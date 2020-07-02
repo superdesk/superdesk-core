@@ -552,7 +552,7 @@ class SluglineDeskService(BaseService):
 
 
 class OverviewResource(Resource):
-    url = r'desks/<regex("([a-f0-9]{24})|all"):desk_id>/overview/<regex("stages|assignments"):agg_type>'
+    url = r'desks/<regex("([a-f0-9]{24})|all"):desk_id>/overview/<regex("stages|assignments|users"):agg_type>'
     resource_title = "desk_overview"
     resource_methods = ['GET']
 
@@ -563,6 +563,11 @@ class OverviewService(BaseService):
     def on_fetched(self, doc):
         desk_id = request.view_args['desk_id']
         agg_type = request.view_args['agg_type']
+        timer_label = "{agg_type} overview aggregation {desk_id!r}".format(agg_type=agg_type, desk_id=desk_id)
+        if agg_type == 'users':
+            with timer(timer_label):
+                doc['_items'] = self._users_aggregation(desk_id)
+            return
 
         if agg_type == "stages":
             collection = "archive"
@@ -594,13 +599,94 @@ class OverviewService(BaseService):
             }
         }
 
-        with timer("{agg_type} overview aggregation {desk_id!r}".format(agg_type=agg_type, desk_id=desk_id)):
+        with timer(timer_label):
             response = app.data.elastic.search(agg_query, collection, params={"size": 0})
 
         doc["_items"] = [
             {'count': b['doc_count'], key: b['key']}
             for b in response.hits['aggregations']['overview']['buckets']
         ]
+
+    def _users_aggregation(self, desk_id: str) -> None:
+        desks_service = superdesk.get_resource_service('desks')
+        if desk_id == 'all':
+            desk_filter = {}
+            es_query = {}
+        else:
+            desk_filter = {"_id": ObjectId(desk_id)}
+            es_query = {
+                "filter": {
+                    "term": {"task.desk": desk_id}
+                }
+            }
+
+        req = ParsedRequest()
+        req.projection = json.dumps({'members': 1})
+        found = desks_service.get(req, desk_filter)
+        members = set()
+        for d in found:
+            members.update({m['user'] for m in d['members']})
+
+        users_aggregation = app.data.pymongo().db.users.aggregate([
+            {"$match": {"_id": {"$in": list(members)}}},
+            {"$group": {"_id": "$role", "authors": {"$addToSet": "$_id"}}}
+        ])
+
+        es_query['aggs'] = {
+            "desk_authors": {
+                "filter": {
+                    "terms": {
+                        "version_creator": [str(m) for m in members]
+                    }
+                },
+                "aggs": {
+                    "authors": {
+                        "terms": {
+                            "field": "version_creator",
+                        },
+                        "aggs": {
+                            "assigned": {
+                                "filter": {
+                                    "exists": {
+                                        "field": "assignment_id",
+                                    }
+                                }
+                            },
+                            "locked": {
+                                "filter": {
+                                    "exists": {
+                                        "field": "lock_user",
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        docs_agg = app.data.elastic.search(es_query, "archive", params={"size": 0})
+        stats_by_authors = {}
+        for a in docs_agg.hits["aggregations"]["desk_authors"]["authors"]["buckets"]:
+            stats_by_authors[a["key"]] = {
+                "assigned": a["assigned"]["doc_count"],
+                "locked": a["locked"]["doc_count"],
+            }
+
+        overview = []
+        for a in users_aggregation:
+            role = a['_id']
+            authors_dict = {}
+            role_dict = {
+                "role": role,
+                "authors": authors_dict,
+            }
+            authors = a['authors']
+            for author in authors:
+                author = str(author)
+                authors_dict[author] = stats_by_authors[author]
+            overview.append(role_dict)
+
+        return overview
 
 
 def remove_profile_from_desks(item):
