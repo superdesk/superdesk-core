@@ -744,6 +744,36 @@ metadata_schema = {
     '_type': {'type': 'string', 'mapping': None},
     'operation': {'type': 'string'},
     'es_highlight': {'type': 'dict', 'allow_unknown': True, 'readonly': True},
+
+    # targeting fields
+    'target_regions': {
+        'type': 'list',
+        'nullable': True,
+        'schema': {
+            'type': 'dict',
+            'schema': {
+                'qcode': {'type': 'string'},
+                'name': {'type': 'string'},
+                'allow': {'type': 'boolean'}
+            }
+        }
+    },
+    'target_types': {
+        'type': 'list',
+        'nullable': True,
+        'schema': {
+            'type': 'dict',
+            'schema': {
+                'qcode': {'type': 'string'},
+                'name': {'type': 'string'},
+                'allow': {'type': 'boolean'}
+            }
+        }
+    },
+    'target_subscribers': {
+        'type': 'list',
+        'nullable': True
+    },
 }
 
 metadata_schema['lock_user']['versioned'] = False
