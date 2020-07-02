@@ -441,7 +441,7 @@ Feature: Desks
          "family_id": 2}
          ]
          """
-        When we get "/desks/#SPORTS_DESK_ID#/stages_overview"
+        When we get "/desks/#SPORTS_DESK_ID#/overview/stages"
         Then we get existing resource
         """
             {
@@ -457,7 +457,7 @@ Feature: Desks
                 ]
             }
         """
-        When we get "/desks/all/stages_overview"
+        When we get "/desks/all/overview/stages"
         Then we get existing resource
         """
             {
@@ -469,6 +469,83 @@ Feature: Desks
                     {
                         "stage": "#desks.working_stage#",
                         "count": 2
+                    }
+                ]
+            }
+        """
+        
+    @auth
+    @notification
+    Scenario: Retrieve number of items with desk assignents overview
+        Given we have "desks" with "SPORTS_DESK_ID" and success
+        """
+        [{"name": "Sports", "desk_type": "authoring"}]
+        """
+        And we have "desks" with "POLITICS_DESK_ID" and success
+        """
+        [{"name": "Politics", "desk_type": "authoring"}]
+        """
+        Given "assignments"
+         """
+         [
+         {"_id":"1", "assigned_to":{"desk":"#SPORTS_DESK_ID#", "state":"assigned"}, "type":"assignment",
+          "planning" : { "genre":[], "slugline":"test 1", "g2_content_type":"text" }},
+         {"_id":"2", "assigned_to":{"desk":"#SPORTS_DESK_ID#", "state":"assigned"}, "type":"assignment",
+          "planning" : { "genre":[], "slugline":"test 2", "g2_content_type":"text" }},
+         {"_id":"3", "assigned_to":{"desk":"#SPORTS_DESK_ID#", "state":"in_progress"}, "type":"assignment",
+          "planning" : { "genre":[], "slugline":"test 3", "g2_content_type":"text" }},
+         {"_id":"4", "assigned_to":{"desk":"#SPORTS_DESK_ID#", "state":"in_progress"}, "type":"assignment",
+          "planning" : { "genre":[], "slugline":"test 4", "g2_content_type":"text" }},
+         {"_id":"5", "assigned_to":{"desk":"#SPORTS_DESK_ID#", "state":"in_progress"}, "type":"assignment",
+          "planning" : { "genre":[], "slugline":"test 5", "g2_content_type":"text" }},
+         {"_id":"6", "assigned_to":{"desk":"#SPORTS_DESK_ID#", "state":"in_progress"}, "type":"assignment",
+          "planning" : { "genre":[], "slugline":"test 6", "g2_content_type":"text" }},
+         {"_id":"7", "assigned_to":{"desk":"#SPORTS_DESK_ID#", "state":"completed"}, "type":"assignment",
+          "planning" : { "genre":[], "slugline":"test 7", "g2_content_type":"text" }},
+         {"_id":"8", "assigned_to":{"desk":"#POLITICS_DESK_ID#", "state":"in_progress"}, "type":"assignment",
+          "planning" : { "genre":[], "slugline":"test 8", "g2_content_type":"text" }},
+         {"_id":"9", "assigned_to":{"desk":"#POLITICS_DESK_ID#", "state":"completed"}, "type":"assignment",
+          "planning" : { "genre":[], "slugline":"test 9", "g2_content_type":"text" }},
+         {"_id":"10", "assigned_to":{"desk":"#POLITICS_DESK_ID#", "state":"completed"}, "type":"assignment",
+          "planning" : { "genre":[], "slugline":"test 10", "g2_content_type":"text" }}
+         ]
+         """
+        When we get "/desks/#SPORTS_DESK_ID#/overview/assignments"
+        Then we get existing resource
+        """
+            {
+                "_items": [
+                    {
+                        "state": "assigned",
+                        "count": 2
+                    },
+                    {
+                        "state": "in_progress",
+                        "count": 4
+                    },
+                    {
+                        "state": "completed",
+                        "count": 1
+                    }
+                ]
+            }
+        """
+        When we get "/desks/all/overview/assignments"
+        Then we get existing resource
+        """
+            {
+                "_items": [
+                    {
+                        "state": "assigned",
+                        "count": 2
+                    },
+                    {
+                        "state": "in_progress",
+                        "count": 5
+                    },
+                    {
+                        "state": "completed",
+                        "count": 3
                     }
                 ]
             }

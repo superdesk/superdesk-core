@@ -136,9 +136,9 @@ def init_app(app):
     endpoint_name = 'sluglines'
     service = SluglineDeskService(endpoint_name, backend=superdesk.get_backend())
     SluglineDesksResource(endpoint_name, app=app, service=service)
-    endpoint_name = 'stages_overview'
-    service = StagesOverviewService(endpoint_name, backend=superdesk.get_backend())
-    StagesOverviewResource(endpoint_name, app=app, service=service)
+    endpoint_name = 'desk_overview'
+    service = OverviewService(endpoint_name, backend=superdesk.get_backend())
+    OverviewResource(endpoint_name, app=app, service=service)
 
 
 superdesk.privilege(name='desks', label='Desk Management', description='User can manage desks.')
@@ -551,40 +551,55 @@ class SluglineDeskService(BaseService):
         return (False, older_sluglines)
 
 
-class StagesOverviewResource(Resource):
-    url = r'desks/<regex("([a-f0-9]{24})|all"):desk_id>/stages_overview'
-    resource_title = "desk_stages_overview"
+class OverviewResource(Resource):
+    url = r'desks/<regex("([a-f0-9]{24})|all"):desk_id>/overview/<regex("stages|assignments"):agg_type>'
+    resource_title = "desk_overview"
     resource_methods = ['GET']
 
 
-class StagesOverviewService(BaseService):
-    """Aggregate count of items per stage"""
+class OverviewService(BaseService):
+    """Aggregate count of items per stage or status"""
 
     def on_fetched(self, doc):
         desk_id = request.view_args['desk_id']
+        agg_type = request.view_args['agg_type']
+
+        if agg_type == "stages":
+            collection = "archive"
+            desk_field = "task.desk"
+            key = "stage"
+            field = "task.{key}".format(key=key)
+        elif agg_type == "assignments":
+            collection = "assignments"
+            desk_field = "assigned_to.desk"
+            key = "state"
+            field = "assigned_to.{key}".format(key=key)
+        else:
+            raise ValueError("Invalid overview aggregation type: {agg_type}".format(agg_type=agg_type))
+
         if desk_id == 'all':
             agg_query = {}
         else:
             agg_query = {
                 "filter": {
-                    "term": {"task.desk": desk_id}
+                    "term": {desk_field: desk_id}
                 }
             }
 
         agg_query['aggs'] = {
-            "stages": {
+            "overview": {
                 "terms": {
-                    "field": "task.stage"
+                    "field": field
                 }
             }
         }
 
-        with timer("stages overview aggregation {desk_id!r}".format(desk_id=desk_id)):
-            response = app.data.elastic.search(agg_query, "archive", params={"size": 0})
+        with timer("{agg_type} overview aggregation {desk_id!r}".format(agg_type=agg_type, desk_id=desk_id)):
+            response = app.data.elastic.search(agg_query, collection, params={"size": 0})
 
         doc["_items"] = [
-            {'count': b['doc_count'], 'stage': b['key']}
-            for b in response.hits['aggregations']['stages']['buckets']
+            {'count': b['doc_count'], key: b['key']}
+            for b in response.hits['aggregations']['overview']['buckets']
         ]
 
 
