@@ -7,3 +7,5 @@ recursive-include superdesk *.po
 recursive-include apps *.json
 recursive-include apps *.html
 recursive-include apps *.txt
+
+include .fireq.json
