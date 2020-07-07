@@ -23,7 +23,7 @@ from superdesk.metadata.item import metadata_schema, ITEM_STATE, CONTENT_STATE
 from superdesk.celery_app import celery
 from apps.tasks import apply_onstage_rule
 from apps.archive.common import ARCHIVE, CUSTOM_HATEOAS, item_schema, format_dateline_to_locmmmddsrc, \
-    insert_into_versions, ARCHIVE_SCHEMA_FIELDS
+    insert_into_versions
 from apps.auth import get_user
 
 from superdesk.lock import lock, unlock
@@ -55,9 +55,6 @@ class TemplateType(SuperdeskBaseEnum):
 
 def get_schema():
     schema = deepcopy(metadata_schema)
-    schema['target_types'] = ARCHIVE_SCHEMA_FIELDS.get('target_types')
-    schema['target_regions'] = ARCHIVE_SCHEMA_FIELDS.get('target_regions')
-    schema['target_subscribers'] = ARCHIVE_SCHEMA_FIELDS.get('target_subscribers')
     return schema
 
 
