@@ -390,6 +390,8 @@ metadata_schema = {
                 'state': {'type': 'string'},
                 'city_code': {'type': 'string'},
                 'country': {'type': 'string'},
+                'code': {'type': 'string'},
+                'scheme': {'type': 'string'},
             }},
             'date': {'type': 'datetime', 'nullable': True},
             'source': {'type': 'string'},
