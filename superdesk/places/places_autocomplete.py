@@ -37,7 +37,7 @@ class PlacesAutocompleteService(superdesk.Service):
         assert req.args.get('name'), {'name': 1}
         params = [
             ('name_startsWith', req.args.get('name')),
-            ('lang', req.args.get('lang')),
+            ('lang', req.args.get('lang', 'en').split('-')[0]),
             ('style', req.args.get('style', app.config['GEONAMES_SEARCH_STYLE'])),
         ]
 
