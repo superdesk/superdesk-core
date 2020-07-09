@@ -352,7 +352,8 @@ class ValidateService(superdesk.Service):
         :return:
         """
         if doc.get('associations'):
-            schema.setdefault('associations', {})['media_metadata'] = True
+            schema.setdefault('associations', {})['media_metadata'] = app.config.get(
+                'VALIDATE_MEDIA_METADATA_ON_PUBLISH', True)
 
     def _get_validator_schema(self, validator):
         """Get schema for given validator.
