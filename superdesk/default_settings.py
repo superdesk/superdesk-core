@@ -431,6 +431,7 @@ CORE_APPS.extend([
     'superdesk.commands',
     'superdesk.locators',
     'superdesk.media',
+    'superdesk.sams',
 
     'apps.auth',
     'apps.archive',
