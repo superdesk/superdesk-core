@@ -188,7 +188,7 @@ class ContentTypesService(superdesk.Service):
             schema = updates.get('schema', {})
             processed = False
             for field, params in schema.items():
-                if not params or not params.get('enabled', True):
+                if (not params or not params.get('enabled', True)) and not data.get(field):
                     data.pop(field, None)
                     processed = True
             if processed:
