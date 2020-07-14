@@ -535,3 +535,31 @@ Feature: User Resource
         """
         {"email": "some@email.com"}
         """
+
+    @auth
+    Scenario: Test username pattern config
+        Given config update
+        """
+        {"USER_USERNAME_PATTERN": "^[a-z]+$"}
+        """
+        When we post to "users"
+        """
+        {"username": "foo123", "email": "foo@bar.com"}
+        """
+        Then we get error 400
+        """
+        {"_status": "ERR", "_issues": {"username": {"pattern": 1}}}
+        """
+
+        Given config update
+        """
+        {"USER_USERNAME_PATTERN": null}
+        """
+        When we post to "users"
+        """
+        {"username": "foo123", "email": "foo@bar.com"}
+        """
+        Then we get new resource
+        """
+        {}
+        """

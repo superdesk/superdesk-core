@@ -880,3 +880,9 @@ USER_EXTERNAL_CREATE = False
 #: .. versionadded:: 2.0
 #:
 USER_EXTERNAL_DESK = None
+
+#: Set regex pattern to check username for
+#:
+#: .. versionadded:: 2.0
+#:
+USER_USERNAME_PATTERN = None
