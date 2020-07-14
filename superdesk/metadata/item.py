@@ -9,6 +9,7 @@
 # at https://www.sourcefabric.org/superdesk/license
 
 from collections import namedtuple
+
 from superdesk.resource import Resource, not_analyzed, not_indexed, not_enabled
 from .packages import LINKED_IN_PACKAGES, PACKAGE
 from eve.utils import config
@@ -362,6 +363,23 @@ metadata_schema = {
         'type': 'list',
         'minlength': 1,
         'nullable': True,
+        'mapping': {
+            'dynamic': False,
+            'properties': {
+                'id': not_analyzed,
+                'refs': {
+                    'dynamic': False,
+                    'properties': {
+                        'idRef': not_analyzed,
+                        '_id': not_analyzed,
+                        'uri': not_analyzed,
+                        'guid': not_analyzed,
+                        'type': not_analyzed,
+                        'location': not_analyzed,
+                    },
+                },
+            },
+        },
     },
     'deleted_groups': {
         'type': 'list',
