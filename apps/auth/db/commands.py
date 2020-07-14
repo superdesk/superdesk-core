@@ -114,10 +114,11 @@ class ImportUsersCommand(superdesk.Command):
 
     option_list = (
         superdesk.Option('--field', '-f', dest='fields', action='append'),
+        superdesk.Option('--activation-email', '-a', dest='activation_email', required=False, action='store_true'),
         superdesk.Option('import_file'),
     )
 
-    def run(self, fields, import_file):
+    def run(self, fields, import_file, activation_email=False):
         import_path = Path(import_file)
         if import_path.suffix == '.csv':
             try:
@@ -179,7 +180,9 @@ class ImportUsersCommand(superdesk.Command):
                     )
                 )
 
-            clean_data = {}
+            clean_data = {
+                'needs_activation': activation_email
+            }
             try:
                 for field_name in USER_FIELDS_NAMES.intersection(user_data):
                     value = user_data[field_name]
