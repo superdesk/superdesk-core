@@ -31,6 +31,14 @@ logger = logging.getLogger(__name__)
 
 
 class SetsResource(Resource):
+    """Resource instance for Sets
+    **schema** =
+        ``state`` *string*
+        ``name`` *string*
+        ``description`` *string*
+        ``destination_name`` *string*
+        ``destination_config`` *dict*
+    """
     endpoint_name = 'sets'
     resource_title = 'Sets'
 
@@ -45,9 +53,12 @@ class SetsResource(Resource):
 
 
 class SetsService(BaseService):
+    """
+    Service for proxy to sams sets endpoints
+    """
     def extract_item(self, arg):
         """
-        Method to remove unnecessary fields from a dictionary type item
+        Method to remove fields from a dictionary type item
         """
         fields_to_remove = ['_created', '_updated', '_etag']
         return dict(
@@ -58,10 +69,10 @@ class SetsService(BaseService):
         """
         Returns a list of all the registered sets
         """
-        sets = self.client.sets.search()
+        sets = self.client.sets.search().json()
         items = list(map(
             lambda item: self.parse_date(item),
-            sets.json()['_items']
+            sets['_items']
         ))
         return ListCursor(items)
 

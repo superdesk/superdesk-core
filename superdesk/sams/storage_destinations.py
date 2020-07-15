@@ -31,7 +31,13 @@ logger = logging.getLogger(__name__)
 
 
 class StorageDestinationsResource(Resource):
-
+    """Resource instance for Storage Destinations
+    **schema** =
+        ``_id`` *string*
+            Destination name
+        ``provider`` *string*
+            Destination's Provider name
+    """
     endpoint_name = 'storage_destinations'
 
     url = 'sams/destinations'
@@ -44,14 +50,17 @@ class StorageDestinationsResource(Resource):
 
 
 class StorageDestinationsService(BaseService):
+    """
+    Service for proxy to sams destinations endpoints
+    """
     def get(self, req, **lookup):
         """
         Returns a list of all the registered storage destinations
         """
-        destinations = self.client.destinations.search()
+        destinations = self.client.destinations.search().json()
         items = list(map(
             lambda item: self.parse_date(item),
-            destinations.json()['_items']
+            destinations['_items']
         ))
         return ListCursor(items)
 
