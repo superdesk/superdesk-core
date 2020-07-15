@@ -8,12 +8,12 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
-from superdesk.resource import Resource
-from superdesk.services import BaseService
-from .storage_destinations import StorageDestinationsResource, StorageDestinationsService
-from .sets import SetsResource, SetsService
-from sams_client import SamsClient
 import superdesk
+from .storage_destinations import (
+    StorageDestinationsResource,
+    StorageDestinationsService
+)
+from .sets import SetsResource, SetsService
 from flask_babel import _
 
 
@@ -25,5 +25,31 @@ def init_app(app):
     }
 
     endpoint_name = StorageDestinationsResource.endpoint_name
-    service = StorageDestinationsService(configs, datasource=endpoint_name, backend=superdesk.get_backend())
-    StorageDestinationsResource(endpoint_name, app=app, service=service)
+    service = StorageDestinationsService(
+        configs,
+        datasource=endpoint_name,
+        backend=superdesk.get_backend()
+    )
+    StorageDestinationsResource(
+        endpoint_name,
+        app=app,
+        service=service
+    )
+
+    endpoint_name = SetsResource.endpoint_name
+    service = SetsService(
+        configs,
+        datasource=endpoint_name,
+        backend=superdesk.get_backend()
+    )
+    SetsResource(
+        endpoint_name,
+        app=app,
+        service=service
+    )
+
+    superdesk.privilege(
+        name='sets',
+        label=_('Sets'),
+        description=_('Can access Sets')
+    )
