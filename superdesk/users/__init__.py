@@ -25,6 +25,10 @@ def init_app(app):
     # Registering with intrinsic privileges because: A user should be allowed to update their own profile.
     superdesk.intrinsic_privilege(resource_name='users', method=['PATCH'])
 
+    app.client_config.setdefault('user', {}).update({
+        'username_pattern': app.config.get('USER_USERNAME_PATTERN'),
+    })
+
 
 def get_user_from_request(required=False):
     """
