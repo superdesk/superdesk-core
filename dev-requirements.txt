@@ -21,3 +21,4 @@ python3-saml>=1.9,<1.10
 
 -e git+git://github.com/superdesk/superdesk-planning.git@develop#egg=superdesk-planning
 -e .
+-e git+git://github.com/superdesk/sams.git@develop#egg=sams&subdirectory=src/clients/python/
