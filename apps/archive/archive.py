@@ -687,6 +687,19 @@ class ArchiveService(BaseService):
         # delete entry from published repo
         get_resource_service('published').delete_by_article_id(original['_id'])
 
+        # deschedule scheduled associations
+        if config.PUBLISH_ASSOCIATED_ITEMS:
+            associations = original.get(ASSOCIATIONS) or {}
+            archive_service = get_resource_service('archive')
+            for associations_key, associated_item in associations.items():
+                orig_associated_item = archive_service.find_one(req=None, _id=associated_item[config.ID_FIELD])
+                if orig_associated_item and orig_associated_item.get('state') == CONTENT_STATE.SCHEDULED:
+                    # deschedule associated item itself
+                    archive_service.patch(id=associated_item[config.ID_FIELD], updates={PUBLISH_SCHEDULE: None})
+                    # update associated item info in the original
+                    orig_associated_item = archive_service.find_one(req=None, _id=associated_item[config.ID_FIELD])
+                    updates.setdefault(ASSOCIATIONS, {})[associations_key] = orig_associated_item
+
     def can_edit(self, item, user_id):
         """
         Determines if the user can edit the item or not.
@@ -862,7 +875,7 @@ class ArchiveService(BaseService):
 
             update_schedule_settings(updated, PUBLISH_SCHEDULE, updated.get(PUBLISH_SCHEDULE))
 
-            if updates.get(PUBLISH_SCHEDULE):
+            if updates.get(PUBLISH_SCHEDULE) and updates.get('state') != CONTENT_STATE.PUBLISHED:
                 validate_schedule(updated.get(SCHEDULE_SETTINGS, {}).get('utc_{}'.format(PUBLISH_SCHEDULE)))
 
             updates[SCHEDULE_SETTINGS] = updated.get(SCHEDULE_SETTINGS, {})
