@@ -11,19 +11,23 @@
 """The Destinations API allows to retrieve the list of ``StorageDestinations``.
 
 
-=====================   =================================================================
+=====================   =======================================================
 **endpoint name**        'storage_destinations'
 **resource title**       'Destinations'
 **resource url**         [GET] '/sams/destinations'
 **item url**             [GET] '/sams/destinations/<:class:`str`>'
-**schema**               :attr:`sams_client.schemas.destinations.destinationSchema`
-=====================   =================================================================
+**schema**               :attr:`sams_client.schemas.destinationSchema`
+=====================   =======================================================
 """
 
-from superdesk.resource import Resource
+import logging
 from .base_service import BaseService
 from sams_client.schemas import destinationSchema
+from superdesk.errors import SuperdeskApiError
+from superdesk.resource import Resource
 from superdesk.utils import ListCursor
+
+logger = logging.getLogger(__name__)
 
 
 class StorageDestinationsResource(Resource):
@@ -45,13 +49,11 @@ class StorageDestinationsService(BaseService):
         Returns a list of all the registered storage destinations
         """
         destinations = self.client.destinations.search()
-        if len(destinations.json()['_items']) != 0:
-            items = list(map(
-                lambda item: self.to_dict(item),
-                destinations.json()['_items']
-            ))
-            return ListCursor(items)
-        return ListCursor(destinations.json()['_items'])
+        items = list(map(
+            lambda item: self.parse_date(item),
+            destinations.json()['_items']
+        ))
+        return ListCursor(items)
 
     def find_one(self, req, **lookup):
         """
@@ -59,5 +61,8 @@ class StorageDestinationsService(BaseService):
         name and provider name of the respective storage destination
         """
         name = lookup['_id']
-        destination = self.client.destinations.get_by_id(name)
-        return self.to_dict(destination.json())
+        item = self.client.destinations.get_by_id(item_id=name).json()
+        # Handles error if cannot find item with given ID on sams client
+        if item.get('code') == 404:
+            raise SuperdeskApiError.notFoundError(item['message'])
+        return self.parse_date(item)
