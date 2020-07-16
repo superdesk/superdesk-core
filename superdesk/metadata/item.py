@@ -410,6 +410,15 @@ metadata_schema = {
                 'country': {'type': 'string'},
                 'code': {'type': 'string'},
                 'scheme': {'type': 'string'},
+                'location': {
+                    'type': 'dict',
+                    'mapping': {'type': 'geo_point'},
+                    'nullable': True,
+                    'schema': {
+                        'lat': {'type': 'integer'},
+                        'lon': {'type': 'integer'},
+                    },
+                },
             }},
             'date': {'type': 'datetime', 'nullable': True},
             'source': {'type': 'string'},
