@@ -376,6 +376,12 @@ metadata_schema = {
                         'guid': not_analyzed,
                         'type': not_analyzed,
                         'location': not_analyzed,
+                        'headline': {
+                            'type': 'string'
+                        },
+                        'slugline': {
+                            'type': 'string'
+                        },
                     },
                 },
             },
