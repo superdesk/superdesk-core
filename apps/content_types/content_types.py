@@ -180,6 +180,8 @@ class ContentTypesService(superdesk.Service):
         Finds the templates that are referencing the given
         content profile an clears the disabled fields
         """
+
+        # these are the only fields of templates that don't depend on the schema.
         template_metadata_fields = ['language', 'usageterms']
 
         templates = list(superdesk.get_resource_service('content_templates').
