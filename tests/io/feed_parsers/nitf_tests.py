@@ -272,4 +272,3 @@ class HandleInvalidFieldsTestCase(NITFTestCase):
 
     def test_keywords(self):
         self.assertEqual(len(self.item.get('keywords')), 0)
-
