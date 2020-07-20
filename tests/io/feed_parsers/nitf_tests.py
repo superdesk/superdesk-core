@@ -257,3 +257,18 @@ class MappingTestCase(TestCase):
 
     def tearDown(self):
         del config.NITF_MAPPING
+
+
+class HandleInvalidFieldsTestCase(NITFTestCase):
+
+    filename = 'handle_invalid_fields.xml'
+
+    def test_dates(self):
+        self.assertEqual(self.item.get('firstcreated').isoformat(), '2020-07-03T20:51:36+00:00')
+        self.assertEqual(self.item.get('versioncreated').isoformat(), '2020-07-03T20:51:36+00:00')
+
+    def test_expiry(self):
+        self.assertEqual(self.item.get('expiry'), None)
+
+    def test_keywords(self):
+        self.assertEqual(len(self.item.get('keywords')), 0)
