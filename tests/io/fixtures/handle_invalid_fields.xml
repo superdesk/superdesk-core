@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="utf-8"?>
+<nitf version="-//IPTC//DTD NITF 3.4//EN" change.date="October 18, 2006" change.time="19:30">
+  <head>
+    <title>Rideau-Hall-Police</title>
+    <tobject tobject.type="news">
+      <tobject.property tobject.property.type="current" />
+      <tobject.subject tobject.subject.ipr="IPTC" />
+    </tobject>
+    <docdata management-status="usable">
+      <doc-id id-string="eed713d46d74499d86b3250fa47b341b" />
+      <doc.copyright holder="The Canadian Press. All rights reserved." year="2020" />
+      <doc-scope scope="National" />
+      <date.expire norm="YYYYMMDD000000-HHMM" />
+      <date.issue norm="20200703T165136-0400" />
+      <date.release norm="YYYYMMDD000000-HHMM" />
+      <ed-msg info="" />
+      <key-list>
+        <keyword>National</keyword>
+        <keyword>Justice</keyword>
+        <keyword>Politics</keyword>
+      </key-list>
+      <series series.part="4" series.totalpart="0" />
+    </docdata>
+    <revision-history norm="20200703T165136-0400" comment="ADDS military statement" />
+    <urgency ed-urg="2" />
+  </head>
+  <body>
+    <body.head>
+      <hedline>
+        <hl1>Man accused of ramming gate at Rideau Hall with truck faces multiple charges</hl1>
+        <hl2>Rideau Hall suspect faces multiple charges</hl2>
+      </hedline>
+      <byline>
+        <person>Mia Rabson and Jordan Press</person>
+        <byttl>The Canadian Press</byttl>
+      </byline>
+      <dateline>
+        <location>
+          <city>Ottawa</city>
+          <state>Ontario</state>
+          <country>Canada</country>
+        </location>
+        <story.date norm="20200703T165136-0400" />
+      </dateline>
+      <distributor>THE CANADIAN PRESS</distributor>
+      <abstract>
+        <media>
+          <media-metadata name="TransRef" value="JDT10970312" />
+        </media>
+      </abstract>
+    </body.head>
+    <body.content>
+      <block id="CPARTICLE">
+        <p>OTTAWA - A Manitoba man is facing 22 criminal charges after allegedly ramming his truck through a pedestrian gate at Rideau Hall Thursday and has been remanded in custody until July 17.</p>
+        <p>Corey Hurren, a 46-year-old member of the military and businessman, made his first court appearance by teleconference Friday afternoon, about 30 hours after the RCMP say he was arrested less than 200 metres from the front door of Prime Minister Justin Trudeau's current residence.</p>
+        <p>The RCMP said Friday Hurren had several weapons on him, including at least one gun. They said he was loose on the grounds of Rideau Hall for 13 minutes early Thursday morning before police saw him. The Mounties then spoke with him for more than an hour and a half before he was arrested.</p>
+        <p>Hurren faces 22 charges, including one for uttering threats. The rest are all weapons charges, including two counts for possession of a restricted or prohibited gun, four counts for careless use, storage or handling of a firearm and four counts for possessing a firearm for a dangerous purpose.</p>
+        <p>At the brief court appearance, which happened by phone due to limited in-person court proceedings during the COVID-19 pandemic, Hurren sounded calm as he said his full name and date of birth. He also confirmed to the judge he understood the proceedings.</p>
+        <p>His lawyer, Michael Davies, asked for the case to be adjourned until July 17. Assistant Crown Attorney Meaghan Cunningham said the Crown opposes releasing Hurren and agreed to the adjournment.</p>
+        <p>Neither Trudeau nor his family were at their Rideau Cottage home when the incident occurred. Gov. Gen. Julie Payette, whose residence is usually at Rideau Hall, was also not there at the time.</p>
+        <p>Trudeau said Friday this is the kind of event nobody wants to happen, but was thankful it was resolved without anybody getting hurt.</p>
+        <p>In a statement, the Canadian Armed Forces said Hurren is a master corporal in the 4th Ranger Patrol Group, a reservist temporarily on full-time duty during the COVID-19 pandemic.</p>
+        <p>"He was not, however, part of any CAF military task at the time of his arrest; he travelled to Ottawa of his own accord without the knowledge of his chain of command," the statement says, adding his Ranger rifle has been in the military's hands throughout.</p>
+        <p>The Forces will review Hurren's status once the RCMP's investigation and legal proceedings are finished, the statement says, and his actions may be subject to military discipline as well.</p>
+        <p>Deputy RCMP Commissioner Mike Duheme said the incident led to immediate security changes at Rideau Hall, but noted the RCMP never discuss the security that protects either the Governor General or the prime minister.</p>
+        <p>"I am very proud of all our people and our partners who moved fast and acted decisively to contain this threat," Duheme said.</p>
+        <p>He said as far as the Mounties know, Hurren was acting alone, had "several weapons" on him including a gun Duheme later described as a rifle, and was not known to the RCMP before the incident.</p>
+        <p>Duheme wouldn't go into a motive, what brought the man to the national capital, or what he did just before smashing through the public entrance to the sprawling property. That's all part of the ongoing investigation, Duheme said.</p>
+        <p>He did provide a minute-by-minute account of the incident, that began at 6:29 a.m. local time Thursday, when Hurren allegedly drove his truck through the Thomas Gate — a secondary entrance near the main gate to the grounds, wide enough to admit a vehicle but typically used by pedestrians. The truck got about 120 metres along a footpath before it became disabled.</p>
+        <p>The man in the truck ran up the path, carrying what looked like a rifle, to Rideau Hall's rose garden, hiding there for three minutes before making his way to the greenhouses that are attached to the back of the Governor General's residence.</p>
+        <p>A short path leads from the back of the greenhouses through a stand of trees to Rideau Cottage, which is where Trudeau and his family have lived since his election in 2015 while the government decides what to do with 24 Sussex Drive. That has been the official residence of past prime ministers but is now in need of major repairs.</p>
+        <p>Staff from the National Capital Commission, which manages the property, noticed the abandoned vehicle shortly after it was left there, and notified the commissionaires providing site security.</p>
+        <p>Around 6:40 a.m., commissionaires allegedly spotted the man on the path, gun in hand. The man was then spotted separately by RCMP security detail on the grounds. At that time a lockdown of the entire site was ordered.</p>
+        <p>RCMP confirmed they had visual contact of the suspect at 6:43 a.m., and after officers took cover for their own safety, they began speaking to him. The suspect did not respond for eight minutes, when he finally gave the officers his name and a conversation began.</p>
+        <p>That conversation continued for an hour and 42 minutes before the man was taken into custody at 8:29 a.m.</p>
+        <p>Duheme said when Mounties first saw the man they could have easily rushed up to him, but instead looked for a safe spot to speak with him. The conversation went well, he said, meaning there was no need to do something more dramatic.</p>
+        <p>"I cannot emphasize enough how effective our members were in being vigilant, reacting quickly and using successful de-escalation techniques to resolve this highly volatile incident swiftly and without injury to anyone," Duheme said.</p>
+        <p>The constable who dealt with the man was in a safe spot, he said, and didn't need to rush.</p>
+        <p>"Our intervention, regardless of who the person is, is always based on the environment and the threat cues that are being posed. It's got nothing to do with ethnicity, it's to do with the environment that we're in, the threat that we have, the analysis that the officer is making, the subject's behaviour and whatnot, the environment that's around us for tactical cover. There's a multiple factor," Duheme said.</p>
+        <p>This report by The Canadian Press was first published July 3, 2020.</p>
+      </block>
+    </body.content>
+  </body>
+</nitf>
