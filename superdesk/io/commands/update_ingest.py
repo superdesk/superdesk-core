@@ -24,7 +24,7 @@ from superdesk.errors import ProviderError
 from superdesk.io import get_feeding_service
 from superdesk.io.registry import registered_feeding_services, registered_feed_parsers
 from superdesk.io.iptc import subject_codes
-from superdesk.lock import lock, unlock
+from superdesk.lock import lock, unlock, touch
 from superdesk.media.renditions import update_renditions, transfer_renditions
 from superdesk.metadata.item import GUID_NEWSML, GUID_FIELD, FAMILY_ID, ITEM_TYPE, CONTENT_TYPE, CONTENT_STATE, \
     ITEM_STATE
@@ -281,6 +281,9 @@ def update_provider(provider, rule_set=None, routing_scheme=None, sync=False):
         failed = None
         while True:
             try:
+                if not touch(lock_name, expire=UPDATE_TTL):
+                    logger.warning('lock expired while updating provider %s', provider[superdesk.config.ID_FIELD])
+                    return
                 items = generator.send(failed)
                 failed = ingest_items(items, provider, feeding_service, rule_set, routing_scheme)
                 update_last_item_updated(update, items)

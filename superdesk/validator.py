@@ -245,6 +245,14 @@ class SuperdeskValidator(Validator):
         if twitter and value and not re.match('^@[A-Za-z0-9_]{1,15}$', value, re.IGNORECASE):
             self._error(field, ERROR_PATTERN)
 
+    def _validate_username_pattern(self, enabled, field, value):
+        """
+        {'type': 'boolean'}
+        """
+        if enabled and app.config.get('USER_USERNAME_PATTERN') and \
+                not re.match(app.config['USER_USERNAME_PATTERN'], value or ''):
+            self._error(field, ERROR_PATTERN)
+
     def _validate_empty(self, empty, field, value):
         """
         {'type': 'boolean'}

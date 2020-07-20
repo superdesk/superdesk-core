@@ -512,7 +512,7 @@ class DBUsersService(UsersService):
         validator = self._validator()
         if not validator.validate(data, update=update):
             raise ValidationError(validator.errors)
-        return validator.normalized(data)  # will populate default metadata
+        return validator.normalized(data) if not update else data
 
     def create_external_user(self, data):
         docs = [self._process_external_data(data)]

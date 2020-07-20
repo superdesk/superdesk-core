@@ -29,7 +29,8 @@ class UsersResource(Resource):
                 'type': 'string',
                 'unique': True,
                 'required': True,
-                'minlength': 1
+                'minlength': 1,
+                'username_pattern': True,
             },
             'password': {
                 'type': 'string',
