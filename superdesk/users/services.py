@@ -366,7 +366,7 @@ class UsersService(BaseService):
 
         """filtering out inactive users"""
 
-        params = json.loads(request.args.get('where')) if request.args.get('where') else None
+        params = json.loads(request.args.get('where')) if request and request.args.get('where') else None
         query = {
             '$and': [
                 {'is_active': True},
