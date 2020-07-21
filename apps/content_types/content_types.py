@@ -180,6 +180,10 @@ class ContentTypesService(superdesk.Service):
         Finds the templates that are referencing the given
         content profile an clears the disabled fields
         """
+
+        # these are the only fields of templates that don't depend on the schema.
+        template_metadata_fields = ['language', 'usageterms']
+
         templates = list(superdesk.get_resource_service('content_templates').
                          get_templates_by_profile_id(original.get('_id')))
 
@@ -188,7 +192,7 @@ class ContentTypesService(superdesk.Service):
             schema = updates.get('schema', {})
             processed = False
             for field, params in schema.items():
-                if not params or not params.get('enabled', True):
+                if (not params or not params.get('enabled', True)) and field not in template_metadata_fields:
                     data.pop(field, None)
                     processed = True
             if processed:
