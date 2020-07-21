@@ -11,7 +11,7 @@
 import flask
 import logging
 from bson import ObjectId
-from flask import current_app as app
+from flask import current_app as app, json, request
 from eve.utils import config
 from superdesk.activity import add_activity, ACTIVITY_CREATE, ACTIVITY_UPDATE
 from superdesk.metadata.item import SIGN_OFF
@@ -363,6 +363,22 @@ class UsersService(BaseService):
                 lookup['is_author'] = bool(int(is_author))
             else:
                 logger.warn('bad value of is_author argument ({value})'.format(value=is_author))
+
+        """filtering out inactive users"""
+
+        params = json.loads(request.args.get('where')) if request.args.get('where') else None
+        query = {
+            '$and': [
+                {'is_active': True},
+                {'is_enabled': True},
+            ]
+        }
+
+        if req and not params:
+            req.where = json.dumps(query)
+        elif req and params and params.get('all'):
+            req.where = None
+
         return super().get(req, lookup)
 
     def get_users_by_user_type(self, user_type='user'):
