@@ -21,57 +21,29 @@
 """
 
 import logging
-from .base_service import BaseService
-from sams_client.schemas import destinationSchema
-from superdesk.errors import SuperdeskApiError
-from superdesk.resource import Resource
-from superdesk.utils import ListCursor
+import superdesk
 
 logger = logging.getLogger(__name__)
+destinations_bp = superdesk.Blueprint('sams_destinations', __name__)
 
 
-class StorageDestinationsResource(Resource):
-    """Resource instance for Storage Destinations
-    **schema** =
-        ``_id`` *string*
-            Destination name
-        ``provider`` *string*
-            Destination's Provider name
+@destinations_bp.route('/sams/destinations', methods=['GET'])
+def get():
     """
-    endpoint_name = 'storage_destinations'
-
-    url = 'sams/destinations'
-    item_url = r'regex("[a-zA-Z0-9]+")'
-
-    schema = destinationSchema
-
-    item_methods = ['GET']
-    resource_methods = ['GET']
-
-
-class StorageDestinationsService(BaseService):
+    Returns a list of all the registered storage destinations
     """
-    Service for proxy to sams destinations endpoints
-    """
-    def get(self, req, **lookup):
-        """
-        Returns a list of all the registered storage destinations
-        """
-        destinations = self.client.destinations.search().json()
-        items = list(map(
-            lambda item: self.parse_date(item),
-            destinations['_items']
-        ))
-        return ListCursor(items)
+    destinations = destinations_bp.kwargs['client'].destinations.search().json()
+    return destinations
 
-    def find_one(self, req, **lookup):
-        """
-        Uses ``_id`` in the lookup and returns the destination
-        name and provider name of the respective storage destination
-        """
-        name = lookup['_id']
-        item = self.client.destinations.get_by_id(item_id=name).json()
-        # Handles error if cannot find item with given ID on sams client
-        if item.get('code') == 404:
-            raise SuperdeskApiError.notFoundError(item['message'])
-        return self.parse_date(item)
+
+@destinations_bp.route('/sams/destinations/<item_id>', methods=['GET'])
+def find_one(item_id):
+    """
+    Uses item_id and returns the destination
+    name and provider name of the respective storage destination
+    """
+    item = destinations_bp.kwargs['client'].destinations.get_by_id(item_id=item_id).json()
+    # Handles error if cannot find item with given ID on sams client
+    if item.get('code') == 404:
+        return item['message'], 404
+    return item

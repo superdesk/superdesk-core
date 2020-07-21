@@ -107,6 +107,9 @@ class SuperdeskTokenAuth(TokenAuth):
         # Step 1:
         if not user:
             return True
+        
+        if resource == '_blueprint':
+            return True
 
         # Step 2: Get User's Privileges
         get_resource_service('users').set_privileges(user, flask.g.role)

@@ -1,20 +1,8 @@
-# -*- coding: utf-8; -*-
-#
-# This file is part of Superdesk.
-#
-# Copyright 2013, 2014 Sourcefabric z.u. and contributors.
-#
-# For the full copyright and license information, please see the
-# AUTHORS and LICENSE files distributed with this source code, or
-# at https://www.sourcefabric.org/superdesk/license
-
 import superdesk
-from .storage_destinations import (
-    StorageDestinationsResource,
-    StorageDestinationsService
-)
-from .sets import SetsResource, SetsService
-from flask_babel import _
+from .storage_destinations import destinations_bp
+from .sets import sets_bp
+from .decorator import blueprint_auth
+from sams_client import SamsClient
 
 
 def init_app(app):
@@ -23,33 +11,18 @@ def init_app(app):
         'HOST': app.config.get('SAMS_HOST'),
         'PORT': app.config.get('SAMS_PORT')
     }
+    client = SamsClient(configs)
 
-    endpoint_name = StorageDestinationsResource.endpoint_name
-    service = StorageDestinationsService(
-        configs,
-        datasource=endpoint_name,
-        backend=superdesk.get_backend()
-    )
-    StorageDestinationsResource(
-        endpoint_name,
-        app=app,
-        service=service
-    )
+    @destinations_bp.before_request
+    @blueprint_auth(app)
+    def before_request():
+        """ Add authentication before request to destinations blueprint """
+        pass
+    superdesk.blueprint(destinations_bp, app, client=client)
 
-    endpoint_name = SetsResource.endpoint_name
-    service = SetsService(
-        configs,
-        datasource=endpoint_name,
-        backend=superdesk.get_backend()
-    )
-    SetsResource(
-        endpoint_name,
-        app=app,
-        service=service
-    )
-
-    superdesk.privilege(
-        name='sets',
-        label=_('Sets'),
-        description=_('Can access Sets')
-    )
+    @sets_bp.before_request
+    @blueprint_auth(app)
+    def before_request():
+        """ Add authentication before request to sets blueprint """
+        pass
+    superdesk.blueprint(sets_bp, app, client=client)

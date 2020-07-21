@@ -21,109 +21,76 @@
 """
 
 import logging
-from .base_service import BaseService
-from sams_client.schemas import SET_SCHEMA
+import superdesk
+from eve.render import send_response
+from flask import request
 from superdesk.errors import SuperdeskApiError
-from superdesk.resource import Resource
-from superdesk.utils import ListCursor
+from superdesk.utc import utcnow
 
 logger = logging.getLogger(__name__)
+sets_bp = superdesk.Blueprint('sams_sets', __name__)
 
 
-class SetsResource(Resource):
-    """Resource instance for Sets
-    **schema** =
-        ``state`` *string*
-        ``name`` *string*
-        ``description`` *string*
-        ``destination_name`` *string*
-        ``destination_config`` *dict*
+@sets_bp.route('/sams/sets', methods=['GET'])
+def get():
     """
-    endpoint_name = 'sets'
-    resource_title = 'Sets'
-
-    url = 'sams/sets'
-    item_url = r'regex("[a-zA-Z0-9]+")'
-
-    item_methods = ['GET', 'PATCH', 'DELETE']
-    resource_methods = ['GET', 'POST']
-    privileges = {'POST': 'sets', 'PATCH': 'sets', 'DELETE': 'sets'}
-
-    schema = SET_SCHEMA
-
-
-class SetsService(BaseService):
+    Returns a list of all the registered sets
     """
-    Service for proxy to sams sets endpoints
+    sets = sets_bp.kwargs['client'].sets.search().json()
+    return sets
+
+
+@sets_bp.route('/sams/sets/<item_id>', methods=['GET'])
+def find_one(item_id):
     """
-    def extract_item(self, arg):
-        """
-        Method to remove fields from a dictionary type item
-        """
-        fields_to_remove = ['_created', '_updated', '_etag']
-        return dict(
-            (key, arg[key]) for key in set(arg.keys()) - set(fields_to_remove)
-        )
+    Uses item_id and returns the corresponding
+    set
+    """
+    item = sets_bp.kwargs['client'].sets.get_by_id(item_id=item_id).json()
+    # Handles error if cannot find item with given ID on sams client
+    if item.get('code') == 404:
+        return item['message'], 404
+    return item
 
-    def get(self, req, **lookup):
-        """
-        Returns a list of all the registered sets
-        """
-        sets = self.client.sets.search().json()
-        items = list(map(
-            lambda item: self.parse_date(item),
-            sets['_items']
-        ))
-        return ListCursor(items)
 
-    def find_one(self, req, **lookup):
-        """
-        Uses ``_id`` or ``name`` in the lookup and returns the corresponding
-        set
-        """
-        # For delete and update find_one gets called with
-        # key as '_id' in lookup
-        # For create find_one gets called with key as 'name' in lookup
-        name = lookup.get('_id', lookup.get('name'))
-        item = self.client.sets.get_by_id(item_id=name).json()
-        # Handles error if cannot find item with given ID on sams client
-        if item.get('code') == 404:
-            if lookup.get('name'):      # returns None in case of create
-                return None
-            raise SuperdeskApiError.notFoundError(item['message'])
-        return self.parse_date(item)
+@sets_bp.route('/sams/sets', methods=['POST'])
+def create():
+    """
+    Creates a new set
+    """
+    docs = [request.get_json()]
+    post_response = sets_bp.kwargs['client'].sets.create(docs=docs).json()
+    # Handles error if set already exists
+    if post_response.get('_status') == 'ERR':
+        return post_response['_error']['message'], post_response['_error']['code']
+    return post_response
 
-    def create(self, docs, **lookup):
-        """
-        Uses docs from arguments and creates a new set
-        """
-        docs[0] = self.extract_item(docs[0])
-        post_response = self.client.sets.create(docs=docs).json()
-        # Handles error if set already exists
-        if post_response.get('_status') == 'ERR':
-            raise SuperdeskApiError.badRequestError(
-                message=post_response['_error']['message'],
-                payload=post_response['_issues']
-            )
-        return [post_response['_id']]
 
-    def delete(self, lookup):
-        """
-        Uses ``_id`` in the lookup and deletes the corresponding set
-        """
-        name = lookup['_id']
-        item = self.client.sets.get_by_id(item_id=name).json()
-        self.client.sets.delete(
-            item_id=name, headers={'If-Match': item['_etag']}
-        )
+@sets_bp.route('/sams/sets/<item_id>', methods=['DELETE'])
+def delete(item_id):
+    """
+    Uses item_id and deletes the corresponding set
+    """
+    etag = request.headers['If-Match']
+    sets_bp.kwargs['client'].sets.delete(
+        item_id=item_id, headers={'If-Match': etag}
+    )
+    return '', 204
 
-    def update(self, id, updates, original):
-        """
-        Uses id and updates from arguments and updates the corresponding set
-        """
-        updates = self.extract_item(updates)
-        self.client.sets.update(
-            item_id=id,
-            updates=updates,
-            headers={'If-Match': original['_etag']}
-        )
+
+@sets_bp.route('/sams/sets/<item_id>', methods=['PATCH'])
+def update(item_id):
+    """
+    Uses item_id and updates the corresponding set
+    """
+    etag = request.headers['If-Match']
+    updates = request.get_json()
+    update_response = sets_bp.kwargs['client'].sets.update(
+        item_id=item_id,
+        updates=updates,
+        headers={'If-Match': etag}
+    ).json()
+    # Handles error returned from sams client
+    if update_response.get('_status') == 'ERR':
+        return update_response['_error']['message'], update_response['_error']['code']
+    return '', 204
