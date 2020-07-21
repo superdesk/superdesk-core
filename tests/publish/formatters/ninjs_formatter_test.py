@@ -1673,6 +1673,15 @@ class NinjsFormatterTest(TestCase):
         ninjs = json.loads(doc)
         self.assertEqual(ninjs, expected)
 
+    def test_empty_genre(self):
+        seq, doc = self.formatter.format({
+            "type": "text",
+            "guid": "foo",
+            "genre": None,
+        }, {"name": "Test Subscriber"})[0]
+        ninjs = json.loads(doc)
+        self.assertIsNotNone(ninjs)
+
 
 @mock.patch("superdesk.publish.subscribers.SubscribersService.generate_sequence_number", lambda self, subscriber: 1)
 class Ninjs2FormatterTest(TestCase):
