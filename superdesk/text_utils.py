@@ -21,6 +21,7 @@ import chardet
 
 logger = logging.getLogger(__name__)
 
+
 # KEEP CHANGES IN SYNC WITH CLIENT FUNCTION `countWords`
 # regex is used instead re to support unicode letter matching with \p{L}
 def get_text_word_count(text):
