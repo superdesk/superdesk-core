@@ -497,6 +497,8 @@ class IngestTwitterError(SuperdeskIngestError):
     _codes = {
         6100: "Twitter authentication failure",
         6200: "No Screen names specified",
+        6300: "Rate limit exceeded",
+        6400: "Unknown API error",
     }
 
     @classmethod
@@ -506,6 +508,14 @@ class IngestTwitterError(SuperdeskIngestError):
     @classmethod
     def TwitterNoScreenNamesError(cls, exception=None, provider=None):
         return IngestTwitterError(6200, exception, provider)
+
+    @classmethod
+    def TwitterRateLimitError(cls, exception=None, provider=None):
+        return IngestTwitterError(6300, exception, provider)
+
+    @classmethod
+    def TwitterAPIGeneralError(cls, exception=None, provider=None):
+        return IngestTwitterError(6400, exception, provider)
 
 
 class SuperdeskPublishError(SuperdeskError):
