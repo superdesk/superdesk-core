@@ -34,7 +34,7 @@ class WordCountTestCase(unittest.TestCase):
         sealed their place at the finals in <chron>October 2015</chron>.</p>"""))
 
     def test_word_count_nitf_2(self):
-        self.assertEqual(316, text_utils.get_word_count("""
+        self.assertEqual(314, text_utils.get_word_count("""
         <p>Rio Tinto has kept intact its target for iron ore shipments in 2017 after hitting the mid-point
         of its revised guidance range for 2016. </p><p>The world's second largest iron ore exporter shipped
         327.6 million tonnes of iron ore from its Pilbara operations in 2016, in line with the slightly lowered
