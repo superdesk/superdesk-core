@@ -107,7 +107,7 @@ class SuperdeskTokenAuth(TokenAuth):
         # Step 1:
         if not user:
             return True
-        
+
         if resource == '_blueprint':
             return True
 
