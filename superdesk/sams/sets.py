@@ -22,10 +22,8 @@
 
 import logging
 import superdesk
-from eve.render import send_response
 from flask import request
 from superdesk.errors import SuperdeskApiError
-from superdesk.utc import utcnow
 
 logger = logging.getLogger(__name__)
 sets_bp = superdesk.Blueprint('sams_sets', __name__)
