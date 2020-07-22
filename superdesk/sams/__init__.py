@@ -2,6 +2,7 @@ import superdesk
 from .storage_destinations import destinations_bp
 from .sets import sets_bp
 from .decorator import blueprint_auth
+from flask_babel import _
 from sams_client import SamsClient
 
 
@@ -26,3 +27,15 @@ def init_app(app):
         """ Add authentication before request to sets blueprint """
         pass
     superdesk.blueprint(sets_bp, app, client=client)
+
+    superdesk.privilege(
+        name='sams',
+        label=_('Sams'),
+        description=_('Access to the SAMS management page (and to upload assets etc)')
+    )
+
+    superdesk.privilege(
+        name='sams_manage',
+        label=_('Sams manage'),
+        description=_('Allows management of SAMS Sets etc')
+    )
