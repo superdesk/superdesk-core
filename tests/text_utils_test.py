@@ -27,7 +27,7 @@ class WordCountTestCase(unittest.TestCase):
         """))
 
     def test_word_count_nitf(self):
-        self.assertEqual(40, text_utils.get_word_count("""
+        self.assertEqual(37, text_utils.get_word_count("""
         <p>2014: Northern Ireland beat <location>Greece</location> 2-0 in <location>Athens</location>
         with goals from <person>Jamie Ward</person> and <person>Kyle Lafferty</person> to boost their
         hopes of qualifying for <money>Euro 2016</money>. <person>Michael O'Neill's</person> side
