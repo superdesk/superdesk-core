@@ -18,7 +18,7 @@ def init_app(app):
     @sets_bp.before_request
     @blueprint_auth(app)
     def before_request():
-        """ Add authentication before request to destinations blueprint """
+        """ Add authentication before request to all blueprint """
         pass
 
     superdesk.blueprint(destinations_bp, app, client=client)
