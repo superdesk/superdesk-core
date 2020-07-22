@@ -30,15 +30,14 @@ def get_text_word_count(text):
     :param str text: text string
     :return int: word count
     """
-    r0 = text
+
+    r0 = get_text(text, space_on_elements=True)
+
+    r1 = regex.sub(r'\n', ' ', r0, regex.MULTILINE | regex.UNICODE)
 
     # Remove spaces between two numbers
     # 1 000 000 000 -> 1000000000
-    r1 = regex.sub(r'([0-9]) ([0-9])', '\\1\\2', r0, regex.MULTILINE | regex.UNICODE)
-
-    # split hyphenated words(2 letters or longer) so they are counted as multiple words
-    # real-time video -> real time video
-    r2 = regex.sub(r'(\p{L}{2,})-(\p{L}{2,})', '\\1 \\2', r1, regex.MULTILINE | regex.UNICODE)
+    r2 = regex.sub(r'([0-9]) ([0-9])', '\\1\\2', r1, regex.MULTILINE | regex.UNICODE)
 
     # remove anything that is not a unicode letter, a space or a number
     r3 = regex.sub(r'[^\p{L} 0-9]', '', r2, regex.MULTILINE | regex.UNICODE)
