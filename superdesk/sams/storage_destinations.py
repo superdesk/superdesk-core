@@ -32,8 +32,8 @@ def get():
     """
     Returns a list of all the registered storage destinations
     """
-    destinations = destinations_bp.kwargs['client'].destinations.search().json()
-    return destinations
+    destinations = destinations_bp.kwargs['client'].destinations.search()
+    return destinations.json(), destinations.status_code
 
 
 @destinations_bp.route('/sams/destinations/<item_id>', methods=['GET'])
@@ -42,8 +42,5 @@ def find_one(item_id):
     Uses item_id and returns the destination
     name and provider name of the respective storage destination
     """
-    item = destinations_bp.kwargs['client'].destinations.get_by_id(item_id=item_id).json()
-    # Handles error if cannot find item with given ID on sams client
-    if item.get('code') == 404:
-        return item['message'], 404
-    return item
+    item = destinations_bp.kwargs['client'].destinations.get_by_id(item_id=item_id)
+    return item.json(), item.status_code

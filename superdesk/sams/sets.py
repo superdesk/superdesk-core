@@ -34,8 +34,8 @@ def get():
     """
     Returns a list of all the registered sets
     """
-    sets = sets_bp.kwargs['client'].sets.search().json()
-    return sets
+    sets = sets_bp.kwargs['client'].sets.search()
+    return sets.json(), sets.status_code
 
 
 @sets_bp.route('/sams/sets/<item_id>', methods=['GET'])
@@ -44,11 +44,8 @@ def find_one(item_id):
     Uses item_id and returns the corresponding
     set
     """
-    item = sets_bp.kwargs['client'].sets.get_by_id(item_id=item_id).json()
-    # Handles error if cannot find item with given ID on sams client
-    if item.get('code') == 404:
-        return item['message'], 404
-    return item
+    item = sets_bp.kwargs['client'].sets.get_by_id(item_id=item_id)
+    return item.json(), item.status_code
 
 
 @sets_bp.route('/sams/sets', methods=['POST'])
@@ -57,11 +54,8 @@ def create():
     Creates a new set
     """
     docs = [request.get_json()]
-    post_response = sets_bp.kwargs['client'].sets.create(docs=docs).json()
-    # Handles error if set already exists
-    if post_response.get('_status') == 'ERR':
-        return post_response['_error']['message'], post_response['_error']['code']
-    return post_response
+    post_response = sets_bp.kwargs['client'].sets.create(docs=docs)
+    return post_response.json(), post_response.status_code
 
 
 @sets_bp.route('/sams/sets/<item_id>', methods=['DELETE'])
@@ -69,11 +63,17 @@ def delete(item_id):
     """
     Uses item_id and deletes the corresponding set
     """
-    etag = request.headers['If-Match']
-    sets_bp.kwargs['client'].sets.delete(
+    try:
+        etag = request.headers['If-Match']
+    except KeyError as e:
+        raise SuperdeskApiError.badRequestError("If-Match field missing in header")
+
+    delete_response = sets_bp.kwargs['client'].sets.delete(
         item_id=item_id, headers={'If-Match': etag}
     )
-    return '', 204
+    if delete_response.status_code != 204:
+        return delete_response.json(), delete_response.status_code
+    return '', delete_response.status_code
 
 
 @sets_bp.route('/sams/sets/<item_id>', methods=['PATCH'])
@@ -81,14 +81,15 @@ def update(item_id):
     """
     Uses item_id and updates the corresponding set
     """
-    etag = request.headers['If-Match']
+    try:
+        etag = request.headers['If-Match']
+    except KeyError as e:
+        raise SuperdeskApiError.badRequestError("If-Match field missing in header")
+
     updates = request.get_json()
     update_response = sets_bp.kwargs['client'].sets.update(
         item_id=item_id,
         updates=updates,
         headers={'If-Match': etag}
-    ).json()
-    # Handles error returned from sams client
-    if update_response.get('_status') == 'ERR':
-        return update_response['_error']['message'], update_response['_error']['code']
-    return '', 204
+    )
+    return update_response.json(), update_response.status_code
