@@ -42,5 +42,7 @@ def find_one(item_id):
     Uses item_id and returns the destination
     name and provider name of the respective storage destination
     """
-    item = destinations_bp.kwargs['client'].destinations.get_by_id(item_id=item_id)
+    item = destinations_bp.kwargs['client'].destinations.get_by_id(
+        item_id=item_id
+    )
     return item.json(), item.status_code

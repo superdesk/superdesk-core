@@ -65,8 +65,10 @@ def delete(item_id):
     """
     try:
         etag = request.headers['If-Match']
-    except KeyError as e:
-        raise SuperdeskApiError.badRequestError("If-Match field missing in header")
+    except KeyError:
+        raise SuperdeskApiError.badRequestError(
+            "If-Match field missing in header"
+        )
 
     delete_response = sets_bp.kwargs['client'].sets.delete(
         item_id=item_id, headers={'If-Match': etag}
@@ -83,8 +85,10 @@ def update(item_id):
     """
     try:
         etag = request.headers['If-Match']
-    except KeyError as e:
-        raise SuperdeskApiError.badRequestError("If-Match field missing in header")
+    except KeyError:
+        raise SuperdeskApiError.badRequestError(
+            "If-Match field missing in header"
+        )
 
     updates = request.get_json()
     update_response = sets_bp.kwargs['client'].sets.update(
