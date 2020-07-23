@@ -51,9 +51,9 @@ def find_one(item_id):
 @sets_bp.route('/sams/sets', methods=['POST'])
 def create():
     """
-    Creates a new set
+    Creates new sets
     """
-    docs = [request.get_json()]
+    docs = request.get_json()
     post_response = sets_bp.kwargs['client'].sets.create(docs=docs)
     return post_response.json(), post_response.status_code
 
