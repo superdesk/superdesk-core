@@ -54,7 +54,7 @@ class PATestCase(PANITFFileTestCase):
         self.assertEqual(self.item.get('format'), 'HTML')
         self.assertEqual(4, len(self.item.get('subject')))
         self.assertIn('Trivia (Oct 14)', self.item.get('keywords'))
-        self.assertTrue(type(self.item.get('word_count')) is int)
+        self.assertIsInstance(self.item.get('word_count'), int)
 
 
 class PAEmbargoTestCase(PANITFFileTestCase):
