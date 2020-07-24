@@ -367,7 +367,7 @@ CORE_APPS = [
 ]
 
 #: Specify what modules should be enabled
-INSTALLED_APPS = ['superdesk.sams']
+INSTALLED_APPS = []
 
 #: LDAP Server (eg: ldap://sourcefabric.org)
 LDAP_SERVER = env('LDAP_SERVER', '')
