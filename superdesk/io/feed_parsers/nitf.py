@@ -267,7 +267,7 @@ class NITFFeedParser(XMLFeedParser):
         if elem is not None:
             byline = elem.text
             person = elem.find('person')
-            if person is not None:
+            if person is not None and person.text is not None:
                 byline = "{} {}".format(byline.strip(), person.text.strip())
         return byline
 
