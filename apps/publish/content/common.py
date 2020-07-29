@@ -667,11 +667,11 @@ class BasePublishService(BaseService):
                 continue
 
             if type(associated_item) == dict and associated_item.get(config.ID_FIELD):
-
                 if not config.PUBLISH_ASSOCIATED_ITEMS or not publish_service:
-                    # Not allowed to publish
-                    original[ASSOCIATIONS][associations_key]['state'] = self.published_state
-                    original[ASSOCIATIONS][associations_key]['operation'] = self.publish_type
+                    if original.get(ASSOCIATIONS, {}).get(associations_key):
+                        # Not allowed to publish
+                        original[ASSOCIATIONS][associations_key]['state'] = self.published_state
+                        original[ASSOCIATIONS][associations_key]['operation'] = self.publish_type
                     continue
 
                 # if item is not fetchable, only mark it as published
