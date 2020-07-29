@@ -665,6 +665,8 @@ class BasePublishService(BaseService):
         if updates and updates.get(ASSOCIATIONS):
             associations.update(updates[ASSOCIATIONS])
 
+        archive_service = get_resource_service('archive')
+
         for associations_key, associated_item in associations.items():
             if associated_item is None:
                 continue
@@ -687,11 +689,13 @@ class BasePublishService(BaseService):
 
                 if associated_item.get('state') == CONTENT_STATE.UNPUBLISHED:
                     # get the original associated item from archive
-                    orig_associated_item = get_resource_service('archive') \
-                        .find_one(req=None, _id=associated_item[config.ID_FIELD])
+                    orig_associated_item = archive_service.find_one(req=None, _id=associated_item[config.ID_FIELD])
 
-                    orig_associated_item['state'] = self.published_state
+                    orig_associated_item['state'] = updates.get('state', self.published_state)
                     orig_associated_item['operation'] = self.publish_type
+
+                    # if main item is scheduled we must also schedule associations
+                    self._inherit_publish_schedule(original, updates, orig_associated_item)
 
                     get_resource_service('archive_publish').patch(id=orig_associated_item.pop(config.ID_FIELD),
                                                                   updates=orig_associated_item)
@@ -703,19 +707,18 @@ class BasePublishService(BaseService):
                     remove_unwanted(associated_item)
 
                     # get the original associated item from archive
-                    original_associated_item = get_resource_service('archive').\
-                        find_one(req=None, _id=associated_item[config.ID_FIELD])
+                    orig_associated_item = archive_service.find_one(req=None, _id=associated_item[config.ID_FIELD])
 
                     # check if the original associated item exists in archive
-                    if not original_associated_item:
+                    if not orig_associated_item:
                         raise SuperdeskApiError.badRequestError(
                             _('Associated item "{}" does not exist in the system'.format(associations_key)))
 
-                    if original_associated_item.get('state') in PUBLISH_STATES:
+                    if orig_associated_item.get('state') in PUBLISH_STATES:
                         # item was published already
                         original[ASSOCIATIONS][associations_key].update({
-                            'state': original_associated_item['state'],
-                            'operation': original_associated_item.get('operation', self.publish_type),
+                            'state': orig_associated_item['state'],
+                            'operation': orig_associated_item.get('operation', self.publish_type),
                         })
                         continue
 
@@ -723,15 +726,21 @@ class BasePublishService(BaseService):
                     # fixes SDESK-5043
                     associated_item['_updated'] = utcnow()
 
+                    # if main item is scheduled we must also schedule associations
+                    self._inherit_publish_schedule(original, updates, associated_item)
+
                     get_resource_service('archive_publish').patch(id=associated_item.pop(config.ID_FIELD),
                                                                   updates=associated_item)
-                    associated_item['state'] = self.published_state
+                    associated_item['state'] = updates.get('state', self.published_state)
                     associated_item['operation'] = self.publish_type
                     updates[ASSOCIATIONS] = updates.get(ASSOCIATIONS, {})
                     updates[ASSOCIATIONS][associations_key] = associated_item
                 elif associated_item.get('state') != self.published_state:
                     # Check if there are updates to associated item
                     association_updates = updates.get(ASSOCIATIONS, {}).get(associations_key)
+
+                    # if main item is scheduled we must also schedule associations
+                    self._inherit_publish_schedule(original, updates, associated_item)
 
                     if not association_updates:
                         # there is no update for this item
@@ -763,6 +772,14 @@ class BasePublishService(BaseService):
                 if not stored_item:
                     continue
             track_usage(media_item, stored_item, item_obj, item_name, original)
+
+    def _inherit_publish_schedule(self, original, updates, associated_item):
+        if self.publish_type == 'publish' and (updates.get(PUBLISH_SCHEDULE) or original.get(PUBLISH_SCHEDULE)):
+            schedule_settings = updates.get(SCHEDULE_SETTINGS, original.get(SCHEDULE_SETTINGS, {}))
+            publish_schedule = updates.get(PUBLISH_SCHEDULE, original.get(PUBLISH_SCHEDULE))
+
+            associated_item[PUBLISH_SCHEDULE] = publish_schedule
+            associated_item[SCHEDULE_SETTINGS] = schedule_settings
 
 
 def get_crop(rendition):
