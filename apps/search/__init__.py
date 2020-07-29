@@ -194,7 +194,10 @@ class SearchService(superdesk.Service):
         if filters:
             set_filters(query, filters)
 
-        params = {}
+        params = {
+            # https://www.elastic.co/guide/en/elasticsearch/reference/current/breaking-changes-7.0.html#track-total-hits-10000-default # NOQA
+            'track_total_hits': True
+        }
         if fields:
             params['_source'] = fields
 
