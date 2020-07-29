@@ -376,6 +376,12 @@ metadata_schema = {
                         'guid': not_analyzed,
                         'type': not_analyzed,
                         'location': not_analyzed,
+                        'headline': {
+                            'type': 'string'
+                        },
+                        'slugline': {
+                            'type': 'string'
+                        },
                     },
                 },
             },
@@ -410,6 +416,15 @@ metadata_schema = {
                 'country': {'type': 'string'},
                 'code': {'type': 'string'},
                 'scheme': {'type': 'string'},
+                'location': {
+                    'type': 'dict',
+                    'mapping': {'type': 'geo_point'},
+                    'nullable': True,
+                    'schema': {
+                        'lat': {'type': 'integer'},
+                        'lon': {'type': 'integer'},
+                    },
+                },
             }},
             'date': {'type': 'datetime', 'nullable': True},
             'source': {'type': 'string'},

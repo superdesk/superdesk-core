@@ -53,6 +53,10 @@ class SamlAuthTestCase(tests.TestCase):
             self.assertNotIn(ERROR, resp)
 
             user = self.app.data.find_one('users', req=None, email='foo.bar@example.com')
+            self.assertTrue(user.get('is_active'))
+            self.assertTrue(user.get('is_enabled'))
+            self.assertFalse(user.get('needs_activation'))
+            self.assertEqual('user', user.get('user_type'))
 
             self.assertIsNotNone(user.get('role'))
             role = self.app.data.find_one('roles', req=None, _id=user['role'])
@@ -94,6 +98,10 @@ class SamlAuthTestCase(tests.TestCase):
             with patch.dict(self.app.config, {'USER_EXTERNAL_CREATE': True}):
                 resp = saml.index()
 
+            user = self.app.data.find_one('users', req=None, email='foo.bar@example.com')
+            self.assertIsNotNone(user)
+            self.app.data.update('users', user['_id'], {'user_type': 'administrator'}, user)
+
             flask.session[saml.SESSION_USERDATA_KEY].update({
                 "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/givenname": ["John"],
                 "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/surname": ["Doe"],
@@ -109,3 +117,4 @@ class SamlAuthTestCase(tests.TestCase):
         self.assertEqual('John', user['first_name'])
         self.assertEqual('Doe', user['last_name'])
         self.assertEqual('Doe, John', user['display_name'])
+        self.assertEqual('administrator', user['user_type'])

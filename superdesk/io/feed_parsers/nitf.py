@@ -127,7 +127,10 @@ class NITFFeedParser(XMLFeedParser):
             try:
                 value = datetime.strptime(tree.attrib['norm'], '%Y%m%dT%H%M%S%z')
             except ValueError:
-                value = dateutil.parser.parse(tree.attrib['norm'])
+                try:
+                    value = dateutil.parser.parse(tree.attrib['norm'])
+                except ValueError:
+                    return
 
         return utc.normalize(value) if value.tzinfo else value
 
@@ -231,7 +234,7 @@ class NITFFeedParser(XMLFeedParser):
         return places
 
     def get_keywords(self, docdata):
-        return [keyword.attrib['key'] for keyword in docdata.findall('key-list/keyword')]
+        return [keyword.attrib['key'] for keyword in docdata.findall('key-list/keyword') if 'key' in keyword.attrib]
 
     def get_genre(self, tree):
         elem = tree.find('head/tobject/tobject.property')
@@ -264,7 +267,7 @@ class NITFFeedParser(XMLFeedParser):
         if elem is not None:
             byline = elem.text
             person = elem.find('person')
-            if person is not None:
+            if person is not None and person.text is not None:
                 byline = "{} {}".format(byline.strip(), person.text.strip())
         return byline
 
