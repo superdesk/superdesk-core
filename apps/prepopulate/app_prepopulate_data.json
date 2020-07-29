@@ -819,6 +819,7 @@
                 {"is_active": false, "name": "Supplementary Traffic", "qcode": "z"}
             ]
         },
+        "selection_type": "multi selection",
         "resource": "vocabularies",
         "id_name": "-id vocabularies categories-"
     },
