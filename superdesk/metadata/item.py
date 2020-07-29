@@ -546,6 +546,19 @@ metadata_schema = {
         },
     },
 
+    'person': {
+        'type': 'list',
+        'nullable': True,
+        'mapping': {
+            'type': 'object',
+            'dynamic': False,
+            'properties': {
+                'lastname': not_analyzed,
+                'firstname': not_analyzed,
+            },
+        },
+    },
+
     # Not Categorized
     'creditline': {
         'type': 'string'
