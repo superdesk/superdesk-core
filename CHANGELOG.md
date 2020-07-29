@@ -1,5 +1,11 @@
 # Superdesk Server Changelog
 
+## [1.33.4] 2020-07-29
+
+### Fixed
+
+- Publishing fails when feature media is added during correction.
+
 ## [1.33.3] 2020-06-26
 
 ### Fixed
