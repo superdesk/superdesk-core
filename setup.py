@@ -53,6 +53,7 @@ install_requires = [
     'authlib>0.12,<0.13',
     'draftjs-exporter[lxml]<2.2',
     'werkzeug>=1.0,<1.1',
+    'regex==2020.7.14',
 ]
 
 package_data = {
