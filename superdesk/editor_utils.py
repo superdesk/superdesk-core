@@ -12,6 +12,8 @@
 import re
 import logging
 import uuid
+import lxml.etree as etree
+
 from textwrap import dedent
 from collections.abc import MutableSequence
 
@@ -420,7 +422,10 @@ class DraftJSHTMLExporter:
                     content_state = cells[0][col_idx]
                 except IndexError:
                     continue
-                content = DOM.parse_html(self.exporter.render(content_state))
+                try:
+                    content = DOM.parse_html(self.exporter.render(content_state))
+                except etree.ParserError:
+                    continue
                 if content.text or len(content):
                     DOM.append_child(th, content)
         else:
@@ -440,7 +445,10 @@ class DraftJSHTMLExporter:
                     content_state = cells[row_idx][col_idx]
                 except IndexError:
                     continue
-                content = DOM.parse_html(self.exporter.render(content_state))
+                try:
+                    content = DOM.parse_html(self.exporter.render(content_state))
+                except etree.ParserError:
+                    continue
                 if content.text or len(content):
                     DOM.append_child(td, content)
 
