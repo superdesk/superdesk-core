@@ -364,20 +364,17 @@ class UsersService(BaseService):
             else:
                 logger.warn('bad value of is_author argument ({value})'.format(value=is_author))
 
-        """filtering out inactive users"""
+        """filtering out inactive users and disabled users"""
 
-        params = json.loads(request.args.get('where')) if request and request.args.get('where') else None
-        query = {
-            '$and': [
-                {'is_active': True},
-                {'is_enabled': True},
-            ]
-        }
+        params = json.loads(request.args.get('where')) if request and request.args.get('where') else {}
 
-        if req and not params:
-            req.where = json.dumps(query)
-        elif req and params and params.get('all'):
-            req.where = None
+        # Filtering inactive users
+        if not req.args.get('show_inactive') and params.get('is_active', True):
+            lookup['is_active'] = True
+
+        # Filtering disabled users
+        if not req.args.get('show_disabled') and params.get('is_enabled', True):
+            lookup['is_enabled'] = True
 
         return super().get(req, lookup)
 
