@@ -89,7 +89,8 @@ class SuperdeskTokenAuth(TokenAuth):
     def check_permissions(self, resource, method, user):
         """Checks user permissions.
 
-        1. If there's no user associated with the request or HTTP Method is GET then return True.
+        1. If there's no user associated with the request or HTTP Method is GET or the Resource is a Flask Blueprint
+        then return True.
         2. Get User's Privileges
         3. Intrinsic Privileges:
             Check if resource has intrinsic privileges.
@@ -106,6 +107,9 @@ class SuperdeskTokenAuth(TokenAuth):
 
         # Step 1:
         if not user:
+            return True
+
+        if resource == '_blueprint':
             return True
 
         # Step 2: Get User's Privileges

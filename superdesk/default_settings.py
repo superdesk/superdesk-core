@@ -102,6 +102,9 @@ LOG_CONFIG_FILE = env('LOG_CONFIG_FILE', 'logging_config.yml')
 LOG_SERVER_ADDRESS = env('LOG_SERVER_ADDRESS', 'localhost')
 LOG_SERVER_PORT = int(env('LOG_SERVER_PORT', 5555))
 
+SAMS_HOST = env('SAMS_HOST', 'localhost')
+SAMS_PORT = env('SAMS_PORT', 5700)
+
 #: application name - used in email footers, ``APP_NAME`` env
 APPLICATION_NAME = env('APP_NAME', 'Superdesk')
 #: public client url - used to create links within emails etc, ``SUPERDESK_CLIENT_URL`` env
