@@ -191,6 +191,5 @@ class FTPPublishServiceTestCase(TestCase):
         subscriber = {}
         service._transmit(queue_item, subscriber)
 
-        print('mock', ftp_mock)
         ftp_mock.storbinary.assert_any_call('STOR 5e448e47016d1f63a92f03b8.jpg', b'binary')
         ftp_mock.storbinary.assert_any_call('STOR 5e448dd1016d1f63a92f0393.png', b'binary')

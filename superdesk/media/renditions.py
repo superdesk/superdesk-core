@@ -392,7 +392,7 @@ def get_rendition_file_name(rendition):
     :param rendition:
     :return:
     """
-    media_id = str(rendition.get('media'))
+    media_id = str(rendition['media'])
     ext = os.path.splitext(media_id)[-1]
     return media_id.replace('/', '-') + (
         guess_media_extension(rendition.get('mimetype', '')) if not ext else '')
