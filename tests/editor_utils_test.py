@@ -11,15 +11,18 @@
 
 import json
 import uuid
-from superdesk.tests import TestCase
+import unittest
+import flask
 import superdesk.editor_utils as editor_utils
 
 from superdesk.editor_utils import Editor3Content
 
 
-class Editor3TestCase(TestCase):
+class Editor3TestCase(unittest.TestCase):
 
     def setUp(self):
+        self.app = flask.Flask(__name__)
+        self.app.app_context().push()
         super().setUp()
         if "EMBED_PRE_PROCESS" in self.app.config:
             del self.app.config["EMBED_PRE_PROCESS"]
@@ -117,7 +120,7 @@ class Editor3TestCase(TestCase):
                         "data": {},
                     }],
                     "entityMap": {},
-                })
+                } if cell else None)
 
         draftjs_data['blocks'][0]['data']['data'] = json.dumps(draftjs_data['entityMap']['0']['data']['data'])
         return draftjs_data
