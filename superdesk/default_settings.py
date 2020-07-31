@@ -184,6 +184,9 @@ ELASTICSEARCH_SETTINGS = {
     }
 }
 
+# https://www.elastic.co/guide/en/elasticsearch/reference/master/search-request-body.html#request-body-search-track-total-hits # NOQA
+ELASTICSEARCH_TRACK_TOTAL_HITS = True
+
 #: redis url
 REDIS_URL = env('REDIS_URL', 'redis://localhost:6379')
 if env('REDIS_PORT'):
