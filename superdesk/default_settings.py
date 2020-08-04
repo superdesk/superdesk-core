@@ -88,6 +88,12 @@ BANDWIDTH_SAVER = False
 DATE_FORMAT = '%Y-%m-%dT%H:%M:%S+0000'
 ELASTIC_DATE_FORMAT = '%Y-%m-%d'
 ELASTIC_DATETIME_FORMAT = '%Y-%m-%dT%H:%M:%S'
+#: default size of elastic queries generated on server
+#: for saved search reports etc.
+#:
+#: .. versionadded:: 1.34
+#:
+ELASTIC_DEFAULT_SIZE = 10
 PAGINATION_LIMIT = 200
 
 MERGE_NESTED_DOCUMENTS = False

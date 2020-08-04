@@ -15,7 +15,7 @@ import logging
 import json
 import pytz
 from datetime import datetime
-from superdesk import app
+from flask import current_app as app
 
 logger = logging.getLogger(__name__)
 
@@ -263,6 +263,7 @@ def filter2query(filter_, user_id=None):
         query["post_filter"] = {"bool": {"must": post_filter, "must_not": post_filter_must_not}}
 
     query["sort"] = {"versioncreated": "desc"}
+    query.setdefault('size', app.config['ELASTIC_DEFAULT_SIZE'])
 
     search_query.pop("repo", None)
 
