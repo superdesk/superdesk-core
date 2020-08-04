@@ -342,3 +342,18 @@ Feature: Vocabularies
     }
     """
     Then we get OK response
+
+  @auth @notification
+  Scenario: Create new vocabulary with a label
+    When we post to "vocabularies"
+    """
+    {"_id": "foo", "type": "manageable", "display_name": "Foo", "items": [], "tags": [{"text": "Other"}]}
+    """
+    Then we get new resource
+    """
+    {"_id": "foo", "type": "manageable", "display_name": "Foo", "items": [], "tags": [{"text": "Other"}]}
+    """
+    And we get notifications
+    """
+    [{"event": "vocabularies:created", "extra": {"vocabulary_id": "foo", "vocabulary": "Foo", "user": "#CONTEXT_USER_ID#"}}]
+    """
