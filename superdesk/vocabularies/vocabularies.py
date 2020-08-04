@@ -70,7 +70,11 @@ class VocabulariesResource(Resource):
             'required': False,
             'schema': {
                 'type': 'dict',
-                'schema': {},
+                'schema': {
+                    'text': {
+                        'type': 'string'
+                    }
+                },
             }
         },
         'popup_width': {
