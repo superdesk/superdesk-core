@@ -369,11 +369,11 @@ class UsersService(BaseService):
         params = json.loads(request.args.get('where')) if request and request.args.get('where') else {}
 
         # Filtering inactive users
-        if req and not req.args.get('show_inactive') and params.get('is_active', True):
+        if req and req.args and not req.args.get('show_inactive') and params.get('is_active', True):
             lookup['is_active'] = True
 
         # Filtering disabled users
-        if req and not req.args.get('show_disabled') and params.get('is_enabled', True):
+        if req and req.args and not req.args.get('show_disabled') and params.get('is_enabled', True):
             lookup['is_enabled'] = True
 
         return super().get(req, lookup)
