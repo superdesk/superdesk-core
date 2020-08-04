@@ -8,7 +8,9 @@ Feature: Macros
             {"_items":
                 [{"name": "usd_to_cad",
                   "label": "Currency USD to CAD",
-                  "description": "Convert USD to CAD."}]}
+                  "description": "Convert USD to CAD."},
+                 {"name": "acre_to_metric", "group": "area"}
+                ]}
             """
 
     @auth
