@@ -366,12 +366,14 @@ class UsersService(BaseService):
 
         """filtering out inactive users and disabled users"""
 
+        args = req.args if req and req.args else {}
+
         # Filtering inactive users
-        if req and req.args and not req.args.get('show_inactive'):
+        if not args.get('show_inactive'):
             lookup['is_active'] = True
 
         # Filtering disabled users
-        if req and req.args and not req.args.get('show_disabled'):
+        if not args.get('show_disabled'):
             lookup['is_enabled'] = True
 
         return super().get(req, lookup)
