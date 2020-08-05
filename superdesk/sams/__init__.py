@@ -23,6 +23,14 @@ def init_app(app):
         """
         pass
 
+    @destinations_bp.after_request
+    @sets_bp.after_request
+    def after_request(response):
+        response.headers.set('Access-Control-Allow-Origin', '*')
+        response.headers.set('Access-Control-Allow-Headers', '*')
+        response.headers.set('Access-Control-Allow-Methods', '*')
+        return response
+
     superdesk.blueprint(destinations_bp, app, client=client)
     superdesk.blueprint(sets_bp, app, client=client)
 
