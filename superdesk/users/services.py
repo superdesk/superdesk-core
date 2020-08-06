@@ -370,11 +370,17 @@ class UsersService(BaseService):
 
         # Filtering inactive users
         if not args.get('show_inactive'):
-            lookup['is_active'] = True
+            if lookup is not None:
+                lookup['is_active'] = True
+            else:
+                lookup = {'is_active': True}
 
         # Filtering disabled users
         if not args.get('show_disabled'):
-            lookup['is_enabled'] = True
+            if lookup is not None:
+                lookup['is_enabled'] = True
+            else:
+                lookup = {'is_enabled': True}
 
         return super().get(req, lookup)
 
