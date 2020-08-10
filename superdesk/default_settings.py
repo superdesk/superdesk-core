@@ -90,6 +90,13 @@ DATE_FORMAT = '%Y-%m-%dT%H:%M:%S+0000'
 ELASTIC_DATE_FORMAT = '%Y-%m-%d'
 ELASTIC_DATETIME_FORMAT = '%Y-%m-%dT%H:%M:%S'
 
+#: default size of elastic queries generated on server
+#: for saved search reports etc.
+#:
+#: .. versionadded:: 1.34
+#:
+ELASTIC_DEFAULT_SIZE = 10
+
 PAGINATION_LIMIT = 200
 
 #: keep default in sync with limit - so when client does not use pagination return all
