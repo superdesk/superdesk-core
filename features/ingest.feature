@@ -551,7 +551,7 @@ Feature: Fetch From Ingest
                        "state": "ingested",
                        "renditions":{
                           "baseImage":{
-                             "width":1280
+                             "width":1400
                           },
                           "original":{
                           }

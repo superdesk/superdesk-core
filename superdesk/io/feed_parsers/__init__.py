@@ -114,7 +114,7 @@ class XMLFeedParser(FeedParser, metaclass=ABCMeta):
                                  "only default will be used ({})".format(self.__class__))
                 if 'xpath':
                     if '/' not in 'xpath':
-                        logger.info("default_attr can be used for simple child element ({})".format(self.__class__))
+                        logger.debug("default_attr can be used for simple child element ({})".format(self.__class__))
                 else:
                     logger.error("xpath is needed when default_attr is used ({})".format(self.__class__))
             if 'callback' in value and 'list' in value:

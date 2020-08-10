@@ -376,7 +376,7 @@ def transfer_renditions(renditions):
             local = app.media.get(rend['media'])
             if local:
                 rend['href'] = app.media.url_for_media(rend['media'], local.content_type)
-                return
+                continue
 
         content, filename, content_type = download_file_from_url(rend.get('href'))
         file_type, ext = content_type.split('/')
