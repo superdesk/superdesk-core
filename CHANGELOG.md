@@ -1,5 +1,23 @@
 # Superdesk Server Changelog
 
+## [1.33.4] 2020-07-29
+
+### Fixed
+
+- Publishing fails when feature media is added during correction.
+
+## [1.33.3] 2020-06-26
+
+### Fixed
+
+- Fix internal destination duplicating package content.
+
+## [1.33.2] 2020-06-08
+
+### Fixed
+
+- Fix failing update script.
+
 ## [1.33.1] 2020-05-11
 
 ### Fixed

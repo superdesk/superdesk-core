@@ -110,7 +110,7 @@ class ConceptItemsService(BaseService):
                 payload={"language": "Concept items requires 'languages' vocabulary to be set"}
             )
 
-        languages_qcodes = [l['qcode'] for l in languages]
+        languages_qcodes = [lang['qcode'] for lang in languages]
 
         if doc['language'] not in languages_qcodes:
             raise SuperdeskApiError.badRequestError(
