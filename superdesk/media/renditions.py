@@ -366,6 +366,12 @@ def transfer_renditions(renditions):
     :return: Updated renditions
     """
     for rend in iter(renditions.values()):
+        if rend.get('media'):
+            local = app.media.get(rend['media'])
+            if local:
+                rend['href'] = app.media.url_for_media(rend['media'], local.content_type)
+                continue
+
         content, filename, content_type = download_file_from_url(rend.get('href'))
         file_type, ext = content_type.split('/')
         metadata = process_file(content, file_type)
