@@ -16,6 +16,7 @@ from apps.auth.errors import CredentialsAuthError
 from apps.auth.service import AuthService
 from superdesk import get_resource_service
 from superdesk.resource import Resource
+from superdesk.utils import ignorecase_query
 
 
 class OIDCAuthResource(Resource):
@@ -54,16 +55,21 @@ class OIDCAuthService(AuthService):
             **user,
             'username': username,
             'email': g.oidc_token_info.get('email'),
-            'first_name': g.oidc_token_info.get('given_name'),
-            'last_name': g.oidc_token_info.get('family_name'),
             'display_name': g.oidc_token_info.get('name'),
         }
+
+        # first name and last name is optional in Keycloak
+        if 'given_name' in g.oidc_token_info:
+            sync_data['first_name'] = g.oidc_token_info.get('given_name')
+        if 'family_name' in g.oidc_token_info:
+            sync_data['last_name'] = g.oidc_token_info.get('family_name')
+
         if not user:
             user_role = None
             client_id = g.oidc_token_info.get('client_id', '')
             keycloak_roles = g.oidc_token_info.get('resource_access', {}).get(client_id, {}).get('roles', [])
             for role_name in keycloak_roles:
-                role = get_resource_service('roles').find_one(req=None, name=role_name)
+                role = get_resource_service('roles').find_one(req=None, name=ignorecase_query(role_name))
                 if role:
                     user_role = role.get('_id')
                     break
