@@ -426,7 +426,7 @@
 		        },
 		        "type" : {
 		            "type" : "string",
-		            "required" : "true",
+		            "required" : true,
 		            "allowed" : [
 		                "text"
 		            ]
@@ -472,7 +472,7 @@
 		        },
 		        "type" : {
 		            "type" : "string",
-		            "required" : "true",
+		            "required" : true,
 		            "allowed" : [
 		                "text"
 		            ]
@@ -512,7 +512,7 @@
                 },
                 "type" : {
                     "type" : "string",
-                    "required" : "true",
+                    "required" : true,
                     "allowed" : [
                         "text"
                     ]
@@ -568,6 +568,7 @@
                 {"is_active": true, "name": "5", "qcode": 5}
             ]
         },
+        "selection_type": "multi selection",
         "resource": "vocabularies",
 		"id_name": "-id vocabularies urgency-"
     },
@@ -589,6 +590,7 @@
                 {"is_active": false, "name": "9", "qcode": 9}
             ]
         },
+        "selection_type": "multi selection",
         "resource": "vocabularies",
 		"id_name": "-id vocabularies priority-"
     },
@@ -641,6 +643,7 @@
                 {"is_active": true, "name": "composite", "qcode": "composite"}
             ]
         },
+        "selection_type": "multi selection",
         "resource": "vocabularies",
 		"id_name": "-id vocabularies priority-"
     },
@@ -677,6 +680,7 @@
                 {"is_active": true, "name": "WA", "qcode": "WA", "state": "Western Australia", "country": "Australia", "world_region": "Oceania", "group": "Australia"}
             ]
         },
+        "selection_type": "multi selection",
         "resource": "vocabularies",
 		"id_name": "-id vocabularies priority-"
     },
@@ -780,6 +784,7 @@
                 {"is_active": true, "name": "Broadcast Script", "qcode": "Broadcast Script"}
             ]
         },
+        "selection_type": "multi selection",
 		"resource": "vocabularies",
 		"id_name": "-id vocabularies genre-"
     },
@@ -819,6 +824,7 @@
                 {"is_active": false, "name": "Supplementary Traffic", "qcode": "z"}
             ]
         },
+        "selection_type": "multi selection",
         "resource": "vocabularies",
         "id_name": "-id vocabularies categories-"
     },
@@ -839,6 +845,7 @@
                 {"qcode" : "v", "is_active" : true}
             ]
         },
+        "selection_type": "multi selection",
         "resource": "vocabularies",
         "id_name": "-id vocabularies default_categories-"
     },
@@ -1342,6 +1349,7 @@
         "username": "admin",
         "data": {
             "headline": "package3",
+            "slugline": "package3 slugline",
             "type": "composite",
             "guid": "package3",
             "versioncreated": "NOW()",

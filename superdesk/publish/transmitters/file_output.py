@@ -22,6 +22,8 @@ class FilePublishService(publish_service.PublishService):
     It creates files on superdesk server in configured folder.
     """
 
+    NAME = 'File'
+
     def _transmit(self, queue_item, subscriber):
         try:
             config = queue_item['destination']['config']

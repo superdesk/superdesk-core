@@ -77,6 +77,10 @@ class ArchivedResource(Resource):
         'field': 'archived_id'
     }
 
+    mongo_indexes = {
+        'item_id_1': ([('item_id', 1)], {'background': True}),
+    }
+
 
 class ArchivedService(BaseService):
 
@@ -181,9 +185,10 @@ class ArchivedService(BaseService):
 
     def find_one(self, req, **lookup):
         item = super().find_one(req, **lookup)
+        user = get_user()
 
-        if item and str(item.get('task', {}).get('stage', '')) in \
-                get_resource_service('users').get_invisible_stages_ids(get_user().get('_id')):
+        if user and item and str(item.get('task', {}).get('stage', '')) in \
+                get_resource_service('users').get_invisible_stages_ids(user.get('_id')):
             raise SuperdeskApiError.forbiddenError(_("User does not have permissions to read the item."))
 
         return item

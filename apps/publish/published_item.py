@@ -88,7 +88,10 @@ published_item_fields = {
     },
     PUBLISHED_IN_PACKAGE: {
         'type': 'string'
-    }
+    },
+    '_current_version': {  # must be set explicitly, there is no versioning
+        'type': 'integer',
+    },
 }
 
 
@@ -117,7 +120,7 @@ class PublishedItemResource(Resource):
         'elastic_filter_callback': get_content_filter,
         'projection': {
             'old_version': 0,
-            'last_version': 0
+            'last_version': 0,
         }
     }
 
@@ -181,7 +184,7 @@ class PublishedItemService(BaseService):
         """
         Item should be one of the PUBLISH_STATES. If not raise error.
         """
-        if doc.get(ITEM_STATE) not in PUBLISH_STATES:
+        if doc.get(ITEM_STATE) not in PUBLISH_STATES and doc.get(ITEM_STATE) != 'spiked':
             raise SuperdeskApiError.badRequestError(
                 _('Invalid state ({state}) for the Published item.').format(state=doc.get(ITEM_STATE)))
 
@@ -291,7 +294,9 @@ class PublishedItemService(BaseService):
 
             request = ParsedRequest()
             request.args = {'source': json.dumps(query), 'repo': 'published'}
-            return get_resource_service('search').get(req=request, lookup=None)
+            items = list(self.get(req=request, lookup=None))
+            if items:
+                return items[0]
         except Exception:
             return None
 

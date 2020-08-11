@@ -30,6 +30,7 @@ EDITOR_ATTRIBUTES = (
     'order',
     'sdWidth',
     'required',
+    'readonly',
     'hideDate',
     'showCrops',
     'formatOptions',
@@ -40,6 +41,8 @@ EDITOR_ATTRIBUTES = (
     'sourceField',
     'section',
     'preview',
+    'enabled',
+    'field_name'
 )
 
 
@@ -49,6 +52,11 @@ class ContentTypesResource(superdesk.Resource):
             'type': 'string',
             'iunique': True,
         },
+        'item_type': {
+            'type': 'string',
+            'nullable': True,
+            'content_type_single_item_type': True,
+        },
         'label': {
             'type': 'string',
             'iunique': True,
@@ -57,10 +65,14 @@ class ContentTypesResource(superdesk.Resource):
             'type': 'string',
         },
         'schema': {
-            'type': 'dict'
+            'type': 'dict',
+            'schema': {},
+            'allow_unknown': True,
         },
         'editor': {
-            'type': 'dict'
+            'type': 'dict',
+            'schema': {},
+            'allow_unknown': True,
         },
         'widgets_config': {
             'type': 'list',
@@ -168,6 +180,10 @@ class ContentTypesService(superdesk.Service):
         Finds the templates that are referencing the given
         content profile an clears the disabled fields
         """
+
+        # these are the only fields of templates that don't depend on the schema.
+        template_metadata_fields = ['language', 'usageterms']
+
         templates = list(superdesk.get_resource_service('content_templates').
                          get_templates_by_profile_id(original.get('_id')))
 
@@ -176,7 +192,7 @@ class ContentTypesService(superdesk.Service):
             schema = updates.get('schema', {})
             processed = False
             for field, params in schema.items():
-                if not params or not params.get('enabled', True):
+                if (not params or not params.get('enabled', True)) and field not in template_metadata_fields:
                     data.pop(field, None)
                     processed = True
             if processed:
@@ -317,7 +333,7 @@ def init_custom(editor, schema, fields_map):
             replace_key(schema, old_field, field)
         else:
             # fields are stored in subject so add new custom editor
-            schema[field] = {'type': 'list', 'required': False}
+            schema[field] = {'type': 'list', 'required': False, 'readonly': False}
             if editor.get(field, None):
                 editor[field]['enabled'] = True
             else:
@@ -341,6 +357,7 @@ def expand_subject(editor, schema, fields_map):
     schema[subject]['schema'] = {}
     set_enabled_for_custom(editor, allowed, fields_map)
     set_required_for_custom(editor, schema, mandatory, fields_map)
+    set_readonly_for_custom(editor, schema, mandatory, fields_map)
     set_default_for_custom(schema, default_values, fields_map)
 
 
@@ -350,11 +367,38 @@ def set_enabled_for_custom(editor, allowed, fields_map):
 
 
 def set_required_for_custom(editor, schema, mandatory, fields_map):
-    for field, value in mandatory.items():
+    # old notation where `value` is string
+    for field, value in tuple((k, v) for k, v in mandatory.items() if type(v) == str):
         if field == value or field == 'subject':
             try:
                 editor[fields_map.get(field, field)]['required'] = value is not None
                 schema[fields_map.get(field, field)]['required'] = value is not None
+            except KeyError:
+                continue
+    # new notation where `value` is dict
+    for field, value in tuple((k, v) for k, v in mandatory.items() if type(v) == dict):
+        if (field is not None and value.get('required', False)) or field == 'subject':
+            try:
+                editor[fields_map.get(field, field)]['required'] = value.get('required', False)
+                schema[fields_map.get(field, field)]['required'] = value.get('required', False)
+            except KeyError:
+                continue
+
+
+def set_readonly_for_custom(editor, schema, mandatory, fields_map):
+    # old notation where `value` is string
+    for field, value in tuple((k, v) for k, v in mandatory.items() if type(v) == str):
+        try:
+            editor[fields_map.get(field, field)]['readonly'] = False
+            schema[fields_map.get(field, field)]['readonly'] = False
+        except KeyError:
+            continue
+    # new notation where `value` is dict
+    for field, value in tuple((k, v) for k, v in mandatory.items() if type(v) == dict):
+        if (field is not None and value.get('readonly', False)) or field == 'subject':
+            try:
+                editor[fields_map.get(field, field)]['readonly'] = value.get('readonly', False)
+                schema[fields_map.get(field, field)]['readonly'] = value.get('readonly', False)
             except KeyError:
                 continue
 
@@ -430,8 +474,21 @@ def compose_subject_schema(schema, fields_map):
     for old_field, field in fields_map.items():
         if (old_field == field or old_field == 'subject') and schema.get(field, None):
             allowed.append(field)
-            if schema[field].get('required', False):
-                mandatory[old_field] = field
+            if schema[field].get('required', False) and schema[field].get('readonly', False):
+                mandatory[old_field] = {
+                    'required': True,
+                    'readonly': True,
+                }
+            elif schema[field].get('required', False):
+                mandatory[old_field] = {
+                    'required': True,
+                    'readonly': False,
+                }
+            elif schema[field].get('readonly', False):
+                mandatory[old_field] = {
+                    'required': False,
+                    'readonly': True,
+                }
             else:
                 mandatory[old_field] = None
             if schema[field].get('default', None):
@@ -446,8 +503,10 @@ def init_subject_schema(schema, default, mandatory, allowed, fields_map):
     subject = get_subject_name(fields_map)
     try:
         is_required = schema['subject']['required']
+        is_readonly = schema['subject'].get('readonly', False)
     except (KeyError, TypeError):
         is_required = DEFAULT_SCHEMA['subject'].get('required', False)
+        is_readonly = DEFAULT_SCHEMA['subject'].get('readonly', False)
     schema[subject] = deepcopy(DEFAULT_SCHEMA['subject'])
     schema[subject]['default'] = default
     schema[subject]['mandatory_in_list']['scheme'] = mandatory
@@ -456,6 +515,7 @@ def init_subject_schema(schema, default, mandatory, allowed, fields_map):
         schema[subject]['required'] = mandatory.get('subject') is not None
     else:
         schema[subject]['required'] = is_required
+        schema[subject]['readonly'] = is_readonly
 
 
 def init_editor_required(editor, schema):

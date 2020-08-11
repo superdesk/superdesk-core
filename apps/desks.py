@@ -11,13 +11,14 @@ import json
 import itertools
 
 import superdesk
-from flask import current_app as app
+from flask import current_app as app, request
 
 from superdesk import get_resource_service
 from superdesk.errors import SuperdeskApiError
 from superdesk.resource import Resource
 from superdesk import config
 from superdesk.utils import SuperdeskBaseEnum
+from superdesk.timer import timer
 from bson.objectid import ObjectId
 from superdesk.services import BaseService
 from superdesk.notification import push_notification
@@ -135,6 +136,9 @@ def init_app(app):
     endpoint_name = 'sluglines'
     service = SluglineDeskService(endpoint_name, backend=superdesk.get_backend())
     SluglineDesksResource(endpoint_name, app=app, service=service)
+    endpoint_name = 'desk_overview'
+    service = OverviewService(endpoint_name, backend=superdesk.get_backend())
+    OverviewResource(endpoint_name, app=app, service=service)
 
 
 superdesk.privilege(name='desks', label='Desk Management', description='User can manage desks.')
@@ -254,6 +258,16 @@ class DesksService(BaseService):
         if items and items.count():
             raise SuperdeskApiError.preconditionFailedError(
                 message=_('Cannot delete desk as it has article(s) or referenced by versions of the article(s).'))
+
+    def add_member(self, desk_id, user_id):
+        desk = self.find_one(req=None, _id=desk_id)
+        if not desk:
+            raise ValueError('desk "{}" not found'.format(desk_id))
+        members = desk.get('members', [])
+        members.append({'user': user_id})
+        updates = {'members': members}
+        self.on_update(updates, desk)
+        self.system_update(desk['_id'], updates, desk)
 
     def delete(self, lookup):
         """
@@ -393,6 +407,10 @@ class SluglineDesksResource(Resource):
                                              ]}}
     resource_methods = ['GET']
     item_methods = []
+    schema = {
+        'place': {'type': 'string'},
+        'items': {'type': 'list'},
+    }
 
 
 class SluglineDeskService(BaseService):
@@ -531,6 +549,144 @@ class SluglineDeskService(BaseService):
                 else:
                     return (True, [])
         return (False, older_sluglines)
+
+
+class OverviewResource(Resource):
+    url = r'desks/<regex("([a-f0-9]{24})|all"):desk_id>/overview/<regex("stages|assignments|users"):agg_type>'
+    resource_title = "desk_overview"
+    resource_methods = ['GET']
+
+
+class OverviewService(BaseService):
+    """Aggregate count of items per stage or status"""
+
+    def on_fetched(self, doc):
+        desk_id = request.view_args['desk_id']
+        agg_type = request.view_args['agg_type']
+        timer_label = "{agg_type} overview aggregation {desk_id!r}".format(agg_type=agg_type, desk_id=desk_id)
+        if agg_type == 'users':
+            with timer(timer_label):
+                doc['_items'] = self._users_aggregation(desk_id)
+            return
+
+        if agg_type == "stages":
+            collection = "archive"
+            desk_field = "task.desk"
+            key = "stage"
+            field = "task.{key}".format(key=key)
+        elif agg_type == "assignments":
+            collection = "assignments"
+            desk_field = "assigned_to.desk"
+            key = "state"
+            field = "assigned_to.{key}".format(key=key)
+        else:
+            raise ValueError("Invalid overview aggregation type: {agg_type}".format(agg_type=agg_type))
+
+        if desk_id == 'all':
+            agg_query = {}
+        else:
+            agg_query = {
+                "filter": {
+                    "term": {desk_field: desk_id}
+                }
+            }
+
+        agg_query['aggs'] = {
+            "overview": {
+                "terms": {
+                    "field": field
+                }
+            }
+        }
+
+        with timer(timer_label):
+            response = app.data.elastic.search(agg_query, collection, params={"size": 0})
+
+        doc["_items"] = [
+            {'count': b['doc_count'], key: b['key']}
+            for b in response.hits['aggregations']['overview']['buckets']
+        ]
+
+    def _users_aggregation(self, desk_id: str) -> None:
+        desks_service = superdesk.get_resource_service('desks')
+        if desk_id == 'all':
+            desk_filter = {}
+            es_query = {}
+        else:
+            desk_filter = {"_id": ObjectId(desk_id)}
+            es_query = {
+                "filter": {
+                    "term": {"task.desk": desk_id}
+                }
+            }
+
+        req = ParsedRequest()
+        req.projection = json.dumps({'members': 1})
+        found = desks_service.get(req, desk_filter)
+        members = set()
+        for d in found:
+            members.update({m['user'] for m in d['members']})
+
+        users_aggregation = app.data.pymongo().db.users.aggregate([
+            {"$match": {"_id": {"$in": list(members)}}},
+            {"$group": {"_id": "$role", "authors": {"$addToSet": "$_id"}}}
+        ])
+
+        es_query['aggs'] = {
+            "desk_authors": {
+                "filter": {
+                    "terms": {
+                        "version_creator": [str(m) for m in members]
+                    }
+                },
+                "aggs": {
+                    "authors": {
+                        "terms": {
+                            "field": "version_creator",
+                        },
+                        "aggs": {
+                            "assigned": {
+                                "filter": {
+                                    "exists": {
+                                        "field": "assignment_id",
+                                    }
+                                }
+                            },
+                            "locked": {
+                                "filter": {
+                                    "exists": {
+                                        "field": "lock_user",
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        docs_agg = app.data.elastic.search(es_query, "archive", params={"size": 0})
+        stats_by_authors = {}
+        for a in docs_agg.hits["aggregations"]["desk_authors"]["authors"]["buckets"]:
+            stats_by_authors[a["key"]] = {
+                "assigned": a["assigned"]["doc_count"],
+                "locked": a["locked"]["doc_count"],
+            }
+
+        overview = []
+        for a in users_aggregation:
+            role = a['_id']
+            authors_dict = {}
+            role_dict = {
+                "role": role,
+                "authors": authors_dict,
+            }
+            authors = a['authors']
+            for author in authors:
+                author = str(author)
+                authors_dict[author] = stats_by_authors[author]
+            overview.append(role_dict)
+
+        return overview
 
 
 def remove_profile_from_desks(item):

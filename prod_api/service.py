@@ -29,6 +29,7 @@ class ProdApiService(superdesk.Service):
         '_created',
         '_current_version',
         '_links',
+        'fields_meta',
     }
 
     def on_fetched(self, result):

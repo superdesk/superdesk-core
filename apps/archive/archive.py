@@ -13,6 +13,7 @@ import logging
 import datetime
 import superdesk
 import superdesk.signals as signals
+from superdesk import editor_utils
 
 from copy import copy, deepcopy
 from superdesk.resource import Resource
@@ -33,8 +34,10 @@ from superdesk.activity import add_activity, notify_and_add_activity, ACTIVITY_C
 from eve.utils import parse_request, config, date_to_str, ParsedRequest
 from superdesk.services import BaseService
 from superdesk.users.services import current_user_has_privilege, is_admin
-from superdesk.metadata.item import ITEM_STATE, CONTENT_STATE, CONTENT_TYPE, ITEM_TYPE, EMBARGO, \
-    PUBLISH_SCHEDULE, SCHEDULE_SETTINGS, SIGN_OFF, ASSOCIATIONS, MEDIA_TYPES, INGEST_ID, PROCESSED_FROM, PUBLISH_STATES
+from superdesk.metadata.item import (ITEM_STATE, CONTENT_STATE, CONTENT_TYPE, ITEM_TYPE, EMBARGO,
+                                     PUBLISH_SCHEDULE, SCHEDULE_SETTINGS, SIGN_OFF, ASSOCIATIONS,
+                                     MEDIA_TYPES, INGEST_ID, PROCESSED_FROM, PUBLISH_STATES,
+                                     get_schema)
 from superdesk.metadata.packages import LINKED_IN_PACKAGES, RESIDREF
 from apps.common.components.utils import get_component
 from apps.item_autosave.components.item_autosave import ItemAutosave
@@ -45,6 +48,7 @@ from apps.common.models.utils import get_model
 from apps.item_lock.models.item import ItemModel
 from apps.packages import PackageService
 from .archive_media import ArchiveMediaService
+from .usage import track_usage, update_refs
 from superdesk.utc import utcnow
 from superdesk.vocabularies import is_related_content
 from flask_babel import _
@@ -81,6 +85,7 @@ def private_content_filter():
 
         if stages:
             private_filter['must_not'] = [{'terms': {'task.stage': stages}}]
+            private_filter['minimum_should_match'] = 1
 
         return {'bool': private_filter}
 
@@ -156,43 +161,6 @@ def flush_renditions(updates, original):
                         updates[ASSOCIATIONS][key]['renditions'][old_rendition] = None
 
 
-def flush_previous_item_keys_from_associations(updates, original):
-    """Remove original association items keys from updated association item
-        if the association key is same and associated items _id is diffrent.
-    for ex:
-        1. Add an image to a articles body and save the article where let's say key is(association.edior_0)
-        2. Remove the associated image don't save artilce this time
-        3. And add a new media item wehere key is still (association.edior_0)
-        4. save the article and notice that new associated item contains all those keys from previous associated
-            items that were not present in this one.
-        Which is wrong, this function identifies those keys and sets them to None
-    :param dict updates: updates for the document
-    :param original: original is document
-    """
-    if not original.get(ASSOCIATIONS) or not updates.get(ASSOCIATIONS):
-        return
-
-    for key in [k for k in updates[ASSOCIATIONS] if k in original[ASSOCIATIONS]]:
-        if original[ASSOCIATIONS].get(key) and updates[ASSOCIATIONS].get(key) and (
-           updates[ASSOCIATIONS][key].get('_id') != original[ASSOCIATIONS][key].get('_id')):
-            # make sure associated item's "_id" are different in updates and original
-            for item_key in original[ASSOCIATIONS][key]:
-                present_in_updates = True
-                if item_key not in updates[ASSOCIATIONS][key]:
-                    present_in_updates = False
-                    updates[ASSOCIATIONS][key][item_key] = None
-
-                # handle the nested dict inside associations key
-                if isinstance(original[ASSOCIATIONS][key][item_key], dict):
-                    if not present_in_updates:
-                        updates[ASSOCIATIONS][key][item_key] = {}
-                    # handles situation like ex: original['associations']['foo']['extra'] = {'foo': 1}
-                    # and updates['associations']['foo']['extra'] = {'bar': 1}
-                    # output will be updates['associations']['foo']['extra'] = {'bar': 1, 'foo': None}
-                    for k in original[ASSOCIATIONS][key][item_key]:
-                        updates[ASSOCIATIONS][key][item_key][k] = None
-
-
 class ArchiveVersionsResource(Resource):
     schema = item_schema()
     extra_response_fields = extra_response_fields
@@ -200,7 +168,10 @@ class ArchiveVersionsResource(Resource):
     resource_methods = []
     internal_resource = True
     privileges = {'PATCH': 'archive'}
-    mongo_indexes = {'guid': ([('guid', 1)], {'background': True})}
+    mongo_indexes = {
+        'guid': ([('guid', 1)], {'background': True}),
+        '_id_document_1': ([('_id_document', 1)], {'background': True}),
+    }
 
 
 class ArchiveVersionsService(BaseService):
@@ -222,7 +193,8 @@ class ArchiveResource(Resource):
         },
         'default_sort': [('_updated', -1)],
         'elastic_filter': {'bool': {
-            'must': {'terms': {'state': ['fetched', 'routed', 'draft', 'in_progress', 'spiked', 'submitted']}},
+            'must': {'terms': {'state': ['fetched', 'routed', 'draft', 'in_progress',
+                                         'spiked', 'submitted', 'unpublished']}},
             'must_not': {'term': {'version': 0}}
         }},
         'elastic_filter_callback': private_content_filter
@@ -232,7 +204,10 @@ class ArchiveResource(Resource):
     item_methods = ['GET', 'PATCH', 'PUT']
     versioning = True
     privileges = {'POST': SOURCE, 'PATCH': SOURCE, 'PUT': SOURCE}
-    mongo_indexes = {'processed_from_1': ([(PROCESSED_FROM, 1)], {'background': True})}
+    mongo_indexes = {
+        'processed_from_1': ([(PROCESSED_FROM, 1)], {'background': True}),
+        'unique_id_1': ([('unique_id', 1)], {'background': True}),
+    }
 
 
 class ArchiveService(BaseService):
@@ -260,6 +235,7 @@ class ArchiveService(BaseService):
             if doc.get('body_footer') and is_normal_package(doc):
                 raise SuperdeskApiError.badRequestError(_("Package doesn't support Public Service Announcements"))
 
+            editor_utils.generate_fields(doc)
             self._test_readonly_stage(doc)
 
             doc['version_creator'] = doc['original_creator']
@@ -337,6 +313,7 @@ class ArchiveService(BaseService):
         """
         user = get_user()
 
+        editor_utils.generate_fields(updates)
         if ITEM_TYPE in updates:
             del updates[ITEM_TYPE]
 
@@ -350,7 +327,7 @@ class ArchiveService(BaseService):
         self._add_desk_metadata(updates, original)
         self._handle_media_updates(updates, original, user)
         flush_renditions(updates, original)
-        flush_previous_item_keys_from_associations(updates, original)
+        update_refs(updates, original)
 
     def _handle_media_updates(self, updates, original, user):
         update_associations(updates)
@@ -368,34 +345,25 @@ class ArchiveService(BaseService):
             if not (item_obj and config.ID_FIELD in item_obj):
                 continue
 
-            if is_related_content(item_name):
-                continue
-
             item_id = item_obj[config.ID_FIELD]
-            media_item = {}
+            media_item = self.find_one(req=None, _id=item_id)
             if app.settings.get('COPY_METADATA_FROM_PARENT') and item_obj.get(ITEM_TYPE) in MEDIA_TYPES:
                 stored_item = (original.get(ASSOCIATIONS) or {}).get(item_name) or item_obj
             else:
-                media_item = stored_item = self.find_one(req=None, _id=item_id)
+                stored_item = media_item
                 if not stored_item:
                     continue
+
+            track_usage(media_item, stored_item, item_obj, item_name, original)
+
+            if is_related_content(item_name):
+                continue
 
             self._validate_updates(stored_item, item_obj, user)
             if stored_item[ITEM_TYPE] == CONTENT_TYPE.PICTURE:  # create crops
                 CropService().create_multiple_crops(item_obj, stored_item)
                 if body and item_obj.get('description_text', None):
                     body = update_image_caption(body, item_name, item_obj['description_text'])
-
-            # If the media item is not marked as 'used', mark it as used
-            if original.get(ITEM_TYPE) == CONTENT_TYPE.TEXT and \
-                    (item_obj is not stored_item or not stored_item.get('used')):
-                if media_item is not stored_item:
-                    media_item = self.find_one(req=None, _id=item_id)
-
-                if media_item and not media_item.get('used'):
-                    self.system_update(media_item['_id'], {'used': True}, media_item)
-
-                stored_item['used'] = True
 
             self._set_association_timestamps(item_obj, updates, new=False)
             stored_item.update(item_obj)
@@ -466,6 +434,13 @@ class ArchiveService(BaseService):
 
     def replace(self, id, document, original):
         return self.restore_version(id, document, original) or super().replace(id, document, original)
+
+    def get(self, req, lookup):
+        if req is None and lookup is not None and '$or' in lookup:
+            # embedded resource generates mongo query which doesn't work with elastic
+            # so it needs to be fixed here
+            return super().get(req, lookup['$or'][0])
+        return super().get(req, lookup)
 
     def find_one(self, req, **lookup):
         item = super().find_one(req, **lookup)
@@ -556,6 +531,7 @@ class ArchiveService(BaseService):
 
         convert_task_attributes_to_objectId(new_doc)
         transtype_metadata(new_doc)
+        signals.item_duplicate.send(self, item=new_doc, original=original_doc, operation=operation)
         get_model(ItemModel).create([new_doc])
         self._duplicate_versions(original_doc['_id'], new_doc)
         self._duplicate_history(original_doc['_id'], new_doc)
@@ -574,6 +550,8 @@ class ArchiveService(BaseService):
                 new_doc,
                 operation or ITEM_DUPLICATED_FROM
             )
+
+        signals.item_duplicated.send(self, item=new_doc, original=original_doc, operation=operation)
 
         return new_doc['guid']
 
@@ -594,7 +572,7 @@ class ArchiveService(BaseService):
                                SCHEDULE_SETTINGS, 'lock_time', 'lock_action', 'lock_session', 'lock_user', SIGN_OFF,
                                'rewritten_by', 'rewrite_of', 'rewrite_sequence', 'highlights', 'marked_desks',
                                '_type', 'event_id', 'assignment_id', PROCESSED_FROM,
-                               'translations', 'translation_id', 'translated_from',
+                               'translations', 'translation_id', 'translated_from', 'firstpublished'
                                ])
         if delete_keys:
             keys_to_delete.extend(delete_keys)
@@ -708,6 +686,19 @@ class ArchiveService(BaseService):
         updates[ITEM_OPERATION] = ITEM_DESCHEDULE
         # delete entry from published repo
         get_resource_service('published').delete_by_article_id(original['_id'])
+
+        # deschedule scheduled associations
+        if config.PUBLISH_ASSOCIATED_ITEMS:
+            associations = original.get(ASSOCIATIONS) or {}
+            archive_service = get_resource_service('archive')
+            for associations_key, associated_item in associations.items():
+                orig_associated_item = archive_service.find_one(req=None, _id=associated_item[config.ID_FIELD])
+                if orig_associated_item and orig_associated_item.get('state') == CONTENT_STATE.SCHEDULED:
+                    # deschedule associated item itself
+                    archive_service.patch(id=associated_item[config.ID_FIELD], updates={PUBLISH_SCHEDULE: None})
+                    # update associated item info in the original
+                    orig_associated_item = archive_service.find_one(req=None, _id=associated_item[config.ID_FIELD])
+                    updates.setdefault(ASSOCIATIONS, {})[associations_key] = orig_associated_item
 
     def can_edit(self, item, user_id):
         """
@@ -884,7 +875,7 @@ class ArchiveService(BaseService):
 
             update_schedule_settings(updated, PUBLISH_SCHEDULE, updated.get(PUBLISH_SCHEDULE))
 
-            if updates.get(PUBLISH_SCHEDULE):
+            if updates.get(PUBLISH_SCHEDULE) and updates.get('state') != CONTENT_STATE.PUBLISHED:
                 validate_schedule(updated.get(SCHEDULE_SETTINGS, {}).get('utc_{}'.format(PUBLISH_SCHEDULE)))
 
             updates[SCHEDULE_SETTINGS] = updated.get(SCHEDULE_SETTINGS, {})
@@ -1113,10 +1104,26 @@ class ArchiveService(BaseService):
             try:
                 item = self.find_one(req={}, _id=item['rewrite_of'])
                 # prepend translations + update
-                items_chain = self.get_item_translations(item) + items_chain
-                items_chain.insert(0, item)
+                items_chain = [item, *self.get_item_translations(item), *items_chain]
             except Exception:
-                break
+                # `item` is not an update, but it can be a translation
+                if 'translated_from' in item:
+                    translation_item = item
+                    item = get_item_translated_from(item)
+                    # add item + translations
+                    items_chain = [
+                        item,
+                        *[
+                            i for i in self.get_item_translations(item)
+                            # `translation_item` was already added into `items_chain` on a previous iteration
+                            if i['_id'] != translation_item['_id']
+                        ],
+                        *items_chain
+                    ]
+                else:
+                    # `item` is not a translation and not an update, it means that it's an initial
+                    break
+
         else:
             logger.error(
                 'Failed to retrieve the whole items chain for item {}'.format(item.get('_id'))
@@ -1148,7 +1155,7 @@ class ArchiveService(BaseService):
 class AutoSaveResource(Resource):
     endpoint_name = 'archive_autosave'
     item_url = item_url
-    schema = item_schema({'_id': {'type': 'string', 'unique': True}})
+    schema = get_schema(versioning=True)
     resource_methods = ['POST']
     item_methods = ['GET', 'PUT', 'PATCH', 'DELETE']
     resource_title = endpoint_name
@@ -1159,6 +1166,9 @@ class ArchiveSaveService(BaseService):
     def create(self, docs, **kwargs):
         if not docs:
             raise SuperdeskApiError.notFoundError('Content is missing')
+
+        for doc in docs:
+            editor_utils.generate_fields(doc)
 
         req = parse_request(self.datasource)
         try:

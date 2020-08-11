@@ -17,5 +17,7 @@ requests-mock
 responses
 pytest==5.2.2
 pytest-env==0.6.2
--e git+git://github.com/superdesk/superdesk-planning.git@master#egg=superdesk-planning
+python3-saml>=1.9,<1.10
+
+-e git+git://github.com/superdesk/superdesk-planning.git@develop#egg=superdesk-planning
 -e .

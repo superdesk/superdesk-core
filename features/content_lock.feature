@@ -12,7 +12,9 @@ Feature: Content Locking
         """
         Then we get new resource
         """
-        {"_id": "item-1", "guid": "item-1", "headline": "test", "lock_user": "#CONTEXT_USER_ID#"}
+        {"_id": "item-1", "guid": "item-1", "headline": "test", "lock_user": "#CONTEXT_USER_ID#",
+         "_links": {"self": {"href": "/archive/item-1"}}
+        }
         """
         And item "item-1" is assigned
         And we get notifications
@@ -99,7 +101,9 @@ Feature: Content Locking
         """
         Then we get new resource
         """
-        {"_id": "item-1", "guid": "item-1", "headline": "test", "lock_user": null}
+        {"_id": "item-1", "guid": "item-1", "headline": "test", "lock_user": null,
+         "_links": {"self": {"href": "/archive/item-1"}}
+        }
         """
         And we get notifications
         """

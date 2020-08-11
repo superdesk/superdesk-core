@@ -166,7 +166,11 @@ def transmit_item(queue_item_id, is_async=False):
         logger.info('Transmitting queue item {}'.format(log_msg))
 
         destination = queue_item['destination']
-        transmitter = superdesk.publish.registered_transmitters[destination.get('delivery_type')]
+        try:
+            transmitter = superdesk.publish.registered_transmitters[destination.get('delivery_type')]
+        except KeyError:
+            print(destination['delivery_type'] not in superdesk.publish.registered_transmitters)
+            raise
         transmitter.transmit(queue_item)
         logger.info('Transmitted queue item {}'.format(log_msg))
         return True

@@ -1,3 +1,4 @@
+import os
 import json
 import pytest
 from pathlib import Path
@@ -12,7 +13,7 @@ from prod_api.app import get_app as get_prodapi_api
 
 
 MONGO_DB = 'prodapi_tests'
-ELASTICSEARCH_INDEX = 'prodapi_tests'
+ELASTICSEARCH_INDEX = MONGO_DB
 AUTH_SERVER_SHARED_SECRET = '2kZOf0VI9T70vU9uMlKLyc5GlabxVgl6'
 
 
@@ -28,6 +29,7 @@ def get_test_prodapi_app(extra_config=None):
         'SUPERDESK_TESTING': True,
         'MONGO_CONNECT': False,
         'MONGO_MAX_POOL_SIZE': 1,
+        'MONGO_DBNAME': MONGO_DB,
         'MONGO_URI': get_mongo_uri('MONGO_URI', MONGO_DB),
         'ELASTICSEARCH_INDEX': ELASTICSEARCH_INDEX,
         'PRODAPI_URL': 'http://localhost:5500',
@@ -40,6 +42,10 @@ def get_test_prodapi_app(extra_config=None):
         test_config.update(extra_config)
     prodapi_app = get_prodapi_api(test_config)
 
+    # put elastic mapping
+    with prodapi_app.app_context():
+        prodapi_app.data.elastic.init_index()
+
     return prodapi_app
 
 
@@ -50,6 +56,7 @@ def get_test_superdesk_app(extra_config=None):
     :return: eve.flaskapp.Eve
     """
     test_config = {
+        'MONGO_DBNAME': MONGO_DB,
         'MONGO_URI': get_mongo_uri('MONGO_URI', MONGO_DB),
         'ELASTICSEARCH_INDEX': ELASTICSEARCH_INDEX,
         'AUTH_SERVER_SHARED_SECRET': AUTH_SERVER_SHARED_SECRET,
@@ -139,7 +146,7 @@ def prodapi_app_with_data(request):
 
     # fill with data
     with app.app_context():
-        p = Path('./tests/fixtures')
+        p = Path(os.path.join(os.path.dirname(__file__), 'tests/fixtures'))
         for fixture_file in [x for x in p.iterdir() if x.is_file()]:
             with fixture_file.open() as f:
                 app.data.insert(

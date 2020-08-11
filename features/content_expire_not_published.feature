@@ -205,6 +205,10 @@ Feature: Content Expiry Not Published Items
 
   @auth
   Scenario: Content linked in planning does not expire.
+    Given "assignments"
+    """
+    [{"_id": "123456", "planning": {}}]
+    """
     When we post to "archive" with success
     """
     [{"guid": "456", "type": "text", "headline": "test", "state": "fetched",

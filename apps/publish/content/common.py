@@ -32,9 +32,9 @@ from superdesk.publish import SUBSCRIBER_TYPES
 from superdesk.services import BaseService
 from superdesk.utc import utcnow
 from superdesk.workflow import is_workflow_state_transition_valid
+from superdesk.validation import ValidationError
 
 from eve.utils import config
-from eve.validation import ValidationError
 from eve.versioning import resolve_document_version
 
 from apps.archive.archive import ArchiveResource, SOURCE as ARCHIVE
@@ -42,6 +42,7 @@ from apps.archive.common import get_user, insert_into_versions, item_operations,
     FIELDS_TO_COPY_FOR_ASSOCIATED_ITEM, remove_unwanted
 from apps.archive.common import validate_schedule, ITEM_OPERATION, update_schedule_settings, \
     convert_task_attributes_to_objectId, get_expiry, get_utc_schedule, get_expiry_date, transtype_metadata
+from apps.archive.usage import track_usage, update_refs
 from apps.common.components.utils import get_component
 from apps.item_autosave.components.item_autosave import ItemAutosave
 from apps.legal_archive.commands import import_into_legal_archive
@@ -95,6 +96,7 @@ class BasePublishResource(ArchiveResource):
         self.item_methods = ['PATCH']
 
         self.privileges = {'PATCH': publish_type}
+
         super().__init__(endpoint_name, app=app, service=service)
 
 
@@ -118,6 +120,7 @@ class BasePublishService(BaseService):
         transtype_metadata(updates, original)
         self._process_publish_updates(original, updates)
         self._mark_media_item_as_used(updates, original)
+        update_refs(updates, original)
 
     def on_updated(self, updates, original):
         original = super().find_one(req=None, _id=original[config.ID_FIELD])
@@ -568,7 +571,7 @@ class BasePublishService(BaseService):
                 validate_item = {'act': self.publish_type, 'type': doc[ITEM_TYPE], 'validate': doc}
                 if type(item) == dict:
                     validate_item['embedded'] = True
-                errors = get_resource_service('validate').post([validate_item], headline=True)
+                errors = get_resource_service('validate').post([validate_item], headline=True, fields=True)[0]
                 if errors[0]:
                     pre_errors = ['Associated item %s %s' % (doc.get('slugline', ''), error) for error in errors[0]]
                     validation_errors.extend(pre_errors)
@@ -662,16 +665,18 @@ class BasePublishService(BaseService):
         if updates and updates.get(ASSOCIATIONS):
             associations.update(updates[ASSOCIATIONS])
 
+        archive_service = get_resource_service('archive')
+
         for associations_key, associated_item in associations.items():
             if associated_item is None:
                 continue
 
             if type(associated_item) == dict and associated_item.get(config.ID_FIELD):
-
                 if not config.PUBLISH_ASSOCIATED_ITEMS or not publish_service:
-                    # Not allowed to publish
-                    original[ASSOCIATIONS][associations_key]['state'] = self.published_state
-                    original[ASSOCIATIONS][associations_key]['operation'] = self.publish_type
+                    if original.get(ASSOCIATIONS, {}).get(associations_key):
+                        # Not allowed to publish
+                        original[ASSOCIATIONS][associations_key]['state'] = self.published_state
+                        original[ASSOCIATIONS][associations_key]['operation'] = self.publish_type
                     continue
 
                 # if item is not fetchable, only mark it as published
@@ -684,11 +689,13 @@ class BasePublishService(BaseService):
 
                 if associated_item.get('state') == CONTENT_STATE.UNPUBLISHED:
                     # get the original associated item from archive
-                    orig_associated_item = get_resource_service('archive') \
-                        .find_one(req=None, _id=associated_item[config.ID_FIELD])
+                    orig_associated_item = archive_service.find_one(req=None, _id=associated_item[config.ID_FIELD])
 
-                    orig_associated_item['state'] = self.published_state
+                    orig_associated_item['state'] = updates.get('state', self.published_state)
                     orig_associated_item['operation'] = self.publish_type
+
+                    # if main item is scheduled we must also schedule associations
+                    self._inherit_publish_schedule(original, updates, orig_associated_item)
 
                     get_resource_service('archive_publish').patch(id=orig_associated_item.pop(config.ID_FIELD),
                                                                   updates=orig_associated_item)
@@ -700,19 +707,18 @@ class BasePublishService(BaseService):
                     remove_unwanted(associated_item)
 
                     # get the original associated item from archive
-                    original_associated_item = get_resource_service('archive').\
-                        find_one(req=None, _id=associated_item[config.ID_FIELD])
+                    orig_associated_item = archive_service.find_one(req=None, _id=associated_item[config.ID_FIELD])
 
                     # check if the original associated item exists in archive
-                    if not original_associated_item:
+                    if not orig_associated_item:
                         raise SuperdeskApiError.badRequestError(
                             _('Associated item "{}" does not exist in the system'.format(associations_key)))
 
-                    if original_associated_item.get('state') in PUBLISH_STATES:
+                    if orig_associated_item.get('state') in PUBLISH_STATES:
                         # item was published already
                         original[ASSOCIATIONS][associations_key].update({
-                            'state': original_associated_item['state'],
-                            'operation': original_associated_item.get('operation', self.publish_type),
+                            'state': orig_associated_item['state'],
+                            'operation': orig_associated_item.get('operation', self.publish_type),
                         })
                         continue
 
@@ -720,15 +726,21 @@ class BasePublishService(BaseService):
                     # fixes SDESK-5043
                     associated_item['_updated'] = utcnow()
 
+                    # if main item is scheduled we must also schedule associations
+                    self._inherit_publish_schedule(original, updates, associated_item)
+
                     get_resource_service('archive_publish').patch(id=associated_item.pop(config.ID_FIELD),
                                                                   updates=associated_item)
-                    associated_item['state'] = self.published_state
+                    associated_item['state'] = updates.get('state', self.published_state)
                     associated_item['operation'] = self.publish_type
                     updates[ASSOCIATIONS] = updates.get(ASSOCIATIONS, {})
                     updates[ASSOCIATIONS][associations_key] = associated_item
                 elif associated_item.get('state') != self.published_state:
                     # Check if there are updates to associated item
                     association_updates = updates.get(ASSOCIATIONS, {}).get(associations_key)
+
+                    # if main item is scheduled we must also schedule associations
+                    self._inherit_publish_schedule(original, updates, associated_item)
 
                     if not association_updates:
                         # there is no update for this item
@@ -749,29 +761,25 @@ class BasePublishService(BaseService):
             return
 
         for item_name, item_obj in updates.get(ASSOCIATIONS).items():
-            if not (item_obj and config.ID_FIELD in item_obj):
+            if not item_obj or config.ID_FIELD not in item_obj:
                 continue
-
             item_id = item_obj[config.ID_FIELD]
-            media_item = {}
+            media_item = self.find_one(req=None, _id=item_id)
             if app.settings.get('COPY_METADATA_FROM_PARENT') and item_obj.get(ITEM_TYPE) in MEDIA_TYPES:
                 stored_item = (original.get(ASSOCIATIONS) or {}).get(item_name) or item_obj
             else:
-                media_item = stored_item = self.find_one(req=None, _id=item_id)
+                stored_item = media_item
                 if not stored_item:
                     continue
+            track_usage(media_item, stored_item, item_obj, item_name, original)
 
-            # If the media item is not marked as 'used', mark it as used
-            if original.get(ITEM_TYPE) == CONTENT_TYPE.TEXT and \
-                    (item_obj is not stored_item or not stored_item.get('used')):
-                archive_service = get_resource_service('archive')
-                if media_item is not stored_item:
-                    media_item = archive_service.find_one(req=None, _id=item_id)
+    def _inherit_publish_schedule(self, original, updates, associated_item):
+        if self.publish_type == 'publish' and (updates.get(PUBLISH_SCHEDULE) or original.get(PUBLISH_SCHEDULE)):
+            schedule_settings = updates.get(SCHEDULE_SETTINGS, original.get(SCHEDULE_SETTINGS, {}))
+            publish_schedule = updates.get(PUBLISH_SCHEDULE, original.get(PUBLISH_SCHEDULE))
 
-                if media_item and not media_item.get('used'):
-                    archive_service.system_update(media_item['_id'], {'used': True}, media_item)
-
-                stored_item['used'] = True
+            associated_item[PUBLISH_SCHEDULE] = publish_schedule
+            associated_item[SCHEDULE_SETTINGS] = schedule_settings
 
 
 def get_crop(rendition):

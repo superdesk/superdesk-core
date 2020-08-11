@@ -211,7 +211,7 @@ Feature: Saved Searches
         """
         {
         "name": "US Pictures",
-        "filter": {"query": {"q": "US", "repo": "ingest", "type": ["picture"]}}
+        "filter": {"query": {"q": "image", "repo": "ingest", "type": ["picture"]}}
         }
         """
         Then we get response code 201
@@ -220,7 +220,7 @@ Feature: Saved Searches
         """
         {
         "name": "US Pictures",
-        "filter": {"query": {"repo": "ingest", "q": "US", "type": ["picture"]}}
+        "filter": {"query": {"repo": "ingest", "q": "image", "type": ["picture"]}}
         }
         """
         When we get "/saved_searches/#saved_searches._id#/items"

@@ -15,10 +15,11 @@ from copy import deepcopy
 import superdesk
 
 from superdesk import get_resource_service
-from superdesk.metadata.item import CONTENT_STATE, ITEM_STATE
+from superdesk.metadata.item import CONTENT_STATE, ITEM_STATE, get_schema
 from superdesk.metadata.utils import aggregations as common_aggregations, item_url, get_elastic_highlight_query
 from apps.archive.archive import SOURCE as ARCHIVE
 from superdesk.resource import build_custom_hateoas
+from apps.publish.published_item import published_item_fields
 from superdesk import es_utils
 
 
@@ -74,7 +75,8 @@ class SearchService(superdesk.Service):
                             }
                         }
                     ],
-                    'must_not': {'term': {'version': 0}}
+                    'must_not': {'term': {'version': 0}},
+                    'minimum_should_match': 1,
                 }
             }
         ]
@@ -196,13 +198,7 @@ class SearchService(superdesk.Service):
         if fields:
             params['_source'] = fields
 
-        hits = self.elastic.es.search(
-            body=query,
-            index=es_utils.get_index(types),
-            doc_type=types,
-            params=params
-        )
-        docs = self._get_docs(hits)
+        docs = self.elastic.search(query, types, params)
 
         for resource in types:
             response = {app.config['ITEMS']: [doc for doc in docs if doc['_type'] == resource]}
@@ -222,10 +218,13 @@ class SearchService(superdesk.Service):
 
     def find_one(self, req, **lookup):
         """Find item by id in all collections."""
-        hits = self.elastic.es.mget({'ids': [lookup[app.config['ID_FIELD']]]}, es_utils.get_index())
-        hits['hits'] = {'hits': hits.pop('docs', [])}
-        docs = self._get_docs(hits)
-        return docs.first()
+        _id = lookup['_id']
+        for resource in self._get_types(req):
+            id_field = 'item_id' if resource == 'published' else '_id'
+            resource_lookup = {id_field: _id}
+            item = get_resource_service(resource).find_one(req=req, **resource_lookup)
+            if item:
+                return item
 
     def on_fetched(self, doc):
         """
@@ -251,6 +250,11 @@ class SearchResource(superdesk.Resource):
     resource_methods = ['GET']
     item_methods = ['GET']
     item_url = item_url
+    schema = get_schema(versioning=True)
+    schema.update(published_item_fields)
+    datasource = {
+        'projection': {field: 1 for field in list(schema.keys()) + ['archive_item']}
+    }
 
 
 def init_app(app):

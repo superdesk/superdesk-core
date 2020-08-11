@@ -8,7 +8,7 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
-from superdesk.resource import Resource
+from superdesk.resource import Resource, text_with_keyword
 
 CONTACTS_PRIVILEDGE = 'contacts'
 VIEW_CONTACTS = 'view_contacts'
@@ -36,16 +36,18 @@ class ContactsResource(Resource):
         },
         'organisation': {
             'type': 'string',
-            'required': False
+            'required': False,
+            'mapping': text_with_keyword,
         },
         'first_name': {
             'type': 'string',
-            'required': False
+            'required': False,
+            'mapping': text_with_keyword,
         },
         'last_name': {
             'type': 'string',
             'required': False,
-            'mapping': {'type': 'string'}
+            'mapping': text_with_keyword,
         },
         'honorific': {
             'type': 'string',
@@ -166,6 +168,7 @@ class OrganisationSearchResource(Resource):
         'search_backend': 'elastic'
     }
 
+    schema = ContactsResource.schema
     resource_methods = ['GET']
     item_methods = ['GET']
     url = 'contacts/organisations'

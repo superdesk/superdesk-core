@@ -67,6 +67,14 @@ ANALYTICS_DATETIME_FORMAT = "%Y-%m-%d %H:00:00"
 os.environ['AUTHLIB_INSECURE_TRANSPORT'] = '1'
 
 
+def expect_status(response, code):
+    assert int(code) == response.status_code, 'exptected {expected}, got {code}, reason={reason}'.format(
+        code=response.status_code,
+        expected=code,
+        reason=response.get_data().decode('utf-8'),
+    )
+
+
 def test_json(context, json_fields=None):
     if json_fields is None:
         json_fields = []
@@ -237,6 +245,18 @@ def get_it(context):
     it = context.data[0]
     res = get_res('/%s/%s' % (context.resource, it['_id']), context)
     return get_self_href(res, context), res.get('_etag')
+
+
+def get_response_readable(data):
+    try:
+        return json.dumps(json.loads(data), indent=2)
+    except (ValueError, TypeError):
+        pass
+    try:
+        return data.decode("utf-8")
+    except ValueError:
+        pass
+    return data
 
 
 def if_match(context, etag):
@@ -1055,6 +1075,7 @@ def step_impl_then_get_new(context):
 def step_impl_then_get_error(context, code):
     expect_status(context.response, int(code))
     if context.text:
+        print('got', context.response.get_data().decode("utf-8"))
         test_json(context)
 
 
@@ -1191,6 +1212,7 @@ def step_impl_then_get_nofield_in_path(context, path):
 @then('we get existing resource')
 def step_impl_then_get_existing(context):
     assert_200(context.response)
+    print('got', get_response_readable(context.response.data))
     test_json(context)
 
 
@@ -1207,7 +1229,8 @@ def step_impl_then_get_ok(context):
 
 @then('we get response code {code}')
 def step_impl_then_get_code(context, code):
-    expect_status(context.response, int(code))
+    assert context.response.status_code == int(code), \
+        'we got code={} data={}'.format(context.response.status_code, get_response_readable(context.response.data))
 
 
 @then('we get updated response')
@@ -1460,6 +1483,7 @@ def step_impl_we_fetch_data_uri(context):
 @then('we fetch a file "{url}"')
 def step_impl_we_cannot_fetch_file(context, url):
     url = apply_placeholders(context, url)
+    assert '#' not in url, 'missing placeholders for url %s %s' % (url, getattr(context, 'placeholders', {}))
     headers = [('Accept', 'application/json')]
     headers = unique_headers(headers, context.headers)
     context.response = context.client.get(get_prefixed_url(context.app, url), headers=headers)
@@ -1887,6 +1911,11 @@ def step_set_limit(context):
     context.app.settings['MAX_SEARCH_DEPTH'] = 1
 
 
+@when('we reset elastic limit')
+def step_set_limit(context):
+    context.app.settings['MAX_SEARCH_DEPTH'] = -1
+
+
 @then('we get emails')
 def step_we_get_email(context):
     data = json.loads(context.text)
@@ -1985,7 +2014,7 @@ def then_field_is_populated(context, field_name):
 @then('we get "{field_name}" not populated')
 def then_field_is_not_populated(context, field_name):
     resp = parse_json_response(context.response)
-    assert resp[field_name] is None, 'item is not populated'
+    assert resp.get(field_name) is None, '%s should be none, but it is %s in %s' % (field_name, resp[field_name], resp)
 
 
 @then('the field "{field_name}" value is not "{field_value}"')
@@ -2023,7 +2052,9 @@ def step_impl_when_rewrite(context, item_id):
     if context.response.status_code == 400:
         return
 
+    expect_status(context.response, 201)
     resp = parse_json_response(context.response)
+
     set_placeholder(context, 'REWRITE_OF', _id)
     set_placeholder(context, 'REWRITE_ID', resp['_id'])
 
@@ -2462,10 +2493,8 @@ def we_assert_content_api_item_is_not_published(context, item_id):
 def we_ensure_that_archived_schema_extra_fields_are_not_present(context):
     with context.app.test_request_context(context.app.config['URL_PREFIX']):
         eve_keys = set([config.ID_FIELD, config.LAST_UPDATED, config.DATE_CREATED, config.VERSION, config.ETAG])
-        archived_schema_keys = set(context.app.config['DOMAIN']['archived']['schema'].keys())
-        archived_schema_keys.union(eve_keys)
-        archive_schema_keys = set(context.app.config['DOMAIN']['archive']['schema'].keys())
-        archive_schema_keys.union(eve_keys)
+        archived_schema_keys = set(context.app.config['DOMAIN']['archived']['schema'].keys()).union(eve_keys)
+        archive_schema_keys = set(context.app.config['DOMAIN']['archive']['schema'].keys()).union(eve_keys)
         extra_fields = [key for key in archived_schema_keys if key not in archive_schema_keys]
         duplicate_item = json.loads(context.response.get_data())
         for field in extra_fields:

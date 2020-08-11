@@ -58,6 +58,8 @@ def send_email(self, subject, sender, recipients, text_body, html_body, cc=None,
         msg = SuperdeskMessage(subject_line, sender=sender, recipients=recipients, cc=cc, bcc=bcc,
                                body=text_body, html=html_body, attachments=attachments)
         return app.mail.send(msg)
+    except OSError:
+        logger.exception('can not send email %s', subject)
     finally:
         unlock(lock_id, remove=True)
 

@@ -1265,7 +1265,7 @@ Feature: Content Profile
                     },
                     "type": "list",
                     "required": true,
-                    "mandatory_in_list": {"scheme": {"category": "category"}}
+                    "mandatory_in_list": {"scheme": {"category": {"required": true}}}
                 }
             },
             "editor": {
@@ -1818,3 +1818,84 @@ Feature: Content Profile
         """
         {"schema": {"subject": {"required": false}}}
         """
+
+    @auth
+    Scenario: Only 1 profile can be added for non text item types
+        When we post to "content_types"
+        """
+        {"_id": "foo", "item_type": "picture"}
+        """
+        Then we get new resource
+        When we post to "content_types"
+        """
+        {"_id": "bar", "item_type": "picture"}
+        """
+        Then we get error 400
+        """
+        {"_status": "ERR", "_issues": {"item_type": "Only 1 instance is allowed."}}
+        """
+
+    @auth
+    Scenario: Updating the content profile doesn't change template metadata
+        Given "content_types"
+        """
+        [{"_id": "foo", "label": "Foo", "schema": {
+            "headline": {
+                "maxlength" : 64,
+                "type" : "string",
+                "required" : false,
+                "nullable" : true
+            },
+            "slugline" : {
+                "type" : "string",
+                "nullable" : true,
+                "maxlength" : 24,
+                "required" : false
+            },
+            "place": {"default": [{"name": "Prague"}]}
+        }}]
+        """
+        And "content_templates"
+        """
+        [{
+            "template_name": "foo",
+            "data": {
+                "slugline": "Testing the slugline",
+                "headline": "Testing the headline",
+                "profile": "foo",
+                "language": "fr"
+            }
+        }]
+        """
+        When we patch "content_types/foo"
+        """
+        {"schema": {
+            "headline": null,
+            "slugline" : {
+                "type" : "string",
+                "nullable" : true,
+                "maxlength" : 24,
+                "required" : false
+            },
+            "language": null,
+            "place": {"default": [{"name": "Prague"}]}
+        }}
+        """
+        Then we get updated response
+        """
+        {"updated_by": "#CONTEXT_USER_ID#"}
+        """
+        When we get "content_templates"
+        Then we get list with 1 items
+        """
+        {"_items": [{
+            "template_name": "foo",
+            "data": {
+                "slugline": "Testing the slugline",
+                "profile": "foo",
+                "language": "fr"
+            }
+          }]
+        }
+        """
+        And there is no "headline" in data

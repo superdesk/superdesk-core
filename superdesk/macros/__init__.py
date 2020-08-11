@@ -10,6 +10,10 @@ import sys
 import imp
 import logging
 import importlib
+import logging
+
+
+logger = logging.getLogger(__name__)
 
 
 logger = logging.getLogger(__name__)

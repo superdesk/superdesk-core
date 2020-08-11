@@ -27,6 +27,13 @@ class FilterConditionParametersResource(Resource):
     url = "filter_conditions/parameters"
     resource_methods = ['GET']
     item_methods = []
+    schema = {
+        'field': {'type': 'string'},
+        'label': {'type': 'string'},
+        'operators': {'type': 'list'},
+        'values': {'type': 'list'},
+        'value_field': {'type': 'string'},
+    }
 
 
 class FilterConditionParametersService(BaseService):

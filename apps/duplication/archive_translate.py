@@ -54,14 +54,14 @@ class TranslateResource(Resource):
 
 class TranslateService(BaseService):
 
-    def _translate_item(self, guid, language, task=None, service=None, **kwargs):
+    def _translate_item(self, guid, language, task=None, service=None, state=None, **kwargs):
         if not service:
             service = ARCHIVE
         archive_service = get_resource_service(service)
         macros_service = get_resource_service('macros')
         published_service = get_resource_service('published')
 
-        item = archive_service.find_one(req=None, _id=guid)
+        item = archive_service.find_one(req=None, guid=guid)
         if not item:
             raise SuperdeskApiError.notFoundError(_('Fail to found item with guid: {guid}').format(guid=guid))
 
@@ -79,7 +79,7 @@ class TranslateService(BaseService):
                                                      task=task)
 
         if not item.get('translation_id'):
-            item['translation_id'] = item['_id']
+            item['translation_id'] = item['guid']
 
         macros_service.execute_translation_macro(
             item, item.get('language', None), language)
@@ -92,9 +92,12 @@ class TranslateService(BaseService):
             item['task'] = task
 
         extra_fields = ['translation_id', 'translated_from']
-        _id = archive_service.duplicate_item(item, extra_fields=extra_fields, operation='translate')
 
-        item.setdefault('translations', []).append(_id)
+        translation_guid = archive_service.duplicate_item(
+            item, extra_fields=extra_fields, state=state, operation='translate'
+        )
+
+        item.setdefault('translations', []).append(translation_guid)
 
         updates = {
             'translation_id': item['translation_id'],
@@ -108,7 +111,7 @@ class TranslateService(BaseService):
         if kwargs.get('notify', True):
             push_content_notification([item])
 
-        return _id
+        return translation_guid
 
     def create(self, docs, **kwargs):
         ids = []

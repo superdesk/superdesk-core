@@ -30,7 +30,7 @@ from superdesk.utc import utcnow
 from superdesk.workflow import is_workflow_state_transition_valid
 from superdesk import get_resource_service
 from superdesk.metadata.packages import RESIDREF, REFS, GROUPS
-from superdesk.metadata.item import MEDIA_TYPES, ASSOCIATIONS
+from superdesk.metadata.item import MEDIA_TYPES, ASSOCIATIONS, get_schema
 
 custom_hateoas = {'self': {'title': 'Archive', 'href': '/archive/{_id}'}}
 
@@ -39,11 +39,13 @@ class FetchResource(Resource):
     endpoint_name = 'fetch'
     resource_title = endpoint_name
 
-    schema = {
+    schema = get_schema(True)
+    schema.update({
         'desk': Resource.rel('desks', False, required=True),
         'stage': Resource.rel('stages', False, nullable=True),
-        'macro': {'type': 'string'}
-    }
+        'macro': {'type': 'string'},
+        '_links': {'type': 'dict'},
+    })
 
     url = 'ingest/<{0}:id>/fetch'.format(item_url)
 
@@ -78,11 +80,13 @@ class FetchService(BaseService):
                 raise InvalidStateTransitionError()
 
             if doc.get('macro'):  # there is a macro so transform it
+                macro_kwargs = kwargs.get('macro_kwargs') or {}
                 ingest_doc = get_resource_service('macros').execute_macro(
                     ingest_doc,
                     doc.get('macro'),
                     dest_desk_id=desk_id,
                     dest_stage_id=stage_id,
+                    **macro_kwargs,
                 )
 
             dest_doc = fetch_item(ingest_doc, desk_id, stage_id, state=doc.get(ITEM_STATE), target=doc.get('target'))

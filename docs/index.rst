@@ -55,6 +55,7 @@ works and can be developed further.
     editor
     auth_server
     production_api
+    video_server
     extending
     authentication
     cli

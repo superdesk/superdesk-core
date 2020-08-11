@@ -22,15 +22,13 @@ from .common import update_dates_for, generate_guid, GUID_TAG, set_original_crea
 from superdesk.activity import add_activity
 from superdesk.filemeta import set_filemeta
 from superdesk.timer import timer
-from superdesk.errors import SuperdeskApiError
-from superdesk.media.video_editor import VideoEditorService
-import magic
+from superdesk.media.video_editor import VideoEditorWrapper
 
 logger = logging.getLogger(__name__)
 
 
 class ArchiveMediaService():
-    videoEditor = VideoEditorService()
+    video_editor = VideoEditorWrapper()
 
     type_av = {'image': CONTENT_TYPE.PICTURE, 'audio': CONTENT_TYPE.AUDIO, 'video': CONTENT_TYPE.VIDEO}
 
@@ -41,16 +39,14 @@ class ArchiveMediaService():
             if 'media' not in doc or doc['media'] is None:
                 abort(400, description="No media found")
             # check content type of video by python-magic
-            content_type = magic.from_buffer(doc['media'].read(1024), mime=True)
+            content_type = app.media._get_mimetype(doc['media'])
             doc['media'].seek(0)
             file_type = content_type.split('/')[0]
-            if file_type == 'video' and app.config.get("VIDEO_SERVER_ENABLE"):
-                if not self.videoEditor.check_video_server():
-                    raise SuperdeskApiError(message="Cannot connect to videoserver", status_code=500)
+            if file_type == 'video' and app.config.get("VIDEO_SERVER_ENABLED"):
                 # upload media to video server
                 res, renditions, metadata = self.upload_file_to_video_server(doc)
                 # get thumbnails for timeline bar
-                self.videoEditor.get_timeline_thumbnails(doc.get('media'), 40)
+                self.video_editor.create_timeline_thumbnails(doc.get('media'), 60)
             else:
                 file, content_type, metadata = self.get_file_from_document(doc)
                 inserted = [doc['media']]
@@ -76,7 +72,7 @@ class ArchiveMediaService():
                 for file_id in inserted:
                     delete_file_on_error(doc, file_id)
                 if res:
-                    self.videoEditor.delete(res.get('_id'))
+                    self.video_editor.delete(res.get('_id'))
                 abort(500)
 
     def _set_metadata(self, doc):
@@ -124,14 +120,14 @@ class ArchiveMediaService():
         :return:
         """
         # upload video to video server
-        res = self.videoEditor.post(doc.get('media'))
+        res = self.video_editor.create(doc.get('media'))
         doc['media'] = res['_id']
         metadata = res.get('metadata')
         # create renditions
         rend = {
             'href': res.get('url'),
             'video_editor_id': res.get('_id'),
-            'mimetype': res.get('content-type'),
+            'mimetype': res.get('mime_type'),
             'version': res.get('version'),
         }
         renditions = {'original': rend}

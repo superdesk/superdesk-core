@@ -18,13 +18,11 @@ class PlanningResource(Resource):
     item_url = item_url
     item_methods = ['GET']
     resource_methods = ['GET']
+    allow_unknown = True
     datasource = {
         'source': 'planning',
         'search_backend': 'elastic',
-        'default_sort': [('_updated', -1)],
-        'projection': {
-            'fields_meta': 0
-        },
+        'default_sort': [('_updated', -1)]
     }
     privileges = {
         'GET': Scope.PLANNING_READ.name
@@ -36,13 +34,11 @@ class EventsResource(Resource):
     item_url = item_url
     item_methods = ['GET']
     resource_methods = ['GET']
+    allow_unknown = True
     datasource = {
         'source': 'events',
         'search_backend': 'elastic',
-        'default_sort': [('_updated', -1)],
-        'projection': {
-            'fields_meta': 0
-        },
+        'default_sort': [('_updated', -1)]
     }
     privileges = {
         'GET': Scope.EVENTS_READ.name
@@ -54,13 +50,11 @@ class AssignmentsResource(Resource):
     item_url = item_url
     item_methods = ['GET']
     resource_methods = ['GET']
+    allow_unknown = True
     datasource = {
         'source': 'assignments',
         'search_backend': 'elastic',
-        'default_sort': [('_updated', -1)],
-        'projection': {
-            'fields_meta': 0
-        },
+        'default_sort': [('_updated', -1)]
     }
     privileges = {
         'GET': Scope.ASSIGNMENTS_READ.name
@@ -72,16 +66,10 @@ class EventsHistoryResource(Resource):
     item_url = item_url
     item_methods = ['GET']
     resource_methods = ['GET']
+    allow_unknown = True
     datasource = {
         'source': 'events_history',
-        'default_sort': [('_updated', -1)],
-        'projection': {
-            # NOTE: since schema is not defined here, setting up a projection explicitly is required,
-            # otherwise default `eve` fields (projection) will be applied e.q. `{'_id': 1}`
-            # and it will cut off all required data.
-            # https://github.com/pyeve/eve/blob/afd573d9254a9a23393f35760e9c515300909ccd/eve/io/base.py#L420
-            '_etag': 0
-        },
+        'default_sort': [('_updated', -1)]
     }
     privileges = {
         'GET': Scope.EVENTS_READ.name
@@ -93,16 +81,10 @@ class EventsFilesResource(Resource):
     item_url = item_url
     item_methods = ['GET']
     resource_methods = ['GET']
+    allow_unknown = True
     datasource = {
         'source': 'events_files',
-        'default_sort': [('_updated', -1)],
-        'projection': {
-            # NOTE: since schema is not defined here, setting up a projection explicitly is required,
-            # otherwise default `eve` fields (projection) will be applied e.q. `{'_id': 1}`
-            # and it will cut off all required data.
-            # https://github.com/pyeve/eve/blob/afd573d9254a9a23393f35760e9c515300909ccd/eve/io/base.py#L420
-            '_etag': 0
-        },
+        'default_sort': [('_updated', -1)]
     }
     privileges = {
         'GET': Scope.EVENTS_READ.name

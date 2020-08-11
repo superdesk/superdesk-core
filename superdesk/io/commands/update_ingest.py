@@ -9,6 +9,7 @@
 # at https://www.sourcefabric.org/superdesk/license
 
 
+import bson
 import logging
 from datetime import timedelta, timezone, datetime
 
@@ -23,7 +24,7 @@ from superdesk.errors import ProviderError
 from superdesk.io import get_feeding_service
 from superdesk.io.registry import registered_feeding_services, registered_feed_parsers
 from superdesk.io.iptc import subject_codes
-from superdesk.lock import lock, unlock
+from superdesk.lock import lock, unlock, touch
 from superdesk.media.renditions import update_renditions, transfer_renditions
 from superdesk.metadata.item import GUID_NEWSML, GUID_FIELD, FAMILY_ID, ITEM_TYPE, CONTENT_TYPE, CONTENT_STATE, \
     ITEM_STATE
@@ -207,6 +208,20 @@ def get_task_id(provider):
     return 'update-ingest-{0}-{1}'.format(provider.get('name'), provider.get(superdesk.config.ID_FIELD))
 
 
+def has_system_renditions(item):
+    return all((
+        rend in item['renditions']
+        for rend in ('viewImage', 'baseImage', 'thumbnail')
+    ))
+
+
+def update_assoc_renditions(assoc, ingested):
+    if ingested.get('renditions'):
+        assoc.setdefault('renditions', {})
+        for key, val in ingested['renditions'].items():
+            assoc['renditions'][key] = val
+
+
 class UpdateIngest(superdesk.Command):
     """Runs update for ingest providers.
 
@@ -280,6 +295,9 @@ def update_provider(provider, rule_set=None, routing_scheme=None, sync=False):
         failed = None
         while True:
             try:
+                if not touch(lock_name, expire=UPDATE_TTL):
+                    logger.warning('lock expired while updating provider %s', provider[superdesk.config.ID_FIELD])
+                    return
                 items = generator.send(failed)
                 failed = ingest_items(items, provider, feeding_service, rule_set, routing_scheme)
                 update_last_item_updated(update, items)
@@ -516,6 +534,13 @@ def ingest_item(item, provider, feeding_service, rule_set=None, routing_scheme=N
         item['ingest_provider'] = str(provider[superdesk.config.ID_FIELD])
         item.setdefault('source', provider.get('source', ''))
         item.setdefault('uri', item[GUID_FIELD])  # keep it as original guid
+
+        if item.get('profile'):
+            try:
+                item['profile'] = bson.ObjectId(item['profile'])
+            except bson.errors.InvalidId:
+                pass
+
         set_default_state(item, CONTENT_STATE.INGESTED)
         item['expiry'] = get_expiry_date(provider.get('content_expiry') or app.config['INGEST_EXPIRY_MINUTES'],
                                          item.get('versioncreated'))
@@ -548,24 +573,30 @@ def ingest_item(item, provider, feeding_service, rule_set=None, routing_scheme=N
         # if the item has associated media
         for key, assoc in item.get('associations', {}).items():
             set_default_state(assoc, CONTENT_STATE.INGESTED)
-            if assoc.get('renditions'):
-                transfer_renditions(assoc['renditions'])
             # wire up the id of the associated feature media to the ingested one
             guid = assoc.get('guid')
+            assoc_name = assoc.get('headline') or assoc.get('slugline') or assoc['guid']
             if guid:
-                lookup = {'guid': guid}
-                ingested = ingest_service.get_from_mongo(req=None, lookup=lookup)
-                if ingested.count() >= 1:
-                    assoc['_id'] = ingested[0]['_id']
-                    for rendition in ingested[0].get('renditions', {}):  # add missing renditions
-                        assoc['renditions'].setdefault(
-                            rendition,
-                            ingested[0]['renditions'][rendition])
+                ingested = ingest_service.find_one(req=None, guid=guid)
+                logger.info('assoc ingested before %s', assoc_name)
+                if ingested is not None:
+                    assoc['_id'] = ingested['_id']
+                    if is_new_version(assoc, ingested) and assoc.get('renditions'):  # new version
+                        logger.info('new assoc version - re-transfer renditions for %s', assoc_name)
+                        transfer_renditions(assoc['renditions'])
+                    else:
+                        logger.info('same/old version - use already fetched renditions for %s', assoc_name)
+                        update_assoc_renditions(assoc, ingested)
                 else:  # there is no such item in the system - ingest it
+                    if assoc.get('renditions') and has_system_renditions(assoc):  # all set, just download
+                        logger.info('new association  with system renditions - transfer %s', assoc_name)
+                        transfer_renditions(assoc['renditions'])
                     status, ids = ingest_item(assoc, provider, feeding_service, rule_set)
                     if status:
                         assoc['_id'] = ids[0]
                         items_ids.extend(ids)
+                        ingested = ingest_service.find_one(req=None, _id=ids[0])
+                        update_assoc_renditions(assoc, ingested)
             elif assoc.get('residRef'):
                 item['associations'][key] = resolve_ref(assoc)
 

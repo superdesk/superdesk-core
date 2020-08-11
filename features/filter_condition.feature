@@ -1,4 +1,3 @@
-
 Feature: Filter Condition
 
   @auth
@@ -123,4 +122,14 @@ Feature: Filter Condition
     Then we get error 400
     """
     {"_status": "ERR", "_message": "Filter condition has been referenced in content filter: soccer"}
+    """
+
+  @auth
+  Scenario: Get filter condition params
+    When we get "filter_conditions/parameters"
+    Then we get list with 20+ items
+    """
+    {"_items": [
+      {"field": "urgency", "label": "Urgency", "operators": [], "values": [], "value_field": "qcode"}
+    ]}
     """

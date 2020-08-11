@@ -39,6 +39,8 @@ class DictionariesResource(Resource):
         },
         'content': {
             'type': 'dict',
+            'schema': {},
+            'allow_unknown': True,
         },
         'content_list': {
             'type': 'string',

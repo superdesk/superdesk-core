@@ -265,7 +265,7 @@ Feature: Validate
       "embed1": {"required": true},
       "date1": {"required": true},
       "subject": {
-        "mandatory_in_list": {"scheme": {"vocabulary1": "vocabulary1"}},
+        "mandatory_in_list": {"scheme": {"vocabulary1": {"required": true}}},
         "type": "list"
       }
     }}]
@@ -315,7 +315,7 @@ Feature: Validate
     """
     [{"_id": "test", "schema": {
       "subject": {
-        "mandatory_in_list": {"scheme": {"01": "01", "destination": null}},
+        "mandatory_in_list": {"scheme": {"01": {"required": "true"}, "destination": null}},
         "type": "list",
         "nullable": true,
         "required": false,
@@ -355,7 +355,7 @@ Feature: Validate
     """
     [{"_id": "test", "schema": {
       "subject": {
-        "mandatory_in_list": {"scheme": {"01": "01", "destination": null}},
+        "mandatory_in_list": {"scheme": {"01": {"required": "true"}, "destination": null}},
         "type": "list",
         "nullable": false,
         "required": true,
@@ -449,4 +449,34 @@ Feature: Validate
     Then we get existing resource
     """
     {"errors": ["SUBJECT is a required field"]}
+    """
+
+  @auth
+    Scenario: Validate picture using content profile
+    Given "content_types"
+    """
+    [{"_id": "test", "item_type": "picture", "schema": {
+      "headline": {
+        "type": "string",
+        "nullable": true,
+        "required": true
+      }
+    }}]
+    """
+
+    When we post to "/validate"
+    """
+    {
+      "act": "publish",
+      "type": "picture",
+      "validate": {
+        "type": "picture",
+        "slugline": "foo"
+      }
+    }
+    """
+
+    Then we get existing resource
+    """
+    {"errors": ["HEADLINE is a required field"]}
     """

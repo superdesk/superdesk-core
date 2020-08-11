@@ -410,3 +410,277 @@ Feature: Desks
         """
         {"slugline": "x", "headline": "sports", "anpa_category": [{"qcode": "sport"}]}
         """
+
+    @auth
+    @notification
+    Scenario: Retrieve number of items with desk stages overview
+        Given we have "desks" with "SPORTS_DESK_ID" and success
+        """
+        [{"name": "Sports", "desk_type": "authoring"}]
+        """
+        And we have "desks" with "POLITICS_DESK_ID" and success
+        """
+        [{"name": "Politics", "desk_type": "authoring"}]
+        """
+        Given "archive"
+         """
+         [
+         {"_id":"1","slugline": "slugline1", "state": "draft",
+         "task": {"desk": "#SPORTS_DESK_ID#", "stage": "#desks.working_stage#"}, "headline": "one", "family_id": 1},
+         {"_id":"2","slugline": "slugline2", "state": "draft",
+         "task": {"desk": "#SPORTS_DESK_ID#", "stage": "#desks.working_stage#"}, "place": null, "headline": "two",
+         "family_id": 2},
+         {"_id":"3","slugline": "slugline3", "last_published_version": "True", "state": "published",
+         "task": {"desk": "#SPORTS_DESK_ID#", "stage": "#desks.incoming_stage#"}, "place": null, "headline": "three",
+         "family_id": 2},
+         {"_id":"4","slugline": "slugline4", "last_published_version": "True", "state": "published",
+         "task": {"desk": "#POLITICS_DESK_ID#", "stage": "#desks.incoming_stage#"}, "place": null, "headline": "four",
+         "family_id": 2},
+         {"_id":"5","slugline": "slugline5", "state": "draft",
+         "task": {"desk": "#POLITICS_DESK_ID#", "stage": "#desks.incoming_stage#"}, "place": null, "headline": "five",
+         "family_id": 2}
+         ]
+         """
+        When we get "/desks/#SPORTS_DESK_ID#/overview/stages"
+        Then we get existing resource
+        """
+            {
+                "_items": [
+                    {
+                        "stage": "#desks.incoming_stage#",
+                        "count": 1
+                    },
+                    {
+                        "stage": "#desks.working_stage#",
+                        "count": 2
+                    }
+                ]
+            }
+        """
+        When we get "/desks/all/overview/stages"
+        Then we get existing resource
+        """
+            {
+                "_items": [
+                    {
+                        "stage": "#desks.incoming_stage#",
+                        "count": 3
+                    },
+                    {
+                        "stage": "#desks.working_stage#",
+                        "count": 2
+                    }
+                ]
+            }
+        """
+        
+    @auth
+    @notification
+    Scenario: Retrieve number of items with desk assignents overview
+        Given we have "desks" with "SPORTS_DESK_ID" and success
+        """
+        [{"name": "Sports", "desk_type": "authoring"}]
+        """
+        And we have "desks" with "POLITICS_DESK_ID" and success
+        """
+        [{"name": "Politics", "desk_type": "authoring"}]
+        """
+        Given "assignments"
+         """
+         [
+         {"_id":"1", "assigned_to":{"desk":"#SPORTS_DESK_ID#", "state":"assigned"}, "type":"assignment",
+          "planning" : { "genre":[], "slugline":"test 1", "g2_content_type":"text" }},
+         {"_id":"2", "assigned_to":{"desk":"#SPORTS_DESK_ID#", "state":"assigned"}, "type":"assignment",
+          "planning" : { "genre":[], "slugline":"test 2", "g2_content_type":"text" }},
+         {"_id":"3", "assigned_to":{"desk":"#SPORTS_DESK_ID#", "state":"in_progress"}, "type":"assignment",
+          "planning" : { "genre":[], "slugline":"test 3", "g2_content_type":"text" }},
+         {"_id":"4", "assigned_to":{"desk":"#SPORTS_DESK_ID#", "state":"in_progress"}, "type":"assignment",
+          "planning" : { "genre":[], "slugline":"test 4", "g2_content_type":"text" }},
+         {"_id":"5", "assigned_to":{"desk":"#SPORTS_DESK_ID#", "state":"in_progress"}, "type":"assignment",
+          "planning" : { "genre":[], "slugline":"test 5", "g2_content_type":"text" }},
+         {"_id":"6", "assigned_to":{"desk":"#SPORTS_DESK_ID#", "state":"in_progress"}, "type":"assignment",
+          "planning" : { "genre":[], "slugline":"test 6", "g2_content_type":"text" }},
+         {"_id":"7", "assigned_to":{"desk":"#SPORTS_DESK_ID#", "state":"completed"}, "type":"assignment",
+          "planning" : { "genre":[], "slugline":"test 7", "g2_content_type":"text" }},
+         {"_id":"8", "assigned_to":{"desk":"#POLITICS_DESK_ID#", "state":"in_progress"}, "type":"assignment",
+          "planning" : { "genre":[], "slugline":"test 8", "g2_content_type":"text" }},
+         {"_id":"9", "assigned_to":{"desk":"#POLITICS_DESK_ID#", "state":"completed"}, "type":"assignment",
+          "planning" : { "genre":[], "slugline":"test 9", "g2_content_type":"text" }},
+         {"_id":"10", "assigned_to":{"desk":"#POLITICS_DESK_ID#", "state":"completed"}, "type":"assignment",
+          "planning" : { "genre":[], "slugline":"test 10", "g2_content_type":"text" }}
+         ]
+         """
+        When we get "/desks/#SPORTS_DESK_ID#/overview/assignments"
+        Then we get existing resource
+        """
+            {
+                "_items": [
+                    {
+                        "state": "assigned",
+                        "count": 2
+                    },
+                    {
+                        "state": "in_progress",
+                        "count": 4
+                    },
+                    {
+                        "state": "completed",
+                        "count": 1
+                    }
+                ]
+            }
+        """
+        When we get "/desks/all/overview/assignments"
+        Then we get existing resource
+        """
+            {
+                "_items": [
+                    {
+                        "state": "assigned",
+                        "count": 2
+                    },
+                    {
+                        "state": "in_progress",
+                        "count": 5
+                    },
+                    {
+                        "state": "completed",
+                        "count": 3
+                    }
+                ]
+            }
+        """
+
+    @auth
+    @notification
+    Scenario: Retrieve overview of users
+        Given we have "roles" with "ROLE_EDITOR_ID" and success
+        """
+        [{"name": "Editor"}]
+        """
+        And we have "roles" with "ROLE_SUBEDITOR_ID" and success
+        """
+        [{"name": "Sub Editor"}]
+        """
+        And we have "roles" with "ROLE_JOURNALIST_ID" and success
+        """
+        [{"name": "Journalist"}]
+        """
+        Given we have "users" with "USER_1_ID" and success
+        """
+        {"username": "user_1", "email": "user_1@example.net", "is_active": true, "role": "#ROLE_JOURNALIST_ID#"}
+        """
+        And we have "users" with "USER_2_ID" and success
+        """
+        {"username": "user_2", "email": "user_2@example.net", "is_active": true, "role": "#ROLE_JOURNALIST_ID#"}
+        """
+        And we have "users" with "USER_3_ID" and success
+        """
+        {"username": "user_3", "email": "user_3@example.net", "is_active": true, "role": "#ROLE_EDITOR_ID#"}
+        """
+        And we have "users" with "USER_4_ID" and success
+        """
+        {"username": "user_4", "email": "user_4@example.net", "is_active": true, "role": "#ROLE_SUBEDITOR_ID#"}
+        """
+        Given we have "desks" with "SPORTS_DESK_ID" and success
+        """
+        [{"name": "Sports", "desk_type": "authoring", "members": [{"user": "#USER_1_ID#"},
+          {"user": "#USER_2_ID#"}, {"user": "#USER_3_ID#"}] }]
+        """
+        And we have "desks" with "POLITICS_DESK_ID" and success
+        """
+        [{"name": "Politics", "desk_type": "authoring", "members": [{"user": "#USER_1_ID#"},
+          {"user": "#USER_3_ID#"}, {"user": "#USER_4_ID#"}] }]
+        """
+        Given "archive"
+         """
+         [
+         {"_id":"1","slugline": "slugline1", "state": "draft", "original_creator": "#USER_1_ID#",
+         "task": {"desk": "#SPORTS_DESK_ID#", "stage": "#desks.working_stage#"}, "headline": "one", "family_id": 1,
+         "assignment_id": "123", "lock_user": "#USER_3_ID#"},
+         {"_id":"2","slugline": "slugline2", "state": "draft", "original_creator": "#USER_2_ID#",
+         "task": {"desk": "#SPORTS_DESK_ID#", "stage": "#desks.working_stage#"}, "place": null, "headline": "two",
+         "family_id": 2, "assignment_id": "456", "lock_user": "#USER_4_ID#"},
+         {"_id":"3","slugline": "slugline3", "last_published_version": "True", "state": "published",
+         "task": {"desk": "#SPORTS_DESK_ID#", "stage": "#desks.incoming_stage#"}, "place": null, "headline": "three",
+         "family_id": 2, "original_creator": "#USER_3_ID#"},
+         {"_id":"4","slugline": "slugline4", "last_published_version": "True", "state": "published",
+         "task": {"desk": "#POLITICS_DESK_ID#", "stage": "#desks.incoming_stage#"}, "place": null, "headline": "four",
+         "family_id": 2, "original_creator": "#USER_4_ID#", "lock_user": "#USER_3_ID#"},
+         {"_id":"5","slugline": "slugline5", "state": "draft",
+         "task": {"desk": "#SPORTS_DESK_ID#", "stage": "#desks.incoming_stage#"}, "place": null, "headline": "five",
+         "family_id": 2, "original_creator": "#USER_1_ID#", "assignment_id": "789"},
+         {"_id":"6","slugline": "slugline6", "state": "draft",
+         "task": {"desk": "#SPORTS_DESK_ID#", "stage": "#desks.incoming_stage#"}, "place": null, "headline": "five",
+         "family_id": 2, "original_creator": "#USER_2_ID#", "lock_user": "#USER_3_ID#"}
+         ]
+         """
+        When we get "/desks/#SPORTS_DESK_ID#/overview/users"
+        Then we get existing resource
+        """
+            {
+              "_items": [
+                {
+                  "authors": {
+                    "#USER_1_ID#": {
+                      "assigned": 2,
+                      "locked": 1
+                    },
+                    "#USER_2_ID#": {
+                      "assigned": 1,
+                      "locked": 2
+                    }
+                  },
+                  "role": "#ROLE_JOURNALIST_ID#"
+                },
+                {
+                  "authors": {
+                    "#USER_3_ID#": {
+                      "assigned": 0,
+                      "locked": 0
+                    }
+                  },
+                  "role": "#ROLE_EDITOR_ID#"
+                }
+              ]
+            }
+        """
+        When we get "/desks/all/overview/users"
+        Then we get existing resource
+        """
+            {
+                "_items": [
+                  {
+                    "authors": {
+                      "#USER_1_ID#": {
+                        "assigned": 2,
+                        "locked": 1
+                      },
+                      "#USER_2_ID#": {
+                        "assigned": 1,
+                        "locked": 2
+                      }
+                    },
+                    "role": "#ROLE_JOURNALIST_ID#"
+                  },
+                  {
+                    "authors": {
+                      "#USER_3_ID#": {
+                        "assigned": 0,
+                        "locked": 0
+                      }
+                    },
+                    "role": "#ROLE_EDITOR_ID#"
+                  },
+                  {
+                    "authors": {
+                      "#USER_4_ID#": {
+                        "assigned": 0,
+                        "locked": 1
+                      }
+                    },
+                    "role": "#ROLE_SUBEDITOR_ID#"
+                  }
+                ]
+            }
+        """

@@ -90,7 +90,7 @@ class FilterConditionTests(TestCase):
 
     def _setup_elastic_args(self, elastic_translation, search_type='filter'):
         if search_type == 'keyword':
-            self.req.args = {'source': json.dumps({'query': {'bool': {'should': [elastic_translation]}}})}
+            self.req.args = {'source': json.dumps({'query': {'bool': {'filter': [elastic_translation]}}})}
         elif search_type == 'not':
             self.req.args = {'source': json.dumps({'query': {'bool': {'must_not': [elastic_translation]}}})}
         elif search_type == 'filter':

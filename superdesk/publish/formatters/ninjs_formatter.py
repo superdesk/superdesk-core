@@ -222,7 +222,7 @@ class NINJSFormatter(Formatter):
         if not ninjs.get('copyrightholder') and not ninjs.get('copyrightnotice') and not ninjs.get('usageterms'):
             ninjs.update(superdesk.get_resource_service('vocabularies').get_rightsinfo(article))
 
-        if 'genre' in article:
+        if article.get('genre'):
             ninjs['genre'] = self._get_genre(article)
 
         if article.get('flags', {}).get('marked_for_legal'):
@@ -322,6 +322,14 @@ class NINJSFormatter(Formatter):
                     item = orig_item.copy()
 
                 item = self._transform_to_ninjs(item, subscriber, recursive=False)
+
+                # Keep original POI and get rid of all other POI.
+                renditions = item.get('renditions')
+                if renditions:
+                    for rendition in renditions.keys():
+                        if rendition != 'original' and renditions.get(rendition, {}).get('poi'):
+                            renditions[rendition].pop('poi', None)
+
                 associations[key] = item  # all items should stay in associations
                 match = MEDIA_FIELD_RE.match(key)
                 if match:
@@ -413,7 +421,7 @@ class NINJSFormatter(Formatter):
 
         def get_label(item):
             if locator_map:
-                locators = [l for l in locator_map.get('items', []) if l['qcode'] == item.get('qcode')]
+                locators = [loc for loc in locator_map.get('items', []) if loc['qcode'] == item.get('qcode')]
                 if locators and len(locators) == 1:
                     return locators[0].get('state') or \
                         locators[0].get('country') or \

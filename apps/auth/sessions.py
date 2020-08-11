@@ -15,7 +15,7 @@ from superdesk.metadata.utils import item_url
 class SessionsResource(Resource):
     schema = {
         'user': Resource.rel('users', True),
-        'session_preferences': {'type': 'dict'}
+        'session_preferences': {'type': 'dict'},
     }
     datasource = {
         'source': 'auth',
@@ -28,8 +28,9 @@ class SessionsResource(Resource):
 
 class UserSessionClearResource(Resource):
     endpoint_name = 'clear_sessions'
-    url = 'users/<{0}:user_id>/sessions'.format(item_url)
-    datasource = {'source': 'users'}
+    url = 'users/<{0}:user>/sessions'.format(item_url)
+    datasource = {'source': 'auth'}
     resource_methods = ['DELETE']
+    item_methods = []
     resource_title = endpoint_name
     privileges = {'DELETE': 'users'}

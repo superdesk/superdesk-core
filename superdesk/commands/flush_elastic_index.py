@@ -55,22 +55,30 @@ class FlushElasticIndex(superdesk.Command):
 
         self._index_from_mongo(sd_index, capi_index)
 
-    def _delete_elastic(self, index):
-        """Deletes elastic index
+    def _delete_elastic(self, index_prefix):
+        """Deletes elastic indices with `index_prefix`
 
-        :param str index: elastix index
+        :param str index_prefix: elastix index
         :raise: SystemExit exception if delete elastic index response status is not 200 or 404.
         """
 
-        try:
-            print('- Removing elastic index "{}"'.format(index))
-            self._es.indices.delete(index=index, ignore=[])
-        except es_exceptions.NotFoundError:
-            print('\t- "{}" elastic index was not found. Continue wihout deleting.'.format(index))
-        except es_exceptions.TransportError as e:
-            raise SystemExit('\t- "{}" elastic index was not deleted. Exception: "{}"'.format(index, e.error))
-        else:
-            print('\t- "{}" elastic index was deleted.'.format(index))
+        indices = list(self._es.indices.get_alias('{}_*'.format(index_prefix)).keys())
+
+        for es_resource in app.data.get_elastic_resources():
+            alias = app.data.elastic._resource_index(es_resource)
+            for index in indices:
+                if index.rsplit('_', 1)[0] == alias:
+                    try:
+                        print('- Removing elastic index "{}"'.format(index))
+                        self._es.indices.delete(index=index)
+                    except es_exceptions.NotFoundError:
+                        print('\t- "{}" elastic index was not found. Continue wihout deleting.'.format(index))
+                    except es_exceptions.TransportError as e:
+                        raise SystemExit(
+                            '\t- "{}" elastic index was not deleted. Exception: "{}"'.format(index, e.error))
+                    else:
+                        print('\t- "{}" elastic index was deleted.'.format(index))
+                        break
 
     def _index_from_mongo(self, sd_index, capi_index):
         """Index elastic search from mongo.

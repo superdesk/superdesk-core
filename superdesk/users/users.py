@@ -29,7 +29,8 @@ class UsersResource(Resource):
                 'type': 'string',
                 'unique': True,
                 'required': True,
-                'minlength': 1
+                'minlength': 1,
+                'username_pattern': True,
             },
             'password': {
                 'type': 'string',
@@ -95,18 +96,26 @@ class UsersResource(Resource):
                 'nullable': True
             },
             'user_info': {
-                'type': 'dict'
+                'type': 'dict',
+                'schema': {},
+                'allow_unknown': True,
             },
             'picture_url': {
                 'type': 'string',
                 'nullable': True
             },
             'avatar': Resource.rel('upload', embeddable=True, nullable=True),
-            'avatar_renditions': {'type': 'dict'},
+            'avatar_renditions': {'type': 'dict', 'schema': {}},
             'role': Resource.rel('roles', True),
-            'privileges': {'type': 'dict'},
+            'privileges': {
+                'type': 'dict',
+                'schema': {},
+                'allow_unknown': True,
+            },
             'workspace': {
-                'type': 'dict'
+                'type': 'dict',
+                'schema': {},
+                'allow_unknown': True,
             },
             'user_type': {
                 'type': 'string',
@@ -168,7 +177,17 @@ class UsersResource(Resource):
                 'type': 'string',
                 'required': False,
                 'nullable': True
-            }
+            },
+            'session_preferences': {
+                'type': 'dict',
+                'schema': {},
+                'allow_unknown': True,
+            },
+            'user_preferences': {
+                'type': 'dict',
+                'schema': {},
+                'allow_unknown': True,
+            },
         }
 
         self.extra_response_fields = [

@@ -11,6 +11,8 @@
 import functools as ft
 import logging
 import superdesk
+import superdesk.signals as signals
+
 from flask import current_app as app
 from eve.utils import config, ParsedRequest
 from copy import deepcopy
@@ -25,6 +27,8 @@ from superdesk.notification import push_notification
 from superdesk import get_resource_service
 from bson.objectid import ObjectId
 from datetime import timedelta
+from werkzeug.exceptions import Conflict
+from .common import remove_media_files
 
 logger = logging.getLogger(__name__)
 
@@ -37,6 +41,11 @@ def log_exeption(fn):
         except Exception as e:
             logger.exception(e)
     return inner
+
+
+def _get_expired_mongo_ids_query(minutes, now):
+    _datetime = now - timedelta(minutes=minutes)
+    return {'_id': {'$lt': ObjectId.from_datetime(_datetime)}}
 
 
 class RemoveExpiredContent(superdesk.Command):
@@ -64,10 +73,11 @@ class RemoveExpiredContent(superdesk.Command):
             return
 
         logger.info('{} Removing expired content for expiry.'.format(self.log_msg))
-        # both functions should be called, even the first one throw exception,
+        # all functions should be called, even the first one throw exception,
         # so they are wrapped with log_exeption
-        self._remove_expired_publish_queue_items()
+        self._remove_expired_publish_queue_items(now)
         self._remove_expired_items(now, lock_name)
+        self._remove_expired_archived_items(now, lock_name)
         unlock(lock_name)
 
         push_notification('content:expired')
@@ -76,13 +86,12 @@ class RemoveExpiredContent(superdesk.Command):
         remove_locks()
 
     @log_exeption
-    def _remove_expired_publish_queue_items(self):
+    def _remove_expired_publish_queue_items(self, now):
         expire_interval = app.config.get('PUBLISH_QUEUE_EXPIRY_MINUTES', 0)
         if expire_interval:
-            expire_time = utcnow() - timedelta(minutes=expire_interval)
+            expire_time = now - timedelta(minutes=expire_interval)
             logger.info('{} Removing publish queue items created before {}'.format(self.log_msg, str(expire_time)))
-
-            get_resource_service('publish_queue').delete({'_id': {'$lte': ObjectId.from_datetime(expire_time)}})
+            get_resource_service('publish_queue').delete(_get_expired_mongo_ids_query(expire_interval, now))
 
     @log_exeption
     def _remove_expired_items(self, expiry_datetime, lock_name):
@@ -180,7 +189,7 @@ class RemoveExpiredContent(superdesk.Command):
             items_to_expire.update(killed_items)
 
             # get the filter conditions
-            logger.info('{} filter conditions.'.format(self.log_msg))
+            logger.info('{} Loading filter conditions.'.format(self.log_msg))
             req = ParsedRequest()
             filter_conditions = list(get_resource_service('content_filters').get(req=req,
                                                                                  lookup={'is_archived_filter': True}))
@@ -213,6 +222,32 @@ class RemoveExpiredContent(superdesk.Command):
                     logger.exception('{} Failed to set expiry status for item. {}'.format(self.log_msg, msg))
 
             logger.info('{} Deleting killed from archive.'.format(self.log_msg))
+
+    @log_exeption
+    def _remove_expired_archived_items(self, now, lock_name):
+        if not touch(lock_name, expire=600):
+            logger.warning('{} Lost lock before removing expired items from archived.'.format(self.log_msg))
+            return
+        EXPIRY_MINUTES = app.config.get('ARCHIVED_EXPIRY_MINUTES')
+        EXPIRY_LIMIT = app.config.get('MAX_EXPIRY_QUERY_LIMIT', 100)
+        if not EXPIRY_MINUTES:
+            return
+        logger.info('%s Starting to remove expired items from archived.', self.log_msg)
+        archived_service = get_resource_service('archived')
+        query = _get_expired_mongo_ids_query(EXPIRY_MINUTES, now)
+        expired = list(archived_service.find(query, max_results=EXPIRY_LIMIT, sort='_id'))
+        if not len(expired):
+            logger.info('%s No items found to expire in archived.', self.log_msg)
+        else:
+            logger.info('%s Removing %d expired items from archived.', self.log_msg, len(expired))
+        removed = archived_service.delete_docs(expired)
+        for item in expired:
+            if item['_id'] not in removed:
+                logger.error('%s Item was not removed from archived item=%s', self.log_msg, item['item_id'])
+                continue
+            signals.archived_item_removed.send(archived_service, item=item)
+            if not app.config.get('LEGAL_ARCHIVE') and not archived_service.find_one(req=None, item_id=item['item_id']):
+                remove_media_files(item)
 
     def _can_remove_item(self, item, processed_item=None, preserve_published_desks=None):
         """Recursively checks if the item can be removed.
@@ -263,7 +298,12 @@ class RemoveExpiredContent(superdesk.Command):
 
         # If the item is associated with a planning assignment and not published then preserve it
         if item.get('assignment_id') and item.get(ITEM_STATE) not in PUBLISH_STATES:
-            is_expired = False
+            try:
+                assignment = superdesk.get_resource_service('assignments').find_one(req=None, _id=item['assignment_id'])
+                if assignment is not None:
+                    is_expired = False
+            except KeyError:  # planning is not enabled
+                pass
 
         if is_expired:
             # now check recursively for all references
@@ -339,8 +379,11 @@ class RemoveExpiredContent(superdesk.Command):
                 logger.info('{} Found {} published items for item: {}'.format(self.log_msg,
                                                                               len(published_items), item_id))
                 if moved_to_archived:
-                    archived_service.post(published_items)
-                    logger.info('{} Moved item to text archive for item {}.'.format(self.log_msg, item_id))
+                    try:
+                        archived_service.post(published_items)
+                        logger.info('{} Moved item to text archive for item {}.'.format(self.log_msg, item_id))
+                    except Conflict:
+                        logger.warning('%s Item is already in text archive. item=%s', self.log_msg, item_id)
                 else:
                     logger.info('{} Not Moving item to text archive for item {}.'.format(self.log_msg, item_id))
 

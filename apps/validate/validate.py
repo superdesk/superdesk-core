@@ -20,6 +20,7 @@ from superdesk.text_utils import get_text
 from superdesk import get_resource_service
 from _collections_abc import MutableMapping
 from superdesk.signals import item_validate
+from superdesk.validator import BaseErrorHandler
 
 
 REQUIRED_FIELD = 'is a required field'
@@ -32,7 +33,7 @@ INVALID_CHAR = 'contains invalid characters'
 
 def check_json(doc, field, value):
     if isinstance(doc, dict):
-        if field in doc and doc[field] == value:
+        if field in doc and value['required'] and doc[field]:
             return True
         for key in doc:
             if check_json(doc[key], field, value):
@@ -64,57 +65,74 @@ def get_validator_schema(schema):
 
 
 class SchemaValidator(Validator):
-    def _validate_type_media(self, field, value):
-        """Allow type media in schema."""
-        pass
 
-    def _validate_type_related_content(self, field, value):
-        """Allow type related_content in schema."""
-        pass
+    def __init__(self, *args, **kwargs):
+        kwargs['error_handler'] = BaseErrorHandler
+        super(SchemaValidator, self).__init__(*args, **kwargs)
 
-    def _validate_type_embed(self, field, value):
-        """Allow type media in schema."""
-        pass
+    types_mapping = {
+        k: v for k, v in Validator.types_mapping.items()
+        if k not in ('date', )
+    }
 
-    def _validate_type_custom(self, field, value):
-        """Allow custom field type."""
-        pass
+    def _validate_type_media(self, value):
+        return True
 
-    def _validate_type_date(self, field, value):
-        if not isinstance(value, datetime):
-            try:
-                datetime.strptime(value or '', '%Y-%m-%dT%H:%M:%S+%f')
-            except ValueError:
-                self._error(field, DATE_FIELD)
+    def _validate_type_related_content(self, value):
+        return True
 
-    def _validate_type_picture(self, field, value):
-        """Allow type picture in schema."""
-        pass
+    def _validate_type_embed(self, value):
+        return True
 
-    def _validate_type_text(self, field, value):
-        """Validate type text in schema."""
-        if value and not isinstance(value, str):
-            self._error(field, STRING_FIELD)
+    def _validate_type_custom(self, value):
+        return True
 
-    def _validate_type_any(self, field, value):
+    def _validate_type_picture(self, value):
+        return True
+
+    def _validate_type_any(self, value):
         """Allow type any, ex: for CV of type 'custom'."""
-        pass
+        return True
+
+    def _validate_type_text(self, value):
+        """Validate type text in schema."""
+        if value and isinstance(value, str):
+            return True
+
+    def _validate_type_date(self, value):
+        if isinstance(value, datetime):
+            return True
+        try:
+            datetime.strptime(value or '', '%Y-%m-%dT%H:%M:%S+%f')
+            return True
+        except ValueError:
+            pass
 
     def _validate_mandatory_in_list(self, mandatory, field, value):
-        """Validates if all elements from mandatory are presented in the list"""
+        """
+        {'type': 'dict'}
+        """
         for key in mandatory:
             for key_field in mandatory[key]:
-                if not check_json(value, key, mandatory[key][key_field]):
-                    self._error(key_field, REQUIRED_FIELD)
+                if mandatory[key][key_field]["required"]:
+                    if value and len(value) > 0 and any(value_field['scheme'] == key_field for value_field in value):
+                        if not check_json(value, key, mandatory[key][key_field]):
+                            self._error(key_field, REQUIRED_FIELD)
+                    else:
+                        self._error(key_field, REQUIRED_FIELD)
 
     def _validate_mandatory_in_dictionary(self, mandatory, field, value):
-        """Validates if all elements from mandatory are presented in the dictionary"""
+        """
+        {'type': 'list'}
+        """
         for key in mandatory:
             if not value.get(key):
                 self._error(key, REQUIRED_FIELD)
 
     def _validate_empty(self, empty, field, value):
-        """Original validates only strings, adding a list check."""
+        """
+        {'type': 'boolean'}
+        """
         super()._validate_empty(empty, field, value)
         if field == "subject":
             # for subject, we have to ignore all data with scheme
@@ -139,31 +157,51 @@ class SchemaValidator(Validator):
             self._error(field, REQUIRED_FIELD)
 
     def _validate_enabled(self, *args):
-        """Ignore ``enabled`` in the schema."""
+        """
+        {'type': 'boolean'}
+        """
+        pass
+
+    def _validate_readonly(self, *args):
+        """
+        {'type': 'boolean'}
+        """
         pass
 
     def _validate_place(self, *args):
-        """Ignore place."""
+        """
+        {'type': 'list'}
+        """
         pass
 
     def _validate_genre(self, *args):
-        """Ignore genre."""
+        """
+        {'type': 'dict'}
+        """
         pass
 
     def _validate_anpa_category(self, *args):
-        """Ignore anpa category."""
+        """
+        {'type': 'list'}
+        """
         pass
 
     def _validate_subject(self, *args):
-        """Ignore subject."""
+        """
+        {'type': 'list'}
+        """
         pass
 
     def _validate_company_codes(self, *args):
-        """Ignore company codes."""
+        """
+        {'type': 'list'}
+        """
         pass
 
     def _validate_validate_characters(self, validate, field, value):
-        """Validate if field contains only allowed characters."""
+        """
+        {'type': 'boolean'}
+        """
         disallowed_characters = app.config.get('DISALLOWED_CHARACTERS')
 
         if validate and disallowed_characters and value:
@@ -172,6 +210,9 @@ class SchemaValidator(Validator):
                 return self._error(field, INVALID_CHAR)
 
     def _validate_media_metadata(self, validate, associations_field, associations):
+        """
+        {'type': 'boolean'}
+        """
         if not validate:
             return
         media_metadata_schema = app.config.get('VALIDATOR_MEDIA_METADATA')
@@ -201,8 +242,9 @@ class ValidateResource(superdesk.Resource):
         'embedded': {'type': 'boolean', 'required': False},
         'validate': {
             'type': 'dict',
-            'required': True
-        }
+            'required': True,
+        },
+        'errors': {'type': 'list'},
     }
 
     resource_methods = ['POST']
@@ -215,7 +257,9 @@ class ValidateService(superdesk.Service):
         for doc in docs:
             test_doc = deepcopy(doc)
             doc['errors'] = self._validate(test_doc, fields=fields, **kwargs)
-        return [doc['errors'] for doc in docs]
+        if fields:
+            return [doc['errors'] for doc in docs]
+        return [i for i in range(len(docs))]
 
     def _get_profile_schema(self, schema, doc):
         doc['validate'].setdefault('extra', {})  # make sure extra is there so it will validate its fields
@@ -244,8 +288,11 @@ class ValidateService(superdesk.Service):
         use its schema for validations, otherwise it will fall back to action/item_type filter.
         """
         profile = doc['validate'].get('profile')
-        if profile and (app.config['AUTO_PUBLISH_CONTENT_PROFILE'] or doc['act'] != 'auto_publish'):
+        item_type = doc['validate'].get('type') or doc.get('type')
+        if (profile or item_type) and (app.config['AUTO_PUBLISH_CONTENT_PROFILE'] or doc['act'] != 'auto_publish'):
             content_type = superdesk.get_resource_service('content_types').find_one(req=None, _id=profile)
+            if not content_type and item_type:
+                content_type = superdesk.get_resource_service('content_types').find_one(req=None, item_type=item_type)
             if content_type:
                 return self._get_profile_schema(content_type.get('schema', {}), doc)
         lookup = {'act': doc['act'], 'type': doc[ITEM_TYPE]}
@@ -334,11 +381,12 @@ class ValidateService(superdesk.Service):
         :param schema:
         :return:
         """
+
         if doc.get('flags', {}).get('marked_for_sms', False):
             doc['sms'] = doc.get('sms_message', '')
         else:
             # remove it from the valiadation it is not required
-            schema.pop('sms', None)
+            schema.pop('sms', None) if schema.get('sms') else schema.pop('sms_message', None)
 
     def _process_media_metadata(self, doc, schema):
         """Request media validation if associations is present
@@ -348,7 +396,8 @@ class ValidateService(superdesk.Service):
         :return:
         """
         if doc.get('associations'):
-            schema.setdefault('associations', {})['media_metadata'] = True
+            schema.setdefault('associations', {})['media_metadata'] = app.config.get(
+                'VALIDATE_MEDIA_METADATA_ON_PUBLISH', True)
 
     def _get_validator_schema(self, validator):
         """Get schema for given validator.
@@ -358,7 +407,10 @@ class ValidateService(superdesk.Service):
         return {field: get_validator_schema(schema) for field, schema in validator['schema'].items() if schema}
 
     def _get_vocabulary_display_name(self, vocabulary_id):
-        vocabulary = get_resource_service('vocabularies').find_one(req=None, _id=vocabulary_id)
+        if vocabulary_id == 'anpa_category':
+            vocabulary = get_resource_service('vocabularies').find_one(req=None, _id='categories')
+        else:
+            vocabulary = get_resource_service('vocabularies').find_one(req=None, _id=vocabulary_id)
         if vocabulary and 'display_name' in vocabulary:
             return vocabulary['display_name']
         return vocabulary_id

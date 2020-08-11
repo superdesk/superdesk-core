@@ -15,7 +15,7 @@ from .auth import OIDCAuthResource, OIDCAuthService
 
 def init_app(app):
     endpoint_name = 'auth_oidc'
-    app.client_config['oidc_auth'] = bool(app.config['OIDC_ENABLE']) and bool(app.config['SECRET_KEY'] != '')
+    app.client_config['oidc_auth'] = bool(app.config['OIDC_ENABLED']) and bool(app.config['SECRET_KEY'] != '')
     if app.client_config['oidc_auth']:
         issuer = app.config['OIDC_ISSUER']
         app.config.setdefault('OIDC_CLIENT_SECRETS', {

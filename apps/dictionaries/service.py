@@ -156,11 +156,10 @@ class DictionaryService(BaseService):
                 pass
 
         for doc in docs:
-            if self.find_one(req=None, name=doc['name'],
-                             language_id=doc['language_id'],
-                             type=doc.get('type', DictionaryType.DICTIONARY.value)):
+            if self.is_duplicate_dictionary(doc):
                 raise SuperdeskApiError.badRequestError(message=_('The dictionary already exists'),
                                                         payload={'name': 'duplicate'})
+
             self.__set_default(doc)
             self._validate_dictionary(doc)
 
@@ -194,6 +193,11 @@ class DictionaryService(BaseService):
     def get_base_language(self, lang):
         if lang and lang.find('-') > 0:
             return lang.split('-')[0]
+
+    def is_duplicate_dictionary(self, doc):
+        return self.find_one(req=None, name=doc['name'],
+                             language_id=doc['language_id'],
+                             type=doc.get('type', DictionaryType.DICTIONARY.value))
 
     def get_dictionaries(self, lang):
         """Returns all the active dictionaries.
@@ -245,6 +249,27 @@ class DictionaryService(BaseService):
             except (KeyError, JSONDecodeError, RuntimeError):
                 # request.data is not set during tests, so we ignore those errors
                 pass
+
+        user = original.get('user')
+        name = updates.get('name')
+        language_id = updates.get('language_id')
+
+        # if user is present it means dictonary is personal/abbrevations.
+        if user and language_id:
+            personal_dictionary = {
+                'name': str(user) + ':' + language_id,
+                'language_id': language_id,
+                'type': original.get('type'),
+            }
+
+        if (user and language_id and language_id != original.get('language_id')
+                and self.is_duplicate_dictionary(personal_dictionary)):
+            raise SuperdeskApiError.badRequestError(message=_('The dictionary already exists'),
+                                                    payload={'name': 'duplicate'})
+        elif (name and name != original.get('name') and self.find_one(req=None, name=name)):
+            raise SuperdeskApiError.badRequestError(message=_('The dictionary already exists'),
+                                                    payload={'name': 'duplicate'})
+
         # parse json list
         if updates.get('content_list'):
             updates['content'] = json.loads(updates.pop('content_list'))

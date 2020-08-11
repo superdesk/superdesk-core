@@ -122,6 +122,7 @@ def get_feed_parser(parser_name):
 class FeedParserAllowedResource(Resource):
     resource_methods = ['GET']
     item_methods = []
+    allow_unknown = True
 
 
 class FeedParserAllowedService(Service):
@@ -142,6 +143,13 @@ class FeedParserAllowedService(Service):
 class FeedingServiceAllowedResource(Resource):
     resource_methods = ['GET']
     item_methods = []
+    schema = {
+        'feeding_service': {'type': 'string'},
+        'label': {'type': 'string'},
+        'fields': {'type': 'list'},
+        'field_groups': {'type': 'dict', 'schema': {}},
+        'parser_restricted_values': {'type': 'list'},
+    }
 
 
 class FeedingServiceAllowedService(Service):
