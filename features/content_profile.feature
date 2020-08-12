@@ -1900,7 +1900,6 @@ Feature: Content Profile
         """
         And there is no "headline" in data
 
-    @wip
     @auth
     Scenario: Removing the keywords field from content profile should not show the keywords field again 
         Given "vocabularies"
