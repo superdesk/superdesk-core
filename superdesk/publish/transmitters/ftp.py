@@ -112,6 +112,9 @@ class FTPPublishService(PublishService):
             for key, rendition in renditions.items():
                 if key not in renditions_filter:
                     continue
+                if not rendition.get('media'):
+                    logger.warn('media missing on rendition %s for item %s', key, item['guid'])
+                    continue
                 rendition.pop('href', None)
                 rendition.setdefault('mimetype', rendition.get('original', {}).get('mimetype', item.get('mimetype')))
                 media[rendition['media']] = rendition
