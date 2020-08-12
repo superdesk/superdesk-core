@@ -370,6 +370,7 @@ CORE_APPS = [
     'superdesk.attachments',
     'superdesk.auth_server',
     'apps.links',
+    'superdesk.locales',
 ]
 
 #: Specify what modules should be enabled
