@@ -62,6 +62,7 @@ class SpellcheckerResource(Resource):
     internal_resource = False
     resource_methods = ['POST']
     item_methods = ['GET']
+    projection = False
 
 
 class SpellcheckerService(BaseService):
