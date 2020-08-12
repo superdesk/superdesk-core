@@ -1899,3 +1899,66 @@ Feature: Content Profile
         }
         """
         And there is no "headline" in data
+
+    @wip
+    @auth
+    Scenario: Removing the keywords field from content profile should not show the keywords field again 
+        Given "vocabularies"
+        """
+        [
+            {
+                "_id": "keywords", 
+                "display_name": "keywords_little", 
+                "service": {"all": 1},
+                "items": [{"name": "k1", "parent": "k1", "qcode": "k1"}]
+            }
+        ]
+        """
+        And "content_types"
+        """
+        [{"_id": "profile"}]
+        """
+        When we get "/content_types/profile?edit=true"
+        Then we get existing resource
+        """
+        {
+            "schema": {
+                "keywords": {
+                    "type": "list",
+                    "required": false
+                }
+            },
+            "editor": {
+                "keywords": {
+                    "enabled": false,
+                    "field_name": "keywords_little"
+                }
+            }
+        }
+        """
+        When we patch "/content_types/profile"
+        """
+        {
+            "editor": {"keywords": {"enabled": true}}
+        }
+        """
+        And we get "/content_types/profile?edit=true"
+        Then we get existing resource
+        """
+        {
+            "editor": {"keywords": {"enabled": true}}
+        }
+        """
+         When we patch "/content_types/profile"
+        """
+        {
+            "editor": {"keywords": {"enabled": false}}
+        }
+        """
+        And we get "/content_types/profile?edit=true"
+        Then we get existing resource
+        """
+        {
+            "editor": {"keywords": {"enabled": false}}
+        }
+        """
