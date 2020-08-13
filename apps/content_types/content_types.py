@@ -334,7 +334,10 @@ def init_custom(editor, schema, fields_map):
         else:
             # fields are stored in subject so add new custom editor
             schema[field] = {'type': 'list', 'required': False, 'readonly': False}
-            if editor.get(field, None):
+
+            if editor.get(field) and 'enabled' in editor[field]:
+                editor[field]['enabled'] = editor[field].get('enabled')
+            elif editor.get(field):
                 editor[field]['enabled'] = True
             else:
                 editor[field] = {'enabled': False}
