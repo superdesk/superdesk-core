@@ -116,4 +116,12 @@ class MacrosResource(superdesk.Resource):
             'type': 'string',
             'readonly': True,
         },
+        'access_type': {
+            'type': 'string',
+            'readonly': True,
+        },
+        'group': {
+            'type': 'string',
+            'readonly': True,
+        },
     }
