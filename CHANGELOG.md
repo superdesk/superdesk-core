@@ -1,5 +1,11 @@
 # Superdesk Server Changelog
 
+## [1.33.5] 2020-08-14
+
+### Fixed
+
+- Fix language is reset in metadata section of the template when updating content profile.
+
 ## [1.33.4] 2020-07-29
 
 ### Fixed
