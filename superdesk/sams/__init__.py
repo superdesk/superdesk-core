@@ -1,4 +1,5 @@
 import superdesk
+from .assets import assets_bp
 from .storage_destinations import destinations_bp
 from .sets import sets_bp
 from superdesk.auth.decorator import blueprint_auth
@@ -14,6 +15,7 @@ def init_app(app):
     }
     client = SamsClient(configs)
 
+    @assets_bp.before_request
     @destinations_bp.before_request
     @sets_bp.before_request
     @blueprint_auth()
@@ -23,6 +25,7 @@ def init_app(app):
         """
         pass
 
+    @assets_bp.after_request
     @destinations_bp.after_request
     @sets_bp.after_request
     def after_request(response):
@@ -33,6 +36,7 @@ def init_app(app):
 
     superdesk.blueprint(destinations_bp, app, client=client)
     superdesk.blueprint(sets_bp, app, client=client)
+    superdesk.blueprint(assets_bp, app, client=client)
 
     superdesk.privilege(
         name='sams',
