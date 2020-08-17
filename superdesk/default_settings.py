@@ -26,7 +26,7 @@ from distutils.util import strtobool as _strtobool
 try:
     from urllib.parse import urlparse
 except ImportError:
-    from urlparse import urlparse
+    from urlparse import urlparse # type: ignore
 
 
 def strtobool(value):
