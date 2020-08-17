@@ -5,7 +5,7 @@ from superdesk import text_utils
 
 class WordCountTestCase(unittest.TestCase):
 
-    def test_word_count_whitespace_string():
+    def test_word_count_whitespace_string(self):
         self.assertEqual(0, text_utils.get_word_count('   '))
 
     def test_word_count_p_tags(self):
