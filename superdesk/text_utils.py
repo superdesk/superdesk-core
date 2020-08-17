@@ -31,8 +31,13 @@ def get_text_word_count(text):
     :return int: word count
     """
 
-    flags = regex.MULTILINE
-    r0 = get_text(text, space_on_elements=True)
+    flags = regex.MULTILINE | regex.UNICODE
+    initial_text_trimmed = text.strip()
+
+    if len(initial_text_trimmed) < 1:
+        return 0
+
+    r0 = get_text(initial_text_trimmed, space_on_elements=True)
 
     r1 = regex.sub(r'\n', ' ', r0, flags=flags)
 
