@@ -7,6 +7,7 @@ class WordCountTestCase(unittest.TestCase):
 
     def test_word_count_p_tags(self):
         self.assertEqual(2, text_utils.get_word_count('<p>foo<strong>s</strong></p><p>bar</p>'))
+        self.assertEqual(500, text_utils.get_word_count('<p>word</p>' * 500))
 
     def test_word_count_brs(self):
         self.assertEqual(2, text_utils.get_word_count('<p>foo<br><br>bar</p>'))
