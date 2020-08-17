@@ -560,6 +560,7 @@
             "display_name": "Urgency",
             "type": "manageable",
             "unique_field": "qcode",
+            "selection_type": "multi selection",
             "items": [
                 {"is_active": true, "name": "1", "qcode": 1},
                 {"is_active": true, "name": "2", "qcode": 2},
@@ -568,7 +569,6 @@
                 {"is_active": true, "name": "5", "qcode": 5}
             ]
         },
-        "selection_type": "multi selection",
         "resource": "vocabularies",
 		"id_name": "-id vocabularies urgency-"
     },
@@ -578,6 +578,7 @@
             "_id": "priority",
             "display_name": "Priority",
             "type": "manageable",
+            "selection_type": "multi selection",
             "items": [
                 {"is_active": true, "name": "1", "qcode": 1},
                 {"is_active": true, "name": "2", "qcode": 2},
@@ -590,7 +591,6 @@
                 {"is_active": false, "name": "9", "qcode": 9}
             ]
         },
-        "selection_type": "multi selection",
         "resource": "vocabularies",
 		"id_name": "-id vocabularies priority-"
     },
@@ -633,6 +633,7 @@
             "_id": "type",
             "display_name": "Article Type",
             "type": "unmanageable",
+            "selection_type": "multi selection",
             "items": [
                 {"is_active": true, "name": "text", "qcode": "text"},
                 {"is_active": true, "name": "preformatted", "qcode": "preformatted"},
@@ -643,7 +644,6 @@
                 {"is_active": true, "name": "composite", "qcode": "composite"}
             ]
         },
-        "selection_type": "multi selection",
         "resource": "vocabularies",
 		"id_name": "-id vocabularies priority-"
     },
@@ -653,6 +653,7 @@
             "_id": "locators",
             "display_name": "Locators",
             "type": "unmanageable",
+            "selection_type": "multi selection",
             "items": [
                 {"is_active": true, "name": "ACT", "qcode": "ACT", "state": "Australian Capital Territory", "country": "Australia", "world_region": "Oceania", "group": "Australia"},
                 {"is_active": true, "name": "ADV", "qcode": "ADV", "group": ""},
@@ -680,7 +681,6 @@
                 {"is_active": true, "name": "WA", "qcode": "WA", "state": "Western Australia", "country": "Australia", "world_region": "Oceania", "group": "Australia"}
             ]
         },
-        "selection_type": "multi selection",
         "resource": "vocabularies",
 		"id_name": "-id vocabularies priority-"
     },
@@ -771,6 +771,7 @@
     {
         "data": {
             "_id": "genre",
+            "selection_type": "multi selection",
             "items": [
                 {"is_active": true, "name": "Article (news)", "qcode": "Article"},
                 {"is_active": true, "name": "Sidebar", "qcode": "Sidebar"},
@@ -784,7 +785,6 @@
                 {"is_active": true, "name": "Broadcast Script", "qcode": "Broadcast Script"}
             ]
         },
-        "selection_type": "multi selection",
 		"resource": "vocabularies",
 		"id_name": "-id vocabularies genre-"
     },
@@ -794,6 +794,7 @@
             "_id": "categories",
             "display_name": "Categories",
             "type": "manageable",
+            "selection_type": "multi selection",
             "unique_field": "qcode",
             "items": [
                 {"is_active": true, "name": "Australian General News", "qcode": "a"},
@@ -824,7 +825,6 @@
                 {"is_active": false, "name": "Supplementary Traffic", "qcode": "z"}
             ]
         },
-        "selection_type": "multi selection",
         "resource": "vocabularies",
         "id_name": "-id vocabularies categories-"
     },
@@ -834,6 +834,7 @@
             "_id": "default_categories",
             "display_name": "Default Categories",
             "type": "manageable",
+            "selection_type": "multi selection",
             "unique_field": "qcode",
             "items" : [
                 {"qcode" : "a", "is_active" : true},
@@ -845,7 +846,6 @@
                 {"qcode" : "v", "is_active" : true}
             ]
         },
-        "selection_type": "multi selection",
         "resource": "vocabularies",
         "id_name": "-id vocabularies default_categories-"
     },
