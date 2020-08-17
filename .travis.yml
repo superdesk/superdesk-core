@@ -32,4 +32,6 @@ jobs:
           name: "behave"
         - script: cd prod_api && time pytest
           name: "prodapi-pytest"
+        - script: mypy .
+          name: "mypy"
 
