@@ -31,19 +31,20 @@ def get_text_word_count(text):
     :return int: word count
     """
 
+    flags = regex.MULTILINE
     r0 = get_text(text, space_on_elements=True)
 
-    r1 = regex.sub(r'\n', ' ', r0, regex.MULTILINE | regex.UNICODE)
+    r1 = regex.sub(r'\n', ' ', r0, flags=flags)
 
     # Remove spaces between two numbers
     # 1 000 000 000 -> 1000000000
-    r2 = regex.sub(r'([0-9]) ([0-9])', '\\1\\2', r1, regex.MULTILINE | regex.UNICODE)
+    r2 = regex.sub(r'([0-9]) ([0-9])', '\\1\\2', r1, flags=flags)
 
     # remove anything that is not a unicode letter, a space or a number
-    r3 = regex.sub(r'[^\p{L} 0-9]', '', r2, regex.MULTILINE | regex.UNICODE)
+    r3 = regex.sub(r'[^\p{L} 0-9]', '', r2, flags=flags)
 
     # replace two or more spaces with one space
-    r4 = regex.sub(r' {2,}', ' ', r3, regex.MULTILINE | regex.UNICODE)
+    r4 = regex.sub(r' {2,}', ' ', r3, flags=flags)
 
     result = len(r4.strip().split(" "))
 
