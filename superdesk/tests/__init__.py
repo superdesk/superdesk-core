@@ -297,7 +297,7 @@ def use_snapshot(app, name, funcs=(snapshot_es, snapshot_mongo), force=False):
     return wrapper
 
 
-use_snapshot.cache = {}
+use_snapshot.cache = {} # type: ignore
 
 
 def setup(context=None, config=None, app_factory=get_app, reset=False):

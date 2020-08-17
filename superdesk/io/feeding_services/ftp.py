@@ -28,7 +28,7 @@ from superdesk.ftp import ftp_connect
 try:
     from urllib.parse import urlparse
 except ImportError:
-    from urlparse import urlparse
+    from urlparse import urlparse # type: ignore
 
 logger = logging.getLogger(__name__)
 DEFAULT_SUCCESS_PATH = "_PROCESSED"

@@ -31,7 +31,7 @@ class PubStatuses(NamedTuple):
     CANCELED: str
 
 
-PUB_STATUS = PubStatuses('usable', 'withheld', 'canceled')
+PUB_STATUS: PubStatuses = PubStatuses('usable', 'withheld', 'canceled')
 
 
 class ContentTypes(NamedTuple):
@@ -45,7 +45,8 @@ class ContentTypes(NamedTuple):
     EVENT: str
 
 
-CONTENT_TYPE = ContentTypes('text', 'preformatted', 'audio', 'video', 'picture', 'graphic', 'composite', 'event')
+CONTENT_TYPE: ContentTypes = ContentTypes('text', 'preformatted', 'audio', 'video', 'picture', 'graphic', 'composite',
+                                          'event')
 
 MEDIA_TYPES = ('audio', 'video', 'picture', 'graphic')
 ITEM_TYPE = 'type'
@@ -71,8 +72,9 @@ class ContentStates(NamedTuple):
     UNPUBLISHED: str
 
 
-CONTENT_STATE = ContentStates('draft', 'ingested', 'routed', 'fetched', 'submitted', 'in_progress', 'spiked',
-                              'published', 'killed', 'corrected', 'scheduled', 'recalled', 'unpublished')
+CONTENT_STATE: ContentStates = ContentStates('draft', 'ingested', 'routed', 'fetched', 'submitted', 'in_progress',
+                                             'spiked',
+                                             'published', 'killed', 'corrected', 'scheduled', 'recalled', 'unpublished')
 
 PUBLISH_STATES = {
     CONTENT_STATE.PUBLISHED,
@@ -90,7 +92,7 @@ class Formats(NamedTuple):
 
 
 FORMAT = 'format'
-FORMATS = Formats('HTML', 'preserved')
+FORMATS: Formats = Formats('HTML', 'preserved')
 
 BYLINE = 'byline'
 SIGN_OFF = 'sign_off'

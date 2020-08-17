@@ -1,3 +1,4 @@
+from typing import List
 
 from superdesk import Resource, Service
 from superdesk.utils import ListCursor
@@ -5,7 +6,10 @@ from superdesk.errors import AlreadyExistsError
 from flask_babel import _
 
 registered_search_providers = {}
-allowed_search_providers = []
+
+# If you initialize a variable with an empty container or "None"
+# you may have to help mypy a bit by providing a type annotation
+allowed_search_providers: List[str] = []
 
 
 def register_search_provider(name, fetch_endpoint=None, provider_class=None, label=None):
@@ -51,7 +55,7 @@ def register_search_provider(name, fetch_endpoint=None, provider_class=None, lab
     else:
         provider_data['label'] = name
 
-    provider_data = registered_search_providers[name] = provider_data
+    registered_search_providers[name] = provider_data
 
     allowed_search_providers.append(name)
 

@@ -66,4 +66,4 @@ class LegalPublishQueueResource(LegalResource, PublishQueueResource):
     item_schema.update(PublishQueueResource.schema)
     schema = item_schema
 
-    datasource = {'source': LEGAL_PUBLISH_QUEUE_NAME}
+    datasource = {'source': LEGAL_PUBLISH_QUEUE_NAME} # type: ignore

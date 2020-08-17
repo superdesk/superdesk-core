@@ -386,40 +386,6 @@ class ErrorsTestCase(TestCase):
                          "ParserError Error 1006 - NITF input could not be processed: "
                          "Testing nitfParserError on channel TestProvider")
 
-    def test_raise_folderCreateError(self):
-        with assert_raises(IngestFileError) as error_context:
-            try:
-                ex = Exception("Testing folderCreateError")
-                raise ex
-            except Exception:
-                raise IngestFileError.folderCreateError(ex, self.provider)
-        exception = error_context.exception
-        self.assertTrue(exception.code == 3001)
-        self.assertTrue(exception.message == "Destination folder could not be created")
-        self.assertIsNotNone(exception.system_exception)
-        self.assertEqual(exception.system_exception.args[0], "Testing folderCreateError")
-        self.assertEqual(len(self.mock_logger_handler.messages['error']), 1)
-        self.assertEqual(self.mock_logger_handler.messages['error'][0],
-                         "IngestFileError Error 3001 - Destination folder could not be created: "
-                         "Testing folderCreateError on channel TestProvider")
-
-    def test_raise_fileMoveError(self):
-        with assert_raises(IngestFileError) as error_context:
-            try:
-                ex = Exception("Testing fileMoveError")
-                raise ex
-            except Exception:
-                raise IngestFileError.fileMoveError(ex, self.provider)
-        exception = error_context.exception
-        self.assertTrue(exception.code == 3002)
-        self.assertTrue(exception.message == "Ingest file could not be copied")
-        self.assertIsNotNone(exception.system_exception)
-        self.assertEqual(exception.system_exception.args[0], "Testing fileMoveError")
-        self.assertEqual(len(self.mock_logger_handler.messages['error']), 1)
-        self.assertEqual(self.mock_logger_handler.messages['error'][0],
-                         "IngestFileError Error 3002 - Ingest file could not be copied: "
-                         "Testing fileMoveError on channel TestProvider")
-
     def test_raise_providerAddError(self):
         with assert_raises(ProviderError) as error_context:
             try:

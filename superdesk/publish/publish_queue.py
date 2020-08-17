@@ -9,6 +9,7 @@
 # at https://www.sourcefabric.org/superdesk/license
 
 import logging
+from typing import Dict, Any
 
 from superdesk import get_resource_service
 from superdesk.notification import push_notification

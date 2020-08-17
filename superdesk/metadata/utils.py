@@ -16,7 +16,7 @@ from contextlib import contextmanager
 try:
     from urllib.parse import urlparse
 except ImportError:
-    from urlparse import urlparse
+    from urlparse import urlparse # type: ignore
 
 from superdesk.utils import SuperdeskBaseEnum
 from .item import GUID_TAG, GUID_NEWSML, GUID_FIELD, ITEM_TYPE, CONTENT_TYPE

@@ -435,8 +435,8 @@ class ValidateService(superdesk.Service):
             v.allow_unknown = True
             try:
                 v.validate(doc['validate'], validation_schema)
-            except TypeError as e:
-                logger.exception('Invalid validator schema value "%s" for ' % str(e))
+            except TypeError as ex:
+                logger.exception('Invalid validator schema value "%s" for ' % str(ex))
             error_list = v.errors
             response = []
             for e in error_list:

@@ -8,6 +8,7 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
+from typing import List, Dict
 import traceback
 import requests
 from superdesk.errors import IngestApiError, SuperdeskIngestError
@@ -73,7 +74,7 @@ class HTTPFeedingServiceBase(FeedingService):
     HTTP_AUTH = True
 
     # use this when auth is always required
-    AUTH_FIELDS = [
+    AUTH_FIELDS: List[Dict] = [
         {
             'id': 'username', 'type': 'text', 'label': 'Username',
             'placeholder': 'Username', 'required': True
@@ -85,7 +86,7 @@ class HTTPFeedingServiceBase(FeedingService):
     ]
 
     # use this when auth depends of a "auth_required" flag (set by user)
-    AUTH_REQ_FIELDS = [
+    AUTH_REQ_FIELDS: List[Dict] = [
         {
             'id': 'auth_required', 'type': 'boolean', 'label': 'Requires Authentication',
             'placeholder': 'Requires Authentication', 'required': False
@@ -193,13 +194,13 @@ class HTTPFeedingServiceBase(FeedingService):
             raise IngestApiError.apiGeneralError(exception, self.provider)
 
         if not response.ok:
-            exception = Exception(response.reason)
+            exc = Exception(response.reason)
             if response.status_code in (401, 403):
-                raise IngestApiError.apiAuthError(exception, self.provider)
+                raise IngestApiError.apiAuthError(exc, self.provider)
             elif response.status_code == 404:
-                raise IngestApiError.apiNotFoundError(exception, self.provider)
+                raise IngestApiError.apiNotFoundError(exc, self.provider)
             else:
-                raise IngestApiError.apiGeneralError(exception, self.provider)
+                raise IngestApiError.apiGeneralError(exc, self.provider)
 
         return response
 

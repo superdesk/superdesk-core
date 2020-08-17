@@ -34,7 +34,7 @@ class SubscriberTypes(NamedTuple):
     ALL: str
 
 
-SUBSCRIBER_TYPES = SubscriberTypes('digital', 'wire', 'all')
+SUBSCRIBER_TYPES: SubscriberTypes = SubscriberTypes('digital', 'wire', 'all')
 
 
 class SubscriberMediaTypes(NamedTuple):
@@ -43,7 +43,7 @@ class SubscriberMediaTypes(NamedTuple):
     BOTH: str
 
 
-SUBSCRIBER_MEDIA_TYPES = SubscriberMediaTypes('media', 'non-media', 'both')
+SUBSCRIBER_MEDIA_TYPES: SubscriberMediaTypes = SubscriberMediaTypes('media', 'non-media', 'both')
 
 
 def register_transmitter(transmitter_type, transmitter, errors):
