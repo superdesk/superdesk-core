@@ -37,7 +37,7 @@ def get():
     """
     Returns a list of all the registered assets
     """
-    assets = assets_bp.kwargs['client'].assets.search()
+    assets = assets_bp.kwargs['client'].assets.search(args=request.args.to_dict())
     return assets.json(), assets.status_code
 
 
