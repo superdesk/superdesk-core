@@ -61,6 +61,11 @@ def enhance_document_with_default_prefs(doc):
             sync_field('label', v, default)
             sync_field('category', v, default)
 
+        if v.get('label'):
+            v['label'] = _(v['label'])
+        if v.get('category'):
+            v['category_label'] = _(v['category'])
+
     doc[_user_preferences_key] = available
 
 
@@ -95,12 +100,13 @@ class PreferencesResource(Resource):
     item_methods = ['GET', 'PATCH']
     merge_nested_documents = True
 
+
     superdesk.register_default_user_preference('feature:preview', {
         'type': 'bool',
         'enabled': False,
         'default': False,
-        'label': 'Enable Feature Preview',
-        'category': 'feature',
+        'label': _('Enable Feature Preview'),
+        'category': _('feature'),
         'privileges': ['feature_preview']
     })
 
@@ -109,16 +115,16 @@ class PreferencesResource(Resource):
         'allowed': ['mgrid', 'compact'],
         'view': 'mgrid',
         'default': 'mgrid',
-        'label': 'Users archive view format',
-        'category': 'archive'
+        'label': _('Users archive view format'),
+        'category': _('archive')
     })
 
     superdesk.register_default_user_preference('singleline:view', {
         'type': 'bool',
         'enabled': None,
         'default': False,
-        'label': 'Enable Single Line View',
-        'category': 'rows'
+        'label': _('Enable Single Line View'),
+        'category': _('rows')
     })
 
     superdesk.register_default_user_preference('editor:theme', {
@@ -142,28 +148,28 @@ class PreferencesResource(Resource):
 
     superdesk.register_default_user_preference('dateline:located', {
         'type': 'dict',
-        'label': 'Located',
-        'category': 'article_defaults'
+        'label': _('Located'),
+        'category': _('article_defaults')
     })
 
     superdesk.register_default_user_preference('categories:preferred', {
         'type': 'dict',
-        'category': 'categories',
-        'label': 'Preferred Categories',
+        'category': _('categories'),
+        'label': _('Preferred Categories'),
         'selected': {},
     })
 
     superdesk.register_default_user_preference('desks:preferred', {
         'type': 'dict',
-        'category': 'desks',
-        'label': 'Preferred Desks',
+        'category': _('desks'),
+        'label': _('Preferred Desks'),
         'selected': {},
     })
 
     superdesk.register_default_user_preference('article:default:place', {
         'type': 'list',
-        'label': 'Place',
-        'category': 'article_defaults',
+        'label': _('Place'),
+        'category': _('article_defaults'),
         'place': []
     })
 
@@ -178,8 +184,8 @@ class PreferencesResource(Resource):
         'allowed': ['mgrid', 'compact'],
         'view': 'mgrid',
         'default': 'mgrid',
-        'label': 'Users contacts view format',
-        'category': 'contacts'
+        'label': _('Users contacts view format'),
+        'category': _('contacts')
     })
 
     superdesk.register_default_user_preference('destination:active', {})
