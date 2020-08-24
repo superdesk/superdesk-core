@@ -10,13 +10,9 @@
 
 from datetime import datetime
 from uuid import uuid4
+from urllib.parse import urlparse
 from flask import current_app as app
 from contextlib import contextmanager
-
-try:
-    from urllib.parse import urlparse
-except ImportError:
-    from urlparse import urlparse # type: ignore
 
 from superdesk.utils import SuperdeskBaseEnum
 from .item import GUID_TAG, GUID_NEWSML, GUID_FIELD, ITEM_TYPE, CONTENT_TYPE

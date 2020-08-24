@@ -11,7 +11,7 @@
 import json
 import logging
 import superdesk
-
+from urllib.parse import urlparse
 from io import BytesIO
 from flask import current_app as app
 
@@ -24,11 +24,6 @@ from superdesk.media.renditions import get_rendition_file_name, get_renditions_s
 errors = [PublishFtpError.ftpError().get_error_description()]
 
 logger = logging.getLogger(__name__)
-
-try:
-    from urllib.parse import urlparse
-except ImportError:
-    from urlparse import urlparse # type: ignore
 
 
 def get_renditions_filter():

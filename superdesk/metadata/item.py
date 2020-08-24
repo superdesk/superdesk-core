@@ -83,7 +83,7 @@ PUBLISH_STATES = {
     CONTENT_STATE.KILLED,
     CONTENT_STATE.RECALLED,
     CONTENT_STATE.UNPUBLISHED,
-} # type: ignore
+}
 
 
 class Formats(NamedTuple):

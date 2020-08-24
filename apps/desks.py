@@ -608,7 +608,7 @@ class OverviewService(BaseService):
             for b in response.hits['aggregations']['overview']['buckets']
         ]
 
-    def _users_aggregation(self, desk_id: str) -> List:
+    def _users_aggregation(self, desk_id: str) -> List[Dict]:
         desks_service = superdesk.get_resource_service('desks')
 
         es_query: Dict[str, Any]

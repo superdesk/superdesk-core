@@ -120,7 +120,7 @@ class PublishQueueResource(Resource):
     }
 
     etag_ignore_fields = ['moved_to_legal']
-    datasource = {'default_sort': [('_created', -1), ('subscriber_id', 1), ('published_seq_num', -1)]}
+    datasource: Dict[str, Any] = {'default_sort': [('_created', -1), ('subscriber_id', 1), ('published_seq_num', -1)]}
     privileges = {'POST': 'publish_queue', 'PATCH': 'publish_queue'}
 
 
