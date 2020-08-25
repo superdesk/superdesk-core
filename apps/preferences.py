@@ -22,6 +22,7 @@ from superdesk.workflow import get_privileged_actions
 from superdesk.validation import ValidationError
 from flask_babel import _
 
+
 _preferences_key = 'preferences'
 _user_preferences_key = 'user_preferences'
 _session_preferences_key = 'session_preferences'
@@ -61,9 +62,9 @@ def enhance_document_with_default_prefs(doc):
             sync_field('label', v, default)
             sync_field('category', v, default)
 
-        if v.get('label'):
+        if isinstance(v, dict) and v.get('label'):
             v['label'] = _(v['label'])
-        if v.get('category'):
+        if isinstance(v, dict) and v.get('category'):
             v['category_label'] = _(v['category'])
 
     doc[_user_preferences_key] = available
@@ -99,7 +100,6 @@ class PreferencesResource(Resource):
     resource_methods = []
     item_methods = ['GET', 'PATCH']
     merge_nested_documents = True
-
 
     superdesk.register_default_user_preference('feature:preview', {
         'type': 'bool',
