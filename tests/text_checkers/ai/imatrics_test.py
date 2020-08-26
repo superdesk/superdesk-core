@@ -15,6 +15,7 @@ from superdesk.tests import TestCase
 from superdesk.text_checkers import tools
 from superdesk.text_checkers import ai
 from superdesk.text_checkers.ai.base import registered_ai_services, AIServiceBase
+from superdesk.errors import SuperdeskApiError
 from superdesk import get_resource_service
 
 ai.AUTO_IMPORT = False
@@ -55,8 +56,8 @@ class IMatricsTestCase(TestCase):
             ])
 
     @responses.activate
-    def test_checker(self):
-        """Check that spellchecking is working"""
+    def test_autotagging(self):
+        """Check that autotagging is working"""
         doc = {
             "service": "imatrics",
             "item_id": "test_1",
@@ -129,3 +130,131 @@ class IMatricsTestCase(TestCase):
         }
 
         self.assertEqual(doc['analysis'], expected)
+
+    @responses.activate
+    def test_search(self):
+        """Tag searching is returning tags"""
+        doc = {
+            "service": "imatrics",
+            "operation": "search",
+            "data": {"term": "informasjons"},
+        }
+        ai_data_op_service = get_resource_service('ai_data_op')
+        api_url = urljoin(TEST_BASE_URL, "concept/get")
+        responses.add(
+            responses.POST, api_url,
+            json={
+                "result": [
+                    {
+                        "longDescription": "",
+                        "pubStatus": True,
+                        "aliases": [],
+                        "latestVersionTimestamp": "2020-07-14T15:26:26Z",
+                        "author": "NTB",
+                        "createdTimestamp": "2020-07-14T15:26:26Z",
+                        "shortDescription": "",
+                        "broader": "",
+                        "title": "informasjons- og kommunikasjonsteknologi",
+                        "type": "category",
+                        "uuid": "c8a83204-29e0-3a7f-9a0e-51e76d885f7f"
+                    },
+                    {
+                        "longDescription": "",
+                        "pubStatus": True,
+                        "aliases": [],
+                        "latestVersionTimestamp": "2020-07-14T15:26:24Z",
+                        "author": "NTB",
+                        "createdTimestamp": "2020-07-14T15:26:24Z",
+                        "shortDescription": "",
+                        "broader": "",
+                        "title": "informasjonsvitenskap",
+                        "type": "category",
+                        "uuid": "af815add-8456-3226-8177-ea0d8e3011eb"
+                    }
+                ],
+                "response": "Request successful.",
+                "error": False,
+                "scrollID": "9e7da4cf-541f-36b1-b7a0-aa883a76c04f"
+            }
+        )
+        ai_data_op_service.create([doc])
+
+        expected = {
+            'tags': [{'media_topics': [],
+                      'title': 'informasjons- og kommunikasjonsteknologi',
+                      'type': 'subject',
+                      'uuid': 'c8a83204-29e0-3a7f-9a0e-51e76d885f7f',
+                      'source': 'NTB',
+
+                      },
+                     {'media_topics': [],
+                      'title': 'informasjonsvitenskap',
+                      'type': 'subject',
+                      'uuid': 'af815add-8456-3226-8177-ea0d8e3011eb',
+                      'source': 'NTB',
+                      }]
+        }
+
+        self.assertEqual(doc['result'], expected)
+
+    @responses.activate
+    def test_create(self):
+        """Tag can be created"""
+        doc = {
+            "service": "imatrics",
+            "operation": "create",
+            "data": {"title": "test_create"},
+        }
+        ai_data_op_service = get_resource_service('ai_data_op')
+        api_url = urljoin(TEST_BASE_URL, "concept/create")
+        responses.add(
+            responses.POST, api_url,
+            json={
+                'response': 'Concept created with uuid: 6083cb74-77b7-3046-8187-a6333b76b5a4.',
+                "error": False
+            }
+        )
+        ai_data_op_service.create([doc])
+        self.assertEqual(doc['result'], {})
+
+    @responses.activate
+    def test_create_fail(self):
+        """Tag creation conflict report raise an error"""
+        doc = {
+            "service": "imatrics",
+            "operation": "create",
+            "data": {"title": "test_create"},
+        }
+        ai_data_op_service = get_resource_service('ai_data_op')
+        api_url = urljoin(TEST_BASE_URL, "concept/create")
+        responses.add(
+            responses.POST, api_url,
+            json={
+                "response": "A concept of type topic and title test_create already exists with uuid a2d0ce94-e4b2-3102-"
+                            "9671-9307b464573c.",
+                "error": True
+            }
+        )
+        with self.assertRaises(SuperdeskApiError) as cm:
+            ai_data_op_service.create([doc])
+
+        exc = cm.exception
+        self.assertEqual(exc.status_code, 502)
+
+    @responses.activate
+    def test_delete(self):
+        """Tag can be deleted"""
+        doc = {
+            "service": "imatrics",
+            "operation": "delete",
+            "data": {"uuid": "afc7e49d-57d0-34af-b184-b7600af362a9"},
+        }
+        ai_data_op_service = get_resource_service('ai_data_op')
+        api_url = urljoin(TEST_BASE_URL, "concept/delete") + "?uuid=afc7e49d-57d0-34af-b184-b7600af362a9"
+        responses.add(
+            responses.DELETE, api_url,
+            body="Concept deleted",
+        )
+        ai_data_op_service.create([doc])
+
+        self.assertEqual(doc['result'], {})
