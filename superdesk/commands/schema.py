@@ -71,7 +71,7 @@ class SchemaMigrateCommand(superdesk.Command):
         try:
             app_schema_version = get_schema_version()
             superdesk_schema_version = app.config.get('SCHEMA_VERSION', superdesk.SCHEMA_VERSION)
-            if app_schema_version < superdesk.SCHEMA_VERSION:
+            if app_schema_version < superdesk_schema_version:
                 print('Updating schema from version {} to {}.'.format(
                     app_schema_version, superdesk_schema_version
                 ))

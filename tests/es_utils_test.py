@@ -13,6 +13,7 @@ class ESUtilsTestCase(TestCase):
             },
             "post_filter": {"bool": {"must": [], "must_not": [{"terms": {"genre.name": ["Article (news)"]}}]}},
             "sort": {"versioncreated": "desc"},
+            "size": 10,
         }
 
         with self.app.app_context():
@@ -53,6 +54,7 @@ class ESUtilsTestCase(TestCase):
                 }
             },
             "sort": {"versioncreated": "desc"},
+            "size": 10,
         }
         with self.app.app_context():
             query = es_utils.filter2query(filter_)

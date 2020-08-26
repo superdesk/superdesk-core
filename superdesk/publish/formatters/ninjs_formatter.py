@@ -222,7 +222,7 @@ class NINJSFormatter(Formatter):
         if not ninjs.get('copyrightholder') and not ninjs.get('copyrightnotice') and not ninjs.get('usageterms'):
             ninjs.update(superdesk.get_resource_service('vocabularies').get_rightsinfo(article))
 
-        if 'genre' in article:
+        if article.get('genre'):
             ninjs['genre'] = self._get_genre(article)
 
         if article.get('flags', {}).get('marked_for_legal'):

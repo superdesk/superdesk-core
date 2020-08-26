@@ -17,7 +17,7 @@ class RolesTestCase(TestCase):
     roles = [{'name': 'test', 'privileges': {'ingest': 1, 'archive': 1, 'fetch': 1}}]
 
     users = [{'username': 'foobar', 'first_name': 'foo', 'last_name': 'bar',
-              'user_type': 'user', 'display_name': 'Foo Bar', 'is_enabled': True}]
+              'user_type': 'user', 'display_name': 'Foo Bar', 'is_enabled': True, 'is_active': True}]
 
     def setUp(self):
         self.app.data.insert('roles', self.roles)

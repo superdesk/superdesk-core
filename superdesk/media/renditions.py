@@ -376,7 +376,7 @@ def transfer_renditions(renditions):
             local = app.media.get(rend['media'])
             if local:
                 rend['href'] = app.media.url_for_media(rend['media'], local.content_type)
-                return
+                continue
 
         content, filename, content_type = download_file_from_url(rend.get('href'))
         file_type, ext = content_type.split('/')
@@ -392,6 +392,7 @@ def get_rendition_file_name(rendition):
     :param rendition:
     :return:
     """
-    ext = os.path.splitext(rendition.get('media'))[-1]
-    return rendition.get('media').replace('/', '-') + (
+    media_id = str(rendition['media'])
+    ext = os.path.splitext(media_id)[-1]
+    return media_id.replace('/', '-') + (
         guess_media_extension(rendition.get('mimetype', '')) if not ext else '')

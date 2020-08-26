@@ -5,8 +5,12 @@ from superdesk import text_utils
 
 class WordCountTestCase(unittest.TestCase):
 
+    def test_word_count_whitespace_string(self):
+        self.assertEqual(0, text_utils.get_word_count('   '))
+
     def test_word_count_p_tags(self):
         self.assertEqual(2, text_utils.get_word_count('<p>foo<strong>s</strong></p><p>bar</p>'))
+        self.assertEqual(500, text_utils.get_word_count('<p>word</p>' * 500))
 
     def test_word_count_brs(self):
         self.assertEqual(2, text_utils.get_word_count('<p>foo<br><br>bar</p>'))
@@ -27,14 +31,14 @@ class WordCountTestCase(unittest.TestCase):
         """))
 
     def test_word_count_nitf(self):
-        self.assertEqual(40, text_utils.get_word_count("""
+        self.assertEqual(37, text_utils.get_word_count("""
         <p>2014: Northern Ireland beat <location>Greece</location> 2-0 in <location>Athens</location>
         with goals from <person>Jamie Ward</person> and <person>Kyle Lafferty</person> to boost their
         hopes of qualifying for <money>Euro 2016</money>. <person>Michael O'Neill's</person> side
         sealed their place at the finals in <chron>October 2015</chron>.</p>"""))
 
     def test_word_count_nitf_2(self):
-        self.assertEqual(316, text_utils.get_word_count("""
+        self.assertEqual(314, text_utils.get_word_count("""
         <p>Rio Tinto has kept intact its target for iron ore shipments in 2017 after hitting the mid-point
         of its revised guidance range for 2016. </p><p>The world's second largest iron ore exporter shipped
         327.6 million tonnes of iron ore from its Pilbara operations in 2016, in line with the slightly lowered

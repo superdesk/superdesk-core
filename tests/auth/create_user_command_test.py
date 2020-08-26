@@ -99,3 +99,41 @@ class CreateUserCommandTestCase(TestCase):
         self.assertIsNotNone(found_user)
         role_id = roles_services.find_one(req=None, name="Admin")['_id']
         self.assertEqual(found_user["role"], role_id)
+
+    def test_import_users_no_activation_email(self):
+        """users:import does not send activation email"""
+        roles = [
+            {'name': 'Writer', 'privileges': {}},
+            {'name': 'Admin', 'privileges': {}},
+        ]
+
+        self.app.data.insert('roles', roles)
+
+        cmd = ImportUsersCommand()
+        fixtures_path = join(dirname(__file__), 'fixtures')
+        import_file = join(fixtures_path, "import_users_test.json")
+
+        with self.app.app_context():
+            with self.app.mail.record_messages() as outbox:
+                assert len(outbox) == 0
+                cmd.run(None, import_file)
+                assert len(outbox) == 0
+
+    def test_import_users_activation_email(self):
+        """users:import sends activation link"""
+        roles = [
+            {'name': 'Writer', 'privileges': {}},
+            {'name': 'Admin', 'privileges': {}},
+        ]
+
+        self.app.data.insert('roles', roles)
+
+        cmd = ImportUsersCommand()
+        fixtures_path = join(dirname(__file__), 'fixtures')
+        import_file = join(fixtures_path, "import_users_test.json")
+
+        with self.app.app_context():
+            with self.app.mail.record_messages() as outbox:
+                assert len(outbox) == 0
+                cmd.run(None, import_file, activation_email=True)
+                assert len(outbox) == 2

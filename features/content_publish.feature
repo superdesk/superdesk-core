@@ -4090,3 +4090,400 @@ Feature: Content Publishing
             }
         }
         """
+
+    @auth
+    Scenario: Schedule publishing when PUBLISH_ASSOCIATED_ITEMS is on
+      Given empty "subscribers"
+      Given config update
+      """
+      { "PUBLISH_ASSOCIATED_ITEMS": true}
+      """
+      And "desks"
+      """
+      [{"name": "Sports", "content_expiry": 60}]
+      """
+      And the "validators"
+      """
+      [{"_id": "publish_text", "act": "publish", "type": "text", "schema":{}}]
+      """
+      And "archive"
+      """
+      [
+          {
+              "_id": "234",
+              "guid": "234",
+              "_current_version": 1,
+              "type": "picture",
+              "slugline": "234",
+              "headline": "234",
+              "state": "in_progress",
+              "task": {
+                  "desk": "#desks._id#",
+                  "stage": "#desks.incoming_stage#",
+                  "user": "#CONTEXT_USER_ID#"
+              },
+              "renditions": {}
+          },
+          {
+              "_id": "123",
+              "guid": "123",
+              "_current_version": 1,
+              "headline": "main item",
+              "slugline": "main item",
+              "body_html": "Test Document body",
+              "state": "in_progress",
+              "task": {
+                  "desk": "#desks._id#",
+                  "stage": "#desks.incoming_stage#",
+                  "user": "#CONTEXT_USER_ID#"
+              },
+              "associations": {
+                  "media--1": {
+                      "_id": "234",
+                      "_current_version": 1,
+                      "guid": "234",
+                      "type": "picture",
+                      "slugline": "234",
+                      "headline": "234",
+                      "alt_text": "alt_text",
+                      "description_text": "description_text",
+                      "state": "in_progress",
+                      "renditions": {},
+                      "task": {
+                          "desk": "#desks._id#",
+                          "stage": "#desks.incoming_stage#",
+                          "user": "#CONTEXT_USER_ID#"
+                      }
+                  }
+              }
+          }
+      ]
+      """
+      When we post to "/products" with success
+      """
+      {
+        "name":"prod-1","codes":"abc,xyz", "product_type": "both"
+      }
+      """
+      And we post to "/subscribers" with success
+      """
+      {
+        "name":"Channel 3","media_type":"media", "subscriber_type": "digital", "sequence_num_settings":{"min" : 1, "max" : 10}, "email": "test@test.com",
+        "products": ["#products._id#"],
+        "destinations":[{"name":"Test","format": "nitf", "delivery_type":"email","config":{"recipients":"test@test.com"}}]
+      }
+      """
+      And we publish "123" with "publish" type and "published" state
+      """
+      {"publish_schedule": "#DATE+2#"}
+      """
+      Then we get OK response
+      And we get existing resource
+      """
+      {
+          "_id": "123",
+          "guid": "123",
+          "_current_version": 2,
+          "state": "scheduled",
+          "operation": "publish",
+          "associations": {
+              "media--1": {
+                  "_id": "234",
+                  "_current_version": 2,
+                  "guid": "234",
+                  "type": "picture",
+                  "slugline": "234",
+                  "headline": "234",
+                  "alt_text": "alt_text",
+                  "description_text": "description_text",
+                  "state": "scheduled",
+                  "operation": "publish",
+                  "renditions": {}
+              }
+          }
+      }
+      """
+      When we get "/archive/123"
+      Then we get existing resource
+      """
+      {
+          "_id": "123",
+          "guid": "123",
+          "_current_version": 2,
+          "state": "scheduled",
+          "operation": "publish",
+          "associations": {
+              "media--1": {
+                  "_id": "234",
+                  "_current_version": 2,
+                  "guid": "234",
+                  "type": "picture",
+                  "slugline": "234",
+                  "headline": "234",
+                  "alt_text": "alt_text",
+                  "description_text": "description_text",
+                  "state": "scheduled",
+                  "operation": "publish",
+                  "renditions": {}
+              }
+          }
+      }
+      """
+      When we get "/archive/234"
+      Then we get existing resource
+      """
+      {
+          "_id": "234",
+          "_current_version": 2,
+          "guid": "234",
+          "type": "picture",
+          "slugline": "234",
+          "headline": "234",
+          "alt_text": "alt_text",
+          "description_text": "description_text",
+          "state": "scheduled",
+          "operation": "publish",
+          "renditions": {}
+      }
+      """
+      When we patch "/archive/123"
+      """
+      {"publish_schedule": null}
+      """
+      Then we get OK response
+      And we get existing resource
+      """
+      {
+          "_id": "123",
+          "guid": "123",
+          "state": "in_progress",
+          "operation": "deschedule",
+          "associations": {
+              "media--1": {
+                  "_id": "234",
+                  "guid": "234",
+                  "type": "picture",
+                  "slugline": "234",
+                  "headline": "234",
+                  "alt_text": "alt_text",
+                  "description_text": "description_text",
+                  "state": "in_progress",
+                  "operation": "deschedule",
+                  "renditions": {}
+              }
+          }
+      }
+      """
+      When we get "/archive/123"
+      Then we get existing resource
+      """
+      {
+          "_id": "123",
+          "guid": "123",
+          "state": "in_progress",
+          "operation": "deschedule",
+          "associations": {
+              "media--1": {
+                  "guid": "234",
+                  "type": "picture",
+                  "state": "in_progress",
+                  "operation": "deschedule"
+              }
+          }
+      }
+      """
+      When we get "/archive/234"
+      Then we get existing resource
+      """
+      {
+          "guid": "234",
+          "type": "picture",
+          "state": "in_progress",
+          "operation": "deschedule"
+      }
+      """
+      When we publish "123" with "publish" type and "published" state
+      """
+      {"publish_schedule": "#DATE+2#"}
+      """
+      Then we get OK response
+      And we get existing resource
+      """
+      {
+          "_id": "123",
+          "guid": "123",
+          "state": "scheduled",
+          "operation": "publish",
+          "associations": {
+              "media--1": {
+                  "_id": "234",
+                  "type": "picture",
+                  "state": "scheduled",
+                  "operation": "publish"
+              }
+          }
+      }
+      """
+      When we get "/archive/123"
+      Then we get existing resource
+      """
+      {
+          "_id": "123",
+          "guid": "123",
+          "state": "scheduled",
+          "operation": "publish",
+          "associations": {
+              "media--1": {
+                  "guid": "234",
+                  "type": "picture",
+                  "state": "scheduled",
+                  "operation": "publish"
+              }
+          }
+      }
+      """
+      When we get "/archive/234"
+      Then we get existing resource
+      """
+      {
+          "guid": "234",
+          "type": "picture",
+          "state": "scheduled",
+          "operation": "publish"
+      }
+      """
+      
+      
+    @auth
+    Scenario: Send correction with adding a featuremedia
+      Given config update
+      """
+      { "PUBLISH_ASSOCIATED_ITEMS": false}
+      """
+      And "vocabularies"
+      """
+      [{
+        "_id": "crop_sizes",
+        "unique_field": "name",
+        "items": [
+          {"is_active": true, "name": "original", "width": 800, "height": 600}
+        ]
+      }
+      ]
+      """
+      And "validators"
+      """
+      [
+          {"_id": "publish_text", "act": "publish", "type": "text", "schema":{}},
+          {"_id": "correct_text", "act": "correct", "type": "text", "schema":{}},
+          {"_id": "publish_picture", "act": "publish", "type": "picture", "schema": {}},
+          {"_id": "correct_picture", "act": "correct", "type": "picture", "schema": {}}
+      ]
+      """
+      And "desks"
+      """
+      [{"name": "Sports"}]
+      """
+      And "archive"
+      """
+      [
+          {
+            "guid": "123",
+            "type": "text",
+            "headline": "test",
+            "state": "in_progress",
+            "task": {
+              "desk": "#desks._id#",
+              "stage": "#desks.incoming_stage#",
+              "user": "#CONTEXT_USER_ID#"
+              },
+            "subject":
+              [
+                {"qcode": "17004000",
+                "name": "Statistics"}
+              ],
+            "body_html": "Test Document body",
+            "_current_version": 1
+          },
+          {
+              "guid": "234",
+              "type": "picture",
+              "slugline": "234",
+              "headline": "234",
+              "state": "in_progress",
+              "task": {
+                "desk": "#desks._id#",
+                "stage": "#desks.incoming_stage#",
+                "user": "#CONTEXT_USER_ID#"
+              },
+              "renditions": {
+                  "original": {"CropLeft": 0, "CropRight": 800, "CropTop": 0, "CropBottom": 600}
+              },
+              "_current_version": 1
+          }
+      ]
+      """
+      When we post to "/products" with success
+      """
+      {
+          "name":"prod-1","codes":"abc,xyz", "product_type": "both"
+      }
+      """
+      And we post to "/subscribers" with success
+      """
+      {
+        "name":"Channel 3","media_type":"media", "subscriber_type": "digital", "sequence_num_settings":{"min" : 1, "max" : 10}, "email": "test@test.com",
+        "products": ["#products._id#"],
+        "destinations":[{"name":"Test","format": "nitf", "delivery_type":"email","config":{"recipients":"test@test.com"}}]
+      }
+      """
+      When we publish "123" with "publish" type and "published" state
+      Then we get OK response
+      And we get existing resource
+      """
+      {
+        "_current_version": 2,
+        "type": "text",
+        "state": "published",
+        "task":{"desk": "#desks._id#", "stage": "#desks.incoming_stage#"}
+      }
+      """
+      When we publish "123" with "correct" type and "corrected" state
+      """
+      {
+        "associations": {
+          "featuremedia": {
+              "_id": "234",
+              "guid": "234",
+              "byline": "foo",
+              "alt_text": "alt_text",
+              "description_text": "description_text",
+              "headline": "234",
+              "renditions": {
+                    "original": {"CropLeft": 0, "CropRight": 800, "CropTop": 0, "CropBottom": 600}
+                  }
+              }
+          }
+      }
+      """
+      Then we get OK response
+      And we get existing resource
+      """
+      {
+        "_current_version": 3,
+        "state": "corrected",
+        "associations": {
+            "featuremedia": {
+              "_id": "234",
+              "guid": "234",
+              "byline": "foo",
+              "alt_text": "alt_text",
+              "description_text": "description_text",
+              "headline": "234",
+              "renditions": {
+                    "original": {"CropLeft": 0, "CropRight": 800, "CropTop": 0, "CropBottom": 600}
+                  }
+              }
+          }
+      }
+      """

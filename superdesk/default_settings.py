@@ -88,6 +88,12 @@ BANDWIDTH_SAVER = False
 DATE_FORMAT = '%Y-%m-%dT%H:%M:%S+0000'
 ELASTIC_DATE_FORMAT = '%Y-%m-%d'
 ELASTIC_DATETIME_FORMAT = '%Y-%m-%dT%H:%M:%S'
+#: default size of elastic queries generated on server
+#: for saved search reports etc.
+#:
+#: .. versionadded:: 1.34
+#:
+ELASTIC_DEFAULT_SIZE = 10
 PAGINATION_LIMIT = 200
 
 MERGE_NESTED_DOCUMENTS = False
@@ -186,6 +192,9 @@ ELASTICSEARCH_SETTINGS = {
         }
     }
 }
+
+# https://www.elastic.co/guide/en/elasticsearch/reference/master/search-request-body.html#request-body-search-track-total-hits # NOQA
+ELASTICSEARCH_TRACK_TOTAL_HITS = True
 
 #: redis url
 REDIS_URL = env('REDIS_URL', 'redis://localhost:6379')
@@ -364,6 +373,7 @@ CORE_APPS = [
     'superdesk.attachments',
     'superdesk.auth_server',
     'apps.links',
+    'superdesk.locales',
 ]
 
 #: Specify what modules should be enabled
@@ -425,6 +435,7 @@ CORE_APPS.extend([
     'superdesk.io.iptc',
     'superdesk.io.mediatopics',
     'superdesk.text_checkers.spellcheckers',
+    'superdesk.text_checkers.ai',
     'apps.io',
     'apps.io.feeding_services',
     'superdesk.publish',
@@ -883,3 +894,9 @@ USER_EXTERNAL_CREATE = False
 #: .. versionadded:: 2.0
 #:
 USER_EXTERNAL_DESK = None
+
+#: Set regex pattern to check username for
+#:
+#: .. versionadded:: 2.0
+#:
+USER_USERNAME_PATTERN = None

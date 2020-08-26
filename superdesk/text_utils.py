@@ -10,6 +10,7 @@
 # at https://www.sourcefabric.org/superdesk/license
 
 import re
+import regex
 import logging
 from lxml import etree  # noqa
 from superdesk import etree as sd_etree
@@ -21,19 +22,38 @@ import chardet
 logger = logging.getLogger(__name__)
 
 
-# This pattern matches http(s) links, numbers (1.000.000 or 1,000,000 or 1 000 000), regulars words,
-# compound words (e.g. "two-done") or abbreviation (e.g. D.C.)
-# If you modify please keep in sync with superdesk-client/core/scripts/apps/authoring/authoring/directives/WordCount.js
-WORD_PATTERN = re.compile(r'https?:[^ ]*|([0-9]+[,. ]?)+|([\w]\.)+|[\w][\w-]*')
-
-
+# KEEP CHANGES IN SYNC WITH CLIENT FUNCTION `countWords`
+# regex is used instead re to support unicode letter matching with \p{L}
 def get_text_word_count(text):
     """Get word count for given plain text.
 
     :param str text: text string
     :return int: word count
     """
-    return sum(1 for word in WORD_PATTERN.finditer(text))
+
+    flags = regex.MULTILINE | regex.UNICODE
+    initial_text_trimmed = text.strip()
+
+    if len(initial_text_trimmed) < 1:
+        return 0
+
+    r0 = get_text(initial_text_trimmed, space_on_elements=True)
+
+    r1 = regex.sub(r'\n', ' ', r0, flags=flags)
+
+    # Remove spaces between two numbers
+    # 1 000 000 000 -> 1000000000
+    r2 = regex.sub(r'([0-9]) ([0-9])', '\\1\\2', r1, flags=flags)
+
+    # remove anything that is not a unicode letter, a space or a number
+    r3 = regex.sub(r'[^\p{L} 0-9]', '', r2, flags=flags)
+
+    # replace two or more spaces with one space
+    r4 = regex.sub(r' {2,}', ' ', r3, flags=flags)
+
+    result = len(r4.strip().split(" "))
+
+    return result
 
 
 def get_text(markup, content='xml', lf_on_block=False, space_on_elements=False, space=' '):

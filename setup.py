@@ -14,7 +14,7 @@ from setuptools import setup, find_packages
 LONG_DESCRIPTION = "Superdesk Server Core"
 
 install_requires = [
-    'eve==1.1.1',
+    'eve==1.1.2',
     'eve-elastic>=7.0.0,<8.0.0',
     'flask>=1.1,<1.2',
     'flask-oauthlib>=0.9.3,<0.10',
@@ -44,7 +44,7 @@ install_requires = [
     'mongolock>=1.3.4,<1.4',
     'PyYAML>=4.2b1,<5.0',
     'lxml>=3.8,<4.2',
-    'python-twitter==3.3',
+    'python-twitter==3.5',
     'chardet<4.0',
     'pymongo>=3.8,<3.9',
     'croniter<0.4',
@@ -53,6 +53,7 @@ install_requires = [
     'authlib>0.12,<0.13',
     'draftjs-exporter[lxml]<2.2',
     'werkzeug>=1.0,<1.1',
+    'regex==2020.7.14',
 ]
 
 package_data = {

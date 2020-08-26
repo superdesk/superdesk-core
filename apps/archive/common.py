@@ -18,6 +18,7 @@ from flask import current_app as app
 from eve.versioning import insert_versioning_documents
 from pytz import timezone
 from copy import deepcopy
+from dateutil.parser import parse
 
 import superdesk
 from superdesk import editor_utils
@@ -641,6 +642,12 @@ def update_schedule_settings(updates, field_name, value):
     :param field_name: Name of he field: either publish_schedule or embargo
     :param value: The original value
     """
+
+    if isinstance(value, str):
+        try:
+            value = parse(value)
+        except ValueError:
+            raise SuperdeskApiError.badRequestError(_("{} date is not recognized".format(field_name)))
 
     schedule_settings = updates.get(SCHEDULE_SETTINGS, {}) or {}
     utc_field_name = 'utc_{}'.format(field_name)

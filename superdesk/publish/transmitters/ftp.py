@@ -8,15 +8,18 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
+import json
+import logging
+import superdesk
+
+from io import BytesIO
+from flask import current_app as app
+
 from superdesk.ftp import ftp_connect
 from superdesk.publish import register_transmitter
-from io import BytesIO
 from superdesk.publish.publish_service import get_publish_service, PublishService
 from superdesk.errors import PublishFtpError
-from superdesk import app
-import json
-from superdesk.media.renditions import get_rendition_file_name
-import logging
+from superdesk.media.renditions import get_rendition_file_name, get_renditions_spec
 
 errors = [PublishFtpError.ftpError().get_error_description()]
 
@@ -26,6 +29,14 @@ try:
     from urllib.parse import urlparse
 except ImportError:
     from urlparse import urlparse
+
+
+def get_renditions_filter():
+    renditions = set(get_renditions_spec(
+        without_internal_renditions=True
+    ).keys())
+    renditions.add('original')
+    return renditions
 
 
 class FTPPublishService(PublishService):
@@ -55,6 +66,16 @@ class FTPPublishService(PublishService):
             'path': url_parts.path.lstrip('/'),
         }
 
+    def _get_published_item(self, queue_item):
+        try:
+            return json.loads(queue_item['formatted_item'])
+        except json.JSONDecodeError as ex:
+            return superdesk.get_resource_service('published').find_one(
+                req=None,
+                item_id=queue_item['item_id'],
+                _current_version=queue_item['item_version'],
+            )
+
     def _transmit(self, queue_item, subscriber):
         config = queue_item.get('destination', {}).get('config', {})
 
@@ -66,11 +87,9 @@ class FTPPublishService(PublishService):
                     if 'associated_path' in config and config.get('associated_path'):
                         ftp.cwd('/' + config.get('associated_path', '').lstrip('/'))
 
-                    try:
-                        item = json.loads(queue_item['formatted_item'])
+                    item = self._get_published_item(queue_item)
+                    if item:
                         self._copy_published_media_files(item, ftp)
-                    except json.JSONDecodeError as ex:
-                        logger.exception('The formatted item could not be parsed as json')
 
                     # If the directory was changed to push associated files change it back
                     if 'associated_path' in config and config.get('associated_path'):
@@ -85,11 +104,17 @@ class FTPPublishService(PublishService):
             raise PublishFtpError.ftpError(ex, config)
 
     def _copy_published_media_files(self, item, ftp):
+        renditions_filter = get_renditions_filter()
 
         def parse_media(item):
             media = {}
             renditions = item.get('renditions', {})
-            for _, rendition in renditions.items():
+            for key, rendition in renditions.items():
+                if key not in renditions_filter:
+                    continue
+                if not rendition.get('media'):
+                    logger.warn('media missing on rendition %s for item %s', key, item['guid'])
+                    continue
                 rendition.pop('href', None)
                 rendition.setdefault('mimetype', rendition.get('original', {}).get('mimetype', item.get('mimetype')))
                 media[rendition['media']] = rendition
