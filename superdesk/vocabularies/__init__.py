@@ -14,6 +14,7 @@ from superdesk.signals import item_published
 from .vocabularies import VocabulariesResource, VocabulariesService, is_related_content
 from .commands import UpdateVocabulariesInItemsCommand # noqa
 from .keywords import add_missing_keywords
+from flask_babel import _
 
 
 def init_app(app):
@@ -23,8 +24,8 @@ def init_app(app):
 
     superdesk.register_default_user_preference('cvs:preferred_items', {
         'value': {},
-        'category': 'cvs',
-        'label': 'Prefered CV items',
+        'category': _('cvs'),
+        'label': _('Prefered CV items'),
     })
 
     item_published.connect(add_missing_keywords)

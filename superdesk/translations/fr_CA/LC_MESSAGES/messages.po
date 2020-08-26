@@ -1,18 +1,19 @@
-# Translations template for Superdesk-Core.
+# French (Canada) translations for Superdesk-Core.
 # Copyright (C) 2020 ORGANIZATION
 # This file is distributed under the same license as the Superdesk-Core
 # project.
 # FIRST AUTHOR <EMAIL@ADDRESS>, 2020.
 #
-#, fuzzy
 msgid ""
 msgstr ""
 "Project-Id-Version: Superdesk-Core 1.33\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
 "POT-Creation-Date: 2020-08-21 14:40+0530\n"
-"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"PO-Revision-Date: 2020-08-21 14:40+0530\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
-"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: fr_CA\n"
+"Language-Team: fr_CA <LL@li.org>\n"
+"Plural-Forms: nplurals=2; plural=(n > 1)\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -28,7 +29,7 @@ msgstr ""
 
 #: superdesk/activity.py:84
 msgid "Allow Desktop Notifications"
-msgstr ""
+msgstr "Autoriser les notifications de bureau"
 
 #: superdesk/validator.py:283
 msgid "Only 1 instance is allowed."
@@ -67,11 +68,11 @@ msgstr ""
 
 #: apps/archive/__init__.py:100 apps/monitoring.py:11
 msgid "Monitoring view"
-msgstr ""
+msgstr "Affichage"
 
 #: apps/monitoring.py:12
 msgid "monitoring"
-msgstr ""
+msgstr "suivi"
 
 #: apps/preferences.py:65
 msgid "label"
@@ -123,11 +124,11 @@ msgstr ""
 
 #: apps/preferences.py:164
 msgid "desks"
-msgstr ""
+msgstr "pupitres"
 
 #: apps/preferences.py:165
 msgid "Preferred Desks"
-msgstr ""
+msgstr "Pupitres préférés"
 
 #: apps/content_filters/filter_condition/filter_condition_parameters.py:121
 #: apps/preferences.py:171
@@ -136,7 +137,7 @@ msgstr ""
 
 #: apps/preferences.py:187
 msgid "Users contacts view format"
-msgstr ""
+msgstr "Affichage"
 
 #: apps/preferences.py:188
 msgid "contacts"
