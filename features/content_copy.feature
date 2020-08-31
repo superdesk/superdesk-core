@@ -33,7 +33,6 @@ Feature: Copy Content in Personal Workspace
       When we get "/archive/"
       Then we get list with 2 items
 
-    @wip
     @auth
     Scenario: Copy item in a desk will show it in personal
       Given "desks"
