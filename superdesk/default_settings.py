@@ -836,6 +836,12 @@ WORKFLOW_ALLOW_MULTIPLE_UPDATES = False
 #:
 WORKFLOW_ALLOW_DUPLICATE_TO_NON_MEMBERS = False
 
+#: Allow users to copy content from desk to personal
+#:
+#: .. versionadded:: 1.34
+#:
+WORKFLOW_ALLOW_COPY_TO_PERSONAL = True
+
 #: Enable archive autocomplete API
 #:
 #: .. versionadded:: 2.0
