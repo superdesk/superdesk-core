@@ -34,7 +34,7 @@ Feature: Copy Content in Personal Workspace
       Then we get list with 2 items
 
     @auth
-    Scenario: Copy should fail if copying an item in a desk
+    Scenario: Copy item in a desk will show it in personal
       Given "desks"
       """
       [{"name": "Sports"}]
@@ -48,7 +48,11 @@ Feature: Copy Content in Personal Workspace
       """
       {}
       """
-      Then we get error 412
+      Then we get new resource
+      When we get "/archive/"
+      Then we get list with 2 items
       """
-      {"_message": "Copy is not allowed on items in a desk.", "_status": "ERR"}
+      {"_items": [
+        {"original_creator": "#CONTEXT_USER_ID#", "task": "__empty__", "family_id": "123"}
+      ]}
       """
