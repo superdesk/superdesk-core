@@ -9,6 +9,7 @@
 # at https://www.sourcefabric.org/superdesk/license
 from decimal import Decimal
 from . import unit_base
+from flask_babel import _
 
 SQUARE_METER_SYMBOL = 'square meter'
 HECTARE_SYMBOL = 'ha'
