@@ -9,7 +9,7 @@
 # at https://www.sourcefabric.org/superdesk/license
 from decimal import Decimal
 from . import unit_base
-from flask_babel import _
+from flask_babel import lazy_gettext
 
 CUBIC_METER_SYMBOL = 'cubic meter'
 
@@ -35,7 +35,7 @@ def cubic_feet_to_metric(item, **kwargs):
 
 
 name = 'cubic_feet_to_metric'
-label = _('Volume cubic feet to metric')
+label = lazy_gettext('Volume cubic feet to metric')
 callback = cubic_feet_to_metric
 access_type = 'frontend'
 action_type = 'interactive'

@@ -9,7 +9,7 @@
 # at https://www.sourcefabric.org/superdesk/license
 from decimal import Decimal
 from . import unit_base
-from flask_babel import _
+from flask_babel import lazy_gettext
 
 CUBIC_METER_SYMBOL = 'kg'
 
@@ -35,7 +35,7 @@ def pounds_to_metric(item, **kwargs):
 
 
 name = 'pounds_to_metric'
-label = _('Weight pounds to metric')
+label = lazy_gettext('Weight pounds to metric')
 callback = pounds_to_metric
 access_type = 'frontend'
 action_type = 'interactive'

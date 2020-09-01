@@ -18,7 +18,7 @@ from superdesk.metadata.item import ITEM_STATE, CONTENT_STATE, PUBLISH_SCHEDULE,
 from apps.archive.common import ITEM_OPERATION
 from apps.publish.content.common import publish_services
 from apps.content_types import apply_schema
-from flask_babel import _
+from flask_babel import lazy_gettext
 
 
 def internal_destination_auto_publish(item, **kwargs):
@@ -80,7 +80,7 @@ def internal_destination_auto_publish(item, **kwargs):
 
 
 name = 'Internal_Destination_Auto_Publish'
-label = _('Internal Destination Auto Publish')
+label = lazy_gettext('Internal Destination Auto Publish')
 callback = internal_destination_auto_publish
 access_type = 'backend'
 action_type = 'direct'

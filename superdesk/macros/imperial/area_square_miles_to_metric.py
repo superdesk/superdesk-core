@@ -9,7 +9,7 @@
 # at https://www.sourcefabric.org/superdesk/license
 from decimal import Decimal
 from . import unit_base
-from flask_babel import _
+from flask_babel import lazy_gettext
 
 SQUARE_KILOMETER_SYMBOL = 'square km'
 HECTARE_SYMBOL = 'ha'
@@ -44,7 +44,7 @@ def square_mile_to_metric(item, **kwargs):
 
 
 name = 'square_mile_to_metric'
-label = _('Area square miles to metric')
+label = lazy_gettext('Area square miles to metric')
 callback = square_mile_to_metric
 access_type = 'frontend'
 action_type = 'interactive'

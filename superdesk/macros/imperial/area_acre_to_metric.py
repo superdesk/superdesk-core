@@ -9,7 +9,7 @@
 # at https://www.sourcefabric.org/superdesk/license
 from decimal import Decimal
 from . import unit_base
-from flask_babel import _
+from flask_babel import lazy_gettext
 
 SQUARE_METER_SYMBOL = 'square meter'
 HECTARE_SYMBOL = 'ha'
@@ -44,7 +44,7 @@ def acre_to_metric(item, **kwargs):
 
 
 name = 'acre_to_metric'
-label = _('Area acres to metric')
+label = lazy_gettext('Area acres to metric')
 callback = acre_to_metric
 access_type = 'frontend'
 action_type = 'interactive'

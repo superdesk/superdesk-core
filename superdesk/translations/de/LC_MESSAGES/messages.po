@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2020-08-31 21:54+0530\n"
+"POT-Creation-Date: 2020-09-01 18:14+0530\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: de\n"
@@ -58,7 +58,7 @@ msgstr ""
 msgid "Internal Destination Auto Publish"
 msgstr ""
 
-#: superdesk/macros/take_key_validator.py:24
+#: superdesk/macros/take_key_validator.py:25
 msgid "validate take key"
 msgstr ""
 
@@ -66,7 +66,7 @@ msgstr ""
 msgid "Validate for Publish"
 msgstr ""
 
-#: superdesk/macros/imperial/area_acre_to_metric.py:46
+#: superdesk/macros/imperial/area_acre_to_metric.py:47
 msgid "Area acres to metric"
 msgstr ""
 
@@ -127,7 +127,7 @@ msgid "Prefered CV items"
 msgstr ""
 
 #: apps/content_filters/filter_condition/filter_condition_parameters.py:73
-#: superdesk/vocabularies/vocabularies.py:444
+#: superdesk/vocabularies/vocabularies.py:451
 msgid "Keywords"
 msgstr ""
 
@@ -767,14 +767,14 @@ msgstr ""
 msgid "The dictionary type cannot be changed."
 msgstr ""
 
-#: apps/duplication/archive_copy.py:54
+#: apps/duplication/archive_copy.py:55
 #: apps/duplication/archive_duplication.py:121
 #: apps/duplication/archive_move.py:108
 #: apps/duplication/archive_translate.py:66
 msgid "Fail to found item with guid: {guid}"
 msgstr ""
 
-#: apps/duplication/archive_copy.py:59
+#: apps/duplication/archive_copy.py:60
 msgid "Copy is not allowed on items in a desk."
 msgstr ""
 

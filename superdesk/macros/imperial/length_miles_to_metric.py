@@ -10,7 +10,7 @@
 
 from . import unit_base
 from decimal import Decimal
-from flask_babel import _
+from flask_babel import lazy_gettext
 
 KILOMETER_SYMBOL = 'km'
 
@@ -35,7 +35,7 @@ def miles_to_metric(item, **kwargs):
 
 
 name = 'miles_to_metric'
-label = _('Length miles to kilometres')
+label = lazy_gettext('Length miles to kilometres')
 order = 4
 callback = miles_to_metric
 access_type = 'frontend'

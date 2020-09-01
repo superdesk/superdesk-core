@@ -2,7 +2,7 @@
 from superdesk import get_resource_service
 from superdesk.utc import utcnow
 from superdesk.logging import logger
-from flask_babel import _
+from flask_babel import lazy_gettext
 
 
 def get_destination_desk(desk, limit=10):
@@ -42,7 +42,7 @@ def routing(item, desk=None, **kwargs):
 
 
 name = 'desk_routing'
-label = _('Desk Routing')
+label = lazy_gettext('Desk Routing')
 callback = routing
 access_type = 'backend'
 action_type = 'direct'
