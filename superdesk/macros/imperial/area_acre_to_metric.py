@@ -43,7 +43,7 @@ def acre_to_metric(item, **kwargs):
 
 
 name = 'acre_to_metric'
-label = 'Area acres to metric'
+label = _('Area acres to metric')
 callback = acre_to_metric
 access_type = 'frontend'
 action_type = 'interactive'

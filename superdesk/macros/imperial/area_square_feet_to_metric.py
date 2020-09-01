@@ -9,6 +9,7 @@
 # at https://www.sourcefabric.org/superdesk/license
 from decimal import Decimal
 from . import unit_base
+from flask_babel import _
 
 SQUARE_METER_SYMBOL = 'square meter'
 HECTARE_SYMBOL = 'ha'
@@ -43,7 +44,7 @@ def square_feet_to_metric(item, **kwargs):
 
 
 name = 'square_feet_to_metric'
-label = 'Area square feet to metric'
+label = _('Area square feet to metric')
 callback = square_feet_to_metric
 access_type = 'frontend'
 action_type = 'interactive'

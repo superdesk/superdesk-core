@@ -9,6 +9,7 @@
 # at https://www.sourcefabric.org/superdesk/license
 from decimal import Decimal
 from . import unit_base
+from flask_babel import _
 
 CUBIC_METER_SYMBOL = 'cubic meter'
 
@@ -32,9 +33,8 @@ def cubic_feet_to_metric(item, **kwargs):
     regex = r'(\d+-?,?\.?\d*)((\s*)|(-))((cu\.?\s*-?ft)|(cb\.?\s*-?ft)|([cC]ubic\s*-?(([fF]((ee)|(oo))t)|(ft))))\b'
     return unit_base.do_conversion(item, convert, unit_base.format_output, regex, match_index=0, value_index=1)
 
-
 name = 'cubic_feet_to_metric'
-label = 'Volume cubic feet to metric'
+label = _('Volume cubic feet to metric')
 callback = cubic_feet_to_metric
 access_type = 'frontend'
 action_type = 'interactive'

@@ -12,6 +12,7 @@ from eve.utils import config
 from superdesk import get_resource_service
 from planning.common import ASSIGNMENT_WORKFLOW_STATE
 from copy import deepcopy
+from flask_babel import _
 
 
 def update_on_assign_id(item, **kwargs):
@@ -29,7 +30,7 @@ def update_on_assign_id(item, **kwargs):
 
 
 name = 'assign_status'
-label = 'Update Status On Assignment ID'
+label = _('Update Status On Assignment ID')
 callback = update_on_assign_id
 access_type = 'backend'
 action_type = 'direct'

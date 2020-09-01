@@ -10,6 +10,7 @@
 
 from . import unit_base
 from decimal import Decimal
+from flask_babel import _
 
 KILOMETER_SYMBOL = 'km'
 
@@ -34,7 +35,7 @@ def nautical_miles_to_metric(item, **kwargs):
 
 
 name = 'nautical_miles_to_metric'
-label = 'Length nautical miles to kilometres'
+label = _('Length nautical miles to kilometres')
 callback = nautical_miles_to_metric
 access_type = 'frontend'
 action_type = 'interactive'

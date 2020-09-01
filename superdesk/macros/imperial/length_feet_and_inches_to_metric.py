@@ -11,6 +11,7 @@
 import re
 from . import unit_base
 from decimal import Decimal
+from flask_babel import _
 
 
 def convert(feet, inches):
@@ -99,7 +100,7 @@ def feet_inches_to_metric(item, **kwargs):
 
 
 name = 'feet_inches_to_metric'
-label = 'Length feet-inches to metric'
+label = _('Length feet-inches to metric')
 callback = feet_inches_to_metric
 access_type = 'frontend'
 action_type = 'interactive'
