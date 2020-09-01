@@ -10,6 +10,7 @@
 
 from flask_babel import _
 
+
 def validate(item, **kwargs):
     """Checks if item has take_key value"""
 
