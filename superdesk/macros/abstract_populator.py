@@ -10,7 +10,7 @@
 
 import re
 from superdesk.text_utils import get_text
-from flask_babel import _
+from flask_babel import lazy_gettext
 
 p = re.compile('(?i)(?<=[.?!])\\S+(?=[a-z])')
 
@@ -32,7 +32,7 @@ def populate(item, **kwargs):
 
 
 name = 'populate_abstract'
-label = _('Populate Abstract')
+label = lazy_gettext('Populate Abstract')
 order = 3
 shortcut = 'a'
 callback = populate
