@@ -11,7 +11,7 @@ from os.path import join
 import logging
 import requests
 from collections import OrderedDict
-from typing import Optional
+from typing import Optional, Dict, List
 from superdesk import get_resource_service
 from superdesk import etree
 from superdesk.errors import SuperdeskApiError
@@ -142,7 +142,7 @@ class IMatrics(AIServiceBase):
 
         r_data = r.json()
 
-        analyzed_data = {}
+        analyzed_data: Dict[str, List] = {}
 
         for concept in r_data:
             tag_data = self.concept2tag_data(concept)
@@ -182,7 +182,7 @@ class IMatrics(AIServiceBase):
 
         r_data = r.json()
 
-        tags = []
+        tags: List[Dict] = []
         ret = {
             'tags': tags
         }
