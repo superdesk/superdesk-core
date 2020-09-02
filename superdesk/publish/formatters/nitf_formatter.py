@@ -322,7 +322,7 @@ class NITFFormatter(Formatter):
 
     def _format_head(self, article, head):
         tobject = self._format_tobject(article, head)
-        if 'genre' in article and len(article['genre']) > 0:
+        if article.get('genre'):
             SubElement(tobject, 'tobject.property', {'tobject.property.type': article['genre'][0]['name']})
         self._format_subjects(article, tobject)
 

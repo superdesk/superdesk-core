@@ -11,6 +11,7 @@
 from superdesk import get_resource_service, config
 from superdesk.validation import ValidationError
 from apps.publish.content.common import ITEM_PUBLISH
+from flask_babel import lazy_gettext
 
 
 def validate_for_publish(item, **kwargs):
@@ -23,7 +24,7 @@ def validate_for_publish(item, **kwargs):
 
 
 name = 'Validate for Publish'
-label = 'Validate for Publish'
+label = lazy_gettext('Validate for Publish')
 callback = validate_for_publish
 access_type = 'frontend'
 action_type = 'direct'

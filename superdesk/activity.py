@@ -13,6 +13,7 @@ import logging
 
 from bson.objectid import ObjectId
 from flask import g
+from flask_babel import _
 
 import superdesk
 from superdesk import get_resource_service
@@ -74,15 +75,15 @@ class ActivityResource(Resource):
         'type': 'bool',
         'enabled': True,
         'default': True,
-        'label': 'Send notifications via email',
-        'category': 'notifications',
+        'label': _('Send notifications via email'),
+        'category': _('notifications'),
     })
     superdesk.register_default_user_preference('desktop:notification', {
         'type': 'bool',
         'enabled': True,
         'default': False,
-        'label': 'Allow Desktop Notifications',
-        'category': 'notifications',
+        'label': _('Allow Desktop Notifications'),
+        'category': _('notifications'),
     })
 
 

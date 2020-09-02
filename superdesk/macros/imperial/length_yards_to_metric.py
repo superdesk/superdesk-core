@@ -10,6 +10,7 @@
 
 from . import unit_base
 from decimal import Decimal
+from flask_babel import lazy_gettext
 
 METERS_SYMBOL = 'metres'
 
@@ -35,7 +36,7 @@ def yards_to_metric(item, **kwargs):
 
 
 name = 'yards_to_metric'
-label = 'Length yards to metres'
+label = lazy_gettext('Length yards to metres')
 callback = yards_to_metric
 access_type = 'frontend'
 action_type = 'interactive'

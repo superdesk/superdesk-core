@@ -14,7 +14,8 @@ from .utils import mock_dictionaries
 import responses
 from flask import Flask
 from superdesk.tests import TestCase
-from superdesk.text_checkers.spellcheckers.base import registered_spellcheckers
+from superdesk.text_checkers import tools
+from superdesk.text_checkers.spellcheckers.base import registered_spellcheckers, SpellcheckerBase
 from superdesk.text_checkers import spellcheckers
 from superdesk.text_checkers.spellcheckers.leuven_dutch import LeuvenDutch, API_URL, OPT_API_KEY
 from superdesk import get_resource_service
@@ -30,7 +31,7 @@ def load_spellcheckers():
     registered_spellcheckers.clear()
     app = Flask(__name__)
     app.config[OPT_API_KEY] = '123-456-789-ABC'
-    spellcheckers.importSpellcheckers(app, spellcheckers.__name__)
+    tools.import_services(app, spellcheckers.__name__, SpellcheckerBase)
 
 
 class LeuvenDutchTestCase(TestCase):
