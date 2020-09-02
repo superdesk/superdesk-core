@@ -1,33 +1,41 @@
-# French (Canada) translations for Superdesk-Core.
+# Translations template for Superdesk-Core.
 # Copyright (C) 2020 ORGANIZATION
 # This file is distributed under the same license as the Superdesk-Core
 # project.
 # FIRST AUTHOR <EMAIL@ADDRESS>, 2020.
-#
+# 
+# Translators:
+# Evzen Deulin <evgeny.deulin@sourcefabric.org>, 2020
+# Simon Peacock <simon.peacock@gmail.com>, 2020
+# Marie-Eve Ouellette <marie-eve.ouellette@lapressecanadienne.com>, 2020
+# Gideon Lehmann <gideon.lehmann@sourcefabric.org>, 2020
+# Charles-Philippe Giroux <charles-philippe.giroux@lapressecanadienne.com>, 2020
+# 
+#, fuzzy
 msgid ""
 msgstr ""
 "Project-Id-Version: Superdesk-Core 1.33\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2020-09-01 18:14+0530\n"
-"PO-Revision-Date: 2020-08-21 14:40+0530\n"
-"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
-"Language: fr_CA\n"
-"Language-Team: fr_CA <LL@li.org>\n"
-"Plural-Forms: nplurals=2; plural=(n > 1)\n"
+"POT-Creation-Date: 2020-08-21 14:40+0530\n"
+"PO-Revision-Date: 2019-04-04 09:17+0000\n"
+"Last-Translator: Charles-Philippe Giroux <charles-philippe.giroux@lapressecanadienne.com>, 2020\n"
+"Language-Team: French (Canada) (https://www.transifex.com/sourcefabric/teams/6584/fr_CA/)\n"
 "MIME-Version: 1.0\n"
-"Content-Type: text/plain; charset=utf-8\n"
+"Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 2.8.0\n"
+"Language: fr_CA\n"
+"Plural-Forms: nplurals=2; plural=(n > 1);\n"
 
-#: superdesk/activity.py:78
+#: superdesk/activity.py:77
 msgid "Send notifications via email"
 msgstr ""
 
-#: superdesk/activity.py:79 superdesk/activity.py:86
+#: superdesk/activity.py:78 superdesk/activity.py:85
 msgid "notifications"
-msgstr ""
+msgstr "notifications"
 
-#: superdesk/activity.py:85
+#: superdesk/activity.py:84
 msgid "Allow Desktop Notifications"
 msgstr "Autoriser les notifications de bureau"
 
@@ -121,9 +129,9 @@ msgstr "Poids: livres en mesure métrique"
 
 #: superdesk/vocabularies/__init__.py:27
 msgid "cvs"
-msgstr ""
+msgstr "paramètres personnalisés"
 
-#: superdesk/vocabularies/__init__.py:28
+#: superdesk/vocabularies/__init__.py:27
 msgid "Prefered CV items"
 msgstr ""
 
@@ -133,7 +141,8 @@ msgid "Keywords"
 msgstr ""
 
 #: apps/desks.py:213
-msgid "Cannot update Desk Type as there are article(s) referenced by the Desk."
+msgid ""
+"Cannot update Desk Type as there are article(s) referenced by the Desk."
 msgstr ""
 
 #: apps/desks.py:236
@@ -150,19 +159,19 @@ msgid ""
 "article(s)."
 msgstr ""
 
-#: apps/archive/__init__.py:100 apps/monitoring.py:12
+#: apps/archive/__init__.py:100 apps/monitoring.py:11
 msgid "Monitoring view"
 msgstr "Affichage"
 
-#: apps/monitoring.py:13
+#: apps/monitoring.py:12
 msgid "monitoring"
 msgstr "suivi"
 
-#: apps/preferences.py:66
+#: apps/preferences.py:65
 msgid "label"
 msgstr ""
 
-#: apps/preferences.py:68
+#: apps/preferences.py:67
 msgid "category"
 msgstr ""
 
@@ -172,7 +181,7 @@ msgstr ""
 
 #: apps/preferences.py:109
 msgid "feature"
-msgstr ""
+msgstr "fonctionnalité"
 
 #: apps/preferences.py:118
 msgid "Users archive view format"
@@ -180,7 +189,7 @@ msgstr ""
 
 #: apps/preferences.py:119
 msgid "archive"
-msgstr ""
+msgstr "archiver"
 
 #: apps/preferences.py:126
 msgid "Enable Single Line View"
@@ -188,7 +197,7 @@ msgstr ""
 
 #: apps/preferences.py:127
 msgid "rows"
-msgstr ""
+msgstr "colonnes"
 
 #: apps/preferences.py:151
 msgid "Located"
@@ -196,11 +205,11 @@ msgstr ""
 
 #: apps/preferences.py:152 apps/preferences.py:172
 msgid "article_defaults"
-msgstr ""
+msgstr "paramètres par défaut des articles"
 
 #: apps/preferences.py:157
 msgid "categories"
-msgstr ""
+msgstr "catégories"
 
 #: apps/preferences.py:158
 msgid "Preferred Categories"
@@ -225,7 +234,7 @@ msgstr "Affichage"
 
 #: apps/preferences.py:188
 msgid "contacts"
-msgstr ""
+msgstr "contacts"
 
 #: apps/preferences.py:261 apps/preferences.py:273
 msgid "Invalid preference: {preference}"
@@ -241,8 +250,8 @@ msgstr ""
 
 #: apps/stages.py:174
 msgid ""
-"Cannot delete stage as it has article(s) or referenced by versions of the"
-" article(s)."
+"Cannot delete stage as it has article(s) or referenced by versions of the "
+"article(s)."
 msgstr ""
 
 #: apps/stages.py:181
@@ -425,8 +434,8 @@ msgstr ""
 
 #: apps/archive/archive.py:874
 msgid ""
-"This item is in a package and it needs to be removed before the item can "
-"be scheduled!"
+"This item is in a package and it needs to be removed before the item can be "
+"scheduled!"
 msgstr ""
 
 #: apps/archive/archive.py:900
@@ -544,8 +553,7 @@ msgstr ""
 
 #: apps/archived/archived.py:137
 msgid ""
-"Can't kill as this article acts as a Master Story for existing "
-"broadcast(s)"
+"Can't kill as this article acts as a Master Story for existing broadcast(s)"
 msgstr ""
 
 #: apps/archived/archived.py:140
@@ -748,7 +756,8 @@ msgid ""
 msgstr ""
 
 #: apps/content_types/content_types.py:175
-msgid "Cannot disable content profile as following desks are referencing: {desks}"
+msgid ""
+"Cannot disable content profile as following desks are referencing: {desks}"
 msgstr ""
 
 #: apps/dictionaries/service.py:142
@@ -768,14 +777,14 @@ msgstr ""
 msgid "The dictionary type cannot be changed."
 msgstr ""
 
-#: apps/duplication/archive_copy.py:55
+#: apps/duplication/archive_copy.py:54
 #: apps/duplication/archive_duplication.py:121
 #: apps/duplication/archive_move.py:108
 #: apps/duplication/archive_translate.py:66
 msgid "Fail to found item with guid: {guid}"
 msgstr ""
 
-#: apps/duplication/archive_copy.py:60
+#: apps/duplication/archive_copy.py:59
 msgid "Copy is not allowed on items in a desk."
 msgstr ""
 
@@ -844,7 +853,8 @@ msgid "Not set a keywords provider"
 msgstr ""
 
 #: apps/ldap/ldap.py:125
-msgid "User does not belong to security Group or could not find the user profile."
+msgid ""
+"User does not belong to security Group or could not find the user profile."
 msgstr ""
 
 #: apps/ldap/ldap.py:174
@@ -926,11 +936,13 @@ msgid "Product is used by the subscriber(s): {names}"
 msgstr ""
 
 #: apps/products/service.py:47
-msgid "Product is used for API publishing for the subscriber(s): {subscribers}"
+msgid ""
+"Product is used for API publishing for the subscriber(s): {subscribers}"
 msgstr ""
 
 #: apps/products/service.py:54
-msgid "Product is used for direct publishing for the subscriber(s): {subscribers}"
+msgid ""
+"Product is used for direct publishing for the subscriber(s): {subscribers}"
 msgstr ""
 
 #: apps/publish/published_item.py:189
@@ -971,8 +983,8 @@ msgstr ""
 
 #: apps/publish/content/common.py:302
 msgid ""
-"There are unpublished related items that won't be sent out as related "
-"items. Do you want to publish the article anyway?"
+"There are unpublished related items that won't be sent out as related items."
+" Do you want to publish the article anyway?"
 msgstr ""
 
 #: apps/publish/content/common.py:321 apps/publish/content/common.py:380
@@ -1231,4 +1243,3 @@ msgstr ""
 #: apps/video_edit/__init__.py:31
 msgid "\"capture\" or \"edit\" is required"
 msgstr ""
-
