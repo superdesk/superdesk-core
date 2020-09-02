@@ -13,9 +13,10 @@ from unittest.mock import MagicMock, patch
 from flask import Flask
 from .utils import mock_dictionaries
 from superdesk.tests import TestCase
+from superdesk.text_checkers import tools
 from superdesk.text_checkers import spellcheckers
 from superdesk.text_checkers.spellcheckers import SPELLCHECKER_DEFAULT
-from superdesk.text_checkers.spellcheckers.base import registered_spellcheckers
+from superdesk.text_checkers.spellcheckers.base import registered_spellcheckers, SpellcheckerBase
 from superdesk.text_checkers.spellcheckers.default import Default
 from superdesk import get_resource_service
 
@@ -40,7 +41,7 @@ MODEL = {
 def load_spellcheckers():
     registered_spellcheckers.clear()
     app = Flask(__name__)
-    spellcheckers.importSpellcheckers(app, spellcheckers.__name__)
+    tools.import_services(app, spellcheckers.__name__, SpellcheckerBase)
 
 
 class DefaultSpellcheckerTestCase(TestCase):

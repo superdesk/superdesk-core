@@ -12,8 +12,9 @@ from urllib.parse import urljoin
 import responses
 from flask import Flask
 from superdesk.tests import TestCase
+from superdesk.text_checkers import tools
 from superdesk.text_checkers import spellcheckers
-from superdesk.text_checkers.spellcheckers.base import registered_spellcheckers
+from superdesk.text_checkers.spellcheckers.base import registered_spellcheckers, SpellcheckerBase
 from superdesk.text_checkers.spellcheckers.grammalecte import PATH_CHECK, PATH_SUGGEST, Grammalecte
 from superdesk import get_resource_service
 import os
@@ -37,7 +38,7 @@ def load_spellcheckers():
             "version": "1.2",
         },
     )
-    spellcheckers.importSpellcheckers(app, spellcheckers.__name__)
+    tools.import_services(app, spellcheckers.__name__, SpellcheckerBase)
 
 
 class GrammalecteTestCase(TestCase):

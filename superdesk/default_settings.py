@@ -432,6 +432,7 @@ CORE_APPS.extend([
     'superdesk.io.iptc',
     'superdesk.io.mediatopics',
     'superdesk.text_checkers.spellcheckers',
+    'superdesk.text_checkers.ai',
     'apps.io',
     'apps.io.feeding_services',
     'superdesk.publish',
@@ -834,6 +835,12 @@ WORKFLOW_ALLOW_MULTIPLE_UPDATES = False
 #: .. versionadded:: 1.34
 #:
 WORKFLOW_ALLOW_DUPLICATE_TO_NON_MEMBERS = False
+
+#: Allow users to copy content from desk to personal
+#:
+#: .. versionadded:: 1.34
+#:
+WORKFLOW_ALLOW_COPY_TO_PERSONAL = True
 
 #: Enable archive autocomplete API
 #:

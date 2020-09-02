@@ -168,7 +168,14 @@ class VocabulariesResource(Resource):
         'custom_field_config': {
             'type': 'dict',
             'nullable': True,
-            'schema': {},
+            'schema': {
+                'increment_steps': {
+                    'type': 'list',
+                },
+                'initial_offset_minutes': {
+                    'type': 'integer',
+                }
+            },
         },
     }
 

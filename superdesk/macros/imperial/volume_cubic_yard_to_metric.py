@@ -9,6 +9,7 @@
 # at https://www.sourcefabric.org/superdesk/license
 from decimal import Decimal
 from . import unit_base
+from flask_babel import lazy_gettext
 
 CUBIC_METER_SYMBOL = 'cubic meter'
 
@@ -34,7 +35,7 @@ def cubic_yard_to_metric(item, **kwargs):
 
 
 name = 'cubic_yard_to_metric'
-label = 'Volume cubic yard to metric'
+label = lazy_gettext('Volume cubic yard to metric')
 callback = cubic_yard_to_metric
 access_type = 'frontend'
 action_type = 'interactive'

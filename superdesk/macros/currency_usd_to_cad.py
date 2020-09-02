@@ -11,6 +11,7 @@
 import os
 from . import currency_base
 from decimal import Decimal
+from flask_babel import lazy_gettext
 
 USD_TO_CAD = Decimal('1.3139')  # backup
 
@@ -34,7 +35,7 @@ def usd_to_cad(item, **kwargs):
 
 
 name = 'usd_to_cad'
-label = 'Currency USD to CAD'
+label = lazy_gettext('Currency USD to CAD')
 shortcut = 'd'
 callback = usd_to_cad
 access_type = 'frontend'

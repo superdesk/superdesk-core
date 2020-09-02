@@ -8,6 +8,8 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
+from flask_babel import lazy_gettext
+
 
 def validate(item, **kwargs):
     """Checks if item has take_key value"""
@@ -20,7 +22,7 @@ def validate(item, **kwargs):
 
 
 name = 'take_key_validator'
-label = 'validate take key'
+label = lazy_gettext('validate take key')
 callback = validate
 access_type = 'backend'
 action_type = 'direct'
