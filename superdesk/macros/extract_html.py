@@ -10,6 +10,7 @@
 
 from superdesk import etree as sd_etree
 from lxml import etree
+from flask_babel import lazy_gettext
 
 
 def extract_html_macro(item, **kwargs):
@@ -54,7 +55,7 @@ def extract_html_macro(item, **kwargs):
 
 
 name = 'Extract Html Macro'
-label = 'Extract Html Macro'
+label = lazy_gettext('Extract Html Macro')
 callback = extract_html_macro
 access_type = 'frontend'
 action_type = 'direct'

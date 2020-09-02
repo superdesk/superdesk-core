@@ -9,7 +9,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Superdesk-Core 1.33\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2020-08-21 14:40+0530\n"
+"POT-Creation-Date: 2020-09-01 18:14+0530\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -18,15 +18,15 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 2.8.0\n"
 
-#: superdesk/activity.py:77
+#: superdesk/activity.py:78
 msgid "Send notifications via email"
 msgstr ""
 
-#: superdesk/activity.py:78 superdesk/activity.py:85
+#: superdesk/activity.py:79 superdesk/activity.py:86
 msgid "notifications"
 msgstr ""
 
-#: superdesk/activity.py:84
+#: superdesk/activity.py:85
 msgid "Allow Desktop Notifications"
 msgstr ""
 
@@ -34,11 +34,95 @@ msgstr ""
 msgid "Only 1 instance is allowed."
 msgstr ""
 
-#: superdesk/vocabularies/__init__.py:26
-msgid "cvs"
+#: superdesk/macros/abstract_populator.py:35
+msgid "Populate Abstract"
+msgstr ""
+
+#: superdesk/macros/assign_status.py:33
+msgid "Update Status On Assignment ID"
+msgstr ""
+
+#: superdesk/macros/currency_usd_to_cad.py:38
+msgid "Currency USD to CAD"
+msgstr ""
+
+#: superdesk/macros/desk_routing.py:45
+msgid "Desk Routing"
+msgstr ""
+
+#: superdesk/macros/extract_html.py:58
+msgid "Extract Html Macro"
+msgstr ""
+
+#: superdesk/macros/internal_destination_auto_publish.py:83
+msgid "Internal Destination Auto Publish"
+msgstr ""
+
+#: superdesk/macros/take_key_validator.py:25
+msgid "validate take key"
+msgstr ""
+
+#: superdesk/macros/validate_for_publish.py:27
+msgid "Validate for Publish"
+msgstr ""
+
+#: superdesk/macros/imperial/area_acre_to_metric.py:47
+msgid "Area acres to metric"
+msgstr ""
+
+#: superdesk/macros/imperial/area_square_feet_to_metric.py:47
+msgid "Area square feet to metric"
+msgstr ""
+
+#: superdesk/macros/imperial/area_square_inch_to_metric.py:47
+msgid "Area square inch to metric"
+msgstr ""
+
+#: superdesk/macros/imperial/area_square_miles_to_metric.py:47
+msgid "Area square miles to metric"
+msgstr ""
+
+#: superdesk/macros/imperial/area_square_yards_to_metric.py:47
+msgid "Area square yards to metric"
+msgstr ""
+
+#: superdesk/macros/imperial/length_feet_and_inches_to_metric.py:103
+msgid "Length feet-inches to metric"
+msgstr ""
+
+#: superdesk/macros/imperial/length_miles_to_metric.py:38
+msgid "Length miles to kilometres"
+msgstr ""
+
+#: superdesk/macros/imperial/length_nautical_miles_to_metric.py:38
+msgid "Length nautical miles to kilometres"
+msgstr ""
+
+#: superdesk/macros/imperial/length_yards_to_metric.py:39
+msgid "Length yards to metres"
+msgstr ""
+
+#: superdesk/macros/imperial/volume_cubic_feet_to_metric.py:38
+msgid "Volume cubic feet to metric"
+msgstr ""
+
+#: superdesk/macros/imperial/volume_cubic_inches_to_metric.py:48
+msgid "Volume cubic inches to metric"
+msgstr ""
+
+#: superdesk/macros/imperial/volume_cubic_yard_to_metric.py:38
+msgid "Volume cubic yard to metric"
+msgstr ""
+
+#: superdesk/macros/imperial/weight_pounds_to_metric.py:38
+msgid "Weight pounds to metric"
 msgstr ""
 
 #: superdesk/vocabularies/__init__.py:27
+msgid "cvs"
+msgstr ""
+
+#: superdesk/vocabularies/__init__.py:28
 msgid "Prefered CV items"
 msgstr ""
 
@@ -65,19 +149,19 @@ msgid ""
 "article(s)."
 msgstr ""
 
-#: apps/archive/__init__.py:100 apps/monitoring.py:11
+#: apps/archive/__init__.py:100 apps/monitoring.py:12
 msgid "Monitoring view"
 msgstr ""
 
-#: apps/monitoring.py:12
+#: apps/monitoring.py:13
 msgid "monitoring"
 msgstr ""
 
-#: apps/preferences.py:65
+#: apps/preferences.py:66
 msgid "label"
 msgstr ""
 
-#: apps/preferences.py:67
+#: apps/preferences.py:68
 msgid "category"
 msgstr ""
 
@@ -683,14 +767,14 @@ msgstr ""
 msgid "The dictionary type cannot be changed."
 msgstr ""
 
-#: apps/duplication/archive_copy.py:54
+#: apps/duplication/archive_copy.py:55
 #: apps/duplication/archive_duplication.py:121
 #: apps/duplication/archive_move.py:108
 #: apps/duplication/archive_translate.py:66
 msgid "Fail to found item with guid: {guid}"
 msgstr ""
 
-#: apps/duplication/archive_copy.py:59
+#: apps/duplication/archive_copy.py:60
 msgid "Copy is not allowed on items in a desk."
 msgstr ""
 
