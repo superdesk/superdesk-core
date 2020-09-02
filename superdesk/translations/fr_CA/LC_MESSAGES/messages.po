@@ -1,41 +1,41 @@
-# Translations template for Superdesk-Core.
+# French (Canada) translations for Superdesk-Core.
 # Copyright (C) 2020 ORGANIZATION
 # This file is distributed under the same license as the Superdesk-Core
 # project.
 # FIRST AUTHOR <EMAIL@ADDRESS>, 2020.
-# 
+#
 # Translators:
 # Evzen Deulin <evgeny.deulin@sourcefabric.org>, 2020
 # Simon Peacock <simon.peacock@gmail.com>, 2020
 # Marie-Eve Ouellette <marie-eve.ouellette@lapressecanadienne.com>, 2020
 # Gideon Lehmann <gideon.lehmann@sourcefabric.org>, 2020
 # Charles-Philippe Giroux <charles-philippe.giroux@lapressecanadienne.com>, 2020
-# 
-#, fuzzy
 msgid ""
 msgstr ""
 "Project-Id-Version: Superdesk-Core 1.33\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2020-08-21 14:40+0530\n"
+"POT-Creation-Date: 2020-09-02 18:09+0530\n"
 "PO-Revision-Date: 2019-04-04 09:17+0000\n"
-"Last-Translator: Charles-Philippe Giroux <charles-philippe.giroux@lapressecanadienne.com>, 2020\n"
-"Language-Team: French (Canada) (https://www.transifex.com/sourcefabric/teams/6584/fr_CA/)\n"
+"Last-Translator: Charles-Philippe Giroux <charles-"
+"philippe.giroux@lapressecanadienne.com>, 2020\n"
+"Language: fr_CA\n"
+"Language-Team: French (Canada) "
+"(https://www.transifex.com/sourcefabric/teams/6584/fr_CA/)\n"
+"Plural-Forms: nplurals=2; plural=(n > 1)\n"
 "MIME-Version: 1.0\n"
-"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 2.8.0\n"
-"Language: fr_CA\n"
-"Plural-Forms: nplurals=2; plural=(n > 1);\n"
 
-#: superdesk/activity.py:77
+#: superdesk/activity.py:78
 msgid "Send notifications via email"
 msgstr ""
 
-#: superdesk/activity.py:78 superdesk/activity.py:85
+#: superdesk/activity.py:79 superdesk/activity.py:86
 msgid "notifications"
 msgstr "notifications"
 
-#: superdesk/activity.py:84
+#: superdesk/activity.py:85
 msgid "Allow Desktop Notifications"
 msgstr "Autoriser les notifications de bureau"
 
@@ -131,18 +131,17 @@ msgstr "Poids: livres en mesure métrique"
 msgid "cvs"
 msgstr "paramètres personnalisés"
 
-#: superdesk/vocabularies/__init__.py:27
+#: superdesk/vocabularies/__init__.py:28
 msgid "Prefered CV items"
 msgstr ""
 
 #: apps/content_filters/filter_condition/filter_condition_parameters.py:73
-#: superdesk/vocabularies/vocabularies.py:451
+#: apps/validate/validate.py:62 superdesk/vocabularies/vocabularies.py:451
 msgid "Keywords"
-msgstr ""
+msgstr "Mots clés"
 
 #: apps/desks.py:213
-msgid ""
-"Cannot update Desk Type as there are article(s) referenced by the Desk."
+msgid "Cannot update Desk Type as there are article(s) referenced by the Desk."
 msgstr ""
 
 #: apps/desks.py:236
@@ -159,19 +158,19 @@ msgid ""
 "article(s)."
 msgstr ""
 
-#: apps/archive/__init__.py:100 apps/monitoring.py:11
+#: apps/archive/__init__.py:100 apps/monitoring.py:12
 msgid "Monitoring view"
 msgstr "Affichage"
 
-#: apps/monitoring.py:12
+#: apps/monitoring.py:13
 msgid "monitoring"
 msgstr "suivi"
 
-#: apps/preferences.py:65
+#: apps/preferences.py:66
 msgid "label"
 msgstr ""
 
-#: apps/preferences.py:67
+#: apps/preferences.py:68
 msgid "category"
 msgstr ""
 
@@ -224,7 +223,7 @@ msgid "Preferred Desks"
 msgstr "Pupitres préférés"
 
 #: apps/content_filters/filter_condition/filter_condition_parameters.py:121
-#: apps/preferences.py:171
+#: apps/preferences.py:171 apps/validate/validate.py:66
 msgid "Place"
 msgstr ""
 
@@ -250,8 +249,8 @@ msgstr ""
 
 #: apps/stages.py:174
 msgid ""
-"Cannot delete stage as it has article(s) or referenced by versions of the "
-"article(s)."
+"Cannot delete stage as it has article(s) or referenced by versions of the"
+" article(s)."
 msgstr ""
 
 #: apps/stages.py:181
@@ -434,8 +433,8 @@ msgstr ""
 
 #: apps/archive/archive.py:874
 msgid ""
-"This item is in a package and it needs to be removed before the item can be "
-"scheduled!"
+"This item is in a package and it needs to be removed before the item can "
+"be scheduled!"
 msgstr ""
 
 #: apps/archive/archive.py:900
@@ -553,7 +552,8 @@ msgstr ""
 
 #: apps/archived/archived.py:137
 msgid ""
-"Can't kill as this article acts as a Master Story for existing broadcast(s)"
+"Can't kill as this article acts as a Master Story for existing "
+"broadcast(s)"
 msgstr ""
 
 #: apps/archived/archived.py:140
@@ -662,54 +662,66 @@ msgid "ANPA Category"
 msgstr ""
 
 #: apps/content_filters/filter_condition/filter_condition_parameters.py:49
+#: apps/validate/validate.py:78
 msgid "Urgency"
-msgstr ""
+msgstr "Niveau d'urgence"
 
 #: apps/content_filters/filter_condition/filter_condition_parameters.py:55
+#: apps/validate/validate.py:59
 msgid "Genre"
-msgstr ""
+msgstr "Type de contenu"
 
 #: apps/content_filters/filter_condition/filter_condition_parameters.py:61
+#: apps/validate/validate.py:76
 msgid "Subject"
-msgstr ""
+msgstr "Sujet"
 
 #: apps/content_filters/filter_condition/filter_condition_parameters.py:67
+#: apps/validate/validate.py:67
 msgid "Priority"
-msgstr ""
+msgstr "Priorité"
 
 #: apps/content_filters/filter_condition/filter_condition_parameters.py:77
+#: apps/validate/validate.py:71
 msgid "Slugline"
-msgstr ""
+msgstr "Titre de rappel"
 
 #: apps/content_filters/filter_condition/filter_condition_parameters.py:81
+#: apps/validate/validate.py:77
 msgid "Type"
 msgstr ""
 
 #: apps/content_filters/filter_condition/filter_condition_parameters.py:87
+#: apps/validate/validate.py:74
 msgid "Source"
 msgstr ""
 
 #: apps/content_filters/filter_condition/filter_condition_parameters.py:91
+#: apps/validate/validate.py:60
 msgid "Headline"
-msgstr ""
+msgstr "Titre"
 
 #: apps/content_filters/filter_condition/filter_condition_parameters.py:95
 msgid "Ednote"
 msgstr ""
 
 #: apps/content_filters/filter_condition/filter_condition_parameters.py:99
+#: apps/validate/validate.py:44
 msgid "Body HTML"
-msgstr ""
+msgstr "Corps HTML"
 
 #: apps/content_filters/filter_condition/filter_condition_parameters.py:103
+#: apps/validate/validate.py:52
 msgid "Desk"
-msgstr ""
+msgstr "Bureau"
 
 #: apps/content_filters/filter_condition/filter_condition_parameters.py:109
+#: apps/validate/validate.py:75
 msgid "Stage"
-msgstr ""
+msgstr "Étape"
 
 #: apps/content_filters/filter_condition/filter_condition_parameters.py:115
+#: apps/validate/validate.py:72
 msgid "SMS"
 msgstr ""
 
@@ -718,12 +730,14 @@ msgid "Ingest provider"
 msgstr ""
 
 #: apps/content_filters/filter_condition/filter_condition_parameters.py:133
+#: apps/validate/validate.py:54
 msgid "Embargo"
 msgstr ""
 
 #: apps/content_filters/filter_condition/filter_condition_parameters.py:139
+#: apps/validate/validate.py:56
 msgid "Feature Media"
-msgstr ""
+msgstr "Médias vedettes"
 
 #: apps/content_filters/filter_condition/filter_condition_parameters.py:151
 msgid "Agendas"
@@ -756,8 +770,7 @@ msgid ""
 msgstr ""
 
 #: apps/content_types/content_types.py:175
-msgid ""
-"Cannot disable content profile as following desks are referencing: {desks}"
+msgid "Cannot disable content profile as following desks are referencing: {desks}"
 msgstr ""
 
 #: apps/dictionaries/service.py:142
@@ -777,14 +790,14 @@ msgstr ""
 msgid "The dictionary type cannot be changed."
 msgstr ""
 
-#: apps/duplication/archive_copy.py:54
+#: apps/duplication/archive_copy.py:55
 #: apps/duplication/archive_duplication.py:121
 #: apps/duplication/archive_move.py:108
 #: apps/duplication/archive_translate.py:66
 msgid "Fail to found item with guid: {guid}"
 msgstr ""
 
-#: apps/duplication/archive_copy.py:59
+#: apps/duplication/archive_copy.py:60
 msgid "Copy is not allowed on items in a desk."
 msgstr ""
 
@@ -853,8 +866,7 @@ msgid "Not set a keywords provider"
 msgstr ""
 
 #: apps/ldap/ldap.py:125
-msgid ""
-"User does not belong to security Group or could not find the user profile."
+msgid "User does not belong to security Group or could not find the user profile."
 msgstr ""
 
 #: apps/ldap/ldap.py:174
@@ -936,13 +948,11 @@ msgid "Product is used by the subscriber(s): {names}"
 msgstr ""
 
 #: apps/products/service.py:47
-msgid ""
-"Product is used for API publishing for the subscriber(s): {subscribers}"
+msgid "Product is used for API publishing for the subscriber(s): {subscribers}"
 msgstr ""
 
 #: apps/products/service.py:54
-msgid ""
-"Product is used for direct publishing for the subscriber(s): {subscribers}"
+msgid "Product is used for direct publishing for the subscriber(s): {subscribers}"
 msgstr ""
 
 #: apps/publish/published_item.py:189
@@ -983,8 +993,8 @@ msgstr ""
 
 #: apps/publish/content/common.py:302
 msgid ""
-"There are unpublished related items that won't be sent out as related items."
-" Do you want to publish the article anyway?"
+"There are unpublished related items that won't be sent out as related "
+"items. Do you want to publish the article anyway?"
 msgstr ""
 
 #: apps/publish/content/common.py:321 apps/publish/content/common.py:380
@@ -1236,6 +1246,146 @@ msgstr ""
 msgid "Templates that are not create type can only be assigned to one desk!"
 msgstr ""
 
+#: apps/validate/validate.py:27
+msgid "is a required field"
+msgstr "est un champ obligatoire"
+
+#: apps/validate/validate.py:28
+msgid "max length is {length}"
+msgstr ""
+
+#: apps/validate/validate.py:29
+msgid "require a string value"
+msgstr ""
+
+#: apps/validate/validate.py:30
+msgid "require a date value"
+msgstr ""
+
+#: apps/validate/validate.py:31
+msgid "{} is a required field"
+msgstr "{} est un champ obligatoire"
+
+#: apps/validate/validate.py:32
+msgid "contains invalid characters"
+msgstr ""
+
+#: apps/validate/validate.py:33
+msgid "{} is too long"
+msgstr "{} est trop long"
+
+#: apps/validate/validate.py:34
+msgid "{} is too short"
+msgstr "{} est trop court"
+
+#: apps/validate/validate.py:37
+msgid "Abstract"
+msgstr "Résumé"
+
+#: apps/validate/validate.py:38
+msgid "Alt text"
+msgstr "Texte alternatif"
+
+#: apps/validate/validate.py:39
+msgid "Take Key"
+msgstr ""
+
+#: apps/validate/validate.py:40
+msgid "Archive description"
+msgstr "Description de l'archive"
+
+#: apps/validate/validate.py:41
+msgid "Attachments"
+msgstr "Pièces jointes"
+
+#: apps/validate/validate.py:42
+msgid "Authors"
+msgstr ""
+
+#: apps/validate/validate.py:43
+msgid "Body footer"
+msgstr "Corps pied de page"
+
+#: apps/validate/validate.py:45
+msgid "Byline"
+msgstr "Signature"
+
+#: apps/validate/validate.py:46
+msgid "Categories"
+msgstr "Catégories"
+
+#: apps/validate/validate.py:47
+msgid "Company Codes"
+msgstr "Codes d'entreprise"
+
+#: apps/validate/validate.py:48
+msgid "Copyright holder"
+msgstr "Titulaire du droit d'auteur"
+
+#: apps/validate/validate.py:49
+msgid "Copyright notice"
+msgstr ""
+
+#: apps/validate/validate.py:50
+msgid "Dateline"
+msgstr "Date"
+
+#: apps/validate/validate.py:51
+msgid "Description"
+msgstr ""
+
+#: apps/validate/validate.py:53
+msgid "Ed. Note"
+msgstr "Note de l'éditeur"
+
+#: apps/validate/validate.py:55
+msgid "Feature Image"
+msgstr "Image de fond"
+
+#: apps/validate/validate.py:57
+msgid "Footer"
+msgstr "Pied de page"
+
+#: apps/validate/validate.py:58
+msgid "Footers"
+msgstr "Pieds de page"
+
+#: apps/validate/validate.py:61
+msgid "Ingest Provider"
+msgstr "Contributeur"
+
+#: apps/validate/validate.py:63
+msgid "Language"
+msgstr "Langue"
+
+#: apps/validate/validate.py:64
+msgid "Media"
+msgstr "Média"
+
+#: apps/validate/validate.py:65
+msgid "Media Description"
+msgstr "Description du média"
+
+#: apps/validate/validate.py:68
+msgid "Scheduled Time"
+msgstr ""
+
+#: apps/validate/validate.py:69
+msgid "Related Items"
+msgstr "Éléments liées"
+
+#: apps/validate/validate.py:70
+msgid "Sign Off"
+msgstr "Initiales"
+
+#: apps/validate/validate.py:73
+msgid "SMS Message"
+msgstr ""
+
+#: apps/validate/validate.py:79
+msgid "Usage Terms"
+msgstr "Termes d'utilisation"
+
 #: apps/video_edit/__init__.py:29
 msgid "\"video_editor_id\" is required"
 msgstr ""
@@ -1243,3 +1393,4 @@ msgstr ""
 #: apps/video_edit/__init__.py:31
 msgid "\"capture\" or \"edit\" is required"
 msgstr ""
+
