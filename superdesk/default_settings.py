@@ -17,16 +17,12 @@ import json
 import os
 import pytz
 import tzlocal
+from urllib.parse import urlparse
 
 from datetime import timedelta, datetime
 from celery.schedules import crontab
 from kombu import Queue, Exchange
 from distutils.util import strtobool as _strtobool
-
-try:
-    from urllib.parse import urlparse
-except ImportError:
-    from urlparse import urlparse
 
 
 def strtobool(value):

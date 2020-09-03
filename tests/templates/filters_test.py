@@ -64,8 +64,6 @@ class ConvertDatetimeFiltersTest(TestCase):
         result = render_template_string(template_string, item=item)
         self.assertEqual(result, '02 Jan 2015 09:53 AEDT')
 
-    def test_convert_datetime_utc_timezone_format(self):
-        template_string = '{{ item.versioncreated | format_datetime("Australia/Sydney", "%d %b %Y %H:%S %Z")}}'
         item = {'versioncreated': '2015-06-01T22:54:53+0000'}
         result = render_template_string(template_string, item=item)
         self.assertEqual(result, '02 Jun 2015 08:53 AEST')

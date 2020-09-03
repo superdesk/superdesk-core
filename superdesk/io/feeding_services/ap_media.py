@@ -66,7 +66,7 @@ class APMediaFeedingService(HTTPFeedingServiceBase):
 
     HTTP_AUTH = False
 
-    HTTP_TIMEOUT = 40.0
+    HTTP_TIMEOUT = 40
 
     def config_test(self, provider=None):
         self._get_products(provider)
