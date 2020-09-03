@@ -80,14 +80,14 @@ FIELD_LABELS = {
 }
 
 ERROR_MESSAGES = {
-    'REQUIRED_FIELD': lazy_gettext('is a required field'),
-    'MAX_LENGTH': lazy_gettext('max length is {length}'),
-    'STRING_FIELD': lazy_gettext('require a string value'),
-    'DATE_FIELD': lazy_gettext('require a date value'),
-    'REQUIRED_ERROR': lazy_gettext('{} is a required field'),
-    'INVALID_CHAR': lazy_gettext('contains invalid characters'),
-    'TOO_LONG': lazy_gettext('{} is too long'),
-    'TOO_SHORT': lazy_gettext('{} is too short'),
+    REQUIRED_FIELD: lazy_gettext('is a required field'),
+    MAX_LENGTH: lazy_gettext('max length is {length}'),
+    STRING_FIELD: lazy_gettext('require a string value'),
+    DATE_FIELD: lazy_gettext('require a date value'),
+    REQUIRED_ERROR: lazy_gettext('{} is a required field'),
+    INVALID_CHAR: lazy_gettext('contains invalid characters'),
+    TOO_LONG: lazy_gettext('{} is too long'),
+    TOO_SHORT: lazy_gettext('{} is too short'),
 }
 
 
@@ -516,22 +516,22 @@ class ValidateService(superdesk.Service):
                     for field in error_list[e]:
                         display_name = self._get_vocabulary_display_name(field)
                         if 'required' in error_list[e][field]:
-                            messages.append(ERROR_MESSAGES['REQUIRED_ERROR'].format(display_name))
+                            messages.append(ERROR_MESSAGES[REQUIRED_ERROR].format(display_name))
                         else:
                             error_field = self.get_error_field_name(display_name)
                             messages.append('{} {}'.format(error_field, error_list[e][field]))
                 elif 'required field' in error_list[e] or type(error_list[e]) is dict or type(error_list[e]) is list:
                     display_name = self._get_vocabulary_display_name(e)
                     error_field = self.get_error_field_name(display_name)
-                    messages.append(ERROR_MESSAGES['REQUIRED_ERROR'].format(error_field.upper()))
+                    messages.append(ERROR_MESSAGES[REQUIRED_ERROR].format(error_field.upper()))
                 elif 'min length is 1' == error_list[e] or 'null value not allowed' in error_list[e]:
-                    messages.append(ERROR_MESSAGES['REQUIRED_ERROR'].format(e.upper()))
+                    messages.append(ERROR_MESSAGES[REQUIRED_ERROR].format(e.upper()))
                 elif 'min length is' in error_list[e]:
                     error_field = self.get_error_field_name(e)
-                    messages.append(ERROR_MESSAGES['TOO_SHORT'].format(error_field.upper()))
+                    messages.append(ERROR_MESSAGES[TOO_SHORT].format(error_field.upper()))
                 elif 'max length is' in error_list[e]:
                     error_field = self.get_error_field_name(e)
-                    messages.append(ERROR_MESSAGES['TOO_LONG'].format(error_field.upper()))
+                    messages.append(ERROR_MESSAGES[TOO_LONG].format(error_field.upper()))
                 else:
                     messages.append('{} {}'.format(e.upper(), error_list[e]))
 
