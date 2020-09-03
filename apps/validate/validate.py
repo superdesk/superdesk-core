@@ -24,16 +24,16 @@ from superdesk.validator import BaseErrorHandler
 from flask_babel import lazy_gettext, _
 
 
-REQUIRED_FIELD = _('is a required field')
-MAX_LENGTH = lazy_gettext('max length is {length}')
-STRING_FIELD = _('require a string value')
-DATE_FIELD = _('require a date value')
-REQUIRED_ERROR = lazy_gettext('{} is a required field')
-INVALID_CHAR = _('contains invalid characters')
-TOO_LONG = lazy_gettext('{} is too long')
-TOO_SHORT = lazy_gettext('{} is too short')
+REQUIRED_FIELD = 'is a required field'
+MAX_LENGTH = 'max length is {length}'
+STRING_FIELD = 'require a string value'
+DATE_FIELD = 'require a date value'
+REQUIRED_ERROR = '{} is a required field'
+INVALID_CHAR = 'contains invalid characters'
+TOO_LONG = '{} is too long'
+TOO_SHORT = '{} is too short'
 
-GET_LABEL_MAP = {
+FIELD_LABELS = {
     'abstract': lazy_gettext('Abstract'),
     'alt_text': lazy_gettext('Alt text'),
     'anpa_take_key': lazy_gettext('Take Key'),
@@ -77,6 +77,17 @@ GET_LABEL_MAP = {
     'type': lazy_gettext('Type'),
     'urgency': lazy_gettext('Urgency'),
     'usageterms': lazy_gettext('Usage Terms'),
+}
+
+ERROR_MESSAGES = {
+    'REQUIRED_FIELD_MESSAGE': lazy_gettext('is a required field'),
+    'MAX_LENGTH_MESSAGE': lazy_gettext('max length is {length}'),
+    'STRING_FIELD_MESSAGE': lazy_gettext('require a string value'),
+    'DATE_FIELD_MESSAGE': lazy_gettext('require a date value'),
+    'REQUIRED_ERROR_MESSAGE': lazy_gettext('{} is a required field'),
+    'INVALID_CHAR_MESSAGE': lazy_gettext('contains invalid characters'),
+    'TOO_LONG_MESSAGE': lazy_gettext('{} is too long'),
+    'TOO_SHORT_MESSAGE': lazy_gettext('{} is too short'),
 }
 
 
@@ -470,8 +481,8 @@ class ValidateService(superdesk.Service):
                 subject.setdefault('scheme', None)
 
     def get_error_field_name(self, error_field):
-        if GET_LABEL_MAP.get(error_field):
-            return GET_LABEL_MAP.get(error_field)
+        if FIELD_LABELS.get(error_field):
+            return FIELD_LABELS.get(error_field)
         return error_field
 
     def _validate(self, doc, fields=False, **kwargs):
@@ -505,22 +516,22 @@ class ValidateService(superdesk.Service):
                     for field in error_list[e]:
                         display_name = self._get_vocabulary_display_name(field)
                         if 'required' in error_list[e][field]:
-                            messages.append(REQUIRED_ERROR.format(display_name))
+                            messages.append(ERROR_MESSAGES.get('REQUIRED_ERROR_MESSAGE').format(display_name))
                         else:
                             error_field = self.get_error_field_name(display_name)
                             messages.append('{} {}'.format(error_field, error_list[e][field]))
                 elif 'required field' in error_list[e] or type(error_list[e]) is dict or type(error_list[e]) is list:
                     display_name = self._get_vocabulary_display_name(e)
                     error_field = self.get_error_field_name(display_name)
-                    messages.append(REQUIRED_ERROR.format(error_field.upper()))
+                    messages.append(ERROR_MESSAGES.get('REQUIRED_ERROR_MESSAGE').format(error_field.upper()))
                 elif 'min length is 1' == error_list[e] or 'null value not allowed' in error_list[e]:
-                    messages.append(REQUIRED_ERROR.format(e.upper()))
+                    messages.append(ERROR_MESSAGES.get('REQUIRED_ERROR_MESSAGE').format(e.upper()))
                 elif 'min length is' in error_list[e]:
                     error_field = self.get_error_field_name(e)
-                    messages.append(TOO_SHORT.format(error_field.upper()))
+                    messages.append(ERROR_MESSAGES.get('TOO_SHORT_MESSAGE').format(error_field.upper()))
                 elif 'max length is' in error_list[e]:
                     error_field = self.get_error_field_name(e)
-                    messages.append(TOO_LONG.format(error_field.upper()))
+                    messages.append(ERROR_MESSAGES.get('TOO_LONG_MESSAGE').format(error_field.upper()))
                 else:
                     messages.append('{} {}'.format(e.upper(), error_list[e]))
 

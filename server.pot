@@ -9,7 +9,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Superdesk-Core 1.33\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2020-09-02 18:09+0530\n"
+"POT-Creation-Date: 2020-09-03 12:57+0530\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -62,7 +62,7 @@ msgstr ""
 msgid "validate take key"
 msgstr ""
 
-#: superdesk/macros/validate_for_publish.py:27
+#: superdesk/macros/validate_for_publish.py:28
 msgid "Validate for Publish"
 msgstr ""
 
@@ -1237,38 +1237,6 @@ msgstr ""
 msgid "Templates that are not create type can only be assigned to one desk!"
 msgstr ""
 
-#: apps/validate/validate.py:27
-msgid "is a required field"
-msgstr ""
-
-#: apps/validate/validate.py:28
-msgid "max length is {length}"
-msgstr ""
-
-#: apps/validate/validate.py:29
-msgid "require a string value"
-msgstr ""
-
-#: apps/validate/validate.py:30
-msgid "require a date value"
-msgstr ""
-
-#: apps/validate/validate.py:31
-msgid "{} is a required field"
-msgstr ""
-
-#: apps/validate/validate.py:32
-msgid "contains invalid characters"
-msgstr ""
-
-#: apps/validate/validate.py:33
-msgid "{} is too long"
-msgstr ""
-
-#: apps/validate/validate.py:34
-msgid "{} is too short"
-msgstr ""
-
 #: apps/validate/validate.py:37
 msgid "Abstract"
 msgstr ""
@@ -1375,6 +1343,38 @@ msgstr ""
 
 #: apps/validate/validate.py:79
 msgid "Usage Terms"
+msgstr ""
+
+#: apps/validate/validate.py:83
+msgid "is a required field"
+msgstr ""
+
+#: apps/validate/validate.py:84
+msgid "max length is {length}"
+msgstr ""
+
+#: apps/validate/validate.py:85
+msgid "require a string value"
+msgstr ""
+
+#: apps/validate/validate.py:86
+msgid "require a date value"
+msgstr ""
+
+#: apps/validate/validate.py:87
+msgid "{} is a required field"
+msgstr ""
+
+#: apps/validate/validate.py:88
+msgid "contains invalid characters"
+msgstr ""
+
+#: apps/validate/validate.py:89
+msgid "{} is too long"
+msgstr ""
+
+#: apps/validate/validate.py:90
+msgid "{} is too short"
 msgstr ""
 
 #: apps/video_edit/__init__.py:29
