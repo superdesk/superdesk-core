@@ -898,6 +898,12 @@ USER_EXTERNAL_CREATE = False
 #:
 USER_EXTERNAL_DESK = None
 
+#: Remove domain from username when creating users via sso
+#:
+#: .. versionadded:: 2.0
+#:
+USER_EXTERNAL_USERNAME_STRIP_DOMAIN = False
+
 #: Set regex pattern to check username for
 #:
 #: .. versionadded:: 2.0

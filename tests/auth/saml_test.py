@@ -18,7 +18,7 @@ SAML_DATA = {
     "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/givenname": ["Foo"],
     "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/surname": ["Bar"],
     "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress": ["foo.bar@example.com"],
-    "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name": ["foo"],
+    "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name": ["foo@bar.com"],
     "http://schemas.microsoft.com/ws/2008/06/identity/claims/role": ["editor"],
     "displayname": ["Bar, Foo"],
     "country": ["CA"],
@@ -48,6 +48,7 @@ class SamlAuthTestCase(tests.TestCase):
             with patch.dict(self.app.config, {
                 'USER_EXTERNAL_CREATE': True,
                 'USER_EXTERNAL_DESK': 'sports',
+                'USER_EXTERNAL_USERNAME_STRIP_DOMAIN': True,
             }):
                 resp = saml.index()
             self.assertNotIn(ERROR, resp)
@@ -57,6 +58,7 @@ class SamlAuthTestCase(tests.TestCase):
             self.assertTrue(user.get('is_enabled'))
             self.assertFalse(user.get('needs_activation'))
             self.assertEqual('user', user.get('user_type'))
+            self.assertEqual('foo', user['username'])
 
             self.assertIsNotNone(user.get('role'))
             role = self.app.data.find_one('roles', req=None, _id=user['role'])
