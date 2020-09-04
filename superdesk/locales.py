@@ -15,6 +15,7 @@ def get_timezones():
     user = get_user()
     lang = user.get('language', flask.current_app.config.get('DEFAULT_LANGUAGE', 'en')).replace('-', '_')
     l18n.set_language(lang[0:2])
+
     return [
         {
             'id': tz,
