@@ -123,3 +123,13 @@ def update(item_id):
         files=files
     )
     return update_response.json(), update_response.status_code
+
+
+@assets_bp.route('/sams/assets/counts', methods=['GET'], defaults={'set_ids': None})
+@assets_bp.route('/sams/assets/counts/<set_ids>', methods=['GET'])
+def get_assets_count(set_ids):
+
+    counts = assets_bp.kwargs['client'].assets.get_assets_count(
+        set_ids=set_ids
+    )
+    return counts
