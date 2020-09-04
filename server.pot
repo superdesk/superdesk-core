@@ -9,7 +9,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Superdesk-Core 1.33\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2020-09-01 18:14+0530\n"
+"POT-Creation-Date: 2020-09-03 12:57+0530\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -62,7 +62,7 @@ msgstr ""
 msgid "validate take key"
 msgstr ""
 
-#: superdesk/macros/validate_for_publish.py:27
+#: superdesk/macros/validate_for_publish.py:28
 msgid "Validate for Publish"
 msgstr ""
 
@@ -127,7 +127,7 @@ msgid "Prefered CV items"
 msgstr ""
 
 #: apps/content_filters/filter_condition/filter_condition_parameters.py:73
-#: superdesk/vocabularies/vocabularies.py:451
+#: apps/validate/validate.py:62 superdesk/vocabularies/vocabularies.py:451
 msgid "Keywords"
 msgstr ""
 
@@ -214,7 +214,7 @@ msgid "Preferred Desks"
 msgstr ""
 
 #: apps/content_filters/filter_condition/filter_condition_parameters.py:121
-#: apps/preferences.py:171
+#: apps/preferences.py:171 apps/validate/validate.py:66
 msgid "Place"
 msgstr ""
 
@@ -653,34 +653,42 @@ msgid "ANPA Category"
 msgstr ""
 
 #: apps/content_filters/filter_condition/filter_condition_parameters.py:49
+#: apps/validate/validate.py:78
 msgid "Urgency"
 msgstr ""
 
 #: apps/content_filters/filter_condition/filter_condition_parameters.py:55
+#: apps/validate/validate.py:59
 msgid "Genre"
 msgstr ""
 
 #: apps/content_filters/filter_condition/filter_condition_parameters.py:61
+#: apps/validate/validate.py:76
 msgid "Subject"
 msgstr ""
 
 #: apps/content_filters/filter_condition/filter_condition_parameters.py:67
+#: apps/validate/validate.py:67
 msgid "Priority"
 msgstr ""
 
 #: apps/content_filters/filter_condition/filter_condition_parameters.py:77
+#: apps/validate/validate.py:71
 msgid "Slugline"
 msgstr ""
 
 #: apps/content_filters/filter_condition/filter_condition_parameters.py:81
+#: apps/validate/validate.py:77
 msgid "Type"
 msgstr ""
 
 #: apps/content_filters/filter_condition/filter_condition_parameters.py:87
+#: apps/validate/validate.py:74
 msgid "Source"
 msgstr ""
 
 #: apps/content_filters/filter_condition/filter_condition_parameters.py:91
+#: apps/validate/validate.py:60
 msgid "Headline"
 msgstr ""
 
@@ -689,18 +697,22 @@ msgid "Ednote"
 msgstr ""
 
 #: apps/content_filters/filter_condition/filter_condition_parameters.py:99
+#: apps/validate/validate.py:44
 msgid "Body HTML"
 msgstr ""
 
 #: apps/content_filters/filter_condition/filter_condition_parameters.py:103
+#: apps/validate/validate.py:52
 msgid "Desk"
 msgstr ""
 
 #: apps/content_filters/filter_condition/filter_condition_parameters.py:109
+#: apps/validate/validate.py:75
 msgid "Stage"
 msgstr ""
 
 #: apps/content_filters/filter_condition/filter_condition_parameters.py:115
+#: apps/validate/validate.py:72
 msgid "SMS"
 msgstr ""
 
@@ -709,10 +721,12 @@ msgid "Ingest provider"
 msgstr ""
 
 #: apps/content_filters/filter_condition/filter_condition_parameters.py:133
+#: apps/validate/validate.py:54
 msgid "Embargo"
 msgstr ""
 
 #: apps/content_filters/filter_condition/filter_condition_parameters.py:139
+#: apps/validate/validate.py:56
 msgid "Feature Media"
 msgstr ""
 
@@ -1221,6 +1235,146 @@ msgstr ""
 
 #: apps/templates/content_templates.py:361
 msgid "Templates that are not create type can only be assigned to one desk!"
+msgstr ""
+
+#: apps/validate/validate.py:37
+msgid "Abstract"
+msgstr ""
+
+#: apps/validate/validate.py:38
+msgid "Alt text"
+msgstr ""
+
+#: apps/validate/validate.py:39
+msgid "Take Key"
+msgstr ""
+
+#: apps/validate/validate.py:40
+msgid "Archive description"
+msgstr ""
+
+#: apps/validate/validate.py:41
+msgid "Attachments"
+msgstr ""
+
+#: apps/validate/validate.py:42
+msgid "Authors"
+msgstr ""
+
+#: apps/validate/validate.py:43
+msgid "Body footer"
+msgstr ""
+
+#: apps/validate/validate.py:45
+msgid "Byline"
+msgstr ""
+
+#: apps/validate/validate.py:46
+msgid "Categories"
+msgstr ""
+
+#: apps/validate/validate.py:47
+msgid "Company Codes"
+msgstr ""
+
+#: apps/validate/validate.py:48
+msgid "Copyright holder"
+msgstr ""
+
+#: apps/validate/validate.py:49
+msgid "Copyright notice"
+msgstr ""
+
+#: apps/validate/validate.py:50
+msgid "Dateline"
+msgstr ""
+
+#: apps/validate/validate.py:51
+msgid "Description"
+msgstr ""
+
+#: apps/validate/validate.py:53
+msgid "Ed. Note"
+msgstr ""
+
+#: apps/validate/validate.py:55
+msgid "Feature Image"
+msgstr ""
+
+#: apps/validate/validate.py:57
+msgid "Footer"
+msgstr ""
+
+#: apps/validate/validate.py:58
+msgid "Footers"
+msgstr ""
+
+#: apps/validate/validate.py:61
+msgid "Ingest Provider"
+msgstr ""
+
+#: apps/validate/validate.py:63
+msgid "Language"
+msgstr ""
+
+#: apps/validate/validate.py:64
+msgid "Media"
+msgstr ""
+
+#: apps/validate/validate.py:65
+msgid "Media Description"
+msgstr ""
+
+#: apps/validate/validate.py:68
+msgid "Scheduled Time"
+msgstr ""
+
+#: apps/validate/validate.py:69
+msgid "Related Items"
+msgstr ""
+
+#: apps/validate/validate.py:70
+msgid "Sign Off"
+msgstr ""
+
+#: apps/validate/validate.py:73
+msgid "SMS Message"
+msgstr ""
+
+#: apps/validate/validate.py:79
+msgid "Usage Terms"
+msgstr ""
+
+#: apps/validate/validate.py:83
+msgid "is a required field"
+msgstr ""
+
+#: apps/validate/validate.py:84
+msgid "max length is {length}"
+msgstr ""
+
+#: apps/validate/validate.py:85
+msgid "require a string value"
+msgstr ""
+
+#: apps/validate/validate.py:86
+msgid "require a date value"
+msgstr ""
+
+#: apps/validate/validate.py:87
+msgid "{} is a required field"
+msgstr ""
+
+#: apps/validate/validate.py:88
+msgid "contains invalid characters"
+msgstr ""
+
+#: apps/validate/validate.py:89
+msgid "{} is too long"
+msgstr ""
+
+#: apps/validate/validate.py:90
+msgid "{} is too short"
 msgstr ""
 
 #: apps/video_edit/__init__.py:29
