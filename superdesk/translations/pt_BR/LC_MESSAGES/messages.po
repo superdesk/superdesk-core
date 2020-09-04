@@ -1,27 +1,18 @@
-# French (Canada) translations for Superdesk-Core.
+# Portuguese (Brazil) translations for Superdesk-Core.
 # Copyright (C) 2020 ORGANIZATION
 # This file is distributed under the same license as the Superdesk-Core
 # project.
 # FIRST AUTHOR <EMAIL@ADDRESS>, 2020.
 #
-# Translators:
-# Evzen Deulin <evgeny.deulin@sourcefabric.org>, 2020
-# Simon Peacock <simon.peacock@gmail.com>, 2020
-# Marie-Eve Ouellette <marie-eve.ouellette@lapressecanadienne.com>, 2020
-# Gideon Lehmann <gideon.lehmann@sourcefabric.org>, 2020
-# Charles-Philippe Giroux <charles-philippe.giroux@lapressecanadienne.com>,
-# 2020
 msgid ""
 msgstr ""
 "Project-Id-Version: Superdesk-Core 1.33\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
 "POT-Creation-Date: 2020-09-03 12:57+0530\n"
-"PO-Revision-Date: 2019-04-04 09:17+0000\n"
-"Last-Translator: Charles-Philippe Giroux <charles-"
-"philippe.giroux@lapressecanadienne.com>, 2020\n"
-"Language: fr_CA\n"
-"Language-Team: French (Canada) "
-"(https://www.transifex.com/sourcefabric/teams/6584/fr_CA/)\n"
+"PO-Revision-Date: 2020-09-03 00:39+0530\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language: pt_BR\n"
+"Language-Team: pt_BR <LL@li.org>\n"
 "Plural-Forms: nplurals=2; plural=(n > 1)\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
@@ -34,11 +25,11 @@ msgstr ""
 
 #: superdesk/activity.py:79 superdesk/activity.py:86
 msgid "notifications"
-msgstr "notifications"
+msgstr ""
 
 #: superdesk/activity.py:85
 msgid "Allow Desktop Notifications"
-msgstr "Autoriser les notifications de bureau"
+msgstr ""
 
 #: superdesk/validator.py:283
 msgid "Only 1 instance is allowed."
@@ -46,7 +37,7 @@ msgstr ""
 
 #: superdesk/macros/abstract_populator.py:35
 msgid "Populate Abstract"
-msgstr "Remplir l'aperçu"
+msgstr ""
 
 #: superdesk/macros/assign_status.py:33
 msgid "Update Status On Assignment ID"
@@ -54,7 +45,7 @@ msgstr ""
 
 #: superdesk/macros/currency_usd_to_cad.py:38
 msgid "Currency USD to CAD"
-msgstr "Devise: dollars US en dollars CA"
+msgstr ""
 
 #: superdesk/macros/desk_routing.py:45
 msgid "Desk Routing"
@@ -62,7 +53,7 @@ msgstr ""
 
 #: superdesk/macros/extract_html.py:58
 msgid "Extract Html Macro"
-msgstr "Macro d'extraction HTML"
+msgstr ""
 
 #: superdesk/macros/internal_destination_auto_publish.py:83
 msgid "Internal Destination Auto Publish"
@@ -74,23 +65,23 @@ msgstr ""
 
 #: superdesk/macros/validate_for_publish.py:28
 msgid "Validate for Publish"
-msgstr "Valider pour publication"
+msgstr ""
 
 #: superdesk/macros/imperial/area_acre_to_metric.py:47
 msgid "Area acres to metric"
-msgstr "Aire: acres en mesure métrique"
+msgstr ""
 
 #: superdesk/macros/imperial/area_square_feet_to_metric.py:47
 msgid "Area square feet to metric"
-msgstr "Aire: pieds carrés en mesure métrique"
+msgstr ""
 
 #: superdesk/macros/imperial/area_square_inch_to_metric.py:47
 msgid "Area square inch to metric"
-msgstr "Aire: pouces carrés en mesure métrique"
+msgstr ""
 
 #: superdesk/macros/imperial/area_square_miles_to_metric.py:47
 msgid "Area square miles to metric"
-msgstr "Aire: miles carrés en mesure métrique"
+msgstr ""
 
 #: superdesk/macros/imperial/area_square_yards_to_metric.py:47
 msgid "Area square yards to metric"
@@ -98,39 +89,39 @@ msgstr ""
 
 #: superdesk/macros/imperial/length_feet_and_inches_to_metric.py:103
 msgid "Length feet-inches to metric"
-msgstr "Longueur: pieds-pouces en mesure métrique"
+msgstr ""
 
 #: superdesk/macros/imperial/length_miles_to_metric.py:38
 msgid "Length miles to kilometres"
-msgstr "Longueur: miles en kilomètres"
+msgstr ""
 
 #: superdesk/macros/imperial/length_nautical_miles_to_metric.py:38
 msgid "Length nautical miles to kilometres"
-msgstr "Longueur: miles nautiques en kilomètres"
+msgstr ""
 
 #: superdesk/macros/imperial/length_yards_to_metric.py:39
 msgid "Length yards to metres"
-msgstr "Longueur: verges en mètres"
+msgstr ""
 
 #: superdesk/macros/imperial/volume_cubic_feet_to_metric.py:38
 msgid "Volume cubic feet to metric"
-msgstr "Volume: pieds cubes en mesure métrique"
+msgstr ""
 
 #: superdesk/macros/imperial/volume_cubic_inches_to_metric.py:48
 msgid "Volume cubic inches to metric"
-msgstr "Volume: pouces cubes en mesure métrique"
+msgstr ""
 
 #: superdesk/macros/imperial/volume_cubic_yard_to_metric.py:38
 msgid "Volume cubic yard to metric"
-msgstr "Volume: verges cubes en mesure métrique"
+msgstr ""
 
 #: superdesk/macros/imperial/weight_pounds_to_metric.py:38
 msgid "Weight pounds to metric"
-msgstr "Poids: livres en mesure métrique"
+msgstr ""
 
 #: superdesk/vocabularies/__init__.py:27
 msgid "cvs"
-msgstr "paramètres personnalisés"
+msgstr ""
 
 #: superdesk/vocabularies/__init__.py:28
 msgid "Prefered CV items"
@@ -139,7 +130,7 @@ msgstr ""
 #: apps/content_filters/filter_condition/filter_condition_parameters.py:73
 #: apps/validate/validate.py:62 superdesk/vocabularies/vocabularies.py:451
 msgid "Keywords"
-msgstr "Mots clés"
+msgstr "Palavras-Chave"
 
 #: apps/desks.py:213
 msgid "Cannot update Desk Type as there are article(s) referenced by the Desk."
@@ -161,11 +152,11 @@ msgstr ""
 
 #: apps/archive/__init__.py:100 apps/monitoring.py:12
 msgid "Monitoring view"
-msgstr "Affichage"
+msgstr ""
 
 #: apps/monitoring.py:13
 msgid "monitoring"
-msgstr "suivi"
+msgstr ""
 
 #: apps/preferences.py:66
 msgid "label"
@@ -181,7 +172,7 @@ msgstr ""
 
 #: apps/preferences.py:109
 msgid "feature"
-msgstr "fonctionnalité"
+msgstr ""
 
 #: apps/preferences.py:118
 msgid "Users archive view format"
@@ -189,7 +180,7 @@ msgstr ""
 
 #: apps/preferences.py:119
 msgid "archive"
-msgstr "archiver"
+msgstr ""
 
 #: apps/preferences.py:126
 msgid "Enable Single Line View"
@@ -197,7 +188,7 @@ msgstr ""
 
 #: apps/preferences.py:127
 msgid "rows"
-msgstr "colonnes"
+msgstr ""
 
 #: apps/preferences.py:151
 msgid "Located"
@@ -205,11 +196,11 @@ msgstr ""
 
 #: apps/preferences.py:152 apps/preferences.py:172
 msgid "article_defaults"
-msgstr "paramètres par défaut des articles"
+msgstr ""
 
 #: apps/preferences.py:157
 msgid "categories"
-msgstr "catégories"
+msgstr ""
 
 #: apps/preferences.py:158
 msgid "Preferred Categories"
@@ -217,24 +208,24 @@ msgstr ""
 
 #: apps/preferences.py:164
 msgid "desks"
-msgstr "pupitres"
+msgstr ""
 
 #: apps/preferences.py:165
 msgid "Preferred Desks"
-msgstr "Pupitres préférés"
+msgstr ""
 
 #: apps/content_filters/filter_condition/filter_condition_parameters.py:121
 #: apps/preferences.py:171 apps/validate/validate.py:66
 msgid "Place"
-msgstr ""
+msgstr "Local"
 
 #: apps/preferences.py:187
 msgid "Users contacts view format"
-msgstr "Affichage"
+msgstr ""
 
 #: apps/preferences.py:188
 msgid "contacts"
-msgstr "contacts"
+msgstr ""
 
 #: apps/preferences.py:261 apps/preferences.py:273
 msgid "Invalid preference: {preference}"
@@ -665,42 +656,42 @@ msgstr ""
 #: apps/content_filters/filter_condition/filter_condition_parameters.py:49
 #: apps/validate/validate.py:78
 msgid "Urgency"
-msgstr "Niveau d'urgence"
+msgstr "Urgência"
 
 #: apps/content_filters/filter_condition/filter_condition_parameters.py:55
 #: apps/validate/validate.py:59
 msgid "Genre"
-msgstr "Type de contenu"
+msgstr "Gênero"
 
 #: apps/content_filters/filter_condition/filter_condition_parameters.py:61
 #: apps/validate/validate.py:76
 msgid "Subject"
-msgstr "Sujet"
+msgstr "Assunto"
 
 #: apps/content_filters/filter_condition/filter_condition_parameters.py:67
 #: apps/validate/validate.py:67
 msgid "Priority"
-msgstr "Priorité"
+msgstr "Prioridade"
 
 #: apps/content_filters/filter_condition/filter_condition_parameters.py:77
 #: apps/validate/validate.py:71
 msgid "Slugline"
-msgstr "Titre de rappel"
+msgstr ""
 
 #: apps/content_filters/filter_condition/filter_condition_parameters.py:81
 #: apps/validate/validate.py:77
 msgid "Type"
-msgstr ""
+msgstr "Tipo"
 
 #: apps/content_filters/filter_condition/filter_condition_parameters.py:87
 #: apps/validate/validate.py:74
 msgid "Source"
-msgstr ""
+msgstr "Fonte"
 
 #: apps/content_filters/filter_condition/filter_condition_parameters.py:91
 #: apps/validate/validate.py:60
 msgid "Headline"
-msgstr "Titre"
+msgstr "Manchete"
 
 #: apps/content_filters/filter_condition/filter_condition_parameters.py:95
 msgid "Ednote"
@@ -709,17 +700,17 @@ msgstr ""
 #: apps/content_filters/filter_condition/filter_condition_parameters.py:99
 #: apps/validate/validate.py:44
 msgid "Body HTML"
-msgstr "Corps HTML"
+msgstr "Corpo de HTML"
 
 #: apps/content_filters/filter_condition/filter_condition_parameters.py:103
 #: apps/validate/validate.py:52
 msgid "Desk"
-msgstr "Bureau"
+msgstr ""
 
 #: apps/content_filters/filter_condition/filter_condition_parameters.py:109
 #: apps/validate/validate.py:75
 msgid "Stage"
-msgstr "Étape"
+msgstr "Estágio"
 
 #: apps/content_filters/filter_condition/filter_condition_parameters.py:115
 #: apps/validate/validate.py:72
@@ -738,7 +729,7 @@ msgstr ""
 #: apps/content_filters/filter_condition/filter_condition_parameters.py:139
 #: apps/validate/validate.py:56
 msgid "Feature Media"
-msgstr "Médias vedettes"
+msgstr "Recurso de Mídia"
 
 #: apps/content_filters/filter_condition/filter_condition_parameters.py:151
 msgid "Agendas"
@@ -1249,23 +1240,23 @@ msgstr ""
 
 #: apps/validate/validate.py:37
 msgid "Abstract"
-msgstr "Résumé"
+msgstr "Resumo"
 
 #: apps/validate/validate.py:38
 msgid "Alt text"
-msgstr "Texte alternatif"
+msgstr "Texto Alternativo"
 
 #: apps/validate/validate.py:39
 msgid "Take Key"
-msgstr ""
+msgstr "Obter Chave"
 
 #: apps/validate/validate.py:40
 msgid "Archive description"
-msgstr "Description de l'archive"
+msgstr ""
 
 #: apps/validate/validate.py:41
 msgid "Attachments"
-msgstr "Pièces jointes"
+msgstr "Anexos"
 
 #: apps/validate/validate.py:42
 msgid "Authors"
@@ -1273,67 +1264,67 @@ msgstr ""
 
 #: apps/validate/validate.py:43
 msgid "Body footer"
-msgstr "Corps pied de page"
+msgstr "Corpo de rodapé"
 
 #: apps/validate/validate.py:45
 msgid "Byline"
-msgstr "Signature"
+msgstr "Assinatura"
 
 #: apps/validate/validate.py:46
 msgid "Categories"
-msgstr "Catégories"
+msgstr "Categorias"
 
 #: apps/validate/validate.py:47
 msgid "Company Codes"
-msgstr "Codes d'entreprise"
+msgstr "Códigos da Companhia"
 
 #: apps/validate/validate.py:48
 msgid "Copyright holder"
-msgstr "Titulaire du droit d'auteur"
+msgstr "Titular do Copyright"
 
 #: apps/validate/validate.py:49
 msgid "Copyright notice"
-msgstr ""
+msgstr "Aviso de Copyright"
 
 #: apps/validate/validate.py:50
 msgid "Dateline"
-msgstr "Date"
+msgstr "Subtítulo"
 
 #: apps/validate/validate.py:51
 msgid "Description"
-msgstr ""
+msgstr "Descrição"
 
 #: apps/validate/validate.py:53
 msgid "Ed. Note"
-msgstr "Note de l'éditeur"
+msgstr "Ed. Nota"
 
 #: apps/validate/validate.py:55
 msgid "Feature Image"
-msgstr "Image de fond"
+msgstr "Recurso Imagem"
 
 #: apps/validate/validate.py:57
 msgid "Footer"
-msgstr "Pied de page"
+msgstr "Rodapé"
 
 #: apps/validate/validate.py:58
 msgid "Footers"
-msgstr "Pieds de page"
+msgstr "Rodapés"
 
 #: apps/validate/validate.py:61
 msgid "Ingest Provider"
-msgstr "Contributeur"
+msgstr "Provedor de Ingestão"
 
 #: apps/validate/validate.py:63
 msgid "Language"
-msgstr "Langue"
+msgstr "Idioma"
 
 #: apps/validate/validate.py:64
 msgid "Media"
-msgstr "Média"
+msgstr "Mídia"
 
 #: apps/validate/validate.py:65
 msgid "Media Description"
-msgstr "Description du média"
+msgstr "Descrição de Mídia"
 
 #: apps/validate/validate.py:68
 msgid "Scheduled Time"
@@ -1341,51 +1332,51 @@ msgstr ""
 
 #: apps/validate/validate.py:69
 msgid "Related Items"
-msgstr "Éléments liées"
+msgstr "Itens Relacionados"
 
 #: apps/validate/validate.py:70
 msgid "Sign Off"
-msgstr "Initiales"
+msgstr "Sair"
 
 #: apps/validate/validate.py:73
 msgid "SMS Message"
-msgstr ""
+msgstr "Mensagem SMS"
 
 #: apps/validate/validate.py:79
 msgid "Usage Terms"
-msgstr "Termes d'utilisation"
+msgstr "Termos de Uso"
 
 #: apps/validate/validate.py:83
 msgid "is a required field"
-msgstr "est un champ obligatoire"
+msgstr "é um campo obrigatório"
 
 #: apps/validate/validate.py:84
 msgid "max length is {length}"
-msgstr ""
+msgstr "comprimento máximo é {comprimento}"
 
 #: apps/validate/validate.py:85
 msgid "require a string value"
-msgstr ""
+msgstr "requer um valor de string"
 
 #: apps/validate/validate.py:86
 msgid "require a date value"
-msgstr ""
+msgstr "requer um valor de data"
 
 #: apps/validate/validate.py:87
 msgid "{} is a required field"
-msgstr "{} est un champ obligatoire"
+msgstr "{} é um campo obrigatório"
 
 #: apps/validate/validate.py:88
 msgid "contains invalid characters"
-msgstr ""
+msgstr "Contém caracteres inválidos"
 
 #: apps/validate/validate.py:89
 msgid "{} is too long"
-msgstr "{} est trop long"
+msgstr "{} é muito longo"
 
 #: apps/validate/validate.py:90
 msgid "{} is too short"
-msgstr "{} est trop court"
+msgstr "{} é muito curto"
 
 #: apps/video_edit/__init__.py:29
 msgid "\"video_editor_id\" is required"
