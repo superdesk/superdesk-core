@@ -1,6 +1,7 @@
 
 import pytz
 import flask
+import l18n
 import babel.dates as dates
 
 from apps.auth import get_user
@@ -13,9 +14,11 @@ bp = flask.Blueprint('locales', __name__)
 def get_timezones():
     user = get_user()
     lang = user.get('language', flask.current_app.config.get('DEFAULT_LANGUAGE', 'en')).replace('-', '_')
+    l18n.set_language(lang[0:2])
     return [
         {
             'id': tz,
+            'label': str(l18n.tz_fullnames.get(tz, tz)),
             'name': dates.get_timezone_name(tz, locale=lang),
             'location': dates.get_timezone_location(tz, locale=lang),
         } for tz in pytz.common_timezones
