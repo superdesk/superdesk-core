@@ -9,14 +9,22 @@
 # at https://www.sourcefabric.org/superdesk/license
 
 import datetime
-from unittest import mock
+import lxml.etree as etree
 
-from lxml import etree
+from unittest import mock
 
 from apps.publish import init_app
 from superdesk.tests import TestCase
 from superdesk.utc import utcnow
 from superdesk.publish.formatters import NewsMLG2Formatter
+
+
+NSMAP = {
+    None: 'http://iptc.org/std/nar/2006-10-01/',
+    'xml': 'http://www.w3.org/XML/1998/namespace',
+}
+
+XML_LANG = '{{{}}}lang'.format(NSMAP['xml'])
 
 
 def ns(key):
@@ -1050,3 +1058,53 @@ class NewsMLG2FormatterTest(TestCase):
         self.assertEqual('iso3166-1a2:CZ', country.get('qcode'))
         broader = country.findall(ns('broader'))
         self.assertEqual(0, len(broader))
+
+    def format(self, updates=None):
+        article = self.article.copy()
+        article.update(updates)
+        _, doc = self.formatter.format(article, {'name': 'Test Subscriber'})[0]
+        root = etree.fromstring(doc.encode('utf-8'))
+        item = root.find('itemSet', NSMAP).find('newsItem', NSMAP)
+        return item
+
+    def test_lang_fr(self):
+        item = self.format({
+            'language': 'fr-CA',
+            'subject': [
+                {'name': 'foo', 'qcode': 'foo', 'translations': {
+                    'name': {'fr': 'foo fr', 'en': 'foo en'},
+                }},
+                {'name': 'bar', 'qcode': 'bar'},
+            ],
+            'anpa_category': [
+                {'name': 'cat', 'qcode': 'cat', 'translations': {
+                    'name': {'fr-CA': 'cat fr', 'en': 'cat en'},
+                }},
+            ],
+            'place': [],
+            'company_codes': [],
+            'genre': [
+                {'name': 'gen', 'qcode': 'gen', 'translations': {
+                    'name': {'fr': 'gen fr', 'en': 'gen en'},
+                }},
+            ],
+        })
+
+        self.assertIsNotNone(item)
+        self.assertEqual('fr-CA', item.attrib.get(XML_LANG))
+
+        meta = item.find('contentMeta', NSMAP)
+        self.assertIsNotNone(meta)
+
+        subject = meta.findall('subject', NSMAP)
+        self.assertEqual(3, len(subject))
+        self.assertEqual('foo fr', subject[0].find('name', NSMAP).text)
+        self.assertEqual('fr', subject[0].find('name', NSMAP).attrib[XML_LANG])
+        self.assertEqual('bar', subject[1].find('name', NSMAP).text)
+        self.assertEqual('en', subject[1].find('name', NSMAP).attrib[XML_LANG])
+        self.assertEqual('cat fr', subject[2].find('name', NSMAP).text)
+        self.assertEqual('fr-CA', subject[2].find('name', NSMAP).attrib[XML_LANG])
+
+        genre = meta.find('genre', NSMAP)
+        self.assertEqual('gen fr', genre.find('name', NSMAP).text)
+        self.assertEqual('fr', genre.find('name', NSMAP).attrib[XML_LANG])
