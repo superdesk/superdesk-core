@@ -1,5 +1,11 @@
 # Superdesk Server Changelog
 
+## [1.33.6] 2020-09-08
+
+### Fixed
+
+- Fix vine module import error.
+
 ## [1.33.5] 2020-08-14
 
 ### Fixed
