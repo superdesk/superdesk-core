@@ -20,6 +20,7 @@
 =====================   =================================================
 """
 
+import ast
 import logging
 import magic
 import superdesk
@@ -128,7 +129,7 @@ def update(item_id):
 @assets_bp.route('/sams/assets/counts', methods=['GET'], defaults={'set_ids': None})
 @assets_bp.route('/sams/assets/counts/<set_ids>', methods=['GET'])
 def get_assets_count(set_ids):
-
+    set_ids = ast.literal_eval(set_ids) if set_ids else None
     counts = assets_bp.kwargs['client'].assets.get_assets_count(
         set_ids=set_ids
     )
