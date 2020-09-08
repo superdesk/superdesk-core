@@ -40,4 +40,4 @@ label = lazy_gettext('Length yards to metres')
 callback = yards_to_metric
 access_type = 'frontend'
 action_type = 'interactive'
-group = 'length'
+group = lazy_gettext('length')
