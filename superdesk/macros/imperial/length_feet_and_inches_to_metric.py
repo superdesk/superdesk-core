@@ -104,4 +104,4 @@ label = lazy_gettext('Length feet-inches to metric')
 callback = feet_inches_to_metric
 access_type = 'frontend'
 action_type = 'interactive'
-group = 'length'
+group = lazy_gettext('length')

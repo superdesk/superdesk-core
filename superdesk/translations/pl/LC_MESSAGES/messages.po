@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Superdesk-Core 1.33\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2020-09-03 12:57+0530\n"
+"POT-Creation-Date: 2020-09-07 19:42+0530\n"
 "PO-Revision-Date: 2020-09-03 00:49+0530\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: pl\n"
@@ -72,6 +72,14 @@ msgstr ""
 msgid "Area acres to metric"
 msgstr ""
 
+#: superdesk/macros/imperial/area_acre_to_metric.py:51
+#: superdesk/macros/imperial/area_square_feet_to_metric.py:51
+#: superdesk/macros/imperial/area_square_inch_to_metric.py:51
+#: superdesk/macros/imperial/area_square_miles_to_metric.py:51
+#: superdesk/macros/imperial/area_square_yards_to_metric.py:51
+msgid "area"
+msgstr ""
+
 #: superdesk/macros/imperial/area_square_feet_to_metric.py:47
 msgid "Area square feet to metric"
 msgstr ""
@@ -92,6 +100,13 @@ msgstr ""
 msgid "Length feet-inches to metric"
 msgstr ""
 
+#: superdesk/macros/imperial/length_feet_and_inches_to_metric.py:107
+#: superdesk/macros/imperial/length_miles_to_metric.py:43
+#: superdesk/macros/imperial/length_nautical_miles_to_metric.py:42
+#: superdesk/macros/imperial/length_yards_to_metric.py:43
+msgid "length"
+msgstr ""
+
 #: superdesk/macros/imperial/length_miles_to_metric.py:38
 msgid "Length miles to kilometres"
 msgstr ""
@@ -108,6 +123,12 @@ msgstr ""
 msgid "Volume cubic feet to metric"
 msgstr ""
 
+#: superdesk/macros/imperial/volume_cubic_feet_to_metric.py:42
+#: superdesk/macros/imperial/volume_cubic_inches_to_metric.py:52
+#: superdesk/macros/imperial/volume_cubic_yard_to_metric.py:42
+msgid "volume"
+msgstr ""
+
 #: superdesk/macros/imperial/volume_cubic_inches_to_metric.py:48
 msgid "Volume cubic inches to metric"
 msgstr ""
@@ -118,6 +139,10 @@ msgstr ""
 
 #: superdesk/macros/imperial/weight_pounds_to_metric.py:38
 msgid "Weight pounds to metric"
+msgstr ""
+
+#: superdesk/macros/imperial/weight_pounds_to_metric.py:42
+msgid "temperature and weight"
 msgstr ""
 
 #: superdesk/vocabularies/__init__.py:27
@@ -133,19 +158,19 @@ msgstr ""
 msgid "Keywords"
 msgstr ""
 
-#: apps/desks.py:213
+#: apps/desks.py:214
 msgid "Cannot update Desk Type as there are article(s) referenced by the Desk."
 msgstr ""
 
-#: apps/desks.py:236
+#: apps/desks.py:237
 msgid "Cannot delete desk as it is assigned as default desk to user(s)."
 msgstr ""
 
-#: apps/desks.py:247
+#: apps/desks.py:248
 msgid "Cannot delete desk as routing scheme(s) are associated with the desk"
 msgstr ""
 
-#: apps/desks.py:260
+#: apps/desks.py:261
 msgid ""
 "Cannot delete desk as it has article(s) or referenced by versions of the "
 "article(s)."
@@ -959,73 +984,73 @@ msgid ""
 "remove_expired()."
 msgstr ""
 
-#: apps/publish/content/common.py:204
+#: apps/publish/content/common.py:203
 #: apps/publish/enqueue/enqueue_service.py:201
 msgid "Key is missing on article to be published: {exception}"
 msgstr ""
 
-#: apps/publish/content/common.py:209
+#: apps/publish/content/common.py:208
 msgid "Failed to publish the item: {id}"
 msgstr ""
 
-#: apps/publish/content/common.py:250
+#: apps/publish/content/common.py:249
 msgid "Embargo can't be set after publishing"
 msgstr ""
 
-#: apps/publish/content/common.py:254
+#: apps/publish/content/common.py:253
 msgid "Dateline can't be modified on kill or take down"
 msgstr ""
 
-#: apps/publish/content/common.py:259
+#: apps/publish/content/common.py:258
 msgid "Cannot publish the story after Update is published.!"
 msgstr ""
 
-#: apps/publish/content/common.py:264
+#: apps/publish/content/common.py:263
 msgid "Can't publish update until original story is published.!"
 msgstr ""
 
-#: apps/publish/content/common.py:302
+#: apps/publish/content/common.py:301
 msgid ""
 "There are unpublished related items that won't be sent out as related "
 "items. Do you want to publish the article anyway?"
 msgstr ""
 
-#: apps/publish/content/common.py:321 apps/publish/content/common.py:380
+#: apps/publish/content/common.py:320 apps/publish/content/common.py:379
 #: apps/publish/enqueue/enqueue_service.py:125
 msgid "Corrected package cannot be empty!"
 msgstr ""
 
-#: apps/publish/content/common.py:325
+#: apps/publish/content/common.py:324
 msgid "Cannot publish an item which is marked as Not for Publication"
 msgstr ""
 
-#: apps/publish/content/common.py:329
+#: apps/publish/content/common.py:328
 msgid "Can't {operation} as item state is {state}"
 msgstr ""
 
-#: apps/publish/content/common.py:331
+#: apps/publish/content/common.py:330
 msgid ""
 "Can't {operation} as either package state or one of the items state is "
 "{state}"
 msgstr ""
 
-#: apps/publish/content/common.py:373 apps/publish/content/publish.py:41
+#: apps/publish/content/common.py:372 apps/publish/content/publish.py:41
 msgid "Empty package cannot be published!"
 msgstr ""
 
-#: apps/publish/content/common.py:393
+#: apps/publish/content/common.py:392
 msgid "Package item with id: {guid} does not exist."
 msgstr ""
 
-#: apps/publish/content/common.py:586
+#: apps/publish/content/common.py:585
 msgid "packaged item is locked by another user"
 msgstr ""
 
-#: apps/publish/content/common.py:593
+#: apps/publish/content/common.py:592
 msgid "packaged item is locked by you. Unlock it and try again"
 msgstr ""
 
-#: apps/publish/content/common.py:715
+#: apps/publish/content/common.py:714
 msgid "Associated item \"{}\" does not exist in the system"
 msgstr ""
 
@@ -1197,15 +1222,15 @@ msgstr ""
 msgid "Invalid Saved Search"
 msgstr ""
 
-#: apps/search_providers/registry.py:28
+#: apps/search_providers/registry.py:32
 msgid "fetch_enpoint must be a string"
 msgstr ""
 
-#: apps/search_providers/registry.py:33
+#: apps/search_providers/registry.py:37
 msgid "You have to specify either fetch_endpoint or provider_class."
 msgstr ""
 
-#: apps/search_providers/registry.py:41
+#: apps/search_providers/registry.py:45
 msgid ""
 "A Search Provider for the fetch endpoint: {endpoint} exists with name: "
 "{name}"

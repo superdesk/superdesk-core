@@ -39,4 +39,4 @@ label = lazy_gettext('Volume cubic yard to metric')
 callback = cubic_yard_to_metric
 access_type = 'frontend'
 action_type = 'interactive'
-group = 'volume'
+group = lazy_gettext('volume')
