@@ -48,4 +48,4 @@ label = lazy_gettext('Area square miles to metric')
 callback = square_mile_to_metric
 access_type = 'frontend'
 action_type = 'interactive'
-group = 'area'
+group = lazy_gettext('area')

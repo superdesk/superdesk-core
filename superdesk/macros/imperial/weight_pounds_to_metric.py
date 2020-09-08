@@ -39,4 +39,4 @@ label = lazy_gettext('Weight pounds to metric')
 callback = pounds_to_metric
 access_type = 'frontend'
 action_type = 'interactive'
-group = 'temperature and weight'
+group = lazy_gettext('temperature and weight')

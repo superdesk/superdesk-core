@@ -48,4 +48,4 @@ label = lazy_gettext('Area acres to metric')
 callback = acre_to_metric
 access_type = 'frontend'
 action_type = 'interactive'
-group = 'area'
+group = lazy_gettext('area')
