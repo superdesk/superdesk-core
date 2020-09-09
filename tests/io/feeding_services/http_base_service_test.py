@@ -10,7 +10,7 @@ class FeedingServiceWithUrl(HTTPFeedingServiceBase):
 
     fields = []
 
-    def _update():
+    def _update(self, provider, update):
         pass
 
 

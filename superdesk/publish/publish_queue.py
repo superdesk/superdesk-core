@@ -9,6 +9,7 @@
 # at https://www.sourcefabric.org/superdesk/license
 
 import logging
+from typing import Dict, Any
 
 from superdesk import get_resource_service
 from superdesk.notification import push_notification
@@ -119,7 +120,7 @@ class PublishQueueResource(Resource):
     }
 
     etag_ignore_fields = ['moved_to_legal']
-    datasource = {'default_sort': [('_created', -1), ('subscriber_id', 1), ('published_seq_num', -1)]}
+    datasource: Dict[str, Any] = {'default_sort': [('_created', -1), ('subscriber_id', 1), ('published_seq_num', -1)]}
     privileges = {'POST': 'publish_queue', 'PATCH': 'publish_queue'}
 
 

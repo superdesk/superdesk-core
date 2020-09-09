@@ -169,7 +169,7 @@ class ValidateMandatoryInListTest(TestCase):
                 'validate': {'profile': 'foo', 'slugline': 'foo'},
             },
         ], fields=True)
-        self.assertEqual(['FEATURE_MEDIA is a required field'], errors[0][0])
+        self.assertEqual(['FEATURE MEDIA is a required field'], errors[0][0])
 
     def test_validate_field_required_media_description_empty(self):
         self.app.data.insert('content_types', [{'_id': 'foo', 'schema': {
@@ -185,7 +185,8 @@ class ValidateMandatoryInListTest(TestCase):
                 'validate': {'profile': 'foo', 'slugline': 'foo', 'associations': {'featuremedia': {}}},
             }
         ], fields=True)
-        self.assertIn('MEDIA_DESCRIPTION is a required field', errors[0][0])
+        print(errors[0][0])
+        self.assertIn('MEDIA DESCRIPTION is a required field', errors[0][0])
 
     def test_validate_field_required_media_description_null(self):
         self.app.data.insert('content_types', [{'_id': 'foo', 'schema': {
@@ -201,8 +202,8 @@ class ValidateMandatoryInListTest(TestCase):
                 'validate': {'profile': 'foo', 'slugline': 'foo', 'associations': {'featuremedia': None}},
             },
         ], fields=True)
-        self.assertIn('FEATURE_MEDIA is a required field', errors[0][0])
-        self.assertIn('MEDIA_DESCRIPTION is a required field', errors[0][0])
+        self.assertIn('FEATURE MEDIA is a required field', errors[0][0])
+        self.assertIn('MEDIA DESCRIPTION is a required field', errors[0][0])
 
     def test_validate_field_required_media_description_required_false(self):
         self.app.data.insert('content_types', [{'_id': 'foo', 'schema': {
@@ -218,7 +219,7 @@ class ValidateMandatoryInListTest(TestCase):
                 'validate': {'profile': 'foo', 'slugline': 'foo', 'associations': {'featuremedia': None}},
             },
         ], fields=True)
-        self.assertIn('FEATURE_MEDIA is a required field', errors[0][0])
+        self.assertIn('FEATURE MEDIA is a required field', errors[0][0])
 
     def test_validate_field_required_media_description_required_false_null_true(self):
         self.app.data.insert('content_types', [{'_id': 'foo', 'schema': {

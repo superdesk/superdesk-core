@@ -38,7 +38,7 @@ class SearchService(ItemsService):
         'priority', 'type', 'item_source'
     }
 
-    excluded_fields_from_response = {}
+    excluded_fields_from_response = set()
 
     def _filter_empty_vals(self, data):
         """Filter out `None` values from a given dict."""

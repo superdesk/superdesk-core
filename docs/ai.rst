@@ -1,16 +1,28 @@
 .. _ai_services:
 
-Artificial Intelligence Services
-================================
+AI/Machine Learning Services
+=================================================
 
 Superdesk can interact with service analysing article using machine learning.
 
 Analyzing an article
 --------------------
 
-A text can be analyzed using ``ai`` endpoint.
+A text can be analyzed using following endpoint:
+
+.. autodata:: superdesk.text_checkers.ai.AI_SERVICE_ENDPOINT
 
 .. autoclass:: superdesk.text_checkers.ai.AIService
+
+
+Manipulating service data
+-------------------------
+
+Various data of the services may need to be manipulated, this is done following endpoint:
+
+.. autodata:: superdesk.text_checkers.ai.AI_DATA_OP_ENDPOINT
+
+.. autoclass:: superdesk.text_checkers.ai.AIDataOpService
 
 
 AI services

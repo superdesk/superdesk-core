@@ -58,7 +58,7 @@ class FileSortAttributes(Enum):
     Enum defining the File Story Attributes.
     """
 
-    name = 1
+    fname = 1
     created = 2
     modified = 3
 
@@ -123,7 +123,7 @@ def get_hash(input_str, salt):
     return hashed.decode('UTF-8')
 
 
-def get_sorted_files(path, sort_by=FileSortAttributes.name, sort_order=SortOrder.asc):
+def get_sorted_files(path, sort_by=FileSortAttributes.fname, sort_order=SortOrder.asc):
     """
     Get the list of files based on the sort order.
 
@@ -136,7 +136,7 @@ def get_sorted_files(path, sort_by=FileSortAttributes.name, sort_order=SortOrder
     """
     # get the files
     files = [file for file in os.listdir(path) if os.path.isfile(os.path.join(path, file))]
-    if sort_by == FileSortAttributes.name:
+    if sort_by == FileSortAttributes.fname:
         files.sort(reverse=(sort_order == SortOrder.desc))
     elif sort_by == FileSortAttributes.created:
         files.sort(key=lambda file: os.path.getctime(os.path.join(path, file)), reverse=(sort_order == SortOrder.desc))

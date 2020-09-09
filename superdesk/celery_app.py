@@ -77,7 +77,7 @@ def handle_exception(exc):
     logger.exception(exc)
 
 
-class AppContextTask(TaskBase):
+class AppContextTask(TaskBase): # type: ignore
     abstract = True
     serializer = 'eve/json'
     app_errors = (

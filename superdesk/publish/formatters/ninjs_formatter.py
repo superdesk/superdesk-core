@@ -33,6 +33,7 @@ import json
 import superdesk
 import logging
 import re
+from typing import Tuple
 
 from flask import current_app as app
 from eve.utils import config
@@ -97,10 +98,12 @@ class NINJSFormatter(Formatter):
     and ``type``. In the latest case the items are sent separately before the package item.
     """
 
-    direct_copy_properties = ('versioncreated', 'usageterms', 'language', 'headline', 'copyrightnotice',
-                              'urgency', 'pubstatus', 'mimetype', 'copyrightholder', 'ednote',
-                              'body_text', 'body_html', 'slugline', 'keywords',
-                              'firstcreated', 'firstpublished', 'source', 'extra', 'annotations')
+    direct_copy_properties: Tuple[str, ...] = (
+        'versioncreated', 'usageterms', 'language', 'headline', 'copyrightnotice',
+        'urgency', 'pubstatus', 'mimetype', 'copyrightholder', 'ednote',
+        'body_text', 'body_html', 'slugline', 'keywords',
+        'firstcreated', 'firstpublished', 'source', 'extra', 'annotations'
+    )
 
     rendition_properties = ('href', 'width', 'height', 'mimetype', 'poi', 'media')
     vidible_fields = {field: field for field in rendition_properties}

@@ -17,16 +17,12 @@ import json
 import os
 import pytz
 import tzlocal
+from urllib.parse import urlparse
 
 from datetime import timedelta, datetime
 from celery.schedules import crontab
 from kombu import Queue, Exchange
 from distutils.util import strtobool as _strtobool
-
-try:
-    from urllib.parse import urlparse
-except ImportError:
-    from urlparse import urlparse
 
 
 def strtobool(value):
@@ -839,6 +835,12 @@ WORKFLOW_ALLOW_MULTIPLE_UPDATES = False
 #:
 WORKFLOW_ALLOW_DUPLICATE_TO_NON_MEMBERS = False
 
+#: Allow users to copy content from desk to personal
+#:
+#: .. versionadded:: 1.34
+#:
+WORKFLOW_ALLOW_COPY_TO_PERSONAL = True
+
 #: Enable archive autocomplete API
 #:
 #: .. versionadded:: 2.0
@@ -894,6 +896,12 @@ USER_EXTERNAL_CREATE = False
 #: .. versionadded:: 2.0
 #:
 USER_EXTERNAL_DESK = None
+
+#: Remove domain from username when creating users via sso
+#:
+#: .. versionadded:: 2.0
+#:
+USER_EXTERNAL_USERNAME_STRIP_DOMAIN = False
 
 #: Set regex pattern to check username for
 #:

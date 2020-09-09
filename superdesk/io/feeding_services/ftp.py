@@ -13,7 +13,7 @@ import os
 import ftplib
 import logging
 import tempfile
-
+from urllib.parse import urlparse
 from datetime import datetime
 
 from flask import current_app as app
@@ -25,10 +25,6 @@ from superdesk.io.feeding_services import FeedingService
 from superdesk.errors import IngestFtpError
 from superdesk.ftp import ftp_connect
 
-try:
-    from urllib.parse import urlparse
-except ImportError:
-    from urlparse import urlparse
 
 logger = logging.getLogger(__name__)
 DEFAULT_SUCCESS_PATH = "_PROCESSED"

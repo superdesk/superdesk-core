@@ -16,7 +16,7 @@ from superdesk.tests import TestCase
 
 
 class ScoopTestCase(TestCase):
-
+    filename = 'scoop.xml'
     vocab = [{'_id': 'locators', 'items': [{
         "is_active": True,
         "name": "NZ",
@@ -37,10 +37,6 @@ class ScoopTestCase(TestCase):
             parser = ScoopNewsMLTwoFeedParser()
             self.xml = etree.parse(f)
             self.item = parser.parse(self.xml.getroot(), provider)
-
-
-class ScoopTestCase(ScoopTestCase):
-    filename = 'scoop.xml'
 
     def test_content(self):
         self.assertEqual(self.item[0].get('headline'),

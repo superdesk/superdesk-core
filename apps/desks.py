@@ -9,6 +9,7 @@
 # at https://www.sourcefabric.org/superdesk/license
 import json
 import itertools
+from typing import Dict, Any, List
 
 import superdesk
 from flask import current_app as app, request
@@ -607,8 +608,12 @@ class OverviewService(BaseService):
             for b in response.hits['aggregations']['overview']['buckets']
         ]
 
-    def _users_aggregation(self, desk_id: str) -> None:
+    def _users_aggregation(self, desk_id: str) -> List[Dict]:
         desks_service = superdesk.get_resource_service('desks')
+
+        es_query: Dict[str, Any]
+        desk_filter: Dict[str, Any]
+
         if desk_id == 'all':
             desk_filter = {}
             es_query = {}
@@ -675,7 +680,7 @@ class OverviewService(BaseService):
         overview = []
         for a in users_aggregation:
             role = a['_id']
-            authors_dict = {}
+            authors_dict: Dict[str, Any] = {}
             role_dict = {
                 "role": role,
                 "authors": authors_dict,
