@@ -28,7 +28,7 @@ class Default(SpellcheckerBase):
 
     name = SPELLCHECKER_DEFAULT
     label = "Superdesk default spellchecker"
-    capacities = [CAP_SPELLING]
+    capacities = (CAP_SPELLING,)
     languages = [LANG_ANY]
 
     def check(self, text, language=None):

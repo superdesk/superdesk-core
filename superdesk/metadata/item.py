@@ -8,7 +8,7 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
-from collections import namedtuple
+from typing import NamedTuple
 
 from superdesk.resource import Resource, not_analyzed, not_indexed, not_enabled
 from .packages import LINKED_IN_PACKAGES, PACKAGE
@@ -25,27 +25,57 @@ ASSOCIATIONS = 'associations'
 
 
 #: item public states
-pub_status = ['usable', 'withheld', 'canceled']
-PUB_STATUS = namedtuple('PUBSTATUS', ['USABLE', 'HOLD', 'CANCELED'])(*pub_status)
+class PubStatuses(NamedTuple):
+    USABLE: str
+    HOLD: str
+    CANCELED: str
 
-ITEM_TYPE = 'type'
-content_type = ['text', 'preformatted', 'audio', 'video', 'picture', 'graphic', 'composite', 'event']
-CONTENT_TYPE = namedtuple('CONTENT_TYPE',
-                          ['TEXT', 'PREFORMATTED', 'AUDIO', 'VIDEO',
-                           'PICTURE', 'GRAPHIC', 'COMPOSITE', 'EVENT'])(*content_type)
+
+PUB_STATUS: PubStatuses = PubStatuses('usable', 'withheld', 'canceled')
+
+
+class ContentTypes(NamedTuple):
+    TEXT: str
+    PREFORMATTED: str
+    AUDIO: str
+    VIDEO: str
+    PICTURE: str
+    GRAPHIC: str
+    COMPOSITE: str
+    EVENT: str
+
+
+CONTENT_TYPE: ContentTypes = ContentTypes('text', 'preformatted', 'audio', 'video', 'picture', 'graphic', 'composite',
+                                          'event')
 
 MEDIA_TYPES = ('audio', 'video', 'picture', 'graphic')
-
+ITEM_TYPE = 'type'
 ITEM_STATE = 'state'
 ITEM_PRIORITY = 'priority'
 ITEM_URGENCY = 'urgency'
 
+
 #: item internal states
-content_state = ['draft', 'ingested', 'routed', 'fetched', 'submitted', 'in_progress', 'spiked',
-                 'published', 'killed', 'corrected', 'scheduled', 'recalled', 'unpublished']
-CONTENT_STATE = namedtuple('CONTENT_STATE', ['DRAFT', 'INGESTED', 'ROUTED', 'FETCHED', 'SUBMITTED', 'PROGRESS',
-                                             'SPIKED', 'PUBLISHED', 'KILLED', 'CORRECTED',
-                                             'SCHEDULED', 'RECALLED', 'UNPUBLISHED'])(*content_state)
+class ContentStates(NamedTuple):
+    DRAFT: str
+    INGESTED: str
+    ROUTED: str
+    FETCHED: str
+    SUBMITTED: str
+    PROGRESS: str
+    SPIKED: str
+    PUBLISHED: str
+    KILLED: str
+    CORRECTED: str
+    SCHEDULED: str
+    RECALLED: str
+    UNPUBLISHED: str
+
+
+CONTENT_STATE: ContentStates = ContentStates('draft', 'ingested', 'routed', 'fetched', 'submitted', 'in_progress',
+                                             'spiked',
+                                             'published', 'killed', 'corrected', 'scheduled', 'recalled', 'unpublished')
+
 PUBLISH_STATES = {
     CONTENT_STATE.PUBLISHED,
     CONTENT_STATE.SCHEDULED,
@@ -55,9 +85,14 @@ PUBLISH_STATES = {
     CONTENT_STATE.UNPUBLISHED,
 }
 
+
+class Formats(NamedTuple):
+    HTML: str
+    PRESERVED: str
+
+
 FORMAT = 'format'
-formats = ['HTML', 'preserved']
-FORMATS = namedtuple('FORMAT', ['HTML', 'PRESERVED'])(*formats)
+FORMATS: Formats = Formats('HTML', 'preserved')
 
 BYLINE = 'byline'
 SIGN_OFF = 'sign_off'
@@ -210,7 +245,7 @@ metadata_schema = {
     # Item Metadata
     ITEM_TYPE: {
         'type': 'string',
-        'allowed': content_type,
+        'allowed': tuple(CONTENT_TYPE),
         'default': 'text',
         'mapping': not_analyzed,
     },
@@ -299,18 +334,18 @@ metadata_schema = {
     # Related to state of an article
     ITEM_STATE: {
         'type': 'string',
-        'allowed': content_state,
+        'allowed': tuple(CONTENT_STATE),
         'mapping': not_analyzed,
     },
     # The previous state the item was in before for example being spiked, when un-spiked it will revert to this state
     'revert_state': {
         'type': 'string',
-        'allowed': content_state,
+        'allowed': tuple(CONTENT_STATE),
         'mapping': not_analyzed,
     },
     'pubstatus': {
         'type': 'string',
-        'allowed': pub_status,
+        'allowed': tuple(PUB_STATUS),
         'default': PUB_STATUS.USABLE,
         'mapping': not_analyzed,
         'nullable': True,

@@ -8,7 +8,7 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
-
+from typing import Dict, Any
 import logging
 import superdesk
 from eve.utils import config
@@ -59,7 +59,7 @@ class Resource():
     public_item_methods = None
     extra_response_fields = None
     embedded_fields = None
-    datasource = None
+    datasource: Dict[str, Any] = {}
     versioning = None
     internal_resource = None
     resource_title = None
@@ -89,7 +89,7 @@ class Resource():
                 endpoint_schema.update({'additional_lookup': self.additional_lookup})
             if self.extra_response_fields is not None:
                 endpoint_schema.update({'extra_response_fields': self.extra_response_fields})
-            if self.datasource is not None:
+            if self.datasource:
                 endpoint_schema.update({'datasource': self.datasource})
             if self.item_methods is not None:
                 endpoint_schema.update({'item_methods': self.item_methods})

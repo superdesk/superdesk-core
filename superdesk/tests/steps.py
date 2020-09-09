@@ -37,7 +37,7 @@ from wooper.general import (
     WooperAssertionError
 )
 from wooper.expect import (
-    expect_status, expect_status_in,
+    expect_status_in,
     expect_json, expect_json_length,
     expect_json_contains, expect_json_not_contains,
     expect_headers_contain,
@@ -1724,6 +1724,9 @@ def then_we_get_notifications(context):
 @then('we get default preferences')
 def get_default_prefs(context):
     response_data = json.loads(context.response.get_data())
+    for key, value in default_user_preferences.items():
+        if isinstance(value, dict) and value.get('category'):
+            value['category_label'] = value['category']
     assert_equal(response_data['user_preferences'], default_user_preferences)
 
 
@@ -1912,7 +1915,7 @@ def step_set_limit(context):
 
 
 @when('we reset elastic limit')
-def step_set_limit(context):
+def step_reset_limit(context):
     context.app.settings['MAX_SEARCH_DEPTH'] = -1
 
 

@@ -178,7 +178,7 @@ Item metadata
 
     Workflow state.
 
-    .. autodata:: content_state
+    .. autodata:: ContentStates
 
 ``revert_state`` *string*
 
@@ -188,7 +188,7 @@ Item metadata
 
     Publication state.
 
-    .. autodata:: pub_status
+    .. autodata:: PubStatuses
 
 ``signal`` *string*
 

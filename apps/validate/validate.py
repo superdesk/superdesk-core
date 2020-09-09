@@ -21,6 +21,7 @@ from superdesk import get_resource_service
 from _collections_abc import MutableMapping
 from superdesk.signals import item_validate
 from superdesk.validator import BaseErrorHandler
+from flask_babel import lazy_gettext, _
 
 
 REQUIRED_FIELD = 'is a required field'
@@ -29,6 +30,65 @@ STRING_FIELD = 'require a string value'
 DATE_FIELD = 'require a date value'
 REQUIRED_ERROR = '{} is a required field'
 INVALID_CHAR = 'contains invalid characters'
+TOO_LONG = '{} is too long'
+TOO_SHORT = '{} is too short'
+
+FIELD_LABELS = {
+    'abstract': lazy_gettext('Abstract'),
+    'alt_text': lazy_gettext('Alt text'),
+    'anpa_take_key': lazy_gettext('Take Key'),
+    'archive_description': lazy_gettext('Archive description'),
+    'attachments': lazy_gettext('Attachments'),
+    'authors': lazy_gettext('Authors'),
+    'body_footer': lazy_gettext('Body footer'),
+    'body_html': lazy_gettext('Body HTML'),
+    'byline': lazy_gettext('Byline'),
+    'categories': lazy_gettext('Categories'),
+    'company_codes': lazy_gettext('Company Codes'),
+    'copyrightholder': lazy_gettext('Copyright holder'),
+    'copyrightnotice': lazy_gettext('Copyright notice'),
+    'dateline': lazy_gettext('Dateline'),
+    'description_text': lazy_gettext('Description'),
+    'desk': lazy_gettext('Desk'),
+    'ednote': lazy_gettext('Ed. Note'),
+    'embargo': lazy_gettext('Embargo'),
+    'feature_image': lazy_gettext('Feature Image'),
+    'feature_media': lazy_gettext('Feature Media'),
+    'footer': lazy_gettext('Footer'),
+    'footers': lazy_gettext('Footers'),
+    'genre': lazy_gettext('Genre'),
+    'headline': lazy_gettext('Headline'),
+    'ingest_provider': lazy_gettext('Ingest Provider'),
+    'keywords': lazy_gettext('Keywords'),
+    'language': lazy_gettext('Language'),
+    'media': lazy_gettext('Media'),
+    'media_description': lazy_gettext('Media Description'),
+    'place': lazy_gettext('Place'),
+    'priority': lazy_gettext('Priority'),
+    'publish_schedule': lazy_gettext('Scheduled Time'),
+    'relatedItems': lazy_gettext('Related Items'),
+    'sign_off': lazy_gettext('Sign Off'),
+    'slugline': lazy_gettext('Slugline'),
+    'sms': lazy_gettext('SMS'),
+    'sms_message': lazy_gettext('SMS Message'),
+    'source': lazy_gettext('Source'),
+    'stage': lazy_gettext('Stage'),
+    'subject': lazy_gettext('Subject'),
+    'type': lazy_gettext('Type'),
+    'urgency': lazy_gettext('Urgency'),
+    'usageterms': lazy_gettext('Usage Terms'),
+}
+
+ERROR_MESSAGES = {
+    REQUIRED_FIELD: lazy_gettext('is a required field'),
+    MAX_LENGTH: lazy_gettext('max length is {length}'),
+    STRING_FIELD: lazy_gettext('require a string value'),
+    DATE_FIELD: lazy_gettext('require a date value'),
+    REQUIRED_ERROR: lazy_gettext('{} is a required field'),
+    INVALID_CHAR: lazy_gettext('contains invalid characters'),
+    TOO_LONG: lazy_gettext('{} is too long'),
+    TOO_SHORT: lazy_gettext('{} is too short'),
+}
 
 
 def check_json(doc, field, value):
@@ -420,6 +480,11 @@ class ValidateService(superdesk.Service):
             for subject in item['subject']:
                 subject.setdefault('scheme', None)
 
+    def get_error_field_name(self, error_field):
+        if FIELD_LABELS.get(error_field):
+            return FIELD_LABELS.get(error_field)
+        return error_field
+
     def _validate(self, doc, fields=False, **kwargs):
         item = deepcopy(doc['validate'])  # make a copy for signal before validation processing
         use_headline = kwargs and 'headline' in kwargs
@@ -435,8 +500,8 @@ class ValidateService(superdesk.Service):
             v.allow_unknown = True
             try:
                 v.validate(doc['validate'], validation_schema)
-            except TypeError as e:
-                logger.exception('Invalid validator schema value "%s" for ' % str(e))
+            except TypeError as ex:
+                logger.exception('Invalid validator schema value "%s" for ' % str(ex))
             error_list = v.errors
             response = []
             for e in error_list:
@@ -451,18 +516,22 @@ class ValidateService(superdesk.Service):
                     for field in error_list[e]:
                         display_name = self._get_vocabulary_display_name(field)
                         if 'required' in error_list[e][field]:
-                            messages.append(REQUIRED_ERROR.format(display_name))
+                            messages.append(ERROR_MESSAGES[REQUIRED_ERROR].format(display_name))
                         else:
-                            messages.append('{} {}'.format(display_name, error_list[e][field]))
+                            error_field = self.get_error_field_name(display_name)
+                            messages.append('{} {}'.format(error_field, error_list[e][field]))
                 elif 'required field' in error_list[e] or type(error_list[e]) is dict or type(error_list[e]) is list:
                     display_name = self._get_vocabulary_display_name(e)
-                    messages.append(REQUIRED_ERROR.format(display_name.upper()))
+                    error_field = self.get_error_field_name(display_name)
+                    messages.append(ERROR_MESSAGES[REQUIRED_ERROR].format(error_field.upper()))
                 elif 'min length is 1' == error_list[e] or 'null value not allowed' in error_list[e]:
-                    messages.append(REQUIRED_ERROR.format(e.upper()))
+                    messages.append(ERROR_MESSAGES[REQUIRED_ERROR].format(e.upper()))
                 elif 'min length is' in error_list[e]:
-                    messages.append('{} is too short'.format(e.upper()))
+                    error_field = self.get_error_field_name(e)
+                    messages.append(ERROR_MESSAGES[TOO_SHORT].format(error_field.upper()))
                 elif 'max length is' in error_list[e]:
-                    messages.append('{} is too long'.format(e.upper()))
+                    error_field = self.get_error_field_name(e)
+                    messages.append(ERROR_MESSAGES[TOO_LONG].format(error_field.upper()))
                 else:
                     messages.append('{} {}'.format(e.upper(), error_list[e]))
 

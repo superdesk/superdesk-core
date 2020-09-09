@@ -19,7 +19,7 @@ from superdesk.activity import ACTIVITY_CREATE, ACTIVITY_EVENT, ACTIVITY_UPDATE,
     ACTIVITY_DELETE
 from superdesk.errors import SuperdeskApiError
 from superdesk.io import allowed_feeding_services, allowed_feed_parsers, get_feeding_service
-from superdesk.metadata.item import CONTENT_STATE, content_type
+from superdesk.metadata.item import CONTENT_STATE, CONTENT_TYPE
 from superdesk.notification import push_notification
 from superdesk.resource import Resource
 from superdesk.services import BaseService
@@ -77,8 +77,8 @@ class IngestProviderResource(Resource):
             },
             'content_types': {
                 'type': 'list',
-                'default': content_type,
-                'allowed': content_type
+                'default': tuple(CONTENT_TYPE),
+                'allowed': tuple(CONTENT_TYPE)
             },
             'allow_remove_ingested': {
                 'type': 'boolean',

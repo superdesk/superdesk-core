@@ -59,7 +59,9 @@ class MimetypeMixin:
                 determined_content_type = mimetypes.MimeTypes().guess_type(filename)[0]
 
         if determined_content_type and determined_content_type != content_type:
-            logger.info("Content type '{}' was expected, but '{}' was determined")
+            logger.info("Content type '{}' was expected, but '{}' was determined".format(
+                content_type, determined_content_type
+            ))
             content_type = determined_content_type
 
         return content_type

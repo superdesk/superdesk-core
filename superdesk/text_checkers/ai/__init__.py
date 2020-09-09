@@ -13,6 +13,12 @@ import superdesk
 
 AUTO_IMPORT = True
 
+#: main endpoint to interact with AI Services
+AI_SERVICE_ENDPOINT = 'ai'
+
+#: endpoint to manipulate AI Services data
+AI_DATA_OP_ENDPOINT = 'ai_data_op'
+
 
 class AIResource(Resource):
     schema = {
@@ -30,14 +36,14 @@ class AIResource(Resource):
     }
     internal_resource = False
     resource_methods = ['POST']
-    item_methods = ['GET']
+    item_methods = []
 
 
 class AIService(BaseService):
     r"""Service managing article analysis with machine learning/AI related services
 
-    When doing a POST request on this service, the following keys can be used (keys with a \* are required):
-
+    When doing a POST request on this service, the following keys can be used (keys
+    with a\* are required)
 
     ==========  ===========
     key         explanation
@@ -58,7 +64,6 @@ class AIService(BaseService):
     """
 
     def create(self, docs, **kwargs):
-        # we override create because we don't want anything stored in database
         doc = docs[0]
         service = doc["service"]
         item_id = doc.get('item_id')
@@ -72,12 +77,92 @@ class AIService(BaseService):
         return [0]
 
 
+class AIDataOpResource(Resource):
+    schema = {
+        'service': {
+            'type': 'string',
+            'required': True,
+        },
+        'operation': {
+            'type': 'string',
+            'required': True,
+            'allowed': ['search', 'create', 'delete'],
+        },
+        'data_name': {
+            'type': 'string',
+            'required': False,
+        },
+        'data': {
+            'type': 'dict',
+            'required': True,
+        }
+    }
+    datasource = {
+        'projection': {'result': 1}
+    }
+    internal_resource = False
+    resource_methods = ['POST']
+    item_methods = []
+
+
+class AIDataOpService(BaseService):
+    r"""Service to manipulate AI service related data
+
+    When doing a POST request on this service, the following keys can be used (keys
+    with a \* are required):
+
+
+    ============  ===========
+    key           explanation
+    ============  ===========
+    service \*    name of the service to use
+    operation \*  operation that you want to do on the data (search, create, …)
+    data_name     type of data to manipulate (empty for default or when service only
+                  handle one type of data)
+    data          argument of use for the operation
+    ============  ===========
+
+    e.g. to search for tags with iMatrics service:
+
+    .. sourcecode:: json
+
+        {
+            "service": "imatrics",
+            "operation": "search",
+            "data": {"term": "some_term"},
+        }
+    """
+
+    def create(self, docs, **kwargs):
+        doc = docs[0]
+        service = doc["service"]
+        operation = doc["operation"]
+        name = doc.get("data_name")
+        data = doc["data"]
+        try:
+            service = registered_ai_services[service]
+        except KeyError:
+            raise SuperdeskApiError.notFoundError("{service} service can't be found".format(service=service))
+
+        result = service.data_operation("POST", operation, name, data)
+        docs[0].update({"result": result})
+        return [0]
+
+
 def init_app(app):
     if AUTO_IMPORT:
         tools.import_services(app, __name__, AIServiceBase)
 
-    endpoint_name = 'ai'
+    allowed_service = list(registered_ai_services)
+
+    endpoint_name = AI_SERVICE_ENDPOINT
     service = AIService(endpoint_name, backend=superdesk.get_backend())
-    AIResource.schema["service"]["allowed"] = list(registered_ai_services)
+    AIResource.schema["service"]["allowed"] = allowed_service
     AIResource(endpoint_name, app=app, service=service)
+    superdesk.intrinsic_privilege(endpoint_name, method=['POST'])
+
+    endpoint_name = AI_DATA_OP_ENDPOINT
+    service = AIDataOpService(endpoint_name, backend=superdesk.get_backend())
+    AIDataOpResource.schema["service"]["allowed"] = allowed_service
+    AIDataOpResource(endpoint_name, app=app, service=service)
     superdesk.intrinsic_privilege(endpoint_name, method=['POST'])

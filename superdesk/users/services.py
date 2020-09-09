@@ -528,6 +528,10 @@ class DBUsersService(UsersService):
         if update:
             data.pop('email')
             data.pop('username')
+        elif data.get('username'):
+            if app.config.get('USER_EXTERNAL_USERNAME_STRIP_DOMAIN'):
+                data['username'] = data['username'].split('@')[0]
+            data['username'] = data['username'].replace('@', '.')  # @ breaks mentioning
         validator = self._validator()
         if not validator.validate(data, update=update):
             raise ValidationError(validator.errors)

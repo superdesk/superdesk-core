@@ -8,9 +8,10 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
+import os
+from os.path import basename
 from httmock import urlmatch, HTTMock
 from urllib.parse import parse_qs
-from os.path import os, basename
 
 
 @urlmatch(scheme='https', netloc='commerce.reuters.com', path='/rmd/rest/xml/login')
