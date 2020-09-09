@@ -13,7 +13,6 @@
 from superdesk import Resource, Service
 from superdesk.utils import ListCursor
 from superdesk.errors import SuperdeskIngestError, AlreadyExistsError
-from flask_babel.speaklater import LazyString
 
 registered_feed_parsers = {}
 allowed_feed_parsers = []
@@ -163,15 +162,6 @@ class FeedingServiceAllowedService(Service):
                 restricted_parsers = list(restricted_parsers.keys())
 
             fields = getattr(feeding_service_class, 'fields', [])
-            # we need to transtype LazyString to str before serialization
-            for idx, field in enumerate(fields):
-                copied = False
-                for key, value in field.items():
-                    if isinstance(value, LazyString):
-                        if not copied:
-                            field = fields[idx] = field.copy()
-                            copied = True
-                        field[key] = str(value)
 
             return {
                 'feeding_service': service_id,
