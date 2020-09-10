@@ -1,36 +1,35 @@
-# French (Canada) translations for Superdesk-Core.
+# Translations template for Superdesk-Core.
 # Copyright (C) 2020 ORGANIZATION
 # This file is distributed under the same license as the Superdesk-Core
 # project.
 # FIRST AUTHOR <EMAIL@ADDRESS>, 2020.
-#
+# 
 # Translators:
 # Evzen Deulin <evgeny.deulin@sourcefabric.org>, 2020
 # Simon Peacock <simon.peacock@gmail.com>, 2020
 # Marie-Eve Ouellette <marie-eve.ouellette@lapressecanadienne.com>, 2020
+# Charles-Philippe Giroux <charles-philippe.giroux@lapressecanadienne.com>, 2020
 # Gideon Lehmann <gideon.lehmann@sourcefabric.org>, 2020
-# Charles-Philippe Giroux <charles-philippe.giroux@lapressecanadienne.com>,
-# 2020
+# 
+#, fuzzy
 msgid ""
 msgstr ""
 "Project-Id-Version: Superdesk-Core 1.33\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
 "POT-Creation-Date: 2020-09-07 19:42+0530\n"
 "PO-Revision-Date: 2019-04-04 09:17+0000\n"
-"Last-Translator: Charles-Philippe Giroux <charles-"
-"philippe.giroux@lapressecanadienne.com>, 2020\n"
-"Language: fr_CA\n"
-"Language-Team: French (Canada) "
-"(https://www.transifex.com/sourcefabric/teams/6584/fr_CA/)\n"
-"Plural-Forms: nplurals=2; plural=(n > 1)\n"
+"Last-Translator: Gideon Lehmann <gideon.lehmann@sourcefabric.org>, 2020\n"
+"Language-Team: French (Canada) (https://www.transifex.com/sourcefabric/teams/6584/fr_CA/)\n"
 "MIME-Version: 1.0\n"
-"Content-Type: text/plain; charset=utf-8\n"
+"Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 2.8.0\n"
+"Language: fr_CA\n"
+"Plural-Forms: nplurals=2; plural=(n > 1);\n"
 
 #: superdesk/activity.py:78
 msgid "Send notifications via email"
-msgstr ""
+msgstr "Envoyer les notifications par courriel"
 
 #: superdesk/activity.py:79 superdesk/activity.py:86
 msgid "notifications"
@@ -42,7 +41,7 @@ msgstr "Autoriser les notifications de bureau"
 
 #: superdesk/validator.py:283
 msgid "Only 1 instance is allowed."
-msgstr ""
+msgstr "Un seul cas est permis."
 
 #: superdesk/macros/abstract_populator.py:35
 msgid "Populate Abstract"
@@ -54,15 +53,15 @@ msgstr ""
 
 #: superdesk/macros/currency_usd_to_cad.py:38
 msgid "Currency USD to CAD"
-msgstr "Devise: dollars US en dollars CA"
+msgstr "Devises: dollars US en dollars CA"
 
 #: superdesk/macros/desk_routing.py:45
 msgid "Desk Routing"
-msgstr ""
+msgstr "Routage de pupitre"
 
 #: superdesk/macros/extract_html.py:58
 msgid "Extract Html Macro"
-msgstr "Macro d'extraction HTML"
+msgstr "Extraire macro html"
 
 #: superdesk/macros/internal_destination_auto_publish.py:83
 msgid "Internal Destination Auto Publish"
@@ -70,7 +69,7 @@ msgstr ""
 
 #: superdesk/macros/take_key_validator.py:25
 msgid "validate take key"
-msgstr ""
+msgstr "valider la version"
 
 #: superdesk/macros/validate_for_publish.py:28
 msgid "Validate for Publish"
@@ -86,7 +85,7 @@ msgstr "Aire: acres en mesure métrique"
 #: superdesk/macros/imperial/area_square_miles_to_metric.py:51
 #: superdesk/macros/imperial/area_square_yards_to_metric.py:51
 msgid "area"
-msgstr "Aire"
+msgstr "aire"
 
 #: superdesk/macros/imperial/area_square_feet_to_metric.py:47
 msgid "Area square feet to metric"
@@ -102,7 +101,7 @@ msgstr "Aire: miles carrés en mesure métrique"
 
 #: superdesk/macros/imperial/area_square_yards_to_metric.py:47
 msgid "Area square yards to metric"
-msgstr ""
+msgstr "Aire: verges carrées en mesure métrique"
 
 #: superdesk/macros/imperial/length_feet_and_inches_to_metric.py:103
 msgid "Length feet-inches to metric"
@@ -113,7 +112,7 @@ msgstr "Longueur: pieds-pouces en mesure métrique"
 #: superdesk/macros/imperial/length_nautical_miles_to_metric.py:42
 #: superdesk/macros/imperial/length_yards_to_metric.py:43
 msgid "length"
-msgstr "Longueur"
+msgstr "longeur"
 
 #: superdesk/macros/imperial/length_miles_to_metric.py:38
 msgid "Length miles to kilometres"
@@ -135,7 +134,7 @@ msgstr "Volume: pieds cubes en mesure métrique"
 #: superdesk/macros/imperial/volume_cubic_inches_to_metric.py:52
 #: superdesk/macros/imperial/volume_cubic_yard_to_metric.py:42
 msgid "volume"
-msgstr "Volume"
+msgstr "volume"
 
 #: superdesk/macros/imperial/volume_cubic_inches_to_metric.py:48
 msgid "Volume cubic inches to metric"
@@ -164,25 +163,34 @@ msgstr ""
 #: apps/content_filters/filter_condition/filter_condition_parameters.py:73
 #: apps/validate/validate.py:62 superdesk/vocabularies/vocabularies.py:451
 msgid "Keywords"
-msgstr "Mots clés"
+msgstr "Mots-clés"
 
 #: apps/desks.py:214
-msgid "Cannot update Desk Type as there are article(s) referenced by the Desk."
+msgid ""
+"Cannot update Desk Type as there are article(s) referenced by the Desk."
 msgstr ""
+"Le type de pupitre ne peut pas être mis à jour parce qu'au moins un article "
+"est référencé par le pupitre. "
 
 #: apps/desks.py:237
 msgid "Cannot delete desk as it is assigned as default desk to user(s)."
 msgstr ""
+"Le pupitre ne peut pas être supprimé parce qu'au moins un utilisateur l'a "
+"choisi comme pupitre par défaut. "
 
 #: apps/desks.py:248
 msgid "Cannot delete desk as routing scheme(s) are associated with the desk"
 msgstr ""
+"Le pupitre ne peut pas être supprimé parce qu'au moins un schéma de routage "
+"lui est associé."
 
 #: apps/desks.py:261
 msgid ""
 "Cannot delete desk as it has article(s) or referenced by versions of the "
 "article(s)."
 msgstr ""
+"Le pupitre ne peut pas être supprimé parce qu'il contient au moins un "
+"article ou qu'une version de cet article lui est référencée. "
 
 #: apps/archive/__init__.py:100 apps/monitoring.py:12
 msgid "Monitoring view"
@@ -194,15 +202,15 @@ msgstr "suivi"
 
 #: apps/preferences.py:66
 msgid "label"
-msgstr ""
+msgstr "étiquette"
 
 #: apps/preferences.py:68
 msgid "category"
-msgstr ""
+msgstr "catégorie"
 
 #: apps/preferences.py:108
 msgid "Enable Feature Preview"
-msgstr ""
+msgstr "Autoriser l'utilisation des fonctionnalités à venir"
 
 #: apps/preferences.py:109
 msgid "feature"
@@ -210,7 +218,7 @@ msgstr "fonctionnalité"
 
 #: apps/preferences.py:118
 msgid "Users archive view format"
-msgstr ""
+msgstr "Affichage de l'archive des utilisateurs"
 
 #: apps/preferences.py:119
 msgid "archive"
@@ -218,7 +226,7 @@ msgstr "archiver"
 
 #: apps/preferences.py:126
 msgid "Enable Single Line View"
-msgstr ""
+msgstr "Activer l'affichage sur une seule ligne"
 
 #: apps/preferences.py:127
 msgid "rows"
@@ -226,7 +234,7 @@ msgstr "colonnes"
 
 #: apps/preferences.py:151
 msgid "Located"
-msgstr ""
+msgstr "Situé"
 
 #: apps/preferences.py:152 apps/preferences.py:172
 msgid "article_defaults"
@@ -238,7 +246,7 @@ msgstr "catégories"
 
 #: apps/preferences.py:158
 msgid "Preferred Categories"
-msgstr ""
+msgstr "Catégories préférées"
 
 #: apps/preferences.py:164
 msgid "desks"
@@ -251,7 +259,7 @@ msgstr "Pupitres préférés"
 #: apps/content_filters/filter_condition/filter_condition_parameters.py:121
 #: apps/preferences.py:171 apps/validate/validate.py:66
 msgid "Place"
-msgstr ""
+msgstr "Endroit"
 
 #: apps/preferences.py:187
 msgid "Users contacts view format"
@@ -263,45 +271,48 @@ msgstr "contacts"
 
 #: apps/preferences.py:261 apps/preferences.py:273
 msgid "Invalid preference: {preference}"
-msgstr ""
+msgstr "Préférence invalide: {preference}"
 
 #: apps/stages.py:163
 msgid "Cannot delete a Working Stage."
-msgstr ""
+msgstr "Impossible de supprimer une étape 'en cours'."
 
 #: apps/stages.py:168
 msgid "Cannot delete a Incoming Stage."
-msgstr ""
+msgstr "Impossible de supprimer une étape de révision"
 
 #: apps/stages.py:174
 msgid ""
-"Cannot delete stage as it has article(s) or referenced by versions of the"
-" article(s)."
+"Cannot delete stage as it has article(s) or referenced by versions of the "
+"article(s)."
 msgstr ""
+"L'étape ne peut pas être supprimée parce qu'elle contient au moins un "
+"article ou qu'une version de cet article lui est référencée. "
 
 #: apps/stages.py:181
 msgid "Stage is referred by Ingest Routing Schemes : {rule_names}"
 msgstr ""
+"L'étape est référencée par le schéma de routage d'ingestion: {rule_names}"
 
 #: apps/stages.py:201
 msgid "Must have one working stage in a desk"
-msgstr ""
+msgstr "Il doit y avoir une étape 'en cours' dans un pupitre"
 
 #: apps/stages.py:209
 msgid "Must have one incoming stage in a desk"
-msgstr ""
+msgstr "Il doit y avoir une étape de révision dans un pupitre"
 
 #: apps/archive/common.py:548 apps/tasks.py:89
 msgid "Invalid desk identifier {desk_id}"
-msgstr ""
+msgstr "Identifiant de pupitre invalide {desk_id}"
 
 #: apps/tasks.py:93
 msgid "User is not member of desk: {desk_id}"
-msgstr ""
+msgstr "L'utilisateur n'est pas membre du pupitre: {desk_id} "
 
 #: apps/archive/common.py:554 apps/tasks.py:103
 msgid "Invalid stage identifier {stage_id}"
-msgstr ""
+msgstr "Identifiant de l'étape invalide {stage_id}"
 
 #: apps/tasks.py:139
 msgid "Error:{exception} in {rule_type} rule:{rule} for stage:{stage}"
@@ -313,23 +324,23 @@ msgstr ""
 
 #: apps/archive/__init__.py:103
 msgid "Create content"
-msgstr ""
+msgstr "Créer un contenu"
 
 #: apps/archive/__init__.py:103
 msgid "Create and save content"
-msgstr ""
+msgstr "Créer et enregistré un contenu"
 
 #: apps/archive/__init__.py:104
 msgid "Ingest"
-msgstr ""
+msgstr "Ingérer"
 
 #: apps/archive/__init__.py:104
 msgid "Access to ingest sources management"
-msgstr ""
+msgstr "Accéder à la gestion des sources d'ingestion"
 
 #: apps/archive/__init__.py:105
 msgid "Spike"
-msgstr ""
+msgstr "Placer dans la corbeille"
 
 #: apps/archive/__init__.py:105
 msgid "Spike/delete items"
@@ -345,7 +356,7 @@ msgstr ""
 
 #: apps/archive/__init__.py:107
 msgid "Unspike"
-msgstr ""
+msgstr "Sortir de la corbeille"
 
 #: apps/archive/__init__.py:107
 msgid "Unspike/undelete content"
@@ -369,7 +380,7 @@ msgstr ""
 
 #: apps/archive/__init__.py:110
 msgid "Restore"
-msgstr ""
+msgstr "Restaurer"
 
 #: apps/archive/__init__.py:110
 msgid "Restore content"
@@ -377,7 +388,7 @@ msgstr ""
 
 #: apps/archive/__init__.py:111
 msgid "Update"
-msgstr ""
+msgstr "Mise à jour"
 
 #: apps/archive/__init__.py:111
 msgid "Create an update"
@@ -385,7 +396,7 @@ msgstr ""
 
 #: apps/archive/__init__.py:113
 msgid "Unlock content"
-msgstr ""
+msgstr "Déverrouiller le contenu"
 
 #: apps/archive/__init__.py:114
 msgid "Unlock locked content by another user"
@@ -459,8 +470,8 @@ msgstr ""
 
 #: apps/archive/archive.py:874
 msgid ""
-"This item is in a package and it needs to be removed before the item can "
-"be scheduled!"
+"This item is in a package and it needs to be removed before the item can be "
+"scheduled!"
 msgstr ""
 
 #: apps/archive/archive.py:900
@@ -578,8 +589,7 @@ msgstr ""
 
 #: apps/archived/archived.py:137
 msgid ""
-"Can't kill as this article acts as a Master Story for existing "
-"broadcast(s)"
+"Can't kill as this article acts as a Master Story for existing broadcast(s)"
 msgstr ""
 
 #: apps/archived/archived.py:140
@@ -690,27 +700,27 @@ msgstr ""
 #: apps/content_filters/filter_condition/filter_condition_parameters.py:49
 #: apps/validate/validate.py:78
 msgid "Urgency"
-msgstr "Niveau d'urgence"
+msgstr ""
 
 #: apps/content_filters/filter_condition/filter_condition_parameters.py:55
 #: apps/validate/validate.py:59
 msgid "Genre"
-msgstr "Type de contenu"
+msgstr ""
 
 #: apps/content_filters/filter_condition/filter_condition_parameters.py:61
 #: apps/validate/validate.py:76
 msgid "Subject"
-msgstr "Sujet"
+msgstr ""
 
 #: apps/content_filters/filter_condition/filter_condition_parameters.py:67
 #: apps/validate/validate.py:67
 msgid "Priority"
-msgstr "Priorité"
+msgstr ""
 
 #: apps/content_filters/filter_condition/filter_condition_parameters.py:77
 #: apps/validate/validate.py:71
 msgid "Slugline"
-msgstr "Titre de rappel"
+msgstr ""
 
 #: apps/content_filters/filter_condition/filter_condition_parameters.py:81
 #: apps/validate/validate.py:77
@@ -725,7 +735,7 @@ msgstr ""
 #: apps/content_filters/filter_condition/filter_condition_parameters.py:91
 #: apps/validate/validate.py:60
 msgid "Headline"
-msgstr "Titre"
+msgstr ""
 
 #: apps/content_filters/filter_condition/filter_condition_parameters.py:95
 msgid "Ednote"
@@ -734,17 +744,17 @@ msgstr ""
 #: apps/content_filters/filter_condition/filter_condition_parameters.py:99
 #: apps/validate/validate.py:44
 msgid "Body HTML"
-msgstr "Corps HTML"
+msgstr ""
 
 #: apps/content_filters/filter_condition/filter_condition_parameters.py:103
 #: apps/validate/validate.py:52
 msgid "Desk"
-msgstr "Bureau"
+msgstr ""
 
 #: apps/content_filters/filter_condition/filter_condition_parameters.py:109
 #: apps/validate/validate.py:75
 msgid "Stage"
-msgstr "Étape"
+msgstr ""
 
 #: apps/content_filters/filter_condition/filter_condition_parameters.py:115
 #: apps/validate/validate.py:72
@@ -763,7 +773,7 @@ msgstr ""
 #: apps/content_filters/filter_condition/filter_condition_parameters.py:139
 #: apps/validate/validate.py:56
 msgid "Feature Media"
-msgstr "Médias vedettes"
+msgstr ""
 
 #: apps/content_filters/filter_condition/filter_condition_parameters.py:151
 msgid "Agendas"
@@ -796,7 +806,8 @@ msgid ""
 msgstr ""
 
 #: apps/content_types/content_types.py:175
-msgid "Cannot disable content profile as following desks are referencing: {desks}"
+msgid ""
+"Cannot disable content profile as following desks are referencing: {desks}"
 msgstr ""
 
 #: apps/dictionaries/service.py:142
@@ -892,7 +903,8 @@ msgid "Not set a keywords provider"
 msgstr ""
 
 #: apps/ldap/ldap.py:125
-msgid "User does not belong to security Group or could not find the user profile."
+msgid ""
+"User does not belong to security Group or could not find the user profile."
 msgstr ""
 
 #: apps/ldap/ldap.py:174
@@ -974,11 +986,13 @@ msgid "Product is used by the subscriber(s): {names}"
 msgstr ""
 
 #: apps/products/service.py:47
-msgid "Product is used for API publishing for the subscriber(s): {subscribers}"
+msgid ""
+"Product is used for API publishing for the subscriber(s): {subscribers}"
 msgstr ""
 
 #: apps/products/service.py:54
-msgid "Product is used for direct publishing for the subscriber(s): {subscribers}"
+msgid ""
+"Product is used for direct publishing for the subscriber(s): {subscribers}"
 msgstr ""
 
 #: apps/publish/published_item.py:189
@@ -1019,8 +1033,8 @@ msgstr ""
 
 #: apps/publish/content/common.py:301
 msgid ""
-"There are unpublished related items that won't be sent out as related "
-"items. Do you want to publish the article anyway?"
+"There are unpublished related items that won't be sent out as related items."
+" Do you want to publish the article anyway?"
 msgstr ""
 
 #: apps/publish/content/common.py:320 apps/publish/content/common.py:379
@@ -1149,10 +1163,12 @@ msgstr ""
 #: apps/rules/routing_rules.py:201
 msgid "Routing scheme is applied to channel(s). It cannot be deleted."
 msgstr ""
+"Le schéma de routage est appliqué à un ou plusieurs canaux. Il ne peut pas "
+"être supprimé. "
 
 #: apps/rules/routing_rules.py:293
 msgid "A Routing Scheme must have at least one Rule"
-msgstr ""
+msgstr "Un schéma de routage doit avoir au moins une règle"
 
 #: apps/rules/routing_rules.py:300
 msgid "A routing rule has invalid fields {fields}"
@@ -1197,6 +1213,8 @@ msgstr ""
 #: apps/rules/rule_sets.py:54
 msgid "Cannot delete Rule set as it's associated with channel(s)."
 msgstr ""
+"La règle ne peut pas être supprimée puisqu'elle est associée à un ou "
+"plusieurs canaux. "
 
 #: apps/saved_searches/saved_searches.py:167
 msgid "User's subscriptions are not allowed on create"
@@ -1274,11 +1292,11 @@ msgstr ""
 
 #: apps/validate/validate.py:37
 msgid "Abstract"
-msgstr "Résumé"
+msgstr ""
 
 #: apps/validate/validate.py:38
 msgid "Alt text"
-msgstr "Texte alternatif"
+msgstr ""
 
 #: apps/validate/validate.py:39
 msgid "Take Key"
@@ -1286,11 +1304,11 @@ msgstr ""
 
 #: apps/validate/validate.py:40
 msgid "Archive description"
-msgstr "Description de l'archive"
+msgstr ""
 
 #: apps/validate/validate.py:41
 msgid "Attachments"
-msgstr "Pièces jointes"
+msgstr ""
 
 #: apps/validate/validate.py:42
 msgid "Authors"
@@ -1298,23 +1316,23 @@ msgstr ""
 
 #: apps/validate/validate.py:43
 msgid "Body footer"
-msgstr "Corps pied de page"
+msgstr ""
 
 #: apps/validate/validate.py:45
 msgid "Byline"
-msgstr "Signature"
+msgstr ""
 
 #: apps/validate/validate.py:46
 msgid "Categories"
-msgstr "Catégories"
+msgstr ""
 
 #: apps/validate/validate.py:47
 msgid "Company Codes"
-msgstr "Codes d'entreprise"
+msgstr ""
 
 #: apps/validate/validate.py:48
 msgid "Copyright holder"
-msgstr "Titulaire du droit d'auteur"
+msgstr ""
 
 #: apps/validate/validate.py:49
 msgid "Copyright notice"
@@ -1322,7 +1340,7 @@ msgstr ""
 
 #: apps/validate/validate.py:50
 msgid "Dateline"
-msgstr "Date"
+msgstr ""
 
 #: apps/validate/validate.py:51
 msgid "Description"
@@ -1330,35 +1348,35 @@ msgstr ""
 
 #: apps/validate/validate.py:53
 msgid "Ed. Note"
-msgstr "Note de l'éditeur"
+msgstr ""
 
 #: apps/validate/validate.py:55
 msgid "Feature Image"
-msgstr "Image de fond"
+msgstr ""
 
 #: apps/validate/validate.py:57
 msgid "Footer"
-msgstr "Pied de page"
+msgstr ""
 
 #: apps/validate/validate.py:58
 msgid "Footers"
-msgstr "Pieds de page"
+msgstr ""
 
 #: apps/validate/validate.py:61
 msgid "Ingest Provider"
-msgstr "Contributeur"
+msgstr ""
 
 #: apps/validate/validate.py:63
 msgid "Language"
-msgstr "Langue"
+msgstr ""
 
 #: apps/validate/validate.py:64
 msgid "Media"
-msgstr "Média"
+msgstr ""
 
 #: apps/validate/validate.py:65
 msgid "Media Description"
-msgstr "Description du média"
+msgstr ""
 
 #: apps/validate/validate.py:68
 msgid "Scheduled Time"
@@ -1366,11 +1384,11 @@ msgstr ""
 
 #: apps/validate/validate.py:69
 msgid "Related Items"
-msgstr "Éléments liées"
+msgstr ""
 
 #: apps/validate/validate.py:70
 msgid "Sign Off"
-msgstr "Initiales"
+msgstr ""
 
 #: apps/validate/validate.py:73
 msgid "SMS Message"
@@ -1378,11 +1396,11 @@ msgstr ""
 
 #: apps/validate/validate.py:79
 msgid "Usage Terms"
-msgstr "Termes d'utilisation"
+msgstr ""
 
 #: apps/validate/validate.py:83
 msgid "is a required field"
-msgstr "est un champ obligatoire"
+msgstr ""
 
 #: apps/validate/validate.py:84
 msgid "max length is {length}"
@@ -1398,7 +1416,7 @@ msgstr ""
 
 #: apps/validate/validate.py:87
 msgid "{} is a required field"
-msgstr "{} est un champ obligatoire"
+msgstr ""
 
 #: apps/validate/validate.py:88
 msgid "contains invalid characters"
@@ -1406,11 +1424,11 @@ msgstr ""
 
 #: apps/validate/validate.py:89
 msgid "{} is too long"
-msgstr "{} est trop long"
+msgstr ""
 
 #: apps/validate/validate.py:90
 msgid "{} is too short"
-msgstr "{} est trop court"
+msgstr ""
 
 #: apps/video_edit/__init__.py:29
 msgid "\"video_editor_id\" is required"
@@ -1419,4 +1437,3 @@ msgstr ""
 #: apps/video_edit/__init__.py:31
 msgid "\"capture\" or \"edit\" is required"
 msgstr ""
-
