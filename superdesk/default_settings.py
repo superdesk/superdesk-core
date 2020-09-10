@@ -908,3 +908,6 @@ USER_EXTERNAL_USERNAME_STRIP_DOMAIN = False
 #: .. versionadded:: 2.0
 #:
 USER_USERNAME_PATTERN = None
+
+#: Default instance language
+DEFAULT_LANGUAGE = 'en'

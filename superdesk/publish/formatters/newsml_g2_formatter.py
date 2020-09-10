@@ -35,10 +35,6 @@ def get_newsml_provider_id():
     return app.config.get('NEWSML_PROVIDER_ID')
 
 
-def _get_lang(article):
-    return article.get('language', 'en')
-
-
 def _get_cv_qcode(item):
     if item.get('qcode'):
         return item['qcode']
@@ -135,7 +131,7 @@ class NewsMLG2Formatter(Formatter):
         item = SubElement(item_set, item_type, attrib={'standard': 'NewsML-G2', 'standardversion': '2.18',
                                                        'guid': article['guid'],
                                                        'version': str(article[superdesk.config.VERSION]),
-                                                       XML_LANG: article.get('language', 'en'),
+                                                       XML_LANG: self._get_lang(article),
                                                        'conformance': 'power'})
         SubElement(item, 'catalogRef',
                    attrib={'href': 'http://www.iptc.org/std/catalog/catalog.IPTC-G2-Standards_25.xml'})
@@ -310,7 +306,7 @@ class NewsMLG2Formatter(Formatter):
                 if 'qcode' in s:
                     subj = SubElement(content_meta, 'subject',
                                       attrib={'type': 'cpnat:abstract', 'qcode': 'subj:' + s['qcode']})
-                    SubElement(subj, 'name', attrib={XML_LANG: 'en'}).text = s['name']
+                    self._format_translated_name(subj, s, article)
 
     def _format_genre(self, article, content_meta):
         """Appends the genre element to the contentMeta element
@@ -322,7 +318,7 @@ class NewsMLG2Formatter(Formatter):
             for g in article['genre']:
                 if g.get('name'):
                     genre = SubElement(content_meta, 'genre', attrib={'qcode': _get_cv_qcode(g)})
-                    SubElement(genre, 'name', attrib={XML_LANG: _get_lang(article)}).text = g['name']
+                    self._format_translated_name(genre, g, article)
 
     def _format_category(self, article, content_meta):
         """Appends the subject element to the contentMeta element
@@ -333,7 +329,7 @@ class NewsMLG2Formatter(Formatter):
         for category in article.get('anpa_category', []):
             subject = SubElement(content_meta, 'subject',
                                  attrib={'type': 'cpnat:abstract', 'qcode': 'cat:' + category['qcode']})
-            SubElement(subject, 'name', attrib={XML_LANG: 'en'}).text = category.get('name', '')
+            self._format_translated_name(subject, category, article)
 
     def _format_slugline(self, article, content_meta):
         """Appends the slugline element to the contentMeta element
@@ -552,3 +548,30 @@ class NewsMLG2Formatter(Formatter):
         return format_type == 'newsmlg2' and \
             article[ITEM_TYPE] in {CONTENT_TYPE.TEXT, CONTENT_TYPE.PREFORMATTED, CONTENT_TYPE.COMPOSITE,
                                    CONTENT_TYPE.PICTURE, CONTENT_TYPE.VIDEO, CONTENT_TYPE.AUDIO}
+
+    def _get_translated_name(self, subject, article):
+        """Get translated name for cv item.
+
+        First checks full lang id with possible country,
+        then just language id, then uses name assuming
+        it's in app default language.
+        """
+        lang = self._get_lang(article)
+        translations = subject.get('translations') or {}
+        try:
+            return translations['name'][lang], lang
+        except KeyError:
+            pass
+        try:
+            lang = lang.replace('-', '_').split('_')[0]
+            return translations['name'][lang], lang
+        except KeyError:
+            pass
+        return subject.get('name', ''), app.config['DEFAULT_LANGUAGE']
+
+    def _format_translated_name(self, dest, subject, article):
+        name, lang = self._get_translated_name(subject, article)
+        SubElement(dest, 'name', attrib={XML_LANG: lang}).text = name
+
+    def _get_lang(self, article):
+        return article.get('language', app.config['DEFAULT_LANGUAGE'])
