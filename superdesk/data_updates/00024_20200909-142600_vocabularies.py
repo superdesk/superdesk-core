@@ -16,10 +16,10 @@ class DataUpdate(DataUpdate):
     resource = 'vocabularies'
 
     def forwards(self, mongodb_collection, mongodb_database):
-      for vocabulary in mongodb_collection.find({'_id': 'usageterms'}):
-        if 'schema_field' not in vocabulary:
-          mongodb_collection.update({'_id': vocabulary.get(config.ID_FIELD)},
-                                    {'$set': {'schema_field': 'usageterms'}})
+        for vocabulary in mongodb_collection.find({'_id': 'usageterms'}):
+            if 'schema_field' not in vocabulary:
+                mongodb_collection.update({'_id': vocabulary.get(config.ID_FIELD)},
+                                          {'$set': {'schema_field': 'usageterms'}})
 
     def backwards(self, mongodb_collection, mongodb_database):
         pass
