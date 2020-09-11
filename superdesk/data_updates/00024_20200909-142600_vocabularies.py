@@ -23,4 +23,3 @@ class DataUpdate(DataUpdate):
 
     def backwards(self, mongodb_collection, mongodb_database):
         pass
-
