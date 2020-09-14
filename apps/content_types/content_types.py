@@ -98,6 +98,7 @@ class ContentTypesResource(superdesk.Resource):
         },
         'created_by': superdesk.Resource.rel('users', nullable=True),
         'updated_by': superdesk.Resource.rel('users', nullable=True),
+        'init_version': {'type': 'integer'},
     }
 
     item_url = r'regex("[\w,.:-]+")'
