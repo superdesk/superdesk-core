@@ -19,6 +19,7 @@ class WorkspaceResource(superdesk.Resource):
         'widgets': {'type': 'list'},
         'desk': superdesk.Resource.rel('desks'),
         'user': superdesk.Resource.rel('users'),
+        'init_version': {'type': 'integer'},
     }
     item_methods = ['GET', 'PATCH', 'DELETE']
 
