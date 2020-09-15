@@ -536,7 +536,8 @@ class ValidateService(superdesk.Service):
                     messages.append(ERROR_MESSAGES[TOO_LONG].format(error_field.upper()))
                 else:
                     error_field = self.get_error_field_name(e)
-                    messages.append('{} {}'.format(error_field.upper(), ERROR_MESSAGES[error_list[e]]))
+                    messages.append('{} {}'.format(error_field.upper(),
+                                    ERROR_MESSAGES[error_list[e]] if ERROR_MESSAGES.get(error_list[e]) else error_list[e]))
 
                 for message in messages:
                     if use_headline:
