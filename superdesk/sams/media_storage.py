@@ -87,7 +87,7 @@ class SAMSMediaStorage(MediaStorage, MimetypeMixin):
         if resource in RESOURCE_METADATA_MAPPING:
             metadata = RESOURCE_METADATA_MAPPING[resource](
                 self._client,
-                secure_filename(path.basename(filename))
+                secure_filename(path.basename(filename)) if filename else ''
             )
 
             if metadata is not None:
