@@ -50,6 +50,8 @@ def init_app(app):
                         description='Duplicate Content within a Desk')
     superdesk.privilege(name='translate', label='Translate Content within a Desk',
                         description='Translate Content within a Desk')
+    superdesk.privilege(name='send_to_personal', label='Send Content to Personal desk',
+                        description='Send Content to Personal desk')
 
     superdesk.intrinsic_privilege('copy', method=['POST'])
 
