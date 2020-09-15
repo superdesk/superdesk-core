@@ -16,7 +16,10 @@ class AttachmentsResource(superdesk.Resource):
         'mimetype': {'type': 'string'},
         'filename': {'type': 'string'},
         'length': {'type': 'integer'},
-        'title': {'type': 'string'},
+        'title': {
+            'type': 'string',
+            'required': True,
+        },
         'description': {'type': 'string'},
         'user': superdesk.Resource.rel('users'),
         'internal': {'type': 'boolean', 'default': False},

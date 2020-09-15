@@ -420,14 +420,10 @@ def step_impl_given_resource_with_provider(context, provider):
 
 @given('config update')
 def given_config_update(context):
-    diff = json.loads(context.text)
-    context.app.config.update(diff)
-    if 'AMAZON_CONTAINER_NAME' in diff:
-        from superdesk.storage import AmazonMediaStorage
-        context.app.media = AmazonMediaStorage(context.app)
-
-        m = patch.object(context.app.media, 'client')
-        m.start()
+    tests.update_config_from_step(
+        context,
+        json.loads(context.text)
+    )
 
 
 @given('config')
@@ -980,7 +976,8 @@ def step_impl_when_restore_version(context, version):
 
 @when('we upload a file "{filename}" to "{dest}"')
 def step_impl_when_upload_image(context, filename, dest):
-    upload_file(context, dest, filename, 'media')
+    data = {} if not context.text else json.loads(apply_placeholders(context, context.text))
+    upload_file(context, dest, filename, 'media', data)
 
 
 @when('we upload a binary file with cropping')
@@ -2566,6 +2563,12 @@ def step_impl_store_indexed_item_to_ctx(context, tag, index):
     data = get_json_data(context.response)
     item = data['_items'][int(index) - 1]
     setattr(context, tag, item)
+
+
+@then('we store response in "{tag}"')
+def step_impl_store_response_in_cts(context, tag):
+    data = get_json_data(context.response)
+    setattr(context, tag, data)
 
 
 def test_items_contain_items(items, context_items):
