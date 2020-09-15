@@ -164,10 +164,12 @@ def setup_config(config):
 
     update_config(app_config)
 
-    # Extend the INSTALLED APPS with the list provided
     app_config.setdefault('INSTALLED_APPS', [])
-    config.setdefault('INSTALLED_APPS', [])
-    app_config['INSTALLED_APPS'].extend(config.pop('INSTALLED_APPS', []))
+
+    # Extend the INSTALLED APPS with the list provided
+    if config:
+        config.setdefault('INSTALLED_APPS', [])
+        app_config['INSTALLED_APPS'].extend(config.pop('INSTALLED_APPS', []))
 
     # Make sure there are no duplicate entries in INSTALLED_APPS
     app_config['INSTALLED_APPS'] = list(set(app_config['INSTALLED_APPS']))
