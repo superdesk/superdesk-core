@@ -21,7 +21,7 @@ before_install:
     - sudo dpkg -i libmagic-mgc_5.37-3_amd64.deb
     - sudo dpkg -i libmagic1_5.37-3_amd64.deb
     - |
-      if [ "INSTALL_START_SAMS" == "true" ]; then
+      if [ "$INSTALL_START_SAMS" == "true" ]; then
         bash scripts/install-start-sams.sh
       fi
 
