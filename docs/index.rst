@@ -48,6 +48,7 @@ works and can be developed further.
     publish
     ingest
     spellchecking
+    ai
     settings
     schema
     content-types

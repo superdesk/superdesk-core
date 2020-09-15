@@ -11,6 +11,7 @@
 import abc
 import logging
 from collections import namedtuple
+from typing import Tuple
 
 logger = logging.getLogger(__name__)
 
@@ -66,7 +67,7 @@ class SpellcheckerBase(metaclass=SpellcheckerRegisterer):
     SUGGEST_TIMEOUT = (3, 10)
 
     #: what this spellchecker can do (spelling, grammar)
-    capacities = "spelling"
+    capacities: Tuple[str, ...] = ("spelling",)
 
     #: version of the spellchecker, None if unknown
     version = None

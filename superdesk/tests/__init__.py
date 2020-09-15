@@ -90,7 +90,7 @@ def update_config(conf):
     conf['MACROS_MODULE'] = 'superdesk.macros'
     conf['DEFAULT_TIMEZONE'] = 'Europe/Prague'
     conf['LEGAL_ARCHIVE'] = True
-    conf['INSTALLED_APPS'].append('planning')
+    conf['INSTALLED_APPS'].extend(['planning', 'superdesk.macros.imperial'])
 
     # limit mongodb connections
     conf['MONGO_CONNECT'] = False
@@ -297,7 +297,7 @@ def use_snapshot(app, name, funcs=(snapshot_es, snapshot_mongo), force=False):
     return wrapper
 
 
-use_snapshot.cache = {}
+use_snapshot.cache = {} # type: ignore
 
 
 def setup(context=None, config=None, app_factory=get_app, reset=False):

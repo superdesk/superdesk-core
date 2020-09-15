@@ -9,6 +9,7 @@
 # at https://www.sourcefabric.org/superdesk/license
 
 import logging
+from typing import Dict
 
 from copy import copy
 from eve.utils import config, ParsedRequest
@@ -30,7 +31,7 @@ class PublishService(BaseService):
     """
 
     formatter = NewsroomNinjsFormatter()
-    subscriber = {'config': {}}
+    subscriber: Dict[str, Dict] = {'config': {}}
 
     def publish(self, item, subscribers=None):
         """Publish an item to content api.

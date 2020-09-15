@@ -9,6 +9,7 @@
 # at https://www.sourcefabric.org/superdesk/license
 from decimal import Decimal
 from . import unit_base
+from flask_babel import lazy_gettext
 
 SQUARE_METER_SYMBOL = 'square meter'
 SQUARE_CENTIMETER_SYMBOL = 'square cm'
@@ -43,8 +44,8 @@ def square_inch_to_metric(item, **kwargs):
 
 
 name = 'square_inch_to_metric'
-label = 'Area square inch to metric'
+label = lazy_gettext('Area square inch to metric')
 callback = square_inch_to_metric
 access_type = 'frontend'
 action_type = 'interactive'
-group = 'area'
+group = lazy_gettext('area')

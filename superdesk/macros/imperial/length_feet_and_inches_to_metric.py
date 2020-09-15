@@ -11,6 +11,7 @@
 import re
 from . import unit_base
 from decimal import Decimal
+from flask_babel import lazy_gettext
 
 
 def convert(feet, inches):
@@ -99,8 +100,8 @@ def feet_inches_to_metric(item, **kwargs):
 
 
 name = 'feet_inches_to_metric'
-label = 'Length feet-inches to metric'
+label = lazy_gettext('Length feet-inches to metric')
 callback = feet_inches_to_metric
 access_type = 'frontend'
 action_type = 'interactive'
-group = 'length'
+group = lazy_gettext('length')

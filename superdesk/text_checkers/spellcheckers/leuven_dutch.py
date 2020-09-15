@@ -30,7 +30,7 @@ class LeuvenDutch(SpellcheckerBase):
 
     name = "leuven_dutch"
     label = "University of Leuven Dutch spellchecker"
-    capacities = [CAP_SPELLING]
+    capacities = (CAP_SPELLING,)
     languages = ['nl']
 
     def __init__(self, app):

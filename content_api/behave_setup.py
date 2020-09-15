@@ -13,7 +13,7 @@ import os
 import unittest
 import elasticsearch
 from content_api.app import get_app
-from content_api.app.settings import ELASTICSEARCH_URL
+from content_api.app.settings import CONTENTAPI_ELASTICSEARCH_URL
 from eve_elastic import get_es, get_indices
 
 
@@ -22,8 +22,8 @@ TEST_DBNAME = 'content-api-tests'
 
 def get_test_settings():
     test_settings = {}
-    test_settings['ELASTICSEARCH_URL'] = ELASTICSEARCH_URL
-    test_settings['ELASTICSEARCH_INDEX'] = TEST_DBNAME
+    test_settings['CONTENTAPI_ELASTICSEARCH_URL'] = CONTENTAPI_ELASTICSEARCH_URL
+    test_settings['CONTENTAPI_ELASTICSEARCH_INDEX'] = TEST_DBNAME
     test_settings['MONGO_DBNAME'] = TEST_DBNAME
     test_settings['MONGO_URI'] = 'mongodb://localhost/%s' % TEST_DBNAME
     test_settings['DEBUG'] = True
@@ -40,8 +40,8 @@ def get_test_settings():
 def drop_elastic(app):
     with app.app_context():
         try:
-            es = get_es(app.config['ELASTICSEARCH_URL'])
-            get_indices(es).delete(app.config['ELASTICSEARCH_INDEX'])
+            es = get_es(app.config['CONTENTAPI_ELASTICSEARCH_URL'])
+            get_indices(es).delete(app.config['CONTENTAPI_ELASTICSEARCH_INDEX'])
         except elasticsearch.exceptions.NotFoundError:
             pass
 

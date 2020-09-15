@@ -9,14 +9,12 @@
 # at https://www.sourcefabric.org/superdesk/license
 
 import logging
-from pathlib import Path
-from importlib import import_module
+import superdesk
 from superdesk.resource import Resource
 from superdesk.services import BaseService
 from superdesk.errors import SuperdeskApiError
+from .. import tools
 from .base import registered_spellcheckers, SpellcheckerBase
-from inspect import isclass
-import superdesk
 
 logger = logging.getLogger(__name__)
 # can be set to False if importSpellcheckers need to be called manually
@@ -62,6 +60,7 @@ class SpellcheckerResource(Resource):
     internal_resource = False
     resource_methods = ['POST']
     item_methods = ['GET']
+    projection = False
 
 
 class SpellcheckerService(BaseService):
@@ -175,33 +174,6 @@ class SpellcheckersListService(BaseService):
         doc['spellcheckers'] = [s.serialize() for s in registered_spellcheckers.values()]
 
 
-def importSpellcheckers(app, pkg_name):
-    """Import all spellcheckers in given package
-
-    This method will import python modules and look for a SpellcheckerBase subclass there
-    If found, the subclass will be instanciated
-    :param app: app instance
-    :param str pkg_name: name of the package to use
-    """
-    pkg = import_module(pkg_name)
-    for file_path in Path(pkg.__file__).parent.glob("*.py"):
-        module_name = file_path.stem
-        if module_name in ("__init__", "base"):
-            continue
-        spellchecker_mod = import_module(pkg_name + '.' + module_name)
-        for obj_name in dir(spellchecker_mod):
-            if obj_name.startswith('__') or obj_name == 'SpellcheckerBase':
-                continue
-            obj = getattr(spellchecker_mod, obj_name)
-            if not isclass(obj):
-                continue
-            if issubclass(obj, SpellcheckerBase):
-                obj(app)
-                break
-        else:
-            logger.warning("Can't find Spellchecker in module {module_name}".format(module_name=module_name))
-
-
 def init_app(app):
     endpoint_name = 'spellcheckers_list'
     service = SpellcheckersListService(endpoint_name, backend=superdesk.get_backend())
@@ -213,4 +185,4 @@ def init_app(app):
     superdesk.intrinsic_privilege(endpoint_name, method=['POST'])
 
     if AUTO_IMPORT:
-        importSpellcheckers(app, __name__)
+        tools.import_services(app, __name__, SpellcheckerBase)

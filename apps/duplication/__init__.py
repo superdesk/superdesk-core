@@ -13,7 +13,7 @@ import logging
 
 import superdesk
 
-from .archive_copy import CopyService, CopyResource
+from .archive_copy import CopyService, CopyResource, init_app as archive_copy_init_app
 from .archive_duplication import DuplicateService, DuplicateResource
 from .archive_fetch import FetchResource, FetchService
 from .archive_move import MoveResource, MoveService
@@ -52,3 +52,5 @@ def init_app(app):
                         description='Translate Content within a Desk')
 
     superdesk.intrinsic_privilege('copy', method=['POST'])
+
+    archive_copy_init_app(app)

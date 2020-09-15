@@ -14,7 +14,7 @@ from setuptools import setup, find_packages
 LONG_DESCRIPTION = "Superdesk Server Core"
 
 install_requires = [
-    'eve==1.1.1',
+    'eve==1.1.2',
     'eve-elastic>=7.0.0,<8.0.0',
     'flask>=1.1,<1.2',
     'flask-oauthlib>=0.9.3,<0.10',
@@ -55,6 +55,7 @@ install_requires = [
     'werkzeug>=1.0,<1.1',
     'regex==2020.7.14',
     'flask-oidc-ex==0.5.5',
+    'vine==1.3.0',
 ]
 
 package_data = {

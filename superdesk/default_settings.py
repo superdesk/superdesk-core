@@ -17,16 +17,12 @@ import json
 import os
 import pytz
 import tzlocal
+from urllib.parse import urlparse
 
 from datetime import timedelta, datetime
 from celery.schedules import crontab
 from kombu import Queue, Exchange
 from distutils.util import strtobool as _strtobool
-
-try:
-    from urllib.parse import urlparse
-except ImportError:
-    from urlparse import urlparse
 
 
 def strtobool(value):
@@ -370,6 +366,7 @@ CORE_APPS = [
     'superdesk.attachments',
     'superdesk.auth_server',
     'apps.links',
+    'superdesk.locales',
 ]
 
 #: Specify what modules should be enabled
@@ -432,6 +429,7 @@ CORE_APPS.extend([
     'superdesk.io.iptc',
     'superdesk.io.mediatopics',
     'superdesk.text_checkers.spellcheckers',
+    'superdesk.text_checkers.ai',
     'apps.io',
     'apps.io.feeding_services',
     'superdesk.publish',
@@ -835,6 +833,12 @@ WORKFLOW_ALLOW_MULTIPLE_UPDATES = False
 #:
 WORKFLOW_ALLOW_DUPLICATE_TO_NON_MEMBERS = False
 
+#: Allow users to copy content from desk to personal
+#:
+#: .. versionadded:: 1.34
+#:
+WORKFLOW_ALLOW_COPY_TO_PERSONAL = True
+
 #: Enable archive autocomplete API
 #:
 #: .. versionadded:: 2.0
@@ -891,13 +895,27 @@ USER_EXTERNAL_CREATE = False
 #:
 USER_EXTERNAL_DESK = None
 
+#: Remove domain from username when creating users via sso
+#:
+#: .. versionadded:: 2.0
+#:
+USER_EXTERNAL_USERNAME_STRIP_DOMAIN = False
+
 #: Set regex pattern to check username for
 #:
 #: .. versionadded:: 2.0
 #:
 USER_USERNAME_PATTERN = None
 
+#: Default instance language
+#:
+#: .. versionadded:: 2.0
+#:
+DEFAULT_LANGUAGE = 'en'
+
 #: OIDC config
+#:
+#: .. versionadded:: 2.1
 #:
 OIDC_ENABLED = strtobool(env('OIDC_ENABLED', 'false'))
 OIDC_ISSUER = env('OIDC_ISSUER', 'http://localhost:8080/auth/realms/SUPERDESK_REALM')

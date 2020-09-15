@@ -9,6 +9,7 @@
 # at https://www.sourcefabric.org/superdesk/license
 from decimal import Decimal
 from . import unit_base
+from flask_babel import lazy_gettext
 
 CUBIC_METER_SYMBOL = 'cubic meter'
 CUBIC_CENTIMETER_SYMBOL = 'cubic centimeter'
@@ -44,8 +45,8 @@ def cubic_inches_to_metric(item, **kwargs):
 
 
 name = 'cubic_inches_to_metric'
-label = 'Volume cubic inches to metric'
+label = lazy_gettext('Volume cubic inches to metric')
 callback = cubic_inches_to_metric
 access_type = 'frontend'
 action_type = 'interactive'
-group = 'volume'
+group = lazy_gettext('volume')

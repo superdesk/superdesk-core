@@ -13,6 +13,7 @@ from datetime import datetime, timedelta
 import functools
 import json
 import logging
+from typing import Set
 from superdesk.datalayer import InvalidSearchString
 from superdesk.services import BaseService
 from superdesk.utc import utcnow
@@ -51,7 +52,7 @@ class ItemsService(BaseService):
 
     default_sort = ItemsResource.datasource.get('default_sort', [('versioncreated', -1)])
 
-    excluded_fields_from_response = {
+    excluded_fields_from_response: Set[str] = {
         '_etag', '_created',
         '_updated', 'subscribers',
         '_current_version', '_latest_version',

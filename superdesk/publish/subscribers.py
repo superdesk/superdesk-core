@@ -19,7 +19,7 @@ from superdesk.utils import ListCursor
 from superdesk.resource import Resource, build_custom_hateoas
 from superdesk.services import BaseService
 from superdesk.errors import SuperdeskApiError
-from superdesk.publish import subscriber_types, SUBSCRIBER_TYPES  # NOQA
+from superdesk.publish import SUBSCRIBER_TYPES  # NOQA
 from flask import current_app as app
 from superdesk.metadata.utils import ProductTypes
 from superdesk.notification import push_notification
@@ -42,7 +42,7 @@ class SubscribersResource(Resource):
         },
         'subscriber_type': {
             'type': 'string',
-            'allowed': subscriber_types,
+            'allowed': tuple(SUBSCRIBER_TYPES),
             'required': True
         },
         'sequence_num_settings': {
@@ -131,6 +131,7 @@ class SubscribersResource(Resource):
         'selected_subscribers': {
             'type': 'list',
         },
+        'init_version': {'type': 'integer'},
     }
 
     item_methods = ['GET', 'PATCH', 'PUT']

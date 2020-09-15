@@ -120,4 +120,8 @@ class MacrosResource(superdesk.Resource):
             'type': 'string',
             'readonly': True,
         },
+        'group': {
+            'type': 'string',
+            'readonly': True,
+        },
     }
