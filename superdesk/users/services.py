@@ -519,7 +519,7 @@ class DBUsersService(UsersService):
             role = get_resource_service('roles').find_one(req=None, name=ignorecase_query(role_name))
             if role:
                 data['role'] = role['_id']
-        if not update and data.get('desk') or app.config.get('USER_EXTERNAL_DESK'):
+        if not update and (data.get('desk') or app.config.get('USER_EXTERNAL_DESK')):
             desk_name = data.pop('desk', None) or app.config.get('USER_EXTERNAL_DESK')
             desk = get_resource_service('desks').find_one(req=None, name=ignorecase_query(desk_name))
             if desk:
