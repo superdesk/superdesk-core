@@ -32,12 +32,15 @@ ERROR = '{"error": 404}'
 
 class SamlAuthTestCase(tests.TestCase):
 
+    def setUp(self):
+        self.desks = [{'name': 'Sports'}, {'name': 'Finance'}]
+        self.roles = [{'name': 'Editor'}, {'name': 'Admin'}]
+        with self.app.app_context():
+            self.app.data.insert('desks', self.desks)
+            self.app.data.insert('roles', self.roles)
+
     @patch('superdesk.auth.saml.init_saml_auth')
     def test_create_missing_user(self, init_mock):
-        with self.app.app_context():
-            self.app.data.insert('desks', [{'name': 'Sports'}, {'name': 'Finance'}])
-            self.app.data.insert('roles', [{'name': 'Editor'}, {'name': 'Admin'}])
-
         with self.app.test_client() as c:
             flask.session[saml.SESSION_NAME_ID] = 'foo.bar@example.com'
             flask.session[saml.SESSION_USERDATA_KEY] = SAML_DATA
@@ -97,12 +100,20 @@ class SamlAuthTestCase(tests.TestCase):
             # with missing data it can't work
             flask.session[saml.SESSION_NAME_ID] = 'nameId'
             flask.session[saml.SESSION_USERDATA_KEY] = SAML_DATA.copy()
-            with patch.dict(self.app.config, {'USER_EXTERNAL_CREATE': True}):
+            with patch.dict(self.app.config, {
+                'USER_EXTERNAL_CREATE': True,
+                'USER_EXTERNAL_DESK': 'sports',
+            }):
                 resp = saml.index()
 
             user = self.app.data.find_one('users', req=None, email='foo.bar@example.com')
             self.assertIsNotNone(user)
-            self.app.data.update('users', user['_id'], {'user_type': 'administrator'}, user)
+            self.assertEqual(self.desks[0]['_id'], user['desk'])
+
+            self.app.data.update('users', user['_id'], {
+                'user_type': 'administrator',
+                'desk': self.desks[1]['_id'],
+            }, user)
 
             flask.session[saml.SESSION_USERDATA_KEY].update({
                 "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/givenname": ["John"],
@@ -112,7 +123,10 @@ class SamlAuthTestCase(tests.TestCase):
                 "displayname": ["Doe, John"],
             })
 
-            with patch.dict(self.app.config, {'USER_EXTERNAL_CREATE': True}):
+            with patch.dict(self.app.config, {
+                'USER_EXTERNAL_CREATE': True,
+                'USER_EXTERNAL_DESK': 'sports',
+            }):
                 resp = saml.index()
 
         user = self.app.data.find_one('users', req=None, email='foo.bar@example.com')
@@ -120,3 +134,4 @@ class SamlAuthTestCase(tests.TestCase):
         self.assertEqual('Doe', user['last_name'])
         self.assertEqual('Doe, John', user['display_name'])
         self.assertEqual('administrator', user['user_type'])
+        self.assertEqual(self.desks[1]['_id'], user['desk'])
