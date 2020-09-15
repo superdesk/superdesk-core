@@ -1,11 +1,24 @@
 @sams
 Feature: SAMS Integration
-    @auth
-    Scenario: Upload attachment to SAMS
+    Background: Setup Set
         Given config
         """
+            {"INSTALLED_APPS": ["superdesk.sams"]}
+        """
+        When we post to "/sams/sets"
+        """
         {
-            "INSTALLED_APPS": ["superdesk.sams"],
+            "name": "Default",
+            "destination_name": "Default",
+            "state": "usable"
+        }
+        """
+
+    @auth
+    Scenario: Upload attachment to SAMS
+        Given config update
+        """
+        {
             "MEDIA_STORAGE_PROVIDER": "superdesk.sams.media_storage.SAMSMediaStorage"
         }
         """
@@ -44,10 +57,6 @@ Feature: SAMS Integration
 
     @auth
     Scenario: Upload attachment after enabling SAMS
-        Given config
-        """
-        {"INSTALLED_APPS": ["superdesk.sams"]}
-        """
         When we upload a file "bike.jpg" to "/attachments"
         """
         {
