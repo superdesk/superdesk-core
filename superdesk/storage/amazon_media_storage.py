@@ -10,7 +10,6 @@
 
 """Amazon media storage module."""
 
-from io import BytesIO
 from os.path import splitext
 from urllib.parse import urlparse
 import json
@@ -23,6 +22,7 @@ from botocore.client import Config
 from eve.io.media import MediaStorage
 
 from superdesk.media.media_operations import download_file_from_url, guess_media_extension
+from .superdesk_file import SuperdeskFile
 from superdesk.utc import query_datetime
 from .mimetype_mixin import MimetypeMixin
 
@@ -30,7 +30,7 @@ logger = logging.getLogger(__name__)
 MAX_KEYS = 1000
 
 
-class AmazonObjectWrapper(BytesIO):
+class AmazonObjectWrapper(SuperdeskFile):
 
     def __init__(self, s3_object, name, metadata):
         super().__init__()
@@ -45,7 +45,7 @@ class AmazonObjectWrapper(BytesIO):
         self.seek(0)
         self.content_type = s3_object['ContentType']
         self.length = int(s3_object['ContentLength'])
-        self.name = name
+        self._name = name
         self.filename = name
         self.metadata = metadata
         self.upload_date = s3_object['LastModified']
