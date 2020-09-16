@@ -1,4 +1,5 @@
 {
     "elastic": 7,
-    "sams": true
+    "sams": true,
+    "superdesk_branch": "sams"
 }
