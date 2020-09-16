@@ -196,7 +196,7 @@ def setup_config(config):
 def update_config_from_step(context, config):
     context.app.config.update(config)
 
-    if 'MEDIA_STORAGE_PROVIDER' in config:
+    if 'MEDIA_STORAGE_PROVIDER' in config or 'AMAZON_CONTAINER_NAME' in config:
         context.app.media = get_media_storage_class(context.app.config)(context.app)
 
     if 'AMAZON_CONTAINER_NAME' in config:
