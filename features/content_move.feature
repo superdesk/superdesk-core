@@ -578,3 +578,40 @@ Feature: Move or Send Content to another desk
         { "headline": "test", "_id": "item-1", "guid": "item-1", "slugline": "WORMS",
           "task": {"desk": "#desks._id#", "user": "#user._id#"}}
         """
+
+    @auth
+    Scenario: Send Content from one desk to Personal desk
+        Given we have "desks" with "SPORTS_DESK_ID" and success
+        """
+        [{"name": "Sports", "desk_type": "authoring"}]
+        """
+        When we post to "archive"
+        """
+        [{  "type":"text", "headline": "test1", "guid": "123", "state": "submitted",
+            "task": {"desk": "#desks._id#", "stage": "#desks.incoming_stage#", "user": "#CONTEXT_USER_ID#"}}]
+        """
+        And we get "/archive/123"
+        Then we get existing resource
+        """
+        {"headline": "test1", "sign_off": "abc"}
+        """
+        When we post to "/desks" with "FINANCE_DESK_ID" and success
+        """
+        [{"name": "Finance", "desk_type": "production" }]
+        """
+        And we switch user
+        And we post to "/archive/123/move"
+        """
+        [{}]
+        """
+        Then we get OK response
+
+        When we get "/archive/123"
+        Then we get existing resource
+        """
+        { "operation": "move", "headline": "test1", "guid": "123", "state": "submitted", "_current_version": 2, "sign_off": "abc/foo",
+          "task": {
+                "user": "#CONTEXT_USER_ID#"
+            }
+        }
+        """
