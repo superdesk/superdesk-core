@@ -13,8 +13,13 @@ import json
 import flask
 import logging
 import superdesk
+import multiprocessing
 import werkzeug.exceptions
 
+from flask import current_app as app
+from eve.utils import date_to_str
+from eve.versioning import insert_versioning_documents
+from bson.objectid import ObjectId
 from apps.archive.common import ITEM_OPERATION
 from superdesk import get_resource_service
 from superdesk.metadata.item import ITEM_STATE, CONTENT_STATE
@@ -22,10 +27,7 @@ from superdesk.resource import Resource
 from superdesk.services import BaseService
 from superdesk.tests import clean_dbs, use_snapshot
 from superdesk.utc import utcnow
-from eve.utils import date_to_str
-from flask import current_app as app
-from eve.versioning import insert_versioning_documents
-from bson.objectid import ObjectId
+from superdesk.timer import timer
 from apps.search_providers import allowed_search_providers,\
     register_search_provider
 
@@ -169,6 +171,7 @@ class PrepopulateService(BaseService):
             if doc.get('remove_first'):
                 clean_dbs(app, force=True)
 
+            app.init_indexes()
             app.data.init_elastic(app)
 
             get_resource_service('users').stop_updating_stage_visibility()
@@ -183,12 +186,14 @@ class PrepopulateService(BaseService):
             get_resource_service('users').update_stage_visibility_for_users()
 
     def create(self, docs, **kwargs):
-        self._create(docs)
-        if app.config.get('SUPERDESK_TESTING'):
-            for provider in ['paimg', 'aapmm']:
-                if provider not in allowed_search_providers:
-                    register_search_provider(provider, provider)
-        return ['OK']
+        with multiprocessing.Lock() as lock:
+            with timer('prepopulate'):
+                self._create(docs)
+            if app.config.get('SUPERDESK_TESTING'):
+                for provider in ['paimg', 'aapmm']:
+                    if provider not in allowed_search_providers:
+                        register_search_provider(provider, provider)
+            return ['OK']
 
 
 class AppPrepopulateCommand(superdesk.Command):

@@ -53,3 +53,7 @@ class ProductsResource(Resource):
     }
 
     privileges = {'POST': 'products', 'PATCH': 'products', 'DELETE': 'products'}
+
+    mongo_indexes = {
+        'name_1': ([('name', 1)], {'unique': True}),
+    }
