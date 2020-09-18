@@ -20,6 +20,7 @@
 =====================   =================================================
 """
 
+import ast
 import logging
 import magic
 import superdesk
@@ -37,7 +38,7 @@ def get():
     """
     Returns a list of all the registered assets
     """
-    assets = assets_bp.kwargs['client'].assets.search(args=request.args.to_dict())
+    assets = assets_bp.kwargs['client'].assets.search(params=request.args.to_dict())
     return assets.json(), assets.status_code
 
 
@@ -123,3 +124,13 @@ def update(item_id):
         files=files
     )
     return update_response.json(), update_response.status_code
+
+
+@assets_bp.route('/sams/assets/counts', methods=['GET'], defaults={'set_ids': None})
+@assets_bp.route('/sams/assets/counts/<set_ids>', methods=['GET'])
+def get_assets_count(set_ids):
+    set_ids = ast.literal_eval(set_ids) if set_ids else None
+    counts = assets_bp.kwargs['client'].assets.get_assets_count(
+        set_ids=set_ids
+    )
+    return counts
