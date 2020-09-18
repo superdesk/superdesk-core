@@ -62,6 +62,10 @@ class RolesResource(Resource):
 
     privileges = {'POST': 'roles', 'DELETE': 'roles', 'PATCH': 'roles'}
 
+    mongo_indexes = {
+        'name_1': ([('name', 1)], {'unique': True}),
+    }
+
 
 class RolesService(BaseService):
 

@@ -185,6 +185,10 @@ class ContentTemplatesResource(Resource):
 
     merge_nested_documents = True
 
+    mongo_indexes = {
+        'user_1_template_name_1': ([('user', 1), ('template_name', 1)], {'unique': True}),
+    }
+
 
 class ContentTemplatesService(BaseService):
 
