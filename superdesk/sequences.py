@@ -31,6 +31,9 @@ class SequencesResource(Resource):
     }
     etag_ignore_fields = ['sequence_number', 'name']
     internal_resource = True
+    mongo_indexes = {
+        'key_1': ([('key', 1)], {'unique': True}),
+    }
 
 
 class SequencesService(BaseService):

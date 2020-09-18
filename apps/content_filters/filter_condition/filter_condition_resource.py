@@ -86,6 +86,10 @@ class FilterConditionResource(Resource):
                   'PATCH': 'content_filters',
                   'DELETE': 'content_filters'}
 
+    mongo_indexes = {
+        'name_1': ([('name', 1)], {'unique': True}),
+    }
+
     def pre_request_post(self, request):
         self._init_allowed_filters()
 

@@ -90,6 +90,10 @@ class StagesResource(Resource):
 
     privileges = {'POST': 'desks', 'DELETE': 'desks', 'PATCH': 'desks'}
 
+    mongo_indexes = {
+        'desk_1_name_1': ([('desk', 1), ('name', 1)], {'unique': True}),
+    }
+
 
 class StagesService(BaseService):
     notification_key = 'stage'

@@ -138,6 +138,10 @@ class SubscribersResource(Resource):
 
     privileges = {'POST': 'subscribers', 'PATCH': 'subscribers'}
 
+    mongo_indexes = {
+        'name_1': ([('name', 1)], {'unique': True}),
+    }
+
 
 class SubscribersService(BaseService):
     def get(self, req, lookup):
