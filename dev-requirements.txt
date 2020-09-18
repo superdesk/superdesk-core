@@ -22,4 +22,5 @@ mypy
 
 -e git+git://github.com/superdesk/superdesk-planning.git@develop#egg=superdesk-planning
 -e .
--e git+git://github.com/superdesk/sams.git@develop#egg=sams&subdirectory=src/clients/python/
+-e git+git://github.com/superdesk/sams.git@develop#egg=sams_client&subdirectory=src/clients/python/
+
