@@ -131,6 +131,7 @@ class SubscribersResource(Resource):
         'selected_subscribers': {
             'type': 'list',
         },
+        'init_version': {'type': 'integer'},
     }
 
     item_methods = ['GET', 'PATCH', 'PUT']

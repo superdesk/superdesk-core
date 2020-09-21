@@ -11,11 +11,12 @@
 # Gideon Lehmann <gideon.lehmann@sourcefabric.org>, 2020
 # Charles-Philippe Giroux <charles-philippe.giroux@lapressecanadienne.com>,
 # 2020
+#, fuzzy
 msgid ""
 msgstr ""
 "Project-Id-Version: Superdesk-Core 1.33\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2020-09-07 19:42+0530\n"
+"POT-Creation-Date: 2020-09-15 11:10+0530\n"
 "PO-Revision-Date: 2019-04-04 09:17+0000\n"
 "Last-Translator: Charles-Philippe Giroux <charles-"
 "philippe.giroux@lapressecanadienne.com>, 2020\n"
@@ -30,7 +31,7 @@ msgstr ""
 
 #: superdesk/activity.py:78
 msgid "Send notifications via email"
-msgstr ""
+msgstr "Envoyer les notifications par courriel"
 
 #: superdesk/activity.py:79 superdesk/activity.py:86
 msgid "notifications"
@@ -42,7 +43,7 @@ msgstr "Autoriser les notifications de bureau"
 
 #: superdesk/validator.py:283
 msgid "Only 1 instance is allowed."
-msgstr ""
+msgstr "Un seul cas est permis."
 
 #: superdesk/macros/abstract_populator.py:35
 msgid "Populate Abstract"
@@ -54,15 +55,15 @@ msgstr ""
 
 #: superdesk/macros/currency_usd_to_cad.py:38
 msgid "Currency USD to CAD"
-msgstr "Devise: dollars US en dollars CA"
+msgstr "Devises: dollars US en dollars CA"
 
 #: superdesk/macros/desk_routing.py:45
 msgid "Desk Routing"
-msgstr ""
+msgstr "Routage de pupitre"
 
 #: superdesk/macros/extract_html.py:58
 msgid "Extract Html Macro"
-msgstr "Macro d'extraction HTML"
+msgstr "Extraire macro html"
 
 #: superdesk/macros/internal_destination_auto_publish.py:83
 msgid "Internal Destination Auto Publish"
@@ -70,9 +71,9 @@ msgstr ""
 
 #: superdesk/macros/take_key_validator.py:25
 msgid "validate take key"
-msgstr ""
+msgstr "valider la version"
 
-#: superdesk/macros/validate_for_publish.py:28
+#: superdesk/macros/validate_for_publish.py:29
 msgid "Validate for Publish"
 msgstr "Valider pour publication"
 
@@ -86,7 +87,7 @@ msgstr "Aire: acres en mesure métrique"
 #: superdesk/macros/imperial/area_square_miles_to_metric.py:51
 #: superdesk/macros/imperial/area_square_yards_to_metric.py:51
 msgid "area"
-msgstr "Aire"
+msgstr "aire"
 
 #: superdesk/macros/imperial/area_square_feet_to_metric.py:47
 msgid "Area square feet to metric"
@@ -102,7 +103,7 @@ msgstr "Aire: miles carrés en mesure métrique"
 
 #: superdesk/macros/imperial/area_square_yards_to_metric.py:47
 msgid "Area square yards to metric"
-msgstr ""
+msgstr "Aire: verges carrées en mesure métrique"
 
 #: superdesk/macros/imperial/length_feet_and_inches_to_metric.py:103
 msgid "Length feet-inches to metric"
@@ -113,7 +114,7 @@ msgstr "Longueur: pieds-pouces en mesure métrique"
 #: superdesk/macros/imperial/length_nautical_miles_to_metric.py:42
 #: superdesk/macros/imperial/length_yards_to_metric.py:43
 msgid "length"
-msgstr "Longueur"
+msgstr "longeur"
 
 #: superdesk/macros/imperial/length_miles_to_metric.py:38
 msgid "Length miles to kilometres"
@@ -135,7 +136,7 @@ msgstr "Volume: pieds cubes en mesure métrique"
 #: superdesk/macros/imperial/volume_cubic_inches_to_metric.py:52
 #: superdesk/macros/imperial/volume_cubic_yard_to_metric.py:42
 msgid "volume"
-msgstr "Volume"
+msgstr "volume"
 
 #: superdesk/macros/imperial/volume_cubic_inches_to_metric.py:48
 msgid "Volume cubic inches to metric"
@@ -162,27 +163,35 @@ msgid "Prefered CV items"
 msgstr ""
 
 #: apps/content_filters/filter_condition/filter_condition_parameters.py:73
-#: apps/validate/validate.py:62 superdesk/vocabularies/vocabularies.py:451
+#: apps/validate/validate.py:63 superdesk/vocabularies/vocabularies.py:451
 msgid "Keywords"
-msgstr "Mots clés"
+msgstr "Mots-clés"
 
 #: apps/desks.py:214
 msgid "Cannot update Desk Type as there are article(s) referenced by the Desk."
 msgstr ""
+"Le type de pupitre ne peut pas être mis à jour parce qu'au moins un "
+"article est référencé par le pupitre. "
 
 #: apps/desks.py:237
 msgid "Cannot delete desk as it is assigned as default desk to user(s)."
 msgstr ""
+"Le pupitre ne peut pas être supprimé parce qu'au moins un utilisateur l'a"
+" choisi comme pupitre par défaut. "
 
 #: apps/desks.py:248
 msgid "Cannot delete desk as routing scheme(s) are associated with the desk"
 msgstr ""
+"Le pupitre ne peut pas être supprimé parce qu'au moins un schéma de "
+"routage lui est associé."
 
 #: apps/desks.py:261
 msgid ""
 "Cannot delete desk as it has article(s) or referenced by versions of the "
 "article(s)."
 msgstr ""
+"Le pupitre ne peut pas être supprimé parce qu'il contient au moins un "
+"article ou qu'une version de cet article lui est référencée. "
 
 #: apps/archive/__init__.py:100 apps/monitoring.py:12
 msgid "Monitoring view"
@@ -194,15 +203,15 @@ msgstr "suivi"
 
 #: apps/preferences.py:66
 msgid "label"
-msgstr ""
+msgstr "étiquette"
 
 #: apps/preferences.py:68
 msgid "category"
-msgstr ""
+msgstr "catégorie"
 
 #: apps/preferences.py:108
 msgid "Enable Feature Preview"
-msgstr ""
+msgstr "Autoriser l'utilisation des fonctionnalités à venir"
 
 #: apps/preferences.py:109
 msgid "feature"
@@ -210,7 +219,7 @@ msgstr "fonctionnalité"
 
 #: apps/preferences.py:118
 msgid "Users archive view format"
-msgstr ""
+msgstr "Affichage de l'archive des utilisateurs"
 
 #: apps/preferences.py:119
 msgid "archive"
@@ -218,7 +227,7 @@ msgstr "archiver"
 
 #: apps/preferences.py:126
 msgid "Enable Single Line View"
-msgstr ""
+msgstr "Activer l'affichage sur une seule ligne"
 
 #: apps/preferences.py:127
 msgid "rows"
@@ -226,7 +235,7 @@ msgstr "colonnes"
 
 #: apps/preferences.py:151
 msgid "Located"
-msgstr ""
+msgstr "Situé"
 
 #: apps/preferences.py:152 apps/preferences.py:172
 msgid "article_defaults"
@@ -238,7 +247,7 @@ msgstr "catégories"
 
 #: apps/preferences.py:158
 msgid "Preferred Categories"
-msgstr ""
+msgstr "Catégories préférées"
 
 #: apps/preferences.py:164
 msgid "desks"
@@ -249,9 +258,9 @@ msgid "Preferred Desks"
 msgstr "Pupitres préférés"
 
 #: apps/content_filters/filter_condition/filter_condition_parameters.py:121
-#: apps/preferences.py:171 apps/validate/validate.py:66
+#: apps/preferences.py:171 apps/validate/validate.py:67
 msgid "Place"
-msgstr ""
+msgstr "Endroit"
 
 #: apps/preferences.py:187
 msgid "Users contacts view format"
@@ -263,45 +272,47 @@ msgstr "contacts"
 
 #: apps/preferences.py:261 apps/preferences.py:273
 msgid "Invalid preference: {preference}"
-msgstr ""
+msgstr "Préférence invalide: {preference}"
 
 #: apps/stages.py:163
 msgid "Cannot delete a Working Stage."
-msgstr ""
+msgstr "Impossible de supprimer une étape 'en cours'."
 
 #: apps/stages.py:168
 msgid "Cannot delete a Incoming Stage."
-msgstr ""
+msgstr "Impossible de supprimer une étape de révision"
 
 #: apps/stages.py:174
 msgid ""
 "Cannot delete stage as it has article(s) or referenced by versions of the"
 " article(s)."
 msgstr ""
+"L'étape ne peut pas être supprimée parce qu'elle contient au moins un "
+"article ou qu'une version de cet article lui est référencée. "
 
 #: apps/stages.py:181
 msgid "Stage is referred by Ingest Routing Schemes : {rule_names}"
-msgstr ""
+msgstr "L'étape est référencée par le schéma de routage d'ingestion: {rule_names}"
 
 #: apps/stages.py:201
 msgid "Must have one working stage in a desk"
-msgstr ""
+msgstr "Il doit y avoir une étape 'en cours' dans un pupitre"
 
 #: apps/stages.py:209
 msgid "Must have one incoming stage in a desk"
-msgstr ""
+msgstr "Il doit y avoir une étape de révision dans un pupitre"
 
 #: apps/archive/common.py:548 apps/tasks.py:89
 msgid "Invalid desk identifier {desk_id}"
-msgstr ""
+msgstr "Identifiant de pupitre invalide {desk_id}"
 
 #: apps/tasks.py:93
 msgid "User is not member of desk: {desk_id}"
-msgstr ""
+msgstr "L'utilisateur n'est pas membre du pupitre: {desk_id} "
 
 #: apps/archive/common.py:554 apps/tasks.py:103
 msgid "Invalid stage identifier {stage_id}"
-msgstr ""
+msgstr "Identifiant de l'étape invalide {stage_id}"
 
 #: apps/tasks.py:139
 msgid "Error:{exception} in {rule_type} rule:{rule} for stage:{stage}"
@@ -313,23 +324,23 @@ msgstr ""
 
 #: apps/archive/__init__.py:103
 msgid "Create content"
-msgstr ""
+msgstr "Créer un contenu"
 
 #: apps/archive/__init__.py:103
 msgid "Create and save content"
-msgstr ""
+msgstr "Créer et enregistré un contenu"
 
 #: apps/archive/__init__.py:104
 msgid "Ingest"
-msgstr ""
+msgstr "Ingérer"
 
 #: apps/archive/__init__.py:104
 msgid "Access to ingest sources management"
-msgstr ""
+msgstr "Accéder à la gestion des sources d'ingestion"
 
 #: apps/archive/__init__.py:105
 msgid "Spike"
-msgstr ""
+msgstr "Placer dans la corbeille"
 
 #: apps/archive/__init__.py:105
 msgid "Spike/delete items"
@@ -345,7 +356,7 @@ msgstr ""
 
 #: apps/archive/__init__.py:107
 msgid "Unspike"
-msgstr ""
+msgstr "Sortir de la corbeille"
 
 #: apps/archive/__init__.py:107
 msgid "Unspike/undelete content"
@@ -353,47 +364,47 @@ msgstr ""
 
 #: apps/archive/__init__.py:108
 msgid "Edit Unique Name"
-msgstr ""
+msgstr "Modifier l'identifiant unique"
 
 #: apps/archive/__init__.py:108
 msgid "Edit unique name"
-msgstr ""
+msgstr "Modifier l'identifiant unique"
 
 #: apps/archive/__init__.py:109
 msgid "Hold"
-msgstr ""
+msgstr "Retenir"
 
 #: apps/archive/__init__.py:109
 msgid "Hold content"
-msgstr ""
+msgstr "Retenir le contenu"
 
 #: apps/archive/__init__.py:110
 msgid "Restore"
-msgstr ""
+msgstr "Restaurer"
 
 #: apps/archive/__init__.py:110
 msgid "Restore content"
-msgstr ""
+msgstr "Restaurer le contenu"
 
 #: apps/archive/__init__.py:111
 msgid "Update"
-msgstr ""
+msgstr "Mise à jour"
 
 #: apps/archive/__init__.py:111
 msgid "Create an update"
-msgstr ""
+msgstr "Créer une mise à jour"
 
 #: apps/archive/__init__.py:113
 msgid "Unlock content"
-msgstr ""
+msgstr "Déverrouiller le contenu"
 
 #: apps/archive/__init__.py:114
 msgid "Unlock locked content by another user"
-msgstr ""
+msgstr "Déverrouiller le contenu verrouillé par un autre utilisateur"
 
 #: apps/archive/__init__.py:116
 msgid "Mark items for users"
-msgstr ""
+msgstr "Signaler les éléments aux utilisateurs"
 
 #: apps/archive/__init__.py:117
 msgid "User can mark or unmark items for other users"
@@ -407,15 +418,15 @@ msgstr ""
 #: apps/duplication/archive_duplication.py:132
 #: apps/item_autosave/components/item_autosave.py:36
 msgid "The item was locked by another user"
-msgstr ""
+msgstr "Cet élément a été verrouillé par un autre utilisateur"
 
 #: apps/archive/archive.py:450 apps/archived/archived.py:192
 msgid "User does not have permissions to read the item."
-msgstr ""
+msgstr "L'utilisateur n'a pas la permission de lire cet élément."
 
 #: apps/archive/archive.py:465
 msgid "Invalid version {old_version}"
-msgstr ""
+msgstr "Version invalide {old_version}"
 
 #: apps/archive/archive.py:469
 msgid "Invalid item id {item_id}"
@@ -439,7 +450,7 @@ msgstr ""
 
 #: apps/archive/archive.py:786
 msgid "Invalid Embargo"
-msgstr ""
+msgstr "Embargo invalide"
 
 #: apps/archive/archive.py:790
 msgid "A Package doesn't support Embargo"
@@ -447,7 +458,7 @@ msgstr ""
 
 #: apps/archive/archive.py:854
 msgid "Item isn't in a valid state to be updated."
-msgstr ""
+msgstr "L'élément n'est pas dans un état valide pour être mis à jour."
 
 #: apps/archive/archive.py:862
 msgid "Unauthorized to modify Unique Name"
@@ -469,7 +480,7 @@ msgstr ""
 
 #: apps/archive/archive.py:905
 msgid "Duplicate subjects are not allowed"
-msgstr ""
+msgstr "Les sujets dupliqués ne sont pas permis"
 
 #: apps/archive/archive.py:1177
 msgid "Client and server etags don't match"
@@ -481,11 +492,11 @@ msgstr ""
 
 #: apps/archive/archive_link.py:58 apps/archive/archive_rewrite.py:296
 msgid "Only updates can be unlinked!"
-msgstr ""
+msgstr "Seules les mises à jour peuvent être déliés!"
 
 #: apps/archive/archive_rewrite.py:114
 msgid "Cannot find the article"
-msgstr ""
+msgstr "L'article n'a pas été trouvé"
 
 #: apps/archive/archive_rewrite.py:117
 msgid "Rewrite of an Item having embargo isn't possible"
@@ -616,11 +627,11 @@ msgstr ""
 
 #: apps/auth/__init__.py:64
 msgid "Invalid user."
-msgstr ""
+msgstr "Utilisateur invalide."
 
 #: apps/auth/auth.py:118
 msgid "Insufficient privileges for the requested operation."
-msgstr ""
+msgstr "Privilèges insuffisants pour l'opération demandée."
 
 #: apps/auth/db/reset_password.py:80
 msgid "Either key:password or email must be provided"
@@ -628,7 +639,7 @@ msgstr ""
 
 #: apps/auth/db/reset_password.py:98
 msgid "Invalid email"
-msgstr ""
+msgstr "Courriel invalide"
 
 #: apps/auth/db/reset_password.py:102
 msgid "User not enabled"
@@ -636,7 +647,7 @@ msgstr ""
 
 #: apps/auth/db/reset_password.py:106 apps/auth/db/reset_password.py:123
 msgid "User not active"
-msgstr ""
+msgstr "Utilisateur inactif"
 
 #: apps/comments/comments.py:84
 msgid "Commenting on behalf of someone else is prohibited."
@@ -664,12 +675,12 @@ msgstr ""
 
 #: apps/content_filters/content_filter/content_filter_test.py:49
 msgid "Content filter not found"
-msgstr ""
+msgstr "Le filtre de contenu n'a pas été trouvé"
 
 #: apps/content_filters/content_filter/content_filter_test.py:59
 #: apps/products/product_test.py:49 apps/publish/formatters/service.py:66
 msgid "Article not found!"
-msgstr ""
+msgstr "L'article n'a pas été trouvé!"
 
 #: apps/content_filters/content_filter/content_filter_test.py:64
 msgid "Error in testing article: {error}"
@@ -685,45 +696,45 @@ msgstr ""
 
 #: apps/content_filters/filter_condition/filter_condition_parameters.py:43
 msgid "ANPA Category"
-msgstr ""
+msgstr "Catégorie"
 
 #: apps/content_filters/filter_condition/filter_condition_parameters.py:49
-#: apps/validate/validate.py:78
+#: apps/validate/validate.py:79
 msgid "Urgency"
-msgstr "Niveau d'urgence"
+msgstr "Priorité"
 
 #: apps/content_filters/filter_condition/filter_condition_parameters.py:55
-#: apps/validate/validate.py:59
+#: apps/validate/validate.py:60
 msgid "Genre"
-msgstr "Type de contenu"
+msgstr "Version"
 
 #: apps/content_filters/filter_condition/filter_condition_parameters.py:61
-#: apps/validate/validate.py:76
+#: apps/validate/validate.py:77
 msgid "Subject"
 msgstr "Sujet"
 
 #: apps/content_filters/filter_condition/filter_condition_parameters.py:67
-#: apps/validate/validate.py:67
+#: apps/validate/validate.py:68
 msgid "Priority"
 msgstr "Priorité"
 
 #: apps/content_filters/filter_condition/filter_condition_parameters.py:77
-#: apps/validate/validate.py:71
+#: apps/validate/validate.py:72
 msgid "Slugline"
 msgstr "Titre de rappel"
 
 #: apps/content_filters/filter_condition/filter_condition_parameters.py:81
-#: apps/validate/validate.py:77
+#: apps/validate/validate.py:78
 msgid "Type"
-msgstr ""
+msgstr "Type"
 
 #: apps/content_filters/filter_condition/filter_condition_parameters.py:87
-#: apps/validate/validate.py:74
+#: apps/validate/validate.py:75
 msgid "Source"
-msgstr ""
+msgstr "Source"
 
 #: apps/content_filters/filter_condition/filter_condition_parameters.py:91
-#: apps/validate/validate.py:60
+#: apps/validate/validate.py:61
 msgid "Headline"
 msgstr "Titre"
 
@@ -732,42 +743,42 @@ msgid "Ednote"
 msgstr ""
 
 #: apps/content_filters/filter_condition/filter_condition_parameters.py:99
-#: apps/validate/validate.py:44
+#: apps/validate/validate.py:45
 msgid "Body HTML"
 msgstr "Corps HTML"
 
 #: apps/content_filters/filter_condition/filter_condition_parameters.py:103
-#: apps/validate/validate.py:52
+#: apps/validate/validate.py:53
 msgid "Desk"
-msgstr "Bureau"
+msgstr "Pupitre"
 
 #: apps/content_filters/filter_condition/filter_condition_parameters.py:109
-#: apps/validate/validate.py:75
+#: apps/validate/validate.py:76
 msgid "Stage"
 msgstr "Étape"
 
 #: apps/content_filters/filter_condition/filter_condition_parameters.py:115
-#: apps/validate/validate.py:72
+#: apps/validate/validate.py:73
 msgid "SMS"
-msgstr ""
+msgstr "Message texte"
 
 #: apps/content_filters/filter_condition/filter_condition_parameters.py:127
 msgid "Ingest provider"
-msgstr ""
+msgstr "Fournisseur d'ingestion"
 
 #: apps/content_filters/filter_condition/filter_condition_parameters.py:133
-#: apps/validate/validate.py:54
+#: apps/validate/validate.py:55
 msgid "Embargo"
-msgstr ""
+msgstr "Embargo"
 
 #: apps/content_filters/filter_condition/filter_condition_parameters.py:139
-#: apps/validate/validate.py:56
+#: apps/validate/validate.py:57
 msgid "Feature Media"
-msgstr "Médias vedettes"
+msgstr "Contenu multimédia"
 
 #: apps/content_filters/filter_condition/filter_condition_parameters.py:151
 msgid "Agendas"
-msgstr ""
+msgstr "Agendas"
 
 #: apps/content_filters/filter_condition/filter_condition_service.py:35
 msgid "Filter condition has been referenced in content filter: {references}"
@@ -806,7 +817,7 @@ msgstr ""
 #: apps/dictionaries/service.py:160 apps/dictionaries/service.py:267
 #: apps/dictionaries/service.py:270
 msgid "The dictionary already exists"
-msgstr ""
+msgstr "Le dictionnaire existe déjà"
 
 #: apps/dictionaries/service.py:187
 msgid "User is required for the abbreviations dictionary."
@@ -814,7 +825,7 @@ msgstr ""
 
 #: apps/dictionaries/service.py:191
 msgid "The dictionary type cannot be changed."
-msgstr ""
+msgstr "Le type de dictionnaire ne peut pas être changé."
 
 #: apps/duplication/archive_copy.py:55
 #: apps/duplication/archive_duplication.py:121
@@ -845,7 +856,7 @@ msgstr ""
 
 #: apps/export/service.py:76
 msgid "No items to export."
-msgstr ""
+msgstr "Aucun élément à exporter."
 
 #: apps/export/service.py:81
 msgid "Formatter not found for requested format type."
@@ -869,11 +880,11 @@ msgstr ""
 
 #: apps/item_lock/components/item_lock.py:73
 msgid "Item is locked by another user."
-msgstr ""
+msgstr "L'élément est verrouillé par un autre utilisateur."
 
 #: apps/item_lock/components/item_lock.py:118
 msgid "Item is not locked."
-msgstr ""
+msgstr "L'élément n'est pas verrouillé."
 
 #: apps/keywords/alchemy.py:27
 msgid "AlchemyAPI key is not set"
@@ -1022,6 +1033,8 @@ msgid ""
 "There are unpublished related items that won't be sent out as related "
 "items. Do you want to publish the article anyway?"
 msgstr ""
+"Il existe des éléments associés non publiés qui ne seront pas envoyés en "
+"tant qu'éléments associés. Voulez-vous publier l'article quand même?"
 
 #: apps/publish/content/common.py:320 apps/publish/content/common.py:379
 #: apps/publish/enqueue/enqueue_service.py:125
@@ -1149,10 +1162,12 @@ msgstr ""
 #: apps/rules/routing_rules.py:201
 msgid "Routing scheme is applied to channel(s). It cannot be deleted."
 msgstr ""
+"Le schéma de routage est appliqué à un ou plusieurs canaux. Il ne peut "
+"pas être supprimé. "
 
 #: apps/rules/routing_rules.py:293
 msgid "A Routing Scheme must have at least one Rule"
-msgstr ""
+msgstr "Un schéma de routage doit avoir au moins une règle"
 
 #: apps/rules/routing_rules.py:300
 msgid "A routing rule has invalid fields {fields}"
@@ -1197,6 +1212,8 @@ msgstr ""
 #: apps/rules/rule_sets.py:54
 msgid "Cannot delete Rule set as it's associated with channel(s)."
 msgstr ""
+"La règle ne peut pas être supprimée puisqu'elle est associée à un ou "
+"plusieurs canaux. "
 
 #: apps/saved_searches/saved_searches.py:167
 msgid "User's subscriptions are not allowed on create"
@@ -1272,145 +1289,149 @@ msgstr ""
 msgid "Templates that are not create type can only be assigned to one desk!"
 msgstr ""
 
-#: apps/validate/validate.py:37
-msgid "Abstract"
-msgstr "Résumé"
-
 #: apps/validate/validate.py:38
+msgid "Abstract"
+msgstr "Aperçu"
+
+#: apps/validate/validate.py:39
 msgid "Alt text"
 msgstr "Texte alternatif"
 
-#: apps/validate/validate.py:39
-msgid "Take Key"
-msgstr ""
-
 #: apps/validate/validate.py:40
+msgid "Take Key"
+msgstr "Lead"
+
+#: apps/validate/validate.py:41
 msgid "Archive description"
 msgstr "Description de l'archive"
 
-#: apps/validate/validate.py:41
+#: apps/validate/validate.py:42
 msgid "Attachments"
 msgstr "Pièces jointes"
 
-#: apps/validate/validate.py:42
-msgid "Authors"
-msgstr ""
-
 #: apps/validate/validate.py:43
-msgid "Body footer"
-msgstr "Corps pied de page"
+msgid "Authors"
+msgstr "Auteurs"
 
-#: apps/validate/validate.py:45
+#: apps/validate/validate.py:44
+msgid "Body footer"
+msgstr "Pied de page"
+
+#: apps/validate/validate.py:46
 msgid "Byline"
 msgstr "Signature"
 
-#: apps/validate/validate.py:46
+#: apps/validate/validate.py:47
 msgid "Categories"
 msgstr "Catégories"
 
-#: apps/validate/validate.py:47
+#: apps/validate/validate.py:48
 msgid "Company Codes"
 msgstr "Codes d'entreprise"
 
-#: apps/validate/validate.py:48
-msgid "Copyright holder"
-msgstr "Titulaire du droit d'auteur"
-
 #: apps/validate/validate.py:49
-msgid "Copyright notice"
-msgstr ""
+msgid "Copyright holder"
+msgstr "Détenteur du droit d'auteur"
 
 #: apps/validate/validate.py:50
-msgid "Dateline"
-msgstr "Date"
+msgid "Copyright notice"
+msgstr "Avis de droit d'auteur"
 
 #: apps/validate/validate.py:51
+msgid "Dateline"
+msgstr "Origine et date"
+
+#: apps/validate/validate.py:52
 msgid "Description"
-msgstr ""
+msgstr "Description"
 
-#: apps/validate/validate.py:53
+#: apps/validate/validate.py:54
 msgid "Ed. Note"
-msgstr "Note de l'éditeur"
+msgstr "Note de la rédaction"
 
-#: apps/validate/validate.py:55
+#: apps/validate/validate.py:56
 msgid "Feature Image"
-msgstr "Image de fond"
+msgstr "Photo"
 
-#: apps/validate/validate.py:57
+#: apps/validate/validate.py:58
 msgid "Footer"
 msgstr "Pied de page"
 
-#: apps/validate/validate.py:58
+#: apps/validate/validate.py:59
 msgid "Footers"
 msgstr "Pieds de page"
 
-#: apps/validate/validate.py:61
+#: apps/validate/validate.py:62
 msgid "Ingest Provider"
-msgstr "Contributeur"
+msgstr "Fournisseur d'ingestion"
 
-#: apps/validate/validate.py:63
+#: apps/validate/validate.py:64
 msgid "Language"
 msgstr "Langue"
 
-#: apps/validate/validate.py:64
-msgid "Media"
-msgstr "Média"
-
 #: apps/validate/validate.py:65
-msgid "Media Description"
-msgstr "Description du média"
+msgid "Media"
+msgstr "Contenu multimédia"
 
-#: apps/validate/validate.py:68
-msgid "Scheduled Time"
-msgstr ""
+#: apps/validate/validate.py:66
+msgid "Media Description"
+msgstr "Description de l'élément multimédia"
 
 #: apps/validate/validate.py:69
-msgid "Related Items"
-msgstr "Éléments liées"
+msgid "Scheduled Time"
+msgstr "Heure programmée"
 
 #: apps/validate/validate.py:70
+msgid "Related Items"
+msgstr "Éléments associés"
+
+#: apps/validate/validate.py:71
 msgid "Sign Off"
 msgstr "Initiales"
 
-#: apps/validate/validate.py:73
+#: apps/validate/validate.py:74
 msgid "SMS Message"
-msgstr ""
+msgstr "Message texte"
 
-#: apps/validate/validate.py:79
+#: apps/validate/validate.py:80
 msgid "Usage Terms"
-msgstr "Termes d'utilisation"
-
-#: apps/validate/validate.py:83
-msgid "is a required field"
-msgstr "est un champ obligatoire"
+msgstr "Conditions d'utilisation"
 
 #: apps/validate/validate.py:84
-msgid "max length is {length}"
+msgid "is a required field"
 msgstr ""
 
 #: apps/validate/validate.py:85
-msgid "require a string value"
+msgid "max length is {length}"
 msgstr ""
 
 #: apps/validate/validate.py:86
-msgid "require a date value"
+msgid "require a string value"
 msgstr ""
 
 #: apps/validate/validate.py:87
-msgid "{} is a required field"
-msgstr "{} est un champ obligatoire"
+msgid "require a date value"
+msgstr ""
 
 #: apps/validate/validate.py:88
-msgid "contains invalid characters"
+msgid "{} is a required field"
 msgstr ""
 
 #: apps/validate/validate.py:89
-msgid "{} is too long"
-msgstr "{} est trop long"
+msgid "contains invalid characters"
+msgstr ""
 
 #: apps/validate/validate.py:90
+msgid "{} is too long"
+msgstr ""
+
+#: apps/validate/validate.py:91
 msgid "{} is too short"
-msgstr "{} est trop court"
+msgstr ""
+
+#: apps/validate/validate.py:92
+msgid "empty values not allowed"
+msgstr ""
 
 #: apps/video_edit/__init__.py:29
 msgid "\"video_editor_id\" is required"
