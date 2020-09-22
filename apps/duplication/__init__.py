@@ -18,6 +18,7 @@ from .archive_duplication import DuplicateService, DuplicateResource
 from .archive_fetch import FetchResource, FetchService
 from .archive_move import MoveResource, MoveService
 from .archive_translate import TranslateService, TranslateResource
+from flask_babel import lazy_gettext
 
 
 logger = logging.getLogger(__name__)
@@ -44,12 +45,16 @@ def init_app(app):
     service = MoveService(endpoint_name, backend=superdesk.get_backend())
     MoveResource(endpoint_name, app=app, service=service)
 
-    superdesk.privilege(name='fetch', label='Fetch Content To a Desk', description='Fetch Content to a Desk')
-    superdesk.privilege(name='move', label='Move Content to another desk', description='Move Content to another desk')
-    superdesk.privilege(name='duplicate', label='Duplicate Content within a Desk',
-                        description='Duplicate Content within a Desk')
-    superdesk.privilege(name='translate', label='Translate Content within a Desk',
-                        description='Translate Content within a Desk')
+    superdesk.privilege(name='fetch', label=lazy_gettext('Fetch Content To a Desk'),
+                        description=lazy_gettext('Fetch Content to a Desk'))
+    superdesk.privilege(name='move', label=lazy_gettext('Move Content to another desk'),
+                        description=lazy_gettext('Move Content to another desk'))
+    superdesk.privilege(name='duplicate', label=lazy_gettext('Duplicate Content within a Desk'),
+                        description=lazy_gettext('Duplicate Content within a Desk'))
+    superdesk.privilege(name='translate', label=lazy_gettext('Translate Content within a Desk'),
+                        description=lazy_gettext('Translate Content within a Desk'))
+    superdesk.privilege(name='send_to_personal', label=lazy_gettext('Send Content to Personal desk'),
+                        description=lazy_gettext('Send Content to Personal desk'))
 
     superdesk.intrinsic_privilege('copy', method=['POST'])
 
