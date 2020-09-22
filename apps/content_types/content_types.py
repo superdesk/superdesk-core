@@ -98,6 +98,7 @@ class ContentTypesResource(superdesk.Resource):
         },
         'created_by': superdesk.Resource.rel('users', nullable=True),
         'updated_by': superdesk.Resource.rel('users', nullable=True),
+        'init_version': {'type': 'integer'},
     }
 
     item_url = r'regex("[\w,.:-]+")'
@@ -108,6 +109,10 @@ class ContentTypesResource(superdesk.Resource):
 
     datasource = {
         'default_sort': [('priority', -1)],
+    }
+
+    mongo_indexes = {
+        'label_1': ([('label', 1)], {'unique': True}),
     }
 
 

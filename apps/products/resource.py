@@ -48,7 +48,12 @@ class ProductsResource(Resource):
             'default': ProductTypes.BOTH.value,
             'allowed': ProductTypes.values(),
             'required': True
-        }
+        },
+        'init_version': {'type': 'integer'},
     }
 
     privileges = {'POST': 'products', 'PATCH': 'products', 'DELETE': 'products'}
+
+    mongo_indexes = {
+        'name_1': ([('name', 1)], {'unique': True}),
+    }

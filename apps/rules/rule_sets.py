@@ -35,6 +35,10 @@ class RuleSetsResource(Resource):
 
     privileges = {'POST': 'rule_sets', 'DELETE': 'rule_sets', 'PATCH': 'rule_sets'}
 
+    mongo_indexes = {
+        'name_1': ([('name', 1)], {'unique': True}),
+    }
+
 
 class RuleSetsService(BaseService):
 

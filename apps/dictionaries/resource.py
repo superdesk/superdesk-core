@@ -60,6 +60,7 @@ class DictionariesResource(Resource):
         },
 
         '_file_id': {'type': 'objectid', 'nullable': True, 'readonly': True},
+        'init_version': {'type': 'integer'},
     }
     item_methods = ['GET', 'PATCH', 'PUT', 'DELETE']
     resource_methods = ['GET', 'POST', 'DELETE']

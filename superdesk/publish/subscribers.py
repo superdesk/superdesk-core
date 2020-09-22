@@ -131,11 +131,16 @@ class SubscribersResource(Resource):
         'selected_subscribers': {
             'type': 'list',
         },
+        'init_version': {'type': 'integer'},
     }
 
     item_methods = ['GET', 'PATCH', 'PUT']
 
     privileges = {'POST': 'subscribers', 'PATCH': 'subscribers'}
+
+    mongo_indexes = {
+        'name_1': ([('name', 1)], {'unique': True}),
+    }
 
 
 class SubscribersService(BaseService):

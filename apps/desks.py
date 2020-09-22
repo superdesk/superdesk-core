@@ -149,6 +149,9 @@ class DesksResource(Resource):
     schema = desks_schema
     privileges = {'POST': 'desks', 'PATCH': 'desks', 'DELETE': 'desks'}
     datasource = {'default_sort': [('name', 1)]}
+    mongo_indexes = {
+        'name_1': ([('name', 1)], {'unique': True}),
+    }
 
 
 class DesksService(BaseService):

@@ -55,6 +55,10 @@ class IngestProviderResource(Resource):
     :param critical_errors: error codes which are considered critical and should close provider
     """
 
+    mongo_indexes = {
+        'name_1': ([('name', 1)], {'unique': True}),
+    }
+
     def __init__(self, endpoint_name, app, service, endpoint_schema=None):
         self.schema = {
             'name': {
