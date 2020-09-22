@@ -582,10 +582,16 @@ Feature: Desks
         """
         {"username": "user_4", "email": "user_4@example.net", "is_active": true, "role": "#ROLE_SUBEDITOR_ID#"}
         """
+        And we have "users" with "USER_5_ID" and success
+		# This user has no associated article on purpose (cf. SDESK-5557)
+        # she must associated to a desk to test the issue (she is associated to Sports desk below)
+        """
+        {"username": "user_5", "email": "user_5@example.net", "is_active": true, "role": "#ROLE_SUBEDITOR_ID#"}
+        """
         Given we have "desks" with "SPORTS_DESK_ID" and success
         """
         [{"name": "Sports", "desk_type": "authoring", "members": [{"user": "#USER_1_ID#"},
-          {"user": "#USER_2_ID#"}, {"user": "#USER_3_ID#"}] }]
+          {"user": "#USER_2_ID#"}, {"user": "#USER_3_ID#"}, {"user": "#USER_5_ID#"}] }]
         """
         And we have "desks" with "POLITICS_DESK_ID" and success
         """

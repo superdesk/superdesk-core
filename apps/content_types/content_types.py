@@ -111,6 +111,10 @@ class ContentTypesResource(superdesk.Resource):
         'default_sort': [('priority', -1)],
     }
 
+    mongo_indexes = {
+        'label_1': ([('label', 1)], {'unique': True}),
+    }
+
 
 class ContentTypesService(superdesk.Service):
     def _set_updated_by(self, doc):

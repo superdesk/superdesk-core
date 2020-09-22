@@ -37,6 +37,10 @@ class HighlightsResource(Resource):
     }
     privileges = {'POST': 'highlights', 'PATCH': 'highlights', 'DELETE': 'highlights'}
 
+    mongo_indexes = {
+        'name_1': ([('name', 1)], {'unique': True}),
+    }
+
 
 class MarkedForHighlightsResource(Resource):
     """Marked for highlights Schema"""

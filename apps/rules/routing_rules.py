@@ -157,6 +157,10 @@ class RoutingRuleSchemeResource(Resource):
 
     privileges = {'POST': 'routing_rules', 'DELETE': 'routing_rules', 'PATCH': 'routing_rules'}
 
+    mongo_indexes = {
+        'name_1': ([('name', 1)], {'unique': True}),
+    }
+
 
 class RoutingRuleSchemeService(BaseService):
     """
