@@ -8,6 +8,7 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 import json
+import logging
 import itertools
 from typing import Dict, Any, List
 
@@ -28,6 +29,9 @@ from superdesk.metadata.item import FAMILY_ID
 from eve.utils import ParsedRequest
 from superdesk.utils import ListCursor
 from flask_babel import _
+
+
+logger = logging.getLogger(__name__)
 
 
 class DeskTypes(SuperdeskBaseEnum):
@@ -691,7 +695,11 @@ class OverviewService(BaseService):
             authors = a['authors']
             for author in authors:
                 author = str(author)
-                authors_dict[author] = stats_by_authors[author]
+                try:
+                    authors_dict[author] = stats_by_authors[author]
+                except KeyError:
+                    logger.debug("No article found for {author}".format(author=author))
+                    authors_dict[author] = {"assigned": 0, "locked": 0}
             overview.append(role_dict)
 
         return overview
