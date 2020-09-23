@@ -1,5 +1,11 @@
 # Superdesk Server Changelog
 
+## [1.33.7] 2020-09-23
+
+### Fixed
+
+- Don't crash on publishing when an item does not have `LINKED_IN_PACKAGES` set.
+
 ## [1.33.6] 2020-09-08
 
 ### Fixed
