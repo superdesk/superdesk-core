@@ -129,6 +129,7 @@ class IPTCExampleTestCase(NITFTestCase):
         self.assertEqual(1, len(places))
         self.assertEqual('Norfolk', places[0]['name'])
         self.assertEqual('US', places[0]['code'])
+        self.assertEqual('Norfolk', places[0]['qcode'])
 
     def test_expiry(self):
         self.assertEqual('2012-02-26T14:30:00+00:00', self.item.get('expiry').isoformat())
@@ -257,3 +258,11 @@ class MappingTestCase(TestCase):
 
     def tearDown(self):
         del config.NITF_MAPPING
+
+
+class NTBTestCase(NITFTestCase):
+
+    filename = 'nitf-ntb.xml'
+
+    def test_place(self):
+        self.assertEqual([], self.item.get('place'))
