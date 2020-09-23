@@ -97,7 +97,8 @@ def prepopulate_data(file_name, default_user=None, directory=None):
                 try:
                     ids = service.post([data])
                 except werkzeug.exceptions.Conflict:
-                    ids = [data['_id']]  # data with given id is there already
+                    # instance was already prepopulated
+                    break
                 except superdesk.errors.SuperdeskApiError as e:
                     logger.exception(e)
                     continue  # an error raised by validation
