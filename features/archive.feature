@@ -1121,7 +1121,7 @@ Feature: News Items Archive
     Scenario: body_html is generated from draftJS state
         Given "archive"
         """
-        [{"_id": "test_editor_gen_1", "guid": "test_editor_gen_1", "headline": "test"}]
+        [{"_id": "test_editor_gen_1", "guid": "test_editor_gen_1", "headline": "test", "associations": {"foo": {"type": "text"}}}]
         """
 
         When we patch given
@@ -1172,6 +1172,9 @@ Feature: News Items Archive
                         "entityMap": {}
                     }]
                 }
+            },
+            "associations": {
+                "foo": {"type": "text"}
             }
         }
         """
