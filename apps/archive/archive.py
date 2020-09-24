@@ -111,7 +111,7 @@ def update_associations(doc):
 
     :param dict doc: update data
     """
-    if not doc.get('fields_meta', {}).get('body_html'):
+    if not doc.get('fields_meta', {}).get('body_html') or ASSOCIATIONS not in doc:
         return
     entityMap = doc['fields_meta']['body_html']['draftjsState'][0].get('entityMap', {})
     associations = doc.get(ASSOCIATIONS, {})
@@ -335,7 +335,7 @@ class ArchiveService(BaseService):
         if original[ITEM_TYPE] == CONTENT_TYPE.PICTURE:  # create crops
             self.cropService.create_multiple_crops(updates, original)
 
-        if ASSOCIATIONS not in updates or not updates.get(ASSOCIATIONS):
+        if not updates.get(ASSOCIATIONS):
             return
 
         body = updates.get("body_html", original.get("body_html", None))
