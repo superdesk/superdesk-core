@@ -62,3 +62,7 @@ class ContentFilterResource(Resource):
     privileges = {'POST': 'content_filters',
                   'PATCH': 'content_filters',
                   'DELETE': 'content_filters'}
+
+    mongo_indexes = {
+        'name_1': ([('name', 1)], {'unique': True}),
+    }

@@ -45,7 +45,7 @@ class MoveResource(Resource):
     schema = {
         'task': {
             'type': 'dict',
-            'required': True,
+            'required': False,
             'schema': {
                 'desk': Resource.rel('desks', False, required=True),
                 'stage': Resource.rel('stages', False, required=True)
@@ -172,7 +172,7 @@ class MoveService(BaseService):
         if old_desk_id and old_desk_id != new_desk_id:
             old_desk = get_resource_service('desks').find_one(req=None, _id=old_desk_id)
             new_desk = get_resource_service('desks').find_one(req=None, _id=new_desk_id)
-            if old_desk.get('desk_type', '') != new_desk.get('desk_type', ''):
+            if old_desk and new_desk and old_desk.get('desk_type', '') != new_desk.get('desk_type', ''):
                 if new_desk.get('desk_type') == DeskTypes.production.value:
                     updated['task'][LAST_AUTHORING_DESK] = old_desk_id
                 else:

@@ -408,7 +408,7 @@ class BasePublishService(BaseService):
 
                 elif guid in removed_items:
                     # remove the package information from the package item.
-                    linked_in_packages = [linked for linked in package_item.get(LINKED_IN_PACKAGES)
+                    linked_in_packages = [linked for linked in package_item.get(LINKED_IN_PACKAGES, [])
                                           if linked.get(PACKAGE) != package.get(config.ID_FIELD)]
                     super().system_update(guid, {LINKED_IN_PACKAGES: linked_in_packages}, package_item)
 
