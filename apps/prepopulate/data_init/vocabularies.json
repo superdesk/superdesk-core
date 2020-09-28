@@ -6,6 +6,7 @@
         "selection_type": "multi selection",
         "unique_field": "qcode",
         "items": [
+
             {"is_active": true, "name": "FIXME1", "qcode": "f1", "subject": "", "translations": {"name": {"fr": "FIXME1-fr", "es": "FIXME1-es"}}},
             {"is_active": true, "name": "FIXME2", "qcode": "f2", "subject": "", "translations": {"name": {"fr": "FIXME2-fr", "es": "FIXME2-es"}}}
         ],
@@ -118,11 +119,11 @@
         },
         "translations": {
             "display_name": {
-                "da": "prioritet",
+                "da": "haster",
                 "de_DE": "dringlichkeit",
                 "el": "Επείγον",
                 "es": "urgencia",
-                "fr-CA": "priorité",
+                "fr-CA": "urgence",
                 "nb": "Hast",
                 "pt_BR": "Urgência",
                 "ru_RU": "Срочность",
