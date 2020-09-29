@@ -19,13 +19,13 @@
             "display_name": {
                 "ar": "فئات",
                 "da": "kategorier",
-                "de_DE": "Kategorien",
+                "de-DE": "Kategorien",
                 "el": "κατηγορίες",
                 "es": "categorías",
                 "nb": "kategorier",
-                "pt_BR": "categorias",
-                "ru_RU": "категории",
-                "uk_UA": "категорії",
+                "pt-BR": "categorias",
+                "ru-RU": "категории",
+                "uk-UA": "категорії",
                 "fr-CA": "Catégories"
             }
         }
@@ -87,14 +87,14 @@
         "translations": {
             "display_name": {
                 "da": "genre",
-                "de_DE": "genre",
+                "de-DE": "genre",
                 "el": "Είδος",
                 "es": "genero",
                 "fr-CA": "version",
                 "nb": "Stofftype",
-                "pt_BR": "gênero",
-                "ru_RU": "Жанр",
-                "uk_UA": "Жанр"
+                "pt-BR": "gênero",
+                "ru-RU": "Жанр",
+                "uk-UA": "Жанр"
             }
         }
     },
@@ -120,14 +120,14 @@
         "translations": {
             "display_name": {
                 "da": "haster",
-                "de_DE": "dringlichkeit",
+                "de-DE": "dringlichkeit",
                 "el": "Επείγον",
                 "es": "urgencia",
                 "fr-CA": "urgence",
                 "nb": "Hast",
-                "pt_BR": "Urgência",
-                "ru_RU": "Срочность",
-                "uk_UA": "Tерміновість"
+                "pt-BR": "Urgência",
+                "ru-RU": "Срочность",
+                "uk-UA": "Tерміновість"
             }
         }
     },
@@ -157,14 +157,14 @@
         "translations": {
             "display_name": {
                 "da": "prioritet",
-                "de_DE": "priorität",
+                "de-DE": "priorität",
                 "el": "Προτεραιότητα",
                 "es": "prioridad",
                 "fr-CA": "Priorité",
                 "nb": "viktighet",
-                "pt_BR": "prioridade",
-                "ru_RU": "Приоритет",
-                "uk_UA": "Пріоритет"
+                "pt-BR": "prioridade",
+                "ru-RU": "Приоритет",
+                "uk-UA": "Пріоритет"
             }
         }
     },
