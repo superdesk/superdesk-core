@@ -177,6 +177,10 @@ class VocabulariesResource(Resource):
                 }
             },
         },
+        'translations': {
+            'type': 'dict',
+            'schema': {},
+        }
     }
 
     soft_delete = True

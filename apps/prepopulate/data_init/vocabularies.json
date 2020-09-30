@@ -6,6 +6,7 @@
         "selection_type": "multi selection",
         "unique_field": "qcode",
         "items": [
+
             {"is_active": true, "name": "FIXME1", "qcode": "f1", "subject": "", "translations": {"name": {"fr": "FIXME1-fr", "es": "FIXME1-es"}}},
             {"is_active": true, "name": "FIXME2", "qcode": "f2", "subject": "", "translations": {"name": {"fr": "FIXME2-fr", "es": "FIXME2-es"}}}
         ],
@@ -13,6 +14,20 @@
             "name": {"translate": true},
             "qcode": {},
             "subject": {}
+        },
+        "translations": {
+            "display_name": {
+                "ar": "فئات",
+                "da": "kategorier",
+                "de-DE": "Kategorien",
+                "el": "κατηγορίες",
+                "es": "categorías",
+                "nb": "kategorier",
+                "pt-BR": "categorias",
+                "ru-RU": "категории",
+                "uk-UA": "категорії",
+                "fr-CA": "Catégories"
+            }
         }
     },
     {
@@ -68,6 +83,19 @@
         "schema": {
             "name": {"translate": true},
             "qcode": {}
+        },
+        "translations": {
+            "display_name": {
+                "da": "genre",
+                "de-DE": "genre",
+                "el": "Είδος",
+                "es": "genero",
+                "fr-CA": "version",
+                "nb": "Stofftype",
+                "pt-BR": "gênero",
+                "ru-RU": "Жанр",
+                "uk-UA": "Жанр"
+            }
         }
     },
     {
@@ -88,6 +116,19 @@
             "qcode": {"type": "integer"},
             "color": {"type": "color", "label": "Сolour"},
             "short": {"type": "short", "label": "List Name", "maxlength": 2, "translate": true}
+        },
+        "translations": {
+            "display_name": {
+                "da": "haster",
+                "de-DE": "dringlichkeit",
+                "el": "Επείγον",
+                "es": "urgencia",
+                "fr-CA": "urgence",
+                "nb": "Hast",
+                "pt-BR": "Urgência",
+                "ru-RU": "Срочность",
+                "uk-UA": "Tерміновість"
+            }
         }
     },
     {
@@ -112,6 +153,19 @@
             "qcode": {"type": "integer"},
             "color": {"type": "color", "label": "Сolour"},
             "short": {"type": "short", "label": "List Name", "maxlength": 2, "translate": true}
+        },
+        "translations": {
+            "display_name": {
+                "da": "prioritet",
+                "de-DE": "priorität",
+                "el": "Προτεραιότητα",
+                "es": "prioridad",
+                "fr-CA": "Priorité",
+                "nb": "viktighet",
+                "pt-BR": "prioridade",
+                "ru-RU": "Приоритет",
+                "uk-UA": "Пріоритет"
+            }
         }
     },
     {
