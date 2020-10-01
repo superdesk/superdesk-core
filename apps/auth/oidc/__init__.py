@@ -8,13 +8,20 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
+import logging
+
 import superdesk
 
 from .auth import OIDCAuthResource, OIDCAuthService
 
+logger = logging.getLogger(__name__)
+
 
 def init_app(app):
     endpoint_name = 'auth_oidc'
+    if bool(app.config['OIDC_ENABLED']) and not bool(app.config['SECRET_KEY'] != ''):
+        logger.warn('SECRET_KEY is not set')
+
     app.client_config['oidc_auth'] = bool(app.config['OIDC_ENABLED']) and bool(app.config['SECRET_KEY'] != '')
     if app.client_config['oidc_auth']:
         issuer = app.config['OIDC_ISSUER']
