@@ -23,6 +23,9 @@ def init_app(app):
     service = ContentTemplatesService(endpoint_name, backend=superdesk.get_backend())
     ContentTemplatesResource(endpoint_name, app=app, service=service)
     superdesk.privilege(name=CONTENT_TEMPLATE_PRIVILEGE, label='Templates', description='Create templates')
+    superdesk.privilege(name='personal_template',
+                        label='Manage other user personal template',
+                        description='Manage other user personal template')
 
     endpoint_name = 'content_templates_apply'
     service = ContentTemplatesApplyService(endpoint_name, backend=superdesk.get_backend())

@@ -11,7 +11,7 @@
 import re
 import superdesk
 import logging
-from flask import render_template_string, current_app as app
+from flask import g, render_template_string, current_app as app
 from copy import deepcopy
 from superdesk.services import BaseService
 from superdesk import Resource, Service, config, get_resource_service
@@ -194,6 +194,7 @@ class ContentTemplatesService(BaseService):
 
     def on_create(self, docs):
         for doc in docs:
+            self._validate_privileges(doc)
             doc['template_name'] = doc['template_name'].lower().strip()
             if doc.get('schedule'):
                 doc['next_run'] = get_next_run(doc.get('schedule'))
@@ -213,6 +214,7 @@ class ContentTemplatesService(BaseService):
         push_template_notification(docs)
 
     def on_update(self, updates, original):
+        self._validate_privileges(original)
         if updates.get('template_type') and updates.get('template_type') != original.get('template_type') and \
            updates.get('template_type') == TemplateType.KILL.value:
             self._validate_kill_template(updates)
@@ -256,6 +258,7 @@ class ContentTemplatesService(BaseService):
             schedule.pop('create_at', None)
 
     def on_delete(self, doc):
+        self._validate_privileges(doc)
         if doc.get('template_type') == TemplateType.KILL.value:
             raise SuperdeskApiError.badRequestError(_('Kill templates can not be deleted.'))
 
@@ -377,6 +380,15 @@ class ContentTemplatesService(BaseService):
                 doc['data'][key] = None
             else:
                 doc[key] = None
+
+    def _validate_privileges(self, doc):
+        user = g.user
+        privileges = g.user.get('active_privileges', {})
+
+        if not doc.get('is_public') and user != doc.get('user') and not privileges.get('personal_template'):
+            raise SuperdeskApiError.badRequestError('You dont have the privilege to modify another user template')
+        elif doc.get('is_public') and not privileges.get(CONTENT_TEMPLATE_PRIVILEGE):
+            raise SuperdeskApiError.badRequestError('You dont have the privilege to manage the public template')
 
 
 class ContentTemplatesApplyResource(Resource):
