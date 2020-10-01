@@ -83,7 +83,7 @@ class SAMSMediaStorage(MediaStorage, MimetypeMixin):
     ) -> SuperdeskFile:
         """Attempts to retrieve the file from SAMS or the `_fallback` provider"""
 
-        if SAMS_RESOURCE_ENABLED.get(resource, False):
+        if resource is not None and SAMS_RESOURCE_ENABLED.get(resource, False):
             file = get_file_from_sams(self._client, ObjectId(id_or_filename))
             if file:
                 return file
@@ -104,7 +104,7 @@ class SAMSMediaStorage(MediaStorage, MimetypeMixin):
     ) -> ObjectId:
         """Attempts to upload the file to SAMS or the `_fallback` provider"""
 
-        if SAMS_RESOURCE_ENABLED.get(resource, False):
+        if resource is not None and SAMS_RESOURCE_ENABLED.get(resource, False):
             data = request.form.to_dict()
             metadata = get_sams_values_from_resource_schema(resource, data)
 
@@ -138,7 +138,7 @@ class SAMSMediaStorage(MediaStorage, MimetypeMixin):
     ):
         """Ignored if the file is stored in SAMS, otherwise deletes from the `_fallback` provider"""
 
-        if SAMS_RESOURCE_ENABLED.get(resource, False):
+        if resource is not None and SAMS_RESOURCE_ENABLED.get(resource, False):
             if get_asset_from_sams(self._client, ObjectId(id_or_filename)):
                 # If the Asset exists in SAMS, then we should not delete it
                 # as Assets should be deleted using DELETE /sams/assets/<id>
@@ -158,7 +158,7 @@ class SAMSMediaStorage(MediaStorage, MimetypeMixin):
     ) -> bool:
         """Returns True if the file is available in SAMS or the `_fallback` provider"""
 
-        if SAMS_RESOURCE_ENABLED.get(resource, False):
+        if resource is not None and SAMS_RESOURCE_ENABLED.get(resource, False):
             if get_asset_from_sams(self._client, ObjectId(id_or_filename)):
                 return True
 
