@@ -104,9 +104,17 @@ def update(item_id):
             "If-Match field missing in header"
         )
 
-    files = {'binary': request.files.get('binary')}
+    if request.files.get('binary'):
+        # The binary data was supplied so this must be a multipart request
+        # Get the updates from the `request.form` attribute
+        files = {'binary': request.files['binary']}
+        updates = request.form.to_dict()
+    else:
+        # Only the metadata was supplied so this must be a standard JSON request
+        # Get the updates from the `request.get_json` function
+        files = {}
+        updates = request.get_json()
 
-    updates = request.form.to_dict()
     update_response = assets_bp.kwargs['client'].assets.update(
         item_id=item_id,
         updates=updates,

@@ -2,7 +2,7 @@
 import os
 import superdesk
 
-from flask import current_app
+from flask import current_app, request
 from werkzeug.utils import secure_filename
 from apps.auth import get_user_id
 
@@ -19,10 +19,21 @@ class AttachmentsResource(superdesk.Resource):
         'title': {
             'type': 'string',
             'required': True,
+            'sams': {'field': 'name'},
         },
         'description': {'type': 'string'},
         'user': superdesk.Resource.rel('users'),
-        'internal': {'type': 'boolean', 'default': False},
+        'internal': {
+            'type': 'boolean',
+            'default': False,
+            'sams': {
+                'field': 'state',
+                'map_value': {
+                    False: 'public',
+                    True: 'internal'
+                }
+            }
+        },
     }
 
     item_methods = ['GET', 'PATCH']
@@ -34,6 +45,12 @@ class AttachmentsService(superdesk.Service):
     def on_create(self, docs):
         for doc in docs:
             doc['user'] = get_user_id()
+
+            # If a `media` argument is passed into the request url then use that as the id for the media item
+            # This is so that SAMS client can manually create this link between SAMS and the article
+            if request.args.get('media'):
+                doc['media'] = request.args['media']
+
             if doc.get('media'):
                 media = current_app.media.get(doc['media'], RESOURCE)
                 doc.setdefault('filename', secure_filename(os.path.basename(getattr(media, 'filename'))))
