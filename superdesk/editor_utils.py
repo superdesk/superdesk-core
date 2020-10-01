@@ -748,6 +748,7 @@ def generate_fields(item, fields=None):
         fields = get_content_state_fields(item)
 
     for field in fields:
+        old_field = None
         if CHECK_GENERATE_CONSISTENCY:
             old_field = item.get(field)
         editor = Editor3Content(item, field, is_html=field not in TEXT_FIELDS)
@@ -755,13 +756,11 @@ def generate_fields(item, fields=None):
         if CHECK_GENERATE_CONSISTENCY:
             if old_field is not None and old_field != item[field]:
                 logger.warning(
-                    "Generated HTML inconsistency between client and backend, we'll use client one:\n"
-                    "client field: {old_field!r}\n"
-                    "backend field: {new_field!r}\n"
-                    "field state: {state}\n\n".format(
-                        old_field=old_field,
-                        new_field=item[field],
-                        state=get_field_content_state(item, field)
-                    )
+                    "Generated HTML inconsistency between client and backend, we'll use client one",
+                    extra=dict(
+                        client=old_field,
+                        backend=item[field],
+                        field_state=get_field_content_state(item, field),
+                    ),
                 )
                 item[field] = old_field
