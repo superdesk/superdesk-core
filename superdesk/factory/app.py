@@ -137,6 +137,7 @@ def get_app(config=None, media_storage=None, config_object=None, init_elastic=No
         template_folder=os.path.join(abs_path, 'templates'))
 
     app.jinja_options = {'autoescape': False}
+    app.json_encoder = SuperdeskJSONEncoder  # seems like eve param doesn't set it on flask
 
     # init client_config with default config
     app.client_config = {
