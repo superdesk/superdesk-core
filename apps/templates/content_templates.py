@@ -382,12 +382,14 @@ class ContentTemplatesService(BaseService):
                 doc[key] = None
 
     def _validate_privileges(self, doc):
-        user = g.user
-        privileges = g.user.get('active_privileges', {})
+        user = g.get('user')
+        privileges = user.get('active_privileges', {}) if user else {}
 
-        if not doc.get('is_public') and user != doc.get('user') and not privileges.get('personal_template'):
+        if (user and not doc.get('is_public')
+                and user != doc.get('user') and not privileges.get('personal_template')):
             raise SuperdeskApiError.badRequestError('You dont have the privilege to modify another user template')
-        elif doc.get('is_public') and not privileges.get(CONTENT_TEMPLATE_PRIVILEGE):
+        elif (user and doc.get('is_public')
+                and not privileges.get(CONTENT_TEMPLATE_PRIVILEGE)):
             raise SuperdeskApiError.badRequestError('You dont have the privilege to manage the public template')
 
 
