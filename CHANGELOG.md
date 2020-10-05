@@ -1,5 +1,54 @@
 # Superdesk Server Changelog
 
+## [2.0] 2020-10-05
+
+[Changes](https://github.com/superdesk/superdesk-core/milestone/85?closed=1)
+
+## [1.33.7] 2020-09-23
+
+### Fixed
+
+- Don't crash on publishing when an item does not have `LINKED_IN_PACKAGES` set.
+
+## [1.33.6] 2020-09-08
+
+### Fixed
+
+- Fix vine module import error.
+
+## [1.33.5] 2020-08-14
+
+### Fixed
+
+- Fix language is reset in metadata section of the template when updating content profile.
+
+## [1.33.4] 2020-07-29
+
+### Fixed
+
+- Publishing fails when feature media is added during correction.
+
+## [1.33.3] 2020-06-26
+
+### Fixed
+
+- Fix internal destination duplicating package content.
+
+## [1.33.2] 2020-06-08
+
+### Fixed
+
+- Fix failing update script.
+
+## [1.33.1] 2020-05-11
+
+### Fixed
+
+- Fix spiking of unpublished items.
+- Fix rewrite action membership check when user has no move privilege.
+- Display field names instead of IDs on validation error.
+- Allow any logged in user to upload files.
+
 ## [1.33] 2020-04-09
 
 Listing some changes below, for full list go to [github](https://github.com/superdesk/superdesk-core/milestone/79?closed=1).

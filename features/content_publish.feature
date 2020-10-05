@@ -4353,7 +4353,6 @@ Feature: Content Publishing
       }
       """
       
-      
     @auth
     Scenario: Send correction with adding a featuremedia
       Given config update

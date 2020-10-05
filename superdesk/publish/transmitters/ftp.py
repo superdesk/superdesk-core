@@ -34,6 +34,14 @@ def get_renditions_filter():
     return renditions
 
 
+def get_renditions_filter():
+    renditions = set(get_renditions_spec(
+        without_internal_renditions=True
+    ).keys())
+    renditions.add('original')
+    return renditions
+
+
 class FTPPublishService(PublishService):
     """FTP Publish Service.
 

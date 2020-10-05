@@ -322,7 +322,7 @@ msgstr ""
 
 #: apps/archive/__init__.py:101
 msgid "Access to Monitoring view in left toolbar"
-msgstr ""
+msgstr "Accédez à l'affichage suivi dans la barre d'outils à gauche"
 
 #: apps/archive/__init__.py:103
 msgid "Create content"
@@ -362,7 +362,7 @@ msgstr "Sortir de la corbeille"
 
 #: apps/archive/__init__.py:107
 msgid "Unspike/undelete content"
-msgstr ""
+msgstr "Sortir le contenu de la corbeille ou annuler sa suppression"
 
 #: apps/archive/__init__.py:108
 msgid "Edit Unique Name"
@@ -411,6 +411,8 @@ msgstr "Signaler les éléments aux utilisateurs"
 #: apps/archive/__init__.py:117
 msgid "User can mark or unmark items for other users"
 msgstr ""
+"L'utilisateur peut signaler ou annuler le signalement d'éléments pour "
+"d'autres utilisateurs"
 
 #: apps/archive/archive.py:236 apps/archive/archive.py:857
 msgid "Package doesn't support Public Service Announcements"
@@ -450,7 +452,7 @@ msgstr "L'embargo ne peut pas être plus tôt que maintenant"
 
 #: apps/archive/archive.py:783
 msgid "Rewrites doesn't support Embargo"
-msgstr ""
+msgstr "Les réécritures ne permettent pas de choisir un embargo"
 
 #: apps/archive/archive.py:786
 msgid "Invalid Embargo"
@@ -458,7 +460,7 @@ msgstr "Embargo invalide"
 
 #: apps/archive/archive.py:790
 msgid "A Package doesn't support Embargo"
-msgstr ""
+msgstr "Un assemblage ne peut pas être soumis à un embargo"
 
 #: apps/archive/archive.py:854
 msgid "Item isn't in a valid state to be updated."
@@ -466,7 +468,7 @@ msgstr "L'élément n'est pas dans un état valide pour être mis à jour."
 
 #: apps/archive/archive.py:862
 msgid "Unauthorized to modify Unique Name"
-msgstr ""
+msgstr "Vous n'êtes pas autorisé à modifier un identifiant unique"
 
 #: apps/archive/archive.py:867
 msgid "Cannot change the genre for broadcast content."
@@ -477,10 +479,12 @@ msgid ""
 "This item is in a package and it needs to be removed before the item can be "
 "scheduled!"
 msgstr ""
+"Cet élément fait partie d'un assemblage et il doit en être retiré avant de "
+"pouvoir être programmé!"
 
 #: apps/archive/archive.py:900
 msgid "Duplicate category codes are not allowed"
-msgstr ""
+msgstr "La duplication des codes de catégorie n'est pas permise"
 
 #: apps/archive/archive.py:905
 msgid "Duplicate subjects are not allowed"
@@ -489,6 +493,7 @@ msgstr "Les sujets dupliqués ne sont pas permis"
 #: apps/archive/archive.py:1177
 msgid "Client and server etags don't match"
 msgstr ""
+"Les étiquettes électroniques du client et du serveur ne sont pas conformes"
 
 #: apps/archive/archive.py:1179
 msgid "Request for Auto-save must have _id"
@@ -504,7 +509,7 @@ msgstr "L'article n'a pas été trouvé"
 
 #: apps/archive/archive_rewrite.py:117
 msgid "Rewrite of an Item having embargo isn't possible"
-msgstr ""
+msgstr "Il n'est pas possible de réécrire un élément soumis à un embargo"
 
 #: apps/archive/archive_rewrite.py:120
 msgid "Event id does not exist"
@@ -517,14 +522,16 @@ msgstr "L'article a déjà été réécrit !"
 #: apps/archive/archive_rewrite.py:135
 msgid "Rewrite is not published. Cannot rewrite the story again."
 msgstr ""
+"La réécriture n'est pas publiée. Il n'est pas possible de réécrire l'article"
+" de nouveau."
 
 #: apps/archive/archive_rewrite.py:140
 msgid "Rewrite story has been used as update before !"
-msgstr ""
+msgstr "L'article réécrit a déjà été utilisé en tant que mise à jour!"
 
 #: apps/archive/archive_rewrite.py:151
 msgid "Rewrite story can only be text or pre-formatted !"
-msgstr ""
+msgstr "L'article réécrit ne peut exister qu'en version texte ou préformatée!"
 
 #: apps/archive/archive_rewrite.py:155
 msgid "Broadcast cannot be a update story !"
@@ -533,6 +540,8 @@ msgstr ""
 #: apps/archive/archive_rewrite.py:158
 msgid "Rewrite item content profile does not match with Original item."
 msgstr ""
+"Le profit de contenu de l'élément réécrit n'est pas conforme à celui de "
+"l'élément original."
 
 #: apps/archive/archive_spike.py:97
 msgid "The item \"{slugline}\" is in a package"
@@ -550,7 +559,7 @@ msgstr ""
 #: apps/archive/autocomplete.py:41
 #, python-format
 msgid "Field %(field)s is not allowed"
-msgstr ""
+msgstr "Le champ %(field)s n'est pas permis"
 
 #: apps/archive/common.py:407
 msgid "Document not found in archive collection"
@@ -558,15 +567,15 @@ msgstr "Le document n'a pas été trouvé dans la collection d'archives"
 
 #: apps/archive/common.py:630 apps/archive/common.py:632
 msgid "Schedule date is not recognized"
-msgstr ""
+msgstr "La date de programmation n'est pas reconnue"
 
 #: apps/archive/common.py:634
 msgid "Schedule cannot be earlier than now"
-msgstr ""
+msgstr "La programmation ne peut pas avoir lieu plus tôt que maintenant"
 
 #: apps/archive/common.py:650
 msgid "{} date is not recognized"
-msgstr ""
+msgstr "La date {} n'est pas reconnue"
 
 #: apps/archive_broadcast/broadcast.py:90
 msgid "Cannot find the {genre} genre."
@@ -582,7 +591,7 @@ msgstr "Type de contenu invalide."
 
 #: apps/archive_broadcast/broadcast.py:126
 msgid "Invalid content state."
-msgstr ""
+msgstr "État du contenu invalide."
 
 #: apps/archived/archived.py:130
 msgid "Only Text articles are allowed to be Killed in Archived repo"
@@ -600,10 +609,12 @@ msgstr ""
 #: apps/archived/archived.py:140
 msgid "Can't Kill as article is still available in production"
 msgstr ""
+"Ne peut pas être supprimé puisque l'article est toujours en production"
 
 #: apps/archived/archived.py:143
 msgid "Can't kill as article is part of a Package"
 msgstr ""
+"Ne peut pas être supprimé puisque l'article fait partie d'un assemblage"
 
 #: apps/archived/archived.py:148
 msgid "Can't Kill as the Digital Story is still available in production"
@@ -620,6 +631,8 @@ msgstr ""
 #: apps/archived/archived.py:163
 msgid "Can't Kill as Take(s) are still available in production"
 msgstr ""
+"Ne peut pas être supprimé parce qu'au moins une version est toujours "
+"disponible en production"
 
 #: apps/archived/archived.py:167
 msgid "One of Take(s) not found in Archived repo"
@@ -628,6 +641,8 @@ msgstr ""
 #: apps/archived/archived.py:170
 msgid "Can't kill as one of Take(s) is part of a Package"
 msgstr ""
+"Ne peut pas être supprimé puisqu'au moins une version fait partie d'un "
+"assemblage"
 
 #: apps/auth/__init__.py:64
 msgid "Invalid user."
@@ -688,11 +703,11 @@ msgstr "L'article n'a pas été trouvé!"
 
 #: apps/content_filters/content_filter/content_filter_test.py:64
 msgid "Error in testing article: {error}"
-msgstr ""
+msgstr "Une erreur est survenue lors du test de l'article: {error}"
 
 #: apps/content_filters/content_filter/content_filter_test.py:78
 msgid "Error in testing archive: {error}"
-msgstr ""
+msgstr "Une erreur est survenue lors du test de l'archive: {error}"
 
 #: apps/content_filters/filter_condition/filter_condition_field.py:53
 msgid "Invalid filter conditions field {field}"
@@ -744,7 +759,7 @@ msgstr "Titre"
 
 #: apps/content_filters/filter_condition/filter_condition_parameters.py:95
 msgid "Ednote"
-msgstr ""
+msgstr "Note de la rédaction"
 
 #: apps/content_filters/filter_condition/filter_condition_parameters.py:99
 #: apps/validate/validate.py:45
@@ -803,6 +818,7 @@ msgstr ""
 #: apps/content_types/content_types.py:144
 msgid "Vocabulary {vocabulary} is used in {count} content type(s)"
 msgstr ""
+"Le vocabulaire {vocabulary} est utilisé dans {count} type(s) de contenu"
 
 #: apps/content_types/content_types.py:164
 msgid ""
@@ -852,6 +868,7 @@ msgstr ""
 #: apps/duplication/archive_move.py:74
 msgid "Item is locked for move by another user."
 msgstr ""
+"L'élément est verrouillé par un autre utilisateur et ne peut être déplacé."
 
 #: apps/duplication/archive_move.py:158
 msgid "Move is not allowed within the same stage."
@@ -922,7 +939,7 @@ msgstr ""
 
 #: apps/ldap/ldap.py:206 apps/ldap/ldap.py:213
 msgid "Invalid Credentials."
-msgstr ""
+msgstr "Accréditation invalide."
 
 #: apps/ldap/ldap.py:216
 msgid "User already exists in the system."
@@ -1006,7 +1023,7 @@ msgstr ""
 
 #: apps/publish/published_item.py:189
 msgid "Invalid state ({state}) for the Published item."
-msgstr ""
+msgstr "État ({state}) invalide pour l'élément publié."
 
 #: apps/publish/published_item.py:244 apps/publish/published_item.py:256
 #: apps/publish/published_item.py:268
@@ -1031,6 +1048,8 @@ msgstr "L'embargo ne peut pas être programmé après la publication"
 #: apps/publish/content/common.py:253
 msgid "Dateline can't be modified on kill or take down"
 msgstr ""
+"L'origine et la date ne peuvent pas être modifiés pour un article qui est "
+"supprimé. "
 
 #: apps/publish/content/common.py:258
 msgid "Cannot publish the story after Update is published.!"
@@ -1061,16 +1080,19 @@ msgstr ""
 #: apps/publish/content/common.py:328
 msgid "Can't {operation} as item state is {state}"
 msgstr ""
+"Ne peut pas exécuter {operation} puisque l'état de l'élément est {state}"
 
 #: apps/publish/content/common.py:330
 msgid ""
 "Can't {operation} as either package state or one of the items state is "
 "{state}"
 msgstr ""
+"Ne peut pas exécuter {operation} puisque l'état de l'assemblage ou d'un des "
+"éléments est {state}"
 
 #: apps/publish/content/common.py:372 apps/publish/content/publish.py:41
 msgid "Empty package cannot be published!"
-msgstr ""
+msgstr "Un assemblage vide ne peut pas être publié!"
 
 #: apps/publish/content/common.py:392
 msgid "Package item with id: {guid} does not exist."
@@ -1132,15 +1154,18 @@ msgstr "L'article n'a pas été trouvé!"
 
 #: apps/publish/content/resend.py:82
 msgid "Only text stories can be resent!"
-msgstr ""
+msgstr "Seuls les articles en format texte peuvent être retransmis!"
 
 #: apps/publish/content/resend.py:87
 msgid "Only published, corrected or killed stories can be resent!"
 msgstr ""
+"Seuls les articles publiés, corrigés ou supprimés peuvent être retransmis!"
 
 #: apps/publish/content/resend.py:91
 msgid "Please use the newest version {version} to resend!"
 msgstr ""
+"S'il-vous-plaît utilisez la version la plus récente {version} pour "
+"retransmettre!"
 
 #: apps/publish/content/resend.py:96
 msgid "Updated story cannot be resent!"
@@ -1160,7 +1185,7 @@ msgstr "L'élément d'assemblage avec l'identifiant: {guid} n'a pas été publi�
 
 #: apps/publish/enqueue/enqueue_service.py:205
 msgid "Failed to publish the item: {exception}"
-msgstr ""
+msgstr "L'élément n'a pas pu être publié: {exception}"
 
 #: apps/publish/enqueue/enqueue_service.py:530
 msgid "Can not find package {package} published item {item}"
@@ -1176,7 +1201,7 @@ msgstr "Le formateur n'a pas été trouvé"
 
 #: apps/publish/formatters/service.py:80
 msgid "Error in formatting article: {exception}"
-msgstr ""
+msgstr "Erreur dans le formatage de l'article: {exception}"
 
 #: apps/rules/routing_rules.py:201
 msgid "Routing scheme is applied to channel(s). It cannot be deleted."
@@ -1206,7 +1231,7 @@ msgstr ""
 
 #: apps/rules/routing_rules.py:332
 msgid "Invalid values for day of week."
-msgstr ""
+msgstr "Les jours de la semaine sont invalides."
 
 #: apps/rules/routing_rules.py:338
 msgid "Invalid value for from time."
@@ -1259,6 +1284,8 @@ msgstr ""
 #: apps/saved_searches/saved_searches.py:313
 msgid "Unauthorized to modify other user's local search."
 msgstr ""
+"Vous n'êtes pas autorisé à modifier la recherche locale d'un autre "
+"utilisateur."
 
 #: apps/saved_searches/saved_searches.py:315
 msgid "Unauthorized to modify global search."
@@ -1288,23 +1315,23 @@ msgstr ""
 
 #: apps/suggestions/service.py:34
 msgid "The item identifier is required"
-msgstr ""
+msgstr "L'identifiant de l'élément est requis"
 
 #: apps/suggestions/service.py:39
 msgid "Invalid item identifer"
-msgstr ""
+msgstr "Identifiant d'élément invalide"
 
 #: apps/templates/content_templates.py:200
 msgid "Invalid kill template. {fields} are not allowed"
-msgstr ""
+msgstr "Gabarit de suppression invalide. {fields} ne sont pas permis"
 
 #: apps/templates/content_templates.py:256
 msgid "Kill templates can not be deleted."
-msgstr ""
+msgstr "Les gabarits de suppression ne peuvent pas être supprimés."
 
 #: apps/templates/content_templates.py:347
 msgid "Kill templates must be public"
-msgstr ""
+msgstr "Les gabarits de suppression doivent être publics"
 
 #: apps/templates/content_templates.py:361
 msgid "Templates that are not create type can only be assigned to one desk!"
@@ -1432,7 +1459,7 @@ msgstr ""
 
 #: apps/validate/validate.py:87
 msgid "require a date value"
-msgstr ""
+msgstr "a besoin d'une date"
 
 #: apps/validate/validate.py:88
 msgid "{} is a required field"
@@ -1440,7 +1467,7 @@ msgstr "{} est un champ obligatoire"
 
 #: apps/validate/validate.py:89
 msgid "contains invalid characters"
-msgstr ""
+msgstr "contient des caractères invalides"
 
 #: apps/validate/validate.py:90
 msgid "{} is too long"
