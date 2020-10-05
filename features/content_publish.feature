@@ -4352,3 +4352,137 @@ Feature: Content Publishing
           "operation": "publish"
       }
       """
+
+    @auth
+    Scenario: Send correction with adding a featuremedia
+      Given config update
+      """
+      { "PUBLISH_ASSOCIATED_ITEMS": false}
+      """
+      And "vocabularies"
+      """
+      [{
+        "_id": "crop_sizes",
+        "unique_field": "name",
+        "items": [
+          {"is_active": true, "name": "original", "width": 800, "height": 600}
+        ]
+      }
+      ]
+      """
+      And "validators"
+      """
+      [
+          {"_id": "publish_text", "act": "publish", "type": "text", "schema":{}},
+          {"_id": "correct_text", "act": "correct", "type": "text", "schema":{}},
+          {"_id": "publish_picture", "act": "publish", "type": "picture", "schema": {}},
+          {"_id": "correct_picture", "act": "correct", "type": "picture", "schema": {}}
+      ]
+      """
+      And "desks"
+      """
+      [{"name": "Sports"}]
+      """
+      And "archive"
+      """
+      [
+          {
+            "guid": "123",
+            "type": "text",
+            "headline": "test",
+            "state": "in_progress",
+            "task": {
+              "desk": "#desks._id#",
+              "stage": "#desks.incoming_stage#",
+              "user": "#CONTEXT_USER_ID#"
+              },
+            "subject":
+              [
+                {"qcode": "17004000",
+                "name": "Statistics"}
+              ],
+            "body_html": "Test Document body",
+            "_current_version": 1
+          },
+          {
+              "guid": "234",
+              "type": "picture",
+              "slugline": "234",
+              "headline": "234",
+              "state": "in_progress",
+              "task": {
+                "desk": "#desks._id#",
+                "stage": "#desks.incoming_stage#",
+                "user": "#CONTEXT_USER_ID#"
+              },
+              "renditions": {
+                  "original": {"CropLeft": 0, "CropRight": 800, "CropTop": 0, "CropBottom": 600}
+              },
+              "_current_version": 1
+          }
+      ]
+      """
+      When we post to "/products" with success
+      """
+      {
+          "name":"prod-1","codes":"abc,xyz", "product_type": "both"
+      }
+      """
+      And we post to "/subscribers" with success
+      """
+      {
+        "name":"Channel 3","media_type":"media", "subscriber_type": "digital", "sequence_num_settings":{"min" : 1, "max" : 10}, "email": "test@test.com",
+        "products": ["#products._id#"],
+        "destinations":[{"name":"Test","format": "nitf", "delivery_type":"email","config":{"recipients":"test@test.com"}}]
+      }
+      """
+      When we publish "123" with "publish" type and "published" state
+      Then we get OK response
+      And we get existing resource
+      """
+      {
+        "_current_version": 2,
+        "type": "text",
+        "state": "published",
+        "task":{"desk": "#desks._id#", "stage": "#desks.incoming_stage#"}
+      }
+      """
+      When we publish "123" with "correct" type and "corrected" state
+      """
+      {
+        "associations": {
+          "featuremedia": {
+              "_id": "234",
+              "guid": "234",
+              "byline": "foo",
+              "alt_text": "alt_text",
+              "description_text": "description_text",
+              "headline": "234",
+              "renditions": {
+                    "original": {"CropLeft": 0, "CropRight": 800, "CropTop": 0, "CropBottom": 600}
+                  }
+              }
+          }
+      }
+      """
+      Then we get OK response
+      And we get existing resource
+      """
+      {
+        "_current_version": 3,
+        "state": "corrected",
+        "associations": {
+            "featuremedia": {
+              "_id": "234",
+              "guid": "234",
+              "byline": "foo",
+              "alt_text": "alt_text",
+              "description_text": "description_text",
+              "headline": "234",
+              "renditions": {
+                    "original": {"CropLeft": 0, "CropRight": 800, "CropTop": 0, "CropBottom": 600}
+                  }
+              }
+          }
+      }
+      """
