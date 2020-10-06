@@ -179,9 +179,7 @@ class ContentTemplatesResource(Resource):
 
     resource_methods = ['GET', 'POST']
     item_methods = ['GET', 'PATCH', 'DELETE']
-    privileges = {'POST': CONTENT_TEMPLATE_PRIVILEGE,
-                  'PATCH': CONTENT_TEMPLATE_PRIVILEGE,
-                  'DELETE': CONTENT_TEMPLATE_PRIVILEGE}
+    no_privileges = True
 
     merge_nested_documents = True
 
@@ -194,7 +192,6 @@ class ContentTemplatesService(BaseService):
 
     def on_create(self, docs):
         for doc in docs:
-            self._validate_privileges(doc)
             doc['template_name'] = doc['template_name'].lower().strip()
             if doc.get('schedule'):
                 doc['next_run'] = get_next_run(doc.get('schedule'))
@@ -386,7 +383,7 @@ class ContentTemplatesService(BaseService):
         privileges = user.get('active_privileges', {}) if user else {}
 
         if (user and not doc.get('is_public')
-                and user != doc.get('user') and not privileges.get('personal_template')):
+                and user.get(config.ID_FIELD) != doc.get('user') and not privileges.get('personal_template')):
             raise SuperdeskApiError.badRequestError('You dont have the privilege to modify another user template')
         elif (user and doc.get('is_public')
                 and not privileges.get(CONTENT_TEMPLATE_PRIVILEGE)):
