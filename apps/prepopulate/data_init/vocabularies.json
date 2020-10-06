@@ -5,6 +5,7 @@
         "type": "manageable",
         "selection_type": "multi selection",
         "unique_field": "qcode",
+        "init_version": 1,
         "items": [
 
             {"is_active": true, "name": "FIXME1", "qcode": "f1", "subject": "", "translations": {"name": {"fr": "FIXME1-fr", "es": "FIXME1-es"}}},
@@ -55,6 +56,7 @@
         "type": "manageable",
         "selection_type": "multi selection",
         "unique_field": "qcode",
+        "init_version": 1,
         "items": [
             {"is_active": true, "name": "Article (news)", "qcode": "Article"},
             {"is_active": true, "name": "Sidebar", "qcode": "Sidebar"},
@@ -104,6 +106,7 @@
         "type": "manageable",
         "selection_type": "multi selection",
         "unique_field": "qcode",
+        "init_version": 1,
         "items": [
             {"is_active": true, "name": "1", "qcode": 1},
             {"is_active": true, "name": "2", "qcode": 2},
@@ -137,6 +140,7 @@
         "type": "manageable",
         "selection_type": "multi selection",
         "unique_field": "qcode",
+        "init_version": 1,
         "items": [
             {"is_active": true, "name": "1", "qcode": 1},
             {"is_active": true, "name": "2", "qcode": 2},
