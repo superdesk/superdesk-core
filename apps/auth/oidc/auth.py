@@ -51,7 +51,12 @@ class OIDCAuthService(AuthService):
         users_service = get_resource_service('users')
         username = g.oidc_token_info.get('username')
         user = users_service.find_one(req=None, username=username) or {}
+
+        auth_service = get_resource_service('auth_users')
+        auth_user = auth_service.find_one(req=None, username=username) or {}
+
         sync_data = {
+            **auth_user,
             **user,
             'username': username,
             'email': g.oidc_token_info.get('email'),
