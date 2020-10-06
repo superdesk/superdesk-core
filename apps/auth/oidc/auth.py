@@ -14,6 +14,7 @@ from flask_oidc_ex import OpenIDConnect
 import superdesk
 from apps.auth.errors import CredentialsAuthError
 from apps.auth.service import AuthService
+from eve.utils import config
 from superdesk import get_resource_service
 from superdesk.resource import Resource
 from superdesk.utils import ignorecase_query
@@ -52,12 +53,7 @@ class OIDCAuthService(AuthService):
         username = g.oidc_token_info.get('username')
         user = users_service.find_one(req=None, username=username) or {}
 
-        auth_service = get_resource_service('auth_users')
-        auth_user = auth_service.find_one(req=None, username=username) or {}
-
         sync_data = {
-            **auth_user,
-            **user,
             'username': username,
             'email': g.oidc_token_info.get('email'),
             'display_name': g.oidc_token_info.get('name'),
@@ -86,6 +82,7 @@ class OIDCAuthService(AuthService):
             })
             users_service.post([sync_data])
         else:
-            users_service.put(user.get('_id'), sync_data)
+            users_service.patch(user[config.ID_FIELD], sync_data)
 
-        return sync_data
+        user.update(sync_data)
+        return user
