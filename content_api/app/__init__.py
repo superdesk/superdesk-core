@@ -75,6 +75,8 @@ def get_app(config=None):
         validator=SuperdeskValidator
     )
 
+    app.notification_client = None
+
     set_error_handlers(app)
 
     for module_name in app.config.get('CONTENTAPI_INSTALLED_APPS', []):

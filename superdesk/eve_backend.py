@@ -178,6 +178,9 @@ class EveBackend():
             doc.pop('_type', None)
         ids = self.create_in_mongo(endpoint_name, docs, **kwargs)
         self.create_in_search(endpoint_name, docs, **kwargs)
+        for doc in docs:
+            push_notification('resource:created', _id=str(doc['_id']),
+                              resource=endpoint_name)
         return ids
 
     def create_in_mongo(self, endpoint_name, docs, **kwargs):
@@ -363,6 +366,9 @@ class EveBackend():
         if len(removed_ids):
             backend.remove(endpoint_name, {config.ID_FIELD: {'$in': removed_ids}})
             logger.info("Removed %d documents from %s.", len(removed_ids), endpoint_name)
+            for doc in docs:
+                push_notification('resource:deleted', _id=str(doc['_id']),
+                                  resource=endpoint_name)
         else:
             logger.warn("No documents for %s resource were deleted.", endpoint_name)
         return removed_ids

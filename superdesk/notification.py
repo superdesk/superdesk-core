@@ -58,6 +58,12 @@ def push_notification(name, **kwargs):
     :param name: event name
     """
     logger.debug('pushing event {0} ({1})'.format(name, json.dumps(kwargs, default=json_serialize_datetime_objectId)))
+
+    if not getattr(app, 'notification_client', None):
+        # not initialized - ignore
+        # this could be the case for content/production api
+        return
+
     if not app.notification_client.open:
         app.notification_client.close()
         init_app(app)
