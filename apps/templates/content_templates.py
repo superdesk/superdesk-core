@@ -192,6 +192,7 @@ class ContentTemplatesService(BaseService):
 
     def on_create(self, docs):
         for doc in docs:
+            self._validate_privileges(doc)
             doc['template_name'] = doc['template_name'].lower().strip()
             if doc.get('schedule'):
                 doc['next_run'] = get_next_run(doc.get('schedule'))
@@ -379,15 +380,16 @@ class ContentTemplatesService(BaseService):
                 doc[key] = None
 
     def _validate_privileges(self, doc):
-        user = g.get('user')
-        privileges = user.get('active_privileges', {}) if user else {}
+        active_user = g.get('user')
+        user = doc.get('user')
+        privileges = active_user.get('active_privileges', {}) if active_user else {}
 
-        if (user and not doc.get('is_public')
-                and user.get(config.ID_FIELD) != doc.get('user') and not privileges.get('personal_template')):
-            raise SuperdeskApiError.badRequestError('You dont have the privilege to modify another user template')
-        elif (user and doc.get('is_public')
+        if (active_user and user and not doc.get('is_public')
+                and active_user.get(config.ID_FIELD) != doc.get('user') and not privileges.get('personal_template')):
+            raise SuperdeskApiError.badRequestError(_('You dont have the privilege to modify another user template'))
+        elif (active_user and doc.get('is_public')
                 and not privileges.get(CONTENT_TEMPLATE_PRIVILEGE)):
-            raise SuperdeskApiError.badRequestError('You dont have the privilege to manage the public template')
+            raise SuperdeskApiError.badRequestError(_('You dont have the privilege to manage the public template'))
 
 
 class ContentTemplatesApplyResource(Resource):
