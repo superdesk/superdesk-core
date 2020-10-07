@@ -534,16 +534,12 @@ class BasePublishService(BaseService):
             items.extend(self.package_service.get_residrefs(original_item))
 
         for item in items:
+            orig = None
             if type(item) == dict and item.get(config.ID_FIELD):
                 doc = item
-                # enhance doc with lock_user
-                req = ParsedRequest()
-                req.args = {}
-                req.projection = json.dumps({'lock_user': 1})
+                orig = super().find_one(req=None, _id=item[config.ID_FIELD])
                 try:
-                    doc.update({
-                        'lock_user': super().find_one(req=req, _id=item[config.ID_FIELD])['lock_user']
-                    })
+                    doc.update({'lock_user': orig['lock_user']})
                 except (TypeError, KeyError):
                     pass
             elif item:
@@ -554,11 +550,15 @@ class BasePublishService(BaseService):
             if not doc:
                 continue
 
+            if not orig:
+                orig = doc.copy()
+
             if original_item[ITEM_TYPE] == CONTENT_TYPE.COMPOSITE:
                 self._validate_associated_items(doc, validation_errors=validation_errors)
 
             # make sure no items are killed or recalled or spiked or scheduled
-            doc_item_state = doc.get(ITEM_STATE, CONTENT_STATE.PUBLISHED)
+            # using the latest version of the item from archive
+            doc_item_state = orig.get(ITEM_STATE, CONTENT_STATE.PUBLISHED)
             if doc_item_state in {CONTENT_STATE.KILLED, CONTENT_STATE.RECALLED,
                                   CONTENT_STATE.SPIKED, CONTENT_STATE.SCHEDULED}:
                 validation_errors.append('Item cannot contain associated {} item'.format(doc[ITEM_STATE]))

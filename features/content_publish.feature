@@ -4453,6 +4453,7 @@ Feature: Content Publishing
         "associations": {
           "featuremedia": {
               "_id": "234",
+              "type": "picture",
               "guid": "234",
               "byline": "foo",
               "alt_text": "alt_text",
@@ -4474,6 +4475,7 @@ Feature: Content Publishing
         "associations": {
             "featuremedia": {
               "_id": "234",
+              "type": "picture",
               "guid": "234",
               "byline": "foo",
               "alt_text": "alt_text",
