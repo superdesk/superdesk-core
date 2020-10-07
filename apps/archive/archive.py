@@ -366,6 +366,7 @@ class ArchiveService(BaseService):
                     body = update_image_caption(body, item_name, item_obj['description_text'])
 
             self._set_association_timestamps(item_obj, updates, new=False)
+
             stored_item.update(item_obj)
 
             updates[ASSOCIATIONS][item_name] = stored_item
@@ -866,7 +867,8 @@ class ArchiveService(BaseService):
                 any(genre.get('qcode', '').lower() != BROADCAST_GENRE.lower() for genre in updates.get('genre')):
             raise SuperdeskApiError.badRequestError(_('Cannot change the genre for broadcast content.'))
 
-        if PUBLISH_SCHEDULE in updates or "schedule_settings" in updates:
+        if (PUBLISH_SCHEDULE in updates or "schedule_settings" in updates) and \
+                original.get('state') != CONTENT_STATE.PUBLISHED:
             if (updates.get(PUBLISH_SCHEDULE, None) or
                     any(v is not None for v in updates.get('schedule_settings', {}).values())) and\
                     is_item_in_package(original) and not force_unlock:

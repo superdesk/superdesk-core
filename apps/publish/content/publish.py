@@ -10,7 +10,8 @@
 
 import logging
 from superdesk.errors import SuperdeskApiError
-from superdesk.metadata.item import CONTENT_TYPE, ITEM_TYPE, ITEM_STATE, CONTENT_STATE, PUBLISH_SCHEDULE, EMBARGO
+from superdesk.metadata.item import CONTENT_TYPE, ITEM_TYPE, ITEM_STATE, CONTENT_STATE, PUBLISH_SCHEDULE, \
+    EMBARGO, SCHEDULE_SETTINGS
 
 from apps.archive.common import set_sign_off, ITEM_OPERATION
 from apps.archive.archive import update_word_count
@@ -42,8 +43,8 @@ class ArchivePublishService(BasePublishService):
 
     def on_update(self, updates, original):
         if not original.get('firstpublished'):
-            if updates.get('publish_schedule'):
-                updates['firstpublished'] = updates['publish_schedule']
+            if updates.get(SCHEDULE_SETTINGS) and updates[SCHEDULE_SETTINGS].get('utc_publish_schedule'):
+                updates['firstpublished'] = updates[SCHEDULE_SETTINGS]['utc_publish_schedule']
             else:
                 updates['firstpublished'] = utcnow()
 
