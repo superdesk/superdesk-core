@@ -253,7 +253,7 @@ class IMatricsTestCase(TestCase):
         api_url = urljoin(TEST_BASE_URL, "concept/delete") + "?uuid=afc7e49d-57d0-34af-b184-b7600af362a9"
         responses.add(
             responses.DELETE, api_url,
-            body="Concept deleted",
+            json={"error": False},
         )
         ai_data_op_service.create([doc])
 

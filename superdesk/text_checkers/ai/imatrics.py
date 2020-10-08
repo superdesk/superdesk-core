@@ -112,7 +112,6 @@ class IMatrics(AIServiceBase):
         if not self.base_url or not self.user or not self.key:
             logger.warning("IMatrics is not configured propertly, can't analyze article")
             return {}
-        url = join(self.base_url, "article/concept")
         archive_service = get_resource_service("archive")
         item = archive_service.find_one(req=None, _id=item_id)
         if item is None:
@@ -142,15 +141,8 @@ class IMatrics(AIServiceBase):
             "headline": headline,
             "body": body,
         }
-        r = requests.post(url, json=data, auth=(self.user, self.key), timeout=TIMEOUT)
-        if r.status_code != 200:
-            raise SuperdeskApiError.proxyError("Unexpected return code ({status_code}) from {name}: {msg}".format(
-                name=self.name,
-                status_code=r.status_code,
-                msg=r.text,
-            ))
 
-        r_data = r.json()
+        r_data = self._request("article/concept", data)
 
         analyzed_data: Dict[str, List] = {}
 
@@ -167,7 +159,6 @@ class IMatrics(AIServiceBase):
         return analyzed_data
 
     def search(self, data: dict) -> dict:
-        search_url = join(self.base_url, "concept/get")
 
         data = {
             "title": data['term'],
@@ -175,22 +166,8 @@ class IMatrics(AIServiceBase):
             "draft": False,
             "size": 10,
         }
-        r = requests.post(
-            search_url,
-            params={'operation': 'title_type'},
-            json=data,
-            auth=(self.user, self.key),
-            timeout=TIMEOUT
-        )
 
-        if r.status_code != 200:
-            raise SuperdeskApiError.proxyError("Unexpected return code ({status_code}) from {name}: {msg}".format(
-                name=self.name,
-                status_code=r.status_code,
-                msg=r.text,
-            ))
-
-        r_data = r.json()
+        r_data = self._request("concept/get", data)
 
         tags: List[Dict] = []
         ret = {
@@ -203,7 +180,6 @@ class IMatrics(AIServiceBase):
         return ret
 
     def create(self, data: dict) -> dict:
-        create_url = join(self.base_url, "concept/create")
         concept = {}
 
         try:
@@ -221,21 +197,7 @@ class IMatrics(AIServiceBase):
             logger.warning("no mapping for superdesk type {sd_type!r}".format(sd_type=sd_type))
             concept["type"] = "topic"
 
-        r = requests.post(
-            create_url,
-            json=concept,
-            auth=(self.user, self.key),
-            timeout=TIMEOUT
-        )
-
-        if r.status_code != 200:
-            raise SuperdeskApiError.proxyError("Unexpected return code ({status_code}) from {name}: {msg}".format(
-                name=self.name,
-                status_code=r.status_code,
-                msg=r.text,
-            ))
-
-        r_data = r.json()
+        r_data = self._request("concept/create", concept)
 
         if r_data['error']:
             raise SuperdeskApiError.proxyError(
@@ -252,21 +214,7 @@ class IMatrics(AIServiceBase):
         except KeyError:
             raise SuperdeskApiError.badRequestError("[{name}] no tag UUID specified".format(name=self.name))
 
-        delete_url = join(self.base_url, "concept/delete")
-        r = requests.delete(
-            delete_url,
-            params={'uuid': data["uuid"]},
-            auth=(self.user, self.key),
-            timeout=TIMEOUT
-        )
-
-        if r.status_code != 200:
-            raise SuperdeskApiError.proxyError("Unexpected return code ({status_code}) from {name}: {msg}".format(
-                name=self.name,
-                status_code=r.status_code,
-                msg=r.text,
-            ))
-
+        self._request("concept/delete", method='DELETE', params={'uuid': data["uuid"]})
         return {}
 
     def data_operation(
@@ -293,3 +241,17 @@ class IMatrics(AIServiceBase):
                 "[{name}] Unexpected operation: {operation}".format(
                     name=name, operation=operation)
             )
+
+    def publish(self, data):
+        return self._request('article/publish', data)
+
+    def _request(self, service, data=None, method='POST', params=None):
+        url = join(self.base_url, service)
+        r = requests.request(method, url, json=data, auth=(self.user, self.key), params=params, timeout=TIMEOUT)
+        if r.status_code != 200:
+            raise SuperdeskApiError.proxyError("Unexpected return code ({status_code}) from {name}: {msg}".format(
+                name=self.name,
+                status_code=r.status_code,
+                msg=r.text,
+            ))
+        return r.json()
