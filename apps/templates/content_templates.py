@@ -25,6 +25,7 @@ from apps.tasks import apply_onstage_rule
 from apps.archive.common import ARCHIVE, CUSTOM_HATEOAS, item_schema, format_dateline_to_locmmmddsrc, \
     insert_into_versions
 from apps.auth import get_user
+from superdesk.utils import ListCursor
 
 from superdesk.lock import lock, unlock
 from superdesk.celery_task_utils import get_lock_id
@@ -190,9 +191,27 @@ class ContentTemplatesResource(Resource):
 
 class ContentTemplatesService(BaseService):
 
+    def get(self, req, lookup):
+        active_user = g.get('user', {})
+        privileges = active_user.get('active_privileges', {})
+        results = super().get(req, lookup)
+
+        data = []
+        for result in results:
+            if (active_user and not result.get('is_public')
+                    and active_user.get('_id') != result.get('user') and privileges.get('personal_template')):
+                data.append(result)
+            elif active_user and not result.get('is_public') and active_user.get('_id') == result.get('user'):
+                data.append(result)
+            elif result.get('is_public'):
+                data.append(result)
+        results = data
+
+        return ListCursor(results)
+
     def on_create(self, docs):
         for doc in docs:
-            self._validate_privileges(doc)
+            self._validate_privileges(doc, action='create')
             doc['template_name'] = doc['template_name'].lower().strip()
             if doc.get('schedule'):
                 doc['next_run'] = get_next_run(doc.get('schedule'))
@@ -212,7 +231,7 @@ class ContentTemplatesService(BaseService):
         push_template_notification(docs)
 
     def on_update(self, updates, original):
-        self._validate_privileges(original)
+        self._validate_privileges(original, action='update')
         if updates.get('template_type') and updates.get('template_type') != original.get('template_type') and \
            updates.get('template_type') == TemplateType.KILL.value:
             self._validate_kill_template(updates)
@@ -256,7 +275,7 @@ class ContentTemplatesService(BaseService):
             schedule.pop('create_at', None)
 
     def on_delete(self, doc):
-        self._validate_privileges(doc)
+        self._validate_privileges(doc, action='delete')
         if doc.get('template_type') == TemplateType.KILL.value:
             raise SuperdeskApiError.badRequestError(_('Kill templates can not be deleted.'))
 
@@ -379,17 +398,19 @@ class ContentTemplatesService(BaseService):
             else:
                 doc[key] = None
 
-    def _validate_privileges(self, doc):
+    def _validate_privileges(self, doc, action=None):
         active_user = g.get('user')
         user = doc.get('user')
         privileges = active_user.get('active_privileges', {}) if active_user else {}
 
         if (active_user and user and not doc.get('is_public')
                 and active_user.get(config.ID_FIELD) != doc.get('user') and not privileges.get('personal_template')):
-            raise SuperdeskApiError.badRequestError(_('You dont have the privilege to modify another user template'))
+            raise SuperdeskApiError.badRequestError(
+                _('You dont have the privilege to {action} another user personal template'.format(action=action)))
         elif (active_user and doc.get('is_public')
                 and not privileges.get(CONTENT_TEMPLATE_PRIVILEGE)):
-            raise SuperdeskApiError.badRequestError(_('You dont have the privilege to manage the public template'))
+            raise SuperdeskApiError.badRequestError(
+                _('You dont have the privilege to {action} the public template'.format(action=action)))
 
 
 class ContentTemplatesApplyResource(Resource):

@@ -17,8 +17,8 @@ from flask import request, current_app as app
 from eve.auth import TokenAuth
 from superdesk.resource import Resource
 from superdesk.errors import SuperdeskApiError
-from superdesk import get_resource_service, get_resource_privileges, \
-    get_no_resource_privileges, get_intrinsic_privileges
+from superdesk import (get_resource_service, get_resource_privileges,
+                       get_no_resource_privileges, get_intrinsic_privileges)
 from superdesk.utc import utcnow
 from flask_babel import _
 
