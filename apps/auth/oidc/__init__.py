@@ -19,10 +19,10 @@ logger = logging.getLogger(__name__)
 
 def init_app(app):
     endpoint_name = 'auth_oidc'
-    if bool(app.config['OIDC_ENABLED']) and not bool(app.config['SECRET_KEY'] != ''):
+    if app.config['OIDC_ENABLED'] and not app.config['SECRET_KEY']:
         logger.warn('SECRET_KEY is not set')
 
-    app.client_config['oidc_auth'] = bool(app.config['OIDC_ENABLED']) and bool(app.config['SECRET_KEY'] != '')
+    app.client_config['oidc_auth'] = app.config['OIDC_ENABLED'] and app.config['SECRET_KEY']
     if app.client_config['oidc_auth']:
         issuer = app.config['OIDC_ISSUER']
         app.config.setdefault('OIDC_CLIENT_SECRETS', {
