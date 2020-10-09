@@ -11,7 +11,7 @@ PACKAGE_FIELDS = {
     'type', 'state', 'groups', 'unique_name', 'pubstatus', 'origina_creator', 'flags', 'guid',
     'schedule_settings', 'expiry', 'format', 'lock_time', 'lock_user', 'lock_session', config.ID_FIELD,
     config.LAST_UPDATED, config.DATE_CREATED, config.ETAG, 'version', '_current_version', 'version_creator',
-    'operation', 'unique_id', 'version_created'
+    'operation', 'unique_id', 'version_created', 'fields_meta',
 }
 
 
@@ -44,7 +44,7 @@ class GenerateHighlightsService(superdesk.Service):
             export = doc.get('export')
             template = get_template(package.get('highlight'))
             stringTemplate = None
-            if template and 'body_html' in template.get('data', {}):
+            if template and template.get('data') and template['data'].get('body_html'):
                 stringTemplate = template['data']['body_html']
 
             doc.clear()
