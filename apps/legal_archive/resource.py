@@ -11,8 +11,10 @@
 from apps.archive.archive import ArchiveResource, ArchiveVersionsResource
 from apps.archive_history import ArchiveHistoryResource
 
+from typing import Any
 from superdesk.publish.publish_queue import PublishQueueResource
 from superdesk.resource import Resource
+from superdesk.mongo import TEXT_INDEX_OPTIONS
 
 
 LEGAL_ARCHIVE_NAME = 'legal_archive'
@@ -33,6 +35,17 @@ class LegalArchiveResource(LegalResource, ArchiveResource):
     resource_title = endpoint_name
 
     datasource = {'source': LEGAL_ARCHIVE_NAME}
+    mongo_indexes = ArchiveResource.mongo_indexes.copy()  # type: Any
+    mongo_indexes.update({
+        'text': (
+            [
+                ('headline', 'text'),
+                ('slugline', 'text'),
+                ('description_text', 'text'),
+            ],
+            TEXT_INDEX_OPTIONS,
+        ),
+    })
 
 
 class LegalArchiveVersionsResource(LegalResource, ArchiveVersionsResource):

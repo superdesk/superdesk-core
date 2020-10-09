@@ -9,6 +9,7 @@
 # at https://www.sourcefabric.org/superdesk/license
 
 import logging
+
 from eve.versioning import versioned_id_field
 from flask import g, current_app as app
 from eve.utils import config, ParsedRequest
@@ -18,6 +19,7 @@ from superdesk.errors import SuperdeskApiError
 from superdesk.metadata.item import ITEM_TYPE, GUID_FIELD, CONTENT_TYPE
 from superdesk.metadata.packages import GROUPS, RESIDREF, REFS
 from superdesk.utils import ListCursor
+from superdesk.mongo import set_mongo_lang
 
 logger = logging.getLogger(__name__)
 
@@ -40,6 +42,7 @@ class LegalService(Service):
                 doc.setdefault(config.ID_FIELD, doc.get(GUID_FIELD))
                 if doc[ITEM_TYPE] == CONTENT_TYPE.COMPOSITE:
                     self._change_location_of_items_in_package(doc)
+            set_mongo_lang(doc)
 
     def on_replace(self, document, original):
         """Runs on replace of legal item.
@@ -63,6 +66,10 @@ class LegalService(Service):
         """
 
         self.check_get_access_privilege()
+
+        if req and req.args.get('query'):
+            lookup['$text'] = {'$search': req.args['query']}
+
         return super().get(req, lookup)
 
     def find_one(self, req, **lookup):
