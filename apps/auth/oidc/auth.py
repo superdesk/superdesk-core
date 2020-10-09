@@ -9,6 +9,7 @@
 # at https://www.sourcefabric.org/superdesk/license
 
 from flask import g, request
+from flask_babel import _
 from flask_oidc_ex import OpenIDConnect
 
 import superdesk
@@ -18,6 +19,8 @@ from eve.utils import config
 from superdesk import get_resource_service
 from superdesk.resource import Resource
 from superdesk.utils import ignorecase_query
+
+from ..errors import CredentialsAuthError
 
 
 class OIDCAuthResource(Resource):
@@ -50,12 +53,12 @@ class OIDCAuthService(AuthService):
             raise CredentialsAuthError(credentials)
 
         users_service = get_resource_service('users')
-        username = g.oidc_token_info.get('username')
+        username = g.oidc_token_info['username']
         user = users_service.find_one(req=None, username=username) or {}
 
         sync_data = {
             'username': username,
-            'email': g.oidc_token_info.get('email'),
+            'email': g.oidc_token_info.get('email', user.get('email')),
             'display_name': g.oidc_token_info.get('name'),
         }
 
@@ -66,6 +69,9 @@ class OIDCAuthService(AuthService):
             sync_data['last_name'] = g.oidc_token_info.get('family_name')
 
         if not user:
+            # email is optional in Keycloak
+            if not sync_data['email']:
+                raise CredentialsAuthError(sync_data, message=_('Please update your account email address'))
             user_role = None
             client_id = g.oidc_token_info.get('client_id', '')
             keycloak_roles = g.oidc_token_info.get('resource_access', {}).get(client_id, {}).get('roles', [])
