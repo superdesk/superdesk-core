@@ -93,7 +93,7 @@ class SuperdeskEve(eve.Eve):
                     index_options = {}
 
                 # index creation in background
-                index_options['background'] = True
+                index_options.setdefault('background', True)
                 create_index(self, resource, name, list_of_keys, index_options)
 
 
