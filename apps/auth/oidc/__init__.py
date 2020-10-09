@@ -24,7 +24,7 @@ def init_app(app):
 
     app.client_config['oidc_auth'] = app.config['OIDC_ENABLED'] and app.config['SECRET_KEY']
     if app.client_config['oidc_auth']:
-        issuer = app.config['OIDC_ISSUER']
+        issuer = app.config['OIDC_ISSUER_URL']
         app.config.setdefault('OIDC_CLIENT_SECRETS', {
             "web": {
                 "issuer": issuer,
@@ -41,7 +41,7 @@ def init_app(app):
             'url': url,
             'realm': realm,
             'clientId': app.config['OIDC_WEB_CLIENT'],
-            'redirectUri': app.config['OIDC_BROWSER_REDIRECT_URI']
+            'redirectUri': app.config['OIDC_BROWSER_REDIRECT_URL']
         }
         service = OIDCAuthService('auth', backend=superdesk.get_backend(), app=app)
         OIDCAuthResource(endpoint_name, app=app, service=service)
