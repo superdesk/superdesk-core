@@ -8,6 +8,31 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
+"""
+Superdesk OpenID Connect Authentication
+
+.. versionadded:: 2.1
+
+Configuration
+~~~~~~~~~~~~~
+
+Superdesk supports OIDC authentication via Keycloak. To enable OIDC auth module, set environment variable
+``OIDC_ENABLED`` to True.
+Setting :ref:`settings.secret_key` is also required.
+
+Next you need to create a server client (with **confidential**
+`access type <https://www.keycloak.org/docs/latest/server_admin/#_access-type>`_) and web client (with **public**
+access type). Both with ``Valid Redirect URIs`` set to :ref:`settings.default.client_url`.
+
+Finally with your Keycloak server is running at ``localhost:8080``, ``SUPERDESK``, ``server_client``, ``web_client``
+are your keycloak realm, server client, and web client respectively, set following environment variables::
+
+    OIDC_ENABLED=True
+    OIDC_ISSUER_URL=http://localhost:8080/auth/realms/SUPERDESK
+    OIDC_SERVER_CLIENT=server_client
+    OIDC_SERVER_CLIENT_SECRET=server-client-secret
+    OIDC_WEB_CLIENT=web-client
+"""
 import logging
 
 import superdesk

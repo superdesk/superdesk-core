@@ -25,6 +25,8 @@ Default settings
 
 Default: ``'Superdesk'``
 
+.. _settings.default.client_url:
+
 ``CLIENT_URL``
 ^^^^^^^^^^^^^^
 
@@ -565,6 +567,46 @@ Default: ``'Single Sign On'``
 
 Label on auth button for SAML.
 
+OpenID Connect Auth Settings
+----------------------------
+
+.. versionadded:: 2.1
+
+.. _settings.oidc_oauth:
+
+``OIDC_ENABLED``
+^^^^^^^^^^^^^^^^
+
+Default: ``False``
+
+``OIDC_ISSUER_URL``
+^^^^^^^^^^^^^^^^^^^
+
+Default: ``http://localhost:8080/auth/realms/SUPERDESK_REAL``
+
+Issuer URL address
+
+``OIDC_SERVER_CLIENT``
+^^^^^^^^^^^^^^^^^^^^^^
+
+Keycloak client name with `access type <https://www.keycloak.org/docs/latest/server_admin/#_access-type>`_ is confidential
+
+``OIDC_SERVER_CLIENT_SECRET``
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Keycloak server client secret
+
+``OIDC_WEB_CLIENT``
+^^^^^^^^^^^^^^^^^^^
+
+Keycloak client name with access type is public
+
+``OIDC_BROWSER_REDIRECT_URL``
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Default: :ref:`settings.default.client_url`
+
+Redirect URL for successful authentication with Keycloak
 
 Schema and Editor
 -----------------
@@ -685,7 +727,7 @@ Example::
     }
 
 Video server settings
---------------------
+---------------------
 
 ``VIDEO_SERVER_URL``
 ^^^^^^^^^^^^^^^^^^^^^^^
