@@ -1,5 +1,11 @@
 # Superdesk Server Changelog
 
+## [2.0.2] 2020-10-12
+
+### Fixed
+
+- Fix generating highlights item when using editor3.
+
 ## [2.0.1] 2020-10-07
 
 ### Fixed
