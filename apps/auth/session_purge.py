@@ -35,13 +35,14 @@ class RemoveExpiredSessions(superdesk.Command):
         self.remove_expired_sessions()
 
     def remove_expired_sessions(self):
+        auth_service = get_resource_service('auth')
         expiry_minutes = app.settings['SESSION_EXPIRY_MINUTES']
         expiration_time = utcnow() - timedelta(minutes=expiry_minutes)
         logger.info('Deleting session not updated since {}'.format(expiration_time))
         query = {'_updated': {'$lte': date_to_str(expiration_time)}}
-        sessions = get_resource_service('auth').get(req=None, lookup=query)
+        sessions = auth_service.get(req=None, lookup=query)
         for session in sessions:
-            get_resource_service('auth').delete_action({'_id': str(session['_id'])})
+            auth_service.delete({'_id': str(session['_id'])})
         self._update_online_users()
 
     def _update_online_users(self):
