@@ -490,6 +490,9 @@ EXTENDED_MEDIA_INFO = ['content_type', 'name', 'length', '_id']
 RETURN_MEDIA_AS_BASE64_STRING = False
 VERSION = '_current_version'
 
+#: media storage provider
+MEDIA_STORAGE_PROVIDER = env('MEDIA_STORAGE_PROVIDER')
+
 #: uses for generation of media url ``(<media_prefix>/<media_id>)``::
 MEDIA_PREFIX = env('MEDIA_PREFIX', '%s/upload-raw' % SERVER_URL.rstrip('/'))
 MEDIA_PREFIXES_TO_FIX = None

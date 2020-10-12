@@ -22,12 +22,11 @@
 
 import ast
 import logging
-import magic
 import superdesk
-from flask import request, current_app as app
-from io import BytesIO
+from flask import request
 from superdesk.errors import SuperdeskApiError
-from werkzeug.wsgi import wrap_file
+from .utils import get_file_from_sams
+from superdesk.storage.superdesk_file import generate_response_for_file
 
 logger = logging.getLogger(__name__)
 assets_bp = superdesk.Blueprint('sams_assets', __name__)
@@ -58,17 +57,8 @@ def get_binary(item_id):
     Uses item_id and returns the corresponding
     asset binary
     """
-    item = assets_bp.kwargs['client'].assets.get_binary_by_id(item_id=item_id)
-    content = BytesIO(item.content)
-    content_type = magic.from_buffer(content.getvalue(), mime=True)
-    data = wrap_file(request.environ, content, buffer_size=1024 * 256)
-
-    response = app.response_class(
-        data,
-        mimetype=content_type,
-        direct_passthrough=True
-    )
-    return response
+    file = get_file_from_sams(assets_bp.kwargs['client'], item_id)
+    return generate_response_for_file(file)
 
 
 @assets_bp.route('/sams/assets', methods=['POST'])
@@ -114,9 +104,17 @@ def update(item_id):
             "If-Match field missing in header"
         )
 
-    files = {'binary': request.files.get('binary')}
+    if request.files.get('binary'):
+        # The binary data was supplied so this must be a multipart request
+        # Get the updates from the `request.form` attribute
+        files = {'binary': request.files['binary']}
+        updates = request.form.to_dict()
+    else:
+        # Only the metadata was supplied so this must be a standard JSON request
+        # Get the updates from the `request.get_json` function
+        files = {}
+        updates = request.get_json()
 
-    updates = request.form.to_dict()
     update_response = assets_bp.kwargs['client'].assets.update(
         item_id=item_id,
         updates=updates,

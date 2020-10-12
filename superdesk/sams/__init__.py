@@ -1,4 +1,5 @@
 import superdesk
+from eve.flaskapp import Eve
 from .assets import assets_bp
 from .storage_destinations import destinations_bp
 from .sets import sets_bp
@@ -7,13 +8,16 @@ from flask_babel import _
 from sams_client import SamsClient
 
 
-def init_app(app):
-
+def get_sams_client(app: Eve) -> SamsClient:
     configs = {
         'HOST': app.config.get('SAMS_HOST'),
         'PORT': app.config.get('SAMS_PORT')
     }
-    client = SamsClient(configs)
+    return SamsClient(configs)
+
+
+def init_app(app: Eve):
+    client = get_sams_client(app)
 
     @assets_bp.before_request
     @destinations_bp.before_request
