@@ -582,7 +582,7 @@ Default: ``False``
 ``OIDC_ISSUER_URL``
 ^^^^^^^^^^^^^^^^^^^
 
-Default: ``http://localhost:8080/auth/realms/SUPERDESK_REAL``
+Default: ``http://localhost:8080/auth/realms/SUPERDESK_REALM``
 
 Issuer URL address
 
