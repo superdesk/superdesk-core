@@ -25,7 +25,6 @@ from apps.tasks import apply_onstage_rule
 from apps.archive.common import ARCHIVE, CUSTOM_HATEOAS, item_schema, format_dateline_to_locmmmddsrc, \
     insert_into_versions
 from apps.auth import get_user
-from superdesk.utils import ListCursor
 
 from superdesk.lock import lock, unlock
 from superdesk.celery_task_utils import get_lock_id
@@ -194,20 +193,12 @@ class ContentTemplatesService(BaseService):
     def get(self, req, lookup):
         active_user = g.get('user', {})
         privileges = active_user.get('active_privileges', {})
+        lookup.update({'$or': [{'is_public': True}, {'user': active_user['_id']}]})
+        if privileges.get('personal_template'):
+            lookup['$or'].append({'is_public': False})
         results = super().get(req, lookup)
 
-        data = []
-        for result in results:
-            if (active_user and not result.get('is_public')
-                    and active_user.get('_id') != result.get('user') and privileges.get('personal_template')):
-                data.append(result)
-            elif active_user and not result.get('is_public') and active_user.get('_id') == result.get('user'):
-                data.append(result)
-            elif result.get('is_public'):
-                data.append(result)
-        results = data
-
-        return ListCursor(results)
+        return results
 
     def on_create(self, docs):
         for doc in docs:
