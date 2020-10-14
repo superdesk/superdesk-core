@@ -24,9 +24,9 @@ TIMEOUT = 30
 CONCEPT_MAPPING = OrderedDict([
     # following concepts don't have clear equivalent in SD
     ("category", "subject"),
-    ("object", "subject"),
+    ("object", "object"),
     ("entity", "organisation"),
-    ("event", "subject"),
+    ("event", "event"),
 
     ("topic", "subject"),
     ("organisation", "organisation"),
@@ -59,8 +59,12 @@ class IMatrics(AIServiceBase):
     def concept2tag_data(self, concept: dict) -> dict:
         """Convert an iMatrics concept to Superdesk friendly data"""
         tag_data = {
-            "uuid": concept["uuid"],
-            "title": concept["title"],
+            "name": concept["title"],
+            "qcode": concept["uuid"],
+            "source": "imatrics",
+            "altids": {
+                "imatrics": concept["uuid"],
+            }
         }
         try:
             tag_type = CONCEPT_MAPPING[concept["type"]]
@@ -68,34 +72,25 @@ class IMatrics(AIServiceBase):
             logger.warning("no mapping for concept type {concept_type!r}".format(concept_type=concept["type"]))
             tag_type = concept["type"]
 
-        if "author" in concept:
-            tag_data["source"] = concept["author"]
-
         tag_data["type"] = tag_type
 
         try:
             tag_data["weight"] = concept["weight"]
         except KeyError:
             pass
-        if tag_type == "person":
-            title = tag_data.pop("title")
-            try:
-                tag_data["firstname"], tag_data["lastname"] = title.split(" ", 1)
-            except ValueError:
-                tag_data["firstname"], tag_data["lastname"] = "", title
 
-        media_topics = tag_data["media_topics"] = []
         for link in concept.get('links', []):
             if link.get("source") == "IPTC":
                 topic_id = link.get("id", "")
                 if topic_id.startswith("medtop:"):
                     topic_id = topic_id[7:]
-                media_topics.append({
-                    "name": concept["title"],
-                    "code": topic_id,
-                })
-            else:
-                tag_data.setdefault('links', []).append(link)
+                    tag_data["qcode"] = topic_id
+                    tag_data["altids"]["medtop"] = topic_id
+
+        if concept["type"] in ('topic', 'category'):
+            tag_data['scheme'] = 'imatrics_{}'.format(concept["type"])
+
+        print('tag', tag_data)
 
         return tag_data
 
@@ -107,17 +102,11 @@ class IMatrics(AIServiceBase):
                     name=self.name, verb=verb, operation=operation)
             )
 
-    def analyze(self, item_id: str) -> dict:
+    def analyze(self, item: dict) -> dict:
         """Analyze article to get tagging suggestions"""
         if not self.base_url or not self.user or not self.key:
             logger.warning("IMatrics is not configured propertly, can't analyze article")
             return {}
-        archive_service = get_resource_service("archive")
-        item = archive_service.find_one(req=None, _id=item_id)
-        if item is None:
-            logger.warning("Could not find any item with id {item_id}".format(item_id=item_id))
-            return {}
-
         try:
             body = [p.strip() for p in item["body_text"].split("\n") if p.strip()]
         except KeyError:
@@ -127,12 +116,12 @@ class IMatrics(AIServiceBase):
                     if p.strip()
                 ]
             except KeyError:
-                logger.warning("no body found in item {item_id!r}".format(item_id=item_id))
+                logger.warning("no body found in item {item_id!r}".format(item_id=item['guid']))
                 body = []
 
         headline = item.get('headline', '')
         if not body and not headline:
-            logger.warning("no body nor headline found in item {item_id!r}".format(item_id=item_id))
+            logger.warning("no body nor headline found in item {item_id!r}".format(item_id=item['guid']))
             # we return an empty result
             return {"subject": []}
 
@@ -169,13 +158,12 @@ class IMatrics(AIServiceBase):
 
         r_data = self._request("concept/get", data)
 
-        tags: List[Dict] = []
-        ret = {
-            'tags': tags
-        }
+        tags: Dict[str, List[Dict]] = {}
+        ret = {'tags': tags}
         for concept in r_data['result']:
             tag_data = self.concept2tag_data(concept)
-            tags.append(tag_data)
+            tag_type = tag_data.pop('type')
+            tags.setdefault(tag_type, []).append(tag_data)
 
         return ret
 

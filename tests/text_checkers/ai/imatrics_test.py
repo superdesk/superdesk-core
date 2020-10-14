@@ -35,32 +35,30 @@ def load_ai_services():
 
 class IMatricsTestCase(TestCase):
 
+    maxDiff = None
+
+    item = {
+        "_id": "test_1",
+        "guid": "test_1",
+        "type": "text",
+        "version": 1,
+        "body_html": "<p>this is a fake article to test the imatrics service, it should be returning some "
+                     "interesting tags.</p>",
+        "headline": "test imatrics",
+        "slugline": "test imatrics",
+    }
+
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
         load_ai_services()
-
-    def setUp(self):
-        with self.app.app_context():
-            self.app.data.insert('archive', [
-                {
-                    "_id": "test_1",
-                    "guid": "test_1",
-                    "type": "text",
-                    "version": 1,
-                    "body_html": "<p>this is a fake article to test the imatrics service, it should be returning some "
-                                 "interesting tags.</p>",
-                    "headline": "test imatrics",
-                    "slugline": "test imatrics",
-                }
-            ])
 
     @responses.activate
     def test_autotagging(self):
         """Check that autotagging is working"""
         doc = {
             "service": "imatrics",
-            "item_id": "test_1",
+            "item": self.item,
         }
         ai_service = get_resource_service('ai')
         api_url = urljoin(TEST_BASE_URL, "article/concept")
@@ -107,25 +105,33 @@ class IMatricsTestCase(TestCase):
         expected = {
             "subject": [
                 {
-                    "media_topics": [],
-                    "title": "IT",
-                    "uuid": "e3c482c0-08a4-3b31-a7f1-e231f1ddffc4",
+                    "name": "IT",
+                    "qcode": "e3c482c0-08a4-3b31-a7f1-e231f1ddffc4",
+                    "scheme": "imatrics_topic",
+                    "source": "imatrics",
+                    "altids": {
+                        "imatrics": "e3c482c0-08a4-3b31-a7f1-e231f1ddffc4",
+                    },
                 },
                 {
-                    "media_topics": [
-                        {
-                            "name": "informasjons- og kommunikasjonsteknologi",
-                            "code": "20000763"
-                        }
-                    ],
-                    "title": "informasjons- og kommunikasjonsteknologi",
-                    "uuid": "c8a83204-29e0-3a7f-9a0e-51e76d885f7f",
+                    "name": "informasjons- og kommunikasjonsteknologi",
+                    "qcode": "20000763",
+                    "scheme": "imatrics_category",
+                    "source": "imatrics",
+                    "altids": {
+                        "imatrics": "c8a83204-29e0-3a7f-9a0e-51e76d885f7f",
+                        "medtop": "20000763",
+                    },
                 },
                 {
-                    "media_topics": [],
-                    "title": "Service",
-                    "uuid": "44f52663-52f9-3836-ac45-ae862fe945a3",
-                }
+                    "name": "Service",
+                    "qcode": "44f52663-52f9-3836-ac45-ae862fe945a3",
+                    "scheme": "imatrics_topic",
+                    "source": "imatrics",
+                    "altids": {
+                        "imatrics": "44f52663-52f9-3836-ac45-ae862fe945a3",
+                    },
+                },
             ]
         }
 
@@ -180,19 +186,28 @@ class IMatricsTestCase(TestCase):
         ai_data_op_service.create([doc])
 
         expected = {
-            'tags': [{'media_topics': [],
-                      'title': 'informasjons- og kommunikasjonsteknologi',
-                      'type': 'subject',
-                      'uuid': 'c8a83204-29e0-3a7f-9a0e-51e76d885f7f',
-                      'source': 'NTB',
-
-                      },
-                     {'media_topics': [],
-                      'title': 'informasjonsvitenskap',
-                      'type': 'subject',
-                      'uuid': 'af815add-8456-3226-8177-ea0d8e3011eb',
-                      'source': 'NTB',
-                      }]
+            'tags': {
+                'subject': [
+                    {
+                        'name': 'informasjons- og kommunikasjonsteknologi',
+                        'qcode': 'c8a83204-29e0-3a7f-9a0e-51e76d885f7f',
+                        'scheme': 'imatrics_category',
+                        'source': 'imatrics',
+                        'altids': {
+                            'imatrics': 'c8a83204-29e0-3a7f-9a0e-51e76d885f7f',
+                        },
+                    },
+                    {
+                        'name': 'informasjonsvitenskap',
+                        'qcode': 'af815add-8456-3226-8177-ea0d8e3011eb',
+                        'scheme': 'imatrics_category',
+                        'source': 'imatrics',
+                        'altids': {
+                            'imatrics': 'af815add-8456-3226-8177-ea0d8e3011eb',
+                        },
+                    },
+                ]
+            }
         }
 
         self.assertEqual(doc['result'], expected)
