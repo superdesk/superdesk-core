@@ -7,12 +7,13 @@
 # at https://www.sourcefabric.org/superdesk/license
 
 import os
-from os.path import join
 import logging
 import requests
+
+from flask import current_app
 from collections import OrderedDict
 from typing import Optional, Dict, List
-from superdesk import get_resource_service
+from urllib.parse import urljoin
 from superdesk import etree
 from superdesk.errors import SuperdeskApiError
 from .base import AIServiceBase
@@ -51,10 +52,19 @@ class IMatrics(AIServiceBase):
 
     def __init__(self, app):
         super().__init__(app)
-        self.base_url = self.config.get("IMATRICS_BASE_URL", os.environ.get("IMATRICS_BASE_URL"))
-        self.user = self.config.get("IMATRICS_USER", os.environ.get("IMATRICS_USER"))
-        self.key = self.config.get("IMATRICS_KEY", os.environ.get("IMATRICS_KEY"))
         self.convept_map_inv = {v: k for k, v in CONCEPT_MAPPING.items()}
+
+    @property
+    def base_url(self):
+        return current_app.config.get("IMATRICS_BASE_URL", os.environ.get("IMATRICS_BASE_URL"))
+
+    @property
+    def user(self):
+        return current_app.config.get("IMATRICS_USER", os.environ.get("IMATRICS_USER"))
+
+    @property
+    def key(self):
+        return current_app.config.get("IMATRICS_KEY", os.environ.get("IMATRICS_KEY"))
 
     def concept2tag_data(self, concept: dict) -> dict:
         """Convert an iMatrics concept to Superdesk friendly data"""
@@ -89,8 +99,6 @@ class IMatrics(AIServiceBase):
 
         if concept["type"] in ('topic', 'category'):
             tag_data['scheme'] = 'imatrics_{}'.format(concept["type"])
-
-        print('tag', tag_data)
 
         return tag_data
 
@@ -234,7 +242,7 @@ class IMatrics(AIServiceBase):
         return self._request('article/publish', data)
 
     def _request(self, service, data=None, method='POST', params=None):
-        url = join(self.base_url, service)
+        url = urljoin(self.base_url, service)
         r = requests.request(method, url, json=data, auth=(self.user, self.key), params=params, timeout=TIMEOUT)
         if r.status_code != 200:
             raise SuperdeskApiError.proxyError("Unexpected return code ({status_code}) from {name}: {msg}".format(

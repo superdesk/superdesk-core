@@ -8,9 +8,8 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
-from urllib.parse import urljoin
 import responses
-from flask import Flask
+from urllib.parse import urljoin
 from superdesk.tests import TestCase
 from superdesk.text_checkers import tools
 from superdesk.text_checkers import ai
@@ -20,17 +19,6 @@ from superdesk import get_resource_service
 
 ai.AUTO_IMPORT = False
 TEST_BASE_URL = "https://something.example.org"
-
-
-@responses.activate
-def load_ai_services():
-    """Load ai servies by mocking Grammalecte server, so it can be detected"""
-    registered_ai_services.clear()
-    app = Flask(__name__)
-    app.config["IMATRICS_BASE_URL"] = TEST_BASE_URL
-    app.config["IMATRICS_USER"] = "some_user"
-    app.config["IMATRICS_KEY"] = "some_secret_key"
-    tools.import_services(app, ai.__name__, AIServiceBase)
 
 
 class IMatricsTestCase(TestCase):
@@ -48,10 +36,12 @@ class IMatricsTestCase(TestCase):
         "slugline": "test imatrics",
     }
 
-    @classmethod
-    def setUpClass(cls):
-        super().setUpClass()
-        load_ai_services()
+    def setUp(self):
+        self.app.config["IMATRICS_BASE_URL"] = TEST_BASE_URL
+        self.app.config["IMATRICS_USER"] = "some_user"
+        self.app.config["IMATRICS_KEY"] = "some_secret_key"
+        registered_ai_services.clear()
+        tools.import_services(self.app, ai.__name__, AIServiceBase)
 
     @responses.activate
     def test_autotagging(self):

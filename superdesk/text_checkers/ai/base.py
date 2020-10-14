@@ -41,7 +41,7 @@ class AIServiceBase(metaclass=AIServiceRegisterer):
     """
 
     def __init__(self, app):
-        self.config = app.config
+        pass
 
     @property
     @abc.abstractmethod
