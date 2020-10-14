@@ -11,7 +11,7 @@
 import re
 import superdesk
 import logging
-from flask import render_template_string, current_app as app
+from flask import g, render_template_string, current_app as app
 from copy import deepcopy
 from superdesk.services import BaseService
 from superdesk import Resource, Service, config, get_resource_service
@@ -176,15 +176,26 @@ class ContentTemplatesResource(Resource):
 
     resource_methods = ['GET', 'POST']
     item_methods = ['GET', 'PATCH', 'DELETE']
-    privileges = {'POST': CONTENT_TEMPLATE_PRIVILEGE,
-                  'PATCH': CONTENT_TEMPLATE_PRIVILEGE,
-                  'DELETE': CONTENT_TEMPLATE_PRIVILEGE}
+    no_privileges = True
 
 
 class ContentTemplatesService(BaseService):
 
+    def get(self, req, lookup):
+        active_user = g.get('user', {})
+        privileges = active_user.get('active_privileges', {})
+        if not lookup:
+            lookup = {}
+        lookup.update({'$or': [{'is_public': True}, {'user': active_user.get('_id')}]})
+        if privileges.get('personal_template'):
+            lookup['$or'].append({'is_public': False})
+        results = super().get(req, lookup)
+
+        return results
+
     def on_create(self, docs):
         for doc in docs:
+            self._validate_privileges(doc, action='create')
             doc['template_name'] = doc['template_name'].lower().strip()
             if doc.get('schedule'):
                 doc['next_run'] = get_next_run(doc.get('schedule'))
@@ -204,6 +215,7 @@ class ContentTemplatesService(BaseService):
         push_template_notification(docs)
 
     def on_update(self, updates, original):
+        self._validate_privileges(original, action='update')
         if updates.get('template_type') and updates.get('template_type') != original.get('template_type') and \
            updates.get('template_type') == TemplateType.KILL.value:
             self._validate_kill_template(updates)
@@ -247,6 +259,7 @@ class ContentTemplatesService(BaseService):
             schedule.pop('create_at', None)
 
     def on_delete(self, doc):
+        self._validate_privileges(doc, action='delete')
         if doc.get('template_type') == TemplateType.KILL.value:
             raise SuperdeskApiError.badRequestError(_('Kill templates can not be deleted.'))
 
@@ -368,6 +381,20 @@ class ContentTemplatesService(BaseService):
                 doc['data'][key] = None
             else:
                 doc[key] = None
+
+    def _validate_privileges(self, doc, action=None):
+        active_user = g.get('user')
+        user = doc.get('user')
+        privileges = active_user.get('active_privileges', {}) if active_user else {}
+
+        if (active_user and user and not doc.get('is_public')
+                and active_user.get(config.ID_FIELD) != doc.get('user') and not privileges.get('personal_template')):
+            raise SuperdeskApiError.badRequestError(
+                _('You dont have the privilege to {action} another user personal template'.format(action=action)))
+        elif (active_user and doc.get('is_public')
+                and not privileges.get(CONTENT_TEMPLATE_PRIVILEGE)):
+            raise SuperdeskApiError.badRequestError(
+                _('You dont have the privilege to {action} the public template'.format(action=action)))
 
 
 class ContentTemplatesApplyResource(Resource):
