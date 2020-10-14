@@ -193,7 +193,9 @@ class ContentTemplatesService(BaseService):
     def get(self, req, lookup):
         active_user = g.get('user', {})
         privileges = active_user.get('active_privileges', {})
-        lookup.update({'$or': [{'is_public': True}, {'user': active_user['_id']}]})
+        if not lookup:
+            lookup = {}
+        lookup.update({'$or': [{'is_public': True}, {'user': active_user.get('_id')}]})
         if privileges.get('personal_template'):
             lookup['$or'].append({'is_public': False})
         results = super().get(req, lookup)
