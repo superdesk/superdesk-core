@@ -7,6 +7,10 @@ def format_datetime(date):
 
 
 class IMatricsFormatter(NINJSFormatter):
+
+    def can_format(self, format_type, article):
+        return format_type.lower() == 'imatrics' and article.get('type') == 'text'
+
     def _transform_to_ninjs(self, article, subscriber, recursive=True):
         return {
             "uuid": article["guid"],
