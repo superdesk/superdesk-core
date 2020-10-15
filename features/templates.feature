@@ -699,3 +699,40 @@ Feature: Templates
           }]
         }
         """
+
+    @auth
+    Scenario: Create content using template with template language
+    Given "content_templates"
+    """
+    [{
+        "template_name": "test",
+        "template_type": "create",
+        "is_public": true,
+        "data": {
+            "headline": "{{ 'foo' }}",
+            "byline": "{{ 'bar' }}",
+            "extra": {
+                "test": "{{ user.sign_off }}",
+                "test2": "{{ item.something.missing }}",
+                "test3": "{% if something %}"
+            }
+        }
+    }]
+    """
+    When we post to "archive"
+    """
+    {
+        "type": "text",
+        "template": "#content_templates._id#"
+    }
+    """
+    Then we get new resource
+    """
+    {
+        "headline": "foo",
+        "byline": "bar",
+        "extra": {
+            "test": "abc"
+        }
+    }
+    """

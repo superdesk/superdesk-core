@@ -221,6 +221,12 @@ def on_create_item(docs, repo_type=ARCHIVE):
         if not doc.get(ITEM_OPERATION):
             doc[ITEM_OPERATION] = ITEM_CREATE
 
+        if doc.get('template'):
+            from apps.templates.content_templates import render_content_template_by_id  # avoid circular import
+            doc.pop('fields_meta', None)
+            render_content_template_by_id(doc, doc['template'], update=True)
+            editor_utils.generate_fields(doc)
+
 
 def format_dateline_to_locmmmddsrc(located, current_timestamp, source=None):
     """
