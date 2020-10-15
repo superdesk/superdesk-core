@@ -261,7 +261,7 @@ Feature: User preferences
       When we login as user "foo" with password "bar" and user type "user"
       Then we get "/users/test_user" and match
       """
-      {"username": "test_user", "session_preferences": {}}
+      {"username": "test_user"}
       """
 
     @auth

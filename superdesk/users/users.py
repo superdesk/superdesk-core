@@ -206,7 +206,7 @@ class UsersResource(Resource):
         self.etag_ignore_fields = ['session_preferences', '_etag', 'invisible_stages']
 
         self.datasource = {
-            'projection': {'password': 0},
+            'projection': {'password': 0, 'session_preferences': 0},
             'default_sort': [('username', 1)],
         }
 

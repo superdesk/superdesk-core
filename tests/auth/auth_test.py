@@ -17,7 +17,6 @@ class AuthTestCase(TestCase):
             {'name': 'foo', 'username': 'foo', 'session_preferences': {'test': {}}},
             {'name': 'bar', 'username': 'bar', 'session_preferences': {'bar': {}, str(sess_id): {}}},
         ])
-
         self.assertEqual(2, len(user_ids))
 
         self.app.data.insert('auth', [
@@ -25,13 +24,20 @@ class AuthTestCase(TestCase):
             {'user': user_ids[1], '_updated': utcnow()},
             {'_id': sess_id, 'user': user_ids[1], '_updated': utcnow()}
         ])
+        _ids = [_auth['user'] for _auth in self.app.data.find_all('auth')]
+        self.assertEqual(3, len(_ids))
 
         RemoveExpiredSessions().run()
 
+        # don't expose user preferences
         users = self.app.data.find_list_of_ids('users', user_ids)
-
-        self.assertEqual({}, users[0]['session_preferences'])
-        self.assertEqual({str(sess_id): {}}, users[1]['session_preferences'])
+        self.assertNotIn('session_preferences', users[0])
+        self.assertNotIn('session_preferences', users[1])
+        # ensure that expired auth tokens were removed
+        _ids = [_auth['user'] for _auth in self.app.data.find_all('auth')]
+        self.assertEqual(2, len(_ids))
+        self.assertEqual(user_ids[1], _ids[0])
+        self.assertEqual(user_ids[1], _ids[1])
 
     def test_is_current_user_admin(self):
         with patch('apps.auth.get_user', return_value={}):
@@ -44,8 +50,9 @@ class AuthTestCase(TestCase):
         user_ids = self.app.data.insert('users', [
             {'username': 'foo', 'user_type': 'administrator'},
         ])
+        initial_updated = utcnow() - timedelta(minutes=5)
         self.app.data.insert('auth', [
-            {'user': user_ids[0], '_updated': utcnow() - timedelta(minutes=5), 'token': 'foo'},
+            {'user': user_ids[0], '_updated': initial_updated, 'token': 'foo'},
         ])
 
         with self.app.test_request_context('/users', method='POST'):

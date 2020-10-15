@@ -8,11 +8,11 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
+import superdesk
+from apps import auth
+
 from .users import UsersResource
 from .services import UsersService, DBUsersService, is_admin  # noqa
-from superdesk.errors import SuperdeskApiError
-import superdesk
-import flask
 
 
 def init_app(app):
@@ -37,7 +37,4 @@ def get_user_from_request(required=False):
     :param boolean required: if True and there is no user it will raise an error
     """
 
-    user = flask.g.get('user', {})
-    if '_id' not in user and required:
-        raise SuperdeskApiError.notFoundError('Invalid user.')
-    return user
+    return auth.get_user(required)

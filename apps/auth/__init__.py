@@ -10,18 +10,18 @@
 
 import flask
 import logging
-import superdesk
-
+from flask_babel import _
 from eve.utils import config
+
+import superdesk
+from superdesk.errors import SuperdeskApiError
+from superdesk.services import BaseService
+from superdesk.celery_app import celery
 from apps.auth.auth import SuperdeskTokenAuth
 from .auth import AuthUsersResource, AuthResource  # noqa
 from .sessions import SessionsResource, UserSessionClearResource
-from superdesk.services import BaseService
-from superdesk.celery_app import celery
 from .session_purge import RemoveExpiredSessions
-from superdesk.errors import SuperdeskApiError
 from .service import UserSessionClearService, AuthService
-from flask_babel import _
 
 logger = logging.getLogger(__name__)
 
