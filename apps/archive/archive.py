@@ -665,7 +665,7 @@ class ArchiveService(BaseService):
         # send signal
         signals.item_update.send(self, updates=updates, original=original)
 
-        res = super().update(id, updates, original)
+        super().update(id, updates, original)
 
         updated = copy(original)
         updated.update(updates)
@@ -997,6 +997,7 @@ class ArchiveService(BaseService):
         :param original: original item version before update
         :param add_activity: flag to decide whether to add notification as activity or not
         """
+        marked_user = marked_for_user = None
         orig_marked_user = original.get('marked_for_user', None)
         new_marked_user = updates.get('marked_for_user', None)
         by_user = get_user().get('display_name', get_user().get('username'))
@@ -1006,7 +1007,7 @@ class ArchiveService(BaseService):
             marked_user = user_service.find_one(req=None, _id=new_marked_user)
             marked_for_user = marked_user.get('display_name', marked_user.get('username'))
 
-        if orig_marked_user and new_marked_user is None:
+        if orig_marked_user and not new_marked_user:
             # sent when unmarking user from item
             user_list = [user_service.find_one(req=None, _id=orig_marked_user)]
             message = 'Item "{headline}" has been unmarked by {by_user}.'.format(
@@ -1014,7 +1015,7 @@ class ArchiveService(BaseService):
 
             self._send_mark_user_notifications('item:unmarked', message, resource=self.datasource, item=original,
                                                user_list=user_list, add_activity=add_activity)
-        else:
+        elif marked_user and marked_for_user:
             # sent when mark item for user or mark to another user
             user_list = [marked_user]
             if new_marked_user and orig_marked_user and new_marked_user != orig_marked_user:
