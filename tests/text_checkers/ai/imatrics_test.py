@@ -136,7 +136,7 @@ class IMatricsTestCase(TestCase):
             "data": {"term": "informasjons"},
         }
         ai_data_op_service = get_resource_service('ai_data_op')
-        api_url = urljoin(TEST_BASE_URL, "concept/get")
+        api_url = urljoin(TEST_BASE_URL, "concept/get?operation=title_type")
         responses.add(
             responses.POST, api_url,
             json={
