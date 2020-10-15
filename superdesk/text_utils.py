@@ -134,7 +134,7 @@ def get_reading_time(html, word_count=None, language=None):
     return reading_time_minutes
 
 
-def sanitize_html(html):
+def sanitize_html(html, remove_tags=None, kill_tags=None):
     """Sanitize HTML
 
     :param str html: unsafe HTML markup
@@ -143,12 +143,14 @@ def sanitize_html(html):
     if not html:
         return ""
 
-    blacklist = ["script", "style", "head"]
+    if not kill_tags:
+        kill_tags = ["script", "style", "head"]
 
     root_elem = lxml_html.fromstring(html)
     cleaner = clean.Cleaner(
         add_nofollow=False,
-        kill_tags=blacklist
+        kill_tags=kill_tags,
+        remove_tags=remove_tags
     )
     cleaned_xhtml = cleaner.clean_html(root_elem)
 
