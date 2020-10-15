@@ -164,7 +164,7 @@ class IMatrics(AIServiceBase):
             "size": 10,
         }
 
-        r_data = self._request("concept/get", data)
+        r_data = self._request("concept/get", data, params=dict(operation='title_type'))
 
         tags: Dict[str, List[Dict]] = {}
         ret = {'tags': tags}
