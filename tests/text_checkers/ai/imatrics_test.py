@@ -61,7 +61,7 @@ class IMatricsTestCase(TestCase):
                     "links": [],
                     "title": "IT",
                     "type": "topic",
-                    "uuid": "e3c482c0-08a4-3b31-a7f1-e231f1ddffc4"
+                    "uuid": "e3c482c0-08a4-3b31-a7f1-e231f1ddffc4",
                 },
                 {
                     "weight": 0.8387794287831216,
@@ -99,6 +99,7 @@ class IMatricsTestCase(TestCase):
                     "qcode": "e3c482c0-08a4-3b31-a7f1-e231f1ddffc4",
                     "scheme": "imatrics_topic",
                     "source": "imatrics",
+                    "description": "",
                     "altids": {
                         "imatrics": "e3c482c0-08a4-3b31-a7f1-e231f1ddffc4",
                     },
@@ -108,6 +109,7 @@ class IMatricsTestCase(TestCase):
                     "qcode": "20000763",
                     "scheme": "imatrics_category",
                     "source": "imatrics",
+                    "description": "",
                     "altids": {
                         "imatrics": "c8a83204-29e0-3a7f-9a0e-51e76d885f7f",
                         "medtop": "20000763",
@@ -118,6 +120,7 @@ class IMatricsTestCase(TestCase):
                     "qcode": "44f52663-52f9-3836-ac45-ae862fe945a3",
                     "scheme": "imatrics_topic",
                     "source": "imatrics",
+                    "description": "",
                     "altids": {
                         "imatrics": "44f52663-52f9-3836-ac45-ae862fe945a3",
                     },
@@ -148,7 +151,7 @@ class IMatricsTestCase(TestCase):
                         "latestVersionTimestamp": "2020-07-14T15:26:26Z",
                         "author": "NTB",
                         "createdTimestamp": "2020-07-14T15:26:26Z",
-                        "shortDescription": "",
+                        "shortDescription": "title",
                         "broader": "",
                         "title": "informasjons- og kommunikasjonsteknologi",
                         "type": "category",
@@ -161,7 +164,7 @@ class IMatricsTestCase(TestCase):
                         "latestVersionTimestamp": "2020-07-14T15:26:24Z",
                         "author": "NTB",
                         "createdTimestamp": "2020-07-14T15:26:24Z",
-                        "shortDescription": "",
+                        "shortDescription": "title",
                         "broader": "",
                         "title": "informasjonsvitenskap",
                         "type": "category",
@@ -183,6 +186,7 @@ class IMatricsTestCase(TestCase):
                         'qcode': 'c8a83204-29e0-3a7f-9a0e-51e76d885f7f',
                         'scheme': 'imatrics_category',
                         'source': 'imatrics',
+                        'description': 'title',
                         'altids': {
                             'imatrics': 'c8a83204-29e0-3a7f-9a0e-51e76d885f7f',
                         },
@@ -192,6 +196,7 @@ class IMatricsTestCase(TestCase):
                         'qcode': 'af815add-8456-3226-8177-ea0d8e3011eb',
                         'scheme': 'imatrics_category',
                         'source': 'imatrics',
+                        'description': 'title',
                         'altids': {
                             'imatrics': 'af815add-8456-3226-8177-ea0d8e3011eb',
                         },

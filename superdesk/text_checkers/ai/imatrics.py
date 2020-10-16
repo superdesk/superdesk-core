@@ -72,6 +72,7 @@ class IMatrics(AIServiceBase):
             "name": concept["title"],
             "qcode": concept["uuid"],
             "source": "imatrics",
+            "description": concept.get("shortDescription", ""),
             "altids": {
                 "imatrics": concept["uuid"],
             }
