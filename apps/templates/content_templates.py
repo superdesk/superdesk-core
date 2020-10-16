@@ -507,7 +507,11 @@ def render_content_template(item, template, update=False):
     def render_content_template_fields(data, dest=None, top=True):
         updates = {}
         for key, value in data.items():
-            if (top and key in TEMPLATE_DATA_IGNORE_FIELDS) or not value:
+            if (top and key in TEMPLATE_DATA_IGNORE_FIELDS) or not value or (item[key] and item[key] != value):
+                # Ignore template field if:
+                #   * Top level field is in TEMPLATE_DATA_IGNORE_FIELDS
+                #   * template value is not defined
+                #   * item field is defined and has changed from the template
                 continue
 
             if top and key == 'extra':
