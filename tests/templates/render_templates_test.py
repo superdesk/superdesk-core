@@ -10,7 +10,6 @@
 
 from superdesk.tests import TestCase
 from apps.templates.content_templates import get_item_from_template, render_content_template
-from tests import wip
 
 
 class RenderTemplateTestCase(TestCase):
