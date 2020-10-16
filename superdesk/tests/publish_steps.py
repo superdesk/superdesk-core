@@ -15,8 +15,8 @@ from behave import when, then  # @UnresolvedImport
 from apps.publish.enqueue import enqueue_published
 from superdesk.tests.steps import assert_200, apply_placeholders, json_match, \
     get_json_data, test_json, format_items
-from wooper.general import fail_and_print_body
-from wooper.assertions import assert_equal
+from tests.wooper.general import fail_and_print_body
+from tests.wooper.assertions import assert_equal
 from superdesk.publish import transmit
 
 
