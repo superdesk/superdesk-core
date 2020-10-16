@@ -72,11 +72,14 @@ class IMatrics(AIServiceBase):
             "name": concept["title"],
             "qcode": concept["uuid"],
             "source": "imatrics",
-            "description": concept.get("shortDescription", ""),
             "altids": {
                 "imatrics": concept["uuid"],
             }
         }
+
+        if concept.get("shortDescription") and concept["shortDescription"].strip():
+            tag_data["description"] = concept["shortDescription"].strip()
+
         try:
             tag_type = CONCEPT_MAPPING[concept["type"]]
         except KeyError:

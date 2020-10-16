@@ -99,7 +99,6 @@ class IMatricsTestCase(TestCase):
                     "qcode": "e3c482c0-08a4-3b31-a7f1-e231f1ddffc4",
                     "scheme": "imatrics_topic",
                     "source": "imatrics",
-                    "description": "",
                     "altids": {
                         "imatrics": "e3c482c0-08a4-3b31-a7f1-e231f1ddffc4",
                     },
@@ -109,7 +108,6 @@ class IMatricsTestCase(TestCase):
                     "qcode": "20000763",
                     "scheme": "imatrics_category",
                     "source": "imatrics",
-                    "description": "",
                     "altids": {
                         "imatrics": "c8a83204-29e0-3a7f-9a0e-51e76d885f7f",
                         "medtop": "20000763",
@@ -120,7 +118,6 @@ class IMatricsTestCase(TestCase):
                     "qcode": "44f52663-52f9-3836-ac45-ae862fe945a3",
                     "scheme": "imatrics_topic",
                     "source": "imatrics",
-                    "description": "",
                     "altids": {
                         "imatrics": "44f52663-52f9-3836-ac45-ae862fe945a3",
                     },
