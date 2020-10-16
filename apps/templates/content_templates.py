@@ -499,6 +499,7 @@ def render_content_template(item, template, update=False):
 
     :param dict item: item on which template is applied
     :param dict template: template
+    :param bool update: apply updates to item
     :return dict: updates to the item
     """
     kwargs = dict(item=item, user=get_user())

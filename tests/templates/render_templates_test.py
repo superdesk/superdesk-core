@@ -10,6 +10,7 @@
 
 from superdesk.tests import TestCase
 from apps.templates.content_templates import get_item_from_template, render_content_template
+from tests import wip
 
 
 class RenderTemplateTestCase(TestCase):
@@ -57,3 +58,23 @@ class RenderTemplateTestCase(TestCase):
 
         item = get_item_from_template(template)
         self.assertEqual('test it', item['headline'])
+
+    def test_skip_fields_when_they_differ_from_template(self):
+        template = {
+            '_id': 'foo',
+            'template_name': 'test',
+            'template_desks': ['sports'],
+            'data': {
+                'headline': 'toto template',
+                'body_html': 'this is a test template',
+                'urgency': 1, 'priority': 3,
+                'dateline': {},
+                'anpa_take_key': 'test',
+                'genre': [{'name': 'Analysis', 'qcode': 'Analysis'}]
+            }
+        }
+
+        before = get_item_from_template(template)
+        before['genre'] = [{'name': 'template_genre', 'qcode': 'template_genre'}]
+        after = render_content_template(before, template, update=True)
+        self.assertListEqual(after['genre'], before['genre'])
