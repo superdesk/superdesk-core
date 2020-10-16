@@ -369,7 +369,8 @@ def set_sign_off(updates, original=None, repo_type=ARCHIVE, user=None):
         return
 
     # remove the sign off from the list if already there
-    current_sign_off = current_sign_off.replace(sign_off + '/', '')
+    if not app.config.get('FULL_SIGN_OFF'):
+        current_sign_off = current_sign_off.replace(sign_off + '/', '')
 
     updated_sign_off = '{}/{}'.format(current_sign_off, sign_off)
     updates[SIGN_OFF] = updated_sign_off[1:] if updated_sign_off.startswith('/') else updated_sign_off
