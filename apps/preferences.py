@@ -192,6 +192,12 @@ class PreferencesResource(Resource):
 
     superdesk.register_default_user_preference('extensions', {})
 
+    superdesk.register_default_user_preference('search:filters_panel_open', {
+        'type': 'bool',
+        'enabled': True,
+        'default': True
+    })
+
     superdesk.register_default_session_preference('scratchpad:items', [])
     superdesk.register_default_session_preference('desk:last_worked', '')
     superdesk.register_default_session_preference('desk:items', [])
