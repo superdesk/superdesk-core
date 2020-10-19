@@ -162,7 +162,7 @@ class VideoEditTestCase(TestCase):
                                            'version': 1,
                                            'video_editor_id':
                                            'video_id'},
-                              'thumbnail': {
+                              'viewImage': {
                                  "mimetype": "image/png",
                                  "href": "http://localhost/projects/video_id/raw/thumbnails/preview"
                              }})
@@ -177,10 +177,10 @@ class VideoEditTestCase(TestCase):
             req = {'file': FileStorage(BytesIO(b'abcdef'), 'image.jpeg')}
             res = self.video_edit.on_replace(req, {'project': {'_id': 'video_id'}})
             self.assertEqual(
-                res['renditions']['thumbnail']['href'],
+                res['renditions']['viewImage']['href'],
                 'http://localhost/projects/video_id/raw/thumbnails/preview'
             )
-            self.assertEqual(res['renditions']['thumbnail']['mimetype'], 'image/jpeg')
+            self.assertEqual(res['renditions']['viewImage']['mimetype'], 'image/jpeg')
 
     def test_capture_timeline(self):
         with requests_mock.mock() as mock:
