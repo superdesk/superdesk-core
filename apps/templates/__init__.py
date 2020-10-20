@@ -16,20 +16,13 @@ from .content_templates import ContentTemplatesApplyResource, ContentTemplatesAp
 from .content_templates import create_scheduled_content  # noqa
 from .content_templates import create_template_for_profile
 from .filters import format_datetime_filter, first_paragraph_filter
-from flask_babel import lazy_gettext
 
 
 def init_app(app):
     endpoint_name = 'content_templates'
     service = ContentTemplatesService(endpoint_name, backend=superdesk.get_backend())
     ContentTemplatesResource(endpoint_name, app=app, service=service)
-    superdesk.privilege(name=CONTENT_TEMPLATE_PRIVILEGE,
-                        label=lazy_gettext('Templates'),
-                        description=lazy_gettext('Create templates'))
-
-    superdesk.privilege(name='personal_template',
-                        label=lazy_gettext('Manage other user personal template'),
-                        description=lazy_gettext('Manage other user personal template'))
+    superdesk.privilege(name=CONTENT_TEMPLATE_PRIVILEGE, label='Templates', description='Create templates')
 
     endpoint_name = 'content_templates_apply'
     service = ContentTemplatesApplyService(endpoint_name, backend=superdesk.get_backend())

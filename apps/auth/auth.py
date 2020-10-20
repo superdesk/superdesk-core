@@ -17,8 +17,7 @@ from flask import request, current_app as app
 from eve.auth import TokenAuth
 from superdesk.resource import Resource
 from superdesk.errors import SuperdeskApiError
-from superdesk import (get_resource_service, get_resource_privileges,
-                       get_no_resource_privileges, get_intrinsic_privileges)
+from superdesk import get_resource_service, get_resource_privileges, get_intrinsic_privileges
 from superdesk.utc import utcnow
 from flask_babel import _
 
@@ -134,10 +133,6 @@ class SuperdeskTokenAuth(TokenAuth):
         # Step 4: User's privileges
         privileges = user.get('active_privileges', {})
         resource_privileges = get_resource_privileges(resource).get(method, None)
-
-        if not resource_privileges and get_no_resource_privileges(resource):
-            return True
-
         if privileges.get(resource_privileges, False):
             return True
 
