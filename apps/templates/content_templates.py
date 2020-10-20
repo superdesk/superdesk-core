@@ -397,8 +397,9 @@ class ContentTemplatesService(BaseService):
         active_user = g.get('user')
         user = doc.get('user')
         privileges = active_user.get('active_privileges', {}) if active_user else {}
-
-        if (active_user and user and not doc.get('is_public')
+        if (active_user and active_user.get('user_type')) == 'administrator':
+            return
+        elif (active_user and user and not doc.get('is_public')
                 and active_user.get(config.ID_FIELD) != doc.get('user') and not privileges.get('personal_template')):
             raise SuperdeskApiError.badRequestError(
                 _('You dont have the privilege to {action} another user personal template'.format(action=action)))
