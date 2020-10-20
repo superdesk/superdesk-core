@@ -3,8 +3,8 @@ import superdesk
 from flask_babel import lazy_gettext
 from superdesk import get_resource_service
 
-fields_to_exclude = superdesk.app.config['FIELDS_TO_EXCLUDE']
-fields_to_override = superdesk.app.config['FIELDS_TO_OVERRIDE']
+fields_to_exclude = superdesk.app.config.get('DEFAULT_TEMPLATE_METADATA_MACRO_EXCLUDE')
+fields_to_override = superdesk.app.config.get('DEFAULT_TEMPLATE_METADATA_MACRO_OVERRIDE')
 
 
 logger = logging.getLogger(__name__)
