@@ -54,9 +54,8 @@ def set_logged_user(username, password):
 
 
 def get_default_user():
-    user = {'username': 'test_user', 'password': 'test_password', 'user_type': 'administrator',
-            'is_active': True, 'needs_activation': False, 'first_name': 'first name',
-            'last_name': 'last name', 'email': 'test_user@test.com'}
+    user = {'username': 'test_user', 'password': 'test_password', 'is_active': True, 'needs_activation': False,
+            'first_name': 'first name', 'last_name': 'last name', 'email': 'test_user@test.com'}
     return user
 
 
