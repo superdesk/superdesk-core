@@ -29,14 +29,14 @@ from eve.io.mongo import MongoJSONEncoder
 from eve.methods.common import parse
 from eve.utils import ParsedRequest, config
 from flask import json
-from tests.wooper.assertions import (
+from wooper.assertions import (
     assert_in, assert_equal, assertions
 )
-from tests.wooper.general import (
+from wooper.general import (
     fail_and_print_body, apply_path, parse_json_response,
     WooperAssertionError
 )
-from tests.wooper.expect import (
+from wooper.expect import (
     expect_status_in,
     expect_json, expect_json_length,
     expect_json_contains, expect_json_not_contains,
