@@ -95,7 +95,7 @@ class SuperdeskEve(eve.Eve):
                     index_options = {}
 
                 # index creation in background
-                index_options['background'] = True
+                index_options.setdefault('background', True)
                 create_index(self, resource, name, list_of_keys, index_options)
 
 
@@ -153,7 +153,10 @@ def get_app(config=None, media_storage=None, config_object=None, init_elastic=No
         validator=SuperdeskValidator,
         template_folder=os.path.join(abs_path, 'templates'))
 
+    app.notification_client = None
+
     app.jinja_options = {'autoescape': False}
+    app.json_encoder = SuperdeskJSONEncoder  # seems like eve param doesn't set it on flask
 
     # init client_config with default config
     app.client_config = {

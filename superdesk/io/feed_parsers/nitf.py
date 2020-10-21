@@ -226,10 +226,11 @@ class NITFFeedParser(XMLFeedParser):
     def get_places(self, docdata):
         places = []
         evloc = docdata.find('evloc')
-        if evloc is not None:
+        if evloc is not None and evloc.attrib.get('city') and evloc.attrib.get('iso-cc'):
             places.append({
                 'name': evloc.attrib.get('city'),
                 'code': evloc.attrib.get('iso-cc'),
+                'qcode': evloc.attrib.get('city'),
             })
         return places
 

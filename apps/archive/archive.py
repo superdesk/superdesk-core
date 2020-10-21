@@ -111,7 +111,7 @@ def update_associations(doc):
 
     :param dict doc: update data
     """
-    if not doc.get('fields_meta', {}).get('body_html'):
+    if not doc.get('fields_meta', {}).get('body_html') or ASSOCIATIONS not in doc:
         return
     entityMap = doc['fields_meta']['body_html']['draftjsState'][0].get('entityMap', {})
     associations = doc.get(ASSOCIATIONS, {})
@@ -335,7 +335,7 @@ class ArchiveService(BaseService):
         if original[ITEM_TYPE] == CONTENT_TYPE.PICTURE:  # create crops
             self.cropService.create_multiple_crops(updates, original)
 
-        if ASSOCIATIONS not in updates or not updates.get(ASSOCIATIONS):
+        if not updates.get(ASSOCIATIONS):
             return
 
         body = updates.get("body_html", original.get("body_html", None))
@@ -366,6 +366,7 @@ class ArchiveService(BaseService):
                     body = update_image_caption(body, item_name, item_obj['description_text'])
 
             self._set_association_timestamps(item_obj, updates, new=False)
+
             stored_item.update(item_obj)
 
             updates[ASSOCIATIONS][item_name] = stored_item
@@ -664,7 +665,7 @@ class ArchiveService(BaseService):
         # send signal
         signals.item_update.send(self, updates=updates, original=original)
 
-        res = super().update(id, updates, original)
+        super().update(id, updates, original)
 
         updated = copy(original)
         updated.update(updates)
@@ -866,7 +867,8 @@ class ArchiveService(BaseService):
                 any(genre.get('qcode', '').lower() != BROADCAST_GENRE.lower() for genre in updates.get('genre')):
             raise SuperdeskApiError.badRequestError(_('Cannot change the genre for broadcast content.'))
 
-        if PUBLISH_SCHEDULE in updates or "schedule_settings" in updates:
+        if (PUBLISH_SCHEDULE in updates or "schedule_settings" in updates) and \
+                original.get('state') != CONTENT_STATE.PUBLISHED:
             if (updates.get(PUBLISH_SCHEDULE, None) or
                     any(v is not None for v in updates.get('schedule_settings', {}).values())) and\
                     is_item_in_package(original) and not force_unlock:
@@ -995,6 +997,7 @@ class ArchiveService(BaseService):
         :param original: original item version before update
         :param add_activity: flag to decide whether to add notification as activity or not
         """
+        marked_user = marked_for_user = None
         orig_marked_user = original.get('marked_for_user', None)
         new_marked_user = updates.get('marked_for_user', None)
         by_user = get_user().get('display_name', get_user().get('username'))
@@ -1004,7 +1007,7 @@ class ArchiveService(BaseService):
             marked_user = user_service.find_one(req=None, _id=new_marked_user)
             marked_for_user = marked_user.get('display_name', marked_user.get('username'))
 
-        if orig_marked_user and new_marked_user is None:
+        if orig_marked_user and not new_marked_user:
             # sent when unmarking user from item
             user_list = [user_service.find_one(req=None, _id=orig_marked_user)]
             message = 'Item "{headline}" has been unmarked by {by_user}.'.format(
@@ -1012,7 +1015,7 @@ class ArchiveService(BaseService):
 
             self._send_mark_user_notifications('item:unmarked', message, resource=self.datasource, item=original,
                                                user_list=user_list, add_activity=add_activity)
-        else:
+        elif marked_user and marked_for_user:
             # sent when mark item for user or mark to another user
             user_list = [marked_user]
             if new_marked_user and orig_marked_user and new_marked_user != orig_marked_user:

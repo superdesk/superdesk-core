@@ -122,14 +122,24 @@ class IMatrics(AIServiceBase):
         try:
             body = [p.strip() for p in item["body_text"].split("\n") if p.strip()]
         except KeyError:
-            body = [
-                p.strip() for p in etree.to_string(etree.parse_html(item["body_html"]), method="text").split("\n")
-                if p.strip()
-            ]
+            try:
+                body = [
+                    p.strip() for p in etree.to_string(etree.parse_html(item["body_html"]), method="text").split("\n")
+                    if p.strip()
+                ]
+            except KeyError:
+                logger.warning("no body found in item {item_id!r}".format(item_id=item_id))
+                body = []
+
+        headline = item.get('headline', '')
+        if not body and not headline:
+            logger.warning("no body nor headline found in item {item_id!r}".format(item_id=item_id))
+            # we return an empty result
+            return {"subject": []}
 
         data = {
             "uuid": item["guid"],
-            "headline": item["headline"],
+            "headline": headline,
             "body": body,
         }
         r = requests.post(url, json=data, auth=(self.user, self.key), timeout=TIMEOUT)

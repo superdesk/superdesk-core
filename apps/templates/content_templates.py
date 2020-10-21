@@ -11,6 +11,8 @@
 import re
 import superdesk
 import logging
+import jinja2.exceptions
+
 from flask import render_template_string, current_app as app
 from copy import deepcopy
 from superdesk.services import BaseService
@@ -35,13 +37,13 @@ from superdesk.notification import push_notification
 
 CONTENT_TEMPLATE_RESOURCE = 'content_templates'
 CONTENT_TEMPLATE_PRIVILEGE = CONTENT_TEMPLATE_RESOURCE
-TEMPLATE_FIELDS = {'template_name', 'template_type', 'schedule', 'type', 'state',
-                   'last_run', 'next_run', 'template_desks', 'schedule_desk', 'schedule_stage',
-                   config.ID_FIELD, config.LAST_UPDATED, config.DATE_CREATED,
-                   config.ETAG, 'task'}
 KILL_TEMPLATE_NOT_REQUIRED_FIELDS = ['schedule', 'dateline', 'template_desks', 'schedule_desk',
                                      'schedule_stage']
 PLAINTEXT_FIELDS = {'headline'}
+TEMPLATE_DATA_IGNORE_FIELDS = {  # fields to be ignored when creating item from template
+    config.ID_FIELD, config.LAST_UPDATED, config.DATE_CREATED, config.ETAG, config.VERSION,
+    'task', 'firstcreated', 'versioncreated', 'firstpublished', 'fields_meta',
+}
 
 
 logger = logging.getLogger(__name__)
@@ -449,11 +451,12 @@ def render_content_template_by_name(item, template_name):
     return render_content_template(item, template)
 
 
-def render_content_template_by_id(item, template_id):
+def render_content_template_by_id(item, template_id, update=False):
     """Apply template by name.
 
     :param dict item: item on which template is applied
     :param str template_id: template _id
+    :param bool update: apply updates to item
     :return dict: updates to the item
     """
     # get the kill template
@@ -461,32 +464,52 @@ def render_content_template_by_id(item, template_id):
     if not template:
         SuperdeskApiError.badRequestError(message='{} Template missing.'.format(template_id))
 
-    return render_content_template(item, template)
+    return render_content_template(item, template, update)
 
 
-def render_content_template(item, template):
+def render_content_template(item, template, update=False):
     """Render the template.
 
     :param dict item: item on which template is applied
     :param dict template: template
     :return dict: updates to the item
     """
-    updates = {}
-    template_data = template.get('data', {})
-    for key, value in template_data.items():
-        if key in TEMPLATE_FIELDS or template_data.get(key) is None:
-            continue
+    kwargs = dict(item=item, user=get_user())
+    template_data = template.get('data', {}) if template else {}
 
-        if isinstance(value, str):
-            updates[key] = render_template_string(value, item=item)
-        elif (isinstance(value, dict) or isinstance(value, list)) and value:
-            updates[key] = value
-        elif not (isinstance(value, dict) or isinstance(value, list)):
-            updates[key] = value
+    def render_content_template_fields(data, dest=None, top=True):
+        updates = {}
+        for key, value in data.items():
+            if (top and key in TEMPLATE_DATA_IGNORE_FIELDS) or not value:
+                continue
 
-    filter_plaintext_fields(updates)
+            if top and key == 'extra':
+                updates[key] = render_content_template_fields(value, top=False)
+                if update:
+                    item.setdefault(key, {}).update(updates[key])
+            elif isinstance(value, str):
+                try:
+                    updates[key] = render_template_string(value, **kwargs)
+                except jinja2.exceptions.UndefinedError as err:
+                    logger.error(err, extra=dict(field=key, template=value))
+                except jinja2.exceptions.TemplateSyntaxError as err:
+                    logger.error(err, extra=dict(field=key, template=value))
+            elif isinstance(value, (dict, list)):
+                updates[key] = value
+            elif not isinstance(value, (dict, list)):
+                updates[key] = value
 
-    return updates
+        if top:
+            filter_plaintext_fields(updates)
+        if update:
+            for key, value in updates.items():
+                if item.get(key) and isinstance(item[key], dict):
+                    item[key].update(value)
+                else:
+                    item[key] = value
+        return updates
+
+    return render_content_template_fields(template_data, dest=item)
 
 
 def get_scheduled_templates(now):

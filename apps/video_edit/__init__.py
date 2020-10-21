@@ -38,10 +38,14 @@ class VideoEditService(superdesk.Service):
                     crop=capture.get('crop'),
                     rotate=capture.get('rotate')
                 )
-                renditions.setdefault('thumbnail', {}).update({
+                renditions.setdefault('viewImage', {}).update({
                     'href': project['thumbnails']['preview'].get('url'),
                     'mimetype': project['thumbnails']['preview'].get('mime_type', 'image/png'),
                 })
+
+                # clean up old thumbnails
+                renditions.pop('baseImage', None)
+                renditions.pop('thumbnail', None)
             # push task edit video to video server
             if 'edit' in doc:
                 edit = doc.pop('edit')
@@ -93,10 +97,12 @@ class VideoEditService(superdesk.Service):
         data = self.video_editor.upload_preview_thumbnail(project.get('_id'), file)
         document.update(original)
         renditions = document.get('renditions', {})
-        renditions.setdefault('thumbnail', {}).update({
+        renditions.setdefault('viewImage', {}).update({
             'href': data.get('url'),
             'mimetype': data.get('mimetype'),
         })
+        renditions.pop('baseImage', None)
+        renditions.pop('thumbnail', None)
         document.update({'renditions': renditions})
         return document
 

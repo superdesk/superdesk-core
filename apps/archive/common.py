@@ -194,6 +194,12 @@ def on_create_item(docs, repo_type=ARCHIVE):
         if not doc.get(ITEM_OPERATION):
             doc[ITEM_OPERATION] = ITEM_CREATE
 
+        if doc.get('template'):
+            from apps.templates.content_templates import render_content_template_by_id  # avoid circular import
+            doc.pop('fields_meta', None)
+            render_content_template_by_id(doc, doc['template'], update=True)
+            editor_utils.generate_fields(doc)
+
 
 def format_dateline_to_locmmmddsrc(located, current_timestamp, source=None):
     """
@@ -363,7 +369,8 @@ def set_sign_off(updates, original=None, repo_type=ARCHIVE, user=None):
         return
 
     # remove the sign off from the list if already there
-    current_sign_off = current_sign_off.replace(sign_off + '/', '')
+    if not app.config.get('FULL_SIGN_OFF'):
+        current_sign_off = current_sign_off.replace(sign_off + '/', '')
 
     updated_sign_off = '{}/{}'.format(current_sign_off, sign_off)
     updates[SIGN_OFF] = updated_sign_off[1:] if updated_sign_off.startswith('/') else updated_sign_off

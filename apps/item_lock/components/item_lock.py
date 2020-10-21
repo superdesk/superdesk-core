@@ -157,7 +157,7 @@ class ItemLock(BaseComponent):
 
     def unlock_session(self, user_id, session_id):
         item_model = get_model(ItemModel)
-        items = item_model.find({LOCK_SESSION: session_id})
+        items = item_model.find({LOCK_SESSION: str(session_id)})
 
         for item in items:
             self.unlock({'_id': item['_id']}, user_id, session_id, None)

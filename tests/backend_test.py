@@ -60,8 +60,14 @@ class BackendTestCase(TestCase):
     @patch('superdesk.eve_backend.push_notification')
     def test_update_resource_push_notification(self, push_notification_mock):
         backend = get_backend()
-        backend.create('archive', [{'_id': 'some-id'}])
         with self.app.app_context():
+            backend.create('archive', [{'_id': 'some-id'}])
+            push_notification_mock.assert_called_once_with(
+                'resource:created',
+                resource='archive',
+                _id='some-id',
+            )
+
             backend.update('archive', 'some-id', {
                 'foo': 1,
                 'new': {'baz': 1},
@@ -85,19 +91,25 @@ class BackendTestCase(TestCase):
                     'missing': 1,
                 },
             })
-        push_notification_mock.assert_called_once_with(
-            'resource:updated',
-            resource='archive',
-            _id='some-id',
-            fields=ANY,
-        )
 
-        self.assertEqual(push_notification_mock.call_args[1].get('fields'), {
-            'foo': 1,
-            'new': 1,
-            'new.baz': 1,
-            'different': 1,
-            'different.foo': 1,
-            'different.bar': 1,
-            'different.missing': 1,
-        })
+            push_notification_mock.assert_called_with(
+                'resource:updated',
+                resource='archive',
+                _id='some-id',
+                fields={
+                    'foo': 1,
+                    'new': 1,
+                    'new.baz': 1,
+                    'different': 1,
+                    'different.foo': 1,
+                    'different.bar': 1,
+                    'different.missing': 1,
+                },
+            )
+
+            backend.delete('archive', {'_id': 'some-id'})
+            push_notification_mock.assert_called_with(
+                'resource:deleted',
+                resource='archive',
+                _id='some-id',
+            )

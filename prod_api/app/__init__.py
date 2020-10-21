@@ -77,6 +77,8 @@ def get_app(config=None):
         validator=SuperdeskValidator
     )
 
+    app.notification_client = None
+
     set_error_handlers(app)
 
     for module_name in app.config.get('PRODAPI_INSTALLED_APPS', []):

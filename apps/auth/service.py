@@ -10,12 +10,15 @@
 
 import flask
 from flask import request, current_app as app
-from superdesk import utils as utils, get_resource_service
-from superdesk.services import BaseService
+from flask_babel import _
 from eve.utils import config
+
+from superdesk import utils as utils, get_resource_service, get_resource_privileges
+from superdesk.services import BaseService
 from superdesk.errors import SuperdeskApiError
-from apps.auth.errors import UserDisabledError
 from superdesk.users.errors import UserInactiveError
+from apps import auth
+from apps.auth.errors import UserDisabledError
 
 
 class AuthService(BaseService):
@@ -44,15 +47,6 @@ class AuthService(BaseService):
         for doc in docs:
             get_resource_service('preferences').set_session_based_prefs(doc['_id'], doc['user'])
 
-    def on_deleted(self, doc):
-        """Runs on delete of a session
-
-        :param doc: A deleted auth doc AKA a session
-        :return:
-        """
-        # notify that the session has ended
-        app.on_session_end(doc['user'], doc['_id'])
-
     def set_auth_default(self, doc, user_id):
         doc['user'] = user_id
         doc['token'] = utils.get_random_string(40)
@@ -66,6 +60,40 @@ class AuthService(BaseService):
         if not updates:
             updates = {}
         self.system_update(flask.g.auth['_id'], updates, flask.g.auth)
+
+    def on_fetched_item(self, doc: dict) -> None:
+        if str(doc['user']) != str(auth.get_user_id()):
+            raise SuperdeskApiError.notFoundError(_('Not found.'))
+
+    def on_deleted(self, doc):
+        """Runs on delete of a session
+
+        :param doc: A deleted auth doc AKA a session
+        :return:
+        """
+        # notify that the session has ended
+        app.on_session_end(doc['user'], doc['_id'])
+
+    def is_authorized(self, **kwargs) -> bool:
+        """
+        Check auth for intrinsic methods.
+        """
+        method = kwargs['method']
+        user = auth.get_user()
+
+        # delete token is a part of `users` privelege
+        # user with `users` privelege can delete sessions of any user
+        # user without `users` privelege can delete only it's own session (logout)
+        if method == 'DELETE':
+            _auth = self.find_one(req=None, _id=kwargs.get('_id'))
+            if _auth and _auth.get('user') == user.get('_id'):
+                return True
+
+            active_privileges = user.get('active_privileges', {})
+            users_resource_privileges = get_resource_privileges('users').get(method, None)
+            return active_privileges.get(users_resource_privileges, False)
+
+        return True
 
 
 class UserSessionClearService(BaseService):
