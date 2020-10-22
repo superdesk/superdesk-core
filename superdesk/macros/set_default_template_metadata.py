@@ -1,11 +1,7 @@
 import logging
-import superdesk
+from flask import current_app as app
 from flask_babel import lazy_gettext
 from superdesk import get_resource_service
-
-fields_to_exclude = superdesk.app.config.get('DEFAULT_TEMPLATE_METADATA_MACRO_EXCLUDE')
-fields_to_override = superdesk.app.config.get('DEFAULT_TEMPLATE_METADATA_MACRO_OVERRIDE')
-
 
 logger = logging.getLogger(__name__)
 
@@ -45,6 +41,10 @@ def get_default_content_template(item, **kwargs):
 
 
 def set_default_template_metadata(item, **kwargs):
+
+    fields_to_exclude = app.config.get('DEFAULT_TEMPLATE_METADATA_MACRO_EXCLUDE', {})
+    fields_to_override = app.config.get('DEFAULT_TEMPLATE_METADATA_MACRO_OVERRIDE', {})
+
     """Replace some metadata from default content template"""
 
     content_template = get_default_content_template(item, **kwargs)
@@ -72,7 +72,7 @@ def set_default_template_metadata(item, **kwargs):
             to_add.append(sub)
 
     # and now we add the new one
-    item.get('subject').extend([i for i in to_add if i.get('scheme')])
+    item.get('subject', []).extend([i for i in to_add if i.get('scheme') and to_add])
     return item
 
 
