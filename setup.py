@@ -54,6 +54,7 @@ install_requires = [
     'draftjs-exporter[lxml]<2.2',
     'werkzeug>=1.0,<1.1',
     'regex==2020.7.14',
+    'flask-oidc-ex==0.5.5',
     'vine==1.3.0',
 ]
 
