@@ -320,7 +320,7 @@ class ArchiveService(BaseService):
         self._validate_updates(original, updates, user)
 
         if self.__is_req_for_save(updates):
-            publish_from_personal = flask.request.args.get('publish_from_personal')
+            publish_from_personal = flask.request.args.get('publish_from_personal') if flask.request else False
             update_state(original, updates, publish_from_personal)
 
         remove_unwanted(updates)
