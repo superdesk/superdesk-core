@@ -598,7 +598,7 @@ def set_item_expiry(update, original):
         update['expiry'] = get_expiry(desk_id, stage_id)
 
 
-def update_state(original, updates):
+def update_state(original, updates, publish_from_personal=None):
     """Updates the 'updates' with a valid state
 
     If the state transition valid, the content is in user's workspace and
@@ -610,7 +610,8 @@ def update_state(original, updates):
     if original_state not in {CONTENT_STATE.INGESTED, CONTENT_STATE.PROGRESS, CONTENT_STATE.SCHEDULED}:
         if not is_workflow_state_transition_valid('save', original_state):
             raise superdesk.errors.InvalidStateTransitionError()
-        elif is_assigned_to_a_desk(original):
+        elif is_assigned_to_a_desk(original) or (not is_assigned_to_a_desk(original)
+                                                 and publish_from_personal):
             updates[ITEM_STATE] = CONTENT_STATE.PROGRESS
         elif not is_assigned_to_a_desk(original):
             updates[ITEM_STATE] = CONTENT_STATE.DRAFT

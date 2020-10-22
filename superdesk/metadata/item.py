@@ -513,7 +513,17 @@ metadata_schema = {
     },
 
     # Desk and Stage Details
-    'task': {'type': 'dict'},
+    'task': {
+        'type': 'dict',
+        'schema': {
+            'user': {'type': 'string', 'mapping': not_analyzed, 'nullable': True},
+            'desk': {'type': 'string', 'mapping': not_analyzed},
+            'desk_history': {'type': 'list', 'mapping': not_analyzed},
+            'last_desk': {'type': 'string', 'mapping': not_analyzed},
+            'stage': {'type': 'string', 'mapping': not_analyzed, 'nullable': True},
+            'status': {'type': 'string', 'mapping': not_analyzed},
+        },
+    },
 
     # Task and Lock Details
     'task_id': {
