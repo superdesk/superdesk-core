@@ -18,7 +18,7 @@ import superdesk
 
 from flask_mail import Mail
 from eve.auth import TokenAuth
-from eve.io.mongo import MongoJSONEncoder, create_index
+from eve.io.mongo import create_index
 from eve.render import send_response
 from flask_babel import Babel
 from flask import g
@@ -31,6 +31,7 @@ from superdesk.factory.sentry import SuperdeskSentry
 from superdesk.logging import configure_logging
 from superdesk.storage import AmazonMediaStorage, SuperdeskGridFSMediaStorage
 from superdesk.validator import SuperdeskValidator
+from superdesk.json_utils import SuperdeskJSONEncoder
 
 SUPERDESK_PATH = os.path.abspath(os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
 
@@ -131,7 +132,7 @@ def get_app(config=None, media_storage=None, config_object=None, init_elastic=No
         auth=TokenAuth,
         media=media_storage,
         settings=app_config,
-        json_encoder=MongoJSONEncoder,
+        json_encoder=SuperdeskJSONEncoder,
         validator=SuperdeskValidator,
         template_folder=os.path.join(abs_path, 'templates'))
 
