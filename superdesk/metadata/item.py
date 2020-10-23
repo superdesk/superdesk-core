@@ -9,6 +9,7 @@
 # at https://www.sourcefabric.org/superdesk/license
 
 from typing import NamedTuple
+from copy import deepcopy
 
 from superdesk.resource import Resource, not_analyzed, not_indexed, not_enabled
 from .packages import LINKED_IN_PACKAGES, PACKAGE
@@ -108,6 +109,21 @@ LAST_PRODUCTION_DESK = 'last_production_desk'
 DESK_HISTORY = 'desk_history'
 
 ITEM_EVENT_ID = 'event_id'
+
+entity_metadata = {
+    'type': 'list',
+    'nullable': True,
+    'mapping': {
+        'type': 'object',
+        'dynamic': False,
+        'properties': {
+            'name': not_analyzed,
+            'qcode': not_analyzed,
+            'scheme': not_analyzed,
+            'source': not_analyzed,
+        },
+    },
+}
 
 metadata_schema = {
     config.ID_FIELD: {
@@ -581,18 +597,10 @@ metadata_schema = {
         },
     },
 
-    'person': {
-        'type': 'list',
-        'nullable': True,
-        'mapping': {
-            'type': 'object',
-            'dynamic': False,
-            'properties': {
-                'lastname': not_analyzed,
-                'firstname': not_analyzed,
-            },
-        },
-    },
+    'event': deepcopy(entity_metadata),
+    'person': deepcopy(entity_metadata),
+    'object': deepcopy(entity_metadata),
+    'organisation': deepcopy(entity_metadata),
 
     # Not Categorized
     'creditline': {

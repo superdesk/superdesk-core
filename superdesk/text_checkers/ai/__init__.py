@@ -26,9 +26,15 @@ class AIResource(Resource):
             'type': 'string',
             'required': True,
         },
-        'item_id': {
-            'type': 'string',
+        'item': {
+            'type': 'dict',
             'required': True,
+            'schema': {
+                'guid': {'type': 'string', 'required': True},
+                'language': {'type': 'string', 'required': True},
+                'headline': {'type': 'string', 'nullable': True},
+                'body_html': {'type': 'string', 'required': True},
+            }
         },
     }
     datasource = {
@@ -49,7 +55,7 @@ class AIService(BaseService):
     key         explanation
     ==========  ===========
     service \*  name of the service to use
-    item_id \*  _id of the item in archive collection
+    item \*     item metadata to be analyzed
     ==========  ===========
 
     e.g. to get autotagging with iMatrics service:
@@ -58,7 +64,11 @@ class AIService(BaseService):
 
         {
             "service": "imatrics",
-            "item_id": "some_id"
+            "item": {
+                "guid": "some_id",
+                "headline": "item headline",
+                "body_html": "item content"
+            }
         }
 
     """
@@ -66,13 +76,13 @@ class AIService(BaseService):
     def create(self, docs, **kwargs):
         doc = docs[0]
         service = doc["service"]
-        item_id = doc.get('item_id')
+        item = doc["item"]
         try:
             service = registered_ai_services[service]
         except KeyError:
             raise SuperdeskApiError.notFoundError("{service} service can't be found".format(service=service))
 
-        analyzed_data = service.analyze(item_id)
+        analyzed_data = service.analyze(item)
         docs[0].update({"analysis": analyzed_data})
         return [0]
 

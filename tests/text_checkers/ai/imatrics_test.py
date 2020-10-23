@@ -8,9 +8,8 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
-from urllib.parse import urljoin
 import responses
-from flask import Flask
+from urllib.parse import urljoin
 from superdesk.tests import TestCase
 from superdesk.text_checkers import tools
 from superdesk.text_checkers import ai
@@ -22,45 +21,34 @@ ai.AUTO_IMPORT = False
 TEST_BASE_URL = "https://something.example.org"
 
 
-@responses.activate
-def load_ai_services():
-    """Load ai servies by mocking Grammalecte server, so it can be detected"""
-    registered_ai_services.clear()
-    app = Flask(__name__)
-    app.config["IMATRICS_BASE_URL"] = TEST_BASE_URL
-    app.config["IMATRICS_USER"] = "some_user"
-    app.config["IMATRICS_KEY"] = "some_secret_key"
-    tools.import_services(app, ai.__name__, AIServiceBase)
-
-
 class IMatricsTestCase(TestCase):
 
-    @classmethod
-    def setUpClass(cls):
-        super().setUpClass()
-        load_ai_services()
+    maxDiff = None
+
+    item = {
+        "_id": "test_1",
+        "guid": "test_1",
+        "type": "text",
+        "version": 1,
+        "body_html": "<p>this is a fake article to test the imatrics service, it should be returning some "
+                     "interesting tags.</p>",
+        "headline": "test imatrics",
+        "slugline": "test imatrics",
+    }
 
     def setUp(self):
-        with self.app.app_context():
-            self.app.data.insert('archive', [
-                {
-                    "_id": "test_1",
-                    "guid": "test_1",
-                    "type": "text",
-                    "version": 1,
-                    "body_html": "<p>this is a fake article to test the imatrics service, it should be returning some "
-                                 "interesting tags.</p>",
-                    "headline": "test imatrics",
-                    "slugline": "test imatrics",
-                }
-            ])
+        self.app.config["IMATRICS_BASE_URL"] = TEST_BASE_URL
+        self.app.config["IMATRICS_USER"] = "some_user"
+        self.app.config["IMATRICS_KEY"] = "some_secret_key"
+        registered_ai_services.clear()
+        tools.import_services(self.app, ai.__name__, AIServiceBase)
 
     @responses.activate
     def test_autotagging(self):
         """Check that autotagging is working"""
         doc = {
             "service": "imatrics",
-            "item_id": "test_1",
+            "item": self.item,
         }
         ai_service = get_resource_service('ai')
         api_url = urljoin(TEST_BASE_URL, "article/concept")
@@ -73,7 +61,7 @@ class IMatricsTestCase(TestCase):
                     "links": [],
                     "title": "IT",
                     "type": "topic",
-                    "uuid": "e3c482c0-08a4-3b31-a7f1-e231f1ddffc4"
+                    "uuid": "e3c482c0-08a4-3b31-a7f1-e231f1ddffc4",
                 },
                 {
                     "weight": 0.8387794287831216,
@@ -107,25 +95,33 @@ class IMatricsTestCase(TestCase):
         expected = {
             "subject": [
                 {
-                    "media_topics": [],
-                    "title": "IT",
-                    "uuid": "e3c482c0-08a4-3b31-a7f1-e231f1ddffc4",
+                    "name": "IT",
+                    "qcode": "e3c482c0-08a4-3b31-a7f1-e231f1ddffc4",
+                    "scheme": "imatrics_topic",
+                    "source": "imatrics",
+                    "altids": {
+                        "imatrics": "e3c482c0-08a4-3b31-a7f1-e231f1ddffc4",
+                    },
                 },
                 {
-                    "media_topics": [
-                        {
-                            "name": "informasjons- og kommunikasjonsteknologi",
-                            "code": "20000763"
-                        }
-                    ],
-                    "title": "informasjons- og kommunikasjonsteknologi",
-                    "uuid": "c8a83204-29e0-3a7f-9a0e-51e76d885f7f",
+                    "name": "informasjons- og kommunikasjonsteknologi",
+                    "qcode": "20000763",
+                    "scheme": "imatrics_category",
+                    "source": "imatrics",
+                    "altids": {
+                        "imatrics": "c8a83204-29e0-3a7f-9a0e-51e76d885f7f",
+                        "medtop": "20000763",
+                    },
                 },
                 {
-                    "media_topics": [],
-                    "title": "Service",
-                    "uuid": "44f52663-52f9-3836-ac45-ae862fe945a3",
-                }
+                    "name": "Service",
+                    "qcode": "44f52663-52f9-3836-ac45-ae862fe945a3",
+                    "scheme": "imatrics_topic",
+                    "source": "imatrics",
+                    "altids": {
+                        "imatrics": "44f52663-52f9-3836-ac45-ae862fe945a3",
+                    },
+                },
             ]
         }
 
@@ -140,7 +136,7 @@ class IMatricsTestCase(TestCase):
             "data": {"term": "informasjons"},
         }
         ai_data_op_service = get_resource_service('ai_data_op')
-        api_url = urljoin(TEST_BASE_URL, "concept/get")
+        api_url = urljoin(TEST_BASE_URL, "concept/get?operation=title_type")
         responses.add(
             responses.POST, api_url,
             json={
@@ -152,7 +148,7 @@ class IMatricsTestCase(TestCase):
                         "latestVersionTimestamp": "2020-07-14T15:26:26Z",
                         "author": "NTB",
                         "createdTimestamp": "2020-07-14T15:26:26Z",
-                        "shortDescription": "",
+                        "shortDescription": "title",
                         "broader": "",
                         "title": "informasjons- og kommunikasjonsteknologi",
                         "type": "category",
@@ -165,7 +161,7 @@ class IMatricsTestCase(TestCase):
                         "latestVersionTimestamp": "2020-07-14T15:26:24Z",
                         "author": "NTB",
                         "createdTimestamp": "2020-07-14T15:26:24Z",
-                        "shortDescription": "",
+                        "shortDescription": "title",
                         "broader": "",
                         "title": "informasjonsvitenskap",
                         "type": "category",
@@ -180,19 +176,30 @@ class IMatricsTestCase(TestCase):
         ai_data_op_service.create([doc])
 
         expected = {
-            'tags': [{'media_topics': [],
-                      'title': 'informasjons- og kommunikasjonsteknologi',
-                      'type': 'subject',
-                      'uuid': 'c8a83204-29e0-3a7f-9a0e-51e76d885f7f',
-                      'source': 'NTB',
-
-                      },
-                     {'media_topics': [],
-                      'title': 'informasjonsvitenskap',
-                      'type': 'subject',
-                      'uuid': 'af815add-8456-3226-8177-ea0d8e3011eb',
-                      'source': 'NTB',
-                      }]
+            'tags': {
+                'subject': [
+                    {
+                        'name': 'informasjons- og kommunikasjonsteknologi',
+                        'qcode': 'c8a83204-29e0-3a7f-9a0e-51e76d885f7f',
+                        'scheme': 'imatrics_category',
+                        'source': 'imatrics',
+                        'description': 'title',
+                        'altids': {
+                            'imatrics': 'c8a83204-29e0-3a7f-9a0e-51e76d885f7f',
+                        },
+                    },
+                    {
+                        'name': 'informasjonsvitenskap',
+                        'qcode': 'af815add-8456-3226-8177-ea0d8e3011eb',
+                        'scheme': 'imatrics_category',
+                        'source': 'imatrics',
+                        'description': 'title',
+                        'altids': {
+                            'imatrics': 'af815add-8456-3226-8177-ea0d8e3011eb',
+                        },
+                    },
+                ]
+            }
         }
 
         self.assertEqual(doc['result'], expected)
@@ -253,7 +260,7 @@ class IMatricsTestCase(TestCase):
         api_url = urljoin(TEST_BASE_URL, "concept/delete") + "?uuid=afc7e49d-57d0-34af-b184-b7600af362a9"
         responses.add(
             responses.DELETE, api_url,
-            body="Concept deleted",
+            json={"error": False},
         )
         ai_data_op_service.create([doc])
 
