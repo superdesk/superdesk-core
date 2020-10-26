@@ -74,6 +74,16 @@ DESK_HISTORY = 'desk_history'
 
 ITEM_EVENT_ID = 'event_id'
 
+geopoint = {
+    'type': 'dict',
+    'mapping': {'type': 'geo_point'},
+    'nullable': True,
+    'schema': {
+        'lat': {'type': 'float'},
+        'lon': {'type': 'float'},
+    },
+}
+
 metadata_schema = {
     config.ID_FIELD: {
         'type': 'string',
@@ -416,13 +426,27 @@ metadata_schema = {
                 'country': {'type': 'string'},
                 'code': {'type': 'string'},
                 'scheme': {'type': 'string'},
-                'location': {
+                'location': geopoint,
+                'place': {
                     'type': 'dict',
-                    'mapping': {'type': 'geo_point'},
                     'nullable': True,
+                    'mapping': not_enabled,
                     'schema': {
-                        'lat': {'type': 'integer'},
-                        'lon': {'type': 'integer'},
+                        'scheme': {'type': 'string'},
+                        'qcode': {'type': 'string'},
+                        'code': {'type': 'string'},
+                        'name': {'type': 'string'},
+                        'locality': {'type': 'string'},
+                        'state': {'type': 'string'},
+                        'country': {'type': 'string'},
+                        'world_region': {'type': 'string'},
+                        'locality_code': {'type': 'string'},
+                        'state_code': {'type': 'string'},
+                        'country_code': {'type': 'string'},
+                        'world_region_code': {'type': 'string'},
+                        'feature_class': {'type': 'string'},
+                        'rel': {'type': 'string'},
+                        'location': geopoint,
                     },
                 },
             }},
