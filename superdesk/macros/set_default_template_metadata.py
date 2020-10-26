@@ -72,7 +72,11 @@ def set_default_template_metadata(item, **kwargs):
             to_add.append(sub)
 
     # and now we add the new one
-    item.get('subject', []).extend([i for i in to_add if i.get('scheme') and to_add])
+    item.setdefault('subject', []).extend([i for i in to_add if i.get('scheme') and to_add])
+
+    if not item['subject'] and data.get('subject'):
+        item['subject'] = data.get('subject')
+
     return item
 
 
