@@ -115,8 +115,8 @@ geopoint = {
     'mapping': {'type': 'geo_point'},
     'nullable': True,
     'schema': {
-        'lat': {'type': 'integer'},
-        'lon': {'type': 'integer'},
+        'lat': {'type': 'float'},
+        'lon': {'type': 'float'},
     },
 }
 
