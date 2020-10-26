@@ -132,3 +132,12 @@ def get_assets_count(set_ids):
         set_ids=set_ids
     )
     return counts
+
+
+@assets_bp.route("/sams/assets/compressed_binary/<asset_ids>", methods=["GET"])
+def get_assets_compressed_binary(asset_ids):
+    asset_ids = ast.literal_eval(asset_ids) if asset_ids else None
+    zip_binary = assets_bp.kwargs["client"].assets.get_binary_zip_by_id(
+        item_ids=asset_ids
+    )
+    return zip_binary.content
