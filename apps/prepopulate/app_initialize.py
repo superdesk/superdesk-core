@@ -2,6 +2,8 @@ import json
 import logging
 import os
 import re
+import elasticsearch.exceptions
+
 from collections import OrderedDict
 from pathlib import Path
 
@@ -261,7 +263,14 @@ class AppInitializeWithDataCommand(superdesk.Command):
         # create indexes in mongo
         app.init_indexes()
         # put mapping to elastic
-        app.data.init_elastic(app)
+        try:
+            app.data.init_elastic(app)
+        except elasticsearch.exceptions.TransportError as err:
+            if 'update' in str(err):
+                logger.error(err)
+                logger.warning("Can't update the mapping, please run app:rebuild_elastic_index command.")
+            else:
+                raise
 
         if init_index_only:
             logger.info('Only indexes initialized.')

@@ -529,11 +529,13 @@ metadata_schema = {
         'type': 'dict',
         'schema': {},
         'allow_unknown': True,
+        'mapping': not_enabled,
     },
     'filemeta': {
         'type': 'dict',
         'schema': {},
         'allow_unknown': True,
+        'mapping': not_enabled,
     },
     'filemeta_json': {
         'type': 'string'
