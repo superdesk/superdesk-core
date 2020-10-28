@@ -506,7 +506,12 @@ def render_content_template(item, template, update=False):
     :param dict template: template
     :return dict: updates to the item
     """
+
     kwargs = dict(item=item, user=get_user())
+    dateline_present_in_user_preferences = (kwargs['user'].get('user_preferences', {})
+                                            .get('dateline:located', {}).get('located'))
+    if dateline_present_in_user_preferences:
+        TEMPLATE_DATA_IGNORE_FIELDS.add('dateline')
     template_data = template.get('data', {}) if template else {}
 
     def render_content_template_fields(data, dest=None, top=True):
