@@ -197,13 +197,16 @@ class ContentTemplatesService(BaseService):
         privileges = active_user.get('active_privileges', {})
         if not lookup:
             lookup = {}
-        if not privileges.get('content_templates') and not privileges.get('personal_template'):
-            lookup.update({'$and': [{'is_public': False}, {'user': active_user.get('_id')}]})
-        elif not privileges.get('content_templates') and privileges.get('personal_template'):
-            lookup.update({'$or': [{'is_public': False}, {'user': active_user.get('_id')}]})
-        elif privileges.get('content_templates') and not privileges.get('personal_template'):
-            lookup.update({'$or': [{'is_public': True}, {'user': active_user.get('_id')}]})
-
+        if req and req.args and req.args.get('manage'):
+            if not privileges.get('content_templates') and not privileges.get('personal_template'):
+                lookup.update({'$and': [{'is_public': False}, {'user': active_user.get('_id')}]})
+            elif not privileges.get('content_templates') and privileges.get('personal_template'):
+                lookup.update({'$or': [{'is_public': False}, {'user': active_user.get('_id')}]})
+            elif (privileges.get('content_templates') and not privileges.get('personal_template')):
+                lookup.update({'$or': [{'is_public': True}, {'user': active_user.get('_id')}]})
+        else:
+            if not privileges.get('personal_template'):
+                lookup.update({'$or': [{'is_public': True}, {'user': active_user.get('_id')}]})
         results = super().get(req, lookup)
 
         return results
