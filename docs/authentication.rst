@@ -78,3 +78,8 @@ Superdesk SAML Auth
 -------------------
 
 .. automodule:: superdesk.auth.saml
+
+Superdesk OpenID Connect Auth
+-----------------------------
+
+.. automodule:: apps.auth.oidc

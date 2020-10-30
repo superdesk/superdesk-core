@@ -162,3 +162,4 @@ from .email_formatter import EmailFormatter  # NOQA
 from .ninjs_newsroom_formatter import NewsroomNinjsFormatter  # NOQA
 from .idml_formatter import IDMLFormatter  # NOQA
 from .ninjs_ftp_formatter import FTPNinjsFormatter  # NOQA
+from .imatrics import IMatricsFormatter  # NOQA

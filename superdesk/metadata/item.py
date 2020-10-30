@@ -9,6 +9,7 @@
 # at https://www.sourcefabric.org/superdesk/license
 
 from typing import NamedTuple
+from copy import deepcopy
 
 from superdesk.resource import Resource, not_analyzed, not_indexed, not_enabled
 from .packages import LINKED_IN_PACKAGES, PACKAGE
@@ -108,6 +109,31 @@ LAST_PRODUCTION_DESK = 'last_production_desk'
 DESK_HISTORY = 'desk_history'
 
 ITEM_EVENT_ID = 'event_id'
+
+geopoint = {
+    'type': 'dict',
+    'mapping': {'type': 'geo_point'},
+    'nullable': True,
+    'schema': {
+        'lat': {'type': 'float'},
+        'lon': {'type': 'float'},
+    },
+}
+
+entity_metadata = {
+    'type': 'list',
+    'nullable': True,
+    'mapping': {
+        'type': 'object',
+        'dynamic': False,
+        'properties': {
+            'name': not_analyzed,
+            'qcode': not_analyzed,
+            'scheme': not_analyzed,
+            'source': not_analyzed,
+        },
+    },
+}
 
 metadata_schema = {
     config.ID_FIELD: {
@@ -451,13 +477,27 @@ metadata_schema = {
                 'country': {'type': 'string'},
                 'code': {'type': 'string'},
                 'scheme': {'type': 'string'},
-                'location': {
+                'location': geopoint,
+                'place': {
                     'type': 'dict',
-                    'mapping': {'type': 'geo_point'},
                     'nullable': True,
+                    'mapping': not_enabled,
                     'schema': {
-                        'lat': {'type': 'integer'},
-                        'lon': {'type': 'integer'},
+                        'scheme': {'type': 'string'},
+                        'qcode': {'type': 'string'},
+                        'code': {'type': 'string'},
+                        'name': {'type': 'string'},
+                        'locality': {'type': 'string'},
+                        'state': {'type': 'string'},
+                        'country': {'type': 'string'},
+                        'world_region': {'type': 'string'},
+                        'locality_code': {'type': 'string'},
+                        'state_code': {'type': 'string'},
+                        'country_code': {'type': 'string'},
+                        'world_region_code': {'type': 'string'},
+                        'feature_class': {'type': 'string'},
+                        'rel': {'type': 'string'},
+                        'location': geopoint,
                     },
                 },
             }},
@@ -489,11 +529,13 @@ metadata_schema = {
         'type': 'dict',
         'schema': {},
         'allow_unknown': True,
+        'mapping': not_enabled,
     },
     'filemeta': {
         'type': 'dict',
         'schema': {},
         'allow_unknown': True,
+        'mapping': not_enabled,
     },
     'filemeta_json': {
         'type': 'string'
@@ -581,18 +623,10 @@ metadata_schema = {
         },
     },
 
-    'person': {
-        'type': 'list',
-        'nullable': True,
-        'mapping': {
-            'type': 'object',
-            'dynamic': False,
-            'properties': {
-                'lastname': not_analyzed,
-                'firstname': not_analyzed,
-            },
-        },
-    },
+    'event': deepcopy(entity_metadata),
+    'person': deepcopy(entity_metadata),
+    'object': deepcopy(entity_metadata),
+    'organisation': deepcopy(entity_metadata),
 
     # Not Categorized
     'creditline': {
@@ -647,7 +681,7 @@ metadata_schema = {
             'desk': {'type': 'string', 'mapping': not_analyzed},
             'desk_history': {'type': 'list', 'mapping': not_analyzed},
             'last_desk': {'type': 'string', 'mapping': not_analyzed},
-            'stage': {'type': 'string', 'mapping': not_analyzed},
+            'stage': {'type': 'string', 'mapping': not_analyzed, 'nullable': True},
             'status': {'type': 'string', 'mapping': not_analyzed},
         },
     },

@@ -408,6 +408,7 @@ else:
     CORE_APPS.append('superdesk.users')
     CORE_APPS.append('apps.auth.db')
     CORE_APPS.append('apps.auth.xmpp')
+    CORE_APPS.append('apps.auth.oidc')
 
 
 CORE_APPS.extend([
@@ -913,4 +914,18 @@ USER_EXTERNAL_USERNAME_STRIP_DOMAIN = False
 USER_USERNAME_PATTERN = None
 
 #: Default instance language
+#:
+#: .. versionadded:: 2.0
+#:
 DEFAULT_LANGUAGE = 'en'
+
+#: OIDC config
+#:
+#: .. versionadded:: 2.1
+#:
+OIDC_ENABLED = strtobool(env('OIDC_ENABLED', 'false'))
+OIDC_ISSUER_URL = env('OIDC_ISSUER_URL', 'http://localhost:8080/auth/realms/SUPERDESK_REALM')
+OIDC_SERVER_CLIENT = env('OIDC_SERVER_CLIENT')
+OIDC_SERVER_CLIENT_SECRET = env('OIDC_SERVER_CLIENT_SECRET')
+OIDC_WEB_CLIENT = env('OIDC_WEB_CLIENT')
+OIDC_BROWSER_REDIRECT_URL = env('OIDC_BROWSER_REDIRECT_URL', CLIENT_URL)

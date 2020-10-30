@@ -107,7 +107,7 @@ class MediaEditorTestCase(BaseMediaEditorTestCase):
         """Test saturation change"""
         item = self.do_edit({"saturation": 0})
         md5_hash = self.md5_sum(item, 'original')
-        self.assertEqual(md5_hash, '9693480b4e15843bed520fa1a159fb5a')
+        self.assertEqual(md5_hash, 'e5e82193eb8f17185d2dd5628798973b')
 
     def test_update(self):
         """Test that item is updated correctly"""
@@ -116,5 +116,5 @@ class MediaEditorTestCase(BaseMediaEditorTestCase):
         expected_media_id = item['renditions']['original']['media']
         self.assertNotEqual(original_media_id, expected_media_id)
         md5_hash = self.md5_sum(item, 'original')
-        self.assertEqual(md5_hash, '4e88727bb595d21ecdc7670a6afb099c')
+        self.assertEqual(md5_hash, '4d598de991f07a125d8a68933d2a22c8')
         self.assertEqual(item['renditions']['original']['media'], expected_media_id)

@@ -21,7 +21,7 @@ install_requires = [
     'flask-mail>=0.9,<0.10',
     'flask-script>=2.0.5,<3.0',
     'flask-babel>=1.0,<1.1',
-    'pillow>=3.0,<=5.0',
+    'pillow>=8.0,<9.0',
     'arrow>=0.4,<=0.13',
     'asyncio>=3.4,<3.5',
     'bcrypt>=3.1.1,<3.2',
@@ -54,6 +54,7 @@ install_requires = [
     'draftjs-exporter[lxml]<2.2',
     'werkzeug>=1.0,<1.1',
     'regex==2020.7.14',
+    'flask-oidc-ex==0.5.5',
     'vine==1.3.0',
 ]
 

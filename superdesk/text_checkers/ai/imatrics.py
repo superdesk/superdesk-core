@@ -7,12 +7,13 @@
 # at https://www.sourcefabric.org/superdesk/license
 
 import os
-from os.path import join
 import logging
 import requests
+
+from flask import current_app
 from collections import OrderedDict
 from typing import Optional, Dict, List
-from superdesk import get_resource_service
+from urllib.parse import urljoin
 from superdesk import etree
 from superdesk.errors import SuperdeskApiError
 from .base import AIServiceBase
@@ -24,9 +25,9 @@ TIMEOUT = 30
 CONCEPT_MAPPING = OrderedDict([
     # following concepts don't have clear equivalent in SD
     ("category", "subject"),
-    ("object", "subject"),
+    ("object", "object"),
     ("entity", "organisation"),
-    ("event", "subject"),
+    ("event", "event"),
 
     ("topic", "subject"),
     ("organisation", "organisation"),
@@ -51,25 +52,39 @@ class IMatrics(AIServiceBase):
 
     def __init__(self, app):
         super().__init__(app)
-        self.base_url = self.config.get("IMATRICS_BASE_URL", os.environ.get("IMATRICS_BASE_URL"))
-        self.user = self.config.get("IMATRICS_USER", os.environ.get("IMATRICS_USER"))
-        self.key = self.config.get("IMATRICS_KEY", os.environ.get("IMATRICS_KEY"))
         self.convept_map_inv = {v: k for k, v in CONCEPT_MAPPING.items()}
+
+    @property
+    def base_url(self):
+        return current_app.config.get("IMATRICS_BASE_URL", os.environ.get("IMATRICS_BASE_URL"))
+
+    @property
+    def user(self):
+        return current_app.config.get("IMATRICS_USER", os.environ.get("IMATRICS_USER"))
+
+    @property
+    def key(self):
+        return current_app.config.get("IMATRICS_KEY", os.environ.get("IMATRICS_KEY"))
 
     def concept2tag_data(self, concept: dict) -> dict:
         """Convert an iMatrics concept to Superdesk friendly data"""
         tag_data = {
-            "uuid": concept["uuid"],
-            "title": concept["title"],
+            "name": concept["title"],
+            "qcode": concept["uuid"],
+            "source": "imatrics",
+            "altids": {
+                "imatrics": concept["uuid"],
+            }
         }
+
+        if concept.get("shortDescription") and concept["shortDescription"].strip():
+            tag_data["description"] = concept["shortDescription"].strip()
+
         try:
             tag_type = CONCEPT_MAPPING[concept["type"]]
         except KeyError:
             logger.warning("no mapping for concept type {concept_type!r}".format(concept_type=concept["type"]))
             tag_type = concept["type"]
-
-        if "author" in concept:
-            tag_data["source"] = concept["author"]
 
         tag_data["type"] = tag_type
 
@@ -77,25 +92,17 @@ class IMatrics(AIServiceBase):
             tag_data["weight"] = concept["weight"]
         except KeyError:
             pass
-        if tag_type == "person":
-            title = tag_data.pop("title")
-            try:
-                tag_data["firstname"], tag_data["lastname"] = title.split(" ", 1)
-            except ValueError:
-                tag_data["firstname"], tag_data["lastname"] = "", title
 
-        media_topics = tag_data["media_topics"] = []
         for link in concept.get('links', []):
             if link.get("source") == "IPTC":
                 topic_id = link.get("id", "")
                 if topic_id.startswith("medtop:"):
                     topic_id = topic_id[7:]
-                media_topics.append({
-                    "name": concept["title"],
-                    "code": topic_id,
-                })
-            else:
-                tag_data.setdefault('links', []).append(link)
+                    tag_data["qcode"] = topic_id
+                    tag_data["altids"]["medtop"] = topic_id
+
+        if concept["type"] in ('topic', 'category'):
+            tag_data['scheme'] = 'imatrics_{}'.format(concept["type"])
 
         return tag_data
 
@@ -107,18 +114,11 @@ class IMatrics(AIServiceBase):
                     name=self.name, verb=verb, operation=operation)
             )
 
-    def analyze(self, item_id: str) -> dict:
+    def analyze(self, item: dict) -> dict:
         """Analyze article to get tagging suggestions"""
         if not self.base_url or not self.user or not self.key:
             logger.warning("IMatrics is not configured propertly, can't analyze article")
             return {}
-        url = join(self.base_url, "article/concept")
-        archive_service = get_resource_service("archive")
-        item = archive_service.find_one(req=None, _id=item_id)
-        if item is None:
-            logger.warning("Could not find any item with id {item_id}".format(item_id=item_id))
-            return {}
-
         try:
             body = [p.strip() for p in item["body_text"].split("\n") if p.strip()]
         except KeyError:
@@ -128,12 +128,12 @@ class IMatrics(AIServiceBase):
                     if p.strip()
                 ]
             except KeyError:
-                logger.warning("no body found in item {item_id!r}".format(item_id=item_id))
+                logger.warning("no body found in item {item_id!r}".format(item_id=item['guid']))
                 body = []
 
         headline = item.get('headline', '')
         if not body and not headline:
-            logger.warning("no body nor headline found in item {item_id!r}".format(item_id=item_id))
+            logger.warning("no body nor headline found in item {item_id!r}".format(item_id=item['guid']))
             # we return an empty result
             return {"subject": []}
 
@@ -142,15 +142,8 @@ class IMatrics(AIServiceBase):
             "headline": headline,
             "body": body,
         }
-        r = requests.post(url, json=data, auth=(self.user, self.key), timeout=TIMEOUT)
-        if r.status_code != 200:
-            raise SuperdeskApiError.proxyError("Unexpected return code ({status_code}) from {name}: {msg}".format(
-                name=self.name,
-                status_code=r.status_code,
-                msg=r.text,
-            ))
 
-        r_data = r.json()
+        r_data = self._request("article/concept", data)
 
         analyzed_data: Dict[str, List] = {}
 
@@ -167,7 +160,6 @@ class IMatrics(AIServiceBase):
         return analyzed_data
 
     def search(self, data: dict) -> dict:
-        search_url = join(self.base_url, "concept/get")
 
         data = {
             "title": data['term'],
@@ -175,35 +167,19 @@ class IMatrics(AIServiceBase):
             "draft": False,
             "size": 10,
         }
-        r = requests.post(
-            search_url,
-            params={'operation': 'title_type'},
-            json=data,
-            auth=(self.user, self.key),
-            timeout=TIMEOUT
-        )
 
-        if r.status_code != 200:
-            raise SuperdeskApiError.proxyError("Unexpected return code ({status_code}) from {name}: {msg}".format(
-                name=self.name,
-                status_code=r.status_code,
-                msg=r.text,
-            ))
+        r_data = self._request("concept/get", data, params=dict(operation='title_type'))
 
-        r_data = r.json()
-
-        tags: List[Dict] = []
-        ret = {
-            'tags': tags
-        }
+        tags: Dict[str, List[Dict]] = {}
+        ret = {'tags': tags}
         for concept in r_data['result']:
             tag_data = self.concept2tag_data(concept)
-            tags.append(tag_data)
+            tag_type = tag_data.pop('type')
+            tags.setdefault(tag_type, []).append(tag_data)
 
         return ret
 
     def create(self, data: dict) -> dict:
-        create_url = join(self.base_url, "concept/create")
         concept = {}
 
         try:
@@ -221,21 +197,7 @@ class IMatrics(AIServiceBase):
             logger.warning("no mapping for superdesk type {sd_type!r}".format(sd_type=sd_type))
             concept["type"] = "topic"
 
-        r = requests.post(
-            create_url,
-            json=concept,
-            auth=(self.user, self.key),
-            timeout=TIMEOUT
-        )
-
-        if r.status_code != 200:
-            raise SuperdeskApiError.proxyError("Unexpected return code ({status_code}) from {name}: {msg}".format(
-                name=self.name,
-                status_code=r.status_code,
-                msg=r.text,
-            ))
-
-        r_data = r.json()
+        r_data = self._request("concept/create", concept)
 
         if r_data['error']:
             raise SuperdeskApiError.proxyError(
@@ -252,21 +214,7 @@ class IMatrics(AIServiceBase):
         except KeyError:
             raise SuperdeskApiError.badRequestError("[{name}] no tag UUID specified".format(name=self.name))
 
-        delete_url = join(self.base_url, "concept/delete")
-        r = requests.delete(
-            delete_url,
-            params={'uuid': data["uuid"]},
-            auth=(self.user, self.key),
-            timeout=TIMEOUT
-        )
-
-        if r.status_code != 200:
-            raise SuperdeskApiError.proxyError("Unexpected return code ({status_code}) from {name}: {msg}".format(
-                name=self.name,
-                status_code=r.status_code,
-                msg=r.text,
-            ))
-
+        self._request("concept/delete", method='DELETE', params={'uuid': data["uuid"]})
         return {}
 
     def data_operation(
@@ -293,3 +241,17 @@ class IMatrics(AIServiceBase):
                 "[{name}] Unexpected operation: {operation}".format(
                     name=name, operation=operation)
             )
+
+    def publish(self, data):
+        return self._request('article/publish', data)
+
+    def _request(self, service, data=None, method='POST', params=None):
+        url = urljoin(self.base_url, service)
+        r = requests.request(method, url, json=data, auth=(self.user, self.key), params=params, timeout=TIMEOUT)
+        if r.status_code != 200:
+            raise SuperdeskApiError.proxyError("Unexpected return code ({status_code}) from {name}: {msg}".format(
+                name=self.name,
+                status_code=r.status_code,
+                msg=r.text,
+            ))
+        return r.json()
