@@ -433,6 +433,9 @@ metadata_schema = {
                     'mapping': not_enabled,
                     'schema': {
                         'scheme': {'type': 'string'},
+                        'continent_code': {'type': 'string'},
+                        'region': {'type': 'string'},
+                        'region_code': {'type': 'string'},
                         'qcode': {'type': 'string'},
                         'code': {'type': 'string'},
                         'name': {'type': 'string'},
@@ -447,6 +450,7 @@ metadata_schema = {
                         'feature_class': {'type': 'string'},
                         'rel': {'type': 'string'},
                         'location': geopoint,
+                        'tz': {'type': 'string'},
                     },
                 },
             }},
