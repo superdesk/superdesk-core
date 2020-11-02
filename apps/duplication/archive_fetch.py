@@ -89,7 +89,14 @@ class FetchService(BaseService):
                     **macro_kwargs,
                 )
 
-            dest_doc = fetch_item(ingest_doc, desk_id, stage_id, state=doc.get(ITEM_STATE), target=doc.get('target'))
+            dest_doc = fetch_item(
+                ingest_doc, desk_id, stage_id,
+                # we might want to change state or target from the macro
+                state=ingest_doc[ITEM_STATE]
+                if ingest_doc.get(ITEM_STATE) and ingest_doc[ITEM_STATE] != CONTENT_STATE.INGESTED
+                else doc.get(ITEM_STATE),
+                target=ingest_doc.get('target', doc.get('target'))
+            )
 
             id_of_fetched_items.append(dest_doc[config.ID_FIELD])
             ingest_service.patch(id_of_item_to_be_fetched, {'archived': dest_doc['versioncreated']})
