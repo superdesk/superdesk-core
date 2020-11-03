@@ -561,14 +561,43 @@ class SluglineDeskService(BaseService):
 
 class OverviewResource(Resource):
     url = r'desks/<regex("([a-f0-9]{24})|all"):desk_id>/overview/<regex("stages|assignments|users"):agg_type>'
+    privileges = {'POST': 'desks'}
     resource_title = "desk_overview"
-    resource_methods = ['GET']
+    resource_methods = ['GET', 'POST']
+    schema = {
+        'filters': {
+            'type': 'dict',
+            'schema': {
+                'slugline': {
+                    'type': 'list',
+                    'mapping': {
+                        'type': 'string'
+                    }
+                },
+                'headline': {
+                    'type': 'list',
+                    'mapping': {
+                        'type': 'string'
+                    }
+                },
+                'byline': {
+                    'type': 'list',
+                    'mapping': {
+                        'type': 'string'
+                    }
+                },
+            }
+        }
+    }
+    datasource = {
+        'projection': {'_items': 1}
+    }
 
 
 class OverviewService(BaseService):
     """Aggregate count of items per stage or status"""
 
-    def on_fetched(self, doc):
+    def _do_request(self, doc):
         desk_id = request.view_args['desk_id']
         agg_type = request.view_args['agg_type']
         timer_label = "{agg_type} overview aggregation {desk_id!r}".format(agg_type=agg_type, desk_id=desk_id)
@@ -607,13 +636,29 @@ class OverviewService(BaseService):
             }
         }
 
+        filters = doc.get('filters')
+        if filters:
+            filter_ = agg_query.setdefault("filter", {})
+            match = filter_.setdefault('match', {})
+            for f_name, f_data in filters.items():
+                match_value = ' '.join(f_data)
+                assert f_name not in match
+                match[f_name] = match_value
+
         with timer(timer_label):
-            response = app.data.elastic.search(agg_query, collection, params={"size": 0})
+            response = app.data.elastic.search(agg_query, collection) # , params={"size": 0})
 
         doc["_items"] = [
             {'count': b['doc_count'], key: b['key']}
             for b in response.hits['aggregations']['overview']['buckets']
         ]
+
+    def on_fetched(self, doc):
+        self._do_request(doc)
+
+    def create(self, docs, **kwargs):
+        self._do_request(docs[0])
+        return [0]
 
     def _users_aggregation(self, desk_id: str) -> List[Dict]:
         desks_service = superdesk.get_resource_service('desks')
