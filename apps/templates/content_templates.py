@@ -178,6 +178,10 @@ class ContentTemplatesResource(Resource):
     item_methods = ['GET', 'PATCH', 'DELETE']
     no_privileges = True
 
+    mongo_indexes = {
+        'user_1_template_name_1_is_public_1': ([('user', 1), ('template_name', 1), ('is_public', 1)], {'unique': True}),
+    }
+
 
 class ContentTemplatesService(BaseService):
 
