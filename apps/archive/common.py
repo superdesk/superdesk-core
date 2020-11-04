@@ -819,7 +819,10 @@ def copy_metadata_from_user_preferences(doc, repo_type=ARCHIVE):
 
         if doc.get('operation', '') != 'fetch':
             located = user.get('user_preferences', {}).get('dateline:located', {}).get('located')
-            dateline = doc.get('dateline', {}).get('located')
+            try:
+                dateline = doc['dateline']['located']
+            except (KeyError, TypeError):
+                dateline = None
             if not dateline and user and located:
                 current_date_time = dateline_ts = utcnow()
                 doc['dateline'] = {'date': current_date_time,
