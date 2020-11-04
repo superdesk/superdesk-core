@@ -598,12 +598,12 @@ class OverviewService(BaseService):
     """Aggregate count of items per stage or status"""
 
     def _do_request(self, doc):
-        desk_id = request.view_args['desk_id']
-        agg_type = request.view_args['agg_type']
+        desk_id = request.view_args["desk_id"]
+        agg_type = request.view_args["agg_type"]
         timer_label = "{agg_type} overview aggregation {desk_id!r}".format(agg_type=agg_type, desk_id=desk_id)
-        if agg_type == 'users':
+        if agg_type == "users":
             with timer(timer_label):
-                doc['_items'] = self._users_aggregation(desk_id)
+                doc["_items"] = self._users_aggregation(desk_id)
             return
 
         if agg_type == "stages":
@@ -619,16 +619,20 @@ class OverviewService(BaseService):
         else:
             raise ValueError("Invalid overview aggregation type: {agg_type}".format(agg_type=agg_type))
 
-        if desk_id == 'all':
+        if desk_id == "all":
             agg_query = {}
         else:
             agg_query = {
                 "filter": {
-                    "term": {desk_field: desk_id}
+                    "bool": {
+                        "must": [
+                            {"term": {desk_field: desk_id}}
+                        ]
+                    }
                 }
             }
 
-        agg_query['aggs'] = {
+        agg_query["aggs"] = {
             "overview": {
                 "terms": {
                     "field": field
@@ -636,21 +640,24 @@ class OverviewService(BaseService):
             }
         }
 
-        filters = doc.get('filters')
+        filters = doc.get("filters")
         if filters:
-            filter_ = agg_query.setdefault("filter", {})
-            match = filter_.setdefault('match', {})
+            filter_bool = {"bool": {"should": []}}
+            should = filter_bool["bool"]["should"]
+            if "filter" in agg_query:
+                agg_query["filter"]["bool"]["must"].append(filter_bool)
+            else:
+                agg_query["filter"] = filter_bool
             for f_name, f_data in filters.items():
-                match_value = ' '.join(f_data)
-                assert f_name not in match
-                match[f_name] = match_value
+                for text in f_data:
+                    should.append({"match": {f_name: text}})
 
         with timer(timer_label):
-            response = app.data.elastic.search(agg_query, collection) # , params={"size": 0})
+            response = app.data.elastic.search(agg_query, collection, params={"size": 0})
 
         doc["_items"] = [
-            {'count': b['doc_count'], key: b['key']}
-            for b in response.hits['aggregations']['overview']['buckets']
+            {"count": b["doc_count"], key: b["key"]}
+            for b in response.hits["aggregations"]["overview"]["buckets"]
         ]
 
     def on_fetched(self, doc):
