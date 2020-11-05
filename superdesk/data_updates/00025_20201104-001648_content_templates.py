@@ -7,6 +7,8 @@
 # Author  : administrator
 # Creation: 2020-11-04 00:16
 
+import pymongo.errors
+
 from superdesk.commands.data_updates import DataUpdate
 
 
@@ -15,7 +17,10 @@ class DataUpdate(DataUpdate):
     resource = 'content_templates'
 
     def forwards(self, mongodb_collection, mongodb_database):
-        mongodb_collection.drop_index('user_1_template_name_1')
+        try:
+            mongodb_collection.drop_index('user_1_template_name_1')
+        except pymongo.errors.OperationFailure:
+            pass
 
     def backwards(self, mongodb_collection, mongodb_database):
         pass
