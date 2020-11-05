@@ -55,12 +55,19 @@ def init_highlight_package(doc):
             main_group['refs'].append(package.get_item_ref(item))
             used_items.append(item['_id'])
 
+def init_default_content_profile(doc):
+    if not doc.get('profile'):
+        desk_id = doc.get('task', {}).get('desk')
+        desk = get_resource_service('desks').find_one(req=None, _id=desk_id)
+        doc['profile'] = desk.get('default_content_profile')
+
 
 def on_create_package(sender, docs):
     """Call init_highlight_package for each package with highlight reference."""
     for doc in docs:
         if doc.get('highlight'):
             init_highlight_package(doc)
+            init_default_content_profile(doc)
 
 
 def get_highlight_name(highlights_id):
