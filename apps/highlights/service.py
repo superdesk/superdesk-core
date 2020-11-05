@@ -55,6 +55,7 @@ def init_highlight_package(doc):
             main_group['refs'].append(package.get_item_ref(item))
             used_items.append(item['_id'])
 
+
 def init_default_content_profile(doc):
     if not doc.get('profile'):
         desk_id = doc.get('task', {}).get('desk')
