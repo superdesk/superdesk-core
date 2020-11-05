@@ -114,7 +114,10 @@ class BasePublishService(BaseService):
     def on_update(self, updates, original):
         self._refresh_associated_items(original)
         self._validate(original, updates)
-        self._set_updates(original, updates, updates.get(config.LAST_UPDATED, utcnow()))
+        self._set_updates(
+            original, updates, updates.get(config.LAST_UPDATED, utcnow()),
+            preserve_state=original.get('state') in (CONTENT_STATE.SCHEDULED, ) and 'pubstatus' not in updates
+        )
         convert_task_attributes_to_objectId(updates)  # ???
         transtype_metadata(updates, original)
         self._process_publish_updates(original, updates)
