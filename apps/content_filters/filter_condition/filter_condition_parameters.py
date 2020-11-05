@@ -215,7 +215,7 @@ class FilterConditionParametersService(BaseService):
         for i, stage in enumerate(stages):
             try:
                 desk = next(filter(lambda d: d['_id'] == stage['desk'], desks))
-            except StopIteration:
+            except (StopIteration, KeyError):
                 # if stage has no desk, remove that stage from a list
                 logger.warning('Desk not found for stage with id "{}".'.format(stage['_id']))
                 stages[i] = None
