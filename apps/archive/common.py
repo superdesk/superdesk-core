@@ -21,6 +21,7 @@ from pytz import timezone
 from copy import deepcopy
 
 import superdesk
+from superdesk import editor_utils
 from superdesk.users.services import get_sign_off
 from superdesk.utc import utcnow, get_expiry_date, local_to_utc, get_date
 from superdesk import get_resource_service
