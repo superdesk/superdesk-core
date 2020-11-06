@@ -68,7 +68,7 @@ def set_default_template_metadata(item, **kwargs):
     to_add = []
     for sub in subject:
         if (sub.get('scheme')
-                and not any(subjects.get('scheme') == sub.get('scheme') for subjects in item.get('subject'))):
+                and not any(subjects.get('scheme') == sub.get('scheme') for subjects in item.get('subject', {}))):
             to_add.append(sub)
 
     # and now we add the new one
