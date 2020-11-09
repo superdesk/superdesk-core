@@ -561,20 +561,49 @@ class SluglineDeskService(BaseService):
 
 class OverviewResource(Resource):
     url = r'desks/<regex("([a-f0-9]{24})|all"):desk_id>/overview/<regex("stages|assignments|users"):agg_type>'
+    privileges = {'POST': 'desks'}
     resource_title = "desk_overview"
-    resource_methods = ['GET']
+    resource_methods = ['GET', 'POST']
+    schema = {
+        'filters': {
+            'type': 'dict',
+            'schema': {
+                'slugline': {
+                    'type': 'list',
+                    'mapping': {
+                        'type': 'string'
+                    }
+                },
+                'headline': {
+                    'type': 'list',
+                    'mapping': {
+                        'type': 'string'
+                    }
+                },
+                'byline': {
+                    'type': 'list',
+                    'mapping': {
+                        'type': 'string'
+                    }
+                },
+            }
+        }
+    }
+    datasource = {
+        'projection': {'_items': 1}
+    }
 
 
 class OverviewService(BaseService):
     """Aggregate count of items per stage or status"""
 
-    def on_fetched(self, doc):
-        desk_id = request.view_args['desk_id']
-        agg_type = request.view_args['agg_type']
+    def _do_request(self, doc):
+        desk_id = request.view_args["desk_id"]
+        agg_type = request.view_args["agg_type"]
         timer_label = "{agg_type} overview aggregation {desk_id!r}".format(agg_type=agg_type, desk_id=desk_id)
-        if agg_type == 'users':
+        if agg_type == "users":
             with timer(timer_label):
-                doc['_items'] = self._users_aggregation(desk_id)
+                doc["_items"] = self._users_aggregation(desk_id)
             return
 
         if agg_type == "stages":
@@ -590,16 +619,20 @@ class OverviewService(BaseService):
         else:
             raise ValueError("Invalid overview aggregation type: {agg_type}".format(agg_type=agg_type))
 
-        if desk_id == 'all':
+        if desk_id == "all":
             agg_query = {}
         else:
             agg_query = {
                 "filter": {
-                    "term": {desk_field: desk_id}
+                    "bool": {
+                        "must": [
+                            {"term": {desk_field: desk_id}}
+                        ]
+                    }
                 }
             }
 
-        agg_query['aggs'] = {
+        agg_query["aggs"] = {
             "overview": {
                 "terms": {
                     "field": field
@@ -607,13 +640,32 @@ class OverviewService(BaseService):
             }
         }
 
+        filters = doc.get("filters")
+        if filters:
+            filter_bool = {"bool": {"should": []}}
+            should = filter_bool["bool"]["should"]
+            if "filter" in agg_query:
+                agg_query["filter"]["bool"]["must"].append(filter_bool)
+            else:
+                agg_query["filter"] = filter_bool
+            for f_name, f_data in filters.items():
+                for text in f_data:
+                    should.append({"match": {f_name: text}})
+
         with timer(timer_label):
             response = app.data.elastic.search(agg_query, collection, params={"size": 0})
 
         doc["_items"] = [
-            {'count': b['doc_count'], key: b['key']}
-            for b in response.hits['aggregations']['overview']['buckets']
+            {"count": b["doc_count"], key: b["key"]}
+            for b in response.hits["aggregations"]["overview"]["buckets"]
         ]
+
+    def on_fetched(self, doc):
+        self._do_request(doc)
+
+    def create(self, docs, **kwargs):
+        self._do_request(docs[0])
+        return [0]
 
     def _users_aggregation(self, desk_id: str) -> List[Dict]:
         desks_service = superdesk.get_resource_service('desks')

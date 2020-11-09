@@ -430,9 +430,9 @@ Feature: Desks
          {"_id":"2","slugline": "slugline2", "state": "draft",
          "task": {"desk": "#SPORTS_DESK_ID#", "stage": "#desks.working_stage#"}, "place": null, "headline": "two",
          "family_id": 2},
-         {"_id":"3","slugline": "slugline3", "last_published_version": "True", "state": "published",
-         "task": {"desk": "#SPORTS_DESK_ID#", "stage": "#desks.incoming_stage#"}, "place": null, "headline": "three",
-         "family_id": 2},
+         {"_id":"3","slugline": "slugline3", "byline": "byline1", "last_published_version": "True",
+         "state": "published", "task": {"desk": "#SPORTS_DESK_ID#", "stage": "#desks.incoming_stage#"}, "place": null,
+         "headline": "three", "family_id": 2},
          {"_id":"4","slugline": "slugline4", "last_published_version": "True", "state": "published",
          "task": {"desk": "#POLITICS_DESK_ID#", "stage": "#desks.incoming_stage#"}, "place": null, "headline": "four",
          "family_id": 2},
@@ -473,7 +473,64 @@ Feature: Desks
                 ]
             }
         """
-        
+        When we post to "/desks/all/overview/stages"
+        """
+            {
+                "filters": {
+                    "slugline": ["slugline3", "slugline4"]
+                }
+            }
+        """
+        Then we get existing resource
+        """
+            {
+                "_items": [
+                    {
+                        "stage": "#desks.incoming_stage#",
+                        "count": 2
+                    }
+                ]
+            }
+        """
+        When we post to "/desks/#SPORTS_DESK_ID#/overview/stages"
+        """
+            {
+                "filters": {
+                    "headline": ["two"]
+                }
+            }
+        """
+        Then we get existing resource
+        """
+            {
+                "_items": [
+                    {
+                        "stage": "#desks.working_stage#",
+                        "count": 1
+                    }
+                ]
+            }
+        """
+        When we post to "/desks/#SPORTS_DESK_ID#/overview/stages"
+        """
+            {
+                "filters": {
+                    "byline": ["byline1"]
+                }
+            }
+        """
+        Then we get existing resource
+        """
+            {
+                "_items": [
+                    {
+                        "stage": "#desks.incoming_stage#",
+                        "count": 1
+                    }
+                ]
+            }
+        """
+
     @auth
     @notification
     Scenario: Retrieve number of items with desk assignents overview
