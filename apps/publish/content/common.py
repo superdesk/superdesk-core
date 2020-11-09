@@ -369,6 +369,7 @@ class BasePublishService(BaseService):
         if len(items) == 0 and self.publish_type == ITEM_PUBLISH:
             raise SuperdeskApiError.badRequestError(_("Empty package cannot be published!"))
 
+        added_items = []
         removed_items = []
         if self.publish_type in [ITEM_CORRECT, ITEM_KILL]:
             removed_items, added_items = self._get_changed_items(items, updates)
@@ -403,6 +404,19 @@ class BasePublishService(BaseService):
                         archive_publish.patch(id=package_item.pop(config.ID_FIELD), updates=package_item)
 
                     insert_into_versions(id_=guid)
+
+                elif guid in added_items:
+                    linked_in_packages = package_item.get(LINKED_IN_PACKAGES, [])
+                    if package[config.ID_FIELD] not in (lp.get(PACKAGE) for lp in linked_in_packages):
+                        linked_in_packages.append({PACKAGE: package[config.ID_FIELD]})
+                        super().system_update(
+                            guid,
+                            {
+                                LINKED_IN_PACKAGES: linked_in_packages,
+                                PUBLISHED_IN_PACKAGE: package[config.ID_FIELD]
+                            },
+                            package_item
+                        )
 
                 elif guid in removed_items:
                     # remove the package information from the package item.
