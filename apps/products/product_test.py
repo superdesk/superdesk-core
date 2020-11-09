@@ -27,6 +27,11 @@ class ProductTestResource(Resource):
     schema = {
         'article_id': {'type': 'string'}
     }
+    datasource = {
+        'projection': {
+            '_items': 1,
+        },
+    }
     url = 'products/test'
     resource_methods = ['POST']
     item_methods = []
