@@ -431,13 +431,19 @@ Feature: Desks
          "task": {"desk": "#SPORTS_DESK_ID#", "stage": "#desks.working_stage#"}, "place": null, "headline": "two",
          "family_id": 2},
          {"_id":"3","slugline": "slugline3", "byline": "byline1", "last_published_version": "True",
-         "state": "published", "task": {"desk": "#SPORTS_DESK_ID#", "stage": "#desks.incoming_stage#"}, "place": null,
+         "state": "draft", "task": {"desk": "#SPORTS_DESK_ID#", "stage": "#desks.incoming_stage#"}, "place": null,
          "headline": "three", "family_id": 2},
-         {"_id":"4","slugline": "slugline4", "last_published_version": "True", "state": "published",
+         {"_id":"4","slugline": "slugline4", "last_published_version": "True", "state": "draft",
          "task": {"desk": "#POLITICS_DESK_ID#", "stage": "#desks.incoming_stage#"}, "place": null, "headline": "four",
          "family_id": 2},
          {"_id":"5","slugline": "slugline5", "state": "draft",
          "task": {"desk": "#POLITICS_DESK_ID#", "stage": "#desks.incoming_stage#"}, "place": null, "headline": "five",
+         "family_id": 2},
+         {"_id":"6","slugline": "slugline6", "state": "published",
+         "task": {"desk": "#SPORTS_DESK_ID#", "stage": "#desks.incoming_stage#"}, "place": null, "headline": "six",
+         "family_id": 2},
+         {"_id":"7","slugline": "slugline6", "state": "killed",
+         "task": {"desk": "#POLITICS_DESK_ID#", "stage": "#desks.incoming_stage#"}, "place": null, "headline": "seven",
          "family_id": 2}
          ]
          """
