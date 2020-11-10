@@ -63,6 +63,19 @@ class SuperdeskGridFSMediaStorage(GridFSMediaStorage, MimetypeMixin):
         """
         return self.app.download_url(str(media_id))
 
+    def url_for_external(self, media_id: str, resource: str = None) -> str:
+        """Returns a URL for external use
+
+        Returns a URL for use with the Content/Production API
+
+        :param str media_id: The ID of the asset
+        :param str resource: The name of the resource type this Asset is attached to
+        :rtype: str
+        :return: The URL for external use
+        """
+
+        return f'/assets/{str(media_id)}'
+
     def fetch_rendition(self, rendition):
         return self.get(rendition.get('media'), 'upload')
 

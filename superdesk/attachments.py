@@ -1,5 +1,6 @@
 
 import os
+from typing import Optional, Dict, Any
 import superdesk
 
 from flask import current_app, request
@@ -71,6 +72,23 @@ def is_attachment_public(attachment):
         attachment = superdesk.get_resource_service('attachments').find_one(req=None, _id=attachment['attachment'])
 
     return not attachment.get('internal')
+
+
+def get_attachment_public_url(attachment: Dict[str, Any]) -> Optional[str]:
+    """Returns the file url for the attachment provided
+
+    :param dict attachment: The attachment to get the file URL
+    :rtype: str
+    :return: None if the attachment is not public, otherwise the public URL to the file
+    """
+
+    if attachment.get('attachment'):  # retrieve object reference
+        attachment = superdesk.get_resource_service('attachments').find_one(req=None, _id=attachment['attachment'])
+
+    if attachment.get('internal'):
+        return None
+
+    return current_app.media.url_for_external(attachment['media'], RESOURCE)
 
 
 def init_app(app):

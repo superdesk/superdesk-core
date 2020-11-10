@@ -64,6 +64,17 @@ def get_file_from_sams(client: SamsClient, asset_id: ObjectId) -> Optional[SAMSF
     return None
 
 
+def get_asset_public_url(client: SamsClient, asset_id: ObjectId) -> Optional[str]:
+    """Attempts to retrieve the public URL for the Asset"""
+
+    asset = get_asset_from_sams(client, asset_id)
+
+    if asset:
+        return (asset['_links'].get('public') or {}).get('href')
+
+    return None
+
+
 def get_default_set_id_for_upload(client: SamsClient, data: Dict[str, Any]) -> ObjectId:
     """Returns the Set ID to use for a file upload"""
 

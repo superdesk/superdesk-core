@@ -73,6 +73,19 @@ class AmazonMediaStorage(MediaStorage, MimetypeMixin):
     def url_for_download(self, media_id, content_type=None):
         return self.app.download_url(str(media_id))
 
+    def url_for_external(self, media_id: str, resource: str = None) -> str:
+        """Returns a URL for external use
+
+        Returns a URL for use with the Content/Production API
+
+        :param str media_id: The ID of the asset
+        :param str resource: The name of the resource type this Asset is attached to
+        :rtype: str
+        :return: The URL for external use
+        """
+
+        return f'/assets/{str(media_id)}'
+
     def _make_s3_safe(self, _id):
         """
         Removes characters from the input _id that may cause issues when using the string as a key in S3 storage.
