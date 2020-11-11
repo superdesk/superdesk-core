@@ -25,7 +25,7 @@ from bson.objectid import ObjectId
 from superdesk.services import BaseService
 from superdesk.notification import push_notification
 from superdesk.activity import add_activity, ACTIVITY_UPDATE
-from superdesk.metadata.item import FAMILY_ID
+from superdesk.metadata.item import FAMILY_ID, ITEM_STATE, CONTENT_STATE
 from eve.utils import ParsedRequest
 from superdesk.utils import ListCursor
 from flask_babel import _
@@ -619,18 +619,30 @@ class OverviewService(BaseService):
         else:
             raise ValueError("Invalid overview aggregation type: {agg_type}".format(agg_type=agg_type))
 
-        if desk_id == "all":
-            agg_query = {}
-        else:
-            agg_query = {
-                "filter": {
-                    "bool": {
-                        "must": [
-                            {"term": {desk_field: desk_id}}
-                        ]
-                    }
+        agg_query = {
+            "filter": {
+                "bool": {
+                    "must_not": [
+                        {
+                            "terms":
+                                {
+                                    ITEM_STATE: [
+                                        CONTENT_STATE.PUBLISHED,
+                                        CONTENT_STATE.SPIKED,
+                                        CONTENT_STATE.PUBLISHED,
+                                        CONTENT_STATE.KILLED,
+                                        CONTENT_STATE.CORRECTED,
+                                    ]
+                                }
+                        }
+                    ]
                 }
             }
+        }
+        filter_bool = agg_query["filter"]["bool"]
+
+        if desk_id != "all":
+            filter_bool["must"] = [{"term": {desk_field: desk_id}}]
 
         agg_query["aggs"] = {
             "overview": {
@@ -642,12 +654,8 @@ class OverviewService(BaseService):
 
         filters = doc.get("filters")
         if filters:
-            filter_bool = {"bool": {"should": []}}
-            should = filter_bool["bool"]["should"]
-            if "filter" in agg_query:
-                agg_query["filter"]["bool"]["must"].append(filter_bool)
-            else:
-                agg_query["filter"] = filter_bool
+            should = []
+            filter_bool.setdefault("must", []).append({"bool": {"should": should}})
             for f_name, f_data in filters.items():
                 for text in f_data:
                     should.append({"match": {f_name: text}})
