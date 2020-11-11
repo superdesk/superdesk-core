@@ -148,6 +148,11 @@ class ContentTemplatesResource(Resource):
 
         'schedule_stage': Resource.rel('stages', embeddable=False, nullable=True),
 
+        'schedule_macro': {
+            'type': 'string',
+            'nullable': True
+        },
+
         'schedule': {'type': 'dict', 'schema': {
             'is_active': {'type': 'boolean'},
             'create_at': {'type': 'string'},
@@ -586,6 +591,7 @@ def get_item_from_template(template):
     if template.get('schedule_desk'):
         item['task'] = {'desk': template['schedule_desk'], 'stage': template.get('schedule_stage')}
     item['template'] = template.get('_id')
+    item['macro'] = template.get('schedule_macro')
     item.pop('firstcreated', None)
     item.pop('versioncreated', None)
 
