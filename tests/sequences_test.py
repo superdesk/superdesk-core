@@ -41,6 +41,7 @@ class SequencesTestCase(TestCase):
     def test_rotate_sequence_number(self):
         with self.app.app_context():
 
+            last_sequence_number = None
             for i in range(self.max_seq_number):
                 last_sequence_number = self.service.get_next_sequence_number(
                     'test_sequence_1',
@@ -49,9 +50,10 @@ class SequencesTestCase(TestCase):
                 )
             self.assertEqual(last_sequence_number, self.max_seq_number)
 
-            last_sequence_number = self.service.get_next_sequence_number(
-                'test_sequence_1',
-                max_seq_number=self.max_seq_number,
-                min_seq_number=self.min_seq_number
-            )
-            self.assertEqual(last_sequence_number, self.min_seq_number)
+            for i in range(0, 2):
+                last_sequence_number = self.service.get_next_sequence_number(
+                    'test_sequence_1',
+                    max_seq_number=self.max_seq_number,
+                    min_seq_number=self.min_seq_number
+                )
+                self.assertEqual(last_sequence_number, self.min_seq_number + i, 'failed for i={}'.format(i))
