@@ -660,6 +660,9 @@ class OverviewService(BaseService):
                 for text in f_data:
                     should.append({"match": {f_name: text}})
 
+            # with filters we need whole documents, we get them with top_hits
+            agg_query['aggs']['overview']['aggs'] = {'top_docs': {'top_hits': {"size": 100}}}
+
         with timer(timer_label):
             response = app.data.elastic.search(agg_query, collection, params={"size": 0})
 
@@ -667,6 +670,12 @@ class OverviewService(BaseService):
             {"count": b["doc_count"], key: b["key"]}
             for b in response.hits["aggregations"]["overview"]["buckets"]
         ]
+
+        if filters:
+            for idx, bucket in enumerate(response.hits["aggregations"]["overview"]["buckets"]):
+                docs = doc["_items"][idx]["docs"] = []
+                for hit_doc in bucket["top_docs"]["hits"]["hits"]:
+                    docs.append(hit_doc['_source'])
 
     def on_fetched(self, doc):
         self._do_request(doc)
