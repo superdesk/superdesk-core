@@ -68,8 +68,8 @@ class SequencesService(BaseService):
             if sequence_number > max_seq_number:
                 target_resource.find_and_modify(
                     query={'key': key_name},
-                    update={'sequence_number': min_seq_number},
-                    upsert=True)
+                    update={'$set': {'sequence_number': min_seq_number}}
+                )
 
                 sequence_number = min_seq_number
 
