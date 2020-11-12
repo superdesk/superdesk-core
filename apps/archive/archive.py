@@ -269,6 +269,9 @@ class ArchiveService(BaseService):
             convert_task_attributes_to_objectId(doc)
             transtype_metadata(doc)
 
+            if doc.get('macro'):  # if there is a macro, execute it
+                get_resource_service('macros').execute_macro(doc, doc['macro'])
+
             # send signal
             superdesk.item_create.send(self, item=doc)
 
@@ -300,6 +303,7 @@ class ArchiveService(BaseService):
             doc.setdefault('_type', 'archive')
 
         get_resource_service('content_types').set_used(profiles)
+
         push_content_notification(docs)
 
     def on_update(self, updates, original):
