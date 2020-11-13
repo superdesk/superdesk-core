@@ -139,6 +139,7 @@ class IMatrics(AIServiceBase):
 
         data = {
             "uuid": item["guid"],
+            "pubStatus": False,
             "headline": headline,
             "body": body,
         }
@@ -243,7 +244,7 @@ class IMatrics(AIServiceBase):
             )
 
     def publish(self, data):
-        return self._request('article/publish', data)
+        return self._request('article/concept', data)
 
     def _request(self, service, data=None, method='POST', params=None):
         url = urljoin(self.base_url, service)
