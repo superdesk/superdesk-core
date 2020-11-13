@@ -1,5 +1,13 @@
 # Superdesk Server Changelog
 
+## [2.0.3] 2020-11-13
+
+### Fixed
+
+- Fix ingest sequence rotation.
+- Fix issues with default template in highlights configuration.
+- Placeline not prefilled from user preferences in user-created/edited templates.
+
 ## [2.0.2] 2020-10-12
 
 ### Fixed
