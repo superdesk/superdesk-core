@@ -2,6 +2,7 @@
 import os
 from typing import Optional, Dict, Any
 import superdesk
+from superdesk.logging import logger
 
 from flask import current_app, request
 from werkzeug.utils import secure_filename
@@ -86,6 +87,14 @@ def get_attachment_public_url(attachment: Dict[str, Any]) -> Optional[str]:
         attachment = superdesk.get_resource_service('attachments').find_one(req=None, _id=attachment['attachment'])
 
     if attachment.get('internal'):
+        return None
+
+    if not attachment.get('media'):
+        # All attachments should have a `media` attribute set
+        # The provided attachment dict must be invalid
+        attachment_id = str(attachment.get('_id'))
+        logger.warn(f'Attachment "{attachment_id}" has no media attribute set')
+
         return None
 
     return current_app.media.url_for_external(attachment['media'], RESOURCE)

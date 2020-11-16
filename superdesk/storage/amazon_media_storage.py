@@ -84,7 +84,7 @@ class AmazonMediaStorage(MediaStorage, MimetypeMixin):
         :return: The URL for external use
         """
 
-        return f'/assets/{str(media_id)}'
+        return f'/assets/{media_id}'
 
     def _make_s3_safe(self, _id):
         """
