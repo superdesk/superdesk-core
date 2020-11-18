@@ -120,7 +120,46 @@ jobs:
         pip install -r dev-requirements.txt
 
     - name: Behave
-      run: behave --format progress2 --logging-level=ERROR
+      run: behave --tags=-sams --format progress2 --logging-level=ERROR
+
+  behave-sams:
+
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        python-version: [3.6]
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v2
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install packages
+        run: ./scripts/tests_setup
+
+      - name: Start SAMS
+        run: ./scripts/install-start-sams
+
+      - name: Cache pip
+        uses: actions/cache@v2
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('dev-requirements.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip
+            ${{ runner.os }}-
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip wheel setuptools
+          pip install -r dev-requirements.txt
+
+      - name: Behave
+        run: behave --tags=sams --format progress2 --logging-level=ERROR
 
   prodapi:
 
