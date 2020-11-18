@@ -239,6 +239,7 @@ metadata_schema = {
         'type': 'list',
         'mapping': {
             'type': 'object',
+            'dynamic': False,
             'properties': {
                 'qcode': not_analyzed,
                 'name': not_analyzed
