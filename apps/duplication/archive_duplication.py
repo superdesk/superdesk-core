@@ -10,7 +10,7 @@
 import json
 
 from eve.utils import config, ParsedRequest
-from flask import request
+from flask import request, current_app as app
 
 import superdesk
 from apps.archive.archive import SOURCE as ARCHIVE
@@ -33,7 +33,7 @@ class DuplicateResource(Resource):
     resource_title = endpoint_name
 
     schema = {
-        'desk': Resource.rel('desks', False, required=True),
+        'desk': Resource.rel('desks', False, required=True, nullable=True),
         'stage': Resource.rel('stages', False, required=False),
         'type': {
             'type': 'string',
@@ -54,6 +54,12 @@ class DuplicateResource(Resource):
 
 
 class DuplicateService(BaseService):
+    
+    def on_create(self, docs):
+        for doc in docs:
+            if not doc.get('desk') and not app.config['WORKFLOW_ALLOW_COPY_TO_PERSONAL']:
+                raise SuperdeskApiError.forbiddenError(message=_("Duplicate to Personal space is not allowed."))
+
     def create(self, docs, **kwargs):
         guid_of_item_to_be_duplicated = request.view_args['guid']
 
@@ -89,6 +95,10 @@ class DuplicateService(BaseService):
 
             send_to(doc=archived_doc, desk_id=doc.get('desk'), stage_id=doc.get('stage'),
                     default_stage='working_stage', user_id=get_user_id())
+
+            if not doc.get('desk'):  # item copied to personal space
+                archived_doc['state'] = CONTENT_STATE.PROGRESS
+
             new_guid = archive_service.duplicate_content(archived_doc)
             guid_of_duplicated_items.append(new_guid)
 

@@ -531,7 +531,7 @@ class ArchiveService(BaseService):
 
         if original_doc.get('task', {}).get('desk') is not None and new_doc.get(ITEM_STATE) != CONTENT_STATE.SUBMITTED:
             new_doc[ITEM_STATE] = CONTENT_STATE.SUBMITTED
-
+        
         if state:
             new_doc[ITEM_STATE] = state
 
