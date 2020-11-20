@@ -10,24 +10,27 @@
 
 """Amazon media storage module."""
 
-from io import BytesIO
-from os.path import splitext
-from urllib.parse import urlparse
+import re
+import boto3
 import json
 import logging
 import time
 import unidecode
 
-import boto3
+from io import BytesIO
+from os.path import splitext
+from urllib.parse import urlparse
 from botocore.client import Config
-from eve.io.media import MediaStorage
 
 from superdesk.media.media_operations import download_file_from_url, guess_media_extension
 from superdesk.utc import query_datetime
-from .mimetype_mixin import MimetypeMixin
+from . import SuperdeskMediaStorage
+
+
+MAX_KEYS = 1000
+MONGOID_REGEX = re.compile(r'([a-f0-9]{24})\.[a-z]{3,4}')
 
 logger = logging.getLogger(__name__)
-MAX_KEYS = 1000
 
 
 class AmazonObjectWrapper(BytesIO):
@@ -53,7 +56,7 @@ class AmazonObjectWrapper(BytesIO):
         self._id = name
 
 
-class AmazonMediaStorage(MediaStorage, MimetypeMixin):
+class AmazonMediaStorage(SuperdeskMediaStorage):
 
     def __init__(self, app=None):
         super().__init__(app)
@@ -196,7 +199,7 @@ class AmazonMediaStorage(MediaStorage, MimetypeMixin):
         return headers
 
     def put(self, content, filename=None, content_type=None, resource=None, metadata=None, _id=None, version=True,
-            folder=None):
+            folder=None, **kwargs):
         """Save a new file using the storage system, preferably with the name specified.
 
         If there already exists a file with this name name, the
@@ -232,7 +235,6 @@ class AmazonMediaStorage(MediaStorage, MimetypeMixin):
         if found:
             return _id
 
-        kwargs = {}
         acl = self.app.config['AMAZON_OBJECT_ACL']
         if acl:
             # not sure it's really needed here,
@@ -345,5 +347,8 @@ class AmazonMediaStorage(MediaStorage, MimetypeMixin):
 
         return files
 
-    def getFilename(self, media_id):
-        return media_id
+    def get_by_filename(self, filename):
+        match = MONGOID_REGEX.match(filename)
+        if match:
+            return self.get(match.group(1))
+        return self.get(filename)

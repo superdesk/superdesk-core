@@ -12,11 +12,13 @@ import logging
 import json
 import mimetypes
 import bson
+import bson.errors
 import gridfs
 import os.path
+
 from eve.io.mongo.media import GridFSMediaStorage
 
-from .mimetype_mixin import MimetypeMixin
+from . import SuperdeskMediaStorage
 
 
 logger = logging.getLogger(__name__)
@@ -29,7 +31,7 @@ def format_id(_id):
         return _id
 
 
-class SuperdeskGridFSMediaStorage(GridFSMediaStorage, MimetypeMixin):
+class SuperdeskGridFSMediaStorage(SuperdeskMediaStorage, GridFSMediaStorage):
     def get(self, _id, resource=None):
         logger.debug('Getting media file with id= %s' % _id)
         _id = format_id(_id)
@@ -152,6 +154,10 @@ class SuperdeskGridFSMediaStorage(GridFSMediaStorage, MimetypeMixin):
                 logging.warning('Failed to get file attributes. {}'.format(e))
         return files
 
-    def getFilename(self, media_id):
-        media, _ = os.path.splitext(media_id)
-        return media
+    def exists(self, id_or_filename, resource):
+        _id = format_id(id_or_filename)
+        return super().exists(_id)
+
+    def get_by_filename(self, filename):
+        _id, _ = os.path.splitext(filename)
+        return self.get(_id)
