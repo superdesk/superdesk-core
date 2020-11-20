@@ -54,7 +54,7 @@ class DuplicateResource(Resource):
 
 
 class DuplicateService(BaseService):
-    
+
     def on_create(self, docs):
         for doc in docs:
             if not doc.get('desk') and not app.config['WORKFLOW_ALLOW_COPY_TO_PERSONAL']:
