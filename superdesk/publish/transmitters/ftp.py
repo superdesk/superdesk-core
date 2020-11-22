@@ -96,7 +96,7 @@ class FTPPublishService(PublishService):
         except PublishFtpError:
             raise
         except Exception as ex:
-            raise PublishFtpError.ftpError(ex, config)
+            raise PublishFtpError.ftpError(ex, queue_item.get('destination'))
 
     def _copy_published_media_files(self, item, ftp):
         renditions_filter = get_renditions_filter()

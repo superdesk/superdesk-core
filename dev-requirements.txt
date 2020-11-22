@@ -9,10 +9,6 @@ pydocstyle<4.0
 httmock
 watchdog==0.9.0
 wooper
-sphinx==1.8.5
-sphinx-autobuild==0.7.1
-sphinxcontrib-plantuml
-docutils
 requests-mock
 responses
 pytest==5.2.2
