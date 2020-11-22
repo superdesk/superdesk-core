@@ -1,9 +1,8 @@
-#!/usr/bin/env python
-# -*- coding: utf-8; -*-
+#!/usr/bin/env python3
 #
 # This file is part of Superdesk.
 #
-# Copyright 2013, 2014, 2015 Sourcefabric z.u. and contributors.
+# Copyright 2013-2020 Sourcefabric z.u. and contributors.
 #
 # For the full copyright and license information, please see the
 # AUTHORS and LICENSE files distributed with this source code, or
@@ -14,6 +13,11 @@ from setuptools import setup, find_packages
 LONG_DESCRIPTION = "Superdesk Server Core"
 
 install_requires = [
+    # temporary requirement to get urllib in a version compatible with requests
+    # to be kept until requests update its requirements
+    # (cf. https://github.com/psf/requests/issues/5654
+    # and https://github.com/psf/requests/pull/5651)
+    'urllib3<1.26',
     'eve==1.1.2',
     'eve-elastic>=7.0.0,<8.0.0',
     'flask>=1.1,<1.2',
@@ -23,7 +27,6 @@ install_requires = [
     'flask-babel>=1.0,<1.1',
     'pillow>=8.0,<9.0',
     'arrow>=0.4,<=0.13',
-    'asyncio>=3.4,<3.5',
     'bcrypt>=3.1.1,<3.2',
     'blinker>=1.3,<1.5',
     'celery[redis]>=4.3.0,<4.4',
