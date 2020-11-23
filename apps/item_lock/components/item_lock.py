@@ -81,14 +81,15 @@ class ItemLock(BaseComponent):
                 if action:
                     updates[LOCK_ACTION] = action
 
-                item_model.update(item_filter, updates)
-
-                if item.get(TASK):
-                    item[TASK]['user'] = user_id
+                updates[TASK] = item.get(TASK)
+                if updates.get(TASK):
+                    updates[TASK]['user'] = user_id
                 else:
-                    item[TASK] = {'user': user_id}
+                    updates[TASK] = {'user': user_id}
 
-                superdesk.get_resource_service('tasks').assign_user(item[config.ID_FIELD], item[TASK])
+                # tasks service will update the user
+                superdesk.get_resource_service('tasks').assign_user(item[config.ID_FIELD], updates)
+
                 item = item_model.find_one(item_filter)
                 self.app.on_item_locked(item, user_id)
                 push_notification('item:lock',
