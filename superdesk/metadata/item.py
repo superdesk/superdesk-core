@@ -71,11 +71,13 @@ class ContentStates(NamedTuple):
     SCHEDULED: str
     RECALLED: str
     UNPUBLISHED: str
+    CORRECTION: str
+    BEING_CORRECTED: str
 
 
 CONTENT_STATE: ContentStates = ContentStates('draft', 'ingested', 'routed', 'fetched', 'submitted', 'in_progress',
-                                             'spiked',
-                                             'published', 'killed', 'corrected', 'scheduled', 'recalled', 'unpublished')
+                                             'spiked', 'published', 'killed', 'corrected', 'scheduled',
+                                             'recalled', 'unpublished', 'correction', 'being_corrected')
 
 PUBLISH_STATES = {
     CONTENT_STATE.PUBLISHED,
@@ -84,6 +86,7 @@ PUBLISH_STATES = {
     CONTENT_STATE.KILLED,
     CONTENT_STATE.RECALLED,
     CONTENT_STATE.UNPUBLISHED,
+    CONTENT_STATE.BEING_CORRECTED
 }
 
 
@@ -315,6 +318,16 @@ metadata_schema = {
         'type': 'integer',
         'nullable': True,
         'mapping': not_analyzed
+    },
+    'corrected_of': {
+        'type': 'string',
+        'nullable': True,
+        'mapping': not_analyzed,
+    },
+    'correction_by': {
+        'type': 'string',
+        'nullable': True,
+        'mapping': not_analyzed,
     },
     'rewrite_sequence': {
         'type': 'integer',
