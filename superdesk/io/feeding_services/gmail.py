@@ -61,14 +61,14 @@ class GMailFeedingService(EmailFeedingService):
     def init_app(cls, app):
         # we need to access config to set the URL, so we do it here
         field = next(f for f in cls.fields if f['type'] == 'url_request')
-        field['url'] = join(app.config['SERVER_URL'], 'login', 'google', '{PROVIDER_NAME}')
+        field['url'] = join(app.config['SERVER_URL'], 'login', 'google', '{OID}')
 
     def _test(self, provider):
         self._update(provider, update=None, test=True)
 
     def authenticate(self, provider: dict, config: dict) -> imaplib.IMAP4_SSL:
         oauth2_token_service = superdesk.get_resource_service('oauth2_token')
-        token = oauth2_token_service.find_one(req=None, name='google', identifier=provider['name'])
+        token = oauth2_token_service.find_one(req=None, _id=provider['url_id'])
         if token is None:
             raise IngestEmailError.notConfiguredError(ValueError(l_("You need to log in first")), provider=provider)
         imap = imaplib.IMAP4_SSL('imap.gmail.com')

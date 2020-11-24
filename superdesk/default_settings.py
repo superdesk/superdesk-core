@@ -363,6 +363,7 @@ CORE_APPS = [
     'superdesk.internal_destinations',
     'apps.client_config',
     'superdesk.auth',
+    'superdesk.auth.oauth',
     'superdesk.attachments',
     'superdesk.auth_server',
     'apps.links',
