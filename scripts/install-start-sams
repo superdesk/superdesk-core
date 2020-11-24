@@ -1,8 +1,8 @@
 #!/usr/bin/env sh
 
-# Make the SAMS directory and pushd into it
+# Make the SAMS directory and cd into it
 mkdir ../sams
-pushd ../sams
+cd ../sams
 
 # Download SAMS
 git clone -b develop --single-branch https://github.com/superdesk/sams.git sams
@@ -26,6 +26,3 @@ do
     sleep 5
 done
 echo 'SAMS now running'
-
-# Change directory back to previous before this script
-popd

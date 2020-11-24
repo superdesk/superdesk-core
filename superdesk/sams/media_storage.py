@@ -28,7 +28,7 @@ from superdesk.sams import get_sams_client
 from sams_client import SamsClient
 
 from .utils import get_asset_from_sams, get_file_from_sams, \
-    raise_sams_error, get_default_set_id_for_upload
+    raise_sams_error, get_default_set_id_for_upload, get_asset_public_url
 
 logger = logging.getLogger(__name__)
 
@@ -74,6 +74,28 @@ class SAMSMediaStorage(MediaStorage, MimetypeMixin):
         fallback_klass = get_media_storage_class(self.app.config, False)
         self._fallback = fallback_klass(self.app)
         self._client: SamsClient = get_sams_client(self.app)
+
+    def url_for_external(self, media_id: str, resource: str = None) -> str:
+        """Returns a URL for external use
+
+        Returns a URL for use with the SAMS FileServer (if the Asset is public),
+        otherwise falls back to the Content/Production API (via MediaStorage fallback)
+
+        :param str media_id: The ID of the asset
+        :param str resource: The name of the resource type this Asset is attached to
+        :rtype: str
+        :return: The URL for external use
+        """
+
+        if resource is not None and SAMS_RESOURCE_ENABLED.get(resource, False):
+            url = get_asset_public_url(self._client, ObjectId(media_id))
+
+            if url:
+                # If SAMS provided a public URL, return that
+                # otherwise return a href for Production/Content API instead
+                return url
+
+        return self._fallback.url_for_external(media_id)
 
     def get(
         self,
