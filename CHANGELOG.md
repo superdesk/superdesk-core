@@ -1,5 +1,11 @@
 # Superdesk Server Changelog
 
+## [2.0.4] 2020-11-24
+
+### Fixed
+
+- Add migration script to remove sequences with `None` key.
+
 ## [2.0.3] 2020-11-13
 
 ### Fixed
