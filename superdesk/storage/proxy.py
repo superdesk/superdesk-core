@@ -1,4 +1,3 @@
-
 import logging
 
 from typing import List
@@ -12,10 +11,13 @@ logger = logging.getLogger(__name__)
 
 
 def log_missing_media(id_or_filename, resource=None):
-    logger.error("Media item not found", extra=dict(
-        id=id_or_filename,
-        resource=resource,
-    ))
+    logger.error(
+        "Media item not found",
+        extra=dict(
+            id=id_or_filename,
+            resource=resource,
+        ),
+    )
 
 
 class ProxyMediaStorage(SuperdeskMediaStorage):
@@ -27,7 +29,7 @@ class ProxyMediaStorage(SuperdeskMediaStorage):
 
         self._storage = [SuperdeskGridFSMediaStorage(app)]
 
-        if app.config.get('AMAZON_CONTAINER_NAME'):
+        if app.config.get("AMAZON_CONTAINER_NAME"):
             # make amazon first if configured, so it will be the default
             self._storage.insert(0, AmazonMediaStorage(app))
 
@@ -35,7 +37,7 @@ class ProxyMediaStorage(SuperdeskMediaStorage):
         if id_or_filename:
             for storage in self._storage:
                 if storage.exists(id_or_filename, resource):
-                    logger.debug('got media from storage id=%s storage=%s', id_or_filename, storage)
+                    logger.debug("got media from storage id=%s storage=%s", id_or_filename, storage)
                     return storage
             if not fallback:
                 log_missing_media(id_or_filename, resource)
@@ -53,8 +55,9 @@ class ProxyMediaStorage(SuperdeskMediaStorage):
         return self.storage(id_or_filename, resource).exists(id_or_filename, resource=resource)
 
     def put(self, content, filename=None, content_type=None, resource=None, **kwargs):
-        return self.storage(None, resource).put(content, filename=filename, content_type=content_type,
-                                                resource=resource, **kwargs)
+        return self.storage(None, resource).put(
+            content, filename=filename, content_type=content_type, resource=resource, **kwargs
+        )
 
     def url_for_media(self, media_id, content_type=None):
         return self.storage(media_id, fallback=True).url_for_media(media_id, content_type=content_type)
@@ -63,8 +66,8 @@ class ProxyMediaStorage(SuperdeskMediaStorage):
         return self.storage(media_id, fallback=True).url_for_download(media_id, content_type=content_type)
 
     def fetch_rendition(self, rendition):
-        if rendition.get('media'):
-            return self.get(rendition['media'])
+        if rendition.get("media"):
+            return self.get(rendition["media"])
 
         for storage in self._storage:
             media = storage.fetch_rendition(rendition)

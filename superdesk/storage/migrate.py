@@ -1,4 +1,3 @@
-
 import codecs
 import superdesk
 
@@ -9,8 +8,8 @@ class MigrateMediaCommand(superdesk.Command):
     """It will migrate files from Mongo GridFS into Amazon S3 storage."""
 
     option_list = [
-        superdesk.Option('--limit', '-l', dest='limit', required=False, default=50, type=int),
-        superdesk.Option('--skip', '-s', dest='skip', required=False, default=0, type=int),
+        superdesk.Option("--limit", "-l", dest="limit", required=False, default=50, type=int),
+        superdesk.Option("--skip", "-s", dest="skip", required=False, default=0, type=int),
     ]
 
     def run(self, limit, skip):
@@ -19,7 +18,7 @@ class MigrateMediaCommand(superdesk.Command):
 
         files = mongo.fs().find(no_cursor_timeout=True).limit(limit).skip(skip)
         if not files.count():
-            print('There are no files in mongo to be migrated.')
+            print("There are no files in mongo to be migrated.")
             return
 
         print("starting to migrate {} files".format(files.count()))
@@ -33,16 +32,16 @@ class MigrateMediaCommand(superdesk.Command):
                     content_type=file.content_type,
                     metadata=file.metadata,
                     _id=str(file._id),
-                    ContentMD5=codecs.encode(codecs.decode(file.md5, 'hex'), 'base64').decode().strip(),
+                    ContentMD5=codecs.encode(codecs.decode(file.md5, "hex"), "base64").decode().strip(),
                 )
                 if saved:
                     mongo.delete(file._id)
                     migrated += 1
-                    print('.', end='')
+                    print(".", end="")
             except Exception as error:
                 print("Error while migrating file {}: {}".format(file._id, error))
 
-        print('done migrating {} files.'.format(migrated))
+        print("done migrating {} files.".format(migrated))
 
 
-superdesk.command('media:migrate', MigrateMediaCommand())
+superdesk.command("media:migrate", MigrateMediaCommand())
