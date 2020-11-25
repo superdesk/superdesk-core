@@ -32,7 +32,6 @@ from flask import url_for, render_template
 from authlib.integrations.flask_client import OAuth
 from authlib.integrations.requests_client import OAuth2Session
 from authlib.oauth2.rfc6749.wrappers import OAuth2Token
-from bson import ObjectId
 from superdesk.resource import Resource
 from superdesk.services import BaseService
 
@@ -99,7 +98,7 @@ class OAuth2TokenService(BaseService):
 
 
 def token2dict(
-    token_id: ObjectId,
+    token_id: str,
     email: str,
     token: OAuth2Token,
     name: str = "google",
@@ -127,14 +126,14 @@ def configure_google(
     refresh: bool = False
 ) -> None:
     scopes = ['openid', 'email', 'profile']
-    token_provider_id_queue = []
+    token_url_id_queue = []
     if extra_scopes:
         scopes.extend(extra_scopes)
     kwargs = {}
     if refresh:
         kwargs['authorize_params'] = {'access_type': 'offline'}
 
-    oauth.register(
+    oauth.register(  # type: ignore # mypy seems confused with this global oauth
         'google',
         server_metadata_url="https://accounts.google.com/.well-known/openid-configuration",
         client_kwargs={
@@ -144,23 +143,21 @@ def configure_google(
     )
 
     @bp.route('/login/google')
-    @bp.route('/login/google/<provider_id>')
-    def google_login(provider_id=None):
+    @bp.route('/login/google/<url_id>')
+    def google_login(url_id=None):
         """Redirect to google OAuth authorization page
 
-        :param provider_id: used to identify the token
-            if OAuth is used for Superdesk login, provider_id is None.
+        :param url_id: used to identify the token
+            if OAuth is used for Superdesk login, url_id is None.
             Otherwise, it is used to associate the token with the provider needing it
         """
-        if provider_id is not None:
-            provider_id = ObjectId(provider_id)
-        token_provider_id_queue.append(provider_id)
+        token_url_id_queue.append(url_id)
         redirect_uri = url_for('.google_authorized', _external=True)
         return oauth.google.authorize_redirect(redirect_uri)
 
     @bp.route('/login/google_authorized')
     def google_authorized():
-        token_id = token_provider_id_queue.pop() if token_provider_id_queue else None
+        token_id = token_url_id_queue.pop() if token_url_id_queue else None
         token = oauth.google.authorize_access_token()
         if not token:
             return render_template(TEMPLATE, data={}) if token_id else auth_user()
@@ -204,14 +201,17 @@ def configure_google(
     superdesk.blueprint(bp, app)
 
 
-def refresh_google_token(token_id: ObjectId) -> dict:
+def refresh_google_token(token_id: str) -> dict:
     oauth2_token_service = superdesk.get_resource_service('oauth2_token')
     token = oauth2_token_service.find_one(req=None, _id=token_id)
     if token is None:
         raise ValueError("unknown token id: {_id}".format(_id=token_id))
     if not token['refresh_token']:
         raise ValueError("missing refresh token for token {_id}".format(_id=token['_id']))
-    session = OAuth2Session(oauth.google.client_id, oauth.google.client_secret)
+    session = OAuth2Session(
+        oauth.google.client_id,  # type: ignore # mypy seems confused with this global oauth
+        oauth.google.client_secret  # type: ignore
+    )
     new_token = session.refresh_token(REFRESH_TOKEN_URL, token['refresh_token'])
     token_dict = token2dict(token['_id'], token['email'], new_token)
     oauth2_token_service.update(token['_id'], token_dict, token)

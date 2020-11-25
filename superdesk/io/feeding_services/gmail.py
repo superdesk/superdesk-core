@@ -61,7 +61,7 @@ class GMailFeedingService(EmailFeedingService):
     def init_app(cls, app):
         # we need to access config to set the URL, so we do it here
         field = next(f for f in cls.fields if f['type'] == 'url_request')
-        field['url'] = join(app.config['SERVER_URL'], 'login', 'google', '{OID}')
+        field['url'] = join(app.config['SERVER_URL'], 'login', 'google', '{URL_ID}')
 
     def _test(self, provider):
         self._update(provider, update=None, test=True)
