@@ -48,7 +48,7 @@ class GMailFeedingService(EmailFeedingService):
         {
             'id': 'mailbox', 'type': 'text', 'label': l_('Mailbox'),
             'default_value': 'INBOX',
-            'placeholder': 'Mailbox', 'required': True,
+            'placeholder': l_('Mailbox'), 'required': True,
             'errors': {6004: 'Authentication error.'}
         },
         {
@@ -84,7 +84,7 @@ class GMailFeedingService(EmailFeedingService):
         )
         imap.authenticate(
             'XOAUTH2',
-            lambda __: auth_string
+            lambda __: auth_string.encode()
         )
         return imap
 
