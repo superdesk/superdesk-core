@@ -42,7 +42,7 @@ from superdesk.auth import auth_user, TEMPLATE
 logger = logging.getLogger(__name__)
 
 bp = superdesk.Blueprint('oauth', __name__)
-oauth = None
+oauth: Optional[OAuth] = None
 REFRESH_TOKEN_URL = "https://oauth2.googleapis.com/token"
 
 
@@ -69,10 +69,6 @@ def init_app(app):
 
 class OAuth2TokenResource(Resource):
     schema = {
-        'identifier': {
-            'type': 'string',
-            'unique': True,
-        },
         'name': {
             'type': 'string',
             'required': True,
@@ -103,14 +99,14 @@ class OAuth2TokenService(BaseService):
 
 
 def token2dict(
-    token_id: str,
+    token_id: ObjectId,
     email: str,
     token: OAuth2Token,
     name: str = "google",
 ) -> dict:
     """Convert authlib's OAuth2Token to a dict usable with datalayer
 
-    :param identifier: name used to associate the token with a provider
+    :param token_id: used to associate the token with a provider
     :param email: email associated with this token
     :param token: token to convert
     :param name: name of the OAuth2 service
@@ -212,7 +208,7 @@ def refresh_google_token(token_id: ObjectId) -> dict:
     oauth2_token_service = superdesk.get_resource_service('oauth2_token')
     token = oauth2_token_service.find_one(req=None, _id=token_id)
     if token is None:
-        raise ValueError("unknown token id: {_id}".format(_id=token['_id']))
+        raise ValueError("unknown token id: {_id}".format(_id=token_id))
     if not token['refresh_token']:
         raise ValueError("missing refresh token for token {_id}".format(_id=token['_id']))
     session = OAuth2Session(oauth.google.client_id, oauth.google.client_secret)
