@@ -237,7 +237,8 @@
                     {"name": "NewsML G2", "qcode": "newsmlg2"},
                     {"name": "Email", "qcode": "email"},
                     {"name": "Newsroom NINJS", "qcode": "newsroom ninjs"},
-                    {"name": "Adobe InDesign (IDML)", "qcode": "idml"}
+                    {"name": "Adobe InDesign (IDML)", "qcode": "idml"},
+                    {"name": "iMatrics", "qcode": "imatrics"}
                 ]},
             {"is_active": true, "name": "Digital/Internet", "qcode": "digital",
                 "formats": [
@@ -247,7 +248,8 @@
                     {"name": "NewsML G2", "qcode": "newsmlg2"},
                     {"name": "Email", "qcode": "email"},
                     {"name": "Newsroom NINJS", "qcode": "newsroom ninjs"},
-                    {"name": "Adobe InDesign (IDML)", "qcode": "idml"}
+                    {"name": "Adobe InDesign (IDML)", "qcode": "idml"},
+                    {"name": "iMatrics", "qcode": "imatrics"}
                 ]},
             {"is_active": true, "name": "Wire/Paper", "qcode": "wire",
                 "formats": [
@@ -255,7 +257,7 @@
                     {"name": "Email", "qcode": "email"}
                 ]}
         ],
-        "init_version": 2
+        "init_version": 3
     },
     {
         "_id": "crop_sizes",

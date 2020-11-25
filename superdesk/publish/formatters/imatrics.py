@@ -19,12 +19,10 @@ class IMatricsFormatter(NINJSFormatter):
             "publicationTimestamp": format_datetime(article["firstpublished"]),
             "authors": [author["sub_label"] for author in article.get("authors") or []],
             "language": article["language"],
-            "pubStatus": article.get("pubstatus") == "usable",
-            "newspapers": [],
-            "channels": [],
+            "pubStatus": True,
             "concepts": self._format_concepts(article),
             "headline": get_text(article["headline"]),
-            "preamble": get_text(article["abstract"], lf_on_block=True).strip(),
+            "preamble": get_text(article["abstract"], lf_on_block=True).strip() if article.get("abstract") else "",
             "dateline": article["dateline"]["text"]
             if article.get("dateline") and article["dateline"].get("text")
             else "",
