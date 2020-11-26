@@ -11,7 +11,7 @@
 import logging
 from superdesk.errors import SuperdeskApiError
 from superdesk.metadata.item import CONTENT_TYPE, ITEM_TYPE, ITEM_STATE, CONTENT_STATE, PUBLISH_SCHEDULE, \
-    EMBARGO, SCHEDULE_SETTINGS
+    EMBARGO, SCHEDULE_SETTINGS, ASSOCIATIONS
 
 from apps.archive.common import set_sign_off, ITEM_OPERATION
 from apps.archive.archive import update_word_count
@@ -19,6 +19,7 @@ from superdesk.utc import utcnow
 
 from .common import BasePublishService, BasePublishResource, ITEM_PUBLISH
 from flask_babel import _
+from flask import request
 
 logger = logging.getLogger(__name__)
 
@@ -57,6 +58,7 @@ class ArchivePublishService(BasePublishService):
         super().on_update(updates, original)
         set_sign_off(updates, original)
         update_word_count(updates)
+        self.set_desk(updates, original)
 
     def set_state(self, original, updates):
         """Set the state of the document to schedule if the publish_schedule is specified.
@@ -71,3 +73,17 @@ class ArchivePublishService(BasePublishService):
             updates[ITEM_STATE] = CONTENT_STATE.PUBLISHED
         else:
             super().set_state(original, updates)
+
+    def set_desk(self, updates, original):
+        if (not original.get('task', {}).get('desk') and not updates.get('task', {}).get('desk')
+                and request and request.args and request.args.get('desk_id')):
+
+            desk_id = request.args['desk_id']
+            updates['task'] = updates.get('task', {})
+            updates['task']['desk'] = desk_id
+
+            if updates.get(ASSOCIATIONS):
+                for key, associated_item in updates[ASSOCIATIONS].items():
+                    if associated_item and not associated_item.get('task', {}).get('desk'):
+                        associated_item['task'] = associated_item.get('task', {})
+                        associated_item['task']['desk'] = desk_id
