@@ -288,6 +288,10 @@ Set/updated by system mostly.
 
     Template id if item was created using a template.
 
+``published_in_package`` *id*
+
+    If item was published as part of a package for the first time this will be set to package id.
+
 Ingest
 ------
 Set on ingest, might be empty for items created in house.
