@@ -20,6 +20,10 @@ def log_missing_media(id_or_filename, resource=None):
     )
 
 
+class MissingMediaError(ValueError):
+    pass
+
+
 class ProxyMediaStorage(SuperdeskMediaStorage):
 
     _storage: List[SuperdeskMediaStorage]
@@ -41,18 +45,27 @@ class ProxyMediaStorage(SuperdeskMediaStorage):
                     return storage
             if not fallback:
                 log_missing_media(id_or_filename, resource)
-                raise ValueError("Media item not found")
+                raise MissingMediaError
 
         return self._storage[0]
 
     def get(self, id_or_filename, resource=None):
-        return self.storage(id_or_filename, resource).get(id_or_filename, resource=resource)
+        try:
+            return self.storage(id_or_filename, resource).get(id_or_filename, resource=resource)
+        except MissingMediaError:
+            return
 
     def delete(self, id_or_filename, resource=None):
-        return self.storage(id_or_filename, resource).delete(id_or_filename, resource=resource)
+        try:
+            return self.storage(id_or_filename, resource).delete(id_or_filename, resource=resource)
+        except MissingMediaError:
+            return True
 
     def exists(self, id_or_filename, resource=None):
-        return self.storage(id_or_filename, resource).exists(id_or_filename, resource=resource)
+        try:
+            return self.storage(id_or_filename, resource).exists(id_or_filename, resource=resource)
+        except MissingMediaError:
+            return False
 
     def put(self, content, filename=None, content_type=None, resource=None, **kwargs):
         return self.storage(None, resource).put(
