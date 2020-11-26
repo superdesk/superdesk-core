@@ -11,7 +11,6 @@
 
 import os
 from unittest.mock import create_autospec
-from superdesk.ftp import ftp_connect
 from superdesk.tests import TestCase
 import ftplib
 from apps.publish import init_app
@@ -131,7 +130,7 @@ class FTPPublishServiceTestCase(TestCase):
         self.assertTrue(self.is_item_loaded(config, 'abc.ntf'))
 
     @mock.patch('ftplib.FTP', autospec=True)
-    @mock.patch('superdesk.storage.SuperdeskGridFSMediaStorage.get', mockGet)
+    @mock.patch('superdesk.storage.ProxyMediaStorage.get', mockGet)
     @mock.patch('superdesk.publish.transmitters.ftp.get_renditions_spec', return_value={'16-9': {}, '4-3': {}})
     def test_with_associations(self, mock_ftp_constructor, *args):
         item = {
@@ -148,7 +147,7 @@ class FTPPublishServiceTestCase(TestCase):
         mock_ftp_constructor.storbinary.assert_any_call('STOR 5e448ee9016d1f63a92f040b.jpg', b'binary')
 
     @mock.patch('superdesk.ftp.ftplib.FTP', autospec=True)
-    @mock.patch('superdesk.storage.SuperdeskGridFSMediaStorage.get', mockGet)
+    @mock.patch('superdesk.storage.ProxyMediaStorage.get', mockGet)
     @mock.patch('superdesk.publish.transmitters.ftp.get_renditions_spec', return_value={'16-9': {}, '4-3': {}})
     def test_with_association_and_embed(self, mock_ftp_constructor, *args):
         item = {'associations': ASSOCIATIONS}
@@ -164,7 +163,7 @@ class FTPPublishServiceTestCase(TestCase):
         mock_ftp_constructor.storbinary.assert_any_call('STOR 5e448dd1016d1f63a92f039e.png', b'binary')
 
     @mock.patch('superdesk.publish.transmitters.ftp.ftp_connect')
-    @mock.patch('superdesk.storage.SuperdeskGridFSMediaStorage.get', mockGet)
+    @mock.patch('superdesk.storage.ProxyMediaStorage.get', mockGet)
     def test_publish_non_ninjs_item_assoc(self, ftp_connect_mock, *args):
         service = FTPPublishService()
         queue_item = {

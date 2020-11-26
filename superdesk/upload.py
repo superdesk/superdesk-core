@@ -42,8 +42,7 @@ def get_upload_as_data_uri_bc(media_id):
 @bp.route('/upload-raw/<path:media_id>', methods=['GET'])
 def get_upload_as_data_uri(media_id):
     if not request.args.get('resource'):
-        media_id = app.media.getFilename(media_id)
-        media_file = app.media.get(media_id, 'upload')
+        media_file = app.media.get_by_filename(media_id)
     else:
         media_file = app.media.get(media_id, request.args['resource'])
     if media_file:

@@ -249,14 +249,14 @@ class UpdateIngestTest(TestCase):
         self.ingest_items(items, provider, provider_service)
 
         # four files in grid fs
-        current_files = self.app.media.fs('upload').find()
+        current_files = self.app.media.storage().fs('upload').find()
         self.assertEqual(4, current_files.count())
 
         remove = RemoveExpiredContent()
         remove.run(provider.get('type'))
 
         # all gone
-        current_files = self.app.media.fs('upload').find()
+        current_files = self.app.media.storage().fs('upload').find()
         self.assertEqual(0, current_files.count())
 
     def test_apply_rule_set(self):
@@ -319,7 +319,7 @@ class UpdateIngestTest(TestCase):
         self.ingest_items(items, provider, provider_service)
 
         # 12 files in grid fs
-        current_files = self.app.media.fs('upload').find()
+        current_files = self.app.media.storage().fs('upload').find()
         self.assertEqual(12, current_files.count())
 
     def test_anpa_category_to_subject_derived_ingest(self):
