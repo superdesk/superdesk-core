@@ -81,7 +81,7 @@ class BasePublishResource(ArchiveResource):
     Base resource class for "publish" endpoint.
     """
 
-    def __init__(self, endpoint_name, app, service, publish_type):
+    def __init__(self, endpoint_name, app, service, publish_type, privilege=None):
         self.endpoint_name = 'archive_%s' % publish_type
         self.resource_title = endpoint_name
         self.schema[PUBLISHED_IN_PACKAGE] = {'type': 'string'}
@@ -94,7 +94,7 @@ class BasePublishResource(ArchiveResource):
         self.resource_methods = []
         self.item_methods = ['PATCH']
 
-        self.privileges = {'PATCH': publish_type}
+        self.privileges = {'PATCH': privilege if privilege else publish_type}
 
         super().__init__(endpoint_name, app=app, service=service)
 
@@ -825,7 +825,8 @@ def update_item_data(item, data, keys=None, keep_existing=False):
 superdesk.workflow_state('published')
 superdesk.workflow_action(
     name='publish',
-    include_states=['fetched', 'routed', 'submitted', 'in_progress', 'scheduled', 'unpublished'],
+    include_states=['fetched', 'routed', 'submitted', 'in_progress',
+                    'scheduled', 'unpublished', 'correction'],
     privileges=['publish']
 )
 
@@ -852,7 +853,14 @@ superdesk.workflow_action(
 superdesk.workflow_state('corrected')
 superdesk.workflow_action(
     name='correct',
-    include_states=['published', 'corrected'],
+    include_states=['published', 'corrected', 'correction'],
+    privileges=['correct']
+)
+
+superdesk.workflow_state('correction')
+superdesk.workflow_action(
+    name='correction',
+    include_states=['published'],
     privileges=['correct']
 )
 

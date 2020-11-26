@@ -586,7 +586,8 @@ def update_state(original, updates, publish_from_personal=None):
     """
 
     original_state = original.get(ITEM_STATE)
-    if original_state not in {CONTENT_STATE.INGESTED, CONTENT_STATE.PROGRESS, CONTENT_STATE.SCHEDULED}:
+    if original_state not in {CONTENT_STATE.INGESTED, CONTENT_STATE.PROGRESS,
+                              CONTENT_STATE.SCHEDULED, CONTENT_STATE.CORRECTION}:
         if not is_workflow_state_transition_valid('save', original_state):
             raise superdesk.errors.InvalidStateTransitionError()
         elif is_assigned_to_a_desk(original) or (not is_assigned_to_a_desk(original)

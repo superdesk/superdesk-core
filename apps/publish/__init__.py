@@ -15,7 +15,7 @@ import superdesk
 from apps.publish.content import ArchivePublishResource, ArchivePublishService, \
     KillPublishResource, KillPublishService, CorrectPublishResource, CorrectPublishService, \
     ResendResource, ResendService, TakeDownPublishService, TakeDownPublishResource, \
-    UnpublishResource, UnpublishService
+    UnpublishResource, UnpublishService, CorrectionPublishResource, CorrectionPublishService
 from apps.publish.enqueue import EnqueueContent
 from apps.publish.published_item import PublishedItemResource, PublishedItemService
 from apps.publish.content.published_package_items import PublishedPackageItemsService,\
@@ -38,6 +38,10 @@ def init_app(app):
     endpoint_name = 'archive_correct'
     service = CorrectPublishService(endpoint_name, backend=get_backend())
     CorrectPublishResource(endpoint_name, app=app, service=service)
+
+    endpoint_name = 'archive_correction'
+    service = CorrectionPublishService(endpoint_name, backend=get_backend())
+    CorrectionPublishResource(endpoint_name, app=app, service=service)
 
     endpoint_name = 'archive_takedown'
     service = TakeDownPublishService(endpoint_name, backend=get_backend())
