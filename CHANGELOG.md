@@ -1,5 +1,12 @@
 # Superdesk Server Changelog
 
+## [2.0.5] 2020-11-27
+
+### Fixed
+
+- Ignore HTML markup when doing elastic higlights.
+- Fix `firstpublished` timestamp for scheduled items.
+
 ## [2.0.4] 2020-11-24
 
 ### Fixed
