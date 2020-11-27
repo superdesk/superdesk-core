@@ -47,6 +47,7 @@ from apps.content import push_content_notification, push_expired_notification, p
 from apps.common.models.utils import get_model
 from apps.item_lock.models.item import ItemModel
 from apps.packages import PackageService
+from superdesk.privilege import GLOBAL_SEARCH_PRIVILEGE
 from .archive_media import ArchiveMediaService
 from .usage import track_usage, update_refs
 from superdesk.utc import utcnow
@@ -62,7 +63,7 @@ def format_subj_qcode(subj):
 
 
 def private_content_filter():
-    """Filter out out users private content if this is a user request.
+    """Filter out other users private content if this is a user request.
 
     As private we treat items where user is creator, last version creator,
     or has the item assigned to him atm.
@@ -72,11 +73,11 @@ def private_content_filter():
     user = getattr(flask.g, 'user', None)
     if user:
         private_filter = {'should': [
-            {'exists': {'field': 'task.desk'}},
+            # assigned to me or created by me
             {'term': {'task.user': str(user['_id'])}},
             {'term': {'version_creator': str(user['_id'])}},
             {'term': {'original_creator': str(user['_id'])}},
-        ]}
+        ], 'minimum_should_match': 1}
 
         if 'invisible_stages' in user:
             stages = user.get('invisible_stages')
@@ -85,7 +86,18 @@ def private_content_filter():
 
         if stages:
             private_filter['must_not'] = [{'terms': {'task.stage': stages}}]
-            private_filter['minimum_should_match'] = 1
+
+        # user can see all public content
+        if current_user_has_privilege(GLOBAL_SEARCH_PRIVILEGE):
+            private_filter['should'].append({'exists': {'field': 'task.desk'}})
+
+        # if user has no global search access, only show him content on his desks
+        # and not on any desk
+        else:
+            desks = get_resource_service('user_desks').get_by_user(user['_id']) or []
+            private_filter['should'].append(
+                {'terms': {'task.desk': [str(d['_id']) for d in desks]}},
+            )
 
         return {'bool': private_filter}
 
@@ -197,7 +209,7 @@ class ArchiveResource(Resource):
                                          'spiked', 'submitted', 'unpublished']}},
             'must_not': {'term': {'version': 0}}
         }},
-        'elastic_filter_callback': private_content_filter
+        'elastic_filter_callback': private_content_filter,
     }
     etag_ignore_fields = ['highlights', 'broadcast']
     resource_methods = ['GET', 'POST']

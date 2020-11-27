@@ -8,16 +8,16 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
+import superdesk
+
+from copy import deepcopy
 from flask import current_app as app, json, g
 from eve_elastic.elastic import set_filters
-from copy import deepcopy
-
-import superdesk
 
 from superdesk import get_resource_service
 from superdesk.metadata.item import CONTENT_STATE, ITEM_STATE, get_schema
 from superdesk.metadata.utils import aggregations as common_aggregations, item_url, get_elastic_highlight_query
-from apps.archive.archive import SOURCE as ARCHIVE
+from apps.archive.archive import SOURCE as ARCHIVE, ArchiveResource, private_content_filter
 from superdesk.resource import build_custom_hateoas
 from apps.publish.published_item import published_item_fields
 from superdesk import es_utils
@@ -47,22 +47,15 @@ class SearchService(superdesk.Service):
 
     def get_archive_filters(self):
         """
-        Returns Archive filters filters
+        Returns Archive filters
 
         If the content state is draft, it must be from the current user
         """
-        user_id = (g.get('user') or {}).get('_id')
-        return [
+        filters = [
             {'exists': {'field': 'task.desk'}},
             {
                 'bool': {
                     'should': [
-                        {
-                            'and': [
-                                {'term': {ITEM_STATE: CONTENT_STATE.DRAFT}},
-                                {'term': {'task.user': str(user_id)}}
-                            ]
-                        },
                         {
                             'terms': {
                                 ITEM_STATE: [
@@ -78,8 +71,23 @@ class SearchService(superdesk.Service):
                     'must_not': {'term': {'version': 0}},
                     'minimum_should_match': 1,
                 }
-            }
+            },
         ]
+
+        user_id = (g.get('user') or {}).get('_id')
+        if user_id:
+            filters[1]['bool']['should'].append({
+                'bool': {'must': [
+                    {'term': {ITEM_STATE: CONTENT_STATE.DRAFT}},
+                    {'term': {'task.user': str(user_id)}},
+                ]},
+            })
+
+        private_filter = private_content_filter()
+        if private_filter:
+            filters.append(private_filter)
+
+        return filters
 
     def get_published_filters(self):
         """
@@ -255,6 +263,8 @@ class SearchResource(superdesk.Resource):
     datasource = {
         'projection': {field: 1 for field in list(schema.keys()) + ['archive_item']}
     }
+
+    privileges = {}
 
 
 def init_app(app):

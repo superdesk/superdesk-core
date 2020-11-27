@@ -402,6 +402,9 @@ class UserDesksService(BaseService):
         # desk = list(self.get(req=None, lookup={'members.user':ObjectId(user_id), '_id': ObjectId(desk_id)}))
         return len(list(self.get(req=None, lookup={'members.user': ObjectId(user_id), '_id': ObjectId(desk_id)}))) > 0
 
+    def get_by_user(self, user_id):
+        return list(self.get(req=None, lookup={'user_id': user_id}))
+
 
 class SluglineDesksResource(Resource):
 

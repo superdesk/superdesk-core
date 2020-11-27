@@ -72,9 +72,15 @@ Feature: Role Resource
         Then we get response code 200
 
     @auth
-    Scenario: All users can read everything
+    Scenario: Users without permissions can't read from restricted resources
         Given we have "user" as type of user
         When we get "/ingest"
+        Then we get response code 403
+
+    @auth
+    Scenario: All users can read non-restricted resources
+        Given we have "user" as type of user
+        When we get "/roles"
         Then we get response code 200
 
     @auth

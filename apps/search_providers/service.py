@@ -10,12 +10,14 @@
 
 import logging
 
-from apps.search_providers import allowed_search_providers
+from flask_babel import _
 from eve.utils import config
+
+from apps.search_providers import allowed_search_providers
 from superdesk.errors import SuperdeskApiError
 from superdesk.services import BaseService
 from superdesk.utils import ListCursor
-from flask_babel import _
+from superdesk.users.services import current_user_has_item_privilege
 
 logger = logging.getLogger(__name__)
 
@@ -30,8 +32,12 @@ class SearchProviderService(BaseService):
         filtered_providers = []
 
         for provider in providers:
-            if provider['search_provider'] in allowed_search_providers:
-                filtered_providers.append(provider)
+            if provider['search_provider'] not in allowed_search_providers:
+                continue
+            if req and req.args.get('with_privileges') and \
+                    not current_user_has_item_privilege(self.datasource, provider):
+                continue
+            filtered_providers.append(provider)
 
         return ListCursor(filtered_providers)
 

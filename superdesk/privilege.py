@@ -11,8 +11,13 @@
 """Privileges registry."""
 from .errors import PrivilegeNameError
 
+import superdesk
+
 _privileges = {}
 _intrinsic_privileges = {}
+
+
+GLOBAL_SEARCH_PRIVILEGE = 'use_global_saved_searches'
 
 
 def privilege(**kwargs):
@@ -31,9 +36,36 @@ def privilege(**kwargs):
     _privileges[kwargs['name']] = kwargs
 
 
-def get_privilege_list():
+def get_item_privilege_name(resource: str, item):
+    return 'resource:{}:{}'.format(resource, item['_id'])
+
+
+def _get_resource_privileges():
+    resource_privileges = []
+    for name, resource in superdesk.resources.items():
+        if not getattr(resource, 'item_privileges', None):
+            continue
+        items = superdesk.get_resource_service(name).get(None, {})
+        for item in items:
+            try:
+                label = resource.item_privileges_label.format(**item)
+            except KeyError:
+                label = '{}: {}'.format(name, item['_id'])
+            resource_privileges.append({
+                'name': get_item_privilege_name(name, item),
+                'label': label,
+                'category': name,
+            })
+    return resource_privileges
+
+
+def _get_registered_privileges():
     """Get list of all registered privileges."""
     return [v for v in _privileges.values()]
+
+
+def get_privilege_list():
+    return _get_registered_privileges() + _get_resource_privileges()
 
 
 def intrinsic_privilege(resource_name, method=None):

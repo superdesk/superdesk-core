@@ -13,7 +13,7 @@ import logging
 import superdesk
 
 from datetime import timedelta
-from flask import request, current_app as app
+from flask import request, current_app as app, json
 from eve.auth import TokenAuth
 from superdesk.resource import Resource
 from superdesk.errors import SuperdeskApiError
@@ -112,7 +112,12 @@ class SuperdeskTokenAuth(TokenAuth):
         # Step 2: Get User's Privileges
         get_resource_service('users').set_privileges(user, flask.g.role)
 
-        if method == 'GET':
+        try:
+            resource_privileges = get_resource_privileges(resource).get(method, None)
+        except KeyError:
+            resource_privileges = None
+
+        if method == 'GET' and not resource_privileges:
             return True
 
         # Step 3: Intrinsic Privileges
@@ -133,7 +138,6 @@ class SuperdeskTokenAuth(TokenAuth):
 
         # Step 4: User's privileges
         privileges = user.get('active_privileges', {})
-        resource_privileges = get_resource_privileges(resource).get(method, None)
 
         if not resource_privileges and get_no_resource_privileges(resource):
             return True

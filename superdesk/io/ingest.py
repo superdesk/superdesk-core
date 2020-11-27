@@ -8,6 +8,8 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
+import superdesk
+
 from superdesk.resource import Resource
 from superdesk.services import BaseService
 from superdesk.metadata.item import metadata_schema
@@ -18,7 +20,7 @@ from eve.utils import config
 from flask import current_app as app
 from apps.auth import get_user
 from superdesk.notification import push_notification
-import superdesk
+from superdesk.privilege import GLOBAL_SEARCH_PRIVILEGE
 
 SOURCE = 'ingest'
 
@@ -37,7 +39,7 @@ class IngestResource(Resource):
         'aggregations': aggregations,
         'es_highlight': get_elastic_highlight_query
     }
-    privileges = {'DELETE': 'fetch'}
+    privileges = {'DELETE': 'fetch', 'GET': GLOBAL_SEARCH_PRIVILEGE}
 
 
 class IngestService(BaseService):

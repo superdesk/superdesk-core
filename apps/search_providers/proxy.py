@@ -1,5 +1,6 @@
 
 import bson
+import bson.errors
 import superdesk
 
 from flask import abort, request, json
@@ -8,6 +9,7 @@ from superdesk.utils import ListCursor
 from apps.search_providers.registry import registered_search_providers
 from apps.io.search_ingest import SearchIngestService
 from superdesk.metadata.item import get_schema
+from superdesk.users.services import current_user_has_item_privilege
 
 
 PROXY_ENDPOINT = 'search_providers_proxy'
@@ -51,6 +53,8 @@ class SearchProviderProxyService(SearchIngestService):
             abort(400)
         if provider.get('is_closed'):
             abort(400)
+        if not current_user_has_item_privilege('search_providers', provider):
+            abort(403)
         return provider
 
     def _get_service(self, provider):

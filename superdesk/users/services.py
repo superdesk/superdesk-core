@@ -11,7 +11,7 @@
 import flask
 import logging
 from bson import ObjectId
-from flask import current_app as app, json, request
+from flask import current_app as app
 from eve.utils import config
 from superdesk.activity import add_activity, ACTIVITY_CREATE, ACTIVITY_UPDATE
 from superdesk.metadata.item import SIGN_OFF
@@ -20,7 +20,7 @@ from superdesk.utils import is_hashed, get_hash, compare_preferences
 from superdesk import get_resource_service
 from superdesk.emails import send_user_status_changed_email, send_activate_account_email
 from superdesk.utc import utcnow
-from superdesk.privilege import get_privilege_list
+from superdesk.privilege import get_item_privilege_name, get_privilege_list
 from superdesk.errors import SuperdeskApiError
 from superdesk.users.errors import UserInactiveError, UserNotRegisteredException
 from superdesk.notification import push_notification
@@ -81,6 +81,11 @@ def current_user_has_privilege(privilege):
         return True
     privileges = get_privileges(flask.g.user, getattr(flask.g, 'role', None))
     return privileges.get(privilege, False)
+
+
+def current_user_has_item_privilege(resource: str, item):
+    """Check if current user has privilege for item."""
+    return current_user_has_privilege(get_item_privilege_name(resource, item))
 
 
 def is_sensitive_update(updates):

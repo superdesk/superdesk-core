@@ -9,6 +9,7 @@
 # at https://www.sourcefabric.org/superdesk/license
 from eve.utils import ParsedRequest
 
+from flask import json
 from apps.search import init_app
 from superdesk.metadata.item import ITEM_STATE, CONTENT_STATE
 from superdesk.tests import TestCase
@@ -78,4 +79,4 @@ class SearchServiceTestCase(TestCase):
             req = ParsedRequest()
             req.args = {'repo': 'archive'}
             docs = self.app.data.find('search', req, None)[0]
-            self.assertEquals(1, docs.count())
+            self.assertEquals(1, docs.count(), json.dumps(list(docs), indent=2))

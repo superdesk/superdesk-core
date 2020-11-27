@@ -15,6 +15,7 @@ from .saved_searches import SavedSearchesService, SavedSearchesResource, AllSave
     SavedSearchItemsResource, SavedSearchItemsService, AllSavedSearchesService
 from superdesk import get_resource_service
 from superdesk import es_utils
+from superdesk.privilege import GLOBAL_SEARCH_PRIVILEGE
 import pytz
 from croniter import croniter
 from datetime import datetime
@@ -40,7 +41,7 @@ def init_app(app):
     service = SavedSearchItemsService(endpoint_name, backend=superdesk.get_backend())
     SavedSearchItemsResource(endpoint_name, app=app, service=service)
 
-    superdesk.privilege(name='use_global_saved_searches',
+    superdesk.privilege(name=GLOBAL_SEARCH_PRIVILEGE,
                         label='Global searches',
                         description='Use global saved searches.')
     superdesk.privilege(name='global_saved_searches',
