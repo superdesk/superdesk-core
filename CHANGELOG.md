@@ -1,5 +1,11 @@
 # Superdesk Server Changelog
 
+## [1.33.8] 2020-11-27
+
+### Fixed
+
+- Ignore HTML Markup when doing elastic highlights.
+
 ## [1.33.7] 2020-09-23
 
 ### Fixed
