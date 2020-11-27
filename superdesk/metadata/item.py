@@ -350,6 +350,11 @@ metadata_schema = {
     'body_html': {
         'type': 'string',
         'nullable': True,
+        'mapping': {
+            'type': 'string',
+            'analyzer': 'html_field_analyzer',
+            'search_analyzer': 'standard'
+        }
     },
     'body_text': {
         'type': 'string',
