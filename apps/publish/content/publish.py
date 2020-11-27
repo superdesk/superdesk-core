@@ -41,6 +41,9 @@ class ArchivePublishService(BasePublishService):
                 raise SuperdeskApiError.badRequestError(_("Empty package cannot be published!"))
 
     def on_update(self, updates, original):
+        updates[ITEM_OPERATION] = self.item_operation
+        super().on_update(updates, original)
+
         if not original.get('firstpublished'):
             updates.setdefault('firstpublished', utcnow())
 
@@ -49,8 +52,6 @@ class ArchivePublishService(BasePublishService):
             updates['previous_marked_user'] = original['marked_for_user']
             updates['marked_for_user'] = None
 
-        updates[ITEM_OPERATION] = self.item_operation
-        super().on_update(updates, original)
         set_sign_off(updates, original)
         update_word_count(updates)
 
