@@ -21,6 +21,7 @@ import os
 import sys
 import datetime
 
+
 sys.path.insert(0, os.path.abspath('../'))
 
 # -- General configuration ------------------------------------------------
@@ -35,8 +36,14 @@ sys.path.insert(0, os.path.abspath('../'))
 extensions = [
     'sphinx.ext.autodoc',
     #'sphinx.ext.viewcode',
-    'sphinxcontrib.plantuml',
 ]
+
+try:
+    import sphinxcontrib.plantuml
+    extensions.append('sphinxcontrib.plantuml')
+except ImportError:
+    pass
+
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
 

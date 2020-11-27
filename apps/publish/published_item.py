@@ -86,8 +86,11 @@ published_item_fields = {
         'type': 'boolean',
         'default': False
     },
+    # if item is published as part of a package this will
+    # be set to package id so transmitter can handle such
+    # items differently
     PUBLISHED_IN_PACKAGE: {
-        'type': 'string'
+        'type': 'string',
     },
     '_current_version': {  # must be set explicitly, there is no versioning
         'type': 'integer',
