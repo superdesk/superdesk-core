@@ -32,6 +32,7 @@ from superdesk.datalayer import SuperdeskDataLayer  # noqa
 from superdesk.errors import SuperdeskError, SuperdeskApiError
 from superdesk.factory.sentry import SuperdeskSentry
 from superdesk.logging import configure_logging
+from superdesk.storage import ProxyMediaStorage
 from superdesk.validator import SuperdeskValidator
 from superdesk.json_utils import SuperdeskJSONEncoder
 
@@ -108,12 +109,8 @@ def get_media_storage_class(app_config: Dict[str, Any], use_provider_config: boo
             if not issubclass(klass, MediaStorage):
                 raise SystemExit('Invalid setting MEDIA_STORAGE_PROVIDER. Class must extend eve.io.media.MediaStorage')
             return klass
-    elif app_config.get('AMAZON_CONTAINER_NAME'):
-        from superdesk.storage import AmazonMediaStorage
-        return AmazonMediaStorage
 
-    from superdesk.storage import SuperdeskGridFSMediaStorage
-    return SuperdeskGridFSMediaStorage
+    return ProxyMediaStorage
 
 
 def get_app(config=None, media_storage=None, config_object=None, init_elastic=None):

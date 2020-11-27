@@ -146,7 +146,7 @@ class CropTestCase(TestCase):
         media = mock.MagicMock()
         media.name = 'test.jpg'
 
-        with mock.patch('superdesk.app.media.get', return_value=media):
+        with mock.patch.object(self.app.media, 'fetch_rendition', return_value=media):
             doc = {'CropLeft': 0, 'CropRight': 800, 'CropTop': 0, 'CropBottom': 600}
             with self.assertRaises(SuperdeskApiError) as context:
                 self.service.create_crop(original, '4-3', doc)

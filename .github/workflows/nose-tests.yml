@@ -1,11 +1,6 @@
 name: "CI"
 
-on:
-  push:
-    branches: [develop, master, sams]
-  pull_request:
-    # The branches below must be a subset of the branches above
-    branches: [develop, sams]
+on: [push, pull_request]
 
 jobs:
 
