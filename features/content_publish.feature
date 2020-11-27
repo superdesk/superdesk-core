@@ -4487,3 +4487,67 @@ Feature: Content Publishing
           }
       }
       """
+
+    @auth
+    Scenario: Publish a user content from personal space
+      Given the "validators"
+      """
+        [
+        {
+            "schema": {},
+            "type": "text",
+            "act": "publish",
+            "_id": "publish_text"
+        },
+        {
+            "_id": "publish_composite",
+            "act": "publish",
+            "type": "composite",
+            "schema": {}
+        }
+        ]
+      """
+      And "desks"
+      """
+      [{"name": "Sports"}]
+      """
+      When we post to "/archive" with success
+      """
+      [{"guid": "123", "type": "text", "headline": "test", "state": "in_progress",
+        "task": {"user": "#CONTEXT_USER_ID#"},
+        "subject":[{"qcode": "17004000", "name": "Statistics"}],
+        "slugline": "test",
+        "body_html": "Test Document body",
+        "dateline": {
+          "located" : {
+              "country" : "Afghanistan",
+              "tz" : "Asia/Kabul",
+              "city" : "Mazar-e Sharif",
+              "alt_name" : "",
+              "country_code" : "AF",
+              "city_code" : "Mazar-e Sharif",
+              "dateline" : "city",
+              "state" : "Balkh",
+              "state_code" : "AF.30"
+          },
+          "text" : "MAZAR-E SHARIF, Dec 30  -",
+          "source": "AAP"}
+        }]
+      """
+      Then we get OK response
+      And we get existing resource
+      """
+      {"_current_version": 1, "state": "in_progress"}
+      """
+      Then we get OK response
+      When we publish "#archive._id#?desk_id=#desks._id#" with "publish" type and "published" state
+      Then we get OK response
+      And we get existing resource
+      """
+      {
+        "_current_version": 2,
+        "type": "text",
+        "state": "published",
+        "task":{"desk": "#desks._id#", "user": "#CONTEXT_USER_ID#"}
+       }
+      """
