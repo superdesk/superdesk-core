@@ -965,7 +965,8 @@ Feature: Content Publishing
                   "_current_version": 3,
                   "state": "in_progress",
                   "type": "text",
-                  "_id": "123"
+                  "_id": "123",
+                  "firstpublished": null
 
               }
           ]
