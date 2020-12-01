@@ -6,7 +6,7 @@ nose-exclude
 pep8
 pyflakes
 pydocstyle<4.0
-httmock
+httmock==1.4.0
 watchdog==0.9.0
 wooper==0.4.4
 requests-mock
