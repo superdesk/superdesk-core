@@ -393,6 +393,7 @@ CORE_APPS = [
     'superdesk.internal_destinations',
     'apps.client_config',
     'superdesk.auth',
+    'superdesk.auth.oauth',
     'superdesk.attachments',
     'superdesk.auth_server',
     'apps.links',
@@ -724,6 +725,10 @@ CONTENT_API_EXPIRY_DAYS = int(env('CONTENT_API_EXPIRY_DAYS', 0))
 # Google OAuth settings
 GOOGLE_CLIENT_ID = env('GOOGLE_CLIENT_ID')
 GOOGLE_CLIENT_SECRET = env('GOOGLE_CLIENT_SECRET')
+# Google login will only be activated if both GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET are set
+GOOGLE_LOGIN = True
+GOOGLE_GMAIL = True
+
 
 # SAML Auth settings
 SAML_PATH = env('SAML_PATH')

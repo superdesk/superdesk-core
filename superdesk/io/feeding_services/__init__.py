@@ -40,7 +40,7 @@ class FeedingService(metaclass=ABCMeta):
         2. fields: list of dictionaries; contains the descriptions of configuration fields. All fields must
             have the following properties:
                 - id: field identifier
-                - type: valid values: text, password, boolean, mapping, choices
+                - type: valid values: text, password, boolean, mapping, choices, url_request
             Optional properties:
                 - label: field label for UI view
                 - required: if true the field is required
@@ -52,6 +52,10 @@ class FeedingService(metaclass=ABCMeta):
                 - show_expression: if the evaluation of the expression is true the field is displayed.
                     Field values can be referred by enclosing the field identifier in accolades: {field_id}
                 - default_value: value to use
+            Type specific properties:
+                properties with a ``*`` are mandatory
+                - url_request *: a dict containing the following keys:
+                    - url *: URL to request
             The fields can be of the following types:
                 1. text: has the following properties besides the generic ones:
                     - placeholder: placeholder text
@@ -275,6 +279,7 @@ class FeedingService(metaclass=ABCMeta):
 
 # must be imported for registration
 from superdesk.io.feeding_services.email import EmailFeedingService  # NOQA
+from superdesk.io.feeding_services.gmail import GMailFeedingService  # NOQA
 from superdesk.io.feeding_services.file_service import FileFeedingService  # NOQA
 from superdesk.io.feeding_services.ftp import FTPFeedingService  # NOQA
 from superdesk.io.feeding_services.ritzau import RitzauFeedingService  # NOQA
@@ -284,3 +289,8 @@ from superdesk.io.feeding_services.twitter import TwitterFeedingService  # NOQA
 from superdesk.io.feeding_services.ap import APFeedingService  # NOQA
 from superdesk.io.feeding_services.bbc_ldrs import BBCLDRSFeedingService # NOQA
 from superdesk.io.feeding_services.ap_media import APMediaFeedingService # NOQA
+
+
+def init_app(app):
+    # app needs to be accessible for those feeding services
+    GMailFeedingService.init_app(app)
