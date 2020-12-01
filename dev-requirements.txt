@@ -8,7 +8,11 @@ pyflakes
 pydocstyle<4.0
 httmock
 watchdog==0.9.0
-wooper
+
+# Use master branch from github repo
+# to use relaxed versions for behave & requests
+git+git://github.com/actionless/wooper.git@master#egg=wooper
+
 requests-mock
 responses
 pytest==5.2.2
