@@ -1,5 +1,11 @@
 # Superdesk Server Changelog
 
+## [1.33.9] 2020-12-01
+
+### Fixed
+
+- Fix install with pip 20.3.
+
 ## [1.33.8] 2020-11-27
 
 ### Fixed
