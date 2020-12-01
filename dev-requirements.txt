@@ -8,7 +8,11 @@ pyflakes
 pydocstyle<4.0
 httmock
 watchdog==0.9.0
-wooper
+
+# Replace wooper with fork for now
+# to fix use relaxed versions for behave & requests
+git+git://github.com/marklark86/wooper.git@relax-requirements#egg=wooper
+
 requests-mock
 responses
 pytest==5.2.2
@@ -16,7 +20,6 @@ pytest-env==0.6.2
 python3-saml>=1.9,<1.10
 mypy
 
--e git+git://github.com/superdesk/superdesk-planning.git@develop#egg=superdesk-planning
+-e git+git://github.com/superdesk/superdesk-planning.git@sams#egg=superdesk-planning
 -e .
 -e git+git://github.com/superdesk/sams.git@develop#egg=sams_client&subdirectory=src/clients/python/
-
