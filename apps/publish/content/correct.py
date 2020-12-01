@@ -18,7 +18,7 @@ from apps.archive.archive import flush_renditions
 from .common import BasePublishService, BasePublishResource, ITEM_CORRECT
 from superdesk.emails import send_translation_changed
 from superdesk.activity import add_activity
-from flask import g
+from flask import g, current_app as app
 
 
 def send_translation_notifications(original):
@@ -78,6 +78,16 @@ class CorrectPublishService(BasePublishService):
         else:
             super().set_state(original, updates)
 
+    def change_being_corrected_to_published(self, updates, original):
+        if app.config.get('CORRECTIONS_WORKFLOW') and original.get('state') == 'correction':
+            publish_service = get_resource_service('published')
+            being_corrected_articles = publish_service.find({
+                'guid': original.get('corrected_of'),
+                'state': 'being_corrected'
+            })
+            for item in being_corrected_articles:
+                publish_service.patch(item['_id'], updates={'state': 'published'})
+
     def on_update(self, updates, original):
         CropService().validate_multiple_crops(updates, original)
         super().on_update(updates, original)
@@ -87,6 +97,7 @@ class CorrectPublishService(BasePublishService):
         set_sign_off(updates, original)
         update_word_count(updates, original)
         flush_renditions(updates, original)
+        self.change_being_corrected_to_published(updates, original)
 
     def update(self, id, updates, original):
         editor_utils.generate_fields(updates)

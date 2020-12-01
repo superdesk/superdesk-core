@@ -14,4 +14,3 @@ from .publish import ArchivePublishResource, ArchivePublishService  # NOQA
 from .resend import ResendResource, ResendService  # NOQA
 from .take_down import TakeDownPublishResource, TakeDownPublishService  # NOQA
 from .unpublish import UnpublishResource, UnpublishService  # noqa
-from .correction import CorrectionPublishResource, CorrectionPublishService  # NOQA

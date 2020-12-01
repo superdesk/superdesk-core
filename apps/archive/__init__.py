@@ -25,6 +25,7 @@ from .ingest import IngestResource, AppIngestService
 from .user_content import UserContentResource, UserContentService
 from .archive_lock import ArchiveLockResource, ArchiveUnlockResource, ArchiveLockService, ArchiveUnlockService
 from .archive_spike import ArchiveUnspikeResource, ArchiveSpikeService, ArchiveSpikeResource, ArchiveUnspikeService
+from .archive_correction import ArchiveCorrectionService, ArchiveCorrectionResource
 from .related import ArchiveRelatedResource, ArchiveRelatedService
 from apps.common.components.utils import register_component
 from apps.item_lock.components.item_lock import ItemLock
@@ -75,6 +76,10 @@ def init_app(app):
     endpoint_name = 'archive_rewrite'
     service = ArchiveRewriteService(endpoint_name, backend=superdesk.get_backend())
     ArchiveRewriteResource(endpoint_name, app=app, service=service)
+
+    endpoint_name = 'archive_correction'
+    service = ArchiveCorrectionService(endpoint_name, backend=superdesk.get_backend())
+    ArchiveCorrectionResource(endpoint_name, app=app, service=service)
 
     endpoint_name = 'archive_autosave'
     service = ArchiveSaveService(endpoint_name, backend=superdesk.get_backend())

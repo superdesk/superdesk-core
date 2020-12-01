@@ -81,7 +81,7 @@ class BasePublishResource(ArchiveResource):
     Base resource class for "publish" endpoint.
     """
 
-    def __init__(self, endpoint_name, app, service, publish_type, privilege=None):
+    def __init__(self, endpoint_name, app, service, publish_type):
         self.endpoint_name = 'archive_%s' % publish_type
         self.resource_title = endpoint_name
         self.schema[PUBLISHED_IN_PACKAGE] = {'type': 'string'}
@@ -94,7 +94,7 @@ class BasePublishResource(ArchiveResource):
         self.resource_methods = []
         self.item_methods = ['PATCH']
 
-        self.privileges = {'PATCH': privilege if privilege else publish_type}
+        self.privileges = {'PATCH': publish_type}
 
         super().__init__(endpoint_name, app=app, service=service)
 
@@ -846,7 +846,7 @@ superdesk.workflow_action(
 superdesk.workflow_state('killed')
 superdesk.workflow_action(
     name='kill',
-    include_states=['published', 'scheduled', 'corrected'],
+    include_states=['published', 'scheduled', 'corrected', 'being_corrected'],
     privileges=['kill']
 )
 
@@ -860,7 +860,7 @@ superdesk.workflow_action(
 superdesk.workflow_state('correction')
 superdesk.workflow_action(
     name='correction',
-    include_states=['published'],
+    include_states=['published', 'correction', 'being_corrected', 'corrected'],
     privileges=['correct']
 )
 
@@ -873,7 +873,7 @@ superdesk.workflow_action(
 superdesk.workflow_state('recalled')
 superdesk.workflow_action(
     name='recalled',
-    include_states=['published', 'scheduled', 'corrected'],
+    include_states=['published', 'scheduled', 'corrected', 'being_corrected'],
     privileges=['takedown']
 )
 
