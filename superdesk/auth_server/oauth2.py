@@ -8,7 +8,7 @@
 
 import time
 import logging
-from authlib.flask.oauth2 import AuthorizationServer
+from authlib.integrations.flask_oauth2 import AuthorizationServer
 from authlib.oauth2.rfc6749 import grants
 from authlib.jose import jwt
 import superdesk
