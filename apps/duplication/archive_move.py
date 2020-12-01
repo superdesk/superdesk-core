@@ -123,8 +123,8 @@ class MoveService(BaseService):
         user = get_user()
         send_to(doc=archived_doc, desk_id=doc.get('task', {}).get('desk'), stage_id=doc.get('task', {}).get('stage'),
                 user_id=user.get(config.ID_FIELD))
-        if archived_doc[ITEM_STATE] not in \
-                {CONTENT_STATE.PUBLISHED, CONTENT_STATE.SCHEDULED, CONTENT_STATE.KILLED, CONTENT_STATE.RECALLED}:
+        if archived_doc[ITEM_STATE] not in ({CONTENT_STATE.PUBLISHED, CONTENT_STATE.SCHEDULED,
+                                            CONTENT_STATE.KILLED, CONTENT_STATE.RECALLED, CONTENT_STATE.CORRECTION}):
             archived_doc[ITEM_STATE] = CONTENT_STATE.SUBMITTED
         archived_doc[ITEM_OPERATION] = ITEM_MOVE
         # set the change in desk type when content is moved.
