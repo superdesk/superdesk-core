@@ -40,12 +40,23 @@ class IMatricsTestCase(TestCase):
         self.app.config["IMATRICS_BASE_URL"] = TEST_BASE_URL
         self.app.config["IMATRICS_USER"] = "some_user"
         self.app.config["IMATRICS_KEY"] = "some_secret_key"
+        self.app.config["IMATRICS_SUBJECT_SCHEME"] = "topics"
         registered_ai_services.clear()
         tools.import_services(self.app, ai.__name__, AIServiceBase)
 
     @responses.activate
     def test_autotagging(self):
         """Check that autotagging is working"""
+        self.app.data.insert('vocabularies', [
+            {'_id': 'topics', 'items': [
+                {
+                    'name': 'superdesk name',
+                    'qcode': '20000763',
+                    'is_active': True,
+                },
+            ]}
+        ])
+
         doc = {
             "service": "imatrics",
             "item": self.item,
@@ -90,6 +101,7 @@ class IMatricsTestCase(TestCase):
             ]
 
         )
+
         ai_service.create([doc])
 
         expected = {
@@ -104,9 +116,9 @@ class IMatricsTestCase(TestCase):
                     },
                 },
                 {
-                    "name": "informasjons- og kommunikasjonsteknologi",
+                    "name": "superdesk name",
                     "qcode": "20000763",
-                    "scheme": "imatrics_category",
+                    "scheme": "topics",
                     "source": "imatrics",
                     "altids": {
                         "imatrics": "c8a83204-29e0-3a7f-9a0e-51e76d885f7f",
