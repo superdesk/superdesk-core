@@ -1,5 +1,13 @@
 # Superdesk Server Changelog
 
+## [2.0.6] 2020-12-02
+
+### Fixed
+
+- Fix dev dependencies package versions.
+- Make geonames fields in dateline optional.
+- Reset `firstpublished` on deschedule.
+
 ## [2.0.5] 2020-11-27
 
 ### Fixed
