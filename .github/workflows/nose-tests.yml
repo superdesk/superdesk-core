@@ -42,9 +42,6 @@ jobs:
     - name: Flake8
       run: flake8
 
-    - name: Mypy
-      run: mypy .
-
   nose:
 
     runs-on: ubuntu-latest
