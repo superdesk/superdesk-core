@@ -461,6 +461,13 @@ class VocabulariesService(BaseService):
             }
             self.post([cv])
 
+    def get_article_cv_item(self, item, scheme):
+        article_item = {
+            k: v for k, v in item.items() if k not in ('is_active', )
+        }
+        article_item.update({'scheme': scheme})
+        return article_item
+
 
 def is_related_content(item_name, related_content=None):
     if related_content is None:
