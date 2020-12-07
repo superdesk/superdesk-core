@@ -78,6 +78,9 @@ class ProxyMediaStorage(SuperdeskMediaStorage):
     def url_for_download(self, media_id, content_type=None):
         return self.storage(media_id, fallback=True).url_for_download(media_id, content_type=content_type)
 
+    def url_for_external(self, media_id: str, resource: str = None) -> str:
+        return self.storage(media_id, resource=resource, fallback=True).url_for_external(media_id, resource)
+
     def fetch_rendition(self, rendition):
         if rendition.get("media"):
             return self.get(rendition["media"])
