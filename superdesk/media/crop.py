@@ -14,6 +14,7 @@ from eve.utils import ParsedRequest
 import superdesk
 import logging
 from copy import deepcopy
+from flask import current_app as app
 from superdesk import get_resource_service, config
 from superdesk.errors import SuperdeskApiError
 from superdesk.media.media_operations import crop_image, process_file_from_stream
@@ -163,7 +164,7 @@ class CropService():
         :raises SuperdeskApiError.badRequestError
         :return dict: rendition
         """
-        original_file = superdesk.app.media.fetch_rendition(original_image)
+        original_file = app.media.fetch_rendition(original_image)
         if not original_file:
             raise SuperdeskApiError.badRequestError('Original file couldn\'t be found')
         try:
@@ -199,10 +200,10 @@ class CropService():
             file_name, content_type, metadata = process_file_from_stream(file_stream,
                                                                          content_type=original.get('mimetype'))
             file_stream.seek(0)
-            file_id = superdesk.app.media.put(file_stream, filename=file_name,
-                                              content_type=content_type,
-                                              resource='upload',
-                                              metadata=metadata)
+            file_id = app.media.put(file_stream, filename=file_name,
+                                    content_type=content_type,
+                                    resource='upload',
+                                    metadata=metadata)
             crop['media'] = file_id
             crop['mimetype'] = content_type
             crop['href'] = url_for_media(file_id, content_type)
@@ -213,7 +214,7 @@ class CropService():
             return crop
         except Exception as ex:
             try:
-                superdesk.app.media.delete(file_id)
+                app.media.delete(file_id)
             except Exception:
                 pass
             raise SuperdeskApiError.internalError('Generating crop failed: {}'.format(str(ex)), exception=ex)
@@ -224,7 +225,7 @@ class CropService():
         :param Object_id file_id: Object_Id of the file.
         """
         try:
-            superdesk.app.media.delete(file_id)
+            app.media.delete(file_id)
         except Exception:
             logger.exception("Crop File cannot be deleted. File_Id {}".format(file_id))
 

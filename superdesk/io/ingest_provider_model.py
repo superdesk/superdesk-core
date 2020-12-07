@@ -177,6 +177,10 @@ class IngestProviderResource(Resource):
                 'type': 'boolean',
                 'nullable': True,
             },
+            'url_id': {
+                'type': 'string',
+                'nullable': True,
+            },
         }
 
         self.item_methods = ['GET', 'PATCH', 'DELETE']

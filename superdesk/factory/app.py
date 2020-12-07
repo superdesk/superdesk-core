@@ -29,7 +29,7 @@ from superdesk.datalayer import SuperdeskDataLayer  # noqa
 from superdesk.errors import SuperdeskError, SuperdeskApiError
 from superdesk.factory.sentry import SuperdeskSentry
 from superdesk.logging import configure_logging
-from superdesk.storage import AmazonMediaStorage, SuperdeskGridFSMediaStorage
+from superdesk.storage import ProxyMediaStorage
 from superdesk.validator import SuperdeskValidator
 from superdesk.json_utils import SuperdeskJSONEncoder
 
@@ -122,10 +122,8 @@ def get_app(config=None, media_storage=None, config_object=None, init_elastic=No
     except TypeError:
         app_config.from_object(config)
 
-    if not media_storage and app_config.get('AMAZON_CONTAINER_NAME'):
-        media_storage = AmazonMediaStorage
-    elif not media_storage:
-        media_storage = SuperdeskGridFSMediaStorage
+    if not media_storage:
+        media_storage = ProxyMediaStorage
 
     app = SuperdeskEve(
         data=SuperdeskDataLayer,

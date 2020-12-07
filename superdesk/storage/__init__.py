@@ -10,10 +10,35 @@
 
 """Superdesk storage module."""
 
+import abc
+
+from eve.io.media import MediaStorage
 from eve.io.mongo.media import GridFSMediaStorage, GridFS
 
-from .desk_media_storage import SuperdeskGridFSMediaStorage  # noqa
-from .amazon_media_storage import AmazonMediaStorage  # noqa
+from .mimetype_mixin import MimetypeMixin
+
+
+class SuperdeskMediaStorage(MediaStorage, MimetypeMixin):
+
+    @abc.abstractmethod
+    def url_for_media(self, media, content_type=None):
+        raise NotImplementedError
+
+    @abc.abstractmethod
+    def url_for_download(self, media, content_type=None):
+        raise NotImplementedError
+
+    @abc.abstractmethod
+    def get_by_filename(self, filename):
+        raise NotImplementedError
+
+    @abc.abstractmethod
+    def remove_unreferenced_files(self, existing_files, resource=None):
+        raise NotImplementedError
+
+    @abc.abstractmethod
+    def fetch_rendition(self, rendition, resource=None):
+        raise NotImplementedError
 
 
 class SimpleMediaStorage(GridFSMediaStorage):
@@ -28,3 +53,10 @@ class SimpleMediaStorage(GridFSMediaStorage):
 
 def init_app(app):
     app.storage = SimpleMediaStorage(app)
+
+
+from .proxy import ProxyMediaStorage  # noqa
+from .desk_media_storage import SuperdeskGridFSMediaStorage  # noqa
+from .amazon_media_storage import AmazonMediaStorage  # noqa
+
+from .migrate import MigrateMediaCommand  # noqa

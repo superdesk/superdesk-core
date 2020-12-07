@@ -175,11 +175,41 @@ ELASTICSEARCH_SETTINGS = {
                     'replacement': ' '
                 }
             },
+            'char_filter': {
+                # https://www.elastic.co/guide/en/elasticsearch/reference/current/analysis-charfilters.html
+                # https://www.elastic.co/guide/en/elasticsearch/reference/current/analysis-htmlstrip-charfilter.html
+                'html_strip_filter': {
+                    'type': 'html_strip'
+                }
+            },
             'analyzer': {
                 'phrase_prefix_analyzer': {
                     'type': 'custom',
                     'filter': ['remove_hyphen', 'lowercase'],
                     'tokenizer': 'keyword'
+                },
+                'html_field_analyzer': {
+                    'type': 'custom',
+                    'tokenizer': 'standard',
+                    'char_filter': ['html_strip_filter'],
+                }
+            }
+        }
+    }
+}
+CONTENTAPI_ELASTICSEARCH_SETTINGS = {
+    'settings': {
+        'analysis': {
+            'char_filter': {
+                'html_strip_filter': {
+                    'type': 'html_strip'
+                }
+            },
+            'analyzer': {
+                'html_field_analyzer': {
+                    'type': 'custom',
+                    'tokenizer': 'standard',
+                    'char_filter': ['html_strip_filter'],
                 }
             }
         }
@@ -363,6 +393,7 @@ CORE_APPS = [
     'superdesk.internal_destinations',
     'apps.client_config',
     'superdesk.auth',
+    'superdesk.auth.oauth',
     'superdesk.attachments',
     'superdesk.auth_server',
     'apps.links',
@@ -694,6 +725,10 @@ CONTENT_API_EXPIRY_DAYS = int(env('CONTENT_API_EXPIRY_DAYS', 0))
 # Google OAuth settings
 GOOGLE_CLIENT_ID = env('GOOGLE_CLIENT_ID')
 GOOGLE_CLIENT_SECRET = env('GOOGLE_CLIENT_SECRET')
+# Google login will only be activated if both GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET are set
+GOOGLE_LOGIN = True
+GOOGLE_GMAIL = True
+
 
 # SAML Auth settings
 SAML_PATH = env('SAML_PATH')

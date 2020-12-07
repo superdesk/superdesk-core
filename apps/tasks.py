@@ -296,8 +296,8 @@ class TasksService(BaseService):
     def on_deleted(self, doc):
         push_notification(self.datasource, deleted=1)
 
-    def assign_user(self, item_id, user):
-        return self.patch(item_id, {'task': user})
+    def assign_user(self, item_id, updates):
+        return self.patch(item_id, updates)
 
     def _stage_changed(self, updates, original):
         new_stage_id = str(updates.get('task', {}).get('stage', ''))

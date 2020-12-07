@@ -690,6 +690,7 @@ class ArchiveService(BaseService):
         updates[PUBLISH_SCHEDULE] = original[PUBLISH_SCHEDULE]
         updates[SCHEDULE_SETTINGS] = original[SCHEDULE_SETTINGS]
         updates[ITEM_OPERATION] = ITEM_DESCHEDULE
+        updates['firstpublished'] = None
         # delete entry from published repo
         get_resource_service('published').delete_by_article_id(original['_id'])
 

@@ -161,10 +161,12 @@ class FeedingServiceAllowedService(Service):
             if restricted_parsers is not None:
                 restricted_parsers = list(restricted_parsers.keys())
 
+            fields = getattr(feeding_service_class, 'fields', [])
+
             return {
                 'feeding_service': service_id,
                 'label': getattr(feeding_service_class, 'label', service_id),
-                'fields': getattr(feeding_service_class, 'fields', []),
+                'fields': fields,
                 'field_groups': getattr(feeding_service_class, 'field_groups', {}),
                 'parser_restricted_values': restricted_parsers
             }

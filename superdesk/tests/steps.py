@@ -158,6 +158,9 @@ def json_match(context_data, response_data, json_fields=None):
             if context_data[key] == "__now__":
                 assert_is_now(response_data[key], key)
                 continue
+            if context_data[key] == "__future__":
+                assert arrow.get(response_data[key]) > arrow.get(), '{} should be in future'.format(key)
+                continue
             if context_data[key] == "__empty__":
                 assert len(response_data[key]) == 0, '%s is not empty (%s)' % (key, response_data[key])
                 continue

@@ -302,6 +302,10 @@ class DraftJSHTMLExporter:
             content_state = self.content_state
 
         try:
+            for block in content_state['blocks']:
+                block.setdefault('depth', 0)
+                block.setdefault('entityRanges', [])
+                block.setdefault('inlineStyleRanges', [])
             html = self.exporter.render(content_state)
         except KeyError as e:
             if e.args == ('text',):

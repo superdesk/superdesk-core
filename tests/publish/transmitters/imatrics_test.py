@@ -31,7 +31,7 @@ class IMatricsTransmitterTestCase(unittest.TestCase):
             with patch.dict(superdesk.resources, resources):
                 responses.add(
                     responses.POST,
-                    url=self.app.config["IMATRICS_BASE_URL"] + "article/publish",
+                    url=self.app.config["IMATRICS_BASE_URL"] + "article/concept",
                     json={"uuid": "guid"},
                 )
                 formatter = IMatricsFormatter()
@@ -127,8 +127,6 @@ class IMatricsTransmitterTestCase(unittest.TestCase):
                         "latestVersionTimestamp": item["versioncreated"].isoformat(),
                         "publicationTimestamp": item["firstpublished"].isoformat(),
                         "authors": ["john"],
-                        "newspapers": [],
-                        "channels": [],
                         "concepts": [
                             {
                                 "title": "The category",

@@ -709,7 +709,6 @@ Feature: Content Publishing
       """
       [{"guid": "123", "headline": "test", "_current_version": 1, "state": "fetched",
         "task": {"desk": "#desks._id#", "stage": "#desks.incoming_stage#", "user": "#CONTEXT_USER_ID#"},
-        "publish_schedule":"#DATE+2#",
         "subject":[{"qcode": "17004000", "name": "Statistics"}],
         "slugline": "test",
         "body_html": "Test Document body"}]
@@ -735,7 +734,7 @@ Feature: Content Publishing
       Then we get OK response
       And we get existing resource
       """
-      {"_current_version": 2, "state": "scheduled", "operation": "publish"}
+      {"_current_version": 2, "state": "scheduled", "operation": "publish", "firstpublished": "__future__"}
       """
       And we get expiry for schedule and embargo content 60 minutes after "#archive_publish.publish_schedule#"
       When we get "/published"
@@ -966,7 +965,8 @@ Feature: Content Publishing
                   "_current_version": 3,
                   "state": "in_progress",
                   "type": "text",
-                  "_id": "123"
+                  "_id": "123",
+                  "firstpublished": null
 
               }
           ]
@@ -4487,4 +4487,68 @@ Feature: Content Publishing
               }
           }
       }
+      """
+
+    @auth
+    Scenario: Publish a user content from personal space
+      Given the "validators"
+      """
+        [
+        {
+            "schema": {},
+            "type": "text",
+            "act": "publish",
+            "_id": "publish_text"
+        },
+        {
+            "_id": "publish_composite",
+            "act": "publish",
+            "type": "composite",
+            "schema": {}
+        }
+        ]
+      """
+      And "desks"
+      """
+      [{"name": "Sports"}]
+      """
+      When we post to "/archive" with success
+      """
+      [{"guid": "123", "type": "text", "headline": "test", "state": "in_progress",
+        "task": {"user": "#CONTEXT_USER_ID#"},
+        "subject":[{"qcode": "17004000", "name": "Statistics"}],
+        "slugline": "test",
+        "body_html": "Test Document body",
+        "dateline": {
+          "located" : {
+              "country" : "Afghanistan",
+              "tz" : "Asia/Kabul",
+              "city" : "Mazar-e Sharif",
+              "alt_name" : "",
+              "country_code" : "AF",
+              "city_code" : "Mazar-e Sharif",
+              "dateline" : "city",
+              "state" : "Balkh",
+              "state_code" : "AF.30"
+          },
+          "text" : "MAZAR-E SHARIF, Dec 30  -",
+          "source": "AAP"}
+        }]
+      """
+      Then we get OK response
+      And we get existing resource
+      """
+      {"_current_version": 1, "state": "in_progress"}
+      """
+      Then we get OK response
+      When we publish "#archive._id#?desk_id=#desks._id#" with "publish" type and "published" state
+      Then we get OK response
+      And we get existing resource
+      """
+      {
+        "_current_version": 2,
+        "type": "text",
+        "state": "published",
+        "task":{"desk": "#desks._id#", "user": "#CONTEXT_USER_ID#"}
+       }
       """

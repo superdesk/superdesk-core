@@ -84,8 +84,8 @@ class BasePublishResource(ArchiveResource):
     def __init__(self, endpoint_name, app, service, publish_type):
         self.endpoint_name = 'archive_%s' % publish_type
         self.resource_title = endpoint_name
-        self.schema[PUBLISHED_IN_PACKAGE] = {'type': 'string'}
 
+        self.schema[PUBLISHED_IN_PACKAGE] = {'type': 'string'}
         self.datasource = {'source': ARCHIVE}
 
         self.url = 'archive/{}'.format(publish_type)

@@ -16,7 +16,6 @@ from celery.exceptions import SoftTimeLimitExceeded
 
 import superdesk
 from superdesk.tests import TestCase
-from superdesk.publish.publish_queue import PUBLISHED_IN_PACKAGE
 
 
 class SoftTimeLimitTestCase(TestCase):
