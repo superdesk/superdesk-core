@@ -196,7 +196,7 @@ def configure_google(
             return render_template(TEMPLATE, data={})
         else:
             # no token_id, OAuth is only used for log-in
-            return auth_user(user['email'])
+            return auth_user(user['email'], {"needs_activation": False})
 
     superdesk.blueprint(bp, app)
 
