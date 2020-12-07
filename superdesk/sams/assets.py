@@ -27,6 +27,8 @@ from flask import request
 from superdesk.errors import SuperdeskApiError
 from .utils import get_file_from_sams
 from superdesk.storage.superdesk_file import generate_response_for_file
+from apps.auth import get_user_id
+from .client import get_sams_client
 
 logger = logging.getLogger(__name__)
 assets_bp = superdesk.Blueprint('sams_assets', __name__)
@@ -37,7 +39,7 @@ def get():
     """
     Returns a list of all the registered assets
     """
-    assets = assets_bp.kwargs['client'].assets.search(params=request.args.to_dict())
+    assets = get_sams_client().assets.search(params=request.args.to_dict())
     return assets.json(), assets.status_code
 
 
@@ -47,7 +49,7 @@ def find_one(item_id):
     Uses item_id and returns the corresponding
     asset
     """
-    item = assets_bp.kwargs['client'].assets.get_by_id(item_id=item_id)
+    item = get_sams_client().assets.get_by_id(item_id=item_id)
     return item.json(), item.status_code
 
 
@@ -57,7 +59,7 @@ def get_binary(item_id):
     Uses item_id and returns the corresponding
     asset binary
     """
-    file = get_file_from_sams(assets_bp.kwargs['client'], item_id)
+    file = get_file_from_sams(get_sams_client(), item_id)
     return generate_response_for_file(file)
 
 
@@ -68,7 +70,11 @@ def create():
     """
     files = {'binary': request.files['binary']}
     docs = request.form.to_dict()
-    post_response = assets_bp.kwargs['client'].assets.create(docs=docs, files=files)
+    post_response = get_sams_client().assets.create(
+        docs=docs,
+        files=files,
+        external_user_id=get_user_id(True)
+    )
     return post_response.json(), post_response.status_code
 
 
@@ -84,7 +90,7 @@ def delete(item_id):
             "If-Match field missing in header"
         )
 
-    delete_response = assets_bp.kwargs['client'].assets.delete(
+    delete_response = get_sams_client().assets.delete(
         item_id=item_id, headers={'If-Match': etag}
     )
     if delete_response.status_code != 204:
@@ -115,11 +121,12 @@ def update(item_id):
         files = {}
         updates = request.get_json()
 
-    update_response = assets_bp.kwargs['client'].assets.update(
+    update_response = get_sams_client().assets.update(
         item_id=item_id,
         updates=updates,
         headers={'If-Match': etag},
-        files=files
+        files=files,
+        external_user_id=get_user_id(True)
     )
     return update_response.json(), update_response.status_code
 
@@ -128,7 +135,7 @@ def update(item_id):
 @assets_bp.route('/sams/assets/counts/<set_ids>', methods=['GET'])
 def get_assets_count(set_ids):
     set_ids = ast.literal_eval(set_ids) if set_ids else None
-    counts = assets_bp.kwargs['client'].assets.get_assets_count(
+    counts = get_sams_client().assets.get_assets_count(
         set_ids=set_ids
     )
     return counts
@@ -137,7 +144,7 @@ def get_assets_count(set_ids):
 @assets_bp.route("/sams/assets/compressed_binary/<asset_ids>", methods=["GET"])
 def get_assets_compressed_binary(asset_ids):
     asset_ids = ast.literal_eval(asset_ids) if asset_ids else None
-    zip_binary = assets_bp.kwargs["client"].assets.get_binary_zip_by_id(
+    zip_binary = get_sams_client().assets.get_binary_zip_by_id(
         item_ids=asset_ids
     )
     return zip_binary.content

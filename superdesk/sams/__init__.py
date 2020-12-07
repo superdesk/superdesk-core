@@ -5,15 +5,7 @@ from .storage_destinations import destinations_bp
 from .sets import sets_bp
 from superdesk.auth.decorator import blueprint_auth
 from flask_babel import _
-from sams_client import SamsClient
-
-
-def get_sams_client(app: Eve) -> SamsClient:
-    configs = {
-        'HOST': app.config.get('SAMS_HOST'),
-        'PORT': app.config.get('SAMS_PORT')
-    }
-    return SamsClient(configs)
+from .client import get_sams_client
 
 
 def init_app(app: Eve):
