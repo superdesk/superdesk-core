@@ -846,7 +846,7 @@ superdesk.workflow_action(
 superdesk.workflow_state('killed')
 superdesk.workflow_action(
     name='kill',
-    include_states=['published', 'scheduled', 'corrected', 'being_corrected'],
+    include_states=['published', 'scheduled', 'corrected', 'correction'],
     privileges=['kill']
 )
 
@@ -860,7 +860,7 @@ superdesk.workflow_action(
 superdesk.workflow_state('correction')
 superdesk.workflow_action(
     name='correction',
-    include_states=['published', 'correction', 'being_corrected', 'corrected'],
+    include_states=['published', 'correction', 'being_corrected', 'corrected', 'kill'],
     privileges=['correct']
 )
 
@@ -873,7 +873,7 @@ superdesk.workflow_action(
 superdesk.workflow_state('recalled')
 superdesk.workflow_action(
     name='recalled',
-    include_states=['published', 'scheduled', 'corrected', 'being_corrected'],
+    include_states=['published', 'scheduled', 'corrected'],
     privileges=['takedown']
 )
 

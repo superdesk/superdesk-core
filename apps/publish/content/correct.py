@@ -84,7 +84,7 @@ class CorrectPublishService(BasePublishService):
         if app.config.get('CORRECTIONS_WORKFLOW') and original.get('state') == 'correction':
             publish_service = get_resource_service('published')
             being_corrected_articles = publish_service.find({
-                'guid': original.get('corrected_of'),
+                'guid': original.get('guid'),
                 'state': 'being_corrected'
             })
             for item in being_corrected_articles:

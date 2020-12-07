@@ -319,16 +319,6 @@ metadata_schema = {
         'nullable': True,
         'mapping': not_analyzed
     },
-    'corrected_of': {
-        'type': 'string',
-        'nullable': True,
-        'mapping': not_analyzed,
-    },
-    'correction_by': {
-        'type': 'string',
-        'nullable': True,
-        'mapping': not_analyzed,
-    },
     'rewrite_sequence': {
         'type': 'integer',
         'nullable': True,
