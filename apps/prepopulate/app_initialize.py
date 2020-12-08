@@ -265,12 +265,9 @@ class AppInitializeWithDataCommand(superdesk.Command):
         # put mapping to elastic
         try:
             app.data.init_elastic(app)
-        except elasticsearch.exceptions.TransportError as err:
-            if 'update' in str(err):
-                logger.error(err)
-                logger.warning("Can't update the mapping, please run app:rebuild_elastic_index command.")
-            else:
-                raise
+        except (elasticsearch.exceptions.TransportError) as err:
+            logger.error(err)
+            logger.warning("Can't update the mapping, please run app:rebuild_elastic_index command.")
 
         if init_index_only:
             logger.info('Only indexes initialized.')
