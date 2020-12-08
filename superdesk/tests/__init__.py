@@ -24,6 +24,8 @@ from apps.ldap import ADAuth
 from superdesk import get_resource_service
 from superdesk.factory import get_app
 from superdesk.factory.app import get_media_storage_class
+from superdesk.storage.amazon_media_storage import AmazonMediaStorage
+from superdesk.storage.proxy import ProxyMediaStorage
 
 logger = logging.getLogger(__name__)
 test_user = {
@@ -200,8 +202,12 @@ def update_config_from_step(context, config):
         context.app.media = get_media_storage_class(context.app.config)(context.app)
 
     if 'AMAZON_CONTAINER_NAME' in config:
-        m = patch.object(context.app.media, 'client')
-        m.start()
+        if isinstance(context.app.media, AmazonMediaStorage):
+            m = patch.object(context.app.media, 'client')
+            m.start()
+        elif isinstance(context.app.media, ProxyMediaStorage):
+            m = patch.object(context.app.media.storage(), 'client')
+            m.start()
 
 
 def clean_dbs(app, force=False):
