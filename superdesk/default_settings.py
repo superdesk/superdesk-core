@@ -114,6 +114,9 @@ server_url = urlparse(SERVER_URL)
 SERVER_DOMAIN = server_url.netloc or 'localhost'
 URL_PREFIX = env('URL_PREFIX', server_url.path.lstrip('/')) or ''
 
+# map package name => github repo name, to be filled when a custom version of a package is used
+REPO_OVERRIDE = {}
+
 JSON_SORT_KEYS = False
 VALIDATION_ERROR_STATUS = 400
 VALIDATION_ERROR_AS_LIST = True
