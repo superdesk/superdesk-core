@@ -9,6 +9,7 @@
 import os
 import logging
 import requests
+import superdesk
 
 from flask import current_app
 from collections import OrderedDict
@@ -53,6 +54,7 @@ class IMatrics(AIServiceBase):
     def __init__(self, app):
         super().__init__(app)
         self.convept_map_inv = {v: k for k, v in CONCEPT_MAPPING.items()}
+        self._subjects = []
 
     @property
     def base_url(self):
@@ -98,13 +100,27 @@ class IMatrics(AIServiceBase):
                 topic_id = link.get("id", "")
                 if topic_id.startswith("medtop:"):
                     topic_id = topic_id[7:]
-                    tag_data["qcode"] = topic_id
+                    subject = self.find_subject(topic_id)
+                    if subject:
+                        tag_data.update(subject)
                     tag_data["altids"]["medtop"] = topic_id
 
         if concept["type"] in ('topic', 'category'):
-            tag_data['scheme'] = 'imatrics_{}'.format(concept["type"])
+            tag_data.setdefault('scheme', 'imatrics_{}'.format(concept["type"]))
 
         return tag_data
+
+    def find_subject(self, topic_id):
+        SCHEME_ID = current_app.config.get('IMATRICS_SUBJECT_SCHEME')
+        if not SCHEME_ID:
+            return
+        if not self._subjects:
+            cv = superdesk.get_resource_service('vocabularies').find_one(req=None, _id=SCHEME_ID)
+            if cv and cv.get('items'):
+                self._subjects = [item for item in cv['items'] if item.get('is_active')]
+        for subject in self._subjects:
+            if subject.get('qcode') == topic_id:
+                return superdesk.get_resource_service('vocabularies').get_article_cv_item(subject, SCHEME_ID)
 
     def check_verb(self, expected: str, verb: str, operation: str) -> None:
         """Check that HTTP verb use is the one expected for this operation"""
