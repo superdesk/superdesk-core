@@ -14,6 +14,8 @@ time pip install -e .
 cd ../clients/python
 time pip install -e .
 
+pip install "gunicorn>=20.0.4,<20.1" honcho==1.0.1
+
 # Start the service
 cd ../../server
 export STORAGE_DESTINATION_1="MongoGridFS,Default,mongodb://localhost/sams"
