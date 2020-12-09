@@ -141,7 +141,7 @@ FIELDS_TO_COPY_FOR_ASSOCIATED_ITEM = ['anpa_category', 'subject', 'slugline', 'u
 
 
 def get_default_source():
-    return app.config.get('DEFAULT_SOURCE_VALUE_FOR_MANUAL_ARTICLES')
+    return app.config.get('DEFAULT_SOURCE_VALUE_FOR_MANUAL_ARTICLES', '')
 
 
 def update_version(updates, original):

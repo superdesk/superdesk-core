@@ -8,11 +8,21 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
-from superdesk.tests import TestCase
+import flask
+import unittest
+
+from unittest.mock import patch
+from datetime import datetime, timedelta
+
+from apps.templates.filters import format_datetime_filter
 from apps.templates.content_templates import get_item_from_template, render_content_template
 
 
-class RenderTemplateTestCase(TestCase):
+class RenderTemplateTestCase(unittest.TestCase):
+    def setUp(self):
+        self.app = flask.Flask(__name__)
+        self.app.app_context().push()
+        self.app.jinja_env.filters['format_datetime'] = format_datetime_filter
 
     def test_render_content_template(self):
         template = {
@@ -26,8 +36,8 @@ class RenderTemplateTestCase(TestCase):
                 'urgency': 1, 'priority': 3,
                 'dateline': {},
                 'anpa_take_key': 'this is test',
-                'place': ['Australia']
-            }
+                'place': ['Australia'],
+            },
         }
 
         item = {
@@ -57,3 +67,17 @@ class RenderTemplateTestCase(TestCase):
 
         item = get_item_from_template(template)
         self.assertEqual('test it', item['headline'])
+
+    def test_render_dateline_current_time(self):
+        now = datetime(2020, 12, 8, 13, 0, 0)
+        template = {'data': {
+            'dateline': {
+                'located': {'dateline': 'city', 'tz': 'Europe/Prague', 'city': 'Prague', 'city_code': 'Prague', 'country_code': 'CZ', 'state_code': '52'},
+                'date': now - timedelta(days=5),
+                'text': 'PRAGUE, Dec 3 -',
+            },
+        }}
+
+        with patch('apps.templates.content_templates.utcnow', return_value=now):
+            updates = render_content_template({}, template)
+        self.assertEqual('PRAGUE, Dec 8  -', updates['dateline']['text'])
