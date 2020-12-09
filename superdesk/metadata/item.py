@@ -11,7 +11,7 @@
 from typing import NamedTuple
 from copy import deepcopy
 
-from superdesk.resource import Resource, not_analyzed, not_indexed, not_enabled
+from superdesk.resource import Resource, not_analyzed, not_indexed, not_enabled, text_with_keyword
 from .packages import LINKED_IN_PACKAGES, PACKAGE
 from eve.utils import config
 from superdesk.utils import SuperdeskBaseEnum
@@ -127,7 +127,7 @@ entity_metadata = {
         'type': 'object',
         'dynamic': False,
         'properties': {
-            'name': not_analyzed,
+            'name': text_with_keyword,
             'qcode': not_analyzed,
             'scheme': not_analyzed,
             'source': not_analyzed,
