@@ -24,6 +24,8 @@ import logging
 import superdesk
 from flask import request
 from superdesk.errors import SuperdeskApiError
+from apps.auth import get_user_id
+from .client import get_sams_client
 
 logger = logging.getLogger(__name__)
 sets_bp = superdesk.Blueprint('sams_sets', __name__)
@@ -34,7 +36,7 @@ def get():
     """
     Returns a list of all the registered sets
     """
-    sets = sets_bp.kwargs['client'].sets.search()
+    sets = get_sams_client().sets.search()
     return sets.json(), sets.status_code
 
 
@@ -44,7 +46,7 @@ def find_one(item_id):
     Uses item_id and returns the corresponding
     set
     """
-    item = sets_bp.kwargs['client'].sets.get_by_id(item_id=item_id)
+    item = get_sams_client().sets.get_by_id(item_id=item_id)
     return item.json(), item.status_code
 
 
@@ -54,7 +56,10 @@ def create():
     Creates new sets
     """
     docs = request.get_json()
-    post_response = sets_bp.kwargs['client'].sets.create(docs=docs)
+    post_response = get_sams_client().sets.create(
+        docs=docs,
+        external_user_id=get_user_id(True)
+    )
     return post_response.json(), post_response.status_code
 
 
@@ -70,7 +75,7 @@ def delete(item_id):
             "If-Match field missing in header"
         )
 
-    delete_response = sets_bp.kwargs['client'].sets.delete(
+    delete_response = get_sams_client().sets.delete(
         item_id=item_id, headers={'If-Match': etag}
     )
     if delete_response.status_code != 204:
@@ -91,7 +96,7 @@ def update(item_id):
         )
 
     updates = request.get_json()
-    update_response = sets_bp.kwargs['client'].sets.update(
+    update_response = get_sams_client().sets.update(
         item_id=item_id,
         updates=updates,
         headers={'If-Match': etag}

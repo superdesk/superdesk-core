@@ -22,6 +22,7 @@
 
 import logging
 import superdesk
+from .client import get_sams_client
 
 logger = logging.getLogger(__name__)
 destinations_bp = superdesk.Blueprint('sams_destinations', __name__)
@@ -32,7 +33,7 @@ def get():
     """
     Returns a list of all the registered storage destinations
     """
-    destinations = destinations_bp.kwargs['client'].destinations.search()
+    destinations = get_sams_client().destinations.search()
     return destinations.json(), destinations.status_code
 
 
@@ -42,7 +43,7 @@ def find_one(item_id):
     Uses item_id and returns the destination
     name and provider name of the respective storage destination
     """
-    item = destinations_bp.kwargs['client'].destinations.get_by_id(
+    item = get_sams_client().destinations.get_by_id(
         item_id=item_id
     )
     return item.json(), item.status_code
