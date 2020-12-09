@@ -27,7 +27,7 @@ from flask import request
 from superdesk.errors import SuperdeskApiError
 from .utils import get_file_from_sams
 from superdesk.storage.superdesk_file import generate_response_for_file
-from apps.auth import get_user_id
+from apps.auth import get_auth, get_user_id
 from .client import get_sams_client
 
 logger = logging.getLogger(__name__)
@@ -148,3 +148,25 @@ def get_assets_compressed_binary(asset_ids):
         item_ids=asset_ids
     )
     return zip_binary.content
+
+
+@assets_bp.route("/sams/assets/lock/<asset_id>", methods=["PATCH"])
+def lock_asset(asset_id):
+    docs = {"lock_action": "edit"}
+    lock_asset_response = get_sams_client().assets.lock_asset(
+        item_id=asset_id,
+        external_user_id=get_user_id(True),
+        external_session_id=get_auth()['_id'],
+        docs=docs)
+    return lock_asset_response.json(), lock_asset_response.status_code
+
+
+@assets_bp.route("/sams/assets/unlock/<asset_id>", methods=["PATCH"])
+def unlock_asset(asset_id):
+    docs = {}
+    unlock_asset_response = get_sams_client().assets.unlock_asset(
+        item_id=asset_id,
+        external_user_id=get_user_id(True),
+        external_session_id=get_auth()['_id'],
+        docs=docs)
+    return unlock_asset_response.json(), unlock_asset_response.status_code
