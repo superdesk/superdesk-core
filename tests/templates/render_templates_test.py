@@ -32,8 +32,9 @@ class RenderTemplateTestCase(unittest.TestCase):
             'data': {
                 'headline': 'Foo Template: {{item.headline}}',
                 'body_html': 'This article has slugline: {{item.slugline}} and dateline: {{item.dateline["text"]}} '
-                             'at {{item.versioncreated | format_datetime("Australia/Sydney", "%d %b %Y %H:%S %Z")}}',
-                'urgency': 1, 'priority': 3,
+                'at {{item.versioncreated | format_datetime("Australia/Sydney", "%d %b %Y %H:%S %Z")}}',
+                'urgency': 1,
+                'priority': 3,
                 'dateline': {},
                 'anpa_take_key': 'this is test',
                 'place': ['Australia'],
@@ -41,22 +42,25 @@ class RenderTemplateTestCase(unittest.TestCase):
         }
 
         item = {
-            '_id': '123', 'headline': 'Test Template',
-            'slugline': 'Testing', 'body_html': 'This is test story',
-            'dateline': {
-                'text': 'hello world'
-            },
-            'urgency': 4, 'priority': 6,
+            '_id': '123',
+            'headline': 'Test Template',
+            'slugline': 'Testing',
+            'body_html': 'This is test story',
+            'dateline': {'text': 'hello world'},
+            'urgency': 4,
+            'priority': 6,
             'versioncreated': '2015-06-01T22:54:53+0000',
-            'place': ['NSW']
+            'place': ['NSW'],
         }
 
         updates = render_content_template(item, template)
         self.assertEqual(updates['headline'], 'Foo Template: Test Template')
         self.assertEqual(updates['urgency'], 1)
         self.assertEqual(updates['priority'], 3)
-        self.assertEqual(updates['body_html'], 'This article has slugline: Testing and dateline: '
-                                               'hello world at 02 Jun 2015 08:53 AEST')
+        self.assertEqual(
+            updates['body_html'],
+            'This article has slugline: Testing and dateline: ' 'hello world at 02 Jun 2015 08:53 AEST',
+        )
         self.assertListEqual(updates['place'], ['Australia'])
 
     def test_headline_strip_tags(self):
@@ -70,13 +74,22 @@ class RenderTemplateTestCase(unittest.TestCase):
 
     def test_render_dateline_current_time(self):
         now = datetime(2020, 12, 8, 13, 0, 0)
-        template = {'data': {
-            'dateline': {
-                'located': {'dateline': 'city', 'tz': 'Europe/Prague', 'city': 'Prague', 'city_code': 'Prague', 'country_code': 'CZ', 'state_code': '52'},
-                'date': now - timedelta(days=5),
-                'text': 'PRAGUE, Dec 3 -',
-            },
-        }}
+        template = {
+            'data': {
+                'dateline': {
+                    'located': {
+                        'dateline': 'city',
+                        'tz': 'Europe/Prague',
+                        'city': 'Prague',
+                        'city_code': 'Prague',
+                        'country_code': 'CZ',
+                        'state_code': '52',
+                    },
+                    'date': now - timedelta(days=5),
+                    'text': 'PRAGUE, Dec 3 -',
+                },
+            }
+        }
 
         with patch('apps.templates.content_templates.utcnow', return_value=now):
             updates = render_content_template({}, template)
