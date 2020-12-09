@@ -76,7 +76,10 @@ def get_meta(file_stream):
 
     exif_meta = {}
     for k, v in exif.items():
-        key = ExifTags.TAGS[k].strip()
+        try:
+            key = ExifTags.TAGS[k].strip()
+        except KeyError:
+            continue
 
         if key == 'GPSInfo':
             # lookup GPSInfo description key names
