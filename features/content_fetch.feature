@@ -330,7 +330,13 @@ Feature: Fetch Items from Ingest
               "embedded216742513" : {
                   "description_text" : "Oil prices edged up on Monday, supported by the first fall in US drilling activity in month."
                }
-            }
+            },
+            "refs": [
+                {
+                    "key": "embedded216742513",
+                    "type": "picture"
+                }
+            ]
       	}, {
       		"family_id": "urn:newsml:localhost:5000:2019-03-31T20:37:42.832355:9e339340-11c5-43f5-8314-3c6088bbe562",
       		"type": "picture"
