@@ -24,7 +24,6 @@ from superdesk.workflow import is_workflow_state_transition_valid
 from superdesk.errors import SuperdeskApiError, InvalidStateTransitionError
 from superdesk.notification import push_notification
 from superdesk.signals import item_rewrite
-from apps.tasks import send_to
 from apps.archive.archive import update_associations
 from flask_babel import _
 
@@ -224,6 +223,7 @@ class ArchiveRewriteService(Service):
         rewrite.pop(PROCESSED_FROM, None)
 
         if not existing_item:
+            from apps.tasks import send_to
             # send the document to the desk only if a new rewrite is created
             send_to(doc=rewrite, desk_id=(desk_id or original['task']['desk']),
                     default_stage='working_stage', user_id=get_user_id())

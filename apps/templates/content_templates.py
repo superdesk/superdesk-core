@@ -526,13 +526,16 @@ def render_content_template(item, template, update=False):
                 updates[key] = value
 
         if top:
+            update_dateline(updates)
             filter_plaintext_fields(updates)
+
         if update:
             for key, value in updates.items():
                 if item.get(key) and isinstance(item[key], dict):
                     item[key].update(value)
                 else:
                     item[key] = value
+
         return updates
 
     return render_content_template_fields(template_data, dest=item)
@@ -574,15 +577,18 @@ def get_item_from_template(template):
     item.pop('firstcreated', None)
     item.pop('versioncreated', None)
 
+    update_dateline(item)
+    filter_plaintext_fields(item)
+
+    return item
+
+
+def update_dateline(item):
     # handle dateline
     dateline = item.get('dateline', {})
     dateline['date'] = utcnow()
     if dateline.get('located'):
         dateline['text'] = format_dateline_to_locmmmddsrc(dateline['located'], dateline['date'])
-
-    filter_plaintext_fields(item)
-
-    return item
 
 
 def filter_plaintext_fields(item):
