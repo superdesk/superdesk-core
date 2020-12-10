@@ -152,7 +152,7 @@ def get_assets_compressed_binary(asset_ids):
 
 @assets_bp.route("/sams/assets/lock/<asset_id>", methods=["PATCH"])
 def lock_asset(asset_id):
-    docs = {"lock_action": "edit"}
+    docs = request.json
     lock_asset_response = get_sams_client().assets.lock_asset(
         item_id=asset_id,
         external_user_id=get_user_id(True),
