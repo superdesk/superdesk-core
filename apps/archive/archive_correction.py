@@ -66,10 +66,15 @@ class ArchiveCorrectionService(Service):
                                     archive_item, ITEM_CORRECTION)
 
         # modify item in published.
-        published_articles = published_service.find({'guid': original.get('guid')})
+        if original.get('state') == CONTENT_STATE.CORRECTED:
+            published_article = published_service.find_one(req=None,
+                                                           guid=original.get('guid'),
+                                                           correction_sequence=original.get('correction_sequence'))
+        else:
+            published_article = published_service.find_one(req=None,
+                                                           guid=original.get('guid'))
 
-        for item in published_articles:
-            published_service.patch(id=item.get(config.ID_FIELD), updates=published_item_updates)
+        published_service.patch(id=published_article.get(config.ID_FIELD), updates=published_item_updates)
 
         user = get_user(required=True)
         push_notification('item:correction', item=original.get(config.ID_FIELD), user=str(user.get(config.ID_FIELD)))

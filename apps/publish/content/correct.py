@@ -83,12 +83,14 @@ class CorrectPublishService(BasePublishService):
     def change_being_corrected_to_published(self, updates, original):
         if app.config.get('CORRECTIONS_WORKFLOW') and original.get('state') == 'correction':
             publish_service = get_resource_service('published')
-            being_corrected_articles = publish_service.find({
-                'guid': original.get('guid'),
-                'state': 'being_corrected'
-            })
-            for item in being_corrected_articles:
-                publish_service.patch(item['_id'], updates={'state': 'published'})
+            being_corrected_article = publish_service.find_one(req=None,
+                                                               guid=original.get('guid'),
+                                                               state='being_corrected')
+
+            if being_corrected_article.get('correction_sequence', 0) > 0:
+                publish_service.patch(being_corrected_article['_id'], updates={'state': 'corrected'})
+            else:
+                publish_service.patch(being_corrected_article['_id'], updates={'state': 'published'})
 
     def send_to_original_desk(self, updates, original):
         if (app.config.get('CORRECTIONS_WORKFLOW') and original.get('state') == 'correction'
