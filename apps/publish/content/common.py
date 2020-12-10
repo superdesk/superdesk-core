@@ -825,7 +825,8 @@ def update_item_data(item, data, keys=None, keep_existing=False):
 superdesk.workflow_state('published')
 superdesk.workflow_action(
     name='publish',
-    include_states=['fetched', 'routed', 'submitted', 'in_progress', 'scheduled', 'unpublished'],
+    include_states=['fetched', 'routed', 'submitted', 'in_progress',
+                    'scheduled', 'unpublished', 'correction'],
     privileges=['publish']
 )
 
@@ -845,14 +846,21 @@ superdesk.workflow_action(
 superdesk.workflow_state('killed')
 superdesk.workflow_action(
     name='kill',
-    include_states=['published', 'scheduled', 'corrected'],
+    include_states=['published', 'scheduled', 'corrected', 'correction'],
     privileges=['kill']
 )
 
 superdesk.workflow_state('corrected')
 superdesk.workflow_action(
     name='correct',
-    include_states=['published', 'corrected'],
+    include_states=['published', 'corrected', 'correction'],
+    privileges=['correct']
+)
+
+superdesk.workflow_state('correction')
+superdesk.workflow_action(
+    name='correction',
+    include_states=['published', 'correction', 'being_corrected', 'corrected', 'kill'],
     privileges=['correct']
 )
 

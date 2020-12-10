@@ -70,7 +70,8 @@ class SearchService(superdesk.Service):
                                     CONTENT_STATE.ROUTED,
                                     CONTENT_STATE.PROGRESS,
                                     CONTENT_STATE.SUBMITTED,
-                                    CONTENT_STATE.SPIKED
+                                    CONTENT_STATE.SPIKED,
+                                    CONTENT_STATE.CORRECTION,
                                 ]
                             }
                         }
@@ -95,6 +96,7 @@ class SearchService(superdesk.Service):
                     CONTENT_STATE.RECALLED,
                     CONTENT_STATE.CORRECTED,
                     CONTENT_STATE.UNPUBLISHED,
+                    CONTENT_STATE.BEING_CORRECTED,
                 ]
             }
             }

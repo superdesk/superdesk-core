@@ -57,6 +57,8 @@ ITEM_UNMARK = 'unmark'
 ITEM_RESEND = 'resend'
 ITEM_EXPORT_HIGHLIGHT = 'export_highlight'
 ITEM_CREATE_HIGHLIGHT = 'create_highlight'
+ITEM_CORRECTION = 'correction'
+ITEM_CANCEL_CORRECTION = 'cancel_correction'
 item_operations = [ITEM_CREATE, ITEM_FETCH, ITEM_UPDATE, ITEM_RESTORE,
                    ITEM_DUPLICATE, ITEM_DUPLICATED_FROM, ITEM_DESCHEDULE,
                    ITEM_REWRITE, ITEM_LINK, ITEM_UNLINK, ITEM_MARK, ITEM_UNMARK, ITEM_RESEND,
@@ -586,7 +588,8 @@ def update_state(original, updates, publish_from_personal=None):
     """
 
     original_state = original.get(ITEM_STATE)
-    if original_state not in {CONTENT_STATE.INGESTED, CONTENT_STATE.PROGRESS, CONTENT_STATE.SCHEDULED}:
+    if original_state not in {CONTENT_STATE.INGESTED, CONTENT_STATE.PROGRESS,
+                              CONTENT_STATE.SCHEDULED, CONTENT_STATE.CORRECTION}:
         if not is_workflow_state_transition_valid('save', original_state):
             raise superdesk.errors.InvalidStateTransitionError()
         elif is_assigned_to_a_desk(original) or (not is_assigned_to_a_desk(original)
