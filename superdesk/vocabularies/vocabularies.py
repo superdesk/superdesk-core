@@ -179,7 +179,11 @@ class VocabulariesResource(Resource):
         },
         'translations': {
             'type': 'dict',
-            'schema': {},
+            'schema': {
+                'display_name': {
+                    'type': 'dict',
+                },
+            },
         }
     }
 
