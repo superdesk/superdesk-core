@@ -662,7 +662,7 @@ msgstr "Courriel invalide"
 
 #: apps/auth/db/reset_password.py:102
 msgid "User not enabled"
-msgstr ""
+msgstr "Utilisateur non activé"
 
 #: apps/auth/db/reset_password.py:106 apps/auth/db/reset_password.py:123
 msgid "User not active"
@@ -670,11 +670,12 @@ msgstr "Utilisateur inactif"
 
 #: apps/comments/comments.py:84
 msgid "Commenting on behalf of someone else is prohibited."
-msgstr ""
+msgstr "Commenter au nom de quelqu'un d'autre est interdit."
 
 #: apps/contacts/service.py:88
 msgid "Contacts of type \"{contact_type}\" must have an email address"
 msgstr ""
+"Les contacts de type \"{contact_type}\" doivent avoir une adresse courriel"
 
 #: apps/content_filters/content_filter/content_filter_service.py:39
 msgid "Content filter has been referenced by subscriber(s) {references}"
@@ -690,7 +691,7 @@ msgstr ""
 
 #: apps/content_filters/content_filter/content_filter_service.py:125
 msgid "Circular dependency error in content filters:{filter}"
-msgstr ""
+msgstr "Erreur de dépendance circulaire dans le filtre de contenu: {filter}"
 
 #: apps/content_filters/content_filter/content_filter_test.py:49
 msgid "Content filter not found"
@@ -833,7 +834,7 @@ msgstr ""
 
 #: apps/dictionaries/service.py:142
 msgid "A text dictionary file is required"
-msgstr ""
+msgstr "Un fichier de texte de dictionnaire est requis"
 
 #: apps/dictionaries/service.py:160 apps/dictionaries/service.py:267
 #: apps/dictionaries/service.py:270
@@ -932,6 +933,8 @@ msgstr ""
 msgid ""
 "User does not belong to security Group or could not find the user profile."
 msgstr ""
+"L'utilisateur n'appartient pas au groupe de sécurité ou le profil de "
+"l'utilisateur n'a pas été trouvé. "
 
 #: apps/ldap/ldap.py:174
 msgid "No user has been found in AD"
@@ -947,29 +950,31 @@ msgstr "L'utilisateur existe déjà dans le système."
 
 #: apps/packages/package_service.py:132
 msgid "Root group is missing."
-msgstr ""
+msgstr "Le groupe d'origine est manquant."
 
 #: apps/packages/package_service.py:137
 msgid "Only one root group is allowed."
-msgstr ""
+msgstr "Un seul groupe d'origine est autorisé."
 
 #: apps/packages/package_service.py:145
 msgid "Group is missing id."
-msgstr ""
+msgstr "Le groupe n'a pas d'identifiant."
 
 #: apps/packages/package_service.py:156
 msgid "{id} group is added multiple times."
-msgstr ""
+msgstr "Le groupe {id} a été ajouté plusieurs fois."
 
 #: apps/packages/package_service.py:161
 msgid ""
 "The number of groups and of referenced groups in the root group do not "
 "match."
 msgstr ""
+"Le nombre de groupes et de groupes référencés dans le groupe d'origine ne "
+"sont pas assortis."
 
 #: apps/packages/package_service.py:166
 msgid "Not all groups are referenced in the root group."
-msgstr ""
+msgstr "Tous les groupes ne sont pas référencés dans le groupe d'origine."
 
 #: apps/packages/package_service.py:211
 msgid "Package contains empty ResidRef!"
@@ -977,7 +982,7 @@ msgstr ""
 
 #: apps/packages/package_service.py:216
 msgid "Invalid item reference: {reference}"
-msgstr ""
+msgstr "La référence d'élément {reference} est invalide"
 
 #: apps/packages/package_service.py:246
 msgid "Trying to self reference as an association."
@@ -989,7 +994,7 @@ msgstr "Le contenu a été associé plusieurs fois"
 
 #: apps/packages/package_service.py:258
 msgid "Trying to create a circular reference to: {item_id}"
-msgstr ""
+msgstr "Tente de créer une référence circulaire pour: {item_id}"
 
 #: apps/packages/package_service.py:431
 msgid "Package can't have item which has embargo. "
@@ -998,6 +1003,8 @@ msgstr "L'assemblage ne peut pas contenir des éléments sous embargo."
 #: apps/packages/package_service.py:432
 msgid "Slugline/Unique Name of the item having embargo: {slugline}/{unique}"
 msgstr ""
+"Mots clés/identifiant unique de l'élément soumis à un embargo: "
+"{slugline}/{unique}"
 
 #: apps/products/product_test.py:43
 msgid "Article id cannot be empty!"
@@ -1035,7 +1042,7 @@ msgstr ""
 #: apps/publish/content/common.py:203
 #: apps/publish/enqueue/enqueue_service.py:201
 msgid "Key is missing on article to be published: {exception}"
-msgstr ""
+msgstr "Une clé est manquante pour l'article à être publié: {exception}"
 
 #: apps/publish/content/common.py:208
 msgid "Failed to publish the item: {id}"
@@ -1076,6 +1083,8 @@ msgstr "L'assemblage corrigé ne peut pas être vide!"
 #: apps/publish/content/common.py:324
 msgid "Cannot publish an item which is marked as Not for Publication"
 msgstr ""
+"Impossible de publier un élément qui a été signalé comme: Pas pour "
+"publication"
 
 #: apps/publish/content/common.py:328
 msgid "Can't {operation} as item state is {state}"
@@ -1279,7 +1288,7 @@ msgstr "La recherche ne peut pas être enregistrée sans filtre!"
 
 #: apps/saved_searches/saved_searches.py:294
 msgid "Fail to validate the filter against {index}."
-msgstr ""
+msgstr "Échec de la validation du filtre par rapport à {index}."
 
 #: apps/saved_searches/saved_searches.py:313
 msgid "Unauthorized to modify other user's local search."
@@ -1312,6 +1321,8 @@ msgstr ""
 #: apps/search_providers/service.py:69
 msgid "Deleting a Search Provider after receiving items is prohibited."
 msgstr ""
+"Supprimer un fournisseur de recherche après avoir obtenu des éléments est "
+"interdit. "
 
 #: apps/suggestions/service.py:34
 msgid "The item identifier is required"
