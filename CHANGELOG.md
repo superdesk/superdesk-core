@@ -1,5 +1,11 @@
 # Superdesk Server Changelog
 
+## [2.0.7] 2020-12-11
+
+### Fixed
+
+- Populate `refs` on item when autorouting from ingest.
+
 ## [2.0.6] 2020-12-02
 
 ### Fixed
