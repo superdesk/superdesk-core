@@ -32,6 +32,7 @@ class IMatricsTestCase(TestCase):
         "version": 1,
         "body_html": "<p>this is a fake article to test the imatrics service, it should be returning some "
                      "interesting tags.</p>",
+        "abstract": "<p>abstract</p><p>two lines</p>",
         "headline": "test imatrics",
         "slugline": "test imatrics",
     }
@@ -64,7 +65,21 @@ class IMatricsTestCase(TestCase):
         ai_service = get_resource_service('ai')
         api_url = urljoin(TEST_BASE_URL, "article/concept")
         responses.add(
-            responses.POST, api_url,
+            responses.POST,
+            api_url,
+            match=[
+                responses.json_params_matcher({
+                    "uuid": self.item["guid"],
+                    "pubStatus": False,
+                    "headline": self.item["headline"],
+                    "body": [
+                        "this is a fake article to test the imatrics service,"
+                        " it should be returning some interesting tags.",
+                        "abstract",
+                        "two lines",
+                    ],
+                })
+            ],
             json=[
                 {
                     "weight": 1,
