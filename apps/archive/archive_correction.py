@@ -48,33 +48,53 @@ class ArchiveCorrectionService(Service):
         archive_service = get_resource_service(ARCHIVE)
         published_service = get_resource_service('published')
         archive_item = archive_service.find_one(req=None, _id=original.get(config.ID_FIELD))
-        # updates for item in archive.
-        archive_item_updates = ({ITEM_STATE: CONTENT_STATE.CORRECTION, 'operation': CONTENT_STATE.CORRECTION}
-                                if not remove_correction
-                                else {ITEM_STATE: CONTENT_STATE.PUBLISHED, 'operation': ITEM_CANCEL_CORRECTION})
 
-        # updates for item in published.
-        published_item_updates = ({ITEM_STATE: CONTENT_STATE.BEING_CORRECTED,
-                                  'operation': CONTENT_STATE.BEING_CORRECTED} if not remove_correction
-                                  else {ITEM_STATE: CONTENT_STATE.PUBLISHED, 'operation': ITEM_CANCEL_CORRECTION})
-
-        # modify item in archive.
-        archive_service.system_update(archive_item.get(config.ID_FIELD),
-                                      archive_item_updates,
-                                      archive_item)
-        app.on_archive_item_updated(archive_item_updates,
-                                    archive_item, ITEM_CORRECTION)
-
-        # modify item in published.
-        if original.get('state') == CONTENT_STATE.CORRECTED:
+        if remove_correction:
             published_article = published_service.find_one(req=None,
                                                            guid=original.get('guid'),
-                                                           correction_sequence=original.get('correction_sequence'))
-        else:
-            published_article = published_service.find_one(req=None,
-                                                           guid=original.get('guid'))
+                                                           state=CONTENT_STATE.BEING_CORRECTED)
 
+        elif original.get('state') == CONTENT_STATE.CORRECTED:
+            published_article = published_service.find_one(req=None,
+                                                           guid=original.get('guid'),
+                                                           correction_sequence=original.get('correction_sequence'),
+                                                           state=CONTENT_STATE.CORRECTED)
+        else:
+            published_article = published_service.find_one(req=None, guid=original.get('guid'))
+
+        # updates for item in archive.
+        if not remove_correction:
+            archive_item_updates = {ITEM_STATE: CONTENT_STATE.CORRECTION, 'operation': CONTENT_STATE.CORRECTION}
+        elif remove_correction and archive_item.get('correction_sequence'):
+            archive_item_updates = {ITEM_STATE: CONTENT_STATE.CORRECTED, 'operation': 'correct'}
+        else:
+            archive_item_updates = {ITEM_STATE: CONTENT_STATE.PUBLISHED, 'operation': ITEM_CANCEL_CORRECTION}
+
+        # updates for item in published.
+        if not remove_correction:
+            published_item_updates = {ITEM_STATE: CONTENT_STATE.BEING_CORRECTED,
+                                      'operation': CONTENT_STATE.BEING_CORRECTED}
+        elif remove_correction and published_article.get('correction_sequence'):
+            published_item_updates = {ITEM_STATE: CONTENT_STATE.CORRECTED, 'operation': 'correct'}
+        else:
+            published_item_updates = {ITEM_STATE: CONTENT_STATE.PUBLISHED, 'operation': ITEM_CANCEL_CORRECTION}
+
+        # modify item in archive.
+        archive_service.system_update(archive_item.get(config.ID_FIELD), archive_item_updates, archive_item)
+        app.on_archive_item_updated(archive_item_updates, archive_item, ITEM_CORRECTION)
+
+        # modify item in published.
         published_service.patch(id=published_article.get(config.ID_FIELD), updates=published_item_updates)
+
+        #  if remove_correction, set the item values back to the old one.
+        if remove_correction:
+            IGNORE_FIELDS = ['_id']
+            for key, value in published_article.items():
+                if key not in IGNORE_FIELDS:
+                    archive_item[key] = published_item_updates.get(key, value)
+
+            archive_service.system_update(archive_item.get(config.ID_FIELD), archive_item, archive_item)
+            app.on_archive_item_updated(archive_item, archive_item, ITEM_CANCEL_CORRECTION)
 
         user = get_user(required=True)
         push_notification('item:correction', item=original.get(config.ID_FIELD), user=str(user.get(config.ID_FIELD)))
