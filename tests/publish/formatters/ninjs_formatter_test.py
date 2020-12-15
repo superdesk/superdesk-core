@@ -816,6 +816,25 @@ class NinjsFormatterTest(TestCase):
 
         self.assertEqual({"name": "Kobeřice", "code": "3073493", "scheme": "geonames"}, ninjs["place"][0])
 
+        self.app.config['NINJS_PLACE_EXTENDED'] = True
+
+        seq, doc = self.formatter.format(article, {"name": "Test Subscriber"})[0]
+        ninjs = json.loads(doc)
+
+        self.assertEqual({
+            "name": "Kobeřice",
+            "code": "3073493",
+            "scheme": "geonames",
+            "state": "Moravskoslezský kraj",
+            "state_code": "80",
+            "country": "Česko",
+            "country_code": "CZ",
+            "geometry_point": {
+                "type": "Point",
+                "coordinates": [49.98548, 18.05212],
+            },
+        }, ninjs["place"][0])
+
     def test_custom_media(self):
         """Test that custom media are put in "groups" field and not associations (SDESK-2955)"""
         self.app.data.insert(
