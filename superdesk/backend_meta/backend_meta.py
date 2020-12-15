@@ -11,6 +11,7 @@ import os.path
 import re
 import json
 from pathlib import Path
+from typing import Optional, Dict
 from superdesk.resource import Resource
 from superdesk.services import BaseService
 from superdesk import config
@@ -42,21 +43,27 @@ class BackendMetaService(BaseService):
     """Service givin metadata on backend itself"""
 
     @staticmethod
-    def find_dir(name):
+    def find_dir(name: str) -> Optional[Path]:
+        """Look for a dir in up to 2 parents directories"""
         # depending of the installation (local git or docker)
         # a dir can be in the same path as settings or in the parent
         # this method try both and return None if dir is not found
         if settings is None:
-            return
+            return None
         current_path = Path(settings.__file__)
         for i in range(2):
             current_path = current_path.parent
             tested_dir = current_path / name
             if tested_dir.is_dir():
                 return tested_dir
+        return None
 
     @staticmethod
-    def get_commit_href(package, revision):
+    def get_commit_href(package: str, revision: str) -> str:
+        """Get URL for a Github commit
+
+        if config.REPO_OVERRIDE is set, it will be used
+        """
         try:
             repo_override = config.REPO_OVERRIDE
         except AttributeError:
@@ -68,7 +75,12 @@ class BackendMetaService(BaseService):
         )
 
     @classmethod
-    def get_superdesk_version(cls):
+    def get_superdesk_version(cls) -> Optional[Dict[str, str]]:
+        """Get version data for main superdesk package
+
+        because superdesk is not installed as a Python package, this works by looking for GIT
+        metadata and retrieving the commit version from there
+        """
         git_dir = cls.find_dir('.git')
         if git_dir is not None:
             head_path = git_dir / 'HEAD'
@@ -90,7 +102,8 @@ class BackendMetaService(BaseService):
         return None
 
     @classmethod
-    def get_package_version(cls, package):
+    def get_package_version(cls, package: str) -> Optional[Dict[str, str]]:
+        """Get version data for a Python package"""
         try:
             version = pkg_version(package)
         except PackageNotFoundError:
@@ -116,8 +129,15 @@ class BackendMetaService(BaseService):
                     version=semver,
                 )
             return data
+        return None
 
-    def complete_nodemod_ref(self, data, package, repo=None):
+    def complete_nodemod_ref(
+            self,
+            data: Dict[str, str],
+            package: str,
+            repo: Optional[str] = None
+    ) -> None:
+        """Complete when possible missing data for a node module version"""
         if not repo:
             repo = package
         try:
@@ -137,7 +157,12 @@ class BackendMetaService(BaseService):
                 except ValueError:
                     data['href'] = GITHUB_BRANCH_HREF.format(package=repo, branch=commit)
 
-    def get_nodemod_version(self, package, repo=None):
+    def get_nodemod_version(
+        self,
+        package: str,
+        repo: Optional[str] = None
+    ) -> Optional[Dict[str, str]]:
+        """Get version data for a Node module"""
         # we get superdesk-client-core version and revision from package.json and package-lock.json
         client_dir = self.find_dir('client')
         if client_dir is not None:
@@ -184,7 +209,7 @@ class BackendMetaService(BaseService):
         ] if mod is not None]
 
 
-# it may be useful to have the version of installed package in backend logs
+# it may be useful to have the version of installed packages in backend logs
 for package in ('superdesk-core', 'superdesk-planning', 'superdesk-analytics', 'superdesk-published'):
     v_data = BackendMetaService.get_package_version(package)
     if v_data is not None:
