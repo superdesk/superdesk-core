@@ -198,7 +198,7 @@ class AmazonMediaStorage(SuperdeskMediaStorage):
                         logger.exception(ex)
         return headers
 
-    def put(self, content, filename=None, content_type=None, resource=None, metadata=None, _id=None, version=True,
+    def put(self, content, filename=None, content_type=None, metadata=None, resource=None, _id=None, version=True,
             folder=None, **kwargs):
         """Save a new file using the storage system, preferably with the name specified.
 
