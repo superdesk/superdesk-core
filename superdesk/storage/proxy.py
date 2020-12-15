@@ -67,9 +67,9 @@ class ProxyMediaStorage(SuperdeskMediaStorage):
         except MissingMediaError:
             return False
 
-    def put(self, content, filename=None, content_type=None, resource=None, **kwargs):
+    def put(self, content, filename=None, content_type=None, metadata=None, resource=None, **kwargs):
         return self.storage(None, resource).put(
-            content, filename=filename, content_type=content_type, resource=resource, **kwargs
+            content, filename=filename, content_type=content_type, metadata=metadata, resource=resource, **kwargs
         )
 
     def url_for_media(self, media_id, content_type=None):
