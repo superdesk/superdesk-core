@@ -86,16 +86,6 @@ class ArchiveCorrectionService(Service):
         # modify item in published.
         published_service.patch(id=published_article.get(config.ID_FIELD), updates=published_item_updates)
 
-        #  if remove_correction, set the item values back to the old one.
-        if remove_correction:
-            IGNORE_FIELDS = ['_id']
-            for key, value in published_article.items():
-                if key not in IGNORE_FIELDS:
-                    archive_item[key] = published_item_updates.get(key, value)
-
-            archive_service.system_update(archive_item.get(config.ID_FIELD), archive_item, archive_item)
-            app.on_archive_item_updated(archive_item, archive_item, ITEM_CANCEL_CORRECTION)
-
         user = get_user(required=True)
         push_notification('item:correction', item=original.get(config.ID_FIELD), user=str(user.get(config.ID_FIELD)))
 
