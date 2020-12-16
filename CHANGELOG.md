@@ -1,5 +1,12 @@
 # Superdesk Server Changelog
 
+## [1.33.10] 2020-12-16
+
+### Fixed
+
+- Fix `linked_in_packages` and `published_in_package` not set for item
+  added to correted package.
+
 ## [1.33.9] 2020-12-01
 
 ### Fixed
