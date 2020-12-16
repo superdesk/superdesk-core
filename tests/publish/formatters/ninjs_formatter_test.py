@@ -816,9 +816,8 @@ class NinjsFormatterTest(TestCase):
 
         self.assertEqual({"name": "Kobeřice", "code": "3073493", "scheme": "geonames"}, ninjs["place"][0])
 
-        self.app.config['NINJS_PLACE_EXTENDED'] = True
-
-        seq, doc = self.formatter.format(article, {"name": "Test Subscriber"})[0]
+        with mock.patch.dict(self.app.config, {'NINJS_PLACE_EXTENDED': True}):
+            seq, doc = self.formatter.format(article, {"name": "Test Subscriber"})[0]
         ninjs = json.loads(doc)
 
         self.assertEqual({
