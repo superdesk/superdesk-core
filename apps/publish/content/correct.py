@@ -15,10 +15,12 @@ from superdesk.utc import utcnow
 from superdesk.text_utils import update_word_count
 from apps.archive.common import set_sign_off, ITEM_OPERATION, get_user
 from apps.archive.archive import flush_renditions
+from apps.tasks import send_to
+from apps.auth import get_user_id
 from .common import BasePublishService, BasePublishResource, ITEM_CORRECT
 from superdesk.emails import send_translation_changed
 from superdesk.activity import add_activity
-from flask import g
+from flask import g, current_app as app
 
 
 def send_translation_notifications(original):
@@ -78,6 +80,24 @@ class CorrectPublishService(BasePublishService):
         else:
             super().set_state(original, updates)
 
+    def change_being_corrected_to_published(self, updates, original):
+        if app.config.get('CORRECTIONS_WORKFLOW') and original.get('state') == 'correction':
+            publish_service = get_resource_service('published')
+            being_corrected_article = publish_service.find_one(req=None,
+                                                               guid=original.get('guid'),
+                                                               state='being_corrected')
+
+            if being_corrected_article.get('correction_sequence', 0) > 0:
+                publish_service.patch(being_corrected_article['_id'], updates={'state': 'corrected'})
+            else:
+                publish_service.patch(being_corrected_article['_id'], updates={'state': 'published'})
+
+    def send_to_original_desk(self, updates, original):
+        if (app.config.get('CORRECTIONS_WORKFLOW') and original.get('state') == 'correction'
+                and original.get('task', {}).get('desk_history')):
+            send_to(doc=updates, desk_id=(original['task']['desk_history'][0]),
+                    default_stage='working_stage', user_id=get_user_id())
+
     def on_update(self, updates, original):
         CropService().validate_multiple_crops(updates, original)
         super().on_update(updates, original)
@@ -87,6 +107,8 @@ class CorrectPublishService(BasePublishService):
         set_sign_off(updates, original)
         update_word_count(updates, original)
         flush_renditions(updates, original)
+        self.change_being_corrected_to_published(updates, original)
+        self.send_to_original_desk(updates, original)
 
     def update(self, id, updates, original):
         editor_utils.generate_fields(updates)

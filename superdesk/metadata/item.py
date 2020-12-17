@@ -11,7 +11,7 @@
 from typing import NamedTuple
 from copy import deepcopy
 
-from superdesk.resource import Resource, not_analyzed, not_indexed, not_enabled
+from superdesk.resource import Resource, not_analyzed, not_indexed, not_enabled, text_with_keyword
 from .packages import LINKED_IN_PACKAGES, PACKAGE
 from eve.utils import config
 from superdesk.utils import SuperdeskBaseEnum
@@ -71,11 +71,13 @@ class ContentStates(NamedTuple):
     SCHEDULED: str
     RECALLED: str
     UNPUBLISHED: str
+    CORRECTION: str
+    BEING_CORRECTED: str
 
 
 CONTENT_STATE: ContentStates = ContentStates('draft', 'ingested', 'routed', 'fetched', 'submitted', 'in_progress',
-                                             'spiked',
-                                             'published', 'killed', 'corrected', 'scheduled', 'recalled', 'unpublished')
+                                             'spiked', 'published', 'killed', 'corrected', 'scheduled',
+                                             'recalled', 'unpublished', 'correction', 'being_corrected')
 
 PUBLISH_STATES = {
     CONTENT_STATE.PUBLISHED,
@@ -84,6 +86,7 @@ PUBLISH_STATES = {
     CONTENT_STATE.KILLED,
     CONTENT_STATE.RECALLED,
     CONTENT_STATE.UNPUBLISHED,
+    CONTENT_STATE.BEING_CORRECTED
 }
 
 
@@ -127,7 +130,7 @@ entity_metadata = {
         'type': 'object',
         'dynamic': False,
         'properties': {
-            'name': not_analyzed,
+            'name': text_with_keyword,
             'qcode': not_analyzed,
             'scheme': not_analyzed,
             'source': not_analyzed,

@@ -15,18 +15,16 @@ from flask import request
 from flask_babel import _
 from eve.utils import config
 
-from apps.tasks import send_to
+from apps.archive.usage import update_refs
 from apps.archive.archive import SOURCE as ARCHIVE
 from apps.content import push_item_move_notification
 from superdesk.metadata.utils import item_url
 from apps.archive.common import insert_into_versions, fetch_item
-from superdesk.metadata.utils import generate_guid
 from superdesk.metadata.item import INGEST_ID, INGEST_VERSION, FAMILY_ID, ITEM_STATE, \
     CONTENT_STATE, GUID_FIELD
 from superdesk.errors import SuperdeskApiError, InvalidStateTransitionError
 from superdesk.resource import Resource, build_custom_hateoas
 from superdesk.services import BaseService
-from superdesk.utc import utcnow
 from superdesk.workflow import is_workflow_state_transition_valid
 from superdesk import get_resource_service
 from superdesk.metadata.packages import RESIDREF, REFS, GROUPS
@@ -116,6 +114,8 @@ class FetchService(BaseService):
 
             if dest_doc.get('type', 'text') in MEDIA_TYPES:
                 dest_doc['profile'] = None
+
+            update_refs(dest_doc, {})
 
             get_resource_service(ARCHIVE).post([dest_doc])
             insert_into_versions(doc=dest_doc)

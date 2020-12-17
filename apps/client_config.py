@@ -38,4 +38,5 @@ def init_app(app):
         'workflow_allow_duplicate_non_members': app.config.get('WORKFLOW_ALLOW_DUPLICATE_NON_MEMBERS'),
         'disallowed_characters': app.config.get('DISALLOWED_CHARACTERS'),
         'allow_updating_scheduled_items': app.config.get('ALLOW_UPDATING_SCHEDULED_ITEMS'),
+        'corrections_workflow': app.config.get('CORRECTIONS_WORKFLOW'),
     })
