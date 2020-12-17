@@ -446,11 +446,21 @@ class NINJSFormatter(Formatter):
         return places
 
     def _format_geonames(self, place):
-        return {
-            'scheme': place['scheme'],
-            'code': place['code'],
-            'name': place['name'],
-        }
+        fields = ['scheme', 'code', 'name']
+        if app.config.get('NINJS_PLACE_EXTENDED'):
+            fields.extend([
+                'state',
+                'state_code',
+                'country',
+                'country_code',
+            ])
+        geo = {k: v for k, v in place.items() if k in fields}
+        if app.config.get('NINJS_PLACE_EXTENDED') and place.get('location'):
+            geo['geometry_point'] = {
+                'type': 'Point',
+                'coordinates': [place['location'].get('lat'), place['location'].get('lon')],
+            }
+        return geo
 
     def _format_profile(self, profile):
         return superdesk.get_resource_service('content_types').get_output_name(profile)
