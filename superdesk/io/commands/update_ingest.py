@@ -575,7 +575,7 @@ def ingest_item(item, provider, feeding_service, rule_set=None, routing_scheme=N
             set_default_state(assoc, CONTENT_STATE.INGESTED)
             # wire up the id of the associated feature media to the ingested one
             guid = assoc.get('guid')
-            assoc_name = assoc.get('headline') or assoc.get('slugline') or assoc['guid']
+            assoc_name = assoc.get('headline') or assoc.get('slugline') or guid
             if guid:
                 ingested = ingest_service.find_one(req=None, guid=guid)
                 logger.info('assoc ingested before %s', assoc_name)
