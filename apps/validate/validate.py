@@ -174,10 +174,18 @@ class SchemaValidator(Validator):
         """
         {'type': 'dict'}
         """
+        subject_schemas = {}
+
+        if field == 'subject':
+            cvs = get_resource_service('vocabularies').get_from_mongo(req=None, lookup={'schema_field': field})
+            for cv in cvs:
+                subject_schemas.update({field: cv['_id']})
+
         for key in mandatory:
             for key_field in mandatory[key]:
                 if mandatory[key][key_field]["required"]:
-                    if value and len(value) > 0 and any(value_field['scheme'] == key_field for value_field in value):
+                    if (value and len(value) > 0
+                            and any(v['scheme'] == key_field or key_field in subject_schemas for v in value)):
                         if not check_json(value, key, mandatory[key][key_field]):
                             self._error(key_field, REQUIRED_FIELD)
                     else:
@@ -471,6 +479,10 @@ class ValidateService(superdesk.Service):
     def _get_vocabulary_display_name(self, vocabulary_id):
         if vocabulary_id == 'anpa_category':
             vocabulary = get_resource_service('vocabularies').find_one(req=None, _id='categories')
+        elif vocabulary_id == 'subject':
+            cv = get_resource_service('vocabularies').find_one(req=None, schema_field=vocabulary_id)
+            id = cv['_id'] if cv else vocabulary_id
+            vocabulary = get_resource_service('vocabularies').find_one(req=None, _id=id)
         else:
             vocabulary = get_resource_service('vocabularies').find_one(req=None, _id=vocabulary_id)
         if vocabulary and 'display_name' in vocabulary:

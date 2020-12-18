@@ -480,3 +480,60 @@ Feature: Validate
     """
     {"errors": ["HEADLINE is a required field"]}
     """
+
+    @auth
+    Scenario: Custom subject vocabulary should display the display name if present
+    Given "content_types"
+    """
+    [{"_id": "test", "schema": {
+      "subject": {
+        "type": "list",
+        "nullable": false,
+        "required": true,
+        "type": "list"
+      }
+    }}]
+    """
+    And "vocabularies"
+    """
+    [
+      {"_id": "custom_subject_field", "schema_field": "subject", "display_name": "Subject custom field"},
+      {"_id": "other_field"}
+    ]
+    """
+
+    When we post to "/validate"
+    """
+    {
+      "act": "publish", "type": "text",
+      "validate": {
+        "profile": "test",
+        "subject": [
+          {"name": "foo", "qcode": "foo", "scheme": "custom_subject_field"}
+        ]
+      }
+    }
+    """
+
+    Then we get existing resource
+    """
+    {"errors": "__empty__"}
+    """
+
+    When we post to "/validate"
+    """
+    {
+      "act": "publish", "type": "text",
+      "validate": {
+        "profile": "test",
+        "subject": [
+          {"name": "foo", "qcode": "foo", "scheme": "other field"}
+        ]
+      }
+    }
+    """
+
+    Then we get existing resource
+    """
+    {"errors": ["SUBJECT CUSTOM FIELD is a required field"]}
+    """
