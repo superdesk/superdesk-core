@@ -188,7 +188,7 @@ class PreferencesResource(Resource):
         'category': _('contacts')
     })
 
-    superdesk.register_default_user_preference('destination:active', {}
+    superdesk.register_default_user_preference('destination:active', {})
 
     superdesk.register_default_user_preference('extensions', {})
 
