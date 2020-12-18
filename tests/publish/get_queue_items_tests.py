@@ -12,6 +12,7 @@ from bson import ObjectId
 from unittest import mock
 from unittest.mock import MagicMock
 from datetime import timedelta
+from collections import UserList
 
 from superdesk.tests import TestCase
 from superdesk.utc import utcnow
@@ -133,6 +134,9 @@ class QueueItemsTestCase(TestCase):
         fake_storage_delete = fake_storage.delete
         service = publish_queue.PublishQueueService(backend=MagicMock())
         service.get_from_mongo = MagicMock()
-        service.get_from_mongo.return_value = [{'_id': "4567", 'encoded_item_id': 'TEST ID'}]
+        cursor = UserList([{'_id': "4567", 'encoded_item_id': 'TEST ID'}])
+        cursor.sort = MagicMock()
+        cursor.sort.return_value = cursor
+        service.get_from_mongo.return_value = cursor
         service.delete({'_id': "4567"})
         assert fake_storage_delete.call_args == mock.call('TEST ID')
