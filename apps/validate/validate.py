@@ -184,7 +184,8 @@ class SchemaValidator(Validator):
         for key in mandatory:
             for key_field in mandatory[key]:
                 if mandatory[key][key_field]["required"]:
-                    if (value and len(value) > 0 and any(v['scheme'] == key_field or key_field in subject_schemas for v in value)):
+                    if (value and len(value) > 0
+                            and any(v['scheme'] == key_field or key_field in subject_schemas for v in value)):
                         if not check_json(value, key, mandatory[key][key_field]):
                             self._error(key_field, REQUIRED_FIELD)
                     else:
