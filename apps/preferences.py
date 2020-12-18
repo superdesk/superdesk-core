@@ -198,6 +198,8 @@ class PreferencesResource(Resource):
         'default': True
     })
 
+    superdesk.register_default_user_preference('masterdesk:desks', {})
+
     superdesk.register_default_user_preference('editor:char_limit_ui', {})
 
     superdesk.register_default_session_preference('scratchpad:items', [])

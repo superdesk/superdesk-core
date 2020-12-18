@@ -40,7 +40,7 @@ class SuperdeskMediaStorageTestCase(unittest.TestCase):
         self.storage._storage[0].put.return_value = 'media_id'
         _id = self.storage.put(content, 'filename', 'text/plain', 'test')
         self.storage._storage[0].put.assert_called_once_with(content, filename='filename',
-                                                             content_type='text/plain', resource='test')
+                                                             content_type='text/plain', metadata='test', resource=None)
 
         self.assertIsNotNone(self.storage.get(_id))
 
