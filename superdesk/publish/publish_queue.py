@@ -156,7 +156,7 @@ class PublishQueueService(BaseService):
     def delete(self, lookup):
         # as encoded item is added manually to storage
         # we also need to remove it manually on delete
-        cur = self.get_from_mongo(req=None, lookup=lookup)
+        cur = self.get_from_mongo(req=None, lookup=lookup).sort("_id", 1)
         for doc in cur:
             try:
                 encoded_item_id = doc['encoded_item_id']
