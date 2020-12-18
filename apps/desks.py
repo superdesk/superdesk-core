@@ -147,6 +147,7 @@ def init_app(app):
 
 
 superdesk.privilege(name='desks', label='Desk Management', description='User can manage desks.')
+superdesk.privilege(name='masterdesk', label='Master Desk', description='User can access master desk.')
 
 
 class DesksResource(Resource):
