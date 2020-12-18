@@ -188,7 +188,7 @@ class PreferencesResource(Resource):
         'category': _('contacts')
     })
 
-    superdesk.register_default_user_preference('destination:active', {})
+    superdesk.register_default_user_preference('destination:active', {}
 
     superdesk.register_default_user_preference('extensions', {})
 
@@ -197,7 +197,7 @@ class PreferencesResource(Resource):
         'enabled': True,
         'default': True
     })
-    
+
     superdesk.register_default_user_preference('masterdesk:desks', {})
 
     superdesk.register_default_user_preference('editor:char_limit_ui', {})
