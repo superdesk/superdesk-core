@@ -1,5 +1,13 @@
 # Superdesk Server Changelog
 
+## [2.0.8] 2020-12-18
+
+### Fixed
+
+- Fix delete from `publish_queue` query not using index.
+- Fix ingestion of existing items via ref.
+- Fix publish script cleanup.
+
 ## [2.0.7] 2020-12-11
 
 ### Fixed
