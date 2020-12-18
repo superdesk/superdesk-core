@@ -203,6 +203,7 @@ class PreferencesResource(Resource):
     superdesk.register_default_session_preference('scratchpad:items', [])
     superdesk.register_default_session_preference('desk:last_worked', '')
     superdesk.register_default_session_preference('desk:items', [])
+    superdesk.register_default_session_preference('masterdesk:desks', [])
     superdesk.register_default_session_preference('stage:items', [])
     superdesk.register_default_session_preference('pinned:items', [])
 
