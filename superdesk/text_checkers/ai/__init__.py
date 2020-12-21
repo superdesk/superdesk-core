@@ -31,6 +31,7 @@ class AIResource(Resource):
             'required': True,
             'schema': {
                 'guid': {'type': 'string', 'required': True},
+                'abstract': {'type': 'string', 'required': False},
                 'language': {'type': 'string', 'required': True},
                 'headline': {'type': 'string', 'nullable': True},
                 'body_html': {'type': 'string', 'required': True},

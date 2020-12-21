@@ -15,7 +15,7 @@ from flask import current_app
 from collections import OrderedDict
 from typing import Optional, Dict, List
 from urllib.parse import urljoin
-from superdesk import etree
+from superdesk.text_utils import get_text
 from superdesk.errors import SuperdeskApiError
 from .base import AIServiceBase
 
@@ -135,18 +135,7 @@ class IMatrics(AIServiceBase):
         if not self.base_url or not self.user or not self.key:
             logger.warning("IMatrics is not configured propertly, can't analyze article")
             return {}
-        try:
-            body = [p.strip() for p in item["body_text"].split("\n") if p.strip()]
-        except KeyError:
-            try:
-                body = [
-                    p.strip() for p in etree.to_string(etree.parse_html(item["body_html"]), method="text").split("\n")
-                    if p.strip()
-                ]
-            except KeyError:
-                logger.warning("no body found in item {item_id!r}".format(item_id=item['guid']))
-                body = []
-
+        body = get_item_body(item)
         headline = item.get('headline', '')
         if not body and not headline:
             logger.warning("no body nor headline found in item {item_id!r}".format(item_id=item['guid']))
@@ -272,3 +261,17 @@ class IMatrics(AIServiceBase):
                 msg=r.text,
             ))
         return r.json()
+
+
+def get_item_body(item):
+    body = []
+    for field in ("body_html", "abstract"):
+        try:
+            body.extend([
+                p.strip()
+                for p in get_text(item[field], 'html', True).split("\n")
+                if p.strip()
+            ])
+        except KeyError:
+            pass
+    return body
