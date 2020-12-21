@@ -1,5 +1,11 @@
 # Superdesk Server Changelog
 
+## [1.33.11] 2020-12-22
+
+### Fixed
+
+- Add additional place metadata to NINJS output when using geonames and `NINJS_PLACE_EXTENDED` is on.
+
 ## [1.33.10] 2020-12-16
 
 ### Fixed
