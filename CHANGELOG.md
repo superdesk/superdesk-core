@@ -1,5 +1,11 @@
 # Superdesk Server Changelog
 
+## [2.0.9] 2020-12-22
+
+### Fixed
+
+- Fix publish queue delete OperationError from mongo.
+
 ## [2.0.8] 2020-12-18
 
 ### Fixed
