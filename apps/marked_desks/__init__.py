@@ -22,3 +22,6 @@ def init_app(app):
 
     superdesk.privilege(name='mark_for_desks', label='Mark items for desks',
                         description='User can mark items for other desks.')
+    superdesk.privilege(name='mark_for_desks__non_members',
+                        label='Mark items for desks even if the user is not a member of the desk',
+                        description='User can mark items for other desks even if they are not a member of that desk')
