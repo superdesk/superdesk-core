@@ -2653,7 +2653,10 @@ Feature: Content Publishing
         "type": "text",
         "state": "published",
         "associations": {
-            "media--1": {"state": "published"}
+            "media--1": {
+              "state": "published",
+              "task": {"desk": "#desks._id#", "stage": "#desks.incoming_stage#"}
+            }
         },
         "task":{"desk": "#desks._id#", "stage": "#desks.incoming_stage#"}
       }
@@ -2667,7 +2670,6 @@ Feature: Content Publishing
           "task":{"desk": "#desks._id#"}
       }
       """
-      And we get null stage
       When we get "/published"
       Then we get list with 3 items
       """
@@ -2677,7 +2679,8 @@ Feature: Content Publishing
           "media--1": {
             "_id": "234",
             "type": "picture",
-            "state": "published"
+            "state": "published",
+            "task": {"desk": "#desks._id#", "stage": "#desks.incoming_stage#"}
           },
           "related--1": {
             "_id": "text",

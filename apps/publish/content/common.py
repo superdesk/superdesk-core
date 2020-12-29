@@ -719,7 +719,6 @@ class BasePublishService(BaseService):
 
                 if associated_item.get('state') not in PUBLISH_STATES:
                     # This associated item has not been published before
-                    associated_item.get('task', {}).pop('stage', None)
                     remove_unwanted(associated_item)
 
                     # get the original associated item from archive
