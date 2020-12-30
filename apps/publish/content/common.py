@@ -737,6 +737,11 @@ class BasePublishService(BaseService):
                         })
                         continue
 
+                    if orig_associated_item.get('task', {}).get('stage'):
+                        associated_item['task'].update({
+                            'stage': orig_associated_item.get('task', {}).get('stage')
+                        })
+
                     # update _updated, otherwise it's stored as string.
                     # fixes SDESK-5043
                     associated_item['_updated'] = utcnow()
