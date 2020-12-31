@@ -737,7 +737,7 @@ class BasePublishService(BaseService):
                         })
                         continue
 
-                    if orig_associated_item.get('task', {}).get('stage'):
+                    if orig_associated_item.get('task', {}).get('stage') and associated_item.get('task'):
                         associated_item['task'].update({
                             'stage': orig_associated_item.get('task', {}).get('stage')
                         })
