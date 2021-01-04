@@ -58,6 +58,8 @@ install_requires = [
     'regex==2020.7.14',
     'flask-oidc-ex==0.5.5',
     'vine==1.3.0',
+    # to be replaced by stdlib version when we use Python 3.8+
+    'importlib_metadata<3.2',
 ]
 
 package_data = {
@@ -91,6 +93,8 @@ setup(
     packages=find_packages(exclude=['tests', 'features']),
     package_data=package_data,
     include_package_data=True,
+    use_scm_version=True,
+    setup_requires=['setuptools_scm'],
     install_requires=install_requires,
     classifiers=[
         'Development Status :: 4 - Beta',
