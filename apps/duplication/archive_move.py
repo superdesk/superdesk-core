@@ -133,7 +133,9 @@ class MoveService(BaseService):
         set_sign_off(archived_doc, original=original)
         convert_task_attributes_to_objectId(archived_doc)
         resolve_document_version(archived_doc, ARCHIVE, 'PATCH', original)
+
         del archived_doc[config.ID_FIELD]
+        del archived_doc[config.ETAG]  # force etag update
 
         signals.item_move.send(self, item=archived_doc, original=original)
         archive_service.update(original[config.ID_FIELD], archived_doc, original)
