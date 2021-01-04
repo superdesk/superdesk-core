@@ -737,6 +737,7 @@ class BasePublishService(BaseService):
                         })
                         continue
 
+                    # if the original associated item stage is present, it should be updated in the association item.
                     if orig_associated_item.get('task', {}).get('stage') and associated_item.get('task'):
                         associated_item['task'].update({
                             'stage': orig_associated_item.get('task', {}).get('stage')
