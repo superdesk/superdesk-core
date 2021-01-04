@@ -34,10 +34,10 @@ DATA_UPDATE_TEMPLATE = '''
 # Author  : $user
 # Creation: $current_date
 
-from superdesk.commands.data_updates import DataUpdate
+from superdesk.commands.data_updates import DataUpdate as _DataUpdate
 
 
-class DataUpdate(DataUpdate):
+class DataUpdate(_DataUpdate):
 
     resource = '$resource'
 
