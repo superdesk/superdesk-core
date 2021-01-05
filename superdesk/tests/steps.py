@@ -758,6 +758,11 @@ def step_then_we_get_same_etag(context):
     assert context.etag == get_response_etag(context.response), 'etags not matching'
 
 
+@then('we get different etag')
+def step_then_we_get_different_etag(context):
+    assert context.etag != get_response_etag(context.response), 'etags are matching'
+
+
 def store_placeholder(context, url):
     if context.response.status_code in (200, 201):
         try:
