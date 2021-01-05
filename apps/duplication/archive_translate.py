@@ -24,6 +24,8 @@ from superdesk.workflow import is_workflow_state_transition_valid
 from superdesk.utc import utcnow
 from apps.packages import PackageService
 from flask_babel import _
+from flask import current_app as app
+
 
 package_service = PackageService()
 
@@ -92,6 +94,21 @@ class TranslateService(BaseService):
             item['task'] = task
 
         extra_fields = ['translation_id', 'translated_from']
+
+        if app.config.get('UPDATE_TRANSLATION_METADATA'):
+            if item.get('anpa_take_key'):
+                item['anpa_take_key'] = '0'
+
+                cv = get_resource_service('vocabularies').find_one(req=None, _id='destinations')
+                if not cv or not cv.get('items'):
+                    return
+                for value in cv['items']:
+                    if value.get('name') == 'Presse Canadienne staff':
+                        item.setdefault('subject', []).append({
+                                'name': value['name'],
+                                'qcode': value['qcode'],
+                                'scheme': 'destinations',
+                        })
 
         translation_guid = archive_service.duplicate_item(
             item, extra_fields=extra_fields, state=state, operation='translate'
