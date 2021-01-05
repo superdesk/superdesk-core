@@ -47,3 +47,9 @@ def init_app(app: Eve):
         label=_('Sams manage'),
         description=_('Allows management of SAMS Sets etc')
     )
+
+    superdesk.privilege(
+        name='sams_manage_assets',
+        label=_('SAMS Manage Assets'),
+        description=_('Allows management of SAMS Assets')
+    )
