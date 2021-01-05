@@ -10,8 +10,8 @@ from content_api import MONGO_PREFIX
 class SubscriberTokenResource(superdesk.Resource):
     schema = {
         '_id': {'type': 'string', 'unique': True},
-        'expiry': {'type': 'datetime', 'nullable': True},
-        'never_expire': {'type': 'boolean'},
+        'expiry': {'readonly': True},
+        'expiry_days': {'type': 'integer'},
         'subscriber': superdesk.Resource.rel('subscribers', required=True),
     }
 
@@ -32,6 +32,6 @@ class SubscriberTokenService(superdesk.Service):
     def create(self, docs, **kwargs):
         for doc in docs:
             doc['_id'] = get_random_token()
-            if not doc.get('never_expire'):
-                doc.setdefault('expiry', utcnow() + timedelta(days=7))
+            if doc.get('expiry_days'):
+                doc.setdefault('expiry', utcnow() + timedelta(days=doc['expiry_days']))
         return super().create(docs, **kwargs)
