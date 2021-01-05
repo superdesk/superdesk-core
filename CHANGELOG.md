@@ -1,5 +1,11 @@
 # Superdesk Server Changelog
 
+## [2.0.10] 2021-01-05
+
+### Fixed
+
+- Dont terminate app:initialize_data command on duplicate key error
+
 ## [2.0.9] 2020-12-22
 
 ### Fixed
