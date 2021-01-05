@@ -25,7 +25,7 @@ class FormatterRegistry(type):
     def __init__(cls, name, bases, attrs):
         """Register sub-classes of Formatter class when defined."""
         super(FormatterRegistry, cls).__init__(name, bases, attrs)
-        if name != 'Formatter':
+        if name != "Formatter":
             formatters.append(cls)
 
 
@@ -57,32 +57,32 @@ class Formatter(metaclass=FormatterRegistry):
         :return: body with public service announcements.
         """
         try:
-            article['body_html'] = article['body_html'].replace('<br>', '<br/>')
+            article["body_html"] = article["body_html"].replace("<br>", "<br/>")
         except KeyError:
             pass
 
-        body = ''
+        body = ""
         if article[ITEM_TYPE] in [CONTENT_TYPE.TEXT, CONTENT_TYPE.PREFORMATTED]:
-            body = article.get('body_html', '')
+            body = article.get("body_html", "")
         elif article[ITEM_TYPE] in [CONTENT_TYPE.AUDIO, CONTENT_TYPE.PICTURE, CONTENT_TYPE.VIDEO]:
-            body = article.get('description', '')
+            body = article.get("description", "")
 
-        if body and article.get(FORMAT, '') == FORMATS.PRESERVED:
-            body = body.replace('\n', '\r\n').replace('\r\r', '\r')
-            parsed = parse_html(body, content='html')
+        if body and article.get(FORMAT, "") == FORMATS.PRESERVED:
+            body = body.replace("\n", "\r\n").replace("\r\r", "\r")
+            parsed = parse_html(body, content="html")
 
-            for br in parsed.xpath('//br'):
-                br.tail = '\r\n' + br.tail if br.tail else '\r\n'
+            for br in parsed.xpath("//br"):
+                br.tail = "\r\n" + br.tail if br.tail else "\r\n"
 
-            etree.strip_elements(parsed, 'br', with_tail=False)
+            etree.strip_elements(parsed, "br", with_tail=False)
             body = etree.tostring(parsed, encoding="unicode")
 
-        if body and article.get('body_footer'):
-            footer = article.get('body_footer')
-            if article.get(FORMAT, '') == FORMATS.PRESERVED:
-                body = '{}\r\n{}'.format(body, get_text(footer))
+        if body and article.get("body_footer"):
+            footer = article.get("body_footer")
+            if article.get(FORMAT, "") == FORMATS.PRESERVED:
+                body = "{}\r\n{}".format(body, get_text(footer))
             else:
-                body = '{}{}'.format(body, footer)
+                body = "{}{}".format(body, footer)
         return body
 
     def append_legal(self, article, truncate=False):
@@ -93,10 +93,10 @@ class Formatter(metaclass=FormatterRegistry):
         :param truncate: truncates the slugline to 24 characters
         :return: updated slugline
         """
-        slugline = article.get('slugline', '') or ''
+        slugline = article.get("slugline", "") or ""
 
-        if article.get('flags', {}).get('marked_for_legal', False):
-            slugline = '{}: {}'.format('Legal', slugline)
+        if article.get("flags", {}).get("marked_for_legal", False):
+            slugline = "{}: {}".format("Legal", slugline)
             if truncate:
                 slugline = slugline[:24]
 
@@ -110,23 +110,23 @@ class Formatter(metaclass=FormatterRegistry):
         :param str html: the html to parse the text from
         :return:
         """
-        root = parse_html(html, content='html')
+        root = parse_html(html, content="html")
         # if there are no ptags just br
-        if not len(root.xpath('//p')) and len(root.xpath('//br')):
-            para = etree.SubElement(element, 'p')
-            for br in root.xpath('//br'):
-                etree.SubElement(para, 'br').text = br.text
+        if not len(root.xpath("//p")) and len(root.xpath("//br")):
+            para = etree.SubElement(element, "p")
+            for br in root.xpath("//br"):
+                etree.SubElement(para, "br").text = br.text
 
-        for p in root.xpath('//p'):
-            para = etree.SubElement(element, 'p')
-            if len(p.xpath('.//br')) > 0:
-                for br in p.xpath('.//br'):
-                    etree.SubElement(para, 'br').text = br.text
+        for p in root.xpath("//p"):
+            para = etree.SubElement(element, "p")
+            if len(p.xpath(".//br")) > 0:
+                for br in p.xpath(".//br"):
+                    etree.SubElement(para, "br").text = br.text
             para.text = etree.tostring(p, encoding="unicode", method="text")
 
         # there neither ptags pr br's
         if len(list(element)) == 0:
-            etree.SubElement(element, 'p').text = etree.tostring(root, encoding="unicode", method="text")
+            etree.SubElement(element, "p").text = etree.tostring(root, encoding="unicode", method="text")
 
     def set_destination(self, destination=None, subscriber=None):
         self.destination = destination
@@ -135,9 +135,9 @@ class Formatter(metaclass=FormatterRegistry):
     def _publish_media(self, media):
         if self.destination:
             try:
-                transmitter = registered_transmitters[self.destination['delivery_type']]
+                transmitter = registered_transmitters[self.destination["delivery_type"]]
             except KeyError:
-                logger.warning('Missing transmitter for destination %s', self.destination)
+                logger.warning("Missing transmitter for destination %s", self.destination)
             else:
                 return transmitter.transmit_media(media, self.subscriber, self.destination)
 

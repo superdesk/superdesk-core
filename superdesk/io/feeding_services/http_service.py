@@ -29,14 +29,16 @@ class HTTPFeedingService(FeedingService, metaclass=ABCMeta):
     Feeding Service class which can read article(s) using HTTP.
     """
 
-    ERRORS = [IngestApiError.apiTimeoutError().get_error_description(),
-              IngestApiError.apiRedirectError().get_error_description(),
-              IngestApiError.apiRequestError().get_error_description(),
-              IngestApiError.apiUnicodeError().get_error_description(),
-              IngestApiError.apiParseError().get_error_description(),
-              IngestApiError.apiGeneralError().get_error_description()]
+    ERRORS = [
+        IngestApiError.apiTimeoutError().get_error_description(),
+        IngestApiError.apiRedirectError().get_error_description(),
+        IngestApiError.apiRequestError().get_error_description(),
+        IngestApiError.apiUnicodeError().get_error_description(),
+        IngestApiError.apiParseError().get_error_description(),
+        IngestApiError.apiGeneralError().get_error_description(),
+    ]
 
-    label = 'HTTP'
+    label = "HTTP"
 
     def __init__(self):
         super().__init__()
@@ -51,11 +53,12 @@ class HTTPFeedingService(FeedingService, metaclass=ABCMeta):
         :return: Authentication Token
         :rtype: str
         """
-        token = {'auth_token': self._generate_auth_token(provider), 'created': utcnow()}
-        get_resource_service('ingest_providers').system_update(provider[config.ID_FIELD], updates={'tokens': token},
-                                                               original=provider)
-        provider['tokens'] = token
-        return token['auth_token']
+        token = {"auth_token": self._generate_auth_token(provider), "created": utcnow()}
+        get_resource_service("ingest_providers").system_update(
+            provider[config.ID_FIELD], updates={"tokens": token}, original=provider
+        )
+        provider["tokens"] = token
+        return token["auth_token"]
 
     def _generate_auth_token(self, provider):
         """
@@ -68,21 +71,25 @@ class HTTPFeedingService(FeedingService, metaclass=ABCMeta):
         :raises: IngestApiError.apiGeneralError() if auth_url is missing in the Ingest Provider configuration
         """
         session = requests.Session()
-        session.mount('https://', SSLAdapter())
+        session.mount("https://", SSLAdapter())
 
-        auth_url = provider.get('config', {}).get('auth_url', None)
+        auth_url = provider.get("config", {}).get("auth_url", None)
         if not auth_url:
-            raise IngestApiError.apiGeneralError(provider=provider,
-                                                 exception=KeyError(
-                                                     '''
+            raise IngestApiError.apiGeneralError(
+                provider=provider,
+                exception=KeyError(
+                    """
                                                      Ingest Provider {} is missing Authentication URL.
                                                      Please check the configuration.
-                                                     '''.format(provider['name']))
-                                                 )
+                                                     """.format(
+                        provider["name"]
+                    )
+                ),
+            )
 
         payload = {
-            'username': provider.get('config', {}).get('username', ''),
-            'password': provider.get('config', {}).get('password', ''),
+            "username": provider.get("config", {}).get("username", ""),
+            "password": provider.get("config", {}).get("password", ""),
         }
 
         response = session.get(auth_url, params=payload, verify=False, timeout=30)
@@ -108,9 +115,9 @@ class HTTPFeedingService(FeedingService, metaclass=ABCMeta):
         :rtype: bool
         """
         ttl = timedelta(hours=12)
-        created = arrow.get(token.get('created')).datetime
+        created = arrow.get(token.get("created")).datetime
 
-        return created + ttl >= utcnow() and token.get('auth_token')
+        return created + ttl >= utcnow() and token.get("auth_token")
 
     def _get_auth_token(self, provider, update=False):
         """
@@ -124,12 +131,12 @@ class HTTPFeedingService(FeedingService, metaclass=ABCMeta):
         :return: Authentication Token
         :rtype: str
         """
-        token = provider.get('tokens')
+        token = provider.get("tokens")
 
         if token and self._is_valid_token(token):
-            return token.get('auth_token')
+            return token.get("auth_token")
 
-        return self._generate_token_and_update_provider(provider) if update else ''
+        return self._generate_token_and_update_provider(provider) if update else ""
 
 
 # workaround for ssl version error
@@ -143,5 +150,4 @@ class SSLAdapter(requests.adapters.HTTPAdapter):
         Initializes pool manager to use ssl version v1.
         """
 
-        self.poolmanager = PoolManager(num_pools=connections, maxsize=maxsize, ssl_version=ssl.PROTOCOL_TLSv1,
-                                       **kwargs)
+        self.poolmanager = PoolManager(num_pools=connections, maxsize=maxsize, ssl_version=ssl.PROTOCOL_TLSv1, **kwargs)

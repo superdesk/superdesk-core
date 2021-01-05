@@ -16,23 +16,22 @@ from superdesk.macros.take_key_validator import validate
 
 
 class TakeKeyValidatorTestCase(unittest.TestCase):
-
     def test_validation_fails(self):
-        item = {'body_html': '$100'}
+        item = {"body_html": "$100"}
         with assert_raises(KeyError):
             validate(item)
 
     def test_validation_fails_empty(self):
-        item = {'body_html': '$100', 'anpa_take_key': ''}
+        item = {"body_html": "$100", "anpa_take_key": ""}
         with assert_raises(KeyError):
             validate(item)
 
     def test_validation_fails_white_space(self):
-        item = {'body_html': '$100', 'anpa_take_key': '  '}
+        item = {"body_html": "$100", "anpa_take_key": "  "}
         with assert_raises(KeyError):
             validate(item)
 
     def test_validation_succeeds(self):
-        item = {'body_html': '$100', 'anpa_take_key': 'Update'}
+        item = {"body_html": "$100", "anpa_take_key": "Update"}
         res = validate(item)
         self.assertIsNotNone(res)

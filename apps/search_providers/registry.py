@@ -34,26 +34,28 @@ def register_search_provider(name, fetch_endpoint=None, provider_class=None, lab
         raise AlreadyExistsError("A Search Provider with name: {} already exists".format(name))
 
     if not ((fetch_endpoint and not provider_class) or (not fetch_endpoint and provider_class)):
-        raise ValueError(_('You have to specify either fetch_endpoint or provider_class.'))
+        raise ValueError(_("You have to specify either fetch_endpoint or provider_class."))
 
     provider_data = {}
 
     if fetch_endpoint:
-        existing_endpoints = {d['endpoint'] for d in registered_search_providers.values() if 'endpoint' in d}
+        existing_endpoints = {d["endpoint"] for d in registered_search_providers.values() if "endpoint" in d}
         if fetch_endpoint in existing_endpoints:
             raise AlreadyExistsError(
                 _("A Search Provider for the fetch endpoint: {endpoint} exists with name: {name}").format(
-                    endpoint=fetch_endpoint, name=registered_search_providers[name]))
-        provider_data['endpoint'] = fetch_endpoint
+                    endpoint=fetch_endpoint, name=registered_search_providers[name]
+                )
+            )
+        provider_data["endpoint"] = fetch_endpoint
     else:
-        provider_data['class'] = provider_class
+        provider_data["class"] = provider_class
 
     if label is not None:
-        provider_data['label'] = label
-    elif provider_class is not None and hasattr(provider_class, 'label') and provider_class.label:
-        provider_data['label'] = provider_class.label
+        provider_data["label"] = label
+    elif provider_class is not None and hasattr(provider_class, "label") and provider_class.label:
+        provider_data["label"] = provider_class.label
     else:
-        provider_data['label'] = name
+        provider_data["label"] = name
 
     registered_search_providers[name] = provider_data
 
@@ -61,24 +63,18 @@ def register_search_provider(name, fetch_endpoint=None, provider_class=None, lab
 
 
 class SearchProviderAllowedResource(Resource):
-    resource_methods = ['GET']
+    resource_methods = ["GET"]
     item_methods = []
     schema = {
-        'label': {'type': 'string'},
-        'search_provider': {'type': 'string'},
+        "label": {"type": "string"},
+        "search_provider": {"type": "string"},
     }
 
 
 class SearchProviderAllowedService(Service):
-
     def get(self, req, lookup):
         def provider(provider_id):
             provider_data = registered_search_providers[provider_id]
-            return {
-                'search_provider': provider_id,
-                'label': provider_data['label']
-            }
+            return {"search_provider": provider_id, "label": provider_data["label"]}
 
-        return ListCursor(
-            [provider(_id) for _id in registered_search_providers]
-        )
+        return ListCursor([provider(_id) for _id in registered_search_providers])

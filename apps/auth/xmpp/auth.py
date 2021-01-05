@@ -21,48 +21,37 @@ import superdesk
 
 class XMPPAuthResource(Resource):
     schema = {
-        'jid': {
-            'type': 'string',
-            'required': True
-        },
-        'transactionId': {
-            'type': 'string',
-            'required': True
-        },
-        'token': {
-            'type': 'string'
-        },
-        'user': Resource.rel('users', True)
+        "jid": {"type": "string", "required": True},
+        "transactionId": {"type": "string", "required": True},
+        "token": {"type": "string"},
+        "user": Resource.rel("users", True),
     }
-    resource_methods = ['POST']
-    public_methods = ['POST']
-    extra_response_fields = ['user', 'token', 'username']
+    resource_methods = ["POST"]
+    public_methods = ["POST"]
+    extra_response_fields = ["user", "token", "username"]
 
 
-superdesk.intrinsic_privilege('auth_xmpp', method=['DELETE'])
+superdesk.intrinsic_privilege("auth_xmpp", method=["DELETE"])
 
 
 class XMPPAuthService(AuthService):
-
     def authenticate(self, credentials):
-        auth_url = app.config['XMPP_AUTH_URL']
+        auth_url = app.config["XMPP_AUTH_URL"]
         if not auth_url:
             raise SuperdeskApiError.notConfiguredError()
-        domain = app.config['XMPP_AUTH_DOMAIN']
-        jid = credentials.get('jid')
+        domain = app.config["XMPP_AUTH_DOMAIN"]
+        jid = credentials.get("jid")
         if not jid:
             raise CredentialsAuthError(credentials)
-        user = get_resource_service('auth_users').find_one(req=None, jid=jid)
+        user = get_resource_service("auth_users").find_one(req=None, jid=jid)
         if not user:
             raise CredentialsAuthError(credentials)
 
         try:
-            r = requests.post(app.config['XMPP_AUTH_URL'],
-                              data={
-                                  "jid": jid,
-                                  "domain": domain,
-                                  "transaction_id":
-                                  credentials.get('transactionId')})
+            r = requests.post(
+                app.config["XMPP_AUTH_URL"],
+                data={"jid": jid, "domain": domain, "transaction_id": credentials.get("transactionId")},
+            )
         except Exception:
             raise CredentialsAuthError(credentials)
         else:
@@ -72,5 +61,5 @@ class XMPPAuthService(AuthService):
         return user
 
     def set_auth_default(self, doc, user_id):
-        doc['user'] = user_id
-        doc['token'] = utils.get_random_string(40)
+        doc["user"] = user_id
+        doc["token"] = utils.get_random_string(40)

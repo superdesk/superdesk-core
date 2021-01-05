@@ -13,19 +13,19 @@ import superdesk
 
 class ValidatorsResource(superdesk.Resource):
     schema = {
-        '_id': {'type': 'string', 'required': True, 'unique': True},
-        'act': {'type': 'string', 'required': True},
-        'type': {'type': 'string', 'required': True},
-        'embedded': {'type': 'boolean', 'required': False},
-        'schema': {
-            'type': 'dict',
-            'required': False,
-            'schema': {},
-            'allow_unknown': True,
-        }
+        "_id": {"type": "string", "required": True, "unique": True},
+        "act": {"type": "string", "required": True},
+        "type": {"type": "string", "required": True},
+        "embedded": {"type": "boolean", "required": False},
+        "schema": {
+            "type": "dict",
+            "required": False,
+            "schema": {},
+            "allow_unknown": True,
+        },
     }
 
-    resource_methods = ['POST']
+    resource_methods = ["POST"]
     item_methods = []
 
 

@@ -13,27 +13,26 @@ import operator
 
 
 class FilterConditionOperatorsEnum(Enum):
-    in_ = 1,
-    nin = 2,
-    like = 3,
-    notlike = 4,
-    startswith = 5,
-    endswith = 6,
-    match = 7,
-    eq = 8,
-    ne = 9,
-    gt = 10,
-    gte = 11,
-    lt = 12,
-    lte = 13,
+    in_ = (1,)
+    nin = (2,)
+    like = (3,)
+    notlike = (4,)
+    startswith = (5,)
+    endswith = (6,)
+    match = (7,)
+    eq = (8,)
+    ne = (9,)
+    gt = (10,)
+    gte = (11,)
+    lt = (12,)
+    lte = (13,)
     exists = 14
 
 
 class FilterConditionOperator:
-
     @staticmethod
     def factory(operator):
-        if operator + '_' == FilterConditionOperatorsEnum.in_.name:
+        if operator + "_" == FilterConditionOperatorsEnum.in_.name:
             return InOperator(operator)
         elif operator == FilterConditionOperatorsEnum.nin.name:
             return NotInOperator(operator)
@@ -41,12 +40,14 @@ class FilterConditionOperator:
             return NotLikeOperator(operator)
         elif operator == FilterConditionOperatorsEnum.match.name:
             return MatchOperator(operator)
-        elif operator in [FilterConditionOperatorsEnum.eq.name,
-                          FilterConditionOperatorsEnum.ne.name,
-                          FilterConditionOperatorsEnum.gt.name,
-                          FilterConditionOperatorsEnum.gte.name,
-                          FilterConditionOperatorsEnum.lt.name,
-                          FilterConditionOperatorsEnum.lte.name]:
+        elif operator in [
+            FilterConditionOperatorsEnum.eq.name,
+            FilterConditionOperatorsEnum.ne.name,
+            FilterConditionOperatorsEnum.gt.name,
+            FilterConditionOperatorsEnum.gte.name,
+            FilterConditionOperatorsEnum.lt.name,
+            FilterConditionOperatorsEnum.lte.name,
+        ]:
             return ComparisonOperator(operator)
         elif operator == FilterConditionOperatorsEnum.exists.name:
             return ExistsOperator(operator)
@@ -54,7 +55,7 @@ class FilterConditionOperator:
             return RegexOperator(operator)
 
     def _get_default_mongo_operator(self):
-        return '${}'.format(self.operator.name)
+        return "${}".format(self.operator.name)
 
     def get_mongo_operator(self):
         return self.mongo_operator
@@ -74,9 +75,9 @@ class FilterConditionOperator:
 
 class InOperator(FilterConditionOperator):
     def __init__(self, operator):
-        self.operator = FilterConditionOperatorsEnum[operator + '_']
-        self.mongo_operator = '$in'
-        self.elastic_operator = 'terms'
+        self.operator = FilterConditionOperatorsEnum[operator + "_"]
+        self.mongo_operator = "$in"
+        self.elastic_operator = "terms"
 
     def does_match(self, article_value, filter_value):
         if isinstance(article_value, list):
@@ -89,7 +90,7 @@ class NotInOperator(FilterConditionOperator):
     def __init__(self, operator):
         self.operator = FilterConditionOperatorsEnum[operator]
         self.mongo_operator = self._get_default_mongo_operator()
-        self.elastic_operator = 'terms'
+        self.elastic_operator = "terms"
 
     def does_match(self, article_value, filter_value):
         if isinstance(article_value, list):
@@ -104,8 +105,8 @@ class NotInOperator(FilterConditionOperator):
 class NotLikeOperator(FilterConditionOperator):
     def __init__(self, operator):
         self.operator = FilterConditionOperatorsEnum[operator]
-        self.mongo_operator = '$not'
-        self.elastic_operator = 'query_string'
+        self.mongo_operator = "$not"
+        self.elastic_operator = "query_string"
 
     def does_match(self, article_value, filter_value):
         return filter_value.match(article_value) is None
@@ -119,19 +120,23 @@ class ComparisonOperator(FilterConditionOperator):
     Represents comparison operators
     """
 
-    _operators = {FilterConditionOperatorsEnum.gt: operator.gt,
-                  FilterConditionOperatorsEnum.lt: operator.lt,
-                  FilterConditionOperatorsEnum.gte: operator.ge,
-                  FilterConditionOperatorsEnum.lte: operator.le,
-                  FilterConditionOperatorsEnum.ne: operator.ne,
-                  FilterConditionOperatorsEnum.eq: operator.eq}
+    _operators = {
+        FilterConditionOperatorsEnum.gt: operator.gt,
+        FilterConditionOperatorsEnum.lt: operator.lt,
+        FilterConditionOperatorsEnum.gte: operator.ge,
+        FilterConditionOperatorsEnum.lte: operator.le,
+        FilterConditionOperatorsEnum.ne: operator.ne,
+        FilterConditionOperatorsEnum.eq: operator.eq,
+    }
 
-    _elastic_mapper = {FilterConditionOperatorsEnum.gt: '{{"range": {{"{}": {{"gt": "{}"}}}}}}',
-                       FilterConditionOperatorsEnum.gte: '{{"range": {{"{}": {{"gte": "{}"}}}}}}',
-                       FilterConditionOperatorsEnum.lt: '{{"range": {{"{}": {{"lt": "{}"}}}}}}',
-                       FilterConditionOperatorsEnum.lte: '{{"range": {{"{}": {{"lte": "{}"}}}}}}',
-                       FilterConditionOperatorsEnum.eq: '{{"term": {{"{}": "{}"}}}}',
-                       FilterConditionOperatorsEnum.ne: '{{"term": {{"{}": "{}"}}}}'}
+    _elastic_mapper = {
+        FilterConditionOperatorsEnum.gt: '{{"range": {{"{}": {{"gt": "{}"}}}}}}',
+        FilterConditionOperatorsEnum.gte: '{{"range": {{"{}": {{"gte": "{}"}}}}}}',
+        FilterConditionOperatorsEnum.lt: '{{"range": {{"{}": {{"lt": "{}"}}}}}}',
+        FilterConditionOperatorsEnum.lte: '{{"range": {{"{}": {{"lte": "{}"}}}}}}',
+        FilterConditionOperatorsEnum.eq: '{{"term": {{"{}": "{}"}}}}',
+        FilterConditionOperatorsEnum.ne: '{{"term": {{"{}": "{}"}}}}',
+    }
 
     def __init__(self, operator):
         self.operator = FilterConditionOperatorsEnum[operator]
@@ -165,8 +170,8 @@ class RegexOperator(FilterConditionOperator):
 
     def __init__(self, operator):
         self.operator = FilterConditionOperatorsEnum[operator]
-        self.mongo_operator = '$regex'
-        self.elastic_operator = 'query_string'
+        self.mongo_operator = "$regex"
+        self.elastic_operator = "query_string"
 
     def does_match(self, article_value, filter_value):
         return filter_value.match(article_value) is not None
@@ -175,7 +180,7 @@ class RegexOperator(FilterConditionOperator):
 class MatchOperator(FilterConditionOperator):
     def __init__(self, operator):
         self.operator = FilterConditionOperatorsEnum[operator]
-        self.mongo_operator = '$in'
+        self.mongo_operator = "$in"
         self.elastic_operator = '{{"query_string": {{"{}":"{}"}}}}'
 
     def does_match(self, article_value, filter_value):
@@ -188,7 +193,7 @@ class MatchOperator(FilterConditionOperator):
 class ExistsOperator(FilterConditionOperator):
     def __init__(self, operator):
         self.operator = FilterConditionOperatorsEnum[operator]
-        self.get_mongo_operator = '$exists'
+        self.get_mongo_operator = "$exists"
         self.get_elastic_operator = '{{"exists": {{"field": "{}"}} }}'
 
     def does_match(self, article_value, filter_value):

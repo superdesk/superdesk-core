@@ -16,21 +16,21 @@ import json
 
 
 class APMediaTestCase(TestCase):
-    vocab = [{'_id': 'genre', 'items': [{'name': 'Current'}]}]
+    vocab = [{"_id": "genre", "items": [{"name": "Current"}]}]
 
     def setUp(self):
         with self.app.app_context():
-            self.app.data.insert('vocabularies', self.vocab)
+            self.app.data.insert("vocabularies", self.vocab)
         dirname = os.path.dirname(os.path.realpath(__file__))
-        fixture = os.path.normpath(os.path.join(dirname, '../fixtures', self.filename))
-        provider = {'name': 'Test'}
+        fixture = os.path.normpath(os.path.join(dirname, "../fixtures", self.filename))
+        provider = {"name": "Test"}
         with open(fixture) as fp:
             self.item = APMediaFeedParser().parse(json.load(fp), provider)
 
 
 class SimpleTestCase(APMediaTestCase):
 
-    filename = 'ap_media_picture.json'
+    filename = "ap_media_picture.json"
 
     def test_headline(self):
-        self.assertEqual(self.item.get('headline'), 'US Paul Simon Poets Society')
+        self.assertEqual(self.item.get("headline"), "US Paul Simon Poets Society")

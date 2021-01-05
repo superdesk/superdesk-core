@@ -17,20 +17,24 @@ from .macro_register import macros
 
 
 def get_public_props(item):
-    return {k: v for k, v in item.items() if k != 'callback'}
+    return {k: v for k, v in item.items() if k != "callback"}
 
 
 class MacrosService(superdesk.Service):
-
     def get(self, req, lookup):
         """Return all registered macros."""
-        desk = getattr(req, 'args', {}).get('desk')
-        include_backend = getattr(req, 'args', {}).get('backend') == 'true'
+        desk = getattr(req, "args", {}).get("desk")
+        include_backend = getattr(req, "args", {}).get("backend") == "true"
         all_macros = self.get_macros(include_backend)
 
         if desk:
-            return ListCursor([get_public_props(macro) for macro in all_macros if
-                               desk.upper() in macro.get('desks', []) or macro.get('desks') is None])
+            return ListCursor(
+                [
+                    get_public_props(macro)
+                    for macro in all_macros
+                    if desk.upper() in macro.get("desks", []) or macro.get("desks") is None
+                ]
+            )
         else:
             return ListCursor([get_public_props(macro) for macro in all_macros])
 
@@ -38,18 +42,18 @@ class MacrosService(superdesk.Service):
         try:
             ids = []
             for doc in docs:
-                res = self.execute_macro(doc['item'], doc['macro'])
+                res = self.execute_macro(doc["item"], doc["macro"])
                 if isinstance(res, tuple):
-                    doc['item'] = res[0]
-                    doc['diff'] = res[1]
+                    doc["item"] = res[0]
+                    doc["diff"] = res[1]
                 else:
-                    doc['item'] = res
-                if doc.get('commit'):
-                    item = superdesk.get_resource_service('archive').find_one(req=None, _id=doc['item']['_id'])
-                    updates = doc['item'].copy()
-                    updates.pop('_id')
-                    superdesk.get_resource_service('archive').update(item['_id'], updates, item)
-                ids.append(doc['macro'])
+                    doc["item"] = res
+                if doc.get("commit"):
+                    item = superdesk.get_resource_service("archive").find_one(req=None, _id=doc["item"]["_id"])
+                    updates = doc["item"].copy()
+                    updates.pop("_id")
+                    superdesk.get_resource_service("archive").update(item["_id"], updates, item)
+                ids.append(doc["macro"])
             return ids
         except Exception as ex:
             raise SuperdeskApiError.internalError(str(ex), exception=ex)
@@ -59,13 +63,13 @@ class MacrosService(superdesk.Service):
 
     def execute_macro(self, doc, macro_name, **kwargs):
         macro = self.get_macro_by_name(macro_name)
-        return macro['callback'](doc, **kwargs)
+        return macro["callback"](doc, **kwargs)
 
     def get_macros(self, include_backend):
         if include_backend:
             return macros
         else:
-            return [m for m in macros if m.get('access_type') == 'frontend']
+            return [m for m in macros if m.get("access_type") == "frontend"]
 
     def execute_translation_macro(self, doc, from_language, to_language):
         """
@@ -73,55 +77,52 @@ class MacrosService(superdesk.Service):
         Macros can have optionally defined translation related settings: from_languages, to_languages.
         """
         for m in macros:
-            if (not m.get('from_languages', None) or from_language in m['from_languages']) \
-                    and to_language in m.get('to_languages', []):
-                m['callback'](doc, from_language=from_language, to_language=to_language)
+            if (not m.get("from_languages", None) or from_language in m["from_languages"]) and to_language in m.get(
+                "to_languages", []
+            ):
+                m["callback"](doc, from_language=from_language, to_language=to_language)
 
 
 class MacrosResource(superdesk.Resource):
-    resource_methods = ['GET', 'POST']
+    resource_methods = ["GET", "POST"]
     item_methods = []
-    privileges = {'POST': 'archive'}
+    privileges = {"POST": "archive"}
 
     schema = {
-        'macro': {
-            'type': 'string',
-            'required': True,
-            'allowed': macros
+        "macro": {"type": "string", "required": True, "allowed": macros},
+        "item": {
+            "type": "dict",
         },
-        'item': {
-            'type': 'dict',
+        "commit": {
+            "type": "boolean",
+            "default": False,
         },
-        'commit': {
-            'type': 'boolean',
-            'default': False,
+        "diff": {
+            "type": "dict",
+            "readonly": True,
         },
-        'diff': {
-            'type': 'dict',
-            'readonly': True,
+        "name": {
+            "type": "string",
+            "readonly": True,
         },
-        'name': {
-            'type': 'string',
-            'readonly': True,
+        "label": {
+            "type": "string",
+            "readonly": True,
         },
-        'label': {
-            'type': 'string',
-            'readonly': True,
+        "description": {
+            "type": "string",
+            "readonly": True,
         },
-        'description': {
-            'type': 'string',
-            'readonly': True,
+        "action_type": {
+            "type": "string",
+            "readonly": True,
         },
-        'action_type': {
-            'type': 'string',
-            'readonly': True,
+        "access_type": {
+            "type": "string",
+            "readonly": True,
         },
-        'access_type': {
-            'type': 'string',
-            'readonly': True,
-        },
-        'group': {
-            'type': 'string',
-            'readonly': True,
+        "group": {
+            "type": "string",
+            "readonly": True,
         },
     }

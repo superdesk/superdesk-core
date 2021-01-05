@@ -30,7 +30,7 @@ class SearchProviderService(BaseService):
         filtered_providers = []
 
         for provider in providers:
-            if provider['search_provider'] in allowed_search_providers:
+            if provider["search_provider"] in allowed_search_providers:
                 filtered_providers.append(provider)
 
         return ListCursor(filtered_providers)
@@ -41,23 +41,23 @@ class SearchProviderService(BaseService):
         """
 
         provider = super().find_one(req, **lookup)
-        return provider if provider and provider['search_provider'] in allowed_search_providers else None
+        return provider if provider and provider["search_provider"] in allowed_search_providers else None
 
     def on_created(self, docs):
         for doc in docs:
-            if doc.get('is_default'):
+            if doc.get("is_default"):
                 self.find_and_modify(
-                    query={'$and': [{'_id': {'$ne': doc[config.ID_FIELD]}}, {'is_default': True}]},
-                    update={'$set': {'is_default': False}},
-                    upsert=False
+                    query={"$and": [{"_id": {"$ne": doc[config.ID_FIELD]}}, {"is_default": True}]},
+                    update={"$set": {"is_default": False}},
+                    upsert=False,
                 )
 
     def on_updated(self, updates, original):
-        if updates.get('is_default'):
+        if updates.get("is_default"):
             self.find_and_modify(
-                query={'$and': [{'_id': {'$ne': original[config.ID_FIELD]}}, {'is_default': True}]},
-                update={'$set': {'is_default': False}},
-                upsert=False
+                query={"$and": [{"_id": {"$ne": original[config.ID_FIELD]}}, {"is_default": True}]},
+                update={"$set": {"is_default": False}},
+                upsert=False,
             )
 
     def on_delete(self, doc):
@@ -65,5 +65,5 @@ class SearchProviderService(BaseService):
         Overriding to check if the search provider being requested to delete has been used to fetch items.
         """
 
-        if doc.get('last_item_update'):
+        if doc.get("last_item_update"):
             raise SuperdeskApiError.forbiddenError(_("Deleting a Search Provider after receiving items is prohibited."))

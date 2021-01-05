@@ -19,7 +19,7 @@ from content_api.tokens.resource import CompanyTokenResource  # noqa
 from content_api.tokens.service import CompanyTokenService  # noqa
 
 
-TOKEN_RESOURCE = 'subscriber_token'
+TOKEN_RESOURCE = "subscriber_token"
 
 
 class AuthSubscriberTokenResource(SubscriberTokenResource):
@@ -28,17 +28,16 @@ class AuthSubscriberTokenResource(SubscriberTokenResource):
 
 
 class SubscriberTokenAuth(TokenAuth):
-
     def check_auth(self, token, allowed_roles, resource, method):
         """Try to find auth token and if valid put subscriber id into ``g.user``."""
         data = app.data.mongo.find_one(TOKEN_RESOURCE, req=None, _id=token)
         if not data:
             return False
         now = utcnow()
-        if data.get('expiry') < now:
-            app.data.mongo.remove(TOKEN_RESOURCE, {'_id': token})
+        if data.get("expiry") < now:
+            app.data.mongo.remove(TOKEN_RESOURCE, {"_id": token})
             return False
-        g.user = str(data.get('subscriber'))
+        g.user = str(data.get("subscriber"))
         return g.user
 
 

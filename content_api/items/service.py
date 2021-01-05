@@ -30,7 +30,7 @@ from eve.utils import ParsedRequest, date_to_str
 from superdesk import get_resource_service
 
 
-logger = logging.getLogger('superdesk')
+logger = logging.getLogger("superdesk")
 
 
 class ItemsService(BaseService):
@@ -42,21 +42,37 @@ class ItemsService(BaseService):
     """
 
     allowed_params = {
-        'start_date', 'end_date',
-        'include_fields', 'exclude_fields',
-        'max_results', 'page', 'version', 'where',
-        'q', 'default_operator', 'filter',
-        'service', 'subject', 'genre', 'urgency',
-        'priority', 'type', 'item_source', 'sort'
+        "start_date",
+        "end_date",
+        "include_fields",
+        "exclude_fields",
+        "max_results",
+        "page",
+        "version",
+        "where",
+        "q",
+        "default_operator",
+        "filter",
+        "service",
+        "subject",
+        "genre",
+        "urgency",
+        "priority",
+        "type",
+        "item_source",
+        "sort",
     }
 
-    default_sort = ItemsResource.datasource.get('default_sort', [('versioncreated', -1)])
+    default_sort = ItemsResource.datasource.get("default_sort", [("versioncreated", -1)])
 
     excluded_fields_from_response: Set[str] = {
-        '_etag', '_created',
-        '_updated', 'subscribers',
-        '_current_version', '_latest_version',
-        'ancestors'
+        "_etag",
+        "_created",
+        "_updated",
+        "subscribers",
+        "_current_version",
+        "_latest_version",
+        "ancestors",
     }
 
     def find_one(self, req, **lookup):
@@ -72,16 +88,15 @@ class ItemsService(BaseService):
         if req is None:
             req = ParsedRequest()
 
-        allowed_params = {'include_fields', 'exclude_fields', 'version'}
-        self._check_for_unknown_params(
-            req, whitelist=allowed_params, allow_filtering=False)
+        allowed_params = {"include_fields", "exclude_fields", "version"}
+        self._check_for_unknown_params(req, whitelist=allowed_params, allow_filtering=False)
 
         self._set_fields_filter(req)  # Eve's "projection"
 
         # if subscribers is not allowed it is an external API request that should be filtered by the user
         if self._is_internal_api():
             # in case there is no subscriber set by auth return nothing
-            lookup['subscribers'] = g.get('user')
+            lookup["subscribers"] = g.get("user")
 
         return super().find_one(req, **lookup)
 
@@ -98,7 +113,7 @@ class ItemsService(BaseService):
         """
         internal_req = ParsedRequest() if req is None else deepcopy(req)
         internal_req.args = MultiDict()
-        orig_request_params = getattr(req, 'args', MultiDict())
+        orig_request_params = getattr(req, "args", MultiDict())
 
         self._check_for_unknown_params(req, whitelist=self.allowed_params)
         self._set_search_field(internal_req.args, orig_request_params)
@@ -107,28 +122,28 @@ class ItemsService(BaseService):
         self._set_filter_for_arguments(internal_req, orig_request_params)
 
         # projections
-        internal_req.args['exclude_fields'] = orig_request_params.get('exclude_fields')
-        internal_req.args['include_fields'] = orig_request_params.get('include_fields')
+        internal_req.args["exclude_fields"] = orig_request_params.get("exclude_fields")
+        internal_req.args["include_fields"] = orig_request_params.get("include_fields")
         self._set_fields_filter(internal_req)  # Eve's "projection"
 
         # if subscribers is not allowed it is an external API request that should be filtered by the user
         if self._is_internal_api():
             # in case there is no subscriber set by auth return nothing
-            lookup['subscribers'] = g.get('user')
+            lookup["subscribers"] = g.get("user")
 
         # apply default sorting if it was not provided explicitly in query.
         # eve-elastic applies default sorting only if filtering was not provided in query
         # https://github.com/petrjasek/eve-elastic/blob/master/eve_elastic/elastic.py#L455
         self._set_default_sort(internal_req)
 
-        if 'aggregations' in self.allowed_params:
-            internal_req.args['aggregations'] = orig_request_params.get('aggregations', 0)
+        if "aggregations" in self.allowed_params:
+            internal_req.args["aggregations"] = orig_request_params.get("aggregations", 0)
 
         try:
             res = super().get(internal_req, lookup)
             return res
         except InvalidSearchString:
-            raise BadParameterValueError('invalid search text')
+            raise BadParameterValueError("invalid search text")
 
     def on_fetched_item(self, document):
         """Event handler when a single item is retrieved from database.
@@ -152,14 +167,13 @@ class ItemsService(BaseService):
         :param dict result: dictionary contaning the list of MongoDB documents
             (the fetched items) and some metadata, e.g. pagination info
         """
-        for document in result['_items']:
+        for document in result["_items"]:
             self._process_fetched_object(document)
 
-        if '_links' in result:  # might not be present if HATEOAS disabled
+        if "_links" in result:  # might not be present if HATEOAS disabled
             url_parts = urlparse(request.url)
-            result['_links']['self']['href'] = '{}?{}'.format(
-                url_parts.path[1:],  # relative path, remove opening slash
-                url_parts.query
+            result["_links"]["self"]["href"] = "{}?{}".format(
+                url_parts.path[1:], url_parts.query  # relative path, remove opening slash
             )
 
     def on_deleted(self, document):
@@ -169,7 +183,7 @@ class ItemsService(BaseService):
 
         :param dict document: Item that has been deleted
         """
-        get_resource_service('items_versions').on_item_deleted(document)
+        get_resource_service("items_versions").on_item_deleted(document)
 
     def get_expired_items(self, expiry_datetime=None, expiry_days=None, max_results=None, include_children=True):
         """Get the expired items.
@@ -187,25 +201,25 @@ class ItemsService(BaseService):
             expiry_datetime = utcnow()
 
         if expiry_days is None:
-            expiry_days = app.settings['CONTENT_API_EXPIRY_DAYS']
+            expiry_days = app.settings["CONTENT_API_EXPIRY_DAYS"]
 
         if max_results is None:
-            max_results = app.settings['MAX_EXPIRY_QUERY_LIMIT']
+            max_results = app.settings["MAX_EXPIRY_QUERY_LIMIT"]
 
         last_id = None
         expire_at = date_to_str(expiry_datetime - timedelta(days=expiry_days))
 
         while True:
-            query = {'$and': [{'_updated': {'$lte': expire_at}}]}
+            query = {"$and": [{"_updated": {"$lte": expire_at}}]}
 
             if last_id is not None:
-                query['$and'].append({'_id': {'$gt': last_id}})
+                query["$and"].append({"_id": {"$gt": last_id}})
 
             if not include_children:
-                query['$and'].append({'ancestors': {'$exists': False}})
+                query["$and"].append({"ancestors": {"$exists": False}})
 
             req = ParsedRequest()
-            req.sort = '_id'
+            req.sort = "_id"
             req.where = json.dumps(query)
             req.max_results = max_results
 
@@ -214,7 +228,7 @@ class ItemsService(BaseService):
             if not items:
                 break
 
-            last_id = items[-1]['_id']
+            last_id = items[-1]["_id"]
             yield items
 
     def _is_internal_api(self):
@@ -222,7 +236,7 @@ class ItemsService(BaseService):
 
         :return bool:
         """
-        return self.datasource == 'items' or self.datasource == 'packages'
+        return self.datasource == "items" or self.datasource == "packages"
 
     def _process_fetched_object(self, document):
         """Does some processing on the raw document fetched from database.
@@ -234,67 +248,64 @@ class ItemsService(BaseService):
 
         :param dict document: MongoDB document to process
         """
-        document['uri'] = self._get_uri(document)
+        document["uri"] = self._get_uri(document)
 
-        _id = document.pop('_id')
+        _id = document.pop("_id")
 
         for field_name in self.excluded_fields_from_response:
             document.pop(field_name, None)
 
         self._process_item_renditions(document)
         self._process_item_associations(document)
-        get_resource_service('api_audit').audit_item(document, _id)
+        get_resource_service("api_audit").audit_item(document, _id)
 
     def _process_item_renditions(self, item):
         hrefs = {}
-        if item.get('renditions'):
-            for _k, v in item['renditions'].items():
-                if 'media' in v:
-                    href = v.get('href')
-                    media = v.pop('media')
-                    v['href'] = app.media.url_for_media(media, v.get('mimetype'))
-                    hrefs[href] = v['href']
+        if item.get("renditions"):
+            for _k, v in item["renditions"].items():
+                if "media" in v:
+                    href = v.get("href")
+                    media = v.pop("media")
+                    v["href"] = app.media.url_for_media(media, v.get("mimetype"))
+                    hrefs[href] = v["href"]
         return hrefs
 
     def _process_item_associations(self, item):
         hrefs = {}
         allowed_items = {}
-        if item.get('associations'):
-            for _k, v in item.get('associations', {}).items():
+        if item.get("associations"):
+            for _k, v in item.get("associations", {}).items():
                 if not v:
                     continue
                 # only allow subscribers
-                if (g.get('subscriber') or g.get('user')) in v.get('subscribers', []):
+                if (g.get("subscriber") or g.get("user")) in v.get("subscribers", []):
                     hrefs.update(self._process_item_renditions(v))
-                    v.pop('subscribers', None)
+                    v.pop("subscribers", None)
                     allowed_items[_k] = v
 
-        item['associations'] = allowed_items
+        item["associations"] = allowed_items
 
-        if item.get('body_html'):
+        if item.get("body_html"):
             for k, v in hrefs.items():
-                item['body_html'] = item['body_html'].replace(k, v)
+                item["body_html"] = item["body_html"].replace(k, v)
 
     def _get_uri(self, document):
         """Return the given document's `uri`.
 
         :param dict document: MongoDB document fetched from database
         """
-        if document.get('type') == 'composite':
-            endpoint_name = 'packages'
+        if document.get("type") == "composite":
+            endpoint_name = "packages"
         else:
-            endpoint_name = 'items'
+            endpoint_name = "items"
 
-        resource_url = '{api_url}/{endpoint}/'.format(
-            api_url=app.config['CONTENTAPI_URL'],
-            endpoint=app.config['URLS'][endpoint_name]
+        resource_url = "{api_url}/{endpoint}/".format(
+            api_url=app.config["CONTENTAPI_URL"], endpoint=app.config["URLS"][endpoint_name]
         )
 
-        return urljoin(resource_url, quote(document.get('_id', document.get('guid'))))
+        return urljoin(resource_url, quote(document.get("_id", document.get("guid"))))
 
-    def _check_for_unknown_params(
-        self, request, whitelist, allow_filtering=True
-    ):
+    def _check_for_unknown_params(self, request, whitelist, allow_filtering=True):
         """Check if the request contains only allowed parameters.
 
         :param req: object representing the HTTP request
@@ -309,27 +320,24 @@ class ItemsService(BaseService):
             * if the request contains more than one value for any of the
               parameters
         """
-        if not request or not getattr(request, 'args'):
+        if not request or not getattr(request, "args"):
             return
         request_params = request.args or MultiDict()
 
         if not allow_filtering:
-            err_msg = ("Filtering{} is not supported when retrieving a "
-                       "single object (the \"{param}\" parameter)")
+            err_msg = "Filtering{} is not supported when retrieving a " 'single object (the "{param}" parameter)'
 
-            if 'start_date' in request_params.keys():
-                desc = err_msg.format(' by date range', param='start_date')
+            if "start_date" in request_params.keys():
+                desc = err_msg.format(" by date range", param="start_date")
                 raise UnexpectedParameterError(desc=desc)
 
-            if 'end_date' in request_params.keys():
-                desc = err_msg.format(' by date range', param='end_date')
+            if "end_date" in request_params.keys():
+                desc = err_msg.format(" by date range", param="end_date")
                 raise UnexpectedParameterError(desc=desc)
 
         for param_name in request_params.keys():
             if param_name not in whitelist:
-                raise UnexpectedParameterError(
-                    desc="Unexpected parameter ({})".format(param_name)
-                )
+                raise UnexpectedParameterError(desc="Unexpected parameter ({})".format(param_name))
 
             if len(request_params.getlist(param_name)) > 1:
                 desc = "Multiple values received for parameter ({})"
@@ -346,17 +354,20 @@ class ItemsService(BaseService):
         """
         # request argments and elasticsearch fields
         argument_fields = {
-            'service': 'service.code',
-            'subject': 'subject.code',
-            'urgency': 'urgency',
-            'priority': 'priority',
-            'genre': 'genre.code',
-            'item_source': 'source'
+            "service": "service.code",
+            "subject": "subject.code",
+            "urgency": "urgency",
+            "priority": "priority",
+            "genre": "genre.code",
+            "item_source": "source",
         }
 
         try:
-            filters = json.loads(orig_request_params.get('filter')) \
-                if orig_request_params and orig_request_params.get('filter') else []
+            filters = (
+                json.loads(orig_request_params.get("filter"))
+                if orig_request_params and orig_request_params.get("filter")
+                else []
+            )
         except Exception:
             raise BadParameterValueError("Bad parameter value for Parameter (filter)")
 
@@ -376,7 +387,7 @@ class ItemsService(BaseService):
             if not isinstance(filter_value, list):
                 filter_value = [filter_value]
 
-            filters.append({'terms': {field_name: filter_value}})
+            filters.append({"terms": {field_name: filter_value}})
 
         # set the date range filter
         start_date, end_date = self._get_date_range(orig_request_params)
@@ -384,7 +395,7 @@ class ItemsService(BaseService):
         if date_filter:
             filters.append(date_filter)
         if filters:
-            req.args['filter'] = json.dumps({'bool': {'must': filters}})
+            req.args["filter"] = json.dumps({"bool": {"must": filters}})
 
     def _get_date_range(self, request_params):
         """Extract the start and end date limits from request parameters.
@@ -404,49 +415,32 @@ class ItemsService(BaseService):
             * if the start date is bigger than the end date
         """
         # check date limits' format...
-        err_msg = ("{} parameter must be a valid ISO 8601 date (YYYY-MM-DD) "
-                   "without the time part")
+        err_msg = "{} parameter must be a valid ISO 8601 date (YYYY-MM-DD) " "without the time part"
 
         try:
-            start_date = self._parse_iso_date(request_params.get('start_date'))
+            start_date = self._parse_iso_date(request_params.get("start_date"))
         except ValueError:
-            raise BadParameterValueError(
-                desc=err_msg.format('start_date')) from None
+            raise BadParameterValueError(desc=err_msg.format("start_date")) from None
 
         try:
-            end_date = self._parse_iso_date(request_params.get('end_date'))
+            end_date = self._parse_iso_date(request_params.get("end_date"))
         except ValueError:
-            raise BadParameterValueError(
-                desc=err_msg.format('end_date')) from None
+            raise BadParameterValueError(desc=err_msg.format("end_date")) from None
 
         # disallow dates in the future...
-        err_msg = (
-            "{} date ({}) must not be set in the future "
-            "(current server date (UTC): {})")
+        err_msg = "{} date ({}) must not be set in the future " "(current server date (UTC): {})"
         today = utcnow().date()
 
         if (start_date is not None) and (start_date > today):
-            raise BadParameterValueError(
-                desc=err_msg.format(
-                    'Start', start_date.isoformat(), today.isoformat()
-                )
-            )
+            raise BadParameterValueError(desc=err_msg.format("Start", start_date.isoformat(), today.isoformat()))
 
         if (end_date is not None) and (end_date > today):
-            raise BadParameterValueError(
-                desc=err_msg.format(
-                    'End', end_date.isoformat(), today.isoformat()
-                )
-            )
+            raise BadParameterValueError(desc=err_msg.format("End", end_date.isoformat(), today.isoformat()))
 
         # make sure that the date range limits make sense...
-        if (
-            (start_date is not None) and (end_date is not None) and
-            (start_date > end_date)
-        ):
+        if (start_date is not None) and (end_date is not None) and (start_date > end_date):
             # NOTE: we allow start_date == end_date (for specific date queries)
-            raise BadParameterValueError(
-                desc="Start date must not be greater than end date")
+            raise BadParameterValueError(desc="Start date must not be greater than end date")
 
         # set default date range values if missing...
         if self._is_internal_api():
@@ -478,10 +472,10 @@ class ItemsService(BaseService):
         if end_date is None:
             end_date = utcnow().date()
 
-        date_filter = {'range': {'versioncreated': {}}}
+        date_filter = {"range": {"versioncreated": {}}}
 
-        date_filter['range']['versioncreated']['gte'] = self._format_date(start_date)
-        date_filter['range']['versioncreated']['lte'] = self._format_date(end_date)
+        date_filter["range"]["versioncreated"]["gte"] = self._format_date(start_date)
+        date_filter["range"]["versioncreated"]["lte"] = self._format_date(end_date)
 
         return date_filter
 
@@ -490,12 +484,12 @@ class ItemsService(BaseService):
         try:
             elastic_filter = json.loads(original_filter_param) if original_filter_param else []
             if not isinstance(elastic_filter, list):
-                raise BadParameterValueError(desc='Invalid Parameter value for filter')
+                raise BadParameterValueError(desc="Invalid Parameter value for filter")
         except Exception:
-            raise BadParameterValueError(desc='Invalid Parameter value for filter')
+            raise BadParameterValueError(desc="Invalid Parameter value for filter")
 
         elastic_filter.append(filter)
-        req.args['filter'] = json.dumps(elastic_filter)
+        req.args["filter"] = json.dumps(elastic_filter)
 
     def _set_fields_filter(self, req):
         """Set content fields filter on the request object (the "projection")
@@ -521,7 +515,7 @@ class ItemsService(BaseService):
             internal_request_params = MultiDict()
 
         for key, value in original_request_params.items():
-            if key in {'q', 'default_operator', 'df', 'filter'}:
+            if key in {"q", "default_operator", "df", "filter"}:
                 internal_request_params[key] = value
 
     def _get_field_filter_params(self, request_params):
@@ -551,40 +545,38 @@ class ItemsService(BaseService):
                 required to be present in the response according to the NINJS
                 standard
         """
-        include_fields = request_params.get('include_fields')
-        exclude_fields = request_params.get('exclude_fields')
+        include_fields = request_params.get("include_fields")
+        exclude_fields = request_params.get("exclude_fields")
 
         # parse field filter parameters...
         strip_items = functools.partial(map, lambda s: s.strip())
         remove_empty = functools.partial(filter, None)
 
         if include_fields is not None:
-            include_fields = include_fields.split(',')
+            include_fields = include_fields.split(",")
             include_fields = set(remove_empty(strip_items(include_fields)))
 
         if exclude_fields is not None:
-            exclude_fields = exclude_fields.split(',')
+            exclude_fields = exclude_fields.split(",")
             exclude_fields = set(remove_empty(strip_items(exclude_fields)))
 
         # check for semantically incorrect field filter values...
         if (include_fields is not None) and (exclude_fields is not None):
-            err_msg = ('Cannot both include and exclude content fields '
-                       'at the same time.')
+            err_msg = "Cannot both include and exclude content fields " "at the same time."
             raise UnexpectedParameterError(desc=err_msg)
 
         if include_fields is not None:
-            err_msg = 'Unknown content field to include ({}).'
+            err_msg = "Unknown content field to include ({})."
             for field in include_fields:
                 if field not in ItemsResource.schema:
                     raise BadParameterValueError(desc=err_msg.format(field))
 
         if exclude_fields is not None:
-            if 'uri' in exclude_fields:
-                err_msg = ('Cannot exclude a content field required by the '
-                           'NINJS format (uri).')
+            if "uri" in exclude_fields:
+                err_msg = "Cannot exclude a content field required by the " "NINJS format (uri)."
                 raise BadParameterValueError(desc=err_msg)
 
-            err_msg = 'Unknown content field to exclude ({}).'
+            err_msg = "Unknown content field to exclude ({})."
             for field in exclude_fields:
                 if field not in ItemsResource.schema:
                     raise BadParameterValueError(desc=err_msg.format(field))
@@ -648,7 +640,7 @@ class ItemsService(BaseService):
         if date_str is None:
             return None
         else:
-            return datetime.strptime(date_str, '%Y-%m-%d').date()
+            return datetime.strptime(date_str, "%Y-%m-%d").date()
 
     @staticmethod
     def _format_date(date):

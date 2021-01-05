@@ -1,4 +1,3 @@
-
 import socket
 import ftplib
 
@@ -16,9 +15,9 @@ def ftp_connect(config):
 
     :param config: dict with `host`, `username`, `password`, `path`, `passive` and `use_ftp`
     """
-    if config.get('use_ftps', False):
+    if config.get("use_ftps", False):
         try:
-            ftp = ftplib.FTP_TLS(config.get('host'), timeout=app.config.get('FTP_TIMEOUT', 300))
+            ftp = ftplib.FTP_TLS(config.get("host"), timeout=app.config.get("FTP_TIMEOUT", 300))
         except socket.gaierror as e:
             raise IngestFtpError.ftpHostError(exception=e)
 
@@ -29,23 +28,23 @@ def ftp_connect(config):
             raise IngestFtpError.ftpAuthError(exception=ae)
     else:
         try:
-            ftp = ftplib.FTP(config.get('host'), timeout=app.config.get('FTP_TIMEOUT', 300))
+            ftp = ftplib.FTP(config.get("host"), timeout=app.config.get("FTP_TIMEOUT", 300))
         except socket.gaierror as e:
             raise IngestFtpError.ftpHostError(exception=e)
 
-    if config.get('username'):
+    if config.get("username"):
         try:
-            ftp.login(config.get('username'), config.get('password'))
+            ftp.login(config.get("username"), config.get("password"))
         except ftplib.error_perm as e:
             raise IngestFtpError.ftpAuthError(exception=e)
 
     # set encryption on data channel if able
-    if hasattr(ftp, 'prot_p'):
+    if hasattr(ftp, "prot_p"):
         ftp.prot_p()
 
-    if config.get('path'):
-        ftp.cwd(config.get('path', '').lstrip('/'))
-    if config.get('passive') is False:  # only set this when not active, it's passive by default
+    if config.get("path"):
+        ftp.cwd(config.get("path", "").lstrip("/"))
+    if config.get("passive") is False:  # only set this when not active, it's passive by default
         ftp.set_pasv(False)
     yield ftp
     ftp.close()

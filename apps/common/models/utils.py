@@ -17,7 +17,7 @@ def register_model(model):
 
     :param model: object The model object.
     """
-    assert isinstance(model, BaseModel), 'Invalid model %s' % model
+    assert isinstance(model, BaseModel), "Invalid model %s" % model
     app_models[model.name()] = model
 
 

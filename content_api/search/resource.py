@@ -19,22 +19,22 @@ class SearchResource(Resource):
     schema = schema
 
     datasource = {
-        'search_backend': 'elastic',
-        'source': 'items',
-        'elastic_filter': {"bool": {"must_not": {"term": {"type": "composite"}}}},
-        'default_sort': [('_updated', -1)],
-        'aggregations': {
-            'type': {'terms': {'field': 'type'}},
-            'category': {'terms': {'field': 'service.name', 'size': 100}},
-            'source': {'terms': {'field': 'source', 'size': 100}},
-            'urgency': {'terms': {'field': 'urgency'}},
-            'priority': {'terms': {'field': 'priority'}},
-            'genre': {'terms': {'field': 'genre.name', 'size': 100}},
-        }
+        "search_backend": "elastic",
+        "source": "items",
+        "elastic_filter": {"bool": {"must_not": {"term": {"type": "composite"}}}},
+        "default_sort": [("_updated", -1)],
+        "aggregations": {
+            "type": {"terms": {"field": "type"}},
+            "category": {"terms": {"field": "service.name", "size": 100}},
+            "source": {"terms": {"field": "source", "size": 100}},
+            "urgency": {"terms": {"field": "urgency"}},
+            "priority": {"terms": {"field": "priority"}},
+            "genre": {"terms": {"field": "genre.name", "size": 100}},
+        },
     }
 
-    item_methods = ['GET']
-    resource_methods = ['GET']
+    item_methods = ["GET"]
+    resource_methods = ["GET"]
     mongo_prefix = MONGO_PREFIX
     elastic_prefix = ELASTIC_PREFIX
-    privileges = {'GET': 'search_capi'}
+    privileges = {"GET": "search_capi"}

@@ -12,7 +12,7 @@ from . import unit_base
 from decimal import Decimal
 from flask_babel import lazy_gettext
 
-KILOMETER_SYMBOL = 'km'
+KILOMETER_SYMBOL = "km"
 
 
 def convert(miles, **kwargs):
@@ -22,21 +22,21 @@ def convert(miles, **kwargs):
     :return: Kilometers value in string
     """
     miles_to_km_rate = Decimal(1.852)
-    miles_list = miles.split('-')
+    miles_list = miles.split("-")
     kilometers = [unit_base.format_converted((Decimal(m) * miles_to_km_rate), precision=1) for m in miles_list]
-    return '-'.join(kilometers), KILOMETER_SYMBOL
+    return "-".join(kilometers), KILOMETER_SYMBOL
 
 
 def nautical_miles_to_metric(item, **kwargs):
     """Converts distance values from nautical miles to metric"""
 
-    regex = r'(\d+-?,?\.?\d*)((\s*)|(-))((nmi)|([nN]autical [mM]iles?))\b'
+    regex = r"(\d+-?,?\.?\d*)((\s*)|(-))((nmi)|([nN]autical [mM]iles?))\b"
     return unit_base.do_conversion(item, convert, unit_base.format_output, regex, match_index=0, value_index=1)
 
 
-name = 'nautical_miles_to_metric'
-label = lazy_gettext('Length nautical miles to kilometres')
+name = "nautical_miles_to_metric"
+label = lazy_gettext("Length nautical miles to kilometres")
 callback = nautical_miles_to_metric
-access_type = 'frontend'
-action_type = 'interactive'
-group = lazy_gettext('length')
+access_type = "frontend"
+action_type = "interactive"
+group = lazy_gettext("length")

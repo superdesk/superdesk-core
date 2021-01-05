@@ -59,12 +59,12 @@ def set_error_handlers(app):
 
     @app.errorhandler(403)
     def server_forbidden_handler(error):
-        return send_response(None, ({'code': 403, 'error': error.response}, None, None, 403))
+        return send_response(None, ({"code": 403, "error": error.response}, None, None, 403))
 
     @app.errorhandler(AssertionError)
     def assert_error_handler(error):
-        print('error', error)
-        return send_response(None, ({'code': 400, 'error': str(error) if str(error) else 'assert'}, None, None, 400))
+        print("error", error)
+        return send_response(None, ({"code": 400, "error": str(error) if str(error) else "assert"}, None, None, 400))
 
     @app.errorhandler(500)
     def server_error_handler(error):
@@ -74,17 +74,15 @@ def set_error_handlers(app):
 
 
 class SuperdeskEve(eve.Eve):
-
     def __getattr__(self, name):
         """Workaround for https://github.com/pyeve/eve/issues/1087"""
         if name in {"im_self", "im_func"}:
-            raise AttributeError("type object '%s' has no attribute '%s'" %
-                                 (self.__class__.__name__, name))
+            raise AttributeError("type object '%s' has no attribute '%s'" % (self.__class__.__name__, name))
         return super(SuperdeskEve, self).__getattr__(name)
 
     def init_indexes(self, ignore_duplicate_keys=False):
-        for resource, resource_config in self.config['DOMAIN'].items():
-            mongo_indexes = resource_config.get('mongo_indexes__init')
+        for resource, resource_config in self.config["DOMAIN"].items():
+            mongo_indexes = resource_config.get("mongo_indexes__init")
             if not mongo_indexes:
                 continue
 
@@ -97,7 +95,7 @@ class SuperdeskEve(eve.Eve):
                     index_options = {}
 
                 # index creation in background
-                index_options.setdefault('background', True)
+                index_options.setdefault("background", True)
 
                 try:
                     create_index(self, resource, name, list_of_keys, index_options)
@@ -123,10 +121,10 @@ def get_app(config=None, media_storage=None, config_object=None, init_elastic=No
 
     abs_path = SUPERDESK_PATH
     app_config = flask.Config(abs_path)
-    app_config.from_object('superdesk.default_settings')
-    app_config.setdefault('APP_ABSPATH', abs_path)
-    app_config.setdefault('DOMAIN', {})
-    app_config.setdefault('SOURCES', {})
+    app_config.from_object("superdesk.default_settings")
+    app_config.setdefault("APP_ABSPATH", abs_path)
+    app_config.setdefault("DOMAIN", {})
+    app_config.setdefault("SOURCES", {})
 
     if config_object:
         app_config.from_object(config_object)
@@ -146,32 +144,35 @@ def get_app(config=None, media_storage=None, config_object=None, init_elastic=No
         settings=app_config,
         json_encoder=SuperdeskJSONEncoder,
         validator=SuperdeskValidator,
-        template_folder=os.path.join(abs_path, 'templates'))
+        template_folder=os.path.join(abs_path, "templates"),
+    )
 
     app.notification_client = None
 
-    app.jinja_options = {'autoescape': False}
+    app.jinja_options = {"autoescape": False}
     app.json_encoder = SuperdeskJSONEncoder  # seems like eve param doesn't set it on flask
 
     # init client_config with default config
     app.client_config = {
-        'content_expiry_minutes': app.config.get('CONTENT_EXPIRY_MINUTES', 0),
-        'ingest_expiry_minutes': app.config.get('INGEST_EXPIRY_MINUTES', 0)
+        "content_expiry_minutes": app.config.get("CONTENT_EXPIRY_MINUTES", 0),
+        "ingest_expiry_minutes": app.config.get("INGEST_EXPIRY_MINUTES", 0),
     }
 
     superdesk.app = app
 
-    custom_loader = jinja2.ChoiceLoader([
-        jinja2.FileSystemLoader('templates'),
-        jinja2.FileSystemLoader(os.path.join(SUPERDESK_PATH, 'templates')),
-    ])
+    custom_loader = jinja2.ChoiceLoader(
+        [
+            jinja2.FileSystemLoader("templates"),
+            jinja2.FileSystemLoader(os.path.join(SUPERDESK_PATH, "templates")),
+        ]
+    )
 
     app.jinja_loader = custom_loader
     app.mail = Mail(app)
     app.sentry = SuperdeskSentry(app)
 
     # setup babel
-    app.config.setdefault('BABEL_TRANSLATION_DIRECTORIES', os.path.join(SUPERDESK_PATH, 'translations'))
+    app.config.setdefault("BABEL_TRANSLATION_DIRECTORIES", os.path.join(SUPERDESK_PATH, "translations"))
     app.babel_tzinfo = None
     app.babel_locale = None
     app.babel_translations = None
@@ -179,28 +180,26 @@ def get_app(config=None, media_storage=None, config_object=None, init_elastic=No
 
     @babel.localeselector
     def get_locale():
-        user = getattr(g, 'user', {})
-        user_language = user.get('language', app.config.get('DEFAULT_LANGUAGE', 'en'))
+        user = getattr(g, "user", {})
+        user_language = user.get("language", app.config.get("DEFAULT_LANGUAGE", "en"))
         try:
             # Attempt to load the local using Babel.parse_local
-            parse_locale(user_language.replace('-', '_'))
+            parse_locale(user_language.replace("-", "_"))
         except ValueError:
             # If Babel fails to recognise the locale, then use the default language
-            user_language = app.config.get('DEFAULT_LANGUAGE', 'en')
+            user_language = app.config.get("DEFAULT_LANGUAGE", "en")
 
-        return user_language.replace('-', '_')
+        return user_language.replace("-", "_")
 
     set_error_handlers(app)
 
     @app.after_request
     def after_request(response):
         # fixing previous media prefixes if defined
-        if app.config['MEDIA_PREFIXES_TO_FIX'] and app.config['MEDIA_PREFIX']:
-            current_prefix = app.config['MEDIA_PREFIX'].rstrip('/').encode()
-            for prefix in app.config['MEDIA_PREFIXES_TO_FIX']:
-                response.data = response.data.replace(
-                    prefix.rstrip('/').encode(), current_prefix
-                )
+        if app.config["MEDIA_PREFIXES_TO_FIX"] and app.config["MEDIA_PREFIX"]:
+            current_prefix = app.config["MEDIA_PREFIX"].rstrip("/").encode()
+            for prefix in app.config["MEDIA_PREFIXES_TO_FIX"]:
+                response.data = response.data.replace(prefix.rstrip("/").encode(), current_prefix)
         return response
 
     init_celery(app)
@@ -211,13 +210,13 @@ def get_app(config=None, media_storage=None, config_object=None, init_elastic=No
             return
         installed.add(module_name)
         app_module = importlib.import_module(module_name)
-        if hasattr(app_module, 'init_app'):
+        if hasattr(app_module, "init_app"):
             app_module.init_app(app)
 
-    for module_name in app.config.get('CORE_APPS', []):
+    for module_name in app.config.get("CORE_APPS", []):
         install_app(module_name)
 
-    for module_name in app.config.get('INSTALLED_APPS', []):
+    for module_name in app.config.get("INSTALLED_APPS", []):
         install_app(module_name)
 
     for resource in superdesk.DOMAIN:
@@ -226,6 +225,6 @@ def get_app(config=None, media_storage=None, config_object=None, init_elastic=No
     for name, jinja_filter in superdesk.JINJA_FILTERS.items():
         app.jinja_env.filters[name] = jinja_filter
 
-    configure_logging(app.config['LOG_CONFIG_FILE'])
+    configure_logging(app.config["LOG_CONFIG_FILE"])
 
     return app

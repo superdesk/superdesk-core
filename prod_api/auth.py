@@ -24,33 +24,19 @@ class JWTAuth(TokenAuth):
         :param method: HTTP method being executed (POST, GET, etc.)
         """
 
-        if not app.config.get('AUTH_SERVER_SHARED_SECRET'):
+        if not app.config.get("AUTH_SERVER_SHARED_SECRET"):
             return False
 
         # decode jwt
         try:
-            decoded_jwt = jwt.decode(
-                token,
-                key=app.config.get('AUTH_SERVER_SHARED_SECRET')
-            )
+            decoded_jwt = jwt.decode(token, key=app.config.get("AUTH_SERVER_SHARED_SECRET"))
             decoded_jwt.validate_exp(now=time(), leeway=0)
         except (BadSignatureError, ExpiredTokenError, DecodeError):
             return False
 
         # authorization
         resource_privileges = get_resource_privileges(resource).get(method, None)
-        if resource_privileges not in decoded_jwt.get('scope', []):
-            abort(
-                make_response(
-                    jsonify({
-                        "_status": "ERR",
-                        "_error": {
-                            "code": 403,
-                            "message": "Invalid scope"
-                        }
-                    }),
-                    403
-                )
-            )
+        if resource_privileges not in decoded_jwt.get("scope", []):
+            abort(make_response(jsonify({"_status": "ERR", "_error": {"code": 403, "message": "Invalid scope"}}), 403))
 
         return True

@@ -14,6 +14,6 @@ import superdesk
 
 
 def init_app(app):
-    endpoint_name = 'users'
+    endpoint_name = "users"
     service = UsersService(endpoint_name, backend=superdesk.get_backend())
     UsersResource(endpoint_name, app=app, service=service)

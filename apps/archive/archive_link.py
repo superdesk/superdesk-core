@@ -27,51 +27,50 @@ logger = logging.getLogger(__name__)
 
 
 class ArchiveLinkResource(Resource):
-    endpoint_name = 'archive_link'
+    endpoint_name = "archive_link"
     resource_title = endpoint_name
 
     schema = {
-        'link_id': Resource.rel('archive', embeddable=False, type='string', nullable=True, required=False),
-        'desk': Resource.rel('desks', embeddable=False, nullable=True, required=False)
+        "link_id": Resource.rel("archive", embeddable=False, type="string", nullable=True, required=False),
+        "desk": Resource.rel("desks", embeddable=False, nullable=True, required=False),
     }
 
-    url = 'archive/<{0}:target_id>/link'.format(item_url)
+    url = "archive/<{0}:target_id>/link".format(item_url)
 
-    resource_methods = ['DELETE']
+    resource_methods = ["DELETE"]
     item_methods = []
 
 
 class ArchiveLinkService(Service):
-
     def delete(self, lookup):
-        target_id = request.view_args['target_id']
+        target_id = request.view_args["target_id"]
         archive_service = get_resource_service(ARCHIVE)
         target = archive_service.find_one(req=None, _id=target_id)
         updates = {}
 
-        if target.get('rewrite_of'):
+        if target.get("rewrite_of"):
             # remove the rewrite info
             ArchiveSpikeService().update_rewrite(target)
 
-        if not target.get('rewrite_of'):
+        if not target.get("rewrite_of"):
             # there is nothing to do
             raise SuperdeskApiError.badRequestError(_("Only updates can be unlinked!"))
 
-        if target.get('rewrite_of'):
-            updates['rewrite_of'] = None
+        if target.get("rewrite_of"):
+            updates["rewrite_of"] = None
 
-        if target.get('anpa_take_key'):
-            updates['anpa_take_key'] = None
+        if target.get("anpa_take_key"):
+            updates["anpa_take_key"] = None
 
-        if target.get('rewrite_sequence'):
-            updates['rewrite_sequence'] = None
+        if target.get("rewrite_sequence"):
+            updates["rewrite_sequence"] = None
 
-        if target.get('sequence'):
-            updates['sequence'] = None
+        if target.get("sequence"):
+            updates["sequence"] = None
 
-        updates['event_id'] = generate_guid(type=GUID_TAG)
+        updates["event_id"] = generate_guid(type=GUID_TAG)
 
         archive_service.system_update(target_id, updates, target)
         user = get_user(required=True)
-        push_notification('item:unlink', item=target_id, user=str(user.get(config.ID_FIELD)))
+        push_notification("item:unlink", item=target_id, user=str(user.get(config.ID_FIELD)))
         app.on_archive_item_updated(updates, target, ITEM_UNLINK)

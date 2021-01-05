@@ -14,38 +14,40 @@ from httmock import urlmatch, HTTMock
 from urllib.parse import parse_qs
 
 
-@urlmatch(scheme='https', netloc='commerce.reuters.com', path='/rmd/rest/xml/login')
+@urlmatch(scheme="https", netloc="commerce.reuters.com", path="/rmd/rest/xml/login")
 def login_request(url, request):
-    return {'status_code': 200,
-            'content': '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><authToken>fake_token</authToken>'}
+    return {
+        "status_code": 200,
+        "content": '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><authToken>fake_token</authToken>',
+    }
 
 
-@urlmatch(scheme='http', netloc='rmb.reuters.com', path='/rmd/rest/xml/item')
+@urlmatch(scheme="http", netloc="rmb.reuters.com", path="/rmd/rest/xml/item")
 def item_request(url, request):
     try:
         params = parse_qs(url.query, keep_blank_values=True)
-        fixtures = os.path.join(os.path.abspath(os.path.dirname(__file__)), '../../tests/io/fixtures')
-        if 'channel' in params:
-            file = os.path.join(fixtures, params['channel'][0])
+        fixtures = os.path.join(os.path.abspath(os.path.dirname(__file__)), "../../tests/io/fixtures")
+        if "channel" in params:
+            file = os.path.join(fixtures, params["channel"][0])
         else:
-            file = os.path.join(fixtures, params['id'][0].replace(':', '_version_'))
+            file = os.path.join(fixtures, params["id"][0].replace(":", "_version_"))
         with open(file, "r") as stored_response:
             content = stored_response.read()
-            return {'status_code': 200, 'content': content}
+            return {"status_code": 200, "content": content}
     except Exception:
-        return {'status_code': 404}
+        return {"status_code": 404}
 
 
-@urlmatch(scheme='http', netloc='content.reuters.com')
+@urlmatch(scheme="http", netloc="content.reuters.com")
 def content_request(url, request):
     try:
-        fixtures = os.path.join(os.path.abspath(os.path.dirname(__file__)), '../../tests/io/fixtures')
+        fixtures = os.path.join(os.path.abspath(os.path.dirname(__file__)), "../../tests/io/fixtures")
         file = os.path.join(fixtures, basename(url.path))
-        with open(file, 'rb') as stored_response:
+        with open(file, "rb") as stored_response:
             content = stored_response.read()
-            return {'status_code': 200, 'content': content}
+            return {"status_code": 200, "content": content}
     except Exception:
-        return {'status_code': 404}
+        return {"status_code": 404}
 
 
 def setup_reuters_mock(context):
@@ -54,5 +56,5 @@ def setup_reuters_mock(context):
 
 
 def teardown_reuters_mock(context):
-    if hasattr(context, 'mock'):
+    if hasattr(context, "mock"):
         context.mock.__exit__(None, None, None)

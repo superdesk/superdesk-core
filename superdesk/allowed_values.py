@@ -17,28 +17,29 @@ from flask import current_app as app
 class AllowedValuesResource(superdesk.Resource):
     """Resource allowing apps to set allowed values which can be used by client to filter certain options."""
 
-    resource_methods = ['GET']
+    resource_methods = ["GET"]
     item_methods = []
     schema = {
-        'items': {
-            'type': 'list',
+        "items": {
+            "type": "list",
         },
     }
 
 
 class AllowedValuesService(superdesk.Service):
-
     def get(self, req, lookup):
         allowed = []
-        for resource, config in app.config.get('DOMAIN', {}).items():
-            for field, field_config in config.get('schema', {}).items():
-                if field_config.get('allowed'):
-                    allowed.append({
-                        '_id': '{}.{}'.format(resource, field),
-                        'items': [str(item) for item in field_config['allowed']],
-                    })
+        for resource, config in app.config.get("DOMAIN", {}).items():
+            for field, field_config in config.get("schema", {}).items():
+                if field_config.get("allowed"):
+                    allowed.append(
+                        {
+                            "_id": "{}.{}".format(resource, field),
+                            "items": [str(item) for item in field_config["allowed"]],
+                        }
+                    )
         return ListCursor(allowed)
 
 
 def init_app(app):
-    AllowedValuesResource('allowed_values', app, AllowedValuesService())
+    AllowedValuesResource("allowed_values", app, AllowedValuesService())

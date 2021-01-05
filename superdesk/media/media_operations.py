@@ -49,7 +49,7 @@ def fix_content_type(content_type, content):
 
     It will try to get it from content if it starts with application or is unknown.
     """
-    if not content_type or 'application/' in content_type:
+    if not content_type or "application/" in content_type:
         content_type = magic.from_buffer(content.getvalue(), mime=True)
         content.seek(0)
     return str(content_type)
@@ -67,23 +67,23 @@ def download_file_from_url(url, request_kwargs=None):
         request_kwargs = {}
 
     try:
-        rv = requests.get(url, headers={'User-Agent': 'Superdesk-1.0'}, timeout=(5, 25), **request_kwargs)
+        rv = requests.get(url, headers={"User-Agent": "Superdesk-1.0"}, timeout=(5, 25), **request_kwargs)
     except requests.exceptions.MissingSchema:  # any route will do here, we only need host
-        rv = requests.get(urljoin(url_for('static', filename='x', _external=True), url), timeout=15, **request_kwargs)
+        rv = requests.get(urljoin(url_for("static", filename="x", _external=True), url), timeout=15, **request_kwargs)
     if rv.status_code not in (200, 201):
-        raise SuperdeskApiError.internalError('Failed to retrieve file from URL: %s' % url)
+        raise SuperdeskApiError.internalError("Failed to retrieve file from URL: %s" % url)
     content = BytesIO(rv.content)
-    content_type = rv.headers.get('content-type', 'image/jpeg').split(';')[0]
+    content_type = rv.headers.get("content-type", "image/jpeg").split(";")[0]
     content_type = fix_content_type(content_type, content)
-    ext = str(content_type).split('/')[1]
+    ext = str(content_type).split("/")[1]
     name = str(ObjectId()) + ext
     return content, name, content_type
 
 
 def download_file_from_encoded_str(encoded_str):
-    content = encoded_str.split(';base64,')
-    mime = content[0].split(':')[1]
-    ext = content[0].split('/')[1]
+    content = encoded_str.split(";base64,")
+    mime = content[0].split(":")[1]
+    ext = content[0].split("/")[1]
     name = str(ObjectId()) + ext
     content = base64.b64decode(content[1])
     return BytesIO(content), name, mime
@@ -93,15 +93,15 @@ def process_file_from_stream(content, content_type=None):
     content_type = content_type or content.content_type
     content = BytesIO(content.read())
     content_type = fix_content_type(content_type, content)
-    file_type, ext = content_type.split('/')
+    file_type, ext = content_type.split("/")
     try:
         metadata = process_file(content, file_type)
     except OSError:  # error from PIL when image is supposed to be an image but is not.
-        raise SuperdeskApiError.internalError('Failed to process file')
+        raise SuperdeskApiError.internalError("Failed to process file")
     file_name = get_file_name(content)
     content.seek(0)
     metadata = encode_metadata(metadata)
-    metadata.update({'length': json.dumps(len(content.getvalue()))})
+    metadata.update({"length": json.dumps(len(content.getvalue()))})
     return file_name, content_type, metadata
 
 
@@ -117,7 +117,7 @@ def decode_val(string_val):
     """Format dates that elastic will try to convert automatically."""
     val = json.loads(string_val)
     try:
-        arrow.get(val, 'YYYY-MM-DD')  # test if it will get matched by elastic
+        arrow.get(val, "YYYY-MM-DD")  # test if it will get matched by elastic
         return str(arrow.get(val))
     except (Exception):
         return val
@@ -130,9 +130,9 @@ def process_file(content, type):
     :param str type: type of media file
     :return: dict metadata related to media file.
     """
-    if type == 'image':
+    if type == "image":
         return process_image(content)
-    if type in ('audio', 'video'):
+    if type in ("audio", "video"):
         return process_video(content)
     return {}
 
@@ -166,9 +166,15 @@ def _get_cropping_data(doc):
 
     :param doc: crop dict
     """
-    if all([doc.get('CropTop', None) is not None, doc.get('CropLeft', None) is not None,
-            doc.get('CropRight', None) is not None, doc.get('CropBottom', None) is not None]):
-        return (int(doc['CropLeft']), int(doc['CropTop']), int(doc['CropRight']), int(doc['CropBottom']))
+    if all(
+        [
+            doc.get("CropTop", None) is not None,
+            doc.get("CropLeft", None) is not None,
+            doc.get("CropRight", None) is not None,
+            doc.get("CropBottom", None) is not None,
+        ]
+    ):
+        return (int(doc["CropLeft"]), int(doc["CropTop"]), int(doc["CropRight"]), int(doc["CropBottom"]))
 
 
 def crop_image(content, file_name, cropping_data, exact_size=None, image_format=None):
@@ -182,22 +188,22 @@ def crop_image(content, file_name, cropping_data, exact_size=None, image_format=
     if not isinstance(cropping_data, tuple):
         cropping_data = _get_cropping_data(cropping_data)
     if cropping_data:
-        logger.debug('Opened image {} from stream, going to crop it'.format(file_name))
+        logger.debug("Opened image {} from stream, going to crop it".format(file_name))
         content.seek(0)
         img = Image.open(content)
         cropped = img.crop(cropping_data)
-        if exact_size and 'width' in exact_size and 'height' in exact_size:
-            cropped = cropped.resize((int(exact_size['width']), int(exact_size['height'])), Image.ANTIALIAS)
-        logger.debug('Cropped image {} from stream, going to save it'.format(file_name))
+        if exact_size and "width" in exact_size and "height" in exact_size:
+            cropped = cropped.resize((int(exact_size["width"]), int(exact_size["height"])), Image.ANTIALIAS)
+        logger.debug("Cropped image {} from stream, going to save it".format(file_name))
         try:
             out = BytesIO()
             cropped.save(out, image_format or img.format)
             out.seek(0)
-            setattr(out, 'width', cropped.size[0])
-            setattr(out, 'height', cropped.size[1])
+            setattr(out, "width", cropped.size[0])
+            setattr(out, "height", cropped.size[1])
             return True, out
         except Exception as io:
-            logger.exception('Failed to generate crop for filename: {}. Crop: {}'.format(file_name, cropping_data))
+            logger.exception("Failed to generate crop for filename: {}. Crop: {}".format(file_name, cropping_data))
             return False, io
     return False, content
 
@@ -209,25 +215,28 @@ def get_watermark(image):
     :return: watermarked image
     """
     image = image.copy()
-    if not app.config.get('WATERMARK_IMAGE'):
+    if not app.config.get("WATERMARK_IMAGE"):
         return image
-    if image.mode != 'RGBA':
-        image = image.convert('RGBA')
-    path = os.path.join(app.config['ABS_PATH'], app.config['WATERMARK_IMAGE'])
+    if image.mode != "RGBA":
+        image = image.convert("RGBA")
+    path = os.path.join(app.config["ABS_PATH"], app.config["WATERMARK_IMAGE"])
     if not os.path.isfile(path):
-        logger.warning('No water mark file found at : {}'.format(path))
+        logger.warning("No water mark file found at : {}".format(path))
         return image
-    with open(path, mode='rb') as watermark_binary:
+    with open(path, mode="rb") as watermark_binary:
         watermark_image = Image.open(watermark_binary)
         set_opacity(watermark_image, 0.3)
-        watermark_layer = Image.new('RGBA', image.size)
-        watermark_layer.paste(watermark_image, (
-            image.size[0] - watermark_image.size[0],
-            int((image.size[1] - watermark_image.size[1]) * 0.66),
-        ))
+        watermark_layer = Image.new("RGBA", image.size)
+        watermark_layer.paste(
+            watermark_image,
+            (
+                image.size[0] - watermark_image.size[0],
+                int((image.size[1] - watermark_image.size[1]) * 0.66),
+            ),
+        )
 
     watermark = Image.alpha_composite(image, watermark_layer)
-    return watermark.convert('RGB')
+    return watermark.convert("RGB")
 
 
 def set_opacity(image, opacity=1):
@@ -238,10 +247,10 @@ def set_opacity(image, opacity=1):
 
 def guess_media_extension(content_type):
     ext = str(guess_extension(content_type))
-    if ext in ['.jpe', '.jpeg']:
-        return '.jpg'
-    if 'mp3' in content_type or 'audio/mpeg' in content_type:
-        return '.mp3'
-    if 'flac' in content_type:
-        return '.flac'
-    return ext if ext != 'None' else ''
+    if ext in [".jpe", ".jpeg"]:
+        return ".jpg"
+    if "mp3" in content_type or "audio/mpeg" in content_type:
+        return ".mp3"
+    if "flac" in content_type:
+        return ".flac"
+    return ext if ext != "None" else ""

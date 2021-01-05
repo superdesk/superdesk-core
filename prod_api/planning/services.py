@@ -12,47 +12,43 @@ from ..service import ProdApiService
 
 
 class PlanningService(ProdApiService):
-    excluded_fields = \
-        {
-            '_id',
-            'item_class',
-            'flags',
-            'lock_user',
-            'lock_time',
-            'lock_session',
-        } | ProdApiService.excluded_fields
+    excluded_fields = {
+        "_id",
+        "item_class",
+        "flags",
+        "lock_user",
+        "lock_time",
+        "lock_session",
+    } | ProdApiService.excluded_fields
 
 
 class EventsService(ProdApiService):
-    excluded_fields = \
-        {
-            '_id',
-            'lock_action',
-            'lock_user',
-            'lock_time',
-            'lock_session',
-        } | ProdApiService.excluded_fields
+    excluded_fields = {
+        "_id",
+        "lock_action",
+        "lock_user",
+        "lock_time",
+        "lock_session",
+    } | ProdApiService.excluded_fields
 
 
 class AssignmentsService(ProdApiService):
-    excluded_fields = \
-        {
-            'lock_action',
-            'lock_user',
-            'lock_time',
-        } | ProdApiService.excluded_fields
+    excluded_fields = {
+        "lock_action",
+        "lock_user",
+        "lock_time",
+    } | ProdApiService.excluded_fields
 
 
 class EventsHistoryService(ProdApiService):
-    excluded_fields = \
-        {
-            'update._etag',
-            'update._links',
-            'update._status',
-            'update._updated',
-            'update._created',
-            'update._id',
-        } | ProdApiService.excluded_fields
+    excluded_fields = {
+        "update._etag",
+        "update._links",
+        "update._status",
+        "update._updated",
+        "update._created",
+        "update._id",
+    } | ProdApiService.excluded_fields
 
 
 class EventsFilesService(ProdApiService):

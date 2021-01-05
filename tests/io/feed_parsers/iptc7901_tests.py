@@ -17,7 +17,7 @@ from superdesk.tests import TestCase
 
 def fixture(filename):
     dirname = os.path.dirname(os.path.realpath(__file__))
-    return os.path.normpath(os.path.join(dirname, '../fixtures', filename))
+    return os.path.normpath(os.path.join(dirname, "../fixtures", filename))
 
 
 class IptcTestCase(TestCase):
@@ -25,28 +25,28 @@ class IptcTestCase(TestCase):
     parser = IPTC7901FeedParser()
 
     def open(self, filename):
-        provider = {'name': 'Test'}
+        provider = {"name": "Test"}
         return self.parser.parse(fixture(filename), provider)
 
     def test_open_iptc7901_file(self):
         with self.app.app_context():
-            item = self.open('IPTC7901.txt')
-            self.assertEqual('text', item['type'])
-            self.assertEqual('062', item['ingest_provider_sequence'])
-            self.assertEqual('i', item['anpa_category'][0]['qcode'])
-            self.assertEqual(211, item['word_count'])
-            self.assertEqual('Germany Social Democrats: Coalition talks with Merkel could fail =', item['headline'])
-            self.assertRegex(item['body_html'], '^\n   Berlin')
-            self.assertEqual('Germany-politics', item['slugline'])
-            self.assertEqual(4, item['priority'])
-            self.assertEqual([{'qcode': 'i'}], item['anpa_category'])
-            self.assertTrue(item['ednote'].find('## Editorial contacts'))
+            item = self.open("IPTC7901.txt")
+            self.assertEqual("text", item["type"])
+            self.assertEqual("062", item["ingest_provider_sequence"])
+            self.assertEqual("i", item["anpa_category"][0]["qcode"])
+            self.assertEqual(211, item["word_count"])
+            self.assertEqual("Germany Social Democrats: Coalition talks with Merkel could fail =", item["headline"])
+            self.assertRegex(item["body_html"], "^\n   Berlin")
+            self.assertEqual("Germany-politics", item["slugline"])
+            self.assertEqual(4, item["priority"])
+            self.assertEqual([{"qcode": "i"}], item["anpa_category"])
+            self.assertTrue(item["ednote"].find("## Editorial contacts"))
 
     def test_open_iptc7901_file_odd_charset(self):
         with self.app.app_context():
-            item = self.open('IPTC7901_odd_charset.txt')
-            self.assertTrue(item['body_html'].find('Müller'))
-            self.assertTrue(item['ednote'].find('## Editorial contacts'))
+            item = self.open("IPTC7901_odd_charset.txt")
+            self.assertTrue(item["body_html"].find("Müller"))
+            self.assertTrue(item["ednote"].find("## Editorial contacts"))
 
     def test_map_priority(self):
         self.assertEqual(1, self.parser.map_priority("1"))

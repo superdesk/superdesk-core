@@ -11,29 +11,26 @@
 from superdesk.resource import Resource
 
 
-DICTIONARY_FILE = 'file'
+DICTIONARY_FILE = "file"
 
 
 class KeywordsResource(Resource):
     """Keywords schema"""
 
     schema = {
-        'text': {
-            'type': 'string',
-            'required': True
+        "text": {"type": "string", "required": True},
+        "keywords": {
+            "type": "list",
+            "required": False,
+            "schema": {
+                "type": "dict",
+                "schema": {
+                    "text": {"type": "string", "required": True, "empty": False},
+                    "relevance": {"type": "string", "required": True},
+                },
+            },
         },
-        'keywords': {
-            'type': 'list',
-            'required': False,
-            'schema': {
-                'type': 'dict',
-                'schema': {
-                    'text': {'type': 'string', 'required': True, 'empty': False},
-                    'relevance': {'type': 'string', 'required': True},
-                }
-            }
-        }
     }
     item_methods = []
-    resource_methods = ['POST']
-    privileges = {'POST': 'archive'}
+    resource_methods = ["POST"]
+    privileges = {"POST": "archive"}

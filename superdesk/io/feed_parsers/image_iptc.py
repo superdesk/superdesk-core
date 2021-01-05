@@ -36,27 +36,27 @@ class ImageIPTCFeedParser(FileFeedParser):
     Feed Parser which can parse images using IPTC metadata
     """
 
-    NAME = 'image_iptc'
+    NAME = "image_iptc"
     label = "Image (IPTC metadata)"
-    ALLOWED_EXT = mimetypes.guess_all_extensions('image/jpeg')
+    ALLOWED_EXT = mimetypes.guess_all_extensions("image/jpeg")
 
-    DATETIME_FORMAT = '%Y%m%dT%H%M%S%z'
+    DATETIME_FORMAT = "%Y%m%dT%H%M%S%z"
 
     IPTC_MAPPING = {
-        TAG.HEADLINE: 'headline',
-        TAG.BY_LINE: 'byline',
-        TAG.OBJECT_NAME: 'slugline',
-        TAG.CAPTION_ABSTRACT: 'description_text',
-        TAG.KEYWORDS: 'keywords',
-        TAG.SPECIAL_INSTRUCTIONS: 'ednote',
-        TAG.COPYRIGHT_NOTICE: 'copyrightnotice',
-        TAG.ORIGINAL_TRANSMISSION_REFERENCE: 'assignment_id',
+        TAG.HEADLINE: "headline",
+        TAG.BY_LINE: "byline",
+        TAG.OBJECT_NAME: "slugline",
+        TAG.CAPTION_ABSTRACT: "description_text",
+        TAG.KEYWORDS: "keywords",
+        TAG.SPECIAL_INSTRUCTIONS: "ednote",
+        TAG.COPYRIGHT_NOTICE: "copyrightnotice",
+        TAG.ORIGINAL_TRANSMISSION_REFERENCE: "assignment_id",
     }
 
     def can_parse(self, image_path):
         if not isinstance(image_path, str):
             return False
-        return mimetypes.guess_type(image_path)[0] == 'image/jpeg'
+        return mimetypes.guess_type(image_path)[0] == "image/jpeg"
 
     def parse(self, image_path, provider=None):
         try:
@@ -69,14 +69,15 @@ class ImageIPTCFeedParser(FileFeedParser):
         filename = os.path.basename(image_path)
         content_type = mimetypes.guess_type(image_path)[0]
         guid = utils.generate_guid(type=GUID_TAG)
-        item = {'guid': guid,
-                'uri': guid,
-                config.VERSION: 1,
-                ITEM_TYPE: CONTENT_TYPE.PICTURE,
-                'mimetype': content_type,
-                'versioncreated': utcnow(),
-                }
-        with open(image_path, 'rb') as f:
+        item = {
+            "guid": guid,
+            "uri": guid,
+            config.VERSION: 1,
+            ITEM_TYPE: CONTENT_TYPE.PICTURE,
+            "mimetype": content_type,
+            "versioncreated": utcnow(),
+        }
+        with open(image_path, "rb") as f:
             _, content_type, file_metadata = process_file_from_stream(f, content_type=content_type)
             f.seek(0)
             file_id = app.media.put(f, filename=filename, content_type=content_type, metadata=file_metadata)
@@ -88,16 +89,17 @@ class ImageIPTCFeedParser(FileFeedParser):
             self.parse_meta(item, metadata)
 
             rendition_spec = get_renditions_spec(no_custom_crops=True)
-            renditions = generate_renditions(f, file_id, [file_id], 'image',
-                                             content_type, rendition_spec, url_for_media)
-            item['renditions'] = renditions
+            renditions = generate_renditions(
+                f, file_id, [file_id], "image", content_type, rendition_spec, url_for_media
+            )
+            item["renditions"] = renditions
         return item
 
     def parse_date_time(self, date, time):
         if not date or not time:
             return
 
-        datetime_string = '{}T{}'.format(date, time)
+        datetime_string = "{}T{}".format(date, time)
         try:
             return datetime.strptime(datetime_string, self.DATETIME_FORMAT)
         except ValueError:
@@ -109,7 +111,7 @@ class ImageIPTCFeedParser(FileFeedParser):
     def parse_meta(self, item, metadata):
         datetime_created = self.parse_date_time(metadata.get(TAG.DATE_CREATED), metadata.get(TAG.TIME_CREATED))
         if datetime_created:
-            item['firstcreated'] = datetime_created
+            item["firstcreated"] = datetime_created
 
         # now we map IPTC metadata to superdesk metadata
         for source_key, dest_key in self.IPTC_MAPPING.items():

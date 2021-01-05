@@ -16,18 +16,20 @@ from .services import UsersService, DBUsersService, is_admin  # noqa
 
 
 def init_app(app):
-    endpoint_name = 'users'
+    endpoint_name = "users"
     service = DBUsersService(endpoint_name, backend=superdesk.get_backend())
     UsersResource(endpoint_name, app=app, service=service)
 
-    superdesk.privilege(name='users', label='User Management', description='User can manage users.')
+    superdesk.privilege(name="users", label="User Management", description="User can manage users.")
 
     # Registering with intrinsic privileges because: A user should be allowed to update their own profile.
-    superdesk.intrinsic_privilege(resource_name='users', method=['PATCH'])
+    superdesk.intrinsic_privilege(resource_name="users", method=["PATCH"])
 
-    app.client_config.setdefault('user', {}).update({
-        'username_pattern': app.config.get('USER_USERNAME_PATTERN'),
-    })
+    app.client_config.setdefault("user", {}).update(
+        {
+            "username_pattern": app.config.get("USER_USERNAME_PATTERN"),
+        }
+    )
 
 
 def get_user_from_request(required=False):

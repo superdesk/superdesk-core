@@ -22,12 +22,12 @@ class KeywordsService(BaseService):
 
     def create(self, docs, **kwargs):
         if not self.provider:
-            raise SuperdeskApiError.internalError(_('Not set a keywords provider'))
+            raise SuperdeskApiError.internalError(_("Not set a keywords provider"))
 
         try:
             ids = []
             for doc in docs:
-                doc['keywords'] = self.provider.get_keywords(doc.get('text', ''))
+                doc["keywords"] = self.provider.get_keywords(doc.get("text", ""))
                 ids.append(len(ids))
             return ids
         except Exception as ex:

@@ -17,14 +17,45 @@ from superdesk import editor_utils
 
 from copy import copy, deepcopy
 from superdesk.resource import Resource
-from superdesk.metadata.utils import extra_response_fields, item_url, aggregations, \
-    is_normal_package, get_elastic_highlight_query
-from .common import remove_unwanted, update_state, set_item_expiry, remove_media_files, \
-    on_create_item, on_duplicate_item, get_user, update_version, set_sign_off, \
-    handle_existing_data, item_schema, validate_schedule, is_item_in_package, update_schedule_settings, \
-    ITEM_OPERATION, ITEM_RESTORE, ITEM_CREATE, ITEM_UPDATE, ITEM_DUPLICATE, ITEM_DUPLICATED_FROM, \
-    ITEM_DESCHEDULE, ARCHIVE as SOURCE, LAST_PRODUCTION_DESK, LAST_AUTHORING_DESK, ITEM_FETCH, \
-    convert_task_attributes_to_objectId, BROADCAST_GENRE, set_dateline, get_subject, transtype_metadata
+from superdesk.metadata.utils import (
+    extra_response_fields,
+    item_url,
+    aggregations,
+    is_normal_package,
+    get_elastic_highlight_query,
+)
+from .common import (
+    remove_unwanted,
+    update_state,
+    set_item_expiry,
+    remove_media_files,
+    on_create_item,
+    on_duplicate_item,
+    get_user,
+    update_version,
+    set_sign_off,
+    handle_existing_data,
+    item_schema,
+    validate_schedule,
+    is_item_in_package,
+    update_schedule_settings,
+    ITEM_OPERATION,
+    ITEM_RESTORE,
+    ITEM_CREATE,
+    ITEM_UPDATE,
+    ITEM_DUPLICATE,
+    ITEM_DUPLICATED_FROM,
+    ITEM_DESCHEDULE,
+    ARCHIVE as SOURCE,
+    LAST_PRODUCTION_DESK,
+    LAST_AUTHORING_DESK,
+    ITEM_FETCH,
+    convert_task_attributes_to_objectId,
+    BROADCAST_GENRE,
+    set_dateline,
+    get_subject,
+    transtype_metadata,
+)
 from superdesk.media.crop import CropService
 from flask import current_app as app, json
 from superdesk import get_resource_service
@@ -34,10 +65,22 @@ from superdesk.activity import add_activity, notify_and_add_activity, ACTIVITY_C
 from eve.utils import parse_request, config, date_to_str, ParsedRequest
 from superdesk.services import BaseService
 from superdesk.users.services import current_user_has_privilege, is_admin
-from superdesk.metadata.item import (ITEM_STATE, CONTENT_STATE, CONTENT_TYPE, ITEM_TYPE, EMBARGO,
-                                     PUBLISH_SCHEDULE, SCHEDULE_SETTINGS, SIGN_OFF, ASSOCIATIONS,
-                                     MEDIA_TYPES, INGEST_ID, PROCESSED_FROM, PUBLISH_STATES,
-                                     get_schema)
+from superdesk.metadata.item import (
+    ITEM_STATE,
+    CONTENT_STATE,
+    CONTENT_TYPE,
+    ITEM_TYPE,
+    EMBARGO,
+    PUBLISH_SCHEDULE,
+    SCHEDULE_SETTINGS,
+    SIGN_OFF,
+    ASSOCIATIONS,
+    MEDIA_TYPES,
+    INGEST_ID,
+    PROCESSED_FROM,
+    PUBLISH_STATES,
+    get_schema,
+)
 from superdesk.metadata.packages import LINKED_IN_PACKAGES, RESIDREF
 from apps.common.components.utils import get_component
 from apps.item_autosave.components.item_autosave import ItemAutosave
@@ -53,12 +96,12 @@ from superdesk.utc import utcnow
 from superdesk.vocabularies import is_related_content
 from flask_babel import _
 
-EDITOR_KEY_PREFIX = 'editor_'
+EDITOR_KEY_PREFIX = "editor_"
 logger = logging.getLogger(__name__)
 
 
 def format_subj_qcode(subj):
-    return ':'.join([code for code in [subj.get('scheme'), subj.get('qcode')] if code])
+    return ":".join([code for code in [subj.get("scheme"), subj.get("qcode")] if code])
 
 
 def private_content_filter():
@@ -69,25 +112,27 @@ def private_content_filter():
 
     Also filter out content of stages not visible to current user (if any).
     """
-    user = getattr(flask.g, 'user', None)
+    user = getattr(flask.g, "user", None)
     if user:
-        private_filter = {'should': [
-            {'exists': {'field': 'task.desk'}},
-            {'term': {'task.user': str(user['_id'])}},
-            {'term': {'version_creator': str(user['_id'])}},
-            {'term': {'original_creator': str(user['_id'])}},
-        ]}
+        private_filter = {
+            "should": [
+                {"exists": {"field": "task.desk"}},
+                {"term": {"task.user": str(user["_id"])}},
+                {"term": {"version_creator": str(user["_id"])}},
+                {"term": {"original_creator": str(user["_id"])}},
+            ]
+        }
 
-        if 'invisible_stages' in user:
-            stages = user.get('invisible_stages')
+        if "invisible_stages" in user:
+            stages = user.get("invisible_stages")
         else:
-            stages = get_resource_service('users').get_invisible_stages_ids(user.get('_id'))
+            stages = get_resource_service("users").get_invisible_stages_ids(user.get("_id"))
 
         if stages:
-            private_filter['must_not'] = [{'terms': {'task.stage': stages}}]
-            private_filter['minimum_should_match'] = 1
+            private_filter["must_not"] = [{"terms": {"task.stage": stages}}]
+            private_filter["minimum_should_match"] = 1
 
-        return {'bool': private_filter}
+        return {"bool": private_filter}
 
 
 def update_image_caption(body, name, caption):
@@ -96,11 +141,11 @@ def update_image_caption(body, name, caption):
     start = body.find(name)
     if start == -1:
         return body
-    startDescription = body.find('<figcaption>', start)
-    endDescription = body.find('</figcaption>', start)
+    startDescription = body.find("<figcaption>", start)
+    endDescription = body.find("</figcaption>", start)
     if startDescription == -1 or endDescription == -1:
         return body
-    return body[0:startDescription + len('<figcaption>')] + caption + body[endDescription:]
+    return body[0 : startDescription + len("<figcaption>")] + caption + body[endDescription:]
 
 
 def update_associations(doc):
@@ -111,16 +156,16 @@ def update_associations(doc):
 
     :param dict doc: update data
     """
-    if not doc.get('fields_meta', {}).get('body_html') or ASSOCIATIONS not in doc:
+    if not doc.get("fields_meta", {}).get("body_html") or ASSOCIATIONS not in doc:
         return
-    entityMap = doc['fields_meta']['body_html']['draftjsState'][0].get('entityMap', {})
+    entityMap = doc["fields_meta"]["body_html"]["draftjsState"][0].get("entityMap", {})
     associations = doc.get(ASSOCIATIONS, {})
     doc[ASSOCIATIONS] = {k: None if k.startswith(EDITOR_KEY_PREFIX) else v for k, v in associations.items()}
 
     mediaList = {
-        EDITOR_KEY_PREFIX + key: entity['data']['media']
+        EDITOR_KEY_PREFIX + key: entity["data"]["media"]
         for key, entity in entityMap.items()
-        if entity.get('type', None) == 'MEDIA'
+        if entity.get("type", None) == "MEDIA"
     }
 
     doc[ASSOCIATIONS].update(mediaList)
@@ -140,25 +185,21 @@ def flush_renditions(updates, original):
     if ASSOCIATIONS not in original or ASSOCIATIONS not in updates or not updates[ASSOCIATIONS]:
         return
 
-    default_renditions = ('original', 'baseImage', 'thumbnail', 'viewImage')
+    default_renditions = ("original", "baseImage", "thumbnail", "viewImage")
 
     for key in [k for k in updates[ASSOCIATIONS] if k in original[ASSOCIATIONS]]:
         try:
-            new_href = updates[ASSOCIATIONS][key]['renditions']['original']['href']
-            old_href = original[ASSOCIATIONS][key]['renditions']['original']['href']
+            new_href = updates[ASSOCIATIONS][key]["renditions"]["original"]["href"]
+            old_href = original[ASSOCIATIONS][key]["renditions"]["original"]["href"]
         except (KeyError, TypeError):
             continue
         else:
             if new_href != old_href:
-                new_renditions = [
-                    r for r in updates[ASSOCIATIONS][key]['renditions'] if r not in default_renditions
-                ]
-                old_renditions = [
-                    r for r in original[ASSOCIATIONS][key]['renditions'] if r not in default_renditions
-                ]
+                new_renditions = [r for r in updates[ASSOCIATIONS][key]["renditions"] if r not in default_renditions]
+                old_renditions = [r for r in original[ASSOCIATIONS][key]["renditions"] if r not in default_renditions]
                 for old_rendition in old_renditions:
                     if old_rendition not in new_renditions:
-                        updates[ASSOCIATIONS][key]['renditions'][old_rendition] = None
+                        updates[ASSOCIATIONS][key]["renditions"][old_rendition] = None
 
 
 class ArchiveVersionsResource(Resource):
@@ -167,10 +208,10 @@ class ArchiveVersionsResource(Resource):
     item_url = item_url
     resource_methods = []
     internal_resource = True
-    privileges = {'PATCH': 'archive'}
+    privileges = {"PATCH": "archive"}
     mongo_indexes = {
-        'guid': ([('guid', 1)], {'background': True}),
-        '_id_document_1': ([('_id_document', 1)], {'background': True}),
+        "guid": ([("guid", 1)], {"background": True}),
+        "_id_document_1": ([("_id_document", 1)], {"background": True}),
     }
 
 
@@ -184,29 +225,40 @@ class ArchiveResource(Resource):
     extra_response_fields = extra_response_fields
     item_url = item_url
     datasource = {
-        'search_backend': 'elastic',
-        'aggregations': aggregations,
-        'es_highlight': get_elastic_highlight_query,
-        'projection': {
-            'old_version': 0,
-            'last_version': 0
+        "search_backend": "elastic",
+        "aggregations": aggregations,
+        "es_highlight": get_elastic_highlight_query,
+        "projection": {"old_version": 0, "last_version": 0},
+        "default_sort": [("_updated", -1)],
+        "elastic_filter": {
+            "bool": {
+                "must": {
+                    "terms": {
+                        "state": [
+                            "fetched",
+                            "routed",
+                            "draft",
+                            "in_progress",
+                            "spiked",
+                            "submitted",
+                            "unpublished",
+                            "correction",
+                        ]
+                    }
+                },
+                "must_not": {"term": {"version": 0}},
+            }
         },
-        'default_sort': [('_updated', -1)],
-        'elastic_filter': {'bool': {
-            'must': {'terms': {'state': ['fetched', 'routed', 'draft', 'in_progress',
-                                         'spiked', 'submitted', 'unpublished', 'correction']}},
-            'must_not': {'term': {'version': 0}}
-        }},
-        'elastic_filter_callback': private_content_filter
+        "elastic_filter_callback": private_content_filter,
     }
-    etag_ignore_fields = ['highlights', 'broadcast']
-    resource_methods = ['GET', 'POST']
-    item_methods = ['GET', 'PATCH', 'PUT']
+    etag_ignore_fields = ["highlights", "broadcast"]
+    resource_methods = ["GET", "POST"]
+    item_methods = ["GET", "PATCH", "PUT"]
     versioning = True
-    privileges = {'POST': SOURCE, 'PATCH': SOURCE, 'PUT': SOURCE}
+    privileges = {"POST": SOURCE, "PATCH": SOURCE, "PUT": SOURCE}
     mongo_indexes = {
-        'processed_from_1': ([(PROCESSED_FROM, 1)], {'background': True}),
-        'unique_id_1': ([('unique_id', 1)], {'background': True}),
+        "processed_from_1": ([(PROCESSED_FROM, 1)], {"background": True}),
+        "unique_id_1": ([("unique_id", 1)], {"background": True}),
     }
 
 
@@ -232,13 +284,13 @@ class ArchiveService(BaseService):
         on_create_item(docs)
 
         for doc in docs:
-            if doc.get('body_footer') and is_normal_package(doc):
+            if doc.get("body_footer") and is_normal_package(doc):
                 raise SuperdeskApiError.badRequestError(_("Package doesn't support Public Service Announcements"))
 
             editor_utils.generate_fields(doc)
             self._test_readonly_stage(doc)
 
-            doc['version_creator'] = doc['original_creator']
+            doc["version_creator"] = doc["original_creator"]
             remove_unwanted(doc)
             update_word_count(doc)
             set_item_expiry({}, doc)
@@ -257,20 +309,20 @@ class ArchiveService(BaseService):
                     self._set_association_timestamps(assoc, doc)
                     remove_unwanted(assoc)
 
-            if doc.get('media'):
+            if doc.get("media"):
                 self.mediaService.on_create([doc])
 
             # let client create version 0 docs
-            if doc.get('version') == 0:
-                doc[config.VERSION] = doc['version']
+            if doc.get("version") == 0:
+                doc[config.VERSION] = doc["version"]
 
             self._add_desk_metadata(doc, {})
 
             convert_task_attributes_to_objectId(doc)
             transtype_metadata(doc)
 
-            if doc.get('macro'):  # if there is a macro, execute it
-                get_resource_service('macros').execute_macro(doc, doc['macro'])
+            if doc.get("macro"):  # if there is a macro, execute it
+                get_resource_service("macros").execute_macro(doc, doc["macro"])
 
             # send signal
             superdesk.item_create.send(self, item=doc)
@@ -286,23 +338,22 @@ class ArchiveService(BaseService):
             if subject:
                 msg = 'added new {{ type }} item about "{{ subject }}"'
             else:
-                msg = 'added new {{ type }} item with empty header/title'
-            add_activity(ACTIVITY_CREATE, msg,
-                         self.datasource, item=doc, type=doc[ITEM_TYPE], subject=subject)
+                msg = "added new {{ type }} item with empty header/title"
+            add_activity(ACTIVITY_CREATE, msg, self.datasource, item=doc, type=doc[ITEM_TYPE], subject=subject)
 
-            if doc.get('profile'):
-                profiles.add(doc['profile'])
+            if doc.get("profile"):
+                profiles.add(doc["profile"])
 
             self.cropService.update_media_references(doc, {})
             if doc[ITEM_OPERATION] == ITEM_FETCH:
-                app.on_archive_item_updated({'task': doc.get('task')}, doc, ITEM_FETCH)
+                app.on_archive_item_updated({"task": doc.get("task")}, doc, ITEM_FETCH)
             else:
-                app.on_archive_item_updated({'task': doc.get('task')}, doc, ITEM_CREATE)
+                app.on_archive_item_updated({"task": doc.get("task")}, doc, ITEM_CREATE)
 
             # used by client to detect item type
-            doc.setdefault('_type', 'archive')
+            doc.setdefault("_type", "archive")
 
-        get_resource_service('content_types').set_used(profiles)
+        get_resource_service("content_types").set_used(profiles)
 
         push_content_notification(docs)
 
@@ -324,7 +375,7 @@ class ArchiveService(BaseService):
         self._validate_updates(original, updates, user)
 
         if self.__is_req_for_save(updates):
-            publish_from_personal = flask.request.args.get('publish_from_personal') if flask.request else False
+            publish_from_personal = flask.request.args.get("publish_from_personal") if flask.request else False
             update_state(original, updates, publish_from_personal)
 
         remove_unwanted(updates)
@@ -352,7 +403,7 @@ class ArchiveService(BaseService):
 
             item_id = item_obj[config.ID_FIELD]
             media_item = self.find_one(req=None, _id=item_id)
-            if app.settings.get('COPY_METADATA_FROM_PARENT') and item_obj.get(ITEM_TYPE) in MEDIA_TYPES:
+            if app.settings.get("COPY_METADATA_FROM_PARENT") and item_obj.get(ITEM_TYPE) in MEDIA_TYPES:
                 stored_item = (original.get(ASSOCIATIONS) or {}).get(item_name) or item_obj
             else:
                 stored_item = media_item
@@ -367,8 +418,8 @@ class ArchiveService(BaseService):
             self._validate_updates(stored_item, item_obj, user)
             if stored_item[ITEM_TYPE] == CONTENT_TYPE.PICTURE:  # create crops
                 CropService().create_multiple_crops(item_obj, stored_item)
-                if body and item_obj.get('description_text', None):
-                    body = update_image_caption(body, item_name, item_obj['description_text'])
+                if body and item_obj.get("description_text", None):
+                    body = update_image_caption(body, item_name, item_obj["description_text"])
 
             self._set_association_timestamps(item_obj, updates, new=False)
 
@@ -379,7 +430,7 @@ class ArchiveService(BaseService):
             updates["body_html"] = body
 
     def on_updated(self, updates, original):
-        get_component(ItemAutosave).clear(original['_id'])
+        get_component(ItemAutosave).clear(original["_id"])
 
         if original[ITEM_TYPE] == CONTENT_TYPE.COMPOSITE:
             self.packageService.on_updated(updates, original)
@@ -388,17 +439,21 @@ class ArchiveService(BaseService):
         updated.update(updates)
 
         if config.VERSION in updates:
-            add_activity(ACTIVITY_UPDATE,
-                         'created new version {{ version }} for item {{ type }} about "{{ subject }}"',
-                         self.datasource, item=updated,
-                         version=updates[config.VERSION], subject=get_subject(updates, original),
-                         type=updated[ITEM_TYPE])
+            add_activity(
+                ACTIVITY_UPDATE,
+                'created new version {{ version }} for item {{ type }} about "{{ subject }}"',
+                self.datasource,
+                item=updated,
+                version=updates[config.VERSION],
+                subject=get_subject(updates, original),
+                type=updated[ITEM_TYPE],
+            )
 
         push_content_notification([updated, original])
-        get_resource_service('archive_broadcast').reset_broadcast_status(updates, original)
+        get_resource_service("archive_broadcast").reset_broadcast_status(updates, original)
 
-        if updates.get('profile'):
-            get_resource_service('content_types').set_used([updates.get('profile')])
+        if updates.get("profile"):
+            get_resource_service("content_types").set_used([updates.get("profile")])
 
         self.cropService.update_media_references(updates, original)
 
@@ -406,35 +461,45 @@ class ArchiveService(BaseService):
         document[ITEM_OPERATION] = ITEM_UPDATE
         remove_unwanted(document)
         user = get_user()
-        lock_user = original.get('lock_user', None)
-        force_unlock = document.get('force_unlock', False)
-        user_id = str(user.get('_id'))
+        lock_user = original.get("lock_user", None)
+        force_unlock = document.get("force_unlock", False)
+        user_id = str(user.get("_id"))
         if lock_user and str(lock_user) != user_id and not force_unlock:
-            raise SuperdeskApiError.forbiddenError(_('The item was locked by another user'))
-        document['versioncreated'] = utcnow()
+            raise SuperdeskApiError.forbiddenError(_("The item was locked by another user"))
+        document["versioncreated"] = utcnow()
         set_item_expiry(document, original)
-        document['version_creator'] = user_id
+        document["version_creator"] = user_id
         if force_unlock:
-            del document['force_unlock']
+            del document["force_unlock"]
 
     def on_replaced(self, document, original):
-        get_component(ItemAutosave).clear(original['_id'])
-        add_activity(ACTIVITY_UPDATE, 'replaced item {{ type }} about {{ subject }}',
-                     self.datasource, item=original,
-                     type=original['type'], subject=get_subject(original))
+        get_component(ItemAutosave).clear(original["_id"])
+        add_activity(
+            ACTIVITY_UPDATE,
+            "replaced item {{ type }} about {{ subject }}",
+            self.datasource,
+            item=original,
+            type=original["type"],
+            subject=get_subject(original),
+        )
         push_content_notification([document, original])
         self.cropService.update_media_references(document, original)
 
     def on_deleted(self, doc):
-        get_component(ItemAutosave).clear(doc['_id'])
+        get_component(ItemAutosave).clear(doc["_id"])
         if doc[ITEM_TYPE] == CONTENT_TYPE.COMPOSITE:
             self.packageService.on_deleted(doc)
 
         remove_media_files(doc)
 
-        add_activity(ACTIVITY_DELETE, 'removed item {{ type }} about {{ subject }}',
-                     self.datasource, item=doc,
-                     type=doc[ITEM_TYPE], subject=get_subject(doc))
+        add_activity(
+            ACTIVITY_DELETE,
+            "removed item {{ type }} about {{ subject }}",
+            self.datasource,
+            item=doc,
+            type=doc[ITEM_TYPE],
+            subject=get_subject(doc),
+        )
         push_expired_notification([doc.get(config.ID_FIELD)])
         app.on_archive_item_deleted(doc)
 
@@ -442,17 +507,18 @@ class ArchiveService(BaseService):
         return self.restore_version(id, document, original) or super().replace(id, document, original)
 
     def get(self, req, lookup):
-        if req is None and lookup is not None and '$or' in lookup:
+        if req is None and lookup is not None and "$or" in lookup:
             # embedded resource generates mongo query which doesn't work with elastic
             # so it needs to be fixed here
-            return super().get(req, lookup['$or'][0])
+            return super().get(req, lookup["$or"][0])
         return super().get(req, lookup)
 
     def find_one(self, req, **lookup):
         item = super().find_one(req, **lookup)
 
-        if item and str(item.get('task', {}).get('stage', '')) in \
-                get_resource_service('users').get_invisible_stages_ids(get_user().get('_id')):
+        if item and str(item.get("task", {}).get("stage", "")) in get_resource_service(
+            "users"
+        ).get_invisible_stages_ids(get_user().get("_id")):
             raise SuperdeskApiError.forbiddenError(_("User does not have permissions to read the item."))
 
         handle_existing_data(item)
@@ -460,39 +526,41 @@ class ArchiveService(BaseService):
 
     def restore_version(self, id, doc, original):
         item_id = id
-        old_version = int(doc.get('old_version', 0))
-        last_version = int(doc.get('last_version', 0))
-        if (not all([item_id, old_version, last_version])):
+        old_version = int(doc.get("old_version", 0))
+        last_version = int(doc.get("last_version", 0))
+        if not all([item_id, old_version, last_version]):
             return None
 
-        old = get_resource_service('archive_versions').find_one(req=None, _id_document=item_id,
-                                                                _current_version=old_version)
+        old = get_resource_service("archive_versions").find_one(
+            req=None, _id_document=item_id, _current_version=old_version
+        )
         if old is None:
-            raise SuperdeskApiError.notFoundError(_('Invalid version {old_version}').format(old_version=old_version))
+            raise SuperdeskApiError.notFoundError(_("Invalid version {old_version}").format(old_version=old_version))
 
         curr = get_resource_service(SOURCE).find_one(req=None, _id=item_id)
         if curr is None:
-            raise SuperdeskApiError.notFoundError(_('Invalid item id {item_id}').format(item_id=item_id))
+            raise SuperdeskApiError.notFoundError(_("Invalid item id {item_id}").format(item_id=item_id))
 
         if curr[config.VERSION] != last_version:
             raise SuperdeskApiError.preconditionFailedError(
-                _('Invalid last version {last_version}').format(last_version=last_version))
+                _("Invalid last version {last_version}").format(last_version=last_version)
+            )
 
-        old['_id'] = old['_id_document']
-        old['_updated'] = old['versioncreated'] = utcnow()
+        old["_id"] = old["_id_document"]
+        old["_updated"] = old["versioncreated"] = utcnow()
         set_item_expiry(old, doc)
-        old.pop('_id_document', None)
+        old.pop("_id_document", None)
         old.pop(SIGN_OFF, None)
         old[ITEM_OPERATION] = ITEM_RESTORE
 
-        resolve_document_version(old, SOURCE, 'PATCH', curr)
+        resolve_document_version(old, SOURCE, "PATCH", curr)
         remove_unwanted(old)
         set_sign_off(updates=old, original=curr)
 
         super().replace(id=item_id, document=old, original=curr)
 
-        old.pop('old_version', None)
-        old.pop('last_version', None)
+        old.pop("old_version", None)
+        old.pop("last_version", None)
 
         doc.update(old)
         return item_id
@@ -504,14 +572,14 @@ class ArchiveService(BaseService):
         :return: guid of the duplicated article
         """
 
-        if original_doc.get(ITEM_TYPE, '') == CONTENT_TYPE.COMPOSITE:
-            for groups in original_doc.get('groups'):
-                if groups.get('id') != 'root':
-                    associations = groups.get('refs', [])
+        if original_doc.get(ITEM_TYPE, "") == CONTENT_TYPE.COMPOSITE:
+            for groups in original_doc.get("groups"):
+                if groups.get("id") != "root":
+                    associations = groups.get("refs", [])
                     for assoc in associations:
                         if assoc.get(RESIDREF):
                             item, _item_id, _endpoint = self.packageService.get_associated_item(assoc)
-                            assoc[RESIDREF] = assoc['guid'] = self.duplicate_content(item)
+                            assoc[RESIDREF] = assoc["guid"] = self.duplicate_content(item)
 
         return self.duplicate_item(original_doc, state, extra_fields)
 
@@ -525,11 +593,11 @@ class ArchiveService(BaseService):
         """
         new_doc = original_doc.copy()
 
-        self.remove_after_copy(new_doc, extra_fields, delete_keys=['marked_for_user'])
+        self.remove_after_copy(new_doc, extra_fields, delete_keys=["marked_for_user"])
         on_duplicate_item(new_doc, original_doc, operation)
-        resolve_document_version(new_doc, SOURCE, 'PATCH', new_doc)
+        resolve_document_version(new_doc, SOURCE, "PATCH", new_doc)
 
-        if original_doc.get('task', {}).get('desk') is not None and new_doc.get(ITEM_STATE) != CONTENT_STATE.SUBMITTED:
+        if original_doc.get("task", {}).get("desk") is not None and new_doc.get(ITEM_STATE) != CONTENT_STATE.SUBMITTED:
             new_doc[ITEM_STATE] = CONTENT_STATE.SUBMITTED
 
         if state:
@@ -539,27 +607,25 @@ class ArchiveService(BaseService):
         transtype_metadata(new_doc)
         signals.item_duplicate.send(self, item=new_doc, original=original_doc, operation=operation)
         get_model(ItemModel).create([new_doc])
-        self._duplicate_versions(original_doc['_id'], new_doc)
-        self._duplicate_history(original_doc['_id'], new_doc)
-        app.on_archive_item_updated({'duplicate_id': new_doc['guid']}, original_doc, operation or ITEM_DUPLICATE)
+        self._duplicate_versions(original_doc["_id"], new_doc)
+        self._duplicate_history(original_doc["_id"], new_doc)
+        app.on_archive_item_updated({"duplicate_id": new_doc["guid"]}, original_doc, operation or ITEM_DUPLICATE)
 
-        if original_doc.get('task'):
+        if original_doc.get("task"):
             # Store the new task details along with this history entry
             app.on_archive_item_updated(
-                {'duplicate_id': original_doc['_id'], 'task': original_doc.get('task')},
+                {"duplicate_id": original_doc["_id"], "task": original_doc.get("task")},
                 new_doc,
-                operation or ITEM_DUPLICATED_FROM
+                operation or ITEM_DUPLICATED_FROM,
             )
         else:
             app.on_archive_item_updated(
-                {'duplicate_id': original_doc['_id']},
-                new_doc,
-                operation or ITEM_DUPLICATED_FROM
+                {"duplicate_id": original_doc["_id"]}, new_doc, operation or ITEM_DUPLICATED_FROM
             )
 
         signals.item_duplicated.send(self, item=new_doc, original=original_doc, operation=operation)
 
-        return new_doc['guid']
+        return new_doc["guid"]
 
     def remove_after_copy(self, copied_item, extra_fields=None, delete_keys=None):
         """Removes the properties which doesn't make sense to have for an item after copy.
@@ -568,18 +634,41 @@ class ArchiveService(BaseService):
         :param extra_fields: extra fields to copy besides content fields
         """
         # get the archive schema keys
-        archive_schema_keys = list(app.config['DOMAIN'][SOURCE]['schema'].keys())
-        archive_schema_keys.extend([config.ID_FIELD, config.LAST_UPDATED, config.DATE_CREATED,
-                                    config.VERSION, config.ETAG])
+        archive_schema_keys = list(app.config["DOMAIN"][SOURCE]["schema"].keys())
+        archive_schema_keys.extend(
+            [config.ID_FIELD, config.LAST_UPDATED, config.DATE_CREATED, config.VERSION, config.ETAG]
+        )
 
         # Delete the keys that are not part of archive schema.
         keys_to_delete = [key for key in copied_item.keys() if key not in archive_schema_keys]
-        keys_to_delete.extend([config.ID_FIELD, 'guid', LINKED_IN_PACKAGES, EMBARGO, PUBLISH_SCHEDULE,
-                               SCHEDULE_SETTINGS, 'lock_time', 'lock_action', 'lock_session', 'lock_user', SIGN_OFF,
-                               'rewritten_by', 'rewrite_of', 'rewrite_sequence', 'highlights', 'marked_desks',
-                               '_type', 'event_id', 'assignment_id', PROCESSED_FROM,
-                               'translations', 'translation_id', 'translated_from', 'firstpublished'
-                               ])
+        keys_to_delete.extend(
+            [
+                config.ID_FIELD,
+                "guid",
+                LINKED_IN_PACKAGES,
+                EMBARGO,
+                PUBLISH_SCHEDULE,
+                SCHEDULE_SETTINGS,
+                "lock_time",
+                "lock_action",
+                "lock_session",
+                "lock_user",
+                SIGN_OFF,
+                "rewritten_by",
+                "rewrite_of",
+                "rewrite_sequence",
+                "highlights",
+                "marked_desks",
+                "_type",
+                "event_id",
+                "assignment_id",
+                PROCESSED_FROM,
+                "translations",
+                "translation_id",
+                "translated_from",
+                "firstpublished",
+            ]
+        )
         if delete_keys:
             keys_to_delete.extend(delete_keys)
 
@@ -590,10 +679,10 @@ class ArchiveService(BaseService):
             copied_item.pop(key, None)
 
         # Copy should not preseve the SMS flag
-        if copied_item.get('flags', {}).get('marked_for_sms', False):
-            copied_item['flags']['marked_for_sms'] = False
+        if copied_item.get("flags", {}).get("marked_for_sms", False):
+            copied_item["flags"]["marked_for_sms"] = False
 
-        task = copied_item.get('task', {})
+        task = copied_item.get("task", {})
         task.pop(LAST_PRODUCTION_DESK, None)
         task.pop(LAST_AUTHORING_DESK, None)
 
@@ -606,29 +695,29 @@ class ArchiveService(BaseService):
         :param old_id: identifier to fetch versions
         :param new_doc: identifiers from this doc will be used to create versions for the duplicated item.
         """
-        resource_def = app.config['DOMAIN']['archive']
+        resource_def = app.config["DOMAIN"]["archive"]
         version_id = versioned_id_field(resource_def)
-        old_versions = get_resource_service('archive_versions').get(req=None, lookup={version_id: old_id})
+        old_versions = get_resource_service("archive_versions").get(req=None, lookup={version_id: old_id})
 
         new_versions = []
         for old_version in old_versions:
             old_version[version_id] = new_doc[config.ID_FIELD]
             del old_version[config.ID_FIELD]
 
-            old_version['guid'] = new_doc['guid']
-            old_version['unique_name'] = new_doc['unique_name']
-            old_version['unique_id'] = new_doc['unique_id']
-            old_version['versioncreated'] = utcnow()
+            old_version["guid"] = new_doc["guid"]
+            old_version["unique_name"] = new_doc["unique_name"]
+            old_version["unique_id"] = new_doc["unique_id"]
+            old_version["versioncreated"] = utcnow()
             if old_version[config.VERSION] == new_doc[config.VERSION]:
                 old_version[ITEM_OPERATION] = new_doc[ITEM_OPERATION]
             new_versions.append(old_version)
 
         last_version = deepcopy(new_doc)
-        last_version['_id_document'] = new_doc['_id']
-        del last_version['_id']
+        last_version["_id_document"] = new_doc["_id"]
+        del last_version["_id"]
         new_versions.append(last_version)
         if new_versions:
-            get_resource_service('archive_versions').post(new_versions)
+            get_resource_service("archive_versions").post(new_versions)
 
     def _duplicate_history(self, old_id, new_doc):
         """Duplicates history for an item.
@@ -639,19 +728,19 @@ class ArchiveService(BaseService):
         :param old_id: identifier to fetch history
         :param new_doc: identifiers from this doc will be used to create version history for the duplicated item.
         """
-        old_history_items = get_resource_service('archive_history').get(req=None, lookup={'item_id': old_id})
+        old_history_items = get_resource_service("archive_history").get(req=None, lookup={"item_id": old_id})
 
         new_history_items = []
         for old_history_item in old_history_items:
             del old_history_item[config.ID_FIELD]
-            old_history_item['item_id'] = new_doc['guid']
-            if not old_history_item.get('original_item_id'):
-                old_history_item['original_item_id'] = old_id
+            old_history_item["item_id"] = new_doc["guid"]
+            if not old_history_item.get("original_item_id"):
+                old_history_item["original_item_id"] = old_id
 
             new_history_items.append(old_history_item)
 
         if new_history_items:
-            get_resource_service('archive_history').post(new_history_items)
+            get_resource_service("archive_history").post(new_history_items)
 
     def update(self, id, updates, original):
         if updates.get(ASSOCIATIONS):
@@ -676,7 +765,7 @@ class ArchiveService(BaseService):
         updated.update(updates)
         signals.item_updated.send(self, item=updated, original=original)
 
-        if 'marked_for_user' in updates:
+        if "marked_for_user" in updates:
             self.handle_mark_user_notifications(updates, original)
 
     def deschedule_item(self, updates, original):
@@ -690,17 +779,17 @@ class ArchiveService(BaseService):
         updates[PUBLISH_SCHEDULE] = original[PUBLISH_SCHEDULE]
         updates[SCHEDULE_SETTINGS] = original[SCHEDULE_SETTINGS]
         updates[ITEM_OPERATION] = ITEM_DESCHEDULE
-        updates['firstpublished'] = None
+        updates["firstpublished"] = None
         # delete entry from published repo
-        get_resource_service('published').delete_by_article_id(original['_id'])
+        get_resource_service("published").delete_by_article_id(original["_id"])
 
         # deschedule scheduled associations
         if config.PUBLISH_ASSOCIATED_ITEMS:
             associations = original.get(ASSOCIATIONS) or {}
-            archive_service = get_resource_service('archive')
+            archive_service = get_resource_service("archive")
             for associations_key, associated_item in associations.items():
                 orig_associated_item = archive_service.find_one(req=None, _id=associated_item[config.ID_FIELD])
-                if orig_associated_item and orig_associated_item.get('state') == CONTENT_STATE.SCHEDULED:
+                if orig_associated_item and orig_associated_item.get("state") == CONTENT_STATE.SCHEDULED:
                     # deschedule associated item itself
                     archive_service.patch(id=associated_item[config.ID_FIELD], updates={PUBLISH_SCHEDULE: None})
                     # update associated item info in the original
@@ -714,29 +803,29 @@ class ArchiveService(BaseService):
         # TODO: modify this function when read only permissions for stages are implemented
         # TODO: and Content state related checking.
 
-        if not current_user_has_privilege('archive'):
-            return False, 'User does not have sufficient permissions.'
+        if not current_user_has_privilege("archive"):
+            return False, "User does not have sufficient permissions."
 
-        item_location = item.get('task')
+        item_location = item.get("task")
 
         if item_location:
-            if item_location.get('desk'):
-                if not superdesk.get_resource_service('user_desks').is_member(user_id, item_location.get('desk')):
-                    return False, 'User is not a member of the desk.'
-            elif item_location.get('user'):
-                if not str(item_location.get('user')) == str(user_id):
-                    return False, 'Item belongs to another user.'
+            if item_location.get("desk"):
+                if not superdesk.get_resource_service("user_desks").is_member(user_id, item_location.get("desk")):
+                    return False, "User is not a member of the desk."
+            elif item_location.get("user"):
+                if not str(item_location.get("user")) == str(user_id):
+                    return False, "Item belongs to another user."
 
-        return True, ''
+        return True, ""
 
     def delete_by_article_ids(self, ids):
         """Remove the content
 
         :param list ids: list of ids to be removed
         """
-        version_field = versioned_id_field(app.config['DOMAIN']['archive_versions'])
-        get_resource_service('archive_versions').delete_action(lookup={version_field: {'$in': ids}})
-        super().delete_action({config.ID_FIELD: {'$in': ids}})
+        version_field = versioned_id_field(app.config["DOMAIN"]["archive_versions"])
+        get_resource_service("archive_versions").delete_action(lookup={version_field: {"$in": ids}})
+        super().delete_action({config.ID_FIELD: {"$in": ids}})
 
     def _set_association_timestamps(self, assoc_item, updates, new=True):
         if type(assoc_item) == dict:
@@ -755,11 +844,11 @@ class ArchiveService(BaseService):
         :param dictionary doc: doc to test
         """
 
-        if 'req_for_save' in doc:
-            req_for_save = doc['req_for_save']
-            del doc['req_for_save']
+        if "req_for_save" in doc:
+            req_for_save = doc["req_for_save"]
+            del doc["req_for_save"]
 
-            return req_for_save == 'true'
+            return req_for_save == "true"
 
         return True
 
@@ -775,18 +864,19 @@ class ArchiveService(BaseService):
 
         if item[ITEM_TYPE] != CONTENT_TYPE.COMPOSITE:
             if EMBARGO in item:
-                embargo = item.get(SCHEDULE_SETTINGS, {}).get('utc_{}'.format(EMBARGO))
+                embargo = item.get(SCHEDULE_SETTINGS, {}).get("utc_{}".format(EMBARGO))
                 if embargo:
                     if item.get(PUBLISH_SCHEDULE) or item[ITEM_STATE] == CONTENT_STATE.SCHEDULED:
                         raise SuperdeskApiError.badRequestError(
-                            _("An item can't have both Publish Schedule and Embargo"))
+                            _("An item can't have both Publish Schedule and Embargo")
+                        )
 
-                    if (item[ITEM_STATE] not in {
-                        CONTENT_STATE.KILLED, CONTENT_STATE.RECALLED, CONTENT_STATE.SCHEDULED}) \
-                            and embargo <= utcnow():
+                    if (
+                        item[ITEM_STATE] not in {CONTENT_STATE.KILLED, CONTENT_STATE.RECALLED, CONTENT_STATE.SCHEDULED}
+                    ) and embargo <= utcnow():
                         raise SuperdeskApiError.badRequestError(_("Embargo cannot be earlier than now"))
 
-                    if item.get('rewrite_of'):
+                    if item.get("rewrite_of"):
                         raise SuperdeskApiError.badRequestError(_("Rewrites doesn't support Embargo"))
 
                     if not isinstance(embargo, datetime.date) or not embargo.time():
@@ -806,16 +896,16 @@ class ArchiveService(BaseService):
         """
 
         def abort_if_readonly_stage(stage_id):
-            stage = superdesk.get_resource_service('stages').find_one(req=None, _id=stage_id)
-            if stage.get('local_readonly'):
-                flask.abort(403, response={'readonly': True})
+            stage = superdesk.get_resource_service("stages").find_one(req=None, _id=stage_id)
+            if stage.get("local_readonly"):
+                flask.abort(403, response={"readonly": True})
 
-        orig_stage_id = item.get('task', {}).get('stage')
+        orig_stage_id = item.get("task", {}).get("stage")
         if orig_stage_id and get_user() and not item.get(INGEST_ID):
             abort_if_readonly_stage(orig_stage_id)
 
         if updates:
-            dest_stage_id = updates.get('task', {}).get('stage')
+            dest_stage_id = updates.get("task", {}).get("stage")
             if dest_stage_id and get_user() and not item.get(INGEST_ID):
                 abort_if_readonly_stage(dest_stage_id)
 
@@ -850,41 +940,54 @@ class ArchiveService(BaseService):
 
         self._test_readonly_stage(original, updates)
 
-        lock_user = original.get('lock_user', None)
-        force_unlock = updates.get('force_unlock', False)
+        lock_user = original.get("lock_user", None)
+        force_unlock = updates.get("force_unlock", False)
         str_user_id = str(user.get(config.ID_FIELD)) if user else None
 
         if lock_user and str(lock_user) != str_user_id and not force_unlock:
-            raise SuperdeskApiError.forbiddenError(_('The item was locked by another user'))
+            raise SuperdeskApiError.forbiddenError(_("The item was locked by another user"))
 
         if original.get(ITEM_STATE) in {CONTENT_STATE.KILLED, CONTENT_STATE.RECALLED}:
             raise SuperdeskApiError.forbiddenError(_("Item isn't in a valid state to be updated."))
 
-        if updates.get('body_footer') and is_normal_package(original):
+        if updates.get("body_footer") and is_normal_package(original):
             raise SuperdeskApiError.badRequestError(_("Package doesn't support Public Service Announcements"))
 
-        if 'unique_name' in updates and not is_admin(user) \
-                and (user['active_privileges'].get('metadata_uniquename', 0) == 0) \
-                and not force_unlock:
+        if (
+            "unique_name" in updates
+            and not is_admin(user)
+            and (user["active_privileges"].get("metadata_uniquename", 0) == 0)
+            and not force_unlock
+        ):
             raise SuperdeskApiError.forbiddenError(_("Unauthorized to modify Unique Name"))
 
         # if broadcast then update to genre is not allowed.
-        if original.get('broadcast') and updates.get('genre') and \
-                any(genre.get('qcode', '').lower() != BROADCAST_GENRE.lower() for genre in updates.get('genre')):
-            raise SuperdeskApiError.badRequestError(_('Cannot change the genre for broadcast content.'))
+        if (
+            original.get("broadcast")
+            and updates.get("genre")
+            and any(genre.get("qcode", "").lower() != BROADCAST_GENRE.lower() for genre in updates.get("genre"))
+        ):
+            raise SuperdeskApiError.badRequestError(_("Cannot change the genre for broadcast content."))
 
-        if (PUBLISH_SCHEDULE in updates or "schedule_settings" in updates) and \
-                original.get('state') != CONTENT_STATE.PUBLISHED:
-            if (updates.get(PUBLISH_SCHEDULE, None) or
-                    any(v is not None for v in updates.get('schedule_settings', {}).values())) and\
-                    is_item_in_package(original) and not force_unlock:
+        if (PUBLISH_SCHEDULE in updates or "schedule_settings" in updates) and original.get(
+            "state"
+        ) != CONTENT_STATE.PUBLISHED:
+            if (
+                (
+                    updates.get(PUBLISH_SCHEDULE, None)
+                    or any(v is not None for v in updates.get("schedule_settings", {}).values())
+                )
+                and is_item_in_package(original)
+                and not force_unlock
+            ):
                 raise SuperdeskApiError.badRequestError(
-                    _('This item is in a package and it needs to be removed before the item can be scheduled!'))
+                    _("This item is in a package and it needs to be removed before the item can be scheduled!")
+                )
 
             update_schedule_settings(updated, PUBLISH_SCHEDULE, updated.get(PUBLISH_SCHEDULE))
 
-            if updates.get(PUBLISH_SCHEDULE) and updates.get('state') != CONTENT_STATE.PUBLISHED:
-                validate_schedule(updated.get(SCHEDULE_SETTINGS, {}).get('utc_{}'.format(PUBLISH_SCHEDULE)))
+            if updates.get(PUBLISH_SCHEDULE) and updates.get("state") != CONTENT_STATE.PUBLISHED:
+                validate_schedule(updated.get(SCHEDULE_SETTINGS, {}).get("utc_{}".format(PUBLISH_SCHEDULE)))
 
             updates[SCHEDULE_SETTINGS] = updated.get(SCHEDULE_SETTINGS, {})
 
@@ -903,12 +1006,12 @@ class ArchiveService(BaseService):
             updates[SCHEDULE_SETTINGS] = updated.get(SCHEDULE_SETTINGS, {})
 
         # Ensure that there are no duplicate categories in the update
-        category_qcodes = [q['qcode'] for q in updates.get('anpa_category', []) or []]
+        category_qcodes = [q["qcode"] for q in updates.get("anpa_category", []) or []]
         if category_qcodes and len(category_qcodes) != len(set(category_qcodes)):
             raise SuperdeskApiError.badRequestError(_("Duplicate category codes are not allowed"))
 
         # Ensure that there are no duplicate subjects in the update
-        subject_qcodes = [format_subj_qcode(q) for q in updates.get('subject', []) or []]
+        subject_qcodes = [format_subj_qcode(q) for q in updates.get("subject", []) or []]
         if subject_qcodes and len(subject_qcodes) != len(set(subject_qcodes)):
             raise SuperdeskApiError.badRequestError(_("Duplicate subjects are not allowed"))
 
@@ -924,9 +1027,9 @@ class ArchiveService(BaseService):
         transtype_metadata(updates, original)
 
         updates[ITEM_OPERATION] = ITEM_UPDATE
-        updates.setdefault('original_creator', original.get('original_creator'))
-        updates['versioncreated'] = utcnow()
-        updates['version_creator'] = str(user.get(config.ID_FIELD)) if user else None
+        updates.setdefault("original_creator", original.get("original_creator"))
+        updates["versioncreated"] = utcnow()
+        updates["version_creator"] = str(user.get(config.ID_FIELD)) if user else None
 
         update_word_count(updates, original)
         update_version(updates, original)
@@ -936,13 +1039,15 @@ class ArchiveService(BaseService):
         set_dateline(updates, original)
 
         # Clear publish_schedule field
-        if updates.get(PUBLISH_SCHEDULE) \
-                and datetime.datetime.fromtimestamp(0).date() == updates.get(PUBLISH_SCHEDULE).date():
+        if (
+            updates.get(PUBLISH_SCHEDULE)
+            and datetime.datetime.fromtimestamp(0).date() == updates.get(PUBLISH_SCHEDULE).date()
+        ):
             updates[PUBLISH_SCHEDULE] = None
             updates[SCHEDULE_SETTINGS] = {}
 
-        if updates.get('force_unlock', False):
-            del updates['force_unlock']
+        if updates.get("force_unlock", False):
+            del updates["force_unlock"]
 
     def get_expired_items(self, expiry_datetime, invalid_only=False):
         """Get the expired items.
@@ -957,23 +1062,20 @@ class ArchiveService(BaseService):
 
         while True:
             req = ParsedRequest()
-            req.sort = 'unique_id'
+            req.sort = "unique_id"
             query = {
-                '$and': [
-                    {'expiry': {'$lte': date_to_str(expiry_datetime)}},
-                    {'$or': [
-                        {'task.desk': {'$ne': None}},
-                        {ITEM_STATE: CONTENT_STATE.SPIKED, 'task.desk': None}
-                    ]}
+                "$and": [
+                    {"expiry": {"$lte": date_to_str(expiry_datetime)}},
+                    {"$or": [{"task.desk": {"$ne": None}}, {ITEM_STATE: CONTENT_STATE.SPIKED, "task.desk": None}]},
                 ]
             }
 
-            query['$and'].append({'unique_id': {'$gt': unique_id}})
+            query["$and"].append({"unique_id": {"$gt": unique_id}})
 
             if invalid_only:
-                query['$and'].append({'expiry_status': 'invalid'})
+                query["$and"].append({"expiry_status": "invalid"})
             else:
-                query['$and'].append({'expiry_status': {'$ne': 'invalid'}})
+                query["$and"].append({"expiry_status": {"$ne": "invalid"}})
 
             req.where = json.dumps(query)
 
@@ -983,7 +1085,7 @@ class ArchiveService(BaseService):
             if not len(items):
                 break
 
-            unique_id = items[-1]['unique_id']
+            unique_id = items[-1]["unique_id"]
             yield items
 
     def _add_desk_metadata(self, updates, original):
@@ -994,7 +1096,7 @@ class ArchiveService(BaseService):
         :param updates: updates to item that should be saved
         :param original: original item version before update
         """
-        return get_resource_service('desks').apply_desk_metadata(updates, original)
+        return get_resource_service("desks").apply_desk_metadata(updates, original)
 
     def handle_mark_user_notifications(self, updates, original, add_activity=True):
         """Notify user when item is marked or unmarked
@@ -1004,23 +1106,30 @@ class ArchiveService(BaseService):
         :param add_activity: flag to decide whether to add notification as activity or not
         """
         marked_user = marked_for_user = None
-        orig_marked_user = original.get('marked_for_user', None)
-        new_marked_user = updates.get('marked_for_user', None)
-        by_user = get_user().get('display_name', get_user().get('username'))
-        user_service = get_resource_service('users')
+        orig_marked_user = original.get("marked_for_user", None)
+        new_marked_user = updates.get("marked_for_user", None)
+        by_user = get_user().get("display_name", get_user().get("username"))
+        user_service = get_resource_service("users")
 
         if new_marked_user:
             marked_user = user_service.find_one(req=None, _id=new_marked_user)
-            marked_for_user = marked_user.get('display_name', marked_user.get('username'))
+            marked_for_user = marked_user.get("display_name", marked_user.get("username"))
 
         if orig_marked_user and not new_marked_user:
             # sent when unmarking user from item
             user_list = [user_service.find_one(req=None, _id=orig_marked_user)]
             message = 'Item "{headline}" has been unmarked by {by_user}.'.format(
-                headline=original.get('headline', original.get('slugline', 'item')), by_user=by_user)
+                headline=original.get("headline", original.get("slugline", "item")), by_user=by_user
+            )
 
-            self._send_mark_user_notifications('item:unmarked', message, resource=self.datasource, item=original,
-                                               user_list=user_list, add_activity=add_activity)
+            self._send_mark_user_notifications(
+                "item:unmarked",
+                message,
+                resource=self.datasource,
+                item=original,
+                user_list=user_list,
+                add_activity=add_activity,
+            )
         elif marked_user and marked_for_user:
             # sent when mark item for user or mark to another user
             user_list = [marked_user]
@@ -1028,15 +1137,24 @@ class ArchiveService(BaseService):
                 user_list.append(user_service.find_one(req=None, _id=orig_marked_user))
 
             message = 'Item "{headline}" has been marked for {for_user} by {by_user}.'.format(
-                headline=original.get('headline', original.get('slugline', 'item')), for_user=marked_for_user,
-                by_user=by_user)
+                headline=original.get("headline", original.get("slugline", "item")),
+                for_user=marked_for_user,
+                by_user=by_user,
+            )
 
-            self._send_mark_user_notifications('item:marked', message, resource=self.datasource, item=original,
-                                               user_list=user_list,
-                                               add_activity=add_activity, marked_for_user=marked_for_user)
+            self._send_mark_user_notifications(
+                "item:marked",
+                message,
+                resource=self.datasource,
+                item=original,
+                user_list=user_list,
+                add_activity=add_activity,
+                marked_for_user=marked_for_user,
+            )
 
-    def _send_mark_user_notifications(self, activity_name, msg, resource=None, item=None, user_list=None,
-                                      add_activity=True, **data):
+    def _send_mark_user_notifications(
+        self, activity_name, msg, resource=None, item=None, user_list=None, add_activity=True, **data
+    ):
         """Send notifications on mark or unmark user operation
 
         :param activity_name: Name of the activity
@@ -1048,26 +1166,25 @@ class ArchiveService(BaseService):
         :param data: kwargs
         """
 
-        if item.get('type') == 'text':
-            link_id = item.get('guid', item.get('_id'))
+        if item.get("type") == "text":
+            link_id = item.get("guid", item.get("_id"))
         else:
             # since guid and _id do not match for the item of type picture, audio and video
             # create link using _id instead of guid for media items
             # and item_id for published media items as _id or guid does not match _id in archive for media items
-            link_id = item.get('item_id') if item.get('state') in PUBLISH_STATES else item.get('_id')
+            link_id = item.get("item_id") if item.get("state") in PUBLISH_STATES else item.get("_id")
 
-        client_url = app.config.get('CLIENT_URL', '').rstrip('/')
-        link = '{}/#/workspace?item={}&action=view'.format(client_url, link_id)
+        client_url = app.config.get("CLIENT_URL", "").rstrip("/")
+        link = "{}/#/workspace?item={}&action=view".format(client_url, link_id)
 
         if add_activity:
-            notify_and_add_activity(activity_name, msg,
-                                    resource=resource, item=item,
-                                    user_list=user_list, link=link, **data)
+            notify_and_add_activity(
+                activity_name, msg, resource=resource, item=item, user_list=user_list, link=link, **data
+            )
         # send separate notification for markForUser extension
-        push_notification(activity_name,
-                          item_id=item.get(config.ID_FIELD),
-                          user_list=user_list,
-                          extension='markForUser')
+        push_notification(
+            activity_name, item_id=item.get(config.ID_FIELD), user_list=user_list, extension="markForUser"
+        )
 
     def get_items_chain(self, item):
         """
@@ -1095,12 +1212,12 @@ class ArchiveService(BaseService):
             _item = item
             for _i in range(50):
                 try:
-                    item = self.find_one(req={}, _id=item['translated_from'])
+                    item = self.find_one(req={}, _id=item["translated_from"])
                 except Exception:
                     break
             else:
                 logger.error(
-                    'Failed to retrive an initial item from which item {} was translated from'.format(_item.get('_id'))
+                    "Failed to retrive an initial item from which item {} was translated from".format(_item.get("_id"))
                 )
             return item
 
@@ -1111,32 +1228,31 @@ class ArchiveService(BaseService):
 
         for _i in range(50):
             try:
-                item = self.find_one(req={}, _id=item['rewrite_of'])
+                item = self.find_one(req={}, _id=item["rewrite_of"])
                 # prepend translations + update
                 items_chain = [item, *self.get_item_translations(item), *items_chain]
             except Exception:
                 # `item` is not an update, but it can be a translation
-                if 'translated_from' in item:
+                if "translated_from" in item:
                     translation_item = item
                     item = get_item_translated_from(item)
                     # add item + translations
                     items_chain = [
                         item,
                         *[
-                            i for i in self.get_item_translations(item)
+                            i
+                            for i in self.get_item_translations(item)
                             # `translation_item` was already added into `items_chain` on a previous iteration
-                            if i['_id'] != translation_item['_id']
+                            if i["_id"] != translation_item["_id"]
                         ],
-                        *items_chain
+                        *items_chain,
                     ]
                 else:
                     # `item` is not a translation and not an update, it means that it's an initial
                     break
 
         else:
-            logger.error(
-                'Failed to retrieve the whole items chain for item {}'.format(item.get('_id'))
-            )
+            logger.error("Failed to retrieve the whole items chain for item {}".format(item.get("_id")))
         return items_chain
 
     def get_item_translations(self, item):
@@ -1149,11 +1265,8 @@ class ArchiveService(BaseService):
         """
         translation_items = []
 
-        for translation_item_id in item.get('translations', []):
-            translation_item = self.find_one(
-                req={},
-                _id=translation_item_id
-            )
+        for translation_item_id in item.get("translations", []):
+            translation_item = self.find_one(req={}, _id=translation_item_id)
             translation_items.append(translation_item)
             # get a translation of a translation and so on
             translation_items += self.get_item_translations(translation_item)
@@ -1162,47 +1275,47 @@ class ArchiveService(BaseService):
 
 
 class AutoSaveResource(Resource):
-    endpoint_name = 'archive_autosave'
+    endpoint_name = "archive_autosave"
     item_url = item_url
     schema = get_schema(versioning=True)
-    resource_methods = ['POST']
-    item_methods = ['GET', 'PUT', 'PATCH', 'DELETE']
+    resource_methods = ["POST"]
+    item_methods = ["GET", "PUT", "PATCH", "DELETE"]
     resource_title = endpoint_name
-    privileges = {'POST': 'archive', 'PATCH': 'archive', 'PUT': 'archive', 'DELETE': 'archive'}
+    privileges = {"POST": "archive", "PATCH": "archive", "PUT": "archive", "DELETE": "archive"}
 
 
 class ArchiveSaveService(BaseService):
     def create(self, docs, **kwargs):
         if not docs:
-            raise SuperdeskApiError.notFoundError('Content is missing')
+            raise SuperdeskApiError.notFoundError("Content is missing")
 
         for doc in docs:
             editor_utils.generate_fields(doc)
 
         req = parse_request(self.datasource)
         try:
-            get_component(ItemAutosave).autosave(docs[0]['_id'], docs[0], get_user(required=True), req.if_match)
+            get_component(ItemAutosave).autosave(docs[0]["_id"], docs[0], get_user(required=True), req.if_match)
         except InvalidEtag:
-            raise SuperdeskApiError.preconditionFailedError(_('Client and server etags don\'t match'))
+            raise SuperdeskApiError.preconditionFailedError(_("Client and server etags don't match"))
         except KeyError:
             raise SuperdeskApiError.badRequestError(_("Request for Auto-save must have _id"))
-        return [docs[0]['_id']]
+        return [docs[0]["_id"]]
 
     def on_fetched_item(self, item):
-        item['_type'] = 'archive'
+        item["_type"] = "archive"
         return item
 
 
-superdesk.workflow_state('in_progress')
+superdesk.workflow_state("in_progress")
 superdesk.workflow_action(
-    name='save',
-    include_states=['draft', 'fetched', 'routed', 'submitted', 'scheduled', 'unpublished'],
-    privileges=['archive']
+    name="save",
+    include_states=["draft", "fetched", "routed", "submitted", "scheduled", "unpublished"],
+    privileges=["archive"],
 )
 
-superdesk.workflow_state('submitted')
+superdesk.workflow_state("submitted")
 superdesk.workflow_action(
-    name='move',
-    exclude_states=['ingested', 'spiked', 'on-hold', 'published', 'scheduled', 'killed'],
-    privileges=['archive']
+    name="move",
+    exclude_states=["ingested", "spiked", "on-hold", "published", "scheduled", "killed"],
+    privileges=["archive"],
 )

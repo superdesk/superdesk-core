@@ -11,8 +11,8 @@ from decimal import Decimal
 from . import unit_base
 from flask_babel import lazy_gettext
 
-SQUARE_METER_SYMBOL = 'square meter'
-HECTARE_SYMBOL = 'ha'
+SQUARE_METER_SYMBOL = "square meter"
+HECTARE_SYMBOL = "ha"
 
 
 def convert(acres, precision=0):
@@ -23,7 +23,7 @@ def convert(acres, precision=0):
     """
     acre_to_sqm_rate = Decimal(4046.86)
     symbol = SQUARE_METER_SYMBOL
-    acres_list = acres.split('-')
+    acres_list = acres.split("-")
     square_meter_list = [Decimal(a) * acre_to_sqm_rate for a in acres_list]
 
     if any(s for s in square_meter_list if s > Decimal(10000)):
@@ -33,19 +33,19 @@ def convert(acres, precision=0):
     else:
         square_meter_list = [unit_base.format_converted(s, precision=precision) for s in square_meter_list]
 
-    return '-'.join(square_meter_list), symbol
+    return "-".join(square_meter_list), symbol
 
 
 def acre_to_metric(item, **kwargs):
     """Converts acre values to metric"""
 
-    regex = r'(\d+-?,?\.?\d*)((\s*)|(-))((ac)|([aA]cres?))\b'
+    regex = r"(\d+-?,?\.?\d*)((\s*)|(-))((ac)|([aA]cres?))\b"
     return unit_base.do_conversion(item, convert, unit_base.format_output, regex, match_index=0, value_index=1)
 
 
-name = 'acre_to_metric'
-label = lazy_gettext('Area acres to metric')
+name = "acre_to_metric"
+label = lazy_gettext("Area acres to metric")
 callback = acre_to_metric
-access_type = 'frontend'
-action_type = 'interactive'
-group = lazy_gettext('area')
+access_type = "frontend"
+action_type = "interactive"
+group = lazy_gettext("area")

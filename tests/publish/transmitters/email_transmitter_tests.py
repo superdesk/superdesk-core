@@ -25,30 +25,29 @@ class MockMediaFS:
         self.read = Mock()
         self.read.side_effect = self._read
 
-    name = 'filename'
-    content_type = 'image/jpeg'
+    name = "filename"
+    content_type = "image/jpeg"
 
     def _get(self, id, resource):
         return self
 
     def _read(self):
         dirname = os.path.dirname(os.path.realpath(__file__))
-        fixture = os.path.normpath(os.path.join(dirname, '../fixtures', 'IPTC-PhotometadataRef-Std2017.1.jpg'))
-        with open(fixture, 'rb') as f:
+        fixture = os.path.normpath(os.path.join(dirname, "../fixtures", "IPTC-PhotometadataRef-Std2017.1.jpg"))
+        with open(fixture, "rb") as f:
             return f.read()
 
 
 class MockMail:
-
     def __init__(self):
         self.send = Mock()
         self.send.side_effect = self._send
 
     def _send(self, message):
-        if message.subject != 'Test Subject':
-            raise ValueError('Unexpected Subjet')
+        if message.subject != "Test Subject":
+            raise ValueError("Unexpected Subjet")
         if len(message.attachments) != 1:
-            raise Exception('Wrong number of attachments')
+            raise Exception("Wrong number of attachments")
 
 
 class EmailPublishServiceTest(TestCase):
@@ -67,22 +66,21 @@ class EmailPublishServiceTest(TestCase):
 
     def test_attachment(self):
         queue_item = {
-            'item_id': '123',
-            'destination':
-            {
-                'delivery_type': 'email',
-                'config': {
-                    'media_cid': 'MainImage',
-                    'media_rendition': 'viewImage',
-                    'recipients': 'a@b.c.d',
-                    'attach_media': True,
-                    'watermark': True
+            "item_id": "123",
+            "destination": {
+                "delivery_type": "email",
+                "config": {
+                    "media_cid": "MainImage",
+                    "media_rendition": "viewImage",
+                    "recipients": "a@b.c.d",
+                    "attach_media": True,
+                    "watermark": True,
                 },
-                'name': 'Email',
-                'format': 'Email'
+                "name": "Email",
+                "format": "Email",
             },
-            'formatted_item': '{"message_text": "Test", "message_html": "<p>Test</p>", '
-                              '"message_subject": "Test Subject", "renditions": {"viewImage": {"media": "1234"}}}'
+            "formatted_item": '{"message_text": "Test", "message_html": "<p>Test</p>", '
+            '"message_subject": "Test Subject", "renditions": {"viewImage": {"media": "1234"}}}',
         }
 
         transmitter = EmailPublishService()

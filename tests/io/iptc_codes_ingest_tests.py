@@ -15,7 +15,6 @@ from superdesk.io.commands.update_ingest import process_iptc_codes
 
 
 class IPTCCodesTestCase(TestCase):
-
     def test_unknown_iptc(self):
         """Test if an unknown IPTC code is not causing a crash"""
         item = {

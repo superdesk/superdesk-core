@@ -15,59 +15,86 @@ from superdesk.publish.transmitters.odbc import ODBCPublishService
 
 
 class ODBCTests(TestCase):
-    subscribers = [{"_id": "1", "name": "Test", "subscriber_type": SUBSCRIBER_TYPES.WIRE, "media_type": "media",
-                    "is_active": True, "sequence_num_settings": {"max": 10, "min": 1},
-                    "critical_errors": {"9004": True},
-                    "destinations": [{"name": "AAP IPNEWS", "delivery_type": "odbc", "format": "AAP IPNEWS",
-                                      "config": {"stored_procedure": "InsertNews"}
-                                      }]
-                    }]
+    subscribers = [
+        {
+            "_id": "1",
+            "name": "Test",
+            "subscriber_type": SUBSCRIBER_TYPES.WIRE,
+            "media_type": "media",
+            "is_active": True,
+            "sequence_num_settings": {"max": 10, "min": 1},
+            "critical_errors": {"9004": True},
+            "destinations": [
+                {
+                    "name": "AAP IPNEWS",
+                    "delivery_type": "odbc",
+                    "format": "AAP IPNEWS",
+                    "config": {"stored_procedure": "InsertNews"},
+                }
+            ],
+        }
+    ]
 
-    queue_items = [{"_id": "1", "state": "pending", "content_type": "text", "headline": "test", "unique_name": "#2034",
-                    "publishing_action": "published", "published_seq_num": 4,
-                    "destination": {"name": "AAP IPNEWS", "delivery_type": "odbc", "format": "AAP IPNEWS",
-                                    "config": {"stored_procedure": "InsertNews"}
-                                    },
-                    "formatted_item": {
-                        "ident": "0",
-                        "selector_codes": '3**',
-                        "wordcount": 313,
-                        "texttab": "x",
-                        "originator": "AAP",
-                        "service_level": "a",
-                        "keyword": "ROSS",
-                        "subject": "crime, law and justice",
-                        "category": "a",
-                        "take_key": "Take-that",
-                        "subject_detail": "international court or tribunal",
-                        "subject_reference": "02011001",
-                        "article_text": "THIS IS A TEST PLEASE IGNORE",
-                        "priority": "u",
-                        "headline": "TEST HEADLINE",
-                        "usn": 68147,
-                        "subject_matter": "international law",
-                        "sequence": 117,
-                        "news_item_type": "News",
-                        "author": "",
-                        "genre": "Current",
-                        "fullStory": 1
-                    },
-                    "subscriber_id": "1", "item_id": "1", "item_version": 6
-                    }]
+    queue_items = [
+        {
+            "_id": "1",
+            "state": "pending",
+            "content_type": "text",
+            "headline": "test",
+            "unique_name": "#2034",
+            "publishing_action": "published",
+            "published_seq_num": 4,
+            "destination": {
+                "name": "AAP IPNEWS",
+                "delivery_type": "odbc",
+                "format": "AAP IPNEWS",
+                "config": {"stored_procedure": "InsertNews"},
+            },
+            "formatted_item": {
+                "ident": "0",
+                "selector_codes": "3**",
+                "wordcount": 313,
+                "texttab": "x",
+                "originator": "AAP",
+                "service_level": "a",
+                "keyword": "ROSS",
+                "subject": "crime, law and justice",
+                "category": "a",
+                "take_key": "Take-that",
+                "subject_detail": "international court or tribunal",
+                "subject_reference": "02011001",
+                "article_text": "THIS IS A TEST PLEASE IGNORE",
+                "priority": "u",
+                "headline": "TEST HEADLINE",
+                "usn": 68147,
+                "subject_matter": "international law",
+                "sequence": 117,
+                "news_item_type": "News",
+                "author": "",
+                "genre": "Current",
+                "fullStory": 1,
+            },
+            "subscriber_id": "1",
+            "item_id": "1",
+            "item_version": 6,
+        }
+    ]
 
     def setUp(self):
-        self.subscribers[0]['destinations'][0]['config']['connection_string'] = \
-            superdesk.app.config["ODBC_TEST_CONNECTION_STRING"]
-        self.app.data.insert('subscribers', self.subscribers)
+        self.subscribers[0]["destinations"][0]["config"]["connection_string"] = superdesk.app.config[
+            "ODBC_TEST_CONNECTION_STRING"
+        ]
+        self.app.data.insert("subscribers", self.subscribers)
 
-        self.queue_items[0]['destination']['config']['connection_string'] = \
-            superdesk.app.config["ODBC_TEST_CONNECTION_STRING"]
-        self.app.data.insert('publish_queue', self.queue_items)
+        self.queue_items[0]["destination"]["config"]["connection_string"] = superdesk.app.config[
+            "ODBC_TEST_CONNECTION_STRING"
+        ]
+        self.app.data.insert("publish_queue", self.queue_items)
         init_app(self.app)
 
     def test_transmit(self):
-        if superdesk.app.config['ODBC_PUBLISH']:
-            subscriber = self.app.data.find('subscribers', None, None)[0]
+        if superdesk.app.config["ODBC_PUBLISH"]:
+            subscriber = self.app.data.find("subscribers", None, None)[0]
 
             publish_service = ODBCPublishService()
             ret = publish_service._transmit(self.queue_items[0], subscriber)

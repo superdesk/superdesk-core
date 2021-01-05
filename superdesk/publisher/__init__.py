@@ -15,5 +15,4 @@ Superdesk Web Pubisher specific modules.
 import superdesk
 
 
-superdesk.privilege(name='livesite', label='Livesite Editor',
-                    description='Edit a site live on Web Publisher')
+superdesk.privilege(name="livesite", label="Livesite Editor", description="Edit a site live on Web Publisher")

@@ -14,14 +14,5 @@ from superdesk.resource import Resource
 class MarkedForDesksResource(Resource):
     """Marked for desks Schema"""
 
-    schema = {
-        'marked_desk': {
-            'type': 'string',
-            'required': True
-        },
-        'marked_item': {
-            'type': 'string',
-            'required': True
-        }
-    }
-    privileges = {'POST': 'mark_for_desks'}
+    schema = {"marked_desk": {"type": "string", "required": True}, "marked_item": {"type": "string", "required": True}}
+    privileges = {"POST": "mark_for_desks"}
