@@ -105,9 +105,9 @@ class TranslateService(BaseService):
                 for value in cv['items']:
                     if value.get('name') == 'Presse Canadienne staff':
                         item.setdefault('subject', []).append({
-                                'name': value['name'],
-                                'qcode': value['qcode'],
-                                'scheme': 'destinations',
+                            'name': value['name'],
+                            'qcode': value['qcode'],
+                            'scheme': 'destinations',
                         })
 
         translation_guid = archive_service.duplicate_item(
