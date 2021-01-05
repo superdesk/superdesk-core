@@ -259,7 +259,10 @@ class AppInitializeWithDataCommand(superdesk.Command):
         logger.info('Config: %s', app.config['APP_ABSPATH'])
 
         # create indexes in mongo
-        app.init_indexes()
+        # We can safely ignore duplicate key errors as this only affects performance
+        # As we want the rest of this command to still execute
+        app.init_indexes(ignore_duplicate_keys=True)
+
         # put mapping to elastic
         app.data.init_elastic(app)
 

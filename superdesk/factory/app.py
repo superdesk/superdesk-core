@@ -15,6 +15,7 @@ import flask
 import jinja2
 import importlib
 import superdesk
+import logging
 
 from flask_mail import Mail
 from eve.auth import TokenAuth
@@ -23,6 +24,7 @@ from eve.render import send_response
 from flask_babel import Babel
 from flask import g
 from babel import parse_locale
+from pymongo.errors import DuplicateKeyError
 
 from superdesk.celery_app import init_celery
 from superdesk.datalayer import SuperdeskDataLayer  # noqa
@@ -34,6 +36,8 @@ from superdesk.validator import SuperdeskValidator
 from superdesk.json_utils import SuperdeskJSONEncoder
 
 SUPERDESK_PATH = os.path.abspath(os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
+
+logger = logging.getLogger(__name__)
 
 
 def set_error_handlers(app):
@@ -78,7 +82,7 @@ class SuperdeskEve(eve.Eve):
                                  (self.__class__.__name__, name))
         return super(SuperdeskEve, self).__getattr__(name)
 
-    def init_indexes(self):
+    def init_indexes(self, ignore_duplicate_keys=False):
         for resource, resource_config in self.config['DOMAIN'].items():
             mongo_indexes = resource_config.get('mongo_indexes__init')
             if not mongo_indexes:
@@ -93,8 +97,18 @@ class SuperdeskEve(eve.Eve):
                     index_options = {}
 
                 # index creation in background
-                index_options['background'] = True
-                create_index(self, resource, name, list_of_keys, index_options)
+                index_options.setdefault('background', True)
+
+                try:
+                    create_index(self, resource, name, list_of_keys, index_options)
+                except DuplicateKeyError as err:
+                    # Duplicate key for unique indexes are generally caused by invalid documents in the collection
+                    # such as multiple documents not having a value for the attribute used for the index
+                    # Log the error so it can be diagnosed and fixed
+                    logger.exception(err)
+
+                    if not ignore_duplicate_keys:
+                        raise
 
 
 def get_app(config=None, media_storage=None, config_object=None, init_elastic=None):
