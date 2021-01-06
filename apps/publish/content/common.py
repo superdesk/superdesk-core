@@ -16,7 +16,6 @@ from copy import copy
 from copy import deepcopy
 from functools import partial
 from flask import current_app as app
-from eve.utils import ParsedRequest
 
 from superdesk import get_resource_service
 from apps.content import push_content_notification
@@ -310,12 +309,12 @@ class BasePublishService(BaseService):
         if self.publish_type == ITEM_PUBLISH and updated.get("rewritten_by"):
             rewritten_by = get_resource_service(ARCHIVE).find_one(req=None, _id=updated.get("rewritten_by"))
             if rewritten_by and rewritten_by.get(ITEM_STATE) in PUBLISH_STATES:
-                raise SuperdeskApiError.badRequestError(_("Cannot publish the story after Update is published.!"))
+                raise SuperdeskApiError.badRequestError(_("Cannot publish the story after Update is published."))
 
         if self.publish_type == ITEM_PUBLISH and updated.get("rewrite_of"):
             rewrite_of = get_resource_service(ARCHIVE).find_one(req=None, _id=updated.get("rewrite_of"))
             if rewrite_of and rewrite_of.get(ITEM_STATE) not in PUBLISH_STATES:
-                raise SuperdeskApiError.badRequestError(_("Can't publish update until original story is published.!"))
+                raise SuperdeskApiError.badRequestError(_("Can't publish update until original story is published."))
 
         publish_type = "auto_publish" if updates.get("auto_publish") else self.publish_type
         validate_item = {"act": publish_type, "type": original["type"], "validate": updated}
@@ -370,17 +369,17 @@ class BasePublishService(BaseService):
     def _validate_package(self, package, updates, validation_errors):
         # make sure package is not scheduled or spiked
         if package[ITEM_STATE] in (CONTENT_STATE.SPIKED, CONTENT_STATE.SCHEDULED):
-            validation_errors.append("Package cannot be {}".format(package[ITEM_STATE]))
+            validation_errors.append(_("Package cannot be {state}").format(state=package[ITEM_STATE]))
 
         if package.get(EMBARGO):
-            validation_errors.append("Package cannot have Embargo")
+            validation_errors.append(_("Package cannot have Embargo"))
 
         items = self.package_service.get_residrefs(package)
         if self.publish_type in [ITEM_CORRECT, ITEM_KILL]:
             removed_items, added_items = self._get_changed_items(items, updates)
             # we raise error if correction is done on a empty package. Kill is fine.
             if len(removed_items) == len(items) and len(added_items) == 0 and self.publish_type == ITEM_CORRECT:
-                validation_errors.append(_("Corrected package cannot be empty!"))
+                validation_errors.append(_("Corrected package cannot be empty."))
 
     def raise_if_not_marked_for_publication(self, original):
         if original.get("flags", {}).get("marked_for_not_publication", False):
@@ -646,10 +645,10 @@ class BasePublishService(BaseService):
                 CONTENT_STATE.SPIKED,
                 CONTENT_STATE.SCHEDULED,
             }:
-                validation_errors.append("Item cannot contain associated {} item".format(doc[ITEM_STATE]))
+                validation_errors.append(_("Item cannot contain associated {state} item.").format(state=doc_item_state))
 
             if doc.get(EMBARGO):
-                validation_errors.append("Item cannot have associated items with Embargo")
+                validation_errors.append(_("Item cannot have associated items with Embargo"))
 
             # don't validate items that already have published
             if doc_item_state not in [CONTENT_STATE.PUBLISHED, CONTENT_STATE.CORRECTED]:
@@ -658,7 +657,7 @@ class BasePublishService(BaseService):
                     validate_item["embedded"] = True
                 errors = get_resource_service("validate").post([validate_item], headline=True, fields=True)[0]
                 if errors[0]:
-                    pre_errors = ["Associated item %s %s" % (doc.get("slugline", ""), error) for error in errors[0]]
+                    pre_errors = [_("Associated item {name} {error}").format(name=doc.get("slugline", ""), error=error) for error in errors[0]]
                     validation_errors.extend(pre_errors)
 
             if config.PUBLISH_ASSOCIATED_ITEMS:
