@@ -108,9 +108,7 @@ class IMatricsTransmitterTestCase(unittest.TestCase):
                         },
                     ],
                 }
-                queue_item = {
-                    "formatted_item": formatter.format(item, subscriber)[0][1]
-                }
+                queue_item = {"formatted_item": formatter.format(item, subscriber)[0][1]}
                 transmitter._transmit(queue_item, subscriber)
                 self.assertEqual(len(responses.calls), 1)
                 self.assertEqual(

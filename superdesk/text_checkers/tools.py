@@ -32,9 +32,9 @@ def import_services(
         module_name = file_path.stem
         if module_name in ("__init__", "base"):
             continue
-        service_mod = import_module(pkg_name + '.' + module_name)
+        service_mod = import_module(pkg_name + "." + module_name)
         for obj_name in dir(service_mod):
-            if obj_name.startswith('__') or obj_name == base_cls.__name__:
+            if obj_name.startswith("__") or obj_name == base_cls.__name__:
                 continue
             obj = getattr(service_mod, obj_name)
             if not isclass(obj):

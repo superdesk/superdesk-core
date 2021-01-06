@@ -15,14 +15,14 @@ def validate(item, **kwargs):
     """Checks if item has take_key value"""
 
     # validation
-    if not item.get('anpa_take_key', '').strip():
-        raise KeyError('Take key cannot be empty!')
+    if not item.get("anpa_take_key", "").strip():
+        raise KeyError("Take key cannot be empty!")
 
     return item
 
 
-name = 'take_key_validator'
-label = lazy_gettext('validate take key')
+name = "take_key_validator"
+label = lazy_gettext("validate take key")
 callback = validate
-access_type = 'backend'
-action_type = 'direct'
+access_type = "backend"
+action_type = "direct"

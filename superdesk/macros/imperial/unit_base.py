@@ -26,12 +26,12 @@ def format_converted(converted_value, precision):
         precision += 1
         rounded = round(converted_value, precision)
 
-    return '{0:,}'.format(round(converted_value, precision))
+    return "{0:,}".format(round(converted_value, precision))
 
 
 def format_output(original, converted, symbol):
     """Returns the replacement string for the given original value"""
-    return '{} ({} {})'.format(original, converted, symbol)
+    return "{} ({} {})".format(original, converted, symbol)
 
 
 def do_conversion(item, converter, formatter, search_param, match_index, value_index):
@@ -50,12 +50,12 @@ def do_conversion(item, converter, formatter, search_param, match_index, value_i
     def convert(match):
         match_item = match.group(match_index)
         from_value = match.group(value_index)
-        multi_values = '-' in from_value and from_value[-1:] != '-'
+        multi_values = "-" in from_value and from_value[-1:] != "-"
         precision = 0
 
         if match_item and from_value:
             if not multi_values:
-                from_value = re.sub(r'[^\d.]', '', from_value)
+                from_value = re.sub(r"[^\d.]", "", from_value)
                 precision = abs(Decimal(from_value).as_tuple().exponent)
             to_value, symbol = converter(from_value, precision=precision)
             diff.setdefault(match_item, formatter(match_item, to_value, symbol))

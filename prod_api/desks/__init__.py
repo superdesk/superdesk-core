@@ -19,5 +19,5 @@ def init_app(app):
     :param app: the API application object
     :type app: `Eve`
     """
-    service = DesksService(datasource='desks', backend=superdesk.get_backend())
-    DesksResource(endpoint_name='desks', app=app, service=service)
+    service = DesksService(datasource="desks", backend=superdesk.get_backend())
+    DesksResource(endpoint_name="desks", app=app, service=service)

@@ -25,37 +25,50 @@ logger = logging.getLogger(__name__)
 
 
 def init_app(app):
-    endpoint_name = 'fetch'
+    endpoint_name = "fetch"
     service = FetchService(endpoint_name, backend=superdesk.get_backend())
     FetchResource(endpoint_name, app=app, service=service)
 
-    endpoint_name = 'duplicate'
+    endpoint_name = "duplicate"
     service = DuplicateService(endpoint_name, backend=superdesk.get_backend())
     DuplicateResource(endpoint_name, app=app, service=service)
 
-    endpoint_name = 'translate'
+    endpoint_name = "translate"
     service = TranslateService(endpoint_name, backend=superdesk.get_backend())
     TranslateResource(endpoint_name, app=app, service=service)
 
-    endpoint_name = 'copy'
+    endpoint_name = "copy"
     service = CopyService(endpoint_name, backend=superdesk.get_backend())
     CopyResource(endpoint_name, app=app, service=service)
 
-    endpoint_name = 'move'
+    endpoint_name = "move"
     service = MoveService(endpoint_name, backend=superdesk.get_backend())
     MoveResource(endpoint_name, app=app, service=service)
 
-    superdesk.privilege(name='fetch', label=lazy_gettext('Fetch Content To a Desk'),
-                        description=lazy_gettext('Fetch Content to a Desk'))
-    superdesk.privilege(name='move', label=lazy_gettext('Move Content to another desk'),
-                        description=lazy_gettext('Move Content to another desk'))
-    superdesk.privilege(name='duplicate', label=lazy_gettext('Duplicate Content within a Desk'),
-                        description=lazy_gettext('Duplicate Content within a Desk'))
-    superdesk.privilege(name='translate', label=lazy_gettext('Translate Content within a Desk'),
-                        description=lazy_gettext('Translate Content within a Desk'))
-    superdesk.privilege(name='send_to_personal', label=lazy_gettext('Send Content to Personal desk'),
-                        description=lazy_gettext('Send Content to Personal desk'))
+    superdesk.privilege(
+        name="fetch", label=lazy_gettext("Fetch Content To a Desk"), description=lazy_gettext("Fetch Content to a Desk")
+    )
+    superdesk.privilege(
+        name="move",
+        label=lazy_gettext("Move Content to another desk"),
+        description=lazy_gettext("Move Content to another desk"),
+    )
+    superdesk.privilege(
+        name="duplicate",
+        label=lazy_gettext("Duplicate Content within a Desk"),
+        description=lazy_gettext("Duplicate Content within a Desk"),
+    )
+    superdesk.privilege(
+        name="translate",
+        label=lazy_gettext("Translate Content within a Desk"),
+        description=lazy_gettext("Translate Content within a Desk"),
+    )
+    superdesk.privilege(
+        name="send_to_personal",
+        label=lazy_gettext("Send Content to Personal desk"),
+        description=lazy_gettext("Send Content to Personal desk"),
+    )
 
-    superdesk.intrinsic_privilege('copy', method=['POST'])
+    superdesk.intrinsic_privilege("copy", method=["POST"])
 
     archive_copy_init_app(app)

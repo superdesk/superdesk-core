@@ -13,6 +13,6 @@ from .workqueue import WorkqueueService, WorkqueueResource
 
 
 def init_app(app):
-    endpoint_name = 'workqueue'
+    endpoint_name = "workqueue"
     service = WorkqueueService(endpoint_name, backend=superdesk.get_backend())
     WorkqueueResource(endpoint_name, app=app, service=service)

@@ -15,25 +15,25 @@ class InvalidFilter(Exception):
         self.operation = operation
 
     def __str__(self):
-        return 'Invalid filter on %s: %s' % (self.operation, filter)
+        return "Invalid filter on %s: %s" % (self.operation, filter)
 
 
 class InvalidEtag(Exception):
     def __str__(self):
-        return 'Client and server etags don\'t match'
+        return "Client and server etags don't match"
 
 
-class Validator():
+class Validator:
     def validate(self, doc):
         raise NotImplementedError()
 
 
-class ValidationError():
+class ValidationError:
     def __init__(self, errors):
         self.errors = errors
 
 
-class BaseModel():
+class BaseModel:
     """This is a basic interface for defining models.
 
     The only requirement is
@@ -146,7 +146,7 @@ class BaseModel():
         self.validate(doc)
         orig = self.find_one(filter)
         if not orig:
-            raise InvalidFilter(filter, 'update')
+            raise InvalidFilter(filter, "update")
         if etag:
             self.validate_etag(orig, etag)
         self.on_update(doc, orig)
@@ -163,7 +163,7 @@ class BaseModel():
         self.validate(doc)
         orig = self.find(filter)
         if orig.count() != 1:
-            raise InvalidFilter(filter, 'replace')
+            raise InvalidFilter(filter, "replace")
 
         orig = list(orig)
 

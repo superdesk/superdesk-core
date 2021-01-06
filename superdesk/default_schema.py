@@ -1,4 +1,3 @@
-
 import superdesk.schema as schema
 
 
@@ -36,21 +35,20 @@ class DefaultSchema(schema.Schema):
     anpa_category = schema.ListField()
 
     #: subject
-    subject = schema.ListField(required=True, mandatory_in_list={'scheme': {}}, schema={
-        'type': 'dict',
-        'schema': {
-            'name': {},
-            'qcode': {},
-            'scheme': {
-                'type': 'string',
-                'required': True,
-                'nullable': True,
-                'allowed': []
+    subject = schema.ListField(
+        required=True,
+        mandatory_in_list={"scheme": {}},
+        schema={
+            "type": "dict",
+            "schema": {
+                "name": {},
+                "qcode": {},
+                "scheme": {"type": "string", "required": True, "nullable": True, "allowed": []},
+                "service": {"nullable": True},
+                "parent": {"nullable": True},
             },
-            'service': {'nullable': True},
-            'parent': {'nullable': True}
-        }
-    })
+        },
+    )
 
     #: company codes
     company_codes = schema.ListField()
@@ -59,14 +57,16 @@ class DefaultSchema(schema.Schema):
     ednote = schema.StringField()
 
     #: authors
-    authors = schema.ListField(schema={
-        'type': 'dict',
-        'schema': {
-            'name': {'type': 'string'},
-            'parent': {'type': 'string'},
-            'role': {'type': 'string'},
+    authors = schema.ListField(
+        schema={
+            "type": "dict",
+            "schema": {
+                "name": {"type": "string"},
+                "parent": {"type": "string"},
+                "role": {"type": "string"},
+            },
         }
-    })
+    )
 
     #: headline
     headline = schema.StringField(maxlength=64)
@@ -110,41 +110,41 @@ DEFAULT_SCHEMA = dict(DefaultSchema)
 
 
 DEFAULT_EDITOR = {
-    'slugline': {'order': 1, 'sdWidth': 'full', 'enabled': True},
-    'keywords': {'order': 2, 'sdWidth': 'full', 'enabled': False},
-    'language': {'order': 3, 'sdWidth': 'half', 'enabled': False},
-    'usageterms': {'order': 4, 'sdWidth': 'full', 'enabled': False},
-    'genre': {'order': 5, 'sdWidth': 'half', 'enabled': True},
-    'anpa_take_key': {'order': 6, 'sdWidth': 'half', 'enabled': False},
-    'place': {'order': 7, 'sdWidth': 'half', 'enabled': True},
-    'priority': {'order': 8, 'sdWidth': 'quarter', 'enabled': True},
-    'urgency': {'order': 9, 'sdWidth': 'quarter', 'enabled': True},
-    'anpa_category': {'order': 10, 'sdWidth': 'full', 'enabled': True},
-    'subject': {'order': 11, 'sdWidth': 'full', 'enabled': True},
-    'company_codes': {'order': 12, 'sdWidth': 'full', 'enabled': False},
-    'ednote': {'order': 13, 'sdWidth': 'full', 'enabled': True},
-    'authors': {'order': 14, 'sdWidth': 'full', 'enabled': True},
-    'headline': {'order': 15, 'formatOptions': [], 'enabled': True},
-    'sms': {'order': 16, 'enabled': False},
-    'abstract': {
-        'order': 17,
-        'formatOptions': ['bold', 'italic', 'underline', 'link'],
-        'editor3': True,
-        'enabled': True
+    "slugline": {"order": 1, "sdWidth": "full", "enabled": True},
+    "keywords": {"order": 2, "sdWidth": "full", "enabled": False},
+    "language": {"order": 3, "sdWidth": "half", "enabled": False},
+    "usageterms": {"order": 4, "sdWidth": "full", "enabled": False},
+    "genre": {"order": 5, "sdWidth": "half", "enabled": True},
+    "anpa_take_key": {"order": 6, "sdWidth": "half", "enabled": False},
+    "place": {"order": 7, "sdWidth": "half", "enabled": True},
+    "priority": {"order": 8, "sdWidth": "quarter", "enabled": True},
+    "urgency": {"order": 9, "sdWidth": "quarter", "enabled": True},
+    "anpa_category": {"order": 10, "sdWidth": "full", "enabled": True},
+    "subject": {"order": 11, "sdWidth": "full", "enabled": True},
+    "company_codes": {"order": 12, "sdWidth": "full", "enabled": False},
+    "ednote": {"order": 13, "sdWidth": "full", "enabled": True},
+    "authors": {"order": 14, "sdWidth": "full", "enabled": True},
+    "headline": {"order": 15, "formatOptions": [], "enabled": True},
+    "sms": {"order": 16, "enabled": False},
+    "abstract": {
+        "order": 17,
+        "formatOptions": ["bold", "italic", "underline", "link"],
+        "editor3": True,
+        "enabled": True,
     },
-    'byline': {'order': 18, 'enabled': True},
-    'dateline': {'order': 19, 'enabled': True},
-    'body_html': {
-        'order': 20,
-        'formatOptions': ['h2', 'bold', 'italic', 'underline', 'quote', 'link', 'embed', 'media'],
-        'cleanPastedHTML': False,
-        'editor3': True,
-        'enabled': True
+    "byline": {"order": 18, "enabled": True},
+    "dateline": {"order": 19, "enabled": True},
+    "body_html": {
+        "order": 20,
+        "formatOptions": ["h2", "bold", "italic", "underline", "quote", "link", "embed", "media"],
+        "cleanPastedHTML": False,
+        "editor3": True,
+        "enabled": True,
     },
-    'footer': {'order': 21, 'enabled': False},
-    'body_footer': {'order': 22, 'enabled': False},
-    'sign_off': {'order': 23, 'enabled': True},
-    'feature_media': {'enabled': True},
-    'media_description': {'enabled': True},
-    'attachments': {'enabled': False},
+    "footer": {"order": 21, "enabled": False},
+    "body_footer": {"order": 22, "enabled": False},
+    "sign_off": {"order": 23, "enabled": True},
+    "feature_media": {"enabled": True},
+    "media_description": {"enabled": True},
+    "attachments": {"enabled": False},
 }

@@ -1,4 +1,3 @@
-
 import bson
 import superdesk
 
@@ -10,23 +9,23 @@ from apps.io.search_ingest import SearchIngestService
 from superdesk.metadata.item import get_schema
 
 
-PROXY_ENDPOINT = 'search_providers_proxy'
+PROXY_ENDPOINT = "search_providers_proxy"
 
 
 class SearchProviderProxyResource(superdesk.Resource):
     schema = {
-        'guid': {'type': 'string', 'required': True},
-        'desk': superdesk.Resource.rel('desks', False, nullable=True),
-        'repo': superdesk.Resource.rel('search_providers', False, nullable=True),
-        'stage': superdesk.Resource.rel('stages', False, nullable=True),
-        'fetch_endpoint': {'type': 'string', 'readonly': True},
-        'search_provider': {'type': 'string', 'readonly': True},
-        '_fetchable': {'type': 'boolean', 'readonly': True},
+        "guid": {"type": "string", "required": True},
+        "desk": superdesk.Resource.rel("desks", False, nullable=True),
+        "repo": superdesk.Resource.rel("search_providers", False, nullable=True),
+        "stage": superdesk.Resource.rel("stages", False, nullable=True),
+        "fetch_endpoint": {"type": "string", "readonly": True},
+        "search_provider": {"type": "string", "readonly": True},
+        "_fetchable": {"type": "boolean", "readonly": True},
     }
     schema.update(get_schema())
 
-    resource_methods = ['GET', 'POST']
-    privileges = {'POST': 'archive'}
+    resource_methods = ["GET", "POST"]
+    privileges = {"POST": "archive"}
 
 
 class SearchProviderProxyService(SearchIngestService):
@@ -39,28 +38,28 @@ class SearchProviderProxyService(SearchIngestService):
 
     def get_provider(self, provider_id=None, req=None):
         if not provider_id:
-            provider_id = req.args.get('repo') if req else request.args.get('repo')
+            provider_id = req.args.get("repo") if req else request.args.get("repo")
         if provider_id is None:
             abort(400)
         try:
             bson.ObjectId(provider_id)
         except bson.errors.InvalidId:
             return provider_id
-        provider = superdesk.get_resource_service('search_providers').find_one(req=None, _id=provider_id)
+        provider = superdesk.get_resource_service("search_providers").find_one(req=None, _id=provider_id)
         if not provider:
             abort(400)
-        if provider.get('is_closed'):
+        if provider.get("is_closed"):
             abort(400)
         return provider
 
     def _get_service(self, provider):
         if isinstance(provider, str):
-            return provider if ',' not in provider and provider else 'search'
-        provider_data = registered_search_providers[provider['search_provider']]
+            return provider if "," not in provider and provider else "search"
+        provider_data = registered_search_providers[provider["search_provider"]]
         try:
-            return provider_data['endpoint']
+            return provider_data["endpoint"]
         except KeyError:
-            return provider_data['class'](provider)
+            return provider_data["class"](provider)
 
     def get(self, req, lookup):
         """Search using provider."""
@@ -69,7 +68,7 @@ class SearchProviderProxyService(SearchIngestService):
         if isinstance(service, str):
             return superdesk.get_resource_service(service).get(req, lookup)
         query = self._get_query(req)
-        params = json.loads(req.args['params']) if req.args.get('params') else {}
+        params = json.loads(req.args["params"]) if req.args.get("params") else {}
         try:
             items = service.find(query, params)
         except TypeError:  # BC
@@ -100,20 +99,20 @@ class SearchProviderProxyService(SearchIngestService):
 
     def fetch_rendition(self, rendition, item):
         """Fetch binary from provider."""
-        provider = self.get_provider(provider_id=item.get('ingest_provider'))
+        provider = self.get_provider(provider_id=item.get("ingest_provider"))
         service = self._get_service(provider)
         if isinstance(service, str):
             return superdesk.get_resource_service(service).fetch_rendition(self, rendition)
-        return service.fetch_file(rendition.get('href'), rendition=rendition, item=item)
+        return service.fetch_file(rendition.get("href"), rendition=rendition, item=item)
 
     def _set_item_defaults(self, item, provider):
         """Add default values to external items."""
         now = utcnow()
-        item.setdefault('_id', item.get('guid') or bson.ObjectId())
-        item.setdefault('_type', 'externalsource')
-        item.setdefault('type', 'picture')
-        item.setdefault('pubstatus', 'usable')
-        item.setdefault('firstcreated', now)
-        item.setdefault('versioncreated', now)
-        item.setdefault('fetch_endpoint', PROXY_ENDPOINT)
-        item.setdefault('ingest_provider', str(provider['_id']))
+        item.setdefault("_id", item.get("guid") or bson.ObjectId())
+        item.setdefault("_type", "externalsource")
+        item.setdefault("type", "picture")
+        item.setdefault("pubstatus", "usable")
+        item.setdefault("firstcreated", now)
+        item.setdefault("versioncreated", now)
+        item.setdefault("fetch_endpoint", PROXY_ENDPOINT)
+        item.setdefault("ingest_provider", str(provider["_id"]))

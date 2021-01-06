@@ -13,17 +13,17 @@ import logging.config
 import yaml
 
 logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger('superdesk')
+logger = logging.getLogger("superdesk")
 
 # set default levels
-logging.getLogger('ldap3').setLevel(logging.WARNING)
-logging.getLogger('kombu').setLevel(logging.WARNING)
-logging.getLogger('elasticsearch').setLevel(logging.ERROR)
+logging.getLogger("ldap3").setLevel(logging.WARNING)
+logging.getLogger("kombu").setLevel(logging.WARNING)
+logging.getLogger("elasticsearch").setLevel(logging.ERROR)
 
-logging.getLogger('apps').setLevel(logging.INFO)
-logging.getLogger('superdesk').setLevel(logging.INFO)
-logging.getLogger('content_api').setLevel(logging.INFO)
-logging.getLogger('superdesk.websockets_comms').setLevel(logging.WARNING)
+logging.getLogger("apps").setLevel(logging.INFO)
+logging.getLogger("superdesk").setLevel(logging.INFO)
+logging.getLogger("content_api").setLevel(logging.INFO)
+logging.getLogger("superdesk.websockets_comms").setLevel(logging.WARNING)
 
 
 def item_msg(msg, item):
@@ -32,7 +32,7 @@ def item_msg(msg, item):
     :param msg: Original message
     :param item: Item object
     """
-    return '{} item={}'.format(msg, str(item.get('_id', item.get('guid'))))
+    return "{} item={}".format(msg, str(item.get("_id", item.get("guid"))))
 
 
 def configure_logging(file_path):
@@ -45,9 +45,9 @@ def configure_logging(file_path):
         return
 
     try:
-        with open(file_path, 'r') as f:
+        with open(file_path, "r") as f:
             logging_dict = yaml.load(f)
 
         logging.config.dictConfig(logging_dict)
     except Exception:
-        logger.warn('Cannot load logging config. File: %s', file_path)
+        logger.warn("Cannot load logging config. File: %s", file_path)

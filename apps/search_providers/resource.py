@@ -15,34 +15,22 @@ from superdesk.utils import required_string
 
 class SearchProviderResource(Resource):
     schema = {
-        'search_provider': {
-            'type': 'string',
-            'required': True,
-            'allowed': allowed_search_providers
+        "search_provider": {"type": "string", "required": True, "allowed": allowed_search_providers},
+        "source": required_string,
+        "name": {"type": "string"},
+        "is_closed": {"type": "boolean", "default": False},
+        "is_default": {"type": "boolean", "default": False},
+        "advanced_search": {
+            "type": "boolean",
+            "default": False,
         },
-        'source': required_string,
-        'name': {'type': 'string'},
-        'is_closed': {
-            'type': 'boolean',
-            'default': False
-        },
-        'is_default': {
-            'type': 'boolean',
-            'default': False
-        },
-        'advanced_search': {
-            'type': 'boolean',
-            'default': False,
-        },
-        'last_item_update': {'type': 'datetime'},
-        'config': {
-            'type': 'dict'
-        }
+        "last_item_update": {"type": "datetime"},
+        "config": {"type": "dict"},
     }
 
-    etag_ignore_fields = ['last_item_update']
+    etag_ignore_fields = ["last_item_update"]
 
-    resource_methods = ['GET', 'POST']
-    item_methods = ['GET', 'PATCH', 'DELETE']
+    resource_methods = ["GET", "POST"]
+    item_methods = ["GET", "PATCH", "DELETE"]
 
-    privileges = {'POST': 'search_providers', 'PATCH': 'search_providers', 'DELETE': 'search_providers'}
+    privileges = {"POST": "search_providers", "PATCH": "search_providers", "DELETE": "search_providers"}

@@ -15,6 +15,7 @@ from typing import Optional, Dict
 from superdesk.resource import Resource
 from superdesk.services import BaseService
 from superdesk import config
+
 try:
     import settings
 except ImportError:
@@ -26,11 +27,11 @@ from importlib_metadata import version as pkg_version, PackageNotFoundError
 
 logger = logging.getLogger(__name__)
 
-GITHUB_TAG_HREF = 'https://github.com/superdesk/{repo}/releases/tag/v{version}'
-GITHUB_COMMIT_HREF = 'https://github.com/superdesk/{package}/commit/{revision}'
-GITHUB_BRANCH_HREF = 'https://github.com/superdesk/{package}/tree/{branch}'
-PYPI_VERSION_HREF = 'https://pypi.org/project/{package}/{version}/'
-NPM_VERSION_HREF = 'https://www.npmjs.com/package/{package}/v/{version}'
+GITHUB_TAG_HREF = "https://github.com/superdesk/{repo}/releases/tag/v{version}"
+GITHUB_COMMIT_HREF = "https://github.com/superdesk/{package}/commit/{revision}"
+GITHUB_BRANCH_HREF = "https://github.com/superdesk/{package}/tree/{branch}"
+PYPI_VERSION_HREF = "https://pypi.org/project/{package}/{version}/"
+NPM_VERSION_HREF = "https://www.npmjs.com/package/{package}/v/{version}"
 
 RE_REV = re.compile(r"\+g(?P<revision>[a-f0-9]+)(\.[0-9]+)?")
 
@@ -69,10 +70,7 @@ class BackendMetaService(BaseService):
         except AttributeError:
             # config may not be initialised (during tests or beginning of the session)
             repo_override = {}
-        return GITHUB_COMMIT_HREF.format(
-            package=repo_override.get(package, package),
-            revision=revision
-        )
+        return GITHUB_COMMIT_HREF.format(package=repo_override.get(package, package), revision=revision)
 
     @classmethod
     def get_superdesk_version(cls) -> Optional[Dict[str, str]]:
@@ -81,9 +79,9 @@ class BackendMetaService(BaseService):
         because superdesk is not installed as a Python package, this works by looking for GIT
         metadata and retrieving the commit version from there
         """
-        git_dir = cls.find_dir('.git')
+        git_dir = cls.find_dir(".git")
         if git_dir is not None:
-            head_path = git_dir / 'HEAD'
+            head_path = git_dir / "HEAD"
             try:
                 with head_path.open() as f:
                     head = f.read()
@@ -112,7 +110,7 @@ class BackendMetaService(BaseService):
             logger.error(f"Can't retrieve package version: {e}")
             return None
         else:
-            semver = '.'.join(version.split('.', 3)[:3])
+            semver = ".".join(version.split(".", 3)[:3])
             data = {
                 "name": package,
                 "version": version,
@@ -131,63 +129,54 @@ class BackendMetaService(BaseService):
             return data
         return None
 
-    def complete_nodemod_ref(
-            self,
-            data: Dict[str, str],
-            package: str,
-            repo: Optional[str] = None
-    ) -> None:
+    def complete_nodemod_ref(self, data: Dict[str, str], package: str, repo: Optional[str] = None) -> None:
         """Complete when possible missing data for a node module version"""
         if not repo:
             repo = package
         try:
-            version = data['version']
+            version = data["version"]
         except KeyError:
             return
         try:
-            commit = version.split('#')[1]
+            commit = version.split("#")[1]
         except IndexError:
-            if 'href' not in data:
-                data['href'] = GITHUB_TAG_HREF.format(repo=repo, version=version)
+            if "href" not in data:
+                data["href"] = GITHUB_TAG_HREF.format(repo=repo, version=version)
         else:
-            if 'href' not in data:
+            if "href" not in data:
                 try:
                     int(version, 16)
-                    data['href'] = GITHUB_COMMIT_HREF.format(package=repo, revision=commit)
+                    data["href"] = GITHUB_COMMIT_HREF.format(package=repo, revision=commit)
                 except ValueError:
-                    data['href'] = GITHUB_BRANCH_HREF.format(package=repo, branch=commit)
+                    data["href"] = GITHUB_BRANCH_HREF.format(package=repo, branch=commit)
 
-    def get_nodemod_version(
-        self,
-        package: str,
-        repo: Optional[str] = None
-    ) -> Optional[Dict[str, str]]:
+    def get_nodemod_version(self, package: str, repo: Optional[str] = None) -> Optional[Dict[str, str]]:
         """Get version data for a Node module"""
         # we get superdesk-client-core version and revision from package.json and package-lock.json
-        client_dir = self.find_dir('client')
+        client_dir = self.find_dir("client")
         if client_dir is not None:
             data = {
                 "name": repo or package,
             }
-            pkg_path = client_dir / 'package.json'
+            pkg_path = client_dir / "package.json"
             try:
                 with pkg_path.open() as f:
                     pkg = json.load(f)
-                data['version'] = pkg['dependencies'][package]
+                data["version"] = pkg["dependencies"][package]
             except (IOError, KeyError):
                 pass
-            pkg_lock_path = client_dir / 'package-lock.json'
+            pkg_lock_path = client_dir / "package-lock.json"
             try:
                 with pkg_lock_path.open() as f:
                     pkg_lock = json.load(f)
-                pkg_ver = pkg_lock['dependencies'][package]['version']
-                if pkg_ver.startswith('github:'):
-                    __, data['revision'] = pkg_ver[8:].split('#')
-                    data['version'] = data['revision']
-                    data['href'] = self.get_commit_href(repo or package, data['revision'])
+                pkg_ver = pkg_lock["dependencies"][package]["version"]
+                if pkg_ver.startswith("github:"):
+                    __, data["revision"] = pkg_ver[8:].split("#")
+                    data["version"] = data["revision"]
+                    data["href"] = self.get_commit_href(repo or package, data["revision"])
                 else:
-                    data['version'] = data['semver'] = pkg_ver
-                    data['href'] = NPM_VERSION_HREF.format(package=package, version=pkg_ver)
+                    data["version"] = data["semver"] = pkg_ver
+                    data["href"] = NPM_VERSION_HREF.format(package=package, version=pkg_ver)
             except (IOError, KeyError):
                 self.complete_nodemod_ref(data, package, repo)
 
@@ -199,18 +188,22 @@ class BackendMetaService(BaseService):
         return None
 
     def on_fetched(self, doc):
-        doc['modules'] = [mod for mod in [
-            self.get_superdesk_version(),
-            self.get_package_version('superdesk-core'),
-            self.get_nodemod_version('superdesk-core', repo='superdesk-client-core'),
-            self.get_package_version('superdesk-planning'),
-            self.get_package_version('superdesk-analytics'),
-            self.get_nodemod_version('superdesk-publisher'),
-        ] if mod is not None]
+        doc["modules"] = [
+            mod
+            for mod in [
+                self.get_superdesk_version(),
+                self.get_package_version("superdesk-core"),
+                self.get_nodemod_version("superdesk-core", repo="superdesk-client-core"),
+                self.get_package_version("superdesk-planning"),
+                self.get_package_version("superdesk-analytics"),
+                self.get_nodemod_version("superdesk-publisher"),
+            ]
+            if mod is not None
+        ]
 
 
 # it may be useful to have the version of installed packages in backend logs
-for package in ('superdesk-core', 'superdesk-planning', 'superdesk-analytics', 'superdesk-published'):
+for package in ("superdesk-core", "superdesk-planning", "superdesk-analytics", "superdesk-published"):
     v_data = BackendMetaService.get_package_version(package)
     if v_data is not None:
         logger.info(f"version of {package!r}: {v_data['version']}")

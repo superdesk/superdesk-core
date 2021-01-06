@@ -18,13 +18,10 @@ from superdesk.utc import utcnow
 from superdesk.errors import SubscriberError, SuperdeskPublishError, PublishQueueError
 
 logger = logging.getLogger(__name__)
-extensions = {
-    'NITF': 'ntf',
-    'XML': 'xml',
-    'NINJS': 'json'}
+extensions = {"NITF": "ntf", "XML": "xml", "NINJS": "json"}
 
 
-class PublishServiceBase():
+class PublishServiceBase:
     """Base publish service class."""
 
     NAME = None
@@ -46,31 +43,31 @@ class PublishServiceBase():
         raise NotImplementedError()
 
     def transmit(self, queue_item):
-        subscriber = get_resource_service('subscribers').find_one(req=None, _id=queue_item['subscriber_id'])
+        subscriber = get_resource_service("subscribers").find_one(req=None, _id=queue_item["subscriber_id"])
 
-        if not subscriber.get('is_active'):
-            raise SubscriberError.subscriber_inactive_error(Exception('Subscriber inactive'), subscriber)
+        if not subscriber.get("is_active"):
+            raise SubscriberError.subscriber_inactive_error(Exception("Subscriber inactive"), subscriber)
         else:
             try:
                 # "formatted_item" is the item as str
                 # "encoded_item" is the bytes version
                 # if "encoded_item_id" exists we use it, else
                 # we fill encoded_item using "formatted_item" and "item_encoding"
-                if 'encoded_item_id' in queue_item:
-                    encoded_item_id = queue_item['encoded_item_id']
-                    queue_item['encoded_item'] = app.storage.get(encoded_item_id).read()
+                if "encoded_item_id" in queue_item:
+                    encoded_item_id = queue_item["encoded_item_id"]
+                    queue_item["encoded_item"] = app.storage.get(encoded_item_id).read()
                 else:
-                    encoding = queue_item.get('item_encoding', 'utf-8')
-                    queue_item['encoded_item'] = queue_item['formatted_item'].encode(encoding, errors='replace')
+                    encoding = queue_item.get("item_encoding", "utf-8")
+                    queue_item["encoded_item"] = queue_item["formatted_item"].encode(encoding, errors="replace")
                 self._transmit(queue_item, subscriber) or []
-                self.update_item_status(queue_item, 'success')
+                self.update_item_status(queue_item, "success")
             except SuperdeskPublishError as error:
-                self.update_item_status(queue_item, 'error', error)
+                self.update_item_status(queue_item, "error", error)
                 self.close_transmitter(subscriber, error)
                 raise error
 
     def transmit_media(self, media, subscriber=None, destination=None):
-        if subscriber and destination and subscriber.get('is_active'):
+        if subscriber and destination and subscriber.get("is_active"):
             return self._transmit_media(media, destination)
 
     def close_transmitter(self, subscriber, error):
@@ -80,30 +77,31 @@ class PublishServiceBase():
         :param error: The error thrown during transmission
         """
 
-        if subscriber.get('critical_errors', {}).get(str(error.code)):
+        if subscriber.get("critical_errors", {}).get(str(error.code)):
             update = {
-                'is_active': False,
-                'last_closed': {
-                    'closed_at': utcnow(),
-                    'message': 'Subscriber made inactive due to critical error: {}'.format(error)
-                }
+                "is_active": False,
+                "last_closed": {
+                    "closed_at": utcnow(),
+                    "message": "Subscriber made inactive due to critical error: {}".format(error),
+                },
             }
 
-            get_resource_service('subscribers').system_update(subscriber[config.ID_FIELD], update, subscriber)
+            get_resource_service("subscribers").system_update(subscriber[config.ID_FIELD], update, subscriber)
 
     def update_item_status(self, queue_item, status, error=None):
         try:
-            item_update = {'state': status}
-            if status == 'in-progress':
-                item_update['transmit_started_at'] = utcnow()
-            elif status == 'success':
-                item_update['completed_at'] = utcnow()
-            elif status == 'error' and error:
-                item_update['error_message'] = '{}:{}'.format(error, str(error.system_exception))
+            item_update = {"state": status}
+            if status == "in-progress":
+                item_update["transmit_started_at"] = utcnow()
+            elif status == "success":
+                item_update["completed_at"] = utcnow()
+            elif status == "error" and error:
+                item_update["error_message"] = "{}:{}".format(error, str(error.system_exception))
 
-            publish_queue_service = superdesk.get_resource_service('publish_queue')
-            queue_id = ObjectId(queue_item.get('_id')) if isinstance(queue_item.get('_id'), str) else queue_item.get(
-                '_id')
+            publish_queue_service = superdesk.get_resource_service("publish_queue")
+            queue_id = (
+                ObjectId(queue_item.get("_id")) if isinstance(queue_item.get("_id"), str) else queue_item.get("_id")
+            )
             publish_queue_service.patch(queue_id, item_update)
         except Exception as ex:
             raise PublishQueueError.item_update_error(ex)
@@ -111,7 +109,7 @@ class PublishServiceBase():
     @classmethod
     def get_file_extension(cls, queue_item):
         try:
-            format_ = queue_item['destination']['format'].upper()
+            format_ = queue_item["destination"]["format"].upper()
         except KeyError:
             pass
         else:
@@ -128,15 +126,16 @@ class PublishServiceBase():
 
     @classmethod
     def get_filename(cls, queue_item):
-        config = queue_item.get('destination', {}).get('config', {})
+        config = queue_item.get("destination", {}).get("config", {})
         # use the file extension from config if it is set otherwise use extension for the format
-        extension = config.get('file_extension') or cls.get_file_extension(queue_item)
+        extension = config.get("file_extension") or cls.get_file_extension(queue_item)
 
-        return '{}-{}-{}.{}'.format(
-            queue_item['item_id'],
-            str(queue_item.get('item_version', '')),
-            str(queue_item.get('published_seq_num', '')),
-            extension).replace(':', '-')
+        return "{}-{}-{}.{}".format(
+            queue_item["item_id"],
+            str(queue_item.get("item_version", "")),
+            str(queue_item.get("published_seq_num", "")),
+            extension,
+        ).replace(":", "-")
 
     @staticmethod
     def register_file_extension(format_, ext):

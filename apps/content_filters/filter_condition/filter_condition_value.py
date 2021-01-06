@@ -8,22 +8,29 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 import re
-from apps.content_filters.filter_condition.filter_condition_operator \
-    import FilterConditionOperatorsEnum, ComparisonOperator, ExistsOperator
+from apps.content_filters.filter_condition.filter_condition_operator import (
+    FilterConditionOperatorsEnum,
+    ComparisonOperator,
+    ExistsOperator,
+)
 
 
 class FilterConditionValue:
 
-    mongo_mapper = {FilterConditionOperatorsEnum.startswith: '^{}',
-                    FilterConditionOperatorsEnum.like: '.*{}.*',
-                    FilterConditionOperatorsEnum.notlike: '.*{}.*',
-                    FilterConditionOperatorsEnum.endswith: '.*{}'}
+    mongo_mapper = {
+        FilterConditionOperatorsEnum.startswith: "^{}",
+        FilterConditionOperatorsEnum.like: ".*{}.*",
+        FilterConditionOperatorsEnum.notlike: ".*{}.*",
+        FilterConditionOperatorsEnum.endswith: ".*{}",
+    }
 
-    elastic_mapper = {FilterConditionOperatorsEnum.startswith: '{}:{}*',
-                      FilterConditionOperatorsEnum.like: '{}:*{}*',
-                      FilterConditionOperatorsEnum.notlike: '{}:*{}*',
-                      FilterConditionOperatorsEnum.endswith: '{}:*{}',
-                      FilterConditionOperatorsEnum.match: '{}:{}'}
+    elastic_mapper = {
+        FilterConditionOperatorsEnum.startswith: "{}:{}*",
+        FilterConditionOperatorsEnum.like: "{}:*{}*",
+        FilterConditionOperatorsEnum.notlike: "{}:*{}*",
+        FilterConditionOperatorsEnum.endswith: "{}:*{}",
+        FilterConditionOperatorsEnum.match: "{}:{}",
+    }
 
     def __init__(self, operator, value):
         self.operator = operator
@@ -54,7 +61,7 @@ class FilterConditionValue:
             return t(self.value), field.get_entity_name()
 
         if self.elastic_regex:
-            return self.elastic_regex.format(field.get_entity_name(), self.value), 'query'
+            return self.elastic_regex.format(field.get_entity_name(), self.value), "query"
         else:
             return self._get_value(field), field.get_entity_name()
 
@@ -63,6 +70,6 @@ class FilterConditionValue:
 
     def _get_value(self, field):
         t = field.get_type()
-        if self.value.find(',') > 0:
-            return [t(x) for x in self.value.strip().split(',')]
+        if self.value.find(",") > 0:
+            return [t(x) for x in self.value.strip().split(",")]
         return [t(self.value)]

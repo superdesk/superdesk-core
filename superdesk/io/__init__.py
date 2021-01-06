@@ -33,44 +33,37 @@ logger = logging.getLogger(__name__)
 
 
 def init_app(app):
-    endpoint_name = 'ingest_providers'
+    endpoint_name = "ingest_providers"
     service = IngestProviderService(endpoint_name, backend=superdesk.get_backend())
     IngestProviderResource(endpoint_name, app=app, service=service)
 
     from .io_errors import IOErrorsService, IOErrorsResource
-    endpoint_name = 'io_errors'
+
+    endpoint_name = "io_errors"
     service = IOErrorsService(endpoint_name, backend=superdesk.get_backend())
     IOErrorsResource(endpoint_name, app=app, service=service)
 
-    endpoint_name = 'ingest'
+    endpoint_name = "ingest"
     service = IngestService(endpoint_name, backend=superdesk.get_backend())
     IngestResource(endpoint_name, app=app, service=service)
 
     superdesk.register_resource(
-        name='feed_parsers_allowed',
-        resource=FeedParserAllowedResource,
-        service=FeedParserAllowedService
+        name="feed_parsers_allowed", resource=FeedParserAllowedResource, service=FeedParserAllowedService
     )
     superdesk.privilege(
-        name='feed_parsers',
-        label='Ingest Feed Parsers',
-        description='User can maintain Ingest Feed Parsers.'
+        name="feed_parsers", label="Ingest Feed Parsers", description="User can maintain Ingest Feed Parsers."
     )
 
     superdesk.register_resource(
-        name='feeding_services_allowed',
-        resource=FeedingServiceAllowedResource,
-        service=FeedingServiceAllowedService
+        name="feeding_services_allowed", resource=FeedingServiceAllowedResource, service=FeedingServiceAllowedService
     )
 
     superdesk.privilege(
-        name='feeding_services',
-        label='Ingest Feed Services',
-        description='User can maintain Ingest Feed Services.'
+        name="feeding_services", label="Ingest Feed Services", description="User can maintain Ingest Feed Services."
     )
 
 
-superdesk.privilege(name='ingest_providers', label='Ingest Channels', description='User can maintain Ingest Channels.')
+superdesk.privilege(name="ingest_providers", label="Ingest Channels", description="User can maintain Ingest Channels.")
 
 
 @celery.task(soft_time_limit=15)

@@ -13,18 +13,29 @@ import superdesk
 
 from superdesk.celery_app import celery
 from superdesk import get_backend, privilege
-from .resource import LegalArchiveResource, LegalArchiveVersionsResource, LegalPublishQueueResource, \
-    LegalArchiveHistoryResource, LEGAL_ARCHIVE_NAME, LEGAL_ARCHIVE_VERSIONS_NAME, \
-    LEGAL_ARCHIVE_HISTORY_NAME, LEGAL_PUBLISH_QUEUE_NAME
-from .service import LegalArchiveService, LegalArchiveVersionsService, LegalPublishQueueService, \
-    LegalArchiveHistoryService
+from .resource import (
+    LegalArchiveResource,
+    LegalArchiveVersionsResource,
+    LegalPublishQueueResource,
+    LegalArchiveHistoryResource,
+    LEGAL_ARCHIVE_NAME,
+    LEGAL_ARCHIVE_VERSIONS_NAME,
+    LEGAL_ARCHIVE_HISTORY_NAME,
+    LEGAL_PUBLISH_QUEUE_NAME,
+)
+from .service import (
+    LegalArchiveService,
+    LegalArchiveVersionsService,
+    LegalPublishQueueService,
+    LegalArchiveHistoryService,
+)
 from .commands import ImportLegalPublishQueueCommand, ImportLegalArchiveCommand  # noqa
 
 logger = logging.getLogger(__name__)
 
 
 def init_app(app):
-    if not app.config['LEGAL_ARCHIVE']:
+    if not app.config["LEGAL_ARCHIVE"]:
         return
 
     endpoint_name = LEGAL_ARCHIVE_NAME
@@ -43,10 +54,10 @@ def init_app(app):
     service = LegalPublishQueueService(endpoint_name, backend=get_backend())
     LegalPublishQueueResource(endpoint_name, app=app, service=service)
 
-    privilege(name=LEGAL_ARCHIVE_NAME, label='Legal Archive', description='Read from legal archive')
+    privilege(name=LEGAL_ARCHIVE_NAME, label="Legal Archive", description="Read from legal archive")
 
-    superdesk.command('legal_publish_queue:import', ImportLegalPublishQueueCommand())
-    superdesk.command('legal_archive:import', ImportLegalArchiveCommand())
+    superdesk.command("legal_publish_queue:import", ImportLegalPublishQueueCommand())
+    superdesk.command("legal_archive:import", ImportLegalArchiveCommand())
 
 
 @celery.task(soft_time_limit=300)

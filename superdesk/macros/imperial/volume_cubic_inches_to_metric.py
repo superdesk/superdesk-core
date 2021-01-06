@@ -11,8 +11,8 @@ from decimal import Decimal
 from . import unit_base
 from flask_babel import lazy_gettext
 
-CUBIC_METER_SYMBOL = 'cubic meter'
-CUBIC_CENTIMETER_SYMBOL = 'cubic centimeter'
+CUBIC_METER_SYMBOL = "cubic meter"
+CUBIC_CENTIMETER_SYMBOL = "cubic centimeter"
 
 
 def convert(cubic_inches, precision=1):
@@ -23,30 +23,31 @@ def convert(cubic_inches, precision=1):
     """
     ci_to_ccm_rate = Decimal(16.3871)
     symbol = CUBIC_CENTIMETER_SYMBOL
-    cubic_inches_list = cubic_inches.split('-')
+    cubic_inches_list = cubic_inches.split("-")
     cubic_centimeter_list = [Decimal(a) * ci_to_ccm_rate for a in cubic_inches_list]
 
     if any(s for s in cubic_centimeter_list if s > Decimal(100000)):
         # if the value is greater than 100000 then convert it to cubic meters
-        cubic_centimeter_list = [unit_base.format_converted((s / Decimal(1000000)), precision=1)
-                                 for s in cubic_centimeter_list]
+        cubic_centimeter_list = [
+            unit_base.format_converted((s / Decimal(1000000)), precision=1) for s in cubic_centimeter_list
+        ]
         symbol = CUBIC_METER_SYMBOL
     else:
         cubic_centimeter_list = [unit_base.format_converted(s, precision=precision) for s in cubic_centimeter_list]
 
-    return '-'.join(cubic_centimeter_list), symbol
+    return "-".join(cubic_centimeter_list), symbol
 
 
 def cubic_inches_to_metric(item, **kwargs):
     """Converts cubic inch values to metric"""
 
-    regex = r'(\d+-?,?\.?\d*)((\s*)|(-))((cu\.?\s*-?in)|(cb\.?\s*-?in)|([cC]ubic\s*-?([iI]nches|[iI]nch|in)))\b'
+    regex = r"(\d+-?,?\.?\d*)((\s*)|(-))((cu\.?\s*-?in)|(cb\.?\s*-?in)|([cC]ubic\s*-?([iI]nches|[iI]nch|in)))\b"
     return unit_base.do_conversion(item, convert, unit_base.format_output, regex, match_index=0, value_index=1)
 
 
-name = 'cubic_inches_to_metric'
-label = lazy_gettext('Volume cubic inches to metric')
+name = "cubic_inches_to_metric"
+label = lazy_gettext("Volume cubic inches to metric")
 callback = cubic_inches_to_metric
-access_type = 'frontend'
-action_type = 'interactive'
-group = lazy_gettext('volume')
+access_type = "frontend"
+action_type = "interactive"
+group = lazy_gettext("volume")

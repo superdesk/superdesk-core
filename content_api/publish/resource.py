@@ -20,8 +20,8 @@ class PublishResource(Resource):
     schema = deepcopy(item_schema)
 
     datasource = {
-        'source': 'items',
-        'search_backend': 'elastic',
+        "source": "items",
+        "search_backend": "elastic",
     }
 
     mongo_prefix = MONGO_PREFIX

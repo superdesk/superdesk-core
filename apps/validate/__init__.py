@@ -18,8 +18,8 @@ logger = logging.getLogger(__name__)
 
 
 def init_app(app):
-    endpoint_name = 'validate'
+    endpoint_name = "validate"
     service = ValidateService(endpoint_name, backend=None)
     ValidateResource(endpoint_name, app=app, service=service)
 
-    superdesk.intrinsic_privilege(resource_name=endpoint_name, method=['POST'])
+    superdesk.intrinsic_privilege(resource_name=endpoint_name, method=["POST"])

@@ -18,6 +18,6 @@ logger = logging.getLogger(__name__)
 
 
 def init_app(app):
-    endpoint_name = 'validators'
+    endpoint_name = "validators"
     service = ValidatorsService(endpoint_name, backend=superdesk.get_backend())
     ValidatorsResource(endpoint_name, app=app, service=service)

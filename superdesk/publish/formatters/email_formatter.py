@@ -44,31 +44,32 @@ class EmailFormatter(Formatter):
 
     def _inject_dateline(self, formatted_article):
         """Inject dateline in article's body_html"""
-        body_html_elem = sd_etree.parse_html(formatted_article.get('body_html', '<p> </p>'))
-        ptag = body_html_elem.find('.//p')
+        body_html_elem = sd_etree.parse_html(formatted_article.get("body_html", "<p> </p>"))
+        ptag = body_html_elem.find(".//p")
         if ptag is not None:
-            ptag.text = formatted_article['dateline']['text'] + ' ' + (ptag.text or '')
-            formatted_article['body_html'] = sd_etree.to_string(body_html_elem)
+            ptag.text = formatted_article["dateline"]["text"] + " " + (ptag.text or "")
+            formatted_article["body_html"] = sd_etree.to_string(body_html_elem)
 
     def format(self, article, subscriber, codes=None):
         formatted_article = deepcopy(article)
-        pub_seq_num = superdesk.get_resource_service('subscribers').generate_sequence_number(subscriber)
+        pub_seq_num = superdesk.get_resource_service("subscribers").generate_sequence_number(subscriber)
         doc = {}
         try:
             if formatted_article.get(FORMAT) == FORMATS.HTML:
-                if formatted_article.get('dateline', {}).get('text'):
+                if formatted_article.get("dateline", {}).get("text"):
                     # If there is a dateline inject it into the body
                     self._inject_dateline(formatted_article)
-                doc['message_html'] = render_template('email_article_body.html', article=formatted_article)
+                doc["message_html"] = render_template("email_article_body.html", article=formatted_article)
             else:
-                doc['message_html'] = None
-            doc['message_text'] = render_template('email_article_body.txt', article=formatted_article)
-            doc['message_subject'] = render_template('email_article_subject.txt', article=formatted_article)
-            doc['renditions'] = ((formatted_article.get('associations', {}) or {}).get('featuremedia', {}) or {}).get(
-                'renditions')
+                doc["message_html"] = None
+            doc["message_text"] = render_template("email_article_body.txt", article=formatted_article)
+            doc["message_subject"] = render_template("email_article_subject.txt", article=formatted_article)
+            doc["renditions"] = ((formatted_article.get("associations", {}) or {}).get("featuremedia", {}) or {}).get(
+                "renditions"
+            )
         except Exception as ex:
             raise FormatterError.EmailFormatterError(ex, FormatterError)
         return [(pub_seq_num, json.dumps(doc))]
 
     def can_format(self, format_type, article):
-        return format_type.lower() == 'email' and article[ITEM_TYPE] == CONTENT_TYPE.TEXT
+        return format_type.lower() == "email" and article[ITEM_TYPE] == CONTENT_TYPE.TEXT

@@ -15,12 +15,11 @@ from superdesk.utils import ListCursor
 
 
 class ItemsVersionsService(BaseService):
-
     def get(self, req, lookup):
-        resource_def = app.config['DOMAIN']['items']
+        resource_def = app.config["DOMAIN"]["items"]
         id_field = versioned_id_field(resource_def)
 
-        lookup = {'$and': [lookup, {'pubstatus': {'$ne': 'canceled'}}]}
+        lookup = {"$and": [lookup, {"pubstatus": {"$ne": "canceled"}}]}
         version_history = list(super().get_from_mongo(req=req, lookup=lookup))
 
         for doc in version_history:
@@ -29,8 +28,7 @@ class ItemsVersionsService(BaseService):
         return ListCursor(version_history)
 
     def find_one(self, req, **lookup):
-        lookup = {'$and': [lookup,
-                           {'pubstatus': {'$ne': 'canceled'}}]}
+        lookup = {"$and": [lookup, {"pubstatus": {"$ne": "canceled"}}]}
         return super().find_one(req, **lookup)
 
     def on_item_deleted(self, document):
@@ -40,4 +38,4 @@ class ItemsVersionsService(BaseService):
 
         :param dict document: Item that has been deleted
         """
-        self.delete(lookup={'_id_document': document['_id']})
+        self.delete(lookup={"_id_document": document["_id"]})

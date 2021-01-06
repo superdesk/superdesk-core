@@ -10,37 +10,27 @@ class StoryList(Story):
 
     def _add_story(self):
         # merge Story attributes
-        story_attributes = self.merge_attributes(
-            self.STORY_DEFAULTS,
-            self._attributes.get('Story', {})
-        )
-        story_attributes.update({'Self': self.self_id})
+        story_attributes = self.merge_attributes(self.STORY_DEFAULTS, self._attributes.get("Story", {}))
+        story_attributes.update({"Self": self.self_id})
         # Story
-        story = etree.SubElement(
-            self._etree,
-            'Story',
-            attrib=story_attributes
-        )
+        story = etree.SubElement(self._etree, "Story", attrib=story_attributes)
         # StoryPreference
         etree.SubElement(
             story,
-            'StoryPreference',
-            attrib=self.merge_attributes(
-                self.STORYPREFERENCE_DEFAULTS,
-                self._attributes.get('StoryPreference', {})
-            )
+            "StoryPreference",
+            attrib=self.merge_attributes(self.STORYPREFERENCE_DEFAULTS, self._attributes.get("StoryPreference", {})),
         )
 
         if self._markup_tag:
             # XMLElement to tag a story
             paragraphstylerange_container = etree.SubElement(
                 story,
-                'XMLElement',
+                "XMLElement",
                 attrib={
-                    'Self': '{}_{}'.format(self.self_id, self._markup_tag.lower()),
-                    'XMLContent': self.self_id,
-                    'MarkupTag': 'XMLTag/{}'.format(self._markup_tag)
-                }
+                    "Self": "{}_{}".format(self.self_id, self._markup_tag.lower()),
+                    "XMLContent": self.self_id,
+                    "MarkupTag": "XMLTag/{}".format(self._markup_tag),
+                },
             )
         else:
             paragraphstylerange_container = story
@@ -48,20 +38,16 @@ class StoryList(Story):
         # ParagraphStyleRange
         paragraphstylerange = etree.SubElement(
             paragraphstylerange_container,
-            'ParagraphStyleRange',
+            "ParagraphStyleRange",
             attrib=self.merge_attributes(
-                self.PARAGRAPHSTYLERANGE_DEFAULTS,
-                self._attributes.get('ParagraphStyleRange', {})
-            )
+                self.PARAGRAPHSTYLERANGE_DEFAULTS, self._attributes.get("ParagraphStyleRange", {})
+            ),
         )
 
         # CharacterStyleRange(s) + <Br />
-        for li in self._element.xpath('.//li'):
-            if paragraphstylerange.find('CharacterStyleRange') is not None:
-                etree.SubElement(
-                    paragraphstylerange,
-                    'Br'
-                )
+        for li in self._element.xpath(".//li"):
+            if paragraphstylerange.find("CharacterStyleRange") is not None:
+                etree.SubElement(paragraphstylerange, "Br")
             paragraphstylerange[:] += self._handle_inline_tags(li)
 
         return story
@@ -76,9 +62,9 @@ class StoryList(Story):
         list_item_length = 0
         list_item_height = 0
 
-        for el in story._etree.xpath('.//ParagraphStyleRange')[0].iterchildren():
+        for el in story._etree.xpath(".//ParagraphStyleRange")[0].iterchildren():
 
-            if el.tag == 'Br':
+            if el.tag == "Br":
                 if list_item_height < 20:
                     list_item_height = 20
                 list_height += list_item_height

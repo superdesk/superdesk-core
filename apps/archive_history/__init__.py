@@ -16,7 +16,7 @@ log = logging.getLogger(__name__)
 
 
 def init_app(app):
-    endpoint_name = 'archive_history'
+    endpoint_name = "archive_history"
 
     service = ArchiveHistoryService(endpoint_name, backend=get_backend())
     ArchiveHistoryResource(endpoint_name, app=app, service=service)

@@ -1,4 +1,3 @@
-
 import redis
 import hermes
 import hermes.backend
@@ -15,7 +14,7 @@ class SuperdeskRedisBackend(hermes.backend.redis.Backend):
 
     def __init__(self, mangler, **kwargs):
         self.mangler = mangler
-        self.client = redis.StrictRedis.from_url(kwargs.pop('url'))
+        self.client = redis.StrictRedis.from_url(kwargs.pop("url"))
         self._options = kwargs
 
 
@@ -24,7 +23,7 @@ class SuperdeskMangler(hermes.Mangler):
 
     def hash(self, value):
         try:
-            encoded_value = value.encode('utf-8')
+            encoded_value = value.encode("utf-8")
         except AttributeError:
             encoded_value = value
         return super().hash(encoded_value)
@@ -49,20 +48,21 @@ class SuperdeskCacheBackend(hermes.backend.AbstractBackend):
     @property
     def _backend(self):
         if not app:
-            raise RuntimeError('You can only use cache within app context.')
+            raise RuntimeError("You can only use cache within app context.")
 
         if not app.cache:
-            cache_url = app.config.get('CACHE_URL', '')
-            if 'redis' in cache_url or 'unix' in cache_url:
+            cache_url = app.config.get("CACHE_URL", "")
+            if "redis" in cache_url or "unix" in cache_url:
                 app.cache = SuperdeskRedisBackend(self.mangler, url=cache_url)
-                logger.info('using redis cache backend')
+                logger.info("using redis cache backend")
             elif cache_url:
                 import hermes.backend.memcached
+
                 app.cache = hermes.backend.memcached.Backend(self.mangler, servers=[cache_url])
-                logger.info('using memcached cache backend')
+                logger.info("using memcached cache backend")
             else:
                 app.cache = hermes.backend.dict.Backend(self.mangler)
-                logger.info('using dict cache backend')
+                logger.info("using dict cache backend")
 
         return app.cache
 

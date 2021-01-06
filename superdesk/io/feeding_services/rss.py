@@ -37,52 +37,66 @@ class RSSFeedingService(HTTPFeedingServiceBase):
     the underlying parser supports them, but for our needs RSS 2.0 is assumed)
     """
 
-    NAME = 'rss'
+    NAME = "rss"
 
-    ERRORS = [IngestApiError.apiAuthError().get_error_description(),
-              IngestApiError.apiNotFoundError().get_error_description(),
-              IngestApiError.apiGeneralError().get_error_description(),
-              ParserError.parseMessageError().get_error_description()]
-
-    label = 'RSS/Atom'
-
-    fields = [
-        {
-            'id': 'url', 'type': 'text', 'label': 'Host',
-            'placeholder': 'RSS Feed URL', 'required': True,
-            'errors': {4001: 'Connection timed out.', 4006: 'URL not found.',
-                       4009: 'Can\'t connect to host.', 1001: 'Can\'t parse the RSS.'}
-        }] + HTTPFeedingServiceBase.AUTH_REQ_FIELDS + [
-        {
-            'id': 'field_aliases', 'type': 'mapping', 'label': 'Content Field Aliases',
-            'add_mapping_label': 'Add alias', 'remove_mapping_label': 'Remove',
-            'empty_label': 'No field aliases defined.',
-            'first_field_options': {
-                'label': 'Content Field Name',
-                'values': ['body_text', 'guid', 'published_parsed', 'summary', 'title', 'updated_parsed']
-            },
-            'second_field_options': {
-                'label': 'Field Alias',
-                'placeholder': 'Enter field alias'
-            }
-        }
+    ERRORS = [
+        IngestApiError.apiAuthError().get_error_description(),
+        IngestApiError.apiNotFoundError().get_error_description(),
+        IngestApiError.apiGeneralError().get_error_description(),
+        ParserError.parseMessageError().get_error_description(),
     ]
+
+    label = "RSS/Atom"
+
+    fields = (
+        [
+            {
+                "id": "url",
+                "type": "text",
+                "label": "Host",
+                "placeholder": "RSS Feed URL",
+                "required": True,
+                "errors": {
+                    4001: "Connection timed out.",
+                    4006: "URL not found.",
+                    4009: "Can't connect to host.",
+                    1001: "Can't parse the RSS.",
+                },
+            }
+        ]
+        + HTTPFeedingServiceBase.AUTH_REQ_FIELDS
+        + [
+            {
+                "id": "field_aliases",
+                "type": "mapping",
+                "label": "Content Field Aliases",
+                "add_mapping_label": "Add alias",
+                "remove_mapping_label": "Remove",
+                "empty_label": "No field aliases defined.",
+                "first_field_options": {
+                    "label": "Content Field Name",
+                    "values": ["body_text", "guid", "published_parsed", "summary", "title", "updated_parsed"],
+                },
+                "second_field_options": {"label": "Field Alias", "placeholder": "Enter field alias"},
+            }
+        ]
+    )
 
     HTTP_AUTH = None
 
-    field_groups = {'auth_data': {'label': 'Authentication Info', 'fields': ['username', 'password']}}
+    field_groups = {"auth_data": {"label": "Authentication Info", "fields": ["username", "password"]}}
 
-    ItemField = namedtuple('ItemField', ['name', 'name_in_data', 'type'])
+    ItemField = namedtuple("ItemField", ["name", "name_in_data", "type"])
 
     item_fields = [
-        ItemField('guid', 'guid', str),
-        ItemField('uri', 'guid', str),
-        ItemField('firstcreated', 'published_parsed', datetime),
-        ItemField('versioncreated', 'updated_parsed', datetime),
-        ItemField('headline', 'title', str),
-        ItemField('abstract', 'summary', str),
-        ItemField('body_html', 'body_text', str),
-        ItemField('byline', 'author', str),
+        ItemField("guid", "guid", str),
+        ItemField("uri", "guid", str),
+        ItemField("firstcreated", "published_parsed", datetime),
+        ItemField("versioncreated", "updated_parsed", datetime),
+        ItemField("headline", "title", str),
+        ItemField("abstract", "summary", str),
+        ItemField("body_html", "body_text", str),
+        ItemField("byline", "author", str),
     ]
     """A list of fields that items created from the ingest data should contain.
 
@@ -95,17 +109,17 @@ class RSSFeedingService(HTTPFeedingServiceBase):
     """
 
     IMG_MIME_TYPES = (
-        'image/gif',
-        'image/jpeg',
-        'image/png',
-        'image/tiff',
+        "image/gif",
+        "image/jpeg",
+        "image/png",
+        "image/tiff",
     )
     """
     Supported MIME types for ingesting external images referenced by the
     RSS entries.
     """
 
-    IMG_FILE_SUFFIXES = ('.gif', '.jpeg', '.jpg', '.png', '.tif', '.tiff')
+    IMG_FILE_SUFFIXES = (".gif", ".jpeg", ".jpg", ".png", ".tif", ".tiff")
     """
     Supported image filename extensions for ingesting (used for the
     <media:thumbnail> tags - they lack the "type" attribute).
@@ -125,10 +139,7 @@ class RSSFeedingService(HTTPFeedingServiceBase):
         :rtype: str
         """
         if self.auth_info:
-            userinfo_part = '{}:{}@'.format(
-                urlquote(self.auth_info['username']),
-                urlquote(self.auth_info['password'])
-            )
+            userinfo_part = "{}:{}@".format(urlquote(self.auth_info["username"]), urlquote(self.auth_info["password"]))
             scheme, netloc, path, query, fragment = urlsplit(url)
             netloc = userinfo_part + netloc
             url = urlunsplit((scheme, netloc, path, query, fragment))
@@ -169,7 +180,7 @@ class RSSFeedingService(HTTPFeedingServiceBase):
         t_provider_updated = t_provider_updated.replace(tzinfo=None)
 
         new_items = []
-        field_aliases = self.config.get('field_aliases')
+        field_aliases = self.config.get("field_aliases")
 
         for entry in data.entries:
             try:
@@ -180,7 +191,7 @@ class RSSFeedingService(HTTPFeedingServiceBase):
                 # missing updated info, so better ingest it
                 pass
 
-            item = self._create_item(entry, field_aliases, provider.get('source', None))
+            item = self._create_item(entry, field_aliases, provider.get("source", None))
             self.localize_timestamps(item)
 
             # If the RSS entry references any images, create picture items from
@@ -207,7 +218,7 @@ class RSSFeedingService(HTTPFeedingServiceBase):
         :raises IngestApiError: if fetching data fails for any reason
             (e.g. authentication error, resource not found, etc.)
         """
-        url = self.config['url']
+        url = self.config["url"]
 
         response = self.get_url(url)
 
@@ -229,22 +240,22 @@ class RSSFeedingService(HTTPFeedingServiceBase):
         """
         img_links = set()
 
-        for link in getattr(rss_entry, 'links', []):
-            if link.get('type') in self.IMG_MIME_TYPES:
-                img_links.add(link['href'])
+        for link in getattr(rss_entry, "links", []):
+            if link.get("type") in self.IMG_MIME_TYPES:
+                img_links.add(link["href"])
 
-        for item in getattr(rss_entry, 'media_thumbnail', []):
-            url = item.get('url', '')
+        for item in getattr(rss_entry, "media_thumbnail", []):
+            url = item.get("url", "")
             if url.endswith(self.IMG_FILE_SUFFIXES):
                 img_links.add(url)
 
-        for item in getattr(rss_entry, 'media_content', []):
-            if item.get('type') in self.IMG_MIME_TYPES:
-                img_links.add(item['url'])
+        for item in getattr(rss_entry, "media_content", []):
+            if item.get("type") in self.IMG_MIME_TYPES:
+                img_links.add(item["url"])
 
         return list(img_links)
 
-    def _create_item(self, data, field_aliases=None, source='source'):
+    def _create_item(self, data, field_aliases=None, source="source"):
         """Create a new content item from RSS feed data.
 
         :param dict data: parsed data of a single feed entry
@@ -271,17 +282,15 @@ class RSSFeedingService(HTTPFeedingServiceBase):
         # parsed data's summary field, that summary should not be used to
         # populate the field it was originally meant for.
         fields_to_consider = (
-            f for f in self.item_fields
-            if (f.name_in_data not in aliased_fields) or
-               (f.name_in_data in aliased_fields and
-                f.name_in_data in field_aliases)
+            f
+            for f in self.item_fields
+            if (f.name_in_data not in aliased_fields)
+            or (f.name_in_data in aliased_fields and f.name_in_data in field_aliases)
         )
 
         utc_now = datetime.utcnow()
         for field in fields_to_consider:
-            data_field_name = field_aliases.get(
-                field.name_in_data, field.name_in_data
-            )
+            data_field_name = field_aliases.get(field.name_in_data, field.name_in_data)
             field_value = data.get(data_field_name)
 
             if (field.type is datetime) and field_value:
@@ -294,36 +303,29 @@ class RSSFeedingService(HTTPFeedingServiceBase):
             # and that tag is parsed differently. If the body_html has not been
             # found in its default data field and is not aliased, try to
             # populate it using the aforementioned content field as a fallback.
-            if (
-                field.name == 'body_html' and
-                not field_value and
-                field.name_in_data not in field_aliases
-            ):
+            if field.name == "body_html" and not field_value and field.name_in_data not in field_aliases:
                 try:
-                    item['body_html'] = data.content[0].value
+                    item["body_html"] = data.content[0].value
                 except Exception:
                     pass  # content either non-existent or parsed differently
 
-        if not data.get('guidislink') and data.get('link'):
-            item['uri'] = data['link']
-            scheme, netloc, path, query, fragment = urlsplit(item['uri'])
-            if data.get('guid'):
-                item['guid'] = generate_tag(domain=netloc, id=data.get('guid'))
+        if not data.get("guidislink") and data.get("link"):
+            item["uri"] = data["link"]
+            scheme, netloc, path, query, fragment = urlsplit(item["uri"])
+            if data.get("guid"):
+                item["guid"] = generate_tag(domain=netloc, id=data.get("guid"))
             else:
-                item['guid'] = generate_tag_from_url(data['link'])
+                item["guid"] = generate_tag_from_url(data["link"])
 
-        if item.get('uri', None):
-            if not item.get('body_html', None):
-                item['body_html'] = ''
-            item['body_html'] = '<p><a href="%s" target="_blank">%s</a></p>' % (item['uri'], source) + item['body_html']
+        if item.get("uri", None):
+            if not item.get("body_html", None):
+                item["body_html"] = ""
+            item["body_html"] = '<p><a href="%s" target="_blank">%s</a></p>' % (item["uri"], source) + item["body_html"]
 
-        item['dateline'] = {
-            'source': source,
-            'date': item.get('firstcreated', item.get('versioncreated'))
-        }
+        item["dateline"] = {"source": source, "date": item.get("firstcreated", item.get("versioncreated"))}
 
-        if not item.get('versioncreated') and item.get('firstcreated'):
-            item['versioncreated'] = item['firstcreated']
+        if not item.get("versioncreated") and item.get("firstcreated"):
+            item["versioncreated"] = item["firstcreated"]
 
         return item
 
@@ -342,15 +344,11 @@ class RSSFeedingService(HTTPFeedingServiceBase):
 
         for image_url in image_links:
             img_item = {
-                'guid': generate_tag_from_url(image_url),
+                "guid": generate_tag_from_url(image_url),
                 ITEM_TYPE: CONTENT_TYPE.PICTURE,
-                'firstcreated': text_item.get('firstcreated'),
-                'versioncreated': text_item.get('versioncreated'),
-                'renditions': {
-                    'baseImage': {
-                        'href': image_url
-                    }
-                }
+                "firstcreated": text_item.get("firstcreated"),
+                "versioncreated": text_item.get("versioncreated"),
+                "renditions": {"baseImage": {"href": image_url}},
             }
             image_items.append(img_item)
 
@@ -374,28 +372,29 @@ class RSSFeedingService(HTTPFeedingServiceBase):
         """
         package = {
             ITEM_TYPE: CONTENT_TYPE.COMPOSITE,
-            'guid': '{}:pkg'.format(text_item['guid']),
-            'firstcreated': text_item['firstcreated'],
-            'versioncreated': text_item['versioncreated'],
-            'headline': text_item.get('headline', ''),
-            'groups': [
+            "guid": "{}:pkg".format(text_item["guid"]),
+            "firstcreated": text_item["firstcreated"],
+            "versioncreated": text_item["versioncreated"],
+            "headline": text_item.get("headline", ""),
+            "groups": [
                 {
-                    'id': 'root',
-                    'role': 'grpRole:NEP',
-                    'refs': [{'idRef': 'main'}],
-                }, {
-                    'id': 'main',
-                    'role': 'main',
-                    'refs': [],
-                }
-            ]
+                    "id": "root",
+                    "role": "grpRole:NEP",
+                    "refs": [{"idRef": "main"}],
+                },
+                {
+                    "id": "main",
+                    "role": "main",
+                    "refs": [],
+                },
+            ],
         }
 
-        item_references = package['groups'][1]['refs']
-        item_references.append({'residRef': text_item['guid']})
+        item_references = package["groups"][1]["refs"]
+        item_references.append({"residRef": text_item["guid"]})
 
         for image in image_items:
-            item_references.append({'residRef': image['guid']})
+            item_references.append({"residRef": image["guid"]})
 
         return package
 

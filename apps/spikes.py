@@ -16,7 +16,7 @@ from superdesk.metadata.item import metadata_schema
 
 
 def init_app(app):
-    endpoint_name = 'spikes'
+    endpoint_name = "spikes"
     service = BaseService(endpoint_name, backend=get_backend())
     SpikesResource(endpoint_name, app=app, service=service)
 
@@ -24,9 +24,9 @@ def init_app(app):
 class SpikesResource(Resource):
     schema = metadata_schema
     datasource = {
-        'source': 'archive',
-        'search_backend': 'elastic',
-        'default_sort': [('expiry', -1)],
-        'elastic_filter': {'term': {'state': 'spiked'}}
+        "source": "archive",
+        "search_backend": "elastic",
+        "default_sort": [("expiry", -1)],
+        "elastic_filter": {"term": {"state": "spiked"}},
     }
-    resource_methods = ['GET']
+    resource_methods = ["GET"]

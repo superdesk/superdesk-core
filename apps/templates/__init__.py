@@ -20,23 +20,25 @@ from flask_babel import lazy_gettext
 
 
 def init_app(app):
-    endpoint_name = 'content_templates'
+    endpoint_name = "content_templates"
     service = ContentTemplatesService(endpoint_name, backend=superdesk.get_backend())
     ContentTemplatesResource(endpoint_name, app=app, service=service)
-    superdesk.privilege(name=CONTENT_TEMPLATE_PRIVILEGE,
-                        label=lazy_gettext('Templates'),
-                        description=lazy_gettext('Create templates'))
+    superdesk.privilege(
+        name=CONTENT_TEMPLATE_PRIVILEGE, label=lazy_gettext("Templates"), description=lazy_gettext("Create templates")
+    )
 
-    superdesk.privilege(name='personal_template',
-                        label=lazy_gettext('Manage other user personal template'),
-                        description=lazy_gettext('Manage other user personal template'))
+    superdesk.privilege(
+        name="personal_template",
+        label=lazy_gettext("Manage other user personal template"),
+        description=lazy_gettext("Manage other user personal template"),
+    )
 
-    endpoint_name = 'content_templates_apply'
+    endpoint_name = "content_templates_apply"
     service = ContentTemplatesApplyService(endpoint_name, backend=superdesk.get_backend())
     ContentTemplatesApplyResource(endpoint_name, app=app, service=service)
 
-    register_jinja_filter('format_datetime', format_datetime_filter)
-    register_jinja_filter('first_paragraph', first_paragraph_filter)
-    register_jinja_filter('get_text', get_text)
+    register_jinja_filter("format_datetime", format_datetime_filter)
+    register_jinja_filter("first_paragraph", first_paragraph_filter)
+    register_jinja_filter("get_text", get_text)
 
     app.on_inserted_content_types += create_template_for_profile

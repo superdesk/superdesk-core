@@ -1,4 +1,3 @@
-
 import superdesk
 
 from superdesk import get_backend
@@ -8,21 +7,26 @@ from .generate import GenerateHighlightsService, GenerateHighlightsResource
 
 
 def init_app(app):
-    endpoint_name = 'highlights'
+    endpoint_name = "highlights"
     service = HighlightsService(endpoint_name, backend=get_backend())
     HighlightsResource(endpoint_name, app=app, service=service)
 
-    endpoint_name = 'marked_for_highlights'
+    endpoint_name = "marked_for_highlights"
     service = MarkedForHighlightsService(endpoint_name, backend=get_backend())
     MarkedForHighlightsResource(endpoint_name, app=app, service=service)
 
-    endpoint_name = 'generate_highlights'
+    endpoint_name = "generate_highlights"
     service = GenerateHighlightsService(endpoint_name, backend=get_backend())
     GenerateHighlightsResource(endpoint_name, app=app, service=service)
 
-    superdesk.privilege(name='highlights_read', label='Highlights - read',
-                        description='Can see a list of highlights.')
-    superdesk.privilege(name='highlights', label='Highlights/Summary List Management',
-                        description='User can manage highlights/summary lists.')
-    superdesk.privilege(name='mark_for_highlights', label='Mark items for Highlights/Summary Lists',
-                        description='User can mark items for Highlights/Summary Lists.')
+    superdesk.privilege(name="highlights_read", label="Highlights - read", description="Can see a list of highlights.")
+    superdesk.privilege(
+        name="highlights",
+        label="Highlights/Summary List Management",
+        description="User can manage highlights/summary lists.",
+    )
+    superdesk.privilege(
+        name="mark_for_highlights",
+        label="Mark items for Highlights/Summary Lists",
+        description="User can mark items for Highlights/Summary Lists.",
+    )

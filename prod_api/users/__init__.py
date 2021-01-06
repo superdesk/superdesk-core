@@ -19,5 +19,5 @@ def init_app(app):
     :param app: the API application object
     :type app: `Eve`
     """
-    service = UsersService(datasource='users', backend=superdesk.get_backend())
-    UsersResource(endpoint_name='users', app=app, service=service)
+    service = UsersService(datasource="users", backend=superdesk.get_backend())
+    UsersResource(endpoint_name="users", app=app, service=service)

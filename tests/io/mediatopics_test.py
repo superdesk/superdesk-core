@@ -15,7 +15,6 @@ from superdesk.io.iptc import subject_codes
 
 
 class MediaTopicsTestCase(unittest.TestCase):
-
     def setUp(self):
         self.topics = MediaTopicsIndex()
 
@@ -28,7 +27,7 @@ class MediaTopicsTestCase(unittest.TestCase):
     def test_get_items(self):
         items = self.topics.get_items()
         for i in items:
-            subject = self.topics.get_subject_code(i.get('qcode'))
+            subject = self.topics.get_subject_code(i.get("qcode"))
             self.assertIsNotNone(subject)
             # print(i.get('qcode'), i.get('name'), '\t---->\t', subject, subject_codes.get(subject))
 
@@ -40,13 +39,13 @@ class MediaTopicsTestCase(unittest.TestCase):
             # print(i, v.get('prefLabel').get('en-GB'), '\t---->\t', subject, subject_codes.get(subject))
 
     def test_media_topic_to_subject(self):
-        subject = self.topics.get_subject_code('medtop:20000070')
-        self.assertEqual(subject, '16004000')
+        subject = self.topics.get_subject_code("medtop:20000070")
+        self.assertEqual(subject, "16004000")
 
     def test_subject_to_media_topic(self):
-        topic = self.topics.get_media_topic('16004000')
-        self.assertEqual(topic, 'medtop:20000070')
+        topic = self.topics.get_media_topic("16004000")
+        self.assertEqual(topic, "medtop:20000070")
 
     def test_get_media_topic_item(self):
-        topic = self.topics.get_media_topic_item('medtop:20000070')
-        self.assertEqual(topic['type'], ['http://www.w3.org/2004/02/skos/core#Concept'])
+        topic = self.topics.get_media_topic_item("medtop:20000070")
+        self.assertEqual(topic["type"], ["http://www.w3.org/2004/02/skos/core#Concept"])

@@ -16,14 +16,12 @@ from apps.products.product_test import ProductTestService, ProductTestResource
 
 
 def init_app(app):
-    endpoint_name = 'products'
+    endpoint_name = "products"
     service = ProductsService(endpoint_name, backend=get_backend())
     ProductsResource(endpoint_name, app=app, service=service)
 
-    endpoint_name = 'product_tests'
-    service = ProductTestService(
-        endpoint_name, backend=superdesk.get_backend())
+    endpoint_name = "product_tests"
+    service = ProductTestService(endpoint_name, backend=superdesk.get_backend())
     ProductTestResource(endpoint_name, app=app, service=service)
 
-    superdesk.privilege(name='products', label='Products Management',
-                        description='User can manage product lists.')
+    superdesk.privilege(name="products", label="Products Management", description="User can manage product lists.")

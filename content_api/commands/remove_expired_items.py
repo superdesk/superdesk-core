@@ -33,30 +33,28 @@ class RemoveExpiredItems(superdesk.Command):
 
     """
 
-    log_msg = ''
+    log_msg = ""
     expiry_days = 0  # by default this should not run
 
-    option_list = [
-        superdesk.Option('--expiry', '-m', dest='expiry_days', required=False)
-    ]
+    option_list = [superdesk.Option("--expiry", "-m", dest="expiry_days", required=False)]
 
     def run(self, expiry_days=None):
         if expiry_days:
             self.expiry_days = int(expiry_days)
-        elif app.settings.get('CONTENT_API_EXPIRY_DAYS'):
-            self.expiry_days = app.settings['CONTENT_API_EXPIRY_DAYS']
+        elif app.settings.get("CONTENT_API_EXPIRY_DAYS"):
+            self.expiry_days = app.settings["CONTENT_API_EXPIRY_DAYS"]
 
         if self.expiry_days == 0:
-            logger.info('Expiry days is set to 0, therefor no items will be removed.')
+            logger.info("Expiry days is set to 0, therefor no items will be removed.")
             return
 
         now = utcnow()
-        self.log_msg = 'Expiry Time: {}'.format(now)
-        logger.info('{} Starting to remove expired content_api items.'.format(self.log_msg))
+        self.log_msg = "Expiry Time: {}".format(now)
+        logger.info("{} Starting to remove expired content_api items.".format(self.log_msg))
 
-        lock_name = get_lock_id('content_api', 'remove_expired')
+        lock_name = get_lock_id("content_api", "remove_expired")
         if not lock(lock_name, expire=600):
-            logger.info('{} Remove expired content_api items task is already running'.format(self.log_msg))
+            logger.info("{} Remove expired content_api items task is already running".format(self.log_msg))
             return
 
         try:
@@ -65,9 +63,9 @@ class RemoveExpiredItems(superdesk.Command):
             unlock(lock_name)
 
         if num_items_removed == 0:
-            logger.info('{} Completed but no items were removed'.format(self.log_msg))
+            logger.info("{} Completed but no items were removed".format(self.log_msg))
         else:
-            logger.info('{} Completed removing {} expired content_api items'.format(self.log_msg, num_items_removed))
+            logger.info("{} Completed removing {} expired content_api items".format(self.log_msg, num_items_removed))
 
     def _remove_expired_items(self, expiry_datetime, expiry_days):
         """Remove expired items from content_api items
@@ -75,32 +73,30 @@ class RemoveExpiredItems(superdesk.Command):
         :param datetime expiry_datetime: the datetime items are to expire
         :param int expiry_days: The number of days an item will be active
         """
-        logger.info('{} Starting to remove expired items.'.format(self.log_msg))
-        items_service = get_resource_service('items')
+        logger.info("{} Starting to remove expired items.".format(self.log_msg))
+        items_service = get_resource_service("items")
 
         num_items_removed = 0
         for expired_items in items_service.get_expired_items(
-                expiry_datetime=expiry_datetime,
-                expiry_days=expiry_days,
-                include_children=False
+            expiry_datetime=expiry_datetime, expiry_days=expiry_days, include_children=False
         ):
             items_to_remove = set()
 
             log_msg_format = "{{'_id': {_id}, '_updated': {_updated}, 'expired_on': {expiry}}}"
             for item in expired_items:
-                item.setdefault('expiry', item['_updated'] + timedelta(days=self.expiry_days))
+                item.setdefault("expiry", item["_updated"] + timedelta(days=self.expiry_days))
                 expiry_msg = log_msg_format.format(**item)
-                logger.info('{} Processing expired item. {}'.format(self.log_msg, expiry_msg))
+                logger.info("{} Processing expired item. {}".format(self.log_msg, expiry_msg))
 
                 for child in self._get_expired_chain(items_service, item, expiry_datetime):
-                    items_to_remove.add(child['_id'])
+                    items_to_remove.add(child["_id"])
 
             if items_to_remove:
-                logger.info('{} Deleting items.: {}'.format(self.log_msg, items_to_remove))
+                logger.info("{} Deleting items.: {}".format(self.log_msg, items_to_remove))
                 num_items_removed += len(items_to_remove)
-                items_service.delete_action(lookup={'_id': {'$in': list(items_to_remove)}})
+                items_service.delete_action(lookup={"_id": {"$in": list(items_to_remove)}})
 
-        logger.info('{} Finished removing expired items from the content_api'.format(self.log_msg))
+        logger.info("{} Finished removing expired items from the content_api".format(self.log_msg))
         return num_items_removed
 
     def _get_expired_chain(self, service, parent, expiry_datetime):
@@ -127,8 +123,8 @@ class RemoveExpiredItems(superdesk.Command):
         :param datetime expiry_datetime: The date and time items should be expired
         :return bool: True if the item has expired, otherwise False
         """
-        item.setdefault('expiry', item['_updated'] + timedelta(days=self.expiry_days))
-        return item.get('expiry') <= expiry_datetime
+        item.setdefault("expiry", item["_updated"] + timedelta(days=self.expiry_days))
+        return item.get("expiry") <= expiry_datetime
 
     def _get_children(self, service, item):
         """Get the list of children to the root item using the ancestors dictionary key
@@ -137,7 +133,7 @@ class RemoveExpiredItems(superdesk.Command):
         :param dict item: The root item to get the children of
         :return list: The list of children for this root item
         """
-        return list(service.find({'ancestors': item['_id']}))
+        return list(service.find({"ancestors": item["_id"]}))
 
 
-superdesk.command('content_api:remove_expired', RemoveExpiredItems())
+superdesk.command("content_api:remove_expired", RemoveExpiredItems())

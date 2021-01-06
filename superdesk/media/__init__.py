@@ -15,10 +15,10 @@ import superdesk
 
 
 def init_app(app):
-    endpoint_name = 'media_references'
+    endpoint_name = "media_references"
     service = BaseService(endpoint_name, backend=superdesk.get_backend())
     MediaReferencesResource(endpoint_name, app=app, service=service)
 
-    endpoint_name = 'media_editor'
+    endpoint_name = "media_editor"
     service = MediaEditorService(endpoint_name, backend=superdesk.get_backend())
     MediaEditorResource(endpoint_name, app=app, service=service)

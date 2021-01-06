@@ -14,11 +14,11 @@ from superdesk.commands.data_updates import DataUpdate
 
 class DataUpdate(DataUpdate):
 
-    resource = 'content_templates'
+    resource = "content_templates"
 
     def forwards(self, mongodb_collection, mongodb_database):
         try:
-            mongodb_collection.drop_index('user_1_template_name_1')
+            mongodb_collection.drop_index("user_1_template_name_1")
         except pymongo.errors.OperationFailure:
             pass
 

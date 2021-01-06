@@ -1,4 +1,3 @@
-
 from unittest import mock
 from datetime import datetime
 from bson import ObjectId
@@ -77,10 +76,10 @@ class SavedSearchesTestCase(TestCase):
                                 "next_report": datetime.strptime("2018-09-10 16:50:00+00", "%Y-%m-%d %H:%M:%S+%f"),
                                 "last_report": datetime.strptime("2018-09-10 16:45:04+00", "%Y-%m-%d %H:%M:%S+%f"),
                             }
-                        ]
+                        ],
                     },
                 },
-            ]
+            ],
         )
 
         with self.app.app_context():

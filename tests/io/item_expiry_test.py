@@ -15,11 +15,10 @@ from superdesk.io.commands.update_ingest import is_not_expired
 
 
 class ItemExpiryTestCase(TestCase):
-
     def test_expiry_no_dateinfo(self):
         self.assertTrue(is_not_expired({}, None))
 
     def test_expiry_overflow(self):
-        item = {'versioncreated': datetime.now()}
+        item = {"versioncreated": datetime.now()}
         delta = timedelta(minutes=999999999999)
         self.assertTrue(is_not_expired(item, delta))

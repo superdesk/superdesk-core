@@ -22,19 +22,19 @@ class RunMacro(superdesk.Command):
     """
 
     option_list = [
-        superdesk.Option('--name', '-n', dest='macro_name', required=True),
-        superdesk.Option('--kwargs', '-k', dest='kwargs', required=False)
+        superdesk.Option("--name", "-n", dest="macro_name", required=True),
+        superdesk.Option("--kwargs", "-k", dest="kwargs", required=False),
     ]
 
     def run(self, macro_name, kwargs):
         kwargs = json.loads(kwargs)
-        macro = superdesk.get_resource_service('macros').get_macro_by_name(macro_name)
+        macro = superdesk.get_resource_service("macros").get_macro_by_name(macro_name)
 
         if not macro:
-            print('Failed to locate macro {}.'.format(macro_name))
+            print("Failed to locate macro {}.".format(macro_name))
             return
 
-        macro['callback'](**kwargs)
+        macro["callback"](**kwargs)
 
 
-superdesk.command('app:run_macro', RunMacro())
+superdesk.command("app:run_macro", RunMacro())
