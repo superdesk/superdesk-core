@@ -613,6 +613,10 @@ class BasePublishService(BaseService):
         if original_item[ITEM_TYPE] == CONTENT_TYPE.COMPOSITE and self.publish_type == ITEM_PUBLISH:
             items.extend(self.package_service.get_residrefs(original_item))
 
+        main_publish_schedule = get_utc_schedule(updates, PUBLISH_SCHEDULE) or get_utc_schedule(
+            original_item, PUBLISH_SCHEDULE
+        )
+
         for item in items:
             orig = None
             if type(item) == dict and item.get(config.ID_FIELD):
@@ -636,16 +640,24 @@ class BasePublishService(BaseService):
             if original_item[ITEM_TYPE] == CONTENT_TYPE.COMPOSITE:
                 self._validate_associated_items(doc, validation_errors=validation_errors)
 
-            # make sure no items are killed or recalled or spiked or scheduled
+            # make sure no items are killed or recalled or spiked
             # using the latest version of the item from archive
             doc_item_state = orig.get(ITEM_STATE, CONTENT_STATE.PUBLISHED)
-            if doc_item_state in {
-                CONTENT_STATE.KILLED,
-                CONTENT_STATE.RECALLED,
-                CONTENT_STATE.SPIKED,
-                CONTENT_STATE.SCHEDULED,
-            }:
+            if (
+                doc_item_state
+                in {
+                    CONTENT_STATE.KILLED,
+                    CONTENT_STATE.RECALLED,
+                    CONTENT_STATE.SPIKED,
+                }
+                or (doc_item_state == CONTENT_STATE.SCHEDULED and not main_publish_schedule)
+            ):
                 validation_errors.append(_("Item cannot contain associated {state} item.").format(state=doc_item_state))
+
+            if doc_item_state == CONTENT_STATE.SCHEDULED:
+                item_schedule = get_utc_schedule(orig, PUBLISH_SCHEDULE)
+                if main_publish_schedule < item_schedule:
+                    validation_errors.append(_("Associated item is scheduled later than current item."))
 
             if doc.get(EMBARGO):
                 validation_errors.append(_("Item cannot have associated items with Embargo"))
@@ -657,7 +669,10 @@ class BasePublishService(BaseService):
                     validate_item["embedded"] = True
                 errors = get_resource_service("validate").post([validate_item], headline=True, fields=True)[0]
                 if errors[0]:
-                    pre_errors = [_("Associated item {name} {error}").format(name=doc.get("slugline", ""), error=error) for error in errors[0]]
+                    pre_errors = [
+                        _("Associated item {name} {error}").format(name=doc.get("slugline", ""), error=error)
+                        for error in errors[0]
+                    ]
                     validation_errors.extend(pre_errors)
 
             if config.PUBLISH_ASSOCIATED_ITEMS:
@@ -871,8 +886,8 @@ class BasePublishService(BaseService):
             schedule_settings = updates.get(SCHEDULE_SETTINGS, original.get(SCHEDULE_SETTINGS, {}))
             publish_schedule = updates.get(PUBLISH_SCHEDULE, original.get(PUBLISH_SCHEDULE))
 
-            associated_item[PUBLISH_SCHEDULE] = publish_schedule
-            associated_item[SCHEDULE_SETTINGS] = schedule_settings
+            associated_item.setdefault(PUBLISH_SCHEDULE, publish_schedule)
+            associated_item.setdefault(SCHEDULE_SETTINGS, schedule_settings)
 
 
 def get_crop(rendition):
