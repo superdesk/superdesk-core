@@ -3,47 +3,7 @@ name: "Test"
 on: [push, pull_request]
 
 jobs:
-
-  mypy:
-
-    runs-on: ubuntu-latest
-
-    strategy:
-      matrix:
-        python-version: [3.6]
-
-    steps:
-    - uses: actions/checkout@v2
-
-    - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v2
-      with:
-        python-version: ${{ matrix.python-version }}
-
-    - name: Install packages
-      run: ./scripts/tests_setup
-      env:
-        SKIP_SERVER_INSTALL: true
-
-    - name: Cache pip
-      uses: actions/cache@v2
-      with:
-        path: ~/.cache/pip
-        key: ${{ runner.os }}-pip-${{ hashFiles('dev-requirements.txt') }}
-        restore-keys: |
-          ${{ runner.os }}-pip
-          ${{ runner.os }}-
-
-    - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip wheel setuptools
-        pip install -r dev-requirements.txt
-
-    - name: Mypy
-      run: mypy .
-
   nose:
-
     runs-on: ubuntu-latest
 
     strategy:
@@ -79,7 +39,6 @@ jobs:
       run: nosetests --logging-level=ERROR
 
   behave:
-
     runs-on: ubuntu-latest
 
     strategy:
