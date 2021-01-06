@@ -379,7 +379,7 @@ class BasePublishService(BaseService):
             removed_items, added_items = self._get_changed_items(items, updates)
             # we raise error if correction is done on a empty package. Kill is fine.
             if len(removed_items) == len(items) and len(added_items) == 0 and self.publish_type == ITEM_CORRECT:
-                validation_errors.append(_("Corrected package cannot be empty."))
+                validation_errors.append(_("Corrected package cannot be empty!"))
 
     def raise_if_not_marked_for_publication(self, original):
         if original.get("flags", {}).get("marked_for_not_publication", False):
