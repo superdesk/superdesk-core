@@ -438,7 +438,7 @@ Feature: Subscribers
 
     When we post to "subscriber_token"
     """
-    {"subscriber": "#subscribers._id#"}
+    {"subscriber": "#subscribers._id#", "expiry_days": 7}
     """
 
     Then we get new resource

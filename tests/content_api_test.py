@@ -293,7 +293,7 @@ class ContentAPITestCase(TestCase):
 
     def test_generate_token_service(self):
         service = superdesk.get_resource_service("subscriber_token")
-        payload = {"subscriber": "foo"}
+        payload = {"subscriber": "foo", "expiry_days": 7}
         ids = service.create([payload])
         token = payload["_id"]
         self.assertEqual("foo", self.capi.auth.check_auth(token, [], "items", "get"))

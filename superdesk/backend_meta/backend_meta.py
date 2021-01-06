@@ -121,7 +121,7 @@ class BackendMetaService(BaseService):
                 revision = rev_match.group("revision")
                 data["revision"] = revision
                 data["href"] = cls.get_commit_href(package, revision)
-            else:
+            elif version == semver:
                 data["href"] = PYPI_VERSION_HREF.format(
                     package=package,
                     version=semver,

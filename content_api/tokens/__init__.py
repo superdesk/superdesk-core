@@ -34,7 +34,7 @@ class SubscriberTokenAuth(TokenAuth):
         if not data:
             return False
         now = utcnow()
-        if data.get("expiry") < now:
+        if data.get("expiry") and data.get("expiry") < now:
             app.data.mongo.remove(TOKEN_RESOURCE, {"_id": token})
             return False
         g.user = str(data.get("subscriber"))
