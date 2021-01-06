@@ -163,7 +163,7 @@ def lock_asset(asset_id):
 
 @assets_bp.route("/sams/assets/unlock/<asset_id>", methods=["PATCH"])
 def unlock_asset(asset_id):
-    docs = {}
+    docs = request.json
     unlock_asset_response = get_sams_client().assets.unlock_asset(
         item_id=asset_id,
         external_user_id=get_user_id(True),
