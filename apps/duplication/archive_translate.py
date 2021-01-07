@@ -84,13 +84,9 @@ class TranslateService(BaseService):
 
         extra_fields = ["translation_id", "translated_from"]
 
-        UPDATE_TRANSLATION_METADATA_MACRO = app.config.get(
-            'UPDATE_TRANSLATION_METADATA_MACRO'
-        )
+        UPDATE_TRANSLATION_METADATA_MACRO = app.config.get("UPDATE_TRANSLATION_METADATA_MACRO")
 
-        if UPDATE_TRANSLATION_METADATA_MACRO and macros_service.get_macro_by_name(
-            UPDATE_TRANSLATION_METADATA_MACRO
-        ):
+        if UPDATE_TRANSLATION_METADATA_MACRO and macros_service.get_macro_by_name(UPDATE_TRANSLATION_METADATA_MACRO):
             macros_service.execute_macro(item, UPDATE_TRANSLATION_METADATA_MACRO)
 
         translation_guid = archive_service.duplicate_item(
