@@ -10,7 +10,6 @@
 
 
 import superdesk
-
 from apps.archive.archive import SOURCE as ARCHIVE
 from apps.content import push_content_notification
 from apps.auth import get_user_id
@@ -28,6 +27,8 @@ from flask import current_app as app
 
 
 package_service = PackageService()
+
+UPDATE_TRANSLATION_METADATA_MACRO = superdesk.app.config.get('UPDATE_TRANSLATION_METADATA_MACRO')
 
 
 class TranslateResource(Resource):
@@ -95,20 +96,8 @@ class TranslateService(BaseService):
 
         extra_fields = ['translation_id', 'translated_from']
 
-        if app.config.get('UPDATE_TRANSLATION_METADATA'):
-            if item.get('anpa_take_key'):
-                item['anpa_take_key'] = '0'
-
-                cv = get_resource_service('vocabularies').find_one(req=None, _id='destinations')
-                if not cv or not cv.get('items'):
-                    return
-                for value in cv['items']:
-                    if value.get('name') == 'Presse Canadienne staff':
-                        item.setdefault('subject', []).append({
-                            'name': value['name'],
-                            'qcode': value['qcode'],
-                            'scheme': 'destinations',
-                        })
+        if UPDATE_TRANSLATION_METADATA_MACRO and macros_service.get_macro_by_name(UPDATE_TRANSLATION_METADATA_MACRO):
+            macros_service.execute_macro(item, UPDATE_TRANSLATION_METADATA_MACRO)
 
         translation_guid = archive_service.duplicate_item(
             item, extra_fields=extra_fields, state=state, operation='translate'
