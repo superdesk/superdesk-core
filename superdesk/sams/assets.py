@@ -170,3 +170,9 @@ def unlock_asset(asset_id):
         external_session_id=get_auth()['_id'],
         docs=docs)
     return unlock_asset_response.json(), unlock_asset_response.status_code
+
+
+def unlock_asset_by_user(user_id):
+    unlock_asset_response = get_sams_client().assets.unlock_assets_by_user(
+        external_user_id=user_id)
+    return unlock_asset_response.status_code
