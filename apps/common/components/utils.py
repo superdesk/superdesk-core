@@ -18,7 +18,7 @@ def register_component(component):
     @param component: object
         The component object.
     """
-    assert isinstance(component, BaseComponent), 'Invalid component %s' % component
+    assert isinstance(component, BaseComponent), "Invalid component %s" % component
     app_components[component.name()] = component
 
 

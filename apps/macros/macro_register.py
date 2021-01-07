@@ -20,7 +20,7 @@ from flask import current_app
 def load_macros(app=None):
     if not app:
         app = current_app
-    module = app.config.get('MACROS_MODULE', 'superdesk.macros')
+    module = app.config.get("MACROS_MODULE", "superdesk.macros")
     load_module(module)
 
 
@@ -40,39 +40,41 @@ def load_module(module):
             return
 
     m = sys.modules[module]
-    if getattr(m, 'init_app', None):
+    if getattr(m, "init_app", None):
         m.init_app(current_app)
 
     register_macros()
 
 
 def register_macros():
-    macro_modules = [sys.modules[m] for m in sys.modules.keys()
-                     if 'macros.' in m and
-                     'callback' in dir(sys.modules[m]) and
-                     not m.endswith('_test') and
-                     not m.startswith('__')]
+    macro_modules = [
+        sys.modules[m]
+        for m in sys.modules.keys()
+        if "macros." in m and "callback" in dir(sys.modules[m]) and not m.endswith("_test") and not m.startswith("__")
+    ]
     # DO NOT REMOVE: This is a hack introduced long time back to solve the problem
     # where macros were not getting loaded for celery jobs.
-    print(macro_modules, file=open(os.devnull, 'w'))
+    print(macro_modules, file=open(os.devnull, "w"))
 
     for macro_module in macro_modules:
-        replace_type = macro_module.replace_type if hasattr(macro_module, 'replace_type') else 'no-replace'
-        '''
+        replace_type = macro_module.replace_type if hasattr(macro_module, "replace_type") else "no-replace"
+        """
          replace_type:
              'no-replace': no replace action will be performed
              'simple-replace': will detect changes from backend and will perform a replace that will
                  not preserve any style
              'keep-style-replace': will detect changes from backend and will perform a replace that
                  will not preserve any set style
-        '''
-        kwargs = {'name': macro_module.name,
-                  'callback': macro_module.callback,
-                  'access_type': macro_module.access_type,
-                  'action_type': macro_module.action_type,
-                  'replace_type': replace_type}
+        """
+        kwargs = {
+            "name": macro_module.name,
+            "callback": macro_module.callback,
+            "access_type": macro_module.access_type,
+            "action_type": macro_module.action_type,
+            "replace_type": replace_type,
+        }
 
-        options = ['label', 'order', 'shortcut', 'from_languages', 'to_languages', 'group']
+        options = ["label", "order", "shortcut", "from_languages", "to_languages", "group"]
         for field in options:
             if hasattr(macro_module, field):
                 kwargs[field] = getattr(macro_module, field)
@@ -80,7 +82,7 @@ def register_macros():
         register(**kwargs)
 
 
-class MacroRegister():
+class MacroRegister:
     """Dynamic macros registry.
 
     Will look for new macros whenever macros are used.
@@ -118,7 +120,7 @@ class MacroRegister():
         """
         load_macros()
         for macro in self.macros:
-            if macro.get('name') == name:
+            if macro.get("name") == name:
                 return macro
 
     def register(self, **kwargs):
@@ -130,8 +132,8 @@ class MacroRegister():
         :param shortcut: default client shortcut (witch ctrl)
         :param description: macro description, using callback doctext as default
         """
-        kwargs.setdefault('description', inspect.getdoc(kwargs.get('callback')))
-        self.macros = [macro for macro in self.macros if macro['name'] != kwargs.get('name')]
+        kwargs.setdefault("description", inspect.getdoc(kwargs.get("callback")))
+        self.macros = [macro for macro in self.macros if macro["name"] != kwargs.get("name")]
         self.macros.append(kwargs)
 
 

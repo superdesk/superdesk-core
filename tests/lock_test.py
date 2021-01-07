@@ -1,4 +1,3 @@
-
 import time
 
 from superdesk.tests import TestCase
@@ -6,9 +5,8 @@ from superdesk.lock import lock, unlock, touch
 
 
 class LockTestCase(TestCase):
-
     def test_lock(self):
-        task = 'test'
+        task = "test"
 
         self.assertTrue(lock(task, expire=2))
         self.assertFalse(lock(task))

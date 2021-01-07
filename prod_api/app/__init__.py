@@ -41,17 +41,18 @@ def get_app(config=None):
     :return: a new SuperdeskEve app instance
     """
 
-    app_config = flask.Config('.')
+    app_config = flask.Config(".")
 
     # default config
-    app_config.from_object('prod_api.app.settings')
+    app_config.from_object("prod_api.app.settings")
 
     # https://docs.python-eve.org/en/stable/config.html#domain-configuration
-    app_config.update({'DOMAIN': {'upload': {}}})
+    app_config.update({"DOMAIN": {"upload": {}}})
 
     # override from instance settings module, but only things defined in default config
     try:
         import settings as server_settings
+
         for key in dir(server_settings):
             if key.isupper() and key in app_config:
                 app_config[key] = getattr(server_settings, key)
@@ -63,13 +64,14 @@ def get_app(config=None):
 
     # media storage
     media_storage = SuperdeskGridFSMediaStorage
-    if app_config.get('AMAZON_CONTAINER_NAME'):
+    if app_config.get("AMAZON_CONTAINER_NAME"):
         from superdesk.storage import AmazonMediaStorage
+
         media_storage = AmazonMediaStorage
 
     # auth
     auth = None
-    if app_config['PRODAPI_AUTH_ENABLED']:
+    if app_config["PRODAPI_AUTH_ENABLED"]:
         auth = JWTAuth
 
     app = Eve(
@@ -78,14 +80,14 @@ def get_app(config=None):
         data=SuperdeskDataLayer,
         media=media_storage,
         json_encoder=MongoJSONEncoder,
-        validator=SuperdeskValidator
+        validator=SuperdeskValidator,
     )
 
     app.notification_client = None
 
     set_error_handlers(app)
 
-    for module_name in app.config.get('PRODAPI_INSTALLED_APPS', []):
+    for module_name in app.config.get("PRODAPI_INSTALLED_APPS", []):
         app_module = importlib.import_module(module_name)
         try:
             init_app = app_module.init_app
@@ -99,8 +101,8 @@ def get_app(config=None):
     return app
 
 
-if __name__ == '__main__':
-    host = '0.0.0.0'
-    port = int(os.environ.get('PORT', '5500'))
+if __name__ == "__main__":
+    host = "0.0.0.0"
+    port = int(os.environ.get("PORT", "5500"))
     app = get_app()
     app.run(host=host, port=port, debug=True, use_reloader=True)

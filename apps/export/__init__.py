@@ -14,7 +14,7 @@ import superdesk
 
 
 def init_app(app):
-    endpoint_name = 'export'
+    endpoint_name = "export"
     service = ExportService(endpoint_name, backend=superdesk.get_backend())
     ExportResource(endpoint_name, app=app, service=service)
-    superdesk.privilege(name='content_export', label='Content export', description='Content export')
+    superdesk.privilege(name="content_export", label="Content export", description="Content export")

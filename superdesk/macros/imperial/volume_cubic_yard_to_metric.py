@@ -11,7 +11,7 @@ from decimal import Decimal
 from . import unit_base
 from flask_babel import lazy_gettext
 
-CUBIC_METER_SYMBOL = 'cubic meter'
+CUBIC_METER_SYMBOL = "cubic meter"
 
 
 def convert(cubic_yard, precision=1):
@@ -22,21 +22,21 @@ def convert(cubic_yard, precision=1):
     """
     cy_to_cm_rate = Decimal(0.764555)
     symbol = CUBIC_METER_SYMBOL
-    cubic_yard_list = cubic_yard.split('-')
+    cubic_yard_list = cubic_yard.split("-")
     cubic_meter_list = [unit_base.format_converted(Decimal(a) * cy_to_cm_rate, precision) for a in cubic_yard_list]
-    return '-'.join(cubic_meter_list), symbol
+    return "-".join(cubic_meter_list), symbol
 
 
 def cubic_yard_to_metric(item, **kwargs):
     """Converts cubic yard values to metric"""
 
-    regex = r'(\d+-?,?\.?\d*)((\s*)|(-))((cu\.?\s*-?yds?)|(cb\.?\s*-?yds?)|([cC]ubic\s*-?([yY]ards?|yds?)))\b'
+    regex = r"(\d+-?,?\.?\d*)((\s*)|(-))((cu\.?\s*-?yds?)|(cb\.?\s*-?yds?)|([cC]ubic\s*-?([yY]ards?|yds?)))\b"
     return unit_base.do_conversion(item, convert, unit_base.format_output, regex, match_index=0, value_index=1)
 
 
-name = 'cubic_yard_to_metric'
-label = lazy_gettext('Volume cubic yard to metric')
+name = "cubic_yard_to_metric"
+label = lazy_gettext("Volume cubic yard to metric")
 callback = cubic_yard_to_metric
-access_type = 'frontend'
-action_type = 'interactive'
-group = lazy_gettext('volume')
+access_type = "frontend"
+action_type = "interactive"
+group = lazy_gettext("volume")

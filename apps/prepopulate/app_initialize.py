@@ -34,147 +34,150 @@ Options can be sent to index creation and in this case the last element in the l
 dictionary:
 [[("first_name", pymongo.ASCENDING), ("last_name", pymongo.ASCENDING)], {'sparse': True}]]
 """
-__entities__ = OrderedDict([
-    ('roles', ('roles.json', ['name'], False)),
-    ('users', ('users.json', [], False)),
-    ('stages', ('stages.json', ['desk'], False)),
-    ('desks', ('desks.json', ['incoming_stage'], False)),
-    ('vocabularies', ('vocabularies.json', '', True)),
-    ('validators', ('validators.json', '', True)),
-    ('content_templates', ('content_templates.json', [
-        [('template_name', pymongo.ASCENDING)],
-        [('next_run', pymongo.ASCENDING)],
-    ], False)),
-    ('content_types', ('content_types.json', '', True)),
-    ('published', (None, [
-        [
-            ('expiry', pymongo.ASCENDING),
-            ('_created', pymongo.ASCENDING),
-            ('state', pymongo.ASCENDING)
-        ],
-        [
-            ('item_id', pymongo.ASCENDING),
-            ('state', pymongo.ASCENDING)
-        ],
-        [
-            ('publish_sequence_no', pymongo.ASCENDING)
-        ],
-        [
-            ('queue_state', pymongo.ASCENDING)
-        ]], False)),
-    ('activity', (None, [
-        [
-            ('_created', pymongo.DESCENDING),
-            {'expireAfterSeconds': 86400}
-        ],
-        [
-            ('user', pymongo.ASCENDING),
-            ('_created', pymongo.DESCENDING),
-        ],
-        [
-            ('item', pymongo.ASCENDING),
-            ('read', pymongo.ASCENDING),
-            ('user', pymongo.ASCENDING)
-        ],
-        [
-            ('resource', pymongo.ASCENDING),
-            ('data.provider_id', pymongo.ASCENDING)
-        ]], False)),
-    ('archive', (None, [
-        [
-            ('_updated', pymongo.ASCENDING)
-        ],
-        [
-            ('expiry', pymongo.ASCENDING),
-            ('state', pymongo.ASCENDING)
-        ],
-        [
-            ('type', pymongo.ASCENDING)
-        ],
-        [
-            ('groups.refs.residRef', pymongo.ASCENDING),
-            {'sparse': True}
-        ],
-        [
-            ('schedule_settings.utc_publish_schedule', pymongo.ASCENDING),
-            ('state', pymongo.ASCENDING)
-        ],
-        [
-            ('unique_name', pymongo.ASCENDING)
-        ]], False)),
-    ('archive_versions', (None, [
-        [
-            ('_id_document', pymongo.ASCENDING),
-            ('_current_version', pymongo.ASCENDING)
-        ]], False)),
-    ('ingest', (None, [
-        [
-            ('expiry', pymongo.ASCENDING),
-            ('ingest_provider', pymongo.ASCENDING)
-        ],
-        [
-            ('guid', pymongo.ASCENDING)
-        ]], False)),
-    ('publish_queue', (None, [
-        [
-            ('_created', pymongo.DESCENDING),
-            ('state', pymongo.ASCENDING),
-            ('destination.delivery_type', pymongo.ASCENDING)
-        ],
-        [
-            ('item_id', pymongo.ASCENDING),
-            ('item_version', pymongo.ASCENDING)
-        ],
-        [
-            ('state', pymongo.ASCENDING),
-            ('destination.delivery_type', pymongo.ASCENDING)
-        ],
-        [
-            ('subscriber_id', pymongo.ASCENDING)
-        ],
-        [
-            ('_updated', pymongo.DESCENDING)
-        ],
-        [
-            ('ingest_provider', pymongo.ASCENDING)
-        ]], False)),
-    ('archived', (None, [
-        [
-            ('archived_id', pymongo.ASCENDING),
-            {'unique': True}
-        ],
-        [
-            ('item_id', pymongo.ASCENDING)
-        ],
-    ], False)),
-
-    ('legal_archive', (None, [
-        [('versioncreated', pymongo.DESCENDING)],
-    ], False)),
-
-    ('legal_archive_versions', (None, [
-        [
-            ('_id_document', pymongo.ASCENDING),
-            ('_current_version', pymongo.ASCENDING)
-        ]], False)),
-    ('legal_publish_queue', (None, [
-        [('_updated', pymongo.DESCENDING)]
-    ], False)),
-    ('dictionaries', ('dictionaries.json', '', True)),
-    ('ingest_providers', ('ingest_providers.json', '', True)),
-    ('search_providers', ('search_providers.json', '', True)),
-    ('products', ('products.json', '', True)),
-    ('subscribers', ('subscribers.json', '', True)),
-    ('workspaces', ('workspaces.json', '', True)),
-    ('item_comments', (None, [
-        [('item', pymongo.ASCENDING), ('_created', pymongo.DESCENDING)]
-    ], True)),
-    ('audit', (None, [[('_updated', pymongo.ASCENDING)],
-                      [('_id', pymongo.ASCENDING), ('_updated', pymongo.ASCENDING)]], False)),
-    ('contacts', ('contacts.json', '', False)),
-    ('planning_types', ('planning_types.json', '', True))
-])
-INIT_DATA_PATH = Path(__file__).resolve().parent / 'data_init'
+__entities__ = OrderedDict(
+    [
+        ("roles", ("roles.json", ["name"], False)),
+        ("users", ("users.json", [], False)),
+        ("stages", ("stages.json", ["desk"], False)),
+        ("desks", ("desks.json", ["incoming_stage"], False)),
+        ("vocabularies", ("vocabularies.json", "", True)),
+        ("validators", ("validators.json", "", True)),
+        (
+            "content_templates",
+            (
+                "content_templates.json",
+                [
+                    [("template_name", pymongo.ASCENDING)],
+                    [("next_run", pymongo.ASCENDING)],
+                ],
+                False,
+            ),
+        ),
+        ("content_types", ("content_types.json", "", True)),
+        (
+            "published",
+            (
+                None,
+                [
+                    [("expiry", pymongo.ASCENDING), ("_created", pymongo.ASCENDING), ("state", pymongo.ASCENDING)],
+                    [("item_id", pymongo.ASCENDING), ("state", pymongo.ASCENDING)],
+                    [("publish_sequence_no", pymongo.ASCENDING)],
+                    [("queue_state", pymongo.ASCENDING)],
+                ],
+                False,
+            ),
+        ),
+        (
+            "activity",
+            (
+                None,
+                [
+                    [("_created", pymongo.DESCENDING), {"expireAfterSeconds": 86400}],
+                    [
+                        ("user", pymongo.ASCENDING),
+                        ("_created", pymongo.DESCENDING),
+                    ],
+                    [("item", pymongo.ASCENDING), ("read", pymongo.ASCENDING), ("user", pymongo.ASCENDING)],
+                    [("resource", pymongo.ASCENDING), ("data.provider_id", pymongo.ASCENDING)],
+                ],
+                False,
+            ),
+        ),
+        (
+            "archive",
+            (
+                None,
+                [
+                    [("_updated", pymongo.ASCENDING)],
+                    [("expiry", pymongo.ASCENDING), ("state", pymongo.ASCENDING)],
+                    [("type", pymongo.ASCENDING)],
+                    [("groups.refs.residRef", pymongo.ASCENDING), {"sparse": True}],
+                    [("schedule_settings.utc_publish_schedule", pymongo.ASCENDING), ("state", pymongo.ASCENDING)],
+                    [("unique_name", pymongo.ASCENDING)],
+                ],
+                False,
+            ),
+        ),
+        (
+            "archive_versions",
+            (None, [[("_id_document", pymongo.ASCENDING), ("_current_version", pymongo.ASCENDING)]], False),
+        ),
+        (
+            "ingest",
+            (
+                None,
+                [
+                    [("expiry", pymongo.ASCENDING), ("ingest_provider", pymongo.ASCENDING)],
+                    [("guid", pymongo.ASCENDING)],
+                ],
+                False,
+            ),
+        ),
+        (
+            "publish_queue",
+            (
+                None,
+                [
+                    [
+                        ("_created", pymongo.DESCENDING),
+                        ("state", pymongo.ASCENDING),
+                        ("destination.delivery_type", pymongo.ASCENDING),
+                    ],
+                    [("item_id", pymongo.ASCENDING), ("item_version", pymongo.ASCENDING)],
+                    [("state", pymongo.ASCENDING), ("destination.delivery_type", pymongo.ASCENDING)],
+                    [("subscriber_id", pymongo.ASCENDING)],
+                    [("_updated", pymongo.DESCENDING)],
+                    [("ingest_provider", pymongo.ASCENDING)],
+                ],
+                False,
+            ),
+        ),
+        (
+            "archived",
+            (
+                None,
+                [
+                    [("archived_id", pymongo.ASCENDING), {"unique": True}],
+                    [("item_id", pymongo.ASCENDING)],
+                ],
+                False,
+            ),
+        ),
+        (
+            "legal_archive",
+            (
+                None,
+                [
+                    [("versioncreated", pymongo.DESCENDING)],
+                ],
+                False,
+            ),
+        ),
+        (
+            "legal_archive_versions",
+            (None, [[("_id_document", pymongo.ASCENDING), ("_current_version", pymongo.ASCENDING)]], False),
+        ),
+        ("legal_publish_queue", (None, [[("_updated", pymongo.DESCENDING)]], False)),
+        ("dictionaries", ("dictionaries.json", "", True)),
+        ("ingest_providers", ("ingest_providers.json", "", True)),
+        ("search_providers", ("search_providers.json", "", True)),
+        ("products", ("products.json", "", True)),
+        ("subscribers", ("subscribers.json", "", True)),
+        ("workspaces", ("workspaces.json", "", True)),
+        ("item_comments", (None, [[("item", pymongo.ASCENDING), ("_created", pymongo.DESCENDING)]], True)),
+        (
+            "audit",
+            (
+                None,
+                [[("_updated", pymongo.ASCENDING)], [("_id", pymongo.ASCENDING), ("_updated", pymongo.ASCENDING)]],
+                False,
+            ),
+        ),
+        ("contacts", ("contacts.json", "", False)),
+        ("planning_types", ("planning_types.json", "", True)),
+    ]
+)
+INIT_DATA_PATH = Path(__file__).resolve().parent / "data_init"
 
 
 def get_filepath(filename, path=None):
@@ -190,7 +193,7 @@ def get_filepath(filename, path=None):
         dirs = [path]
     else:
         dirs = [
-            app.config.get('INIT_DATA_PATH', INIT_DATA_PATH),
+            app.config.get("INIT_DATA_PATH", INIT_DATA_PATH),
             INIT_DATA_PATH,
         ]
 
@@ -241,11 +244,11 @@ class AppInitializeWithDataCommand(superdesk.Command):
     """
 
     option_list = [
-        superdesk.Option('--entity-name', '-n', action='append'),
-        superdesk.Option('--full-path', '-p', dest='path'),
-        superdesk.Option('--sample-data', action='store_true'),
-        superdesk.Option('--force', '-f', action='store_true'),
-        superdesk.Option('--init-index-only', '-i', action='store_true'),
+        superdesk.Option("--entity-name", "-n", action="append"),
+        superdesk.Option("--full-path", "-p", dest="path"),
+        superdesk.Option("--sample-data", action="store_true"),
+        superdesk.Option("--force", "-f", action="store_true"),
+        superdesk.Option("--init-index-only", "-i", action="store_true"),
     ]
 
     def run(self, entity_name=None, path=None, sample_data=False, force=False, init_index_only=False):
@@ -257,11 +260,14 @@ class AppInitializeWithDataCommand(superdesk.Command):
         :param bool force: if True, update item even if it has been modified by user
         :param bool init_index_only: if True, it only initializes index only
         """
-        logger.info('Starting data initialization')
-        logger.info('Config: %s', app.config['APP_ABSPATH'])
+        logger.info("Starting data initialization")
+        logger.info("Config: %s", app.config["APP_ABSPATH"])
 
         # create indexes in mongo
-        app.init_indexes()
+        # We can safely ignore duplicate key errors as this only affects performance
+        # As we want the rest of this command to still execute
+        app.init_indexes(ignore_duplicate_keys=True)
+
         # put mapping to elastic
         try:
             app.data.init_elastic(app)
@@ -270,14 +276,14 @@ class AppInitializeWithDataCommand(superdesk.Command):
             logger.warning("Can't update the mapping, please run app:rebuild_elastic_index command.")
 
         if init_index_only:
-            logger.info('Only indexes initialized.')
+            logger.info("Only indexes initialized.")
             return 0
 
         if sample_data:
             if not path:
-                path = INIT_DATA_PATH.parent / 'data_sample'
+                path = INIT_DATA_PATH.parent / "data_sample"
             else:
-                raise ValueError('path and sample_data should not be set at the same time')
+                raise ValueError("path and sample_data should not be set at the same time")
 
         if entity_name:
             if isinstance(entity_name, str):
@@ -294,9 +300,9 @@ class AppInitializeWithDataCommand(superdesk.Command):
                 continue
             except Exception as ex:
                 logger.exception(ex)
-                logger.info('Exception loading entity {} from {}'.format(name, file_name))
+                logger.info("Exception loading entity {} from {}".format(name, file_name))
 
-        logger.info('Data import finished')
+        logger.info("Data import finished")
         return 0
 
     def import_file(self, entity_name, path, file_name, index_params, do_patch=False, force=False):
@@ -317,15 +323,15 @@ class AppInitializeWithDataCommand(superdesk.Command):
         http://api.mongodb.org/python/current/api/pymongo/collection.html
         :param bool do_patch: if True then patch the document else don't patch.
         """
-        logger.info('Process %r', entity_name)
+        logger.info("Process %r", entity_name)
         file_path = file_name and get_filepath(file_name, path)
         if not file_path:
             pass
         elif not file_path.exists():
-            logger.info(' - file not exists: %s', file_path)
+            logger.info(" - file not exists: %s", file_path)
         else:
-            logger.info(' - got file path: %s', file_path)
-            with file_path.open('rt', encoding='utf-8') as app_prepopulation:
+            logger.info(" - got file path: %s", file_path)
+            with file_path.open("rt", encoding="utf-8") as app_prepopulation:
                 service = superdesk.get_resource_service(entity_name)
                 json_data = json.loads(app_prepopulation.read())
                 data = [fillEnvironmentVariables(item) for item in json_data]
@@ -334,41 +340,41 @@ class AppInitializeWithDataCommand(superdesk.Command):
                 existing = service.get_from_mongo(None, {})
                 update_data = True
                 if not do_patch and existing.count() > 0:
-                    logger.info(' - data already exists none will be loaded')
+                    logger.info(" - data already exists none will be loaded")
                     update_data = False
                 elif do_patch and existing.count() > 0:
-                    logger.info(' - data already exists it will be updated')
+                    logger.info(" - data already exists it will be updated")
 
                 if update_data:
                     if do_patch:
                         for item in existing:
                             for loaded_item in data:
-                                if '_id' in loaded_item and loaded_item['_id'] == item['_id']:
+                                if "_id" in loaded_item and loaded_item["_id"] == item["_id"]:
                                     data.remove(loaded_item)
-                                    if force or item.get('init_version', 0) < loaded_item.get('init_version', 0):
+                                    if force or item.get("init_version", 0) < loaded_item.get("init_version", 0):
                                         existing_data.append(loaded_item)
 
                     if data:
                         for item in data:
                             if not item.get(config.ETAG):
-                                item.setdefault(config.ETAG, 'init')
+                                item.setdefault(config.ETAG, "init")
                         service.post(data)
 
                     if existing_data and do_patch:
                         for item in existing_data:
-                            item['_etag'] = 'init'
-                            service.update(item['_id'], item, service.find_one(None, _id=item['_id']))
+                            item["_etag"] = "init"
+                            service.update(item["_id"], item, service.find_one(None, _id=item["_id"]))
 
-                logger.info(' - file imported successfully: %s', file_name)
+                logger.info(" - file imported successfully: %s", file_name)
 
         if index_params:
             for index in index_params:
                 crt_index = list(index) if isinstance(index, list) else index
                 options = crt_index.pop() if isinstance(crt_index[-1], dict) and isinstance(index, list) else {}
                 collection = app.data.mongo.pymongo(resource=entity_name).db[entity_name]
-                options['background'] = True
+                options["background"] = True
                 index_name = collection.create_index(crt_index, **options)
-                logger.info(' - index: %s for collection %s created successfully.', index_name, entity_name)
+                logger.info(" - index: %s for collection %s created successfully.", index_name, entity_name)
 
 
 def fillEnvironmentVariables(item):
@@ -383,9 +389,9 @@ def fillEnvironmentVariables(item):
             variables[variable] = value
 
     for name in variables:
-        text = text.replace('#ENV_%s#' % name, variables[name])
+        text = text.replace("#ENV_%s#" % name, variables[name])
 
     return json.loads(text)
 
 
-superdesk.command('app:initialize_data', AppInitializeWithDataCommand())
+superdesk.command("app:initialize_data", AppInitializeWithDataCommand())

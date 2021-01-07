@@ -1,4 +1,3 @@
-
 import os
 
 from superdesk.macros import load_macros

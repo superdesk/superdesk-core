@@ -1,12 +1,11 @@
-
-class SearchProvider():
+class SearchProvider:
     """Base class for Search Providers.
 
     You can use ``self.provider`` to get config data.
     """
 
     #: Provider Type Label
-    label = 'unknown'
+    label = "unknown"
 
     def __init__(self, provider):
         """Create search provider instance.

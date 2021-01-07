@@ -13,14 +13,10 @@ from .workspace import WorkspaceService, WorkspaceResource
 
 
 def init_app(app):
-    superdesk.register_resource('workspaces', WorkspaceResource, WorkspaceService,
-                                privilege=['POST', 'PATCH', 'DELETE'])
+    superdesk.register_resource(
+        "workspaces", WorkspaceResource, WorkspaceService, privilege=["POST", "PATCH", "DELETE"]
+    )
 
-    superdesk.register_default_user_preference('workspace:active', {
-        'type': 'string',
-        'workspace': ''
-    })
+    superdesk.register_default_user_preference("workspace:active", {"type": "string", "workspace": ""})
 
-    superdesk.privilege(name='dashboard',
-                        label='Dashboard',
-                        description='Can access dashboard.')
+    superdesk.privilege(name="dashboard", label="Dashboard", description="Can access dashboard.")

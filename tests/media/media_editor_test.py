@@ -26,32 +26,33 @@ import hashlib
 
 
 class BaseMediaEditorTestCase(TestCase):
-
     def setUp(self):
         super().setUp()
         dirname = os.path.dirname(os.path.realpath(__file__))
-        image_path = os.path.normpath(os.path.join(dirname, 'fixtures', self.filename))
+        image_path = os.path.normpath(os.path.join(dirname, "fixtures", self.filename))
         content_type = mimetypes.guess_type(image_path)[0]
         guid = utils.generate_guid(type=GUID_TAG)
-        self.item = {'guid': guid,
-                     'version': 1,
-                     '_id': guid,
-                     ITEM_TYPE: CONTENT_TYPE.PICTURE,
-                     'mimetype': content_type,
-                     'versioncreated': datetime.now()
-                     }
+        self.item = {
+            "guid": guid,
+            "version": 1,
+            "_id": guid,
+            ITEM_TYPE: CONTENT_TYPE.PICTURE,
+            "mimetype": content_type,
+            "versioncreated": datetime.now(),
+        }
 
-        with open(image_path, 'rb') as f:
+        with open(image_path, "rb") as f:
             _, content_type, file_metadata = process_file_from_stream(f, content_type=content_type)
             f.seek(0)
             file_id = app.media.put(f, filename=self.filename, content_type=content_type, metadata=file_metadata)
             filemeta.set_filemeta(self.item, file_metadata)
             f.seek(0)
             rendition_spec = get_renditions_spec()
-            renditions = generate_renditions(f, file_id, [file_id], 'image',
-                                             content_type, rendition_spec, url_for_media)
-            self.item['renditions'] = renditions
-        archive = get_resource_service('archive')
+            renditions = generate_renditions(
+                f, file_id, [file_id], "image", content_type, rendition_spec, url_for_media
+            )
+            self.item["renditions"] = renditions
+        archive = get_resource_service("archive")
         archive.post([self.item])
 
     def do_edit(self, edit, item=None):
@@ -60,24 +61,22 @@ class BaseMediaEditorTestCase(TestCase):
         :param dict edit: edition instructions
         :return dict item: item with modified media
         """
-        media_editor = get_resource_service('media_editor')
-        request_data = {
-            'edit': edit}
+        media_editor = get_resource_service("media_editor")
+        request_data = {"edit": edit}
         if item is None:
-            item_id = self.item['_id']
-            request_data['item_id'] = item_id
+            item_id = self.item["_id"]
+            request_data["item_id"] = item_id
         else:
             for k in item:
                 if isinstance(item[k], datetime):
                     item[k] = item[k].isoformat()
-            for r in item['renditions'].values():
-                r['media'] = str(r['media'])
-            request_data['item'] = item
+            for r in item["renditions"].values():
+                r["media"] = str(r["media"])
+            request_data["item"] = item
         docs = [request_data]
-        with self.app.test_request_context('media_editor',
-                                           method='POST',
-                                           content_type='application/json',
-                                           data=json.dumps(request_data)):
+        with self.app.test_request_context(
+            "media_editor", method="POST", content_type="application/json", data=json.dumps(request_data)
+        ):
             media_editor.create(docs)
 
         return docs[0]
@@ -88,7 +87,7 @@ class BaseMediaEditorTestCase(TestCase):
         useful to check that image has been transformed correctly
         :param str rendition: name of the rendition to use
         """
-        media_id = item['renditions'][rendition]['media']
+        media_id = item["renditions"][rendition]["media"]
         media = app.media.get(media_id)
         md5_hash = hashlib.md5(media.read())
         return md5_hash.hexdigest()
@@ -100,21 +99,21 @@ class MediaEditorTestCase(BaseMediaEditorTestCase):
     def test_edition(self):
         """Test basic edition instructions"""
         item = self.do_edit({"contrast": 1.2, "rotate": "90"})
-        md5_hash = self.md5_sum(item, 'original')
-        self.assertEqual(md5_hash, 'e3bae72827b39918f02211936645822b')
+        md5_hash = self.md5_sum(item, "original")
+        self.assertEqual(md5_hash, "e3bae72827b39918f02211936645822b")
 
     def test_saturation(self):
         """Test saturation change"""
         item = self.do_edit({"saturation": 0})
-        md5_hash = self.md5_sum(item, 'original')
-        self.assertEqual(md5_hash, 'e5e82193eb8f17185d2dd5628798973b')
+        md5_hash = self.md5_sum(item, "original")
+        self.assertEqual(md5_hash, "e5e82193eb8f17185d2dd5628798973b")
 
     def test_update(self):
         """Test that item is updated correctly"""
-        original_media_id = self.item['renditions']['original']['media']
+        original_media_id = self.item["renditions"]["original"]["media"]
         item = self.do_edit({"rotate": "170", "saturation": "0"}, item=self.item)
-        expected_media_id = item['renditions']['original']['media']
+        expected_media_id = item["renditions"]["original"]["media"]
         self.assertNotEqual(original_media_id, expected_media_id)
-        md5_hash = self.md5_sum(item, 'original')
-        self.assertEqual(md5_hash, '4d598de991f07a125d8a68933d2a22c8')
-        self.assertEqual(item['renditions']['original']['media'], expected_media_id)
+        md5_hash = self.md5_sum(item, "original")
+        self.assertEqual(md5_hash, "4d598de991f07a125d8a68933d2a22c8")
+        self.assertEqual(item["renditions"]["original"]["media"], expected_media_id)

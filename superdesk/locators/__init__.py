@@ -21,7 +21,7 @@ def _load_json(file_path):
     :param file_path: path of the file having JSON string.
     :return: JSON Object
     """
-    with open(file_path, 'r', encoding='utf-8') as f:
+    with open(file_path, "r", encoding="utf-8") as f:
         return json.load(f)
 
 
@@ -29,7 +29,6 @@ def init_app(app):
     app.locators = LocatorIndex()
     superdesk.blueprint(bp, app)
     _locators_file_path = app.config.get(
-        'LOCATORS_DATA_FILE',
-        os.path.join(os.path.dirname(os.path.realpath(__file__)), 'data', 'locators.json')
+        "LOCATORS_DATA_FILE", os.path.join(os.path.dirname(os.path.realpath(__file__)), "data", "locators.json")
     )
     app.locators.register(_load_json(_locators_file_path))

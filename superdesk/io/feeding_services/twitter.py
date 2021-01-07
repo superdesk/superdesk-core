@@ -27,76 +27,83 @@ class TwitterFeedingService(FeedingService):
     Screen Names and also hashtags
     """
 
-    NAME = 'twitter'
+    NAME = "twitter"
 
-    label = 'Twitter'
+    label = "Twitter"
 
     fields = [
         {
-            'id': 'consumer_key', 'type': 'text', 'label': 'Twitter Consumer Key',
-            'placeholder': 'Twitter consumer_key', 'required': True,
-            'errors': {6100: 'Twitter authentication failure'}
+            "id": "consumer_key",
+            "type": "text",
+            "label": "Twitter Consumer Key",
+            "placeholder": "Twitter consumer_key",
+            "required": True,
+            "errors": {6100: "Twitter authentication failure"},
         },
         {
-            'id': 'consumer_secret', 'type': 'password', 'label': 'Twitter Consumer Secret',
-            'placeholder': 'Twitter consumer_secret', 'required': True
+            "id": "consumer_secret",
+            "type": "password",
+            "label": "Twitter Consumer Secret",
+            "placeholder": "Twitter consumer_secret",
+            "required": True,
         },
         {
-            'id': 'screen_names', 'type': 'text', 'label': 'Twitter Screen Names',
-            'placeholder': 'Twitter screen_names', 'required': True,
-            'errors': {6200: 'No Screen names specified'}
-        }
+            "id": "screen_names",
+            "type": "text",
+            "label": "Twitter Screen Names",
+            "placeholder": "Twitter screen_names",
+            "required": True,
+            "errors": {6200: "No Screen names specified"},
+        },
     ]
 
-    ERRORS = [IngestTwitterError.TwitterLoginError().get_error_description(),
-              IngestTwitterError.TwitterNoScreenNamesError().get_error_description(),
-              IngestTwitterError.TwitterRateLimitError().get_error_description(),
-              IngestTwitterError.TwitterAPIGeneralError().get_error_description()]
+    ERRORS = [
+        IngestTwitterError.TwitterLoginError().get_error_description(),
+        IngestTwitterError.TwitterNoScreenNamesError().get_error_description(),
+        IngestTwitterError.TwitterRateLimitError().get_error_description(),
+        IngestTwitterError.TwitterAPIGeneralError().get_error_description(),
+    ]
 
     def _test(self, provider):
         self._update(provider, update=None, test=True)
 
     def _update(self, provider, update, test=False):
-        config = provider.get('config', {})
-        consumer_key = config.get('consumer_key', '')
-        consumer_secret = config.get('consumer_secret', '')
-        screen_names = config.get('screen_names', '')
+        config = provider.get("config", {})
+        consumer_key = config.get("consumer_key", "")
+        consumer_secret = config.get("consumer_secret", "")
+        screen_names = config.get("screen_names", "")
         status_count = 100
         # how many statuses to get, 200 should be max
 
         new_items = []
-        api = twitter.Api(consumer_key=consumer_key,
-                          consumer_secret=consumer_secret,
-                          application_only_auth=True)
+        api = twitter.Api(consumer_key=consumer_key, consumer_secret=consumer_secret, application_only_auth=True)
         try:
-            screen_names = screen_names.split(',')
+            screen_names = screen_names.split(",")
         except Exception as ex:
             raise IngestTwitterError.TwitterNoScreenNamesError(ex, provider)
 
         if not screen_names:
             raise IngestTwitterError.TwitterNoScreenNamesError(provider)
         for screen_name in screen_names:
-            screen_name = screen_name.replace(' ', '')
+            screen_name = screen_name.replace(" ", "")
             try:
                 # hashtag search
-                if screen_name.startswith('#'):
-                    statuses = api.GetSearch(screen_name.lstrip('#'),
-                                             count=status_count)
+                if screen_name.startswith("#"):
+                    statuses = api.GetSearch(screen_name.lstrip("#"), count=status_count)
                 # user search
                 else:
-                    statuses = api.GetUserTimeline(screen_name=screen_name,
-                                                   count=status_count)
+                    statuses = api.GetUserTimeline(screen_name=screen_name, count=status_count)
             except twitter.error.TwitterError as exc:
                 # in some case python twitter error will return dict
                 if type(exc.args[0]) == dict:
                     raise IngestTwitterError.TwitterAPIGeneralError(exc, provider)
-                if exc.message[0].get('code') == 34:
+                if exc.message[0].get("code") == 34:
                     # that page does not exist
                     continue
-                elif exc.message[0].get('code') == 32:
+                elif exc.message[0].get("code") == 32:
                     # invalid credentials
                     raise IngestTwitterError.TwitterLoginError(exc, provider)
-                elif exc.message[0].get('code') == 88:
+                elif exc.message[0].get("code") == 88:
                     # rate limit exceeded
                     raise IngestTwitterError.TwitterRateLimitError(exc, provider)
                 else:
@@ -104,45 +111,39 @@ class TwitterFeedingService(FeedingService):
 
             for status in statuses:
                 d = parser.parse(status.created_at)
-                guid_hash = hashlib.sha1(status.text.
-                                         encode('utf8')).hexdigest()
+                guid_hash = hashlib.sha1(status.text.encode("utf8")).hexdigest()
                 guid = generate_guid(type=GUID_TAG, id=guid_hash)
                 headline = "%s: %s" % (status.user.screen_name, status.text)
                 item = {}
-                item['source'] = 'twitter'
-                item['extra'] = {'tweet_url': "https://twitter.com/%s/status/%s" % (status.user.screen_name, status.id)}
-                item['headline'] = headline
-                item['type'] = 'text'
-                item['guid'] = guid
-                item['versioncreated'] = d
-                item['firstcreated'] = d
+                item["source"] = "twitter"
+                item["extra"] = {"tweet_url": "https://twitter.com/%s/status/%s" % (status.user.screen_name, status.id)}
+                item["headline"] = headline
+                item["type"] = "text"
+                item["guid"] = guid
+                item["versioncreated"] = d
+                item["firstcreated"] = d
 
-                item['body_html'] = status.text
+                item["body_html"] = status.text
                 # include URL on body
-                urls = re.findall('http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|'
-                                  '[!*\(\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+',
-                                  status.text)
+                urls = re.findall(
+                    "http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|" "[!*\(\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+", status.text
+                )
                 if urls:
-                    item['body_html'] += '<p><a href="%s"' \
-                        ' target="_blank">%s</a></p>' % (urls[0], urls[0])
+                    item["body_html"] += '<p><a href="%s"' ' target="_blank">%s</a></p>' % (urls[0], urls[0])
 
                 # on hashtag search we don't want retweets
-                if not (screen_name.startswith('#') and status.text
-                        .startswith('RT ')):
+                if not (screen_name.startswith("#") and status.text.startswith("RT ")):
                     new_items.append(item)
                     if status.media:
                         image_urls = []
                         for media_item in status.media:
-                            if media_item.type in ['photo', 'animated',
-                                                   'video']:
+                            if media_item.type in ["photo", "animated", "video"]:
                                 image_urls.append(media_item.media_url)
                         try:
                             # Eg can fail while fetching image
-                            image_items = self._create_image_items(image_urls,
-                                                                   item)
+                            image_items = self._create_image_items(image_urls, item)
                             new_items.extend(image_items)
-                            package_item = self._create_package(item,
-                                                                image_items)
+                            package_item = self._create_package(item, image_items)
                             new_items.append(package_item)
                         except Exception:
                             pass
@@ -154,29 +155,29 @@ class TwitterFeedingService(FeedingService):
         """
         package = {
             ITEM_TYPE: CONTENT_TYPE.COMPOSITE,
-            'guid': generate_guid(type=GUID_TAG,
-                                  id=text_item.get('guid') + '-package'),
-            'versioncreated': text_item['versioncreated'],
-            'firstcreated': text_item.get('firstcreated'),
-            'headline': text_item.get('headline', ''),
-            'groups': [
+            "guid": generate_guid(type=GUID_TAG, id=text_item.get("guid") + "-package"),
+            "versioncreated": text_item["versioncreated"],
+            "firstcreated": text_item.get("firstcreated"),
+            "headline": text_item.get("headline", ""),
+            "groups": [
                 {
-                    'id': 'root',
-                    'role': 'grpRole:NEP',
-                    'refs': [{'idRef': 'main'}],
-                }, {
-                    'id': 'main',
-                    'role': 'main',
-                    'refs': [],
-                }
-            ]
+                    "id": "root",
+                    "role": "grpRole:NEP",
+                    "refs": [{"idRef": "main"}],
+                },
+                {
+                    "id": "main",
+                    "role": "main",
+                    "refs": [],
+                },
+            ],
         }
 
-        item_references = package['groups'][1]['refs']
-        item_references.append({'residRef': text_item['guid']})
+        item_references = package["groups"][1]["refs"]
+        item_references.append({"residRef": text_item["guid"]})
 
         for image in image_items:
-            item_references.append({'residRef': image['guid']})
+            item_references.append({"residRef": image["guid"]})
 
         return package
 
@@ -184,20 +185,14 @@ class TwitterFeedingService(FeedingService):
         image_items = []
 
         for image_url in image_links:
-            guid_hash = hashlib.sha1(image_url.encode('utf8')).hexdigest()
+            guid_hash = hashlib.sha1(image_url.encode("utf8")).hexdigest()
             img_item = {
-                'guid': generate_guid(type=GUID_TAG,
-                                      id=text_item.get('guid') +
-                                      guid_hash + '-image'),
+                "guid": generate_guid(type=GUID_TAG, id=text_item.get("guid") + guid_hash + "-image"),
                 ITEM_TYPE: CONTENT_TYPE.PICTURE,
-                'versioncreated': text_item.get('versioncreated'),
-                'firstcreated': text_item.get('firstcreated'),
-                'headline': text_item.get('headline', ''),
-                'renditions': {
-                    'baseImage': {
-                        'href': image_url
-                    }
-                }
+                "versioncreated": text_item.get("versioncreated"),
+                "firstcreated": text_item.get("firstcreated"),
+                "headline": text_item.get("headline", ""),
+                "renditions": {"baseImage": {"href": image_url}},
             }
             image_items.append(img_item)
 

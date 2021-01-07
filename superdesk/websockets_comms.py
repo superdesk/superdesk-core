@@ -40,9 +40,9 @@ class SocketBrokerClient:
     def __init__(self, url, exchange_name=None):
         self.url = url
         self.connect()
-        self.exchange_name = exchange_name if exchange_name else celery_queue('socket_notification')
+        self.exchange_name = exchange_name if exchange_name else celery_queue("socket_notification")
         self.channel = self.connection.channel()
-        self.socket_exchange = Exchange(self.exchange_name, type='fanout', channel=self.channel)
+        self.socket_exchange = Exchange(self.exchange_name, type="fanout", channel=self.channel)
         self.socket_exchange.declare()
 
     def open(self):
@@ -56,17 +56,17 @@ class SocketBrokerClient:
 
     def connect(self):
         self._close()
-        logger.info('Connecting to broker {}'.format(self.url))
+        logger.info("Connecting to broker {}".format(self.url))
         self.connection = Connection(self.url, heartbeat=WS_HEART_BEAT)
         self.connection.connect()
-        logger.info('Connected to broker {}'.format(self.url))
+        logger.info("Connected to broker {}".format(self.url))
 
     def _close(self):
-        if hasattr(self, 'connection') and self.connection:
-            logger.info('Closing connecting to broker {}'.format(self.url))
+        if hasattr(self, "connection") and self.connection:
+            logger.info("Closing connecting to broker {}".format(self.url))
             self.connection.release()
             self.connection = None
-            logger.info('Connection closed to broker {}'.format(self.url))
+            logger.info("Connection closed to broker {}".format(self.url))
 
     def close(self):
         self._close()
@@ -78,6 +78,7 @@ class SocketMessageProducer(SocketBrokerClient):
     """
     Publishes messages to a exchange (fanout).
     """
+
     def send(self, message):
         """
         Publishes the message to an exchange
@@ -87,9 +88,9 @@ class SocketMessageProducer(SocketBrokerClient):
         try:
             with producers[self.connection].acquire(block=True) as producer:
                 producer.publish(message, exchange=self.socket_exchange)
-                logger.debug('message:{} published to broker:{}.'.format(message, self.url))
+                logger.debug("message:{} published to broker:{}.".format(message, self.url))
         except Exception:
-            logger.exception('Failed to publish message {} to broker.'.format(message))
+            logger.exception("Failed to publish message {} to broker.".format(message))
 
 
 class SocketMessageConsumer(SocketBrokerClient, ConsumerMixin):
@@ -106,11 +107,14 @@ class SocketMessageConsumer(SocketBrokerClient, ConsumerMixin):
         """
         super().__init__(url, exchange_name)
         self.callback = callback
-        self.queue_name = 'socket_consumer_{}'.format(get_random_string())
+        self.queue_name = "socket_consumer_{}".format(get_random_string())
         # expire message after 10 seconds and queue after 60 seconds
-        self.queue = Queue(self.queue_name, exchange=self.socket_exchange,
-                           channel=self.channel,
-                           queue_arguments={'x-message-ttl': 10000, 'x-expires': 60000})
+        self.queue = Queue(
+            self.queue_name,
+            exchange=self.socket_exchange,
+            channel=self.channel,
+            queue_arguments={"x-message-ttl": 10000, "x-expires": 60000},
+        )
 
     def get_consumers(self, Consumer, channel):
         return [Consumer(queues=[self.queue], callbacks=[self.on_message])]
@@ -128,14 +132,14 @@ class SocketMessageConsumer(SocketBrokerClient, ConsumerMixin):
             except Exception:
                 loop = asyncio.new_event_loop()
 
-            logger.info('Queue: {}. Broadcasting message {}'.format(self.queue_name, body))
+            logger.info("Queue: {}. Broadcasting message {}".format(self.queue_name, body))
             loop.run_until_complete(self.callback(body))
         except Exception:
-            logger.exception('Dropping event. Failed to send message {}.'.format(body))
+            logger.exception("Dropping event. Failed to send message {}.".format(body))
         try:
             message.ack()
         except Exception:
-            logger.exception('Failed to ack message {} on queue {}.'.format(body, self.queue_name))
+            logger.exception("Failed to ack message {} on queue {}.".format(body, self.queue_name))
 
     def close(self):
         """
@@ -143,10 +147,10 @@ class SocketMessageConsumer(SocketBrokerClient, ConsumerMixin):
 
         :return:
         """
-        logger.info('closing consumer')
+        logger.info("closing consumer")
         self.should_stop = True
         super().close()
-        logger.info('consumer terminated successfully')
+        logger.info("consumer terminated successfully")
 
 
 class SocketCommunication:
@@ -163,10 +167,10 @@ class SocketCommunication:
         self.exchange_name = exchange_name
         self.messages = {}
         self.event_interval = {
-            'ingest:update': 5,
-            'ingest:cleaned': 5,
-            'content:expired': 5,
-            'publish_queue:update': 5,
+            "ingest:update": 5,
+            "ingest:cleaned": 5,
+            "content:expired": 5,
+            "publish_queue:update": 5,
         }
 
     @asyncio.coroutine
@@ -186,7 +190,7 @@ class SocketCommunication:
             if not websocket.open:
                 break
             pings += 1
-            yield from websocket.send(json.dumps({'ping': pings, 'clients': len(websocket.ws_server.websockets)}))
+            yield from websocket.send(json.dumps({"ping": pings, "clients": len(websocket.ws_server.websockets)}))
 
     @asyncio.coroutine
     def broadcast(self, message):
@@ -197,19 +201,19 @@ class SocketCommunication:
         :param message: message as it was received - no encoding/decoding.
         """
         message_data = json.loads(message)
-        message_id = message_data.get('event', '')
-        message_created = arrow.get(message_data.get('_created', utcnow()))
+        message_id = message_data.get("event", "")
+        message_created = arrow.get(message_data.get("_created", utcnow()))
         last_created = self.messages.get(message_id)
         ttl = self.event_interval.get(message_id, 0)
 
         if last_created and last_created + timedelta(seconds=ttl) > message_created:
-            logger.info('skiping event %s' % (message_id, ))
+            logger.info("skiping event %s" % (message_id,))
             return
 
         if ttl:
             self.messages[message_id] = message_created
 
-        logger.debug('broadcast %s' % message)
+        logger.debug("broadcast %s" % message)
         for websocket in self.clients.copy():
             try:
                 if websocket.open:
@@ -234,7 +238,7 @@ class SocketCommunication:
         :param websocket: websocket protocol instance
         """
         host, port = websocket.remote_address
-        logger.info('%s address=%s:%s' % (message, host, port))
+        logger.info("%s address=%s:%s" % (message, host, port))
 
     @asyncio.coroutine
     def _connection_handler(self, websocket, path):
@@ -246,16 +250,16 @@ class SocketCommunication:
         :param websocket: websocket protocol instance
         :param path: url path used by client - used to identify client/server connections
         """
-        if 'server' in path:
-            self._log('server open', websocket)
+        if "server" in path:
+            self._log("server open", websocket)
             yield from self._server_loop(websocket)
-            self._log('server done', websocket)
+            self._log("server done", websocket)
         else:
-            self._log('client open', websocket)
+            self._log("client open", websocket)
             self.clients.add(websocket)
             yield from self._client_loop(websocket)
             self.clients.remove(websocket)
-            self._log('client done', websocket)
+            self._log("client done", websocket)
 
     def run_server(self):
         """Create websocket server and run it until it gets Ctrl+C or SIGTERM.
@@ -264,10 +268,9 @@ class SocketCommunication:
         """
         try:
             loop = asyncio.get_event_loop()
-            server = loop.run_until_complete(websockets.serve(self._connection_handler,
-                                                              self.host, self.port))
+            server = loop.run_until_complete(websockets.serve(self._connection_handler, self.host, self.port))
             loop.add_signal_handler(signal.SIGTERM, loop.stop)
-            logger.info('listening on %s:%s' % (self.host, self.port))
+            logger.info("listening on %s:%s" % (self.host, self.port))
             consumer = None
             # create socket message consumer
             consumer = SocketMessageConsumer(self.broker_url, self.broadcast, self.exchange_name)
@@ -277,7 +280,7 @@ class SocketCommunication:
         except KeyboardInterrupt:
             pass
         finally:
-            logger.info('closing server')
+            logger.info("closing server")
             server.close()
             loop.run_until_complete(server.wait_closed())
             loop.stop()

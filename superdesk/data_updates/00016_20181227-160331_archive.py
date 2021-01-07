@@ -14,26 +14,24 @@ from eve.utils import config
 # This script replaces the whole json of related item with respective _id only
 class DataUpdate(DataUpdate):
 
-    resource = 'archive'
+    resource = "archive"
 
     def forwards(self, mongodb_collection, mongodb_database):
         # To find the related content from vocabularies
-        related_content = list(mongodb_database['vocabularies'].find({
-            'field_type': 'related_content'
-        }))
+        related_content = list(mongodb_database["vocabularies"].find({"field_type": "related_content"}))
 
-        collection = mongodb_database['archive']
+        collection = mongodb_database["archive"]
 
-        for item in collection.find({'associations': {'$ne': None}}):
-            for item_name, item_obj in item['associations'].items():
+        for item in collection.find({"associations": {"$ne": None}}):
+            for item_name, item_obj in item["associations"].items():
                 if item_obj and related_content:
-                    if item_name.split('--')[0] in [content['_id'] for content in related_content]:
+                    if item_name.split("--")[0] in [content["_id"] for content in related_content]:
                         related_item_id = item_obj[config.ID_FIELD]
 
                         updates = {"$set": {}}
-                        updates['$set']['associations.' + item_name] = {'_id': related_item_id}
+                        updates["$set"]["associations." + item_name] = {"_id": related_item_id}
 
-                        print(collection.update({'_id': item['_id']}, updates))
+                        print(collection.update({"_id": item["_id"]}, updates))
 
     def backwards(self, mongodb_collection, mongodb_database):
         raise NotImplementedError()

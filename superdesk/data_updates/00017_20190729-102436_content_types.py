@@ -12,13 +12,13 @@ from superdesk.commands.data_updates import DataUpdate
 
 class DataUpdate(DataUpdate):
 
-    resource = 'content_types'
+    resource = "content_types"
 
     def forwards(self, mongodb_collection, mongodb_database):
-        filter_ = {'editor.headline.formatOptions': {'$nin': [None, []]}}
-        update = {'$set': {'editor.headline.formatOptions': []}}
+        filter_ = {"editor.headline.formatOptions": {"$nin": [None, []]}}
+        update = {"$set": {"editor.headline.formatOptions": []}}
         result = mongodb_collection.update_many(filter_, update)
-        print('matched={} updated={}'.format(result.matched_count, result.modified_count))
+        print("matched={} updated={}".format(result.matched_count, result.modified_count))
 
     def backwards(self, mongodb_collection, mongodb_database):
         pass  # no need to return back to wrong value

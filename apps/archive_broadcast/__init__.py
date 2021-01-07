@@ -21,5 +21,6 @@ def init_app(app):
     service = ArchiveBroadcastService(endpoint_name, backend=superdesk.get_backend())
     ArchiveBroadcastResource(endpoint_name, app=app, service=service)
 
-    superdesk.privilege(name=ARCHIVE_BROADCAST_NAME, label='Broadcast',
-                        description='Allows user to create broadcast content.')
+    superdesk.privilege(
+        name=ARCHIVE_BROADCAST_NAME, label="Broadcast", description="Allows user to create broadcast content."
+    )

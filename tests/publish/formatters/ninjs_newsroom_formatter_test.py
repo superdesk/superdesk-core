@@ -22,7 +22,7 @@ import planning.assignments as planning_assignments
 import planning.planning as planning_planning
 
 
-@mock.patch('superdesk.publish.subscribers.SubscribersService.generate_sequence_number', lambda self, subscriber: 1)
+@mock.patch("superdesk.publish.subscribers.SubscribersService.generate_sequence_number", lambda self, subscriber: 1)
 class NewsroomNinjsFormatterTest(TestCase):
     def setUp(self):
         self.formatter = NewsroomNinjsFormatter()
@@ -30,73 +30,87 @@ class NewsroomNinjsFormatterTest(TestCase):
         self.maxDiff = None
 
     def test_products(self):
-        self.app.data.insert('content_filters',
-                             [{"_id": 3,
-                               "content_filter": [{"expression": {"pf": [1], "fc": [2]}}],
-                               "name": "soccer-only3"}])
-        self.app.data.insert('filter_conditions',
-                             [{'_id': 1,
-                               'field': 'headline',
-                               'operator': 'like',
-                               'value': 'test',
-                               'name': 'test-1'}])
-        self.app.data.insert('filter_conditions',
-                             [{'_id': 2,
-                               'field': 'urgency',
-                               'operator': 'in',
-                               'value': '2',
-                               'name': 'test-2'}])
-        self.app.data.insert('products',
-                             [{"_id": 1,
-                               "content_filter": {"filter_id": 3, "filter_type": "permitting"},
-                               "name": "p-1", "product_type": "api"}])
-        self.app.data.insert('vocabularies', [
-            {
-                "_id": "locators",
-                "display_name": "Locators",
-                "type": "unmanageable",
-                "unique_field": "qcode",
-                "items": [
-                    {"is_active": True, "name": "NSW", "qcode": "NSW", "state": "New South Wales",
-                     "country": "Australia", "world_region": "Oceania", "group": "Australia"},
-                ],
-            }
-        ])
-        embargo_ts = (utcnow() + timedelta(days=2))
+        self.app.data.insert(
+            "content_filters",
+            [{"_id": 3, "content_filter": [{"expression": {"pf": [1], "fc": [2]}}], "name": "soccer-only3"}],
+        )
+        self.app.data.insert(
+            "filter_conditions",
+            [{"_id": 1, "field": "headline", "operator": "like", "value": "test", "name": "test-1"}],
+        )
+        self.app.data.insert(
+            "filter_conditions", [{"_id": 2, "field": "urgency", "operator": "in", "value": "2", "name": "test-2"}]
+        )
+        self.app.data.insert(
+            "products",
+            [
+                {
+                    "_id": 1,
+                    "content_filter": {"filter_id": 3, "filter_type": "permitting"},
+                    "name": "p-1",
+                    "product_type": "api",
+                }
+            ],
+        )
+        self.app.data.insert(
+            "vocabularies",
+            [
+                {
+                    "_id": "locators",
+                    "display_name": "Locators",
+                    "type": "unmanageable",
+                    "unique_field": "qcode",
+                    "items": [
+                        {
+                            "is_active": True,
+                            "name": "NSW",
+                            "qcode": "NSW",
+                            "state": "New South Wales",
+                            "country": "Australia",
+                            "world_region": "Oceania",
+                            "group": "Australia",
+                        },
+                    ],
+                }
+            ],
+        )
+        embargo_ts = utcnow() + timedelta(days=2)
         article = {
-            '_id': 'tag:aap.com.au:20150613:12345',
-            'guid': 'tag:aap.com.au:20150613:12345',
-            '_current_version': 1,
-            'anpa_category': [{'qcode': 'a'}],
-            'source': 'AAP',
-            'headline': 'This is a test headline',
-            'byline': 'joe',
-            'slugline': 'slugline',
-            'subject': [{'qcode': '02011001', 'name': 'international court or tribunal', 'parent': None},
-                        {'qcode': '02011002', 'name': 'extradition'}],
-            'anpa_take_key': 'take_key',
-            'unique_id': '1',
-            'body_html': 'The story body',
-            'type': 'text',
-            'word_count': '1',
-            'priority': 1,
-            'profile': 'snap',
-            'state': 'published',
-            'urgency': 2,
-            'pubstatus': 'usable',
-            'creditline': 'sample creditline',
-            'keywords': ['traffic'],
-            'abstract': '<p>sample <b>abstract</b></p>',
-            'place': [{'name': 'NSW', 'qcode': 'NSW'}],
-            'embargo': embargo_ts,
-            'body_footer': '<p>call helpline 999 if you are planning to quit smoking</p>',
-            'company_codes': [{'name': 'YANCOAL AUSTRALIA LIMITED', 'qcode': 'YAL', 'security_exchange': 'ASX'}],
-            'genre': [{'name': 'Article', 'qcode': 'article'}],
-            'flags': {'marked_for_legal': True},
-            'extra': {'foo': 'test'},
-            'operation': 'publish'
+            "_id": "tag:aap.com.au:20150613:12345",
+            "guid": "tag:aap.com.au:20150613:12345",
+            "_current_version": 1,
+            "anpa_category": [{"qcode": "a"}],
+            "source": "AAP",
+            "headline": "This is a test headline",
+            "byline": "joe",
+            "slugline": "slugline",
+            "subject": [
+                {"qcode": "02011001", "name": "international court or tribunal", "parent": None},
+                {"qcode": "02011002", "name": "extradition"},
+            ],
+            "anpa_take_key": "take_key",
+            "unique_id": "1",
+            "body_html": "The story body",
+            "type": "text",
+            "word_count": "1",
+            "priority": 1,
+            "profile": "snap",
+            "state": "published",
+            "urgency": 2,
+            "pubstatus": "usable",
+            "creditline": "sample creditline",
+            "keywords": ["traffic"],
+            "abstract": "<p>sample <b>abstract</b></p>",
+            "place": [{"name": "NSW", "qcode": "NSW"}],
+            "embargo": embargo_ts,
+            "body_footer": "<p>call helpline 999 if you are planning to quit smoking</p>",
+            "company_codes": [{"name": "YANCOAL AUSTRALIA LIMITED", "qcode": "YAL", "security_exchange": "ASX"}],
+            "genre": [{"name": "Article", "qcode": "article"}],
+            "flags": {"marked_for_legal": True},
+            "extra": {"foo": "test"},
+            "operation": "publish",
         }
-        seq, doc = self.formatter.format(article, {'name': 'Test Subscriber'})[0]
+        seq, doc = self.formatter.format(article, {"name": "Test Subscriber"})[0]
         expected = {
             "guid": "tag:aap.com.au:20150613:12345",
             "version": "1",
@@ -104,8 +118,10 @@ class NewsroomNinjsFormatterTest(TestCase):
             "pubstatus": "usable",
             "body_html": "The story body<p>call helpline 999 if you are planning to quit smoking</p>",
             "type": "text",
-            "subject": [{"code": "02011001", "name": "international court or tribunal"},
-                        {"code": "02011002", "name": "extradition"}],
+            "subject": [
+                {"code": "02011001", "name": "international court or tribunal"},
+                {"code": "02011002", "name": "extradition"},
+            ],
             "service": [{"code": "a"}],
             "source": "AAP",
             "headline": "This is a test headline",
@@ -117,20 +133,25 @@ class NewsroomNinjsFormatterTest(TestCase):
             "slugline": "slugline",
             "description_text": "sample abstract",
             "description_html": "<p>sample <b>abstract</b></p>",
-            'keywords': ['traffic'],
-            'organisation': [{'name': 'YANCOAL AUSTRALIA LIMITED', 'rel': 'Securities Identifier',
-                              'symbols': [{'ticker': 'YAL', 'exchange': 'ASX'}]}],
-            'genre': [{'name': 'Article', 'code': 'article'}],
-            'signal': [{'name': 'Content Warning', 'code': 'cwarn', 'scheme': 'http://cv.iptc.org/newscodes/signal/'}],
-            'extra': {'foo': 'test'},
-            'charcount': 67,
-            'wordcount': 13,
-            'readtime': 0,
-            'products': [{'code': 1, 'name': 'p-1'}]
+            "keywords": ["traffic"],
+            "organisation": [
+                {
+                    "name": "YANCOAL AUSTRALIA LIMITED",
+                    "rel": "Securities Identifier",
+                    "symbols": [{"ticker": "YAL", "exchange": "ASX"}],
+                }
+            ],
+            "genre": [{"name": "Article", "code": "article"}],
+            "signal": [{"name": "Content Warning", "code": "cwarn", "scheme": "http://cv.iptc.org/newscodes/signal/"}],
+            "extra": {"foo": "test"},
+            "charcount": 67,
+            "wordcount": 13,
+            "readtime": 0,
+            "products": [{"code": 1, "name": "p-1"}],
         }
         self.assertEqual(json.loads(doc), expected)
-        article['urgency'] = 1
-        seq, doc = self.formatter.format(article, {'name': 'Test Subscriber'})[0]
+        article["urgency"] = 1
+        seq, doc = self.formatter.format(article, {"name": "Test Subscriber"})[0]
         expected = {
             "guid": "tag:aap.com.au:20150613:12345",
             "version": "1",
@@ -138,8 +159,10 @@ class NewsroomNinjsFormatterTest(TestCase):
             "pubstatus": "usable",
             "body_html": "The story body<p>call helpline 999 if you are planning to quit smoking</p>",
             "type": "text",
-            "subject": [{"code": "02011001", "name": "international court or tribunal"},
-                        {"code": "02011002", "name": "extradition"}],
+            "subject": [
+                {"code": "02011001", "name": "international court or tribunal"},
+                {"code": "02011002", "name": "extradition"},
+            ],
             "service": [{"code": "a"}],
             "source": "AAP",
             "headline": "This is a test headline",
@@ -151,16 +174,21 @@ class NewsroomNinjsFormatterTest(TestCase):
             "slugline": "slugline",
             "description_text": "sample abstract",
             "description_html": "<p>sample <b>abstract</b></p>",
-            'keywords': ['traffic'],
-            'organisation': [{'name': 'YANCOAL AUSTRALIA LIMITED', 'rel': 'Securities Identifier',
-                              'symbols': [{'ticker': 'YAL', 'exchange': 'ASX'}]}],
-            'genre': [{'name': 'Article', 'code': 'article'}],
-            'signal': [{'name': 'Content Warning', 'code': 'cwarn', 'scheme': 'http://cv.iptc.org/newscodes/signal/'}],
-            'extra': {'foo': 'test'},
-            'charcount': 67,
-            'wordcount': 13,
-            'readtime': 0,
-            'products': []
+            "keywords": ["traffic"],
+            "organisation": [
+                {
+                    "name": "YANCOAL AUSTRALIA LIMITED",
+                    "rel": "Securities Identifier",
+                    "symbols": [{"ticker": "YAL", "exchange": "ASX"}],
+                }
+            ],
+            "genre": [{"name": "Article", "code": "article"}],
+            "signal": [{"name": "Content Warning", "code": "cwarn", "scheme": "http://cv.iptc.org/newscodes/signal/"}],
+            "extra": {"foo": "test"},
+            "charcount": 67,
+            "wordcount": 13,
+            "readtime": 0,
+            "products": [],
         }
         self.assertEqual(json.loads(doc), expected)
 
@@ -168,22 +196,22 @@ class NewsroomNinjsFormatterTest(TestCase):
         planning_assignments.init_app(self.app)
         planning_planning.init_app(self.app)
 
-        assignments = [{'coverage_item': 'urn:coverage-id', 'planning_item': 'urn:planning-id'}]
-        self.app.data.insert('assignments', assignments)
+        assignments = [{"coverage_item": "urn:coverage-id", "planning_item": "urn:planning-id"}]
+        self.app.data.insert("assignments", assignments)
 
         article = {
-            '_id': 'tag:aap.com.au:20150613:12345',
-            'guid': 'tag:aap.com.au:20150613:12345',
-            'type': 'text',
-            'version': 1,
-            'assignment_id': assignments[0]['_id'],
+            "_id": "tag:aap.com.au:20150613:12345",
+            "guid": "tag:aap.com.au:20150613:12345",
+            "type": "text",
+            "version": 1,
+            "assignment_id": assignments[0]["_id"],
         }
 
-        seq, doc = self.formatter.format(article, {'name': 'Test Subscriber'})[0]
+        seq, doc = self.formatter.format(article, {"name": "Test Subscriber"})[0]
         data = json.loads(doc)
 
-        self.assertEqual('urn:planning-id', data['planning_id'])
-        self.assertEqual('urn:coverage-id', data['coverage_id'])
+        self.assertEqual("urn:planning-id", data["planning_id"])
+        self.assertEqual("urn:coverage-id", data["coverage_id"])
 
     def test_picture_formatter(self):
         article = {
@@ -227,7 +255,7 @@ class NewsroomNinjsFormatterTest(TestCase):
                     "mimetype": "image/jpeg",
                     "width": 640,
                     "height": 401,
-                }
+                },
             },
             "headline": "AMAZING PICTURE",
             "pubstatus": "usable",
@@ -244,7 +272,7 @@ class NewsroomNinjsFormatterTest(TestCase):
             "products": [],
         }
         self.assertEqual(expected, json.loads(doc))
-        self.assertIn('viewImage', json.loads(doc).get('renditions'))
+        self.assertIn("viewImage", json.loads(doc).get("renditions"))
 
     def test_auto_published_item(self):
         article = {
@@ -264,14 +292,14 @@ class NewsroomNinjsFormatterTest(TestCase):
         }
         _, doc = self.formatter.format(article, {"name": "Test Subscriber"})[0]
         processed = json.loads(doc)
-        self.assertEqual(processed['guid'], 'foo')
-        article['ingest_id'] = 'bar'
-        article['ingest_version'] = '7'
+        self.assertEqual(processed["guid"], "foo")
+        article["ingest_id"] = "bar"
+        article["ingest_version"] = "7"
         _, doc = self.formatter.format(article, {"name": "Test Subscriber"})[0]
         processed = json.loads(doc)
-        self.assertEqual(processed['guid'], 'foo')
-        article['auto_publish'] = True
+        self.assertEqual(processed["guid"], "foo")
+        article["auto_publish"] = True
         _, doc = self.formatter.format(article, {"name": "Test Subscriber"})[0]
         processed = json.loads(doc)
-        self.assertEqual(processed['guid'], 'bar')
-        self.assertEqual(processed['version'], '7')
+        self.assertEqual(processed["guid"], "bar")
+        self.assertEqual(processed["version"], "7")

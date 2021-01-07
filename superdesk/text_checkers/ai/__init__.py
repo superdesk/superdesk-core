@@ -14,35 +14,33 @@ import superdesk
 AUTO_IMPORT = True
 
 #: main endpoint to interact with AI Services
-AI_SERVICE_ENDPOINT = 'ai'
+AI_SERVICE_ENDPOINT = "ai"
 
 #: endpoint to manipulate AI Services data
-AI_DATA_OP_ENDPOINT = 'ai_data_op'
+AI_DATA_OP_ENDPOINT = "ai_data_op"
 
 
 class AIResource(Resource):
     schema = {
-        'service': {
-            'type': 'string',
-            'required': True,
+        "service": {
+            "type": "string",
+            "required": True,
         },
-        'item': {
-            'type': 'dict',
-            'required': True,
-            'schema': {
-                'guid': {'type': 'string', 'required': True},
-                'abstract': {'type': 'string', 'required': False},
-                'language': {'type': 'string', 'required': True},
-                'headline': {'type': 'string', 'nullable': True},
-                'body_html': {'type': 'string', 'required': True},
-            }
+        "item": {
+            "type": "dict",
+            "required": True,
+            "schema": {
+                "guid": {"type": "string", "required": True},
+                "abstract": {"type": "string", "required": False},
+                "language": {"type": "string", "required": True},
+                "headline": {"type": "string", "nullable": True},
+                "body_html": {"type": "string", "required": True},
+            },
         },
     }
-    datasource = {
-        'projection': {'analysis': 1}
-    }
+    datasource = {"projection": {"analysis": 1}}
     internal_resource = False
-    resource_methods = ['POST']
+    resource_methods = ["POST"]
     item_methods = []
 
 
@@ -90,29 +88,27 @@ class AIService(BaseService):
 
 class AIDataOpResource(Resource):
     schema = {
-        'service': {
-            'type': 'string',
-            'required': True,
+        "service": {
+            "type": "string",
+            "required": True,
         },
-        'operation': {
-            'type': 'string',
-            'required': True,
-            'allowed': ['search', 'create', 'delete'],
+        "operation": {
+            "type": "string",
+            "required": True,
+            "allowed": ["search", "create", "delete"],
         },
-        'data_name': {
-            'type': 'string',
-            'required': False,
+        "data_name": {
+            "type": "string",
+            "required": False,
         },
-        'data': {
-            'type': 'dict',
-            'required': True,
-        }
+        "data": {
+            "type": "dict",
+            "required": True,
+        },
     }
-    datasource = {
-        'projection': {'result': 1}
-    }
+    datasource = {"projection": {"result": 1}}
     internal_resource = False
-    resource_methods = ['POST']
+    resource_methods = ["POST"]
     item_methods = []
 
 
@@ -170,10 +166,10 @@ def init_app(app):
     service = AIService(endpoint_name, backend=superdesk.get_backend())
     AIResource.schema["service"]["allowed"] = allowed_service
     AIResource(endpoint_name, app=app, service=service)
-    superdesk.intrinsic_privilege(endpoint_name, method=['POST'])
+    superdesk.intrinsic_privilege(endpoint_name, method=["POST"])
 
     endpoint_name = AI_DATA_OP_ENDPOINT
     service = AIDataOpService(endpoint_name, backend=superdesk.get_backend())
     AIDataOpResource.schema["service"]["allowed"] = allowed_service
     AIDataOpResource(endpoint_name, app=app, service=service)
-    superdesk.intrinsic_privilege(endpoint_name, method=['POST'])
+    superdesk.intrinsic_privilege(endpoint_name, method=["POST"])

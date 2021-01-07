@@ -13,24 +13,24 @@ from superdesk import get_resource_service
 
 class DataUpdate(DataUpdate):
 
-    resource = 'vocabularies'
+    resource = "vocabularies"
     product_types = {
-        '_id': 'product_types',
-        'display_name': 'Product Types',
-        'type': 'unmanageable',
-        'items': [
-            {'is_active': True, 'name': 'API', 'qcode': 'api'},
-            {'is_active': True, 'name': 'Direct', 'qcode': 'direct'},
-            {'is_active': True, 'name': 'Both', 'qcode': 'both'}
-        ]
+        "_id": "product_types",
+        "display_name": "Product Types",
+        "type": "unmanageable",
+        "items": [
+            {"is_active": True, "name": "API", "qcode": "api"},
+            {"is_active": True, "name": "Direct", "qcode": "direct"},
+            {"is_active": True, "name": "Both", "qcode": "both"},
+        ],
     }
 
     def forwards(self, mongodb_collection, mongodb_database):
-        product_types = get_resource_service(self.resource).find_one(req=None, _id='product_types')
+        product_types = get_resource_service(self.resource).find_one(req=None, _id="product_types")
         if product_types:
-            print('Product Types vocabulary already exists in the system.')
+            print("Product Types vocabulary already exists in the system.")
             return
         get_resource_service(self.resource).post([self.product_types])
 
     def backwards(self, mongodb_collection, mongodb_database):
-        get_resource_service(self.resource).delete_action({'_id': 'product_types'})
+        get_resource_service(self.resource).delete_action({"_id": "product_types"})

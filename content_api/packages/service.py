@@ -24,7 +24,7 @@ class PackagesService(ItemsService):
     Serves mainly as a proxy to the data layer.
     """
 
-    default_sort = PackagesResource.datasource.get('default_sort', [('versioncreated', -1)])
+    default_sort = PackagesResource.datasource.get("default_sort", [("versioncreated", -1)])
 
     def on_fetched_item(self, document):
         """Event handler when a single package is retrieved from database.
@@ -46,7 +46,7 @@ class PackagesService(ItemsService):
         :param dict result: dictionary contaning the list of MongoDB documents
             (the fetched packages) and some metadata, e.g. pagination info
         """
-        for document in result['_items']:
+        for document in result["_items"]:
             self._process_referenced_objects(document)
         super().on_fetched(result)
 
@@ -58,9 +58,9 @@ class PackagesService(ItemsService):
 
         :param dict document: MongoDB document representing a package object
         """
-        for item in document.get('associations', {}).values():
+        for item in document.get("associations", {}).values():
             if not item:
                 continue
-            if item.get('_id') or item.get('guid'):
-                item['uri'] = self._get_uri(item)
-                item.pop('_id', None)
+            if item.get("_id") or item.get("guid"):
+                item["uri"] = self._get_uri(item)
+                item.pop("_id", None)

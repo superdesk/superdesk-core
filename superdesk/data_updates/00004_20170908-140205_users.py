@@ -12,18 +12,12 @@ from superdesk.commands.data_updates import DataUpdate
 
 class DataUpdate(DataUpdate):
 
-    resource = 'users'
+    resource = "users"
 
     def forwards(self, mongodb_collection, mongodb_database):
         # we want all existing users to be authors by default
-        print(mongodb_collection.update_many({'is_author': {'$exists': False}},
-                                             {'$set': {
-                                                 'is_author': True
-                                             }}))
+        print(mongodb_collection.update_many({"is_author": {"$exists": False}}, {"$set": {"is_author": True}}))
 
     def backwards(self, mongodb_collection, mongodb_database):
         # author was not existing before the update, so we remove the value
-        print(mongodb_collection.update_many({},
-                                             {'$unset': {
-                                                 'is_author': ''
-                                             }}))
+        print(mongodb_collection.update_many({}, {"$unset": {"is_author": ""}}))

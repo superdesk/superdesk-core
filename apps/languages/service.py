@@ -24,4 +24,4 @@ class LanguagesService(BaseService):
         Return the list of languages defined on config file.
         """
 
-        return ListCursor(app.config.get('LANGUAGES', []))
+        return ListCursor(app.config.get("LANGUAGES", []))

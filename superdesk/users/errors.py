@@ -15,8 +15,8 @@ class UserInactiveError(SuperdeskApiError):
     """User is inactive, access restricted"""
 
     status_code = 403
-    payload = {'is_active': False}
-    message = 'Account is inactive, access restricted.'
+    payload = {"is_active": False}
+    message = "Account is inactive, access restricted."
 
 
 class UserNotRegisteredException(Exception):

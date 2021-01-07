@@ -19,14 +19,13 @@ import datetime
 
 
 class DbAuthService(AuthService):
-
     def authenticate(self, credentials, ignore_expire=False):
-        user = get_resource_service('auth_users').find_one(req=None, username=credentials.get('username'))
+        user = get_resource_service("auth_users").find_one(req=None, username=credentials.get("username"))
         if not user:
             raise CredentialsAuthError(credentials)
 
-        password = credentials.get('password').encode('UTF-8')
-        hashed = user.get('password').encode('UTF-8')
+        password = credentials.get("password").encode("UTF-8")
+        hashed = user.get("password").encode("UTF-8")
 
         if not (password and hashed):
             raise CredentialsAuthError(credentials)
@@ -34,17 +33,17 @@ class DbAuthService(AuthService):
         if not bcrypt.checkpw(password, hashed):
             raise CredentialsAuthError(credentials)
 
-        if not ignore_expire and app.settings.get('PASSWORD_EXPIRY_DAYS', 0) > 0:
-            days = app.settings.get('PASSWORD_EXPIRY_DAYS')
-            date = user.get('password_changed_on')
+        if not ignore_expire and app.settings.get("PASSWORD_EXPIRY_DAYS", 0) > 0:
+            days = app.settings.get("PASSWORD_EXPIRY_DAYS")
+            date = user.get("password_changed_on")
             if date is None or (date + datetime.timedelta(days=days)) < utcnow():
                 raise PasswordExpiredError()
 
         return user
 
     def is_authorized(self, **kwargs):
-        if kwargs.get('_id') is None:
+        if kwargs.get("_id") is None:
             return False
 
-        auth = self.find_one(_id=str(kwargs.get('_id')), req=None)
-        return auth and str(g.auth['_id']) == str(auth.get('_id'))
+        auth = self.find_one(_id=str(kwargs.get("_id")), req=None)
+        return auth and str(g.auth["_id"]) == str(auth.get("_id"))

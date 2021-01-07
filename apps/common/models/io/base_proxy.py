@@ -44,12 +44,12 @@ class BaseProxy(DataLayer):
         return self._update(resource, filter, doc)
 
     def replace(self, resource, filter, doc):
-        return self._update(resource, filter, doc, method='replace')
+        return self._update(resource, filter, doc, method="replace")
 
     def delete(self, resource, filter):
         return self.data_layer.delete(resource, filter)
 
-    def _update(self, resource, filter, doc, method='update'):
+    def _update(self, resource, filter, doc, method="update"):
         _id = doc.pop(ID_FIELD, None)
         original = self.find_one(resource, filter, None)
         filter[ID_FIELD] = original[ID_FIELD]  # make sure it's correct type

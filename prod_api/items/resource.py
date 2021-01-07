@@ -19,22 +19,22 @@ from superdesk.auth_server.scopes import Scope
 # and it will cut off all required data.
 # https://github.com/pyeve/eve/blob/afd573d9254a9a23393f35760e9c515300909ccd/eve/io/base.py#L420
 projection = {key: 1 for key in metadata_schema}
-projection.update({
-    'fields_meta': 0,
-})
+projection.update(
+    {
+        "fields_meta": 0,
+    }
+)
 
 
 class ItemsResource(Resource):
-    url = 'items'
+    url = "items"
     item_url = item_url
-    item_methods = ['GET']
-    resource_methods = ['GET']
+    item_methods = ["GET"]
+    resource_methods = ["GET"]
     datasource = {
-        'source': 'archive',
-        'search_backend': 'elastic',
-        'default_sort': [('_updated', -1)],
-        'projection': projection,
+        "source": "archive",
+        "search_backend": "elastic",
+        "default_sort": [("_updated", -1)],
+        "projection": projection,
     }
-    privileges = {
-        'GET': Scope.ARCHIVE_READ.name
-    }
+    privileges = {"GET": Scope.ARCHIVE_READ.name}

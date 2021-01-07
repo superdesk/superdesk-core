@@ -13,5 +13,5 @@ from .clients import AuthServerClientsResource, AuthServerClientsService
 
 def init_app(app):
     oauth2.config_oauth(app)
-    superdesk.register_resource('auth_server_clients', AuthServerClientsResource, AuthServerClientsService)
+    superdesk.register_resource("auth_server_clients", AuthServerClientsResource, AuthServerClientsService)
     superdesk.blueprint(oauth2.bp, app)

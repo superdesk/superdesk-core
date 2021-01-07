@@ -25,17 +25,17 @@ class ApiAuditService(BaseService):
         :param id: id of the item
         :return:
         """
-        subscriber = getattr(g, 'user', None)
+        subscriber = getattr(g, "user", None)
         # in behave testing we get user (dict)
         if isinstance(subscriber, dict):
             subscriber = subscriber.get(config.ID_FIELD)
 
         audit = {
-            'type': item.get('type', ''),
-            'subscriber': subscriber,
-            'uri': item.get('uri', None),
-            'items_id': id,
-            'version': item.get('version', ''),
-            'remote_addr': request.remote_addr
+            "type": item.get("type", ""),
+            "subscriber": subscriber,
+            "uri": item.get("uri", None),
+            "items_id": id,
+            "version": item.get("version", ""),
+            "remote_addr": request.remote_addr,
         }
         self.post([audit])

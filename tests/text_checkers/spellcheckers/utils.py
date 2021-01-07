@@ -19,7 +19,7 @@ def mock_dictionaries(service, model):
 
     other services are returned normally
     """
-    if service == 'dictionaries':
+    if service == "dictionaries":
         fake_service = MagicMock()
         fake_service.get_model_for_lang.return_value = model
         return fake_service

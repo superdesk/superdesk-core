@@ -23,20 +23,16 @@ def create_server(config):
     :param config: config dictionary
     """
     try:
-        host = config['WS_HOST']
-        port = int(config['WS_PORT'])
-        broker_url = config['BROKER_URL']
-        exchange_name = config.get('WEBSOCKET_EXCHANGE')
+        host = config["WS_HOST"]
+        port = int(config["WS_PORT"])
+        broker_url = config["BROKER_URL"]
+        exchange_name = config.get("WEBSOCKET_EXCHANGE")
         comms = SocketCommunication(host, port, broker_url, exchange_name)
         comms.run_server()
     except Exception:
-        logger.exception('Failed to start the WebSocket server.')
+        logger.exception("Failed to start the WebSocket server.")
 
 
-if __name__ == '__main__':
-    config = {
-        'WS_HOST': '0.0.0.0',
-        'WS_PORT': '5100',
-        'BROKER_URL': 'redis://localhost:6379'
-    }
+if __name__ == "__main__":
+    config = {"WS_HOST": "0.0.0.0", "WS_PORT": "5100", "BROKER_URL": "redis://localhost:6379"}
     create_server(config)
