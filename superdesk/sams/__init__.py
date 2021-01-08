@@ -59,4 +59,4 @@ def init_app(app: Eve):
 
 
 def unlock_assets_on_logout(user_id, session_id):
-    unlock_asset_by_user(user_id)
+    unlock_asset_by_user(user_id, session_id)
