@@ -182,6 +182,14 @@ def lock_asset(asset_id):
         external_user_id=get_user_id(True),
         external_session_id=get_auth()['_id'],
         docs=docs)
+    if lock_asset_response.status_code == 200:
+        push_notification(
+            'sams:asset:lock_asset',
+            item_id=asset_id,
+            user_id=get_user_id(True),
+            session_id=get_auth()['_id'],
+            _etag=lock_asset_response.json()['_etag'],
+            extension='sams')
     return lock_asset_response.json(), lock_asset_response.status_code
 
 
@@ -193,6 +201,14 @@ def unlock_asset(asset_id):
         external_user_id=get_user_id(True),
         external_session_id=get_auth()['_id'],
         docs=docs)
+    if unlock_asset_response.status_code == 200:
+        push_notification(
+            'sams:asset:unlock_asset',
+            item_id=asset_id,
+            user_id=get_user_id(True),
+            session_id=get_auth()['_id'],
+            _etag=unlock_asset_response.json()['_etag'],
+            extension='sams')
     return unlock_asset_response.json(), unlock_asset_response.status_code
 
 
