@@ -63,11 +63,12 @@ def create():
     )
     if post_response.status_code == 201:
         push_notification(
-            'set:created',
+            'sams:set:created',
             item_id=post_response.json()['_id'],
             user_id=get_user_id(True),
             session_id=get_auth()['_id'],
-            _etag=post_response.json()['_etag'])
+            _etag=post_response.json()['_etag'],
+            extension='sams')
     return post_response.json(), post_response.status_code
 
 
@@ -90,10 +91,11 @@ def delete(item_id):
         return delete_response.json(), delete_response.status_code
     if delete_response.status_code == 204:
         push_notification(
-            'set:deleted',
+            'sams:set:deleted',
             item_id=item_id,
             user_id=get_user_id(True),
-            session_id=get_auth()['_id'])
+            session_id=get_auth()['_id'],
+            extension='sams')
     return '', delete_response.status_code
 
 
@@ -117,9 +119,10 @@ def update(item_id):
     )
     if update_response.status_code == 200:
         push_notification(
-            'set:updated',
+            'sams:set:updated',
             item_id=update_response.json()['_id'],
             user_id=get_user_id(True),
             session_id=get_auth()['_id'],
-            _etag=update_response.json()['_etag'])
+            _etag=update_response.json()['_etag'],
+            extension='sams')
     return update_response.json(), update_response.status_code
