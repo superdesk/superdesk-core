@@ -14,18 +14,18 @@ from content_api import MONGO_PREFIX
 
 class CompanyTokenResource(Resource):
     schema = {
-        '_id': {'type': 'string', 'unique': True},
-        'expiry': {'type': 'datetime'},
-        'company': Resource.rel('companies', required=False),
+        "_id": {"type": "string", "unique": True},
+        "expiry": {"type": "datetime"},
+        "company": Resource.rel("companies", required=False),
     }
 
     item_url = 'regex(".+")'
-    resource_methods = ['GET', 'POST']
-    item_methods = ['GET', 'DELETE']
-    privileges = {'POST': 'subscribers', 'DELETE': 'subscribers'}
+    resource_methods = ["GET", "POST"]
+    item_methods = ["GET", "DELETE"]
+    privileges = {"POST": "subscribers", "DELETE": "subscribers"}
 
     datasource = {
-        'default_sort': [('_created', 1)],
+        "default_sort": [("_created", 1)],
     }
 
     mongo_prefix = MONGO_PREFIX

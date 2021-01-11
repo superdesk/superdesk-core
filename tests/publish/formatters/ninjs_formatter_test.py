@@ -195,7 +195,7 @@ class NinjsFormatterTest(TestCase):
             "embargoed": embargoed.isoformat(),
         }
         self.assertEqual(expected, json.loads(doc))
-        self.assertNotIn('viewImage', json.loads(doc).get('renditions'))
+        self.assertNotIn("viewImage", json.loads(doc).get("renditions"))
 
     def test_composite_formatter(self):
         article = {
@@ -816,6 +816,27 @@ class NinjsFormatterTest(TestCase):
 
         self.assertEqual({"name": "Kobeřice", "code": "3073493", "scheme": "geonames"}, ninjs["place"][0])
 
+        with mock.patch.dict(self.app.config, {"NINJS_PLACE_EXTENDED": True}):
+            seq, doc = self.formatter.format(article, {"name": "Test Subscriber"})[0]
+        ninjs = json.loads(doc)
+
+        self.assertEqual(
+            {
+                "name": "Kobeřice",
+                "code": "3073493",
+                "scheme": "geonames",
+                "state": "Moravskoslezský kraj",
+                "state_code": "80",
+                "country": "Česko",
+                "country_code": "CZ",
+                "geometry_point": {
+                    "type": "Point",
+                    "coordinates": [49.98548, 18.05212],
+                },
+            },
+            ninjs["place"][0],
+        )
+
     def test_custom_media(self):
         """Test that custom media are put in "groups" field and not associations (SDESK-2955)"""
         self.app.data.insert(
@@ -951,7 +972,7 @@ class NinjsFormatterTest(TestCase):
                             "type": "picture",
                             "version": "1",
                         },
-                    ]
+                    ],
                 }
             },
             "guid": "123",
@@ -1114,9 +1135,12 @@ class NinjsFormatterTest(TestCase):
                 }
             ],
         )
-        self.app.data.insert("vocabularies", [
-            {"_id": "custom_related_content", "field_type": "related_content"},
-        ])
+        self.app.data.insert(
+            "vocabularies",
+            [
+                {"_id": "custom_related_content", "field_type": "related_content"},
+            ],
+        )
 
         article = {
             "_id": "5ba1224e0d6f13056bd82d50",
@@ -1142,24 +1166,27 @@ class NinjsFormatterTest(TestCase):
             },
         }
 
-        self.app.data.insert("archive", [
-            {
-                "_id": "guid1",
-                "guid": "guid1",
-                "type": "text",
-                "language": "en",
-                "associations": {
-                    "featuredmedia": {
-                        "type": "picture",
+        self.app.data.insert(
+            "archive",
+            [
+                {
+                    "_id": "guid1",
+                    "guid": "guid1",
+                    "type": "text",
+                    "language": "en",
+                    "associations": {
+                        "featuredmedia": {
+                            "type": "picture",
+                        },
                     },
                 },
-            },
-            {
-                "_id": "guid2",
-                "guid": "guid2",
-                "type": "picture",
-            },
-        ])
+                {
+                    "_id": "guid2",
+                    "guid": "guid2",
+                    "type": "picture",
+                },
+            ],
+        )
 
         expected = {
             "associations": {
@@ -1197,8 +1224,8 @@ class NinjsFormatterTest(TestCase):
                             "type": "picture",
                             "priority": 5,
                             "order": 2,
-                        }
-                    ]
+                        },
+                    ],
                 }
             },
             "guid": "123",
@@ -1402,7 +1429,7 @@ class NinjsFormatterTest(TestCase):
                             "order": 2,
                             "version": "1",
                         },
-                    ]
+                    ],
                 }
             },
             "guid": "123",
@@ -1657,7 +1684,7 @@ class NinjsFormatterTest(TestCase):
                             "version": "1",
                             "order": 21,
                         },
-                    ]
+                    ],
                 }
             },
             "guid": "123",
@@ -1674,37 +1701,39 @@ class NinjsFormatterTest(TestCase):
         self.assertEqual(ninjs, expected)
 
     def test_empty_genre(self):
-        seq, doc = self.formatter.format({
-            "type": "text",
-            "guid": "foo",
-            "genre": None,
-        }, {"name": "Test Subscriber"})[0]
+        seq, doc = self.formatter.format(
+            {
+                "type": "text",
+                "guid": "foo",
+                "genre": None,
+            },
+            {"name": "Test Subscriber"},
+        )[0]
         ninjs = json.loads(doc)
         self.assertIsNotNone(ninjs)
 
 
 @mock.patch("superdesk.publish.subscribers.SubscribersService.generate_sequence_number", lambda self, subscriber: 1)
 class Ninjs2FormatterTest(TestCase):
-
     def setUp(self):
         self.formatter = NINJS2Formatter()
 
     def test_format_type(self):
-        self.assertEqual('ninjs2', self.formatter.format_type)
+        self.assertEqual("ninjs2", self.formatter.format_type)
 
     def test_correction_sequence_number(self):
         article = {
-            'guid': 'bar',
-            'type': 'text',
-            'correction_sequence': 2,
-            'rewrite_sequence': 1,
-            'rewrite_of': 'foo',
-            'version': 5,
+            "guid": "bar",
+            "type": "text",
+            "correction_sequence": 2,
+            "rewrite_sequence": 1,
+            "rewrite_of": "foo",
+            "version": 5,
         }
 
         seq, doc = self.formatter.format(article, {"name": "Test Subscriber"})[0]
         ninjs = json.loads(doc)
 
-        self.assertEqual('2', ninjs.get('version'))
-        self.assertEqual(1, ninjs.get('rewrite_sequence'))
-        self.assertEqual('foo', ninjs.get('rewrite_of'))
+        self.assertEqual("2", ninjs.get("version"))
+        self.assertEqual(1, ninjs.get("rewrite_sequence"))
+        self.assertEqual("foo", ninjs.get("rewrite_of"))

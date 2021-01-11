@@ -11,7 +11,7 @@ from decimal import Decimal
 from . import unit_base
 from flask_babel import lazy_gettext
 
-CUBIC_METER_SYMBOL = 'kg'
+CUBIC_METER_SYMBOL = "kg"
 
 
 def convert(pounds, precision=1):
@@ -22,21 +22,21 @@ def convert(pounds, precision=1):
     """
     lb_to_kg_rate = Decimal(0.453592)
     symbol = CUBIC_METER_SYMBOL
-    pounds_list = pounds.split('-')
+    pounds_list = pounds.split("-")
     kg_list = [unit_base.format_converted(Decimal(a) * lb_to_kg_rate, precision) for a in pounds_list]
-    return '-'.join(kg_list), symbol
+    return "-".join(kg_list), symbol
 
 
 def pounds_to_metric(item, **kwargs):
     """Converts pound values to metric"""
 
-    regex = r'(\d+-?,?\.?\d*)((\s*)|(-))((lbs?)|([pP]ounds?))\b'
+    regex = r"(\d+-?,?\.?\d*)((\s*)|(-))((lbs?)|([pP]ounds?))\b"
     return unit_base.do_conversion(item, convert, unit_base.format_output, regex, match_index=0, value_index=1)
 
 
-name = 'pounds_to_metric'
-label = lazy_gettext('Weight pounds to metric')
+name = "pounds_to_metric"
+label = lazy_gettext("Weight pounds to metric")
 callback = pounds_to_metric
-access_type = 'frontend'
-action_type = 'interactive'
-group = lazy_gettext('temperature and weight')
+access_type = "frontend"
+action_type = "interactive"
+group = lazy_gettext("temperature and weight")

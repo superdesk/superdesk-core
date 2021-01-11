@@ -14,9 +14,10 @@ from apps.dictionaries.service import DictionaryService
 
 
 def init_app(app):
-    endpoint_name = 'dictionaries'
+    endpoint_name = "dictionaries"
     service = DictionaryService(endpoint_name, backend=superdesk.get_backend())
     DictionariesResource(endpoint_name, app=app, service=service)
 
-    superdesk.privilege(name='dictionaries', label='Dictionaries List Management',
-                        description='User can manage dictionaries lists.')
+    superdesk.privilege(
+        name="dictionaries", label="Dictionaries List Management", description="User can manage dictionaries lists."
+    )

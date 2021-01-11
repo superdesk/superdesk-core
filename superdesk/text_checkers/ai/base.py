@@ -17,7 +17,6 @@ registered_ai_services = {}
 
 
 class AIServiceRegisterer(abc.ABCMeta):
-
     def __call__(cls, *args, **kwargs):
         instance = super().__call__(*args, **kwargs)
         name = instance.name

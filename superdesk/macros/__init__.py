@@ -18,20 +18,21 @@ logger = logging.getLogger(__name__)
 
 logger = logging.getLogger(__name__)
 
-macro_replacement_fields = {'body_html', 'body_text', 'abstract', 'headline', 'slugline', 'description_text'}
+macro_replacement_fields = {"body_html", "body_text", "abstract", "headline", "slugline", "description_text"}
 
 
-def load_macros(path, package_prefix='superdesk.macros'):
+def load_macros(path, package_prefix="superdesk.macros"):
     """Load macros from given path
 
     :param str path:
     :param str package_prefix:
     """
-    macros = [f[:-3] for f in os.listdir(path)
-              if f.endswith('.py') and not f.endswith('_test.py') and not f.startswith('__')]
+    macros = [
+        f[:-3] for f in os.listdir(path) if f.endswith(".py") and not f.endswith("_test.py") and not f.startswith("__")
+    ]
 
     for macro in macros:
-        module = '{}.{}'.format(package_prefix, macro)
+        module = "{}.{}".format(package_prefix, macro)
         try:
             if module in sys.modules.keys():
                 m = sys.modules[module]

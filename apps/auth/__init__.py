@@ -29,19 +29,19 @@ logger = logging.getLogger(__name__)
 def init_app(app):
     app.auth = SuperdeskTokenAuth()  # Overwrite the app default auth
 
-    endpoint_name = 'auth_users'
+    endpoint_name = "auth_users"
     service = BaseService(endpoint_name, backend=superdesk.get_backend())
     AuthUsersResource(endpoint_name, app=app, service=service)
 
-    endpoint_name = 'sessions'
+    endpoint_name = "sessions"
     service = BaseService(endpoint_name, backend=superdesk.get_backend())
     SessionsResource(endpoint_name, app=app, service=service)
 
-    endpoint_name = 'clear_sessions'
+    endpoint_name = "clear_sessions"
     service = UserSessionClearService(endpoint_name, backend=superdesk.get_backend())
     UserSessionClearResource(endpoint_name, app=app, service=service)
 
-    endpoint_name = 'auth'
+    endpoint_name = "auth"
     service = AuthService(endpoint_name, backend=superdesk.get_backend())
     AuthResource(endpoint_name, app=app, service=service)
 
@@ -59,9 +59,9 @@ def get_user(required=False):
 
     :param boolean required: if True and there is no user it will raise an error
     """
-    user = flask.g.get('user', {})
+    user = flask.g.get("user", {})
     if config.ID_FIELD not in user and required:
-        raise SuperdeskApiError.notFoundError(_('Invalid user.'))
+        raise SuperdeskApiError.notFoundError(_("Invalid user."))
     return user
 
 
@@ -76,7 +76,7 @@ def get_user_id(required=False):
 
 def get_auth():
     """Get authenticated session data."""
-    auth = flask.g.get('auth', {})
+    auth = flask.g.get("auth", {})
     return auth
 
 
@@ -86,7 +86,7 @@ def is_current_user_admin(required=False):
     :param required: raise an error if required and there is no user context
     """
     user = get_user(required) or {}
-    return user.get('user_type', '') == 'administrator'
+    return user.get("user_type", "") == "administrator"
 
 
-superdesk.command('session:gc', RemoveExpiredSessions())
+superdesk.command("session:gc", RemoveExpiredSessions())

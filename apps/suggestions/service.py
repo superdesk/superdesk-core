@@ -18,8 +18,7 @@ from flask_babel import _
 
 
 class SuggestionsService(BaseService):
-    """Service used for live suggestions functionality.
-    """
+    """Service used for live suggestions functionality."""
 
     def __init__(self, datasource=None, backend=None):
         super().__init__(datasource, backend)
@@ -30,34 +29,26 @@ class SuggestionsService(BaseService):
         Return a list of items related to the given item. The given item id is retrieved
         from the lookup dictionary as 'item_id'
         """
-        if 'item_id' not in lookup:
-            raise SuperdeskApiError.badRequestError(_('The item identifier is required'))
-        item = get_resource_service('archive_autosave').find_one(req=None, _id=lookup['item_id'])
+        if "item_id" not in lookup:
+            raise SuperdeskApiError.badRequestError(_("The item identifier is required"))
+        item = get_resource_service("archive_autosave").find_one(req=None, _id=lookup["item_id"])
         if not item:
-            item = get_resource_service('archive').find_one(req=None, _id=lookup['item_id'])
+            item = get_resource_service("archive").find_one(req=None, _id=lookup["item_id"])
             if not item:
-                raise SuperdeskApiError.notFoundError(_('Invalid item identifer'))
+                raise SuperdeskApiError.notFoundError(_("Invalid item identifer"))
 
         keywords = self.provider.get_keywords(self._transform(item))
         if not keywords:
             return ElasticCursor([])
 
         query = {
-            'query': {
-                'filtered': {
-                    'query': {
-                        'query_string': {
-                            'query': ' '.join(kwd['text'] for kwd in keywords)
-                        }
-                    }
-                }
-            }
+            "query": {"filtered": {"query": {"query_string": {"query": " ".join(kwd["text"] for kwd in keywords)}}}}
         }
 
         req = ParsedRequest()
-        req.args = {'source': json.dumps(query), 'repo': 'archive,published,archived'}
+        req.args = {"source": json.dumps(query), "repo": "archive,published,archived"}
 
-        return get_resource_service('search').get(req=req, lookup=None)
+        return get_resource_service("search").get(req=req, lookup=None)
 
     def _transform(self, item):
         """
@@ -65,5 +56,5 @@ class SuggestionsService(BaseService):
         :param item: dict
         :return: str
         """
-        fields = ['slugline', 'headline', 'body_html', 'body_text', 'description_text']
-        return '\n\n'.join(item[field] for field in fields if field in item)
+        fields = ["slugline", "headline", "body_html", "body_text", "description_text"]
+        return "\n\n".join(item[field] for field in fields if field in item)

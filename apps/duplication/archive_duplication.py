@@ -29,39 +29,32 @@ from flask_babel import _
 
 
 class DuplicateResource(Resource):
-    endpoint_name = 'duplicate'
+    endpoint_name = "duplicate"
     resource_title = endpoint_name
 
     schema = {
-        'desk': Resource.rel('desks', False, required=True, nullable=True),
-        'stage': Resource.rel('stages', False, required=False),
-        'type': {
-            'type': 'string',
-            'required': True
-        },
-        'item_id': {
-            'type': 'string',
-            'required': False
-        }
+        "desk": Resource.rel("desks", False, required=True, nullable=True),
+        "stage": Resource.rel("stages", False, required=False),
+        "type": {"type": "string", "required": True},
+        "item_id": {"type": "string", "required": False},
     }
 
-    url = 'archive/<{0}:guid>/duplicate'.format(item_url)
+    url = "archive/<{0}:guid>/duplicate".format(item_url)
 
-    resource_methods = ['POST']
+    resource_methods = ["POST"]
     item_methods = []
 
-    privileges = {'POST': 'duplicate'}
+    privileges = {"POST": "duplicate"}
 
 
 class DuplicateService(BaseService):
-
     def on_create(self, docs):
         for doc in docs:
-            if not doc.get('desk') and not app.config['WORKFLOW_ALLOW_COPY_TO_PERSONAL']:
+            if not doc.get("desk") and not app.config["WORKFLOW_ALLOW_COPY_TO_PERSONAL"]:
                 raise SuperdeskApiError.forbiddenError(message=_("Duplicate to Personal space is not allowed."))
 
     def create(self, docs, **kwargs):
-        guid_of_item_to_be_duplicated = request.view_args['guid']
+        guid_of_item_to_be_duplicated = request.view_args["guid"]
 
         guid_of_duplicated_items = []
 
@@ -69,17 +62,15 @@ class DuplicateService(BaseService):
             archive_service = get_resource_service(ARCHIVE)
             archived_doc = {}
 
-            if doc.get('type') == 'archived':
-                archived_service = get_resource_service('archived')
+            if doc.get("type") == "archived":
+                archived_service = get_resource_service("archived")
                 req = ParsedRequest()
-                query = {'query':
-                         {'filtered':
-                          {'filter':
-                           {'bool':
-                            {'must': [
-                                {'term': {'item_id': doc.get('item_id')}}
-                            ]}}}}, "sort": [{"_current_version": "desc"}], "size": 1}
-                req.args = {'source': json.dumps(query)}
+                query = {
+                    "query": {"filtered": {"filter": {"bool": {"must": [{"term": {"item_id": doc.get("item_id")}}]}}}},
+                    "sort": [{"_current_version": "desc"}],
+                    "size": 1,
+                }
+                req.args = {"source": json.dumps(query)}
                 archived_docs = archived_service.get(req=req, lookup=None)
                 if archived_docs.count() > 0:
                     archived_doc = archived_docs[0]
@@ -90,19 +81,24 @@ class DuplicateService(BaseService):
             self._validate(archived_doc, doc, guid_of_item_to_be_duplicated)
 
             # reset timestamps
-            archived_doc['versioncreated'] = archived_doc['firstcreated'] = utcnow()
-            archived_doc['firstpublished'] = None
+            archived_doc["versioncreated"] = archived_doc["firstcreated"] = utcnow()
+            archived_doc["firstpublished"] = None
 
-            send_to(doc=archived_doc, desk_id=doc.get('desk'), stage_id=doc.get('stage'),
-                    default_stage='working_stage', user_id=get_user_id())
+            send_to(
+                doc=archived_doc,
+                desk_id=doc.get("desk"),
+                stage_id=doc.get("stage"),
+                default_stage="working_stage",
+                user_id=get_user_id(),
+            )
 
-            if not doc.get('desk'):  # item copied to personal space
-                archived_doc['state'] = CONTENT_STATE.PROGRESS
+            if not doc.get("desk"):  # item copied to personal space
+                archived_doc["state"] = CONTENT_STATE.PROGRESS
 
             new_guid = archive_service.duplicate_content(archived_doc)
             guid_of_duplicated_items.append(new_guid)
 
-        if kwargs.get('notify', True):
+        if kwargs.get("notify", True):
             push_content_notification([archived_doc])
 
         return guid_of_duplicated_items
@@ -128,22 +124,23 @@ class DuplicateService(BaseService):
         """
 
         if not doc_in_archive:
-            raise SuperdeskApiError.notFoundError(_(
-                'Fail to found item with guid: {guid}').format(guid=guid_to_duplicate))
+            raise SuperdeskApiError.notFoundError(
+                _("Fail to found item with guid: {guid}").format(guid=guid_to_duplicate)
+            )
 
-        if not is_workflow_state_transition_valid('duplicate', doc_in_archive[ITEM_STATE]):
+        if not is_workflow_state_transition_valid("duplicate", doc_in_archive[ITEM_STATE]):
             raise InvalidStateTransitionError()
 
-        lock_user = doc_in_archive.get('lock_user', None)
-        force_unlock = doc_in_archive.get('force_unlock', False)
+        lock_user = doc_in_archive.get("lock_user", None)
+        force_unlock = doc_in_archive.get("force_unlock", False)
         user = get_user()
         str_user_id = str(user.get(config.ID_FIELD)) if user else None
         if lock_user and str(lock_user) != str_user_id and not force_unlock:
-            raise SuperdeskApiError.forbiddenError(_('The item was locked by another user'))
+            raise SuperdeskApiError.forbiddenError(_("The item was locked by another user"))
 
 
 superdesk.workflow_action(
-    name='duplicate',
+    name="duplicate",
     exclude_states=[CONTENT_STATE.SPIKED, CONTENT_STATE.KILLED, CONTENT_STATE.RECALLED],
-    privileges=['archive', 'duplicate']
+    privileges=["archive", "duplicate"],
 )

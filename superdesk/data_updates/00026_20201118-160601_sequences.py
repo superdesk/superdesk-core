@@ -12,10 +12,10 @@ from superdesk.commands.data_updates import DataUpdate
 
 class DataUpdate(DataUpdate):
 
-    resource = 'sequences'
+    resource = "sequences"
 
     def forwards(self, mongodb_collection, mongodb_database):
-        return mongodb_collection.delete_many({'key': None})
+        return mongodb_collection.delete_many({"key": None})
 
     def backwards(self, mongodb_collection, mongodb_database):
         pass

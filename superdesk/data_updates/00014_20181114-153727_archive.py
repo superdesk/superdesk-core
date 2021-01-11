@@ -42,21 +42,21 @@ class TreeNode:
 
 class DataUpdate(DataUpdate):
 
-    resource = 'archive'
+    resource = "archive"
 
     def forwards(self, mongodb_collection, mongodb_database):
 
         # building multiple trees
         tree_items = {}
-        for item in mongodb_collection.find({'translated_from': {'$exists': True}}):
-            node_id = item['_id']
+        for item in mongodb_collection.find({"translated_from": {"$exists": True}}):
+            node_id = item["_id"]
 
             if node_id not in tree_items:
                 tree_items[node_id] = TreeNode(node_id)
 
             node = tree_items[node_id]
 
-            parent_id = item['translated_from']
+            parent_id = item["translated_from"]
 
             if parent_id not in tree_items:
                 tree_items[parent_id] = TreeNode(parent_id)
@@ -68,12 +68,7 @@ class DataUpdate(DataUpdate):
         for root_node in get_root_nodes(tree_items):
             ids = get_ids_recursive([root_node])
 
-            print(
-                mongodb_collection.update_many(
-                    {'_id': {'$in': ids}},
-                    {'$set': {'translation_id': root_node.id}}
-                )
-            )
+            print(mongodb_collection.update_many({"_id": {"$in": ids}}, {"$set": {"translation_id": root_node.id}}))
 
     def backwards(self, mongodb_collection, mongodb_database):
         raise NotImplementedError()

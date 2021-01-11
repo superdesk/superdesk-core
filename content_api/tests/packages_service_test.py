@@ -42,11 +42,8 @@ class OnFetchedItemMethodTestCase(PackagesServiceTestCase):
         super().setUp()
 
         self.app = Flask(__name__)
-        self.app.config['CONTENTAPI_URL'] = 'http://content_api.com'
-        self.app.config['URLS'] = {
-            'items': 'items_endpoint',
-            'packages': 'packages_endpoint'
-        }
+        self.app.config["CONTENTAPI_URL"] = "http://content_api.com"
+        self.app.config["URLS"] = {"items": "items_endpoint", "packages": "packages_endpoint"}
 
         self.app_context = self.app.app_context()
         self.app_context.push()
@@ -56,48 +53,30 @@ class OnFetchedItemMethodTestCase(PackagesServiceTestCase):
         super().tearDown()
 
     def test_invokes_superclass_method_with_correct_args(self, super_fetched):
-        document = {'_id': 'item:XYZ'}
-        instance = self._make_one(datasource='packages')
+        document = {"_id": "item:XYZ"}
+        instance = self._make_one(datasource="packages")
         instance.on_fetched_item(document)
         super_fetched.assert_called_with(document)
 
     def test_sets_uri_field_on_referenced_items(self, super_fetched):
-        document = {
-            '_id': 'item:XYZ',
-            'associations': {
-                'main': {'type': 'picture', '_id': 'img:123'}
-            }
-        }
+        document = {"_id": "item:XYZ", "associations": {"main": {"type": "picture", "_id": "img:123"}}}
 
-        instance = self._make_one(datasource='packages')
+        instance = self._make_one(datasource="packages")
         instance.on_fetched_item(document)
 
-        expected_assoc = {
-            'main': {
-                'type': 'picture',
-                'uri': 'http://content_api.com/items_endpoint/img%3A123'
-            }
-        }
-        self.assertEqual(document.get('associations'), expected_assoc)
+        expected_assoc = {"main": {"type": "picture", "uri": "http://content_api.com/items_endpoint/img%3A123"}}
+        self.assertEqual(document.get("associations"), expected_assoc)
 
     def test_sets_uri_field_on_referenced_packages(self, super_fetched):
-        document = {
-            '_id': 'item:XYZ',
-            'associations': {
-                'story_object': {'type': 'composite', '_id': 'pkg:456'}
-            }
-        }
+        document = {"_id": "item:XYZ", "associations": {"story_object": {"type": "composite", "_id": "pkg:456"}}}
 
-        instance = self._make_one(datasource='packages')
+        instance = self._make_one(datasource="packages")
         instance.on_fetched_item(document)
 
         expected_assoc = {
-            'story_object': {
-                'type': 'composite',
-                'uri': 'http://content_api.com/packages_endpoint/pkg%3A456'
-            }
+            "story_object": {"type": "composite", "uri": "http://content_api.com/packages_endpoint/pkg%3A456"}
         }
-        self.assertEqual(document.get('associations'), expected_assoc)
+        self.assertEqual(document.get("associations"), expected_assoc)
 
 
 @mock.patch("content_api.packages.service.ItemsService.on_fetched")
@@ -108,11 +87,8 @@ class OnFetchedMethodTestCase(PackagesServiceTestCase):
         super().setUp()
 
         self.app = Flask(__name__)
-        self.app.config['CONTENTAPI_URL'] = 'http://content_api.com'
-        self.app.config['URLS'] = {
-            'items': 'items_endpoint',
-            'packages': 'packages_endpoint'
-        }
+        self.app.config["CONTENTAPI_URL"] = "http://content_api.com"
+        self.app.config["URLS"] = {"items": "items_endpoint", "packages": "packages_endpoint"}
 
         self.app_context = self.app.app_context()
         self.app_context.push()
@@ -122,52 +98,30 @@ class OnFetchedMethodTestCase(PackagesServiceTestCase):
         super().tearDown()
 
     def test_invokes_superclass_method_with_correct_args(self, super_fetched):
-        result = {
-            '_items': []
-        }
-        instance = self._make_one(datasource='packages')
+        result = {"_items": []}
+        instance = self._make_one(datasource="packages")
         instance.on_fetched(result)
         super_fetched.assert_called_with(result)
 
-    def test_sets_uri_field_on_objects_referenced_by_fetched_packages(
-        self, super_fetched
-    ):
+    def test_sets_uri_field_on_objects_referenced_by_fetched_packages(self, super_fetched):
         result = {
-            '_items': [
-                {
-                    '_id': 'pkg:ABC',
-                    'associations': {
-                        'main_picture': {'type': 'picture', '_id': 'img:123'}
-                    }
-                },
-                {
-                    '_id': 'pkg:DEF',
-                    'associations': {
-                        'main_story': {'type': 'composite', '_id': 'pkg:456'}
-                    }
-                },
+            "_items": [
+                {"_id": "pkg:ABC", "associations": {"main_picture": {"type": "picture", "_id": "img:123"}}},
+                {"_id": "pkg:DEF", "associations": {"main_story": {"type": "composite", "_id": "pkg:456"}}},
             ]
         }
 
-        instance = self._make_one(datasource='packages')
+        instance = self._make_one(datasource="packages")
         instance.on_fetched(result)
 
         # check 1st fetched package's associations
-        expected_assoc = {
-            'main_picture': {
-                'type': 'picture',
-                'uri': 'http://content_api.com/items_endpoint/img%3A123'
-            }
-        }
-        fetched_package = result['_items'][0]
-        self.assertEqual(fetched_package.get('associations'), expected_assoc)
+        expected_assoc = {"main_picture": {"type": "picture", "uri": "http://content_api.com/items_endpoint/img%3A123"}}
+        fetched_package = result["_items"][0]
+        self.assertEqual(fetched_package.get("associations"), expected_assoc)
 
         # check 2nd fetched package's associations
         expected_assoc = {
-            'main_story': {
-                'type': 'composite',
-                'uri': 'http://content_api.com/packages_endpoint/pkg%3A456'
-            }
+            "main_story": {"type": "composite", "uri": "http://content_api.com/packages_endpoint/pkg%3A456"}
         }
-        fetched_package = result['_items'][1]
-        self.assertEqual(fetched_package.get('associations'), expected_assoc)
+        fetched_package = result["_items"][1]
+        self.assertEqual(fetched_package.get("associations"), expected_assoc)

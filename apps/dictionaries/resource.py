@@ -11,58 +11,43 @@
 from superdesk.resource import Resource
 from superdesk.utils import SuperdeskBaseEnum
 
-DICTIONARY_FILE = 'file'
+DICTIONARY_FILE = "file"
 
 
 class DictionaryType(SuperdeskBaseEnum):
-    """Defines Dictionary Type
+    """Defines Dictionary Type"""
 
-    """
-
-    DICTIONARY = 'dictionary'
-    ABBREVIATIONS = 'abbreviations'
+    DICTIONARY = "dictionary"
+    ABBREVIATIONS = "abbreviations"
 
 
 class DictionariesResource(Resource):
-    """Dictionaries schema
-
-    """
+    """Dictionaries schema"""
 
     schema = {
-        'name': {
-            'type': 'string',
-            'required': True
+        "name": {"type": "string", "required": True},
+        "language_id": {"type": "string", "required": True},
+        "content": {
+            "type": "dict",
+            "schema": {},
+            "allow_unknown": True,
         },
-        'language_id': {
-            'type': 'string',
-            'required': True
-        },
-        'content': {
-            'type': 'dict',
-            'schema': {},
-            'allow_unknown': True,
-        },
-        'content_list': {
-            'type': 'string',
+        "content_list": {
+            "type": "string",
         },
         DICTIONARY_FILE: {
-            'type': 'file',
+            "type": "file",
         },
-        'user': Resource.rel('users', nullable=True),
-        'is_active': {
-            'type': 'string',
-            'default': 'true',
+        "user": Resource.rel("users", nullable=True),
+        "is_active": {
+            "type": "string",
+            "default": "true",
         },
-        'type': {
-            'type': 'string',
-            'default': DictionaryType.DICTIONARY.value,
-            'allowed': DictionaryType.values()
-        },
-
-        '_file_id': {'type': 'objectid', 'nullable': True, 'readonly': True},
-        'init_version': {'type': 'integer'},
+        "type": {"type": "string", "default": DictionaryType.DICTIONARY.value, "allowed": DictionaryType.values()},
+        "_file_id": {"type": "objectid", "nullable": True, "readonly": True},
+        "init_version": {"type": "integer"},
     }
-    item_methods = ['GET', 'PATCH', 'PUT', 'DELETE']
-    resource_methods = ['GET', 'POST', 'DELETE']
-    privileges = {'POST': 'dictionaries', 'PATCH': 'dictionaries', 'DELETE': 'dictionaries'}
-    etag_ignore_fields = ['content', 'content_list']
+    item_methods = ["GET", "PATCH", "PUT", "DELETE"]
+    resource_methods = ["GET", "POST", "DELETE"]
+    privileges = {"POST": "dictionaries", "PATCH": "dictionaries", "DELETE": "dictionaries"}
+    etag_ignore_fields = ["content", "content_list"]

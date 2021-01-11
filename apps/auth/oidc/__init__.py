@@ -43,30 +43,33 @@ logger = logging.getLogger(__name__)
 
 
 def init_app(app):
-    endpoint_name = 'auth_oidc'
-    if app.config['OIDC_ENABLED'] and not app.config['SECRET_KEY']:
-        logger.warn('SECRET_KEY is not set')
+    endpoint_name = "auth_oidc"
+    if app.config["OIDC_ENABLED"] and not app.config["SECRET_KEY"]:
+        logger.warn("SECRET_KEY is not set")
 
-    app.client_config['oidc_auth'] = app.config['OIDC_ENABLED'] and app.config['SECRET_KEY']
-    if app.client_config['oidc_auth']:
-        issuer = app.config['OIDC_ISSUER_URL']
-        app.config.setdefault('OIDC_CLIENT_SECRETS', {
-            "web": {
-                "issuer": issuer,
-                "auth_uri": issuer + '/protocol/openid-connect/auth',
-                "client_id": app.config['OIDC_SERVER_CLIENT'],
-                "client_secret": app.config['OIDC_SERVER_CLIENT_SECRET'],
-                "userinfo_uri": issuer + '/protocol/openid-connect/userinfo',
-                "token_uri": issuer + '/protocol/openid-connect/token',
-                "token_introspection_uri": issuer + '/protocol/openid-connect/token/introspect'
-            }
-        })
-        url, realm = issuer.split('/realms/')
-        app.client_config['keycloak_config'] = {
-            'url': url,
-            'realm': realm,
-            'clientId': app.config['OIDC_WEB_CLIENT'],
-            'redirectUri': app.config['OIDC_BROWSER_REDIRECT_URL']
+    app.client_config["oidc_auth"] = app.config["OIDC_ENABLED"] and app.config["SECRET_KEY"]
+    if app.client_config["oidc_auth"]:
+        issuer = app.config["OIDC_ISSUER_URL"]
+        app.config.setdefault(
+            "OIDC_CLIENT_SECRETS",
+            {
+                "web": {
+                    "issuer": issuer,
+                    "auth_uri": issuer + "/protocol/openid-connect/auth",
+                    "client_id": app.config["OIDC_SERVER_CLIENT"],
+                    "client_secret": app.config["OIDC_SERVER_CLIENT_SECRET"],
+                    "userinfo_uri": issuer + "/protocol/openid-connect/userinfo",
+                    "token_uri": issuer + "/protocol/openid-connect/token",
+                    "token_introspection_uri": issuer + "/protocol/openid-connect/token/introspect",
+                }
+            },
+        )
+        url, realm = issuer.split("/realms/")
+        app.client_config["keycloak_config"] = {
+            "url": url,
+            "realm": realm,
+            "clientId": app.config["OIDC_WEB_CLIENT"],
+            "redirectUri": app.config["OIDC_BROWSER_REDIRECT_URL"],
         }
-        service = OIDCAuthService('auth', backend=superdesk.get_backend(), app=app)
+        service = OIDCAuthService("auth", backend=superdesk.get_backend(), app=app)
         OIDCAuthResource(endpoint_name, app=app, service=service)

@@ -20,41 +20,36 @@ class Spread(BasePackageElement):
     """
 
     SPREAD_DEFAULTS = {
-        'FlattenerOverride': 'Default',
-        'ShowMasterItems': 'true',
-        'PageCount': '1',
-        'BindingLocation': '0',
-        'AllowPageShuffle': 'true',
-        'ItemTransform': '1 0 0 1 0 0',
-        'PageTransitionType': 'None',
-        'PageTransitionDirection': 'NotApplicable',
-        'PageTransitionDuration': 'Medium'
+        "FlattenerOverride": "Default",
+        "ShowMasterItems": "true",
+        "PageCount": "1",
+        "BindingLocation": "0",
+        "AllowPageShuffle": "true",
+        "ItemTransform": "1 0 0 1 0 0",
+        "PageTransitionType": "None",
+        "PageTransitionDirection": "NotApplicable",
+        "PageTransitionDuration": "Medium",
     }
     PAGE_DEFAULTS = {
-        'AppliedTrapPreset': 'TrapPreset/$ID/kDefaultTrapStyleName',
-        'AppliedMaster': 'n',
-        'OverrideList': '',
-        'TabOrder': '',
-        'GridStartingPoint': 'TopOutside',
-        'UseMasterGrid': 'true'
+        "AppliedTrapPreset": "TrapPreset/$ID/kDefaultTrapStyleName",
+        "AppliedMaster": "n",
+        "OverrideList": "",
+        "TabOrder": "",
+        "GridStartingPoint": "TopOutside",
+        "UseMasterGrid": "true",
     }
     MARGINPREFERENCE_DEFAULTS = {
-        'ColumnCount': '1',
-        'ColumnGutter': '12',
-        'Top': '36',
-        'Bottom': '36',
-        'Left': '36',
-        'Right': '36',
-        'ColumnDirection': 'Horizontal',
-        'ColumnsPositions': '0 540'
+        "ColumnCount": "1",
+        "ColumnGutter": "12",
+        "Top": "36",
+        "Bottom": "36",
+        "Left": "36",
+        "Right": "36",
+        "ColumnDirection": "Horizontal",
+        "ColumnsPositions": "0 540",
     }
-    TEXTFRAME_DEFAULTS = {
-        'ItemTransform': "1 0 0 1 0 0",
-        'ContentType': "TextType"
-    }
-    GEOMETRYPATH_DEFAULTS = {
-        'PathOpen': 'false'
-    }
+    TEXTFRAME_DEFAULTS = {"ItemTransform": "1 0 0 1 0 0", "ContentType": "TextType"}
+    GEOMETRYPATH_DEFAULTS = {"PathOpen": "false"}
     VERTICAL_MARGIN = 10
 
     def __init__(self, self_id, document_page_width, document_page_height, attributes=None):
@@ -72,11 +67,11 @@ class Spread(BasePackageElement):
         Used as a filename for a file inside zip container.
         :return str: filename
         """
-        return 'Spreads/Spread_{}.xml'.format(self.self_id)
+        return "Spreads/Spread_{}.xml".format(self.self_id)
 
     @property
     def page_inner_height(self):
-        return self._document_page_height - self._page_margins['top'] - self._page_margins['bottom']
+        return self._document_page_height - self._page_margins["top"] - self._page_margins["bottom"]
 
     @staticmethod
     def _make_itemtransform_translation(matrix, coordiantes):
@@ -104,9 +99,9 @@ class Spread(BasePackageElement):
             [1, 0],
             [0, 1],
             [
-                self._document_page_width / 2 * (-1) + margins['right'],
-                self._document_page_height / 2 * (-1) + margins['top']
-            ]
+                self._document_page_width / 2 * (-1) + margins["right"],
+                self._document_page_height / 2 * (-1) + margins["top"],
+            ],
         )
 
     @property
@@ -114,20 +109,14 @@ class Spread(BasePackageElement):
         """
         :return list: list of dicts with last used pathpoints
         """
-        elements = self._spread.xpath('.//PathPointArray')
+        elements = self._spread.xpath(".//PathPointArray")
 
         if not elements:
             return None
 
         pathpointarray = elements[-1]
 
-        return [
-            {
-                k: [
-                    float(i) for i in el.attrib[k].split()
-                ] for k in el.attrib
-            } for el in pathpointarray
-        ]
+        return [{k: [float(i) for i in el.attrib[k].split()] for k in el.attrib} for el in pathpointarray]
 
     @property
     def _last_used_itemtransform(self):
@@ -135,18 +124,14 @@ class Spread(BasePackageElement):
         Return a last (lowest) TextFrame/Rectangle's ItemTransform as a matrix
         :return tuple: last used item transform as a matrix
         """
-        elements = self._spread.xpath('*[self::TextFrame|self::Rectangle]')
+        elements = self._spread.xpath("*[self::TextFrame|self::Rectangle]")
 
         if not elements:
             return None
 
-        _transform = [float(i) for i in elements[-1].get('ItemTransform').split()]
+        _transform = [float(i) for i in elements[-1].get("ItemTransform").split()]
 
-        return (
-            _transform[:2],
-            _transform[2:4],
-            _transform[4:]
-        )
+        return (_transform[:2], _transform[2:4], _transform[4:])
 
     @property
     def _page_margins(self):
@@ -155,13 +140,13 @@ class Spread(BasePackageElement):
         """
         if self._page is None:
             # TODO create custom exception
-            raise Exception('Page does not exist.')
+            raise Exception("Page does not exist.")
 
         return {
-            'top': float(self._page.find('MarginPreference').attrib['Top']),
-            'bottom': float(self._page.find('MarginPreference').attrib['Bottom']),
-            'left': float(self._page.find('MarginPreference').attrib['Left']),
-            'right': float(self._page.find('MarginPreference').attrib['Right'])
+            "top": float(self._page.find("MarginPreference").attrib["Top"]),
+            "bottom": float(self._page.find("MarginPreference").attrib["Bottom"]),
+            "left": float(self._page.find("MarginPreference").attrib["Left"]),
+            "right": float(self._page.find("MarginPreference").attrib["Right"]),
         }
 
     def add_page(self, attributes=None):
@@ -177,29 +162,17 @@ class Spread(BasePackageElement):
         # merge Page attributes
         page_attributes = self.PAGE_DEFAULTS
         if attributes:
-            page_attributes = self.merge_attributes(
-                page_attributes,
-                attributes.get('Page', {})
-            )
+            page_attributes = self.merge_attributes(page_attributes, attributes.get("Page", {}))
         # Page
-        self._page = etree.SubElement(
-            self._spread,
-            'Page',
-            attrib=page_attributes
-        )
+        self._page = etree.SubElement(self._spread, "Page", attrib=page_attributes)
         # merge MarginPreference attributes
         marginpreference_attributes = self.MARGINPREFERENCE_DEFAULTS
         if attributes:
             marginpreference_attributes = self.merge_attributes(
-                marginpreference_attributes,
-                attributes.get('MarginPreference', {})
+                marginpreference_attributes, attributes.get("MarginPreference", {})
             )
         # MarginPreference
-        etree.SubElement(
-            self._page,
-            'MarginPreference',
-            attrib=marginpreference_attributes
-        )
+        etree.SubElement(self._page, "MarginPreference", attrib=marginpreference_attributes)
 
         return self._page
 
@@ -215,11 +188,7 @@ class Spread(BasePackageElement):
         if height < 20:
             height = 20
 
-        modifier = {
-            'TextFrame': {
-                'ItemTransform': self._generate_next_itemtransform()
-            }
-        }
+        modifier = {"TextFrame": {"ItemTransform": self._generate_next_itemtransform()}}
 
         if attributes:
             attributes = dict(merge_dicts_deep(attributes, modifier))
@@ -229,10 +198,7 @@ class Spread(BasePackageElement):
         textframe = self._create_textframe(attributes)
 
         # Properties
-        properties = etree.SubElement(
-            textframe,
-            'Properties'
-        )
+        properties = etree.SubElement(textframe, "Properties")
         pathgeometry = self._create_pathgeometry(height)
         properties.append(pathgeometry)
 
@@ -244,18 +210,15 @@ class Spread(BasePackageElement):
         """
         # 0:0 is at the center of the page when facing pages is off
         highest_possible_y_axis_point = self.page_inner_height / 2
-        required_y_axis_point = float(
-            self._generate_next_itemtransform().rsplit(maxsplit=1)[-1]
-        ) + height + self.VERTICAL_MARGIN
+        required_y_axis_point = (
+            float(self._generate_next_itemtransform().rsplit(maxsplit=1)[-1]) + height + self.VERTICAL_MARGIN
+        )
 
         return highest_possible_y_axis_point >= required_y_axis_point
 
     def _build_etree(self):
-        self._etree = etree.Element(
-            etree.QName(self.XMLNS_IDPKG, 'Spread'),
-            nsmap={'idPkg': self.XMLNS_IDPKG}
-        )
-        self._etree.set('DOMVersion', self.DOM_VERSION)
+        self._etree = etree.Element(etree.QName(self.XMLNS_IDPKG, "Spread"), nsmap={"idPkg": self.XMLNS_IDPKG})
+        self._etree.set("DOMVersion", self.DOM_VERSION)
         self._add_spread()
 
     def _add_spread(self):
@@ -264,17 +227,10 @@ class Spread(BasePackageElement):
         :return lxml.etree: Spread etree instance
         """
         # merge Spread attributes
-        spread_attributes = self.merge_attributes(
-            self.SPREAD_DEFAULTS,
-            self._attributes.get('Spread', {})
-        )
-        spread_attributes.update({'Self': self.self_id})
+        spread_attributes = self.merge_attributes(self.SPREAD_DEFAULTS, self._attributes.get("Spread", {}))
+        spread_attributes.update({"Self": self.self_id})
         # Spread
-        self._spread = etree.SubElement(
-            self._etree,
-            'Spread',
-            attrib=spread_attributes
-        )
+        self._spread = etree.SubElement(self._etree, "Spread", attrib=spread_attributes)
 
         return self._spread
 
@@ -288,16 +244,9 @@ class Spread(BasePackageElement):
         # merge TextFrame attributes
         textframe_attributes = self.TEXTFRAME_DEFAULTS
         if attributes:
-            textframe_attributes = self.merge_attributes(
-                textframe_attributes,
-                attributes.get('TextFrame', {})
-            )
+            textframe_attributes = self.merge_attributes(textframe_attributes, attributes.get("TextFrame", {}))
         # Page
-        textframe = etree.SubElement(
-            self._spread,
-            'TextFrame',
-            attrib=textframe_attributes
-        )
+        textframe = etree.SubElement(self._spread, "TextFrame", attrib=textframe_attributes)
 
         return textframe
 
@@ -310,23 +259,14 @@ class Spread(BasePackageElement):
         # for rectangle frames only
 
         # PathGeometry
-        pathgeometry = etree.Element(
-            'PathGeometry'
-        )
+        pathgeometry = etree.Element("PathGeometry")
         # GeometryPath
-        geometrypath = etree.SubElement(
-            pathgeometry,
-            'GeometryPath',
-            attrib=self.GEOMETRYPATH_DEFAULTS
-        )
+        geometrypath = etree.SubElement(pathgeometry, "GeometryPath", attrib=self.GEOMETRYPATH_DEFAULTS)
         # PathPointArray
-        pathpointarray = etree.SubElement(
-            geometrypath,
-            'PathPointArray'
-        )
+        pathpointarray = etree.SubElement(geometrypath, "PathPointArray")
         # PathPoint(s)
         margins = self._page_margins
-        internal_page_width = self._document_page_width - margins['right'] - margins['left']
+        internal_page_width = self._document_page_width - margins["right"] - margins["left"]
         pathpoints_coordinates = [
             # left top
             [0, 0],
@@ -341,12 +281,12 @@ class Spread(BasePackageElement):
         for coordiantes in pathpoints_coordinates:
             etree.SubElement(
                 pathpointarray,
-                'PathPoint',
+                "PathPoint",
                 attrib={
-                    'Anchor': '{} {}'.format(*coordiantes),
-                    'LeftDirection': '{} {}'.format(*coordiantes),
-                    'RightDirection': '{} {}'.format(*coordiantes),
-                }
+                    "Anchor": "{} {}".format(*coordiantes),
+                    "LeftDirection": "{} {}".format(*coordiantes),
+                    "RightDirection": "{} {}".format(*coordiantes),
+                },
             )
 
         return pathgeometry
@@ -360,12 +300,15 @@ class Spread(BasePackageElement):
         if matrix:
             matrix = self._make_itemtransform_translation(matrix, (0, self.VERTICAL_MARGIN))
             # add frame height
-            matrix = self._make_itemtransform_translation(matrix, (0, self._last_used_pathpoints[1]['Anchor'][1]))
+            matrix = self._make_itemtransform_translation(matrix, (0, self._last_used_pathpoints[1]["Anchor"][1]))
         else:
             matrix = self._initial_itemtransform_matrix
 
-        return '{:.0f} {:.0f} {:.0f} {:.0f} {} {}'.format(
-            matrix[0][0], matrix[0][1],
-            matrix[1][0], matrix[1][1],
-            matrix[2][0], matrix[2][1],
+        return "{:.0f} {:.0f} {:.0f} {:.0f} {} {}".format(
+            matrix[0][0],
+            matrix[0][1],
+            matrix[1][0],
+            matrix[1][1],
+            matrix[2][0],
+            matrix[2][1],
         )

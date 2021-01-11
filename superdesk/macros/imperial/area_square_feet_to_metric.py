@@ -11,8 +11,8 @@ from decimal import Decimal
 from . import unit_base
 from flask_babel import lazy_gettext
 
-SQUARE_METER_SYMBOL = 'square meter'
-HECTARE_SYMBOL = 'ha'
+SQUARE_METER_SYMBOL = "square meter"
+HECTARE_SYMBOL = "ha"
 
 
 def convert(square_feet, precision=1):
@@ -23,7 +23,7 @@ def convert(square_feet, precision=1):
     """
     sqf_to_sqm_rate = Decimal(0.09290304)
     symbol = SQUARE_METER_SYMBOL
-    square_feet_list = square_feet.split('-')
+    square_feet_list = square_feet.split("-")
     square_meter_list = [Decimal(a) * sqf_to_sqm_rate for a in square_feet_list]
 
     if any(s for s in square_meter_list if s > Decimal(10000)):
@@ -33,19 +33,19 @@ def convert(square_feet, precision=1):
     else:
         square_meter_list = [unit_base.format_converted(s, precision=1) for s in square_meter_list]
 
-    return '-'.join(square_meter_list), symbol
+    return "-".join(square_meter_list), symbol
 
 
 def square_feet_to_metric(item, **kwargs):
     """Converts square feet values to metric"""
 
-    regex = r'(\d+-?,?\.?\d*)((\s*)|(-))((sq\.?\s*-?ft)|([sS]quare\s*-?(([fF]((ee)|(oo))t)|(ft))))\b'
+    regex = r"(\d+-?,?\.?\d*)((\s*)|(-))((sq\.?\s*-?ft)|([sS]quare\s*-?(([fF]((ee)|(oo))t)|(ft))))\b"
     return unit_base.do_conversion(item, convert, unit_base.format_output, regex, match_index=0, value_index=1)
 
 
-name = 'square_feet_to_metric'
-label = lazy_gettext('Area square feet to metric')
+name = "square_feet_to_metric"
+label = lazy_gettext("Area square feet to metric")
 callback = square_feet_to_metric
-access_type = 'frontend'
-action_type = 'interactive'
-group = lazy_gettext('area')
+access_type = "frontend"
+action_type = "interactive"
+group = lazy_gettext("area")

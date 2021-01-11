@@ -19,7 +19,7 @@ from eve.methods.common import resolve_document_etag
 log = logging.getLogger(__name__)
 
 
-class BaseService():
+class BaseService:
     """
     Base service for all endpoints, defines the basic implementation for CRUD datalayer functionality.
     """
@@ -113,14 +113,12 @@ class BaseService():
         return res
 
     def _validator(self, skip_validation=False):
-        resource_def = app.config['DOMAIN'][self.datasource]
-        schema = resource_def['schema']
+        resource_def = app.config["DOMAIN"][self.datasource]
+        schema = resource_def["schema"]
         return (
             None
             if skip_validation
-            else app.validator(
-                schema, resource=self.datasource, allow_unknown=resource_def['allow_unknown']
-            )
+            else app.validator(schema, resource=self.datasource, allow_unknown=resource_def["allow_unknown"])
         )
 
     def _resolve_defaults(self, doc):

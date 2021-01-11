@@ -12,15 +12,10 @@ from enum import Enum
 
 # please refer to /docs/auth_server.rst for details on scopes
 
-Scope = Enum('Scope', [
-    'ARCHIVE_READ',
-    'DESKS_READ',
-    'PLANNING_READ',
-    'CONTACTS_READ',
-    'USERS_READ',
-    'ASSIGNMENTS_READ',
-    'EVENTS_READ'
-])
+Scope = Enum(
+    "Scope",
+    ["ARCHIVE_READ", "DESKS_READ", "PLANNING_READ", "CONTACTS_READ", "USERS_READ", "ASSIGNMENTS_READ", "EVENTS_READ"],
+)
 
 
 allowed_scopes = {s.name for s in Scope}

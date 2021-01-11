@@ -9,16 +9,16 @@
 # at https://www.sourcefabric.org/superdesk/license
 
 
-LINKED_IN_PACKAGES = 'linked_in_packages'
-PACKAGE = 'package'
-PACKAGE_TYPE = 'package_type'
-REFS = 'refs'
-RESIDREF = 'residRef'
-ID_REF = 'idRef'
-ROLE = 'role'
-GROUPS = 'groups'
-MAIN_GROUP = 'main'
-MAIN_ROLE = 'grpRole:main'
-ROOT_GROUP = 'root'
-ROOT_ROLE = 'grpRole:NEP'
-GROUP_ID = 'id'
+LINKED_IN_PACKAGES = "linked_in_packages"
+PACKAGE = "package"
+PACKAGE_TYPE = "package_type"
+REFS = "refs"
+RESIDREF = "residRef"
+ID_REF = "idRef"
+ROLE = "role"
+GROUPS = "groups"
+MAIN_GROUP = "main"
+MAIN_ROLE = "grpRole:main"
+ROOT_GROUP = "root"
+ROOT_ROLE = "grpRole:NEP"
+GROUP_ID = "id"

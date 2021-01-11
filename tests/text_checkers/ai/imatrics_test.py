@@ -31,7 +31,8 @@ class IMatricsTestCase(TestCase):
         "type": "text",
         "version": 1,
         "body_html": "<p>this is a fake article to test the imatrics service, it should be returning some "
-                     "interesting tags.</p>",
+        "interesting tags.</p>",
+        "abstract": "<p>abstract</p><p>two lines</p>",
         "headline": "test imatrics",
         "slugline": "test imatrics",
     }
@@ -47,24 +48,46 @@ class IMatricsTestCase(TestCase):
     @responses.activate
     def test_autotagging(self):
         """Check that autotagging is working"""
-        self.app.data.insert('vocabularies', [
-            {'_id': 'topics', 'items': [
+        self.app.data.insert(
+            "vocabularies",
+            [
                 {
-                    'name': 'superdesk name',
-                    'qcode': '20000763',
-                    'is_active': True,
-                },
-            ]}
-        ])
+                    "_id": "topics",
+                    "items": [
+                        {
+                            "name": "superdesk name",
+                            "qcode": "20000763",
+                            "is_active": True,
+                        },
+                    ],
+                }
+            ],
+        )
 
         doc = {
             "service": "imatrics",
             "item": self.item,
         }
-        ai_service = get_resource_service('ai')
+        ai_service = get_resource_service("ai")
         api_url = urljoin(TEST_BASE_URL, "article/concept")
         responses.add(
-            responses.POST, api_url,
+            responses.POST,
+            api_url,
+            match=[
+                responses.json_params_matcher(
+                    {
+                        "uuid": self.item["guid"],
+                        "pubStatus": False,
+                        "headline": self.item["headline"],
+                        "body": [
+                            "this is a fake article to test the imatrics service,"
+                            " it should be returning some interesting tags.",
+                            "abstract",
+                            "two lines",
+                        ],
+                    }
+                )
+            ],
             json=[
                 {
                     "weight": 1,
@@ -80,26 +103,17 @@ class IMatricsTestCase(TestCase):
                     "links": [],
                     "title": "Service",
                     "type": "topic",
-                    "uuid": "44f52663-52f9-3836-ac45-ae862fe945a3"
+                    "uuid": "44f52663-52f9-3836-ac45-ae862fe945a3",
                 },
                 {
                     "weight": 1,
                     "geometry": {},
-                    "links": [
-                        {
-                            "relationType": "",
-                            "id": "medtop:20000763",
-                            "source": "IPTC",
-                            "uri": "",
-                            "url": ""
-                        }
-                    ],
+                    "links": [{"relationType": "", "id": "medtop:20000763", "source": "IPTC", "uri": "", "url": ""}],
                     "title": "informasjons- og kommunikasjonsteknologi",
                     "type": "category",
-                    "uuid": "c8a83204-29e0-3a7f-9a0e-51e76d885f7f"
-                }
-            ]
-
+                    "uuid": "c8a83204-29e0-3a7f-9a0e-51e76d885f7f",
+                },
+            ],
         )
 
         ai_service.create([doc])
@@ -137,7 +151,7 @@ class IMatricsTestCase(TestCase):
             ]
         }
 
-        self.assertEqual(doc['analysis'], expected)
+        self.assertEqual(doc["analysis"], expected)
 
     @responses.activate
     def test_search(self):
@@ -147,10 +161,11 @@ class IMatricsTestCase(TestCase):
             "operation": "search",
             "data": {"term": "informasjons"},
         }
-        ai_data_op_service = get_resource_service('ai_data_op')
+        ai_data_op_service = get_resource_service("ai_data_op")
         api_url = urljoin(TEST_BASE_URL, "concept/get?operation=title_type")
         responses.add(
-            responses.POST, api_url,
+            responses.POST,
+            api_url,
             json={
                 "result": [
                     {
@@ -164,7 +179,7 @@ class IMatricsTestCase(TestCase):
                         "broader": "",
                         "title": "informasjons- og kommunikasjonsteknologi",
                         "type": "category",
-                        "uuid": "c8a83204-29e0-3a7f-9a0e-51e76d885f7f"
+                        "uuid": "c8a83204-29e0-3a7f-9a0e-51e76d885f7f",
                     },
                     {
                         "longDescription": "",
@@ -177,44 +192,44 @@ class IMatricsTestCase(TestCase):
                         "broader": "",
                         "title": "informasjonsvitenskap",
                         "type": "category",
-                        "uuid": "af815add-8456-3226-8177-ea0d8e3011eb"
-                    }
+                        "uuid": "af815add-8456-3226-8177-ea0d8e3011eb",
+                    },
                 ],
                 "response": "Request successful.",
                 "error": False,
-                "scrollID": "9e7da4cf-541f-36b1-b7a0-aa883a76c04f"
-            }
+                "scrollID": "9e7da4cf-541f-36b1-b7a0-aa883a76c04f",
+            },
         )
         ai_data_op_service.create([doc])
 
         expected = {
-            'tags': {
-                'subject': [
+            "tags": {
+                "subject": [
                     {
-                        'name': 'informasjons- og kommunikasjonsteknologi',
-                        'qcode': 'c8a83204-29e0-3a7f-9a0e-51e76d885f7f',
-                        'scheme': 'imatrics_category',
-                        'source': 'imatrics',
-                        'description': 'title',
-                        'altids': {
-                            'imatrics': 'c8a83204-29e0-3a7f-9a0e-51e76d885f7f',
+                        "name": "informasjons- og kommunikasjonsteknologi",
+                        "qcode": "c8a83204-29e0-3a7f-9a0e-51e76d885f7f",
+                        "scheme": "imatrics_category",
+                        "source": "imatrics",
+                        "description": "title",
+                        "altids": {
+                            "imatrics": "c8a83204-29e0-3a7f-9a0e-51e76d885f7f",
                         },
                     },
                     {
-                        'name': 'informasjonsvitenskap',
-                        'qcode': 'af815add-8456-3226-8177-ea0d8e3011eb',
-                        'scheme': 'imatrics_category',
-                        'source': 'imatrics',
-                        'description': 'title',
-                        'altids': {
-                            'imatrics': 'af815add-8456-3226-8177-ea0d8e3011eb',
+                        "name": "informasjonsvitenskap",
+                        "qcode": "af815add-8456-3226-8177-ea0d8e3011eb",
+                        "scheme": "imatrics_category",
+                        "source": "imatrics",
+                        "description": "title",
+                        "altids": {
+                            "imatrics": "af815add-8456-3226-8177-ea0d8e3011eb",
                         },
                     },
                 ]
             }
         }
 
-        self.assertEqual(doc['result'], expected)
+        self.assertEqual(doc["result"], expected)
 
     @responses.activate
     def test_create(self):
@@ -224,17 +239,15 @@ class IMatricsTestCase(TestCase):
             "operation": "create",
             "data": {"title": "test_create"},
         }
-        ai_data_op_service = get_resource_service('ai_data_op')
+        ai_data_op_service = get_resource_service("ai_data_op")
         api_url = urljoin(TEST_BASE_URL, "concept/create")
         responses.add(
-            responses.POST, api_url,
-            json={
-                'response': 'Concept created with uuid: 6083cb74-77b7-3046-8187-a6333b76b5a4.',
-                "error": False
-            }
+            responses.POST,
+            api_url,
+            json={"response": "Concept created with uuid: 6083cb74-77b7-3046-8187-a6333b76b5a4.", "error": False},
         )
         ai_data_op_service.create([doc])
-        self.assertEqual(doc['result'], {})
+        self.assertEqual(doc["result"], {})
 
     @responses.activate
     def test_create_fail(self):
@@ -244,15 +257,16 @@ class IMatricsTestCase(TestCase):
             "operation": "create",
             "data": {"title": "test_create"},
         }
-        ai_data_op_service = get_resource_service('ai_data_op')
+        ai_data_op_service = get_resource_service("ai_data_op")
         api_url = urljoin(TEST_BASE_URL, "concept/create")
         responses.add(
-            responses.POST, api_url,
+            responses.POST,
+            api_url,
             json={
                 "response": "A concept of type topic and title test_create already exists with uuid a2d0ce94-e4b2-3102-"
-                            "9671-9307b464573c.",
-                "error": True
-            }
+                "9671-9307b464573c.",
+                "error": True,
+            },
         )
         with self.assertRaises(SuperdeskApiError) as cm:
             ai_data_op_service.create([doc])
@@ -268,12 +282,13 @@ class IMatricsTestCase(TestCase):
             "operation": "delete",
             "data": {"uuid": "afc7e49d-57d0-34af-b184-b7600af362a9"},
         }
-        ai_data_op_service = get_resource_service('ai_data_op')
+        ai_data_op_service = get_resource_service("ai_data_op")
         api_url = urljoin(TEST_BASE_URL, "concept/delete") + "?uuid=afc7e49d-57d0-34af-b184-b7600af362a9"
         responses.add(
-            responses.DELETE, api_url,
+            responses.DELETE,
+            api_url,
             json={"error": False},
         )
         ai_data_op_service.create([doc])
 
-        self.assertEqual(doc['result'], {})
+        self.assertEqual(doc["result"], {})

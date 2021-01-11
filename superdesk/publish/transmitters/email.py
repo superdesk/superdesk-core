@@ -34,62 +34,69 @@ class EmailPublishService(PublishService):
     :param recipients: email addresses separated by ``;``
     """
 
-    NAME = 'Email'
+    NAME = "Email"
 
     def _transmit(self, queue_item, subscriber):
-        config = queue_item.get('destination', {}).get('config', {})
+        config = queue_item.get("destination", {}).get("config", {})
 
         try:
             # detect if it's been formatted by the Email formatter, is so load the item
             try:
-                item = json.loads(queue_item['formatted_item'])
-                if 'message_subject' not in item:
+                item = json.loads(queue_item["formatted_item"])
+                if "message_subject" not in item:
                     item = {}
             except Exception:
                 item = {}
 
-            admins = app.config['ADMINS']
-            recipients = [r.strip() for r in config.get('recipients', '').split(';') if r.strip()]
-            bcc = [r.strip() for r in config.get('recipients_bcc', '').split(';') if r.strip()]
+            admins = app.config["ADMINS"]
+            recipients = [r.strip() for r in config.get("recipients", "").split(";") if r.strip()]
+            bcc = [r.strip() for r in config.get("recipients_bcc", "").split(";") if r.strip()]
             if not recipients and not bcc:
-                raise PublishEmailError.recipientNotFoundError(LookupError('recipient and bcc fields are empty!'))
+                raise PublishEmailError.recipientNotFoundError(LookupError("recipient and bcc fields are empty!"))
 
-            subject = item.get('message_subject', 'Story: {}'.format(queue_item['item_id']))
-            text_body = item.get('message_text', queue_item['formatted_item'])
-            html_body = item.get('message_html', queue_item['formatted_item'])
+            subject = item.get("message_subject", "Story: {}".format(queue_item["item_id"]))
+            text_body = item.get("message_text", queue_item["formatted_item"])
+            html_body = item.get("message_html", queue_item["formatted_item"])
 
             # Attach feature media if required
             attachments = []
-            if config.get('attach_media') and item.get('renditions'):
+            if config.get("attach_media") and item.get("renditions"):
                 # The CID can be used to embbed the image in the html template email like <img src=CID:cid-value>
-                cid = config.get('media_cid', '')
+                cid = config.get("media_cid", "")
                 # Get the rendition that has been nominated for attaching to the email
-                rendition = config.get('media_rendition', '')
-                media_item = item.get('renditions', {}).get(rendition)
+                rendition = config.get("media_rendition", "")
+                media_item = item.get("renditions", {}).get(rendition)
                 if media_item and rendition:
-                    media = app.media.get(media_item['media'], resource='upload')
+                    media = app.media.get(media_item["media"], resource="upload")
                     im = Image.open(media)
-                    if config.get('watermark', False):
+                    if config.get("watermark", False):
                         im = get_watermark(im)
 
                     binary = io.BytesIO()
-                    im.save(binary, 'jpeg', quality=80)
+                    im.save(binary, "jpeg", quality=80)
 
-                    attachments.append(Attachment(filename=media.name, content_type=media.content_type,
-                                                  data=binary.getvalue(),
-                                                  headers=[('Content-ID', cid)]))
+                    attachments.append(
+                        Attachment(
+                            filename=media.name,
+                            content_type=media.content_type,
+                            data=binary.getvalue(),
+                            headers=[("Content-ID", cid)],
+                        )
+                    )
 
             # sending email synchronously
-            send_email(subject=subject,
-                       sender=admins[0],
-                       recipients=recipients,
-                       text_body=text_body,
-                       html_body=html_body,
-                       bcc=bcc,
-                       attachments=attachments)
+            send_email(
+                subject=subject,
+                sender=admins[0],
+                recipients=recipients,
+                text_body=text_body,
+                html_body=html_body,
+                bcc=bcc,
+                attachments=attachments,
+            )
 
         except Exception as ex:
-            raise PublishEmailError.emailError(ex, queue_item.get('destination'))
+            raise PublishEmailError.emailError(ex, queue_item.get("destination"))
 
 
-register_transmitter('email', EmailPublishService(), errors)
+register_transmitter("email", EmailPublishService(), errors)

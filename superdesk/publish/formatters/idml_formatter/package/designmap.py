@@ -14,11 +14,11 @@ class Designmap(BasePackageElement):
 
     AID_DECLARATION = '<?aid style="50" type="document" readerVersion="6.0" featureSet="257"?>'
     HYPERLINK_DEFAULTS = {
-        'Visible': 'false',
-        'Highlight': 'None',
-        'Width': 'Thin',
-        'BorderStyle': 'Solid',
-        'Hidden': 'false',
+        "Visible": "false",
+        "Highlight": "None",
+        "Width": "Thin",
+        "BorderStyle": "Solid",
+        "Hidden": "false",
     }
 
     def __init__(self, attributes=None):
@@ -32,14 +32,11 @@ class Designmap(BasePackageElement):
         Used as a filename for a file inside zip container.
         :return str: filename
         """
-        return 'designmap.xml'
+        return "designmap.xml"
 
     def _build_etree(self):
-        self._etree = etree.Element(
-            'Document',
-            nsmap={'idPkg': self.XMLNS_IDPKG}
-        )
-        self._etree.set('DOMVersion', self.DOM_VERSION)
+        self._etree = etree.Element("Document", nsmap={"idPkg": self.XMLNS_IDPKG})
+        self._etree.set("DOMVersion", self.DOM_VERSION)
 
     def render(self):
         """
@@ -47,9 +44,13 @@ class Designmap(BasePackageElement):
         Used as a content for a file inside a zip container.
         :return str: content of the file inside zip/idml container.
         """
-        return self.XML_DECLARATION + '\n' + \
-            self.AID_DECLARATION + '\n' + \
-            etree.tostring(self._etree, pretty_print=True).decode('utf-8')
+        return (
+            self.XML_DECLARATION
+            + "\n"
+            + self.AID_DECLARATION
+            + "\n"
+            + etree.tostring(self._etree, pretty_print=True).decode("utf-8")
+        )
 
     def add_pkg(self, tag, src):
         """
@@ -61,8 +62,8 @@ class Designmap(BasePackageElement):
         return etree.SubElement(
             self._etree,
             etree.QName(self.XMLNS_IDPKG, tag),
-            attrib={'src': src},
-            nsmap={'idPkg': self.XMLNS_IDPKG},
+            attrib={"src": src},
+            nsmap={"idPkg": self.XMLNS_IDPKG},
         )
 
     def add_hyperlinks(self, links):
@@ -74,30 +75,30 @@ class Designmap(BasePackageElement):
             self._links_counter += 1
             hyperlinkurldestination = etree.SubElement(
                 self._etree,
-                'HyperlinkURLDestination',
+                "HyperlinkURLDestination",
                 {
-                    'Self': 'HyperlinkURLDestination/{}'.format(link['href']),
-                    'Name': link['href'],
-                    'DestinationURL': link['href'],
-                    'Hidden': 'false',
-                    'DestinationUniqueKey': str(self._links_counter),
-                }
+                    "Self": "HyperlinkURLDestination/{}".format(link["href"]),
+                    "Name": link["href"],
+                    "DestinationURL": link["href"],
+                    "Hidden": "false",
+                    "DestinationUniqueKey": str(self._links_counter),
+                },
             )
             hyperlink = etree.SubElement(
                 self._etree,
-                'Hyperlink',
+                "Hyperlink",
                 self.merge_attributes(
                     self.HYPERLINK_DEFAULTS,
                     {
-                        'Self': 'u{}'.format(self._links_counter),
-                        'Name': link['text'],
-                        'Source': link['self_id'],
-                        'DestinationUniqueKey': str(self._links_counter),
-                    }
-                )
+                        "Self": "u{}".format(self._links_counter),
+                        "Name": link["text"],
+                        "Source": link["self_id"],
+                        "DestinationUniqueKey": str(self._links_counter),
+                    },
+                ),
             )
-            properties = etree.SubElement(hyperlink, 'Properties')
-            bordercolor = etree.SubElement(properties, 'BorderColor', attrib={'type': 'enumeration'})
-            bordercolor.text = 'Black'
-            etree.SubElement(properties, 'Destination', attrib={'type': 'object'})
-            bordercolor.text = hyperlinkurldestination.get('DestinationUniqueKey')
+            properties = etree.SubElement(hyperlink, "Properties")
+            bordercolor = etree.SubElement(properties, "BorderColor", attrib={"type": "enumeration"})
+            bordercolor.text = "Black"
+            etree.SubElement(properties, "Destination", attrib={"type": "object"})
+            bordercolor.text = hyperlinkurldestination.get("DestinationUniqueKey")

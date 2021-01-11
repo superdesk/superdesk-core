@@ -13,5 +13,5 @@ from apps.macros.macros import MacrosResource, MacrosService
 
 
 def init_app(app):
-    MacrosResource('macros', app=app, service=MacrosService())
+    MacrosResource("macros", app=app, service=MacrosService())
     load_macros(app)

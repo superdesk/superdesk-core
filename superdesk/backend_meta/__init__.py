@@ -13,6 +13,6 @@ import superdesk
 
 
 def init_app(app):
-    endpoint_name = 'backend_meta'
+    endpoint_name = "backend_meta"
     service = BackendMetaService(endpoint_name, backend=superdesk.get_backend())
     BackendMetaResource(endpoint_name, app=app, service=service)

@@ -19,7 +19,6 @@ from .mimetype_mixin import MimetypeMixin
 
 
 class SuperdeskMediaStorage(MediaStorage, MimetypeMixin):
-
     @abc.abstractmethod
     def url_for_media(self, media, content_type=None):
         raise NotImplementedError

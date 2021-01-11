@@ -27,67 +27,70 @@ class IPTC7901FeedParser(FileFeedParser):
     Feed Parser which can parse if the feed is in IPTC 7901 format.
     """
 
-    NAME = 'iptc7901'
+    NAME = "iptc7901"
 
-    label = 'IPTC 7901 Parser'
+    label = "IPTC 7901 Parser"
 
     def can_parse(self, file_path):
         try:
-            with open(file_path, 'rb') as f:
+            with open(file_path, "rb") as f:
                 lines = [line for line in f]
-                return re.match(b'\x01([a-zA-Z]*)([0-9]*) (.) ([A-Z]{1,3}) ([0-9]*) ([a-zA-Z0-9 ]*)',
-                                lines[0], flags=re.I)
+                return re.match(
+                    b"\x01([a-zA-Z]*)([0-9]*) (.) ([A-Z]{1,3}) ([0-9]*) ([a-zA-Z0-9 ]*)", lines[0], flags=re.I
+                )
         except Exception:
             return False
 
     def parse(self, file_path, provider=None):
         try:
-            item = {ITEM_TYPE: CONTENT_TYPE.TEXT, 'guid': generate_guid(type=GUID_TAG),
-                    'versioncreated': utcnow()}
+            item = {ITEM_TYPE: CONTENT_TYPE.TEXT, "guid": generate_guid(type=GUID_TAG), "versioncreated": utcnow()}
 
-            with open(file_path, 'rb') as f:
+            with open(file_path, "rb") as f:
                 lines = [line for line in f]
             # parse first header line
-            m = re.match(b'\x01([a-zA-Z]*)([0-9]*) (.) ([A-Z]{1,3}) ([0-9]*) ([a-zA-Z0-9 ]*)', lines[0], flags=re.I)
+            m = re.match(b"\x01([a-zA-Z]*)([0-9]*) (.) ([A-Z]{1,3}) ([0-9]*) ([a-zA-Z0-9 ]*)", lines[0], flags=re.I)
             if m:
-                item['original_source'] = m.group(1).decode('latin-1', 'replace')
-                item['ingest_provider_sequence'] = m.group(2).decode()
-                item['priority'] = self.map_priority(m.group(3).decode())
-                item['anpa_category'] = [{'qcode': self.map_category(m.group(4).decode())}]
-                item['word_count'] = int(m.group(5).decode())
+                item["original_source"] = m.group(1).decode("latin-1", "replace")
+                item["ingest_provider_sequence"] = m.group(2).decode()
+                item["priority"] = self.map_priority(m.group(3).decode())
+                item["anpa_category"] = [{"qcode": self.map_category(m.group(4).decode())}]
+                item["word_count"] = int(m.group(5).decode())
 
             inHeader = True
             inText = False
             inNote = False
             for line in lines[1:]:
                 # STX starts the body of the story
-                if line[0:1] == b'\x02':
+                if line[0:1] == b"\x02":
                     # pick the rest of the line off as the headline
-                    item['headline'] = line[1:].decode('latin-1', 'replace').rstrip('\r\n')
-                    item['body_html'] = ''
+                    item["headline"] = line[1:].decode("latin-1", "replace").rstrip("\r\n")
+                    item["body_html"] = ""
                     inText = True
                     inHeader = False
                     continue
                 # ETX denotes the end of the story
-                if line[0:1] == b'\x03':
+                if line[0:1] == b"\x03":
                     break
                 if inText:
-                    if line.decode('latin-1', 'replace')\
-                            .find('The following information is not for publication') != -1 \
-                            or line.decode('latin-1', 'replace').find(
-                                'The following information is not intended for publication') != -1:
+                    if (
+                        line.decode("latin-1", "replace").find("The following information is not for publication") != -1
+                        or line.decode("latin-1", "replace").find(
+                            "The following information is not intended for publication"
+                        )
+                        != -1
+                    ):
                         inNote = True
                         inText = False
-                        item['ednote'] = ''
+                        item["ednote"] = ""
                         continue
-                    item['body_html'] += line.decode('latin-1', 'replace')
+                    item["body_html"] += line.decode("latin-1", "replace")
                 if inNote:
-                    item['ednote'] += line.decode('latin-1', 'replace')
+                    item["ednote"] += line.decode("latin-1", "replace")
                     continue
                 if inHeader:
-                    if 'slugline' not in item:
-                        item['slugline'] = ''
-                    item['slugline'] += line.decode('latin-1', 'replace').rstrip('/\r\n')
+                    if "slugline" not in item:
+                        item["slugline"] = ""
+                    item["slugline"] += line.decode("latin-1", "replace").rstrip("/\r\n")
                     continue
 
             return item
@@ -95,8 +98,8 @@ class IPTC7901FeedParser(FileFeedParser):
             raise ParserError.IPTC7901ParserError(exception=ex, provider=provider)
 
     def map_category(self, source_category):
-        if source_category == 'x' or source_category == 'X':
-            return 'i'
+        if source_category == "x" or source_category == "X":
+            return "i"
         else:
             return source_category
 

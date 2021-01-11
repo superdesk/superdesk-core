@@ -12,14 +12,15 @@ from superdesk.commands.data_updates import DataUpdate
 
 class DataUpdate(DataUpdate):
 
-    resource = 'vocabularies'
+    resource = "vocabularies"
 
     def forwards(self, mongodb_collection, mongodb_database):
-        print(mongodb_collection.update_many({'unique_field': {'$exists': False},
-                                              'schema.qcode': {'$exists': True}},
-                                             {'$set': {
-                                                 'unique_field': "qcode"
-                                             }}))
+        print(
+            mongodb_collection.update_many(
+                {"unique_field": {"$exists": False}, "schema.qcode": {"$exists": True}},
+                {"$set": {"unique_field": "qcode"}},
+            )
+        )
 
     def backwards(self, mongodb_collection, mongodb_database):
         pass

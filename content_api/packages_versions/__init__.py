@@ -14,6 +14,6 @@ from .resource import PackagesVersionsResource
 
 
 def init_app(app):
-    endpoint_name = 'packages_versions'
+    endpoint_name = "packages_versions"
     service = PackagesVersionsService(endpoint_name, backend=superdesk.get_backend())
     PackagesVersionsResource(endpoint_name, app=app, service=service)

@@ -26,15 +26,15 @@ class AppIngestService(IngestService):
         """
 
         for item in docs[config.ITEMS]:
-            handle_existing_data(item, doc_type='ingest')
+            handle_existing_data(item, doc_type="ingest")
 
     def on_create(self, docs):
         for doc in docs:
             set_default_state(doc, CONTENT_STATE.INGESTED)
-            if not app.config.get('DEFAULT_CONTENT_TYPE', None):
+            if not app.config.get("DEFAULT_CONTENT_TYPE", None):
                 doc.setdefault(ITEM_PRIORITY, int(config.DEFAULT_PRIORITY_VALUE_FOR_INGESTED_ARTICLES))
                 doc.setdefault(ITEM_URGENCY, int(config.DEFAULT_URGENCY_VALUE_FOR_INGESTED_ARTICLES))
-            handle_existing_data(doc, doc_type='ingest')
+            handle_existing_data(doc, doc_type="ingest")
             update_word_count(doc)
 
-        on_create_item(docs, repo_type='ingest')  # do it after setting the state otherwise it will make it draft
+        on_create_item(docs, repo_type="ingest")  # do it after setting the state otherwise it will make it draft

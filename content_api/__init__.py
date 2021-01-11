@@ -12,8 +12,8 @@ from flask import current_app
 from .commands import RemoveExpiredItems  # noqa
 
 
-MONGO_PREFIX = 'CONTENTAPI_MONGO'
-ELASTIC_PREFIX = 'CONTENTAPI_ELASTICSEARCH'
+MONGO_PREFIX = "CONTENTAPI_MONGO"
+ELASTIC_PREFIX = "CONTENTAPI_ELASTICSEARCH"
 
 
 def is_enabled():
@@ -21,4 +21,4 @@ def is_enabled():
 
     It can be turned off via ``CONTENTAPI_ENABLED`` setting.
     """
-    return current_app.config.get('CONTENTAPI_ENABLED', True)
+    return current_app.config.get("CONTENTAPI_ENABLED", True)

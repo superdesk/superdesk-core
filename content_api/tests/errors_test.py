@@ -12,7 +12,6 @@ from content_api.tests import ApiTestCase
 
 
 class PublicApiErrorTestCase(ApiTestCase):
-
     def _make_one(self, *args, **kwargs):
         """Create and return a new instance of the class under test.
 
@@ -27,6 +26,7 @@ class PublicApiErrorTestCase(ApiTestCase):
 
     def test_inherits_from_superdesk_error(self):
         from superdesk.errors import SuperdeskError
+
         error = self._make_one()
         self.assertIsInstance(error, SuperdeskError)
 
@@ -43,12 +43,11 @@ class PublicApiErrorTestCase(ApiTestCase):
         self.assertEqual(error.message, "Unknown API error.")
 
     def test_uses_error_description_if_given(self):
-        error = self._make_one(desc='Detailed description')
+        error = self._make_one(desc="Detailed description")
         self.assertEqual(error.payload, "Detailed description")
 
 
 class UnknownParameterErrorTestCase(ApiTestCase):
-
     def _make_one(self, *args, **kwargs):
         """Create and return a new instance of the class under test.
 
@@ -63,6 +62,7 @@ class UnknownParameterErrorTestCase(ApiTestCase):
 
     def test_inherits_from_base_publicapi_error(self):
         from content_api.errors import PublicApiError
+
         error = self._make_one()
         self.assertIsInstance(error, PublicApiError)
 
@@ -75,12 +75,11 @@ class UnknownParameterErrorTestCase(ApiTestCase):
         self.assertEqual(error.message, "Unexpected parameter.")
 
     def test_uses_error_description_if_given(self):
-        error = self._make_one(desc='More detailed description')
-        self.assertEqual(error.payload, 'More detailed description')
+        error = self._make_one(desc="More detailed description")
+        self.assertEqual(error.payload, "More detailed description")
 
 
 class BadParameterValueTestCase(ApiTestCase):
-
     def _make_one(self, *args, **kwargs):
         """Create and return a new instance of the class under test.
 
@@ -95,6 +94,7 @@ class BadParameterValueTestCase(ApiTestCase):
 
     def test_inherits_from_base_publicapi_error(self):
         from content_api.errors import PublicApiError
+
         error = self._make_one()
         self.assertIsInstance(error, PublicApiError)
 
@@ -107,5 +107,5 @@ class BadParameterValueTestCase(ApiTestCase):
         self.assertEqual(error.message, "Bad parameter value.")
 
     def test_uses_error_description_if_given(self):
-        error = self._make_one(desc='Integer expected for max results')
-        self.assertEqual(error.payload, 'Integer expected for max results')
+        error = self._make_one(desc="Integer expected for max results")
+        self.assertEqual(error.payload, "Integer expected for max results")

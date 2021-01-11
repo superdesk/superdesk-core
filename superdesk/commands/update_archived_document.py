@@ -35,10 +35,10 @@ class UpdateArchivedDocumentCommand(superdesk.Command):
     """
 
     option_list = [
-        superdesk.Option('--ids', '-i', dest='ids', required=True),
-        superdesk.Option('--field', '-f', dest='field', required=True),
-        superdesk.Option('--value', '-v', dest='value', required=True),
-        superdesk.Option('--parseNeeded', '-p', dest='parseNeeded', default=False)
+        superdesk.Option("--ids", "-i", dest="ids", required=True),
+        superdesk.Option("--field", "-f", dest="field", required=True),
+        superdesk.Option("--value", "-v", dest="value", required=True),
+        superdesk.Option("--parseNeeded", "-p", dest="parseNeeded", default=False),
     ]
 
     def run(self, ids, field, value, parseNeeded=False):
@@ -48,7 +48,7 @@ class UpdateArchivedDocumentCommand(superdesk.Command):
             try:
                 value = json.loads(value)
             except Exception as e:
-                print('Error in parsing the value: {}'.format(value))
+                print("Error in parsing the value: {}".format(value))
                 print(e)
                 return
 
@@ -56,11 +56,11 @@ class UpdateArchivedDocumentCommand(superdesk.Command):
             items = DeleteArchivedDocumentCommand().get_archived_items(ids)
 
             for item in items:
-                superdesk.get_resource_service('archived').system_update(bson.ObjectId(item['_id']),
-                                                                         {field: value},
-                                                                         item)
-                print('Archived item {} has been updated.'.format(item['_id']))
-                print('-' * 45)
+                superdesk.get_resource_service("archived").system_update(
+                    bson.ObjectId(item["_id"]), {field: value}, item
+                )
+                print("Archived item {} has been updated.".format(item["_id"]))
+                print("-" * 45)
 
 
-superdesk.command('app:updateArchivedDocument', UpdateArchivedDocumentCommand())
+superdesk.command("app:updateArchivedDocument", UpdateArchivedDocumentCommand())

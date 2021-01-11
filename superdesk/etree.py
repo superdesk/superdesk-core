@@ -1,4 +1,3 @@
-
 # -*- coding: utf-8; -*-
 #
 # This file is part of Superdesk.
@@ -51,7 +50,8 @@ BLOCK_ELEMENTS = (
     "table",
     "tfoot",
     "ul",
-    "video")
+    "video",
+)
 
 # from https://www.w3.org/TR/html/syntax.html#void-elements
 VOID_ELEMENTS = (
@@ -70,7 +70,8 @@ VOID_ELEMENTS = (
     "param",
     "source",
     "track",
-    "wbr")
+    "wbr",
+)
 
 
 def fix_html_void_elements(element):
@@ -83,11 +84,11 @@ def fix_html_void_elements(element):
     # we want self closing for HTML void elemends and start/end tags otherwise
     # so we set element.text to None for void ones, and empty string otherwise
     for e in element.xpath("//*[not(node())]"):
-        e.text = None if e.tag in VOID_ELEMENTS else ''
+        e.text = None if e.tag in VOID_ELEMENTS else ""
     return element
 
 
-def parse_html(html, content='xml', lf_on_block=False, space_on_elements=False, space=' '):
+def parse_html(html, content="xml", lf_on_block=False, space_on_elements=False, space=" "):
     """Parse element and return etreeElement
 
     <div> element is added around the HTML
@@ -103,20 +104,20 @@ def parse_html(html, content='xml', lf_on_block=False, space_on_elements=False, 
     if not isinstance(html, str):
         raise ValueError("a string is expected")
     if not html:
-        return etree.Element('div')
+        return etree.Element("div")
 
-    if content == 'xml':
+    if content == "xml":
         # to preserve 'carriage return' otherwise it gets stripped.
-        html = html.replace('\r', '&#13;')
+        html = html.replace("\r", "&#13;")
         parser = etree.XMLParser(recover=True, remove_blank_text=True)
         root = etree.fromstring("<div>" + html + "</div>", parser)
-    elif content == 'html':
+    elif content == "html":
         parser = etree.HTMLParser(recover=True, remove_blank_text=True)
         root = etree.fromstring(html, parser)
         if root is None:
-            root = etree.Element('div')
+            root = etree.Element("div")
         else:
-            div = etree.Element('div')
+            div = etree.Element("div")
             # we unwrap elements in <head> and <body>
             # <script> can be used in embed, and the parser will move them to <head>
             # so we need both <head> and <body>
@@ -124,18 +125,18 @@ def parse_html(html, content='xml', lf_on_block=False, space_on_elements=False, 
                 div.extend(elt)
             root = div
     else:
-        raise ValueError('invalid content: {}'.format(content))
+        raise ValueError("invalid content: {}".format(content))
     if lf_on_block:
-        for elem in root.iterfind('.//'):
+        for elem in root.iterfind(".//"):
             # append \n to the tail
             if elem.tag in BLOCK_ELEMENTS:
-                elem.tail = (elem.tail or '') + '\n'
+                elem.tail = (elem.tail or "") + "\n"
             # prepend \n to the tail
-            elif elem.tag in ('br',):
-                elem.tail = '\n' + (elem.tail or '')
+            elif elem.tag in ("br",):
+                elem.tail = "\n" + (elem.tail or "")
     if space_on_elements:
-        for elem in root.iterfind('.//'):
-            elem.tail = (elem.tail or '') + space
+        for elem in root.iterfind(".//"):
+            elem.tail = (elem.tail or "") + space
     return root
 
 
@@ -157,7 +158,7 @@ def to_string(elem, encoding="unicode", method="xml", remove_root_div=True, pret
             div_start = b"<div>"
             div_end = b"</div>"
         if string.startswith(div_start) and string.endswith(div_end):
-            return string[len(div_start):-len(div_end)]
+            return string[len(div_start) : -len(div_end)]
     return string
 
 
@@ -171,10 +172,10 @@ def clean_html(elem):
     if not isinstance(elem, html.HtmlElement):
         elem = html.fromstring(etree.tostring(elem))
     safe_attrs = set(html.defs.safe_attrs)
-    safe_attrs.remove('class')
-    cleaner = html.clean.Cleaner(allow_tags=config.HTML_TAGS_WHITELIST,
-                                 remove_unknown_tags=False,
-                                 safe_attrs=safe_attrs)
+    safe_attrs.remove("class")
+    cleaner = html.clean.Cleaner(
+        allow_tags=config.HTML_TAGS_WHITELIST, remove_unknown_tags=False, safe_attrs=safe_attrs
+    )
     return cleaner.clean_html(elem)
 
 
@@ -184,6 +185,6 @@ def clean_html_str(html_str):
     :param str html_str: raw HTML to clean
     :return str: cleaned HTML
     """
-    html_elt = parse_html(html_str, 'html')
+    html_elt = parse_html(html_str, "html")
     html_elt = clean_html(html_elt)
-    return to_string(html_elt, method='html')
+    return to_string(html_elt, method="html")

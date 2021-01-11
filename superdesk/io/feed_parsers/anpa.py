@@ -26,13 +26,13 @@ class ANPAFeedParser(FileFeedParser):
     Feed Parser which can parse if the feed is in ANPA 1312 format.
     """
 
-    NAME = 'anpa1312'
+    NAME = "anpa1312"
 
     def can_parse(self, file_path):
         try:
-            with open(file_path, 'rb') as f:
+            with open(file_path, "rb") as f:
                 lines = [line for line in f]
-                return re.match(b'\x16\x16\x01([a-z])([0-9]{4})\x1f([a-z0-9-]+)', lines[0], flags=re.I)
+                return re.match(b"\x16\x16\x01([a-z])([0-9]{4})\x1f([a-z0-9-]+)", lines[0], flags=re.I)
         except Exception:
             return False
 
@@ -40,67 +40,72 @@ class ANPAFeedParser(FileFeedParser):
         try:
             item = {ITEM_TYPE: CONTENT_TYPE.TEXT, GUID_FIELD: generate_guid(type=GUID_TAG), FORMAT: FORMATS.HTML}
 
-            with open(file_path, 'rb') as f:
+            with open(file_path, "rb") as f:
                 lines = [line for line in f]
 
             # parse first header line
-            m = re.match(b'\x16\x16\x01([a-z])([0-9]{4})\x1f([a-z-]+)', lines[0], flags=re.I)
+            m = re.match(b"\x16\x16\x01([a-z])([0-9]{4})\x1f([a-z-]+)", lines[0], flags=re.I)
             if m:
-                item['provider_sequence'] = m.group(2).decode()
+                item["provider_sequence"] = m.group(2).decode()
 
             # parse second header line
             m = re.match(
-                b'([a-z]) ([a-z])(\x13|\x14)(\x11|\x12) (am-|pm-|bc-|ap-)([a-z-.0-9]+)(.*) '
-                b'([0-9]{1,2})-([0-9]{1,2}) ([0-9]{0,4})',
-                lines[1], flags=re.I)
+                b"([a-z]) ([a-z])(\x13|\x14)(\x11|\x12) (am-|pm-|bc-|ap-)([a-z-.0-9]+)(.*) "
+                b"([0-9]{1,2})-([0-9]{1,2}) ([0-9]{0,4})",
+                lines[1],
+                flags=re.I,
+            )
             if m:
-                item['priority'] = self.map_priority(m.group(1).decode())
-                item['anpa_category'] = [{'qcode': m.group(2).decode()}]
-                item['slugline'] = m.group(6).decode('latin-1', 'replace')
-                item['anpa_take_key'] = m.group(7).decode('latin-1', 'replace').strip()
+                item["priority"] = self.map_priority(m.group(1).decode())
+                item["anpa_category"] = [{"qcode": m.group(2).decode()}]
+                item["slugline"] = m.group(6).decode("latin-1", "replace")
+                item["anpa_take_key"] = m.group(7).decode("latin-1", "replace").strip()
                 if len(m.group(10).decode()):
-                    item['word_count'] = int(m.group(10).decode())
-                if m.group(4) == b'\x12':
+                    item["word_count"] = int(m.group(10).decode())
+                if m.group(4) == b"\x12":
                     item[FORMAT] = FORMATS.PRESERVED
 
             # parse created date at the end of file
-            m = re.search(b'\x03([a-z]+)-([a-z]+)-([0-9]+-[0-9]+-[0-9]+ [0-9]{2}[0-9]{2})GMT', lines[-4], flags=re.I)
+            m = re.search(b"\x03([a-z]+)-([a-z]+)-([0-9]+-[0-9]+-[0-9]+ [0-9]{2}[0-9]{2})GMT", lines[-4], flags=re.I)
             if m:
-                item['firstcreated'] = datetime.strptime(m.group(3).decode(), '%m-%d-%y %H%M').replace(tzinfo=utc)
-                item['versioncreated'] = item['firstcreated']
+                item["firstcreated"] = datetime.strptime(m.group(3).decode(), "%m-%d-%y %H%M").replace(tzinfo=utc)
+                item["versioncreated"] = item["firstcreated"]
 
             # parse anpa content
-            body = b''.join(lines[2:])
-            m = re.match(b'\x02(.*)\x03', body, flags=re.M + re.S)
+            body = b"".join(lines[2:])
+            m = re.match(b"\x02(.*)\x03", body, flags=re.M + re.S)
             if m:
-                text = m.group(1).decode('latin-1', 'replace').split('\n')
+                text = m.group(1).decode("latin-1", "replace").split("\n")
 
                 if item.get(FORMAT) == FORMATS.PRESERVED:
                     # ANPA defines a number of special characters e.g. TLI (Tab Line Inicator) Hex x08 and
                     # TTS Space Band Hex x10 These will be replaced, there will likely be others
-                    body_lines = [line.strip('^').replace('\b', '%08').replace('\x10', '%10') for line in text if
-                                  line.startswith(('\t', '^', '\b'))]
-                    item['body_html'] = '<pre>' + '\n'.join(body_lines) + '</pre>'
+                    body_lines = [
+                        line.strip("^").replace("\b", "%08").replace("\x10", "%10")
+                        for line in text
+                        if line.startswith(("\t", "^", "\b"))
+                    ]
+                    item["body_html"] = "<pre>" + "\n".join(body_lines) + "</pre>"
                 else:
-                    body_lines = [line.strip() for line in text if line.startswith(('\t'))]
-                    item['body_html'] = '<p>' + '</p><p>'.join(body_lines) + '</p>'
+                    body_lines = [line.strip() for line in text if line.startswith(("\t"))]
+                    item["body_html"] = "<p>" + "</p><p>".join(body_lines) + "</p>"
 
                 # content metadata
-                header_lines = [line.strip('^<= ') for line in text if line.startswith('^')]
+                header_lines = [line.strip("^<= ") for line in text if line.startswith("^")]
                 if len(header_lines) > 1:
-                    item['headline'] = header_lines[1].rstrip('\r\n^<= ')
+                    item["headline"] = header_lines[1].rstrip("\r\n^<= ")
                 if len(header_lines) > 3:
-                    item['byline'] = header_lines[-2].rstrip('\r\n^<= ')
+                    item["byline"] = header_lines[-2].rstrip("\r\n^<= ")
 
                     # if there is no body use header lines
                     if len(body_lines) == 1 and not body_lines[0]:
-                        item['body_html'] = '<p>' + '</p><p>'.join(header_lines[2:]) + '</p>'
+                        item["body_html"] = "<p>" + "</p><p>".join(header_lines[2:]) + "</p>"
 
                 # slugline
                 if len(header_lines) > 1:
-                    m = re.match('[A-Z]{2}-[A-Z]{2}--([a-z-0-9.]+)', header_lines[0], flags=re.I)
+                    m = re.match("[A-Z]{2}-[A-Z]{2}--([a-z-0-9.]+)", header_lines[0], flags=re.I)
                     if m:
-                        item['slugline'] = m.group(1)
+                        item["slugline"] = m.group(1)
 
                 # ednote
                 self._parse_ednote(header_lines, item)
@@ -113,17 +118,17 @@ class ANPAFeedParser(FileFeedParser):
         for line in header_lines:
             m = re.search("EDITOR'S NOTE _(.*)", line)
             if m:
-                item['ednote'] = m.group(1).strip()
+                item["ednote"] = m.group(1).strip()
 
     def map_priority(self, source_priority):
         mapping = {
-            'f': Priority.Flash.value,
-            'u': Priority.Urgent.value,
-            'b': Priority.Three_Paragraph.value,
-            'z': Priority.Ordinary.value
+            "f": Priority.Flash.value,
+            "u": Priority.Urgent.value,
+            "b": Priority.Three_Paragraph.value,
+            "z": Priority.Ordinary.value,
         }
 
-        source_priority = source_priority.lower().strip() if isinstance(source_priority, str) else ''
+        source_priority = source_priority.lower().strip() if isinstance(source_priority, str) else ""
         return mapping.get(source_priority, Priority.Ordinary.value)
 
 

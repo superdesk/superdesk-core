@@ -31,9 +31,9 @@ def privilege(**kwargs):
     - description
     - category
     """
-    if '.' in kwargs['name']:
-        raise PrivilegeNameError('"." is not supported in privilege name "%s"' % kwargs['name'])
-    _privileges[kwargs['name']] = kwargs
+    if "." in kwargs["name"]:
+        raise PrivilegeNameError('"." is not supported in privilege name "%s"' % kwargs["name"])
+    _privileges[kwargs["name"]] = kwargs
 
 
 def get_item_privilege_name(resource: str, item):

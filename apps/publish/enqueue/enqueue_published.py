@@ -31,22 +31,29 @@ class EnqueuePublishedService(EnqueueService):
         subscriber_codes, codes, rewrite_codes = {}, {}, {}
         associations, rewrite_associations = {}, {}
 
-        rewrite_of = doc.get('rewrite_of')
+        rewrite_of = doc.get("rewrite_of")
 
         # Step 1
-        query = {'is_active': True}
-        subscribers = list(get_resource_service('subscribers').get(req=None, lookup=query))
+        query = {"is_active": True}
+        subscribers = list(get_resource_service("subscribers").get(req=None, lookup=query))
 
         # Step 2b
         if doc.get(ITEM_TYPE) in [CONTENT_TYPE.TEXT, CONTENT_TYPE.PREFORMATTED]:
             if rewrite_of:
                 item_ids = [rewrite_of]
 
-                query = {'$and': [{'item_id': {'$in': item_ids}},
-                                  {'publishing_action': {'$in': [CONTENT_STATE.PUBLISHED, CONTENT_STATE.CORRECTED]}}]}
+                query = {
+                    "$and": [
+                        {"item_id": {"$in": item_ids}},
+                        {"publishing_action": {"$in": [CONTENT_STATE.PUBLISHED, CONTENT_STATE.CORRECTED]}},
+                    ]
+                }
 
-                rewrite_subscribers, rewrite_codes, rewrite_associations = \
-                    self._get_subscribers_for_previously_sent_items(query)
+                (
+                    rewrite_subscribers,
+                    rewrite_codes,
+                    rewrite_associations,
+                ) = self._get_subscribers_for_previously_sent_items(query)
 
         # Step 2
         subscribers, codes = self.filter_subscribers(doc, subscribers, target_media_type)
@@ -67,7 +74,6 @@ class EnqueuePublishedService(EnqueueService):
         self._update_associations(associations, rewrite_associations)
 
         # handle associations
-        associations = self._filter_subscribers_for_associations(subscribers, doc,
-                                                                 target_media_type, associations)
+        associations = self._filter_subscribers_for_associations(subscribers, doc, target_media_type, associations)
 
         return subscribers, subscriber_codes, associations

@@ -18,14 +18,13 @@ from superdesk.privilege import get_privilege_list
 
 
 class PrivilegeService(superdesk.Service):
-
     def get(self, req, lookup):
         """
         Returns all registered privileges.
         """
 
         _privileges = get_privilege_list()
-        _privileges = sorted(_privileges, key=itemgetter('label'))
+        _privileges = sorted(_privileges, key=itemgetter("label"))
 
         return ListCursor(_privileges)
 
@@ -33,7 +32,7 @@ class PrivilegeService(superdesk.Service):
 class PrivilegeResource(superdesk.Resource):
     """Read-only resource with all privileges."""
 
-    resource_methods = ['GET']
+    resource_methods = ["GET"]
     item_methods = []
     schema = {
         'name': {'type': 'string'},
@@ -44,4 +43,4 @@ class PrivilegeResource(superdesk.Resource):
 
 
 def init_app(app):
-    PrivilegeResource('privileges', app=app, service=PrivilegeService())
+    PrivilegeResource("privileges", app=app, service=PrivilegeService())

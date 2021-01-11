@@ -18,32 +18,14 @@ class CompaniesResource(Resource):
     """
 
     schema = {
-        'name': {
-            'type': 'string',
-            'unique': True,
-            'required': True
-        },
-        'sd_subscriber_id': {
-            'type': 'string'
-        },
-        'is_enabled': {
-            'type': 'boolean',
-            'default': True
-        },
-        'contact_name': {
-            'type': 'string'
-        },
-        'phone': {
-            'type': 'string'
-        },
-        'country': {
-            'type': 'string'
-        }
+        "name": {"type": "string", "unique": True, "required": True},
+        "sd_subscriber_id": {"type": "string"},
+        "is_enabled": {"type": "boolean", "default": True},
+        "contact_name": {"type": "string"},
+        "phone": {"type": "string"},
+        "country": {"type": "string"},
     }
-    datasource = {
-        'source': 'companies',
-        'default_sort': [('name', 1)]
-    }
-    item_methods = ['GET', 'PATCH', 'PUT']
-    resource_methods = ['GET', 'POST']
+    datasource = {"source": "companies", "default_sort": [("name", 1)]}
+    item_methods = ["GET", "PATCH", "PUT"]
+    resource_methods = ["GET", "POST"]
     mongo_prefix = MONGO_PREFIX
