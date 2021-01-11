@@ -200,4 +200,10 @@ def unlock_asset_by_user(user_id, session_id):
     unlock_asset_response = get_sams_client().assets.unlock_assets_by_user(
         external_user_id=user_id,
         external_session_id=session_id)
+    if unlock_asset_response.status_code == 200:
+        push_notification(
+            'sams:asset:session_unlock',
+            user_id=get_user_id(True),
+            session_id=get_auth()['_id'],
+            extension='sams')
     return unlock_asset_response.status_code
