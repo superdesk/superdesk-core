@@ -17,7 +17,7 @@ _privileges = {}
 _intrinsic_privileges = {}
 
 
-GLOBAL_SEARCH_PRIVILEGE = 'use_global_saved_searches'
+GLOBAL_SEARCH_PRIVILEGE = "use_global_saved_searches"
 
 
 def privilege(**kwargs):
@@ -37,25 +37,27 @@ def privilege(**kwargs):
 
 
 def get_item_privilege_name(resource: str, item):
-    return 'resource:{}:{}'.format(resource, item['_id'])
+    return "resource:{}:{}".format(resource, item["_id"])
 
 
 def _get_resource_privileges():
     resource_privileges = []
     for name, resource in superdesk.resources.items():
-        if not getattr(resource, 'item_privileges', None):
+        if not getattr(resource, "item_privileges", None):
             continue
         items = superdesk.get_resource_service(name).get(None, {})
         for item in items:
             try:
                 label = resource.item_privileges_label.format(**item)
             except KeyError:
-                label = '{}: {}'.format(name, item['_id'])
-            resource_privileges.append({
-                'name': get_item_privilege_name(name, item),
-                'label': label,
-                'category': name,
-            })
+                label = "{}: {}".format(name, item["_id"])
+            resource_privileges.append(
+                {
+                    "name": get_item_privilege_name(name, item),
+                    "label": label,
+                    "category": name,
+                }
+            )
     return resource_privileges
 
 

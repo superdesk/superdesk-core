@@ -115,31 +115,34 @@ def private_content_filter():
     """
     user = getattr(flask.g, "user", None)
     if user:
-        private_filter = {'should': [
-            # assigned to me or created by me
-            {'term': {'task.user': str(user['_id'])}},
-            {'term': {'version_creator': str(user['_id'])}},
-            {'term': {'original_creator': str(user['_id'])}},
-        ], 'minimum_should_match': 1}
+        private_filter = {
+            "should": [
+                # assigned to me or created by me
+                {"term": {"task.user": str(user["_id"])}},
+                {"term": {"version_creator": str(user["_id"])}},
+                {"term": {"original_creator": str(user["_id"])}},
+            ],
+            "minimum_should_match": 1,
+        }
 
-        if 'invisible_stages' in user:
-            stages = user.get('invisible_stages')
+        if "invisible_stages" in user:
+            stages = user.get("invisible_stages")
         else:
             stages = get_resource_service("users").get_invisible_stages_ids(user.get("_id"))
 
         if stages:
-            private_filter['must_not'] = [{'terms': {'task.stage': stages}}]
+            private_filter["must_not"] = [{"terms": {"task.stage": stages}}]
 
         # user can see all public content
         if current_user_has_privilege(GLOBAL_SEARCH_PRIVILEGE):
-            private_filter['should'].append({'exists': {'field': 'task.desk'}})
+            private_filter["should"].append({"exists": {"field": "task.desk"}})
 
         # if user has no global search access, only show him content on his desks
         # and not on any desk
         else:
-            desks = get_resource_service('user_desks').get_by_user(user['_id']) or []
-            private_filter['should'].append(
-                {'terms': {'task.desk': [str(d['_id']) for d in desks]}},
+            desks = get_resource_service("user_desks").get_by_user(user["_id"]) or []
+            private_filter["should"].append(
+                {"terms": {"task.desk": [str(d["_id"]) for d in desks]}},
             )
 
         return {"bool": private_filter}
@@ -259,13 +262,18 @@ class ArchiveResource(Resource):
                 "must_not": {"term": {"version": 0}},
             }
         },
-        'default_sort': [('_updated', -1)],
-        'elastic_filter': {'bool': {
-            'must': {'terms': {'state': ['fetched', 'routed', 'draft', 'in_progress',
-                                         'spiked', 'submitted', 'unpublished']}},
-            'must_not': {'term': {'version': 0}}
-        }},
-        'elastic_filter_callback': private_content_filter,
+        "default_sort": [("_updated", -1)],
+        "elastic_filter": {
+            "bool": {
+                "must": {
+                    "terms": {
+                        "state": ["fetched", "routed", "draft", "in_progress", "spiked", "submitted", "unpublished"]
+                    }
+                },
+                "must_not": {"term": {"version": 0}},
+            }
+        },
+        "elastic_filter_callback": private_content_filter,
     }
     etag_ignore_fields = ["highlights", "broadcast"]
     resource_methods = ["GET", "POST"]

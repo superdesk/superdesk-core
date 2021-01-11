@@ -35,7 +35,7 @@ class IngestResource(Resource):
         "aggregations": aggregations,
         "es_highlight": get_elastic_highlight_query,
     }
-    privileges = {'DELETE': 'fetch', 'GET': GLOBAL_SEARCH_PRIVILEGE}
+    privileges = {"DELETE": "fetch", "GET": GLOBAL_SEARCH_PRIVILEGE}
 
 
 class IngestService(BaseService):

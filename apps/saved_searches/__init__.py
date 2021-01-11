@@ -47,21 +47,25 @@ def init_app(app):
     service = SavedSearchItemsService(endpoint_name, backend=superdesk.get_backend())
     SavedSearchItemsResource(endpoint_name, app=app, service=service)
 
-    superdesk.privilege(name=GLOBAL_SEARCH_PRIVILEGE,
-                        label='Global searches',
-                        description='Use global saved searches.')
-    superdesk.privilege(name='global_saved_searches',
-                        label='Manage Global Saved Searches',
-                        description='User can manage other users\' global saved searches')
-    superdesk.privilege(name='saved_searches',
-                        label='Manage Saved Searches',
-                        description='User can manage saved searches')
-    superdesk.privilege(name='saved_searches_subscriptions',
-                        label='Manage Saved Searches Subscriptions',
-                        description='User can (un)subscribe to saved searches')
-    superdesk.privilege(name='saved_searches_subscriptions_admin',
-                        label='Manage Saved Searches Subscriptions For Other Users',
-                        description='User manage other users saved searches subscriptions ')
+    superdesk.privilege(name=GLOBAL_SEARCH_PRIVILEGE, label="Global searches", description="Use global saved searches.")
+    superdesk.privilege(
+        name="global_saved_searches",
+        label="Manage Global Saved Searches",
+        description="User can manage other users' global saved searches",
+    )
+    superdesk.privilege(
+        name="saved_searches", label="Manage Saved Searches", description="User can manage saved searches"
+    )
+    superdesk.privilege(
+        name="saved_searches_subscriptions",
+        label="Manage Saved Searches Subscriptions",
+        description="User can (un)subscribe to saved searches",
+    )
+    superdesk.privilege(
+        name="saved_searches_subscriptions_admin",
+        label="Manage Saved Searches Subscriptions For Other Users",
+        description="User manage other users saved searches subscriptions ",
+    )
 
 
 def get_next_date(scheduling, base=None):

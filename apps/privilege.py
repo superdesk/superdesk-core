@@ -35,10 +35,10 @@ class PrivilegeResource(superdesk.Resource):
     resource_methods = ["GET"]
     item_methods = []
     schema = {
-        'name': {'type': 'string'},
-        'label': {'type': 'string'},
-        'category': {'type': 'string'},
-        'description': {'type': 'string'},
+        "name": {"type": "string"},
+        "label": {"type": "string"},
+        "category": {"type": "string"},
+        "description": {"type": "string"},
     }
 
 

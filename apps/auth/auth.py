@@ -104,7 +104,7 @@ class SuperdeskTokenAuth(TokenAuth):
         except KeyError:
             resource_privileges = None
 
-        if method == 'GET' and not resource_privileges:
+        if method == "GET" and not resource_privileges:
             return True
 
         # Step 3: Intrinsic Privileges
@@ -122,7 +122,7 @@ class SuperdeskTokenAuth(TokenAuth):
             return authorized
 
         # Step 4: User's privileges
-        privileges = user.get('active_privileges', {})
+        privileges = user.get("active_privileges", {})
 
         if not resource_privileges and get_no_resource_privileges(resource):
             return True

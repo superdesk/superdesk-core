@@ -32,10 +32,13 @@ class SearchProviderService(BaseService):
         filtered_providers = []
 
         for provider in providers:
-            if provider['search_provider'] not in allowed_search_providers:
+            if provider["search_provider"] not in allowed_search_providers:
                 continue
-            if req and req.args.get('with_privileges') and \
-                    not current_user_has_item_privilege(self.datasource, provider):
+            if (
+                req
+                and req.args.get("with_privileges")
+                and not current_user_has_item_privilege(self.datasource, provider)
+            ):
                 continue
             filtered_providers.append(provider)
 

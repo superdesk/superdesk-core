@@ -34,7 +34,7 @@ class SearchProviderResource(Resource):
     resource_methods = ["GET", "POST"]
     item_methods = ["GET", "PATCH", "DELETE"]
 
-    privileges = {'POST': 'search_providers', 'PATCH': 'search_providers', 'DELETE': 'search_providers'}
+    privileges = {"POST": "search_providers", "PATCH": "search_providers", "DELETE": "search_providers"}
 
     item_privileges = True
-    item_privileges_label = lazy_gettext('Search Provider: {name}')
+    item_privileges_label = lazy_gettext("Search Provider: {name}")

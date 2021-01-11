@@ -52,7 +52,7 @@ class SearchService(superdesk.Service):
         If the content state is draft, it must be from the current user
         """
         filters = [
-            {'exists': {'field': 'task.desk'}},
+            {"exists": {"field": "task.desk"}},
             {
                 "bool": {
                     "should": [
@@ -75,14 +75,18 @@ class SearchService(superdesk.Service):
             },
         ]
 
-        user_id = (g.get('user') or {}).get('_id')
+        user_id = (g.get("user") or {}).get("_id")
         if user_id:
-            filters[1]['bool']['should'].append({
-                'bool': {'must': [
-                    {'term': {ITEM_STATE: CONTENT_STATE.DRAFT}},
-                    {'term': {'task.user': str(user_id)}},
-                ]},
-            })
+            filters[1]["bool"]["should"].append(
+                {
+                    "bool": {
+                        "must": [
+                            {"term": {ITEM_STATE: CONTENT_STATE.DRAFT}},
+                            {"term": {"task.user": str(user_id)}},
+                        ]
+                    },
+                }
+            )
 
         private_filter = private_content_filter()
         if private_filter:

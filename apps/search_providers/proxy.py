@@ -52,7 +52,7 @@ class SearchProviderProxyService(SearchIngestService):
             abort(400)
         if provider.get("is_closed"):
             abort(400)
-        if not current_user_has_item_privilege('search_providers', provider):
+        if not current_user_has_item_privilege("search_providers", provider):
             abort(403)
         return provider
 
