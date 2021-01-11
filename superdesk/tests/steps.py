@@ -168,6 +168,11 @@ def json_match(context_data, response_data, json_fields=None):
             if context_data[key] == "__empty__":
                 assert len(response_data[key]) == 0, "%s is not empty (%s)" % (key, response_data[key])
                 continue
+            if context_data[key] == "__objectid__":
+                assert ObjectId(response_data[key]), "{key} is not ObjectId ({value})".format(
+                    key=key, value=response_data[key]
+                )
+                continue
             response_field = response_data[key]
             if key in json_fields:
                 try:

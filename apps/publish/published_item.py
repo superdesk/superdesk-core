@@ -23,7 +23,7 @@ from superdesk.utc import utcnow
 
 from bson.objectid import ObjectId
 from eve.utils import ParsedRequest, config
-from flask import current_app as app
+from flask import current_app as app, request
 
 from apps.archive.archive import SOURCE as ARCHIVE
 from apps.archive.common import handle_existing_data, item_schema
@@ -207,6 +207,10 @@ class PublishedItemService(BaseService):
                     "lock_session": archive_item.get("lock_session", None),
                     "archive_item": archive_item if archive_item else None,
                 }
+
+                if request and request.args.get("published_id") == "1":
+                    updates.pop(config.ID_FIELD)
+                    updates.pop("item_id")
 
                 item.update(updates)
                 handle_existing_data(item)
