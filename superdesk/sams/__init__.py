@@ -1,6 +1,6 @@
 import superdesk
 from eve.flaskapp import Eve
-from .assets import assets_bp
+from .assets import assets_bp, unlock_asset_by_user
 from .storage_destinations import destinations_bp
 from .sets import sets_bp
 from superdesk.auth.decorator import blueprint_auth
@@ -10,6 +10,9 @@ from .client import get_sams_client
 
 def init_app(app: Eve):
     client = get_sams_client(app)
+
+    app.on_session_end -= unlock_assets_on_logout
+    app.on_session_end += unlock_assets_on_logout
 
     @assets_bp.before_request
     @destinations_bp.before_request
@@ -53,3 +56,7 @@ def init_app(app: Eve):
         label=_('SAMS Manage Assets'),
         description=_('Allows management of SAMS Assets')
     )
+
+
+def unlock_assets_on_logout(user_id, session_id):
+    unlock_asset_by_user(user_id, session_id)
