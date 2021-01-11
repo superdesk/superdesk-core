@@ -247,26 +247,6 @@ class ArchiveResource(Resource):
             "bool": {
                 "must": {
                     "terms": {
-                        "state": [
-                            "fetched",
-                            "routed",
-                            "draft",
-                            "in_progress",
-                            "spiked",
-                            "submitted",
-                            "unpublished",
-                            "correction",
-                        ]
-                    }
-                },
-                "must_not": {"term": {"version": 0}},
-            }
-        },
-        "default_sort": [("_updated", -1)],
-        "elastic_filter": {
-            "bool": {
-                "must": {
-                    "terms": {
                         "state": ["fetched", "routed", "draft", "in_progress", "spiked", "submitted", "unpublished"]
                     }
                 },
