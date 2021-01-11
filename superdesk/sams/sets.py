@@ -24,7 +24,8 @@ import logging
 import superdesk
 from flask import request
 from superdesk.errors import SuperdeskApiError
-from apps.auth import get_user_id
+from superdesk.notification import push_notification
+from apps.auth import get_auth, get_user_id
 from .client import get_sams_client
 
 logger = logging.getLogger(__name__)
@@ -60,6 +61,14 @@ def create():
         docs=docs,
         external_user_id=get_user_id(True)
     )
+    if post_response.status_code == 201:
+        push_notification(
+            'sams:set:created',
+            item_id=post_response.json()['_id'],
+            user_id=get_user_id(True),
+            session_id=get_auth()['_id'],
+            _etag=post_response.json()['_etag'],
+            extension='sams')
     return post_response.json(), post_response.status_code
 
 
@@ -80,6 +89,13 @@ def delete(item_id):
     )
     if delete_response.status_code != 204:
         return delete_response.json(), delete_response.status_code
+    if delete_response.status_code == 204:
+        push_notification(
+            'sams:set:deleted',
+            item_id=item_id,
+            user_id=get_user_id(True),
+            session_id=get_auth()['_id'],
+            extension='sams')
     return '', delete_response.status_code
 
 
@@ -101,4 +117,12 @@ def update(item_id):
         updates=updates,
         headers={'If-Match': etag}
     )
+    if update_response.status_code == 200:
+        push_notification(
+            'sams:set:updated',
+            item_id=update_response.json()['_id'],
+            user_id=get_user_id(True),
+            session_id=get_auth()['_id'],
+            _etag=update_response.json()['_etag'],
+            extension='sams')
     return update_response.json(), update_response.status_code

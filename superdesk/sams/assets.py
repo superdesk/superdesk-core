@@ -25,6 +25,7 @@ import logging
 import superdesk
 from flask import request
 from superdesk.errors import SuperdeskApiError
+from superdesk.notification import push_notification
 from .utils import get_file_from_sams
 from superdesk.storage.superdesk_file import generate_response_for_file
 from apps.auth import get_auth, get_user_id
@@ -75,6 +76,14 @@ def create():
         files=files,
         external_user_id=get_user_id(True)
     )
+    if post_response.status_code == 201:
+        push_notification(
+            'sams:asset:created',
+            item_id=post_response.json()['_id'],
+            user_id=get_user_id(True),
+            session_id=get_auth()['_id'],
+            _etag=post_response.json()['_etag'],
+            extension='sams')
     return post_response.json(), post_response.status_code
 
 
@@ -95,6 +104,13 @@ def delete(item_id):
     )
     if delete_response.status_code != 204:
         return delete_response.json(), delete_response.status_code
+    if delete_response.status_code == 204:
+        push_notification(
+            'sams:asset:deleted',
+            item_id=item_id,
+            user_id=get_user_id(True),
+            session_id=get_auth()['_id'],
+            extension='sams')
     return '', delete_response.status_code
 
 
@@ -128,6 +144,14 @@ def update(item_id):
         files=files,
         external_user_id=get_user_id(True)
     )
+    if update_response.status_code == 200:
+        push_notification(
+            'sams:asset:updated',
+            item_id=update_response.json()['_id'],
+            user_id=get_user_id(True),
+            session_id=get_auth()['_id'],
+            _etag=update_response.json()['_etag'],
+            extension='sams')
     return update_response.json(), update_response.status_code
 
 
@@ -158,6 +182,14 @@ def lock_asset(asset_id):
         external_user_id=get_user_id(True),
         external_session_id=get_auth()['_id'],
         docs=docs)
+    if lock_asset_response.status_code == 200:
+        push_notification(
+            'sams:asset:lock_asset',
+            item_id=asset_id,
+            user_id=get_user_id(True),
+            session_id=get_auth()['_id'],
+            _etag=lock_asset_response.json()['_etag'],
+            extension='sams')
     return lock_asset_response.json(), lock_asset_response.status_code
 
 
@@ -169,6 +201,14 @@ def unlock_asset(asset_id):
         external_user_id=get_user_id(True),
         external_session_id=get_auth()['_id'],
         docs=docs)
+    if unlock_asset_response.status_code == 200:
+        push_notification(
+            'sams:asset:unlock_asset',
+            item_id=asset_id,
+            user_id=get_user_id(True),
+            session_id=get_auth()['_id'],
+            _etag=unlock_asset_response.json()['_etag'],
+            extension='sams')
     return unlock_asset_response.json(), unlock_asset_response.status_code
 
 
@@ -176,4 +216,10 @@ def unlock_asset_by_user(user_id, session_id):
     unlock_asset_response = get_sams_client().assets.unlock_assets_by_user(
         external_user_id=user_id,
         external_session_id=session_id)
+    if unlock_asset_response.status_code == 200:
+        push_notification(
+            'sams:asset:session_unlock',
+            user_id=get_user_id(True),
+            session_id=get_auth()['_id'],
+            extension='sams')
     return unlock_asset_response.status_code
