@@ -36,7 +36,7 @@ class SearchProviderService(BaseService):
                 continue
             if (
                 req
-                and req.args.get("with_privileges")
+                and req.args.get("manage") not in ("1", "true")
                 and not current_user_has_item_privilege(self.datasource, provider)
             ):
                 continue
