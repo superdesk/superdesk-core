@@ -1,7 +1,6 @@
 Feature: Places
 
     @auth
-    @wip
     Scenario: Places autocomplete 
         When we get "/places_autocomplete?name=koberice&lang=cs"
         # we use __any_value__ for states because we
