@@ -40,8 +40,8 @@ class FormattersService(BaseService):
     def _validate(self, doc):
         """Validates the given story for publish action"""
         validate_item = {"act": ITEM_PUBLISH, "type": doc["type"], "validate": doc}
-        validation_errors = get_resource_service("validate").post([validate_item])
-        if validation_errors[0]:
+        validation_errors = get_resource_service("validate").validate(validate_item)
+        if validation_errors:
             raise ValidationError(validation_errors)
 
     def create(self, docs, **kwargs):
