@@ -684,6 +684,7 @@ Feature: Desks
          "family_id": 2, "original_creator": "#USER_2_ID#", "lock_user": "#USER_3_ID#"}
          ]
          """
+        # we can't check assignments because adding json to "assignments" requires planning to be installed
         When we get "/desks/#SPORTS_DESK_ID#/overview/users"
         Then we get existing resource
         """
@@ -692,11 +693,11 @@ Feature: Desks
                 {
                   "authors": {
                     "#USER_1_ID#": {
-                      "assigned": 2,
+                      "assigned": 0,
                       "locked": 1
                     },
                     "#USER_2_ID#": {
-                      "assigned": 1,
+                      "assigned": 0,
                       "locked": 2
                     }
                   },
@@ -722,11 +723,11 @@ Feature: Desks
                   {
                     "authors": {
                       "#USER_1_ID#": {
-                        "assigned": 2,
+                        "assigned": 0,
                         "locked": 1
                       },
                       "#USER_2_ID#": {
-                        "assigned": 1,
+                        "assigned": 0,
                         "locked": 2
                       }
                     },

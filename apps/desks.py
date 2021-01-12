@@ -553,7 +553,7 @@ class OverviewService(BaseService):
     def _do_request(self, doc):
         desk_id = request.view_args["desk_id"]
         agg_type = request.view_args["agg_type"]
-        timer_label = "{agg_type} overview aggregation {desk_id!r}".format(agg_type=agg_type, desk_id=desk_id)
+        timer_label = f"{agg_type} overview aggregation {desk_id!r}"
         if agg_type == "users":
             with timer(timer_label):
                 doc["_items"] = self._users_aggregation(desk_id)
@@ -563,14 +563,14 @@ class OverviewService(BaseService):
             collection = "archive"
             desk_field = "task.desk"
             key = "stage"
-            field = "task.{key}".format(key=key)
+            field = f"task.{key}"
         elif agg_type == "assignments":
             collection = "assignments"
             desk_field = "assigned_to.desk"
             key = "state"
-            field = "assigned_to.{key}".format(key=key)
+            field = f"assigned_to.{key}"
         else:
-            raise ValueError("Invalid overview aggregation type: {agg_type}".format(agg_type=agg_type))
+            raise ValueError(f"Invalid overview aggregation type: {agg_type}")
 
         agg_query = {
             "filter": {
@@ -633,6 +633,7 @@ class OverviewService(BaseService):
         desks_service = superdesk.get_resource_service("desks")
 
         es_query: Dict[str, Any]
+        es_assign_query: Dict[str, Any]
         desk_filter: Dict[str, Any]
 
         if desk_id == "all":
@@ -656,6 +657,7 @@ class OverviewService(BaseService):
             ]
         )
 
+        # first we check archives for locked items
         es_query["aggs"] = {
             "desk_authors": {
                 "filter": {"terms": {"version_creator": [str(m) for m in members]}},
@@ -665,13 +667,6 @@ class OverviewService(BaseService):
                             "field": "version_creator",
                         },
                         "aggs": {
-                            "assigned": {
-                                "filter": {
-                                    "exists": {
-                                        "field": "assignment_id",
-                                    }
-                                }
-                            },
                             "locked": {
                                 "filter": {
                                     "exists": {
@@ -688,9 +683,36 @@ class OverviewService(BaseService):
         stats_by_authors = {}
         for a in docs_agg.hits["aggregations"]["desk_authors"]["authors"]["buckets"]:
             stats_by_authors[a["key"]] = {
-                "assigned": a["assigned"]["doc_count"],
                 "locked": a["locked"]["doc_count"],
+                "assigned": 0,
             }
+
+        # then assignments
+        if desk_id == "all":
+            desk_filter = {}
+            es_assign_query = {}
+        else:
+            desk_filter = {"_id": ObjectId(desk_id)}
+            es_assign_query = {"filter": {"term": {"assigned_to.desk": desk_id}}}
+        es_assign_query["aggs"] = {
+            "desk_authors": {
+                "filter": {"terms": {"assigned_to.user": [str(m) for m in members]}},
+                "aggs": {
+                    "authors": {
+                        "terms": {
+                            "field": "assigned_to.user",
+                        },
+                    }
+                },
+            }
+        }
+        try:
+            assign_agg = app.data.elastic.search(es_assign_query, "assignments", params={"size": 0})
+        except KeyError:
+            logger.warning('Can\'t access "assignments" collection, planning is probably not installed')
+        else:
+            for a in assign_agg.hits["aggregations"]["desk_authors"]["authors"]["buckets"]:
+                stats_by_authors.setdefault(a["key"], {"locked": 0})["assigned"] = a["doc_count"]
 
         overview = []
         for a in users_aggregation:
