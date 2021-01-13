@@ -190,7 +190,12 @@ class ContentFilterService(BaseService):
 
         filter_condition_service = get_resource_service("filter_conditions")
         expressions = []
-        for expression in content_filter.get("content_filter", []):
+        for index, expression in enumerate(content_filter.get("content_filter", [])):
+            if not expression.get("expression"):
+                raise SuperdeskApiError.badRequestError(
+                    _('Filter statement {index} does not have a filter condition').format(
+                        index=index + 1
+                    ))
             filter_conditions = []
             if "fc" in expression.get("expression", {}):
                 for f in expression["expression"]["fc"]:
