@@ -193,9 +193,7 @@ class ContentFilterService(BaseService):
         for index, expression in enumerate(content_filter.get("content_filter", [])):
             if not expression.get("expression"):
                 raise SuperdeskApiError.badRequestError(
-                    _(
-                        "Filter statement {index} does not have a filter condition"
-                    ).format(index=index + 1)
+                    _("Filter statement {index} does not have a filter condition").format(index=index + 1)
                 )
             filter_conditions = []
             if "fc" in expression.get("expression", {}):
