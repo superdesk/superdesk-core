@@ -918,7 +918,8 @@ Feature: Content Publishing
         "publish_schedule": "#DATE+1#",
         "subject":[{"qcode": "17004000", "name": "Statistics"}],
         "slugline": "test",
-        "body_html": "Test Document body"}]
+        "body_html": "Test Document body",
+        "associations": {"editor_0": null}}]
       """
       When we post to "/products" with success
       """

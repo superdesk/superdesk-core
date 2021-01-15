@@ -652,7 +652,9 @@ def validate_schedule(schedule):
             raise SuperdeskApiError.badRequestError(_("Schedule date is not recognized"))
         if not schedule.date() or schedule.date().year <= 1970:
             raise SuperdeskApiError.badRequestError(_("Schedule date is not recognized"))
-        if schedule < utcnow():
+        if (schedule.tzinfo and schedule < utcnow()) or (
+            not schedule.tzinfo and schedule < utcnow().replace(tzinfo=None)
+        ):
             raise SuperdeskApiError.badRequestError(_("Schedule cannot be earlier than now"))
 
 
