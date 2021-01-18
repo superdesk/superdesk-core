@@ -1,5 +1,11 @@
 # Superdesk Server Changelog
 
+## [2.0.11] 2021-01-18
+
+### Fixed
+
+- Fix error when descheduling item which makes it disappear.
+
 ## [2.0.10] 2021-01-05
 
 ### Fixed
