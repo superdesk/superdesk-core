@@ -650,11 +650,10 @@ class BasePublishService(BaseService):
                     CONTENT_STATE.RECALLED,
                     CONTENT_STATE.SPIKED,
                 }
-                or (doc_item_state == CONTENT_STATE.SCHEDULED and not main_publish_schedule)
+                or (doc_item_state == CONTENT_STATE.SCHEDULED and main_publish_schedule is None)
             ):
                 validation_errors.append(_("Item cannot contain associated {state} item.").format(state=doc_item_state))
-
-            if doc_item_state == CONTENT_STATE.SCHEDULED:
+            elif doc_item_state == CONTENT_STATE.SCHEDULED:
                 item_schedule = get_utc_schedule(orig, PUBLISH_SCHEDULE)
                 if main_publish_schedule < item_schedule:
                     validation_errors.append(_("Associated item is scheduled later than current item."))
