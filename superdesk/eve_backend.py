@@ -256,8 +256,14 @@ class EveBackend():
                 raise SuperdeskApiError.notFoundError()
             else:
                 # item is there, but no change was done - ok
-                logger.error('Item : {} not updated in collection {}. '
-                             'Updates are : {}'.format(id, endpoint_name, updates))
+                logger.warning(
+                    "Item was not updated in mongo.",
+                    extra=dict(
+                        id=id,
+                        resource=endpoint_name,
+                        updates=updates,
+                    ),
+                )
                 return updates
 
         if search_backend:

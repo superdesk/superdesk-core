@@ -694,6 +694,8 @@ class ArchiveService(BaseService):
             associations = original.get(ASSOCIATIONS) or {}
             archive_service = get_resource_service('archive')
             for associations_key, associated_item in associations.items():
+                if not associated_item:
+                    continue
                 orig_associated_item = archive_service.find_one(req=None, _id=associated_item[config.ID_FIELD])
                 if orig_associated_item and orig_associated_item.get('state') == CONTENT_STATE.SCHEDULED:
                     # deschedule associated item itself
