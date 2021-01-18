@@ -130,12 +130,9 @@ class PurgeAudit(superdesk.Command):
         :return:
         """
         service = superdesk.get_resource_service("audit")
-        current_id = None
         logger.info("Starting to purge audit logs at {}".format(utcnow()))
         for _ in range(100):  # make sure we don't get stuck
             lookup = {"$and": [{"_id": {"$lte": ObjectId.from_datetime(self.expiry)}}]}
-            if current_id:
-                lookup["$and"].append({"_id": {"$gt": current_id}})
             req = ParsedRequest()
             req.sort = '[("_id", 1)]'
             req.projection = '{"_id": 1}'
@@ -146,7 +143,6 @@ class PurgeAudit(superdesk.Command):
                 logger.info("Finished purging audit logs at {}".format(utcnow()))
                 return
             logger.info("Found {} audit items at {}".format(len(items), utcnow()))
-            current_id = items[-1]
             service.delete_ids_from_mongo(items)
         logger.warning("Audit purge didn't finish in 100 iterations.")
 
