@@ -77,6 +77,7 @@ class Resource:
     hateoas = None
     merge_nested_documents = None
     projection = None
+    item_privileges = False
 
     def __init__(self, endpoint_name, app, service, endpoint_schema=None):
         self.endpoint_name = endpoint_name

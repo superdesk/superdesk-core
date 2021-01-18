@@ -9,6 +9,7 @@
 # at https://www.sourcefabric.org/superdesk/license
 from eve.utils import ParsedRequest
 
+from flask import json
 from apps.search import init_app
 from superdesk.metadata.item import ITEM_STATE, CONTENT_STATE
 from superdesk.tests import TestCase

@@ -9,6 +9,8 @@
 # at https://www.sourcefabric.org/superdesk/license
 
 import logging
+
+from typing import Union
 from flask import current_app as app, json
 from eve.utils import ParsedRequest, config
 from eve.methods.common import resolve_document_etag
@@ -22,9 +24,9 @@ class BaseService:
     Base service for all endpoints, defines the basic implementation for CRUD datalayer functionality.
     """
 
-    datasource = None
+    datasource: Union[str, None]
 
-    def __init__(self, datasource=None, backend=None):
+    def __init__(self, datasource: str = None, backend=None):
         self.backend = backend
         self.datasource = datasource
 

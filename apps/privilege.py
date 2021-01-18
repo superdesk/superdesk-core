@@ -8,9 +8,11 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
+import superdesk
+
+from flask_babel import _
 from operator import itemgetter
 
-import superdesk
 from superdesk.utils import ListCursor
 from superdesk.privilege import get_privilege_list
 
@@ -35,6 +37,7 @@ class PrivilegeResource(superdesk.Resource):
     schema = {
         "name": {"type": "string"},
         "label": {"type": "string"},
+        "category": {"type": "string"},
         "description": {"type": "string"},
     }
 

@@ -19,13 +19,20 @@ Feature: Search Provider Feature
 	    """
         {"_items": [{"search_provider": "testsearch", "source": "testsearch", "is_closed": false, "config": {"password":"", "username":""}, "name": "test"}]}
 	    """
+        When we get "/privileges"
+        Then we get list with 1+ items
+        """
+        {"_items": [
+            {"name": "resource:search_providers:#search_providers._id#", "label": "Search Provider: test", "category": "search_providers"}
+        ]}
+        """
 
     @auth
     Scenario: Creating a Search Provider fails if the search provider type hasn't been registered with the application
         Given empty "search_providers"
         When we post to "search_providers"
 	    """
-        [{"search_provider": "Multimedia", "source": "aapmm", "config": {"password":"", "username":""}}]
+        [{"search_provider": "Multimedia", "source": "aapmm", "config": {"password":"", "username":""}, "name": "test"}]
 	    """
         Then we get error 400
         """
@@ -37,7 +44,7 @@ Feature: Search Provider Feature
         Given empty "search_providers"
         When we post to "search_providers"
 	    """
-        [{"search_provider": "testsearch", "source": "testsearch", "config": {"password":"", "username":""}}]
+        [{"search_provider": "testsearch", "source": "testsearch", "config": {"password":"", "username":""}, "name": "test"}]
 	    """
         When we patch "search_providers/#search_providers._id#"
         """
@@ -53,7 +60,7 @@ Feature: Search Provider Feature
         Given empty "search_providers"
         When we post to "search_providers"
 	    """
-        [{"search_provider": "testsearch", "source": "testsearch", "config": {"password":"", "username":""}}]
+        [{"search_provider": "testsearch", "source": "testsearch", "config": {"password":"", "username":""}, "name": "test"}]
 	    """
         When we delete "search_providers/#search_providers._id#"
         Then we get response code 204

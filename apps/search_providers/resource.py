@@ -8,6 +8,7 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
+from flask_babel import lazy_gettext
 from apps.search_providers import allowed_search_providers
 from superdesk.resource import Resource
 from superdesk.utils import required_string
@@ -17,7 +18,7 @@ class SearchProviderResource(Resource):
     schema = {
         "search_provider": {"type": "string", "required": True, "allowed": allowed_search_providers},
         "source": required_string,
-        "name": {"type": "string"},
+        "name": {"type": "string", "required": True},
         "is_closed": {"type": "boolean", "default": False},
         "is_default": {"type": "boolean", "default": False},
         "advanced_search": {
@@ -34,3 +35,6 @@ class SearchProviderResource(Resource):
     item_methods = ["GET", "PATCH", "DELETE"]
 
     privileges = {"POST": "search_providers", "PATCH": "search_providers", "DELETE": "search_providers"}
+
+    item_privileges = True
+    item_privileges_label = lazy_gettext("Search Provider: {name}")
