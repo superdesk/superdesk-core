@@ -132,7 +132,7 @@ class PurgeAudit(superdesk.Command):
         service = superdesk.get_resource_service("audit")
         logger.info("Starting to purge audit logs at {}".format(utcnow()))
         for _ in range(100):  # make sure we don't get stuck
-            lookup = {"$and": [{"_id": {"$lte": ObjectId.from_datetime(self.expiry)}}]}
+            lookup = {"$and": [{"_id": {"$lt": ObjectId.from_datetime(self.expiry)}}]}
             req = ParsedRequest()
             req.sort = '[("_id", 1)]'
             req.projection = '{"_id": 1}'
