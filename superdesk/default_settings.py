@@ -186,36 +186,34 @@ ELASTICSEARCH_SETTINGS = {
                     'type': 'html_strip'
                 }
             },
-            'analyzer': {
-                'phrase_prefix_analyzer': {
-                    'type': 'custom',
-                    'filter': ['remove_hyphen', 'lowercase'],
-                    'tokenizer': 'keyword'
+            "analyzer": {
+                "phrase_prefix_analyzer": {
+                    "type": "custom",
+                    "filter": ["remove_hyphen", "lowercase"],
+                    "tokenizer": "keyword",
                 },
-                'html_field_analyzer': {
-                    'type': 'custom',
-                    'tokenizer': 'standard',
-                    'char_filter': ['html_strip_filter'],
-                }
+                "html_field_analyzer": {
+                    "type": "custom",
+                    "filter": ["lowercase"],
+                    "tokenizer": "standard",
+                    "char_filter": ["html_strip_filter"],
+                },
             }
         }
     }
 }
 CONTENTAPI_ELASTICSEARCH_SETTINGS = {
-    'settings': {
-        'analysis': {
-            'char_filter': {
-                'html_strip_filter': {
-                    'type': 'html_strip'
+    "settings": {
+        "analysis": {
+            "char_filter": {"html_strip_filter": {"type": "html_strip"}},
+            "analyzer": {
+                "html_field_analyzer": {
+                    "type": "custom",
+                    "filter": ["lowercase"],
+                    "tokenizer": "standard",
+                    "char_filter": ["html_strip_filter"],
                 }
             },
-            'analyzer': {
-                'html_field_analyzer': {
-                    'type': 'custom',
-                    'tokenizer': 'standard',
-                    'char_filter': ['html_strip_filter'],
-                }
-            }
         }
     }
 }
