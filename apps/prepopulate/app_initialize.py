@@ -32,11 +32,20 @@ Alternatively index param can be specified as
 [[("first_name", pymongo.ASCENDING), ("last_name", pymongo.ASCENDING)], [("username", pymongo.ASCENDING)]]
 Options can be sent to index creation and in this case the last element in the list is the options
 dictionary:
-[[("first_name", pymongo.ASCENDING), ("last_name", pymongo.ASCENDING)], {'sparse': True}]]
+[[("first_name", pymongo.ASCENDING), ("last_name", pymongo.ASCENDING)], {'sparse': True}]
 """
 __entities__ = OrderedDict(
     [
-        ("roles", ("roles.json", ["name"], False)),
+        (
+            "roles",
+            (
+                "roles.json",
+                [
+                    [("name", pymongo.ASCENDING), {"unique": True, "background": True}],
+                ],
+                False,
+            ),
+        ),
         ("users", ("users.json", [], False)),
         ("stages", ("stages.json", ["desk"], False)),
         ("desks", ("desks.json", ["incoming_stage"], False)),
@@ -372,7 +381,7 @@ class AppInitializeWithDataCommand(superdesk.Command):
                 crt_index = list(index) if isinstance(index, list) else index
                 options = crt_index.pop() if isinstance(crt_index[-1], dict) and isinstance(index, list) else {}
                 collection = app.data.mongo.pymongo(resource=entity_name).db[entity_name]
-                options["background"] = True
+                options.setdefault("background", True)
                 index_name = collection.create_index(crt_index, **options)
                 logger.info(" - index: %s for collection %s created successfully.", index_name, entity_name)
 
