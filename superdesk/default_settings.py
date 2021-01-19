@@ -185,6 +185,7 @@ ELASTICSEARCH_SETTINGS = {
                 },
                 "html_field_analyzer": {
                     "type": "custom",
+                    "filter": ["lowercase"],
                     "tokenizer": "standard",
                     "char_filter": ["html_strip_filter"],
                 },
@@ -199,6 +200,7 @@ CONTENTAPI_ELASTICSEARCH_SETTINGS = {
             "analyzer": {
                 "html_field_analyzer": {
                     "type": "custom",
+                    "filter": ["lowercase"],
                     "tokenizer": "standard",
                     "char_filter": ["html_strip_filter"],
                 }
