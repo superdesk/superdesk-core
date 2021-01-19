@@ -72,6 +72,12 @@ class ResendService(Service):
     def _validate_article(self, article_id, article_version):
         archive_article = get_resource_service(ARCHIVE).find_one(req=None, _id=article_id)
 
+        if (app.config.get('CORRECTIONS_WORKFLOW') and archive_article.get(ITEM_STATE) == 'correction'):
+            publish_service = get_resource_service("published")
+            archive_article = publish_service.find_one(
+                req=None, guid=archive_article.get("guid"), state="being_corrected"
+            )
+
         if not archive_article:
             raise SuperdeskApiError.badRequestError(message=_("Story couldn't be found!"))
 
@@ -82,6 +88,7 @@ class ResendService(Service):
             CONTENT_STATE.PUBLISHED,
             CONTENT_STATE.CORRECTED,
             CONTENT_STATE.KILLED,
+            CONTENT_STATE.BEING_CORRECTED,
         ]:
             raise SuperdeskApiError.badRequestError(
                 message=_("Only published, corrected or killed stories can be resent!")
