@@ -14,6 +14,7 @@ import datetime
 from superdesk.utc import utcnow
 from eve.utils import date_to_str, ParsedRequest, config
 from copy import deepcopy
+from bson import ObjectId
 
 logger = logging.getLogger(__name__)
 
@@ -71,7 +72,7 @@ class PurgeAudit(superdesk.Command):
                 return
             self.expiry = utcnow() - datetime.timedelta(minutes=config.AUDIT_EXPIRY_MINUTES)
         logger.info("Starting audit purge for items older than {}".format(self.expiry))
-        self.purge_orphaned_item_audits()
+        # self.purge_orphaned_item_audits()
         self.purge_old_entries()
         logger.info("Completed audit purge")
 
@@ -99,9 +100,9 @@ class PurgeAudit(superdesk.Command):
         logger.info("Starting to purge audit logs of content items not in archive at {}".format(utcnow()))
 
         # Scan the audit collection for items to delete
-        while True:
+        for _ in range(100):
             query = deepcopy(self.item_entry_query)
-            query["$and"].append({"_updated": {"$lte": date_to_str(self.expiry)}})
+            query["$and"].append({"_id": {"$lte": ObjectId.from_datetime(self.expiry)}})
             if current_id:
                 query["$and"].append({"_id": {"$gt": current_id}})
             req = ParsedRequest()
@@ -125,17 +126,13 @@ class PurgeAudit(superdesk.Command):
 
     def purge_old_entries(self):
         """
-        Purge entries older than the expiry that are not related to archive items
+        Purge entries older than the expiry
         :return:
         """
         service = superdesk.get_resource_service("audit")
-        current_id = None
-        logger.info("Starting to purge audit logs of none content items at {}".format(utcnow()))
-
-        while True:
-            lookup = {"$and": [self.not_item_entry_query, {"_updated": {"$lte": date_to_str(self.expiry)}}]}
-            if current_id:
-                lookup["$and"].append({"_id": {"$gt": current_id}})
+        logger.info("Starting to purge audit logs at {}".format(utcnow()))
+        for _ in range(100):  # make sure we don't get stuck
+            lookup = {"$and": [{"_id": {"$lt": ObjectId.from_datetime(self.expiry)}}]}
             req = ParsedRequest()
             req.sort = '[("_id", 1)]'
             req.projection = '{"_id": 1}'
@@ -143,12 +140,11 @@ class PurgeAudit(superdesk.Command):
             audits = service.get_from_mongo(req=req, lookup=lookup)
             items = list(item.get("_id") for item in audits)
             if len(items) == 0:
-                logger.info("Finished purging audit logs of none content items at {}".format(utcnow()))
+                logger.info("Finished purging audit logs at {}".format(utcnow()))
                 return
             logger.info("Found {} audit items at {}".format(len(items), utcnow()))
-            current_id = items[len(items) - 1]
-            logger.info("Deleting {} old audit items".format(len(items)))
             service.delete_ids_from_mongo(items)
+        logger.warning("Audit purge didn't finish in 100 iterations.")
 
 
 superdesk.command("audit:purge", PurgeAudit())
