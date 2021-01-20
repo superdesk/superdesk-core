@@ -12,7 +12,10 @@
 
 import blinker
 import logging as logging_lib
-from flask import abort, json, Blueprint, current_app as app  # noqa
+
+from typing import Any, Dict, Optional
+from flask import abort, json, Blueprint, current_app as app
+from flask_babel.speaklater import LazyString
 from flask_script import Command as BaseCommand, Option  # noqa
 from werkzeug.exceptions import HTTPException
 from eve.utils import config  # noqa
@@ -25,6 +28,8 @@ from .resource import Resource  # noqa
 from .privilege import privilege, intrinsic_privilege, get_intrinsic_privileges  # noqa
 from .workflow import *  # noqa
 from .signals import *  # noqa
+from apps.common.models.base_model import BaseModel
+from apps.common.components.base_component import BaseComponent
 
 __version__ = "2.0.1"
 
@@ -33,12 +38,12 @@ SCHEMA_VERSION = 0
 DOMAIN = {}
 COMMANDS = {}
 JINJA_FILTERS = dict()
-app_components = dict()
-app_models = dict()
-resources = dict()
+app_components: Dict[str, BaseComponent] = dict()
+app_models: Dict[str, BaseModel] = dict()
+resources: Dict[str, Resource] = dict()
 _eve_backend = EveBackend()
-default_user_preferences = dict()
-default_session_preferences = dict()
+default_user_preferences: Dict[str, Any] = dict()
+default_session_preferences: Dict[str, Any] = dict()
 logger = logging_lib.getLogger(__name__)
 
 
@@ -117,8 +122,22 @@ def get_no_resource_privileges(resource_name):
     return attr
 
 
-def register_default_user_preference(preference_name, preference):
-    default_user_preferences[preference_name] = preference
+def register_default_user_preference(
+    preference_name: str,
+    preference: dict,
+    label: Optional[LazyString] = None,
+    category: Optional[LazyString] = None,
+):
+    # this part is temporary so I can update core before updating planning
+    if label is None:
+        label = preference.pop("label", None)
+    if category is None:
+        category = preference.pop("category", None)
+    default_user_preferences[preference_name] = dict(
+        value=preference,
+        label=label,
+        category_label=category,
+    )
 
 
 def register_default_session_preference(preference_name, preference):
