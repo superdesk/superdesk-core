@@ -67,7 +67,7 @@ class ArchiveCorrectionService(Service):
         if not remove_correction:
             archive_item_updates = {ITEM_STATE: CONTENT_STATE.CORRECTION, "operation": CONTENT_STATE.CORRECTION}
         elif remove_correction and archive_item.get("correction_sequence"):
-            archive_item_updates = {ITEM_STATE: CONTENT_STATE.CORRECTED, "operation": "correct"}
+            archive_item_updates = {ITEM_STATE: CONTENT_STATE.CORRECTED, "operation": ITEM_CANCEL_CORRECTION}
         else:
             archive_item_updates = {ITEM_STATE: CONTENT_STATE.PUBLISHED, "operation": ITEM_CANCEL_CORRECTION}
 
