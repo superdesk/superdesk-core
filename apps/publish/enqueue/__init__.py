@@ -47,10 +47,12 @@ ITEM_CORRECT = "correct"
 ITEM_KILL = "kill"
 ITEM_TAKEDOWN = "takedown"
 ITEM_UNPUBLISH = "unpublish"
+ITEM_BEING_CORRECTED = "being_corrected"
 
 enqueue_services = {
     ITEM_PUBLISH: EnqueuePublishedService(),
     ITEM_CORRECT: EnqueueCorrectedService(),
+    ITEM_BEING_CORRECTED: EnqueueCorrectedService(published_state=CONTENT_STATE.BEING_CORRECTED),
     ITEM_KILL: EnqueueKilledService(),
     ITEM_TAKEDOWN: EnqueueKilledService(published_state=CONTENT_STATE.RECALLED),
     ITEM_UNPUBLISH: EnqueueKilledService(published_state=CONTENT_STATE.UNPUBLISHED),
