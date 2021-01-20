@@ -96,9 +96,7 @@ class ResendService(Service):
 
         if article[config.VERSION] != article_version:
             raise SuperdeskApiError.badRequestError(
-                message=_("Please use the newest version {version} to resend!").format(
-                    version=article[config.VERSION]
-                )
+                message=_("Please use the newest version {version} to resend!").format(version=article[config.VERSION])
             )
 
         if article.get("rewritten_by"):
