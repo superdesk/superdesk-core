@@ -8,8 +8,12 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
-from typing import Dict, Any
+from typing import Dict, Any, List, Optional
 import logging
+
+from eve.auth import BasicAuth
+from flask_babel.speaklater import LazyString
+from typing_extensions import Literal
 import superdesk
 from eve.utils import config
 
@@ -42,41 +46,44 @@ def build_custom_hateoas(hateoas, doc, **values):
         links[link_name] = link
 
 
+Method = Literal["GET", "POST", "PATCH", "PUT", "DELETE"]
+
+
 class Resource:
     """
     Base model for all endpoints, defines the basic implementation for CRUD datalayer functionality.
     """
 
-    endpoint_name = None
-    url = None
-    item_url = None
-    additional_lookup = None
+    endpoint_name: Optional[str] = None
+    url: Optional[str] = None
+    item_url: Optional[str] = None
+    additional_lookup: Optional[Dict[str, str]] = None
     schema = {}
-    allow_unknown = None
-    item_methods = None
-    resource_methods = None
-    public_methods = None
-    public_item_methods = None
-    extra_response_fields = None
-    embedded_fields = None
+    allow_unknown: bool = False
+    item_methods: Optional[List[Method]] = None
+    resource_methods: Optional[List[Method]] = None
+    public_methods: Optional[List[Method]] = None
+    public_item_methods: Optional[List[Method]] = None
+    extra_response_fields: Optional[List[str]] = None
+    embedded_fields: Optional[List[str]] = None
     datasource: Dict[str, Any] = {}
-    versioning = None
-    internal_resource = None
-    resource_title = None
-    service = None
-    endpoint_schema = None
+    versioning: bool = False
+    internal_resource: bool = False
+    resource_title: Optional[str] = None
+    service: Optional[str] = None
+    endpoint_schema: Optional[str] = None
     resource_preferences = None
-    etag_ignore_fields = []
-    mongo_prefix = None
-    mongo_indexes = None
+    etag_ignore_fields: List[str] = []
+    mongo_prefix: Optional[str] = None
+    mongo_indexes: Optional[Dict[str, Any]] = None
     auth_field = None
-    authentication = None
-    elastic_prefix = None
-    query_objectid_as_string = None
-    soft_delete = None
+    authentication: Optional[BasicAuth] = None
+    elastic_prefix: Optional[str] = None
+    query_objectid_as_string: bool = False
+    soft_delete: bool = False
     hateoas = None
-    merge_nested_documents = None
-    projection = None
+    merge_nested_documents: bool = False
+    projection: bool = True
     item_privileges = False
 
     def __init__(self, endpoint_name, app, service, endpoint_schema=None):

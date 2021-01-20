@@ -13,6 +13,7 @@ import superdesk
 
 from bson import ObjectId
 from flask import current_app as app
+from typing import Any, Dict, Optional
 from superdesk import get_resource_service, config
 from superdesk.utc import utcnow
 from superdesk.errors import SubscriberError, SuperdeskPublishError, PublishQueueError
@@ -24,8 +25,8 @@ extensions = {"NITF": "ntf", "XML": "xml", "NINJS": "json"}
 class PublishServiceBase:
     """Base publish service class."""
 
-    NAME = None
-    CONFIG = None
+    NAME: Optional[str] = None
+    CONFIG: Dict[str, Any] = {}
     DEFAULT_EXT = "txt"
 
     def _transmit(self, queue_item, subscriber):

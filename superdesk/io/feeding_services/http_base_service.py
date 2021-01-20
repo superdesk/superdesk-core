@@ -8,7 +8,7 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
-from typing import List, Dict
+from typing import List, Dict, Optional
 import traceback
 import requests
 from superdesk.errors import IngestApiError, SuperdeskIngestError
@@ -65,7 +65,7 @@ class HTTPFeedingServiceBase(FeedingService):
     ]
 
     # override this parameter with the main URL to use
-    HTTP_URL = None
+    HTTP_URL: Optional[str] = None
     # timeout in seconds
     HTTP_TIMEOUT = 30
     # if some parameters are used in every request, put them here
