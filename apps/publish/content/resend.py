@@ -70,21 +70,21 @@ class ResendService(Service):
         return subscribers
 
     def _validate_article(self, article_id, article_version):
-        archive_article = get_resource_service(ARCHIVE).find_one(req=None, _id=article_id)
+        article = get_resource_service(ARCHIVE).find_one(req=None, _id=article_id)
 
-        if app.config.get("CORRECTIONS_WORKFLOW") and archive_article.get(ITEM_STATE) == "correction":
+        if app.config.get("CORRECTIONS_WORKFLOW") and article.get(ITEM_STATE) == "correction":
             publish_service = get_resource_service("published")
-            archive_article = publish_service.find_one(
-                req=None, guid=archive_article.get("guid"), state="being_corrected"
+            article = publish_service.find_one(
+                req=None, guid=article.get("guid"), state="being_corrected"
             )
 
-        if not archive_article:
+        if not article:
             raise SuperdeskApiError.badRequestError(message=_("Story couldn't be found!"))
 
-        if archive_article[ITEM_TYPE] not in [CONTENT_TYPE.TEXT, CONTENT_TYPE.PREFORMATTED]:
+        if article[ITEM_TYPE] not in [CONTENT_TYPE.TEXT, CONTENT_TYPE.PREFORMATTED]:
             raise SuperdeskApiError.badRequestError(message=_("Only text stories can be resent!"))
 
-        if archive_article.get(ITEM_STATE) not in [
+        if article.get(ITEM_STATE) not in [
             CONTENT_STATE.PUBLISHED,
             CONTENT_STATE.CORRECTED,
             CONTENT_STATE.KILLED,
@@ -94,14 +94,14 @@ class ResendService(Service):
                 message=_("Only published, corrected or killed stories can be resent!")
             )
 
-        if archive_article[config.VERSION] != article_version:
+        if article[config.VERSION] != article_version:
             raise SuperdeskApiError.badRequestError(
                 message=_("Please use the newest version {version} to resend!").format(
-                    version=archive_article[config.VERSION]
+                    version=article[config.VERSION]
                 )
             )
 
-        if archive_article.get("rewritten_by"):
+        if article.get("rewritten_by"):
             raise SuperdeskApiError.badRequestError(message=_("Updated story cannot be resent!"))
 
-        return archive_article
+        return article
