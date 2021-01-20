@@ -74,9 +74,7 @@ class ResendService(Service):
 
         if app.config.get("CORRECTIONS_WORKFLOW") and article.get(ITEM_STATE) == "correction":
             publish_service = get_resource_service("published")
-            article = publish_service.find_one(
-                req=None, guid=article.get("guid"), state="being_corrected"
-            )
+            article = publish_service.find_one(req=None, guid=article.get("guid"), state="being_corrected")
 
         if not article:
             raise SuperdeskApiError.badRequestError(message=_("Story couldn't be found!"))
