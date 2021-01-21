@@ -1745,7 +1745,7 @@ def then_we_get_notifications(context):
 def get_default_prefs(context):
     response_data = json.loads(context.response.get_data())
     data = {}
-    enhance_document_with_default_prefs(data, True)
+    enhance_document_with_default_prefs(data)
     assert_equal(response_data["user_preferences"], data["user_preferences"])
 
 
