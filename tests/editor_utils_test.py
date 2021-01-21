@@ -19,6 +19,8 @@ from superdesk.editor_utils import Editor3Content
 
 
 class Editor3TestCase(unittest.TestCase):
+    maxDiff = None
+
     def setUp(self):
         self.app = flask.Flask(__name__)
         self.app.app_context().push()
@@ -267,12 +269,14 @@ class Editor3TestCase(unittest.TestCase):
         }
 
         expected = (
-            '<h1>The name of Highlaws comes from the Old English hēah-hlāw</h1><h2>, meaning "high mounds". In the past'
-            ",</h2><h3>variant spellings included Heelawes, Hielawes,</h3><h4>Highlows, Hielows, and Hylaws.</h4><h5>["
-            "2] The hamlet appears in a survey of Holm Cultram dating back</h5><h6>to the year 1538, during the reign o"
-            "f Henry VIII.</h6><p>There were at least thirteen families resident in Highlaws at that time.[3] Abdastart"
-            "us is a genus of lace bugs in the family Tingidae. There are about five described species in Abdastartus.<"
-            "/p>"
+            "<h1>The name of Highlaws comes from the Old English hēah-hlāw</h1>\n"
+            '<h2>, meaning "high mounds". In the past,</h2>\n'
+            "<h3>variant spellings included Heelawes, Hielawes,</h3>\n"
+            "<h4>Highlows, Hielows, and Hylaws.</h4>\n"
+            "<h5>[2] The hamlet appears in a survey of Holm Cultram dating back</h5>\n"
+            "<h6>to the year 1538, during the reign of Henry VIII.</h6>\n"
+            "<p>There were at least thirteen families resident in Highlaws at that time.[3] Abdastartus "
+            "is a genus of lace bugs in the family Tingidae. There are about five described species in Abdastartus.</p>"
         )
 
         item = self.build_item(draftjs_data)
@@ -309,7 +313,7 @@ class Editor3TestCase(unittest.TestCase):
         }
 
         expected = (
-            '<blockquote>The name of Highlaws comes from the Old English hēah-hlāw, meaning "high mounds".</blockquote>'
+            '<blockquote>The name of Highlaws comes from the Old English hēah-hlāw, meaning "high mounds".</blockquote>\n'
             "<p>In the past, variant spellings included Heelawes, Hielawes, Highlows, Hielows, and Hylaws.</p>"
         )
 
@@ -347,8 +351,8 @@ class Editor3TestCase(unittest.TestCase):
         }
 
         expected = (
-            '<pre><code>The name of Highlaws comes from the Old English hēah-hlāw, meaning "high mounds".</code></pre><'
-            "p>In the past, variant spellings included Heelawes, Hielawes, Highlows, Hielows, and Hylaws.</p>"
+            '<pre><code>The name of Highlaws comes from the Old English hēah-hlāw, meaning "high mounds".</code></pre>\n'
+            "<p>In the past, variant spellings included Heelawes, Hielawes, Highlows, Hielows, and Hylaws.</p>"
         )
 
         item = self.build_item(draftjs_data)
@@ -938,7 +942,8 @@ class Editor3TestCase(unittest.TestCase):
 
         expected = (
             '<!-- EMBED START Image {id: "editor_0"} -->\n'
-            '<figure><img alt="pin alt" src="http://localhost:5000/api/upload-raw/5c9d03dd149f116747b6730f.jpg">'
+            "<figure>"
+            '<img alt="pin alt" src="http://localhost:5000/api/upload-raw/5c9d03dd149f116747b6730f.jpg">'
             "<figcaption>pin dec</figcaption></figure>\n"
             '<!-- EMBED END Image {id: "editor_0"} -->'
         )
@@ -1224,8 +1229,9 @@ class Editor3TestCase(unittest.TestCase):
         }
 
         expected = (
-            '<ol><li>The name of Highlaws comes from the Old English</li></ol><ul><li>hēah-hlāw, meaning "high mounds".'
-            " In the past, variant</li></ul><ol><li>spellings included Heelawes, Hielawes, Highlows,</li><li>Hielows, a"
+            "<ol><li>The name of Highlaws comes from the Old English</li></ol>\n"
+            '<ul><li>hēah-hlāw, meaning "high mounds". In the past, variant</li></ul>\n'
+            "<ol><li>spellings included Heelawes, Hielawes, Highlows,</li><li>Hielows, a"
             "nd Hylaws.</li></ol>"
         )
 
@@ -1506,7 +1512,7 @@ class Editor3TestCase(unittest.TestCase):
             ]
         )
 
-        expected = "<ul><li>1<ul><li>2<ul><li>3<ul><li>4</li></ul></li></ul></li></ul></li></ul><p>abc</p>"
+        expected = "<ul><li>1<ul><li>2<ul><li>3<ul><li>4</li></ul></li></ul></li></ul></li></ul>\n<p>abc</p>"
 
         item = self.build_item(draftjs_data)
         editor = Editor3Content(item)
@@ -1592,8 +1598,8 @@ class Editor3TestCase(unittest.TestCase):
         body_editor.prepend("embed", embed_html)
         body_editor.update_item()
         expected = (
-            '<div class="embed-block"><p class="some_class">some embedded HTML</p></div><p>The name of Highlaws comes f'
-            'rom the Old English hēah-hlāw, meaning "high mounds".</p>'
+            '<div class="embed-block"><p class="some_class">some embedded HTML</p></div>\n'
+            '<p>The name of Highlaws comes from the Old English hēah-hlāw, meaning "high mounds".</p>'
         )
         self.assertEqual(item["body_html"], expected)
 
@@ -1623,8 +1629,8 @@ class Editor3TestCase(unittest.TestCase):
         body_editor.prepend("embed", embed_html)
         body_editor.update_item()
         expected = (
-            '<div class="embed-block"><p class="some_class">some modified embed</p></div><p>The name of Highlaws comes '
-            'from the Old English hēah-hlāw, meaning "high mounds".</p>'
+            '<div class="embed-block"><p class="some_class">some modified embed</p></div>\n'
+            '<p>The name of Highlaws comes from the Old English hēah-hlāw, meaning "high mounds".</p>'
         )
         self.assertEqual(item["body_html"], expected)
 
@@ -1658,7 +1664,9 @@ class Editor3TestCase(unittest.TestCase):
                 }
             },
         }
-        item_editor2 = {"body_html": '<p>first <i>line</i> text</p><p>second <a href="http://example.com">line</a></p>'}
+        item_editor2 = {
+            "body_html": '<p>first <i>line</i> text</p>\n<p>second <a href="http://example.com">line</a></p>'
+        }
         item_editor3 = self.build_item(draftjs_data, "body_html")
 
         body_editor = Editor3Content(item_editor3, "body_html")
@@ -1668,7 +1676,7 @@ class Editor3TestCase(unittest.TestCase):
         editor_utils.replace_text(item_editor2, "body_html", "first", "initial")
         editor_utils.replace_text(item_editor3, "body_html", "first", "initial")
         self.assertEqual(
-            '<p>initial <i>line</i> text</p><p>second <a href="http://example.com">line</a></p>',
+            '<p>initial <i>line</i> text</p>\n<p>second <a href="http://example.com">line</a></p>',
             item_editor2["body_html"],
         )
         self.assertEqual(item_editor2["body_html"], item_editor3["body_html"])
@@ -1676,7 +1684,7 @@ class Editor3TestCase(unittest.TestCase):
         editor_utils.replace_text(item_editor2, "body_html", "text", "foo")
         editor_utils.replace_text(item_editor3, "body_html", "text", "foo")
         self.assertEqual(
-            '<p>initial <i>line</i> foo</p><p>second <a href="http://example.com">line</a></p>',
+            '<p>initial <i>line</i> foo</p>\n<p>second <a href="http://example.com">line</a></p>',
             item_editor2["body_html"],
         )
         self.assertEqual(item_editor2["body_html"], item_editor3["body_html"])
@@ -1726,10 +1734,10 @@ class Editor3TestCase(unittest.TestCase):
             "body_html": "<h1>head</h1>\n<p>lorem <b>this is bold</b> and <b>bold</b> end</p>",
         }
         editor_utils.replace_text(item, "body_html", "bold", "UL")
-        self.assertEqual("<h1>head</h1><p>lorem <b>this is UL</b> and <b>UL</b> end</p>", item["body_html"])
+        self.assertEqual("<h1>head</h1>\n<p>lorem <b>this is UL</b> and <b>UL</b> end</p>", item["body_html"])
 
     def test_replace_what_you_had_is_what_you_get(self):
-        html = "".join(
+        html = "\n".join(
             [
                 "<h1>H1 foo</h1>",
                 "<h2>H2 foo</h2>",
@@ -1738,26 +1746,20 @@ class Editor3TestCase(unittest.TestCase):
                 "<p>P foo</p>",
                 "<pre>PRE foo</pre>",
                 "<blockquote>BLOCKQUOTE foo</blockquote>",
-                '<!-- EMBED START Image {id: "editor_0"} -->\n',
-                '<figure><img alt="" src="http://example.com"></figure>\n' '<!-- EMBED END Image {id: "editor_0"} -->',
-                "<ul>",
-                "<li>LI foo</li>",
-                "<li>LI2 foo</li>",
-                "</ul>",
-                "<ol>",
-                "<li>LI OL foo</li>",
-                "</ol>",
-                "<table>",  # only parsing tables so far, no text replace in it
-                "<thead><tr><th><p>th foo</p></th></tr></thead>",
-                "<tbody><tr><td><p>td foo</p></td></tr></tbody>",
-                "</table>",
+                '<!-- EMBED START Image {id: "editor_0"} -->',
+                '<figure><img alt="" src="http://example.com"></figure>',
+                '<!-- EMBED END Image {id: "editor_0"} -->',
+                "<ul><li>LI foo</li><li>LI2 foo</li></ul>",
+                "<ol><li>LI OL foo</li></ol>",
+                (
+                    "<table>"  # only parsing tables so far, no text replace in it
+                    "<thead><tr><th><p>th foo</p></th></tr></thead>"
+                    "<tbody><tr><td><p>td foo</p></td></tr></tbody>"
+                    "</table>"
+                ),
                 '<p><a href="http://p.com" target="_blank">P</a> foo</p>',
-                '<div class="embed-block">',
-                "<script>foo</script>",
-                "</div>",
-                '<div class="embed-block">',
-                '<iframe src="http://iframe.com">foo</iframe>',
-                "</div>",
+                '<div class="embed-block"><script>foo</script></div>',
+                '<div class="embed-block"><iframe src="http://iframe.com">foo</iframe></div>',
             ]
         )
 
@@ -1840,3 +1842,83 @@ class Editor3TestCase(unittest.TestCase):
         self.update_item_field(item, draftjs_data_body_html, "body_html")
         found_fields = set(editor_utils.get_content_state_fields(item))
         self.assertEqual(found_fields, {"headline", "body_html"})
+
+    def test_client_compatibility(self):
+        client = (
+            "<p>WestJet says it will operate its first Boeing 737 MAX flight on Jan. 21 since the aircraft was cleared to fly again in Canadian airspace.</p>\n"
+            "<p><br></p>\n"
+            "<p><br></p>\n"
+            "<p><br></p>\n"
+            "<p><b>This report by The Canadian Press was first published Month Date, 2021.</b></p>\n"
+            "<p><b>Companies in this story: (TSX:TKTK)</b></p>"
+        )
+        field_state = json.loads(
+            """
+        {
+    "entityMap": {},
+    "blocks": [{
+        "text": "WestJet says it will operate its first Boeing 737 MAX flight on Jan. 21 since the aircraft was cleared to fly again in Canadian airspace.",
+        "data": {
+            "MULTIPLE_HIGHLIGHTS": {}
+        },
+        "depth": 0,
+        "key": "aft68",
+        "inlineStyleRanges": [],
+        "entityRanges": [],
+        "type": "unstyled"
+    }, {
+        "text": "",
+        "data": {},
+        "depth": 0,
+        "key": "fsdml",
+        "inlineStyleRanges": [],
+        "entityRanges": [],
+        "type": "unstyled"
+    }, {
+        "text": "",
+        "data": {},
+        "depth": 0,
+        "key": "cqlf1",
+        "inlineStyleRanges": [],
+        "entityRanges": [],
+        "type": "unstyled"
+    }, {
+        "text": "",
+        "data": {},
+        "depth": 0,
+        "key": "3ni9a",
+        "inlineStyleRanges": [],
+        "entityRanges": [],
+        "type": "unstyled"
+    }, {
+        "text": "This report by The Canadian Press was first published Month Date, 2021.",
+        "data": {},
+        "depth": 0,
+        "key": "bbduq",
+        "inlineStyleRanges": [{
+            "style": "BOLD",
+            "length": 71,
+            "offset": 0
+        }],
+        "entityRanges": [],
+        "type": "unstyled"
+    }, {
+        "text": "Companies in this story: (TSX:TKTK)",
+        "data": {},
+        "depth": 0,
+        "key": "alubr",
+        "inlineStyleRanges": [{
+            "style": "BOLD",
+            "length": 35,
+            "offset": 0
+        }],
+        "entityRanges": [],
+        "type": "unstyled"
+    }]
+}
+        """
+        )
+        item = self.build_item(field_state)
+        body_editor = Editor3Content(item)
+        body_editor.update_item()
+        self.assertEqual(client, item["body_html"])
