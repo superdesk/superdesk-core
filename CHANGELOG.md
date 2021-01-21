@@ -1,5 +1,11 @@
 # Superdesk Server Changelog
 
+## [2.0.12] 2021-01-21
+
+### Fixed
+
+- Fix elastic search not working on capitalized words.
+
 ## [2.0.11] 2021-01-18
 
 ### Fixed
