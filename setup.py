@@ -60,6 +60,7 @@ install_requires = [
     "vine==1.3.0",
     # to be replaced by stdlib version when we use Python 3.8+
     "importlib_metadata<3.2",
+    "typing_extensions>=3.7.4",
 ]
 
 package_data = {
