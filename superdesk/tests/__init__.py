@@ -35,10 +35,8 @@ test_user = {
     "email": "behave_test@sourcefabric.org",
     "preferences": {
         "email:notification": {
-            "label": "Send notifications via email",
             "type": "bool",
             "default": True,
-            "category": "notifications",
             "enabled": True,
         }
     },
@@ -414,10 +412,8 @@ def setup_ad_user(context, user):
         "sign_off": ad_user.get("sign_off", "abc"),
         "preferences": {
             "email:notification": {
-                "label": "Send notifications via email",
                 "type": "bool",
                 "default": True,
-                "category": "notifications",
                 "enabled": True,
             }
         },

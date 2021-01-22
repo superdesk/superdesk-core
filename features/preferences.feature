@@ -35,7 +35,7 @@ Feature: User preferences
         {
             "user_preferences": {
                 "archive:view": {
-                    "category": "archive",
+                    "category_label": "archive",
                     "default": "mgrid",
                     "label": "Users archive view format",
                     "type": "string",
@@ -61,7 +61,7 @@ Feature: User preferences
         {
             "user_preferences": {
                 "feature:preview": {
-                    "category": "feature",
+                    "category_label": "feature",
                     "default": false,
                     "enabled": true,
                     "label": "Enable Feature Preview",
@@ -71,7 +71,6 @@ Feature: User preferences
             }
         }
         """
-        And there is no "label" in "editor:theme" preferences
 
 
     @auth
@@ -87,7 +86,7 @@ Feature: User preferences
         {
             "user_preferences": {
                 "email:notification": {
-                    "category": "notifications",
+                    "category_label": "notifications",
                     "default": true,
                     "enabled": false,
                     "label": "Send notifications via email",
@@ -103,7 +102,7 @@ Feature: User preferences
 
         When we patch "/preferences/#SESSION_ID#"
         """
-        {"user_preferences": {"editor:theme": {"theme": "railscast", "category": "editor"}}}
+        {"user_preferences": {"editor:theme": {"theme": "railscast", "category_label": "editor"}}}
         """
 
         When we get "/preferences/#SESSION_ID#"
@@ -245,7 +244,7 @@ Feature: User preferences
             ],
             "user_preferences": {
                 "feature:preview": {
-                    "category": "feature",
+                    "category_label": "feature",
                     "default": false,
                     "enabled": false,
                     "label": "Enable Feature Preview",
