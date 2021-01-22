@@ -20,7 +20,6 @@ from os.path import basename
 from re import findall
 from unittest.mock import patch
 from urllib.parse import urlparse
-from pathlib import Path
 
 import arrow
 import responses
@@ -43,7 +42,7 @@ from wooper.expect import (
 
 import superdesk
 from superdesk import tests
-from superdesk import get_resource_service, utc, etree
+from superdesk import default_user_preferences, get_resource_service, utc, etree
 from superdesk.io import get_feeding_service
 from superdesk.io.commands import update_ingest
 from superdesk.io.commands.update_ingest import LAST_ITEM_UPDATE
@@ -53,7 +52,7 @@ from superdesk.utc import utcnow, get_expiry_date
 from superdesk.tests import get_prefixed_url, set_placeholder
 from apps.dictionaries.resource import DICTIONARY_FILE
 from superdesk.filemeta import get_filemeta
-from apps.preferences import enhance_document_with_default_prefs
+from pathlib import Path
 
 # for auth server
 from authlib.jose import jwt
@@ -1744,9 +1743,10 @@ def then_we_get_notifications(context):
 @then("we get default preferences")
 def get_default_prefs(context):
     response_data = json.loads(context.response.get_data())
-    data = {}
-    enhance_document_with_default_prefs(data)
-    assert_equal(response_data["user_preferences"], data["user_preferences"])
+    for key, value in default_user_preferences.items():
+        if isinstance(value, dict) and value.get("category"):
+            value["category_label"] = value["category"]
+    assert_equal(response_data["user_preferences"], default_user_preferences)
 
 
 @when('we spike "{item_id}"')
