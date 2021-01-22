@@ -1,5 +1,5 @@
 import superdesk
-from flask_babel import lazy_gettext
+from flask_babel import _
 
 
 def init_app(app):
@@ -10,9 +10,9 @@ def init_app(app):
             "allowed": ["list", "swimlane"],
             "view": "list",
             "default": "list",
+            "label": _("Monitoring view"),
+            "category": _("monitoring"),
         },
-        label=lazy_gettext("Monitoring view"),
-        category=lazy_gettext("monitoring"),
     )
 
     superdesk.register_default_session_preference("monitoring:view:session", None)

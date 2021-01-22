@@ -13,7 +13,7 @@ import logging
 
 from bson.objectid import ObjectId
 from flask import g
-from flask_babel import _, lazy_gettext
+from flask_babel import _
 
 import superdesk
 from superdesk import get_resource_service
@@ -77,9 +77,9 @@ class ActivityResource(Resource):
             "type": "bool",
             "enabled": True,
             "default": True,
+            "label": _("Send notifications via email"),
+            "category": _("notifications"),
         },
-        label=lazy_gettext("Send notifications via email"),
-        category=lazy_gettext("notifications"),
     )
     superdesk.register_default_user_preference(
         "desktop:notification",
@@ -87,9 +87,9 @@ class ActivityResource(Resource):
             "type": "bool",
             "enabled": True,
             "default": False,
+            "label": _("Allow Desktop Notifications"),
+            "category": _("notifications"),
         },
-        label=lazy_gettext("Allow Desktop Notifications"),
-        category=lazy_gettext("notifications"),
     )
 
 

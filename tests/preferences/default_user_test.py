@@ -12,4 +12,4 @@ class DefaultUserPrefsTestCase(unittest.TestCase):
             }
         }
         enhance_document_with_default_prefs(doc)
-        self.assertIn("email:notification", doc["user_preferences"])
+        self.assertNotIn("label", doc["user_preferences"]["editor:theme"])
