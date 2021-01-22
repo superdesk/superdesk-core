@@ -30,9 +30,7 @@ class SystemMessagesService(Service):
         :param docs:
         :return:
         """
-        push_notification(
-            "system_message:created", _id=[doc.get(config.ID_FIELD) for doc in docs]
-        )
+        push_notification("system_message:created", _id=[doc.get(config.ID_FIELD) for doc in docs])
 
     def on_update(self, updates, original):
         self._validate_administrator("update")
