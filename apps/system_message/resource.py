@@ -21,9 +21,9 @@ class SystemMessagesResource(Resource):
         },
         "message_title": {"type": "string", "required": True},
         "message": {"type": "string", "required": True},
-        "user": {"type": "string", "required": True},
+        "user_id": {"type": "string", "required": True},
     }
 
     resource_methods = ["GET", "POST"]
     item_methods = ["GET", "PATCH", "DELETE"]
-    no_privileges = True
+    privileges = {"POST": "system_messages", "PATCH": "system_messages", "DELETE": "system_messages"}

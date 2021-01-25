@@ -42,7 +42,7 @@ class SystemMessagesService(Service):
         :param original:
         :return:
         """
-        push_notification("system_message:udpated", _id=[original.get(config.ID_FIELD)])
+        push_notification("system_message:updated", _id=[original.get(config.ID_FIELD)])
 
     def on_delete(self, doc):
         self._validate_administrator("delete")

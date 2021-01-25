@@ -20,3 +20,5 @@ def init_app(app):
     endpoint_name = "system_message"
     service = SystemMessagesService(endpoint_name, backend=superdesk.get_backend())
     SystemMessagesResource(endpoint_name, app=app, service=service)
+
+    superdesk.privilege(name="system_messages", label="System Message", description="User can manage system messages.")

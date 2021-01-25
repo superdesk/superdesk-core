@@ -17,7 +17,7 @@ Feature: System Messages
             "message_title": "This is message title",
             "message": "This is a message",
 	        "type": "alert",
-	        "user": "#CONTEXT_USER_ID#"
+	        "user_id": "#CONTEXT_USER_ID#"
         }]
 	    """
         Then we get new resource
@@ -29,7 +29,7 @@ Feature: System Messages
             "message_title": "This is message title",
             "message": "This is a message",
 	        "type": "alert",
-	        "user": "#CONTEXT_USER_ID#"}]
+	        "user_id": "#CONTEXT_USER_ID#"}]
         }
 	    """
 
@@ -42,7 +42,7 @@ Feature: System Messages
             "is_active": true,
             "message_title": "This is message title",
 	        "type": "alert",
-	        "user": "#CONTEXT_USER_ID#"
+	        "user_id": "#CONTEXT_USER_ID#"
         }]
 	    """
         Then we get error 400
@@ -65,7 +65,7 @@ Feature: System Messages
             "message_title": "This is message title",
             "message": "This is a message",
 	        "type": "alert",
-	        "user": "#CONTEXT_USER_ID#"
+	        "user_id": "#CONTEXT_USER_ID#"
         }]
 	    """
         Then we get new resource
@@ -77,7 +77,7 @@ Feature: System Messages
             "message_title": "This is message title",
             "message": "This is a message",
 	        "type": "alert",
-	        "user": "#CONTEXT_USER_ID#"}]
+	        "user_id": "#CONTEXT_USER_ID#"}]
         }
 	    """
         When we patch "/system_message/#system_message._id#"
@@ -91,7 +91,7 @@ Feature: System Messages
             "message_title": "This is message title",
             "message": "This is a updated message",
 	        "type": "alert",
-	        "user": "#CONTEXT_USER_ID#"
+	        "user_id": "#CONTEXT_USER_ID#"
         }
 	    """
 
@@ -105,7 +105,7 @@ Feature: System Messages
             "message_title": "This is message title",
             "message": "This is a message",
 	        "type": "alert",
-	        "user": "#CONTEXT_USER_ID#"
+	        "user_id": "#CONTEXT_USER_ID#"
         }]
 	    """
         Then we get OK response
