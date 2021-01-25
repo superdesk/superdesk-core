@@ -8,12 +8,12 @@
 # Creation: 2017-11-24 19:54
 
 from copy import deepcopy
-from superdesk.commands.data_updates import DataUpdate
+from superdesk.commands.data_updates import BaseDataUpdate
 
 from eve.utils import config
 
 
-class DataUpdate(DataUpdate):
+class DataUpdate(BaseDataUpdate):
     replace_values_forward = {
         "picture": "media",
         "unorderedlist": "unordered list",

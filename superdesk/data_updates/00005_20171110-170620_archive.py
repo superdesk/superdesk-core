@@ -7,10 +7,10 @@
 # Author  : mugur
 # Creation: 2017-11-10 17:06
 
-from superdesk.commands.data_updates import DataUpdate
+from superdesk.commands.data_updates import BaseDataUpdate
 
 
-class DataUpdate(DataUpdate):
+class DataUpdate(BaseDataUpdate):
 
     resource = "archive"
 

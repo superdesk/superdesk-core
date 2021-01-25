@@ -7,12 +7,12 @@
 # Author  : Gyan
 # Creation: 2018-12-27 16:03
 
-from superdesk.commands.data_updates import DataUpdate
+from superdesk.commands.data_updates import BaseDataUpdate
 from eve.utils import config
 
 
 # This script replaces the whole json of related item with respective _id only
-class DataUpdate(DataUpdate):
+class DataUpdate(BaseDataUpdate):
 
     resource = "archive"
 

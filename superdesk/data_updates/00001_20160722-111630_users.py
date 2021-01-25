@@ -7,12 +7,12 @@
 # Author  : sdesk
 # Creation: 2016-07-22 11:16
 
-from superdesk.commands.data_updates import DataUpdate
+from superdesk.commands.data_updates import BaseDataUpdate
 from superdesk import get_resource_service
 from eve.utils import config
 
 
-class DataUpdate(DataUpdate):
+class DataUpdate(BaseDataUpdate):
     """Updates the user collection with invisible stages.
 
     Refer to https://dev.sourcefabric.org/browse/SD-5077 for more information

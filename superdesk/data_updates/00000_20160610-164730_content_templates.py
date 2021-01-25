@@ -7,10 +7,10 @@
 # Author  : edouard
 # Creation: 2016-06-10 11:10
 
-from superdesk.commands.data_updates import DataUpdate
+from superdesk.commands.data_updates import BaseDataUpdate
 
 
-class DataUpdate(DataUpdate):
+class DataUpdate(BaseDataUpdate):
     """
 
     Data update for Pull Request #418

@@ -7,10 +7,10 @@
 # Author  : petr
 # Creation: 2020-11-18 16:06
 
-from superdesk.commands.data_updates import DataUpdate
+from superdesk.commands.data_updates import BaseDataUpdate
 
 
-class DataUpdate(DataUpdate):
+class DataUpdate(BaseDataUpdate):
 
     resource = "sequences"
 

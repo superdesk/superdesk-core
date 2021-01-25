@@ -7,13 +7,13 @@
 # Author  : Jérôme
 # Creation: 2019-11-06 18:08
 
-from superdesk.commands.data_updates import DataUpdate
+from superdesk.commands.data_updates import BaseDataUpdate
 from superdesk import get_resource_service
 from apps.archive.common import transtype_metadata
 from datetime import datetime
 
 
-class DataUpdate(DataUpdate):
+class DataUpdate(BaseDataUpdate):
 
     resource = "archive"
 

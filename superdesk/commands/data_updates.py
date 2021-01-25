@@ -9,6 +9,7 @@
 # at https://www.sourcefabric.org/superdesk/license
 
 
+from abc import abstractclassmethod
 from string import Template
 from types import ModuleType
 from flask import current_app
@@ -35,10 +36,10 @@ DATA_UPDATE_TEMPLATE = """
 # Author  : $user
 # Creation: $current_date
 
-from superdesk.commands.data_updates import DataUpdate as _DataUpdate
+from superdesk.commands.data_updates import BaseDataUpdate
 
 
-class DataUpdate(_DataUpdate):
+class DataUpdate(BaseDataUpdate):
 
     resource = '$resource'
 
@@ -302,9 +303,12 @@ superdesk.command("data:upgrade", Upgrade())
 superdesk.command("data:downgrade", Downgrade())
 
 
-class DataUpdate:
+class BaseDataUpdate:
     def apply(self, direction):
         assert direction in ["forwards", "backwards"]
         collection = current_app.data.get_mongo_collection(self.resource)
         db = current_app.data.driver.db
         getattr(self, direction)(collection, db)
+
+
+DataUpdate = BaseDataUpdate
