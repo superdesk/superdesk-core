@@ -58,8 +58,12 @@ class SystemMessagesService(Service):
     def _validate_message(self, doc):
         max_characters = app.config.get("MAX_CHARACTERS_FOR_SYSTEM_MESSAGE", 200)
         if doc.get("message") and len(doc["message"]) > max_characters:
-            raise SuperdeskApiError.badRequestError(_(f"Max {max_characters} characters are allowed"))
+            raise SuperdeskApiError.badRequestError(
+                message=_("Max {max_characters} characters are allowed").format(max_characters=max_characters)
+            )
 
     def _validate_administrator(self, operation):
         if not is_current_user_admin():
-            raise SuperdeskApiError.badRequestError(_(f"Only administrator user can {operation} the message"))
+            raise SuperdeskApiError.badRequestError(
+                message=_("Only administrator user can {operation} the message").format(operation=operation)
+            )
