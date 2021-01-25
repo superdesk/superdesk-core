@@ -12,6 +12,8 @@ import logging
 import superdesk
 from .service import SystemMessagesService
 from .resource import SystemMessagesResource
+from flask_babel import lazy_gettext
+
 
 logger = logging.getLogger(__name__)
 
@@ -21,4 +23,4 @@ def init_app(app):
     service = SystemMessagesService(endpoint_name, backend=superdesk.get_backend())
     SystemMessagesResource(endpoint_name, app=app, service=service)
 
-    superdesk.privilege(name="system_messages", label="System Message", description="User can manage system messages.")
+    superdesk.privilege(name="system_messages", label=lazy_gettext("System Message"), description=lazy_gettext("User can manage system messages."))
