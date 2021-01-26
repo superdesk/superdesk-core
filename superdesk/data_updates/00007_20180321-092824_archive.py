@@ -10,7 +10,7 @@
 import superdesk
 import subprocess
 import json
-from superdesk.commands.data_updates import DataUpdate
+from superdesk.commands.data_updates import BaseDataUpdate
 from os.path import realpath, join, dirname
 
 node_script_path = join(dirname(realpath(superdesk.__file__)), "data_updates", "00007_20180321-092824_archive.dist.js")
@@ -25,7 +25,7 @@ def get_updated_editor_state(editor_state):
         return editor_state
 
 
-class DataUpdate(DataUpdate):
+class DataUpdate(BaseDataUpdate):
 
     resource = "archive"  # will use multiple resources, keeping this here so validation passes
 

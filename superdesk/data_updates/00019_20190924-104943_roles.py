@@ -7,10 +7,10 @@
 # Author  : petr
 # Creation: 2019-09-24 10:49
 
-from superdesk.commands.data_updates import DataUpdate
+from superdesk.commands.data_updates import BaseDataUpdate
 
 
-class DataUpdate(DataUpdate):
+class DataUpdate(BaseDataUpdate):
 
     resource = "roles"
     privileges = [

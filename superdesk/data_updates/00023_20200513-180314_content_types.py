@@ -8,11 +8,11 @@
 # Creation: 2020-05-13 18:03
 
 from copy import deepcopy
-from superdesk.commands.data_updates import DataUpdate
+from superdesk.commands.data_updates import BaseDataUpdate
 from eve.utils import config
 
 
-class DataUpdate(DataUpdate):
+class DataUpdate(BaseDataUpdate):
 
     resource = "content_types"
 

@@ -7,7 +7,7 @@
 # Author  : tomas
 # Creation: 2018-11-27 10:54
 
-from superdesk.commands.data_updates import DataUpdate
+from superdesk.commands.data_updates import BaseDataUpdate
 from superdesk import get_resource_service
 
 # This upgrade script does the same as the previous one 00014_20181114-153727_archive.py
@@ -48,7 +48,7 @@ class TreeNode:
         self.children = []
 
 
-class DataUpdate(DataUpdate):
+class DataUpdate(BaseDataUpdate):
 
     resource = "archive"  # will use multiple resources, keeping this here so validation passes
 
