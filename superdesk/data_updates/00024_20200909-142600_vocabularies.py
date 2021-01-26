@@ -7,11 +7,11 @@
 # Author  : pablopunk
 # Creation: 2020-09-09 14:08
 
-from superdesk.commands.data_updates import DataUpdate
+from superdesk.commands.data_updates import BaseDataUpdate
 from eve.utils import config
 
 
-class DataUpdate(DataUpdate):
+class DataUpdate(BaseDataUpdate):
 
     resource = "vocabularies"
 

@@ -7,11 +7,11 @@
 # Author  : superdesk
 # Creation: 2017-02-14 14:53
 
-from superdesk.commands.data_updates import DataUpdate
+from superdesk.commands.data_updates import BaseDataUpdate
 from superdesk import get_resource_service
 
 
-class DataUpdate(DataUpdate):
+class DataUpdate(BaseDataUpdate):
 
     resource = "vocabularies"
     product_types = {

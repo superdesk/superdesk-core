@@ -8,10 +8,10 @@
 # Creation: 2018-04-25 01:07
 
 from eve.utils import config
-from superdesk.commands.data_updates import DataUpdate
+from superdesk.commands.data_updates import BaseDataUpdate
 
 
-class DataUpdate(DataUpdate):
+class DataUpdate(BaseDataUpdate):
 
     resource = "vocabularies"
     update_fields = ["name", "qcode"]

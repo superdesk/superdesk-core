@@ -7,7 +7,7 @@
 # Author  : tomas
 # Creation: 2018-11-14 15:37
 
-from superdesk.commands.data_updates import DataUpdate
+from superdesk.commands.data_updates import BaseDataUpdate
 
 
 def get_root_nodes(tree_items):
@@ -40,7 +40,7 @@ class TreeNode:
         self.children = []
 
 
-class DataUpdate(DataUpdate):
+class DataUpdate(BaseDataUpdate):
 
     resource = "archive"
 
