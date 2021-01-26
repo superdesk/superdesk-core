@@ -36,7 +36,6 @@ class ConceptItemsResource(Resource):
         "_type": {"type": "string"},
     }
     privileges = {
-        "POST": CONCEPT_ITEMS_PRIVELEGE,
         "PATCH": CONCEPT_ITEMS_PRIVELEGE,
         "PUT": CONCEPT_ITEMS_PRIVELEGE,
         "DELETE": CONCEPT_ITEMS_PRIVELEGE,
