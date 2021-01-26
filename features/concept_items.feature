@@ -850,3 +850,34 @@ Feature: Concept items
                 "updated_by": "#CONTEXT_USER_ID#"
             }
             """
+
+    @auth
+    Scenario: Any user can create a concept item
+        Given "vocabularies"
+        """
+        [{
+            "_id" : "languages",
+            "display_name" : "Languages",
+            "type" : "manageable",
+            "items" : [
+                {
+                    "name" : "en",
+                    "qcode" : "en",
+                    "is_active" : true
+                }
+            ]
+        }]
+        """
+        When we login as user "foo" with password "foofoo" and user type "user"
+        When we post to "/concept_items"
+        """
+        {
+            "name": "Hobbit",
+            "cpnat_type": "cpnat:abstract",
+            "labels": ["book", "tolkien"],
+            "language": "en",
+            "definition_html": "The Hobbit is a children's fantasy novel by English author J. R. R. Tolkien."
+        }
+        """
+        Then we get response code 201
+     

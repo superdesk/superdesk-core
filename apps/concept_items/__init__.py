@@ -22,3 +22,6 @@ def init_app(app):
     superdesk.privilege(
         name=CONCEPT_ITEMS_PRIVELEGE, label="Concept items management", description="User can manage concept items."
     )
+
+    # let everyone create concepts (SDESK-4959)
+    superdesk.intrinsic_privilege(endpoint_name, "POST")
