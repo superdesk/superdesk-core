@@ -468,6 +468,7 @@ CORE_APPS.extend(
         "apps.concept_items",
         "superdesk.places",
         "apps.desk_routing",
+        "apps.system_message",
     ]
 )
 
