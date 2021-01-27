@@ -1,5 +1,5 @@
 from behave import then
-from steps import json
+from flask import json
 
 
 @then("we get users")

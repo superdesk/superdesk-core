@@ -28,7 +28,7 @@ from superdesk.activity import add_activity, ACTIVITY_UPDATE
 from superdesk.metadata.item import FAMILY_ID, ITEM_STATE, CONTENT_STATE
 from eve.utils import ParsedRequest
 from superdesk.utils import ListCursor
-from flask_babel import _
+from flask_babel import _, lazy_gettext
 
 
 logger = logging.getLogger(__name__)
@@ -99,8 +99,12 @@ def init_app(app):
     OverviewResource(endpoint_name, app=app, service=service)
 
 
-superdesk.privilege(name="desks", label="Desk Management", description="User can manage desks.")
-superdesk.privilege(name="masterdesk", label="Master Desk", description="User can access master desk.")
+superdesk.privilege(
+    name="desks", label=lazy_gettext("Desk Management"), description=lazy_gettext("User can manage desks.")
+)
+superdesk.privilege(
+    name="masterdesk", label=lazy_gettext("Master Desk"), description=lazy_gettext("User can access master desk.")
+)
 
 
 class DesksResource(Resource):

@@ -51,7 +51,7 @@ def get_app(config=None):
 
     # override from instance settings module, but only things defined in default config
     try:
-        import settings as server_settings
+        import settings as server_settings  # type: ignore
 
         for key in dir(server_settings):
             if key.isupper() and key in app_config:
