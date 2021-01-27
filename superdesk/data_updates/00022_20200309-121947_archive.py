@@ -11,10 +11,10 @@ from bson import ObjectId
 from bson.errors import InvalidId
 from superdesk import get_resource_service
 from superdesk.vocabularies import is_related_content
-from superdesk.commands.data_updates import DataUpdate
+from superdesk.commands.data_updates import BaseDataUpdate
 
 
-class DataUpdate(DataUpdate):
+class DataUpdate(BaseDataUpdate):
 
     resource = "archive"
 

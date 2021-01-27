@@ -7,10 +7,10 @@
 # Author  : Jérôme
 # Creation: 2017-09-08 14:02
 
-from superdesk.commands.data_updates import DataUpdate
+from superdesk.commands.data_updates import BaseDataUpdate
 
 
-class DataUpdate(DataUpdate):
+class DataUpdate(BaseDataUpdate):
 
     resource = "users"
 

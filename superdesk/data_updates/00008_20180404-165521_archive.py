@@ -7,10 +7,10 @@
 # Author  : Jérôme
 # Creation: 2018-04-04 16:55
 
-from superdesk.commands.data_updates import DataUpdate
+from superdesk.commands.data_updates import BaseDataUpdate
 
 
-class DataUpdate(DataUpdate):
+class DataUpdate(BaseDataUpdate):
 
     resource = "archive"  # will use multiple resources, keeping this here so validation passes
 
