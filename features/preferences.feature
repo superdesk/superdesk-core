@@ -71,7 +71,6 @@ Feature: User preferences
             }
         }
         """
-        And there is no "label" in "editor:theme" preferences
 
 
     @auth

@@ -8,19 +8,18 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
-from flask import request
-from eve.utils import config
-from eve.methods.common import resolve_document_etag
 import logging
 import superdesk
+
+from flask import request
+from eve.utils import config
 from superdesk.resource import Resource
 from superdesk.services import BaseService
-from superdesk.utc import utcnow
 from superdesk import get_backend
 from superdesk import get_resource_service
 from superdesk.workflow import get_privileged_actions
 from superdesk.validation import ValidationError
-from flask_babel import _
+from flask_babel import _, lazy_gettext
 
 
 _preferences_key = "preferences"
@@ -42,16 +41,27 @@ def init_app(app):
     superdesk.intrinsic_privilege(resource_name=endpoint_name, method=["PATCH"])
 
 
+def available_user_preferences():
+    available = {}
+    for key, pref in superdesk.default_user_preferences.items():
+        available[key] = dict()
+        available[key].update(pref.value)
+        for field in ("label", "category"):
+            if getattr(pref, field, None):
+                available[key][field] = str(getattr(pref, field))
+    return available
+
+
 def enhance_document_with_default_prefs(doc):
     user_prefs = doc.get(_user_preferences_key, {})
-    available = dict(superdesk.default_user_preferences)
+    available = available_user_preferences()
     available.update(user_prefs)
 
-    def sync_field(field, dest, default):
-        if not isinstance(dest, dict) or not isinstance(default, dict):
+    def sync_field(field, dest, value=None):
+        if not isinstance(dest, dict):
             return
-        if default.get(field):
-            dest[field] = default[field]
+        if value:
+            dest[field] = str(value)
         elif dest.get(field):
             dest.pop(field, None)
 
@@ -59,13 +69,8 @@ def enhance_document_with_default_prefs(doc):
     for k, v in available.items():
         default = superdesk.default_user_preferences.get(k)
         if default:
-            sync_field("label", v, default)
-            sync_field("category", v, default)
-
-        if isinstance(v, dict) and v.get("label"):
-            v["label"] = _(v["label"])
-        if isinstance(v, dict) and v.get("category"):
-            v["category_label"] = _(v["category"])
+            sync_field("label", v, default.label)
+            sync_field("category", v, default.category)
 
     doc[_user_preferences_key] = available
 
@@ -105,10 +110,10 @@ class PreferencesResource(Resource):
             "type": "bool",
             "enabled": False,
             "default": False,
-            "label": _("Enable Feature Preview"),
-            "category": _("feature"),
             "privileges": ["feature_preview"],
         },
+        label=lazy_gettext("Enable Feature Preview"),
+        category=lazy_gettext("feature"),
     )
 
     superdesk.register_default_user_preference(
@@ -118,9 +123,9 @@ class PreferencesResource(Resource):
             "allowed": ["mgrid", "compact"],
             "view": "mgrid",
             "default": "mgrid",
-            "label": _("Users archive view format"),
-            "category": _("archive"),
         },
+        label=lazy_gettext("Users archive view format"),
+        category=lazy_gettext("archive"),
     )
 
     superdesk.register_default_user_preference(
@@ -129,9 +134,9 @@ class PreferencesResource(Resource):
             "type": "bool",
             "enabled": None,
             "default": False,
-            "label": _("Enable Single Line View"),
-            "category": _("rows"),
         },
+        label=lazy_gettext("Enable Single Line View"),
+        category=lazy_gettext("rows"),
     )
 
     superdesk.register_default_user_preference(
@@ -156,31 +161,39 @@ class PreferencesResource(Resource):
     superdesk.register_default_user_preference("templates:recent", {})
 
     superdesk.register_default_user_preference(
-        "dateline:located", {"type": "dict", "label": _("Located"), "category": _("article_defaults")}
+        "dateline:located",
+        {
+            "type": "dict",
+        },
+        label=lazy_gettext("Located"),
+        category=lazy_gettext("article_defaults"),
     )
 
     superdesk.register_default_user_preference(
         "categories:preferred",
         {
             "type": "dict",
-            "category": _("categories"),
-            "label": _("Preferred Categories"),
             "selected": {},
         },
+        label=lazy_gettext("Preferred Categories"),
+        category=lazy_gettext("categories"),
     )
 
     superdesk.register_default_user_preference(
         "desks:preferred",
         {
             "type": "dict",
-            "category": _("desks"),
-            "label": _("Preferred Desks"),
             "selected": {},
         },
+        label=lazy_gettext("Preferred Desks"),
+        category=lazy_gettext("desks"),
     )
 
     superdesk.register_default_user_preference(
-        "article:default:place", {"type": "list", "label": _("Place"), "category": _("article_defaults"), "place": []}
+        "article:default:place",
+        {"type": "list", "place": []},
+        label=lazy_gettext("Place"),
+        category=lazy_gettext("article_defaults"),
     )
 
     superdesk.register_default_user_preference(
@@ -194,9 +207,9 @@ class PreferencesResource(Resource):
             "allowed": ["mgrid", "compact"],
             "view": "mgrid",
             "default": "mgrid",
-            "label": _("Users contacts view format"),
-            "category": _("contacts"),
         },
+        label=lazy_gettext("Users contacts view format"),
+        category=lazy_gettext("contacts"),
     )
 
     superdesk.register_default_user_preference("destination:active", {})
@@ -246,7 +259,7 @@ class PreferencesService(BaseService):
     def set_user_initial_prefs(self, user_doc):
         if _user_preferences_key not in user_doc:
             orig_user_prefs = user_doc.get(_preferences_key, {})
-            available = dict(superdesk.default_user_preferences)
+            available = available_user_preferences()
             available.update(orig_user_prefs)
             user_doc[_user_preferences_key] = available
 
@@ -289,7 +302,7 @@ class PreferencesService(BaseService):
         user_prefs = updates.get(_user_preferences_key)
         if user_prefs is not None:
             # check if the input is validated against the default values
-            for k in (k for k, v in user_prefs.items() if k not in superdesk.default_user_preferences):
+            for k in (k for k in user_prefs if k not in superdesk.default_user_preferences):
                 raise ValidationError(_("Invalid preference: {preference}").format(preference=k))
 
             existing_user_preferences.update(user_prefs)
