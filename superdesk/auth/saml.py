@@ -55,7 +55,7 @@ bp = superdesk.Blueprint("saml", __name__)
 logger = logging.getLogger(__name__)
 
 
-def init_app(app):
+def init_app(app) -> None:
     app.client_config["saml_auth"] = False
     if app.config.get("SAML_PATH"):
         assert imported, "onelogin module is not available"

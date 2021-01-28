@@ -17,7 +17,7 @@ from .validators import ValidatorsService, ValidatorsResource
 logger = logging.getLogger(__name__)
 
 
-def init_app(app):
+def init_app(app) -> None:
     endpoint_name = "validators"
     service = ValidatorsService(endpoint_name, backend=superdesk.get_backend())
     ValidatorsResource(endpoint_name, app=app, service=service)

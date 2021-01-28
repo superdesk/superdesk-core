@@ -42,7 +42,7 @@ from .auth import OIDCAuthResource, OIDCAuthService
 logger = logging.getLogger(__name__)
 
 
-def init_app(app):
+def init_app(app) -> None:
     endpoint_name = "auth_oidc"
     if app.config["OIDC_ENABLED"] and not app.config["SECRET_KEY"]:
         logger.warn("SECRET_KEY is not set")

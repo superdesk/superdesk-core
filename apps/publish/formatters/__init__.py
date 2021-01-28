@@ -13,7 +13,7 @@ from apps.publish.formatters.service import FormattersService
 from apps.publish.formatters.resource import FormattersResource
 
 
-def init_app(app):
+def init_app(app) -> None:
     endpoint_name = "formatters"
     service = FormattersService(endpoint_name, backend=get_backend())
     FormattersResource(endpoint_name, app=app, service=service)

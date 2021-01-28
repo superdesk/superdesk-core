@@ -17,7 +17,7 @@ from .user_mentions import on_activity_updated
 from .inline_comments import handle_inline_mentions
 
 
-def init_app(app):
+def init_app(app) -> None:
     endpoint_name = "comments"
     service = CommentsService(endpoint_name, backend=superdesk.get_backend())
     CommentsResource(endpoint_name, app=app, service=service)

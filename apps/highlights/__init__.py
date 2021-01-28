@@ -1,3 +1,5 @@
+from typing import Any
+from flask_babel import lazy_gettext
 import superdesk
 
 from superdesk import get_backend
@@ -6,9 +8,9 @@ from apps.highlights.service import HighlightsService, MarkedForHighlightsServic
 from .generate import GenerateHighlightsService, GenerateHighlightsResource
 
 
-def init_app(app):
+def init_app(app) -> None:
     endpoint_name = "highlights"
-    service = HighlightsService(endpoint_name, backend=get_backend())
+    service: Any = HighlightsService(endpoint_name, backend=get_backend())
     HighlightsResource(endpoint_name, app=app, service=service)
 
     endpoint_name = "marked_for_highlights"
@@ -19,14 +21,14 @@ def init_app(app):
     service = GenerateHighlightsService(endpoint_name, backend=get_backend())
     GenerateHighlightsResource(endpoint_name, app=app, service=service)
 
-    superdesk.privilege(name="highlights_read", label="Highlights - read", description="Can see a list of highlights.")
+    superdesk.privilege(name="highlights_read", label=lazy_gettext("Highlights - read"), description=lazy_gettext("Can see a list of highlights."))
     superdesk.privilege(
         name="highlights",
-        label="Highlights/Summary List Management",
-        description="User can manage highlights/summary lists.",
+        label=lazy_gettext("Highlights/Summary List Management"),
+        description=lazy_gettext("User can manage highlights/summary lists."),
     )
     superdesk.privilege(
         name="mark_for_highlights",
-        label="Mark items for Highlights/Summary Lists",
-        description="User can mark items for Highlights/Summary Lists.",
+        label=lazy_gettext("Mark items for Highlights/Summary Lists"),
+        description=lazy_gettext("User can mark items for Highlights/Summary Lists."),
     )

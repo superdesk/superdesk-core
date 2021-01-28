@@ -13,7 +13,7 @@ import superdesk
 from superdesk.services import BaseService
 
 
-def init_app(app):
+def init_app(app) -> None:
     endpoint_name = "companies"
     service = BaseService(endpoint_name, backend=superdesk.get_backend())
     CompaniesResource(endpoint_name, app=app, service=service)

@@ -42,5 +42,5 @@ class PrivilegeResource(superdesk.Resource):
     }
 
 
-def init_app(app):
+def init_app(app) -> None:
     PrivilegeResource("privileges", app=app, service=PrivilegeService())

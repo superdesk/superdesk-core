@@ -26,7 +26,7 @@ from flask_babel import _
 logger = logging.getLogger(__name__)
 
 
-def init_app(app):
+def init_app(app) -> None:
     endpoint_name = "stages"
     service = StagesService(endpoint_name, backend=superdesk.get_backend())
     StagesResource(endpoint_name, app=app, service=service)

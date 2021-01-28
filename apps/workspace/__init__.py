@@ -8,15 +8,16 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
+from flask_babel import lazy_gettext
 import superdesk
 from .workspace import WorkspaceService, WorkspaceResource
 
 
-def init_app(app):
+def init_app(app) -> None:
     superdesk.register_resource(
         "workspaces", WorkspaceResource, WorkspaceService, privilege=["POST", "PATCH", "DELETE"]
     )
 
     superdesk.register_default_user_preference("workspace:active", {"type": "string", "workspace": ""})
 
-    superdesk.privilege(name="dashboard", label="Dashboard", description="Can access dashboard.")
+    superdesk.privilege(name="dashboard", label=lazy_gettext("Dashboard"), description=lazy_gettext("Can access dashboard."))

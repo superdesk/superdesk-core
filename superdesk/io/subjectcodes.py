@@ -81,6 +81,6 @@ def get_subjectcodeitems():
     return app.subjects.get_items()
 
 
-def init_app(app):
+def init_app(app) -> None:
     app.subjects = SubjectIndex()
     superdesk.blueprint(bp, app)

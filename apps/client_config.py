@@ -18,7 +18,7 @@ class ClientConfigService(superdesk.Service):
         docs["config"] = getattr(app, "client_config", {})
 
 
-def init_app(app):
+def init_app(app) -> None:
     superdesk.register_resource("client_config", ClientConfigResource, ClientConfigService, _app=app)
     app.client_config.update(
         {

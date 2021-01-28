@@ -8,6 +8,9 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 import logging
+from typing import Any
+
+from flask_babel import lazy_gettext
 import superdesk
 from superdesk.celery_app import celery
 from superdesk.lock import lock, unlock
@@ -34,9 +37,9 @@ REPORT_SOFT_LIMIT = 60 * 5
 LOCK_NAME = "saved_searches_report"
 
 
-def init_app(app):
+def init_app(app) -> None:
     endpoint_name = "saved_searches"
-    service = SavedSearchesService(endpoint_name, backend=superdesk.get_backend())
+    service: Any = SavedSearchesService(endpoint_name, backend=superdesk.get_backend())
     SavedSearchesResource(endpoint_name, app=app, service=service)
 
     endpoint_name = "all_saved_searches"
@@ -47,24 +50,24 @@ def init_app(app):
     service = SavedSearchItemsService(endpoint_name, backend=superdesk.get_backend())
     SavedSearchItemsResource(endpoint_name, app=app, service=service)
 
-    superdesk.privilege(name=GLOBAL_SEARCH_PRIVILEGE, label="Global searches", description="Use global saved searches.")
+    superdesk.privilege(name=GLOBAL_SEARCH_PRIVILEGE, label=lazy_gettext("Global searches"), description=lazy_gettext("Use global saved searches."))
     superdesk.privilege(
         name="global_saved_searches",
-        label="Manage Global Saved Searches",
-        description="User can manage other users' global saved searches",
+        label=lazy_gettext("Manage Global Saved Searches"),
+        description=lazy_gettext("User can manage other users' global saved searches"),
     )
     superdesk.privilege(
-        name="saved_searches", label="Manage Saved Searches", description="User can manage saved searches"
+        name="saved_searches", label=lazy_gettext("Manage Saved Searches"), description=lazy_gettext("User can manage saved searches")
     )
     superdesk.privilege(
         name="saved_searches_subscriptions",
-        label="Manage Saved Searches Subscriptions",
-        description="User can (un)subscribe to saved searches",
+        label=lazy_gettext("Manage Saved Searches Subscriptions"),
+        description=lazy_gettext("User can (un)subscribe to saved searches"),
     )
     superdesk.privilege(
         name="saved_searches_subscriptions_admin",
-        label="Manage Saved Searches Subscriptions For Other Users",
-        description="User manage other users saved searches subscriptions ",
+        label=lazy_gettext("Manage Saved Searches Subscriptions For Other Users"),
+        description=lazy_gettext("User manage other users saved searches subscriptions"),
     )
 
 

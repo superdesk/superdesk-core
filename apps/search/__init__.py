@@ -272,7 +272,7 @@ class SearchResource(superdesk.Resource):
     privileges = {}
 
 
-def init_app(app):
+def init_app(app) -> None:
     search_service = SearchService(ARCHIVE, backend=superdesk.get_backend())
     SearchResource("search", app=app, service=search_service)
 

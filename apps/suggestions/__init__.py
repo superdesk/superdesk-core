@@ -15,7 +15,7 @@ from apps.suggestions.resource import SuggestionsResource
 from apps.suggestions.service import SuggestionsService
 
 
-def init_app(app):
+def init_app(app) -> None:
     endpoint_name = "suggestions"
     service = SuggestionsService(endpoint_name, backend=get_backend())
     if app.config.get("KEYWORDS_PROVIDER") == "Alchemy":

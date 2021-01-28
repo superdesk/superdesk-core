@@ -10,17 +10,18 @@
 
 import superdesk
 
+from flask_babel import lazy_gettext
 from .resource import ConceptItemsResource, CONCEPT_ITEMS_PRIVELEGE
 from .service import ConceptItemsService
 
 
-def init_app(app):
+def init_app(app) -> None:
     endpoint_name = "concept_items"
     service = ConceptItemsService(endpoint_name, backend=superdesk.get_backend())
     ConceptItemsResource(endpoint_name, app=app, service=service)
 
     superdesk.privilege(
-        name=CONCEPT_ITEMS_PRIVELEGE, label="Knowledge base management", description="User can manage knowledge base."
+        name=CONCEPT_ITEMS_PRIVELEGE, label=lazy_gettext("Knowledge base management"), description=lazy_gettext("User can manage knowledge base.")
     )
 
     # let everyone create concepts (SDESK-4959)

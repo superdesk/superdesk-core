@@ -84,9 +84,9 @@ desks_schema = {
 }
 
 
-def init_app(app):
+def init_app(app) -> None:
     endpoint_name = "desks"
-    service = DesksService(endpoint_name, backend=superdesk.get_backend())
+    service: Any = DesksService(endpoint_name, backend=superdesk.get_backend())
     DesksResource(endpoint_name, app=app, service=service)
     endpoint_name = "user_desks"
     service = UserDesksService(endpoint_name, backend=superdesk.get_backend())

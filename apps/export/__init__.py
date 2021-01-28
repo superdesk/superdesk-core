@@ -8,13 +8,14 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
+from flask_babel import lazy_gettext
 from apps.export.resource import ExportResource
 from apps.export.service import ExportService
 import superdesk
 
 
-def init_app(app):
+def init_app(app) -> None:
     endpoint_name = "export"
     service = ExportService(endpoint_name, backend=superdesk.get_backend())
     ExportResource(endpoint_name, app=app, service=service)
-    superdesk.privilege(name="content_export", label="Content export", description="Content export")
+    superdesk.privilege(name="content_export", label=lazy_gettext("Content export"), description=lazy_gettext("Content export"))

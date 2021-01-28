@@ -52,7 +52,7 @@ def is_attachment_public(attachment):
     return not attachment.get("internal")
 
 
-def init_app(app):
+def init_app(app) -> None:
     superdesk.register_resource(RESOURCE, AttachmentsResource, AttachmentsService)
     app.client_config["attachments_max_files"] = app.config.get("ATTACHMENTS_MAX_FILES", 10)
     app.client_config["attachments_max_size"] = app.config.get("ATTACHMENTS_MAX_SIZE", 2 ** 20 * 8)  # 8MB

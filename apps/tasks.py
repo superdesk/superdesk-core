@@ -53,9 +53,9 @@ MACRO_ONSTAGE = "onstage"
 logger = logging.getLogger(__name__)
 
 
-def init_app(app):
+def init_app(app) -> None:
     endpoint_name = "tasks"
-    service = TasksService(TaskResource.datasource["source"], backend=superdesk.get_backend())
+    service = TasksService(str(TaskResource.datasource["source"]), backend=superdesk.get_backend())
     TaskResource(endpoint_name, app=app, service=service)
 
 

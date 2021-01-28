@@ -14,7 +14,7 @@ from superdesk.services import BaseService
 import superdesk
 
 
-def init_app(app):
+def init_app(app) -> None:
     endpoint_name = "media_references"
     service = BaseService(endpoint_name, backend=superdesk.get_backend())
     MediaReferencesResource(endpoint_name, app=app, service=service)

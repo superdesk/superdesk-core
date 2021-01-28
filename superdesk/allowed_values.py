@@ -41,5 +41,5 @@ class AllowedValuesService(superdesk.Service):
         return ListCursor(allowed)
 
 
-def init_app(app):
+def init_app(app) -> None:
     AllowedValuesResource("allowed_values", app, AllowedValuesService())

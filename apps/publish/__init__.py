@@ -9,6 +9,9 @@
 # at https://www.sourcefabric.org/superdesk/license
 
 import logging
+from typing import Any
+
+from flask_babel import lazy_gettext
 from superdesk import get_backend
 import superdesk
 
@@ -34,10 +37,10 @@ from apps.publish.content.published_package_items import PublishedPackageItemsSe
 logger = logging.getLogger(__name__)
 
 
-def init_app(app):
+def init_app(app) -> None:
 
     endpoint_name = "archive_publish"
-    service = ArchivePublishService(endpoint_name, backend=get_backend())
+    service: Any = ArchivePublishService(endpoint_name, backend=get_backend())
     ArchivePublishResource(endpoint_name, app=app, service=service)
 
     endpoint_name = "archive_kill"
@@ -68,15 +71,15 @@ def init_app(app):
     service = UnpublishService(endpoint_name, backend=get_backend())
     UnpublishResource(endpoint_name, app=app, service=service)
 
-    superdesk.privilege(name="subscribers", label="Subscribers", description="User can manage subscribers")
-    superdesk.privilege(name="publish", label="Publish", description="Publish a content")
-    superdesk.privilege(name="kill", label="Kill", description="Kill a published content")
-    superdesk.privilege(name="correct", label="Correction", description="Correction to a published content")
-    superdesk.privilege(name="publish_queue", label="Publish Queue", description="User can update publish queue")
-    superdesk.privilege(name="resend", label="Resending Stories", description="User can resend published stories")
-    superdesk.privilege(name="embargo", label="Embargo", description="User can set embargo date")
-    superdesk.privilege(name="takedown", label="Take down", description="Take down a published content")
-    superdesk.privilege(name="unpublish", label="Unpublish", description="Unpublish a published content")
+    superdesk.privilege(name="subscribers", label=lazy_gettext("Subscribers"), description=lazy_gettext("User can manage subscribers"))
+    superdesk.privilege(name="publish", label=lazy_gettext("Publish"), description=lazy_gettext("Publish a content"))
+    superdesk.privilege(name="kill", label=lazy_gettext("Kill"), description=lazy_gettext("Kill a published content"))
+    superdesk.privilege(name="correct", label=lazy_gettext("Correction"), description=lazy_gettext("Correction to a published content"))
+    superdesk.privilege(name="publish_queue", label=lazy_gettext("Publish Queue"), description=lazy_gettext("User can update publish queue"))
+    superdesk.privilege(name="resend", label=lazy_gettext("Resending Stories"), description=lazy_gettext("User can resend published stories"))
+    superdesk.privilege(name="embargo", label=lazy_gettext("Embargo"), description=lazy_gettext("User can set embargo date"))
+    superdesk.privilege(name="takedown", label=lazy_gettext("Take down"), description=lazy_gettext("Take down a published content"))
+    superdesk.privilege(name="unpublish", label=lazy_gettext("Unpublish"), description=lazy_gettext("Unpublish a published content"))
 
 
 def enqueue_content():

@@ -17,7 +17,7 @@ import superdesk
 logger = logging.getLogger(__name__)
 
 
-def init_app(app):
+def init_app(app) -> None:
     endpoint_name = "validate"
     service = ValidateService(endpoint_name, backend=None)
     ValidateResource(endpoint_name, app=app, service=service)

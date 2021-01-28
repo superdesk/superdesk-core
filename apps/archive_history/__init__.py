@@ -15,7 +15,7 @@ from superdesk import get_backend
 log = logging.getLogger(__name__)
 
 
-def init_app(app):
+def init_app(app) -> None:
     endpoint_name = "archive_history"
 
     service = ArchiveHistoryService(endpoint_name, backend=get_backend())

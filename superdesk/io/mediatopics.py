@@ -182,5 +182,5 @@ class MediaTopicsIndex:
         return sorted(items, key=lambda k: k["name"])
 
 
-def init_app(app):
+def init_app(app) -> None:
     app.mediatopics = MediaTopicsIndex()

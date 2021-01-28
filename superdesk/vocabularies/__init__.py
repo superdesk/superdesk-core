@@ -17,7 +17,7 @@ from .keywords import add_missing_keywords
 from flask_babel import _, lazy_gettext
 
 
-def init_app(app):
+def init_app(app) -> None:
     endpoint_name = "vocabularies"
     service = VocabulariesService(endpoint_name, backend=superdesk.get_backend())
     VocabulariesResource(endpoint_name, app=app, service=service)

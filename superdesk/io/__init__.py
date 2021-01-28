@@ -11,6 +11,7 @@
 """Superdesk IO"""
 
 import logging
+from typing import Any
 
 import superdesk
 from flask_babel import lazy_gettext
@@ -33,9 +34,9 @@ from superdesk.io.ingest_provider_model import IngestProviderResource, IngestPro
 logger = logging.getLogger(__name__)
 
 
-def init_app(app):
+def init_app(app) -> None:
     endpoint_name = "ingest_providers"
-    service = IngestProviderService(endpoint_name, backend=superdesk.get_backend())
+    service: Any = IngestProviderService(endpoint_name, backend=superdesk.get_backend())
     IngestProviderResource(endpoint_name, app=app, service=service)
 
     from .io_errors import IOErrorsService, IOErrorsResource

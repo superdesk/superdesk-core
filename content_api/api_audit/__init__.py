@@ -13,7 +13,7 @@ from .resource import ApiAuditResource
 from .service import ApiAuditService
 
 
-def init_app(app):
+def init_app(app) -> None:
     """
     Initialise the auditing of the API
     :param app:

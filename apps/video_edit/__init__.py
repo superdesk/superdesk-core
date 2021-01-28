@@ -169,6 +169,6 @@ class VideoEditResource(superdesk.Resource):
     }
 
 
-def init_app(app):
+def init_app(app) -> None:
     video_edit_service = VideoEditService(ARCHIVE, backend=superdesk.get_backend())
     VideoEditResource("video_edit", app=app, service=video_edit_service)

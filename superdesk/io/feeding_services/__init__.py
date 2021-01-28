@@ -292,6 +292,6 @@ from superdesk.io.feeding_services.bbc_ldrs import BBCLDRSFeedingService  # NOQA
 from superdesk.io.feeding_services.ap_media import APMediaFeedingService  # NOQA
 
 
-def init_app(app):
+def init_app(app) -> None:
     # app needs to be accessible for those feeding services
     GMailFeedingService.init_app(app)

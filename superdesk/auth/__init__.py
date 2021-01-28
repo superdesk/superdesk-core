@@ -88,5 +88,5 @@ def auth_user(email, userdata=None):
     return auth_user(None)
 
 
-def init_app(app):
+def init_app(app) -> None:
     superdesk.register_resource(RESOURCE, OAuthResource, OAuthService, _app=app)

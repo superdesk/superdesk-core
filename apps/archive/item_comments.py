@@ -8,6 +8,7 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
+from typing import Any
 import superdesk
 from superdesk.resource import Resource
 from superdesk.services import BaseService
@@ -49,9 +50,9 @@ class ItemCommentsSubService(BaseService):
         return super().get(req, lookup)
 
 
-def init_app(app):
+def init_app(app) -> None:
     endpoint_name = "item_comments"
-    service = ItemCommentsService(endpoint_name, backend=superdesk.get_backend())
+    service: Any = ItemCommentsService(endpoint_name, backend=superdesk.get_backend())
     ItemCommentsResource(endpoint_name, app=app, service=service)
 
     endpoint_name = "content_item_comments"
