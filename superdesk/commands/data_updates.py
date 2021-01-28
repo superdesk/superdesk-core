@@ -59,12 +59,14 @@ def get_dirs(only_relative_folder=False):
     try:
         with superdesk.app.app_context():
             dirs.append(current_app.config.get("DATA_UPDATES_PATH", DEFAULT_DATA_UPDATE_DIR_NAME))
+            if current_app.config.get("APPS_DATA_UPDATES_PATHS"):
+                dirs.extend(current_app.config["APPS_DATA_UPDATES_PATHS"])
     except RuntimeError:
         # working outside of application context
         pass
     if not only_relative_folder:
         dirs.append(MAIN_DATA_UPDATES_DIR)
-    assert len(dirs) <= 2
+    assert len(dirs)
     return dirs
 
 
