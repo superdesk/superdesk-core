@@ -22,7 +22,9 @@ def init_app(app) -> None:
     service: Any = ADUsersService(endpoint_name, backend=superdesk.get_backend())
     UsersResource(endpoint_name, app=app, service=service)
 
-    superdesk.privilege(name="users", label=lazy_gettext("User Management"), description=lazy_gettext("User can manage users."))
+    superdesk.privilege(
+        name="users", label=lazy_gettext("User Management"), description=lazy_gettext("User can manage users.")
+    )
 
     # Registering with intrinsic privileges because: A user should be allowed to update their own profile.
     superdesk.intrinsic_privilege(resource_name="users", method=["PATCH"])

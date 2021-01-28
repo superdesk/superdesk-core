@@ -20,4 +20,6 @@ def init_app(app) -> None:
 
     superdesk.register_default_user_preference("workspace:active", {"type": "string", "workspace": ""})
 
-    superdesk.privilege(name="dashboard", label=lazy_gettext("Dashboard"), description=lazy_gettext("Can access dashboard."))
+    superdesk.privilege(
+        name="dashboard", label=lazy_gettext("Dashboard"), description=lazy_gettext("Can access dashboard.")
+    )

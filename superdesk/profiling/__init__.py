@@ -32,7 +32,11 @@ def init_app(app) -> None:
         service = ProfilingService(endpoint_name, backend=superdesk.get_backend())
         ProfilingResource(endpoint_name, app=app, service=service)
 
-        superdesk.privilege(name="profiling", label=lazy_gettext("Profiling Service"), description=lazy_gettext("User can read profiling data."))
+        superdesk.privilege(
+            name="profiling",
+            label=lazy_gettext("Profiling Service"),
+            description=lazy_gettext("User can read profiling data."),
+        )
 
         profile.enable()
 

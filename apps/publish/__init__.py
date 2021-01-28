@@ -71,15 +71,33 @@ def init_app(app) -> None:
     service = UnpublishService(endpoint_name, backend=get_backend())
     UnpublishResource(endpoint_name, app=app, service=service)
 
-    superdesk.privilege(name="subscribers", label=lazy_gettext("Subscribers"), description=lazy_gettext("User can manage subscribers"))
+    superdesk.privilege(
+        name="subscribers", label=lazy_gettext("Subscribers"), description=lazy_gettext("User can manage subscribers")
+    )
     superdesk.privilege(name="publish", label=lazy_gettext("Publish"), description=lazy_gettext("Publish a content"))
     superdesk.privilege(name="kill", label=lazy_gettext("Kill"), description=lazy_gettext("Kill a published content"))
-    superdesk.privilege(name="correct", label=lazy_gettext("Correction"), description=lazy_gettext("Correction to a published content"))
-    superdesk.privilege(name="publish_queue", label=lazy_gettext("Publish Queue"), description=lazy_gettext("User can update publish queue"))
-    superdesk.privilege(name="resend", label=lazy_gettext("Resending Stories"), description=lazy_gettext("User can resend published stories"))
-    superdesk.privilege(name="embargo", label=lazy_gettext("Embargo"), description=lazy_gettext("User can set embargo date"))
-    superdesk.privilege(name="takedown", label=lazy_gettext("Take down"), description=lazy_gettext("Take down a published content"))
-    superdesk.privilege(name="unpublish", label=lazy_gettext("Unpublish"), description=lazy_gettext("Unpublish a published content"))
+    superdesk.privilege(
+        name="correct", label=lazy_gettext("Correction"), description=lazy_gettext("Correction to a published content")
+    )
+    superdesk.privilege(
+        name="publish_queue",
+        label=lazy_gettext("Publish Queue"),
+        description=lazy_gettext("User can update publish queue"),
+    )
+    superdesk.privilege(
+        name="resend",
+        label=lazy_gettext("Resending Stories"),
+        description=lazy_gettext("User can resend published stories"),
+    )
+    superdesk.privilege(
+        name="embargo", label=lazy_gettext("Embargo"), description=lazy_gettext("User can set embargo date")
+    )
+    superdesk.privilege(
+        name="takedown", label=lazy_gettext("Take down"), description=lazy_gettext("Take down a published content")
+    )
+    superdesk.privilege(
+        name="unpublish", label=lazy_gettext("Unpublish"), description=lazy_gettext("Unpublish a published content")
+    )
 
 
 def enqueue_content():

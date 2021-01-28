@@ -22,7 +22,9 @@ def init_app(app) -> None:
     MarkedForDesksResource(endpoint_name, app=app, service=service)
 
     superdesk.privilege(
-        name="mark_for_desks", label=lazy_gettext("Mark items for desks"), description=lazy_gettext("User can mark items for other desks.")
+        name="mark_for_desks",
+        label=lazy_gettext("Mark items for desks"),
+        description=lazy_gettext("User can mark items for other desks."),
     )
     superdesk.privilege(
         name="mark_for_desks__non_members",

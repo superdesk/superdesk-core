@@ -8,4 +8,8 @@ def init_app(app) -> None:
     endpoint_name = "content_types"
     service = ContentTypesService(endpoint_name, backend=superdesk.get_backend())
     ContentTypesResource(endpoint_name, app=app, service=service)
-    superdesk.privilege(name=CONTENT_TYPE_PRIVILEGE, label=lazy_gettext("Content Profile"), description=lazy_gettext("Manage content profiles"))
+    superdesk.privilege(
+        name=CONTENT_TYPE_PRIVILEGE,
+        label=lazy_gettext("Content Profile"),
+        description=lazy_gettext("Manage content profiles"),
+    )

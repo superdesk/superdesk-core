@@ -21,7 +21,9 @@ def init_app(app) -> None:
     ConceptItemsResource(endpoint_name, app=app, service=service)
 
     superdesk.privilege(
-        name=CONCEPT_ITEMS_PRIVELEGE, label=lazy_gettext("Knowledge base management"), description=lazy_gettext("User can manage knowledge base.")
+        name=CONCEPT_ITEMS_PRIVELEGE,
+        label=lazy_gettext("Knowledge base management"),
+        description=lazy_gettext("User can manage knowledge base."),
     )
 
     # let everyone create concepts (SDESK-4959)

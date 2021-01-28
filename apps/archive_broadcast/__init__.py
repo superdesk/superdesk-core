@@ -24,5 +24,7 @@ def init_app(app) -> None:
     ArchiveBroadcastResource(endpoint_name, app=app, service=service)
 
     superdesk.privilege(
-        name=ARCHIVE_BROADCAST_NAME, label=lazy_gettext("Broadcast"), description=lazy_gettext("Allows user to create broadcast content.")
+        name=ARCHIVE_BROADCAST_NAME,
+        label=lazy_gettext("Broadcast"),
+        description=lazy_gettext("Allows user to create broadcast content."),
     )

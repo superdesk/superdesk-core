@@ -57,7 +57,11 @@ def init_app(app) -> None:
     service = LegalPublishQueueService(endpoint_name, backend=get_backend())
     LegalPublishQueueResource(endpoint_name, app=app, service=service)
 
-    privilege(name=LEGAL_ARCHIVE_NAME, label=lazy_gettext("Legal Archive"), description=lazy_gettext("Read from legal archive"))
+    privilege(
+        name=LEGAL_ARCHIVE_NAME,
+        label=lazy_gettext("Legal Archive"),
+        description=lazy_gettext("Read from legal archive"),
+    )
 
     superdesk.command("legal_publish_queue:import", ImportLegalPublishQueueCommand())
     superdesk.command("legal_archive:import", ImportLegalArchiveCommand())

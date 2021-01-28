@@ -26,4 +26,8 @@ def init_app(app) -> None:
     service = ProductTestService(endpoint_name, backend=superdesk.get_backend())
     ProductTestResource(endpoint_name, app=app, service=service)
 
-    superdesk.privilege(name="products", label=lazy_gettext("Products Management"), description=lazy_gettext("User can manage product lists."))
+    superdesk.privilege(
+        name="products",
+        label=lazy_gettext("Products Management"),
+        description=lazy_gettext("User can manage product lists."),
+    )

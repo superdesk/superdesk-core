@@ -25,7 +25,9 @@ def init_app(app) -> None:
     from apps.search_providers.proxy import SearchProviderProxyResource, SearchProviderProxyService
 
     superdesk.privilege(
-        name="search_providers", label=lazy_gettext("Manage Search Providers"), description=lazy_gettext("User can manage search providers.")
+        name="search_providers",
+        label=lazy_gettext("Manage Search Providers"),
+        description=lazy_gettext("User can manage search providers."),
     )
 
     superdesk.register_resource(name="search_providers", resource=SearchProviderResource, service=SearchProviderService)

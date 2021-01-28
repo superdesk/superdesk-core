@@ -21,7 +21,11 @@ def init_app(app) -> None:
     service = GenerateHighlightsService(endpoint_name, backend=get_backend())
     GenerateHighlightsResource(endpoint_name, app=app, service=service)
 
-    superdesk.privilege(name="highlights_read", label=lazy_gettext("Highlights - read"), description=lazy_gettext("Can see a list of highlights."))
+    superdesk.privilege(
+        name="highlights_read",
+        label=lazy_gettext("Highlights - read"),
+        description=lazy_gettext("Can see a list of highlights."),
+    )
     superdesk.privilege(
         name="highlights",
         label=lazy_gettext("Highlights/Summary List Management"),

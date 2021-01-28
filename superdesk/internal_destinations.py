@@ -97,6 +97,10 @@ def handle_item_published(sender, item, **extra):
 def init_app(app) -> None:
     register_resource(NAME, InternalDestinationsResource, InternalDestinationsService, _app=app)
 
-    privilege(name=NAME, label=lazy_gettext("Internal Destinations"), description=lazy_gettext("User can manage internal destinations."))
+    privilege(
+        name=NAME,
+        label=lazy_gettext("Internal Destinations"),
+        description=lazy_gettext("User can manage internal destinations."),
+    )
 
     item_published.connect(handle_item_published)

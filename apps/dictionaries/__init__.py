@@ -20,5 +20,7 @@ def init_app(app) -> None:
     DictionariesResource(endpoint_name, app=app, service=service)
 
     superdesk.privilege(
-        name="dictionaries", label=lazy_gettext("Dictionaries List Management"), description=lazy_gettext("User can manage dictionaries lists.")
+        name="dictionaries",
+        label=lazy_gettext("Dictionaries List Management"),
+        description=lazy_gettext("User can manage dictionaries lists."),
     )

@@ -19,4 +19,6 @@ def init_app(app) -> None:
     service = RolesService(endpoint_name, backend=superdesk.get_backend())
     RolesResource(endpoint_name, app=app, service=service)
 
-    superdesk.privilege(name="roles", label=lazy_gettext("Roles Management"), description=lazy_gettext("User can manage roles."))
+    superdesk.privilege(
+        name="roles", label=lazy_gettext("Roles Management"), description=lazy_gettext("User can manage roles.")
+    )

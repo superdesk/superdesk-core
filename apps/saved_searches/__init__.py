@@ -50,14 +50,20 @@ def init_app(app) -> None:
     service = SavedSearchItemsService(endpoint_name, backend=superdesk.get_backend())
     SavedSearchItemsResource(endpoint_name, app=app, service=service)
 
-    superdesk.privilege(name=GLOBAL_SEARCH_PRIVILEGE, label=lazy_gettext("Global searches"), description=lazy_gettext("Use global saved searches."))
+    superdesk.privilege(
+        name=GLOBAL_SEARCH_PRIVILEGE,
+        label=lazy_gettext("Global searches"),
+        description=lazy_gettext("Use global saved searches."),
+    )
     superdesk.privilege(
         name="global_saved_searches",
         label=lazy_gettext("Manage Global Saved Searches"),
         description=lazy_gettext("User can manage other users' global saved searches"),
     )
     superdesk.privilege(
-        name="saved_searches", label=lazy_gettext("Manage Saved Searches"), description=lazy_gettext("User can manage saved searches")
+        name="saved_searches",
+        label=lazy_gettext("Manage Saved Searches"),
+        description=lazy_gettext("User can manage saved searches"),
     )
     superdesk.privilege(
         name="saved_searches_subscriptions",

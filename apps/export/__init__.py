@@ -18,4 +18,6 @@ def init_app(app) -> None:
     endpoint_name = "export"
     service = ExportService(endpoint_name, backend=superdesk.get_backend())
     ExportResource(endpoint_name, app=app, service=service)
-    superdesk.privilege(name="content_export", label=lazy_gettext("Content export"), description=lazy_gettext("Content export"))
+    superdesk.privilege(
+        name="content_export", label=lazy_gettext("Content export"), description=lazy_gettext("Content export")
+    )

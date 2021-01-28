@@ -23,8 +23,12 @@ def init_app(app) -> None:
     endpoint_name = "contacts"
     service: Any = ContactsService(endpoint_name, backend=superdesk.get_backend())
     ContactsResource(endpoint_name, app=app, service=service)
-    superdesk.privilege(name=CONTACTS_PRIVILEDGE, label=lazy_gettext("Contacts Management"), description=lazy_gettext("Manage Contacts"))
-    superdesk.privilege(name=VIEW_CONTACTS, label=lazy_gettext("Contacts View Rights"), description=lazy_gettext("View Contacts"))
+    superdesk.privilege(
+        name=CONTACTS_PRIVILEDGE, label=lazy_gettext("Contacts Management"), description=lazy_gettext("Manage Contacts")
+    )
+    superdesk.privilege(
+        name=VIEW_CONTACTS, label=lazy_gettext("Contacts View Rights"), description=lazy_gettext("View Contacts")
+    )
 
     service = OrganisationService(endpoint_name, backend=superdesk.get_backend())
     endpoint_name = "contacts organisations"

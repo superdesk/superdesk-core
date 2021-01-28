@@ -70,4 +70,6 @@ def init_app(app) -> None:
 
     superdesk.register_resource("closed_desks", ClosedDeskResource, ClosedDeskService, _app=app)
 
-    superdesk.privilege(name=PRIVILEGE, label=lazy_gettext("Desk routing"), description=lazy_gettext("User can configure desk routing"))
+    superdesk.privilege(
+        name=PRIVILEGE, label=lazy_gettext("Desk routing"), description=lazy_gettext("User can configure desk routing")
+    )

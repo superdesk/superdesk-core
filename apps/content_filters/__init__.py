@@ -43,4 +43,8 @@ def init_app(app) -> None:
     service = ContentFilterTestService(endpoint_name, backend=superdesk.get_backend())
     ContentFilterTestResource(endpoint_name, app=app, service=service)
 
-    superdesk.privilege(name="content_filters", label=lazy_gettext("Content Filters"), description=lazy_gettext("User can manage content filters"))
+    superdesk.privilege(
+        name="content_filters",
+        label=lazy_gettext("Content Filters"),
+        description=lazy_gettext("User can manage content filters"),
+    )
