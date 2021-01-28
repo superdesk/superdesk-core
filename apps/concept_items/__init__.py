@@ -20,7 +20,7 @@ def init_app(app):
     ConceptItemsResource(endpoint_name, app=app, service=service)
 
     superdesk.privilege(
-        name=CONCEPT_ITEMS_PRIVELEGE, label="Concept items management", description="User can manage concept items."
+        name=CONCEPT_ITEMS_PRIVELEGE, label="Knowledge base management", description="User can manage knowledge base."
     )
 
     # let everyone create concepts (SDESK-4959)
