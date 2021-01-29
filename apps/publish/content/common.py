@@ -769,7 +769,6 @@ class BasePublishService(BaseService):
         for associations_key, associated_item in associations.items():
             if associated_item is None:
                 continue
-
             if type(associated_item) == dict and associated_item.get(config.ID_FIELD):
                 if not config.PUBLISH_ASSOCIATED_ITEMS or not publish_service:
                     if original.get(ASSOCIATIONS, {}).get(associations_key):
@@ -861,7 +860,7 @@ class BasePublishService(BaseService):
                         remove_unwanted(association_updates)
                         publish_service.patch(id=association_updates.pop(config.ID_FIELD), updates=association_updates)
 
-            self._update_archive(associated_item, updates.get(ASSOCIATIONS, {}).get(associations_key))
+            insert_into_versions(doc=associated_item)
         self._refresh_associated_items(original)
 
     def _mark_media_item_as_used(self, updates, original):
