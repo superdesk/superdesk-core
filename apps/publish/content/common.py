@@ -861,6 +861,7 @@ class BasePublishService(BaseService):
                         remove_unwanted(association_updates)
                         publish_service.patch(id=association_updates.pop(config.ID_FIELD), updates=association_updates)
 
+            self._update_archive(associated_item, updates.get(ASSOCIATIONS, {}).get(associations_key))
         self._refresh_associated_items(original)
 
     def _mark_media_item_as_used(self, updates, original):
