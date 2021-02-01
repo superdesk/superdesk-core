@@ -35,6 +35,8 @@ class DataUpdatesTestCase(TestCase):
             self.addCleanup(patcher.stop)
             patcher.start()
 
+        self.app.config["APPS_DATA_UPDATES_PATHS"] = []
+
     def test_data_update_generation(self):
         assert len(get_data_updates_files()) == 0, get_data_updates_files()
         GenerateUpdate().run(resource_name="RESOURCE_NAME")
