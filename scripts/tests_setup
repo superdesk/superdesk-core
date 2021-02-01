@@ -11,6 +11,6 @@ sudo dpkg -i libmagic-mgc_5.37-3_amd64.deb
 sudo dpkg -i libmagic1_5.37-3_amd64.deb
 
 if [ "$SKIP_SERVER_INSTALL" != "true" ]; then
-    docker-compose -f .travis-docker-compose.yml up -d
+    docker-compose up -d
     while ! curl -sfo /dev/null 'http://localhost:9200/'; do echo -n '.' && sleep .5; done
 fi
