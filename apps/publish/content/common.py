@@ -860,6 +860,7 @@ class BasePublishService(BaseService):
                         remove_unwanted(association_updates)
                         publish_service.patch(id=association_updates.pop(config.ID_FIELD), updates=association_updates)
 
+            # When there is an associated item which is published, Inserts the latest version of that associated item into archive_versions.
             insert_into_versions(doc=associated_item)
         self._refresh_associated_items(original)
 
