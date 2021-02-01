@@ -4,7 +4,7 @@ from unittest import mock
 
 import superdesk.commands.data_updates
 from superdesk import get_resource_service
-from superdesk.commands.data_updates import get_data_updates_files, GenerateUpdate, Upgrade, Downgrade
+from superdesk.commands.data_updates import get_data_updates_files, GenerateUpdate, Upgrade, Downgrade, get_dirs
 from superdesk.tests import TestCase
 
 # change the folder where to store updates for test purpose
@@ -34,6 +34,8 @@ class DataUpdatesTestCase(TestCase):
             patcher = mock.patch("superdesk.commands.data_updates.%s" % name, "pass")
             self.addCleanup(patcher.stop)
             patcher.start()
+
+        self.app.config["APPS_DATA_UPDATES_PATHS"] = []
 
     def test_data_update_generation(self):
         assert len(get_data_updates_files()) == 0, get_data_updates_files()
@@ -105,3 +107,8 @@ class DataUpdatesTestCase(TestCase):
         Downgrade().run(data_update_id=thirdieth_update)
         assert self.number_of_data_updates_applied() == 29
         Upgrade().run()
+
+    def test_multiple_dirs(self):
+        with mock.patch.dict(self.app.config, {"APPS_DATA_UPDATES_PATHS": ["/tmp/foo", "tmp/bar"]}):
+            dirs = get_dirs()
+            self.assertEqual(4, len(dirs))
