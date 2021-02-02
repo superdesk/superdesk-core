@@ -445,8 +445,9 @@ class VocabulariesService(BaseService):
         article_item.update({"scheme": scheme})
         return article_item
 
-    def get_items(self, _id: str, qcode: str = None, is_active: bool = None,
-                  name: str = None, lang: str = None) -> Union[List, None]:
+    def get_items(
+        self, _id: str, qcode: str = None, is_active: bool = True, name: str = None, lang: str = None
+    ) -> List:
         """
         Return `items` with specified filters from the CV with specified `_id`.
         If `lang` is provided then `name` is looked in `items.translations.name.{lang}`,
@@ -457,49 +458,53 @@ class VocabulariesService(BaseService):
         :param is_active: items.is_active filter
         :param name: items.name filter
         :param lang: items.lang filter
-        :return: items list or None
+        :return: items list
         """
 
         projection: Dict[str, Any] = {}
-        lookup = {'_id': _id}
+        lookup = {"_id": _id}
 
         if qcode:
-            elem_match = projection.setdefault('items', {}).setdefault('$elemMatch', {})
-            elem_match['qcode'] = qcode
+            elem_match = projection.setdefault("items", {}).setdefault("$elemMatch", {})
+            elem_match["qcode"] = qcode
 
         # if `lang` is provided `name` is looked in `translations.name.{lang}`
         if name and lang:
-            elem_match = projection.setdefault('items', {}).setdefault('$elemMatch', {})
-            elem_match[f'translations.name.{lang}'] = {
-                '$regex': r'^{}$'.format(name),
+            elem_match = projection.setdefault("items", {}).setdefault("$elemMatch", {})
+            elem_match[f"translations.name.{lang}"] = {
+                "$regex": r"^{}$".format(name),
                 # case-insensitive
-                '$options': 'i'
+                "$options": "i",
             }
         elif name:
-            elem_match = projection.setdefault('items', {}).setdefault('$elemMatch', {})
-            elem_match['name'] = {
-                '$regex': r'^{}$'.format(name),
+            elem_match = projection.setdefault("items", {}).setdefault("$elemMatch", {})
+            elem_match["name"] = {
+                "$regex": r"^{}$".format(name),
                 # case-insensitive
-                '$options': 'i'
+                "$options": "i",
             }
 
-        cursor = self.get_from_mongo(
-            req=None,
-            lookup=lookup,
-            projection=projection
-        )
+        cursor = self.get_from_mongo(req=None, lookup=lookup, projection=projection)
 
         try:
-            items = cursor.next()['items']
+            items = cursor.next()["items"]
         except (StopIteration, KeyError):
-            return None
+            return []
 
         # $elemMatch projection contains only the first element matching the condition,
-        # that's why `is_active` filter is filtered via python
+        # that"s why `is_active` filter is filtered via python
         if is_active is not None:
-            items = [i for i in items if i['is_active'] == is_active]
-        if not items:
-            return None
+            items = [i for i in items if i.get("is_active", True) == is_active]
+
+        def format_item(item):
+            try:
+                del item["is_active"]
+            except KeyError:
+                pass
+            item["scheme"] = _id
+            return item
+
+        items = list(map(format_item, items))
 
         return items
 
