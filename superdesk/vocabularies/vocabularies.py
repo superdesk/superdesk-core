@@ -11,6 +11,7 @@
 
 import logging
 import json
+from typing import List, Union
 
 from flask import request, current_app as app
 from eve.utils import config
@@ -443,6 +444,64 @@ class VocabulariesService(BaseService):
         article_item = {k: v for k, v in item.items() if k not in ("is_active",)}
         article_item.update({"scheme": scheme})
         return article_item
+
+    def get_items(self, _id: str, qcode: str = None, is_active: bool = None,
+                  name: str = None, lang: str = None) -> Union[List, None]:
+        """
+        Return `items` with specified filters from the CV with specified `_id`.
+        If `lang` is provided then `name` is looked in `items.translations.name.{lang}`,
+        otherwise `name` is looked in `items.name`.
+
+        :param _id: custom vocabulary _id
+        :param qcode: items.qcode filter
+        :param is_active: items.is_active filter
+        :param name: items.name filter
+        :param lang: items.lang filter
+        :return: items list or None
+        """
+
+        projection = {}
+        lookup = {'_id': _id}
+
+        if qcode:
+            elem_match = projection.setdefault('items', {}).setdefault('$elemMatch', {})
+            elem_match['qcode'] = qcode
+
+        # if `lang` is provided `name` is looked in `translations.name.{lang}`
+        if name and lang:
+            elem_match = projection.setdefault('items', {}).setdefault('$elemMatch', {})
+            elem_match[f'translations.name.{lang}'] = {
+                '$regex': r'^{}$'.format(name),
+                # case-insensitive
+                '$options': 'i'
+            }
+        elif name:
+            elem_match = projection.setdefault('items', {}).setdefault('$elemMatch', {})
+            elem_match['name'] = {
+                '$regex': r'^{}$'.format(name),
+                # case-insensitive
+                '$options': 'i'
+            }
+
+        cursor = self.get_from_mongo(
+            req=None,
+            lookup=lookup,
+            projection=projection
+        )
+
+        try:
+            items = cursor.next()['items']
+        except (StopIteration, KeyError):
+            return None
+
+        # $elemMatch projection contains only the first element matching the condition,
+        # that's why `is_active` filter is filtered via python
+        if is_active is not None:
+            items = [i for i in items if i['is_active'] == is_active]
+        if not items:
+            return None
+
+        return items
 
 
 def is_related_content(item_name, related_content=None):
