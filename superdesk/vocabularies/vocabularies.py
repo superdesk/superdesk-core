@@ -11,7 +11,7 @@
 
 import logging
 import json
-from typing import List, Union
+from typing import List, Union, Any, Dict
 
 from flask import request, current_app as app
 from eve.utils import config
@@ -460,7 +460,7 @@ class VocabulariesService(BaseService):
         :return: items list or None
         """
 
-        projection = {}
+        projection: Dict[str, Any] = {}
         lookup = {'_id': _id}
 
         if qcode:
