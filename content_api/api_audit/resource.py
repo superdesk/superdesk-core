@@ -12,12 +12,12 @@ from superdesk.resource import Resource
 from content_api import MONGO_PREFIX
 
 schema = {
-    'type': {'type': 'string'},
-    'subscriber': {'type': 'string'},
-    'uri': {'type': 'string'},
-    'items_id': {'type': 'string'},
-    'version': {'type': 'string'},
-    'remote_addr': {'type': 'string'}
+    "type": {"type": "string"},
+    "subscriber": {"type": "string"},
+    "uri": {"type": "string"},
+    "items_id": {"type": "string"},
+    "version": {"type": "string"},
+    "remote_addr": {"type": "string"},
 }
 
 
@@ -29,4 +29,4 @@ class ApiAuditResource(Resource):
     schema = schema
     mongo_prefix = MONGO_PREFIX
     internal_resource = True
-    mongo_indexes = {'subscriber': [('subscriber', 1)]}
+    mongo_indexes = {"subscriber": [("subscriber", 1)]}

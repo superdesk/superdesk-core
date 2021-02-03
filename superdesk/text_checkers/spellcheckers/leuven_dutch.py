@@ -31,7 +31,7 @@ class LeuvenDutch(SpellcheckerBase):
     name = "leuven_dutch"
     label = "University of Leuven Dutch spellchecker"
     capacities = (CAP_SPELLING,)
-    languages = ['nl']
+    languages = ["nl"]
 
     def __init__(self, app):
         super().__init__(app)
@@ -52,19 +52,19 @@ class LeuvenDutch(SpellcheckerBase):
         data = r.json()
 
         err_list = []
-        check_data = {'errors': err_list}
+        check_data = {"errors": err_list}
         len_end_marker = len(END_MARKER)
-        output = data['spellingchecker']['output']
-        marked = output['marked'].split(START_MARKER)
+        output = data["spellingchecker"]["output"]
+        marked = output["marked"].split(START_MARKER)
         # the first item in "marked" is unmarked text, we start our index there
         text_idx = len(marked.pop(0))
 
         for marked_part in marked:
-            mistake = marked_part[:marked_part.find(END_MARKER)]
+            mistake = marked_part[: marked_part.find(END_MARKER)]
             ercorr_data = {
-                'startOffset': text_idx,
-                'text': mistake,
-                'type': "spelling",
+                "startOffset": text_idx,
+                "text": mistake,
+                "type": "spelling",
             }
             err_list.append(ercorr_data)
             text_idx += len(marked_part) - len_end_marker
@@ -80,11 +80,14 @@ class LeuvenDutch(SpellcheckerBase):
         r = requests.post(check_url, data=data, timeout=self.SUGGEST_TIMEOUT)
         if r.status_code != 200:
             raise SuperdeskApiError.internalError("Unexpected return code from {}".format(self.name))
-        return {'suggestions': self.list2suggestions(r.json()['suggesties']['output'].get('suggesties', []))}
+        return {"suggestions": self.list2suggestions(r.json()["suggesties"]["output"].get("suggesties", []))}
 
     def available(self):
         if not self.api_key:
-            logger.warning("API key is not set for {label}, please set {opt} variable to use it"
-                           .format(label=self.label, opt=OPT_API_KEY))
+            logger.warning(
+                "API key is not set for {label}, please set {opt} variable to use it".format(
+                    label=self.label, opt=OPT_API_KEY
+                )
+            )
             return False
         return True

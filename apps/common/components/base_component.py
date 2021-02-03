@@ -9,7 +9,7 @@
 # at https://www.sourcefabric.org/superdesk/license
 
 
-class BaseComponent():
+class BaseComponent:
     """This is a basic interface for defining components.
 
     The only requirement is to implement the name method that

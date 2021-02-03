@@ -8,22 +8,23 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
+import superdesk
+
+from flask_babel import _
 from operator import itemgetter
 
-import superdesk
 from superdesk.utils import ListCursor
 from superdesk.privilege import get_privilege_list
 
 
 class PrivilegeService(superdesk.Service):
-
     def get(self, req, lookup):
         """
         Returns all registered privileges.
         """
 
         _privileges = get_privilege_list()
-        _privileges = sorted(_privileges, key=itemgetter('label'))
+        _privileges = sorted(_privileges, key=itemgetter("label"))
 
         return ListCursor(_privileges)
 
@@ -31,14 +32,15 @@ class PrivilegeService(superdesk.Service):
 class PrivilegeResource(superdesk.Resource):
     """Read-only resource with all privileges."""
 
-    resource_methods = ['GET']
+    resource_methods = ["GET"]
     item_methods = []
     schema = {
-        'name': {'type': 'string'},
-        'label': {'type': 'string'},
-        'description': {'type': 'string'},
+        "name": {"type": "string"},
+        "label": {"type": "string"},
+        "category": {"type": "string"},
+        "description": {"type": "string"},
     }
 
 
 def init_app(app):
-    PrivilegeResource('privileges', app=app, service=PrivilegeService())
+    PrivilegeResource("privileges", app=app, service=PrivilegeService())

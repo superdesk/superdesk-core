@@ -13,10 +13,10 @@ from eve.render import send_response
 from flask import Blueprint, current_app as app
 from superdesk.utc import utcnow
 
-bp = Blueprint('locators', __name__)
+bp = Blueprint("locators", __name__)
 
 
-class LocatorIndex():
+class LocatorIndex:
     """Locator index."""
 
     def __init__(self):
@@ -47,32 +47,69 @@ class LocatorIndex():
         """
 
         if country_code and state_code:
-            cities = [{'city_code': city['qcode'], 'city': city['name'], 'alt_name': city.get('alt_name', ''),
-                       'tz': city['timezone'], 'dateline': city['dateline_format'], 'state': state['name'],
-                       'state_code': state['qcode'], 'country': country['name'], 'country_code': country['qcode']}
-                      for country in self.locators if country['qcode'] == country_code
-                      for state in country['states'] if state['qcode'] == state_code for city in state['cities']]
-            cities.sort(key=itemgetter('city'))
+            cities = [
+                {
+                    "city_code": city["qcode"],
+                    "city": city["name"],
+                    "alt_name": city.get("alt_name", ""),
+                    "tz": city["timezone"],
+                    "dateline": city["dateline_format"],
+                    "state": state["name"],
+                    "state_code": state["qcode"],
+                    "country": country["name"],
+                    "country_code": country["qcode"],
+                }
+                for country in self.locators
+                if country["qcode"] == country_code
+                for state in country["states"]
+                if state["qcode"] == state_code
+                for city in state["cities"]
+            ]
+            cities.sort(key=itemgetter("city"))
         elif country_code:
-            cities = [{'city_code': city['qcode'], 'city': city['name'], 'alt_name': city.get('alt_name', ''),
-                       'tz': city['timezone'], 'dateline': city['dateline_format'], 'state': state['name'],
-                       'state_code': state['qcode'], 'country': country['name'], 'country_code': country['qcode']}
-                      for country in self.locators if country['qcode'] == country_code for state in country['states']
-                      for city in state['cities']]
-            cities.sort(key=itemgetter('state', 'city'))
+            cities = [
+                {
+                    "city_code": city["qcode"],
+                    "city": city["name"],
+                    "alt_name": city.get("alt_name", ""),
+                    "tz": city["timezone"],
+                    "dateline": city["dateline_format"],
+                    "state": state["name"],
+                    "state_code": state["qcode"],
+                    "country": country["name"],
+                    "country_code": country["qcode"],
+                }
+                for country in self.locators
+                if country["qcode"] == country_code
+                for state in country["states"]
+                for city in state["cities"]
+            ]
+            cities.sort(key=itemgetter("state", "city"))
         else:
-            cities = [{'city_code': city['qcode'], 'city': city['name'], 'alt_name': city.get('alt_name', ''),
-                       'tz': city['timezone'], 'dateline': city['dateline_format'], 'state': state['name'],
-                       'state_code': state['qcode'], 'country': country['name'], 'country_code': country['qcode']}
-                      for country in self.locators for state in country['states'] for city in state['cities']]
-            cities.sort(key=itemgetter('country', 'state', 'city'))
+            cities = [
+                {
+                    "city_code": city["qcode"],
+                    "city": city["name"],
+                    "alt_name": city.get("alt_name", ""),
+                    "tz": city["timezone"],
+                    "dateline": city["dateline_format"],
+                    "state": state["name"],
+                    "state_code": state["qcode"],
+                    "country": country["name"],
+                    "country_code": country["qcode"],
+                }
+                for country in self.locators
+                for state in country["states"]
+                for city in state["cities"]
+            ]
+            cities.sort(key=itemgetter("country", "state", "city"))
 
         return cities
 
 
-@bp.route('/cities/', methods=['GET', 'OPTIONS'])
-@bp.route('/country/<country_code>', methods=['GET', 'OPTIONS'])
-@bp.route('/country/<country_code>/state/<state_code>', methods=['GET', 'OPTIONS'])
+@bp.route("/cities/", methods=["GET", "OPTIONS"])
+@bp.route("/country/<country_code>", methods=["GET", "OPTIONS"])
+@bp.route("/country/<country_code>/state/<state_code>", methods=["GET", "OPTIONS"])
 def get_cities(country_code=None, state_code=None):
     """
     Fetches cities and sends the list as response body.
@@ -87,7 +124,7 @@ def get_cities(country_code=None, state_code=None):
     cities = app.locators.find_cities(country_code=country_code, state_code=state_code)
 
     if cities and len(cities):
-        response_data = {'_items': cities, '_meta': {'total': len(cities)}}
+        response_data = {"_items": cities, "_meta": {"total": len(cities)}}
         return send_response(None, (response_data, utcnow(), None, 200))
     else:
         return send_response(None, ({}, utcnow(), None, 404))

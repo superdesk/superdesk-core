@@ -11,7 +11,7 @@
 from builtins import NotImplementedError
 
 
-class DataLayer():
+class DataLayer:
     def etag(self, doc):
         raise NotImplementedError()
 

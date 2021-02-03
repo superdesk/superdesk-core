@@ -7,15 +7,15 @@
 # Author  : petr
 # Creation: 2020-11-18 16:06
 
-from superdesk.commands.data_updates import DataUpdate
+from superdesk.commands.data_updates import BaseDataUpdate
 
 
-class DataUpdate(DataUpdate):
+class DataUpdate(BaseDataUpdate):
 
-    resource = 'sequences'
+    resource = "sequences"
 
     def forwards(self, mongodb_collection, mongodb_database):
-        return mongodb_collection.delete_many({'key': None})
+        return mongodb_collection.delete_many({"key": None})
 
     def backwards(self, mongodb_collection, mongodb_database):
         pass

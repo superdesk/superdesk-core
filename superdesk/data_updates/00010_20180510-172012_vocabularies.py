@@ -7,27 +7,25 @@
 # Author  : Jérôme
 # Creation: 2018-05-10 17:20
 
-from superdesk.commands.data_updates import DataUpdate
+from superdesk.commands.data_updates import BaseDataUpdate
 
 
-class DataUpdate(DataUpdate):
+class DataUpdate(BaseDataUpdate):
 
-    resource = 'vocabularies'
+    resource = "vocabularies"
 
     def forwards(self, mongodb_collection, mongodb_database):
-        print(mongodb_collection.update_many({'_id': {'$in': ['genre',
-                                                              'priority',
-                                                              'replace_words',
-                                                              'annotation_types']}},
-                                             {'$set': {
-                                                 'unique_field': "qcode"
-                                             }}))
+        print(
+            mongodb_collection.update_many(
+                {"_id": {"$in": ["genre", "priority", "replace_words", "annotation_types"]}},
+                {"$set": {"unique_field": "qcode"}},
+            )
+        )
 
     def backwards(self, mongodb_collection, mongodb_database):
-        print(mongodb_collection.update_many({'_id': {'$in': ['genre',
-                                                              'priority',
-                                                              'replace_words',
-                                                              'annotation_types']}},
-                                             {'$unset': {
-                                                 'unique_field': "qcode"
-                                             }}))
+        print(
+            mongodb_collection.update_many(
+                {"_id": {"$in": ["genre", "priority", "replace_words", "annotation_types"]}},
+                {"$unset": {"unique_field": "qcode"}},
+            )
+        )

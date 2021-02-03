@@ -41,9 +41,9 @@ def process_file(filepath):
     if not os.path.exists(filepath):
         raise FileNotFoundError
 
-    [table_name, ext] = os.path.basename(filepath).split('.')
+    [table_name, ext] = os.path.basename(filepath).split(".")
 
-    with open(filepath, 'rt') as vocabularies:
+    with open(filepath, "rt") as vocabularies:
         json_data = json.loads(vocabularies.read())
         populate_table_json(table_name, json_data)
 
@@ -65,12 +65,10 @@ class AppPopulateCommand(superdesk.Command):
 
     """
 
-    option_list = (
-        superdesk.Option('--filepath', '-f', dest='filepath', required=True),
-    )
+    option_list = (superdesk.Option("--filepath", "-f", dest="filepath", required=True),)
 
     def run(self, filepath):
         process_file(filepath)
 
 
-superdesk.command('app:populate', AppPopulateCommand())
+superdesk.command("app:populate", AppPopulateCommand())

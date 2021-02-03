@@ -7,9 +7,8 @@ def format_datetime(date):
 
 
 class IMatricsFormatter(NINJSFormatter):
-
     def can_format(self, format_type, article):
-        return format_type.lower() == 'imatrics' and article.get('type') == 'text'
+        return format_type.lower() == "imatrics" and article.get("type") == "text"
 
     def _transform_to_ninjs(self, article, subscriber, recursive=True):
         return {
@@ -26,41 +25,35 @@ class IMatricsFormatter(NINJSFormatter):
             "dateline": article["dateline"]["text"]
             if article.get("dateline") and article["dateline"].get("text")
             else "",
-            "body": [
-                line.strip()
-                for line in get_text(article["body_html"], lf_on_block=True).split("\n")
-                if line
-            ],
+            "body": [line.strip() for line in get_text(article["body_html"], lf_on_block=True).split("\n") if line],
         }
 
     def _format_concepts(self, article):
         concepts = []
-        if article.get('subject'):
+        if article.get("subject"):
             concepts.extend(
                 [
                     {
-                        'type': 'topic'
-                        if subj.get('scheme') == 'imatrics_topic'
-                        else 'category',
-                        'title': subj['name'],
-                        'uuid': subj['altids']['imatrics'],
+                        "type": "topic" if subj.get("scheme") == "imatrics_topic" else "category",
+                        "title": subj["name"],
+                        "uuid": subj["altids"]["imatrics"],
                     }
-                    for subj in article['subject']
-                    if subj.get('altids') and subj['altids'].get('imatrics')
+                    for subj in article["subject"]
+                    if subj.get("altids") and subj["altids"].get("imatrics")
                 ]
             )
-        for _type in ('organisation', 'person', 'place', 'event', 'object'):
+        for _type in ("organisation", "person", "place", "event", "object"):
             if not article.get(_type):
                 continue
             concepts.extend(
                 [
                     {
-                        'type': _type,
-                        'title': concept['name'],
-                        'uuid': concept['altids']['imatrics'],
+                        "type": _type,
+                        "title": concept["name"],
+                        "uuid": concept["altids"]["imatrics"],
                     }
                     for concept in article[_type]
-                    if concept.get('altids') and concept['altids'].get('imatrics')
+                    if concept.get("altids") and concept["altids"].get("imatrics")
                 ]
             )
         return concepts

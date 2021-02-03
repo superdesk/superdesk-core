@@ -12,20 +12,23 @@ import superdesk
 
 from superdesk.signals import item_published
 from .vocabularies import VocabulariesResource, VocabulariesService, is_related_content
-from .commands import UpdateVocabulariesInItemsCommand # noqa
+from .commands import UpdateVocabulariesInItemsCommand  # noqa
 from .keywords import add_missing_keywords
-from flask_babel import _
+from flask_babel import _, lazy_gettext
 
 
 def init_app(app):
-    endpoint_name = 'vocabularies'
+    endpoint_name = "vocabularies"
     service = VocabulariesService(endpoint_name, backend=superdesk.get_backend())
     VocabulariesResource(endpoint_name, app=app, service=service)
 
-    superdesk.register_default_user_preference('cvs:preferred_items', {
-        'value': {},
-        'category': _('cvs'),
-        'label': _('Prefered CV items'),
-    })
+    superdesk.register_default_user_preference(
+        "cvs:preferred_items",
+        {
+            "value": {},
+        },
+        label=lazy_gettext("Prefered CV items"),
+        category=lazy_gettext("cvs"),
+    )
 
     item_published.connect(add_missing_keywords)

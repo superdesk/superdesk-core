@@ -16,45 +16,44 @@ from superdesk.errors import SuperdeskApiError
 
 
 comments_schema = dict(comments_schema)
-comments_schema.update({'item': Resource.rel('archive', True, True, type='string')})
+comments_schema.update({"item": Resource.rel("archive", True, True, type="string")})
 
 
 class ItemCommentsResource(CommentsResource):
     schema = comments_schema
-    resource_methods = ['GET', 'POST', 'DELETE']
-    datasource = {'default_sort': [('_created', -1)]}
-    privileges = {'POST': 'archive', 'DELETE': 'archive'}
+    resource_methods = ["GET", "POST", "DELETE"]
+    datasource = {"default_sort": [("_created", -1)]}
+    privileges = {"POST": "archive", "DELETE": "archive"}
 
 
 class ItemCommentsService(CommentsService):
-    notification_key = 'item:comment'
+    notification_key = "item:comment"
 
 
 class ItemCommentsSubResource(Resource):
-    url = 'archive/<path:item>/comments'
+    url = "archive/<path:item>/comments"
     schema = comments_schema
-    datasource = {'source': 'item_comments'}
-    resource_methods = ['GET']
+    datasource = {"source": "item_comments"}
+    resource_methods = ["GET"]
 
 
 class ItemCommentsSubService(BaseService):
-
     def check_item_valid(self, item_id):
-        item = superdesk.get_resource_service('archive').find_one(req=None, _id=item_id)
+        item = superdesk.get_resource_service("archive").find_one(req=None, _id=item_id)
         if not item:
-            msg = 'Invalid content item ID provided: %s' % item_id
+            msg = "Invalid content item ID provided: %s" % item_id
             raise SuperdeskApiError.notFoundError(msg)
 
     def get(self, req, lookup):
-        self.check_item_valid(lookup.get('item'))
+        self.check_item_valid(lookup.get("item"))
         return super().get(req, lookup)
 
 
 def init_app(app):
-    endpoint_name = 'item_comments'
+    endpoint_name = "item_comments"
     service = ItemCommentsService(endpoint_name, backend=superdesk.get_backend())
     ItemCommentsResource(endpoint_name, app=app, service=service)
 
-    endpoint_name = 'content_item_comments'
+    endpoint_name = "content_item_comments"
     service = ItemCommentsSubService(endpoint_name, backend=superdesk.get_backend())
     ItemCommentsSubResource(endpoint_name, app=app, service=service)

@@ -8,15 +8,25 @@ Feature: Published Items Repo
 
     @auth
     Scenario: Get published items with published state
+        Given "archive"
+        """
+        [{"_id": "archive_id", "state": "published"}]
+        """
         Given "published"
         """
-        [{"_id": "tag:example.com,0000:newsml_BRE9A605", "state": "published"}]
+        [{"_id": "archive_id", "state": "published"}]
         """
         When we get "/published"
         Then we get existing resource
         """
-        {"_items": [{"_id": "tag:example.com,0000:newsml_BRE9A605", "state": "published"}]}
+        {"_items": [{"_id": "archive_id", "state": "published"}]}
         """
+        When we get "/published?published_id=1"
+        Then we get existing resource
+        """
+        {"_items": [{"_id": "__objectid__", "item_id": "archive_id", "state": "published"}]}
+        """
+
     @auth
     Scenario: Insert published items with non-published state
         When we post to "published"

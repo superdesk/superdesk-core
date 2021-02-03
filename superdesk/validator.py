@@ -23,11 +23,11 @@ from eve.validation import SingleErrorAsStringErrorHandler
 from werkzeug.datastructures import FileStorage
 
 
-ERROR_PATTERN = 'pattern'
-ERROR_UNIQUE = 'unique'
-ERROR_MINLENGTH = 'minlength'
-ERROR_REQUIRED = 'required'
-ERROR_JSON_LIST = 'json_list'
+ERROR_PATTERN = "pattern"
+ERROR_UNIQUE = "unique"
+ERROR_MINLENGTH = "minlength"
+ERROR_REQUIRED = "required"
+ERROR_JSON_LIST = "json_list"
 
 CLIENT_ERRORS = (
     ERROR_UNIQUE,
@@ -67,9 +67,8 @@ class SuperdeskErrorHandler(BaseErrorHandler):
 
 
 class SuperdeskValidator(Validator):
-
     def __init__(self, *args, **kwargs):
-        kwargs['error_handler'] = SuperdeskErrorHandler
+        kwargs["error_handler"] = SuperdeskErrorHandler
         super(SuperdeskValidator, self).__init__(*args, **kwargs)
 
     def _validate_mapping(self, mapping, field, value):
@@ -112,7 +111,7 @@ class SuperdeskValidator(Validator):
         # given that admins are usually create users, not users by themself,
         # probably just check for @ is enough
         # https://davidcel.is/posts/stop-validating-email-addresses-with-regex/
-        if re.match('.+@.+', value, re.IGNORECASE):
+        if re.match(".+@.+", value, re.IGNORECASE):
             return True
 
     def _validate_type_file(self, value):
@@ -125,7 +124,7 @@ class SuperdeskValidator(Validator):
         {'type': 'boolean'}
         """
         if multiple:
-            emails = value.split(',')
+            emails = value.split(",")
             if not all([self._validate_type_email(email) for email in emails]):
                 self._error(field, ERROR_PATTERN)
 
@@ -143,16 +142,16 @@ class SuperdeskValidator(Validator):
     def _set_id_query(self, query):
         if self.document_id:
             try:
-                query[config.ID_FIELD] = {'$ne': ObjectId(self.document_id)}
+                query[config.ID_FIELD] = {"$ne": ObjectId(self.document_id)}
             except InvalidId:
-                query[config.ID_FIELD] = {'$ne': self.document_id}
+                query[config.ID_FIELD] = {"$ne": self.document_id}
 
     def _validate_iunique(self, unique, field, value):
         """
         {'type': 'boolean'}
         """
         if unique:
-            pattern = '^{}$'.format(re.escape(value.strip()))
+            pattern = "^{}$".format(re.escape(value.strip()))
             query = {field: re.compile(pattern, re.IGNORECASE)}
             self._set_id_query(query)
             cursor = superdesk.get_resource_service(self.resource).get_from_mongo(req=None, lookup=query)
@@ -169,11 +168,8 @@ class SuperdeskValidator(Validator):
         parent_field_value = update.get(parent_field, original.get(parent_field))
 
         if parent_field:
-            pattern = '^{}$'.format(re.escape(value.strip()))
-            query = {
-                field: re.compile(pattern, re.IGNORECASE),
-                parent_field: parent_field_value
-            }
+            pattern = "^{}$".format(re.escape(value.strip()))
+            query = {field: re.compile(pattern, re.IGNORECASE), parent_field: parent_field_value}
             self._set_id_query(query)
 
             cursor = superdesk.get_resource_service(self.resource).get_from_mongo(req=None, lookup=query)
@@ -184,7 +180,7 @@ class SuperdeskValidator(Validator):
         """
         {'type': 'integer'}
         """
-        if isinstance(value, (type(''), list)):
+        if isinstance(value, (type(""), list)):
             if len(value) < min_length:
                 self._error(field, ERROR_MINLENGTH)
 
@@ -192,30 +188,29 @@ class SuperdeskValidator(Validator):
         """
         {'type': 'list'}
         """
-        required = list(field for field, definition in self.schema.items()
-                        if definition.get('required') is True)
-        missing = set(required) - set(key for key in document.keys()
-                                      if document.get(key) is not None or
-                                      not self.ignore_none_values)
+        required = list(field for field, definition in self.schema.items() if definition.get("required") is True)
+        missing = set(required) - set(
+            key for key in document.keys() if document.get(key) is not None or not self.ignore_none_values
+        )
         for field in missing:
             self._error(field, ERROR_REQUIRED)
 
     def _validate_type_json_list(self, field, value):
         """It will fail later when loading."""
-        if not isinstance(value, type('')):
+        if not isinstance(value, type("")):
             self._error(field, ERROR_JSON_LIST)
 
     def _validate_unique_to_user(self, unique, field, value):
         """
         {'type': 'boolean'}
         """
-        doc = getattr(self, 'document', getattr(self, 'original_document', {}))
+        doc = getattr(self, "document", getattr(self, "original_document", {}))
 
-        if 'user' in doc:
+        if "user" in doc:
             _, auth_value = auth_field_and_value(self.resource)
-            query = {'user': auth_value}
+            query = {"user": auth_value}
         else:
-            query = {'user': {'$exists': False}}
+            query = {"user": {"$exists": False}}
 
         self._is_value_unique(unique, field, value, query)
 
@@ -226,20 +221,20 @@ class SuperdeskValidator(Validator):
         original = self.persisted_document or {}
         update = self.document or {}
 
-        is_public = update.get('is_public', original.get('is_public', None))
-        template_name = update.get('template_name', original.get('template_name', None))
+        is_public = update.get("is_public", original.get("is_public", None))
+        template_name = update.get("template_name", original.get("template_name", None))
 
         if is_public:
-            query = {'is_public': True}
+            query = {"is_public": True}
         else:
             _, auth_value = auth_field_and_value(self.resource)
-            query = {'user': auth_value, 'is_public': False}
+            query = {"user": auth_value, "is_public": False}
 
-        query['template_name'] = re.compile('^{}$'.format(re.escape(template_name.strip())), re.IGNORECASE)
+        query["template_name"] = re.compile("^{}$".format(re.escape(template_name.strip())), re.IGNORECASE)
 
         if self.document_id:
-            id_field = config.DOMAIN[self.resource]['id_field']
-            query[id_field] = {'$ne': self.document_id}
+            id_field = config.DOMAIN[self.resource]["id_field"]
+            query[id_field] = {"$ne": self.document_id}
 
         if superdesk.get_resource_service(self.resource).find_one(req=None, **query):
             self._error(field, "Template Name is not unique")
@@ -248,15 +243,18 @@ class SuperdeskValidator(Validator):
         """
         {'type': 'boolean'}
         """
-        if twitter and value and not re.match('^@[A-Za-z0-9_]{1,15}$', value, re.IGNORECASE):
+        if twitter and value and not re.match("^@[A-Za-z0-9_]{1,15}$", value, re.IGNORECASE):
             self._error(field, ERROR_PATTERN)
 
     def _validate_username_pattern(self, enabled, field, value):
         """
         {'type': 'boolean'}
         """
-        if enabled and app.config.get('USER_USERNAME_PATTERN') and \
-                not re.match(app.config['USER_USERNAME_PATTERN'], value or ''):
+        if (
+            enabled
+            and app.config.get("USER_USERNAME_PATTERN")
+            and not re.match(app.config["USER_USERNAME_PATTERN"], value or "")
+        ):
             self._error(field, ERROR_PATTERN)
 
     def _validate_empty(self, empty, field, value):
@@ -284,6 +282,6 @@ class SuperdeskValidator(Validator):
         """
         {'type': 'boolean'}
         """
-        if checked and value not in {'text', None}:
-            if app.data.find_one('content_types', req=None, item_type=value) is not None:
+        if checked and value not in {"text", None}:
+            if app.data.find_one("content_types", req=None, item_type=value) is not None:
                 self._error(field, _("Only 1 instance is allowed."))

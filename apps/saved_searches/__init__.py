@@ -11,10 +11,17 @@ import logging
 import superdesk
 from superdesk.celery_app import celery
 from superdesk.lock import lock, unlock
-from .saved_searches import SavedSearchesService, SavedSearchesResource, AllSavedSearchesResource, \
-    SavedSearchItemsResource, SavedSearchItemsService, AllSavedSearchesService
+from .saved_searches import (
+    SavedSearchesService,
+    SavedSearchesResource,
+    AllSavedSearchesResource,
+    SavedSearchItemsResource,
+    SavedSearchItemsService,
+    AllSavedSearchesService,
+)
 from superdesk import get_resource_service
 from superdesk import es_utils
+from superdesk.privilege import GLOBAL_SEARCH_PRIVILEGE
 import pytz
 from croniter import croniter
 from datetime import datetime
@@ -28,33 +35,37 @@ LOCK_NAME = "saved_searches_report"
 
 
 def init_app(app):
-    endpoint_name = 'saved_searches'
+    endpoint_name = "saved_searches"
     service = SavedSearchesService(endpoint_name, backend=superdesk.get_backend())
     SavedSearchesResource(endpoint_name, app=app, service=service)
 
-    endpoint_name = 'all_saved_searches'
+    endpoint_name = "all_saved_searches"
     service = AllSavedSearchesService(endpoint_name, backend=superdesk.get_backend())
     AllSavedSearchesResource(endpoint_name, app=app, service=service)
 
-    endpoint_name = 'saved_search_items'
+    endpoint_name = "saved_search_items"
     service = SavedSearchItemsService(endpoint_name, backend=superdesk.get_backend())
     SavedSearchItemsResource(endpoint_name, app=app, service=service)
 
-    superdesk.privilege(name='use_global_saved_searches',
-                        label='Global searches',
-                        description='Use global saved searches.')
-    superdesk.privilege(name='global_saved_searches',
-                        label='Manage Global Saved Searches',
-                        description='User can manage other users\' global saved searches')
-    superdesk.privilege(name='saved_searches',
-                        label='Manage Saved Searches',
-                        description='User can manage saved searches')
-    superdesk.privilege(name='saved_searches_subscriptions',
-                        label='Manage Saved Searches Subscriptions',
-                        description='User can (un)subscribe to saved searches')
-    superdesk.privilege(name='saved_searches_subscriptions_admin',
-                        label='Manage Saved Searches Subscriptions For Other Users',
-                        description='User manage other users saved searches subscriptions ')
+    superdesk.privilege(name=GLOBAL_SEARCH_PRIVILEGE, label="Global searches", description="Use global saved searches.")
+    superdesk.privilege(
+        name="global_saved_searches",
+        label="Manage Global Saved Searches",
+        description="User can manage other users' global saved searches",
+    )
+    superdesk.privilege(
+        name="saved_searches", label="Manage Saved Searches", description="User can manage saved searches"
+    )
+    superdesk.privilege(
+        name="saved_searches_subscriptions",
+        label="Manage Saved Searches Subscriptions",
+        description="User can (un)subscribe to saved searches",
+    )
+    superdesk.privilege(
+        name="saved_searches_subscriptions_admin",
+        label="Manage Saved Searches Subscriptions For Other Users",
+        description="User manage other users saved searches subscriptions ",
+    )
 
 
 def get_next_date(scheduling, base=None):
@@ -64,7 +75,7 @@ def get_next_date(scheduling, base=None):
     :return datetime: date of next schedule
     """
     if base is None:
-        tz = pytz.timezone(superdesk.app.config['DEFAULT_TIMEZONE'])
+        tz = pytz.timezone(superdesk.app.config["DEFAULT_TIMEZONE"])
         base = datetime.now(tz=tz)
     cron_iter = croniter(scheduling, base)
     return cron_iter.get_next(datetime)
@@ -76,27 +87,28 @@ def send_report_email(user_id, search, docs):
     :param dict search: saved search data
     :param list found_items: items matching the search request
     """
-    users_service = get_resource_service('users')
-    user_data = next(users_service.find({'_id': user_id}))
-    recipients = [user_data['email']]
+    users_service = get_resource_service("users")
+    user_data = next(users_service.find({"_id": user_id}))
+    recipients = [user_data["email"]]
     app = superdesk.app
-    admins = app.config['ADMINS']
+    admins = app.config["ADMINS"]
     subject = "Saved searches report"
     context = {
-        'app_name': app.config['APPLICATION_NAME'],
-        'search': search,
-        'docs': docs,
-        'client_url': app.config['CLIENT_URL'].rstrip('/')
+        "app_name": app.config["APPLICATION_NAME"],
+        "search": search,
+        "docs": docs,
+        "client_url": app.config["CLIENT_URL"].rstrip("/"),
     }
     text_body = render_template("saved_searches_report.txt", **context)
     html_body = render_template("saved_searches_report.html", **context)
     emails.send_email.delay(
-        subject=subject, sender=admins[0], recipients=recipients, text_body=text_body, html_body=html_body)
+        subject=subject, sender=admins[0], recipients=recipients, text_body=text_body, html_body=html_body
+    )
 
 
 def publish_report(user_id, search_data):
     """Create report for a search and send it by email"""
-    search_filter = json.loads(search_data['filter'])
+    search_filter = json.loads(search_data["filter"])
     query = es_utils.filter2query(search_filter, user_id=user_id)
     repos = es_utils.filter2repos(search_filter) or es_utils.REPOS.copy()
     docs = list(superdesk.app.data.elastic.search(query, repos))
@@ -107,20 +119,20 @@ def process_subscribers(subscribers, search, now, isDesk=False):
     do_update = False
 
     for subscriber_data in subscribers:
-        scheduling = subscriber_data['scheduling']
-        next_report = subscriber_data.get('next_report')
+        scheduling = subscriber_data["scheduling"]
+        next_report = subscriber_data.get("next_report")
         if next_report is None:
-            subscriber_data['next_report'] = get_next_date(scheduling)
+            subscriber_data["next_report"] = get_next_date(scheduling)
             do_update = True
         elif next_report <= now:
             if isDesk:
-                desk = get_resource_service('desks').find_one(req=None, _id=subscriber_data['desk'])
-                for member in (desk or {}).get('members', []):
-                    publish_report(member.get('user'), search)
+                desk = get_resource_service("desks").find_one(req=None, _id=subscriber_data["desk"])
+                for member in (desk or {}).get("members", []):
+                    publish_report(member.get("user"), search)
             else:
-                publish_report(subscriber_data['user'], search)
-            subscriber_data['last_report'] = now
-            subscriber_data['next_report'] = get_next_date(scheduling)
+                publish_report(subscriber_data["user"], search)
+            subscriber_data["last_report"] = now
+            subscriber_data["next_report"] = get_next_date(scheduling)
             do_update = True
 
     return do_update
@@ -132,30 +144,32 @@ def report():
     if not lock(LOCK_NAME, expire=REPORT_SOFT_LIMIT + 10):
         return
     try:
-        saved_searches = get_resource_service('saved_searches')
+        saved_searches = get_resource_service("saved_searches")
         subscribed_searches = saved_searches.find({"subscribers": {"$exists": 1}})
-        tz = pytz.timezone(superdesk.app.config['DEFAULT_TIMEZONE'])
+        tz = pytz.timezone(superdesk.app.config["DEFAULT_TIMEZONE"])
         now = datetime.now(tz=tz)
         for search in subscribed_searches:
             do_update = False
 
-            subscribed_users = search['subscribers'].get('user_subscriptions', [])
+            subscribed_users = search["subscribers"].get("user_subscriptions", [])
             try:
                 do_update = process_subscribers(subscribed_users, search, now, False) or do_update
             except Exception as e:
-                logger.error("Can't do saved search report for users:\nexception: {e}\ndata: {search}".format(
-                    e=e, search=search))
+                logger.error(
+                    "Can't do saved search report for users:\nexception: {e}\ndata: {search}".format(e=e, search=search)
+                )
 
-            subscribed_desks = search['subscribers'].get('desk_subscriptions', [])
+            subscribed_desks = search["subscribers"].get("desk_subscriptions", [])
             try:
                 do_update = process_subscribers(subscribed_desks, search, now, True) or do_update
             except Exception as e:
-                logger.error("Can't do saved search report for desks:\nexception: {e}\ndata: {search}".format(
-                    e=e, search=search))
+                logger.error(
+                    "Can't do saved search report for desks:\nexception: {e}\ndata: {search}".format(e=e, search=search)
+                )
 
             if do_update:
-                updates = {'subscribers': search['subscribers']}
-                saved_searches.system_update(search['_id'], updates, search)
+                updates = {"subscribers": search["subscribers"]}
+                saved_searches.system_update(search["_id"], updates, search)
     except Exception as e:
         logger.error("Can't report saved searches: {reason}".format(reason=e))
     finally:

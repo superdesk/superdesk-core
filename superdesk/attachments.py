@@ -1,4 +1,3 @@
-
 import os
 from typing import Optional, Dict, Any
 import superdesk
@@ -9,7 +8,7 @@ from werkzeug.utils import secure_filename
 from apps.auth import get_user_id
 
 
-RESOURCE = 'attachments'
+RESOURCE = "attachments"
 
 
 class AttachmentsResource(superdesk.Resource):
@@ -38,9 +37,9 @@ class AttachmentsResource(superdesk.Resource):
         },
     }
 
-    item_methods = ['GET', 'PATCH']
-    resource_methods = ['GET', 'POST']
-    privileges = {'POST': 'archive', 'PATCH': 'archive'}
+    item_methods = ["GET", "PATCH"]
+    resource_methods = ["GET", "POST"]
+    privileges = {"POST": "archive", "PATCH": "archive"}
 
 
 class AttachmentsService(superdesk.Service):
@@ -60,7 +59,7 @@ class AttachmentsService(superdesk.Service):
                 doc.setdefault('length', getattr(media, 'length'))
 
     def on_deleted(self, doc):
-        current_app.media.delete(doc['media'], RESOURCE)
+        current_app.media.delete(doc["media"], RESOURCE)
 
 
 def is_attachment_public(attachment):
@@ -69,10 +68,10 @@ def is_attachment_public(attachment):
     :param attachment: Attachment object or id inside attachment attribute
     :return: boolean
     """
-    if attachment.get('attachment'): # retrieve object reference
-        attachment = superdesk.get_resource_service('attachments').find_one(req=None, _id=attachment['attachment'])
+    if attachment.get("attachment"):  # retrieve object reference
+        attachment = superdesk.get_resource_service("attachments").find_one(req=None, _id=attachment["attachment"])
 
-    return not attachment.get('internal')
+    return not attachment.get("internal")
 
 
 def get_attachment_public_url(attachment: Dict[str, Any]) -> Optional[str]:
@@ -102,5 +101,5 @@ def get_attachment_public_url(attachment: Dict[str, Any]) -> Optional[str]:
 
 def init_app(app):
     superdesk.register_resource(RESOURCE, AttachmentsResource, AttachmentsService)
-    app.client_config['attachments_max_files'] = app.config.get('ATTACHMENTS_MAX_FILES', 10)
-    app.client_config['attachments_max_size'] = app.config.get('ATTACHMENTS_MAX_SIZE', 2 ** 20 * 8)  # 8MB
+    app.client_config["attachments_max_files"] = app.config.get("ATTACHMENTS_MAX_FILES", 10)
+    app.client_config["attachments_max_size"] = app.config.get("ATTACHMENTS_MAX_SIZE", 2 ** 20 * 8)  # 8MB

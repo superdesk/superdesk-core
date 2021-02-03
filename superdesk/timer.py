@@ -1,4 +1,3 @@
-
 import logging
 
 from contextlib import contextmanager
@@ -20,4 +19,4 @@ def timer(name):
     _timer.start(name)
     yield _timer
     time = _timer.stop(name)
-    logger.info('%s: %.3fms', name, time * 1000)
+    logger.info("%s: %.3fms", name, time * 1000)

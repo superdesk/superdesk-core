@@ -33,13 +33,13 @@ class ImportUserProfileFromADCommand(superdesk.Command):
     """
 
     option_list = (
-        superdesk.Option('--ad_username', '-adu', dest='ad_username', required=True),
-        superdesk.Option('--ad_password', '-adp', dest='ad_password', required=True),
-        superdesk.Option('--username_to_import', '-u', dest='username', required=True),
-        superdesk.Option('--admin', '-a', dest='admin', required=False),
+        superdesk.Option("--ad_username", "-adu", dest="ad_username", required=True),
+        superdesk.Option("--ad_password", "-adp", dest="ad_password", required=True),
+        superdesk.Option("--username_to_import", "-u", dest="username", required=True),
+        superdesk.Option("--admin", "-a", dest="admin", required=False),
     )
 
-    def run(self, ad_username, ad_password, username, admin='false'):
+    def run(self, ad_username, ad_password, username, admin="false"):
         """Imports or Updates a User Profile from AD to Mongo.
 
         :param ad_username: Active Directory Username
@@ -49,28 +49,34 @@ class ImportUserProfileFromADCommand(superdesk.Command):
         """
 
         # force type conversion to boolean
-        user_type = 'administrator' if admin is not None and admin.lower() == 'true' else 'user'
+        user_type = "administrator" if admin is not None and admin.lower() == "true" else "user"
 
         # Authenticate and fetch profile from AD
         settings = app.settings
-        ad_auth = ADAuth(settings['LDAP_SERVER'], settings['LDAP_SERVER_PORT'], settings['LDAP_BASE_FILTER'],
-                         settings['LDAP_USER_FILTER'], settings['LDAP_USER_ATTRIBUTES'], settings['LDAP_FQDN'])
+        ad_auth = ADAuth(
+            settings["LDAP_SERVER"],
+            settings["LDAP_SERVER_PORT"],
+            settings["LDAP_BASE_FILTER"],
+            settings["LDAP_USER_FILTER"],
+            settings["LDAP_USER_ATTRIBUTES"],
+            settings["LDAP_FQDN"],
+        )
 
         user_data = ad_auth.authenticate_and_fetch_profile(ad_username, ad_password, username)
 
         if len(user_data) == 0:
-            raise SuperdeskApiError.notFoundError('Username not found')
+            raise SuperdeskApiError.notFoundError("Username not found")
 
         # Check if User Profile already exists in Mongo
-        user = superdesk.get_resource_service('users').find_one(req=None, **get_user_query(username))
+        user = superdesk.get_resource_service("users").find_one(req=None, **get_user_query(username))
 
         if user:
-            superdesk.get_resource_service('users').patch(user.get('_id'), user_data)
+            superdesk.get_resource_service("users").patch(user.get("_id"), user_data)
         else:
             add_default_values(user_data, username, user_type=user_type)
-            superdesk.get_resource_service('users').post([user_data])
+            superdesk.get_resource_service("users").post([user_data])
 
         return user_data
 
 
-superdesk.command('users:copyfromad', ImportUserProfileFromADCommand())
+superdesk.command("users:copyfromad", ImportUserProfileFromADCommand())

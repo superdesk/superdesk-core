@@ -31,44 +31,42 @@ class RemoveExportedFiles(superdesk.Command):
 
     """
 
-    log_msg = ''
+    log_msg = ""
     expire_hours = 24
 
-    option_list = [
-        superdesk.Option('--expire-hours', '-e', dest='expire_hours', required=False, type=int)
-    ]
+    option_list = [superdesk.Option("--expire-hours", "-e", dest="expire_hours", required=False, type=int)]
 
     def run(self, expire_hours=None):
         if expire_hours:
             self.expire_hours = expire_hours
-        elif 'TEMP_FILE_EXPIRY_HOURS' in app.config:
-            self.expire_hours = app.config['TEMP_FILE_EXPIRY_HOURS']
+        elif "TEMP_FILE_EXPIRY_HOURS" in app.config:
+            self.expire_hours = app.config["TEMP_FILE_EXPIRY_HOURS"]
 
         expire_at = utcnow() - timedelta(hours=self.expire_hours)
-        self.log_msg = 'Expiry Time: {}.'.format(expire_at)
-        logger.info('{} Starting to remove exported files from storage'.format(self.log_msg))
+        self.log_msg = "Expiry Time: {}.".format(expire_at)
+        logger.info("{} Starting to remove exported files from storage".format(self.log_msg))
 
-        lock_name = get_lock_id('storage', 'remove_exported')
+        lock_name = get_lock_id("storage", "remove_exported")
         if not lock(lock_name, expire=300):
-            logger.info('Remove exported files from storage task is already running')
+            logger.info("Remove exported files from storage task is already running")
             return
 
         try:
-            logger.info('{} Removing expired temporary media files'.format(self.log_msg))
+            logger.info("{} Removing expired temporary media files".format(self.log_msg))
             self._remove_exported_files(expire_at)
         finally:
             unlock(lock_name)
 
-        logger.info('{} Completed removing exported files from storage'.format(self.log_msg))
+        logger.info("{} Completed removing exported files from storage".format(self.log_msg))
 
     def _remove_exported_files(self, expire_at):
-        logger.info('{} Beginning to remove exported files from storage'.format(self.log_msg))
+        logger.info("{} Beginning to remove exported files from storage".format(self.log_msg))
         for file_id in self._get_file_ids(expire_at):
             app.media.delete(file_id)
 
     def _get_file_ids(self, expire_at):
-        files = app.media.find(folder='temp', upload_date={'$lte': expire_at})
-        return [file['_id'] for file in files]
+        files = app.media.find(folder="temp", upload_date={"$lte": expire_at})
+        return [file["_id"] for file in files]
 
 
-superdesk.command('storage:remove_exported', RemoveExportedFiles())
+superdesk.command("storage:remove_exported", RemoveExportedFiles())

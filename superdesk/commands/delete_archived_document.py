@@ -32,7 +32,7 @@ class DeleteArchivedDocumentCommand(superdesk.Command):
     def can_delete_items(self, items):
         """Checks if the given items are deletable"""
 
-        archived_service = superdesk.get_resource_service('archived')
+        archived_service = superdesk.get_resource_service("archived")
         can_delete = True
         messages = []
 
@@ -41,8 +41,8 @@ class DeleteArchivedDocumentCommand(superdesk.Command):
                 archived_service.validate_delete_action(item, True)
             except Exception as ex:
                 can_delete = False
-                messages.append('-' * 45)
-                messages.append('Cannot delete {} as {}'.format(item['item_id'], str(ex)))
+                messages.append("-" * 45)
+                messages.append("Cannot delete {} as {}".format(item["item_id"], str(ex)))
 
         if not can_delete:
             [print(m) for m in messages]
@@ -52,34 +52,24 @@ class DeleteArchivedDocumentCommand(superdesk.Command):
     def get_archived_items(self, ids):
         """Returns the items with the given list of ids"""
 
-        query = {
-            'query': {
-                'filtered': {
-                    'filter': {
-                        'and': [
-                            {'terms': {'_id': ids}}
-                        ]
-                    }
-                }
-            }
-        }
+        query = {"query": {"filtered": {"filter": {"and": [{"terms": {"_id": ids}}]}}}}
 
         request = ParsedRequest()
-        request.args = {'source': json.dumps(query)}
-        return list(superdesk.get_resource_service('archived').get(req=request, lookup=None))
+        request.args = {"source": json.dumps(query)}
+        return list(superdesk.get_resource_service("archived").get(req=request, lookup=None))
 
     def delete(self, items):
         """Deletes the given items and any digital package of them"""
 
-        archived_service = superdesk.get_resource_service('archived')
+        archived_service = superdesk.get_resource_service("archived")
         for item in items:
-            articles_to_kill = archived_service.find_articles_to_kill({'_id': item[config.ID_FIELD]}, False)
+            articles_to_kill = archived_service.find_articles_to_kill({"_id": item[config.ID_FIELD]}, False)
 
             if not articles_to_kill:
                 continue
 
             for article in articles_to_kill:
-                archived_service.command_delete({'_id': article[config.ID_FIELD]})
+                archived_service.command_delete({"_id": article[config.ID_FIELD]})
                 print("Deleted item {} ".format(article[config.ID_FIELD]))
 
     def run(self, ids):
@@ -99,4 +89,4 @@ class DeleteArchivedDocumentCommand(superdesk.Command):
             return
 
 
-superdesk.command('app:deleteArchivedDocument', DeleteArchivedDocumentCommand())
+superdesk.command("app:deleteArchivedDocument", DeleteArchivedDocumentCommand())

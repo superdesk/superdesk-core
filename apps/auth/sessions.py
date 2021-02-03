@@ -14,23 +14,20 @@ from superdesk.metadata.utils import item_url
 
 class SessionsResource(Resource):
     schema = {
-        'user': Resource.rel('users', True),
-        'session_preferences': {'type': 'dict'},
+        "user": Resource.rel("users", True),
+        "session_preferences": {"type": "dict"},
     }
-    datasource = {
-        'source': 'auth',
-        'default_sort': [('_created', -1)]
-    }
-    resource_methods = ['GET', 'POST']
-    item_methods = ['GET', 'DELETE', 'PATCH']
-    embedded_fields = ['user']
+    datasource = {"source": "auth", "default_sort": [("_created", -1)]}
+    resource_methods = ["GET", "POST"]
+    item_methods = ["GET", "DELETE", "PATCH"]
+    embedded_fields = ["user"]
 
 
 class UserSessionClearResource(Resource):
-    endpoint_name = 'clear_sessions'
-    url = 'users/<{0}:user>/sessions'.format(item_url)
-    datasource = {'source': 'auth'}
-    resource_methods = ['DELETE']
+    endpoint_name = "clear_sessions"
+    url = "users/<{0}:user>/sessions".format(item_url)
+    datasource = {"source": "auth"}
+    resource_methods = ["DELETE"]
     item_methods = []
     resource_title = endpoint_name
-    privileges = {'DELETE': 'users'}
+    privileges = {"DELETE": "users"}

@@ -31,38 +31,40 @@ class ReutersHTTPFeedingService(HTTPFeedingService):
     Feeding Service class which can read article(s) using HTTP provided by Reuters.
     """
 
-    NAME = 'reuters_http'
+    NAME = "reuters_http"
 
-    ERRORS = [IngestApiError.apiTimeoutError().get_error_description(),
-              IngestApiError.apiRedirectError().get_error_description(),
-              IngestApiError.apiRequestError().get_error_description(),
-              IngestApiError.apiUnicodeError().get_error_description(),
-              IngestApiError.apiParseError().get_error_description(),
-              IngestApiError.apiGeneralError().get_error_description()]
+    ERRORS = [
+        IngestApiError.apiTimeoutError().get_error_description(),
+        IngestApiError.apiRedirectError().get_error_description(),
+        IngestApiError.apiRequestError().get_error_description(),
+        IngestApiError.apiUnicodeError().get_error_description(),
+        IngestApiError.apiParseError().get_error_description(),
+        IngestApiError.apiGeneralError().get_error_description(),
+    ]
 
-    DATE_FORMAT = '%Y.%m.%d.%H.%M'
+    DATE_FORMAT = "%Y.%m.%d.%H.%M"
 
-    label = 'Reuters feed API'
+    label = "Reuters feed API"
 
     fields = [
         {
-            'id': 'url', 'type': 'text', 'label': 'Feed URL',
-            'placeholder': 'Feed URL', 'required': True,
-            'default': 'http://rmb.reuters.com/rmd/rest/xml'
+            "id": "url",
+            "type": "text",
+            "label": "Feed URL",
+            "placeholder": "Feed URL",
+            "required": True,
+            "default": "http://rmb.reuters.com/rmd/rest/xml",
         },
         {
-            'id': 'auth_url', 'type': 'text', 'label': 'URL for Authentication',
-            'placeholder': 'authentication url', 'required': True,
-            'default': 'https://commerce.reuters.com/rmd/rest/xml/login'
+            "id": "auth_url",
+            "type": "text",
+            "label": "URL for Authentication",
+            "placeholder": "authentication url",
+            "required": True,
+            "default": "https://commerce.reuters.com/rmd/rest/xml/login",
         },
-        {
-            'id': 'username', 'type': 'text', 'label': 'Username',
-            'placeholder': 'Username', 'required': True
-        },
-        {
-            'id': 'password', 'type': 'password', 'label': 'Password',
-            'placeholder': 'Password', 'required': True
-        }
+        {"id": "username", "type": "text", "label": "Username", "placeholder": "Username", "required": True},
+        {"id": "password", "type": "password", "label": "Password", "placeholder": "Password", "required": True},
     ]
 
     session = None
@@ -70,20 +72,20 @@ class ReutersHTTPFeedingService(HTTPFeedingService):
     def _update(self, provider, update):
         updated = utcnow()
 
-        last_updated = provider.get('last_updated')
-        ttl_minutes = app.config['INGEST_EXPIRY_MINUTES']
+        last_updated = provider.get("last_updated")
+        ttl_minutes = app.config["INGEST_EXPIRY_MINUTES"]
         if not last_updated or last_updated < updated - datetime.timedelta(minutes=ttl_minutes):
             last_updated = updated - datetime.timedelta(minutes=ttl_minutes)
 
         self.provider = provider
-        provider_config = provider.get('config')
+        provider_config = provider.get("config")
         if not provider_config:
             provider_config = {}
-            provider['config'] = provider_config
+            provider["config"] = provider_config
 
-        provider_config.setdefault('url', 'http://rmb.reuters.com/rmd/rest/xml')
-        provider_config.setdefault('auth_url', 'https://commerce.reuters.com/rmd/rest/xml/login')
-        self.URL = provider_config.get('url')
+        provider_config.setdefault("url", "http://rmb.reuters.com/rmd/rest/xml")
+        provider_config.setdefault("auth_url", "https://commerce.reuters.com/rmd/rest/xml/login")
+        self.URL = provider_config.get("url")
 
         for channel in self._get_channels():
             ids = self._get_article_ids(channel, last_updated, updated)
@@ -94,15 +96,15 @@ class ReutersHTTPFeedingService(HTTPFeedingService):
                         yield items
                 # if there was an exception processing the one of the bunch log it and continue
                 except Exception as ex:
-                    logger.warn('Reuters item {} has not been retrieved'.format(id))
+                    logger.warn("Reuters item {} has not been retrieved".format(id))
                     logger.exception(ex)
 
     def _get_channels(self):
         """Get subscribed channels."""
         channels = []
-        tree = self._get_tree('channels')
-        for channel in tree.findall('channelInformation'):
-            channels.append(channel.find('alias').text)
+        tree = self._get_tree("channels")
+        for channel in tree.findall("channelInformation"):
+            channels.append(channel.find("alias").text)
 
         return channels
 
@@ -118,7 +120,7 @@ class ReutersHTTPFeedingService(HTTPFeedingService):
         if payload is None:
             payload = {}
 
-        payload['token'] = self._get_auth_token(self.provider, update=True)
+        payload["token"] = self._get_auth_token(self.provider, update=True)
         url = self._get_absolute_url(endpoint)
 
         if not self.session:
@@ -130,7 +132,7 @@ class ReutersHTTPFeedingService(HTTPFeedingService):
                 response = self.session.get(url, params=payload, timeout=(30, 15))
             except requests.exceptions.Timeout as ex:
                 if retries < 3:
-                    logger.warn('Reuters API timeout retrying, retries {}'.format(retries))
+                    logger.warn("Reuters API timeout retrying, retries {}".format(retries))
                     retries += 1
                     continue
                 raise IngestApiError.apiTimeoutError(ex, self.provider)
@@ -145,7 +147,7 @@ class ReutersHTTPFeedingService(HTTPFeedingService):
                 raise IngestApiError.apiGeneralError(error, self.provider)
 
             if response.status_code == 404:
-                raise LookupError(_('Not found {payload}').format(payload=payload))
+                raise LookupError(_("Not found {payload}").format(payload=payload))
 
             break
 
@@ -168,41 +170,44 @@ class ReutersHTTPFeedingService(HTTPFeedingService):
         :param: endpoint
         :type endpoint: str
         """
-        return '/'.join([self.URL, endpoint])
+        return "/".join([self.URL, endpoint])
 
     def _get_article_ids(self, channel, last_updated, updated):
         """
         Get article ids which should be upserted also save the poll token that is returned.
         """
         ids = set()
-        payload = {'channel': channel, 'fieldsRef': 'id'}
+        payload = {"channel": channel, "fieldsRef": "id"}
 
         # check if the channel has a pollToken if not fall back to dateRange
         last_poll_token = self._get_poll_token(channel)
         if last_poll_token is not None:
             logger.info("Reuters requesting channel {} with poll token {}".format(channel, last_poll_token))
-            payload['pollToken'] = last_poll_token
+            payload["pollToken"] = last_poll_token
         else:
-            payload['dateRange'] = "%s-%s" % (self._format_date(last_updated), self._format_date(updated))
-            logger.info("Reuters requesting channel {} with dateRange {}".format(channel, payload['dateRange']))
+            payload["dateRange"] = "%s-%s" % (self._format_date(last_updated), self._format_date(updated))
+            logger.info("Reuters requesting channel {} with dateRange {}".format(channel, payload["dateRange"]))
 
-        tree = self._get_tree('items', payload)
-        status_code = tree.find('status').get('code') if tree.tag == 'results' else tree.get('code')
+        tree = self._get_tree("items", payload)
+        status_code = tree.find("status").get("code") if tree.tag == "results" else tree.get("code")
         # check the returned status
-        if status_code != '10':
+        if status_code != "10":
             logger.warn("Reuters channel request returned status code {}".format(status_code))
             # status code 30 indicates failure
-            if status_code == '30':
+            if status_code == "30":
                 # invalid token
-                logger.warn("Reuters error on channel {} code {} {}".format(channel, tree.find('error').get('code'),
-                                                                            tree.find('error').text))
-                if tree.find('error').get('code') == '2100':
+                logger.warn(
+                    "Reuters error on channel {} code {} {}".format(
+                        channel, tree.find("error").get("code"), tree.find("error").text
+                    )
+                )
+                if tree.find("error").get("code") == "2100":
                     self._save_poll_token(channel, None)
                     logger.warn("Reuters channel invalid token reseting {}".format(status_code))
                 return ids
 
         # extract the returned poll token if there is one
-        poll_token = tree.find('pollToken')
+        poll_token = tree.find("pollToken")
         if poll_token is not None:
             # a new token indicated new content
             if poll_token.text != last_poll_token:
@@ -216,8 +221,8 @@ class ReutersHTTPFeedingService(HTTPFeedingService):
             logger.info("Reuters channel {} retrieved no token".format(channel))
             return ids
 
-        for result in tree.findall('result'):
-            id = result.find('id').text
+        for result in tree.findall("result"):
+            id = result.find("id").text
             ids.add(id)
             logger.info("Reuters id : {}".format(id))
 
@@ -231,14 +236,14 @@ class ReutersHTTPFeedingService(HTTPFeedingService):
         :return:
         """
         # get the provider in case it has been updated by another channel
-        ingest_provider_service = superdesk.get_resource_service('ingest_providers')
+        ingest_provider_service = superdesk.get_resource_service("ingest_providers")
         provider = ingest_provider_service.find_one(req=None, _id=self.provider[superdesk.config.ID_FIELD])
-        provider_token = provider.get('tokens')
-        if 'poll_tokens' not in provider_token:
-            provider_token['poll_tokens'] = {channel: poll_token}
+        provider_token = provider.get("tokens")
+        if "poll_tokens" not in provider_token:
+            provider_token["poll_tokens"] = {channel: poll_token}
         else:
-            provider_token['poll_tokens'][channel] = poll_token
-        upd_provider = {'tokens': provider_token}
+            provider_token["poll_tokens"][channel] = poll_token
+        upd_provider = {"tokens": provider_token}
         ingest_provider_service.system_update(self.provider[superdesk.config.ID_FIELD], upd_provider, self.provider)
 
     def _get_poll_token(self, channel):
@@ -247,8 +252,8 @@ class ReutersHTTPFeedingService(HTTPFeedingService):
         :param channel:
         :return: token
         """
-        if 'tokens' in self.provider and 'poll_tokens' in self.provider['tokens']:
-            return self.provider.get('tokens').get('poll_tokens').get(channel, None)
+        if "tokens" in self.provider and "poll_tokens" in self.provider["tokens"]:
+            return self.provider.get("tokens").get("poll_tokens").get(channel, None)
 
     def _format_date(self, date):
         return date.strftime(self.DATE_FORMAT)
@@ -273,8 +278,8 @@ class ReutersHTTPFeedingService(HTTPFeedingService):
         Parse item message and return given items.
         """
 
-        payload = {'id': id}
-        tree = self._get_tree('item', payload)
+        payload = {"id": id}
+        tree = self._get_tree("item", payload)
 
         parser = self.get_feed_parser(self.provider, tree)
         items = parser.parse(tree, self.provider)
@@ -286,18 +291,18 @@ class ReutersHTTPFeedingService(HTTPFeedingService):
         Fetch remote assets for given item.
         """
         items = []
-        for group in item.get('groups', []):
-            for ref in group.get('refs', []):
-                if 'residRef' in ref:
-                    items.extend(self._parse_items(ref.get('residRef')))
+        for group in item.get("groups", []):
+            for ref in group.get("refs", []):
+                if "residRef" in ref:
+                    items.extend(self._parse_items(ref.get("residRef")))
 
         return items
 
     def prepare_href(self, href, mimetype=None):
         (scheme, netloc, path, params, query, fragment) = urlparse(href)
-        new_href = urlunparse((scheme, netloc, path, '', '', ''))
-        return '%s?auth_token=%s' % (new_href, self._get_auth_token(self.provider, update=True))
+        new_href = urlunparse((scheme, netloc, path, "", "", ""))
+        return "%s?auth_token=%s" % (new_href, self._get_auth_token(self.provider, update=True))
 
 
 register_feeding_service(ReutersHTTPFeedingService)
-register_feeding_service_parser(ReutersHTTPFeedingService.NAME, 'newsml2')
+register_feeding_service_parser(ReutersHTTPFeedingService.NAME, "newsml2")

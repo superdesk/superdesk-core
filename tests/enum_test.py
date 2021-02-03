@@ -19,7 +19,6 @@ class EnumToTest(SuperdeskBaseEnum):
 
 
 class EnumTestCase(TestCase):
-
     def test_enum_from_value(self):
         self.assertEqual(EnumToTest.from_value(1), EnumToTest.red)
         self.assertIsNone(EnumToTest.from_value(4))

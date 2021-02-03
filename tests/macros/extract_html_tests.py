@@ -14,9 +14,9 @@ from superdesk.macros.extract_html import extract_html_macro
 
 
 class ExtractHtmlTestCase(unittest.TestCase):
-
     def test_extract_html_macro(self):
-        item = {'body_html': 'test <a href="www.sourcefabric.org">Sourcefabric</a> <br> <span>test <span/>'}
+        item = {"body_html": 'test <a href="www.sourcefabric.org">Sourcefabric</a> <br> <span>test <span/>'}
         extract_html_macro(item)
-        self.assertEqual(item.get('body_html'),
-                         '<p>test <a href="www.sourcefabric.org">Sourcefabric</a> </p><p>test </p>')
+        self.assertEqual(
+            item.get("body_html"), '<p>test <a href="www.sourcefabric.org">Sourcefabric</a> </p><p>test </p>'
+        )

@@ -26,73 +26,78 @@ logger = logging.getLogger(__name__)
 
 
 class ResendResource(ArchiveResource):
-    endpoint_name = 'archive_resend'
+    endpoint_name = "archive_resend"
     resource_title = endpoint_name
 
-    schema = {
-        'subscribers': {'type': 'list'},
-        'version': {'type': 'integer'}
-    }
+    schema = {"subscribers": {"type": "list"}, "version": {"type": "integer"}}
 
-    url = 'archive/<{0}:original_id>/resend'.format(item_url)
-    resource_methods = ['POST']
-    privileges = {'POST': 'resend'}
+    url = "archive/<{0}:original_id>/resend".format(item_url)
+    resource_methods = ["POST"]
+    privileges = {"POST": "resend"}
 
 
 class ResendService(Service):
 
-    digital = partial(filter, lambda s: (s.get('subscriber_type', '') in {SUBSCRIBER_TYPES.DIGITAL,
-                                                                          SUBSCRIBER_TYPES.ALL}))
+    digital = partial(
+        filter, lambda s: (s.get("subscriber_type", "") in {SUBSCRIBER_TYPES.DIGITAL, SUBSCRIBER_TYPES.ALL})
+    )
 
     def create(self, docs, **kwargs):
         doc = docs[0] if len(docs) > 0 else {}
-        article_id = request.view_args['original_id']
-        article_version = doc.get('version')
+        article_id = request.view_args["original_id"]
+        article_version = doc.get("version")
         article = self._validate_article(article_id, article_version)
-        subscribers = self._validate_subscribers(doc.get('subscribers'), article)
+        subscribers = self._validate_subscribers(doc.get("subscribers"), article)
         get_enqueue_service(article.get(ITEM_OPERATION)).resend(article, subscribers)
-        app.on_archive_item_updated({'subscribers': doc.get('subscribers')}, article, ITEM_RESEND)
+        app.on_archive_item_updated({"subscribers": doc.get("subscribers")}, article, ITEM_RESEND)
         return [article_id]
 
     def _validate_subscribers(self, subscriber_ids, article):
         if not subscriber_ids:
-            raise SuperdeskApiError.badRequestError(message=_('No subscribers selected!'))
+            raise SuperdeskApiError.badRequestError(message=_("No subscribers selected!"))
 
-        query = {'$and': [{config.ID_FIELD: {'$in': list(subscriber_ids)}}, {'is_active': True}]}
-        subscribers = list(get_resource_service('subscribers').get(req=None, lookup=query))
+        query = {"$and": [{config.ID_FIELD: {"$in": list(subscriber_ids)}}, {"is_active": True}]}
+        subscribers = list(get_resource_service("subscribers").get(req=None, lookup=query))
 
         if len(subscribers) == 0:
-            raise SuperdeskApiError.badRequestError(message=_('No active subscribers found!'))
+            raise SuperdeskApiError.badRequestError(message=_("No active subscribers found!"))
 
         if is_genre(article, BROADCAST_GENRE):
             digital_subscribers = list(self.digital(subscribers))
             if len(digital_subscribers) > 0:
-                raise SuperdeskApiError.badRequestError(_('Only wire subscribers can receive broadcast stories!'))
+                raise SuperdeskApiError.badRequestError(_("Only wire subscribers can receive broadcast stories!"))
 
         return subscribers
 
     def _validate_article(self, article_id, article_version):
-        archive_article = get_resource_service(ARCHIVE).find_one(req=None, _id=article_id)
+        article = get_resource_service(ARCHIVE).find_one(req=None, _id=article_id)
 
-        if not archive_article:
+        if app.config.get("CORRECTIONS_WORKFLOW") and article.get(ITEM_STATE) == "correction":
+            publish_service = get_resource_service("published")
+            article = publish_service.find_one(req=None, guid=article.get("guid"), state="being_corrected")
+
+        if not article:
             raise SuperdeskApiError.badRequestError(message=_("Story couldn't be found!"))
 
-        if archive_article[ITEM_TYPE] not in [CONTENT_TYPE.TEXT, CONTENT_TYPE.PREFORMATTED]:
-            raise SuperdeskApiError.badRequestError(
-                message=_('Only text stories can be resent!'))
+        if article[ITEM_TYPE] not in [CONTENT_TYPE.TEXT, CONTENT_TYPE.PREFORMATTED]:
+            raise SuperdeskApiError.badRequestError(message=_("Only text stories can be resent!"))
 
-        if archive_article.get(ITEM_STATE) not in \
-                [CONTENT_STATE.PUBLISHED, CONTENT_STATE.CORRECTED, CONTENT_STATE.KILLED]:
+        if article.get(ITEM_STATE) not in [
+            CONTENT_STATE.PUBLISHED,
+            CONTENT_STATE.CORRECTED,
+            CONTENT_STATE.KILLED,
+            CONTENT_STATE.BEING_CORRECTED,
+        ]:
             raise SuperdeskApiError.badRequestError(
-                message=_('Only published, corrected or killed stories can be resent!'))
+                message=_("Only published, corrected or killed stories can be resent!")
+            )
 
-        if archive_article[config.VERSION] != article_version:
+        if article[config.VERSION] != article_version:
             raise SuperdeskApiError.badRequestError(
-                message=_('Please use the newest version {version} to resend!').format(
-                    version=archive_article[config.VERSION]))
+                message=_("Please use the newest version {version} to resend!").format(version=article[config.VERSION])
+            )
 
-        if archive_article.get('rewritten_by'):
-            raise SuperdeskApiError.badRequestError(
-                message=_('Updated story cannot be resent!'))
+        if article.get("rewritten_by"):
+            raise SuperdeskApiError.badRequestError(message=_("Updated story cannot be resent!"))
 
-        return archive_article
+        return article

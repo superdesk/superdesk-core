@@ -13,9 +13,8 @@ from .length_feet_and_inches_to_metric import feet_inches_to_metric
 
 
 class FeetInchesTestCase(unittest.TestCase):
-
     def test_feet_to_cm(self):
-        text = '''His height is 5'10" today
+        text = """His height is 5'10" today
                 His height is 5'10 today
                 His height is 5' 10 today
                 His height is 5 ft 10 today
@@ -34,28 +33,28 @@ class FeetInchesTestCase(unittest.TestCase):
                 His height is 10-12 ft today
                 His height is 10-12 in today
                 His height is 5-foot-10 today
-                His height is 5-feet-10 today'''
+                His height is 5-feet-10 today"""
 
-        item = {'body_html': text}
+        item = {"body_html": text}
         res, diff = feet_inches_to_metric(item)
-        self.assertEqual(diff['5\'10"'], '5\'10" (1.78 m)')
-        self.assertEqual(diff['5\'10'], '5\'10 (1.78 m)')
-        self.assertEqual(diff['5\' 10'], '5\' 10 (1.78 m)')
-        self.assertEqual(diff['5 ft 10'], '5 ft 10 (1.78 m)')
-        self.assertEqual(diff['5 ft. 10'], '5 ft. 10 (1.78 m)')
-        self.assertEqual(diff['5 ft 10 in'], '5 ft 10 in (1.78 m)')
-        self.assertEqual(diff['5\' 10"'], '5\' 10" (1.78 m)')
-        self.assertEqual(diff['5\''], '5\' (1.52 m)')
-        self.assertEqual(diff['5 ft'], '5 ft (1.52 m)')
-        self.assertEqual(diff['5 feet'], '5 feet (1.52 m)')
-        self.assertEqual(diff['10.2-ft'], '10.2-ft (3.11 m)')
-        self.assertEqual(diff['10.2-in'], '10.2-in (25.91 cm)')
+        self.assertEqual(diff["5'10\""], "5'10\" (1.78 m)")
+        self.assertEqual(diff["5'10"], "5'10 (1.78 m)")
+        self.assertEqual(diff["5' 10"], "5' 10 (1.78 m)")
+        self.assertEqual(diff["5 ft 10"], "5 ft 10 (1.78 m)")
+        self.assertEqual(diff["5 ft. 10"], "5 ft. 10 (1.78 m)")
+        self.assertEqual(diff["5 ft 10 in"], "5 ft 10 in (1.78 m)")
+        self.assertEqual(diff["5' 10\""], "5' 10\" (1.78 m)")
+        self.assertEqual(diff["5'"], "5' (1.52 m)")
+        self.assertEqual(diff["5 ft"], "5 ft (1.52 m)")
+        self.assertEqual(diff["5 feet"], "5 feet (1.52 m)")
+        self.assertEqual(diff["10.2-ft"], "10.2-ft (3.11 m)")
+        self.assertEqual(diff["10.2-in"], "10.2-in (25.91 cm)")
         self.assertEqual(diff['1,020"'], '1,020" (25.91 m)')
-        self.assertEqual(diff['1,020 in'], '1,020 in (25.91 m)')
-        self.assertEqual(diff['1 inch'], '1 inch (2.54 cm)')
-        self.assertEqual(diff['1,020 inches'], '1,020 inches (25.91 m)')
-        self.assertEqual(diff['10-12 ft'], '10-12 ft (3.05-3.66 m)')
-        self.assertEqual(diff['10-12 in'], '10-12 in (25.40-30.48 cm)')
-        self.assertEqual(diff['5-foot-10'], '5-foot-10 (1.78 m)')
-        self.assertEqual(diff['5-feet-10'], '5-feet-10 (1.78 m)')
-        self.assertEqual(res['body_html'], item['body_html'])
+        self.assertEqual(diff["1,020 in"], "1,020 in (25.91 m)")
+        self.assertEqual(diff["1 inch"], "1 inch (2.54 cm)")
+        self.assertEqual(diff["1,020 inches"], "1,020 inches (25.91 m)")
+        self.assertEqual(diff["10-12 ft"], "10-12 ft (3.05-3.66 m)")
+        self.assertEqual(diff["10-12 in"], "10-12 in (25.40-30.48 cm)")
+        self.assertEqual(diff["5-foot-10"], "5-foot-10 (1.78 m)")
+        self.assertEqual(diff["5-feet-10"], "5-feet-10 (1.78 m)")
+        self.assertEqual(res["body_html"], item["body_html"])

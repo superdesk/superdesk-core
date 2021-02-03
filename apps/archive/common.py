@@ -25,9 +25,23 @@ from superdesk import editor_utils
 from superdesk.users.services import get_sign_off
 from superdesk.utc import utcnow, get_expiry_date, local_to_utc, get_date
 from superdesk import get_resource_service
-from superdesk.metadata.item import metadata_schema, ITEM_STATE, CONTENT_STATE, \
-    LINKED_IN_PACKAGES, BYLINE, SIGN_OFF, EMBARGO, ITEM_TYPE, CONTENT_TYPE, PUBLISH_SCHEDULE, SCHEDULE_SETTINGS, \
-    ASSOCIATIONS, LAST_AUTHORING_DESK, LAST_PRODUCTION_DESK, ITEM_EVENT_ID
+from superdesk.metadata.item import (
+    metadata_schema,
+    ITEM_STATE,
+    CONTENT_STATE,
+    LINKED_IN_PACKAGES,
+    BYLINE,
+    SIGN_OFF,
+    EMBARGO,
+    ITEM_TYPE,
+    CONTENT_TYPE,
+    PUBLISH_SCHEDULE,
+    SCHEDULE_SETTINGS,
+    ASSOCIATIONS,
+    LAST_AUTHORING_DESK,
+    LAST_PRODUCTION_DESK,
+    ITEM_EVENT_ID,
+)
 from superdesk.workflow import set_default_state, is_workflow_state_transition_valid
 from superdesk.metadata.item import GUID_NEWSML, GUID_FIELD, GUID_TAG, not_analyzed, FAMILY_ID, INGEST_ID
 from superdesk.metadata.utils import generate_guid
@@ -38,118 +52,106 @@ from flask_babel import _
 
 
 logger = logging.getLogger(__name__)
-ARCHIVE = 'archive'
-CUSTOM_HATEOAS = {'self': {'title': 'Archive', 'href': '/archive/{_id}'}}
-ITEM_OPERATION = 'operation'
-ITEM_CREATE = 'create'
-ITEM_FETCH = 'fetch'
-ITEM_UPDATE = 'update'
-ITEM_REWRITE = 'rewrite'
-ITEM_RESTORE = 'restore'
-ITEM_LINK = 'link'
-ITEM_UNLINK = 'unlink'
-ITEM_REOPEN = 'reopen'
-ITEM_DUPLICATE = 'duplicate'
-ITEM_DUPLICATED_FROM = 'duplicated_from'
-ITEM_DESCHEDULE = 'deschedule'
-ITEM_MARK = 'mark'
-ITEM_UNMARK = 'unmark'
-ITEM_RESEND = 'resend'
-ITEM_EXPORT_HIGHLIGHT = 'export_highlight'
-ITEM_CREATE_HIGHLIGHT = 'create_highlight'
-ITEM_CORRECTION = 'correction'
-ITEM_CANCEL_CORRECTION = 'cancel_correction'
-item_operations = [ITEM_CREATE, ITEM_FETCH, ITEM_UPDATE, ITEM_RESTORE,
-                   ITEM_DUPLICATE, ITEM_DUPLICATED_FROM, ITEM_DESCHEDULE,
-                   ITEM_REWRITE, ITEM_LINK, ITEM_UNLINK, ITEM_MARK, ITEM_UNMARK, ITEM_RESEND,
-                   ITEM_EXPORT_HIGHLIGHT, ITEM_CREATE_HIGHLIGHT]
-BROADCAST_GENRE = 'Broadcast Script'
+ARCHIVE = "archive"
+CUSTOM_HATEOAS = {"self": {"title": "Archive", "href": "/archive/{_id}"}}
+ITEM_OPERATION = "operation"
+ITEM_CREATE = "create"
+ITEM_FETCH = "fetch"
+ITEM_UPDATE = "update"
+ITEM_REWRITE = "rewrite"
+ITEM_RESTORE = "restore"
+ITEM_LINK = "link"
+ITEM_UNLINK = "unlink"
+ITEM_REOPEN = "reopen"
+ITEM_DUPLICATE = "duplicate"
+ITEM_DUPLICATED_FROM = "duplicated_from"
+ITEM_DESCHEDULE = "deschedule"
+ITEM_MARK = "mark"
+ITEM_UNMARK = "unmark"
+ITEM_RESEND = "resend"
+ITEM_EXPORT_HIGHLIGHT = "export_highlight"
+ITEM_CREATE_HIGHLIGHT = "create_highlight"
+ITEM_CORRECTION = "correction"
+ITEM_CANCEL_CORRECTION = "cancel_correction"
+item_operations = [
+    ITEM_CREATE,
+    ITEM_FETCH,
+    ITEM_UPDATE,
+    ITEM_RESTORE,
+    ITEM_DUPLICATE,
+    ITEM_DUPLICATED_FROM,
+    ITEM_DESCHEDULE,
+    ITEM_REWRITE,
+    ITEM_LINK,
+    ITEM_UNLINK,
+    ITEM_MARK,
+    ITEM_UNMARK,
+    ITEM_RESEND,
+    ITEM_EXPORT_HIGHLIGHT,
+    ITEM_CREATE_HIGHLIGHT,
+]
+BROADCAST_GENRE = "Broadcast Script"
 
 # these fields are not available in ingest but available in archive, published, archived
 ARCHIVE_SCHEMA_FIELDS = {
-    'old_version': {
-        'type': 'number',
+    "old_version": {
+        "type": "number",
     },
-    'last_version': {
-        'type': 'number',
+    "last_version": {
+        "type": "number",
     },
-    'task': {'type': 'dict'},
-    PUBLISH_SCHEDULE: {
-        'type': 'datetime',
-        'nullable': True
-    },
+    "task": {"type": "dict"},
+    PUBLISH_SCHEDULE: {"type": "datetime", "nullable": True},
     SCHEDULE_SETTINGS: {
-        'type': 'dict',
-        'nullable': True,
-        'schema': {
-            'time_zone': {'type': 'string', 'nullable': True},
-            'utc_publish_schedule': {'type': 'datetime', 'nullable': True},
-            'utc_embargo': {'type': 'datetime', 'nullable': True}
-        }
+        "type": "dict",
+        "nullable": True,
+        "schema": {
+            "time_zone": {"type": "string", "nullable": True},
+            "utc_publish_schedule": {"type": "datetime", "nullable": True},
+            "utc_embargo": {"type": "datetime", "nullable": True},
+        },
     },
-
-    ITEM_OPERATION: {
-        'type': 'string',
-        'allowed': item_operations,
-        'index': 'not_analyzed'
+    ITEM_OPERATION: {"type": "string", "allowed": item_operations, "index": "not_analyzed"},
+    "event_id": {"type": "string", "mapping": not_analyzed},
+    "rewritten_by": {"type": "string", "mapping": not_analyzed, "nullable": True},
+    "rewrite_of": {"type": "string", "mapping": not_analyzed, "nullable": True},
+    "sequence": {"type": "integer"},  # deprecated
+    "associated_take_sequence": {"type": "integer"},  # deprecated
+    EMBARGO: {"type": "datetime", "nullable": True},
+    "broadcast": {
+        "type": "dict",
+        "nullable": True,
+        "schema": {
+            "status": {"type": "string"},
+            "master_id": {"type": "string", "mapping": not_analyzed},
+            "rewrite_id": {"type": "string", "mapping": not_analyzed},
+        },
     },
-    'event_id': {
-        'type': 'string',
-        'mapping': not_analyzed
-    },
-    'rewritten_by': {
-        'type': 'string',
-        'mapping': not_analyzed,
-        'nullable': True
-    },
-    'rewrite_of': {
-        'type': 'string',
-        'mapping': not_analyzed,
-        'nullable': True
-    },
-    'sequence': {  # deprecated
-        'type': 'integer'
-    },
-    'associated_take_sequence': {  # deprecated
-        'type': 'integer'
-    },
-    EMBARGO: {
-        'type': 'datetime',
-        'nullable': True
-    },
-    'broadcast': {
-        'type': 'dict',
-        'nullable': True,
-        'schema': {
-            'status': {'type': 'string'},
-            'master_id': {'type': 'string', 'mapping': not_analyzed},
-            'rewrite_id': {'type': 'string', 'mapping': not_analyzed}
-        }
-    },
-    'expiry_status': {
-        'type': 'string',
-        'mapping': not_analyzed,
-        'nullable': True
-    },
-    'original_id': {
-        'type': 'string',
-        'mapping': not_analyzed
-    }
+    "expiry_status": {"type": "string", "mapping": not_analyzed, "nullable": True},
+    "original_id": {"type": "string", "mapping": not_analyzed},
 }
 
 
-FIELDS_TO_COPY_FOR_ASSOCIATED_ITEM = ['anpa_category', 'subject', 'slugline', 'urgency',
-                                      'priority', 'footer', 'abstract', 'genre']
+FIELDS_TO_COPY_FOR_ASSOCIATED_ITEM = [
+    "anpa_category",
+    "subject",
+    "slugline",
+    "urgency",
+    "priority",
+    "footer",
+    "abstract",
+    "genre",
+]
 
 
 def get_default_source():
-    return app.config.get('DEFAULT_SOURCE_VALUE_FOR_MANUAL_ARTICLES', '')
+    return app.config.get("DEFAULT_SOURCE_VALUE_FOR_MANUAL_ARTICLES", "")
 
 
 def update_version(updates, original):
     """Increment version number if possible."""
-    if config.VERSION in updates and original.get('version', 0) == 0:
-        updates.setdefault('version', updates[config.VERSION])
+    if config.VERSION in updates and original.get("version", 0) == 0:
+        updates.setdefault("version", updates[config.VERSION])
 
 
 def on_create_item(docs, repo_type=ARCHIVE):
@@ -163,14 +165,14 @@ def on_create_item(docs, repo_type=ARCHIVE):
         if not doc.get(GUID_FIELD):
             doc[GUID_FIELD] = generate_guid(type=GUID_NEWSML)
 
-        if 'unique_id' not in doc:
+        if "unique_id" not in doc:
             generate_unique_id_and_name(doc, repo_type)
 
-        if 'family_id' not in doc:
-            doc['family_id'] = doc[GUID_FIELD]
+        if "family_id" not in doc:
+            doc["family_id"] = doc[GUID_FIELD]
 
-        if 'event_id' not in doc and repo_type != 'ingest':
-            doc['event_id'] = generate_guid(type=GUID_TAG)
+        if "event_id" not in doc and repo_type != "ingest":
+            doc["event_id"] = generate_guid(type=GUID_TAG)
 
         set_default_state(doc, CONTENT_STATE.DRAFT)
         doc.setdefault(config.ID_FIELD, doc[GUID_FIELD])
@@ -179,27 +181,28 @@ def on_create_item(docs, repo_type=ARCHIVE):
             # set the source for the article
             set_default_source(doc)
 
-        if 'profile' not in doc and app.config.get('DEFAULT_CONTENT_TYPE', None):
-            doc['profile'] = app.config.get('DEFAULT_CONTENT_TYPE', None)
+        if "profile" not in doc and app.config.get("DEFAULT_CONTENT_TYPE", None):
+            doc["profile"] = app.config.get("DEFAULT_CONTENT_TYPE", None)
 
         copy_metadata_from_profile(doc)
         copy_metadata_from_user_preferences(doc, repo_type)
 
-        if 'language' not in doc:
-            doc['language'] = app.config.get('DEFAULT_LANGUAGE', 'en')
+        if "language" not in doc:
+            doc["language"] = app.config.get("DEFAULT_LANGUAGE", "en")
 
-            if doc.get('task', None) and doc['task'].get('desk', None):
-                desk = superdesk.get_resource_service('desks').find_one(req=None, _id=doc['task']['desk'])
-                if desk and desk.get('desk_language', None):
-                    doc['language'] = desk['desk_language']
+            if doc.get("task", None) and doc["task"].get("desk", None):
+                desk = superdesk.get_resource_service("desks").find_one(req=None, _id=doc["task"]["desk"])
+                if desk and desk.get("desk_language", None):
+                    doc["language"] = desk["desk_language"]
 
         if not doc.get(ITEM_OPERATION):
             doc[ITEM_OPERATION] = ITEM_CREATE
 
-        if doc.get('template'):
+        if doc.get("template"):
             from apps.templates.content_templates import render_content_template_by_id  # avoid circular import
-            doc.pop('fields_meta', None)
-            render_content_template_by_id(doc, doc['template'], update=True)
+
+            doc.pop("fields_meta", None)
+            render_content_template_by_id(doc, doc["template"], update=True)
             editor_utils.generate_fields(doc)
 
 
@@ -214,27 +217,28 @@ def format_dateline_to_locmmmddsrc(located, current_timestamp, source=None):
         source = get_default_source()
 
     dateline_location = "{city_code}"
-    dateline_location_format_fields = located.get('dateline', 'city')
-    dateline_location_format_fields = dateline_location_format_fields.split(',')
-    if 'country' in dateline_location_format_fields and 'state' in dateline_location_format_fields:
+    dateline_location_format_fields = located.get("dateline", "city")
+    dateline_location_format_fields = dateline_location_format_fields.split(",")
+    if "country" in dateline_location_format_fields and "state" in dateline_location_format_fields:
         dateline_location = "{city_code}, {state_code}, {country_code}"
-    elif 'state' in dateline_location_format_fields:
+    elif "state" in dateline_location_format_fields:
         dateline_location = "{city_code}, {state_code}"
-    elif 'country' in dateline_location_format_fields:
+    elif "country" in dateline_location_format_fields:
         dateline_location = "{city_code}, {country_code}"
     dateline_location = dateline_location.format(**located)
 
-    if located['tz'] != 'UTC':
-        current_timestamp = datetime.fromtimestamp(current_timestamp.timestamp(), tz=timezone(located['tz']))
+    if located["tz"] != "UTC":
+        current_timestamp = datetime.fromtimestamp(current_timestamp.timestamp(), tz=timezone(located["tz"]))
     if current_timestamp.month == 9:
-        formatted_date = 'Sept {}'.format(current_timestamp.strftime('%-d'))
+        formatted_date = "Sept {}".format(current_timestamp.strftime("%-d"))
     elif 3 <= current_timestamp.month <= 7:
-        formatted_date = current_timestamp.strftime('%B %-d')
+        formatted_date = current_timestamp.strftime("%B %-d")
     else:
-        formatted_date = current_timestamp.strftime('%b %-d')
+        formatted_date = current_timestamp.strftime("%b %-d")
 
-    return "{location}, {mmmdd} {source} -".format(location=dateline_location.upper(), mmmdd=formatted_date,
-                                                   source=source)
+    return "{location}, {mmmdd} {source} -".format(
+        location=dateline_location.upper(), mmmdd=formatted_date, source=source
+    )
 
 
 def set_default_source(doc):
@@ -249,29 +253,29 @@ def set_default_source(doc):
 
     # If the item has been ingested and the source for the provider is not the same as the system default source
     # the source must be preserved as the item has been ingested from an external agency
-    if doc.get('ingest_provider'):
-        provider = get_resource_service('ingest_providers').find_one(req=None, _id=doc.get('ingest_provider'))
+    if doc.get("ingest_provider"):
+        provider = get_resource_service("ingest_providers").find_one(req=None, _id=doc.get("ingest_provider"))
         if not provider:
-            provider = get_resource_service('search_providers').find_one(req=None, _id=doc.get('ingest_provider'))
-        if provider and provider.get('source', '') != get_default_source():
-            if not doc.get('source'):
-                doc['source'] = provider.get('source')
-            if doc.get('dateline'):
+            provider = get_resource_service("search_providers").find_one(req=None, _id=doc.get("ingest_provider"))
+        if provider and provider.get("source", "") != get_default_source():
+            if not doc.get("source"):
+                doc["source"] = provider.get("source")
+            if doc.get("dateline"):
                 set_dateline(doc, {})
             return
 
     # set the source for the article as default
     source = get_default_source()
-    desk_id = doc.get('task', {}).get('desk')
+    desk_id = doc.get("task", {}).get("desk")
 
     if desk_id:
         # if desk level source is specified then use that instead of the default source
-        desk = get_resource_service('desks').find_one(req=None, _id=desk_id)
-        source = desk.get('source') or source
+        desk = get_resource_service("desks").find_one(req=None, _id=desk_id)
+        source = desk.get("source") or source
 
-    doc['source'] = source
+    doc["source"] = source
 
-    if not doc.get('dateline'):
+    if not doc.get("dateline"):
         return
 
     set_dateline(doc, {})
@@ -282,12 +286,12 @@ def on_duplicate_item(doc, original_doc, operation=None):
 
     doc[GUID_FIELD] = generate_guid(type=GUID_NEWSML)
     generate_unique_id_and_name(doc)
-    doc['event_id'] = generate_guid(type=GUID_TAG)
-    doc.setdefault('_id', doc[GUID_FIELD])
+    doc["event_id"] = generate_guid(type=GUID_TAG)
+    doc.setdefault("_id", doc[GUID_FIELD])
     set_sign_off(doc)
-    doc['force_unlock'] = True
+    doc["force_unlock"] = True
     doc[ITEM_OPERATION] = operation or ITEM_DUPLICATE
-    doc['original_id'] = original_doc.get('item_id', original_doc.get('_id'))
+    doc["original_id"] = original_doc.get("item_id", original_doc.get("_id"))
     set_default_source(doc)
 
 
@@ -296,17 +300,18 @@ def set_dateline(updates, original):
     :param {dict} updates: Updates related to the doc
     :param {dict} original: Original document.
     """
-    if not ((updates.get('dateline') or {}).get('located') and (updates.get('dateline') or {}).get('date')):
+    if not ((updates.get("dateline") or {}).get("located") and (updates.get("dateline") or {}).get("date")):
         return
 
-    source = updates.get('source', original.get('source')) or get_default_source()
-    updates['dateline']['source'] = source
+    source = updates.get("source", original.get("source")) or get_default_source()
+    updates["dateline"]["source"] = source
 
-    if isinstance(updates['dateline'].get('date'), str):
-        updates['dateline']['date'] = get_date(updates['dateline'].get('date'))
+    if isinstance(updates["dateline"].get("date"), str):
+        updates["dateline"]["date"] = get_date(updates["dateline"].get("date"))
 
-    updates['dateline']['text'] = format_dateline_to_locmmmddsrc(updates['dateline'].get('located'),
-                                                                 updates['dateline'].get('date'), source)
+    updates["dateline"]["text"] = format_dateline_to_locmmmddsrc(
+        updates["dateline"].get("located"), updates["dateline"].get("date"), source
+    )
 
 
 def clear_rewritten_flag(event_id, rewrite_id, rewrite_field):
@@ -316,12 +321,12 @@ def clear_rewritten_flag(event_id, rewrite_id, rewrite_field):
     :param str rewrite_id: rewrite id of the document
     :param str rewrite_field: field name 'rewrite_of' or 'rewritten_by'
     """
-    publish_service = get_resource_service('published')
+    publish_service = get_resource_service("published")
     archive_service = get_resource_service(ARCHIVE)
 
-    published_rewritten_stories = publish_service.get_rewritten_items_by_event_story(event_id,
-                                                                                     rewrite_id,
-                                                                                     rewrite_field)
+    published_rewritten_stories = publish_service.get_rewritten_items_by_event_story(
+        event_id, rewrite_id, rewrite_field
+    )
     processed_items = set()
     for doc in published_rewritten_stories:
         doc_id = doc.get(config.ID_FIELD)
@@ -335,14 +340,14 @@ def clear_rewritten_flag(event_id, rewrite_id, rewrite_field):
 
 
 def update_dates_for(doc):
-    for item in ['firstcreated', 'versioncreated']:
+    for item in ["firstcreated", "versioncreated"]:
         doc.setdefault(item, utcnow())
 
 
 def set_original_creator(doc):
     usr = get_user()
-    user = str(usr.get('_id', doc.get('original_creator', '')))
-    doc['original_creator'] = user
+    user = str(usr.get("_id", doc.get("original_creator", "")))
+    doc["original_creator"] = user
 
 
 def set_sign_off(updates, original=None, repo_type=ARCHIVE, user=None):
@@ -365,17 +370,17 @@ def set_sign_off(updates, original=None, repo_type=ARCHIVE, user=None):
     if SIGN_OFF in updates:
         return
     sign_off = get_sign_off(user)
-    current_sign_off = '' if original is None else (original.get(SIGN_OFF, '') or '')
+    current_sign_off = "" if original is None else (original.get(SIGN_OFF, "") or "")
 
     if current_sign_off.endswith(sign_off):
         return
 
     # remove the sign off from the list if already there
-    if not app.config.get('FULL_SIGN_OFF'):
-        current_sign_off = current_sign_off.replace(sign_off + '/', '')
+    if not app.config.get("FULL_SIGN_OFF"):
+        current_sign_off = current_sign_off.replace(sign_off + "/", "")
 
-    updated_sign_off = '{}/{}'.format(current_sign_off, sign_off)
-    updates[SIGN_OFF] = updated_sign_off[1:] if updated_sign_off.startswith('/') else updated_sign_off
+    updated_sign_off = "{}/{}".format(current_sign_off, sign_off)
+    updates[SIGN_OFF] = updated_sign_off[1:] if updated_sign_off.startswith("/") else updated_sign_off
 
 
 def generate_unique_id_and_name(item, repo_type=ARCHIVE):
@@ -385,11 +390,11 @@ def generate_unique_id_and_name(item, repo_type=ARCHIVE):
     """
 
     try:
-        unique_id = get_resource_service('sequences').get_next_sequence_number(
-            key_name='{}_SEQ'.format(repo_type.upper())
+        unique_id = get_resource_service("sequences").get_next_sequence_number(
+            key_name="{}_SEQ".format(repo_type.upper())
         )
-        item['unique_id'] = unique_id
-        item['unique_name'] = "#" + str(unique_id)
+        item["unique_id"] = unique_id
+        item["unique_name"] = "#" + str(unique_id)
     except Exception as e:
         raise IdentifierGenerationError() from e
 
@@ -413,10 +418,10 @@ def insert_into_versions(id_=None, doc=None):
         doc_in_archive_collection = doc
 
     if not doc_in_archive_collection:
-        raise SuperdeskApiError.badRequestError(message=_('Document not found in archive collection'))
+        raise SuperdeskApiError.badRequestError(message=_("Document not found in archive collection"))
 
     remove_unwanted(doc_in_archive_collection)
-    if app.config['VERSION'] in doc_in_archive_collection:
+    if app.config["VERSION"] in doc_in_archive_collection:
         insert_versioning_documents(ARCHIVE, doc_in_archive_collection)
 
 
@@ -428,7 +433,7 @@ def remove_unwanted(doc):
 
     # _type attribute comes when queried against Elastic and desk comes while fetching an item from ingest
     if doc:
-        for attr in ['_type', 'desk', 'archived']:
+        for attr in ["_type", "desk", "archived"]:
             if attr in doc:
                 del doc[attr]
 
@@ -441,8 +446,8 @@ def fetch_item(doc, desk_id, stage_id, state=None, target=None):
         dest_doc.update(target)
 
     new_id = generate_guid(type=GUID_TAG)
-    if doc.get('guid'):
-        dest_doc.setdefault('uri', doc[GUID_FIELD])
+    if doc.get("guid"):
+        dest_doc.setdefault("uri", doc[GUID_FIELD])
 
     dest_doc[config.ID_FIELD] = new_id
     dest_doc[GUID_FIELD] = new_id
@@ -452,7 +457,7 @@ def fetch_item(doc, desk_id, stage_id, state=None, target=None):
     from apps.tasks import send_to
 
     dest_doc[config.VERSION] = 1
-    dest_doc['versioncreated'] = utcnow()
+    dest_doc["versioncreated"] = utcnow()
     send_to(doc=dest_doc, desk_id=desk_id, stage_id=stage_id)
     dest_doc[ITEM_STATE] = state or CONTENT_STATE.FETCHED
 
@@ -475,33 +480,36 @@ def remove_media_files(doc):
     """
     references = None
 
-    if doc.get('renditions'):
-        references = [doc.get('renditions')]
+    if doc.get("renditions"):
+        references = [doc.get("renditions")]
 
     if not references:
-        references = [assoc.get('renditions') for assoc in (doc.get(ASSOCIATIONS) or {}).values()
-                      if assoc and assoc.get('renditions')]
+        references = [
+            assoc.get("renditions")
+            for assoc in (doc.get(ASSOCIATIONS) or {}).values()
+            if assoc and assoc.get("renditions")
+        ]
 
     if references:
-        logger.info('Removing media files for %s', doc.get('guid'))
+        logger.info("Removing media files for %s", doc.get("guid"))
 
     for renditions in references:
         for rendition in renditions.values():
-            media = rendition.get('media') if isinstance(rendition.get('media'), str) else str(rendition.get('media'))
+            media = rendition.get("media") if isinstance(rendition.get("media"), str) else str(rendition.get("media"))
             try:
-                references = get_resource_service('media_references').get(req=None, lookup={
-                    'media_id': media, 'published': True
-                })
+                references = get_resource_service("media_references").get(
+                    req=None, lookup={"media_id": media, "published": True}
+                )
 
                 if references.count() == 0:
-                    logger.info('Deleting media:{}'.format(rendition.get('media')))
+                    logger.info("Deleting media:{}".format(rendition.get("media")))
                     app.media.delete(media)
             except Exception:
-                logger.exception('Failed to remove Media Id: {} from item: {}'.format(media, doc.get(config.ID_FIELD)))
+                logger.exception("Failed to remove Media Id: {} from item: {}".format(media, doc.get(config.ID_FIELD)))
 
-    for attachment in doc.get('attachments', []):
-        lookup = {'_id': attachment['attachment']}
-        get_resource_service('attachments').delete_action(lookup)
+    for attachment in doc.get("attachments", []):
+        lookup = {"_id": attachment["attachment"]}
+        get_resource_service("attachments").delete_action(lookup)
 
 
 def is_assigned_to_a_desk(doc):
@@ -511,7 +519,7 @@ def is_assigned_to_a_desk(doc):
     :return: True if the 'doc' is being submitted to a desk, else False.
     """
 
-    return doc.get('task') and doc['task'].get('desk')
+    return doc.get("task") and doc["task"].get("desk")
 
 
 def get_item_expiry(desk, stage, offset=None):
@@ -527,11 +535,11 @@ def get_item_expiry(desk, stage, offset=None):
     :param datetime offset: datetime passed in case of embargo.
     :return datetime: expiry datetime
     """
-    expiry_minutes = app.settings['CONTENT_EXPIRY_MINUTES']
-    if stage and (stage.get('content_expiry') or 0) > 0:
-        expiry_minutes = stage.get('content_expiry')
-    elif desk and (desk.get('content_expiry') or 0) > 0:
-        expiry_minutes = desk.get('content_expiry')
+    expiry_minutes = app.settings["CONTENT_EXPIRY_MINUTES"]
+    if stage and (stage.get("content_expiry") or 0) > 0:
+        expiry_minutes = stage.get("content_expiry")
+    elif desk and (desk.get("content_expiry") or 0) > 0:
+        expiry_minutes = desk.get("content_expiry")
 
     return get_expiry_date(expiry_minutes, offset=offset)
 
@@ -551,32 +559,32 @@ def get_expiry(desk_id, stage_id, offset=None):
     desk = None
 
     if desk_id:
-        desk = superdesk.get_resource_service('desks').find_one(req=None, _id=desk_id)
+        desk = superdesk.get_resource_service("desks").find_one(req=None, _id=desk_id)
 
         if not desk:
-            raise SuperdeskApiError.notFoundError(_('Invalid desk identifier {desk_id}').format(desk_id=desk_id))
+            raise SuperdeskApiError.notFoundError(_("Invalid desk identifier {desk_id}").format(desk_id=desk_id))
 
     if stage_id:
-        stage = get_resource_service('stages').find_one(req=None, _id=stage_id)
+        stage = get_resource_service("stages").find_one(req=None, _id=stage_id)
 
         if not stage:
-            raise SuperdeskApiError.notFoundError(_('Invalid stage identifier {stage_id}').format(stage_id=stage_id))
+            raise SuperdeskApiError.notFoundError(_("Invalid stage identifier {stage_id}").format(stage_id=stage_id))
 
     return get_item_expiry(desk, stage, offset)
 
 
 def set_item_expiry(update, original):
-    task = update.get('task', original.get('task', {}))
-    desk_id = task.get('desk', None)
-    stage_id = task.get('stage', None)
+    task = update.get("task", original.get("task", {}))
+    desk_id = task.get("desk", None)
+    stage_id = task.get("stage", None)
 
     if not desk_id:
         return
 
     if update == {}:
-        original['expiry'] = get_expiry(desk_id, stage_id)
+        original["expiry"] = get_expiry(desk_id, stage_id)
     else:
-        update['expiry'] = get_expiry(desk_id, stage_id)
+        update["expiry"] = get_expiry(desk_id, stage_id)
 
 
 def update_state(original, updates, publish_from_personal=None):
@@ -588,18 +596,21 @@ def update_state(original, updates, publish_from_personal=None):
     """
 
     original_state = original.get(ITEM_STATE)
-    if original_state not in {CONTENT_STATE.INGESTED, CONTENT_STATE.PROGRESS,
-                              CONTENT_STATE.SCHEDULED, CONTENT_STATE.CORRECTION}:
-        if not is_workflow_state_transition_valid('save', original_state):
+    if original_state not in {
+        CONTENT_STATE.INGESTED,
+        CONTENT_STATE.PROGRESS,
+        CONTENT_STATE.SCHEDULED,
+        CONTENT_STATE.CORRECTION,
+    }:
+        if not is_workflow_state_transition_valid("save", original_state):
             raise superdesk.errors.InvalidStateTransitionError()
-        elif is_assigned_to_a_desk(original) or (not is_assigned_to_a_desk(original)
-                                                 and publish_from_personal):
+        elif is_assigned_to_a_desk(original) or (not is_assigned_to_a_desk(original) and publish_from_personal):
             updates[ITEM_STATE] = CONTENT_STATE.PROGRESS
         elif not is_assigned_to_a_desk(original):
             updates[ITEM_STATE] = CONTENT_STATE.DRAFT
 
 
-def handle_existing_data(doc, pub_status_value='usable', doc_type='archive'):
+def handle_existing_data(doc, pub_status_value="usable", doc_type="archive"):
     """Handles existing data.
 
     For now the below are handled:
@@ -608,24 +619,24 @@ def handle_existing_data(doc, pub_status_value='usable', doc_type='archive'):
     """
 
     if doc:
-        if 'pubstatus' in doc:
-            doc['pubstatus'] = doc.get('pubstatus', pub_status_value).lower()
+        if "pubstatus" in doc:
+            doc["pubstatus"] = doc.get("pubstatus", pub_status_value).lower()
 
-        if doc_type == 'archive' and not is_flag_in_item(doc, 'marked_for_not_publication'):
-            set_flag(doc, 'marked_for_not_publication', False)
+        if doc_type == "archive" and not is_flag_in_item(doc, "marked_for_not_publication"):
+            set_flag(doc, "marked_for_not_publication", False)
 
 
 def set_flag(doc, flag_name, flag_value):
-    flags = doc.get('flags', {})
+    flags = doc.get("flags", {})
     flags[flag_name] = flag_value
 
 
 def is_flag_in_item(doc, flag_name):
-    return 'flags' in doc and flag_name in doc.get('flags', {})
+    return "flags" in doc and flag_name in doc.get("flags", {})
 
 
 def get_flag(doc, flag_name):
-    return doc.get('flags', {}).get(flag_name, False)
+    return doc.get("flags", {}).get(flag_name, False)
 
 
 def validate_schedule(schedule):
@@ -641,7 +652,9 @@ def validate_schedule(schedule):
             raise SuperdeskApiError.badRequestError(_("Schedule date is not recognized"))
         if not schedule.date() or schedule.date().year <= 1970:
             raise SuperdeskApiError.badRequestError(_("Schedule date is not recognized"))
-        if schedule < utcnow():
+        if (schedule.tzinfo and schedule < utcnow()) or (
+            not schedule.tzinfo and schedule < utcnow().replace(tzinfo=None)
+        ):
             raise SuperdeskApiError.badRequestError(_("Schedule cannot be earlier than now"))
 
 
@@ -661,14 +674,14 @@ def update_schedule_settings(updates, field_name, value):
             raise SuperdeskApiError.badRequestError(_("{} date is not recognized".format(field_name)))
 
     schedule_settings = updates.get(SCHEDULE_SETTINGS, {}) or {}
-    utc_field_name = 'utc_{}'.format(field_name)
+    utc_field_name = "utc_{}".format(field_name)
     if field_name:
-        tz_name = schedule_settings.get('time_zone')
+        tz_name = schedule_settings.get("time_zone")
         if tz_name:
             schedule_settings[utc_field_name] = local_to_utc(tz_name, value)
         else:
             schedule_settings[utc_field_name] = value
-            schedule_settings['time_zone'] = None
+            schedule_settings["time_zone"] = None
 
     updates[SCHEDULE_SETTINGS] = schedule_settings
 
@@ -680,10 +693,12 @@ def get_utc_schedule(doc, field_name):
     :param field_name: Name of he field: either publish_schedule or embargo
     :return: the utc value of the field
     """
-    utc_field_name = 'utc_{}'.format(field_name)
-    if SCHEDULE_SETTINGS not in doc or \
-            not doc.get(SCHEDULE_SETTINGS) or \
-            utc_field_name not in doc.get(SCHEDULE_SETTINGS, {}):
+    utc_field_name = "utc_{}".format(field_name)
+    if (
+        SCHEDULE_SETTINGS not in doc
+        or not doc.get(SCHEDULE_SETTINGS)
+        or utc_field_name not in doc.get(SCHEDULE_SETTINGS, {})
+    ):
         update_schedule_settings(doc, field_name, doc.get(field_name))
 
     return doc.get(SCHEDULE_SETTINGS, {}).get(utc_field_name)
@@ -707,8 +722,7 @@ def is_item_in_package(item):
     :param item:
     :return: True if the item belongs to a package
     """
-    return item.get(LINKED_IN_PACKAGES, None) \
-        and sum(1 for x in item.get(LINKED_IN_PACKAGES, []))
+    return item.get(LINKED_IN_PACKAGES, None) and sum(1 for x in item.get(LINKED_IN_PACKAGES, []))
 
 
 def convert_task_attributes_to_objectId(doc):
@@ -716,22 +730,22 @@ def convert_task_attributes_to_objectId(doc):
 
     :param doc:
     """
-    task = doc.get('task', {})
+    task = doc.get("task", {})
 
     if not task:
         return
 
-    if ObjectId.is_valid(task.get('desk')) and not isinstance(task.get('desk'), ObjectId):
-        task['desk'] = ObjectId(task.get('desk'))
-    if ObjectId.is_valid(task.get('stage')) and not isinstance(task.get('stage'), ObjectId):
-        task['stage'] = ObjectId(task.get('stage'))
-    if ObjectId.is_valid(task.get('user')) and not isinstance(task.get('user'), ObjectId):
-        task['user'] = ObjectId(task.get('user'))
-    if ObjectId.is_valid(task.get(LAST_PRODUCTION_DESK)) and \
-            not isinstance(task.get(LAST_PRODUCTION_DESK), ObjectId):
+    if ObjectId.is_valid(task.get("desk")) and not isinstance(task.get("desk"), ObjectId):
+        task["desk"] = ObjectId(task.get("desk"))
+    if ObjectId.is_valid(task.get("stage")) and not isinstance(task.get("stage"), ObjectId):
+        task["stage"] = ObjectId(task.get("stage"))
+    if ObjectId.is_valid(task.get("user")) and not isinstance(task.get("user"), ObjectId):
+        task["user"] = ObjectId(task.get("user"))
+    if ObjectId.is_valid(task.get(LAST_PRODUCTION_DESK)) and not isinstance(task.get(LAST_PRODUCTION_DESK), ObjectId):
         task[LAST_PRODUCTION_DESK] = ObjectId(task.get(LAST_PRODUCTION_DESK))
-    if ObjectId.is_valid(task.get(LAST_AUTHORING_DESK, None)) and \
-            not isinstance(task.get(LAST_AUTHORING_DESK), ObjectId):
+    if ObjectId.is_valid(task.get(LAST_AUTHORING_DESK, None)) and not isinstance(
+        task.get(LAST_AUTHORING_DESK), ObjectId
+    ):
         task[LAST_AUTHORING_DESK] = ObjectId(task.get(LAST_AUTHORING_DESK))
 
 
@@ -745,7 +759,7 @@ def transtype_metadata(doc, original=None):
     :param original: original document in case of update
     """
     # For now only fields of type "date" in the "extra" dict are handled.
-    extra = doc.get('extra')
+    extra = doc.get("extra")
     if not extra:
         return
 
@@ -753,29 +767,28 @@ def transtype_metadata(doc, original=None):
         original = {}
 
     try:
-        profile_id = doc.get('profile') or original['profile']
+        profile_id = doc.get("profile") or original["profile"]
     except KeyError:
         # profile may be missing with some items in tests
         logger.warning("`profile` is not available in doc")
         return
-    ctypes_service = get_resource_service('content_types')
+    ctypes_service = get_resource_service("content_types")
     profile = ctypes_service.find_one(None, _id=profile_id)
     if profile is None:
         return
 
     for key, value in extra.items():
         try:
-            value_type = profile['schema'][key]['type']
+            value_type = profile["schema"][key]["type"]
         except KeyError:
             continue
 
-        if value_type == 'date':
+        if value_type == "date":
             if value and type(value) != datetime:
                 try:
                     extra[key] = date_parse(value)
                 except Exception as e:
-                    logger.warning("Can't parse {key}: {reason}".format(
-                        key=key, reason=e))
+                    logger.warning("Can't parse {key}: {reason}".format(key=key, reason=e))
 
 
 def copy_metadata_from_profile(doc):
@@ -784,17 +797,19 @@ def copy_metadata_from_profile(doc):
     :param doc
     """
     defaults = {}
-    profile = doc.get('profile', None)
+    profile = doc.get("profile", None)
     if profile:
-        content_type = superdesk.get_resource_service('content_types').find_one(req=None, _id=profile)
+        content_type = superdesk.get_resource_service("content_types").find_one(req=None, _id=profile)
         if content_type:
-            defaults = {name: field.get('default', None)
-                        for (name, field) in content_type.get('schema', {}).items()
-                        if field and field.get('default', None)}
+            defaults = {
+                name: field.get("default", None)
+                for (name, field) in content_type.get("schema", {}).items()
+                if field and field.get("default", None)
+            }
 
-    defaults.setdefault('priority', config.DEFAULT_PRIORITY_VALUE_FOR_MANUAL_ARTICLES)
-    defaults.setdefault('urgency', config.DEFAULT_URGENCY_VALUE_FOR_MANUAL_ARTICLES)
-    defaults.setdefault('genre', config.DEFAULT_GENRE_VALUE_FOR_MANUAL_ARTICLES)
+    defaults.setdefault("priority", config.DEFAULT_PRIORITY_VALUE_FOR_MANUAL_ARTICLES)
+    defaults.setdefault("urgency", config.DEFAULT_URGENCY_VALUE_FOR_MANUAL_ARTICLES)
+    defaults.setdefault("genre", config.DEFAULT_GENRE_VALUE_FOR_MANUAL_ARTICLES)
     for field in defaults:
         if field in doc and not doc[field]:
             del doc[field]
@@ -818,29 +833,31 @@ def copy_metadata_from_user_preferences(doc, repo_type=ARCHIVE):
 
     if repo_type == ARCHIVE:
         user = get_user()
-        source = doc.get('source') or get_default_source()
+        source = doc.get("source") or get_default_source()
 
-        if doc.get('operation', '') != 'fetch':
-            located = user.get('user_preferences', {}).get('dateline:located', {}).get('located')
+        if doc.get("operation", "") != "fetch":
+            located = user.get("user_preferences", {}).get("dateline:located", {}).get("located")
             try:
-                dateline = doc['dateline']['located']
+                dateline = doc["dateline"]["located"]
             except (KeyError, TypeError):
                 dateline = None
             if not dateline and user and located:
                 current_date_time = dateline_ts = utcnow()
-                doc['dateline'] = {'date': current_date_time,
-                                   'source': source,
-                                   'located': located,
-                                   'text': format_dateline_to_locmmmddsrc(located, dateline_ts, source)}
+                doc["dateline"] = {
+                    "date": current_date_time,
+                    "source": source,
+                    "located": located,
+                    "text": format_dateline_to_locmmmddsrc(located, dateline_ts, source),
+                }
 
             if BYLINE not in doc and user and user.get(BYLINE):
                 doc[BYLINE] = user[BYLINE]
 
-            if 'place' not in doc and user:
-                place_in_preference = user.get('user_preferences', {}).get('article:default:place')
+            if "place" not in doc and user:
+                place_in_preference = user.get("user_preferences", {}).get("article:default:place")
 
                 if place_in_preference:
-                    doc['place'] = place_in_preference.get('place')
+                    doc["place"] = place_in_preference.get("place")
 
         set_sign_off(doc, repo_type=repo_type, user=user)
 
@@ -853,7 +870,7 @@ def is_genre(item, genre_value):
     :return: If exists then true else false
     """
     try:
-        return any(genre.get('qcode', '').lower() == genre_value.lower() for genre in item.get('genre', []))
+        return any(genre.get("qcode", "").lower() == genre_value.lower() for genre in item.get("genre", []))
     except (AttributeError, TypeError):  # from sentry
         return False
 
@@ -865,13 +882,13 @@ def get_dateline_city(dateline):
     :return str:
     """
     if not dateline:
-        return ''
+        return ""
 
-    if (dateline.get('located') or {}) and dateline.get('located', {}).get('city'):
-        city = dateline.get('located', {}).get('city') or ''
+    if (dateline.get("located") or {}) and dateline.get("located", {}).get("city"):
+        city = dateline.get("located", {}).get("city") or ""
     else:
-        city = dateline.get('text') or ''
-        city = city[:city.rfind(',')]
+        city = dateline.get("text") or ""
+        city = city[: city.rfind(",")]
 
     return city
 
@@ -891,12 +908,12 @@ def get_subject(doc1, doc2=None):
     :param dict doc1:
     :param dict doc2:
     """
-    for key in ('headline', 'slugline', 'subject'):
+    for key in ("headline", "slugline", "subject"):
         value = doc1.get(key)
         if not value and doc2:
             value = doc2.get(key)
-        if value and key == 'subject':
-            value = [v.get('name') for v in value if 'name' in v][0]
+        if value and key == "subject":
+            value = [v.get("name") for v in value if "name" in v][0]
         if value:
             return value
 

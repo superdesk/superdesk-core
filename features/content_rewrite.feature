@@ -679,7 +679,7 @@ Feature: Rewrite content
         """
         {
           "_status": "ERR",
-          "_issues": {"validator exception": "400: Can't publish update until original story is published.!"}
+          "_issues": {"validator exception": "400: Can't publish update until original story is published."}
         }
         """
 

@@ -28,8 +28,8 @@ from apps.auth.service import AuthService
 from superdesk.validation import ValidationError
 
 
-RESOURCE = 'oauth'
-TEMPLATE = 'oauth_authorized.html'
+RESOURCE = "oauth"
+TEMPLATE = "oauth_authorized.html"
 
 
 logger = logging.getLogger(__name__)
@@ -40,11 +40,10 @@ class OAuthResource(AuthResource):
 
 
 class OAuthService(AuthService):
-
     def authenticate(self, document):
-        if not document.get('email'):
+        if not document.get("email"):
             return
-        return superdesk.get_resource_service('auth_users').find_one(req=None, email=document['email'].lower())
+        return superdesk.get_resource_service("auth_users").find_one(req=None, email=document["email"].lower())
 
 
 def auth_user(email, userdata=None):
@@ -56,32 +55,35 @@ def auth_user(email, userdata=None):
     :param email: user email address
     """
     # we don't get email from service
-    if userdata and userdata.get('email'):
-        email = userdata['email']
-    data = [{'email': email}]
+    if userdata and userdata.get("email"):
+        email = userdata["email"]
+    data = [{"email": email}]
     if not email:
-        return render_template(TEMPLATE, data={'error': 404})
+        return render_template(TEMPLATE, data={"error": 404})
     try:
         superdesk.get_resource_service(RESOURCE).post(data)
-        data[0]['_id'] = str(data[0]['_id'])
-        data[0]['user'] = str(data[0]['user'])
+        data[0]["_id"] = str(data[0]["_id"])
+        data[0]["user"] = str(data[0]["user"])
         if userdata:
-            superdesk.get_resource_service('users').update_external_user(data[0]['user'], userdata)
+            superdesk.get_resource_service("users").update_external_user(data[0]["user"], userdata)
         return render_template(TEMPLATE, data=data[0])
     except ValueError:
-        if not app.config['USER_EXTERNAL_CREATE'] or not userdata:
-            return render_template(TEMPLATE, data={'error': 404})
+        if not app.config["USER_EXTERNAL_CREATE"] or not userdata:
+            return render_template(TEMPLATE, data={"error": 404})
 
     # create new user using userdata
     # and re-run auth
     try:
-        user = superdesk.get_resource_service('users').create_external_user(userdata)
-        return auth_user(user['email'])
+        user = superdesk.get_resource_service("users").create_external_user(userdata)
+        return auth_user(user["email"])
     except ValidationError as err:  # can't create user, so let it fail on next iteration
-        logger.error('can not create user automaticaly, userdata is not valid', extra={
-            'userdata': userdata,
-            'errors': err,
-        })
+        logger.error(
+            "can not create user automaticaly, userdata is not valid",
+            extra={
+                "userdata": userdata,
+                "errors": err,
+            },
+        )
 
     return auth_user(None)
 

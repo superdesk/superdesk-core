@@ -72,21 +72,21 @@ class HTTPPushService(PublishService):
     for both json and multipart POST requests.
     """
 
-    NAME = 'HTTP Push'
+    NAME = "HTTP Push"
 
     headers = {"Content-type": "application/json", "Accept": "application/json"}
-    hash_header = 'x-superdesk-signature'
+    hash_header = "x-superdesk-signature"
 
     def _transmit(self, queue_item, subscriber):
         """
         @see: PublishService._transmit
         """
-        item = json.loads(queue_item['formatted_item'])
-        destination = queue_item.get('destination', {})
+        item = json.loads(queue_item["formatted_item"])
+        destination = queue_item.get("destination", {})
 
-        self._copy_published_media_files(json.loads(queue_item['formatted_item']), destination)
+        self._copy_published_media_files(json.loads(queue_item["formatted_item"]), destination)
 
-        if not queue_item.get(PUBLISHED_IN_PACKAGE) or not destination.get('config', {}).get('packaged', False):
+        if not queue_item.get(PUBLISHED_IN_PACKAGE) or not destination.get("config", {}).get("packaged", False):
             self._push_item(destination, json.dumps(item))
 
     def _push_item(self, destination, data):
@@ -99,7 +99,7 @@ class HTTPPushService(PublishService):
             response.raise_for_status()
         except Exception as ex:
             logger.exception(ex)
-            message = 'Error pushing item %s: %s' % (response.status_code, response.text)
+            message = "Error pushing item %s: %s" % (response.status_code, response.text)
             self._raise_publish_error(response.status_code, Exception(message), destination)
 
     def _copy_published_media_files(self, item, destination):
@@ -118,33 +118,37 @@ class HTTPPushService(PublishService):
 
         def parse_media(item):
             media = {}
-            renditions = item.get('renditions', {})
+            renditions = item.get("renditions", {})
             for _, rendition in renditions.items():
-                rendition.pop('href', None)
-                rendition.setdefault('mimetype', rendition.get('original', {}).get('mimetype', item.get('mimetype')))
-                media[rendition['media']] = rendition
-            for attachment in item.get('attachments', []):
-                media.update({attachment['media']: {
-                    'mimetype': attachment['mimetype'],
-                    'resource': 'attachments',
-                }})
+                rendition.pop("href", None)
+                rendition.setdefault("mimetype", rendition.get("original", {}).get("mimetype", item.get("mimetype")))
+                media[rendition["media"]] = rendition
+            for attachment in item.get("attachments", []):
+                media.update(
+                    {
+                        attachment["media"]: {
+                            "mimetype": attachment["mimetype"],
+                            "resource": "attachments",
+                        }
+                    }
+                )
             return media
 
         media = {}
         media.update(parse_media(item))
 
-        for assoc in item.get('associations', {}).values():
+        for assoc in item.get("associations", {}).values():
             if assoc is None:
                 continue
             media.update(parse_media(assoc))
-            for assoc2 in assoc.get('associations', {}).values():
+            for assoc2 in assoc.get("associations", {}).values():
                 if assoc2 is None:
                     continue
                 media.update(parse_media(assoc2))
 
         for media_id, rendition in media.items():
             if not self._media_exists(media_id, destination):
-                binary = app.media.get(media_id, resource=rendition.get('resource', 'upload'))
+                binary = app.media.get(media_id, resource=rendition.get("resource", "upload"))
                 self._transmit_media(binary, destination, exists=False)
 
     def _transmit_media(self, media, destination, exists=None):
@@ -152,12 +156,12 @@ class HTTPPushService(PublishService):
             exists = self._media_exists(media._id, destination)
         if exists:
             return
-        mimetype = getattr(media, 'content_type', 'image/jpeg')
-        data = {'media_id': str(media._id)}
-        files = {'media': (str(media._id), media, mimetype)}
+        mimetype = getattr(media, "content_type", "image/jpeg")
+        data = {"media_id": str(media._id)}
+        files = {"media": (str(media._id), media, mimetype)}
         s = requests.Session()
         assets_url = self._get_assets_url(destination)
-        request = requests.Request('POST', assets_url)
+        request = requests.Request("POST", assets_url)
         prepped = request.prepare()
         prepped.prepare_body(data, files)
         headers = self._get_headers(prepped.body, destination, prepped.headers)
@@ -166,10 +170,8 @@ class HTTPPushService(PublishService):
         if response.status_code not in (200, 201):
             self._raise_publish_error(
                 response.status_code,
-                Exception('Error pushing media file %s: %s %s' % (
-                    str(media._id), response.status_code, response.text
-                )),
-                destination
+                Exception("Error pushing media file %s: %s %s" % (str(media._id), response.status_code, response.text)),
+                destination,
             )
 
     def _media_exists(self, media_id, destination):
@@ -187,9 +189,7 @@ class HTTPPushService(PublishService):
         response = requests.get(assets_url)
         if response.status_code not in (requests.codes.ok, requests.codes.not_found):  # @UndefinedVariable
             self._raise_publish_error(
-                response.status_code,
-                Exception('Error querying the assets service %s' % assets_url),
-                destination
+                response.status_code, Exception("Error querying the assets service %s" % assets_url), destination
             )
         return response.status_code == requests.codes.ok  # @UndefinedVariable
 
@@ -204,23 +204,23 @@ class HTTPPushService(PublishService):
 
     def _get_data_hash(self, data, secret_token):
         if isinstance(data, str):
-            encoded_data = bytes(data, 'utf-8')
+            encoded_data = bytes(data, "utf-8")
         else:
             encoded_data = data
-        mac = hmac.new(str.encode(secret_token), msg=encoded_data, digestmod='sha1')
-        return 'sha1=' + str(mac.hexdigest())
+        mac = hmac.new(str.encode(secret_token), msg=encoded_data, digestmod="sha1")
+        return "sha1=" + str(mac.hexdigest())
 
     def _get_secret_token(self, destination):
-        return destination.get('config', {}).get('secret_token', None)
+        return destination.get("config", {}).get("secret_token", None)
 
     def _get_assets_url(self, destination, media_id=None):
-        url = destination.get('config', {}).get('assets_url', None)
+        url = destination.get("config", {}).get("assets_url", None)
         if media_id is not None:
-            return '/'.join([url, str(media_id)])
+            return "/".join([url, str(media_id)])
         return url
 
     def _get_resource_url(self, destination):
-        return destination.get('config', {}).get('resource_url')
+        return destination.get("config", {}).get("resource_url")
 
     def _raise_publish_error(self, status_code, e, destination=None):
         if status_code >= 400 and status_code < 500:
@@ -231,4 +231,4 @@ class HTTPPushService(PublishService):
             raise PublishHTTPPushError.httpPushError(e, destination)
 
 
-register_transmitter('http_push', HTTPPushService(), errors)
+register_transmitter("http_push", HTTPPushService(), errors)

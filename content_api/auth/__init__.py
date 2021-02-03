@@ -15,9 +15,9 @@ from .auth import AuthUsersResource
 
 
 def init_app(app):
-    endpoint_name = 'auth'
-    service = BaseService('auth', backend=superdesk.get_backend())
+    endpoint_name = "auth"
+    service = BaseService("auth", backend=superdesk.get_backend())
     AuthResource(endpoint_name, app=app, service=service)
 
-    service = BaseService('auth_user', backend=superdesk.get_backend())
-    AuthUsersResource('auth_user', app=app, service=service)
+    service = BaseService("auth_user", backend=superdesk.get_backend())
+    AuthUsersResource("auth_user", app=app, service=service)

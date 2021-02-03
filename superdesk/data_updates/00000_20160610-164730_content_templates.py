@@ -7,10 +7,10 @@
 # Author  : edouard
 # Creation: 2016-06-10 11:10
 
-from superdesk.commands.data_updates import DataUpdate
+from superdesk.commands.data_updates import BaseDataUpdate
 
 
-class DataUpdate(DataUpdate):
+class DataUpdate(BaseDataUpdate):
     """
 
     Data update for Pull Request #418
@@ -27,31 +27,39 @@ class DataUpdate(DataUpdate):
 
     """
 
-    resource = 'content_templates'
+    resource = "content_templates"
 
     def forwards(self, mongodb_collection, mongodb_database):
         # new `template_desks` field must contain a list of desk id
         for template in mongodb_collection.find({}):
-            if template.get('template_desk'):
-                print(mongodb_collection.update({'_id': template['_id']}, {
-                    '$set': {
-                        'template_desks': [template.get('template_desk')]
-                    }
-                }))
+            if template.get("template_desk"):
+                print(
+                    mongodb_collection.update(
+                        {"_id": template["_id"]}, {"$set": {"template_desks": [template.get("template_desk")]}}
+                    )
+                )
         # renames fields:
         #   - template_desk -> schedule_desk
         #   - template_stage -> schedule_stage
-        print(mongodb_collection.update({}, {
-            '$rename': {
-                'template_desk': 'schedule_desk',
-                'template_stage': 'schedule_stage'
-            },
-        }, upsert=False, multi=True))
+        print(
+            mongodb_collection.update(
+                {},
+                {
+                    "$rename": {"template_desk": "schedule_desk", "template_stage": "schedule_stage"},
+                },
+                upsert=False,
+                multi=True,
+            )
+        )
 
     def backwards(self, mongodb_collection, mongodb_database):
-        print(mongodb_collection.update({}, {
-            '$rename': {
-                'schedule_desk': 'template_desk',
-                'schedule_stage': 'template_stage'
-            },
-        }, upsert=False, multi=True))
+        print(
+            mongodb_collection.update(
+                {},
+                {
+                    "$rename": {"schedule_desk": "template_desk", "schedule_stage": "template_stage"},
+                },
+                upsert=False,
+                multi=True,
+            )
+        )

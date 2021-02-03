@@ -14,13 +14,12 @@ from apps.macros.macro_register import macros
 
 
 class MacrosTestCase(TestCase):
-
     def test_register(self):
         with self.app.app_context():
-            macros.register(name='test')
-            self.assertIn('test', macros)
+            macros.register(name="test")
+            self.assertIn("test", macros)
 
     def test_load_modules(self):
         with self.app.app_context():
-            self.assertIn('usd_to_cad', macros)
-            self.assertNotIn('foo name', macros)
+            self.assertIn("usd_to_cad", macros)
+            self.assertNotIn("foo name", macros)

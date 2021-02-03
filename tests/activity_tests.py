@@ -21,9 +21,9 @@ def mock_get_resource_service(resource_name):
 
 class MockPreferenceService:
     def email_notification_is_enabled(self, preferences=None):
-        send_email = preferences.get('email:notification', {}) if isinstance(preferences, dict) else {}
+        send_email = preferences.get("email:notification", {}) if isinstance(preferences, dict) else {}
 
-        return send_email and send_email.get('enabled', False)
+        return send_email and send_email.get("enabled", False)
 
 
 class ActivityTestCase(TestCase):
@@ -31,27 +31,37 @@ class ActivityTestCase(TestCase):
         init_app(self.app)
 
     def test_if_user_is_in_recipients(self):
-        activity = {'recipients': [{'user_id': '1', 'read': True},
-                                   {'user_id': '2', 'read': False}]}
+        activity = {"recipients": [{"user_id": "1", "read": True}, {"user_id": "2", "read": False}]}
 
-        self.assertTrue(ActivityService().is_recipient(activity, '1'))
-        self.assertTrue(ActivityService().is_recipient(activity, '2'))
-        self.assertFalse(ActivityService().is_recipient(activity, '3'))
+        self.assertTrue(ActivityService().is_recipient(activity, "1"))
+        self.assertTrue(ActivityService().is_recipient(activity, "2"))
+        self.assertFalse(ActivityService().is_recipient(activity, "3"))
 
     def test_is_read(self):
-        activity = {'recipients': [{'user_id': '1', 'read': True},
-                                   {'user_id': '2', 'read': False}]}
+        activity = {"recipients": [{"user_id": "1", "read": True}, {"user_id": "2", "read": False}]}
 
-        self.assertTrue(ActivityService().is_read(activity, '1'))
-        self.assertFalse(ActivityService().is_read(activity, '2'))
-        self.assertFalse(ActivityService().is_read(activity, '3'))
+        self.assertTrue(ActivityService().is_read(activity, "1"))
+        self.assertFalse(ActivityService().is_read(activity, "2"))
+        self.assertFalse(ActivityService().is_read(activity, "3"))
 
-    @mock.patch('superdesk.activity.get_resource_service', mock_get_resource_service)
+    @mock.patch("superdesk.activity.get_resource_service", mock_get_resource_service)
     def test_get_recipients_filters_out_users_not_activated(self):
-        users = [{'email': 'test_1@test.com', 'needs_activation': False, 'is_enabled': True, 'is_active': True,
-                  'user_preferences': {'email:notification': {'enabled': True}}},
-                 {'email': 'test_2@test.com', 'needs_activation': True, 'is_enabled': True, 'is_active': True,
-                  'user_preferences': {'email:notification': {'enabled': True}}}]
+        users = [
+            {
+                "email": "test_1@test.com",
+                "needs_activation": False,
+                "is_enabled": True,
+                "is_active": True,
+                "user_preferences": {"email:notification": {"enabled": True}},
+            },
+            {
+                "email": "test_2@test.com",
+                "needs_activation": True,
+                "is_enabled": True,
+                "is_active": True,
+                "user_preferences": {"email:notification": {"enabled": True}},
+            },
+        ]
 
         recipients = get_recipients(user_list=users, activity_name=ACTIVITY_ERROR)
         self.assertEqual(len(recipients), 1)

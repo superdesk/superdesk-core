@@ -15,10 +15,10 @@ class PackagesResource(ItemsResource):
     """A class defining and configuring the /packages API endpoint."""
 
     datasource = {
-        'source': 'items',
-        'search_backend': 'elastic',
-        'elastic_filter': {"bool": {"must": {"term": {"type": "composite"}}}},
-        'default_sort': [('versioncreated', -1)],
+        "source": "items",
+        "search_backend": "elastic",
+        "elastic_filter": {"bool": {"must": {"term": {"type": "composite"}}}},
+        "default_sort": [("versioncreated", -1)],
     }
-    item_methods = ['GET']
-    resource_methods = ['GET']
+    item_methods = ["GET"]
+    resource_methods = ["GET"]

@@ -25,14 +25,13 @@ logger = logging.getLogger(__name__)
 
 
 class FormattersService(BaseService):
-
     def get(self, req, lookup):
         formatters = get_all_formatters()
 
-        if req.args.get('criteria'):
-            formatters = (f for f in formatters if getattr(f, req.args.get('criteria')) is True)
+        if req.args.get("criteria"):
+            formatters = (f for f in formatters if getattr(f, req.args.get("criteria")) is True)
 
-        return ListCursor([{'name': type(f).__name__} for f in formatters])
+        return ListCursor([{"name": type(f).__name__} for f in formatters])
 
     def _get_formatter(self, name):
         formatters = get_all_formatters()
@@ -40,43 +39,44 @@ class FormattersService(BaseService):
 
     def _validate(self, doc):
         """Validates the given story for publish action"""
-        validate_item = {'act': ITEM_PUBLISH, 'type': doc['type'], 'validate': doc}
-        validation_errors = get_resource_service('validate').post([validate_item])
-        if validation_errors[0]:
+        validate_item = {"act": ITEM_PUBLISH, "type": doc["type"], "validate": doc}
+        validation_errors = get_resource_service("validate").validate(validate_item)
+        if validation_errors:
             raise ValidationError(validation_errors)
 
     def create(self, docs, **kwargs):
-        service = get_resource_service('archive')
+        service = get_resource_service("archive")
         doc = docs[0]
-        formatter_name = doc.get('formatter_name')
+        formatter_name = doc.get("formatter_name")
 
         if not formatter_name:
-            raise SuperdeskApiError.badRequestError(_('Formatter name not found'))
+            raise SuperdeskApiError.badRequestError(_("Formatter name not found"))
 
         formatter = self._get_formatter(formatter_name)
 
         if not formatter:
-            raise SuperdeskApiError.badRequestError(_('Formatter not found'))
+            raise SuperdeskApiError.badRequestError(_("Formatter not found"))
 
-        if 'article_id' in doc:
-            article_id = doc.get('article_id')
+        if "article_id" in doc:
+            article_id = doc.get("article_id")
             article = service.find_one(req=None, _id=article_id)
 
             if not article:
-                raise SuperdeskApiError.badRequestError(_('Article not found!'))
+                raise SuperdeskApiError.badRequestError(_("Article not found!"))
 
             try:
                 self._validate(article)
-                sequence, formatted_doc = formatter.format(apply_schema(article), {'_id': '0'}, None)[0]
-                formatted_doc = formatted_doc.replace('\'\'', '\'')
+                sequence, formatted_doc = formatter.format(apply_schema(article), {"_id": "0"}, None)[0]
+                formatted_doc = formatted_doc.replace("''", "'")
 
                 # respond only with the formatted output if output_field is configured
-                if hasattr(formatter, 'output_field'):
+                if hasattr(formatter, "output_field"):
                     formatted_doc = json.loads(formatted_doc)
-                    formatted_doc = formatted_doc.get(formatter.output_field, '').replace('\'\'', '\'')
+                    formatted_doc = formatted_doc.get(formatter.output_field, "").replace("''", "'")
             except Exception as ex:
                 logger.exception(ex)
-                raise SuperdeskApiError.\
-                    badRequestError(_('Error in formatting article: {exception}').format(exception=str(ex)))
+                raise SuperdeskApiError.badRequestError(
+                    _("Error in formatting article: {exception}").format(exception=str(ex))
+                )
 
-            return [{'formatted_doc': formatted_doc}]
+            return [{"formatted_doc": formatted_doc}]

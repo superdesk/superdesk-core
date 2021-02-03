@@ -1,4 +1,3 @@
-
 import os
 import re
 import socket
@@ -13,8 +12,8 @@ from superdesk.utc import utcnow
 
 
 _lock_resource_settings = {
-    'internal_resource': True,
-    'versioning': False,
+    "internal_resource": True,
+    "versioning": False,
 }
 
 logger = logging.getLogger(__name__)
@@ -29,7 +28,7 @@ class SuperdeskMongoLock(MongoLock):
 
     def release(self, key, owner, remove=False):
         if remove:
-            return self.collection.delete_one({'_id': key, 'owner': owner})
+            return self.collection.delete_one({"_id": key, "owner": owner})
         else:
             return super().release(key, owner)
 
@@ -41,22 +40,22 @@ class SuperdeskMongoLock(MongoLock):
         """
         lock_info = self.get_lock_info(key)
         locked = super()._try_get_lock(key, owner, expire)
-        if locked and lock_info and lock_info['locked']:
-            logger.warning('Lock %s expired', key)
+        if locked and lock_info and lock_info["locked"]:
+            logger.warning("Lock %s expired", key)
         return locked
 
 
 def _get_lock():
     """Get mongolock instance using app mongodb."""
-    app.register_resource('_lock', _lock_resource_settings)  # setup dummy resource for locks
-    return SuperdeskMongoLock(client=app.data.mongo.pymongo('_lock').db)
+    app.register_resource("_lock", _lock_resource_settings)  # setup dummy resource for locks
+    return SuperdeskMongoLock(client=app.data.mongo.pymongo("_lock").db)
 
 
 _lock = LocalProxy(_get_lock)
 
 
 def get_host():
-    return 'hostid:{} pid:{}'.format(socket.gethostname(), os.getpid())
+    return "hostid:{} pid:{}".format(socket.gethostname(), os.getpid())
 
 
 def lock(task, host=None, expire=300, timeout=None):
@@ -71,9 +70,9 @@ def lock(task, host=None, expire=300, timeout=None):
         host = get_host()
     got_lock = _lock.lock(task, host, expire=expire, timeout=timeout)
     if got_lock:
-        logger.debug('got lock task=%s host=%s' % (task, host))
+        logger.debug("got lock task=%s host=%s" % (task, host))
     else:
-        logger.debug('task locked already task=%s host=%s' % (task, host))
+        logger.debug("task locked already task=%s host=%s" % (task, host))
     return got_lock
 
 
@@ -88,7 +87,7 @@ def unlock(task, host=None, remove=False):
     """
     if not host:
         host = get_host()
-    logger.debug('releasing lock task=%s host=%s' % (task, host))
+    logger.debug("releasing lock task=%s host=%s" % (task, host))
     return _lock.release(task, host, remove)
 
 
@@ -97,18 +96,22 @@ def remove_locks():
     Removes item related locks that are not in use
     :return:
     """
-    result = _lock.collection.delete_many({'$or': [{'_id': re.compile('^item_move'), 'locked': False},
-                                          {'_id': re.compile('^item_lock'), 'locked': False}]})
-    logger.info('unused item locks deleted count={}'.format(result.deleted_count))
+    result = _lock.collection.delete_many(
+        {
+            "$or": [
+                {"_id": re.compile("^item_move"), "locked": False},
+                {"_id": re.compile("^item_lock"), "locked": False},
+            ]
+        }
+    )
+    logger.info("unused item locks deleted count={}".format(result.deleted_count))
 
 
 def is_locked(task):
     """Get info if task is locked."""
     lock_info = _lock.get_lock_info(task)
     return not (
-        not lock_info
-        or not lock_info['locked']
-        or (lock_info['expire'] is not None and lock_info['expire'] < utcnow())
+        not lock_info or not lock_info["locked"] or (lock_info["expire"] is not None and lock_info["expire"] < utcnow())
     )
 
 

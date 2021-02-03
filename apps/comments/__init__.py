@@ -18,7 +18,7 @@ from .inline_comments import handle_inline_mentions
 
 
 def init_app(app):
-    endpoint_name = 'comments'
+    endpoint_name = "comments"
     service = CommentsService(endpoint_name, backend=superdesk.get_backend())
     CommentsResource(endpoint_name, app=app, service=service)
 

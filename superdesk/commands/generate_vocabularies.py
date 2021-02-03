@@ -69,11 +69,12 @@ class GenerateVocabularies(superdesk.Command):
     """
 
     option_list = [
-        superdesk.Option('-k', '--keys-map', help='key mapping json file'),
-        superdesk.Option('-b', '--base', help='json array to use as base vocabularies'),
-        superdesk.Option('-f', '--force', action="store_true",
-                         help='overwritte "vocabularies.json" if it already exists'),
-        superdesk.Option('source_file', help='plain text file with the vocabularies to create')
+        superdesk.Option("-k", "--keys-map", help="key mapping json file"),
+        superdesk.Option("-b", "--base", help="json array to use as base vocabularies"),
+        superdesk.Option(
+            "-f", "--force", action="store_true", help='overwritte "vocabularies.json" if it already exists'
+        ),
+        superdesk.Option("source_file", help="plain text file with the vocabularies to create"),
     ]
 
     def get_path(self, path):
@@ -90,7 +91,7 @@ class GenerateVocabularies(superdesk.Command):
         else:
             voc = json.load(open(self.get_path(base)))
             if not isinstance(voc, list):
-                raise SystemExit('base vocabularies must be an array')
+                raise SystemExit("base vocabularies must be an array")
 
         if keys_map is None:
             keys_map = {}
@@ -108,7 +109,7 @@ class GenerateVocabularies(superdesk.Command):
             line = line.strip()
             if not line:
                 continue
-            if line.endswith(':'):
+            if line.endswith(":"):
                 skip = False
                 name = line[:-1].strip()
                 extra = None
@@ -118,15 +119,15 @@ class GenerateVocabularies(superdesk.Command):
                         skip = True
                         continue
                     if isinstance(name, dict):
-                        extra = name.get(u'extra')
-                        name = name.get(u'name')
+                        extra = name.get("extra")
+                        name = name.get("name")
                 current_voc = {
-                    '_id': name.lower().replace(' ', '_'),
+                    "_id": name.lower().replace(" ", "_"),
                     "display_name": name,
                     "type": "manageable",
                     "unique_field": "qcode",
                     "service": {"all": 1},
-                    'items': [],
+                    "items": [],
                 }
                 if base_extra:
                     current_voc.update(base_extra)
@@ -136,17 +137,18 @@ class GenerateVocabularies(superdesk.Command):
             elif not skip:
                 if current_voc is None:
                     raise SystemExit(
-                        'Invalid source file! Your file must start with a vocabularies label (it must end with a '
-                        'colon)')
+                        "Invalid source file! Your file must start with a vocabularies label (it must end with a "
+                        "colon)"
+                    )
                 item = {
-                    u'name': line,
-                    u'qcode': line,
-                    u'is_active': True,
+                    "name": line,
+                    "qcode": line,
+                    "is_active": True,
                 }
-                current_voc['items'].append(item)
+                current_voc["items"].append(item)
 
         json.dump(voc, open("vocabularies.json", "w"), indent=4)
         print('Data generated in "vocabularies.json"')
 
 
-superdesk.command('vocabularies:generate', GenerateVocabularies())
+superdesk.command("vocabularies:generate", GenerateVocabularies())

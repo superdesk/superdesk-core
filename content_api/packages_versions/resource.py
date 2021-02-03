@@ -17,12 +17,12 @@ from copy import deepcopy
 class PackagesVersionsResource(Resource):
     item_url = 'regex("[\w,.:-]+")'
     version_schema = deepcopy(schema)
-    version_schema['_id_document'] = {'type': 'string'}
+    version_schema["_id_document"] = {"type": "string"}
     schema = version_schema
 
-    datasource = {'source': 'items_versions'}
+    datasource = {"source": "items_versions"}
 
-    item_methods = ['GET']
-    resource_methods = ['GET']
+    item_methods = ["GET"]
+    resource_methods = ["GET"]
     internal_resource = True
     mongo_prefix = MONGO_PREFIX

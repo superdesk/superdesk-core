@@ -14,7 +14,7 @@ import datetime
 import pytz
 from pytz import utc, timezone  # flake8: noqa
 
-tzinfo = getattr(datetime, 'tzinfo', object)
+tzinfo = getattr(datetime, "tzinfo", object)
 
 
 def utcnow():
@@ -23,7 +23,7 @@ def utcnow():
     Remove microseconds which can't be persisted by mongo so we have
     the values consistent in both mongo and elastic.
     """
-    if hasattr(datetime.datetime, 'now'):
+    if hasattr(datetime.datetime, "now"):
         now = datetime.datetime.now(tz=utc)
     else:
         now = datetime.datetime.utcnow()
@@ -45,7 +45,7 @@ def get_expiry_date(minutes, offset=None):
             except OverflowError:
                 return
         else:
-            raise TypeError('offset must be a datetime.date, not a %s' % type(offset))
+            raise TypeError("offset must be a datetime.date, not a %s" % type(offset))
     else:
         try:
             return utcnow() + datetime.timedelta(minutes=minutes)
@@ -91,8 +91,8 @@ def set_time(current_datetime, timestr):
     :param int second
     """
     if timestr is None:
-        timestr = '00:00:00'
-    time = datetime.datetime.strptime(timestr, '%H:%M:%S')
+        timestr = "00:00:00"
+    time = datetime.datetime.strptime(timestr, "%H:%M:%S")
     return current_datetime.replace(hour=time.hour, minute=time.minute, second=time.second)
 
 
@@ -105,9 +105,9 @@ def get_timezone_offset(local_tz_name, utc_datetime):
     """
     try:
         local_dt = utc_to_local(local_tz_name, utc_datetime)
-        return local_dt.strftime('%z')
+        return local_dt.strftime("%z")
     except Exception:
-        return utcnow().strftime('%z')
+        return utcnow().strftime("%z")
 
 
 def query_datetime(datetime_value, query):
@@ -122,16 +122,16 @@ def query_datetime(datetime_value, query):
     :param dict query: The query parameters used to check against the datetime_value
     :return boolean: True if all comparison operators pass, else False
     """
-    if '$lte' in query and datetime_value > query['$lte']:
+    if "$lte" in query and datetime_value > query["$lte"]:
         return False
-    elif '$lt' in query and datetime_value >= query['$lt']:
+    elif "$lt" in query and datetime_value >= query["$lt"]:
         return False
-    elif '$gte' in query and datetime_value < query['$gte']:
+    elif "$gte" in query and datetime_value < query["$gte"]:
         return False
-    elif '$gt' in query and datetime_value <= query['$gt']:
+    elif "$gt" in query and datetime_value <= query["$gt"]:
         return False
-    elif '$eq' in query and datetime_value != query['$eq']:
+    elif "$eq" in query and datetime_value != query["$eq"]:
         return False
-    elif '$ne' in query and datetime_value == query['$ne']:
+    elif "$ne" in query and datetime_value == query["$ne"]:
         return False
     return True

@@ -11,7 +11,7 @@ Feature: Places
             "_items": [
                 {
                     "code": "3073494",
-                    "continent_code": null,
+                    "continent_code": "",
                     "country": "\u010cesko",
                     "country_code": "CZ",
                     "feature_class": "P",
@@ -20,15 +20,15 @@ Feature: Places
                         "lon": 17.11262
                     },
                     "name": "Koberice",
-                    "region": null,
-                    "region_code": null,
+                    "region": "",
+                    "region_code": "",
                     "scheme": "geonames",
                     "state": "__any_value__",
                     "state_code": "84"
                 },
                 {
                     "code": "3073493",
-                    "continent_code": null,
+                    "continent_code": "",
                     "country": "\u010cesko",
                     "country_code": "CZ",
                     "feature_class": "P",
@@ -37,15 +37,15 @@ Feature: Places
                         "lon": 18.05212
                     },
                     "name": "Kobe\u0159ice",
-                    "region": null,
-                    "region_code": null,
+                    "region": "",
+                    "region_code": "",
                     "scheme": "geonames",
                     "state": "__any_value__",
                     "state_code": "85"
                 },
                 {
                     "code": "3073495",
-                    "continent_code": null,
+                    "continent_code": "",
                     "country": "\u010cesko",
                     "country_code": "CZ",
                     "feature_class": "P",
@@ -54,8 +54,8 @@ Feature: Places
                         "lon": 16.88324
                     },
                     "name": "Kobe\u0159ice",
-                    "region": null,
-                    "region_code": null,
+                    "region": "",
+                    "region_code": "",
                     "scheme": "geonames",
                     "state": "__any_value__",
                     "state_code": "78"

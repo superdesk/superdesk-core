@@ -13,11 +13,7 @@ class Tags(BasePackageElement):
      ``
     """
 
-    DEFAULT_TAGS = {
-        'Root': {
-            'TagColor': 'LightBlue'
-        }
-    }
+    DEFAULT_TAGS = {"Root": {"TagColor": "LightBlue"}}
 
     @property
     def filename(self):
@@ -26,14 +22,11 @@ class Tags(BasePackageElement):
         Used as a filename for a file inside zip container.
         :return str: filename
         """
-        return 'XML/Tags.xml'
+        return "XML/Tags.xml"
 
     def _build_etree(self):
-        self._etree = etree.Element(
-            etree.QName(self.XMLNS_IDPKG, 'Tags'),
-            nsmap={'idPkg': self.XMLNS_IDPKG}
-        )
-        self._etree.set('DOMVersion', self.DOM_VERSION)
+        self._etree = etree.Element(etree.QName(self.XMLNS_IDPKG, "Tags"), nsmap={"idPkg": self.XMLNS_IDPKG})
+        self._etree.set("DOMVersion", self.DOM_VERSION)
         self._add_xmltags()
 
     def _add_xmltags(self):
@@ -46,23 +39,14 @@ class Tags(BasePackageElement):
             # XMLTag
             xmltag = etree.SubElement(
                 self._etree,
-                'XMLTag',
+                "XMLTag",
                 attrib={
-                    'Self': 'XMLTag/{}'.format(tag),
-                    'Name': tag,
-                }
+                    "Self": "XMLTag/{}".format(tag),
+                    "Name": tag,
+                },
             )
             # Properties
-            properties = etree.SubElement(
-                xmltag,
-                'Properties'
-            )
+            properties = etree.SubElement(xmltag, "Properties")
             # TagColor
-            tagcolor = etree.SubElement(
-                properties,
-                'TagColor',
-                attrib={
-                    'type': 'enumeration'
-                }
-            )
-            tagcolor.text = tags[tag]['TagColor']
+            tagcolor = etree.SubElement(properties, "TagColor", attrib={"type": "enumeration"})
+            tagcolor.text = tags[tag]["TagColor"]

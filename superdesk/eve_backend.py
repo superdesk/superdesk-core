@@ -25,24 +25,24 @@ from superdesk.errors import SuperdeskApiError
 from superdesk.notification import push_notification
 
 
-SYSTEM_KEYS = set([
-    '_etag',
-    '_updated',
-    '_created',
-])
+SYSTEM_KEYS = set(
+    [
+        "_etag",
+        "_updated",
+        "_created",
+    ]
+)
 
 
 def get_key(key, parent=None):
-    return '.'.join(filter(None, [parent, key]))
+    return ".".join(filter(None, [parent, key]))
 
 
 def get_diff_keys(updates, original=None, parent=None):
     if original is None:
         original = {}
     if original and parent:
-        keys = set([
-            get_key(key, parent) for key in set(original.keys()) - set(updates.keys())
-        ])
+        keys = set([get_key(key, parent) for key in set(original.keys()) - set(updates.keys())])
     else:
         keys = set()
     for key, val in updates.items():
@@ -53,7 +53,7 @@ def get_diff_keys(updates, original=None, parent=None):
     return {key: 1 for key in keys if key not in SYSTEM_KEYS}
 
 
-class EveBackend():
+class EveBackend:
     """Superdesk data backend, handles mongodb/elastic data storage."""
 
     def find_one(self, endpoint_name, req, **lookup):
@@ -72,14 +72,14 @@ class EveBackend():
             item_search = search_backend.find_one(endpoint_name, req=req, **lookup)
             if item is None and item_search:
                 item = item_search
-                logger.warn(item_msg('item is only in elastic', item))
+                logger.warn(item_msg("item is only in elastic", item))
             elif item_search is None and item:
-                logger.warn(item_msg('item is only in mongo', item))
+                logger.warn(item_msg("item is only in mongo", item))
                 try:
-                    logger.info(item_msg('trying to add item to elastic', item))
+                    logger.info(item_msg("trying to add item to elastic", item))
                     search_backend.insert(endpoint_name, [item])
                 except RequestError as e:
-                    logger.error(item_msg('failed to add item into elastic error={}'.format(str(e)), item))
+                    logger.error(item_msg("failed to add item into elastic error={}".format(str(e)), item))
         return item
 
     def find(self, endpoint_name, where, max_results=0, sort=None):
@@ -105,12 +105,12 @@ class EveBackend():
         :param dict source
         """
         req = ParsedRequest()
-        req.args = {'source': json.dumps(source)}
+        req.args = {"source": json.dumps(source)}
         search_backend = self._lookup_backend(endpoint_name)
         if search_backend:
             return search_backend.find(endpoint_name, req, {})
         else:
-            logger.warn('there is no search backend for %s' % endpoint_name)
+            logger.warn("there is no search backend for %s" % endpoint_name)
 
     def get(self, endpoint_name, req, lookup, **kwargs):
         """Get list of items.
@@ -163,8 +163,8 @@ class EveBackend():
         """
         backend = self._backend(endpoint_name)
 
-        if kwargs.get('query'):
-            kwargs['query'] = backend._mongotize(kwargs['query'], endpoint_name)
+        if kwargs.get("query"):
+            kwargs["query"] = backend._mongotize(kwargs["query"], endpoint_name)
 
         return backend.driver.db[endpoint_name].find_and_modify(**kwargs)
 
@@ -175,12 +175,11 @@ class EveBackend():
         :param docs: list of docs to be inserted
         """
         for doc in docs:
-            doc.pop('_type', None)
+            doc.pop("_type", None)
         ids = self.create_in_mongo(endpoint_name, docs, **kwargs)
         self.create_in_search(endpoint_name, docs, **kwargs)
         for doc in docs:
-            push_notification('resource:created', _id=str(doc['_id']),
-                              resource=endpoint_name)
+            push_notification("resource:created", _id=str(doc["_id"]), resource=endpoint_name)
         return ids
 
     def create_in_mongo(self, endpoint_name, docs, **kwargs):
@@ -247,8 +246,9 @@ class EveBackend():
 
         try:
             backend.update(endpoint_name, id, updates, original)
-            push_notification('resource:updated', _id=str(id),
-                              resource=endpoint_name, fields=get_diff_keys(updates, original))
+            push_notification(
+                "resource:updated", _id=str(id), resource=endpoint_name, fields=get_diff_keys(updates, original)
+            )
         except eve.io.base.DataLayer.OriginalChangedError:
             if not backend.find_one(endpoint_name, req=None, _id=id) and search_backend:
                 # item is in elastic, not in mongo - not good
@@ -259,8 +259,14 @@ class EveBackend():
                 raise SuperdeskApiError.notFoundError()
             else:
                 # item is there, but no change was done - ok
-                logger.error('Item : {} not updated in collection {}. '
-                             'Updates are : {}'.format(id, endpoint_name, updates))
+                logger.warning(
+                    "Item was not updated in mongo.",
+                    extra=dict(
+                        id=id,
+                        resource=endpoint_name,
+                        updates=updates,
+                    ),
+                )
                 return updates
 
         if search_backend:
@@ -338,7 +344,7 @@ class EveBackend():
         :param lookup: User mongo query syntax. example 1. ``{'_id':123}``, 2. ``{'item_id': {'$in': [123, 234]}}``
         :returns: Returns list of ids which were removed.
         """
-        docs = list(self.get_from_mongo(endpoint_name, lookup=lookup, req=ParsedRequest()))
+        docs = list(self.get_from_mongo(endpoint_name, lookup=lookup, req=ParsedRequest()).sort("_id", 1))
         removed_ids = self.delete_docs(endpoint_name, docs)
         if len(docs) and not len(removed_ids):
             logger.warn("No documents for %s resource were deleted using lookup %s", endpoint_name, lookup)
@@ -359,16 +365,15 @@ class EveBackend():
                     self.remove_from_search(endpoint_name, doc)
                     removed_ids.append(doc[config.ID_FIELD])
                 except NotFoundError:
-                    logger.warning('item missing from elastic _id=%s' % (doc[config.ID_FIELD], ))
+                    logger.warning("item missing from elastic _id=%s" % (doc[config.ID_FIELD],))
                     removed_ids.append(doc[config.ID_FIELD])
                 except Exception:
-                    logger.exception('item can not be removed from elastic _id=%s' % (doc[config.ID_FIELD], ))
+                    logger.exception("item can not be removed from elastic _id=%s" % (doc[config.ID_FIELD],))
         if len(removed_ids):
-            backend.remove(endpoint_name, {config.ID_FIELD: {'$in': removed_ids}})
+            backend.remove(endpoint_name, {config.ID_FIELD: {"$in": removed_ids}})
             logger.info("Removed %d documents from %s.", len(removed_ids), endpoint_name)
             for doc in docs:
-                push_notification('resource:deleted', _id=str(doc['_id']),
-                                  resource=endpoint_name)
+                push_notification("resource:deleted", _id=str(doc["_id"]), resource=endpoint_name)
         else:
             logger.warn("No documents for %s resource were deleted.", endpoint_name)
         return removed_ids
@@ -382,8 +387,8 @@ class EveBackend():
         backend = self._backend(endpoint_name)
         search_backend = self._lookup_backend(endpoint_name)
         if search_backend:
-            raise SuperdeskApiError.forbiddenError(message='Can not remove from endpoint with a defined search')
-        backend.remove(endpoint_name, {config.ID_FIELD: {'$in': ids}})
+            raise SuperdeskApiError.forbiddenError(message="Can not remove from endpoint with a defined search")
+        backend.remove(endpoint_name, {config.ID_FIELD: {"$in": ids}})
         return len(ids)
 
     def remove_from_search(self, endpoint_name, doc):
@@ -393,9 +398,9 @@ class EveBackend():
         :param dict doc: Document to delete
         """
         search_backend = app.data._search_backend(endpoint_name)
-        search_backend.remove(endpoint_name,
-                              {'_id': doc.get(config.ID_FIELD)},
-                              search_backend.get_parent_id(endpoint_name, doc))
+        search_backend.remove(
+            endpoint_name, {"_id": doc.get(config.ID_FIELD)}, search_backend.get_parent_id(endpoint_name, doc)
+        )
 
     def _datasource(self, endpoint_name):
         return app.data.datasource(endpoint_name)[0]
@@ -421,7 +426,7 @@ class EveBackend():
         if search_backend:
             parent = search_backend.get_parent_id(endpoint_name, doc)
             if parent:
-                lookup['parent'] = parent
+                lookup["parent"] = parent
 
     def _cursor_hook(self, cursor, req):
         """Apply additional methods for cursor"""
@@ -433,7 +438,5 @@ class EveBackend():
         if isinstance(cursor, MongoCursor):
             # http://api.mongodb.com/python/current/examples/collations.html
             # https://docs.mongodb.com/manual/reference/collation/
-            if 'collation' in req.args:
-                cursor.collation(Collation(
-                    **std_json.loads(req.args['collation'])
-                ))
+            if "collation" in req.args:
+                cursor.collation(Collation(**std_json.loads(req.args["collation"])))

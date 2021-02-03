@@ -16,17 +16,17 @@ from .users_service import ADUsersService, UsersResource, is_admin  # NOQA
 
 
 def init_app(app):
-    endpoint_name = 'users'
+    endpoint_name = "users"
     service = ADUsersService(endpoint_name, backend=superdesk.get_backend())
     UsersResource(endpoint_name, app=app, service=service)
 
-    superdesk.privilege(name='users', label='User Management', description='User can manage users.')
+    superdesk.privilege(name="users", label="User Management", description="User can manage users.")
 
     # Registering with intrinsic privileges because: A user should be allowed to update their own profile.
-    superdesk.intrinsic_privilege(resource_name='users', method=['PATCH'])
+    superdesk.intrinsic_privilege(resource_name="users", method=["PATCH"])
 
     # we need to use the same endpoint as database auth because it is called in the same location
-    endpoint_name = 'auth_db'
+    endpoint_name = "auth_db"
     service = ADAuthService(endpoint_name, backend=superdesk.get_backend())
     AuthResource(endpoint_name, app=app, service=service)
 

@@ -15,6 +15,6 @@ from apps.archived.archived import ArchivedResource, ArchivedService
 
 def init_app(app):
 
-    endpoint_name = 'archived'
+    endpoint_name = "archived"
     service = ArchivedService(endpoint_name, backend=superdesk.get_backend())
     ArchivedResource(endpoint_name, app=app, service=service)

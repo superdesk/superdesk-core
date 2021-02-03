@@ -21,12 +21,12 @@ from superdesk.storage.superdesk_file import generate_response_for_file
 bp = superdesk.Blueprint('assets', __name__)
 
 
-@bp.route('/assets/<path:media_id>', methods=['GET'])
+@bp.route("/assets/<path:media_id>", methods=["GET"])
 def get_media_streamed(media_id):
-    if not app.auth.authorized([], 'assets', 'GET'):
+    if not app.auth.authorized([], "assets", "GET"):
         return app.auth.authenticate()
     try:
-        media_file = app.media.get(media_id, 'upload')
+        media_file = app.media.get(media_id, "upload")
     except bson.errors.InvalidId:
         media_file = None
     if media_file:
@@ -40,7 +40,7 @@ def get_media_streamed(media_id):
 
 
 def upload_url(media_id):
-    return _upload_url(media_id, view='assets.get_media_streamed')
+    return _upload_url(media_id, view="assets.get_media_streamed")
 
 
 def init_app(app):

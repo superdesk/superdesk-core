@@ -903,7 +903,7 @@ Feature: Package Publishing
       When we publish "compositeitem" with "publish" type and "published" state
       Then we get error 400
       """
-        {"_issues": {"validator exception": "['Item cannot contain associated spiked item']"}, "_status": "ERR"}
+        {"_issues": {"validator exception": "['Item cannot contain associated spiked item.']"}, "_status": "ERR"}
       """
 
 

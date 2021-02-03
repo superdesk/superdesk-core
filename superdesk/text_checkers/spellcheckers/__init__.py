@@ -30,36 +30,32 @@ LANG_ANY = "*"
 
 class SpellcheckerResource(Resource):
     schema = {
-        'spellchecker': {
-            'type': 'string',
-            'required': True,
+        "spellchecker": {
+            "type": "string",
+            "required": True,
         },
-        'text': {
-            'type': 'string',
-            'required': True,
+        "text": {
+            "type": "string",
+            "required": True,
         },
-        'language': {
-            'type': 'string',
-            'nullable': True,
+        "language": {
+            "type": "string",
+            "nullable": True,
         },
-        'suggestions': {
-            'type': 'boolean',
-            'default': False,
+        "suggestions": {
+            "type": "boolean",
+            "default": False,
         },
         # if True, spelling errors which are in internal dictionary will be ignored
-        'use_internal_dict': {
-            'type': 'boolean',
-            'default': True,
+        "use_internal_dict": {
+            "type": "boolean",
+            "default": True,
         },
-        'ignore': {
-            'type': 'list',
-            'nullable': True,
-            'default': None
-        },
+        "ignore": {"type": "list", "nullable": True, "default": None},
     }
     internal_resource = False
-    resource_methods = ['POST']
-    item_methods = ['GET']
+    resource_methods = ["POST"]
+    item_methods = ["GET"]
     projection = False
 
 
@@ -111,29 +107,29 @@ class SpellcheckerService(BaseService):
         if spellchecker.name == SPELLCHECKER_DEFAULT:
             # default spellchecker already works with internal dictionaries
             return
-        errors = check_data['errors']
+        errors = check_data["errors"]
         if not errors:
             return
         lang = spellchecker.get_language(language)
-        dictionaries_service = superdesk.get_resource_service('dictionaries')
+        dictionaries_service = superdesk.get_resource_service("dictionaries")
         model = dictionaries_service.get_model_for_lang(lang)
         to_remove = []
         for error in errors:
-            if error.get('type', 'spelling') != 'spelling':
+            if error.get("type", "spelling") != "spelling":
                 continue
-            if error['text'].lower() in model:
+            if error["text"].lower() in model:
                 to_remove.append(error)
         for error in to_remove:
             errors.remove(error)
 
     def remove_ignored(self, check_data, ignore):
         ignore = {i.lower() for i in ignore}
-        errors = check_data['errors']
+        errors = check_data["errors"]
         if not errors:
             return
         to_remove = []
         for error in errors:
-            if error['text'].lower() in ignore:
+            if error["text"].lower() in ignore:
                 to_remove.append(error)
         for error in to_remove:
             errors.remove(error)
@@ -142,17 +138,17 @@ class SpellcheckerService(BaseService):
         # we override create because we don't want anything stored in database
         doc = docs[0]
         sc_name = doc["spellchecker"]
-        language = doc.get('language')
+        language = doc.get("language")
         try:
             spellchecker = registered_spellcheckers[sc_name]
         except KeyError:
             raise SuperdeskApiError.notFoundError("{sc_name} spellchecker can't be found".format(sc_name=sc_name))
 
         if doc["suggestions"]:
-            check_data = spellchecker.suggest(doc['text'], language)
+            check_data = spellchecker.suggest(doc["text"], language)
             assert "suggestions" in check_data
         else:
-            check_data = spellchecker.check(doc['text'], language)
+            check_data = spellchecker.check(doc["text"], language)
             assert "errors" in check_data
             if doc["use_internal_dict"]:
                 self.remove_errors_in_dict(spellchecker, language, check_data)
@@ -171,18 +167,18 @@ class SpellcheckersListService(BaseService):
     """Service listing registered spell checkers"""
 
     def on_fetched(self, doc):
-        doc['spellcheckers'] = [s.serialize() for s in registered_spellcheckers.values()]
+        doc["spellcheckers"] = [s.serialize() for s in registered_spellcheckers.values()]
 
 
 def init_app(app):
-    endpoint_name = 'spellcheckers_list'
+    endpoint_name = "spellcheckers_list"
     service = SpellcheckersListService(endpoint_name, backend=superdesk.get_backend())
     SpellcheckersListResource(endpoint_name, app=app, service=service)
 
-    endpoint_name = 'spellchecker'
+    endpoint_name = "spellchecker"
     service = SpellcheckerService(endpoint_name, backend=superdesk.get_backend())
     SpellcheckerResource(endpoint_name, app=app, service=service)
-    superdesk.intrinsic_privilege(endpoint_name, method=['POST'])
+    superdesk.intrinsic_privilege(endpoint_name, method=["POST"])
 
     if AUTO_IMPORT:
         tools.import_services(app, __name__, SpellcheckerBase)

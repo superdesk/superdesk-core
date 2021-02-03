@@ -20,7 +20,7 @@ class SearchServiceTestCase(ApiTestCase):
 
     def setUp(self):
         self.app = Flask(__name__)
-        self.ctx = self.app.test_request_context('/')
+        self.ctx = self.app.test_request_context("/")
         self.ctx.push()
 
     def tearDown(self):
@@ -43,42 +43,41 @@ class SearchServiceTestCase(ApiTestCase):
         return self._get_target_class()(*args, **kwargs)
 
 
-fake_super_get = MagicMock(name='fake super().get')
+fake_super_get = MagicMock(name="fake super().get")
 
 
-@mock.patch('content_api.items.service.BaseService.get', fake_super_get)
+@mock.patch("content_api.items.service.BaseService.get", fake_super_get)
 class MapResponseTestCast(SearchServiceTestCase):
-
     def test_format_cv(self):
         instance = self._make_one()
-        item = instance._format_cv_item({'code': 'x', 'name': 'test'})
-        self.assertEqual(item['qcode'], 'x')
+        item = instance._format_cv_item({"code": "x", "name": "test"})
+        self.assertEqual(item["qcode"], "x")
 
     def test_map_item(self):
         instance = self._make_one()
         item = {
-            'service': [{'code': 'x', 'name': 'foo'}],
-            'genre': [{'code': 'y', 'name': 'bar'}],
-            'subject': [{'code': 'a', 'name': 'xyz'}],
-            'place': [{'code': 'a', 'name': 'xyz'}],
-            'headline': 'headline'
+            "service": [{"code": "x", "name": "foo"}],
+            "genre": [{"code": "y", "name": "bar"}],
+            "subject": [{"code": "a", "name": "xyz"}],
+            "place": [{"code": "a", "name": "xyz"}],
+            "headline": "headline",
         }
 
         instance._map_item(item)
 
         expected = {
-            'anpa_category': [{'qcode': 'x', 'name': 'foo'}],
-            'genre': [{'qcode': 'y', 'name': 'bar'}],
-            'subject': [{'qcode': 'a', 'name': 'xyz'}],
-            'place': [{'qcode': 'a', 'name': 'xyz'}],
-            'headline': 'headline'
+            "anpa_category": [{"qcode": "x", "name": "foo"}],
+            "genre": [{"qcode": "y", "name": "bar"}],
+            "subject": [{"qcode": "a", "name": "xyz"}],
+            "place": [{"qcode": "a", "name": "xyz"}],
+            "headline": "headline",
         }
 
         self.assertEqual(item, expected)
 
     def test_aggregations(self):
         fake_request = MagicMock()
-        fake_request.args = MultiDict([('aggregations', 1)])
+        fake_request.args = MultiDict([("aggregations", 1)])
         lookup = {}
         fake_response = MagicMock()
         fake_response.count.return_value = 1
@@ -91,10 +90,10 @@ class MapResponseTestCast(SearchServiceTestCase):
         args, _ = fake_super_get.call_args
 
         self.assertGreater(len(args), 0)
-        self.assertEqual(args[0].args['aggregations'], 1)
+        self.assertEqual(args[0].args["aggregations"], 1)
 
         fake_request = MagicMock()
-        fake_request.args = MultiDict([('aggregations', 0)])
+        fake_request.args = MultiDict([("aggregations", 0)])
         lookup = {}
 
         instance = self._make_one()
@@ -104,4 +103,4 @@ class MapResponseTestCast(SearchServiceTestCase):
         args, _ = fake_super_get.call_args
 
         self.assertGreater(len(args), 0)
-        self.assertEqual(args[0].args['aggregations'], 0)
+        self.assertEqual(args[0].args["aggregations"], 0)

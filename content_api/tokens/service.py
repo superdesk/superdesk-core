@@ -15,9 +15,8 @@ from superdesk.utils import get_random_token
 
 
 class CompanyTokenService(superdesk.Service):
-
     def create(self, docs, **kwargs):
         for doc in docs:
-            doc['_id'] = get_random_token()
-            doc.setdefault('expiry', utcnow() + timedelta(days=7))
+            doc["_id"] = get_random_token()
+            doc.setdefault("expiry", utcnow() + timedelta(days=7))
         return super().create(docs, **kwargs)

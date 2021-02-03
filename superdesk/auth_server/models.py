@@ -19,17 +19,15 @@ logger = logging.getLogger(__name__)
 
 
 class OAuth2Client(ClientMixin):
-
     def __init__(self, data):
-        self._id = data['_id']
-        self.pwd_hash = data['password']
-        scope = data['scope']
+        self._id = data["_id"]
+        self.pwd_hash = data["password"]
+        scope = data["scope"]
         if not allowed_scopes.issuperset(scope):
-            invalid_scopes = ', '.join(set(scope) - allowed_scopes)
+            invalid_scopes = ", ".join(set(scope) - allowed_scopes)
             msg = (
-                'Invalid scopes: those scope values are not allowed, '
-                'please check "AUTH_SERVER_CLIENTS" in settings: {invalid_scopes}'
-                .format(invalid_scopes=invalid_scopes)
+                "Invalid scopes: those scope values are not allowed, "
+                'please check "AUTH_SERVER_CLIENTS" in settings: {invalid_scopes}'.format(invalid_scopes=invalid_scopes)
             )
             raise ValueError(msg)
         self.scope = scope
@@ -39,26 +37,24 @@ class OAuth2Client(ClientMixin):
         return str(self._id)
 
     def check_token_endpoint_auth_method(self, method):
-        return method == 'client_secret_basic'
+        return method == "client_secret_basic"
 
     def check_client_secret(self, client_secret):
         return bcrypt.checkpw(client_secret.encode(), self.pwd_hash.encode())
 
     def check_grant_type(self, grant_type):
-        return grant_type == 'client_credentials'
+        return grant_type == "client_credentials"
 
     def get_allowed_scope(self, scope):
-        return ''
+        return ""
 
 
 def query_client(client_id):
-    clients_service = superdesk.get_resource_service('auth_server_clients')
+    clients_service = superdesk.get_resource_service("auth_server_clients")
     try:
         client_data = clients_service.find_one(req=None, _id=ObjectId(client_id))
     except InvalidId as e:
-        logger.error(
-            "Invalid 'client_id' was provided. Exception: {}".format(e)
-        )
+        logger.error("Invalid 'client_id' was provided. Exception: {}".format(e))
         return None
 
     if client_data is None:

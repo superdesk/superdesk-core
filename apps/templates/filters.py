@@ -39,22 +39,24 @@ def format_datetime_filter(date_or_string, timezone_string=None, date_format=Non
             return str(date_time)
 
     except Exception:
-        logger.warning('Failed to convert datetime. Arguments: Date - {} Timezone - {} format - {}.'.format(
-            date_or_string, timezone_string, date_format
-        ))
-        return ''
+        logger.warning(
+            "Failed to convert datetime. Arguments: Date - {} Timezone - {} format - {}.".format(
+                date_or_string, timezone_string, date_format
+            )
+        )
+        return ""
 
 
 def first_paragraph_filter(input_string):
     try:
-        elem = parse_html(input_string, content='html')
+        elem = parse_html(input_string, content="html")
     except ValueError as e:
         logger.warning(e)
     else:
         # all non-empty paragraphs: ignores <p><br></p> sections
-        for p in elem.iterfind('.//p'):
+        for p in elem.iterfind(".//p"):
             if p.text:
                 return etree.tostring(p, encoding="unicode")
 
-    logger.warning('Failed to locate the first paragraph from input_string: {}.'.format(input_string))
-    return ''
+    logger.warning("Failed to locate the first paragraph from input_string: {}.".format(input_string))
+    return ""

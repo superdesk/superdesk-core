@@ -33,7 +33,7 @@ def format_id(_id):
 
 class SuperdeskGridFSMediaStorage(SuperdeskMediaStorage, GridFSMediaStorage):
     def get(self, _id, resource=None):
-        logger.debug('Getting media file with id= %s' % _id)
+        logger.debug("Getting media file with id= %s" % _id)
         _id = format_id(_id)
         try:
             media_file = self.fs(resource).get(_id)
@@ -45,7 +45,7 @@ class SuperdeskGridFSMediaStorage(SuperdeskMediaStorage, GridFSMediaStorage):
                     try:
                         media_file.metadata[k] = json.loads(v)
                     except ValueError:
-                        logger.info('Non JSON metadata for file: %s with key: %s and value: %s', _id, k, v)
+                        logger.info("Non JSON metadata for file: %s with key: %s and value: %s", _id, k, v)
         return media_file
 
     def url_for_media(self, media_id, content_type=None):
@@ -53,9 +53,9 @@ class SuperdeskGridFSMediaStorage(SuperdeskMediaStorage, GridFSMediaStorage):
 
         :param media_id: media id from media_id method
         """
-        ext = mimetypes.guess_extension(content_type or '') or ''
-        if ext in ('.jpe', '.jpeg'):
-            ext = '.jpg'
+        ext = mimetypes.guess_extension(content_type or "") or ""
+        if ext in (".jpe", ".jpeg"):
+            ext = ".jpg"
         return self.app.upload_url(str(media_id) + ext)
 
     def url_for_download(self, media_id, content_type=None):
@@ -79,7 +79,7 @@ class SuperdeskGridFSMediaStorage(SuperdeskMediaStorage, GridFSMediaStorage):
         return f'/assets/{media_id}'
 
     def fetch_rendition(self, rendition):
-        return self.get(rendition.get('media'), 'upload')
+        return self.get(rendition.get("media"), "upload")
 
     def put(self, content, filename=None, content_type=None, metadata=None, resource=None, folder=None, **kwargs):
         """Store content in gridfs.
@@ -96,25 +96,26 @@ class SuperdeskGridFSMediaStorage(SuperdeskMediaStorage, GridFSMediaStorage):
         # try to determine mimetype on the server
         content_type = self._get_mimetype(content, filename, content_type)
 
-        if '_id' in kwargs:
-            kwargs['_id'] = format_id(kwargs['_id'])
+        if "_id" in kwargs:
+            kwargs["_id"] = format_id(kwargs["_id"])
 
         if folder:
-            if folder[-1] == '/':
+            if folder[-1] == "/":
                 folder = folder[:-1]
 
             if filename:
-                filename = '{}/{}'.format(folder, filename)
+                filename = "{}/{}".format(folder, filename)
 
         try:
-            logger.info('Adding file {} to the GridFS'.format(filename))
-            return self.fs(resource).put(content, content_type=content_type,
-                                         filename=filename, metadata=metadata, **kwargs)
+            logger.info("Adding file {} to the GridFS".format(filename))
+            return self.fs(resource).put(
+                content, content_type=content_type, filename=filename, metadata=metadata, **kwargs
+            )
         except gridfs.errors.FileExists:
-            logger.info('File exists filename=%s id=%s' % (filename, kwargs['_id']))
+            logger.info("File exists filename=%s id=%s" % (filename, kwargs["_id"]))
 
     def fs(self, resource=None):
-        resource = resource or 'upload'
+        resource = resource or "upload"
         driver = self.app.data.mongo
         px = driver.current_mongo_prefix(resource)
         if px not in self._fs:
@@ -123,11 +124,11 @@ class SuperdeskGridFSMediaStorage(SuperdeskMediaStorage, GridFSMediaStorage):
 
     def remove_unreferenced_files(self, existing_files, resource=None):
         """Get the files from Grid FS and compare against existing files and delete the orphans."""
-        current_files = self.fs(resource).find({'_id': {'$nin': list(existing_files)}})
+        current_files = self.fs(resource).find({"_id": {"$nin": list(existing_files)}})
         for file_id in (file._id for file in current_files if str(file._id) not in existing_files):
-            print('Removing unused file: ', file_id)
+            print("Removing unused file: ", file_id)
             self.delete(file_id)
-        print('Image cleaning completed successfully.')
+        print("Image cleaning completed successfully.")
 
     def find(self, folder=None, upload_date=None, resource=None):
         """Search for files in the GridFS
@@ -141,11 +142,11 @@ class SuperdeskGridFSMediaStorage(SuperdeskMediaStorage, GridFSMediaStorage):
         :param resource: The resource type to use
         :return list: List of files that matched the provided parameters
         """
-        folder_query = {'filename': {'$regex': '^{}/'.format(folder)}} if folder else None
-        date_query = {'uploadDate': upload_date} if upload_date else None
+        folder_query = {"filename": {"$regex": "^{}/".format(folder)}} if folder else None
+        date_query = {"uploadDate": upload_date} if upload_date else None
 
         if folder and upload_date:
-            query = {'$and': [folder_query, date_query]}
+            query = {"$and": [folder_query, date_query]}
         elif folder:
             query = folder_query
         elif date_query:
@@ -156,15 +157,17 @@ class SuperdeskGridFSMediaStorage(SuperdeskMediaStorage, GridFSMediaStorage):
         files = []
         for file in self.fs(resource).find(query):
             try:
-                files.append({
-                    '_id': file._id,
-                    'filename': file.filename,
-                    'upload_date': file.upload_date,
-                    'size': file.length,
-                    '_etag': file.md5
-                })
+                files.append(
+                    {
+                        "_id": file._id,
+                        "filename": file.filename,
+                        "upload_date": file.upload_date,
+                        "size": file.length,
+                        "_etag": file.md5,
+                    }
+                )
             except AttributeError as e:
-                logging.warning('Failed to get file attributes. {}'.format(e))
+                logging.warning("Failed to get file attributes. {}".format(e))
         return files
 
     def exists(self, id_or_filename, resource):

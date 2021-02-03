@@ -21,10 +21,10 @@ from superdesk.websockets_comms import SocketMessageProducer
 
 
 logger = logging.getLogger(__name__)
-exchange_name = 'socket_notification'
+exchange_name = "socket_notification"
 
 
-class ClosedSocket():
+class ClosedSocket:
     """Mimic closed socket to simplify logic when connection can't be established at first place."""
 
     def __init__(self):
@@ -36,8 +36,9 @@ class ClosedSocket():
 
 def init_app(app):
     try:
-        app.notification_client = SocketMessageProducer(app.config['CELERY_BROKER_URL'],
-                                                        app.config.get('WEBSOCKET_EXCHANGE'))
+        app.notification_client = SocketMessageProducer(
+            app.config["CELERY_BROKER_URL"], app.config.get("WEBSOCKET_EXCHANGE")
+        )
     except (RuntimeError, OSError):
         # not working now, but we can try later when actually sending something
         app.notification_client = ClosedSocket()
@@ -45,8 +46,8 @@ def init_app(app):
 
 def _create_socket_message(**kwargs):
     """Send out all kwargs as json string."""
-    kwargs.setdefault('_created', datetime.utcnow().isoformat())
-    kwargs.setdefault('_process', os.getpid())
+    kwargs.setdefault("_created", datetime.utcnow().isoformat())
+    kwargs.setdefault("_process", os.getpid())
     return json.dumps(kwargs, default=json_serialize_datetime_objectId)
 
 
@@ -57,9 +58,9 @@ def push_notification(name, **kwargs):
 
     :param name: event name
     """
-    logger.debug('pushing event {0} ({1})'.format(name, json.dumps(kwargs, default=json_serialize_datetime_objectId)))
+    logger.debug("pushing event {0} ({1})".format(name, json.dumps(kwargs, default=json_serialize_datetime_objectId)))
 
-    if not getattr(app, 'notification_client', None):
+    if not getattr(app, "notification_client", None):
         # not initialized - ignore
         # this could be the case for content/production api
         return
@@ -69,12 +70,12 @@ def push_notification(name, **kwargs):
         init_app(app)
 
     if not app.notification_client.open:
-        logger.warning('No connection to broker. Dropping event %s' % name)
+        logger.warning("No connection to broker. Dropping event %s" % name)
         return
 
     try:
         message = _create_socket_message(event=name, extra=kwargs)
-        logger.debug('Sending the message: {} to the broker.'.format(message))
+        logger.debug("Sending the message: {} to the broker.".format(message))
         app.notification_client.send(message)
     except Exception as err:
         logger.exception(err)
