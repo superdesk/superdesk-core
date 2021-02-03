@@ -508,6 +508,9 @@ class VocabulariesService(BaseService):
 
         return items
 
+    def get_languages(self):
+        return self.get_items(_id="languages")
+
 
 def is_related_content(item_name, related_content=None):
     if related_content is None:
