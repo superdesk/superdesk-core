@@ -27,13 +27,13 @@ class SAMSFileWrapper(SuperdeskFile):
         super().__init__()
         self.write(file.content)
         self.seek(0)
-        self.content_type = asset['mimetype']
-        self.length = asset['length']
-        self._name = asset['name']
-        self.filename = asset['filename']
-        self.upload_date = str_to_date(asset['_updated'])
-        self.md5 = asset['_etag']
-        self._id = asset['_id']
+        self.content_type = asset["mimetype"]
+        self.length = asset["length"]
+        self._name = asset["name"]
+        self.filename = asset["filename"]
+        self.upload_date = str_to_date(asset["_updated"])
+        self.md5 = asset["_etag"]
+        self._id = asset["_id"]
 
 
 def get_asset_from_sams(client: SamsClient, asset_id: ObjectId) -> Optional[Dict[str, Any]]:
@@ -70,7 +70,7 @@ def get_asset_public_url(client: SamsClient, asset_id: ObjectId) -> Optional[str
     asset = get_asset_from_sams(client, asset_id)
 
     if asset:
-        return (asset['_links'].get('public') or {}).get('href')
+        return (asset["_links"].get("public") or {}).get("href")
 
     return None
 
@@ -78,15 +78,15 @@ def get_asset_public_url(client: SamsClient, asset_id: ObjectId) -> Optional[str
 def get_default_set_id_for_upload(client: SamsClient, data: Dict[str, Any]) -> ObjectId:
     """Returns the Set ID to use for a file upload"""
 
-    if not data.get('set_id'):
+    if not data.get("set_id"):
         # TODO: Implement default sets for Desk/Module (i.e. Planning)
         #       For now, simply return the first Set found
-        response = client.sets.search(params={'max_results': 1})
+        response = client.sets.search(params={"max_results": 1})
         raise_sams_error(response)
-        set_item = response.json()['_items'][0]
-        return ObjectId(set_item['_id'])
+        set_item = response.json()["_items"][0]
+        return ObjectId(set_item["_id"])
 
-    return ObjectId(data['set_id'])
+    return ObjectId(data["set_id"])
 
 
 def raise_sams_error(response: Response):
@@ -102,7 +102,7 @@ def raise_sams_error(response: Response):
         error = response.json()
         raise SuperdeskApiError(
             status_code=response.status_code,
-            message=error.get('description') or '',
+            message=error.get("description") or "",
             payload=error,
-            exception=http_error
+            exception=http_error,
         )

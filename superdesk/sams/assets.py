@@ -32,10 +32,10 @@ from apps.auth import get_auth, get_user_id
 from .client import get_sams_client
 
 logger = logging.getLogger(__name__)
-assets_bp = superdesk.Blueprint('sams_assets', __name__)
+assets_bp = superdesk.Blueprint("sams_assets", __name__)
 
 
-@assets_bp.route('/sams/assets', methods=['GET'])
+@assets_bp.route("/sams/assets", methods=["GET"])
 def get():
     """
     Returns a list of all the registered assets
@@ -44,7 +44,7 @@ def get():
     return assets.json(), assets.status_code
 
 
-@assets_bp.route('/sams/assets/<item_id>', methods=['GET'])
+@assets_bp.route("/sams/assets/<item_id>", methods=["GET"])
 def find_one(item_id):
     """
     Uses item_id and returns the corresponding
@@ -54,7 +54,7 @@ def find_one(item_id):
     return item.json(), item.status_code
 
 
-@assets_bp.route('/sams/assets/binary/<item_id>', methods=['GET'])
+@assets_bp.route("/sams/assets/binary/<item_id>", methods=["GET"])
 def get_binary(item_id):
     """
     Uses item_id and returns the corresponding
@@ -64,72 +64,64 @@ def get_binary(item_id):
     return generate_response_for_file(file)
 
 
-@assets_bp.route('/sams/assets', methods=['POST'])
+@assets_bp.route("/sams/assets", methods=["POST"])
 def create():
     """
     Creates new Asset
     """
-    files = {'binary': request.files['binary']}
+    files = {"binary": request.files["binary"]}
     docs = request.form.to_dict()
-    post_response = get_sams_client().assets.create(
-        docs=docs,
-        files=files,
-        external_user_id=get_user_id(True)
-    )
+    post_response = get_sams_client().assets.create(docs=docs, files=files, external_user_id=get_user_id(True))
     if post_response.status_code == 201:
         push_notification(
-            'sams:asset:created',
-            item_id=post_response.json()['_id'],
+            "sams:asset:created",
+            item_id=post_response.json()["_id"],
             user_id=get_user_id(True),
-            session_id=get_auth()['_id'],
-            _etag=post_response.json()['_etag'],
-            extension='sams')
+            session_id=get_auth()["_id"],
+            _etag=post_response.json()["_etag"],
+            extension="sams",
+        )
     return post_response.json(), post_response.status_code
 
 
-@assets_bp.route('/sams/assets/<item_id>', methods=['DELETE'])
+@assets_bp.route("/sams/assets/<item_id>", methods=["DELETE"])
 def delete(item_id):
     """
     Uses item_id and deletes the corresponding asset
     """
     try:
-        etag = request.headers['If-Match']
+        etag = request.headers["If-Match"]
     except KeyError:
-        raise SuperdeskApiError.badRequestError(
-            "If-Match field missing in header"
-        )
+        raise SuperdeskApiError.badRequestError("If-Match field missing in header")
 
-    delete_response = get_sams_client().assets.delete(
-        item_id=item_id, headers={'If-Match': etag}
-    )
+    delete_response = get_sams_client().assets.delete(item_id=item_id, headers={"If-Match": etag})
     if delete_response.status_code != 204:
         return delete_response.json(), delete_response.status_code
     if delete_response.status_code == 204:
         push_notification(
-            'sams:asset:deleted',
+            "sams:asset:deleted",
             item_id=item_id,
             user_id=get_user_id(True),
-            session_id=get_auth()['_id'],
-            extension='sams')
-    return '', delete_response.status_code
+            session_id=get_auth()["_id"],
+            extension="sams",
+        )
+    return "", delete_response.status_code
 
 
-@assets_bp.route('/sams/assets/<item_id>', methods=['PATCH'])
+@assets_bp.route("/sams/assets/<item_id>", methods=["PATCH"])
 def update(item_id):
     """
     Uses item_id and updates the corresponding asset
     """
     try:
-        etag = request.headers['If-Match']
+        etag = request.headers["If-Match"]
     except KeyError:
-        raise SuperdeskApiError.badRequestError(
-            "If-Match field missing in header"
-        )
+        raise SuperdeskApiError.badRequestError("If-Match field missing in header")
 
-    if request.files.get('binary'):
+    if request.files.get("binary"):
         # The binary data was supplied so this must be a multipart request
         # Get the updates from the `request.form` attribute
-        files = {'binary': request.files['binary']}
+        files = {"binary": request.files["binary"]}
         updates = request.form.to_dict()
     else:
         # Only the metadata was supplied so this must be a standard JSON request
@@ -138,39 +130,32 @@ def update(item_id):
         updates = request.get_json()
 
     update_response = get_sams_client().assets.update(
-        item_id=item_id,
-        updates=updates,
-        headers={'If-Match': etag},
-        files=files,
-        external_user_id=get_user_id(True)
+        item_id=item_id, updates=updates, headers={"If-Match": etag}, files=files, external_user_id=get_user_id(True)
     )
     if update_response.status_code == 200:
         push_notification(
-            'sams:asset:updated',
-            item_id=update_response.json()['_id'],
+            "sams:asset:updated",
+            item_id=update_response.json()["_id"],
             user_id=get_user_id(True),
-            session_id=get_auth()['_id'],
-            _etag=update_response.json()['_etag'],
-            extension='sams')
+            session_id=get_auth()["_id"],
+            _etag=update_response.json()["_etag"],
+            extension="sams",
+        )
     return update_response.json(), update_response.status_code
 
 
-@assets_bp.route('/sams/assets/counts', methods=['GET'], defaults={'set_ids': None})
-@assets_bp.route('/sams/assets/counts/<set_ids>', methods=['GET'])
+@assets_bp.route("/sams/assets/counts", methods=["GET"], defaults={"set_ids": None})
+@assets_bp.route("/sams/assets/counts/<set_ids>", methods=["GET"])
 def get_assets_count(set_ids):
     set_ids = ast.literal_eval(set_ids) if set_ids else None
-    counts = get_sams_client().assets.get_assets_count(
-        set_ids=set_ids
-    )
+    counts = get_sams_client().assets.get_assets_count(set_ids=set_ids)
     return counts
 
 
 @assets_bp.route("/sams/assets/compressed_binary/<asset_ids>", methods=["GET"])
 def get_assets_compressed_binary(asset_ids):
     asset_ids = ast.literal_eval(asset_ids) if asset_ids else None
-    zip_binary = get_sams_client().assets.get_binary_zip_by_id(
-        item_ids=asset_ids
-    )
+    zip_binary = get_sams_client().assets.get_binary_zip_by_id(item_ids=asset_ids)
     return zip_binary.content
 
 
@@ -178,18 +163,17 @@ def get_assets_compressed_binary(asset_ids):
 def lock_asset(asset_id):
     docs = request.json
     lock_asset_response = get_sams_client().assets.lock_asset(
-        item_id=asset_id,
-        external_user_id=get_user_id(True),
-        external_session_id=get_auth()['_id'],
-        docs=docs)
+        item_id=asset_id, external_user_id=get_user_id(True), external_session_id=get_auth()["_id"], docs=docs
+    )
     if lock_asset_response.status_code == 200:
         push_notification(
-            'sams:asset:lock_asset',
+            "sams:asset:lock_asset",
             item_id=asset_id,
             user_id=get_user_id(True),
-            session_id=get_auth()['_id'],
-            _etag=lock_asset_response.json()['_etag'],
-            extension='sams')
+            session_id=get_auth()["_id"],
+            _etag=lock_asset_response.json()["_etag"],
+            extension="sams",
+        )
     return lock_asset_response.json(), lock_asset_response.status_code
 
 
@@ -197,29 +181,26 @@ def lock_asset(asset_id):
 def unlock_asset(asset_id):
     docs = request.json
     unlock_asset_response = get_sams_client().assets.unlock_asset(
-        item_id=asset_id,
-        external_user_id=get_user_id(True),
-        external_session_id=get_auth()['_id'],
-        docs=docs)
+        item_id=asset_id, external_user_id=get_user_id(True), external_session_id=get_auth()["_id"], docs=docs
+    )
     if unlock_asset_response.status_code == 200:
         push_notification(
-            'sams:asset:unlock_asset',
+            "sams:asset:unlock_asset",
             item_id=asset_id,
             user_id=get_user_id(True),
-            session_id=get_auth()['_id'],
-            _etag=unlock_asset_response.json()['_etag'],
-            extension='sams')
+            session_id=get_auth()["_id"],
+            _etag=unlock_asset_response.json()["_etag"],
+            extension="sams",
+        )
     return unlock_asset_response.json(), unlock_asset_response.status_code
 
 
 def unlock_asset_by_user(user_id, session_id):
     unlock_asset_response = get_sams_client().assets.unlock_assets_by_user(
-        external_user_id=user_id,
-        external_session_id=session_id)
+        external_user_id=user_id, external_session_id=session_id
+    )
     if unlock_asset_response.status_code == 200:
         push_notification(
-            'sams:asset:session_unlock',
-            user_id=get_user_id(True),
-            session_id=get_auth()['_id'],
-            extension='sams')
+            "sams:asset:session_unlock", user_id=get_user_id(True), session_id=get_auth()["_id"], extension="sams"
+        )
     return unlock_asset_response.status_code

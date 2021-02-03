@@ -407,8 +407,8 @@ def transfer_renditions(renditions):
         file_type, ext = content_type.split("/")
         metadata = process_file(content, file_type)
         file_guid = app.media.put(content, filename=filename, content_type=content_type, metadata=metadata)
-        rend['href'] = app.media.url_for_media(file_guid, content_type)
-        rend['media'] = file_guid
+        rend["href"] = app.media.url_for_media(file_guid, content_type)
+        rend["media"] = file_guid
 
 
 def get_rendition_file_name(rendition):

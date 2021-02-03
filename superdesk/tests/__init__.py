@@ -167,47 +167,48 @@ def setup_config(config):
 
     update_config(app_config)
 
-    app_config.setdefault('INSTALLED_APPS', [])
+    app_config.setdefault("INSTALLED_APPS", [])
 
     # Extend the INSTALLED APPS with the list provided
     if config:
-        config.setdefault('INSTALLED_APPS', [])
-        app_config['INSTALLED_APPS'].extend(config.pop('INSTALLED_APPS', []))
+        config.setdefault("INSTALLED_APPS", [])
+        app_config["INSTALLED_APPS"].extend(config.pop("INSTALLED_APPS", []))
 
     # Make sure there are no duplicate entries in INSTALLED_APPS
-    app_config['INSTALLED_APPS'] = list(set(app_config['INSTALLED_APPS']))
+    app_config["INSTALLED_APPS"] = list(set(app_config["INSTALLED_APPS"]))
 
-    app_config.update(config or {}, **{
-        'APP_ABSPATH': app_abspath,
-        'DEBUG': True,
-        'TESTING': True,
-    })
+    app_config.update(
+        config or {},
+        **{
+            "APP_ABSPATH": app_abspath,
+            "DEBUG": True,
+            "TESTING": True,
+        },
+    )
 
-    logging.getLogger('apps').setLevel(logging.WARNING)
-    logging.getLogger('elastic').setLevel(logging.WARNING)  # elastic datalayer
-    logging.getLogger('urllib3').setLevel(logging.WARNING)
-    logging.getLogger('celery').setLevel(logging.WARNING)
-    logging.getLogger('superdesk').setLevel(logging.ERROR)
-    logging.getLogger('elasticsearch').setLevel(logging.ERROR)
-    logging.getLogger('superdesk.errors').setLevel(logging.CRITICAL)
+    logging.getLogger("apps").setLevel(logging.WARNING)
+    logging.getLogger("elastic").setLevel(logging.WARNING)  # elastic datalayer
+    logging.getLogger("urllib3").setLevel(logging.WARNING)
+    logging.getLogger("celery").setLevel(logging.WARNING)
+    logging.getLogger("superdesk").setLevel(logging.ERROR)
+    logging.getLogger("elasticsearch").setLevel(logging.ERROR)
+    logging.getLogger("superdesk.errors").setLevel(logging.CRITICAL)
 
-    return {
-        key: deepcopy(val) for key, val in app_config.items()
-    }
+    return {key: deepcopy(val) for key, val in app_config.items()}
 
 
 def update_config_from_step(context, config):
     context.app.config.update(config)
 
-    if 'MEDIA_STORAGE_PROVIDER' in config or 'AMAZON_CONTAINER_NAME' in config:
+    if "MEDIA_STORAGE_PROVIDER" in config or "AMAZON_CONTAINER_NAME" in config:
         context.app.media = get_media_storage_class(context.app.config)(context.app)
 
-    if 'AMAZON_CONTAINER_NAME' in config:
+    if "AMAZON_CONTAINER_NAME" in config:
         if isinstance(context.app.media, AmazonMediaStorage):
-            m = patch.object(context.app.media, 'client')
+            m = patch.object(context.app.media, "client")
             m.start()
         elif isinstance(context.app.media, ProxyMediaStorage):
-            m = patch.object(context.app.media.storage(), 'client')
+            m = patch.object(context.app.media.storage(), "client")
             m.start()
 
 

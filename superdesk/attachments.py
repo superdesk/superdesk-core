@@ -13,27 +13,21 @@ RESOURCE = "attachments"
 
 class AttachmentsResource(superdesk.Resource):
     schema = {
-        'media': {'type': 'media'},
-        'mimetype': {'type': 'string'},
-        'filename': {'type': 'string'},
-        'length': {'type': 'integer'},
-        'title': {
-            'type': 'string',
-            'required': True,
-            'sams': {'field': 'name'},
+        "media": {"type": "media"},
+        "mimetype": {"type": "string"},
+        "filename": {"type": "string"},
+        "length": {"type": "integer"},
+        "title": {
+            "type": "string",
+            "required": True,
+            "sams": {"field": "name"},
         },
-        'description': {'type': 'string'},
-        'user': superdesk.Resource.rel('users'),
-        'internal': {
-            'type': 'boolean',
-            'default': False,
-            'sams': {
-                'field': 'state',
-                'map_value': {
-                    False: 'public',
-                    True: 'internal'
-                }
-            }
+        "description": {"type": "string"},
+        "user": superdesk.Resource.rel("users"),
+        "internal": {
+            "type": "boolean",
+            "default": False,
+            "sams": {"field": "state", "map_value": {False: "public", True: "internal"}},
         },
     }
 
@@ -45,18 +39,18 @@ class AttachmentsResource(superdesk.Resource):
 class AttachmentsService(superdesk.Service):
     def on_create(self, docs):
         for doc in docs:
-            doc['user'] = get_user_id()
+            doc["user"] = get_user_id()
 
             # If a `media` argument is passed into the request url then use that as the id for the media item
             # This is so that SAMS client can manually create this link between SAMS and the article
-            if request.args.get('media'):
-                doc['media'] = request.args['media']
+            if request.args.get("media"):
+                doc["media"] = request.args["media"]
 
-            if doc.get('media'):
-                media = current_app.media.get(doc['media'], RESOURCE)
-                doc.setdefault('filename', secure_filename(os.path.basename(getattr(media, 'filename'))))
-                doc.setdefault('mimetype', getattr(media, 'content_type'))
-                doc.setdefault('length', getattr(media, 'length'))
+            if doc.get("media"):
+                media = current_app.media.get(doc["media"], RESOURCE)
+                doc.setdefault("filename", secure_filename(os.path.basename(getattr(media, "filename"))))
+                doc.setdefault("mimetype", getattr(media, "content_type"))
+                doc.setdefault("length", getattr(media, "length"))
 
     def on_deleted(self, doc):
         current_app.media.delete(doc["media"], RESOURCE)
@@ -82,21 +76,21 @@ def get_attachment_public_url(attachment: Dict[str, Any]) -> Optional[str]:
     :return: None if the attachment is not public, otherwise the public URL to the file
     """
 
-    if attachment.get('attachment'):  # retrieve object reference
-        attachment = superdesk.get_resource_service('attachments').find_one(req=None, _id=attachment['attachment'])
+    if attachment.get("attachment"):  # retrieve object reference
+        attachment = superdesk.get_resource_service("attachments").find_one(req=None, _id=attachment["attachment"])
 
-    if attachment.get('internal'):
+    if attachment.get("internal"):
         return None
 
-    if not attachment.get('media'):
+    if not attachment.get("media"):
         # All attachments should have a `media` attribute set
         # The provided attachment dict must be invalid
-        attachment_id = str(attachment.get('_id'))
+        attachment_id = str(attachment.get("_id"))
         logger.warn(f'Attachment "{attachment_id}" has no media attribute set')
 
         return None
 
-    return current_app.media.url_for_external(attachment['media'], RESOURCE)
+    return current_app.media.url_for_external(attachment["media"], RESOURCE)
 
 
 def init_app(app):

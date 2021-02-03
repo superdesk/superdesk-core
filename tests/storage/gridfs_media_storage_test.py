@@ -44,7 +44,7 @@ class GridFSMediaStorageTestCase(unittest.TestCase):
         _id = bson.ObjectId()
 
         with self.app.app_context():
-            self.media.put(data, filename=filename, content_type='text/plain', _id=str(_id))
+            self.media.put(data, filename=filename, content_type="text/plain", _id=str(_id))
 
         kwargs = {
             "content_type": "text/plain",

@@ -18,4 +18,4 @@ def wip(f):
     nosetests -a wip
     """
 
-    return attr('wip')(f)
+    return attr("wip")(f)

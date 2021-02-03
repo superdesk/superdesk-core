@@ -34,7 +34,6 @@ logger = logging.getLogger(__name__)
 
 
 class AmazonObjectWrapper(SuperdeskFile):
-
     def __init__(self, s3_object, name, metadata):
         super().__init__()
 
@@ -46,8 +45,8 @@ class AmazonObjectWrapper(SuperdeskFile):
             buf = s3_body.read(amt=blocksize)
 
         self.seek(0)
-        self.content_type = s3_object['ContentType']
-        self.length = int(s3_object['ContentLength'])
+        self.content_type = s3_object["ContentType"]
+        self.length = int(s3_object["ContentLength"])
         self._name = name
         self.filename = name
         self.metadata = metadata
@@ -86,7 +85,7 @@ class AmazonMediaStorage(SuperdeskMediaStorage):
         :return: The URL for external use
         """
 
-        return f'/assets/{media_id}'
+        return f"/assets/{media_id}"
 
     def _make_s3_safe(self, _id):
         """

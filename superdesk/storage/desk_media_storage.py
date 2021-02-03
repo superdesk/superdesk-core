@@ -76,7 +76,7 @@ class SuperdeskGridFSMediaStorage(SuperdeskMediaStorage, GridFSMediaStorage):
         :return: The URL for external use
         """
 
-        return f'/assets/{media_id}'
+        return f"/assets/{media_id}"
 
     def fetch_rendition(self, rendition):
         return self.get(rendition.get("media"), "upload")

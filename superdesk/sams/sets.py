@@ -29,10 +29,10 @@ from apps.auth import get_auth, get_user_id
 from .client import get_sams_client
 
 logger = logging.getLogger(__name__)
-sets_bp = superdesk.Blueprint('sams_sets', __name__)
+sets_bp = superdesk.Blueprint("sams_sets", __name__)
 
 
-@sets_bp.route('/sams/sets', methods=['GET'])
+@sets_bp.route("/sams/sets", methods=["GET"])
 def get():
     """
     Returns a list of all the registered sets
@@ -41,7 +41,7 @@ def get():
     return sets.json(), sets.status_code
 
 
-@sets_bp.route('/sams/sets/<item_id>', methods=['GET'])
+@sets_bp.route("/sams/sets/<item_id>", methods=["GET"])
 def find_one(item_id):
     """
     Uses item_id and returns the corresponding
@@ -51,78 +51,68 @@ def find_one(item_id):
     return item.json(), item.status_code
 
 
-@sets_bp.route('/sams/sets', methods=['POST'])
+@sets_bp.route("/sams/sets", methods=["POST"])
 def create():
     """
     Creates new sets
     """
     docs = request.get_json()
-    post_response = get_sams_client().sets.create(
-        docs=docs,
-        external_user_id=get_user_id(True)
-    )
+    post_response = get_sams_client().sets.create(docs=docs, external_user_id=get_user_id(True))
     if post_response.status_code == 201:
         push_notification(
-            'sams:set:created',
-            item_id=post_response.json()['_id'],
+            "sams:set:created",
+            item_id=post_response.json()["_id"],
             user_id=get_user_id(True),
-            session_id=get_auth()['_id'],
-            _etag=post_response.json()['_etag'],
-            extension='sams')
+            session_id=get_auth()["_id"],
+            _etag=post_response.json()["_etag"],
+            extension="sams",
+        )
     return post_response.json(), post_response.status_code
 
 
-@sets_bp.route('/sams/sets/<item_id>', methods=['DELETE'])
+@sets_bp.route("/sams/sets/<item_id>", methods=["DELETE"])
 def delete(item_id):
     """
     Uses item_id and deletes the corresponding set
     """
     try:
-        etag = request.headers['If-Match']
+        etag = request.headers["If-Match"]
     except KeyError:
-        raise SuperdeskApiError.badRequestError(
-            "If-Match field missing in header"
-        )
+        raise SuperdeskApiError.badRequestError("If-Match field missing in header")
 
-    delete_response = get_sams_client().sets.delete(
-        item_id=item_id, headers={'If-Match': etag}
-    )
+    delete_response = get_sams_client().sets.delete(item_id=item_id, headers={"If-Match": etag})
     if delete_response.status_code != 204:
         return delete_response.json(), delete_response.status_code
     if delete_response.status_code == 204:
         push_notification(
-            'sams:set:deleted',
+            "sams:set:deleted",
             item_id=item_id,
             user_id=get_user_id(True),
-            session_id=get_auth()['_id'],
-            extension='sams')
-    return '', delete_response.status_code
+            session_id=get_auth()["_id"],
+            extension="sams",
+        )
+    return "", delete_response.status_code
 
 
-@sets_bp.route('/sams/sets/<item_id>', methods=['PATCH'])
+@sets_bp.route("/sams/sets/<item_id>", methods=["PATCH"])
 def update(item_id):
     """
     Uses item_id and updates the corresponding set
     """
     try:
-        etag = request.headers['If-Match']
+        etag = request.headers["If-Match"]
     except KeyError:
-        raise SuperdeskApiError.badRequestError(
-            "If-Match field missing in header"
-        )
+        raise SuperdeskApiError.badRequestError("If-Match field missing in header")
 
     updates = request.get_json()
-    update_response = get_sams_client().sets.update(
-        item_id=item_id,
-        updates=updates,
-        headers={'If-Match': etag}
-    )
+    update_response = get_sams_client().sets.update(item_id=item_id, updates=updates, headers={"If-Match": etag})
     if update_response.status_code == 200:
         push_notification(
-            'sams:set:updated',
-            item_id=update_response.json()['_id'],
+            "sams:set:updated",
+            item_id=update_response.json()["_id"],
             user_id=get_user_id(True),
-            session_id=get_auth()['_id'],
-            _etag=update_response.json()['_etag'],
-            extension='sams')
+            session_id=get_auth()["_id"],
+            _etag=update_response.json()["_etag"],
+            extension="sams",
+        )
     return update_response.json(), update_response.status_code

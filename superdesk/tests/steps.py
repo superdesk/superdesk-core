@@ -433,10 +433,7 @@ def step_impl_given_resource_with_provider(context, provider):
 
 @given("config update")
 def given_config_update(context):
-    tests.update_config_from_step(
-        context,
-        json.loads(context.text)
-    )
+    tests.update_config_from_step(context, json.loads(context.text))
 
 
 @given("config")
@@ -992,7 +989,7 @@ def step_impl_when_restore_version(context, version):
 @when('we upload a file "{filename}" to "{dest}"')
 def step_impl_when_upload_image(context, filename, dest):
     data = {} if not context.text else json.loads(apply_placeholders(context, context.text))
-    upload_file(context, dest, filename, 'media', data)
+    upload_file(context, dest, filename, "media", data)
 
 
 @when("we upload a binary file with cropping")

@@ -25,10 +25,10 @@ import superdesk
 from .client import get_sams_client
 
 logger = logging.getLogger(__name__)
-destinations_bp = superdesk.Blueprint('sams_destinations', __name__)
+destinations_bp = superdesk.Blueprint("sams_destinations", __name__)
 
 
-@destinations_bp.route('/sams/destinations', methods=['GET'])
+@destinations_bp.route("/sams/destinations", methods=["GET"])
 def get():
     """
     Returns a list of all the registered storage destinations
@@ -37,13 +37,11 @@ def get():
     return destinations.json(), destinations.status_code
 
 
-@destinations_bp.route('/sams/destinations/<item_id>', methods=['GET'])
+@destinations_bp.route("/sams/destinations/<item_id>", methods=["GET"])
 def find_one(item_id):
     """
     Uses item_id and returns the destination
     name and provider name of the respective storage destination
     """
-    item = get_sams_client().destinations.get_by_id(
-        item_id=item_id
-    )
+    item = get_sams_client().destinations.get_by_id(item_id=item_id)
     return item.json(), item.status_code

@@ -18,7 +18,7 @@ from superdesk import get_resource_service
 from superdesk.upload import upload_url as _upload_url
 from superdesk.storage.superdesk_file import generate_response_for_file
 
-bp = superdesk.Blueprint('assets', __name__)
+bp = superdesk.Blueprint("assets", __name__)
 
 
 @bp.route("/assets/<path:media_id>", methods=["GET"])
@@ -30,13 +30,11 @@ def get_media_streamed(media_id):
     except bson.errors.InvalidId:
         media_file = None
     if media_file:
-        get_resource_service('api_audit').audit_item({'type': 'asset', 'uri': request.url}, media_id)
+        get_resource_service("api_audit").audit_item({"type": "asset", "uri": request.url}, media_id)
         return generate_response_for_file(
-            media_file,
-            cache_for=3600 * 24 * 7,  # 7 days cache
-            content_disposition='inline'
+            media_file, cache_for=3600 * 24 * 7, content_disposition="inline"  # 7 days cache
         )
-    raise FileNotFoundError('File not found on media storage.')
+    raise FileNotFoundError("File not found on media storage.")
 
 
 def upload_url(media_id):

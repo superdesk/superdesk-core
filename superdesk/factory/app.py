@@ -113,13 +113,13 @@ class SuperdeskEve(eve.Eve):
 
 
 def get_media_storage_class(app_config: Dict[str, Any], use_provider_config: bool = True) -> Type[MediaStorage]:
-    if use_provider_config and app_config.get('MEDIA_STORAGE_PROVIDER'):
-        if isinstance(app_config['MEDIA_STORAGE_PROVIDER'], str):
-            module_name, class_name = app_config['MEDIA_STORAGE_PROVIDER'].rsplit('.', 1)
+    if use_provider_config and app_config.get("MEDIA_STORAGE_PROVIDER"):
+        if isinstance(app_config["MEDIA_STORAGE_PROVIDER"], str):
+            module_name, class_name = app_config["MEDIA_STORAGE_PROVIDER"].rsplit(".", 1)
             module = importlib.import_module(module_name)
             klass = getattr(module, class_name)
             if not issubclass(klass, MediaStorage):
-                raise SystemExit('Invalid setting MEDIA_STORAGE_PROVIDER. Class must extend eve.io.media.MediaStorage')
+                raise SystemExit("Invalid setting MEDIA_STORAGE_PROVIDER. Class must extend eve.io.media.MediaStorage")
             return klass
 
     return ProxyMediaStorage

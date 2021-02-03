@@ -28,9 +28,9 @@ def init_app(app: Eve):
     @destinations_bp.after_request
     @sets_bp.after_request
     def after_request(response):
-        response.headers.set('Access-Control-Allow-Origin', '*')
-        response.headers.set('Access-Control-Allow-Headers', '*')
-        response.headers.set('Access-Control-Allow-Methods', '*')
+        response.headers.set("Access-Control-Allow-Origin", "*")
+        response.headers.set("Access-Control-Allow-Headers", "*")
+        response.headers.set("Access-Control-Allow-Methods", "*")
         return response
 
     superdesk.blueprint(destinations_bp, app, client=client)
@@ -38,23 +38,13 @@ def init_app(app: Eve):
     superdesk.blueprint(assets_bp, app, client=client)
 
     superdesk.privilege(
-        name='sams',
-        label=_('Sams'),
-        description=_(
-            'Access to the SAMS management page (and to upload assets etc)'
-        )
+        name="sams", label=_("Sams"), description=_("Access to the SAMS management page (and to upload assets etc)")
     )
 
-    superdesk.privilege(
-        name='sams_manage',
-        label=_('Sams manage'),
-        description=_('Allows management of SAMS Sets etc')
-    )
+    superdesk.privilege(name="sams_manage", label=_("Sams manage"), description=_("Allows management of SAMS Sets etc"))
 
     superdesk.privilege(
-        name='sams_manage_assets',
-        label=_('SAMS Manage Assets'),
-        description=_('Allows management of SAMS Assets')
+        name="sams_manage_assets", label=_("SAMS Manage Assets"), description=_("Allows management of SAMS Assets")
     )
 
 

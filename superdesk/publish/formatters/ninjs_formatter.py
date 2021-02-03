@@ -505,22 +505,24 @@ class NINJSFormatter(Formatter):
 
     def _format_attachments(self, article):
         output = []
-        attachments_service = superdesk.get_resource_service('attachments')
-        for attachment_ref in article['attachments']:
-            attachment = attachments_service.find_one(req=None, _id=attachment_ref['attachment'])
+        attachments_service = superdesk.get_resource_service("attachments")
+        for attachment_ref in article["attachments"]:
+            attachment = attachments_service.find_one(req=None, _id=attachment_ref["attachment"])
             href = get_attachment_public_url(attachment)
             if href:
                 # If we get a href, the attachment is available for subscriber consumption
-                output.append({
-                    'id': str(attachment['_id']),
-                    'title': attachment['title'],
-                    'description': attachment.get('description'),
-                    'filename': attachment['filename'],
-                    'mimetype': attachment['mimetype'],
-                    'length': attachment.get('length'),
-                    'media': str(attachment['media']),
-                    'href': href,
-                })
+                output.append(
+                    {
+                        "id": str(attachment["_id"]),
+                        "title": attachment["title"],
+                        "description": attachment.get("description"),
+                        "filename": attachment["filename"],
+                        "mimetype": attachment["mimetype"],
+                        "length": attachment.get("length"),
+                        "media": str(attachment["media"]),
+                        "href": href,
+                    }
+                )
         return output
 
     def _format_authors(self, article):

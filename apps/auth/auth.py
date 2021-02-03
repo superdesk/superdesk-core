@@ -97,7 +97,7 @@ class SuperdeskTokenAuth(TokenAuth):
         if not user:
             return True
 
-        if resource == '_blueprint':
+        if resource == "_blueprint":
             return True
 
         # Step 2: Get User's Privileges
