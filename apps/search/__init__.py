@@ -124,20 +124,32 @@ class SearchService(superdesk.Service):
     def _get_query(self, req):
         """Get elastic query."""
         args = getattr(req, 'args', {})
-        query = json.loads(args.get('source')) if args.get('source') else {'query': {'filtered': {}}}
+        source = json.loads(args.get('source')) if args.get('source') else {'query': {'filtered': {}}}
+
+        try:
+            self._enhance_query_string(source['query']['filtered']['query']['query_string'])
+        except KeyError:
+            pass
+
         if app.data.elastic.should_aggregate(req):
-            query['aggs'] = self.aggregations
+            source['aggs'] = self.aggregations
 
         if app.data.elastic.should_highlight(req):
             highlight_query = get_elastic_highlight_query(self._get_highlight_query_string(req))
             if highlight_query:
-                query['highlight'] = highlight_query
-        return query
+                source['highlight'] = highlight_query
+
+        return source
+
+    def _enhance_query_string(self, query_string):
+        query_string_settings = app.config['ELASTICSEARCH_SETTINGS']['settings']['query_string']
+        query_string.setdefault('analyze_wildcard', query_string_settings['analyze_wildcard'])
 
     def _get_highlight_query_string(self, req):
         args = getattr(req, 'args', {})
         source = json.loads(args.get('source')) if args.get('source') else {'query': {'filtered': {}}}
         query_string = source.get('query', {}).get('filtered', {}).get('query', {}).get('query_string')
+        self._enhance_query_string(query_string)
         return query_string
 
     def _get_projected_fields(self, req):
