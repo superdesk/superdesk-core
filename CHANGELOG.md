@@ -1,5 +1,11 @@
 # Superdesk Server Changelog
 
+## [1.33.12] 2021-02-04
+
+### Changed
+
+- Add `analyze_wildcard` config for `query_string` elastic query.
+
 ## [1.33.11] 2020-12-22
 
 ### Fixed
