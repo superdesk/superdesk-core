@@ -190,7 +190,11 @@ ELASTICSEARCH_SETTINGS = {
                     "char_filter": ["html_strip_filter"],
                 },
             },
-        }
+        },
+        "query_string": {
+            # https://discuss.elastic.co/t/configuring-the-standard-tokenizer/8691/5
+            "analyze_wildcard": False
+        },
     }
 }
 CONTENTAPI_ELASTICSEARCH_SETTINGS = {
