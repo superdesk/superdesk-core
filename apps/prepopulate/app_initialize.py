@@ -184,6 +184,7 @@ __entities__ = OrderedDict(
         ),
         ("contacts", ("contacts.json", "", False)),
         ("planning_types", ("planning_types.json", "", True)),
+        ("planning_export_templates", ("planning_export_templates.json", "", True))
     ]
 )
 INIT_DATA_PATH = Path(__file__).resolve().parent / "data_init"
