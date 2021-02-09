@@ -90,7 +90,7 @@ class ContactsResource(Resource):
                     "type": "dict",
                     "required": False,
                 },
-            }
+            },
         },
         "notes": {"type": "string", "required": False},
         "contact_type": {
