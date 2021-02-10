@@ -4,6 +4,79 @@
 
 [Changes](https://github.com/superdesk/superdesk-core/milestone/89?closed=1)
 
+## [2.0.12] 2021-01-21
+
+### Fixed
+
+- Fix elastic search not working on capitalized words.
+
+## [2.0.11] 2021-01-18
+
+### Fixed
+
+- Fix error when descheduling item which makes it disappear.
+
+## [2.0.10] 2021-01-05
+
+### Fixed
+
+- Dont terminate app:initialize_data command on duplicate key error
+
+## [2.0.9] 2020-12-22
+
+### Fixed
+
+- Fix publish queue delete OperationError from mongo.
+
+## [2.0.8] 2020-12-18
+
+### Fixed
+
+- Fix delete from `publish_queue` query not using index.
+- Fix ingestion of existing items via ref.
+- Fix publish script cleanup.
+
+## [2.0.7] 2020-12-11
+
+### Fixed
+
+- Populate `refs` on item when autorouting from ingest.
+
+## [2.0.6] 2020-12-02
+
+### Fixed
+
+- Fix dev dependencies package versions.
+- Make geonames fields in dateline optional.
+- Reset `firstpublished` on deschedule.
+
+## [2.0.5] 2020-11-27
+
+### Fixed
+
+- Ignore HTML markup when doing elastic higlights.
+- Fix `firstpublished` timestamp for scheduled items.
+
+## [2.0.4] 2020-11-24
+
+### Fixed
+
+- Add migration script to remove sequences with `None` key.
+
+## [2.0.3] 2020-11-13
+
+### Fixed
+
+- Fix ingest sequence rotation.
+- Fix issues with default template in highlights configuration.
+- Placeline not prefilled from user preferences in user-created/edited templates.
+
+## [2.0.2] 2020-10-12
+
+### Fixed
+
+- Fix generating highlights item when using editor3.
+
 ## [2.0.1] 2020-10-07
 
 ### Fixed

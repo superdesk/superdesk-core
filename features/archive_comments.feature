@@ -163,7 +163,7 @@ Feature: News Items Archive Comments
                            "__PUBLIC_API__comments": [{
                                "msg": "hello @[foo](user:#users._id#)"
                            }]
-                       }}
+                       }, "depth": 0, "inlineStyleRanges": [], "entityRanges": []}
                    ]
                }]
 
@@ -231,7 +231,7 @@ Feature: News Items Archive Comments
                                "msg": "hello @[foo](user:#users._id#)",
                                "notified": true
                            }]
-                       }}
+                       }, "depth": 0}
                    ]
                }]
 
@@ -257,7 +257,7 @@ Feature: News Items Archive Comments
                                    }
                                ]
                            }]
-                       }}
+                       }, "depth": 0, "inlineStyleRanges": [], "entityRanges": []}
                    ]
                }]
 
