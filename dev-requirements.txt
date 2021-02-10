@@ -16,5 +16,5 @@ pytest-env==0.6.2
 python3-saml>=1.9,<1.10
 mypy
 
--e git+git://github.com/superdesk/superdesk-planning.git@develop#egg=superdesk-planning
+-e git+git://github.com/superdesk/superdesk-planning.git@release/2.1#egg=superdesk-planning
 -e .
