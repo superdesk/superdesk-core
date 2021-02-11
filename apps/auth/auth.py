@@ -151,6 +151,10 @@ class SuperdeskTokenAuth(TokenAuth):
                 now = utcnow()
                 if auth_token[app.config["LAST_UPDATED"]] + timedelta(seconds=30) < now:  # update once per 30s max
                     auth_service.update_session({app.config["LAST_UPDATED"]: now})
+                    user_service.system_update(
+                        flask.g.user["_id"], {"last_activity_at": now, "_updated": now}, flask.g.user
+                    )
+
             return self.check_permissions(resource, method, flask.g.user)
 
     def authorized(self, allowed_roles, resource, method):
