@@ -34,7 +34,7 @@ from apps.common.components.base_component import BaseComponent
 __version__ = "2.1.0"
 
 API_NAME = "Superdesk API"
-SCHEMA_VERSION = 0
+SCHEMA_VERSION = 1
 DOMAIN = {}
 COMMANDS = {}
 JINJA_FILTERS = dict()
