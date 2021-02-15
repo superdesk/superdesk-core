@@ -1,5 +1,12 @@
 # Superdesk Server Changelog
 
+## [2.1.1] 2021-02-15
+
+### Fixed
+
+- Store last activity timestamp on user.
+- Fix error when saving media contacts with country.
+
 ## [2.1.0] 2021-02-10
 
 [Changes](https://github.com/superdesk/superdesk-core/milestone/89?closed=1)
