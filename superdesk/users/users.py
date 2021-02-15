@@ -121,6 +121,7 @@ class UsersResource(Resource):
                 "schema": {},
                 "allow_unknown": True,
             },
+            "last_activity_at": {"type": "datetime", "nullable": True, "readonly": True},
         }
 
         self.extra_response_fields = [
@@ -134,9 +135,10 @@ class UsersResource(Resource):
             "is_enabled",
             "needs_activation",
             "desk",
+            "last_activity_at",
         ]
 
-        self.etag_ignore_fields = ["session_preferences", "_etag", "invisible_stages"]
+        self.etag_ignore_fields = ["session_preferences", "_etag", "invisible_stages", "last_activity_at"]
 
         self.datasource = {
             "projection": {"password": 0, "session_preferences": 0},
