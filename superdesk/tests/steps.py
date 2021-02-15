@@ -1851,7 +1851,8 @@ def we_mention_user_in_comment(context, url):
 def we_change_user_status(context, status, url):
     with context.app.mail.record_messages() as outbox:
         step_impl_when_patch_url(context, url)
-        assert len(outbox) == 1
+        assert_200(context.response)
+        assert len(outbox) == 1, f"there are {len(outbox)} messages"
         assert_equal(outbox[0].subject, "Your Superdesk account is " + status)
         assert outbox[0].body
 
