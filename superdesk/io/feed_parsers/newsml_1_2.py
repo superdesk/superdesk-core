@@ -70,14 +70,7 @@ class NewsMLOneFeedParser(XMLFeedParser):
             # item['Content'] = etree.tostring(
             # tree.find('NewsItem/NewsComponent/ContentItem/DataContent/nitf/body/body.content'))
 
-            item["body_html"] = (
-                etree.tostring(
-                    xml.find("NewsItem/NewsComponent/ContentItem/DataContent/nitf/body/body.content"),
-                    encoding="unicode",
-                )
-                .replace("<body.content>", "")
-                .replace("</body.content>", "")
-            )
+            self.parse_content(item, xml)
 
             parsed_el = xml.findall("NewsItem/NewsComponent/ContentItem/Characteristics/Property")
             characteristics = self.parse_attribute_values(parsed_el, "Words")
@@ -96,6 +89,16 @@ class NewsMLOneFeedParser(XMLFeedParser):
             return self.populate_fields(item)
         except Exception as ex:
             raise ParserError.newsmlOneParserError(ex, provider)
+
+    def parse_content(self, item, xml):
+        item["body_html"] = (
+            etree.tostring(
+                xml.find("NewsItem/NewsComponent/ContentItem/DataContent/nitf/body/body.content"),
+                encoding="unicode",
+            )
+            .replace("<body.content>", "")
+            .replace("</body.content>", "")
+        )
 
     def parse_elements(self, tree):
         items = {}
@@ -147,7 +150,10 @@ class NewsMLOneFeedParser(XMLFeedParser):
 
     def parse_news_management(self, item, tree):
         parsed_el = self.parse_elements(tree.find("NewsItem/NewsManagement"))
-        item["urgency"] = int(parsed_el["Urgency"]["FormalName"])
+        try:
+            item["urgency"] = int(parsed_el["Urgency"]["FormalName"])
+        except KeyError:
+            pass
         item["versioncreated"] = self.datetime(parsed_el["ThisRevisionCreated"])
         item["firstcreated"] = self.datetime(parsed_el["FirstCreated"])
         item["pubstatus"] = (parsed_el["Status"]["FormalName"]).lower()

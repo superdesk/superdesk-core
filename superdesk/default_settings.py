@@ -196,6 +196,7 @@ ELASTICSEARCH_SETTINGS = {
         }
     }
 }
+
 CONTENTAPI_ELASTICSEARCH_SETTINGS = {
     "settings": {
         "analysis": {

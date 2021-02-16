@@ -69,6 +69,8 @@ class AuthTestCase(TestCase):
             self.app.auth.check_auth("foo", [], "users", "POST")
             auth = self.app.data.find_one("auth", None, token="foo")
             self.assertGreaterEqual(auth["_updated"], utcnow() - timedelta(seconds=1))
+            user = self.app.data.find_one("users", req=None, username="foo")
+            self.assertEqual(user["last_activity_at"], auth["_updated"])
 
             self.app.data.update("auth", auth["_id"], {"_updated": utcnow() - timedelta(seconds=10)}, auth)
 

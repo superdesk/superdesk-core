@@ -100,15 +100,10 @@ class ConceptItemsService(BaseService):
         self._setup_updated_by(updates)
 
     def _validate_language(self, doc):
-        # fetch languages from CVs
-        req = ParsedRequest()
-        req.projection = json.dumps({"items.qcode": 1})
-
         try:
-            languages = (
-                superdesk.get_resource_service("vocabularies").find_one(req=req, _id="languages").get("items", [])
-            )
-        except AttributeError:
+            languages = superdesk.get_resource_service("vocabularies").get_languages()
+            assert languages
+        except AssertionError:
             raise SuperdeskApiError.badRequestError(
                 message="Request is not valid",
                 payload={"language": "Concept items requires 'languages' vocabulary to be set"},
