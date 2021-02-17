@@ -32,6 +32,7 @@ from flask_babel import _
 
 
 logger = logging.getLogger(__name__)
+SIZE_MAX = 2_147_483_647
 
 
 class DeskTypes(SuperdeskBaseEnum):
@@ -584,7 +585,6 @@ class OverviewService(BaseService):
                                 ITEM_STATE: [
                                     CONTENT_STATE.PUBLISHED,
                                     CONTENT_STATE.SPIKED,
-                                    CONTENT_STATE.PUBLISHED,
                                     CONTENT_STATE.KILLED,
                                     CONTENT_STATE.CORRECTED,
                                 ]
@@ -599,7 +599,10 @@ class OverviewService(BaseService):
         if desk_id != "all":
             filter_bool["must"] = [{"term": {desk_field: desk_id}}]
 
-        agg_query["aggs"] = {"overview": {"terms": {"field": field}}}
+        # FIXME: we use max size to get all items, but using a composite request with pagination
+        #   would be better (cf. https://www.elastic.co/guide/en/elasticsearch/reference/7.11/search-aggregations-bucket
+        #                        -composite-aggregation.html)
+        agg_query["aggs"] = {"overview": {"terms": {"field": field, "size": SIZE_MAX}}}
 
         filters = doc.get("filters")
         if filters:
@@ -666,9 +669,7 @@ class OverviewService(BaseService):
                 "filter": {"terms": {"version_creator": [str(m) for m in members]}},
                 "aggs": {
                     "authors": {
-                        "terms": {
-                            "field": "version_creator",
-                        },
+                        "terms": {"field": "version_creator", "size": SIZE_MAX},
                         "aggs": {
                             "locked": {
                                 "filter": {
@@ -702,9 +703,7 @@ class OverviewService(BaseService):
                 "filter": {"terms": {"assigned_to.user": [str(m) for m in members]}},
                 "aggs": {
                     "authors": {
-                        "terms": {
-                            "field": "assigned_to.user",
-                        },
+                        "terms": {"field": "assigned_to.user", "size": SIZE_MAX},
                     }
                 },
             }
