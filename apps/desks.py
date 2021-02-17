@@ -32,7 +32,7 @@ from flask_babel import _
 
 
 logger = logging.getLogger(__name__)
-SIZE_MAX = 2147483647
+SIZE_MAX = 2_147_483_647
 
 
 class DeskTypes(SuperdeskBaseEnum):
