@@ -1,7 +1,9 @@
 import os
+from typing import Optional, Dict, Any
 import superdesk
+from superdesk.logging import logger
 
-from flask import current_app
+from flask import current_app, request
 from werkzeug.utils import secure_filename
 from apps.auth import get_user_id
 
@@ -15,10 +17,18 @@ class AttachmentsResource(superdesk.Resource):
         "mimetype": {"type": "string"},
         "filename": {"type": "string"},
         "length": {"type": "integer"},
-        "title": {"type": "string"},
+        "title": {
+            "type": "string",
+            "required": True,
+            "sams": {"field": "name"},
+        },
         "description": {"type": "string"},
         "user": superdesk.Resource.rel("users"),
-        "internal": {"type": "boolean", "default": False},
+        "internal": {
+            "type": "boolean",
+            "default": False,
+            "sams": {"field": "state", "map_value": {False: "public", True: "internal"}},
+        },
     }
 
     item_methods = ["GET", "PATCH"]
@@ -30,6 +40,12 @@ class AttachmentsService(superdesk.Service):
     def on_create(self, docs):
         for doc in docs:
             doc["user"] = get_user_id()
+
+            # If a `media` argument is passed into the request url then use that as the id for the media item
+            # This is so that SAMS client can manually create this link between SAMS and the article
+            if request.args.get("media"):
+                doc["media"] = request.args["media"]
+
             if doc.get("media"):
                 media = current_app.media.get(doc["media"], RESOURCE)
                 doc.setdefault("filename", secure_filename(os.path.basename(getattr(media, "filename"))))
@@ -50,6 +66,31 @@ def is_attachment_public(attachment):
         attachment = superdesk.get_resource_service("attachments").find_one(req=None, _id=attachment["attachment"])
 
     return not attachment.get("internal")
+
+
+def get_attachment_public_url(attachment: Dict[str, Any]) -> Optional[str]:
+    """Returns the file url for the attachment provided
+
+    :param dict attachment: The attachment to get the file URL
+    :rtype: str
+    :return: None if the attachment is not public, otherwise the public URL to the file
+    """
+
+    if attachment.get("attachment"):  # retrieve object reference
+        attachment = superdesk.get_resource_service("attachments").find_one(req=None, _id=attachment["attachment"])
+
+    if attachment.get("internal"):
+        return None
+
+    if not attachment.get("media"):
+        # All attachments should have a `media` attribute set
+        # The provided attachment dict must be invalid
+        attachment_id = str(attachment.get("_id"))
+        logger.warn(f'Attachment "{attachment_id}" has no media attribute set')
+
+        return None
+
+    return current_app.media.url_for_external(attachment["media"], RESOURCE)
 
 
 def init_app(app):

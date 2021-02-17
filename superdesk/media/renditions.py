@@ -370,7 +370,7 @@ def update_renditions(item, href, old_item, request_kwargs=None):
         content, filename, content_type = download_file_from_url(href, request_kwargs)
         file_type, ext = content_type.split("/")
         metadata = process_file(content, file_type)
-        file_guid = app.media.put(content, filename, content_type, metadata)
+        file_guid = app.media.put(content, filename=filename, content_type=content_type, metadata=metadata)
         inserted.append(file_guid)
         rendition_spec = get_renditions_spec()
         renditions = generate_renditions(
@@ -406,7 +406,7 @@ def transfer_renditions(renditions):
         content, filename, content_type = download_file_from_url(rend.get("href"))
         file_type, ext = content_type.split("/")
         metadata = process_file(content, file_type)
-        file_guid = app.media.put(content, filename, content_type, metadata)
+        file_guid = app.media.put(content, filename=filename, content_type=content_type, metadata=metadata)
         rend["href"] = app.media.url_for_media(file_guid, content_type)
         rend["media"] = file_guid
 

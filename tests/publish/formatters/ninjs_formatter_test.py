@@ -1712,6 +1712,53 @@ class NinjsFormatterTest(TestCase):
         ninjs = json.loads(doc)
         self.assertIsNotNone(ninjs)
 
+    def test_attachments_href(self):
+        attachment_id = ObjectId()
+        media_id = ObjectId()
+
+        self.app.data.insert(
+            "attachments",
+            [
+                {
+                    "_id": attachment_id,
+                    "media": media_id,
+                    "title": "content",
+                    "description": "test content",
+                    "filename": "content.txt",
+                    "mimetype": "text/plain",
+                    "length": 7,
+                }
+            ],
+        )
+
+        seq, doc = self.formatter.format(
+            {
+                "_id": "urn:bar",
+                "_current_version": 1,
+                "guid": "urn:bar",
+                "type": "text",
+                "attachments": [{"attachment": attachment_id}],
+            },
+            {"name": "Test Subscriber"},
+        )[0]
+        data = json.loads(doc)
+
+        self.assertEqual(
+            data["attachments"],
+            [
+                {
+                    "id": str(attachment_id),
+                    "title": "content",
+                    "description": "test content",
+                    "filename": "content.txt",
+                    "mimetype": "text/plain",
+                    "length": 7,
+                    "media": str(media_id),
+                    "href": f"/assets/{str(media_id)}",
+                }
+            ],
+        )
+
 
 @mock.patch("superdesk.publish.subscribers.SubscribersService.generate_sequence_number", lambda self, subscriber: 1)
 class Ninjs2FormatterTest(TestCase):
