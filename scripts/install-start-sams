@@ -1,5 +1,8 @@
 #!/usr/bin/env sh
 
+# Make sure we're using the local Superdesk-Core source
+pip install -e .
+
 # Make the SAMS directory and cd into it
 mkdir ../sams
 cd ../sams
