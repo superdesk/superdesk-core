@@ -195,8 +195,11 @@ class APMediaFeedingService(HTTPFeedingServiceBase):
                     complete_item["associations"] = {}
                     for key, assoc in associations.items():
                         logger.info('Get AP association "%s"', assoc.get("headline"))
-                        related_json = self.api_get(assoc["uri"], provider).json()
-                        complete_item["associations"][key] = related_json
+                        try:
+                            related_json = self.api_get(assoc["uri"], provider).json()
+                            complete_item["associations"][key] = related_json
+                        except IngestApiError:
+                            logger.warning("Could not fetch AP association", extra=assoc)
 
                 parsed_items.append(parser.parse(complete_item, provider))
 
