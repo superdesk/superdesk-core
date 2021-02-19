@@ -51,47 +51,10 @@ class SearchService(superdesk.Service):
 
         If the content state is draft, it must be from the current user
         """
-        filters = [
-            {"exists": {"field": "task.desk"}},
-            {
-                "bool": {
-                    "should": [
-                        {
-                            "terms": {
-                                ITEM_STATE: [
-                                    CONTENT_STATE.FETCHED,
-                                    CONTENT_STATE.ROUTED,
-                                    CONTENT_STATE.PROGRESS,
-                                    CONTENT_STATE.SUBMITTED,
-                                    CONTENT_STATE.SPIKED,
-                                    CONTENT_STATE.CORRECTION,
-                                ]
-                            }
-                        },
-                    ],
-                    "must_not": {"term": {"version": 0}},
-                    "minimum_should_match": 1,
-                }
-            },
-        ]
-
-        user_id = (g.get("user") or {}).get("_id")
-        if user_id:
-            filters[1]["bool"]["should"].append(
-                {
-                    "bool": {
-                        "must": [
-                            {"term": {ITEM_STATE: CONTENT_STATE.DRAFT}},
-                            {"term": {"task.user": str(user_id)}},
-                        ]
-                    },
-                }
-            )
-
+        filters = [deepcopy(ArchiveResource.datasource["elastic_filter"])]
         private_filter = private_content_filter()
         if private_filter:
             filters.append(private_filter)
-
         return filters
 
     def get_published_filters(self):

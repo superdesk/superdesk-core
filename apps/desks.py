@@ -647,7 +647,7 @@ class OverviewService(BaseService):
             es_query = {}
         else:
             desk_filter = {"_id": ObjectId(desk_id)}
-            es_query = {"filter": {"term": {"task.desk": desk_id}}}
+            es_query = {"filter": [{"term": {"task.desk": desk_id}}]}
 
         req = ParsedRequest()
         req.projection = json.dumps({"members": 1})
@@ -663,10 +663,15 @@ class OverviewService(BaseService):
             ]
         )
 
+        # only do aggregations on content accesible by user
+        content_filters = superdesk.get_resource_service("search").get_archive_filters()
+        if content_filters:
+            es_query.setdefault("filter", []).extend(content_filters)
+
         # first we check archives for locked items
         es_query["aggs"] = {
             "desk_authors": {
-                "filter": {"terms": {"version_creator": [str(m) for m in members]}},
+                "filter": {"bool": {"filter": {"terms": {"version_creator": [str(m) for m in members]}}}},
                 "aggs": {
                     "authors": {
                         "terms": {"field": "version_creator", "size": SIZE_MAX},
