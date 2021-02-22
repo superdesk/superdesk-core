@@ -29,14 +29,14 @@ class ContentFilterTests(TestCase):
             self.s = SubscribersService(datasource="subscribers", backend=get_backend())
 
             self.articles = [
-                {"_id": "1", "urgency": 1, "headline": "story", "state": "fetched"},
-                {"_id": "2", "headline": "prtorque", "state": "fetched"},
-                {"_id": "3", "urgency": 3, "headline": "creator", "state": "fetched"},
-                {"_id": "4", "urgency": 4, "state": "fetched"},
-                {"_id": "5", "urgency": 2, "state": "fetched"},
-                {"_id": "6", "state": "fetched"},
-                {"_id": "7", "subject": [{"scheme": "my_vocabulary", "qcode": "MV:01"}]},
-                {"_id": "8", "extra": {"custom_text": "my text"}},
+                {"_id": "1", "urgency": 1, "headline": "story", "state": "fetched", "task": {"desk": 1}},
+                {"_id": "2", "headline": "prtorque", "state": "fetched", "task": {"desk": 1}},
+                {"_id": "3", "urgency": 3, "headline": "creator", "state": "fetched", "task": {"desk": 1}},
+                {"_id": "4", "urgency": 4, "state": "fetched", "task": {"desk": 1}},
+                {"_id": "5", "urgency": 2, "state": "fetched", "task": {"desk": 1}},
+                {"_id": "6", "state": "fetched", "task": {"desk": 1}},
+                {"_id": "7", "subject": [{"scheme": "my_vocabulary", "qcode": "MV:01"}], "task": {"desk": 1}},
+                {"_id": "8", "extra": {"custom_text": "my text"}, "task": {"desk": 1}},
             ]
             self.app.data.insert("archive", self.articles)
 

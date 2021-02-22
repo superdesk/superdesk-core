@@ -28,9 +28,9 @@ class FilterConditionTests(TestCase):
         self.req = ParsedRequest()
         with self.app.test_request_context(self.app.config.get("URL_PREFIX")):
             self.articles = [
-                {"_id": "1", "urgency": 1, "headline": "story", "state": "fetched"},
-                {"_id": "2", "headline": "prtorque", "state": "fetched"},
-                {"_id": "3", "urgency": 3, "state": "fetched", "flags": {"marked_for_sms": True}},
+                {"_id": "1", "urgency": 1, "headline": "story", "state": "fetched", "task": {"desk": 1}},
+                {"_id": "2", "headline": "prtorque", "state": "fetched", "task": {"desk": 1}},
+                {"_id": "3", "urgency": 3, "state": "fetched", "flags": {"marked_for_sms": True}, "task": {"desk": 1}},
                 {
                     "_id": "4",
                     "urgency": 4,
@@ -45,8 +45,9 @@ class FilterConditionTests(TestCase):
                     "state": "fetched",
                     "embargo": utcnow(),
                     "schedule_settings": {"utc_embargo": utcnow() + timedelta(minutes=20)},
+                    "task": {"desk": 1},
                 },
-                {"_id": "7", "genre": [{"name": "Sidebar"}], "state": "fetched"},
+                {"_id": "7", "genre": [{"name": "Sidebar"}], "state": "fetched", "task": {"desk": 1}},
                 {
                     "_id": "8",
                     "subject": [
@@ -54,15 +55,21 @@ class FilterConditionTests(TestCase):
                         {"name": "high schools", "qcode": "05005003", "parent": "05005000"},
                     ],
                     "state": "fetched",
+                    "task": {"desk": 1},
                 },
-                {"_id": "9", "state": "fetched", "anpa_category": [{"qcode": "a", "name": "Aus News"}]},
+                {
+                    "_id": "9",
+                    "state": "fetched",
+                    "anpa_category": [{"qcode": "a", "name": "Aus News"}],
+                    "task": {"desk": 1},
+                },
                 {
                     "_id": "10",
                     "body_html": "<p>Mention<p>",
                     "embargo": utcnow(),
                     "schedule_settings": {"utc_embargo": utcnow() - timedelta(minutes=20)},
                 },
-                {"_id": "11", "place": [{"qcode": "NSW", "name": "NSW"}], "state": "fetched"},
+                {"_id": "11", "place": [{"qcode": "NSW", "name": "NSW"}], "state": "fetched", "task": {"desk": 1}},
                 {
                     "_id": "12",
                     "body_html": '<div>&#13;\n&#13;\n<body dir="ltr">&#13;\n<div>&#13;\n'
