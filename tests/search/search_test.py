@@ -83,4 +83,4 @@ class SearchServiceTestCase(TestCase):
             req = ParsedRequest()
             req.args = {"repo": "archive"}
             docs = self.app.data.find("search", req, None)[0]
-            self.assertEquals(1, docs.count())
+            self.assertNotIn(CONTENT_STATE.PUBLISHED, [item["state"] for item in docs])

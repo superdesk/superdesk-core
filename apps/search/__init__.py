@@ -17,7 +17,7 @@ import superdesk
 from superdesk import get_resource_service
 from superdesk.metadata.item import CONTENT_STATE, ITEM_STATE, get_schema
 from superdesk.metadata.utils import aggregations as common_aggregations, item_url, get_elastic_highlight_query
-from apps.archive.archive import SOURCE as ARCHIVE
+from apps.archive.archive import ArchiveResource, SOURCE as ARCHIVE, private_content_filter
 from superdesk.resource import build_custom_hateoas
 from apps.publish.published_item import published_item_fields
 from superdesk import es_utils
@@ -51,31 +51,11 @@ class SearchService(superdesk.Service):
 
         If the content state is draft, it must be from the current user
         """
-        user_id = (g.get("user") or {}).get("_id")
-        return [
-            {"exists": {"field": "task.desk"}},
-            {
-                "bool": {
-                    "should": [
-                        {"and": [{"term": {ITEM_STATE: CONTENT_STATE.DRAFT}}, {"term": {"task.user": str(user_id)}}]},
-                        {
-                            "terms": {
-                                ITEM_STATE: [
-                                    CONTENT_STATE.FETCHED,
-                                    CONTENT_STATE.ROUTED,
-                                    CONTENT_STATE.PROGRESS,
-                                    CONTENT_STATE.SUBMITTED,
-                                    CONTENT_STATE.SPIKED,
-                                    CONTENT_STATE.CORRECTION,
-                                ]
-                            }
-                        },
-                    ],
-                    "must_not": {"term": {"version": 0}},
-                    "minimum_should_match": 1,
-                }
-            },
-        ]
+        filters = [deepcopy(ArchiveResource.datasource["elastic_filter"])]
+        private_filter = private_content_filter()
+        if private_filter:
+            filters.append(private_filter)
+        return filters
 
     def get_published_filters(self):
         """

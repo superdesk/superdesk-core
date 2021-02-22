@@ -120,7 +120,8 @@ def private_content_filter():
                 {"term": {"task.user": str(user["_id"])}},
                 {"term": {"version_creator": str(user["_id"])}},
                 {"term": {"original_creator": str(user["_id"])}},
-            ]
+            ],
+            "minimum_should_match": 1,
         }
 
         if "invisible_stages" in user:
@@ -130,9 +131,34 @@ def private_content_filter():
 
         if stages:
             private_filter["must_not"] = [{"terms": {"task.stage": stages}}]
-            private_filter["minimum_should_match"] = 1
 
-        return {"bool": private_filter}
+        # user can see all public content
+        # as long as it's not drafts
+        private_filter["should"].append(
+            {
+                "bool": {
+                    "must": {"exists": {"field": "task.desk"}},
+                    "must_not": {"term": {"state": "draft"}},
+                }
+            }
+        )
+
+        return {
+            "bool": {
+                "should": [
+                    {"bool": private_filter},
+                    {"bool": {"must_not": {"term": {"state": "draft"}}}},
+                ],
+                "minimum_should_match": 1,
+            },
+        }
+    else:  # no user specific filtering, filter out private content
+        return {
+            "bool": {
+                "must": {"exists": {"field": "task.desk"}},
+                "must_not": {"term": {"state": "draft"}},
+            },
+        }
 
 
 def update_image_caption(body, name, caption):
@@ -234,16 +260,7 @@ class ArchiveResource(Resource):
             "bool": {
                 "must": {
                     "terms": {
-                        "state": [
-                            "fetched",
-                            "routed",
-                            "draft",
-                            "in_progress",
-                            "spiked",
-                            "submitted",
-                            "unpublished",
-                            "correction",
-                        ]
+                        "state": ["draft", "fetched", "routed", "in_progress", "spiked", "submitted", "unpublished"]
                     }
                 },
                 "must_not": {"term": {"version": 0}},
