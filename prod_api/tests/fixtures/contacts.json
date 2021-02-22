@@ -65,7 +65,10 @@
         "is_active": true,
         "public": true,
         "city": "Praha",
-        "country": "CZE",
+        "country": {
+            "name": "CZE",
+            "qcode": "CZE"
+        },
         "instagram": "",
         "job_title": "admin of the world",
         "locality": "",

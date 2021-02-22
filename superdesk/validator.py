@@ -83,6 +83,12 @@ class SuperdeskValidator(Validator):
         """
         pass
 
+    def _validate_sams(self, mapping, field, value):
+        """
+        {'type': 'dict', 'nullable': True}
+        """
+        pass
+
     def _validate_type_phone_number(self, value):
         """Enables validation for `phone_number` schema attribute.
 

@@ -568,7 +568,6 @@ def render_content_template(item, template, update=False):
                     item[key].update(value)
                 else:
                     item[key] = value
-
         return updates
 
     return render_content_template_fields(template_data, dest=item)

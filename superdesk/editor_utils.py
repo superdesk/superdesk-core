@@ -13,6 +13,7 @@ import re
 import logging
 import uuid
 import lxml.etree as etree
+import lxml.html as lxml_html
 
 from textwrap import dedent
 from collections.abc import MutableSequence
@@ -627,7 +628,9 @@ class Editor3Content(EditorContent):
 
     @property
     def html(self):
-        return self.html_exporter.render()
+        exported = self.html_exporter.render()
+        pieces = lxml_html.fragments_fromstring(exported)
+        return "\n".join([render_fragment(elem).strip() for elem in pieces if elem is not None]).strip()
 
     @property
     def text(self):
@@ -763,7 +766,7 @@ def generate_fields(item, fields=None):
         editor = Editor3Content(item, field, is_html=field not in TEXT_FIELDS)
         editor.update_item()
         if CHECK_GENERATE_CONSISTENCY:
-            if old_field is not None and old_field != item[field]:
+            if old_field is not None and old_field.strip() != item[field].strip():
                 logger.warning(
                     "Generated HTML inconsistency between client and backend, we'll use client one",
                     extra=dict(
@@ -773,3 +776,10 @@ def generate_fields(item, fields=None):
                     ),
                 )
                 item[field] = old_field
+
+
+def render_fragment(elem) -> str:
+    if elem.tag == "p" and not elem.text and not len(elem):
+        # client renders empty paragraph as `<p><br></p>`
+        etree.SubElement(elem, "br", nsmap=None, attrib=None)
+    return str(lxml_html.tostring(elem, encoding="unicode"))

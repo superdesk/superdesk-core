@@ -46,6 +46,7 @@ from superdesk.media.renditions import get_renditions_spec
 from superdesk.vocabularies import is_related_content
 from apps.archive.common import get_utc_schedule
 from superdesk import text_utils
+from superdesk.attachments import get_attachment_public_url
 from collections import OrderedDict
 
 logger = logging.getLogger(__name__)
@@ -507,17 +508,19 @@ class NINJSFormatter(Formatter):
         attachments_service = superdesk.get_resource_service("attachments")
         for attachment_ref in article["attachments"]:
             attachment = attachments_service.find_one(req=None, _id=attachment_ref["attachment"])
-            if superdesk.attachments.is_attachment_public(attachment):  # don't save internal attachments
+            href = get_attachment_public_url(attachment)
+            if href:
+                # If we get a href, the attachment is available for subscriber consumption
                 output.append(
                     {
                         "id": str(attachment["_id"]),
                         "title": attachment["title"],
-                        "description": attachment["description"],
+                        "description": attachment.get("description"),
                         "filename": attachment["filename"],
                         "mimetype": attachment["mimetype"],
                         "length": attachment.get("length"),
                         "media": str(attachment["media"]),
-                        "href": "/assets/{}".format(str(attachment["media"])),
+                        "href": href,
                     }
                 )
         return output

@@ -48,7 +48,7 @@ install_requires = [
     "lxml>=3.8,<4.2",
     "python-twitter==3.5",
     "chardet<4.0",
-    "pymongo>=3.8,<3.9",
+    "pymongo>=3.8,<3.12",
     "croniter<0.4",
     "python-dateutil<2.8",
     "unidecode==0.04.21",
@@ -83,7 +83,7 @@ package_data = {
 
 setup(
     name="Superdesk-Core",
-    version="2.0.1",
+    version="2.1.0",
     description="Superdesk Core library",
     long_description=LONG_DESCRIPTION,
     author="petr jasek",

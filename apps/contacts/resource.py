@@ -81,7 +81,17 @@ class ContactsResource(Resource):
         "city": {"type": "string", "required": False},
         "contact_state": {"type": "string", "required": False},
         "postcode": {"type": "string", "required": False},
-        "country": {"type": "string", "required": False},
+        "country": {
+            "type": "dict",
+            "schema": {
+                "name": {"type": "string", "required": False},
+                "qcode": {"type": "string", "required": False},
+                "translations": {
+                    "type": "dict",
+                    "required": False,
+                },
+            },
+        },
         "notes": {"type": "string", "required": False},
         "contact_type": {
             "type": "string",

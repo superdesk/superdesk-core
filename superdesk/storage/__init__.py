@@ -28,6 +28,10 @@ class SuperdeskMediaStorage(MediaStorage, MimetypeMixin):
         raise NotImplementedError
 
     @abc.abstractmethod
+    def url_for_external(self, media_id: str, resource: str = None) -> str:
+        raise NotImplementedError
+
+    @abc.abstractmethod
     def get_by_filename(self, filename):
         raise NotImplementedError
 

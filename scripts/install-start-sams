@@ -1,0 +1,33 @@
+#!/usr/bin/env sh
+
+# Make sure we're using the local Superdesk-Core source
+pip install -e .
+
+# Make the SAMS directory and cd into it
+mkdir ../sams
+cd ../sams
+
+# Download SAMS
+git clone -b develop --single-branch https://github.com/superdesk/sams.git sams
+
+# Install Python packages
+cd sams/src/server
+time pip install -e .
+
+cd ../clients/python
+time pip install -e .
+
+pip install "gunicorn>=20.0.4,<20.1" honcho==1.0.1
+
+# Start the service
+cd ../../server
+export STORAGE_DESTINATION_1="MongoGridFS,Default,mongodb://localhost/sams"
+honcho start &
+
+started=0
+while [ $started -eq 0 ]
+do
+    curl -s "http://localhost:5700" 2>&1 > /dev/null && started=1 || echo 'Waiting for SAMS...'
+    sleep 5
+done
+echo 'SAMS now running'

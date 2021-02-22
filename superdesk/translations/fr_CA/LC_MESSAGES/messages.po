@@ -678,7 +678,7 @@ msgstr "Utilisateur inactif"
 
 #: apps/auth/oidc/auth.py:69
 msgid "Please update your account email address"
-msgstr ""
+msgstr "Veuillez mettre à jour l'adresse courriel de votre compte"
 
 #: apps/comments/comments.py:80
 msgid "Commenting on behalf of someone else is prohibited."
@@ -867,7 +867,7 @@ msgstr "Extraire le contenu dans un pupitre"
 
 #: apps/duplication/__init__.py:49
 msgid "Fetch Content to a Desk"
-msgstr ""
+msgstr "Extraire le contenu vers un pupitre"
 
 #: apps/duplication/__init__.py:53 apps/duplication/__init__.py:54
 msgid "Move Content to another desk"
@@ -879,11 +879,11 @@ msgstr "Dupliquer le contenu dans un pupitre"
 
 #: apps/duplication/__init__.py:63 apps/duplication/__init__.py:64
 msgid "Translate Content within a Desk"
-msgstr ""
+msgstr "Traduire le contenu dans un pupitre"
 
 #: apps/duplication/__init__.py:68 apps/duplication/__init__.py:69
 msgid "Send Content to Personal desk"
-msgstr ""
+msgstr "Envoyer le contenu à un pupitre personnalisé"
 
 #: apps/duplication/archive_copy.py:54
 #: apps/duplication/archive_duplication.py:128
@@ -898,7 +898,7 @@ msgstr "La copie n'est pas permise sur les éléments dans un pupitre."
 
 #: apps/duplication/archive_duplication.py:54
 msgid "Duplicate to Personal space is not allowed."
-msgstr ""
+msgstr "La duplication vers un espace sécurisé n'est pas autorisée."
 
 #: apps/duplication/archive_fetch.py:75
 msgid "Fail to found ingest item with _id: {id}"
@@ -1101,10 +1101,14 @@ msgstr ""
 #: apps/publish/content/common.py:312
 msgid "Cannot publish the story after Update is published."
 msgstr ""
+"Il n'est pas possible de publier l'article après la publication de la mise à"
+" jour."
 
 #: apps/publish/content/common.py:317
 msgid "Can't publish update until original story is published."
 msgstr ""
+"La mise à jour ne peut pas être publiée avant que l'article original soit "
+"publié."
 
 #: apps/publish/content/common.py:359
 msgid ""
@@ -1116,11 +1120,11 @@ msgstr ""
 
 #: apps/publish/content/common.py:372
 msgid "Package cannot be {state}"
-msgstr ""
+msgstr "Le budget ne peut pas être {state}"
 
 #: apps/publish/content/common.py:375
 msgid "Package cannot have Embargo"
-msgstr ""
+msgstr "Le budget ne peut pas avoir d'embargo"
 
 #: apps/publish/content/common.py:382
 msgid "Corrected package cannot be empty."
@@ -1401,11 +1405,11 @@ msgstr "Gabarits"
 
 #: apps/templates/__init__.py:27
 msgid "Create templates"
-msgstr ""
+msgstr "Créer des gabarits"
 
 #: apps/templates/__init__.py:32 apps/templates/__init__.py:33
 msgid "Manage other user personal template"
-msgstr ""
+msgstr "Gérer le gabarit personnel d'un autre employé"
 
 #: apps/templates/content_templates.py:224
 msgid "Invalid kill template. {fields} are not allowed"
