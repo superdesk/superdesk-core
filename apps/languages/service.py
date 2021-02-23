@@ -23,6 +23,11 @@ def view_language(item):
     language["_id"] = language["qcode"]
     language["label"] = language["name"]
     language["language"] = language["qcode"]
+
+    # allow translations
+    language.setdefault("source", True)
+    language.setdefault("destination", True)
+
     return language
 
 
