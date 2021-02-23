@@ -19,6 +19,7 @@ from base64 import b64encode
 from unittest.mock import patch
 
 from flask import json, Config
+from werkzeug.utils import ImportStringError
 
 from apps.ldap import ADAuth
 from superdesk import get_resource_service
@@ -164,7 +165,10 @@ def setup_config(config):
     app_abspath = os.path.abspath(os.path.dirname(os.path.dirname(__file__)))
     app_config = Config(app_abspath)
     app_config.from_object("superdesk.default_settings")
-    app_config.from_object("settings")
+    try:
+        app_config.from_object("settings")
+    except ImportStringError as e:
+        logger.warning(f"Can't load local settings: {e}")
 
     update_config(app_config)
 
