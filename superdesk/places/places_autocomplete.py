@@ -51,8 +51,8 @@ class PlacesAutocompleteService(superdesk.Service):
         data = [format_geoname_item(item) for item in json_data.get("geonames", [])]
         return ListCursor(data)
 
-    def get_place(self, geoname_id, language):
-        if geoname_id and language:
+    def get_place(self, geoname_id, language="en"):
+        assert geoname_id
             params = [
                 ("geonameId", geoname_id),
                 ("lang", language),
