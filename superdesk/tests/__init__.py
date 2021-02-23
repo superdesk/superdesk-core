@@ -164,6 +164,7 @@ def setup_config(config):
     app_abspath = os.path.abspath(os.path.dirname(os.path.dirname(__file__)))
     app_config = Config(app_abspath)
     app_config.from_object("superdesk.default_settings")
+    app_config.from_object("settings")
 
     update_config(app_config)
 
