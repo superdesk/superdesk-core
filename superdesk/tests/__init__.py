@@ -13,6 +13,7 @@ import functools
 import logging
 import socket
 import unittest
+from pathlib import Path
 
 from copy import deepcopy
 from base64 import b64encode
@@ -163,6 +164,15 @@ def setup_config(config):
     app_abspath = os.path.abspath(os.path.dirname(os.path.dirname(__file__)))
     app_config = Config(app_abspath)
     app_config.from_object("superdesk.default_settings")
+    cwd = Path.cwd()
+    for p in [cwd] + list(cwd.parents):
+        settings = p / "settings.py"
+        if settings.is_file():
+            logger.info(f"using local settings from {settings}")
+            app_config.from_pyfile(settings)
+            break
+    else:
+        logger.warning("Can't find local settings")
 
     update_config(app_config)
 
