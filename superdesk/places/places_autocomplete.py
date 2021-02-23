@@ -53,12 +53,12 @@ class PlacesAutocompleteService(superdesk.Service):
 
     def get_place(self, geoname_id, language="en"):
         assert geoname_id
-            params = [
-                ("geonameId", geoname_id),
-                ("lang", language),
-                ("style", app.config.get("GEONAMES_SEARCH_STYLE", "full")),
-            ]
+        params = [
+            ("geonameId", geoname_id),
+            ("lang", language),
+            ("style", app.config.get("GEONAMES_SEARCH_STYLE", "full")),
+        ]
 
-            json_data = geonames_request("getJSON", params)
-            data = format_geoname_item(json_data)
-            return data
+        json_data = geonames_request("getJSON", params)
+        data = format_geoname_item(json_data)
+        return data
