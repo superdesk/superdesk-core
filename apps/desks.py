@@ -668,10 +668,10 @@ class OverviewService(BaseService):
         # first we check archives for locked items
         es_query["aggs"] = {
             "desk_authors": {
-                "filter": {"bool": {"filter": {"terms": {"version_creator": [str(m) for m in members]}}}},
+                "filter": {"bool": {"filter": {"terms": {"lock_user": [str(m) for m in members]}}}},
                 "aggs": {
                     "authors": {
-                        "terms": {"field": "version_creator", "size": SIZE_MAX},
+                        "terms": {"field": "lock_user", "size": SIZE_MAX},
                         "aggs": {
                             "locked": {
                                 "filter": {
