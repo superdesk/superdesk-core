@@ -51,14 +51,14 @@ class PlacesAutocompleteService(superdesk.Service):
         data = [format_geoname_item(item) for item in json_data.get("geonames", [])]
         return ListCursor(data)
 
-    def get_detail(self, req, lookup):
-        assert req.args.get("geonameId"), {"geonameId": 1}
-        params = [
-            ("geonameId", req.args.get("geonameId")),
-            ("lang", req.args.get("lang", "en").split("-")[0]),
-            ("style", req.args.get("style", app.config["GEONAMES_SEARCH_STYLE"])),
-        ]
+    def get_place(self, geoname_id, language):
+        if geoname_id and language:
+            params = [
+                ("geonameId", geoname_id),
+                ("lang", language),
+                ("style", app.config.get("GEONAMES_SEARCH_STYLE", "full")),
+            ]
 
-        json_data = geonames_request("getJSON", params)
-        data = format_geoname_item(json_data)
-        return data
+            json_data = geonames_request("getJSON", params)
+            data = format_geoname_item(json_data)
+            return data
