@@ -694,11 +694,11 @@ Feature: Desks
                   "authors": {
                     "#USER_1_ID#": {
                       "assigned": 0,
-                      "locked": 1
+                      "locked": 0
                     },
                     "#USER_2_ID#": {
                       "assigned": 0,
-                      "locked": 2
+                      "locked": 0
                     }
                   },
                   "role": "#ROLE_JOURNALIST_ID#"
@@ -707,7 +707,7 @@ Feature: Desks
                   "authors": {
                     "#USER_3_ID#": {
                       "assigned": 0,
-                      "locked": 0
+                      "locked": 2
                     }
                   },
                   "role": "#ROLE_EDITOR_ID#"
@@ -724,7 +724,7 @@ Feature: Desks
                     "authors": {
                       "#USER_3_ID#": {
                         "assigned": 0,
-                        "locked": 0
+                        "locked": 2
                       }
                     },
                     "role": "#ROLE_EDITOR_ID#"
@@ -733,7 +733,7 @@ Feature: Desks
                     "authors": {
                       "#USER_4_ID#": {
                         "assigned": 0,
-                        "locked": 0
+                        "locked": 1
                       }
                     },
                     "role": "#ROLE_SUBEDITOR_ID#"
@@ -742,11 +742,11 @@ Feature: Desks
                     "authors": {
                       "#USER_1_ID#": {
                         "assigned": 0,
-                        "locked": 1
+                        "locked": 0
                       },
                       "#USER_2_ID#": {
                         "assigned": 0,
-                        "locked": 2
+                        "locked": 0
                       }
                     },
                     "role": "#ROLE_JOURNALIST_ID#"
