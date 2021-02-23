@@ -59,12 +59,6 @@ class PlacesAutocompleteService(superdesk.Service):
             ("style", req.args.get("style", app.config["GEONAMES_SEARCH_STYLE"])),
         ]
 
-        if req.args.get("featureClass"):
-            params.append(("featureClass", req.args.get("featureClass")))
-        else:
-            for feature_class in app.config["GEONAMES_FEATURE_CLASSES"]:
-                params.append(("featureClass", feature_class.upper()))
-
         json_data = geonames_request("getJSON", params)
         data = format_geoname_item(json_data)
         return data
