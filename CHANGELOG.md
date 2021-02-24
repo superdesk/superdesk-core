@@ -1,5 +1,14 @@
 # Superdesk Server Changelog
 
+## [2.1.2] 2021-02-24
+
+### Fixed
+
+- Load local settings for unit tests.
+- Fix search results inconsistency between archive and search endpoints.
+- Handle error when fetching association from AP Media API.
+- Fix master desk aggregations.
+
 ## [2.1.1] 2021-02-15
 
 ### Fixed
