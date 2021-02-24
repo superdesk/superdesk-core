@@ -92,6 +92,7 @@ schema = {
     "coverage_id": metadata_schema["guid"],
     "agenda_id": metadata_schema["guid"],
     "agenda_href": metadata_schema["guid"],
+    "refs": metadata_schema["refs"],
 }
 
 

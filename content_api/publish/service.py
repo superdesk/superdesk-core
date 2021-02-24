@@ -48,6 +48,7 @@ class PublishService(BaseService):
             item = EnqueueService.filter_document(item)
             item = remove_metadata_for_publish(item)
             doc = self.formatter._transform_to_ninjs(item, self.subscriber)
+            print("refs", item.get("refs"))
             now = utcnow()
             doc.setdefault("firstcreated", now)
             doc.setdefault("versioncreated", now)

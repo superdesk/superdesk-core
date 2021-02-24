@@ -257,7 +257,18 @@ class ContentAPITestCase(TestCase):
             self.assertEqual({}, data["associations"])
 
     def test_content_filtering(self):
-        self.content_api.publish({"guid": "u3", "type": "text", "source": "foo", "urgency": 3}, [self.subscriber])
+        self.content_api.publish(
+            {
+                "guid": "u3",
+                "type": "text",
+                "source": "foo",
+                "urgency": 3,
+                "refs": [
+                    {"guid": "u2", "type": "text"},
+                ],
+            },
+            [self.subscriber],
+        )
         self.content_api.publish({"guid": "u2", "type": "text", "source": "bar", "urgency": 2}, [self.subscriber])
 
         headers = self._auth_headers()
@@ -290,6 +301,11 @@ class ContentAPITestCase(TestCase):
             response = c.get('items?item_source=["foo","bar"]', headers=headers)
             data = json.loads(response.data)
             self.assertEqual(2, data["_meta"]["total"])
+
+            response = c.get("items?related_to=u2", headers=headers)
+            self.assertEqual(200, response.status_code)
+            data = json.loads(response.data)
+            self.assertEqual(1, data["_meta"]["total"])
 
     def test_generate_token_service(self):
         service = superdesk.get_resource_service("subscriber_token")
