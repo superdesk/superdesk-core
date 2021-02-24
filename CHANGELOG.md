@@ -1,5 +1,11 @@
 # Superdesk Server Changelog
 
+## [1.33.13] 2021-02-24
+
+### Fixed
+
+- Fix `firstpublished` timestamp when scheduling/descheduling.
+
 ## [1.33.12] 2021-02-04
 
 ### Changed
