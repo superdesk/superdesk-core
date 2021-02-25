@@ -7,9 +7,9 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: Superdesk-Core 2.0.2.dev192+g78fa2677.d20210106\n"
+"Project-Id-Version: Superdesk-Core 2.0.13.dev294+gc7a46b6b\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2021-01-06 12:51+0100\n"
+"POT-Creation-Date: 2021-02-25 14:27+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -18,20 +18,52 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 2.8.0\n"
 
-#: superdesk/activity.py:80
+#: superdesk/activity.py:81
 msgid "Send notifications via email"
 msgstr ""
 
-#: superdesk/activity.py:81 superdesk/activity.py:91
+#: superdesk/activity.py:82 superdesk/activity.py:92
 msgid "notifications"
 msgstr ""
 
-#: superdesk/activity.py:90
+#: superdesk/activity.py:91
 msgid "Allow Desktop Notifications"
 msgstr ""
 
-#: superdesk/validator.py:281
+#: superdesk/internal_destinations.py:102
+msgid "Internal Destinations"
+msgstr ""
+
+#: superdesk/internal_destinations.py:103
+msgid "User can manage internal destinations."
+msgstr ""
+
+#: superdesk/validator.py:287
 msgid "Only 1 instance is allowed."
+msgstr ""
+
+#: superdesk/io/__init__.py:57
+msgid "Ingest Feed Parsers"
+msgstr ""
+
+#: superdesk/io/__init__.py:58
+msgid "User can maintain Ingest Feed Parsers."
+msgstr ""
+
+#: superdesk/io/__init__.py:67
+msgid "Ingest Feed Services"
+msgstr ""
+
+#: superdesk/io/__init__.py:68
+msgid "User can maintain Ingest Feed Services."
+msgstr ""
+
+#: superdesk/io/__init__.py:74
+msgid "Ingest Channels"
+msgstr ""
+
+#: superdesk/io/__init__.py:75
+msgid "User can maintain Ingest Channels."
 msgstr ""
 
 #: superdesk/macros/abstract_populator.py:35
@@ -147,115 +179,203 @@ msgstr ""
 msgid "temperature and weight"
 msgstr ""
 
-#: superdesk/vocabularies/__init__.py:29
-msgid "cvs"
+#: superdesk/profiling/__init__.py:37
+msgid "Profiling Service"
+msgstr ""
+
+#: superdesk/profiling/__init__.py:38
+msgid "User can read profiling data."
+msgstr ""
+
+#: superdesk/publisher/__init__.py:21
+msgid "Livesite Editor"
+msgstr ""
+
+#: superdesk/publisher/__init__.py:22
+msgid "Edit a site live on Web Publisher"
+msgstr ""
+
+#: superdesk/roles/__init__.py:23
+msgid "Roles Management"
+msgstr ""
+
+#: superdesk/roles/__init__.py:23
+msgid "User can manage roles."
+msgstr ""
+
+#: superdesk/sams/__init__.py:41
+msgid "Sams"
+msgstr ""
+
+#: superdesk/sams/__init__.py:41
+msgid "Access to the SAMS management page (and to upload assets etc)"
+msgstr ""
+
+#: superdesk/sams/__init__.py:44
+msgid "Sams manage"
+msgstr ""
+
+#: superdesk/sams/__init__.py:44
+msgid "Allows management of SAMS Sets etc"
+msgstr ""
+
+#: superdesk/sams/__init__.py:47
+msgid "SAMS Manage Assets"
+msgstr ""
+
+#: superdesk/sams/__init__.py:47
+msgid "Allows management of SAMS Assets"
+msgstr ""
+
+#: apps/ldap/__init__.py:26 superdesk/users/__init__.py:25
+msgid "User Management"
+msgstr ""
+
+#: apps/ldap/__init__.py:26 superdesk/users/__init__.py:25
+msgid "User can manage users."
 msgstr ""
 
 #: superdesk/vocabularies/__init__.py:30
 msgid "Prefered CV items"
 msgstr ""
 
+#: superdesk/vocabularies/__init__.py:31
+msgid "cvs"
+msgstr ""
+
+#: superdesk/vocabularies/vocabularies.py:38
+msgid "Vocabularies Management"
+msgstr ""
+
+#: superdesk/vocabularies/vocabularies.py:39
+msgid "User can manage vocabularies' contents."
+msgstr ""
+
 #: apps/content_filters/filter_condition/filter_condition_parameters.py:78
-#: apps/validate/validate.py:63 superdesk/vocabularies/vocabularies.py:433
+#: apps/validate/validate.py:63 superdesk/vocabularies/vocabularies.py:438
 msgid "Keywords"
 msgstr ""
 
-#: apps/desks.py:175
+#: apps/desk_routing.py:74
+msgid "Desk routing"
+msgstr ""
+
+#: apps/desk_routing.py:74
+msgid "User can configure desk routing"
+msgstr ""
+
+#: apps/desks.py:104
+msgid "Desk Management"
+msgstr ""
+
+#: apps/desks.py:104
+msgid "User can manage desks."
+msgstr ""
+
+#: apps/desks.py:107
+msgid "Master Desk"
+msgstr ""
+
+#: apps/desks.py:107
+msgid "User can access master desk."
+msgstr ""
+
+#: apps/desks.py:180
 msgid "Cannot update Desk Type as there are article(s) referenced by the Desk."
 msgstr ""
 
-#: apps/desks.py:199
+#: apps/desks.py:204
 msgid "Cannot delete desk as it is assigned as default desk to user(s)."
 msgstr ""
 
-#: apps/desks.py:211
+#: apps/desks.py:216
 msgid "Cannot delete desk as routing scheme(s) are associated with the desk"
 msgstr ""
 
-#: apps/desks.py:225
+#: apps/desks.py:230
 msgid ""
 "Cannot delete desk as it has article(s) or referenced by versions of the "
 "article(s)."
 msgstr ""
 
-#: apps/archive/__init__.py:109 apps/monitoring.py:13
+#: apps/feature_preview.py:7
+msgid "Feature Preview"
+msgstr ""
+
+#: apps/feature_preview.py:8
+msgid "Let user toggle Feature Preview on/off."
+msgstr ""
+
+#: apps/archive/__init__.py:111 apps/monitoring.py:14
 msgid "Monitoring view"
 msgstr ""
 
-#: apps/monitoring.py:14
+#: apps/monitoring.py:15
 msgid "monitoring"
 msgstr ""
 
-#: apps/preferences.py:66
-msgid "label"
-msgstr ""
-
-#: apps/preferences.py:68
-msgid "category"
-msgstr ""
-
-#: apps/preferences.py:108
+#: apps/preferences.py:115
 msgid "Enable Feature Preview"
 msgstr ""
 
-#: apps/preferences.py:109
+#: apps/preferences.py:116
 msgid "feature"
 msgstr ""
 
-#: apps/preferences.py:121
+#: apps/preferences.py:127
 msgid "Users archive view format"
 msgstr ""
 
-#: apps/preferences.py:122
+#: apps/preferences.py:128
 msgid "archive"
 msgstr ""
 
-#: apps/preferences.py:132
+#: apps/preferences.py:138
 msgid "Enable Single Line View"
 msgstr ""
 
-#: apps/preferences.py:133
+#: apps/preferences.py:139
 msgid "rows"
 msgstr ""
 
-#: apps/preferences.py:159
+#: apps/preferences.py:168
 msgid "Located"
 msgstr ""
 
-#: apps/preferences.py:159 apps/preferences.py:183
+#: apps/preferences.py:169 apps/preferences.py:196
 msgid "article_defaults"
 msgstr ""
 
-#: apps/preferences.py:166
-msgid "categories"
-msgstr ""
-
-#: apps/preferences.py:167
+#: apps/preferences.py:178
 msgid "Preferred Categories"
 msgstr ""
 
-#: apps/preferences.py:176
-msgid "desks"
+#: apps/preferences.py:179
+msgid "categories"
 msgstr ""
 
-#: apps/preferences.py:177
+#: apps/preferences.py:188
 msgid "Preferred Desks"
 msgstr ""
 
+#: apps/preferences.py:189
+msgid "desks"
+msgstr ""
+
 #: apps/content_filters/filter_condition/filter_condition_parameters.py:134
-#: apps/preferences.py:183 apps/validate/validate.py:67
+#: apps/preferences.py:195 apps/validate/validate.py:67
 msgid "Place"
 msgstr ""
 
-#: apps/preferences.py:197
+#: apps/preferences.py:211
 msgid "Users contacts view format"
 msgstr ""
 
-#: apps/preferences.py:198
+#: apps/preferences.py:212
 msgid "contacts"
 msgstr ""
 
-#: apps/preferences.py:281 apps/preferences.py:293
+#: apps/preferences.py:295 apps/preferences.py:307
 msgid "Invalid preference: {preference}"
 msgstr ""
 
@@ -301,175 +421,179 @@ msgstr ""
 msgid "Error:{exception} in {rule_type} rule:{rule} for stage:{stage}"
 msgstr ""
 
-#: apps/archive/__init__.py:109
+#: apps/tasks.py:328
+msgid "Tasks Management"
+msgstr ""
+
+#: apps/archive/__init__.py:112
 msgid "Access to Monitoring view in left toolbar"
 msgstr ""
 
-#: apps/archive/__init__.py:111
+#: apps/archive/__init__.py:115
 msgid "Create content"
 msgstr ""
 
-#: apps/archive/__init__.py:111
+#: apps/archive/__init__.py:115
 msgid "Create and save content"
 msgstr ""
 
-#: apps/archive/__init__.py:112
+#: apps/archive/__init__.py:118
 msgid "Ingest"
 msgstr ""
 
-#: apps/archive/__init__.py:112
+#: apps/archive/__init__.py:118
 msgid "Access to ingest sources management"
 msgstr ""
 
-#: apps/archive/__init__.py:113
+#: apps/archive/__init__.py:120
 msgid "Spike"
 msgstr ""
 
-#: apps/archive/__init__.py:113
+#: apps/archive/__init__.py:120
 msgid "Spike/delete items"
 msgstr ""
 
-#: apps/archive/__init__.py:114
+#: apps/archive/__init__.py:122
 msgid "Spike view"
 msgstr ""
 
-#: apps/archive/__init__.py:114
+#: apps/archive/__init__.py:122
 msgid "View spiked content"
 msgstr ""
 
-#: apps/archive/__init__.py:115
+#: apps/archive/__init__.py:125
 msgid "Unspike"
 msgstr ""
 
-#: apps/archive/__init__.py:115
+#: apps/archive/__init__.py:125
 msgid "Unspike/undelete content"
 msgstr ""
 
-#: apps/archive/__init__.py:116
+#: apps/archive/__init__.py:128
 msgid "Edit Unique Name"
 msgstr ""
 
-#: apps/archive/__init__.py:116
+#: apps/archive/__init__.py:128
 msgid "Edit unique name"
 msgstr ""
 
-#: apps/archive/__init__.py:117
+#: apps/archive/__init__.py:130
 msgid "Hold"
 msgstr ""
 
-#: apps/archive/__init__.py:117
+#: apps/archive/__init__.py:130
 msgid "Hold content"
 msgstr ""
 
-#: apps/archive/__init__.py:118
+#: apps/archive/__init__.py:131
 msgid "Restore"
 msgstr ""
 
-#: apps/archive/__init__.py:118
+#: apps/archive/__init__.py:131
 msgid "Restore content"
 msgstr ""
 
-#: apps/archive/__init__.py:119
+#: apps/archive/__init__.py:132
 msgid "Update"
 msgstr ""
 
-#: apps/archive/__init__.py:119
+#: apps/archive/__init__.py:132
 msgid "Create an update"
 msgstr ""
 
-#: apps/archive/__init__.py:121
+#: apps/archive/__init__.py:135
 msgid "Unlock content"
 msgstr ""
 
-#: apps/archive/__init__.py:121
+#: apps/archive/__init__.py:136
 msgid "Unlock locked content by another user"
 msgstr ""
 
-#: apps/archive/__init__.py:125
+#: apps/archive/__init__.py:140
 msgid "Mark items for users"
 msgstr ""
 
-#: apps/archive/__init__.py:126
+#: apps/archive/__init__.py:141
 msgid "User can mark or unmark items for other users"
 msgstr ""
 
-#: apps/archive/archive.py:288 apps/archive/archive.py:954
+#: apps/archive/archive.py:315 apps/archive/archive.py:983
 msgid "Package doesn't support Public Service Announcements"
 msgstr ""
 
-#: apps/archive/archive.py:468 apps/archive/archive.py:948
+#: apps/archive/archive.py:495 apps/archive/archive.py:977
 #: apps/duplication/archive_duplication.py:139
 #: apps/item_autosave/components/item_autosave.py:36
 msgid "The item was locked by another user"
 msgstr ""
 
-#: apps/archive/archive.py:522 apps/archived/archived.py:201
+#: apps/archive/archive.py:549 apps/archived/archived.py:201
 msgid "User does not have permissions to read the item."
 msgstr ""
 
-#: apps/archive/archive.py:538
+#: apps/archive/archive.py:565
 msgid "Invalid version {old_version}"
 msgstr ""
 
-#: apps/archive/archive.py:542
+#: apps/archive/archive.py:569
 msgid "Invalid item id {item_id}"
 msgstr ""
 
-#: apps/archive/archive.py:546
+#: apps/archive/archive.py:573
 msgid "Invalid last version {last_version}"
 msgstr ""
 
-#: apps/archive/archive.py:871
+#: apps/archive/archive.py:900
 msgid "An item can't have both Publish Schedule and Embargo"
 msgstr ""
 
-#: apps/archive/archive.py:877
+#: apps/archive/archive.py:906
 msgid "Embargo cannot be earlier than now"
 msgstr ""
 
-#: apps/archive/archive.py:880
+#: apps/archive/archive.py:909
 msgid "Rewrites doesn't support Embargo"
 msgstr ""
 
-#: apps/archive/archive.py:883
+#: apps/archive/archive.py:912
 msgid "Invalid Embargo"
 msgstr ""
 
-#: apps/archive/archive.py:887
+#: apps/archive/archive.py:916
 msgid "A Package doesn't support Embargo"
 msgstr ""
 
-#: apps/archive/archive.py:951
+#: apps/archive/archive.py:980
 msgid "Item isn't in a valid state to be updated."
 msgstr ""
 
-#: apps/archive/archive.py:962
+#: apps/archive/archive.py:991
 msgid "Unauthorized to modify Unique Name"
 msgstr ""
 
-#: apps/archive/archive.py:970
+#: apps/archive/archive.py:999
 msgid "Cannot change the genre for broadcast content."
 msgstr ""
 
-#: apps/archive/archive.py:984
+#: apps/archive/archive.py:1013
 msgid ""
 "This item is in a package and it needs to be removed before the item can "
 "be scheduled!"
 msgstr ""
 
-#: apps/archive/archive.py:1011
+#: apps/archive/archive.py:1040
 msgid "Duplicate category codes are not allowed"
 msgstr ""
 
-#: apps/archive/archive.py:1016
+#: apps/archive/archive.py:1045
 msgid "Duplicate subjects are not allowed"
 msgstr ""
 
-#: apps/archive/archive.py:1299
+#: apps/archive/archive.py:1328
 msgid "Client and server etags don't match"
 msgstr ""
 
-#: apps/archive/archive.py:1301
+#: apps/archive/archive.py:1330
 msgid "Request for Auto-save must have _id"
 msgstr ""
 
@@ -538,12 +662,20 @@ msgstr ""
 msgid "Schedule date is not recognized"
 msgstr ""
 
-#: apps/archive/common.py:656
+#: apps/archive/common.py:658
 msgid "Schedule cannot be earlier than now"
 msgstr ""
 
-#: apps/archive/common.py:672
+#: apps/archive/common.py:674
 msgid "{} date is not recognized"
+msgstr ""
+
+#: apps/archive_broadcast/__init__.py:28
+msgid "Broadcast"
+msgstr ""
+
+#: apps/archive_broadcast/__init__.py:29
+msgid "Allows user to create broadcast content."
 msgstr ""
 
 #: apps/archive_broadcast/broadcast.py:92
@@ -608,11 +740,19 @@ msgstr ""
 msgid "Can't kill as one of Take(s) is part of a Package"
 msgstr ""
 
+#: apps/archived/archived.py:414
+msgid "Archive Management"
+msgstr ""
+
+#: apps/archived/archived.py:415
+msgid "User can remove items from the archived"
+msgstr ""
+
 #: apps/auth/__init__.py:64
 msgid "Invalid user."
 msgstr ""
 
-#: apps/auth/auth.py:106
+#: apps/auth/auth.py:115
 msgid "Insufficient privileges for the requested operation."
 msgstr ""
 
@@ -644,8 +784,40 @@ msgstr ""
 msgid "Commenting on behalf of someone else is prohibited."
 msgstr ""
 
+#: apps/concept_items/__init__.py:25
+msgid "Knowledge base management"
+msgstr ""
+
+#: apps/concept_items/__init__.py:26
+msgid "User can manage knowledge base."
+msgstr ""
+
+#: apps/contacts/__init__.py:27
+msgid "Contacts Management"
+msgstr ""
+
+#: apps/contacts/__init__.py:27
+msgid "Manage Contacts"
+msgstr ""
+
+#: apps/contacts/__init__.py:30
+msgid "Contacts View Rights"
+msgstr ""
+
+#: apps/contacts/__init__.py:30
+msgid "View Contacts"
+msgstr ""
+
 #: apps/contacts/service.py:85
 msgid "Contacts of type \"{contact_type}\" must have an email address"
+msgstr ""
+
+#: apps/content_filters/__init__.py:48
+msgid "Content Filters"
+msgstr ""
+
+#: apps/content_filters/__init__.py:49
+msgid "User can manage content filters"
 msgstr ""
 
 #: apps/content_filters/content_filter/content_filter_service.py:40
@@ -662,6 +834,10 @@ msgstr ""
 
 #: apps/content_filters/content_filter/content_filter_service.py:122
 msgid "Circular dependency error in content filters:{filter}"
+msgstr ""
+
+#: apps/content_filters/content_filter/content_filter_service.py:196
+msgid "Filter statement {index} does not have a filter condition"
 msgstr ""
 
 #: apps/content_filters/content_filter/content_filter_test.py:48
@@ -758,7 +934,7 @@ msgid "Ingest provider"
 msgstr ""
 
 #: apps/content_filters/filter_condition/filter_condition_parameters.py:148
-#: apps/validate/validate.py:55
+#: apps/publish/__init__.py:93 apps/validate/validate.py:55
 msgid "Embargo"
 msgstr ""
 
@@ -787,6 +963,14 @@ msgstr ""
 msgid "Filter condition:{condition} has identical settings"
 msgstr ""
 
+#: apps/content_types/__init__.py:13
+msgid "Content Profile"
+msgstr ""
+
+#: apps/content_types/__init__.py:14
+msgid "Manage content profiles"
+msgstr ""
+
 #: apps/content_types/content_types.py:143
 msgid "Vocabulary {vocabulary} is used in {count} content type(s)"
 msgstr ""
@@ -799,6 +983,14 @@ msgstr ""
 
 #: apps/content_types/content_types.py:179
 msgid "Cannot disable content profile as following desks are referencing: {desks}"
+msgstr ""
+
+#: apps/dictionaries/__init__.py:24
+msgid "Dictionaries List Management"
+msgstr ""
+
+#: apps/dictionaries/__init__.py:25
+msgid "User can manage dictionaries lists."
 msgstr ""
 
 #: apps/dictionaries/service.py:142
@@ -818,34 +1010,34 @@ msgstr ""
 msgid "The dictionary type cannot be changed."
 msgstr ""
 
-#: apps/duplication/__init__.py:49
+#: apps/duplication/__init__.py:50
 msgid "Fetch Content To a Desk"
 msgstr ""
 
-#: apps/duplication/__init__.py:49
+#: apps/duplication/__init__.py:50
 msgid "Fetch Content to a Desk"
 msgstr ""
 
-#: apps/duplication/__init__.py:53 apps/duplication/__init__.py:54
+#: apps/duplication/__init__.py:54 apps/duplication/__init__.py:55
 msgid "Move Content to another desk"
 msgstr ""
 
-#: apps/duplication/__init__.py:58 apps/duplication/__init__.py:59
+#: apps/duplication/__init__.py:59 apps/duplication/__init__.py:60
 msgid "Duplicate Content within a Desk"
 msgstr ""
 
-#: apps/duplication/__init__.py:63 apps/duplication/__init__.py:64
+#: apps/duplication/__init__.py:64 apps/duplication/__init__.py:65
 msgid "Translate Content within a Desk"
 msgstr ""
 
-#: apps/duplication/__init__.py:68 apps/duplication/__init__.py:69
+#: apps/duplication/__init__.py:69 apps/duplication/__init__.py:70
 msgid "Send Content to Personal desk"
 msgstr ""
 
 #: apps/duplication/archive_copy.py:54
 #: apps/duplication/archive_duplication.py:128
 #: apps/duplication/archive_move.py:125
-#: apps/duplication/archive_translate.py:59
+#: apps/duplication/archive_translate.py:60
 msgid "Fail to found item with guid: {guid}"
 msgstr ""
 
@@ -869,6 +1061,10 @@ msgstr ""
 msgid "Move is not allowed within the same stage."
 msgstr ""
 
+#: apps/export/__init__.py:22
+msgid "Content export"
+msgstr ""
+
 #: apps/export/service.py:67
 msgid "Error creating export zip file. Try again please."
 msgstr ""
@@ -879,6 +1075,30 @@ msgstr ""
 
 #: apps/export/service.py:85
 msgid "Formatter not found for requested format type."
+msgstr ""
+
+#: apps/highlights/__init__.py:26
+msgid "Highlights - read"
+msgstr ""
+
+#: apps/highlights/__init__.py:27
+msgid "Can see a list of highlights."
+msgstr ""
+
+#: apps/highlights/__init__.py:31
+msgid "Highlights/Summary List Management"
+msgstr ""
+
+#: apps/highlights/__init__.py:32
+msgid "User can manage highlights/summary lists."
+msgstr ""
+
+#: apps/highlights/__init__.py:36
+msgid "Mark items for Highlights/Summary Lists"
+msgstr ""
+
+#: apps/highlights/__init__.py:37
+msgid "User can mark items for Highlights/Summary Lists."
 msgstr ""
 
 #: apps/io/search_ingest.py:61
@@ -937,6 +1157,32 @@ msgstr ""
 msgid "User already exists in the system."
 msgstr ""
 
+#: apps/legal_archive/__init__.py:62
+msgid "Legal Archive"
+msgstr ""
+
+#: apps/legal_archive/__init__.py:63
+msgid "Read from legal archive"
+msgstr ""
+
+#: apps/marked_desks/__init__.py:26
+msgid "Mark items for desks"
+msgstr ""
+
+#: apps/marked_desks/__init__.py:27
+msgid "User can mark items for other desks."
+msgstr ""
+
+#: apps/marked_desks/__init__.py:31
+msgid "Mark items for desks even if the user is not a member of the desk"
+msgstr ""
+
+#: apps/marked_desks/__init__.py:32
+msgid ""
+"User can mark items for other desks even if they are not a member of that"
+" desk"
+msgstr ""
+
 #: apps/packages/package_service.py:146
 msgid "Root group is missing."
 msgstr ""
@@ -991,6 +1237,14 @@ msgstr ""
 msgid "Slugline/Unique Name of the item having embargo: {slugline}/{unique}"
 msgstr ""
 
+#: apps/products/__init__.py:31
+msgid "Products Management"
+msgstr ""
+
+#: apps/products/__init__.py:32
+msgid "User can manage product lists."
+msgstr ""
+
 #: apps/products/product_test.py:45
 msgid "Article id cannot be empty!"
 msgstr ""
@@ -1011,12 +1265,80 @@ msgstr ""
 msgid "Product is used for direct publishing for the subscriber(s): {subscribers}"
 msgstr ""
 
+#: apps/publish/__init__.py:75
+msgid "Subscribers"
+msgstr ""
+
+#: apps/publish/__init__.py:75
+msgid "User can manage subscribers"
+msgstr ""
+
+#: apps/publish/__init__.py:77
+msgid "Publish"
+msgstr ""
+
+#: apps/publish/__init__.py:77
+msgid "Publish a content"
+msgstr ""
+
+#: apps/publish/__init__.py:78
+msgid "Kill"
+msgstr ""
+
+#: apps/publish/__init__.py:78
+msgid "Kill a published content"
+msgstr ""
+
+#: apps/publish/__init__.py:80
+msgid "Correction"
+msgstr ""
+
+#: apps/publish/__init__.py:80
+msgid "Correction to a published content"
+msgstr ""
+
+#: apps/publish/__init__.py:84
+msgid "Publish Queue"
+msgstr ""
+
+#: apps/publish/__init__.py:85
+msgid "User can update publish queue"
+msgstr ""
+
+#: apps/publish/__init__.py:89
+msgid "Resending Stories"
+msgstr ""
+
+#: apps/publish/__init__.py:90
+msgid "User can resend published stories"
+msgstr ""
+
+#: apps/publish/__init__.py:93
+msgid "User can set embargo date"
+msgstr ""
+
+#: apps/publish/__init__.py:96
+msgid "Take down"
+msgstr ""
+
+#: apps/publish/__init__.py:96
+msgid "Take down a published content"
+msgstr ""
+
+#: apps/publish/__init__.py:99
+msgid "Unpublish"
+msgstr ""
+
+#: apps/publish/__init__.py:99
+msgid "Unpublish a published content"
+msgstr ""
+
 #: apps/publish/published_item.py:167
 msgid "Invalid state ({state}) for the Published item."
 msgstr ""
 
-#: apps/publish/published_item.py:224 apps/publish/published_item.py:237
-#: apps/publish/published_item.py:250
+#: apps/publish/published_item.py:228 apps/publish/published_item.py:241
+#: apps/publish/published_item.py:254
 msgid ""
 "Deleting a published item has a workflow which is implemented in "
 "remove_expired()."
@@ -1061,8 +1383,9 @@ msgstr ""
 msgid "Package cannot have Embargo"
 msgstr ""
 
-#: apps/publish/content/common.py:382
-msgid "Corrected package cannot be empty."
+#: apps/publish/content/common.py:382 apps/publish/content/common.py:448
+#: apps/publish/enqueue/enqueue_service.py:138
+msgid "Corrected package cannot be empty!"
 msgstr ""
 
 #: apps/publish/content/common.py:386
@@ -1083,36 +1406,35 @@ msgstr ""
 msgid "Empty package cannot be published!"
 msgstr ""
 
-#: apps/publish/content/common.py:448
-#: apps/publish/enqueue/enqueue_service.py:138
-msgid "Corrected package cannot be empty!"
-msgstr ""
-
 #: apps/publish/content/common.py:461
 msgid "Package item with id: {guid} does not exist."
 msgstr ""
 
-#: apps/publish/content/common.py:648
+#: apps/publish/content/common.py:655
 msgid "Item cannot contain associated {state} item."
 msgstr ""
 
-#: apps/publish/content/common.py:651
+#: apps/publish/content/common.py:659
+msgid "Associated item is scheduled later than current item."
+msgstr ""
+
+#: apps/publish/content/common.py:662
 msgid "Item cannot have associated items with Embargo"
 msgstr ""
 
-#: apps/publish/content/common.py:660
+#: apps/publish/content/common.py:672
 msgid "Associated item {name} {error}"
 msgstr ""
 
-#: apps/publish/content/common.py:670
+#: apps/publish/content/common.py:684
 msgid "packaged item is locked by another user"
 msgstr ""
 
-#: apps/publish/content/common.py:679
+#: apps/publish/content/common.py:693
 msgid "packaged item is locked by you. Unlock it and try again"
 msgstr ""
 
-#: apps/publish/content/common.py:800
+#: apps/publish/content/common.py:813
 msgid "Associated item \"{}\" does not exist in the system"
 msgstr ""
 
@@ -1150,23 +1472,23 @@ msgstr ""
 msgid "Only wire subscribers can receive broadcast stories!"
 msgstr ""
 
-#: apps/publish/content/resend.py:76
+#: apps/publish/content/resend.py:80
 msgid "Story couldn't be found!"
 msgstr ""
 
-#: apps/publish/content/resend.py:79
+#: apps/publish/content/resend.py:83
 msgid "Only text stories can be resent!"
 msgstr ""
 
-#: apps/publish/content/resend.py:87
+#: apps/publish/content/resend.py:92
 msgid "Only published, corrected or killed stories can be resent!"
 msgstr ""
 
-#: apps/publish/content/resend.py:92
+#: apps/publish/content/resend.py:97
 msgid "Please use the newest version {version} to resend!"
 msgstr ""
 
-#: apps/publish/content/resend.py:98
+#: apps/publish/content/resend.py:101
 msgid "Updated story cannot be resent!"
 msgstr ""
 
@@ -1198,6 +1520,22 @@ msgstr ""
 
 #: apps/publish/formatters/service.py:79
 msgid "Error in formatting article: {exception}"
+msgstr ""
+
+#: apps/rules/__init__.py:35
+msgid "Transformation Rules Management"
+msgstr ""
+
+#: apps/rules/__init__.py:36
+msgid "User can setup transformation rules for ingest content."
+msgstr ""
+
+#: apps/rules/__init__.py:41
+msgid "Routing Rules Management"
+msgstr ""
+
+#: apps/rules/__init__.py:42
+msgid "User can manage routing rules which are executed on ingested articles."
 msgstr ""
 
 #: apps/rules/routing_rules.py:180
@@ -1252,6 +1590,46 @@ msgstr ""
 msgid "Cannot delete Rule set as it's associated with channel(s)."
 msgstr ""
 
+#: apps/saved_searches/__init__.py:55
+msgid "Global searches"
+msgstr ""
+
+#: apps/saved_searches/__init__.py:56
+msgid "Use global saved searches."
+msgstr ""
+
+#: apps/saved_searches/__init__.py:60
+msgid "Manage Global Saved Searches"
+msgstr ""
+
+#: apps/saved_searches/__init__.py:61
+msgid "User can manage other users' global saved searches"
+msgstr ""
+
+#: apps/saved_searches/__init__.py:65
+msgid "Manage Saved Searches"
+msgstr ""
+
+#: apps/saved_searches/__init__.py:66
+msgid "User can manage saved searches"
+msgstr ""
+
+#: apps/saved_searches/__init__.py:70
+msgid "Manage Saved Searches Subscriptions"
+msgstr ""
+
+#: apps/saved_searches/__init__.py:71
+msgid "User can (un)subscribe to saved searches"
+msgstr ""
+
+#: apps/saved_searches/__init__.py:75
+msgid "Manage Saved Searches Subscriptions For Other Users"
+msgstr ""
+
+#: apps/saved_searches/__init__.py:76
+msgid "User manage other users saved searches subscriptions"
+msgstr ""
+
 #: apps/saved_searches/saved_searches.py:138
 msgid "User's subscriptions are not allowed on create"
 msgstr ""
@@ -1284,6 +1662,14 @@ msgstr ""
 msgid "Invalid Saved Search"
 msgstr ""
 
+#: apps/search_providers/__init__.py:29
+msgid "Manage Search Providers"
+msgstr ""
+
+#: apps/search_providers/__init__.py:30
+msgid "User can manage search providers."
+msgstr ""
+
 #: apps/search_providers/registry.py:32
 msgid "fetch_enpoint must be a string"
 msgstr ""
@@ -1298,7 +1684,11 @@ msgid ""
 "{name}"
 msgstr ""
 
-#: apps/search_providers/service.py:69
+#: apps/search_providers/resource.py:40
+msgid "Search Provider: {name}"
+msgstr ""
+
+#: apps/search_providers/service.py:78
 msgid "Deleting a Search Provider after receiving items is prohibited."
 msgstr ""
 
@@ -1310,15 +1700,31 @@ msgstr ""
 msgid "Invalid item identifer"
 msgstr ""
 
-#: apps/templates/__init__.py:27
+#: apps/system_message/__init__.py:28
+msgid "System Message"
+msgstr ""
+
+#: apps/system_message/__init__.py:29
+msgid "User can manage system messages."
+msgstr ""
+
+#: apps/system_message/service.py:62
+msgid "Max {max_characters} characters are allowed"
+msgstr ""
+
+#: apps/system_message/service.py:68
+msgid "Only administrator user can {operation} the message"
+msgstr ""
+
+#: apps/templates/__init__.py:28
 msgid "Templates"
 msgstr ""
 
-#: apps/templates/__init__.py:27
+#: apps/templates/__init__.py:28
 msgid "Create templates"
 msgstr ""
 
-#: apps/templates/__init__.py:32 apps/templates/__init__.py:33
+#: apps/templates/__init__.py:33 apps/templates/__init__.py:34
 msgid "Manage other user personal template"
 msgstr ""
 
@@ -1496,5 +1902,13 @@ msgstr ""
 
 #: apps/video_edit/__init__.py:31
 msgid "\"capture\" or \"edit\" is required"
+msgstr ""
+
+#: apps/workspace/__init__.py:24
+msgid "Dashboard"
+msgstr ""
+
+#: apps/workspace/__init__.py:24
+msgid "Can access dashboard."
 msgstr ""
 
