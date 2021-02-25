@@ -27,7 +27,7 @@ class DataUpdatesService(BaseService):
             doc["applied"] = datetime.datetime.now()
 
 
-def init_app(app):
+def init_app(app) -> None:
     endpoint_name = "data_updates"
     service = DataUpdatesService(endpoint_name, backend=superdesk.get_backend())
     DataUpdatesResource(endpoint_name, app=app, service=service)

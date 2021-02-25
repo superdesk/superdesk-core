@@ -93,7 +93,7 @@ def get_attachment_public_url(attachment: Dict[str, Any]) -> Optional[str]:
     return current_app.media.url_for_external(attachment["media"], RESOURCE)
 
 
-def init_app(app):
+def init_app(app) -> None:
     superdesk.register_resource(RESOURCE, AttachmentsResource, AttachmentsService)
     app.client_config["attachments_max_files"] = app.config.get("ATTACHMENTS_MAX_FILES", 10)
     app.client_config["attachments_max_size"] = app.config.get("ATTACHMENTS_MAX_SIZE", 2 ** 20 * 8)  # 8MB

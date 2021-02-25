@@ -1,3 +1,4 @@
+from flask_babel import lazy_gettext
 import superdesk
 
 from superdesk.notification import push_notification
@@ -52,7 +53,7 @@ class ClosedDeskService(superdesk.Service):
                 push_content_notification([item])
 
 
-def init_app(app):
+def init_app(app) -> None:
     app.config["DOMAIN"]["desks"]["schema"].update(
         {
             "is_closed": {"type": "boolean"},
@@ -69,4 +70,6 @@ def init_app(app):
 
     superdesk.register_resource("closed_desks", ClosedDeskResource, ClosedDeskService, _app=app)
 
-    superdesk.privilege(name=PRIVILEGE, label="Desk routing", description="User can configure desk routing")
+    superdesk.privilege(
+        name=PRIVILEGE, label=lazy_gettext("Desk routing"), description=lazy_gettext("User can configure desk routing")
+    )

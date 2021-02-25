@@ -9,6 +9,7 @@
 # at https://www.sourcefabric.org/superdesk/license
 
 import logging
+from typing import Any
 import superdesk
 from superdesk.resource import Resource
 from superdesk.services import BaseService
@@ -170,9 +171,9 @@ class SpellcheckersListService(BaseService):
         doc["spellcheckers"] = [s.serialize() for s in registered_spellcheckers.values()]
 
 
-def init_app(app):
+def init_app(app) -> None:
     endpoint_name = "spellcheckers_list"
-    service = SpellcheckersListService(endpoint_name, backend=superdesk.get_backend())
+    service: Any = SpellcheckersListService(endpoint_name, backend=superdesk.get_backend())
     SpellcheckersListResource(endpoint_name, app=app, service=service)
 
     endpoint_name = "spellchecker"

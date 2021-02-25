@@ -41,6 +41,6 @@ class ConfigService(superdesk.Service):
         return is_current_user_admin()
 
 
-def init_app(app):
+def init_app(app) -> None:
     superdesk.register_resource("config", ConfigResource, ConfigService, _app=app)
     superdesk.intrinsic_privilege("config", method=["POST"])

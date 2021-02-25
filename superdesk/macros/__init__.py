@@ -43,5 +43,5 @@ def load_macros(path, package_prefix="superdesk.macros"):
             logger.warning("Can't import macro {module}: {reason}".format(module=module, reason=e))
 
 
-def init_app(app):
+def init_app(app) -> None:
     load_macros(os.path.dirname(__file__), __name__)

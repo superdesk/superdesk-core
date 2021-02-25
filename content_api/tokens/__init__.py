@@ -41,5 +41,5 @@ class SubscriberTokenAuth(TokenAuth):
         return g.user
 
 
-def init_app(app):
+def init_app(app) -> None:
     superdesk.register_resource(TOKEN_RESOURCE, AuthSubscriberTokenResource, SubscriberTokenService, _app=app)

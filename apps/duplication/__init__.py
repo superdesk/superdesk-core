@@ -10,6 +10,7 @@
 
 
 import logging
+from typing import Any
 
 import superdesk
 
@@ -24,9 +25,9 @@ from flask_babel import lazy_gettext
 logger = logging.getLogger(__name__)
 
 
-def init_app(app):
+def init_app(app) -> None:
     endpoint_name = "fetch"
-    service = FetchService(endpoint_name, backend=superdesk.get_backend())
+    service: Any = FetchService(endpoint_name, backend=superdesk.get_backend())
     FetchResource(endpoint_name, app=app, service=service)
 
     endpoint_name = "duplicate"

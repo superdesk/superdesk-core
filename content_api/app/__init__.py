@@ -50,7 +50,7 @@ def get_app(config=None):
 
     try:
         # override from settings module, but only things defined in default config
-        import settings as server_settings
+        import settings as server_settings  # type: ignore
 
         for key in dir(server_settings):
             if key.isupper() and key in app_config:

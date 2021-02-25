@@ -67,5 +67,5 @@ class LinksService(ArchiveService):
         return super().get(req, lookup)
 
 
-def init_app(_app):
+def init_app(_app) -> None:
     superdesk.register_resource("links", LinksResource, LinksService, _app=_app)

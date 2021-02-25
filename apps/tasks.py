@@ -40,7 +40,7 @@ from apps.archive.common import (
     ARCHIVE,
     get_subject,
 )
-from flask_babel import _
+from flask_babel import _, lazy_gettext
 
 task_statuses = ["todo", "in_progress", "done"]
 default_status = "todo"
@@ -53,9 +53,9 @@ MACRO_ONSTAGE = "onstage"
 logger = logging.getLogger(__name__)
 
 
-def init_app(app):
+def init_app(app) -> None:
     endpoint_name = "tasks"
-    service = TasksService(TaskResource.datasource["source"], backend=superdesk.get_backend())
+    service = TasksService(str(TaskResource.datasource["source"]), backend=superdesk.get_backend())
     TaskResource(endpoint_name, app=app, service=service)
 
 
@@ -325,4 +325,4 @@ class TasksService(BaseService):
         return new_stage_id and new_stage_id != old_stage_id
 
 
-superdesk.privilege(name="tasks", label="Tasks Management", description="Tasks Management")
+superdesk.privilege(name="tasks", label=lazy_gettext("Tasks Management"), description=lazy_gettext("Tasks Management"))

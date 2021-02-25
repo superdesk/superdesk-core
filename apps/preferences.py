@@ -30,7 +30,7 @@ _action_key = "allowed_actions"
 logger = logging.getLogger(__name__)
 
 
-def init_app(app):
+def init_app(app) -> None:
     endpoint_name = "preferences"
     service = PreferencesService(endpoint_name, backend=get_backend())
     PreferencesResource(endpoint_name, app=app, service=service)

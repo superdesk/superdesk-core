@@ -13,7 +13,7 @@ from .service import DesksService
 from .resource import DesksResource
 
 
-def init_app(app):
+def init_app(app) -> None:
     """Initialize the `desks` API endpoint.
 
     :param app: the API application object

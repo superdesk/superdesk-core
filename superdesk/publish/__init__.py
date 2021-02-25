@@ -15,7 +15,7 @@ Items must be inserted to publish queue in order to get transmitted.
 """
 
 import logging
-from typing import NamedTuple
+from typing import Any, NamedTuple
 
 from superdesk.celery_app import celery
 from superdesk.publish.publish_content import PublishContent
@@ -70,7 +70,7 @@ from superdesk.publish.publish_queue import PublishQueueResource, PublishQueueSe
 from superdesk.publish.subscriber_token import SubscriberTokenResource, SubscriberTokenService  # NOQA
 
 
-def init_app(app):
+def init_app(app) -> None:
     # XXX: we need to do imports for transmitters and formatters here
     #      so classes creation is done after PublishService is set
     #      this is a temporary workaround until a proper plugin system
@@ -79,7 +79,7 @@ def init_app(app):
     import superdesk.publish.formatters  # NOQA
 
     endpoint_name = "subscribers"
-    service = SubscribersService(endpoint_name, backend=get_backend())
+    service: Any = SubscribersService(endpoint_name, backend=get_backend())
     SubscribersResource(endpoint_name, app=app, service=service)
 
     endpoint_name = "publish_queue"

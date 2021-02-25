@@ -13,7 +13,7 @@ from .services import PlanningService, EventsService, AssignmentsService, Events
 from .resources import PlanningResource, EventsResource, AssignmentsResource, EventsHistoryResource, EventsFilesResource
 
 
-def init_app(app):
+def init_app(app) -> None:
     """Initialize the `planning`, `events` and `assignments` API endpoint.
 
     :param app: the API application object

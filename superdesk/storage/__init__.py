@@ -54,7 +54,7 @@ class SimpleMediaStorage(GridFSMediaStorage):
         return self._fs[px]
 
 
-def init_app(app):
+def init_app(app) -> None:
     app.storage = SimpleMediaStorage(app)
 
 

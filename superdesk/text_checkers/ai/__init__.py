@@ -4,6 +4,7 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
+from typing import Any
 from superdesk.resource import Resource
 from superdesk.services import BaseService
 from superdesk.errors import SuperdeskApiError
@@ -156,14 +157,14 @@ class AIDataOpService(BaseService):
         return [0]
 
 
-def init_app(app):
+def init_app(app) -> None:
     if AUTO_IMPORT:
         tools.import_services(app, __name__, AIServiceBase)
 
     allowed_service = list(registered_ai_services)
 
     endpoint_name = AI_SERVICE_ENDPOINT
-    service = AIService(endpoint_name, backend=superdesk.get_backend())
+    service: Any = AIService(endpoint_name, backend=superdesk.get_backend())
     AIResource.schema["service"]["allowed"] = allowed_service
     AIResource(endpoint_name, app=app, service=service)
     superdesk.intrinsic_privilege(endpoint_name, method=["POST"])

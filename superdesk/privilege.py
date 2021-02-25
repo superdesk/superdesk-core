@@ -9,7 +9,9 @@
 # at https://www.sourcefabric.org/superdesk/license
 
 """Privileges registry."""
+from typing import Optional
 from .errors import PrivilegeNameError
+from flask_babel.speaklater import LazyString
 
 import superdesk
 
@@ -20,7 +22,13 @@ _intrinsic_privileges = {}
 GLOBAL_SEARCH_PRIVILEGE = "use_global_saved_searches"
 
 
-def privilege(**kwargs):
+def privilege(
+    name,
+    label: Optional[LazyString] = None,
+    description: Optional[LazyString] = None,
+    category: Optional[LazyString] = None,
+    **kwargs,
+):
     """Register privilege.
 
     Privilege name must not contain "."
@@ -31,9 +39,17 @@ def privilege(**kwargs):
     - description
     - category
     """
-    if "." in kwargs["name"]:
-        raise PrivilegeNameError('"." is not supported in privilege name "%s"' % kwargs["name"])
-    _privileges[kwargs["name"]] = kwargs
+    if "." in name:
+        raise PrivilegeNameError('"." is not supported in privilege name "%s"' % name)
+    _privileges[name] = kwargs
+    _privileges[name].update(
+        dict(
+            name=name,
+            label=label,
+            category=category,
+            description=description,
+        )
+    )
 
 
 def get_item_privilege_name(resource: str, item):

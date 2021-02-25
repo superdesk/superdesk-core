@@ -11,8 +11,10 @@
 """Superdesk IO"""
 
 import logging
+from typing import Any
 
 import superdesk
+from flask_babel import lazy_gettext
 from superdesk.celery_app import celery
 from superdesk.io.ingest import IngestResource, IngestService
 from superdesk.io.registry import registered_feed_parsers, allowed_feed_parsers  # noqa
@@ -32,9 +34,9 @@ from superdesk.io.ingest_provider_model import IngestProviderResource, IngestPro
 logger = logging.getLogger(__name__)
 
 
-def init_app(app):
+def init_app(app) -> None:
     endpoint_name = "ingest_providers"
-    service = IngestProviderService(endpoint_name, backend=superdesk.get_backend())
+    service: Any = IngestProviderService(endpoint_name, backend=superdesk.get_backend())
     IngestProviderResource(endpoint_name, app=app, service=service)
 
     from .io_errors import IOErrorsService, IOErrorsResource
@@ -51,7 +53,9 @@ def init_app(app):
         name="feed_parsers_allowed", resource=FeedParserAllowedResource, service=FeedParserAllowedService
     )
     superdesk.privilege(
-        name="feed_parsers", label="Ingest Feed Parsers", description="User can maintain Ingest Feed Parsers."
+        name="feed_parsers",
+        label=lazy_gettext("Ingest Feed Parsers"),
+        description=lazy_gettext("User can maintain Ingest Feed Parsers."),
     )
 
     superdesk.register_resource(
@@ -59,11 +63,17 @@ def init_app(app):
     )
 
     superdesk.privilege(
-        name="feeding_services", label="Ingest Feed Services", description="User can maintain Ingest Feed Services."
+        name="feeding_services",
+        label=lazy_gettext("Ingest Feed Services"),
+        description=lazy_gettext("User can maintain Ingest Feed Services."),
     )
 
 
-superdesk.privilege(name="ingest_providers", label="Ingest Channels", description="User can maintain Ingest Channels.")
+superdesk.privilege(
+    name="ingest_providers",
+    label=lazy_gettext("Ingest Channels"),
+    description=lazy_gettext("User can maintain Ingest Channels."),
+)
 
 
 @celery.task(soft_time_limit=15)

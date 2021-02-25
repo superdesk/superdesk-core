@@ -11,6 +11,8 @@
 import logging
 
 from copy import deepcopy
+
+from flask_babel import lazy_gettext
 from apps.tasks import send_to
 from superdesk import register_resource, get_resource_service, privilege
 from superdesk.services import Service
@@ -92,9 +94,13 @@ def handle_item_published(sender, item, **extra):
         item_routed.send(sender, item=next_item)
 
 
-def init_app(app):
+def init_app(app) -> None:
     register_resource(NAME, InternalDestinationsResource, InternalDestinationsService, _app=app)
 
-    privilege(name=NAME, label="Internal Destinations", description="User can manage internal destinations.")
+    privilege(
+        name=NAME,
+        label=lazy_gettext("Internal Destinations"),
+        description=lazy_gettext("User can manage internal destinations."),
+    )
 
     item_published.connect(handle_item_published)

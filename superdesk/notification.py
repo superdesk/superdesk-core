@@ -34,7 +34,7 @@ class ClosedSocket:
         pass
 
 
-def init_app(app):
+def init_app(app) -> None:
     try:
         app.notification_client = SocketMessageProducer(
             app.config["CELERY_BROKER_URL"], app.config.get("WEBSOCKET_EXCHANGE")

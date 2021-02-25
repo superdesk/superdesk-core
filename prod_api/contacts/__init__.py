@@ -13,7 +13,7 @@ from .service import ContactsService
 from .resource import ContactsResource
 
 
-def init_app(app):
+def init_app(app) -> None:
     """Initialize the `contacts` API endpoint.
 
     :param app: the API application object

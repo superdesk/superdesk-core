@@ -8,6 +8,7 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
+from typing import Any
 import superdesk
 from superdesk import register_jinja_filter
 from superdesk.text_utils import get_text
@@ -19,9 +20,9 @@ from .filters import format_datetime_filter, first_paragraph_filter
 from flask_babel import lazy_gettext
 
 
-def init_app(app):
+def init_app(app) -> None:
     endpoint_name = "content_templates"
-    service = ContentTemplatesService(endpoint_name, backend=superdesk.get_backend())
+    service: Any = ContentTemplatesService(endpoint_name, backend=superdesk.get_backend())
     ContentTemplatesResource(endpoint_name, app=app, service=service)
     superdesk.privilege(
         name=CONTENT_TEMPLATE_PRIVILEGE, label=lazy_gettext("Templates"), description=lazy_gettext("Create templates")

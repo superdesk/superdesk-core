@@ -45,7 +45,7 @@ oauth: Optional[OAuth] = None
 REFRESH_TOKEN_URL = "https://oauth2.googleapis.com/token"
 
 
-def init_app(app):
+def init_app(app) -> None:
     global oauth
     oauth = OAuth(app)
 

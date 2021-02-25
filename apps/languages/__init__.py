@@ -14,7 +14,7 @@ from apps.languages.service import LanguagesService
 from apps.languages.resource import LanguagesResource
 
 
-def init_app(app):
+def init_app(app) -> None:
     endpoint_name = "languages"
     service = LanguagesService(endpoint_name, backend=get_backend())
     LanguagesResource(endpoint_name, app=app, service=service)

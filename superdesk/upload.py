@@ -61,7 +61,7 @@ def upload_url(media_id, view="upload_raw.get_upload_as_data_uri"):
     return "%s/%s" % (media_prefix, media_id)
 
 
-def init_app(app):
+def init_app(app) -> None:
     endpoint_name = "upload"
     service = UploadService(endpoint_name, backend=superdesk.get_backend())
     UploadResource(endpoint_name, app=app, service=service)

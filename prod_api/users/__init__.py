@@ -13,7 +13,7 @@ from .service import UsersService
 from .resource import UsersResource
 
 
-def init_app(app):
+def init_app(app) -> None:
     """Initialize the `users` API endpoint.
 
     :param app: the API application object

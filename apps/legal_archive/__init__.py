@@ -9,6 +9,9 @@
 # at https://www.sourcefabric.org/superdesk/license
 
 import logging
+from typing import Any
+
+from flask_babel import lazy_gettext
 import superdesk
 
 from superdesk.celery_app import celery
@@ -34,12 +37,12 @@ from .commands import ImportLegalPublishQueueCommand, ImportLegalArchiveCommand 
 logger = logging.getLogger(__name__)
 
 
-def init_app(app):
+def init_app(app) -> None:
     if not app.config["LEGAL_ARCHIVE"]:
         return
 
     endpoint_name = LEGAL_ARCHIVE_NAME
-    service = LegalArchiveService(endpoint_name, backend=get_backend())
+    service: Any = LegalArchiveService(endpoint_name, backend=get_backend())
     LegalArchiveResource(endpoint_name, app=app, service=service)
 
     endpoint_name = LEGAL_ARCHIVE_VERSIONS_NAME
@@ -54,7 +57,11 @@ def init_app(app):
     service = LegalPublishQueueService(endpoint_name, backend=get_backend())
     LegalPublishQueueResource(endpoint_name, app=app, service=service)
 
-    privilege(name=LEGAL_ARCHIVE_NAME, label="Legal Archive", description="Read from legal archive")
+    privilege(
+        name=LEGAL_ARCHIVE_NAME,
+        label=lazy_gettext("Legal Archive"),
+        description=lazy_gettext("Read from legal archive"),
+    )
 
     superdesk.command("legal_publish_queue:import", ImportLegalPublishQueueCommand())
     superdesk.command("legal_archive:import", ImportLegalArchiveCommand())

@@ -41,6 +41,6 @@ def upload_url(media_id):
     return _upload_url(media_id, view="assets.get_media_streamed")
 
 
-def init_app(app):
+def init_app(app) -> None:
     superdesk.blueprint(bp, app)
     app.upload_url = upload_url

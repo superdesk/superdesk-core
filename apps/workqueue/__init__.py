@@ -12,7 +12,7 @@ import superdesk
 from .workqueue import WorkqueueService, WorkqueueResource
 
 
-def init_app(app):
+def init_app(app) -> None:
     endpoint_name = "workqueue"
     service = WorkqueueService(endpoint_name, backend=superdesk.get_backend())
     WorkqueueResource(endpoint_name, app=app, service=service)

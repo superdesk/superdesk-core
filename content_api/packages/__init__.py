@@ -13,7 +13,7 @@ from .service import PackagesService
 from .resource import PackagesResource
 
 
-def init_app(app):
+def init_app(app) -> None:
     """Initialize the `packages` API endpoint.
 
     :param app: the API application object

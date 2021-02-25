@@ -47,5 +47,5 @@ class PictureRenditionsResource(superdesk.Resource):
     }
 
 
-def init_app(app):
+def init_app(app) -> None:
     superdesk.register_resource("picture_renditions", PictureRenditionsResource, PictureRenditionsService, "archive")

@@ -51,7 +51,7 @@ from superdesk.services import BaseService
 from superdesk.resource import Resource
 from superdesk.utc import utcnow
 from apps.publish.content import KillPublishService, TakeDownPublishService
-from flask_babel import _
+from flask_babel import _, lazy_gettext
 
 logger = logging.getLogger(__name__)
 PACKAGE_TYPE = "package_type"
@@ -409,4 +409,8 @@ class ArchivedService(BaseService):
         return refs
 
 
-superdesk.privilege(name="archived", label="Archive Management", description="User can remove items from the archived")
+superdesk.privilege(
+    name="archived",
+    label=lazy_gettext("Archive Management"),
+    description=lazy_gettext("User can remove items from the archived"),
+)
