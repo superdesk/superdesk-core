@@ -34,6 +34,7 @@ from croniter import croniter
 from datetime import datetime
 from flask_babel import _
 from superdesk.notification import push_notification
+from superdesk import editor_utils
 
 CONTENT_TEMPLATE_RESOURCE = 'content_templates'
 CONTENT_TEMPLATE_PRIVILEGE = CONTENT_TEMPLATE_RESOURCE
@@ -453,7 +454,9 @@ class ContentTemplatesApplyService(Service):
         updates = render_content_template(item, template)
         item.update(updates)
 
-        if template_name == 'kill':
+        editor_utils.generate_fields(item, force=True)
+
+        if template_name == "kill":
             apply_null_override_for_kill(item)
 
         docs[0] = item

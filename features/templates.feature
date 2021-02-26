@@ -289,7 +289,18 @@ Feature: Templates
                     "dateline": {
                         "text": "Prague, 9 May (SAP)"
                     },
-                    "versioncreated": "2015-01-01T22:54:53+0000"
+                    "versioncreated": "2015-01-01T22:54:53+0000",
+                    "fields_meta": {
+                        "body_html": {
+                            "draftjsState": [
+                                {
+                                    "blocks": [
+                                        {"text": "test"}
+                                    ]
+                                }
+                            ]
+                        }
+                    }
                 }
             }
         """
@@ -306,8 +317,18 @@ Feature: Templates
           "dateline": {
             "text": "Prague, 9 May (SAP)"
           },
-          "versioncreated": "2015-01-01T22:54:53+0000"
-
+          "versioncreated": "2015-01-01T22:54:53+0000",
+          "fields_meta": {
+                "body_html": {
+                    "draftjsState": [
+                        {
+                            "blocks": [
+                                {"text": "Please kill story slugged testing ex Prague, 9 May (SAP) at 01 Jan 2015 23:53 CET."}
+                            ]
+                        }
+                    ]
+                }
+            }
         }
         """
 
