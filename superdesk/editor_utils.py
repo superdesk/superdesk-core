@@ -484,17 +484,18 @@ class Editor3Content(EditorContent):
     editor_version = 3
     HTML_EXPORTER = DraftJSHTMLExporter
 
-    def __init__(self, item, field="body_html", is_html=True):
+    def __init__(self, item, field="body_html", is_html=True, reload=False):
         """
         :param item: item containing Draft.js ContentState
         :param field: field to manage, can be "body_html", "headline", etc.
         :param is_html: boolean to indicate if the field is html or text field
+        :param reload: boolean to indicate if the content state should be reloaded from item value
         """
         self.item = item
         self.field = field
         self.is_html = is_html
         self.content_state = get_field_content_state(item, field)
-        if not self.content_state:
+        if not self.content_state or reload:
             self._create_state_from_html(item.get(field))
         self.blocks = BlockSequence(self)
         self.html_exporter = DraftJSHTMLExporter(self)
@@ -747,11 +748,12 @@ def filter_blocks(item, field, filter, is_html=True):
     editor.update_item()
 
 
-def generate_fields(item, fields=None):
+def generate_fields(item, fields=None, force=False):
     """Generate item fields from editor states
 
     :param item: item containing Draft.js ContentState
     :param fields: fields to generate, None to generate all fields with a content state
+    :param force: force refreshing of content state from item field
     """
     if fields is None:
         fields = get_content_state_fields(item)
@@ -760,9 +762,9 @@ def generate_fields(item, fields=None):
         old_field = None
         if CHECK_GENERATE_CONSISTENCY:
             old_field = item.get(field)
-        editor = Editor3Content(item, field, is_html=field not in TEXT_FIELDS)
+        editor = Editor3Content(item, field, is_html=field not in TEXT_FIELDS, reload=force)
         editor.update_item()
-        if CHECK_GENERATE_CONSISTENCY:
+        if CHECK_GENERATE_CONSISTENCY and not force:
             if old_field is not None and old_field != item[field]:
                 logger.warning(
                     "Generated HTML inconsistency between client and backend, we'll use client one",
