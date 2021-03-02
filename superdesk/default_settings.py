@@ -356,6 +356,7 @@ CORE_APPS = [
     "superdesk.auth_server",
     "apps.links",
     "superdesk.locales",
+    "apps.usage_metrics",
 ]
 
 #: Specify what modules should be enabled
