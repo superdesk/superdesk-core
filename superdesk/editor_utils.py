@@ -71,7 +71,7 @@ def get_field_content_state(item, field):
 
 def get_content_state_fields(item):
     """Return all fields which have a content state"""
-    return (field for field in item.get("fields_meta", {}))
+    return (field for field in item.get("fields_meta") or {})
 
 
 def set_field_content_state(item, field, content_state):
