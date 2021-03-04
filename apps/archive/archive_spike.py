@@ -190,9 +190,8 @@ class ArchiveSpikeService(BaseService):
 
             # Remove the translated item from the list of translations in the original item
             # where orignal item can be in archive or in both archive and published resource as well
-            translated_from = archive_service.find_one(req=None, _id=original.get("translated_from"))
+            translated_from = archive_service.find_one(req=None, guid=original.get("translated_from"))
             translated_from_id = translated_from.get(config.ID_FIELD)
-
             self._remove_translations(archive_service, translated_from, id_to_remove)
 
             if translated_from.get("state") in PUBLISH_STATES:
