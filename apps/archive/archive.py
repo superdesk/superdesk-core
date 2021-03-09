@@ -260,7 +260,16 @@ class ArchiveResource(Resource):
             "bool": {
                 "must": {
                     "terms": {
-                        "state": ["draft", "fetched", "routed", "in_progress", "spiked", "submitted", "unpublished"]
+                        "state": [
+                            "draft",
+                            "fetched",
+                            "routed",
+                            "in_progress",
+                            "spiked",
+                            "submitted",
+                            "unpublished",
+                            "correction",
+                        ]
                     }
                 },
                 "must_not": {"term": {"version": 0}},
