@@ -1,0 +1,8 @@
+<!doctype html>
+<title>Error while authenticating with OAuth</title>
+
+<script>
+opener.postMessage({type: 'oauth', data: {{ {"error": message}|tojson }}}, '*');
+opener.focus();
+window.close();
+</script>
