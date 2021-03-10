@@ -33,6 +33,7 @@ class DataUpdate(BaseDataUpdate):
                     contact_state = {
                         "contact_state": {
                             "name": document["contact_state"],
+                            "qcode": document["contact_state"],
                         }
                     }
                 mongodb_collection.update(
