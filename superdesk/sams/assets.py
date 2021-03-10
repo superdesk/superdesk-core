@@ -206,7 +206,7 @@ def unlock_asset_by_user(user_id, session_id):
     return unlock_asset_response.status_code
 
 
-@assets_bp.route("/sams/assets/tags", methods=["GET"])
+@assets_bp.route("/sams/assets/tags", methods=["POST"])
 def get_assets_tags():
 
     search_query = request.args.to_dict().get("query")
