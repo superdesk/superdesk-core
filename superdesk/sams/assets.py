@@ -211,15 +211,7 @@ def get_assets_tags(search_query):
 
     query = {
         "bool": {
-            "must": [
-                {
-                    "query_string": {
-                        "query": search_query,
-                        "default_field": "tags.name",
-                        "default_operator": "AND"
-                    }
-                }
-            ]
+            "must": [{"query_string": {"query": search_query, "default_field": "tags.name", "default_operator": "AND"}}]
         }
     }
 
