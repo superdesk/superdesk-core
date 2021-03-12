@@ -206,14 +206,15 @@ def unlock_asset_by_user(user_id, session_id):
     return unlock_asset_response.status_code
 
 
-@assets_bp.route("/sams/assets/tags/<search_query>", methods=["GET"])
-def get_assets_tags(search_query):
+@assets_bp.route("/sams/assets/tags", methods=["GET"])
+def get_assets_tags():
 
+    search_query = request.args.to_dict().get("query")
     query = {
         "bool": {
             "must": [{"query_string": {"query": search_query, "default_field": "tags.name", "default_operator": "AND"}}]
         }
     }
 
-    tags_response = get_sams_client().assets.get_tag_codes(query=query)
+    tags_response = get_sams_client().assets.get_tag_codes(query=query if search_query else search_query)
     return tags_response
