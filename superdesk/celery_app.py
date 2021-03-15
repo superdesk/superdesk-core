@@ -100,8 +100,21 @@ class AppContextTask(TaskBase):  # type: ignore
 celery.Task = AppContextTask
 
 
+class CeleryConfig:
+    """
+    Flask only loads uppercase keys, but celery switched to lower case config,
+    so adding a wrapper to convert old style uppercase config to lowercase.
+    """
+
+    def __init__(self, app):
+        for key, val in app.config.items():
+            if key.startswith("CELERY_"):
+                setattr(self, key.lower(), val)
+
+
 def init_celery(app):
-    celery.config_from_object(app.config, namespace="CELERY")
+    config = CeleryConfig(app)
+    celery.config_from_object(config, namespace="celery")
     app.celery = celery
     app.redis = __get_redis(app)
 

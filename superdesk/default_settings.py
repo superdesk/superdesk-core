@@ -230,8 +230,6 @@ CELERY_BROKER_URL = BROKER_URL
 
 #: celery task config
 CELERY_TASK_ALWAYS_EAGER = strtobool(env("CELERY_ALWAYS_EAGER", "false"))
-CELERY_TASK_SERIALIZER = "json"
-CELERY_TASK_PROTOCOL = 1
 CELERY_TASK_IGNORE_RESULT = True
 CELERY_TASK_SEND_EVENTS = False
 
@@ -547,9 +545,6 @@ ADMINS = [_MAIL_FROM]
 
 DEBUG = strtobool(env("SUPERDESK_DEBUG", "false"))
 SUPERDESK_TESTING = strtobool(env("SUPERDESK_TESTING", "false"))
-
-#: Set the timezone celery functions to UTC to avoid daylight savings issues SDESK-1057
-CELERY_TIMEZONE = "UTC"
 
 #: The number of days after the user has to change his password
 PASSWORD_EXPIRY_DAYS = int(env("PASSWORD_EXPIRY_DAYS", 0))
