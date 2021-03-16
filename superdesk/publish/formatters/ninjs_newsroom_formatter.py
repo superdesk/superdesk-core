@@ -47,4 +47,7 @@ class NewsroomNinjsFormatter(NINJSFormatter):
                 if assignment.get("planning_item"):
                     ninjs.setdefault("planning_id", assignment["planning_item"])
 
+        if article.get("refs"):
+            ninjs["refs"] = article["refs"]
+
         return ninjs
