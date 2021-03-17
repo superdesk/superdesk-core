@@ -156,9 +156,9 @@ class DesksService(BaseService):
             # make the desk available in default content template
             content_templates = get_resource_service("content_templates")
             template = content_templates.find_one(req=None, _id=desk.get("default_content_template"))
-            template["template_desks"].append(desk.get(config.ID_FIELD))
-
-            content_templates.patch(desk.get("default_content_template"), template)
+            if template:
+                template.setdefault("template_desks", []).append(desk.get(config.ID_FIELD))
+                content_templates.patch(desk.get("default_content_template"), template)
 
         return [doc[config.ID_FIELD] for doc in docs]
 
