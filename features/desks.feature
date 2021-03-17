@@ -754,7 +754,7 @@ Feature: Desks
                 ]
             }
         """
-    @wip
+
     @auth
     @notification
     Scenario: Make the desk available in default content template
