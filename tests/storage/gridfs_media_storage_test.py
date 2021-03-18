@@ -44,7 +44,7 @@ class GridFSMediaStorageTestCase(unittest.TestCase):
         _id = bson.ObjectId()
 
         with self.app.app_context():
-            self.media.put(data, filename, "text/plain", _id=str(_id))
+            self.media.put(data, filename=filename, content_type="text/plain", _id=str(_id))
 
         kwargs = {
             "content_type": "text/plain",
@@ -111,7 +111,7 @@ class GridFSMediaStorageTestCase(unittest.TestCase):
         filename = "extensionless"
         content_type = "text/css"
         with self.app.app_context():
-            self.media.put(content, filename, content_type, _id=str(_id))
+            self.media.put(content, filename=filename, content_type=content_type, _id=str(_id))
         kwargs = {
             "content_type": content_type,
             "filename": filename,
@@ -127,7 +127,7 @@ class GridFSMediaStorageTestCase(unittest.TestCase):
         filename = "styles.css"
         content_type = "application/pdf"
         with self.app.app_context():
-            self.media.put(content, filename, content_type, _id=str(_id))
+            self.media.put(content, filename=filename, content_type=content_type, _id=str(_id))
         kwargs = {
             "content_type": "text/css",
             "filename": filename,
@@ -142,7 +142,7 @@ class GridFSMediaStorageTestCase(unittest.TestCase):
         filename = "styles.JpG"
         content_type = "application/pdf"
         with self.app.app_context():
-            self.media.put(content, filename, content_type, _id=str(_id))
+            self.media.put(content, filename=filename, content_type=content_type, _id=str(_id))
         kwargs = {
             "content_type": "image/jpeg",
             "filename": filename,
@@ -159,7 +159,7 @@ class GridFSMediaStorageTestCase(unittest.TestCase):
             filename = "extensionless"
             content_type = "dummy/text"
             with self.app.app_context():
-                self.media.put(content, filename, content_type, _id=str(_id))
+                self.media.put(content, filename=filename, content_type=content_type, _id=str(_id))
             kwargs = {
                 "content_type": "image/jpeg",
                 "filename": filename,
@@ -174,7 +174,7 @@ class GridFSMediaStorageTestCase(unittest.TestCase):
             filename = "extensionless"
             content_type = "dummy/text"
             with self.app.app_context():
-                self.media.put(content, filename, content_type, _id=str(_id))
+                self.media.put(content, filename=filename, content_type=content_type, _id=str(_id))
             kwargs = {
                 "content_type": "application/vnd.ms-excel",
                 "filename": filename,
@@ -189,7 +189,7 @@ class GridFSMediaStorageTestCase(unittest.TestCase):
             filename = "extensionless"
             content_type = "dummy/text"
             with self.app.app_context():
-                self.media.put(content, filename, content_type, _id=str(_id))
+                self.media.put(content, filename=filename, content_type=content_type, _id=str(_id))
             kwargs = {
                 "content_type": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
                 "filename": filename,
@@ -204,7 +204,7 @@ class GridFSMediaStorageTestCase(unittest.TestCase):
             filename = "extensionless"
             content_type = "dummy/text"
             with self.app.app_context():
-                self.media.put(content, filename, content_type, _id=str(_id))
+                self.media.put(content, filename=filename, content_type=content_type, _id=str(_id))
             kwargs = {
                 "content_type": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
                 "filename": filename,

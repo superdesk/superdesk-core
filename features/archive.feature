@@ -228,7 +228,7 @@ Feature: News Items Archive
         """
         Given "archive"
             """
-            [{"_id": "testid1", "guid": "testid1", "task": {"desk": "#desks._id#"}}]
+            [{"_id": "testid1", "guid": "testid1", "task": {"desk": "#desks._id#"}, "state": "fetched"}]
             """
         When we get "/archive"
         Then we get list with 1 items

@@ -664,10 +664,10 @@ Feature: Desks
         Given "archive"
          """
          [
-         {"_id":"1","slugline": "slugline1", "state": "draft", "original_creator": "#USER_1_ID#",
+         {"_id":"1","slugline": "slugline1", "state": "in_progress", "original_creator": "#USER_1_ID#",
          "task": {"desk": "#SPORTS_DESK_ID#", "stage": "#desks.working_stage#"}, "headline": "one", "family_id": 1,
          "assignment_id": "123", "lock_user": "#USER_3_ID#"},
-         {"_id":"2","slugline": "slugline2", "state": "draft", "original_creator": "#USER_2_ID#",
+         {"_id":"2","slugline": "slugline2", "state": "in_progress", "original_creator": "#USER_2_ID#",
          "task": {"desk": "#SPORTS_DESK_ID#", "stage": "#desks.working_stage#"}, "place": null, "headline": "two",
          "family_id": 2, "assignment_id": "456", "lock_user": "#USER_4_ID#"},
          {"_id":"3","slugline": "slugline3", "last_published_version": "True", "state": "published",
@@ -676,10 +676,10 @@ Feature: Desks
          {"_id":"4","slugline": "slugline4", "last_published_version": "True", "state": "published",
          "task": {"desk": "#POLITICS_DESK_ID#", "stage": "#desks.incoming_stage#"}, "place": null, "headline": "four",
          "family_id": 2, "original_creator": "#USER_4_ID#", "lock_user": "#USER_3_ID#"},
-         {"_id":"5","slugline": "slugline5", "state": "draft",
+         {"_id":"5","slugline": "slugline5", "state": "in_progress",
          "task": {"desk": "#SPORTS_DESK_ID#", "stage": "#desks.incoming_stage#"}, "place": null, "headline": "five",
          "family_id": 2, "original_creator": "#USER_1_ID#", "assignment_id": "789"},
-         {"_id":"6","slugline": "slugline6", "state": "draft",
+         {"_id":"6","slugline": "slugline6", "state": "in_progress",
          "task": {"desk": "#SPORTS_DESK_ID#", "stage": "#desks.incoming_stage#"}, "place": null, "headline": "five",
          "family_id": 2, "original_creator": "#USER_2_ID#", "lock_user": "#USER_3_ID#"}
          ]
@@ -694,11 +694,11 @@ Feature: Desks
                   "authors": {
                     "#USER_1_ID#": {
                       "assigned": 0,
-                      "locked": 1
+                      "locked": 0
                     },
                     "#USER_2_ID#": {
                       "assigned": 0,
-                      "locked": 2
+                      "locked": 0
                     }
                   },
                   "role": "#ROLE_JOURNALIST_ID#"
@@ -707,7 +707,7 @@ Feature: Desks
                   "authors": {
                     "#USER_3_ID#": {
                       "assigned": 0,
-                      "locked": 0
+                      "locked": 2
                     }
                   },
                   "role": "#ROLE_EDITOR_ID#"
@@ -722,22 +722,9 @@ Feature: Desks
                 "_items": [
                   {
                     "authors": {
-                      "#USER_1_ID#": {
-                        "assigned": 0,
-                        "locked": 1
-                      },
-                      "#USER_2_ID#": {
-                        "assigned": 0,
-                        "locked": 2
-                      }
-                    },
-                    "role": "#ROLE_JOURNALIST_ID#"
-                  },
-                  {
-                    "authors": {
                       "#USER_3_ID#": {
                         "assigned": 0,
-                        "locked": 0
+                        "locked": 2
                       }
                     },
                     "role": "#ROLE_EDITOR_ID#"
@@ -750,7 +737,52 @@ Feature: Desks
                       }
                     },
                     "role": "#ROLE_SUBEDITOR_ID#"
+                  },
+                  {
+                    "authors": {
+                      "#USER_1_ID#": {
+                        "assigned": 0,
+                        "locked": 0
+                      },
+                      "#USER_2_ID#": {
+                        "assigned": 0,
+                        "locked": 0
+                      }
+                    },
+                    "role": "#ROLE_JOURNALIST_ID#"
                   }
                 ]
             }
         """
+
+    @auth
+    @notification
+    Scenario: Make the desk available in default content template
+        Given empty "desks"
+        Given "content_templates"
+        """
+        [{
+            "template_name": "test",
+            "template_type": "create",
+            "data": {"headline": "test", "type": "text", "slugline": "test"}
+        }]
+        """
+        When we post to "/desks"
+        """
+        {
+            "name": "Sports Desk",
+            "desk_language": "en",
+            "default_content_template": "#content_templates._id#"
+        }
+        """
+        Then we get OK response
+        When we get "content_templates/#content_templates._id#"
+        Then we get existing resource
+        """
+        {
+            "template_name": "test",
+            "template_type": "create",
+            "template_desks": ["#desks._id#"]
+        }
+        """
+        

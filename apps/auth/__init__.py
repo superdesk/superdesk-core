@@ -26,7 +26,7 @@ from .service import UserSessionClearService, AuthService
 logger = logging.getLogger(__name__)
 
 
-def init_app(app):
+def init_app(app) -> None:
     app.auth = SuperdeskTokenAuth()  # Overwrite the app default auth
 
     endpoint_name = "auth_users"

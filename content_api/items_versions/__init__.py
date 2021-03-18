@@ -13,7 +13,7 @@ from .service import ItemsVersionsService
 from .resource import ItemsVersionsResource
 
 
-def init_app(app):
+def init_app(app) -> None:
     """Initialise the items versions end point
 
     :param app: the API application object

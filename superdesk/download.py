@@ -41,7 +41,7 @@ def download_url(media_id):
     return url_for("download_raw.download_file", id=media_id, _external=True)
 
 
-def init_app(app):
+def init_app(app) -> None:
     endpoint_name = "download"
     app.download_url = download_url
     superdesk.blueprint(bp, app)

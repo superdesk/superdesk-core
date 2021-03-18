@@ -70,6 +70,6 @@ class FeedingServiceWebhookService(BaseService):
             update_ingest.update_provider.apply_async(expires=update_ingest.get_task_ttl(provider), kwargs=kwargs)
 
 
-def init_app(app):
+def init_app(app) -> None:
     service = FeedingServiceWebhookService()
     FeedingServiceWebhookResource("webhook", app=app, service=service)

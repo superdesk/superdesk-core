@@ -77,7 +77,8 @@ class SuperdeskTokenAuth(TokenAuth):
     def check_permissions(self, resource, method, user):
         """Checks user permissions.
 
-        1. If there's no user associated with the request or HTTP Method is GET then return True.
+        1. If there's no user associated with the request or HTTP Method is GET or the Resource is a Flask Blueprint
+        then return True.
         2. Get User's Privileges
         3. Intrinsic Privileges:
             Check if resource has intrinsic privileges.
@@ -94,6 +95,9 @@ class SuperdeskTokenAuth(TokenAuth):
 
         # Step 1:
         if not user:
+            return True
+
+        if resource == "_blueprint":
             return True
 
         # Step 2: Get User's Privileges
@@ -149,8 +153,15 @@ class SuperdeskTokenAuth(TokenAuth):
             flask.g.auth_value = auth_token["user"]
             if method in ("POST", "PUT", "PATCH") or method == "GET" and not request.args.get("auto"):
                 now = utcnow()
+                auth_updated = False
                 if auth_token[app.config["LAST_UPDATED"]] + timedelta(seconds=30) < now:  # update once per 30s max
                     auth_service.update_session({app.config["LAST_UPDATED"]: now})
+                    auth_updated = True
+                if not flask.g.user.get("last_activity_at") or auth_updated:
+                    user_service.system_update(
+                        flask.g.user["_id"], {"last_activity_at": now, "_updated": now}, flask.g.user
+                    )
+
             return self.check_permissions(resource, method, flask.g.user)
 
     def authorized(self, allowed_roles, resource, method):

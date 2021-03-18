@@ -125,13 +125,13 @@ Feature: Contacts
         """
         When we patch "/contacts/1"
         """
-        {"first_name": "Mary"}
+        {"first_name": "Mary", "country": {"name": "Argentina", "qcode": "arg"}, "contact_state": {"name" : "New Zealand", "qcode" : "NZ"}}
         """
         When we get "/contacts/1"
         Then we get existing resource
           """
           {
-              "last_name" : "Foo", "first_name" : "Mary"
+              "last_name" : "Foo", "first_name" : "Mary", "country": {"name": "Argentina", "qcode": "arg"}, "contact_state": {"name" : "New Zealand", "qcode" : "NZ"}
           }
           """
         Then we get notifications

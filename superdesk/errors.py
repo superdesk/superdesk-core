@@ -233,13 +233,18 @@ class SuperdeskIngestError(SuperdeskError):
                     message += '\nitem="{}" name="{}"'.format(
                         item.get("guid", ""), item.get("headline", item.get("slugline", ""))
                     )
-                update_notifiers(
-                    "error",
-                    message,
-                    resource="ingest_providers" if provider else None,
-                    name=self.provider_name,
-                    provider_id=provider.get("_id", ""),
-                )
+                try:
+                    update_notifiers(
+                        "error",
+                        message,
+                        resource="ingest_providers" if provider else None,
+                        name=self.provider_name,
+                        provider_id=provider.get("_id", ""),
+                    )
+                except KeyError:
+                    # this might not be working during tests
+                    # and should be probably avoided in the first place
+                    pass
 
             if provider:
                 message = "{}: {} on channel {}".format(self, exception, self.provider_name)

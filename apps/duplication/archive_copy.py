@@ -74,7 +74,7 @@ class CopyService(BaseService):
         return guid_of_copied_items
 
 
-def init_app(app):
+def init_app(app) -> None:
     if app.config["WORKFLOW_ALLOW_COPY_TO_PERSONAL"]:
         kwargs = dict(
             exclude_states=[CONTENT_STATE.SPIKED, CONTENT_STATE.KILLED, CONTENT_STATE.RECALLED],

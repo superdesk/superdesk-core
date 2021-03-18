@@ -16,7 +16,7 @@ from typing import List, Union, Any, Dict
 from flask import request, current_app as app
 from eve.utils import config
 from eve.methods.common import serialize_value
-from flask_babel import _
+from flask_babel import _, lazy_gettext
 
 from superdesk import privilege, get_resource_service
 from superdesk.notification import push_notification
@@ -33,7 +33,11 @@ logger = logging.getLogger(__name__)
 KEYWORDS_CV = "keywords"
 
 
-privilege(name="vocabularies", label="Vocabularies Management", description="User can manage vocabularies' contents.")
+privilege(
+    name="vocabularies",
+    label=lazy_gettext("Vocabularies Management"),
+    description=lazy_gettext("User can manage vocabularies' contents."),
+)
 
 
 # TODO(petr): add api to specify vocabulary schema
@@ -507,6 +511,9 @@ class VocabulariesService(BaseService):
         items = list(map(format_item, items))
 
         return items
+
+    def get_languages(self):
+        return self.get_items(_id="languages")
 
 
 def is_related_content(item_name, related_content=None):

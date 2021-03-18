@@ -14,7 +14,7 @@ from superdesk.services import BaseService
 from .auth import AuthUsersResource
 
 
-def init_app(app):
+def init_app(app) -> None:
     endpoint_name = "auth"
     service = BaseService("auth", backend=superdesk.get_backend())
     AuthResource(endpoint_name, app=app, service=service)

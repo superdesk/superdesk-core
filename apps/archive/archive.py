@@ -134,8 +134,16 @@ def private_content_filter():
             private_filter["must_not"] = [{"terms": {"task.stage": stages}}]
 
         # user can see all public content
+        # as long as it's not drafts
         if current_user_has_privilege(GLOBAL_SEARCH_PRIVILEGE):
-            private_filter["should"].append({"exists": {"field": "task.desk"}})
+            private_filter["should"].append(
+                {
+                    "bool": {
+                        "must": {"exists": {"field": "task.desk"}},
+                        "must_not": {"term": {"state": "draft"}},
+                    }
+                }
+            )
 
         # if user has no global search access, only show him content on his desks
         # and not on any desk
@@ -145,7 +153,22 @@ def private_content_filter():
                 {"terms": {"task.desk": [str(d["_id"]) for d in desks]}},
             )
 
-        return {"bool": private_filter}
+        return {
+            "bool": {
+                "should": [
+                    {"bool": private_filter},
+                    {"bool": {"must_not": {"term": {"state": "draft"}}}},
+                ],
+                "minimum_should_match": 1,
+            },
+        }
+    else:  # no user specific filtering, filter out private content
+        return {
+            "bool": {
+                "must": {"exists": {"field": "task.desk"}},
+                "must_not": {"term": {"state": "draft"}},
+            },
+        }
 
 
 def update_image_caption(body, name, caption):
@@ -247,7 +270,16 @@ class ArchiveResource(Resource):
             "bool": {
                 "must": {
                     "terms": {
-                        "state": ["fetched", "routed", "draft", "in_progress", "spiked", "submitted", "unpublished"]
+                        "state": [
+                            "draft",
+                            "fetched",
+                            "routed",
+                            "in_progress",
+                            "spiked",
+                            "submitted",
+                            "unpublished",
+                            "correction",
+                        ]
                     }
                 },
                 "must_not": {"term": {"version": 0}},

@@ -104,6 +104,9 @@ LOG_CONFIG_FILE = env("LOG_CONFIG_FILE", "logging_config.yml")
 LOG_SERVER_ADDRESS = env("LOG_SERVER_ADDRESS", "localhost")
 LOG_SERVER_PORT = int(env("LOG_SERVER_PORT", 5555))
 
+SAMS_HOST = env("SAMS_HOST", "localhost")
+SAMS_PORT = env("SAMS_PORT", 5700)
+
 #: application name - used in email footers, ``APP_NAME`` env
 APPLICATION_NAME = env("APP_NAME", "Superdesk")
 #: public client url - used to create links within emails etc, ``SUPERDESK_CLIENT_URL`` env
@@ -197,6 +200,7 @@ ELASTICSEARCH_SETTINGS = {
         },
     }
 }
+
 CONTENTAPI_ELASTICSEARCH_SETTINGS = {
     "settings": {
         "analysis": {
@@ -482,6 +486,9 @@ EXTENDED_MEDIA_INFO = ["content_type", "name", "length", "_id"]
 RETURN_MEDIA_AS_BASE64_STRING = False
 VERSION = "_current_version"
 
+#: media storage provider
+MEDIA_STORAGE_PROVIDER = env("MEDIA_STORAGE_PROVIDER")
+
 #: uses for generation of media url ``(<media_prefix>/<media_id>)``::
 MEDIA_PREFIX = env("MEDIA_PREFIX", "%s/upload-raw" % SERVER_URL.rstrip("/"))
 MEDIA_PREFIXES_TO_FIX = None
@@ -656,6 +663,9 @@ ENABLE_PROFILING = False
 
 #: default timeout for ftp connections
 FTP_TIMEOUT = 300
+
+#: default timeout when publishing using the `http_push` transmitter
+HTTP_PUSH_TIMEOUT = (5, 30)
 
 #: default amount of files which can processed during one iteration of ftp ingest
 FTP_INGEST_FILES_LIST_LIMIT = 100

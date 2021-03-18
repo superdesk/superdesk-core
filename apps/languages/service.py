@@ -9,8 +9,8 @@
 # at https://www.sourcefabric.org/superdesk/license
 
 import logging
+import superdesk
 
-from flask import current_app as app
 from superdesk.services import BaseService
 from superdesk.utils import ListCursor
 
@@ -18,10 +18,23 @@ from superdesk.utils import ListCursor
 logger = logging.getLogger(__name__)
 
 
+def view_language(item):
+    language = item.copy()
+    language["_id"] = language["qcode"]
+    language["label"] = language["name"]
+    language["language"] = language["qcode"]
+
+    # allow translations
+    language.setdefault("source", True)
+    language.setdefault("destination", True)
+
+    return language
+
+
 class LanguagesService(BaseService):
     def get(self, req, lookup):
         """
         Return the list of languages defined on config file.
         """
-
-        return ListCursor(app.config.get("LANGUAGES", []))
+        languages = superdesk.get_resource_service("vocabularies").get_languages()
+        return ListCursor([view_language(lang) for lang in languages])

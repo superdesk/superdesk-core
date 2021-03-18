@@ -26,6 +26,6 @@ data_subject_codes = os.path.join(dirname, "data", "subject_codes.json")
 subject_codes = load_codes(data_subject_codes)
 
 
-def init_app(app):
+def init_app(app) -> None:
     last_modified = datetime(2012, 7, 10)
     app.subjects.register(subject_codes, last_modified)

@@ -56,7 +56,7 @@ class AutocompleteService(superdesk.Service):
         return ListCursor(docs)
 
 
-def init_app(_app):
+def init_app(_app) -> None:
     _app.client_config.update({"archive_autocomplete": _app.config.get(SETTING_ENABLED, False)})
 
     if _app.config.get(SETTING_ENABLED) and not _app.config.get(SETTING_HOURS) and not _app.config.get(SETTING_DAYS):

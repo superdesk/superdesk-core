@@ -18,7 +18,7 @@ from flask_babel import lazy_gettext
 logger = logging.getLogger(__name__)
 
 
-def init_app(app):
+def init_app(app) -> None:
     endpoint_name = "system_message"
     service = SystemMessagesService(endpoint_name, backend=superdesk.get_backend())
     SystemMessagesResource(endpoint_name, app=app, service=service)

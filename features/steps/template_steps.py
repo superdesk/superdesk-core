@@ -1,7 +1,8 @@
 import pytz
+from behave import when, then  # type: ignore
 from datetime import datetime, timedelta
 from superdesk.tests import set_placeholder
-from steps import when, then, get_json_data, parse_date  # @UnresolvedImport
+from superdesk.tests.steps import get_json_data, parse_date
 from superdesk.utc import utcnow, local_to_utc
 
 

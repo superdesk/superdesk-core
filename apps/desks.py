@@ -28,10 +28,11 @@ from superdesk.activity import add_activity, ACTIVITY_UPDATE
 from superdesk.metadata.item import FAMILY_ID, ITEM_STATE, CONTENT_STATE
 from eve.utils import ParsedRequest
 from superdesk.utils import ListCursor
-from flask_babel import _
+from flask_babel import _, lazy_gettext
 
 
 logger = logging.getLogger(__name__)
+SIZE_MAX = 2_147_483_647
 
 
 class DeskTypes(SuperdeskBaseEnum):
@@ -84,9 +85,9 @@ desks_schema = {
 }
 
 
-def init_app(app):
+def init_app(app) -> None:
     endpoint_name = "desks"
-    service = DesksService(endpoint_name, backend=superdesk.get_backend())
+    service: Any = DesksService(endpoint_name, backend=superdesk.get_backend())
     DesksResource(endpoint_name, app=app, service=service)
     endpoint_name = "user_desks"
     service = UserDesksService(endpoint_name, backend=superdesk.get_backend())
@@ -99,8 +100,12 @@ def init_app(app):
     OverviewResource(endpoint_name, app=app, service=service)
 
 
-superdesk.privilege(name="desks", label="Desk Management", description="User can manage desks.")
-superdesk.privilege(name="masterdesk", label="Master Desk", description="User can access master desk.")
+superdesk.privilege(
+    name="desks", label=lazy_gettext("Desk Management"), description=lazy_gettext("User can manage desks.")
+)
+superdesk.privilege(
+    name="masterdesk", label=lazy_gettext("Master Desk"), description=lazy_gettext("User can access master desk.")
+)
 
 
 class DesksResource(Resource):
@@ -147,6 +152,13 @@ class DesksService(BaseService):
             super().create([desk], **kwargs)
             for stage_type in stages_to_be_linked_with_desk:
                 stage_service.patch(desk[stage_type], {"desk": desk[config.ID_FIELD]})
+
+            # make the desk available in default content template
+            content_templates = get_resource_service("content_templates")
+            template = content_templates.find_one(req=None, _id=desk.get("default_content_template"))
+            if template:
+                template.setdefault("template_desks", []).append(desk.get(config.ID_FIELD))
+                content_templates.patch(desk.get("default_content_template"), template)
 
         return [doc[config.ID_FIELD] for doc in docs]
 
@@ -584,7 +596,6 @@ class OverviewService(BaseService):
                                 ITEM_STATE: [
                                     CONTENT_STATE.PUBLISHED,
                                     CONTENT_STATE.SPIKED,
-                                    CONTENT_STATE.PUBLISHED,
                                     CONTENT_STATE.KILLED,
                                     CONTENT_STATE.CORRECTED,
                                 ]
@@ -599,7 +610,10 @@ class OverviewService(BaseService):
         if desk_id != "all":
             filter_bool["must"] = [{"term": {desk_field: desk_id}}]
 
-        agg_query["aggs"] = {"overview": {"terms": {"field": field}}}
+        # FIXME: we use max size to get all items, but using a composite request with pagination
+        #   would be better (cf. https://www.elastic.co/guide/en/elasticsearch/reference/7.11/search-aggregations-bucket
+        #                        -composite-aggregation.html)
+        agg_query["aggs"] = {"overview": {"terms": {"field": field, "size": SIZE_MAX}}}
 
         filters = doc.get("filters")
         if filters:
@@ -644,7 +658,7 @@ class OverviewService(BaseService):
             es_query = {}
         else:
             desk_filter = {"_id": ObjectId(desk_id)}
-            es_query = {"filter": {"term": {"task.desk": desk_id}}}
+            es_query = {"filter": [{"term": {"task.desk": desk_id}}]}
 
         req = ParsedRequest()
         req.projection = json.dumps({"members": 1})
@@ -660,15 +674,18 @@ class OverviewService(BaseService):
             ]
         )
 
+        # only do aggregations on content accesible by user
+        content_filters = superdesk.get_resource_service("search").get_archive_filters()
+        if content_filters:
+            es_query.setdefault("filter", []).extend(content_filters)
+
         # first we check archives for locked items
         es_query["aggs"] = {
             "desk_authors": {
-                "filter": {"terms": {"version_creator": [str(m) for m in members]}},
+                "filter": {"bool": {"filter": {"terms": {"lock_user": [str(m) for m in members]}}}},
                 "aggs": {
                     "authors": {
-                        "terms": {
-                            "field": "version_creator",
-                        },
+                        "terms": {"field": "lock_user", "size": SIZE_MAX},
                         "aggs": {
                             "locked": {
                                 "filter": {
@@ -702,9 +719,7 @@ class OverviewService(BaseService):
                 "filter": {"terms": {"assigned_to.user": [str(m) for m in members]}},
                 "aggs": {
                     "authors": {
-                        "terms": {
-                            "field": "assigned_to.user",
-                        },
+                        "terms": {"field": "assigned_to.user", "size": SIZE_MAX},
                     }
                 },
             }

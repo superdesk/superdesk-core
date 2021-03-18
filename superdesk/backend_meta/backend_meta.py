@@ -17,7 +17,7 @@ from superdesk.services import BaseService
 from superdesk import config
 
 try:
-    import settings
+    import settings  # type: ignore
 except ImportError:
     # settings doesn't exist during tests
     settings = None

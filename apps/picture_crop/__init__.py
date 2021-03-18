@@ -73,7 +73,7 @@ class PictureCropService(superdesk.Service):
                 metadata = encode_metadata(process_image(orig_file))
                 metadata.update({"length": json.dumps(len(output.getvalue()))})
                 output = fix_orientation(output)
-                media = app.media.put(output, filename, orig["mimetype"], metadata=metadata)
+                media = app.media.put(output, filename=filename, content_type=orig["mimetype"], metadata=metadata)
                 doc["href"] = app.media.url_for_media(media, orig["mimetype"])
                 doc["width"] = output.width
                 doc["height"] = output.height
@@ -97,5 +97,5 @@ class PictureCropResource(superdesk.Resource):
     }
 
 
-def init_app(app):
+def init_app(app) -> None:
     superdesk.register_resource("picture_crop", PictureCropResource, PictureCropService, "archive")

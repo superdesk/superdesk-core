@@ -37,6 +37,6 @@ def format_document():
     return Response(formatted_docs[0][1], headers=headers, mimetype=get_mime_type(formatter_qcode))
 
 
-def init_app(app):
+def init_app(app) -> None:
 
     superdesk.blueprint(bp, app)

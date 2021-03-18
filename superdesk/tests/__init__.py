@@ -13,6 +13,7 @@ import functools
 import logging
 import socket
 import unittest
+from pathlib import Path
 
 from copy import deepcopy
 from base64 import b64encode
@@ -23,6 +24,9 @@ from flask import json, Config
 from apps.ldap import ADAuth
 from superdesk import get_resource_service
 from superdesk.factory import get_app
+from superdesk.factory.app import get_media_storage_class
+from superdesk.storage.amazon_media_storage import AmazonMediaStorage
+from superdesk.storage.proxy import ProxyMediaStorage
 
 logger = logging.getLogger(__name__)
 test_user = {
@@ -161,8 +165,27 @@ def setup_config(config):
     app_abspath = os.path.abspath(os.path.dirname(os.path.dirname(__file__)))
     app_config = Config(app_abspath)
     app_config.from_object("superdesk.default_settings")
+    cwd = Path.cwd()
+    for p in [cwd] + list(cwd.parents):
+        settings = p / "settings.py"
+        if settings.is_file():
+            logger.info(f"using local settings from {settings}")
+            app_config.from_pyfile(settings)
+            break
+    else:
+        logger.warning("Can't find local settings")
 
     update_config(app_config)
+
+    app_config.setdefault("INSTALLED_APPS", [])
+
+    # Extend the INSTALLED APPS with the list provided
+    if config:
+        config.setdefault("INSTALLED_APPS", [])
+        app_config["INSTALLED_APPS"].extend(config.pop("INSTALLED_APPS", []))
+
+    # Make sure there are no duplicate entries in INSTALLED_APPS
+    app_config["INSTALLED_APPS"] = list(set(app_config["INSTALLED_APPS"]))
 
     app_config.update(
         config or {},
@@ -182,6 +205,21 @@ def setup_config(config):
     logging.getLogger("superdesk.errors").setLevel(logging.CRITICAL)
 
     return {key: deepcopy(val) for key, val in app_config.items()}
+
+
+def update_config_from_step(context, config):
+    context.app.config.update(config)
+
+    if "MEDIA_STORAGE_PROVIDER" in config or "AMAZON_CONTAINER_NAME" in config:
+        context.app.media = get_media_storage_class(context.app.config)(context.app)
+
+    if "AMAZON_CONTAINER_NAME" in config:
+        if isinstance(context.app.media, AmazonMediaStorage):
+            m = patch.object(context.app.media, "client")
+            m.start()
+        elif isinstance(context.app.media, ProxyMediaStorage):
+            m = patch.object(context.app.media.storage(), "client")
+            m.start()
 
 
 def clean_dbs(app, force=False):

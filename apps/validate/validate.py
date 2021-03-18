@@ -18,7 +18,7 @@ from superdesk.metadata.item import ITEM_TYPE
 from superdesk.logging import logger
 from superdesk.text_utils import get_text
 from superdesk import get_resource_service
-from _collections_abc import MutableMapping
+from _collections_abc import MutableMapping  # typing: ignore
 from superdesk.signals import item_validate
 from superdesk.validator import BaseErrorHandler
 from flask_babel import lazy_gettext, _

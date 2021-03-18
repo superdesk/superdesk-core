@@ -14,7 +14,7 @@ from .resource import PublishResource, MONGO_PREFIX  # noqa
 from .service import PublishService
 
 
-def init_app(app):
+def init_app(app) -> None:
     """Initialize the `publish` API endpoint.
 
     :param app: the API application object

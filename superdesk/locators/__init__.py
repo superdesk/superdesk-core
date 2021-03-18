@@ -25,7 +25,7 @@ def _load_json(file_path):
         return json.load(f)
 
 
-def init_app(app):
+def init_app(app) -> None:
     app.locators = LocatorIndex()
     superdesk.blueprint(bp, app)
     _locators_file_path = app.config.get(

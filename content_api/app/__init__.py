@@ -27,9 +27,8 @@ from eve.io.mongo.mongo import MongoJSONEncoder
 
 from content_api.tokens import SubscriberTokenAuth
 from superdesk.datalayer import SuperdeskDataLayer
-from superdesk.storage import SuperdeskGridFSMediaStorage
 from superdesk.validator import SuperdeskValidator
-from superdesk.factory.app import set_error_handlers
+from superdesk.factory.app import set_error_handlers, get_media_storage_class
 from superdesk.factory.sentry import SuperdeskSentry
 
 
@@ -51,7 +50,7 @@ def get_app(config=None):
 
     try:
         # override from settings module, but only things defined in default config
-        import settings as server_settings
+        import settings as server_settings  # type: ignore
 
         for key in dir(server_settings):
             if key.isupper() and key in app_config:
@@ -62,11 +61,7 @@ def get_app(config=None):
     if config:
         app_config.update(config)
 
-    media_storage = SuperdeskGridFSMediaStorage
-    if app_config.get("AMAZON_CONTAINER_NAME"):
-        from superdesk.storage import AmazonMediaStorage
-
-        media_storage = AmazonMediaStorage
+    media_storage = get_media_storage_class(app_config)
 
     app = Eve(
         auth=SubscriberTokenAuth,

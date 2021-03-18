@@ -12,6 +12,8 @@ import io
 import logging
 import pstats
 import re
+
+from flask_babel import lazy_gettext
 from superdesk import get_resource_service
 import superdesk
 
@@ -24,13 +26,17 @@ from superdesk.profiling.service import ProfilingService, profile
 logger = logging.getLogger(__name__)
 
 
-def init_app(app):
+def init_app(app) -> None:
     if app.config.get("ENABLE_PROFILING"):
         endpoint_name = "profiling"
         service = ProfilingService(endpoint_name, backend=superdesk.get_backend())
         ProfilingResource(endpoint_name, app=app, service=service)
 
-        superdesk.privilege(name="profiling", label="Profiling Service", description="User can read profiling data.")
+        superdesk.privilege(
+            name="profiling",
+            label=lazy_gettext("Profiling Service"),
+            description=lazy_gettext("User can read profiling data."),
+        )
 
         profile.enable()
 

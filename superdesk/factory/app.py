@@ -9,6 +9,8 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
+from typing import Dict, Any, Type
+
 import os
 import eve
 import flask
@@ -20,6 +22,7 @@ import logging
 from flask_mail import Mail
 from eve.auth import TokenAuth
 from eve.io.mongo.mongo import _create_index as create_index
+from eve.io.media import MediaStorage
 from eve.render import send_response
 from flask_babel import Babel
 from flask import g
@@ -109,6 +112,19 @@ class SuperdeskEve(eve.Eve):
                         raise
 
 
+def get_media_storage_class(app_config: Dict[str, Any], use_provider_config: bool = True) -> Type[MediaStorage]:
+    if use_provider_config and app_config.get("MEDIA_STORAGE_PROVIDER"):
+        if isinstance(app_config["MEDIA_STORAGE_PROVIDER"], str):
+            module_name, class_name = app_config["MEDIA_STORAGE_PROVIDER"].rsplit(".", 1)
+            module = importlib.import_module(module_name)
+            klass = getattr(module, class_name)
+            if not issubclass(klass, MediaStorage):
+                raise SystemExit("Invalid setting MEDIA_STORAGE_PROVIDER. Class must extend eve.io.media.MediaStorage")
+            return klass
+
+    return ProxyMediaStorage
+
+
 def get_app(config=None, media_storage=None, config_object=None, init_elastic=None):
     """App factory.
 
@@ -135,7 +151,7 @@ def get_app(config=None, media_storage=None, config_object=None, init_elastic=No
         app_config.from_object(config)
 
     if not media_storage:
-        media_storage = ProxyMediaStorage
+        media_storage = get_media_storage_class(app_config)
 
     app = SuperdeskEve(
         data=SuperdeskDataLayer,

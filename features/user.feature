@@ -103,13 +103,19 @@ Feature: User Resource
     Scenario: List users
         Given "users"
         """
-        [{"username": "foo", "email": "foo@bar.org", "is_active": true}, {"username": "bar", "email": "foo@bar.or", "is_active": true}]
+        [
+            {"username": "foo", "email": "foo@bar.org", "is_active": true},
+            {"username": "bar", "email": "foo@bar.or", "is_active": true, "last_activity_at": "2020-10-10T10:10:10+0000"}
+        ]
         """
         When we get "/users"
-        Then we get list with +2 items
-        And we get users
+        Then we get list with 3 items
         """
-        ["bar", "foo"]
+        {"_items": [
+            {"username": "foo"},
+            {"username": "bar", "last_activity_at": "2020-10-10T10:10:10+0000"},
+            {"username": "test_user"}
+        ]}
         """
 
     @auth

@@ -9,7 +9,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 
-def init_app(app):
+def init_app(app) -> None:
     endpoint_name = "sequences"
     service = SequencesService(endpoint_name, backend=superdesk.get_backend())
     SequencesResource(endpoint_name, app=app, service=service)

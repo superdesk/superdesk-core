@@ -32,6 +32,6 @@ def locales_view():
     return send_response(None, (resp, None, None, 200))
 
 
-def init_app(app):
+def init_app(app) -> None:
     bp.url_prefix = "/{}".format(app.config["URL_PREFIX"].lstrip("/"))
     app.register_blueprint(bp)

@@ -13,6 +13,7 @@ import re
 import logging
 import uuid
 import lxml.etree as etree
+import lxml.html as lxml_html
 
 from textwrap import dedent
 from collections.abc import MutableSequence
@@ -70,7 +71,7 @@ def get_field_content_state(item, field):
 
 def get_content_state_fields(item):
     """Return all fields which have a content state"""
-    return (field for field in item.get("fields_meta", {}))
+    return (field for field in item.get("fields_meta") or {})
 
 
 def set_field_content_state(item, field, content_state):
@@ -484,17 +485,18 @@ class Editor3Content(EditorContent):
     editor_version = 3
     HTML_EXPORTER = DraftJSHTMLExporter
 
-    def __init__(self, item, field="body_html", is_html=True):
+    def __init__(self, item, field="body_html", is_html=True, reload=False):
         """
         :param item: item containing Draft.js ContentState
         :param field: field to manage, can be "body_html", "headline", etc.
         :param is_html: boolean to indicate if the field is html or text field
+        :param reload: boolean to indicate if the content state should be reloaded from item value
         """
         self.item = item
         self.field = field
         self.is_html = is_html
         self.content_state = get_field_content_state(item, field)
-        if not self.content_state:
+        if not self.content_state or reload:
             self._create_state_from_html(item.get(field))
         self.blocks = BlockSequence(self)
         self.html_exporter = DraftJSHTMLExporter(self)
@@ -627,7 +629,9 @@ class Editor3Content(EditorContent):
 
     @property
     def html(self):
-        return self.html_exporter.render()
+        exported = self.html_exporter.render()
+        pieces = lxml_html.fragments_fromstring(exported)
+        return "\n".join([render_fragment(elem).strip() for elem in pieces if elem is not None]).strip()
 
     @property
     def text(self):
@@ -747,11 +751,12 @@ def filter_blocks(item, field, filter, is_html=True):
     editor.update_item()
 
 
-def generate_fields(item, fields=None):
+def generate_fields(item, fields=None, force=False):
     """Generate item fields from editor states
 
     :param item: item containing Draft.js ContentState
     :param fields: fields to generate, None to generate all fields with a content state
+    :param force: force refreshing of content state from item field
     """
     if fields is None:
         fields = get_content_state_fields(item)
@@ -760,10 +765,10 @@ def generate_fields(item, fields=None):
         old_field = None
         if CHECK_GENERATE_CONSISTENCY:
             old_field = item.get(field)
-        editor = Editor3Content(item, field, is_html=field not in TEXT_FIELDS)
+        editor = Editor3Content(item, field, is_html=field not in TEXT_FIELDS, reload=force)
         editor.update_item()
-        if CHECK_GENERATE_CONSISTENCY:
-            if old_field is not None and old_field != item[field]:
+        if CHECK_GENERATE_CONSISTENCY and not force:
+            if old_field is not None and old_field.strip() != item[field].strip():
                 logger.warning(
                     "Generated HTML inconsistency between client and backend, we'll use client one",
                     extra=dict(
@@ -773,3 +778,10 @@ def generate_fields(item, fields=None):
                     ),
                 )
                 item[field] = old_field
+
+
+def render_fragment(elem) -> str:
+    if elem.tag == "p" and not elem.text and not len(elem):
+        # client renders empty paragraph as `<p><br></p>`
+        etree.SubElement(elem, "br", nsmap=None, attrib=None)
+    return str(lxml_html.tostring(elem, encoding="unicode"))

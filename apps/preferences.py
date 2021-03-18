@@ -30,7 +30,7 @@ _action_key = "allowed_actions"
 logger = logging.getLogger(__name__)
 
 
-def init_app(app):
+def init_app(app) -> None:
     endpoint_name = "preferences"
     service = PreferencesService(endpoint_name, backend=get_backend())
     PreferencesResource(endpoint_name, app=app, service=service)
@@ -223,6 +223,7 @@ class PreferencesResource(Resource):
     superdesk.register_default_user_preference("masterdesk:desks", {})
 
     superdesk.register_default_user_preference("editor:char_limit_ui", {})
+    superdesk.register_default_user_preference("editor:pinned_widget", {})
 
     superdesk.register_default_session_preference("scratchpad:items", [])
     superdesk.register_default_session_preference("desk:last_worked", "")

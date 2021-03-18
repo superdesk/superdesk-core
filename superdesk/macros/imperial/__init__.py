@@ -3,5 +3,5 @@ import os
 from superdesk.macros import load_macros
 
 
-def init_app(app):
+def init_app(app) -> None:
     load_macros(os.path.dirname(__file__), __name__)

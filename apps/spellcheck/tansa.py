@@ -1,7 +1,7 @@
 import superdesk
 
 
-def init_app(app):
+def init_app(app) -> None:
     app.client_config.update(
         {
             "tansa": {

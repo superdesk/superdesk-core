@@ -8,6 +8,7 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
+from typing import Any
 from apps.auth import AuthResource
 from .reset_password import ResetPasswordService, ResetPasswordResource, ActiveTokensResource
 import superdesk
@@ -17,9 +18,9 @@ from superdesk.services import BaseService
 from apps.auth.db.change_password import ChangePasswordService, ChangePasswordResource
 
 
-def init_app(app):
+def init_app(app) -> None:
     endpoint_name = "auth_db"
-    service = DbAuthService("auth", backend=superdesk.get_backend())
+    service: Any = DbAuthService("auth", backend=superdesk.get_backend())
     AuthResource(endpoint_name, app=app, service=service)
 
     endpoint_name = "reset_user_password"
