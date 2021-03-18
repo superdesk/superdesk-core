@@ -203,6 +203,7 @@ class HTTPPushServiceTestCase(unittest.TestCase):
     @mock.patch("superdesk.publish.transmitters.http_push.requests.Session.send", return_value=CreatedResponse)
     @mock.patch("requests.get", return_value=NotFoundResponse)
     def test_push_associated_assets(self, get_mock, send_mock, app_mock):
+        app_mock.config = {}
         app_mock.media.get.return_value = TestMedia(b"bin")
 
         dest = {"config": {"assets_url": "http://example.com"}}
@@ -226,12 +227,13 @@ class HTTPPushServiceTestCase(unittest.TestCase):
         ]
 
         for media in images:
-            get_mock.assert_any_call("http://example.com/%s" % media)
+            get_mock.assert_any_call("http://example.com/%s" % media, timeout=30)
 
     @mock.patch("superdesk.publish.transmitters.http_push.app")
     @mock.patch("superdesk.publish.transmitters.http_push.requests.Session.send", return_value=CreatedResponse)
     @mock.patch("requests.get", return_value=NotFoundResponse)
     def test_push_attachments(self, get_mock, send_mock, app_mock):
+        app_mock.config = {}
         app_mock.media.get.return_value = TestMedia(b"bin")
 
         dest = {"config": {"assets_url": "http://example.com", "secret_token": "foo"}}
@@ -246,8 +248,8 @@ class HTTPPushServiceTestCase(unittest.TestCase):
         service._copy_published_media_files(item, dest)
 
         app_mock.media.get.assert_called_with("media-id", resource="attachments")
-        get_mock.assert_called_with("http://example.com/media-id")
-        send_mock.assert_called_once_with(mock.ANY)
+        get_mock.assert_called_with("http://example.com/media-id", timeout=30)
+        send_mock.assert_called_once_with(mock.ANY, timeout=30)
         request = send_mock.call_args[0][0]
         self.assertEqual("http://example.com/", request.url)
         self.assertEqual("POST", request.method)
@@ -258,15 +260,17 @@ class HTTPPushServiceTestCase(unittest.TestCase):
             request.headers["x-superdesk-signature"], "sha1=%s" % hmac.new(b"foo", request.body, "sha1").hexdigest()
         )
 
+    @mock.patch("superdesk.publish.transmitters.http_push.app")
     @mock.patch("superdesk.publish.transmitters.http_push.requests.Session.send", return_value=CreatedResponse)
     @mock.patch("requests.get", return_value=NotFoundResponse)
-    def test_push_binaries(self, get_mock, send_mock):
+    def test_push_binaries(self, get_mock, send_mock, app_mock):
+        app_mock.config = {}
         media = TestMedia(b"content")
         dest = {"config": {"assets_url": "http://example.com", "secret_token": "foo"}}
         service = HTTPPushService()
         service._transmit_media(media, dest)
-        get_mock.assert_called_with("http://example.com/media-id")
-        send_mock.assert_called_once_with(mock.ANY)
+        get_mock.assert_called_with("http://example.com/media-id", timeout=30)
+        send_mock.assert_called_once_with(mock.ANY, timeout=30)
         request = send_mock.call_args[0][0]
         self.assertEqual("http://example.com/", request.url)
         self.assertIn(b"content", request.body)
