@@ -149,6 +149,13 @@ class DesksService(BaseService):
             for stage_type in stages_to_be_linked_with_desk:
                 stage_service.patch(desk[stage_type], {"desk": desk[config.ID_FIELD]})
 
+            # make the desk available in default content template
+            content_templates = get_resource_service("content_templates")
+            template = content_templates.find_one(req=None, _id=desk.get("default_content_template"))
+            if template:
+                template.setdefault("template_desks", []).append(desk.get(config.ID_FIELD))
+                content_templates.patch(desk.get("default_content_template"), template)
+
         return [doc[config.ID_FIELD] for doc in docs]
 
     def on_created(self, docs):
