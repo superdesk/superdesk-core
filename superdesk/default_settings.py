@@ -90,6 +90,12 @@ ELASTIC_DATETIME_FORMAT = "%Y-%m-%dT%H:%M:%S"
 #: .. versionadded:: 1.34
 #:
 ELASTIC_DEFAULT_SIZE = 10
+
+#: allow wildcards in query string
+#:
+#: https://discuss.elastic.co/t/configuring-the-standard-tokenizer/8691/5
+ELASTIC_QUERY_STRING_ANALYZE_WILDCARD = False
+
 PAGINATION_LIMIT = 200
 
 MERGE_NESTED_DOCUMENTS = False
@@ -165,9 +171,6 @@ CONTENTAPI_ELASTICSEARCH_URL = env("CONTENTAPI_ELASTICSEARCH_URL", ELASTICSEARCH
 ELASTICSEARCH_INDEX = env("ELASTICSEARCH_INDEX", "superdesk")
 CONTENTAPI_ELASTICSEARCH_INDEX = env("CONTENTAPI_ELASTICSEARCH_INDEX", CONTENTAPI_MONGO_DBNAME)
 
-if env("ELASTIC_PORT"):
-    ELASTICSEARCH_URL = env("ELASTIC_PORT").replace("tcp:", "http:")
-
 ELASTICSEARCH_BACKUPS_PATH = env("ELASTICSEARCH_BACKUPS_PATH", "")
 
 #: elastic settings - superdesk custom filter
@@ -194,12 +197,9 @@ ELASTICSEARCH_SETTINGS = {
                 },
             },
         },
-        "query_string": {
-            # https://discuss.elastic.co/t/configuring-the-standard-tokenizer/8691/5
-            "analyze_wildcard": False
-        },
-    }
+    },
 }
+
 
 CONTENTAPI_ELASTICSEARCH_SETTINGS = {
     "settings": {
@@ -222,8 +222,6 @@ ELASTICSEARCH_TRACK_TOTAL_HITS = True
 
 #: redis url
 REDIS_URL = env("REDIS_URL", "redis://localhost:6379")
-if env("REDIS_PORT"):
-    REDIS_URL = env("REDIS_PORT").replace("tcp:", "redis:")
 
 #: cache url - superdesk will try to figure out if it's redis or memcached
 CACHE_URL = env("SUPERDESK_CACHE_URL", REDIS_URL)

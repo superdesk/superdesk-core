@@ -122,8 +122,7 @@ class SearchService(superdesk.Service):
         return source
 
     def _enhance_query_string(self, query_string):
-        query_string_settings = app.config["ELASTICSEARCH_SETTINGS"]["settings"]["query_string"]
-        query_string.setdefault("analyze_wildcard", query_string_settings["analyze_wildcard"])
+        query_string.setdefault("analyze_wildcard", app.config["ELASTIC_QUERY_STRING_ANALYZE_WILDCARD"])
 
     def _get_highlight_query_string(self, req):
         args = getattr(req, "args", {})
