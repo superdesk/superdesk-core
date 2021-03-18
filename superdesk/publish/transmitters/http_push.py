@@ -194,7 +194,7 @@ class HTTPPushService(PublishService):
         return response.status_code == requests.codes.ok  # @UndefinedVariable
 
     def _get_timeout(self):
-        return app.config.get('HTTP_PUSH_TIMEOUT', 30)
+        return app.config.get("HTTP_PUSH_TIMEOUT", 30)
 
     def _get_headers(self, data, destination, current_headers):
         secret_token = self._get_secret_token(destination)
