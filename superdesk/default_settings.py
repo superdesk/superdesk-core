@@ -661,7 +661,7 @@ ENABLE_PROFILING = False
 FTP_TIMEOUT = 300
 
 #: default timeout when publishing using the `http_push` transmitter
-HTTP_PUSH_TIMEOUT = 30
+HTTP_PUSH_TIMEOUT = int(env("HTTP_PUSH_TIMEOUT", 30))
 
 #: default amount of files which can processed during one iteration of ftp ingest
 FTP_INGEST_FILES_LIST_LIMIT = 100
