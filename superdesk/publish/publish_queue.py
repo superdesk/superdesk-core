@@ -9,6 +9,7 @@
 # at https://www.sourcefabric.org/superdesk/license
 
 import logging
+import json
 from typing import Dict, Any
 
 from superdesk import get_resource_service
@@ -97,6 +98,17 @@ class PublishQueueService(BaseService):
                 subscriber = subscriber_service.find_one(req=None, _id=doc["subscriber_id"])
                 doc["published_seq_num"] = subscriber_service.generate_sequence_number(subscriber)
 
+            if app.config.get("RESEND_ASSOCIATION_ITEMS_WITH_NEW_STORIES_AND_UPDATES_AND_CORRECTION"):
+                self.resend_association_items(doc)
+            elif app.config.get(
+                "RESEND_ASSOCIATION_ITEMS_WITH_NEW_STORIES_AND_UPDATES"
+            ) and not self.is_corrected_document(doc):
+                self.resend_association_items(doc)
+            elif app.config.get("RESEND_ASSOCIATION_ITEMS_WITH_NEW_STORIES") and not (
+                self.is_corrected_document(doc) or self.is_updated_document(doc)
+            ):
+                self.resend_association_items(doc)
+
     def on_updated(self, updates, original):
         if updates.get("state", "") != original.get("state", ""):
             self._set_queue_state(updates, original)
@@ -115,6 +127,35 @@ class PublishQueueService(BaseService):
             if destination.get("delivery_type") == "content_api"
             else updates.get("state") or QueueState.PENDING.value
         )
+
+    def is_updated_document(self, doc):
+        article = get_resource_service("published").find_one(req=None, guid=doc["item_id"])
+        if not article:
+            return
+        return article.get("rewrite_of")
+
+    def is_corrected_document(self, doc):
+        article = get_resource_service("published").find_one(req=None, guid=doc["item_id"])
+        if not article:
+            return
+        return article.get("operation") == "corrected" or article.get("operation") == "being_corrected"
+
+    def resend_association_items(self, doc):
+        associated_items = (
+            json.loads(doc.get("formatted_item", {})).get("associations", {}) if doc.get("formatted_item") else {}
+        )
+        if associated_items:
+            for key, associated_value in associated_items.items():
+                associated_article = get_resource_service("published").find_one(
+                    req=None, guid=associated_value.get("guid")
+                )
+                subscriber = get_resource_service("subscribers").find_one(req=None, _id=doc["subscriber_id"])
+                if associated_article and subscriber:
+                    from apps.publish.enqueue import get_enqueue_service
+
+                    get_enqueue_service(associated_article.get("operation")).queue_transmission(
+                        associated_article, [subscriber]
+                    )
 
     def delete(self, lookup):
         # as encoded item is added manually to storage
