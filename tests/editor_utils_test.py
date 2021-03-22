@@ -938,7 +938,7 @@ class Editor3TestCase(unittest.TestCase):
 
         expected = (
             '<!-- EMBED START Image {id: "editor_0"} -->\n'
-            '<figure><img alt="pin alt" src="http://localhost:5000/api/upload-raw/5c9d03dd149f116747b6730f.jpg">'
+            '<figure><img src="http://localhost:5000/api/upload-raw/5c9d03dd149f116747b6730f.jpg" alt="pin alt">'
             "<figcaption>pin dec</figcaption></figure>\n"
             '<!-- EMBED END Image {id: "editor_0"} -->'
         )
@@ -1064,7 +1064,7 @@ class Editor3TestCase(unittest.TestCase):
 
         expected = (
             '<!-- EMBED START Image {id: "editor_0"} -->\n'
-            '<figure><img alt="" src="http://localhost:5000/api/upload-raw/5c9d03dd149f116747b6730f.jpg">'
+            '<figure><img src="http://localhost:5000/api/upload-raw/5c9d03dd149f116747b6730f.jpg" alt="">'
             "</figure>\n"
             '<!-- EMBED END Image {id: "editor_0"} -->'
         )
@@ -1739,7 +1739,7 @@ class Editor3TestCase(unittest.TestCase):
                 "<pre>PRE foo</pre>",
                 "<blockquote>BLOCKQUOTE foo</blockquote>",
                 '<!-- EMBED START Image {id: "editor_0"} -->\n',
-                '<figure><img alt="" src="http://example.com"></figure>\n' '<!-- EMBED END Image {id: "editor_0"} -->',
+                '<figure><img src="http://example.com" alt=""></figure>\n' '<!-- EMBED END Image {id: "editor_0"} -->',
                 "<ul>",
                 "<li>LI foo</li>",
                 "<li>LI2 foo</li>",
