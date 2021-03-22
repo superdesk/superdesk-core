@@ -23,7 +23,7 @@ def init_app(app) -> None:
     superdesk.privilege(
         name=CONCEPT_ITEMS_PRIVELEGE,
         label=lazy_gettext("Knowledge base management"),
-        description=lazy_gettext("User can manage knowledge base."),
+        description=lazy_gettext("User can manage annotations library."),
     )
 
     # let everyone create concepts (SDESK-4959)
