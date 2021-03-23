@@ -82,6 +82,10 @@ class ArchiveCorrectionService(Service):
         else:
             published_item_updates = {ITEM_STATE: CONTENT_STATE.PUBLISHED, "operation": ITEM_CANCEL_CORRECTION}
 
+        # clear publishing schedule when we create correction
+        if archive_item.get("publish_schedule"):
+            archive_item_updates.update({"publish_schedule": None, "schedule_settings": {}})
+
         # modify item in archive.
         archive_service.system_update(archive_item.get(config.ID_FIELD), archive_item_updates, archive_item)
         app.on_archive_item_updated(archive_item_updates, archive_item, ITEM_CORRECTION)
