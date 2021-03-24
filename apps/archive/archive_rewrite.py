@@ -191,7 +191,17 @@ class ArchiveRewriteService(Service):
         """
         rewrite = dict()
 
-        fields = ["family_id", "event_id", "flags", "language", ASSOCIATIONS, "extra"]
+        fields = [
+            "family_id",
+            "event_id",
+            "flags",
+            "language",
+            ASSOCIATIONS,
+            "extra",
+            "place",
+            "organisation",
+            "person",
+        ]
         existing_item_preserve_fields = (ASSOCIATIONS, "flags")
 
         if app.config.get("COPY_ON_REWRITE_FIELDS"):
