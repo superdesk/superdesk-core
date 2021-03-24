@@ -1207,7 +1207,10 @@ def step_impl_then_get_ok(context):
 
 @then('we get response code {code}')
 def step_impl_then_get_code(context, code):
-    expect_status(context.response, int(code))
+    assert context.response.status_code == int(code), 'got code {}\n{}\n'.format(
+        context.response.status_code,
+        json.dumps(get_json_data(context.response), indent=2),
+    )
 
 
 @then('we get updated response')

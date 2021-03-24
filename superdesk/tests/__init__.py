@@ -102,6 +102,12 @@ def update_config(conf):
 
     # auth server
     conf['AUTH_SERVER_SHARED_SECRET'] = 'some secret'
+
+    # import planning
+    conf['INSTALLED_APPS'] = [
+        'planning',
+    ]
+
     return conf
 
 
