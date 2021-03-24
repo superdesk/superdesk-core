@@ -128,7 +128,8 @@ class SearchService(superdesk.Service):
         args = getattr(req, "args", {})
         source = json.loads(args.get("source")) if args.get("source") else {"query": {"filtered": {}}}
         query_string = source.get("query", {}).get("filtered", {}).get("query", {}).get("query_string")
-        self._enhance_query_string(query_string)
+        if query_string:
+            self._enhance_query_string(query_string)
         return query_string
 
     def _get_projected_fields(self, req):
