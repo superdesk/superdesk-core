@@ -221,7 +221,8 @@ class ValidateService(superdesk.Service):
             doc['errors'] = self._validate(test_doc, fields=fields, **kwargs)
         return [doc['errors'] for doc in docs]
 
-    def _get_profile_schema(self, schema, doc):
+    def _get_profile_schema(self, _schema, doc):
+        schema = deepcopy(_schema)  # avoid persisting changes to schema
         doc['validate'].setdefault('extra', {})  # make sure extra is there so it will validate its fields
         extra_field_types = {'text': 'string', 'embed': 'dict', 'date': 'date',
                              'urls': 'list', 'custom': 'any'}
