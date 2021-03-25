@@ -4179,7 +4179,7 @@ Feature: Content Publishing
       """
       And we publish "123" with "publish" type and "published" state
       """
-      {"publish_schedule": "#DATE+2#"}
+      {"publish_schedule": "#DATE+1#", "schedule_settings": {"time_zone": "Europe/Prague"}}
       """
       Then we get OK response
       And we get existing resource
@@ -4202,6 +4202,7 @@ Feature: Content Publishing
                   "description_text": "description_text",
                   "state": "scheduled",
                   "operation": "publish",
+                  "schedule_settings": {"time_zone": "Europe/Prague"},
                   "renditions": {}
               }
           }
