@@ -138,12 +138,16 @@ class PublishQueueService(BaseService):
         )
 
     def is_updated_document(self, doc):
+        if not doc.get("item_id"):
+            return
         article = get_resource_service("published").find_one(req=None, guid=doc["item_id"])
         if not article:
             return
         return article.get("rewrite_of")
 
     def is_corrected_document(self, doc):
+        if not doc.get("item_id"):
+            return
         article = get_resource_service("published").find_one(req=None, guid=doc["item_id"])
         if not article:
             return
