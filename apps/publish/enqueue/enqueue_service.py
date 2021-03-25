@@ -431,7 +431,7 @@ class EnqueueService:
                     continue
 
             formatters, temp_queued = self.queue_transmission(
-                updated, [subscriber], {subscriber[config.ID_FIELD]: codes}
+                updated, [subscriber], {subscriber[config.ID_FIELD]: codes}, is_publish=True
             )
 
             subscribers.append(subscriber)

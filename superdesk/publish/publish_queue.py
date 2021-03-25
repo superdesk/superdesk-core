@@ -150,9 +150,13 @@ class PublishQueueService(BaseService):
         return doc.get("publishing_action") == "corrected" or article.get("operation") == "being_corrected"
 
     def resend_association_items(self, doc):
-        associated_items = (
-            json.loads(doc.get("formatted_item", {})).get("associations", {}) if doc.get("formatted_item") else {}
-        )
+        try:
+            associated_items = (
+                json.loads(doc.get("formatted_item", {})).get("associations", {}) if doc.get("formatted_item") else {}
+            )
+        except Exception:
+            return
+
         if associated_items:
             for key, associated_value in associated_items.items():
                 associated_article = get_resource_service("published").find_one(
