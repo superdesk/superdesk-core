@@ -12,6 +12,7 @@ import logging
 import json
 from typing import Dict, Any
 
+from superdesk import config
 from superdesk import get_resource_service
 from superdesk.notification import push_notification
 from superdesk.resource import Resource
@@ -98,16 +99,24 @@ class PublishQueueService(BaseService):
                 subscriber = subscriber_service.find_one(req=None, _id=doc["subscriber_id"])
                 doc["published_seq_num"] = subscriber_service.generate_sequence_number(subscriber)
 
-            if app.config.get("RESEND_ASSOCIATION_ITEMS_WITH_NEW_STORIES_AND_UPDATES_AND_CORRECTION"):
-                self.resend_association_items(doc)
-            elif app.config.get(
-                "RESEND_ASSOCIATION_ITEMS_WITH_NEW_STORIES_AND_UPDATES"
-            ) and not self.is_corrected_document(doc):
-                self.resend_association_items(doc)
-            elif app.config.get("RESEND_ASSOCIATION_ITEMS_WITH_NEW_STORIES") and not (
-                self.is_corrected_document(doc) or self.is_updated_document(doc)
-            ):
-                self.resend_association_items(doc)
+    def create(self, docs, **kwargs):
+        super().create(docs)
+        is_publish = kwargs.get("is_publish")
+
+        if not is_publish and not app.config.get("SENT_ONCE"):
+            for doc in docs:
+                if app.config.get("RESEND_ASSOCIATION_ITEMS_WITH_NEW_STORIES_AND_UPDATES_AND_CORRECTION"):
+                    self.resend_association_items(doc)
+                elif app.config.get(
+                    "RESEND_ASSOCIATION_ITEMS_WITH_NEW_STORIES_AND_UPDATES"
+                ) and not self.is_corrected_document(doc):
+                    self.resend_association_items(doc)
+                elif app.config.get("RESEND_ASSOCIATION_ITEMS_WITH_NEW_STORIES", True) and not (
+                    self.is_corrected_document(doc) or self.is_updated_document(doc)
+                ):
+                    self.resend_association_items(doc)
+
+        return [doc[config.ID_FIELD] for doc in docs]
 
     def on_updated(self, updates, original):
         if updates.get("state", "") != original.get("state", ""):
@@ -138,7 +147,7 @@ class PublishQueueService(BaseService):
         article = get_resource_service("published").find_one(req=None, guid=doc["item_id"])
         if not article:
             return
-        return article.get("operation") == "corrected" or article.get("operation") == "being_corrected"
+        return doc.get("publishing_action") == "corrected" or article.get("operation") == "being_corrected"
 
     def resend_association_items(self, doc):
         associated_items = (

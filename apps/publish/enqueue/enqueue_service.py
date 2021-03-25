@@ -254,11 +254,17 @@ class EnqueueService:
         :raises PublishQueueError.item_not_queued_error:
                 If the nothing is queued.
         """
+        is_publish = True
+
+        if doc.get("rewrite_of") or doc.get("state") == "corrected" or doc.get("translated_from"):
+            is_publish = False
+
         # Step 1
         subscribers, subscriber_codes, associations = self.get_subscribers(doc, target_media_type)
-
         # Step 2
-        no_formatters, queued = self.queue_transmission(deepcopy(doc), subscribers, subscriber_codes, associations)
+        no_formatters, queued = self.queue_transmission(
+            deepcopy(doc), subscribers, subscriber_codes, associations, is_publish=is_publish
+        )
 
         # Step 3
         self._push_formatter_notification(doc, no_formatters)
@@ -448,7 +454,7 @@ class EnqueueService:
             destinations.append({"name": "content api", "delivery_type": "content_api", "format": "ninjs"})
         return destinations
 
-    def queue_transmission(self, doc, subscribers, subscriber_codes=None, associations=None):
+    def queue_transmission(self, doc, subscribers, subscriber_codes=None, associations=None, is_publish=None):
         """Method formats and then queues the article for transmission to the passed subscribers.
 
         ::Important Note:: Format Type across Subscribers can repeat. But we can't have formatted item generated once
@@ -541,7 +547,7 @@ class EnqueueService:
                             publish_queue_item.pop(ITEM_STATE, None)
 
                             # content api delivery will be marked as SUCCESS in queue
-                            get_resource_service("publish_queue").post([publish_queue_item])
+                            get_resource_service("publish_queue").post([publish_queue_item], is_publish=is_publish)
 
                             queued = True
                 except Exception:
