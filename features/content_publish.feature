@@ -96,7 +96,8 @@ Feature: Content Publishing
       """
       {"_items" : [
         {"_id": "123", "guid": "123", "headline": "test", "_current_version": 2, "state": "published",
-        "task": {"desk": "#desks._id#", "stage": "#desks.incoming_stage#", "user": "#CONTEXT_USER_ID#"}
+        "task": {"desk": "#desks._id#", "stage": "#desks.incoming_stage#", "user": "#CONTEXT_USER_ID#"},
+        "lock_user": "__none__"
         }]}
       """
       When we enqueue published
@@ -1152,10 +1153,6 @@ Feature: Content Publishing
       """
       {"_current_version": 2, "state": "killed", "operation": "kill", "pubstatus": "canceled", "task":{"desk": "#desks._id#", "stage": "#desks.incoming_stage#"}, "version_creator": "#CONTEXT_USER_ID#"}
       """
-      When we post to "/archive/#archive._id#/unlock"
-      """
-      {}
-      """
       Then we get OK response
       When we enqueue published
       Then we assert the content api item "123" is published to subscriber "#subscribers._id#"
@@ -1226,14 +1223,16 @@ Feature: Content Publishing
       Then we get OK response
       And we get existing resource
       """
-      {"_current_version": 2, "state": "corrected", "operation": "correct", "task":{"desk": "#desks._id#", "stage": "#desks.incoming_stage#"}}
+      {"_current_version": 2, "state": "corrected", "operation": "correct", "task":{"desk": "#desks._id#", "stage": "#desks.incoming_stage#"},
+       "lock_user": "__none__"
+      }
       """
       When we enqueue published
       When we post to "/archive/#archive._id#/unlock"
       """
       {}
       """
-      Then we get OK response
+      Then we get error 400
       When we get "/legal_archive/123"
       Then we get OK response
       When we get "/legal_archive/123?version=all"
@@ -1320,11 +1319,6 @@ Feature: Content Publishing
       """
       And we get updated timestamp "versioncreated"
       When we enqueue published
-      When we post to "/archive/#archive._id#/unlock"
-      """
-      {}
-      """
-      Then we get OK response
       When we get "/legal_archive/123"
       Then we get OK response
       And we get existing resource
@@ -1367,11 +1361,6 @@ Feature: Content Publishing
       """
       And we get updated timestamp "versioncreated"
       When we enqueue published
-      When we post to "/archive/#archive._id#/unlock"
-      """
-      {}
-      """
-      Then we get OK response
       When we get "/legal_archive/123"
       Then we get OK response
       And we get existing resource
@@ -3126,11 +3115,6 @@ Feature: Content Publishing
       """
       And we get updated timestamp "versioncreated"
       When we enqueue published
-      When we post to "/archive/#archive._id#/unlock"
-      """
-      {}
-      """
-      Then we get OK response
       When we get "/legal_archive/123"
       Then we get OK response
       And we get existing resource
@@ -3173,11 +3157,6 @@ Feature: Content Publishing
       """
       And we get updated timestamp "versioncreated"
       When we enqueue published
-      When we post to "/archive/#archive._id#/unlock"
-      """
-      {}
-      """
-      Then we get OK response
       When we get "/legal_archive/123"
       Then we get OK response
       And we get existing resource

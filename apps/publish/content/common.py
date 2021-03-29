@@ -73,6 +73,7 @@ from apps.publish.published_item import LAST_PUBLISHED_VERSION, PUBLISHED, PUBLI
 from superdesk.media.crop import CropService
 from superdesk.vocabularies import is_related_content
 from superdesk.default_settings import strtobool
+from apps.item_lock.components.item_lock import set_unlock_updates
 
 from flask_babel import _
 from flask import request, json
@@ -205,6 +206,9 @@ class BasePublishService(BaseService):
         try:
             user = get_user()
             auto_publish = updates.get("auto_publish", False)
+
+            # unlock the item
+            set_unlock_updates(updates)
 
             if original[ITEM_TYPE] == CONTENT_TYPE.COMPOSITE:
                 self._publish_package_items(original, updates)
