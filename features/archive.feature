@@ -354,7 +354,7 @@ Feature: News Items Archive
         When we upload a file "bike.jpg" to "archive"
         Then we get new resource
         """
-        {"guid": "__any_value__", "firstcreated": "__any_value__", "versioncreated": "__any_value__", "state": "in_progress"}
+        {"guid": "#archive._id#", "firstcreated": "__any_value__", "versioncreated": "__any_value__", "state": "in_progress"}
         """
         When we patch latest
         """
