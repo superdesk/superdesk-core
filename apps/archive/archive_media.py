@@ -86,8 +86,8 @@ class ArchiveMediaService():
 
         update_dates_for(doc)
         generate_unique_id_and_name(doc)
-        doc['guid'] = generate_guid(type=GUID_TAG)
-        doc.setdefault(config.ID_FIELD, doc['guid'])
+        doc.setdefault("guid", generate_guid(type=GUID_TAG))
+        doc.setdefault(config.ID_FIELD, doc["guid"])
         doc[config.VERSION] = 1
         set_item_expiry({}, doc)
 
