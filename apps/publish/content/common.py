@@ -888,9 +888,9 @@ class BasePublishService(BaseService):
         if self.publish_type == "publish" and (updates.get(PUBLISH_SCHEDULE) or original.get(PUBLISH_SCHEDULE)):
             schedule_settings = updates.get(SCHEDULE_SETTINGS, original.get(SCHEDULE_SETTINGS, {}))
             publish_schedule = updates.get(PUBLISH_SCHEDULE, original.get(PUBLISH_SCHEDULE))
-
-            associated_item.setdefault(PUBLISH_SCHEDULE, publish_schedule)
-            associated_item.setdefault(SCHEDULE_SETTINGS, schedule_settings)
+            if publish_schedule and not associated_item.get(PUBLISH_SCHEDULE):
+                associated_item[PUBLISH_SCHEDULE] = publish_schedule
+                associated_item[SCHEDULE_SETTINGS] = schedule_settings
 
 
 def get_crop(rendition):
