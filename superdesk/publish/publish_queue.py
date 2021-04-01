@@ -101,17 +101,15 @@ class PublishQueueService(BaseService):
 
     def create(self, docs, **kwargs):
         super().create(docs)
-        is_publish = kwargs.get("is_publish")
 
-        if not is_publish and not app.config.get("SENT_ONCE"):
+        is_publish = kwargs.get("is_publish")
+        if not is_publish and not app.config.get("PUBLISH_ASSOCIATIONS_RESEND") == "never":
             for doc in docs:
-                if app.config.get("RESEND_ASSOCIATION_ITEMS_WITH_NEW_STORIES_AND_UPDATES_AND_CORRECTION"):
+                if app.config.get("PUBLISH_ASSOCIATIONS_RESEND") == "corrections":
                     self.resend_association_items(doc)
-                elif app.config.get(
-                    "RESEND_ASSOCIATION_ITEMS_WITH_NEW_STORIES_AND_UPDATES"
-                ) and not self.is_corrected_document(doc):
+                elif app.config.get("PUBLISH_ASSOCIATIONS_RESEND") == "updates" and not self.is_corrected_document(doc):
                     self.resend_association_items(doc)
-                elif app.config.get("RESEND_ASSOCIATION_ITEMS_WITH_NEW_STORIES", True) and not (
+                elif not (
                     self.is_corrected_document(doc) or self.is_updated_document(doc)
                 ):
                     self.resend_association_items(doc)
@@ -154,17 +152,15 @@ class PublishQueueService(BaseService):
         return doc.get("publishing_action") == "corrected" or article.get("operation") == "being_corrected"
 
     def resend_association_items(self, doc):
-        try:
-            associated_items = (
-                json.loads(doc.get("formatted_item", {})).get("associations", {}) if doc.get("formatted_item") else {}
-            )
-        except Exception:
-            return
+        associated_items = doc.get("associated_items")
 
         if associated_items:
-            for key, associated_value in associated_items.items():
+            for id in associated_items:
+                archive_article = get_resource_service("archive").find_one(
+                    req=None, _id=id
+                )
                 associated_article = get_resource_service("published").find_one(
-                    req=None, guid=associated_value.get("guid")
+                    req=None, guid=archive_article.get("guid")
                 )
                 subscriber = get_resource_service("subscribers").find_one(req=None, _id=doc["subscriber_id"])
                 if associated_article and subscriber:
