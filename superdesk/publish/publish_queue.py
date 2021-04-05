@@ -102,7 +102,7 @@ class PublishQueueService(BaseService):
         super().create(docs)
 
         is_publish = kwargs.get("is_publish")
-        if not (is_publish and app.config.get("PUBLISH_ASSOCIATIONS_RESEND") == "never"):
+        if not (is_publish or app.config.get("PUBLISH_ASSOCIATIONS_RESEND") == "never"):
             for doc in docs:
                 if app.config.get("PUBLISH_ASSOCIATIONS_RESEND") == "corrections":
                     self.resend_association_items(doc)
