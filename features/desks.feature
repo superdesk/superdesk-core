@@ -754,3 +754,35 @@ Feature: Desks
                 ]
             }
         """
+
+    @auth
+    @notification
+    Scenario: Make the desk available in default content template
+        Given empty "desks"
+        Given "content_templates"
+        """
+        [{
+            "template_name": "test",
+            "template_type": "create",
+            "data": {"headline": "test", "type": "text", "slugline": "test"}
+        }]
+        """
+        When we post to "/desks"
+        """
+        {
+            "name": "Sports Desk",
+            "desk_language": "en",
+            "default_content_template": "#content_templates._id#"
+        }
+        """
+        Then we get OK response
+        When we get "content_templates/#content_templates._id#"
+        Then we get existing resource
+        """
+        {
+            "template_name": "test",
+            "template_type": "create",
+            "template_desks": ["#desks._id#"]
+        }
+        """
+        
