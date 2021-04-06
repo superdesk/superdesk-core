@@ -21,7 +21,7 @@ Content which expires in production will be removed without any traces left.
 Published content
 -----------------
 
-Published content will be in ``published`` collection for ``CONTENT_EXPIRY_MINUTES``,
+Published content will be in ``published`` collection for ``PUBLISHED_CONTENT_EXPIRY_MINUTES``,
 after that it will be still available in ``archived`` collection.
 
 Ingest content expiry
