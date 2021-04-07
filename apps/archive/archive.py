@@ -1096,11 +1096,10 @@ class ArchiveService(BaseService):
         :param bool invalid_only: True only invalid items
         :return pymongo.cursor: expired non published items.
         """
-        unique_id = 0
-
-        while True:
+        last_id = None
+        for i in range(app.config["MAX_EXPIRY_LOOPS"]):  # avoid blocking forever just in case
             req = ParsedRequest()
-            req.sort = "unique_id"
+            req.sort = "_id"
             query = {
                 "$and": [
                     {"expiry": {"$lte": date_to_str(expiry_datetime)}},
@@ -1108,23 +1107,27 @@ class ArchiveService(BaseService):
                 ]
             }
 
-            query["$and"].append({"unique_id": {"$gt": unique_id}})
-
             if invalid_only:
                 query["$and"].append({"expiry_status": "invalid"})
             else:
                 query["$and"].append({"expiry_status": {"$ne": "invalid"}})
 
-            req.where = json.dumps(query)
+            if last_id:
+                query["$and"].append({"_id": {"$gt": last_id}})
 
+            req.where = json.dumps(query)
             req.max_results = config.MAX_EXPIRY_QUERY_LIMIT
+
             items = list(self.get_from_mongo(req=req, lookup=None))
 
             if not len(items):
                 break
 
-            unique_id = items[-1]["unique_id"]
+            last_id = items[-1]["_id"]
+
             yield items
+        else:
+            logger.warning("get_expired_items did not finish in %d loops", app.config["MAX_EXPIRY_LOOPS"])
 
     def _add_desk_metadata(self, updates, original):
         """Populate updates metadata from item desk in case it's set.

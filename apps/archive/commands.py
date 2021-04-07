@@ -112,15 +112,16 @@ class RemoveExpiredContent(superdesk.Command):
         logger.info("{} Starting to remove published expired items.".format(self.log_msg))
         archive_service = get_resource_service(ARCHIVE)
         published_service = get_resource_service("published")
-        items_to_remove = set()
-        items_to_be_archived = dict()
-        items_having_issues = dict()
         preserve_published_desks = {
             desk.get(config.ID_FIELD): 1
             for desk in get_resource_service("desks").find(where={"preserve_published_content": True})
         }
 
         for expired_items in archive_service.get_expired_items(expiry_datetime):
+            items_to_remove = set()
+            items_to_be_archived = dict()
+            items_having_issues = dict()
+
             if len(expired_items) == 0:
                 logger.info("{} No items found to expire.".format(self.log_msg))
                 return
