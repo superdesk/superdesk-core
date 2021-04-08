@@ -133,17 +133,23 @@ class PublishQueueService(BaseService):
         )
 
     def is_updated_document(self, doc):
-        if not doc.get("item_id"):
+
+        if not (doc.get("item_id") or doc.get("item_version")):
             return
-        article = get_resource_service("published").find_one(req=None, guid=doc["item_id"])
+        article = get_resource_service("published").find_one(
+            req=None, guid=doc["item_id"], _current_version=doc["item_version"]
+        )
         if not article:
             return
         return article.get("rewrite_of")
 
     def is_corrected_document(self, doc):
-        if not doc.get("item_id"):
+
+        if not (doc.get("item_id") or doc.get("item_version")):
             return
-        article = get_resource_service("published").find_one(req=None, guid=doc["item_id"])
+        article = get_resource_service("published").find_one(
+            req=None, guid=doc["item_id"], _current_version=doc["item_version"]
+        )
         if not article:
             return
         return doc.get("publishing_action") == "corrected" or article.get("operation") == "being_corrected"
@@ -152,24 +158,17 @@ class PublishQueueService(BaseService):
         associated_items = doc.get("associated_items")
         if associated_items:
             for associated_id in associated_items:
-                associated_article = get_resource_service("published").find_one(req=None, item_id=associated_id)
+                archive_article = get_resource_service("archive").find_one(req=None, _id=associated_id)
+                if not archive_article:
+                    return
+                associated_article = get_resource_service("published").find_one(
+                    req=None, item_id=archive_article["_id"], _current_version=archive_article["_current_version"]
+                )
+
                 if associated_article:
-                    subscribers_list = associated_article.get("target_subscribers", {})
-                    if subscribers_list:
-                        subscribers = []
-                        for subscriber in subscribers_list:
-                            subscribers.append(
-                                get_resource_service("subscribers").find_one(req=None, _id=subscriber.get("_id"))
-                            )
-                    else:
-                        subscribers = [get_resource_service("subscribers").find_one(req=None, _id=doc["subscriber_id"])]
+                    from apps.publish.enqueue import get_enqueue_service
 
-                    if subscribers:
-                        from apps.publish.enqueue import get_enqueue_service
-
-                        get_enqueue_service(associated_article.get("operation")).queue_transmission(
-                            associated_article, subscribers
-                        )
+                    get_enqueue_service(associated_article.get("operation")).publish(associated_article)
 
     def delete(self, lookup):
         # as encoded item is added manually to storage
