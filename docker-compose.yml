@@ -13,11 +13,15 @@ services:
             - discovery.type=single-node
         tmpfs:
             - /usr/share/elasticsearch/data
+        networks:
+            - superdesk-core
 
     redis:
         image: redis:alpine
         ports:
             - "6379:6379"
+        networks:
+            - superdesk-core
 
     mongo:
         image: mongo:4.4
@@ -25,4 +29,9 @@ services:
             - "27017:27017"
         tmpfs:
             - /data/db
+        networks:
+            - superdesk-core
 
+networks:
+    superdesk-core:
+        driver: bridge
