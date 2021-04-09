@@ -265,12 +265,14 @@ class ItemsService(BaseService):
         if item.get("renditions"):
             renditions = {}
             for k, v in item["renditions"].items():
-                if v and "media" in v:
+                if not v:
+                    continue
+                renditions[k] = v
+                if "media" in v:
                     href = v.get("href")
                     media = v.pop("media")
                     v["href"] = app.media.url_for_media(media, v.get("mimetype"))
                     hrefs[href] = v["href"]
-                    renditions[k] = v
             item["renditions"] = renditions  # filter out empty renditions
         return hrefs
 
