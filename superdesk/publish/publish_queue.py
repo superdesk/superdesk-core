@@ -109,6 +109,7 @@ class PublishQueueService(BaseService):
                 elif app.config.get("PUBLISH_ASSOCIATIONS_RESEND") == "updates" and not self.is_corrected_document(doc):
                     self.resend_association_items(doc)
                 elif not (self.is_corrected_document(doc) or self.is_updated_document(doc)):
+
                     self.resend_association_items(doc)
 
         return [doc[config.ID_FIELD] for doc in docs]
@@ -133,7 +134,6 @@ class PublishQueueService(BaseService):
         )
 
     def is_updated_document(self, doc):
-
         if not (doc.get("item_id") and doc.get("item_version")):
             return
         article = get_resource_service("published").find_one(
@@ -144,10 +144,10 @@ class PublishQueueService(BaseService):
         return article.get("rewrite_of")
 
     def is_corrected_document(self, doc):
-        if not (doc.get("item_id") and doc.get("item_version1")):
+        if not (doc.get("item_id") and doc.get("item_version", "version")):
             return
         article = get_resource_service("published").find_one(
-            req=None, guid=doc["item_id"], _current_version=doc["item_version"]
+            req=None, guid=doc["item_id"], _current_version=doc.get("item_version", "version")
         )
         if not article:
             return
