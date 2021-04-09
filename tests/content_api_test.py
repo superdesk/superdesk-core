@@ -177,6 +177,42 @@ class ContentAPITestCase(TestCase):
             audit_entries = superdesk.get_resource_service("api_audit").get(req=None, lookup={"type": "asset"})
             self.assertEqual(1, audit_entries.count())
 
+    def test_update_picture(self):
+        picture = {
+            "_id": "foo",
+            "guid": "foo",
+            "type": "picture",
+            "headline": "foo",
+            "renditions": {
+                "original": {
+                    "media": "abcd1234",
+                    "width": 300,
+                    "height": 200,
+                    "mimetype": "image/jpeg",
+                    "href": "foo",
+                },
+                "thumbnail": {
+                    "media": "abcd1234",
+                    "width": 300,
+                    "height": 200,
+                    "mimetype": "image/jpeg",
+                    "href": "foo",
+                },
+            },
+        }
+
+        self.content_api.publish(picture)
+
+        picture["renditions"]["viewImage"] = picture["renditions"].pop("thumbnail")
+        self.content_api.publish(picture)
+
+        headers = self._auth_headers()
+        with self.capi.test_client() as c:
+            response = c.get("items/foo", headers=headers)
+            data = json.loads(response.data)
+            self.assertIn("viewImage", data["renditions"])
+            self.assertNotIn("thumbnail", data["renditions"])
+
     def test_text_with_pic_associations(self):
         subscriber = {"_id": "sub1"}
         self.content_api.publish(
@@ -219,8 +255,8 @@ class ContentAPITestCase(TestCase):
             self.assertIn("assets/bar", renditions["original"]["href"])
             self.assertNotIn("http://localhost:5000/api/upload/", data["body_html"])
 
-    def test_association_reset(self):
-        subscriber = {"_id": "sub1"}
+    def test_association_update(self):
+        subscribers = [self.subscriber["_id"]]
         self.content_api.publish(
             {
                 "guid": "text",
@@ -230,31 +266,94 @@ class ContentAPITestCase(TestCase):
                 "associations": {
                     "foo": {
                         "guid": "foo",
-                        "type": "text",
-                        "body_html": "<p>Foo</p>",
+                        "type": "picture",
+                        "renditions": {
+                            "original": {
+                                "media": "abcd1234",
+                                "width": 300,
+                                "height": 200,
+                                "mimetype": "image/jpeg",
+                                "href": "foo",
+                            },
+                            "viewImage": {
+                                "media": "abcd1234",
+                                "width": 300,
+                                "height": 200,
+                                "mimetype": "image/jpeg",
+                                "href": "foo",
+                            },
+                        },
+                        "subscribers": subscribers,
                     },
                 },
             },
-            [subscriber],
+            [self.subscriber],
         )
+
+        data = self.get_json("items/text")
+        picture = data["associations"]["foo"]
+        self.assertIn("viewImage", picture["renditions"])
+
+        self.content_api.publish(
+            {
+                "guid": "text",
+                "type": "text",
+                "body_html": "",
+                "version": 2,
+                "associations": {
+                    "foo": {
+                        "guid": "bar",
+                        "type": "picture",
+                        "renditions": {
+                            "original": {
+                                "media": "abcd1234",
+                                "width": 300,
+                                "height": 200,
+                                "mimetype": "image/jpeg",
+                                "href": "bar",
+                            },
+                            "baseImage": {
+                                "media": "abcd1234",
+                                "width": 300,
+                                "height": 200,
+                                "mimetype": "image/jpeg",
+                                "href": "bar",
+                            },
+                        },
+                        "subscribers": subscribers,
+                    },
+                },
+            },
+            [self.subscriber],
+        )
+
+        data = self.get_json("items/text")
+        picture = data["associations"]["foo"]
+        self.assertNotIn("viewImage", picture["renditions"])
+        self.assertIn("baseImage", picture["renditions"])
 
         self.content_api.publish(
             {
                 "guid": "text",
                 "type": "text",
                 "body_html": "updated",
-                "version": 2,
+                "version": 3,
                 "assocations": {
                     "foo": None,
                 },
-            }
+            },
+            [self.subscriber],
         )
 
+        data = self.get_json("items/text")
+        self.assertEqual({}, data["associations"])
+
+    def get_json(self, url, subscriber=None):
         headers = self._auth_headers(subscriber)
         with self.capi.test_client() as c:
-            response = c.get("items/text", headers=headers)
+            response = c.get(url, headers=headers)
             data = json.loads(response.data)
-            self.assertEqual({}, data["associations"])
+            return data
 
     def test_content_filtering(self):
         self.content_api.publish({"guid": "u3", "type": "text", "source": "foo", "urgency": 3}, [self.subscriber])
