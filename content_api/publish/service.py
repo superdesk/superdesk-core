@@ -94,6 +94,7 @@ class PublishService(BaseService):
 
         self._process_associations(item, original)
         self._create_version_doc(item)
+
         if original:
             self.update(_id, item, original)
             return _id
@@ -153,10 +154,11 @@ class PublishService(BaseService):
         :param dict item: item being published
         :param dit doc: ninjs documents
         """
-        for assoc, assoc_item in (item.get('associations') or {}).items():
+        doc.setdefault("associations", {})
+        for assoc, assoc_item in (item.get("associations") or {}).items():
             if not assoc_item:
                 continue
-            doc.get('associations', {}).get(assoc)['subscribers'] = list(map(str, assoc_item.get('subscribers') or []))
+            doc["associations"][assoc]["subscribers"] = list(map(str, assoc_item.get("subscribers") or []))
 
     def _process_associations(self, updates, original):
         """Update associations using existing published item and ensure that associated item subscribers
@@ -177,4 +179,9 @@ class PublishService(BaseService):
                     update_assoc['subscribers'] = list(set(original_assoc.get('subscribers') or []) |
                                                        set(update_assoc.get('subscribers') or []))
 
-            update_assoc['subscribers'] = list(set(update_assoc['subscribers']) & set(subscribers))
+                if original_assoc and original_assoc.get("renditions"):
+                    update_assoc.setdefault("renditions", {})
+                    for rend in original_assoc["renditions"]:
+                        update_assoc["renditions"].setdefault(rend, None)
+
+            update_assoc["subscribers"] = list(set(update_assoc["subscribers"]) & set(subscribers))
