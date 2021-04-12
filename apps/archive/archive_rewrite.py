@@ -279,6 +279,10 @@ class ArchiveRewriteService(Service):
             # if True then reset to the default priority value.
             rewrite["priority"] = int(config.DEFAULT_PRIORITY_VALUE_FOR_MANUAL_ARTICLES)
 
+        # Disable and empty date time for coming_up field
+        if original.get("extra", {}).get("DueBy"):
+            rewrite["extra"]["DueBy"] = None
+
         rewrite["rewrite_of"] = original[config.ID_FIELD]
         rewrite["rewrite_sequence"] = (original.get("rewrite_sequence") or 0) + 1
         rewrite.pop(PROCESSED_FROM, None)
