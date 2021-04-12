@@ -13,6 +13,8 @@ as numbers to be able to filter based on such actions::
 
 import superdesk
 
+from superdesk.resource import MongoIndexes
+
 
 class UsageMetricsResource(superdesk.Resource):
     no_privileges = True
@@ -24,7 +26,7 @@ class UsageMetricsResource(superdesk.Resource):
         "date": {"type": "datetime"},
     }
 
-    mongo_indexes = {
+    mongo_indexes: MongoIndexes = {
         "item_1": ([("item", 1)], {}),
     }
 

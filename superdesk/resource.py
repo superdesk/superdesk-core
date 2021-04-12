@@ -47,6 +47,7 @@ def build_custom_hateoas(hateoas, doc, **values):
 
 
 Method = Literal["GET", "POST", "PATCH", "PUT", "DELETE"]
+MongoIndexes = Optional[Dict[str, Any]]
 
 
 class Resource:
@@ -75,7 +76,7 @@ class Resource:
     resource_preferences = None
     etag_ignore_fields: List[str] = []
     mongo_prefix: Optional[str] = None
-    mongo_indexes: Optional[Dict[str, Any]] = None
+    mongo_indexes: MongoIndexes = None
     auth_field = None
     authentication: Optional[BasicAuth] = None
     elastic_prefix: Optional[str] = None
