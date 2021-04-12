@@ -1,6 +1,7 @@
 Feature: Usage Metrics
 
     @auth
+    @notification
     Scenario: Track item activity
         Given "users"
         """
@@ -14,7 +15,14 @@ Feature: Usage Metrics
             {"_id": "abcd"}
         ]
         """
-        When we post to "/usage-metrics"
+        When we patch "archive/abcd"
+        """
+        {"headline": "do some action to avoid user last activity notification later"}
+        """
+        Then we get OK response
+
+        When we reset notifications
+        And we post to "/usage-metrics"
         """
         {
             "action": "preview",
@@ -24,3 +32,14 @@ Feature: Usage Metrics
         }
         """
         Then we get new resource
+
+        When we get "archive/abcd"
+        Then we get existing resource
+        """
+        {
+            "metrics": {
+                "preview": 1
+            }
+        }
+        """
+        And we get 0 notifications

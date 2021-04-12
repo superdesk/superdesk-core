@@ -1734,6 +1734,12 @@ def then_we_get_notifications(context):
     )
 
 
+@then("we get 0 notifications")
+def then_we_get_no_notifications(context):
+    notifications = getattr(context.app.notification_client, "messages", [])
+    assert len(notifications) == 0, f"we got {len(notifications)} notifications: {notifications}"
+
+
 @then("we get default preferences")
 def get_default_prefs(context):
     response_data = json.loads(context.response.get_data())

@@ -22,7 +22,7 @@ from superdesk.logging import logger, item_msg
 from eve.methods.common import resolve_document_etag
 from elasticsearch.exceptions import RequestError, NotFoundError
 from superdesk.errors import SuperdeskApiError
-from superdesk.notification import push_notification
+from superdesk.notification import push_notification as _push_notification
 
 
 SYSTEM_KEYS = set(
@@ -178,8 +178,11 @@ class EveBackend:
             doc.pop("_type", None)
         ids = self.create_in_mongo(endpoint_name, docs, **kwargs)
         self.create_in_search(endpoint_name, docs, **kwargs)
-        for doc in docs:
-            push_notification("resource:created", _id=str(doc["_id"]), resource=endpoint_name)
+
+        if self.notify_on_change(endpoint_name):
+            for doc in docs:
+                _push_notification("resource:created", _id=str(doc["_id"]), resource=endpoint_name)
+
         return ids
 
     def create_in_mongo(self, endpoint_name, docs, **kwargs):
@@ -225,7 +228,7 @@ class EveBackend:
                 updates[config.ETAG] = updated[config.ETAG]
         return self._change_request(endpoint_name, id, updates, original)
 
-    def system_update(self, endpoint_name, id, updates, original):
+    def system_update(self, endpoint_name, id, updates, original, change_request=False, push_notification=True):
         """Only update what is provided, without affecting etag.
 
         This is useful when you want to make some changes without affecting users.
@@ -234,21 +237,30 @@ class EveBackend:
         :param id: document id
         :param updates: changes made to document
         :param original: original document
+        :param change_request: if True it will allow you to use other mongo operations than `$set`
+        :param push_notification: if False it won't send resource: notifications for update
         """
-        updates.setdefault(config.LAST_UPDATED, utcnow())
+        if not change_request:
+            updates.setdefault(config.LAST_UPDATED, utcnow())
         updated = original.copy()
         updated.pop(config.ETAG, None)  # make sure we update
-        return self._change_request(endpoint_name, id, updates, updated)
+        return self._change_request(
+            endpoint_name, id, updates, updated, change_request=change_request, push_notification=push_notification
+        )
 
-    def _change_request(self, endpoint_name, id, updates, original):
+    def _change_request(self, endpoint_name, id, updates, original, change_request=False, push_notification=True):
         backend = self._backend(endpoint_name)
         search_backend = self._lookup_backend(endpoint_name)
 
         try:
-            backend.update(endpoint_name, id, updates, original)
-            push_notification(
-                "resource:updated", _id=str(id), resource=endpoint_name, fields=get_diff_keys(updates, original)
-            )
+            if change_request:  # allows using mongo operations other than $set
+                backend._change_request(endpoint_name, id, updates, original)
+            else:
+                backend.update(endpoint_name, id, updates, original)
+            if push_notification and self.notify_on_change(endpoint_name):
+                _push_notification(
+                    "resource:updated", _id=str(id), resource=endpoint_name, fields=get_diff_keys(updates, original)
+                )
         except eve.io.base.DataLayer.OriginalChangedError:
             if not backend.find_one(endpoint_name, req=None, _id=id) and search_backend:
                 # item is in elastic, not in mongo - not good
@@ -372,8 +384,9 @@ class EveBackend:
         if len(removed_ids):
             backend.remove(endpoint_name, {config.ID_FIELD: {"$in": removed_ids}})
             logger.info("Removed %d documents from %s.", len(removed_ids), endpoint_name)
-            for doc in docs:
-                push_notification("resource:deleted", _id=str(doc["_id"]), resource=endpoint_name)
+            if self.notify_on_change(endpoint_name):
+                for doc in docs:
+                    _push_notification("resource:deleted", _id=str(doc["_id"]), resource=endpoint_name)
         else:
             logger.warn("No documents for %s resource were deleted.", endpoint_name)
         return removed_ids
@@ -440,3 +453,8 @@ class EveBackend:
             # https://docs.mongodb.com/manual/reference/collation/
             if "collation" in req.args:
                 cursor.collation(Collation(**std_json.loads(req.args["collation"])))
+
+    def notify_on_change(self, endpoint_name):
+        """Test if we should push notifications for given resource."""
+        source_config = app.config["DOMAIN"][endpoint_name]
+        return source_config["notifications"] is True
