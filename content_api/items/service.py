@@ -74,6 +74,7 @@ class ItemsService(BaseService):
         "_current_version",
         "_latest_version",
         "ancestors",
+        "refs",
     }
 
     def find_one(self, req, **lookup):

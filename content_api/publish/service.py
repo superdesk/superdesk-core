@@ -187,3 +187,10 @@ class PublishService(BaseService):
                         update_assoc["renditions"].setdefault(rend, None)
 
             update_assoc["subscribers"] = list(set(update_assoc["subscribers"]) & set(subscribers))
+
+        # remove associations which were there priviously
+        # but are missing now
+        if original and original.get("associations"):
+            updates.setdefault("associations", {})
+            for assoc in original["associations"]:
+                updates["associations"].setdefault(assoc, None)
