@@ -188,7 +188,7 @@ class PublishService(BaseService):
 
             update_assoc["subscribers"] = list(set(update_assoc["subscribers"]) & set(subscribers))
 
-        # remove associations which were there priviously
+        # remove associations which were there previously
         # but are missing now
         if original and original.get("associations"):
             updates.setdefault("associations", {})
