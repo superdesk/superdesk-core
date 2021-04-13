@@ -483,6 +483,7 @@ metadata_schema = {
             "uri": {"type": "string"},
             "guid": {"type": "string"},
             "type": {"type": "string"},
+            "source": {"type": "string", "nullable": True},
         },
         "mapping": {
             "type": "object",
@@ -492,6 +493,7 @@ metadata_schema = {
                 "uri": not_analyzed,
                 "guid": not_analyzed,
                 "type": not_analyzed,
+                "source": not_analyzed,
             },
         },
     },

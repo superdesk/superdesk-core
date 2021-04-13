@@ -62,6 +62,7 @@ class ItemsService(BaseService):
         "item_source",
         "sort",
         "related_to",
+        "related_source",
     }
 
     default_sort = ItemsResource.datasource.get("default_sort", [("versioncreated", -1)])
@@ -368,6 +369,7 @@ class ItemsService(BaseService):
             "genre": "genre.code",
             "item_source": "source",
             "related_to": "refs.guid",
+            "related_source": "refs.source",
         }
 
         try:

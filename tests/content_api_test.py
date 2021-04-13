@@ -1,3 +1,4 @@
+from apps.archive.usage import update_refs
 import io
 import time
 import superdesk
@@ -353,18 +354,20 @@ class ContentAPITestCase(TestCase):
             return data
 
     def test_content_filtering(self):
-        self.content_api.publish(
-            {
-                "guid": "u3",
-                "type": "text",
-                "source": "foo",
-                "urgency": 3,
-                "refs": [
-                    {"guid": "u2", "type": "text"},
-                ],
+        item = {
+            "guid": "u3",
+            "type": "text",
+            "source": "foo",
+            "urgency": 3,
+            "associations": {
+                "one": {"guid": "u2", "type": "text", "source": "bar"},
+                "two": {"guid": "u1", "type": "text", "source": "baz"},
             },
-            [self.subscriber],
-        )
+        }
+
+        update_refs(item, {})
+
+        self.content_api.publish(item, [self.subscriber])
         self.content_api.publish({"guid": "u2", "type": "text", "source": "bar", "urgency": 2}, [self.subscriber])
 
         headers = self._auth_headers()
@@ -402,6 +405,21 @@ class ContentAPITestCase(TestCase):
             self.assertEqual(200, response.status_code)
             data = json.loads(response.data)
             self.assertEqual(1, data["_meta"]["total"])
+
+            response = c.get("items?related_to=empty", headers=headers)
+            self.assertEqual(200, response.status_code)
+            data = json.loads(response.data)
+            self.assertEqual(0, data["_meta"]["total"])
+
+            response = c.get("items?related_source=bar", headers=headers)
+            self.assertEqual(200, response.status_code)
+            data = json.loads(response.data)
+            self.assertEqual(1, data["_meta"]["total"])
+
+            response = c.get("items?related_source=empty", headers=headers)
+            self.assertEqual(200, response.status_code)
+            data = json.loads(response.data)
+            self.assertEqual(0, data["_meta"]["total"])
 
     def test_generate_token_service(self):
         service = superdesk.get_resource_service("subscriber_token")
