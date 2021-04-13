@@ -1,5 +1,11 @@
 # Superdesk Server Changelog
 
+## [1.32.5] 2021-04-20
+
+### Fixed
+
+- Set timeout for HTTP Push delivery.
+
 ## [1.32.4] 2019-12-23
 
 ### Added
