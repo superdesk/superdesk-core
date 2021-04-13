@@ -338,9 +338,6 @@ class ContentAPITestCase(TestCase):
                 "type": "text",
                 "body_html": "updated",
                 "version": 3,
-                "assocations": {
-                    "foo": None,
-                },
             },
             [self.subscriber],
         )
