@@ -55,7 +55,7 @@ class ItemsService(BaseService):
         '_etag', '_created',
         '_updated', 'subscribers',
         '_current_version', '_latest_version',
-        'ancestors'
+        'ancestors', 'refs',
     }
 
     def find_one(self, req, **lookup):
