@@ -100,9 +100,9 @@ class PublishQueueService(BaseService):
 
     def create(self, docs, **kwargs):
 
-        is_publish = kwargs.get("is_publish")
+        publish_first_version = kwargs.get("publish_first_version")
         resend_associates = kwargs.get("resend_associates", True)
-        if config.PUBLISH_ASSOCIATIONS_RESEND and not is_publish and resend_associates:
+        if config.PUBLISH_ASSOCIATIONS_RESEND and not publish_first_version and resend_associates:
             for doc in docs:
                 if config.PUBLISH_ASSOCIATIONS_RESEND == "corrections":
                     self.resend_association_items(doc)
