@@ -99,20 +99,17 @@ class PublishQueueService(BaseService):
                 doc["published_seq_num"] = subscriber_service.generate_sequence_number(subscriber)
 
     def create(self, docs, **kwargs):
-        super().create(docs)
 
         is_publish = kwargs.get("is_publish")
-        if not (is_publish or app.config.get("PUBLISH_ASSOCIATIONS_RESEND") == "never"):
+        resend_associates = kwargs.get("resend_associates", True)
+        if config.PUBLISH_ASSOCIATIONS_RESEND and not is_publish and resend_associates:
             for doc in docs:
-                if app.config.get("PUBLISH_ASSOCIATIONS_RESEND") == "corrections":
+                if config.PUBLISH_ASSOCIATIONS_RESEND == "corrections":
                     self.resend_association_items(doc)
-                elif app.config.get("PUBLISH_ASSOCIATIONS_RESEND") == "updates" and not self.is_corrected_document(doc):
-                    self.resend_association_items(doc)
-                elif not (self.is_corrected_document(doc) or self.is_updated_document(doc)):
-
+                elif config.PUBLISH_ASSOCIATIONS_RESEND == "updates" and not self.is_corrected_document(doc):
                     self.resend_association_items(doc)
 
-        return [doc[config.ID_FIELD] for doc in docs]
+        return super().create(docs)
 
     def on_updated(self, updates, original):
         if updates.get("state", "") != original.get("state", ""):
@@ -133,16 +130,6 @@ class PublishQueueService(BaseService):
             else updates.get("state") or QueueState.PENDING.value
         )
 
-    def is_updated_document(self, doc):
-        if not (doc.get("item_id") and doc.get("item_version")):
-            return
-        article = get_resource_service("published").find_one(
-            req=None, guid=doc["item_id"], _current_version=doc["item_version"]
-        )
-        if not article:
-            return
-        return article.get("rewrite_of")
-
     def is_corrected_document(self, doc):
         if not (doc.get("item_id") and doc.get("item_version", "version")):
             return
@@ -159,12 +146,12 @@ class PublishQueueService(BaseService):
             for associated_id in associated_items:
                 archive_article = get_resource_service("archive").find_one(req=None, _id=associated_id)
                 if not archive_article:
-                    return
+                    continue
                 associated_article = get_resource_service("published").find_one(
                     req=None, item_id=archive_article["_id"], _current_version=archive_article["_current_version"]
                 )
 
-                if associated_article:
+                if associated_article and associated_article.get("state") not in ["unpublished", "killed"]:
                     from apps.publish.enqueue import get_enqueue_service
 
                     get_enqueue_service(associated_article.get("operation")).publish(associated_article)

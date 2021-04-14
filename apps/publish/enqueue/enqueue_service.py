@@ -255,7 +255,6 @@ class EnqueueService:
                 If the nothing is queued.
         """
         is_publish = True
-
         if doc.get("rewrite_of") or doc.get("state") == "corrected" or doc.get("translated_from"):
             is_publish = False
 
@@ -454,7 +453,7 @@ class EnqueueService:
             destinations.append({"name": "content api", "delivery_type": "content_api", "format": "ninjs"})
         return destinations
 
-    def queue_transmission(self, doc, subscribers, subscriber_codes=None, associations=None, is_publish=None):
+    def queue_transmission(self, doc, subscribers, subscriber_codes=None, associations=None, is_publish=False):
         """Method formats and then queues the article for transmission to the passed subscribers.
 
         ::Important Note:: Format Type across Subscribers can repeat. But we can't have formatted item generated once
@@ -473,8 +472,10 @@ class EnqueueService:
 
         try:
             queued = False
+            resend_associates = True
             no_formatters = []
             for subscriber in subscribers:
+
                 try:
                     if (
                         doc[ITEM_TYPE] not in [CONTENT_TYPE.TEXT, CONTENT_TYPE.PREFORMATTED]
@@ -547,9 +548,14 @@ class EnqueueService:
                             publish_queue_item.pop(ITEM_STATE, None)
 
                             # content api delivery will be marked as SUCCESS in queue
-                            get_resource_service("publish_queue").post([publish_queue_item], is_publish=is_publish)
+                            get_resource_service("publish_queue").post(
+                                [publish_queue_item], is_publish=is_publish, resend_associates=resend_associates
+                            )
 
+                            # do not want to send multiple entries
+                            resend_associates = False
                             queued = True
+
                 except Exception:
                     logger.exception(
                         "Failed to queue item for id {} with headline {} for subscriber {}.".format(
