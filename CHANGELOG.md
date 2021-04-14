@@ -1,5 +1,14 @@
 # Superdesk Server Changelog
 
+## [1.33.14] 2021-04-14
+
+### Fixed
+
+- Fix content api returning old renditions for corrected items.
+- Support timeouts for HTTP Push transmitter. 
+- Handle lazy strings in JSON encoder.
+- Fix crash when highlighting an empty query string.
+
 ## [1.33.13] 2021-02-24
 
 ### Fixed
