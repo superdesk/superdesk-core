@@ -49,6 +49,18 @@ def push_unlock_notification(item, user_id, session_id):
     )
 
 
+def set_unlock_updates(updates, force=True):
+    updates.update(
+        {
+            LOCK_USER: None,
+            LOCK_SESSION: None,
+            LOCK_TIME: None,
+            LOCK_ACTION: None,
+            "force_unlock": force,
+        }
+    )
+
+
 class ItemLock(BaseComponent):
     def __init__(self, app):
         self.app = app
@@ -136,13 +148,8 @@ class ItemLock(BaseComponent):
                 superdesk.get_resource_service("archive").delete_action(lookup={"_id": item["_id"]})
                 push_content_notification([item])
             else:
-                updates = {
-                    LOCK_USER: None,
-                    LOCK_SESSION: None,
-                    LOCK_TIME: None,
-                    LOCK_ACTION: None,
-                    "force_unlock": True,
-                }
+                updates = {}
+                set_unlock_updates(updates)
                 autosave = superdesk.get_resource_service("archive_autosave").find_one(req=None, _id=item["_id"])
                 if autosave and item[ITEM_STATE] not in PUBLISH_STATES:
                     if not hasattr(flask.g, "user"):  # user is not set when session expires
