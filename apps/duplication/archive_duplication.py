@@ -125,7 +125,7 @@ class DuplicateService(BaseService):
 
         if not doc_in_archive:
             raise SuperdeskApiError.notFoundError(
-                _("Fail to found item with guid: {guid}").format(guid=guid_to_duplicate)
+                _("Failed to find item with guid: {guid}").format(guid=guid_to_duplicate)
             )
 
         if not is_workflow_state_transition_valid("duplicate", doc_in_archive[ITEM_STATE]):
