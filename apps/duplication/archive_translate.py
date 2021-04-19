@@ -57,7 +57,7 @@ class TranslateService(BaseService):
 
         item = archive_service.find_one(req=None, guid=guid)
         if not item:
-            raise SuperdeskApiError.notFoundError(_("Fail to found item with guid: {guid}").format(guid=guid))
+            raise SuperdeskApiError.notFoundError(_("Failed to find item with guid: {guid}").format(guid=guid))
 
         if not is_workflow_state_transition_valid("translate", item[ITEM_STATE]):
             raise InvalidStateTransitionError()
