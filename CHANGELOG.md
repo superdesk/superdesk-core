@@ -1,5 +1,32 @@
 # Superdesk Server Changelog
 
+## [2.1.3] 2021-04-19
+
+### Fixed
+
+- Fix error when auto publishing associated items with schedule.
+- Unlock article after publishing.
+- Update lxml version.
+- Fix default content template not available in planning scheduled export.
+- Fix correction workflow.
+- Fix editor field not updated when applying a template.
+
+## [2.1.2] 2021-02-24
+
+### Fixed
+
+- Load local settings for unit tests.
+- Fix search results inconsistency between archive and search endpoints.
+- Handle error when fetching association from AP Media API.
+- Fix master desk aggregations.
+
+## [2.1.1] 2021-02-15
+
+### Fixed
+
+- Store last activity timestamp on user.
+- Fix error when saving media contacts with country.
+
 ## [2.1.0] 2021-02-10
 
 [Changes](https://github.com/superdesk/superdesk-core/milestone/89?closed=1)
