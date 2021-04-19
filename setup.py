@@ -82,7 +82,7 @@ package_data = {
 
 setup(
     name="Superdesk-Core",
-    version="2.1.3",
+    version="2.3.dev",
     description="Superdesk Core library",
     long_description=LONG_DESCRIPTION,
     author="petr jasek",
