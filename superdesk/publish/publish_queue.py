@@ -98,19 +98,6 @@ class PublishQueueService(BaseService):
                 subscriber = subscriber_service.find_one(req=None, _id=doc["subscriber_id"])
                 doc["published_seq_num"] = subscriber_service.generate_sequence_number(subscriber)
 
-    def create(self, docs, **kwargs):
-
-        publish_first_version = kwargs.get("publish_first_version")
-        resend_associates = kwargs.get("resend_associates", True)
-        if config.PUBLISH_ASSOCIATIONS_RESEND and not publish_first_version and resend_associates:
-            for doc in docs:
-                if config.PUBLISH_ASSOCIATIONS_RESEND == "corrections":
-                    self.resend_association_items(doc)
-                elif config.PUBLISH_ASSOCIATIONS_RESEND == "updates" and not self.is_corrected_document(doc):
-                    self.resend_association_items(doc)
-
-        return super().create(docs)
-
     def on_updated(self, updates, original):
         if updates.get("state", "") != original.get("state", ""):
             self._set_queue_state(updates, original)
@@ -129,32 +116,6 @@ class PublishQueueService(BaseService):
             if destination.get("delivery_type") == "content_api"
             else updates.get("state") or QueueState.PENDING.value
         )
-
-    def is_corrected_document(self, doc):
-        if not (doc.get("item_id") and doc.get("item_version", "version")):
-            return
-        article = get_resource_service("published").find_one(
-            req=None, guid=doc["item_id"], _current_version=doc.get("item_version", "version")
-        )
-        if not article:
-            return
-        return doc.get("publishing_action") == "corrected" or article.get("operation") == "being_corrected"
-
-    def resend_association_items(self, doc):
-        associated_items = doc.get("associated_items")
-        if associated_items:
-            for associated_id in associated_items:
-                archive_article = get_resource_service("archive").find_one(req=None, _id=associated_id)
-                if not archive_article:
-                    continue
-                associated_article = get_resource_service("published").find_one(
-                    req=None, item_id=archive_article["_id"], _current_version=archive_article["_current_version"]
-                )
-
-                if associated_article and associated_article.get("state") not in ["unpublished", "killed"]:
-                    from apps.publish.enqueue import get_enqueue_service
-
-                    get_enqueue_service(associated_article.get("operation")).publish(associated_article)
 
     def delete(self, lookup):
         # as encoded item is added manually to storage

@@ -473,8 +473,16 @@ class EnqueueService:
             subscriber_codes = {}
 
         try:
+            if config.PUBLISH_ASSOCIATIONS_RESEND and not publish_first_version:
+                if config.PUBLISH_ASSOCIATIONS_RESEND == "corrections":
+                    self.resend_association_items(doc)
+                elif config.PUBLISH_ASSOCIATIONS_RESEND == "updates" and doc.get("state") not in [
+                    "corrected",
+                    "being_corrected",
+                ]:
+                    self.resend_association_items(doc)
+
             queued = False
-            resend_associates = True
             no_formatters = []
             for subscriber in subscribers:
 
@@ -550,14 +558,7 @@ class EnqueueService:
                             publish_queue_item.pop(ITEM_STATE, None)
 
                             # content api delivery will be marked as SUCCESS in queue
-                            get_resource_service("publish_queue").post(
-                                [publish_queue_item],
-                                publish_first_version=publish_first_version,
-                                resend_associates=resend_associates,
-                            )
-
-                            # do not want to send multiple entries
-                            resend_associates = False
+                            get_resource_service("publish_queue").post([publish_queue_item])
                             queued = True
 
                 except Exception:
@@ -570,6 +571,22 @@ class EnqueueService:
             return no_formatters, queued
         except Exception:
             raise
+
+    def resend_association_items(self, doc):
+        associated_items = doc.get(ASSOCIATIONS)
+        if associated_items:
+            for name, association in associated_items.items():
+                archive_article = get_resource_service("archive").find_one(req=None, _id=association["guid"])
+                if not archive_article:
+                    continue
+                associated_article = get_resource_service("published").find_one(
+                    req=None, item_id=archive_article["_id"], _current_version=archive_article["_current_version"]
+                )
+
+                if associated_article and associated_article.get("state") not in ["unpublished", "killed"]:
+                    from apps.publish.enqueue import get_enqueue_service
+
+                    get_enqueue_service(associated_article.get("operation")).publish(associated_article)
 
     def _embed_package_items(self, package):
         """Embeds all package items in the package document."""
