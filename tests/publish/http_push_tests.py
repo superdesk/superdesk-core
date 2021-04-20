@@ -94,6 +94,8 @@ class HTTPPushPublishTestCase(unittest.TestCase):
 
         self.destination = self.item.get('destination', {})
         self.app = flask.Flask(__name__)
+        ctx = self.app.app_context()
+        ctx.push()
 
     def is_item_published(self, item_id):
         """Return True if the item was published, False otherwise.
@@ -211,7 +213,7 @@ class HTTPPushPublishTestCase(unittest.TestCase):
         ]
 
         for media in images:
-            get_mock.assert_any_call('http://example.com/%s' % media)
+            get_mock.assert_any_call('http://example.com/%s' % media, timeout=mock.ANY)
 
     @mock.patch('superdesk.publish.transmitters.http_push.app')
     @mock.patch('superdesk.publish.transmitters.http_push.requests.Session.send', return_value=CreatedResponse)
@@ -231,8 +233,8 @@ class HTTPPushPublishTestCase(unittest.TestCase):
         service._copy_published_media_files(item, dest)
 
         app_mock.media.get.assert_called_with('media-id', resource='attachments')
-        get_mock.assert_called_with('http://example.com/media-id')
-        send_mock.assert_called_once_with(mock.ANY)
+        get_mock.assert_called_with('http://example.com/media-id', timeout=mock.ANY)
+        send_mock.assert_called_once_with(mock.ANY, timeout=mock.ANY)
         request = send_mock.call_args[0][0]
         self.assertEqual('http://example.com/', request.url)
         self.assertEqual('POST', request.method)
@@ -249,8 +251,8 @@ class HTTPPushPublishTestCase(unittest.TestCase):
         dest = {'config': {'assets_url': 'http://example.com', 'secret_token': 'foo'}}
         service = HTTPPushService()
         service._transmit_media(media, dest)
-        get_mock.assert_called_with('http://example.com/media-id')
-        send_mock.assert_called_once_with(mock.ANY)
+        get_mock.assert_called_with('http://example.com/media-id', timeout=mock.ANY)
+        send_mock.assert_called_once_with(mock.ANY, timeout=mock.ANY)
         request = send_mock.call_args[0][0]
         self.assertEqual('http://example.com/', request.url)
         self.assertIn(b'content', request.body)

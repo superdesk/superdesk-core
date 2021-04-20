@@ -1,0 +1,13 @@
+name: "Lint"
+
+on: [push, pull_request]
+
+jobs:
+
+  flake8:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - uses: actions/setup-python@v2
+    - run: pip install flake8
+    - run: flake8
