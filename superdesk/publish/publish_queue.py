@@ -9,10 +9,8 @@
 # at https://www.sourcefabric.org/superdesk/license
 
 import logging
-import json
 from typing import Dict, Any
 
-from superdesk import config
 from superdesk import get_resource_service
 from superdesk.notification import push_notification
 from superdesk.resource import Resource
@@ -90,6 +88,7 @@ class PublishQueueResource(Resource):
 class PublishQueueService(BaseService):
     def on_create(self, docs):
         subscriber_service = get_resource_service("subscribers")
+
         for doc in docs:
             self._set_queue_state(doc, {})
             doc["moved_to_legal"] = False
