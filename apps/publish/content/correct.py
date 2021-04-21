@@ -91,15 +91,15 @@ class CorrectPublishService(BasePublishService):
             else:
                 publish_service.patch(being_corrected_article["_id"], updates={"state": "published"})
 
-    def send_to_original_desk(self, updates, original):
+    def send_to_current_desk(self, updates, original):
         if (
             app.config.get("CORRECTIONS_WORKFLOW")
             and original.get("state") == "correction"
-            and original.get("task", {}).get("desk_history")
+            and original.get("task", {}).get("desk")
         ):
             send_to(
                 doc=updates,
-                desk_id=(original["task"]["desk_history"][0]),
+                desk_id=(original["task"]["desk"]),
                 default_stage="working_stage",
                 user_id=get_user_id(),
             )
@@ -114,7 +114,7 @@ class CorrectPublishService(BasePublishService):
         update_word_count(updates, original)
         flush_renditions(updates, original)
         self.change_being_corrected_to_published(updates, original)
-        self.send_to_original_desk(updates, original)
+        self.send_to_current_desk(updates, original)
 
     def update(self, id, updates, original):
         editor_utils.generate_fields(updates)
