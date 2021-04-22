@@ -91,19 +91,6 @@ class CorrectPublishService(BasePublishService):
             else:
                 publish_service.patch(being_corrected_article["_id"], updates={"state": "published"})
 
-    def send_to_current_desk(self, updates, original):
-        if (
-            app.config.get("CORRECTIONS_WORKFLOW")
-            and original.get("state") == "correction"
-            and original.get("task", {}).get("desk")
-        ):
-            send_to(
-                doc=updates,
-                desk_id=(original["task"]["desk"]),
-                default_stage="working_stage",
-                user_id=get_user_id(),
-            )
-
     def on_update(self, updates, original):
         CropService().validate_multiple_crops(updates, original)
         super().on_update(updates, original)
@@ -114,7 +101,6 @@ class CorrectPublishService(BasePublishService):
         update_word_count(updates, original)
         flush_renditions(updates, original)
         self.change_being_corrected_to_published(updates, original)
-        self.send_to_current_desk(updates, original)
 
     def update(self, id, updates, original):
         editor_utils.generate_fields(updates)
