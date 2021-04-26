@@ -18,7 +18,7 @@ import content_api
 from flask import current_app as app
 from superdesk import get_resource_service
 from superdesk.errors import SuperdeskApiError, SuperdeskPublishError
-from superdesk.metadata.item import CONTENT_TYPE, ITEM_TYPE, ITEM_STATE, PUBLISH_SCHEDULE, ASSOCIATIONS
+from superdesk.metadata.item import CONTENT_TYPE, ITEM_TYPE, ITEM_STATE, PUBLISH_SCHEDULE, ASSOCIATIONS, MEDIA_TYPES
 from superdesk.metadata.packages import GROUPS, ROOT_GROUP, GROUP_ID, REFS, RESIDREF
 from superdesk.notification import push_notification
 from superdesk.publish import SUBSCRIBER_TYPES
@@ -576,13 +576,17 @@ class EnqueueService:
         associated_items = doc.get(ASSOCIATIONS)
         if associated_items:
             for name, association in associated_items.items():
-                archive_article = get_resource_service("archive").find_one(req=None, _id=association["guid"])
+                # resend only media association
+                if association.get("type") not in MEDIA_TYPES:
+                    continue
+
+                archive_article = get_resource_service("archive").find_one(req=None, _id=association.get("guid"))
                 if not archive_article:
                     continue
+
                 associated_article = get_resource_service("published").find_one(
                     req=None, item_id=archive_article["_id"], _current_version=archive_article["_current_version"]
                 )
-
                 if associated_article and associated_article.get("state") not in ["unpublished", "killed"]:
                     from apps.publish.enqueue import get_enqueue_service
 
