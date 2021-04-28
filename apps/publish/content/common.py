@@ -624,8 +624,8 @@ class BasePublishService(BaseService):
         for item in items:
             orig = None
             if type(item) == dict and item.get(config.ID_FIELD):
-                doc = item
                 orig = super().find_one(req=None, _id=item[config.ID_FIELD])
+                doc = orig if orig else item
                 try:
                     doc.update({"lock_user": orig["lock_user"]})
                 except (TypeError, KeyError):
