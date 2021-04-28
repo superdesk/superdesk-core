@@ -685,6 +685,11 @@ metadata_schema = {
     "used": {"type": "boolean"},
     "used_count": {"type": "integer"},
     "used_updated": {"type": "datetime"},
+    "metrics": {
+        "type": "dict",
+        "readonly": True,
+        "allow_unknown": True,
+    },
     # system fields
     "_type": {"type": "string", "mapping": None},
     "operation": {"type": "string"},

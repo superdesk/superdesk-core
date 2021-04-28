@@ -67,8 +67,8 @@ class BaseService:
     def update(self, id, updates, original):
         return self.backend.update(self.datasource, id, updates, original)
 
-    def system_update(self, id, updates, original):
-        return self.backend.system_update(self.datasource, id, updates, original)
+    def system_update(self, id, updates, original, **kwargs):
+        return self.backend.system_update(self.datasource, id, updates, original, **kwargs)
 
     def replace(self, id, document, original):
         res = self.backend.replace(self.datasource, id, document, original)

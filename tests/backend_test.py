@@ -53,7 +53,7 @@ class BackendTestCase(TestCase):
             date2 = doc_new[self.app.config["DATE_CREATED"]]
             self.assertEqual(date1, date2)
 
-    @patch("superdesk.eve_backend.push_notification")
+    @patch("superdesk.eve_backend._push_notification")
     def test_update_resource_push_notification(self, push_notification_mock):
         backend = get_backend()
         with self.app.app_context():
