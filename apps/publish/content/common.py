@@ -626,6 +626,8 @@ class BasePublishService(BaseService):
             if type(item) == dict and item.get(config.ID_FIELD):
                 doc = item
                 orig = super().find_one(req=None, _id=item[config.ID_FIELD])
+                if not app.settings.get("COPY_METADATA_FROM_PARENT") and orig:
+                    doc = orig
                 try:
                     doc.update({"lock_user": orig["lock_user"]})
                 except (TypeError, KeyError):
