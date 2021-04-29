@@ -720,7 +720,7 @@ Feature: Templates
           }]
         }
         """
-    @wip
+
     @auth
     Scenario: Create content using template with template language
     Given "content_templates"
