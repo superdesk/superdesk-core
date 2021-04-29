@@ -24,7 +24,7 @@ class VidibleTestCase(unittest.TestCase):
         pid = "56bb474de4b0568f54a23ed7"
         vid = "56bb4688e4b0b6448ed479dd"
         bcid = "538612f0e4b00fbb8e898655"
-        with requests_mock.mock() as mock:
+        with requests_mock.Mocker() as mock:
             mock.get(
                 "http://delivery.vidible.tv/jsonp/pid={pid}/{bcid}.js".format(pid=pid, bcid=bcid), text=VIDIBLE_TEXT
             )
