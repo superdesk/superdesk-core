@@ -720,7 +720,7 @@ Feature: Templates
           }]
         }
         """
-
+    @wip
     @auth
     Scenario: Create content using template with template language
     Given "content_templates"
@@ -735,7 +735,8 @@ Feature: Templates
             "extra": {
                 "test": "{{ user.sign_off }}",
                 "test2": "{{ item.something.missing }}",
-                "test3": "{% if something %}"
+                "test3": "{% if something %}",
+                "test4": "{{ now|iso_datetime }}"
             }
         }
     }]
@@ -753,7 +754,8 @@ Feature: Templates
         "headline": "foo",
         "byline": "bar",
         "extra": {
-            "test": "abc"
+            "test": "abc",
+            "test4": "__now__"
         }
     }
     """
