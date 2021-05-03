@@ -568,6 +568,9 @@ def ingest_item(item, provider, feeding_service, rule_set=None, routing_scheme=N
                 item["profile"] = bson.ObjectId(item["profile"])
             except bson.errors.InvalidId:
                 pass
+            profile = superdesk.get_resource_service("content_types").find_one(req=None, _id=item["profile"])
+            if not profile:  # unknown profile
+                item.pop("profile")
 
         set_default_state(item, CONTENT_STATE.INGESTED)
         item["expiry"] = get_expiry_date(
