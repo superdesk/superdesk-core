@@ -1,5 +1,16 @@
 # Superdesk Server Changelog
 
+## [2.1.3] 2021-04-19
+
+### Fixed
+
+- Fix error when auto publishing associated items with schedule.
+- Unlock article after publishing.
+- Update lxml version.
+- Fix default content template not available in planning scheduled export.
+- Fix correction workflow.
+- Fix editor field not updated when applying a template.
+
 ## [2.1.2] 2021-02-24
 
 ### Fixed
