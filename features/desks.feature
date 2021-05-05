@@ -651,6 +651,10 @@ Feature: Desks
         """
         {"username": "user_5", "email": "user_5@example.net", "is_active": true, "role": "#ROLE_SUBEDITOR_ID#"}
         """
+        Given "desks"
+        """
+        [{"name": "Empty", "desk_type": "authoring"}]
+        """
         Given we have "desks" with "SPORTS_DESK_ID" and success
         """
         [{"name": "Sports", "desk_type": "authoring", "members": [{"user": "#USER_1_ID#"},

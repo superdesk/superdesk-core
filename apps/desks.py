@@ -334,7 +334,9 @@ class DesksService(BaseService):
         for desk in desks:
             if "members" in desk:
                 users = tuple(
-                    db_users.find({"_id": {"$in": [member["user"] for member in desk["members"]]}}, {"display_name": 1})
+                    db_users.find(
+                        {"_id": {"$in": [member["user"] for member in desk.get("members", [])]}}, {"display_name": 1}
+                    )
                 )
                 members_set |= {(m["_id"], m["display_name"]) for m in users}
 
@@ -665,7 +667,7 @@ class OverviewService(BaseService):
         found = desks_service.get(req, desk_filter)
         members = set()
         for d in found:
-            members.update({m["user"] for m in d["members"]})
+            members.update({m["user"] for m in d.get("members", [])})
 
         users_aggregation = app.data.pymongo().db.users.aggregate(
             [
