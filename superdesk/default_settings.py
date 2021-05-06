@@ -358,6 +358,7 @@ CORE_APPS = [
     "superdesk.auth_server",
     "apps.links",
     "superdesk.locales",
+    "apps.usage_metrics",
 ]
 
 #: Specify what modules should be enabled
@@ -579,6 +580,9 @@ AUDIT_EXPIRY_MINUTES = int(env("AUDIT_EXPIRY_MINUTES", 0))
 
 #: The number records to be fetched for expiry.
 MAX_EXPIRY_QUERY_LIMIT = int(env("MAX_EXPIRY_QUERY_LIMIT", 100))
+
+#: Number of loops to do on each run
+MAX_EXPIRY_LOOPS = 50
 
 #: The number of minutes before Publish Queue is purged
 PUBLISH_QUEUE_EXPIRY_MINUTES = int(env("PUBLISH_QUEUE_EXPIRY_MINUTES", 0))

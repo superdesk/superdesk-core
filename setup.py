@@ -19,7 +19,7 @@ install_requires = [
     # and https://github.com/psf/requests/pull/5651)
     "urllib3<1.26",
     "eve==1.1.2",
-    "eve-elastic>=7.0.0,<8.0.0",
+    "eve-elastic>=7.1.3,<7.4",
     "flask>=1.1,<1.2",
     "flask-mail>=0.9,<0.10",
     "flask-script>=2.0.5,<3.0",
@@ -82,7 +82,7 @@ package_data = {
 
 setup(
     name="Superdesk-Core",
-    version="2.1.0",
+    version="2.3.dev",
     description="Superdesk Core library",
     long_description=LONG_DESCRIPTION,
     author="petr jasek",
@@ -93,7 +93,6 @@ setup(
     packages=find_packages(exclude=["tests", "features"]),
     package_data=package_data,
     include_package_data=True,
-    use_scm_version=True,
     setup_requires=["setuptools_scm"],
     install_requires=install_requires,
     classifiers=[

@@ -27,7 +27,7 @@ class ContactsResource(Resource):
         "is_active": {"type": "boolean", "default": True},
         # flag to indicate that the contact item should not be publicly visible, for example if the item relates to
         # a contact that can not be distributed due to privacy concerns
-        "public": {"type": "boolean", "default": True},
+        "public": {"type": "boolean", "default": False},
         "organisation": {
             "type": "string",
             "required": False,

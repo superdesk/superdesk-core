@@ -47,6 +47,7 @@ def build_custom_hateoas(hateoas, doc, **values):
 
 
 Method = Literal["GET", "POST", "PATCH", "PUT", "DELETE"]
+MongoIndexes = Optional[Dict[str, Any]]
 
 
 class Resource:
@@ -75,7 +76,7 @@ class Resource:
     resource_preferences = None
     etag_ignore_fields: List[str] = []
     mongo_prefix: Optional[str] = None
-    mongo_indexes: Optional[Dict[str, Any]] = None
+    mongo_indexes: MongoIndexes = None
     auth_field = None
     authentication: Optional[BasicAuth] = None
     elastic_prefix: Optional[str] = None
@@ -85,6 +86,7 @@ class Resource:
     merge_nested_documents: bool = False
     projection: bool = True
     item_privileges = False
+    notifications = True
 
     def __init__(self, endpoint_name, app, service, endpoint_schema=None):
         self.endpoint_name = endpoint_name
@@ -142,6 +144,8 @@ class Resource:
                 endpoint_schema["mongo_indexes__init"] = self.mongo_indexes
             if self.projection is not None:
                 endpoint_schema.update({"projection": self.projection})
+
+            endpoint_schema.update(dict(notifications=self.notifications))
 
             if app.config.get("SCHEMA_UPDATE", {}).get(self.endpoint_name):
                 schema_updates = app.config["SCHEMA_UPDATE"][self.endpoint_name]

@@ -202,6 +202,7 @@ class GetMethodTestCase(ItemsServiceTestCase):
                 "item_source",
                 "sort",
                 "related_to",
+                "related_source",
             ]
         )
 

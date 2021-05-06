@@ -483,6 +483,7 @@ metadata_schema = {
             "uri": {"type": "string"},
             "guid": {"type": "string"},
             "type": {"type": "string"},
+            "source": {"type": "string", "nullable": True},
         },
         "mapping": {
             "type": "object",
@@ -492,6 +493,7 @@ metadata_schema = {
                 "uri": not_analyzed,
                 "guid": not_analyzed,
                 "type": not_analyzed,
+                "source": not_analyzed,
             },
         },
     },
@@ -683,6 +685,11 @@ metadata_schema = {
     "used": {"type": "boolean"},
     "used_count": {"type": "integer"},
     "used_updated": {"type": "datetime"},
+    "metrics": {
+        "type": "dict",
+        "readonly": True,
+        "allow_unknown": True,
+    },
     # system fields
     "_type": {"type": "string", "mapping": None},
     "operation": {"type": "string"},
