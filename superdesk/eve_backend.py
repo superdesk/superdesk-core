@@ -270,13 +270,14 @@ class EveBackend:
                     self.remove_from_search(endpoint_name, item)
                 raise SuperdeskApiError.notFoundError()
             else:
-                # item is there, but no change was done - ok
-                logger.warning(
-                    "Item was not updated in mongo.",
+                # item is there, but no change was done
+                logger.error(
+                    "Item was not updated in mongo, it has changed from the original.",
                     extra=dict(
                         id=id,
                         resource=endpoint_name,
                         updates=updates,
+                        original=original,
                     ),
                 )
                 return updates
