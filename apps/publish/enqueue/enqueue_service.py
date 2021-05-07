@@ -580,7 +580,9 @@ class EnqueueService:
                 if association.get("type") not in MEDIA_TYPES:
                     continue
 
-                archive_article = get_resource_service("archive").find_one(req=None, _id=association.get("guid"))
+                archive_article = get_resource_service("archive").find_one(
+                    req=None, _id=association.get("guid", association.get("_id"))
+                )
                 if not archive_article:
                     continue
 
