@@ -16,6 +16,7 @@ from superdesk.io.feeding_services.http_base_service import HTTPFeedingServiceBa
 from superdesk.errors import IngestApiError, SuperdeskIngestError
 import requests
 import superdesk
+import urllib
 from superdesk.io.feed_parsers import nitf
 from lxml import etree
 from superdesk.utc import utcnow
@@ -150,7 +151,7 @@ class APMediaFeedingService(HTTPFeedingServiceBase):
             params["versions"] = "all"
 
             logger.info("AP Media Start/Recovery time: {} params {}".format(recovery_time, params))
-            r = self.get_url(params=params, verify=False, allow_redirects=True)
+            r = self.get_url(params=urllib.parse.urlencode(params), verify=False, allow_redirects=True)
             r.raise_for_status()
         try:
             response = json.loads(r.text)
