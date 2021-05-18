@@ -2428,3 +2428,92 @@ Feature: Rewrite content
         {"desk_id": "#desks._id#"}
         """
         Then we get OK response
+
+    @auth
+    Scenario: Sync editor fields when linking updates
+        Given "desks"
+        """
+        [{"name": "Sports"}]
+        """
+        And "content_types"
+        """
+        [
+          {"_id": "story", "schema": {
+            "headline": {},
+            "subheadline": {},
+            "body_html": {}
+          }}
+        ]
+        """
+        And "archive"
+        """
+        [
+          {
+            "guid": "1", "type": "text", "headline": "item 1", "_current_version": 1, "state": "fetched",
+            "profile": "story",
+            "task": {"desk": "#desks._id#", "stage": "#desks.incoming_stage#", "user": "#CONTEXT_USER_ID#"},
+            "body_html": "body 1", "extra": {"subheadline": "subhead 1"},
+            "fields_meta": {
+              "extra>subheadline": {
+                "draftjsState": [
+                  {"blocks": [
+                    { "type": "unstyled",
+                      "text": "subhead 1"}
+                  ]}
+                ]
+              }
+            }
+          },
+          {
+            "guid": "2", "type": "text", "headline": "item 2", "_current_version": 1, "state": "fetched",
+            "profile": "story",
+            "task": {"desk": "#desks._id#", "stage": "#desks.incoming_stage#", "user": "#CONTEXT_USER_ID#"},
+            "body_html": "body 2", "extra": {"subheadline": "subhead 2"},
+            "fields_meta": {
+              "extra>subheadline": {
+                "draftjsState": [
+                  {"blocks": [
+                    { "type": "unstyled",
+                      "text": "subhead 2"}
+                  ]}
+                ]
+              }
+            }
+          }
+        ]
+        """
+        When we rewrite "2"
+        """
+        {"update": {
+            "_id": "1", "guid": "1", "body_html": "body 1", "extra": {"subheadline": "subhead 1"},
+            "profile": "story", "type": "text",
+            "fields_meta": {
+              "extra>subheadline": {
+                "draftjsState": [
+                  {"blocks": [
+                    {
+                      "type": "unstyled",
+                      "text": "subhead 1"}
+                  ]}
+                ]
+              }
+            }
+        }}
+        """
+        Then we get OK response
+        When we get "archive/1"
+        Then we get existing resource
+        """
+        {
+          "extra": {"subheadline": "subhead 2"},
+          "fields_meta": {
+            "extra>subheadline": {
+              "draftjsState": [{
+                "blocks": [
+                  {"type": "unstyled", "text": "subhead 2"}
+                ]
+              }]
+            }
+          }
+        }
+        """

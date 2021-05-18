@@ -71,7 +71,7 @@ def get_field_content_state(item, field):
 
 def get_content_state_fields(item):
     """Return all fields which have a content state"""
-    return (field for field in item.get("fields_meta") or {})
+    return [field for field in item.get("fields_meta") or {}]
 
 
 def set_field_content_state(item, field, content_state):
@@ -497,7 +497,12 @@ class Editor3Content(EditorContent):
         self.is_html = is_html
         self.content_state = get_field_content_state(item, field)
         if not self.content_state or reload:
-            self._create_state_from_html(item.get(field))
+            keys = field.split(">")
+            if len(keys) == 2:
+                _html = item["extra"].get(keys[1])
+            else:
+                _html = item.get(field)
+            self._create_state_from_html(_html)
         self.blocks = BlockSequence(self)
         self.html_exporter = DraftJSHTMLExporter(self)
 
