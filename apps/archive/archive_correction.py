@@ -86,6 +86,13 @@ class ArchiveCorrectionService(Service):
         if archive_item.get("publish_schedule"):
             archive_item_updates.update({"publish_schedule": None, "schedule_settings": {}})
 
+        # set working stage when we create correction
+        if archive_item.get("task", {}).get("desk"):
+            archive_item_updates.update({"task": archive_item.get("task")})
+            desk = get_resource_service("desks").find_one(req=None, _id=archive_item["task"]["desk"]) or {}
+            if desk:
+                archive_item_updates["task"].update({"stage": desk.get("working_stage")})
+
         # modify item in archive.
         archive_service.system_update(archive_item.get(config.ID_FIELD), archive_item_updates, archive_item)
         app.on_archive_item_updated(archive_item_updates, archive_item, ITEM_CORRECTION)
