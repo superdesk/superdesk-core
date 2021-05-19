@@ -4536,3 +4536,66 @@ Feature: Content Publishing
         "task":{"desk": "#desks._id#", "user": "#CONTEXT_USER_ID#"}
        }
       """
+
+    @auth
+    Scenario: Create correction in working stage
+      Given config update
+      """
+      { "CORRECTIONS_WORKFLOW": true}
+      """
+      And "validators"
+      """
+      [
+          {"_id": "publish_text", "act": "publish", "type": "text", "schema":{}},
+          {"_id": "correct_text", "act": "correct", "type": "text", "schema":{}}
+      ]
+      """
+      And "desks"
+      """
+      [{"name": "Sports"}]
+      """
+      And "archive"
+      """
+      [
+          {
+            "guid": "123",
+            "type": "text",
+            "headline": "test",
+            "state": "fetched",
+            "task": {
+              "desk": "#desks._id#",
+              "stage": "#desks.incoming_stage#",
+              "user": "#CONTEXT_USER_ID#"
+              },
+            "subject":
+              [
+                {"qcode": "17004000",
+                "name": "Statistics"}
+              ],
+            "_current_version": 1
+          }
+      ]
+      """
+      When we publish "123" with "publish" type and "published" state
+      Then we get OK response
+      And we get existing resource
+      """
+      {
+        "_current_version": 2,
+        "type": "text",
+        "state": "published",
+        "task":{"desk": "#desks._id#", "stage": "#desks.incoming_stage#"}
+      }
+      """
+      When we publish "123" with "correction" type and "correction" state
+      Then we get OK response
+      When we get "/archive/123"
+      Then we get existing resource
+      """
+      {
+        "_current_version": 2,
+        "type": "text",
+        "state": "correction",
+        "task":{"desk": "#desks._id#", "stage": "#desks.working_stage#"}
+      }
+      """
