@@ -75,12 +75,14 @@ class IMatrics(AIServiceBase):
             "name": concept["title"],
             "qcode": concept["uuid"],
             "source": "imatrics",
+            "aliases": concept["aliases"],
+            "original_source": concept.get("source"),
             "altids": {
                 "imatrics": concept["uuid"],
             },
         }
 
-        if concept.get("shortDescription") and concept["shortDescription"].strip():
+        if concept.get("shortDescription") and concept["shortDescription"].strip() != "NaN":
             tag_data["description"] = concept["shortDescription"].strip()
 
         try:
@@ -149,13 +151,18 @@ class IMatrics(AIServiceBase):
             "pubStatus": False,
             "headline": headline,
             "body": body,
+            "language": item["language"],
         }
 
-        r_data = self._request("article/concept", data)
+        r_data = self._request(
+            "article/analysis",
+            data,
+            params=dict(conceptFields="uuid,title,type,shortDescription,aliases,source,weight"),
+        )
 
         analyzed_data: Dict[str, List] = {}
 
-        for concept in r_data:
+        for concept in r_data["concepts"]:
             tag_data = self.concept2tag_data(concept)
             tag_type = tag_data.pop("type")
             analyzed_data.setdefault(tag_type, []).append(tag_data)

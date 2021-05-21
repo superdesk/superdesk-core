@@ -30,6 +30,7 @@ class IMatricsTestCase(TestCase):
         "guid": "test_1",
         "type": "text",
         "version": 1,
+        "language": "en",
         "body_html": "<p>this is a fake article to test the imatrics service, it should be returning some "
         "interesting tags.</p>",
         "abstract": "<p>abstract</p><p>two lines</p>",
@@ -69,7 +70,7 @@ class IMatricsTestCase(TestCase):
             "item": self.item,
         }
         ai_service = get_resource_service("ai")
-        api_url = urljoin(TEST_BASE_URL, "article/concept")
+        api_url = urljoin(TEST_BASE_URL, "article/analysis")
         responses.add(
             responses.POST,
             api_url,
@@ -79,6 +80,7 @@ class IMatricsTestCase(TestCase):
                         "uuid": self.item["guid"],
                         "pubStatus": False,
                         "headline": self.item["headline"],
+                        "language": "en",
                         "body": [
                             "this is a fake article to test the imatrics service,"
                             " it should be returning some interesting tags.",
@@ -88,32 +90,41 @@ class IMatricsTestCase(TestCase):
                     }
                 )
             ],
-            json=[
-                {
-                    "weight": 1,
-                    "geometry": {},
-                    "links": [],
-                    "title": "IT",
-                    "type": "topic",
-                    "uuid": "e3c482c0-08a4-3b31-a7f1-e231f1ddffc4",
-                },
-                {
-                    "weight": 0.8387794287831216,
-                    "geometry": {},
-                    "links": [],
-                    "title": "Service",
-                    "type": "topic",
-                    "uuid": "44f52663-52f9-3836-ac45-ae862fe945a3",
-                },
-                {
-                    "weight": 1,
-                    "geometry": {},
-                    "links": [{"relationType": "", "id": "medtop:20000763", "source": "IPTC", "uri": "", "url": ""}],
-                    "title": "informasjons- og kommunikasjonsteknologi",
-                    "type": "category",
-                    "uuid": "c8a83204-29e0-3a7f-9a0e-51e76d885f7f",
-                },
-            ],
+            json={
+                "concepts": [
+                    {
+                        "weight": 1,
+                        "geometry": {},
+                        "links": [],
+                        "title": "IT",
+                        "type": "topic",
+                        "uuid": "e3c482c0-08a4-3b31-a7f1-e231f1ddffc4",
+                        "aliases": [],
+                    },
+                    {
+                        "weight": 0.8387794287831216,
+                        "geometry": {},
+                        "links": [],
+                        "title": "Service",
+                        "type": "topic",
+                        "uuid": "44f52663-52f9-3836-ac45-ae862fe945a3",
+                        "aliases": [],
+                    },
+                    {
+                        "weight": 1,
+                        "geometry": {},
+                        "links": [
+                            {"relationType": "", "id": "medtop:20000763", "source": "IPTC", "uri": "", "url": ""}
+                        ],
+                        "title": "informasjons- og kommunikasjonsteknologi",
+                        "type": "category",
+                        "uuid": "c8a83204-29e0-3a7f-9a0e-51e76d885f7f",
+                        "source": "source",
+                        "aliases": ["foo"],
+                        "shortDescription": "NaN",
+                    },
+                ]
+            },
         )
 
         ai_service.create([doc])
@@ -128,6 +139,8 @@ class IMatricsTestCase(TestCase):
                     "altids": {
                         "imatrics": "e3c482c0-08a4-3b31-a7f1-e231f1ddffc4",
                     },
+                    "original_source": None,
+                    "aliases": [],
                 },
                 {
                     "name": "superdesk name",
@@ -138,6 +151,8 @@ class IMatricsTestCase(TestCase):
                         "imatrics": "c8a83204-29e0-3a7f-9a0e-51e76d885f7f",
                         "medtop": "20000763",
                     },
+                    "original_source": "source",
+                    "aliases": ["foo"],
                 },
                 {
                     "name": "Service",
@@ -147,6 +162,8 @@ class IMatricsTestCase(TestCase):
                     "altids": {
                         "imatrics": "44f52663-52f9-3836-ac45-ae862fe945a3",
                     },
+                    "original_source": None,
+                    "aliases": [],
                 },
             ]
         }
@@ -214,6 +231,8 @@ class IMatricsTestCase(TestCase):
                         "altids": {
                             "imatrics": "c8a83204-29e0-3a7f-9a0e-51e76d885f7f",
                         },
+                        "aliases": [],
+                        "original_source": None,
                     },
                     {
                         "name": "informasjonsvitenskap",
@@ -224,6 +243,8 @@ class IMatricsTestCase(TestCase):
                         "altids": {
                             "imatrics": "af815add-8456-3226-8177-ea0d8e3011eb",
                         },
+                        "aliases": [],
+                        "original_source": None,
                     },
                 ]
             }
