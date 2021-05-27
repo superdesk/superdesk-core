@@ -572,19 +572,18 @@ class EnqueueService:
         except Exception:
             raise
 
-    def remove_duplicate_association(self, associated_items):
+    def get_unique_associations(self, associated_items):
         associations = {}
-        for item in associated_items.values():
-            item_id = item.get("_id")
+        for association in associated_items.values():
+            item_id = association.get("_id")
             if item_id and item_id not in associations.keys():
-                associations[item_id] = item
-        return associations
+                associations[item_id] = association
+        return associations.values()
 
     def resend_association_items(self, doc):
         associated_items = doc.get(ASSOCIATIONS)
         if associated_items:
-            associated_items = self.remove_duplicate_association(associated_items)
-            for name, association in associated_items.items():
+            for association in self.get_unique_associations(associated_items):
                 # resend only media association
                 if association.get("type") not in MEDIA_TYPES:
                     continue
