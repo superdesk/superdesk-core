@@ -4599,3 +4599,114 @@ Feature: Content Publishing
         "task":{"desk": "#desks._id#", "stage": "#desks.working_stage#"}
       }
       """
+
+    @auth
+    Scenario: Save changes to a duplicate related item after publish
+      Given config update
+      """
+      { "PUBLISH_ASSOCIATED_ITEMS": true}
+      """
+      And "validators"
+        """
+        [
+            {"_id": "publish_text", "act": "publish", "type": "text", "schema":{}}
+        ]
+        """
+      And "desks"
+        """
+        [{"name": "Sports", "members":[{"user":"#CONTEXT_USER_ID#"}]}]
+        """
+      And "archive"
+        """
+        [
+            {
+                "_id": "234",
+                "guid": "234",
+                "slugline": "related item",
+                "headline": "related item",
+                "alt_text": "alt_text",
+                "description_text": "description_text",
+                "type": "picture",
+                "state": "submitted",
+                "operation": "duplicate",
+                "task": {
+                    "desk": "#desks._id#",
+                    "stage": "#desks.incoming_stage#",
+                    "user": "#CONTEXT_USER_ID#"
+                }
+            },
+            {
+                "_id": "123",
+                "guid": "123",
+                "_current_version": 1,
+                "headline": "main item",
+                "slugline": "main item",
+                "body_html": "Test Document body",
+                "state": "in_progress",
+                "task": {
+                    "desk": "#desks._id#",
+                    "stage": "#desks.incoming_stage#",
+                    "user": "#CONTEXT_USER_ID#"
+                },
+                "associations": {
+                    "related--1": {
+                        "_id": "234",
+                        "guid": "234",
+                        "slugline": "related item",
+                        "headline": "related item",
+                        "alt_text": "alt_text",
+                        "description_text": "description_text",
+                        "type": "picture",
+                        "state": "submitted",
+                        "operation": "duplicate",
+                        "task": {
+                            "desk": "#desks._id#",
+                            "stage": "#desks.incoming_stage#",
+                            "user": "#CONTEXT_USER_ID#"
+                        }
+                    }
+                }
+            }
+        ]
+        """
+      When we patch "/archive/234"
+        """
+        {"headline": "related item test", "slugline": "related item test"}
+        """
+      Then we get OK response
+      And we get existing resource
+        """
+        {
+            "_id": "234",
+            "guid": "234",
+            "slugline": "related item test",
+            "headline": "related item test",
+            "alt_text": "alt_text",
+            "description_text": "description_text",
+            "type": "picture",
+            "state": "in_progress",
+            "operation": "update",
+            "task": {
+                "desk": "#desks._id#",
+                "stage": "#desks.incoming_stage#",
+                "user": "#CONTEXT_USER_ID#"
+            }
+        }
+        """
+      When we publish "123" with "publish" type and "published" state
+      Then we get OK response
+      When we get "/archive/234"
+      Then we get existing resource
+        """
+        {
+            "_id": "234",
+            "guid": "234",
+            "slugline": "related item test",
+            "headline": "related item test",
+            "alt_text": "alt_text",
+            "description_text": "description_text",
+            "type": "picture",
+            "state": "published",
+            "operation": "publish"
+        }
+        """

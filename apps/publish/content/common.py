@@ -144,6 +144,7 @@ class BasePublishService(BaseService):
 
     def on_update(self, updates, original):
         self._refresh_associated_items(original)
+        self._set_updates_for_media_items(original, updates)
         self._validate(original, updates)
         self._set_updates(
             original,
@@ -711,6 +712,14 @@ class BasePublishService(BaseService):
             kwargs = {"item_id": doc.get(config.ID_FIELD)}
             # countdown=3 is for elasticsearch to be refreshed with archive and published changes
             import_into_legal_archive.apply_async(countdown=3, kwargs=kwargs)  # @UndefinedVariable
+
+    def _set_updates_for_media_items(self, doc, updates):
+        if doc.get("type") not in MEDIA_TYPES:
+            return
+
+        for key in DEFAULT_SCHEMA.keys():
+            if doc.get(key):
+                updates[key] = doc[key]
 
     def _refresh_associated_items(self, original, skip_related=False):
         """Refreshes associated items with the latest version. Any further updates made to basic metadata done after
