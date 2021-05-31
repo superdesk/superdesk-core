@@ -600,6 +600,7 @@ class OverviewService(BaseService):
                                     CONTENT_STATE.SPIKED,
                                     CONTENT_STATE.KILLED,
                                     CONTENT_STATE.CORRECTED,
+                                    CONTENT_STATE.SCHEDULED,
                                 ]
                             }
                         }
