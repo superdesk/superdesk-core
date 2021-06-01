@@ -106,14 +106,9 @@ def remove_set_restriction_from_desks(set_id_to_remove: str):
     # Use pymongo directly as this query doesn't work through services
     for desk in desks_db.find({"sams_settings.allowed_sets": set_id_to_remove}):
         desk["sams_settings"]["allowed_sets"] = [
-            set_id
-            for set_id in desk["sams_settings"]["allowed_sets"]
-            if set_id != set_id_to_remove
+            set_id for set_id in desk["sams_settings"]["allowed_sets"] if set_id != set_id_to_remove
         ]
-        desk_service.patch(
-            id=desk["_id"],
-            updates={"sams_settings": desk["sams_settings"]}
-        )
+        desk_service.patch(id=desk["_id"], updates={"sams_settings": desk["sams_settings"]})
 
 
 @sets_bp.route("/sams/sets/<item_id>", methods=["PATCH"])
