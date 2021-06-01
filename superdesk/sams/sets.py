@@ -22,7 +22,7 @@
 
 import logging
 import superdesk
-from flask import request
+from flask import request, current_app as app
 from superdesk.errors import SuperdeskApiError
 from superdesk.notification import push_notification
 from apps.auth import get_auth, get_user_id
@@ -84,6 +84,7 @@ def delete(item_id):
     if delete_response.status_code != 204:
         return delete_response.json(), delete_response.status_code
     if delete_response.status_code == 204:
+        remove_set_restriction_from_desks(item_id)
         push_notification(
             "sams:set:deleted",
             item_id=item_id,
@@ -92,6 +93,27 @@ def delete(item_id):
             extension="sams",
         )
     return "", delete_response.status_code
+
+
+def remove_set_restriction_from_desks(set_id_to_remove: str):
+    """
+    Removes the provided Set from "sams_settings.sets" from all Desks
+    """
+
+    desk_service = superdesk.get_resource_service("desks")
+    desks_db = app.data.mongo.pymongo("desks").db["desks"]
+
+    # Use pymongo directly as this query doesn't work through services
+    for desk in desks_db.find({"sams_settings.allowed_sets": set_id_to_remove}):
+        desk["sams_settings"]["allowed_sets"] = [
+            set_id
+            for set_id in desk["sams_settings"]["allowed_sets"]
+            if set_id != set_id_to_remove
+        ]
+        desk_service.patch(
+            id=desk["_id"],
+            updates={"sams_settings": desk["sams_settings"]}
+        )
 
 
 @sets_bp.route("/sams/sets/<item_id>", methods=["PATCH"])

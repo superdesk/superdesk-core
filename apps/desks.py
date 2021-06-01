@@ -82,6 +82,14 @@ desks_schema = {
     },
     # if the preserve_published_content is set to true then the content on this won't be expired
     "preserve_published_content": {"type": "boolean", "required": False, "default": False},
+
+    "sams_settings": {
+        "type": "dict",
+        "allow_unknown": True,
+        "schema": {
+            "allowed_sets": {"type": "list"}
+        }
+    }
 }
 
 
