@@ -37,15 +37,24 @@ class GMailFeedingService(EmailFeedingService):
 
     fields = [
         {
+            "id": "log_in_url",
             "type": "url_request",
             "label": l_("Log-in with GMail"),
+            "show_expression": "!provider.config['email']",
+        },
+        {
+            "id": "log_out_url",
+            "type": "url_request",
+            "label": l_("Log-out"),
+            "show_expression": "provider.config['email']",
         },
         {
             "id": "email",
-            "type": "string",
+            "type": "text",
             "label": l_("email"),
             "readonly": True,
             "placeholder": l_("This field will be automatically filled once you've logged using log-in button above"),
+            "show_expression": "{email}",
         },
         {
             "id": "mailbox",
@@ -62,15 +71,17 @@ class GMailFeedingService(EmailFeedingService):
     @classmethod
     def init_app(cls, app):
         # we need to access config to set the URL, so we do it here
-        field = next(f for f in cls.fields if f["type"] == "url_request")
-        field["url"] = join(app.config["SERVER_URL"], "login", "google", "{URL_ID}")
+        field = next(f for f in cls.fields if f["id"] == "log_in_url")
+        field["url"] = join(app.config["SERVER_URL"], "login", "google", "{PROVIDER_ID}")
+        field = next(f for f in cls.fields if f["id"] == "log_out_url")
+        field["url"] = join(app.config["SERVER_URL"], "logout", "google", "{PROVIDER_ID}")
 
     def _test(self, provider):
         self._update(provider, update=None, test=True)
 
     def authenticate(self, provider: dict, config: dict) -> imaplib.IMAP4_SSL:
         oauth2_token_service = superdesk.get_resource_service("oauth2_token")
-        token = oauth2_token_service.find_one(req=None, _id=provider["url_id"])
+        token = oauth2_token_service.find_one(req=None, _id=provider["_id"])
         if token is None:
             raise IngestEmailError.notConfiguredError(ValueError(l_("You need to log in first")), provider=provider)
         imap = imaplib.IMAP4_SSL("imap.gmail.com")

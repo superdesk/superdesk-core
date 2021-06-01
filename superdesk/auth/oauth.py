@@ -26,9 +26,10 @@ Once configured you will find there *Client ID* and *Client secret*, use both to
 
 import logging
 from datetime import datetime
-from typing import Optional, List
+from typing import Optional, List, Tuple
 import superdesk
 from flask import url_for, render_template
+from eve.utils import config
 from authlib.integrations.flask_client import OAuth
 from authlib.integrations.requests_client import OAuth2Session
 from authlib.oauth2.rfc6749.wrappers import OAuth2Token
@@ -42,7 +43,7 @@ logger = logging.getLogger(__name__)
 
 bp = superdesk.Blueprint("oauth", __name__)
 oauth: Optional[OAuth] = None
-REFRESH_TOKEN_URL = "https://oauth2.googleapis.com/token"
+TOKEN_ENDPOINT = "https://oauth2.googleapis.com/token"
 
 
 def init_app(app) -> None:
@@ -181,15 +182,39 @@ def configure_google(app, extra_scopes: Optional[List[str]] = None, refresh: boo
                         '"security/Third-party apps with account access") then try to log-in again'
                     )
 
+
+            # token_id is actually the provider id
+            ingest_providers_service = superdesk.get_resource_service("ingest_providers")
+            provider = ingest_providers_service.find_one(req=None, _id=token_id)
+            if provider is None:
+                logger.warning(
+                    f"No provider is corresponding to the id used with the token {token_id!r}"
+                )
+            else:
+                ingest_providers_service.update(
+                    provider[config.ID_FIELD],
+                    updates={"config.email": user["email"]},
+                    original=provider
+                )
+
             return render_template(TEMPLATE, data={})
         else:
             # no token_id, OAuth is only used for log-in
             return auth_user(user["email"], {"needs_activation": False})
 
+    @bp.route("/logout/google/<url_id>")
+    def google_logout(url_id: str = None):
+        """Revoke token
+
+        :param url_id: used to identify the token
+        """
+        revoke_google_token(url_id)
+        return render_template(TEMPLATE, data={})
+
     superdesk.blueprint(bp, app)
 
 
-def refresh_google_token(token_id: str) -> dict:
+def _get_token_and_sesion(token_id: str) -> Tuple[dict, dict]:
     oauth2_token_service = superdesk.get_resource_service("oauth2_token")
     token = oauth2_token_service.find_one(req=None, _id=token_id)
     if token is None:
@@ -200,7 +225,30 @@ def refresh_google_token(token_id: str) -> dict:
         oauth.google.client_id,  # type: ignore # mypy seems confused with this global oauth
         oauth.google.client_secret,  # type: ignore
     )
-    new_token = session.refresh_token(REFRESH_TOKEN_URL, token["refresh_token"])
+    return token, session
+
+
+def refresh_google_token(token_id: str) -> dict:
+    token, session = _get_token_and_sesion(token_id)
+    new_token = session.refresh_token(TOKEN_ENDPOINT, token["refresh_token"])
     token_dict = token2dict(token["_id"], token["email"], new_token)
+    oauth2_token_service = superdesk.get_resource_service("oauth2_token")
     oauth2_token_service.update(token["_id"], token_dict, token)
     return token_dict
+
+
+def revoke_google_token(token_id: str) -> None:
+    """Revoke a token"""
+    token, session = _get_token_and_sesion(token_id)
+    oauth2_token_service = superdesk.get_resource_service("oauth2_token")
+    session.revoke_token(TOKEN_ENDPOINT, token["access_token"])
+    oauth2_token_service.delete({config.ID_FIELD: token_id})
+    ingest_providers_service = superdesk.get_resource_service("ingest_providers")
+    provider = ingest_providers_service.find_one(req=None, _id=token_id)
+    if provider is not None:
+        ingest_providers_service.update(
+            provider[config.ID_FIELD],
+            updates={"config.email": None},
+            original=provider
+        )
+    logger.info(f"OAUTH token {token_id!r} has been revoked")

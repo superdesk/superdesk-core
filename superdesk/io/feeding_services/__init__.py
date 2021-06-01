@@ -49,7 +49,7 @@ class FeedingService(metaclass=ABCMeta):
                     on validation. Field values can be referred by enclosing the field identifier in
                     accolades: {field_id}
                 - readonly: if true, the field is not editable
-                - show_expression: if the evaluation of the expression is true the field is displayed.
+                - show_expression: if the evaluation of this JavaScript expression is true the field is displayed.
                     Field values can be referred by enclosing the field identifier in accolades: {field_id}
                 - default_value: value to use
             Type specific properties:
