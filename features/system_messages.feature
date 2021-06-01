@@ -2,15 +2,15 @@ Feature: System Messages
 
     @auth
     Scenario: List of empty system message
-    Given empty "system_message"
-    When we get "/system_message"
+    Given empty "system_messages"
+    When we get "/system_messages"
     Then we get list with 0 items
 
     @auth
     @notification
     Scenario: Create a new system message
-        Given empty "system_message"
-        When we post to "system_message"
+        Given empty "system_messages"
+        When we post to "system_messages"
 	    """
         [{
             "is_active": true,
@@ -21,7 +21,7 @@ Feature: System Messages
         }]
 	    """
         Then we get new resource
-        When we get "/system_message"
+        When we get "/system_messages"
         Then we get list with 1 items
 	    """
         {"_items": [{
@@ -35,8 +35,8 @@ Feature: System Messages
 
     @auth
     Scenario: Create a new system message with empty fields should give required error
-        Given empty "system_message"
-        When we post to "system_message"
+        Given empty "system_messages"
+        When we post to "system_messages"
 	    """
         [{
             "is_active": true,
@@ -57,8 +57,8 @@ Feature: System Messages
     @auth
     @notification
     Scenario: Update a system message
-        Given empty "system_message"
-        When we post to "system_message"
+        Given empty "system_messages"
+        When we post to "system_messages"
 	    """
         [{
             "is_active": true,
@@ -69,7 +69,7 @@ Feature: System Messages
         }]
 	    """
         Then we get new resource
-        When we get "/system_message"
+        When we get "/system_messages"
         Then we get list with 1 items
 	    """
         {"_items": [{
@@ -80,7 +80,7 @@ Feature: System Messages
 	        "user_id": "#CONTEXT_USER_ID#"}]
         }
 	    """
-        When we patch "/system_message/#system_message._id#"
+        When we patch "/system_messages/#system_messages._id#"
         """
         {"message": "This is a updated message"}
         """
@@ -98,7 +98,7 @@ Feature: System Messages
     @auth
     @notification
     Scenario: Delete a system message
-        When we post to "system_message"
+        When we post to "system_messages"
 	    """
         [{
             "is_active": true,
@@ -109,5 +109,5 @@ Feature: System Messages
         }]
 	    """
         Then we get OK response
-        When we delete "/system_message/#system_message._id#"
+        When we delete "/system_messages/#system_messages._id#"
         Then we get OK response
