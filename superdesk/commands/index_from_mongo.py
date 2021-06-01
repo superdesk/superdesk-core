@@ -36,23 +36,24 @@ class IndexFromMongo(superdesk.Command):
         superdesk.Option("--from", "-f", dest="collection_name"),
         superdesk.Option("--all", action="store_true", dest="all_collections"),
         superdesk.Option("--page-size", "-p"),
+        superdesk.Option("--last-id"),
     ]
     default_page_size = 500
 
-    def run(self, collection_name, all_collections, page_size):
+    def run(self, collection_name, all_collections, page_size, last_id):
         if not collection_name and not all_collections:
             raise SystemExit("Specify --all to index from all collections")
         elif all_collections:
             app.data.init_elastic(app)
             resources = app.data.get_elastic_resources()
             for resource in resources:
-                self.copy_resource(resource, page_size)
+                self.copy_resource(resource, page_size, last_id)
         else:
-            self.copy_resource(collection_name, page_size)
+            self.copy_resource(collection_name, page_size, last_id)
 
     @classmethod
-    def copy_resource(cls, resource, page_size):
-        for items in cls.get_mongo_items(resource, page_size):
+    def copy_resource(cls, resource, page_size, last_id):
+        for items in cls.get_mongo_items(resource, page_size, last_id):
             print("{} Inserting {} items".format(time.strftime("%X %x %Z"), len(items)))
             s = time.time()
             success, failed = 0, 0
@@ -67,6 +68,9 @@ class IndexFromMongo(superdesk.Command):
                 else:
                     break
 
+            if last_id:
+                print(last_id)
+
             print("{} Inserted {} items in {:.3f} seconds".format(time.strftime("%X %x %Z"), success, time.time() - s))
             if failed:
                 print("Failed to do bulk insert of items {}. Errors: {}".format(len(failed), failed))
@@ -75,7 +79,7 @@ class IndexFromMongo(superdesk.Command):
         return "Finished indexing collection {}".format(resource)
 
     @classmethod
-    def get_mongo_items(cls, mongo_collection_name, page_size):
+    def get_mongo_items(cls, mongo_collection_name, page_size, last_id):
         """Generate list of items from given mongo collection per page size.
 
         :param mongo_collection_name: Name of the collection to get the items
@@ -87,7 +91,7 @@ class IndexFromMongo(superdesk.Command):
 
         db = app.data.get_mongo_collection(mongo_collection_name)
         args = {"limit": bucket_size, "sort": [(config.ID_FIELD, pymongo.ASCENDING)]}
-        last_id = None
+
         while True:
             if last_id:
                 args.update({"filter": {config.ID_FIELD: {"$gt": last_id}}})
