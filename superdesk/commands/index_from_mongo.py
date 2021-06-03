@@ -15,6 +15,7 @@ import superdesk
 from flask import current_app as app
 from superdesk.errors import BulkIndexError
 from superdesk import config
+from bson.objectid import ObjectId
 
 
 class IndexFromMongo(superdesk.Command):
@@ -68,10 +69,11 @@ class IndexFromMongo(superdesk.Command):
                 else:
                     break
 
-            if last_id:
-                print(last_id)
-
             print("{} Inserted {} items in {:.3f} seconds".format(time.strftime("%X %x %Z"), success, time.time() - s))
+
+            # print last ID for items
+            print(items[-1][config.ID_FIELD])
+
             if failed:
                 print("Failed to do bulk insert of items {}. Errors: {}".format(len(failed), failed))
                 raise BulkIndexError(resource=resource, errors=failed)
@@ -91,6 +93,11 @@ class IndexFromMongo(superdesk.Command):
 
         db = app.data.get_mongo_collection(mongo_collection_name)
         args = {"limit": bucket_size, "sort": [(config.ID_FIELD, pymongo.ASCENDING)]}
+
+        try:
+            last_id = ObjectId(last_id)
+        except Exception:
+            pass
 
         while True:
             if last_id:
