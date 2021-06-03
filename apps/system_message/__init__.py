@@ -19,7 +19,7 @@ logger = logging.getLogger(__name__)
 
 
 def init_app(app) -> None:
-    endpoint_name = "system_message"
+    endpoint_name = "system_messages"
     service = SystemMessagesService(endpoint_name, backend=superdesk.get_backend())
     SystemMessagesResource(endpoint_name, app=app, service=service)
 

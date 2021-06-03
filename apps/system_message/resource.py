@@ -16,7 +16,7 @@ class SystemMessagesResource(Resource):
         "is_active": {"type": "boolean", "default": False},
         "type": {
             "type": "string",
-            "allowed": ["warning", "alert", "primary/info", "success"],
+            "allowed": ["warning", "alert", "primary", "success", "highlight", "light"],
             "required": True,
         },
         "message_title": {"type": "string", "required": True},
