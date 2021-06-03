@@ -362,6 +362,7 @@ def process_anpa_category(item, provider):
                     item_category["name"] = mapped_category[0]["name"]
                     # make the case of the qcode match what we hold in our dictionary
                     item_category["qcode"] = mapped_category[0]["qcode"]
+                    item_category["scheme"] = "categories"
     except Exception as ex:
         raise ProviderError.anpaError(ex, provider)
 

@@ -5,7 +5,7 @@ Feature: Move or Send Content to another desk
     Scenario: Send Content from personal to another desk
         Given "desks"
         """
-        [{"name": "Sports", "desk_type": "production", "desk_metadata": {"slugline": "SPORTS"}}]
+        [{"name": "Sports", "desk_type": "production"}]
         """
         When we post to "archive"
         """
@@ -35,7 +35,7 @@ Feature: Move or Send Content to another desk
         When we get "/archive/123"
         Then we get existing resource
         """
-        { "headline": "test1", "guid": "123", "state": "submitted", "_current_version": 2, "slugline": "SPORTS",
+        { "headline": "test1", "guid": "123", "state": "submitted", "_current_version": 2,
           "task": {"desk": "#desks._id#", "stage": "#desks.incoming_stage#", "user": "#CONTEXT_USER_ID#"}}
         """
         Then there is no "last_production_desk" in task
