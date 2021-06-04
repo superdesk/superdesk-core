@@ -48,12 +48,12 @@ class IndexFromMongo(superdesk.Command):
             app.data.init_elastic(app)
             resources = app.data.get_elastic_resources()
             for resource in resources:
-                self.copy_resource(resource, page_size, last_id)
+                self.copy_resource(resource, page_size)
         else:
             self.copy_resource(collection_name, page_size, last_id)
 
     @classmethod
-    def copy_resource(cls, resource, page_size, last_id):
+    def copy_resource(cls, resource, page_size, last_id=None):
         for items in cls.get_mongo_items(resource, page_size, last_id):
             print("{} Inserting {} items".format(time.strftime("%X %x %Z"), len(items)))
             s = time.time()
@@ -70,9 +70,6 @@ class IndexFromMongo(superdesk.Command):
                     break
 
             print("{} Inserted {} items in {:.3f} seconds".format(time.strftime("%X %x %Z"), success, time.time() - s))
-
-            # print last ID for items
-            print(items[-1][config.ID_FIELD])
 
             if failed:
                 print("Failed to do bulk insert of items {}. Errors: {}".format(len(failed), failed))
@@ -94,14 +91,16 @@ class IndexFromMongo(superdesk.Command):
         db = app.data.get_mongo_collection(mongo_collection_name)
         args = {"limit": bucket_size, "sort": [(config.ID_FIELD, pymongo.ASCENDING)]}
 
-        try:
-            last_id = ObjectId(last_id)
-        except Exception:
-            pass
-
         while True:
             if last_id:
+                try:
+                    last_id = ObjectId(last_id)
+                except Exception:
+                    pass
                 args.update({"filter": {config.ID_FIELD: {"$gt": last_id}}})
+                # print last ID for items
+                print(last_id)
+
             cursor = db.find(**args)
             if not cursor.count():
                 break
