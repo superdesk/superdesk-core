@@ -74,6 +74,7 @@ class IMatrics(AIServiceBase):
         tag_data = {
             "name": concept["title"],
             "qcode": concept["uuid"],
+            "parent": concept.get("broader") or None,
             "source": "imatrics",
             "aliases": concept["aliases"],
             "original_source": concept.get("source"),
@@ -157,7 +158,7 @@ class IMatrics(AIServiceBase):
         r_data = self._request(
             "article/analysis",
             data,
-            params=dict(conceptFields="uuid,title,type,shortDescription,aliases,source,weight"),
+            params=dict(conceptFields="uuid,title,type,shortDescription,aliases,source,weight,broader"),
         )
 
         analyzed_data: Dict[str, List] = {}

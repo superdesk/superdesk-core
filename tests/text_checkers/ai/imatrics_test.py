@@ -141,6 +141,7 @@ class IMatricsTestCase(TestCase):
                     },
                     "original_source": None,
                     "aliases": [],
+                    "parent": None,
                 },
                 {
                     "name": "superdesk name",
@@ -153,6 +154,7 @@ class IMatricsTestCase(TestCase):
                     },
                     "original_source": "source",
                     "aliases": ["foo"],
+                    "parent": None,
                 },
                 {
                     "name": "Service",
@@ -164,6 +166,7 @@ class IMatricsTestCase(TestCase):
                     },
                     "original_source": None,
                     "aliases": [],
+                    "parent": None,
                 },
             ]
         }
@@ -233,6 +236,7 @@ class IMatricsTestCase(TestCase):
                         },
                         "aliases": [],
                         "original_source": None,
+                        "parent": None,
                     },
                     {
                         "name": "informasjonsvitenskap",
@@ -245,6 +249,7 @@ class IMatricsTestCase(TestCase):
                         },
                         "aliases": [],
                         "original_source": None,
+                        "parent": None,
                     },
                 ]
             }
