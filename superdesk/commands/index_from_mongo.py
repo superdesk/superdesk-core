@@ -98,11 +98,10 @@ class IndexFromMongo(superdesk.Command):
                 except Exception:
                     pass
                 args.update({"filter": {config.ID_FIELD: {"$gt": last_id}}})
-                # print last ID for items
-                print(last_id)
 
             cursor = db.find(**args)
             if not cursor.count():
+                print("Last id", mongo_collection_name, last_id)
                 break
             items = list(cursor)
             last_id = items[-1][config.ID_FIELD]
