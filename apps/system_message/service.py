@@ -13,7 +13,7 @@ from flask import current_app as app
 from superdesk.services import Service
 from superdesk.notification import push_notification
 from superdesk.errors import SuperdeskApiError
-from apps.auth import is_current_user_admin
+from apps.auth import is_current_user_admin, get_user_id
 from flask_babel import _
 from eve.utils import config
 
@@ -23,6 +23,7 @@ class SystemMessagesService(Service):
         for doc in docs:
             self._validate_administrator("create")
             self._validate_message(doc)
+            doc["user_id"] = get_user_id()
 
     def on_created(self, docs):
         """
@@ -34,6 +35,7 @@ class SystemMessagesService(Service):
 
     def on_update(self, updates, original):
         self._validate_administrator("update")
+        updates["user_id"] = get_user_id()
 
     def on_updated(self, updates, original):
         """
