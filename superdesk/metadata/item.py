@@ -205,6 +205,7 @@ metadata_schema = {
             "properties": {
                 "qcode": not_analyzed,
                 "name": not_analyzed,
+                "scheme": not_analyzed,
             },
         },
     },

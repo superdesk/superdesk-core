@@ -295,22 +295,6 @@ class DesksService(BaseService):
         else:
             push_notification(self.notification_key, updated=1, desk_id=str(desk.get(config.ID_FIELD)))
 
-    def apply_desk_metadata(self, updates, original):
-        """Apply desk metadata in case it was set in updates and metadata is not set yet on item.
-
-        :param updates: updates to item that should be saved
-        :param original: original item version before update
-        """
-        desk_id = updates.get("task", {}).get("desk", {})
-        if not desk_id:
-            return
-        desk = self.find_one(req=None, _id=desk_id)
-        if not desk:
-            return
-        for key, val in desk.get("desk_metadata", {}).items():
-            if key not in updates and key not in original:
-                updates[key] = val
-
     def get_desk_name(self, desk_id):
         """Return the item desk.
 
