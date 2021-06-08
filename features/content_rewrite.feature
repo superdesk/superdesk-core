@@ -2445,14 +2445,18 @@ Feature: Rewrite content
           }}
         ]
         """
+        And "vocabularies"
+        """
+        [{"_id": "subheadline", "field_options": {"single": true}}]
+        """
         And "archive"
         """
         [
           {
-            "guid": "1", "type": "text", "headline": "item 1", "_current_version": 1, "state": "fetched",
+            "guid": "1", "type": "text", "headline": "headline 1", "_current_version": 1, "state": "fetched",
             "profile": "story",
             "task": {"desk": "#desks._id#", "stage": "#desks.incoming_stage#", "user": "#CONTEXT_USER_ID#"},
-            "body_html": "body 1", "extra": {"subheadline": "subhead 1"},
+            "body_html": "<p>body 1</p>", "extra": {"subheadline": "subhead 1"},
             "fields_meta": {
               "extra>subheadline": {
                 "draftjsState": [
@@ -2461,11 +2465,27 @@ Feature: Rewrite content
                       "text": "subhead 1"}
                   ]}
                 ]
+              },
+              "body_html": {
+                "draftjsState": [
+                  {"blocks": [
+                    { "type": "unstyled",
+                      "text": "body 1"}
+                  ]}
+                ]
+              },
+              "headline": {
+                "draftjsState": [
+                  {"blocks": [
+                    { "type": "unstyled",
+                      "text": "headline 1"}
+                  ]}
+                ]
               }
             }
           },
           {
-            "guid": "2", "type": "text", "headline": "item 2", "_current_version": 1, "state": "fetched",
+            "guid": "2", "type": "text", "headline": "headline 2", "_current_version": 1, "state": "fetched",
             "profile": "story",
             "task": {"desk": "#desks._id#", "stage": "#desks.incoming_stage#", "user": "#CONTEXT_USER_ID#"},
             "body_html": "body 2", "extra": {"subheadline": "subhead 2"},
@@ -2477,6 +2497,22 @@ Feature: Rewrite content
                       "text": "subhead 2"}
                   ]}
                 ]
+              },
+              "body_html": {
+                "draftjsState": [
+                  {"blocks": [
+                    { "type": "unstyled",
+                      "text": "body 2"}
+                  ]}
+                ]
+              },
+              "headline": {
+                "draftjsState": [
+                  {"blocks": [
+                    { "type": "unstyled",
+                      "text": "headline 2"}
+                  ]}
+                ]
               }
             }
           }
@@ -2485,8 +2521,8 @@ Feature: Rewrite content
         When we rewrite "2"
         """
         {"update": {
-            "_id": "1", "guid": "1", "body_html": "body 1", "extra": {"subheadline": "subhead 1"},
-            "profile": "story", "type": "text",
+            "_id": "1", "guid": "1", "body_html": "<p>body 1</p>", "extra": {"subheadline": "subhead 1"},
+            "profile": "story", "type": "text", "headline": "headline 1",
             "fields_meta": {
               "extra>subheadline": {
                 "draftjsState": [
@@ -2494,6 +2530,22 @@ Feature: Rewrite content
                     {
                       "type": "unstyled",
                       "text": "subhead 1"}
+                  ]}
+                ]
+              },
+              "body_html": {
+                "draftjsState": [
+                  {"blocks": [
+                    { "type": "unstyled",
+                      "text": "body 1"}
+                  ]}
+                ]
+              },
+              "headline": {
+                "draftjsState": [
+                  {"blocks": [
+                    { "type": "unstyled",
+                      "text": "headline 1"}
                   ]}
                 ]
               }
@@ -2505,15 +2557,36 @@ Feature: Rewrite content
         Then we get existing resource
         """
         {
-          "extra": {"subheadline": "subhead 2"},
+          "extra": {"subheadline": "subhead 1"},
+          "headline": "headline 1",
+          "body_html": "<p>body 1</p>",
           "fields_meta": {
             "extra>subheadline": {
               "draftjsState": [{
                 "blocks": [
-                  {"type": "unstyled", "text": "subhead 2"}
+                  {
+                    "type": "unstyled",
+                    "text": "subhead 1"
+                  }
                 ]
               }]
-            }
+            },
+            "body_html": {
+                "draftjsState": [
+                  {"blocks": [
+                    { "type": "unstyled",
+                      "text": "body 1"}
+                  ]}
+                ]
+              },
+              "headline": {
+                "draftjsState": [
+                  {"blocks": [
+                    { "type": "unstyled",
+                      "text": "headline 1"}
+                  ]}
+                ]
+              }
           }
         }
         """

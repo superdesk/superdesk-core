@@ -10,10 +10,12 @@
 """This module contains tools to manage content for Superdesk editor"""
 
 import re
-import logging
 import uuid
+import logging
 import lxml.etree as etree
 import lxml.html as lxml_html
+
+import superdesk
 
 from textwrap import dedent
 from collections.abc import MutableSequence
@@ -76,6 +78,23 @@ def get_content_state_fields(item):
 
 def set_field_content_state(item, field, content_state):
     item.setdefault("fields_meta", {}).update({field: {EDITOR_STATE: [content_state]}})
+
+
+def get_field_path(item, field):
+    keys = field.split(">")
+    if len(keys) == 2:
+        return item.setdefault("extra", {}), keys[1]
+    return item, field
+
+
+def get_field_value(item, field):
+    path, key = get_field_path(item, field)
+    return path.get(key)
+
+
+def set_field_value(item, field, value):
+    path, key = get_field_path(item, field)
+    path[key] = value
 
 
 class Entity:
@@ -497,11 +516,7 @@ class Editor3Content(EditorContent):
         self.is_html = is_html
         self.content_state = get_field_content_state(item, field)
         if not self.content_state or reload:
-            keys = field.split(">")
-            if len(keys) == 2:
-                _html = item["extra"].get(keys[1])
-            else:
-                _html = item.get(field)
+            _html = get_field_value(item, field)
             self._create_state_from_html(_html)
         self.blocks = BlockSequence(self)
         self.html_exporter = DraftJSHTMLExporter(self)
@@ -647,7 +662,8 @@ class Editor3Content(EditorContent):
         return max((int(k) for k in self.content_state["entityMap"].keys()), default=-1) + 1
 
     def update_item(self):
-        self.item[self.field] = self.html if self.is_html else self.text
+        value = self.html if self.is_html else self.text
+        set_field_value(self.item, self.field, value)
         set_field_content_state(self.item, self.field, self.content_state)
 
     def create_block(self, block_type, *args, **kwargs):
@@ -770,7 +786,7 @@ def generate_fields(item, fields=None, force=False):
         old_field = None
         if CHECK_GENERATE_CONSISTENCY:
             old_field = item.get(field)
-        editor = Editor3Content(item, field, is_html=field not in TEXT_FIELDS, reload=force)
+        editor = Editor3Content(item, field, is_html=is_html(field), reload=force)
         editor.update_item()
         if CHECK_GENERATE_CONSISTENCY and not force:
             if old_field is not None and old_field.strip() != item[field].strip():
@@ -783,6 +799,14 @@ def generate_fields(item, fields=None, force=False):
                     ),
                 )
                 item[field] = old_field
+
+
+def is_html(field) -> bool:
+    if "extra" in field:
+        field_id = field.split(">")[1]
+        field_options = superdesk.get_resource_service("vocabularies").get_field_options(field_id)
+        return field_options.get("single") is not True
+    return field not in TEXT_FIELDS
 
 
 def render_fragment(elem) -> str:
