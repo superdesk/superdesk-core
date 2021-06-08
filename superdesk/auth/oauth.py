@@ -182,19 +182,14 @@ def configure_google(app, extra_scopes: Optional[List[str]] = None, refresh: boo
                         '"security/Third-party apps with account access") then try to log-in again'
                     )
 
-
             # token_id is actually the provider id
             ingest_providers_service = superdesk.get_resource_service("ingest_providers")
             provider = ingest_providers_service.find_one(req=None, _id=token_id)
             if provider is None:
-                logger.warning(
-                    f"No provider is corresponding to the id used with the token {token_id!r}"
-                )
+                logger.warning(f"No provider is corresponding to the id used with the token {token_id!r}")
             else:
                 ingest_providers_service.update(
-                    provider[config.ID_FIELD],
-                    updates={"config.email": user["email"]},
-                    original=provider
+                    provider[config.ID_FIELD], updates={"config.email": user["email"]}, original=provider
                 )
 
             return render_template(TEMPLATE, data={})
@@ -203,7 +198,7 @@ def configure_google(app, extra_scopes: Optional[List[str]] = None, refresh: boo
             return auth_user(user["email"], {"needs_activation": False})
 
     @bp.route("/logout/google/<url_id>")
-    def google_logout(url_id: str = None):
+    def google_logout(url_id: str):
         """Revoke token
 
         :param url_id: used to identify the token
@@ -214,7 +209,7 @@ def configure_google(app, extra_scopes: Optional[List[str]] = None, refresh: boo
     superdesk.blueprint(bp, app)
 
 
-def _get_token_and_sesion(token_id: str) -> Tuple[dict, dict]:
+def _get_token_and_sesion(token_id: str) -> Tuple[dict, OAuth2Session]:
     oauth2_token_service = superdesk.get_resource_service("oauth2_token")
     token = oauth2_token_service.find_one(req=None, _id=token_id)
     if token is None:
@@ -246,9 +241,5 @@ def revoke_google_token(token_id: str) -> None:
     ingest_providers_service = superdesk.get_resource_service("ingest_providers")
     provider = ingest_providers_service.find_one(req=None, _id=token_id)
     if provider is not None:
-        ingest_providers_service.update(
-            provider[config.ID_FIELD],
-            updates={"config.email": None},
-            original=provider
-        )
+        ingest_providers_service.update(provider[config.ID_FIELD], updates={"config.email": None}, original=provider)
     logger.info(f"OAUTH token {token_id!r} has been revoked")
