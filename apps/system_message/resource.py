@@ -21,7 +21,7 @@ class SystemMessagesResource(Resource):
         },
         "message_title": {"type": "string", "required": True},
         "message": {"type": "string", "required": True},
-        "user_id": Resource.rel("users", required=True),
+        "user_id": Resource.rel("users"),
     }
 
     resource_methods = ["GET", "POST"]

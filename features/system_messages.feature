@@ -16,8 +16,7 @@ Feature: System Messages
             "is_active": true,
             "message_title": "This is message title",
             "message": "This is a message",
-	        "type": "alert",
-	        "user_id": "#CONTEXT_USER_ID#"
+	        "type": "alert"
         }]
 	    """
         Then we get new resource
