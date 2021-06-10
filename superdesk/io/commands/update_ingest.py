@@ -346,8 +346,9 @@ def update_provider(provider, rule_set=None, routing_scheme=None, sync=False):
 
 
 def process_anpa_category(item, provider):
+    CV = "categories"
     try:
-        anpa_categories = superdesk.get_resource_service("vocabularies").find_one(req=None, _id="categories")
+        anpa_categories = superdesk.get_resource_service("vocabularies").find_one(req=None, _id=CV)
         if anpa_categories:
             for item_category in item["anpa_category"]:
                 mapped_category = [
@@ -362,6 +363,7 @@ def process_anpa_category(item, provider):
                     item_category["name"] = mapped_category[0]["name"]
                     # make the case of the qcode match what we hold in our dictionary
                     item_category["qcode"] = mapped_category[0]["qcode"]
+                    item_category["scheme"] = CV
     except Exception as ex:
         raise ProviderError.anpaError(ex, provider)
 
