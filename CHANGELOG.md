@@ -1,6 +1,6 @@
 # Superdesk Server Changelog
 
-## [2.2.0] 2021-05-04
+## [2.2.0] 2021-05-05
 
 [Changes](https://github.com/superdesk/superdesk-core/milestone/93?closed=1)
 
