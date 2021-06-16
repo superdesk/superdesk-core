@@ -93,12 +93,20 @@ class ArchiveCorrectionService(Service):
             if desk:
                 archive_item_updates["task"].update({"stage": desk.get("working_stage")})
 
-        # modify item in archive.
-        archive_service.system_update(archive_item.get(config.ID_FIELD), archive_item_updates, archive_item)
-        app.on_archive_item_updated(archive_item_updates, archive_item, ITEM_CORRECTION)
+        try:
+            # modify item in published.
+            published_service.system_update(
+                published_article.get(config.ID_FIELD), published_item_updates, published_article
+            )
 
-        # modify item in published.
-        published_service.patch(id=published_article.get(config.ID_FIELD), updates=published_item_updates)
+            # modify item in archive.
+            archive_service.system_update(archive_item.get(config.ID_FIELD), archive_item_updates, archive_item)
+            app.on_archive_item_updated(archive_item_updates, archive_item, ITEM_CORRECTION)
+
+        except Exception as e:
+            raise SuperdeskApiError.internalError(
+                message=_("Failed to create correction for item: {exception}").format(exception=str(e))
+            )
 
         user = get_user(required=True)
         push_notification("item:correction", item=original.get(config.ID_FIELD), user=str(user.get(config.ID_FIELD)))
