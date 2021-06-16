@@ -20,7 +20,7 @@ class SystemMessagesResource(Resource):
             "required": True,
         },
         "message_title": {"type": "string", "required": True},
-        "message": {"type": "string", "required": True},
+        "message": {"type": "string", "required": True, "maxlength": 200},
         "user_id": Resource.rel("users"),
     }
 
