@@ -9,20 +9,16 @@
 # at https://www.sourcefabric.org/superdesk/license
 
 
-from flask import current_app as app
 from superdesk.services import Service
 from superdesk.notification import push_notification
-from superdesk.errors import SuperdeskApiError
-from apps.auth import is_current_user_admin, get_user_id
-from flask_babel import _
+
 from eve.utils import config
+from apps.auth import get_user_id
 
 
 class SystemMessagesService(Service):
     def on_create(self, docs):
         for doc in docs:
-            self._validate_administrator("create")
-            self._validate_message(doc)
             doc["user_id"] = get_user_id()
 
     def on_created(self, docs):
@@ -34,7 +30,6 @@ class SystemMessagesService(Service):
         push_notification("system_message:created", _id=[doc.get(config.ID_FIELD) for doc in docs])
 
     def on_update(self, updates, original):
-        self._validate_administrator("update")
         updates["user_id"] = get_user_id()
 
     def on_updated(self, updates, original):
@@ -46,9 +41,6 @@ class SystemMessagesService(Service):
         """
         push_notification("system_message:updated", _id=[original.get(config.ID_FIELD)])
 
-    def on_delete(self, doc):
-        self._validate_administrator("delete")
-
     def on_deleted(self, doc):
         """
         Send a notification
@@ -56,16 +48,3 @@ class SystemMessagesService(Service):
         :return:
         """
         push_notification("system_message:deleted", _id=[doc.get(config.ID_FIELD)])
-
-    def _validate_message(self, doc):
-        max_characters = app.config.get("MAX_CHARACTERS_FOR_SYSTEM_MESSAGE", 200)
-        if doc.get("message") and len(doc["message"]) > max_characters:
-            raise SuperdeskApiError.badRequestError(
-                message=_("Max {max_characters} characters are allowed").format(max_characters=max_characters)
-            )
-
-    def _validate_administrator(self, operation):
-        if not is_current_user_admin():
-            raise SuperdeskApiError.badRequestError(
-                message=_("Only administrator user can {operation} the message").format(operation=operation)
-            )
