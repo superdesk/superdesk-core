@@ -95,17 +95,23 @@ class ArchiveCorrectionService(Service):
 
         try:
             # modify item in published.
-            published_service.system_update(
+            _published_item = published_service.system_update(
                 published_article.get(config.ID_FIELD), published_item_updates, published_article
             )
+            if _published_item is None or (
+                published_item_updates.get("operation") == CONTENT_STATE.BEING_CORRECTED
+                and _published_item.get("state") != CONTENT_STATE.BEING_CORRECTED
+            ):
+                raise SuperdeskApiError.badRequestError(message=_("Being corrected item is not generated"))
 
             # modify item in archive.
             archive_service.system_update(archive_item.get(config.ID_FIELD), archive_item_updates, archive_item)
             app.on_archive_item_updated(archive_item_updates, archive_item, ITEM_CORRECTION)
 
         except Exception as e:
+            logger.exception(e)
             raise SuperdeskApiError.internalError(
-                message=_("Failed to create correction for item: {exception}").format(exception=str(e))
+                message=_("Failed to generate correction: {exception}").format(exception=str(e))
             )
 
         user = get_user(required=True)
