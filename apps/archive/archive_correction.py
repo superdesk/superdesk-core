@@ -98,11 +98,10 @@ class ArchiveCorrectionService(Service):
             _published_item = published_service.system_update(
                 published_article.get(config.ID_FIELD), published_item_updates, published_article
             )
-            if _published_item is None or (
+            assert _published_item is not None and (
                 published_item_updates.get("operation") == CONTENT_STATE.BEING_CORRECTED
-                and _published_item.get("state") != CONTENT_STATE.BEING_CORRECTED
-            ):
-                raise SuperdeskApiError.badRequestError(message=_("Being corrected item is not generated"))
+                and _published_item.get("state") == CONTENT_STATE.BEING_CORRECTED
+            ), "Being corrected is not generated"
 
             # modify item in archive.
             archive_service.system_update(archive_item.get(config.ID_FIELD), archive_item_updates, archive_item)
