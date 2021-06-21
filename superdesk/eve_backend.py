@@ -10,8 +10,9 @@
 
 
 import eve.io.base
-
 import json as std_json
+
+from typing_extensions import Literal
 from pymongo.cursor import Cursor as MongoCursor
 from pymongo.collation import Collation
 from flask import current_app as app, json
@@ -179,9 +180,8 @@ class EveBackend:
         ids = self.create_in_mongo(endpoint_name, docs, **kwargs)
         self.create_in_search(endpoint_name, docs, **kwargs)
 
-        if self.notify_on_change(endpoint_name):
-            for doc in docs:
-                _push_notification("resource:created", _id=str(doc["_id"]), resource=endpoint_name)
+        for doc in docs:
+            self._push_resource_notification("created", endpoint_name, _id=str(doc["_id"]))
 
         return ids
 
@@ -257,9 +257,9 @@ class EveBackend:
                 backend._change_request(endpoint_name, id, updates, original)
             else:
                 backend.update(endpoint_name, id, updates, original)
-            if push_notification and self.notify_on_change(endpoint_name):
-                _push_notification(
-                    "resource:updated", _id=str(id), resource=endpoint_name, fields=get_diff_keys(updates, original)
+            if push_notification:
+                self._push_resource_notification(
+                    "updated", endpoint_name, _id=str(id), fields=get_diff_keys(updates, original)
                 )
         except eve.io.base.DataLayer.OriginalChangedError:
             if not backend.find_one(endpoint_name, req=None, _id=id) and search_backend:
@@ -385,9 +385,8 @@ class EveBackend:
         if len(removed_ids):
             backend.remove(endpoint_name, {config.ID_FIELD: {"$in": removed_ids}})
             logger.info("Removed %d documents from %s.", len(removed_ids), endpoint_name)
-            if self.notify_on_change(endpoint_name):
-                for doc in docs:
-                    _push_notification("resource:deleted", _id=str(doc["_id"]), resource=endpoint_name)
+            for doc in docs:
+                self._push_resource_notification("deleted", endpoint_name, _id=str(doc["_id"]))
         else:
             logger.warn("No documents for %s resource were deleted.", endpoint_name)
         return removed_ids
@@ -459,3 +458,8 @@ class EveBackend:
         """Test if we should push notifications for given resource."""
         source_config = app.config["DOMAIN"][endpoint_name]
         return source_config["notifications"] is True
+
+    def _push_resource_notification(self, action: Literal["created", "updated", "deleted"], endpoint_name, **kwargs):
+        resource = self._datasource(endpoint_name)
+        if self.notify_on_change(resource):
+            _push_notification(f"resource:{action}", resource=resource, **kwargs)
