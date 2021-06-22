@@ -98,9 +98,13 @@ class ArchiveCorrectionService(Service):
             _published_item = published_service.system_update(
                 published_article.get(config.ID_FIELD), published_item_updates, published_article
             )
-            assert _published_item is not None and (
-                published_item_updates.get("operation") == CONTENT_STATE.BEING_CORRECTED
-                and _published_item.get("state") == CONTENT_STATE.BEING_CORRECTED
+            assert (
+                remove_correction
+                or _published_item is not None
+                and (
+                    published_item_updates.get("operation") == CONTENT_STATE.BEING_CORRECTED
+                    and _published_item.get("state") == CONTENT_STATE.BEING_CORRECTED
+                )
             ), "Being corrected is not generated"
 
             # modify item in archive.
