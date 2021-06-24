@@ -89,6 +89,7 @@ class WPWXRFeedParser(XMLFeedParser):
                     },
                 ),
                 ("attachments", {"xpath": "wp:attachment_url", "list": True, "key_hook": self.attachments_hook}),
+                ("original_article_url", {"xpath": "link", "default": "", "key_hook": self._set_original_article_url}),
             ]
         )
 
@@ -292,6 +293,10 @@ class WPWXRFeedParser(XMLFeedParser):
                 width=media_data["renditions"]["original"]["width"],
             )
             item["body_html"] += "<div>" + embed_start + img + embed_end + "</div>"
+
+    def _set_original_article_url(self, item, value):
+        if value:
+            item.setdefault("extra", {})["original_article_url"] = value
 
 
 register_feed_parser(WPWXRFeedParser.NAME, WPWXRFeedParser())
