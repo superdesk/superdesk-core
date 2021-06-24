@@ -76,10 +76,10 @@ class CommentsService(BaseService):
         for doc in docs:
             sent_user = doc.get("user", None)
             user = g.user
-            if sent_user and sent_user != str(user.get("_id")):
+            if sent_user and sent_user != str(user["_id"]):
                 message = _("Commenting on behalf of someone else is prohibited.")
                 raise SuperdeskApiError.forbiddenError(message)
-            doc["user"] = str(user.get("_id"))
+            doc["user"] = user["_id"]
             user_names, desk_names = get_mentions(doc.get("text"))
             doc["mentioned_users"] = get_users(user_names)
             doc["mentioned_desks"] = get_desks(desk_names)
