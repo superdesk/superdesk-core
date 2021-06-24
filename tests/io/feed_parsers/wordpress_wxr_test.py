@@ -103,6 +103,9 @@ class WPWXRTestCase(WPWXRTestBase):
 
     def test_guid(self):
         self.assertEqual(self.articles[0]["guid"], "http://sdnewtester.org/?p=216")
+        self.assertEqual(
+            self.articles[0]["extra"]["original_article_url"], "http://sdnewtester.org/bla/bla/article.html"
+        )
 
     def test_firstpublished(self):
         self.assertEqual(
