@@ -44,6 +44,8 @@ logger = logging.getLogger(__name__)
 bp = superdesk.Blueprint("oauth", __name__)
 oauth: Optional[OAuth] = None
 TOKEN_ENDPOINT = "https://oauth2.googleapis.com/token"
+KEY_GOOGLE_PROVIDER_ID = "oauth_gmail_id"
+TTL_GOOGLE_PROVIDER_ID = 600
 
 
 def init_app(app) -> None:
@@ -121,7 +123,6 @@ def token2dict(
 
 def configure_google(app, extra_scopes: Optional[List[str]] = None, refresh: bool = False) -> None:
     scopes = ["openid", "email", "profile"]
-    token_url_id_queue = []
     if extra_scopes:
         scopes.extend(extra_scopes)
     kwargs = {}
@@ -144,13 +145,17 @@ def configure_google(app, extra_scopes: Optional[List[str]] = None, refresh: boo
             if OAuth is used for Superdesk login, url_id is None.
             Otherwise, it is used to associate the token with the provider needing it
         """
-        token_url_id_queue.append(url_id)
+        superdesk.app.redis.set(KEY_GOOGLE_PROVIDER_ID, url_id, ex=TTL_GOOGLE_PROVIDER_ID)
         redirect_uri = url_for(".google_authorized", _external=True)
         return oauth.google.authorize_redirect(redirect_uri)
 
     @bp.route("/login/google_authorized")
     def google_authorized():
-        token_id = token_url_id_queue.pop() if token_url_id_queue else None
+        token_id = superdesk.app.redis.get(KEY_GOOGLE_PROVIDER_ID)
+        if token_id is not None:
+            token_id = token_id.decode()
+            superdesk.app.redis.delete(KEY_GOOGLE_PROVIDER_ID)
+
         token = oauth.google.authorize_access_token()
         if not token:
             return render_template(TEMPLATE, data={}) if token_id else auth_user()
