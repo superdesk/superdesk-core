@@ -254,19 +254,18 @@ class EnqueueService:
         :raises PublishQueueError.item_not_queued_error:
                 If the nothing is queued.
         """
-        new_item = False
-
+        sent = False
         # while publishing new item media association, do not resend same association mulitple time
         if target_media_type and config.PUBLISH_ASSOCIATIONS_RESEND:
             return
         elif not config.PUBLISH_ASSOCIATIONS_RESEND:
-            new_item = True
+            sent = True
 
         # Step 1
         subscribers, subscriber_codes, associations = self.get_subscribers(doc, target_media_type)
         # Step 2
         no_formatters, queued = self.queue_transmission(
-            deepcopy(doc), subscribers, subscriber_codes, associations, new_item
+            deepcopy(doc), subscribers, subscriber_codes, associations, sent
         )
 
         # Step 3
@@ -434,7 +433,7 @@ class EnqueueService:
                     continue
 
             formatters, temp_queued = self.queue_transmission(
-                updated, [subscriber], {subscriber[config.ID_FIELD]: codes}, new_item=True
+                updated, [subscriber], {subscriber[config.ID_FIELD]: codes}, sent=True
             )
 
             subscribers.append(subscriber)
@@ -457,7 +456,7 @@ class EnqueueService:
             destinations.append({"name": "content api", "delivery_type": "content_api", "format": "ninjs"})
         return destinations
 
-    def queue_transmission(self, doc, subscribers, subscriber_codes=None, associations=None, new_item=False):
+    def queue_transmission(self, doc, subscribers, subscriber_codes=None, associations=None, sent=False):
         """Method formats and then queues the article for transmission to the passed subscribers.
 
         ::Important Note:: Format Type across Subscribers can repeat. But we can't have formatted item generated once
@@ -475,7 +474,7 @@ class EnqueueService:
             subscriber_codes = {}
 
         try:
-            if config.PUBLISH_ASSOCIATIONS_RESEND and not new_item:
+            if config.PUBLISH_ASSOCIATIONS_RESEND and not sent:
                 is_correction = doc.get("state") in ["corrected", "being_corrected"]
                 is_update = doc.get("rewrite_of")
                 is_new = not is_correction and not is_update
