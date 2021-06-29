@@ -24,6 +24,7 @@ log = logging.getLogger(__name__)
 not_indexed = {"type": "string", "index": "no"}  # noqa
 not_analyzed = {"type": "string", "index": "not_analyzed"}
 not_enabled = {"type": "object", "enabled": False}  # noqa
+not_dynamic = {"type": "object", "dynamic": False}  # noqa
 text_with_keyword = {
     "type": "text",
     "fields": {
