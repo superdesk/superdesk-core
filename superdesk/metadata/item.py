@@ -11,7 +11,7 @@
 from typing import NamedTuple
 from copy import deepcopy
 
-from superdesk.resource import Resource, not_analyzed, not_indexed, not_enabled, text_with_keyword
+from superdesk.resource import Resource, not_analyzed, not_indexed, not_enabled, text_with_keyword, not_dynamic
 from .packages import LINKED_IN_PACKAGES, PACKAGE
 from eve.utils import config
 from superdesk.utils import SuperdeskBaseEnum
@@ -626,7 +626,7 @@ metadata_schema = {
     "extra": {
         "type": "dict",
         "schema": {},
-        "mapping": not_enabled,
+        "mapping": not_dynamic,
         "allow_unknown": True,
     },
     "attachments": {
