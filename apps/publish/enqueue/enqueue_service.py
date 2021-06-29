@@ -254,9 +254,11 @@ class EnqueueService:
         :raises PublishQueueError.item_not_queued_error:
                 If the nothing is queued.
         """
-        publish_first_version = True
-        if doc.get("rewrite_of") or doc.get("state") == "corrected" or doc.get("translated_from"):
-            publish_first_version = False
+        publish_first_version = False
+        if target_media_type and config.PUBLISH_ASSOCIATIONS_RESEND:
+            return
+        elif not config.PUBLISH_ASSOCIATIONS_RESEND:
+            publish_first_version = True
 
         # Step 1
         subscribers, subscriber_codes, associations = self.get_subscribers(doc, target_media_type)
@@ -474,7 +476,13 @@ class EnqueueService:
 
         try:
             if config.PUBLISH_ASSOCIATIONS_RESEND and not publish_first_version:
-                if config.PUBLISH_ASSOCIATIONS_RESEND == "corrections":
+                if (
+                    config.PUBLISH_ASSOCIATIONS_RESEND == "default"
+                    and not doc.get("rewrite_of")
+                    and doc.get("state") not in ["corrected", "being_corrected"]
+                ):
+                    self.resend_association_items(doc)
+                elif config.PUBLISH_ASSOCIATIONS_RESEND == "corrections":
                     self.resend_association_items(doc)
                 elif config.PUBLISH_ASSOCIATIONS_RESEND == "updates" and doc.get("state") not in [
                     "corrected",
@@ -573,14 +581,22 @@ class EnqueueService:
             raise
 
     def get_unique_associations(self, associated_items):
+        """This method is used for the removing duplicate associate items
+        :param dict associated_items: all the associate item
+        """
         associations = {}
         for association in associated_items.values():
+            if not association:
+                continue
             item_id = association.get("_id")
             if item_id and item_id not in associations.keys():
                 associations[item_id] = association
         return associations.values()
 
     def resend_association_items(self, doc):
+        """This method is used to resend assciation items.
+        :param dict doc: document
+        """
         associated_items = doc.get(ASSOCIATIONS)
         if associated_items:
             for association in self.get_unique_associations(associated_items):
