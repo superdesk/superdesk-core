@@ -254,17 +254,19 @@ class EnqueueService:
         :raises PublishQueueError.item_not_queued_error:
                 If the nothing is queued.
         """
-        publish_first_version = False
+        new_item = False
+
+        # while publishing new item media association, do not resend same association mulitple time
         if target_media_type and config.PUBLISH_ASSOCIATIONS_RESEND:
             return
         elif not config.PUBLISH_ASSOCIATIONS_RESEND:
-            publish_first_version = True
+            new_item = True
 
         # Step 1
         subscribers, subscriber_codes, associations = self.get_subscribers(doc, target_media_type)
         # Step 2
         no_formatters, queued = self.queue_transmission(
-            deepcopy(doc), subscribers, subscriber_codes, associations, publish_first_version=publish_first_version
+            deepcopy(doc), subscribers, subscriber_codes, associations, new_item
         )
 
         # Step 3
@@ -432,7 +434,7 @@ class EnqueueService:
                     continue
 
             formatters, temp_queued = self.queue_transmission(
-                updated, [subscriber], {subscriber[config.ID_FIELD]: codes}, publish_first_version=True
+                updated, [subscriber], {subscriber[config.ID_FIELD]: codes}, new_item=True
             )
 
             subscribers.append(subscriber)
@@ -455,9 +457,7 @@ class EnqueueService:
             destinations.append({"name": "content api", "delivery_type": "content_api", "format": "ninjs"})
         return destinations
 
-    def queue_transmission(
-        self, doc, subscribers, subscriber_codes=None, associations=None, publish_first_version=False
-    ):
+    def queue_transmission(self, doc, subscribers, subscriber_codes=None, associations=None, new_item=False):
         """Method formats and then queues the article for transmission to the passed subscribers.
 
         ::Important Note:: Format Type across Subscribers can repeat. But we can't have formatted item generated once
@@ -475,19 +475,16 @@ class EnqueueService:
             subscriber_codes = {}
 
         try:
-            if config.PUBLISH_ASSOCIATIONS_RESEND and not publish_first_version:
-                if (
-                    config.PUBLISH_ASSOCIATIONS_RESEND == "default"
-                    and not doc.get("rewrite_of")
-                    and doc.get("state") not in ["corrected", "being_corrected"]
-                ):
+            if config.PUBLISH_ASSOCIATIONS_RESEND and not new_item:
+                is_correction = doc.get("state") in ["corrected", "being_corrected"]
+                is_update = doc.get("rewrite_of")
+                is_new = not is_correction and not is_update
+
+                if config.PUBLISH_ASSOCIATIONS_RESEND == "new" and is_new:
                     self.resend_association_items(doc)
                 elif config.PUBLISH_ASSOCIATIONS_RESEND == "corrections":
                     self.resend_association_items(doc)
-                elif config.PUBLISH_ASSOCIATIONS_RESEND == "updates" and doc.get("state") not in [
-                    "corrected",
-                    "being_corrected",
-                ]:
+                elif config.PUBLISH_ASSOCIATIONS_RESEND == "updates" and not is_correction:
                     self.resend_association_items(doc)
 
             queued = False
