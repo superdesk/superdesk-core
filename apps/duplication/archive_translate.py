@@ -23,6 +23,7 @@ from superdesk.workflow import is_workflow_state_transition_valid
 from superdesk.utc import utcnow
 from apps.packages import PackageService
 from flask_babel import _
+from eve.utils import config
 from flask import current_app as app
 
 
@@ -81,6 +82,15 @@ class TranslateService(BaseService):
         item["firstcreated"] = utcnow()
         if task:
             item["task"] = task
+
+        if config.PUBLISH_ASSOCIATED_ITEMS:
+            associations = item.get("associations") or {}
+            archive_service = get_resource_service("archive")
+            for associations_key, associated_item in associations.items():
+                if not associated_item:
+                    continue
+                if associated_item.get("is_queued"):
+                    associated_item["is_queued"] = None
 
         extra_fields = ["translation_id", "translated_from"]
 

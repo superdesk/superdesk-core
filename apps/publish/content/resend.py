@@ -48,6 +48,14 @@ class ResendService(Service):
         article_version = doc.get("version")
         article = self._validate_article(article_id, article_version)
         subscribers = self._validate_subscribers(doc.get("subscribers"), article)
+        if config.PUBLISH_ASSOCIATED_ITEMS:
+            associations = article.get("associations") or {}
+            for associations_key, associated_item in associations.items():
+                if not associated_item:
+                    continue
+                if associated_item.get("is_queued"):
+                    associated_item["is_queued"] = None
+
         get_enqueue_service(article.get(ITEM_OPERATION)).resend(article, subscribers)
         app.on_archive_item_updated({"subscribers": doc.get("subscribers")}, article, ITEM_RESEND)
         return [article_id]

@@ -84,6 +84,14 @@ class DuplicateService(BaseService):
             archived_doc["versioncreated"] = archived_doc["firstcreated"] = utcnow()
             archived_doc["firstpublished"] = None
 
+            if config.PUBLISH_ASSOCIATED_ITEMS:
+                associations = archived_doc.get("associations") or {}
+                for associations_key, associated_item in associations.items():
+                    if not associated_item:
+                        continue
+                    if associated_item.get("is_queued"):
+                        associated_item["is_queued"] = None
+
             send_to(
                 doc=archived_doc,
                 desk_id=doc.get("desk"),

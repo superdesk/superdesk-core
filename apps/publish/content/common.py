@@ -815,6 +815,9 @@ class BasePublishService(BaseService):
                     )
                     continue
 
+                if associated_item.get("type") not in MEDIA_TYPES and is_related_content(associations_key):
+                    associated_item["queue_state"] = True
+
                 if associated_item.get("state") not in PUBLISH_STATES:
                     # This associated item has not been published before
                     remove_unwanted(associated_item)
@@ -856,6 +859,7 @@ class BasePublishService(BaseService):
                     associated_item["operation"] = self.publish_type
                     updates[ASSOCIATIONS] = updates.get(ASSOCIATIONS, {})
                     updates[ASSOCIATIONS][associations_key] = associated_item
+                    associated_item["is_queued"] = True
                 elif associated_item.get("state") != self.published_state:
                     # Check if there are updates to associated item
                     association_updates = updates.get(ASSOCIATIONS, {}).get(associations_key)

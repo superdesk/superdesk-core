@@ -255,11 +255,6 @@ class EnqueueService:
                 If the nothing is queued.
         """
         sent = False
-        # while publishing new item media association, do not resend same association mulitple time
-        if target_media_type and config.PUBLISH_ASSOCIATIONS_RESEND:
-            return
-        elif not config.PUBLISH_ASSOCIATIONS_RESEND:
-            sent = True
 
         # Step 1
         subscribers, subscriber_codes, associations = self.get_subscribers(doc, target_media_type)
@@ -467,7 +462,6 @@ class EnqueueService:
         :param list subscribers: List of subscriber dict.
         :return : (list, bool) tuple of list of missing formatters and boolean flag. True if queued else False
         """
-
         if associations is None:
             associations = {}
         if subscriber_codes is None:
@@ -597,6 +591,10 @@ class EnqueueService:
         if associated_items:
             for association in self.get_unique_associations(associated_items):
                 # resend only media association
+
+                if association.get("is_queued"):
+                    continue
+
                 if association.get("type") not in MEDIA_TYPES:
                     continue
 
