@@ -13,7 +13,7 @@ import superdesk
 
 from flask import current_app
 from collections import OrderedDict
-from typing import Optional, Dict, List
+from typing import Optional, Dict, List, Set
 from urllib.parse import urljoin
 from superdesk.text_utils import get_text
 from superdesk.errors import SuperdeskApiError
@@ -76,7 +76,7 @@ class IMatrics(AIServiceBase):
             "qcode": concept["uuid"],
             "parent": concept.get("broader") or None,
             "source": "imatrics",
-            "aliases": concept["aliases"],
+            "aliases": concept.get("aliases", []),
             "original_source": concept.get("source"),
             "altids": {
                 "imatrics": concept["uuid"],
@@ -135,6 +135,19 @@ class IMatrics(AIServiceBase):
                 )
             )
 
+    def _parse_concepts(
+        self, analyzed_data: Dict[str, List], concepts: List[dict], seen_qcodes: set, new_concepts_to_get: set
+    ) -> None:
+        """Parse response data, convert iMatrics concepts to SD data and add them to analyzed_data"""
+        for concept in concepts:
+            tag_data = self.concept2tag_data(concept)
+            seen_qcodes.add(tag_data["qcode"])
+            parent = tag_data["parent"]
+            if parent is not None and parent not in seen_qcodes:
+                new_concepts_to_get.add(parent)
+            tag_type = tag_data.pop("type")
+            analyzed_data.setdefault(tag_type, []).append(tag_data)
+
     def analyze(self, item: dict) -> dict:
         """Analyze article to get tagging suggestions"""
         if not self.base_url or not self.user or not self.key:
@@ -163,15 +176,23 @@ class IMatrics(AIServiceBase):
 
         analyzed_data: Dict[str, List] = {}
 
-        for concept in r_data["concepts"]:
-            tag_data = self.concept2tag_data(concept)
-            tag_type = tag_data.pop("type")
-            analyzed_data.setdefault(tag_type, []).append(tag_data)
+        seen_qcodes: Set[str] = set()
+        new_concepts_to_get: Set[str] = set()
+        self._parse_concepts(analyzed_data, r_data["concepts"], seen_qcodes, new_concepts_to_get)
+        while new_concepts_to_get:
+            to_get = new_concepts_to_get.copy()
+            new_concepts_to_get.clear()
+            for concept_id in to_get:
+                r_data = self._request("concept/get", {"uuid": concept_id}, params=dict(operation="id"))
+                self._parse_concepts(analyzed_data, r_data["result"], seen_qcodes, new_concepts_to_get)
 
         for tags in analyzed_data.values():
-            tags.sort(key=lambda d: d["weight"], reverse=True)
+            tags.sort(key=lambda d: d.get("weight", 0), reverse=True)
             for tag in tags:
-                del tag["weight"]
+                try:
+                    del tag["weight"]
+                except KeyError:
+                    pass
 
         return analyzed_data
 
