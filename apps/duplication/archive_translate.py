@@ -10,7 +10,7 @@
 
 
 import superdesk
-from apps.archive.archive import SOURCE as ARCHIVE
+from apps.archive.archive import SOURCE as ARCHIVE, remove_is_queued
 from apps.content import push_content_notification
 from apps.auth import get_user_id
 from superdesk import get_resource_service
@@ -83,14 +83,7 @@ class TranslateService(BaseService):
         if task:
             item["task"] = task
 
-        if config.PUBLISH_ASSOCIATED_ITEMS:
-            associations = item.get("associations") or {}
-            archive_service = get_resource_service("archive")
-            for associations_key, associated_item in associations.items():
-                if not associated_item:
-                    continue
-                if associated_item.get("is_queued"):
-                    associated_item["is_queued"] = None
+        remove_is_queued(item)
 
         extra_fields = ["translation_id", "translated_from"]
 

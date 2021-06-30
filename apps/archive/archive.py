@@ -238,6 +238,16 @@ def flush_renditions(updates, original):
                         updates[ASSOCIATIONS][key]["renditions"][old_rendition] = None
 
 
+def remove_is_queued(item):
+    if config.PUBLISH_ASSOCIATED_ITEMS:
+        associations = item.get("associations") or {}
+        for associations_key, associated_item in associations.items():
+            if not associated_item:
+                continue
+            if associated_item.get("is_queued"):
+                associated_item["is_queued"] = None
+
+
 class ArchiveVersionsResource(Resource):
     schema = item_schema()
     extra_response_fields = extra_response_fields

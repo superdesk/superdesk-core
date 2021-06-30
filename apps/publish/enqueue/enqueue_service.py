@@ -592,10 +592,7 @@ class EnqueueService:
             for association in self.get_unique_associations(associated_items):
                 # resend only media association
 
-                if association.get("is_queued"):
-                    continue
-
-                if association.get("type") not in MEDIA_TYPES:
+                if association.get("type") not in MEDIA_TYPES or association.get("is_queued"):
                     continue
 
                 archive_article = get_resource_service("archive").find_one(req=None, _id=association.get("_id"))
