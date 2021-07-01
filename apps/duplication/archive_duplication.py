@@ -13,7 +13,7 @@ from eve.utils import config, ParsedRequest
 from flask import request, current_app as app
 
 import superdesk
-from apps.archive.archive import SOURCE as ARCHIVE
+from apps.archive.archive import SOURCE as ARCHIVE, remove_is_queued
 from apps.auth import get_user, get_user_id
 from apps.content import push_content_notification
 from apps.tasks import send_to
@@ -83,6 +83,8 @@ class DuplicateService(BaseService):
             # reset timestamps
             archived_doc["versioncreated"] = archived_doc["firstcreated"] = utcnow()
             archived_doc["firstpublished"] = None
+
+            remove_is_queued(archived_doc)
 
             send_to(
                 doc=archived_doc,
