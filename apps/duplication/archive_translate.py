@@ -23,7 +23,6 @@ from superdesk.workflow import is_workflow_state_transition_valid
 from superdesk.utc import utcnow
 from apps.packages import PackageService
 from flask_babel import _
-from eve.utils import config
 from flask import current_app as app
 
 
