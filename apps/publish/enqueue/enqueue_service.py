@@ -254,15 +254,13 @@ class EnqueueService:
         :raises PublishQueueError.item_not_queued_error:
                 If the nothing is queued.
         """
-        publish_first_version = True
-        if doc.get("rewrite_of") or doc.get("state") == "corrected" or doc.get("translated_from"):
-            publish_first_version = False
+        sent = False
 
         # Step 1
         subscribers, subscriber_codes, associations = self.get_subscribers(doc, target_media_type)
         # Step 2
         no_formatters, queued = self.queue_transmission(
-            deepcopy(doc), subscribers, subscriber_codes, associations, publish_first_version=publish_first_version
+            deepcopy(doc), subscribers, subscriber_codes, associations, sent
         )
 
         # Step 3
@@ -430,7 +428,7 @@ class EnqueueService:
                     continue
 
             formatters, temp_queued = self.queue_transmission(
-                updated, [subscriber], {subscriber[config.ID_FIELD]: codes}, publish_first_version=True
+                updated, [subscriber], {subscriber[config.ID_FIELD]: codes}, sent=True
             )
 
             subscribers.append(subscriber)
@@ -453,9 +451,7 @@ class EnqueueService:
             destinations.append({"name": "content api", "delivery_type": "content_api", "format": "ninjs"})
         return destinations
 
-    def queue_transmission(
-        self, doc, subscribers, subscriber_codes=None, associations=None, publish_first_version=False
-    ):
+    def queue_transmission(self, doc, subscribers, subscriber_codes=None, associations=None, sent=False):
         """Method formats and then queues the article for transmission to the passed subscribers.
 
         ::Important Note:: Format Type across Subscribers can repeat. But we can't have formatted item generated once
@@ -466,20 +462,22 @@ class EnqueueService:
         :param list subscribers: List of subscriber dict.
         :return : (list, bool) tuple of list of missing formatters and boolean flag. True if queued else False
         """
-
         if associations is None:
             associations = {}
         if subscriber_codes is None:
             subscriber_codes = {}
 
         try:
-            if config.PUBLISH_ASSOCIATIONS_RESEND and not publish_first_version:
-                if config.PUBLISH_ASSOCIATIONS_RESEND == "corrections":
+            if config.PUBLISH_ASSOCIATIONS_RESEND and not sent:
+                is_correction = doc.get("state") in ["corrected", "being_corrected"]
+                is_update = doc.get("rewrite_of")
+                is_new = not is_correction and not is_update
+
+                if config.PUBLISH_ASSOCIATIONS_RESEND == "new" and is_new:
                     self.resend_association_items(doc)
-                elif config.PUBLISH_ASSOCIATIONS_RESEND == "updates" and doc.get("state") not in [
-                    "corrected",
-                    "being_corrected",
-                ]:
+                elif config.PUBLISH_ASSOCIATIONS_RESEND == "corrections":
+                    self.resend_association_items(doc)
+                elif config.PUBLISH_ASSOCIATIONS_RESEND == "updates" and not is_correction:
                     self.resend_association_items(doc)
 
             queued = False
@@ -573,19 +571,28 @@ class EnqueueService:
             raise
 
     def get_unique_associations(self, associated_items):
+        """This method is used for the removing duplicate associate items
+        :param dict associated_items: all the associate item
+        """
         associations = {}
         for association in associated_items.values():
+            if not association:
+                continue
             item_id = association.get("_id")
             if item_id and item_id not in associations.keys():
                 associations[item_id] = association
         return associations.values()
 
     def resend_association_items(self, doc):
+        """This method is used to resend assciation items.
+        :param dict doc: document
+        """
         associated_items = doc.get(ASSOCIATIONS)
         if associated_items:
             for association in self.get_unique_associations(associated_items):
                 # resend only media association
-                if association.get("type") not in MEDIA_TYPES:
+
+                if association.get("type") not in MEDIA_TYPES or association.get("is_queued"):
                     continue
 
                 archive_article = get_resource_service("archive").find_one(req=None, _id=association.get("_id"))

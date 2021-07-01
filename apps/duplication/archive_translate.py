@@ -10,7 +10,7 @@
 
 
 import superdesk
-from apps.archive.archive import SOURCE as ARCHIVE
+from apps.archive.archive import SOURCE as ARCHIVE, remove_is_queued
 from apps.content import push_content_notification
 from apps.auth import get_user_id
 from superdesk import get_resource_service
@@ -81,6 +81,8 @@ class TranslateService(BaseService):
         item["firstcreated"] = utcnow()
         if task:
             item["task"] = task
+
+        remove_is_queued(item)
 
         extra_fields = ["translation_id", "translated_from"]
 

@@ -856,6 +856,8 @@ class BasePublishService(BaseService):
                     associated_item["operation"] = self.publish_type
                     updates[ASSOCIATIONS] = updates.get(ASSOCIATIONS, {})
                     updates[ASSOCIATIONS][associations_key] = associated_item
+                    # check for marking that the association item has been queued
+                    associated_item["is_queued"] = True
                 elif associated_item.get("state") != self.published_state:
                     # Check if there are updates to associated item
                     association_updates = updates.get(ASSOCIATIONS, {}).get(associations_key)
