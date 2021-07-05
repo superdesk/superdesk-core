@@ -590,9 +590,7 @@ class OverviewService(BaseService):
                                 ]
                             }
                         },
-                        {
-                            "term": {"version": 0}
-                        }
+                        {"term": {"version": 0}},
                     ]
                 }
             }
