@@ -589,7 +589,8 @@ class OverviewService(BaseService):
                                     CONTENT_STATE.SCHEDULED,
                                 ]
                             }
-                        }
+                        },
+                        {"term": {"version": 0}},
                     ]
                 }
             }
