@@ -47,7 +47,6 @@ class GMailFeedingService(EmailFeedingService):
             "id": "log_in_url",
             "type": "url_request",
             "label": l_("Log-in with GMail"),
-
             # provider._id != null              provider has to be saved before trying to log in
             # provider.config['email'] == null  do not display log-in button if logged-in already
             "show_expression": "provider._id != null && provider.config['email'] == null",
@@ -56,7 +55,6 @@ class GMailFeedingService(EmailFeedingService):
             "id": "log_out_url",
             "type": "url_request",
             "label": l_("Log-out"),
-
             # provider.config['email'] != null  only display log-out button if already logged in
             "show_expression": "provider.config['email'] != null",
         },
