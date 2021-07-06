@@ -46,11 +46,9 @@ class FeedingService(metaclass=ABCMeta):
                 - required: if true the field is required
                 - errors: dictionary of with key being the error code and value the error description
                 - required_expression: if the evaluation of the expression is true the field is required
-                    on validation. Field values can be referred by enclosing the field identifier in
-                    accolades: {field_id}
+                    on validation.
                 - readonly: if true, the field is not editable
                 - show_expression: if the evaluation of this JavaScript expression is true the field is displayed.
-                    Field values can be referred by enclosing the field identifier in accolades: {field_id}
                 - default_value: value to use
             Type specific properties:
                 properties with a ``*`` are mandatory

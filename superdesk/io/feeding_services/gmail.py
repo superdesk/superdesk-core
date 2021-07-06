@@ -37,24 +37,28 @@ class GMailFeedingService(EmailFeedingService):
 
     fields = [
         {
+            "id": "email",
+            "type": "text",
+            "label": l_("email"),
+            "readonly": True,
+            "show_expression": "provider.config['email'] != null",
+        },
+        {
             "id": "log_in_url",
             "type": "url_request",
             "label": l_("Log-in with GMail"),
-            "show_expression": "!provider.config['email']",
+
+            # provider._id != null              provider has to be saved before trying to log in
+            # provider.config['email'] == null  do not display log-in button if logged-in already
+            "show_expression": "provider._id != null && provider.config['email'] == null",
         },
         {
             "id": "log_out_url",
             "type": "url_request",
             "label": l_("Log-out"),
-            "show_expression": "provider.config['email']",
-        },
-        {
-            "id": "email",
-            "type": "text",
-            "label": l_("email"),
-            "readonly": True,
-            "placeholder": l_("This field will be automatically filled once you've logged using log-in button above"),
-            "show_expression": "{email}",
+
+            # provider.config['email'] != null  only display log-out button if already logged in
+            "show_expression": "provider.config['email'] != null",
         },
         {
             "id": "mailbox",

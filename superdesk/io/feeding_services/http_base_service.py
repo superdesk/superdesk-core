@@ -95,16 +95,16 @@ class HTTPFeedingServiceBase(FeedingService):
             "type": "text",
             "label": "Username",
             "placeholder": "Username",
-            "required_expression": "{auth_required}",
-            "show_expression": "{auth_required}",
+            "required_expression": "provider.config.auth_required === true",
+            "show_expression": "provider.config.auth_required === true",
         },
         {
             "id": "password",
             "type": "password",
             "label": "Password",
             "placeholder": "Password",
-            "required_expression": "{auth_required}",
-            "show_expression": "{auth_required}",
+            "required_expression": "provider.config.auth_required === true",
+            "show_expression": "provider.config.auth_required === true",
         },
     ]
 
