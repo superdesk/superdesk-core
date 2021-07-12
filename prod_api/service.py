@@ -28,7 +28,6 @@ class ProdApiService(superdesk.Service):
         "_updated",
         "_created",
         "_current_version",
-        "_links",
         "fields_meta",
     }
 
