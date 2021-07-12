@@ -19,6 +19,7 @@ def init_app(app: Eve):
 
     try:
         from planning.prod_api import init_app as init_planning_app
+
         init_planning_app(app)
     except ImportError:
         pass
