@@ -44,7 +44,6 @@ def test_excluded_fields(prodapi_app_with_data, prodapi_app_with_data_client):
         "_updated",
         "_created",
         "_current_version",
-        "_links",
     }
 
     with prodapi_app_with_data.test_request_context():
