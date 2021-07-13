@@ -7,6 +7,7 @@
 # at https://www.sourcefabric.org/superdesk/license
 
 import imaplib
+from bson import ObjectId
 from os.path import join
 import time
 import logging
@@ -83,7 +84,7 @@ class GMailFeedingService(EmailFeedingService):
 
     def authenticate(self, provider: dict, config: dict) -> imaplib.IMAP4_SSL:
         oauth2_token_service = superdesk.get_resource_service("oauth2_token")
-        token = oauth2_token_service.find_one(req=None, _id=provider["_id"])
+        token = oauth2_token_service.find_one(req=None, _id=ObjectId(provider["_id"]))
         if token is None:
             raise IngestEmailError.notConfiguredError(ValueError(l_("You need to log in first")), provider=provider)
         imap = imaplib.IMAP4_SSL("imap.gmail.com")

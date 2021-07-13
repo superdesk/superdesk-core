@@ -27,6 +27,7 @@ Once configured you will find there *Client ID* and *Client secret*, use both to
 import logging
 from datetime import datetime
 from typing import Optional, List, Tuple
+from bson import ObjectId
 import superdesk
 from flask import url_for, render_template
 from eve.utils import config
@@ -112,7 +113,7 @@ def token2dict(
     :param name: name of the OAuth2 service
     """
     return {
-        "_id": token_id,
+        "_id": ObjectId(token_id),
         "name": "google",
         "email": email,
         "access_token": token["access_token"],
@@ -208,13 +209,13 @@ def configure_google(app, extra_scopes: Optional[List[str]] = None, refresh: boo
 
         :param url_id: used to identify the token
         """
-        revoke_google_token(url_id)
+        revoke_google_token(ObjectId(url_id))
         return render_template(TEMPLATE, data={})
 
     superdesk.blueprint(bp, app)
 
 
-def _get_token_and_sesion(token_id: str) -> Tuple[dict, OAuth2Session]:
+def _get_token_and_sesion(token_id: ObjectId) -> Tuple[dict, OAuth2Session]:
     oauth2_token_service = superdesk.get_resource_service("oauth2_token")
     token = oauth2_token_service.find_one(req=None, _id=token_id)
     if token is None:
@@ -228,7 +229,7 @@ def _get_token_and_sesion(token_id: str) -> Tuple[dict, OAuth2Session]:
     return token, session
 
 
-def refresh_google_token(token_id: str) -> dict:
+def refresh_google_token(token_id: ObjectId) -> dict:
     token, session = _get_token_and_sesion(token_id)
     new_token = session.refresh_token(TOKEN_ENDPOINT, token["refresh_token"])
     token_dict = token2dict(token["_id"], token["email"], new_token)
@@ -237,7 +238,7 @@ def refresh_google_token(token_id: str) -> dict:
     return token_dict
 
 
-def revoke_google_token(token_id: str) -> None:
+def revoke_google_token(token_id: ObjectId) -> None:
     """Revoke a token"""
     token, session = _get_token_and_sesion(token_id)
     oauth2_token_service = superdesk.get_resource_service("oauth2_token")
