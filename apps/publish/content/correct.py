@@ -14,7 +14,7 @@ from superdesk.metadata.item import ITEM_STATE, EMBARGO, SCHEDULE_SETTINGS
 from superdesk.utc import utcnow
 from superdesk.text_utils import update_word_count
 from apps.archive.common import set_sign_off, ITEM_OPERATION, get_user
-from apps.archive.archive import flush_renditions
+from apps.archive.archive import flush_renditions, remove_is_queued
 from apps.tasks import send_to
 from apps.auth import get_user_id
 from .common import BasePublishService, BasePublishResource, ITEM_CORRECT
@@ -94,6 +94,7 @@ class CorrectPublishService(BasePublishService):
     def on_update(self, updates, original):
         CropService().validate_multiple_crops(updates, original)
         super().on_update(updates, original)
+        remove_is_queued(updates)
         updates[ITEM_OPERATION] = self.item_operation
         updates["versioncreated"] = utcnow()
         updates["correction_sequence"] = original.get("correction_sequence", 1) + 1
