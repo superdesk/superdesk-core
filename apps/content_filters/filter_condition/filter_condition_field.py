@@ -37,6 +37,7 @@ class FilterConditionFieldsEnum(Enum):
     embargo = 18
     featuremedia = 19
     agendas = 20
+    languages = 21
 
 
 class FilterConditionField:
@@ -74,6 +75,8 @@ class FilterConditionField:
             return FilterConditionEmbargoField(field)
         elif FilterConditionFieldsEnum[field] == FilterConditionFieldsEnum.featuremedia:
             return FilterConditionFeatureMediaField(field)
+        elif FilterConditionFieldsEnum[field] == FilterConditionFieldsEnum.languages:
+            return FilterConditionLanguagesField(field)
         else:
             return FilterConditionField(field)
 
@@ -264,3 +267,16 @@ class FilterConditionFeatureMediaField(FilterConditionField):
 
     def get_mongo_query(self):
         return {"associations.featuremedia._id": {"$exists": True}}
+
+
+class FilterConditionLanguagesField(FilterConditionField):
+    def __init__(self, field):
+        self.field_name = "language"
+        self.entity_name = field
+        self.field_type = str
+
+    def is_in_article(self, article):
+        return self.field_name in article and article.get(self.field_name) is not None
+
+    def get_value(self, article):
+        return article.get(self.field_name)
