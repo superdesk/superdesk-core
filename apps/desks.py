@@ -587,6 +587,7 @@ class OverviewService(BaseService):
                                     CONTENT_STATE.KILLED,
                                     CONTENT_STATE.CORRECTED,
                                     CONTENT_STATE.SCHEDULED,
+                                    CONTENT_STATE.RECALLED,
                                 ]
                             }
                         },
