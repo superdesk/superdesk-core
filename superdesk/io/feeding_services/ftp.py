@@ -13,14 +13,15 @@ import os
 import ftplib
 import logging
 import tempfile
-from urllib.parse import urlparse
+import lxml.etree as etree
+
 from datetime import datetime
+from urllib.parse import urlparse
 
 from flask import current_app as app
 from superdesk.io.registry import register_feeding_service
 from superdesk.io.feed_parsers import XMLFeedParser
-from superdesk.utc import utc
-from superdesk.etree import etree
+from superdesk.utc import utc, utcnow
 from superdesk.io.feeding_services import FeedingService
 from superdesk.errors import IngestFtpError
 from superdesk.ftp import ftp_connect
@@ -222,17 +223,8 @@ class FTPFeedingService(FeedingService):
             return [(filename, facts["modify"]) for filename, facts in ftp.mlsd() if facts.get("type") == "file"]
         except Exception as ex:
             if "500" in str(ex):
-                file_list = []
-                file_name_list = []
-                date_list = []
-                ftp.dir(file_list.append)
-                self.DATE_FORMAT = "%Y %b %d %H:%M:%S"
-                for line in file_list:
-                    col = line.split()
-                    date_string = "{} ".format(datetime.now().year) + " ".join(col[5:8]) + ":00"
-                    date_list.append(date_string)
-                    file_name_list.append(col[8])
-                return zip(file_name_list, date_list)
+                now = utcnow()
+                return [(file_name, now) for file_name in ftp.nlst()]
             else:
                 raise IngestFtpError.ftpError(ex, provider)
         finally:
@@ -297,6 +289,7 @@ class FTPFeedingService(FeedingService):
         try:
             self._timer.start("ftp_connect")
             with ftp_connect(config) as ftp:
+                ftp.encoding = "UTF-8"
                 self._log_msg(
                     "Connected to FTP server. Exec time: {:.4f} secs.".format(self._timer.stop("ftp_connect"))
                 )
@@ -315,7 +308,11 @@ class FTPFeedingService(FeedingService):
                         continue
 
                     # filter by modify datetime
-                    file_modify = datetime.strptime(modify, self.DATE_FORMAT).replace(tzinfo=utc)
+                    file_modify = (
+                        modify
+                        if isinstance(modify, datetime)
+                        else datetime.strptime(modify, self.DATE_FORMAT).replace(tzinfo=utc)
+                    )
                     if last_processed_file_modify:
                         # ignore limit and add files for processing
                         if last_processed_file_modify == file_modify:
