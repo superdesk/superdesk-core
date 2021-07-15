@@ -8,10 +8,12 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
-from typing import Dict, Any, Optional
+from typing import Dict, Any, Optional, Union
 
 from bson import ObjectId
 from eve.utils import str_to_date
+from pymongo.cursor import Cursor as MongoCursor
+from flask import current_app as app
 from requests import Response
 from requests.exceptions import HTTPError
 
@@ -87,6 +89,14 @@ def get_default_set_id_for_upload(client: SamsClient, data: Dict[str, Any]) -> O
         return ObjectId(set_item["_id"])
 
     return ObjectId(data["set_id"])
+
+
+def get_attachments_from_asset_id(asset_id: Union[ObjectId, str]) -> MongoCursor:
+    """Returns the list of Attachments that use this SAMS Asset"""
+
+    # use PyMongo directly as searching with `media: str` doesnt work for Superdesk's datalayer
+    db_attachments = app.data.get_mongo_collection("attachments")
+    return db_attachments.find({"media": str(asset_id)})
 
 
 def raise_sams_error(response: Response):

@@ -418,6 +418,7 @@ class ArchiveService(BaseService):
         self._add_system_updates(original, updates, user)
         self._add_desk_metadata(updates, original)
         self._handle_media_updates(updates, original, user)
+        self._handle_attachment_updates(updates, original)
         flush_renditions(updates, original)
         update_refs(updates, original)
 
@@ -464,6 +465,30 @@ class ArchiveService(BaseService):
             updates[ASSOCIATIONS][item_name] = stored_item
         if body:
             updates["body_html"] = body
+
+    def _handle_attachment_updates(self, updates, original):
+        """Handle changes to item attachments
+
+        If an attachment was removed in this update, then remove the
+        associated Attachment document from the collection as well
+        """
+
+        if "attachments" not in updates or not len(original.get("attachments") or []):
+            # No need to proceed if:
+            #   - ``attachments`` is not supplied in updates, or
+            #   - original has no ``attachments``
+            return
+
+        updated_attachment_ids = [attachment["attachment"] for attachment in updates["attachments"] or []]
+        attachment_ids_to_remove = [
+            attachment["attachment"]
+            for attachment in original["attachments"]
+            if attachment["attachment"] not in updated_attachment_ids
+        ]
+
+        for attachment_id in attachment_ids_to_remove:
+            lookup = {"_id": attachment_id}
+            get_resource_service("attachments").delete_action(lookup)
 
     def on_updated(self, updates, original):
         get_component(ItemAutosave).clear(original["_id"])
