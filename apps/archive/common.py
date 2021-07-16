@@ -227,7 +227,7 @@ def format_dateline_to_locmmmddsrc(located, current_timestamp, source=None):
         dateline_location = "{city_code}, {country_code}"
     dateline_location = dateline_location.format(**located)
 
-    if located["tz"] != "UTC":
+    if located.get("tz") and located["tz"] != "UTC":
         current_timestamp = datetime.fromtimestamp(current_timestamp.timestamp(), tz=timezone(located["tz"]))
     if current_timestamp.month == 9:
         formatted_date = "Sept {}".format(current_timestamp.strftime("%-d"))
