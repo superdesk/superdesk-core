@@ -238,6 +238,16 @@ def flush_renditions(updates, original):
                         updates[ASSOCIATIONS][key]["renditions"][old_rendition] = None
 
 
+def remove_is_queued(item):
+    if config.PUBLISH_ASSOCIATED_ITEMS:
+        associations = item.get("associations") or {}
+        for associations_key, associated_item in associations.items():
+            if not associated_item:
+                continue
+            if associated_item.get("is_queued"):
+                associated_item["is_queued"] = None
+
+
 class ArchiveVersionsResource(Resource):
     schema = item_schema()
     extra_response_fields = extra_response_fields
@@ -352,8 +362,6 @@ class ArchiveService(BaseService):
             if doc.get("version") == 0:
                 doc[config.VERSION] = doc["version"]
 
-            self._add_desk_metadata(doc, {})
-
             convert_task_attributes_to_objectId(doc)
             transtype_metadata(doc)
 
@@ -416,7 +424,6 @@ class ArchiveService(BaseService):
 
         remove_unwanted(updates)
         self._add_system_updates(original, updates, user)
-        self._add_desk_metadata(updates, original)
         self._handle_media_updates(updates, original, user)
         flush_renditions(updates, original)
         update_refs(updates, original)
@@ -1128,16 +1135,6 @@ class ArchiveService(BaseService):
             yield items
         else:
             logger.warning("get_expired_items did not finish in %d loops", app.config["MAX_EXPIRY_LOOPS"])
-
-    def _add_desk_metadata(self, updates, original):
-        """Populate updates metadata from item desk in case it's set.
-
-        It will only add data which is not set yet on the item.
-
-        :param updates: updates to item that should be saved
-        :param original: original item version before update
-        """
-        return get_resource_service("desks").apply_desk_metadata(updates, original)
 
     def handle_mark_user_notifications(self, updates, original, add_activity=True):
         """Notify user when item is marked or unmarked

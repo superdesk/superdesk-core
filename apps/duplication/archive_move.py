@@ -122,7 +122,7 @@ class MoveService(BaseService):
         archived_doc = archive_service.find_one(req=None, _id=id)
 
         if not archived_doc:
-            raise SuperdeskApiError.notFoundError(_("Fail to found item with guid: {guid}").format(guid=id))
+            raise SuperdeskApiError.notFoundError(_("Failed to find item with guid: {guid}").format(guid=id))
 
         self._validate(archived_doc, doc)
         self._move(archived_doc, doc)

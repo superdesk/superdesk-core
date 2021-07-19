@@ -11,6 +11,9 @@ from superdesk.factory import get_app as get_sd_app
 from superdesk.auth_server.clients import RegisterClient
 from prod_api.app import get_app as get_prodapi_api
 
+from planning.prod_api.events.resource import EventsResource
+from planning.events.events_schema import events_schema
+
 
 MONGO_DB = "prodapi_tests"
 ELASTICSEARCH_INDEX = MONGO_DB
@@ -41,6 +44,12 @@ def get_test_prodapi_app(extra_config=None):
     if extra_config:
         test_config.update(extra_config)
     prodapi_app = get_prodapi_api(test_config)
+
+    # patch Events API with dates schema
+    # otherwise queries against it will fail (due to default sort)
+    # this will not happen in a production environment
+    # as the index/types should already be created
+    EventsResource.schema = {"dates": events_schema["dates"]}
 
     # put elastic mapping
     with prodapi_app.app_context():

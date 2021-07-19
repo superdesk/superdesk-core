@@ -86,12 +86,36 @@ class ArchiveCorrectionService(Service):
         if archive_item.get("publish_schedule"):
             archive_item_updates.update({"publish_schedule": None, "schedule_settings": {}})
 
-        # modify item in archive.
-        archive_service.system_update(archive_item.get(config.ID_FIELD), archive_item_updates, archive_item)
-        app.on_archive_item_updated(archive_item_updates, archive_item, ITEM_CORRECTION)
+        # set working stage when we create correction
+        if archive_item.get("task", {}).get("desk"):
+            archive_item_updates.update({"task": archive_item.get("task")})
+            desk = get_resource_service("desks").find_one(req=None, _id=archive_item["task"]["desk"]) or {}
+            if desk:
+                archive_item_updates["task"].update({"stage": desk.get("working_stage")})
 
-        # modify item in published.
-        published_service.patch(id=published_article.get(config.ID_FIELD), updates=published_item_updates)
+        try:
+            # modify item in published.
+            _published_item = published_service.system_update(
+                published_article.get(config.ID_FIELD), published_item_updates, published_article
+            )
+            assert (
+                remove_correction
+                or _published_item is not None
+                and (
+                    published_item_updates.get("operation") == CONTENT_STATE.BEING_CORRECTED
+                    and _published_item.get("state") == CONTENT_STATE.BEING_CORRECTED
+                )
+            ), "Being corrected is not generated"
+
+            # modify item in archive.
+            archive_service.system_update(archive_item.get(config.ID_FIELD), archive_item_updates, archive_item)
+            app.on_archive_item_updated(archive_item_updates, archive_item, ITEM_CORRECTION)
+
+        except Exception as e:
+            logger.exception(e)
+            raise SuperdeskApiError.internalError(
+                message=_("Failed to generate correction: {exception}").format(exception=str(e))
+            )
 
         user = get_user(required=True)
         push_notification("item:correction", item=original.get(config.ID_FIELD), user=str(user.get(config.ID_FIELD)))

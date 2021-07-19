@@ -62,7 +62,7 @@ class AuthResource(Resource):
 
     resource_methods = ["POST"]
     item_methods = ["GET", "DELETE"]
-    public_methods = ["POST", "DELETE"]
+    public_methods = ["POST"]
     extra_response_fields = ["user", "token", "username"]
     datasource = {"source": "auth"}
     mongo_indexes = {"token": ([("token", 1)], {"background": True})}
@@ -154,7 +154,7 @@ class SuperdeskTokenAuth(TokenAuth):
             if method in ("POST", "PUT", "PATCH") or method == "GET" and not request.args.get("auto"):
                 now = utcnow()
                 auth_updated = False
-                if auth_token[app.config["LAST_UPDATED"]] + timedelta(seconds=30) < now:  # update once per 30s max
+                if auth_token[app.config["LAST_UPDATED"]] + timedelta(seconds=10) < now:  # update once every 10s max
                     auth_service.update_session({app.config["LAST_UPDATED"]: now})
                     auth_updated = True
                 if not flask.g.user.get("last_activity_at") or auth_updated:

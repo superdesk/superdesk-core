@@ -144,6 +144,7 @@ class BasePublishService(BaseService):
 
     def on_update(self, updates, original):
         self._refresh_associated_items(original)
+        self._set_updates_for_media_items(original, updates)
         self._validate(original, updates)
         self._set_updates(
             original,
@@ -626,6 +627,8 @@ class BasePublishService(BaseService):
             if type(item) == dict and item.get(config.ID_FIELD):
                 doc = item
                 orig = super().find_one(req=None, _id=item[config.ID_FIELD])
+                if not app.settings.get("COPY_METADATA_FROM_PARENT") and orig:
+                    doc = orig
                 try:
                     doc.update({"lock_user": orig["lock_user"]})
                 except (TypeError, KeyError):
@@ -709,6 +712,14 @@ class BasePublishService(BaseService):
             kwargs = {"item_id": doc.get(config.ID_FIELD)}
             # countdown=3 is for elasticsearch to be refreshed with archive and published changes
             import_into_legal_archive.apply_async(countdown=3, kwargs=kwargs)  # @UndefinedVariable
+
+    def _set_updates_for_media_items(self, doc, updates):
+        if doc.get("type") not in MEDIA_TYPES:
+            return
+
+        for key in DEFAULT_SCHEMA.keys():
+            if doc.get(key):
+                updates[key] = doc[key]
 
     def _refresh_associated_items(self, original, skip_related=False):
         """Refreshes associated items with the latest version. Any further updates made to basic metadata done after
@@ -845,6 +856,8 @@ class BasePublishService(BaseService):
                     associated_item["operation"] = self.publish_type
                     updates[ASSOCIATIONS] = updates.get(ASSOCIATIONS, {})
                     updates[ASSOCIATIONS][associations_key] = associated_item
+                    # check for marking that the association item has been queued
+                    associated_item["is_queued"] = True
                 elif associated_item.get("state") != self.published_state:
                     # Check if there are updates to associated item
                     association_updates = updates.get(ASSOCIATIONS, {}).get(associations_key)

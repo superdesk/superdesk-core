@@ -17,6 +17,7 @@ from superdesk import utils as utils, get_resource_service, get_resource_privile
 from superdesk.services import BaseService
 from superdesk.errors import SuperdeskApiError
 from superdesk.users.errors import UserInactiveError
+from superdesk.utc import utcnow
 from apps import auth
 from apps.auth.errors import UserDisabledError
 
@@ -45,6 +46,17 @@ class AuthService(BaseService):
     def on_created(self, docs):
         for doc in docs:
             get_resource_service("preferences").set_session_based_prefs(doc["_id"], doc["user"])
+            self.set_user_last_activity(doc["user"])
+
+    def set_user_last_activity(self, user_id, done=False):
+        now = utcnow()
+        user_service = get_resource_service("users")
+        user = user_service.find_one(req=None, _id=user_id)
+        user_service.system_update(
+            user["_id"],
+            {"last_activity_at": now if not done else None, "_updated": now},
+            user,
+        )
 
     def set_auth_default(self, doc, user_id):
         doc["user"] = user_id
@@ -72,6 +84,7 @@ class AuthService(BaseService):
         """
         # notify that the session has ended
         app.on_session_end(doc["user"], doc["_id"])
+        self.set_user_last_activity(doc["user"], done=True)
 
     def is_authorized(self, **kwargs) -> bool:
         """

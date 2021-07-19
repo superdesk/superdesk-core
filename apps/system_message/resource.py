@@ -16,12 +16,12 @@ class SystemMessagesResource(Resource):
         "is_active": {"type": "boolean", "default": False},
         "type": {
             "type": "string",
-            "allowed": ["warning", "alert", "primary/info", "success"],
+            "allowed": ["warning", "alert", "primary", "success", "highlight", "light"],
             "required": True,
         },
         "message_title": {"type": "string", "required": True},
-        "message": {"type": "string", "required": True},
-        "user_id": Resource.rel("users", required=True),
+        "message": {"type": "string", "required": True, "maxlength": 200},
+        "user_id": Resource.rel("users"),
     }
 
     resource_methods = ["GET", "POST"]

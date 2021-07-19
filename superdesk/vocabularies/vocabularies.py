@@ -515,6 +515,10 @@ class VocabulariesService(BaseService):
     def get_languages(self):
         return self.get_items(_id="languages")
 
+    def get_field_options(self, field) -> Dict:
+        cv = self.find_one(req=None, _id=field)
+        return cv and cv.get("field_options") or {}
+
 
 def is_related_content(item_name, related_content=None):
     if related_content is None:

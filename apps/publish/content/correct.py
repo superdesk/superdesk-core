@@ -14,7 +14,7 @@ from superdesk.metadata.item import ITEM_STATE, EMBARGO, SCHEDULE_SETTINGS
 from superdesk.utc import utcnow
 from superdesk.text_utils import update_word_count
 from apps.archive.common import set_sign_off, ITEM_OPERATION, get_user
-from apps.archive.archive import flush_renditions
+from apps.archive.archive import flush_renditions, remove_is_queued
 from apps.tasks import send_to
 from apps.auth import get_user_id
 from .common import BasePublishService, BasePublishResource, ITEM_CORRECT
@@ -91,22 +91,10 @@ class CorrectPublishService(BasePublishService):
             else:
                 publish_service.patch(being_corrected_article["_id"], updates={"state": "published"})
 
-    def send_to_original_desk(self, updates, original):
-        if (
-            app.config.get("CORRECTIONS_WORKFLOW")
-            and original.get("state") == "correction"
-            and original.get("task", {}).get("desk_history")
-        ):
-            send_to(
-                doc=updates,
-                desk_id=(original["task"]["desk_history"][0]),
-                default_stage="working_stage",
-                user_id=get_user_id(),
-            )
-
     def on_update(self, updates, original):
         CropService().validate_multiple_crops(updates, original)
         super().on_update(updates, original)
+        remove_is_queued(updates)
         updates[ITEM_OPERATION] = self.item_operation
         updates["versioncreated"] = utcnow()
         updates["correction_sequence"] = original.get("correction_sequence", 1) + 1
@@ -114,7 +102,6 @@ class CorrectPublishService(BasePublishService):
         update_word_count(updates, original)
         flush_renditions(updates, original)
         self.change_being_corrected_to_published(updates, original)
-        self.send_to_original_desk(updates, original)
 
     def update(self, id, updates, original):
         editor_utils.generate_fields(updates)

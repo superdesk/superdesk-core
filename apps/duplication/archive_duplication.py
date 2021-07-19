@@ -13,7 +13,7 @@ from eve.utils import config, ParsedRequest
 from flask import request, current_app as app
 
 import superdesk
-from apps.archive.archive import SOURCE as ARCHIVE
+from apps.archive.archive import SOURCE as ARCHIVE, remove_is_queued
 from apps.auth import get_user, get_user_id
 from apps.content import push_content_notification
 from apps.tasks import send_to
@@ -84,6 +84,8 @@ class DuplicateService(BaseService):
             archived_doc["versioncreated"] = archived_doc["firstcreated"] = utcnow()
             archived_doc["firstpublished"] = None
 
+            remove_is_queued(archived_doc)
+
             send_to(
                 doc=archived_doc,
                 desk_id=doc.get("desk"),
@@ -125,7 +127,7 @@ class DuplicateService(BaseService):
 
         if not doc_in_archive:
             raise SuperdeskApiError.notFoundError(
-                _("Fail to found item with guid: {guid}").format(guid=guid_to_duplicate)
+                _("Failed to find item with guid: {guid}").format(guid=guid_to_duplicate)
             )
 
         if not is_workflow_state_transition_valid("duplicate", doc_in_archive[ITEM_STATE]):

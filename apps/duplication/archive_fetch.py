@@ -72,7 +72,7 @@ class FetchService(BaseService):
 
             if not ingest_doc:
                 raise SuperdeskApiError.notFoundError(
-                    _("Fail to found ingest item with _id: {id}").format(id=id_of_item_to_be_fetched)
+                    _("Failed to find ingest item with _id: {id}").format(id=id_of_item_to_be_fetched)
                 )
 
             if not is_workflow_state_transition_valid("fetch_from_ingest", ingest_doc[ITEM_STATE]):

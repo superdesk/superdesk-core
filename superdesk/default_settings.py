@@ -356,6 +356,8 @@ CORE_APPS = [
     "superdesk.auth_server",
     "apps.links",
     "superdesk.locales",
+    "apps.usage_metrics",
+    "superdesk.system.health",
 ]
 
 #: Specify what modules should be enabled
@@ -962,3 +964,4 @@ OIDC_BROWSER_REDIRECT_URL = env("OIDC_BROWSER_REDIRECT_URL", CLIENT_URL)
 #: .. versionadded:: 2.1
 #:
 APPS_DATA_UPDATES_PATHS = []
+PUBLISH_ASSOCIATIONS_RESEND = "new"

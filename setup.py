@@ -86,7 +86,7 @@ package_data = {
 
 setup(
     name="Superdesk-Core",
-    version="2.1.0",
+    version="2.4.0.dev0",
     description="Superdesk Core library",
     long_description=LONG_DESCRIPTION,
     author="petr jasek",
@@ -97,7 +97,6 @@ setup(
     packages=find_packages(exclude=["tests", "features"]),
     package_data=package_data,
     include_package_data=True,
-    use_scm_version=True,
     setup_requires=["setuptools_scm"],
     install_requires=install_requires,
     classifiers=[

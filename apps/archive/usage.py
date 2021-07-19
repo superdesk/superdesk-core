@@ -71,6 +71,7 @@ def update_refs(updates, original):
                 "uri": val.get("uri") or item.get("uri"),
                 "guid": val.get("guid") or item.get("guid"),
                 "type": val.get("type") or item.get("type"),
+                "source": val.get("source") or item.get("source"),
             }
         )
     updates["refs"] = refs

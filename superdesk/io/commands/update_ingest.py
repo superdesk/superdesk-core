@@ -362,6 +362,7 @@ def process_anpa_category(item, provider):
                     item_category["name"] = mapped_category[0]["name"]
                     # make the case of the qcode match what we hold in our dictionary
                     item_category["qcode"] = mapped_category[0]["qcode"]
+                    item_category["scheme"] = "categories"
     except Exception as ex:
         raise ProviderError.anpaError(ex, provider)
 
@@ -568,6 +569,9 @@ def ingest_item(item, provider, feeding_service, rule_set=None, routing_scheme=N
                 item["profile"] = bson.ObjectId(item["profile"])
             except bson.errors.InvalidId:
                 pass
+            profile = superdesk.get_resource_service("content_types").find_one(req=None, _id=item["profile"])
+            if not profile:  # unknown profile
+                item.pop("profile")
 
         set_default_state(item, CONTENT_STATE.INGESTED)
         item["expiry"] = get_expiry_date(
