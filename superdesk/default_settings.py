@@ -359,6 +359,7 @@ CORE_APPS = [
     "apps.links",
     "superdesk.locales",
     "apps.usage_metrics",
+    "superdesk.system.health",
 ]
 
 #: Specify what modules should be enabled
