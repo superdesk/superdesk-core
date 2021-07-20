@@ -38,5 +38,6 @@ def init_app(app) -> None:
             "disallowed_characters": app.config.get("DISALLOWED_CHARACTERS"),
             "allow_updating_scheduled_items": app.config.get("ALLOW_UPDATING_SCHEDULED_ITEMS"),
             "corrections_workflow": app.config.get("CORRECTIONS_WORKFLOW"),
+            "default_timezone": app.config.get("DEFAULT_TIMEZONE"),
         }
     )
