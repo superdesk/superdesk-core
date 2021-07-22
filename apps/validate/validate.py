@@ -286,11 +286,11 @@ class SchemaValidator(Validator):
         """
         if not validate:
             return
-        media_metadata_schema = app.config.get("VALIDATOR_MEDIA_METADATA")
-        if not media_metadata_schema:
-            return
         for assoc_name, assoc_data in associations.items():
             if assoc_data is None or assoc_data.get("type") == "text":
+                continue
+            media_metadata_schema = superdesk.get_resource_service("content_types").get_schema(assoc_data)
+            if not media_metadata_schema:
                 continue
             for field, schema in media_metadata_schema.items():
                 if schema.get("required", False) and not assoc_data.get(field):
@@ -379,6 +379,7 @@ class ValidateService(superdesk.Service):
         default_schema = DEFAULT_SCHEMA_MAP.get(item_type)
         if default_schema:
             return self._get_profile_schema(default_schema, doc)
+        return []
 
     def _populate_extra(self, doc, schema):
         """Populates the extra field in the document with fields stored in subject. Used

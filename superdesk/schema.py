@@ -128,5 +128,9 @@ class StringField(SchemaField):
         super().__init__()
         self.schema["type"] = "string"
         self.schema["required"] = required
-        self.schema["minlength"] = minlength
-        self.schema["maxlength"] = maxlength
+
+        if minlength is not None:
+            self.schema["minlength"] = minlength
+
+        if maxlength is not None:
+            self.schema["maxlength"] = maxlength

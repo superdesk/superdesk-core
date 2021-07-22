@@ -327,7 +327,6 @@ class NINJSFormatter(Formatter):
         associations = OrderedDict()
         extra_items = {}
         media = {}
-        content_profile = None
         archive_service = superdesk.get_resource_service("archive")
 
         article_associations = OrderedDict(
@@ -355,20 +354,9 @@ class NINJSFormatter(Formatter):
                 if match:
                     # item id seems to be build from a custom id
                     # we now check content profile to see if it correspond to a custom field
-                    if content_profile is None:
-                        try:
-                            profile = article["profile"]
-                        except KeyError:
-                            logger.warning("missing profile in article (guid: {guid})".format(guid=article.get("guid")))
-                            content_profile = {"schema": {}}
-                        else:
-                            content_profile = superdesk.get_resource_service("content_types").find_one(
-                                _id=profile, req=None
-                            )
-                            assert content_profile, f"missing profile {profile}"
                     field_id = match.group("field_id")
-                    schema = content_profile["schema"].get(field_id, {})
-                    if schema.get("type") == "media" or schema.get("type") == "related_content":
+                    schema = superdesk.get_resource_service("content_types").get_schema(article)
+                    if schema and schema.get("type") == "media" or schema.get("type") == "related_content":
                         # we want custom media fields in "extra_items", cf. SDESK-2955
                         version = match.group("version")
                         media.setdefault(field_id, []).append((version, item))

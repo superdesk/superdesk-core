@@ -247,7 +247,7 @@ Feature: Content Profile
                         "scheme": {}
                     },
                     "type": "list",
-                    "required": true,
+                    "required": false,
                     "schema": {}
                 }
             },
@@ -400,7 +400,7 @@ Feature: Content Profile
                         "scheme": {}
                     },
                     "schema": {},
-                    "required": true
+                    "required": false
                 },
                 "genre_custom": {
                     "type": "list",

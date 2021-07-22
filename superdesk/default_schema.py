@@ -38,7 +38,7 @@ class DefaultSchema(schema.Schema):
 
     #: subject
     subject = schema.ListField(
-        required=True,
+        required=False,
         mandatory_in_list={"scheme": {}},
         schema={
             "type": "dict",
@@ -113,8 +113,6 @@ class DefaultSchema(schema.Schema):
 DEFAULT_SCHEMA = dict(DefaultSchema)
 
 DEFAULT_MEDIA_SCHEMA = deepcopy(DEFAULT_SCHEMA)
-DEFAULT_MEDIA_SCHEMA["headline"]["required"] = False
-DEFAULT_MEDIA_SCHEMA["subject"]["required"] = False
 DEFAULT_MEDIA_SCHEMA.pop("body_html")
 DEFAULT_MEDIA_SCHEMA.pop("body_footer")
 
