@@ -153,6 +153,7 @@ Feature: Validate
     """
     {"errors": "__empty__"}
     """
+    
   @auth
   Scenario: Missing validator will use default profile
     Given the "validators"

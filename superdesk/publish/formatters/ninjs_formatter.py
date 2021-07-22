@@ -365,6 +365,7 @@ class NINJSFormatter(Formatter):
                             content_profile = superdesk.get_resource_service("content_types").find_one(
                                 _id=profile, req=None
                             )
+                            assert content_profile, f"missing profile {profile}"
                     field_id = match.group("field_id")
                     schema = content_profile["schema"].get(field_id, {})
                     if schema.get("type") == "media" or schema.get("type") == "related_content":

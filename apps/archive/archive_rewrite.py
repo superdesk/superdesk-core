@@ -235,35 +235,12 @@ class ArchiveRewriteService(Service):
         else:
             # ingest provider and source to be retained for new item
             fields.extend(["ingest_provider", "source"])
-
-            if original.get("profile"):
-                content_type = get_resource_service("content_types").find_one(req=None, _id=original["profile"])
-                extended_fields = list(content_type["schema"].keys())
-                # extra fields needed.
-                extended_fields.extend(["profile", "keywords", "target_regions", "target_types", "target_subscribers"])
-            else:
-                extended_fields = [
-                    "abstract",
-                    "anpa_category",
-                    "pubstatus",
-                    "slugline",
-                    "urgency",
-                    "subject",
-                    "priority",
-                    "byline",
-                    "dateline",
-                    "headline",
-                    "place",
-                    "genre",
-                    "body_footer",
-                    "company_codes",
-                    "keywords",
-                    "target_regions",
-                    "target_types",
-                    "target_subscribers",
-                ]
-
-            fields.extend(extended_fields)
+            # system fields needed.
+            fields.extend(["profile", "keywords", "target_regions", "target_types", "target_subscribers"])
+            content_schema = get_resource_service("content_types").get_schema(original)
+            if content_schema:
+                extended_fields = list(content_schema.keys())
+                fields.extend(extended_fields)
 
         for field in fields:
             if original.get(field):

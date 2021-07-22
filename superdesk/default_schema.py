@@ -162,3 +162,21 @@ DEFAULT_EDITOR = {
 DEFAULT_MEDIA_EDITOR = deepcopy(DEFAULT_EDITOR)
 DEFAULT_MEDIA_EDITOR.pop("body_html")
 DEFAULT_MEDIA_EDITOR.pop("body_footer")
+
+DEFAULT_SCHEMA_MAP = {
+    "text": DEFAULT_SCHEMA,
+    "audio": DEFAULT_MEDIA_SCHEMA,
+    "video": DEFAULT_MEDIA_SCHEMA,
+    "picture": DEFAULT_MEDIA_SCHEMA,
+    "graphic": DEFAULT_MEDIA_SCHEMA,
+    "composite": DEFAULT_MEDIA_SCHEMA,
+}
+
+DEFAULT_EDITOR_MAP = {
+    "text": DEFAULT_EDITOR,
+    "audio": DEFAULT_MEDIA_EDITOR,
+    "video": DEFAULT_MEDIA_EDITOR,
+    "picture": DEFAULT_MEDIA_EDITOR,
+    "graphic": DEFAULT_MEDIA_EDITOR,
+    "composite": DEFAULT_MEDIA_EDITOR,
+}

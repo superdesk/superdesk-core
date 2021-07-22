@@ -3,11 +3,10 @@ import bson
 import superdesk
 
 from copy import deepcopy
-from flask import current_app as app
 from eve.utils import config
 from superdesk import get_resource_service
 from superdesk.errors import SuperdeskApiError
-from superdesk.default_schema import DEFAULT_SCHEMA, DEFAULT_EDITOR, DEFAULT_MEDIA_SCHEMA, DEFAULT_MEDIA_EDITOR
+from superdesk.default_schema import DEFAULT_SCHEMA, DEFAULT_EDITOR, DEFAULT_SCHEMA_MAP
 from apps.auth import get_user_id
 from apps.desks import remove_profile_from_desks
 from eve.utils import ParsedRequest
@@ -231,6 +230,13 @@ class ContentTypesService(superdesk.Service):
             return re.compile("[^0-9a-zA-Z_]").sub("", item.get("label", str(_id)))
         except bson.errors.InvalidId:
             return profile
+    
+    def get_schema(self, item):
+        profile_id = item.get("profile") or item.get("type")
+        profile = self.find_one(req=None, _id=profile_id)
+        if profile:
+            return profile["schema"]
+        return DEFAULT_SCHEMA_MAP.get(profile_id)
 
 
 def clean_doc(doc):
