@@ -1,0 +1,16 @@
+#!/usr/bin/env bash
+
+# Install python package dependencie
+sudo apt-get -y update
+sudo apt-get -y install libxml2-dev libxmlsec1-dev libxmlsec1-openssl
+
+# install libmagic
+wget http://launchpadlibrarian.net/433926958/libmagic-mgc_5.37-3_amd64.deb
+wget http://launchpadlibrarian.net/433926961/libmagic1_5.37-3_amd64.deb
+sudo dpkg -i libmagic-mgc_5.37-3_amd64.deb
+sudo dpkg -i libmagic1_5.37-3_amd64.deb
+
+if [ "$SKIP_SERVER_INSTALL" != "true" ]; then
+    docker-compose up -d
+    while ! curl -sfo /dev/null 'http://localhost:9200/'; do echo -n '.' && sleep .5; done
+fi

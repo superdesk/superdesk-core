@@ -1,4 +1,3 @@
-
 from superdesk.tests import TestCase
 from superdesk import es_utils
 
@@ -13,6 +12,7 @@ class ESUtilsTestCase(TestCase):
             },
             "post_filter": {"bool": {"must": [], "must_not": [{"terms": {"genre.name": ["Article (news)"]}}]}},
             "sort": {"versioncreated": "desc"},
+            "size": 10,
         }
 
         with self.app.app_context():
@@ -53,6 +53,7 @@ class ESUtilsTestCase(TestCase):
                 }
             },
             "sort": {"versioncreated": "desc"},
+            "size": 10,
         }
         with self.app.app_context():
             query = es_utils.filter2query(filter_)
@@ -69,12 +70,12 @@ class ESUtilsTestCase(TestCase):
             }
         }
 
-        expected = {'bool': {'must': [{'term': {'ingest_provider': '5c505c8f0d6f137d69cebc99'}}], 'must_not': []}}
+        expected = {"bool": {"must": [{"term": {"ingest_provider": "5c505c8f0d6f137d69cebc99"}}], "must_not": []}}
 
         with self.app.app_context():
             query = es_utils.filter2query(filter_)
 
-        self.assertEqual(query['post_filter'], expected)
+        self.assertEqual(query["post_filter"], expected)
 
     def test_filter2query_raw(self):
         filter_ = {
@@ -87,13 +88,16 @@ class ESUtilsTestCase(TestCase):
         with self.app.app_context():
             query = es_utils.filter2query(filter_)
 
-        self.assertIn({
-            "query_string": {
-                "query": "headline:test",
-                "lenient": False,
-                "default_operator": "AND",
+        self.assertIn(
+            {
+                "query_string": {
+                    "query": "headline:test",
+                    "lenient": False,
+                    "default_operator": "AND",
+                },
             },
-        }, query['query']['bool']['must'])
+            query["query"]["bool"]["must"],
+        )
 
     def test_filter2query_priority(self):
         filter_ = {
@@ -105,11 +109,14 @@ class ESUtilsTestCase(TestCase):
         with self.app.app_context():
             query = es_utils.filter2query(filter_)
 
-        self.assertIn({
-            "terms": {
-                "priority": ["2"],
+        self.assertIn(
+            {
+                "terms": {
+                    "priority": ["2"],
+                },
             },
-        }, query['post_filter']['bool']['must'])
+            query["post_filter"]["bool"]["must"],
+        )
 
     def test_filter2repos_get_types(self):
         repos = es_utils.filter2repos({})
@@ -117,7 +124,7 @@ class ESUtilsTestCase(TestCase):
         types = es_utils.get_doc_types(repos)
         self.assertEqual(es_utils.REPOS, types)
 
-        repos = es_utils.filter2repos({'query': {'repo': 'ingest,published'}})
-        self.assertEqual('ingest,published', repos)
+        repos = es_utils.filter2repos({"query": {"repo": "ingest,published"}})
+        self.assertEqual("ingest,published", repos)
         types = es_utils.get_doc_types(repos)
-        self.assertEqual(['ingest', 'published'], types)
+        self.assertEqual(["ingest", "published"], types)

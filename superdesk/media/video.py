@@ -28,11 +28,11 @@ def get_meta(filestream):
         if not parser:
             return metadata
 
-        tags = extractMetadata(parser).exportPlaintext(human=False, line_prefix='')
+        tags = extractMetadata(parser).exportPlaintext(human=False, line_prefix="")
         for text in tags:
             try:
                 json.dumps(text)
-                key, value = text.split(':', maxsplit=1)
+                key, value = text.split(":", maxsplit=1)
                 key, value = key.strip(), value.strip()
                 if key and value:
                     metadata.update({key: value})

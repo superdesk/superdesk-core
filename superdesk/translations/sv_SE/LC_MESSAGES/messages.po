@@ -1,0 +1,1949 @@
+# Translations template for Superdesk-Core.
+# Copyright (C) 2021 ORGANIZATION
+# This file is distributed under the same license as the Superdesk-Core
+# project.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2021.
+# 
+# Translators:
+# Carl Gustafsson <carl@cubefive.com>, 2020
+# Lars Kajes <mintlars@hotmail.com>, 2021
+# Eva Borgström <eva.stjerne@gmail.com>, 2021
+# 
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: Superdesk-Core 2.0.13.dev294+gc7a46b6b\n"
+"Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
+"POT-Creation-Date: 2021-02-25 14:27+0100\n"
+"PO-Revision-Date: 2019-04-04 09:17+0000\n"
+"Last-Translator: Eva Borgström <eva.stjerne@gmail.com>, 2021\n"
+"Language-Team: Swedish (Sweden) (https://www.transifex.com/sourcefabric/teams/6584/sv_SE/)\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.8.0\n"
+"Language: sv_SE\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+#: superdesk/activity.py:81
+msgid "Send notifications via email"
+msgstr "Skicka meddelanden via e-post"
+
+#: superdesk/activity.py:82 superdesk/activity.py:92
+msgid "notifications"
+msgstr "meddelanden"
+
+#: superdesk/activity.py:91
+msgid "Allow Desktop Notifications"
+msgstr "Tillåt Desktop-meddelanden"
+
+#: superdesk/internal_destinations.py:102
+msgid "Internal Destinations"
+msgstr "Interna destinationer"
+
+#: superdesk/internal_destinations.py:103
+msgid "User can manage internal destinations."
+msgstr "Användare kan hantera interna destinationer."
+
+#: superdesk/validator.py:287
+msgid "Only 1 instance is allowed."
+msgstr "Endast 1 instans tillåten."
+
+#: superdesk/io/__init__.py:57
+msgid "Ingest Feed Parsers"
+msgstr "Importera nyinkomna Parsers"
+
+#: superdesk/io/__init__.py:58
+msgid "User can maintain Ingest Feed Parsers."
+msgstr "Användare kan ta emot nyimporterade parsers."
+
+#: superdesk/io/__init__.py:67
+msgid "Ingest Feed Services"
+msgstr "Importera nyinkomna tjänster"
+
+#: superdesk/io/__init__.py:68
+msgid "User can maintain Ingest Feed Services."
+msgstr "Användare kan ta emot nyimporterade tjänster."
+
+#: superdesk/io/__init__.py:74
+msgid "Ingest Channels"
+msgstr "Importera kanaler"
+
+#: superdesk/io/__init__.py:75
+msgid "User can maintain Ingest Channels."
+msgstr "Användare kan underhålla Importera kanaler."
+
+#: superdesk/macros/abstract_populator.py:35
+msgid "Populate Abstract"
+msgstr "Skriv sammanfattning"
+
+#: superdesk/macros/assign_status.py:33
+msgid "Update Status On Assignment ID"
+msgstr "Uppdatera status på Uppdrags-ID"
+
+#: superdesk/macros/currency_usd_to_cad.py:38
+msgid "Currency USD to CAD"
+msgstr "USD-valuta till CAD"
+
+#: superdesk/macros/desk_routing.py:46
+msgid "Desk Routing"
+msgstr "Desk-routing"
+
+#: superdesk/macros/extract_html.py:58
+msgid "Extract Html Macro"
+msgstr "Hämta Html Macro"
+
+#: superdesk/macros/internal_destination_auto_publish.py:87
+msgid "Internal Destination Auto Publish"
+msgstr "Intern destination Auto-Publicera"
+
+#: superdesk/macros/set_default_template_metadata.py:87
+msgid "Set Default Template Metadata"
+msgstr "Skriv in standardmall Metadata"
+
+#: superdesk/macros/take_key_validator.py:25
+msgid "validate take key"
+msgstr "godkänn version"
+
+#: superdesk/macros/validate_for_publish.py:29
+msgid "Validate for Publish"
+msgstr "Godkänn för publicering"
+
+#: superdesk/macros/imperial/area_acre_to_metric.py:47
+msgid "Area acres to metric"
+msgstr "Omvandla acres till meter"
+
+#: superdesk/macros/imperial/area_acre_to_metric.py:51
+#: superdesk/macros/imperial/area_square_feet_to_metric.py:51
+#: superdesk/macros/imperial/area_square_inch_to_metric.py:51
+#: superdesk/macros/imperial/area_square_miles_to_metric.py:51
+#: superdesk/macros/imperial/area_square_yards_to_metric.py:51
+msgid "area"
+msgstr "yta"
+
+#: superdesk/macros/imperial/area_square_feet_to_metric.py:47
+msgid "Area square feet to metric"
+msgstr "Omvandla square feet till kvadratmeter"
+
+#: superdesk/macros/imperial/area_square_inch_to_metric.py:47
+msgid "Area square inch to metric"
+msgstr "Omvandla square inch till kvadratmeter"
+
+#: superdesk/macros/imperial/area_square_miles_to_metric.py:47
+msgid "Area square miles to metric"
+msgstr "Omvandla square miles till kvadratmeter"
+
+#: superdesk/macros/imperial/area_square_yards_to_metric.py:47
+msgid "Area square yards to metric"
+msgstr "Omvandla square yards till kvadratmeter"
+
+#: superdesk/macros/imperial/length_feet_and_inches_to_metric.py:105
+msgid "Length feet-inches to metric"
+msgstr "Omvandla feet-inches till meter"
+
+#: superdesk/macros/imperial/length_feet_and_inches_to_metric.py:109
+#: superdesk/macros/imperial/length_miles_to_metric.py:43
+#: superdesk/macros/imperial/length_nautical_miles_to_metric.py:42
+#: superdesk/macros/imperial/length_yards_to_metric.py:43
+msgid "length"
+msgstr "längd"
+
+#: superdesk/macros/imperial/length_miles_to_metric.py:38
+msgid "Length miles to kilometres"
+msgstr "Omvandla miles till kilometer"
+
+#: superdesk/macros/imperial/length_nautical_miles_to_metric.py:38
+msgid "Length nautical miles to kilometres"
+msgstr "Omvandla nautical miles till kilometer"
+
+#: superdesk/macros/imperial/length_yards_to_metric.py:39
+msgid "Length yards to metres"
+msgstr "Omvandla yards till meter"
+
+#: superdesk/macros/imperial/volume_cubic_feet_to_metric.py:38
+msgid "Volume cubic feet to metric"
+msgstr "Omvandla cubic feet till kubikmeter"
+
+#: superdesk/macros/imperial/volume_cubic_feet_to_metric.py:42
+#: superdesk/macros/imperial/volume_cubic_inches_to_metric.py:53
+#: superdesk/macros/imperial/volume_cubic_yard_to_metric.py:42
+msgid "volume"
+msgstr "volym"
+
+#: superdesk/macros/imperial/volume_cubic_inches_to_metric.py:49
+msgid "Volume cubic inches to metric"
+msgstr "Omvandla cubic inches till kubikmeter"
+
+#: superdesk/macros/imperial/volume_cubic_yard_to_metric.py:38
+msgid "Volume cubic yard to metric"
+msgstr "Omvandla cubic yard till kubikmeter"
+
+#: superdesk/macros/imperial/weight_pounds_to_metric.py:38
+msgid "Weight pounds to metric"
+msgstr "Omvandla pounds till kilo"
+
+#: superdesk/macros/imperial/weight_pounds_to_metric.py:42
+msgid "temperature and weight"
+msgstr "temperatur och vikt"
+
+#: superdesk/profiling/__init__.py:37
+msgid "Profiling Service"
+msgstr "Profileringsservice"
+
+#: superdesk/profiling/__init__.py:38
+msgid "User can read profiling data."
+msgstr "Användare kan läsa profildata."
+
+#: superdesk/publisher/__init__.py:21
+msgid "Livesite Editor"
+msgstr "Redaktör direktsändning"
+
+#: superdesk/publisher/__init__.py:22
+msgid "Edit a site live on Web Publisher"
+msgstr "Redigera i direktsändning på Web Publisher"
+
+#: superdesk/roles/__init__.py:23
+msgid "Roles Management"
+msgstr "Rollhantering"
+
+#: superdesk/roles/__init__.py:23
+msgid "User can manage roles."
+msgstr "Användare kan hantera roller."
+
+#: superdesk/sams/__init__.py:41
+msgid "Sams"
+msgstr "Sams"
+
+#: superdesk/sams/__init__.py:41
+msgid "Access to the SAMS management page (and to upload assets etc)"
+msgstr "Tillgång till SAMS hanteringssida (och uppladdning av tillgångar etc)"
+
+#: superdesk/sams/__init__.py:44
+msgid "Sams manage"
+msgstr "Sams-hantering"
+
+#: superdesk/sams/__init__.py:44
+msgid "Allows management of SAMS Sets etc"
+msgstr "Tillåter hantering av SAMS-inställningar etc"
+
+#: superdesk/sams/__init__.py:47
+msgid "SAMS Manage Assets"
+msgstr "SAMS tillgångshantering"
+
+#: superdesk/sams/__init__.py:47
+msgid "Allows management of SAMS Assets"
+msgstr "Tillåter hantering av SAMS-tillgångar"
+
+#: apps/ldap/__init__.py:26 superdesk/users/__init__.py:25
+msgid "User Management"
+msgstr "Hantering användare"
+
+#: apps/ldap/__init__.py:26 superdesk/users/__init__.py:25
+msgid "User can manage users."
+msgstr "Användare kan hantera användare."
+
+#: superdesk/vocabularies/__init__.py:30
+msgid "Prefered CV items"
+msgstr "Prefererade CV-egenskaper"
+
+#: superdesk/vocabularies/__init__.py:31
+msgid "cvs"
+msgstr "cv:s"
+
+#: superdesk/vocabularies/vocabularies.py:38
+msgid "Vocabularies Management"
+msgstr "Hantering ordlistor"
+
+#: superdesk/vocabularies/vocabularies.py:39
+msgid "User can manage vocabularies' contents."
+msgstr "Användare kan hantera ordlisteinnehåll."
+
+#: apps/content_filters/filter_condition/filter_condition_parameters.py:78
+#: apps/validate/validate.py:63 superdesk/vocabularies/vocabularies.py:438
+msgid "Keywords"
+msgstr "Nyckelord"
+
+#: apps/desk_routing.py:74
+msgid "Desk routing"
+msgstr "Desk-routing"
+
+#: apps/desk_routing.py:74
+msgid "User can configure desk routing"
+msgstr "Användare kan konfigurera desk-routing"
+
+#: apps/desks.py:104
+msgid "Desk Management"
+msgstr "Deskhantering"
+
+#: apps/desks.py:104
+msgid "User can manage desks."
+msgstr "Användare kan hantera desks."
+
+#: apps/desks.py:107
+msgid "Master Desk"
+msgstr "Master Desk"
+
+#: apps/desks.py:107
+msgid "User can access master desk."
+msgstr "Användare har tillgång till master desk."
+
+#: apps/desks.py:180
+msgid ""
+"Cannot update Desk Type as there are article(s) referenced by the Desk."
+msgstr ""
+"Går inte att uppdatera Desk-typ då det finns artikel(lar) som refereras till"
+" av Desk."
+
+#: apps/desks.py:204
+msgid "Cannot delete desk as it is assigned as default desk to user(s)."
+msgstr "Går inte ta bort desk då den är standard-desk för användare."
+
+#: apps/desks.py:216
+msgid "Cannot delete desk as routing scheme(s) are associated with the desk"
+msgstr "Går inte radera desk då routing-schema(n) är länkade med desken"
+
+#: apps/desks.py:230
+msgid ""
+"Cannot delete desk as it has article(s) or referenced by versions of the "
+"article(s)."
+msgstr ""
+"Går inte att ta bort Desk då den har artikel(lar) som refereras till i "
+"versioner av artikeln(larna)."
+
+#: apps/feature_preview.py:7
+msgid "Feature Preview"
+msgstr "Feature förhandsvisning"
+
+#: apps/feature_preview.py:8
+msgid "Let user toggle Feature Preview on/off."
+msgstr "Låt användare växla Feature förhandsvy av/på."
+
+#: apps/archive/__init__.py:111 apps/monitoring.py:14
+msgid "Monitoring view"
+msgstr "Bevakningsvy"
+
+#: apps/monitoring.py:15
+msgid "monitoring"
+msgstr "bevakning"
+
+#: apps/preferences.py:115
+msgid "Enable Feature Preview"
+msgstr "Möjliggör feature förhandsvisning"
+
+#: apps/preferences.py:116
+msgid "feature"
+msgstr "feature"
+
+#: apps/preferences.py:127
+msgid "Users archive view format"
+msgstr "Vyformat användararkiv"
+
+#: apps/preferences.py:128
+msgid "archive"
+msgstr "arkiv"
+
+#: apps/preferences.py:138
+msgid "Enable Single Line View"
+msgstr "Tillåt enrads-vy"
+
+#: apps/preferences.py:139
+msgid "rows"
+msgstr "rader"
+
+#: apps/preferences.py:168
+msgid "Located"
+msgstr "Belägen"
+
+#: apps/preferences.py:169 apps/preferences.py:196
+msgid "article_defaults"
+msgstr "artikel_mallar"
+
+#: apps/preferences.py:178
+msgid "Preferred Categories"
+msgstr "Prefererade kategorier"
+
+#: apps/preferences.py:179
+msgid "categories"
+msgstr "kategorier"
+
+#: apps/preferences.py:188
+msgid "Preferred Desks"
+msgstr "Prefererade Desks"
+
+#: apps/preferences.py:189
+msgid "desks"
+msgstr "desks"
+
+#: apps/content_filters/filter_condition/filter_condition_parameters.py:134
+#: apps/preferences.py:195 apps/validate/validate.py:67
+msgid "Place"
+msgstr "Plats"
+
+#: apps/preferences.py:211
+msgid "Users contacts view format"
+msgstr "Användarkontakters vyformat"
+
+#: apps/preferences.py:212
+msgid "contacts"
+msgstr "kontakter"
+
+#: apps/preferences.py:295 apps/preferences.py:307
+msgid "Invalid preference: {preference}"
+msgstr "Ogiltigt företräde: {preference}"
+
+#: apps/stages.py:136
+msgid "Cannot delete a Working Stage."
+msgstr "Går inte ta bort kategori Arbete."
+
+#: apps/stages.py:141
+msgid "Cannot delete a Incoming Stage."
+msgstr "Går inte ta bort kategori Inkommande."
+
+#: apps/stages.py:147
+msgid ""
+"Cannot delete stage as it has article(s) or referenced by versions of the "
+"article(s)."
+msgstr ""
+"Går inte ta bort kategorin då den har artikel(lar) som refereras till i "
+"versioner av artikeln(larna)."
+
+#: apps/stages.py:155
+msgid "Stage is referred by Ingest Routing Schemes : {rule_names}"
+msgstr "Kategorin har hänvisning till Routing-scheman : {rule_names}"
+
+#: apps/stages.py:175
+msgid "Must have one working stage in a desk"
+msgstr "Måste finnas en arbetskategori i en desk"
+
+#: apps/stages.py:183
+msgid "Must have one incoming stage in a desk"
+msgstr "Måste finnas en inkommande kategori i en desk"
+
+#: apps/archive/common.py:565 apps/tasks.py:98
+msgid "Invalid desk identifier {desk_id}"
+msgstr "Ogiltig deskidentifiering {desk_id}"
+
+#: apps/tasks.py:103
+msgid "User is not member of desk: {desk_id}"
+msgstr "Användare är inte deskmedlem: {desk_id}"
+
+#: apps/archive/common.py:571 apps/tasks.py:113
+msgid "Invalid stage identifier {stage_id}"
+msgstr "Ogiltig kategoriidentifiering {stage_id}"
+
+#: apps/tasks.py:149
+msgid "Error:{exception} in {rule_type} rule:{rule} for stage:{stage}"
+msgstr "Fel:{exception} i {rule_type} regel:{rule} för kategori:{stage}"
+
+#: apps/tasks.py:328
+msgid "Tasks Management"
+msgstr "Uppdragshantering"
+
+#: apps/archive/__init__.py:112
+msgid "Access to Monitoring view in left toolbar"
+msgstr "Tillgång till bevakningsvy i vänster verktygsfält"
+
+#: apps/archive/__init__.py:115
+msgid "Create content"
+msgstr "Skapa innehåll"
+
+#: apps/archive/__init__.py:115
+msgid "Create and save content"
+msgstr "Skapa och spara innehåll"
+
+#: apps/archive/__init__.py:118
+msgid "Ingest"
+msgstr "Importera"
+
+#: apps/archive/__init__.py:118
+msgid "Access to ingest sources management"
+msgstr "Tillgång till källor för importhantering"
+
+#: apps/archive/__init__.py:120
+msgid "Spike"
+msgstr "Släng"
+
+#: apps/archive/__init__.py:120
+msgid "Spike/delete items"
+msgstr "Släng/radera"
+
+#: apps/archive/__init__.py:122
+msgid "Spike view"
+msgstr "Släng vy"
+
+#: apps/archive/__init__.py:122
+msgid "View spiked content"
+msgstr "Se slängt innehåll"
+
+#: apps/archive/__init__.py:125
+msgid "Unspike"
+msgstr "Återställ"
+
+#: apps/archive/__init__.py:125
+msgid "Unspike/undelete content"
+msgstr "Återställt/oraderat innehåll"
+
+#: apps/archive/__init__.py:128
+msgid "Edit Unique Name"
+msgstr "Redigera unikt namn"
+
+#: apps/archive/__init__.py:128
+msgid "Edit unique name"
+msgstr "Redigera unikt namn"
+
+#: apps/archive/__init__.py:130
+msgid "Hold"
+msgstr "Vänta"
+
+#: apps/archive/__init__.py:130
+msgid "Hold content"
+msgstr "Pausa innehåll"
+
+#: apps/archive/__init__.py:131
+msgid "Restore"
+msgstr "Återställ"
+
+#: apps/archive/__init__.py:131
+msgid "Restore content"
+msgstr "Återställ innehåll"
+
+#: apps/archive/__init__.py:132
+msgid "Update"
+msgstr "Uppdatera"
+
+#: apps/archive/__init__.py:132
+msgid "Create an update"
+msgstr "Skapa uppdatering"
+
+#: apps/archive/__init__.py:135
+msgid "Unlock content"
+msgstr "Lås upp innehåll"
+
+#: apps/archive/__init__.py:136
+msgid "Unlock locked content by another user"
+msgstr "Lås upp innehåll som låsts av annan användare"
+
+#: apps/archive/__init__.py:140
+msgid "Mark items for users"
+msgstr "Markera för användare"
+
+#: apps/archive/__init__.py:141
+msgid "User can mark or unmark items for other users"
+msgstr "Användare kan markera eller avmarkera objekt för andra användare"
+
+#: apps/archive/archive.py:315 apps/archive/archive.py:983
+msgid "Package doesn't support Public Service Announcements"
+msgstr "Paket stöder inte Public Service-meddelanden"
+
+#: apps/archive/archive.py:495 apps/archive/archive.py:977
+#: apps/duplication/archive_duplication.py:139
+#: apps/item_autosave/components/item_autosave.py:36
+msgid "The item was locked by another user"
+msgstr "Låst av annan användare"
+
+#: apps/archive/archive.py:549 apps/archived/archived.py:201
+msgid "User does not have permissions to read the item."
+msgstr "Användare har inte läsbehörighet."
+
+#: apps/archive/archive.py:565
+msgid "Invalid version {old_version}"
+msgstr "Ogiltig version {old_version}"
+
+#: apps/archive/archive.py:569
+msgid "Invalid item id {item_id}"
+msgstr "Ogiltigt id {item_id}"
+
+#: apps/archive/archive.py:573
+msgid "Invalid last version {last_version}"
+msgstr "Ogiltig senaste version {last_version}"
+
+#: apps/archive/archive.py:900
+msgid "An item can't have both Publish Schedule and Embargo"
+msgstr "Kan inte ha både Publicera schema och Embargo"
+
+#: apps/archive/archive.py:906
+msgid "Embargo cannot be earlier than now"
+msgstr "Embargo kan inte vara tidigare än nu"
+
+#: apps/archive/archive.py:909
+msgid "Rewrites doesn't support Embargo"
+msgstr "Omskrivningar stöder inte Embargo"
+
+#: apps/archive/archive.py:912
+msgid "Invalid Embargo"
+msgstr "Ogiltig embargo"
+
+#: apps/archive/archive.py:916
+msgid "A Package doesn't support Embargo"
+msgstr "Ett paket stöder inte Embargo"
+
+#: apps/archive/archive.py:980
+msgid "Item isn't in a valid state to be updated."
+msgstr "Har inte uppnått giltig status för uppdatering."
+
+#: apps/archive/archive.py:991
+msgid "Unauthorized to modify Unique Name"
+msgstr "Ej behörig att ändra unikt namn"
+
+#: apps/archive/archive.py:999
+msgid "Cannot change the genre for broadcast content."
+msgstr "Går inte att ändra genren för sändningsinnehåll."
+
+#: apps/archive/archive.py:1013
+msgid ""
+"This item is in a package and it needs to be removed before the item can be "
+"scheduled!"
+msgstr ""
+"Detta ingår i ett paket och måste flyttas innan det kan schemaläggas! "
+
+#: apps/archive/archive.py:1040
+msgid "Duplicate category codes are not allowed"
+msgstr "Ej tillåtet att kopiera kategorikoder"
+
+#: apps/archive/archive.py:1045
+msgid "Duplicate subjects are not allowed"
+msgstr "Ej tillåtet att kopiera ämnen"
+
+#: apps/archive/archive.py:1328
+msgid "Client and server etags don't match"
+msgstr "Klient och server-etags matchar inte"
+
+#: apps/archive/archive.py:1330
+msgid "Request for Auto-save must have _id"
+msgstr "Begäran om Autospar måste ha _id"
+
+#: apps/archive/archive_correction.py:102 apps/archive/archive_rewrite.py:131
+msgid "Cannot find the article"
+msgstr "Artikeln går inte att hitta"
+
+#: apps/archive/archive_link.py:57 apps/archive/archive_rewrite.py:342
+msgid "Only updates can be unlinked!"
+msgstr "Endast uppdateringar kan vara olänkade!"
+
+#: apps/archive/archive_rewrite.py:134
+msgid "Rewrite of an Item having embargo isn't possible"
+msgstr "Går inte att skriva om något i embargo"
+
+#: apps/archive/archive_rewrite.py:137
+msgid "Event id does not exist"
+msgstr "Event-id finns inte"
+
+#: apps/archive/archive_rewrite.py:140
+msgid "Article has been rewritten before !"
+msgstr "Artikel har redan skrivits om !"
+
+#: apps/archive/archive_rewrite.py:154
+msgid "Rewrite is not published. Cannot rewrite the story again."
+msgstr "Omskrivning ej publicerad. Går inte att skriva om storyn igen."
+
+#: apps/archive/archive_rewrite.py:160
+msgid "Rewrite story has been used as update before !"
+msgstr "Omskriven story har redan använts som uppdatering !"
+
+#: apps/archive/archive_rewrite.py:173
+msgid "Rewrite story can only be text or pre-formatted !"
+msgstr "Omskriven story kan bara vara text eller förformaterad !"
+
+#: apps/archive/archive_rewrite.py:178
+msgid "Broadcast cannot be a update story !"
+msgstr "Ljudsändning kan inte vara en uppdaterad story !"
+
+#: apps/archive/archive_rewrite.py:182
+msgid "Rewrite item content profile does not match with Original item."
+msgstr "Omskriven innehållsprofil matchar inte originalet."
+
+#: apps/archive/archive_spike.py:103
+msgid "The item \"{slugline}\" is in a package"
+msgstr "Materialet \"{slugline}\" finns i ett paket"
+
+#: apps/archive/archive_spike.py:104
+msgid " it needs to be removed before the item can be spiked"
+msgstr " måste flyttas innan det kan kastas"
+
+#: apps/archive/autocomplete.py:37
+msgid "Archive autocomplete is not enabled"
+msgstr "Arkivera datorgenererat ej möjligt"
+
+#: apps/archive/autocomplete.py:40
+#, python-format
+msgid "Field %(field)s is not allowed"
+msgstr "Fält %(field)s är inte tillåtet"
+
+#: apps/archive/common.py:421
+msgid "Document not found in archive collection"
+msgstr "Dokument ej hittat i arkivet"
+
+#: apps/archive/common.py:652 apps/archive/common.py:654
+msgid "Schedule date is not recognized"
+msgstr "Schemadatum ej godkänt"
+
+#: apps/archive/common.py:658
+msgid "Schedule cannot be earlier than now"
+msgstr "Schema kan inte bakdateras"
+
+#: apps/archive/common.py:674
+msgid "{} date is not recognized"
+msgstr "{} datum ej godkänt"
+
+#: apps/archive_broadcast/__init__.py:28
+msgid "Broadcast"
+msgstr "Sändning"
+
+#: apps/archive_broadcast/__init__.py:29
+msgid "Allows user to create broadcast content."
+msgstr "Tillåter användare att skapa ljudinnehåll."
+
+#: apps/archive_broadcast/broadcast.py:92
+msgid "Cannot find the {genre} genre."
+msgstr "Kan inte hitta {genre} genren."
+
+#: apps/archive_broadcast/broadcast.py:118
+msgid "Cannot find the requested item id."
+msgstr "Önskat id hittas inte."
+
+#: apps/archive_broadcast/broadcast.py:121
+msgid "Invalid content type."
+msgstr "Ogiltig innehållstyp."
+
+#: apps/archive_broadcast/broadcast.py:124
+msgid "Invalid content state."
+msgstr "Ogiltig innehållsstatus."
+
+#: apps/archived/archived.py:134
+msgid "Only Text articles are allowed to be Killed in Archived repo"
+msgstr "Endast textartiklar kan spärras i Arkiverad repo "
+
+#: apps/archived/archived.py:137
+msgid "Killing of Broadcast Items isn't allowed in Archived repo"
+msgstr "Ej tillåtet att spärra ljudmaterial i Arkiverad repo"
+
+#: apps/archived/archived.py:141
+msgid ""
+"Can't kill as this article acts as a Master Story for existing broadcast(s)"
+msgstr ""
+"Går inte att spärra då artikeln är Master Story för existerande sändning(ar)"
+" "
+
+#: apps/archived/archived.py:145
+msgid "Can't Kill as article is still available in production"
+msgstr "Kan inte spärras då artikeln ännu är tillgänglig i produktion"
+
+#: apps/archived/archived.py:148
+msgid "Can't kill as article is part of a Package"
+msgstr "Kan inte spärras då artikeln ingår i ett paket"
+
+#: apps/archived/archived.py:153
+msgid "Can't Kill as the Digital Story is still available in production"
+msgstr "Kan inte spärras då Digital-storyn ännu är tillgänglig i produktion"
+
+#: apps/archived/archived.py:159
+msgid "Digital Story of the article not found in Archived repo"
+msgstr "Digital Story på artikeln ej hittad i Arkiverad repo"
+
+#: apps/archived/archived.py:163
+msgid "Can't kill as Digital Story is part of a Package"
+msgstr "Kan inte spärras då Digital-Story ingår i ett paket"
+
+#: apps/archived/archived.py:168
+msgid "Can't Kill as Take(s) are still available in production"
+msgstr "Kan inte spärras då provtext(er) ännu är tillgänglig i produktion"
+
+#: apps/archived/archived.py:172
+msgid "One of Take(s) not found in Archived repo"
+msgstr "Provtext(er) ej hittad i Arkiverad repo"
+
+#: apps/archived/archived.py:175
+msgid "Can't kill as one of Take(s) is part of a Package"
+msgstr "Kan inte spärras då provtext(er) ingår i paket"
+
+#: apps/archived/archived.py:414
+msgid "Archive Management"
+msgstr "Arkivhantering"
+
+#: apps/archived/archived.py:415
+msgid "User can remove items from the archived"
+msgstr "Användare kan flytta material från arkivet "
+
+#: apps/auth/__init__.py:64
+msgid "Invalid user."
+msgstr "Ogiltig användare."
+
+#: apps/auth/auth.py:115
+msgid "Insufficient privileges for the requested operation."
+msgstr "Otillräcklig behörighet för önskad operation."
+
+#: apps/auth/service.py:65
+msgid "Not found."
+msgstr "Ej hittad."
+
+#: apps/auth/db/reset_password.py:79
+msgid "Either key:password or email must be provided"
+msgstr "Antingen nyckel:lösenord eller e-post måste anges"
+
+#: apps/auth/db/reset_password.py:97
+msgid "Invalid email"
+msgstr "Ogiltig e-post"
+
+#: apps/auth/db/reset_password.py:101
+msgid "User not enabled"
+msgstr "Användare ej tillgänglig"
+
+#: apps/auth/db/reset_password.py:105 apps/auth/db/reset_password.py:122
+msgid "User not active"
+msgstr "Användare ej aktiv"
+
+#: apps/auth/oidc/auth.py:69
+msgid "Please update your account email address"
+msgstr "Uppdatera ditt e-postadresskonto"
+
+#: apps/comments/comments.py:80
+msgid "Commenting on behalf of someone else is prohibited."
+msgstr "Förbjudet att kommentera å någon annans vägnar. "
+
+#: apps/concept_items/__init__.py:25
+msgid "Knowledge base management"
+msgstr "Hantering av kunskapsbas"
+
+#: apps/concept_items/__init__.py:26
+msgid "User can manage knowledge base."
+msgstr "Användare kan hantera kunskapsbas."
+
+#: apps/contacts/__init__.py:27
+msgid "Contacts Management"
+msgstr "Kontakthantering"
+
+#: apps/contacts/__init__.py:27
+msgid "Manage Contacts"
+msgstr "Hantera Kontakter"
+
+#: apps/contacts/__init__.py:30
+msgid "Contacts View Rights"
+msgstr "Kontakters tittarrättigheter"
+
+#: apps/contacts/__init__.py:30
+msgid "View Contacts"
+msgstr "Tittarkontakter"
+
+#: apps/contacts/service.py:85
+msgid "Contacts of type \"{contact_type}\" must have an email address"
+msgstr "Kontakttyp \"{contact_type}\" måste ha en e-postadress"
+
+#: apps/content_filters/__init__.py:48
+msgid "Content Filters"
+msgstr "Innehållsfilter"
+
+#: apps/content_filters/__init__.py:49
+msgid "User can manage content filters"
+msgstr "Användare kan hantera innehållsfilter"
+
+#: apps/content_filters/content_filter/content_filter_service.py:40
+msgid "Content filter has been referenced by subscriber(s) {references}"
+msgstr "Innehållsfilter har refererats till av prenumerant(er) {references}"
+
+#: apps/content_filters/content_filter/content_filter_service.py:48
+msgid "Content filter has been referenced by routing scheme(s) {references}"
+msgstr "Innehållsfilter har refererats till av routing-schema(n) {references}"
+
+#: apps/content_filters/content_filter/content_filter_service.py:56
+msgid "Content filter has been referenced in {references})"
+msgstr "Innehållsfilter har refererats till i {references})"
+
+#: apps/content_filters/content_filter/content_filter_service.py:122
+msgid "Circular dependency error in content filters:{filter}"
+msgstr ""
+" Cirkulärt kombinationsfält innehåller fel i innehållsfiltren:{filtret}"
+
+#: apps/content_filters/content_filter/content_filter_service.py:196
+msgid "Filter statement {index} does not have a filter condition"
+msgstr "Filteruppgift {index} innehåller inte filtervillkor"
+
+#: apps/content_filters/content_filter/content_filter_test.py:48
+msgid "Content filter not found"
+msgstr "Innehållsfilter hittas ej"
+
+#: apps/content_filters/content_filter/content_filter_test.py:58
+#: apps/products/product_test.py:51 apps/publish/formatters/service.py:65
+msgid "Article not found!"
+msgstr "Artikel hittades inte!"
+
+#: apps/content_filters/content_filter/content_filter_test.py:63
+msgid "Error in testing article: {error}"
+msgstr "Fel vid artikeltest: {error}"
+
+#: apps/content_filters/content_filter/content_filter_test.py:78
+msgid "Error in testing archive: {error}"
+msgstr "Fel vid arkivtest: {error}"
+
+#: apps/content_filters/filter_condition/filter_condition_field.py:52
+msgid "Invalid filter conditions field {field}"
+msgstr "Ogiltiga filtervillkorsfält {field}"
+
+#: apps/content_filters/filter_condition/filter_condition_parameters.py:45
+msgid "ANPA Category"
+msgstr "ANPA-kategori"
+
+#: apps/content_filters/filter_condition/filter_condition_parameters.py:52
+#: apps/validate/validate.py:79
+msgid "Urgency"
+msgstr "Brådskande"
+
+#: apps/content_filters/filter_condition/filter_condition_parameters.py:59
+#: apps/validate/validate.py:60
+msgid "Genre"
+msgstr "Genre"
+
+#: apps/content_filters/filter_condition/filter_condition_parameters.py:66
+#: apps/validate/validate.py:77
+msgid "Subject"
+msgstr "Ämne"
+
+#: apps/content_filters/filter_condition/filter_condition_parameters.py:73
+#: apps/validate/validate.py:68
+msgid "Priority"
+msgstr "Prioritet"
+
+#: apps/content_filters/filter_condition/filter_condition_parameters.py:81
+#: apps/validate/validate.py:72
+msgid "Slugline"
+msgstr "Slugline"
+
+#: apps/content_filters/filter_condition/filter_condition_parameters.py:86
+#: apps/validate/validate.py:78
+msgid "Type"
+msgstr "Typ"
+
+#: apps/content_filters/filter_condition/filter_condition_parameters.py:93
+#: apps/validate/validate.py:75
+msgid "Source"
+msgstr "Källa "
+
+#: apps/content_filters/filter_condition/filter_condition_parameters.py:98
+#: apps/validate/validate.py:61
+msgid "Headline"
+msgstr "Rubrik"
+
+#: apps/content_filters/filter_condition/filter_condition_parameters.py:103
+msgid "Ednote"
+msgstr "Red-not"
+
+#: apps/content_filters/filter_condition/filter_condition_parameters.py:108
+#: apps/validate/validate.py:45
+msgid "Body HTML"
+msgstr "Brödtext HTML"
+
+#: apps/content_filters/filter_condition/filter_condition_parameters.py:113
+#: apps/validate/validate.py:53
+msgid "Desk"
+msgstr "Desk"
+
+#: apps/content_filters/filter_condition/filter_condition_parameters.py:120
+#: apps/validate/validate.py:76
+msgid "Stage"
+msgstr "Kategori"
+
+#: apps/content_filters/filter_condition/filter_condition_parameters.py:127
+#: apps/validate/validate.py:73
+msgid "SMS"
+msgstr "SMS"
+
+#: apps/content_filters/filter_condition/filter_condition_parameters.py:141
+msgid "Ingest provider"
+msgstr "Importera nyhetsbyrå"
+
+#: apps/content_filters/filter_condition/filter_condition_parameters.py:148
+#: apps/publish/__init__.py:93 apps/validate/validate.py:55
+msgid "Embargo"
+msgstr "Embargo"
+
+#: apps/content_filters/filter_condition/filter_condition_parameters.py:155
+#: apps/validate/validate.py:57
+msgid "Feature Media"
+msgstr "Bildmedia"
+
+#: apps/content_filters/filter_condition/filter_condition_parameters.py:170
+msgid "Agendas"
+msgstr "Agendor"
+
+#: apps/content_filters/filter_condition/filter_condition_service.py:36
+msgid "Filter condition has been referenced in content filter: {references}"
+msgstr "Filtervillkor är refererade i innehållsfilter: {references}"
+
+#: apps/content_filters/filter_condition/filter_condition_service.py:51
+msgid "Filter condition:{condition} has unidentified field: {field}"
+msgstr "Filtervillkor:{condition} har oidentifierat fält: {field}"
+
+#: apps/content_filters/filter_condition/filter_condition_service.py:57
+msgid "Filter condition:{condition} has unidentified operator: {operator}"
+msgstr "Filtervillkor:{condition} har oidentifierad operatör: {operator}"
+
+#: apps/content_filters/filter_condition/filter_condition_service.py:76
+msgid "Filter condition:{condition} has identical settings"
+msgstr "Filtervillkor:{condition} har identiska inställningar"
+
+#: apps/content_types/__init__.py:13
+msgid "Content Profile"
+msgstr "Innehållsprofil"
+
+#: apps/content_types/__init__.py:14
+msgid "Manage content profiles"
+msgstr "Hantera innehållsprofiler"
+
+#: apps/content_types/content_types.py:143
+msgid "Vocabulary {vocabulary} is used in {count} content type(s)"
+msgstr "Ordlista {vocabulary} används i {count} innehållstyp(er)"
+
+#: apps/content_types/content_types.py:165
+msgid ""
+"Cannot disable content profile as following templates are referencing: "
+"{templates}"
+msgstr ""
+"Går inte att inaktivera innehållsprofil då följande mallar är länkade:: "
+"{templates}"
+
+#: apps/content_types/content_types.py:179
+msgid ""
+"Cannot disable content profile as following desks are referencing: {desks}"
+msgstr ""
+"Kan inte inaktivera innehållsprofil då följande desks är länkade: {desks}"
+
+#: apps/dictionaries/__init__.py:24
+msgid "Dictionaries List Management"
+msgstr "Ordböcker listhantering"
+
+#: apps/dictionaries/__init__.py:25
+msgid "User can manage dictionaries lists."
+msgstr "Användare kan hantera ordbokslistor."
+
+#: apps/dictionaries/service.py:142
+msgid "A text dictionary file is required"
+msgstr "Textordboksfil krävs"
+
+#: apps/dictionaries/service.py:161 apps/dictionaries/service.py:281
+#: apps/dictionaries/service.py:285
+msgid "The dictionary already exists"
+msgstr "Ordboken finns redan"
+
+#: apps/dictionaries/service.py:189
+msgid "User is required for the abbreviations dictionary."
+msgstr "Användare måste anges för förkortningsordbok."
+
+#: apps/dictionaries/service.py:193
+msgid "The dictionary type cannot be changed."
+msgstr "Ordbokstyp kan inte ändras."
+
+#: apps/duplication/__init__.py:50
+msgid "Fetch Content To a Desk"
+msgstr "Hämta innehållet till Desk"
+
+#: apps/duplication/__init__.py:50
+msgid "Fetch Content to a Desk"
+msgstr "Hämta innehåll till en Desk"
+
+#: apps/duplication/__init__.py:54 apps/duplication/__init__.py:55
+msgid "Move Content to another desk"
+msgstr "Flytta tiil en annan desk"
+
+#: apps/duplication/__init__.py:59 apps/duplication/__init__.py:60
+msgid "Duplicate Content within a Desk"
+msgstr "Kopiera innehållet inom en Desk"
+
+#: apps/duplication/__init__.py:64 apps/duplication/__init__.py:65
+msgid "Translate Content within a Desk"
+msgstr "Översätt innehåll inom en desk"
+
+#: apps/duplication/__init__.py:69 apps/duplication/__init__.py:70
+msgid "Send Content to Personal desk"
+msgstr "Skicka innehåll till personlig desk"
+
+#: apps/duplication/archive_copy.py:54
+#: apps/duplication/archive_duplication.py:128
+#: apps/duplication/archive_move.py:125
+#: apps/duplication/archive_translate.py:60
+msgid "Fail to found item with guid: {guid}"
+msgstr "Gick inte att hitta med guid: {guid}"
+
+#: apps/duplication/archive_copy.py:59
+msgid "Copy is not allowed on items in a desk."
+msgstr "Ej tillåtet att kopiera material i en desk."
+
+#: apps/duplication/archive_duplication.py:54
+msgid "Duplicate to Personal space is not allowed."
+msgstr "Kopiering till personlig sfär ej tillåtet."
+
+#: apps/duplication/archive_fetch.py:75
+msgid "Fail to found ingest item with _id: {id}"
+msgstr "Gick inte att hitta material med _id: {id}"
+
+#: apps/duplication/archive_move.py:87
+msgid "Item is locked for move by another user."
+msgstr "Annan användare har låst materialet för flyttning."
+
+#: apps/duplication/archive_move.py:188
+msgid "Move is not allowed within the same stage."
+msgstr "Flytt ej tillåten inom samma kategori."
+
+#: apps/export/__init__.py:22
+msgid "Content export"
+msgstr "Innehållsexport"
+
+#: apps/export/service.py:67
+msgid "Error creating export zip file. Try again please."
+msgstr "Problem att skapa export zip-fil. Försök igen."
+
+#: apps/export/service.py:80
+msgid "No items to export."
+msgstr "Finns ingenting att exportera."
+
+#: apps/export/service.py:85
+msgid "Formatter not found for requested format type."
+msgstr "Formaterare ej hittad för önskad formattyp."
+
+#: apps/highlights/__init__.py:26
+msgid "Highlights - read"
+msgstr "Highlights - läsa"
+
+#: apps/highlights/__init__.py:27
+msgid "Can see a list of highlights."
+msgstr "Kan se highlights-lista."
+
+#: apps/highlights/__init__.py:31
+msgid "Highlights/Summary List Management"
+msgstr "Hantering lista highlights/sammanfattning"
+
+#: apps/highlights/__init__.py:32
+msgid "User can manage highlights/summary lists."
+msgstr "Användare kan hantera highlights/översiktslistor."
+
+#: apps/highlights/__init__.py:36
+msgid "Mark items for Highlights/Summary Lists"
+msgstr "Markerad för Highlights/Sammanfattnings-listor"
+
+#: apps/highlights/__init__.py:37
+msgid "User can mark items for Highlights/Summary Lists."
+msgstr "Användare kan markera material för Highlights/Översiktslistor."
+
+#: apps/io/search_ingest.py:61
+msgid "Destination desk cannot be empty."
+msgstr "Destinationsdesk kan inte vara tom."
+
+#: apps/io/search_ingest.py:92
+msgid "provider not found source={source}"
+msgstr "nyhetsbyrå hittade inte källa={source}"
+
+#: apps/io/feeding_services/reuters.py:150
+msgid "Not found {payload}"
+msgstr "Ej hittad {payload}"
+
+#: apps/item_autosave/components/item_autosave.py:32
+msgid "Invalid item identifier"
+msgstr "Ogiltig identifiering"
+
+#: apps/item_lock/components/item_lock.py:73
+msgid "Item is locked by another user."
+msgstr "Materialet låst av annan användare."
+
+#: apps/item_lock/components/item_lock.py:121
+msgid "Item is not locked."
+msgstr "Materialet är inte låst."
+
+#: apps/keywords/alchemy.py:27
+msgid "AlchemyAPI key is not set"
+msgstr "AlchemyAPI-nycket ej inställd"
+
+#: apps/keywords/alchemy.py:41
+msgid "Fail to connect to Alchemy service"
+msgstr "Går inte att ansluta till Alchemy-service"
+
+#: apps/keywords/alchemy.py:47
+msgid "Fail to parse the response from Alchemy service"
+msgstr "Gick inte att analysera svaret från Alchemy-service"
+
+#: apps/keywords/service.py:25
+msgid "Not set a keywords provider"
+msgstr "Inte inlagt huvudnyhetsbyrå"
+
+#: apps/ldap/ldap.py:105
+msgid ""
+"User does not belong to security Group or could not find the user profile."
+msgstr ""
+"Användare ingår inte i säkerhetsgruppen eller användarprofilen kunde inte "
+"hittas."
+
+#: apps/ldap/ldap.py:163
+msgid "No user has been found in AD"
+msgstr "Ingen användare hittad i AD"
+
+#: apps/ldap/ldap.py:200 apps/ldap/ldap.py:207
+msgid "Invalid Credentials."
+msgstr "Ogiltiga referenser."
+
+#: apps/ldap/ldap.py:211
+msgid "User already exists in the system."
+msgstr "Användare finns redan i systemet."
+
+#: apps/legal_archive/__init__.py:62
+msgid "Legal Archive"
+msgstr "Legalt arkiv"
+
+#: apps/legal_archive/__init__.py:63
+msgid "Read from legal archive"
+msgstr "Taget från rättsarkiv"
+
+#: apps/marked_desks/__init__.py:26
+msgid "Mark items for desks"
+msgstr "Markera för desks"
+
+#: apps/marked_desks/__init__.py:27
+msgid "User can mark items for other desks."
+msgstr "Användare kan markera material för andra desks."
+
+#: apps/marked_desks/__init__.py:31
+msgid "Mark items for desks even if the user is not a member of the desk"
+msgstr "Markera för desks även om användaren inte är medlem i desken."
+
+#: apps/marked_desks/__init__.py:32
+msgid ""
+"User can mark items for other desks even if they are not a member of that "
+"desk"
+msgstr ""
+"Användare kan markera material till andra desks även om dessa inte är medlem"
+" i desken"
+
+#: apps/packages/package_service.py:146
+msgid "Root group is missing."
+msgstr "Rotgrupp saknas."
+
+#: apps/packages/package_service.py:151
+msgid "Only one root group is allowed."
+msgstr "Bara tillåtet med en rotgrupp."
+
+#: apps/packages/package_service.py:159
+msgid "Group is missing id."
+msgstr "Grupp saknar id."
+
+#: apps/packages/package_service.py:169
+msgid "{id} group is added multiple times."
+msgstr "{id} grupp tillagd flera gånger."
+
+#: apps/packages/package_service.py:174
+msgid ""
+"The number of groups and of referenced groups in the root group do not "
+"match."
+msgstr "Antalet grupper och refererade grupper i rotgruppen matchar inte."
+
+#: apps/packages/package_service.py:179
+msgid "Not all groups are referenced in the root group."
+msgstr "Inte alla grupper är refererade till i rotgruppen."
+
+#: apps/packages/package_service.py:224
+msgid "Package contains empty ResidRef!"
+msgstr "Paket innehåller tomt ResidRef!"
+
+#: apps/packages/package_service.py:229
+msgid "Invalid item reference: {reference}"
+msgstr "Ogiltig referens: {reference}"
+
+#: apps/packages/package_service.py:259
+msgid "Trying to self reference as an association."
+msgstr ""
+
+#: apps/packages/package_service.py:265
+msgid "Content associated multiple times"
+msgstr "Innehåll länkat flera gånger"
+
+#: apps/packages/package_service.py:271
+msgid "Trying to create a circular reference to: {item_id}"
+msgstr "Försöker skapa en cirkulär referens till: {item_id}"
+
+#: apps/packages/package_service.py:451
+msgid "Package can't have item which has embargo. "
+msgstr "Paket kan inte innehålla något med embargo. "
+
+#: apps/packages/package_service.py:452
+msgid "Slugline/Unique Name of the item having embargo: {slugline}/{unique}"
+msgstr "Slugline/Unikt namn på material med embargo: {slugline}/{unique}"
+
+#: apps/products/__init__.py:31
+msgid "Products Management"
+msgstr "Produkthantering"
+
+#: apps/products/__init__.py:32
+msgid "User can manage product lists."
+msgstr "Användare kan hantera produktlistor."
+
+#: apps/products/product_test.py:45
+msgid "Article id cannot be empty!"
+msgstr "Artikel-id kan inte vara tomt!"
+
+#: apps/products/product_test.py:58
+msgid "Error in testing article: {exception}"
+msgstr "Fel vid artikeltest: {exception}"
+
+#: apps/products/service.py:30
+msgid "Product is used by the subscriber(s): {names}"
+msgstr "Produkten används av prenumeranten(erna): {names}"
+
+#: apps/products/service.py:48
+msgid ""
+"Product is used for API publishing for the subscriber(s): {subscribers}"
+msgstr ""
+"Produkten används för API-publicering till prenumerant(er): {subscribers}"
+
+#: apps/products/service.py:58
+msgid ""
+"Product is used for direct publishing for the subscriber(s): {subscribers}"
+msgstr ""
+"Produkten används för direktpublicering till prenumerant(er): {subscribers}"
+
+#: apps/publish/__init__.py:75
+msgid "Subscribers"
+msgstr "Prenumeranter"
+
+#: apps/publish/__init__.py:75
+msgid "User can manage subscribers"
+msgstr "Användare kan hantera prenumeranter"
+
+#: apps/publish/__init__.py:77
+msgid "Publish"
+msgstr "Publicera"
+
+#: apps/publish/__init__.py:77
+msgid "Publish a content"
+msgstr "Publicera ett innehåll"
+
+#: apps/publish/__init__.py:78
+msgid "Kill"
+msgstr "Spärra "
+
+#: apps/publish/__init__.py:78
+msgid "Kill a published content"
+msgstr "Spärra ett publicerat innehåll"
+
+#: apps/publish/__init__.py:80
+msgid "Correction"
+msgstr "Rättelse"
+
+#: apps/publish/__init__.py:80
+msgid "Correction to a published content"
+msgstr "Rättelse av ett publicerat innehåll"
+
+#: apps/publish/__init__.py:84
+msgid "Publish Queue"
+msgstr "Publiceringskö"
+
+#: apps/publish/__init__.py:85
+msgid "User can update publish queue"
+msgstr "Användare kan uppdatera publiceringskö"
+
+#: apps/publish/__init__.py:89
+msgid "Resending Stories"
+msgstr "Återsänder Stories"
+
+#: apps/publish/__init__.py:90
+msgid "User can resend published stories"
+msgstr "Användare kan återsända publicerade stories"
+
+#: apps/publish/__init__.py:93
+msgid "User can set embargo date"
+msgstr "Användare kan sätta embargo-datum"
+
+#: apps/publish/__init__.py:96
+msgid "Take down"
+msgstr "Ladda ner"
+
+#: apps/publish/__init__.py:96
+msgid "Take down a published content"
+msgstr "Ladda ner ett publicerat innehåll"
+
+#: apps/publish/__init__.py:99
+msgid "Unpublish"
+msgstr "Publicera inte"
+
+#: apps/publish/__init__.py:99
+msgid "Unpublish a published content"
+msgstr "Avpublicera ett publicerat innehåll"
+
+#: apps/publish/published_item.py:167
+msgid "Invalid state ({state}) for the Published item."
+msgstr "Ogiltig status ({state}) för det publicerade."
+
+#: apps/publish/published_item.py:228 apps/publish/published_item.py:241
+#: apps/publish/published_item.py:254
+msgid ""
+"Deleting a published item has a workflow which is implemented in "
+"remove_expired()."
+msgstr ""
+"När något publicerat raderas överförs arbetsflödet till ta bort_upphört()."
+
+#: apps/publish/content/common.py:248
+#: apps/publish/enqueue/enqueue_service.py:221
+msgid "Key is missing on article to be published: {exception}"
+msgstr "Nyckel saknas för artikel som ska publiceras: {exception}"
+
+#: apps/publish/content/common.py:253
+msgid "Failed to publish the item: {id}"
+msgstr "Gick inte att publicera: {id}"
+
+#: apps/publish/content/common.py:303
+msgid "Embargo can't be set after publishing"
+msgstr "Embargo kan inte anges efter publicering"
+
+#: apps/publish/content/common.py:307
+msgid "Dateline can't be modified on kill or take down"
+msgstr "Datum kan inte ändras i spärrade eller borttagna"
+
+#: apps/publish/content/common.py:312
+msgid "Cannot publish the story after Update is published."
+msgstr "Går inte publicera storyn när Uppdatering är publicerad."
+
+#: apps/publish/content/common.py:317
+msgid "Can't publish update until original story is published."
+msgstr "Kan inte publicera uppdatering förrän originalstoryn är publicerad."
+
+#: apps/publish/content/common.py:359
+msgid ""
+"There are unpublished related items that won't be sent out as related items."
+" Do you want to publish the article anyway?"
+msgstr ""
+"Opublicerat relaterat material kommer inte skickas ut som relaterat. Vill du"
+" publicera artikeln ändå?"
+
+#: apps/publish/content/common.py:372
+msgid "Package cannot be {state}"
+msgstr "Paket kan inte vara {state}"
+
+#: apps/publish/content/common.py:375
+msgid "Package cannot have Embargo"
+msgstr "Paket kan inte ha Embargo"
+
+#: apps/publish/content/common.py:382 apps/publish/content/common.py:448
+#: apps/publish/enqueue/enqueue_service.py:138
+msgid "Corrected package cannot be empty!"
+msgstr "Rättat paket kan inte vara tomt!"
+
+#: apps/publish/content/common.py:386
+msgid "Cannot publish an item which is marked as Not for Publication"
+msgstr "Går inte att publicera något märkt: Inte för publicering "
+
+#: apps/publish/content/common.py:391
+msgid "Can't {operation} as item state is {state}"
+msgstr "Går inte {operation} då status är {state}"
+
+#: apps/publish/content/common.py:393
+msgid ""
+"Can't {operation} as either package state or one of the items state is "
+"{state}"
+msgstr ""
+"Går inte {operation} då status för antingen paket eller ett av objekten är "
+"{state}"
+
+#: apps/publish/content/common.py:440 apps/publish/content/publish.py:51
+msgid "Empty package cannot be published!"
+msgstr "Tomt paket kan inte publiceras!"
+
+#: apps/publish/content/common.py:461
+msgid "Package item with id: {guid} does not exist."
+msgstr "Paket med id: {guid} finns inte."
+
+#: apps/publish/content/common.py:655
+msgid "Item cannot contain associated {state} item."
+msgstr "Kan inte innehålla länkat objekt {state}."
+
+#: apps/publish/content/common.py:659
+msgid "Associated item is scheduled later than current item."
+msgstr "Det länkade är schemalagt senare än detta."
+
+#: apps/publish/content/common.py:662
+msgid "Item cannot have associated items with Embargo"
+msgstr "Kan inte innehålla länkade objekt belagda med embargo"
+
+#: apps/publish/content/common.py:672
+msgid "Associated item {name} {error}"
+msgstr "Länkat {name} {error}"
+
+#: apps/publish/content/common.py:684
+msgid "packaged item is locked by another user"
+msgstr "paket låst av annan användare"
+
+#: apps/publish/content/common.py:693
+msgid "packaged item is locked by you. Unlock it and try again"
+msgstr "Paket låst av dig. Lås upp och försök igen"
+
+#: apps/publish/content/common.py:813
+msgid "Associated item \"{}\" does not exist in the system"
+msgstr "Länkat objekt \"{}\" finns inte i systemet"
+
+#: apps/publish/content/kill.py:57
+msgid ""
+"This item is in a package. It needs to be removed before the item can be "
+"killed"
+msgstr "Ingår i ett paket. Måste flyttas innan det går att spärra"
+
+#: apps/publish/content/published_package_items.py:47
+msgid "Invalid package identifier"
+msgstr "Ogiltig  paketidentifiering"
+
+#: apps/publish/content/published_package_items.py:49
+msgid "Package was not published"
+msgstr "Paketet har inte publicerats"
+
+#: apps/publish/content/published_package_items.py:56
+msgid "Invalid item identifier  {item_id}"
+msgstr "Ogiltig identifiering {item_id}"
+
+#: apps/publish/content/published_package_items.py:62
+msgid "Circular reference in item {item_id}"
+msgstr "Cirkulär referens i {item_id}"
+
+#: apps/publish/content/resend.py:57
+msgid "No subscribers selected!"
+msgstr "Inga prenumeranter valda!"
+
+#: apps/publish/content/resend.py:63
+msgid "No active subscribers found!"
+msgstr "Inga aktiva prenumeranter hittades!"
+
+#: apps/publish/content/resend.py:68
+msgid "Only wire subscribers can receive broadcast stories!"
+msgstr "Endast trådanslutna prenumeranter kan ta emot ljudstories!"
+
+#: apps/publish/content/resend.py:80
+msgid "Story couldn't be found!"
+msgstr "Story hittades inte!"
+
+#: apps/publish/content/resend.py:83
+msgid "Only text stories can be resent!"
+msgstr "Endast textstories kan skickas igen!"
+
+#: apps/publish/content/resend.py:92
+msgid "Only published, corrected or killed stories can be resent!"
+msgstr "Endast publicerade, rättade eller spärrade stories kan återskickas!"
+
+#: apps/publish/content/resend.py:97
+msgid "Please use the newest version {version} to resend!"
+msgstr "Använd nyaste versionen {version} för att skicka igen!"
+
+#: apps/publish/content/resend.py:101
+msgid "Updated story cannot be resent!"
+msgstr "Uppdaterad story kan inte skickas igen!"
+
+#: apps/publish/content/unpublish.py:19
+msgid ""
+"This item is in a package. It needs to be removed before the item can be "
+"unpublished."
+msgstr "Ingår i ett paket. Måste flyttas innan avpublicering."
+
+#: apps/publish/enqueue/enqueue_service.py:148
+msgid "Package item with id: {guid} has not been published."
+msgstr "Paket med id: {guid} har inte publicerats."
+
+#: apps/publish/enqueue/enqueue_service.py:226
+msgid "Failed to publish the item: {exception}"
+msgstr "Publiceringen misslyckades: {undantag}"
+
+#: apps/publish/enqueue/enqueue_service.py:570
+msgid "Can not find package {package} published item {item}"
+msgstr "Paketet {package} med publicerat {item} hittades inte"
+
+#: apps/publish/formatters/service.py:53
+msgid "Formatter name not found"
+msgstr "Formaterarnamn hittas ej"
+
+#: apps/publish/formatters/service.py:58
+msgid "Formatter not found"
+msgstr "Formaterare hittas ej"
+
+#: apps/publish/formatters/service.py:79
+msgid "Error in formatting article: {exception}"
+msgstr "Fel. Artikeln formaterades inte: {undantag}"
+
+#: apps/rules/__init__.py:35
+msgid "Transformation Rules Management"
+msgstr "Hantering omvandlingsregler"
+
+#: apps/rules/__init__.py:36
+msgid "User can setup transformation rules for ingest content."
+msgstr "Användare kan upprätta transformationregler för importerat innehåll."
+
+#: apps/rules/__init__.py:41
+msgid "Routing Rules Management"
+msgstr "Routing-regelhantering "
+
+#: apps/rules/__init__.py:42
+msgid "User can manage routing rules which are executed on ingested articles."
+msgstr ""
+"Användare kan hantera routing-regler för utförda eller importerade artiklar."
+
+#: apps/rules/routing_rules.py:180
+msgid "Routing scheme is applied to channel(s). It cannot be deleted."
+msgstr "Routing-schema tillämpas på kanal(er). Kan inte raderas."
+
+#: apps/rules/routing_rules.py:281
+msgid "A Routing Scheme must have at least one Rule"
+msgstr "Ett Routing-schema måste ha minst en Regel"
+
+#: apps/rules/routing_rules.py:289
+msgid "A routing rule has invalid fields {fields}"
+msgstr "En routing-regel har ogiltiga fält {fields}"
+
+#: apps/rules/routing_rules.py:296
+msgid "A routing rule must have a name"
+msgstr "En routing-regel måste ha ett namn"
+
+#: apps/rules/routing_rules.py:302
+msgid "A routing rule must have actions"
+msgstr "En routing-regel måste innehålla åtgärder"
+
+#: apps/rules/routing_rules.py:319
+msgid "Schedule when defined can't be empty."
+msgstr "Definierat schema kan inte vara tomt."
+
+#: apps/rules/routing_rules.py:323
+msgid "Invalid values for day of week."
+msgstr "Ogiltiga värden för veckodag."
+
+#: apps/rules/routing_rules.py:329
+msgid "Invalid value for from time."
+msgstr "Ogiltigt värde för från-tid."
+
+#: apps/rules/routing_rules.py:337
+msgid "Invalid value for hour_of_day_to (expected %H:%M:%S)."
+msgstr "Ogiltigt värde för timme_på_dagen_till (förväntad %H:%M:%S)."
+
+#: apps/rules/routing_rules.py:341
+msgid "From time should be less than To Time."
+msgstr "Från-tid ska vara tidigare än Till-tid."
+
+#: apps/rules/routing_rules.py:346
+msgid "Unknown time zone {time_zone}"
+msgstr "Okänd tidszon {tids_zon}"
+
+#: apps/rules/routing_rules.py:359
+msgid "Rule Names must be unique within a scheme"
+msgstr "Regelnamn måste vara unika i ett schema"
+
+#: apps/rules/rule_sets.py:55
+msgid "Cannot delete Rule set as it's associated with channel(s)."
+msgstr "Regelinställning kan inte raderas då den är länkad till kanal(er). "
+
+#: apps/saved_searches/__init__.py:55
+msgid "Global searches"
+msgstr "Globala sökningar"
+
+#: apps/saved_searches/__init__.py:56
+msgid "Use global saved searches."
+msgstr "Använd globalt sparade sökningar."
+
+#: apps/saved_searches/__init__.py:60
+msgid "Manage Global Saved Searches"
+msgstr "Hantering av Globalt sparade sökningar"
+
+#: apps/saved_searches/__init__.py:61
+msgid "User can manage other users' global saved searches"
+msgstr "Användare kan hantera annan användares globalt sparade sökningar"
+
+#: apps/saved_searches/__init__.py:65
+msgid "Manage Saved Searches"
+msgstr "Hantera sparade sökningar"
+
+#: apps/saved_searches/__init__.py:66
+msgid "User can manage saved searches"
+msgstr "Användare kan hantera sparade sökningar"
+
+#: apps/saved_searches/__init__.py:70
+msgid "Manage Saved Searches Subscriptions"
+msgstr "Hanterar Sparade prenumerationssökningar"
+
+#: apps/saved_searches/__init__.py:71
+msgid "User can (un)subscribe to saved searches"
+msgstr "Användare kan (av)prenumerera på sparade sökningar"
+
+#: apps/saved_searches/__init__.py:75
+msgid "Manage Saved Searches Subscriptions For Other Users"
+msgstr "Hanterar Sparade prenumerationssökningar för andra användare"
+
+#: apps/saved_searches/__init__.py:76
+msgid "User manage other users saved searches subscriptions"
+msgstr "Användare hanterar andra användares sparade prenumerationssökningar"
+
+#: apps/saved_searches/saved_searches.py:138
+msgid "User's subscriptions are not allowed on create"
+msgstr "Användarens prenumerationer ej tillåtna i skapa"
+
+#: apps/saved_searches/saved_searches.py:163
+msgid "Unauthorized to modify subscriptions."
+msgstr "Ej behörig att ändra prenumerationer."
+
+#: apps/saved_searches/saved_searches.py:180
+msgid "Unauthorized to modify other users' subscriptions."
+msgstr "Ej behörig att ändra andra användares prenumerationer."
+
+#: apps/saved_searches/saved_searches.py:244
+msgid "Search cannot be saved without a filter!"
+msgstr "Sökning kan inte sparas utan filter!"
+
+#: apps/saved_searches/saved_searches.py:266
+msgid "Fail to validate the filter against {index}."
+msgstr "Gick inte att bekräfta filtret mot {index}."
+
+#: apps/saved_searches/saved_searches.py:286
+msgid "Unauthorized to modify other user's local search."
+msgstr "Ej auktoriserad att ändra annan användares lokala sökning."
+
+#: apps/saved_searches/saved_searches.py:288
+msgid "Unauthorized to modify global search."
+msgstr "Ej auktoriserad att ändra global sökning."
+
+#: apps/saved_searches/saved_searches.py:313
+msgid "Invalid Saved Search"
+msgstr "Ogiltig Sparad sökning"
+
+#: apps/search_providers/__init__.py:29
+msgid "Manage Search Providers"
+msgstr "Hantera sökbyråer"
+
+#: apps/search_providers/__init__.py:30
+msgid "User can manage search providers."
+msgstr "Användare kan hantera sökbyråer."
+
+#: apps/search_providers/registry.py:32
+msgid "fetch_enpoint must be a string"
+msgstr "hämta_slutpunkt måste vara en sträng"
+
+#: apps/search_providers/registry.py:37
+msgid "You have to specify either fetch_endpoint or provider_class."
+msgstr "Antingen hämta_slutpunkt eller nyhetsbyråstatus måste anges."
+
+#: apps/search_providers/registry.py:45
+msgid ""
+"A Search Provider for the fetch endpoint: {endpoint} exists with name: "
+"{name}"
+msgstr "Sökbyrå för hämtad slutpunkt: {slutpunkt} finns med namnet: {namn}"
+
+#: apps/search_providers/resource.py:40
+msgid "Search Provider: {name}"
+msgstr "Sökbyrå: {namn}"
+
+#: apps/search_providers/service.py:78
+msgid "Deleting a Search Provider after receiving items is prohibited."
+msgstr "Radera sökbyrå efter leverans är förbjudet."
+
+#: apps/suggestions/service.py:33
+msgid "The item identifier is required"
+msgstr "Identifiering måste anges"
+
+#: apps/suggestions/service.py:38
+msgid "Invalid item identifer"
+msgstr "Ogiltig identifiering"
+
+#: apps/system_message/__init__.py:28
+msgid "System Message"
+msgstr "Systemmeddelande"
+
+#: apps/system_message/__init__.py:29
+msgid "User can manage system messages."
+msgstr "Användare kan hantera systemmeddelanden."
+
+#: apps/system_message/service.py:62
+msgid "Max {max_characters} characters are allowed"
+msgstr "Max {max_characters} tecken tillåtna"
+
+#: apps/system_message/service.py:68
+msgid "Only administrator user can {operation} the message"
+msgstr "Endast adminanvändare kan {operation} meddelandet"
+
+#: apps/templates/__init__.py:28
+msgid "Templates"
+msgstr "Mallar"
+
+#: apps/templates/__init__.py:28
+msgid "Create templates"
+msgstr "Skapa mallar"
+
+#: apps/templates/__init__.py:33 apps/templates/__init__.py:34
+msgid "Manage other user personal template"
+msgstr "Hantera annan användares personliga mall"
+
+#: apps/templates/content_templates.py:224
+msgid "Invalid kill template. {fields} are not allowed"
+msgstr "Ogiltig spärrad mall. {fält} ej tillåtna"
+
+#: apps/templates/content_templates.py:287
+msgid "Kill templates can not be deleted."
+msgstr "Spärrade mallar går inte att ta bort."
+
+#: apps/templates/content_templates.py:389
+msgid "Kill templates must be public"
+msgstr "Spärrade mallar måste vara allmänna"
+
+#: apps/templates/content_templates.py:405
+msgid "Templates that are not create type can only be assigned to one desk!"
+msgstr "Mallar av icke-skapa-typ kan bara tilldelas en desk!"
+
+#: apps/templates/content_templates.py:436
+msgid "You dont have the privilege to {action} another user personal template"
+msgstr "Du saknar behörighet till {action} annans personliga användarmall"
+
+#: apps/templates/content_templates.py:440
+msgid "You dont have the privilege to {action} the public template"
+msgstr "Du saknar behörighet till {action} den allmänna mallen"
+
+#: apps/validate/validate.py:38
+msgid "Abstract"
+msgstr "Abstrakt"
+
+#: apps/validate/validate.py:39
+msgid "Alt text"
+msgstr "Alt text"
+
+#: apps/validate/validate.py:40
+msgid "Take Key"
+msgstr "Version"
+
+#: apps/validate/validate.py:41
+msgid "Archive description"
+msgstr "Arkivbeskrivning"
+
+#: apps/validate/validate.py:42
+msgid "Attachments"
+msgstr "bilagor"
+
+#: apps/validate/validate.py:43
+msgid "Authors"
+msgstr "Författare"
+
+#: apps/validate/validate.py:44
+msgid "Body footer"
+msgstr "Brödtextens fottext"
+
+#: apps/validate/validate.py:46
+msgid "Byline"
+msgstr "Byline"
+
+#: apps/validate/validate.py:47
+msgid "Categories"
+msgstr "Kategorier"
+
+#: apps/validate/validate.py:48
+msgid "Company Codes"
+msgstr "Företagskoder"
+
+#: apps/validate/validate.py:49
+msgid "Copyright holder"
+msgstr "Copyrightinnehavare"
+
+#: apps/validate/validate.py:50
+msgid "Copyright notice"
+msgstr "Copyright anteckning"
+
+#: apps/validate/validate.py:51
+msgid "Dateline"
+msgstr "Datumrad"
+
+#: apps/validate/validate.py:52
+msgid "Description"
+msgstr "Beskrivning"
+
+#: apps/validate/validate.py:54
+msgid "Ed. Note"
+msgstr "Red. not"
+
+#: apps/validate/validate.py:56
+msgid "Feature Image"
+msgstr "Bild"
+
+#: apps/validate/validate.py:58
+msgid "Footer"
+msgstr "Sidfot"
+
+#: apps/validate/validate.py:59
+msgid "Footers"
+msgstr "Sidfötter"
+
+#: apps/validate/validate.py:62
+msgid "Ingest Provider"
+msgstr "Importera nyhetsbyrå"
+
+#: apps/validate/validate.py:64
+msgid "Language"
+msgstr "Språk"
+
+#: apps/validate/validate.py:65
+msgid "Media"
+msgstr "Media"
+
+#: apps/validate/validate.py:66
+msgid "Media Description"
+msgstr "Mediabeskrivning"
+
+#: apps/validate/validate.py:69
+msgid "Scheduled Time"
+msgstr "Schemalagd tid"
+
+#: apps/validate/validate.py:70
+msgid "Related Items"
+msgstr "Relaterade till "
+
+#: apps/validate/validate.py:71
+msgid "Sign Off"
+msgstr "Logga ut"
+
+#: apps/validate/validate.py:74
+msgid "SMS Message"
+msgstr "SMS-meddelande"
+
+#: apps/validate/validate.py:80
+msgid "Usage Terms"
+msgstr "Användartermer"
+
+#: apps/validate/validate.py:84
+msgid "is a required field"
+msgstr "fältet måste fyllas i"
+
+#: apps/validate/validate.py:85
+msgid "max length is {length}"
+msgstr "maxlängd är {length}"
+
+#: apps/validate/validate.py:86
+msgid "require a string value"
+msgstr "behövs ett strängvärde"
+
+#: apps/validate/validate.py:87
+msgid "require a date value"
+msgstr "behövs ett datumvärde"
+
+#: apps/validate/validate.py:88
+msgid "{} is a required field"
+msgstr "{} fältet måste fyllas i"
+
+#: apps/validate/validate.py:89
+msgid "contains invalid characters"
+msgstr "innehåller ogiltiga tecken"
+
+#: apps/validate/validate.py:90
+msgid "{} is too long"
+msgstr "{} är för lång"
+
+#: apps/validate/validate.py:91
+msgid "{} is too short"
+msgstr "{} är för kort"
+
+#: apps/validate/validate.py:92
+msgid "empty values not allowed"
+msgstr "tomma värden ej tillåtna"
+
+#: apps/video_edit/__init__.py:29
+msgid "\"video_editor_id\" is required"
+msgstr "\"video_editor_id\" måste anges"
+
+#: apps/video_edit/__init__.py:31
+msgid "\"capture\" or \"edit\" is required"
+msgstr "Måste \"kortas\" eller \"redigeras\""
+
+#: apps/workspace/__init__.py:24
+msgid "Dashboard"
+msgstr "Dashboard"
+
+#: apps/workspace/__init__.py:24
+msgid "Can access dashboard."
+msgstr "Har tillgång till dashboard."

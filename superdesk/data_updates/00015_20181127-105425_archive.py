@@ -7,7 +7,7 @@
 # Author  : tomas
 # Creation: 2018-11-27 10:54
 
-from superdesk.commands.data_updates import DataUpdate
+from superdesk.commands.data_updates import BaseDataUpdate
 from superdesk import get_resource_service
 
 # This upgrade script does the same as the previous one 00014_20181114-153727_archive.py
@@ -48,28 +48,28 @@ class TreeNode:
         self.children = []
 
 
-class DataUpdate(DataUpdate):
+class DataUpdate(BaseDataUpdate):
 
-    resource = 'archive'  # will use multiple resources, keeping this here so validation passes
+    resource = "archive"  # will use multiple resources, keeping this here so validation passes
 
     def forwards(self, mongodb_collection, mongodb_database):
         tree_items = {}
 
         # `translated_from` can refer to archive['_id'] or published['item_id']
 
-        for resource in ['archive', 'published']:
+        for resource in ["archive", "published"]:
             collection = mongodb_database[resource]
 
             # building multiple trees
-            for item in collection.find({'translated_from': {'$exists': True}}):
-                node_id = item['_id']
+            for item in collection.find({"translated_from": {"$exists": True}}):
+                node_id = item["_id"]
 
                 if node_id not in tree_items:
                     tree_items[node_id] = TreeNode(node_id)
 
                 node = tree_items[node_id]
                 node.resource = resource
-                parent_id = item['translated_from']
+                parent_id = item["translated_from"]
 
                 if parent_id not in tree_items:
                     tree_items[parent_id] = TreeNode(parent_id)
@@ -79,9 +79,9 @@ class DataUpdate(DataUpdate):
 
         # processing trees
         for root_node in get_root_nodes(tree_items):
-            updates = {'translation_id': root_node.id}
+            updates = {"translation_id": root_node.id}
 
-            for resource in ['archive', 'published']:
+            for resource in ["archive", "published"]:
                 service = get_resource_service(resource)
                 ids = get_ids_recursive([root_node], resource)
 

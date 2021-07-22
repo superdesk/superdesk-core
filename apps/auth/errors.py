@@ -17,34 +17,28 @@ logger = logging.getLogger(__name__)
 
 
 class UserDisabledError(SuperdeskApiError):
-    """User is disabled, access restricted
-
-    """
+    """User is disabled, access restricted"""
 
     status_code = 403
-    payload = {'is_enabled': False}
-    message = 'Account is disabled, access restricted.'
+    payload = {"is_enabled": False}
+    message = "Account is disabled, access restricted."
 
 
 class PasswordExpiredError(SuperdeskApiError):
-    """The password of the user has expired
-
-    """
+    """The password of the user has expired"""
 
     status_code = 403
-    payload = {'password_is_expired': True}
-    message = 'The password of the user has expired.'
+    payload = {"password_is_expired": True}
+    message = "The password of the user has expired."
 
 
 class CredentialsAuthError(SuperdeskApiError):
-    """Credentials Not Match Auth Exception
-
-    """
+    """Credentials Not Match Auth Exception"""
 
     def __init__(self, credentials, message=None, error=None):
-        super().__init__(status_code=401, message=message, payload={'credentials': 1})
+        super().__init__(status_code=401, message=message, payload={"credentials": 1})
         # pop the password so that it doesn't get logged
-        credentials.pop('password', None)
+        credentials.pop("password", None)
         logger.warning("Login failure: %s" % json.dumps(credentials))
         if error:
             logger.error("Exception occurred: {}".format(error))

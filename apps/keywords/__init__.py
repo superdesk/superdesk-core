@@ -14,9 +14,9 @@ from apps.keywords.service import KeywordsService
 from apps.keywords.alchemy import AlchemyKeywordsProvider
 
 
-def init_app(app):
-    endpoint_name = 'keywords'
+def init_app(app) -> None:
+    endpoint_name = "keywords"
     service = KeywordsService(endpoint_name, backend=superdesk.get_backend())
-    if app.config.get('KEYWORDS_PROVIDER') == 'Alchemy':
+    if app.config.get("KEYWORDS_PROVIDER") == "Alchemy":
         service.provider = AlchemyKeywordsProvider()
     KeywordsResource(endpoint_name, app=app, service=service)

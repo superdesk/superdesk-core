@@ -21,42 +21,32 @@ logger = logging.getLogger(__name__)
 
 class ChangePasswordResource(Resource):
     schema = {
-        'username': {
-            'type': 'string',
-            'required': True
-        },
-        'old_password': {
-            'type': 'string',
-            'required': True
-        },
-        'new_password': {
-            'type': 'string',
-            'required': True
-        },
+        "username": {"type": "string", "required": True},
+        "old_password": {"type": "string", "required": True},
+        "new_password": {"type": "string", "required": True},
     }
-    public_methods = ['POST']
-    resource_methods = ['POST']
+    public_methods = ["POST"]
+    resource_methods = ["POST"]
     item_methods = []
 
 
 class ChangePasswordService(BaseService):
-
     def create(self, docs, **kwargs):
         for doc in docs:
-            username = doc['username']
-            credentials = {'username': username, 'password': doc['old_password']}
+            username = doc["username"]
+            credentials = {"username": username, "password": doc["old_password"]}
             try:
-                get_resource_service('auth_db').authenticate(credentials, True)
+                get_resource_service("auth_db").authenticate(credentials, True)
             except Exception as e:
                 raise CredentialsAuthError(credentials=credentials, error=e)
 
-            user = superdesk.get_resource_service('users').find_one(req=None, username=username)
-            superdesk.get_resource_service('users').update_password(user['_id'], doc['new_password'])
-            del doc['old_password']
-            del doc['new_password']
+            user = superdesk.get_resource_service("users").find_one(req=None, username=username)
+            superdesk.get_resource_service("users").update_password(user["_id"], doc["new_password"])
+            del doc["old_password"]
+            del doc["new_password"]
 
             # return etag for further user updates
-            user = superdesk.get_resource_service('users').find_one(req=None, _id=user['_id'])
-            doc['_etag'] = user['_etag']
+            user = superdesk.get_resource_service("users").find_one(req=None, _id=user["_id"])
+            doc["_etag"] = user["_etag"]
 
-            return [user['_id']]
+            return [user["_id"]]

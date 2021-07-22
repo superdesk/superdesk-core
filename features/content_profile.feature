@@ -1834,3 +1834,130 @@ Feature: Content Profile
         """
         {"_status": "ERR", "_issues": {"item_type": "Only 1 instance is allowed."}}
         """
+
+    @auth
+    Scenario: Updating the content profile doesn't change template metadata
+        Given "content_types"
+        """
+        [{"_id": "foo", "label": "Foo", "schema": {
+            "headline": {
+                "maxlength" : 64,
+                "type" : "string",
+                "required" : false,
+                "nullable" : true
+            },
+            "slugline" : {
+                "type" : "string",
+                "nullable" : true,
+                "maxlength" : 24,
+                "required" : false
+            },
+            "place": {"default": [{"name": "Prague"}]}
+        }}]
+        """
+        And "content_templates"
+        """
+        [{
+            "template_name": "foo",
+            "data": {
+                "slugline": "Testing the slugline",
+                "headline": "Testing the headline",
+                "profile": "foo",
+                "language": "fr"
+            }
+        }]
+        """
+        When we patch "content_types/foo"
+        """
+        {"schema": {
+            "headline": null,
+            "slugline" : {
+                "type" : "string",
+                "nullable" : true,
+                "maxlength" : 24,
+                "required" : false
+            },
+            "language": null,
+            "place": {"default": [{"name": "Prague"}]}
+        }}
+        """
+        Then we get updated response
+        """
+        {"updated_by": "#CONTEXT_USER_ID#"}
+        """
+        When we get "content_templates"
+        Then we get list with 1 items
+        """
+        {"_items": [{
+            "template_name": "foo",
+            "data": {
+                "slugline": "Testing the slugline",
+                "profile": "foo",
+                "language": "fr"
+            }
+          }]
+        }
+        """
+        And there is no "headline" in data
+
+    @auth
+    Scenario: Removing the keywords field from content profile should not show the keywords field again 
+        Given "vocabularies"
+        """
+        [
+            {
+                "_id": "keywords", 
+                "display_name": "keywords_little", 
+                "service": {"all": 1},
+                "items": [{"name": "k1", "parent": "k1", "qcode": "k1"}]
+            }
+        ]
+        """
+        And "content_types"
+        """
+        [{"_id": "profile"}]
+        """
+        When we get "/content_types/profile?edit=true"
+        Then we get existing resource
+        """
+        {
+            "schema": {
+                "keywords": {
+                    "type": "list",
+                    "required": false
+                }
+            },
+            "editor": {
+                "keywords": {
+                    "enabled": false,
+                    "field_name": "keywords_little"
+                }
+            }
+        }
+        """
+        When we patch "/content_types/profile"
+        """
+        {
+            "editor": {"keywords": {"enabled": true}}
+        }
+        """
+        And we get "/content_types/profile?edit=true"
+        Then we get existing resource
+        """
+        {
+            "editor": {"keywords": {"enabled": true}}
+        }
+        """
+         When we patch "/content_types/profile"
+        """
+        {
+            "editor": {"keywords": {"enabled": false}}
+        }
+        """
+        And we get "/content_types/profile?edit=true"
+        Then we get existing resource
+        """
+        {
+            "editor": {"keywords": {"enabled": false}}
+        }
+        """

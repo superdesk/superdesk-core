@@ -5,7 +5,9 @@
         "type": "manageable",
         "selection_type": "multi selection",
         "unique_field": "qcode",
+        "init_version": 1,
         "items": [
+
             {"is_active": true, "name": "FIXME1", "qcode": "f1", "subject": "", "translations": {"name": {"fr": "FIXME1-fr", "es": "FIXME1-es"}}},
             {"is_active": true, "name": "FIXME2", "qcode": "f2", "subject": "", "translations": {"name": {"fr": "FIXME2-fr", "es": "FIXME2-es"}}}
         ],
@@ -13,6 +15,20 @@
             "name": {"translate": true},
             "qcode": {},
             "subject": {}
+        },
+        "translations": {
+            "display_name": {
+                "ar": "فئات",
+                "da": "kategorier",
+                "de-DE": "Kategorien",
+                "el": "κατηγορίες",
+                "es": "categorías",
+                "nb": "kategorier",
+                "pt-BR": "categorias",
+                "ru-RU": "категории",
+                "uk-UA": "категорії",
+                "fr-CA": "Catégories"
+            }
         }
     },
     {
@@ -35,11 +51,27 @@
         }
     },
     {
+        "_id": "languages",
+        "display_name": "Languages",
+        "type": "manageable",
+        "unique_field": "qcode",
+        "init_version": 1,
+        "service": { "all": 1 },
+        "items": [
+            {"name": "Nederlands", "qcode": "nl", "is_active": true },
+            {"name": "Français", "qcode": "fr", "is_active": true },
+            {"name": "English", "qcode": "en", "is_active": true },
+            {"name": "Deutsch", "qcode": "de", "is_active": true },
+            {"name": "Español", "qcode": "es", "is_active": true }
+        ]
+    },
+    {
         "_id": "genre",
         "display_name": "Genre",
         "type": "manageable",
         "selection_type": "multi selection",
         "unique_field": "qcode",
+        "init_version": 1,
         "items": [
             {"is_active": true, "name": "Article (news)", "qcode": "Article"},
             {"is_active": true, "name": "Sidebar", "qcode": "Sidebar"},
@@ -68,6 +100,19 @@
         "schema": {
             "name": {"translate": true},
             "qcode": {}
+        },
+        "translations": {
+            "display_name": {
+                "da": "genre",
+                "de-DE": "genre",
+                "el": "Είδος",
+                "es": "genero",
+                "fr-CA": "version",
+                "nb": "Stofftype",
+                "pt-BR": "gênero",
+                "ru-RU": "Жанр",
+                "uk-UA": "Жанр"
+            }
         }
     },
     {
@@ -76,6 +121,7 @@
         "type": "manageable",
         "selection_type": "multi selection",
         "unique_field": "qcode",
+        "init_version": 1,
         "items": [
             {"is_active": true, "name": "1", "qcode": 1},
             {"is_active": true, "name": "2", "qcode": 2},
@@ -88,6 +134,19 @@
             "qcode": {"type": "integer"},
             "color": {"type": "color", "label": "Сolour"},
             "short": {"type": "short", "label": "List Name", "maxlength": 2, "translate": true}
+        },
+        "translations": {
+            "display_name": {
+                "da": "haster",
+                "de-DE": "dringlichkeit",
+                "el": "Επείγον",
+                "es": "urgencia",
+                "fr-CA": "urgence",
+                "nb": "Hast",
+                "pt-BR": "Urgência",
+                "ru-RU": "Срочность",
+                "uk-UA": "Tерміновість"
+            }
         }
     },
     {
@@ -96,6 +155,7 @@
         "type": "manageable",
         "selection_type": "multi selection",
         "unique_field": "qcode",
+        "init_version": 1,
         "items": [
             {"is_active": true, "name": "1", "qcode": 1},
             {"is_active": true, "name": "2", "qcode": 2},
@@ -112,6 +172,19 @@
             "qcode": {"type": "integer"},
             "color": {"type": "color", "label": "Сolour"},
             "short": {"type": "short", "label": "List Name", "maxlength": 2, "translate": true}
+        },
+        "translations": {
+            "display_name": {
+                "da": "prioritet",
+                "de-DE": "priorität",
+                "el": "Προτεραιότητα",
+                "es": "prioridad",
+                "fr-CA": "Priorité",
+                "nb": "viktighet",
+                "pt-BR": "prioridade",
+                "ru-RU": "Приоритет",
+                "uk-UA": "Пріоритет"
+            }
         }
     },
     {
@@ -179,7 +252,8 @@
                     {"name": "NewsML G2", "qcode": "newsmlg2"},
                     {"name": "Email", "qcode": "email"},
                     {"name": "Newsroom NINJS", "qcode": "newsroom ninjs"},
-                    {"name": "Adobe InDesign (IDML)", "qcode": "idml"}
+                    {"name": "Adobe InDesign (IDML)", "qcode": "idml"},
+                    {"name": "iMatrics", "qcode": "imatrics"}
                 ]},
             {"is_active": true, "name": "Digital/Internet", "qcode": "digital",
                 "formats": [
@@ -189,7 +263,8 @@
                     {"name": "NewsML G2", "qcode": "newsmlg2"},
                     {"name": "Email", "qcode": "email"},
                     {"name": "Newsroom NINJS", "qcode": "newsroom ninjs"},
-                    {"name": "Adobe InDesign (IDML)", "qcode": "idml"}
+                    {"name": "Adobe InDesign (IDML)", "qcode": "idml"},
+                    {"name": "iMatrics", "qcode": "imatrics"}
                 ]},
             {"is_active": true, "name": "Wire/Paper", "qcode": "wire",
                 "formats": [
@@ -197,7 +272,7 @@
                     {"name": "Email", "qcode": "email"}
                 ]}
         ],
-        "init_version": 2
+        "init_version": 3
     },
     {
         "_id": "crop_sizes",

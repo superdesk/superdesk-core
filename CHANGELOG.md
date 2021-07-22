@@ -1,5 +1,172 @@
 # Superdesk Server Changelog
 
+## [2.3.0] 2021-07-13
+
+[Changes](https://github.com/superdesk/superdesk-core/milestone/107?closed=1)
+
+## [2.2.0] 2021-05-05
+
+[Changes](https://github.com/superdesk/superdesk-core/milestone/93?closed=1)
+
+## [2.1.3] 2021-04-19
+
+### Fixed
+
+- Fix error when auto publishing associated items with schedule.
+- Unlock article after publishing.
+- Update lxml version.
+- Fix default content template not available in planning scheduled export.
+- Fix correction workflow.
+- Fix editor field not updated when applying a template.
+
+## [2.1.2] 2021-02-24
+
+### Fixed
+
+- Load local settings for unit tests.
+- Fix search results inconsistency between archive and search endpoints.
+- Handle error when fetching association from AP Media API.
+- Fix master desk aggregations.
+
+## [2.1.1] 2021-02-15
+
+### Fixed
+
+- Store last activity timestamp on user.
+- Fix error when saving media contacts with country.
+
+## [2.1.0] 2021-02-10
+
+[Changes](https://github.com/superdesk/superdesk-core/milestone/89?closed=1)
+
+## [2.0.12] 2021-01-21
+
+### Fixed
+
+- Fix elastic search not working on capitalized words.
+
+## [2.0.11] 2021-01-18
+
+### Fixed
+
+- Fix error when descheduling item which makes it disappear.
+
+## [2.0.10] 2021-01-05
+
+### Fixed
+
+- Dont terminate app:initialize_data command on duplicate key error
+
+## [2.0.9] 2020-12-22
+
+### Fixed
+
+- Fix publish queue delete OperationError from mongo.
+
+## [2.0.8] 2020-12-18
+
+### Fixed
+
+- Fix delete from `publish_queue` query not using index.
+- Fix ingestion of existing items via ref.
+- Fix publish script cleanup.
+
+## [2.0.7] 2020-12-11
+
+### Fixed
+
+- Populate `refs` on item when autorouting from ingest.
+
+## [2.0.6] 2020-12-02
+
+### Fixed
+
+- Fix dev dependencies package versions.
+- Make geonames fields in dateline optional.
+- Reset `firstpublished` on deschedule.
+
+## [2.0.5] 2020-11-27
+
+### Fixed
+
+- Ignore HTML markup when doing elastic higlights.
+- Fix `firstpublished` timestamp for scheduled items.
+
+## [2.0.4] 2020-11-24
+
+### Fixed
+
+- Add migration script to remove sequences with `None` key.
+
+## [2.0.3] 2020-11-13
+
+### Fixed
+
+- Fix ingest sequence rotation.
+- Fix issues with default template in highlights configuration.
+- Placeline not prefilled from user preferences in user-created/edited templates.
+
+## [2.0.2] 2020-10-12
+
+### Fixed
+
+- Fix generating highlights item when using editor3.
+
+## [2.0.1] 2020-10-07
+
+### Fixed
+
+- Fix updating scheduled item with associations.
+
+## [2.0] 2020-10-05
+
+[Changes](https://github.com/superdesk/superdesk-core/milestone/85?closed=1)
+
+## [1.33.7] 2020-09-23
+
+### Fixed
+
+- Don't crash on publishing when an item does not have `LINKED_IN_PACKAGES` set.
+
+## [1.33.6] 2020-09-08
+
+### Fixed
+
+- Fix vine module import error.
+
+## [1.33.5] 2020-08-14
+
+### Fixed
+
+- Fix language is reset in metadata section of the template when updating content profile.
+
+## [1.33.4] 2020-07-29
+
+### Fixed
+
+- Publishing fails when feature media is added during correction.
+
+## [1.33.3] 2020-06-26
+
+### Fixed
+
+- Fix internal destination duplicating package content.
+
+## [1.33.2] 2020-06-08
+
+### Fixed
+
+- Fix failing update script.
+
+## [1.33.1] 2020-05-11
+
+### Fixed
+
+- Fix spiking of unpublished items.
+- Fix rewrite action membership check when user has no move privilege.
+- Display field names instead of IDs on validation error.
+- Allow any logged in user to upload files.
+
 ## [1.33] 2020-04-09
 
 Listing some changes below, for full list go to [github](https://github.com/superdesk/superdesk-core/milestone/79?closed=1).

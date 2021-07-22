@@ -103,13 +103,19 @@ Feature: User Resource
     Scenario: List users
         Given "users"
         """
-        [{"username": "foo", "email": "foo@bar.org", "is_active": true}, {"username": "bar", "email": "foo@bar.or", "is_active": true}]
+        [
+            {"username": "foo", "email": "foo@bar.org", "is_active": true},
+            {"username": "bar", "email": "foo@bar.or", "is_active": true, "last_activity_at": "2020-10-10T10:10:10+0000"}
+        ]
         """
         When we get "/users"
-        Then we get list with +2 items
-        And we get users
+        Then we get list with 3 items
         """
-        ["bar", "foo"]
+        {"_items": [
+            {"username": "foo"},
+            {"username": "bar", "last_activity_at": "2020-10-10T10:10:10+0000"},
+            {"username": "test_user"}
+        ]}
         """
 
     @auth
@@ -349,8 +355,7 @@ Feature: User Resource
         When we get "/users/#users._id#"
         Then we get existing resource
         """
-        {"username": "foobar", "display_name": "foobar", "user_type": "user",
-        "session_preferences": {}}
+        {"username": "foobar", "display_name": "foobar", "user_type": "user"}
         """
 
     @auth
@@ -534,4 +539,32 @@ Feature: User Resource
         Then we get new resource
         """
         {"email": "some@email.com"}
+        """
+
+    @auth
+    Scenario: Test username pattern config
+        Given config update
+        """
+        {"USER_USERNAME_PATTERN": "^[a-z]+$"}
+        """
+        When we post to "users"
+        """
+        {"username": "foo123", "email": "foo@bar.com"}
+        """
+        Then we get error 400
+        """
+        {"_status": "ERR", "_issues": {"username": {"pattern": 1}}}
+        """
+
+        Given config update
+        """
+        {"USER_USERNAME_PATTERN": null}
+        """
+        When we post to "users"
+        """
+        {"username": "foo123", "email": "foo@bar.com"}
+        """
+        Then we get new resource
+        """
+        {}
         """

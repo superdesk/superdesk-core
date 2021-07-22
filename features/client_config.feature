@@ -13,7 +13,8 @@ Feature: Client Config
                 "schema": {},
                 "editor": {},
                 "publish_content_expiry_minutes": 0,
-                "workflow_allow_multiple_updates": false
+                "workflow_allow_multiple_updates": false,
+                "default_timezone": "Europe/Prague"
             }
         }
         """

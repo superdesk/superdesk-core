@@ -62,14 +62,14 @@ def serialize(o):
     if isinstance(o, list):
         return [serialize(item) for item in o]
     elif isinstance(o, dict):
-        if o.get('kwargs') and not isinstance(o['kwargs'], dict):
-            o['kwargs'] = json.loads(o['kwargs'])
+        if o.get("kwargs") and not isinstance(o["kwargs"], dict):
+            o["kwargs"] = json.loads(o["kwargs"])
         return {k: serialize(v) for k, v in o.items()}
     else:
         return try_cast(o)
 
 
-register('eve/json', dumps, loads, content_type='application/json')
+register("eve/json", dumps, loads, content_type="application/json")
 
 
 def handle_exception(exc):
@@ -77,9 +77,9 @@ def handle_exception(exc):
     logger.exception(exc)
 
 
-class AppContextTask(TaskBase):
+class AppContextTask(TaskBase):  # type: ignore
     abstract = True
-    serializer = 'eve/json'
+    serializer = "eve/json"
     app_errors = (
         SuperdeskError,
         werkzeug.exceptions.InternalServerError,  # mongo layer err
@@ -101,7 +101,7 @@ celery.Task = AppContextTask
 
 
 def init_celery(app):
-    celery.config_from_object(app.config, namespace='CELERY')
+    celery.config_from_object(app.config, namespace="CELERY")
     app.celery = celery
     app.redis = __get_redis(app)
 
@@ -123,16 +123,16 @@ def __get_redis(app_ctx):
 
     :return: Redis Client object
     """
-    redis_url = app_ctx.config['REDIS_URL']
+    redis_url = app_ctx.config["REDIS_URL"]
     try:
         return redis.from_url(redis_url)
     except ValueError as e:
-        logger.warn('Failed to connect to redis using a connection string: {}'.format(e))
+        logger.warn("Failed to connect to redis using a connection string: {}".format(e))
 
         # Newer Redis clients will not accept 'amqp' as the scheme
         # Attempt to mock a redis scheme instead
-        protocol = redis_url.split('//')[0]
-        new_url = redis_url.replace(protocol, 'redis:')
+        protocol = redis_url.split("//")[0]
+        new_url = redis_url.replace(protocol, "redis:")
         return redis.from_url(new_url)
 
 
@@ -155,11 +155,11 @@ def update_key(key, flag=False, db=None):
 
 
 def _update_subtask_progress(task_id, current=None, total=None, done=None):
-    redis_db = redis.from_url(app.config['REDIS_URL'])
+    redis_db = redis.from_url(app.config["REDIS_URL"])
     try:
-        current_key = 'current_%s' % task_id
-        total_key = 'total_%s' % task_id
-        done_key = 'done_%s' % task_id
+        current_key = "current_%s" % task_id
+        total_key = "total_%s" % task_id
+        done_key = "done_%s" % task_id
 
         crt_current = update_key(current_key, current, redis_db)
         crt_total = update_key(total_key, total, redis_db)

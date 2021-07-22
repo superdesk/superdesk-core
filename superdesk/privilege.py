@@ -9,13 +9,26 @@
 # at https://www.sourcefabric.org/superdesk/license
 
 """Privileges registry."""
+from typing import Optional
 from .errors import PrivilegeNameError
+from flask_babel.speaklater import LazyString
+
+import superdesk
 
 _privileges = {}
 _intrinsic_privileges = {}
 
 
-def privilege(**kwargs):
+GLOBAL_SEARCH_PRIVILEGE = "use_global_saved_searches"
+
+
+def privilege(
+    name,
+    label: Optional[LazyString] = None,
+    description: Optional[LazyString] = None,
+    category: Optional[LazyString] = None,
+    **kwargs,
+):
     """Register privilege.
 
     Privilege name must not contain "."
@@ -26,14 +39,51 @@ def privilege(**kwargs):
     - description
     - category
     """
-    if '.' in kwargs['name']:
-        raise PrivilegeNameError('"." is not supported in privilege name "%s"' % kwargs['name'])
-    _privileges[kwargs['name']] = kwargs
+    if "." in name:
+        raise PrivilegeNameError('"." is not supported in privilege name "%s"' % name)
+    _privileges[name] = kwargs
+    _privileges[name].update(
+        dict(
+            name=name,
+            label=label,
+            category=category,
+            description=description,
+        )
+    )
+
+
+def get_item_privilege_name(resource: str, item):
+    return "resource:{}:{}".format(resource, item["_id"])
+
+
+def _get_resource_privileges():
+    resource_privileges = []
+    for name, resource in superdesk.resources.items():
+        if not getattr(resource, "item_privileges", None):
+            continue
+        items = superdesk.get_resource_service(name).get(None, {})
+        for item in items:
+            try:
+                label = resource.item_privileges_label.format(**item)
+            except KeyError:
+                label = "{}: {}".format(name, item["_id"])
+            resource_privileges.append(
+                {
+                    "name": get_item_privilege_name(name, item),
+                    "label": label,
+                    "category": name,
+                }
+            )
+    return resource_privileges
+
+
+def _get_registered_privileges():
+    """Get list of all registered privileges."""
+    return [v for v in _privileges.values()]
 
 
 def get_privilege_list():
-    """Get list of all registered privileges."""
-    return [v for v in _privileges.values()]
+    return _get_registered_privileges() + _get_resource_privileges()
 
 
 def intrinsic_privilege(resource_name, method=None):

@@ -1,13 +1,12 @@
-
 __all__ = (
-    'Schema',
-    'NoneField',
-    'SchemaField',
-    'StringField',
-    'IntegerField',
-    'ListField',
-    'DictField',
-    'RelatedContentField'
+    "Schema",
+    "NoneField",
+    "SchemaField",
+    "StringField",
+    "IntegerField",
+    "ListField",
+    "DictField",
+    "RelatedContentField",
 )
 
 
@@ -34,14 +33,14 @@ class Schema(metaclass=SchemaType):
     pass
 
 
-class SchemaField():
+class SchemaField:
     """Schema field.
 
     These are for defining Schema class attributes.
     """
 
     def __repr__(self):
-        return 'any'
+        return "any"
 
     def __init__(self):
         self.schema = {}
@@ -51,7 +50,7 @@ class NoneField(SchemaField):
     """None field."""
 
     def __repr__(self):
-        return 'none'
+        return "none"
 
     def __init__(self):
         self.schema = None
@@ -61,73 +60,73 @@ class IntegerField(SchemaField):
     """Integer schema field."""
 
     def __repr__(self):
-        return 'integer'
+        return "integer"
 
     def __init__(self, required=False):
         super().__init__()
-        self.schema['type'] = 'integer'
-        self.schema['required'] = required
+        self.schema["type"] = "integer"
+        self.schema["required"] = required
 
 
 class ListField(SchemaField):
     """List schema field."""
 
     def __repr__(self):
-        return 'list'
+        return "list"
 
     def __init__(self, required=False, mandatory_in_list=None, schema=None):
         super().__init__()
-        self.schema['type'] = 'list'
-        self.schema['required'] = required
-        self.schema['mandatory_in_list'] = mandatory_in_list
-        self.schema['schema'] = schema
+        self.schema["type"] = "list"
+        self.schema["required"] = required
+        self.schema["mandatory_in_list"] = mandatory_in_list
+        self.schema["schema"] = schema
 
 
 class DictField(SchemaField):
     """Dict schema field."""
 
     def __repr__(self):
-        return 'dict'
+        return "dict"
 
     def __init__(self, required=False, schema=None):
         super().__init__()
-        self.schema['type'] = 'dict'
-        self.schema['required'] = required
+        self.schema["type"] = "dict"
+        self.schema["required"] = required
 
 
 class MediaField(SchemaField):
     """Media schema field."""
 
     def __repr__(self):
-        return 'media'
+        return "media"
 
     def __init__(self, required=False, schema=None):
         super().__init__()
-        self.schema['type'] = 'media'
-        self.schema['required'] = required
+        self.schema["type"] = "media"
+        self.schema["required"] = required
 
 
 class RelatedContentField(SchemaField):
     """Related Content schema field."""
 
     def __repr__(self):
-        return 'related-content'
+        return "related-content"
 
     def __init__(self, required=False, schema=None):
         super().__init__()
-        self.schema['type'] = 'related-content'
-        self.schema['required'] = required
+        self.schema["type"] = "related-content"
+        self.schema["required"] = required
 
 
 class StringField(SchemaField):
     """String schema field."""
 
     def __repr__(self):
-        return 'string'
+        return "string"
 
     def __init__(self, required=False, maxlength=None, minlength=None):
         super().__init__()
-        self.schema['type'] = 'string'
-        self.schema['required'] = required
-        self.schema['minlength'] = minlength
-        self.schema['maxlength'] = maxlength
+        self.schema["type"] = "string"
+        self.schema["required"] = required
+        self.schema["minlength"] = minlength
+        self.schema["maxlength"] = maxlength

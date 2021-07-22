@@ -23,13 +23,12 @@ class ProdApiService(superdesk.Service):
     # NOTE: it's possible to specify nested key as `update._links.self.title`
     # in this case only item['update']['_links']['self']['title'] will be removed.
     excluded_fields = {
-        '_etag',
-        '_type',
-        '_updated',
-        '_created',
-        '_current_version',
-        '_links',
-        'fields_meta',
+        "_etag",
+        "_type",
+        "_updated",
+        "_created",
+        "_current_version",
+        "fields_meta",
     }
 
     def on_fetched(self, result):
@@ -39,7 +38,7 @@ class ProdApiService(superdesk.Service):
         :param dict result: dictionary contaning the list of fetched items and
          some metadata, e.g. pagination info.
         """
-        for doc in result['_items']:
+        for doc in result["_items"]:
             self._process_fetched_object(doc)
 
     def on_fetched_item(self, doc):
@@ -63,7 +62,7 @@ class ProdApiService(superdesk.Service):
         Remove keys from an item
         """
         for key in self.excluded_fields:
-            keys = key.split('.')
+            keys = key.split(".")
             if keys[:-1]:
                 # pop last key only from `item`
                 try:
@@ -78,20 +77,20 @@ class ProdApiService(superdesk.Service):
         """
 
         def _process(item):
-            for _k, v in item.get('renditions', {}).items():
-                if v and 'media' in v:
-                    media = v.pop('media')
-                    old_href = v.get('href')
-                    new_href = app.media.url_for_media(media, v.get('mimetype'))
-                    v['href'] = new_href
+            for _k, v in item.get("renditions", {}).items():
+                if v and "media" in v:
+                    media = v.pop("media")
+                    old_href = v.get("href")
+                    new_href = app.media.url_for_media(media, v.get("mimetype"))
+                    v["href"] = new_href
                     # replace href in body
-                    if old_href and doc.get('body_html'):
+                    if old_href and doc.get("body_html"):
                         # no need to use lxml here, it will be to much
-                        doc['body_html'] = doc['body_html'].replace(old_href, new_href)
+                        doc["body_html"] = doc["body_html"].replace(old_href, new_href)
 
-        if doc.get('renditions'):
+        if doc.get("renditions"):
             _process(doc)
 
-        for v in [v for v in doc.get('associations', {}).values() if v]:
+        for v in [v for v in doc.get("associations", {}).values() if v]:
             _process(v)
             self._remove_excluded_fields(v)

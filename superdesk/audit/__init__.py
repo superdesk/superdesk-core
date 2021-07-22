@@ -18,8 +18,8 @@ import logging
 log = logging.getLogger(__name__)
 
 
-def init_app(app):
-    endpoint_name = 'audit'
+def init_app(app) -> None:
+    endpoint_name = "audit"
 
     service = AuditService(endpoint_name, backend=superdesk.get_backend())
     AuditResource(endpoint_name, app=app, service=service)

@@ -30,48 +30,35 @@ class PreferenceTests(TestCase):
                 "label": "Users archive view format",
                 "type": "string",
                 "category": "archive",
-                "allowed": [
-                    "mgrid",
-                    "compact"
-                ],
-                "view": "mgrid"
+                "allowed": ["mgrid", "compact"],
+                "view": "mgrid",
             },
             "feature:preview": {
                 "category": "feature",
-                "default": 'false',
+                "default": "false",
                 "type": "bool",
-                "enabled": 'false',
-                "label": "Andrew"
+                "enabled": "false",
+                "label": "Andrew",
             },
             "email:notification": {
                 "category": "notifications",
-                "default": 'true',
+                "default": "true",
                 "type": "bool",
-                "enabled": 'true',
-                "label": "Send Hello"
-            }
+                "enabled": "true",
+                "label": "Send Hello",
+            },
         }
 
         self._default_session_settings = {
             "desk:items": [],
             "stage:items": [],
             "pinned:items": [],
-            "scratchpad:items": []
+            "scratchpad:items": [],
         }
 
-        self._session_update = {
-            "session_preferences": {
-                "scratchpad:items": [123]
-            }
-        }
+        self._session_update = {"session_preferences": {"scratchpad:items": [123]}}
 
-        self._user_update = {
-            "user_preferences": {
-                "archive:view": {
-                    "label": "Testing user preferences"
-                }
-            }
-        }
+        self._user_update = {"user_preferences": {"archive:view": {"label": "Testing user preferences"}}}
 
     def test_setting_partial_session_preferences_with_empty_existing(self):
         """Test case for setting partial session perferences with empty existing
@@ -81,7 +68,7 @@ class PreferenceTests(TestCase):
         update = self._session_update
         existing_session_settings = {"1234": {}}
 
-        PreferencesService.update_session_prefs(self, update, existing_session_settings, '1234')
+        PreferencesService.update_session_prefs(self, update, existing_session_settings, "1234")
         self.assertListEqual(update["session_preferences"]["1234"]["scratchpad:items"], [123])
 
     def test_setting_partial_session_preferences_with_existing(self):
@@ -89,17 +76,12 @@ class PreferenceTests(TestCase):
 
         :param self: self
         """
-        existing_session_settings = {"1234":
-                                     {
-                                         "desk:items": [],
-                                         "stage:items": [],
-                                         "pinned:items": ['a', 'b', 'c'],
-                                         "scratchpad:items": []
-                                     }
-                                     }
+        existing_session_settings = {
+            "1234": {"desk:items": [], "stage:items": [], "pinned:items": ["a", "b", "c"], "scratchpad:items": []}
+        }
 
         update = self._session_update
-        PreferencesService.update_session_prefs(self, update, existing_session_settings, '1234')
+        PreferencesService.update_session_prefs(self, update, existing_session_settings, "1234")
         self.assertListEqual(update["session_preferences"]["1234"]["scratchpad:items"], [123])
 
     def test_setting_partial_user_preferences_with_existing(self):
@@ -123,11 +105,8 @@ class PreferenceTests(TestCase):
                 "label": "Users archive view format",
                 "type": "string",
                 "category": "archive",
-                "allowed": [
-                    "mgrid",
-                    "compact"
-                ],
-                "view": "mgrid"
+                "allowed": ["mgrid", "compact"],
+                "view": "mgrid",
             }
         }
 

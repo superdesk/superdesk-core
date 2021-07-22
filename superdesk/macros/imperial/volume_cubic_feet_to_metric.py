@@ -9,8 +9,9 @@
 # at https://www.sourcefabric.org/superdesk/license
 from decimal import Decimal
 from . import unit_base
+from flask_babel import lazy_gettext
 
-CUBIC_METER_SYMBOL = 'cubic meter'
+CUBIC_METER_SYMBOL = "cubic meter"
 
 
 def convert(cubic_feet, precision=1):
@@ -21,21 +22,21 @@ def convert(cubic_feet, precision=1):
     """
     cf_to_cm_rate = Decimal(0.0283168)
     symbol = CUBIC_METER_SYMBOL
-    cubic_feet_list = cubic_feet.split('-')
+    cubic_feet_list = cubic_feet.split("-")
     cubic_meter_list = [unit_base.format_converted(Decimal(a) * cf_to_cm_rate, precision) for a in cubic_feet_list]
-    return '-'.join(cubic_meter_list), symbol
+    return "-".join(cubic_meter_list), symbol
 
 
 def cubic_feet_to_metric(item, **kwargs):
     """Converts cubic feet values to metric"""
 
-    regex = r'(\d+-?,?\.?\d*)((\s*)|(-))((cu\.?\s*-?ft)|(cb\.?\s*-?ft)|([cC]ubic\s*-?(([fF]((ee)|(oo))t)|(ft))))\b'
+    regex = r"(\d+-?,?\.?\d*)((\s*)|(-))((cu\.?\s*-?ft)|(cb\.?\s*-?ft)|([cC]ubic\s*-?(([fF]((ee)|(oo))t)|(ft))))\b"
     return unit_base.do_conversion(item, convert, unit_base.format_output, regex, match_index=0, value_index=1)
 
 
-name = 'cubic_feet_to_metric'
-label = 'Volume cubic feet to metric'
+name = "cubic_feet_to_metric"
+label = lazy_gettext("Volume cubic feet to metric")
 callback = cubic_feet_to_metric
-access_type = 'frontend'
-action_type = 'interactive'
-group = 'volume'
+access_type = "frontend"
+action_type = "interactive"
+group = lazy_gettext("volume")

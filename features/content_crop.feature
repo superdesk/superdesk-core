@@ -477,6 +477,7 @@ Feature: Cropping the Image Articles
         "associations": {
           "featuremedia": {
             "_id": "bike",
+            "type": "picture",
             "poi": {"x": 0.2, "y": 0.3}
           }
         }
@@ -494,6 +495,7 @@ Feature: Cropping the Image Articles
       "associations": {
           "featuremedia": {
             "_id": "bike_2",
+            "type": "picture",
             "poi": {"x": 0.3, "y": 0.4},
             "alt_text": "bike",
             "headline": "bike",

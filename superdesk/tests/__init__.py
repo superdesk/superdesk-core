@@ -13,6 +13,7 @@ import functools
 import logging
 import socket
 import unittest
+from pathlib import Path
 
 from copy import deepcopy
 from base64 import b64encode
@@ -23,24 +24,26 @@ from flask import json, Config
 from apps.ldap import ADAuth
 from superdesk import get_resource_service
 from superdesk.factory import get_app
+from superdesk.factory.app import get_media_storage_class
+from superdesk.storage.amazon_media_storage import AmazonMediaStorage
+from superdesk.storage.proxy import ProxyMediaStorage
 
 logger = logging.getLogger(__name__)
 test_user = {
-    'username': 'test_user',
-    'password': 'test_password',
-    'is_active': True,
-    'is_enabled': True,
-    'needs_activation': False,
-    'sign_off': 'abc',
-    'email': 'behave_test@sourcefabric.org',
-    'preferences': {
-        'email:notification': {
-            'label': 'Send notifications via email',
-            'type': 'bool',
-            'default': True,
-            'category': 'notifications',
-            'enabled': True}
-    }
+    "username": "test_user",
+    "password": "test_password",
+    "is_active": True,
+    "is_enabled": True,
+    "needs_activation": False,
+    "sign_off": "abc",
+    "email": "behave_test@sourcefabric.org",
+    "preferences": {
+        "email:notification": {
+            "type": "bool",
+            "default": True,
+            "enabled": True,
+        }
+    },
 }
 
 
@@ -50,62 +53,62 @@ def get_mongo_uri(key, dbname):
     :param key: env variable name
     :param dbname: mongo db name to use
     """
-    env_uri = os.environ.get(key, 'mongodb://localhost/test')
-    env_host = env_uri.rsplit('/', 1)[0]
-    return '/'.join([env_host, dbname])
+    env_uri = os.environ.get(key, "mongodb://localhost/test")
+    env_host = env_uri.rsplit("/", 1)[0]
+    return "/".join([env_host, dbname])
 
 
 def update_config(conf):
-    conf['ELASTICSEARCH_INDEX'] = 'sptest'
-    conf['MONGO_DBNAME'] = 'sptests'
-    conf['MONGO_URI'] = get_mongo_uri('MONGO_URI', 'sptests')
-    conf['LEGAL_ARCHIVE_DBNAME'] = 'sptests_legal_archive'
-    conf['LEGAL_ARCHIVE_URI'] = get_mongo_uri('LEGAL_ARCHIVE_URI', 'sptests_legal_archive')
-    conf['ARCHIVED_DBNAME'] = 'sptests_archived'
-    conf['ARCHIVED_URI'] = get_mongo_uri('ARCHIVED_URI', 'sptests_archived')
-    conf['CONTENTAPI_URL'] = 'http://localhost:5400'
-    conf['CONTENTAPI_MONGO_DBNAME'] = 'sptests_contentapi'
-    conf['CONTENTAPI_MONGO_URI'] = get_mongo_uri('CONTENTAPI_MONGO_URI', 'sptests_contentapi')
-    conf['CONTENTAPI_ELASTICSEARCH_INDEX'] = 'sptest_contentapi'
+    conf["ELASTICSEARCH_INDEX"] = "sptest"
+    conf["MONGO_DBNAME"] = "sptests"
+    conf["MONGO_URI"] = get_mongo_uri("MONGO_URI", "sptests")
+    conf["LEGAL_ARCHIVE_DBNAME"] = "sptests_legal_archive"
+    conf["LEGAL_ARCHIVE_URI"] = get_mongo_uri("LEGAL_ARCHIVE_URI", "sptests_legal_archive")
+    conf["ARCHIVED_DBNAME"] = "sptests_archived"
+    conf["ARCHIVED_URI"] = get_mongo_uri("ARCHIVED_URI", "sptests_archived")
+    conf["CONTENTAPI_URL"] = "http://localhost:5400"
+    conf["CONTENTAPI_MONGO_DBNAME"] = "sptests_contentapi"
+    conf["CONTENTAPI_MONGO_URI"] = get_mongo_uri("CONTENTAPI_MONGO_URI", "sptests_contentapi")
+    conf["CONTENTAPI_ELASTICSEARCH_INDEX"] = "sptest_contentapi"
 
-    conf['DEBUG'] = True
-    conf['TESTING'] = True
-    conf['SUPERDESK_TESTING'] = True
-    conf['BCRYPT_GENSALT_WORK_FACTOR'] = 4
-    conf['CELERY_TASK_ALWAYS_EAGER'] = 'True'
-    conf['CELERY_BEAT_SCHEDULE_FILENAME'] = './testschedule.db'
-    conf['CELERY_BEAT_SCHEDULE'] = {}
-    conf['CONTENT_EXPIRY_MINUTES'] = 99
-    conf['VERSION'] = '_current_version'
-    conf['SECRET_KEY'] = 'test-secret'
-    conf['JSON_SORT_KEYS'] = True
-    conf['ELASTICSEARCH_INDEXES'] = {
-        'archived': 'sptest_archived',
-        'archive': 'sptest_archive',
-        'ingest': 'sptest_ingest',
+    conf["DEBUG"] = True
+    conf["TESTING"] = True
+    conf["SUPERDESK_TESTING"] = True
+    conf["BCRYPT_GENSALT_WORK_FACTOR"] = 4
+    conf["CELERY_TASK_ALWAYS_EAGER"] = "True"
+    conf["CELERY_BEAT_SCHEDULE_FILENAME"] = "./testschedule.db"
+    conf["CELERY_BEAT_SCHEDULE"] = {}
+    conf["CONTENT_EXPIRY_MINUTES"] = 99
+    conf["VERSION"] = "_current_version"
+    conf["SECRET_KEY"] = "test-secret"
+    conf["JSON_SORT_KEYS"] = True
+    conf["ELASTICSEARCH_INDEXES"] = {
+        "archived": "sptest_archived",
+        "archive": "sptest_archive",
+        "ingest": "sptest_ingest",
     }
 
     # (behave|nose)tests depends from these settings
-    conf['DEFAULT_SOURCE_VALUE_FOR_MANUAL_ARTICLES'] = 'AAP'
-    conf['MACROS_MODULE'] = 'superdesk.macros'
-    conf['DEFAULT_TIMEZONE'] = 'Europe/Prague'
-    conf['LEGAL_ARCHIVE'] = True
-    conf['INSTALLED_APPS'].append('planning')
+    conf["DEFAULT_SOURCE_VALUE_FOR_MANUAL_ARTICLES"] = "AAP"
+    conf["MACROS_MODULE"] = "superdesk.macros"
+    conf["DEFAULT_TIMEZONE"] = "Europe/Prague"
+    conf["LEGAL_ARCHIVE"] = True
+    conf["INSTALLED_APPS"].extend(["planning", "superdesk.macros.imperial"])
 
     # limit mongodb connections
-    conf['MONGO_CONNECT'] = False
-    conf['ARCHIVED_CONNECT'] = False
-    conf['LEGAL_ARCHIVE_CONNECT'] = False
-    conf['MONGO_MAX_POOL_SIZE'] = 1
-    conf['ARCHIVED_MAX_POOL_SIZE'] = 1
-    conf['LEGAL_ARCHIVE_MAX_POOL_SIZE'] = 1
+    conf["MONGO_CONNECT"] = False
+    conf["ARCHIVED_CONNECT"] = False
+    conf["LEGAL_ARCHIVE_CONNECT"] = False
+    conf["MONGO_MAX_POOL_SIZE"] = 1
+    conf["ARCHIVED_MAX_POOL_SIZE"] = 1
+    conf["LEGAL_ARCHIVE_MAX_POOL_SIZE"] = 1
 
     # misc
-    conf['GEONAMES_USERNAME'] = 'superdesk_dev'
-    conf['PUBLISH_ASSOCIATED_ITEMS'] = True
+    conf["GEONAMES_USERNAME"] = "superdesk_dev"
+    conf["PUBLISH_ASSOCIATED_ITEMS"] = True
 
     # auth server
-    conf['AUTH_SERVER_SHARED_SECRET'] = 'some secret'
+    conf["AUTH_SERVER_SHARED_SECRET"] = "some secret"
     return conf
 
 
@@ -121,30 +124,32 @@ def foreach_mongo(fn):
     This decorator adds two additional parameters to called function
     `dbconn` and `dbname` for using proper connection and database name
     """
+
     @functools.wraps(fn)
     def inner(app, *a, **kw):
         pairs = (
-            ('MONGO', 'MONGO_DBNAME'),
-            ('ARCHIVED', 'ARCHIVED_DBNAME'),
-            ('LEGAL_ARCHIVE', 'LEGAL_ARCHIVE_DBNAME'),
-            ('CONTENTAPI_MONGO', 'CONTENTAPI_MONGO_DBNAME')
+            ("MONGO", "MONGO_DBNAME"),
+            ("ARCHIVED", "ARCHIVED_DBNAME"),
+            ("LEGAL_ARCHIVE", "LEGAL_ARCHIVE_DBNAME"),
+            ("CONTENTAPI_MONGO", "CONTENTAPI_MONGO_DBNAME"),
         )
         with app.app_context():
             for prefix, name in pairs:
                 if not app.config.get(name):
                     continue
-                kw['dbname'] = app.config[name]
-                kw['dbconn'] = app.data.mongo.pymongo(prefix=prefix).cx
+                kw["dbname"] = app.config[name]
+                kw["dbconn"] = app.data.mongo.pymongo(prefix=prefix).cx
                 fn(app, *a, **kw)
+
     return inner
 
 
 def drop_mongo(app):
     pairs = (
-        ('MONGO', 'MONGO_DBNAME'),
-        ('ARCHIVED', 'ARCHIVED_DBNAME'),
-        ('LEGAL_ARCHIVE', 'LEGAL_ARCHIVE_DBNAME'),
-        ('CONTENTAPI_MONGO', 'CONTENTAPI_MONGO_DBNAME')
+        ("MONGO", "MONGO_DBNAME"),
+        ("ARCHIVED", "ARCHIVED_DBNAME"),
+        ("LEGAL_ARCHIVE", "LEGAL_ARCHIVE_DBNAME"),
+        ("CONTENTAPI_MONGO", "CONTENTAPI_MONGO_DBNAME"),
     )
     with app.app_context():
         for prefix, name in pairs:
@@ -159,27 +164,62 @@ def drop_mongo(app):
 def setup_config(config):
     app_abspath = os.path.abspath(os.path.dirname(os.path.dirname(__file__)))
     app_config = Config(app_abspath)
-    app_config.from_object('superdesk.default_settings')
+    app_config.from_object("superdesk.default_settings")
+    cwd = Path.cwd()
+    for p in [cwd] + list(cwd.parents):
+        settings = p / "settings.py"
+        if settings.is_file():
+            logger.info(f"using local settings from {settings}")
+            app_config.from_pyfile(settings)
+            break
+    else:
+        logger.warning("Can't find local settings")
 
     update_config(app_config)
 
-    app_config.update(config or {}, **{
-        'APP_ABSPATH': app_abspath,
-        'DEBUG': True,
-        'TESTING': True,
-    })
+    app_config.setdefault("INSTALLED_APPS", [])
 
-    logging.getLogger('apps').setLevel(logging.WARNING)
-    logging.getLogger('elastic').setLevel(logging.WARNING)  # elastic datalayer
-    logging.getLogger('urllib3').setLevel(logging.WARNING)
-    logging.getLogger('celery').setLevel(logging.WARNING)
-    logging.getLogger('superdesk').setLevel(logging.ERROR)
-    logging.getLogger('elasticsearch').setLevel(logging.ERROR)
-    logging.getLogger('superdesk.errors').setLevel(logging.CRITICAL)
+    # Extend the INSTALLED APPS with the list provided
+    if config:
+        config.setdefault("INSTALLED_APPS", [])
+        app_config["INSTALLED_APPS"].extend(config.pop("INSTALLED_APPS", []))
 
-    return {
-        key: deepcopy(val) for key, val in app_config.items()
-    }
+    # Make sure there are no duplicate entries in INSTALLED_APPS
+    app_config["INSTALLED_APPS"] = list(set(app_config["INSTALLED_APPS"]))
+
+    app_config.update(
+        config or {},
+        **{
+            "APP_ABSPATH": app_abspath,
+            "DEBUG": True,
+            "TESTING": True,
+        },
+    )
+
+    logging.getLogger("apps").setLevel(logging.WARNING)
+    logging.getLogger("elastic").setLevel(logging.WARNING)  # elastic datalayer
+    logging.getLogger("urllib3").setLevel(logging.WARNING)
+    logging.getLogger("celery").setLevel(logging.WARNING)
+    logging.getLogger("superdesk").setLevel(logging.ERROR)
+    logging.getLogger("elasticsearch").setLevel(logging.ERROR)
+    logging.getLogger("superdesk.errors").setLevel(logging.CRITICAL)
+
+    return {key: deepcopy(val) for key, val in app_config.items()}
+
+
+def update_config_from_step(context, config):
+    context.app.config.update(config)
+
+    if "MEDIA_STORAGE_PROVIDER" in config or "AMAZON_CONTAINER_NAME" in config:
+        context.app.media = get_media_storage_class(context.app.config)(context.app)
+
+    if "AMAZON_CONTAINER_NAME" in config:
+        if isinstance(context.app.media, AmazonMediaStorage):
+            m = patch.object(context.app.media, "client")
+            m.start()
+        elif isinstance(context.app.media, ProxyMediaStorage):
+            m = patch.object(context.app.media.storage(), "client")
+            m.start()
 
 
 def clean_dbs(app, force=False):
@@ -202,7 +242,9 @@ def retry(exc, count=1):
                 if num < count:
                     num += 1
                     return inner(*a, **kw)
+
         return inner
+
     return wrapper
 
 
@@ -213,56 +255,61 @@ def _clean_es(app):
 
 @retry(socket.timeout, 2)
 def clean_es(app, force=False):
-    use_snapshot(app, 'clean', [snapshot_es], force)(_clean_es)(app)
+    use_snapshot(app, "clean", [snapshot_es], force)(_clean_es)(app)
 
 
 def snapshot(fn):
     """
     Call create or restore snapshot function
     """
+
     @functools.wraps(fn)
     def inner(app, name, action, **kw):
-        assert action in ['create', 'restore']
+        assert action in ["create", "restore"]
         create, restore = fn(app, name, **kw)
-        {'create': create, 'restore': restore}[action]()
+        {"create": create, "restore": restore}[action]()
+
     return inner
 
 
 @snapshot
 def snapshot_es(app, name):
-    indices = '%s*' % app.config['ELASTICSEARCH_INDEX']
-    backup = ('backups', '%s%s' % (indices[:-1], name))
+    indices = "%s*" % app.config["ELASTICSEARCH_INDEX"]
+    backup = ("backups", "%s%s" % (indices[:-1], name))
     es = app.data.elastic.es
 
     def create():
         es.snapshot.delete(*backup, ignore=[404])
-        es.indices.open(indices, expand_wildcards='closed', ignore=[404])
-        es.snapshot.create(*backup, wait_for_completion=True, body={
-            'indices': indices,
-            'allow_no_indices': False,
-        })
+        es.indices.open(indices, expand_wildcards="closed", ignore=[404])
+        es.snapshot.create(
+            *backup,
+            wait_for_completion=True,
+            body={
+                "indices": indices,
+                "allow_no_indices": False,
+            },
+        )
 
     def restore():
-        es.indices.close(indices, expand_wildcards='open', ignore=[404])
-        es.snapshot.restore(*backup, body={
-            'indices': indices,
-            'allow_no_indices': False
-        }, wait_for_completion=True)
+        es.indices.close(indices, expand_wildcards="open", ignore=[404])
+        es.snapshot.restore(*backup, body={"indices": indices, "allow_no_indices": False}, wait_for_completion=True)
+
     return create, restore
 
 
 @foreach_mongo
 @snapshot
 def snapshot_mongo(app, name, dbconn, dbname):
-    snapshot = '%s_%s' % (dbname, name)
+    snapshot = "%s_%s" % (dbname, name)
 
     def create():
         dbconn.drop_database(snapshot)
-        dbconn.admin.command('copydb', fromdb=dbname, todb=snapshot)
+        dbconn.admin.command("copydb", fromdb=dbname, todb=snapshot)
 
     def restore():
         dbconn.drop_database(dbname)
-        dbconn.admin.command('copydb', fromdb=snapshot, todb=dbname)
+        dbconn.admin.command("copydb", fromdb=snapshot, todb=dbname)
+
     return create, restore
 
 
@@ -272,36 +319,35 @@ def use_snapshot(app, name, funcs=(snapshot_es, snapshot_mongo), force=False):
             f(app, name, action=action)
 
     def wrapper(fn):
-        path = app.config.get('ELASTICSEARCH_BACKUPS_PATH')
+        path = app.config.get("ELASTICSEARCH_BACKUPS_PATH")
         enabled = path and os.path.exists(path)
 
         @functools.wraps(fn)
         def inner(*a, **kw):
             if not enabled or force:
-                logger.debug(
-                    'Don\'t use snapshot for %s; enabled=%s; force=%s',
-                    fn, enabled, force
-                )
+                logger.debug("Don't use snapshot for %s; enabled=%s; force=%s", fn, enabled, force)
                 use_snapshot.cache.pop(fn, None)
                 return fn(*a, **kw)
 
             if fn in use_snapshot.cache:
-                snapshot('restore')
-                logger.debug('Restore snapshot for %s', fn)
+                snapshot("restore")
+                logger.debug("Restore snapshot for %s", fn)
             else:
                 use_snapshot.cache[fn] = fn(*a, **kw)
-                snapshot('create')
-                logger.debug('Create snapshot for %s', fn)
+                snapshot("create")
+                logger.debug("Create snapshot for %s", fn)
             return use_snapshot.cache[fn]
+
         return inner
+
     return wrapper
 
 
-use_snapshot.cache = {}
+use_snapshot.cache = {}  # type: ignore
 
 
 def setup(context=None, config=None, app_factory=get_app, reset=False):
-    if not hasattr(setup, 'app') or setup.reset or config:
+    if not hasattr(setup, "app") or setup.reset or config:
         cfg = setup_config(config)
         setup.app = app_factory(cfg)
         setup.reset = reset
@@ -310,7 +356,7 @@ def setup(context=None, config=None, app_factory=get_app, reset=False):
     if context:
         context.app = app
         context.client = app.test_client()
-        if not hasattr(context, 'BEHAVE'):
+        if not hasattr(context, "BEHAVE"):
             app.test_request_context().push()
 
     with app.app_context():
@@ -323,27 +369,27 @@ def setup_auth_user(context, user=None):
 
 
 def add_to_context(context, token, user, auth_id=None):
-    context.headers.append(('Authorization', b'basic ' + b64encode(token + b':')))
-    if getattr(context, 'user', None):
+    context.headers.append(("Authorization", b"basic " + b64encode(token + b":")))
+    if getattr(context, "user", None):
         context.previous_user = context.user
     context.user = user
-    set_placeholder(context, 'CONTEXT_USER_ID', str(user.get('_id')))
-    set_placeholder(context, 'AUTH_ID', str(auth_id))
+    set_placeholder(context, "CONTEXT_USER_ID", str(user.get("_id")))
+    set_placeholder(context, "AUTH_ID", str(auth_id))
 
 
 def set_placeholder(context, name, value):
-    old_p = getattr(context, 'placeholders', None)
+    old_p = getattr(context, "placeholders", None)
     if not old_p:
         context.placeholders = dict()
     context.placeholders[name] = value
 
 
 def get_prefixed_url(current_app, endpoint):
-    if endpoint.startswith('http://'):
+    if endpoint.startswith("http://"):
         return endpoint
 
-    endpoint = endpoint.lstrip('/')
-    url_prefix = current_app.config['URL_PREFIX'] + '/'
+    endpoint = endpoint.lstrip("/")
+    url_prefix = current_app.config["URL_PREFIX"] + "/"
     if endpoint.startswith(url_prefix):
         return endpoint
     return url_prefix + endpoint
@@ -356,22 +402,23 @@ def setup_db_user(context, user):
     :param dict user: user
     """
     user = user or test_user
-    with context.app.test_request_context(context.app.config['URL_PREFIX']):
-        original_password = user['password']
+    with context.app.test_request_context(context.app.config["URL_PREFIX"]):
+        original_password = user["password"]
 
-        user.setdefault('user_type', 'administrator')
+        user.setdefault("user_type", "administrator")
 
-        if not get_resource_service('users').find_one(username=user['username'], req=None):
-            get_resource_service('users').post([user])
+        if not get_resource_service("users").find_one(username=user["username"], req=None):
+            get_resource_service("users").post([user])
 
-        user['password'] = original_password
-        auth_data = json.dumps({'username': user['username'], 'password': user['password']})
-        auth_response = context.client.post(get_prefixed_url(context.app, '/auth_db'),
-                                            data=auth_data, headers=context.headers)
+        user["password"] = original_password
+        auth_data = json.dumps({"username": user["username"], "password": user["password"]})
+        auth_response = context.client.post(
+            get_prefixed_url(context.app, "/auth_db"), data=auth_data, headers=context.headers
+        )
 
         auth_data = json.loads(auth_response.get_data())
-        token = auth_data.get('token').encode('ascii')
-        auth_id = auth_data.get('_id')
+        token = auth_data.get("token").encode("ascii")
+        auth_id = auth_data.get("_id")
         add_to_context(context, token, user, auth_id)
 
 
@@ -390,34 +437,34 @@ def setup_ad_user(context, user):
     # auth_data = json.dumps({'username': ad_user['username'], 'password': ad_user['password']})
     # will fail as password key is removed by del doc['password']
     ad_user = ad_user.copy()
-    ad_user['email'] = 'mock@mail.com.au'
+    ad_user["email"] = "mock@mail.com.au"
 
-    ad_user.setdefault('user_type', 'administrator')
+    ad_user.setdefault("user_type", "administrator")
 
     # ad profile to be return from the patch object
     ad_profile = {
-        'email': ad_user['email'],
-        'username': ad_user['username'],
+        "email": ad_user["email"],
+        "username": ad_user["username"],
         # so that test run under the administrator context.
-        'user_type': ad_user.get('user_type'),
-        'sign_off': ad_user.get('sign_off', 'abc'),
-        'preferences': {
-            'email:notification': {
-                'label': 'Send notifications via email',
-                'type': 'bool',
-                'default': True,
-                'category': 'notifications',
-                'enabled': True}
-        }
+        "user_type": ad_user.get("user_type"),
+        "sign_off": ad_user.get("sign_off", "abc"),
+        "preferences": {
+            "email:notification": {
+                "type": "bool",
+                "default": True,
+                "enabled": True,
+            }
+        },
     }
 
-    with patch.object(ADAuth, 'authenticate_and_fetch_profile', return_value=ad_profile):
-        auth_data = json.dumps({'username': ad_user['username'], 'password': ad_user['password']})
-        auth_response = context.client.post(get_prefixed_url(context.app, '/auth_db'),
-                                            data=auth_data, headers=context.headers)
+    with patch.object(ADAuth, "authenticate_and_fetch_profile", return_value=ad_profile):
+        auth_data = json.dumps({"username": ad_user["username"], "password": ad_user["password"]})
+        auth_response = context.client.post(
+            get_prefixed_url(context.app, "/auth_db"), data=auth_data, headers=context.headers
+        )
         auth_response_as_json = json.loads(auth_response.get_data())
-        token = auth_response_as_json.get('token').encode('ascii')
-        ad_user['_id'] = auth_response_as_json['user']
+        token = auth_response_as_json.get("token").encode("ascii")
+        ad_user["_id"] = auth_response_as_json["user"]
 
         add_to_context(context, token, ad_user)
 
@@ -462,6 +509,7 @@ class TestCase(unittest.TestCase):
             """Combine `setUp` with `setUpForChildren`."""
             self.setUpForChildren()
             return orig_setup(self, *args, **kwargs)
+
         orig_setup = cls.setUp
         cls.setUp = wrapper
 
@@ -470,6 +518,7 @@ class TestCase(unittest.TestCase):
             """Combine `tearDown` with `tearDownForChildren`."""
             self.tearDownForChildren()
             return orig_teardown(self, *args, **kwargs)
+
         orig_teardown = cls.tearDown
         cls.tearDown = wrapper
 
@@ -483,6 +532,7 @@ class TestCase(unittest.TestCase):
         def clean_ctx():
             if self.ctx:
                 self.ctx.pop()
+
         self.addCleanup(clean_ctx)
 
     def tearDownForChildren(self):
@@ -490,4 +540,4 @@ class TestCase(unittest.TestCase):
 
     def get_fixture_path(self, filename):
         rootpath = os.path.abspath(os.path.dirname(os.path.dirname(__file__)))
-        return os.path.join(rootpath, 'features', 'steps', 'fixtures', filename)
+        return os.path.join(rootpath, "features", "steps", "fixtures", filename)

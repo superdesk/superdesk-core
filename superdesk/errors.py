@@ -10,7 +10,7 @@
 
 import logging
 
-from flask import current_app as app, json
+from flask import current_app as app
 from cerberus import DocumentError
 from eve.endpoints import send_response
 from werkzeug.exceptions import HTTPException
@@ -35,9 +35,9 @@ def update_notifiers(*args, **kwargs):
 
 def get_registered_errors(self):
     return {
-        'IngestApiError': IngestApiError._codes,
-        'IngestFtpError': IngestFtpError._codes,
-        'IngestFileError': IngestFileError._codes
+        "IngestApiError": IngestApiError._codes,
+        "IngestFtpError": IngestFtpError._codes,
+        "IngestFileError": IngestFileError._codes,
     }
 
 
@@ -54,11 +54,11 @@ def log_exception(message, extra=None, data=None):
     if not extra:
         extra = {}
     if data:
-        extra['file'] = save_error_data(data)
+        extra["file"] = save_error_data(data)
     for k, v in extra.items():
         message = "{} {}={}".format(message, k, v)
     if data:
-        extra['data'] = data
+        extra["data"] = data
     try:
         logger.exception(message, extra=extra)
     except AttributeError:
@@ -68,7 +68,7 @@ def log_exception(message, extra=None, data=None):
 
 def notifications_enabled():
     """Test if notifications are enabled in config."""
-    return app.config.get('ERROR_NOTIFICATIONS', True)
+    return app.config.get("ERROR_NOTIFICATIONS", True)
 
 
 class SuperdeskError(DocumentError):
@@ -82,24 +82,19 @@ class SuperdeskError(DocumentError):
         #: optional detailed error description, defaults to None
         self.desc = desc
 
-        self.message = self._codes.get(code, 'Unknown error')
+        self.message = self._codes.get(code, "Unknown error")
 
         self.status_code = status_code
 
     def __str__(self):
-        desc_text = '' if not self.desc else (' Details: ' + self.desc)
-        return "{} Error {} - {}{desc}".format(
-            self.__class__.__name__,
-            self.code,
-            self.message,
-            desc=desc_text
-        )
+        desc_text = "" if not self.desc else (" Details: " + self.desc)
+        return "{} Error {} - {}{desc}".format(self.__class__.__name__, self.code, self.message, desc=desc_text)
 
     def to_dict(self):
         return {
-            'code': self.code,
-            'desc': self.desc,
-            'message': self.message,
+            "code": self.code,
+            "desc": self.desc,
+            "message": self.message,
         }
 
     def get_error_description(self):
@@ -132,10 +127,10 @@ class SuperdeskApiError(SuperdeskError):
     def to_dict(self):
         """Create dict for json response."""
         rv = {}
-        rv[app.config['STATUS']] = app.config['STATUS_ERR']
-        rv['_message'] = self.message or ''
-        if hasattr(self, 'payload'):
-            rv[app.config['ISSUES']] = self.payload
+        rv[app.config["STATUS"]] = app.config["STATUS_ERR"]
+        rv["_message"] = self.message or ""
+        if hasattr(self, "payload"):
+            rv[app.config["ISSUES"]] = self.payload
         return rv
 
     def __str__(self):
@@ -148,7 +143,7 @@ class SuperdeskApiError(SuperdeskError):
     @classmethod
     def unauthorizedError(cls, message=None, payload=None, exception=None):
         if payload is None:
-            payload = {'auth': 1}
+            payload = {"auth": 1}
         return SuperdeskApiError(status_code=401, message=message, payload=payload, exception=exception)
 
     @classmethod
@@ -173,6 +168,11 @@ class SuperdeskApiError(SuperdeskError):
         return SuperdeskApiError(status_code=500, message=message or default_message, payload=payload)
 
     @classmethod
+    def proxyError(cls, message=None, payload=None):
+        default_message = "something went wrong with third party server"
+        return SuperdeskApiError(status_code=502, message=message or default_message, payload=payload)
+
+    @classmethod
     def conflictError(cls, message=None, payload=None):
         return SuperdeskApiError(status_code=409, message=message, payload=payload)
 
@@ -181,7 +181,7 @@ class IdentifierGenerationError(SuperdeskApiError):
     """Exception raised if failed to generate unique_id."""
 
     status_code = 500
-    payload = {'unique_id': 1}
+    payload = {"unique_id": 1}
     message = "Failed to generate unique_id"
 
 
@@ -189,14 +189,14 @@ class InvalidFileType(SuperdeskError):
     """Exception raised when receiving a file type that is not supported."""
 
     def __init__(self, type=None):
-        super().__init__('Invalid file type %s' % type, payload={})
+        super().__init__("Invalid file type %s" % type, payload={})
 
 
 class BulkIndexError(SuperdeskError):
     """Exception raised when bulk index operation fails.."""
 
     def __init__(self, resource=None, errors=None):
-        super().__init__('Failed to bulk index resource {} errors: {}'.format(resource, errors), payload={})
+        super().__init__("Failed to bulk index resource {} errors: {}".format(resource, errors), payload={})
 
 
 class PrivilegeNameError(Exception):
@@ -206,37 +206,45 @@ class PrivilegeNameError(Exception):
 class InvalidStateTransitionError(SuperdeskApiError):
     """Exception raised if workflow transition is invalid."""
 
-    def __init__(self, message='Workflow transition is invalid.', status_code=412):
+    def __init__(self, message="Workflow transition is invalid.", status_code=412):
         super().__init__(message, status_code)
 
 
 class SuperdeskIngestError(SuperdeskError):
     _codes = {
-        2000: 'Configured Feed Parser either not found or not registered with the application',
-        2001: 'Configuration of the feeding service is missing or incomplete',
-        2002: 'Invalid feed parser value'
+        2000: "Configured Feed Parser either not found or not registered with the application",
+        2001: "Configuration of the feeding service is missing or incomplete",
+        2002: "Invalid feed parser value",
     }
 
     def __init__(self, code, exception, provider=None, data=None, extra=None, item=None):
         super().__init__(code)
         self.system_exception = exception
         provider = provider or {}
-        self.provider_name = provider.get('name', 'Unknown provider') if provider else 'Unknown provider'
+        self.provider_name = provider.get("name", "Unknown provider") if provider else "Unknown provider"
 
         if exception:
-            if provider.get('notifications', {}).get('on_error', True) and notifications_enabled():
+            if provider.get("notifications", {}).get("on_error", True) and notifications_enabled():
                 exception_msg = str(exception)
                 if len(exception_msg) > 200:
-                    exception_msg = exception_msg[200:] + '…'
-                message = 'Error [%s] on ingest provider {{name}}: %s' % (code, exception_msg)
+                    exception_msg = exception_msg[200:] + "…"
+                message = "Error [%s] on ingest provider {{name}}: %s" % (code, exception_msg)
                 if item is not None:
-                    message += '\nitem="{}" name="{}"'.format(item.get('guid', ''),
-                                                              item.get('headline', item.get('slugline', '')))
-                update_notifiers('error',
-                                 message,
-                                 resource='ingest_providers' if provider else None,
-                                 name=self.provider_name,
-                                 provider_id=provider.get('_id', ''))
+                    message += '\nitem="{}" name="{}"'.format(
+                        item.get("guid", ""), item.get("headline", item.get("slugline", ""))
+                    )
+                try:
+                    update_notifiers(
+                        "error",
+                        message,
+                        resource="ingest_providers" if provider else None,
+                        name=self.provider_name,
+                        provider_id=provider.get("_id", ""),
+                    )
+                except KeyError:
+                    # this might not be working during tests
+                    # and should be probably avoided in the first place
+                    pass
 
             if provider:
                 message = "{}: {} on channel {}".format(self, exception, self.provider_name)
@@ -260,15 +268,15 @@ class SuperdeskIngestError(SuperdeskError):
 
 class ProviderError(SuperdeskIngestError):
     _codes = {
-        2001: 'Provider could not be saved',
-        2002: 'Expired content could not be removed',
-        2003: 'Rule could not be applied',
-        2004: 'Ingest error',
-        2005: 'Anpa category error',
-        2006: 'Expired content could not be filtered',
-        2007: 'IPTC processing error',
-        2008: 'External source no suitable resolution found',
-        2009: 'Ingest item error',
+        2001: "Provider could not be saved",
+        2002: "Expired content could not be removed",
+        2003: "Rule could not be applied",
+        2004: "Ingest error",
+        2005: "Anpa category error",
+        2006: "Expired content could not be filtered",
+        2007: "IPTC processing error",
+        2008: "External source no suitable resolution found",
+        2009: "Ingest item error",
     }
 
     @classmethod
@@ -310,14 +318,14 @@ class ProviderError(SuperdeskIngestError):
 
 class ParserError(SuperdeskIngestError):
     _codes = {
-        1001: 'Message could not be parsed',
-        1002: 'Ingest file could not be parsed',
-        1003: 'ANPA file could not be parsed',
-        1004: 'NewsML1 input could not be processed',
-        1005: 'NewsML2 input could not be processed',
-        1006: 'NITF input could not be processed',
-        1007: 'WENN input could not be processed',
-        1008: 'IPTC7901 input could not be processed'
+        1001: "Message could not be parsed",
+        1002: "Ingest file could not be parsed",
+        1003: "ANPA file could not be parsed",
+        1004: "NewsML1 input could not be processed",
+        1005: "NewsML2 input could not be processed",
+        1006: "NITF input could not be processed",
+        1007: "WENN input could not be processed",
+        1008: "IPTC7901 input could not be processed",
     }
 
     @classmethod
@@ -326,11 +334,11 @@ class ParserError(SuperdeskIngestError):
 
     @classmethod
     def parseFileError(cls, source=None, filename=None, exception=None, provider=None):
-        return ParserError(1002, exception, provider, extra={'source': source, 'file': filename})
+        return ParserError(1002, exception, provider, extra={"source": source, "file": filename})
 
     @classmethod
     def anpaParseFileError(cls, filename=None, exception=None):
-        return ParserError(1003, exception, extra={'file': filename})
+        return ParserError(1003, exception, extra={"file": filename})
 
     @classmethod
     def newsmlOneParserError(cls, exception=None, provider=None):
@@ -355,10 +363,10 @@ class ParserError(SuperdeskIngestError):
 
 class IngestFileError(SuperdeskIngestError):
     _codes = {
-        3001: 'Destination folder could not be created',
-        3002: 'Ingest file could not be copied',
-        3003: 'Ingest path not found',
-        3004: 'Ingest path is not directory',
+        3001: "Destination folder could not be created",
+        3002: "Ingest file could not be copied",
+        3003: "Ingest path not found",
+        3004: "Ingest path is not directory",
     }
 
     @classmethod
@@ -385,11 +393,11 @@ class IngestApiError(SuperdeskIngestError):
         4002: "API ingest has too many redirects",
         4003: "API ingest has request error",
         4004: "API ingest Unicode Encode Error",
-        4005: 'API ingest xml parse error',
-        4006: 'API service not found(404) error',
-        4007: 'API authorization error',
-        4008: 'Authentication URL is missing from Ingest Provider configuraion',
-        4009: 'API ingest connection error',
+        4005: "API ingest xml parse error",
+        4006: "API service not found(404) error",
+        4007: "API authorization error",
+        4008: "Authentication URL is missing from Ingest Provider configuraion",
+        4009: "API ingest connection error",
     }
 
     @classmethod
@@ -447,7 +455,7 @@ class IngestFtpError(SuperdeskIngestError):
 
     @classmethod
     def ftpUnknownParserError(cls, exception=None, provider=None, filename=None):
-        return IngestFtpError(5001, exception, provider, extra={'file': filename})
+        return IngestFtpError(5001, exception, provider, extra={"file": filename})
 
     @classmethod
     def ftpAuthError(cls, exception=None, provider=None):
@@ -497,6 +505,8 @@ class IngestTwitterError(SuperdeskIngestError):
     _codes = {
         6100: "Twitter authentication failure",
         6200: "No Screen names specified",
+        6300: "Rate limit exceeded",
+        6400: "Unknown API error",
     }
 
     @classmethod
@@ -507,26 +517,36 @@ class IngestTwitterError(SuperdeskIngestError):
     def TwitterNoScreenNamesError(cls, exception=None, provider=None):
         return IngestTwitterError(6200, exception, provider)
 
+    @classmethod
+    def TwitterRateLimitError(cls, exception=None, provider=None):
+        return IngestTwitterError(6300, exception, provider)
+
+    @classmethod
+    def TwitterAPIGeneralError(cls, exception=None, provider=None):
+        return IngestTwitterError(6400, exception, provider)
+
 
 class SuperdeskPublishError(SuperdeskError):
     def __init__(self, code, exception, destination=None):
         super().__init__(code)
         self.system_exception = exception
         destination = destination or {}
-        self.destination_name = destination.get('name', 'Unknown destination') if destination else 'Unknown destination'
+        self.destination_name = destination.get("name", "Unknown destination") if destination else "Unknown destination"
 
         if exception:
             exception_msg = str(exception)[-200:]
             if notifications_enabled():
-                update_notifiers('error',
-                                 'Error [%s] on a Subscriber''s destination {{name}}: %s' % (code, exception_msg),
-                                 resource='subscribers' if destination else None,
-                                 name=self.destination_name,
-                                 provider_id=destination.get('_id', ''))
+                update_notifiers(
+                    "error",
+                    "Error [%s] on a Subscriber" "s destination {{name}}: %s" % (code, exception_msg),
+                    resource="subscribers" if destination else None,
+                    name=self.destination_name,
+                    provider_id=destination.get("_id", ""),
+                )
 
             extra = {}
             if destination:
-                extra['destination'] = destination.get('name', 'unknown')
+                extra["destination"] = destination.get("name", "unknown")
             log_exception(exception, extra=extra)
 
 
@@ -595,9 +615,7 @@ class FormatterError(SuperdeskPublishError):
 
 
 class SubscriberError(SuperdeskPublishError):
-    _codes = {
-        8001: 'Subscriber is closed'
-    }
+    _codes = {8001: "Subscriber is closed"}
 
     @classmethod
     def subscriber_inactive_error(cls, exception=None, destination=None):
@@ -606,12 +624,12 @@ class SubscriberError(SuperdeskPublishError):
 
 class PublishQueueError(SuperdeskPublishError):
     _codes = {
-        9001: 'Item could not be updated in the queue',
-        9002: 'Item format could not be recognized',
-        9004: 'Schedule information could not be processed',
-        9005: 'State of the content item could not be updated',
-        9008: 'A post-publish action has happened on item',
-        9009: 'Item could not be queued'
+        9001: "Item could not be updated in the queue",
+        9002: "Item format could not be recognized",
+        9004: "Schedule information could not be processed",
+        9005: "State of the content item could not be updated",
+        9008: "A post-publish action has happened on item",
+        9009: "Item could not be queued",
     }
 
     @classmethod
@@ -644,9 +662,7 @@ class PublishQueueError(SuperdeskPublishError):
 
 
 class PublishFtpError(SuperdeskPublishError):
-    _codes = {
-        10000: "FTP publish error"
-    }
+    _codes = {10000: "FTP publish error"}
 
     @classmethod
     def ftpError(cls, exception=None, destination=None):
@@ -654,10 +670,7 @@ class PublishFtpError(SuperdeskPublishError):
 
 
 class PublishEmailError(SuperdeskPublishError):
-    _codes = {
-        11000: "Email publish error",
-        11001: "Recipient could not be found for destination"
-    }
+    _codes = {11000: "Email publish error", 11001: "Recipient could not be found for destination"}
 
     @classmethod
     def emailError(cls, exception=None, destination=None):
@@ -669,9 +682,7 @@ class PublishEmailError(SuperdeskPublishError):
 
 
 class PublishODBCError(SuperdeskPublishError):
-    _codes = {
-        12000: "ODBC publish error"
-    }
+    _codes = {12000: "ODBC publish error"}
 
     @classmethod
     def odbcError(cls, exception=None, destination=None):
@@ -679,9 +690,7 @@ class PublishODBCError(SuperdeskPublishError):
 
 
 class PublishFileError(SuperdeskPublishError):
-    _codes = {
-        13000: "File publish error"
-    }
+    _codes = {13000: "File publish error"}
 
     @classmethod
     def fileSaveError(cls, exception=None, destinations=None):
@@ -731,25 +740,25 @@ class StopDuplication(Exception):
 
 
 class SuperdeskValidationError(HTTPException):
-
     def __init__(self, errors, fields, message=None):
         Exception.__init__(self)
         self.errors = errors
         self.fields = fields
         try:
             self.response = send_response(
-                None, (
+                None,
+                (
                     {
-                        app.config['STATUS']: app.config['STATUS_ERR'],
-                        app.config['ISSUES']: {
-                            'validator exception': str([self.errors]),  # BC
-                            'fields': self.fields,
+                        app.config["STATUS"]: app.config["STATUS_ERR"],
+                        app.config["ISSUES"]: {
+                            "validator exception": str([self.errors]),  # BC
+                            "fields": self.fields,
                         },
                     },
                     None,
                     None,
                     400,
-                )
+                ),
             )
         except RuntimeError as e:
             # the exception is run outside of request context
@@ -758,4 +767,4 @@ class SuperdeskValidationError(HTTPException):
             logger.warning(e)
 
     def __str__(self):
-        return 'Validation Error: {}'.format(str(self.errors))
+        return "Validation Error: {}".format(str(self.errors))

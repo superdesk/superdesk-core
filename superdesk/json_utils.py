@@ -1,4 +1,3 @@
-
 import arrow
 import superdesk
 
@@ -9,12 +8,16 @@ from bson.errors import InvalidId
 from eve.utils import str_to_date
 from eve.io.mongo import MongoJSONEncoder
 from eve_elastic import ElasticJSONSerializer
+from flask_babel import LazyString
 
 
 class SuperdeskJSONEncoder(MongoJSONEncoder, ElasticJSONSerializer):
     """Custom JSON encoder for elastic that can handle `bson.ObjectId`s."""
 
-    pass
+    def default(self, obj):
+        if isinstance(obj, LazyString):
+            return str(obj)
+        return super().default(obj)
 
 
 def try_cast(v):

@@ -5,12 +5,13 @@ Feature: Move or Send Content to another desk
     Scenario: Send Content from personal to another desk
         Given "desks"
         """
-        [{"name": "Sports", "desk_type": "production", "desk_metadata": {"slugline": "SPORTS"}}]
+        [{"name": "Sports", "desk_type": "production"}]
         """
         When we post to "archive"
         """
         [{"guid": "123", "type":"text", "headline": "test1", "guid": "123", "state": "draft", "task": {"user": "#CONTEXT_USER_ID#"}}]
         """
+        And we save etag
         And we post to "/archive/123/move"
         """
         [{"task": {"desk": "#desks._id#", "stage": "#desks.incoming_stage#"}}]
@@ -34,11 +35,12 @@ Feature: Move or Send Content to another desk
         When we get "/archive/123"
         Then we get existing resource
         """
-        { "headline": "test1", "guid": "123", "state": "submitted", "_current_version": 2, "slugline": "SPORTS",
+        { "headline": "test1", "guid": "123", "state": "submitted", "_current_version": 2,
           "task": {"desk": "#desks._id#", "stage": "#desks.incoming_stage#", "user": "#CONTEXT_USER_ID#"}}
         """
         Then there is no "last_production_desk" in task
         And there is no "last_authoring_desk" in task
+        And we get different etag
 
     @auth
     @notification
@@ -577,4 +579,41 @@ Feature: Move or Send Content to another desk
         """
         { "headline": "test", "_id": "item-1", "guid": "item-1", "slugline": "WORMS",
           "task": {"desk": "#desks._id#", "user": "#user._id#"}}
+        """
+
+    @auth
+    Scenario: Send Content from one desk to Personal desk
+        Given we have "desks" with "SPORTS_DESK_ID" and success
+        """
+        [{"name": "Sports", "desk_type": "authoring"}]
+        """
+        When we post to "archive"
+        """
+        [{  "type":"text", "headline": "test1", "guid": "123", "state": "submitted",
+            "task": {"desk": "#desks._id#", "stage": "#desks.incoming_stage#", "user": "#CONTEXT_USER_ID#"}}]
+        """
+        And we get "/archive/123"
+        Then we get existing resource
+        """
+        {"headline": "test1", "sign_off": "abc"}
+        """
+        When we post to "/desks" with "FINANCE_DESK_ID" and success
+        """
+        [{"name": "Finance", "desk_type": "production" }]
+        """
+        And we switch user
+        And we post to "/archive/123/move"
+        """
+        [{}]
+        """
+        Then we get OK response
+
+        When we get "/archive/123"
+        Then we get existing resource
+        """
+        { "operation": "move", "headline": "test1", "guid": "123", "state": "submitted", "_current_version": 2, "sign_off": "abc/foo",
+          "task": {
+                "user": "#CONTEXT_USER_ID#"
+            }
+        }
         """

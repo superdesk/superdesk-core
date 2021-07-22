@@ -21,14 +21,14 @@ class AFPNewsMLOneFeedParser(NewsMLOneFeedParser):
     but the firstcreated and versioncreated times are localised.
     """
 
-    NAME = 'afpnewsml12'
+    NAME = "afpnewsml12"
 
-    label = 'AFP News ML 1.2 Parser'
+    label = "AFP News ML 1.2 Parser"
 
     def parse(self, xml, provider=None):
         item = super().parse(xml, provider)
-        item['firstcreated'] = utc.localize(item['firstcreated']) if item.get('firstcreated') else utcnow()
-        item['versioncreated'] = utc.localize(item['versioncreated']) if item.get('versioncreated') else utcnow()
+        item["firstcreated"] = utc.localize(item["firstcreated"]) if item.get("firstcreated") else utcnow()
+        item["versioncreated"] = utc.localize(item["versioncreated"]) if item.get("versioncreated") else utcnow()
         return item
 
 

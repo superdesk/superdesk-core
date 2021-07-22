@@ -14,15 +14,10 @@ from superdesk.auth_server.scopes import Scope
 
 
 class DesksResource(Resource):
-    url = 'desks'
+    url = "desks"
     item_url = item_url
-    item_methods = ['GET']
-    resource_methods = ['GET']
+    item_methods = ["GET"]
+    resource_methods = ["GET"]
     allow_unknown = True
-    datasource = {
-        'source': 'desks',
-        'default_sort': [('name', 1)]
-    }
-    privileges = {
-        'GET': Scope.DESKS_READ.name
-    }
+    datasource = {"source": "desks", "default_sort": [("name", 1)]}
+    privileges = {"GET": Scope.DESKS_READ.name}

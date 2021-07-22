@@ -7,21 +7,23 @@
 # Author  : Jérôme
 # Creation: 2017-10-23 15:24
 
-from superdesk.commands.data_updates import DataUpdate
+from superdesk.commands.data_updates import BaseDataUpdate
 
 
-class DataUpdate(DataUpdate):
+class DataUpdate(BaseDataUpdate):
 
-    resource = 'vocabularies'
+    resource = "vocabularies"
 
     def forwards(self, mongodb_collection, mongodb_database):
-        print(mongodb_collection.update_many({'_id': {'$in': ['author_roles', 'job_titles']}},
-                                             {'$set': {
-                                                 'unique_field': "qcode"
-                                             }}))
+        print(
+            mongodb_collection.update_many(
+                {"_id": {"$in": ["author_roles", "job_titles"]}}, {"$set": {"unique_field": "qcode"}}
+            )
+        )
 
     def backwards(self, mongodb_collection, mongodb_database):
-        print(mongodb_collection.update_many({'_id': {'$in': ['author_roles', 'job_titles']}},
-                                             {'$unset': {
-                                                 'unique_field': "qcode"
-                                             }}))
+        print(
+            mongodb_collection.update_many(
+                {"_id": {"$in": ["author_roles", "job_titles"]}}, {"$unset": {"unique_field": "qcode"}}
+            )
+        )

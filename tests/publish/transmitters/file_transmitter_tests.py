@@ -20,75 +20,97 @@ from superdesk.errors import PublishFileError
 class FilePublishServiceTest(TestCase):
     def setUp(self):
         self.fixtures = os.path.join(os.path.abspath(os.path.dirname(__file__)))
-        self.subscribers = [{"_id": "1", "name": "Test", "media_type": "media",
-                             "subscriber_type": SUBSCRIBER_TYPES.WIRE, "is_active": True,
-                             "sequence_num_settings": {"max": 10, "min": 1},
-                             "destinations": [{"name": "test", "delivery_type": "File", "format": "nitf",
-                                               "config": {"file_path": self.fixtures}
-                                               }]}]
+        self.subscribers = [
+            {
+                "_id": "1",
+                "name": "Test",
+                "media_type": "media",
+                "subscriber_type": SUBSCRIBER_TYPES.WIRE,
+                "is_active": True,
+                "sequence_num_settings": {"max": 10, "min": 1},
+                "destinations": [
+                    {"name": "test", "delivery_type": "File", "format": "nitf", "config": {"file_path": self.fixtures}}
+                ],
+            }
+        ]
 
     def test_file_write(self):
-        item = {'item_id': 'test_file_name',
-                'item_version': 1,
-                'published_seq_num': 1,
-                'formatted_item': 'I was here',
-                'encoded_item': b'I was here',
-                'item_encoding': 'utf-8',
-                'destination': {"name": "test", "delivery_type": "File", "format": "nitf",
-                                "config": {"file_path": self.fixtures, "file_extension": "txt"}}
-                }
+        item = {
+            "item_id": "test_file_name",
+            "item_version": 1,
+            "published_seq_num": 1,
+            "formatted_item": "I was here",
+            "encoded_item": b"I was here",
+            "item_encoding": "utf-8",
+            "destination": {
+                "name": "test",
+                "delivery_type": "File",
+                "format": "nitf",
+                "config": {"file_path": self.fixtures, "file_extension": "txt"},
+            },
+        }
         service = FilePublishService()
         try:
             service._transmit(item, self.subscribers)
             self.assertTrue(True)
         finally:
-            path = os.path.join(self.fixtures, 'test_file_name-1-1.txt')
+            path = os.path.join(self.fixtures, "test_file_name-1-1.txt")
             if os.path.isfile(path):
                 os.remove(path)
 
     def test_format_default_file_extension(self):
-        item = {'item_id': 'test_file_name',
-                'item_version': 1,
-                'published_seq_num': 1,
-                'formatted_item': 'I was here',
-                'encoded_item': b'I was here',
-                'item_encoding': 'utf-8',
-                'destination': {"name": "test", "delivery_type": "File", "format": "nitf",
-                                "config": {"file_path": self.fixtures}}
-                }
+        item = {
+            "item_id": "test_file_name",
+            "item_version": 1,
+            "published_seq_num": 1,
+            "formatted_item": "I was here",
+            "encoded_item": b"I was here",
+            "item_encoding": "utf-8",
+            "destination": {
+                "name": "test",
+                "delivery_type": "File",
+                "format": "nitf",
+                "config": {"file_path": self.fixtures},
+            },
+        }
         service = FilePublishService()
         try:
             service._transmit(item, self.subscribers)
             self.assertTrue(True)
         finally:
-            path = os.path.join(self.fixtures, 'test_file_name-1-1.ntf')
+            path = os.path.join(self.fixtures, "test_file_name-1-1.ntf")
             if os.path.isfile(path):
                 os.remove(path)
 
-        item['destination']['config']['file_extension'] = ''
+        item["destination"]["config"]["file_extension"] = ""
         try:
             service._transmit(item, self.subscribers)
             self.assertTrue(True)
         finally:
-            path = os.path.join(self.fixtures, 'test_file_name-1-1.ntf')
+            path = os.path.join(self.fixtures, "test_file_name-1-1.ntf")
             if os.path.isfile(path):
                 os.remove(path)
 
     def test_file_write_fail(self):
-        self.fixtures = os.path.join(os.path.abspath(os.path.dirname(__file__) + '/xyz'))
-        item = {'item_id': 'test_file_name',
-                'item_version': 1,
-                'formatted_item': 'I was here',
-                'encoded_item': b'I was here',
-                'item_encoding': 'utf-8',
-                'destination': {"name": "test", "delivery_type": "File", "format": "nitf",
-                                "config": {"file_path": self.fixtures}}
-                }
+        self.fixtures = os.path.join(os.path.abspath(os.path.dirname(__file__) + "/xyz"))
+        item = {
+            "item_id": "test_file_name",
+            "item_version": 1,
+            "formatted_item": "I was here",
+            "encoded_item": b"I was here",
+            "item_encoding": "utf-8",
+            "destination": {
+                "name": "test",
+                "delivery_type": "File",
+                "format": "nitf",
+                "config": {"file_path": self.fixtures},
+            },
+        }
 
         with self.app.app_context():
             service = FilePublishService()
             try:
                 service._transmit(item, self.subscribers)
             except PublishFileError as ex:
-                self.assertEqual(str(ex), 'PublishFileError Error 13000 - File publish error')
+                self.assertEqual(str(ex), "PublishFileError Error 13000 - File publish error")
                 self.assertEqual(ex.code, 13000)

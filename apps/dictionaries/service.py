@@ -24,7 +24,7 @@ from apps.dictionaries.resource import DICTIONARY_FILE, DictionaryType
 from flask_babel import _
 
 
-FILE_ID = '_file_id'
+FILE_ID = "_file_id"
 
 
 logger = logging.getLogger(__name__)
@@ -48,7 +48,7 @@ def train(features):
 
 
 def words(text):
-    return [w.strip() for w in re.findall('[^\n]+', text) if not w.isdigit()]
+    return [w.strip() for w in re.findall("[^\n]+", text) if not w.isdigit()]
 
 
 def add_word(words, word, count):
@@ -73,13 +73,13 @@ def add_words(nwords, text, val=1):
 
 
 def read(stream):
-    return stream.read().decode('utf-8').replace('\ufeff', '')
+    return stream.read().decode("utf-8").replace("\ufeff", "")
 
 
 def merge(doc, words):
-    doc.setdefault('content', {})
+    doc.setdefault("content", {})
     for word, count in words.items():
-        add_word(doc['content'], word, count)
+        add_word(doc["content"], word, count)
 
 
 def fetch_dict(doc):
@@ -92,8 +92,8 @@ def fetch_dict(doc):
         content = json.loads(content_file.read())
         return content
 
-    if doc and doc.get('content'):
-        return decode_dict(doc['content'])
+    if doc and doc.get("content"):
+        return decode_dict(doc["content"])
 
     return {}
 
@@ -106,15 +106,15 @@ def store_dict(updates, original):
     :param updates
     :param original
     """
-    content = updates.pop('content', {})
+    content = updates.pop("content", {})
     if content:
         content_json = json.dumps(content)
         if is_big(content_json):
-            content_binary = io.BytesIO(content_json.encode('utf-8'))
+            content_binary = io.BytesIO(content_json.encode("utf-8"))
             updates[FILE_ID] = app.storage.put(content_binary)
-            updates['content'] = None
+            updates["content"] = None
         else:
-            updates['content'] = content_json
+            updates["content"] = content_json
             updates[FILE_ID] = None
 
     if original.get(FILE_ID):
@@ -138,27 +138,28 @@ def read_from_file(doc):
     UTF-8 encoding
     """
     content = doc.pop(DICTIONARY_FILE)
-    if 'text/' not in content.mimetype:
-        raise SuperdeskApiError.badRequestError(_('A text dictionary file is required'))
+    if "text/" not in content.mimetype:
+        raise SuperdeskApiError.badRequestError(_("A text dictionary file is required"))
     return train(words(read(content)))
 
 
 class DictionaryService(BaseService):
     def on_create(self, docs):
-        if len(docs) == 1 and 'content' in docs[0]:
+        if len(docs) == 1 and "content" in docs[0]:
             # works around Eve behaviour which creates sub-dict on each "." it finds in keys
             # cf. SDESK-3083
             # We also test request.data because it is not set in behave tests, and they would fail without it
             try:
-                docs[0]['content'] = json.loads(request.data.decode('utf-8'))['content']
+                docs[0]["content"] = json.loads(request.data.decode("utf-8"))["content"]
             except (KeyError, JSONDecodeError, RuntimeError):
                 # request.data is not set during tests, so we ignore those errors
                 pass
 
         for doc in docs:
             if self.is_duplicate_dictionary(doc):
-                raise SuperdeskApiError.badRequestError(message=_('The dictionary already exists'),
-                                                        payload={'name': 'duplicate'})
+                raise SuperdeskApiError.badRequestError(
+                    message=_("The dictionary already exists"), payload={"name": "duplicate"}
+                )
 
             self.__set_default(doc)
             self._validate_dictionary(doc)
@@ -171,33 +172,37 @@ class DictionaryService(BaseService):
 
     def on_created(self, docs):
         for doc in docs:
-            push_notification('dictionary:created', language=doc.get('language_id'))
+            push_notification("dictionary:created", language=doc.get("language_id"))
 
     def find_one(self, req, **lookup):
         doc = super().find_one(req, **lookup)
         if doc:
-            doc['content'] = fetch_dict(doc)
+            doc["content"] = fetch_dict(doc)
         return doc
 
     def _validate_dictionary(self, updates, original=None):
         if original is None:
             original = {}
-        dict_type = updates.get('type', original.get('type', DictionaryType.DICTIONARY.value))
-        if dict_type == DictionaryType.ABBREVIATIONS.value and not updates.get('user', original.get('user')):
-            raise SuperdeskApiError.badRequestError(message=_('User is required for the abbreviations dictionary.'),
-                                                    payload={'user': 'missing'})
+        dict_type = updates.get("type", original.get("type", DictionaryType.DICTIONARY.value))
+        if dict_type == DictionaryType.ABBREVIATIONS.value and not updates.get("user", original.get("user")):
+            raise SuperdeskApiError.badRequestError(
+                message=_("User is required for the abbreviations dictionary."), payload={"user": "missing"}
+            )
 
-        if original and dict_type != original.get('type', DictionaryType.DICTIONARY.value):
-            raise SuperdeskApiError.badRequestError(message=_('The dictionary type cannot be changed.'))
+        if original and dict_type != original.get("type", DictionaryType.DICTIONARY.value):
+            raise SuperdeskApiError.badRequestError(message=_("The dictionary type cannot be changed."))
 
     def get_base_language(self, lang):
-        if lang and lang.find('-') > 0:
-            return lang.split('-')[0]
+        if lang and lang.find("-") > 0:
+            return lang.split("-")[0]
 
     def is_duplicate_dictionary(self, doc):
-        return self.find_one(req=None, name=doc['name'],
-                             language_id=doc['language_id'],
-                             type=doc.get('type', DictionaryType.DICTIONARY.value))
+        return self.find_one(
+            req=None,
+            name=doc["name"],
+            language_id=doc["language_id"],
+            type=doc.get("type", DictionaryType.DICTIONARY.value),
+        )
 
     def get_dictionaries(self, lang):
         """Returns all the active dictionaries.
@@ -208,19 +213,23 @@ class DictionaryService(BaseService):
         :param lang:
         :return:
         """
-        languages = [{'language_id': lang}]
+        languages = [{"language_id": lang}]
         base_language = self.get_base_language(lang)
         if base_language:
-            languages.append({'language_id': base_language})
+            languages.append({"language_id": base_language})
 
-        lookup = {'$and': [{'$or': languages},
-                           {'$or': [{'is_active': {'$exists': 0}}, {'is_active': 'true'}]},
-                           {'$or': [{'type': {'$exists': 0}}, {'type': DictionaryType.DICTIONARY.value}]}]}
+        lookup = {
+            "$and": [
+                {"$or": languages},
+                {"$or": [{"is_active": {"$exists": 0}}, {"is_active": "true"}]},
+                {"$or": [{"type": {"$exists": 0}}, {"type": DictionaryType.DICTIONARY.value}]},
+            ]
+        }
         dicts = list(self.get(req=None, lookup=lookup))
-        langs = [d['language_id'] for d in dicts]
+        langs = [d["language_id"] for d in dicts]
 
         if base_language and base_language in langs and lang in langs:
-            dicts = [d for d in dicts if d['language_id'] != base_language]
+            dicts = [d for d in dicts if d["language_id"] != base_language]
 
         return dicts
 
@@ -241,54 +250,60 @@ class DictionaryService(BaseService):
         return model
 
     def on_update(self, updates, original):
-        if 'content' in updates:
+        if "content" in updates:
             # works around Eve behaviour which creates sub-dict on each "." it finds in keys
             # cf. SDESK-3083
             try:
-                updates['content'] = json.loads(request.data.decode('utf-8'))['content']
+                updates["content"] = json.loads(request.data.decode("utf-8"))["content"]
             except (KeyError, JSONDecodeError, RuntimeError):
                 # request.data is not set during tests, so we ignore those errors
                 pass
 
-        user = original.get('user')
-        name = updates.get('name')
-        language_id = updates.get('language_id')
+        user = original.get("user")
+        name = updates.get("name")
+        language_id = updates.get("language_id")
 
         # if user is present it means dictonary is personal/abbrevations.
         if user and language_id:
             personal_dictionary = {
-                'name': str(user) + ':' + language_id,
-                'language_id': language_id,
-                'type': original.get('type'),
+                "name": str(user) + ":" + language_id,
+                "language_id": language_id,
+                "type": original.get("type"),
             }
 
-        if (user and language_id and language_id != original.get('language_id')
-                and self.is_duplicate_dictionary(personal_dictionary)):
-            raise SuperdeskApiError.badRequestError(message=_('The dictionary already exists'),
-                                                    payload={'name': 'duplicate'})
-        elif (name and name != original.get('name') and self.find_one(req=None, name=name)):
-            raise SuperdeskApiError.badRequestError(message=_('The dictionary already exists'),
-                                                    payload={'name': 'duplicate'})
+        if (
+            user
+            and language_id
+            and language_id != original.get("language_id")
+            and self.is_duplicate_dictionary(personal_dictionary)
+        ):
+            raise SuperdeskApiError.badRequestError(
+                message=_("The dictionary already exists"), payload={"name": "duplicate"}
+            )
+        elif name and name != original.get("name") and self.find_one(req=None, name=name):
+            raise SuperdeskApiError.badRequestError(
+                message=_("The dictionary already exists"), payload={"name": "duplicate"}
+            )
 
         # parse json list
-        if updates.get('content_list'):
-            updates['content'] = json.loads(updates.pop('content_list'))
+        if updates.get("content_list"):
+            updates["content"] = json.loads(updates.pop("content_list"))
 
-        if 'type' not in original:
+        if "type" not in original:
             self.__set_default(updates)
 
         self._validate_dictionary(updates, original)
 
         # handle manual changes
-        if original.get('type', DictionaryType.DICTIONARY.value) == DictionaryType.DICTIONARY.value:
+        if original.get("type", DictionaryType.DICTIONARY.value) == DictionaryType.DICTIONARY.value:
             nwords = fetch_dict(original).copy()
-            for word, val in updates.get('content', {}).items():
+            for word, val in updates.get("content", {}).items():
                 if val:
                     add_words(nwords, word, val)
                 else:
                     nwords.pop(word, None)
 
-            updates['content'] = nwords
+            updates["content"] = nwords
 
         # handle uploaded file
         if updates.get(DICTIONARY_FILE):
@@ -298,11 +313,11 @@ class DictionaryService(BaseService):
         store_dict(updates, original)
 
     def on_updated(self, updates, original):
-        push_notification('dictionary:updated', language=updates.get('language_id', original.get('language_id')))
+        push_notification("dictionary:updated", language=updates.get("language_id", original.get("language_id")))
 
     def __set_default(self, doc):
-        if 'type' not in doc:
-            doc['type'] = DictionaryType.DICTIONARY.value
+        if "type" not in doc:
+            doc["type"] = DictionaryType.DICTIONARY.value
 
     def on_fetched_item(self, doc):
         self.__enhance_items([doc])

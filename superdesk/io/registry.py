@@ -36,9 +36,9 @@ def register_feeding_service(service_class):
 
     if service_class.NAME in registered_feeding_services:
         raise AlreadyExistsError(
-            'Feeding Service: {} already registered by {}'.format(
-                service_class.NAME,
-                registered_feeding_services[service_class.NAME])
+            "Feeding Service: {} already registered by {}".format(
+                service_class.NAME, registered_feeding_services[service_class.NAME]
+            )
         )
 
     registered_feeding_services[service_class.NAME] = service_class
@@ -82,8 +82,9 @@ def register_feed_parser(parser_name, parser_class):
     """
 
     if parser_name in registered_feed_parsers:
-        raise AlreadyExistsError('Feed Parser: {} already registered by {}'
-                                 .format(parser_name, type(registered_feed_parsers[parser_name])))
+        raise AlreadyExistsError(
+            "Feed Parser: {} already registered by {}".format(parser_name, type(registered_feed_parsers[parser_name]))
+        )
 
     registered_feed_parsers[parser_name] = parser_class
     allowed_feed_parsers.append(parser_name)
@@ -120,40 +121,33 @@ def get_feed_parser(parser_name):
 
 
 class FeedParserAllowedResource(Resource):
-    resource_methods = ['GET']
+    resource_methods = ["GET"]
     item_methods = []
     allow_unknown = True
 
 
 class FeedParserAllowedService(Service):
-
     def get(self, req, lookup):
         def parser(parser_id):
             registered = registered_feed_parsers[parser_id]
-            return {
-                'feed_parser': parser_id,
-                'label': getattr(registered, 'label', parser_id)
-            }
+            return {"feed_parser": parser_id, "label": getattr(registered, "label", parser_id)}
 
-        return ListCursor(
-            [parser(_id) for _id in registered_feed_parsers]
-        )
+        return ListCursor([parser(_id) for _id in registered_feed_parsers])
 
 
 class FeedingServiceAllowedResource(Resource):
-    resource_methods = ['GET']
+    resource_methods = ["GET"]
     item_methods = []
     schema = {
-        'feeding_service': {'type': 'string'},
-        'label': {'type': 'string'},
-        'fields': {'type': 'list'},
-        'field_groups': {'type': 'dict', 'schema': {}},
-        'parser_restricted_values': {'type': 'list'},
+        "feeding_service": {"type": "string"},
+        "label": {"type": "string"},
+        "fields": {"type": "list"},
+        "field_groups": {"type": "dict", "schema": {}},
+        "parser_restricted_values": {"type": "list"},
     }
 
 
 class FeedingServiceAllowedService(Service):
-
     def get(self, req, lookup):
         def service(service_id):
             feeding_service_class = registered_feeding_services[service_id]
@@ -161,14 +155,14 @@ class FeedingServiceAllowedService(Service):
             if restricted_parsers is not None:
                 restricted_parsers = list(restricted_parsers.keys())
 
+            fields = getattr(feeding_service_class, "fields", [])
+
             return {
-                'feeding_service': service_id,
-                'label': getattr(feeding_service_class, 'label', service_id),
-                'fields': getattr(feeding_service_class, 'fields', []),
-                'field_groups': getattr(feeding_service_class, 'field_groups', {}),
-                'parser_restricted_values': restricted_parsers
+                "feeding_service": service_id,
+                "label": getattr(feeding_service_class, "label", service_id),
+                "fields": fields,
+                "field_groups": getattr(feeding_service_class, "field_groups", {}),
+                "parser_restricted_values": restricted_parsers,
             }
 
-        return ListCursor(
-            [service(_id) for _id in registered_feeding_services]
-        )
+        return ListCursor([service(_id) for _id in registered_feeding_services])

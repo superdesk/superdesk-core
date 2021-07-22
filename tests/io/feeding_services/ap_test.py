@@ -17,7 +17,7 @@ from superdesk.io.feeding_services import ap
 from superdesk.io.feed_parsers import newsml_2_0
 from copy import deepcopy
 
-PREFIX = 'test_superdesk_'
+PREFIX = "test_superdesk_"
 PROVIDER = {
     "_id": "test_provider",
     "config": {
@@ -25,25 +25,24 @@ PROVIDER = {
         "password": "password",
         "idList": "123",
         "feed_parser": "newsml2",
-        "field_aliases": []
+        "field_aliases": [],
     },
 }
 
 
 class APTestCase(TestCase):
-
     def setUp(self):
         super().setUp()
         with self.app.app_context():
             vocab = [{}]
-            self.app.data.insert('vocabularies', vocab)
+            self.app.data.insert("vocabularies", vocab)
         dirname = os.path.dirname(os.path.realpath(__file__))
-        fixture = os.path.normpath(os.path.join(dirname, '../fixtures', 'ap.xml'))
-        with open(fixture, 'rb') as f:
+        fixture = os.path.normpath(os.path.join(dirname, "../fixtures", "ap.xml"))
+        with open(fixture, "rb") as f:
             self.feed_raw = f.read()
 
-    @mock.patch.object(http_base_service, 'requests')
-    @mock.patch.object(ap.APFeedingService, 'get_feed_parser')
+    @mock.patch.object(http_base_service, "requests")
+    @mock.patch.object(ap.APFeedingService, "get_feed_parser")
     def test_feeding(self, get_feed_parser, requests):
         get_feed_parser.return_value = newsml_2_0.NewsMLTwoFeedParser()
         mock_get = requests.get.return_value
@@ -54,8 +53,8 @@ class APTestCase(TestCase):
         items = service._update(provider, {})[0]
         self.assertEqual(len(items), 3)
 
-    @mock.patch.object(http_base_service, 'requests')
-    @mock.patch.object(ap.APFeedingService, 'get_feed_parser')
+    @mock.patch.object(http_base_service, "requests")
+    @mock.patch.object(ap.APFeedingService, "get_feed_parser")
     def test_items_order(self, get_feed_parser, requests):
         """Test that items are reversed on first call (SDESK-4372)
 
@@ -72,8 +71,8 @@ class APTestCase(TestCase):
         service = ap.APFeedingService()
         service.provider = provider
 
-        self.assertNotIn('private', provider)
-        with mock.patch.object(feed_parser, 'parse'):
+        self.assertNotIn("private", provider)
+        with mock.patch.object(feed_parser, "parse"):
             update = {}
             items = service._update(provider, update)[0]
             items.reverse.assert_called_once_with()
@@ -81,7 +80,7 @@ class APTestCase(TestCase):
 
         # because the provider has been run at least one time,
         # private data must now be present
-        self.assertIn('private', provider)
-        with mock.patch.object(feed_parser, 'parse'):
+        self.assertIn("private", provider)
+        with mock.patch.object(feed_parser, "parse"):
             items = service._update(provider, {})[0]
             items.reverse.assert_not_called()

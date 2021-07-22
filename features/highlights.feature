@@ -296,16 +296,42 @@ Feature: Highlights
         Given "archive"
         """
         [
-            {"guid": "item1", "type": "text", "headline": "item1", "body_html": "<p>item1 first</p><p>item1 second</p>", "task": {"desk": "#desks._id#"}},
-            {"guid": "item2", "type": "text", "headline": "item2", "body_html": "<p>item2 first</p><p>item2 second</p>", "task": {"desk": "#desks._id#"}}
+            {"guid": "item1", "type": "text", "headline": "item1", "body_html": "<p>item1 first</p><p>item1 second</p>", "task": {"desk": "#desks._id#"}, "state": "fetched"},
+            {"guid": "item2", "type": "text", "headline": "item2", "body_html": "<p>item2 first</p><p>item2 second</p>", "task": {"desk": "#desks._id#"}, "state": "fetched"}
         ]
         """
         When we post to "content_templates"
         """
-        {"template_name": "default highlight", "template_type": "highlights",
-         "data": {"headline": "custom headline", "slugline": "custom slugline", "byline": "custom byline", "abstract": "custom abstract",
-                  "priority" : 1, "urgency" : 1, "language" : "nb-NO",
-                  "body_html": "<b>custom highlight template</b>\n{% for item in items %} <h2>{{ item.headline }}</h2> {{ item.body_html | first_paragraph() }} <p></p> {% endfor %}"}
+        {
+            "template_name": "default highlight",
+            "template_type": "highlights",
+            "data": {
+                "headline": "custom headline",
+                "slugline": "custom slugline",
+                "byline": "custom byline",
+                "abstract": "custom abstract",
+                "priority": 1,
+                "urgency": 1,
+                "language": "nb-NO",
+                "body_html": "<b>custom highlight template</b>\n{% for item in items %} <h2>{{ item.headline }}</h2> {{ item.body_html | first_paragraph() }} <p></p>{% endfor %}",
+                "fields_meta": {
+                    "body_html": {
+                        "draftjsState": [{
+                            "blocks": [{
+                                "key": "7sg3m",
+                                "text": "test some text",
+                                "type": "unstyled",
+                                "depth": 0,
+                                "inlineStyleRanges": [],
+                                "entityRanges": [],
+                                "data": {
+                                    "MULTIPLE_HIGHLIGHTS": {}
+                                }
+                            }]
+                        }]
+                    }
+                }
+            }
         }
         """
         Then we get response code 201
@@ -356,7 +382,8 @@ Feature: Highlights
         {"_id": "__any_value__", "type": "text", "headline": "custom headline", 
          "slugline": "custom slugline", "byline": "custom byline", "abstract": "custom abstract",
          "priority" : 1, "urgency" : 1, "language" : "nb-NO",
-         "body_html": "<b>custom highlight template</b>\n <h2>item1</h2> <p>item1 first</p> <p></p>  <h2>item2</h2> <p>item2 first</p> <p></p> "}
+         "body_html": "<b>custom highlight template</b>\n <h2>item1</h2> <p>item1 first</p> <p></p> <h2>item2</h2> <p>item2 first</p> <p></p>",
+         "fields_meta": "__none__"}
         """
 
         When we get "/archive"

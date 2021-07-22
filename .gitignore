@@ -36,3 +36,5 @@ include/
 /.settings/
 _build
 _build_html
+__pycache__
+.eggs

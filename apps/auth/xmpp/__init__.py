@@ -13,8 +13,8 @@ import superdesk
 from .auth import XMPPAuthResource, XMPPAuthService
 
 
-def init_app(app):
-    endpoint_name = 'auth_xmpp'
-    service = XMPPAuthService('auth', backend=superdesk.get_backend())
+def init_app(app) -> None:
+    endpoint_name = "auth_xmpp"
+    service = XMPPAuthService("auth", backend=superdesk.get_backend())
     XMPPAuthResource(endpoint_name, app=app, service=service)
-    app.client_config['xmpp_auth'] = bool(app.config['XMPP_AUTH_URL'])
+    app.client_config["xmpp_auth"] = bool(app.config["XMPP_AUTH_URL"])

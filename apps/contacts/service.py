@@ -20,13 +20,12 @@ from copy import deepcopy
 
 
 class ContactsService(Service):
-
     def get(self, req, lookup):
 
         # by default the response will have the inactive and not public entries filtered out
-        if 'all' not in req.args:
-            lookup['is_active'] = True
-            lookup['public'] = True
+        if "all" not in req.args:
+            lookup["is_active"] = True
+            lookup["public"] = True
         return super().get(req, lookup)
 
     def on_create(self, docs):
@@ -39,7 +38,7 @@ class ContactsService(Service):
         :param docs:
         :return:
         """
-        push_notification('contacts:create', _id=[doc.get(config.ID_FIELD) for doc in docs])
+        push_notification("contacts:create", _id=[doc.get(config.ID_FIELD) for doc in docs])
 
     def on_update(self, updates, original):
         item = deepcopy(original)
@@ -53,7 +52,7 @@ class ContactsService(Service):
         :param original:
         :return:
         """
-        push_notification('contacts:update', _id=[original.get(config.ID_FIELD)])
+        push_notification("contacts:update", _id=[original.get(config.ID_FIELD)])
 
     def on_deleted(self, doc):
         """
@@ -61,32 +60,30 @@ class ContactsService(Service):
         :param doc:
         :return:
         """
-        push_notification('contacts:deleted', _id=[doc.get(config.ID_FIELD)])
+        push_notification("contacts:deleted", _id=[doc.get(config.ID_FIELD)])
 
     def _validate_assignable(self, contact):
         """Validates a required email address if the contact_type has assignable flag turned on"""
 
-        if not contact or not contact.get('contact_type'):
+        if not contact or not contact.get("contact_type"):
             return
 
-        types = get_resource_service('vocabularies').find_one(req=None, _id='contact_type')
+        types = get_resource_service("vocabularies").find_one(req=None, _id="contact_type")
 
         if not types:
             return
 
-        contact_type = next((
-            item
-            for item in (types.get('items') or [])
-            if item.get('qcode') == contact.get('contact_type')
-        ), None)
+        contact_type = next(
+            (item for item in (types.get("items") or []) if item.get("qcode") == contact.get("contact_type")), None
+        )
 
-        if not contact_type or not contact_type.get('assignable'):
+        if not contact_type or not contact_type.get("assignable"):
             return
 
-        if not contact.get('contact_email'):
+        if not contact.get("contact_email"):
             raise SuperdeskApiError.badRequestError(
-                message=_("Contacts of type \"{contact_type}\" must have an email address").format(
-                    contact_type=contact_type.get('name')
+                message=_('Contacts of type "{contact_type}" must have an email address').format(
+                    contact_type=contact_type.get("name")
                 )
             )
 
@@ -101,17 +98,17 @@ class OrganisationService(Service):
         """
         new_req = ParsedRequest()
 
-        q_str = 'organisation:' + '* organisation:'.join(req.args.get('q', '').split()) + '*'
-        new_req.args = {'q': q_str, 'default_operator': 'AND', 'projections': '{"organisation": 1}'}
+        q_str = "organisation:" + "* organisation:".join(req.args.get("q", "").split()) + "*"
+        new_req.args = {"q": q_str, "default_operator": "AND", "projections": '{"organisation": 1}'}
         ret = super().get(new_req, lookup)
 
         # Remove any duplicate entries from the response
         orgs = []
         de_duped = []
         for d in ret.docs:
-            if d.get('organisation') not in orgs:
-                orgs.append(d.get('organisation'))
+            if d.get("organisation") not in orgs:
+                orgs.append(d.get("organisation"))
                 de_duped.append(d)
         ret.docs = de_duped
-        ret.hits['hits']['total'] = len(ret.docs)
+        ret.hits["hits"]["total"] = len(ret.docs)
         return ret

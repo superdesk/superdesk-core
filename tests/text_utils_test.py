@@ -1,40 +1,55 @@
-
 import unittest
 from superdesk import text_utils
 
 
 class WordCountTestCase(unittest.TestCase):
+    def test_word_count_whitespace_string(self):
+        self.assertEqual(0, text_utils.get_word_count("   "))
 
     def test_word_count_p_tags(self):
-        self.assertEqual(2, text_utils.get_word_count('<p>foo<strong>s</strong></p><p>bar</p>'))
+        self.assertEqual(2, text_utils.get_word_count("<p>foo<strong>s</strong></p><p>bar</p>"))
+        self.assertEqual(500, text_utils.get_word_count("<p>word</p>" * 500))
 
     def test_word_count_brs(self):
-        self.assertEqual(2, text_utils.get_word_count('<p>foo<br><br>bar</p>'))
-        self.assertEqual(2, text_utils.get_word_count('<p>foo<br /><br />bar</p>'))
+        self.assertEqual(2, text_utils.get_word_count("<p>foo<br><br>bar</p>"))
+        self.assertEqual(2, text_utils.get_word_count("<p>foo<br /><br />bar</p>"))
 
     def test_word_count_hrs(self):
-        self.assertEqual(2, text_utils.get_word_count('<p>foo<br><hr>bar</p>'))
-        self.assertEqual(2, text_utils.get_word_count('<p>foo<br /><hr />bar</p>'))
+        self.assertEqual(2, text_utils.get_word_count("<p>foo<br><hr>bar</p>"))
+        self.assertEqual(2, text_utils.get_word_count("<p>foo<br /><hr />bar</p>"))
 
     def test_word_count_ul(self):
-        self.assertEqual(3, text_utils.get_word_count("""
+        self.assertEqual(
+            3,
+            text_utils.get_word_count(
+                """
             <ul>
                 <li>foo</li>
                 <li>bar</li>
                 <li>baz</li>
                 <li></li>
             </ul>
-        """))
+        """
+            ),
+        )
 
     def test_word_count_nitf(self):
-        self.assertEqual(40, text_utils.get_word_count("""
+        self.assertEqual(
+            37,
+            text_utils.get_word_count(
+                """
         <p>2014: Northern Ireland beat <location>Greece</location> 2-0 in <location>Athens</location>
         with goals from <person>Jamie Ward</person> and <person>Kyle Lafferty</person> to boost their
         hopes of qualifying for <money>Euro 2016</money>. <person>Michael O'Neill's</person> side
-        sealed their place at the finals in <chron>October 2015</chron>.</p>"""))
+        sealed their place at the finals in <chron>October 2015</chron>.</p>"""
+            ),
+        )
 
     def test_word_count_nitf_2(self):
-        self.assertEqual(316, text_utils.get_word_count("""
+        self.assertEqual(
+            314,
+            text_utils.get_word_count(
+                """
         <p>Rio Tinto has kept intact its target for iron ore shipments in 2017 after hitting the mid-point
         of its revised guidance range for 2016. </p><p>The world's second largest iron ore exporter shipped
         327.6 million tonnes of iron ore from its Pilbara operations in 2016, in line with the slightly lowered
@@ -53,7 +68,9 @@ class WordCountTestCase(unittest.TestCase):
         still came in below its guidance range of 535,000 to 565,000 tonnes due to lower-than-expected production
         at its Kennecott mine in the US and no supplies from the Grasberg joint venture in Indonesia.</p><p>It has
         forecast a wide guidance range of 525,000 to 665,000 tonnes for 2017.</p><p>The miner topped production
-        forecasts for bauxite and coking coal, while aluminium output jumped 10 per cent in 2016.</p>"""))
+        forecasts for bauxite and coking coal, while aluminium output jumped 10 per cent in 2016.</p>"""
+            ),
+        )
 
     def test_word_count_html(self):
         # If you change the following text, please change it in client too at
@@ -66,18 +83,26 @@ class WordCountTestCase(unittest.TestCase):
 
     def test_decode(self):
         """Test decoding with encoding detection"""
-        bytes_str = "téstôù".encode('latin-1')
+        bytes_str = "téstôù".encode("latin-1")
         decoded = text_utils.decode(bytes_str)
         self.assertEqual(decoded, "téstôù")
 
     def test_get_par_count(self):
-        self.assertEqual(3, text_utils.get_par_count("""
+        self.assertEqual(
+            3,
+            text_utils.get_par_count(
+                """
         <p>First paragraph</p>
         <p>Second paragraph</p>
         <p>Last paragraph</p>
-        """))
+        """
+            ),
+        )
 
-        self.assertEqual(3, text_utils.get_par_count("""
+        self.assertEqual(
+            3,
+            text_utils.get_par_count(
+                """
         <p><br></p>
         <p>First paragraph</p>
         <p>Second paragraph</p>
@@ -86,16 +111,28 @@ class WordCountTestCase(unittest.TestCase):
         <p>
 
         </p>
-        """))
+        """
+            ),
+        )
 
-        self.assertEqual(0, text_utils.get_par_count("""
+        self.assertEqual(
+            0,
+            text_utils.get_par_count(
+                """
         <p>
 
         </p>
-        """))
+        """
+            ),
+        )
 
-        self.assertEqual(0, text_utils.get_par_count("""
+        self.assertEqual(
+            0,
+            text_utils.get_par_count(
+                """
         <div></div>
-        """))
+        """
+            ),
+        )
 
         self.assertEqual(0, text_utils.get_par_count(None))

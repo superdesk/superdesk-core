@@ -9,6 +9,8 @@
 # at https://www.sourcefabric.org/superdesk/license
 
 import logging
+
+from typing import Union
 from flask import current_app as app, json
 from eve.utils import ParsedRequest, config
 from eve.methods.common import resolve_document_etag
@@ -17,14 +19,14 @@ from eve.methods.common import resolve_document_etag
 log = logging.getLogger(__name__)
 
 
-class BaseService():
+class BaseService:
     """
     Base service for all endpoints, defines the basic implementation for CRUD datalayer functionality.
     """
 
-    datasource = None
+    datasource: Union[str, None]
 
-    def __init__(self, datasource=None, backend=None):
+    def __init__(self, datasource: str = None, backend=None):
         self.backend = backend
         self.datasource = datasource
 
@@ -65,8 +67,8 @@ class BaseService():
     def update(self, id, updates, original):
         return self.backend.update(self.datasource, id, updates, original)
 
-    def system_update(self, id, updates, original):
-        return self.backend.system_update(self.datasource, id, updates, original)
+    def system_update(self, id, updates, original, **kwargs):
+        return self.backend.system_update(self.datasource, id, updates, original, **kwargs)
 
     def replace(self, id, document, original):
         res = self.backend.replace(self.datasource, id, document, original)
@@ -111,14 +113,12 @@ class BaseService():
         return res
 
     def _validator(self, skip_validation=False):
-        resource_def = app.config['DOMAIN'][self.datasource]
-        schema = resource_def['schema']
+        resource_def = app.config["DOMAIN"][self.datasource]
+        schema = resource_def["schema"]
         return (
             None
             if skip_validation
-            else app.validator(
-                schema, resource=self.datasource, allow_unknown=resource_def['allow_unknown']
-            )
+            else app.validator(schema, resource=self.datasource, allow_unknown=resource_def["allow_unknown"])
         )
 
     def _resolve_defaults(self, doc):

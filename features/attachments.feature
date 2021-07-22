@@ -6,19 +6,27 @@ Feature: Attachments
         Then we get list with 0 items
 
         When we upload a file "bike.jpg" to "/attachments"
+        """
+        {
+            "title": "Bike",
+            "description": "bike"
+        }
+        """
         Then we get new resource
         """
         {
             "filename": "bike.jpg",
             "mimetype": "image/jpeg",
             "media": {"length": 469900},
-            "user": "#CONTEXT_USER_ID#"
+            "user": "#CONTEXT_USER_ID#",
+            "title": "Bike",
+            "description": "bike"
         }
         """
 
         When we patch latest
         """
-        {"title": "Bike", "description": "bike"}
+        {"title": "Bike 2", "description": "bike 2"}
         """
         Then we get updated response
 

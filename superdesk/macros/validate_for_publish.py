@@ -11,19 +11,22 @@
 from superdesk import get_resource_service, config
 from superdesk.validation import ValidationError
 from apps.publish.content.common import ITEM_PUBLISH
+from flask_babel import lazy_gettext
+import json
 
 
 def validate_for_publish(item, **kwargs):
-    doc = get_resource_service('archive').find_one(req=None, _id=item[config.ID_FIELD])
-    validate_item = {'act': ITEM_PUBLISH, 'type': doc['type'], 'validate': doc}
-    validation_errors = get_resource_service('validate').create([validate_item], fields=True)
-    if validation_errors[0][0]:
-        raise ValidationError(validation_errors)
+    doc = get_resource_service("archive").find_one(req=None, _id=item[config.ID_FIELD])
+    validate_item = {"act": ITEM_PUBLISH, "type": doc["type"], "validate": doc}
+    validation_errors = get_resource_service("validate").validate(validate_item)
+    if validation_errors:
+        raise ValidationError(json.dumps(validation_errors))
+
     return item
 
 
-name = 'Validate for Publish'
-label = 'Validate for Publish'
+name = "Validate for Publish"
+label = lazy_gettext("Validate for Publish")
 callback = validate_for_publish
-access_type = 'frontend'
-action_type = 'direct'
+access_type = "frontend"
+action_type = "direct"

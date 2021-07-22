@@ -12,6 +12,6 @@ from apps.macros.macro_register import register, load_macros  # NOQA
 from apps.macros.macros import MacrosResource, MacrosService
 
 
-def init_app(app):
-    MacrosResource('macros', app=app, service=MacrosService())
+def init_app(app) -> None:
+    MacrosResource("macros", app=app, service=MacrosService())
     load_macros(app)

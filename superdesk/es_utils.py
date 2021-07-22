@@ -1,4 +1,3 @@
-
 # -*- coding: utf-8; -*-
 #
 # This file is part of Superdesk.
@@ -15,7 +14,7 @@ import logging
 import json
 import pytz
 from datetime import datetime
-from superdesk import app
+from flask import current_app as app
 
 logger = logging.getLogger(__name__)
 
@@ -67,7 +66,7 @@ def get_docs(query_result):
     try:
         docs = [h["_source"] for h in query_result["hits"]["hits"]]
     except KeyError:
-        logger.warning(u"Can't retrieve doc from ES results: {data}".format(data=query_result))
+        logger.warning("Can't retrieve doc from ES results: {data}".format(data=query_result))
         docs = []
     return docs
 
@@ -158,13 +157,15 @@ def filter2query(filter_, user_id=None):
         elif key == "ignoreScheduled":
             query_must_not.append({"term": {"state": "scheduled"}})
         elif key == "raw":
-            query_must.append({
-                "query_string": {
-                    "query": value,
-                    "lenient": False,
-                    "default_operator": "AND",
-                },
-            })
+            query_must.append(
+                {
+                    "query_string": {
+                        "query": value,
+                        "lenient": False,
+                        "default_operator": "AND",
+                    },
+                }
+            )
         else:
             continue
         to_delete.append(key)
@@ -178,8 +179,11 @@ def filter2query(filter_, user_id=None):
             try:
                 post_filter.append({"terms": {field: json.loads(value)}})
             except (ValueError, TypeError) as e:
-                logger.warning('Invalid data received for post filter key="{key}" data="{value}" error="{e}"'.format(
-                    key=key, e=e, value=value))
+                logger.warning(
+                    'Invalid data received for post filter key="{key}" data="{value}" error="{e}"'.format(
+                        key=key, e=e, value=value
+                    )
+                )
                 # the value is probably not JSON encoded as expected, we try directly the value
                 post_filter.append({"terms": {field: value}})
         else:
@@ -263,11 +267,12 @@ def filter2query(filter_, user_id=None):
         query["post_filter"] = {"bool": {"must": post_filter, "must_not": post_filter_must_not}}
 
     query["sort"] = {"versioncreated": "desc"}
+    query.setdefault("size", app.config["ELASTIC_DEFAULT_SIZE"])
 
     search_query.pop("repo", None)
 
-    if "params" in search_query and (search_query['params'] is None or not json.loads(search_query['params'])):
-        del search_query['params']
+    if "params" in search_query and (search_query["params"] is None or not json.loads(search_query["params"])):
+        del search_query["params"]
 
     if search_query:
         logger.warning(
@@ -279,7 +284,7 @@ def filter2query(filter_, user_id=None):
 
 def filter2repos(filter_):
     try:
-        return filter_['query']['repo']
+        return filter_["query"]["repo"]
     except KeyError:
         return None
 
@@ -293,7 +298,7 @@ def get_doc_types(selected_repos, all_repos=None):
     if selected_repos is None:
         return all_repos.copy()
 
-    repos = selected_repos.split(',')
+    repos = selected_repos.split(",")
 
     # If the repos array is still empty after filtering, then return the default repos
     return [repo for repo in repos if repo in all_repos] or all_repos.copy()

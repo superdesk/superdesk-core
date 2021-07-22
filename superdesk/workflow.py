@@ -15,9 +15,15 @@ states = []
 actions = []
 allowed_workflow_states = []
 
-__all__ = ('workflow_state', 'get_workflow_states', 'allowed_workflow_states',
-           'workflow_action', 'get_workflow_actions', 'is_workflow_state_transition_valid',
-           'set_default_state')
+__all__ = (
+    "workflow_state",
+    "get_workflow_states",
+    "allowed_workflow_states",
+    "workflow_action",
+    "get_workflow_actions",
+    "is_workflow_state_transition_valid",
+    "set_default_state",
+)
 
 
 def workflow_action(name, include_states=None, exclude_states=None, privileges=None):
@@ -34,12 +40,9 @@ def workflow_action(name, include_states=None, exclude_states=None, privileges=N
         exclude_states = []
     if privileges is None:
         privileges = []
-    actions.append({
-        'name': name,
-        'exclude_states': exclude_states,
-        'include_states': include_states,
-        'privileges': privileges
-    })
+    actions.append(
+        {"name": name, "exclude_states": exclude_states, "include_states": include_states, "privileges": privileges}
+    )
 
 
 def get_workflow_actions(state=None):
@@ -50,11 +53,13 @@ def get_workflow_actions(state=None):
     if state is None:
         return actions
     else:
+
         def is_go(action, state):
-            if action['include_states']:
-                return state in action['include_states']
-            elif action['exclude_states']:
-                return state not in action['exclude_states']
+            if action["include_states"]:
+                return state in action["include_states"]
+            elif action["exclude_states"]:
+                return state not in action["exclude_states"]
+
         return [action for action in actions if is_go(action, state)]
 
 
@@ -67,8 +72,8 @@ def get_privileged_actions(privileges):
     allowed_action = []
     for action in actions:
         # only add the action if it has some privileges
-        add = len(action['privileges']) > 0
-        for action_privilege in action['privileges']:
+        add = len(action["privileges"]) > 0
+        for action_privilege in action["privileges"]:
             if action_privilege not in privileges.keys():
                 add = False
             else:
@@ -86,7 +91,7 @@ def workflow_state(name):
     :param name: unique name of state
     """
     allowed_workflow_states.append(name)
-    states.append({'name': name})
+    states.append({"name": name})
 
 
 def is_workflow_state_transition_valid(action_name, state):
@@ -97,7 +102,7 @@ def is_workflow_state_transition_valid(action_name, state):
     :param state: Current State of the content
     :return: true if valid, False otherwise.
     """
-    return action_name in [action['name'] for action in get_workflow_actions(state)]
+    return action_name in [action["name"] for action in get_workflow_actions(state)]
 
 
 def get_workflow_states():

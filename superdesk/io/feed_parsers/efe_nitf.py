@@ -26,48 +26,51 @@ class EFEFeedParser(NITFFeedParser):
     Feed parser for the NITF feed from Agencia EFE
     """
 
-    NAME = 'efe_nitf'
+    NAME = "efe_nitf"
 
-    label = 'EFE NITF'
+    label = "EFE NITF"
 
     def __init__(self):
         self.MAPPING = {
-            'guid': {'xpath': 'head/docdata/doc-id/@id-string',
-                     'default': None
-                     },
-            'uri': {'xpath': 'head/docdata/doc-id/@id-string',
-                    'default': None
-                    },
-            'urgency': {'xpath': 'head/docdata/urgency/@ed-urg',
-                        'default_attr': 5,
-                        'filter': int,
-                        },
-            'pubstatus': {'xpath': 'head/docdata/@management-status',
-                          'default_attr': 'usable',
-                          },
-            'firstcreated': {'xpath': 'head/docdata/date.issue',
-                             'filter': self.get_norm_datetime,
-                             },
-            'versioncreated': {'xpath': 'head/docdata/date.issue',
-                               'filter': self.get_norm_datetime,
-                               },
-            'expiry': {'xpath': 'head/docdata/date.expire',
-                       'filter': self.get_norm_datetime,
-                       },
-            'subject': self.get_subjects,
-            'body_html': self.get_content,
+            "guid": {"xpath": "head/docdata/doc-id/@id-string", "default": None},
+            "uri": {"xpath": "head/docdata/doc-id/@id-string", "default": None},
+            "urgency": {
+                "xpath": "head/docdata/urgency/@ed-urg",
+                "default_attr": 5,
+                "filter": int,
+            },
+            "pubstatus": {
+                "xpath": "head/docdata/@management-status",
+                "default_attr": "usable",
+            },
+            "firstcreated": {
+                "xpath": "head/docdata/date.issue",
+                "filter": self.get_norm_datetime,
+            },
+            "versioncreated": {
+                "xpath": "head/docdata/date.issue",
+                "filter": self.get_norm_datetime,
+            },
+            "expiry": {
+                "xpath": "head/docdata/date.expire",
+                "filter": self.get_norm_datetime,
+            },
+            "subject": self.get_subjects,
+            "body_html": self.get_content,
             FORMAT: self.get_format,
-            'place': self.get_place,
-            'keywords': {'xpath': 'head/docdata',
-                         'filter': self.get_keywords,
-                         },
-            'slugline': {'xpath': 'head/docdata',
-                         'filter': self.get_slugline,
-                         },
-            'genre': self.get_genre,
-            'ednote': 'head/docdata/ed-msg/@info',
-            'headline': self.get_headline,
-            'abstract': self.get_abstract,
+            "place": self.get_place,
+            "keywords": {
+                "xpath": "head/docdata",
+                "filter": self.get_keywords,
+            },
+            "slugline": {
+                "xpath": "head/docdata",
+                "filter": self.get_slugline,
+            },
+            "genre": self.get_genre,
+            "ednote": "head/docdata/ed-msg/@info",
+            "headline": self.get_headline,
+            "abstract": self.get_abstract,
         }
 
         super().__init__()
@@ -86,23 +89,24 @@ class EFEFeedParser(NITFFeedParser):
         :return:
         """
         try:
-            if len(item.get('place', [])) == 1:
+            if len(item.get("place", [])) == 1:
                 cities = app.locators.find_cities()
-                city = item.get('place', '')[0].get('name', '')
+                city = item.get("place", "")[0].get("name", "")
                 if city:
-                    located = [c for c in cities if c['city'].lower() == city.lower()]
+                    located = [c for c in cities if c["city"].lower() == city.lower()]
                     if len(located) == 1:
-                        item.setdefault('dateline', {})
-                        item['dateline']['located'] = located[0]
-                        item['dateline']['source'] = item.get('original_source', 'EFE')
-                        item['dateline']['text'] = format_dateline_to_locmmmddsrc(item['dateline']['located'],
-                                                                                  get_date(item['firstcreated']),
-                                                                                  source=item.get('original_source',
-                                                                                                  'EFE'))
+                        item.setdefault("dateline", {})
+                        item["dateline"]["located"] = located[0]
+                        item["dateline"]["source"] = item.get("original_source", "EFE")
+                        item["dateline"]["text"] = format_dateline_to_locmmmddsrc(
+                            item["dateline"]["located"],
+                            get_date(item["firstcreated"]),
+                            source=item.get("original_source", "EFE"),
+                        )
         except Exception as ex:
-            logging.exception('EFE dateline extraction exception {}'.format(ex))
+            logging.exception("EFE dateline extraction exception {}".format(ex))
         finally:
-            item.pop('place', None)
+            item.pop("place", None)
 
     def get_slugline(self, docdata):
         """
@@ -124,7 +128,7 @@ class EFEFeedParser(NITFFeedParser):
         subjects = []
         qcodes = []  # we check qcodes to avoid duplicates
         for elem in tree.findall('head/tobject/tobject.subject[@tobject.subject.ipr="IPTC"]'):
-            qcode = elem.get('tobject.subject.refnum')
+            qcode = elem.get("tobject.subject.refnum")
             if qcode in qcodes:
                 # we ignore duplicates
                 continue
@@ -132,8 +136,8 @@ class EFEFeedParser(NITFFeedParser):
                 qcodes.append(qcode)
 
             # if the subject_fields are not specified.
-            if not any(c['qcode'] == qcode for c in subjects) and subject_codes.get(qcode):
-                subjects.append({'name': subject_codes[qcode], 'qcode': qcode})
+            if not any(c["qcode"] == qcode for c in subjects) and subject_codes.get(qcode):
+                subjects.append({"name": subject_codes[qcode], "qcode": qcode})
         return subjects
 
 

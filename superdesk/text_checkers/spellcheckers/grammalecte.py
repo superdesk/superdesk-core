@@ -76,7 +76,7 @@ class Grammalecte(SpellcheckerBase):
 
     name = "grammalecte"
     capacities = (CAP_SPELLING, CAP_GRAMMAR)
-    languages = ['fr']
+    languages = ["fr"]
 
     def __init__(self, app):
         super().__init__(app)
@@ -151,39 +151,38 @@ class Grammalecte(SpellcheckerBase):
         :param dict json_data: json return by Grammalecte
         :return dict: json used by Superdesk
         """
-        corrections_data = json_data['data']
+        corrections_data = json_data["data"]
         err_list = []
-        check_data = {'errors': err_list}
+        check_data = {"errors": err_list}
 
         for corr_data in corrections_data:
-            paragraph_idx = corr_data.get('iParagraph', 1) - 1
+            paragraph_idx = corr_data.get("iParagraph", 1) - 1
             start_p_index = 0
             for idx in range(paragraph_idx):
-                start_p_index = text.index('\n', start_p_index + 1)
+                start_p_index = text.index("\n", start_p_index + 1)
             if paragraph_idx:
                 # we must add the line feed character
                 start_p_index += 1
 
             grammar_errors = corr_data.get("lGrammarErrors", [])
             spelling_errors = corr_data.get("lSpellingErrors", [])
-            for errors, error_type in ((grammar_errors, 'grammar'),
-                                       (spelling_errors, 'spelling')):
+            for errors, error_type in ((grammar_errors, "grammar"), (spelling_errors, "spelling")):
                 for error in errors:
-                    if error.get('sRuleId') in self._ignore_rules:
+                    if error.get("sRuleId") in self._ignore_rules:
                         continue
-                    start = start_p_index + error['nStart']
-                    end = start_p_index + error['nEnd']
+                    start = start_p_index + error["nStart"]
+                    end = start_p_index + error["nEnd"]
                     ercorr_data = {
-                        'startOffset': start,
-                        'text': text[start:end],
-                        'type': error_type,
+                        "startOffset": start,
+                        "text": text[start:end],
+                        "type": error_type,
                     }
 
-                    if 'aSuggestions' in error:
-                        ercorr_data['suggestions'] = [{'text': s} for s in error['aSuggestions']]
+                    if "aSuggestions" in error:
+                        ercorr_data["suggestions"] = [{"text": s} for s in error["aSuggestions"]]
 
                     try:
-                        ercorr_data['message'] = error['sMessage']
+                        ercorr_data["message"] = error["sMessage"]
                     except KeyError:
                         pass
 
@@ -193,29 +192,31 @@ class Grammalecte(SpellcheckerBase):
 
     def _check_cli(self, text):
         with tempfile.NamedTemporaryFile() as f:
-            f.write(text.encode('utf-8'))
+            f.write(text.encode("utf-8"))
             f.flush()
             extra_args = []
             if SPELLING_SUGGESTIONS:
-                extra_args.append('--with_spell_sugg')
+                extra_args.append("--with_spell_sugg")
             for opt, activate in self.grammalecte_config.items():
                 if activate:
-                    extra_args.extend(['-on', opt])
+                    extra_args.extend(["-on", opt])
                 else:
-                    extra_args.extend(['-off', opt])
-            cmp_proc = subprocess.run(['/usr/bin/env', 'python3', self._cli,
-                                       '--file', f.name, '--json'] + extra_args,
-                                      stdout=subprocess.PIPE,
-                                      stderr=subprocess.PIPE,
-                                      check=True)
+                    extra_args.extend(["-off", opt])
+            cmp_proc = subprocess.run(
+                ["/usr/bin/env", "python3", self._cli, "--file", f.name, "--json"] + extra_args,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                check=True,
+            )
 
-            out = cmp_proc.stdout.decode('utf-8')
+            out = cmp_proc.stdout.decode("utf-8")
             return self.grammalecte2superdesk(text, json.loads(out))
 
     def _check_server(self, text):
         check_url = urljoin(self.base_url, PATH_CHECK)
-        r = requests.post(check_url, data={"text": text,
-                                           "options": json.dumps(self.grammalecte_config)}, timeout=self.CHECK_TIMEOUT)
+        r = requests.post(
+            check_url, data={"text": text, "options": json.dumps(self.grammalecte_config)}, timeout=self.CHECK_TIMEOUT
+        )
         if r.status_code != 200:
             raise SuperdeskApiError.internalError("Unexpected return code from Grammalecte")
         return self.grammalecte2superdesk(text, r.json())
@@ -224,27 +225,28 @@ class Grammalecte(SpellcheckerBase):
         return self._check_cli(text) if self.use_cli else self._check_server(text)
 
     def _suggest_cli(self, text):
-        cmp_proc = subprocess.run(['/usr/bin/env', 'python3', self._cli,
-                                   '--suggest', text, '--json'],
-                                  stdout=subprocess.PIPE,
-                                  stderr=subprocess.PIPE,
-                                  check=True)
+        cmp_proc = subprocess.run(
+            ["/usr/bin/env", "python3", self._cli, "--suggest", text, "--json"],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            check=True,
+        )
 
-        out = cmp_proc.stdout.decode('utf-8')
-        suggestions = json.loads(out).get('aSuggestions', [])
-        return {'suggestions': self.list2suggestions(suggestions)}
+        out = cmp_proc.stdout.decode("utf-8")
+        suggestions = json.loads(out).get("aSuggestions", [])
+        return {"suggestions": self.list2suggestions(suggestions)}
 
     def _suggest_server(self, text):
         if self.version_tuple < (1, 2):
             logger.warning("Suggestions not available with this server version")
-            return {'suggestions': []}
+            return {"suggestions": []}
         check_url = urljoin(self.base_url, PATH_SUGGEST)
         r = requests.post(check_url, data={"token": text}, timeout=self.SUGGEST_TIMEOUT)
         if r.status_code != 200:
             raise SuperdeskApiError.internalError("Unexpected return code from Grammalecte")
 
-        suggestions = r.json().get('suggestions', [])
-        return {'suggestions': self.list2suggestions(suggestions)}
+        suggestions = r.json().get("suggestions", [])
+        return {"suggestions": self.list2suggestions(suggestions)}
 
     def suggest(self, text, language=None):
         return self._suggest_cli(text) if self.use_cli else self._suggest_server(text)
@@ -258,12 +260,11 @@ class Grammalecte(SpellcheckerBase):
             with tempfile.NamedTemporaryFile() as f:
                 # we use empty file to get version, else grammalecte-cli will wait for input
                 # (there is no --version option at the time of writing)
-                cmp_proc = subprocess.run([self._cli, '--file', f.name],
-                                          stdout=subprocess.PIPE,
-                                          stderr=subprocess.PIPE,
-                                          check=True)
+                cmp_proc = subprocess.run(
+                    [self._cli, "--file", f.name], stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=True
+                )
 
-                out = cmp_proc.stdout.decode('utf-8')
+                out = cmp_proc.stdout.decode("utf-8")
                 version = out.strip().split()[1][1:]
         except Exception as e:
             logger.warning("can't use Grammalecte: {e}".format(e=e))
@@ -279,23 +280,21 @@ class Grammalecte(SpellcheckerBase):
         try:
             r = requests.post(check_url, data={"text": ""}, timeout=self.CHECK_TIMEOUT)
         except Exception as e:
-            logger.warning(
-                "can't request Grammalecte URL ({check_url}): {e}".
-                format(check_url=check_url, e=e))
+            logger.warning("can't request Grammalecte URL ({check_url}): {e}".format(check_url=check_url, e=e))
             return False
         if r.status_code != 200:
             logger.warning(
-                "Grammalecte URL ({check_url}) is not returning the expected status"
-                .format(check_url=check_url))
+                "Grammalecte URL ({check_url}) is not returning the expected status".format(check_url=check_url)
+            )
             return False
 
         data = r.json()
-        if data['program'] != 'grammalecte-fr':
-            logger.warning("unexpected program: {program}".format(program=data['program']))
+        if data["program"] != "grammalecte-fr":
+            logger.warning("unexpected program: {program}".format(program=data["program"]))
             return False
-        version = data['version']
+        version = data["version"]
         logger.info("Grammalecte v{version} detected (server)".format(version=version))
-        self.version_tuple = tuple(int(n) for n in version.split('.'))
+        self.version_tuple = tuple(int(n) for n in version.split("."))
         if self.version_tuple < (1, 2):
             logger.warning("Suggestions are only available with server version >= 1.2")
         self.version = version

@@ -9,14 +9,19 @@
 # at https://www.sourcefabric.org/superdesk/license
 from apps.content_filters.filter_condition.filter_condition_field import FilterConditionField
 from apps.content_filters.filter_condition.filter_condition_value import FilterConditionValue
-from apps.content_filters.filter_condition.filter_condition_operator import \
-    FilterConditionOperator, NotInOperator, NotLikeOperator, MatchOperator, \
-    FilterConditionOperatorsEnum, ComparisonOperator, ExistsOperator
+from apps.content_filters.filter_condition.filter_condition_operator import (
+    FilterConditionOperator,
+    NotInOperator,
+    NotLikeOperator,
+    MatchOperator,
+    FilterConditionOperatorsEnum,
+    ComparisonOperator,
+    ExistsOperator,
+)
 import json
 
 
 class FilterCondition:
-
     def __init__(self, field, operator, value):
         self.field = FilterConditionField.factory(field)
         self.operator = FilterConditionOperator.factory(operator)
@@ -24,9 +29,7 @@ class FilterCondition:
 
     @staticmethod
     def parse(filter_condition):
-        return FilterCondition(filter_condition['field'],
-                               filter_condition['operator'],
-                               filter_condition['value'])
+        return FilterCondition(filter_condition["field"], filter_condition["operator"], filter_condition["value"])
 
     def get_mongo_query(self):
         try:
@@ -54,11 +57,15 @@ class FilterCondition:
     def does_match(self, article):
 
         if not self.field.is_in_article(article) and type(self.operator) is not ExistsOperator:
-            return type(self.operator) is NotInOperator or \
-                type(self.operator) is NotLikeOperator or \
-                self.operator.operator is FilterConditionOperatorsEnum.ne or \
-                (self.operator.operator is FilterConditionOperatorsEnum.eq and
-                 self.value.value.lower() in ("no", "false", "f", "0"))
+            return (
+                type(self.operator) is NotInOperator
+                or type(self.operator) is NotLikeOperator
+                or self.operator.operator is FilterConditionOperatorsEnum.ne
+                or (
+                    self.operator.operator is FilterConditionOperatorsEnum.eq
+                    and self.value.value.lower() in ("no", "false", "f", "0")
+                )
+            )
 
         article_value = self.field.get_value(article)
         filter_value = self.value.get_value(self.field, self.operator)

@@ -18,28 +18,28 @@ logger = logging.getLogger(__name__)
 
 
 def update_items(vocabularies, fields, service):
-    ids = list(item.get('_id') for item in service.get_from_mongo(req=None, lookup=None))
+    ids = list(item.get("_id") for item in service.get_from_mongo(req=None, lookup=None))
     count = 0
-    print(service, ' items to be checked: ', len(ids))
+    print(service, " items to be checked: ", len(ids))
     for _id in ids:
         item = service.find_one(_id=_id, req=None)
         updates = update_item(item, vocabularies, fields)
         if updates:
-            print(service, ' update: ', updates, ' for item with id:', _id)
-            service.system_update(item['_id'], updates, item)
+            print(service, " update: ", updates, " for item with id:", _id)
+            service.system_update(item["_id"], updates, item)
             count = count + 1
-    print(service, ' updated: ', count, '/', len(ids))
+    print(service, " updated: ", count, "/", len(ids))
 
 
 def get_vocabularies(vocabularies_list):
-    vocabularies = {vocabulary['_id']: vocabulary for vocabulary in vocabularies_list}
+    vocabularies = {vocabulary["_id"]: vocabulary for vocabulary in vocabularies_list}
     for vocabulary in vocabularies.values():
-        for item in vocabulary.get('items', []):
-            if 'is_active' in item:
-                del item['is_active']
-            item['scheme'] = vocabulary['_id']
-        unique_name = vocabulary.get('unique_field', 'qcode')
-        vocabulary['values'] = {item[unique_name]: item for item in vocabulary.get('items', [])}
+        for item in vocabulary.get("items", []):
+            if "is_active" in item:
+                del item["is_active"]
+            item["scheme"] = vocabulary["_id"]
+        unique_name = vocabulary.get("unique_field", "qcode")
+        vocabulary["values"] = {item[unique_name]: item for item in vocabulary.get("items", [])}
     return vocabularies
 
 
@@ -48,15 +48,15 @@ def is_changed(old, new):
         return True
 
     for value in old:
-        if value == 'translations':
+        if value == "translations":
             continue
         if value not in new or old[value] != new[value]:
             return True
-    if old.get('name', None) != new.get('name', None):
+    if old.get("name", None) != new.get("name", None):
         return True
 
-    old_translations = old.get('translations', {})
-    new_translations = new.get('translations', {})
+    old_translations = old.get("translations", {})
+    new_translations = new.get("translations", {})
 
     if len(old_translations) != len(new_translations):
         return True
@@ -78,10 +78,10 @@ def update_item(item, vocabularies, fields):
     updates = {}
     for field in fields:
         for value in item.get(field, []):
-            scheme = value.get('scheme', None)
-            qcode = value.get('qcode', None)
+            scheme = value.get("scheme", None)
+            qcode = value.get("qcode", None)
             if qcode and scheme and scheme in vocabularies:
-                new_value = vocabularies[scheme].get('values', {}).get(qcode, None)
+                new_value = vocabularies[scheme].get("values", {}).get(qcode, None)
                 if not new_value:
                     continue
                 if is_changed(value, new_value):
@@ -106,13 +106,13 @@ class UpdateVocabulariesInItemsCommand(superdesk.Command):
     option_list = ()
 
     def run(self):
-        fields = ['subject', 'genre', 'place', 'anpa_category']
-        lookup = {'type': 'manageable', 'service': {'$exists': True}}
-        vocabularies_list = get_resource_service('vocabularies').get(req=None, lookup=lookup)
+        fields = ["subject", "genre", "place", "anpa_category"]
+        lookup = {"type": "manageable", "service": {"$exists": True}}
+        vocabularies_list = get_resource_service("vocabularies").get(req=None, lookup=lookup)
         vocabularies = get_vocabularies(vocabularies_list)
 
-        update_items(vocabularies, fields, get_resource_service('archive'))
-        update_items(vocabularies, fields, get_resource_service('published'))
+        update_items(vocabularies, fields, get_resource_service("archive"))
+        update_items(vocabularies, fields, get_resource_service("published"))
 
 
-superdesk.command('vocabularies:update_archive', UpdateVocabulariesInItemsCommand())
+superdesk.command("vocabularies:update_archive", UpdateVocabulariesInItemsCommand())

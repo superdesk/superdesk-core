@@ -17,25 +17,11 @@ logger = logging.getLogger(__name__)
 
 class LanguagesResource(Resource):
     schema = {
-        'language': {
-            'type': 'string',
-            'required': True,
-            'unique': True
-        },
-        'label': {
-            'type': 'string',
-            'required': True,
-            'unique': True
-        },
-        'source': {
-            'type': 'boolean',
-            'default': False
-        },
-        'destination': {
-            'type': 'boolean',
-            'default': False
-        }
+        "language": {"type": "string", "required": True, "unique": True},
+        "label": {"type": "string", "required": True, "unique": True},
+        "source": {"type": "boolean", "default": False},
+        "destination": {"type": "boolean", "default": False},
     }
 
-    resource_methods = ['GET']
+    resource_methods = ["GET"]
     item_methods = []

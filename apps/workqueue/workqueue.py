@@ -14,10 +14,10 @@ from superdesk.metadata.item import get_schema
 
 
 class WorkqueueResource(superdesk.Resource):
-    endpoint_name = 'workqueue'
-    datasource = {'source': 'archive'}
+    endpoint_name = "workqueue"
+    datasource = {"source": "archive"}
     schema = get_schema()
-    item_methods = ['GET']
+    item_methods = ["GET"]
 
 
 class WorkqueueService(superdesk.Service):

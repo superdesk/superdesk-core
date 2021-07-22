@@ -20,20 +20,22 @@ SEARCH_TEXT = """
 
 
 class VidibleTestCase(unittest.TestCase):
-
     def test_get_vidible_metadata(self):
-        pid = '56bb474de4b0568f54a23ed7'
-        vid = '56bb4688e4b0b6448ed479dd'
-        bcid = '538612f0e4b00fbb8e898655'
-        with requests_mock.mock() as mock:
-            mock.get('http://delivery.vidible.tv/jsonp/pid={pid}/{bcid}.js'.format(pid=pid, bcid=bcid),
-                     text=VIDIBLE_TEXT)
-            mock.get('http://api.vidible.tv/search?bcid={bcid}&query={video_id}'.format(video_id=vid, bcid=bcid),
-                     text=SEARCH_TEXT)
+        pid = "56bb474de4b0568f54a23ed7"
+        vid = "56bb4688e4b0b6448ed479dd"
+        bcid = "538612f0e4b00fbb8e898655"
+        with requests_mock.Mocker() as mock:
+            mock.get(
+                "http://delivery.vidible.tv/jsonp/pid={pid}/{bcid}.js".format(pid=pid, bcid=bcid), text=VIDIBLE_TEXT
+            )
+            mock.get(
+                "http://api.vidible.tv/search?bcid={bcid}&query={video_id}".format(video_id=vid, bcid=bcid),
+                text=SEARCH_TEXT,
+            )
             meta = get_vidible_metadata(bcid=bcid, pid=pid)
-        assert(type(meta) is dict)
-        assert(type(meta['height']) is int)
-        assert(type(meta['width']) is int)
-        assert(meta['mimeType'])
-        assert(meta['url'])
-        assert(meta['thumbnail'])
+        assert type(meta) is dict
+        assert type(meta["height"]) is int
+        assert type(meta["width"]) is int
+        assert meta["mimeType"]
+        assert meta["url"]
+        assert meta["thumbnail"]

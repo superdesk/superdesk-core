@@ -1,4 +1,3 @@
-
 import re
 import bson
 
@@ -8,7 +7,7 @@ from .user_mentions import notify_mentioned_users
 
 
 # client is using @[display name](type:id)
-USER_MENTIONS_REGEX = re.compile(r'@\[([^]]+)\]\(user:([a-f0-9]{24})\)')
+USER_MENTIONS_REGEX = re.compile(r"@\[([^]]+)\]\(user:([a-f0-9]{24})\)")
 
 
 def handle_inline_mentions(sender, updates, original):
@@ -17,39 +16,44 @@ def handle_inline_mentions(sender, updates, original):
     updated.update(updates)
     comments = _get_inline_comments(updates)
     for comment in comments:
-        if not comment.get('notified'):
+        if not comment.get("notified"):
             users = _get_mentioned_users(comment)
             if users:
-                notify_mentioned_users([{
-                    '_id': '',
-                    'item': original.get('_id'),
-                    'text': _format_comment_text(comment),
-                    'mentioned_users': {user: bson.ObjectId(user) for user in users},
-                }], app.config.get('CLIENT_URL', '').rstrip('/'), item=updated)
-            comment['notified'] = True
+                notify_mentioned_users(
+                    [
+                        {
+                            "_id": "",
+                            "item": original.get("_id"),
+                            "text": _format_comment_text(comment),
+                            "mentioned_users": {user: bson.ObjectId(user) for user in users},
+                        }
+                    ],
+                    app.config.get("CLIENT_URL", "").rstrip("/"),
+                    item=updated,
+                )
+            comment["notified"] = True
 
 
 def _get_mentioned_users(comment):
-    return [group[1] for group in USER_MENTIONS_REGEX.findall(comment.get('msg', ''))]
+    return [group[1] for group in USER_MENTIONS_REGEX.findall(comment.get("msg", ""))]
 
 
 def _format_comment_text(comment):
     def repl(match):
         return match.group(1)
-    return USER_MENTIONS_REGEX.sub(repl, comment.get('msg', ''))
+
+    return USER_MENTIONS_REGEX.sub(repl, comment.get("msg", ""))
 
 
 def _get_inline_comments(updates):
     try:
         comments = []
-        data = (updates['fields_meta']
-                       ['body_html']
-                       ['draftjsState'][0]
-                       ['blocks'][0]
-                       ['data'].get('__PUBLIC_API__comments', []))
+        data = updates["fields_meta"]["body_html"]["draftjsState"][0]["blocks"][0]["data"].get(
+            "__PUBLIC_API__comments", []
+        )
         for val in data:
             comments.append(val)
-            for reply in val.get('replies', []):
+            for reply in val.get("replies", []):
                 comments.append(reply)
         return comments
     except (KeyError, IndexError):

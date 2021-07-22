@@ -69,15 +69,16 @@ class FeedParser(metaclass=ABCMeta):
         :type text: str
         """
 
-        item.setdefault('dateline', {})
+        item.setdefault("dateline", {})
 
         if city:
             cities = app.locators.find_cities()
-            located = [c for c in cities if c['city'] == city]
-            item['dateline']['located'] = located[0] if len(located) > 0 else {'city_code': city, 'city': city,
-                                                                               'tz': 'UTC', 'dateline': 'city'}
+            located = [c for c in cities if c["city"] == city]
+            item["dateline"]["located"] = (
+                located[0] if len(located) > 0 else {"city_code": city, "city": city, "tz": "UTC", "dateline": "city"}
+            )
         if text:
-            item['dateline']['text'] = text
+            item["dateline"]["text"] = text
 
     def map_priority(self, source_priority):
         """
@@ -108,30 +109,32 @@ class XMLFeedParser(FeedParser, metaclass=ABCMeta):
 
     def _parse_mapping(self, value):
         if isinstance(value, dict):
-            if 'default_attr' in value:
-                if 'default' in value:
-                    logger.error("default and default_attr can't be used at the same time,"
-                                 "only default will be used ({})".format(self.__class__))
-                if 'xpath':
-                    if '/' not in 'xpath':
-                        logger.info("default_attr can be used for simple child element ({})".format(self.__class__))
+            if "default_attr" in value:
+                if "default" in value:
+                    logger.error(
+                        "default and default_attr can't be used at the same time,"
+                        "only default will be used ({})".format(self.__class__)
+                    )
+                if "xpath":
+                    if "/" not in "xpath":
+                        logger.debug("default_attr can be used for simple child element ({})".format(self.__class__))
                 else:
                     logger.error("xpath is needed when default_attr is used ({})".format(self.__class__))
-            if 'callback' in value and 'list' in value:
-                del value['list']
+            if "callback" in value and "list" in value:
+                del value["list"]
                 logger.error("list can't ve used with callback ({})".format(self.__class__))
             return value
         elif isinstance(value, str):
             if not value:
                 return {}
-            return {'xpath': value}
+            return {"xpath": value}
         elif callable(value):
             # if callable has 2 arguments, it's a callback_with_item
             params = inspect.signature(value).parameters
             if len(params) == 2:
-                return {'callback_with_item': value}
+                return {"callback_with_item": value}
             elif len(params) == 1:
-                return {'callback': value}
+                return {"callback": value}
             else:
                 logger.error("Invalid signature for parser callback, ignoring")
                 return {}
@@ -193,7 +196,7 @@ class XMLFeedParser(FeedParser, metaclass=ABCMeta):
         for source_mapping in (self.default_mapping, class_mapping, settings_mapping):
             for key, value in source_mapping.items():
                 key_mapping = self._parse_mapping(value)
-                if key_mapping.get('update', False) and key in mapping:
+                if key_mapping.get("update", False) and key in mapping:
                     mapping[key].update(key_mapping)
                 else:
                     mapping[key] = key_mapping
@@ -221,24 +224,24 @@ class XMLFeedParser(FeedParser, metaclass=ABCMeta):
                 # key is ignored
                 continue
             try:
-                xpath = mapping['xpath']
+                xpath = mapping["xpath"]
             except KeyError:
                 # no xpath, we must have a callable
-                if 'callback_with_item' in mapping:
+                if "callback_with_item" in mapping:
                     # callback_with_item store values themselves, so we continue after calling it
-                    mapping['callback_with_item'](item_xml, item)
+                    mapping["callback_with_item"](item_xml, item)
                     continue
-                if 'callback' not in mapping:
+                if "callback" not in mapping:
                     logging.warn("invalid mapping for key {}, ignoring it".format(key))
                     continue
                 try:
-                    values = [mapping['callback'](item_xml)]
+                    values = [mapping["callback"](item_xml)]
                 except SkipValue:
                     continue
                 list_ = False
             else:
                 values = item_xml.xpath(xpath, namespaces=namespaces)
-                list_ = mapping.get('list', False)
+                list_ = mapping.get("list", False)
                 if not list_:
                     if isinstance(values, list):
                         values = values[:1]
@@ -249,13 +252,13 @@ class XMLFeedParser(FeedParser, metaclass=ABCMeta):
                 if not values:
                     # nothing found, we check default
                     try:
-                        values = [mapping['default']]
+                        values = [mapping["default"]]
                     except KeyError:
-                        if 'default_attr' in mapping:
-                            parent = item_xml.xpath(xpath[:xpath.rfind('/')], namespaces=namespaces)
+                        if "default_attr" in mapping:
+                            parent = item_xml.xpath(xpath[: xpath.rfind("/")], namespaces=namespaces)
                             if parent:
                                 # default_attr is only used when there is a parent element
-                                values = [mapping['default_attr']]
+                                values = [mapping["default_attr"]]
                             else:
                                 continue
                         else:
@@ -268,15 +271,15 @@ class XMLFeedParser(FeedParser, metaclass=ABCMeta):
                             # do we want a filter or the content?
                             try:
                                 # filter
-                                filter_cb = mapping['filter']
+                                filter_cb = mapping["filter"]
                             except KeyError:
                                 # content
-                                values[idx] = ''.join(current_value.itertext())
+                                values[idx] = "".join(current_value.itertext())
                             else:
                                 values[idx] = filter_cb(current_value)
                         else:
-                            if 'filter' in mapping:
-                                values[idx] = mapping['filter'](current_value)
+                            if "filter" in mapping:
+                                values[idx] = mapping["filter"](current_value)
 
                     if None in values:
                         # filter can return None to skip a value
@@ -285,8 +288,8 @@ class XMLFeedParser(FeedParser, metaclass=ABCMeta):
                             continue
 
             value = values if list_ else values[0]
-            if 'key_hook' in mapping:
-                mapping['key_hook'](item, value)
+            if "key_hook" in mapping:
+                mapping["key_hook"](item, value)
             else:
                 item[key] = value
 
@@ -305,9 +308,9 @@ class XMLFeedParser(FeedParser, metaclass=ABCMeta):
         """
 
         if ns is None:
-            ns = self.root.tag.rsplit('}')[0].lstrip('{')
-        elif ns is not None and ns == 'xml':
-            ns = 'http://www.w3.org/XML/1998/namespace'
+            ns = self.root.tag.rsplit("}")[0].lstrip("{")
+        elif ns is not None and ns == "xml":
+            ns = "http://www.w3.org/XML/1998/namespace"
 
         return str(sd_etree.QName(ns, tag))
 

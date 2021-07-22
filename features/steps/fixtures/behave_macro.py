@@ -11,14 +11,14 @@
 
 def update_fields(item, **kwargs):
     """Updates the abstract field"""
-    item['abstract'] = 'Abstract has been updated'
+    item["abstract"] = "Abstract has been updated"
     return item
 
 
-name = 'update_fields'
-label = 'Update Fields'
-shortcut = 'w'
+name = "update_fields"
+label = "Update Fields"
+shortcut = "w"
 callback = update_fields
-desks = ['POLITICS']
-access_type = 'frontend'
-action_type = 'direct'
+desks = ["POLITICS"]
+access_type = "frontend"
+action_type = "direct"

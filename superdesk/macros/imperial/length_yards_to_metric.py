@@ -10,8 +10,9 @@
 
 from . import unit_base
 from decimal import Decimal
+from flask_babel import lazy_gettext
 
-METERS_SYMBOL = 'metres'
+METERS_SYMBOL = "metres"
 
 
 def convert(yards, precision=0):
@@ -22,21 +23,21 @@ def convert(yards, precision=0):
     :return: Meters value in string
     """
     yard_to_meter_rate = Decimal(0.9144)
-    yards_list = yards.split('-')
+    yards_list = yards.split("-")
     metres = [unit_base.format_converted((Decimal(y) * yard_to_meter_rate), precision) for y in yards_list]
-    return '-'.join(metres), METERS_SYMBOL
+    return "-".join(metres), METERS_SYMBOL
 
 
 def yards_to_metric(item, **kwargs):
     """Converts distance values from yard to meters"""
 
-    regex = r'(\d+-?,?\.?\d*)((\s*)|(-))((yd)|([yY]ards?))\b'
+    regex = r"(\d+-?,?\.?\d*)((\s*)|(-))((yd)|([yY]ards?))\b"
     return unit_base.do_conversion(item, convert, unit_base.format_output, regex, match_index=0, value_index=1)
 
 
-name = 'yards_to_metric'
-label = 'Length yards to metres'
+name = "yards_to_metric"
+label = lazy_gettext("Length yards to metres")
 callback = yards_to_metric
-access_type = 'frontend'
-action_type = 'interactive'
-group = 'length'
+access_type = "frontend"
+action_type = "interactive"
+group = lazy_gettext("length")

@@ -13,13 +13,13 @@ from .resource import ApiAuditResource
 from .service import ApiAuditService
 
 
-def init_app(app):
+def init_app(app) -> None:
     """
     Initialise the auditing of the API
     :param app:
     :return:
     """
-    endpoint_name = 'api_audit'
+    endpoint_name = "api_audit"
 
     service = ApiAuditService(endpoint_name, backend=superdesk.get_backend())
     ApiAuditResource(endpoint_name, app=app, service=service)

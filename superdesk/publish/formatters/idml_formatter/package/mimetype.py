@@ -2,7 +2,7 @@ from .base import BasePackageElement
 
 
 class Mimetype(BasePackageElement):
-    MIMETYPE = 'application/vnd.adobe.indesign-idml-package'
+    MIMETYPE = "application/vnd.adobe.indesign-idml-package"
 
     @property
     def filename(self):
@@ -11,7 +11,7 @@ class Mimetype(BasePackageElement):
         Used as a filename for a file inside zip container.
         :return str: filename
         """
-        return 'mimetype'
+        return "mimetype"
 
     def _build_etree(self):
         pass

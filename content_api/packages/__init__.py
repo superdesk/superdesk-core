@@ -13,12 +13,12 @@ from .service import PackagesService
 from .resource import PackagesResource
 
 
-def init_app(app):
+def init_app(app) -> None:
     """Initialize the `packages` API endpoint.
 
     :param app: the API application object
     :type app: `Eve`
     """
-    endpoint_name = 'packages'
+    endpoint_name = "packages"
     service = PackagesService(endpoint_name, backend=superdesk.get_backend())
     PackagesResource(endpoint_name, app=app, service=service)
