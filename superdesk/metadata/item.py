@@ -662,6 +662,7 @@ metadata_schema = {
     "embargoed": {"type": "datetime"},
     "embargoed_text": {"type": "string", "mapping": not_indexed},
     "marked_for_user": Resource.rel("users", required=False, nullable=True),
+    "marked_for_sign_off": {"type": "string", "nullable": True},
     "broadcast": {
         "type": "dict",
         "schema": {
