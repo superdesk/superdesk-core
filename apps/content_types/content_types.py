@@ -230,7 +230,7 @@ class ContentTypesService(superdesk.Service):
             return re.compile("[^0-9a-zA-Z_]").sub("", item.get("label", str(_id)))
         except bson.errors.InvalidId:
             return profile
-    
+
     def get_schema(self, item):
         profile_id = item.get("profile") or item.get("type")
         profile = self.find_one(req=None, _id=profile_id)
