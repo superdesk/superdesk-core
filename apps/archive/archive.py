@@ -401,6 +401,14 @@ class ArchiveService(BaseService):
 
         push_content_notification(docs)
 
+    def set_marked_for_sign_off(self, updates):
+        if "marked_for_user" in updates:
+            sign_off = None
+            if updates["marked_for_user"]:
+                user_doc = get_resource_service("users").find_one(req=None, _id=updates["marked_for_user"])
+                sign_off = user_doc.get("sign_off")
+            updates["marked_for_sign_off"] = sign_off
+
     def on_update(self, updates, original):
         """Runs on archive update.
 
@@ -415,6 +423,9 @@ class ArchiveService(BaseService):
         editor_utils.generate_fields(updates)
         if ITEM_TYPE in updates:
             del updates[ITEM_TYPE]
+
+        # set marked for sign off key if mark for user is exists in updates
+        self.set_marked_for_sign_off(updates)
 
         self._validate_updates(original, updates, user)
 
@@ -636,7 +647,7 @@ class ArchiveService(BaseService):
         """
         new_doc = original_doc.copy()
 
-        self.remove_after_copy(new_doc, extra_fields, delete_keys=["marked_for_user"])
+        self.remove_after_copy(new_doc, extra_fields, delete_keys=["marked_for_user", "marked_for_sign_off"])
         on_duplicate_item(new_doc, original_doc, operation)
         resolve_document_version(new_doc, SOURCE, "PATCH", new_doc)
 

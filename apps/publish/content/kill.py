@@ -205,7 +205,7 @@ class KillPublishService(BasePublishService):
         if not item_id:
             return
 
-        updates = {"marked_for_user": None}
+        updates = {"marked_for_user": None, "marked_for_sign_off": None}
         published_service = get_resource_service(PUBLISHED)
 
         published_items = list(published_service.get_from_mongo(req=None, lookup={"item_id": item_id}))
