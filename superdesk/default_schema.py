@@ -115,6 +115,7 @@ DEFAULT_SCHEMA = dict(DefaultSchema)
 DEFAULT_MEDIA_SCHEMA = deepcopy(DEFAULT_SCHEMA)
 DEFAULT_MEDIA_SCHEMA.pop("body_html")
 DEFAULT_MEDIA_SCHEMA.pop("body_footer")
+DEFAULT_MEDIA_SCHEMA["headline"]["required"] = False
 
 
 DEFAULT_EDITOR = {

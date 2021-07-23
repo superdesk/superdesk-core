@@ -328,6 +328,7 @@ class NINJSFormatter(Formatter):
         extra_items = {}
         media = {}
         archive_service = superdesk.get_resource_service("archive")
+        schema = superdesk.get_resource_service("content_types").get_schema(article) or {}
 
         article_associations = OrderedDict(
             sorted(article.get(ASSOCIATIONS, {}).items(), key=lambda itm: (itm[1] or {}).get("order", 1))
@@ -355,12 +356,12 @@ class NINJSFormatter(Formatter):
                     # item id seems to be build from a custom id
                     # we now check content profile to see if it correspond to a custom field
                     field_id = match.group("field_id")
-                    schema = superdesk.get_resource_service("content_types").get_schema(article)
-                    if schema and schema.get("type") == "media" or schema.get("type") == "related_content":
+                    field_schema = schema.get(field_id)
+                    if field_schema and field_schema.get("type") in ("media", "related_content"):
                         # we want custom media fields in "extra_items", cf. SDESK-2955
                         version = match.group("version")
                         media.setdefault(field_id, []).append((version, item))
-                        extra_items[field_id] = {"type": schema.get("type")}
+                        extra_items[field_id] = {"type": field_schema.get("type")}
 
         if media:
             # we have custom media fields, we now order them
