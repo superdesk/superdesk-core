@@ -96,6 +96,7 @@ from .usage import track_usage, update_refs
 from superdesk.utc import utcnow
 from superdesk.vocabularies import is_related_content
 from flask_babel import _
+from werkzeug.datastructures import ImmutableMultiDict
 
 EDITOR_KEY_PREFIX = "editor_"
 logger = logging.getLogger(__name__)
@@ -549,11 +550,29 @@ class ArchiveService(BaseService):
     def replace(self, id, document, original):
         return self.restore_version(id, document, original) or super().replace(id, document, original)
 
-    def get(self, req, lookup):
+    def _get_highlight_query(self, req):
+        """Get and set highlight query
 
-        # get highlighted text
-        if req and req.args and req.args.get("es_highlight") == 1:
-            return get_resource_service("search").get(req, lookup)
+        :param req parsed request
+        """
+        args = getattr(req, "args", {})
+        source = json.loads(args.get("source")) if args.get("source") else {"query": {"filtered": {}}}
+        query_string = source.get("query", {}).get("filtered", {}).get("query", {}).get("query_string")
+        if query_string:
+            query_string.setdefault("analyze_wildcard", app.config["ELASTIC_QUERY_STRING_ANALYZE_WILDCARD"])
+            highlight_query = get_elastic_highlight_query(query_string)
+            if highlight_query:
+                source["highlight"] = highlight_query
+
+            # update req args
+            req.args = req.args.to_dict()
+            req.args["source"] = json.dumps(source)
+            req.args = ImmutableMultiDict(req.args)
+
+        return req
+
+    def get(self, req, lookup):
+        req = self._get_highlight_query(req)
 
         if req is None and lookup is not None and "$or" in lookup:
             # embedded resource generates mongo query which doesn't work with elastic
