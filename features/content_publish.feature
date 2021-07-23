@@ -2334,7 +2334,7 @@ Feature: Content Publishing
       And we publish "#archive._id#" with "publish" type and "published" state
       Then we get error 400
       """
-      {"_issues": {"validator exception": "[[\"MEDIA'S HEADLINE is a required field\"]]"}, "_status": "ERR"}
+      {"_issues": {"validator exception": "['Associated item s234 234: HEADLINE is a required field']"}, "_status": "ERR"}
       """
 
     @auth

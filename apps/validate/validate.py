@@ -360,25 +360,34 @@ class ValidateService(superdesk.Service):
         """
         item_type = doc["validate"].get("type") or doc.get("type")
         profile_id = doc["validate"].get("profile") or item_type
+
+        # use content profile if exists
         if profile_id and (app.config["AUTO_PUBLISH_CONTENT_PROFILE"] or doc["act"] != "auto_publish"):
             content_type = superdesk.get_resource_service("content_types").find_one(req=None, _id=profile_id)
             if content_type:
                 return self._get_profile_schema(content_type.get("schema", {}), doc)
-            logger.warning("missing profile %s", profile_id)
+
+        # use custom schema like profile schema
+        custom_schema = app.config.get("SCHEMA", {}).get(doc[ITEM_TYPE])
+        if custom_schema:
+            return self._get_profile_schema(custom_schema, doc)
+
+        # no profile or schema, use validators
         lookup = {"act": doc["act"], "type": doc[ITEM_TYPE]}
         if doc.get("embedded"):
             lookup["embedded"] = doc["embedded"]
         else:
             lookup["$or"] = [{"embedded": {"$exists": False}}, {"embedded": False}]
-        custom_schema = app.config.get("SCHEMA", {}).get(doc[ITEM_TYPE])
-        if custom_schema:  # handle custom schema like profile schema
-            return self._get_profile_schema(custom_schema, doc)
         validators = list(superdesk.get_resource_service("validators").get(req=None, lookup=lookup))
         if validators:
             return validators
+
+        # last resort - default schema
         default_schema = DEFAULT_SCHEMA_MAP.get(item_type)
         if default_schema:
             return self._get_profile_schema(default_schema, doc)
+
+        # no rules for validation
         return []
 
     def _populate_extra(self, doc, schema):
