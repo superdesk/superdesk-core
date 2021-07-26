@@ -1,5 +1,11 @@
 # Superdesk Server Changelog
 
+## [1.33.15] 2021-07-26
+
+### Fixed
+
+- Fix picture rendition ingestion.
+
 ## [1.33.14] 2021-04-14
 
 ### Fixed
