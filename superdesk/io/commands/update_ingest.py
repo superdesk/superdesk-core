@@ -550,7 +550,14 @@ def ingest_items(items, provider, feeding_service, rule_set=None, routing_scheme
 def ingest_item(item, provider, feeding_service, rule_set=None, routing_scheme=None):
     items_ids = []
     try:
-        ingest_collection = feeding_service.service if hasattr(feeding_service, "service") else "ingest"
+        if hasattr(feeding_service, "service"):
+            ingest_collection = feeding_service.service
+
+        # If the type of item is event, set the collection to events
+        elif item.get("type") and item.get("type") == "event":
+            ingest_collection = "events"
+        else:
+            ingest_collection = "ingest"
         ingest_service = superdesk.get_resource_service(ingest_collection)
 
         # determine if we already have this item
