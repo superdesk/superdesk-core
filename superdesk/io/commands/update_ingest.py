@@ -484,9 +484,8 @@ def ingest_cancel(item, feeding_service):
     :param item:
     :return:
     """
-    ingest_service = superdesk.get_resource_service(
-        feeding_service.service if hasattr(feeding_service, "service") else "ingest"
-    )
+    ingest_collection = get_ingest_collection(feeding_service, item)
+    ingest_service = superdesk.get_resource_service(ingest_collection)
     lookup = {"uri": item.get("uri")}
     family_members = ingest_service.get_from_mongo(req=None, lookup=lookup)
     for relative in family_members:
@@ -538,7 +537,7 @@ def ingest_items(items, provider, feeding_service, rule_set=None, routing_scheme
         else:
             failed_items.add(item[GUID_FIELD])
     # sync mongo with ingest after all changes
-    ingest_collection = feeding_service.service if hasattr(feeding_service, "service") else "ingest"
+    ingest_collection = get_ingest_collection(feeding_service, item)
     ingest_service = superdesk.get_resource_service(ingest_collection)
     updated_items = ingest_service.find({"_id": {"$in": created_ids}}, max_results=len(created_ids))
     app.data._search_backend(ingest_collection).bulk_insert(ingest_collection, list(updated_items))
@@ -550,14 +549,7 @@ def ingest_items(items, provider, feeding_service, rule_set=None, routing_scheme
 def ingest_item(item, provider, feeding_service, rule_set=None, routing_scheme=None):
     items_ids = []
     try:
-        if hasattr(feeding_service, "service"):
-            ingest_collection = feeding_service.service
-
-        # If the type of item is event, set the collection to events
-        elif item.get("type") and item.get("type") == "event":
-            ingest_collection = "events"
-        else:
-            ingest_collection = "ingest"
+        ingest_collection = get_ingest_collection(feeding_service, item)
         ingest_service = superdesk.get_resource_service(ingest_collection)
 
         # determine if we already have this item
@@ -698,6 +690,19 @@ def is_new_version(item, old_item):
         if not old_item.get(field) or item[field] != old_item[field]:
             return True
     return False
+
+
+def get_ingest_collection(feeding_service, item):
+    if hasattr(feeding_service, "service"):
+        ingest_collection = feeding_service.service
+
+    # If the type of item is event, set the collection to events
+    elif item.get("type") and item.get("type") == "event":
+        ingest_collection = "events"
+    else:
+        ingest_collection = "ingest"
+
+    return ingest_collection
 
 
 superdesk.command("ingest:update", UpdateIngest())
