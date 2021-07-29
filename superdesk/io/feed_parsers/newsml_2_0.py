@@ -119,7 +119,12 @@ class NewsMLTwoFeedParser(XMLFeedParser):
     def parse_item_meta(self, tree, item):
         """Parse itemMeta tag"""
         meta = tree.find(self.qname("itemMeta"))
-        item[ITEM_TYPE] = meta.find(self.qname("itemClass")).attrib["qcode"].split(":")[1]
+
+        item_type_qcode = meta.find(self.qname("itemClass")).attrib["qcode"]
+        if ":" in item_type_qcode:
+            item[ITEM_TYPE] = item_type_qcode.split(":")[1].lower()
+        else:
+            item[ITEM_TYPE] = item_type_qcode.lower()
 
         versioncreated_elt = meta.find(self.qname("versionCreated"))
         if versioncreated_elt is not None and versioncreated_elt.text:
