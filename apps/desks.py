@@ -32,7 +32,8 @@ from flask_babel import _, lazy_gettext
 
 
 logger = logging.getLogger(__name__)
-SIZE_MAX = 2_147_483_647
+
+SIZE_MAX = 1000  # something reasonable for the ui
 
 
 class DeskTypes(SuperdeskBaseEnum):
@@ -570,8 +571,8 @@ class OverviewService(BaseService):
         elif agg_type == "assignments":
             collection = "assignments"
             desk_field = "assigned_to.desk"
-            key = "state"
-            field = f"assigned_to.{key}"
+            key = "desk"
+            field = "assigned_to.desk"
         else:
             raise ValueError(f"Invalid overview aggregation type: {agg_type}")
 
@@ -606,6 +607,9 @@ class OverviewService(BaseService):
         #                        -composite-aggregation.html)
         agg_query["aggs"] = {"overview": {"terms": {"field": field, "size": SIZE_MAX}}}
 
+        if agg_type == "assignments":
+            agg_query["aggs"]["overview"]["aggs"] = {"sub": {"terms": {"field": "assigned_to.state", "size": SIZE_MAX}}}
+
         filters = doc.get("filters")
         if filters:
             should = []
@@ -614,17 +618,23 @@ class OverviewService(BaseService):
                 for text in f_data:
                     should.append({"match": {f_name: text}})
 
-            # with filters we need whole documents, we get them with top_hits
+        with_docs = request and request.args.get("with_docs") == "1"
+        if with_docs:
             agg_query["aggs"]["overview"]["aggs"] = {"top_docs": {"top_hits": {"size": 100}}}
 
         with timer(timer_label):
             response = app.data.elastic.search(agg_query, collection, params={"size": 0})
 
         doc["_items"] = [
-            {"count": b["doc_count"], key: b["key"]} for b in response.hits["aggregations"]["overview"]["buckets"]
+            {
+                "count": b["doc_count"],
+                key: b["key"],
+                "sub": format_buckets(b.get("sub")),
+            }
+            for b in response.hits["aggregations"]["overview"]["buckets"]
         ]
 
-        if filters:
+        if with_docs:
             for idx, bucket in enumerate(response.hits["aggregations"]["overview"]["buckets"]):
                 docs = doc["_items"][idx]["docs"] = []
                 for hit_doc in bucket["top_docs"]["hits"]["hits"]:
@@ -755,3 +765,15 @@ def remove_profile_from_desks(item):
         if desk.get("default_content_profile") == str(item.get(config.ID_FIELD)):
             desk["default_content_profile"] = None
             superdesk.get_resource_service("desks").patch(desk[config.ID_FIELD], desk)
+
+
+def format_buckets(aggs):
+    if not aggs:
+        return aggs
+    return [
+        {
+            "key": b["key"],
+            "count": b["doc_count"],
+        }
+        for b in aggs["buckets"]
+    ]
