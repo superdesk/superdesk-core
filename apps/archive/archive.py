@@ -573,7 +573,10 @@ class ArchiveService(BaseService):
             _set_highlight_query(source)
 
             # update req args
-            req.args = req.args.to_dict()
+            try:
+                req.args = req.args.to_dict()
+            except AttributeError:
+                pass
             req.args["source"] = json.dumps(source)
             req.args = ImmutableMultiDict(req.args)
 
