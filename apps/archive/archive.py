@@ -23,6 +23,7 @@ from superdesk.metadata.utils import (
     aggregations,
     is_normal_package,
     get_elastic_highlight_query,
+    _set_highlight_query,
 )
 from .common import (
     remove_unwanted,
@@ -557,12 +558,8 @@ class ArchiveService(BaseService):
         """
         args = getattr(req, "args", {})
         source = json.loads(args.get("source")) if args.get("source") else {"query": {"filtered": {}}}
-        query_string = source.get("query", {}).get("filtered", {}).get("query", {}).get("query_string")
-        if query_string:
-            query_string.setdefault("analyze_wildcard", app.config["ELASTIC_QUERY_STRING_ANALYZE_WILDCARD"])
-            highlight_query = get_elastic_highlight_query(query_string)
-            if highlight_query:
-                source["highlight"] = highlight_query
+        if source:
+            _set_highlight_query(source)
 
             # update req args
             req.args = req.args.to_dict()
