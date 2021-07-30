@@ -537,7 +537,10 @@ def ingest_items(items, provider, feeding_service, rule_set=None, routing_scheme
         else:
             failed_items.add(item[GUID_FIELD])
     # sync mongo with ingest after all changes
-    ingest_collection = get_ingest_collection(feeding_service, all_items[0])
+    if len(all_items) > 0:
+        ingest_collection = get_ingest_collection(feeding_service, all_items[0])
+    else:
+        ingest_collection = feeding_service.service if hasattr(feeding_service, "service") else "ingest"
     ingest_service = superdesk.get_resource_service(ingest_collection)
     updated_items = ingest_service.find({"_id": {"$in": created_ids}}, max_results=len(created_ids))
     app.data._search_backend(ingest_collection).bulk_insert(ingest_collection, list(updated_items))
