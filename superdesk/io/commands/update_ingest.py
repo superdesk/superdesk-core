@@ -537,7 +537,7 @@ def ingest_items(items, provider, feeding_service, rule_set=None, routing_scheme
         else:
             failed_items.add(item[GUID_FIELD])
     # sync mongo with ingest after all changes
-    ingest_collection = get_ingest_collection(feeding_service, item)
+    ingest_collection = get_ingest_collection(feeding_service, all_items[0])
     ingest_service = superdesk.get_resource_service(ingest_collection)
     updated_items = ingest_service.find({"_id": {"$in": created_ids}}, max_results=len(created_ids))
     app.data._search_backend(ingest_collection).bulk_insert(ingest_collection, list(updated_items))
@@ -697,7 +697,7 @@ def get_ingest_collection(feeding_service, item):
         ingest_collection = feeding_service.service
 
     # If the type of item is event, set the collection to events
-    elif item.get("type") and item.get("type") == "event":
+    elif item.get(ITEM_TYPE) and item.get(ITEM_TYPE) == "event":
         ingest_collection = "events"
     else:
         ingest_collection = "ingest"
