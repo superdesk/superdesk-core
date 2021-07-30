@@ -697,7 +697,7 @@ def get_ingest_collection(feeding_service, item):
         ingest_collection = feeding_service.service
 
     # If the type of item is event, set the collection to events
-    elif item.get(ITEM_TYPE) and item.get(ITEM_TYPE) == "event":
+    elif item.get(ITEM_TYPE) == "event":
         ingest_collection = "events"
     else:
         ingest_collection = "ingest"
