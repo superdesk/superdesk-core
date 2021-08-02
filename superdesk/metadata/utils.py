@@ -93,6 +93,15 @@ def get_elastic_highlight_query(query_string):
         return elastic_highlight_query
 
 
+def _set_highlight_query(source):
+    query_string = source.get("query", {}).get("filtered", {}).get("query", {}).get("query_string")
+    if query_string:
+        query_string.setdefault("analyze_wildcard", app.config["ELASTIC_QUERY_STRING_ANALYZE_WILDCARD"])
+        highlight_query = get_elastic_highlight_query(query_string)
+        if highlight_query:
+            source["highlight"] = highlight_query
+
+
 def generate_guid(**hints):
     """Generate a GUID based on given hints
 
