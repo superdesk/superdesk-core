@@ -144,6 +144,17 @@ FIELDS_TO_COPY_FOR_ASSOCIATED_ITEM = [
 ]
 
 
+DEFAULT_PROFILES = set(
+    [
+        "text",
+        "picture",
+        "audio",
+        "video",
+        "composite",
+    ]
+)
+
+
 def get_default_source():
     return app.config.get("DEFAULT_SOURCE_VALUE_FOR_MANUAL_ARTICLES", "")
 
@@ -181,8 +192,15 @@ def on_create_item(docs, repo_type=ARCHIVE):
             # set the source for the article
             set_default_source(doc)
 
-        if "profile" not in doc and app.config.get("DEFAULT_CONTENT_TYPE", None):
-            doc["profile"] = app.config.get("DEFAULT_CONTENT_TYPE", None)
+        ignore_profiles = DEFAULT_PROFILES.copy()
+        ignore_profiles.add(None)
+
+        if (
+            doc.get("profile") in ignore_profiles
+            and doc.get("type") == "text"
+            and app.config.get("DEFAULT_CONTENT_TYPE", None)
+        ):
+            doc["profile"] = app.config["DEFAULT_CONTENT_TYPE"]
 
         copy_metadata_from_profile(doc)
         copy_metadata_from_user_preferences(doc, repo_type)
@@ -624,6 +642,9 @@ def handle_existing_data(doc, pub_status_value="usable", doc_type="archive"):
 
         if doc_type == "archive" and not is_flag_in_item(doc, "marked_for_not_publication"):
             set_flag(doc, "marked_for_not_publication", False)
+
+        if doc.get("type"):
+            doc.setdefault("profile", doc["type"])
 
 
 def set_flag(doc, flag_name, flag_value):

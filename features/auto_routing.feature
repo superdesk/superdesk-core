@@ -1189,6 +1189,10 @@ Feature: Auto Routing
 
     @auth @provider @vocabulary
     Scenario: Content is ingested and auto published
+        Given config update
+        """
+        {"AUTO_PUBLISH_CONTENT_PROFILE": false}
+        """
         Given empty "desks"
         Given the "validators"
         """
