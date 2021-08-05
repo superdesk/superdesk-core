@@ -138,6 +138,9 @@ class EveBackend:
                 cursor = backend.find(endpoint_name, req, lookup)
                 count = cursor.count()
 
+        if is_mongo:
+            cursor.collation(Collation(locale=app.config.get("MONGO_LOCALE", "en_US")))
+
         self._cursor_hook(cursor=cursor, req=req)
         return cursor
 
