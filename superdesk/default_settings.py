@@ -145,6 +145,8 @@ MONGO_URI = env("MONGO_URI", "mongodb://localhost/%s" % MONGO_DBNAME)
 #: allow all mongo queries
 MONGO_QUERY_BLACKLIST = []
 
+MONGO_LOCALE = "en_US"
+
 #: legal archive switch
 LEGAL_ARCHIVE = env("LEGAL_ARCHIVE", None)
 
