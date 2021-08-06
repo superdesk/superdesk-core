@@ -38,7 +38,7 @@ class FilterConditionService(BaseService):
         return super().delete(lookup)
 
     def _get_referenced_filter_conditions(self, id):
-        lookup = {"content_filter.expression.fc": [id]}
+        lookup = {"content_filter.expression.fc": {"$in": [id]}}
         content_filters = get_resource_service("content_filters").get(req=None, lookup=lookup)
         return content_filters
 
