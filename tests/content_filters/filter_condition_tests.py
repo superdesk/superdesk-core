@@ -47,7 +47,7 @@ class FilterConditionTests(TestCase):
                     "schedule_settings": {"utc_embargo": utcnow() + timedelta(minutes=20)},
                     "task": {"desk": 1},
                 },
-                {"_id": "7", "genre": [{"name": "Sidebar"}], "state": "fetched", "task": {"desk": 1}},
+                {"_id": "7", "genre": [{"name": "Sidebar", "qcode": "Sidebar"}], "state": "fetched", "task": {"desk": 1}},
                 {
                     "_id": "8",
                     "subject": [
