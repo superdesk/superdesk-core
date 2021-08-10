@@ -47,7 +47,12 @@ class FilterConditionTests(TestCase):
                     "schedule_settings": {"utc_embargo": utcnow() + timedelta(minutes=20)},
                     "task": {"desk": 1},
                 },
-                {"_id": "7", "genre": [{"name": "Sidebar", "qcode": "Sidebar"}], "state": "fetched", "task": {"desk": 1}},
+                {
+                    "_id": "7",
+                    "genre": [{"name": "Sidebar", "qcode": "Sidebar"}],
+                    "state": "fetched",
+                    "task": {"desk": 1},
+                },
                 {
                     "_id": "8",
                     "subject": [
@@ -599,9 +604,11 @@ class FilterConditionTests(TestCase):
         self.assertTrue(f.does_match(self.articles[6]))
         self.assertFalse(f.does_match(self.articles[7]))
         self.assertFalse(f.does_match({"genre": None}))
-        self.assertTrue(f.does_match({"genre": [{"name": "Sidebar"}]}))
-        self.assertFalse(f.does_match({"genre": [{"name": "Article"}]}))
-        self.assertTrue(f.does_match({"genre": [{"name": "Sidebar"}, {"name": "Article"}]}))
+        self.assertTrue(f.does_match({"genre": [{"name": "Sidebar", "qcode": "Sidebar"}]}))
+        self.assertFalse(f.does_match({"genre": [{"name": "Article", "qcode": "Article"}]}))
+        self.assertTrue(
+            f.does_match({"genre": [{"name": "Sidebar", "qcode": "Sidebar"}, {"name": "Article", "qcode": "Article"}]})
+        )
 
     def test_does_match_with_category_filter(self):
         f = FilterCondition("anpa_category", "in", "a,i")
