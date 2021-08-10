@@ -36,6 +36,7 @@ from authlib.integrations.requests_client import OAuth2Session
 from authlib.oauth2.rfc6749.wrappers import OAuth2Token
 from superdesk.resource import Resource
 from superdesk.services import BaseService
+from superdesk.errors import SuperdeskApiError
 
 from superdesk.auth import auth_user, TEMPLATE
 
@@ -219,7 +220,7 @@ def _get_token_and_sesion(token_id: ObjectId) -> Tuple[dict, OAuth2Session]:
     oauth2_token_service = superdesk.get_resource_service("oauth2_token")
     token = oauth2_token_service.find_one(req=None, _id=token_id)
     if token is None:
-        raise ValueError("unknown token id: {_id}".format(_id=token_id))
+        raise SuperdeskApiError.notFoundError(f"unknown token id: {token_id}")
     if not token["refresh_token"]:
         raise ValueError("missing refresh token for token {_id}".format(_id=token["_id"]))
     session = OAuth2Session(
