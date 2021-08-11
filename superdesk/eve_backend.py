@@ -9,6 +9,7 @@
 # at https://www.sourcefabric.org/superdesk/license
 
 
+from typing import Dict, Any
 import eve.io.base
 import json as std_json
 
@@ -400,12 +401,25 @@ class EveBackend:
         :param ids:
         :return:
         """
+
+        self.delete_from_mongo(endpoint_name, {config.ID_FIELD: {"$in": ids}})
+        return ids
+
+    def delete_from_mongo(self, endpoint_name: str, lookup: Dict[str, Any]):
+        """Delete from mongo using a lookup without searching or checking
+
+        .. versionadded:: 2.4.0
+
+        :param str endpoint_name: The name of the resource to delete documents for
+        :param dict lookup: The MongoDB query to use for deleting documents
+        :raises SuperdeskApiError.forbiddenError if search is enabled for this resource
+        """
+
         backend = self._backend(endpoint_name)
         search_backend = self._lookup_backend(endpoint_name)
         if search_backend:
             raise SuperdeskApiError.forbiddenError(message="Can not remove from endpoint with a defined search")
-        backend.remove(endpoint_name, {config.ID_FIELD: {"$in": ids}})
-        return len(ids)
+        backend.remove(endpoint_name, lookup)
 
     def remove_from_search(self, endpoint_name, doc):
         """Remove document from search backend.
