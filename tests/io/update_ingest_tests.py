@@ -649,8 +649,9 @@ class UpdateIngestTest(TestCase):
     def test_ingest_profile_if_exists(self):
         provider, provider_service = self.setup_reuters_provider()
         items = provider_service.fetch_ingest(reuters_guid)
+        items[0]["profile"] = "nonexisting"
         ingest_item(items[0], provider, provider_service)
-        self.assertEquals("composite", items[0].get("profile"))
+        self.assertIsNone(items[0].get("profile"))
 
         content_types = [{"_id": "story", "name": "story"}]
         self.app.data.insert("content_types", content_types)

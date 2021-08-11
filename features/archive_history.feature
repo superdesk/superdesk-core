@@ -156,7 +156,6 @@ Feature: Archive history
       {"update": {"_id": "#REWRITE_ID#", "type": "text", "headline": "test",
       "_current_version": 3, "state": "submitted", "priority": 2}}
       """
-      Then we get OK response
       When we get "/archive_history?where=item_id==%22#REWRITE_ID#%22"
       Then we get list with 5 items
       """

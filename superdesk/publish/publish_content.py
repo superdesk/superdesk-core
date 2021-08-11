@@ -23,6 +23,7 @@ from superdesk.celery_app import celery
 from superdesk.utc import utcnow
 from superdesk.profiling import ProfileManager
 from .publish_queue import QueueState
+from celery.exceptions import SoftTimeLimitExceeded
 
 logger = logging.getLogger(__name__)
 

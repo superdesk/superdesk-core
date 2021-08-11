@@ -327,8 +327,8 @@ class NINJSFormatter(Formatter):
         associations = OrderedDict()
         extra_items = {}
         media = {}
+        content_profile = None
         archive_service = superdesk.get_resource_service("archive")
-        schema = superdesk.get_resource_service("content_types").get_schema(article) or {}
 
         article_associations = OrderedDict(
             sorted(article.get(ASSOCIATIONS, {}).items(), key=lambda itm: (itm[1] or {}).get("order", 1))
@@ -355,13 +355,23 @@ class NINJSFormatter(Formatter):
                 if match:
                     # item id seems to be build from a custom id
                     # we now check content profile to see if it correspond to a custom field
+                    if content_profile is None:
+                        try:
+                            profile = article["profile"]
+                        except KeyError:
+                            logger.warning("missing profile in article (guid: {guid})".format(guid=article.get("guid")))
+                            content_profile = {"schema": {}}
+                        else:
+                            content_profile = superdesk.get_resource_service("content_types").find_one(
+                                _id=profile, req=None
+                            )
                     field_id = match.group("field_id")
-                    field_schema = schema.get(field_id)
-                    if field_schema and field_schema.get("type") in ("media", "related_content"):
+                    schema = content_profile["schema"].get(field_id, {})
+                    if schema.get("type") == "media" or schema.get("type") == "related_content":
                         # we want custom media fields in "extra_items", cf. SDESK-2955
                         version = match.group("version")
                         media.setdefault(field_id, []).append((version, item))
-                        extra_items[field_id] = {"type": field_schema.get("type")}
+                        extra_items[field_id] = {"type": schema.get("type")}
 
         if media:
             # we have custom media fields, we now order them

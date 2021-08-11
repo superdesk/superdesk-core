@@ -113,6 +113,7 @@ Feature: News Items Archive
         And we get version 3
         And the field "headline" value is "test"
 
+
     @auth
     @vocabulary
     Scenario: Upload image with point of interest into archive
@@ -120,7 +121,7 @@ Feature: News Items Archive
         When we upload a file "bike.jpg" to "archive"
         Then we get new resource
         """
-        {"guid": "__any_value__", "firstcreated": "__any_value__", "versioncreated": "__any_value__", "state": "in_progress", "profile": "picture", "type": "picture"}
+        {"guid": "__any_value__", "firstcreated": "__any_value__", "versioncreated": "__any_value__", "state": "in_progress"}
         """
         And we get "bike.jpg" metadata
         And we get "picture" renditions

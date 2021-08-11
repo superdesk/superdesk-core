@@ -186,7 +186,8 @@ Feature: Rewrite content
       {"desk_id": "#desks._id#"}
       """
       When we get "/archive/#REWRITE_ID#"
-      Then we get existing resource
+      Then there is no "body_html" in response
+      And we get existing resource
       """
       {
         "_id": "#REWRITE_ID#",
@@ -1714,7 +1715,8 @@ Feature: Rewrite content
       {"desk_id": "#desks._id#"}
       """
       When we get "/archive/#REWRITE_ID#"
-      Then we get existing resource
+      Then there is no "body_html" in response
+      And we get existing resource
       """
       {
         "_id": "#REWRITE_ID#",
