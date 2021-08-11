@@ -24,14 +24,5 @@
             "headline": "Takedown notice",
             "anpa_take_key": "TAKEDOWN"
         }
-    },
-    {
-        "template_name": "Plain Text",
-        "template_type": "create",
-        "is_public": true,
-         "data": {
-            "profile": "text",
-            "type": "text"
-        }
     }
 ]

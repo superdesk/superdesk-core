@@ -349,7 +349,6 @@ class ArchiveTestCase(TestCase):
             "state": CONTENT_STATE.SUBMITTED,
             "_current_version": 1,
             "rewrite_of": "bar",
-            "headline": "foo",
         }
         archive_service.create([item])
         with mock.patch.object(publish, "utcnow", lambda: NOW):

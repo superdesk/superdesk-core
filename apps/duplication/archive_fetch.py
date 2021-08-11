@@ -111,10 +111,11 @@ class FetchService(BaseService):
             self.__fetch_associated_items(dest_doc, desk_id, stage_id, doc.get(ITEM_STATE, CONTENT_STATE.FETCHED))
 
             desk = get_resource_service("desks").find_one(req=None, _id=desk_id)
-            if desk and desk.get("default_content_profile") and dest_doc.get("type") not in MEDIA_TYPES:
-                dest_doc["profile"] = (
-                    dest_doc["profile"] if dest_doc.get("profile") != "text" else desk["default_content_profile"]
-                )
+            if desk and desk.get("default_content_profile"):
+                dest_doc.setdefault("profile", desk["default_content_profile"])
+
+            if dest_doc.get("type", "text") in MEDIA_TYPES:
+                dest_doc["profile"] = None
 
             update_refs(dest_doc, {})
 
