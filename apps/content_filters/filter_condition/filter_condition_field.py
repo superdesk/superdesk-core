@@ -147,11 +147,11 @@ class FilterConditionCategoryField(FilterConditionField):
 class FilterConditionGenreField(FilterConditionField):
     def __init__(self, field):
         self.field = FilterConditionFieldsEnum.genre
-        self.entity_name = "genre.name"
+        self.entity_name = "genre.qcode"
         self.field_type = str
 
     def get_value(self, article):
-        return [g["name"] for g in article[self.field.name]]
+        return [g["qcode"] for g in article[self.field.name]]
 
 
 class FilterConditionUrgencyField(FilterConditionField):
