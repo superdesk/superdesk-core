@@ -579,7 +579,10 @@ INGEST_EXPIRY_MINUTES = int(env("INGEST_EXPIRY_MINUTES", 2 * 24 * 60))
 PUBLISHED_CONTENT_EXPIRY_MINUTES = int(env("PUBLISHED_CONTENT_EXPIRY_MINUTES", 0))
 
 #: The number of minutes before audit content is purged
-AUDIT_EXPIRY_MINUTES = int(env("AUDIT_EXPIRY_MINUTES", 0))
+#:
+#: .. versionchanged:: 2.4.0
+#     Changed default to 14 days (was previously disabled)
+AUDIT_EXPIRY_MINUTES = int(env("AUDIT_EXPIRY_MINUTES", 60 * 24 * 14))
 
 #: The number records to be fetched for expiry.
 MAX_EXPIRY_QUERY_LIMIT = int(env("MAX_EXPIRY_QUERY_LIMIT", 100))
