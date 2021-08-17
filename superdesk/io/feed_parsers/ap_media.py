@@ -9,19 +9,13 @@
 # at https://www.sourcefabric.org/superdesk/license
 
 import logging
-import hashlib
 import datetime
-import re
+
 from superdesk.utc import utc
-import json
-from copy import deepcopy
-from superdesk import etree as sd_etree
 from superdesk.io.registry import register_feed_parser
 from superdesk.io.feed_parsers import FeedParser
 from superdesk.io.iptc import subject_codes
-from superdesk.metadata.item import ITEM_TYPE, CONTENT_TYPE, GUID_TAG, Priority
-from superdesk.metadata.utils import generate_guid
-from superdesk.metadata.item import ITEM_TYPE, CONTENT_TYPE, ITEM_URGENCY, ITEM_PRIORITY
+from superdesk.metadata.item import ITEM_URGENCY, ITEM_PRIORITY, Priority
 from apps.archive.common import format_dateline_to_locmmmddsrc
 from superdesk.utc import get_date
 from flask import current_app as app
@@ -290,13 +284,23 @@ class APMediaFeedParser(FeedParser):
             for dest, src in self.RENDITIONS_MAPPING.items():
                 rend = renditions[src]
                 item["renditions"][dest] = {
-                    "href": rend["href"],
+                    "href": with_apikey(rend["href"], provider),
                     "mimetype": rend["mimetype"],
                     "width": rend["width"],
                     "height": rend["height"],
                 }
         except KeyError:
             pass
+
+
+def with_apikey(href, provider):
+    try:
+        key = provider["config"]["apikey"]
+        separator = "?" if "?" not in href else "&"
+        return f"{href}{separator}apikey={key}"
+    except (KeyError, TypeError):
+        pass
+    return href
 
 
 register_feed_parser(APMediaFeedParser.NAME, APMediaFeedParser())
