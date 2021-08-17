@@ -14,3 +14,4 @@ from .odbc import ODBCPublishService  # NOQA
 from .file_output import FilePublishService  # NOQA
 from .http_push import HTTPPushService  # NOQA
 from .imatrics import IMatricsTransmitter  # NOQA
+from .file_providers import *  # NOQA
