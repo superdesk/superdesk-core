@@ -46,6 +46,7 @@ logger = logging.getLogger(__name__)
 bp = superdesk.Blueprint("oauth", __name__)
 oauth: Optional[OAuth] = None
 TOKEN_ENDPOINT = "https://oauth2.googleapis.com/token"
+REVOKE_ENDPOINT = "https://oauth2.googleapis.com/revoke"
 KEY_GOOGLE_PROVIDER_ID = "oauth_gmail_id"
 TTL_GOOGLE_PROVIDER_ID = 600
 
@@ -243,7 +244,11 @@ def revoke_google_token(token_id: ObjectId) -> None:
     """Revoke a token"""
     token, session = _get_token_and_sesion(token_id)
     oauth2_token_service = superdesk.get_resource_service("oauth2_token")
-    session.revoke_token(TOKEN_ENDPOINT, token["access_token"])
+    resp = session.revoke_token(REVOKE_ENDPOINT, token["access_token"])
+    if not resp.ok:
+        raise SuperdeskApiError.proxyError(
+            f"Can't revoke token {token_id} (HTTP status {resp.status_code}): {resp.text}"
+        )
     oauth2_token_service.delete({config.ID_FIELD: token_id})
     ingest_providers_service = superdesk.get_resource_service("ingest_providers")
     provider = ingest_providers_service.find_one(req=None, _id=token_id)
