@@ -80,10 +80,14 @@ def set_field_content_state(item, field, content_state):
     item.setdefault("fields_meta", {}).update({field: {EDITOR_STATE: [content_state]}})
 
 
-def get_field_path(item, field):
-    keys = field.split(">")
-    if len(keys) == 2:
-        return item.setdefault("extra", {}), keys[1]
+def get_field_id(field: str) -> str:
+    return field.replace("extra>", "", 1) if field.startswith("extra>") else field
+
+
+def get_field_path(item, field: str):
+    field_id = get_field_id(field)
+    if field_id != field:
+        return item.setdefault("extra", {}), field_id
     return item, field
 
 
@@ -772,38 +776,39 @@ def filter_blocks(item, field, filter, is_html=True):
     editor.update_item()
 
 
-def generate_fields(item, fields=None, force=False):
+def generate_fields(item, fields=None, force=False, reload=False):
     """Generate item fields from editor states
 
     :param item: item containing Draft.js ContentState
     :param fields: fields to generate, None to generate all fields with a content state
-    :param force: force refreshing of content state from item field
+    :param force: force updating item from content state, item field value might be old
+    :param reload: force refreshing of content state from item field, content state might be old
     """
     if fields is None:
         fields = get_content_state_fields(item)
 
     for field in fields:
-        old_field = None
-        if CHECK_GENERATE_CONSISTENCY:
-            old_field = item.get(field)
-        editor = Editor3Content(item, field, is_html=is_html(field), reload=force)
+        client_value = get_field_value(item, field)
+        editor = Editor3Content(item, field, is_html=is_html(field), reload=reload)
         editor.update_item()
-        if CHECK_GENERATE_CONSISTENCY and not force:
-            if old_field is not None and old_field.strip() != item[field].strip():
+        if CHECK_GENERATE_CONSISTENCY and not force and client_value is not None:
+            server_value = get_field_value(item, field) or ""
+            if client_value.strip() != server_value.strip():
                 logger.warning(
                     "Generated HTML inconsistency between client and backend, we'll use client one",
                     extra=dict(
-                        client=old_field,
-                        backend=item[field],
+                        field=field,
+                        client=client_value,
+                        backend=server_value,
                         field_state=get_field_content_state(item, field),
                     ),
                 )
-                item[field] = old_field
+                set_field_value(item, field, client_value)
 
 
 def is_html(field) -> bool:
-    if "extra" in field:
-        field_id = field.split(">")[1]
+    field_id = get_field_id(field)
+    if field_id != field:
         field_options = superdesk.get_resource_service("vocabularies").get_field_options(field_id)
         return field_options.get("single") is not True
     return field not in TEXT_FIELDS

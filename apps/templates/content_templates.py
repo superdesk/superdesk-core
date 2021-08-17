@@ -480,7 +480,7 @@ class ContentTemplatesApplyService(Service):
         updates = render_content_template(item, template)
         item.update(updates)
 
-        editor_utils.generate_fields(item, force=True)
+        editor_utils.generate_fields(item, reload=True)
 
         if template_name == "kill":
             apply_null_override_for_kill(item)
