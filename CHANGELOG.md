@@ -1,5 +1,11 @@
 # Superdesk Server Changelog
 
+## [2.1.4] 2021-08-18
+
+### Fixed
+
+- Fix category ingest from wp.
+
 ## [2.1.3] 2021-04-19
 
 ### Fixed
