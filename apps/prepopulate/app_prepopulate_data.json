@@ -463,7 +463,11 @@
                     "required": false,
                     "nullable": true
                 },
-                "body_footer": null
+                "body_footer": {
+                    "type": "string",
+                    "required": false,
+                    "nullable": true
+                }
             },
             "editor": {
                 "slugline": {
@@ -567,7 +571,12 @@
                     "editor3": false,
                     "enabled": true
                 },
-                "body_footer": null
+                "body_footer": {
+                    "order": 21,
+                    "cleanPastedHTML": true,
+                    "editor3": false,
+                    "enabled": true
+                }
             },
             "enabled": true,
             "is_used": true
