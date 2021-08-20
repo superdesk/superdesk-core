@@ -66,7 +66,8 @@ def send_email(self, subject, sender, recipients, text_body, html_body, cc=None,
             html=html_body,
             attachments=attachments,
         )
-        return app.mail.send(msg)
+        if app.config.get("E2E") != True:
+            return app.mail.send(msg)
     except OSError:
         logger.exception("can not send email %s", subject)
     finally:

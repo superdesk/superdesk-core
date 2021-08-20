@@ -1,257 +1,259 @@
-[
-    {
-        "_id" : "text",
-        "item_type" : "text",
-        "schema" : {
-            "abstract" : {
-                "type" : "string",
-                "required" : false,
-                "maxlength" : 160,
-                "nullable" : true
+[{
+        "_id": "text",
+        "item_type": "text",
+        "label": "Text",
+        "schema": {
+            "abstract": {
+                "type": "string",
+                "required": false,
+                "maxlength": 160,
+                "nullable": true
             },
-            "anpa_category" : {
-                "type" : "list",
-                "required" : false,
-                "nullable" : true
+            "anpa_category": {
+                "type": "list",
+                "required": false,
+                "nullable": true
             },
-            "anpa_take_key" : {
-                "type" : "string",
-                "required" : false,
-                "nullable" : true
+            "anpa_take_key": {
+                "type": "string",
+                "required": false,
+                "nullable": true
             },
-            "attachments" : {
-                "type" : "list",
-                "required" : false
+            "attachments": {
+                "type": "list",
+                "required": false
             },
-            "authors" : {
-                "type" : "list",
-                "required" : false,
-                "schema" : {
-                    "type" : "dict",
-                    "schema" : {
-                        "name" : {
-                            "type" : "string"
+            "authors": {
+                "type": "list",
+                "required": false,
+                "schema": {
+                    "type": "dict",
+                    "schema": {
+                        "name": {
+                            "type": "string"
                         },
-                        "parent" : {
-                            "type" : "string"
+                        "parent": {
+                            "type": "string"
                         },
-                        "role" : {
-                            "type" : "string"
+                        "role": {
+                            "type": "string"
                         }
                     }
                 },
-                "nullable" : true
+                "nullable": true
             },
-            "byline" : {
-                "type" : "string",
-                "required" : false,
-                "nullable" : true
+            "byline": {
+                "type": "string",
+                "required": false,
+                "nullable": true
             },
-            "company_codes" : {
-                "type" : "list",
-                "required" : false,
-                "nullable" : true
+            "company_codes": {
+                "type": "list",
+                "required": false,
+                "nullable": true
             },
-            "dateline" : {
-                "type" : "dict",
-                "required" : false,
-                "nullable" : true
+            "dateline": {
+                "type": "dict",
+                "required": false,
+                "nullable": true
             },
-            "ednote" : {
-                "type" : "string",
-                "required" : false,
-                "nullable" : true
+            "ednote": {
+                "type": "string",
+                "required": false,
+                "nullable": true
             },
-            "feature_media" : {
-                "type" : "media",
-                "required" : false
+            "feature_media": {
+                "type": "media",
+                "required": false
             },
-            "footer" : {
-                "type" : "string",
-                "required" : false,
-                "nullable" : true
+            "footer": {
+                "type": "string",
+                "required": false,
+                "nullable": true
             },
-            "genre" : {
-                "type" : "list",
-                "required" : false,
-                "nullable" : true
+            "genre": {
+                "type": "list",
+                "required": false,
+                "nullable": true
             },
-            "headline" : {
-                "type" : "string",
-                "required" : true,
-                "maxlength" : 64,
-                "nullable" : false
+            "headline": {
+                "type": "string",
+                "required": true,
+                "maxlength": 64,
+                "nullable": false
             },
-            "keywords" : {
-                "type" : "list",
-                "required" : false,
-                "nullable" : true
+            "keywords": {
+                "type": "list",
+                "required": false,
+                "nullable": true
             },
-            "language" : {
-                "type" : "string",
-                "required" : false,
-                "nullable" : true
+            "language": {
+                "type": "string",
+                "required": false,
+                "nullable": true
             },
-            "media_description" : {
-                "type" : "string",
-                "required" : false
+            "media_description": {
+                "type": "string",
+                "required": false
             },
-            "place" : {
-                "type" : "list",
-                "required" : false,
-                "nullable" : true
+            "place": {
+                "type": "list",
+                "required": false,
+                "nullable": true
             },
-            "priority" : {
-                "type" : "integer",
-                "required" : false,
-                "nullable" : true
+            "priority": {
+                "type": "integer",
+                "required": false,
+                "nullable": true
             },
-            "sign_off" : {
-                "type" : "string",
-                "required" : false,
-                "nullable" : true
+            "sign_off": {
+                "type": "string",
+                "required": false,
+                "nullable": true
             },
-            "slugline" : {
-                "type" : "string",
-                "required" : true,
-                "maxlength" : 24,
-                "nullable" : false
+            "slugline": {
+                "type": "string",
+                "required": true,
+                "maxlength": 24,
+                "nullable": false
             },
-            "sms" : {
-                "type" : "string",
-                "required" : false,
-                "nullable" : true
+            "sms": {
+                "type": "string",
+                "required": false,
+                "nullable": true
             },
-            "subject" : {
-                "type" : "list",
-                "required" : true,
-                "mandatory_in_list" : {
-                    "scheme" : {
-                        
+            "subject": {
+                "type": "list",
+                "required": true,
+                "mandatory_in_list": {
+                    "scheme": {
+
                     }
                 },
-                "schema" : {
-                    
+                "schema": {
+
                 },
-                "nullable" : false
+                "nullable": false
             },
-            "urgency" : {
-                "type" : "integer",
-                "required" : false,
-                "nullable" : true
+            "urgency": {
+                "type": "integer",
+                "required": false,
+                "nullable": true
             },
-            "usageterms" : {
-                "type" : "string",
-                "required" : false,
-                "nullable" : true
+            "usageterms": {
+                "type": "string",
+                "required": false,
+                "nullable": true
             },
-            "body_html" : null,
-            "body_footer" : null
+            "body_html": {
+                "type": "string",
+                "required": false,
+                "nullable": true
+            },
+            "body_footer": null
         },
-        "editor" : {
-            "slugline" : {
-                "order" : 1,
-                "sdWidth" : "full"
+        "editor": {
+            "slugline": {
+                "order": 1,
+                "sdWidth": "full"
             },
-            "keywords" : {
-                "order" : 2,
-                "sdWidth" : "full"
+            "keywords": {
+                "order": 2,
+                "sdWidth": "full"
             },
-            "language" : {
-                "order" : 3,
-                "sdWidth" : "half"
+            "language": {
+                "order": 3,
+                "sdWidth": "half"
             },
-            "usageterms" : {
-                "order" : 4,
-                "sdWidth" : "full"
+            "usageterms": {
+                "order": 4,
+                "sdWidth": "full"
             },
-            "genre" : {
-                "order" : 5,
-                "sdWidth" : "half"
+            "genre": {
+                "order": 5,
+                "sdWidth": "half"
             },
-            "anpa_take_key" : {
-                "order" : 6,
-                "sdWidth" : "half"
+            "anpa_take_key": {
+                "order": 6,
+                "sdWidth": "half"
             },
-            "place" : {
-                "order" : 7,
-                "sdWidth" : "half"
+            "place": {
+                "order": 7,
+                "sdWidth": "half"
             },
-            "priority" : {
-                "order" : 8,
-                "sdWidth" : "quarter"
+            "priority": {
+                "order": 8,
+                "sdWidth": "quarter"
             },
-            "urgency" : {
-                "order" : 9,
-                "sdWidth" : "quarter"
+            "urgency": {
+                "order": 9,
+                "sdWidth": "quarter"
             },
-            "anpa_category" : {
-                "order" : 10,
-                "sdWidth" : "full"
+            "anpa_category": {
+                "order": 10,
+                "sdWidth": "full"
             },
-            "subject" : {
-                "order" : 11,
-                "sdWidth" : "full"
+            "subject": {
+                "order": 11,
+                "sdWidth": "full"
             },
-            "company_codes" : {
-                "order" : 12,
-                "sdWidth" : "full"
+            "company_codes": {
+                "order": 12,
+                "sdWidth": "full"
             },
-            "ednote" : {
-                "order" : 13,
-                "sdWidth" : "full"
+            "ednote": {
+                "order": 13,
+                "sdWidth": "full"
             },
-            "authors" : {
-                "order" : 14,
-                "sdWidth" : "full"
+            "authors": {
+                "order": 14,
+                "sdWidth": "full"
             },
-            "headline" : {
-                "order" : 15,
-                "formatOptions" : [ ]
+            "headline": {
+                "order": 15,
+                "formatOptions": []
             },
-            "sms" : {
-                "order" : 16
+            "sms": {
+                "order": 16
             },
-            "abstract" : {
-                "order" : 17,
-                "formatOptions" : [
+            "abstract": {
+                "order": 17,
+                "formatOptions": [
                     "bold",
                     "italic",
                     "underline",
                     "link"
                 ],
-                "editor3" : true
+                "editor3": true
             },
-            "byline" : {
-                "order" : 18
+            "body_html": {
+                "order": 20,
+                "formatOptions": ["h2", "bold", "italic", "underline", "quote", "link", "embed", "media"],
+                "cleanPastedHTML": false,
+                "editor3": true,
+                "enabled": true
             },
-            "dateline" : {
-                "order" : 19
+            "byline": {
+                "order": 18
             },
-            "footer" : {
-                "order" : 21
+            "dateline": {
+                "order": 19
             },
-            "sign_off" : {
-                "order" : 23
+            "footer": {
+                "order": 21
             },
-            "feature_media" : {
-                
+            "sign_off": {
+                "order": 23
             },
-            "media_description" : {
-                
-            },
-            "attachments" : {
-                
-            },
-            "body_html" : null,
-            "body_footer" : null
+            "attachments": {}
         },
-        "enabled" : true,
-        "is_used" : true
+        "enabled": true,
+        "is_used": true
     },
     {
         "_id": "audio",
         "item_type": "audio",
+        "label": "Audio",
         "schema": {
             "abstract": {
                 "type": "string",
@@ -546,11 +548,12 @@
                 "enabled": false
             }
         },
-        "enabled" : true,
-        "is_used" : true
+        "enabled": true,
+        "is_used": true
     }, {
         "_id": "video",
         "item_type": "video",
+        "label": "Video",
         "schema": {
             "abstract": {
                 "type": "string",
@@ -607,11 +610,129 @@
                 "enabled": false
             }
         },
-        "enabled" : true,
-        "is_used" : true
+        "editor": {
+            "slugline": {
+                "order": 1,
+                "sdWidth": "full",
+                "enabled": true
+            },
+            "keywords": {
+                "order": 2,
+                "sdWidth": "full",
+                "enabled": false
+            },
+            "language": {
+                "order": 3,
+                "sdWidth": "half",
+                "enabled": false
+            },
+            "usageterms": {
+                "order": 4,
+                "sdWidth": "full",
+                "enabled": false
+            },
+            "genre": {
+                "order": 5,
+                "sdWidth": "half",
+                "enabled": true
+            },
+            "anpa_take_key": {
+                "order": 6,
+                "sdWidth": "half",
+                "enabled": false
+            },
+            "place": {
+                "order": 7,
+                "sdWidth": "half",
+                "enabled": true
+            },
+            "priority": {
+                "order": 8,
+                "sdWidth": "quarter",
+                "enabled": true
+            },
+            "urgency": {
+                "order": 9,
+                "sdWidth": "quarter",
+                "enabled": true
+            },
+            "anpa_category": {
+                "order": 10,
+                "sdWidth": "full",
+                "enabled": true
+            },
+            "subject": {
+                "order": 11,
+                "sdWidth": "full",
+                "enabled": true
+            },
+            "company_codes": {
+                "order": 12,
+                "sdWidth": "full",
+                "enabled": false
+            },
+            "ednote": {
+                "order": 13,
+                "sdWidth": "full",
+                "enabled": true
+            },
+            "authors": {
+                "order": 14,
+                "sdWidth": "full",
+                "enabled": true
+            },
+            "headline": {
+                "order": 15,
+                "formatOptions": [],
+                "enabled": true
+            },
+            "sms": {
+                "order": 16,
+                "enabled": false
+            },
+            "abstract": {
+                "order": 17,
+                "formatOptions": [
+                    "bold",
+                    "italic",
+                    "underline",
+                    "link"
+                ],
+                "editor3": true,
+                "enabled": true
+            },
+            "byline": {
+                "order": 18,
+                "enabled": true
+            },
+            "dateline": {
+                "order": 19,
+                "enabled": true
+            },
+            "footer": {
+                "order": 21,
+                "enabled": false
+            },
+            "sign_off": {
+                "order": 23,
+                "enabled": true
+            },
+            "feature_media": {
+                "enabled": true
+            },
+            "media_description": {
+                "enabled": true
+            },
+            "attachments": {
+                "enabled": false
+            }
+        },
+        "enabled": true,
+        "is_used": true
     }, {
         "_id": "picture",
         "item_type": "picture",
+        "label": "Picture",
         "schema": {
             "abstract": {
                 "type": "string",
@@ -671,11 +792,129 @@
                 "enabled": true
             }
         },
-        "enabled" : true,
-        "is_used" : true
+        "editor": {
+            "slugline": {
+                "order": 1,
+                "sdWidth": "full",
+                "enabled": true
+            },
+            "keywords": {
+                "order": 2,
+                "sdWidth": "full",
+                "enabled": false
+            },
+            "language": {
+                "order": 3,
+                "sdWidth": "half",
+                "enabled": false
+            },
+            "usageterms": {
+                "order": 4,
+                "sdWidth": "full",
+                "enabled": false
+            },
+            "genre": {
+                "order": 5,
+                "sdWidth": "half",
+                "enabled": true
+            },
+            "anpa_take_key": {
+                "order": 6,
+                "sdWidth": "half",
+                "enabled": false
+            },
+            "place": {
+                "order": 7,
+                "sdWidth": "half",
+                "enabled": true
+            },
+            "priority": {
+                "order": 8,
+                "sdWidth": "quarter",
+                "enabled": true
+            },
+            "urgency": {
+                "order": 9,
+                "sdWidth": "quarter",
+                "enabled": true
+            },
+            "anpa_category": {
+                "order": 10,
+                "sdWidth": "full",
+                "enabled": true
+            },
+            "subject": {
+                "order": 11,
+                "sdWidth": "full",
+                "enabled": true
+            },
+            "company_codes": {
+                "order": 12,
+                "sdWidth": "full",
+                "enabled": false
+            },
+            "ednote": {
+                "order": 13,
+                "sdWidth": "full",
+                "enabled": true
+            },
+            "authors": {
+                "order": 14,
+                "sdWidth": "full",
+                "enabled": true
+            },
+            "headline": {
+                "order": 15,
+                "formatOptions": [],
+                "enabled": true
+            },
+            "sms": {
+                "order": 16,
+                "enabled": false
+            },
+            "abstract": {
+                "order": 17,
+                "formatOptions": [
+                    "bold",
+                    "italic",
+                    "underline",
+                    "link"
+                ],
+                "editor3": true,
+                "enabled": true
+            },
+            "byline": {
+                "order": 18,
+                "enabled": true
+            },
+            "dateline": {
+                "order": 19,
+                "enabled": true
+            },
+            "footer": {
+                "order": 21,
+                "enabled": false
+            },
+            "sign_off": {
+                "order": 23,
+                "enabled": true
+            },
+            "feature_media": {
+                "enabled": true
+            },
+            "media_description": {
+                "enabled": true
+            },
+            "attachments": {
+                "enabled": false
+            }
+        },
+        "enabled": true,
+        "is_used": true
     }, {
         "_id": "composite",
         "item_type": "composite",
+        "label": "Package",
         "schema": {
             "abstract": {
                 "type": "string",
@@ -970,7 +1209,7 @@
                 "enabled": false
             }
         },
-        "enabled" : true,
-        "is_used" : true
+        "enabled": true,
+        "is_used": true
     }
 ]
