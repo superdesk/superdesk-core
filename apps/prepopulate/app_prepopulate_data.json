@@ -437,7 +437,7 @@
                 },
                 "subject": {
                     "type": "list",
-                    "required": true,
+                    "required": false,
                     "mandatory_in_list": {
                         "scheme": {
 
@@ -796,7 +796,7 @@
                 },
                 "subject": {
                     "type": "list",
-                    "required": true,
+                    "required": false,
                     "mandatory_in_list": {
                         "scheme": {
 
