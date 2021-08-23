@@ -8,6 +8,7 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
+from typing import Dict, Any
 import logging
 
 from typing import Union
@@ -67,8 +68,8 @@ class BaseService:
     def update(self, id, updates, original):
         return self.backend.update(self.datasource, id, updates, original)
 
-    def system_update(self, id, updates, original):
-        return self.backend.system_update(self.datasource, id, updates, original)
+    def system_update(self, id, updates, original, **kwargs):
+        return self.backend.system_update(self.datasource, id, updates, original, **kwargs)
 
     def replace(self, id, document, original):
         res = self.backend.replace(self.datasource, id, document, original)
@@ -81,6 +82,19 @@ class BaseService:
     def delete_ids_from_mongo(self, ids):
         res = self.backend.delete_ids_from_mongo(self.datasource, ids)
         return res
+
+    def delete_from_mongo(self, lookup: Dict[str, Any]):
+        """Delete items from mongo only
+
+        .. versionadded:: 2.4.0
+
+        .. warning:: ``on_delete`` and ``on_deleted`` is **NOT** called with this action
+
+        :param dict lookup: User mongo query syntax
+        :raises SuperdeskApiError.forbiddenError if search is enabled for this resource
+        """
+
+        self.backend.delete_from_mongo(self.datasource, lookup)
 
     def delete_docs(self, docs):
         return self.backend.delete_docs(self.datasource, docs)

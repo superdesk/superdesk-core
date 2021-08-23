@@ -43,6 +43,7 @@ from superdesk.errors import SuperdeskApiError, InvalidStateTransitionError
 from superdesk.notification import push_notification
 from superdesk.signals import item_rewrite
 from apps.archive.archive import update_associations
+from superdesk.editor_utils import generate_fields
 from flask_babel import _
 
 logger = logging.getLogger(__name__)
@@ -88,10 +89,19 @@ class ArchiveRewriteService(Service):
 
         rewrite = self._create_rewrite_article(original, existing_item=update_document, desk_id=doc.get("desk_id"))
 
-        if "body_html" in rewrite:
-            if "fields_meta" in original:
-                rewrite["fields_meta"] = original["fields_meta"]
-            update_associations(rewrite)
+        if original.get("fields_meta"):
+            rewrite["fields_meta"] = original["fields_meta"].copy()
+
+        if update_document and update_document.get("fields_meta"):
+            # copy content fields from existing item
+            # to preserve those
+            rewrite.setdefault("fields_meta", {})
+            rewrite["fields_meta"].update(update_document["fields_meta"].copy())
+
+        if rewrite.get("fields_meta"):
+            generate_fields(rewrite, force=True)
+
+        update_associations(rewrite)
 
         # signal
         item_rewrite.send(self, item=rewrite, original=original)
@@ -177,7 +187,7 @@ class ArchiveRewriteService(Service):
             ):
                 raise SuperdeskApiError.badRequestError(_("Broadcast cannot be a update story !"))
 
-            if original.get("profile") and original.get("profile") != update.get("profile"):
+            if original.get("profile") and str(original.get("profile")) != str(update.get("profile")):
                 raise SuperdeskApiError.badRequestError(
                     _("Rewrite item content profile does " "not match with Original item.")
                 )
@@ -191,7 +201,17 @@ class ArchiveRewriteService(Service):
         """
         rewrite = dict()
 
-        fields = ["family_id", "event_id", "flags", "language", ASSOCIATIONS, "extra"]
+        fields = [
+            "family_id",
+            "event_id",
+            "flags",
+            "language",
+            ASSOCIATIONS,
+            "extra",
+            "place",
+            "organisation",
+            "person",
+        ]
         existing_item_preserve_fields = (ASSOCIATIONS, "flags")
 
         if app.config.get("COPY_ON_REWRITE_FIELDS"):

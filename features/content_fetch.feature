@@ -524,7 +524,7 @@ Feature: Fetch Items from Ingest
       """
       Then we get error 404
       """
-      {"_message": "Fail to found ingest item with _id: invalid_id", "_status": "ERR"}
+      {"_message": "Failed to find ingest item with _id: invalid_id", "_status": "ERR"}
       """
 
     @auth

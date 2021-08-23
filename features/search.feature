@@ -284,7 +284,7 @@ Feature: Search Feature
         """
         Given "archive"
             """
-            [{"guid": "1", "state": "draft", "task": {"desk": "#desks._id#", "user": "123"}},
+            [{"guid": "1", "state": "draft", "version": 0, "task": {"desk": "#desks._id#", "user": "123"}},
             {"guid": "2", "state": "in_progress", "task": {"desk": "#desks._id#", "user": "#users.id#"}}]
             """
         When we get "/search"

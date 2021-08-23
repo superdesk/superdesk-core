@@ -27,7 +27,7 @@ class ContactsResource(Resource):
         "is_active": {"type": "boolean", "default": True},
         # flag to indicate that the contact item should not be publicly visible, for example if the item relates to
         # a contact that can not be distributed due to privacy concerns
-        "public": {"type": "boolean", "default": True},
+        "public": {"type": "boolean", "default": False},
         "organisation": {
             "type": "string",
             "required": False,
@@ -79,7 +79,17 @@ class ContactsResource(Resource):
         "contact_address": {"type": "list", "schema": {"type": "string", "required": False}},
         "locality": {"type": "string", "required": False},
         "city": {"type": "string", "required": False},
-        "contact_state": {"type": "string", "required": False},
+        "contact_state": {
+            "type": "dict",
+            "schema": {
+                "name": {"type": "string", "required": False},
+                "qcode": {"type": "string", "required": False},
+                "translations": {
+                    "type": "dict",
+                    "required": False,
+                },
+            },
+        },
         "postcode": {"type": "string", "required": False},
         "country": {
             "type": "dict",

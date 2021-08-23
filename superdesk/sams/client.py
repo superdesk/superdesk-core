@@ -13,11 +13,11 @@ def get_sams_client(app: Optional[Eve] = None) -> SamsClient:
         if app is None:
             app = current_app
 
-            _client = SamsClient(
-                {
-                    "HOST": app.config.get("SAMS_HOST"),
-                    "PORT": app.config.get("SAMS_PORT"),
-                }
-            )
+        _client = SamsClient(
+            {
+                "HOST": app.config.get("SAMS_HOST"),
+                "PORT": app.config.get("SAMS_PORT"),
+            }
+        )
 
     return _client

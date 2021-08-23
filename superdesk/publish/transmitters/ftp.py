@@ -16,20 +16,14 @@ from io import BytesIO
 from flask import current_app as app
 
 from superdesk.ftp import ftp_connect
-from superdesk.publish import register_transmitter
+from superdesk.publish import register_transmitter, registered_transmitter_file_providers
 from superdesk.publish.publish_service import get_publish_service, PublishService
 from superdesk.errors import PublishFtpError
-from superdesk.media.renditions import get_rendition_file_name, get_renditions_spec
+from superdesk.media.renditions import get_rendition_file_name
 
 errors = [PublishFtpError.ftpError().get_error_description()]
 
 logger = logging.getLogger(__name__)
-
-
-def get_renditions_filter():
-    renditions = set(get_renditions_spec(without_internal_renditions=True).keys())
-    renditions.add("original")
-    return renditions
 
 
 class FTPPublishService(PublishService):
@@ -97,33 +91,9 @@ class FTPPublishService(PublishService):
             raise PublishFtpError.ftpError(ex, queue_item.get("destination"))
 
     def _copy_published_media_files(self, item, ftp):
-        renditions_filter = get_renditions_filter()
-
-        def parse_media(item):
-            media = {}
-            renditions = item.get("renditions", {})
-            for key, rendition in renditions.items():
-                if key not in renditions_filter:
-                    continue
-                if not rendition.get("media"):
-                    logger.warn("media missing on rendition %s for item %s", key, item["guid"])
-                    continue
-                rendition.pop("href", None)
-                rendition.setdefault("mimetype", rendition.get("original", {}).get("mimetype", item.get("mimetype")))
-                media[rendition["media"]] = rendition
-            return media
-
         media = {}
-        media.update(parse_media(item))
-
-        for assoc in item.get("associations", {}).values():
-            if assoc is None:
-                continue
-            media.update(parse_media(assoc))
-            for assoc2 in assoc.get("associations", {}).values():
-                if assoc2 is None:
-                    continue
-                media.update(parse_media(assoc2))
+        for get_files in registered_transmitter_file_providers:
+            media.update(get_files(self.NAME, item))
 
         # Retrieve the list of files that currently exist in the FTP server
         remote_items = []

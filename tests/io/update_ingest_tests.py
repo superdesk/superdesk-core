@@ -645,3 +645,16 @@ class UpdateIngestTest(TestCase):
         self.assertEqual(3, len(ids))
         self.assertIn("thumbnail", item["associations"]["featuremedia"]["renditions"])
         self.assertIn("thumbnail", item["associations"]["foo"]["renditions"])
+
+    def test_ingest_profile_if_exists(self):
+        provider, provider_service = self.setup_reuters_provider()
+        items = provider_service.fetch_ingest(reuters_guid)
+        items[0]["profile"] = "nonexisting"
+        ingest_item(items[0], provider, provider_service)
+        self.assertIsNone(items[0].get("profile"))
+
+        content_types = [{"_id": "story", "name": "story"}]
+        self.app.data.insert("content_types", content_types)
+        items[0]["profile"] = "story"
+        ingest_item(items[0], provider, provider_service)
+        self.assertEqual("story", items[0].get("profile"))

@@ -385,33 +385,6 @@ Feature: Desks
         """
 
     @auth
-    Scenario: When creating/updating item add desk metadata
-        Given "desks"
-        """
-        [{"desk_metadata": {"anpa_category": [{"qcode": "sport"}], "headline": "sports", "slugline": "sp"}}]
-        """
-        And "archive"
-        """
-        [{"_id": "item1", "headline": "test", "type": "text"}]
-        """
-        When we patch "/archive/item1"
-        """
-        {"task": {"desk": "#desks._id#"}, "slugline": "foo"}
-        """
-        Then we get updated response
-        """
-        {"anpa_category": [{"qcode": "sport"}], "slugline": "foo", "headline": "test"}
-        """
-        When we post to "/archive"
-        """
-        {"slugline": "x", "task": {"desk": "#desks._id#"}}
-        """
-        Then we get new resource
-        """
-        {"slugline": "x", "headline": "sports", "anpa_category": [{"qcode": "sport"}]}
-        """
-
-    @auth
     @notification
     Scenario: Retrieve number of items with desk stages overview
         Given we have "desks" with "SPORTS_DESK_ID" and success
@@ -579,16 +552,22 @@ Feature: Desks
             {
                 "_items": [
                     {
-                        "state": "assigned",
-                        "count": 2
-                    },
-                    {
-                        "state": "in_progress",
-                        "count": 4
-                    },
-                    {
-                        "state": "completed",
-                        "count": 1
+                        "desk": "#SPORTS_DESK_ID#",
+                        "count": 7,
+                        "sub": [
+                            {
+                                "key": "assigned",
+                                "count": 2
+                            },
+                            {
+                                "key": "in_progress",
+                                "count": 4
+                            },
+                            {
+                                "key": "completed",
+                                "count": 1
+                            }
+                        ]
                     }
                 ]
             }
@@ -599,16 +578,36 @@ Feature: Desks
             {
                 "_items": [
                     {
-                        "state": "assigned",
-                        "count": 2
+                        "desk": "#SPORTS_DESK_ID#",
+                        "count": 7,
+                        "sub": [
+                            {
+                                "key": "assigned",
+                                "count": 2
+                            },
+                            {
+                                "key": "in_progress",
+                                "count": 4
+                            },
+                            {
+                                "key": "completed",
+                                "count": 1
+                            }
+                        ]
                     },
                     {
-                        "state": "in_progress",
-                        "count": 5
-                    },
-                    {
-                        "state": "completed",
-                        "count": 3
+                        "desk": "#POLITICS_DESK_ID#",
+                        "count": 3,
+                        "sub": [
+                            {
+                                "key": "completed",
+                                "count": 2
+                            },
+                            {
+                                "key": "in_progress",
+                                "count": 1
+                            }
+                        ]
                     }
                 ]
             }
@@ -650,6 +649,10 @@ Feature: Desks
         # she must associated to a desk to test the issue (she is associated to Sports desk below)
         """
         {"username": "user_5", "email": "user_5@example.net", "is_active": true, "role": "#ROLE_SUBEDITOR_ID#"}
+        """
+        Given "desks"
+        """
+        [{"name": "Empty", "desk_type": "authoring"}]
         """
         Given we have "desks" with "SPORTS_DESK_ID" and success
         """
@@ -754,3 +757,35 @@ Feature: Desks
                 ]
             }
         """
+
+    @auth
+    @notification
+    Scenario: Make the desk available in default content template
+        Given empty "desks"
+        Given "content_templates"
+        """
+        [{
+            "template_name": "test",
+            "template_type": "create",
+            "data": {"headline": "test", "type": "text", "slugline": "test"}
+        }]
+        """
+        When we post to "/desks"
+        """
+        {
+            "name": "Sports Desk",
+            "desk_language": "en",
+            "default_content_template": "#content_templates._id#"
+        }
+        """
+        Then we get OK response
+        When we get "content_templates/#content_templates._id#"
+        Then we get existing resource
+        """
+        {
+            "template_name": "test",
+            "template_type": "create",
+            "template_desks": ["#desks._id#"]
+        }
+        """
+        

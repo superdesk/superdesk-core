@@ -15,6 +15,7 @@ from superdesk.utc import utcnow
 from eve.utils import date_to_str, ParsedRequest, config
 from copy import deepcopy
 from bson import ObjectId
+from time import time
 
 logger = logging.getLogger(__name__)
 
@@ -125,26 +126,14 @@ class PurgeAudit(superdesk.Command):
             service.delete_ids_from_mongo(audit_ids)
 
     def purge_old_entries(self):
-        """
-        Purge entries older than the expiry
-        :return:
-        """
-        service = superdesk.get_resource_service("audit")
+        """Purge entries older than the expiry"""
+
         logger.info("Starting to purge audit logs at {}".format(utcnow()))
-        for _ in range(100):  # make sure we don't get stuck
-            lookup = {"$and": [{"_id": {"$lt": ObjectId.from_datetime(self.expiry)}}]}
-            req = ParsedRequest()
-            req.sort = '[("_id", 1)]'
-            req.projection = '{"_id": 1}'
-            req.max_results = 1000
-            audits = service.get_from_mongo(req=req, lookup=lookup)
-            items = list(item.get("_id") for item in audits)
-            if len(items) == 0:
-                logger.info("Finished purging audit logs at {}".format(utcnow()))
-                return
-            logger.info("Found {} audit items at {}".format(len(items), utcnow()))
-            service.delete_ids_from_mongo(items)
-        logger.warning("Audit purge didn't finish in 100 iterations.")
+        service = superdesk.get_resource_service("audit")
+        time_start = time()
+        service.delete_from_mongo({"_id": {"$lt": ObjectId.from_datetime(self.expiry)}})
+        time_diff = time() - time_start
+        logger.info(f"Finished purging audit logs. Took {time_diff:.4f} seconds")
 
 
 superdesk.command("audit:purge", PurgeAudit())

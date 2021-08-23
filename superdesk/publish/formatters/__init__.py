@@ -132,15 +132,6 @@ class Formatter(metaclass=FormatterRegistry):
         self.destination = destination
         self.subscriber = subscriber
 
-    def _publish_media(self, media):
-        if self.destination:
-            try:
-                transmitter = registered_transmitters[self.destination["delivery_type"]]
-            except KeyError:
-                logger.warning("Missing transmitter for destination %s", self.destination)
-            else:
-                return transmitter.transmit_media(media, self.subscriber, self.destination)
-
 
 def get_formatter(format_type, article):
     for formatter_cls in formatters:

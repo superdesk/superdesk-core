@@ -62,6 +62,7 @@ class ItemsService(BaseService):
         "item_source",
         "sort",
         "related_to",
+        "related_source",
     }
 
     default_sort = ItemsResource.datasource.get("default_sort", [("versioncreated", -1)])
@@ -74,6 +75,7 @@ class ItemsService(BaseService):
         "_current_version",
         "_latest_version",
         "ancestors",
+        "refs",
     }
 
     def find_one(self, req, **lookup):
@@ -263,12 +265,17 @@ class ItemsService(BaseService):
     def _process_item_renditions(self, item):
         hrefs = {}
         if item.get("renditions"):
-            for _k, v in item["renditions"].items():
+            renditions = {}
+            for k, v in item["renditions"].items():
+                if not v:
+                    continue
+                renditions[k] = v
                 if "media" in v:
                     href = v.get("href")
                     media = v.pop("media")
                     v["href"] = app.media.url_for_media(media, v.get("mimetype"))
                     hrefs[href] = v["href"]
+            item["renditions"] = renditions  # filter out empty renditions
         return hrefs
 
     def _process_item_associations(self, item):
@@ -362,6 +369,7 @@ class ItemsService(BaseService):
             "genre": "genre.code",
             "item_source": "source",
             "related_to": "refs.guid",
+            "related_source": "refs.source",
         }
 
         try:

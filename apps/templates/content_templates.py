@@ -480,7 +480,7 @@ class ContentTemplatesApplyService(Service):
         updates = render_content_template(item, template)
         item.update(updates)
 
-        editor_utils.generate_fields(item, force=True)
+        editor_utils.generate_fields(item, reload=True)
 
         if template_name == "kill":
             apply_null_override_for_kill(item)
@@ -530,7 +530,8 @@ def render_content_template(item, template, update=False):
     :return dict: updates to the item
     """
     new_template_data_ignore_fields = TEMPLATE_DATA_IGNORE_FIELDS.copy()
-    kwargs = dict(item=item, user=get_user())
+    kwargs = dict(item=item, user=get_user(), now=utcnow())
+
     dateline_present_in_user_preferences = (
         kwargs["user"].get("user_preferences", {}).get("dateline:located", {}).get("located")
     )

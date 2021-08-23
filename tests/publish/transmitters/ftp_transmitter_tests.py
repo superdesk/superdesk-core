@@ -15,6 +15,7 @@ from superdesk.tests import TestCase
 import ftplib
 from apps.publish import init_app
 from superdesk.publish.transmitters.ftp import FTPPublishService
+from superdesk.publish.transmitters.file_providers import *  # NOQA
 import io
 from unittest import mock
 
@@ -129,7 +130,10 @@ class FTPPublishServiceTestCase(TestCase):
 
     @mock.patch("ftplib.FTP", autospec=True)
     @mock.patch("superdesk.storage.ProxyMediaStorage.get", mockGet)
-    @mock.patch("superdesk.publish.transmitters.ftp.get_renditions_spec", return_value={"16-9": {}, "4-3": {}})
+    @mock.patch(
+        "superdesk.publish.transmitters.file_providers.associations.get_renditions_spec",
+        return_value={"16-9": {}, "4-3": {}},
+    )
     def test_with_associations(self, mock_ftp_constructor, *args):
         item = {
             "associations": {
@@ -147,7 +151,10 @@ class FTPPublishServiceTestCase(TestCase):
 
     @mock.patch("superdesk.ftp.ftplib.FTP", autospec=True)
     @mock.patch("superdesk.storage.ProxyMediaStorage.get", mockGet)
-    @mock.patch("superdesk.publish.transmitters.ftp.get_renditions_spec", return_value={"16-9": {}, "4-3": {}})
+    @mock.patch(
+        "superdesk.publish.transmitters.file_providers.associations.get_renditions_spec",
+        return_value={"16-9": {}, "4-3": {}},
+    )
     def test_with_association_and_embed(self, mock_ftp_constructor, *args):
         item = {"associations": ASSOCIATIONS}
 

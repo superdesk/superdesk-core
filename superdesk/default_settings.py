@@ -90,6 +90,12 @@ ELASTIC_DATETIME_FORMAT = "%Y-%m-%dT%H:%M:%S"
 #: .. versionadded:: 1.34
 #:
 ELASTIC_DEFAULT_SIZE = 10
+
+#: allow wildcards in query string
+#:
+#: https://discuss.elastic.co/t/configuring-the-standard-tokenizer/8691/5
+ELASTIC_QUERY_STRING_ANALYZE_WILDCARD = False
+
 PAGINATION_LIMIT = 200
 
 MERGE_NESTED_DOCUMENTS = False
@@ -139,6 +145,8 @@ MONGO_URI = env("MONGO_URI", "mongodb://localhost/%s" % MONGO_DBNAME)
 #: allow all mongo queries
 MONGO_QUERY_BLACKLIST = []
 
+MONGO_LOCALE = "en_US"
+
 #: legal archive switch
 LEGAL_ARCHIVE = env("LEGAL_ARCHIVE", None)
 
@@ -165,9 +173,6 @@ CONTENTAPI_ELASTICSEARCH_URL = env("CONTENTAPI_ELASTICSEARCH_URL", ELASTICSEARCH
 ELASTICSEARCH_INDEX = env("ELASTICSEARCH_INDEX", "superdesk")
 CONTENTAPI_ELASTICSEARCH_INDEX = env("CONTENTAPI_ELASTICSEARCH_INDEX", CONTENTAPI_MONGO_DBNAME)
 
-if env("ELASTIC_PORT"):
-    ELASTICSEARCH_URL = env("ELASTIC_PORT").replace("tcp:", "http:")
-
 ELASTICSEARCH_BACKUPS_PATH = env("ELASTICSEARCH_BACKUPS_PATH", "")
 
 #: elastic settings - superdesk custom filter
@@ -193,9 +198,10 @@ ELASTICSEARCH_SETTINGS = {
                     "char_filter": ["html_strip_filter"],
                 },
             },
-        }
-    }
+        },
+    },
 }
+
 
 CONTENTAPI_ELASTICSEARCH_SETTINGS = {
     "settings": {
@@ -218,8 +224,6 @@ ELASTICSEARCH_TRACK_TOTAL_HITS = True
 
 #: redis url
 REDIS_URL = env("REDIS_URL", "redis://localhost:6379")
-if env("REDIS_PORT"):
-    REDIS_URL = env("REDIS_PORT").replace("tcp:", "redis:")
 
 #: cache url - superdesk will try to figure out if it's redis or memcached
 CACHE_URL = env("SUPERDESK_CACHE_URL", REDIS_URL)
@@ -356,6 +360,8 @@ CORE_APPS = [
     "superdesk.auth_server",
     "apps.links",
     "superdesk.locales",
+    "apps.usage_metrics",
+    "superdesk.system.health",
 ]
 
 #: Specify what modules should be enabled
@@ -573,10 +579,16 @@ INGEST_EXPIRY_MINUTES = int(env("INGEST_EXPIRY_MINUTES", 2 * 24 * 60))
 PUBLISHED_CONTENT_EXPIRY_MINUTES = int(env("PUBLISHED_CONTENT_EXPIRY_MINUTES", 0))
 
 #: The number of minutes before audit content is purged
-AUDIT_EXPIRY_MINUTES = int(env("AUDIT_EXPIRY_MINUTES", 0))
+#:
+#: .. versionchanged:: 2.4.0
+#     Changed default to 14 days (was previously disabled)
+AUDIT_EXPIRY_MINUTES = int(env("AUDIT_EXPIRY_MINUTES", 60 * 24 * 14))
 
 #: The number records to be fetched for expiry.
 MAX_EXPIRY_QUERY_LIMIT = int(env("MAX_EXPIRY_QUERY_LIMIT", 100))
+
+#: Number of loops to do on each run
+MAX_EXPIRY_LOOPS = 50
 
 #: The number of minutes before Publish Queue is purged
 PUBLISH_QUEUE_EXPIRY_MINUTES = int(env("PUBLISH_QUEUE_EXPIRY_MINUTES", 0))
@@ -659,6 +671,9 @@ ENABLE_PROFILING = False
 
 #: default timeout for ftp connections
 FTP_TIMEOUT = 300
+
+#: default timeout when publishing using the `http_push` transmitter
+HTTP_PUSH_TIMEOUT = (5, 30)
 
 #: default amount of files which can processed during one iteration of ftp ingest
 FTP_INGEST_FILES_LIST_LIMIT = 100
@@ -959,3 +974,4 @@ OIDC_BROWSER_REDIRECT_URL = env("OIDC_BROWSER_REDIRECT_URL", CLIENT_URL)
 #: .. versionadded:: 2.1
 #:
 APPS_DATA_UPDATES_PATHS = []
+PUBLISH_ASSOCIATIONS_RESEND = "new"

@@ -96,7 +96,8 @@ Feature: Content Publishing
       """
       {"_items" : [
         {"_id": "123", "guid": "123", "headline": "test", "_current_version": 2, "state": "published",
-        "task": {"desk": "#desks._id#", "stage": "#desks.incoming_stage#", "user": "#CONTEXT_USER_ID#"}
+        "task": {"desk": "#desks._id#", "stage": "#desks.incoming_stage#", "user": "#CONTEXT_USER_ID#"},
+        "lock_user": "__none__"
         }]}
       """
       When we enqueue published
@@ -1152,10 +1153,6 @@ Feature: Content Publishing
       """
       {"_current_version": 2, "state": "killed", "operation": "kill", "pubstatus": "canceled", "task":{"desk": "#desks._id#", "stage": "#desks.incoming_stage#"}, "version_creator": "#CONTEXT_USER_ID#"}
       """
-      When we post to "/archive/#archive._id#/unlock"
-      """
-      {}
-      """
       Then we get OK response
       When we enqueue published
       Then we assert the content api item "123" is published to subscriber "#subscribers._id#"
@@ -1226,14 +1223,16 @@ Feature: Content Publishing
       Then we get OK response
       And we get existing resource
       """
-      {"_current_version": 2, "state": "corrected", "operation": "correct", "task":{"desk": "#desks._id#", "stage": "#desks.incoming_stage#"}}
+      {"_current_version": 2, "state": "corrected", "operation": "correct", "task":{"desk": "#desks._id#", "stage": "#desks.incoming_stage#"},
+       "lock_user": "__none__"
+      }
       """
       When we enqueue published
       When we post to "/archive/#archive._id#/unlock"
       """
       {}
       """
-      Then we get OK response
+      Then we get error 400
       When we get "/legal_archive/123"
       Then we get OK response
       When we get "/legal_archive/123?version=all"
@@ -1320,11 +1319,6 @@ Feature: Content Publishing
       """
       And we get updated timestamp "versioncreated"
       When we enqueue published
-      When we post to "/archive/#archive._id#/unlock"
-      """
-      {}
-      """
-      Then we get OK response
       When we get "/legal_archive/123"
       Then we get OK response
       And we get existing resource
@@ -1367,11 +1361,6 @@ Feature: Content Publishing
       """
       And we get updated timestamp "versioncreated"
       When we enqueue published
-      When we post to "/archive/#archive._id#/unlock"
-      """
-      {}
-      """
-      Then we get OK response
       When we get "/legal_archive/123"
       Then we get OK response
       And we get existing resource
@@ -3126,11 +3115,6 @@ Feature: Content Publishing
       """
       And we get updated timestamp "versioncreated"
       When we enqueue published
-      When we post to "/archive/#archive._id#/unlock"
-      """
-      {}
-      """
-      Then we get OK response
       When we get "/legal_archive/123"
       Then we get OK response
       And we get existing resource
@@ -3173,11 +3157,6 @@ Feature: Content Publishing
       """
       And we get updated timestamp "versioncreated"
       When we enqueue published
-      When we post to "/archive/#archive._id#/unlock"
-      """
-      {}
-      """
-      Then we get OK response
       When we get "/legal_archive/123"
       Then we get OK response
       And we get existing resource
@@ -4179,7 +4158,7 @@ Feature: Content Publishing
       """
       And we publish "123" with "publish" type and "published" state
       """
-      {"publish_schedule": "#DATE+2#"}
+      {"publish_schedule": "#DATE+1#", "schedule_settings": {"time_zone": "Europe/Prague"}}
       """
       Then we get OK response
       And we get existing resource
@@ -4202,6 +4181,7 @@ Feature: Content Publishing
                   "description_text": "description_text",
                   "state": "scheduled",
                   "operation": "publish",
+                  "schedule_settings": {"time_zone": "Europe/Prague"},
                   "renditions": {}
               }
           }
@@ -4556,3 +4536,177 @@ Feature: Content Publishing
         "task":{"desk": "#desks._id#", "user": "#CONTEXT_USER_ID#"}
        }
       """
+
+    @auth
+    Scenario: Create correction in working stage
+      Given config update
+      """
+      { "CORRECTIONS_WORKFLOW": true}
+      """
+      And "validators"
+      """
+      [
+          {"_id": "publish_text", "act": "publish", "type": "text", "schema":{}},
+          {"_id": "correct_text", "act": "correct", "type": "text", "schema":{}}
+      ]
+      """
+      And "desks"
+      """
+      [{"name": "Sports"}]
+      """
+      And "archive"
+      """
+      [
+          {
+            "guid": "123",
+            "type": "text",
+            "headline": "test",
+            "state": "fetched",
+            "task": {
+              "desk": "#desks._id#",
+              "stage": "#desks.incoming_stage#",
+              "user": "#CONTEXT_USER_ID#"
+              },
+            "subject":
+              [
+                {"qcode": "17004000",
+                "name": "Statistics"}
+              ],
+            "_current_version": 1
+          }
+      ]
+      """
+      When we publish "123" with "publish" type and "published" state
+      Then we get OK response
+      And we get existing resource
+      """
+      {
+        "_current_version": 2,
+        "type": "text",
+        "state": "published",
+        "task":{"desk": "#desks._id#", "stage": "#desks.incoming_stage#"}
+      }
+      """
+      When we publish "123" with "correction" type and "correction" state
+      Then we get OK response
+      When we get "/archive/123"
+      Then we get existing resource
+      """
+      {
+        "_current_version": 2,
+        "type": "text",
+        "state": "correction",
+        "task":{"desk": "#desks._id#", "stage": "#desks.working_stage#"}
+      }
+      """
+
+    @auth
+    Scenario: Save changes to a duplicate related item after publish
+      Given config update
+      """
+      { "PUBLISH_ASSOCIATED_ITEMS": true}
+      """
+      And "validators"
+        """
+        [
+            {"_id": "publish_text", "act": "publish", "type": "text", "schema":{}}
+        ]
+        """
+      And "desks"
+        """
+        [{"name": "Sports", "members":[{"user":"#CONTEXT_USER_ID#"}]}]
+        """
+      And "archive"
+        """
+        [
+            {
+                "_id": "234",
+                "guid": "234",
+                "slugline": "related item",
+                "headline": "related item",
+                "alt_text": "alt_text",
+                "description_text": "description_text",
+                "type": "picture",
+                "state": "submitted",
+                "operation": "duplicate",
+                "task": {
+                    "desk": "#desks._id#",
+                    "stage": "#desks.incoming_stage#",
+                    "user": "#CONTEXT_USER_ID#"
+                }
+            },
+            {
+                "_id": "123",
+                "guid": "123",
+                "_current_version": 1,
+                "headline": "main item",
+                "slugline": "main item",
+                "body_html": "Test Document body",
+                "state": "in_progress",
+                "task": {
+                    "desk": "#desks._id#",
+                    "stage": "#desks.incoming_stage#",
+                    "user": "#CONTEXT_USER_ID#"
+                },
+                "associations": {
+                    "related--1": {
+                        "_id": "234",
+                        "guid": "234",
+                        "slugline": "related item",
+                        "headline": "related item",
+                        "alt_text": "alt_text",
+                        "description_text": "description_text",
+                        "type": "picture",
+                        "state": "submitted",
+                        "operation": "duplicate",
+                        "task": {
+                            "desk": "#desks._id#",
+                            "stage": "#desks.incoming_stage#",
+                            "user": "#CONTEXT_USER_ID#"
+                        }
+                    }
+                }
+            }
+        ]
+        """
+      When we patch "/archive/234"
+        """
+        {"headline": "related item test", "slugline": "related item test"}
+        """
+      Then we get OK response
+      And we get existing resource
+        """
+        {
+            "_id": "234",
+            "guid": "234",
+            "slugline": "related item test",
+            "headline": "related item test",
+            "alt_text": "alt_text",
+            "description_text": "description_text",
+            "type": "picture",
+            "state": "in_progress",
+            "operation": "update",
+            "task": {
+                "desk": "#desks._id#",
+                "stage": "#desks.incoming_stage#",
+                "user": "#CONTEXT_USER_ID#"
+            }
+        }
+        """
+      When we publish "123" with "publish" type and "published" state
+      Then we get OK response
+      When we get "/archive/234"
+      Then we get existing resource
+        """
+        {
+            "_id": "234",
+            "guid": "234",
+            "slugline": "related item test",
+            "headline": "related item test",
+            "alt_text": "alt_text",
+            "description_text": "description_text",
+            "type": "picture",
+            "state": "published",
+            "operation": "publish"
+        }
+        """

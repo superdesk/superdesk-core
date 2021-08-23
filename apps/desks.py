@@ -32,7 +32,8 @@ from flask_babel import _, lazy_gettext
 
 
 logger = logging.getLogger(__name__)
-SIZE_MAX = 2_147_483_647
+
+SIZE_MAX = 1000  # something reasonable for the ui
 
 
 class DeskTypes(SuperdeskBaseEnum):
@@ -82,6 +83,8 @@ desks_schema = {
     },
     # if the preserve_published_content is set to true then the content on this won't be expired
     "preserve_published_content": {"type": "boolean", "required": False, "default": False},
+    # Store SAMS's Desk settings on the Desk items
+    "sams_settings": {"type": "dict", "allow_unknown": True, "schema": {"allowed_sets": {"type": "list"}}},
 }
 
 
@@ -152,6 +155,13 @@ class DesksService(BaseService):
             super().create([desk], **kwargs)
             for stage_type in stages_to_be_linked_with_desk:
                 stage_service.patch(desk[stage_type], {"desk": desk[config.ID_FIELD]})
+
+            # make the desk available in default content template
+            content_templates = get_resource_service("content_templates")
+            template = content_templates.find_one(req=None, _id=desk.get("default_content_template"))
+            if template:
+                template.setdefault("template_desks", []).append(desk.get(config.ID_FIELD))
+                content_templates.patch(desk.get("default_content_template"), template)
 
         return [doc[config.ID_FIELD] for doc in docs]
 
@@ -288,22 +298,6 @@ class DesksService(BaseService):
         else:
             push_notification(self.notification_key, updated=1, desk_id=str(desk.get(config.ID_FIELD)))
 
-    def apply_desk_metadata(self, updates, original):
-        """Apply desk metadata in case it was set in updates and metadata is not set yet on item.
-
-        :param updates: updates to item that should be saved
-        :param original: original item version before update
-        """
-        desk_id = updates.get("task", {}).get("desk", {})
-        if not desk_id:
-            return
-        desk = self.find_one(req=None, _id=desk_id)
-        if not desk:
-            return
-        for key, val in desk.get("desk_metadata", {}).items():
-            if key not in updates and key not in original:
-                updates[key] = val
-
     def get_desk_name(self, desk_id):
         """Return the item desk.
 
@@ -327,7 +321,9 @@ class DesksService(BaseService):
         for desk in desks:
             if "members" in desk:
                 users = tuple(
-                    db_users.find({"_id": {"$in": [member["user"] for member in desk["members"]]}}, {"display_name": 1})
+                    db_users.find(
+                        {"_id": {"$in": [member["user"] for member in desk.get("members", [])]}}, {"display_name": 1}
+                    )
                 )
                 members_set |= {(m["_id"], m["display_name"]) for m in users}
 
@@ -575,8 +571,8 @@ class OverviewService(BaseService):
         elif agg_type == "assignments":
             collection = "assignments"
             desk_field = "assigned_to.desk"
-            key = "state"
-            field = f"assigned_to.{key}"
+            key = "desk"
+            field = "assigned_to.desk"
         else:
             raise ValueError(f"Invalid overview aggregation type: {agg_type}")
 
@@ -591,9 +587,12 @@ class OverviewService(BaseService):
                                     CONTENT_STATE.SPIKED,
                                     CONTENT_STATE.KILLED,
                                     CONTENT_STATE.CORRECTED,
+                                    CONTENT_STATE.SCHEDULED,
+                                    CONTENT_STATE.RECALLED,
                                 ]
                             }
-                        }
+                        },
+                        {"term": {"version": 0}},
                     ]
                 }
             }
@@ -608,6 +607,9 @@ class OverviewService(BaseService):
         #                        -composite-aggregation.html)
         agg_query["aggs"] = {"overview": {"terms": {"field": field, "size": SIZE_MAX}}}
 
+        if agg_type == "assignments":
+            agg_query["aggs"]["overview"]["aggs"] = {"sub": {"terms": {"field": "assigned_to.state", "size": SIZE_MAX}}}
+
         filters = doc.get("filters")
         if filters:
             should = []
@@ -616,17 +618,23 @@ class OverviewService(BaseService):
                 for text in f_data:
                     should.append({"match": {f_name: text}})
 
-            # with filters we need whole documents, we get them with top_hits
+        with_docs = request and request.args.get("with_docs") == "1"
+        if with_docs:
             agg_query["aggs"]["overview"]["aggs"] = {"top_docs": {"top_hits": {"size": 100}}}
 
         with timer(timer_label):
             response = app.data.elastic.search(agg_query, collection, params={"size": 0})
 
         doc["_items"] = [
-            {"count": b["doc_count"], key: b["key"]} for b in response.hits["aggregations"]["overview"]["buckets"]
+            {
+                "count": b["doc_count"],
+                key: b["key"],
+                "sub": format_buckets(b.get("sub")),
+            }
+            for b in response.hits["aggregations"]["overview"]["buckets"]
         ]
 
-        if filters:
+        if with_docs:
             for idx, bucket in enumerate(response.hits["aggregations"]["overview"]["buckets"]):
                 docs = doc["_items"][idx]["docs"] = []
                 for hit_doc in bucket["top_docs"]["hits"]["hits"]:
@@ -658,7 +666,7 @@ class OverviewService(BaseService):
         found = desks_service.get(req, desk_filter)
         members = set()
         for d in found:
-            members.update({m["user"] for m in d["members"]})
+            members.update({m["user"] for m in d.get("members", [])})
 
         users_aggregation = app.data.pymongo().db.users.aggregate(
             [
@@ -757,3 +765,15 @@ def remove_profile_from_desks(item):
         if desk.get("default_content_profile") == str(item.get(config.ID_FIELD)):
             desk["default_content_profile"] = None
             superdesk.get_resource_service("desks").patch(desk[config.ID_FIELD], desk)
+
+
+def format_buckets(aggs):
+    if not aggs:
+        return aggs
+    return [
+        {
+            "key": b["key"],
+            "count": b["doc_count"],
+        }
+        for b in aggs["buckets"]
+    ]

@@ -23,6 +23,7 @@ from superdesk.metadata.utils import (
     aggregations,
     is_normal_package,
     get_elastic_highlight_query,
+    _set_highlight_query,
 )
 from .common import (
     remove_unwanted,
@@ -96,6 +97,7 @@ from .usage import track_usage, update_refs
 from superdesk.utc import utcnow
 from superdesk.vocabularies import is_related_content
 from flask_babel import _
+from werkzeug.datastructures import ImmutableMultiDict
 
 EDITOR_KEY_PREFIX = "editor_"
 logger = logging.getLogger(__name__)
@@ -238,6 +240,16 @@ def flush_renditions(updates, original):
                         updates[ASSOCIATIONS][key]["renditions"][old_rendition] = None
 
 
+def remove_is_queued(item):
+    if config.PUBLISH_ASSOCIATED_ITEMS:
+        associations = item.get("associations") or {}
+        for associations_key, associated_item in associations.items():
+            if not associated_item:
+                continue
+            if associated_item.get("is_queued"):
+                associated_item["is_queued"] = None
+
+
 class ArchiveVersionsResource(Resource):
     schema = item_schema()
     extra_response_fields = extra_response_fields
@@ -352,8 +364,6 @@ class ArchiveService(BaseService):
             if doc.get("version") == 0:
                 doc[config.VERSION] = doc["version"]
 
-            self._add_desk_metadata(doc, {})
-
             convert_task_attributes_to_objectId(doc)
             transtype_metadata(doc)
 
@@ -393,6 +403,14 @@ class ArchiveService(BaseService):
 
         push_content_notification(docs)
 
+    def set_marked_for_sign_off(self, updates):
+        if "marked_for_user" in updates:
+            sign_off = None
+            if updates["marked_for_user"]:
+                user_doc = get_resource_service("users").find_one(req=None, _id=updates["marked_for_user"])
+                sign_off = user_doc.get("sign_off")
+            updates["marked_for_sign_off"] = sign_off
+
     def on_update(self, updates, original):
         """Runs on archive update.
 
@@ -408,6 +426,9 @@ class ArchiveService(BaseService):
         if ITEM_TYPE in updates:
             del updates[ITEM_TYPE]
 
+        # set marked for sign off key if mark for user is exists in updates
+        self.set_marked_for_sign_off(updates)
+
         self._validate_updates(original, updates, user)
 
         if self.__is_req_for_save(updates):
@@ -416,7 +437,6 @@ class ArchiveService(BaseService):
 
         remove_unwanted(updates)
         self._add_system_updates(original, updates, user)
-        self._add_desk_metadata(updates, original)
         self._handle_media_updates(updates, original, user)
         flush_renditions(updates, original)
         update_refs(updates, original)
@@ -542,11 +562,34 @@ class ArchiveService(BaseService):
     def replace(self, id, document, original):
         return self.restore_version(id, document, original) or super().replace(id, document, original)
 
+    def _get_highlight_query(self, req):
+        """Get and set highlight query
+
+        :param req parsed request
+        """
+        args = getattr(req, "args", {})
+        source = json.loads(args.get("source")) if args.get("source") else {"query": {"filtered": {}}}
+        if source:
+            _set_highlight_query(source)
+
+            # update req args
+            try:
+                req.args = req.args.to_dict()
+            except AttributeError:
+                pass
+            req.args["source"] = json.dumps(source)
+            req.args = ImmutableMultiDict(req.args)
+
+        return req
+
     def get(self, req, lookup):
+        req = self._get_highlight_query(req)
+
         if req is None and lookup is not None and "$or" in lookup:
             # embedded resource generates mongo query which doesn't work with elastic
             # so it needs to be fixed here
             return super().get(req, lookup["$or"][0])
+
         return super().get(req, lookup)
 
     def find_one(self, req, **lookup):
@@ -629,7 +672,7 @@ class ArchiveService(BaseService):
         """
         new_doc = original_doc.copy()
 
-        self.remove_after_copy(new_doc, extra_fields, delete_keys=["marked_for_user"])
+        self.remove_after_copy(new_doc, extra_fields, delete_keys=["marked_for_user", "marked_for_sign_off"])
         on_duplicate_item(new_doc, original_doc, operation)
         resolve_document_version(new_doc, SOURCE, "PATCH", new_doc)
 
@@ -1096,11 +1139,10 @@ class ArchiveService(BaseService):
         :param bool invalid_only: True only invalid items
         :return pymongo.cursor: expired non published items.
         """
-        unique_id = 0
-
-        while True:
+        last_id = None
+        for i in range(app.config["MAX_EXPIRY_LOOPS"]):  # avoid blocking forever just in case
             req = ParsedRequest()
-            req.sort = "unique_id"
+            req.sort = "_id"
             query = {
                 "$and": [
                     {"expiry": {"$lte": date_to_str(expiry_datetime)}},
@@ -1108,33 +1150,27 @@ class ArchiveService(BaseService):
                 ]
             }
 
-            query["$and"].append({"unique_id": {"$gt": unique_id}})
-
             if invalid_only:
                 query["$and"].append({"expiry_status": "invalid"})
             else:
                 query["$and"].append({"expiry_status": {"$ne": "invalid"}})
 
-            req.where = json.dumps(query)
+            if last_id:
+                query["$and"].append({"_id": {"$gt": last_id}})
 
+            req.where = json.dumps(query)
             req.max_results = config.MAX_EXPIRY_QUERY_LIMIT
+
             items = list(self.get_from_mongo(req=req, lookup=None))
 
             if not len(items):
                 break
 
-            unique_id = items[-1]["unique_id"]
+            last_id = items[-1]["_id"]
+
             yield items
-
-    def _add_desk_metadata(self, updates, original):
-        """Populate updates metadata from item desk in case it's set.
-
-        It will only add data which is not set yet on the item.
-
-        :param updates: updates to item that should be saved
-        :param original: original item version before update
-        """
-        return get_resource_service("desks").apply_desk_metadata(updates, original)
+        else:
+            logger.warning("get_expired_items did not finish in %d loops", app.config["MAX_EXPIRY_LOOPS"])
 
     def handle_mark_user_notifications(self, updates, original, add_activity=True):
         """Notify user when item is marked or unmarked

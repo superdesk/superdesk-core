@@ -90,6 +90,7 @@ class VocabulariesResource(Resource):
             "allowed": ["single selection", "multi selection", "do not show"],
             "nullable": True,
         },
+        "read_only": {"type": "boolean", "required": False, "nullable": True},
         "schema_field": {"type": "string", "required": False, "nullable": True},
         "dependent": {
             "type": "boolean",
@@ -514,6 +515,10 @@ class VocabulariesService(BaseService):
 
     def get_languages(self):
         return self.get_items(_id="languages")
+
+    def get_field_options(self, field) -> Dict:
+        cv = self.find_one(req=None, _id=field)
+        return cv and cv.get("field_options") or {}
 
 
 def is_related_content(item_name, related_content=None):

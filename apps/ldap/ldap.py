@@ -84,13 +84,13 @@ class ADAuth:
         if username_for_profile is None:
             username_for_profile = username
 
-        if self.fqdn is not None:
+        if self.fqdn is not None and self.fqdn and "@" not in username:
             username = username + "@" + self.fqdn
 
         try:
             ldap_conn = Connection(self.ldap_server, auto_bind=True, user=username, password=password)
 
-            user_filter = self.user_filter.format(username_for_profile)
+            user_filter = self.user_filter.format(username, username_for_profile.split("@")[0])
             logger.info("base filter:{} user filter:{}".format(self.base_filter, user_filter))
 
             with ldap_conn:
@@ -162,6 +162,10 @@ class ADAuthService(AuthService):
             raise SuperdeskApiError.notFoundError(
                 message=_("No user has been found in AD"), payload={"profile_to_import": 1}
             )
+
+        # If the LDAP server returned a username use that.
+        if "username" in user_data:
+            profile_to_import = user_data.pop("username", None)
 
         query = get_user_query(profile_to_import)
 

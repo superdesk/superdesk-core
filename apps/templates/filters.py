@@ -60,3 +60,10 @@ def first_paragraph_filter(input_string):
 
     logger.warning("Failed to locate the first paragraph from input_string: {}.".format(input_string))
     return ""
+
+
+def iso_datetime(date):
+    try:
+        return date.isoformat()
+    except Exception:
+        logger.warning("Failed to convert datetime. Arguments: Datetime - {} into ISOFormat".format(date))

@@ -10,7 +10,7 @@
 
 
 import superdesk
-from apps.archive.archive import SOURCE as ARCHIVE
+from apps.archive.archive import SOURCE as ARCHIVE, remove_is_queued
 from apps.content import push_content_notification
 from apps.auth import get_user_id
 from superdesk import get_resource_service
@@ -57,7 +57,7 @@ class TranslateService(BaseService):
 
         item = archive_service.find_one(req=None, guid=guid)
         if not item:
-            raise SuperdeskApiError.notFoundError(_("Fail to found item with guid: {guid}").format(guid=guid))
+            raise SuperdeskApiError.notFoundError(_("Failed to find item with guid: {guid}").format(guid=guid))
 
         if not is_workflow_state_transition_valid("translate", item[ITEM_STATE]):
             raise InvalidStateTransitionError()
@@ -81,6 +81,8 @@ class TranslateService(BaseService):
         item["firstcreated"] = utcnow()
         if task:
             item["task"] = task
+
+        remove_is_queued(item)
 
         extra_fields = ["translation_id", "translated_from"]
 

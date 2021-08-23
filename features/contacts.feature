@@ -8,7 +8,7 @@ Feature: Contacts
         """
         {
             "first_name": "Albert", "last_name": "Foo", "mobile": [{"number": "1234", "usage": "After hours",
-            "public": true}]
+            "public": true}], "public": true
         }
         """
         Then we get response code 201
@@ -19,7 +19,7 @@ Feature: Contacts
             "_items" :
               [{
               "last_name" : "Foo", "first_name" : "Albert", "mobile": [{"number": "1234", "usage": "After hours",
-              "public": true}]}
+              "public": true}], "public": true}
               ]
           }
           """
@@ -32,8 +32,8 @@ Feature: Contacts
     Scenario: Get contacts
         Given "contacts"
         """
-        [{"_id":1, "first_name": "Albert", "last_name": "Foo"},
-        {"_id":2, "first_name": "Jane", "last_name": "Doe"}]
+        [{"_id":1, "first_name": "Albert", "last_name": "Foo", "public": true},
+        {"_id":2, "first_name": "Jane", "last_name": "Doe", "public": true}]
         """
         When we get "contacts"
         Then we get existing resource
@@ -41,8 +41,8 @@ Feature: Contacts
           {
             "_items" :
               [
-                {"last_name" : "Foo", "first_name" : "Albert"},
-                {"last_name" : "Doe", "first_name" : "Jane"}
+                {"last_name" : "Foo", "first_name" : "Albert", "public": true},
+                {"last_name" : "Doe", "first_name" : "Jane", "public": true}
               ]
           }
           """
@@ -51,7 +51,7 @@ Feature: Contacts
     Scenario: Get active contacts
         Given "contacts"
         """
-        [{"_id":1, "first_name": "Albert", "last_name": "Foo"},
+        [{"_id":1, "first_name": "Albert", "last_name": "Foo","public" : true},
         {"_id":4, "is_active": false,"first_name": "Jane", "last_name": "Doe"}]
         """
         When we get "/contacts"
@@ -86,17 +86,17 @@ Feature: Contacts
     Scenario: Search for a contact
         Given "contacts"
         """
-        [{"_id": 1, "first_name": "Albert", "last_name": "Foo"},
-        {"_id": 2, "first_name": "Jill", "last_name": "Smith"},
-        {"_id": 3, "first_name": "Bill", "last_name": "Lee"},
-        {"_id": 4, "first_name": "Jane", "last_name": "Doe"}]
+        [{"_id": 1, "first_name": "Albert", "last_name": "Foo", "public": true},
+        {"_id": 2, "first_name": "Jill", "last_name": "Smith", "public": true},
+        {"_id": 3, "first_name": "Bill", "last_name": "Lee", "public": true},
+        {"_id": 4, "first_name": "Jane", "last_name": "Doe", "public": true}]
         """
         When we get "/contacts?q=jane"
         Then we get existing resource
           """
           {
             "_items": [{
-              "last_name" : "Doe", "first_name" : "Jane"}]
+              "last_name" : "Doe", "first_name" : "Jane", "public": true}]
           }
           """
 
@@ -125,13 +125,13 @@ Feature: Contacts
         """
         When we patch "/contacts/1"
         """
-        {"first_name": "Mary", "country": {"name": "Argentina", "qcode": "arg"}}
+        {"first_name": "Mary", "country": {"name": "Argentina", "qcode": "arg"}, "contact_state": {"name" : "New Zealand", "qcode" : "NZ"}}
         """
         When we get "/contacts/1"
         Then we get existing resource
           """
           {
-              "last_name" : "Foo", "first_name" : "Mary", "country": {"name": "Argentina", "qcode": "arg"}
+              "last_name" : "Foo", "first_name" : "Mary", "country": {"name": "Argentina", "qcode": "arg"}, "contact_state": {"name" : "New Zealand", "qcode" : "NZ"}
           }
           """
         Then we get notifications

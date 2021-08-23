@@ -38,7 +38,7 @@ def test_excluded_fields(prodapi_app_with_data, prodapi_app_with_data_client):
     :param prodapi_app_with_data_client: client for prod api app with filled data
     """
 
-    excluded_fields = {"_etag", "_type", "_updated", "_created", "_links"}
+    excluded_fields = {"_etag", "_type", "_updated", "_created"}
 
     with prodapi_app_with_data.test_request_context():
         # list

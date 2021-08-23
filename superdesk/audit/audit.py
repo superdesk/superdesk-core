@@ -20,6 +20,7 @@ class AuditResource(Resource):
     endpoint_name = "audit"
     resource_methods = ["GET"]
     item_methods = ["GET"]
+    notifications = False
     schema = {
         "resource": {"type": "string"},
         "action": {"type": "string"},

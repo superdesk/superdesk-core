@@ -148,6 +148,8 @@ class ArchiveSpikeService(BaseService):
             raise InvalidStateTransitionError()
 
         archive_service = get_resource_service(ARCHIVE)
+        published_service = get_resource_service("published")
+
         user = get_user(required=True)
         item = archive_service.find_one(req=None, _id=id)
         task = item.get("task", {})
@@ -171,15 +173,7 @@ class ArchiveSpikeService(BaseService):
             # remove marked_for_user on spike and keep it as previous_marked_user for history
             updates["previous_marked_user"] = original["marked_for_user"]
             updates["marked_for_user"] = None
-
-        published_service = get_resource_service("published")
-        published_items = published_service.find({"guid": original.get("guid"), "state": "unpublished"})
-
-        for item in published_items:
-            if item:
-                item["state"] = CONTENT_STATE.SPIKED
-                item["operation"] = ITEM_SPIKE
-                published_service.patch(id=item.pop(config.ID_FIELD), updates=item)
+            updates["marked_for_sign_off"] = None
 
         if original.get("translation_id") and original.get("translated_from"):
             # remove translations info from the translated item on spike
@@ -195,7 +189,6 @@ class ArchiveSpikeService(BaseService):
             self._remove_translations(archive_service, translated_from, id_to_remove)
 
             if translated_from.get("state") in PUBLISH_STATES:
-                published_service = get_resource_service("published")
                 published_items = list(
                     published_service.get_from_mongo(req=None, lookup={"item_id": translated_from_id})
                 )

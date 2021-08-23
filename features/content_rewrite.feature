@@ -2428,3 +2428,204 @@ Feature: Rewrite content
         {"desk_id": "#desks._id#"}
         """
         Then we get OK response
+
+    @auth
+    Scenario: Sync editor3 fields when linking updates
+        Given "desks"
+        """
+        [{"name": "Sports"}]
+        """
+        And "content_types"
+        """
+        [
+          {"_id": "story", "schema": {
+            "headline": {},
+            "subheadline": {},
+            "body_html": {}
+          }}
+        ]
+        """
+        And "vocabularies"
+        """
+        [
+          {"_id": "subheadline", "field_options": {"single": true}},
+          {"_id": "only1", "field_options": {"single": true}},
+          {"_id": "only2", "field_options": {"single": true}}
+        ]
+        """
+        And "archive"
+        """
+        [
+          {
+            "guid": "1", "type": "text", "headline": "headline 1", "_current_version": 1, "state": "fetched",
+            "profile": "story",
+            "task": {"desk": "#desks._id#", "stage": "#desks.incoming_stage#", "user": "#CONTEXT_USER_ID#"},
+            "body_html": "<p>body 1</p>", "extra": {"subheadline": "subhead 1"},
+            "fields_meta": {
+              "extra>subheadline": {
+                "draftjsState": [
+                  {"blocks": [
+                    { "type": "unstyled",
+                      "text": "subhead 1"}
+                  ]}
+                ]
+              },
+              "body_html": {
+                "draftjsState": [
+                  {"blocks": [
+                    { "type": "unstyled",
+                      "text": "body 1"}
+                  ]}
+                ]
+              },
+              "headline": {
+                "draftjsState": [
+                  {"blocks": [
+                    { "type": "unstyled",
+                      "text": "headline 1"}
+                  ]}
+                ]
+              }
+            }
+          },
+          {
+            "guid": "2", "type": "text", "headline": "headline 2", "_current_version": 1, "state": "fetched",
+            "profile": "story",
+            "task": {"desk": "#desks._id#", "stage": "#desks.incoming_stage#", "user": "#CONTEXT_USER_ID#"},
+            "body_html": "body 2", "extra": {"subheadline": "subhead 2", "only2": "only2"},
+            "fields_meta": {
+              "extra>subheadline": {
+                "draftjsState": [
+                  {"blocks": [
+                    { "type": "unstyled",
+                      "text": "subhead 2"}
+                  ]}
+                ]
+              },
+              "extra>only2": {
+                "draftjsState": [
+                  {"blocks": [
+                    { "type": "unstyled",
+                      "text": "only2"}
+                  ]}
+                ]
+              },
+              "body_html": {
+                "draftjsState": [
+                  {"blocks": [
+                    { "type": "unstyled",
+                      "text": "body 2"}
+                  ]}
+                ]
+              },
+              "headline": {
+                "draftjsState": [
+                  {"blocks": [
+                    { "type": "unstyled",
+                      "text": "headline 2"}
+                  ]}
+                ]
+              }
+            }
+          }
+        ]
+        """
+        When we rewrite "2"
+        """
+        {"update": {
+            "_id": "1", "guid": "1", "body_html": "<p>body 1</p>",
+            "extra": {"subheadline": "subhead 1", "only1": "only1"},
+            "profile": "story", "type": "text", "headline": "headline 1",
+            "fields_meta": {
+              "extra>subheadline": {
+                "draftjsState": [
+                  {"blocks": [
+                    {
+                      "type": "unstyled",
+                      "text": "subhead 1"}
+                  ]}
+                ]
+              },
+              "extra>only1": {
+                "draftjsState": [
+                  {"blocks": [
+                    {
+                      "type": "unstyled",
+                      "text": "only1"}
+                  ]}
+                ]
+              },
+              "body_html": {
+                "draftjsState": [
+                  {"blocks": [
+                    { "type": "unstyled",
+                      "text": "body 1"}
+                  ]}
+                ]
+              },
+              "headline": {
+                "draftjsState": [
+                  {"blocks": [
+                    { "type": "unstyled",
+                      "text": "headline 1"}
+                  ]}
+                ]
+              }
+            }
+        }}
+        """
+        Then we get OK response
+        When we get "archive/1"
+        Then we get existing resource
+        """
+        {
+          "extra": {"subheadline": "subhead 1", "only1": "only1", "only2": "only2"},
+          "headline": "headline 1",
+          "body_html": "<p>body 1</p>",
+          "fields_meta": {
+            "extra>subheadline": {
+              "draftjsState": [{
+                "blocks": [
+                  {
+                    "type": "unstyled",
+                    "text": "subhead 1"
+                  }
+                ]
+              }]
+            },
+            "extra>only1": {
+                "draftjsState": [
+                  {"blocks": [
+                    {
+                      "type": "unstyled",
+                      "text": "only1"}
+                  ]}
+                ]
+            },
+            "extra>only2": {
+                "draftjsState": [
+                  {"blocks": [
+                    { "type": "unstyled",
+                      "text": "only2"}
+                  ]}
+                ]
+              },
+            "body_html": {
+                "draftjsState": [
+                  {"blocks": [
+                    { "type": "unstyled",
+                      "text": "body 1"}
+                  ]}
+                ]
+              },
+              "headline": {
+                "draftjsState": [
+                  {"blocks": [
+                    { "type": "unstyled",
+                      "text": "headline 1"}
+                  ]}
+                ]
+              }
+          }
+        }
+        """

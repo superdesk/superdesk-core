@@ -8,7 +8,7 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
-from apps.archive.archive import ArchiveResource, SOURCE as ARCHIVE
+from apps.archive.archive import ArchiveResource, SOURCE as ARCHIVE, remove_is_queued
 from superdesk.metadata.utils import item_url
 import logging
 from functools import partial
@@ -48,6 +48,7 @@ class ResendService(Service):
         article_version = doc.get("version")
         article = self._validate_article(article_id, article_version)
         subscribers = self._validate_subscribers(doc.get("subscribers"), article)
+        remove_is_queued(article)
         get_enqueue_service(article.get(ITEM_OPERATION)).resend(article, subscribers)
         app.on_archive_item_updated({"subscribers": doc.get("subscribers")}, article, ITEM_RESEND)
         return [article_id]

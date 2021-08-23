@@ -16,7 +16,7 @@ from eve_elastic.elastic import set_filters
 
 from superdesk import get_resource_service
 from superdesk.metadata.item import CONTENT_STATE, ITEM_STATE, get_schema
-from superdesk.metadata.utils import aggregations as common_aggregations, item_url, get_elastic_highlight_query
+from superdesk.metadata.utils import aggregations as common_aggregations, item_url, _set_highlight_query
 from apps.archive.archive import SOURCE as ARCHIVE, ArchiveResource, private_content_filter
 from superdesk.resource import build_custom_hateoas
 from apps.publish.published_item import published_item_fields
@@ -104,21 +104,23 @@ class SearchService(superdesk.Service):
     def _get_query(self, req):
         """Get elastic query."""
         args = getattr(req, "args", {})
-        query = json.loads(args.get("source")) if args.get("source") else {"query": {"filtered": {}}}
+        source = json.loads(args.get("source")) if args.get("source") else {"query": {"filtered": {}}}
+
+        try:
+            self._enhance_query_string(source["query"]["filtered"]["query"]["query_string"])
+        except KeyError:
+            pass
+
         if app.data.elastic.should_aggregate(req):
-            query["aggs"] = self.aggregations
+            source["aggs"] = self.aggregations
 
         if app.data.elastic.should_highlight(req):
-            highlight_query = get_elastic_highlight_query(self._get_highlight_query_string(req))
-            if highlight_query:
-                query["highlight"] = highlight_query
-        return query
+            _set_highlight_query(source)
 
-    def _get_highlight_query_string(self, req):
-        args = getattr(req, "args", {})
-        source = json.loads(args.get("source")) if args.get("source") else {"query": {"filtered": {}}}
-        query_string = source.get("query", {}).get("filtered", {}).get("query", {}).get("query_string")
-        return query_string
+        return source
+
+    def _enhance_query_string(self, query_string):
+        query_string.setdefault("analyze_wildcard", app.config["ELASTIC_QUERY_STRING_ANALYZE_WILDCARD"])
 
     def _get_projected_fields(self, req):
         """Get elastic projected fields."""

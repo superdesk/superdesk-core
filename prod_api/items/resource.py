@@ -31,6 +31,7 @@ class ItemsResource(Resource):
     item_url = item_url
     item_methods = ["GET"]
     resource_methods = ["GET"]
+    resource_title = "Item"
     datasource = {
         "source": "archive",
         "search_backend": "elastic",

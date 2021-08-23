@@ -51,7 +51,7 @@ class CopyService(BaseService):
             archived_doc = archive_service.find_one(req=None, _id=guid_of_item_to_be_copied)
             if not archived_doc:
                 raise SuperdeskApiError.notFoundError(
-                    _("Fail to found item with guid: {guid}").format(guid=guid_of_item_to_be_copied)
+                    _("Failed to find item with guid: {guid}").format(guid=guid_of_item_to_be_copied)
                 )
 
             current_desk_of_item = archived_doc.get("task", {}).get("desk")

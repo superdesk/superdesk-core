@@ -14,7 +14,7 @@ import logging
 import requests
 
 from superdesk import app
-from superdesk.publish import register_transmitter
+from superdesk.publish import register_transmitter, registered_transmitter_file_providers
 
 from superdesk.errors import PublishHTTPPushError, PublishHTTPPushServerError, PublishHTTPPushClientError
 from superdesk.publish.publish_queue import PUBLISHED_IN_PACKAGE
@@ -92,7 +92,7 @@ class HTTPPushService(PublishService):
     def _push_item(self, destination, data):
         resource_url = self._get_resource_url(destination)
         headers = self._get_headers(data, destination, self.headers)
-        response = requests.post(resource_url, data=data, headers=headers)
+        response = requests.post(resource_url, data=data, headers=headers, timeout=self._get_timeout())
 
         # need to rethrow exception as a superdesk exception for now for notifiers.
         try:
@@ -116,35 +116,9 @@ class HTTPPushService(PublishService):
         if not (type(assets_url) == str and assets_url.strip()):
             return
 
-        def parse_media(item):
-            media = {}
-            renditions = item.get("renditions", {})
-            for _, rendition in renditions.items():
-                rendition.pop("href", None)
-                rendition.setdefault("mimetype", rendition.get("original", {}).get("mimetype", item.get("mimetype")))
-                media[rendition["media"]] = rendition
-            for attachment in item.get("attachments", []):
-                media.update(
-                    {
-                        attachment["media"]: {
-                            "mimetype": attachment["mimetype"],
-                            "resource": "attachments",
-                        }
-                    }
-                )
-            return media
-
         media = {}
-        media.update(parse_media(item))
-
-        for assoc in item.get("associations", {}).values():
-            if assoc is None:
-                continue
-            media.update(parse_media(assoc))
-            for assoc2 in assoc.get("associations", {}).values():
-                if assoc2 is None:
-                    continue
-                media.update(parse_media(assoc2))
+        for get_files in registered_transmitter_file_providers:
+            media.update(get_files(self.NAME, item))
 
         for media_id, rendition in media.items():
             if not self._media_exists(media_id, destination):
@@ -166,7 +140,7 @@ class HTTPPushService(PublishService):
         prepped.prepare_body(data, files)
         headers = self._get_headers(prepped.body, destination, prepped.headers)
         prepped.prepare_headers(headers)
-        response = s.send(prepped)
+        response = s.send(prepped, timeout=self._get_timeout())
         if response.status_code not in (200, 201):
             self._raise_publish_error(
                 response.status_code,
@@ -186,12 +160,15 @@ class HTTPPushService(PublishService):
         @return: bool
         """
         assets_url = self._get_assets_url(destination, media_id)
-        response = requests.get(assets_url)
+        response = requests.get(assets_url, timeout=self._get_timeout())
         if response.status_code not in (requests.codes.ok, requests.codes.not_found):  # @UndefinedVariable
             self._raise_publish_error(
                 response.status_code, Exception("Error querying the assets service %s" % assets_url), destination
             )
         return response.status_code == requests.codes.ok  # @UndefinedVariable
+
+    def _get_timeout(self):
+        return app.config.get("HTTP_PUSH_TIMEOUT", (5, 30))
 
     def _get_headers(self, data, destination, current_headers):
         secret_token = self._get_secret_token(destination)

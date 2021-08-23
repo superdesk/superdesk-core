@@ -332,3 +332,78 @@ Feature: Content Filter Tests
       "match_results": false
     }
     """
+
+  @auth
+  @vocabulary
+  Scenario: Test language content filter
+    Given "vocabularies"
+    """
+    [{
+        "_id": "languages",
+        "display_name": "Languages",
+        "type": "manageable",
+        "unique_field": "qcode",
+        "service": { "all": 1 },
+        "items": [
+            {"name": "Nederlands", "qcode": "nl", "is_active": true },
+            {"name": "Français", "qcode": "fr", "is_active": true },
+            {"name": "English", "qcode": "en", "is_active": true },
+            {"name": "Deutsch", "qcode": "de", "is_active": true },
+            {"name": "Español", "qcode": "es", "is_active": true }
+        ]
+    }]
+    """
+    Given "archive"
+    """
+    [{"guid": "foo", "language": "de", "type": "picture"}]
+    """
+    Given "filter_conditions"
+    """
+    [{"name": "language in en", "field": "languages", "operator": "in", "value": "en"}]
+    """
+    Given "content_filters"
+    """
+    [{"content_filter": [{"expression": {"fc": ["#filter_conditions._id#"]}}], "name": "soccer-only"}]
+    """
+    When we post to "/content_filters/test"
+    """
+    [{
+      "article_id": "#archive._id#",
+      "filter": {
+        "name": "test",
+        "content_filter": [
+          {"expression": {"fc": ["#filter_conditions._id#"]}}
+        ]
+      }
+    }]
+    """
+    Then we get existing resource
+    """
+    {
+      "match_results": false
+    }
+    """
+    When we patch "/archive/#archive._id#"
+    """
+    {
+      "language": "en"
+    }
+    """
+    When we post to "/content_filters/test"
+    """
+    [{
+      "article_id": "#archive._id#",
+      "filter": {
+        "name": "test",
+        "content_filter": [
+          {"expression": {"fc": ["#filter_conditions._id#"]}}
+        ]
+      }
+    }]
+    """
+    Then we get existing resource
+    """
+    {
+      "match_results": true
+    }
+    """
