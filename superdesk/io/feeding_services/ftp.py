@@ -91,7 +91,7 @@ class FTPFeedingService(FeedingService):
             "label": "Move ingested items to",
             "placeholder": "FTP Server Path, keep empty to use default path",
             "required": False,
-            "show_expression": "{move}",
+            "show_expression": "provider.config.move === true",
         },
         {
             "id": "move_path_error",
@@ -99,7 +99,7 @@ class FTPFeedingService(FeedingService):
             "label": "Move *NOT* ingested items (i.e. on error) to",
             "placeholder": "FTP Server Path, keep empty to use default path",
             "required": False,
-            "show_expression": "{move}",
+            "show_expression": "provider.config.move === true",
         },
     ]
 
