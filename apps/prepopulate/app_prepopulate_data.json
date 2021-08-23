@@ -460,7 +460,7 @@
                 },
                 "body_html": {
                     "type": "string",
-                    "required": false,
+                    "required": true,
                     "nullable": true
                 },
                 "body_footer": {
