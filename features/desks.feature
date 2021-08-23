@@ -552,16 +552,22 @@ Feature: Desks
             {
                 "_items": [
                     {
-                        "state": "assigned",
-                        "count": 2
-                    },
-                    {
-                        "state": "in_progress",
-                        "count": 4
-                    },
-                    {
-                        "state": "completed",
-                        "count": 1
+                        "desk": "#SPORTS_DESK_ID#",
+                        "count": 7,
+                        "sub": [
+                            {
+                                "key": "assigned",
+                                "count": 2
+                            },
+                            {
+                                "key": "in_progress",
+                                "count": 4
+                            },
+                            {
+                                "key": "completed",
+                                "count": 1
+                            }
+                        ]
                     }
                 ]
             }
@@ -572,16 +578,36 @@ Feature: Desks
             {
                 "_items": [
                     {
-                        "state": "assigned",
-                        "count": 2
+                        "desk": "#SPORTS_DESK_ID#",
+                        "count": 7,
+                        "sub": [
+                            {
+                                "key": "assigned",
+                                "count": 2
+                            },
+                            {
+                                "key": "in_progress",
+                                "count": 4
+                            },
+                            {
+                                "key": "completed",
+                                "count": 1
+                            }
+                        ]
                     },
                     {
-                        "state": "in_progress",
-                        "count": 5
-                    },
-                    {
-                        "state": "completed",
-                        "count": 3
+                        "desk": "#POLITICS_DESK_ID#",
+                        "count": 3,
+                        "sub": [
+                            {
+                                "key": "completed",
+                                "count": 2
+                            },
+                            {
+                                "key": "in_progress",
+                                "count": 1
+                            }
+                        ]
                     }
                 ]
             }

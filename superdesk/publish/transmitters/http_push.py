@@ -14,7 +14,7 @@ import logging
 import requests
 
 from superdesk import app
-from superdesk.publish import register_transmitter
+from superdesk.publish import register_transmitter, registered_transmitter_file_providers
 
 from superdesk.errors import PublishHTTPPushError, PublishHTTPPushServerError, PublishHTTPPushClientError
 from superdesk.publish.publish_queue import PUBLISHED_IN_PACKAGE
@@ -116,35 +116,9 @@ class HTTPPushService(PublishService):
         if not (type(assets_url) == str and assets_url.strip()):
             return
 
-        def parse_media(item):
-            media = {}
-            renditions = item.get("renditions", {})
-            for _, rendition in renditions.items():
-                rendition.pop("href", None)
-                rendition.setdefault("mimetype", rendition.get("original", {}).get("mimetype", item.get("mimetype")))
-                media[rendition["media"]] = rendition
-            for attachment in item.get("attachments", []):
-                media.update(
-                    {
-                        attachment["media"]: {
-                            "mimetype": attachment["mimetype"],
-                            "resource": "attachments",
-                        }
-                    }
-                )
-            return media
-
         media = {}
-        media.update(parse_media(item))
-
-        for assoc in item.get("associations", {}).values():
-            if assoc is None:
-                continue
-            media.update(parse_media(assoc))
-            for assoc2 in assoc.get("associations", {}).values():
-                if assoc2 is None:
-                    continue
-                media.update(parse_media(assoc2))
+        for get_files in registered_transmitter_file_providers:
+            media.update(get_files(self.NAME, item))
 
         for media_id, rendition in media.items():
             if not self._media_exists(media_id, destination):

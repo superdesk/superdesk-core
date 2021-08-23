@@ -34,6 +34,9 @@ from apps.archive.common import (
 from apps.publish.content import publish
 from apps.search_providers import register_search_provider, registered_search_providers
 
+from werkzeug.datastructures import ImmutableMultiDict
+from eve.utils import ParsedRequest
+from flask import json
 
 NOW = utcnow()
 
@@ -422,3 +425,28 @@ class ArchiveTestCase(TestCase):
 
         signals.item_duplicate.disconnect(duplicate_handler_mock)
         signals.item_duplicated.disconnect(duplicated_handler_mock)
+
+    def test_highlight_query(self):
+        source_query = {
+            "query": {
+                "filtered": {"query": {"query_string": {"query": "TEST", "lenient": True, "default_operator": "AND"}}}
+            }
+        }
+
+        req = ParsedRequest()
+        req.args = {"source": json.dumps(source_query)}
+        req.args = ImmutableMultiDict(req.args)
+
+        archive_service = superdesk.get_resource_service("archive")
+        req = archive_service._get_highlight_query(req)
+
+        args = getattr(req, "args", {})
+        source = json.loads(args.get("source")) if args.get("source") else {"query": {"filtered": {}}}
+
+        self.assertEqual(len(source), 2)
+        self.assertIn("query", source)
+        self.assertIn("highlight", source)
+        self.assertIn("fields", source["highlight"])
+        self.assertEqual(
+            ["abstract", "body_footer", "body_html", "headline", "slugline"], list(source["highlight"]["fields"].keys())
+        )

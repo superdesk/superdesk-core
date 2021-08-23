@@ -106,7 +106,11 @@ Feature: Filter Condition
   @auth
   @vocabulary
   Scenario: Delete a referenced filter condition fails
-    Given empty "filter_conditions"
+    Given "filter_conditions"
+    """
+    [{"_id": "5c1243a6f84e5e105f626df5", "name": "initial", "field": "anpa_category", "operator": "in", "value": "3"}]
+    """
+
     When we post to "/filter_conditions" with success
     """
     [{"name": "sport", "field": "anpa_category", "operator": "in", "value": "4"}]
@@ -116,7 +120,7 @@ Feature: Filter Condition
     Given empty "content_filters"
     When we post to "/content_filters" with success
     """
-    [{"content_filter": [{"expression": {"fc": ["#filter_conditions._id#"]}}], "name": "soccer"}]
+    [{"content_filter": [{"expression": {"fc": ["#filter_conditions._id#", "5c1243a6f84e5e105f626df5"]}}], "name": "soccer"}]
     """
     When we delete "/filter_conditions/#filter_conditions._id#"
     Then we get error 400

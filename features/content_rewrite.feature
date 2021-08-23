@@ -2428,7 +2428,7 @@ Feature: Rewrite content
         Then we get OK response
 
     @auth
-    Scenario: Sync editor fields when linking updates
+    Scenario: Sync editor3 fields when linking updates
         Given "desks"
         """
         [{"name": "Sports"}]
@@ -2445,7 +2445,11 @@ Feature: Rewrite content
         """
         And "vocabularies"
         """
-        [{"_id": "subheadline", "field_options": {"single": true}}]
+        [
+          {"_id": "subheadline", "field_options": {"single": true}},
+          {"_id": "only1", "field_options": {"single": true}},
+          {"_id": "only2", "field_options": {"single": true}}
+        ]
         """
         And "archive"
         """
@@ -2486,13 +2490,21 @@ Feature: Rewrite content
             "guid": "2", "type": "text", "headline": "headline 2", "_current_version": 1, "state": "fetched",
             "profile": "story",
             "task": {"desk": "#desks._id#", "stage": "#desks.incoming_stage#", "user": "#CONTEXT_USER_ID#"},
-            "body_html": "body 2", "extra": {"subheadline": "subhead 2"},
+            "body_html": "body 2", "extra": {"subheadline": "subhead 2", "only2": "only2"},
             "fields_meta": {
               "extra>subheadline": {
                 "draftjsState": [
                   {"blocks": [
                     { "type": "unstyled",
                       "text": "subhead 2"}
+                  ]}
+                ]
+              },
+              "extra>only2": {
+                "draftjsState": [
+                  {"blocks": [
+                    { "type": "unstyled",
+                      "text": "only2"}
                   ]}
                 ]
               },
@@ -2519,7 +2531,8 @@ Feature: Rewrite content
         When we rewrite "2"
         """
         {"update": {
-            "_id": "1", "guid": "1", "body_html": "<p>body 1</p>", "extra": {"subheadline": "subhead 1"},
+            "_id": "1", "guid": "1", "body_html": "<p>body 1</p>",
+            "extra": {"subheadline": "subhead 1", "only1": "only1"},
             "profile": "story", "type": "text", "headline": "headline 1",
             "fields_meta": {
               "extra>subheadline": {
@@ -2528,6 +2541,15 @@ Feature: Rewrite content
                     {
                       "type": "unstyled",
                       "text": "subhead 1"}
+                  ]}
+                ]
+              },
+              "extra>only1": {
+                "draftjsState": [
+                  {"blocks": [
+                    {
+                      "type": "unstyled",
+                      "text": "only1"}
                   ]}
                 ]
               },
@@ -2555,7 +2577,7 @@ Feature: Rewrite content
         Then we get existing resource
         """
         {
-          "extra": {"subheadline": "subhead 1"},
+          "extra": {"subheadline": "subhead 1", "only1": "only1", "only2": "only2"},
           "headline": "headline 1",
           "body_html": "<p>body 1</p>",
           "fields_meta": {
@@ -2569,6 +2591,23 @@ Feature: Rewrite content
                 ]
               }]
             },
+            "extra>only1": {
+                "draftjsState": [
+                  {"blocks": [
+                    {
+                      "type": "unstyled",
+                      "text": "only1"}
+                  ]}
+                ]
+            },
+            "extra>only2": {
+                "draftjsState": [
+                  {"blocks": [
+                    { "type": "unstyled",
+                      "text": "only2"}
+                  ]}
+                ]
+              },
             "body_html": {
                 "draftjsState": [
                   {"blocks": [

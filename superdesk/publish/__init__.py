@@ -15,7 +15,10 @@ Items must be inserted to publish queue in order to get transmitted.
 """
 
 import logging
-from typing import Any, NamedTuple
+from typing import Any, NamedTuple, Dict, List, Callable, Union
+from typing_extensions import TypedDict
+
+from bson import ObjectId
 
 from superdesk.celery_app import celery
 from superdesk.publish.publish_content import PublishContent
@@ -26,6 +29,16 @@ logger = logging.getLogger(__name__)
 registered_transmitters = {}
 transmitter_errors = {}
 registered_transmitters_list = []
+
+
+class TransmitterFileEntry(TypedDict):
+    media: Union[ObjectId, str]
+    mimetype: str
+    resource: str
+
+
+TransmitterFileProvider = Callable[[str, Dict[str, Any]], Dict[str, TransmitterFileEntry]]
+registered_transmitter_file_providers: List[TransmitterFileProvider] = []
 
 
 class SubscriberTypes(NamedTuple):
@@ -56,6 +69,10 @@ def register_transmitter(transmitter_type, transmitter, errors):
             "config": getattr(transmitter, "CONFIG", None),
         }
     )
+
+
+def register_transmitter_file_provider(provider: TransmitterFileProvider):
+    registered_transmitter_file_providers.append(provider)
 
 
 @celery.task(soft_time_limit=1800, expires=10)

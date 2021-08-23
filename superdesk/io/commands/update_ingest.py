@@ -20,7 +20,7 @@ import superdesk
 from superdesk.activity import ACTIVITY_EVENT, notify_and_add_activity
 from superdesk.celery_app import celery
 from superdesk.celery_task_utils import get_lock_id
-from superdesk.errors import ProviderError
+from superdesk.errors import ProviderError, SuperdeskApiError
 from superdesk.io import get_feeding_service
 from superdesk.io.registry import registered_feeding_services, registered_feed_parsers
 from superdesk.io.iptc import subject_codes
@@ -484,9 +484,8 @@ def ingest_cancel(item, feeding_service):
     :param item:
     :return:
     """
-    ingest_service = superdesk.get_resource_service(
-        feeding_service.service if hasattr(feeding_service, "service") else "ingest"
-    )
+    ingest_collection = get_ingest_collection(feeding_service, item)
+    ingest_service = superdesk.get_resource_service(ingest_collection)
     lookup = {"uri": item.get("uri")}
     family_members = ingest_service.get_from_mongo(req=None, lookup=lookup)
     for relative in family_members:
@@ -538,7 +537,10 @@ def ingest_items(items, provider, feeding_service, rule_set=None, routing_scheme
         else:
             failed_items.add(item[GUID_FIELD])
     # sync mongo with ingest after all changes
-    ingest_collection = feeding_service.service if hasattr(feeding_service, "service") else "ingest"
+    if len(all_items) > 0:
+        ingest_collection = get_ingest_collection(feeding_service, all_items[0])
+    else:
+        ingest_collection = feeding_service.service if hasattr(feeding_service, "service") else "ingest"
     ingest_service = superdesk.get_resource_service(ingest_collection)
     updated_items = ingest_service.find({"_id": {"$in": created_ids}}, max_results=len(created_ids))
     app.data._search_backend(ingest_collection).bulk_insert(ingest_collection, list(updated_items))
@@ -550,7 +552,7 @@ def ingest_items(items, provider, feeding_service, rule_set=None, routing_scheme
 def ingest_item(item, provider, feeding_service, rule_set=None, routing_scheme=None):
     items_ids = []
     try:
-        ingest_collection = feeding_service.service if hasattr(feeding_service, "service") else "ingest"
+        ingest_collection = get_ingest_collection(feeding_service, item)
         ingest_service = superdesk.get_resource_service(ingest_collection)
 
         # determine if we already have this item
@@ -611,19 +613,37 @@ def ingest_item(item, provider, feeding_service, rule_set=None, routing_scheme=N
             assoc_name = assoc.get("headline") or assoc.get("slugline") or guid
             if guid:
                 ingested = ingest_service.find_one(req=None, guid=guid)
-                logger.info("assoc ingested before %s", assoc_name)
                 if ingested is not None:
+                    logger.info("assoc ingested before %s", assoc_name)
                     assoc["_id"] = ingested["_id"]
                     if is_new_version(assoc, ingested) and assoc.get("renditions"):  # new version
                         logger.info("new assoc version - re-transfer renditions for %s", assoc_name)
-                        transfer_renditions(assoc["renditions"])
+                        try:
+                            transfer_renditions(assoc["renditions"])
+                        except SuperdeskApiError:
+                            logger.exception(
+                                "failed to update associated item renditions",
+                                extra=dict(
+                                    guid=guid,
+                                    name=assoc_name,
+                                ),
+                            )
                     else:
                         logger.info("same/old version - use already fetched renditions for %s", assoc_name)
                         update_assoc_renditions(assoc, ingested)
                 else:  # there is no such item in the system - ingest it
                     if assoc.get("renditions") and has_system_renditions(assoc):  # all set, just download
-                        logger.info("new association  with system renditions - transfer %s", assoc_name)
-                        transfer_renditions(assoc["renditions"])
+                        logger.info("new association with system renditions - transfer %s", assoc_name)
+                        try:
+                            transfer_renditions(assoc["renditions"])
+                        except SuperdeskApiError:
+                            logger.exception(
+                                "failed to download renditions",
+                                extra=dict(
+                                    guid=guid,
+                                    name=assoc_name,
+                                ),
+                            )
                     status, ids = ingest_item(assoc, provider, feeding_service, rule_set)
                     if status:
                         assoc["_id"] = ids[0]
@@ -691,6 +711,19 @@ def is_new_version(item, old_item):
         if not old_item.get(field) or item[field] != old_item[field]:
             return True
     return False
+
+
+def get_ingest_collection(feeding_service, item):
+    if hasattr(feeding_service, "service"):
+        ingest_collection = feeding_service.service
+
+    # If the type of item is event, set the collection to events
+    elif item.get(ITEM_TYPE) == "event":
+        ingest_collection = "events"
+    else:
+        ingest_collection = "ingest"
+
+    return ingest_collection
 
 
 superdesk.command("ingest:update", UpdateIngest())

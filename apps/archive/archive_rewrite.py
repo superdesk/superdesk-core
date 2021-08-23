@@ -89,11 +89,18 @@ class ArchiveRewriteService(Service):
 
         rewrite = self._create_rewrite_article(original, existing_item=update_document, desk_id=doc.get("desk_id"))
 
+        if original.get("fields_meta"):
+            rewrite["fields_meta"] = original["fields_meta"].copy()
+
         if update_document and update_document.get("fields_meta"):
             # copy content fields from existing item
             # to preserve those
-            rewrite["fields_meta"] = update_document["fields_meta"].copy()
-            generate_fields(rewrite)
+            rewrite.setdefault("fields_meta", {})
+            rewrite["fields_meta"].update(update_document["fields_meta"].copy())
+
+        if rewrite.get("fields_meta"):
+            generate_fields(rewrite, force=True)
+
         update_associations(rewrite)
 
         # signal

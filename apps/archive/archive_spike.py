@@ -173,6 +173,7 @@ class ArchiveSpikeService(BaseService):
             # remove marked_for_user on spike and keep it as previous_marked_user for history
             updates["previous_marked_user"] = original["marked_for_user"]
             updates["marked_for_user"] = None
+            updates["marked_for_sign_off"] = None
 
         if original.get("translation_id") and original.get("translated_from"):
             # remove translations info from the translated item on spike

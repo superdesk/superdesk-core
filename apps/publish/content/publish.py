@@ -64,6 +64,7 @@ class ArchivePublishService(BasePublishService):
             # remove marked_for_user on publish and keep it as previous_marked_user for history
             updates["previous_marked_user"] = original["marked_for_user"]
             updates["marked_for_user"] = None
+            updates["marked_for_sign_off"] = None
 
         set_sign_off(updates, original)
         update_word_count(updates)

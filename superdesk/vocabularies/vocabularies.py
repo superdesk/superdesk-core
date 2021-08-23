@@ -90,6 +90,7 @@ class VocabulariesResource(Resource):
             "allowed": ["single selection", "multi selection", "do not show"],
             "nullable": True,
         },
+        "read_only": {"type": "boolean", "required": False, "nullable": True},
         "schema_field": {"type": "string", "required": False, "nullable": True},
         "dependent": {
             "type": "boolean",

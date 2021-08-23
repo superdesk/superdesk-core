@@ -9,13 +9,15 @@
 # at https://www.sourcefabric.org/superdesk/license
 
 
-import logging
 import json
-from superdesk.io.registry import register_feeding_service, register_feeding_service_parser
-from superdesk.io.feeding_services.http_base_service import HTTPFeedingServiceBase
-from superdesk.errors import IngestApiError, SuperdeskIngestError
 import requests
 import superdesk
+import logging
+
+from superdesk.io.feed_parsers.ap_media import with_apikey
+from superdesk.io.registry import register_feeding_service
+from superdesk.io.feeding_services.http_base_service import HTTPFeedingServiceBase
+from superdesk.errors import IngestApiError
 from superdesk.io.feed_parsers import nitf
 from lxml import etree
 from superdesk.utc import utcnow
@@ -110,12 +112,7 @@ class APMediaFeedingService(HTTPFeedingServiceBase):
         provider["config"]["availableProducts"] = ",".join(productList)
 
     def prepare_href(self, href, mimetype=None):
-        href = (
-            href + "&apikey=" + self.provider.get("config", {}).get("apikey")
-            if "?" in href
-            else href + "?apikey=" + self.provider.get("config", {}).get("apikey")
-        )
-        return href
+        return with_apikey(href, self.provider)
 
     def _update(self, provider, update):
         self.HTTP_URL = provider.get("config", {}).get("api_url", "")
