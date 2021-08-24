@@ -10,6 +10,7 @@
 """This module contains tools to manage content for Superdesk editor"""
 
 import re
+from typing import Dict
 import uuid
 import logging
 import lxml.etree as etree
@@ -819,3 +820,22 @@ def render_fragment(elem) -> str:
         # client renders empty paragraph as `<p><br></p>`
         etree.SubElement(elem, "br", nsmap=None, attrib=None)
     return str(lxml_html.tostring(elem, encoding="unicode"))
+
+
+def is_empty_content_state(item: Dict, field: str) -> bool:
+    """Test if editor content state for given field is empty."""
+    content_state = get_field_content_state(item, field)
+    return content_state is None or not any([block.get("text", "").strip() for block in content_state["blocks"]])
+
+
+def copy_fields(source: Dict, dest: Dict, ignore_empty: bool = False):
+    """Copy editor fields state from source item to dest.
+
+    :param source: source item
+    :param dest: dest item
+    :param ignore_empty: if True it will only copy fields which are not empty.
+    """
+    if source.get("fields_meta"):
+        for field in source["fields_meta"]:
+            if ignore_empty is False or not is_empty_content_state(source, field):
+                dest.setdefault("fields_meta", {})[field] = source["fields_meta"][field].copy()
