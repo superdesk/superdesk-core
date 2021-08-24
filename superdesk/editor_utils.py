@@ -823,11 +823,18 @@ def render_fragment(elem) -> str:
 
 
 def is_empty_content_state(item: Dict, field: str) -> bool:
+    """Test if editor content state for given field is empty."""
     content_state = get_field_content_state(item, field)
     return content_state is None or not any([block.get("text", "").strip() for block in content_state["blocks"]])
 
 
-def copy_fields(source: Dict, dest: Dict, ignore_empty=False):
+def copy_fields(source: Dict, dest: Dict, ignore_empty: bool = False):
+    """Copy editor fields state from source item to dest.
+
+    :param source: source item
+    :param dest: dest item
+    :param ignore_empty: if True it will only copy fields which are not empty.
+    """
     if source.get("fields_meta"):
         for field in source["fields_meta"]:
             if ignore_empty is False or not is_empty_content_state(source, field):
