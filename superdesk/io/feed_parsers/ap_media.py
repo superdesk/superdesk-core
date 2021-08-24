@@ -294,6 +294,8 @@ class APMediaFeedParser(FeedParser):
 
 
 def with_apikey(href, provider):
+    if "apikey" in href:
+        return href
     try:
         key = provider["config"]["apikey"]
         separator = "?" if "?" not in href else "&"
