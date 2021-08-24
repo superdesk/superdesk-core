@@ -191,7 +191,7 @@ def configure_google(app, extra_scopes: Optional[List[str]] = None, refresh: boo
                         '"security/Third-party apps with account access") then try to log-in again'
                     )
                     logger.warning(message)
-                    return render_template(ERROR_TEMPLATE, data={"message": message})
+                    return render_template(ERROR_TEMPLATE, message=message)
 
             # token_id is actually the provider id
             ingest_providers_service = superdesk.get_resource_service("ingest_providers")
