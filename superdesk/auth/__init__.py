@@ -29,7 +29,8 @@ from superdesk.validation import ValidationError
 
 
 RESOURCE = "oauth"
-TEMPLATE = "oauth_authorized.html"
+AUTHORIZED_TEMPLATE = "oauth_authorized.html"
+ERROR_TEMPLATE = "oauth_error.html"
 
 
 logger = logging.getLogger(__name__)
@@ -59,17 +60,17 @@ def auth_user(email, userdata=None):
         email = userdata["email"]
     data = [{"email": email}]
     if not email:
-        return render_template(TEMPLATE, data={"error": 404})
+        return render_template(AUTHORIZED_TEMPLATE, data={"error": 404})
     try:
         superdesk.get_resource_service(RESOURCE).post(data)
         data[0]["_id"] = str(data[0]["_id"])
         data[0]["user"] = str(data[0]["user"])
         if userdata:
             superdesk.get_resource_service("users").update_external_user(data[0]["user"], userdata)
-        return render_template(TEMPLATE, data=data[0])
+        return render_template(AUTHORIZED_TEMPLATE, data=data[0])
     except ValueError:
         if not app.config["USER_EXTERNAL_CREATE"] or not userdata:
-            return render_template(TEMPLATE, data={"error": 404})
+            return render_template(AUTHORIZED_TEMPLATE, data={"error": 404})
 
     # create new user using userdata
     # and re-run auth

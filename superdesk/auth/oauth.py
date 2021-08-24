@@ -30,6 +30,7 @@ from typing import Optional, List, Tuple
 from bson import ObjectId
 import superdesk
 from flask import url_for, render_template
+from flask_babel import lazy_gettext as l_
 from eve.utils import config
 from authlib.integrations.flask_client import OAuth
 from authlib.integrations.requests_client import OAuth2Session
@@ -38,7 +39,7 @@ from superdesk.resource import Resource
 from superdesk.services import BaseService
 from superdesk.errors import SuperdeskApiError
 
-from superdesk.auth import auth_user, TEMPLATE
+from superdesk.auth import auth_user, AUTHORIZED_TEMPLATE, ERROR_TEMPLATE
 
 
 logger = logging.getLogger(__name__)
@@ -161,7 +162,7 @@ def configure_google(app, extra_scopes: Optional[List[str]] = None, refresh: boo
 
         token = oauth.google.authorize_access_token()
         if not token:
-            return render_template(TEMPLATE, data={}) if token_id else auth_user()
+            return render_template(AUTHORIZED_TEMPLATE, data={}) if token_id else auth_user()
         user = oauth.google.parse_id_token(token)
         if token_id:
             # token_id is used to link token with provider, we need to store the token
@@ -184,11 +185,13 @@ def configure_google(app, extra_scopes: Optional[List[str]] = None, refresh: boo
                             current_token,
                         )
                 else:
-                    logger.warning(
+                    message = l_(
                         "No refresh token received, that probably means that it's not the first time login is "
                         "requested. Please remove granted permission to Superdesk in Google settings (under "
                         '"security/Third-party apps with account access") then try to log-in again'
                     )
+                    logger.warning(message)
+                    return render_template(ERROR_TEMPLATE, message=message)
 
             # token_id is actually the provider id
             ingest_providers_service = superdesk.get_resource_service("ingest_providers")
@@ -200,7 +203,7 @@ def configure_google(app, extra_scopes: Optional[List[str]] = None, refresh: boo
                     provider[config.ID_FIELD], updates={"config.email": user["email"]}, original=provider
                 )
 
-            return render_template(TEMPLATE, data={})
+            return render_template(AUTHORIZED_TEMPLATE, data={})
         else:
             # no token_id, OAuth is only used for log-in
             return auth_user(user["email"], {"needs_activation": False})
@@ -212,7 +215,7 @@ def configure_google(app, extra_scopes: Optional[List[str]] = None, refresh: boo
         :param url_id: used to identify the token
         """
         revoke_google_token(ObjectId(url_id))
-        return render_template(TEMPLATE, data={})
+        return render_template(AUTHORIZED_TEMPLATE, data={})
 
     superdesk.blueprint(bp, app)
 
