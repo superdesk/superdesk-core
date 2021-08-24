@@ -110,6 +110,8 @@ class IMatricsTestCase(TestCase):
                         "uuid": "44f52663-52f9-3836-ac45-ae862fe945a3",
                         "aliases": [],
                     },
+                ],
+                "broader": [
                     {
                         "weight": 1,
                         "geometry": {},
@@ -123,7 +125,7 @@ class IMatricsTestCase(TestCase):
                         "aliases": ["foo"],
                         "shortDescription": "NaN",
                     },
-                ]
+                ],
             },
         )
 

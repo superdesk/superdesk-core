@@ -135,16 +135,10 @@ class IMatrics(AIServiceBase):
                 )
             )
 
-    def _parse_concepts(
-        self, analyzed_data: Dict[str, List], concepts: List[dict], seen_qcodes: set, new_concepts_to_get: set
-    ) -> None:
+    def _parse_concepts(self, analyzed_data: Dict[str, List], concepts: List[dict]) -> None:
         """Parse response data, convert iMatrics concepts to SD data and add them to analyzed_data"""
         for concept in concepts:
             tag_data = self.concept2tag_data(concept)
-            seen_qcodes.add(tag_data["qcode"])
-            parent = tag_data["parent"]
-            if parent is not None and parent not in seen_qcodes:
-                new_concepts_to_get.add(parent)
             tag_type = tag_data.pop("type")
             analyzed_data.setdefault(tag_type, []).append(tag_data)
 
@@ -175,16 +169,7 @@ class IMatrics(AIServiceBase):
         )
 
         analyzed_data: Dict[str, List] = {}
-
-        seen_qcodes: Set[str] = set()
-        new_concepts_to_get: Set[str] = set()
-        self._parse_concepts(analyzed_data, r_data["concepts"], seen_qcodes, new_concepts_to_get)
-        while new_concepts_to_get:
-            to_get = new_concepts_to_get.copy()
-            new_concepts_to_get.clear()
-            for concept_id in to_get:
-                r_data = self._request("concept/get", {"uuid": concept_id}, params=dict(operation="id"))
-                self._parse_concepts(analyzed_data, r_data["result"], seen_qcodes, new_concepts_to_get)
+        self._parse_concepts(analyzed_data, r_data["concepts"] + r_data["broader"])
 
         for tags in analyzed_data.values():
             tags.sort(key=lambda d: d.get("weight", 0), reverse=True)

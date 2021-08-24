@@ -22,13 +22,17 @@
 
 import ast
 import logging
-import superdesk
 from flask import request
+from flask_babel import _
+
+import superdesk
 from superdesk.errors import SuperdeskApiError
 from superdesk.notification import push_notification
-from .utils import get_file_from_sams
 from superdesk.storage.superdesk_file import generate_response_for_file
+
 from apps.auth import get_auth, get_user_id
+
+from .utils import get_file_from_sams, get_attachments_from_asset_id
 from .client import get_sams_client
 
 logger = logging.getLogger(__name__)
@@ -93,6 +97,9 @@ def delete(item_id):
         etag = request.headers["If-Match"]
     except KeyError:
         raise SuperdeskApiError.badRequestError("If-Match field missing in header")
+
+    if get_attachments_from_asset_id(item_id).count():
+        raise SuperdeskApiError.badRequestError(_("Asset is attached to a news item, cannot delete"))
 
     delete_response = get_sams_client().assets.delete(item_id=item_id, headers={"If-Match": etag})
     if delete_response.status_code != 204:
