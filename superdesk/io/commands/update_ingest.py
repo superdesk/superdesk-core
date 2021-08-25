@@ -549,7 +549,7 @@ def ingest_items(items, provider, feeding_service, rule_set=None, routing_scheme
     return failed_items
 
 
-def ingest_item(item, provider, feeding_service, rule_set=None, routing_scheme=None):
+def ingest_item(item, provider, feeding_service, rule_set=None, routing_scheme=None, expiry=None):
     items_ids = []
     try:
         ingest_collection = get_ingest_collection(feeding_service, item)
@@ -576,9 +576,13 @@ def ingest_item(item, provider, feeding_service, rule_set=None, routing_scheme=N
                 item.pop("profile")
 
         set_default_state(item, CONTENT_STATE.INGESTED)
-        item["expiry"] = get_expiry_date(
-            provider.get("content_expiry") or app.config["INGEST_EXPIRY_MINUTES"], item.get("versioncreated")
-        )
+        item["expiry"] = (
+            get_expiry_date(
+                provider.get("content_expiry") or app.config["INGEST_EXPIRY_MINUTES"], item.get("versioncreated")
+            )
+            if not expiry
+            else expiry
+        )  # when fetching associated item set expiry to match parent
 
         if "anpa_category" in item:
             process_anpa_category(item, provider)
@@ -616,6 +620,8 @@ def ingest_item(item, provider, feeding_service, rule_set=None, routing_scheme=N
                 if ingested is not None:
                     logger.info("assoc ingested before %s", assoc_name)
                     assoc["_id"] = ingested["_id"]
+                    # update expiry so assoc will stay as long as the item using it
+                    ingest_service.system_update(ingested["_id"], {"expiry": item["expiry"]}, ingested)
                     if is_new_version(assoc, ingested) and assoc.get("renditions"):  # new version
                         logger.info("new assoc version - re-transfer renditions for %s", assoc_name)
                         try:
@@ -644,7 +650,7 @@ def ingest_item(item, provider, feeding_service, rule_set=None, routing_scheme=N
                                     name=assoc_name,
                                 ),
                             )
-                    status, ids = ingest_item(assoc, provider, feeding_service, rule_set)
+                    status, ids = ingest_item(assoc, provider, feeding_service, rule_set, expiry=item["expiry"])
                     if status:
                         assoc["_id"] = ids[0]
                         items_ids.extend(ids)
