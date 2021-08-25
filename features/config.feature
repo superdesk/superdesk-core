@@ -52,6 +52,7 @@ Feature: Config
 
     @auth
     Scenario: Default values
+        When we init data "config"
         When we get "/config/client-settings"
         Then we get existing resource
         """
