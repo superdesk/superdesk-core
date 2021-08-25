@@ -14,6 +14,7 @@ class ConfigResource(superdesk.Resource):
     item_url = 'regex("[\w.:_-]+")'
     item_methods = ["GET"]
     resource_methods = ["POST"]
+    public_item_methods = ["GET"]
 
 
 def get_default_value(key):

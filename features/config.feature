@@ -8,6 +8,13 @@ Feature: Config
         {"_id": "foo", "val": null}
         """
 
+    Scenario: Read config without auth
+        When we get "/config/foo"
+        Then we get existing resource
+        """
+        {"_id": "foo", "val": null}
+        """
+
     @auth
     Scenario: Get config
         Given "config"
