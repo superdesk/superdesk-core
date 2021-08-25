@@ -975,3 +975,36 @@ OIDC_BROWSER_REDIRECT_URL = env("OIDC_BROWSER_REDIRECT_URL", CLIENT_URL)
 #:
 APPS_DATA_UPDATES_PATHS = []
 PUBLISH_ASSOCIATIONS_RESEND = "new"
+
+#: Default values for /config endpoint
+#:
+#: .. versionadded:: 2.4
+#:
+CONFIG_DEFAULTS = {
+    "client-settings": dict(
+        defaultRoute="/workspace",
+        features=dict(
+            swimlane=dict(defaultNumberOfColumns=4),
+            editor3=True,
+            qumu=True,
+            savedSearch=dict(
+                subscriptions=True,
+            ),
+            validatePointOfInterestForImages=True,
+            hideRoutedDesks=False,
+            showCharacterLimit=40,
+        ),
+        auth=dict(google=False),
+        ingest=dict(
+            PROVIDER_DASHBOARD_DEFAULTS=dict(
+                show_log_messages=True,
+                show_ingest_count=True,
+                show_time=True,
+                log_messages="error",
+                show_status=True,
+            ),
+            DEFAULT_SCHEDULE=dict(minutes=5, seconds=0),
+            DEFAULT_IDLE_TIME=dict(hours=0, minutes=0),
+        ),
+    ),
+}

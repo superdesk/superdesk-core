@@ -42,3 +42,57 @@ Feature: Config
         """
         {"_id": "foo", "val": {"bar": 2}}
         """
+
+    @auth
+    Scenario: Default values
+        When we get "/config/client-settings"
+        Then we get existing resource
+        """
+        {
+            "_id": "client-settings",
+            "val": {
+                "defaultRoute": "/workspace",
+                "auth": {"google": false}
+            }
+        }
+        """
+        When we post to "/config"
+        """
+        {
+            "_id": "client-settings",
+            "val": {
+                "auth.google": true
+            }
+        }
+        """
+        And we get "/config/client-settings"
+        Then we get existing resource
+        """
+        {
+            "_id": "client-settings",
+            "val": {
+                "defaultRoute": "/workspace",
+                "auth": {"google": true}
+            }
+        }
+        """
+        When we post to "/config"
+        """
+        {
+            "_id": "client-settings",
+            "val": {
+                "defaultRoute": "/settings"
+            }
+        }
+        """
+        And we get "/config/client-settings"
+        Then we get existing resource
+        """
+        {
+            "_id": "client-settings",
+            "val": {
+                "defaultRoute": "/settings",
+                "auth": {"google": true}
+            }
+        }
+        """

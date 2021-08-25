@@ -2,6 +2,7 @@ import superdesk
 
 from flask import current_app as app
 from apps.auth import is_current_user_admin
+from pymongo.errors import DuplicateKeyError
 
 
 class ConfigResource(superdesk.Resource):
@@ -15,13 +16,17 @@ class ConfigResource(superdesk.Resource):
     resource_methods = ["POST"]
 
 
+def get_default_value(key):
+    return app.config["CONFIG_DEFAULTS"].get(key)
+
+
 class ConfigService(superdesk.Service):
     def find_one(self, req, **lookup):
         item = super().find_one(req, **lookup)
         if item:
             return item
         else:
-            return {"_id": lookup.get("_id"), "val": None}
+            return {"_id": lookup["_id"], "val": get_default_value(lookup["_id"])}
 
     def create(self, docs, **kwargs):
         ids = []
@@ -32,7 +37,14 @@ class ConfigService(superdesk.Service):
 
     def set(self, key, val, namespace="superdesk"):
         coll = app.data.mongo.get_collection_with_write_concern("config", "config")
-        coll.update_one({"_id": key}, {"$set": {"_id": key, "val": val}}, upsert=True)
+        default_value = get_default_value(key)
+        if default_value:
+            try:
+                coll.insert_one({"_id": key, "val": default_value})
+            except DuplicateKeyError:
+                pass
+        updates = {f"val.{k}": v for k, v in val.items()} if val else {}
+        coll.update_one({"_id": key}, {"$set": dict(_id=key, **updates)}, upsert=True)
 
     def get(self, key, namespace="superdesk"):
         return self.find_one(req=None, _id=key).get("val")
