@@ -494,9 +494,9 @@ class DraftJSHTMLExporter:
             return DOM.create_element("span", attribs, props["children"])
         if type_.startswith("COMMENT"):
             # nothing to render for comments
-            pass
-        else:
-            logger.error("No style renderer for {type_!r}".format(type_=type_))
+            return
+        logger.info("No style renderer for {type_!r}".format(type_=type_))
+        return props["children"]
 
 
 class Editor3Content(EditorContent):
