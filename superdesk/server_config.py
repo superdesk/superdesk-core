@@ -8,11 +8,13 @@ class ConfigResource(superdesk.Resource):
     schema = {
         "_id": {"type": "string", "required": True},
         "val": {"type": "dict", "schema": {}, "allow_unknown": True},
+        "init_version": {"type": "integer"},
     }
 
     item_url = 'regex("[\w.:_-]+")'
     item_methods = ["GET"]
     resource_methods = ["POST"]
+    public_item_methods = ["GET"]
 
 
 class ConfigService(superdesk.Service):
@@ -21,7 +23,7 @@ class ConfigService(superdesk.Service):
         if item:
             return item
         else:
-            return {"_id": lookup.get("_id"), "val": None}
+            return {"_id": lookup["_id"], "val": None}
 
     def create(self, docs, **kwargs):
         ids = []
@@ -32,7 +34,8 @@ class ConfigService(superdesk.Service):
 
     def set(self, key, val, namespace="superdesk"):
         coll = app.data.mongo.get_collection_with_write_concern("config", "config")
-        coll.update_one({"_id": key}, {"$set": {"_id": key, "val": val}}, upsert=True)
+        updates = {f"val.{k}": v for k, v in val.items()} if val else {}
+        coll.update_one({"_id": key}, {"$set": dict(_id=key, **updates)}, upsert=True)
 
     def get(self, key, namespace="superdesk"):
         return self.find_one(req=None, _id=key).get("val")

@@ -63,6 +63,7 @@ __entities__ = OrderedDict(
             ),
         ),
         ("content_types", ("content_types.json", "", True)),
+        ("config", ("config.json", "", True)),
         (
             "published",
             (
