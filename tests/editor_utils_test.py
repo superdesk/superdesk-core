@@ -176,6 +176,7 @@ class Editor3TestCase(unittest.TestCase):
                         {"offset": 12, "length": 8, "style": "STRIKETHROUGH"},
                         {"offset": 21, "length": 5, "style": "SUBSCRIPT"},
                         {"offset": 27, "length": 4, "style": "SUPERSCRIPT"},
+                        {"offset": 32, "length": 1, "style": "LIMIT_CHARACTERS_OVERFLOW"},
                     ],
                     "entityRanges": [],
                     "data": {"MULTIPLE_HIGHLIGHTS": {}},

@@ -43,7 +43,7 @@ from superdesk.errors import SuperdeskApiError, InvalidStateTransitionError
 from superdesk.notification import push_notification
 from superdesk.signals import item_rewrite
 from apps.archive.archive import update_associations
-from superdesk.editor_utils import generate_fields
+from superdesk.editor_utils import generate_fields, copy_fields
 from flask_babel import _
 
 logger = logging.getLogger(__name__)
@@ -89,14 +89,12 @@ class ArchiveRewriteService(Service):
 
         rewrite = self._create_rewrite_article(original, existing_item=update_document, desk_id=doc.get("desk_id"))
 
-        if original.get("fields_meta"):
-            rewrite["fields_meta"] = original["fields_meta"].copy()
+        # sync editor state
+        copy_fields(original, rewrite, ignore_empty=True)
 
-        if update_document and update_document.get("fields_meta"):
-            # copy content fields from existing item
-            # to preserve those
-            rewrite.setdefault("fields_meta", {})
-            rewrite["fields_meta"].update(update_document["fields_meta"].copy())
+        if update_document:
+            # copy editor state from existing item to preserve those
+            copy_fields(update_document, rewrite, ignore_empty=True)
 
         if rewrite.get("fields_meta"):
             generate_fields(rewrite, force=True)
@@ -212,7 +210,7 @@ class ArchiveRewriteService(Service):
             "organisation",
             "person",
         ]
-        existing_item_preserve_fields = (ASSOCIATIONS, "flags")
+        existing_item_preserve_fields = (ASSOCIATIONS, "flags", "extra")
 
         if app.config.get("COPY_ON_REWRITE_FIELDS"):
             fields.extend(app.config["COPY_ON_REWRITE_FIELDS"])
@@ -239,6 +237,12 @@ class ArchiveRewriteService(Service):
             for key, assoc in original_associations.items():
                 if not existing_associations.get(key):
                     rewrite[ASSOCIATIONS][key] = assoc
+
+            if existing_item.get("extra"):
+                rewrite.setdefault("extra", {})
+                for key, val in existing_item["extra"].items():
+                    if val:
+                        rewrite["extra"][key] = val
         else:
             # ingest provider and source to be retained for new item
             fields.extend(["ingest_provider", "source"])
@@ -256,6 +260,12 @@ class ArchiveRewriteService(Service):
                     continue
 
                 rewrite[field] = original[field]
+
+        # populate any missing extra fields from original
+        if original.get("extra"):
+            for key, val in original["extra"].items():
+                if val:
+                    rewrite.setdefault("extra", {}).setdefault(key, val)
 
         # if the original was flagged for SMS the rewrite should not be.
         if not existing_item and rewrite.get("flags", {}).get("marked_for_sms", False):

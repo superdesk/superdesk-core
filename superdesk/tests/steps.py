@@ -54,6 +54,7 @@ from superdesk.tests import get_prefixed_url, set_placeholder
 from apps.dictionaries.resource import DICTIONARY_FILE
 from superdesk.filemeta import get_filemeta
 from apps.preferences import enhance_document_with_default_prefs
+from apps.prepopulate.app_initialize import AppInitializeWithDataCommand
 
 # for auth server
 from authlib.jose import jwt
@@ -2690,3 +2691,9 @@ def step_impl_then_we_dont_get_access_token(context):
     resp = json.loads(context.response.data)
     assert context.response.status_code == 401
     assert resp == {"error": "invalid_client"}
+
+
+@when('we init data "{entity}"')
+def setp_impl_when_we_init_data(context, entity):
+    with context.app.app_context():
+        AppInitializeWithDataCommand().run(entity)
