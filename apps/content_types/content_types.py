@@ -212,8 +212,6 @@ class ContentTypesService(superdesk.Service):
             prepare_for_edit_content_type(doc)
         if doc:
             clean_doc(doc)
-        if not doc and not is_edit and lookup.get("_id") in ("text", "picture", "audio", "video", "composite"):
-            return get_default_profile(lookup["_id"])
         return doc
 
     def set_used(self, profile_ids):
@@ -595,30 +593,3 @@ def remove_profile_from_templates(item):
     for template in templates:
         template.get("data", {}).pop("profile", None)
         superdesk.get_resource_service("content_templates").patch(template[config.ID_FIELD], template)
-
-
-def get_default_profile(item_type):
-    # generate new types based on core conf
-    try:
-        schema = app.config["SCHEMA"][item_type]
-    except KeyError:
-        if item_type == "text":
-            schema = DEFAULT_SCHEMA
-        else:
-            schema = DEFAULT_MEDIA_SCHEMA
-    try:
-        editor = app.config["EDITOR"][item_type]
-    except KeyError:
-        if item_type == "text":
-            editor = DEFAULT_EDITOR
-        else:
-            editor = DEFAULT_MEDIA_EDITOR
-    return {
-        "_id": item_type,
-        "label": item_type,
-        "item_type": item_type,
-        "schema": schema,
-        "editor": editor,
-        "enabled": True,
-        "is_used": True,
-    }

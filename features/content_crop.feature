@@ -162,7 +162,6 @@ Feature: Cropping the Image Articles
       When we publish "123" with "correct" type and "corrected" state
       """
       {
-        "headline": "Testing",
         "renditions": {"4-3" : {"CropLeft":10,"CropRight":810,"CropTop":10,"CropBottom":610}},
         "correction_sequence": "2"
       }
@@ -170,7 +169,6 @@ Feature: Cropping the Image Articles
       Then we get updated response
       """
       {
-        "headline": "Testing",
         "renditions": {
           "4-3" : {"CropLeft":10,"CropRight":810,"CropTop":10,"CropBottom":610}
           }
