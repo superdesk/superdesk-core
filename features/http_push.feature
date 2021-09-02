@@ -12,6 +12,7 @@ Feature: HTTP Push publishing
         [{
             "name": "http",
             "media_type": "media",
+            "is_active": true,
             "subscriber_type": "digital",
             "products": ["#products._id#"],
             "destinations": [
