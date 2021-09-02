@@ -520,6 +520,10 @@ RENDITIONS = {
         "thumbnail": {"width": 60, "height": 60},
         "viewImage": {"width": 200, "height": 200},
     },
+    "sams": {
+        "thumbnail": {"width": 220, "height": 140},
+        "viewImage": {"width": 640, "height": 640},
+    },
 }
 
 
