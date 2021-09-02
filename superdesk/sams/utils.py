@@ -66,6 +66,29 @@ def get_file_from_sams(client: SamsClient, asset_id: ObjectId) -> Optional[SAMSF
     return None
 
 
+def get_image_from_sams(
+    client: SamsClient,
+    asset_id: ObjectId,
+    width: Optional[int] = None,
+    height: Optional[int] = None,
+    keep_proportions: Optional[bool] = True,
+) -> Optional[SAMSFileWrapper]:
+    asset = get_asset_from_sams(client, asset_id)
+
+    if asset:
+        response = client.images.download(asset_id, width, height, keep_proportions)
+
+        # If the Asset exists in SAMS, then so should the file
+        raise_sams_error(response)
+
+        asset["length"] = response.headers["Content-Length"]
+        asset["_etag"] = response.headers["ETag"].replace('"', "")
+
+        return SAMSFileWrapper(asset, response)
+
+    return None
+
+
 def get_asset_public_url(client: SamsClient, asset_id: ObjectId) -> Optional[str]:
     """Attempts to retrieve the public URL for the Asset"""
 
