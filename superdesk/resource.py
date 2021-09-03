@@ -12,8 +12,8 @@ from typing import Dict, Any, List, Optional
 import logging
 
 from eve.auth import BasicAuth
-from flask_babel.speaklater import LazyString
 from typing_extensions import Literal
+
 import superdesk
 from eve.utils import config
 
@@ -88,6 +88,7 @@ class Resource:
     projection: bool = True
     item_privileges = False
     notifications = True
+    collation = True
 
     def __init__(self, endpoint_name, app, service, endpoint_schema=None):
         self.endpoint_name = endpoint_name
@@ -146,7 +147,12 @@ class Resource:
             if self.projection is not None:
                 endpoint_schema.update({"projection": self.projection})
 
-            endpoint_schema.update(dict(notifications=self.notifications))
+            endpoint_schema.update(
+                dict(
+                    notifications=self.notifications,
+                    collation=self.collation,
+                )
+            )
 
             if app.config.get("SCHEMA_UPDATE", {}).get(self.endpoint_name):
                 schema_updates = app.config["SCHEMA_UPDATE"][self.endpoint_name]

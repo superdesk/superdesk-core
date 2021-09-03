@@ -81,8 +81,13 @@ class PublishQueueResource(Resource):
     additional_lookup = {"url": r'regex("[\w,.:-]+")', "field": "item_id"}
 
     etag_ignore_fields = ["moved_to_legal"]
-    datasource: Dict[str, Any] = {"default_sort": [("_id", -1), ("subscriber_id", 1), ("published_seq_num", -1)]}
+    datasource: Dict[str, Any] = {
+        "default_sort": [
+            ("_id", -1),
+        ],
+    }
     privileges = {"POST": "publish_queue", "PATCH": "publish_queue"}
+    collation = False
 
 
 class PublishQueueService(BaseService):
