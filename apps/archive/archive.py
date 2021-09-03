@@ -307,6 +307,7 @@ class ArchiveResource(Resource):
     mongo_indexes = {
         "processed_from_1": ([(PROCESSED_FROM, 1)], {"background": True}),
         "unique_id_1": ([("unique_id", 1)], {"background": True}),
+        "uri_1": ([("uri", 1)], {"background": True}),
     }
 
 
