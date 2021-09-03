@@ -483,6 +483,7 @@ Feature: Archive history
       [{
         "_id": "sub-1",
         "name":"Channel 3",
+        "is_active": true,
         "media_type":"media",
         "subscriber_type": "wire",
         "sequence_num_settings":{"min" : 1, "max" : 10},
@@ -518,6 +519,7 @@ Feature: Archive history
     {
         "name":"Channel 10",
         "media_type":"media",
+        "is_active": true,
         "subscriber_type": "wire",
         "sequence_num_settings":{"min" : 1, "max" : 10},
         "email": "test@test.com",
