@@ -303,6 +303,7 @@ class ArchiveResource(Resource):
     resource_methods = ["GET", "POST"]
     item_methods = ["GET", "PATCH", "PUT"]
     versioning = True
+    collation = False
     privileges = {"POST": SOURCE, "PATCH": SOURCE, "PUT": SOURCE}
     mongo_indexes = {
         "processed_from_1": ([(PROCESSED_FROM, 1)], {"background": True}),
