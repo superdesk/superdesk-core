@@ -4,12 +4,20 @@ from .assets import assets_bp, unlock_asset_by_user
 from .storage_destinations import destinations_bp
 from .sets import sets_bp
 from superdesk.auth.decorator import blueprint_auth
+from superdesk.default_settings import RENDITIONS
 from flask_babel import _
 from .client import get_sams_client
 
 
 def init_app(app: Eve):
     client = get_sams_client(app)
+
+    if not app.config["RENDITIONS"].get("sams"):
+        # if SAMS renditions are not defined, then copy them from default settings
+        app.config["RENDITIONS"]["sams"] = RENDITIONS["sams"]
+
+        # And re-apply client_config to include SAMS renditions
+        app.client_config.setdefault("media", {}).update({"renditions": app.config.get("RENDITIONS")})
 
     app.on_session_end -= unlock_assets_on_logout
     app.on_session_end += unlock_assets_on_logout

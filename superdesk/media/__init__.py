@@ -22,3 +22,5 @@ def init_app(app) -> None:
     endpoint_name = "media_editor"
     service = MediaEditorService(endpoint_name, backend=superdesk.get_backend())
     MediaEditorResource(endpoint_name, app=app, service=service)
+
+    app.client_config.setdefault("media", {}).update({"renditions": app.config.get("RENDITIONS")})
