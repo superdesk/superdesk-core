@@ -257,6 +257,7 @@ class ArchiveVersionsResource(Resource):
     resource_methods = []
     internal_resource = True
     privileges = {"PATCH": "archive"}
+    collation = False
     mongo_indexes = {
         "guid": ([("guid", 1)], {"background": True}),
         "_id_document_1": ([("_id_document", 1)], {"background": True}),
@@ -303,8 +304,8 @@ class ArchiveResource(Resource):
     resource_methods = ["GET", "POST"]
     item_methods = ["GET", "PATCH", "PUT"]
     versioning = True
-    collation = False
     privileges = {"POST": SOURCE, "PATCH": SOURCE, "PUT": SOURCE}
+    collation = False
     mongo_indexes = {
         "processed_from_1": ([(PROCESSED_FROM, 1)], {"background": True}),
         "unique_id_1": ([("unique_id", 1)], {"background": True}),
