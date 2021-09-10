@@ -1408,29 +1408,6 @@ Feature: Content Profile
         """
 
     @auth
-    Scenario: Content profile defaults override user profile defaults
-        Given "content_types"
-        """
-        [{"_id": "foo", "label": "Foo", "schema": {
-            "byline": {"default": "By Foo"},
-            "headline": null,
-            "place": {"default": [{"name": "Prague"}]}
-        }}]
-        """
-        When we patch "/users/#CONTEXT_USER_ID#"
-        """
-        {"byline": "By Admin"}
-        """
-        When we post to "/archive"
-        """
-        {"type": "text", "profile": "foo"}
-        """
-        Then we get new resource
-        """
-        {"byline": "By Foo", "place": [{"name": "Prague"}]}
-        """
-
-    @auth
     Scenario: Validate using content profile when publishing
         Given "vocabularies"
         """
