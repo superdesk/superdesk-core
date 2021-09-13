@@ -12,6 +12,8 @@
 import os
 import time
 import shutil
+import operator
+
 from unittest import mock
 from copy import deepcopy
 from base64 import b64encode
@@ -1105,13 +1107,23 @@ def step_impl_then_get_list(context, total_count):
 
 
 @then("we get list ordered by {field} with {total_count} items")
-def step_impl_ordered_list(context, field, total_count):
+def step_impl_ordered_by_field_list(context, field, total_count):
     step_impl_then_get_list(context, total_count)
     data = get_json_data(context.response)
-    fields = []
-    for i in data["_items"]:
-        fields.append(i[field])
-    assert sorted(fields) == fields
+    items = data["_items"]
+    assert sorted(items, key=operator.itemgetter(field)) == items
+
+
+@then("we get ordered list with {total_count} items")
+def step_impl_get_ordered_list(context, total_count):
+    step_impl_then_get_list(context, total_count)
+    data = get_json_data(context.response)
+    server_items = data["_items"]
+    context_items = json.loads(apply_placeholders(context, context.text))["_items"]
+    idgetter = operator.itemgetter("_id")
+    server_sorted = list(map(idgetter, server_items))
+    context_sorted = list(map(idgetter, context_items))
+    assert server_sorted == context_sorted, "server items are not sorted: %s" % server_sorted
 
 
 @then('we get "{value}" in formatted output')

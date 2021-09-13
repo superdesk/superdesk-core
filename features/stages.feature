@@ -303,3 +303,65 @@ Feature: Stages
         """
         {"error": {"readonly": true}}
         """
+
+    @auth
+    Scenario: Reordering of stages
+        Given "desks"
+        """
+        [
+            {"name": "sports"}
+        ]
+        """
+        Given "stages"
+        """
+        [
+            {"_id": "first", "desk": "#desks._id#", "name": "first", "order": 1},
+            {"_id": "second", "desk": "#desks._id#", "name": "second", "order": 2},
+            {"_id": "third", "desk": "#desks._id#", "name": "third", "order": 3}
+        ]
+        """
+        When we get "stages"
+        Then we get ordered list with 3 items
+        """
+        {"_items": [
+            {"_id": "first"},
+            {"_id": "second"},
+            {"_id": "third"}
+        ]}
+        """
+        When we post to "stages_order"
+        """
+        {
+            "desk": "#desks._id#",
+            "stages": [
+                "second",
+                "third",
+                "first"
+            ]
+        }
+        """
+        Then we get OK response
+        When we get "stages"
+        Then we get ordered list with 3 items
+        """
+        {"_items": [
+            {"_id": "second"},
+            {"_id": "third"},
+            {"_id": "first"}
+        ]}
+        """
+        When we post to "stages"
+        """
+        {"name": "new", "desk": "#desks._id#"}
+        """
+        Then we get ok response
+        When we get "stages"
+        Then we get ordered list with 4 items
+        """
+        {"_items": [
+            {"_id": "second"},
+            {"_id": "third"},
+            {"_id": "first"},
+            {"_id": "#stages._id#"}
+        ]}
+        """
