@@ -55,7 +55,7 @@ class TranslateService(BaseService):
         macros_service = get_resource_service("macros")
         published_service = get_resource_service("published")
 
-        item = archive_service.find_one(req=None, guid=guid)
+        item = archive_service.find_one(req=None, _id=guid)
         if not item:
             raise SuperdeskApiError.notFoundError(_("Failed to find item with guid: {guid}").format(guid=guid))
 
