@@ -1,5 +1,12 @@
 # Superdesk Server Changelog
 
+## [2.3.3] 2021-09-14
+
+### Fixed
+
+- Fix slow query used by translate.
+- Fix placeline translation handling.
+
 ## [2.3.2] 2021-09-07
 
 ### Fixed
