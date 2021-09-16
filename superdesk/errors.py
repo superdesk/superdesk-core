@@ -727,6 +727,26 @@ class PublishHTTPPushServerError(PublishHTTPPushError):
         return PublishHTTPPushServerError(14002, exception, destination)
 
 
+class PublishAmazonSQSError(SuperdeskPublishError):
+    _codes = {
+        15000: "Amazon SQS publish connection error",
+        15001: "Amazon SQS publish client error",
+        15002: "Amazon SQS publish sendMessage error",
+    }
+
+    @classmethod
+    def connectionError(cls, exception=None, destination=None):
+        return PublishAmazonSQSError(15000, exception, destination)
+
+    @classmethod
+    def clientError(cls, exception=None, destination=None):
+        return PublishAmazonSQSError(15001, exception, destination)
+
+    @classmethod
+    def sendMessageError(cls, exception=None, destination=None):
+        return PublishAmazonSQSError(15002, exception, destination)
+
+
 class AlreadyExistsError(Exception):
     pass
 
