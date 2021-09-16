@@ -36,6 +36,9 @@ class IngestResource(Resource):
         "es_highlight": get_elastic_highlight_query,
     }
     privileges = {"DELETE": "fetch", "GET": GLOBAL_SEARCH_PRIVILEGE}
+    mongo_indexes = {
+        "guid_1": ([("guid", 1)], {"background": True}),
+    }
 
 
 class IngestService(BaseService):
