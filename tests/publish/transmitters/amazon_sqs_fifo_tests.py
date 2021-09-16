@@ -60,9 +60,9 @@ class AmazonSQSFIFOPublishServiceTestCase(TestCase):
         self.sqs.create_queue(
             QueueName=self.config["queue_name"],
             Attributes={
-                'ContentBasedDeduplication': 'true',
-                'FifoQueue': 'true',
-            }
+                "ContentBasedDeduplication": "true",
+                "FifoQueue": "true",
+            },
         )
 
     def _get_queue_messages(self):
