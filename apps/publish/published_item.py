@@ -112,6 +112,11 @@ class PublishedItemResource(Resource):
     item_methods = ["GET", "PATCH"]
     additional_lookup = {"url": 'regex("[\w,.:-]+")', "field": "item_id"}
 
+    mongo_indexes = {
+        "guid_1": ([("guid", 1)], {"background": True}),
+        "item_id_1": ([("item_id", 1)], {"background": True}),
+    }
+
 
 class PublishedItemService(BaseService):
     """
