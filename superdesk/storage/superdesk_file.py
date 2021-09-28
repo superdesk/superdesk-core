@@ -44,7 +44,9 @@ def generate_response_for_file(
     response.cache_control.max_age = cache_for
     response.cache_control.s_max_age = cache_for
     response.cache_control.public = True
-    response.make_conditional(request)
+
+    # Add ``accept_ranges`` & ``complete_length`` so video seeking is supported
+    response.make_conditional(request, accept_ranges=True, complete_length=file.length)
 
     if content_disposition:
         response.headers["Content-Disposition"] = content_disposition
