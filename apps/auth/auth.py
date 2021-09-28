@@ -168,6 +168,8 @@ class SuperdeskTokenAuth(TokenAuth):
         """Ignores auth on home endpoint."""
         if not resource:
             return True
+        elif request.cookies.get("session_token"):
+            return self.check_auth(request.cookies.get("session_token"), allowed_roles, resource, method)
         return super(SuperdeskTokenAuth, self).authorized(allowed_roles, resource, method)
 
     def authenticate(self):

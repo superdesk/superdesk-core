@@ -22,6 +22,7 @@ from .auth import AuthUsersResource, AuthResource  # noqa
 from .sessions import SessionsResource, UserSessionClearResource
 from .session_purge import RemoveExpiredSessions
 from .service import UserSessionClearService, AuthService
+from .auth_cookie import auth_cookie_bp
 
 logger = logging.getLogger(__name__)
 
@@ -44,6 +45,8 @@ def init_app(app) -> None:
     endpoint_name = "auth"
     service = AuthService(endpoint_name, backend=superdesk.get_backend())
     AuthResource(endpoint_name, app=app, service=service)
+
+    superdesk.blueprint(auth_cookie_bp, app)
 
 
 @celery.task

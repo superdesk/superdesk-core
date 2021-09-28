@@ -135,6 +135,7 @@ CACHE_CONTROL = "max-age=0, no-cache"
 X_DOMAINS = "*"
 X_MAX_AGE = 24 * 3600
 X_HEADERS = ["Content-Type", "Authorization", "If-Match"]
+X_ALLOW_CREDENTIALS = True
 
 #: mongo db name, only used when mongo_uri is not set
 MONGO_DBNAME = env("MONGO_DBNAME", "superdesk")
