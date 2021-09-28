@@ -14,6 +14,7 @@ import superdesk
 from flask import Blueprint, current_app as app
 from datetime import datetime
 from eve.render import send_response
+from superdesk.auth.decorator import blueprint_auth
 
 
 NEWSCODE_PATTERN = re.compile("[0-9]{8,9}")
@@ -70,6 +71,7 @@ def get_parent_subjectcode(code):
 
 
 @bp.route("/subjectcodes/", methods=["GET", "OPTIONS"])
+@blueprint_auth()
 def render_subjectcodes():
     items = get_subjectcodeitems()
     response_data = {"_items": items, "_meta": {"total": len(items)}}

@@ -12,6 +12,7 @@
 import logging
 import superdesk
 from superdesk.errors import SuperdeskApiError
+from superdesk.auth.decorator import blueprint_auth
 from werkzeug.wsgi import wrap_file
 from .resource import Resource
 from .services import BaseService
@@ -23,6 +24,7 @@ logger = logging.getLogger(__name__)
 
 @bp.route("/download/<id>", methods=["GET"], defaults={"folder": None})
 @bp.route("/download/<path:folder>/<id>", methods=["GET"])
+@blueprint_auth()
 def download_file(id, folder=None):
     filename = "{}/{}".format(folder, id) if folder else id
 
