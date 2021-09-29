@@ -1,4 +1,4 @@
-from flask import Blueprint, request, Response
+from flask import Blueprint, request, Response, current_app as app
 import superdesk
 from superdesk import get_resource_service
 from superdesk.publish.formatters import get_formatter
@@ -31,8 +31,10 @@ def format_document():
     formatted_docs = formatter.format(article=apply_schema(doc), subscriber=subscriber, codes=None)
 
     headers = {
-        "Access-Control-Allow-Origin": "*",
+        "Access-Control-Allow-Origin": app.config["CLIENT_URL"],
         "Access-Control-Allow-Methods": "GET",
+        "Access-Control-Allow-Headers": ",".join(app.config["X_HEADERS"]),
+        "Access-Control-Allow-Credentials": "true",
         "Cache-Control": "no-cache, no-store, must-revalidate",
     }
 
