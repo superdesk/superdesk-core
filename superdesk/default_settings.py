@@ -18,11 +18,14 @@ import os
 import pytz
 import tzlocal
 from urllib.parse import urlparse
+import logging
 
 from datetime import timedelta, datetime
 from celery.schedules import crontab
 from kombu import Queue, Exchange
 from distutils.util import strtobool as _strtobool
+
+logger = logging.getLogger()
 
 
 def strtobool(value):
@@ -135,6 +138,27 @@ CACHE_CONTROL = "max-age=0, no-cache"
 X_DOMAINS = "*"
 X_MAX_AGE = 24 * 3600
 X_HEADERS = ["Content-Type", "Authorization", "If-Match"]
+
+#: Required for cross-origin cookies for session storage (using ``flask.session``)
+#:
+#: .. versionadded:: 2.4.0
+X_ALLOW_CREDENTIALS = True
+
+#: Don't allow access to the session cookie from the front-end
+#:
+#: .. versionadded:: 2.4.0
+SESSION_COOKIE_HTTPONLY = True
+
+#: Only allow cookies through https if the client is using it
+#:
+#: .. versionadded:: 2.4.0
+SESSION_COOKIE_SECURE = CLIENT_URL.startswith("https")
+
+#: Prevent sending cookies with all external requests
+#: But still allow cross-origin/same-site requests
+#:
+#: .. versionadded:: 2.4.0
+SESSION_COOKIE_SAMESITE = "Strict"
 
 #: mongo db name, only used when mongo_uri is not set
 MONGO_DBNAME = env("MONGO_DBNAME", "superdesk")
@@ -694,7 +718,15 @@ EMAIL_TIMEOUT = 10
 #: This setting is used to overide the desk/stage expiry for items when spiked
 SPIKE_EXPIRY_MINUTES = None
 
+#: A secret key that will be used to securely sign cookies and other things
+#:
+#: .. versionadded:: 1.5
+#: .. versionchanged:: 2.4.0
+#:    Now required as ``flask.session`` will be used for some authentication
 SECRET_KEY = env("SECRET_KEY", "")
+if not SECRET_KEY:
+    SECRET_KEY = b"\x16\xda\xcb\x07\xf3oV\xa7\xdf\xec\xb8\xe8u+P\xe0Q\xc5?\x9a_\x8b\x16j\xcf\xe3I\x83y\xa0\xb3\xc4"
+    logger.warning("SECRET_KEY is not set, hardcoded value is used instead. This should not be used on production!")
 
 #: secure login
 XMPP_AUTH_URL = env("XMPP_AUTH_URL", "")
