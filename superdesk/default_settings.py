@@ -352,6 +352,7 @@ CORE_APPS = [
     "superdesk.attachments",
     "superdesk.auth_server",
     "apps.links",
+    "apps.languages",
     "superdesk.locales",
 ]
 
