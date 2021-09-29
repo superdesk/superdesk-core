@@ -1,5 +1,11 @@
 # Superdesk Server Changelog
 
+## [2.1.5] 2021-09-29
+
+### Fixed
+
+- Enable `/languages` endpoint by default.
+
 ## [2.1.4] 2021-08-18
 
 ### Fixed
