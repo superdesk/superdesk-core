@@ -39,7 +39,7 @@ class SubscribersResource(Resource):
             "required": True,
         },
         "email": {"type": "string", "empty": False, "multiple_emails": True, "required": True},
-        "is_active": {"type": "boolean", "default": True},
+        "is_active": {"type": "boolean", "default": False},
         "is_targetable": {"type": "boolean", "default": True},
         "critical_errors": {"type": "dict", "valueschema": {"type": "boolean"}},
         "last_closed": {

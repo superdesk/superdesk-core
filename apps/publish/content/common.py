@@ -245,7 +245,7 @@ class BasePublishService(BaseService):
                 # send notification so that marked for me list can be updated
                 get_resource_service("archive").handle_mark_user_notifications(updates, original, False)
 
-        except SuperdeskApiError:
+        except (SuperdeskApiError, SuperdeskValidationError):
             raise
         except KeyError as e:
             logger.exception(e)

@@ -917,6 +917,7 @@ Feature: Auto Routing
         [{
           "_id": "sub-1",
           "name":"Channel 1",
+          "is_active": true,
           "media_type": "media",
           "subscriber_type": "digital",
           "sequence_num_settings":{"min" : 1, "max" : 10}, "email": "test@test.com",
@@ -926,6 +927,7 @@ Feature: Auto Routing
         {
           "_id": "sub-2",
           "name":"Wire channel with geo restriction Victoria",
+          "is_active": true,
           "media_type":"media",
           "subscriber_type": "wire",
           "sequence_num_settings":{"min" : 1, "max" : 10}, "email": "test@test.com",
@@ -934,6 +936,7 @@ Feature: Auto Routing
         {
           "_id": "sub-3",
           "name":"Wire channel without geo restriction",
+          "is_active": true,
           "media_type":"media",
           "subscriber_type": "wire",
           "sequence_num_settings":{"min" : 1, "max" : 10}, "email": "test@test.com",
@@ -1227,6 +1230,7 @@ Feature: Auto Routing
         [{
           "_id": "sub-1",
           "name":"Channel 1",
+          "is_active": true,
           "media_type": "media",
           "subscriber_type": "digital",
           "sequence_num_settings":{"min" : 1, "max" : 10}, "email": "test@test.com",

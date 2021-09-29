@@ -833,6 +833,7 @@ Feature: Rewrite content
                 "name":"digital","media_type":"media",
                 "subscriber_type": "digital", "sequence_num_settings":{"min" : 1, "max" : 10},
                 "email": "test@test.com",
+                "is_active": true,
                 "products": ["#products._id#"],
                 "destinations":[
                     {"name":"Test","format": "nitf",
@@ -846,6 +847,7 @@ Feature: Rewrite content
                 "name":"wire","media_type":"media",
                 "subscriber_type": "wire", "sequence_num_settings":{"min" : 1, "max" : 10},
                 "email": "test@test.com",
+                "is_active": true,
                 "products": ["#products._id#"],
                 "destinations":[
                     {"name":"Test","format": "nitf",
@@ -952,6 +954,7 @@ Feature: Rewrite content
                 "name":"digital","media_type":"media",
                 "subscriber_type": "digital", "sequence_num_settings":{"min" : 1, "max" : 10},
                 "email": "test@test.com",
+                "is_active": true,
                 "products": ["#products._id#"],
                 "destinations":[
                     {"name":"Test","format": "nitf",
@@ -965,6 +968,7 @@ Feature: Rewrite content
                 "name":"wire","media_type":"media",
                 "subscriber_type": "wire", "sequence_num_settings":{"min" : 1, "max" : 10},
                 "email": "test@test.com",
+                "is_active": true,
                 "products": ["#products._id#"],
                 "destinations":[
                     {"name":"Test","format": "nitf",
@@ -1092,6 +1096,7 @@ Feature: Rewrite content
                 "name":"digital","media_type":"media",
                 "subscriber_type": "digital", "sequence_num_settings":{"min" : 1, "max" : 10},
                 "email": "test@test.com",
+                "is_active": true,
                 "products": ["#product1#"],
                 "destinations":[
                     {"name":"Test","format": "nitf",
@@ -1105,6 +1110,7 @@ Feature: Rewrite content
                 "name":"wire","media_type":"media",
                 "subscriber_type": "wire", "sequence_num_settings":{"min" : 1, "max" : 10},
                 "email": "test@test.com",
+                "is_active": true,
                 "products": ["#product2#"],
                 "destinations":[
                     {"name":"Test","format": "nitf",
@@ -1230,6 +1236,7 @@ Feature: Rewrite content
                 "name":"digital","media_type":"media",
                 "subscriber_type": "digital", "sequence_num_settings":{"min" : 1, "max" : 10},
                 "email": "test@test.com",
+                "is_active": true,
                 "products": ["#product2#"],
                 "destinations":[
                     {"name":"Test","format": "nitf",
@@ -1243,6 +1250,7 @@ Feature: Rewrite content
                 "name":"wire","media_type":"media",
                 "subscriber_type": "wire", "sequence_num_settings":{"min" : 1, "max" : 10},
                 "email": "test@test.com",
+                "is_active": true,
                 "products": ["#product1#"],
                 "destinations":[
                     {"name":"Test","format": "nitf",
@@ -1370,6 +1378,7 @@ Feature: Rewrite content
                 "name":"digital","media_type":"media",
                 "subscriber_type": "digital", "sequence_num_settings":{"min" : 1, "max" : 10},
                 "email": "test@test.com",
+                "is_active": true,
                 "products": ["#product2#"],
                 "destinations":[
                     {"name":"Test","format": "nitf",
@@ -1383,6 +1392,7 @@ Feature: Rewrite content
                 "name":"wire","media_type":"media",
                 "subscriber_type": "wire", "sequence_num_settings":{"min" : 1, "max" : 10},
                 "email": "test@test.com",
+                "is_active": true,
                 "products": ["#product1#"],
                 "destinations":[
                     {"name":"Test","format": "nitf",

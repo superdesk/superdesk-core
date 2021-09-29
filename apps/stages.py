@@ -8,10 +8,9 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
-import logging
 import superdesk
+
 from superdesk import config
-from flask import current_app as app
 from superdesk.notification import push_notification
 from superdesk.resource import Resource
 from superdesk.services import BaseService
@@ -23,13 +22,10 @@ from superdesk.metadata.item import CONTENT_STATE, ITEM_STATE
 from apps.archive.archive import SOURCE as ARCHIVE
 from flask_babel import _
 
-logger = logging.getLogger(__name__)
 
-
-def init_app(app) -> None:
-    endpoint_name = "stages"
-    service = StagesService(endpoint_name, backend=superdesk.get_backend())
-    StagesResource(endpoint_name, app=app, service=service)
+def init_app(_app) -> None:
+    superdesk.register_resource("stages", StagesResource, StagesService)
+    superdesk.register_resource("stages_order", StagesOrderResource, StagesOrderService)
 
 
 class StagesResource(Resource):
@@ -53,7 +49,7 @@ class StagesResource(Resource):
         "onstage_macro": {"type": "string"},
     }
 
-    datasource = {"default_sort": [("desk_order", 1)]}
+    datasource = {"default_sort": [("desk", 1), ("desk_order", 1)]}
 
     privileges = {"POST": "desks", "DELETE": "desks", "PATCH": "desks"}
 
@@ -284,3 +280,28 @@ class StagesService(BaseService):
         stage = {"name": "Incoming Stage", "default_incoming": True, "desk_order": 2, "content_expiry": None}
         self._resolve_defaults(stage)
         return self.create([stage])
+
+
+class StagesOrderResource(Resource):
+    schema = {
+        "desk": Resource.rel("desks", required=True, type="string"),
+        "stages": {"type": "list", "schema": Resource.rel("stages", required=True, type="string")},
+    }
+
+    item_methods = []
+    resource_methods = ["POST"]
+    privileges = {"POST": "desks"}
+
+
+class StagesOrderService(BaseService):
+    def create(self, docs):
+        desks_service = superdesk.get_resource_service("desks")
+        stages_service = superdesk.get_resource_service("stages")
+        for doc in docs:
+            desk = desks_service.find_one(req=None, _id=doc["desk"])
+            assert desk, {"desk": 1}
+            for index, stage_id in enumerate(doc["stages"]):
+                stage = stages_service.find_one(req=None, _id=stage_id)
+                assert stage, {"stage": stage_id}
+                stages_service.system_update(stage["_id"], {"desk_order": index + 1}, stage)
+        return [doc["desk"] for doc in docs]

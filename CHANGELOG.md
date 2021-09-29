@@ -1,5 +1,22 @@
 # Superdesk Server Changelog
 
+## [2.3.3] 2021-09-14
+
+### Fixed
+
+- Fix slow query used by translate.
+- Fix placeline translation handling.
+
+## [2.3.2] 2021-09-07
+
+### Fixed
+
+- Fix build error when install feedparser library.
+
+## [2.3.1] 2021-08-26
+
+[Changes](https://github.com/superdesk/superdesk-core/milestone/112?closed=1)
+
 ## [2.3.0] 2021-07-13
 
 [Changes](https://github.com/superdesk/superdesk-core/milestone/107?closed=1)

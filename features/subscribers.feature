@@ -28,7 +28,7 @@ Feature: Subscribers
     When we get "/subscribers"
     Then we get list with 1 items
     """
-    {"_items":[{"name":"News1", "is_targetable": true}]}
+    {"_items":[{"name":"News1", "is_targetable": true, "is_active": false}]}
     """
 
   @auth
@@ -46,7 +46,7 @@ Feature: Subscribers
     """
     {
       "name":"News1","media_type":"media", "subscriber_type": "digital", "sequence_num_settings":{"min" : 1, "max" : 10}, "email": "test@test.com",
-      "api_products": ["#products._id#"],
+      "api_products": ["#products._id#"], "is_active": true,
       "codes": "xyz, abc"
     }
     """
@@ -60,7 +60,7 @@ Feature: Subscribers
     """
     {
       "name":"News1","media_type":"media", "subscriber_type": "digital", "sequence_num_settings":{"min" : 1, "max" : 10}, "email": "test@test.com",
-      "products": ["#products._id#"],
+      "products": ["#products._id#"], "is_active": true,
       "codes": "xyz, abc"
     }
     """
@@ -214,6 +214,7 @@ Feature: Subscribers
       "name":"News1",
       "products": ["#products._id#"],
       "email": "test@test.com",
+      "is_active": true,
       "subscriber_type": "digital","media_type":"media", "sequence_num_settings":{"min" : 1, "max" : 10}
     }
     """
@@ -229,6 +230,7 @@ Feature: Subscribers
     {
       "name":"News1", "subscriber_type": "digital","media_type":"media", "sequence_num_settings":{"min" : 1, "max" : 10},
       "email": "test@test.com",
+      "is_active": true,
       "products": ["#products._id#"],
       "destinations": []
     }
@@ -252,6 +254,7 @@ Feature: Subscribers
     {
       "name":"News1",
       "email": "test@test.com",
+      "is_active": true,
       "subscriber_type": "digital","media_type":"media", "sequence_num_settings":{"min" : 1, "max" : 10},
       "api_products": ["#products._id#"]
     }
@@ -287,7 +290,7 @@ Feature: Subscribers
     """
     {
       "name":"News1","media_type":"media", "subscriber_type": "digital", "sequence_num_settings":{"min" : 1, "max" : 10}, "email": "test@test.com",
-      "products": ["#products._id#"],
+      "products": ["#products._id#"], "is_active": true,
       "destinations":[{"name":"destination1","format": "nitf", "delivery_type":"FTP","config":{"ip":"144.122.244.55","password":"xyz"}}]
     }
     """

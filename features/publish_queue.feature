@@ -149,6 +149,7 @@ Feature: Publish Queue
       [{
         "name":"Channel 3",
         "media_type":"media",
+        "is_active": true,
         "subscriber_type": "wire",
         "sequence_num_settings":{"min" : 1, "max" : 10},
         "email": "test@test.com",
@@ -220,6 +221,7 @@ Feature: Publish Queue
       [{
         "name":"Channel 3",
         "media_type":"media",
+        "is_active": true,
         "subscriber_type": "digital",
         "sequence_num_settings":{"min" : 1, "max" : 10},
         "email": "test@test.com",
@@ -531,6 +533,7 @@ Feature: Publish Queue
       [{
         "name":"Channel 3",
         "media_type":"media",
+        "is_active": true,
         "subscriber_type": "digital",
         "sequence_num_settings":{"min" : 1, "max" : 10},
         "email": "test@test.com",

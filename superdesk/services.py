@@ -122,8 +122,8 @@ class BaseService:
             req.projection = json.dumps(projection)
         return self.backend.get_from_mongo(self.datasource, req=req, lookup=lookup)
 
-    def find_and_modify(self, **kwargs):
-        res = self.backend.find_and_modify(self.datasource, **kwargs)
+    def find_and_modify(self, query, update, **kwargs):
+        res = self.backend.find_and_modify(self.datasource, query=query, update=update, **kwargs)
         return res
 
     def _validator(self, skip_validation=False):

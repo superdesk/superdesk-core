@@ -22,17 +22,19 @@
 
 import ast
 import logging
-from flask import request
+from flask import request, current_app as app
 from flask_babel import _
+from bson import ObjectId
 
 import superdesk
 from superdesk.errors import SuperdeskApiError
 from superdesk.notification import push_notification
 from superdesk.storage.superdesk_file import generate_response_for_file
+from superdesk.default_settings import strtobool
 
 from apps.auth import get_auth, get_user_id
 
-from .utils import get_file_from_sams, get_attachments_from_asset_id
+from .utils import get_file_from_sams, get_attachments_from_asset_id, get_image_from_sams
 from .client import get_sams_client
 
 logger = logging.getLogger(__name__)
@@ -68,6 +70,21 @@ def get_binary(item_id):
     return generate_response_for_file(file)
 
 
+@assets_bp.route("/sams/assets/images/<item_id>", methods=["GET"])
+def download_image(item_id: str):
+    """Downloads an image from SAMS and sends back to the requestee"""
+
+    width = int(request.args["width"]) if request.args.get("width") else None
+    height = int(request.args["height"]) if request.args.get("height") else None
+    keep_proportions = strtobool(request.args.get("keep_proportions", "True"))
+    file = get_image_from_sams(get_sams_client(), ObjectId(item_id), width, height, keep_proportions)
+
+    if not file:
+        raise SuperdeskApiError.notFoundError(_("SAMS Image Asset not found"))
+
+    return generate_response_for_file(file)
+
+
 @assets_bp.route("/sams/assets", methods=["POST"])
 def create():
     """
@@ -75,17 +92,33 @@ def create():
     """
     files = {"binary": request.files["binary"]}
     docs = request.form.to_dict()
-    post_response = get_sams_client().assets.create(docs=docs, files=files, external_user_id=get_user_id(True))
+    sams_client = get_sams_client()
+    post_response = sams_client.assets.create(docs=docs, files=files, external_user_id=get_user_id(True))
+    response = post_response.json()
     if post_response.status_code == 201:
+        if response.get("mimetype", "").startswith("image/"):
+            for rendition in app.config["RENDITIONS"]["sams"].values():
+                rendition_response = sams_client.images.generate_rendition(
+                    response["_id"], width=rendition.get("width"), height=rendition.get("height"), keep_proportions=True
+                )
+
+                if not rendition_response.ok:
+                    # We want to continue, even if SAMS failed to generate the rendition
+                    # Instead we just log the error here and continue
+                    error_json = rendition_response.json()
+                    error_code = rendition_response.status_code
+                    description = error_json.get("description") or f"Error [{error_code}]"
+                    logger.error(f"Failed to generate SAMS image rendition: {description}")
+
         push_notification(
             "sams:asset:created",
-            item_id=post_response.json()["_id"],
+            item_id=response["_id"],
             user_id=get_user_id(True),
             session_id=get_auth()["_id"],
-            _etag=post_response.json()["_etag"],
+            _etag=response["_etag"],
             extension="sams",
         )
-    return post_response.json(), post_response.status_code
+    return response, post_response.status_code
 
 
 @assets_bp.route("/sams/assets/<item_id>", methods=["DELETE"])

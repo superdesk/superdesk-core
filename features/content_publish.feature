@@ -66,7 +66,7 @@ Feature: Content Publishing
       """
       {
         "name":"Channel 1","media_type":"media", "subscriber_type": "digital", "sequence_num_settings":{"min" : 1, "max" : 10}, "email": "test@test.com",
-        "products": ["#products._id#"],
+        "products": ["#products._id#"], "is_active": true,
         "destinations":[{"name":"Test","format": "nitf", "delivery_type":"email","config":{"recipients":"test@test.com"}}]
       }
       """
@@ -74,7 +74,7 @@ Feature: Content Publishing
       """
       {
         "name":"Channel 2","media_type":"media", "subscriber_type": "wire", "sequence_num_settings":{"min" : 1, "max" : 10}, "email": "test@test.com",
-        "products": ["#products._id#"],
+        "products": ["#products._id#"], "is_active": true,
         "destinations":[{"name":"Test","format": "nitf", "delivery_type":"email","config":{"recipients":"test@test.com"}}],
         "api_products": ["#products._id#"]
       }
@@ -213,7 +213,7 @@ Feature: Content Publishing
       """
       {
         "name":"Channel 1","media_type":"media", "subscriber_type": "digital", "sequence_num_settings":{"min" : 1, "max" : 10}, "email": "test@test.com",
-        "products": ["#products._id#"],
+        "products": ["#products._id#"], "is_active": true,
         "destinations":[{"name":"Test","format": "nitf", "delivery_type":"email","config":{"recipients":"test@test.com"}}]
       }
       """
@@ -221,7 +221,7 @@ Feature: Content Publishing
       """
       {
         "name":"Channel 2","media_type":"media", "subscriber_type": "wire", "sequence_num_settings":{"min" : 1, "max" : 10}, "email": "test@test.com",
-        "products": ["#products._id#"],
+        "products": ["#products._id#"], "is_active": true,
         "destinations":[{"name":"Test","format": "nitf", "delivery_type":"email","config":{"recipients":"test@test.com"}}]
       }
       """
@@ -289,7 +289,7 @@ Feature: Content Publishing
       {
         "name":"Channel 3","media_type":"media", "subscriber_type": "digital",  "email": "test@test.com",
         "sequence_num_settings":{"min" : 1, "max" : 10},
-        "products": ["#products._id#"],
+        "products": ["#products._id#"], "is_active": true,
         "destinations":[{"name":"Test","format": "nitf", "delivery_type":"email","config":{"recipients":"test@test.com"}}]
       }
       """
@@ -376,7 +376,7 @@ Feature: Content Publishing
       {
         "name":"Channel Direct","media_type":"media", "subscriber_type": "wire",  "email": "test@test.com",
         "sequence_num_settings":{"min" : 1, "max" : 10},
-        "products": ["#p_direct#"],
+        "products": ["#p_direct#"], "is_active": true,
         "destinations":[{"name":"Test","format": "nitf", "delivery_type":"email","config":{"recipients":"test@test.com"}}]
       }
       """
@@ -385,7 +385,7 @@ Feature: Content Publishing
       {
         "name":"Channel API","media_type":"media", "subscriber_type": "wire",  "email": "test@test.com",
         "sequence_num_settings":{"min" : 1, "max" : 10},
-        "api_products": ["#p_api#"]
+        "api_products": ["#p_api#"], "is_active": true
       }
       """
       Then we get latest
@@ -611,6 +611,7 @@ Feature: Content Publishing
       """
       {
         "name":"Channel 3",
+        "is_active": true,
         "media_type":"media",
         "subscriber_type": "digital",
         "email": "test@test.com",
@@ -724,7 +725,7 @@ Feature: Content Publishing
       """
       {
         "name":"Channel 3","media_type":"media", "subscriber_type": "digital", "sequence_num_settings":{"min" : 1, "max" : 10}, "email": "test@test.com",
-        "products": ["#products._id#"],
+        "products": ["#products._id#"], "is_active": true,
         "destinations":[{"name":"Test","format": "nitf", "delivery_type":"email","config":{"recipients":"test@test.com"}}]
       }
       """
@@ -1128,7 +1129,7 @@ Feature: Content Publishing
       """
       {
         "name":"Channel 3","media_type":"media", "subscriber_type": "wire", "sequence_num_settings":{"min" : 1, "max" : 10}, "email": "test@test.com",
-        "products": ["#products._id#"],
+        "products": ["#products._id#"], "is_active": true,
         "destinations":[{"name":"Test","format": "nitf", "delivery_type":"email","config":{"recipients":"test@test.com"}}],
         "api_products": ["#products._id#"]
       }
@@ -1191,7 +1192,7 @@ Feature: Content Publishing
       """
       {
         "name":"Channel 3","media_type":"media", "subscriber_type": "digital", "sequence_num_settings":{"min" : 1, "max" : 10}, "email": "test@test.com",
-        "products": ["#products._id#"],
+        "products": ["#products._id#"], "is_active": true,
         "destinations":[{"name":"Test","format": "nitf", "delivery_type":"email","config":{"recipients":"test@test.com"}}]
       }
       """
@@ -1272,7 +1273,7 @@ Feature: Content Publishing
       """
       {
         "name":"Channel 3","media_type":"media", "subscriber_type": "wire", "sequence_num_settings":{"min" : 1, "max" : 10}, "email": "test@test.com",
-        "products": ["#products._id#"],
+        "products": ["#products._id#"], "is_active": true,
         "destinations":[{"name":"Test","format": "nitf", "delivery_type":"email","config":{"recipients":"test@test.com"}}]
       }
       """
@@ -1500,7 +1501,7 @@ Feature: Content Publishing
       {
         "name":"Channel direct","media_type":"media", "subscriber_type": "wire",
         "sequence_num_settings":{"min" : 1, "max" : 10}, "email": "test@test.com",
-        "products": ["#national-product#"],
+        "products": ["#national-product#"], "is_active": true,
         "destinations":[{"name":"Test","format": "nitf", "delivery_type":"email","config":{"recipients":"test@test.com"}}]
       }
       """
@@ -1509,7 +1510,7 @@ Feature: Content Publishing
       {
         "name":"Channel api","media_type":"media", "subscriber_type": "wire",
         "sequence_num_settings":{"min" : 1, "max" : 10}, "email": "test@test.com",
-        "api_products": ["#sport-product#"]
+        "api_products": ["#sport-product#"], "is_active": true
       }
       """
       And we publish "#archive._id#" with "publish" type and "published" state
@@ -1950,7 +1951,7 @@ Feature: Content Publishing
       """
       {
         "name":"Digital","media_type":"media", "subscriber_type": "digital", "sequence_num_settings":{"min" : 1, "max" : 10}, "email": "test@test.com",
-        "products": ["#products._id#"],
+        "products": ["#products._id#"], "is_active": true,
         "destinations":[{"name":"Test","format": "nitf", "delivery_type":"email","config":{"recipients":"test@test.com"}}]
       }
       """
@@ -1958,7 +1959,7 @@ Feature: Content Publishing
       """
       {
         "name":"Wire","media_type":"media", "subscriber_type": "wire", "sequence_num_settings":{"min" : 1, "max" : 10}, "email": "test@test.com",
-        "products": ["#products._id#"],
+        "products": ["#products._id#"], "is_active": true,
         "destinations":[{"name":"Test","format": "nitf", "delivery_type":"email","config":{"recipients":"test@test.com"}}]
       }
       """
@@ -2954,7 +2955,7 @@ Feature: Content Publishing
       """
       {
         "name":"Channel API","media_type":"media", "subscriber_type": "wire",  "email": "test@test.com",
-        "sequence_num_settings":{"min" : 1, "max" : 10},
+        "sequence_num_settings":{"min" : 1, "max" : 10}, "is_active": true,
         "api_products": ["#p_api#"]
       }
       """
@@ -2969,7 +2970,7 @@ Feature: Content Publishing
       {
         "name":"Subscriber 1","media_type":"media", "subscriber_type": "digital",
         "sequence_num_settings":{"min" : 1, "max" : 10}, "email": "test@test.com",
-        "products": ["#products._id#"],
+        "products": ["#products._id#"], "is_active": true,
         "destinations":[{"name":"Test","format": "ninjs", "delivery_type":"http_push","config":{}}]
       }
       """
@@ -3070,7 +3071,7 @@ Feature: Content Publishing
       """
       {
         "name":"Channel 3","media_type":"media", "subscriber_type": "wire", "sequence_num_settings":{"min" : 1, "max" : 10}, "email": "test@test.com",
-        "products": ["#products._id#"],
+        "products": ["#products._id#"], "is_active": true,
         "destinations":[{"name":"Test","format": "nitf", "delivery_type":"email","config":{"recipients":"test@test.com"}}]
       }
       """
