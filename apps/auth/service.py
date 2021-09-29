@@ -9,7 +9,7 @@
 # at https://www.sourcefabric.org/superdesk/license
 
 import flask
-from flask import request, current_app as app
+from flask import request, current_app as app, session
 from flask_babel import _
 from eve.utils import config
 
@@ -33,6 +33,8 @@ class AuthService(BaseService):
         raise NotImplementedError()
 
     def on_create(self, docs):
+        # Clear the session data when creating a new session
+        session.clear()
         for doc in docs:
             user = self.authenticate(doc)
             if not user:
@@ -82,6 +84,9 @@ class AuthService(BaseService):
         :param doc: A deleted auth doc AKA a session
         :return:
         """
+        # Clear the session data when session has ended
+        session.clear()
+
         # notify that the session has ended
         app.on_session_end(doc["user"], doc["_id"])
         self.set_user_last_activity(doc["user"], done=True)
