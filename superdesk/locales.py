@@ -2,6 +2,7 @@ import pytz
 import flask
 import babel.dates as dates
 
+from superdesk.auth.decorator import blueprint_auth
 from apps.auth import get_user
 from eve.render import send_response
 
@@ -23,9 +24,8 @@ def get_timezones():
 
 
 @bp.route("/locales/timezones", methods=["GET", "OPTIONS"])
+@blueprint_auth("locales")
 def locales_view():
-    if not flask.current_app.auth.authorized([], "locales", "GET"):
-        flask.abort(401)
     resp = None
     if flask.request.method == "GET":
         resp = {"timezones": get_timezones()}

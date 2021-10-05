@@ -26,6 +26,7 @@ from superdesk.media.media_operations import (
 )
 from superdesk.filemeta import set_filemeta
 from superdesk.storage.superdesk_file import generate_response_for_file
+from superdesk.auth.decorator import blueprint_auth
 from .resource import Resource
 from .services import BaseService
 
@@ -35,12 +36,14 @@ logger = logging.getLogger(__name__)
 
 
 @bp.route("/upload/<path:media_id>/raw", methods=["GET"])
+@blueprint_auth()
 def get_upload_as_data_uri_bc(media_id):
     """Keep previous url for backward compatibility"""
     return redirect(upload_url(media_id))
 
 
 @bp.route("/upload-raw/<path:media_id>", methods=["GET"])
+@blueprint_auth()
 def get_upload_as_data_uri(media_id):
     if not request.args.get("resource"):
         media_file = app.media.get_by_filename(media_id)

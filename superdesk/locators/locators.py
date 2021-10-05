@@ -12,6 +12,7 @@ from operator import itemgetter
 from eve.render import send_response
 from flask import Blueprint, current_app as app
 from superdesk.utc import utcnow
+from superdesk.auth.decorator import blueprint_auth
 
 bp = Blueprint("locators", __name__)
 
@@ -110,6 +111,7 @@ class LocatorIndex:
 @bp.route("/cities/", methods=["GET", "OPTIONS"])
 @bp.route("/country/<country_code>", methods=["GET", "OPTIONS"])
 @bp.route("/country/<country_code>/state/<state_code>", methods=["GET", "OPTIONS"])
+@blueprint_auth()
 def get_cities(country_code=None, state_code=None):
     """
     Fetches cities and sends the list as response body.
