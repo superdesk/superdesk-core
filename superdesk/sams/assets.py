@@ -99,11 +99,11 @@ def create():
     if post_response.status_code == 201:
         if response.get("mimetype", "").startswith("image/"):
             # Add original rendition of the image, before adding other smaller ones.
-            width, height = PIL.Image.open(files['binary']).size
+            width, height = PIL.Image.open(files["binary"]).size
 
             # pass name as original in case of creating rendition as original
             rendition_response = sams_client.images.generate_rendition(
-                response["_id"], width=width, height=height, name='original', keep_proportions=True
+                response["_id"], width=width, height=height, name="original", keep_proportions=True
             )
 
             if not rendition_response.ok:
