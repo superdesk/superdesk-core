@@ -1,6 +1,7 @@
 [{
         "_id": "text",
-        "item_type": "text",
+        "type": "text",
+        "init_version": 1,
         "label": "Text",
         "schema": {
             "abstract": {
@@ -252,7 +253,8 @@
     },
     {
         "_id": "audio",
-        "item_type": "audio",
+        "type": "audio",
+        "init_version": 1,
         "label": "Audio",
         "schema": {
             "anpa_category": {
@@ -457,7 +459,8 @@
     },
     {
         "_id": "video",
-        "item_type": "video",
+        "type": "video",
+        "init_version": 1,
         "label": "Video",
         "schema": {
             "anpa_category": {
@@ -662,8 +665,9 @@
     },
     {
         "_id": "picture",
-        "item_type": "picture",
+        "type": "picture",
         "label": "Picture",
+        "init_version": 1,
         "schema": {
             "anpa_category": {
                 "type": "list",
@@ -867,7 +871,8 @@
     },
     {
         "_id": "composite",
-        "item_type": "composite",
+        "type": "composite",
+        "init_version": 1,
         "label": "Package",
         "schema": {
             "abstract": {
