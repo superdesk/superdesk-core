@@ -25,6 +25,7 @@ import logging
 from flask import request, current_app as app
 from flask_babel import _
 from bson import ObjectId
+import PIL
 
 import superdesk
 from superdesk.errors import SuperdeskApiError
@@ -97,6 +98,23 @@ def create():
     response = post_response.json()
     if post_response.status_code == 201:
         if response.get("mimetype", "").startswith("image/"):
+            # Add original rendition of the image, before adding other smaller ones.
+            width, height = PIL.Image.open(files['binary']).size
+
+            # pass name as original in case of creating rendition as original
+            rendition_response = sams_client.images.generate_rendition(
+                response["_id"], width=width, height=height, name='original', keep_proportions=True
+            )
+
+            if not rendition_response.ok:
+                # We want to continue, even if SAMS failed to generate the rendition
+                # Instead we just log the error here and continue
+                error_json = rendition_response.json()
+                error_code = rendition_response.status_code
+                description = error_json.get("description") or f"Error [{error_code}]"
+                logger.error(f"Failed to generate SAMS image rendition: {description}")
+
+            # Create other small renditions.
             for rendition in app.config["RENDITIONS"]["sams"].values():
                 rendition_response = sams_client.images.generate_rendition(
                     response["_id"], width=rendition.get("width"), height=rendition.get("height"), keep_proportions=True
