@@ -283,5 +283,5 @@ class SuperdeskValidator(Validator):
         {'type': 'boolean'}
         """
         if checked and value not in {"text", None}:
-            if app.data.find_one("content_types", req=None, item_type=value) is not None:
+            if app.data.find_one("content_types", req=None, type=value) is not None:
                 self._error(field, _("Only 1 instance is allowed."))
