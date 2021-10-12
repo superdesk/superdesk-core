@@ -25,6 +25,22 @@ from apps.archive.common import ITEM_OPERATION
 from apps.publish.content.common import publish_services
 from apps.content_types import apply_schema
 from flask_babel import lazy_gettext
+from superdesk.utc import utcnow, utc_to_local
+from datetime import time
+import superdesk
+import logging
+
+logger = logging.getLogger(__name__)
+
+
+def is_delay_night_press(item):
+    item_headline = item.get("headline")
+    if item_headline and "press" not in item_headline.lower():
+        return
+    current_time = utc_to_local(superdesk.app.config["DEFAULT_TIMEZONE"], utcnow()).time()
+    if not (time(4, 00) <= current_time and time(7, 00) >= current_time):
+        return
+    return True
 
 
 def internal_destination_auto_publish(item, **kwargs):
@@ -55,6 +71,12 @@ def internal_destination_auto_publish(item, **kwargs):
     updates = {PUBLISH_SCHEDULE: item[PUBLISH_SCHEDULE], SCHEDULE_SETTINGS: item[SCHEDULE_SETTINGS]}
     if item.get(ITEM_STATE) == CONTENT_STATE.PUBLISHED or not overwrite_item:
         new_id = archive_service.duplicate_content(item, state="routed", extra_fields=extra_fields)
+
+        # Do not set publish schedule for auto publish between 4 to 7 am
+        if is_delay_night_press(item):
+            logger.info("macro stopped:do not autopublish between 4 to 7 am item=%s", item.get("guid", "unknown"))
+            raise StopDuplication()
+
         updates[ITEM_STATE] = item.get(ITEM_STATE)
         updates[PROCESSED_FROM] = item[config.ID_FIELD]
 
