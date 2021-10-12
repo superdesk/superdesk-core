@@ -8,6 +8,7 @@ from .update_archived_document import *  # noqa
 from .remove_exported_files import RemoveExportedFiles  # noqa
 from .flush_elastic_index import FlushElasticIndex  # noqa
 from .generate_vocabularies import GenerateVocabularies  # noqa
+from . import data_manipulation  # noqa
 from . import schema  # noqa
 
 
