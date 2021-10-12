@@ -59,6 +59,8 @@ class PublishService(BaseService):
             if "evolvedfrom" in doc:
                 parent_item = self.find_one(req=None, _id=doc["evolvedfrom"])
                 if parent_item:
+                    if parent_item.get("original_id"):
+                        doc["original_id"] = parent_item["original_id"]
                     doc["ancestors"] = copy(parent_item.get("ancestors", []))
                     doc["ancestors"].append(doc["evolvedfrom"])
                     doc["bookmarks"] = parent_item.get("bookmarks", [])
@@ -66,6 +68,8 @@ class PublishService(BaseService):
                     logger.warning(
                         "Failed to find evolvedfrom item '{}' for '{}'".format(doc["evolvedfrom"], doc["guid"])
                     )
+            else:
+                doc["original_id"] = doc["guid"]
 
             self._assign_associations(item, doc)
             logger.info("publishing %s to %s" % (doc["guid"], subscribers))
