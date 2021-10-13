@@ -115,9 +115,15 @@ def create():
                 logger.error(f"Failed to generate SAMS image rendition: {description}")
 
             # Create other small renditions.
-            for rendition in app.config["RENDITIONS"]["sams"].values():
+            renditions = [k for k in app.config["RENDITIONS"]["sams"].keys()]
+            for rendition in renditions:
+                dimensions = app.config["RENDITIONS"]["sams"][rendition]
                 rendition_response = sams_client.images.generate_rendition(
-                    response["_id"], width=rendition.get("width"), height=rendition.get("height"), keep_proportions=True
+                    response["_id"],
+                    width=dimensions.get("width"),
+                    height=dimensions.get("height"),
+                    name=rendition,
+                    keep_proportions=True,
                 )
 
                 if not rendition_response.ok:
