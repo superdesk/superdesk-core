@@ -55,6 +55,7 @@ schema = {
     "embargoed": {"type": "datetime"},
     "evolvedfrom": Resource.not_analyzed_field(),
     "nextversion": Resource.not_analyzed_field(),
+    "original_id": Resource.not_analyzed_field(),
     "subscribers": Resource.not_analyzed_field("list"),
     "ednote": {"type": "string"},
     "signal": {

@@ -2,4 +2,4 @@ sphinx==1.8.5
 sphinx-autobuild==0.7.1
 sphinxcontrib-plantuml
 
--e .
+.
