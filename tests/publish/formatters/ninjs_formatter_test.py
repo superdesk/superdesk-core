@@ -85,6 +85,9 @@ class NinjsFormatterTest(TestCase):
             "flags": {"marked_for_legal": True},
             "extra": {"foo": "test"},
             "annotations": [{"msg": "test"}],
+            "signal": [
+                {"name": "Update", "qcode": "sig:update"},
+            ],
         }
         seq, doc = self.formatter.format(article, {"name": "Test Subscriber"})[0]
         expected = {
@@ -118,7 +121,10 @@ class NinjsFormatterTest(TestCase):
                 }
             ],
             "genre": [{"name": "Article", "code": "article"}],
-            "signal": [{"name": "Content Warning", "code": "cwarn", "scheme": "http://cv.iptc.org/newscodes/signal/"}],
+            "signal": [
+                {"name": "Content Warning", "code": "cwarn", "scheme": "http://cv.iptc.org/newscodes/signal/"},
+                {"name": "Update", "code": "update", "scheme": "http://cv.iptc.org/newscodes/signal/"},
+            ],
             "extra": {"foo": "test"},
             "charcount": 67,
             "wordcount": 13,

@@ -143,6 +143,14 @@ class NewsMLTwoFeedParser(XMLFeedParser):
                 item["embargoed_text"] = embargoed.text  # store it for inspection
                 logger.warning("Can't parse embargoed info '%s' on item '%s'", embargoed.text, item["guid"])
 
+        signals = meta.findall(self.qname("signal"))
+        if signals:
+            item["signal"] = [
+                dict(name=signal.text or signal.get("literal") or signal.get("qcode"), qcode=signal.get("qcode"))
+                for signal in signals
+                if signal.get("qcode")
+            ]
+
     def parse_content_meta(self, tree, item):
         """Parse contentMeta tag"""
         meta = tree.find(self.qname("contentMeta"))
