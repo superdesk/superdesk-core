@@ -8,6 +8,7 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
+import re
 import logging
 from superdesk.io.registry import register_feed_parser
 from superdesk.io.feed_parsers import XMLFeedParser
@@ -43,6 +44,8 @@ BLOCK_WHITELIST = {
     "</",
 }
 
+SHORTCODE_REGEX = re.compile(r"\[/?[_a-z]+\]")
+
 
 def is_block_elem(line):
     text = line.lstrip()
@@ -50,6 +53,10 @@ def is_block_elem(line):
         if text.startswith(block):
             return True
     return False
+
+
+def remove_shortcodes(text):
+    return re.sub(SHORTCODE_REGEX, "", text)
 
 
 class WPWXRFeedParser(XMLFeedParser):
@@ -265,7 +272,10 @@ class WPWXRFeedParser(XMLFeedParser):
                 img.addnext(embed_end)
 
             content = sd_etree.fix_html_void_elements(content)
+
             html = sd_etree.to_string(content, encoding="unicode", method="xml")
+
+        html = remove_shortcodes(html)
 
         item["body_html"] = html
 
