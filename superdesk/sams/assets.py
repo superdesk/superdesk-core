@@ -25,7 +25,6 @@ import logging
 from flask import request, current_app as app
 from flask_babel import _
 from bson import ObjectId
-import PIL
 
 import superdesk
 from superdesk.errors import SuperdeskApiError
