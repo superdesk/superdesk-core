@@ -99,7 +99,7 @@ def create():
     if post_response.status_code == 201:
         if response.get("mimetype", "").startswith("image/"):
 
-            # Create other small renditions.
+            # Create renditions.
             renditions = [k for k in app.config["RENDITIONS"]["sams"].keys()]
             for rendition in renditions:
                 dimensions = app.config["RENDITIONS"]["sams"][rendition]
