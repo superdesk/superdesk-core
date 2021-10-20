@@ -1,5 +1,11 @@
 # Superdesk Server Changelog
 
+## [2.1.6] 2021-10-20
+
+### Fixed
+
+- Filter out shortcodes when importing wxr.
+
 ## [2.1.5] 2021-09-29
 
 ### Fixed
