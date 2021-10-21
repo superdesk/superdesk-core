@@ -116,7 +116,13 @@ class IMatricsTestCase(TestCase):
                         "weight": 1,
                         "geometry": {},
                         "links": [
-                            {"relationType": "", "id": "medtop:20000763", "source": "IPTC", "uri": "", "url": ""}
+                            {
+                                "relationType": "exactMatch",
+                                "id": "medtop:20000763",
+                                "source": "iptc",
+                                "uri": "",
+                                "url": "",
+                            }
                         ],
                         "title": "informasjons- og kommunikasjonsteknologi",
                         "type": "category",
@@ -184,7 +190,7 @@ class IMatricsTestCase(TestCase):
             "data": {"term": "informasjons"},
         }
         ai_data_op_service = get_resource_service("ai_data_op")
-        api_url = urljoin(TEST_BASE_URL, "concept/get?operation=title_type")
+        api_url = urljoin(TEST_BASE_URL, "concept/get")
         responses.add(
             responses.POST,
             api_url,
@@ -230,7 +236,7 @@ class IMatricsTestCase(TestCase):
                     {
                         "name": "informasjons- og kommunikasjonsteknologi",
                         "qcode": "c8a83204-29e0-3a7f-9a0e-51e76d885f7f",
-                        "scheme": "imatrics_category",
+                        "scheme": "mediatopic",
                         "source": "imatrics",
                         "description": "title",
                         "altids": {
@@ -243,7 +249,7 @@ class IMatricsTestCase(TestCase):
                     {
                         "name": "informasjonsvitenskap",
                         "qcode": "af815add-8456-3226-8177-ea0d8e3011eb",
-                        "scheme": "imatrics_category",
+                        "scheme": "mediatopic",
                         "source": "imatrics",
                         "description": "title",
                         "altids": {
