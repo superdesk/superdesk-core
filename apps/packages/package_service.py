@@ -14,21 +14,33 @@ from flask import current_app as app
 import superdesk
 from collections import Counter
 from eve.utils import config, ParsedRequest
-from eve.validation import ValidationError
 from superdesk.errors import SuperdeskApiError
 from superdesk import get_resource_service
 from superdesk.metadata.item import ITEM_TYPE, CONTENT_TYPE, EMBARGO
-from superdesk.metadata.packages import LINKED_IN_PACKAGES, PACKAGE, \
-    REFS, RESIDREF, GROUPS, ID_REF, MAIN_GROUP, ROOT_GROUP, ROLE, ROOT_ROLE, MAIN_ROLE, GROUP_ID
+from superdesk.metadata.packages import (
+    LINKED_IN_PACKAGES,
+    PACKAGE,
+    REFS,
+    RESIDREF,
+    GROUPS,
+    ID_REF,
+    MAIN_GROUP,
+    ROOT_GROUP,
+    ROLE,
+    ROOT_ROLE,
+    MAIN_ROLE,
+    GROUP_ID,
+)
 from apps.archive.common import insert_into_versions, ITEM_UNLINK
 from apps.archive.archive import SOURCE as ARCHIVE
 from superdesk.utc import utcnow
 from superdesk.default_settings import VERSION
 from flask_babel import _
 from superdesk.signals import signals
+from superdesk.validation import ValidationError
 
 logger = logging.getLogger(__name__)
-package_create_signal = signals.signal('package.create')  # @UndefinedVariable
+package_create_signal = signals.signal("package.create")  # @UndefinedVariable
 
 
 def create_root_group(docs):
@@ -41,7 +53,7 @@ def create_root_group(docs):
             continue
         doc[GROUPS] = [
             {GROUP_ID: ROOT_GROUP, ROLE: ROOT_ROLE, REFS: [{ID_REF: MAIN_GROUP}]},
-            {GROUP_ID: MAIN_GROUP, ROLE: MAIN_ROLE, REFS: []}
+            {GROUP_ID: MAIN_GROUP, ROLE: MAIN_ROLE, REFS: []},
         ]
 
 
@@ -51,12 +63,12 @@ def get_item_ref(item):
     :param item: item dict
     """
     return {
-        RESIDREF: item.get('_id'),
-        'headline': item.get('headline'),
-        'slugline': item.get('slugline'),
-        'location': 'archive',
-        'itemClass': 'icls:' + item.get('type', 'text'),
-        'renditions': item.get('renditions', {})
+        RESIDREF: item.get("_id"),
+        "headline": item.get("headline"),
+        "slugline": item.get("slugline"),
+        "location": "archive",
+        "itemClass": "icls:" + item.get("type", "text"),
+        "renditions": item.get("renditions", {}),
     }
 
 
@@ -66,18 +78,19 @@ def copy_metadata_from_highlight_template(doc):
 
     :param doc
     """
-    highlight_id = doc.get('highlight', None)
+    highlight_id = doc.get("highlight", None)
     if highlight_id:
-        highlight = superdesk.get_resource_service('highlights').find_one(req=None, _id=highlight_id)
-        if highlight and 'template' in highlight:
+        highlight = superdesk.get_resource_service("highlights").find_one(req=None, _id=highlight_id)
+        if highlight and "template" in highlight:
             from apps.templates.content_templates import render_content_template_by_id
-            updates = render_content_template_by_id(doc, highlight.get('template', None))
+
+            updates = render_content_template_by_id(doc, highlight.get("template", None))
             if ITEM_TYPE in updates:
                 del updates[ITEM_TYPE]
             doc.update(updates)
 
 
-class PackageService():
+class PackageService:
     def on_create(self, docs):
         create_root_group(docs)
         self.check_root_group(docs)
@@ -85,17 +98,16 @@ class PackageService():
         self.check_not_in_personal_space(docs)
 
         for doc in docs:
-            if not doc.get('ingest_provider'):
-                doc['source'] = app.config.get('DEFAULT_SOURCE_VALUE_FOR_MANUAL_ARTICLES')
+            if not doc.get("ingest_provider"):
+                doc["source"] = app.config.get("DEFAULT_SOURCE_VALUE_FOR_MANUAL_ARTICLES")
 
-            if 'highlight' in doc:
+            if "highlight" in doc:
                 copy_metadata_from_highlight_template(doc)
 
         package_create_signal.send(self, docs=docs)
 
     def on_created(self, docs):
-        for (doc, assoc) in [(doc, assoc) for doc in docs
-                             for assoc in self._get_associations(doc)]:
+        for (doc, assoc) in [(doc, assoc) for doc in docs for assoc in self._get_associations(doc)]:
             self.update_link(doc, assoc)
 
     def on_update(self, updates, original):
@@ -110,10 +122,12 @@ class PackageService():
             self.update_groups(updates, original)
 
     def update_groups(self, updates, original):
-        to_add = {assoc.get(RESIDREF): assoc for assoc in self._get_associations(updates)
-                  if assoc.get(RESIDREF) and updates.get(GROUPS)}
-        to_remove = (assoc for assoc in self._get_associations(original)
-                     if assoc.get(RESIDREF) not in to_add)
+        to_add = {
+            assoc.get(RESIDREF): assoc
+            for assoc in self._get_associations(updates)
+            if assoc.get(RESIDREF) and updates.get(GROUPS)
+        }
+        to_remove = (assoc for assoc in self._get_associations(original) if assoc.get(RESIDREF) not in to_add)
         for assoc in to_remove:
             self.update_link(original, assoc, delete=True)
         for assoc in to_add.keys():
@@ -129,12 +143,12 @@ class PackageService():
             root_groups = [group for group in groups if group.get(GROUP_ID) == ROOT_GROUP]
 
             if len(root_groups) == 0:
-                message = _('Root group is missing.')
+                message = _("Root group is missing.")
                 logger.error(message)
                 raise SuperdeskApiError.forbiddenError(message=message)
 
             if len(root_groups) > 1:
-                message = _('Only one root group is allowed.')
+                message = _("Only one root group is allowed.")
                 logger.error(message)
                 raise SuperdeskApiError.forbiddenError(message=message)
 
@@ -142,28 +156,27 @@ class PackageService():
 
     def check_all_groups_have_id_set(self, groups):
         if any(group for group in groups if not group.get(GROUP_ID)):
-            message = _('Group is missing id.')
+            message = _("Group is missing id.")
             logger.error(message)
             raise SuperdeskApiError.forbiddenError(message=message)
 
     def check_that_all_groups_are_referenced_in_root(self, root, groups):
         rest = [group.get(GROUP_ID) for group in groups if group.get(GROUP_ID) != ROOT_GROUP]
-        refs = [ref.get(ID_REF) for group in groups for ref in group.get(REFS, [])
-                if ref.get(ID_REF)]
+        refs = [ref.get(ID_REF) for group in groups for ref in group.get(REFS, []) if ref.get(ID_REF)]
 
         rest_counter = Counter(rest)
         if any(id for id, value in rest_counter.items() if value > 1):
-            message = _('{id} group is added multiple times.').format(id=id)
+            message = _("{id} group is added multiple times.").format(id=id)
             logger.error(message)
             raise SuperdeskApiError.forbiddenError(message=message)
 
         if len(rest) != len(refs):
-            message = _('The number of groups and of referenced groups in the root group do not match.')
+            message = _("The number of groups and of referenced groups in the root group do not match.")
             logger.error(message)
             raise SuperdeskApiError.forbiddenError(message=message)
 
         if len(set(rest).intersection(refs)) != len(refs):
-            message = _('Not all groups are referenced in the root group.')
+            message = _("Not all groups are referenced in the root group.")
             logger.error(message)
             raise SuperdeskApiError.forbiddenError(message=message)
 
@@ -185,14 +198,14 @@ class PackageService():
             # the next 'particular_type' containing line is liveblog related and it is usefull since
             # liveblog users don't have a personal space. Therefore, if the the task/desk condition
             # is in place, it prevents the liveblog posts from beeing published.
-            if not doc.get('particular_type'):
-                if not doc.get('task') or not doc['task'].get('desk'):
-                    message = 'Packages can not be created in the personal space.'
+            if not doc.get("particular_type"):
+                if not doc.get("task") or not doc["task"].get("desk"):
+                    message = "Packages can not be created in the personal space."
                     logger.error(message)
                     raise SuperdeskApiError.forbiddenError(message=message)
-                if not doc['task'].get('stage'):
-                    desk = get_resource_service('desks').find_one(req=None, _id=doc['task']['desk'])
-                    doc['task']['stage'] = desk['working_stage']
+                if not doc["task"].get("stage"):
+                    desk = get_resource_service("desks").find_one(req=None, _id=doc["task"]["desk"])
+                    doc["task"]["stage"] = desk["working_stage"]
 
     def extract_default_association_data(self, package, assoc):
         if assoc.get(ID_REF):
@@ -200,11 +213,11 @@ class PackageService():
 
         item, item_id, endpoint = self.get_associated_item(assoc)
         self.check_for_circular_reference(package, item_id)
-        assoc['guid'] = item.get('guid', item_id)
-        assoc['type'] = item.get('type')
+        assoc["guid"] = item.get("guid", item_id)
+        assoc["type"] = item.get("type")
 
     def get_associated_item(self, assoc, throw_if_not_found=True):
-        endpoint = assoc.get('location', 'archive')
+        endpoint = assoc.get("location", "archive")
         item_id = assoc[RESIDREF]
 
         if not item_id:
@@ -213,7 +226,7 @@ class PackageService():
         item = get_resource_service(endpoint).find_one(req=None, _id=item_id)
 
         if not item and throw_if_not_found:
-            message = _('Invalid item reference: {reference}').format(reference=assoc[RESIDREF])
+            message = _("Invalid item reference: {reference}").format(reference=assoc[RESIDREF])
             logger.error(message)
             raise SuperdeskApiError.notFoundError(message=message)
         return item, item_id, endpoint
@@ -229,7 +242,7 @@ class PackageService():
             # just exit, no point on complaining
             return
 
-        two_way_links = [d for d in item.get(LINKED_IN_PACKAGES, []) if not d['package'] == package_id]
+        two_way_links = [d for d in item.get(LINKED_IN_PACKAGES, []) if not d["package"] == package_id]
 
         if not delete:
             data = {PACKAGE: package_id}
@@ -243,25 +256,25 @@ class PackageService():
         package_id = package[config.ID_FIELD]
         for itemRef in [assoc[RESIDREF] for assoc in associations if assoc.get(RESIDREF)]:
             if itemRef == package_id:
-                message = _('Trying to self reference as an association.')
+                message = _("Trying to self reference as an association.")
                 logger.error(message)
                 raise SuperdeskApiError.forbiddenError(message=message)
             counter[itemRef] += 1
 
         if any(itemRef for itemRef, value in counter.items() if value > 1):
-            message = _('Content associated multiple times')
+            message = _("Content associated multiple times")
             logger.error(message)
             raise SuperdeskApiError.forbiddenError(message=message)
 
     def check_for_circular_reference(self, package, item_id):
-        if any(d for d in package.get(LINKED_IN_PACKAGES, []) if d['package'] == item_id):
-            message = _('Trying to create a circular reference to: {item_id}').format(item_id=item_id)
+        if any(d for d in package.get(LINKED_IN_PACKAGES, []) if d["package"] == item_id):
+            message = _("Trying to create a circular reference to: {item_id}").format(item_id=item_id)
             logger.error(message)
             raise ValidationError(message)
         else:
             # keep checking in the hierarchy
-            for d in (d for d in package.get(LINKED_IN_PACKAGES, []) if 'package' in d):
-                linked_package = get_resource_service(ARCHIVE).find_one(req=None, _id=d['package'])
+            for d in (d for d in package.get(LINKED_IN_PACKAGES, []) if "package" in d):
+                linked_package = get_resource_service(ARCHIVE).find_one(req=None, _id=d["package"])
                 if linked_package:
                     self.check_for_circular_reference(linked_package, item_id)
 
@@ -274,10 +287,10 @@ class PackageService():
         :return: articles of type composite
         """
 
-        query = {'$and': [{ITEM_TYPE: CONTENT_TYPE.COMPOSITE}, {'groups.refs.residRef': doc_id}]}
+        query = {"$and": [{ITEM_TYPE: CONTENT_TYPE.COMPOSITE}, {"groups.refs.residRef": doc_id}]}
 
         if not_package_id:
-            query['$and'].append({config.ID_FIELD: {'$ne': not_package_id}})
+            query["$and"].append({config.ID_FIELD: {"$ne": not_package_id}})
 
         request = ParsedRequest()
         request.max_results = 100
@@ -298,7 +311,7 @@ class PackageService():
         groups_to_be_removed = set()
         non_root_groups = [group for group in package.get(GROUPS, []) if group.get(GROUP_ID) != ROOT_GROUP]
         for non_rg in non_root_groups:
-            refs = [r for r in non_rg.get(REFS, []) if r.get(RESIDREF, '') != ref_id]
+            refs = [r for r in non_rg.get(REFS, []) if r.get(RESIDREF, "") != ref_id]
             if len(refs) == 0:
                 groups_to_be_removed.add(non_rg.get(GROUP_ID))
             non_rg[REFS] = refs
@@ -307,8 +320,9 @@ class PackageService():
             root_group = [group for group in package.get(GROUPS, []) if group.get(GROUP_ID) == ROOT_GROUP][0]
             refs = [r for r in root_group.get(REFS, []) if r.get(ID_REF) not in groups_to_be_removed]
             root_group[REFS] = refs
-            removed_groups = [group for group in package.get(GROUPS, [])
-                              if group.get(GROUP_ID) not in groups_to_be_removed]
+            removed_groups = [
+                group for group in package.get(GROUPS, []) if group.get(GROUP_ID) not in groups_to_be_removed
+            ]
             package[GROUPS] = removed_groups
 
             # return if the package has any items left in it
@@ -326,10 +340,10 @@ class PackageService():
         """
         non_root_groups = (group for group in package.get(GROUPS, []) if group.get(GROUP_ID) != ROOT_GROUP)
         for g in (ref for group in non_root_groups for ref in group.get(REFS, [])):
-            if g.get(RESIDREF, '') == old_ref_id:
-                new_item = get_resource_service('archive').find_one(req=None, _id=new_ref_id)
+            if g.get(RESIDREF, "") == old_ref_id:
+                new_item = get_resource_service("archive").find_one(req=None, _id=new_ref_id)
                 g[RESIDREF] = new_ref_id
-                g['guid'] = new_ref_id
+                g["guid"] = new_ref_id
                 g[VERSION] = new_item[VERSION]
 
     def update_field_in_package(self, package, ref_id, field, field_value):
@@ -342,14 +356,19 @@ class PackageService():
         """
         non_root_groups = (group for group in package.get(GROUPS, []) if group.get(GROUP_ID) != ROOT_GROUP)
         for g in (ref for group in non_root_groups for ref in group.get(REFS, [])):
-            if g.get(RESIDREF, '') == ref_id:
+            if g.get(RESIDREF, "") == ref_id:
                 g[field] = field_value
 
     def remove_group_ref(self, package, ref_id):
         groups = package[GROUPS]
-        new_groups = [{GROUP_ID: group[GROUP_ID], ROLE: group.get(ROLE),
-                       REFS: [ref for ref in group[REFS] if ref.get('guid') != ref_id]}
-                      for group in groups]
+        new_groups = [
+            {
+                GROUP_ID: group[GROUP_ID],
+                ROLE: group.get(ROLE),
+                REFS: [ref for ref in group[REFS] if ref.get("guid") != ref_id],
+            }
+            for group in groups
+        ]
         new_root_refs = [{ID_REF: group[GROUP_ID]} for group in new_groups if group[GROUP_ID] != ROOT_GROUP]
 
         for group in new_groups:
@@ -371,8 +390,9 @@ class PackageService():
         if processed_packages is None:
             processed_packages = []
 
-        sub_package_ids = [ref['guid'] for group in groups
-                           for ref in group[REFS] if ref.get('type') == CONTENT_TYPE.COMPOSITE]
+        sub_package_ids = [
+            ref["guid"] for group in groups for ref in group[REFS] if ref.get("type") == CONTENT_TYPE.COMPOSITE
+        ]
         for sub_package_id in sub_package_ids:
             if sub_package_id not in processed_packages:
                 sub_package = self.find_one(req=None, _id=sub_package_id)
@@ -381,7 +401,7 @@ class PackageService():
         new_groups = self.remove_group_ref(package, ref_id_to_remove)
         updates = {config.LAST_UPDATED: utcnow(), GROUPS: new_groups}
 
-        resolve_document_version(updates, ARCHIVE, 'PATCH', package)
+        resolve_document_version(updates, ARCHIVE, "PATCH", package)
         get_resource_service(ARCHIVE).patch(package[config.ID_FIELD], updates)
         app.on_archive_item_updated(updates, package, ITEM_UNLINK)
         insert_into_versions(id_=package[config.ID_FIELD])
@@ -390,8 +410,7 @@ class PackageService():
         return sub_package_ids
 
     def _get_associations(self, doc):
-        return [assoc for group in doc.get(GROUPS, [])
-                for assoc in group.get(REFS, [])]
+        return [assoc for group in doc.get(GROUPS, []) for assoc in group.get(REFS, [])]
 
     def remove_spiked_refs_from_package(self, doc_id, not_package_id=None):
         packages = self.get_packages(doc_id, not_package_id)
@@ -412,8 +431,9 @@ class PackageService():
         :param package:
         :return: list of residref
         """
-        return [ref.get(RESIDREF) for group in package.get(GROUPS, [])
-                for ref in group.get(REFS, []) if RESIDREF in ref]
+        return [
+            ref.get(RESIDREF) for group in package.get(GROUPS, []) for ref in group.get(REFS, []) if RESIDREF in ref
+        ]
 
     def check_if_any_item_in_package_has_embargo(self, package):
         """Recursively checks if any item in the package has embargo.
@@ -428,9 +448,11 @@ class PackageService():
 
             if doc.get(EMBARGO):
                 raise SuperdeskApiError.badRequestError(
-                    _("Package can't have item which has embargo. ") +
-                    _("Slugline/Unique Name of the item having embargo: {slugline}/{unique}").format(
-                        slugline=doc.get('slugline'), unique=doc.get('unique_name')))
+                    _("Package can't have item which has embargo. ")
+                    + _("Slugline/Unique Name of the item having embargo: {slugline}/{unique}").format(
+                        slugline=doc.get("slugline"), unique=doc.get("unique_name")
+                    )
+                )
 
             if doc[ITEM_TYPE] == CONTENT_TYPE.COMPOSITE:
                 self.check_if_any_item_in_package_has_embargo(doc)

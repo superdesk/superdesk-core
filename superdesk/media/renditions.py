@@ -18,18 +18,28 @@ from .media_operations import process_file_from_stream
 from .media_operations import crop_image
 from .media_operations import download_file_from_url
 from .media_operations import process_file
+from .media_operations import guess_media_extension
 from .image import fix_orientation
 from eve.utils import config
 from superdesk import get_resource_service
 from superdesk.filemeta import set_filemeta
+import os
 
 
 logger = logging.getLogger(__name__)
 
 
-def generate_renditions(original, media_id, inserted, file_type, content_type,
-                        rendition_config, url_for_media, insert_metadata=True,
-                        temporary=False):
+def generate_renditions(
+    original,
+    media_id,
+    inserted,
+    file_type,
+    content_type,
+    rendition_config,
+    url_for_media,
+    insert_metadata=True,
+    temporary=False,
+):
     """Generate system renditions for given media file id.
 
     :param BytesIO original: original image byte stream
@@ -44,17 +54,17 @@ def generate_renditions(original, media_id, inserted, file_type, content_type,
                            files in "temp" folder will be removed after 24 hours
     :return: dict of renditions
     """
-    rend = {'href': app.media.url_for_media(media_id, content_type), 'media': media_id, 'mimetype': content_type}
-    renditions = {'original': rend}
+    rend = {"href": app.media.url_for_media(media_id, content_type), "media": media_id, "mimetype": content_type}
+    renditions = {"original": rend}
 
-    if file_type != 'image':
+    if file_type != "image":
         return renditions
 
     original = fix_orientation(original)
     img = Image.open(original)
     width, height = img.size
-    rend.update({'width': width})
-    rend.update({'height': height})
+    rend.update({"width": width})
+    rend.update({"height": height})
 
     # remove crop if original is small
     custom_renditions = get_renditions_spec(without_internal_renditions=True)
@@ -63,52 +73,62 @@ def generate_renditions(original, media_id, inserted, file_type, content_type,
         if rendition not in rendition_config:
             continue
         if not can_generate_custom_crop_from_original(width, height, crop):
-            if rendition in config.RENDITIONS['picture']:
-                logger.info('image is too small for rendition "{rendition}", but it is an internal one, '
-                            'so we keep it'.format(rendition=rendition))
+            if rendition in config.RENDITIONS["picture"]:
+                logger.info(
+                    'image is too small for rendition "{rendition}", but it is an internal one, '
+                    "so we keep it".format(rendition=rendition)
+                )
             else:
                 del rendition_config[rendition]
 
-    ext = content_type.split('/')[1].lower()
-    if ext in ('JPG', 'jpg'):
-        ext = 'jpeg'
-    elif ext not in ('jpeg', 'gif', 'tiff', 'png'):
-        ext = 'png'
+    ext = content_type.split("/")[1].lower()
+    if ext in ("JPG", "jpg"):
+        ext = "jpeg"
+    elif ext not in ("jpeg", "gif", "tiff", "png"):
+        ext = "png"
     # make baseImage rendition first
-    base_image = rendition_config.pop('baseImage', None)
+    base_image = rendition_config.pop("baseImage", None)
     specs = list(rendition_config.items())
     if base_image:
-        specs.insert(0, ('baseImage', base_image))
+        specs.insert(0, ("baseImage", base_image))
     base = original
     for rendition, rsize in specs:
         cropping_data = {}
         # reset
         base.seek(0)
         # create the rendition (can be based on ratio or pixels)
-        if rsize.get('width') and rsize.get('height') and rendition not in config.RENDITIONS['picture']:  # custom crop
-            resized, width, height, cropping_data = _crop_image_center(base, ext, rsize['width'], rsize['height'])
+        if rsize.get("width") and rsize.get("height") and rendition not in config.RENDITIONS["picture"]:  # custom crop
+            resized, width, height, cropping_data = _crop_image_center(base, ext, rsize["width"], rsize["height"])
             # we need crop data for original size image
-            cropping_data = _get_center_crop(original, rsize['width'], rsize['height'])
-        elif rsize.get('width') or rsize.get('height'):
-            resized, width, height = _resize_image(base, (rsize.get('width'), rsize.get('height')), ext)
-        elif rsize.get('ratio'):
-            resized, width, height, cropping_data = _crop_image(base, ext, rsize.get('ratio'))
-        rend_content_type = 'image/%s' % ext
+            cropping_data = _get_center_crop(original, rsize["width"], rsize["height"])
+        elif rsize.get("width") or rsize.get("height"):
+            resized, width, height = _resize_image(base, (rsize.get("width"), rsize.get("height")), ext)
+        elif rsize.get("ratio"):
+            resized, width, height, cropping_data = _crop_image(base, ext, rsize.get("ratio"))
+        rend_content_type = "image/%s" % ext
         file_name, rend_content_type, metadata = process_file_from_stream(resized, content_type=rend_content_type)
         resized.seek(0)
-        folder = 'temp' if temporary else None
-        _id = app.media.put(resized, filename=file_name,
-                            content_type=rend_content_type,
-                            folder=folder,
-                            metadata=metadata if insert_metadata else None)
+        folder = "temp" if temporary else None
+        _id = app.media.put(
+            resized,
+            filename=file_name,
+            content_type=rend_content_type,
+            folder=folder,
+            metadata=metadata if insert_metadata else None,
+        )
         inserted.append(_id)
-        renditions[rendition] = {'href': url_for_media(_id, rend_content_type), 'media': _id,
-                                 'mimetype': 'image/%s' % ext, 'width': width, 'height': height}
+        renditions[rendition] = {
+            "href": url_for_media(_id, rend_content_type),
+            "media": _id,
+            "mimetype": "image/%s" % ext,
+            "width": width,
+            "height": height,
+        }
         # add the cropping data if exist
         renditions[rendition].update(cropping_data)
 
         # use baseImage for other renditions once we have it
-        if rendition == 'baseImage' and width < img.size[0] and height < img.size[1]:
+        if rendition == "baseImage" and width < img.size[0] and height < img.size[1]:
             base = resized
     return renditions
 
@@ -124,16 +144,16 @@ def can_generate_custom_crop_from_original(width, height, crop):
     if not crop:
         crop = {}
 
-    if crop.get('ratio'):
+    if crop.get("ratio"):
         return True
 
     try:
-        crop_width = int(crop['width'])
+        crop_width = int(crop["width"])
     except (KeyError, TypeError, ValueError):
         crop_width = None
 
     try:
-        crop_height = int(crop['height'])
+        crop_height = int(crop["height"])
     except (KeyError, TypeError, ValueError):
         crop_height = None
 
@@ -148,7 +168,7 @@ def can_generate_custom_crop_from_original(width, height, crop):
 
 def delete_file_on_error(doc, file_id):
     # Don't delete the file if we are on the import from storage flow
-    if doc.get('_import', None):
+    if doc.get("_import", None):
         return
     app.media.delete(file_id)
 
@@ -168,27 +188,27 @@ def _crop_image(content, format, ratio):
     img = Image.open(content)
     width, height = img.size
     if type(ratio) not in [float, int]:
-        ratio = ratio.split(':')
+        ratio = ratio.split(":")
         ratio = int(ratio[0]) / int(ratio[1])
     if height * ratio > width:
         new_width = width
         new_height = int(new_width / ratio)
         cropping_data = {
-            'CropLeft': 0,
-            'CropRight': new_width,
-            'CropTop': int((height - new_height) / 2),
-            'CropBottom': int((height - new_height) / 2) + new_height,
+            "CropLeft": 0,
+            "CropRight": new_width,
+            "CropTop": int((height - new_height) / 2),
+            "CropBottom": int((height - new_height) / 2) + new_height,
         }
     else:
         new_width = int(height * ratio)
         new_height = height
         cropping_data = {
-            'CropLeft': int((width - new_width) / 2),
-            'CropRight': int((width - new_width) / 2) + new_width,
-            'CropTop': 0,
-            'CropBottom': new_height,
+            "CropLeft": int((width - new_width) / 2),
+            "CropRight": int((width - new_width) / 2) + new_width,
+            "CropTop": 0,
+            "CropBottom": new_height,
         }
-    crop, out = crop_image(content, file_name='crop.for.rendition', cropping_data=cropping_data, image_format=format)
+    crop, out = crop_image(content, file_name="crop.for.rendition", cropping_data=cropping_data, image_format=format)
     return out, new_width, new_height, cropping_data
 
 
@@ -205,20 +225,20 @@ def _get_center_crop(original, width, height):
         dest_height = image.size[1]
         offset = int((image.size[0] - dest_width) / 2)
         cropping_data = {
-            'CropLeft': offset,
-            'CropRight': offset + dest_width,
-            'CropTop': 0,
-            'CropBottom': dest_height,
+            "CropLeft": offset,
+            "CropRight": offset + dest_width,
+            "CropTop": 0,
+            "CropBottom": dest_height,
         }
     else:
         dest_width = image.size[0]
         dest_height = int(height * width_ratio)
         offset = int((image.size[1] - dest_height) / 2)
         cropping_data = {
-            'CropLeft': 0,
-            'CropRight': dest_width,
-            'CropTop': offset,
-            'CropBottom': offset + dest_height,
+            "CropLeft": 0,
+            "CropRight": dest_width,
+            "CropTop": offset,
+            "CropBottom": offset + dest_height,
         }
 
     return cropping_data
@@ -226,10 +246,16 @@ def _get_center_crop(original, width, height):
 
 def _crop_image_center(content, format, width, height):
     cropping_data = _get_center_crop(content, width, height)
-    crop, out = crop_image(content, file_name='crop.for.rendition', cropping_data=cropping_data, exact_size={
-        'width': width,
-        'height': height,
-    }, image_format=format)
+    crop, out = crop_image(
+        content,
+        file_name="crop.for.rendition",
+        cropping_data=cropping_data,
+        exact_size={
+            "width": width,
+            "height": height,
+        },
+        image_format=format,
+    )
     return out, width, height, cropping_data
 
 
@@ -241,7 +267,7 @@ def to_int(x):
         return x
 
 
-def _resize_image(content, size, format='png', keepProportions=True):
+def _resize_image(content, size, format=None, keepProportions=True):
     """Resize the image given as a binary stream
 
     @param content: stream
@@ -258,11 +284,13 @@ def _resize_image(content, size, format='png', keepProportions=True):
     """
     assert isinstance(size, tuple)
     img = Image.open(content)
+    if not format:
+        format = img.format
     width, height = img.size
     new_width, new_height = [to_int(x) for x in size]
     if keepProportions:
         if new_width is None and new_height is None:
-            raise Exception('size parameter requires at least width or height value')
+            raise Exception("size parameter requires at least width or height value")
         # resize with width and height
         if new_width is not None and new_height is not None:
             new_width, new_height = new_width, new_height
@@ -285,7 +313,7 @@ def _resize_image(content, size, format='png', keepProportions=True):
         resized.save(out, format, quality=85)
     except IOError:
         out = BytesIO()
-        resized = resized.convert('RGB')
+        resized = resized.convert("RGB")
         resized.save(out, format, quality=85)
     out.seek(0)
     return out, new_width, new_height
@@ -303,15 +331,15 @@ def get_renditions_spec(without_internal_renditions=False, no_custom_crops=False
     rendition_spec = {}
     # renditions required by superdesk
     if not without_internal_renditions:
-        rendition_spec = deepcopy(config.RENDITIONS['picture'])
+        rendition_spec = deepcopy(config.RENDITIONS["picture"])
 
     if not no_custom_crops:
         # load custom renditions sizes
-        custom_crops = get_resource_service('vocabularies').find_one(req=None, _id='crop_sizes')
+        custom_crops = get_resource_service("vocabularies").find_one(req=None, _id="crop_sizes")
         if custom_crops:
-            for crop in custom_crops.get('items'):
-                if crop.get('is_active'):
-                    rendition_spec[crop['name']] = crop
+            for crop in custom_crops.get("items"):
+                if crop.get("is_active"):
+                    rendition_spec[crop["name"]] = crop
     return rendition_spec
 
 
@@ -331,24 +359,25 @@ def update_renditions(item, href, old_item, request_kwargs=None):
     try:
         # If there is an existing set of renditions we keep those
         if old_item:
-            media = old_item.get('renditions', {}).get('original', {}).get('media', {})
+            media = old_item.get("renditions", {}).get("original", {}).get("media", {})
             if media:
-                item['renditions'] = old_item['renditions']
-                item['mimetype'] = old_item.get('mimetype')
-                item['filemeta'] = old_item.get('filemeta')
-                item['filemeta_json'] = old_item.get('filemeta_json')
+                item["renditions"] = old_item["renditions"]
+                item["mimetype"] = old_item.get("mimetype")
+                item["filemeta"] = old_item.get("filemeta")
+                item["filemeta_json"] = old_item.get("filemeta_json")
                 return
 
         content, filename, content_type = download_file_from_url(href, request_kwargs)
-        file_type, ext = content_type.split('/')
+        file_type, ext = content_type.split("/")
         metadata = process_file(content, file_type)
-        file_guid = app.media.put(content, filename, content_type, metadata)
+        file_guid = app.media.put(content, filename=filename, content_type=content_type, metadata=metadata)
         inserted.append(file_guid)
         rendition_spec = get_renditions_spec()
-        renditions = generate_renditions(content, file_guid, inserted, file_type,
-                                         content_type, rendition_spec, app.media.url_for_media)
-        item['renditions'] = renditions
-        item['mimetype'] = content_type
+        renditions = generate_renditions(
+            content, file_guid, inserted, file_type, content_type, rendition_spec, app.media.url_for_media
+        )
+        item["renditions"] = renditions
+        item["mimetype"] = content_type
         set_filemeta(item, metadata)
     except Exception as e:
         logger.exception(e)
@@ -365,10 +394,29 @@ def transfer_renditions(renditions):
     :param renditions:
     :return: Updated renditions
     """
+    if not renditions:
+        return
     for rend in iter(renditions.values()):
-        content, filename, content_type = download_file_from_url(rend.get('href'))
-        file_type, ext = content_type.split('/')
+        if rend.get("media"):
+            local = app.media.get(rend["media"])
+            if local:
+                rend["href"] = app.media.url_for_media(rend["media"], local.content_type)
+                continue
+
+        content, filename, content_type = download_file_from_url(rend.get("href"))
+        file_type, ext = content_type.split("/")
         metadata = process_file(content, file_type)
-        file_guid = app.media.put(content, filename, content_type, metadata)
-        rend['href'] = app.media.url_for_media(file_guid, content_type)
-        rend['media'] = file_guid
+        file_guid = app.media.put(content, filename=filename, content_type=content_type, metadata=metadata)
+        rend["href"] = app.media.url_for_media(file_guid, content_type)
+        rend["media"] = file_guid
+
+
+def get_rendition_file_name(rendition):
+    """
+    Return a file name for the rendition no matter what storage mechanism used by superdesk
+    :param rendition:
+    :return:
+    """
+    media_id = str(rendition["media"])
+    ext = os.path.splitext(media_id)[-1]
+    return media_id.replace("/", "-") + (guess_media_extension(rendition.get("mimetype", "")) if not ext else "")

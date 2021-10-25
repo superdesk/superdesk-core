@@ -22,16 +22,18 @@ class FilePublishService(publish_service.PublishService):
     It creates files on superdesk server in configured folder.
     """
 
+    NAME = "File"
+
     def _transmit(self, queue_item, subscriber):
         try:
-            config = queue_item['destination']['config']
-            file_path = config['file_path']
+            config = queue_item["destination"]["config"]
+            file_path = config["file_path"]
             if not path.isabs(file_path):
                 file_path = "/" + file_path
-            with open(path.join(file_path, publish_service.get_publish_service().get_filename(queue_item)), 'wb') as f:
-                f.write(queue_item['encoded_item'])
+            with open(path.join(file_path, publish_service.get_publish_service().get_filename(queue_item)), "wb") as f:
+                f.write(queue_item["encoded_item"])
         except Exception as ex:
             raise PublishFileError.fileSaveError(ex, config)
 
 
-register_transmitter('File', FilePublishService(), errors)
+register_transmitter("File", FilePublishService(), errors)

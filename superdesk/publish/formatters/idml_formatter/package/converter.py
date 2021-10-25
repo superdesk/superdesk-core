@@ -2,18 +2,7 @@ import io
 import zipfile
 from lxml import etree
 
-from . import (
-    Mimetype,
-    Preferences,
-    Styles,
-    Tags,
-    Story,
-    StoryTable,
-    StoryList,
-    Spread,
-    Designmap,
-    Graphic
-)
+from . import Mimetype, Preferences, Styles, Tags, Story, StoryTable, StoryList, Spread, Designmap, Graphic
 
 
 class Converter:
@@ -74,38 +63,43 @@ class Converter:
         :param dict article: article data
         :return bytes: idml file as a bytes
         """
-        self._counter = {'spread': 0, 'page': 0, 'story': 0, 'textframe': 0}
+        self._counter = {"spread": 0, "page": 0, "story": 0, "textframe": 0}
         self._init_zip_container()
         self._package = []
         self._package.append(Mimetype())
         self._package.append(Styles())
         self._package.append(Graphic())
         self._package.append(
-            Preferences(attributes={
-                'DocumentPreference': {
-                    'PageHeight': str(self.DOCUMENT_PAGE_HEIGHT),
-                    'PageWidth': str(self.DOCUMENT_PAGE_WIDTH),
-                    'PagesPerDocument': '1',
-                    'FacingPages': 'false'}
-            })
+            Preferences(
+                attributes={
+                    "DocumentPreference": {
+                        "PageHeight": str(self.DOCUMENT_PAGE_HEIGHT),
+                        "PageWidth": str(self.DOCUMENT_PAGE_WIDTH),
+                        "PagesPerDocument": "1",
+                        "FacingPages": "false",
+                    }
+                }
+            )
         )
         self._package.append(
-            Tags(attributes={
-                'Headline': {'TagColor': 'Orange'},
-                'Byline': {'TagColor': 'Orange'},
-                'Heading1': {'TagColor': 'Red'},
-                'Heading2': {'TagColor': 'Red'},
-                'Heading3': {'TagColor': 'Red'},
-                'Heading4': {'TagColor': 'Red'},
-                'Heading5': {'TagColor': 'Red'},
-                'Heading6': {'TagColor': 'Red'},
-                'NormalParagraph': {'TagColor': 'Green'},
-                'Blockquote': {'TagColor': 'Blue'},
-                'Preformatted': {'TagColor': 'Black'},
-                'Table': {'TagColor': 'Yellow'},
-                'UnorderedList': {'TagColor': 'Pink'},
-                'OrderedList': {'TagColor': 'Pink'}
-            })
+            Tags(
+                attributes={
+                    "Headline": {"TagColor": "Orange"},
+                    "Byline": {"TagColor": "Orange"},
+                    "Heading1": {"TagColor": "Red"},
+                    "Heading2": {"TagColor": "Red"},
+                    "Heading3": {"TagColor": "Red"},
+                    "Heading4": {"TagColor": "Red"},
+                    "Heading5": {"TagColor": "Red"},
+                    "Heading6": {"TagColor": "Red"},
+                    "NormalParagraph": {"TagColor": "Green"},
+                    "Blockquote": {"TagColor": "Blue"},
+                    "Preformatted": {"TagColor": "Black"},
+                    "Table": {"TagColor": "Yellow"},
+                    "UnorderedList": {"TagColor": "Pink"},
+                    "OrderedList": {"TagColor": "Pink"},
+                }
+            )
         )
         self._create_stories(article)
         self._create_spreads()
@@ -121,11 +115,7 @@ class Converter:
         BytesIO file-like object is used for zipfile file reference.
         """
         self._idml_bytes_buffer = io.BytesIO()
-        self._in_memory_zip = zipfile.ZipFile(
-            self._idml_bytes_buffer,
-            mode='x',
-            compression=self.ZIP_COMPRESSION
-        )
+        self._in_memory_zip = zipfile.ZipFile(self._idml_bytes_buffer, mode="x", compression=self.ZIP_COMPRESSION)
 
     def _write_package(self):
         """
@@ -136,10 +126,7 @@ class Converter:
         they know how to render itself (file content) and how to name itself.
         """
         for item in self._package:
-            self._in_memory_zip.writestr(
-                item.filename,
-                item.render()
-            )
+            self._in_memory_zip.writestr(item.filename, item.render())
 
     def _create_stories(self, article):
         """
@@ -147,57 +134,55 @@ class Converter:
         :param dict article: article data
         """
 
-        body_html = article['body_html']
+        body_html = article["body_html"]
 
-        if article.get('byline'):
-            byline = etree.Element('byline')
-            byline.text = article.get('byline')
-            body_html = etree.tostring(byline, pretty_print=False).decode('utf-8') + body_html
-        if article.get('headline'):
-            headline = etree.Element('headline')
-            headline.text = article.get('headline')
-            body_html = etree.tostring(headline, pretty_print=False).decode('utf-8') + body_html
+        if article.get("byline"):
+            byline = etree.Element("byline")
+            byline.text = article.get("byline")
+            body_html = etree.tostring(byline, pretty_print=False).decode("utf-8") + body_html
+        if article.get("headline"):
+            headline = etree.Element("headline")
+            headline.text = article.get("headline")
+            body_html = etree.tostring(headline, pretty_print=False).decode("utf-8") + body_html
 
         parser = etree.HTMLParser(recover=True, remove_blank_text=True)
         root = etree.fromstring(body_html, parser)
-        body = root.find('body')
+        body = root.find("body")
 
         for element in body:
-            if element.tag in ('p', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'blockquote', 'pre', 'headline', 'byline'):
+            if element.tag in ("p", "h1", "h2", "h3", "h4", "h5", "h6", "blockquote", "pre", "headline", "byline"):
                 # create text story
                 self._package.append(
                     Story(
                         self._next_story_id(),
                         element,
                         attributes={
-                            'ParagraphStyleRange': Story.BLOCK_TAGS_MAPPING[element.tag]['ParagraphStyleRange']
+                            "ParagraphStyleRange": Story.BLOCK_TAGS_MAPPING[element.tag]["ParagraphStyleRange"]
                         },
-                        markup_tag=Story.BLOCK_TAGS_MAPPING[element.tag]['markup_tag']
+                        markup_tag=Story.BLOCK_TAGS_MAPPING[element.tag]["markup_tag"],
                     )
                 )
-            elif element.tag in ('ul', 'ol'):
+            elif element.tag in ("ul", "ol"):
                 # create list story
                 self._package.append(
                     StoryList(
                         self._next_story_id(),
                         element,
                         attributes={
-                            'ParagraphStyleRange': Story.BLOCK_TAGS_MAPPING[element.tag]['ParagraphStyleRange']
+                            "ParagraphStyleRange": Story.BLOCK_TAGS_MAPPING[element.tag]["ParagraphStyleRange"]
                         },
-                        markup_tag=Story.BLOCK_TAGS_MAPPING[element.tag]['markup_tag']
+                        markup_tag=Story.BLOCK_TAGS_MAPPING[element.tag]["markup_tag"],
                     )
                 )
-            elif element.tag == 'table':
+            elif element.tag == "table":
                 # create table story
                 self._package.append(
                     StoryTable(
                         self._next_story_id(),
                         element,
                         self.DOCUMENT_PAGE_INNER_WIDTH,
-                        attributes={
-                            'Table': Story.BLOCK_TAGS_MAPPING[element.tag]['Table']
-                        },
-                        markup_tag=Story.BLOCK_TAGS_MAPPING[element.tag]['markup_tag']
+                        attributes={"Table": Story.BLOCK_TAGS_MAPPING[element.tag]["Table"]},
+                        markup_tag=Story.BLOCK_TAGS_MAPPING[element.tag]["markup_tag"],
                     )
                 )
 
@@ -226,11 +211,11 @@ class Converter:
                 active_spread.place_textframe(
                     height=text_frame_height,
                     attributes={
-                        'TextFrame': {
-                            'Self': self._next_textframe_id(),
-                            'ParentStory': package.self_id,
+                        "TextFrame": {
+                            "Self": self._next_textframe_id(),
+                            "ParentStory": package.self_id,
                         }
-                    }
+                    },
                 )
 
     def _create_designmap(self):
@@ -267,16 +252,12 @@ class Converter:
         page_id = self._next_page_id()
         spread.add_page(
             {
-                'Page': {
-                    'Self': page_id,
-                    'Name': page_id,
-                    'UseMasterGrid': 'false'
-                },
-                'MarginPreference': {
-                    'Top': str(self.PAGE_MARGIN_TOP),
-                    'Bottom': str(self.PAGE_MARGIN_BOTTOM),
-                    'Left': str(self.PAGE_MARGIN_LEFT),
-                    'Right': str(self.PAGE_MARGIN_RIGHT)
+                "Page": {"Self": page_id, "Name": page_id, "UseMasterGrid": "false"},
+                "MarginPreference": {
+                    "Top": str(self.PAGE_MARGIN_TOP),
+                    "Bottom": str(self.PAGE_MARGIN_BOTTOM),
+                    "Left": str(self.PAGE_MARGIN_LEFT),
+                    "Right": str(self.PAGE_MARGIN_RIGHT),
                 },
             }
         )
@@ -288,8 +269,8 @@ class Converter:
         Generate a story id.
         :return str: story id
         """
-        self_id = 'story_{}'.format(self._counter['story'])
-        self._counter['story'] += 1
+        self_id = "story_{}".format(self._counter["story"])
+        self._counter["story"] += 1
         return self_id
 
     def _next_spread_id(self):
@@ -297,8 +278,8 @@ class Converter:
         Generate a spread id.
         :return str: spread id
         """
-        self_id = 'spread_{}'.format(self._counter['spread'])
-        self._counter['spread'] += 1
+        self_id = "spread_{}".format(self._counter["spread"])
+        self._counter["spread"] += 1
         return self_id
 
     def _next_page_id(self):
@@ -306,8 +287,8 @@ class Converter:
         Generate a page id.
         :return str: page id
         """
-        self_id = 'page_{}'.format(self._counter['page'])
-        self._counter['page'] += 1
+        self_id = "page_{}".format(self._counter["page"])
+        self._counter["page"] += 1
         return self_id
 
     def _next_textframe_id(self):
@@ -315,6 +296,6 @@ class Converter:
         Generate a textframe id.
         :return str: textframe id
         """
-        self_id = 'textframe_{}'.format(self._counter['textframe'])
-        self._counter['textframe'] += 1
+        self_id = "textframe_{}".format(self._counter["textframe"])
+        self._counter["textframe"] += 1
         return self_id

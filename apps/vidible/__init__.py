@@ -11,11 +11,11 @@
 
 import logging
 
-from .vidible import bp
 import superdesk
+from .vidible import bp
 
 logger = logging.getLogger(__name__)
 
 
-def init_app(app):
+def init_app(app) -> None:
     superdesk.blueprint(bp, app)

@@ -17,13 +17,12 @@ from superdesk.metadata.utils import generate_guid
 
 
 class BBCNINJSTestCase(TestCase):
-
     def setUp(self):
         dirname = os.path.dirname(os.path.realpath(__file__))
-        fixture = os.path.normpath(os.path.join(dirname, '../fixtures', self.filename))
-        provider = {'name': 'Test'}
+        fixture = os.path.normpath(os.path.join(dirname, "../fixtures", self.filename))
+        provider = {"name": "Test"}
 
-        with open(fixture, 'r') as json_file:
+        with open(fixture, "r") as json_file:
             data = json_file.read()
 
         self.items = BBCNINJSFeedParser().parse(data, provider)
@@ -31,35 +30,35 @@ class BBCNINJSTestCase(TestCase):
 
 class SimpleTestCase(BBCNINJSTestCase):
 
-    filename = 'bbc-ninjs-text-test.json'
+    filename = "bbc-ninjs-text-test.json"
 
     def test_trans_attributes(self):
         self.assertEqual(self.items[0].get(ITEM_TYPE), CONTENT_TYPE.TEXT)
-        self.assertEqual(self.items[0].get('subject')[0].get('qcode'), '11016007')
+        self.assertEqual(self.items[0].get("subject")[0].get("qcode"), "11016007")
 
-        guid_hash = hashlib.sha1('https://www.example.com//12345'.encode('utf8')).hexdigest()
+        guid_hash = hashlib.sha1("https://www.example.com//12345".encode("utf8")).hexdigest()
         guid = generate_guid(type=GUID_TAG, id=guid_hash)
-        self.assertEqual(self.items[0].get('guid'), guid)
+        self.assertEqual(self.items[0].get("guid"), guid)
 
 
 class CompositeTestCase(BBCNINJSTestCase):
 
-    filename = 'bbc-ninjs-comp-test.json'
+    filename = "bbc-ninjs-comp-test.json"
 
     def test_parsed_items(self):
         # The picture
         self.assertEqual(self.items[1].get(ITEM_TYPE), CONTENT_TYPE.PICTURE)
-        self.assertEqual(self.items[1].get('headline'), 'logo-footer.png')
-        self.assertEqual(self.items[1].get('description_text'), 'abc')
+        self.assertEqual(self.items[1].get("headline"), "logo-footer.png")
+        self.assertEqual(self.items[1].get("description_text"), "abc")
 
         # The text item
         self.assertEqual(self.items[0].get(ITEM_TYPE), CONTENT_TYPE.TEXT)
-        self.assertEqual(self.items[0].get('headline'), 'abcdef')
+        self.assertEqual(self.items[0].get("headline"), "abcdef")
 
         # The associated picture in the text item
-        self.assertEqual(self.items[0].get('associations').get('featuremedia').get(ITEM_TYPE), CONTENT_TYPE.PICTURE)
-        self.assertEqual(self.items[0].get('associations').get('featuremedia').get('headline'), 'logo-footer.png')
-        self.assertEqual(self.items[0].get('associations').get('featuremedia').get('description_text'), 'abc')
+        self.assertEqual(self.items[0].get("associations").get("featuremedia").get(ITEM_TYPE), CONTENT_TYPE.PICTURE)
+        self.assertEqual(self.items[0].get("associations").get("featuremedia").get("headline"), "logo-footer.png")
+        self.assertEqual(self.items[0].get("associations").get("featuremedia").get("description_text"), "abc")
 
         # The composite
         self.assertEqual(self.items[2].get(ITEM_TYPE), CONTENT_TYPE.COMPOSITE)

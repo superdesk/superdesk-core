@@ -14,12 +14,12 @@ from .resource import PublishResource, MONGO_PREFIX  # noqa
 from .service import PublishService
 
 
-def init_app(app):
+def init_app(app) -> None:
     """Initialize the `publish` API endpoint.
 
     :param app: the API application object
     :type app: `Eve`
     """
-    endpoint_name = 'content_api'
+    endpoint_name = "content_api"
     service = PublishService(endpoint_name, backend=superdesk.get_backend())
     PublishResource(endpoint_name, app=app, service=service)

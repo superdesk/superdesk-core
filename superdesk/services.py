@@ -8,9 +8,11 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
+from typing import Dict, Any
 import logging
+
+from typing import Union
 from flask import current_app as app, json
-from eve.defaults import resolve_default_values
 from eve.utils import ParsedRequest, config
 from eve.methods.common import resolve_document_etag
 
@@ -18,14 +20,14 @@ from eve.methods.common import resolve_document_etag
 log = logging.getLogger(__name__)
 
 
-class BaseService():
+class BaseService:
     """
     Base service for all endpoints, defines the basic implementation for CRUD datalayer functionality.
     """
 
-    datasource = None
+    datasource: Union[str, None]
 
-    def __init__(self, datasource=None, backend=None):
+    def __init__(self, datasource: str = None, backend=None):
         self.backend = backend
         self.datasource = datasource
 
@@ -66,8 +68,8 @@ class BaseService():
     def update(self, id, updates, original):
         return self.backend.update(self.datasource, id, updates, original)
 
-    def system_update(self, id, updates, original):
-        return self.backend.system_update(self.datasource, id, updates, original)
+    def system_update(self, id, updates, original, **kwargs):
+        return self.backend.system_update(self.datasource, id, updates, original, **kwargs)
 
     def replace(self, id, document, original):
         res = self.backend.replace(self.datasource, id, document, original)
@@ -80,6 +82,19 @@ class BaseService():
     def delete_ids_from_mongo(self, ids):
         res = self.backend.delete_ids_from_mongo(self.datasource, ids)
         return res
+
+    def delete_from_mongo(self, lookup: Dict[str, Any]):
+        """Delete items from mongo only
+
+        .. versionadded:: 2.4.0
+
+        .. warning:: ``on_delete`` and ``on_deleted`` is **NOT** called with this action
+
+        :param dict lookup: User mongo query syntax
+        :raises SuperdeskApiError.forbiddenError if search is enabled for this resource
+        """
+
+        self.backend.delete_from_mongo(self.datasource, lookup)
 
     def delete_docs(self, docs):
         return self.backend.delete_docs(self.datasource, docs)
@@ -107,13 +122,29 @@ class BaseService():
             req.projection = json.dumps(projection)
         return self.backend.get_from_mongo(self.datasource, req=req, lookup=lookup)
 
-    def find_and_modify(self, **kwargs):
-        res = self.backend.find_and_modify(self.datasource, **kwargs)
+    def find_and_modify(self, query, update, **kwargs):
+        res = self.backend.find_and_modify(self.datasource, query=query, update=update, **kwargs)
         return res
+
+    def _validator(self, skip_validation=False):
+        resource_def = app.config["DOMAIN"][self.datasource]
+        schema = resource_def["schema"]
+        return (
+            None
+            if skip_validation
+            else app.validator(schema, resource=self.datasource, allow_unknown=resource_def["allow_unknown"])
+        )
+
+    def _resolve_defaults(self, doc):
+        validator = self._validator()
+        if validator:
+            normalized = validator.normalized(doc, always_return_document=True)
+            doc.update(normalized)
+        return doc
 
     def post(self, docs, **kwargs):
         for doc in docs:
-            resolve_default_values(doc, app.config['DOMAIN'][self.datasource]['defaults'])
+            self._resolve_defaults(doc)
         self.on_create(docs)
         ids = self.create(docs, **kwargs)
         self.on_created(docs)
@@ -132,7 +163,7 @@ class BaseService():
         return res
 
     def put(self, id, document):
-        resolve_default_values(document, app.config['DOMAIN'][self.datasource]['defaults'])
+        self._resolve_defaults(document)
         original = self.find_one(req=None, _id=id)
         self.on_replace(document, original)
         resolve_document_etag(document, self.datasource)

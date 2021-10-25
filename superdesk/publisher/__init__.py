@@ -12,8 +12,12 @@
 Superdesk Web Pubisher specific modules.
 """
 
+from flask_babel import lazy_gettext
 import superdesk
 
 
-superdesk.privilege(name='livesite', label='Livesite Editor',
-                    description='Edit a site live on Web Publisher')
+superdesk.privilege(
+    name="livesite",
+    label=lazy_gettext("Livesite Editor"),
+    description=lazy_gettext("Edit a site live on Web Publisher"),
+)

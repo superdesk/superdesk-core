@@ -467,7 +467,7 @@ Feature: Fetch From Ingest
     @provider
     Scenario: Ingest ninjs
         Given empty "ingest"
-        When we fetch from "ninjs" ingest "ninjs2.json"
+        When we fetch from "ninjs" ingest "ninjs5.json"
         And we get "/ingest"
         Then we get existing resource
         """
@@ -551,7 +551,7 @@ Feature: Fetch From Ingest
                        "state": "ingested",
                        "renditions":{
                           "baseImage":{
-                             "width":1280
+                             "width":1400
                           },
                           "original":{
                           }
@@ -580,7 +580,7 @@ Feature: Fetch From Ingest
     @provider
     Scenario: Ingest ninjs picture
         Given empty "ingest"
-        When we fetch from "ninjs" ingest "ninjs3.json"
+        When we fetch from "ninjs" ingest "ninjs6.json"
         And we get "/ingest"
         Then we get existing resource
         """

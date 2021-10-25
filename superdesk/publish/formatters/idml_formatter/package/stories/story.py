@@ -15,168 +15,92 @@ class Story(BasePackageElement):
     ``
     """
 
-    STORY_DEFAULTS = {
-        'AppliedNamedGrid': 'n',
-        'AppliedTOCStyle': 'n',
-        'TrackChanges': 'false',
-        'StoryTitle': '$ID/'
-    }
+    STORY_DEFAULTS = {"AppliedNamedGrid": "n", "AppliedTOCStyle": "n", "TrackChanges": "false", "StoryTitle": "$ID/"}
     STORYPREFERENCE_DEFAULTS = {
-        'OpticalMarginAlignment': 'false',
-        'OpticalMarginSize': '12',
-        'FrameType': 'TextFrameType',
-        'StoryOrientation': 'Horizontal',
-        'StoryDirection': 'LeftToRightDirection'
+        "OpticalMarginAlignment": "false",
+        "OpticalMarginSize": "12",
+        "FrameType": "TextFrameType",
+        "StoryOrientation": "Horizontal",
+        "StoryDirection": "LeftToRightDirection",
     }
-    HYPERLINKTEXTSOURCE_DEFAULTS = {
-        'Hidden': 'false',
-        'AppliedCharacterStyle': 'CharacterStyle/$ID/Hyperlink'
-    }
-    PARAGRAPHSTYLERANGE_DEFAULTS = {
-        'AppliedParagraphStyle': 'ParagraphStyle/$ID/NormalParagraphStyle'
-    }
+    HYPERLINKTEXTSOURCE_DEFAULTS = {"Hidden": "false", "AppliedCharacterStyle": "CharacterStyle/$ID/Hyperlink"}
+    PARAGRAPHSTYLERANGE_DEFAULTS = {"AppliedParagraphStyle": "ParagraphStyle/$ID/NormalParagraphStyle"}
     CHARACTERSTYLERANGE_DEFAULTS = {
-        'AppliedCharacterStyle': 'CharacterStyle/$ID/[No character style]',
+        "AppliedCharacterStyle": "CharacterStyle/$ID/[No character style]",
     }
     BLOCK_TAGS_MAPPING = {
-        'p': {
-            'markup_tag': 'NormalParagraph',
-            'ParagraphStyleRange': {
-                'AppliedParagraphStyle': 'ParagraphStyle/Paragraphs%3aNormalParagraph'
+        "p": {
+            "markup_tag": "NormalParagraph",
+            "ParagraphStyleRange": {"AppliedParagraphStyle": "ParagraphStyle/Paragraphs%3aNormalParagraph"},
+        },
+        "blockquote": {
+            "markup_tag": "Blockquote",
+            "ParagraphStyleRange": {"AppliedParagraphStyle": "ParagraphStyle/Paragraphs%3aBlockquote"},
+        },
+        "pre": {
+            "markup_tag": "Preformatted",
+            "ParagraphStyleRange": {"AppliedParagraphStyle": "ParagraphStyle/Paragraphs%3aPreformatted"},
+        },
+        "h1": {
+            "markup_tag": "Heading1",
+            "ParagraphStyleRange": {"AppliedParagraphStyle": "ParagraphStyle/Headings%3aHeading1"},
+        },
+        "h2": {
+            "markup_tag": "Heading2",
+            "ParagraphStyleRange": {"AppliedParagraphStyle": "ParagraphStyle/Headings%3aHeading2"},
+        },
+        "h3": {
+            "markup_tag": "Heading3",
+            "ParagraphStyleRange": {"AppliedParagraphStyle": "ParagraphStyle/Headings%3aHeading3"},
+        },
+        "h4": {
+            "markup_tag": "Heading4",
+            "ParagraphStyleRange": {"AppliedParagraphStyle": "ParagraphStyle/Headings%3aHeading4"},
+        },
+        "h5": {
+            "markup_tag": "Heading5",
+            "ParagraphStyleRange": {"AppliedParagraphStyle": "ParagraphStyle/Headings%3aHeading5"},
+        },
+        "h6": {
+            "markup_tag": "Heading6",
+            "ParagraphStyleRange": {"AppliedParagraphStyle": "ParagraphStyle/Headings%3aHeading6"},
+        },
+        "table": {
+            "markup_tag": "Table",
+            "Table": {"AppliedTableStyle": "TableStyle/$ID/NormalTable"},
+        },
+        "ul": {
+            "markup_tag": "UnorderedList",
+            "ParagraphStyleRange": {
+                "AppliedParagraphStyle": "ParagraphStyle/Lists%3aUnorderedList",
+                "BulletsAndNumberingListType": "BulletList",
             },
         },
-        'blockquote': {
-            'markup_tag': 'Blockquote',
-            'ParagraphStyleRange': {
-                'AppliedParagraphStyle': 'ParagraphStyle/Paragraphs%3aBlockquote'
-            },
-        },
-        'pre': {
-            'markup_tag': 'Preformatted',
-            'ParagraphStyleRange': {
-                'AppliedParagraphStyle': 'ParagraphStyle/Paragraphs%3aPreformatted'
-            },
-        },
-        'h1': {
-            'markup_tag': 'Heading1',
-            'ParagraphStyleRange': {
-                'AppliedParagraphStyle': 'ParagraphStyle/Headings%3aHeading1'
-            },
-        },
-        'h2': {
-            'markup_tag': 'Heading2',
-            'ParagraphStyleRange': {
-                'AppliedParagraphStyle': 'ParagraphStyle/Headings%3aHeading2'
-            },
-        },
-        'h3': {
-            'markup_tag': 'Heading3',
-            'ParagraphStyleRange': {
-                'AppliedParagraphStyle': 'ParagraphStyle/Headings%3aHeading3'
-            },
-        },
-        'h4': {
-            'markup_tag': 'Heading4',
-            'ParagraphStyleRange': {
-                'AppliedParagraphStyle': 'ParagraphStyle/Headings%3aHeading4'
-            },
-        },
-        'h5': {
-            'markup_tag': 'Heading5',
-            'ParagraphStyleRange': {
-                'AppliedParagraphStyle': 'ParagraphStyle/Headings%3aHeading5'
-            },
-        },
-        'h6': {
-            'markup_tag': 'Heading6',
-            'ParagraphStyleRange': {
-                'AppliedParagraphStyle': 'ParagraphStyle/Headings%3aHeading6'
-            },
-        },
-        'table': {
-            'markup_tag': 'Table',
-            'Table': {
-                'AppliedTableStyle': 'TableStyle/$ID/NormalTable'
-            },
-        },
-        'ul': {
-            'markup_tag': 'UnorderedList',
-            'ParagraphStyleRange': {
-                'AppliedParagraphStyle': 'ParagraphStyle/Lists%3aUnorderedList',
-                'BulletsAndNumberingListType': 'BulletList',
-            },
-        },
-        'ol': {
-            'markup_tag': 'OrderedList',
-            'ParagraphStyleRange': {
-                'AppliedParagraphStyle': 'ParagraphStyle/Lists%3aOrderedList',
-                'BulletsAndNumberingListType': 'NumberedList',
+        "ol": {
+            "markup_tag": "OrderedList",
+            "ParagraphStyleRange": {
+                "AppliedParagraphStyle": "ParagraphStyle/Lists%3aOrderedList",
+                "BulletsAndNumberingListType": "NumberedList",
             },
         },
         # custom
-        'headline': {
-            'markup_tag': 'Headline',
-            'ParagraphStyleRange': {
-                'AppliedParagraphStyle': 'ParagraphStyle/Custom%3aHeadline'
-            },
+        "headline": {
+            "markup_tag": "Headline",
+            "ParagraphStyleRange": {"AppliedParagraphStyle": "ParagraphStyle/Custom%3aHeadline"},
         },
-        'byline': {
-            'markup_tag': 'Byline',
-            'ParagraphStyleRange': {
-                'AppliedParagraphStyle': 'ParagraphStyle/Custom%3aByline'
-            },
+        "byline": {
+            "markup_tag": "Byline",
+            "ParagraphStyleRange": {"AppliedParagraphStyle": "ParagraphStyle/Custom%3aByline"},
         },
     }
     INLINE_TAGS_MAPPING = {
-        'b': [
-            {
-                'attribute': 'FontStyle',
-                'value': 'Bold',
-                'appendable': True
-            }
-        ],
-        'i': [
-            {
-                'attribute': 'FontStyle',
-                'value': 'Italic',
-                'appendable': True
-            }
-        ],
-        'u': [
-            {
-                'attribute': 'Underline',
-                'value': 'true',
-                'appendable': False
-            }
-        ],
-        's': [
-            {
-                'attribute': 'StrikeThru',
-                'value': 'true',
-                'appendable': False
-            }
-        ],
-        'sub': [
-            {
-                'attribute': 'Position',
-                'value': 'Subscript',
-                'appendable': False
-            }
-        ],
-        'sup': [
-            {
-                'attribute': 'Position',
-                'value': 'Superscript',
-                'appendable': False
-            }
-        ],
-        'a': [
-            {
-                'attribute': 'AppliedCharacterStyle',
-                'value': 'CharacterStyle/$ID/Hyperlink',
-                'appendable': False
-            }
-        ]
+        "b": [{"attribute": "FontStyle", "value": "Bold", "appendable": True}],
+        "i": [{"attribute": "FontStyle", "value": "Italic", "appendable": True}],
+        "u": [{"attribute": "Underline", "value": "true", "appendable": False}],
+        "s": [{"attribute": "StrikeThru", "value": "true", "appendable": False}],
+        "sub": [{"attribute": "Position", "value": "Subscript", "appendable": False}],
+        "sup": [{"attribute": "Position", "value": "Superscript", "appendable": False}],
+        "a": [{"attribute": "AppliedCharacterStyle", "value": "CharacterStyle/$ID/Hyperlink", "appendable": False}],
     }
 
     def __init__(self, self_id, element, attributes=None, markup_tag=None):
@@ -193,14 +117,11 @@ class Story(BasePackageElement):
         Used as a filename for a file inside zip container.
         :return str: filename
         """
-        return 'Stories/Story_{}.xml'.format(self.self_id)
+        return "Stories/Story_{}.xml".format(self.self_id)
 
     def _build_etree(self):
-        self._etree = etree.Element(
-            etree.QName(self.XMLNS_IDPKG, 'Story'),
-            nsmap={'idPkg': self.XMLNS_IDPKG}
-        )
-        self._etree.set('DOMVersion', self.DOM_VERSION)
+        self._etree = etree.Element(etree.QName(self.XMLNS_IDPKG, "Story"), nsmap={"idPkg": self.XMLNS_IDPKG})
+        self._etree.set("DOMVersion", self.DOM_VERSION)
         self._add_story()
 
     def _add_story(self):
@@ -209,37 +130,27 @@ class Story(BasePackageElement):
         :return lxml.etree: Story etree instance
         """
         # merge Story attributes
-        story_attributes = self.merge_attributes(
-            self.STORY_DEFAULTS,
-            self._attributes.get('Story', {})
-        )
-        story_attributes.update({'Self': self.self_id})
+        story_attributes = self.merge_attributes(self.STORY_DEFAULTS, self._attributes.get("Story", {}))
+        story_attributes.update({"Self": self.self_id})
         # Story
-        story = etree.SubElement(
-            self._etree,
-            'Story',
-            attrib=story_attributes
-        )
+        story = etree.SubElement(self._etree, "Story", attrib=story_attributes)
         # StoryPreference
         etree.SubElement(
             story,
-            'StoryPreference',
-            attrib=self.merge_attributes(
-                self.STORYPREFERENCE_DEFAULTS,
-                self._attributes.get('StoryPreference', {})
-            )
+            "StoryPreference",
+            attrib=self.merge_attributes(self.STORYPREFERENCE_DEFAULTS, self._attributes.get("StoryPreference", {})),
         )
 
         if self._markup_tag:
             # XMLElement to tag a story
             paragraphstylerange_container = etree.SubElement(
                 story,
-                'XMLElement',
+                "XMLElement",
                 attrib={
-                    'Self': '{}_{}'.format(self.self_id, self._markup_tag.lower()),
-                    'XMLContent': self.self_id,
-                    'MarkupTag': 'XMLTag/{}'.format(self._markup_tag)
-                }
+                    "Self": "{}_{}".format(self.self_id, self._markup_tag.lower()),
+                    "XMLContent": self.self_id,
+                    "MarkupTag": "XMLTag/{}".format(self._markup_tag),
+                },
             )
         else:
             paragraphstylerange_container = story
@@ -247,11 +158,10 @@ class Story(BasePackageElement):
         # ParagraphStyleRange
         paragraphstylerange = etree.SubElement(
             paragraphstylerange_container,
-            'ParagraphStyleRange',
+            "ParagraphStyleRange",
             attrib=self.merge_attributes(
-                self.PARAGRAPHSTYLERANGE_DEFAULTS,
-                self._attributes.get('ParagraphStyleRange', {})
-            )
+                self.PARAGRAPHSTYLERANGE_DEFAULTS, self._attributes.get("ParagraphStyleRange", {})
+            ),
         )
 
         paragraphstylerange[:] = self._handle_inline_tags(self._element)
@@ -310,18 +220,15 @@ class Story(BasePackageElement):
             parents = []
 
         element_dict = {
-            'tag': element.tag,
-            'attrib': element.attrib,
-            'parents': tuple(parents),
-            'text': element.text,
-            'tail': element.tail
+            "tag": element.tag,
+            "attrib": element.attrib,
+            "parents": tuple(parents),
+            "text": element.text,
+            "tail": element.tail,
         }
         parents.append(element.tag)
-        element_dict['childs'] = tuple(
-            self._etree_element_to_dict(
-                child,
-                list(parents)
-            ) for child in element.iterchildren()
+        element_dict["childs"] = tuple(
+            self._etree_element_to_dict(child, list(parents)) for child in element.iterchildren()
         )
 
         return element_dict
@@ -357,86 +264,76 @@ class Story(BasePackageElement):
 
         def apply_tag_style(characterstylerange, tag):
             for rule in self.INLINE_TAGS_MAPPING[tag]:
-                attribute = rule['attribute']
-                value = rule['value']
-                appendable = rule['appendable']
+                attribute = rule["attribute"]
+                value = rule["value"]
+                appendable = rule["appendable"]
 
                 if characterstylerange.get(attribute) and appendable:
-                    if attribute == 'FontStyle' and value == 'Bold':
-                        characterstylerange.set(
-                            attribute,
-                            '{} {}'.format(value, characterstylerange.get(attribute))
-                        )
+                    if attribute == "FontStyle" and value == "Bold":
+                        characterstylerange.set(attribute, "{} {}".format(value, characterstylerange.get(attribute)))
                     else:
-                        characterstylerange.set(
-                            attribute,
-                            '{} {}'.format(characterstylerange.get(attribute), value)
-                        )
+                        characterstylerange.set(attribute, "{} {}".format(characterstylerange.get(attribute), value))
                 else:
                     characterstylerange.set(attribute, value)
 
         # text
-        if element_dict['text'] and len(element_dict['text']):
+        if element_dict["text"] and len(element_dict["text"]):
             characterstylerange_list.append(
-                etree.Element('CharacterStyleRange', attrib=self.CHARACTERSTYLERANGE_DEFAULTS)
+                etree.Element("CharacterStyleRange", attrib=self.CHARACTERSTYLERANGE_DEFAULTS)
             )
             # apply parents styles
-            for tag in element_dict['parents']:
+            for tag in element_dict["parents"]:
                 if self.INLINE_TAGS_MAPPING.get(tag):
                     apply_tag_style(characterstylerange_list[-1], tag)
 
             # apply own style
-            tag = element_dict['tag']
+            tag = element_dict["tag"]
             if self.INLINE_TAGS_MAPPING.get(tag):
                 apply_tag_style(characterstylerange_list[-1], tag)
 
-            content = etree.Element('Content')
-            content.text = element_dict['text']
+            content = etree.Element("Content")
+            content.text = element_dict["text"]
 
-            if tag == 'a':
-                self.links.append({
-                    'self_id': '{}_{}'.format(self.self_id, len(self.links) + 1),
-                    'text': element_dict['text'],
-                    'href': element_dict['attrib'].get('href')
-                })
+            if tag == "a":
+                self.links.append(
+                    {
+                        "self_id": "{}_{}".format(self.self_id, len(self.links) + 1),
+                        "text": element_dict["text"],
+                        "href": element_dict["attrib"].get("href"),
+                    }
+                )
 
                 hyperlinktextsource = etree.SubElement(
                     characterstylerange_list[-1],
-                    'HyperlinkTextSource',
+                    "HyperlinkTextSource",
                     attrib=self.merge_attributes(
                         self.HYPERLINKTEXTSOURCE_DEFAULTS,
                         {
-                            'Self': self.links[-1]['self_id'],
-                            'Name': 'Hyperlink {}'.format(self.links[-1]['self_id']),
-                        }
-                    )
+                            "Self": self.links[-1]["self_id"],
+                            "Name": "Hyperlink {}".format(self.links[-1]["self_id"]),
+                        },
+                    ),
                 )
                 hyperlinktextsource.append(content)
             else:
                 characterstylerange_list[-1].append(content)
 
         # childs
-        for child in element_dict['childs']:
+        for child in element_dict["childs"]:
             characterstylerange_list += self._create_characterstylerange_recursive(child, tail=True)
 
         # tail
-        if tail and element_dict['tail'] and len(element_dict['tail']):
+        if tail and element_dict["tail"] and len(element_dict["tail"]):
             characterstylerange_list.append(
-                etree.Element(
-                    'CharacterStyleRange',
-                    attrib=self.CHARACTERSTYLERANGE_DEFAULTS
-                )
+                etree.Element("CharacterStyleRange", attrib=self.CHARACTERSTYLERANGE_DEFAULTS)
             )
             # apply parents styles
-            for tag in element_dict['parents']:
+            for tag in element_dict["parents"]:
                 if self.INLINE_TAGS_MAPPING.get(tag):
                     apply_tag_style(characterstylerange_list[-1], tag)
 
-            content = etree.SubElement(
-                characterstylerange_list[-1],
-                'Content'
-            )
-            content.text = element_dict['tail']
+            content = etree.SubElement(characterstylerange_list[-1], "Content")
+            content.text = element_dict["tail"]
 
         return characterstylerange_list
 
@@ -446,83 +343,33 @@ class Story(BasePackageElement):
 
     @staticmethod
     def guess_height(story, inner_width):
-        style = story._etree.xpath('.//ParagraphStyleRange')[-1].get('AppliedParagraphStyle')
+        style = story._etree.xpath(".//ParagraphStyleRange")[-1].get("AppliedParagraphStyle")
         if not style:
             return 100
 
-        style = style.rsplit('%3a', 1)[-1]
+        style = style.rsplit("%3a", 1)[-1]
         style_map = {
-            'Headline': {
-                'PointSize': 48,
-                'Leading': 48,
-                'LeftIndent': 0,
-                'RightIndent': 0
-            },
-            'Byline': {
-                'PointSize': 20,
-                'Leading': 20,
-                'LeftIndent': 0,
-                'RightIndent': 0
-            },
-            'Heading1': {
-                'PointSize': 40,
-                'Leading': 40,
-                'LeftIndent': 0,
-                'RightIndent': 0
-            },
-            'Heading2': {
-                'PointSize': 30,
-                'Leading': 30,
-                'LeftIndent': 0,
-                'RightIndent': 0
-            },
-            'Heading3': {
-                'PointSize': 20,
-                'Leading': 20,
-                'LeftIndent': 0,
-                'RightIndent': 0
-            },
-            'Heading4': {
-                'PointSize': 14,
-                'Leading': 14,
-                'LeftIndent': 0,
-                'RightIndent': 0
-            },
-            'Heading5': {
-                'PointSize': 11,
-                'Leading': 11,
-                'LeftIndent': 0,
-                'RightIndent': 0
-            },
-            'Heading6': {
-                'PointSize': 9,
-                'Leading': 9,
-                'LeftIndent': 0,
-                'RightIndent': 0
-            },
-            'Blockquote': {
-                'PointSize': 12,
-                'Leading': 12,
-                'LeftIndent': 30,
-                'RightIndent': 30
-            },
-            'default': {
-                'PointSize': 12,
-                'Leading': 12,
-                'LeftIndent': 0,
-                'RightIndent': 0
-            }
+            "Headline": {"PointSize": 48, "Leading": 48, "LeftIndent": 0, "RightIndent": 0},
+            "Byline": {"PointSize": 20, "Leading": 20, "LeftIndent": 0, "RightIndent": 0},
+            "Heading1": {"PointSize": 40, "Leading": 40, "LeftIndent": 0, "RightIndent": 0},
+            "Heading2": {"PointSize": 30, "Leading": 30, "LeftIndent": 0, "RightIndent": 0},
+            "Heading3": {"PointSize": 20, "Leading": 20, "LeftIndent": 0, "RightIndent": 0},
+            "Heading4": {"PointSize": 14, "Leading": 14, "LeftIndent": 0, "RightIndent": 0},
+            "Heading5": {"PointSize": 11, "Leading": 11, "LeftIndent": 0, "RightIndent": 0},
+            "Heading6": {"PointSize": 9, "Leading": 9, "LeftIndent": 0, "RightIndent": 0},
+            "Blockquote": {"PointSize": 12, "Leading": 12, "LeftIndent": 30, "RightIndent": 30},
+            "default": {"PointSize": 12, "Leading": 12, "LeftIndent": 0, "RightIndent": 0},
         }
 
-        point_size = style_map.get(style, style_map['default'])['PointSize']
-        leading = style_map.get(style, style_map['default'])['Leading']
-        left_indent = style_map.get(style, style_map['default'])['LeftIndent']
-        right_indent = style_map.get(style, style_map['default'])['RightIndent']
+        point_size = style_map.get(style, style_map["default"])["PointSize"]
+        leading = style_map.get(style, style_map["default"])["Leading"]
+        left_indent = style_map.get(style, style_map["default"])["LeftIndent"]
+        right_indent = style_map.get(style, style_map["default"])["RightIndent"]
 
         length = story.length
         inner_width -= float(left_indent) + float(right_indent)
-        length *= float(point_size) / style_map['default']['PointSize']
-        length *= float(leading) / style_map['default']['Leading']
+        length *= float(point_size) / style_map["default"]["PointSize"]
+        length *= float(leading) / style_map["default"]["Leading"]
         height = length / inner_width * 75 + 10
 
         return height

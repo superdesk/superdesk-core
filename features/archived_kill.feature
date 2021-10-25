@@ -21,12 +21,12 @@ Feature: Kill a content item in the (dusty) archive
     """
     [{
       "name":"Channel 1", "media_type":"media", "subscriber_type": "digital", "sequence_num_settings":{"min" : 1, "max" : 10}, "email": "test@test.com",
-      "products": ["#products._id#"], "_id": "s-d",
+      "products": ["#products._id#"], "_id": "s-d", "is_active": true,
       "destinations":[{"name":"Test","format": "nitf", "delivery_type":"email","config":{"recipients":"test@test.com"}}]
     },
     {
       "name":"Channel 2", "media_type":"media", "subscriber_type": "wire", "sequence_num_settings":{"min" : 1, "max" : 10}, "email": "test@test.com",
-      "products": ["#products._id#"], "_id": "s-w",
+      "products": ["#products._id#"], "_id": "s-w", "is_active": true,
       "destinations":[{"name":"Test","format": "nitf", "delivery_type":"email","config":{"recipients":"test@test.com"}}]
     }]
     """
@@ -45,7 +45,7 @@ Feature: Kill a content item in the (dusty) archive
     """
     {
       "name":"Channel api", "media_type":"media", "subscriber_type": "wire", "sequence_num_settings":{"min" : 1, "max" : 10}, "email": "test@test.com",
-      "api_products": ["#products._id#"]
+      "api_products": ["#products._id#"], "is_active": true
     }
     """
     And we post to "/archive" with success
@@ -849,7 +849,7 @@ Feature: Kill a content item in the (dusty) archive
     """
     {"_id": "234", "type": "composite", "_current_version": 7, "state": "killed", "pubstatus": "canceled", "operation": "kill"}
     """
-    When we get "/legal_archive/234#?version=all"
+    When we get "/legal_archive/234?version=all"
     Then we get list with 7 items
     When we get "/legal_archive/456"
     Then we get existing resource
@@ -1240,7 +1240,7 @@ Feature: Kill a content item in the (dusty) archive
     """
     {
       "name":"Channel api", "media_type":"media", "subscriber_type": "wire", "sequence_num_settings":{"min" : 1, "max" : 10}, "email": "test@test.com",
-      "api_products": ["#products._id#"]
+      "api_products": ["#products._id#"], "is_active": true
     }
     """
     And we post to "/archive" with success

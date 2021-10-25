@@ -27,9 +27,8 @@ from eve.io.mongo.mongo import MongoJSONEncoder
 
 from content_api.tokens import SubscriberTokenAuth
 from superdesk.datalayer import SuperdeskDataLayer
-from superdesk.storage import SuperdeskGridFSMediaStorage
 from superdesk.validator import SuperdeskValidator
-from superdesk.factory.app import set_error_handlers
+from superdesk.factory.app import set_error_handlers, get_media_storage_class
 from superdesk.factory.sentry import SuperdeskSentry
 
 
@@ -41,17 +40,18 @@ def get_app(config=None):
         from `settings.py`
     :return: a new SuperdeskEve app instance
     """
-    app_config = flask.Config('.')
+    app_config = flask.Config(".")
 
     # get content api default conf
-    app_config.from_object('content_api.app.settings')
+    app_config.from_object("content_api.app.settings")
 
     # set some required fields
-    app_config.update({'DOMAIN': {'upload': {}}, 'SOURCES': {}})
+    app_config.update({"DOMAIN": {"upload": {}}, "SOURCES": {}})
 
     try:
         # override from settings module, but only things defined in default config
-        import settings as server_settings
+        import settings as server_settings  # type: ignore
+
         for key in dir(server_settings):
             if key.isupper() and key in app_config:
                 app_config[key] = getattr(server_settings, key)
@@ -61,10 +61,7 @@ def get_app(config=None):
     if config:
         app_config.update(config)
 
-    media_storage = SuperdeskGridFSMediaStorage
-    if app_config.get('AMAZON_CONTAINER_NAME'):
-        from superdesk.storage import AmazonMediaStorage
-        media_storage = AmazonMediaStorage
+    media_storage = get_media_storage_class(app_config)
 
     app = Eve(
         auth=SubscriberTokenAuth,
@@ -72,12 +69,14 @@ def get_app(config=None):
         data=SuperdeskDataLayer,
         media=media_storage,
         json_encoder=MongoJSONEncoder,
-        validator=SuperdeskValidator
+        validator=SuperdeskValidator,
     )
+
+    app.notification_client = None
 
     set_error_handlers(app)
 
-    for module_name in app.config.get('CONTENTAPI_INSTALLED_APPS', []):
+    for module_name in app.config.get("CONTENTAPI_INSTALLED_APPS", []):
         app_module = importlib.import_module(module_name)
         try:
             app_module.init_app(app)
@@ -89,8 +88,8 @@ def get_app(config=None):
     return app
 
 
-if __name__ == '__main__':
-    host = '0.0.0.0'
-    port = int(os.environ.get('PORT', '5400'))
+if __name__ == "__main__":
+    host = "0.0.0.0"
+    port = int(os.environ.get("PORT", "5400"))
     app = get_app()
     app.run(host=host, port=port, debug=True, use_reloader=True)

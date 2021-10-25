@@ -23,7 +23,7 @@ from superdesk.utils import Timer
 
 logger = logging.getLogger(__name__)
 
-OLD_CONTENT_MINUTES = 'INGEST_OLD_CONTENT_MINUTES'
+OLD_CONTENT_MINUTES = "INGEST_OLD_CONTENT_MINUTES"
 
 
 class FeedingService(metaclass=ABCMeta):
@@ -40,18 +40,20 @@ class FeedingService(metaclass=ABCMeta):
         2. fields: list of dictionaries; contains the descriptions of configuration fields. All fields must
             have the following properties:
                 - id: field identifier
-                - type: valid values: text, password, boolean, mapping, choices
+                - type: valid values: text, password, boolean, mapping, choices, url_request
             Optional properties:
                 - label: field label for UI view
                 - required: if true the field is required
                 - errors: dictionary of with key being the error code and value the error description
                 - required_expression: if the evaluation of the expression is true the field is required
-                    on validation. Field values can be referred by enclosing the field identifier in
-                    accolades: {field_id}
+                    on validation.
                 - readonly: if true, the field is not editable
-                - show_expression: if the evaluation of the expression is true the field is displayed.
-                    Field values can be referred by enclosing the field identifier in accolades: {field_id}
+                - show_expression: if the evaluation of this JavaScript expression is true the field is displayed.
                 - default_value: value to use
+            Type specific properties:
+                properties with a ``*`` are mandatory
+                - url_request *: a dict containing the following keys:
+                    - url *: URL to request
             The fields can be of the following types:
                 1. text: has the following properties besides the generic ones:
                     - placeholder: placeholder text
@@ -101,11 +103,15 @@ class FeedingService(metaclass=ABCMeta):
 
         :param provider: ingest provider document
         """
-        feeding_service = provider.get('feeding_service')
-        feed_parser = provider.get('feed_parser')
+        feeding_service = provider.get("feeding_service")
+        feed_parser = provider.get("feed_parser")
 
-        if feeding_service and feed_parser and restricted_feeding_service_parsers.get(feeding_service) and \
-                not restricted_feeding_service_parsers.get(feeding_service).get(feed_parser):
+        if (
+            feeding_service
+            and feed_parser
+            and restricted_feeding_service_parsers.get(feeding_service)
+            and not restricted_feeding_service_parsers.get(feeding_service).get(feed_parser)
+        ):
             raise SuperdeskIngestError.invalidFeedParserValue(provider=provider)
 
     def _test(self, provider):
@@ -134,17 +140,15 @@ class FeedingService(metaclass=ABCMeta):
         :param provider: provider data
         :return bool: True if is closed
         """
-        is_closed = provider.get('is_closed', False)
+        is_closed = provider.get("is_closed", False)
 
         if isinstance(is_closed, datetime):
             is_closed = False
 
         return is_closed
 
-    def _log_msg(self, msg, level='info'):
-        getattr(logger, level)(
-            "Ingest:{} '{}': {}".format(self._provider['_id'], self._provider['name'], msg)
-        )
+    def _log_msg(self, msg, level="info"):
+        getattr(logger, level)("Ingest:{} '{}': {}".format(self._provider["_id"], self._provider["name"], msg))
 
     def update(self, provider, update):
         """
@@ -159,19 +163,19 @@ class FeedingService(metaclass=ABCMeta):
         :raises SuperdeskIngestError if failed to get items from provider
         """
         if self._is_closed(provider):
-            raise SuperdeskApiError.internalError('Ingest Provider is closed')
+            raise SuperdeskApiError.internalError("Ingest Provider is closed")
         else:
             try:
                 self._provider = provider
                 self._log_msg("Start update execution.")
-                self._timer.start('update')
+                self._timer.start("update")
 
                 return self._update(provider, update) or []
             except SuperdeskIngestError as error:
                 self.close_provider(provider, error)
                 raise error
             finally:
-                self._log_msg("Stop update execution. Exec time: {:.4f} secs.".format(self._timer.stop('update')))
+                self._log_msg("Stop update execution. Exec time: {:.4f} secs.".format(self._timer.stop("update")))
                 # just in case stop all timers
                 self._timer.stop_all()
 
@@ -183,25 +187,26 @@ class FeedingService(metaclass=ABCMeta):
         :param error: ingest error
         :param force: force closing of provider, no matter how it's configured
         """
-        if provider.get('critical_errors', {}).get(str(error.code)) or force:
+        if provider.get("critical_errors", {}).get(str(error.code)) or force:
             updates = {
-                'is_closed': True,
-                'last_closed': {
-                    'closed_at': utcnow(),
-                    'message': 'Channel closed due to critical error: {}'.format(error)
-                }
+                "is_closed": True,
+                "last_closed": {
+                    "closed_at": utcnow(),
+                    "message": "Channel closed due to critical error: {}".format(error),
+                },
             }
 
-            get_resource_service('ingest_providers').system_update(provider[superdesk.config.ID_FIELD],
-                                                                   updates, provider)
+            get_resource_service("ingest_providers").system_update(
+                provider[superdesk.config.ID_FIELD], updates, provider
+            )
 
     def add_timestamps(self, item):
-        warnings.warn('deprecated, use localize_timestamps', DeprecationWarning)
+        warnings.warn("deprecated, use localize_timestamps", DeprecationWarning)
         self.localize_timestamps(item)
 
     def localize_timestamps(self, item):
         """Make sure timestamps are in UTC."""
-        for timestamp in ('firstcreated', 'versioncreated'):
+        for timestamp in ("firstcreated", "versioncreated"):
             if item.get(timestamp):
                 item[timestamp] = utc.localize(item[timestamp])
 
@@ -226,11 +231,9 @@ class FeedingService(metaclass=ABCMeta):
 
     def log_item_error(self, err, item, provider):
         """TODO: put item into provider error basket."""
-        logger.warning('ingest error msg={} item={} provider={}'.format(
-            str(err),
-            item.get('guid'),
-            provider.get('name')
-        ))
+        logger.warning(
+            "ingest error msg={} item={} provider={}".format(str(err), item.get("guid"), provider.get("name"))
+        )
 
     def prepare_href(self, href, mimetype=None):
         """Prepare a link to an external resource (e.g. an image file).
@@ -260,7 +263,7 @@ class FeedingService(metaclass=ABCMeta):
                     if either feed_parser value is empty or Feed Parser not found.
         """
 
-        parser = registered_feed_parsers.get(provider.get('feed_parser', ''))
+        parser = registered_feed_parsers.get(provider.get("feed_parser", ""))
         if not parser:
             raise SuperdeskIngestError.parserNotFoundError(provider=provider)
 
@@ -275,6 +278,7 @@ class FeedingService(metaclass=ABCMeta):
 
 # must be imported for registration
 from superdesk.io.feeding_services.email import EmailFeedingService  # NOQA
+from superdesk.io.feeding_services.gmail import GMailFeedingService  # NOQA
 from superdesk.io.feeding_services.file_service import FileFeedingService  # NOQA
 from superdesk.io.feeding_services.ftp import FTPFeedingService  # NOQA
 from superdesk.io.feeding_services.ritzau import RitzauFeedingService  # NOQA
@@ -282,5 +286,10 @@ from superdesk.io.feeding_services.http_service import HTTPFeedingService  # NOQ
 from superdesk.io.feeding_services.rss import RSSFeedingService  # NOQA
 from superdesk.io.feeding_services.twitter import TwitterFeedingService  # NOQA
 from superdesk.io.feeding_services.ap import APFeedingService  # NOQA
-from superdesk.io.feeding_services.bbc_ldrs import BBCLDRSFeedingService # NOQA
-from superdesk.io.feeding_services.ap_media import APMediaFeedingService # NOQA
+from superdesk.io.feeding_services.bbc_ldrs import BBCLDRSFeedingService  # NOQA
+from superdesk.io.feeding_services.ap_media import APMediaFeedingService  # NOQA
+
+
+def init_app(app) -> None:
+    # app needs to be accessible for those feeding services
+    GMailFeedingService.init_app(app)

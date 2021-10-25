@@ -13,11 +13,11 @@ from .service import ItemsService
 from .resource import ItemsResource
 
 
-def init_app(app):
+def init_app(app) -> None:
     """Initialize the `items` API endpoint.
 
     :param app: the API application object
     :type app: `Eve`
     """
-    service = ItemsService(datasource='archive', backend=superdesk.get_backend())
-    ItemsResource(endpoint_name='archive', app=app, service=service)
+    service = ItemsService(datasource="archive", backend=superdesk.get_backend())
+    ItemsResource(endpoint_name="archive", app=app, service=service)

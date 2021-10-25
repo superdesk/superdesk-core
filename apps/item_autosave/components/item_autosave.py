@@ -22,31 +22,31 @@ class ItemAutosave(BaseComponent):
 
     @classmethod
     def name(cls):
-        return 'archive_autosave'
+        return "archive_autosave"
 
     def autosave(self, item_id, updates, user, etag):
-        updates.setdefault('_type', 'archive')
+        updates.setdefault("_type", "archive")
         item_model = get_model(ItemModel)
-        item = item_model.find_one({'_id': item_id})
+        item = item_model.find_one({"_id": item_id})
         if item is None:
-            raise SuperdeskApiError.notFoundError(_('Invalid item identifier'))
+            raise SuperdeskApiError.notFoundError(_("Invalid item identifier"))
 
-        lock_user = item.get('lock_user', None)
-        if lock_user and str(lock_user) != str(user['_id']):
-            raise SuperdeskApiError.forbiddenError(_('The item was locked by another user'))
+        lock_user = item.get("lock_user", None)
+        if lock_user and str(lock_user) != str(user["_id"]):
+            raise SuperdeskApiError.forbiddenError(_("The item was locked by another user"))
 
         autosave_model = get_model(ItemAutosaveModel)
         item.update(updates)
         self.app.on_item_autosave(item)
-        autosave_item = autosave_model.find_one({'_id': item_id})
+        autosave_item = autosave_model.find_one({"_id": item_id})
         if not autosave_item:
             autosave_model.create([item])
         else:
-            autosave_model.update({'_id': item_id}, item, etag)
+            autosave_model.update({"_id": item_id}, item, etag)
         self.app.on_item_autosaved(item)
         updates.update(item)
         return updates
 
     def clear(self, item_id):
         autosave_model = get_model(ItemAutosaveModel)
-        return autosave_model.delete({'_id': item_id})
+        return autosave_model.delete({"_id": item_id})

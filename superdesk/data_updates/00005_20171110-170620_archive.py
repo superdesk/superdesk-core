@@ -7,15 +7,15 @@
 # Author  : mugur
 # Creation: 2017-11-10 17:06
 
-from superdesk.commands.data_updates import DataUpdate
+from superdesk.commands.data_updates import BaseDataUpdate
 
 
-class DataUpdate(DataUpdate):
+class DataUpdate(BaseDataUpdate):
 
-    resource = 'archive'
+    resource = "archive"
 
     def forwards(self, mongodb_collection, mongodb_database):
-        print('Please rebuild elastic index after upgrade')
+        print("Please rebuild elastic index after upgrade")
 
     def backwards(self, mongodb_collection, mongodb_database):
         pass

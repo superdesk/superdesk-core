@@ -426,7 +426,7 @@
 		        },
 		        "type" : {
 		            "type" : "string",
-		            "required" : "true",
+		            "required" : true,
 		            "allowed" : [
 		                "text"
 		            ]
@@ -472,7 +472,7 @@
 		        },
 		        "type" : {
 		            "type" : "string",
-		            "required" : "true",
+		            "required" : true,
 		            "allowed" : [
 		                "text"
 		            ]
@@ -512,7 +512,7 @@
                 },
                 "type" : {
                     "type" : "string",
-                    "required" : "true",
+                    "required" : true,
                     "allowed" : [
                         "text"
                     ]
@@ -560,6 +560,7 @@
             "display_name": "Urgency",
             "type": "manageable",
             "unique_field": "qcode",
+            "selection_type": "multi selection",
             "items": [
                 {"is_active": true, "name": "1", "qcode": 1},
                 {"is_active": true, "name": "2", "qcode": 2},
@@ -577,6 +578,7 @@
             "_id": "priority",
             "display_name": "Priority",
             "type": "manageable",
+            "selection_type": "multi selection",
             "items": [
                 {"is_active": true, "name": "1", "qcode": 1},
                 {"is_active": true, "name": "2", "qcode": 2},
@@ -631,6 +633,7 @@
             "_id": "type",
             "display_name": "Article Type",
             "type": "unmanageable",
+            "selection_type": "multi selection",
             "items": [
                 {"is_active": true, "name": "text", "qcode": "text"},
                 {"is_active": true, "name": "preformatted", "qcode": "preformatted"},
@@ -650,6 +653,7 @@
             "_id": "locators",
             "display_name": "Locators",
             "type": "unmanageable",
+            "selection_type": "multi selection",
             "items": [
                 {"is_active": true, "name": "ACT", "qcode": "ACT", "state": "Australian Capital Territory", "country": "Australia", "world_region": "Oceania", "group": "Australia"},
                 {"is_active": true, "name": "ADV", "qcode": "ADV", "group": ""},
@@ -767,6 +771,7 @@
     {
         "data": {
             "_id": "genre",
+            "selection_type": "multi selection",
             "items": [
                 {"is_active": true, "name": "Article (news)", "qcode": "Article"},
                 {"is_active": true, "name": "Sidebar", "qcode": "Sidebar"},
@@ -789,6 +794,7 @@
             "_id": "categories",
             "display_name": "Categories",
             "type": "manageable",
+            "selection_type": "multi selection",
             "unique_field": "qcode",
             "items": [
                 {"is_active": true, "name": "Australian General News", "qcode": "a"},
@@ -828,6 +834,7 @@
             "_id": "default_categories",
             "display_name": "Default Categories",
             "type": "manageable",
+            "selection_type": "multi selection",
             "unique_field": "qcode",
             "items" : [
                 {"qcode" : "a", "is_active" : true},
@@ -1342,6 +1349,7 @@
         "username": "admin",
         "data": {
             "headline": "package3",
+            "slugline": "package3 slugline",
             "type": "composite",
             "guid": "package3",
             "versioncreated": "NOW()",

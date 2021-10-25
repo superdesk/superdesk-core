@@ -20,61 +20,50 @@ from superdesk.utc import utcnow
 
 
 class PublishContentTests(TestCase):
-    queue_items = [{"_id": 1,
-                    "destination": {
-                        "delivery_type": "ftp",
-                        "config": {},
-                        "name": "destination1"
-                    },
-                    "_etag": "f28b9af64f169072fb171ec7f316fc03d5826d6b",
-                    "subscriber_id": "552ba73f1d41c8437971613e",
-                    "state": "pending",
-                    "_created": "2015-04-17T13:15:20.000Z",
-                    "_updated": "2015-04-20T05:04:25.000Z",
-                    "item_id": 1
-                    },
-                   {
-                       "_id": 2,
-                       "destination": {
-                           "delivery_type": "ftp",
-                           "config": {},
-                           "name": "destination1"
-                       },
-                       "_etag": "f28b9af64f169072fb171ec7f316fc03d5826d6b",
-                       "subscriber_id": "552ba73f1d41c8437971613e",
-                       "state": "pending",
-                       "_created": "2015-04-17T13:15:20.000Z",
-                       "_updated": "2015-04-20T05:04:25.000Z",
-                       "item_id": 1,
-                       "publish_schedule": utcnow() + timedelta(minutes=10)},
-                   {
-                       "_id": 3,
-                       "destination": {
-                           "delivery_type": "ftp",
-                           "config": {},
-                           "name": "destination1"
-                       },
-                       "_etag": "f28b9af64f169072fb171ec7f316fc03d5826d6b",
-                       "subscriber_id": "552ba73f1d41c8437971613e",
-                       "state": "pending",
-                       "_created": "2015-04-17T13:15:20.000Z",
-                       "_updated": "2015-04-20T05:04:25.000Z",
-                       "item_id": '2',
-                       "publish_schedule": "2015-04-20T05:04:25.000Z"},
-                   {
-                       "_id": 4,
-                       "destination": {
-                           "delivery_type": "content_api",
-                           "format": "ninjs",
-                           "config": {},
-                           "name": "destination1"
-                       },
-                       "_etag": "f28b9af64f169072fb171ec7f316fc03d5826d6b",
-                       "subscriber_id": "552ba73f1d41c8437971613e",
-                       "state": "success",
-                       "_created": "2015-04-17T13:15:20.000Z",
-                       "_updated": "2015-04-20T05:04:25.000Z",
-                       "item_id": '2'}]
+    queue_items = [
+        {
+            "_id": 1,
+            "destination": {"delivery_type": "ftp", "config": {}, "name": "destination1"},
+            "_etag": "f28b9af64f169072fb171ec7f316fc03d5826d6b",
+            "subscriber_id": "552ba73f1d41c8437971613e",
+            "state": "pending",
+            "_created": "2015-04-17T13:15:20.000Z",
+            "_updated": "2015-04-20T05:04:25.000Z",
+            "item_id": 1,
+        },
+        {
+            "_id": 2,
+            "destination": {"delivery_type": "ftp", "config": {}, "name": "destination1"},
+            "_etag": "f28b9af64f169072fb171ec7f316fc03d5826d6b",
+            "subscriber_id": "552ba73f1d41c8437971613e",
+            "state": "pending",
+            "_created": "2015-04-17T13:15:20.000Z",
+            "_updated": "2015-04-20T05:04:25.000Z",
+            "item_id": 1,
+            "publish_schedule": utcnow() + timedelta(minutes=10),
+        },
+        {
+            "_id": 3,
+            "destination": {"delivery_type": "ftp", "config": {}, "name": "destination1"},
+            "_etag": "f28b9af64f169072fb171ec7f316fc03d5826d6b",
+            "subscriber_id": "552ba73f1d41c8437971613e",
+            "state": "pending",
+            "_created": "2015-04-17T13:15:20.000Z",
+            "_updated": "2015-04-20T05:04:25.000Z",
+            "item_id": "2",
+            "publish_schedule": "2015-04-20T05:04:25.000Z",
+        },
+        {
+            "_id": 4,
+            "destination": {"delivery_type": "content_api", "format": "ninjs", "config": {}, "name": "destination1"},
+            "_etag": "f28b9af64f169072fb171ec7f316fc03d5826d6b",
+            "subscriber_id": "552ba73f1d41c8437971613e",
+            "state": "success",
+            "_created": "2015-04-17T13:15:20.000Z",
+            "_updated": "2015-04-20T05:04:25.000Z",
+            "item_id": "2",
+        },
+    ]
 
     published_items = [
         {
@@ -83,7 +72,7 @@ class PublishContentTests(TestCase):
             "_created": utcnow(),
             "_updated": utcnow(),
             "queue_state": "pending",
-            "state": "published"
+            "state": "published",
         },
         {
             "_id": 2,
@@ -96,8 +85,8 @@ class PublishContentTests(TestCase):
             "schedule_settings": {
                 "utc_publish_schedule": utcnow() - timedelta(minutes=5),
                 "timezone": "UTC",
-                "utc_embargo": None
-            }
+                "utc_embargo": None,
+            },
         },
         {
             "_id": 3,
@@ -110,10 +99,9 @@ class PublishContentTests(TestCase):
             "schedule_settings": {
                 "utc_publish_schedule": utcnow() + timedelta(minutes=60),
                 "timezone": "UTC",
-                "utc_embargo": None
-            }
-        }
-
+                "utc_embargo": None,
+            },
+        },
     ]
 
     def setUp(self):
@@ -122,24 +110,21 @@ class PublishContentTests(TestCase):
 
     def test_queue_items(self):
         with self.app.app_context():
-            self.app.data.insert('publish_queue', self.queue_items)
+            self.app.data.insert("publish_queue", self.queue_items)
             items = get_queue_items()
             self.assertEqual(3, items.count())
             ids = [item[config.ID_FIELD] for item in items]
             self.assertNotIn(4, ids)
 
-    @mock.patch('apps.publish.enqueue.EnqueueContent.enqueue_item')
+    @mock.patch("apps.publish.enqueue.EnqueueContent.enqueue_item")
     def test_enqueue_item_not_scheduled(self, *mocks):
         fake_enqueue_item = mocks[0]
-        queue_items = [
-            {'_id': '1', 'item_id': 'item_1', 'queue_state': 'pending',
-             'state': 'published'}
-        ]
+        queue_items = [{"_id": "1", "item_id": "item_1", "queue_state": "pending", "state": "published"}]
         EnqueueContent().enqueue_items(queue_items)
         fake_enqueue_item.assert_called_with(queue_items[0])
 
     def test_get_enqueue_items(self):
-        self.app.data.insert('published', self.published_items)
+        self.app.data.insert("published", self.published_items)
         items = EnqueueContent().get_published_items()
         self.assertEqual(2, len(items))
         ids = [item[config.ID_FIELD] for item in items]

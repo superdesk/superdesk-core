@@ -9,6 +9,7 @@
 # at https://www.sourcefabric.org/superdesk/license
 
 import os
+import re
 import sys
 import time
 import bcrypt
@@ -24,14 +25,13 @@ from bson import ObjectId
 from enum import Enum
 from importlib import import_module
 from eve.utils import config
-from superdesk.default_settings import ELASTIC_DATE_FORMAT, \
-    ELASTIC_DATETIME_FORMAT
+from superdesk.default_settings import ELASTIC_DATE_FORMAT, ELASTIC_DATETIME_FORMAT
 from superdesk.text_utils import get_text
 
 
 logger = logging.getLogger(__name__)
 
-required_string = {'type': 'string', 'required': True, 'nullable': False, 'empty': False}
+required_string = {"type": "string", "required": True, "nullable": False, "empty": False}
 
 PWD_ALPHABET = string.ascii_letters + string.digits
 PWD_DEFAULT_LENGHT = 40
@@ -43,13 +43,15 @@ if sys.version_info < (3, 6):
 
     def gen_password(lenght=PWD_DEFAULT_LENGHT):
         sys_random = SystemRandom()
-        return ''.join(sys_random.choice(PWD_ALPHABET) for _ in range(lenght))
+        return "".join(sys_random.choice(PWD_ALPHABET) for _ in range(lenght))
+
+
 else:
     # "secrets" module is only available with Python 3.6+
     import secrets
 
     def gen_password(lenght=PWD_DEFAULT_LENGHT):
-        return ''.join(secrets.choice(PWD_ALPHABET) for _ in range(lenght))
+        return "".join(secrets.choice(PWD_ALPHABET) for _ in range(lenght))
 
 
 class FileSortAttributes(Enum):
@@ -57,7 +59,7 @@ class FileSortAttributes(Enum):
     Enum defining the File Story Attributes.
     """
 
-    name = 1
+    fname = 1
     created = 2
     modified = 3
 
@@ -112,17 +114,17 @@ def get_random_token(n=40):
 
 
 def import_by_path(path):
-    module_path, class_name = path.rsplit('.', 1)
+    module_path, class_name = path.rsplit(".", 1)
     module = import_module(module_path)
     return getattr(module, class_name)
 
 
 def get_hash(input_str, salt):
-    hashed = bcrypt.hashpw(input_str.encode('UTF-8'), bcrypt.gensalt(salt))
-    return hashed.decode('UTF-8')
+    hashed = bcrypt.hashpw(input_str.encode("UTF-8"), bcrypt.gensalt(salt))
+    return hashed.decode("UTF-8")
 
 
-def get_sorted_files(path, sort_by=FileSortAttributes.name, sort_order=SortOrder.asc):
+def get_sorted_files(path, sort_by=FileSortAttributes.fname, sort_order=SortOrder.asc):
     """
     Get the list of files based on the sort order.
 
@@ -135,7 +137,7 @@ def get_sorted_files(path, sort_by=FileSortAttributes.name, sort_order=SortOrder
     """
     # get the files
     files = [file for file in os.listdir(path) if os.path.isfile(os.path.join(path, file))]
-    if sort_by == FileSortAttributes.name:
+    if sort_by == FileSortAttributes.fname:
         files.sort(reverse=(sort_order == SortOrder.desc))
     elif sort_by == FileSortAttributes.created:
         files.sort(key=lambda file: os.path.getctime(os.path.join(path, file)), reverse=(sort_order == SortOrder.desc))
@@ -149,7 +151,7 @@ def get_sorted_files(path, sort_by=FileSortAttributes.name, sort_order=SortOrder
 
 def is_hashed(input_str):
     """Check if given input_str is hashed."""
-    return input_str.startswith('$2')
+    return input_str.startswith("$2")
 
 
 def merge_dicts(dict_args):
@@ -171,11 +173,7 @@ def merge_dicts_deep(dict1, dict2):
     :param dict2: second dictionary
     :return: generator which will build a merged dict
     """
-    unique_keys = set(
-        dict1.keys()
-    ).union(
-        dict2.keys()
-    )
+    unique_keys = set(dict1.keys()).union(dict2.keys())
 
     for k in unique_keys:
         # need to merge
@@ -245,7 +243,7 @@ def sha(text):
 
 def plaintext_filter(value):
     """Filter out html from value."""
-    return get_text(value).replace('\n', ' ').strip()
+    return get_text(value).replace("\n", " ").strip()
 
 
 def format_date(date_string):
@@ -256,17 +254,17 @@ def format_time(datetime_string):
     return datetime.strftime(datetime_string, ELASTIC_DATETIME_FORMAT)
 
 
-def save_error_data(data, prefix='superdesk-', suffix='.txt'):
+def save_error_data(data, prefix="superdesk-", suffix=".txt"):
     """Save given data into file and return its name.
 
     :param data: unicode data
     """
     with tempfile.NamedTemporaryFile(prefix=prefix, suffix=suffix, delete=False) as file:
-        file.write(data.encode('utf-8'))
+        file.write(data.encode("utf-8"))
         return file.name
 
 
-class Timer():
+class Timer:
     """
     Stopwatch to measure program execution time in seconds.
 
@@ -287,7 +285,7 @@ class Timer():
 
     def _validate(self, key):
         if key not in self._stopwatches:
-            raise KeyError('Timer was not started or was stopped for {} key.'.format(key))
+            raise KeyError("Timer was not started or was stopped for {} key.".format(key))
 
     def start(self, key):
         self._stopwatches[key] = time.time()
@@ -309,3 +307,8 @@ class Timer():
 
     def stop_all(self):
         self._stopwatches = {}
+
+
+def ignorecase_query(word):
+    """Case insensitive mongo query."""
+    return re.compile("^{}$".format(re.escape(word)), re.IGNORECASE)

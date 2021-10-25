@@ -24,9 +24,16 @@ Feature: Default Comments
         """
         [{"text": "test comment 1", "item": "xyz"}]
         """
-        And we get "/comments"
+        And we get "/comments?embedded={"user":1}"
         Then we get list with 2 items
-
+        """
+        {
+            "_items": [
+                {"text": "test comment", "user": {"username": "test_user"}},
+                {"text": "test comment 1", "user": {"username": "test_user"}}
+            ]
+        }
+        """
 
     @auth
     Scenario: Create comment (Fail) - wrong user supplied

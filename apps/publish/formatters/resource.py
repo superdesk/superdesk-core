@@ -14,18 +14,15 @@ from superdesk.resource import Resource
 class FormattersResource(Resource):
     """Formatters schema"""
 
-    endpoint_name = 'formatters'
-    resource_methods = ['GET', 'POST']
+    endpoint_name = "formatters"
+    resource_methods = ["GET", "POST"]
     item_methods = []
     resource_title = endpoint_name
     schema = {
-        'article_id': {
-            'type': 'string',
-            'required': True
+        "name": {
+            "type": "string",
         },
-        'formatter_name': {
-            'type': 'string',
-            'required': True
-        }
+        "article_id": {"type": "string", "required": True},
+        "formatter_name": {"type": "string", "required": True},
     }
-    privileges = {'POST': 'archive'}
+    privileges = {"POST": "archive"}

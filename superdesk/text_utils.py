@@ -1,4 +1,3 @@
-
 # -*- coding: utf-8; -*-
 #
 # This file is part of Superdesk.
@@ -10,6 +9,7 @@
 # at https://www.sourcefabric.org/superdesk/license
 
 import re
+import regex
 import logging
 from lxml import etree  # noqa
 from superdesk import etree as sd_etree
@@ -21,22 +21,41 @@ import chardet
 logger = logging.getLogger(__name__)
 
 
-# This pattern matches http(s) links, numbers (1.000.000 or 1,000,000 or 1 000 000), regulars words,
-# compound words (e.g. "two-done") or abbreviation (e.g. D.C.)
-# If you modify please keep in sync with superdesk-client/core/scripts/apps/authoring/authoring/directives/WordCount.js
-WORD_PATTERN = re.compile(r'https?:[^ ]*|([0-9]+[,. ]?)+|([\w]\.)+|[\w][\w-]*')
-
-
+# KEEP CHANGES IN SYNC WITH CLIENT FUNCTION `countWords`
+# regex is used instead re to support unicode letter matching with \p{L}
 def get_text_word_count(text):
     """Get word count for given plain text.
 
     :param str text: text string
     :return int: word count
     """
-    return sum(1 for word in WORD_PATTERN.finditer(text))
+
+    flags = regex.MULTILINE | regex.UNICODE
+    initial_text_trimmed = text.strip()
+
+    if len(initial_text_trimmed) < 1:
+        return 0
+
+    r0 = get_text(initial_text_trimmed, space_on_elements=True)
+
+    r1 = regex.sub(r"\n", " ", r0, flags=flags)
+
+    # Remove spaces between two numbers
+    # 1 000 000 000 -> 1000000000
+    r2 = regex.sub(r"([0-9]) ([0-9])", "\\1\\2", r1, flags=flags)
+
+    # remove anything that is not a unicode letter, a space or a number
+    r3 = regex.sub(r"[^\p{L} 0-9]", "", r2, flags=flags)
+
+    # replace two or more spaces with one space
+    r4 = regex.sub(r" {2,}", " ", r3, flags=flags)
+
+    result = len(r4.strip().split(" "))
+
+    return result
 
 
-def get_text(markup, content='xml', lf_on_block=False, space_on_elements=False, space=' '):
+def get_text(markup, content="xml", lf_on_block=False, space_on_elements=False, space=" "):
     """Get plain text version of (X)HTML or other XML element
 
     if the markup can't be parsed, it will be returned unchanged
@@ -50,13 +69,9 @@ def get_text(markup, content='xml', lf_on_block=False, space_on_elements=False, 
     """
     try:
         root = sd_etree.parse_html(
-            markup,
-            content=content,
-            lf_on_block=lf_on_block,
-            space_on_elements=space_on_elements,
-            space=space
+            markup, content=content, lf_on_block=lf_on_block, space_on_elements=space_on_elements, space=space
         )
-        text = etree.tostring(root, encoding='unicode', method='text')
+        text = etree.tostring(root, encoding="unicode", method="text")
         return text
     except etree.ParseError:
         return markup
@@ -73,9 +88,9 @@ def get_word_count(markup, no_html=False):
     :return int: count of words inside the text
     """
     if no_html:
-        return get_text_word_count(get_text(markup, content='xml', space_on_elements=True))
+        return get_text_word_count(get_text(markup, content="xml", space_on_elements=True))
     else:
-        return get_text_word_count(get_text(markup, content='html', lf_on_block=True))
+        return get_text_word_count(get_text(markup, content="html", lf_on_block=True))
 
 
 def update_word_count(update, original=None):
@@ -84,12 +99,12 @@ def update_word_count(update, original=None):
     :param update: created/updated document
     :param original: original document if updated
     """
-    if update.get('body_html'):
-        update.setdefault('word_count', get_word_count(update.get('body_html')))
+    if update.get("body_html"):
+        update.setdefault("word_count", get_word_count(update.get("body_html")))
     else:
         # If the body is removed then set the count to zero
-        if original and 'word_count' in original and 'body_html' in update:
-            update['word_count'] = 0
+        if original and "word_count" in original and "body_html" in update:
+            update["word_count"] = 0
 
 
 def get_char_count(html):
@@ -103,15 +118,12 @@ def get_char_count(html):
 
 def get_par_count(html):
     try:
-        elem = sd_etree.parse_html(html, content='html')
-        return len([
-            p for p in elem.iterfind('.//p')
-            if p.text and len(p.text.strip()) > 0
-        ])
+        elem = sd_etree.parse_html(html, content="html")
+        return len([p for p in elem.iterfind(".//p") if p.text and len(p.text.strip()) > 0])
     except ValueError as e:
         logger.warning(e)
 
-    logger.warning('Failed to determine paragraph count from html: {}.'.format(html))
+    logger.warning("Failed to determine paragraph count from html: {}.".format(html))
     return 0
 
 
@@ -125,8 +137,8 @@ def get_reading_time(html, word_count=None, language=None):
     :param str language: language of the text
     :return int: estimated number of minute to read the text
     """
-    if language and language.startswith('ja'):
-        return round(len(re.sub(r'[\s]', '', get_text(html))) / app.config['JAPANESE_CHARACTERS_PER_MINUTE'])
+    if language and language.startswith("ja"):
+        return round(len(re.sub(r"[\s]", "", get_text(html))) / app.config["JAPANESE_CHARACTERS_PER_MINUTE"])
     if not word_count:
         word_count = get_word_count(html)
     reading_time_float = word_count / 250
@@ -137,7 +149,7 @@ def get_reading_time(html, word_count=None, language=None):
     return reading_time_minutes
 
 
-def sanitize_html(html):
+def sanitize_html(html, remove_tags=None, kill_tags=None):
     """Sanitize HTML
 
     :param str html: unsafe HTML markup
@@ -146,13 +158,11 @@ def sanitize_html(html):
     if not html:
         return ""
 
-    blacklist = ["script", "style", "head"]
+    if not kill_tags:
+        kill_tags = ["script", "style", "head"]
 
     root_elem = lxml_html.fromstring(html)
-    cleaner = clean.Cleaner(
-        add_nofollow=False,
-        kill_tags=blacklist
-    )
+    cleaner = clean.Cleaner(add_nofollow=False, kill_tags=kill_tags, remove_tags=remove_tags)
     cleaned_xhtml = cleaner.clean_html(root_elem)
 
     safe_html = etree.tostring(cleaned_xhtml, encoding="unicode")
@@ -171,9 +181,9 @@ def decode(bytes_str):
     @return (str): decoded string
     """
     try:
-        return bytes_str.decode('utf-8')
+        return bytes_str.decode("utf-8")
     except UnicodeDecodeError:
         try:
-            return bytes_str.decode(chardet.detect(bytes_str)['encoding'])
+            return bytes_str.decode(chardet.detect(bytes_str)["encoding"])
         except Exception:
-            return bytes_str.decode('utf-8', 'ignore')
+            return bytes_str.decode("utf-8", "ignore")

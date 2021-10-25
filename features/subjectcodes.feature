@@ -1,5 +1,6 @@
 Feature: Subject codes api
 
+    @auth
     Scenario: Fetch subject codes
         When we get "/subjectcodes/"
         Then we get list with 1404 items

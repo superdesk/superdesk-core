@@ -16,39 +16,29 @@ class ProductsResource(Resource):
     """Products schema"""
 
     schema = {
-        'name': {
-            'type': 'string',
-            'iunique': True,
-            'required': True
-        },
-        'description': {
-            'type': 'string'
-        },
-        'codes': {
-            'type': 'string'
-        },
-        'content_filter': {
-            'type': 'dict',
-            'schema': {
-                'filter_id': Resource.rel('content_filters', nullable=True),
-                'filter_type': {
-                    'type': 'string',
-                    'allowed': ['blocking', 'permitting'],
-                    'default': 'blocking'
-                }
+        "name": {"type": "string", "iunique": True, "required": True},
+        "description": {"type": "string"},
+        "codes": {"type": "string"},
+        "content_filter": {
+            "type": "dict",
+            "schema": {
+                "filter_id": Resource.rel("content_filters", nullable=True),
+                "filter_type": {"type": "string", "allowed": ["blocking", "permitting"], "default": "blocking"},
             },
-            'nullable': True
+            "nullable": True,
         },
-        'geo_restrictions': {
-            'type': 'string',
-            'nullable': True
+        "geo_restrictions": {"type": "string", "nullable": True},
+        "product_type": {
+            "type": "string",
+            "default": ProductTypes.BOTH.value,
+            "allowed": ProductTypes.values(),
+            "required": True,
         },
-        'product_type': {
-            'type': 'string',
-            'default': ProductTypes.BOTH.value,
-            'allowed': ProductTypes.values(),
-            'required': True
-        }
+        "init_version": {"type": "integer"},
     }
 
-    privileges = {'POST': 'products', 'PATCH': 'products', 'DELETE': 'products'}
+    privileges = {"POST": "products", "PATCH": "products", "DELETE": "products"}
+
+    mongo_indexes = {
+        "name_1": ([("name", 1)], {"unique": True}),
+    }

@@ -735,7 +735,8 @@ Feature: Templates
             "extra": {
                 "test": "{{ user.sign_off }}",
                 "test2": "{{ item.something.missing }}",
-                "test3": "{% if something %}"
+                "test3": "{% if something %}",
+                "test4": "{{ now|iso_datetime }}"
             }
         }
     }]
@@ -753,7 +754,54 @@ Feature: Templates
         "headline": "foo",
         "byline": "bar",
         "extra": {
-            "test": "abc"
+            "test": "abc",
+            "test4": "__now__"
         }
     }
     """
+
+    @auth
+    Scenario: User can schedule a content creation and add a macro as well
+        Given "desks"
+        """
+        [{"name": "sports"}]
+        """
+        And "stages"
+        """
+        [{"name": "schedule", "desk": "#desks._id#"}]
+        """
+        And we create a new macro "behave_macro.py"
+
+        When we post to "content_templates"
+        """
+        {"template_name": "test", "template_type": "create",
+         "data": {"headline": "test", "type": "text", "slugline": "test", "firstcreated": "2015-10-10T10:10:10+0000", "versioncreated": "2015-10-10T10:10:10+0000"},
+         "schedule": {"day_of_week": ["MON"], "create_at": "08:15:00", "is_active": true},
+         "template_desks": ["#desks._id#"], "schedule_desk": "#desks._id#", "schedule_stage": "#stages._id#", "schedule_macro": "update_fields"}
+        """
+        Then we get new resource
+        And next run is on monday "08:15:00"
+
+        When we patch latest
+        """
+        {"schedule": {"day_of_week": ["MON"], "cron_list": ["15 09 * * MON"], "is_active": true}}
+        """
+
+        When we run create content task
+        And we run create content task
+        And we get "/archive"
+        Then we get list with 1 items
+        """
+        {"_items": [{
+            "headline": "test",
+            "abstract": "Abstract has been updated",
+            "firstcreated": "__now__",
+            "versioncreated": "__now__",
+            "_updated": "__now__",
+            "_created": "__now__",
+            "_current_version": 1,
+            "_etag": "__any_value__"
+        }]}
+        """
+        When we get "/archive/#ITEM_ID#?version=all"
+        Then we get list with 1 items

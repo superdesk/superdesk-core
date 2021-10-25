@@ -28,24 +28,36 @@ from apps.packages.package_service import PackageService
 from ..models.item import ItemModel
 from flask_babel import _
 
-LOCK_USER = 'lock_user'
-LOCK_SESSION = 'lock_session'
-LOCK_TIME = 'lock_time'
-LOCK_ACTION = 'lock_action'
-STATUS = '_status'
-TASK = 'task'
+LOCK_USER = "lock_user"
+LOCK_SESSION = "lock_session"
+LOCK_TIME = "lock_time"
+LOCK_ACTION = "lock_action"
+STATUS = "_status"
+TASK = "task"
 logger = logging.getLogger(__name__)
 
 
 def push_unlock_notification(item, user_id, session_id):
     push_notification(
-        'item:unlock',
+        "item:unlock",
         item=str(item.get(config.ID_FIELD)),
         item_version=str(item.get(config.VERSION)),
         state=item.get(ITEM_STATE),
         user=str(user_id),
         lock_session=str(session_id),
-        _etag=item.get(config.ETAG)
+        _etag=item.get(config.ETAG),
+    )
+
+
+def set_unlock_updates(updates, force=True):
+    updates.update(
+        {
+            LOCK_USER: None,
+            LOCK_SESSION: None,
+            LOCK_TIME: None,
+            LOCK_ACTION: None,
+            "force_unlock": force,
+        }
     )
 
 
@@ -56,7 +68,7 @@ class ItemLock(BaseComponent):
 
     @classmethod
     def name(cls):
-        return 'item_lock'
+        return "item_lock"
 
     def lock(self, item_filter, user_id, session_id, action):
         item_model = get_model(ItemModel)
@@ -81,23 +93,26 @@ class ItemLock(BaseComponent):
                 if action:
                     updates[LOCK_ACTION] = action
 
-                item_model.update(item_filter, updates)
-
-                if item.get(TASK):
-                    item[TASK]['user'] = user_id
+                updates[TASK] = item.get(TASK)
+                if updates.get(TASK):
+                    updates[TASK]["user"] = user_id
                 else:
-                    item[TASK] = {'user': user_id}
+                    updates[TASK] = {"user": user_id}
 
-                superdesk.get_resource_service('tasks').assign_user(item[config.ID_FIELD], item[TASK])
+                # tasks service will update the user
+                superdesk.get_resource_service("tasks").assign_user(item[config.ID_FIELD], updates)
+
                 item = item_model.find_one(item_filter)
                 self.app.on_item_locked(item, user_id)
-                push_notification('item:lock',
-                                  item=str(item.get(config.ID_FIELD)),
-                                  item_version=str(item.get(config.VERSION)),
-                                  user=str(user_id),
-                                  lock_time=updates[LOCK_TIME],
-                                  lock_session=str(session_id),
-                                  _etag=item.get(config.ETAG))
+                push_notification(
+                    "item:lock",
+                    item=str(item.get(config.ID_FIELD)),
+                    item_version=str(item.get(config.VERSION)),
+                    user=str(user_id),
+                    lock_time=updates[LOCK_TIME],
+                    lock_session=str(session_id),
+                    _etag=item.get(config.ETAG),
+                )
             else:
                 raise SuperdeskApiError.forbiddenError(message=error_message)
 
@@ -130,20 +145,20 @@ class ItemLock(BaseComponent):
                     # if item is composite then update referenced items in package.
                     PackageService().update_groups({}, item)
 
-                superdesk.get_resource_service('archive').delete_action(lookup={'_id': item['_id']})
+                superdesk.get_resource_service("archive").delete_action(lookup={"_id": item["_id"]})
                 push_content_notification([item])
             else:
-                updates = {LOCK_USER: None, LOCK_SESSION: None, LOCK_TIME: None,
-                           LOCK_ACTION: None, 'force_unlock': True}
-                autosave = superdesk.get_resource_service('archive_autosave').find_one(req=None, _id=item['_id'])
+                updates = {}
+                set_unlock_updates(updates)
+                autosave = superdesk.get_resource_service("archive_autosave").find_one(req=None, _id=item["_id"])
                 if autosave and item[ITEM_STATE] not in PUBLISH_STATES:
-                    if not hasattr(flask.g, 'user'):  # user is not set when session expires
-                        flask.g.user = superdesk.get_resource_service('users').find_one(req=None, _id=user_id)
+                    if not hasattr(flask.g, "user"):  # user is not set when session expires
+                        flask.g.user = superdesk.get_resource_service("users").find_one(req=None, _id=user_id)
                     autosave.update(updates)
-                    resolve_document_version(autosave, 'archive', 'PATCH', item)
-                    superdesk.get_resource_service('archive').patch(item['_id'], autosave)
-                    item = superdesk.get_resource_service('archive').find_one(req=None, _id=item['_id'])
-                    insert_versioning_documents('archive', item)
+                    resolve_document_version(autosave, "archive", "PATCH", item)
+                    superdesk.get_resource_service("archive").patch(item["_id"], autosave)
+                    item = superdesk.get_resource_service("archive").find_one(req=None, _id=item["_id"])
+                    insert_versioning_documents("archive", item)
                 else:
                     item_model.update(item_filter, updates)
                     item = item_model.find_one(item_filter)
@@ -157,43 +172,45 @@ class ItemLock(BaseComponent):
 
     def unlock_session(self, user_id, session_id):
         item_model = get_model(ItemModel)
-        items = item_model.find({LOCK_SESSION: session_id})
+        items = item_model.find({LOCK_SESSION: str(session_id)})
 
         for item in items:
-            self.unlock({'_id': item['_id']}, user_id, session_id, None)
+            self.unlock({"_id": item["_id"]}, user_id, session_id, None)
 
     def can_lock(self, item, user_id, session_id):
         """
         Function checks whether user can lock the item or not. If not then raises exception.
         """
-        can_user_edit, error_message = superdesk.get_resource_service('archive').can_edit(item, user_id)
+        can_user_edit, error_message = superdesk.get_resource_service("archive").can_edit(item, user_id)
 
         if can_user_edit:
             if item.get(LOCK_USER):
-                if str(item.get(LOCK_USER, '')) == str(user_id) and str(item.get(LOCK_SESSION)) != str(session_id):
-                    return False, 'Item is locked by you in another session.'
+                if str(item.get(LOCK_USER, "")) == str(user_id) and str(item.get(LOCK_SESSION)) != str(session_id):
+                    return False, "Item is locked by you in another session."
                 else:
-                    if str(item.get(LOCK_USER, '')) != str(user_id):
-                        return False, 'Item is locked by another user.'
+                    if str(item.get(LOCK_USER, "")) != str(user_id):
+                        return False, "Item is locked by another user."
         else:
             return False, error_message
 
-        return True, ''
+        return True, ""
 
     def can_unlock(self, item, user_id):
         """
         Function checks whether user can unlock the item or not.
         """
-        can_user_edit, error_message = superdesk.get_resource_service('archive').can_edit(item, user_id)
+        can_user_edit, error_message = superdesk.get_resource_service("archive").can_edit(item, user_id)
 
         if can_user_edit:
-            if not (str(item.get(LOCK_USER, '')) == str(user_id) or
-                    (current_user_has_privilege('archive') and current_user_has_privilege('unlock'))):
-                return False, 'You don\'t have permissions to unlock an item.'
+            if not (
+                str(item.get(LOCK_USER, "")) == str(user_id)
+                or (current_user_has_privilege("archive") and current_user_has_privilege("unlock"))
+            ):
+                return False, "You don't have permissions to unlock an item."
         else:
             return False, error_message
 
-        return True, ''
+        return True, ""
 
     def on_session_end(self, user_id, session_id):
         self.unlock_session(user_id, session_id)

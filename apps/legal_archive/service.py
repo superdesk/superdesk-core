@@ -67,8 +67,8 @@ class LegalService(Service):
 
         self.check_get_access_privilege()
 
-        if req and req.args.get('query'):
-            lookup['$text'] = {'$search': req.args['query']}
+        if req and req.args.get("query"):
+            lookup["$text"] = {"$search": req.args["query"]}
 
         return super().get(req, lookup)
 
@@ -94,11 +94,11 @@ class LegalService(Service):
         :raises: SuperdeskApiError.forbiddenError() if user is unauthorized to access the Legal Archive resources.
         """
 
-        if not hasattr(g, 'user'):
+        if not hasattr(g, "user"):
             return
 
-        privileges = g.user.get('active_privileges', {})
-        resource_privileges = get_resource_privileges(self.datasource).get('GET', None)
+        privileges = g.user.get("active_privileges", {})
+        resource_privileges = get_resource_privileges(self.datasource).get("GET", None)
         if privileges.get(resource_privileges, 0) == 0:
             raise SuperdeskApiError.forbiddenError()
 
@@ -110,9 +110,9 @@ class LegalService(Service):
 
         if isinstance(legal_archive_docs, list):
             for legal_archive_doc in legal_archive_docs:
-                legal_archive_doc['_type'] = LEGAL_ARCHIVE_NAME
+                legal_archive_doc["_type"] = LEGAL_ARCHIVE_NAME
         else:
-            legal_archive_docs['_type'] = LEGAL_ARCHIVE_NAME
+            legal_archive_docs["_type"] = LEGAL_ARCHIVE_NAME
 
     def _change_location_of_items_in_package(self, package):
         """
@@ -122,7 +122,7 @@ class LegalService(Service):
         for group in package.get(GROUPS, []):
             for ref in group.get(REFS, []):
                 if RESIDREF in ref:
-                    ref['location'] = LEGAL_ARCHIVE_NAME
+                    ref["location"] = LEGAL_ARCHIVE_NAME
 
 
 class LegalArchiveService(LegalService):
@@ -172,11 +172,11 @@ class LegalArchiveVersionsService(LegalService):
             doc_if_exists = None
 
             if config.ID_FIELD in doc:  # This happens when inserting docs from pre-populate command
-                doc_if_exists = self.find_one(req=None, _id=doc['_id'])
+                doc_if_exists = self.find_one(req=None, _id=doc["_id"])
 
             # This also happens when inserting docs from pre-populate command
-            if not doc.get('operation'):
-                doc['operation'] = 'create'
+            if not doc.get("operation"):
+                doc["operation"] = "create"
 
             if doc_if_exists is None:
                 ids.extend(super().create([doc]))
@@ -188,12 +188,13 @@ class LegalArchiveVersionsService(LegalService):
         Version of an article in Legal Archive isn't maintained by Eve. Overriding this to fetch the version history.
         """
 
-        resource_def = app.config['DOMAIN'][LEGAL_ARCHIVE_NAME]
+        resource_def = app.config["DOMAIN"][LEGAL_ARCHIVE_NAME]
         id_field = versioned_id_field(resource_def)
 
         if req and req.args and req.args.get(config.ID_FIELD):
-            version_history = list(super().get_from_mongo(req=ParsedRequest(),
-                                                          lookup={id_field: req.args.get(config.ID_FIELD)}))
+            version_history = list(
+                super().get_from_mongo(req=ParsedRequest(), lookup={id_field: req.args.get(config.ID_FIELD)})
+            )
         else:
             version_history = list(super().get_from_mongo(req=req, lookup=lookup))
 
@@ -213,8 +214,8 @@ class LegalArchiveHistoryService(LegalService):
         ids = []
         for doc in docs:
             doc_if_exists = None
-            if doc.get('item_id'):
-                doc_if_exists = self.find_one(req=None, _id=doc.get('_id'))
+            if doc.get("item_id"):
+                doc_if_exists = self.find_one(req=None, _id=doc.get("_id"))
             if doc_if_exists is None:
                 ids.extend(super().create([doc]))
 

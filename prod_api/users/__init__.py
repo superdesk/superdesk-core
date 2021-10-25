@@ -13,11 +13,11 @@ from .service import UsersService
 from .resource import UsersResource
 
 
-def init_app(app):
+def init_app(app) -> None:
     """Initialize the `users` API endpoint.
 
     :param app: the API application object
     :type app: `Eve`
     """
-    service = UsersService(datasource='users', backend=superdesk.get_backend())
-    UsersResource(endpoint_name='users', app=app, service=service)
+    service = UsersService(datasource="users", backend=superdesk.get_backend())
+    UsersResource(endpoint_name="users", app=app, service=service)

@@ -1,4 +1,3 @@
-
 import superdesk
 
 
@@ -8,7 +7,7 @@ def norvig_suggest(word, model):
     Modified not to return only best correction, but all of them sorted.
     """
     NWORDS = model
-    alphabet = 'abcdefghijklmnopqrstuvwxyz'
+    alphabet = "abcdefghijklmnopqrstuvwxyz"
     suggestions = []
 
     def edits1(word):
@@ -27,7 +26,7 @@ def norvig_suggest(word, model):
         return set(w for w in words if w in NWORDS)
 
     def suggest(word):
-        candidates = known([word]) or known(edits1(word)) # or known_edits2(word)
+        candidates = known([word]) or known(edits1(word))  # or known_edits2(word)
         return sorted(candidates, key=lambda item: NWORDS.get(item, 1), reverse=True)
 
     name_suggestions = suggest(word.capitalize())
@@ -45,30 +44,30 @@ def norvig_suggest(word, model):
 
 class SpellcheckResource(superdesk.Resource):
 
-    resource_methods = ['POST']
+    resource_methods = ["POST"]
     item_methods = []
 
     schema = {
-        'word': {'type': 'string', 'required': True},
-        'language_id': {'type': 'string', 'required': True},
+        "word": {"type": "string", "required": True},
+        "language_id": {"type": "string", "required": True},
+        "corrections": {"type": "list"},
     }
 
     # you should be able to make edits
-    privileges = {'POST': 'archive'}
+    privileges = {"POST": "archive"}
 
 
 class SpellcheckService(superdesk.Service):
-
     def suggest(self, word, lang):
         """Suggest corrections for given word and language.
 
         :param word: word that is probably wrong
         :param lang: language code
         """
-        model = superdesk.get_resource_service('dictionaries').get_model_for_lang(lang)
+        model = superdesk.get_resource_service("dictionaries").get_model_for_lang(lang)
         return norvig_suggest(word, model)
 
     def create(self, docs, **kwargs):
         for doc in docs:
-            doc['corrections'] = self.suggest(doc['word'], doc['language_id'])
-        return [doc['word'] for doc in docs]
+            doc["corrections"] = self.suggest(doc["word"], doc["language_id"])
+        return [doc["word"] for doc in docs]

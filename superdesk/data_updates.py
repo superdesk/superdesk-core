@@ -16,16 +16,7 @@ import superdesk
 
 
 class DataUpdatesResource(Resource):
-    schema = {
-        'name': {
-            'type': 'string',
-            'required': True
-        },
-        'applied': {
-            'type': 'datetime',
-            'required': True
-        }
-    }
+    schema = {"name": {"type": "string", "required": True}, "applied": {"type": "datetime", "required": True}}
     internal_resource = True
     item_url = superdesk.metadata.utils.item_url
 
@@ -33,10 +24,10 @@ class DataUpdatesResource(Resource):
 class DataUpdatesService(BaseService):
     def on_create(self, docs):
         for doc in docs:
-            doc['applied'] = datetime.datetime.now()
+            doc["applied"] = datetime.datetime.now()
 
 
-def init_app(app):
-    endpoint_name = 'data_updates'
+def init_app(app) -> None:
+    endpoint_name = "data_updates"
     service = DataUpdatesService(endpoint_name, backend=superdesk.get_backend())
     DataUpdatesResource(endpoint_name, app=app, service=service)

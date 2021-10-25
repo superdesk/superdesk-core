@@ -49,7 +49,7 @@ class ProfilingService(BaseService):
 
     def on_create(self, docs):
         for doc in docs:
-            doc[config.ID_FIELD] = doc['name']
+            doc[config.ID_FIELD] = doc["name"]
 
     def delete(self, lookup):
         """
@@ -58,7 +58,8 @@ class ProfilingService(BaseService):
         try:
             profile.disable()
             from superdesk.profiling import dump_stats
-            dump_stats(profile, 'rest')
+
+            dump_stats(profile, "rest")
         finally:
             profile.enable()
         return True
@@ -69,8 +70,8 @@ class ProfilingService(BaseService):
         """
         if not req or not req.sort:
             return [self.DEFAULT_SORT]
-        sort_fields = req.sort.split(',')
+        sort_fields = req.sort.split(",")
         for field in sort_fields:
             if field not in self.SORT_FIELDS:
-                raise SuperdeskApiError.badRequestError('Invalid sort field %s' % field)
+                raise SuperdeskApiError.badRequestError("Invalid sort field %s" % field)
         return sort_fields

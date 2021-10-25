@@ -14,21 +14,10 @@ from superdesk.auth_server.scopes import Scope
 
 
 class DesksResource(Resource):
-    url = 'desks'
+    url = "desks"
     item_url = item_url
-    item_methods = ['GET']
-    resource_methods = ['GET']
-    datasource = {
-        'source': 'desks',
-        'default_sort': [('name', 1)],
-        'projection': {
-            # NOTE: since schema is not defined here, setting up a projection explicitly is required,
-            # otherwise default `eve` fields (projection) will be applied e.q. `{'_id': 1}`
-            # and it will cut off all required data.
-            # https://github.com/pyeve/eve/blob/afd573d9254a9a23393f35760e9c515300909ccd/eve/io/base.py#L420
-            'desk_metadata': 0
-        },
-    }
-    privileges = {
-        'GET': Scope.DESKS_READ.name
-    }
+    item_methods = ["GET"]
+    resource_methods = ["GET"]
+    allow_unknown = True
+    datasource = {"source": "desks", "default_sort": [("name", 1)]}
+    privileges = {"GET": Scope.DESKS_READ.name}

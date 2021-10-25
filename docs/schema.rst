@@ -178,7 +178,7 @@ Item metadata
 
     Workflow state.
 
-    .. autodata:: content_state
+    .. autodata:: ContentStates
 
 ``revert_state`` *string*
 
@@ -188,7 +188,7 @@ Item metadata
 
     Publication state.
 
-    .. autodata:: pub_status
+    .. autodata:: PubStatuses
 
 ``signal`` *string*
 
@@ -287,6 +287,10 @@ Set/updated by system mostly.
 ``template`` *id*
 
     Template id if item was created using a template.
+
+``published_in_package`` *id*
+
+    If item was published as part of a package for the first time this will be set to package id.
 
 Ingest
 ------

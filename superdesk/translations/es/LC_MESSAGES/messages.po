@@ -1,0 +1,1993 @@
+# Translations template for Superdesk-Core.
+# Copyright (C) 2021 ORGANIZATION
+# This file is distributed under the same license as the Superdesk-Core
+# project.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2021.
+# 
+# Translators:
+# william Q <wadradominguez@gmail.com>, 2020
+# localizer <omniton@sourcefabric.org>, 2020
+# Carolina Sanchez <carolina.isis8@gmail.com>, 2020
+# Alejandro Malo <alejandromalo@gmail.com>, 2020
+# gaba <gaba@torproject.org>, 2021
+# Bruno Sarlo <bsarlo@gmail.com>, 2021
+# 
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: Superdesk-Core 2.0.13.dev294+gc7a46b6b\n"
+"Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
+"POT-Creation-Date: 2021-02-25 14:27+0100\n"
+"PO-Revision-Date: 2019-04-04 09:17+0000\n"
+"Last-Translator: Bruno Sarlo <bsarlo@gmail.com>, 2021\n"
+"Language-Team: Spanish (https://www.transifex.com/sourcefabric/teams/6584/es/)\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.8.0\n"
+"Language: es\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+#: superdesk/activity.py:81
+msgid "Send notifications via email"
+msgstr "Enviar notificaciones por correo electrónico"
+
+#: superdesk/activity.py:82 superdesk/activity.py:92
+msgid "notifications"
+msgstr "notificaciones"
+
+#: superdesk/activity.py:91
+msgid "Allow Desktop Notifications"
+msgstr ""
+
+#: superdesk/internal_destinations.py:102
+msgid "Internal Destinations"
+msgstr "Destinos internos"
+
+#: superdesk/internal_destinations.py:103
+msgid "User can manage internal destinations."
+msgstr ""
+
+#: superdesk/validator.py:287
+msgid "Only 1 instance is allowed."
+msgstr ""
+
+#: superdesk/io/__init__.py:57
+msgid "Ingest Feed Parsers"
+msgstr ""
+
+#: superdesk/io/__init__.py:58
+msgid "User can maintain Ingest Feed Parsers."
+msgstr ""
+
+#: superdesk/io/__init__.py:67
+msgid "Ingest Feed Services"
+msgstr ""
+
+#: superdesk/io/__init__.py:68
+msgid "User can maintain Ingest Feed Services."
+msgstr ""
+
+#: superdesk/io/__init__.py:74
+msgid "Ingest Channels"
+msgstr "Canales de ingesta"
+
+#: superdesk/io/__init__.py:75
+msgid "User can maintain Ingest Channels."
+msgstr ""
+
+#: superdesk/macros/abstract_populator.py:35
+msgid "Populate Abstract"
+msgstr "Llenar resumen"
+
+#: superdesk/macros/assign_status.py:33
+msgid "Update Status On Assignment ID"
+msgstr ""
+
+#: superdesk/macros/currency_usd_to_cad.py:38
+msgid "Currency USD to CAD"
+msgstr ""
+
+#: superdesk/macros/desk_routing.py:46
+msgid "Desk Routing"
+msgstr ""
+
+#: superdesk/macros/extract_html.py:58
+msgid "Extract Html Macro"
+msgstr ""
+
+#: superdesk/macros/internal_destination_auto_publish.py:87
+msgid "Internal Destination Auto Publish"
+msgstr ""
+
+#: superdesk/macros/set_default_template_metadata.py:87
+msgid "Set Default Template Metadata"
+msgstr ""
+
+#: superdesk/macros/take_key_validator.py:25
+msgid "validate take key"
+msgstr ""
+
+#: superdesk/macros/validate_for_publish.py:29
+msgid "Validate for Publish"
+msgstr ""
+
+#: superdesk/macros/imperial/area_acre_to_metric.py:47
+msgid "Area acres to metric"
+msgstr ""
+
+#: superdesk/macros/imperial/area_acre_to_metric.py:51
+#: superdesk/macros/imperial/area_square_feet_to_metric.py:51
+#: superdesk/macros/imperial/area_square_inch_to_metric.py:51
+#: superdesk/macros/imperial/area_square_miles_to_metric.py:51
+#: superdesk/macros/imperial/area_square_yards_to_metric.py:51
+msgid "area"
+msgstr ""
+
+#: superdesk/macros/imperial/area_square_feet_to_metric.py:47
+msgid "Area square feet to metric"
+msgstr ""
+
+#: superdesk/macros/imperial/area_square_inch_to_metric.py:47
+msgid "Area square inch to metric"
+msgstr ""
+
+#: superdesk/macros/imperial/area_square_miles_to_metric.py:47
+msgid "Area square miles to metric"
+msgstr ""
+
+#: superdesk/macros/imperial/area_square_yards_to_metric.py:47
+msgid "Area square yards to metric"
+msgstr ""
+
+#: superdesk/macros/imperial/length_feet_and_inches_to_metric.py:105
+msgid "Length feet-inches to metric"
+msgstr ""
+
+#: superdesk/macros/imperial/length_feet_and_inches_to_metric.py:109
+#: superdesk/macros/imperial/length_miles_to_metric.py:43
+#: superdesk/macros/imperial/length_nautical_miles_to_metric.py:42
+#: superdesk/macros/imperial/length_yards_to_metric.py:43
+msgid "length"
+msgstr ""
+
+#: superdesk/macros/imperial/length_miles_to_metric.py:38
+msgid "Length miles to kilometres"
+msgstr ""
+
+#: superdesk/macros/imperial/length_nautical_miles_to_metric.py:38
+msgid "Length nautical miles to kilometres"
+msgstr ""
+
+#: superdesk/macros/imperial/length_yards_to_metric.py:39
+msgid "Length yards to metres"
+msgstr ""
+
+#: superdesk/macros/imperial/volume_cubic_feet_to_metric.py:38
+msgid "Volume cubic feet to metric"
+msgstr ""
+
+#: superdesk/macros/imperial/volume_cubic_feet_to_metric.py:42
+#: superdesk/macros/imperial/volume_cubic_inches_to_metric.py:53
+#: superdesk/macros/imperial/volume_cubic_yard_to_metric.py:42
+msgid "volume"
+msgstr ""
+
+#: superdesk/macros/imperial/volume_cubic_inches_to_metric.py:49
+msgid "Volume cubic inches to metric"
+msgstr ""
+
+#: superdesk/macros/imperial/volume_cubic_yard_to_metric.py:38
+msgid "Volume cubic yard to metric"
+msgstr ""
+
+#: superdesk/macros/imperial/weight_pounds_to_metric.py:38
+msgid "Weight pounds to metric"
+msgstr ""
+
+#: superdesk/macros/imperial/weight_pounds_to_metric.py:42
+msgid "temperature and weight"
+msgstr ""
+
+#: superdesk/profiling/__init__.py:37
+msgid "Profiling Service"
+msgstr ""
+
+#: superdesk/profiling/__init__.py:38
+msgid "User can read profiling data."
+msgstr ""
+
+#: superdesk/publisher/__init__.py:21
+msgid "Livesite Editor"
+msgstr ""
+
+#: superdesk/publisher/__init__.py:22
+msgid "Edit a site live on Web Publisher"
+msgstr ""
+
+#: superdesk/roles/__init__.py:23
+msgid "Roles Management"
+msgstr "Gestión de roles"
+
+#: superdesk/roles/__init__.py:23
+msgid "User can manage roles."
+msgstr ""
+
+#: superdesk/sams/__init__.py:41
+msgid "Sams"
+msgstr ""
+
+#: superdesk/sams/__init__.py:41
+msgid "Access to the SAMS management page (and to upload assets etc)"
+msgstr ""
+
+#: superdesk/sams/__init__.py:44
+msgid "Sams manage"
+msgstr ""
+
+#: superdesk/sams/__init__.py:44
+msgid "Allows management of SAMS Sets etc"
+msgstr ""
+
+#: superdesk/sams/__init__.py:47
+msgid "SAMS Manage Assets"
+msgstr ""
+
+#: superdesk/sams/__init__.py:47
+msgid "Allows management of SAMS Assets"
+msgstr ""
+
+#: apps/ldap/__init__.py:26 superdesk/users/__init__.py:25
+msgid "User Management"
+msgstr "Gestión de usuarios"
+
+#: apps/ldap/__init__.py:26 superdesk/users/__init__.py:25
+msgid "User can manage users."
+msgstr ""
+
+#: superdesk/vocabularies/__init__.py:30
+msgid "Prefered CV items"
+msgstr ""
+
+#: superdesk/vocabularies/__init__.py:31
+msgid "cvs"
+msgstr ""
+
+#: superdesk/vocabularies/vocabularies.py:38
+msgid "Vocabularies Management"
+msgstr "Gestión de vocabularios"
+
+#: superdesk/vocabularies/vocabularies.py:39
+msgid "User can manage vocabularies' contents."
+msgstr ""
+
+#: apps/content_filters/filter_condition/filter_condition_parameters.py:78
+#: apps/validate/validate.py:63 superdesk/vocabularies/vocabularies.py:438
+msgid "Keywords"
+msgstr "Palabras clave"
+
+#: apps/desk_routing.py:74
+msgid "Desk routing"
+msgstr ""
+
+#: apps/desk_routing.py:74
+msgid "User can configure desk routing"
+msgstr ""
+
+#: apps/desks.py:104
+msgid "Desk Management"
+msgstr "Gestión de mesa"
+
+#: apps/desks.py:104
+msgid "User can manage desks."
+msgstr ""
+
+#: apps/desks.py:107
+msgid "Master Desk"
+msgstr "Mesa maestra"
+
+#: apps/desks.py:107
+msgid "User can access master desk."
+msgstr ""
+
+#: apps/desks.py:180
+msgid ""
+"Cannot update Desk Type as there are article(s) referenced by the Desk."
+msgstr ""
+"No se puede actualizar el Tipo de Mesa porque hay artículo(s) referenciados "
+"por la mesa."
+
+#: apps/desks.py:204
+msgid "Cannot delete desk as it is assigned as default desk to user(s)."
+msgstr ""
+"No puede eliminarse la mesa pues está asignada por defecto a usuario(s)."
+
+#: apps/desks.py:216
+msgid "Cannot delete desk as routing scheme(s) are associated with the desk"
+msgstr ""
+"No se puede eliminar la mesa porque hay esquema(s) de enrutamientos "
+"asociados con la mesa"
+
+#: apps/desks.py:230
+msgid ""
+"Cannot delete desk as it has article(s) or referenced by versions of the "
+"article(s)."
+msgstr ""
+"No se puede eliminar la mesa porque tiene artículo(s) o referencias de "
+"versiones de los artículos."
+
+#: apps/feature_preview.py:7
+msgid "Feature Preview"
+msgstr "Vista previa de funciones"
+
+#: apps/feature_preview.py:8
+msgid "Let user toggle Feature Preview on/off."
+msgstr ""
+
+#: apps/archive/__init__.py:111 apps/monitoring.py:14
+msgid "Monitoring view"
+msgstr ""
+
+#: apps/monitoring.py:15
+msgid "monitoring"
+msgstr ""
+
+#: apps/preferences.py:115
+msgid "Enable Feature Preview"
+msgstr "Habilitar vista previa de funciones"
+
+#: apps/preferences.py:116
+msgid "feature"
+msgstr "funcionalidad"
+
+#: apps/preferences.py:127
+msgid "Users archive view format"
+msgstr "Formato de vista de archivo de usuarios"
+
+#: apps/preferences.py:128
+msgid "archive"
+msgstr "archivo"
+
+#: apps/preferences.py:138
+msgid "Enable Single Line View"
+msgstr ""
+
+#: apps/preferences.py:139
+msgid "rows"
+msgstr ""
+
+#: apps/preferences.py:168
+msgid "Located"
+msgstr "Ubicación"
+
+#: apps/preferences.py:169 apps/preferences.py:196
+msgid "article_defaults"
+msgstr ""
+
+#: apps/preferences.py:178
+msgid "Preferred Categories"
+msgstr "Categorías preferidas"
+
+#: apps/preferences.py:179
+msgid "categories"
+msgstr "categorías"
+
+#: apps/preferences.py:188
+msgid "Preferred Desks"
+msgstr ""
+
+#: apps/preferences.py:189
+msgid "desks"
+msgstr ""
+
+#: apps/content_filters/filter_condition/filter_condition_parameters.py:134
+#: apps/preferences.py:195 apps/validate/validate.py:67
+msgid "Place"
+msgstr "Lugar"
+
+#: apps/preferences.py:211
+msgid "Users contacts view format"
+msgstr ""
+
+#: apps/preferences.py:212
+msgid "contacts"
+msgstr ""
+
+#: apps/preferences.py:295 apps/preferences.py:307
+msgid "Invalid preference: {preference}"
+msgstr "Preferencia inválida: {preference}"
+
+#: apps/stages.py:136
+msgid "Cannot delete a Working Stage."
+msgstr "No se puede eliminar una etapa de trabajo."
+
+#: apps/stages.py:141
+msgid "Cannot delete a Incoming Stage."
+msgstr "No se puede eliminar una etapa entrante."
+
+#: apps/stages.py:147
+msgid ""
+"Cannot delete stage as it has article(s) or referenced by versions of the "
+"article(s)."
+msgstr ""
+"No se puede eliminar la etapa porque tiene artículos o referencias de "
+"versiones de los artículos."
+
+#: apps/stages.py:155
+msgid "Stage is referred by Ingest Routing Schemes : {rule_names}"
+msgstr ""
+"La etapa fue referida por los esquemas de ingesta de enrutamiento: "
+"{rule_names}"
+
+#: apps/stages.py:175
+msgid "Must have one working stage in a desk"
+msgstr "Debe haber una etapa de trabajo en la mesa"
+
+#: apps/stages.py:183
+msgid "Must have one incoming stage in a desk"
+msgstr "Debe haber una etapa de recién ingresado en la mesa"
+
+#: apps/archive/common.py:565 apps/tasks.py:98
+msgid "Invalid desk identifier {desk_id}"
+msgstr "El identificador de mesa no es válido {desk_id}"
+
+#: apps/tasks.py:103
+msgid "User is not member of desk: {desk_id}"
+msgstr ""
+
+#: apps/archive/common.py:571 apps/tasks.py:113
+msgid "Invalid stage identifier {stage_id}"
+msgstr "El identificador de etapa no es válido {stage_id}"
+
+#: apps/tasks.py:149
+msgid "Error:{exception} in {rule_type} rule:{rule} for stage:{stage}"
+msgstr "Error: {exception} en regla {rule_type}:{rule} para etapa:{stage}"
+
+#: apps/tasks.py:328
+msgid "Tasks Management"
+msgstr "Gestión de tareas"
+
+#: apps/archive/__init__.py:112
+msgid "Access to Monitoring view in left toolbar"
+msgstr ""
+
+#: apps/archive/__init__.py:115
+msgid "Create content"
+msgstr ""
+
+#: apps/archive/__init__.py:115
+msgid "Create and save content"
+msgstr ""
+
+#: apps/archive/__init__.py:118
+msgid "Ingest"
+msgstr "Ingerir"
+
+#: apps/archive/__init__.py:118
+msgid "Access to ingest sources management"
+msgstr ""
+
+#: apps/archive/__init__.py:120
+msgid "Spike"
+msgstr "Spiking"
+
+#: apps/archive/__init__.py:120
+msgid "Spike/delete items"
+msgstr ""
+
+#: apps/archive/__init__.py:122
+msgid "Spike view"
+msgstr ""
+
+#: apps/archive/__init__.py:122
+msgid "View spiked content"
+msgstr ""
+
+#: apps/archive/__init__.py:125
+msgid "Unspike"
+msgstr "Quitar spiking"
+
+#: apps/archive/__init__.py:125
+msgid "Unspike/undelete content"
+msgstr ""
+
+#: apps/archive/__init__.py:128
+msgid "Edit Unique Name"
+msgstr "Editar nombre único"
+
+#: apps/archive/__init__.py:128
+msgid "Edit unique name"
+msgstr ""
+
+#: apps/archive/__init__.py:130
+msgid "Hold"
+msgstr "Retener"
+
+#: apps/archive/__init__.py:130
+msgid "Hold content"
+msgstr ""
+
+#: apps/archive/__init__.py:131
+msgid "Restore"
+msgstr "Restaurar"
+
+#: apps/archive/__init__.py:131
+msgid "Restore content"
+msgstr ""
+
+#: apps/archive/__init__.py:132
+msgid "Update"
+msgstr "Actualizar"
+
+#: apps/archive/__init__.py:132
+msgid "Create an update"
+msgstr ""
+
+#: apps/archive/__init__.py:135
+msgid "Unlock content"
+msgstr "Desbloquear contenido"
+
+#: apps/archive/__init__.py:136
+msgid "Unlock locked content by another user"
+msgstr ""
+
+#: apps/archive/__init__.py:140
+msgid "Mark items for users"
+msgstr ""
+
+#: apps/archive/__init__.py:141
+msgid "User can mark or unmark items for other users"
+msgstr ""
+
+#: apps/archive/archive.py:315 apps/archive/archive.py:983
+msgid "Package doesn't support Public Service Announcements"
+msgstr "El paquete no admite anuncios del servicio público"
+
+#: apps/archive/archive.py:495 apps/archive/archive.py:977
+#: apps/duplication/archive_duplication.py:139
+#: apps/item_autosave/components/item_autosave.py:36
+msgid "The item was locked by another user"
+msgstr "El elemento fue bloqueado por otro usuario"
+
+#: apps/archive/archive.py:549 apps/archived/archived.py:201
+msgid "User does not have permissions to read the item."
+msgstr "El usuario no tiene permisos para leer el elemento."
+
+#: apps/archive/archive.py:565
+msgid "Invalid version {old_version}"
+msgstr "Versión no válida {old_version}"
+
+#: apps/archive/archive.py:569
+msgid "Invalid item id {item_id}"
+msgstr "Id. de elemento no válida {item_id}"
+
+#: apps/archive/archive.py:573
+msgid "Invalid last version {last_version}"
+msgstr "Última versión no válida {last_version}"
+
+#: apps/archive/archive.py:900
+msgid "An item can't have both Publish Schedule and Embargo"
+msgstr ""
+"Un elemento no puede tener agenda de publicación y embargo al mismo tiempo"
+
+#: apps/archive/archive.py:906
+msgid "Embargo cannot be earlier than now"
+msgstr "El embargo no puede tener fecha previa a la de ahora"
+
+#: apps/archive/archive.py:909
+msgid "Rewrites doesn't support Embargo"
+msgstr "Las reescrituras no admiten embargo"
+
+#: apps/archive/archive.py:912
+msgid "Invalid Embargo"
+msgstr "Embargo no válido"
+
+#: apps/archive/archive.py:916
+msgid "A Package doesn't support Embargo"
+msgstr "Un paquete no admite embargo"
+
+#: apps/archive/archive.py:980
+msgid "Item isn't in a valid state to be updated."
+msgstr "El elemento no se encuentra en un estado válido para ser actualizado."
+
+#: apps/archive/archive.py:991
+msgid "Unauthorized to modify Unique Name"
+msgstr "No tienes autorización para modificar el nombre único"
+
+#: apps/archive/archive.py:999
+msgid "Cannot change the genre for broadcast content."
+msgstr "No se puede cambiar el género del contenido transmitido."
+
+#: apps/archive/archive.py:1013
+msgid ""
+"This item is in a package and it needs to be removed before the item can be "
+"scheduled!"
+msgstr ""
+"¡Este elemento está en un paquete y debe ser eliminado antes de que se pueda"
+" agendar!"
+
+#: apps/archive/archive.py:1040
+msgid "Duplicate category codes are not allowed"
+msgstr "No se permiten los códigos de categoría duplicados"
+
+#: apps/archive/archive.py:1045
+msgid "Duplicate subjects are not allowed"
+msgstr "No se permiten los temas duplicados"
+
+#: apps/archive/archive.py:1328
+msgid "Client and server etags don't match"
+msgstr "Las etags de cliente y servidor no coinciden"
+
+#: apps/archive/archive.py:1330
+msgid "Request for Auto-save must have _id"
+msgstr "La solicitud de autoguardado debe contener _id"
+
+#: apps/archive/archive_correction.py:102 apps/archive/archive_rewrite.py:131
+msgid "Cannot find the article"
+msgstr "No se puede hallar el artículo"
+
+#: apps/archive/archive_link.py:57 apps/archive/archive_rewrite.py:342
+msgid "Only updates can be unlinked!"
+msgstr "¡Solo se pueden desvincular las actualizaciones!"
+
+#: apps/archive/archive_rewrite.py:134
+msgid "Rewrite of an Item having embargo isn't possible"
+msgstr "No es posible reescribir elementos con embargo"
+
+#: apps/archive/archive_rewrite.py:137
+msgid "Event id does not exist"
+msgstr "No existe la id del evento"
+
+#: apps/archive/archive_rewrite.py:140
+msgid "Article has been rewritten before !"
+msgstr "¡El artículo ya ha sido reescrito!"
+
+#: apps/archive/archive_rewrite.py:154
+msgid "Rewrite is not published. Cannot rewrite the story again."
+msgstr ""
+"La reescritura no fue publicada. No se puede reescribir la historia otra "
+"vez."
+
+#: apps/archive/archive_rewrite.py:160
+msgid "Rewrite story has been used as update before !"
+msgstr "¡Ya se ha usado la reescritura de la historia como actualización!"
+
+#: apps/archive/archive_rewrite.py:173
+msgid "Rewrite story can only be text or pre-formatted !"
+msgstr ""
+"¡La reescritura de la historia solo puede ser de texto o preformateado!"
+
+#: apps/archive/archive_rewrite.py:178
+msgid "Broadcast cannot be a update story !"
+msgstr "¡La transmisión no puede ser una actualización de historia!"
+
+#: apps/archive/archive_rewrite.py:182
+msgid "Rewrite item content profile does not match with Original item."
+msgstr ""
+"El elemento reescrito del perfil de contenido no coincide con el elemento "
+"original."
+
+#: apps/archive/archive_spike.py:103
+msgid "The item \"{slugline}\" is in a package"
+msgstr "El elemento \"{slugline}\" está en un paquete"
+
+#: apps/archive/archive_spike.py:104
+msgid " it needs to be removed before the item can be spiked"
+msgstr " debe ser eliminado antes de hacerle spiking al elemento"
+
+#: apps/archive/autocomplete.py:37
+msgid "Archive autocomplete is not enabled"
+msgstr ""
+
+#: apps/archive/autocomplete.py:40
+#, python-format
+msgid "Field %(field)s is not allowed"
+msgstr ""
+
+#: apps/archive/common.py:421
+msgid "Document not found in archive collection"
+msgstr "No se halló el documento en la colección de archivo"
+
+#: apps/archive/common.py:652 apps/archive/common.py:654
+msgid "Schedule date is not recognized"
+msgstr "No se reconoce la fecha de agenda"
+
+#: apps/archive/common.py:658
+msgid "Schedule cannot be earlier than now"
+msgstr "La agenda no puede tener fecha previa a la de ahora"
+
+#: apps/archive/common.py:674
+msgid "{} date is not recognized"
+msgstr ""
+
+#: apps/archive_broadcast/__init__.py:28
+msgid "Broadcast"
+msgstr "Transmitir"
+
+#: apps/archive_broadcast/__init__.py:29
+msgid "Allows user to create broadcast content."
+msgstr ""
+
+#: apps/archive_broadcast/broadcast.py:92
+msgid "Cannot find the {genre} genre."
+msgstr "No se puede hallar el género {genre}."
+
+#: apps/archive_broadcast/broadcast.py:118
+msgid "Cannot find the requested item id."
+msgstr "No se puede hallar la id de elemento solicitada."
+
+#: apps/archive_broadcast/broadcast.py:121
+msgid "Invalid content type."
+msgstr "Tipo de contenido no válido."
+
+#: apps/archive_broadcast/broadcast.py:124
+msgid "Invalid content state."
+msgstr "Estado del contenido no válido."
+
+#: apps/archived/archived.py:134
+msgid "Only Text articles are allowed to be Killed in Archived repo"
+msgstr ""
+"Solo se pueden desactivar los artículos de texto del repositorio archivado"
+
+#: apps/archived/archived.py:137
+msgid "Killing of Broadcast Items isn't allowed in Archived repo"
+msgstr ""
+"No se permite desactivar elementos de transmisión del repositorio archivado"
+
+#: apps/archived/archived.py:141
+msgid ""
+"Can't kill as this article acts as a Master Story for existing broadcast(s)"
+msgstr ""
+"No se puede desactivar porque el artículo es historia principal de una "
+"transmisión existente"
+
+#: apps/archived/archived.py:145
+msgid "Can't Kill as article is still available in production"
+msgstr ""
+"No se puede desactivar porque el artículo sigue disponible en producción"
+
+#: apps/archived/archived.py:148
+msgid "Can't kill as article is part of a Package"
+msgstr "No se puede desactivar porque el artículo es parte de un paquete"
+
+#: apps/archived/archived.py:153
+msgid "Can't Kill as the Digital Story is still available in production"
+msgstr ""
+"No se puede desactivar porque la historia digital sigue disponible en "
+"producción"
+
+#: apps/archived/archived.py:159
+msgid "Digital Story of the article not found in Archived repo"
+msgstr ""
+"La historia digital del artículo no se pudo hallar en el repositorio "
+"archivado"
+
+#: apps/archived/archived.py:163
+msgid "Can't kill as Digital Story is part of a Package"
+msgstr ""
+"No se puede desactivar porque la historia digital es parte de un paquete"
+
+#: apps/archived/archived.py:168
+msgid "Can't Kill as Take(s) are still available in production"
+msgstr ""
+"No se puede desactivar porque las tomas siguen disponibles en producción"
+
+#: apps/archived/archived.py:172
+msgid "One of Take(s) not found in Archived repo"
+msgstr "Una de las tomas no se pudo hallar en el repositorio archivado"
+
+#: apps/archived/archived.py:175
+msgid "Can't kill as one of Take(s) is part of a Package"
+msgstr "No se puede desactivar porque una de las tomas es parte de un paquete"
+
+#: apps/archived/archived.py:414
+msgid "Archive Management"
+msgstr ""
+
+#: apps/archived/archived.py:415
+msgid "User can remove items from the archived"
+msgstr ""
+
+#: apps/auth/__init__.py:64
+msgid "Invalid user."
+msgstr "Usuario no válido."
+
+#: apps/auth/auth.py:115
+msgid "Insufficient privileges for the requested operation."
+msgstr ""
+
+#: apps/auth/service.py:65
+msgid "Not found."
+msgstr ""
+
+#: apps/auth/db/reset_password.py:79
+msgid "Either key:password or email must be provided"
+msgstr "Se debe ingresar clave:password o correo electrónico"
+
+#: apps/auth/db/reset_password.py:97
+msgid "Invalid email"
+msgstr "Correo no válido"
+
+#: apps/auth/db/reset_password.py:101
+msgid "User not enabled"
+msgstr "Usuario no habilitado"
+
+#: apps/auth/db/reset_password.py:105 apps/auth/db/reset_password.py:122
+msgid "User not active"
+msgstr "Usuario inactivo"
+
+#: apps/auth/oidc/auth.py:69
+msgid "Please update your account email address"
+msgstr ""
+
+#: apps/comments/comments.py:80
+msgid "Commenting on behalf of someone else is prohibited."
+msgstr "Se prohíbe comentar en nombre de otra persona."
+
+#: apps/concept_items/__init__.py:25
+msgid "Knowledge base management"
+msgstr ""
+
+#: apps/concept_items/__init__.py:26
+msgid "User can manage knowledge base."
+msgstr ""
+
+#: apps/contacts/__init__.py:27
+msgid "Contacts Management"
+msgstr ""
+
+#: apps/contacts/__init__.py:27
+msgid "Manage Contacts"
+msgstr ""
+
+#: apps/contacts/__init__.py:30
+msgid "Contacts View Rights"
+msgstr ""
+
+#: apps/contacts/__init__.py:30
+msgid "View Contacts"
+msgstr ""
+
+#: apps/contacts/service.py:85
+msgid "Contacts of type \"{contact_type}\" must have an email address"
+msgstr ""
+
+#: apps/content_filters/__init__.py:48
+msgid "Content Filters"
+msgstr "Filtros de contenido"
+
+#: apps/content_filters/__init__.py:49
+msgid "User can manage content filters"
+msgstr ""
+
+#: apps/content_filters/content_filter/content_filter_service.py:40
+msgid "Content filter has been referenced by subscriber(s) {references}"
+msgstr ""
+"El filtro de contenido fue referenciado por el/los suscriptores {references}"
+
+#: apps/content_filters/content_filter/content_filter_service.py:48
+msgid "Content filter has been referenced by routing scheme(s) {references}"
+msgstr ""
+"El filtro de contenido fue referenciado por el/los esquemas de enrutamiento "
+"{references}"
+
+#: apps/content_filters/content_filter/content_filter_service.py:56
+msgid "Content filter has been referenced in {references})"
+msgstr "El filtro de contenido fue referenciado en {references}"
+
+#: apps/content_filters/content_filter/content_filter_service.py:122
+msgid "Circular dependency error in content filters:{filter}"
+msgstr "Error de dependencia circular en filtros de contenido: {filter}"
+
+#: apps/content_filters/content_filter/content_filter_service.py:196
+msgid "Filter statement {index} does not have a filter condition"
+msgstr ""
+
+#: apps/content_filters/content_filter/content_filter_test.py:48
+msgid "Content filter not found"
+msgstr "No se halló el filtro de contenido"
+
+#: apps/content_filters/content_filter/content_filter_test.py:58
+#: apps/products/product_test.py:51 apps/publish/formatters/service.py:65
+msgid "Article not found!"
+msgstr "¡No se halló el artículo!"
+
+#: apps/content_filters/content_filter/content_filter_test.py:63
+msgid "Error in testing article: {error}"
+msgstr "Error de testeo en el artículo: {error}"
+
+#: apps/content_filters/content_filter/content_filter_test.py:78
+msgid "Error in testing archive: {error}"
+msgstr "Error de testeo en el archivo: {error}"
+
+#: apps/content_filters/filter_condition/filter_condition_field.py:52
+msgid "Invalid filter conditions field {field}"
+msgstr "Campo de condiciones de filtro no válido {field}"
+
+#: apps/content_filters/filter_condition/filter_condition_parameters.py:45
+msgid "ANPA Category"
+msgstr "Categoría ANPA"
+
+#: apps/content_filters/filter_condition/filter_condition_parameters.py:52
+#: apps/validate/validate.py:79
+msgid "Urgency"
+msgstr "Urgencia"
+
+#: apps/content_filters/filter_condition/filter_condition_parameters.py:59
+#: apps/validate/validate.py:60
+msgid "Genre"
+msgstr "Género"
+
+#: apps/content_filters/filter_condition/filter_condition_parameters.py:66
+#: apps/validate/validate.py:77
+msgid "Subject"
+msgstr "Tema"
+
+#: apps/content_filters/filter_condition/filter_condition_parameters.py:73
+#: apps/validate/validate.py:68
+msgid "Priority"
+msgstr "Prioridad"
+
+#: apps/content_filters/filter_condition/filter_condition_parameters.py:81
+#: apps/validate/validate.py:72
+msgid "Slugline"
+msgstr "Línea de encabezado"
+
+#: apps/content_filters/filter_condition/filter_condition_parameters.py:86
+#: apps/validate/validate.py:78
+msgid "Type"
+msgstr "Escribir"
+
+#: apps/content_filters/filter_condition/filter_condition_parameters.py:93
+#: apps/validate/validate.py:75
+msgid "Source"
+msgstr "Fuente"
+
+#: apps/content_filters/filter_condition/filter_condition_parameters.py:98
+#: apps/validate/validate.py:61
+msgid "Headline"
+msgstr "Encabezado"
+
+#: apps/content_filters/filter_condition/filter_condition_parameters.py:103
+msgid "Ednote"
+msgstr ""
+
+#: apps/content_filters/filter_condition/filter_condition_parameters.py:108
+#: apps/validate/validate.py:45
+msgid "Body HTML"
+msgstr "Cuerpo del HTML"
+
+#: apps/content_filters/filter_condition/filter_condition_parameters.py:113
+#: apps/validate/validate.py:53
+msgid "Desk"
+msgstr "Mesa"
+
+#: apps/content_filters/filter_condition/filter_condition_parameters.py:120
+#: apps/validate/validate.py:76
+msgid "Stage"
+msgstr "Etapa"
+
+#: apps/content_filters/filter_condition/filter_condition_parameters.py:127
+#: apps/validate/validate.py:73
+msgid "SMS"
+msgstr "SMS"
+
+#: apps/content_filters/filter_condition/filter_condition_parameters.py:141
+msgid "Ingest provider"
+msgstr ""
+
+#: apps/content_filters/filter_condition/filter_condition_parameters.py:148
+#: apps/publish/__init__.py:93 apps/validate/validate.py:55
+msgid "Embargo"
+msgstr "Embargo"
+
+#: apps/content_filters/filter_condition/filter_condition_parameters.py:155
+#: apps/validate/validate.py:57
+msgid "Feature Media"
+msgstr "Medios destacados"
+
+#: apps/content_filters/filter_condition/filter_condition_parameters.py:170
+msgid "Agendas"
+msgstr "Agendas"
+
+#: apps/content_filters/filter_condition/filter_condition_service.py:36
+msgid "Filter condition has been referenced in content filter: {references}"
+msgstr ""
+"La condición de filtro fue referenciada en el filtro de contenido: "
+"{references}"
+
+#: apps/content_filters/filter_condition/filter_condition_service.py:51
+msgid "Filter condition:{condition} has unidentified field: {field}"
+msgstr ""
+"La condición de filtro:{condition} tiene un campo no identificado: {field}"
+
+#: apps/content_filters/filter_condition/filter_condition_service.py:57
+msgid "Filter condition:{condition} has unidentified operator: {operator}"
+msgstr ""
+"La condición de filtro:{condition} tiene un operador no identificado: "
+"{operator}"
+
+#: apps/content_filters/filter_condition/filter_condition_service.py:76
+msgid "Filter condition:{condition} has identical settings"
+msgstr "La condición de filtro:{condition} tiene configuraciones idénticas"
+
+#: apps/content_types/__init__.py:13
+msgid "Content Profile"
+msgstr "Perfil de contenido"
+
+#: apps/content_types/__init__.py:14
+msgid "Manage content profiles"
+msgstr ""
+
+#: apps/content_types/content_types.py:143
+msgid "Vocabulary {vocabulary} is used in {count} content type(s)"
+msgstr ""
+"El vocabulario {vocabulary} es usado en estos tipos de contenido {count}"
+
+#: apps/content_types/content_types.py:165
+msgid ""
+"Cannot disable content profile as following templates are referencing: "
+"{templates}"
+msgstr ""
+"No se puede deshabilitar el perfil de contenido porque las siguientes "
+"plantillas lo referencian: {templates}"
+
+#: apps/content_types/content_types.py:179
+msgid ""
+"Cannot disable content profile as following desks are referencing: {desks}"
+msgstr ""
+"No se puede deshabilitar el perfil de contenido porque las siguientes mesas "
+"lo referencian: {desks}"
+
+#: apps/dictionaries/__init__.py:24
+msgid "Dictionaries List Management"
+msgstr "Gestión de la lista de diccionarios"
+
+#: apps/dictionaries/__init__.py:25
+msgid "User can manage dictionaries lists."
+msgstr ""
+
+#: apps/dictionaries/service.py:142
+msgid "A text dictionary file is required"
+msgstr "Se requiere un archivo de texto de diccionario"
+
+#: apps/dictionaries/service.py:161 apps/dictionaries/service.py:281
+#: apps/dictionaries/service.py:285
+msgid "The dictionary already exists"
+msgstr "Ya existe el diccionario"
+
+#: apps/dictionaries/service.py:189
+msgid "User is required for the abbreviations dictionary."
+msgstr "Se requiere un usuario para el diccionario de abreviaturas."
+
+#: apps/dictionaries/service.py:193
+msgid "The dictionary type cannot be changed."
+msgstr "No se puede cambiar el tipo de diccionario."
+
+#: apps/duplication/__init__.py:50
+msgid "Fetch Content To a Desk"
+msgstr "Importar el contenido a una mesa"
+
+#: apps/duplication/__init__.py:50
+msgid "Fetch Content to a Desk"
+msgstr ""
+
+#: apps/duplication/__init__.py:54 apps/duplication/__init__.py:55
+msgid "Move Content to another desk"
+msgstr "Mover el contenido a otra mesa"
+
+#: apps/duplication/__init__.py:59 apps/duplication/__init__.py:60
+msgid "Duplicate Content within a Desk"
+msgstr "Duplicar contenido dentro de una mesa"
+
+#: apps/duplication/__init__.py:64 apps/duplication/__init__.py:65
+msgid "Translate Content within a Desk"
+msgstr ""
+
+#: apps/duplication/__init__.py:69 apps/duplication/__init__.py:70
+msgid "Send Content to Personal desk"
+msgstr ""
+
+#: apps/duplication/archive_copy.py:54
+#: apps/duplication/archive_duplication.py:128
+#: apps/duplication/archive_move.py:125
+#: apps/duplication/archive_translate.py:60
+msgid "Fail to found item with guid: {guid}"
+msgstr "No se halló el elemento con guid: {guid}"
+
+#: apps/duplication/archive_copy.py:59
+msgid "Copy is not allowed on items in a desk."
+msgstr "No se permite copiar en elementos de una mesa."
+
+#: apps/duplication/archive_duplication.py:54
+msgid "Duplicate to Personal space is not allowed."
+msgstr ""
+
+#: apps/duplication/archive_fetch.py:75
+msgid "Fail to found ingest item with _id: {id}"
+msgstr "No se halló el elemento de ingesta con _id: {id}"
+
+#: apps/duplication/archive_move.py:87
+msgid "Item is locked for move by another user."
+msgstr "Otro usuario bloqueó la opción de mover el elemento."
+
+#: apps/duplication/archive_move.py:188
+msgid "Move is not allowed within the same stage."
+msgstr "No se permite mover dentro de la misma etapa."
+
+#: apps/export/__init__.py:22
+msgid "Content export"
+msgstr ""
+
+#: apps/export/service.py:67
+msgid "Error creating export zip file. Try again please."
+msgstr "Error al crear el archivo zip de exportación. Intenta nuevamente."
+
+#: apps/export/service.py:80
+msgid "No items to export."
+msgstr "No hay elementos para exportar."
+
+#: apps/export/service.py:85
+msgid "Formatter not found for requested format type."
+msgstr "No se halló el formateador para el tipo de formato solicitado."
+
+#: apps/highlights/__init__.py:26
+msgid "Highlights - read"
+msgstr ""
+
+#: apps/highlights/__init__.py:27
+msgid "Can see a list of highlights."
+msgstr ""
+
+#: apps/highlights/__init__.py:31
+msgid "Highlights/Summary List Management"
+msgstr "Gestión de la lista de destacados/resumen"
+
+#: apps/highlights/__init__.py:32
+msgid "User can manage highlights/summary lists."
+msgstr ""
+
+#: apps/highlights/__init__.py:36
+msgid "Mark items for Highlights/Summary Lists"
+msgstr "Marcar elementos para la lista de destacados/resumen"
+
+#: apps/highlights/__init__.py:37
+msgid "User can mark items for Highlights/Summary Lists."
+msgstr ""
+
+#: apps/io/search_ingest.py:61
+msgid "Destination desk cannot be empty."
+msgstr "La mesa de destino no puede estar vacía."
+
+#: apps/io/search_ingest.py:92
+msgid "provider not found source={source}"
+msgstr "no se halló el proveedor de fuente={source}"
+
+#: apps/io/feeding_services/reuters.py:150
+msgid "Not found {payload}"
+msgstr "No se halló {payload}"
+
+#: apps/item_autosave/components/item_autosave.py:32
+msgid "Invalid item identifier"
+msgstr "Identificador de elemento no válido"
+
+#: apps/item_lock/components/item_lock.py:73
+msgid "Item is locked by another user."
+msgstr "El elemento fue bloqueado por otro usuario."
+
+#: apps/item_lock/components/item_lock.py:121
+msgid "Item is not locked."
+msgstr "El elemento no está bloqueado."
+
+#: apps/keywords/alchemy.py:27
+msgid "AlchemyAPI key is not set"
+msgstr "No está configurada la API key de Alchemy"
+
+#: apps/keywords/alchemy.py:41
+msgid "Fail to connect to Alchemy service"
+msgstr "No se pudo conectar al servicio de Alchemy"
+
+#: apps/keywords/alchemy.py:47
+msgid "Fail to parse the response from Alchemy service"
+msgstr "No se pudo analizar la respuesta del servicio de Alchemy"
+
+#: apps/keywords/service.py:25
+msgid "Not set a keywords provider"
+msgstr "No se configuró un proveedor de palabras clave"
+
+#: apps/ldap/ldap.py:105
+msgid ""
+"User does not belong to security Group or could not find the user profile."
+msgstr ""
+"El usuario no pertenece al grupo de seguridad o no se pudo hallar el perfil "
+"de usuario."
+
+#: apps/ldap/ldap.py:163
+msgid "No user has been found in AD"
+msgstr "No se halló usuario en AD"
+
+#: apps/ldap/ldap.py:200 apps/ldap/ldap.py:207
+msgid "Invalid Credentials."
+msgstr "Credenciales no válidas."
+
+#: apps/ldap/ldap.py:211
+msgid "User already exists in the system."
+msgstr "El usuario ya existe en el sistema."
+
+#: apps/legal_archive/__init__.py:62
+msgid "Legal Archive"
+msgstr "Archivo legal"
+
+#: apps/legal_archive/__init__.py:63
+msgid "Read from legal archive"
+msgstr ""
+
+#: apps/marked_desks/__init__.py:26
+msgid "Mark items for desks"
+msgstr ""
+
+#: apps/marked_desks/__init__.py:27
+msgid "User can mark items for other desks."
+msgstr ""
+
+#: apps/marked_desks/__init__.py:31
+msgid "Mark items for desks even if the user is not a member of the desk"
+msgstr ""
+
+#: apps/marked_desks/__init__.py:32
+msgid ""
+"User can mark items for other desks even if they are not a member of that "
+"desk"
+msgstr ""
+
+#: apps/packages/package_service.py:146
+msgid "Root group is missing."
+msgstr "Falta grupo raíz."
+
+#: apps/packages/package_service.py:151
+msgid "Only one root group is allowed."
+msgstr "Se permite solo un grupo raíz."
+
+#: apps/packages/package_service.py:159
+msgid "Group is missing id."
+msgstr "Falta id del grupo."
+
+#: apps/packages/package_service.py:169
+msgid "{id} group is added multiple times."
+msgstr "el grupo {id} se agregó varias veces."
+
+#: apps/packages/package_service.py:174
+msgid ""
+"The number of groups and of referenced groups in the root group do not "
+"match."
+msgstr ""
+"La cantidad de grupos y grupos referenciados en el grupo raíz no coincide."
+
+#: apps/packages/package_service.py:179
+msgid "Not all groups are referenced in the root group."
+msgstr "No todos los grupos están referenciados en el grupo raíz."
+
+#: apps/packages/package_service.py:224
+msgid "Package contains empty ResidRef!"
+msgstr "¡El paquete contiene ResidRef vacío!"
+
+#: apps/packages/package_service.py:229
+msgid "Invalid item reference: {reference}"
+msgstr "Referencia de elemento no válida: {reference}"
+
+#: apps/packages/package_service.py:259
+msgid "Trying to self reference as an association."
+msgstr "Estás intentando autoreferenciarte como una asociación."
+
+#: apps/packages/package_service.py:265
+msgid "Content associated multiple times"
+msgstr "Contenido asociado múltiples veces"
+
+#: apps/packages/package_service.py:271
+msgid "Trying to create a circular reference to: {item_id}"
+msgstr "Estás intentando crear una referencia circular a: {item_id}"
+
+#: apps/packages/package_service.py:451
+msgid "Package can't have item which has embargo. "
+msgstr "El paquete no puede tener un elemento con embargo."
+
+#: apps/packages/package_service.py:452
+msgid "Slugline/Unique Name of the item having embargo: {slugline}/{unique}"
+msgstr "Slugline/Nombre único del elemento tiene embargo: {slugline}/{unique}"
+
+#: apps/products/__init__.py:31
+msgid "Products Management"
+msgstr ""
+
+#: apps/products/__init__.py:32
+msgid "User can manage product lists."
+msgstr ""
+
+#: apps/products/product_test.py:45
+msgid "Article id cannot be empty!"
+msgstr "¡La id del artículo no puede estar vacía!"
+
+#: apps/products/product_test.py:58
+msgid "Error in testing article: {exception}"
+msgstr "Error en el testeo del artículo: {exception}"
+
+#: apps/products/service.py:30
+msgid "Product is used by the subscriber(s): {names}"
+msgstr "El producto es usado por el/los suscriptores: {names}"
+
+#: apps/products/service.py:48
+msgid ""
+"Product is used for API publishing for the subscriber(s): {subscribers}"
+msgstr ""
+"El producto es usado para publicación API para el/los suscriptores: "
+"{subscribers}"
+
+#: apps/products/service.py:58
+msgid ""
+"Product is used for direct publishing for the subscriber(s): {subscribers}"
+msgstr ""
+"El producto es usado para publicación directa para el/los suscriptores: "
+"{subscribers}"
+
+#: apps/publish/__init__.py:75
+msgid "Subscribers"
+msgstr "Suscriptores"
+
+#: apps/publish/__init__.py:75
+msgid "User can manage subscribers"
+msgstr ""
+
+#: apps/publish/__init__.py:77
+msgid "Publish"
+msgstr "Publicar"
+
+#: apps/publish/__init__.py:77
+msgid "Publish a content"
+msgstr ""
+
+#: apps/publish/__init__.py:78
+msgid "Kill"
+msgstr "Desactivar"
+
+#: apps/publish/__init__.py:78
+msgid "Kill a published content"
+msgstr ""
+
+#: apps/publish/__init__.py:80
+msgid "Correction"
+msgstr "Corrección"
+
+#: apps/publish/__init__.py:80
+msgid "Correction to a published content"
+msgstr ""
+
+#: apps/publish/__init__.py:84
+msgid "Publish Queue"
+msgstr "Cola de publicación"
+
+#: apps/publish/__init__.py:85
+msgid "User can update publish queue"
+msgstr ""
+
+#: apps/publish/__init__.py:89
+msgid "Resending Stories"
+msgstr ""
+
+#: apps/publish/__init__.py:90
+msgid "User can resend published stories"
+msgstr ""
+
+#: apps/publish/__init__.py:93
+msgid "User can set embargo date"
+msgstr ""
+
+#: apps/publish/__init__.py:96
+msgid "Take down"
+msgstr ""
+
+#: apps/publish/__init__.py:96
+msgid "Take down a published content"
+msgstr ""
+
+#: apps/publish/__init__.py:99
+msgid "Unpublish"
+msgstr "Despublicar"
+
+#: apps/publish/__init__.py:99
+msgid "Unpublish a published content"
+msgstr ""
+
+#: apps/publish/published_item.py:167
+msgid "Invalid state ({state}) for the Published item."
+msgstr "Estado no válido ({state}) para el elemento publicado."
+
+#: apps/publish/published_item.py:228 apps/publish/published_item.py:241
+#: apps/publish/published_item.py:254
+msgid ""
+"Deleting a published item has a workflow which is implemented in "
+"remove_expired()."
+msgstr ""
+"Eliminar un elemento publicado tiene un flujo de trabajo que se implementa "
+"en remove_expired()."
+
+#: apps/publish/content/common.py:248
+#: apps/publish/enqueue/enqueue_service.py:221
+msgid "Key is missing on article to be published: {exception}"
+msgstr "Falta clave en el artículo a publicar: {exception}"
+
+#: apps/publish/content/common.py:253
+msgid "Failed to publish the item: {id}"
+msgstr "No se pudo publicar el elemento: {id}"
+
+#: apps/publish/content/common.py:303
+msgid "Embargo can't be set after publishing"
+msgstr "No se puede poner embargo después de publicar"
+
+#: apps/publish/content/common.py:307
+msgid "Dateline can't be modified on kill or take down"
+msgstr "No se puede modificar la fecha en desactivación o dada de baja"
+
+#: apps/publish/content/common.py:312
+msgid "Cannot publish the story after Update is published."
+msgstr ""
+
+#: apps/publish/content/common.py:317
+msgid "Can't publish update until original story is published."
+msgstr ""
+
+#: apps/publish/content/common.py:359
+msgid ""
+"There are unpublished related items that won't be sent out as related items."
+" Do you want to publish the article anyway?"
+msgstr ""
+
+#: apps/publish/content/common.py:372
+msgid "Package cannot be {state}"
+msgstr ""
+
+#: apps/publish/content/common.py:375
+msgid "Package cannot have Embargo"
+msgstr ""
+
+#: apps/publish/content/common.py:382 apps/publish/content/common.py:448
+#: apps/publish/enqueue/enqueue_service.py:138
+msgid "Corrected package cannot be empty!"
+msgstr "¡El paquete corregido no puede estar vacío!"
+
+#: apps/publish/content/common.py:386
+msgid "Cannot publish an item which is marked as Not for Publication"
+msgstr "No se puede publicar un elemento que está marcado para no publicar"
+
+#: apps/publish/content/common.py:391
+msgid "Can't {operation} as item state is {state}"
+msgstr "No se puede {operation} porque el estado del elemento es {state}"
+
+#: apps/publish/content/common.py:393
+msgid ""
+"Can't {operation} as either package state or one of the items state is "
+"{state}"
+msgstr ""
+"No se puede {operation} porque el estdo del paquete o de uno de los "
+"elementos es {state}"
+
+#: apps/publish/content/common.py:440 apps/publish/content/publish.py:51
+msgid "Empty package cannot be published!"
+msgstr "¡No se puede publicar un paquete vacío!"
+
+#: apps/publish/content/common.py:461
+msgid "Package item with id: {guid} does not exist."
+msgstr "El elemento de paquete con id: {guid} no existe."
+
+#: apps/publish/content/common.py:655
+msgid "Item cannot contain associated {state} item."
+msgstr ""
+
+#: apps/publish/content/common.py:659
+msgid "Associated item is scheduled later than current item."
+msgstr ""
+
+#: apps/publish/content/common.py:662
+msgid "Item cannot have associated items with Embargo"
+msgstr ""
+
+#: apps/publish/content/common.py:672
+msgid "Associated item {name} {error}"
+msgstr ""
+
+#: apps/publish/content/common.py:684
+msgid "packaged item is locked by another user"
+msgstr ""
+
+#: apps/publish/content/common.py:693
+msgid "packaged item is locked by you. Unlock it and try again"
+msgstr ""
+
+#: apps/publish/content/common.py:813
+msgid "Associated item \"{}\" does not exist in the system"
+msgstr ""
+
+#: apps/publish/content/kill.py:57
+msgid ""
+"This item is in a package. It needs to be removed before the item can be "
+"killed"
+msgstr ""
+"El elemento está en un paquete. Se debe eliminar antes de poder ser "
+"desactivado"
+
+#: apps/publish/content/published_package_items.py:47
+msgid "Invalid package identifier"
+msgstr "Identificador de paquete no válido"
+
+#: apps/publish/content/published_package_items.py:49
+msgid "Package was not published"
+msgstr "No se publicó el paquete"
+
+#: apps/publish/content/published_package_items.py:56
+msgid "Invalid item identifier  {item_id}"
+msgstr "Identificador de elemento no válido {item_id}"
+
+#: apps/publish/content/published_package_items.py:62
+msgid "Circular reference in item {item_id}"
+msgstr "Referencia circular en elemento {item_id}"
+
+#: apps/publish/content/resend.py:57
+msgid "No subscribers selected!"
+msgstr "¡No hay suscriptores seleccionados!"
+
+#: apps/publish/content/resend.py:63
+msgid "No active subscribers found!"
+msgstr "¡No se hallaron suscriptores activos!"
+
+#: apps/publish/content/resend.py:68
+msgid "Only wire subscribers can receive broadcast stories!"
+msgstr ""
+"¡Solo los suscriptores por cable pueden recibir historias transmitidas!"
+
+#: apps/publish/content/resend.py:80
+msgid "Story couldn't be found!"
+msgstr "¡No se pudo hallar la historia!"
+
+#: apps/publish/content/resend.py:83
+msgid "Only text stories can be resent!"
+msgstr "¡Solo se pueden reenviar las historias de texto!"
+
+#: apps/publish/content/resend.py:92
+msgid "Only published, corrected or killed stories can be resent!"
+msgstr ""
+"¡Solo se pueden reenviar las historias publicadas, corregidas o "
+"desactivadas!"
+
+#: apps/publish/content/resend.py:97
+msgid "Please use the newest version {version} to resend!"
+msgstr "¡Usa la versión más reciente {version} para reenviar!"
+
+#: apps/publish/content/resend.py:101
+msgid "Updated story cannot be resent!"
+msgstr "¡La historia actualizada no se puede reenviar!"
+
+#: apps/publish/content/unpublish.py:19
+msgid ""
+"This item is in a package. It needs to be removed before the item can be "
+"unpublished."
+msgstr ""
+
+#: apps/publish/enqueue/enqueue_service.py:148
+msgid "Package item with id: {guid} has not been published."
+msgstr "El elemento de paquete con id: {guid} no fue publicado."
+
+#: apps/publish/enqueue/enqueue_service.py:226
+msgid "Failed to publish the item: {exception}"
+msgstr "No se pudo publicar el elemento: {exception}"
+
+#: apps/publish/enqueue/enqueue_service.py:570
+msgid "Can not find package {package} published item {item}"
+msgstr "No se puede hallar el elemento {item} de paquete {package} publicado"
+
+#: apps/publish/formatters/service.py:53
+msgid "Formatter name not found"
+msgstr "No se halló nombre de formateador"
+
+#: apps/publish/formatters/service.py:58
+msgid "Formatter not found"
+msgstr "No se halló formateador"
+
+#: apps/publish/formatters/service.py:79
+msgid "Error in formatting article: {exception}"
+msgstr "Error en formateo del artículo: {exception}"
+
+#: apps/rules/__init__.py:35
+msgid "Transformation Rules Management"
+msgstr "Gestión de reglas de transformación"
+
+#: apps/rules/__init__.py:36
+msgid "User can setup transformation rules for ingest content."
+msgstr ""
+
+#: apps/rules/__init__.py:41
+msgid "Routing Rules Management"
+msgstr "Gestión de reglas de enrutamiento"
+
+#: apps/rules/__init__.py:42
+msgid "User can manage routing rules which are executed on ingested articles."
+msgstr ""
+
+#: apps/rules/routing_rules.py:180
+msgid "Routing scheme is applied to channel(s). It cannot be deleted."
+msgstr "Esquema de enrutamiento aplicado a canales. No se puede eliminar."
+
+#: apps/rules/routing_rules.py:281
+msgid "A Routing Scheme must have at least one Rule"
+msgstr "Un esquema de enrutamiento debe tener al menos una regla"
+
+#: apps/rules/routing_rules.py:289
+msgid "A routing rule has invalid fields {fields}"
+msgstr "Una regla de enrutamiento tiene campos no válidos {fields}"
+
+#: apps/rules/routing_rules.py:296
+msgid "A routing rule must have a name"
+msgstr "La regla de enrutamiento debe tener un nombre"
+
+#: apps/rules/routing_rules.py:302
+msgid "A routing rule must have actions"
+msgstr "La regla de enrutamiento debe tener acciones"
+
+#: apps/rules/routing_rules.py:319
+msgid "Schedule when defined can't be empty."
+msgstr "La agenda no puede estar vacía al definirse."
+
+#: apps/rules/routing_rules.py:323
+msgid "Invalid values for day of week."
+msgstr "Valores no válidos para el día de la semana."
+
+#: apps/rules/routing_rules.py:329
+msgid "Invalid value for from time."
+msgstr "Valor no válido para 'Desde hora'"
+
+#: apps/rules/routing_rules.py:337
+msgid "Invalid value for hour_of_day_to (expected %H:%M:%S)."
+msgstr "Valor no válido para hour_of_day_to (expected %H:%M:%S)."
+
+#: apps/rules/routing_rules.py:341
+msgid "From time should be less than To Time."
+msgstr "'Desde hora' debe ser menos que 'hasta hora'."
+
+#: apps/rules/routing_rules.py:346
+msgid "Unknown time zone {time_zone}"
+msgstr "Zona horaria desconocida {time_zone}"
+
+#: apps/rules/routing_rules.py:359
+msgid "Rule Names must be unique within a scheme"
+msgstr "Los nombres de regla deben ser únicos dentro del esquema"
+
+#: apps/rules/rule_sets.py:55
+msgid "Cannot delete Rule set as it's associated with channel(s)."
+msgstr ""
+"No se puede eliminar conjunto de reglas porque está asociado a canales."
+
+#: apps/saved_searches/__init__.py:55
+msgid "Global searches"
+msgstr ""
+
+#: apps/saved_searches/__init__.py:56
+msgid "Use global saved searches."
+msgstr ""
+
+#: apps/saved_searches/__init__.py:60
+msgid "Manage Global Saved Searches"
+msgstr "Gestionar búsquedas globales guardadas"
+
+#: apps/saved_searches/__init__.py:61
+msgid "User can manage other users' global saved searches"
+msgstr ""
+
+#: apps/saved_searches/__init__.py:65
+msgid "Manage Saved Searches"
+msgstr ""
+
+#: apps/saved_searches/__init__.py:66
+msgid "User can manage saved searches"
+msgstr ""
+
+#: apps/saved_searches/__init__.py:70
+msgid "Manage Saved Searches Subscriptions"
+msgstr ""
+
+#: apps/saved_searches/__init__.py:71
+msgid "User can (un)subscribe to saved searches"
+msgstr ""
+
+#: apps/saved_searches/__init__.py:75
+msgid "Manage Saved Searches Subscriptions For Other Users"
+msgstr ""
+
+#: apps/saved_searches/__init__.py:76
+msgid "User manage other users saved searches subscriptions"
+msgstr ""
+
+#: apps/saved_searches/saved_searches.py:138
+msgid "User's subscriptions are not allowed on create"
+msgstr "Las suscripciones del usuario no se permiten al crear"
+
+#: apps/saved_searches/saved_searches.py:163
+msgid "Unauthorized to modify subscriptions."
+msgstr "No tienes autorización para modificar suscripciones."
+
+#: apps/saved_searches/saved_searches.py:180
+msgid "Unauthorized to modify other users' subscriptions."
+msgstr ""
+"No tienes autorización para modificar suscripciones de otros usuarios."
+
+#: apps/saved_searches/saved_searches.py:244
+msgid "Search cannot be saved without a filter!"
+msgstr "¡La búsqueda no se puede guardar sin un filtro!"
+
+#: apps/saved_searches/saved_searches.py:266
+msgid "Fail to validate the filter against {index}."
+msgstr "Error al validar el filtro con {index}."
+
+#: apps/saved_searches/saved_searches.py:286
+msgid "Unauthorized to modify other user's local search."
+msgstr ""
+"No tienes autorización para modificar la búsqueda local de otros usuarios."
+
+#: apps/saved_searches/saved_searches.py:288
+msgid "Unauthorized to modify global search."
+msgstr "No tienes autorización para modificar la búsqueda global."
+
+#: apps/saved_searches/saved_searches.py:313
+msgid "Invalid Saved Search"
+msgstr "Búsqueda guardada no válida"
+
+#: apps/search_providers/__init__.py:29
+msgid "Manage Search Providers"
+msgstr "Gestionar proveedores de búsqueda"
+
+#: apps/search_providers/__init__.py:30
+msgid "User can manage search providers."
+msgstr ""
+
+#: apps/search_providers/registry.py:32
+msgid "fetch_enpoint must be a string"
+msgstr "fetch_enpoint debe ser una cadena"
+
+#: apps/search_providers/registry.py:37
+msgid "You have to specify either fetch_endpoint or provider_class."
+msgstr "Tienes que especificar fetch_endpoint o provider_class."
+
+#: apps/search_providers/registry.py:45
+msgid ""
+"A Search Provider for the fetch endpoint: {endpoint} exists with name: "
+"{name}"
+msgstr ""
+"Un proveedor de búsqueda para el endpoint: {endpoint} ya existe con el "
+"nombre: {name}"
+
+#: apps/search_providers/resource.py:40
+msgid "Search Provider: {name}"
+msgstr ""
+
+#: apps/search_providers/service.py:78
+msgid "Deleting a Search Provider after receiving items is prohibited."
+msgstr "No se permite borrar un proveedor de búsqueda tras recibir elementos."
+
+#: apps/suggestions/service.py:33
+msgid "The item identifier is required"
+msgstr "El identificador de elemento es obligatorio"
+
+#: apps/suggestions/service.py:38
+msgid "Invalid item identifer"
+msgstr "Identificador de elemento no válido"
+
+#: apps/system_message/__init__.py:28
+msgid "System Message"
+msgstr ""
+
+#: apps/system_message/__init__.py:29
+msgid "User can manage system messages."
+msgstr ""
+
+#: apps/system_message/service.py:62
+msgid "Max {max_characters} characters are allowed"
+msgstr ""
+
+#: apps/system_message/service.py:68
+msgid "Only administrator user can {operation} the message"
+msgstr ""
+
+#: apps/templates/__init__.py:28
+msgid "Templates"
+msgstr "Plantillas"
+
+#: apps/templates/__init__.py:28
+msgid "Create templates"
+msgstr ""
+
+#: apps/templates/__init__.py:33 apps/templates/__init__.py:34
+msgid "Manage other user personal template"
+msgstr ""
+
+#: apps/templates/content_templates.py:224
+msgid "Invalid kill template. {fields} are not allowed"
+msgstr "Plantilla de desactivación no válida. {fields} no están permitidos"
+
+#: apps/templates/content_templates.py:287
+msgid "Kill templates can not be deleted."
+msgstr "Las plantillas de desactivación no se pueden borrar."
+
+#: apps/templates/content_templates.py:389
+msgid "Kill templates must be public"
+msgstr "Las plantillas de desactivación deben ser públicas"
+
+#: apps/templates/content_templates.py:405
+msgid "Templates that are not create type can only be assigned to one desk!"
+msgstr ""
+"¡Las plantillas que no son del tipo de creación solo se pueden asignar a una"
+" mesa!"
+
+#: apps/templates/content_templates.py:436
+msgid "You dont have the privilege to {action} another user personal template"
+msgstr ""
+
+#: apps/templates/content_templates.py:440
+msgid "You dont have the privilege to {action} the public template"
+msgstr ""
+
+#: apps/validate/validate.py:38
+msgid "Abstract"
+msgstr "Resumen"
+
+#: apps/validate/validate.py:39
+msgid "Alt text"
+msgstr "Texto alt"
+
+#: apps/validate/validate.py:40
+msgid "Take Key"
+msgstr "Toma #"
+
+#: apps/validate/validate.py:41
+msgid "Archive description"
+msgstr "Descripción del archivo"
+
+#: apps/validate/validate.py:42
+msgid "Attachments"
+msgstr "Adjuntos"
+
+#: apps/validate/validate.py:43
+msgid "Authors"
+msgstr "Autores"
+
+#: apps/validate/validate.py:44
+msgid "Body footer"
+msgstr "Pie del cuerpo"
+
+#: apps/validate/validate.py:46
+msgid "Byline"
+msgstr "Autor"
+
+#: apps/validate/validate.py:47
+msgid "Categories"
+msgstr "Categorías"
+
+#: apps/validate/validate.py:48
+msgid "Company Codes"
+msgstr "Códigos de la compañía"
+
+#: apps/validate/validate.py:49
+msgid "Copyright holder"
+msgstr "Titular de derechos de autor"
+
+#: apps/validate/validate.py:50
+msgid "Copyright notice"
+msgstr "Nota de derechos de autor"
+
+#: apps/validate/validate.py:51
+msgid "Dateline"
+msgstr "Fecha"
+
+#: apps/validate/validate.py:52
+msgid "Description"
+msgstr "Descripción"
+
+#: apps/validate/validate.py:54
+msgid "Ed. Note"
+msgstr "Nota ed."
+
+#: apps/validate/validate.py:56
+msgid "Feature Image"
+msgstr "Imagen destacada"
+
+#: apps/validate/validate.py:58
+msgid "Footer"
+msgstr "Pie de página"
+
+#: apps/validate/validate.py:59
+msgid "Footers"
+msgstr "Pies de página"
+
+#: apps/validate/validate.py:62
+msgid "Ingest Provider"
+msgstr "Proveedor de ingesta"
+
+#: apps/validate/validate.py:64
+msgid "Language"
+msgstr "Idioma"
+
+#: apps/validate/validate.py:65
+msgid "Media"
+msgstr "Medios"
+
+#: apps/validate/validate.py:66
+msgid "Media Description"
+msgstr "Descripción de medios"
+
+#: apps/validate/validate.py:69
+msgid "Scheduled Time"
+msgstr "Hora agendada"
+
+#: apps/validate/validate.py:70
+msgid "Related Items"
+msgstr "Elementos relacionados"
+
+#: apps/validate/validate.py:71
+msgid "Sign Off"
+msgstr "Cerrar sesión"
+
+#: apps/validate/validate.py:74
+msgid "SMS Message"
+msgstr "Mensaje SMS"
+
+#: apps/validate/validate.py:80
+msgid "Usage Terms"
+msgstr "Términos de uso"
+
+#: apps/validate/validate.py:84
+msgid "is a required field"
+msgstr ""
+
+#: apps/validate/validate.py:85
+msgid "max length is {length}"
+msgstr ""
+
+#: apps/validate/validate.py:86
+msgid "require a string value"
+msgstr ""
+
+#: apps/validate/validate.py:87
+msgid "require a date value"
+msgstr ""
+
+#: apps/validate/validate.py:88
+msgid "{} is a required field"
+msgstr ""
+
+#: apps/validate/validate.py:89
+msgid "contains invalid characters"
+msgstr ""
+
+#: apps/validate/validate.py:90
+msgid "{} is too long"
+msgstr ""
+
+#: apps/validate/validate.py:91
+msgid "{} is too short"
+msgstr ""
+
+#: apps/validate/validate.py:92
+msgid "empty values not allowed"
+msgstr ""
+
+#: apps/video_edit/__init__.py:29
+msgid "\"video_editor_id\" is required"
+msgstr ""
+
+#: apps/video_edit/__init__.py:31
+msgid "\"capture\" or \"edit\" is required"
+msgstr ""
+
+#: apps/workspace/__init__.py:24
+msgid "Dashboard"
+msgstr "Escritorio"
+
+#: apps/workspace/__init__.py:24
+msgid "Can access dashboard."
+msgstr ""

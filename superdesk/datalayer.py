@@ -28,7 +28,7 @@ class SuperdeskDataLayer(DataLayer):
 
     serializers = {}
     serializers.update(Mongo.serializers)
-    serializers.update({'datetime': Elastic.serializers['datetime']})
+    serializers.update({"datetime": Elastic.serializers["datetime"]})
 
     def init_app(self, app):
         app.data = self  # app.data must be set for locks to work
@@ -47,24 +47,26 @@ class SuperdeskDataLayer(DataLayer):
         Thus mongo must be already setup before running this.
         """
         with app.app_context():
-            if lock('elastic', expire=10):
+            if lock("elastic", expire=10):
                 try:
-                    self.elastic.init_index(app)
+                    self.elastic.init_index()
                 finally:
-                    unlock('elastic')
+                    unlock("elastic")
 
-    def find(self, resource, req, lookup):
-        return superdesk.get_resource_service(resource).get(req=req, lookup=lookup)
+    def find(self, resource, req, lookup, perform_count=None):
+        cursor = superdesk.get_resource_service(resource).get(req=req, lookup=lookup)
+        return cursor, cursor.count()
 
     def find_all(self, resource, max_results=1000):
         req = ParsedRequest()
         req.max_results = max_results
-        return self._backend(resource).find(resource, req, None)
+        cursor, count = self._backend(resource).find(resource, req, None)
+        return cursor
 
-    def find_one(self, resource, req, **lookup):
+    def find_one(self, resource, req, check_auth_value=True, force_auth_field_projection=False, **lookup):
         item = superdesk.get_resource_service(resource).find_one(req=req, **lookup)
         if item is not None:
-            item.setdefault('_type', self.datasource(resource)[0])
+            item.setdefault("_type", self.datasource(resource)[0])
         return item
 
     def find_one_raw(self, resource, _id):
@@ -83,7 +85,7 @@ class SuperdeskDataLayer(DataLayer):
         datasource = self.datasource(resource)
         driver = self._backend(resource).driver
         collection = driver.db[datasource[0]]
-        return collection.update(query, {'$set': updates}, multi=True)
+        return collection.update(query, {"$set": updates}, multi=True)
 
     def replace(self, resource, id_, document, original):
         return superdesk.get_resource_service(resource).replace(id=id_, document=document, original=original)
@@ -97,15 +99,15 @@ class SuperdeskDataLayer(DataLayer):
         return self._backend(resource).is_empty(resource)
 
     def _search_backend(self, resource):
-        if resource.endswith(current_app.config['VERSIONS']):
+        if resource.endswith(current_app.config["VERSIONS"]):
             return
         datasource = self.datasource(resource)
-        backend = config.SOURCES.get(datasource[0], {}).get('search_backend', None)
+        backend = config.SOURCES.get(datasource[0], {}).get("search_backend", None)
         return getattr(self, backend) if backend is not None else None
 
     def _backend(self, resource):
         datasource = self.datasource(resource)
-        backend = config.SOURCES.get(datasource[0], {'backend': 'mongo'}).get('backend', 'mongo')
+        backend = config.SOURCES.get(datasource[0], {"backend": "mongo"}).get("backend", "mongo")
         return getattr(self, backend)
 
     def get_mongo_collection(self, resource):

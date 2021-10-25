@@ -28,27 +28,42 @@ class SearchService(ItemsService):
     #    http://localhost:5000/api/search_capi?where={"headline":"muppets"}&start_date=1975-12-31
 
     allowed_params = {
-        'start_date', 'end_date',
-        'include_fields', 'exclude_fields',
-        'max_results', 'page',
-        'where', 'version',
-        'subscribers', 'aggregations',
-        'q', 'default_operator', 'sort', 'filter',
-        'service', 'subject', 'genre', 'urgency',
-        'priority', 'type', 'item_source'
+        "start_date",
+        "end_date",
+        "include_fields",
+        "exclude_fields",
+        "max_results",
+        "page",
+        "where",
+        "version",
+        "subscribers",
+        "aggregations",
+        "q",
+        "default_operator",
+        "sort",
+        "filter",
+        "service",
+        "subject",
+        "genre",
+        "urgency",
+        "priority",
+        "type",
+        "item_source",
     }
 
-    excluded_fields_from_response = {}
+    excluded_fields_from_response = set()
 
     def _filter_empty_vals(self, data):
         """Filter out `None` values from a given dict."""
         return dict(filter(lambda x: x[1], data.items()))
 
     def _format_cv_item(self, item):
-        return self._filter_empty_vals({
-            'qcode': item.get('code'),
-            'name': item.get('name'),
-        })
+        return self._filter_empty_vals(
+            {
+                "qcode": item.get("code"),
+                "name": item.get("name"),
+            }
+        )
 
     def _map_response(self, response):
         """
@@ -72,22 +87,21 @@ class SearchService(ItemsService):
         if not item:
             return
 
-        if item.get('service'):
-            item['anpa_category'] = [self._format_cv_item(item) for item in (item.get('service') or [])]
-            item.pop('service')
+        if item.get("service"):
+            item["anpa_category"] = [self._format_cv_item(item) for item in (item.get("service") or [])]
+            item.pop("service")
 
-        if item.get('subject'):
-            item['subject'] = [self._format_cv_item(item) for item in (item.get('subject') or [])]
+        if item.get("subject"):
+            item["subject"] = [self._format_cv_item(item) for item in (item.get("subject") or [])]
 
-        if item.get('genre'):
-            item['genre'] = [self._format_cv_item(item) for item in (item.get('genre') or [])]
+        if item.get("genre"):
+            item["genre"] = [self._format_cv_item(item) for item in (item.get("genre") or [])]
 
-        if item.get('place'):
-            item['place'] = [self._format_cv_item(item) for item in (item.get('place') or [])]
+        if item.get("place"):
+            item["place"] = [self._format_cv_item(item) for item in (item.get("place") or [])]
 
-        if item.get('signal'):
-            item['flags'] = {'marked_for_legal': True for signal in item.get('signal')
-                             if signal.get('code') == 'cwarn'}
+        if item.get("signal"):
+            item["flags"] = {"marked_for_legal": True for signal in item.get("signal") if signal.get("code") == "cwarn"}
 
     def find_one(self, req, **lookup):
         self.check_get_access_privilege()
@@ -98,9 +112,9 @@ class SearchService(ItemsService):
     def get(self, req, lookup):
         # if there is a subscriber argumment map it into the lookup
         self.check_get_access_privilege()
-        if req and req.args and req.args.get('subscribers'):
-            lookup = {'subscribers': req.args.get('subscribers')}
-            g.subscriber = req.args.get('subscribers')
+        if req and req.args and req.args.get("subscribers"):
+            lookup = {"subscribers": req.args.get("subscribers")}
+            g.subscriber = req.args.get("subscribers")
 
         response = super().get(req, lookup)
         if response.count() > 0:
@@ -127,15 +141,15 @@ class SearchService(ItemsService):
         :param dict item:
         """
         allowed_items = {}
-        if item.get('associations'):
-            for k, v in item.get('associations', {}).items():
+        if item.get("associations"):
+            for k, v in item.get("associations", {}).items():
                 if v is None:
                     continue
                 self._map_item(v)
-                v['_id'] = v.get('guid', v.get('_id'))
+                v["_id"] = v.get("guid", v.get("_id"))
                 allowed_items[k] = v
 
-        item['associations'] = allowed_items
+        item["associations"] = allowed_items
 
     def check_get_access_privilege(self):
         """Checks if user is authorized to perform get operation on search api.
@@ -146,10 +160,10 @@ class SearchService(ItemsService):
         :raises: SuperdeskApiError.forbiddenError() if user is unauthorized to access the Legal Archive resources.
         """
 
-        if not hasattr(g, 'user'):
+        if not hasattr(g, "user"):
             return
 
-        privileges = g.user.get('active_privileges', {})
-        resource_privileges = get_resource_privileges(self.datasource).get('GET', None)
+        privileges = g.user.get("active_privileges", {})
+        resource_privileges = get_resource_privileges(self.datasource).get("GET", None)
         if privileges.get(resource_privileges, 0) == 0:
             raise SuperdeskApiError.forbiddenError()

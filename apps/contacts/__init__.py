@@ -9,6 +9,9 @@
 # at https://www.sourcefabric.org/superdesk/license
 
 import logging
+from typing import Any
+
+from flask_babel import lazy_gettext
 import superdesk
 from .service import ContactsService, OrganisationService
 from .resource import ContactsResource, CONTACTS_PRIVILEDGE, VIEW_CONTACTS, OrganisationSearchResource
@@ -16,13 +19,17 @@ from .resource import ContactsResource, CONTACTS_PRIVILEDGE, VIEW_CONTACTS, Orga
 logger = logging.getLogger(__name__)
 
 
-def init_app(app):
-    endpoint_name = 'contacts'
-    service = ContactsService(endpoint_name, backend=superdesk.get_backend())
+def init_app(app) -> None:
+    endpoint_name = "contacts"
+    service: Any = ContactsService(endpoint_name, backend=superdesk.get_backend())
     ContactsResource(endpoint_name, app=app, service=service)
-    superdesk.privilege(name=CONTACTS_PRIVILEDGE, label='Contacts Management', description='Manage Contacts')
-    superdesk.privilege(name=VIEW_CONTACTS, label='Contacts View Rights', description='View Contacts')
+    superdesk.privilege(
+        name=CONTACTS_PRIVILEDGE, label=lazy_gettext("Contacts Management"), description=lazy_gettext("Manage Contacts")
+    )
+    superdesk.privilege(
+        name=VIEW_CONTACTS, label=lazy_gettext("Contacts View Rights"), description=lazy_gettext("View Contacts")
+    )
 
     service = OrganisationService(endpoint_name, backend=superdesk.get_backend())
-    endpoint_name = 'contacts organisations'
+    endpoint_name = "contacts organisations"
     OrganisationSearchResource(endpoint_name, app=app, service=service)

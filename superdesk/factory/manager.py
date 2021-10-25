@@ -1,9 +1,8 @@
-
 import superdesk
 from flask_script import Manager
 
 
-class SuperdeskManager():
+class SuperdeskManager:
     """Superdesk scripts manager."""
 
     def __init__(self, app, commands):

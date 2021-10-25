@@ -29,30 +29,35 @@ class FilterConditionService(BaseService):
         self._check_parameters([doc])
 
     def delete(self, lookup):
-        referenced_filters = self._get_referenced_filter_conditions(lookup.get('_id'))
+        referenced_filters = self._get_referenced_filter_conditions(lookup.get("_id"))
         if referenced_filters.count() > 0:
-            references = ','.join([pf['name'] for pf in referenced_filters])
-            raise SuperdeskApiError.badRequestError(_(
-                'Filter condition has been referenced in content filter: {references}').format(references=references))
+            references = ",".join([pf["name"] for pf in referenced_filters])
+            raise SuperdeskApiError.badRequestError(
+                _("Filter condition has been referenced in content filter: {references}").format(references=references)
+            )
         return super().delete(lookup)
 
     def _get_referenced_filter_conditions(self, id):
-        lookup = {'content_filter.expression.fc': [id]}
-        content_filters = get_resource_service('content_filters').get(req=None, lookup=lookup)
+        lookup = {"content_filter.expression.fc": {"$in": [id]}}
+        content_filters = get_resource_service("content_filters").get(req=None, lookup=lookup)
         return content_filters
 
     def _check_parameters(self, docs):
-        parameters = get_resource_service('filter_condition_parameters').get(req=None, lookup=None)
+        parameters = get_resource_service("filter_condition_parameters").get(req=None, lookup=None)
         for doc in docs:
-            parameter = [p for p in parameters if p['field'] == doc['field']]
+            parameter = [p for p in parameters if p["field"] == doc["field"]]
             if not parameter or len(parameter) == 0:
-                raise SuperdeskApiError.badRequestError(_(
-                    'Filter condition:{condition} has unidentified field: {field}')
-                    .format(condition=doc['name'], field=doc['field']))
-            if doc['operator'] not in parameter[0]['operators']:
-                raise SuperdeskApiError.badRequestError(_(
-                    'Filter condition:{condition} has unidentified operator: {operator}')
-                    .format(condition=doc['name'], operator=doc['operator']))
+                raise SuperdeskApiError.badRequestError(
+                    _("Filter condition:{condition} has unidentified field: {field}").format(
+                        condition=doc["name"], field=doc["field"]
+                    )
+                )
+            if doc["operator"] not in parameter[0]["operators"]:
+                raise SuperdeskApiError.badRequestError(
+                    _("Filter condition:{condition} has unidentified operator: {operator}").format(
+                        condition=doc["name"], operator=doc["operator"]
+                    )
+                )
 
     def _check_equals(self, docs):
         """Checks if any of the filter conditions in the docs already exists
@@ -62,14 +67,14 @@ class FilterConditionService(BaseService):
         already exists
         """
         for doc in docs:
-            existing_docs = self.get(None, {'field': doc['field'], 'operator': doc['operator']})
+            existing_docs = self.get(None, {"field": doc["field"], "operator": doc["operator"]})
             for existing_doc in existing_docs:
-                if '_id' in doc and doc['_id'] == existing_doc['_id']:
+                if "_id" in doc and doc["_id"] == existing_doc["_id"]:
                     continue
                 if self._are_equal(doc, existing_doc):
-                    raise SuperdeskApiError.badRequestError(_(
-                        'Filter condition:{condition} has identical settings')
-                        .format(condition=existing_doc['name']))
+                    raise SuperdeskApiError.badRequestError(
+                        _("Filter condition:{condition} has identical settings").format(condition=existing_doc["name"])
+                    )
 
     def check_similar(self, filter_condition):
         """Checks for similar items
@@ -83,33 +88,51 @@ class FilterConditionService(BaseService):
         :param filter_condition: Filter conditions to be tested
         :return: Returns the list of matching filter conditions
         """
-        parameters = get_resource_service('filter_condition_parameters').get(req=None, lookup=None)
-        parameter = [p for p in parameters if p['field'] == filter_condition['field']]
-        if 'in' in parameter[0]['operators'] or 'nin' in parameter[0]['operators']:
+        parameters = get_resource_service("filter_condition_parameters").get(req=None, lookup=None)
+        parameter = [p for p in parameters if p["field"] == filter_condition["field"]]
+        if "in" in parameter[0]["operators"] or "nin" in parameter[0]["operators"]:
             # this is a controlled vocabulary field so find the overlapping values
-            existing_docs = list(self.get(None,
-                                          {'field': filter_condition['field'],
-                                           'operator': filter_condition['operator'],
-                                           'value': {'$regex': re.compile('.*{}.*'.format(filter_condition['value']),
-                                                                          re.IGNORECASE)}}))
-            parameter[0]['operators'].remove(filter_condition['operator'])
-            existing_docs.extend(list(self.get(None,
-                                               {'field': filter_condition['field'],
-                                                'operator': parameter[0]['operators'][0],
-                                                'value': {'$not': re.compile('.*{}.*'.format(filter_condition['value']),
-                                                                             re.IGNORECASE)}})))
+            existing_docs = list(
+                self.get(
+                    None,
+                    {
+                        "field": filter_condition["field"],
+                        "operator": filter_condition["operator"],
+                        "value": {"$regex": re.compile(".*{}.*".format(filter_condition["value"]), re.IGNORECASE)},
+                    },
+                )
+            )
+            parameter[0]["operators"].remove(filter_condition["operator"])
+            existing_docs.extend(
+                list(
+                    self.get(
+                        None,
+                        {
+                            "field": filter_condition["field"],
+                            "operator": parameter[0]["operators"][0],
+                            "value": {"$not": re.compile(".*{}.*".format(filter_condition["value"]), re.IGNORECASE)},
+                        },
+                    )
+                )
+            )
         else:
             # find the exact matches
-            existing_docs = list(self.get(None, {'field': filter_condition['field'],
-                                                 'operator': filter_condition['operator'],
-                                                 'value': {'$regex': re.compile('{}'.format(filter_condition['value']),
-                                                                                re.IGNORECASE)}}))
+            existing_docs = list(
+                self.get(
+                    None,
+                    {
+                        "field": filter_condition["field"],
+                        "operator": filter_condition["operator"],
+                        "value": {"$regex": re.compile("{}".format(filter_condition["value"]), re.IGNORECASE)},
+                    },
+                )
+            )
         return existing_docs
 
     def _are_equal(self, fc1, fc2):
         def get_comparer(fc):
-            return ''.join(sorted(fc['value'].upper())) if ',' in fc['value'] else fc['value'].upper()
+            return "".join(sorted(fc["value"].upper())) if "," in fc["value"] else fc["value"].upper()
 
-        return all([fc1['field'] == fc2['field'],
-                    fc1['operator'] == fc2['operator'],
-                    get_comparer(fc1) == get_comparer(fc2)])
+        return all(
+            [fc1["field"] == fc2["field"], fc1["operator"] == fc2["operator"], get_comparer(fc1) == get_comparer(fc2)]
+        )

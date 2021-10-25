@@ -48,7 +48,7 @@ Open the previously created file, and start to implement the `forwards` and `bac
 
 
 ```python
-class DataUpdate(DataUpdate):
+class DataUpdate(BaseDataUpdate):
 
   resource = 'vocabularies'
 

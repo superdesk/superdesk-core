@@ -13,11 +13,10 @@ from superdesk.metadata.utils import item_url
 
 
 class SuggestionsResource(Resource):
-    """Resource used for live suggestions functionality.
-    """
+    """Resource used for live suggestions functionality."""
 
     item_url = item_url
-    url = 'suggestions/<{0}:item_id>'.format(item_url)
+    url = "suggestions/<{0}:item_id>".format(item_url)
 
-    item_methods = ['GET']
-    privileges = {'GET': 'archive'}
+    item_methods = ["GET"]
+    privileges = {"GET": "archive"}

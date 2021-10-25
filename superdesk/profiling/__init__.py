@@ -12,6 +12,8 @@ import io
 import logging
 import pstats
 import re
+
+from flask_babel import lazy_gettext
 from superdesk import get_resource_service
 import superdesk
 
@@ -24,28 +26,31 @@ from superdesk.profiling.service import ProfilingService, profile
 logger = logging.getLogger(__name__)
 
 
-def init_app(app):
-    if app.config.get('ENABLE_PROFILING'):
-        endpoint_name = 'profiling'
+def init_app(app) -> None:
+    if app.config.get("ENABLE_PROFILING"):
+        endpoint_name = "profiling"
         service = ProfilingService(endpoint_name, backend=superdesk.get_backend())
         ProfilingResource(endpoint_name, app=app, service=service)
 
-        superdesk.privilege(name='profiling', label='Profiling Service',
-                            description='User can read profiling data.')
+        superdesk.privilege(
+            name="profiling",
+            label=lazy_gettext("Profiling Service"),
+            description=lazy_gettext("User can read profiling data."),
+        )
 
         profile.enable()
 
 
-class ProfileManager():
+class ProfileManager:
     def __init__(self, name):
         self.name = name
 
     def __enter__(self):
-        if app.config.get('ENABLE_PROFILING'):
+        if app.config.get("ENABLE_PROFILING"):
             profile.enable()
 
     def __exit__(self, exc_type, exc_value, traceback):
-        if app.config.get('ENABLE_PROFILING'):
+        if app.config.get("ENABLE_PROFILING"):
             profile.disable()
             dump_stats(profile, self.name)
 
@@ -57,7 +62,7 @@ def dump_stats(profile, name):
     :param string name: the name that identifies the profile
     """
     profile_output = io.StringIO()
-    ps = pstats.Stats(profile, stream=profile_output).sort_stats('cumulative')
+    ps = pstats.Stats(profile, stream=profile_output).sort_stats("cumulative")
     ps.print_stats()
     lines = profile_output.getvalue().splitlines(True)
     profile_lines = []
@@ -65,11 +70,11 @@ def dump_stats(profile, name):
         processed_line = _process_line(line)
         if processed_line:
             profile_lines.append(processed_line)
-    profile_rec = get_resource_service('profiling').find_one(req=None, _id=name)
+    profile_rec = get_resource_service("profiling").find_one(req=None, _id=name)
     if profile_rec:
-        get_resource_service('profiling').patch(name, {'profiling_data': profile_lines})
+        get_resource_service("profiling").patch(name, {"profiling_data": profile_lines})
     else:
-        get_resource_service('profiling').post([{'name': name, 'profiling_data': profile_lines}])
+        get_resource_service("profiling").post([{"name": name, "profiling_data": profile_lines}])
 
 
 def _process_line(line):
@@ -77,15 +82,15 @@ def _process_line(line):
     Reads from a text line the profiling fields into a dictionary.
     """
     LINE_FIELDS = {
-        1: 'ncalls',
-        2: 'tottime',
-        3: 'percall',
-        4: 'cumtime',
-        5: 'percall_cumtime',
-        6: 'filename_lineno',
-        7: 'func_name'
+        1: "ncalls",
+        2: "tottime",
+        3: "percall",
+        4: "cumtime",
+        5: "percall_cumtime",
+        6: "filename_lineno",
+        7: "func_name",
     }
-    LINE_REGEX = r'\s*([\d\/]+)\s+([\d.]+)\s+([\d.]+)\s+([\d.]+)\s+([\d.]+)\s+([^\(]+)\(([^\)]+)\)$'
+    LINE_REGEX = r"\s*([\d\/]+)\s+([\d.]+)\s+([\d.]+)\s+([\d.]+)\s+([\d.]+)\s+([^\(]+)\(([^\)]+)\)$"
 
     match = re.search(LINE_REGEX, line)
     if match:

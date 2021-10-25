@@ -28,7 +28,7 @@ Feature: Publish embedded items feature
             "schema": {
                 "type": {
                     "type": "string",
-                    "required": "true",
+                    "required": true,
                     "allowed": ["picture"]
                 },
                 "pubstatus": {
@@ -66,7 +66,7 @@ Feature: Publish embedded items feature
             "schema": {
                 "type": {
                     "type": "string",
-                    "required": "true",
+                    "required": true,
                     "allowed": ["picture"]
                 },
                 "pubstatus": {
@@ -121,6 +121,7 @@ Feature: Publish embedded items feature
       "_id": "58f6110d88ea94d000369a2f",
       "name":"Channel 1",
       "media_type": "media",
+      "is_active": true,
       "subscriber_type": "all",
       "sequence_num_settings":{"min" : 1, "max" : 10}, "email": "test@test.com",
       "products": ["text-source-foo"],
@@ -132,6 +133,7 @@ Feature: Publish embedded items feature
       "_id": "58f6113988ea94d000369a30",
       "name":"Channel 2",
       "media_type":"media",
+      "is_active": true,
       "subscriber_type": "all",
       "sequence_num_settings":{"min" : 1, "max" : 10}, "email": "test@test.com",
       "products": ["pic-source-aap"],
@@ -141,6 +143,7 @@ Feature: Publish embedded items feature
       "_id": "58f6115b88ea94d000369a31",
       "name":"Channel 3",
       "media_type":"media",
+      "is_active": true,
       "subscriber_type": "all",
       "sequence_num_settings":{"min" : 1, "max" : 10}, "email": "test@test.com",
       "api_products": ["58f6120488ea94d000369a32", "type-picture"]
@@ -440,6 +443,7 @@ Feature: Publish embedded items feature
         [{
           "name":"Channel 4",
           "media_type":"media",
+          "is_active": true,
           "subscriber_type": "wire",
           "sequence_num_settings":{"min" : 1, "max" : 10}, "email": "test@test.com",
           "api_products": ["58f6120488ea94d000369a32"]
@@ -516,7 +520,7 @@ Feature: Publish embedded items feature
         When we publish "foo" with "publish" type and "published" state
         Then we get error 400
         """
-        {"_issues": {"validator exception": "['Associated item  test: SLUGLINE is a required field']"}}
+        {"_issues": {"validator exception": "['Associated item  #archive._id#: SLUGLINE is a required field']"}}
         """
         Then we set copy metadata from parent flag
         When we publish "foo" with "publish" type and "published" state

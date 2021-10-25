@@ -1265,7 +1265,7 @@ Feature: Content Profile
                     },
                     "type": "list",
                     "required": true,
-                    "mandatory_in_list": {"scheme": {"category": "category"}}
+                    "mandatory_in_list": {"scheme": {"category": {"required": true}}}
                 }
             },
             "editor": {
@@ -1820,6 +1820,22 @@ Feature: Content Profile
         """
 
     @auth
+    Scenario: Only 1 profile can be added for non text item types
+        When we post to "content_types"
+        """
+        {"_id": "foo", "item_type": "picture"}
+        """
+        Then we get new resource
+        When we post to "content_types"
+        """
+        {"_id": "bar", "item_type": "picture"}
+        """
+        Then we get error 400
+        """
+        {"_status": "ERR", "_issues": {"item_type": "Only 1 instance is allowed."}}
+        """
+
+    @auth
     Scenario: Updating the content profile doesn't change template metadata
         Given "content_types"
         """
@@ -1883,3 +1899,65 @@ Feature: Content Profile
         }
         """
         And there is no "headline" in data
+
+    @auth
+    Scenario: Removing the keywords field from content profile should not show the keywords field again 
+        Given "vocabularies"
+        """
+        [
+            {
+                "_id": "keywords", 
+                "display_name": "keywords_little", 
+                "service": {"all": 1},
+                "items": [{"name": "k1", "parent": "k1", "qcode": "k1"}]
+            }
+        ]
+        """
+        And "content_types"
+        """
+        [{"_id": "profile"}]
+        """
+        When we get "/content_types/profile?edit=true"
+        Then we get existing resource
+        """
+        {
+            "schema": {
+                "keywords": {
+                    "type": "list",
+                    "required": false
+                }
+            },
+            "editor": {
+                "keywords": {
+                    "enabled": false,
+                    "field_name": "keywords_little"
+                }
+            }
+        }
+        """
+        When we patch "/content_types/profile"
+        """
+        {
+            "editor": {"keywords": {"enabled": true}}
+        }
+        """
+        And we get "/content_types/profile?edit=true"
+        Then we get existing resource
+        """
+        {
+            "editor": {"keywords": {"enabled": true}}
+        }
+        """
+         When we patch "/content_types/profile"
+        """
+        {
+            "editor": {"keywords": {"enabled": false}}
+        }
+        """
+        And we get "/content_types/profile?edit=true"
+        Then we get existing resource
+        """
+        {
+            "editor": {"keywords": {"enabled": false}}
+        }
+        """

@@ -12,8 +12,9 @@ from urllib.parse import urljoin
 import responses
 from flask import Flask
 from superdesk.tests import TestCase
+from superdesk.text_checkers import tools
 from superdesk.text_checkers import spellcheckers
-from superdesk.text_checkers.spellcheckers.base import registered_spellcheckers
+from superdesk.text_checkers.spellcheckers.base import registered_spellcheckers, SpellcheckerBase
 from superdesk.text_checkers.spellcheckers.grammalecte import PATH_CHECK, PATH_SUGGEST, Grammalecte
 from superdesk import get_resource_service
 import os
@@ -21,7 +22,7 @@ import os
 spellcheckers.AUTO_IMPORT = False
 
 TEST_URL = "http://localhost:8080"
-os.environ['GRAMMALECTE_URL'] = TEST_URL
+os.environ["GRAMMALECTE_URL"] = TEST_URL
 
 
 @responses.activate
@@ -31,17 +32,17 @@ def load_spellcheckers():
     app = Flask(__name__)
     check_url = urljoin(TEST_URL, PATH_CHECK)
     responses.add(
-        responses.POST, check_url,
+        responses.POST,
+        check_url,
         json={
             "program": "grammalecte-fr",
             "version": "1.2",
         },
     )
-    spellcheckers.importSpellcheckers(app, spellcheckers.__name__)
+    tools.import_services(app, spellcheckers.__name__, SpellcheckerBase)
 
 
 class GrammalecteTestCase(TestCase):
-
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
@@ -50,13 +51,15 @@ class GrammalecteTestCase(TestCase):
     def test_list(self):
         """Check that Grammalecte is listed by spellcheckers_list service"""
         doc = {}
-        spellcheckers_list = get_resource_service('spellcheckers_list')
+        spellcheckers_list = get_resource_service("spellcheckers_list")
         spellcheckers_list.on_fetched(doc)
-        for checker in doc['spellcheckers']:
-            if ((checker['name'] == Grammalecte.name
-                 and 'label' in checker
-                 and set(checker['capacities']) == set(Grammalecte.capacities)
-                 and checker['languages'] == ['fr'])):
+        for checker in doc["spellcheckers"]:
+            if (
+                checker["name"] == Grammalecte.name
+                and "label" in checker
+                and set(checker["capacities"]) == set(Grammalecte.capacities)
+                and checker["languages"] == ["fr"]
+            ):
                 return
         self.fail("Grammalecte not found")
 
@@ -69,55 +72,68 @@ class GrammalecteTestCase(TestCase):
             "suggestions": False,
             "use_internal_dict": False,
         }
-        spellchecker = get_resource_service('spellchecker')
+        spellchecker = get_resource_service("spellchecker")
         check_url = urljoin(TEST_URL, PATH_CHECK)
         responses.add(
-            responses.POST, check_url,
+            responses.POST,
+            check_url,
             json={
-                'program': 'grammalecte-fr',
-                'version': '1.2',
-                'lang': 'fr',
-                'error': '',
-                'data': [{
-                    'iParagraph': 1,
-                    'lGrammarErrors': [{
-                        'nStart': 14,
-                        'nEnd': 15,
-                        'sLineId': '#5864',
-                        'sRuleId': 'conf_a_à_verbe__b13_a2_0',
-                        'sType': 'conf',
-                        'aColor': [89, 49, 129],
-                        'sMessage': 'Confusion probable : “à” est une préposition. Pour le verbe “avoir”, écrivez “a”.',
-                        'aSuggestions': ['a'],
-                        'URL': ''},
-                        {'nStart': 16,
-                         'nEnd': 23,
-                         'sLineId': '#5864',
-                         'sRuleId': 'conf_a_à_verbe__b13_a3_0',
-                         'sType': 'conf',
-                         'aColor': [89, 49, 129],
-                         'sMessage': 'Le verbe devrait être à l’infinitif.',
-                         'aSuggestions': ['vérifier'],
-                         'URL': ''}],
-                    'lSpellingErrors': []}]
-            }
+                "program": "grammalecte-fr",
+                "version": "1.2",
+                "lang": "fr",
+                "error": "",
+                "data": [
+                    {
+                        "iParagraph": 1,
+                        "lGrammarErrors": [
+                            {
+                                "nStart": 14,
+                                "nEnd": 15,
+                                "sLineId": "#5864",
+                                "sRuleId": "conf_a_à_verbe__b13_a2_0",
+                                "sType": "conf",
+                                "aColor": [89, 49, 129],
+                                "sMessage": "Confusion probable : “à” est une préposition. Pour le verbe “avoir”, écrivez “a”.",
+                                "aSuggestions": ["a"],
+                                "URL": "",
+                            },
+                            {
+                                "nStart": 16,
+                                "nEnd": 23,
+                                "sLineId": "#5864",
+                                "sRuleId": "conf_a_à_verbe__b13_a3_0",
+                                "sType": "conf",
+                                "aColor": [89, 49, 129],
+                                "sMessage": "Le verbe devrait être à l’infinitif.",
+                                "aSuggestions": ["vérifier"],
+                                "URL": "",
+                            },
+                        ],
+                        "lSpellingErrors": [],
+                    }
+                ],
+            },
         )
         spellchecker.create([doc])
 
-        expected = [{
-            'startOffset': 14,
-            'suggestions': [{'text': 'a'}],
-            'text': 'à',
-            'message': 'Confusion probable : “à” est une préposition. '
-                       'Pour le verbe “avoir”, écrivez “a”.',
-            'type': 'grammar'},
-            {'startOffset': 16,
-             'suggestions': [{'text': 'vérifier'}],
-             'text': 'vérifié',
-             'message': 'Le verbe devrait être à l’infinitif.',
-             'type': 'grammar'}]
+        expected = [
+            {
+                "startOffset": 14,
+                "suggestions": [{"text": "a"}],
+                "text": "à",
+                "message": "Confusion probable : “à” est une préposition. " "Pour le verbe “avoir”, écrivez “a”.",
+                "type": "grammar",
+            },
+            {
+                "startOffset": 16,
+                "suggestions": [{"text": "vérifier"}],
+                "text": "vérifié",
+                "message": "Le verbe devrait être à l’infinitif.",
+                "type": "grammar",
+            },
+        ]
 
-        self.assertEqual(doc['errors'], expected)
+        self.assertEqual(doc["errors"], expected)
 
     @responses.activate
     def test_checker_paragraphs(self):
@@ -128,93 +144,114 @@ class GrammalecteTestCase(TestCase):
             "suggestions": False,
             "use_internal_dict": False,
         }
-        spellchecker = get_resource_service('spellchecker')
+        spellchecker = get_resource_service("spellchecker")
         check_url = urljoin(TEST_URL, PATH_CHECK)
         responses.add(
-            responses.POST, check_url,
+            responses.POST,
+            check_url,
             json={
-                'program': 'grammalecte-fr',
-                'version': '1.1',
-                'lang': 'fr',
-                'error': '',
-                'data': [{
-                    'iParagraph': 1,
-                    'lGrammarErrors': [{
-                        'URL': '',
-                        'aColor': [89, 49, 129],
-                        'aSuggestions': ['a'],
-                        'nEnd': 15,
-                        'nStart': 14,
-                        'sLineId': '#5643',
-                        'sMessage': 'Confusion probable : “à” est une '
-                                    'préposition. Pour le verbe '
-                                    '“avoir”, écrivez “a”.',
-                        'sRuleId': 'conf_a_à_verbe__b13_a2_0',
-                        'sType': 'conf'},
-                        {'URL': '',
-                         'aColor': [89, 49, 129],
-                         'aSuggestions': ['vérifier'],
-                         'nEnd': 23,
-                         'nStart': 16,
-                         'sLineId': '#5643',
-                         'sMessage': 'Le verbe devrait être à '
-                                     'l’infinitif.',
-                         'sRuleId': 'conf_a_à_verbe__b13_a3_0',
-                         'sType': 'conf'}],
-                    'lSpellingErrors': []},
-                    {'iParagraph': 3,
-                     'lGrammarErrors': [
-                         {'URL': '',
-                          'aColor': [89, 49, 129],
-                          'aSuggestions': ['a'],
-                          'nEnd': 15,
-                          'nStart': 14,
-                          'sLineId': '#5643',
-                          'sMessage': 'Confusion probable : “à” est une '
-                                      'préposition. Pour le verbe '
-                                      '“avoir”, écrivez “a”.',
-                          'sRuleId': 'conf_a_à_verbe__b13_a2_0',
-                          'sType': 'conf'},
-                         {'URL': '',
-                          'aColor': [89, 49, 129],
-                          'aSuggestions': ['vérifier'],
-                          'nEnd': 23,
-                          'nStart': 16,
-                          'sLineId': '#5643',
-                          'sMessage': 'Le verbe devrait être à '
-                                      'l’infinitif.',
-                          'sRuleId': 'conf_a_à_verbe__b13_a3_0',
-                          'sType': 'conf'}],
-                     'lSpellingErrors': []}],
-
-            })
+                "program": "grammalecte-fr",
+                "version": "1.1",
+                "lang": "fr",
+                "error": "",
+                "data": [
+                    {
+                        "iParagraph": 1,
+                        "lGrammarErrors": [
+                            {
+                                "URL": "",
+                                "aColor": [89, 49, 129],
+                                "aSuggestions": ["a"],
+                                "nEnd": 15,
+                                "nStart": 14,
+                                "sLineId": "#5643",
+                                "sMessage": "Confusion probable : “à” est une "
+                                "préposition. Pour le verbe "
+                                "“avoir”, écrivez “a”.",
+                                "sRuleId": "conf_a_à_verbe__b13_a2_0",
+                                "sType": "conf",
+                            },
+                            {
+                                "URL": "",
+                                "aColor": [89, 49, 129],
+                                "aSuggestions": ["vérifier"],
+                                "nEnd": 23,
+                                "nStart": 16,
+                                "sLineId": "#5643",
+                                "sMessage": "Le verbe devrait être à " "l’infinitif.",
+                                "sRuleId": "conf_a_à_verbe__b13_a3_0",
+                                "sType": "conf",
+                            },
+                        ],
+                        "lSpellingErrors": [],
+                    },
+                    {
+                        "iParagraph": 3,
+                        "lGrammarErrors": [
+                            {
+                                "URL": "",
+                                "aColor": [89, 49, 129],
+                                "aSuggestions": ["a"],
+                                "nEnd": 15,
+                                "nStart": 14,
+                                "sLineId": "#5643",
+                                "sMessage": "Confusion probable : “à” est une "
+                                "préposition. Pour le verbe "
+                                "“avoir”, écrivez “a”.",
+                                "sRuleId": "conf_a_à_verbe__b13_a2_0",
+                                "sType": "conf",
+                            },
+                            {
+                                "URL": "",
+                                "aColor": [89, 49, 129],
+                                "aSuggestions": ["vérifier"],
+                                "nEnd": 23,
+                                "nStart": 16,
+                                "sLineId": "#5643",
+                                "sMessage": "Le verbe devrait être à " "l’infinitif.",
+                                "sRuleId": "conf_a_à_verbe__b13_a3_0",
+                                "sType": "conf",
+                            },
+                        ],
+                        "lSpellingErrors": [],
+                    },
+                ],
+            },
+        )
         spellchecker.create([doc])
 
-        expected = [{
-            'message': 'Confusion probable : “à” est une préposition. Pour le '
-                       'verbe “avoir”, écrivez “a”.',
-            'startOffset': 14,
-            'suggestions': [{'text': 'a'}],
-            'text': 'à',
-            'type': 'grammar'},
-            {'message': 'Le verbe devrait être à l’infinitif.',
-             'startOffset': 16,
-             'suggestions': [{'text': 'vérifier'}],
-             'text': 'vérifié',
-             'type': 'grammar'},
-            {'message': 'Confusion probable : “à” est une préposition. Pour le '
-                        'verbe “avoir”, écrivez “a”.',
-             'startOffset': 55,
-             'suggestions': [{'text': 'a'}],
-             'text': 'à',
-             'type': 'grammar'},
-            {'message': 'Le verbe devrait être à l’infinitif.',
-             'startOffset': 57,
-             'suggestions': [{'text': 'vérifier'}],
-             'text': 'vérifié',
-             'type': 'grammar'}]
+        expected = [
+            {
+                "message": "Confusion probable : “à” est une préposition. Pour le " "verbe “avoir”, écrivez “a”.",
+                "startOffset": 14,
+                "suggestions": [{"text": "a"}],
+                "text": "à",
+                "type": "grammar",
+            },
+            {
+                "message": "Le verbe devrait être à l’infinitif.",
+                "startOffset": 16,
+                "suggestions": [{"text": "vérifier"}],
+                "text": "vérifié",
+                "type": "grammar",
+            },
+            {
+                "message": "Confusion probable : “à” est une préposition. Pour le " "verbe “avoir”, écrivez “a”.",
+                "startOffset": 55,
+                "suggestions": [{"text": "a"}],
+                "text": "à",
+                "type": "grammar",
+            },
+            {
+                "message": "Le verbe devrait être à l’infinitif.",
+                "startOffset": 57,
+                "suggestions": [{"text": "vérifier"}],
+                "text": "vérifié",
+                "type": "grammar",
+            },
+        ]
 
-        self.assertEqual(doc['errors'], expected)
+        self.assertEqual(doc["errors"], expected)
 
     @responses.activate
     def test_suggest(self):
@@ -225,37 +262,33 @@ class GrammalecteTestCase(TestCase):
             "text": "fote",
             "suggestions": True,
         }
-        spellchecker = get_resource_service('spellchecker')
+        spellchecker = get_resource_service("spellchecker")
         check_url = urljoin(TEST_URL, PATH_SUGGEST)
         responses.add(
-            responses.POST, check_url,
+            responses.POST,
+            check_url,
             json={
-                'suggestions': [
-                    'faute',
-                    'fauté',
-                    'féauté',
-                    'sotte',
-                    'rote',
-                    'roté',
-                    'note',
-                    'noté',
-                    'lote',
-                    'lotte']
-            }
+                "suggestions": ["faute", "fauté", "féauté", "sotte", "rote", "roté", "note", "noté", "lote", "lotte"]
+            },
         )
         spellchecker.create([doc])
 
-        self.assertEqual(doc, {
-            'spellchecker': 'grammalecte',
-            'suggestions': [
-                {'text': 'faute'},
-                {'text': 'fauté'},
-                {'text': 'féauté'},
-                {'text': 'sotte'},
-                {'text': 'rote'},
-                {'text': 'roté'},
-                {'text': 'note'},
-                {'text': 'noté'},
-                {'text': 'lote'},
-                {'text': 'lotte'}],
-            'text': 'fote'})
+        self.assertEqual(
+            doc,
+            {
+                "spellchecker": "grammalecte",
+                "suggestions": [
+                    {"text": "faute"},
+                    {"text": "fauté"},
+                    {"text": "féauté"},
+                    {"text": "sotte"},
+                    {"text": "rote"},
+                    {"text": "roté"},
+                    {"text": "note"},
+                    {"text": "noté"},
+                    {"text": "lote"},
+                    {"text": "lotte"},
+                ],
+                "text": "fote",
+            },
+        )

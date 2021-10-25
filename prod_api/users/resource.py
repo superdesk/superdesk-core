@@ -4,17 +4,10 @@ from superdesk.auth_server.scopes import Scope
 
 
 class UsersResource(Resource):
-    url = 'users'
+    url = "users"
     item_url = item_url
-    item_methods = ['GET']
-    resource_methods = ['GET']
-    datasource = {
-        'source': 'users',
-        'default_sort': [('username', 1)],
-        'projection': {
-            'user_preferences': 0
-        },
-    }
-    privileges = {
-        'GET': Scope.USERS_READ.name
-    }
+    item_methods = ["GET"]
+    resource_methods = ["GET"]
+    allow_unknown = True
+    datasource = {"source": "users", "default_sort": [("username", 1)]}
+    privileges = {"GET": Scope.USERS_READ.name}

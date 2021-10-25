@@ -18,20 +18,20 @@ class IDMLFormatter(Formatter):
         # https://code.i-harness.com/en/q/c84c47
         # super().__init__()
         super(self.__class__, self).__init__()
-        self.format_type = 'idml'
+        self.format_type = "idml"
 
     def format(self, article, subscriber, codes=None):
         try:
-            publish_seq_num = superdesk.get_resource_service('subscribers').generate_sequence_number(subscriber)
+            publish_seq_num = superdesk.get_resource_service("subscribers").generate_sequence_number(subscriber)
             idml_bytes = Converter().create_idml(article)
         except Exception as e:
             raise FormatterError.IDMLFormatterError(e, subscriber)
 
         return [
             {
-                'published_seq_num': publish_seq_num,
-                'encoded_item': idml_bytes,
-                'formatted_item': '',
+                "published_seq_num": publish_seq_num,
+                "encoded_item": idml_bytes,
+                "formatted_item": "",
             }
         ]
 

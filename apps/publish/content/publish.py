@@ -10,8 +10,16 @@
 
 import logging
 from superdesk.errors import SuperdeskApiError
-from superdesk.metadata.item import CONTENT_TYPE, ITEM_TYPE, ITEM_STATE, CONTENT_STATE, PUBLISH_SCHEDULE, \
-    EMBARGO, ASSOCIATIONS
+from superdesk.metadata.item import (
+    CONTENT_TYPE,
+    ITEM_TYPE,
+    ITEM_STATE,
+    CONTENT_STATE,
+    PUBLISH_SCHEDULE,
+    EMBARGO,
+    SCHEDULE_SETTINGS,
+    ASSOCIATIONS,
+)
 
 from apps.archive.common import set_sign_off, ITEM_OPERATION
 from apps.archive.archive import update_word_count
@@ -26,12 +34,12 @@ logger = logging.getLogger(__name__)
 
 class ArchivePublishResource(BasePublishResource):
     def __init__(self, endpoint_name, app, service):
-        super().__init__(endpoint_name, app, service, 'publish')
+        super().__init__(endpoint_name, app, service, "publish")
 
 
 class ArchivePublishService(BasePublishService):
-    publish_type = 'publish'
-    published_state = 'published'
+    publish_type = "publish"
+    published_state = "published"
     item_operation = ITEM_PUBLISH
 
     def _validate(self, original, updates):
@@ -43,16 +51,21 @@ class ArchivePublishService(BasePublishService):
                 raise SuperdeskApiError.badRequestError(_("Empty package cannot be published!"))
 
     def on_update(self, updates, original):
-        if not original.get('firstpublished'):
-            updates.setdefault('firstpublished', utcnow())
-
-        if original.get('marked_for_user'):
-            # remove marked_for_user on publish and keep it as previous_marked_user for history
-            updates['previous_marked_user'] = original['marked_for_user']
-            updates['marked_for_user'] = None
-
         updates[ITEM_OPERATION] = self.item_operation
         super().on_update(updates, original)
+
+        if not original.get("firstpublished"):
+            if updates.get(SCHEDULE_SETTINGS) and updates[SCHEDULE_SETTINGS].get("utc_publish_schedule"):
+                updates["firstpublished"] = updates[SCHEDULE_SETTINGS]["utc_publish_schedule"]
+            else:
+                updates["firstpublished"] = utcnow()
+
+        if original.get("marked_for_user"):
+            # remove marked_for_user on publish and keep it as previous_marked_user for history
+            updates["previous_marked_user"] = original["marked_for_user"]
+            updates["marked_for_user"] = None
+            updates["marked_for_sign_off"] = None
+
         set_sign_off(updates, original)
         update_word_count(updates)
         self.set_desk(updates, original)
@@ -72,15 +85,20 @@ class ArchivePublishService(BasePublishService):
             super().set_state(original, updates)
 
     def set_desk(self, updates, original):
-        if (not original.get('task', {}).get('desk') and not updates.get('task', {}).get('desk')
-                and request and request.args and request.args.get('desk_id')):
+        if (
+            not original.get("task", {}).get("desk")
+            and not updates.get("task", {}).get("desk")
+            and request
+            and request.args
+            and request.args.get("desk_id")
+        ):
 
-            desk_id = request.args['desk_id']
-            updates['task'] = updates.get('task', original.get('task', {}))
-            updates['task']['desk'] = desk_id
+            desk_id = request.args["desk_id"]
+            updates["task"] = updates.get("task", original.get("task", {}))
+            updates["task"]["desk"] = desk_id
 
             if updates.get(ASSOCIATIONS):
                 for key, associated_item in updates[ASSOCIATIONS].items():
-                    if associated_item and not associated_item.get('task', {}).get('desk'):
-                        associated_item['task'] = associated_item.get('task', {})
-                        associated_item['task']['desk'] = desk_id
+                    if associated_item and not associated_item.get("task", {}).get("desk"):
+                        associated_item["task"] = associated_item.get("task", {})
+                        associated_item["task"]["desk"] = desk_id

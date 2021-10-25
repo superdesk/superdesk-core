@@ -16,7 +16,7 @@ from content_api.tests import ApiTestCase
 
 _fake_items_resource = MagicMock()
 _fake_items_service = MagicMock()
-_fake_backend = MagicMock(name='superdesk backend')
+_fake_backend = MagicMock(name="superdesk backend")
 
 
 def _fake_get_backend():
@@ -24,24 +24,21 @@ def _fake_get_backend():
     return _fake_backend
 
 
-class FakeItemsService():
+class FakeItemsService:
     def __init__(self, datasource, backend=None):
         self.datasource = datasource
         self.backend = backend
 
     def __eq__(self, other):
-        return (
-            self.datasource == other.datasource and
-            self.backend is other.backend
-        )
+        return self.datasource == other.datasource and self.backend is other.backend
 
     def __ne__(self, other):
         return not self.__eq__(other)
 
 
-@mock.patch('content_api.items.ItemsResource', _fake_items_resource)
-@mock.patch('content_api.items.ItemsService', FakeItemsService)
-@mock.patch('superdesk.get_backend', _fake_get_backend)
+@mock.patch("content_api.items.ItemsResource", _fake_items_resource)
+@mock.patch("content_api.items.ItemsService", FakeItemsService)
+@mock.patch("superdesk.get_backend", _fake_get_backend)
 class ItemsInitAppTestCase(ApiTestCase):
     """Base class for the `items.init_app` function tests."""
 
@@ -58,8 +55,8 @@ class ItemsInitAppTestCase(ApiTestCase):
             return init_app
 
     def test_instantiates_items_resource_with_correct_arguments(self):
-        fake_app = MagicMock(name='app')
-        fake_items_service = FakeItemsService('items', _fake_get_backend())
+        fake_app = MagicMock(name="app")
+        fake_items_service = FakeItemsService("items", _fake_get_backend())
 
         init_app = self._get_target_function()
         init_app(fake_app)
@@ -67,6 +64,6 @@ class ItemsInitAppTestCase(ApiTestCase):
         self.assertTrue(_fake_items_resource.called)
         args, kwargs = _fake_items_resource.call_args
 
-        self.assertTrue(len(args) > 0 and args[0] == 'items')
-        self.assertIs(kwargs.get('app'), fake_app)
-        self.assertEqual(kwargs.get('service'), fake_items_service)
+        self.assertTrue(len(args) > 0 and args[0] == "items")
+        self.assertIs(kwargs.get("app"), fake_app)
+        self.assertEqual(kwargs.get("service"), fake_items_service)

@@ -48,6 +48,7 @@ works and can be developed further.
     publish
     ingest
     spellchecking
+    ai
     settings
     schema
     content-types
@@ -55,6 +56,7 @@ works and can be developed further.
     editor
     auth_server
     production_api
+    video_server
     extending
     authentication
     cli

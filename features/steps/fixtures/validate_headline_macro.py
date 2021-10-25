@@ -12,14 +12,14 @@
 def validate(item, **kwargs):
     """Updates the abstract field"""
 
-    if not item.get('headline', '').strip():
-        raise KeyError('Headline cannot be empty!')
+    if not item.get("headline", "").strip():
+        raise KeyError("Headline cannot be empty!")
 
 
-name = 'validate_headline'
-label = 'Validate Headline'
-shortcut = 'w'
+name = "validate_headline"
+label = "Validate Headline"
+shortcut = "w"
 callback = validate
-desks = ['POLITICS']
-access_type = 'backend'
-action_type = 'direct'
+desks = ["POLITICS"]
+access_type = "backend"
+action_type = "direct"

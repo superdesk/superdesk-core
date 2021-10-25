@@ -8,6 +8,7 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
+from typing import List, Dict, Optional
 import traceback
 import requests
 from superdesk.errors import IngestApiError, SuperdeskIngestError
@@ -56,13 +57,15 @@ class HTTPFeedingServiceBase(FeedingService):
 
     """
 
-    ERRORS = [IngestApiError.apiTimeoutError().get_error_description(),
-              IngestApiError.apiRequestError().get_error_description(),
-              IngestApiError.apiGeneralError().get_error_description(),
-              SuperdeskIngestError.notConfiguredError().get_error_description()]
+    ERRORS = [
+        IngestApiError.apiTimeoutError().get_error_description(),
+        IngestApiError.apiRequestError().get_error_description(),
+        IngestApiError.apiGeneralError().get_error_description(),
+        SuperdeskIngestError.notConfiguredError().get_error_description(),
+    ]
 
     # override this parameter with the main URL to use
-    HTTP_URL = None
+    HTTP_URL: Optional[str] = None
     # timeout in seconds
     HTTP_TIMEOUT = 30
     # if some parameters are used in every request, put them here
@@ -73,33 +76,36 @@ class HTTPFeedingServiceBase(FeedingService):
     HTTP_AUTH = True
 
     # use this when auth is always required
-    AUTH_FIELDS = [
-        {
-            'id': 'username', 'type': 'text', 'label': 'Username',
-            'placeholder': 'Username', 'required': True
-        },
-        {
-            'id': 'password', 'type': 'password', 'label': 'Password',
-            'placeholder': 'Password', 'required': True
-        }
+    AUTH_FIELDS: List[Dict] = [
+        {"id": "username", "type": "text", "label": "Username", "placeholder": "Username", "required": True},
+        {"id": "password", "type": "password", "label": "Password", "placeholder": "Password", "required": True},
     ]
 
     # use this when auth depends of a "auth_required" flag (set by user)
-    AUTH_REQ_FIELDS = [
+    AUTH_REQ_FIELDS: List[Dict] = [
         {
-            'id': 'auth_required', 'type': 'boolean', 'label': 'Requires Authentication',
-            'placeholder': 'Requires Authentication', 'required': False
+            "id": "auth_required",
+            "type": "boolean",
+            "label": "Requires Authentication",
+            "placeholder": "Requires Authentication",
+            "required": False,
         },
         {
-            'id': 'username', 'type': 'text', 'label': 'Username',
-            'placeholder': 'Username', 'required_expression': '{auth_required}',
-            'show_expression': '{auth_required}'
+            "id": "username",
+            "type": "text",
+            "label": "Username",
+            "placeholder": "Username",
+            "required_expression": "provider.config.auth_required === true",
+            "show_expression": "provider.config.auth_required === true",
         },
         {
-            'id': 'password', 'type': 'password', 'label': 'Password',
-            'placeholder': 'Password', 'required_expression': '{auth_required}',
-            'show_expression': '{auth_required}'
-        }
+            "id": "password",
+            "type": "password",
+            "label": "Password",
+            "placeholder": "Password",
+            "required_expression": "provider.config.auth_required === true",
+            "show_expression": "provider.config.auth_required === true",
+        },
     ]
 
     def __init__(self):
@@ -109,15 +115,15 @@ class HTTPFeedingServiceBase(FeedingService):
     @property
     def auth_info(self):
         """Helper method to retrieve a dict with username and password when set"""
-        username = self.config.get('username', '')
-        password = self.config.get('password', '')
+        username = self.config.get("username", "")
+        password = self.config.get("password", "")
         if not username or not password:
             return None
-        return {'username': username, 'password': password}
+        return {"username": username, "password": password}
 
     @property
     def config(self):
-        return self.provider.setdefault('config', {})
+        return self.provider.setdefault("config", {})
 
     def validate_config(self):
         """
@@ -128,18 +134,16 @@ class HTTPFeedingServiceBase(FeedingService):
         :return:
         """
         # validate required config fields
-        required_keys = [field['id'] for field in self.fields if field.get('required', False)]
+        required_keys = [field["id"] for field in self.fields if field.get("required", False)]
         if not set(self.config.keys()).issuperset(required_keys):
             raise SuperdeskIngestError.notConfiguredError(
-                Exception('{} are required.'.format(', '.join(required_keys)))
+                Exception("{} are required.".format(", ".join(required_keys)))
             )
 
         # validate url
-        url = self.config.get('url')
-        if url and not url.strip().startswith('http'):
-            raise SuperdeskIngestError.notConfiguredError(
-                Exception('URL must be a valid HTTP link.')
-            )
+        url = self.config.get("url")
+        if url and not url.strip().startswith("http"):
+            raise SuperdeskIngestError.notConfiguredError(Exception("URL must be a valid HTTP link."))
 
     def get_url(self, url=None, **kwargs):
         """Do an HTTP Get on URL
@@ -151,14 +155,14 @@ class HTTPFeedingServiceBase(FeedingService):
         if not url:
             url = self.HTTP_URL
         config = self.config
-        user = config.get('username')
-        password = config.get('password')
+        user = config.get("username")
+        password = config.get("password")
         if user:
             user = user.strip()
         if password:
             password = password.strip()
 
-        auth_required = config.get('auth_required', self.HTTP_AUTH)
+        auth_required = config.get("auth_required", self.HTTP_AUTH)
         if auth_required is None:
             # auth_required may not be user in the feeding service
             # in this case with use authentification only if user
@@ -170,7 +174,7 @@ class HTTPFeedingServiceBase(FeedingService):
                 raise SuperdeskIngestError.notConfiguredError("user is not configured")
             if not password:
                 raise SuperdeskIngestError.notConfiguredError("password is not configured")
-            kwargs.setdefault('auth', (user, password))
+            kwargs.setdefault("auth", (user, password))
 
         params = kwargs.pop("params", {})
         if params or self.HTTP_DEFAULT_PARAMETERS:
@@ -193,13 +197,13 @@ class HTTPFeedingServiceBase(FeedingService):
             raise IngestApiError.apiGeneralError(exception, self.provider)
 
         if not response.ok:
-            exception = Exception(response.reason)
+            exc = Exception(response.reason)
             if response.status_code in (401, 403):
-                raise IngestApiError.apiAuthError(exception, self.provider)
+                raise IngestApiError.apiAuthError(exc, self.provider)
             elif response.status_code == 404:
-                raise IngestApiError.apiNotFoundError(exception, self.provider)
+                raise IngestApiError.apiNotFoundError(exc, self.provider)
             else:
-                raise IngestApiError.apiGeneralError(exception, self.provider)
+                raise IngestApiError.apiGeneralError(exc, self.provider)
 
         return response
 

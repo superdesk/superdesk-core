@@ -19,13 +19,13 @@ class ConceptNature(Enum):
     http://cv.iptc.org/newscodes/cpnature/
     """
 
-    ABSTRACT = 'cpnat:abstract'
-    EVENT = 'cpnat:event'
-    GEOAREA = 'cpnat:geoArea'
-    OBJECT = 'cpnat:object'
-    ORGANISATION = 'cpnat:organisation'
-    PERSON = 'cpnat:person'
-    POI = 'cpnat:poi'
+    ABSTRACT = "cpnat:abstract"
+    EVENT = "cpnat:event"
+    GEOAREA = "cpnat:geoArea"
+    OBJECT = "cpnat:object"
+    ORGANISATION = "cpnat:organisation"
+    PERSON = "cpnat:person"
+    POI = "cpnat:poi"
 
     @classmethod
     def values(cls):

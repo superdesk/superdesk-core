@@ -53,6 +53,10 @@ Feature: Search Feature
         When we get "/search"
         Then we get list with <6 items
 
+        When we reset elastic limit
+        And we get "/search"
+        Then we get list with 9 items
+
     @auth
     Scenario: Search Invisible stages without desk membership
         Given empty "desks"
@@ -280,7 +284,7 @@ Feature: Search Feature
         """
         Given "archive"
             """
-            [{"guid": "1", "state": "draft", "task": {"desk": "#desks._id#", "user": "123"}},
+            [{"guid": "1", "state": "draft", "version": 0, "task": {"desk": "#desks._id#", "user": "123"}},
             {"guid": "2", "state": "in_progress", "task": {"desk": "#desks._id#", "user": "#users.id#"}}]
             """
         When we get "/search"
@@ -311,12 +315,46 @@ Feature: Search Feature
         """
         Given "archive"
         """
-        [{"guid": "1", "state": "in_progress", "task": {"desk": "#desks._id#"},
-         "headline": "Foo", "body_html": "foo"},
-        {"guid": "2", "state": "in_progress", "task": {"desk": "#desks._id#"},
-         "headline": "bar", "body_html": "bar"}]
+        [
+            {
+                "guid": "1",
+                "state": "in_progress",
+                "task": {
+                    "desk": "#desks._id#"
+                },
+                "headline": "Foo",
+                "body_html": "foo"
+            },
+            {
+                "guid": "2",
+                "state": "in_progress",
+                "task": {
+                    "desk": "#desks._id#"
+                },
+                "headline": "bar",
+                "body_html": "bar"
+            },
+            {
+                "guid": "3",
+                "state": "in_progress",
+                "task": {
+                    "desk": "#desks._id#"
+                },
+                "headline": "linkage",
+                "body_html": "This is a link: <a href=\"#\">link</a>"
+            },
+            {
+                "guid": "4",
+                "state": "in_progress",
+                "task": {
+                    "desk": "#desks._id#"
+                },
+                "headline": "div in divoka sarka",
+                "body_html": "This is a div: <div>div body</div>"
+            }
+        ]
         """
-        When we get "/search?source={"query": {"filtered": {"query": {"query_string": {"query": "(foo)", "lenient": false, "default_operator": "AND"}}}}}"
+        When we get "/search?source={"query": {"filtered": {"query": {"query_string": {"query": "(foo)", "lenient": true, "default_operator": "AND"}}}}}"
         Then we get list with 1 items
         """
         {
@@ -324,7 +362,7 @@ Feature: Search Feature
                         "headline": "Foo", "body_html": "foo", "es_highlight": "__no_value__"}]
         }
         """
-        When we get "/search?es_highlight=1&source={"query": {"filtered": {"query": {"query_string": {"query": "(foo)", "lenient": false, "default_operator": "AND"}}}}}"
+        When we get "/search?es_highlight=1&source={"query": {"filtered": {"query": {"query_string": {"query": "(foo)", "lenient": true, "default_operator": "AND"}}}}}"
         Then we get list with 1 items
         """
         {
@@ -334,6 +372,64 @@ Feature: Search Feature
                             "headline": ["<span class=\"es-highlight\">Foo</span>"],
                             "body_html": ["<span class=\"es-highlight\">foo</span>"]
                         }}]
+        }
+        """
+        When we get "/search?es_highlight=1&source={"query": {"filtered": {"query": {"query_string": {"query": "(a)", "lenient": true, "default_operator": "AND"}}}}}"
+        Then we get list with 2 items
+        """
+        {
+            "_items": [
+                {
+                    "body_html": "This is a link: <a href=\"#\">link</a>",
+                    "es_highlight": {
+                        "body_html": [
+                            "This is <span class=\"es-highlight\">a</span> link: <a href=\"#\">link</a>"
+                        ]
+                    },
+                    "guid": "3",
+                    "headline": "linkage",
+                    "state": "in_progress",
+                    "task": {
+                        "desk": "#desks._id#"
+                    }
+                },
+                {
+                    "body_html": "This is a div: <div>div body</div>",
+                    "es_highlight": {
+                        "body_html": [
+                            "This is <span class=\"es-highlight\">a</span> div: <div>div body</div>"
+                        ]
+                    },
+                    "guid": "4",
+                    "headline": "div in divoka sarka",
+                    "state": "in_progress",
+                    "task": {
+                        "desk": "#desks._id#"
+                    }
+                }
+            ]
+        }
+        """
+        When we get "/search?es_highlight=1&source={"query": {"filtered": {"query": {"query_string": {"query": "(div)", "lenient": true, "default_operator": "AND"}}}}}"
+        Then we get list with 1 items
+        """
+        {
+            "_items": [
+                {
+                    "body_html": "This is a div: <div>div body</div>",
+                    "es_highlight": {
+                        "body_html": [
+                            "This is a <span class=\"es-highlight\">div</span>: <div><span class=\"es-highlight\">div</span> body</div>"
+                        ]
+                    },
+                    "guid": "4",
+                    "headline": "div in divoka sarka",
+                    "state": "in_progress",
+                    "task": {
+                        "desk": "#desks._id#"
+                    }
+                }
+            ]
         }
         """
 
@@ -350,7 +446,7 @@ Feature: Search Feature
         {"guid": "2", "state": "in_progress", "task": {"desk": "#desks._id#"},
          "headline": "bar", "body_html": "bar"}]
         """
-        When we get "/search?source={"query": {"filtered": {"query": {"query_string": {"query": "(foo)", "lenient": false, "default_operator": "AND"}}}}}"
+        When we get "/search?source={"query": {"filtered": {"query": {"query_string": {"query": "(foo)", "lenient": true, "default_operator": "AND"}}}}}"
         Then we get list with 1 items
         """
         {
@@ -358,7 +454,7 @@ Feature: Search Feature
                         "headline": "Foo", "body_html": "foo", "es_highlight": "__no_value__"}]
         }
         """
-        When we get "/search?projections=["headline"]&source={"query": {"filtered": {"query": {"query_string": {"query": "(foo)", "lenient": false, "default_operator": "AND"}}}}}"
+        When we get "/search?projections=["headline"]&source={"query": {"filtered": {"query": {"query_string": {"query": "(foo)", "lenient": true, "default_operator": "AND"}}}}}"
         Then we get list with 1 items
         And we get "body_html" does not exist
         And we get "state" does not exist

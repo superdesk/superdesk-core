@@ -228,7 +228,7 @@ Feature: News Items Archive
         """
         Given "archive"
             """
-            [{"_id": "testid1", "guid": "testid1", "task": {"desk": "#desks._id#"}}]
+            [{"_id": "testid1", "guid": "testid1", "task": {"desk": "#desks._id#"}, "state": "fetched"}]
             """
         When we get "/archive"
         Then we get list with 1 items
@@ -1115,4 +1115,132 @@ Feature: News Items Archive
         Then we get existing resource
         """
         {"associations": {"foo--1": {"headline": "flower", "byline": "foo", "description_text": "flower desc"}}}
+        """
+
+    @auth
+    Scenario: body_html is generated from draftJS state
+        Given "archive"
+        """
+        [{"_id": "test_editor_gen_1", "guid": "test_editor_gen_1", "headline": "test", "associations": {"foo": {"type": "text"}}}]
+        """
+
+        When we patch given
+        """
+        {
+            "fields_meta": {
+                "body_html": {
+                    "draftjsState": [{
+                        "blocks": [
+                            {
+                                "key": "fcbn3",
+                                "text": "The name of Highlaws comes from the Old English hēah-hlāw, meaning \"high mounds\".",
+                                "type": "unstyled",
+                                "depth": 0,
+                                "inlineStyleRanges": [],
+                                "entityRanges": [],
+                                "data": {"MULTIPLE_HIGHLIGHTS": {}}
+                            }
+                        ],
+                        "entityMap": {}
+                    }]
+                }
+            }
+        }
+        """
+        When we get "/archive/test_editor_gen_1"
+        Then we get existing resource
+        """
+        {
+            "_id": "test_editor_gen_1",
+            "guid": "test_editor_gen_1",
+            "headline": "test",
+            "body_html": "<p>The name of Highlaws comes from the Old English hēah-hlāw, meaning \"high mounds\".</p>",
+            "fields_meta": {
+                "body_html": {
+                    "draftjsState": [{
+                        "blocks": [
+                            {
+                                "key": "fcbn3",
+                                "text": "The name of Highlaws comes from the Old English hēah-hlāw, meaning \"high mounds\".",
+                                "type": "unstyled",
+                                "depth": 0,
+                                "inlineStyleRanges": [],
+                                "entityRanges": [],
+                                "data": {"MULTIPLE_HIGHLIGHTS": {}}
+                            }
+                        ],
+                        "entityMap": {}
+                    }]
+                }
+            },
+            "associations": {
+                "foo": {"type": "text"}
+            }
+        }
+        """
+
+    @auth
+    Scenario: headline is generated from draftJS state
+        Given "archive"
+        """
+        [{"_id": "test_editor_gen_2", "guid": "test_editor_gen_2", "headline": "test"}]
+        """
+
+        When we patch given
+        """
+        {
+            "fields_meta" : {
+                "headline" : {
+                    "draftjsState" : [
+                        {
+                            "blocks" : [
+                                {
+                                    "key" : "dphij",
+                                    "text" : "editor 3 headline test",
+                                    "type" : "unstyled",
+                                    "depth" : 0,
+                                    "inlineStyleRanges" : [ ],
+                                    "entityRanges" : [ ],
+                                    "data" : {
+                                        "MULTIPLE_HIGHLIGHTS" : {}
+                                    }
+                                }
+                            ],
+                            "entityMap" : {}
+                        }
+                    ]
+                }
+            }
+        }
+        """
+        When we get "/archive/test_editor_gen_2"
+        Then we get existing resource
+        """
+        {
+            "_id": "test_editor_gen_2",
+            "guid": "test_editor_gen_2",
+            "headline": "editor 3 headline test",
+            "fields_meta" : {
+                "headline" : {
+                    "draftjsState" : [
+                        {
+                            "blocks" : [
+                                {
+                                    "key" : "dphij",
+                                    "text" : "editor 3 headline test",
+                                    "type" : "unstyled",
+                                    "depth" : 0,
+                                    "inlineStyleRanges" : [ ],
+                                    "entityRanges" : [ ],
+                                    "data" : {
+                                        "MULTIPLE_HIGHLIGHTS" : {}
+                                    }
+                                }
+                            ],
+                            "entityMap" : {}
+                        }
+                    ]
+                }
+            }
+        }
         """

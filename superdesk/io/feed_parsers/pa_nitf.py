@@ -21,9 +21,9 @@ class PAFeedParser(NITFFeedParser):
     NITF Parser extension for Press Association, it maps the category meta tag to an anpa category
     """
 
-    NAME = 'pa_nitf'
+    NAME = "pa_nitf"
 
-    label = 'PA NITF'
+    label = "PA NITF"
 
     def _category_mapping(self, elem):
         """Map the category supplied by PA to a best guess anpa_category in the system.
@@ -34,16 +34,16 @@ class PAFeedParser(NITFFeedParser):
         :param elem:
         :return: anpa category list qcode
         """
-        if elem.get('content') is not None:
-            category = elem.get('content')[:1].upper()
-            if category in {'S', 'R', 'F'}:
-                return [{'qcode': 'S'}]
-            if category == 'Z':
-                return [{'qcode': 'V'}]
-            if category == 'H':
+        if elem.get("content") is not None:
+            category = elem.get("content")[:1].upper()
+            if category in {"S", "R", "F"}:
+                return [{"qcode": "S"}]
+            if category == "Z":
+                return [{"qcode": "V"}]
+            if category == "H":
                 if self.xml.find("head/docdata/doc-scope[@scope='SHOWBIZ']") is not None:
-                    return [{'qcode': 'E'}]
-        return [{'qcode': 'I'}]
+                    return [{"qcode": "E"}]
+        return [{"qcode": "I"}]
 
     def get_content(self, xml):
         """Get the body content of the item.
@@ -55,15 +55,14 @@ class PAFeedParser(NITFFeedParser):
         :return:
         """
         elements = []
-        for elem in xml.find('body/body.content'):
+        for elem in xml.find("body/body.content"):
             text = etree.tostring(elem, encoding="unicode", method="text")
-            elements.append(
-                '<p>{}</p>\n'.format(html.escape(text)))
-        content = ''.join(elements)
-        if self.get_anpa_format(xml) == 't':
-            if not content.startswith('<pre>'):
+            elements.append("<p>{}</p>\n".format(html.escape(text)))
+        content = "".join(elements)
+        if self.get_anpa_format(xml) == "t":
+            if not content.startswith("<pre>"):
                 # convert content to text in a pre tag
-                content = '<pre>{}</pre>'.format(self.parse_to_preformatted(content))
+                content = "<pre>{}</pre>".format(self.parse_to_preformatted(content))
             else:
                 content = self.parse_to_preformatted(content)
         return content
@@ -74,11 +73,11 @@ class PAFeedParser(NITFFeedParser):
         :param xml:
         :return:
         """
-        if xml.find('body/body.head/hedline/hl1') is not None:
-            return xml.find('body/body.head/hedline/hl1').text
+        if xml.find("body/body.head/hedline/hl1") is not None:
+            return xml.find("body/body.head/hedline/hl1").text
         else:
-            if xml.find('head/title') is not None:
-                return self._get_slugline(xml.find('head/title'))
+            if xml.find("head/title") is not None:
+                return self._get_slugline(xml.find("head/title"))
         raise SkipValue()
 
     def _get_slugline(self, elem):
@@ -88,10 +87,10 @@ class PAFeedParser(NITFFeedParser):
         :return:
         """
         # Remove any leading numbers and split to list of words
-        sluglineList = re.sub(r'^[\d.]+\W+', '', elem.text).split(' ')
+        sluglineList = re.sub(r"^[\d.]+\W+", "", elem.text).split(" ")
         slugline = sluglineList[0].capitalize()
         if len(sluglineList) > 1:
-            slugline = '{} {}'.format(slugline, ' '.join(sluglineList[1:]))
+            slugline = "{} {}".format(slugline, " ".join(sluglineList[1:]))
         return slugline
 
     def _get_pubstatus(self, elem):
@@ -100,12 +99,14 @@ class PAFeedParser(NITFFeedParser):
         :param elem:
         :return:
         """
-        return 'usable' if elem.attrib['management-status'] == 'embargoed' else elem.attrib['management-status']
+        return "usable" if elem.attrib["management-status"] == "embargoed" else elem.attrib["management-status"]
 
     def __init__(self):
-        self.MAPPING = {'anpa_category': {'xpath': "head/meta[@name='category']", 'filter': self._category_mapping},
-                        'slugline': {'xpath': 'head/title', 'filter': self._get_slugline},
-                        'pubstatus': {'xpath': 'head/docdata', 'filter': self._get_pubstatus}}
+        self.MAPPING = {
+            "anpa_category": {"xpath": "head/meta[@name='category']", "filter": self._category_mapping},
+            "slugline": {"xpath": "head/title", "filter": self._get_slugline},
+            "pubstatus": {"xpath": "head/docdata", "filter": self._get_pubstatus},
+        }
         super().__init__()
 
     def parse(self, xml, provider=None):

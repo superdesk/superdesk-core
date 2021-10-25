@@ -14,13 +14,14 @@ import superdesk
 from flask import Blueprint, current_app as app
 from datetime import datetime
 from eve.render import send_response
+from superdesk.auth.decorator import blueprint_auth
 
 
-NEWSCODE_PATTERN = re.compile('[0-9]{8,9}')
-bp = Blueprint('subjectcodes', __name__)
+NEWSCODE_PATTERN = re.compile("[0-9]{8,9}")
+bp = Blueprint("subjectcodes", __name__)
 
 
-class SubjectIndex():
+class SubjectIndex:
     """Subjects index."""
 
     def __init__(self):
@@ -50,7 +51,7 @@ class SubjectIndex():
         """
         items = []
         for code in sorted(self.subjects):
-            items.append({'qcode': code, 'name': self.subjects[code], 'parent': get_parent_subjectcode(code)})
+            items.append({"qcode": code, "name": self.subjects[code], "parent": get_parent_subjectcode(code)})
         return items
 
 
@@ -62,17 +63,18 @@ def get_parent_subjectcode(code):
     parent_code = None
     if not NEWSCODE_PATTERN.match(code):
         return parent_code
-    if code[-3:] != '000':
-        parent_code = code[:5] + '000'
-    elif code[2:5] != '000':
-        parent_code = code[:2] + '000000'
+    if code[-3:] != "000":
+        parent_code = code[:5] + "000"
+    elif code[2:5] != "000":
+        parent_code = code[:2] + "000000"
     return parent_code
 
 
-@bp.route('/subjectcodes/', methods=['GET', 'OPTIONS'])
+@bp.route("/subjectcodes/", methods=["GET", "OPTIONS"])
+@blueprint_auth()
 def render_subjectcodes():
     items = get_subjectcodeitems()
-    response_data = {'_items': items, '_meta': {'total': len(items)}}
+    response_data = {"_items": items, "_meta": {"total": len(items)}}
     return send_response(None, (response_data, app.subjects.last_modified, None, 200))
 
 
@@ -81,6 +83,6 @@ def get_subjectcodeitems():
     return app.subjects.get_items()
 
 
-def init_app(app):
+def init_app(app) -> None:
     app.subjects = SubjectIndex()
     superdesk.blueprint(bp, app)

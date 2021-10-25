@@ -17,10 +17,10 @@ class ProfilingResource(Resource):
     """
 
     schema = {
-        'name': {'type': 'string', 'required': True, 'unique': True},
-        'profiling_data': {'type': 'list', 'required': True}
+        "name": {"type": "string", "required": True, "unique": True},
+        "profiling_data": {"type": "list", "required": True},
     }
     item_url = 'regex("[\w,.:-]+")'
-    item_methods = ['GET']
-    resource_methods = ['GET', 'POST', 'DELETE']
-    privileges = {'POST': 'profiling', 'DELETE': 'profiling'}
+    item_methods = ["GET"]
+    resource_methods = ["GET", "POST", "DELETE"]
+    privileges = {"POST": "profiling", "DELETE": "profiling"}

@@ -10,6 +10,7 @@
 
 from flask import request
 from superdesk.resource import Resource, build_custom_hateoas
+from superdesk.metadata.item import get_schema
 from superdesk.metadata.utils import item_url
 from .common import get_user, get_auth, CUSTOM_HATEOAS
 from superdesk.services import BaseService
@@ -21,46 +22,49 @@ def _update_returned_document(doc, item):
     doc.clear()
     doc.update(item)
     build_custom_hateoas(CUSTOM_HATEOAS, doc)
-    return [doc['_id']]
+    return [doc["_id"]]
 
 
 class ArchiveLockResource(Resource):
-    endpoint_name = 'archive_lock'
-    url = 'archive/<{0}:item_id>/lock'.format(item_url)
-    schema = {'lock_action': {'type': 'string'}}
-    datasource = {'source': 'archive'}
-    resource_methods = ['GET', 'POST']
+    endpoint_name = "archive_lock"
+    url = "archive/<{0}:item_id>/lock".format(item_url)
+    schema = get_schema(versioning=True)
+    schema.update(
+        {
+            "_links": {"type": "dict"},
+        }
+    )
+    datasource = {"source": "archive"}
+    resource_methods = ["GET", "POST"]
     resource_title = endpoint_name
-    privileges = {'POST': 'archive'}
+    privileges = {"POST": "archive"}
 
 
 class ArchiveLockService(BaseService):
-
     def create(self, docs, **kwargs):
         user = get_user(required=True)
         auth = get_auth()
-        item_id = request.view_args['item_id']
-        lock_action = docs[0].get('lock_action', 'edit')
-        item = get_component(ItemLock).lock({'_id': item_id}, user['_id'], auth['_id'], lock_action)
+        item_id = request.view_args["item_id"]
+        lock_action = docs[0].get("lock_action", "edit")
+        item = get_component(ItemLock).lock({"_id": item_id}, user["_id"], auth["_id"], lock_action)
         return _update_returned_document(docs[0], item)
 
 
 class ArchiveUnlockResource(Resource):
-    endpoint_name = 'archive_unlock'
-    url = 'archive/<{0}:item_id>/unlock'.format(item_url)
-    schema = {'lock_user': {'type': 'string'}}
-    datasource = {'source': 'archive'}
-    resource_methods = ['GET', 'POST']
+    endpoint_name = "archive_unlock"
+    url = "archive/<{0}:item_id>/unlock".format(item_url)
+    schema = ArchiveLockResource.schema
+    datasource = {"source": "archive"}
+    resource_methods = ["GET", "POST"]
     resource_title = endpoint_name
 
 
 class ArchiveUnlockService(BaseService):
-
     def create(self, docs, **kwargs):
         user = get_user(required=True)
         auth = get_auth()
-        item_id = request.view_args['item_id']
-        item = get_component(ItemLock).unlock({'_id': item_id}, user['_id'], auth['_id'], None)
+        item_id = request.view_args["item_id"]
+        item = get_component(ItemLock).unlock({"_id": item_id}, user["_id"], auth["_id"], None)
 
         if item is None:
             # version 1 item must have been deleted by now

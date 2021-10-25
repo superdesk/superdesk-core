@@ -8,36 +8,34 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
+from flask_babel import lazy_gettext
 import superdesk
 
-from apps.search_providers.registry import registered_search_providers, allowed_search_providers, register_search_provider  # noqa
+from apps.search_providers.registry import (
+    registered_search_providers,
+    allowed_search_providers,
+    register_search_provider,
+)  # noqa
 from apps.search_providers.resource import SearchProviderResource
 from apps.search_providers.service import SearchProviderService
 from apps.search_providers.registry import SearchProviderAllowedResource, SearchProviderAllowedService
 
 
-def init_app(app):
+def init_app(app) -> None:
     from apps.search_providers.proxy import SearchProviderProxyResource, SearchProviderProxyService
+
     superdesk.privilege(
-        name='search_providers',
-        label='Manage Search Providers',
-        description='User can manage search providers.'
+        name="search_providers",
+        label=lazy_gettext("Manage Search Providers"),
+        description=lazy_gettext("User can manage search providers."),
+    )
+
+    superdesk.register_resource(name="search_providers", resource=SearchProviderResource, service=SearchProviderService)
+
+    superdesk.register_resource(
+        name="search_providers_proxy", resource=SearchProviderProxyResource, service=SearchProviderProxyService
     )
 
     superdesk.register_resource(
-        name='search_providers',
-        resource=SearchProviderResource,
-        service=SearchProviderService
-    )
-
-    superdesk.register_resource(
-        name='search_providers_proxy',
-        resource=SearchProviderProxyResource,
-        service=SearchProviderProxyService
-    )
-
-    superdesk.register_resource(
-        name='search_providers_allowed',
-        resource=SearchProviderAllowedResource,
-        service=SearchProviderAllowedService
+        name="search_providers_allowed", resource=SearchProviderAllowedResource, service=SearchProviderAllowedService
     )

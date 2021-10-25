@@ -8,6 +8,13 @@ Feature: Config
         {"_id": "foo", "val": null}
         """
 
+    Scenario: Read config without auth
+        When we get "/config/foo"
+        Then we get existing resource
+        """
+        {"_id": "foo", "val": null}
+        """
+
     @auth
     Scenario: Get config
         Given "config"
@@ -41,4 +48,59 @@ Feature: Config
         Then we get existing resource
         """
         {"_id": "foo", "val": {"bar": 2}}
+        """
+
+    @auth
+    Scenario: Default values
+        When we init data "config"
+        When we get "/config/client-settings"
+        Then we get existing resource
+        """
+        {
+            "_id": "client-settings",
+            "val": {
+                "defaultRoute": "/workspace",
+                "auth": {"google": false}
+            }
+        }
+        """
+        When we post to "/config"
+        """
+        {
+            "_id": "client-settings",
+            "val": {
+                "auth.google": true
+            }
+        }
+        """
+        And we get "/config/client-settings"
+        Then we get existing resource
+        """
+        {
+            "_id": "client-settings",
+            "val": {
+                "defaultRoute": "/workspace",
+                "auth": {"google": true}
+            }
+        }
+        """
+        When we post to "/config"
+        """
+        {
+            "_id": "client-settings",
+            "val": {
+                "defaultRoute": "/settings"
+            }
+        }
+        """
+        And we get "/config/client-settings"
+        Then we get existing resource
+        """
+        {
+            "_id": "client-settings",
+            "val": {
+                "defaultRoute": "/settings",
+                "auth": {"google": true}
+            }
+        }
         """

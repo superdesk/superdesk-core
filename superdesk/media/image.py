@@ -14,6 +14,7 @@ import io
 from superdesk.text_utils import decode
 from PIL import Image, ExifTags
 from PIL import IptcImagePlugin
+from PIL.TiffImagePlugin import IFDRational
 from flask import json
 from .iim_codes import iim_codes
 
@@ -25,7 +26,7 @@ ORIENTATIONS = {
     5: ("Mirrored along top-left diagonal", 0),
     6: ("Rotated 90 degrees", -90),
     7: ("Mirrored along top-right diagonal", 0),
-    8: ("Rotated 270 degrees", -270)
+    8: ("Rotated 270 degrees", -270),
 }
 EXIF_ORIENTATION_TAG = 274
 
@@ -38,7 +39,7 @@ def fix_orientation(file_stream):
     file_stream.seek(0)
     img = Image.open(file_stream)
     file_stream.seek(0)
-    if not hasattr(img, '_getexif'):
+    if not hasattr(img, "_getexif"):
         return file_stream
     rv = img._getexif()
     if not rv:
@@ -50,7 +51,7 @@ def fix_orientation(file_stream):
             degrees = ORIENTATIONS[orientation][1]
             img2 = img.rotate(degrees)
             output = io.BytesIO()
-            img2.save(output, 'jpeg')
+            img2.save(output, "jpeg")
             output.seek(0)
             return output
     return file_stream
@@ -64,9 +65,10 @@ def get_meta(file_stream):
     current = file_stream.tell()
     file_stream.seek(0)
     img = Image.open(file_stream)
-    if not hasattr(img, '_getexif'):
+    try:
+        rv = img.getexif()
+    except AttributeError:
         return {}
-    rv = img._getexif()
     if not rv:
         return {}
     exif = dict(rv)
@@ -75,23 +77,48 @@ def get_meta(file_stream):
     exif_meta = {}
     for k, v in exif.items():
         try:
-            json.dumps(v)
             key = ExifTags.TAGS[k].strip()
+        except KeyError:
+            continue
 
-            if key == 'GPSInfo':
-                # lookup GPSInfo description key names
-                value = {ExifTags.GPSTAGS[vk].strip(): vv for vk, vv in v.items()}
-                exif_meta[key] = value
-            else:
-                value = v.decode('UTF-8') if isinstance(v, bytes) else v
-                exif_meta[key] = value
-        except Exception:
-            # ignore fields we can't store in db
-            pass
+        if key == "GPSInfo":
+            # lookup GPSInfo description key names
+            value = {
+                ExifTags.GPSTAGS[vk].strip(): convert_exif_value(vv, vk) for vk, vv in v.items() if is_serializable(vv)
+            }
+            exif_meta[key] = value
+        elif is_serializable(v):
+            value = v.decode("UTF-8") if isinstance(v, bytes) else v
+            exif_meta[key] = convert_exif_value(value)
+
     # Remove this as it's too long to send in headers
-    exif_meta.pop('UserComment', None)
+    exif_meta.pop("UserComment", None)
 
     return exif_meta
+
+
+def convert_exif_value(val, key=None):
+    if ExifTags.GPSTAGS.get(key) == "GPSAltitudeRef":
+        return 0 if val == b"\x00" else 1
+    if isinstance(val, tuple):
+        return tuple([convert_exif_value(v) for v in val])
+    if isinstance(val, list):
+        return list([convert_exif_value(v) for v in val])
+    if isinstance(val, IFDRational):
+        try:
+            return float(str(val._val))
+        except ValueError:
+            numerator, denominator = val.limit_rational(100)
+            return round(numerator / denominator, 3)
+    return val
+
+
+def is_serializable(val):
+    try:
+        json.dumps(convert_exif_value(val))
+    except (TypeError, UnicodeError):
+        return False
+    return True
 
 
 def get_meta_iptc(file_stream):

@@ -1,0 +1,37 @@
+version: "3.2"
+
+# Note: this file is mainly used for tests. If you want to run Superdesk or its
+# services from docker, please use docker-compose.yml found in main Superdesk
+# repository (https://github.com/superdesk/superdesk)
+
+services:
+    elastic:
+        image: docker.elastic.co/elasticsearch/elasticsearch:7.10.1
+        ports:
+            - "9200:9200"
+        environment:
+            - discovery.type=single-node
+        tmpfs:
+            - /usr/share/elasticsearch/data
+        networks:
+            - superdesk-core
+
+    redis:
+        image: redis:alpine
+        ports:
+            - "6379:6379"
+        networks:
+            - superdesk-core
+
+    mongo:
+        image: mongo:4.4
+        ports:
+            - "27017:27017"
+        tmpfs:
+            - /data/db
+        networks:
+            - superdesk-core
+
+networks:
+    superdesk-core:
+        driver: bridge

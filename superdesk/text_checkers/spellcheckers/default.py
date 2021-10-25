@@ -10,6 +10,7 @@
 
 import re
 import logging
+
 # from superdesk.errors import SuperdeskApiError
 import superdesk
 from superdesk.text_checkers.spellcheckers import SPELLCHECKER_DEFAULT, CAP_SPELLING, LANG_ANY
@@ -28,23 +29,23 @@ class Default(SpellcheckerBase):
 
     name = SPELLCHECKER_DEFAULT
     label = "Superdesk default spellchecker"
-    capacities = [CAP_SPELLING]
+    capacities = (CAP_SPELLING,)
     languages = [LANG_ANY]
 
     def check(self, text, language=None):
         if language is None:
             raise SuperdeskApiError.badRequestError("missing language for default spellchecker")
-        dictionaries_service = superdesk.get_resource_service('dictionaries')
+        dictionaries_service = superdesk.get_resource_service("dictionaries")
         model = dictionaries_service.get_model_for_lang(language)
         err_list = []
-        check_data = {'errors': err_list}
-        for match in re.finditer(r'([^\d\W]+-?)+', text):
+        check_data = {"errors": err_list}
+        for match in re.finditer(r"([^\d\W]+-?)+", text):
             word = match.group().lower()
             if word not in model:
                 ercorr_data = {
-                    'startOffset': match.start(),
-                    'text': match.group(),
-                    'type': 'spelling',
+                    "startOffset": match.start(),
+                    "text": match.group(),
+                    "type": "spelling",
                 }
                 err_list.append(ercorr_data)
         return check_data
@@ -52,6 +53,6 @@ class Default(SpellcheckerBase):
     def suggest(self, text, language=None):
         if language is None:
             raise SuperdeskApiError.badRequestError("missing language for default spellchecker")
-        spellcheck_service = superdesk.get_resource_service('spellcheck')
+        spellcheck_service = superdesk.get_resource_service("spellcheck")
         suggestions = spellcheck_service.suggest(text, language)
-        return {'suggestions': self.list2suggestions(suggestions)}
+        return {"suggestions": self.list2suggestions(suggestions)}

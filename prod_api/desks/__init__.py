@@ -13,11 +13,11 @@ from .service import DesksService
 from .resource import DesksResource
 
 
-def init_app(app):
+def init_app(app) -> None:
     """Initialize the `desks` API endpoint.
 
     :param app: the API application object
     :type app: `Eve`
     """
-    service = DesksService(datasource='desks', backend=superdesk.get_backend())
-    DesksResource(endpoint_name='desks', app=app, service=service)
+    service = DesksService(datasource="desks", backend=superdesk.get_backend())
+    DesksResource(endpoint_name="desks", app=app, service=service)

@@ -66,7 +66,7 @@ Feature: Content Publishing
       """
       {
         "name":"Channel 1","media_type":"media", "subscriber_type": "digital", "sequence_num_settings":{"min" : 1, "max" : 10}, "email": "test@test.com",
-        "products": ["#products._id#"],
+        "products": ["#products._id#"], "is_active": true,
         "destinations":[{"name":"Test","format": "nitf", "delivery_type":"email","config":{"recipients":"test@test.com"}}]
       }
       """
@@ -74,7 +74,7 @@ Feature: Content Publishing
       """
       {
         "name":"Channel 2","media_type":"media", "subscriber_type": "wire", "sequence_num_settings":{"min" : 1, "max" : 10}, "email": "test@test.com",
-        "products": ["#products._id#"],
+        "products": ["#products._id#"], "is_active": true,
         "destinations":[{"name":"Test","format": "nitf", "delivery_type":"email","config":{"recipients":"test@test.com"}}],
         "api_products": ["#products._id#"]
       }
@@ -96,7 +96,8 @@ Feature: Content Publishing
       """
       {"_items" : [
         {"_id": "123", "guid": "123", "headline": "test", "_current_version": 2, "state": "published",
-        "task": {"desk": "#desks._id#", "stage": "#desks.incoming_stage#", "user": "#CONTEXT_USER_ID#"}
+        "task": {"desk": "#desks._id#", "stage": "#desks.incoming_stage#", "user": "#CONTEXT_USER_ID#"},
+        "lock_user": "__none__"
         }]}
       """
       When we enqueue published
@@ -212,7 +213,7 @@ Feature: Content Publishing
       """
       {
         "name":"Channel 1","media_type":"media", "subscriber_type": "digital", "sequence_num_settings":{"min" : 1, "max" : 10}, "email": "test@test.com",
-        "products": ["#products._id#"],
+        "products": ["#products._id#"], "is_active": true,
         "destinations":[{"name":"Test","format": "nitf", "delivery_type":"email","config":{"recipients":"test@test.com"}}]
       }
       """
@@ -220,7 +221,7 @@ Feature: Content Publishing
       """
       {
         "name":"Channel 2","media_type":"media", "subscriber_type": "wire", "sequence_num_settings":{"min" : 1, "max" : 10}, "email": "test@test.com",
-        "products": ["#products._id#"],
+        "products": ["#products._id#"], "is_active": true,
         "destinations":[{"name":"Test","format": "nitf", "delivery_type":"email","config":{"recipients":"test@test.com"}}]
       }
       """
@@ -288,7 +289,7 @@ Feature: Content Publishing
       {
         "name":"Channel 3","media_type":"media", "subscriber_type": "digital",  "email": "test@test.com",
         "sequence_num_settings":{"min" : 1, "max" : 10},
-        "products": ["#products._id#"],
+        "products": ["#products._id#"], "is_active": true,
         "destinations":[{"name":"Test","format": "nitf", "delivery_type":"email","config":{"recipients":"test@test.com"}}]
       }
       """
@@ -375,7 +376,7 @@ Feature: Content Publishing
       {
         "name":"Channel Direct","media_type":"media", "subscriber_type": "wire",  "email": "test@test.com",
         "sequence_num_settings":{"min" : 1, "max" : 10},
-        "products": ["#p_direct#"],
+        "products": ["#p_direct#"], "is_active": true,
         "destinations":[{"name":"Test","format": "nitf", "delivery_type":"email","config":{"recipients":"test@test.com"}}]
       }
       """
@@ -384,7 +385,7 @@ Feature: Content Publishing
       {
         "name":"Channel API","media_type":"media", "subscriber_type": "wire",  "email": "test@test.com",
         "sequence_num_settings":{"min" : 1, "max" : 10},
-        "api_products": ["#p_api#"]
+        "api_products": ["#p_api#"], "is_active": true
       }
       """
       Then we get latest
@@ -610,6 +611,7 @@ Feature: Content Publishing
       """
       {
         "name":"Channel 3",
+        "is_active": true,
         "media_type":"media",
         "subscriber_type": "digital",
         "email": "test@test.com",
@@ -709,7 +711,6 @@ Feature: Content Publishing
       """
       [{"guid": "123", "headline": "test", "_current_version": 1, "state": "fetched",
         "task": {"desk": "#desks._id#", "stage": "#desks.incoming_stage#", "user": "#CONTEXT_USER_ID#"},
-        "publish_schedule":"#DATE+2#",
         "subject":[{"qcode": "17004000", "name": "Statistics"}],
         "slugline": "test",
         "body_html": "Test Document body"}]
@@ -724,7 +725,7 @@ Feature: Content Publishing
       """
       {
         "name":"Channel 3","media_type":"media", "subscriber_type": "digital", "sequence_num_settings":{"min" : 1, "max" : 10}, "email": "test@test.com",
-        "products": ["#products._id#"],
+        "products": ["#products._id#"], "is_active": true,
         "destinations":[{"name":"Test","format": "nitf", "delivery_type":"email","config":{"recipients":"test@test.com"}}]
       }
       """
@@ -735,7 +736,7 @@ Feature: Content Publishing
       Then we get OK response
       And we get existing resource
       """
-      {"_current_version": 2, "state": "scheduled", "operation": "publish"}
+      {"_current_version": 2, "state": "scheduled", "operation": "publish", "firstpublished": "__future__"}
       """
       And we get expiry for schedule and embargo content 60 minutes after "#archive_publish.publish_schedule#"
       When we get "/published"
@@ -919,7 +920,8 @@ Feature: Content Publishing
         "publish_schedule": "#DATE+1#",
         "subject":[{"qcode": "17004000", "name": "Statistics"}],
         "slugline": "test",
-        "body_html": "Test Document body"}]
+        "body_html": "Test Document body",
+        "associations": {"editor_0": null}}]
       """
       When we post to "/products" with success
       """
@@ -966,7 +968,8 @@ Feature: Content Publishing
                   "_current_version": 3,
                   "state": "in_progress",
                   "type": "text",
-                  "_id": "123"
+                  "_id": "123",
+                  "firstpublished": null
 
               }
           ]
@@ -1126,7 +1129,7 @@ Feature: Content Publishing
       """
       {
         "name":"Channel 3","media_type":"media", "subscriber_type": "wire", "sequence_num_settings":{"min" : 1, "max" : 10}, "email": "test@test.com",
-        "products": ["#products._id#"],
+        "products": ["#products._id#"], "is_active": true,
         "destinations":[{"name":"Test","format": "nitf", "delivery_type":"email","config":{"recipients":"test@test.com"}}],
         "api_products": ["#products._id#"]
       }
@@ -1150,10 +1153,6 @@ Feature: Content Publishing
       And we get existing resource
       """
       {"_current_version": 2, "state": "killed", "operation": "kill", "pubstatus": "canceled", "task":{"desk": "#desks._id#", "stage": "#desks.incoming_stage#"}, "version_creator": "#CONTEXT_USER_ID#"}
-      """
-      When we post to "/archive/#archive._id#/unlock"
-      """
-      {}
       """
       Then we get OK response
       When we enqueue published
@@ -1193,7 +1192,7 @@ Feature: Content Publishing
       """
       {
         "name":"Channel 3","media_type":"media", "subscriber_type": "digital", "sequence_num_settings":{"min" : 1, "max" : 10}, "email": "test@test.com",
-        "products": ["#products._id#"],
+        "products": ["#products._id#"], "is_active": true,
         "destinations":[{"name":"Test","format": "nitf", "delivery_type":"email","config":{"recipients":"test@test.com"}}]
       }
       """
@@ -1225,14 +1224,16 @@ Feature: Content Publishing
       Then we get OK response
       And we get existing resource
       """
-      {"_current_version": 2, "state": "corrected", "operation": "correct", "task":{"desk": "#desks._id#", "stage": "#desks.incoming_stage#"}}
+      {"_current_version": 2, "state": "corrected", "operation": "correct", "task":{"desk": "#desks._id#", "stage": "#desks.incoming_stage#"},
+       "lock_user": "__none__"
+      }
       """
       When we enqueue published
       When we post to "/archive/#archive._id#/unlock"
       """
       {}
       """
-      Then we get OK response
+      Then we get error 400
       When we get "/legal_archive/123"
       Then we get OK response
       When we get "/legal_archive/123?version=all"
@@ -1272,7 +1273,7 @@ Feature: Content Publishing
       """
       {
         "name":"Channel 3","media_type":"media", "subscriber_type": "wire", "sequence_num_settings":{"min" : 1, "max" : 10}, "email": "test@test.com",
-        "products": ["#products._id#"],
+        "products": ["#products._id#"], "is_active": true,
         "destinations":[{"name":"Test","format": "nitf", "delivery_type":"email","config":{"recipients":"test@test.com"}}]
       }
       """
@@ -1319,11 +1320,6 @@ Feature: Content Publishing
       """
       And we get updated timestamp "versioncreated"
       When we enqueue published
-      When we post to "/archive/#archive._id#/unlock"
-      """
-      {}
-      """
-      Then we get OK response
       When we get "/legal_archive/123"
       Then we get OK response
       And we get existing resource
@@ -1366,11 +1362,6 @@ Feature: Content Publishing
       """
       And we get updated timestamp "versioncreated"
       When we enqueue published
-      When we post to "/archive/#archive._id#/unlock"
-      """
-      {}
-      """
-      Then we get OK response
       When we get "/legal_archive/123"
       Then we get OK response
       And we get existing resource
@@ -1510,7 +1501,7 @@ Feature: Content Publishing
       {
         "name":"Channel direct","media_type":"media", "subscriber_type": "wire",
         "sequence_num_settings":{"min" : 1, "max" : 10}, "email": "test@test.com",
-        "products": ["#national-product#"],
+        "products": ["#national-product#"], "is_active": true,
         "destinations":[{"name":"Test","format": "nitf", "delivery_type":"email","config":{"recipients":"test@test.com"}}]
       }
       """
@@ -1519,7 +1510,7 @@ Feature: Content Publishing
       {
         "name":"Channel api","media_type":"media", "subscriber_type": "wire",
         "sequence_num_settings":{"min" : 1, "max" : 10}, "email": "test@test.com",
-        "api_products": ["#sport-product#"]
+        "api_products": ["#sport-product#"], "is_active": true
       }
       """
       And we publish "#archive._id#" with "publish" type and "published" state
@@ -1960,7 +1951,7 @@ Feature: Content Publishing
       """
       {
         "name":"Digital","media_type":"media", "subscriber_type": "digital", "sequence_num_settings":{"min" : 1, "max" : 10}, "email": "test@test.com",
-        "products": ["#products._id#"],
+        "products": ["#products._id#"], "is_active": true,
         "destinations":[{"name":"Test","format": "nitf", "delivery_type":"email","config":{"recipients":"test@test.com"}}]
       }
       """
@@ -1968,7 +1959,7 @@ Feature: Content Publishing
       """
       {
         "name":"Wire","media_type":"media", "subscriber_type": "wire", "sequence_num_settings":{"min" : 1, "max" : 10}, "email": "test@test.com",
-        "products": ["#products._id#"],
+        "products": ["#products._id#"], "is_active": true,
         "destinations":[{"name":"Test","format": "nitf", "delivery_type":"email","config":{"recipients":"test@test.com"}}]
       }
       """
@@ -2132,7 +2123,7 @@ Feature: Content Publishing
                     "slugline": {"type": "string", "required": true, "maxlength": 64, "minlength": 1},
                     "subject": {
                       "type": "list",
-                      "mandatory_in_list": {"scheme": {"subject": "subject_custom", "category": "category"}},
+                      "mandatory_in_list": {"scheme": {"subject": {"required": "true"}, "category": {"required": "true"}}},
                       "schema": {
                          "type": "dict",
                          "schema": {
@@ -2165,7 +2156,7 @@ Feature: Content Publishing
       """
       [{"guid": "123", "type": "text", "task": {"desk": "#desks._id#", "stage": "#desks.incoming_stage#", "user": "#CONTEXT_USER_ID#"},
         "subject": [{"name": "DiDFødselsdag", "qcode": "DiDFødselsdag", "scheme": "category", "service": {"d": 1, "i": 1}},
-                    {"name": "arkeologi", "qcode": "01001000", "scheme": "subject_custom", "parent": "01000000"}],
+                    {"name": "arkeologi", "qcode": "01001000", "scheme": "subject", "parent": "01000000"}],
         "slugline": "test", "state": "fetched", "profile": "Standard"}]
       """
       Then we get OK response
@@ -2194,7 +2185,7 @@ Feature: Content Publishing
                     "slugline": {"type": "string", "required": true, "maxlength": 64, "minlength": 1},
                     "subject": {
                       "type": "list",
-                      "mandatory_in_list": {"scheme": {"subject": "subject_custom", "category": "category"}},
+                      "mandatory_in_list": {"scheme": {"subject_custom": {"required": "true"}, "category": {"required": "true"}}},
                       "schema": {
                          "type": "dict",
                          "schema": {
@@ -2254,7 +2245,7 @@ Feature: Content Publishing
                     "slugline": {"type": "string", "required": true, "maxlength": 64, "minlength": 1},
                     "subject": {
                       "type": "list",
-                      "mandatory_in_list": {"scheme": {"subject": "subject_custom", "category": "category"}},
+                      "mandatory_in_list": {"scheme": {"subject": {"required": "true"}, "category": {"required": "true"}}},
                       "schema": {
                          "type": "dict",
                          "schema": {
@@ -2519,7 +2510,7 @@ Feature: Content Publishing
                     },
                     "type": "dict"
                 },
-                "mandatory_in_list": {"scheme": {"subject": "vocabulary1"}},
+                "mandatory_in_list": {"scheme": {"subject": {"required": "true"}}},
                 "default": [],
                 "nullable": false,
                 "required": true,
@@ -2533,7 +2524,7 @@ Feature: Content Publishing
       """
       [{
           "type": "text", "profile": "#content_types._id#", "state": "in_progress",
-          "subject": [{"scheme": "vocabulary1", "name": "Option 1", "qcode": "o1"}],
+          "subject": [{"scheme": "subject", "name": "Option 1", "qcode": "o1"}],
           "extra": {"custom_field_1": "some text"}
       }]
       """
@@ -2653,7 +2644,10 @@ Feature: Content Publishing
         "type": "text",
         "state": "published",
         "associations": {
-            "media--1": {"state": "published"}
+            "media--1": {
+              "state": "published",
+              "task": {"desk": "#desks._id#", "stage": "#desks.incoming_stage#"}
+            }
         },
         "task":{"desk": "#desks._id#", "stage": "#desks.incoming_stage#"}
       }
@@ -2667,7 +2661,6 @@ Feature: Content Publishing
           "task":{"desk": "#desks._id#"}
       }
       """
-      And we get null stage
       When we get "/published"
       Then we get list with 3 items
       """
@@ -2677,7 +2670,8 @@ Feature: Content Publishing
           "media--1": {
             "_id": "234",
             "type": "picture",
-            "state": "published"
+            "state": "published",
+            "task": {"desk": "#desks._id#", "stage": "#desks.incoming_stage#"}
           },
           "related--1": {
             "_id": "text",
@@ -2959,7 +2953,7 @@ Feature: Content Publishing
       """
       {
         "name":"Channel API","media_type":"media", "subscriber_type": "wire",  "email": "test@test.com",
-        "sequence_num_settings":{"min" : 1, "max" : 10},
+        "sequence_num_settings":{"min" : 1, "max" : 10}, "is_active": true,
         "api_products": ["#p_api#"]
       }
       """
@@ -2974,7 +2968,7 @@ Feature: Content Publishing
       {
         "name":"Subscriber 1","media_type":"media", "subscriber_type": "digital",
         "sequence_num_settings":{"min" : 1, "max" : 10}, "email": "test@test.com",
-        "products": ["#products._id#"],
+        "products": ["#products._id#"], "is_active": true,
         "destinations":[{"name":"Test","format": "ninjs", "delivery_type":"http_push","config":{}}]
       }
       """
@@ -3075,7 +3069,7 @@ Feature: Content Publishing
       """
       {
         "name":"Channel 3","media_type":"media", "subscriber_type": "wire", "sequence_num_settings":{"min" : 1, "max" : 10}, "email": "test@test.com",
-        "products": ["#products._id#"],
+        "products": ["#products._id#"], "is_active": true,
         "destinations":[{"name":"Test","format": "nitf", "delivery_type":"email","config":{"recipients":"test@test.com"}}]
       }
       """
@@ -3122,11 +3116,6 @@ Feature: Content Publishing
       """
       And we get updated timestamp "versioncreated"
       When we enqueue published
-      When we post to "/archive/#archive._id#/unlock"
-      """
-      {}
-      """
-      Then we get OK response
       When we get "/legal_archive/123"
       Then we get OK response
       And we get existing resource
@@ -3169,11 +3158,6 @@ Feature: Content Publishing
       """
       And we get updated timestamp "versioncreated"
       When we enqueue published
-      When we post to "/archive/#archive._id#/unlock"
-      """
-      {}
-      """
-      Then we get OK response
       When we get "/legal_archive/123"
       Then we get OK response
       And we get existing resource
@@ -4030,6 +4014,331 @@ Feature: Content Publishing
         """
 
     @auth
+    Scenario: body_html is generated from draftJS state on correction
+        Given "archive"
+        """
+        [{"_id": "test_editor_gen_1", "guid": "test_editor_gen_1", "headline": "test", "state": "fetched"}]
+        """
+        When we publish "#archive._id#" with "publish" type and "published" state
+        Then we get OK response
+
+        When we publish "#archive._id#" with "correct" type and "corrected" state
+        """
+        {
+            "fields_meta": {
+                "body_html": {
+                    "draftjsState": [{
+                        "blocks": [
+                            {
+                                "key": "fcbn3",
+                                "text": "The name of Highlaws comes from the Old English hēah-hlāw, meaning \"high mounds\".",
+                                "type": "unstyled",
+                                "depth": 0,
+                                "inlineStyleRanges": [],
+                                "entityRanges": [],
+                                "data": {"MULTIPLE_HIGHLIGHTS": {}}
+                            }
+                        ],
+                        "entityMap": {}
+                    }]
+                }
+            }
+        }
+        """
+        Then we get OK response
+        And we get existing resource
+        """
+        {
+            "_id": "test_editor_gen_1",
+            "guid": "test_editor_gen_1",
+            "headline": "test",
+            "state": "corrected",
+            "body_html": "<p>The name of Highlaws comes from the Old English hēah-hlāw, meaning \"high mounds\".</p>",
+            "fields_meta": {
+                "body_html": {
+                    "draftjsState": [{
+                        "blocks": [
+                            {
+                                "key": "fcbn3",
+                                "text": "The name of Highlaws comes from the Old English hēah-hlāw, meaning \"high mounds\".",
+                                "type": "unstyled",
+                                "depth": 0,
+                                "inlineStyleRanges": [],
+                                "entityRanges": [],
+                                "data": {"MULTIPLE_HIGHLIGHTS": {}}
+                            }
+                        ],
+                        "entityMap": {}
+                    }]
+                }
+            }
+        }
+        """
+
+    @auth
+    Scenario: Schedule publishing when PUBLISH_ASSOCIATED_ITEMS is on
+      Given empty "subscribers"
+      Given config update
+      """
+      { "PUBLISH_ASSOCIATED_ITEMS": true}
+      """
+      And "desks"
+      """
+      [{"name": "Sports", "content_expiry": 60}]
+      """
+      And the "validators"
+      """
+      [{"_id": "publish_text", "act": "publish", "type": "text", "schema":{}}]
+      """
+      And "archive"
+      """
+      [
+          {
+              "_id": "234",
+              "guid": "234",
+              "_current_version": 1,
+              "type": "picture",
+              "slugline": "234",
+              "headline": "234",
+              "state": "in_progress",
+              "task": {
+                  "desk": "#desks._id#",
+                  "stage": "#desks.incoming_stage#",
+                  "user": "#CONTEXT_USER_ID#"
+              },
+              "renditions": {}
+          },
+          {
+              "_id": "123",
+              "guid": "123",
+              "_current_version": 1,
+              "headline": "main item",
+              "slugline": "main item",
+              "body_html": "Test Document body",
+              "state": "in_progress",
+              "task": {
+                  "desk": "#desks._id#",
+                  "stage": "#desks.incoming_stage#",
+                  "user": "#CONTEXT_USER_ID#"
+              },
+              "associations": {
+                  "media--1": {
+                      "_id": "234",
+                      "_current_version": 1,
+                      "guid": "234",
+                      "type": "picture",
+                      "slugline": "234",
+                      "headline": "234",
+                      "alt_text": "alt_text",
+                      "description_text": "description_text",
+                      "state": "in_progress",
+                      "renditions": {},
+                      "task": {
+                          "desk": "#desks._id#",
+                          "stage": "#desks.incoming_stage#",
+                          "user": "#CONTEXT_USER_ID#"
+                      }
+                  }
+              }
+          }
+      ]
+      """
+      When we post to "/products" with success
+      """
+      {
+        "name":"prod-1","codes":"abc,xyz", "product_type": "both"
+      }
+      """
+      And we post to "/subscribers" with success
+      """
+      {
+        "name":"Channel 3","media_type":"media", "subscriber_type": "digital", "sequence_num_settings":{"min" : 1, "max" : 10}, "email": "test@test.com",
+        "products": ["#products._id#"],
+        "destinations":[{"name":"Test","format": "nitf", "delivery_type":"email","config":{"recipients":"test@test.com"}}]
+      }
+      """
+      And we publish "123" with "publish" type and "published" state
+      """
+      {"publish_schedule": "#DATE+1#", "schedule_settings": {"time_zone": "Europe/Prague"}}
+      """
+      Then we get OK response
+      And we get existing resource
+      """
+      {
+          "_id": "123",
+          "guid": "123",
+          "_current_version": 2,
+          "state": "scheduled",
+          "operation": "publish",
+          "associations": {
+              "media--1": {
+                  "_id": "234",
+                  "_current_version": 2,
+                  "guid": "234",
+                  "type": "picture",
+                  "slugline": "234",
+                  "headline": "234",
+                  "alt_text": "alt_text",
+                  "description_text": "description_text",
+                  "state": "scheduled",
+                  "operation": "publish",
+                  "schedule_settings": {"time_zone": "Europe/Prague"},
+                  "renditions": {}
+              }
+          }
+      }
+      """
+      When we get "/archive/123"
+      Then we get existing resource
+      """
+      {
+          "_id": "123",
+          "guid": "123",
+          "_current_version": 2,
+          "state": "scheduled",
+          "operation": "publish",
+          "associations": {
+              "media--1": {
+                  "_id": "234",
+                  "_current_version": 2,
+                  "guid": "234",
+                  "type": "picture",
+                  "slugline": "234",
+                  "headline": "234",
+                  "alt_text": "alt_text",
+                  "description_text": "description_text",
+                  "state": "scheduled",
+                  "operation": "publish",
+                  "renditions": {}
+              }
+          }
+      }
+      """
+      When we get "/archive/234"
+      Then we get existing resource
+      """
+      {
+          "_id": "234",
+          "_current_version": 2,
+          "guid": "234",
+          "type": "picture",
+          "slugline": "234",
+          "headline": "234",
+          "alt_text": "alt_text",
+          "description_text": "description_text",
+          "state": "scheduled",
+          "operation": "publish",
+          "renditions": {}
+      }
+      """
+      When we patch "/archive/123"
+      """
+      {"publish_schedule": null}
+      """
+      Then we get OK response
+      And we get existing resource
+      """
+      {
+          "_id": "123",
+          "guid": "123",
+          "state": "in_progress",
+          "operation": "deschedule",
+          "associations": {
+              "media--1": {
+                  "_id": "234",
+                  "guid": "234",
+                  "type": "picture",
+                  "slugline": "234",
+                  "headline": "234",
+                  "alt_text": "alt_text",
+                  "description_text": "description_text",
+                  "state": "in_progress",
+                  "operation": "deschedule",
+                  "renditions": {}
+              }
+          }
+      }
+      """
+      When we get "/archive/123"
+      Then we get existing resource
+      """
+      {
+          "_id": "123",
+          "guid": "123",
+          "state": "in_progress",
+          "operation": "deschedule",
+          "associations": {
+              "media--1": {
+                  "guid": "234",
+                  "type": "picture",
+                  "state": "in_progress",
+                  "operation": "deschedule"
+              }
+          }
+      }
+      """
+      When we get "/archive/234"
+      Then we get existing resource
+      """
+      {
+          "guid": "234",
+          "type": "picture",
+          "state": "in_progress",
+          "operation": "deschedule"
+      }
+      """
+      When we publish "123" with "publish" type and "published" state
+      """
+      {"publish_schedule": "#DATE+2#"}
+      """
+      Then we get OK response
+      And we get existing resource
+      """
+      {
+          "_id": "123",
+          "guid": "123",
+          "state": "scheduled",
+          "operation": "publish",
+          "associations": {
+              "media--1": {
+                  "_id": "234",
+                  "type": "picture",
+                  "state": "scheduled",
+                  "operation": "publish"
+              }
+          }
+      }
+      """
+      When we get "/archive/123"
+      Then we get existing resource
+      """
+      {
+          "_id": "123",
+          "guid": "123",
+          "state": "scheduled",
+          "operation": "publish",
+          "associations": {
+              "media--1": {
+                  "guid": "234",
+                  "type": "picture",
+                  "state": "scheduled",
+                  "operation": "publish"
+              }
+          }
+      }
+      """
+      When we get "/archive/234"
+      Then we get existing resource
+      """
+      {
+          "guid": "234",
+          "type": "picture",
+          "state": "scheduled",
+          "operation": "publish"
+      }
+      """
+      
+    @auth
     Scenario: Send correction with adding a featuremedia
       Given config update
       """
@@ -4129,6 +4438,7 @@ Feature: Content Publishing
         "associations": {
           "featuremedia": {
               "_id": "234",
+              "type": "picture",
               "guid": "234",
               "byline": "foo",
               "alt_text": "alt_text",
@@ -4150,6 +4460,7 @@ Feature: Content Publishing
         "associations": {
             "featuremedia": {
               "_id": "234",
+              "type": "picture",
               "guid": "234",
               "byline": "foo",
               "alt_text": "alt_text",
@@ -4226,3 +4537,177 @@ Feature: Content Publishing
         "task":{"desk": "#desks._id#", "user": "#CONTEXT_USER_ID#"}
        }
       """
+
+    @auth
+    Scenario: Create correction in working stage
+      Given config update
+      """
+      { "CORRECTIONS_WORKFLOW": true}
+      """
+      And "validators"
+      """
+      [
+          {"_id": "publish_text", "act": "publish", "type": "text", "schema":{}},
+          {"_id": "correct_text", "act": "correct", "type": "text", "schema":{}}
+      ]
+      """
+      And "desks"
+      """
+      [{"name": "Sports"}]
+      """
+      And "archive"
+      """
+      [
+          {
+            "guid": "123",
+            "type": "text",
+            "headline": "test",
+            "state": "fetched",
+            "task": {
+              "desk": "#desks._id#",
+              "stage": "#desks.incoming_stage#",
+              "user": "#CONTEXT_USER_ID#"
+              },
+            "subject":
+              [
+                {"qcode": "17004000",
+                "name": "Statistics"}
+              ],
+            "_current_version": 1
+          }
+      ]
+      """
+      When we publish "123" with "publish" type and "published" state
+      Then we get OK response
+      And we get existing resource
+      """
+      {
+        "_current_version": 2,
+        "type": "text",
+        "state": "published",
+        "task":{"desk": "#desks._id#", "stage": "#desks.incoming_stage#"}
+      }
+      """
+      When we publish "123" with "correction" type and "correction" state
+      Then we get OK response
+      When we get "/archive/123"
+      Then we get existing resource
+      """
+      {
+        "_current_version": 2,
+        "type": "text",
+        "state": "correction",
+        "task":{"desk": "#desks._id#", "stage": "#desks.working_stage#"}
+      }
+      """
+
+    @auth
+    Scenario: Save changes to a duplicate related item after publish
+      Given config update
+      """
+      { "PUBLISH_ASSOCIATED_ITEMS": true}
+      """
+      And "validators"
+        """
+        [
+            {"_id": "publish_text", "act": "publish", "type": "text", "schema":{}}
+        ]
+        """
+      And "desks"
+        """
+        [{"name": "Sports", "members":[{"user":"#CONTEXT_USER_ID#"}]}]
+        """
+      And "archive"
+        """
+        [
+            {
+                "_id": "234",
+                "guid": "234",
+                "slugline": "related item",
+                "headline": "related item",
+                "alt_text": "alt_text",
+                "description_text": "description_text",
+                "type": "picture",
+                "state": "submitted",
+                "operation": "duplicate",
+                "task": {
+                    "desk": "#desks._id#",
+                    "stage": "#desks.incoming_stage#",
+                    "user": "#CONTEXT_USER_ID#"
+                }
+            },
+            {
+                "_id": "123",
+                "guid": "123",
+                "_current_version": 1,
+                "headline": "main item",
+                "slugline": "main item",
+                "body_html": "Test Document body",
+                "state": "in_progress",
+                "task": {
+                    "desk": "#desks._id#",
+                    "stage": "#desks.incoming_stage#",
+                    "user": "#CONTEXT_USER_ID#"
+                },
+                "associations": {
+                    "related--1": {
+                        "_id": "234",
+                        "guid": "234",
+                        "slugline": "related item",
+                        "headline": "related item",
+                        "alt_text": "alt_text",
+                        "description_text": "description_text",
+                        "type": "picture",
+                        "state": "submitted",
+                        "operation": "duplicate",
+                        "task": {
+                            "desk": "#desks._id#",
+                            "stage": "#desks.incoming_stage#",
+                            "user": "#CONTEXT_USER_ID#"
+                        }
+                    }
+                }
+            }
+        ]
+        """
+      When we patch "/archive/234"
+        """
+        {"headline": "related item test", "slugline": "related item test"}
+        """
+      Then we get OK response
+      And we get existing resource
+        """
+        {
+            "_id": "234",
+            "guid": "234",
+            "slugline": "related item test",
+            "headline": "related item test",
+            "alt_text": "alt_text",
+            "description_text": "description_text",
+            "type": "picture",
+            "state": "in_progress",
+            "operation": "update",
+            "task": {
+                "desk": "#desks._id#",
+                "stage": "#desks.incoming_stage#",
+                "user": "#CONTEXT_USER_ID#"
+            }
+        }
+        """
+      When we publish "123" with "publish" type and "published" state
+      Then we get OK response
+      When we get "/archive/234"
+      Then we get existing resource
+        """
+        {
+            "_id": "234",
+            "guid": "234",
+            "slugline": "related item test",
+            "headline": "related item test",
+            "alt_text": "alt_text",
+            "description_text": "description_text",
+            "type": "picture",
+            "state": "published",
+            "operation": "publish"
+        }
+        """

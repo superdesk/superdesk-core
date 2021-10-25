@@ -231,6 +231,7 @@ Feature: Resend
         "_id": "sub-1",
         "name":"Channel 3",
         "media_type":"media",
+        "is_active": true,
         "subscriber_type": "wire",
         "sequence_num_settings":{"min" : 1, "max" : 10},
         "email": "test@test.com",
@@ -258,6 +259,7 @@ Feature: Resend
     {
         "name":"Channel 10",
         "media_type":"media",
+        "is_active": true,
         "subscriber_type": "wire",
         "sequence_num_settings":{"min" : 1, "max" : 10},
         "email": "test@test.com",
@@ -325,6 +327,7 @@ Feature: Resend
         "_id": "sub-1",
         "name":"Channel 3",
         "media_type":"media",
+        "is_active": true,
         "subscriber_type": "wire",
         "sequence_num_settings":{"min" : 1, "max" : 10},
         "email": "test@test.com",
@@ -351,6 +354,7 @@ Feature: Resend
     {
         "name":"Channel 10",
         "media_type":"media",
+        "is_active": true,
         "subscriber_type": "digital",
         "sequence_num_settings":{"min" : 1, "max" : 10},
         "email": "test@test.com",
@@ -439,6 +443,7 @@ Feature: Resend
         "_id": "sub-1",
         "name":"Channel 3",
         "media_type":"media",
+        "is_active": true,
         "subscriber_type": "wire",
         "sequence_num_settings":{"min" : 1, "max" : 10},
         "email": "test@test.com",
@@ -465,6 +470,7 @@ Feature: Resend
     {
         "name":"Channel 10",
         "media_type":"media",
+        "is_active": true,
         "subscriber_type": "digital",
         "sequence_num_settings":{"min" : 1, "max" : 10},
         "email": "test@test.com",
@@ -540,6 +546,7 @@ Feature: Resend
         "_id": "sub-1",
         "name":"Channel 3",
         "media_type":"media",
+        "is_active": true,
         "subscriber_type": "wire",
         "sequence_num_settings":{"min" : 1, "max" : 10},
         "email": "test@test.com",
@@ -566,6 +573,7 @@ Feature: Resend
     {
         "name":"Channel 10",
         "media_type":"media",
+        "is_active": true,
         "subscriber_type": "digital",
         "sequence_num_settings":{"min" : 1, "max" : 10},
         "email": "test@test.com",
@@ -603,6 +611,7 @@ Feature: Resend
     {
         "name":"api sub",
         "media_type":"media",
+        "is_active": true,
         "subscriber_type": "digital",
         "sequence_num_settings":{"min" : 1, "max" : 10},
         "email": "test@test.com",
@@ -670,6 +679,7 @@ Feature: Resend
         "_id": "sub-1",
         "name":"Channel 3",
         "media_type":"media",
+        "is_active": true,
         "subscriber_type": "wire",
         "sequence_num_settings":{"min" : 1, "max" : 10},
         "email": "test@test.com",
@@ -696,6 +706,7 @@ Feature: Resend
     {
         "name":"Channel Digital",
         "media_type":"media",
+        "is_active": true,
         "subscriber_type": "digital",
         "sequence_num_settings":{"min" : 1, "max" : 10},
         "email": "test@test.com",
@@ -728,6 +739,7 @@ Feature: Resend
     {
         "name":"Channel All",
         "media_type":"media",
+        "is_active": true,
         "subscriber_type": "all",
         "sequence_num_settings":{"min" : 1, "max" : 10},
         "email": "test@test.com",

@@ -13,11 +13,11 @@ from .service import ContactsService
 from .resource import ContactsResource
 
 
-def init_app(app):
+def init_app(app) -> None:
     """Initialize the `contacts` API endpoint.
 
     :param app: the API application object
     :type app: `Eve`
     """
-    service = ContactsService(datasource='contacts', backend=superdesk.get_backend())
-    ContactsResource(endpoint_name='contacts', app=app, service=service)
+    service = ContactsService(datasource="contacts", backend=superdesk.get_backend())
+    ContactsResource(endpoint_name="contacts", app=app, service=service)

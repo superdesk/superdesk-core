@@ -34,6 +34,8 @@ class ODBCPublishService(PublishService):
     :param string stored_procedure:
     """
 
+    NAME = "ODBC"
+
     def _transmit(self, queue_item, subscriber):
         """
         Transmit the given formatted item to the configured ODBC output.
@@ -41,31 +43,34 @@ class ODBCPublishService(PublishService):
         Configuration must have connection string and the name of a stored procedure.
         """
 
-        if not superdesk.app.config['ODBC_PUBLISH'] or not pyodbc_available:
+        if not superdesk.app.config["ODBC_PUBLISH"] or not pyodbc_available:
             raise PublishODBCError()
 
-        config = queue_item.get('destination', {}).get('config', {})
+        config = queue_item.get("destination", {}).get("config", {})
 
         try:
-            with pyodbc.connect(config['connection_string']) as conn:
-                item = json.loads(queue_item['formatted_item'])
+            with pyodbc.connect(config["connection_string"]) as conn:
+                item = json.loads(queue_item["formatted_item"])
 
-                ret = self._CallStoredProc(conn, procName=config['stored_procedure'], paramDict=item)
+                ret = self._CallStoredProc(conn, procName=config["stored_procedure"], paramDict=item)
                 conn.commit()
             return ret
         except Exception as ex:
             raise PublishODBCError.odbcError(ex, config)
 
     def _CallStoredProc(self, conn, procName, paramDict):
-        params = ''
+        params = ""
         for p in paramDict:
             if paramDict[p]:
-                params += ('@{}=N\'{}\', '.format(p, paramDict[p]))
+                params += "@{}=N'{}', ".format(p, paramDict[p])
         params = params[:-2]
         sql = """SET NOCOUNT ON;
              DECLARE @ret int
              EXEC @ret = %s %s
-             SELECT @ret""" % (procName, params)
+             SELECT @ret""" % (
+            procName,
+            params,
+        )
         resp = conn.execute(sql).fetchone()
         if resp is not None:
             return resp[0]
@@ -74,4 +79,4 @@ class ODBCPublishService(PublishService):
 
 
 if pyodbc_available:
-    register_transmitter('ODBC', ODBCPublishService(), errors)
+    register_transmitter("ODBC", ODBCPublishService(), errors)

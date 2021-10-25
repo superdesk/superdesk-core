@@ -21,22 +21,21 @@ class IOErrorsService(superdesk.Service):
     def get(self, req, lookup):
         """Return all ingest errors."""
         errors = feeding_service_errors
-        io_type = getattr(req, 'args', {}).get('io_type', 'ingest')
-        if io_type == 'publish':
+        io_type = getattr(req, "args", {}).get("io_type", "ingest")
+        if io_type == "publish":
             errors = transmitter_errors
 
-        source_type = getattr(req, 'args', {}).get('source_type')
+        source_type = getattr(req, "args", {}).get("source_type")
         if source_type:
             return ListCursor([self.get_errors_by_source_type(source_type, errors)])
         else:
             return ListCursor([self.get_all_errors(errors)])
 
     def get_errors_by_source_type(self, source_type, errors):
-        return {'source_errors': errors[source_type.lower()],
-                'all_errors': self._get_all_errors(errors)}
+        return {"source_errors": errors[source_type.lower()], "all_errors": self._get_all_errors(errors)}
 
     def get_all_errors(self, errors):
-        return {'all_errors': self._get_all_errors(errors)}
+        return {"all_errors": self._get_all_errors(errors)}
 
     def _get_all_errors(self, errors):
         all_errors = {}
@@ -47,18 +46,19 @@ class IOErrorsService(superdesk.Service):
 
 
 class IOErrorsResource(superdesk.Resource):
-    resource_methods = ['GET']
+    resource_methods = ["GET"]
     item_methods = []
 
     schema = {
-        'ingest_error': {
-            'type': 'string',
-            'required': True
+        "ingest_error": {"type": "string", "required": True},
+        "source_type": {"type": "string"},
+        "io_type": {"type": "string"},
+        "all_errors": {
+            "type": "list",
+            "readonly": True,
         },
-        'source_type': {
-            'type': 'string'
+        "source_errors": {
+            "type": "list",
+            "readonly": True,
         },
-        'io_type': {
-            'type': 'string'
-        }
     }

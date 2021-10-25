@@ -25,6 +25,8 @@ Default settings
 
 Default: ``'Superdesk'``
 
+.. _settings.default.client_url:
+
 ``CLIENT_URL``
 ^^^^^^^^^^^^^^
 
@@ -432,8 +434,10 @@ The number of days an activation token is valid, env ``ACTIVATE_TTL``.
 ^^^^^^^^^^^^^^
 
 .. versionadded:: 1.5
+.. versionchanged:: 2.4
+    Now required as ``flask.session`` will be used for some authentication
 
-Default: ``''``
+Default: Hardcoded value, which should not be used in production!
 
 This value should be set to a unique, unpredictable value. It is used for auth token signing.
 
@@ -565,6 +569,46 @@ Default: ``'Single Sign On'``
 
 Label on auth button for SAML.
 
+OpenID Connect Auth Settings
+----------------------------
+
+.. versionadded:: 2.1
+
+.. _settings.oidc_oauth:
+
+``OIDC_ENABLED``
+^^^^^^^^^^^^^^^^
+
+Default: ``False``
+
+``OIDC_ISSUER_URL``
+^^^^^^^^^^^^^^^^^^^
+
+Default: ``http://localhost:8080/auth/realms/SUPERDESK_REALM``
+
+Issuer URL address
+
+``OIDC_SERVER_CLIENT``
+^^^^^^^^^^^^^^^^^^^^^^
+
+Keycloak client name with `access type <https://www.keycloak.org/docs/latest/server_admin/#_access-type>`_ is confidential
+
+``OIDC_SERVER_CLIENT_SECRET``
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Keycloak server client secret
+
+``OIDC_WEB_CLIENT``
+^^^^^^^^^^^^^^^^^^^
+
+Keycloak client name with access type is public
+
+``OIDC_BROWSER_REDIRECT_URL``
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Default: :ref:`settings.default.client_url`
+
+Redirect URL for successful authentication with Keycloak
 
 Schema and Editor
 -----------------
@@ -654,3 +698,49 @@ Other
 .. autodata:: ARCHIVE_AUTOCOMPLETE_HOURS
 
 .. autodata:: LINKS_MAX_HOURS
+
+.. _settings.extending:
+
+Extend Superdesk
+-----------------
+
+Additional settings which are allowed to change some Superdesk defaults
+
+``SCHEMA_UPDATE``
+
+Default: ``None``
+
+Allows to update a default schema.
+
+Example::
+
+    SCHEMA_UPDATE = {
+        'archive': {
+            'extra': {
+                'type': 'dict',
+                'schema': {},
+                'mapping': {
+                    'type': 'object',
+                    'enabled': True
+                },
+                'allow_unknown': True,
+            }
+        }
+    }
+
+Video server settings
+---------------------
+
+``VIDEO_SERVER_URL``
+^^^^^^^^^^^^^^^^^^^^^^^
+
+Default: ``http://localhost:5050``
+
+Video server API url.
+
+``VIDEO_SERVER_ENABLED``
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Default: ``False``
+
+Enable video server.

@@ -25,7 +25,7 @@ Feature: Package Publishing
         """
         {
         "name":"Channel 3","media_type":"media", "subscriber_type": "digital", "sequence_num_settings":{"min" : 1, "max" : 10}, "email": "test@test.com",
-        "products": ["#products._id#"],
+        "products": ["#products._id#"], "is_active": true,
         "destinations":[{"name":"Test","format": "ninjs", "delivery_type":"PublicArchive","config":{"recipients":"test@test.com"}}]
         }
         """
@@ -282,7 +282,7 @@ Feature: Package Publishing
           """
           {
           "name":"Channel 3","media_type":"media", "subscriber_type": "digital", "sequence_num_settings":{"min" : 1, "max" : 10}, "email": "test@test.com",
-          "products": ["#products._id#"],
+          "products": ["#products._id#"], "is_active": true,
           "destinations":[{"name":"Test","format": "ninjs", "delivery_type":"PublicArchive","config":{"recipients":"test@test.com"}}]
           }
           """
@@ -444,7 +444,7 @@ Feature: Package Publishing
           """
           {
           "name":"Channel 3","media_type":"media", "subscriber_type": "digital", "sequence_num_settings":{"min" : 1, "max" : 10}, "email": "test@test.com",
-          "products": ["#products._id#"],
+          "products": ["#products._id#"], "is_active": true,
           "destinations":[{"name":"Test","format": "ninjs", "delivery_type":"PublicArchive","config":{"recipients":"test@test.com"}}]
           }
           """
@@ -594,7 +594,7 @@ Feature: Package Publishing
           """
           {
           "name":"Channel 3","media_type":"media", "subscriber_type": "digital", "sequence_num_settings":{"min" : 1, "max" : 10}, "email": "test@test.com",
-          "products": ["#products._id#"],
+          "products": ["#products._id#"], "is_active": true,
           "destinations":[{"name":"Test","format": "ninjs", "delivery_type":"PublicArchive","config":{"recipients":"test@test.com"}}]
           }
           """
@@ -744,7 +744,7 @@ Feature: Package Publishing
           """
           {
           "name":"Channel 3","media_type":"media", "subscriber_type": "digital", "sequence_num_settings":{"min" : 1, "max" : 10}, "email": "test@test.com",
-          "products": ["#products._id#"],
+          "products": ["#products._id#"], "is_active": true,
           "destinations":[{"name":"Test","format": "ninjs", "delivery_type":"PublicArchive","config":{"recipients":"test@test.com"}}]
           }
           """
@@ -896,14 +896,14 @@ Feature: Package Publishing
           """
           {
           "name":"Channel 3","media_type":"media", "subscriber_type": "digital", "sequence_num_settings":{"min" : 1, "max" : 10}, "email": "test@test.com",
-          "products": ["#products._id#"],
+          "products": ["#products._id#"], "is_active": true,
           "destinations":[{"name":"Test","format": "ninjs", "delivery_type":"PublicArchive","config":{"recipients":"test@test.com"}}]
           }
           """
       When we publish "compositeitem" with "publish" type and "published" state
       Then we get error 400
       """
-        {"_issues": {"validator exception": "['Item cannot contain associated spiked item']"}, "_status": "ERR"}
+        {"_issues": {"validator exception": "['Item cannot contain associated spiked item.']"}, "_status": "ERR"}
       """
 
 
@@ -1021,6 +1021,7 @@ Feature: Package Publishing
           """
           {
             "name":"Channel 3","media_type":"media",
+            "is_active": true,
             "subscriber_type": "digital",
             "sequence_num_settings":{"min" : 1, "max" : 10},
             "products": ["#products._id#"],
@@ -1158,6 +1159,7 @@ Feature: Package Publishing
           """
           {
             "name":"Channel 3","media_type":"media",
+            "is_active": true,
             "subscriber_type": "wire",
             "sequence_num_settings":{"min" : 1, "max" : 10},
             "products": ["#products._id#"],
@@ -1296,6 +1298,7 @@ Feature: Package Publishing
           [{
             "_id": "sub-1",
             "name":"Channel 3","media_type":"media",
+            "is_active": true,
             "subscriber_type": "wire",
             "sequence_num_settings":{"min" : 1, "max" : 10},
             "products": ["1"],
@@ -1304,6 +1307,7 @@ Feature: Package Publishing
           }, {
             "_id": "sub-2",
             "name":"Channel 4","media_type":"media",
+            "is_active": true,
             "subscriber_type": "digital",
             "sequence_num_settings":{"min" : 1, "max" : 10},
             "products": ["1"],
@@ -1437,6 +1441,7 @@ Feature: Package Publishing
           [{
             "_id": "sub-1",
             "name":"Channel 3","media_type":"media",
+            "is_active": true,
             "subscriber_type": "wire",
             "sequence_num_settings":{"min" : 1, "max" : 10},
             "email": "test@test.com",
@@ -1445,6 +1450,7 @@ Feature: Package Publishing
           }, {
             "_id": "sub-2",
             "name":"Channel 4","media_type":"media",
+            "is_active": true,
             "subscriber_type": "digital",
             "sequence_num_settings":{"min" : 1, "max" : 10},
             "email": "test@test.com",
@@ -1578,6 +1584,7 @@ Feature: Package Publishing
           [{
             "_id": "sub-1",
             "name":"Channel 3","media_type":"media",
+            "is_active": true,
             "subscriber_type": "wire",
             "sequence_num_settings":{"min" : 1, "max" : 10},
             "email": "test@test.com",
@@ -1659,6 +1666,7 @@ Feature: Package Publishing
       [{
         "_id": "sub-2",
         "name":"Channel 3","media_type":"media",
+        "is_active": true,
         "subscriber_type": "digital",
         "sequence_num_settings":{"min" : 1, "max" : 10},
         "products": ["1"],
@@ -1852,6 +1860,7 @@ Feature: Package Publishing
       [{
             "_id": "sub-1",
             "name":"Channel 3","media_type":"media",
+            "is_active": true,
             "subscriber_type": "wire",
             "sequence_num_settings":{"min" : 1, "max" : 10},
             "products": ["1"],
@@ -1860,6 +1869,7 @@ Feature: Package Publishing
           }, {
             "_id": "sub-2",
             "name":"Channel 4","media_type":"media",
+            "is_active": true,
             "subscriber_type": "digital",
             "sequence_num_settings":{"min" : 1, "max" : 10},
             "email": "test@test.com",
@@ -1868,6 +1878,7 @@ Feature: Package Publishing
           }, {
             "_id": "sub-3",
             "name":"Channel 5","media_type":"media",
+            "is_active": true,
             "subscriber_type": "digital",
             "sequence_num_settings":{"min" : 1, "max" : 10},
             "products": ["1"],
@@ -2095,6 +2106,7 @@ Feature: Package Publishing
       [{
             "_id": "sub-1",
             "name":"Channel 3","media_type":"media",
+            "is_active": true,
             "subscriber_type": "wire",
             "sequence_num_settings":{"min" : 1, "max" : 10},
             "email": "test@test.com",
@@ -2103,6 +2115,7 @@ Feature: Package Publishing
           }, {
             "_id": "sub-2",
             "name":"Channel 4","media_type":"media",
+            "is_active": true,
             "subscriber_type": "digital",
             "sequence_num_settings":{"min" : 1, "max" : 10},
             "email": "test@test.com",
@@ -2111,6 +2124,7 @@ Feature: Package Publishing
           }, {
             "_id": "sub-3",
             "name":"Channel 5","media_type":"media",
+            "is_active": true,
             "subscriber_type": "digital",
             "sequence_num_settings":{"min" : 1, "max" : 10},
             "email": "test@test.com",
@@ -2298,6 +2312,7 @@ Feature: Package Publishing
       [{
         "_id": "sub-2",
         "name":"Channel 3","media_type":"media",
+        "is_active": true,
         "subscriber_type": "digital",
         "sequence_num_settings":{"min" : 1, "max" : 10},
         "products": ["1"],
@@ -2617,6 +2632,7 @@ Feature: Package Publishing
         [{
               "_id": "sub-1",
               "name":"Channel 3","media_type":"media",
+              "is_active": true,
               "subscriber_type": "digital",
               "sequence_num_settings":{"min" : 1, "max" : 10},
               "email": "test@test.com",
@@ -2625,6 +2641,7 @@ Feature: Package Publishing
             }, {
               "_id": "sub-2",
               "name":"Channel 4","media_type":"media",
+              "is_active": true,
               "subscriber_type": "digital",
               "sequence_num_settings":{"min" : 1, "max" : 10},
               "email": "test@test.com",
@@ -2633,6 +2650,7 @@ Feature: Package Publishing
             }, {
               "_id": "sub-3",
               "name":"Channel 5","media_type":"media",
+              "is_active": true,
               "subscriber_type": "digital",
               "sequence_num_settings":{"min" : 1, "max" : 10},
               "email": "test@test.com",
@@ -3026,6 +3044,7 @@ Feature: Package Publishing
           """
           {
             "name":"Channel 3","media_type":"media",
+            "is_active": true,
             "subscriber_type": "digital",
             "sequence_num_settings":{"min" : 1, "max" : 10},
             "products": ["#products._id#"],
@@ -3300,6 +3319,7 @@ Feature: Package Publishing
           """
           {
             "name":"Channel 3","media_type":"media",
+            "is_active": true,
             "subscriber_type": "digital",
             "sequence_num_settings":{"min" : 1, "max" : 10},
             "products": ["#products._id#"],
@@ -3445,6 +3465,7 @@ Feature: Package Publishing
       [{
         "_id": "sub-2",
         "name":"Channel 3","media_type":"media",
+        "is_active": true,
         "subscriber_type": "digital",
         "sequence_num_settings":{"min" : 1, "max" : 10},
         "products": ["1"],
@@ -3699,6 +3720,7 @@ Feature: Package Publishing
           """
           {
             "name":"Channel 3","media_type":"media",
+            "is_active": true,
             "subscriber_type": "digital",
             "sequence_num_settings":{"min" : 1, "max" : 10},
             "products": ["#products._id#"],
@@ -3836,6 +3858,7 @@ Feature: Package Publishing
           """
           {
             "name":"Channel 3","media_type":"media",
+            "is_active": true,
             "subscriber_type": "digital",
             "sequence_num_settings":{"min" : 1, "max" : 10},
             "products": ["#products._id#"],
@@ -4077,6 +4100,7 @@ Feature: Package Publishing
       [{
             "_id": "sub-1",
             "name":"Channel 3","media_type":"media",
+            "is_active": true,
             "subscriber_type": "digital",
             "sequence_num_settings":{"min" : 1, "max" : 10},
             "email": "test@test.com",
@@ -4085,6 +4109,7 @@ Feature: Package Publishing
           }, {
             "_id": "sub-2",
             "name":"Channel 4","media_type":"media",
+            "is_active": true,
             "subscriber_type": "digital",
             "sequence_num_settings":{"min" : 1, "max" : 10},
             "email": "test@test.com",
@@ -4093,6 +4118,7 @@ Feature: Package Publishing
           }, {
             "_id": "sub-3",
             "name":"Channel 5","media_type":"media",
+            "is_active": true,
             "subscriber_type": "digital",
             "sequence_num_settings":{"min" : 1, "max" : 10},
             "email": "test@test.com",
@@ -4338,6 +4364,7 @@ Feature: Package Publishing
       [{
             "_id": "sub-1",
             "name":"Channel 3","media_type":"media",
+            "is_active": true,
             "subscriber_type": "digital",
             "sequence_num_settings":{"min" : 1, "max" : 10},
             "email": "test@test.com",
@@ -4346,6 +4373,7 @@ Feature: Package Publishing
           }, {
             "_id": "sub-2",
             "name":"Channel 4","media_type":"media",
+            "is_active": true,
             "subscriber_type": "digital",
             "sequence_num_settings":{"min" : 1, "max" : 10},
             "email": "test@test.com",
@@ -4354,6 +4382,7 @@ Feature: Package Publishing
           }, {
             "_id": "sub-3",
             "name":"Channel 5","media_type":"media",
+            "is_active": true,
             "subscriber_type": "digital",
             "sequence_num_settings":{"min" : 1, "max" : 10},
             "email": "test@test.com",
@@ -4589,6 +4618,7 @@ Feature: Package Publishing
           """
           {
             "name":"Channel 3","media_type":"media",
+            "is_active": true,
             "subscriber_type": "digital",
             "sequence_num_settings":{"min" : 1, "max" : 10},
             "products": ["#products._id#"],
@@ -4676,6 +4706,7 @@ Feature: Package Publishing
       [{
         "_id": "sub-2",
         "name":"Channel 3","media_type":"media",
+        "is_active": true,
         "subscriber_type": "digital",
         "sequence_num_settings":{"min" : 1, "max" : 10},
         "email": "test@test.com",
@@ -4826,6 +4857,7 @@ Feature: Package Publishing
       [{
         "_id": "sub-2",
         "name":"Channel 3","media_type":"media",
+        "is_active": true,
         "subscriber_type": "digital",
         "sequence_num_settings":{"min" : 1, "max" : 10},
         "products": ["1"],
@@ -5030,6 +5062,7 @@ Feature: Package Publishing
       [{
             "_id": "sub-1",
             "name":"Channel 3","media_type":"media",
+            "is_active": true,
             "subscriber_type": "digital",
             "sequence_num_settings":{"min" : 1, "max" : 10},
             "email": "test@test.com",
@@ -5038,6 +5071,7 @@ Feature: Package Publishing
           }, {
             "_id": "sub-2",
             "name":"Channel 4","media_type":"media",
+            "is_active": true,
             "subscriber_type": "digital",
             "sequence_num_settings":{"min" : 1, "max" : 10},
             "email": "test@test.com",
@@ -5046,6 +5080,7 @@ Feature: Package Publishing
           }, {
             "_id": "sub-3",
             "name":"Channel 5","media_type":"media",
+            "is_active": true,
             "subscriber_type": "digital",
             "sequence_num_settings":{"min" : 1, "max" : 10},
             "email": "test@test.com",
@@ -5178,6 +5213,7 @@ Feature: Package Publishing
           """
           {
             "name":"Channel 3","media_type":"media",
+            "is_active": true,
             "subscriber_type": "wire",
             "sequence_num_settings":{"min" : 1, "max" : 10},
             "products": ["#products._id#"],

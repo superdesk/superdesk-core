@@ -14,10 +14,10 @@ from . import macro_replacement_fields
 from decimal import Decimal
 from collections import OrderedDict
 
-RATE_SERVICE = 'http://download.finance.yahoo.com/d/quotes.csv?s={}=X&f=nl1d1'
+RATE_SERVICE = "http://download.finance.yahoo.com/d/quotes.csv?s={}=X&f=nl1d1"
 
 
-def to_currency(value, places=2, curr='', sep=',', dp='.', pos='', neg='-', trailneg=''):
+def to_currency(value, places=2, curr="", sep=",", dp=".", pos="", neg="-", trailneg=""):
     """Convert Decimal to a money formatted string.
 
     places:  required number of places after the decimal point
@@ -42,7 +42,7 @@ def to_currency(value, places=2, curr='', sep=',', dp='.', pos='', neg='-', trai
     '<0.02>'
 
     """
-    q = Decimal(10) ** -places      # 2 places --> '0.01'
+    q = Decimal(10) ** -places  # 2 places --> '0.01'
     sign, digits, exp = value.quantize(q).as_tuple()
     result = []
     digits = list(map(str, digits))
@@ -50,11 +50,11 @@ def to_currency(value, places=2, curr='', sep=',', dp='.', pos='', neg='-', trai
     if sign:
         build(trailneg)
     for i in range(places):
-        build(next() if digits else '0')
+        build(next() if digits else "0")
     if places:
         build(dp)
     if not digits:
-        build('0')
+        build("0")
     i = 0
     while digits:
         build(next())
@@ -64,13 +64,13 @@ def to_currency(value, places=2, curr='', sep=',', dp='.', pos='', neg='-', trai
             build(sep)
     build(curr)
     build(neg if sign else pos)
-    return ''.join(reversed(result))
+    return "".join(reversed(result))
 
 
 def get_rate(from_currency, to_currency):
     """Get the exchange rate."""
     r = requests.get(RATE_SERVICE.format(from_currency + to_currency), timeout=5)
-    return Decimal(r.text.split(',')[1])
+    return Decimal(r.text.split(",")[1])
 
 
 def format_output(original, converted):
@@ -78,7 +78,7 @@ def format_output(original, converted):
     if original[-1:].isalpha():
         # If there's 'm' or 'b' at the end of the original carry that across
         converted += original[-1:]
-    return '{} ({})'.format(original, converted)
+    return "{} ({})".format(original, converted)
 
 
 def do_conversion(item, rate, currency, search_param, match_index, value_index):
@@ -99,11 +99,11 @@ def do_conversion(item, rate, currency, search_param, match_index, value_index):
         match_item = match.group(match_index)
         value_item = match.group(value_index)
         if match_item and value_item:
-            if ')' in match_item and '(' not in match_item:
+            if ")" in match_item and "(" not in match_item:
                 # clear any trailing parenthesis
-                match_item = re.sub('[)]', '', 'match_item')
+                match_item = re.sub("[)]", "", "match_item")
 
-            from_value = Decimal(re.sub(r'[^\d.]', '', value_item))
+            from_value = Decimal(re.sub(r"[^\d.]", "", value_item))
             precision = abs(from_value.as_tuple().exponent)
             to_value = rate * from_value
             converted_value = to_currency(to_value, places=precision, curr=currency)

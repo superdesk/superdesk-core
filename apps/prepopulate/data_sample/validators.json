@@ -23,7 +23,7 @@
             },
             "type": {
                 "type": "string",
-                "required": "true",
+                "required": true,
                 "allowed": ["text"]
             },
             "anpa_category": {
@@ -98,7 +98,7 @@
             },
             "type": {
                 "type": "string",
-                "required": "true",
+                "required": true,
                 "allowed": ["text"]
             },
             "anpa_category": {
@@ -168,7 +168,7 @@
             },
             "type": {
                 "type": "string",
-                "required": "true",
+                "required": true,
                 "allowed": ["text"]
             },
             "anpa_category": {
@@ -238,7 +238,7 @@
             },
             "type": {
                 "type": "string",
-                "required": "true",
+                "required": true,
                 "allowed": ["preformatted"]
             },
             "anpa_category": {
@@ -308,7 +308,7 @@
             },
             "type": {
                 "type": "string",
-                "required": "true",
+                "required": true,
                 "allowed": ["preformatted"]
             },
             "anpa_category": {
@@ -378,7 +378,7 @@
             },
             "type": {
                 "type": "string",
-                "required": "true",
+                "required": true,
                 "allowed": ["preformatted"]
             },
             "anpa_category": {
@@ -448,7 +448,7 @@
             },
             "type": {
                 "type": "string",
-                "required": "true",
+                "required": true,
                 "allowed": ["picture"]
             },
             "anpa_category": {
@@ -534,7 +534,7 @@
             },
             "type": {
                 "type": "string",
-                "required": "true",
+                "required": true,
                 "allowed": ["picture"]
             },
             "anpa_category": {
@@ -620,7 +620,7 @@
             },
             "type": {
                 "type": "string",
-                "required": "true",
+                "required": true,
                 "allowed": ["picture"]
             },
             "anpa_category": {
@@ -700,7 +700,7 @@
             },
             "type": {
                 "type": "string",
-                "required": "true",
+                "required": true,
                 "allowed": ["video"]
             },
             "anpa_category": {
@@ -776,7 +776,7 @@
             },
             "type": {
                 "type": "string",
-                "required": "true",
+                "required": true,
                 "allowed": ["video"]
             },
             "anpa_category": {
@@ -852,7 +852,7 @@
             },
             "type": {
                 "type": "string",
-                "required": "true",
+                "required": true,
                 "allowed": ["video"]
             },
             "anpa_category": {
@@ -928,7 +928,7 @@
             },
             "type": {
                 "type": "string",
-                "required": "true",
+                "required": true,
                 "allowed": ["audio"]
             },
             "anpa_category": {
@@ -1004,7 +1004,7 @@
             },
             "type": {
                 "type": "string",
-                "required": "true",
+                "required": true,
                 "allowed": ["audio"]
             },
             "anpa_category": {
@@ -1080,7 +1080,7 @@
             },
             "type": {
                 "type": "string",
-                "required": "true",
+                "required": true,
                 "allowed": ["audio"]
             },
             "anpa_category": {
@@ -1151,7 +1151,7 @@
             },
             "type": {
                 "type": "string",
-                "required": "true",
+                "required": true,
                 "allowed": ["composite"]
             },
             "anpa_category": {
@@ -1206,7 +1206,7 @@
             },
             "type": {
                 "type": "string",
-                "required": "true",
+                "required": true,
                 "allowed": ["composite"]
             },
             "anpa_category": {
@@ -1261,7 +1261,7 @@
             },
             "type": {
                 "type": "string",
-                "required": "true",
+                "required": true,
                 "allowed": ["composite"]
             },
             "anpa_category": {
@@ -1309,7 +1309,7 @@
         "schema": {
             "type": {
                 "type": "string",
-                "required": "true",
+                "required": true,
                 "allowed": ["graphic"]
             },
             "anpa_category": {
@@ -1336,7 +1336,7 @@
         "schema": {
             "type": {
                 "type": "string",
-                "required": "true",
+                "required": true,
                 "allowed": ["graphic"]
             },
             "anpa_category": {
@@ -1363,7 +1363,7 @@
         "schema": {
             "type": {
                 "type": "string",
-                "required": "true",
+                "required": true,
                 "allowed": ["graphic"]
             },
             "anpa_category": {

@@ -385,28 +385,407 @@ Feature: Desks
         """
 
     @auth
-    Scenario: When creating/updating item add desk metadata
+    @notification
+    Scenario: Retrieve number of items with desk stages overview
+        Given we have "desks" with "SPORTS_DESK_ID" and success
+        """
+        [{"name": "Sports", "desk_type": "authoring"}]
+        """
+        And we have "desks" with "POLITICS_DESK_ID" and success
+        """
+        [{"name": "Politics", "desk_type": "authoring"}]
+        """
+        Given "archive"
+         """
+         [
+         {"_id":"1","slugline": "slugline1", "state": "draft",
+         "task": {"desk": "#SPORTS_DESK_ID#", "stage": "#desks.working_stage#"}, "headline": "one", "family_id": 1},
+         {"_id":"2","slugline": "slugline2", "state": "draft",
+         "task": {"desk": "#SPORTS_DESK_ID#", "stage": "#desks.working_stage#"}, "place": null, "headline": "two",
+         "family_id": 2},
+         {"_id":"3","slugline": "slugline3", "byline": "byline1", "last_published_version": "True",
+         "state": "draft", "task": {"desk": "#SPORTS_DESK_ID#", "stage": "#desks.incoming_stage#"}, "place": null,
+         "headline": "three", "family_id": 2},
+         {"_id":"4","slugline": "slugline4", "last_published_version": "True", "state": "draft",
+         "task": {"desk": "#POLITICS_DESK_ID#", "stage": "#desks.incoming_stage#"}, "place": null, "headline": "four",
+         "family_id": 2},
+         {"_id":"5","slugline": "slugline5", "state": "draft",
+         "task": {"desk": "#POLITICS_DESK_ID#", "stage": "#desks.incoming_stage#"}, "place": null, "headline": "five",
+         "family_id": 2},
+         {"_id":"6","slugline": "slugline6", "state": "published",
+         "task": {"desk": "#SPORTS_DESK_ID#", "stage": "#desks.incoming_stage#"}, "place": null, "headline": "six",
+         "family_id": 2},
+         {"_id":"7","slugline": "slugline6", "state": "killed",
+         "task": {"desk": "#POLITICS_DESK_ID#", "stage": "#desks.incoming_stage#"}, "place": null, "headline": "seven",
+         "family_id": 2}
+         ]
+         """
+        When we get "/desks/#SPORTS_DESK_ID#/overview/stages"
+        Then we get existing resource
+        """
+            {
+                "_items": [
+                    {
+                        "stage": "#desks.incoming_stage#",
+                        "count": 1
+                    },
+                    {
+                        "stage": "#desks.working_stage#",
+                        "count": 2
+                    }
+                ]
+            }
+        """
+        When we get "/desks/all/overview/stages"
+        Then we get existing resource
+        """
+            {
+                "_items": [
+                    {
+                        "stage": "#desks.incoming_stage#",
+                        "count": 3
+                    },
+                    {
+                        "stage": "#desks.working_stage#",
+                        "count": 2
+                    }
+                ]
+            }
+        """
+        When we post to "/desks/all/overview/stages"
+        """
+            {
+                "filters": {
+                    "slugline": ["slugline3", "slugline4"]
+                }
+            }
+        """
+        Then we get existing resource
+        """
+            {
+                "_items": [
+                    {
+                        "stage": "#desks.incoming_stage#",
+                        "count": 2
+                    }
+                ]
+            }
+        """
+        When we post to "/desks/#SPORTS_DESK_ID#/overview/stages"
+        """
+            {
+                "filters": {
+                    "headline": ["two"]
+                }
+            }
+        """
+        Then we get existing resource
+        """
+            {
+                "_items": [
+                    {
+                        "stage": "#desks.working_stage#",
+                        "count": 1
+                    }
+                ]
+            }
+        """
+        When we post to "/desks/#SPORTS_DESK_ID#/overview/stages"
+        """
+            {
+                "filters": {
+                    "byline": ["byline1"]
+                }
+            }
+        """
+        Then we get existing resource
+        """
+            {
+                "_items": [
+                    {
+                        "stage": "#desks.incoming_stage#",
+                        "count": 1
+                    }
+                ]
+            }
+        """
+
+    @auth
+    @notification
+    Scenario: Retrieve number of items with desk assignents overview
+        Given we have "desks" with "SPORTS_DESK_ID" and success
+        """
+        [{"name": "Sports", "desk_type": "authoring"}]
+        """
+        And we have "desks" with "POLITICS_DESK_ID" and success
+        """
+        [{"name": "Politics", "desk_type": "authoring"}]
+        """
+        Given "assignments"
+         """
+         [
+         {"_id":"1", "assigned_to":{"desk":"#SPORTS_DESK_ID#", "state":"assigned"}, "type":"assignment",
+          "planning" : { "genre":[], "slugline":"test 1", "g2_content_type":"text" }},
+         {"_id":"2", "assigned_to":{"desk":"#SPORTS_DESK_ID#", "state":"assigned"}, "type":"assignment",
+          "planning" : { "genre":[], "slugline":"test 2", "g2_content_type":"text" }},
+         {"_id":"3", "assigned_to":{"desk":"#SPORTS_DESK_ID#", "state":"in_progress"}, "type":"assignment",
+          "planning" : { "genre":[], "slugline":"test 3", "g2_content_type":"text" }},
+         {"_id":"4", "assigned_to":{"desk":"#SPORTS_DESK_ID#", "state":"in_progress"}, "type":"assignment",
+          "planning" : { "genre":[], "slugline":"test 4", "g2_content_type":"text" }},
+         {"_id":"5", "assigned_to":{"desk":"#SPORTS_DESK_ID#", "state":"in_progress"}, "type":"assignment",
+          "planning" : { "genre":[], "slugline":"test 5", "g2_content_type":"text" }},
+         {"_id":"6", "assigned_to":{"desk":"#SPORTS_DESK_ID#", "state":"in_progress"}, "type":"assignment",
+          "planning" : { "genre":[], "slugline":"test 6", "g2_content_type":"text" }},
+         {"_id":"7", "assigned_to":{"desk":"#SPORTS_DESK_ID#", "state":"completed"}, "type":"assignment",
+          "planning" : { "genre":[], "slugline":"test 7", "g2_content_type":"text" }},
+         {"_id":"8", "assigned_to":{"desk":"#POLITICS_DESK_ID#", "state":"in_progress"}, "type":"assignment",
+          "planning" : { "genre":[], "slugline":"test 8", "g2_content_type":"text" }},
+         {"_id":"9", "assigned_to":{"desk":"#POLITICS_DESK_ID#", "state":"completed"}, "type":"assignment",
+          "planning" : { "genre":[], "slugline":"test 9", "g2_content_type":"text" }},
+         {"_id":"10", "assigned_to":{"desk":"#POLITICS_DESK_ID#", "state":"completed"}, "type":"assignment",
+          "planning" : { "genre":[], "slugline":"test 10", "g2_content_type":"text" }}
+         ]
+         """
+        When we get "/desks/#SPORTS_DESK_ID#/overview/assignments"
+        Then we get existing resource
+        """
+            {
+                "_items": [
+                    {
+                        "desk": "#SPORTS_DESK_ID#",
+                        "count": 7,
+                        "sub": [
+                            {
+                                "key": "assigned",
+                                "count": 2
+                            },
+                            {
+                                "key": "in_progress",
+                                "count": 4
+                            },
+                            {
+                                "key": "completed",
+                                "count": 1
+                            }
+                        ]
+                    }
+                ]
+            }
+        """
+        When we get "/desks/all/overview/assignments"
+        Then we get existing resource
+        """
+            {
+                "_items": [
+                    {
+                        "desk": "#SPORTS_DESK_ID#",
+                        "count": 7,
+                        "sub": [
+                            {
+                                "key": "assigned",
+                                "count": 2
+                            },
+                            {
+                                "key": "in_progress",
+                                "count": 4
+                            },
+                            {
+                                "key": "completed",
+                                "count": 1
+                            }
+                        ]
+                    },
+                    {
+                        "desk": "#POLITICS_DESK_ID#",
+                        "count": 3,
+                        "sub": [
+                            {
+                                "key": "completed",
+                                "count": 2
+                            },
+                            {
+                                "key": "in_progress",
+                                "count": 1
+                            }
+                        ]
+                    }
+                ]
+            }
+        """
+
+    @auth
+    @notification
+    Scenario: Retrieve overview of users
+        Given we have "roles" with "ROLE_EDITOR_ID" and success
+        """
+        [{"name": "Editor"}]
+        """
+        And we have "roles" with "ROLE_SUBEDITOR_ID" and success
+        """
+        [{"name": "Sub Editor"}]
+        """
+        And we have "roles" with "ROLE_JOURNALIST_ID" and success
+        """
+        [{"name": "Journalist"}]
+        """
+        Given we have "users" with "USER_1_ID" and success
+        """
+        {"username": "user_1", "email": "user_1@example.net", "is_active": true, "role": "#ROLE_JOURNALIST_ID#"}
+        """
+        And we have "users" with "USER_2_ID" and success
+        """
+        {"username": "user_2", "email": "user_2@example.net", "is_active": true, "role": "#ROLE_JOURNALIST_ID#"}
+        """
+        And we have "users" with "USER_3_ID" and success
+        """
+        {"username": "user_3", "email": "user_3@example.net", "is_active": true, "role": "#ROLE_EDITOR_ID#"}
+        """
+        And we have "users" with "USER_4_ID" and success
+        """
+        {"username": "user_4", "email": "user_4@example.net", "is_active": true, "role": "#ROLE_SUBEDITOR_ID#"}
+        """
+        And we have "users" with "USER_5_ID" and success
+		# This user has no associated article on purpose (cf. SDESK-5557)
+        # she must associated to a desk to test the issue (she is associated to Sports desk below)
+        """
+        {"username": "user_5", "email": "user_5@example.net", "is_active": true, "role": "#ROLE_SUBEDITOR_ID#"}
+        """
         Given "desks"
         """
-        [{"desk_metadata": {"anpa_category": [{"qcode": "sport"}], "headline": "sports", "slugline": "sp"}}]
+        [{"name": "Empty", "desk_type": "authoring"}]
         """
-        And "archive"
+        Given we have "desks" with "SPORTS_DESK_ID" and success
         """
-        [{"_id": "item1", "headline": "test", "type": "text"}]
+        [{"name": "Sports", "desk_type": "authoring", "members": [{"user": "#USER_1_ID#"},
+          {"user": "#USER_2_ID#"}, {"user": "#USER_3_ID#"}, {"user": "#USER_5_ID#"}] }]
         """
-        When we patch "/archive/item1"
+        And we have "desks" with "POLITICS_DESK_ID" and success
         """
-        {"task": {"desk": "#desks._id#"}, "slugline": "foo"}
+        [{"name": "Politics", "desk_type": "authoring", "members": [{"user": "#USER_1_ID#"},
+          {"user": "#USER_3_ID#"}, {"user": "#USER_4_ID#"}] }]
         """
-        Then we get updated response
+        Given "archive"
+         """
+         [
+         {"_id":"1","slugline": "slugline1", "state": "in_progress", "original_creator": "#USER_1_ID#",
+         "task": {"desk": "#SPORTS_DESK_ID#", "stage": "#desks.working_stage#"}, "headline": "one", "family_id": 1,
+         "assignment_id": "123", "lock_user": "#USER_3_ID#"},
+         {"_id":"2","slugline": "slugline2", "state": "in_progress", "original_creator": "#USER_2_ID#",
+         "task": {"desk": "#SPORTS_DESK_ID#", "stage": "#desks.working_stage#"}, "place": null, "headline": "two",
+         "family_id": 2, "assignment_id": "456", "lock_user": "#USER_4_ID#"},
+         {"_id":"3","slugline": "slugline3", "last_published_version": "True", "state": "published",
+         "task": {"desk": "#SPORTS_DESK_ID#", "stage": "#desks.incoming_stage#"}, "place": null, "headline": "three",
+         "family_id": 2, "original_creator": "#USER_3_ID#"},
+         {"_id":"4","slugline": "slugline4", "last_published_version": "True", "state": "published",
+         "task": {"desk": "#POLITICS_DESK_ID#", "stage": "#desks.incoming_stage#"}, "place": null, "headline": "four",
+         "family_id": 2, "original_creator": "#USER_4_ID#", "lock_user": "#USER_3_ID#"},
+         {"_id":"5","slugline": "slugline5", "state": "in_progress",
+         "task": {"desk": "#SPORTS_DESK_ID#", "stage": "#desks.incoming_stage#"}, "place": null, "headline": "five",
+         "family_id": 2, "original_creator": "#USER_1_ID#", "assignment_id": "789"},
+         {"_id":"6","slugline": "slugline6", "state": "in_progress",
+         "task": {"desk": "#SPORTS_DESK_ID#", "stage": "#desks.incoming_stage#"}, "place": null, "headline": "five",
+         "family_id": 2, "original_creator": "#USER_2_ID#", "lock_user": "#USER_3_ID#"}
+         ]
+         """
+        # we can't check assignments because adding json to "assignments" requires planning to be installed
+        When we get "/desks/#SPORTS_DESK_ID#/overview/users"
+        Then we get existing resource
         """
-        {"anpa_category": [{"qcode": "sport"}], "slugline": "foo", "headline": "test"}
+            {
+              "_items": [
+                {
+                  "authors": {
+                    "#USER_1_ID#": {
+                      "assigned": 0,
+                      "locked": 0
+                    },
+                    "#USER_2_ID#": {
+                      "assigned": 0,
+                      "locked": 0
+                    }
+                  },
+                  "role": "#ROLE_JOURNALIST_ID#"
+                },
+                {
+                  "authors": {
+                    "#USER_3_ID#": {
+                      "assigned": 0,
+                      "locked": 2
+                    }
+                  },
+                  "role": "#ROLE_EDITOR_ID#"
+                }
+              ]
+            }
         """
-        When we post to "/archive"
+        When we get "/desks/all/overview/users"
+        Then we get existing resource
         """
-        {"slugline": "x", "task": {"desk": "#desks._id#"}}
+            {
+                "_items": [
+                  {
+                    "authors": {
+                      "#USER_3_ID#": {
+                        "assigned": 0,
+                        "locked": 2
+                      }
+                    },
+                    "role": "#ROLE_EDITOR_ID#"
+                  },
+                  {
+                    "authors": {
+                      "#USER_4_ID#": {
+                        "assigned": 0,
+                        "locked": 1
+                      }
+                    },
+                    "role": "#ROLE_SUBEDITOR_ID#"
+                  },
+                  {
+                    "authors": {
+                      "#USER_1_ID#": {
+                        "assigned": 0,
+                        "locked": 0
+                      },
+                      "#USER_2_ID#": {
+                        "assigned": 0,
+                        "locked": 0
+                      }
+                    },
+                    "role": "#ROLE_JOURNALIST_ID#"
+                  }
+                ]
+            }
         """
-        Then we get new resource
+
+    @auth
+    @notification
+    Scenario: Make the desk available in default content template
+        Given empty "desks"
+        Given "content_templates"
         """
-        {"slugline": "x", "headline": "sports", "anpa_category": [{"qcode": "sport"}]}
+        [{
+            "template_name": "test",
+            "template_type": "create",
+            "data": {"headline": "test", "type": "text", "slugline": "test"}
+        }]
         """
+        When we post to "/desks"
+        """
+        {
+            "name": "Sports Desk",
+            "desk_language": "en",
+            "default_content_template": "#content_templates._id#"
+        }
+        """
+        Then we get OK response
+        When we get "content_templates/#content_templates._id#"
+        Then we get existing resource
+        """
+        {
+            "template_name": "test",
+            "template_type": "create",
+            "template_desks": ["#desks._id#"]
+        }
+        """
+        

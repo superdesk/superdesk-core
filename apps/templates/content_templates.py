@@ -24,8 +24,13 @@ from superdesk.errors import SuperdeskApiError
 from superdesk.metadata.item import metadata_schema, ITEM_STATE, CONTENT_STATE
 from superdesk.celery_app import celery
 from apps.tasks import apply_onstage_rule
-from apps.archive.common import ARCHIVE, CUSTOM_HATEOAS, item_schema, format_dateline_to_locmmmddsrc, \
-    insert_into_versions, ARCHIVE_SCHEMA_FIELDS
+from apps.archive.common import (
+    ARCHIVE,
+    CUSTOM_HATEOAS,
+    item_schema,
+    format_dateline_to_locmmmddsrc,
+    insert_into_versions,
+)
 from apps.auth import get_user
 
 from superdesk.lock import lock, unlock
@@ -36,14 +41,21 @@ from flask_babel import _
 from superdesk.notification import push_notification
 from superdesk import editor_utils
 
-CONTENT_TEMPLATE_RESOURCE = 'content_templates'
+CONTENT_TEMPLATE_RESOURCE = "content_templates"
 CONTENT_TEMPLATE_PRIVILEGE = CONTENT_TEMPLATE_RESOURCE
-KILL_TEMPLATE_NOT_REQUIRED_FIELDS = ['schedule', 'dateline', 'template_desks', 'schedule_desk',
-                                     'schedule_stage']
-PLAINTEXT_FIELDS = {'headline'}
+KILL_TEMPLATE_NOT_REQUIRED_FIELDS = ["schedule", "dateline", "template_desks", "schedule_desk", "schedule_stage"]
+PLAINTEXT_FIELDS = {"headline"}
 TEMPLATE_DATA_IGNORE_FIELDS = {  # fields to be ignored when creating item from template
-    config.ID_FIELD, config.LAST_UPDATED, config.DATE_CREATED, config.ETAG, config.VERSION,
-    'task', 'firstcreated', 'versioncreated', 'firstpublished', 'fields_meta',
+    config.ID_FIELD,
+    config.LAST_UPDATED,
+    config.DATE_CREATED,
+    config.ETAG,
+    config.VERSION,
+    "task",
+    "firstcreated",
+    "versioncreated",
+    "firstpublished",
+    "fields_meta",
 }
 
 
@@ -51,16 +63,13 @@ logger = logging.getLogger(__name__)
 
 
 class TemplateType(SuperdeskBaseEnum):
-    KILL = 'kill'
-    CREATE = 'create'
-    HIGHLIGHTS = 'highlights'
+    KILL = "kill"
+    CREATE = "create"
+    HIGHLIGHTS = "highlights"
 
 
 def get_schema():
     schema = deepcopy(metadata_schema)
-    schema['target_types'] = ARCHIVE_SCHEMA_FIELDS.get('target_types')
-    schema['target_regions'] = ARCHIVE_SCHEMA_FIELDS.get('target_regions')
-    schema['target_subscribers'] = ARCHIVE_SCHEMA_FIELDS.get('target_subscribers')
     return schema
 
 
@@ -73,7 +82,7 @@ def get_next_run(schedule, now_utc=None):
     :param now_utc
     :return datetime
     """
-    if not schedule.get('is_active', False):
+    if not schedule.get("is_active", False):
         return None
 
     if now_utc is None:
@@ -82,27 +91,27 @@ def get_next_run(schedule, now_utc=None):
     now_utc = now_utc.replace(second=0)
 
     # Derive the first cron_list entry from the create_at and day_of_week
-    if 'create_at' in schedule and 'cron_list' not in schedule:
-        time = schedule.get('create_at').split(':')
-        cron_days = ','.join(schedule.get('day_of_week', '*')) if len(schedule.get('day_of_week')) else '*'
-        cron_entry = '{} {} * * {}'.format(time[1], time[0], cron_days)
-        schedule['cron_list'] = [cron_entry]
-        schedule.pop('create_at', None)
+    if "create_at" in schedule and "cron_list" not in schedule:
+        time = schedule.get("create_at").split(":")
+        cron_days = ",".join(schedule.get("day_of_week", "*")) if len(schedule.get("day_of_week")) else "*"
+        cron_entry = "{} {} * * {}".format(time[1], time[0], cron_days)
+        schedule["cron_list"] = [cron_entry]
+        schedule.pop("create_at", None)
 
     # adjust current time to the schedule's timezone
-    tz_name = schedule.get('time_zone', 'UTC')
-    if tz_name != 'UTC':
+    tz_name = schedule.get("time_zone", "UTC")
+    if tz_name != "UTC":
         current_local_datetime = utc_to_local(tz_name, now_utc)  # convert utc to local time
-        cron = croniter(schedule.get('cron_list')[0], current_local_datetime)
+        cron = croniter(schedule.get("cron_list")[0], current_local_datetime)
         next_run = local_to_utc(tz_name, cron.get_next(datetime))
-        for cron_entry in schedule.get('cron_list'):
+        for cron_entry in schedule.get("cron_list"):
             next_candidate = local_to_utc(tz_name, croniter(cron_entry, current_local_datetime).get_next(datetime))
             if next_candidate < next_run:
                 next_run = next_candidate
     else:
-        cron = croniter(schedule.get('cron_list')[0], now_utc)
+        cron = croniter(schedule.get("cron_list")[0], now_utc)
         next_run = cron.get_next(datetime)
-        for cron_entry in schedule.get('cron_list'):
+        for cron_entry in schedule.get("cron_list"):
             next_candidate = croniter(cron_entry, now_utc).get_next(datetime)
             if next_candidate < next_run:
                 next_run = next_candidate
@@ -110,83 +119,97 @@ def get_next_run(schedule, now_utc=None):
     return next_run
 
 
-def push_template_notification(docs, event='template:update'):
+def push_template_notification(docs, event="template:update"):
     user = get_user()
     template_desks = set()
 
     for doc in docs:
-        if doc.get('template_desks'):
-            template_desks.update([str(template) for template in doc.get('template_desks')])
+        if doc.get("template_desks"):
+            template_desks.update([str(template) for template in doc.get("template_desks")])
 
-    push_notification(event, user=str(user.get(config.ID_FIELD, '')), desks=list(template_desks))
+    push_notification(event, user=str(user.get(config.ID_FIELD, "")), desks=list(template_desks))
 
 
 class ContentTemplatesResource(Resource):
     schema = {
-        'data': {
-            'type': 'dict',
-            'schema': get_schema(),
+        "data": {
+            "type": "dict",
+            "schema": get_schema(),
         },
-
-        'template_name': {
-            'type': 'string',
-            'unique_template': True,
-            'required': True,
+        "template_name": {
+            "type": "string",
+            "unique_template": True,
+            "required": True,
         },
-
-        'template_type': {
-            'type': 'string',
-            'required': True,
-            'allowed': TemplateType.values(),
-            'default': TemplateType.CREATE.value,
+        "template_type": {
+            "type": "string",
+            "required": True,
+            "allowed": TemplateType.values(),
+            "default": TemplateType.CREATE.value,
         },
-
-        'template_desks': {
-            'type': 'list',
-            'required': False,
-            'nullable': True,
-            'schema': Resource.rel('desks', embeddable=False, nullable=True)
+        "template_desks": {
+            "type": "list",
+            "required": False,
+            "nullable": True,
+            "schema": Resource.rel("desks", embeddable=False, nullable=True),
         },
-
-        'schedule_desk': Resource.rel('desks', embeddable=False, nullable=True),
-
-        'schedule_stage': Resource.rel('stages', embeddable=False, nullable=True),
-
-        'schedule': {'type': 'dict', 'schema': {
-            'is_active': {'type': 'boolean'},
-            'create_at': {'type': 'string'},
-            # List of cron expressions that determine the times items should be created.
-            'cron_list': {'type': 'list', 'required': False, 'nullable': True,
-                          'schema': {'type': 'string'}},
-            'day_of_week': {'type': 'list'},
-            'time_zone': {
-                'type': 'string',
-                'nullable': True
-            }
-        }},
-
-        'last_run': {'type': 'datetime', 'readonly': True},
-        'next_run': {'type': 'datetime', 'readonly': True},
-
-        'user': Resource.rel('users'),
-        'is_public': {'type': 'boolean', 'unique_template': True, 'default': False},
+        "schedule_desk": Resource.rel("desks", embeddable=False, nullable=True),
+        "schedule_stage": Resource.rel("stages", embeddable=False, nullable=True),
+        "schedule_macro": {"type": "string", "nullable": True},
+        "schedule": {
+            "type": "dict",
+            "schema": {
+                "is_active": {"type": "boolean"},
+                "create_at": {"type": "string"},
+                # List of cron expressions that determine the times items should be created.
+                "cron_list": {"type": "list", "required": False, "nullable": True, "schema": {"type": "string"}},
+                "day_of_week": {"type": "list"},
+                "time_zone": {"type": "string", "nullable": True},
+            },
+        },
+        "last_run": {"type": "datetime", "readonly": True},
+        "next_run": {"type": "datetime", "readonly": True},
+        "user": Resource.rel("users"),
+        "is_public": {"type": "boolean", "unique_template": True, "default": False},
+        "item": {
+            "type": "dict",
+            "schema": {},
+            "allow_unknown": True,
+        },
     }
 
-    additional_lookup = {
-        'url': 'regex("[\w]+")',
-        'field': 'template_name'
-    }
+    additional_lookup = {"url": 'regex("[\w]+")', "field": "template_name"}
 
-    resource_methods = ['GET', 'POST']
-    item_methods = ['GET', 'PATCH', 'DELETE']
+    resource_methods = ["GET", "POST"]
+    item_methods = ["GET", "PATCH", "DELETE"]
     no_privileges = True
 
+    merge_nested_documents = True
+
     mongo_indexes = {
-        'user_1_template_name_1_is_public_1': ([('user', 1), ('template_name', 1), ('is_public', 1)], {'unique': True}),
+        "user_1_template_name_1_is_public_1": ([("user", 1), ("template_name", 1), ("is_public", 1)], {"unique": True}),
     }
 
 
 class ContentTemplatesService(BaseService):
+    def get(self, req, lookup):
+        active_user = g.get("user", {})
+        privileges = active_user.get("active_privileges", {})
+        if not lookup:
+            lookup = {}
+        if req and req.args and req.args.get("manage"):
+            if not privileges.get("content_templates") and not privileges.get("personal_template"):
+                lookup.update({"$and": [{"is_public": False}, {"user": active_user.get("_id")}]})
+            elif not privileges.get("content_templates") and privileges.get("personal_template"):
+                lookup.update({"$or": [{"is_public": False}, {"user": active_user.get("_id")}]})
+            elif privileges.get("content_templates") and not privileges.get("personal_template"):
+                lookup.update({"$or": [{"is_public": True}, {"user": active_user.get("_id")}]})
+        else:
+            if not privileges.get("personal_template"):
+                lookup.update({"$or": [{"is_public": True}, {"user": active_user.get("_id")}]})
+        results = super().get(req, lookup)
+
+        return results
 
     def get(self, req, lookup):
         active_user = g.get('user', {})
@@ -209,46 +232,52 @@ class ContentTemplatesService(BaseService):
 
     def on_create(self, docs):
         for doc in docs:
-            self._validate_privileges(doc, action='create')
-            doc['template_name'] = doc['template_name'].lower().strip()
-            if doc.get('schedule'):
-                doc['next_run'] = get_next_run(doc.get('schedule'))
+            self._validate_privileges(doc, action="create")
+            doc["template_name"] = doc["template_name"].lower().strip()
+            if doc.get("schedule"):
+                doc["next_run"] = get_next_run(doc.get("schedule"))
 
-            if doc.get('template_type') == TemplateType.KILL.value and \
-                    any(key for key in doc.keys() if key in KILL_TEMPLATE_NOT_REQUIRED_FIELDS):
+            if doc.get("template_type") == TemplateType.KILL.value and any(
+                key for key in doc.keys() if key in KILL_TEMPLATE_NOT_REQUIRED_FIELDS
+            ):
                 raise SuperdeskApiError.badRequestError(
                     message=_("Invalid kill template. {fields} are not allowed").format(
-                        fields=', '.join(KILL_TEMPLATE_NOT_REQUIRED_FIELDS)))
-            if doc.get('template_type') == TemplateType.KILL.value:
+                        fields=", ".join(KILL_TEMPLATE_NOT_REQUIRED_FIELDS)
+                    )
+                )
+            if doc.get("template_type") == TemplateType.KILL.value:
                 self._validate_kill_template(doc)
             if get_user():
-                doc.setdefault('user', get_user()[config.ID_FIELD])
+                doc.setdefault("user", get_user()[config.ID_FIELD])
             self._validate_template_desks(doc)
 
     def on_created(self, docs):
         push_template_notification(docs)
 
     def on_update(self, updates, original):
-        self._validate_privileges(original, action='update')
-        if updates.get('template_type') and updates.get('template_type') != original.get('template_type') and \
-           updates.get('template_type') == TemplateType.KILL.value:
+        self._validate_privileges(original, action="update")
+        if (
+            updates.get("template_type")
+            and updates.get("template_type") != original.get("template_type")
+            and updates.get("template_type") == TemplateType.KILL.value
+        ):
             self._validate_kill_template(updates)
             self._process_kill_template(updates)
 
-        if updates.get('schedule'):
-            original_schedule = deepcopy(original.get('schedule', {}))
-            original_schedule.update(updates.get('schedule'))
-            updates['next_run'] = get_next_run(original_schedule)
+        if updates.get("schedule"):
+            original_schedule = deepcopy(original.get("schedule", {}))
+            original_schedule.update(updates.get("schedule"))
+            updates["next_run"] = get_next_run(original_schedule)
         self._validate_template_desks(updates, original)
 
-        profile_id = updates.get('data', {}).get('profile')
-        if profile_id and str(profile_id) != str(original.get('data', {}).get('profile', '')):
+        profile_id = updates.get("data", {}).get("profile")
+        if profile_id and str(profile_id) != str(original.get("data", {}).get("profile", "")):
             # if profile is changed remove unnecessary fields from template
             original_template = deepcopy(original)
             original_template.update(updates)
-            profile = get_resource_service('content_types').find_one(req=None, _id=profile_id)
+            profile = get_resource_service("content_types").find_one(req=None, _id=profile_id)
             data, _ = self._reset_fields(original_template, profile)
-            updates['data'] = data
+            updates["data"] = data
 
     def on_updated(self, updates, original):
         push_template_notification([updates, original])
@@ -264,18 +293,18 @@ class ContentTemplatesService(BaseService):
             self.handle_existing_data(item)
 
     def handle_existing_data(self, item):
-        schedule = item.get('schedule')
-        if schedule and 'cron_list' not in schedule and 'create_at' in schedule:
-            time = schedule.get('create_at').split(':')
-            cron_days = ','.join(schedule.get('day_of_week', '*')) if len(schedule.get('day_of_week')) else '*'
-            cron_entry = '{} {} * * {}'.format(time[1], time[0], cron_days)
-            schedule['cron_list'] = [cron_entry]
-            schedule.pop('create_at', None)
+        schedule = item.get("schedule")
+        if schedule and "cron_list" not in schedule and "create_at" in schedule:
+            time = schedule.get("create_at").split(":")
+            cron_days = ",".join(schedule.get("day_of_week", "*")) if len(schedule.get("day_of_week")) else "*"
+            cron_entry = "{} {} * * {}".format(time[1], time[0], cron_days)
+            schedule["cron_list"] = [cron_entry]
+            schedule.pop("create_at", None)
 
     def on_delete(self, doc):
-        self._validate_privileges(doc, action='delete')
-        if doc.get('template_type') == TemplateType.KILL.value:
-            raise SuperdeskApiError.badRequestError(_('Kill templates can not be deleted.'))
+        self._validate_privileges(doc, action="delete")
+        if doc.get("template_type") == TemplateType.KILL.value:
+            raise SuperdeskApiError.badRequestError(_("Kill templates can not be deleted."))
 
     def on_deleted(self, doc):
         push_template_notification([doc])
@@ -286,13 +315,13 @@ class ContentTemplatesService(BaseService):
         :param datetime now:
         :return MongoCursor:
         """
-        query = {'next_run': {'$lte': now}, 'schedule.is_active': True}
+        query = {"next_run": {"$lte": now}, "schedule.is_active": True}
         return self.find(query)
 
     def get_templates_by_profile_id(self, profile_id):
         """Get all templates by profile id"""
         templates = self.get(req=None, lookup=None)
-        return [t for t in templates if str(t.get('data', {}).get('profile', '')) == str(profile_id)]
+        return [t for t in templates if str(t.get("data", {}).get("profile", "")) == str(profile_id)]
 
     def update_template_profile(self, updates, profile_id, templates=None):
         """
@@ -308,38 +337,49 @@ class ContentTemplatesService(BaseService):
         for template in templates:
             data, processed = self._reset_fields(template, updates)
             if processed:
-                self.patch(template.get(config.ID_FIELD), {'data': data})
+                self.patch(template.get(config.ID_FIELD), {"data": data})
 
     def _reset_fields(self, template, profile_data):
         """
         Removes fields from template which is disabled or doesn't exist in profile
         """
-        fields_to_keep = ['profile', 'type', 'flags', 'format', 'pubstatus', 'language', 'usageterms', 'company_codes',
-                          'keywords', 'target_regions', 'target_types', 'target_subscribers']
-        data = deepcopy(template.get('data', {}))
-        schema = profile_data.get('schema', {})
+        fields_to_keep = [
+            "profile",
+            "type",
+            "flags",
+            "format",
+            "pubstatus",
+            "language",
+            "usageterms",
+            "company_codes",
+            "keywords",
+            "target_regions",
+            "target_types",
+            "target_subscribers",
+        ]
+        data = deepcopy(template.get("data", {}))
+        schema = profile_data.get("schema", {})
         processed = False
 
         # Reset fields that are disabled or doesn't exist in content profile
         fields_to_remove = []
         for field, params in data.items():
-            if field not in schema or not schema.get(field) or \
-                    not schema.get(field, {}).get('enabled', True):
+            if field not in schema or not schema.get(field) or not schema.get(field, {}).get("enabled", True):
                 fields_to_remove.append(field)
 
         for field in fields_to_remove:
             if field not in fields_to_keep:
                 if field in metadata_schema:
-                    if metadata_schema.get(field, {}).get('nullable'):
+                    if metadata_schema.get(field, {}).get("nullable"):
                         data[field] = None
                     else:
-                        if metadata_schema.get(field, {}).get('type') == 'list':
+                        if metadata_schema.get(field, {}).get("type") == "list":
                             data[field] = []
-                        if metadata_schema.get(field, {}).get('type') == 'string':
-                            data[field] = ''
-                        if metadata_schema.get(field, {}).get('type') == 'integer':
+                        if metadata_schema.get(field, {}).get("type") == "string":
+                            data[field] = ""
+                        if metadata_schema.get(field, {}).get("type") == "integer":
                             data[field] = 0
-                        if metadata_schema.get(field, {}).get('type') == 'dict':
+                        if metadata_schema.get(field, {}).get("type") == "dict":
                             data[field] = {}
                 else:
                     data[field] = None
@@ -353,21 +393,21 @@ class ContentTemplatesService(BaseService):
         :param str template_name: template name
         :return dict: template
         """
-        query = {'template_name': re.compile('^{}$'.format(template_name), re.IGNORECASE)}
+        query = {"template_name": re.compile("^{}$".format(template_name), re.IGNORECASE)}
         return self.find_one(req=None, **query)
 
     def _validate_kill_template(self, doc):
         """
         Validates input values for kill templates
         """
-        if doc.get('template_type') != TemplateType.KILL.value:
+        if doc.get("template_type") != TemplateType.KILL.value:
             return
 
-        if doc.get('template_desks'):
-            raise SuperdeskApiError.badRequestError('Kill templates can not be assigned to desks')
-        if 'is_public' in doc and doc['is_public'] is False:
-            raise SuperdeskApiError.badRequestError(_('Kill templates must be public'))
-        doc['is_public'] = True
+        if doc.get("template_desks"):
+            raise SuperdeskApiError.badRequestError("Kill templates can not be assigned to desks")
+        if "is_public" in doc and doc["is_public"] is False:
+            raise SuperdeskApiError.badRequestError(_("Kill templates must be public"))
+        doc["is_public"] = True
 
     def _validate_template_desks(self, updates, original=None):
         """
@@ -375,86 +415,91 @@ class ContentTemplatesService(BaseService):
         """
         if original is None:
             original = {}
-        template_type = updates.get('template_type', original.get('template_type'))
-        if template_type != TemplateType.CREATE.value and \
-                type(updates.get('template_desks')) == list and \
-                len(updates['template_desks']) > 1:
+        template_type = updates.get("template_type", original.get("template_type"))
+        if (
+            template_type != TemplateType.CREATE.value
+            and type(updates.get("template_desks")) == list
+            and len(updates["template_desks"]) > 1
+        ):
             raise SuperdeskApiError.badRequestError(
-                message=_('Templates that are not create type can only be assigned to one desk!'))
+                message=_("Templates that are not create type can only be assigned to one desk!")
+            )
 
     def _process_kill_template(self, doc):
         """
         Marks certain field required by the kill as null.
         """
-        if doc.get('template_type') != TemplateType.KILL.value:
+        if doc.get("template_type") != TemplateType.KILL.value:
             return
 
         for key in KILL_TEMPLATE_NOT_REQUIRED_FIELDS:
             if key in metadata_schema:
-                doc.setdefault('data', {})
-                doc['data'][key] = None
+                doc.setdefault("data", {})
+                doc["data"][key] = None
             else:
                 doc[key] = None
 
     def _validate_privileges(self, doc, action=None):
-        active_user = g.get('user')
-        user = doc.get('user')
-        privileges = active_user.get('active_privileges', {}) if active_user else {}
-        if (active_user and active_user.get('user_type')) == 'administrator':
+        active_user = g.get("user")
+        user = doc.get("user")
+        privileges = active_user.get("active_privileges", {}) if active_user else {}
+        if (active_user and active_user.get("user_type")) == "administrator":
             return
-        elif (active_user and user and not doc.get('is_public')
-                and active_user.get(config.ID_FIELD) != doc.get('user') and not privileges.get('personal_template')):
+        elif (
+            active_user
+            and user
+            and not doc.get("is_public")
+            and active_user.get(config.ID_FIELD) != doc.get("user")
+            and not privileges.get("personal_template")
+        ):
             raise SuperdeskApiError.badRequestError(
-                _('You dont have the privilege to {action} another user personal template'.format(action=action)))
-        elif (active_user and doc.get('is_public')
-                and not privileges.get(CONTENT_TEMPLATE_PRIVILEGE)):
+                _("You dont have the privilege to {action} another user personal template".format(action=action))
+            )
+        elif active_user and doc.get("is_public") and not privileges.get(CONTENT_TEMPLATE_PRIVILEGE):
             raise SuperdeskApiError.badRequestError(
-                _('You dont have the privilege to {action} the public template'.format(action=action)))
+                _("You dont have the privilege to {action} the public template".format(action=action))
+            )
 
 
 class ContentTemplatesApplyResource(Resource):
-    endpoint_name = 'content_templates_apply'
+    endpoint_name = "content_templates_apply"
     resource_title = endpoint_name
     schema = {
-        'template_name': {
-            'type': 'string',
-            'required': True
-        },
-        'item': {
-            'type': 'dict',
-            'required': True,
-            'schema': item_schema()
-        }
+        "template_name": {"type": "string", "required": True},
+        "item": {"type": "dict", "required": True, "schema": item_schema()},
+        "_links": {"type": "dict"},
     }
 
-    resource_methods = ['POST']
+    # in response there can be anything..
+    schema.update(get_schema())
+
+    resource_methods = ["POST"]
     item_methods = []
-    privileges = {'POST': ARCHIVE}
-    url = 'content_templates_apply'
+    privileges = {"POST": ARCHIVE}
+    url = "content_templates_apply"
 
 
 class ContentTemplatesApplyService(Service):
-
     def create(self, docs, **kwargs):
         doc = docs[0] if len(docs) > 0 else {}
-        template_name = doc.get('template_name')
-        item = doc.get('item') or {}
-        item['desk_name'] = get_resource_service('desks').get_desk_name(item.get('task', {}).get('desk'))
+        template_name = doc.get("template_name")
+        item = doc.get("item") or {}
+        item["desk_name"] = get_resource_service("desks").get_desk_name(item.get("task", {}).get("desk"))
 
         if not template_name:
-            SuperdeskApiError.badRequestError(message='Invalid Template Name')
+            SuperdeskApiError.badRequestError(message="Invalid Template Name")
 
         if not item:
-            SuperdeskApiError.badRequestError(message='Invalid Item')
+            SuperdeskApiError.badRequestError(message="Invalid Item")
 
-        template = superdesk.get_resource_service('content_templates').get_template_by_name(template_name)
+        template = superdesk.get_resource_service("content_templates").get_template_by_name(template_name)
         if not template:
-            SuperdeskApiError.badRequestError(message='Invalid Template')
+            SuperdeskApiError.badRequestError(message="Invalid Template")
 
         updates = render_content_template(item, template)
         item.update(updates)
 
-        editor_utils.generate_fields(item, force=True)
+        editor_utils.generate_fields(item, reload=True)
 
         if template_name == "kill":
             apply_null_override_for_kill(item)
@@ -472,9 +517,9 @@ def render_content_template_by_name(item, template_name):
     :return dict: updates to the item
     """
     # get the kill template
-    template = superdesk.get_resource_service('content_templates').get_template_by_name(template_name)
+    template = superdesk.get_resource_service("content_templates").get_template_by_name(template_name)
     if not template:
-        SuperdeskApiError.badRequestError(message='{} Template missing.'.format(template_name))
+        SuperdeskApiError.badRequestError(message="{} Template missing.".format(template_name))
 
     # apply the kill template
     return render_content_template(item, template)
@@ -489,9 +534,9 @@ def render_content_template_by_id(item, template_id, update=False):
     :return dict: updates to the item
     """
     # get the kill template
-    template = superdesk.get_resource_service('content_templates').find_one(req=None, _id=template_id)
+    template = superdesk.get_resource_service("content_templates").find_one(req=None, _id=template_id)
     if not template:
-        SuperdeskApiError.badRequestError(message='{} Template missing.'.format(template_id))
+        SuperdeskApiError.badRequestError(message="{} Template missing.".format(template_id))
 
     return render_content_template(item, template, update)
 
@@ -503,16 +548,24 @@ def render_content_template(item, template, update=False):
     :param dict template: template
     :return dict: updates to the item
     """
-    kwargs = dict(item=item, user=get_user())
-    template_data = template.get('data', {}) if template else {}
+    new_template_data_ignore_fields = TEMPLATE_DATA_IGNORE_FIELDS.copy()
+    kwargs = dict(item=item, user=get_user(), now=utcnow())
+
+    dateline_present_in_user_preferences = (
+        kwargs["user"].get("user_preferences", {}).get("dateline:located", {}).get("located")
+    )
+    if dateline_present_in_user_preferences:
+        new_template_data_ignore_fields.add("dateline")
+
+    template_data = template.get("data", {}) if template else {}
 
     def render_content_template_fields(data, dest=None, top=True):
         updates = {}
         for key, value in data.items():
-            if (top and key in TEMPLATE_DATA_IGNORE_FIELDS) or not value:
+            if (top and key in new_template_data_ignore_fields) or not value:
                 continue
 
-            if top and key == 'extra':
+            if top and key == "extra":
                 updates[key] = render_content_template_fields(value, top=False)
                 if update:
                     item.setdefault(key, {}).update(updates[key])
@@ -538,7 +591,6 @@ def render_content_template(item, template, update=False):
                     item[key].update(value)
                 else:
                     item[key] = value
-
         return updates
 
     return render_content_template_fields(template_data, dest=item)
@@ -550,7 +602,7 @@ def get_scheduled_templates(now):
     :param datetime now
     :return Cursor
     """
-    return superdesk.get_resource_service('content_templates').get_scheduled_templates(now)
+    return superdesk.get_resource_service("content_templates").get_scheduled_templates(now)
 
 
 def set_template_timestamps(template, now):
@@ -560,10 +612,10 @@ def set_template_timestamps(template, now):
     :param datetime now
     """
     updates = {
-        'last_run': now,
-        'next_run': get_next_run(template.get('schedule'), now),
+        "last_run": now,
+        "next_run": get_next_run(template.get("schedule"), now),
     }
-    service = superdesk.get_resource_service('content_templates')
+    service = superdesk.get_resource_service("content_templates")
     service.update(template[config.ID_FIELD], updates, template)
 
 
@@ -572,13 +624,14 @@ def get_item_from_template(template):
 
     :param dict template
     """
-    item = template.get('data', {})
+    item = template.get("data", {})
     item[ITEM_STATE] = CONTENT_STATE.SUBMITTED
-    if template.get('schedule_desk'):
-        item['task'] = {'desk': template['schedule_desk'], 'stage': template.get('schedule_stage')}
-    item['template'] = template.get('_id')
-    item.pop('firstcreated', None)
-    item.pop('versioncreated', None)
+    if template.get("schedule_desk"):
+        item["task"] = {"desk": template["schedule_desk"], "stage": template.get("schedule_stage")}
+    item["template"] = template.get("_id")
+    item["macro"] = template.get("schedule_macro")
+    item.pop("firstcreated", None)
+    item.pop("versioncreated", None)
 
     update_dateline(item)
     filter_plaintext_fields(item)
@@ -588,10 +641,10 @@ def get_item_from_template(template):
 
 def update_dateline(item):
     # handle dateline
-    dateline = item.get('dateline', {})
-    dateline['date'] = utcnow()
-    if dateline.get('located'):
-        dateline['text'] = format_dateline_to_locmmmddsrc(dateline['located'], dateline['date'])
+    dateline = item.get("dateline", {})
+    dateline["date"] = utcnow()
+    if dateline.get("located"):
+        dateline["text"] = format_dateline_to_locmmmddsrc(dateline["located"], dateline["date"])
 
 
 def filter_plaintext_fields(item):
@@ -602,7 +655,7 @@ def filter_plaintext_fields(item):
 
 
 def apply_null_override_for_kill(item):
-    for key in app.config['KILL_TEMPLATE_NULL_FIELDS']:
+    for key in app.config["KILL_TEMPLATE_NULL_FIELDS"]:
         if key in item:
             item[key] = None
 
@@ -611,7 +664,7 @@ def apply_null_override_for_kill(item):
 def create_scheduled_content(now=None):
     lock_name = get_lock_id("Template", "Schedule")
     if not lock(lock_name, expire=130):
-        logger.info('Task: {} is already running.'.format(lock_name))
+        logger.info("Task: {} is already running.".format(lock_name))
         return
 
     try:
@@ -629,11 +682,11 @@ def create_scheduled_content(now=None):
             try:
                 apply_onstage_rule(item, item.get(config.ID_FIELD))
             except Exception as ex:  # noqa
-                logger.exception('Failed to apply on stage rule while scheduling template.')
+                logger.exception("Failed to apply on stage rule while scheduling template.")
             items.append(item)
         return items
     except Exception as e:
-        logger.exception('Task: {} failed with error {}.'.format(lock_name, str(e)))
+        logger.exception("Task: {} failed with error {}.".format(lock_name, str(e)))
     finally:
         unlock(lock_name)
 
@@ -647,12 +700,14 @@ def create_template_for_profile(items):
     """
     templates = []
     for profile in items:
-        if profile.get('label'):
-            templates.append({
-                'template_name': profile.get('label'),
-                'is_public': True,
-                'data': {'profile': str(profile.get(config.ID_FIELD))}
-            })
+        if profile.get("label"):
+            templates.append(
+                {
+                    "template_name": profile.get("label"),
+                    "is_public": True,
+                    "data": {"profile": str(profile.get(config.ID_FIELD))},
+                }
+            )
     if templates:
         superdesk.get_resource_service(CONTENT_TEMPLATE_RESOURCE).post(templates)
 
@@ -662,8 +717,9 @@ def remove_profile_from_templates(item):
 
     :param item: deleted content profile
     """
-    templates = list(superdesk.get_resource_service(CONTENT_TEMPLATE_RESOURCE).
-                     get_templates_by_profile_id(item.get(config.ID_FIELD)))
+    templates = list(
+        superdesk.get_resource_service(CONTENT_TEMPLATE_RESOURCE).get_templates_by_profile_id(item.get(config.ID_FIELD))
+    )
     for template in templates:
-        template.get('data', {}).pop('profile', None)
+        template.get("data", {}).pop("profile", None)
         superdesk.get_resource_service(CONTENT_TEMPLATE_RESOURCE).patch(template[config.ID_FIELD], template)

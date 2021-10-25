@@ -31,15 +31,15 @@ class UsersService(BaseService):
     def on_create(self, docs):
         super().on_create(docs)
         for doc in docs:
-            if doc.get('password', None) and not is_hashed(doc.get('password')):
-                doc['password'] = self._get_password_hash(doc['password'])
+            if doc.get("password", None) and not is_hashed(doc.get("password")):
+                doc["password"] = self._get_password_hash(doc["password"])
 
     def on_update(self, updates, original):
-        if 'password' in updates:
-            updates['password'] = self._get_password_hash(updates['password'])
+        if "password" in updates:
+            updates["password"] = self._get_password_hash(updates["password"])
 
     def _get_password_hash(self, password):
-        return get_hash(password, app.config.get('BCRYPT_GENSALT_WORK_FACTOR', 12))
+        return get_hash(password, app.config.get("BCRYPT_GENSALT_WORK_FACTOR", 12))
 
     def password_match(self, password, hashed_password):
         """Return true if the given password matches the hashed password

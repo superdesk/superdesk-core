@@ -12,24 +12,25 @@ from eve.utils import config
 from superdesk import get_resource_service
 from planning.common import ASSIGNMENT_WORKFLOW_STATE
 from copy import deepcopy
+from flask_babel import lazy_gettext
 
 
 def update_on_assign_id(item, **kwargs):
-    assign_id = item.get('assignment_id')
+    assign_id = item.get("assignment_id")
     if assign_id:
-        assignments_service = get_resource_service('assignments')
+        assignments_service = get_resource_service("assignments")
         assignment = assignments_service.find_one(req=None, _id=assign_id)
         if assignment is None:
             return item
-        if assignment['assigned_to']['state'] == ASSIGNMENT_WORKFLOW_STATE.ASSIGNED:
-            updates = {'assigned_to': deepcopy(assignment.get('assigned_to'))}
-            updates['assigned_to']['state'] = ASSIGNMENT_WORKFLOW_STATE.IN_PROGRESS
+        if assignment["assigned_to"]["state"] == ASSIGNMENT_WORKFLOW_STATE.ASSIGNED:
+            updates = {"assigned_to": deepcopy(assignment.get("assigned_to"))}
+            updates["assigned_to"]["state"] = ASSIGNMENT_WORKFLOW_STATE.IN_PROGRESS
             assignments_service.patch(assignment[config.ID_FIELD], updates)
     return item
 
 
-name = 'assign_status'
-label = 'Update Status On Assignment ID'
+name = "assign_status"
+label = lazy_gettext("Update Status On Assignment ID")
 callback = update_on_assign_id
-access_type = 'backend'
-action_type = 'direct'
+access_type = "backend"
+action_type = "direct"

@@ -40,17 +40,19 @@ logger = logging.getLogger(__name__)
 
 profile = cProfile.Profile()
 
-UPDATE_SCHEDULE_DEFAULT = {'seconds': 10}
+UPDATE_SCHEDULE_DEFAULT = {"seconds": 10}
 
-ITEM_PUBLISH = 'publish'
-ITEM_CORRECT = 'correct'
-ITEM_KILL = 'kill'
-ITEM_TAKEDOWN = 'takedown'
-ITEM_UNPUBLISH = 'unpublish'
+ITEM_PUBLISH = "publish"
+ITEM_CORRECT = "correct"
+ITEM_KILL = "kill"
+ITEM_TAKEDOWN = "takedown"
+ITEM_UNPUBLISH = "unpublish"
+ITEM_BEING_CORRECTED = "being_corrected"
 
 enqueue_services = {
     ITEM_PUBLISH: EnqueuePublishedService(),
     ITEM_CORRECT: EnqueueCorrectedService(),
+    ITEM_BEING_CORRECTED: EnqueueCorrectedService(published_state=CONTENT_STATE.BEING_CORRECTED),
     ITEM_KILL: EnqueueKilledService(),
     ITEM_TAKEDOWN: EnqueueKilledService(published_state=CONTENT_STATE.RECALLED),
     ITEM_UNPUBLISH: EnqueueKilledService(published_state=CONTENT_STATE.UNPUBLISHED),
@@ -80,11 +82,10 @@ class EnqueueContent(superdesk.Command):
     """
 
     def run(self):
-        """Fetches items from publish queue as per the configuration, calls the transmit function.
-        """
-        lock_name = get_lock_id('publish', 'enqueue_published')
+        """Fetches items from publish queue as per the configuration, calls the transmit function."""
+        lock_name = get_lock_id("publish", "enqueue_published")
         if not lock(lock_name, expire=310):
-            logger.info('Enqueue Task: {} is already running.'.format(lock_name))
+            logger.info("Enqueue Task: {} is already running.".format(lock_name))
             return
 
         try:
@@ -102,15 +103,19 @@ class EnqueueContent(superdesk.Command):
         published_item_id = ObjectId(published_item[config.ID_FIELD])
         published_service = get_resource_service(PUBLISHED)
         archive_service = get_resource_service(ARCHIVE)
-        published_update = {QUEUE_STATE: PUBLISH_STATE.IN_PROGRESS, 'last_queue_event': utcnow()}
+        published_update = {QUEUE_STATE: PUBLISH_STATE.IN_PROGRESS, "last_queue_event": utcnow()}
         try:
-            logger.info('Queueing item with id: {} and item_id: {}'.format(published_item_id,
-                                                                           published_item['item_id']))
+            logger.info(
+                "Queueing item with id: {} and item_id: {}".format(published_item_id, published_item["item_id"])
+            )
 
             published_item = published_service.find_one(req=None, _id=published_item_id)
             if published_item.get(QUEUE_STATE) != PUBLISH_STATE.PENDING:
-                logger.info('Queue State is not pending for published item {}. It is in {}'.
-                            format(published_item_id, published_item.get(QUEUE_STATE)))
+                logger.info(
+                    "Queue State is not pending for published item {}. It is in {}".format(
+                        published_item_id, published_item.get(QUEUE_STATE)
+                    )
+                )
                 return
 
             if published_item.get(ITEM_STATE) == CONTENT_STATE.SCHEDULED:
@@ -118,34 +123,43 @@ class EnqueueContent(superdesk.Command):
                 # change the `version` and `versioncreated` for the item
                 # in archive collection and published collection.
                 versioncreated = utcnow()
-                item_updates = {'versioncreated': versioncreated, ITEM_STATE: CONTENT_STATE.PUBLISHED}
-                resolve_document_version(document=item_updates, resource=ARCHIVE,
-                                         method='PATCH',
-                                         latest_doc={config.VERSION: published_item[config.VERSION]})
+                item_updates = {"versioncreated": versioncreated, ITEM_STATE: CONTENT_STATE.PUBLISHED}
+                resolve_document_version(
+                    document=item_updates,
+                    resource=ARCHIVE,
+                    method="PATCH",
+                    latest_doc={config.VERSION: published_item.get(config.VERSION, 1)},
+                )
 
                 # update the archive collection
-                archive_item = archive_service.find_one(req=None, _id=published_item['item_id'])
-                archive_service.system_update(published_item['item_id'], item_updates, archive_item)
+                archive_item = archive_service.find_one(req=None, _id=published_item["item_id"])
+                archive_service.system_update(published_item["item_id"], item_updates, archive_item)
                 # insert into version.
-                insert_into_versions(published_item['item_id'], doc=None)
+                insert_into_versions(published_item["item_id"], doc=None)
                 # update archive history
                 app.on_archive_item_updated(item_updates, archive_item, ITEM_PUBLISH)
                 # import to legal archive
-                import_into_legal_archive.apply_async(countdown=3, kwargs={'item_id': published_item['item_id']})
-                logger.info('Modified the version of scheduled item: {}'.format(published_item_id))
+                import_into_legal_archive.apply_async(countdown=3, kwargs={"item_id": published_item["item_id"]})
+                logger.info("Modified the version of scheduled item: {}".format(published_item_id))
 
-                logger.info('Publishing scheduled item_id: {}'.format(published_item_id))
+                logger.info("Publishing scheduled item_id: {}".format(published_item_id))
                 # update the published collection
                 published_update.update(item_updates)
-                published_item.update({'versioncreated': versioncreated,
-                                       ITEM_STATE: CONTENT_STATE.PUBLISHED,
-                                       config.VERSION: item_updates[config.VERSION]})
+                published_item.update(
+                    {
+                        "versioncreated": versioncreated,
+                        ITEM_STATE: CONTENT_STATE.PUBLISHED,
+                        config.VERSION: item_updates[config.VERSION],
+                    }
+                )
                 # send a notification to the clients
                 push_content_notification(
-                    [{'_id': str(published_item['item_id']), 'task': published_item.get('task', None)}])
+                    [{"_id": str(published_item["item_id"]), "task": published_item.get("task", None)}]
+                )
                 #  apply internal destinations
-                signals.item_published.send(self,
-                                            item=archive_service.find_one(req=None, _id=published_item['item_id']))
+                signals.item_published.send(
+                    self, item=archive_service.find_one(req=None, _id=published_item["item_id"])
+                )
 
             published_service.patch(published_item_id, published_update)
             # queue the item for publishing
@@ -154,14 +168,14 @@ class EnqueueContent(superdesk.Command):
             except KeyError as key_error:
                 error_updates = {QUEUE_STATE: PUBLISH_STATE.ERROR, ERROR_MESSAGE: str(key_error)}
                 published_service.patch(published_item_id, error_updates)
-                logger.exception('No enqueue service found for operation %s', published_item[ITEM_OPERATION])
+                logger.exception("No enqueue service found for operation %s", published_item[ITEM_OPERATION])
                 raise
 
             # if the item is queued in the publish_queue then the state is "queued"
             # else the queue state is "queued_not_transmitted"
             queue_state = PUBLISH_STATE.QUEUED if queued else PUBLISH_STATE.QUEUED_NOT_TRANSMITTED
             published_service.patch(published_item_id, {QUEUE_STATE: queue_state})
-            logger.info('Queued item with id: {} and item_id: {}'.format(published_item_id, published_item['item_id']))
+            logger.info("Queued item with id: {} and item_id: {}".format(published_item_id, published_item["item_id"]))
         except ConnectionTimeout as error:  # recoverable, set state to pending and retry next time
             error_updates = {QUEUE_STATE: PUBLISH_STATE.PENDING, ERROR_MESSAGE: str(error)}
             published_service.patch(published_item_id, error_updates)
@@ -181,18 +195,16 @@ class EnqueueContent(superdesk.Command):
         """
         query = {
             QUEUE_STATE: PUBLISH_STATE.PENDING,
-            '$or': [
-                {
-                    ITEM_STATE: {'$ne': CONTENT_STATE.SCHEDULED}
-                },
+            "$or": [
+                {ITEM_STATE: {"$ne": CONTENT_STATE.SCHEDULED}},
                 {
                     ITEM_STATE: CONTENT_STATE.SCHEDULED,
-                    '{}.utc_{}'.format(SCHEDULE_SETTINGS, PUBLISH_SCHEDULE): {'$lte': utcnow()}
-                }
-            ]
+                    "{}.utc_{}".format(SCHEDULE_SETTINGS, PUBLISH_SCHEDULE): {"$lte": utcnow()},
+                },
+            ],
         }
         request = ParsedRequest()
-        request.sort = 'publish_sequence_no'
+        request.sort = "publish_sequence_no"
         request.max_results = 200
         return list(get_resource_service(PUBLISHED).get_from_mongo(req=request, lookup=query))
 
@@ -207,18 +219,18 @@ class EnqueueContent(superdesk.Command):
             try:
                 self.enqueue_item(queue_item)
             except Exception:
-                logger.exception('Failed to queue item {}'.format(queue_item.get('_id')))
-                failed_items[str(queue_item.get('_id'))] = queue_item
+                logger.exception("Failed to queue item {}".format(queue_item.get("_id")))
+                failed_items[str(queue_item.get("_id"))] = queue_item
 
         if len(failed_items) > 0:
-            logger.error('Failed to publish the following items: {}'.format(failed_items.keys()))
+            logger.error("Failed to publish the following items: {}".format(failed_items.keys()))
 
 
-superdesk.command('publish:enqueue', EnqueueContent())
+superdesk.command("publish:enqueue", EnqueueContent())
 
 
 @celery.task(soft_time_limit=300)
 def enqueue_published():
     """Pick new items from ``published`` collection and enqueue it."""
-    with ProfileManager('publish:enqueue'):
+    with ProfileManager("publish:enqueue"):
         EnqueueContent().run()
