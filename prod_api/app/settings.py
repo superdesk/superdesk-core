@@ -15,7 +15,7 @@ The meaning of configuration options is described in the Eve framework
 `documentation <http://python-eve.org/config.html#global-configuration>`_.
 """
 
-from superdesk.default_settings import env, urlparse
+from superdesk.default_settings import env, strtobool
 
 from superdesk.default_settings import (  # noqa
     DEBUG,
@@ -30,7 +30,7 @@ from superdesk.default_settings import (  # noqa
     AMAZON_S3_SUBFOLDER,
     AMAZON_OBJECT_ACL,
     AMAZON_ENDPOINT_URL,
-    strtobool,
+    PAGINATION_LIMIT,
 )
 
 SECRET_KEY = env("PRODAPI_SECRET_KEY", "")

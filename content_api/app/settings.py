@@ -32,6 +32,7 @@ from superdesk.default_settings import (  # noqa
     AMAZON_S3_SUBFOLDER,
     AMAZON_OBJECT_ACL,
     AMAZON_ENDPOINT_URL,
+    PAGINATION_LIMIT,
 )
 
 CONTENTAPI_INSTALLED_APPS = [
@@ -52,6 +53,7 @@ MEDIA_PREFIX = env("MEDIA_PREFIX", "%s/assets" % CONTENTAPI_URL.rstrip("/"))
 server_url = urlparse(CONTENTAPI_URL)
 URL_PREFIX = env("CONTENTAPI_URL_PREFIX", server_url.path.strip("/")) or ""
 VERSION = "_current_version"
+XML = False
 
 PUBLIC_RESOURCES = []
 DATE_FORMAT = "%Y-%m-%dT%H:%M:%S+0000"
