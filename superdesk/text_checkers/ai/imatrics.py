@@ -15,6 +15,7 @@ from flask import current_app
 from collections import OrderedDict
 from typing import Optional, Dict, List
 from urllib.parse import urljoin
+from superdesk.default_settings import SCHEMA
 from superdesk.text_utils import get_text
 from superdesk.errors import SuperdeskApiError
 from .base import AIServiceBase
@@ -38,6 +39,11 @@ CONCEPT_MAPPING = OrderedDict(
         ("place", "place"),
     ]
 )
+
+SCHEME_MAPPING = {
+    "category": "mediatopic",
+    "topic": "imatrics_topic",
+}
 
 DEFAULT_CONCEPT_TYPE = "topic"
 
@@ -100,17 +106,17 @@ class IMatrics(AIServiceBase):
             pass
 
         for link in concept.get("links", []):
-            if link.get("source") == "IPTC":
+            if link.get("source").lower() == "iptc" and link.get("relationType") == "exactMatch":
                 topic_id = link.get("id", "")
                 if topic_id.startswith("medtop:"):
                     topic_id = topic_id[7:]
-                    subject = self.find_subject(topic_id)
-                    if subject:
-                        tag_data.update(subject)
-                    tag_data["altids"]["medtop"] = topic_id
+                subject = self.find_subject(topic_id)
+                if subject:
+                    tag_data.update(subject)
+                tag_data["altids"]["medtop"] = topic_id
 
-        if concept["type"] in ("topic", "category"):
-            tag_data.setdefault("scheme", "imatrics_{}".format(concept["type"]))
+        if concept["type"] in SCHEME_MAPPING:
+            tag_data.setdefault("scheme", SCHEME_MAPPING[concept["type"]])
 
         return tag_data
 
@@ -165,7 +171,7 @@ class IMatrics(AIServiceBase):
         r_data = self._request(
             "article/analysis",
             data,
-            params=dict(conceptFields="uuid,title,type,shortDescription,aliases,source,weight,broader"),
+            params=dict(conceptFields="uuid,title,type,shortDescription,aliases,source,weight,broader,links"),
         )
 
         analyzed_data: Dict[str, List] = {}
@@ -190,7 +196,14 @@ class IMatrics(AIServiceBase):
             "size": 10,
         }
 
-        r_data = self._request("concept/get", data, params=dict(operation="title_type"))
+        r_data = self._request(
+            "concept/get",
+            data,
+            params=dict(
+                operation="title_type",
+                conceptFields="uuid,title,type,shortDescription,aliases,source,weight,broader",
+            ),
+        )
 
         tags: Dict[str, List[Dict]] = {}
         ret = {"tags": tags}
