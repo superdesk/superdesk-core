@@ -96,7 +96,6 @@ def get_data_updates_files(strip_file_extension=False):
     return files
 
 
-
 def get_applied_updates(data_updates_service: Optional[BaseService] = None) -> Tuple[str]:
     if data_updates_service is None:
         data_updates_service = superdesk.get_resource_service("data_updates")

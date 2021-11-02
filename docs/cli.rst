@@ -168,6 +168,36 @@ Superdesk commands
 
 .. autoclass:: superdesk.commands.schema.SchemaMigrateCommand()
 
+``storage:dump``
+^^^^^^^^^^^^^^^^
+
+.. autoclass:: superdesk.commands.data_manipulation.StorageDump
+
+``storage:restore``
+^^^^^^^^^^^^^^^^^^^
+
+.. autoclass:: superdesk.commands.data_manipulation.StorageRestore
+
+``storage:record``
+^^^^^^^^^^^^^^^^^^
+
+.. autoclass:: superdesk.commands.data_manipulation.StorageStartRecording
+
+``storage:restore-record``
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. autoclass:: superdesk.commands.data_manipulation.StorageRestoreRecord
+
+``storage:list``
+^^^^^^^^^^^^^^^^
+
+.. autoclass:: superdesk.commands.data_manipulation.StorageList
+
+``storage:upgrade-dumps``
+^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. autoclass:: superdesk.commands.data_manipulation.StorageMigrateDumps
+
 ``storage:remove_exported``
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
