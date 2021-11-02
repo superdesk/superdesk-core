@@ -443,7 +443,6 @@ class ArchiveService(BaseService):
         for key, value in updates.get("extra", {}).items():
             if type(value) == dict and "embed" in value:
                 value.setdefault("description", "")
-                break
 
         remove_unwanted(updates)
         self._add_system_updates(original, updates, user)
