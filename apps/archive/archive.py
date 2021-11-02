@@ -441,7 +441,7 @@ class ArchiveService(BaseService):
 
         # set description for custom embed field
         for key, value in updates.get("extra", {}).items():
-            if "embed" in value:
+            if type(value) == dict and "embed" in value:
                 value.setdefault("description", "")
                 break
 
