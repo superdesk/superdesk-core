@@ -17,6 +17,7 @@ import logging
 import platform
 import shutil
 from multiprocessing import Process, Lock
+import multiprocessing.synchronize
 from datetime import datetime
 from enum import IntEnum
 from pathlib import Path
@@ -230,7 +231,7 @@ def parse_dump_file(
                             par_count -= 1
                         else:
                             obj = loads("".join(obj_buf))
-                            collection.insert(obj)
+                            collection.insert(obj)  # type: ignore
                             inserted += 1
                             obj_buf.clear()
                             state = State.COLLECTION_OBJECT_END
@@ -488,7 +489,7 @@ class StorageStartRecording(superdesk.Command):
         force_db_reset: bool = False,
         full_document: bool = False,
         collections: Optional[List[str]] = None,
-        lock: Optional[Lock] = None,
+        lock: Optional[multiprocessing.synchronize.Lock] = None,
     ) -> None:
         now = time.time()
         if name is None:
@@ -542,10 +543,6 @@ class StorageStartRecording(superdesk.Command):
                             f.write(dumps(change))
                     except KeyboardInterrupt:
                         print("\n📼⬛ recording stopped")
-                    except Exception as e:
-                        from pudb import set_trace
-
-                        set_trace()
                     finally:
                         f.write("]}")
         except OperationFailure as e:
@@ -667,9 +664,6 @@ class StorageList(superdesk.Command):
                         print(f"  {STYLE_DESC}{desc}{STYLE_RESET}")
                     print()
                 except Exception as e:
-                    from pudb import set_trace
-
-                    set_trace()
                     print(f"{STYLE_ERR}Error while reading dump file at {p}: {e}{STYLE_RESET}", file=sys.stderr)
 
         print(f"⋯⋯⋯⋯⋯⋯⋯⋯⋯⋯⋯⋯⋯⋯⋯⋯\n{STYLE_TITLE}Records{STYLE_RESET}\n")
@@ -761,7 +755,10 @@ class StorageMigrateDumps(superdesk.Command):
                     # recording is started, we can launch the migration scripts
                     data_updates.Upgrade().run()
                     # migration is done, we stop the recording
-                    os.kill(record_process.pid, signal.SIGINT)
+                    if record_process.pid is None:
+                        logger.error("Process ID should available!")
+                    else:
+                        os.kill(record_process.pid, signal.SIGINT)
                     record_process.join(5)
                     if record_process.exitcode != 0:
                         logger.error(

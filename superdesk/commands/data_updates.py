@@ -101,7 +101,7 @@ def get_applied_updates(data_updates_service: Optional[BaseService] = None) -> T
         data_updates_service = superdesk.get_resource_service("data_updates")
     req = ParsedRequest()
     req.sort = "-name"
-    return tuple(data_updates_service.get(req=req, lookup={}))
+    return tuple(data_updates_service.get(req=req, lookup={}))  # type: ignore
 
 
 class DataUpdateCommand(superdesk.Command):
