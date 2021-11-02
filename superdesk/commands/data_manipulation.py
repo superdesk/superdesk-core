@@ -58,7 +58,7 @@ else:
     STYLE_NAME = ""
     STYLE_DESC = ""
     STYLE_ERR = ""
-    INFO = f"[i] "
+    INFO = "[i] "
 
 
 def get_dest_path(dest: Union[Path, str], dump: bool = True) -> Path:
@@ -299,7 +299,7 @@ class StorageDump(superdesk.Command):
         superdesk.Option(
             "--dest-dir",
             default=DUMP_DIR,
-            help=f'destination directory (default: "dump", will be created if necessary)',
+            help='destination directory (default: "dump", will be created if necessary)',
         ),
         superdesk.Option("-D", "--description", help="description of the archive"),
         superdesk.Option("-s", "--single", action="store_true", help="dump data in a single JSON file"),
@@ -455,7 +455,7 @@ class StorageStartRecording(superdesk.Command):
         superdesk.Option(
             "--dest-dir",
             default=RECORD_DIR,
-            help=f'destination directory (default: "dump", will be created if necessary)',
+            help='destination directory (default: "dump", will be created if necessary)',
         ),
         superdesk.Option("-D", "--description", help="description of the record"),
         superdesk.Option("-b", "--base-dump", help="base full dump from which the record must be started"),
@@ -638,7 +638,7 @@ class StorageRestoreRecord(superdesk.Command):
             except Exception:
                 logger.exception("🔥 Oh no, something bad happened")
                 sys.exit(1)
-            print(f"📼⏏ record restored")
+            print("📼⏏ record restored")
 
         print("🚽 flushing ElasticSearch index")
         try:
@@ -798,9 +798,9 @@ class StorageMigrateDumps(superdesk.Command):
         if not dump_path.is_dir():
             print("No dump found")
         else:
-            dumps = list(dump_path.iterdir())
-            for idx, p in enumerate(dumps):
-                print(f"{INFO}Restoring dump {p.stem!r} [{idx+1}/{len(dumps)}]")
+            dump_files_paths = list(dump_path.iterdir())
+            for idx, p in enumerate(dump_files_paths):
+                print(f"{INFO}Restoring dump {p.stem!r} [{idx+1}/{len(dump_files_paths)}]")
                 metadata = get_dump_metadata(p)
                 StorageRestore().run(keep_existing=False, archive=p)
                 print(f"{INFO}Applying data migration scripts")
