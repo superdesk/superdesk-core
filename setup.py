@@ -90,7 +90,7 @@ setup(
     url="https://github.com/superdesk/superdesk-core",
     license="GPLv3",
     platforms=["any"],
-    packages=find_packages(exclude=["tests", "features"]),
+    packages=find_packages(exclude=["tests*", "features*"]),
     package_data=package_data,
     include_package_data=True,
     setup_requires=["setuptools_scm"],
