@@ -439,11 +439,6 @@ class ArchiveService(BaseService):
             publish_from_personal = flask.request.args.get("publish_from_personal") if flask.request else False
             update_state(original, updates, publish_from_personal)
 
-        # set description for custom embed field
-        for key, value in updates.get("extra", {}).items():
-            if type(value) == dict and "embed" in value:
-                value.setdefault("description", "")
-
         remove_unwanted(updates)
         self._add_system_updates(original, updates, user)
         self._handle_media_updates(updates, original, user)
