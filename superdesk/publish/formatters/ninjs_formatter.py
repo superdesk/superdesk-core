@@ -282,6 +282,13 @@ class NINJSFormatter(Formatter):
         if (article.get("schedule_settings") or {}).get("utc_publish_schedule"):
             ninjs["publish_schedule"] = article["schedule_settings"]["utc_publish_schedule"]
 
+        # set description for custom embed field
+        if article.get("extra"):
+            ninjs["extra"] = article["extra"]
+            for key, value in ninjs["extra"].items():
+                if type(value) == dict and "embed" in value:
+                    value.setdefault("description", "")
+
         return ninjs
 
     def _generate_renditions(self, article):
