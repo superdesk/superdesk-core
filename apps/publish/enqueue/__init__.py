@@ -156,10 +156,6 @@ class EnqueueContent(superdesk.Command):
                 push_content_notification(
                     [{"_id": str(published_item["item_id"]), "task": published_item.get("task", None)}]
                 )
-                #  apply internal destinations
-                signals.item_published.send(
-                    self, item=archive_service.find_one(req=None, _id=published_item["item_id"])
-                )
 
             published_service.patch(published_item_id, published_update)
             # queue the item for publishing
