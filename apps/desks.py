@@ -310,14 +310,12 @@ class DesksService(BaseService):
 
         return desk_name
 
-    def get(self, req, lookup):
-        desks = tuple(super().get(req, lookup))
-
+    def on_fetched(self, res):
         members_set = set()
         db_users = app.data.mongo.pymongo("users").db["users"]
 
         # find display_name from the users document for each member in desks document
-        for desk in desks:
+        for desk in res["_items"]:
             if "members" in desk:
                 users = tuple(
                     db_users.find(
@@ -332,14 +330,14 @@ class DesksService(BaseService):
             sorted_members_ids = tuple(m[0] for m in members_list)
 
             # sort the members of each desk according to ordered_dict
-            for desk in desks:
+            for desk in res["_items"]:
                 if "members" in desk:
                     # remove members which don't exist in db
                     desk["members"] = [member for member in desk["members"] if member["user"] in sorted_members_ids]
                     # sort member in desk
                     desk["members"].sort(key=lambda x: sorted_members_ids.index(x["user"]))
 
-        return ListCursor(desks)
+        return res
 
 
 class UserDesksResource(Resource):
