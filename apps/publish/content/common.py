@@ -172,7 +172,11 @@ class BasePublishService(BaseService):
         push_content_notification([updates])
         self._import_into_legal_archive(updates)
         CropService().update_media_references(updates, original, True)
-        signals.item_published.send(self, item=original)
+
+        # Do not send item if it is scheduled, on real publishing send item to internal destination
+        if not updates.get(ITEM_STATE) == CONTENT_STATE.SCHEDULED:
+            signals.item_published.send(self, item=original)
+
         packages = self.package_service.get_packages(original[config.ID_FIELD])
         if packages and packages.count() > 0:
             archive_correct = get_resource_service("archive_correct")
