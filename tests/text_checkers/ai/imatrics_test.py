@@ -243,7 +243,7 @@ class IMatricsTestCase(TestCase):
                             "imatrics": "c8a83204-29e0-3a7f-9a0e-51e76d885f7f",
                         },
                         "aliases": [],
-                        "original_source": None,
+                        "original_source": "NTB",
                         "parent": None,
                     },
                     {
@@ -256,11 +256,14 @@ class IMatricsTestCase(TestCase):
                             "imatrics": "af815add-8456-3226-8177-ea0d8e3011eb",
                         },
                         "aliases": [],
-                        "original_source": None,
+                        "original_source": "NTB",
                         "parent": None,
                     },
                 ]
-            }
+            },
+            "broader": {
+                "subject": [],
+            },
         }
 
         self.assertEqual(doc["result"], expected)
