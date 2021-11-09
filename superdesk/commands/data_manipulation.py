@@ -16,12 +16,14 @@ import time
 import logging
 import platform
 import shutil
+import bz2
 from multiprocessing import Process, Lock
 import multiprocessing.synchronize
+from contextlib import contextmanager
 from datetime import datetime
 from enum import IntEnum
 from pathlib import Path
-from typing import Optional, Union, List
+from typing import Optional, Union, List, Iterator
 
 from bson.json_util import dumps, loads
 from pymongo.errors import OperationFailure
@@ -48,14 +50,12 @@ METADATA_KEY = "_sd_dump_metadata"
 
 if platform.system() in ("Linux", "Darwin") and sys.stdout.isatty():
     STYLE_RESET = "\033[0m"
-    STYLE_TITLE = "\033[4m"
     STYLE_NAME = "\033[1m"
     STYLE_DESC = "\033[36m"
     STYLE_ERR = ""
     INFO = f"\033[1;37m\033[44m ℹ️ {STYLE_RESET}"
 else:
     STYLE_RESET = ""
-    STYLE_TITLE = ""
     STYLE_NAME = ""
     STYLE_DESC = ""
     STYLE_ERR = ""
@@ -72,7 +72,14 @@ def get_dest_path(dest: Union[Path, str], dump: bool = True) -> Path:
     """
     dest = Path(dest)
     base = Path(DUMP_DIR if dump else RECORD_DIR)
-    for test_path in (dest, base / dest, dest.with_suffix(".json"), base / dest.with_suffix(".json")):
+    for test_path in (
+            dest,
+            base / dest,
+            dest.with_suffix(".json.bz2"),
+            base / dest.with_suffix(".json.bz2"),
+            dest.with_suffix(".json"),
+            base / dest.with_suffix(".json"),
+    ):
         if test_path.exists():
             return test_path.resolve()
     raise ValueError(f"There is no {'dump' if dump else 'record'} at {dest}.")
@@ -85,6 +92,64 @@ def draw_box_title(title: str) -> None:
     print(f"┃{title}┃")
     print(f"┗{'━' * len(title)}┛")
     print()
+
+
+class DumpFile:
+    """File-like class to read/write optionaly compressed dumps"""
+
+    def __init__(self, path: Path, mode: str, compressed: Optional[bool] = None):
+        if compressed is None:
+            compressed = path.suffix.endswith(".bz2")
+        elif compressed and not path.suffix.endswith(".bz2"):
+            path = path.with_suffix(f"{path.suffix}.bz2")
+        self.f = path.open(mode=f"{mode}b")
+        self.compressed = compressed
+        self.reading = mode == 'r'
+        if compressed:
+            if self.reading:
+                self.decompressor = bz2.BZ2Decompressor()
+            else:
+                self.compressor = bz2.BZ2Compressor()
+
+    def close(self):
+        if self.compressed:
+            if self.reading:
+                if not self.decompressor.eof:
+                    logger.error("Not all data has been decompressed!")
+            else:
+                self.f.write(self.compressor.flush())
+        self.f.close()
+
+    def read(self, size: int = -1) -> str:
+        if self.compressed:
+            buf = b""
+            eof = False
+            # if compression block is not complete, decompress may return empty buf
+            # which would be interpreted as end-of-file, thus we use a loop to read more
+            # data from file in this case, except if we actually have reached end-of-file.
+            while not buf and not eof:
+                buf = self.f.read(size)
+                eof = len(buf) == 0
+                buf = self.decompressor.decompress(buf)
+        else:
+            buf = self.f.read(size)
+        return buf.decode()
+
+    def write(self, data: str) -> None:
+        buf = data.encode()
+        if self.compressed:
+            buf = self.compressor.compress(buf)
+        self.f.write(buf)
+
+
+@contextmanager
+def open_dump(path: Path, mode: str = 'r', compressed: Optional[bool] = None) -> Iterator[DumpFile]:
+    """Open a dump using with optional BZ2 compression"""
+    if mode not in ('r', 'w'):
+        raise ValueError("only 'r' and 'w' modes are supported")
+    dump_file = DumpFile(path, mode, compressed)
+    yield dump_file
+    dump_file.close()
 
 
 def parse_dump_file(
@@ -109,7 +174,10 @@ def parse_dump_file(
         collection = None
         state = State.INIT
     else:
-        collection_name = dump_file.stem
+        if dump_file.suffixes[-2:] == [".json", ".bz2"]:
+            collection_name = dump_file.stem[:-5]
+        else:
+            collection_name = dump_file.stem
         collection = db.get_collection(collection_name)
         if collection_name == METADATA_KEY:
             state = State.METADATA_OBJECT_EXPECTED
@@ -122,7 +190,7 @@ def parse_dump_file(
     escaping = False
     par_count = 0
     inserted = 0
-    with dump_file.open() as f:
+    with open_dump(dump_file) as f:
         buf = f.read(BUF_LEN)
         while buf:
             for idx in range(len(buf)):
@@ -268,7 +336,7 @@ def parse_dump_file(
 def get_dump_metadata(dump: Path) -> dict:
     """Helper method to get metadata from a dump file or dir"""
     if dump.is_dir():
-        metadata_p = dump / f"{METADATA_KEY}.json"
+        metadata_p = dump / f"{METADATA_KEY}.json.bz2"
         return parse_dump_file(metadata_p, single_file=False)
     else:
         return parse_dump_file(dump, metadata_only=True)
@@ -337,8 +405,8 @@ class StorageDump(superdesk.Command):
         if description:
             metadata["description"] = description
         if single:
-            dest_path = dest_path.with_suffix(".json")
-            with dest_path.open("w") as f:
+            dest_path = dest_path.with_suffix(".json.bz2")
+            with open_dump(dest_path, "w") as f:
                 f.write(f"{{{dumps(METADATA_KEY)}: {dumps(metadata)},")
                 for idx, name in enumerate(collections_names):
                     if collections and name in collections:
@@ -358,16 +426,16 @@ class StorageDump(superdesk.Command):
                 f.write("}")
         else:
             dest_path.mkdir()
-            metadata_path = dest_path / f"{METADATA_KEY}.json"
-            with metadata_path.open("w") as f:
+            metadata_path = dest_path / f"{METADATA_KEY}.json.bz2"
+            with open_dump(metadata_path, "w") as f:
                 f.write(dumps(metadata))
             for idx, name in enumerate(collections_names):
                 if collections and name in collections:
                     continue
                 print(dump_msg.format(name=name, idx=idx + 1, total=len(collections_names)))
-                col_path = dest_path / f"{name}.json"
+                col_path = dest_path / f"{name}.json.bz2"
                 collection = db.get_collection(name)
-                with col_path.open("w") as f:
+                with open_dump(col_path, "w") as f:
                     f.write("[")
                     cursor = collection.find()
                     count = cursor.count()
@@ -418,7 +486,7 @@ class StorageRestore(superdesk.Command):
 
     def restore_dir(self, archive_path: Path):
         """Restore database from a dump directory"""
-        for collection_path in archive_path.glob("*.json"):
+        for collection_path in archive_path.glob("*.json.bz2"):
             parse_dump_file(collection_path, single_file=False, keep_existing=self.keep_existing)
 
         print("👷 restore finished")
@@ -496,7 +564,7 @@ class StorageStartRecording(superdesk.Command):
             name = f"{RECORD_NAME}_{datetime.fromtimestamp(now).replace(microsecond=0).isoformat()}"
         dest_dir_p = Path(dest_dir)
         dest_dir_p.mkdir(parents=True, exist_ok=True)
-        dest_path = (dest_dir_p / name).with_suffix(".json")
+        dest_path = (dest_dir_p / name).with_suffix(".json.bz2")
         applied_updates = list(data_updates.get_applied_updates())
         pymongo = superdesk.app.data.pymongo()
         db = pymongo.db
@@ -524,7 +592,7 @@ class StorageStartRecording(superdesk.Command):
             if options:
                 metadata["options"] = options
             with db.watch(**options) as stream:
-                with dest_path.open("w") as f:
+                with open_dump(dest_path, "w") as f:
                     metadata_dump = dumps(metadata)
                     f.write(f'{{"metadata": {metadata_dump}, "events":[')
                     try:
@@ -580,7 +648,7 @@ class StorageRestoreRecord(superdesk.Command):
     def run(self, record_file: Union[Path, str], force_db_reset: bool = False, skip_base_dump: bool = False) -> None:
         file_path = get_dest_path(record_file, dump=False)
         db = superdesk.app.data.pymongo().db
-        with file_path.open() as f:
+        with open_dump(file_path) as f:
             record_data = loads(f.read())
             metadata = record_data["metadata"]
             base_dump = metadata.get("base_dump")
@@ -650,7 +718,7 @@ class StorageList(superdesk.Command):
     """List Superdesk Dumps and Records"""
 
     def run(self) -> None:
-        print(f"{STYLE_TITLE}Full Dumps{STYLE_RESET}\n")
+        draw_box_title("Full Dumps")
         dump_path = Path(DUMP_DIR)
         if not dump_path.is_dir():
             print("No dump found")
@@ -658,7 +726,8 @@ class StorageList(superdesk.Command):
             for p in dump_path.iterdir():
                 try:
                     metadata = get_dump_metadata(p)
-                    print(f"{STYLE_NAME}{p.stem}{STYLE_RESET}")
+                    name = p.stem[:-5] if p.suffix == ".bz2" else p.stem
+                    print(f"{STYLE_NAME}{name}{STYLE_RESET}")
                     desc = metadata.get("description")
                     if desc:
                         print(f"  {STYLE_DESC}{desc}{STYLE_RESET}")
@@ -666,17 +735,18 @@ class StorageList(superdesk.Command):
                 except Exception as e:
                     print(f"{STYLE_ERR}Error while reading dump file at {p}: {e}{STYLE_RESET}", file=sys.stderr)
 
-        print(f"⋯⋯⋯⋯⋯⋯⋯⋯⋯⋯⋯⋯⋯⋯⋯⋯\n{STYLE_TITLE}Records{STYLE_RESET}\n")
+        draw_box_title("Records")
         record_path = Path(RECORD_DIR)
         if not record_path.is_dir():
             print("No record found")
         else:
             for p in record_path.iterdir():
                 try:
-                    with p.open() as f:
+                    with open_dump(p) as f:
                         record = loads(f.read())
                         metadata = record["metadata"]
-                    print(f"{STYLE_NAME}{p.stem}{STYLE_RESET}")
+                    name = p.stem[:-5] if p.suffix == ".bz2" else p.stem
+                    print(f"{STYLE_NAME}{name}{STYLE_RESET}")
                     desc = metadata.get("description")
                     if desc:
                         print(f"  {STYLE_DESC}{desc}{STYLE_RESET}")
@@ -716,9 +786,10 @@ class StorageMigrateDumps(superdesk.Command):
         else:
             records = list(records_path.iterdir())
             for idx, p in enumerate(records):
-                print(f"{INFO}Restoring record {p.stem!r} [{idx+1}/{len(records)}]")
+                name = p.stem[:-5] if p.suffix == ".bz2" else p.stem
+                print(f"{INFO}Restoring record {name!r} [{idx+1}/{len(records)}]")
                 try:
-                    with p.open() as f:
+                    with open_dump(p) as f:
                         record_data = loads(f.read())
                         metadata = record_data["metadata"]
                     # we are interested only in collections used in the record
@@ -735,7 +806,7 @@ class StorageMigrateDumps(superdesk.Command):
                     # now we restore the record
                     StorageRestoreRecord().run(record_file=p, force_db_reset=True)
                     # and start a new record to get changes made for migration
-                    migration_record_name = f"migration_record_{time.time()}.json"
+                    migration_record_name = f"migration_record_{time.time()}.json.bz2"
                     m_record_p = Path(migration_record_name)
                     lock = Lock()
                     lock.acquire()
@@ -770,7 +841,7 @@ class StorageMigrateDumps(superdesk.Command):
                             pass
                         continue
                     # changes made during migration are now recorded in m_record_p, we have to merge them if any
-                    with m_record_p.open() as f:
+                    with open_dump(m_record_p) as f:
                         changes = loads(f.read())
 
                     new_events = changes["events"]
@@ -782,7 +853,7 @@ class StorageMigrateDumps(superdesk.Command):
                         metadata.setdefault("updated", []).append({"desc": "data migration", "timestamp": time.time()})
                         # and we merge the changes
                         record_data["events"].extend(new_events)
-                        with p.open("w") as f:
+                        with open_dump(p, "w") as f:
                             f.write(dumps(record_data))
                         print(f"{INFO}{p} has been udpated")
                 except Exception:
@@ -797,7 +868,8 @@ class StorageMigrateDumps(superdesk.Command):
         else:
             dump_files_paths = list(dump_path.iterdir())
             for idx, p in enumerate(dump_files_paths):
-                print(f"{INFO}Restoring dump {p.stem!r} [{idx+1}/{len(dump_files_paths)}]")
+                name = p.stem[:-5] if p.suffix == ".bz2" else p.stem
+                print(f"{INFO}Restoring dump {name!r} [{idx+1}/{len(dump_files_paths)}]")
                 metadata = get_dump_metadata(p)
                 StorageRestore().run(keep_existing=False, archive=p)
                 print(f"{INFO}Applying data migration scripts")
@@ -828,7 +900,7 @@ class StorageMigrateDumps(superdesk.Command):
 
         now = time.time()
         print(f"{INFO}Storing current database in temporary dump")
-        tmp_db = f"tmp_migration_dump_{datetime.fromtimestamp(now).replace(microsecond=0).isoformat()}.json"
+        tmp_db = f"tmp_migration_dump_{datetime.fromtimestamp(now).replace(microsecond=0).isoformat()}.json.bz2"
         StorageDump().run(
             name=tmp_db,
             dest_dir=".",
