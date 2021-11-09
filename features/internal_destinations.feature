@@ -90,6 +90,8 @@ Feature: Internal Destinations
         """
         Then we get OK response
 
+        When we get "/archive"
+        Then we get list with 0 items
         When we get "/published"
         Then we get list with 1 items
         """
@@ -702,6 +704,8 @@ Feature: Internal Destinations
         }
         """
         Then we get OK response
+        When we get "/published?where=%7B%22processed_from%22%3A%22123%22%7D"
+        Then we get list with 0 items
         When we get "/published"
         Then we get list with 1 items
 
