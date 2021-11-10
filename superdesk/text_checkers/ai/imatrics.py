@@ -147,7 +147,7 @@ class IMatrics(AIServiceBase):
 
     def _parse_concepts(self, concepts: List[dict]) -> Dict[str, List]:
         """Parse response data, convert iMatrics concepts to SD data and add them to analyzed_data"""
-        analyzed_data : Dict[str, List] = {}
+        analyzed_data: Dict[str, List] = {}
         for concept in concepts:
             tag_data, tag_type = self.concept2tag_data(concept)
             analyzed_data.setdefault(tag_type, []).append(tag_data)
