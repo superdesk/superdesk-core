@@ -104,11 +104,7 @@ class IMatrics(AIServiceBase):
             pass
 
         for link in concept.get("links", []):
-            if (
-                link.get("source").lower() == "iptc" and
-                link.get("relationType") == "exactMatch" and
-                link.get("id")
-            ):
+            if link.get("source").lower() == "iptc" and link.get("relationType") == "exactMatch" and link.get("id"):
                 topic_id = link["id"]
                 if topic_id.startswith("medtop:"):
                     topic_id = topic_id[7:]
@@ -117,9 +113,9 @@ class IMatrics(AIServiceBase):
                     tag_data.update(subject)
                 tag_data["altids"]["medtop"] = topic_id
             elif (
-                link.get("source").lower() == "wikidata" and
-                link.get("relationType") in ("exactMatch", "linked") and
-                link.get("id")
+                link.get("source").lower() == "wikidata"
+                and link.get("relationType") in ("exactMatch", "linked")
+                and link.get("id")
             ):
                 tag_data["altids"]["wikidata"] = link["id"]
 
