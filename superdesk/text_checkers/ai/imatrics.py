@@ -147,7 +147,7 @@ class IMatrics(AIServiceBase):
 
     def _parse_concepts(self, concepts: List[dict]) -> Dict[str, List]:
         """Parse response data, convert iMatrics concepts to SD data and add them to analyzed_data"""
-        analyzed_data = {}
+        analyzed_data : Dict[str, List] = {}
         for concept in concepts:
             tag_data, tag_type = self.concept2tag_data(concept)
             analyzed_data.setdefault(tag_type, []).append(tag_data)
@@ -225,14 +225,14 @@ class IMatrics(AIServiceBase):
         )
 
         tags: Dict[str, List[Dict]] = {}
-        ret = {"tags": tags, "broader": {}}
+        broader: Dict[str, List[Dict]] = {}
         for concept in r_data["result"]:
             tag_data, tag_type = self.concept2tag_data(concept)
             tags.setdefault(tag_type, []).append(tag_data)
             if tag_type == "subject":
-                ret["broader"].setdefault(tag_type, [])
-                self._fetch_parent(ret["broader"][tag_type], concept)
-        return ret
+                broader.setdefault(tag_type, [])
+                self._fetch_parent(broader[tag_type], concept)
+        return dict(tags=tags, broader=broader)
 
     def _fetch_parent(self, broader, concept):
         parent_id = concept.get("broader")
