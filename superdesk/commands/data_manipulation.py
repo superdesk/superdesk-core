@@ -73,12 +73,12 @@ def get_dest_path(dest: Union[Path, str], dump: bool = True) -> Path:
     dest = Path(dest)
     base = Path(DUMP_DIR if dump else RECORD_DIR)
     for test_path in (
-            dest,
-            base / dest,
-            dest.with_suffix(".json.bz2"),
-            base / dest.with_suffix(".json.bz2"),
-            dest.with_suffix(".json"),
-            base / dest.with_suffix(".json"),
+        dest,
+        base / dest,
+        dest.with_suffix(".json.bz2"),
+        base / dest.with_suffix(".json.bz2"),
+        dest.with_suffix(".json"),
+        base / dest.with_suffix(".json"),
     ):
         if test_path.exists():
             return test_path.resolve()
@@ -104,7 +104,7 @@ class DumpFile:
             path = path.with_suffix(f"{path.suffix}.bz2")
         self.f = path.open(mode=f"{mode}b")
         self.compressed = compressed
-        self.reading = mode == 'r'
+        self.reading = mode == "r"
         if compressed:
             if self.reading:
                 self.decompressor = bz2.BZ2Decompressor()
@@ -143,9 +143,9 @@ class DumpFile:
 
 
 @contextmanager
-def open_dump(path: Path, mode: str = 'r', compressed: Optional[bool] = None) -> Iterator[DumpFile]:
+def open_dump(path: Path, mode: str = "r", compressed: Optional[bool] = None) -> Iterator[DumpFile]:
     """Open a dump using with optional BZ2 compression"""
-    if mode not in ('r', 'w'):
+    if mode not in ("r", "w"):
         raise ValueError("only 'r' and 'w' modes are supported")
     dump_file = DumpFile(path, mode, compressed)
     yield dump_file
