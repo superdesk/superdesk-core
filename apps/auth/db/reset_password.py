@@ -35,11 +35,9 @@ reset_schema = {
 class ActiveTokensResource(Resource):
     internal_resource = True
     schema = reset_schema
-    where_clause = "this.expire_time >= ISODate()"
     datasource = {
         "source": "reset_user_password",
         "default_sort": [("_created", -1)],
-        "filter": {"$where": where_clause},
     }
     resource_methods = []
     item_methods = []
@@ -55,7 +53,7 @@ class ResetPasswordResource(Resource):
 class ResetPasswordService(BaseService):
     def check_if_valid_token(self, token):
         reset_request = superdesk.get_resource_service("active_tokens").find_one(req=None, token=token)
-        if not reset_request:
+        if not reset_request or reset_request["expire_time"] < utcnow():
             logger.warning("Invalid token received: %s" % token)
             raise SuperdeskApiError.unauthorizedError("Invalid token received")
 
