@@ -13,6 +13,7 @@ from superdesk.utc import get_date, timezone
 from superdesk import config
 from superdesk.etree import parse_html
 from lxml import etree
+from datetime import timedelta
 
 logger = logging.getLogger(__name__)
 
@@ -62,8 +63,10 @@ def first_paragraph_filter(input_string):
     return ""
 
 
-def iso_datetime(date):
+def iso_datetime(date, initial_offset):
     try:
+        if initial_offset:
+            date = date + timedelta(minutes=initial_offset)
         return date.isoformat()
     except Exception:
         logger.warning("Failed to convert datetime. Arguments: Datetime - {} into ISOFormat".format(date))
