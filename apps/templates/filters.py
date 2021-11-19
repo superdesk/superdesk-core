@@ -63,10 +63,15 @@ def first_paragraph_filter(input_string):
     return ""
 
 
-def iso_datetime(date, initial_offset):
+def add_timedelta(date, minutes):
     try:
-        if initial_offset:
-            date = date + timedelta(minutes=initial_offset)
+        return date + timedelta(minutes=minutes)
+    except Exception:
+        logger.warning("Failed to add minutes in Datetime - {}".format(date))
+
+
+def iso_datetime(date):
+    try:
         return date.isoformat()
     except Exception:
         logger.warning("Failed to convert datetime. Arguments: Datetime - {} into ISOFormat".format(date))

@@ -736,7 +736,7 @@ Feature: Templates
                 "test": "{{ user.sign_off }}",
                 "test2": "{{ item.something.missing }}",
                 "test3": "{% if something %}",
-                "test4": "{{ now|iso_datetime }}"
+                "test4": "{{ now|add_timedelta(minutes=45)|iso_datetime }}"
             }
         }
     }]
