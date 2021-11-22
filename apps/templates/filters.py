@@ -63,9 +63,9 @@ def first_paragraph_filter(input_string):
     return ""
 
 
-def add_timedelta(date, minutes):
+def add_timedelta(date, **kwargs):
     try:
-        return date + timedelta(minutes=minutes)
+        return date + timedelta(minutes=kwargs.get("minutes"))
     except Exception:
         logger.warning("Failed to add minutes in Datetime - {}".format(date))
 
