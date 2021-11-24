@@ -114,19 +114,12 @@ class GMailFeedingService(EmailFeedingService):
             data_str = data[0].decode("utf-7")
             labels_str = RE_LABELS_STR.search(data_str).group(1)
             labels = [
-                (m.group("quoted") or m.group("unquoted")).replace('\\"', '"')
-                for m in RE_LABEL.finditer(labels_str)
+                (m.group("quoted") or m.group("unquoted")).replace('\\"', '"') for m in RE_LABEL.finditer(labels_str)
             ]
             for parsed_item in parsed_items:
                 subjects = parsed_item.setdefault("subject", [])
                 for label in labels:
-                    subjects.append(
-                        {
-                            "name": label,
-                            "qcode": label,
-                            "scheme": "label"
-                        }
-                    )
+                    subjects.append({"name": label, "qcode": label, "scheme": "label"})
         except Exception:
             logger.exception("Can't retrieve GMail labels")
 
