@@ -158,7 +158,7 @@ SESSION_COOKIE_SECURE = CLIENT_URL.startswith("https")
 #: But still allow cross-origin/same-site requests
 #:
 #: .. versionadded:: 2.4.0
-SESSION_COOKIE_SAMESITE = "Strict"
+SESSION_COOKIE_SAMESITE = "Lax"
 
 #: mongo db name, only used when mongo_uri is not set
 MONGO_DBNAME = env("MONGO_DBNAME", "superdesk")
