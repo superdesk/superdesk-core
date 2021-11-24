@@ -13,6 +13,7 @@ from superdesk.utc import get_date, timezone
 from superdesk import config
 from superdesk.etree import parse_html
 from lxml import etree
+from datetime import timedelta
 
 logger = logging.getLogger(__name__)
 
@@ -60,6 +61,13 @@ def first_paragraph_filter(input_string):
 
     logger.warning("Failed to locate the first paragraph from input_string: {}.".format(input_string))
     return ""
+
+
+def add_timedelta(date, **kwargs):
+    try:
+        return date + timedelta(**kwargs)
+    except Exception:
+        logger.warning("Failed to add minutes in Datetime - {}".format(date))
 
 
 def iso_datetime(date):
