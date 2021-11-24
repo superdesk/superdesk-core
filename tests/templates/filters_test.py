@@ -9,8 +9,8 @@
 # at https://www.sourcefabric.org/superdesk/license
 
 from flask import render_template_string
-
 from superdesk.tests import TestCase
+import datetime
 
 
 class ConvertDatetimeFiltersTest(TestCase):
@@ -79,3 +79,15 @@ class ConvertDatetimeFiltersTest(TestCase):
         item = {"headline": "Sample headline"}
         result = render_template_string(template_string, item=item)
         self.assertEqual(result, "")
+
+    def test_add_timedelta(self):
+        template_string = "{{ item.datetime | add_timedelta(minutes=45)}}"
+        item = {"datetime": datetime.datetime(2021, 1, 1, 22, 54, 53)}
+        result = render_template_string(template_string, item=item)
+        self.assertEqual(result, "2021-01-01 23:39:53")
+
+    def test_iso_datetime(self):
+        template_string = "{{ item.datetime | iso_datetime()}}"
+        item = {"datetime": datetime.datetime(2021, 1, 1, 22, 54, 53)}
+        result = render_template_string(template_string, item=item)
+        self.assertEqual(result, "2021-01-01T22:54:53")
