@@ -149,7 +149,7 @@ def configure_google(app, extra_scopes: Optional[List[str]] = None, refresh: boo
             if OAuth is used for Superdesk login, url_id is None.
             Otherwise, it is used to associate the token with the provider needing it
         """
-        superdesk.app.redis.set(KEY_GOOGLE_PROVIDER_ID, url_id, ex=TTL_GOOGLE_PROVIDER_ID)
+        superdesk.app.redis.set(KEY_GOOGLE_PROVIDER_ID, url_id or "", ex=TTL_GOOGLE_PROVIDER_ID)
         redirect_uri = url_for(".google_authorized", _external=True)
         return oauth.google.authorize_redirect(redirect_uri)
 
