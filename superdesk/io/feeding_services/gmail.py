@@ -6,7 +6,9 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
+import re
 import imaplib
+from typing import List
 from bson import ObjectId
 from os.path import join
 import time
@@ -20,6 +22,8 @@ from . import EmailFeedingService
 
 
 logger = logging.getLogger(__name__)
+RE_LABELS_STR = re.compile(r"\(X-GM-LABELS \((?P<labels>.*)\)\)")
+RE_LABEL = re.compile(r'"(?P<quoted>(?:[^"\\]|\\.)*)"|(?P<unquoted>\w+)')
 
 
 class GMailFeedingService(EmailFeedingService):
@@ -98,6 +102,33 @@ class GMailFeedingService(EmailFeedingService):
         )
         imap.authenticate("XOAUTH2", lambda __: auth_string.encode())
         return imap
+
+    def parse_extra(self, imap: imaplib.IMAP4_SSL, num: str, parsed_items: List[dict]) -> None:
+        """Add GMail labels to parsed_items"""
+        try:
+            # we use GMail IMAP Extensions
+            # https://developers.google.com/gmail/imap/imap-extensions#access_to_gmail_labels_x-gm-labels
+            _, data = imap.fetch(num, "(X-GM-LABELS)")
+            # it seems that there is nothing to help parsing in standard lib
+            # thus we use some regex to get our labels
+            data_str = data[0].decode("utf-7")
+            labels_str = RE_LABELS_STR.search(data_str).group(1)
+            labels = [
+                (m.group("quoted") or m.group("unquoted")).replace('\\"', '"')
+                for m in RE_LABEL.finditer(labels_str)
+            ]
+            for parsed_item in parsed_items:
+                subjects = parsed_item.setdefault("subject", [])
+                for label in labels:
+                    subjects.append(
+                        {
+                            "name": label,
+                            "qcode": label,
+                            "scheme": "label"
+                        }
+                    )
+        except Exception:
+            logger.exception("Can't retrieve GMail labels")
 
 
 register_feeding_service(GMailFeedingService)
