@@ -46,6 +46,7 @@ from superdesk.workflow import is_workflow_state_transition_valid
 from apps.content import push_item_move_notification
 from superdesk.lock import lock, unlock
 from flask_babel import _
+from superdesk.utc import utcnow
 
 ITEM_MOVE = "move"
 item_operations.append(ITEM_MOVE)
@@ -164,6 +165,7 @@ class MoveService(BaseService):
 
         del archived_doc[config.ID_FIELD]
         del archived_doc[config.ETAG]  # force etag update
+        archived_doc["versioncreated"] = utcnow()
 
         signals.item_move.send(self, item=archived_doc, original=original)
         archive_service.update(original[config.ID_FIELD], archived_doc, original)
