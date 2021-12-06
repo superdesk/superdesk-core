@@ -111,8 +111,14 @@ class GMailFeedingService(EmailFeedingService):
             _, data = imap.fetch(num, "(X-GM-LABELS)")
             # it seems that there is nothing to help parsing in standard lib
             # thus we use some regex to get our labels
-            data_str = data[0].decode("utf-7")
-            labels_str = RE_LABELS_STR.search(data_str).group(1)
+            data_bytes = data[0]
+            if not isinstance(data_bytes, bytes):
+                raise ValueError(f"Unexpected data type: {type(data_bytes)}")
+            data_str = data_bytes.decode("utf-7")
+            match_labels_str = RE_LABELS_STR.search(data_str)
+            if match_labels_str is None:
+                raise ValueError(f"Can't find the expected label string in data: {data_str:r}")
+            labels_str = match_labels_str.group(1)
             labels = [
                 (m.group("quoted") or m.group("unquoted")).replace('\\"', '"') for m in RE_LABEL.finditer(labels_str)
             ]
