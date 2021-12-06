@@ -125,7 +125,7 @@ class GMailFeedingService(EmailFeedingService):
             for parsed_item in parsed_items:
                 subjects = parsed_item.setdefault("subject", [])
                 for label in labels:
-                    subjects.append({"name": label, "qcode": label, "scheme": "label"})
+                    subjects.append({"name": label, "qcode": label, "scheme": "gmail_label"})
         except Exception:
             logger.exception("Can't retrieve GMail labels")
 
