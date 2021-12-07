@@ -8,6 +8,7 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
+from typing import List
 import socket
 import imaplib
 
@@ -90,6 +91,13 @@ class EmailFeedingService(FeedingService):
 
         return imap
 
+    def parse_extra(self, imap: imaplib.IMAP4_SSL, num: str, parsed_items: List[dict]) -> None:
+        """Parse extra metadata
+
+        This method is called after main parsing, and can be used by subclasses
+        """
+        pass
+
     def _update(self, provider, update, test=False):
         config = provider.get("config", {})
         new_items = []
@@ -110,7 +118,9 @@ class EmailFeedingService(FeedingService):
                         if rv == "OK" and not test:
                             try:
                                 parser = self.get_feed_parser(provider, data)
-                                new_items.append(parser.parse(data, provider))
+                                parsed_items = parser.parse(data, provider)
+                                self.parse_extra(imap, num, parsed_items)
+                                new_items.append(parsed_items)
                                 rv, data = imap.store(num, "+FLAGS", "\\Seen")
                             except IngestEmailError:
                                 continue
