@@ -11,12 +11,12 @@ Feature: Move or Send Content to another desk
         """
         [{"guid": "123", "type":"text", "headline": "test1", "guid": "123", "state": "draft", "task": {"user": "#CONTEXT_USER_ID#"}}]
         """
-        And we save etag
         And we post to "/archive/123/move"
         """
         [{"task": {"desk": "#desks._id#", "stage": "#desks.incoming_stage#"}}]
         """
         Then we get OK response
+        And we save etag
         And we get notifications
         """
         [
@@ -40,7 +40,7 @@ Feature: Move or Send Content to another desk
         """
         Then there is no "last_production_desk" in task
         And there is no "last_authoring_desk" in task
-        And we get different etag
+        And we get matching etag
 
     @auth
     @notification

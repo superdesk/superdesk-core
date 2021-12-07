@@ -752,14 +752,17 @@ def get_response_etag(response):
     return json.loads(response.get_data())["_etag"]
 
 
-@when("we save etag")
+@then("we save etag")
 def step_when_we_save_etag(context):
     context.etag = get_response_etag(context.response)
 
 
-@then("we get same etag")
+@then("we get matching etag")
 def step_then_we_get_same_etag(context):
-    assert context.etag == get_response_etag(context.response), "etags not matching"
+    assert context.etag == get_response_etag(context.response), "etags not matching %s != %s" % (
+        context.etag,
+        get_response_etag(context.response),
+    )
 
 
 @then("we get different etag")

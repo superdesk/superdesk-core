@@ -132,6 +132,9 @@ class MoveService(BaseService):
         # finally apply any on stage rules/macros
         apply_onstage_rule(archived_doc, id)
 
+        # return etag of modified item
+        doc["_etag"] = archived_doc["_etag"]
+
         return archived_doc
 
     def _move(self, archived_doc, doc):
