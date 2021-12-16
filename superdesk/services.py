@@ -122,6 +122,9 @@ class BaseService:
             req.projection = json.dumps(projection)
         return self.backend.get_from_mongo(self.datasource, req=req, lookup=lookup)
 
+    def get_all(self):
+        return self.get_from_mongo(None, {}).sort("_id")
+
     def find_and_modify(self, query, update, **kwargs):
         res = self.backend.find_and_modify(self.datasource, query=query, update=update, **kwargs)
         return res
