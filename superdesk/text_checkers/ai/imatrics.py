@@ -43,6 +43,7 @@ CONCEPT_MAPPING = OrderedDict(
 SCHEME_MAPPING = {
     "category": "mediatopic",
     "topic": "imatrics_topic",
+    "place": "place_custom",
 }
 
 DEFAULT_CONCEPT_TYPE = "topic"
@@ -62,6 +63,7 @@ class IMatrics(AIServiceBase):
         super().__init__(app)
         self.convept_map_inv = {v: k for k, v in CONCEPT_MAPPING.items()}
         self._subjects = []
+        self._places = None
 
     @property
     def base_url(self):
@@ -122,6 +124,9 @@ class IMatrics(AIServiceBase):
         if concept["type"] in SCHEME_MAPPING:
             tag_data.setdefault("scheme", SCHEME_MAPPING[concept["type"]])
 
+        if tag_type == "place":
+            self.sync_place(tag_data)
+
         return tag_data, tag_type
 
     def find_subject(self, topic_id):
@@ -135,6 +140,14 @@ class IMatrics(AIServiceBase):
         for subject in self._subjects:
             if subject.get("qcode") == topic_id:
                 return superdesk.get_resource_service("vocabularies").get_article_cv_item(subject, SCHEME_ID)
+
+    def sync_place(self, place_data):
+        if self._places is None:
+            places = superdesk.get_resource_service("vocabularies").get_items(SCHEME_MAPPING["place"])
+            self._places = {p["qcode"]: p for p in places}
+        place = self._places.get(place_data["qcode"])
+        if place:
+            place_data.update(place)
 
     def check_verb(self, expected: str, verb: str, operation: str) -> None:
         """Check that HTTP verb use is the one expected for this operation"""
