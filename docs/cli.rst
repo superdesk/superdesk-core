@@ -233,3 +233,8 @@ Superdesk commands
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 .. autoclass:: superdesk.auth_server.clients.ListClients()
+
+``media:fix_links``
+^^^^^^^^^^^^^^^^^^^
+
+.. autoclass:: superdesk.storage.fix_links.MediaFixLinksCommand()

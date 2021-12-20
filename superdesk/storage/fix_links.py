@@ -5,8 +5,27 @@ from flask import current_app as app
 from superdesk.editor_utils import generate_fields, get_field_content_state
 
 
-class FixHrefCommand(superdesk.Command):
-    """Fix href links in db."""
+class MediaFixLinksCommand(superdesk.Command):
+    """Fix media links in content.
+
+    When moving an instance to different domain the links to media items
+    can be broken if using Superdesk media storage. This command can check
+    the links and fix them when appropriate.
+
+    Usage::
+
+        $ python manage.py media:fix_links --prefix "http://example.com/upload"
+
+    Use the prefix to define the old url which should be fixed, links starting
+    with other urls won't be updated.
+
+    Options:
+
+    -p, --prefix    URL prefix to fix. It will only fix links starting with it.
+    -r, --resource  Only update specified resource.
+    -d, --dry-run   Don't update just print item ids which would be updated.
+
+    """
 
     option_list = [
         superdesk.Option("--prefix", "-p", dest="prefix", required=True),
@@ -92,4 +111,4 @@ class FixHrefCommand(superdesk.Command):
         return updates
 
 
-superdesk.command("media:fix_href", FixHrefCommand())
+superdesk.command("media:fix_links", MediaFixLinksCommand())
