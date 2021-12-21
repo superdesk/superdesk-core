@@ -10,9 +10,10 @@ class MigrateMediaCommand(superdesk.Command):
     option_list = [
         superdesk.Option("--limit", "-l", dest="limit", required=False, default=50, type=int),
         superdesk.Option("--skip", "-s", dest="skip", required=False, default=0, type=int),
+        superdesk.Option("--delete", "-d", dest="delete", required=False, default=False, action="store_true"),
     ]
 
-    def run(self, limit, skip):
+    def run(self, limit, skip, delete):
         mongo = app.media._storage[1]
         amazon = app.media._storage[0]
 
@@ -35,7 +36,8 @@ class MigrateMediaCommand(superdesk.Command):
                     ContentMD5=codecs.encode(codecs.decode(file.md5, "hex"), "base64").decode().strip(),
                 )
                 if saved:
-                    mongo.delete(file._id)
+                    if delete:
+                        mongo.delete(file._id)
                     migrated += 1
                     print(".", end="")
             except Exception as error:
