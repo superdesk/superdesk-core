@@ -160,7 +160,7 @@ ARCHIVED_DBNAME = env("ARCHIVED_DBNAME", "archived")
 #: archived mongodb uri
 ARCHIVED_URI = env("ARCHIVED_URI", "mongodb://localhost/%s" % ARCHIVED_DBNAME)
 
-CONTENTAPI_MONGO_DBNAME = "contentapi"
+CONTENTAPI_MONGO_DBNAME = env("CONTENTAPI_MONGO_DBNAME", "contentapi")
 CONTENTAPI_MONGO_URI = env("CONTENTAPI_MONGO_URI", "mongodb://localhost/%s" % CONTENTAPI_MONGO_DBNAME)
 
 #: elastic url
