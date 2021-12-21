@@ -61,7 +61,17 @@ class IMatricsTestCase(TestCase):
                             "is_active": True,
                         },
                     ],
-                }
+                },
+                {
+                    "_id": "place_custom",
+                    "items": [
+                        {
+                            "name": "test-place",
+                            "qcode": "123",
+                            "is_active": True,
+                        },
+                    ],
+                },
             ],
         )
 
@@ -109,6 +119,12 @@ class IMatricsTestCase(TestCase):
                         "type": "topic",
                         "uuid": "44f52663-52f9-3836-ac45-ae862fe945a3",
                         "aliases": [],
+                    },
+                    {
+                        "type": "place",
+                        "uuid": "123",
+                        "title": "imatrics place",
+                        "wikidata": "Q123",
                     },
                 ],
                 "broader": [
@@ -176,7 +192,21 @@ class IMatricsTestCase(TestCase):
                     "aliases": [],
                     "parent": None,
                 },
-            ]
+            ],
+            "place": [
+                {
+                    "name": "test-place",
+                    "qcode": "123",
+                    "scheme": "place_custom",
+                    "original_source": None,
+                    "aliases": [],
+                    "altids": {
+                        "imatrics": "123",
+                    },
+                    "parent": None,
+                    "source": "imatrics",
+                },
+            ],
         }
 
         self.assertEqual(doc["analysis"], expected)
