@@ -2297,7 +2297,8 @@ Feature: Content Publishing
       """
         [{"_id": "publish_embedded", "type": "picture", "act": "publish", "embedded": true,
           "schema": {"headline": {"type": "string","required": true}}},
-         {"_id": "publish_text", "type": "text", "act": "publish", "schema": {}}]
+         {"_id": "publish_text", "type": "text", "act": "publish", "schema": {}}
+        ]
       """
       And "desks"
       """
@@ -2305,18 +2306,31 @@ Feature: Content Publishing
       """
       And "archive"
       """
-      [{"guid": "123", "type": "text", "headline": "test", "_current_version": 1, "state": "in_progress",
+      [
+        {"_id": "234", "type": "picture", "_current_version": 1, "guid": "234", "state": "in_progress"},
+        {"guid": "123", "type": "text", "headline": "test", "_current_version": 1, "state": "in_progress",
         "task": {"desk": "#desks._id#", "stage": "#desks.incoming_stage#", "user": "#CONTEXT_USER_ID#"},
         "subject":[{"qcode": "17004000", "name": "Statistics"}], "body_html": "Test Document body",
         "associations": {
             "featureimage": {
                 "_id": "234",
+                "_current_version": 1,
                 "guid": "234",
                 "alt_text": "alt_text",
                 "description_text": "description_text",
                 "type": "picture",
                 "slugline": "s234",
-                "state": "in_progress"}}}]
+                "state": "in_progress"
+              }
+            }
+          }
+      ]
+      """
+      And "content_types"
+      """
+      [
+        {"_id": "picture", "schema": {"headline": {"required": true}, "copyrightholder": {"required": true}}}
+      ]
       """
       When we post to "/products" with success
       """
@@ -2337,6 +2351,24 @@ Feature: Content Publishing
       """
       {"_issues": {"validator exception": "[[\"MEDIA'S HEADLINE is a required field\"]]"}, "_status": "ERR"}
       """
+      When we publish "#archive._id#" with "publish" type and "published" state
+      """
+      {
+        "associations": {
+          "featureimage": {
+            "headline": "test",
+            "_id": "234",
+            "guid": "234",
+            "alt_text": "alt_text",
+            "description_text": "description_text",
+            "type": "picture",
+            "slugline": "s234",
+            "state": "in_progress"
+          }
+        }
+      }
+      """
+      Then we get ok response
 
     @auth
     Scenario: Publish fails when embedded item does not exist

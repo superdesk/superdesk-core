@@ -618,7 +618,7 @@ class BasePublishService(BaseService):
         associations = deepcopy(original_item.get(ASSOCIATIONS, {}))
         associations.update(updates.get(ASSOCIATIONS, {}))
 
-        items = [value for value in associations.values()]
+        items = [value for value in associations.values() if value]
         if original_item[ITEM_TYPE] == CONTENT_TYPE.COMPOSITE and self.publish_type == ITEM_PUBLISH:
             items.extend(self.package_service.get_residrefs(original_item))
 
@@ -629,10 +629,9 @@ class BasePublishService(BaseService):
         for item in items:
             orig = None
             if type(item) == dict and item.get(config.ID_FIELD):
-                doc = item
-                orig = super().find_one(req=None, _id=item[config.ID_FIELD])
-                if not app.settings.get("COPY_METADATA_FROM_PARENT") and orig:
-                    doc = orig
+                orig = super().find_one(req=None, _id=item[config.ID_FIELD]) or {}
+                doc = copy(orig)
+                doc.update(item)
                 try:
                     doc.update({"lock_user": orig["lock_user"]})
                 except (TypeError, KeyError):
