@@ -110,7 +110,9 @@ class EmailFeedingService(FeedingService):
                 if rv != "OK":
                     raise IngestEmailError.emailMailboxError()
                 try:
-                    rv, data = imap.search(None, config.get("filter", "(UNSEEN)"))
+                    # at least one criterion must be set
+                    # (see file:///usr/share/doc/python/html/library/imaplib.html#imaplib.IMAP4.search)
+                    rv, data = imap.search(None, config.get("filter") or "(UNSEEN)")
                     if rv != "OK":
                         raise IngestEmailError.emailFilterError()
                     for num in data[0].split():
