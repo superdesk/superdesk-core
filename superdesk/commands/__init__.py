@@ -18,3 +18,12 @@ from superdesk.celery_app import celery
 @celery.task()
 def temp_file_expiry():
     RemoveExportedFiles()
+
+
+def init_app(app) -> None:
+    if superdesk.app.config.get("SUPERDESK_TESTING", False):
+        endpoint_name = "restore_record"
+        service = data_manipulation.RestoreRecordService(endpoint_name, backend=superdesk.get_backend())
+        data_manipulation.RestoreRecordResource(endpoint_name, app=app, service=service)
+
+        superdesk.intrinsic_privilege(resource_name=endpoint_name, method=["POST"])

@@ -28,6 +28,9 @@ from typing import Optional, Union, List, Iterator
 from bson.json_util import dumps, loads
 from pymongo.errors import OperationFailure
 import superdesk
+from superdesk.timer import timer
+from superdesk.resource import Resource
+from superdesk.services import BaseService
 from . import data_updates, flush_elastic_index
 
 
@@ -928,6 +931,32 @@ class StorageMigrateDumps(superdesk.Command):
                 dump_path=tmp_db,
             )
             Path(tmp_db).unlink()
+
+
+class RestoreRecordResource(Resource):
+    """Restore a storage record from its name"""
+
+    schema = {
+        "name": {"type": "string", "required": True},
+    }
+
+
+    resource_methods = ["POST"]
+    public_methods = ["POST"]
+
+
+class RestoreRecordService(BaseService):
+
+    def _create(self, docs):
+        for doc in docs:
+            name = doc["name"]
+            StorageRestoreRecord().run(record_file=name, force_db_reset=True)
+
+    def create(self, docs, **kwargs):
+        with Lock() as lock:
+            with timer("restore_record"):
+                self._create(docs)
+            return ["OK"]
 
 
 superdesk.command("storage:dump", StorageDump())
