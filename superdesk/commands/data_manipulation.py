@@ -458,12 +458,12 @@ class StorageRestore(superdesk.Command):
     option_list = [
         superdesk.Option("--keep-existing", action="store_true", help="don't clear collections before inserting items"),
         superdesk.Option("--no-flush", action="store_true", help="don't flush ElasticSearch indexes"),
-        superdesk.Option("archive", help="file or directory containing the database dump"),
+        superdesk.Option("dump_path", help="file or directory containing the database dump"),
     ]
 
-    def run(self, archive: Union[Path, str], keep_existing: bool = False, no_flush: bool = False) -> None:
+    def run(self, dump_path: Union[Path, str], keep_existing: bool = False, no_flush: bool = False) -> None:
         self.keep_existing = keep_existing
-        archive_path = get_dest_path(archive)
+        archive_path = get_dest_path(dump_path)
         print("💾 restoring archive")
         if archive_path.is_file():
             self.restore_file(archive_path)
@@ -580,7 +580,7 @@ class StorageStartRecording(superdesk.Command):
                 if confirm.lower() != "y":
                     print("Recording cancelled")
                     sys.exit(1)
-            StorageRestore().run(keep_existing=False, archive=base_dump_p)
+            StorageRestore().run(keep_existing=False, dump_path=base_dump_p)
             metadata["base_dump"] = str(base_dump_p)
         if description:
             metadata["description"] = description
@@ -664,7 +664,7 @@ class StorageRestoreRecord(superdesk.Command):
                         if confirm.lower() != "y":
                             print("Restoration cancelled")
                             sys.exit(1)
-                    StorageRestore().run(keep_existing=False, no_flush=True, archive=base_dump_p)
+                    StorageRestore().run(keep_existing=False, no_flush=True, dump_path=base_dump_p)
             print(f"{INFO} restoring record from {datetime.fromtimestamp(metadata['started']).isoformat()}")
             description = metadata.get("description")
             if description:
@@ -688,8 +688,14 @@ class StorageRestoreRecord(superdesk.Command):
                         except KeyError:
                             update_fields = event["updateDescription"]["updatedFields"]
                             remove_fields = event["updateDescription"]["removedFields"]
-                            update_data = {"$set": update_fields, "$unset": {f: 1 for f in remove_fields}}
-                            collection.update({"_id": doc_id}, update_data)
+                            update_data = {}
+                            if update_fields:
+                                update_data["$set"] = update_fields
+                            unset = {f: 1 for f in remove_fields}
+                            if unset:
+                                update_data["$unset"] = unset
+                            if update_data:
+                                collection.update({"_id": doc_id}, update_data)
                         else:
                             collection.update({"_id": doc_id}, full_doc)
                         print(f"updated doc {doc_id!r} in {collection_name!r}")
@@ -799,7 +805,7 @@ class StorageMigrateDumps(superdesk.Command):
                         # this is to avoid the "data_updates" collection to be updated on first unbased record
                         print(f"{INFO}there is no base dump in this record, we use original state")
                         StorageRestore().run(
-                            archive=ori_dump,
+                            dump_path=ori_dump,
                             keep_existing=False,
                             no_flush=True,
                         )
@@ -871,7 +877,7 @@ class StorageMigrateDumps(superdesk.Command):
                 name = p.stem[:-5] if p.suffix == ".bz2" else p.stem
                 print(f"{INFO}Restoring dump {name!r} [{idx+1}/{len(dump_files_paths)}]")
                 metadata = get_dump_metadata(p)
-                StorageRestore().run(keep_existing=False, archive=p)
+                StorageRestore().run(keep_existing=False, dump_path=p)
                 print(f"{INFO}Applying data migration scripts")
                 data_updates.Upgrade().run()
                 print(f"{INFO}Updating dump")
@@ -919,7 +925,7 @@ class StorageMigrateDumps(superdesk.Command):
             print(f"{INFO}Restoring original database")
             StorageRestore().run(
                 keep_existing=False,
-                archive=tmp_db,
+                dump_path=tmp_db,
             )
             Path(tmp_db).unlink()
 
