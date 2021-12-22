@@ -940,13 +940,11 @@ class RestoreRecordResource(Resource):
         "name": {"type": "string", "required": True},
     }
 
-
     resource_methods = ["POST"]
     public_methods = ["POST"]
 
 
 class RestoreRecordService(BaseService):
-
     def _create(self, docs):
         for doc in docs:
             name = doc["name"]
