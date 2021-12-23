@@ -93,7 +93,7 @@ setup(
     packages=find_packages(exclude=["tests*", "features*"]),
     package_data=package_data,
     include_package_data=True,
-    setup_requires=["setuptools_scm"],
+    # setup_requires=["setuptools_scm"],
     install_requires=install_requires,
     classifiers=[
         "Development Status :: 4 - Beta",

@@ -61,7 +61,17 @@ class IMatricsTestCase(TestCase):
                             "is_active": True,
                         },
                     ],
-                }
+                },
+                {
+                    "_id": "place_custom",
+                    "items": [
+                        {
+                            "name": "test-place",
+                            "qcode": "123",
+                            "is_active": True,
+                        },
+                    ],
+                },
             ],
         )
 
@@ -110,13 +120,25 @@ class IMatricsTestCase(TestCase):
                         "uuid": "44f52663-52f9-3836-ac45-ae862fe945a3",
                         "aliases": [],
                     },
+                    {
+                        "type": "place",
+                        "uuid": "123",
+                        "title": "imatrics place",
+                        "wikidata": "Q123",
+                    },
                 ],
                 "broader": [
                     {
                         "weight": 1,
                         "geometry": {},
                         "links": [
-                            {"relationType": "", "id": "medtop:20000763", "source": "IPTC", "uri": "", "url": ""}
+                            {
+                                "relationType": "exactMatch",
+                                "id": "medtop:20000763",
+                                "source": "iptc",
+                                "uri": "",
+                                "url": "",
+                            }
                         ],
                         "title": "informasjons- og kommunikasjonsteknologi",
                         "type": "category",
@@ -170,7 +192,21 @@ class IMatricsTestCase(TestCase):
                     "aliases": [],
                     "parent": None,
                 },
-            ]
+            ],
+            "place": [
+                {
+                    "name": "test-place",
+                    "qcode": "123",
+                    "scheme": "place_custom",
+                    "original_source": None,
+                    "aliases": [],
+                    "altids": {
+                        "imatrics": "123",
+                    },
+                    "parent": None,
+                    "source": "imatrics",
+                },
+            ],
         }
 
         self.assertEqual(doc["analysis"], expected)
@@ -184,7 +220,7 @@ class IMatricsTestCase(TestCase):
             "data": {"term": "informasjons"},
         }
         ai_data_op_service = get_resource_service("ai_data_op")
-        api_url = urljoin(TEST_BASE_URL, "concept/get?operation=title_type")
+        api_url = urljoin(TEST_BASE_URL, "concept/get")
         responses.add(
             responses.POST,
             api_url,
@@ -230,31 +266,34 @@ class IMatricsTestCase(TestCase):
                     {
                         "name": "informasjons- og kommunikasjonsteknologi",
                         "qcode": "c8a83204-29e0-3a7f-9a0e-51e76d885f7f",
-                        "scheme": "imatrics_category",
+                        "scheme": "mediatopic",
                         "source": "imatrics",
                         "description": "title",
                         "altids": {
                             "imatrics": "c8a83204-29e0-3a7f-9a0e-51e76d885f7f",
                         },
                         "aliases": [],
-                        "original_source": None,
+                        "original_source": "NTB",
                         "parent": None,
                     },
                     {
                         "name": "informasjonsvitenskap",
                         "qcode": "af815add-8456-3226-8177-ea0d8e3011eb",
-                        "scheme": "imatrics_category",
+                        "scheme": "mediatopic",
                         "source": "imatrics",
                         "description": "title",
                         "altids": {
                             "imatrics": "af815add-8456-3226-8177-ea0d8e3011eb",
                         },
                         "aliases": [],
-                        "original_source": None,
+                        "original_source": "NTB",
                         "parent": None,
                     },
                 ]
-            }
+            },
+            "broader": {
+                "subject": [],
+            },
         }
 
         self.assertEqual(doc["result"], expected)
