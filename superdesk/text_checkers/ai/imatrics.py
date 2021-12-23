@@ -11,10 +11,11 @@ import logging
 import requests
 import superdesk
 
-from flask import current_app
+from flask import current_app, json
 from collections import OrderedDict
-from typing import Optional, Dict, List, Set
+from typing import Optional, Dict, List, Tuple
 from urllib.parse import urljoin
+from superdesk.default_settings import SCHEMA
 from superdesk.text_utils import get_text
 from superdesk.errors import SuperdeskApiError
 from .base import AIServiceBase
@@ -39,6 +40,12 @@ CONCEPT_MAPPING = OrderedDict(
     ]
 )
 
+SCHEME_MAPPING = {
+    "category": "mediatopic",
+    "topic": "imatrics_topic",
+    "place": "place_custom",
+}
+
 DEFAULT_CONCEPT_TYPE = "topic"
 
 
@@ -56,6 +63,7 @@ class IMatrics(AIServiceBase):
         super().__init__(app)
         self.convept_map_inv = {v: k for k, v in CONCEPT_MAPPING.items()}
         self._subjects = []
+        self._places = None
 
     @property
     def base_url(self):
@@ -69,7 +77,7 @@ class IMatrics(AIServiceBase):
     def key(self):
         return current_app.config.get("IMATRICS_KEY", os.environ.get("IMATRICS_KEY"))
 
-    def concept2tag_data(self, concept: dict) -> dict:
+    def concept2tag_data(self, concept: dict) -> Tuple[dict, str]:
         """Convert an iMatrics concept to Superdesk friendly data"""
         tag_data = {
             "name": concept["title"],
@@ -77,7 +85,7 @@ class IMatrics(AIServiceBase):
             "parent": concept.get("broader") or None,
             "source": "imatrics",
             "aliases": concept.get("aliases", []),
-            "original_source": concept.get("source"),
+            "original_source": concept.get("author") or concept.get("source"),
             "altids": {
                 "imatrics": concept["uuid"],
             },
@@ -92,27 +100,34 @@ class IMatrics(AIServiceBase):
             logger.warning("no mapping for concept type {concept_type!r}".format(concept_type=concept["type"]))
             tag_type = concept["type"]
 
-        tag_data["type"] = tag_type
-
         try:
             tag_data["weight"] = concept["weight"]
         except KeyError:
             pass
 
         for link in concept.get("links", []):
-            if link.get("source") == "IPTC":
-                topic_id = link.get("id", "")
+            if link.get("source").lower() == "iptc" and link.get("relationType") == "exactMatch" and link.get("id"):
+                topic_id = link["id"]
                 if topic_id.startswith("medtop:"):
                     topic_id = topic_id[7:]
-                    subject = self.find_subject(topic_id)
-                    if subject:
-                        tag_data.update(subject)
-                    tag_data["altids"]["medtop"] = topic_id
+                subject = self.find_subject(topic_id)
+                if subject:
+                    tag_data.update(subject)
+                tag_data["altids"]["medtop"] = topic_id
+            elif (
+                link.get("source").lower() == "wikidata"
+                and link.get("relationType") in ("exactMatch", "linked")
+                and link.get("id")
+            ):
+                tag_data["altids"]["wikidata"] = link["id"]
 
-        if concept["type"] in ("topic", "category"):
-            tag_data.setdefault("scheme", "imatrics_{}".format(concept["type"]))
+        if concept["type"] in SCHEME_MAPPING:
+            tag_data.setdefault("scheme", SCHEME_MAPPING[concept["type"]])
 
-        return tag_data
+        if tag_type == "place":
+            self.sync_place(tag_data)
+
+        return tag_data, tag_type
 
     def find_subject(self, topic_id):
         SCHEME_ID = current_app.config.get("IMATRICS_SUBJECT_SCHEME")
@@ -126,6 +141,14 @@ class IMatrics(AIServiceBase):
             if subject.get("qcode") == topic_id:
                 return superdesk.get_resource_service("vocabularies").get_article_cv_item(subject, SCHEME_ID)
 
+    def sync_place(self, place_data):
+        if self._places is None:
+            places = superdesk.get_resource_service("vocabularies").get_items(SCHEME_MAPPING["place"])
+            self._places = {p["qcode"]: p for p in places}
+        place = self._places.get(place_data["qcode"])
+        if place:
+            place_data.update(place)
+
     def check_verb(self, expected: str, verb: str, operation: str) -> None:
         """Check that HTTP verb use is the one expected for this operation"""
         if verb != expected:
@@ -135,12 +158,20 @@ class IMatrics(AIServiceBase):
                 )
             )
 
-    def _parse_concepts(self, analyzed_data: Dict[str, List], concepts: List[dict]) -> None:
+    def _parse_concepts(self, concepts: List[dict]) -> Dict[str, List]:
         """Parse response data, convert iMatrics concepts to SD data and add them to analyzed_data"""
+        analyzed_data: Dict[str, List] = {}
         for concept in concepts:
-            tag_data = self.concept2tag_data(concept)
-            tag_type = tag_data.pop("type")
+            tag_data, tag_type = self.concept2tag_data(concept)
             analyzed_data.setdefault(tag_type, []).append(tag_data)
+        for tags in analyzed_data.values():
+            tags.sort(key=lambda d: d.get("weight", 0), reverse=True)
+            for tag in tags:
+                try:
+                    del tag["weight"]
+                except KeyError:
+                    pass
+        return analyzed_data
 
     def analyze(self, item: dict) -> dict:
         """Analyze article to get tagging suggestions"""
@@ -162,44 +193,83 @@ class IMatrics(AIServiceBase):
             "language": item["language"],
         }
 
-        r_data = self._request(
+        r_data = self._analyze(data)
+        return self._parse_concepts(r_data["concepts"] + r_data["broader"])
+
+    def _analyze(self, data, **params):
+        return self._request(
             "article/analysis",
             data,
-            params=dict(conceptFields="uuid,title,type,shortDescription,aliases,source,weight,broader"),
+            params=dict(
+                conceptFields="uuid,title,type,shortDescription,aliases,source,author,weight,broader,links",
+                **params,
+            ),
         )
 
-        analyzed_data: Dict[str, List] = {}
-        self._parse_concepts(analyzed_data, r_data["concepts"] + r_data["broader"])
-
-        for tags in analyzed_data.values():
-            tags.sort(key=lambda d: d.get("weight", 0), reverse=True)
-            for tag in tags:
-                try:
-                    del tag["weight"]
-                except KeyError:
-                    pass
-
-        return analyzed_data
-
-    def search(self, data: dict) -> dict:
-
+    def search2(self, reg: dict) -> dict:
+        """Test search via analyze, it's missing entities."""
         data = {
-            "title": data["term"],
+            "body": [],
+            "headline": reg["term"],
+            "pubStatus": False,
+            "language": reg["language"],
+        }
+
+        test_data = self._analyze(data, cleanText=False, categories=10, entities=10)
+        tags = self._parse_concepts(test_data["concepts"])
+        broader = self._parse_concepts(test_data["broader"])
+        return {"tags": tags, "broader": broader}
+
+    def search(self, reg: dict) -> dict:
+        data = {
+            "title": reg["term"],
             "type": "all",
             "draft": False,
             "size": 10,
         }
 
-        r_data = self._request("concept/get", data, params=dict(operation="title_type"))
+        r_data = self._request(
+            "concept/get",
+            data,
+            params=dict(
+                operation="title_type",
+                conceptFields="uuid,title,type,shortDescription,aliases,source,author,weight,broader",
+            ),
+        )
 
         tags: Dict[str, List[Dict]] = {}
-        ret = {"tags": tags}
+        broader: Dict[str, List[Dict]] = {}
         for concept in r_data["result"]:
-            tag_data = self.concept2tag_data(concept)
-            tag_type = tag_data.pop("type")
+            tag_data, tag_type = self.concept2tag_data(concept)
             tags.setdefault(tag_type, []).append(tag_data)
+            if tag_type == "subject":
+                broader.setdefault(tag_type, [])
+                self._fetch_parent(broader[tag_type], concept)
+        return dict(tags=tags, broader=broader)
 
-        return ret
+    def _fetch_parent(self, broader, concept):
+        parent_id = concept.get("broader")
+        if not parent_id:
+            return
+        parent = self._get_parent(parent_id)
+        if not parent:
+            return
+        tag_data, _ = self.concept2tag_data(parent)
+        if tag_data["qcode"] in [b["qcode"] for b in broader]:
+            return
+        broader.append(tag_data)
+        self._fetch_parent(broader, parent)
+
+    def _get_parent(self, parent_id: str):
+        data = {"uuid": parent_id}
+        return self._request(
+            "concept/get",
+            data,
+            params=dict(
+                operation="id",
+                conceptFields="uuid,title,type,shortDescription,aliases,source,weight,broader",
+            ),
+        )["result"][0]
 
     def create(self, data: dict) -> dict:
         concept = {}
