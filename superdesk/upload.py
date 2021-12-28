@@ -12,9 +12,10 @@
 import logging
 
 from eve.utils import config
-from flask import request, current_app as app, redirect
+from flask import request, current_app as app, redirect, make_response, jsonify
 
 import superdesk
+import json
 from superdesk.errors import SuperdeskApiError
 from superdesk.media.renditions import generate_renditions, delete_file_on_error
 from superdesk.media.media_operations import (
@@ -53,6 +54,31 @@ def get_upload_as_data_uri(media_id):
         return generate_response_for_file(media_file)
 
     raise SuperdeskApiError.notFoundError("File not found on media storage.")
+
+
+@bp.route("/upload/config-file", methods=['POST', 'OPTIONS'])
+@blueprint_auth()
+def upload_config_file():
+    if request.method == 'OPTIONS':
+        # return headers to avoid CORS problems
+        response = make_response()
+        response.headers.add('Access-Control-Allow-Origin', '*')
+        response.headers.add('Access-Control-Allow-Headers', '*')
+        response.headers.add('Access-Control-Allow-Methods', 'POST')
+        return response
+
+    if "json_file" not in request.files:
+        raise SuperdeskApiError.badRequestError("JSON file is required")
+
+    vocab_items = json.loads(request.files["json_file"].read())
+    if type(vocab_items) == dict:
+        vocab_items = [vocab_items]
+
+    res = superdesk.get_resource_service("vocabularies").update_vocabulary_from_json(vocab_items)
+    response = make_response(jsonify(res))
+    response.headers.add('Access-Control-Allow-Origin', '*')
+    response.headers.add('Access-Control-Expose-Headers', '*')
+    return response
 
 
 def url_for_media(media_id, mimetype=None):
