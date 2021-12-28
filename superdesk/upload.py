@@ -56,15 +56,15 @@ def get_upload_as_data_uri(media_id):
     raise SuperdeskApiError.notFoundError("File not found on media storage.")
 
 
-@bp.route("/upload/config-file", methods=['POST', 'OPTIONS'])
+@bp.route("/upload/config-file", methods=["POST", "OPTIONS"])
 @blueprint_auth()
 def upload_config_file():
-    if request.method == 'OPTIONS':
+    if request.method == "OPTIONS":
         # return headers to avoid CORS problems
         response = make_response()
-        response.headers.add('Access-Control-Allow-Origin', '*')
-        response.headers.add('Access-Control-Allow-Headers', '*')
-        response.headers.add('Access-Control-Allow-Methods', 'POST')
+        response.headers.add("Access-Control-Allow-Origin", "*")
+        response.headers.add("Access-Control-Allow-Headers", "*")
+        response.headers.add("Access-Control-Allow-Methods", "POST")
         return response
 
     if "json_file" not in request.files:
@@ -76,8 +76,8 @@ def upload_config_file():
 
     res = superdesk.get_resource_service("vocabularies").update_vocabulary_from_json(vocab_items)
     response = make_response(jsonify(res))
-    response.headers.add('Access-Control-Allow-Origin', '*')
-    response.headers.add('Access-Control-Expose-Headers', '*')
+    response.headers.add("Access-Control-Allow-Origin", "*")
+    response.headers.add("Access-Control-Expose-Headers", "*")
     return response
 
 

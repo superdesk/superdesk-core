@@ -539,11 +539,15 @@ class VocabulariesService(BaseService):
 
         if success:
             return {
-                "_status": "SUCCESS", "_success": {"code": 200, "_message": "Vocabularies uploaded successfully."}, "items": success
+                "_status": "SUCCESS",
+                "_success": {"code": 200, "_message": "Vocabularies uploaded successfully."},
+                "items": success,
             }
 
         return {
-            "_status": "ERR", "_error": {"code": 400, "_message": "Unable to update vocabualaries using JSON"}, "items": vocab_items
+            "_status": "ERR",
+            "_error": {"code": 400, "_message": "Unable to update vocabualaries using JSON"},
+            "items": vocab_items,
         }
 
 
