@@ -34,7 +34,7 @@ from apps.archive.archive import ArchiveResource, SOURCE as ARCHIVE
 from apps.archive.common import ITEM_EVENT_ID, ITEM_UNLINK, clear_rewritten_flag
 from apps.packages import PackageService
 from superdesk.metadata.packages import LINKED_IN_PACKAGES, PACKAGE
-from superdesk.utc import get_expiry_date
+from superdesk.utc import get_expiry_date, utcnow
 from apps.item_lock.components.item_lock import push_unlock_notification
 from flask_babel import _
 from bson.objectid import ObjectId
@@ -81,6 +81,7 @@ class ArchiveUnspikeResource(ArchiveResource):
 class ArchiveSpikeService(BaseService):
     def on_update(self, updates, original):
         updates[ITEM_OPERATION] = ITEM_SPIKE
+        updates["versioncreated"] = utcnow()
         self._validate_item(original)
         self.update_rewrite(original)
         set_sign_off(updates, original=original)
@@ -328,6 +329,7 @@ class ArchiveUnspikeService(BaseService):
 
     def on_update(self, updates, original):
         updates[ITEM_OPERATION] = ITEM_UNSPIKE
+        updates["versioncreated"] = utcnow()
         updates[ITEM_STATE] = original.get(REVERT_STATE)
         set_sign_off(updates, original=original)
 
