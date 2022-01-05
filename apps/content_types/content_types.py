@@ -44,6 +44,10 @@ EDITOR_ATTRIBUTES = (
     "field_name",
 )
 
+# cvs hardcoded in the app wich special use
+# and not supposed to be added to content profile
+HARDCODED_CVS = ("languages",)
+
 
 class ContentTypesResource(superdesk.Resource):
     schema = {
@@ -302,6 +306,12 @@ def get_fields_map_and_names():
     for vocabulary in vocabularies:
         if vocabulary.get("selection_type") == DO_NOT_SHOW_SELECTION:
             continue
+        if vocabulary.get("_id") in DEFAULT_SCHEMA and not vocabulary.get("schema_field"):
+            # we allowed cvs matching core fields but that was only causing issues,
+            # so filter those out altogether from the config
+            continue
+        if vocabulary.get("_id") in HARDCODED_CVS:
+            continue
         fields_map[vocabulary.get("schema_field", vocabulary["_id"])] = vocabulary["_id"]
         field_names[vocabulary["_id"]] = vocabulary.get("display_name", vocabulary["_id"])
 
@@ -319,8 +329,8 @@ def init_default(doc):
                 editor[field]["enabled"] = False
                 if schema.get(field, None) is None:
                     schema[field] = deepcopy(DEFAULT_SCHEMA[field])
-            else:
-                editor[field]["enabled"] = True
+            else:  # it's there, so why change it?
+                editor[field].setdefault("enabled", True)
     else:
         doc["editor"] = deepcopy(DEFAULT_EDITOR)
         doc["schema"] = deepcopy(DEFAULT_SCHEMA)
@@ -336,9 +346,11 @@ def init_custom(editor, schema, fields_map):
             replace_key(editor, old_field, field)
             replace_key(schema, old_field, field)
         else:
-            # fields are stored in subject so add new custom editor
+            # we add the custom cv field in schema so we can change it's schema
+            # attributes, but we should probably find a different model which
+            # would not require this so we don't have any conflicts with core fields
             schema[field] = {"type": "list", "required": False, "readonly": False}
-
+            # fields are stored in subject so add new custom editor
             if editor.get(field) and "enabled" in editor[field]:
                 editor[field]["enabled"] = editor[field].get("enabled")
             elif editor.get(field):
