@@ -520,36 +520,6 @@ class VocabulariesService(BaseService):
         cv = self.find_one(req=None, _id=field)
         return cv and cv.get("field_options") or {}
 
-    def update_vocabulary_from_json(self, vocab_items):
-        success = []
-        for vocab in vocab_items:
-            try:
-                cv = self.find_one(req=None, _id=vocab["_id"])
-                # update _created and _updated key if keys provided in json
-                if vocab.get("_created"):
-                    vocab["_created"] = cv["_created"] if cv else utcnow()
-                if vocab.get("_updated"):
-                    vocab["_updated"] = utcnow()
-
-                res = self.post([vocab]) if not cv else self.patch(cv["_id"], vocab)
-                if res:
-                    success.append(res)
-            except Exception as ex:
-                raise SuperdeskApiError.badRequestError(str(ex), exception=ex)
-
-        if success:
-            return {
-                "_status": "SUCCESS",
-                "_success": {"code": 200, "_message": "Vocabularies uploaded successfully."},
-                "items": success,
-            }
-
-        return {
-            "_status": "ERR",
-            "_error": {"code": 400, "_message": "Unable to update vocabualaries using JSON"},
-            "items": vocab_items,
-        }
-
 
 def is_related_content(item_name, related_content=None):
     if related_content is None:

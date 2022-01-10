@@ -27,6 +27,7 @@ from superdesk.media.media_operations import (
 )
 from superdesk.filemeta import set_filemeta
 from superdesk.storage.superdesk_file import generate_response_for_file
+from superdesk.users.services import current_user_has_privilege
 from superdesk.auth.decorator import blueprint_auth
 from .resource import Resource
 from .services import BaseService
@@ -67,6 +68,9 @@ def upload_config_file():
         response.headers.add("Access-Control-Allow-Methods", "POST")
         return response
 
+    if not current_user_has_privilege("vocabularies"):
+        raise SuperdeskApiError.forbiddenError("You don't have permissions to upload JSON file")
+
     if "json_file" not in request.files:
         raise SuperdeskApiError.badRequestError("JSON file is required")
 
@@ -74,7 +78,7 @@ def upload_config_file():
     if type(vocab_items) == dict:
         vocab_items = [vocab_items]
 
-    res = superdesk.get_resource_service("vocabularies").update_vocabulary_from_json(vocab_items)
+    res = superdesk.get_resource_service("vocabularies").update_data_from_json(vocab_items)
     response = make_response(jsonify(res))
     response.headers.add("Access-Control-Allow-Origin", "*")
     response.headers.add("Access-Control-Expose-Headers", "*")

@@ -15,6 +15,8 @@ from typing import Union
 from flask import current_app as app, json
 from eve.utils import ParsedRequest, config
 from eve.methods.common import resolve_document_etag
+from superdesk.errors import SuperdeskApiError
+from superdesk.utc import utcnow
 
 
 log = logging.getLogger(__name__)
@@ -208,6 +210,36 @@ class BaseService:
         :param dict item: item
         """
         return self.backend.remove_from_search(self.datasource, item)
+
+    def update_data_from_json(self, items):
+        success = []
+        for item in items:
+            try:
+                cv = self.find_one(req=None, _id=item["_id"])
+                # update _created and _updated key if keys provided in json
+                if item.get("_created"):
+                    item["_created"] = cv["_created"] if cv else utcnow()
+                if item.get("_updated"):
+                    item["_updated"] = utcnow()
+
+                res = self.post([item]) if not cv else self.patch(cv["_id"], item)
+                if res:
+                    success.append(res)
+            except Exception as ex:
+                raise SuperdeskApiError.badRequestError(str(ex), exception=ex)
+
+        if success:
+            return {
+                "_status": "SUCCESS",
+                "_success": {"code": 200, "_message": "Vocabularies uploaded successfully."},
+                "items": success,
+            }
+
+        return {
+            "_status": "ERR",
+            "_error": {"code": 400, "_message": "Unable to update vocabualaries using JSON"},
+            "items": items,
+        }
 
 
 class Service(BaseService):
