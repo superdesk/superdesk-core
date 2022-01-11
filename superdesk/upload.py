@@ -16,6 +16,7 @@ from flask import request, current_app as app, redirect, make_response, jsonify
 
 import superdesk
 import json
+import os
 from superdesk.errors import SuperdeskApiError
 from superdesk.media.renditions import generate_renditions, delete_file_on_error
 from superdesk.media.media_operations import (
@@ -69,14 +70,30 @@ def upload_config_file():
         return response
 
     if not current_user_has_privilege("vocabularies"):
-        raise SuperdeskApiError.forbiddenError("You don't have permissions to upload JSON file")
+        raise SuperdeskApiError.forbiddenError("You don't have permissions to upload JSON file.")
 
-    if "json_file" not in request.files:
-        raise SuperdeskApiError.badRequestError("JSON file is required")
+    json_files = request.files.getlist("json_file")
+    if not json_files:
+        raise SuperdeskApiError.badRequestError("Provide JSON file with key 'json_file'.")
 
-    vocab_items = json.loads(request.files["json_file"].read())
-    if type(vocab_items) == dict:
-        vocab_items = [vocab_items]
+    vocab_items = []
+    for _file in json_files:
+        file_name = _file.filename
+        _, ext = os.path.splitext(file_name)
+        if ext not in [".json"]:
+            raise SuperdeskApiError.badRequestError(
+                "File is not allowed: {}, Only JSON file is allowed to upload.".format(file_name)
+            )
+
+        try:
+            file_data = json.loads(_file.read())
+        except Exception as ex:
+            logger.error("Invalid JSON file {0}: {1}".format(file_name, str(ex)))
+            raise SuperdeskApiError.internalError("Invalid JSON file: {}.".format(file_name))
+
+        if type(file_data) == dict:
+            file_data = [file_data]
+        vocab_items += file_data
 
     res = superdesk.get_resource_service("vocabularies").update_data_from_json(vocab_items)
     response = make_response(jsonify(res))

@@ -226,18 +226,18 @@ class BaseService:
                 if res:
                     success.append(res)
             except Exception as ex:
-                raise SuperdeskApiError.badRequestError(str(ex), exception=ex)
+                raise SuperdeskApiError.badRequestError("Uploaded file is invalid, Error occured:{}.".format(str(ex)))
 
         if success:
             return {
                 "_status": "SUCCESS",
-                "_success": {"code": 200, "_message": "Vocabularies uploaded successfully."},
+                "_success": {"code": 200, "_message": "{} uploaded successfully.".format(self.datasource)},
                 "items": success,
             }
 
         return {
             "_status": "ERR",
-            "_error": {"code": 400, "_message": "Unable to update vocabualaries using JSON"},
+            "_error": {"code": 400, "_message": "Unable to update {}.".format(self.datasource)},
             "items": items,
         }
 
