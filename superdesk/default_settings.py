@@ -940,6 +940,10 @@ ARCHIVE_AUTOCOMPLETE_DAYS = 0
 #:
 ARCHIVE_AUTOCOMPLETE_HOURS = 0
 
+#:
+#: .. versionadded:: 2.3.6
+#:
+ARCHIVE_AUTOCOMPLETE_LIMIT = 500
 
 #: Tansa client config
 #:
