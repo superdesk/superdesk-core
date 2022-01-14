@@ -30,6 +30,7 @@ from superdesk.filemeta import set_filemeta
 from superdesk.storage.superdesk_file import generate_response_for_file
 from superdesk.users.services import current_user_has_privilege
 from superdesk.auth.decorator import blueprint_auth
+from superdesk import get_resource_privileges
 from .resource import Resource
 from .services import BaseService
 
@@ -69,14 +70,19 @@ def upload_config_file():
         response.headers.add("Access-Control-Allow-Methods", "POST")
         return response
 
-    if not current_user_has_privilege("vocabularies"):
+    _resource = request.args.get("resource")
+    if not _resource:
+        raise SuperdeskApiError.forbiddenError("Provide required param: 'resource'.")
+
+    resource_privileges = get_resource_privileges(_resource).get("POST", None)
+    if not current_user_has_privilege(resource_privileges):
         raise SuperdeskApiError.forbiddenError("You don't have permissions to upload JSON file.")
 
     json_files = request.files.getlist("json_file")
     if not json_files:
         raise SuperdeskApiError.badRequestError("Provide JSON file with key 'json_file'.")
 
-    vocab_items = []
+    _items = []
     for _file in json_files:
         file_name = _file.filename
         _, ext = os.path.splitext(file_name)
@@ -93,9 +99,9 @@ def upload_config_file():
 
         if type(file_data) == dict:
             file_data = [file_data]
-        vocab_items += file_data
+        _items += file_data
 
-    res = superdesk.get_resource_service("vocabularies").update_data_from_json(vocab_items)
+    res = superdesk.get_resource_service(_resource).update_data_from_json(_items)
     response = make_response(jsonify(res))
     response.headers.add("Access-Control-Allow-Origin", "*")
     response.headers.add("Access-Control-Expose-Headers", "*")
