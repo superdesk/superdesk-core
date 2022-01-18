@@ -215,14 +215,14 @@ class BaseService:
         success = []
         for item in items:
             try:
-                cv = self.find_one(req=None, _id=item["_id"])
+                orig = self.find_one(req=None, _id=item["_id"])
                 # update _created and _updated key if keys provided in json
                 if item.get("_created"):
-                    item["_created"] = cv["_created"] if cv else utcnow()
+                    item["_created"] = orig["_created"] if orig else utcnow()
                 if item.get("_updated"):
                     item["_updated"] = utcnow()
 
-                res = self.post([item]) if not cv else self.patch(cv["_id"], item)
+                res = self.post([item]) if not orig else self.patch(orig["_id"], item)
                 if res:
                     success.append(res)
             except Exception as ex:
