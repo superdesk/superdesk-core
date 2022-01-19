@@ -37,6 +37,7 @@ from superdesk.logging import configure_logging
 from superdesk.storage import ProxyMediaStorage
 from superdesk.validator import SuperdeskValidator
 from superdesk.json_utils import SuperdeskJSONEncoder
+from .elastic_apm import setup_apm
 
 SUPERDESK_PATH = os.path.abspath(os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
 
@@ -77,6 +78,17 @@ def set_error_handlers(app):
 
 
 class SuperdeskEve(eve.Eve):
+    def __init__(self, **kwargs):
+        # set attributes to avoid event slots being created
+        # when getattr is called on those, thx to eve
+        self.apm = None
+        self.babel_tzinfo = None
+        self.babel_locale = None
+        self.babel_translations = None
+        self.notification_client = None
+
+        super().__init__(**kwargs)
+
     def __getattr__(self, name):
         """Workaround for https://github.com/pyeve/eve/issues/1087"""
         if name in {"im_self", "im_func"}:
@@ -163,8 +175,6 @@ def get_app(config=None, media_storage=None, config_object=None, init_elastic=No
         template_folder=os.path.join(abs_path, "templates"),
     )
 
-    app.notification_client = None
-
     app.jinja_options = {"autoescape": False}
     app.json_encoder = SuperdeskJSONEncoder  # seems like eve param doesn't set it on flask
 
@@ -186,12 +196,10 @@ def get_app(config=None, media_storage=None, config_object=None, init_elastic=No
     app.jinja_loader = custom_loader
     app.mail = Mail(app)
     app.sentry = SuperdeskSentry(app)
+    setup_apm(app)
 
     # setup babel
     app.config.setdefault("BABEL_TRANSLATION_DIRECTORIES", os.path.join(SUPERDESK_PATH, "translations"))
-    app.babel_tzinfo = None
-    app.babel_locale = None
-    app.babel_translations = None
     babel = Babel(app, configure_jinja=False)
 
     @babel.localeselector
