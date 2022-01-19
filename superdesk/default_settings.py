@@ -964,3 +964,10 @@ OIDC_BROWSER_REDIRECT_URL = env("OIDC_BROWSER_REDIRECT_URL", CLIENT_URL)
 #: .. versionadded:: 2.1
 #:
 APPS_DATA_UPDATES_PATHS = []
+
+#: Elastic APM
+#:
+#: .. versionadded:: 2.5, 2.2.2
+#:
+APM_SERVER_URL = env("APM_SERVER_URL")
+APM_SECRET_TOKEN = env("APM_SECRET_TOKEN")
