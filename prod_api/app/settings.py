@@ -31,6 +31,8 @@ from superdesk.default_settings import (  # noqa
     AMAZON_OBJECT_ACL,
     AMAZON_ENDPOINT_URL,
     PAGINATION_LIMIT,
+    APM_SERVER_URL,
+    APM_SECRET_TOKEN,
 )
 
 SECRET_KEY = env("PRODAPI_SECRET_KEY", "")

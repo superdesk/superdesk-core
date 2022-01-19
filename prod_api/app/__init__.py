@@ -24,8 +24,9 @@ from eve import Eve
 from eve.io.mongo.mongo import MongoJSONEncoder
 
 from superdesk.datalayer import SuperdeskDataLayer
+from superdesk.factory.elastic_apm import setup_apm
 from superdesk.validator import SuperdeskValidator
-from superdesk.factory.app import set_error_handlers, get_media_storage_class
+from superdesk.factory.app import SuperdeskEve, set_error_handlers, get_media_storage_class
 from superdesk.factory.sentry import SuperdeskSentry
 
 from prod_api.auth import JWTAuth
@@ -69,7 +70,7 @@ def get_app(config=None):
     if app_config["PRODAPI_AUTH_ENABLED"]:
         auth = JWTAuth
 
-    app = Eve(
+    app = SuperdeskEve(
         auth=auth,
         settings=app_config,
         data=SuperdeskDataLayer,
@@ -78,9 +79,8 @@ def get_app(config=None):
         validator=SuperdeskValidator,
     )
 
-    app.notification_client = None
-
     set_error_handlers(app)
+    setup_apm(app, "Production API")
 
     for module_name in app.config.get("PRODAPI_INSTALLED_APPS", []):
         app_module = importlib.import_module(module_name)
