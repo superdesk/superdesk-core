@@ -560,6 +560,9 @@ PASSWORD_EXPIRY_DAYS = int(env("PASSWORD_EXPIRY_DAYS", 0))
 #: The number of minutes since the last update of the Mongo auth object after which it will be deleted
 SESSION_EXPIRY_MINUTES = int(env("SESSION_EXPIRY_MINUTES", 240))
 
+#: How often update user session/activity timestamp
+SESSION_UPDATE_SECONDS = 30
+
 #: The number of minutes before content items are purged
 CONTENT_EXPIRY_MINUTES = int(env("CONTENT_EXPIRY_MINUTES", 0))
 
