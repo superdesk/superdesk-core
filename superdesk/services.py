@@ -126,6 +126,9 @@ class BaseService:
         res = self.backend.find_and_modify(self.datasource, query=query, update=update, **kwargs)
         return res
 
+    def get_all(self):
+        return self.get_from_mongo(None, {}).sort("_id")
+
     def _validator(self, skip_validation=False):
         resource_def = app.config["DOMAIN"][self.datasource]
         schema = resource_def["schema"]
