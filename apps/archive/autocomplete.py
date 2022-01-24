@@ -26,8 +26,8 @@ class AutocompleteResource(superdesk.Resource):
 
 class AutocompleteService(superdesk.Service):
 
-    allowed_fields = {
-        "slugline",
+    field_mapping = {
+        "slugline": "slugline.keyword",
     }
 
     def get(self, req, lookup):
@@ -37,7 +37,7 @@ class AutocompleteService(superdesk.Service):
         if not app.config.get(SETTING_ENABLED):
             raise SuperdeskApiError(_("Archive autocomplete is not enabled"), 404)
 
-        if field not in self.allowed_fields:
+        if field not in self.field_mapping:
             raise SuperdeskApiError(_("Field %(field)s is not allowed", field=field), 400)
 
         versioncreated_min = (
@@ -63,7 +63,7 @@ class AutocompleteService(superdesk.Service):
             "aggs": {
                 "values": {
                     "terms": {
-                        "field": field,
+                        "field": self.field_mapping[field],
                         "size": app.config[SETTING_LIMIT],
                         "order": {"_key": "asc"},
                     },

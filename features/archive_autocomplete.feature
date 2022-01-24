@@ -17,20 +17,20 @@ Feature: Archive autocomplete
         Given "archive"
         """
         [
-            {"slugline": "published_c", "state": "published", "versioncreated": "2019-01-01T00:00:00+0000"},
-            {"slugline": "published_old", "state": "published", "versioncreated": "1919-01-01T00:00:00+0000"},
-            {"slugline": "draft", "state": "draft", "versioncreated": "2019-01-01T00:00:00+0000"},
-            {"slugline": "czech", "state": "published", "versioncreated": "2019-01-01T00:00:00+0000", "language": "cs"},
-            {"slugline": "published_a", "state": "published", "versioncreated": "2019-01-01T00:00:00+0000", "language": "en"},
-            {"slugline": "published_b", "state": "published", "versioncreated": "2019-01-01T00:00:00+0000", "language": "en"}
+            {"slugline": "PUBLISHED-A", "state": "published", "versioncreated": "2019-01-01T00:00:00+0000"},
+            {"slugline": "PUBLISHED-OLD", "state": "published", "versioncreated": "1919-01-01T00:00:00+0000"},
+            {"slugline": "DRAFT", "state": "draft", "versioncreated": "2019-01-01T00:00:00+0000"},
+            {"slugline": "CZECH", "state": "published", "versioncreated": "2019-01-01T00:00:00+0000", "language": "cs"},
+            {"slugline": "PUBLISHED-C", "state": "published", "versioncreated": "2019-01-01T00:00:00+0000", "language": "en"},
+            {"slugline": "PUBLISHED-B", "state": "published", "versioncreated": "2019-01-01T00:00:00+0000", "language": "en"}
         ]
         """
         When we get "/archive_autocomplete?field=slugline&language=en"
         Then we get list with 3 items
         """
         {"_items": [
-            {"value": "published_a"},
-            {"value": "published_b"},
-            {"value": "published_c"}
+            {"value": "PUBLISHED-A"},
+            {"value": "PUBLISHED-B"},
+            {"value": "PUBLISHED-C"}
         ]}
         """
