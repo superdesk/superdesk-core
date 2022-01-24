@@ -212,12 +212,12 @@ ELASTICSEARCH_SETTINGS = {
             "analyzer": {
                 "phrase_prefix_analyzer": {
                     "type": "custom",
-                    "filter": ["remove_hyphen", "lowercase", "asciifolding"],
-                    "tokenizer": "standard",
+                    "filter": ["remove_hyphen", "lowercase"],
+                    "tokenizer": "keyword",
                 },
                 "html_field_analyzer": {
                     "type": "custom",
-                    "filter": ["lowercase"],
+                    "filter": ["lowercase", "asciifolding"],
                     "tokenizer": "standard",
                     "char_filter": ["html_strip_filter"],
                 },
