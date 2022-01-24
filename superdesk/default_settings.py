@@ -212,8 +212,8 @@ ELASTICSEARCH_SETTINGS = {
             "analyzer": {
                 "phrase_prefix_analyzer": {
                     "type": "custom",
-                    "filter": ["remove_hyphen", "lowercase"],
-                    "tokenizer": "keyword",
+                    "filter": ["remove_hyphen", "lowercase", "asciifolding"],
+                    "tokenizer": "standard",
                 },
                 "html_field_analyzer": {
                     "type": "custom",

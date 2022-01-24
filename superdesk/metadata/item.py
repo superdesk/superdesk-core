@@ -242,7 +242,14 @@ metadata_schema = {
         "type": "string",
         "nullable": True,
     },
-    "headline": {"type": "string"},
+    "headline": {
+        "type": "string",
+        "mapping": {
+            "type": "string",
+            "analyzer": "phrase_prefix_analyzer",
+            "search_analyzer": "phrase_prefix_analyzer",
+        },
+    },
     "slugline": {
         "type": "string",
         "mapping": {
