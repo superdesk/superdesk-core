@@ -217,7 +217,7 @@ ELASTICSEARCH_SETTINGS = {
                 },
                 "html_field_analyzer": {
                     "type": "custom",
-                    "filter": ["lowercase"],
+                    "filter": ["lowercase", "asciifolding"],
                     "tokenizer": "standard",
                     "char_filter": ["html_strip_filter"],
                 },
