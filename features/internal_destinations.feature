@@ -91,21 +91,7 @@ Feature: Internal Destinations
         Then we get OK response
 
         When we get "/archive"
-        Then we get list with 1 items
-        """
-        {"_items": [{
-            "state": "routed",
-            "original_id": "#archive._id#",
-            "family_id": "#archive._id#",
-            "task": {"desk": "#destination_desk#", "stage": "#destination_stage#"},
-            "body_html": "Body $10 (CAD 20)",
-            "publish_schedule": "2099-05-19T10:15:00+0000",
-            "schedule_settings": {
-                "time_zone": "Europe/London",
-                "utc_publish_schedule": "2099-05-19T10:15:00+0000"
-            }
-        }]}
-        """
+        Then we get list with 0 items
         When we get "/published"
         Then we get list with 1 items
         """
@@ -719,26 +705,9 @@ Feature: Internal Destinations
         """
         Then we get OK response
         When we get "/published?where=%7B%22processed_from%22%3A%22123%22%7D"
-        Then we get list with 1 items
-        """
-        {
-            "_items": [{
-            "processed_from": "123",
-            "format": "HTML",
-            "operation": "publish",
-            "family_id": "123",
-            "state": "scheduled",
-            "publish_schedule": "2099-05-19T10:15:00+0000",
-            "pubstatus": "usable",
-            "schedule_settings": {
-                "time_zone": "Europe/London",
-                "utc_publish_schedule": "2099-05-19T10:15:00+0000"
-            }
-            }]
-        }
-        """
+        Then we get list with 0 items
         When we get "/published"
-        Then we get list with 2 items
+        Then we get list with 1 items
 
     @auth
     Scenario: Delay item creation for destinations on publish if the send_after_schedule is enabled for internal destinations

@@ -135,6 +135,7 @@ class STTTestCase(BaseSTTNewsMLTestCase):
         )
 
         self.assertEqual(item["body_html"], expected_body)
+        self.assertIn({"name": "sig:update", "qcode": "sig:update"}, item["signal"])
 
     def test_department_version(self):
         """Test that subject is parsed correctly (STTNHUB-18)"""

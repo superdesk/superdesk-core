@@ -12,7 +12,7 @@ from superdesk.resource import Resource
 from superdesk.metadata.item import metadata_schema, not_analyzed
 from content_api import MONGO_PREFIX, ELASTIC_PREFIX
 
-code_mapping = {"type": "object", "properties": {"name": not_analyzed, "code": not_analyzed}}
+code_mapping = {"type": "object", "properties": {"name": not_analyzed, "code": not_analyzed, "scheme": not_analyzed}}
 
 schema = {
     "_id": metadata_schema["_id"],
@@ -55,15 +55,10 @@ schema = {
     "embargoed": {"type": "datetime"},
     "evolvedfrom": Resource.not_analyzed_field(),
     "nextversion": Resource.not_analyzed_field(),
+    "original_id": Resource.not_analyzed_field(),
     "subscribers": Resource.not_analyzed_field("list"),
     "ednote": {"type": "string"},
-    "signal": {
-        "type": "list",
-        "mapping": {
-            "type": "object",
-            "properties": {"code": not_analyzed, "name": not_analyzed, "scheme": not_analyzed},
-        },
-    },
+    "signal": {"type": "list", "mapping": code_mapping},
     "genre": {"type": "list", "mapping": code_mapping},
     "ancestors": Resource.not_analyzed_field("list"),
     "attachments": {

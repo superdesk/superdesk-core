@@ -45,7 +45,6 @@ if sys.version_info < (3, 6):
         sys_random = SystemRandom()
         return "".join(sys_random.choice(PWD_ALPHABET) for _ in range(lenght))
 
-
 else:
     # "secrets" module is only available with Python 3.6+
     import secrets

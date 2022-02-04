@@ -115,6 +115,7 @@ class PublishedItemResource(Resource):
     mongo_indexes = {
         "guid_1": ([("guid", 1)], {"background": True}),
         "item_id_1": ([("item_id", 1)], {"background": True}),
+        "translation_id_1": ([("translation_id", 1)], {"background": True}),
     }
 
 

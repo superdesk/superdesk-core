@@ -80,8 +80,10 @@ def get_headers(self, environ=None):
     """
     return [
         ("Content-Type", "text/html"),
-        ("Access-Control-Allow-Origin", "*"),
-        ("Access-Control-Allow-Headers", "*"),
+        ("Access-Control-Allow-Origin", app.config["CLIENT_URL"]),
+        ("Access-Control-Allow-Headers", ",".join(app.config["X_HEADERS"])),
+        ("Access-Control-Allow-Credentials", "true"),
+        ("Access-Control-Allow-Methods", "*"),
     ]
 
 

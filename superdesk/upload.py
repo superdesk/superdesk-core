@@ -12,9 +12,11 @@
 import logging
 
 from eve.utils import config
-from flask import request, current_app as app, redirect
+from flask import request, current_app as app, redirect, make_response, jsonify
 
 import superdesk
+import json
+import os
 from superdesk.errors import SuperdeskApiError
 from superdesk.media.renditions import generate_renditions, delete_file_on_error
 from superdesk.media.media_operations import (
@@ -26,6 +28,9 @@ from superdesk.media.media_operations import (
 )
 from superdesk.filemeta import set_filemeta
 from superdesk.storage.superdesk_file import generate_response_for_file
+from superdesk.users.services import current_user_has_privilege
+from superdesk.auth.decorator import blueprint_auth
+from superdesk import get_resource_privileges
 from .resource import Resource
 from .services import BaseService
 
@@ -35,12 +40,14 @@ logger = logging.getLogger(__name__)
 
 
 @bp.route("/upload/<path:media_id>/raw", methods=["GET"])
+@blueprint_auth()
 def get_upload_as_data_uri_bc(media_id):
     """Keep previous url for backward compatibility"""
     return redirect(upload_url(media_id))
 
 
 @bp.route("/upload-raw/<path:media_id>", methods=["GET"])
+@blueprint_auth()
 def get_upload_as_data_uri(media_id):
     if not request.args.get("resource"):
         media_file = app.media.get_by_filename(media_id)
@@ -50,6 +57,55 @@ def get_upload_as_data_uri(media_id):
         return generate_response_for_file(media_file)
 
     raise SuperdeskApiError.notFoundError("File not found on media storage.")
+
+
+@bp.route("/upload/config-file", methods=["POST", "OPTIONS"])
+@blueprint_auth()
+def upload_config_file():
+    if request.method == "OPTIONS":
+        # return headers to avoid CORS problems
+        response = make_response()
+        response.headers.add("Access-Control-Allow-Origin", "*")
+        response.headers.add("Access-Control-Allow-Headers", "*")
+        response.headers.add("Access-Control-Allow-Methods", "POST")
+        return response
+
+    _resource = request.args.get("resource")
+    if not _resource:
+        raise SuperdeskApiError.forbiddenError("Provide required param: 'resource'.")
+
+    resource_privileges = get_resource_privileges(_resource).get("POST", None)
+    if not current_user_has_privilege(resource_privileges):
+        raise SuperdeskApiError.forbiddenError("You don't have permissions to upload JSON file.")
+
+    json_files = request.files.getlist("json_file")
+    if not json_files:
+        raise SuperdeskApiError.badRequestError("Provide JSON file with key 'json_file'.")
+
+    _items = []
+    for _file in json_files:
+        file_name = _file.filename
+        _, ext = os.path.splitext(file_name)
+        if ext not in [".json"]:
+            raise SuperdeskApiError.badRequestError(
+                "File is not allowed: {}, Only JSON file is allowed to upload.".format(file_name)
+            )
+
+        try:
+            file_data = json.loads(_file.read())
+        except Exception as ex:
+            logger.error("Invalid JSON file {0}: {1}".format(file_name, str(ex)))
+            raise SuperdeskApiError.internalError("Invalid JSON file: {}.".format(file_name))
+
+        if type(file_data) == dict:
+            file_data = [file_data]
+        _items += file_data
+
+    res = superdesk.get_resource_service(_resource).update_data_from_json(_items)
+    response = make_response(jsonify(res))
+    response.headers.add("Access-Control-Allow-Origin", "*")
+    response.headers.add("Access-Control-Expose-Headers", "*")
+    return response
 
 
 def url_for_media(media_id, mimetype=None):

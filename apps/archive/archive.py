@@ -307,9 +307,10 @@ class ArchiveResource(Resource):
     privileges = {"POST": SOURCE, "PATCH": SOURCE, "PUT": SOURCE}
     collation = False
     mongo_indexes = {
-        "processed_from_1": ([(PROCESSED_FROM, 1)], {"background": True}),
-        "unique_id_1": ([("unique_id", 1)], {"background": True}),
         "uri_1": ([("uri", 1)], {"background": True}),
+        "ingest_id_1": ([("ingest_id", 1)], {"background": True}),
+        "unique_id_1": ([("unique_id", 1)], {"background": True}),
+        "processed_from_1": ([(PROCESSED_FROM, 1)], {"background": True}),
     }
 
 

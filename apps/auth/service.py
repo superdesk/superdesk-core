@@ -33,6 +33,8 @@ class AuthService(BaseService):
         raise NotImplementedError()
 
     def on_create(self, docs):
+        # Clear the session data when creating a new session
+        flask.session.pop("session_token", None)
         for doc in docs:
             user = self.authenticate(doc)
             if not user:
@@ -82,6 +84,9 @@ class AuthService(BaseService):
         :param doc: A deleted auth doc AKA a session
         :return:
         """
+        # Clear the session data when session has ended
+        flask.session.pop("session_token", None)
+
         # notify that the session has ended
         app.on_session_end(doc["user"], doc["_id"])
         self.set_user_last_activity(doc["user"], done=True)

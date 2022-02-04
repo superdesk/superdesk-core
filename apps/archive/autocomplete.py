@@ -13,6 +13,7 @@ from superdesk.errors import SuperdeskApiError
 SETTING_ENABLED = "ARCHIVE_AUTOCOMPLETE"
 SETTING_DAYS = "ARCHIVE_AUTOCOMPLETE_DAYS"
 SETTING_HOURS = "ARCHIVE_AUTOCOMPLETE_HOURS"
+SETTING_LIMIT = "ARCHIVE_AUTOCOMPLETE_LIMIT"
 
 
 class AutocompleteResource(superdesk.Resource):
@@ -25,8 +26,8 @@ class AutocompleteResource(superdesk.Resource):
 
 class AutocompleteService(superdesk.Service):
 
-    allowed_fields = {
-        "slugline",
+    field_mapping = {
+        "slugline": "slugline.keyword",
     }
 
     def get(self, req, lookup):
@@ -36,23 +37,41 @@ class AutocompleteService(superdesk.Service):
         if not app.config.get(SETTING_ENABLED):
             raise SuperdeskApiError(_("Archive autocomplete is not enabled"), 404)
 
-        if field not in self.allowed_fields:
+        if field not in self.field_mapping:
             raise SuperdeskApiError(_("Field %(field)s is not allowed", field=field), 400)
 
-        _filter = {
-            "state": "published",
-            "language": language,
-            "versioncreated": {
-                "$gte": utcnow()
-                - timedelta(
-                    days=app.config[SETTING_DAYS],
-                    hours=app.config[SETTING_HOURS],
-                )
+        versioncreated_min = (
+            utcnow()
+            - timedelta(
+                days=app.config[SETTING_DAYS],
+                hours=app.config[SETTING_HOURS],
+            )
+        ).replace(
+            microsecond=0
+        )  # avoid different microsecond each time so elastic has 1s to cache
+
+        query = {
+            "query": {
+                "bool": {
+                    "filter": [
+                        {"term": {"state": "published"}},
+                        {"term": {"language": language}},
+                        {"range": {"versioncreated": {"gte": versioncreated_min}}},
+                    ],
+                },
+            },
+            "aggs": {
+                "values": {
+                    "terms": {
+                        "field": self.field_mapping[field],
+                        "size": app.config[SETTING_LIMIT],
+                        "order": {"_key": "asc"},
+                    },
+                },
             },
         }
-        values = self.backend._backend("archive").driver.db["archive"].distinct(field, _filter)
-        sorted_values = sorted(values, key=locale.strxfrm)
-        docs = [{"value": value} for value in sorted_values]
+        res = app.data.elastic.search(query, "archive", params={"size": 0})
+        docs = [{"value": bucket["key"]} for bucket in res.hits["aggregations"]["values"]["buckets"]]
         return ListCursor(docs)
 
 

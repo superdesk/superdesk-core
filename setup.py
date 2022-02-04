@@ -60,6 +60,7 @@ install_requires = [
     # to be replaced by stdlib version when we use Python 3.8+
     "importlib_metadata<3.2",
     "typing_extensions>=3.7.4",
+    "elastic-apm[flask]>=6.7,<6.8",
 ]
 
 package_data = {
@@ -90,10 +91,10 @@ setup(
     url="https://github.com/superdesk/superdesk-core",
     license="GPLv3",
     platforms=["any"],
-    packages=find_packages(exclude=["tests", "features"]),
+    packages=find_packages(exclude=["tests*", "features*"]),
     package_data=package_data,
     include_package_data=True,
-    setup_requires=["setuptools_scm"],
+    # setup_requires=["setuptools_scm"],
     install_requires=install_requires,
     classifiers=[
         "Development Status :: 4 - Beta",

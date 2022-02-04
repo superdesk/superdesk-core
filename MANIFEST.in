@@ -9,3 +9,6 @@ recursive-include apps *.html
 recursive-include apps *.txt
 
 include .fireq.json
+
+recursive-exclude tests *
+recursive-exclude features *

@@ -10,12 +10,12 @@
 
 
 import os
-from superdesk.tests import TestCase
+import datetime
+
+from unittest import TestCase, mock
 
 from superdesk.etree import etree
 from superdesk.io.feed_parsers import wordpress_wxr
-from unittest import mock
-import datetime
 
 FAKE_MEDIA_DATA = {
     "_created": datetime.datetime(2017, 4, 26, 13, 0, 33, tzinfo=datetime.timezone.utc),
@@ -103,6 +103,9 @@ class WPWXRTestCase(WPWXRTestBase):
 
     def test_guid(self):
         self.assertEqual(self.articles[0]["guid"], "http://sdnewtester.org/?p=216")
+        self.assertEqual(
+            self.articles[0]["extra"]["original_article_url"], "http://sdnewtester.org/bla/bla/article.html"
+        )
 
     def test_firstpublished(self):
         self.assertEqual(
@@ -282,5 +285,7 @@ class FunkeWXRTestCase(WPWXRTestBase):
 
     def test_body_html(self):
         self.assertTrue(
-            self.articles[0]["body_html"].lstrip().startswith("<p><strong"), self.articles[0]["body_html"][:20]
+            self.articles[0]["body_html"].lstrip().startswith("<p><strong>Mysterium"),
+            self.articles[0]["body_html"][:20],
         )
+        self.assertNotIn("[contact_form]", self.articles[0]["body_html"])

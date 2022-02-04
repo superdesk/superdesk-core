@@ -1,7 +1,8 @@
-from flask import Blueprint, request, Response
+from flask import Blueprint, request, Response, current_app as app
 import superdesk
 from superdesk import get_resource_service
 from superdesk.publish.formatters import get_formatter
+from superdesk.auth.decorator import blueprint_auth
 from apps.content_types import apply_schema
 
 
@@ -16,6 +17,7 @@ def get_mime_type(formatter_qcode):
 
 
 @bp.route("/format-document-for-preview/", methods=["GET", "OPTIONS"])
+@blueprint_auth()
 def format_document():
 
     document_id = request.args.get("document_id")
@@ -29,8 +31,10 @@ def format_document():
     formatted_docs = formatter.format(article=apply_schema(doc), subscriber=subscriber, codes=None)
 
     headers = {
-        "Access-Control-Allow-Origin": "*",
+        "Access-Control-Allow-Origin": app.config["CLIENT_URL"],
         "Access-Control-Allow-Methods": "GET",
+        "Access-Control-Allow-Headers": ",".join(app.config["X_HEADERS"]),
+        "Access-Control-Allow-Credentials": "true",
         "Cache-Control": "no-cache, no-store, must-revalidate",
     }
 

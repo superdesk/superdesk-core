@@ -97,9 +97,17 @@ def create():
     response = post_response.json()
     if post_response.status_code == 201:
         if response.get("mimetype", "").startswith("image/"):
-            for rendition in app.config["RENDITIONS"]["sams"].values():
+
+            # Create renditions.
+            renditions = [k for k in app.config["RENDITIONS"]["sams"].keys()]
+            for rendition in renditions:
+                dimensions = app.config["RENDITIONS"]["sams"][rendition]
                 rendition_response = sams_client.images.generate_rendition(
-                    response["_id"], width=rendition.get("width"), height=rendition.get("height"), keep_proportions=True
+                    response["_id"],
+                    width=dimensions.get("width"),
+                    height=dimensions.get("height"),
+                    name=rendition,
+                    keep_proportions=True,
                 )
 
                 if not rendition_response.ok:

@@ -56,6 +56,10 @@ logger = logging.getLogger(__name__)
 MEDIA_FIELD_RE = re.compile(r"(?P<field_id>\S+)--(?P<version>\d+)$")
 EXTRA_ITEMS = "extra_items"
 
+SCHEME_MAP = {
+    "sig": "http://cv.iptc.org/newscodes/signal/",
+}
+
 
 def filter_empty_vals(data):
     """Filter out `None` values from a given dict."""
@@ -251,6 +255,9 @@ class NINJSFormatter(Formatter):
         if article.get("flags", {}).get("marked_for_legal"):
             ninjs["signal"] = self._format_signal_cwarn()
 
+        if article.get("signal"):
+            ninjs.setdefault("signal", []).extend([self._format_signal(signal) for signal in article["signal"]])
+
         if article.get("attachments"):
             ninjs["attachments"] = self._format_attachments(article)
 
@@ -274,6 +281,13 @@ class NINJSFormatter(Formatter):
 
         if (article.get("schedule_settings") or {}).get("utc_publish_schedule"):
             ninjs["publish_schedule"] = article["schedule_settings"]["utc_publish_schedule"]
+
+        # set description for custom embed field
+        if article.get("extra"):
+            ninjs["extra"] = article["extra"]
+            for key, value in ninjs["extra"].items():
+                if type(value) == dict and "embed" in value:
+                    value.setdefault("description", "")
 
         return ninjs
 
@@ -491,7 +505,7 @@ class NINJSFormatter(Formatter):
         return superdesk.get_resource_service("content_types").get_output_name(profile)
 
     def _format_signal_cwarn(self):
-        return [{"name": "Content Warning", "code": "cwarn", "scheme": "http://cv.iptc.org/newscodes/signal/"}]
+        return [{"name": "Content Warning", "code": "cwarn", "scheme": SCHEME_MAP["sig"]}]
 
     def _format_attachments(self, article):
         output = []
@@ -568,6 +582,14 @@ class NINJSFormatter(Formatter):
 
             authors.append(author)
         return authors
+
+    def _format_signal(self, signal):
+        scheme, code = signal["qcode"].split(":")
+        return dict(
+            name=signal["name"],
+            code=code,
+            scheme=SCHEME_MAP.get(scheme) or scheme,
+        )
 
     def export(self, item):
         if self.can_format(self.format_type, item):

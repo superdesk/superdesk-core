@@ -36,9 +36,10 @@ def init_app(app: Eve):
     @destinations_bp.after_request
     @sets_bp.after_request
     def after_request(response):
-        response.headers.set("Access-Control-Allow-Origin", "*")
-        response.headers.set("Access-Control-Allow-Headers", "*")
-        response.headers.set("Access-Control-Allow-Methods", "*")
+        response.headers.set("Access-Control-Allow-Origin", app.config["CLIENT_URL"])
+        response.headers.set("Access-Control-Allow-Headers", ",".join(app.config["X_HEADERS"]))
+        response.headers.set("Access-Control-Allow-Methods", "OPTIONS, PATCH, DELETE, HEAD, PUT, GET, POST")
+        response.headers.set("Access-Control-Allow-Credentials", "true")
         return response
 
     superdesk.blueprint(destinations_bp, app, client=client)

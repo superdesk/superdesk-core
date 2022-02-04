@@ -15,6 +15,8 @@ from typing import Union
 from flask import current_app as app, json
 from eve.utils import ParsedRequest, config
 from eve.methods.common import resolve_document_etag
+from superdesk.errors import SuperdeskApiError
+from superdesk.utc import utcnow
 
 
 log = logging.getLogger(__name__)
@@ -122,6 +124,9 @@ class BaseService:
             req.projection = json.dumps(projection)
         return self.backend.get_from_mongo(self.datasource, req=req, lookup=lookup)
 
+    def get_all(self):
+        return self.get_from_mongo(None, {}).sort("_id")
+
     def find_and_modify(self, query, update, **kwargs):
         res = self.backend.find_and_modify(self.datasource, query=query, update=update, **kwargs)
         return res
@@ -205,6 +210,36 @@ class BaseService:
         :param dict item: item
         """
         return self.backend.remove_from_search(self.datasource, item)
+
+    def update_data_from_json(self, items):
+        success = []
+        for item in items:
+            try:
+                orig = self.find_one(req=None, _id=item["_id"])
+                # update _created and _updated key if keys provided in json
+                if item.get("_created"):
+                    item["_created"] = orig["_created"] if orig else utcnow()
+                if item.get("_updated"):
+                    item["_updated"] = utcnow()
+
+                res = self.post([item]) if not orig else self.patch(orig["_id"], item)
+                if res:
+                    success.append(res)
+            except Exception as ex:
+                raise SuperdeskApiError.badRequestError("Uploaded file is invalid, Error occured:{}.".format(str(ex)))
+
+        if success:
+            return {
+                "_status": "SUCCESS",
+                "_success": {"code": 200, "_message": "{} uploaded successfully.".format(self.datasource)},
+                "items": success,
+            }
+
+        return {
+            "_status": "ERR",
+            "_error": {"code": 400, "_message": "Unable to update {}.".format(self.datasource)},
+            "items": items,
+        }
 
 
 class Service(BaseService):

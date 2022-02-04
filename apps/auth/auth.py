@@ -13,7 +13,7 @@ import logging
 import superdesk
 
 from datetime import timedelta
-from flask import request, current_app as app, json
+from flask import request, current_app as app, session
 from eve.auth import TokenAuth
 from superdesk.resource import Resource
 from superdesk.errors import SuperdeskApiError
@@ -146,6 +146,8 @@ class SuperdeskTokenAuth(TokenAuth):
         user_service = get_resource_service("users")
         auth_token = auth_service.find_one(token=token, req=None)
         if auth_token:
+            if session.get("session_token") != token:
+                session["session_token"] = token
             user_id = str(auth_token["user"])
             flask.g.user = user_service.find_one(req=None, _id=user_id)
             flask.g.role = user_service.get_role(flask.g.user)
@@ -168,6 +170,14 @@ class SuperdeskTokenAuth(TokenAuth):
         """Ignores auth on home endpoint."""
         if not resource:
             return True
+        elif session.get("session_token"):
+            if get_resource_service("auth").find_one(token=session["session_token"], req=None):
+                # If the ``session_token`` is valid, continue on with ``check_auth``
+                return self.check_auth(session["session_token"], allowed_roles, resource, method)
+
+            # Otherwise remove ``session_token`` from the session cookie
+            # and continue authentication using the HTTP ``Authorization`` Header
+            session.pop("session_token")
         return super(SuperdeskTokenAuth, self).authorized(allowed_roles, resource, method)
 
     def authenticate(self):

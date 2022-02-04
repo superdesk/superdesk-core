@@ -671,34 +671,6 @@ Feature: News Items Archive
          {"guid": "123", "source": "FOO", "dateline": {"source": "FOO"}}
          """
 
-      @auth
-      Scenario: Create content item based on a content type with default values
-         Given "content_types"
-          """
-          [{"_id": "snap", "schema": {"headline": {"default": "default_headline"}, "priority": {"default": 10}}}]
-          """
-         When we post to "/archive"
-          """
-           [{  "type":"text", "guid": "123",  "profile": "snap" }]
-          """
-         When we get "archive/123"
-         Then we get OK response
-         Then we get existing resource
-         """
-         {"guid": "123", "headline": "default_headline", "priority": 10}
-         """
-
-         When we post to "/archive"
-          """
-           [{  "type":"text", "headline": "test1", "guid": "456",  "priority": 3, "profile": "snap" }]
-          """
-         When we get "archive/456"
-         Then we get OK response
-         Then we get existing resource
-         """
-         {"guid": "456", "headline": "test1", "priority": 3}
-         """
-
     @auth
     Scenario: Hide version 0 items from lists
         When we post to "/archive"

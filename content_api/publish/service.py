@@ -56,9 +56,12 @@ class PublishService(BaseService):
                 if assoc:
                     assoc.setdefault("subscribers", [str(subscriber[config.ID_FIELD]) for subscriber in subscribers])
             doc["subscribers"] = [str(sub["_id"]) for sub in subscribers]
+            doc["original_id"] = doc["guid"]
             if "evolvedfrom" in doc:
                 parent_item = self.find_one(req=None, _id=doc["evolvedfrom"])
                 if parent_item:
+                    if parent_item.get("original_id"):
+                        doc["original_id"] = parent_item["original_id"]
                     doc["ancestors"] = copy(parent_item.get("ancestors", []))
                     doc["ancestors"].append(doc["evolvedfrom"])
                     doc["bookmarks"] = parent_item.get("bookmarks", [])

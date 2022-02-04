@@ -434,8 +434,10 @@ The number of days an activation token is valid, env ``ACTIVATE_TTL``.
 ^^^^^^^^^^^^^^
 
 .. versionadded:: 1.5
+.. versionchanged:: 2.4
+    Now required as ``flask.session`` will be used for some authentication
 
-Default: ``''``
+Default: Hardcoded value, which should not be used in production!
 
 This value should be set to a unique, unpredictable value. It is used for auth token signing.
 

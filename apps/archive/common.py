@@ -815,19 +815,12 @@ def transtype_metadata(doc, original=None):
 def copy_metadata_from_profile(doc):
     """Set the default values defined on document profile.
 
+    .. deprecated:: 2.2
+        We use templates to handle default values, so ignore profile defaults for now.
+
     :param doc
     """
     defaults = {}
-    profile = doc.get("profile", None)
-    if profile:
-        content_type = superdesk.get_resource_service("content_types").find_one(req=None, _id=profile)
-        if content_type:
-            defaults = {
-                name: field.get("default", None)
-                for (name, field) in content_type.get("schema", {}).items()
-                if field and field.get("default", None)
-            }
-
     defaults.setdefault("priority", config.DEFAULT_PRIORITY_VALUE_FOR_MANUAL_ARTICLES)
     defaults.setdefault("urgency", config.DEFAULT_URGENCY_VALUE_FOR_MANUAL_ARTICLES)
     defaults.setdefault("genre", config.DEFAULT_GENRE_VALUE_FOR_MANUAL_ARTICLES)
