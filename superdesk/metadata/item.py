@@ -254,7 +254,10 @@ metadata_schema = {
                     "analyzer": "phrase_prefix_analyzer",
                     "search_analyzer": "phrase_prefix_analyzer",
                     "fielddata": True,
-                }
+                },
+                "keyword": {
+                    "type": "keyword",
+                },
             },
         },
     },
