@@ -1869,13 +1869,13 @@ Feature: Content Profile
             "template_name": "foo",
             "data": {
                 "slugline": "Testing the slugline",
-                "profile": "foo",
-                "language": "fr"
+                "profile": "foo"
             }
           }]
         }
         """
         And there is no "headline" in data
+        And there is no "language" in data
 
     @auth
     Scenario: Removing the keywords field from content profile should not show the keywords field again 
