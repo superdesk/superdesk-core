@@ -73,6 +73,7 @@ ITEM_EXPORT_HIGHLIGHT = "export_highlight"
 ITEM_CREATE_HIGHLIGHT = "create_highlight"
 ITEM_CORRECTION = "correction"
 ITEM_CANCEL_CORRECTION = "cancel_correction"
+ITEM_OPERATION_CORRECT = "correct"
 item_operations = [
     ITEM_CREATE,
     ITEM_FETCH,

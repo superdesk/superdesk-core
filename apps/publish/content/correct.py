@@ -93,9 +93,9 @@ class CorrectPublishService(BasePublishService):
 
     def on_update(self, updates, original):
         CropService().validate_multiple_crops(updates, original)
+        updates[ITEM_OPERATION] = self.item_operation
         super().on_update(updates, original)
         remove_is_queued(updates)
-        updates[ITEM_OPERATION] = self.item_operation
         updates["versioncreated"] = utcnow()
         updates["correction_sequence"] = original.get("correction_sequence", 1) + 1
         set_sign_off(updates, original)

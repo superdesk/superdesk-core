@@ -47,6 +47,7 @@ from .common import (
     ITEM_DUPLICATE,
     ITEM_DUPLICATED_FROM,
     ITEM_DESCHEDULE,
+    ITEM_OPERATION_CORRECT,
     ARCHIVE as SOURCE,
     LAST_PRODUCTION_DESK,
     LAST_AUTHORING_DESK,
@@ -979,7 +980,7 @@ class ArchiveService(BaseService):
 
                     if (
                         item[ITEM_STATE] not in {CONTENT_STATE.KILLED, CONTENT_STATE.RECALLED, CONTENT_STATE.SCHEDULED}
-                    ) and embargo <= utcnow():
+                    ) and embargo <= utcnow() and item[ITEM_OPERATION] != ITEM_OPERATION_CORRECT:
                         raise SuperdeskApiError.badRequestError(_("Embargo cannot be earlier than now"))
 
                     if item.get("rewrite_of"):

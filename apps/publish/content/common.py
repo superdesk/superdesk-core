@@ -53,6 +53,7 @@ from apps.archive.common import (
     item_operations,
     FIELDS_TO_COPY_FOR_ASSOCIATED_ITEM,
     remove_unwanted,
+    ITEM_OPERATION_CORRECT,
 )
 from apps.archive.common import (
     validate_schedule,
@@ -82,7 +83,7 @@ from flask import request, json
 logger = logging.getLogger(__name__)
 
 ITEM_PUBLISH = "publish"
-ITEM_CORRECT = "correct"
+ITEM_CORRECT = ITEM_OPERATION_CORRECT
 ITEM_KILL = "kill"
 ITEM_TAKEDOWN = "takedown"
 ITEM_UNPUBLISH = "unpublish"
