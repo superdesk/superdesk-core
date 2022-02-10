@@ -25,6 +25,7 @@ from superdesk.metadata.item import (
     GUID_TAG,
     PROCESSED_FROM,
     metadata_schema,
+    SCHEDULE_SETTINGS,
 )
 from superdesk.resource import Resource, build_custom_hateoas
 from apps.archive.common import (
@@ -45,6 +46,7 @@ from superdesk.signals import item_rewrite
 from apps.archive.archive import update_associations
 from superdesk.editor_utils import generate_fields, copy_fields
 from flask_babel import _
+from superdesk.utc import utcnow
 
 logger = logging.getLogger(__name__)
 
@@ -138,7 +140,8 @@ class ArchiveRewriteService(Service):
         if not original:
             raise SuperdeskApiError.notFoundError(message=_("Cannot find the article"))
 
-        if original.get(EMBARGO):
+        embargo = original.get(SCHEDULE_SETTINGS, {}).get("utc_{}".format(EMBARGO)) if original.get(EMBARGO) else None
+        if embargo > utcnow():
             raise SuperdeskApiError.badRequestError(_("Rewrite of an Item having embargo isn't possible"))
 
         if not original.get("event_id"):
