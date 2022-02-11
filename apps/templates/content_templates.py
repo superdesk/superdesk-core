@@ -330,7 +330,6 @@ class ContentTemplatesService(BaseService):
             "flags",
             "format",
             "pubstatus",
-            "language",
             "usageterms",
             "company_codes",
             "keywords",
