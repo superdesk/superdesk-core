@@ -88,6 +88,7 @@ class UsersResource(Resource):
             "user_type": {"type": "string", "allowed": ["user", "administrator"], "default": "user"},
             "is_support": {"type": "boolean", "default": False},
             "is_author": {"type": "boolean", "default": True},
+            "private": {"type": "boolean", "default": False, "nullable": True},
             "is_active": {"type": "boolean", "default": True},
             "is_enabled": {"type": "boolean", "default": True},
             "needs_activation": {"type": "boolean", "default": True},
