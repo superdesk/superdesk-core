@@ -141,7 +141,7 @@ class ArchiveRewriteService(Service):
             raise SuperdeskApiError.notFoundError(message=_("Cannot find the article"))
 
         embargo = original.get(SCHEDULE_SETTINGS, {}).get("utc_{}".format(EMBARGO)) if original.get(EMBARGO) else None
-        if embargo > utcnow():
+        if embargo is not None and embargo > utcnow():
             raise SuperdeskApiError.badRequestError(_("Rewrite of an Item having embargo isn't possible"))
 
         if not original.get("event_id"):
