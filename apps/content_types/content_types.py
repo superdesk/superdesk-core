@@ -188,7 +188,7 @@ class ContentTypesService(superdesk.Service):
         """
 
         # these are the only fields of templates that don't depend on the schema.
-        template_metadata_fields = ["language", "usageterms"]
+        template_metadata_fields = ["usageterms"]
 
         templates = list(
             superdesk.get_resource_service("content_templates").get_templates_by_profile_id(original.get("_id"))
