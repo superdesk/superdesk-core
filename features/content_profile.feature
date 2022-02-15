@@ -1018,16 +1018,16 @@ Feature: Content Profile
     Scenario: Only 1 profile can be added for non text item types
         When we post to "content_types"
         """
-        {"_id": "foo", "item_type": "picture"}
+        {"_id": "foo", "type": "picture"}
         """
         Then we get new resource
         When we post to "content_types"
         """
-        {"_id": "bar", "item_type": "picture"}
+        {"_id": "bar", "type": "picture"}
         """
         Then we get error 400
         """
-        {"_status": "ERR", "_issues": {"item_type": "Only 1 instance is allowed."}}
+        {"_status": "ERR", "_issues": {"type": "Only 1 instance is allowed."}}
         """
 
     @auth

@@ -2349,7 +2349,7 @@ Feature: Content Publishing
       And we publish "#archive._id#" with "publish" type and "published" state
       Then we get error 400
       """
-      {"_issues": {"validator exception": "['Associated item s234 234: HEADLINE is a required field']"}, "_status": "ERR"}
+      {"_issues": {"validator exception": "[[\"MEDIA'S COPYRIGHTHOLDER is a required field\", \"MEDIA'S HEADLINE is a required field\"]]"}, "_status": "ERR"}
       """
       When we publish "#archive._id#" with "publish" type and "published" state
       """
@@ -2363,7 +2363,8 @@ Feature: Content Publishing
             "description_text": "description_text",
             "type": "picture",
             "slugline": "s234",
-            "state": "in_progress"
+            "state": "in_progress",
+            "copyrightholder": "copy"
           }
         }
       }
