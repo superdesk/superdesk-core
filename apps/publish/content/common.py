@@ -284,8 +284,8 @@ class BasePublishService(BaseService):
         self.raise_if_invalid_state_transition(original)
         self._raise_if_unpublished_related_items(original)
 
-        updated = original.copy()
-        updated.update(updates)
+        updated = deepcopy(original)
+        updated.update(deepcopy(updates))
 
         self.raise_if_not_marked_for_publication(updated)
 
@@ -329,7 +329,7 @@ class BasePublishService(BaseService):
                 raise SuperdeskValidationError(errors, fields)
 
         validation_errors = []
-        self._validate_associated_items(original, updates, validation_errors)
+        self._validate_associated_items(original, deepcopy(updates), validation_errors)
 
         if original[ITEM_TYPE] == CONTENT_TYPE.COMPOSITE:
             self._validate_package(original, updates, validation_errors)
