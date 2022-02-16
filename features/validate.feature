@@ -456,7 +456,7 @@ Feature: Validate
     Scenario: Validate picture using content profile
     Given "content_types"
     """
-    [{"_id": "picture", "item_type": "picture", "schema": {
+    [{"_id": "picture", "type": "picture", "schema": {
       "headline": {
         "type": "string",
         "nullable": true,

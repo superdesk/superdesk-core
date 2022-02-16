@@ -267,6 +267,7 @@
     {
         "data": {
             "label": "testing",
+            "type": "text",
             "enabled": true,
             "schema": {
                 "slugline": {},
@@ -313,7 +314,7 @@
     {
         "data": {
             "_id": "text",
-            "item_type": "text",
+            "type": "text",
             "label": "Text",
             "schema": {
                 "abstract": {
@@ -588,7 +589,7 @@
     {
         "data": {
             "_id": "picture",
-            "item_type": "picture",
+            "type": "picture",
             "label": "Picture",
             "schema": {
                 "abstract": {
@@ -658,7 +659,7 @@
     {
         "data": {
             "_id": "composite",
-            "item_type": "composite",
+            "type": "composite",
             "label": "Package",
             "schema": {
                 "abstract": {
