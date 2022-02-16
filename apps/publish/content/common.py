@@ -299,9 +299,15 @@ class BasePublishService(BaseService):
                 update_schedule_settings(updated, PUBLISH_SCHEDULE, updated.get(PUBLISH_SCHEDULE))
                 validate_schedule(updated.get(SCHEDULE_SETTINGS, {}).get("utc_{}".format(PUBLISH_SCHEDULE)))
 
-        if original[ITEM_TYPE] != CONTENT_TYPE.COMPOSITE and updates.get(EMBARGO):
+        if original[ITEM_TYPE] != CONTENT_TYPE.COMPOSITE and updated.get(EMBARGO):
+            # Update the schedule_settings for ``EMBARGO``
             update_schedule_settings(updated, EMBARGO, updated.get(EMBARGO))
-            get_resource_service(ARCHIVE).validate_embargo(updated)
+
+            # Only validate if the embargo has changed
+            original_embargo = original.get(SCHEDULE_SETTINGS, {}).get(f"utc_{EMBARGO}")
+            updated_embargo = updates.get(SCHEDULE_SETTINGS, {}).get(f"utc_{EMBARGO}")
+            if original_embargo != updated_embargo:
+                get_resource_service(ARCHIVE).validate_embargo(updated)
 
         if self.publish_type in [ITEM_CORRECT, ITEM_KILL]:
             if updates.get(EMBARGO) and not original.get(EMBARGO):
