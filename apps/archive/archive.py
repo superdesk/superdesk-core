@@ -1045,7 +1045,7 @@ class ArchiveService(BaseService):
                 - if Public Service Announcements are being added to a package or genre is being updated for a
                 broadcast, is invalid for scheduling, the updates contain duplicate anpa_category or subject codes
         """
-        updated = original.copy()
+        updated = deepcopy(original)
         updated.update(updates)
 
         self._test_readonly_stage(original, updates)
