@@ -313,7 +313,6 @@
         "username": "admin",
         "id_name": "-id profile testing-"
     },
-
     {
         "data": {
             "_id": "text",
@@ -441,7 +440,7 @@
                 },
                 "subject": {
                     "type": "list",
-                    "required": false,
+                    "required": true,
                     "mandatory_in_list": {
                         "scheme": {
 
