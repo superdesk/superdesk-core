@@ -288,8 +288,8 @@ class BasePublishService(BaseService):
         self.raise_if_invalid_state_transition(original)
         self._raise_if_unpublished_related_items(original)
 
-        updated = original.copy()
-        updated.update(updates)
+        updated = deepcopy(original)
+        updated.update(deepcopy(updates))
 
         self.raise_if_not_marked_for_publication(updated)
 
@@ -303,9 +303,15 @@ class BasePublishService(BaseService):
                 update_schedule_settings(updated, PUBLISH_SCHEDULE, updated.get(PUBLISH_SCHEDULE))
                 validate_schedule(updated.get(SCHEDULE_SETTINGS, {}).get("utc_{}".format(PUBLISH_SCHEDULE)))
 
-        if original[ITEM_TYPE] != CONTENT_TYPE.COMPOSITE and updates.get(EMBARGO):
+        if original[ITEM_TYPE] != CONTENT_TYPE.COMPOSITE and updated.get(EMBARGO):
+            # Update the schedule_settings for ``EMBARGO``
             update_schedule_settings(updated, EMBARGO, updated.get(EMBARGO))
-            get_resource_service(ARCHIVE).validate_embargo(updated)
+
+            # Only validate if the embargo has changed
+            original_embargo = original.get(SCHEDULE_SETTINGS, {}).get(f"utc_{EMBARGO}")
+            updated_embargo = updated.get(SCHEDULE_SETTINGS, {}).get(f"utc_{EMBARGO}")
+            if original_embargo != updated_embargo:
+                get_resource_service(ARCHIVE).validate_embargo(updated)
 
         if self.publish_type in [ITEM_CORRECT, ITEM_KILL]:
             if updates.get(EMBARGO) and not original.get(EMBARGO):
@@ -333,7 +339,7 @@ class BasePublishService(BaseService):
                 raise SuperdeskValidationError(errors, fields)
 
         validation_errors = []
-        self._validate_associated_items(original, updates, validation_errors)
+        self._validate_associated_items(original, deepcopy(updates), validation_errors)
 
         if original[ITEM_TYPE] == CONTENT_TYPE.COMPOSITE:
             self._validate_package(original, updates, validation_errors)
