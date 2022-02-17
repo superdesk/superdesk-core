@@ -284,7 +284,8 @@
             "editor": {
                 "slugline": {
                     "required": true,
-                    "order": 4
+                    "order": 4,
+                    "sdWidth": "full"
                 },
                 "subject": {
                     "order": 6,
@@ -292,7 +293,8 @@
                     "schema": {},
                     "mandatory_in_list": {
                         "scheme": {}
-                    }
+                    },
+                    "sdWidth": "full"
                 },
                 "headline": {
                     "editor3": true,
@@ -302,7 +304,8 @@
                 "body_html": {
                     "editor3": true,
                     "order": 14,
-                    "formatOptions": ["h2", "bold", "italic", "link", "comments", "annotation", "table"]
+                    "formatOptions": ["h2", "bold", "italic", "link", "comments", "annotation", "table"],
+                    "sdWidth": "full"
                 }
             }
         },
