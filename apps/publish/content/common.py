@@ -225,12 +225,7 @@ class BasePublishService(BaseService):
                 if updated.get(ASSOCIATIONS):
                     self._fix_related_references(updated, updates)
 
-                signals.item_publish.send(self, item=updated)
-
-                # Merge changes from ``updated`` into ``updates``, otherwise changes to the item
-                # from a signal will only be reflected in the ``published`` collection and not ``archive``
-                updates.update(updated)
-
+                signals.item_publish.send(self, item=updated, updates=updates)
                 self._update_archive(original, updates, should_insert_into_versions=auto_publish)
                 self.update_published_collection(published_item_id=original[config.ID_FIELD], updated=updated)
 
