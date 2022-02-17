@@ -225,7 +225,7 @@ class BasePublishService(BaseService):
                 if updated.get(ASSOCIATIONS):
                     self._fix_related_references(updated, updates)
 
-                signals.item_publish.send(self, item=updated)
+                signals.item_publish.send(self, item=updated, updates=updates)
                 self._update_archive(original, updates, should_insert_into_versions=auto_publish)
                 self.update_published_collection(published_item_id=original[config.ID_FIELD], updated=updated)
 
