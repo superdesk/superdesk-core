@@ -305,7 +305,7 @@ class BasePublishService(BaseService):
 
             # Only validate if the embargo has changed
             original_embargo = original.get(SCHEDULE_SETTINGS, {}).get(f"utc_{EMBARGO}")
-            updated_embargo = updates.get(SCHEDULE_SETTINGS, {}).get(f"utc_{EMBARGO}")
+            updated_embargo = updated.get(SCHEDULE_SETTINGS, {}).get(f"utc_{EMBARGO}")
             if original_embargo != updated_embargo:
                 get_resource_service(ARCHIVE).validate_embargo(updated)
 
