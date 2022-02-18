@@ -25,6 +25,8 @@ __all__ = [
     "item_duplicate",
     "item_duplicated",
     "archived_item_removed",
+    "item_resend",
+    "item_resent",
 ]
 
 signals = blinker.Namespace()
@@ -158,6 +160,22 @@ item_duplicated = signals.signal("item:duplicated")
 #: :param sender: archived service
 #: :param item: item being removed from archived
 archived_item_removed = signals.signal("archived:removed")
+
+#: Sent before item is resent
+#:
+#: ..versionadded: 2.3.8
+#:
+#: :param sender: ResendService
+#: :param item: item being resent
+item_resend = signals.signal("item:resend")
+
+#: Sent after item is resent
+#:
+#: ..versionadded: 2.3.8
+#:
+#: :param sender: ResendService
+#: :param item: item that was resent
+item_resent = signals.signal("item:resent")
 
 
 def connect(signal, subscriber):
