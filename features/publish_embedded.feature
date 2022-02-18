@@ -186,6 +186,8 @@ Feature: Publish embedded items feature
                     "headline": "test",
                     "alt_text": "alt_text",
                     "description_text": "description_text",
+                    "subject": [{"name": "subject", "parent": "05000000", "qcode": "05007000"}],
+                    "anpa_category": [{"qcode": "category", "name": "categories"}],
                     "state": "in_progress"
                 }
             }
@@ -196,7 +198,7 @@ Feature: Publish embedded items feature
         When we publish "foo" with "publish" type and "published" state
         Then we get error 400
         """
-        {"_issues": {"validator exception": "['Associated item  test: SLUGLINE is a required field']"}}
+        {"_issues": {"validator exception": "[[\"MEDIA'S SLUGLINE is a required field\"]]"}}
         """
 
         When we patch "archive/#archive._id#"
@@ -216,6 +218,8 @@ Feature: Publish embedded items feature
                 "headline": "test",
                 "alt_text": "alt_text",
                 "description_text": "description_text",
+                "subject": [{"name": "subject", "parent": "05000000", "qcode": "05007000"}],
+                "anpa_category": [{"qcode": "category", "name": "categories"}],
                 "state": "in_progress"}}}
         """
         Then we get OK response
@@ -271,6 +275,8 @@ Feature: Publish embedded items feature
                     "headline": "test",
                     "alt_text": "alt_text",
                     "description_text": "description_text",
+                    "subject": [{"name": "subject", "parent": "05000000", "qcode": "05007000"}],
+                    "anpa_category": [{"qcode": "category", "name": "categories"}],
                     "state": "in_progress"
                 }
             }
@@ -281,7 +287,7 @@ Feature: Publish embedded items feature
         When we publish "foo" with "publish" type and "published" state
         Then we get error 400
         """
-        {"_issues": {"validator exception": "['Associated item  test: SLUGLINE is a required field']"}}
+        {"_issues": { "validator exception": "[[\"MEDIA'S SLUGLINE is a required field\"]]"}}
         """
 
         When we patch "archive/#archive._id#"
@@ -301,6 +307,8 @@ Feature: Publish embedded items feature
                 "headline": "test",
                 "alt_text": "alt_text",
                 "description_text": "description_text",
+                "subject": [{"name": "subject", "parent": "05000000", "qcode": "05007000"}],
+                "anpa_category": [{"qcode": "category", "name": "categories"}],
                 "state": "in_progress"}}}
         """
         Then we get OK response
@@ -386,6 +394,8 @@ Feature: Publish embedded items feature
                     "headline": "test",
                     "alt_text": "alt_text",
                     "description_text": "description_text",
+                    "subject": [{"name": "subject", "parent": "05000000", "qcode": "05007000"}],
+                    "anpa_category": [{"qcode": "category", "name": "categories"}],
                     "state": "in_progress"
                 }
             }
@@ -396,7 +406,7 @@ Feature: Publish embedded items feature
         When we publish "foo" with "publish" type and "published" state
         Then we get error 400
         """
-        {"_issues": {"validator exception": "['Associated item  test: SLUGLINE is a required field']"}}
+        {"_issues": {"validator exception": "[[\"MEDIA'S SLUGLINE is a required field\"]]"}}
         """
 
         When we patch "archive/#archive._id#"
@@ -416,6 +426,8 @@ Feature: Publish embedded items feature
                 "pubstatus" : "usable",
                 "alt_text": "alt_text",
                 "description_text": "description_text",
+                "subject": [{"name": "subject", "parent": "05000000", "qcode": "05007000"}],
+                "anpa_category": [{"qcode": "category", "name": "categories"}],
                 "state": "in_progress"}}}
         """
         Then we get OK response
@@ -510,7 +522,8 @@ Feature: Publish embedded items feature
                     "alt_text": "alt_text",
                     "description_text": "description_text",
                     "state": "in_progress",
-                    "subject": [{"qcode": "02000000", "name": "xxx"}]
+                    "subject": [{"qcode": "02000000", "name": "xxx"}],
+                    "anpa_category": [{"qcode": "a", "name": "foo"}]
                 }
             }
         }
@@ -520,7 +533,7 @@ Feature: Publish embedded items feature
         When we publish "foo" with "publish" type and "published" state
         Then we get error 400
         """
-        {"_issues": {"validator exception": "['Associated item  test: SLUGLINE is a required field']"}}
+        {"_issues": {"validator exception": "[[\"MEDIA'S SLUGLINE is a required field\"]]"}}
         """
         Then we set copy metadata from parent flag
         When we publish "foo" with "publish" type and "published" state

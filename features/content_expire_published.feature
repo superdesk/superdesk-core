@@ -871,7 +871,10 @@ Feature: Content Expiry Published Items
             "poi": {"x": 0.2, "y": 0.3},
             "headline": "headline",
             "alt_text": "alt_text",
-            "description_text": "description_text"
+            "description_text": "description_text",
+            "slugline": "slugline",
+            "subject": [{"name": "subject", "parent": "05000000", "qcode": "05007000"}],
+            "anpa_category": [{"qcode": "category", "name": "categories"}]
           }
         }
       }
@@ -934,7 +937,10 @@ Feature: Content Expiry Published Items
             "poi": {"x": 0.2, "y": 0.3},
             "headline": "headline",
             "alt_text": "alt_text",
-            "description_text": "description_text"
+            "description_text": "description_text",
+            "slugline": "slugline",
+            "subject": [{"name": "subject", "parent": "05000000", "qcode": "05007000"}],
+            "anpa_category": [{"qcode": "category", "name": "categories"}]
           }
         }
       }
@@ -999,7 +1005,10 @@ Feature: Content Expiry Published Items
             "poi": {"x": 0.2, "y": 0.3},
             "headline": "headline",
             "alt_text": "alt_text",
-            "description_text": "description_text"
+            "description_text": "description_text",
+            "slugline": "slugline",
+            "subject": [{"name": "subject", "parent": "05000000", "qcode": "05007000"}],
+            "anpa_category": [{"qcode": "category", "name": "categories"}]
           }
         }
       }
@@ -1066,7 +1075,10 @@ Feature: Content Expiry Published Items
             "poi": {"x": 0.2, "y": 0.3},
             "headline": "headline",
             "alt_text": "alt_text",
-            "description_text": "description_text"
+            "description_text": "description_text",
+            "slugline": "slugline",
+            "subject": [{"name": "subject", "parent": "05000000", "qcode": "05007000"}],
+            "anpa_category": [{"qcode": "category", "name": "categories"}]
           }
         }
       }
