@@ -20,7 +20,9 @@ from superdesk.errors import SuperdeskApiError
 from .base import AIServiceBase
 
 logger = logging.getLogger(__name__)
-TIMEOUT = 30
+session = requests.Session()
+
+TIMEOUT = (5, 30)
 
 # iMatrics concept type to SD type mapping
 CONCEPT_MAPPING = OrderedDict(
@@ -340,7 +342,8 @@ class IMatrics(AIServiceBase):
 
     def _request(self, service, data=None, method="POST", params=None):
         url = urljoin(self.base_url, service)
-        r = requests.request(method, url, json=data, auth=(self.user, self.key), params=params, timeout=TIMEOUT)
+        r = session.request(method, url, json=data, auth=(self.user, self.key), params=params, timeout=TIMEOUT)
+
         if r.status_code != 200:
             raise SuperdeskApiError.proxyError(
                 "Unexpected return code ({status_code}) from {name}: {msg}".format(
