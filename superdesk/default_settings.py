@@ -831,7 +831,16 @@ VALIDATOR_MEDIA_METADATA = {
     "headline": {
         "required": True,
     },
+    "slugline": {
+        "required": True,
+    },
     "alt_text": {
+        "required": True,
+    },
+    "anpa_category": {
+        "required": True,
+    },
+    "subject": {
         "required": True,
     },
     "archive_description": {
