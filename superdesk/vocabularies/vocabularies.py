@@ -144,14 +144,6 @@ class VocabulariesResource(Resource):
         "custom_field_config": {
             "type": "dict",
             "nullable": True,
-            "schema": {
-                "increment_steps": {
-                    "type": "list",
-                },
-                "initial_offset_minutes": {
-                    "type": "integer",
-                },
-            },
         },
         "translations": {
             "type": "dict",
