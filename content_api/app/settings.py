@@ -15,7 +15,7 @@ The meaning of configuration options is described in the Eve framework
 `documentation <http://python-eve.org/config.html#global-configuration>`_.
 """
 
-from superdesk.default_settings import env, urlparse
+from superdesk.default_settings import env, urlparse, strtobool
 
 from superdesk.default_settings import (  # noqa
     SECRET_KEY,
@@ -62,3 +62,9 @@ PUBLIC_RESOURCES = []
 DATE_FORMAT = "%Y-%m-%dT%H:%M:%S+0000"
 ELASTIC_DATE_FORMAT = "%Y-%m-%d"
 BCRYPT_GENSALT_WORK_FACTOR = 12
+
+#: audit subscriber activity
+#:
+#: .. versionadded:: 2.5
+#:
+CONTENTAPI_AUDIT = strtobool(env("CONTENTAPI_AUDIT", "true"))
