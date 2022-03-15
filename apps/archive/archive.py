@@ -576,6 +576,7 @@ class ArchiveService(BaseService):
             self.packageService.on_deleted(doc)
 
         remove_media_files(doc)
+        self._remove_from_translations(doc)
 
         add_activity(
             ACTIVITY_DELETE,
@@ -586,6 +587,7 @@ class ArchiveService(BaseService):
             subject=get_subject(doc),
         )
         push_expired_notification([doc.get(config.ID_FIELD)])
+
         app.on_archive_item_deleted(doc)
 
     def replace(self, id, document, original):
@@ -1375,6 +1377,15 @@ class ArchiveService(BaseService):
             translation_items += self.get_item_translations(translation_item)
 
         return translation_items
+
+    def _remove_from_translations(self, item):
+        if item.get("translated_from"):
+            translated_from = self.find_one(req=None, _id=item["translated_from"])
+            if translated_from is None:
+                return
+            translations = translated_from.get("translations") or []
+            updates = {"translations": [_id for _id in translations if _id != item["_id"]]}
+            self.system_update(translated_from["_id"], updates, translated_from)
 
 
 class AutoSaveResource(Resource):
