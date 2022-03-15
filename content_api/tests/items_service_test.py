@@ -20,10 +20,14 @@ from content_api.tests import ApiTestCase
 from superdesk.tests import TestCase
 from superdesk.utc import utcnow
 from superdesk import get_resource_service
+from content_api.api_audit import ApiAuditService
 
 
-class FakeAuditService:
+class FakeAuditService(ApiAuditService):
     def audit_item(self, doc, id):
+        return
+
+    def audit_items(self, items):
         return
 
 
