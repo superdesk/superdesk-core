@@ -37,10 +37,12 @@ class ProxyMediaStorage(SuperdeskMediaStorage):
             # make amazon first if configured, so it will be the default
             self._storage.insert(0, AmazonMediaStorage(app))
 
+        self.check_exists = app.config.get("PROXY_MEDIA_STORAGE_CHECK_EXISTS", False)
+
     def storage(self, id_or_filename=None, resource=None, fallback=False) -> SuperdeskMediaStorage:
         if id_or_filename:
             for storage in self._storage:
-                if storage.exists(id_or_filename, resource):
+                if not self.check_exists or storage.exists(id_or_filename, resource):
                     logger.debug("got media from storage id=%s storage=%s", id_or_filename, storage)
                     return storage
             if not fallback:

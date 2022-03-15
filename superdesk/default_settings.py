@@ -515,6 +515,13 @@ VERSION = "_current_version"
 #: media storage provider
 MEDIA_STORAGE_PROVIDER = env("MEDIA_STORAGE_PROVIDER")
 
+#: avoid checking if media exists
+#:
+#: it should only check during migration, otherwise this generates unnecessary load on the s3
+#:
+#: .. versionadded:: 2.5
+PROXY_MEDIA_STORAGE_CHECK_EXISTS = strtobool(env("PROXY_MEDIA_STORAGE_CHECK_EXISTS", "false"))
+
 #: uses for generation of media url ``(<media_prefix>/<media_id>)``::
 MEDIA_PREFIX = env("MEDIA_PREFIX", "%s/upload-raw" % SERVER_URL.rstrip("/"))
 MEDIA_PREFIXES_TO_FIX = None
