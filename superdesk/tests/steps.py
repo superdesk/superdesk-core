@@ -85,11 +85,7 @@ def test_json(context, json_fields=None):
     except Exception:
         fail_and_print_body(context.response, "response is not valid json")
     context_data = json.loads(apply_placeholders(context, context.text))
-    assert_equal(
-        json_match(context_data, response_data, json_fields),
-        True,
-        msg=str(context_data) + "\n != \n" + str(response_data),
-    )
+    assert json_match(context_data, response_data, json_fields), str(context_data) + "\n != \n" + str(response_data)
     return response_data
 
 
@@ -144,7 +140,7 @@ def assert_is_now(val, key):
     assert val + timedelta(seconds=2) > now, "%s should be %s, it is %s" % (key, now, val)
 
 
-def json_match(context_data, response_data, json_fields=None):
+def json_match(context_data, response_data, json_fields=None, parent=None):
     if json_fields is None:
         json_fields = []
     if isinstance(context_data, dict):
@@ -183,7 +179,8 @@ def json_match(context_data, response_data, json_fields=None):
                     response_field = json.loads(response_data[key])
                 except Exception:
                     fail_and_print_body(response_data, "response does not contain a valid %s field" % key)
-            if not json_match(context_data[key], response_field, json_fields):
+            if not json_match(context_data[key], response_field, json_fields, parent=key):
+                print("key {} does not match in {}".format(key, parent or context_data))
                 return False
         return True
     elif isinstance(context_data, list):

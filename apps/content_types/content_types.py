@@ -251,20 +251,6 @@ def clean_doc(doc):
         if editor.get(field):
             del editor[field]
 
-    clean_json(schema)
-    clean_json(editor)
-
-
-def clean_json(json):
-    if not isinstance(json, dict):
-        return
-    for key in list(json.keys()):
-        value = json[key]
-        if value is None:
-            del json[key]
-        else:
-            clean_json(value)
-
 
 def prepare_for_edit_content_type(doc):
     clean_doc(doc)
@@ -283,9 +269,10 @@ def init_extra_fields(editor, schema):
     fields = get_resource_service("vocabularies").get_extra_fields()
     for field in fields:
         field_type = field.get("field_type")
-        schema.setdefault(field["_id"], {"type": field_type, "required": False})
-        if field["_id"] in editor:
-            editor[field["_id"]]["enabled"] = True
+        if schema.get(field["_id"]) is None:
+            schema[field["_id"]] = {"type": field_type, "required": False}
+        if editor.get(field["_id"]):
+            editor[field["_id"]].setdefault("enabled", True)
         else:
             editor[field["_id"]] = {"enabled": False}
         editor[field["_id"]]["field_name"] = field["display_name"]
@@ -325,10 +312,10 @@ def init_default(doc):
             if editor.get(field, None) is None:
                 editor[field] = deepcopy(DEFAULT_EDITOR[field])
                 editor[field]["enabled"] = False
-                if schema.get(field, None) is None:
-                    schema[field] = deepcopy(DEFAULT_SCHEMA[field])
             else:
                 editor[field]["enabled"] = True
+            if schema.get(field, None) is None:
+                schema[field] = deepcopy(DEFAULT_SCHEMA[field])
     else:
         doc["editor"] = deepcopy(DEFAULT_EDITOR)
         doc["schema"] = deepcopy(DEFAULT_SCHEMA)
@@ -434,7 +421,9 @@ def get_subject_name(fields_map):
 
 def set_field_name(editor, field_names):
     for (field, name) in field_names.items():
-        editor.setdefault(field, {})["field_name"] = name
+        if editor.get(field) is None:
+            editor[field] = {}
+        editor[field]["field_name"] = name
 
 
 def prepare_for_save_content_type(original, updates):
