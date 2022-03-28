@@ -256,6 +256,16 @@ def clean_doc(doc):
             del editor[field]
 
 
+def clean_null(doc):
+    for field in ("editor", "schema"):
+        clean = {}
+        for key, val in doc[field].items():
+            if val is not None:
+                clean[key] = val
+        if clean != doc[field]:
+            doc[field] = clean
+
+
 def prepare_for_edit_content_type(doc):
     clean_doc(doc)
     init_default(doc)
@@ -266,6 +276,7 @@ def prepare_for_edit_content_type(doc):
     expand_subject(editor, schema, fields_map)
     set_field_name(editor, field_names)
     init_extra_fields(editor, schema)
+    clean_null(doc)
     doc["_updated"] = utcnow()
 
 
