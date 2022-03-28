@@ -1124,8 +1124,7 @@ Feature: Content Profile
             },
             "editor": {
                 "keywords": {
-                    "enabled": false,
-                    "field_name": "keywords_little"
+                    "enabled": false
                 }
             }
         }
@@ -1143,7 +1142,7 @@ Feature: Content Profile
             "editor": {"keywords": {"enabled": true}}
         }
         """
-         When we patch "/content_types/profile"
+        When we patch "/content_types/profile"
         """
         {
             "editor": {"keywords": {"enabled": false}}
@@ -1154,5 +1153,54 @@ Feature: Content Profile
         """
         {
             "editor": {"keywords": {"enabled": false}}
+        }
+        """
+
+    @auth
+    Scenario: Language CV should not override language schema field
+        Given "vocabularies"
+        """
+        [
+            {
+                "_id": "language",
+                "display_name": "Language CV",
+                "service": {"all": 1},
+                "items": [{"name": "English", "qcode": "en"}]
+            }
+        ]
+        """
+        And "content_types"
+        """
+        [{"_id": "profile"}]
+        """
+        When we get "/content_types/profile?edit=true"
+        Then we get existing resource
+        """
+        {
+            "schema": {
+                "language": {
+                    "type": "string",
+                    "required": false
+                }
+            },
+            "editor": {
+                "language": {
+                    "enabled": false
+                }
+            }
+        }
+        """
+        When we patch "/content_types/profile"
+        """
+        {
+            "editor": {"language": {"enabled": true}}
+        }
+        """
+        And we get "/content_types/profile"
+        Then we get existing resource
+        """
+        {
+            "editor": {"language": {"enabled": true}},
+            "schema": {"language": {"type": "string"}}
         }
         """

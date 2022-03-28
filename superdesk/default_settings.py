@@ -591,6 +591,9 @@ PASSWORD_EXPIRY_DAYS = int(env("PASSWORD_EXPIRY_DAYS", 0))
 #: The number of minutes since the last update of the Mongo auth object after which it will be deleted
 SESSION_EXPIRY_MINUTES = int(env("SESSION_EXPIRY_MINUTES", 240))
 
+#: How often update user session/activity timestamp
+SESSION_UPDATE_SECONDS = 30
+
 #: The number of minutes before content items are purged
 CONTENT_EXPIRY_MINUTES = int(env("CONTENT_EXPIRY_MINUTES", 0))
 
@@ -1027,7 +1030,7 @@ PUBLISH_ASSOCIATIONS_RESEND = "new"
 
 #: Elastic APM
 #:
-#: .. versionadded:: 2.5
+#: .. versionadded:: 2.4, 2.3.8, 2.2.2
 #:
 APM_SERVER_URL = env("APM_SERVER_URL")
 APM_SECRET_TOKEN = env("APM_SECRET_TOKEN")
