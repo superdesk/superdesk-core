@@ -246,7 +246,10 @@ class ContentTypesService(superdesk.Service):
 def clean_doc(doc):
     schema = doc.get("schema", {})
     editor = doc.get("editor", {})
-    vocabularies = get_resource_service("vocabularies").get_forbiden_custom_vocabularies()
+    vocabularies = list(get_resource_service("vocabularies").get_forbiden_custom_vocabularies())
+
+    for cv in HARDCODED_CVS:
+        vocabularies.append({"_id": cv})
 
     for vocabulary in vocabularies:
         field = vocabulary.get("schema_field", vocabulary["_id"])
@@ -388,7 +391,10 @@ def expand_subject(editor, schema, fields_map):
 
 def set_enabled_for_custom(editor, allowed, fields_map):
     for field in allowed:
-        editor[fields_map.get(field, field)]["enabled"] = True
+        try:
+            editor[fields_map.get(field, field)]["enabled"] = True
+        except KeyError:
+            pass
 
 
 def set_required_for_custom(editor, schema, mandatory, fields_map):
