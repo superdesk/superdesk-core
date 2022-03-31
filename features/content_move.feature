@@ -11,8 +11,7 @@ Feature: Move or Send Content to another desk
         """
         [{"guid": "123", "type":"text", "headline": "test1", "guid": "123", "state": "draft", "task": {"user": "#CONTEXT_USER_ID#"}, "versioncreated": "2020-01-01T10:00:00+0000"}]
         """
-        When we get "/archive/123"
-        And we post to "/archive/123/move"
+        When we post to "/archive/123/move"
         """
         [{"task": {"desk": "#desks._id#", "stage": "#desks.incoming_stage#"}}]
         """
