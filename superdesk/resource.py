@@ -88,7 +88,7 @@ class Resource:
     projection: bool = True
     item_privileges = False
     notifications = True
-    collation = True
+    collation: bool = False
 
     def __init__(self, endpoint_name, app, service, endpoint_schema=None):
         self.endpoint_name = endpoint_name
