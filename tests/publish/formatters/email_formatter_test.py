@@ -58,7 +58,7 @@ class EmailFormatterTest(TestCase):
             "</b>&nbsp;take&nbsp;\n"
             '<hr>\n<br><font color="red">Very good story</font>'
             "<br>\n<i>Can of beans</i>\n<br>joe\n<br>\n"
-            "<p>BERN, July 13  - The story body of the story so far</p>\n<br>\n"
+            "<p>BERN, July 13  - The story body of the story so far</p>\r\n<br>\n"
             "AAP&nbsp;aa/bb\n\n</body>\n</html>",
         )
         self.assertEqual(
@@ -130,7 +130,7 @@ class EmailFormatterTest(TestCase):
             "</b>&nbsp;take&nbsp;\n"
             '<hr>\n<br><font color="red">Very good story</font>'
             "<br>\n<i>Can of beans</i>\n<br>joe\n<br>\n"
-            "<p>BERN, July 13  - The story body of the story so far</p>\n<br>\n"
+            "<p>BERN, July 13  - The story body of the story so far</p>\r\n<br>\n"
             "AAP&nbsp;aa/bb\n\n</body>\n</html>",
         )
         self.assertEqual(
@@ -175,7 +175,7 @@ class EmailFormatterTest(TestCase):
             "</b>&nbsp;take&nbsp;\n"
             '<hr>\n<br><font color="red">Very good story</font>'
             "<br>\n<i>Can of beans</i>\n<br>joe\n<br>\n"
-            "<p>BERN, July 13  - The story body of the story so far</p>\n<br>\n"
+            "<p>BERN, July 13  - The story body of the story so far</p>\r\n<br>\n"
             "AAP&nbsp;aa/bb\n\n</body>\n</html>",
         )
         self.assertEqual(
@@ -219,7 +219,7 @@ class EmailFormatterTest(TestCase):
             "Published At : Fri Jan 30 03:40:56 2015\n<br>\n<b>slugline"
             "</b>&nbsp;\n<hr>\n"
             "\n<i>Can of beans</i>\n<br>joe\n<br>\n"
-            "<p>BERN, July 13  - The story body of the story so far</p>\n<br>\n"
+            "<p>BERN, July 13  - The story body of the story so far</p>\r\n<br>\n"
             "AAP&nbsp;aa/bb\n\n</body>\n</html>",
         )
         self.assertEqual(
@@ -313,3 +313,25 @@ class EmailFormatterTest(TestCase):
         seq, doc = self.formatter.format(article, {"name": "Test Subscriber"})[0]
         item = json.loads(doc)
         self.assertEqual(item["renditions"]["viewImage"]["media"], "5c11ece81d41c89113ed202b")
+
+    def test_unbroken_html(self):
+        article = {
+            "source": "AAP",
+            "anpa_take_key": "take",
+            "subject": [{"qcode": "02011001"}],
+            "format": "HTML",
+            "type": "text",
+            "body_html": "<p>abcdefghijklmnopqrstuvwxyz</p>" * 2,
+            "word_count": "1",
+            "priority": 1,
+            "place": [{"qcode": "VIC", "name": "VIC"}],
+            "genre": [],
+            "sign_off": "aa/bb",
+        }
+        article["versioncreated"] = datetime.datetime(
+            year=2017, month=2, day=24, hour=16, minute=40, second=56, tzinfo=utc
+        )
+        seq, doc = self.formatter.format(article, {"name": "Test Subscriber"})[0]
+
+        item = json.loads(doc)
+        self.assertIn("<p>abcdefghijklmnopqrstuvwxyz</p>\r\n", item.get("message_html"))
