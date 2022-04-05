@@ -96,7 +96,7 @@ class AIDataOpResource(Resource):
         "operation": {
             "type": "string",
             "required": True,
-            "allowed": ["search", "create", "delete"],
+            "allowed": ["search", "create", "delete", "feedback"],
         },
         "data_name": {
             "type": "string",

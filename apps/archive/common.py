@@ -181,8 +181,8 @@ def on_create_item(docs, repo_type=ARCHIVE):
             # set the source for the article
             set_default_source(doc)
 
-        if "profile" not in doc and app.config.get("DEFAULT_CONTENT_TYPE", None):
-            doc["profile"] = app.config.get("DEFAULT_CONTENT_TYPE", None)
+            if "profile" not in doc and app.config.get("DEFAULT_CONTENT_TYPE"):
+                doc["profile"] = app.config.get("DEFAULT_CONTENT_TYPE", None)
 
         copy_metadata_from_profile(doc)
         copy_metadata_from_user_preferences(doc, repo_type)
