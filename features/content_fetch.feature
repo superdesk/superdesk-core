@@ -607,11 +607,6 @@ Feature: Fetch Items from Ingest
         """
         [{"_id": "foo"}]
         """
-        When we get "/ingest/ingest1"
-        Then we get existing resource
-        """
-        {"profile": "bar"}
-        """
 
         When we post to "/desks"
         """
@@ -625,7 +620,7 @@ Feature: Fetch Items from Ingest
         """
         Then we get new resource
         """
-        {"profile": "bar"}
+        {"profile": "foo"}
         """
 
         When we post to "/ingest/ingest2/fetch"
