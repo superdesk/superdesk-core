@@ -104,7 +104,7 @@ class CorrectPublishService(BasePublishService):
         self.change_being_corrected_to_published(updates, original)
 
     def update(self, id, updates, original):
-        editor_utils.generate_fields(updates)
+        editor_utils.generate_fields(updates, original=original)
         get_resource_service("archive")._handle_media_updates(updates, original, get_user())
         super().update(id, updates, original)
 
