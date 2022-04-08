@@ -426,7 +426,7 @@ class ArchiveService(BaseService):
         """
         user = get_user()
 
-        editor_utils.generate_fields(updates)
+        editor_utils.generate_fields(updates, original=original)
         if ITEM_TYPE in updates:
             del updates[ITEM_TYPE]
 
