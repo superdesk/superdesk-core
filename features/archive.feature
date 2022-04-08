@@ -1216,3 +1216,72 @@ Feature: News Items Archive
             }
         }
         """
+
+    @auth
+    Scenario: Fix updating editor state removing other keys from extra dict (SDFID-641)
+
+        Given "archive"
+        """
+        [{"_id": "test_editor_gen_2", "guid": "test_editor_gen_2", "headline": "test", "extra": {"foo": "foo"}}]
+        """
+
+        When we patch given
+        """
+        {
+            "fields_meta" : {
+                "headline" : {
+                    "draftjsState" : [
+                        {
+                            "blocks" : [
+                                {
+                                    "key" : "dphij",
+                                    "text" : "editor 3 headline test",
+                                    "type" : "unstyled",
+                                    "depth" : 0,
+                                    "inlineStyleRanges" : [ ],
+                                    "entityRanges" : [ ],
+                                    "data" : {
+                                        "MULTIPLE_HIGHLIGHTS" : {}
+                                    }
+                                }
+                            ],
+                            "entityMap" : {}
+                        }
+                    ]
+                },
+                "extra>bar" : {
+                    "draftjsState" : [
+                        {
+                            "blocks" : [
+                                {
+                                    "key" : "dphij",
+                                    "text" : "bar",
+                                    "type" : "unstyled",
+                                    "depth" : 0,
+                                    "inlineStyleRanges" : [ ],
+                                    "entityRanges" : [ ],
+                                    "data" : {
+                                        "MULTIPLE_HIGHLIGHTS" : {}
+                                    }
+                                }
+                            ],
+                            "entityMap" : {}
+                        }
+                    ]
+                }
+            }
+        }
+        """
+        When we get "/archive/test_editor_gen_2"
+        Then we get existing resource
+        """
+        {
+            "_id": "test_editor_gen_2",
+            "guid": "test_editor_gen_2",
+            "headline": "editor 3 headline test",
+            "extra": {
+                "foo": "foo",
+                "bar": "<p>bar</p>"
+            }
+        }
+        """
