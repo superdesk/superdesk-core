@@ -1,5 +1,11 @@
 # Superdesk Server Changelog
 
+## [1.33.16] 2022-04-11
+
+### Fixed
+
+- fix(build): Upgrade feedparser to 6.0.x (17d9259)
+
 ## [1.33.15] 2021-07-26
 
 ### Fixed
