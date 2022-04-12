@@ -177,3 +177,7 @@ class SuperdeskGridFSMediaStorage(SuperdeskMediaStorage, GridFSMediaStorage):
     def get_by_filename(self, filename):
         _id, _ = os.path.splitext(filename)
         return self.get(_id)
+
+    def delete(self, _id, resource=None):
+        media_id = bson.ObjectId(_id) if bson.ObjectId.is_valid(_id) else _id
+        return super().delete(media_id, resource=resource)

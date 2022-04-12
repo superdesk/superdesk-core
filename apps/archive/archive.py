@@ -266,7 +266,7 @@ class ArchiveVersionsResource(Resource):
 
 class ArchiveVersionsService(BaseService):
     def on_deleted(self, doc):
-        remove_media_files(doc)
+        remove_media_files(doc, published=False)
 
 
 class ArchiveResource(Resource):
@@ -575,7 +575,7 @@ class ArchiveService(BaseService):
         if doc[ITEM_TYPE] == CONTENT_TYPE.COMPOSITE:
             self.packageService.on_deleted(doc)
 
-        remove_media_files(doc)
+        remove_media_files(doc, published=False)
         self._remove_from_translations(doc)
 
         add_activity(
