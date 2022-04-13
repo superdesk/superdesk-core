@@ -40,7 +40,7 @@ def download_file(id, folder=None):
 
 
 def download_url(media_id):
-    return url_for("download_raw.download_file", id=media_id, _external=True)
+    return url_for("download_raw.download_file", id=media_id, _external=True, _scheme="https")
 
 
 def init_app(app) -> None:
