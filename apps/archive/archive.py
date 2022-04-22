@@ -342,7 +342,7 @@ class ArchiveService(BaseService):
             editor_utils.generate_fields(doc)
             self._test_readonly_stage(doc)
 
-            doc["version_creator"] = doc["original_creator"]
+            doc["version_creator"] = doc["original_creator"] or None  # avoid ""
             remove_unwanted(doc)
             update_word_count(doc)
             set_item_expiry({}, doc)

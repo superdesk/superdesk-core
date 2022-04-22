@@ -465,23 +465,26 @@ class RoutingRuleSchemeService(BaseService):
         :param item: item to be published
         :param destinations: list of desk and stage
         """
+        guid = ingest_item.get("guid")
         items_to_publish = self.__fetch(ingest_item, destinations, rule)
         for item in items_to_publish:
             try:
-                logger.info("Publishing item %s" % (ingest_item.get("guid")))
-                self._set_default_values(item)
+                archive_item = get_resource_service("archive").find_one(req=None, _id=item)
+                if archive_item.get("auto_publish") is False:
+                    logger.info("Stop auto publishing of item %s", guid)
+                    continue
+                logger.info("Publishing item %s", guid)
+                self._set_default_values(archive_item)
                 get_resource_service("archive_publish").patch(item, {"auto_publish": True})
-                logger.info("Published item %s" % (ingest_item.get("guid")))
+                logger.info("Published item %s", guid)
             except Exception:
-                logger.exception("Failed to publish item %s." % item)
+                logger.exception("Failed to publish item %s.", guid)
 
-    def _set_default_values(self, item):
+    def _set_default_values(self, archive_item):
         """Assigns the default values to the item that about to be auto published"""
-
-        archive_item = get_resource_service("archive").find_one(req=None, _id=item)
         default_categories = self._get_categories(config.DEFAULT_CATEGORY_QCODES_FOR_AUTO_PUBLISHED_ARTICLES)
         default_values = self._assign_default_values(archive_item, default_categories)
-        get_resource_service("archive").patch(item, default_values)
+        get_resource_service("archive").patch(archive_item["_id"], default_values)
 
     def _assign_default_values(self, archive_item, default_categories):
         """Assigns the default values to the item that about to be auto published"""
