@@ -672,34 +672,6 @@ Feature: News Items Archive
          {"guid": "123", "source": "FOO", "dateline": {"source": "FOO"}}
          """
 
-      @auth
-      Scenario: Create content item based on a content type with default values
-         Given "content_types"
-          """
-          [{"_id": "snap", "schema": {"headline": {"default": "default_headline"}, "priority": {"default": 10}}}]
-          """
-         When we post to "/archive"
-          """
-           [{  "type":"text", "guid": "123",  "profile": "snap" }]
-          """
-         When we get "archive/123"
-         Then we get OK response
-         Then we get existing resource
-         """
-         {"guid": "123", "headline": "default_headline", "priority": 10}
-         """
-
-         When we post to "/archive"
-          """
-           [{  "type":"text", "headline": "test1", "guid": "456",  "priority": 3, "profile": "snap" }]
-          """
-         When we get "archive/456"
-         Then we get OK response
-         Then we get existing resource
-         """
-         {"guid": "456", "headline": "test1", "priority": 3}
-         """
-
     @auth
     Scenario: Hide version 0 items from lists
         When we post to "/archive"
@@ -1241,6 +1213,75 @@ Feature: News Items Archive
                         }
                     ]
                 }
+            }
+        }
+        """
+
+    @auth
+    Scenario: Fix updating editor state removing other keys from extra dict (SDFID-641)
+
+        Given "archive"
+        """
+        [{"_id": "test_editor_gen_2", "guid": "test_editor_gen_2", "headline": "test", "extra": {"foo": "foo"}}]
+        """
+
+        When we patch given
+        """
+        {
+            "fields_meta" : {
+                "headline" : {
+                    "draftjsState" : [
+                        {
+                            "blocks" : [
+                                {
+                                    "key" : "dphij",
+                                    "text" : "editor 3 headline test",
+                                    "type" : "unstyled",
+                                    "depth" : 0,
+                                    "inlineStyleRanges" : [ ],
+                                    "entityRanges" : [ ],
+                                    "data" : {
+                                        "MULTIPLE_HIGHLIGHTS" : {}
+                                    }
+                                }
+                            ],
+                            "entityMap" : {}
+                        }
+                    ]
+                },
+                "extra>bar" : {
+                    "draftjsState" : [
+                        {
+                            "blocks" : [
+                                {
+                                    "key" : "dphij",
+                                    "text" : "bar",
+                                    "type" : "unstyled",
+                                    "depth" : 0,
+                                    "inlineStyleRanges" : [ ],
+                                    "entityRanges" : [ ],
+                                    "data" : {
+                                        "MULTIPLE_HIGHLIGHTS" : {}
+                                    }
+                                }
+                            ],
+                            "entityMap" : {}
+                        }
+                    ]
+                }
+            }
+        }
+        """
+        When we get "/archive/test_editor_gen_2"
+        Then we get existing resource
+        """
+        {
+            "_id": "test_editor_gen_2",
+            "guid": "test_editor_gen_2",
+            "headline": "editor 3 headline test",
+            "extra": {
+                "foo": "foo",
+                "bar": "<p>bar</p>"
             }
         }
         """

@@ -158,7 +158,7 @@ SESSION_COOKIE_SECURE = CLIENT_URL.startswith("https")
 #: But still allow cross-origin/same-site requests
 #:
 #: .. versionadded:: 2.4.0
-SESSION_COOKIE_SAMESITE = "Strict"
+SESSION_COOKIE_SAMESITE = "Lax"
 
 #: mongo db name, only used when mongo_uri is not set
 MONGO_DBNAME = env("MONGO_DBNAME", "superdesk")
@@ -186,7 +186,7 @@ ARCHIVED_DBNAME = env("ARCHIVED_DBNAME", "archived")
 #: archived mongodb uri
 ARCHIVED_URI = env("ARCHIVED_URI", "mongodb://localhost/%s" % ARCHIVED_DBNAME)
 
-CONTENTAPI_MONGO_DBNAME = "contentapi"
+CONTENTAPI_MONGO_DBNAME = env("CONTENTAPI_MONGO_DBNAME", "contentapi")
 CONTENTAPI_MONGO_URI = env("CONTENTAPI_MONGO_URI", "mongodb://localhost/%s" % CONTENTAPI_MONGO_DBNAME)
 
 #: elastic url
@@ -217,7 +217,7 @@ ELASTICSEARCH_SETTINGS = {
                 },
                 "html_field_analyzer": {
                     "type": "custom",
-                    "filter": ["lowercase"],
+                    "filter": ["lowercase", "asciifolding"],
                     "tokenizer": "standard",
                     "char_filter": ["html_strip_filter"],
                 },
@@ -591,6 +591,9 @@ PASSWORD_EXPIRY_DAYS = int(env("PASSWORD_EXPIRY_DAYS", 0))
 #: The number of minutes since the last update of the Mongo auth object after which it will be deleted
 SESSION_EXPIRY_MINUTES = int(env("SESSION_EXPIRY_MINUTES", 240))
 
+#: How often update user session/activity timestamp
+SESSION_UPDATE_SECONDS = 30
+
 #: The number of minutes before content items are purged
 CONTENT_EXPIRY_MINUTES = int(env("CONTENT_EXPIRY_MINUTES", 0))
 
@@ -831,7 +834,16 @@ VALIDATOR_MEDIA_METADATA = {
     "headline": {
         "required": True,
     },
+    "slugline": {
+        "required": True,
+    },
     "alt_text": {
+        "required": True,
+    },
+    "anpa_category": {
+        "required": True,
+    },
+    "subject": {
         "required": True,
     },
     "archive_description": {
@@ -940,6 +952,10 @@ ARCHIVE_AUTOCOMPLETE_DAYS = 0
 #:
 ARCHIVE_AUTOCOMPLETE_HOURS = 0
 
+#:
+#: .. versionadded:: 2.3.6
+#:
+ARCHIVE_AUTOCOMPLETE_LIMIT = 500
 
 #: Tansa client config
 #:
@@ -1011,3 +1027,10 @@ OIDC_BROWSER_REDIRECT_URL = env("OIDC_BROWSER_REDIRECT_URL", CLIENT_URL)
 #:
 APPS_DATA_UPDATES_PATHS = []
 PUBLISH_ASSOCIATIONS_RESEND = "new"
+
+#: Elastic APM
+#:
+#: .. versionadded:: 2.4, 2.3.8, 2.2.2
+#:
+APM_SERVER_URL = env("APM_SERVER_URL")
+APM_SECRET_TOKEN = env("APM_SECRET_TOKEN")

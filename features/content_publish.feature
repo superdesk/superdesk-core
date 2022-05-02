@@ -2297,7 +2297,8 @@ Feature: Content Publishing
       """
         [{"_id": "publish_embedded", "type": "picture", "act": "publish", "embedded": true,
           "schema": {"headline": {"type": "string","required": true}}},
-         {"_id": "publish_text", "type": "text", "act": "publish", "schema": {}}]
+         {"_id": "publish_text", "type": "text", "act": "publish", "schema": {}}
+        ]
       """
       And "desks"
       """
@@ -2305,18 +2306,33 @@ Feature: Content Publishing
       """
       And "archive"
       """
-      [{"guid": "123", "type": "text", "headline": "test", "_current_version": 1, "state": "in_progress",
+      [
+        {"_id": "234", "type": "picture", "_current_version": 1, "guid": "234", "state": "in_progress"},
+        {"guid": "123", "type": "text", "headline": "test", "_current_version": 1, "state": "in_progress",
         "task": {"desk": "#desks._id#", "stage": "#desks.incoming_stage#", "user": "#CONTEXT_USER_ID#"},
         "subject":[{"qcode": "17004000", "name": "Statistics"}], "body_html": "Test Document body",
         "associations": {
             "featureimage": {
                 "_id": "234",
+                "_current_version": 1,
                 "guid": "234",
                 "alt_text": "alt_text",
                 "description_text": "description_text",
                 "type": "picture",
                 "slugline": "s234",
-                "state": "in_progress"}}}]
+                "state": "in_progress",
+                "subject": [{"name": "subject", "parent": "05000000", "qcode": "05007000"}],
+                "anpa_category": [{"qcode": "category", "name": "categories"}]
+              }
+            }
+          }
+      ]
+      """
+      And "content_types"
+      """
+      [
+        {"_id": "picture", "schema": {"headline": {"required": true}, "copyrightholder": {"required": true}}}
+      ]
       """
       When we post to "/products" with success
       """
@@ -2337,6 +2353,26 @@ Feature: Content Publishing
       """
       {"_issues": {"validator exception": "[[\"MEDIA'S HEADLINE is a required field\"]]"}, "_status": "ERR"}
       """
+      When we publish "#archive._id#" with "publish" type and "published" state
+      """
+      {
+        "associations": {
+          "featureimage": {
+            "headline": "test",
+            "_id": "234",
+            "guid": "234",
+            "alt_text": "alt_text",
+            "description_text": "description_text",
+            "type": "picture",
+            "slugline": "s234",
+            "state": "in_progress",
+            "subject": [{"name": "subject", "parent": "05000000", "qcode": "05007000"}],
+            "anpa_category": [{"qcode": "category", "name": "categories"}]
+          }
+        }
+      }
+      """
+      Then we get ok response
 
     @auth
     Scenario: Publish fails when embedded item does not exist
@@ -2364,6 +2400,8 @@ Feature: Content Publishing
                 "description_text": "description_text",
                 "type": "picture",
                 "slugline": "s234",
+                "subject": [{"name": "subject", "parent": "05000000", "qcode": "05007000"}],
+                "anpa_category": [{"qcode": "category", "name": "categories"}],
                 "state": "in_progress"}}}]
       """
       When we post to "/products" with success
@@ -2623,6 +2661,8 @@ Feature: Content Publishing
                     "alt_text": "alt_text",
                     "description_text": "description_text",
                     "state": "in_progress",
+                    "subject": [{"name": "subject", "parent": "05000000", "qcode": "05007000"}],
+                    "anpa_category": [{"qcode": "category", "name": "categories"}],
                     "renditions": {},
                     "task": {"desk": "#desks._id#", "stage": "#desks.incoming_stage#", "user": "#CONTEXT_USER_ID#"}
                 },
@@ -2800,6 +2840,8 @@ Feature: Content Publishing
                     "byline": "xyz",
                     "alt_text": "alt_text",
                     "description_text": "description_text",
+                    "subject": [{"name": "subject", "parent": "05000000", "qcode": "05007000"}],
+                    "anpa_category": [{"qcode": "category", "name": "categories"}],
                     "state": "in_progress",
                     "renditions": {
                         "original": {"CropLeft": 0, "CropRight": 800, "CropTop": 0, "CropBottom": 600}
@@ -2832,6 +2874,9 @@ Feature: Content Publishing
                 "byline": "foo",
                 "alt_text": "alt_text",
                 "description_text": "description_text",
+                "slugline": "slugline",
+                "subject": [{"name": "subject", "parent": "05000000", "qcode": "05007000"}],
+                "anpa_category": [{"qcode": "category", "name": "categories"}],
                 "headline": "234",
                 "renditions": {
                       "original": {"CropLeft": 0, "CropRight": 800, "CropTop": 0, "CropBottom": 600}
@@ -2874,6 +2919,8 @@ Feature: Content Publishing
             "headline": "some headline",
             "alt_text": "alt_text",
             "description_text": "description_text",
+            "subject": [{"name": "subject", "parent": "05000000", "qcode": "05007000"}],
+            "anpa_category": [{"qcode": "category", "name": "categories"}],
             "_type": "archive",
             "_current_version": 1
         }}}]
@@ -3332,6 +3379,9 @@ Feature: Content Publishing
                         "headline": "picture headline",
                         "alt_text": "alt_text",
                         "description_text": "description_text",
+                        "slugline": "slugline",
+                        "subject": [{"name": "subject", "parent": "05000000", "qcode": "05007000"}],
+                        "anpa_category": [{"qcode": "category", "name": "categories"}],
                         "format": "HTML",
                         "renditions": {
                             "original": {
@@ -3442,6 +3492,9 @@ Feature: Content Publishing
                     "headline": "picture headline",
                     "alt_text": "alt_text",
                     "description_text": "description_text",
+                    "slugline": "slugline",
+                    "subject": [{"name": "subject", "parent": "05000000", "qcode": "05007000"}],
+                    "anpa_category": [{"qcode": "category", "name": "categories"}],
                     "format": "HTML",
                     "renditions": {
                          "original": {
@@ -3733,6 +3786,9 @@ Feature: Content Publishing
                         "headline": "picture headline",
                         "alt_text": "alt_text",
                         "description_text": "description_text",
+                        "slugline": "slugline",
+                        "subject": [{"name": "subject", "parent": "05000000", "qcode": "05007000"}],
+                        "anpa_category": [{"qcode": "category", "name": "categories"}],
                         "format": "HTML",
                         "renditions": {
                             "original": {
@@ -4131,6 +4187,8 @@ Feature: Content Publishing
                       "headline": "234",
                       "alt_text": "alt_text",
                       "description_text": "description_text",
+                      "subject": [{"name": "subject", "parent": "05000000", "qcode": "05007000"}],
+                      "anpa_category": [{"qcode": "category", "name": "categories"}],
                       "state": "in_progress",
                       "renditions": {},
                       "task": {
@@ -4443,6 +4501,9 @@ Feature: Content Publishing
               "byline": "foo",
               "alt_text": "alt_text",
               "description_text": "description_text",
+              "slugline": "slugline",
+              "subject": [{"name": "subject", "parent": "05000000", "qcode": "05007000"}],
+              "anpa_category": [{"qcode": "category", "name": "categories"}],
               "headline": "234",
               "renditions": {
                     "original": {"CropLeft": 0, "CropRight": 800, "CropTop": 0, "CropBottom": 600}
@@ -4657,6 +4718,8 @@ Feature: Content Publishing
                         "headline": "related item",
                         "alt_text": "alt_text",
                         "description_text": "description_text",
+                        "subject": [{"name": "subject", "parent": "05000000", "qcode": "05007000"}],
+                        "anpa_category": [{"qcode": "category", "name": "categories"}],
                         "type": "picture",
                         "state": "submitted",
                         "operation": "duplicate",

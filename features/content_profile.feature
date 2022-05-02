@@ -290,6 +290,10 @@ Feature: Content Profile
                 "footer": {
                     "type": "string",
                     "required": false
+                },
+                "language": {
+                    "type": "string",
+                    "required": false
                 }
             }
         }
@@ -1408,29 +1412,6 @@ Feature: Content Profile
         """
 
     @auth
-    Scenario: Content profile defaults override user profile defaults
-        Given "content_types"
-        """
-        [{"_id": "foo", "label": "Foo", "schema": {
-            "byline": {"default": "By Foo"},
-            "headline": null,
-            "place": {"default": [{"name": "Prague"}]}
-        }}]
-        """
-        When we patch "/users/#CONTEXT_USER_ID#"
-        """
-        {"byline": "By Admin"}
-        """
-        When we post to "/archive"
-        """
-        {"type": "text", "profile": "foo"}
-        """
-        Then we get new resource
-        """
-        {"byline": "By Foo", "place": [{"name": "Prague"}]}
-        """
-
-    @auth
     Scenario: Validate using content profile when publishing
         Given "vocabularies"
         """
@@ -1892,13 +1873,13 @@ Feature: Content Profile
             "template_name": "foo",
             "data": {
                 "slugline": "Testing the slugline",
-                "profile": "foo",
-                "language": "fr"
+                "profile": "foo"
             }
           }]
         }
         """
         And there is no "headline" in data
+        And there is no "language" in data
 
     @auth
     Scenario: Removing the keywords field from content profile should not show the keywords field again 
@@ -1929,8 +1910,7 @@ Feature: Content Profile
             },
             "editor": {
                 "keywords": {
-                    "enabled": false,
-                    "field_name": "keywords_little"
+                    "enabled": false
                 }
             }
         }
@@ -1948,7 +1928,7 @@ Feature: Content Profile
             "editor": {"keywords": {"enabled": true}}
         }
         """
-         When we patch "/content_types/profile"
+        When we patch "/content_types/profile"
         """
         {
             "editor": {"keywords": {"enabled": false}}
@@ -1959,5 +1939,54 @@ Feature: Content Profile
         """
         {
             "editor": {"keywords": {"enabled": false}}
+        }
+        """
+
+    @auth
+    Scenario: Language CV should not override language schema field
+        Given "vocabularies"
+        """
+        [
+            {
+                "_id": "language",
+                "display_name": "Language CV",
+                "service": {"all": 1},
+                "items": [{"name": "English", "qcode": "en"}]
+            }
+        ]
+        """
+        And "content_types"
+        """
+        [{"_id": "profile"}]
+        """
+        When we get "/content_types/profile?edit=true"
+        Then we get existing resource
+        """
+        {
+            "schema": {
+                "language": {
+                    "type": "string",
+                    "required": false
+                }
+            },
+            "editor": {
+                "language": {
+                    "enabled": false
+                }
+            }
+        }
+        """
+        When we patch "/content_types/profile"
+        """
+        {
+            "editor": {"language": {"enabled": true}}
+        }
+        """
+        And we get "/content_types/profile"
+        Then we get existing resource
+        """
+        {
+            "editor": {"language": {"enabled": true}},
+            "schema": {"language": {"type": "string"}}
         }
         """

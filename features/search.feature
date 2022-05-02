@@ -474,3 +474,33 @@ Feature: Search Feature
         Then we get response code 200
         When we get "archived"
         Then we get list with 1 items
+
+    @auth
+    Scenario: Search by headline and body html containing accent word
+        Given "desks"
+        """
+        [{"name": "Sports Desk", "content_expiry": 60}]
+        """
+        Given "archive"
+        """
+        [{"guid": "1", "state": "in_progress", "task": {"desk": "#desks._id#"},
+         "headline": "foo", "body_html": "foo"},
+        {"guid": "2", "state": "in_progress", "task": {"desk": "#desks._id#"},
+         "headline": "bar", "body_html": "bar"},
+        {"guid": "3", "state": "in_progress", "task": {"desk": "#desks._id#"},
+         "headline": "još test", "body_html": "foo"},
+        {"guid": "4", "state": "in_progress", "task": {"desk": "#desks._id#"},
+         "headline": "bar", "body_html": "još test"}]
+        """
+        When we get "/search?source={"query": {"filtered": {"query": {"query_string": {"query": "(jos)", "lenient": true, "default_operator": "AND"}}}}}"
+        Then we get list with 2 items
+        """
+        {
+            "_items": [
+                {"guid": "3", "state": "in_progress", "task": {"desk": "#desks._id#"},
+                    "headline": "još test", "body_html": "foo"},
+                {"guid": "4", "state": "in_progress", "task": {"desk": "#desks._id#"},
+                    "headline": "bar", "body_html": "još test"}
+            ]
+        }
+        """

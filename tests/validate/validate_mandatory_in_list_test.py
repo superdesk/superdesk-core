@@ -539,7 +539,16 @@ class ValidateMandatoryInListTest(TestCase):
     def test_validate_validate_characters(self):
         self.app.config["DISALLOWED_CHARACTERS"] = ["!", "@", "#"]
         self.app.data.insert(
-            "content_types", [{"_id": "foo", "schema": {"slugline": {"validate_characters": True, "type": "string"}}}]
+            "content_types",
+            [
+                {
+                    "_id": "foo",
+                    "schema": {
+                        "slugline": {"validate_characters": True, "type": "string"},
+                        "body_html": {"validate_characters": True, "type": "string"},
+                    },
+                }
+            ],
         )
         service = ValidateService()
         errors = service.create(
@@ -547,9 +556,11 @@ class ValidateMandatoryInListTest(TestCase):
                 {
                     "act": "test",
                     "type": "test",
-                    "validate": {"profile": "foo", "slugline": "!foo@#"},
+                    "validate": {"profile": "foo", "slugline": "!foo@#", "body_html": "<p>!foo@#</p>"},
                 },
             ],
             fields=True,
         )
+
         self.assertIn("SLUGLINE contains invalid characters", errors[0][0])
+        self.assertIn("BODY HTML contains invalid characters", errors[0][0])

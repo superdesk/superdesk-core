@@ -229,7 +229,7 @@ class BasePublishService(BaseService):
                 if updated.get(ASSOCIATIONS):
                     self._fix_related_references(updated, updates)
 
-                signals.item_publish.send(self, item=updated)
+                signals.item_publish.send(self, item=updated, updates=updates)
                 self._update_archive(original, updates, should_insert_into_versions=auto_publish)
                 self.update_published_collection(published_item_id=original[config.ID_FIELD], updated=updated)
 
@@ -288,8 +288,8 @@ class BasePublishService(BaseService):
         self.raise_if_invalid_state_transition(original)
         self._raise_if_unpublished_related_items(original)
 
-        updated = original.copy()
-        updated.update(updates)
+        updated = deepcopy(original)
+        updated.update(deepcopy(updates))
 
         self.raise_if_not_marked_for_publication(updated)
 
@@ -303,9 +303,15 @@ class BasePublishService(BaseService):
                 update_schedule_settings(updated, PUBLISH_SCHEDULE, updated.get(PUBLISH_SCHEDULE))
                 validate_schedule(updated.get(SCHEDULE_SETTINGS, {}).get("utc_{}".format(PUBLISH_SCHEDULE)))
 
-        if original[ITEM_TYPE] != CONTENT_TYPE.COMPOSITE and updates.get(EMBARGO):
+        if original[ITEM_TYPE] != CONTENT_TYPE.COMPOSITE and updated.get(EMBARGO):
+            # Update the schedule_settings for ``EMBARGO``
             update_schedule_settings(updated, EMBARGO, updated.get(EMBARGO))
-            get_resource_service(ARCHIVE).validate_embargo(updated)
+
+            # Only validate if the embargo has changed
+            original_embargo = original.get(SCHEDULE_SETTINGS, {}).get(f"utc_{EMBARGO}")
+            updated_embargo = updated.get(SCHEDULE_SETTINGS, {}).get(f"utc_{EMBARGO}")
+            if original_embargo != updated_embargo:
+                get_resource_service(ARCHIVE).validate_embargo(updated)
 
         if self.publish_type in [ITEM_CORRECT, ITEM_KILL]:
             if updates.get(EMBARGO) and not original.get(EMBARGO):
@@ -333,7 +339,7 @@ class BasePublishService(BaseService):
                 raise SuperdeskValidationError(errors, fields)
 
         validation_errors = []
-        self._validate_associated_items(original, updates, validation_errors)
+        self._validate_associated_items(original, deepcopy(updates), validation_errors)
 
         if original[ITEM_TYPE] == CONTENT_TYPE.COMPOSITE:
             self._validate_package(original, updates, validation_errors)
@@ -618,7 +624,7 @@ class BasePublishService(BaseService):
         associations = deepcopy(original_item.get(ASSOCIATIONS, {}))
         associations.update(updates.get(ASSOCIATIONS, {}))
 
-        items = [value for value in associations.values()]
+        items = [value for value in associations.values() if value]
         if original_item[ITEM_TYPE] == CONTENT_TYPE.COMPOSITE and self.publish_type == ITEM_PUBLISH:
             items.extend(self.package_service.get_residrefs(original_item))
 
@@ -629,10 +635,9 @@ class BasePublishService(BaseService):
         for item in items:
             orig = None
             if type(item) == dict and item.get(config.ID_FIELD):
-                doc = item
-                orig = super().find_one(req=None, _id=item[config.ID_FIELD])
-                if not app.settings.get("COPY_METADATA_FROM_PARENT") and orig:
-                    doc = orig
+                orig = super().find_one(req=None, _id=item[config.ID_FIELD]) or {}
+                doc = copy(orig)
+                doc.update(item)
                 try:
                     doc.update({"lock_user": orig["lock_user"]})
                 except (TypeError, KeyError):
@@ -654,15 +659,11 @@ class BasePublishService(BaseService):
             # make sure no items are killed or recalled or spiked
             # using the latest version of the item from archive
             doc_item_state = orig.get(ITEM_STATE, CONTENT_STATE.PUBLISHED)
-            if (
-                doc_item_state
-                in {
-                    CONTENT_STATE.KILLED,
-                    CONTENT_STATE.RECALLED,
-                    CONTENT_STATE.SPIKED,
-                }
-                or (doc_item_state == CONTENT_STATE.SCHEDULED and main_publish_schedule is None)
-            ):
+            if doc_item_state in {
+                CONTENT_STATE.KILLED,
+                CONTENT_STATE.RECALLED,
+                CONTENT_STATE.SPIKED,
+            } or (doc_item_state == CONTENT_STATE.SCHEDULED and main_publish_schedule is None):
                 validation_errors.append(_("Item cannot contain associated {state} item.").format(state=doc_item_state))
             elif doc_item_state == CONTENT_STATE.SCHEDULED:
                 item_schedule = get_utc_schedule(orig, PUBLISH_SCHEDULE)

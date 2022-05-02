@@ -40,7 +40,7 @@ Feature: Content Spiking
         """
         Given "archive"
         """
-        [{"_id": "item-1", "guid": "item-1", "_current_version": 1, "headline": "test", "task":{"desk":"#desks._id#", "stage" :"#desks.incoming_stage#"}}]
+        [{"_id": "item-1", "guid": "item-1", "_current_version": 1, "headline": "test", "versioncreated": "2021-12-25T10:00:00+0000", "task":{"desk":"#desks._id#", "stage" :"#desks.incoming_stage#"}}]
         """
         When we spike "item-1"
         Then we get OK response
@@ -50,7 +50,7 @@ Feature: Content Spiking
         When we get "/archive/item-1"
         Then we get existing resource
         """
-        {"_id": "item-1", "state": "spiked", "sign_off": "abc"}
+        {"_id": "item-1", "state": "spiked", "sign_off": "abc", "versioncreated": "__now__"}
         """
 
     @auth
@@ -106,11 +106,14 @@ Feature: Content Spiking
         """
         Given "archive"
         """
-        [{"_id": "item-1", "guid": "item-1", "_current_version": 1, "headline": "test", "task":{"desk":"#desks._id#", "stage" :"#desks.incoming_stage#"}}]
+        [{"_id": "item-1", "guid": "item-1", "_current_version": 1, "headline": "test", "task":{"desk":"#desks._id#", "stage" :"#desks.incoming_stage#"}, "versioncreated": "2021-12-25T10:00:00+0000"}]
         """
         When we spike "item-1"
         And we unspike "item-1"
         Then we get unspiked content "item-1"
+        """
+        {"_id": "item-1", "guid": "item-1", "headline": "test", "versioncreated": "__now__"}
+        """
         And we get version 3
         And we get desk spike expiry after "60"
 

@@ -60,6 +60,9 @@ install_requires = [
     # to be replaced by stdlib version when we use Python 3.8+
     "importlib_metadata<3.2",
     "typing_extensions>=3.7.4",
+    "elastic-apm[flask]>=6.7,<6.8",
+    # Fix an issue with MarkupSafe 2.1.0 not exporting `soft_unicode`
+    "MarkupSafe<2.1",
 ]
 
 package_data = {
@@ -82,7 +85,7 @@ package_data = {
 
 setup(
     name="Superdesk-Core",
-    version="2.4.0.dev0",
+    version="2.5.dev0",
     description="Superdesk Core library",
     long_description=LONG_DESCRIPTION,
     author="petr jasek",
@@ -93,7 +96,7 @@ setup(
     packages=find_packages(exclude=["tests*", "features*"]),
     package_data=package_data,
     include_package_data=True,
-    setup_requires=["setuptools_scm"],
+    # setup_requires=["setuptools_scm"],
     install_requires=install_requires,
     classifiers=[
         "Development Status :: 4 - Beta",

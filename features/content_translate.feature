@@ -160,3 +160,35 @@ Feature: Translate Content
         {"type": "picture", "language": "de", "translated_from": "picture-item"}
       ]
       """
+
+    @auth
+    Scenario: Remove link when translation expires
+      Given "archive"
+      """
+      [{"type":"text", "headline": "test1", "guid": "123", "original_creator": "abc", "state": "draft", "language": "en-CA", "body_html": "test"}]
+      """
+      And "desks"
+      """
+      [{"name": "Sports"}]
+      """
+
+      When we post to "/archive/translate"
+      """
+      {"guid": "123", "language": "en-AU"}
+      """
+      And we patch "/archive/#translate._id#"
+      """
+      {"task": {"desk": "#desks._id#"}}
+      """
+      Then we get ok response
+
+      When we expire items
+      """
+      ["#translate._id#"]
+      """
+
+      And we get "/archive/#archive._id#"
+      Then we get existing resource
+      """
+      {"translation_id": "123", "translations": "__empty__"}
+      """

@@ -7,16 +7,16 @@ Feature: Move or Send Content to another desk
         """
         [{"name": "Sports", "desk_type": "production"}]
         """
-        When we post to "archive"
+        And "archive"
         """
-        [{"guid": "123", "type":"text", "headline": "test1", "guid": "123", "state": "draft", "task": {"user": "#CONTEXT_USER_ID#"}}]
+        [{"guid": "123", "type":"text", "headline": "test1", "guid": "123", "state": "draft", "task": {"user": "#CONTEXT_USER_ID#"}, "versioncreated": "2020-01-01T10:00:00+0000"}]
         """
-        And we save etag
-        And we post to "/archive/123/move"
+        When we post to "/archive/123/move"
         """
         [{"task": {"desk": "#desks._id#", "stage": "#desks.incoming_stage#"}}]
         """
         Then we get OK response
+        And we save etag
         And we get notifications
         """
         [
@@ -31,16 +31,18 @@ Feature: Move or Send Content to another desk
         ]
         """
         When we get "/archive/123?version=all"
-        Then we get list with 2 items
+        Then we get list with 1 items
         When we get "/archive/123"
         Then we get existing resource
         """
-        { "headline": "test1", "guid": "123", "state": "submitted", "_current_version": 2,
-          "task": {"desk": "#desks._id#", "stage": "#desks.incoming_stage#", "user": "#CONTEXT_USER_ID#"}}
+        { "headline": "test1", "guid": "123", "state": "submitted", "_current_version": 1,
+          "task": {"desk": "#desks._id#", "stage": "#desks.incoming_stage#", "user": "#CONTEXT_USER_ID#"},
+          "versioncreated": "__now__"
+        }
         """
         Then there is no "last_production_desk" in task
         And there is no "last_authoring_desk" in task
-        And we get different etag
+        And we get matching etag
 
     @auth
     @notification

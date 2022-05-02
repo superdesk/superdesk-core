@@ -266,7 +266,7 @@ class ArchiveVersionsResource(Resource):
 
 class ArchiveVersionsService(BaseService):
     def on_deleted(self, doc):
-        remove_media_files(doc)
+        remove_media_files(doc, published=False)
 
 
 class ArchiveResource(Resource):
@@ -342,7 +342,7 @@ class ArchiveService(BaseService):
             editor_utils.generate_fields(doc)
             self._test_readonly_stage(doc)
 
-            doc["version_creator"] = doc["original_creator"]
+            doc["version_creator"] = doc["original_creator"] or None  # avoid ""
             remove_unwanted(doc)
             update_word_count(doc)
             set_item_expiry({}, doc)
@@ -426,7 +426,7 @@ class ArchiveService(BaseService):
         """
         user = get_user()
 
-        editor_utils.generate_fields(updates)
+        editor_utils.generate_fields(updates, original=original)
         if ITEM_TYPE in updates:
             del updates[ITEM_TYPE]
 
@@ -575,7 +575,8 @@ class ArchiveService(BaseService):
         if doc[ITEM_TYPE] == CONTENT_TYPE.COMPOSITE:
             self.packageService.on_deleted(doc)
 
-        remove_media_files(doc)
+        remove_media_files(doc, published=False)
+        self._remove_from_translations(doc)
 
         add_activity(
             ACTIVITY_DELETE,
@@ -586,6 +587,7 @@ class ArchiveService(BaseService):
             subject=get_subject(doc),
         )
         push_expired_notification([doc.get(config.ID_FIELD)])
+
         app.on_archive_item_deleted(doc)
 
     def replace(self, id, document, original):
@@ -1045,7 +1047,7 @@ class ArchiveService(BaseService):
                 - if Public Service Announcements are being added to a package or genre is being updated for a
                 broadcast, is invalid for scheduling, the updates contain duplicate anpa_category or subject codes
         """
-        updated = original.copy()
+        updated = deepcopy(original)
         updated.update(updates)
 
         self._test_readonly_stage(original, updates)
@@ -1375,6 +1377,15 @@ class ArchiveService(BaseService):
             translation_items += self.get_item_translations(translation_item)
 
         return translation_items
+
+    def _remove_from_translations(self, item):
+        if item.get("translated_from"):
+            translated_from = self.find_one(req=None, _id=item["translated_from"])
+            if translated_from is None:
+                return
+            translations = translated_from.get("translations") or []
+            updates = {"translations": [_id for _id in translations if _id != item["_id"]]}
+            self.system_update(translated_from["_id"], updates, translated_from)
 
 
 class AutoSaveResource(Resource):

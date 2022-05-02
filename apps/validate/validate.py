@@ -10,6 +10,7 @@
 
 import superdesk
 
+from lxml import html
 from copy import deepcopy
 from datetime import datetime
 from flask import current_app as app
@@ -272,6 +273,9 @@ class SchemaValidator(Validator):
         """
         {'type': 'boolean'}
         """
+        if value:
+            value = str(html.fromstring(value).text_content())
+
         disallowed_characters = app.config.get("DISALLOWED_CHARACTERS")
 
         if validate and disallowed_characters and value:

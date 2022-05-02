@@ -22,13 +22,13 @@ import os
 import flask
 import importlib
 
-from eve import Eve
 from eve.io.mongo.mongo import MongoJSONEncoder
 
 from content_api.tokens import SubscriberTokenAuth
 from superdesk.datalayer import SuperdeskDataLayer
+from superdesk.factory.elastic_apm import setup_apm
 from superdesk.validator import SuperdeskValidator
-from superdesk.factory.app import set_error_handlers, get_media_storage_class
+from superdesk.factory.app import SuperdeskEve, set_error_handlers, get_media_storage_class
 from superdesk.factory.sentry import SuperdeskSentry
 
 
@@ -63,7 +63,7 @@ def get_app(config=None):
 
     media_storage = get_media_storage_class(app_config)
 
-    app = Eve(
+    app = SuperdeskEve(
         auth=SubscriberTokenAuth,
         settings=app_config,
         data=SuperdeskDataLayer,
@@ -72,9 +72,8 @@ def get_app(config=None):
         validator=SuperdeskValidator,
     )
 
-    app.notification_client = None
-
     set_error_handlers(app)
+    setup_apm(app, "Content API")
 
     for module_name in app.config.get("CONTENTAPI_INSTALLED_APPS", []):
         app_module = importlib.import_module(module_name)

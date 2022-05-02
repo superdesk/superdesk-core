@@ -242,7 +242,14 @@ metadata_schema = {
         "type": "string",
         "nullable": True,
     },
-    "headline": {"type": "string"},
+    "headline": {
+        "type": "string",
+        "mapping": {
+            "type": "string",
+            "analyzer": "html_field_analyzer",
+            "search_analyzer": "html_field_analyzer",
+        },
+    },
     "slugline": {
         "type": "string",
         "mapping": {
@@ -254,7 +261,10 @@ metadata_schema = {
                     "analyzer": "phrase_prefix_analyzer",
                     "search_analyzer": "phrase_prefix_analyzer",
                     "fielddata": True,
-                }
+                },
+                "keyword": {
+                    "type": "keyword",
+                },
             },
         },
     },
@@ -371,7 +381,7 @@ metadata_schema = {
     "body_html": {
         "type": "string",
         "nullable": True,
-        "mapping": {"type": "string", "analyzer": "html_field_analyzer", "search_analyzer": "standard"},
+        "mapping": {"type": "string", "analyzer": "html_field_analyzer", "search_analyzer": "html_field_analyzer"},
     },
     "body_text": {
         "type": "string",

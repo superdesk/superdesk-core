@@ -470,7 +470,7 @@ def fetch_item(doc, desk_id, stage_id, state=None, target=None):
     return dest_doc
 
 
-def remove_media_files(doc):
+def remove_media_files(doc, published=False):
     """Removes the media files of the given doc.
 
     If media files are not references by any other
@@ -493,6 +493,9 @@ def remove_media_files(doc):
     if references:
         logger.info("Removing media files for %s", doc.get("guid"))
 
+    if doc.get("guid"):
+        remove_media_references(doc["guid"], published)
+
     for renditions in references:
         for rendition in renditions.values():
             media = rendition.get("media") if isinstance(rendition.get("media"), str) else str(rendition.get("media"))
@@ -502,14 +505,21 @@ def remove_media_files(doc):
                 )
 
                 if references.count() == 0:
-                    logger.info("Deleting media:{}".format(rendition.get("media")))
+                    logger.info("Deleting media:%s", media)
                     app.media.delete(media)
+                else:
+                    logger.info("Keeping media:%s due to references", media)
             except Exception:
-                logger.exception("Failed to remove Media Id: {} from item: {}".format(media, doc.get(config.ID_FIELD)))
+                logger.exception("Failed to remove Media Id: %s from item: %s", media, doc.get("guid"))
 
     for attachment in doc.get("attachments", []):
         lookup = {"_id": attachment["attachment"]}
         get_resource_service("attachments").delete_action(lookup)
+
+
+def remove_media_references(item_id, published):
+    get_resource_service("media_references").delete_action({"item_id": item_id, "published": published})
+    get_resource_service("media_references").delete_action({"association_id": item_id, "published": published})
 
 
 def is_assigned_to_a_desk(doc):
@@ -794,19 +804,12 @@ def transtype_metadata(doc, original=None):
 def copy_metadata_from_profile(doc):
     """Set the default values defined on document profile.
 
+    .. deprecated:: 2.2
+        We use templates to handle default values, so ignore profile defaults for now.
+
     :param doc
     """
     defaults = {}
-    profile = doc.get("profile", None)
-    if profile:
-        content_type = superdesk.get_resource_service("content_types").find_one(req=None, _id=profile)
-        if content_type:
-            defaults = {
-                name: field.get("default", None)
-                for (name, field) in content_type.get("schema", {}).items()
-                if field and field.get("default", None)
-            }
-
     defaults.setdefault("priority", config.DEFAULT_PRIORITY_VALUE_FOR_MANUAL_ARTICLES)
     defaults.setdefault("urgency", config.DEFAULT_URGENCY_VALUE_FOR_MANUAL_ARTICLES)
     defaults.setdefault("genre", config.DEFAULT_GENRE_VALUE_FOR_MANUAL_ARTICLES)

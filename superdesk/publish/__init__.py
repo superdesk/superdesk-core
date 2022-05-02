@@ -59,7 +59,7 @@ class SubscriberMediaTypes(NamedTuple):
 SUBSCRIBER_MEDIA_TYPES: SubscriberMediaTypes = SubscriberMediaTypes("media", "non-media", "both")
 
 
-def register_transmitter(transmitter_type, transmitter, errors):
+def register_transmitter(transmitter_type, transmitter, errors, template_url=None):
     registered_transmitters[transmitter_type] = transmitter
     transmitter_errors[transmitter_type] = dict(errors)
     registered_transmitters_list.append(
@@ -67,6 +67,7 @@ def register_transmitter(transmitter_type, transmitter, errors):
             "type": transmitter_type,
             "name": transmitter.NAME or transmitter_type,
             "config": getattr(transmitter, "CONFIG", None),
+            "template_url": template_url,
         }
     )
 

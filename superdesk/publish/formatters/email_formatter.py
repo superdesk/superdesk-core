@@ -59,7 +59,9 @@ class EmailFormatter(Formatter):
                 if formatted_article.get("dateline", {}).get("text"):
                     # If there is a dateline inject it into the body
                     self._inject_dateline(formatted_article)
-                doc["message_html"] = render_template("email_article_body.html", article=formatted_article)
+                doc["message_html"] = render_template("email_article_body.html", article=formatted_article).replace(
+                    "</p>", "</p>\r"
+                )
             else:
                 doc["message_html"] = None
             doc["message_text"] = render_template("email_article_body.txt", article=formatted_article)
