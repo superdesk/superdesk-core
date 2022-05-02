@@ -168,6 +168,48 @@ Superdesk commands
 
 .. autoclass:: superdesk.commands.schema.SchemaMigrateCommand()
 
+.. _storage_dumps_records:
+
+Storage Dumps and Records
+=========================
+
+.. note::
+
+    You can check :ref:`database_recording` for details on how to use following
+    ``storage:…`` commands.
+
+``storage:dump``
+^^^^^^^^^^^^^^^^
+
+.. autoclass:: superdesk.commands.data_manipulation.StorageDump
+
+.. _cli-storage-restore:
+
+``storage:restore``
+^^^^^^^^^^^^^^^^^^^
+
+.. autoclass:: superdesk.commands.data_manipulation.StorageRestore
+
+``storage:record``
+^^^^^^^^^^^^^^^^^^
+
+.. autoclass:: superdesk.commands.data_manipulation.StorageStartRecording
+
+``storage:restore-record``
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. autoclass:: superdesk.commands.data_manipulation.StorageRestoreRecord
+
+``storage:list``
+^^^^^^^^^^^^^^^^
+
+.. autoclass:: superdesk.commands.data_manipulation.StorageList
+
+``storage:upgrade-dumps``
+^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. autoclass:: superdesk.commands.data_manipulation.StorageMigrateDumps
+
 ``storage:remove_exported``
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
