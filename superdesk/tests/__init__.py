@@ -385,7 +385,7 @@ def set_placeholder(context, name, value):
 
 
 def get_prefixed_url(current_app, endpoint):
-    if endpoint.startswith("http://"):
+    if endpoint.startswith("http://") or endpoint.startswith("https://"):
         return endpoint
 
     endpoint = endpoint.lstrip("/")
