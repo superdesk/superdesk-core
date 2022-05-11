@@ -11,9 +11,14 @@
 from superdesk import get_backend
 from apps.publish.formatters.service import FormattersService
 from apps.publish.formatters.resource import FormattersResource
+from .output_formats import OutputFormatsResource, OutputFormatsService
 
 
 def init_app(app) -> None:
     endpoint_name = "formatters"
     service = FormattersService(endpoint_name, backend=get_backend())
     FormattersResource(endpoint_name, app=app, service=service)
+
+    endpoint_name = "output_formats"
+    service = OutputFormatsService(endpoint_name, backend=None)
+    OutputFormatsResource(endpoint_name, app=app, service=service)

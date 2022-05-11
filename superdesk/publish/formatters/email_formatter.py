@@ -42,6 +42,9 @@ class EmailFormatter(Formatter):
 
     """
 
+    name = "Email"
+    type = "email"
+
     def _inject_dateline(self, formatted_article):
         """Inject dateline in article's body_html"""
         body_html_elem = sd_etree.parse_html(formatted_article.get("body_html", "<p> </p>"))
