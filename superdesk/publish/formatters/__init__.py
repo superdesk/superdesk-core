@@ -9,34 +9,37 @@
 # at https://www.sourcefabric.org/superdesk/license
 
 import logging
+
 from lxml import etree
+from typing import List, Optional, Type
 from superdesk.metadata.item import ITEM_TYPE, CONTENT_TYPE, FORMATS, FORMAT
 from superdesk.etree import parse_html
 from superdesk.text_utils import get_text
-from superdesk.publish import registered_transmitters
 
-formatters = []
+formatters = []  # type: List[Type[Formatter]]
+
 logger = logging.getLogger(__name__)
 
 
-class FormatterRegistry(type):
-    """Registry metaclass for formatters."""
-
-    def __init__(cls, name, bases, attrs):
-        """Register sub-classes of Formatter class when defined."""
-        super(FormatterRegistry, cls).__init__(name, bases, attrs)
-        if name != "Formatter":
-            formatters.append(cls)
-
-
-class Formatter(metaclass=FormatterRegistry):
+class Formatter:
     """Base Formatter class for all types of Formatters like News ML 1.2, News ML G2, NITF, etc."""
 
-    def __init__(self):
+    type: str
+
+    # If name is set it will be visible in UI.
+    # Set to `None` for base classes which are
+    # extended later and shouldn't be used on its own.
+    name: Optional[str]
+
+    def __init__(self) -> None:
         self.can_preview = False
         self.can_export = False
         self.destination = None
         self.subscriber = None
+
+    def __init_subclass__(cls, **kwargs) -> None:
+        super().__init_subclass__(**kwargs)
+        formatters.append(cls)
 
     def format(self, article, subscriber, codes=None):
         """Formats the article and returns the transformed string"""
@@ -46,7 +49,7 @@ class Formatter(metaclass=FormatterRegistry):
         """Formats the article and returns the output string for export"""
         raise NotImplementedError()
 
-    def can_format(self, format_type, article):
+    def can_format(self, format_type, article) -> bool:
         """Test if formatter can format for given article."""
         raise NotImplementedError()
 
@@ -133,14 +136,13 @@ class Formatter(metaclass=FormatterRegistry):
         self.subscriber = subscriber
 
 
-def get_formatter(format_type, article):
-    for formatter_cls in formatters:
-        formatter_instance = formatter_cls()
+def get_formatter(format_type: str, article):
+    for formatter_instance in get_all_formatters():
         if formatter_instance.can_format(format_type, article):
             return formatter_instance
 
 
-def get_all_formatters():
+def get_all_formatters() -> List[Formatter]:
     """Return all formatters registered."""
     return [formatter_cls() for formatter_cls in formatters]
 

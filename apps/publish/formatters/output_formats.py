@@ -1,4 +1,3 @@
-from re import U
 import superdesk
 
 from superdesk.utils import ListCursor
@@ -16,6 +15,8 @@ class OutputFormatsResource(superdesk.Resource):
 
 class OutputFormatsService(superdesk.Service):
     def get(self, req, lookup):
+        """Return list of available output formats."""
+
         values = [
             dict(name=formatter.name, type=formatter.type)
             for formatter in get_all_formatters()

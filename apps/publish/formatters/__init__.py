@@ -20,5 +20,4 @@ def init_app(app) -> None:
     FormattersResource(endpoint_name, app=app, service=service)
 
     endpoint_name = "output_formats"
-    service = OutputFormatsService(endpoint_name, backend=None)
-    OutputFormatsResource(endpoint_name, app=app, service=service)
+    OutputFormatsResource(endpoint_name, app=app, service=OutputFormatsService(endpoint_name, backend=None))
