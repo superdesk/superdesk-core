@@ -18,6 +18,7 @@ The meaning of configuration options is described in the Eve framework
 from superdesk.default_settings import env, urlparse
 
 from superdesk.default_settings import (  # noqa
+    DEBUG,
     SECRET_KEY,
     MONGO_DBNAME,
     MONGO_URI,
@@ -35,7 +36,8 @@ from superdesk.default_settings import (  # noqa
     PAGINATION_LIMIT,
     APM_SERVER_URL,
     APM_SECRET_TOKEN,
-    DEBUG,
+    APM_SERVICE_NAME,
+    CLIENT_URL,
 )
 
 CONTENTAPI_INSTALLED_APPS = [

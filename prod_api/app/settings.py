@@ -33,6 +33,8 @@ from superdesk.default_settings import (  # noqa
     PAGINATION_LIMIT,
     APM_SERVER_URL,
     APM_SECRET_TOKEN,
+    APM_SERVICE_NAME,
+    CLIENT_URL,
 )
 
 SECRET_KEY = env("PRODAPI_SECRET_KEY", "")
