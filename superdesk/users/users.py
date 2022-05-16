@@ -151,5 +151,7 @@ class UsersResource(Resource):
             "first_name_1_last_name_-1": [("first_name", 1), ("last_name", -1)],
         }
 
+        self.collation = True
+
         self.privileges = {"POST": "users", "DELETE": "users", "PATCH": "users"}
         super().__init__(endpoint_name, app=app, service=service, endpoint_schema=endpoint_schema)

@@ -37,7 +37,9 @@ def fix_orientation(file_stream):
     @param file_stream: stream
     """
     file_stream.seek(0)
-    img = Image.open(file_stream)
+
+    # For PNG image we are getting mode RGBA so fix it while croping png image
+    img = Image.open(file_stream).convert("RGB")
     file_stream.seek(0)
     if not hasattr(img, "_getexif"):
         return file_stream

@@ -212,6 +212,7 @@ class ArchiveRewriteService(Service):
             "place",
             "organisation",
             "person",
+            "uri",
         ]
         existing_item_preserve_fields = (ASSOCIATIONS, "flags", "extra")
 
