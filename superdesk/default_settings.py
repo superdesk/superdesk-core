@@ -1035,3 +1035,11 @@ PUBLISH_ASSOCIATIONS_RESEND = "new"
 #:
 APM_SERVER_URL = env("APM_SERVER_URL")
 APM_SECRET_TOKEN = env("APM_SECRET_TOKEN")
+
+#: Elastic APM Service name
+#:
+#: APM service name
+#:
+#: .. versionadded:: 2.4.1
+#:
+APM_SERVICE_NAME = env("APM_SERVICE_NAME")
