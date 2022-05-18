@@ -22,10 +22,10 @@ from copy import deepcopy
 class ContactsService(Service):
     def get(self, req, lookup):
 
-        # by default the response will have the inactive and not public entries filtered out
+        # by default the response will have the inactive entries filtered out
         if "all" not in req.args:
             lookup["is_active"] = True
-            lookup["public"] = True
+
         return super().get(req, lookup)
 
     def on_create(self, docs):
