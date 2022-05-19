@@ -44,7 +44,7 @@ class NewsML12Formatter(Formatter):
     }
     ENCODING = "UTF-8"
 
-    name = None
+    name = "NewsML 1.2"
     type = "newsml12"
 
     def format(self, article, subscriber, codes=None):
