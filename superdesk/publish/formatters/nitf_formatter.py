@@ -32,6 +32,9 @@ class NITFFormatter(Formatter):
     XML_ROOT = '<?xml version="1.0"?>'
     ENCODING = "UTF-8"
 
+    type = "nitf"
+    name = "NITF"
+
     _message_attrib = {"version": "-//IPTC//DTD NITF 3.6//EN"}
 
     _schema_uri = "http://www.iptc.org/std/NITF/3.6/specification"

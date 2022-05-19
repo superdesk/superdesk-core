@@ -28,6 +28,7 @@ def import_services(
     :param base_cls: base class of the service
     """
     pkg = import_module(pkg_name)
+    assert pkg.__file__
     for file_path in Path(pkg.__file__).parent.glob("*.py"):
         module_name = file_path.stem
         if module_name in ("__init__", "base"):
@@ -40,7 +41,7 @@ def import_services(
             if not isclass(obj):
                 continue
             if issubclass(obj, base_cls):
-                obj(app)
+                obj(app)  # type: ignore
                 break
         else:
             logger.warning("Can't find service in module {module_name}".format(module_name=module_name))

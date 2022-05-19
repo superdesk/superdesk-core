@@ -17,6 +17,6 @@ python3-saml>=1.9,<1.10
 typing_extensions>=3.7.4
 moto[sqs]
 
--e git+https://github.com/superdesk/superdesk-planning.git@develop#egg=superdesk-planning
 -e .
+-e git+https://github.com/superdesk/superdesk-planning.git@develop#egg=superdesk-planning
 -e git+https://github.com/superdesk/sams.git@develop#egg=sams_client&subdirectory=src/clients/python/

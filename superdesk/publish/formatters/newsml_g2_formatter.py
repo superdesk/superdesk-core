@@ -49,6 +49,9 @@ class NewsMLG2Formatter(Formatter):
     ENCODING = "UTF-8"
     XML_ROOT = '<?xml version="1.0" encoding="{}"?>'.format(ENCODING)
 
+    name = "NewsML G2"
+    type = "newsmlg2"
+
     _message_nsmap = {
         None: "http://iptc.org/std/nar/2006-10-01/",
         "x": "http://www.w3.org/1999/xhtml",
