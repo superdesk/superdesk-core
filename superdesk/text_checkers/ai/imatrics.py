@@ -351,3 +351,7 @@ def get_item_body(item):
         except KeyError:
             pass
     return body
+
+
+def init_app(app):
+    IMatrics(app)

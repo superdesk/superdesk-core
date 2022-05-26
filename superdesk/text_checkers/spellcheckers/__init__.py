@@ -18,9 +18,7 @@ from .. import tools
 from .base import registered_spellcheckers, SpellcheckerBase
 
 logger = logging.getLogger(__name__)
-# can be set to False if importSpellcheckers need to be called manually
-# (e.g. in unit tests)
-AUTO_IMPORT = True
+
 # default spellchecker is the basic one, using internal dictionary
 SPELLCHECKER_DEFAULT = "default"
 CAP_SPELLING = "spelling"
@@ -180,6 +178,3 @@ def init_app(app) -> None:
     service = SpellcheckerService(endpoint_name, backend=superdesk.get_backend())
     SpellcheckerResource(endpoint_name, app=app, service=service)
     superdesk.intrinsic_privilege(endpoint_name, method=["POST"])
-
-    if AUTO_IMPORT:
-        tools.import_services(app, __name__, SpellcheckerBase)

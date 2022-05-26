@@ -91,3 +91,7 @@ class LeuvenDutch(SpellcheckerBase):
             )
             return False
         return True
+
+
+def init_app(app):
+    LeuvenDutch(app)

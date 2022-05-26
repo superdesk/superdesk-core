@@ -12,8 +12,6 @@ from .. import tools
 from .base import registered_ai_services, AIServiceBase
 import superdesk
 
-AUTO_IMPORT = True
-
 #: main endpoint to interact with AI Services
 AI_SERVICE_ENDPOINT = "ai"
 
@@ -158,9 +156,6 @@ class AIDataOpService(BaseService):
 
 
 def init_app(app) -> None:
-    if AUTO_IMPORT:
-        tools.import_services(app, __name__, AIServiceBase)
-
     allowed_service = list(registered_ai_services)
 
     endpoint_name = AI_SERVICE_ENDPOINT

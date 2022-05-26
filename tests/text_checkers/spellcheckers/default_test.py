@@ -20,8 +20,6 @@ from superdesk.text_checkers.spellcheckers.base import registered_spellcheckers,
 from superdesk.text_checkers.spellcheckers.default import Default
 from superdesk import get_resource_service
 
-spellcheckers.AUTO_IMPORT = False
-
 
 MODEL = {
     "is": 1,
