@@ -1924,7 +1924,6 @@ class Editor3TestCase(unittest.TestCase):
         body_editor.update_item()
         self.assertEqual(client, item["body_html"])
 
-
     def test_for_key_error(self):
         """Check that a simple table is converted to HTML correctly"""
         data = {
@@ -2064,7 +2063,7 @@ class Editor3TestCase(unittest.TestCase):
                             ],
                             "entityMap": {},
                         },
-                    }
+                    },
                 },
             },
             "entity": {"type": "TABLE"},
