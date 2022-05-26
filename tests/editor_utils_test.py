@@ -15,7 +15,7 @@ import unittest
 import flask
 import superdesk.editor_utils as editor_utils
 
-from superdesk.editor_utils import Editor3Content
+from superdesk.editor_utils import DraftJSHTMLExporter, Editor3Content
 
 
 class Editor3TestCase(unittest.TestCase):
@@ -1923,3 +1923,153 @@ class Editor3TestCase(unittest.TestCase):
         body_editor = Editor3Content(item)
         body_editor.update_item()
         self.assertEqual(client, item["body_html"])
+
+
+    def test_for_key_error(self):
+        """Check that a simple table is converted to HTML correctly"""
+        data = {
+            "data": {
+                "numCols": 3,
+                "numRows": 3,
+                "withHeader": False,
+                "cells": {
+                    "0": {
+                        "0": {
+                            "blocks": [
+                                {
+                                    "key": "84b0d9b2-d42c-4bef-ad3a-d216744e9ae2",
+                                    "text": "US dollar\xa0(USD)",
+                                    "type": "unstyled",
+                                    "depth": 0,
+                                    "inlineStyleRanges": [],
+                                    "entityRanges": [],
+                                    "data": {},
+                                }
+                            ],
+                            "entityMap": {},
+                        },
+                        "1": {
+                            "blocks": [
+                                {
+                                    "key": "05324770-67da-43d4-a3d9-a46a489098b8",
+                                    "text": "",
+                                    "type": "unstyled",
+                                    "depth": 0,
+                                    "inlineStyleRanges": [],
+                                    "entityRanges": [],
+                                    "data": {},
+                                }
+                            ],
+                            "entityMap": {},
+                        },
+                        "2": {
+                            "blocks": [
+                                {
+                                    "key": "39fcc25c-f107-4e76-9c19-80d4f729da40",
+                                    "text": "(9,6381)",
+                                    "type": "unstyled",
+                                    "depth": 0,
+                                    "inlineStyleRanges": [],
+                                    "entityRanges": [],
+                                    "data": {},
+                                }
+                            ],
+                            "entityMap": {},
+                        },
+                    },
+                    "1": {
+                        "0": {
+                            "blocks": [
+                                {
+                                    "key": "582dc192-4adf-4014-b44f-252b4a07164f",
+                                    "text": "Euro\xa0(EUR)",
+                                    "type": "unstyled",
+                                    "depth": 0,
+                                    "inlineStyleRanges": [],
+                                    "entityRanges": [],
+                                    "data": {},
+                                }
+                            ],
+                            "entityMap": {},
+                        },
+                        "1": {
+                            "blocks": [
+                                {
+                                    "key": "e9e226b1-e741-4674-bffb-32f935812114",
+                                    "text": "",
+                                    "type": "unstyled",
+                                    "depth": 0,
+                                    "inlineStyleRanges": [],
+                                    "entityRanges": [],
+                                    "data": {},
+                                }
+                            ],
+                            "entityMap": {},
+                        },
+                        "2": {
+                            "blocks": [
+                                {
+                                    "key": "0b83550e-1fe6-4e67-9b03-2dc3245aae18",
+                                    "text": "(10,2704)",
+                                    "type": "unstyled",
+                                    "depth": 0,
+                                    "inlineStyleRanges": [],
+                                    "entityRanges": [],
+                                    "data": {},
+                                }
+                            ],
+                            "entityMap": {},
+                        },
+                    },
+                    "2": {
+                        "0": {
+                            "blocks": [
+                                {
+                                    "key": "1216aeed-af9e-4811-9467-6bbb24bbbda5",
+                                    "text": "Sveitsiske franc\xa0(CHF)",
+                                    "type": "unstyled",
+                                    "depth": 0,
+                                    "inlineStyleRanges": [],
+                                    "entityRanges": [],
+                                    "data": {},
+                                }
+                            ],
+                            "entityMap": {},
+                        },
+                        "1": {
+                            "blocks": [
+                                {
+                                    "key": "3d316782-b1bf-40d8-8fd2-bc1492f187c4",
+                                    "text": "",
+                                    "type": "unstyled",
+                                    "depth": 0,
+                                    "inlineStyleRanges": [],
+                                    "entityRanges": [],
+                                    "data": {},
+                                }
+                            ],
+                            "entityMap": {},
+                        },
+                        "2": {
+                            "blocks": [
+                                {
+                                    "key": "b33559c4-534d-4df1-b8da-5e3c26727e47",
+                                    "text": "(1000,1363)",
+                                    "type": "unstyled",
+                                    "depth": 0,
+                                    "inlineStyleRanges": [],
+                                    "entityRanges": [],
+                                    "data": {},
+                                }
+                            ],
+                            "entityMap": {},
+                        },
+                    }
+                },
+            },
+            "entity": {"type": "TABLE"},
+            "children": " ",
+        }
+
+        DraftJSHTMLExporter.render_table(self, data)
+        self.assertRaises(KeyError)
