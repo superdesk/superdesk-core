@@ -610,7 +610,7 @@ Feature: Fetch Items from Ingest
         When we get "/ingest/ingest1"
         Then we get existing resource
         """
-        {"profile": "bar"}
+        {"profile": "__none__"}
         """
 
         When we post to "/desks"
@@ -625,7 +625,7 @@ Feature: Fetch Items from Ingest
         """
         Then we get new resource
         """
-        {"profile": "bar"}
+        {"profile": "foo"}
         """
 
         When we post to "/ingest/ingest2/fetch"
@@ -634,7 +634,22 @@ Feature: Fetch Items from Ingest
         """
         Then we get new resource
         """
-        {"profile": null}
+        {"profile": "__none__"}
+        """
+
+        When we post to "/desks"
+        """
+        {"name": "finance"}
+        """
+        Then we get new resource
+
+        When we post to "/ingest/ingest1/fetch"
+        """
+        {"desk": "#desks._id#"}
+        """
+        Then we get new resource
+        """
+        {"profile": "bar"}
         """
 
     @auth
