@@ -2068,11 +2068,11 @@ class Editor3TestCase(unittest.TestCase):
                 },
             },
             "entity": {"type": "TABLE"},
-            "children": " ",
+            "children": "",
         }
 
-        expected = (
-            "<table><tbody><tr><td/><td/><td/></tr><tr><td/><td/><td/></tr><tr><td/><td/><td/></tr></tbody></table>"
-        )
-        item = DraftJSHTMLExporter.render_table(self, data)
-        self.assertEqual(lxml.etree.tostring(item, encoding="unicode"), expected)
+        expected = "<table><tbody><tr><td><p>US dollar (USD)</p></td><td/><td><p>(9,6381)</p></td></tr><tr><td><p>Euro (EUR)</p></td><td/><td><p>(10,2704)</p></td></tr><tr><td><p>Sveitsiske franc (CHF)</p></td><td/><td><p>(1000,1363)</p></td></tr></tbody></table>"
+        item_editor3 = self.build_item(data)
+        body_editor = Editor3Content(item_editor3)
+        item = body_editor.html_exporter.render_table(data)
+        self.assertEqual(expected, lxml.etree.tostring(item, encoding="unicode"))

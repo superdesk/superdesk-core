@@ -478,7 +478,7 @@ class DraftJSHTMLExporter:
                     continue
                 except KeyError:
                     try:
-                        content_state = cells[int(row_idx)][int(col_idx)]
+                        content_state = cells[str(row_idx)][str(col_idx)]
                     except KeyError:
                         continue
                 try:
