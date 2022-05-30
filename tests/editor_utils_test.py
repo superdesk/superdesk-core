@@ -1925,7 +1925,7 @@ class Editor3TestCase(unittest.TestCase):
         self.assertEqual(client, item["body_html"])
 
     def test_for_key_error(self):
-        """Check that a simple table is converted to HTML correctly"""
+        """Check that render table run successfully"""
         data = {
             "data": {
                 "numCols": 3,
@@ -2070,5 +2070,5 @@ class Editor3TestCase(unittest.TestCase):
             "children": " ",
         }
 
-        DraftJSHTMLExporter.render_table(self, data)
-        self.assertRaises(KeyError)
+        item = DraftJSHTMLExporter.render_table(self, data)
+        self.assertFalse(item.items(), [])
