@@ -474,10 +474,13 @@ class DraftJSHTMLExporter:
                 DOM.append_child(tr, td)
                 try:
                     content_state = cells[row_idx][col_idx]
-                except KeyError:
-                    continue
                 except IndexError:
                     continue
+                except KeyError:
+                    try:
+                        content_state = cells[int(row_idx)][int(col_idx)]
+                    except KeyError:
+                        continue
                 try:
                     content = DOM.parse_html(self.exporter.render(content_state))
                 except etree.ParserError:
