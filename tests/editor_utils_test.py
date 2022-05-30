@@ -2071,6 +2071,8 @@ class Editor3TestCase(unittest.TestCase):
             "children": " ",
         }
 
-        expected = "<table><tbody><tr><td/><td/><td/></tr><tr><td/><td/><td/></tr><tr><td/><td/><td/></tr></tbody></table>"
+        expected = (
+            "<table><tbody><tr><td/><td/><td/></tr><tr><td/><td/><td/></tr><tr><td/><td/><td/></tr></tbody></table>"
+        )
         item = DraftJSHTMLExporter.render_table(self, data)
         self.assertEqual(lxml.etree.tostring(item, encoding="unicode"), expected)
