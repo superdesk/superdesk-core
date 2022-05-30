@@ -25,7 +25,7 @@ from bson import ObjectId
 from enum import Enum
 from importlib import import_module
 from eve.utils import config
-from typing import Any, Container
+from typing import Any, Dict, Iterator, List
 from superdesk.default_settings import ELASTIC_DATE_FORMAT, ELASTIC_DATETIME_FORMAT
 from superdesk.text_utils import get_text
 
@@ -317,8 +317,11 @@ def ignorecase_query(word):
 class AllowedContainer:
     """Use in schema for allowed values which are constructed dynamically during init."""
 
-    def __init__(self, data: Container[Any]):
+    def __init__(self, data: Dict[str, Any]):
         self.data = data
 
-    def __contains__(self, value: Any):
+    def __contains__(self, value: str) -> bool:
         return value in self.data
+
+    def __iter__(self) -> Iterator[str]:
+        return iter(self.data.keys())
