@@ -9,7 +9,7 @@
 # at https://www.sourcefabric.org/superdesk/license
 
 from superdesk.services import BaseService
-from flask import g, request
+from flask import g, request, current_app as app
 from eve.utils import config
 
 
@@ -25,17 +25,31 @@ class ApiAuditService(BaseService):
         :param id: id of the item
         :return:
         """
+        doc = item.copy()
+        doc["_id"] = id
+        self._audit_docs([doc])
+
+    def audit_items(self, items):
+        self._audit_docs(items)
+
+    def _audit_docs(self, docs):
+        if not len(docs):
+            return
+        if not app.config.get("CONTENTAPI_AUDIT", True):
+            return
         subscriber = getattr(g, "user", None)
         # in behave testing we get user (dict)
         if isinstance(subscriber, dict):
             subscriber = subscriber.get(config.ID_FIELD)
-
-        audit = {
-            "type": item.get("type", ""),
-            "subscriber": subscriber,
-            "uri": item.get("uri", None),
-            "items_id": id,
-            "version": item.get("version", ""),
-            "remote_addr": request.remote_addr,
-        }
-        self.post([audit])
+        audit_docs = [
+            {
+                "type": item.get("type", ""),
+                "subscriber": subscriber,
+                "uri": item.get("uri", None),
+                "items_id": item["_id"],
+                "version": item.get("version", ""),
+                "remote_addr": request.remote_addr,
+            }
+            for item in docs
+        ]
+        self.post(audit_docs)

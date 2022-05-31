@@ -170,8 +170,11 @@ class ItemsService(BaseService):
         :param dict result: dictionary contaning the list of MongoDB documents
             (the fetched items) and some metadata, e.g. pagination info
         """
+        # we have to audit first while we have the item id
+        get_resource_service("api_audit").audit_items(result["_items"])
+
         for document in result["_items"]:
-            self._process_fetched_object(document)
+            self._process_fetched_object(document, audit=False)
 
         if "_links" in result:  # might not be present if HATEOAS disabled
             url_parts = urlparse(request.url)
@@ -241,7 +244,7 @@ class ItemsService(BaseService):
         """
         return self.datasource == "items" or self.datasource == "packages"
 
-    def _process_fetched_object(self, document):
+    def _process_fetched_object(self, document, audit=True):
         """Does some processing on the raw document fetched from database.
 
         It sets the item's `uri` field and removes all the fields added by the
@@ -260,7 +263,9 @@ class ItemsService(BaseService):
 
         self._process_item_renditions(document)
         self._process_item_associations(document)
-        get_resource_service("api_audit").audit_item(document, _id)
+
+        if audit:
+            get_resource_service("api_audit").audit_item(document, _id)
 
     def _process_item_renditions(self, item):
         hrefs = {}

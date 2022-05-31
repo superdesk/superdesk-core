@@ -121,7 +121,7 @@ class SearchService(ItemsService):
             return self._map_response(response)
         return response
 
-    def _process_fetched_object(self, document):
+    def _process_fetched_object(self, document, **kwargs):
         """Does some processing on the raw document fetched from database.
 
         It sets the item's `uri` field and removes all the fields added by the
