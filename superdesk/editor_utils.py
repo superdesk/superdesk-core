@@ -476,6 +476,11 @@ class DraftJSHTMLExporter:
                     content_state = cells[row_idx][col_idx]
                 except IndexError:
                     continue
+                except KeyError:
+                    try:
+                        content_state = cells[str(row_idx)][str(col_idx)]
+                    except KeyError:
+                        continue
                 try:
                     content = DOM.parse_html(self.exporter.render(content_state))
                 except etree.ParserError:
