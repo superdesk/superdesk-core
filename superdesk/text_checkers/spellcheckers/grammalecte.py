@@ -306,3 +306,7 @@ class Grammalecte(SpellcheckerBase):
         except Exception as e:
             logger.warning("Can't check Grammalecte availability: {e}".format(e=e))
             return False
+
+
+def init_app(app):
+    Grammalecte(app)

@@ -20,7 +20,6 @@ from superdesk.text_checkers import spellcheckers
 from superdesk.text_checkers.spellcheckers.leuven_dutch import LeuvenDutch, API_URL, OPT_API_KEY
 from superdesk import get_resource_service
 
-spellcheckers.AUTO_IMPORT = False
 MODEL = {
     "outo": 1,
 }

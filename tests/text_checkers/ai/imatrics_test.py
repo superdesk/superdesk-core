@@ -18,7 +18,6 @@ from superdesk.text_checkers.ai.base import registered_ai_services, AIServiceBas
 from superdesk.errors import SuperdeskApiError
 from superdesk import get_resource_service
 
-ai.AUTO_IMPORT = False
 TEST_BASE_URL = "https://something.example.org"
 
 

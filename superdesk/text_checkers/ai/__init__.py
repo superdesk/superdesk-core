@@ -8,11 +8,10 @@ from typing import Any
 from superdesk.resource import Resource
 from superdesk.services import BaseService
 from superdesk.errors import SuperdeskApiError
+from superdesk.utils import AllowedContainer
 from .. import tools
 from .base import registered_ai_services, AIServiceBase
 import superdesk
-
-AUTO_IMPORT = True
 
 #: main endpoint to interact with AI Services
 AI_SERVICE_ENDPOINT = "ai"
@@ -158,10 +157,7 @@ class AIDataOpService(BaseService):
 
 
 def init_app(app) -> None:
-    if AUTO_IMPORT:
-        tools.import_services(app, __name__, AIServiceBase)
-
-    allowed_service = list(registered_ai_services)
+    allowed_service = AllowedContainer(registered_ai_services)
 
     endpoint_name = AI_SERVICE_ENDPOINT
     service: Any = AIService(endpoint_name, backend=superdesk.get_backend())

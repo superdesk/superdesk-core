@@ -19,7 +19,6 @@ from superdesk.text_checkers.spellcheckers.grammalecte import PATH_CHECK, PATH_S
 from superdesk import get_resource_service
 import os
 
-spellcheckers.AUTO_IMPORT = False
 
 TEST_URL = "http://localhost:8080"
 os.environ["GRAMMALECTE_URL"] = TEST_URL

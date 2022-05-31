@@ -56,3 +56,7 @@ class Default(SpellcheckerBase):
         spellcheck_service = superdesk.get_resource_service("spellcheck")
         suggestions = spellcheck_service.suggest(text, language)
         return {"suggestions": self.list2suggestions(suggestions)}
+
+
+def init_app(app):
+    Default(app)
