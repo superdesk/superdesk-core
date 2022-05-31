@@ -99,7 +99,11 @@ ELASTIC_DEFAULT_SIZE = 10
 #: https://discuss.elastic.co/t/configuring-the-standard-tokenizer/8691/5
 ELASTIC_QUERY_STRING_ANALYZE_WILDCARD = False
 
-PAGINATION_LIMIT = 200
+#: max api items to get with single query
+#:
+#: .. versionchanged:: 2.4.1
+#:
+PAGINATION_LIMIT = 500
 
 MERGE_NESTED_DOCUMENTS = False
 
