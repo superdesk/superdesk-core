@@ -390,6 +390,7 @@ CORE_APPS = [
     "superdesk.locales",
     "apps.usage_metrics",
     "superdesk.system.health",
+    "apps.rundowns",
 ]
 
 #: Specify what modules should be enabled
@@ -1056,3 +1057,10 @@ APM_SECRET_TOKEN = env("APM_SECRET_TOKEN")
 #: .. versionadded:: 2.4.1
 #:
 APM_SERVICE_NAME = env("APM_SERVICE_NAME")
+
+
+#: Default Timezone for Rundowns Shows/Templates
+#:
+#: .. versionadded:: 2.6
+#:
+RUNDOWNS_TIMEZONE = DEFAULT_TIMEZONE
