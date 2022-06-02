@@ -456,6 +456,7 @@ CORE_APPS.extend(
         "superdesk.io.iptc",
         "superdesk.io.mediatopics",
         "superdesk.text_checkers.spellcheckers",
+        "superdesk.text_checkers.spellcheckers.default",
         "superdesk.text_checkers.ai",
         "apps.io",
         "apps.io.feeding_services",
