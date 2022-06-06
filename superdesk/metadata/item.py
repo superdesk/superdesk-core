@@ -724,6 +724,7 @@ metadata_schema = {
         },
     },
     "target_subscribers": {"type": "list", "nullable": True},
+    "context": {"type": "string", "context": True, "mapping": not_analyzed},
 }
 
 metadata_schema["lock_user"]["versioned"] = False

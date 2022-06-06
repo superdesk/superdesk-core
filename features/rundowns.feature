@@ -72,3 +72,22 @@ Feature: Rundowns
 
         When we get "/rundown_templates"
         Then we get list with 0 items
+
+    @auth
+    Scenario: Rundown context
+        When we post to "archive"
+        """
+        {"headline": "test", "context": "rundowns", "duration": 60}
+        """
+        Then we get OK response
+
+        When we get "archive"
+        Then we get list with 0 items
+
+        When we get "archive?context=rundowns"
+        Then we get list with 1 items
+        """
+        {"_items": [
+            {"duration": 60}
+        ]}
+        """

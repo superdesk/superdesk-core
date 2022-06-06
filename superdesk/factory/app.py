@@ -25,7 +25,7 @@ from eve.io.mongo.mongo import _create_index as create_index
 from eve.io.media import MediaStorage
 from eve.render import send_response
 from flask_babel import Babel
-from flask import g
+from flask import g, json
 from babel import parse_locale
 from pymongo.errors import DuplicateKeyError
 
@@ -122,6 +122,17 @@ class SuperdeskEve(eve.Eve):
 
                     if not ignore_duplicate_keys:
                         raise
+
+    def item_context(self, name, schema=None):
+        self.config.setdefault("item_context", {})[name] = {
+            "schema": schema,
+        }
+
+        if schema is not None:
+            for resource in ("archive", "published", "archived"):
+                self.config["DOMAIN"][resource]["schema"].update(schema)
+                for key in schema:
+                    self.config["DOMAIN"][resource]["datasource"]["projection"][key] = 1
 
 
 def get_media_storage_class(app_config: Dict[str, Any], use_provider_config: bool = True) -> Type[MediaStorage]:

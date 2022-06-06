@@ -390,7 +390,6 @@ CORE_APPS = [
     "superdesk.locales",
     "apps.usage_metrics",
     "superdesk.system.health",
-    "apps.rundowns",
 ]
 
 #: Specify what modules should be enabled
@@ -509,6 +508,7 @@ CORE_APPS.extend(
         "superdesk.places",
         "apps.desk_routing",
         "apps.system_message",
+        "apps.rundowns",
     ]
 )
 

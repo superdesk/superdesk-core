@@ -285,3 +285,11 @@ class SuperdeskValidator(Validator):
         if checked and value not in {"text", None}:
             if app.data.find_one("content_types", req=None, item_type=value) is not None:
                 self._error(field, _("Only 1 instance is allowed."))
+
+    def _validate_context(self, checked, field, value):
+        """
+        {"type": "boolean"}
+        """
+        registered = app.config.get("item_context") or {}
+        if checked and value not in registered:
+            self._error(field, _("Unknown context %(name)s", name=value))

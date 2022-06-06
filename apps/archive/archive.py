@@ -58,7 +58,7 @@ from .common import (
     transtype_metadata,
 )
 from superdesk.media.crop import CropService
-from flask import current_app as app, json
+from flask import current_app as app, json, request
 from superdesk import get_resource_service
 from superdesk.errors import SuperdeskApiError
 from eve.versioning import resolve_document_version, versioned_id_field
@@ -116,6 +116,17 @@ def private_content_filter():
     Also filter out content of stages not visible to current user (if any).
     """
     user = getattr(flask.g, "user", None)
+    query = {
+        "bool": {
+            "must": [
+                {"exists": {"field": "task.desk"}},
+            ],
+            "must_not": [
+                {"term": {"state": "draft"}},
+            ],
+        },
+    }
+
     if user:
         private_filter = {
             "should": [
@@ -155,7 +166,7 @@ def private_content_filter():
                 {"terms": {"task.desk": [str(d["_id"]) for d in desks]}},
             )
 
-        return {
+        query = {
             "bool": {
                 "should": [
                     {"bool": private_filter},
@@ -164,13 +175,12 @@ def private_content_filter():
                 "minimum_should_match": 1,
             },
         }
-    else:  # no user specific filtering, filter out private content
-        return {
-            "bool": {
-                "must": {"exists": {"field": "task.desk"}},
-                "must_not": {"term": {"state": "draft"}},
-            },
-        }
+
+    if request is not None and request.args.get("context"):
+        query["bool"].setdefault("must", []).append({"term": {"context": request.args.get("context")}})
+    else:
+        query["bool"].setdefault("must_not", []).append({"exists": {"field": "context"}})
+    return query
 
 
 def update_image_caption(body, name, caption):

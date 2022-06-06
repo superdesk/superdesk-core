@@ -14,3 +14,12 @@ def init_app(app):
 
     superdesk.register_resource("rundown_shows", shows.ShowsResource, shows.ShowsService, _app=app)
     superdesk.register_resource("rundown_templates", templates.TemplatesResource, templates.TemplatesService, _app=app)
+
+    app.item_context(
+        "rundowns",
+        schema={
+            "duration": {
+                "type": "number",
+            },
+        },
+    )
