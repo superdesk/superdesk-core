@@ -23,6 +23,7 @@ class ValidatorsResource(superdesk.Resource):
             "schema": {},
             "allow_unknown": True,
         },
+        "init_version": {"type": "integer"},
     }
 
     resource_methods = ["POST"]
