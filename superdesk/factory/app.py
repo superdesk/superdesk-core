@@ -124,15 +124,23 @@ class SuperdeskEve(eve.Eve):
                         raise
 
     def item_context(self, name, schema=None):
+        """Register item context."""
         self.config.setdefault("item_context", {})[name] = {
             "schema": schema,
         }
 
+        def update_resource_schema(resource):
+            assert schema
+            self.config["DOMAIN"][resource]["schema"].update(schema)
+            for key in schema:
+                self.config["DOMAIN"][resource]["datasource"]["projection"][key] = 1
+
         if schema is not None:
-            for resource in ("archive", "published", "archived"):
-                self.config["DOMAIN"][resource]["schema"].update(schema)
-                for key in schema:
-                    self.config["DOMAIN"][resource]["datasource"]["projection"][key] = 1
+            for resource in ("archive", "archive_autosave", "published", "archived"):
+                update_resource_schema(resource)
+                versioned_resource = resource + self.config["VERSIONS"]
+                if versioned_resource in self.config["DOMAIN"]:
+                    update_resource_schema(versioned_resource)
 
 
 def get_media_storage_class(app_config: Dict[str, Any], use_provider_config: bool = True) -> Type[MediaStorage]:

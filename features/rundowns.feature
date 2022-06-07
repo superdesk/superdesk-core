@@ -84,6 +84,9 @@ Feature: Rundowns
         When we get "archive"
         Then we get list with 0 items
 
+        When we get "search"
+        Then we get list with 0 items
+
         When we get "archive?context=rundowns"
         Then we get list with 1 items
         """
