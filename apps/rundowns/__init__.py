@@ -4,21 +4,26 @@ from flask_babel import lazy_gettext
 
 from superdesk.factory.app import SuperdeskEve
 
-from . import shows, templates, privileges
+SCOPE = "rundowns"
+
+from . import shows, templates, privileges, create  # noqa: E402
 
 
 def init_app(app: SuperdeskEve) -> None:
     superdesk.privilege(
         name=privileges.RUNDOWNS,
         label=lazy_gettext("Rundowns"),
-        description=lazy_gettext("Rundowns module"),
+        description=lazy_gettext("Rundowns management"),
     )
 
     superdesk.register_resource("rundown_shows", shows.ShowsResource, shows.ShowsService, _app=app)
     superdesk.register_resource("rundown_templates", templates.TemplatesResource, templates.TemplatesService, _app=app)
+    superdesk.register_resource(
+        "rundown_from_template", create.FromTemplateResource, create.FromTemplateService, backend=None, _app=app
+    )
 
     app.item_scope(
-        "rundowns",
+        SCOPE,
         schema={
             "duration": {
                 "type": "number",

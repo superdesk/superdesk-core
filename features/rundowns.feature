@@ -94,3 +94,51 @@ Feature: Rundowns
             {"duration": 60}
         ]}
         """
+    
+    @auth
+    Scenario: Create rundown using template
+        Given "rundown_shows"
+        """
+        [
+            {"name": "Test"}
+        ]
+        """
+        And "rundown_templates"
+        """
+        [
+            {
+                "name": "Test",
+                "headline_template": {
+                    "prefix": "Prefix",
+                    "separator": "//",
+                    "date_format": "%H:%M"
+                },
+                "air_time": "06:00"
+            }
+        ]
+        """
+
+        When we post to "rundown_from_template"
+        """
+        {"template": "#rundown_templates._id#"}
+        """
+        Then we get new resource
+        """
+        {
+            "headline": "Prefix // 06:00",
+            "_links": {
+                "self": {
+                    "href": "archive/#rundown_from_template._id#",
+                    "title": "Archive"
+                }
+            }
+        }
+        """
+
+        When we get "archive?scope=rundowns"
+        Then we get list with 1 items
+        """
+        {"_items": [
+            {"headline": "Prefix // 06:00"}
+        ]}
+        """

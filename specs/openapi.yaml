@@ -154,6 +154,28 @@ paths:
         '204':
           description: No content
 
+  /rundown_from_template:
+    post:
+      summary: Create Rundown from template
+      tags:
+        - Rundowns
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                template:
+                  $ref: '#/components/schemas/ObjectId'
+      responses:
+        '201':
+          description: 'Created'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Rundown'
+
 components:
 
   parameters:
@@ -280,3 +302,11 @@ components:
 
         updated_by:
           $ref: '#/components/schemas/ObjectId'
+    
+    Rundown:
+      type: object
+      description: "Package item with extra rundown metadata"
+      properties:
+        headline:
+          type: string
+          example: Marker // 06:00
