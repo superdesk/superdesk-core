@@ -176,10 +176,10 @@ def private_content_filter():
             },
         }
 
-    if request is not None and request.args.get("context"):
-        query["bool"].setdefault("must", []).append({"term": {"context": request.args.get("context")}})
+    if request is not None and request.args.get("scope"):
+        query["bool"].setdefault("must", []).append({"term": {"scope": request.args.get("scope")}})
     else:
-        query["bool"].setdefault("must_not", []).append({"exists": {"field": "context"}})
+        query["bool"].setdefault("must_not", []).append({"exists": {"field": "scope"}})
     return query
 
 

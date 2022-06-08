@@ -74,10 +74,10 @@ Feature: Rundowns
         Then we get list with 0 items
 
     @auth
-    Scenario: Rundown context
+    Scenario: Rundown scope
         When we post to "archive"
         """
-        {"headline": "test", "context": "rundowns", "duration": 60}
+        {"headline": "test", "scope": "rundowns", "duration": 60}
         """
         Then we get OK response
 
@@ -87,7 +87,7 @@ Feature: Rundowns
         When we get "search"
         Then we get list with 0 items
 
-        When we get "archive?context=rundowns"
+        When we get "archive?scope=rundowns"
         Then we get list with 1 items
         """
         {"_items": [

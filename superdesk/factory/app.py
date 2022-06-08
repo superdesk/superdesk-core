@@ -123,9 +123,9 @@ class SuperdeskEve(eve.Eve):
                     if not ignore_duplicate_keys:
                         raise
 
-    def item_context(self, name, schema=None):
-        """Register item context."""
-        self.config.setdefault("item_context", {})[name] = {
+    def item_scope(self, name, schema=None):
+        """Register item scope."""
+        self.config.setdefault("item_scope", {})[name] = {
             "schema": schema,
         }
 
