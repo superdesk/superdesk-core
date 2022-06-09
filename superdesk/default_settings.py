@@ -508,6 +508,7 @@ CORE_APPS.extend(
         "superdesk.places",
         "apps.desk_routing",
         "apps.system_message",
+        "apps.rundowns",
     ]
 )
 
@@ -1056,3 +1057,10 @@ APM_SECRET_TOKEN = env("APM_SECRET_TOKEN")
 #: .. versionadded:: 2.4.1
 #:
 APM_SERVICE_NAME = env("APM_SERVICE_NAME")
+
+
+#: Default Timezone for Rundowns Shows/Templates
+#:
+#: .. versionadded:: 2.6
+#:
+RUNDOWNS_TIMEZONE = DEFAULT_TIMEZONE
