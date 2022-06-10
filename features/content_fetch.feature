@@ -776,3 +776,60 @@ Feature: Fetch Items from Ingest
         }
         ]}
       """
+
+    @auth
+    Scenario: Fetch item with associations
+        Given "ingest"
+        """
+        [
+            {
+                "_id": "picture",
+                "type": "picture",
+                "state": "ingested"
+            },
+            {
+                "_id": "text",
+                "type": "text",
+                "associations": {
+                    "featured": {
+                        "_id": "picture",
+                        "type": "picture",
+                        "state": "ingested"
+                    }
+                }
+            }
+        ]
+        """
+        And "desks"
+        """
+        [{"name": "Sports"}]
+        """
+
+        When we post to "/ingest/text/fetch"
+        """
+        {"desk": "#desks._id#"}
+        """
+        Then we get new resource
+        When we get "archive"
+        Then we get list with 2 items
+        """
+        {
+            "_items": [
+                {
+                    "type": "picture",
+                    "_current_version": 1,
+                    "state": "fetched"
+                },
+                {
+                    "type": "text",
+                    "_current_version": 1,
+                    "associations": {
+                        "featured": {
+                            "_current_version": 1,
+                            "state": "fetched"
+                        }
+                    }
+                }
+            ]
+        }
+        """
