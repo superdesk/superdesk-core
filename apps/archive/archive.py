@@ -624,7 +624,8 @@ class ArchiveService(BaseService):
         return req
 
     def get(self, req, lookup):
-        req = self._get_highlight_query(req)
+        if req is not None:
+            req = self._get_highlight_query(req)
 
         if req is None and lookup is not None and "$or" in lookup:
             # embedded resource generates mongo query which doesn't work with elastic
