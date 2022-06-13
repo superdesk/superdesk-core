@@ -1,15 +1,19 @@
+import pytz
 import superdesk
 
 from . import privileges, SCOPE
 
 from flask import current_app as app
 from eve.methods.common import document_link
-from superdesk.utc import utcnow, utc_to_local
 
 
 class FromTemplateResource(superdesk.Resource):
+    url = r'/shows/<regex("[a-f0-9]{24}"):show>/rundowns'
     schema = {
         "template": superdesk.Resource.rel("rundown_templates", required=True),
+        "date": {
+            "type": "datetime",
+        },
     }
 
     datasource = {
@@ -32,14 +36,15 @@ class FromTemplateService(superdesk.Service):
             assert template
             rundown = {"scope": SCOPE, "type": "composite", "particular_type": "rundown"}
 
+            date = doc["date"]
+
             if template.get("headline_template") and template.get("air_time"):
-                now = utcnow()
                 air_time = template.get("air_time").split(":")
-                date = utc_to_local(app.config["RUNDOWNS_TIMEZONE"], now)
                 date = date.replace(
                     hour=int(air_time[0]),
                     minute=int(air_time[1]),
                     second=int(air_time[2]) if len(air_time) == 3 else 0,
+                    tzinfo=pytz.timezone(app.config["RUNDOWNS_TIMEZONE"]),
                     microsecond=0,
                 )
                 rundown["headline"] = " ".join(
