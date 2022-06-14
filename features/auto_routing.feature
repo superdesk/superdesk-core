@@ -60,6 +60,7 @@ Feature: Auto Routing
             "rules": [
               {
                 "name": "Sports Rule",
+                "handler": "desk_fetch_publish",
                 "filter": "1234567890abcd1234567890",
                 "actions": {
                   "fetch": [
@@ -181,6 +182,7 @@ Feature: Auto Routing
             "rules": [
               {
                 "name": "Syria Rule",
+                "handler": "desk_fetch_publish",
                 "filter": "1234567890abcd1234567890",
                 "actions": {
                   "fetch": [{"desk": "#desks._id#", "stage": "#desks.incoming_stage#"}],
@@ -251,6 +253,7 @@ Feature: Auto Routing
             "rules": [
               {
                 "name": "Finance Rule 1",
+                "handler": "desk_fetch_publish",
                 "filter": "1234567890abcd1234567890",
                 "actions": {
                   "fetch": [{"desk": "#desks._id#", "stage": "#desks.incoming_stage#"}],
@@ -367,6 +370,7 @@ Feature: Auto Routing
             "rules": [
               {
                 "name": "Finance Rule 1",
+                "handler": "desk_fetch_publish",
                 "filter": "1234567890abcd1234567890",
                 "actions": {
                   "fetch": [{"desk": "#desks._id#", "stage": "#desks.incoming_stage#"}],
@@ -465,6 +469,7 @@ Feature: Auto Routing
             "rules": [
               {
                 "name": "Finance Rule 1",
+                "handler": "desk_fetch_publish",
                 "filter": "1234567890abcd1234567890",
                 "actions": {
                   "fetch": [{"desk": "#desks._id#", "stage": "#desks.incoming_stage#"}],
@@ -539,6 +544,7 @@ Feature: Auto Routing
             "rules": [
               {
                 "name": "Finance Rule 1",
+                "handler": "desk_fetch_publish",
                 "filter": "1234567890abcd1234567890",
                 "actions": {
                   "preserve_desk": true,
@@ -609,6 +615,7 @@ Feature: Auto Routing
             "rules": [
               {
                 "name": "Politics Rule 1",
+                "handler": "desk_fetch_publish",
                 "filter": "1234567890abcd1234567890",
                 "actions": {
                   "fetch": [{"desk": "#desks._id#", "stage": "#desks.incoming_stage#", "macro": "update_fields"}],
@@ -705,6 +712,7 @@ Feature: Auto Routing
             "rules": [
               {
                 "name": "Syria Rule",
+                "handler": "desk_fetch_publish",
                 "filter": "1234567890abcd1234567890",
                 "actions": {
                   "fetch": [{"desk": "#desks._id#", "stage": "#desks.incoming_stage#"}],
@@ -780,6 +788,7 @@ Feature: Auto Routing
             "rules": [
               {
                 "name": "Finance Rule 1",
+                "handler": "desk_fetch_publish",
                 "filter": "1234567890abcd1234567890",
                 "actions": {
                   "fetch": [],
@@ -852,6 +861,7 @@ Feature: Auto Routing
             "rules": [
               {
                 "name": "Finance Rule 1",
+                "handler": "desk_fetch_publish",
                 "filter": "1234567890abcd1234567890",
                 "actions": {
                   "fetch": [],
@@ -958,6 +968,7 @@ Feature: Auto Routing
             "rules": [
               {
                 "name": "Finance Rule 1",
+                "handler": "desk_fetch_publish",
                 "filter": "1234567890abcd1234567890",
                 "actions": {
                   "fetch": [],
@@ -1076,6 +1087,7 @@ Feature: Auto Routing
             "rules": [
               {
                 "name": "Finance Rule 1",
+                "handler": "desk_fetch_publish",
                 "filter": "1234567890abcd1234567890",
                 "actions": {
                   "fetch": [],
@@ -1164,6 +1176,7 @@ Feature: Auto Routing
             "rules": [
               {
                 "name": "publish",
+                "handler": "desk_fetch_publish",
                 "actions": {
                   "publish": [{"desk": "#desks._id#", "stage": "#desks.incoming_stage#"}],
                   "exit": false
@@ -1249,6 +1262,7 @@ Feature: Auto Routing
             "rules": [
               {
                 "name": "Finance Rule 1",
+                "handler": "desk_fetch_publish",
                 "filter": "1234567890abcd1234567890",
                 "actions": {
                   "fetch": [],
