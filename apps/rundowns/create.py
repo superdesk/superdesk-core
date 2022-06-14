@@ -8,7 +8,7 @@ from eve.methods.common import document_link
 
 
 class FromTemplateResource(superdesk.Resource):
-    url = r'/shows/<regex("[a-f0-9]{24}"):show>/rundowns'
+    url = r'/rundown_shows/<regex("[a-f0-9]{24}"):show>/rundowns'
     schema = {
         "template": superdesk.Resource.rel("rundown_templates", required=True),
         "date": {
@@ -20,6 +20,7 @@ class FromTemplateResource(superdesk.Resource):
         "projection": {
             "_links": 1,
             "headline": 1,
+            "planned_duration": 1,
         },
     }
 
@@ -57,6 +58,9 @@ class FromTemplateService(superdesk.Service):
                         ],
                     )
                 )
+
+            if template.get("planned_duration"):
+                rundown["planned_duration"] = template["planned_duration"]
 
             superdesk.get_resource_service("archive").post([rundown])
             rundown["_links"] = {"self": document_link("archive", rundown["_id"])}

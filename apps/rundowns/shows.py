@@ -12,7 +12,7 @@ class ShowsResource(superdesk.Resource):
         "description": {
             "type": "string",
         },
-        "duration": {
+        "planned_duration": {
             "type": "number",
         },
         "created_by": superdesk.Resource.rel("users"),

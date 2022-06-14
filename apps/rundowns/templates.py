@@ -4,14 +4,14 @@ from . import privileges
 
 
 class TemplatesResource(superdesk.Resource):
-    url = r'/shows/<regex("[a-f0-9]{24}"):show>/rundown_templates'
+    url = r'/rundown_shows/<regex("[a-f0-9]{24}"):show>/templates'
     resource_title = "rundown_templates"
     schema = {
         "name": {
             "type": "string",
             "required": True,
         },
-        "show": superdesk.Resource.rel("shows", required=True),
+        "show": superdesk.Resource.rel("rundown_shows", required=True),
         "description": {
             "type": "string",
         },
@@ -19,7 +19,7 @@ class TemplatesResource(superdesk.Resource):
             "type": "string",
             "regex": r"[0-9]{2}:[0-9]{2}(:[0-9]{2})?$",
         },
-        "duration": {
+        "planned_duration": {
             "type": "number",
         },
         "schedule": {
@@ -52,7 +52,7 @@ class TemplatesResource(superdesk.Resource):
 def fix_self_link(doc) -> None:
     if "_links" not in doc:
         return
-    doc["_links"]["self"]["href"] = "/shows/{show}/rundown_templates/{_id}".format(
+    doc["_links"]["self"]["href"] = "/rundown_shows/{show}/templates/{_id}".format(
         show=doc["show"],
         _id=doc["_id"],
     )
