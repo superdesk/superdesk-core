@@ -724,8 +724,11 @@ def get_ingest_collection(feeding_service, item):
         ingest_collection = feeding_service.service
 
     # If the type of item is event, set the collection to events
+    # If the type of item is planning, set the collection to planning
     elif item.get(ITEM_TYPE) == "event":
         ingest_collection = "events"
+    elif item.get(ITEM_TYPE) == "planning":
+        ingest_collection = "planning"
     else:
         ingest_collection = "ingest"
 
