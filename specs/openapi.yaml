@@ -192,14 +192,16 @@ components:
 
     showId:
       in: path
-      name: Show Id
+      name: showId
+      description: Show Id
       schema:
         type: string
       required: true
 
     templateId:
       in: path
-      name: Template Id
+      name: templateId
+      description: Template Id
       schema:
         type: string
       required: true
