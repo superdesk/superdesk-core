@@ -176,7 +176,7 @@ def private_content_filter(req=None):
             },
         }
 
-    if req is not None and req.args.get("scope"):
+    if req is not None and req.args is not None and req.args.get("scope"):
         query["bool"].setdefault("must", []).append({"term": {"scope": req.args.get("scope")}})
     else:
         query["bool"].setdefault("must_not", []).append({"exists": {"field": "scope"}})
