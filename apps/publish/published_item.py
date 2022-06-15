@@ -76,7 +76,7 @@ published_item_fields = {
 }
 
 
-def get_content_filter():
+def get_content_filter(req=None):
     """Filter out content of stages not visible to current user (if any).
 
     :return:

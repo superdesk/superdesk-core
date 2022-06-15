@@ -7,7 +7,7 @@ from apps.archive.archive import ArchiveResource, ArchiveService
 from apps.archive.common import CUSTOM_HATEOAS
 
 
-def elastic_filter():
+def elastic_filter(req=None):
     where = request.args.get("where")
     assert where, "where not set"
 
