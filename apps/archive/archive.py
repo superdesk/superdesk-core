@@ -107,7 +107,7 @@ def format_subj_qcode(subj):
     return ":".join([code for code in [subj.get("scheme"), subj.get("qcode")] if code])
 
 
-def private_content_filter():
+def private_content_filter(req=None):
     """Filter out other users private content if this is a user request.
 
     As private we treat items where user is creator, last version creator,
@@ -176,8 +176,8 @@ def private_content_filter():
             },
         }
 
-    if request is not None and request.args.get("scope"):
-        query["bool"].setdefault("must", []).append({"term": {"scope": request.args.get("scope")}})
+    if req is not None and req.args is not None and req.args.get("scope"):
+        query["bool"].setdefault("must", []).append({"term": {"scope": req.args.get("scope")}})
     else:
         query["bool"].setdefault("must_not", []).append({"exists": {"field": "scope"}})
     return query

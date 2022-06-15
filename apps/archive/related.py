@@ -9,7 +9,7 @@ from .archive import ArchiveResource
 ARCHIVE_DATASOURCE = ArchiveResource.datasource
 
 
-def exclude_filter():
+def exclude_filter(req=None):
     if request:
         return {
             "bool": {
