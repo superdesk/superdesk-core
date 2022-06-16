@@ -78,7 +78,7 @@ class RoutingRuleSchemeResource(Resource):
                 "type": "dict",
                 "schema": {
                     "name": {"type": "string"},
-                    "handler": {"type": "string", "required": True, "nullable": False, "empty": False},
+                    "handler": {"type": "string", "nullable": False, "default": "desk_fetch_publish"},
                     "filter": Resource.rel("content_filters", nullable=True),
                     "actions": {
                         "type": "dict",

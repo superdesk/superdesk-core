@@ -8,19 +8,25 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
-from typing import Dict
+from typing import Dict, Any
 import logging
 
 from eve.utils import config
-from superdesk import get_resource_service
+from flask_babel import lazy_gettext, LazyString
+
+from superdesk import get_resource_service, Resource, Service
 from superdesk.metadata.item import CONTENT_STATE, ITEM_TYPE, CONTENT_TYPE, MEDIA_TYPES
-from superdesk.errors import AlreadyExistsError
+from superdesk.utils import ListCursor
 
 logger = logging.getLogger(__name__)
 
 
 class RoutingRuleHandler:
-    NAME: str
+    ID: str
+    NAME: LazyString
+    supported_actions: Dict[str, bool]
+    supported_configs: Dict[str, bool]
+    default_values: Dict[str, Any]
 
     def can_handle(self, rule, ingest_item, routing_scheme) -> bool:
         raise NotImplementedError()
@@ -33,18 +39,85 @@ registered_routing_rule_handlers: Dict[str, RoutingRuleHandler] = {}
 
 
 def register_routing_rule_handler(routing_handler: RoutingRuleHandler):
-    if registered_routing_rule_handlers.get(routing_handler.NAME):
-        raise AlreadyExistsError(f"Ingest Publisher: {routing_handler.NAME} already registered")
-
-    registered_routing_rule_handlers[routing_handler.NAME] = routing_handler
+    registered_routing_rule_handlers[routing_handler.ID] = routing_handler
 
 
 def get_routing_rule_handler(rule) -> RoutingRuleHandler:
-    return registered_routing_rule_handlers[rule.get("handler", DeskFetchPublishRoutingRuleHandler.NAME)]
+    return registered_routing_rule_handlers[rule.get("handler", DeskFetchPublishRoutingRuleHandler.ID)]
+
+
+class IngestRuleHandlersResource(Resource):
+    item_methods = []
+    resource_methods = ["GET"]
+    schema = {
+        "_id": {"type": "string"},
+        "name": {"type": "string"},
+        "supported_actions": {
+            "type": "dict",
+            "required": False,
+            "schema": {},
+            "allow_unknown": True,
+        },
+        "supported_configs": {
+            "type": "dict",
+            "required": False,
+            "schema": {},
+            "allow_unknown": True,
+        },
+        "default_values": {
+            "type": "dict",
+            "required": False,
+            "schema": {},
+            "allow_unknown": True,
+        },
+    }
+
+
+class IngestRuleHandlersService(Service):
+    def get(self, req, lookup):
+        """Return list of available ingest rule handlers"""
+
+        values = sorted(
+            [
+                dict(
+                    _id=handler.ID,
+                    name=handler.NAME,
+                    supported_actions=handler.supported_actions,
+                    supported_configs=handler.supported_configs,
+                    default_values=handler.default_values,
+                )
+                for handler in registered_routing_rule_handlers.values()
+            ],
+            key=lambda x: x["name"].lower(),
+        )
+
+        return ListCursor(values)
 
 
 class DeskFetchPublishRoutingRuleHandler(RoutingRuleHandler):
-    NAME = "desk_fetch_publish"
+    ID = "desk_fetch_publish"
+    NAME = lazy_gettext("Desk Fetch/Publish")
+    supported_actions = {
+        "fetch_to_desk": True,
+        "publish_from_desk": True,
+    }
+    supported_configs = {"exit": True, "preserve_desk": True}
+    default_values = {
+        "name": "",
+        "handler": "desk_fetch_publish",
+        "filter": None,
+        "actions": {
+            "fetch": [],
+            "publish": [],
+            "exit": False,
+        },
+        "schedule": {
+            "day_of_week": ["MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN"],
+            "hour_of_day_from": None,
+            "hour_of_day_to": None,
+            "_allDay": True,
+        },
+    }
 
     def can_handle(self, rule, ingest_item, routing_scheme):
         return ingest_item.get(ITEM_TYPE) in (

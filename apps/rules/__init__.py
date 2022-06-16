@@ -15,6 +15,7 @@ from flask_babel import lazy_gettext
 
 from .routing_rules import RoutingRuleSchemeResource, RoutingRuleSchemeService
 from .rule_sets import RuleSetsService, RuleSetsResource
+from .rule_handlers import IngestRuleHandlersResource, IngestRuleHandlersService
 from superdesk import get_backend
 import superdesk
 
@@ -29,6 +30,10 @@ def init_app(app) -> None:
     endpoint_name = "routing_schemes"
     service = RoutingRuleSchemeService(endpoint_name, backend=get_backend())
     RoutingRuleSchemeResource(endpoint_name, app=app, service=service)
+
+    endpoint_name = "ingest_rule_handlers"
+    service = IngestRuleHandlersService(endpoint_name, backend=get_backend())
+    IngestRuleHandlersResource(endpoint_name, app=app, service=service)
 
     superdesk.privilege(
         name="rule_sets",
