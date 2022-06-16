@@ -4,18 +4,18 @@ from . import privileges
 
 
 class TemplatesResource(superdesk.Resource):
-    url = r'/rundown_shows/<regex("[a-f0-9]{24}"):show>/templates'
+    url = r'/shows/<regex("[a-f0-9]{24}"):show>/templates'
     resource_title = "rundown_templates"
     schema = {
         "name": {
             "type": "string",
             "required": True,
         },
-        "show": superdesk.Resource.rel("rundown_shows", required=True),
+        "show": superdesk.Resource.rel("shows", required=True),
         "description": {
             "type": "string",
         },
-        "air_time": {
+        "airtime_time": {
             "type": "string",
             "regex": r"[0-9]{2}:[0-9]{2}(:[0-9]{2})?$",
         },
@@ -34,13 +34,8 @@ class TemplatesResource(superdesk.Resource):
                 },
             },
         },
-        "headline_template": {
-            "type": "dict",
-            "schema": {
-                "prefix": {"type": "string"},
-                "separator": {"type": "string"},
-                "date_format": {"type": "string"},
-            },
+        "headline": {
+            "type": "string",
         },
         "created_by": superdesk.Resource.rel("users"),
         "updated_by": superdesk.Resource.rel("users"),
@@ -52,7 +47,7 @@ class TemplatesResource(superdesk.Resource):
 def fix_self_link(doc) -> None:
     if "_links" not in doc:
         return
-    doc["_links"]["self"]["href"] = "/rundown_shows/{show}/templates/{_id}".format(
+    doc["_links"]["self"]["href"] = "/shows/{show}/templates/{_id}".format(
         show=doc["show"],
         _id=doc["_id"],
     )
