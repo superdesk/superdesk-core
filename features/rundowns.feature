@@ -1,4 +1,3 @@
-@wip
 Feature: Rundowns
 
     @auth
@@ -100,6 +99,7 @@ Feature: Rundowns
         ]}
         """
     
+    @wip
     @auth
     Scenario: Create rundown using template
         Given "shows"
@@ -128,6 +128,8 @@ Feature: Rundowns
         Then we get new resource
         """
         {
+            "show": "#shows._id#",
+            "rundown_template": "#rundown_templates._id#",
             "headline": "Marker",
             "planned_duration": 3600,
             "airtime_time": "06:00",

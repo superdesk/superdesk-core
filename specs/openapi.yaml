@@ -171,6 +171,9 @@ paths:
           application/json:
             schema:
               type: object
+              required:
+                - template
+                - airtime_date
               properties:
                 template:
                   $ref: '#/components/schemas/ObjectId'
@@ -336,6 +339,10 @@ components:
           type: string
           format: date
           example: 06:00
+        show:
+          $ref: '#/components/schemas/ObjectId'
+        rundown_template:
+          $ref: '#/components/schemas/ObjectId'
   
   responses:
     '401':

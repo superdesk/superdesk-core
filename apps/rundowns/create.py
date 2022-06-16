@@ -1,9 +1,7 @@
-import pytz
 import superdesk
 
 from . import privileges, SCOPE
 
-from flask import current_app as app
 from eve.methods.common import document_link
 
 
@@ -20,6 +18,8 @@ class FromTemplateResource(superdesk.Resource):
     datasource = {
         "projection": {
             "_links": 1,
+            "show": 1,
+            "rundown_template": 1,
             "headline": 1,
             "planned_duration": 1,
             "airtime_time": 1,
@@ -43,6 +43,8 @@ class FromTemplateService(superdesk.Service):
                 "scope": SCOPE,
                 "type": "composite",
                 "particular_type": "rundown",
+                "show": template["show"],
+                "rundown_template": template["_id"],
                 "airtime_date": doc["airtime_date"],
                 "airtime_time": template.get("airtime_time", ""),
                 "headline": template.get("headline", ""),

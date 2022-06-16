@@ -25,6 +25,8 @@ def init_app(app: SuperdeskEve) -> None:
     app.item_scope(
         SCOPE,
         schema={
+            "show": superdesk.Resource.rel("shows"),
+            "rundown_template": superdesk.Resource.rel("rundown_templates"),
             "planned_duration": {
                 "type": "number",
             },
