@@ -11,8 +11,9 @@ class FromTemplateResource(superdesk.Resource):
     url = r'/shows/<regex("[a-f0-9]{24}"):show>/rundowns'
     schema = {
         "template": superdesk.Resource.rel("rundown_templates", required=True),
-        "date": {
+        "airtime_date": {
             "type": "string",
+            "required": True,
         },
     }
 
@@ -42,7 +43,7 @@ class FromTemplateService(superdesk.Service):
                 "scope": SCOPE,
                 "type": "composite",
                 "particular_type": "rundown",
-                "airtime_date": doc["date"],
+                "airtime_date": doc["airtime_date"],
                 "airtime_time": template.get("airtime_time", ""),
                 "headline": template.get("headline", ""),
                 "planned_duration": template.get("planned_duration", 0),

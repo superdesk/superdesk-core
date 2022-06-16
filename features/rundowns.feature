@@ -123,7 +123,7 @@ Feature: Rundowns
 
         When we post to "/shows/#shows._id#/rundowns"
         """
-        {"template": "#rundown_templates._id#", "date": "2022-06-10"}
+        {"template": "#rundown_templates._id#", "airtime_date": "2022-06-10"}
         """
         Then we get new resource
         """
