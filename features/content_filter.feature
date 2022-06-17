@@ -242,6 +242,7 @@ Feature: Content Filter
         "name": "routing scheme 1",
         "rules": [{
             "name": "Sports Rule",
+            "handler": "desk_fetch_publish",
             "filter": "#content_filters._id#",
             "actions": {
                 "fetch": []
