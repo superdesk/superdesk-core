@@ -270,55 +270,57 @@ components:
             is_active:
               type: boolean
               example: true
-            day_of_week:
-              type: array
-              items:
-                type: string
-                enum:
-                  - MON
-                  - TUE
-                  - WED
-                  - THU
-                  - FRI
-                  - SAT
-                  - SUN
-              example:
-                - MON
-                - TUE
-                - WED
-                - THU
-                - FRI
-            auto_create_items:
+            auto_create_rundowns:
               type: boolean
               example: true
+            freq:
+              type: string
+              enum:
+                - DAILY
+                - WEEKLY
+                - MONTHLY
+                - YEARLY
+            interval:
+              type: number
+              default: 1
+            month:
+              type: array
+              items:
+                type: integer
+              example: [1, 12]
+            monthday:
+              type: array
+              items:
+                type: integer
+              example: [1, 30]
+            weekday:
+              type: array
+              items:
+                type: integer
+              description: 0 == MO
+              example: [0, 1, 2, 3, 4]
 
-        headline_template:
-          type: object
-          properties:
-            prefix:
-              type: string
-              example: Marker
-            separator:
-              type: string
-              example: //
-            date_format:
-              type: string
-              example: dd.MM.yyyy
+        headline:
+          type: string
 
         _created:
           type: string
           format: datetime
           example: 2022-02-16T13:33:40+0000
+          readOnly: true
 
         _updated:
           type: string
           format: datetime
           example: 2022-02-16T13:33:40+0000
+          readOnly: true
 
         created_by:
+          readOnly: true
           $ref: '#/components/schemas/ObjectId'
 
         updated_by:
+          readOnly: true
           $ref: '#/components/schemas/ObjectId'
     
     Rundown:

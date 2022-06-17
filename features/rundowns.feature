@@ -32,7 +32,7 @@ Feature: Rundowns
         When we get "/shows"
         Then we get list with 0 items
 
-
+    @wip
     @auth
     Scenario: Templates CRUD
         Given "shows"
@@ -45,7 +45,15 @@ Feature: Rundowns
         {
             "name": "test template",
             "airtime_time": "06:00",
-            "headline": "Marker"
+            "headline": "Marker",
+            "schedule": {
+                "is_active": true,
+                "frequency": "DAILY",
+                "interval": 1,
+                "month": [1],
+                "monthday": [1],
+                "weekday": [1]
+            }
         }
         """
         Then we get new resource
@@ -61,7 +69,7 @@ Feature: Rundowns
 
         When we patch "/shows/#shows._id#/templates/#templates._id#"
         """
-        {"schedule": {"is_active": true, "day_of_week": ["MON", "FRI"]}}
+        {"schedule": {"is_active": true, "weekday": [5, 6]}}
         """
         Then we get OK response
 
@@ -99,7 +107,6 @@ Feature: Rundowns
         ]}
         """
     
-    @wip
     @auth
     Scenario: Create rundown using template
         Given "shows"

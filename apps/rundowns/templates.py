@@ -28,9 +28,25 @@ class TemplatesResource(superdesk.Resource):
                 "is_active": {
                     "type": "boolean",
                 },
-                "day_of_week": {
+                "frequency": {
+                    "type": "string",
+                    "allowed": ["DAILY", "WEEKLY", "MONTHLY", "YEARLY"],
+                },
+                "interval": {
+                    "type": "number",
+                    "default": 1,
+                },
+                "month": {
                     "type": "list",
-                    "allowed": ["MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN"],
+                    "allowed": list(range(1, 13)),
+                },
+                "monthday": {
+                    "type": "list",
+                    "allowed": list(range(1, 32)),
+                },
+                "weekday": {
+                    "type": "list",
+                    "allowed": list(range(0, 7)),
                 },
             },
         },
