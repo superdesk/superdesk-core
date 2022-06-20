@@ -28,7 +28,7 @@ class TemplatesResource(superdesk.Resource):
                 "is_active": {
                     "type": "boolean",
                 },
-                "frequency": {
+                "freq": {
                     "type": "string",
                     "allowed": ["DAILY", "WEEKLY", "MONTHLY", "YEARLY"],
                 },
@@ -47,6 +47,20 @@ class TemplatesResource(superdesk.Resource):
                 "weekday": {
                     "type": "list",
                     "allowed": list(range(0, 7)),
+                },
+            },
+        },
+        "headline_template": {
+            "type": "dict",
+            "schema": {
+                "prefix": {
+                    "type": "string",
+                },
+                "separator": {
+                    "type": "string",
+                },
+                "date_format": {
+                    "type": "string",
                 },
             },
         },

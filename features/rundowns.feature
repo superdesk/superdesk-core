@@ -32,7 +32,6 @@ Feature: Rundowns
         When we get "/shows"
         Then we get list with 0 items
 
-    @wip
     @auth
     Scenario: Templates CRUD
         Given "shows"
@@ -45,10 +44,14 @@ Feature: Rundowns
         {
             "name": "test template",
             "airtime_time": "06:00",
-            "headline": "Marker",
+            "headline_template": {
+                "prefix": "Marker",
+                "separator": "//",
+                "date_format": "dd.mm.yy"
+            },
             "schedule": {
                 "is_active": true,
-                "frequency": "DAILY",
+                "freq": "DAILY",
                 "interval": 1,
                 "month": [1],
                 "monthday": [1],
@@ -123,7 +126,12 @@ Feature: Rundowns
                 "show": "#shows._id#",
                 "headline": "Marker",
                 "airtime_time": "06:00",
-                "planned_duration": 3600
+                "planned_duration": 3600,
+                "headline_template": {
+                    "prefix": "Marker",
+                    "separator": "//",
+                    "date_format": "%d.%m.%Y"
+                }
             }
         ]
         """
@@ -137,7 +145,7 @@ Feature: Rundowns
         {
             "show": "#shows._id#",
             "rundown_template": "#rundown_templates._id#",
-            "headline": "Marker",
+            "headline": "Marker // 10.06.2022",
             "planned_duration": 3600,
             "airtime_time": "06:00",
             "airtime_date": "2022-06-10",
@@ -154,6 +162,6 @@ Feature: Rundowns
         Then we get list with 1 items
         """
         {"_items": [
-            {"headline": "Marker"}
+            {"headline": "Marker // 10.06.2022"}
         ]}
         """

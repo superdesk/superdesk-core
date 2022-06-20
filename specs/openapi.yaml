@@ -300,8 +300,20 @@ components:
               description: 0 == MO
               example: [0, 1, 2, 3, 4]
 
-        headline:
-          type: string
+        headline_template:
+          type: object
+          required:
+            - prefix
+          properties:
+            prefix:
+              type: string
+              example: "Marker"
+            separator:
+              type: string
+              example: "//"
+            date_format:
+              type: string
+              example: "%d.%m.%Y"
 
         _created:
           type: string

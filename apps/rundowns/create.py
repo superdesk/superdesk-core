@@ -1,8 +1,10 @@
+from multiprocessing.sharedctypes import Value
 import superdesk
 
-from . import privileges, SCOPE
-
+from datetime import datetime
 from eve.methods.common import document_link
+
+from . import privileges, SCOPE
 
 
 class FromTemplateResource(superdesk.Resource):
@@ -50,6 +52,27 @@ class FromTemplateService(superdesk.Service):
                 "headline": template.get("headline", ""),
                 "planned_duration": template.get("planned_duration", 0),
             }
+
+            date = datetime.strptime(doc["airtime_date"], "%Y-%m-%d")
+            if template.get("airtime_time"):
+                try:
+                    time = datetime.strptime(template["airtime_time"], "%H:%M:%S")
+                except ValueError:
+                    time = datetime.strptime(template["airtime_time"], "%H:%M")
+                date = date.replace(hour=time.hour, minute=time.minute, second=time.second, microsecond=0)
+
+            if template.get("headline_template"):
+                headline_template = template["headline_template"]
+                rundown["headline"] = " ".join(
+                    filter(
+                        bool,
+                        [
+                            headline_template.get("prefix"),
+                            headline_template.get("separator", " ").strip(),
+                            date.strftime(headline_template.get("date_format", "%d.%m.%Y")),
+                        ],
+                    )
+                )
 
             superdesk.get_resource_service("archive").post([rundown])
             rundown["_links"] = {"self": document_link("archive", rundown["_id"])}
