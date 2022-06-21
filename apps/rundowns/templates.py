@@ -67,6 +67,9 @@ class TemplatesResource(superdesk.Resource):
         "headline": {
             "type": "string",
         },
+        "last_scheduled": {
+            "type": "datetime",
+        },
         "created_by": superdesk.Resource.rel("users"),
         "updated_by": superdesk.Resource.rel("users"),
     }

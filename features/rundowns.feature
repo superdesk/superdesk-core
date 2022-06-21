@@ -165,3 +165,41 @@ Feature: Rundowns
             {"headline": "Marker // 10.06.2022"}
         ]}
         """
+
+    @auth
+    Scenario: Create rundown based on template schedule
+        Given "shows"
+        """
+        [
+            {"name": "Test"}
+        ]
+        """
+        And "rundown_templates"
+        """
+        [
+            {
+                "name": "Test",
+                "show": "#shows._id#",
+                "headline": "Marker",
+                "airtime_time": "06:00",
+                "planned_duration": 3600,
+                "schedule": {
+                    "is_active": true,
+                    "freq": "DAILY"
+                }
+            }
+        ]
+        """
+
+        When we run task "apps.rundowns.tasks.create_scheduled_rundowns"
+        And we get "archive?scope=rundowns"
+        Then we get list with 1 items
+        """
+        {"_items": [
+            {"headline": "Marker"}
+        ]}
+        """
+
+        When we run task "apps.rundowns.tasks.create_scheduled_rundowns"
+        And we get "archive?scope=rundowns"
+        Then we get list with 1 items

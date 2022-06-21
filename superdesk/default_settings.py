@@ -358,6 +358,10 @@ CELERY_BEAT_SCHEDULE = {
         "task": "apps.saved_searches.report",
         "schedule": crontab(minute=0),
     },
+    "rundowns:create-scheduled-rundowns": {
+        "task": "apps.rundowns.tasks.create_scheduled_rundowns",
+        "schedule": crontab(minute=30),
+    },
 }
 
 #: Sentry DSN - will report exceptions there

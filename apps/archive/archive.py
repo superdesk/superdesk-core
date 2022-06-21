@@ -171,6 +171,7 @@ def private_content_filter(req=None):
                 "should": [
                     {"bool": private_filter},
                     {"bool": {"must_not": {"term": {"state": "draft"}}}},
+                    {"exists": {"field": "scope"}},  # different scope might have different private definition
                 ],
                 "minimum_should_match": 1,
             },

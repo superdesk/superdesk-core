@@ -1,12 +1,13 @@
 import superdesk
 
+from typing import Final
 from flask_babel import lazy_gettext
 
 from superdesk.factory.app import SuperdeskEve
 
-SCOPE = "rundowns"
+SCOPE: Final = "rundowns"
 
-from . import shows, templates, privileges, create  # noqa: E402
+from . import shows, templates, privileges, create, tasks  # noqa: E402
 
 
 def init_app(app: SuperdeskEve) -> None:
