@@ -45,14 +45,15 @@ class InternalDestinationsService(Service):
     pass
 
 
-def handle_item_published(sender, item, **extra):
+def handle_item_published(sender, item, desk=None, **extra):
     macros_service = get_resource_service("macros")
     archive_service = get_resource_service("archive")
     filters_service = get_resource_service("content_filters")
     destinations_service = get_resource_service(NAME)
 
     for dest in destinations_service.get(req=None, lookup={"is_active": True}):
-        if dest.get("desk") == item.get("task").get("desk"):
+        item_desk = desk["_id"] if desk is not None else item.get("task").get("desk")
+        if dest.get("desk") == item_desk:
             # item desk and internal destination are same then don't execute
             continue
 
@@ -72,7 +73,11 @@ def handle_item_published(sender, item, **extra):
             item[SCHEDULE_SETTINGS] = {}
 
         new_item = deepcopy(item)
-        send_to(new_item, desk_id=dest["desk"], stage_id=dest.get("stage"))
+
+        try:
+            send_to(new_item, desk_id=dest["desk"], stage_id=dest.get("stage"))
+        except StopDuplication:
+            continue
 
         if dest.get("macro"):
             macro = macros_service.get_macro_by_name(dest["macro"])
