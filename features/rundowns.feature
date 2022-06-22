@@ -44,6 +44,7 @@ Feature: Rundowns
         {
             "name": "test template",
             "airtime_time": "06:00",
+            "airtime_date": "2022-06-22",
             "headline_template": {
                 "prefix": "Marker",
                 "separator": "//",
@@ -66,7 +67,9 @@ Feature: Rundowns
                 "self": {
                     "href": "/shows/#shows._id#/templates/#templates._id#"
                 }
-            }
+            },
+            "airtime_date": "2022-06-22",
+            "airtime_time": "06:00"
         }
         """
 
@@ -166,6 +169,7 @@ Feature: Rundowns
         ]}
         """
 
+    @wip
     @auth
     Scenario: Create rundown based on template schedule
         Given "shows"
@@ -182,6 +186,7 @@ Feature: Rundowns
                 "show": "#shows._id#",
                 "headline": "Marker",
                 "airtime_time": "06:00",
+                "airtime_date": "2022-06-21",
                 "planned_duration": 3600,
                 "schedule": {
                     "is_active": true,

@@ -16,8 +16,10 @@ class TemplatesResource(superdesk.Resource):
             "type": "string",
         },
         "airtime_time": {
-            "type": "string",
-            "regex": r"[0-9]{2}:[0-9]{2}(:[0-9]{2})?$",
+            "type": "time",
+        },
+        "airtime_date": {
+            "type": "date",
         },
         "planned_duration": {
             "type": "number",

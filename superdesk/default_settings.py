@@ -1068,3 +1068,9 @@ APM_SERVICE_NAME = env("APM_SERVICE_NAME")
 #: .. versionadded:: 2.6
 #:
 RUNDOWNS_TIMEZONE = DEFAULT_TIMEZONE
+
+#: How many hours in advance we should create scheduled rundowns
+#:
+#: .. versionadded:: 2.6
+#:
+RUNDOWNS_SCHEDULE_HOURS = 24
