@@ -258,6 +258,12 @@ components:
           format: time
           example: 06:00
 
+        airtime_date:
+          type: string
+          format: date
+          example: 2022-06-22
+          description: When is the first show scheduled.
+
         planned_duration:
           type: number
           format: float
@@ -314,6 +320,12 @@ components:
             date_format:
               type: string
               example: "%d.%m.%Y"
+
+        last_scheduled:
+          type: string
+          format: datetime
+          readOnly: true
+          description: When was the last scheduled rundown created.
 
         _created:
           type: string
