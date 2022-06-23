@@ -1,7 +1,7 @@
 import datetime
 import superdesk
 
-from typing import Dict, Literal, TypedDict
+from typing import Dict, Literal, Optional, TypedDict
 from eve.methods.common import document_link
 
 from . import privileges, SCOPE
@@ -17,11 +17,12 @@ class IRundown(IEntity):
     type: Literal["composite"]
     particular_type: str
     show: str
-    rundown_template: str
     airtime_date: str
     airtime_time: str
     headline: str
     planned_duration: int
+    rundown_template: str
+    rundown_scheduled_on: datetime.datetime
 
 
 class FromTemplateResource(superdesk.Resource):
@@ -51,17 +52,20 @@ class FromTemplateResource(superdesk.Resource):
     privileges = {"POST": privileges.RUNDOWNS}
 
 
-def create_rundown_for_template(template, date: datetime.date) -> IRundown:
+def create_rundown_for_template(
+    template, date: datetime.date, scheduled_on: Optional[datetime.datetime] = None
+) -> IRundown:
     rundown: IRundown = {
         "scope": SCOPE,
         "type": "composite",
         "particular_type": "rundown",
         "show": template["show"],
-        "rundown_template": template["_id"],
         "airtime_date": date.isoformat(),
         "airtime_time": template.get("airtime_time", ""),
         "headline": template.get("headline", ""),
         "planned_duration": template.get("planned_duration", 0),
+        "rundown_template": template["_id"],
+        "rundown_scheduled_on": scheduled_on or datetime.datetime.utcnow(),
     }
 
     if template.get("headline_template"):

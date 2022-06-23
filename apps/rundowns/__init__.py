@@ -28,6 +28,10 @@ def init_app(app: SuperdeskEve) -> None:
         schema={
             "show": superdesk.Resource.rel("shows"),
             "rundown_template": superdesk.Resource.rel("rundown_templates"),
+            "rundown_scheduled_on": {
+                "type": "datetime",
+                "readonly": True,
+            },
             "planned_duration": {
                 "type": "number",
             },

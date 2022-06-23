@@ -31,7 +31,7 @@ from pymongo.errors import DuplicateKeyError
 
 from superdesk.celery_app import init_celery
 from superdesk.datalayer import SuperdeskDataLayer  # noqa
-from superdesk.errors import SuperdeskError, SuperdeskApiError
+from superdesk.errors import SuperdeskError, SuperdeskApiError, DocumentError
 from superdesk.factory.sentry import SuperdeskSentry
 from superdesk.logging import configure_logging
 from superdesk.storage import ProxyMediaStorage
@@ -67,7 +67,10 @@ def set_error_handlers(app):
 
     @app.errorhandler(AssertionError)
     def assert_error_handler(error):
-        print("error", error)
+        return send_response(None, ({"code": 400, "error": str(error) if str(error) else "assert"}, None, None, 400))
+
+    @app.errorhandler(DocumentError)
+    def document_error_handler(error):
         return send_response(None, ({"code": 400, "error": str(error) if str(error) else "assert"}, None, None, 400))
 
     @app.errorhandler(500)
@@ -86,6 +89,7 @@ class SuperdeskEve(eve.Eve):
         self.babel_locale = None
         self.babel_translations = None
         self.notification_client = None
+        self.lock = None
 
         super().__init__(**kwargs)
 

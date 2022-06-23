@@ -2717,7 +2717,6 @@ def setp_impl_when_we_init_data(context, entity):
 
 @when('we run task "{name}"')
 def when_we_run_task(context, name):
-    with context.app.app_context():
-        task = celery.signature(name)
-        assert task is not None
-        task()
+    task = celery.signature(name)
+    assert task is not None
+    task.apply()

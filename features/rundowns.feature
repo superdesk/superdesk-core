@@ -44,18 +44,18 @@ Feature: Rundowns
         {
             "name": "test template",
             "airtime_time": "06:00",
-            "airtime_date": "2022-06-22",
+            "airtime_date": "2050-06-22",
             "headline_template": {
                 "prefix": "Marker",
                 "separator": "//",
                 "date_format": "dd.mm.yy"
             },
+            "repeat": true,
             "schedule": {
-                "is_active": true,
                 "freq": "DAILY",
                 "interval": 1,
                 "month": [1],
-                "monthday": [1],
+                "monthday": [1, -1],
                 "weekday": [1]
             }
         }
@@ -68,21 +68,21 @@ Feature: Rundowns
                     "href": "/shows/#shows._id#/templates/#templates._id#"
                 }
             },
-            "airtime_date": "2022-06-22",
+            "airtime_date": "2050-06-22",
             "airtime_time": "06:00"
         }
         """
 
         When we patch "/shows/#shows._id#/templates/#templates._id#"
         """
-        {"schedule": {"is_active": true, "weekday": [5, 6]}}
+        {"schedule": {"weekday": [5, 6]}, "repeat": false}
         """
         Then we get OK response
 
         When we get "/shows/#shows._id#/templates"
         Then we get list with 1 items
         """
-        {"_items": [{"schedule": {"is_active": true}}]}
+        {"_items": [{"schedule": {"weekday": [5, 6]}, "repeat": false}]}
         """
 
         When we delete "/shows/#shows._id#/templates/#templates._id#"
@@ -168,8 +168,51 @@ Feature: Rundowns
             {"headline": "Marker // 10.06.2022"}
         ]}
         """
+    
+    @auth
+    Scenario: Validate airtime date when creating/updating template
+        Given "shows"
+        """
+        [
+            {"name": "Test"}
+        ]
+        """
 
-    @wip
+        When we post to "shows/#shows._id#/templates"
+        """
+        {
+            "name": "Test",
+            "airtime_time": "06:00",
+            "airtime_date": "2022-06-20"
+        }
+        """
+        Then we get error 400
+        """
+        {"error": "Airtime must be in the future."}
+        """
+
+        When we post to "shows/#shows._id#/templates"
+        """
+        {
+            "name": "Test",
+            "airtime_time": "06:00",
+            "airtime_date": "2050-01-01"
+        }
+        """
+        Then we get new resource
+        """
+        {"scheduled_on": "2050-01-01T05:00:00+0000"}
+        """
+
+        When we patch "shows/#shows._id#/templates/#templates._id#"
+        """
+        {"airtime_date": "2022-06-20"}
+        """
+        Then we get error 400
+        """
+        {"_issues": {"validator exception": "Airtime must be in the future."}}
+        """
+
     @auth
     Scenario: Create rundown based on template schedule
         Given "shows"
@@ -182,15 +225,35 @@ Feature: Rundowns
         """
         [
             {
-                "name": "Test",
+                "name": "Scheduled",
                 "show": "#shows._id#",
-                "headline": "Marker",
                 "airtime_time": "06:00",
-                "airtime_date": "2022-06-21",
+                "airtime_date": "2030-01-01",
                 "planned_duration": 3600,
+                "repeat": true,
                 "schedule": {
-                    "is_active": true,
                     "freq": "DAILY"
+                },
+                "headline_template": {
+                    "prefix": "Scheduled",
+                    "separator": "//",
+                    "date_format": "%d.%m.%Y"
+                }
+            },
+            {
+                "name": "Not Scheduled",
+                "show": "#shows._id#",
+                "airtime_time": "06:00",
+                "airtime_date": "2030-01-01",
+                "planned_duration": 3600,
+                "repeat": false,
+                "schedule": {
+                    "freq": "DAILY"
+                },
+                "headline_template": {
+                    "prefix": "Not Scheduled",
+                    "separator": "//",
+                    "date_format": "%d.%m.%Y"
                 }
             }
         ]
@@ -201,10 +264,16 @@ Feature: Rundowns
         Then we get list with 1 items
         """
         {"_items": [
-            {"headline": "Marker"}
+            {"headline": "Scheduled // 01.01.2030", "rundown_scheduled_on": "2030-01-01T05:00:00+0000"}
         ]}
         """
 
         When we run task "apps.rundowns.tasks.create_scheduled_rundowns"
         And we get "archive?scope=rundowns"
-        Then we get list with 1 items
+        Then we get list with 2 items
+        """
+        {"_items": [
+            {"headline": "Scheduled // 01.01.2030", "rundown_scheduled_on": "2030-01-01T05:00:00+0000"},
+            {"headline": "Scheduled // 02.01.2030", "rundown_scheduled_on": "2030-01-02T05:00:00+0000"}
+        ]}
+        """
