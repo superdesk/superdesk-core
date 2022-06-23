@@ -19,7 +19,7 @@ from eve.versioning import resolve_document_version
 
 from superdesk.users.services import current_user_has_privilege
 from superdesk.resource import Resource
-from superdesk.errors import SuperdeskApiError, InvalidStateTransitionError
+from superdesk.errors import StopDuplication, SuperdeskApiError, InvalidStateTransitionError
 from superdesk.notification import push_notification
 from superdesk.utc import utcnow
 from superdesk.metadata.utils import item_url
@@ -115,11 +115,6 @@ def send_to(doc, update=None, desk_id=None, stage_id=None, user_id=None, default
         task["desk"] = destination_stage["desk"]
         task["stage"] = stage_id
 
-    if destination_stage:
-        apply_stage_rule(doc, update, destination_stage, MACRO_INCOMING, desk=desk, task=task)
-        if destination_stage.get("task_status"):
-            task["status"] = destination_stage["task_status"]
-
     if update:
         update.setdefault("task", {})
         update["task"].update(task)
@@ -127,6 +122,14 @@ def send_to(doc, update=None, desk_id=None, stage_id=None, user_id=None, default
     else:
         doc["task"].update(task)
         doc["expiry"] = get_item_expiry(desk=desk, stage=destination_stage)
+
+    if destination_stage:
+        apply_stage_rule(doc, update, destination_stage, MACRO_INCOMING, desk=desk, task=task)
+        if destination_stage.get("task_status"):
+            if update:
+                update["task"]["status"] = destination_stage["task_status"]
+            else:
+                doc["task"]["status"] = destination_stage["task_status"]
 
 
 def apply_stage_rule(doc, update, stage, rule_type, desk=None, task=None):
@@ -144,6 +147,8 @@ def apply_stage_rule(doc, update, stage, rule_type, desk=None, task=None):
                 modified = compare_dictionaries(original_doc, doc)
                 for i in modified:
                     update[i] = doc[i]
+        except StopDuplication:
+            raise
         except Exception as ex:
             message = _("Error:{exception} in {rule_type} rule:{rule} for stage:{stage}").format(
                 exception=str(ex), rule_type=rule_type, rule=macro.get("label"), stage=stage.get("name")

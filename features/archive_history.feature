@@ -752,6 +752,7 @@ Feature: Archive history
         "rules": [
           {
             "name": "Finance Rule 1",
+            "handler": "desk_fetch_publish",
             "filter": null,
             "actions": {
               "fetch": [{"desk": "#desks._id#", "stage": "#desks.incoming_stage#"}],

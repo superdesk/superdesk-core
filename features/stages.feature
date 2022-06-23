@@ -213,9 +213,10 @@ Feature: Stages
         """
         And we post to "/routing_schemes"
         """
-        [{"name": "routing rule scheme 1", "rules": [{"name": "Sports Rule", "filter": "#FILTER_ID#",
-            "actions": {"fetch": [{"desk": "#desks._id#", "stage": "#stages._id#", "macro": "transform"}]}}]}
-        ]
+        [{"name": "routing rule scheme 1", "rules": [{
+            "name": "Sports Rule", "handler": "desk_fetch_publish", "filter": "#FILTER_ID#",
+            "actions": {"fetch": [{"desk": "#desks._id#", "stage": "#stages._id#", "macro": "transform"}]}
+        }]}]
         """
         And we delete "/stages/#stages._id#"
         Then we get error 412
