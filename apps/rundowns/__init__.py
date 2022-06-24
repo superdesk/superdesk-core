@@ -1,12 +1,13 @@
 import superdesk
 
+from typing import Final
 from flask_babel import lazy_gettext
 
 from superdesk.factory.app import SuperdeskEve
 
-SCOPE = "rundowns"
+SCOPE: Final = "rundowns"
 
-from . import shows, templates, privileges, create  # noqa: E402
+from . import shows, templates, privileges, create, tasks  # noqa: E402
 
 
 def init_app(app: SuperdeskEve) -> None:
@@ -27,6 +28,10 @@ def init_app(app: SuperdeskEve) -> None:
         schema={
             "show": superdesk.Resource.rel("shows"),
             "rundown_template": superdesk.Resource.rel("rundown_templates"),
+            "rundown_scheduled_on": {
+                "type": "datetime",
+                "readonly": True,
+            },
             "planned_duration": {
                 "type": "number",
             },

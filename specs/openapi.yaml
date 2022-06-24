@@ -258,47 +258,31 @@ components:
           format: time
           example: 06:00
 
+        airtime_date:
+          type: string
+          format: date
+          example: 2022-06-22
+          description: When is the first show scheduled.
+
         planned_duration:
           type: number
           format: float
           example: 3600.0
           description: Planned show duration in seconds.
         
+        repeat:
+          type: boolean
+          example: true
+          description: Toggle auto creation on/off.
+
         schedule:
-          type: object
-          properties:
-            is_active:
-              type: boolean
-              example: true
-            auto_create_rundowns:
-              type: boolean
-              example: true
-            freq:
-              type: string
-              enum:
-                - DAILY
-                - WEEKLY
-                - MONTHLY
-                - YEARLY
-            interval:
-              type: number
-              default: 1
-            month:
-              type: array
-              items:
-                type: integer
-              example: [1, 12]
-            monthday:
-              type: array
-              items:
-                type: integer
-              example: [1, 30]
-            weekday:
-              type: array
-              items:
-                type: integer
-              description: 0 == MO
-              example: [0, 1, 2, 3, 4]
+          $ref: '#/components/schemas/Schedule'
+
+        scheduled_on:
+          type: string
+          format: datetime
+          readOnly: true
+          description: When is the next rundown scheduled to be created.
 
         headline_template:
           type: object
@@ -357,7 +341,40 @@ components:
           $ref: '#/components/schemas/ObjectId'
         rundown_template:
           $ref: '#/components/schemas/ObjectId'
-  
+
+    Schedule:
+      type: object
+      required:
+        - freq
+      properties:
+        freq:
+          type: string
+          enum:
+            - DAILY
+            - WEEKLY
+            - MONTHLY
+            - YEARLY
+        interval:
+          type: number
+          default: 1
+        month:
+          type: array
+          items:
+            type: integer
+          example: [1, 12]
+        monthday:
+          type: array
+          items:
+            type: integer
+          example: [1, 30, -1]
+          description: use negative numbers to count from the end
+        weekday:
+          type: array
+          items:
+            type: integer
+          description: 0 == MO
+          example: [0, 1, 2, 3, 4]
+
   responses:
     '401':
       description: Unauthorized

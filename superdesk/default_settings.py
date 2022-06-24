@@ -358,6 +358,10 @@ CELERY_BEAT_SCHEDULE = {
         "task": "apps.saved_searches.report",
         "schedule": crontab(minute=0),
     },
+    "rundowns:create-scheduled-rundowns": {
+        "task": "apps.rundowns.tasks.create_scheduled_rundowns",
+        "schedule": crontab(minute=30),
+    },
 }
 
 #: Sentry DSN - will report exceptions there
@@ -1064,3 +1068,9 @@ APM_SERVICE_NAME = env("APM_SERVICE_NAME")
 #: .. versionadded:: 2.6
 #:
 RUNDOWNS_TIMEZONE = DEFAULT_TIMEZONE
+
+#: How many hours in advance we should create scheduled rundowns
+#:
+#: .. versionadded:: 2.6
+#:
+RUNDOWNS_SCHEDULE_HOURS = 48

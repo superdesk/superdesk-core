@@ -11,7 +11,10 @@
 
 import os
 import time
+import arrow
+import celery
 import shutil
+import responses
 import operator
 
 from unittest import mock
@@ -24,8 +27,6 @@ from unittest.mock import patch
 from urllib.parse import urlparse
 from pathlib import Path
 
-import arrow
-import responses
 from behave import given, when, then  # @UnresolvedImport
 from bson import ObjectId
 from eve.io.mongo import MongoJSONEncoder
@@ -2712,3 +2713,10 @@ def step_impl_then_we_dont_get_access_token(context):
 def setp_impl_when_we_init_data(context, entity):
     with context.app.app_context():
         AppInitializeWithDataCommand().run(entity)
+
+
+@when('we run task "{name}"')
+def when_we_run_task(context, name):
+    task = celery.signature(name)
+    assert task is not None
+    task.apply()

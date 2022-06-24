@@ -1,10 +1,28 @@
-from multiprocessing.sharedctypes import Value
+import datetime
 import superdesk
 
-from datetime import datetime
+from typing import Dict, Literal, Optional, TypedDict
 from eve.methods.common import document_link
 
 from . import privileges, SCOPE
+
+
+class IEntity(TypedDict, total=False):
+    _id: str
+    _links: Dict
+
+
+class IRundown(IEntity):
+    scope: Literal["rundowns"]
+    type: Literal["composite"]
+    particular_type: str
+    show: str
+    airtime_date: str
+    airtime_time: str
+    headline: str
+    planned_duration: int
+    rundown_template: str
+    rundown_scheduled_on: datetime.datetime
 
 
 class FromTemplateResource(superdesk.Resource):
@@ -34,49 +52,50 @@ class FromTemplateResource(superdesk.Resource):
     privileges = {"POST": privileges.RUNDOWNS}
 
 
+def create_rundown_for_template(
+    template, date: datetime.date, scheduled_on: Optional[datetime.datetime] = None
+) -> IRundown:
+    rundown: IRundown = {
+        "scope": SCOPE,
+        "type": "composite",
+        "particular_type": "rundown",
+        "show": template["show"],
+        "airtime_date": date.isoformat(),
+        "airtime_time": template.get("airtime_time", ""),
+        "headline": template.get("headline", ""),
+        "planned_duration": template.get("planned_duration", 0),
+        "rundown_template": template["_id"],
+        "rundown_scheduled_on": scheduled_on or datetime.datetime.utcnow(),
+    }
+
+    if template.get("headline_template"):
+        headline_template = template["headline_template"]
+        rundown["headline"] = " ".join(
+            filter(
+                bool,
+                [
+                    headline_template.get("prefix"),
+                    headline_template.get("separator", " ").strip(),
+                    date.strftime(headline_template.get("date_format", "%d.%m.%Y")),
+                ],
+            )
+        )
+
+    superdesk.get_resource_service("archive").post([rundown])
+    return rundown
+
+
 class FromTemplateService(superdesk.Service):
     def create(self, docs, **kwargs):
         ids = []
         for doc in docs:
             template = superdesk.get_resource_service("rundown_templates").find_one(req=None, _id=doc["template"])
             assert template
-
-            rundown = {
-                "scope": SCOPE,
-                "type": "composite",
-                "particular_type": "rundown",
-                "show": template["show"],
-                "rundown_template": template["_id"],
-                "airtime_date": doc["airtime_date"],
-                "airtime_time": template.get("airtime_time", ""),
-                "headline": template.get("headline", ""),
-                "planned_duration": template.get("planned_duration", 0),
-            }
-
-            date = datetime.strptime(doc["airtime_date"], "%Y-%m-%d")
-            if template.get("airtime_time"):
-                try:
-                    time = datetime.strptime(template["airtime_time"], "%H:%M:%S")
-                except ValueError:
-                    time = datetime.strptime(template["airtime_time"], "%H:%M")
-                date = date.replace(hour=time.hour, minute=time.minute, second=time.second, microsecond=0)
-
-            if template.get("headline_template"):
-                headline_template = template["headline_template"]
-                rundown["headline"] = " ".join(
-                    filter(
-                        bool,
-                        [
-                            headline_template.get("prefix"),
-                            headline_template.get("separator", " ").strip(),
-                            date.strftime(headline_template.get("date_format", "%d.%m.%Y")),
-                        ],
-                    )
-                )
-
-            superdesk.get_resource_service("archive").post([rundown])
+            date = datetime.date.fromisoformat(doc["airtime_date"])
+            rundown = create_rundown_for_template(template, date)
+            assert "_id" in rundown
             rundown["_links"] = {"self": document_link("archive", rundown["_id"])}
             doc.update(rundown)
-            ids.append(rundown.get("_id"))
+            ids.append(rundown["_id"])
 
-        return ids
+            return ids
