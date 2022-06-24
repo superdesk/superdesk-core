@@ -108,6 +108,7 @@ def update_config(conf):
     conf["PUBLISH_ASSOCIATED_ITEMS"] = True
     conf["PAGINATION_LIMIT"] = conf["PAGINATION_DEFAULT"] = 200
     conf["RUNDOWNS_SCHEDULE_HOURS"] = 24 * 365 * 50  # 50 years
+    conf["RUNDOWNS_TIMEZONE"] = "Europe/Prague"
 
     # auth server
     conf["AUTH_SERVER_SHARED_SECRET"] = "some secret"
