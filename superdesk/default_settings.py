@@ -1064,6 +1064,3 @@ APM_SERVICE_NAME = env("APM_SERVICE_NAME")
 #: .. versionadded:: 2.6
 #:
 RUNDOWNS_TIMEZONE = DEFAULT_TIMEZONE
-
-#: default offset limit which can processed during onclusive API ingest
-ONCLUSIVE_MAX_OFFSET = 10000
