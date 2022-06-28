@@ -1,3 +1,4 @@
+from asyncore import read
 import pytz
 import datetime
 import superdesk
@@ -7,6 +8,7 @@ from flask import current_app as app
 from flask_babel import _
 from superdesk.errors import DocumentError
 from superdesk.utc import local_to_utc
+from apps.auth import get_user, get_user_id
 
 from . import privileges, utils
 
@@ -85,8 +87,8 @@ class TemplatesResource(superdesk.Resource):
             "type": "datetime",
             "readonly": True,
         },
-        "created_by": superdesk.Resource.rel("users"),
-        "updated_by": superdesk.Resource.rel("users"),
+        "created_by": superdesk.Resource.rel("users", readonly=True),
+        "updated_by": superdesk.Resource.rel("users", readonly=True),
     }
 
     privileges = {"POST": privileges.RUNDOWNS, "PATCH": privileges.RUNDOWNS, "DELETE": privileges.RUNDOWNS}
@@ -142,9 +144,11 @@ class TemplatesService(superdesk.Service):
     def on_create(self, docs):
         for doc in docs:
             self.set_scheduled_on(doc)
+            doc["created_by"] = get_user_id()
 
     def on_update(self, updates, original):
         self.set_scheduled_on(updates, original)
+        updates["updated_by"] = get_user_id()
 
     def on_created(self, docs):
         super().on_created(docs)

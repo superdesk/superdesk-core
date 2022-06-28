@@ -69,7 +69,8 @@ Feature: Rundowns
                 }
             },
             "airtime_date": "2050-06-22",
-            "airtime_time": "06:00"
+            "airtime_time": "06:00",
+            "created_by": "#CONTEXT_USER_ID#"
         }
         """
 
@@ -78,6 +79,11 @@ Feature: Rundowns
         {"schedule": {"weekday": [5, 6]}, "repeat": false}
         """
         Then we get OK response
+        """
+        {
+            "updated_by": "#CONTEXT_USER_ID#"
+        }
+        """
 
         When we get "/shows/#shows._id#/templates"
         Then we get list with 1 items
