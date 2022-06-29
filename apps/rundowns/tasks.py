@@ -30,7 +30,7 @@ def create_scheduled_rundowns():
             updates = {}
             local_date = utc_to_local(str(tz), template["scheduled_on"])
             logger.info("Creating Rundown for template %s on %s", template["name"], local_date.isoformat())
-            create.create_rundown_for_template(template, local_date.date(), template["scheduled_on"])
+            create.create_rundown_from_template(template, local_date.date(), template["scheduled_on"])
             schedule = template["schedule"]
             assert hasattr(rrule, schedule["freq"].upper())
             dates = list(

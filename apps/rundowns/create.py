@@ -1,7 +1,8 @@
 import datetime
+from apps.packages.package_service import get_item_ref
 import superdesk
 
-from typing import Dict, Literal, Optional, TypedDict
+from typing import Dict, List, Literal, Optional, TypedDict
 from eve.methods.common import document_link
 
 from . import privileges, SCOPE
@@ -10,6 +11,19 @@ from . import privileges, SCOPE
 class IEntity(TypedDict, total=False):
     _id: str
     _links: Dict
+
+
+class IRef(TypedDict, total=False):
+    _id: str
+    idRef: str
+    residRef: str
+    planned_duration: int
+    start_time: str
+
+
+class IGroup(TypedDict):
+    id: str
+    refs: List[IRef]
 
 
 class IRundown(IEntity):
@@ -23,6 +37,7 @@ class IRundown(IEntity):
     planned_duration: int
     rundown_template: str
     rundown_scheduled_on: datetime.datetime
+    groups: List[IGroup]
 
 
 class FromTemplateResource(superdesk.Resource):
@@ -52,7 +67,7 @@ class FromTemplateResource(superdesk.Resource):
     privileges = {"POST": privileges.RUNDOWNS}
 
 
-def create_rundown_for_template(
+def create_rundown_from_template(
     template, date: datetime.date, scheduled_on: Optional[datetime.datetime] = None
 ) -> IRundown:
     rundown: IRundown = {
@@ -66,6 +81,7 @@ def create_rundown_for_template(
         "planned_duration": template.get("planned_duration", 0),
         "rundown_template": template["_id"],
         "rundown_scheduled_on": scheduled_on or datetime.datetime.utcnow(),
+        "groups": [],
     }
 
     if template.get("headline_template"):
@@ -81,8 +97,39 @@ def create_rundown_for_template(
             )
         )
 
+    if template.get("groups"):
+        rundown["groups"].append(
+            {
+                "id": "root",
+                "refs": [
+                    {"idRef": "main"},
+                ],
+            }
+        )
+
+        for group in template["groups"]:
+            rundown["groups"].append(
+                {
+                    "id": group["id"],
+                    "refs": [duplicate_group_item(ref) for ref in group["refs"] if ref.get("residRef")],
+                }
+            )
+
     superdesk.get_resource_service("archive").post([rundown])
     return rundown
+
+
+def duplicate_group_item(ref: IRef) -> IRef:
+    archive_service = superdesk.get_resource_service("archive")
+    assert "residRef" in ref
+    item = archive_service.find_one(req=None, _id=ref["residRef"])
+    copy_id = archive_service.duplicate_item(item)
+    copy = archive_service.find_one(req=None, _id=copy_id)
+    new_ref: IRef = get_item_ref(copy)  # type: ignore
+    for field in ("planned_duration", "start_time"):
+        if ref.get(field):
+            new_ref[field] = ref[field]
+    return new_ref
 
 
 class FromTemplateService(superdesk.Service):
@@ -92,7 +139,7 @@ class FromTemplateService(superdesk.Service):
             template = superdesk.get_resource_service("rundown_templates").find_one(req=None, _id=doc["template"])
             assert template
             date = datetime.date.fromisoformat(doc["airtime_date"])
-            rundown = create_rundown_for_template(template, date)
+            rundown = create_rundown_from_template(template, date)
             assert "_id" in rundown
             rundown["_links"] = {"self": document_link("archive", rundown["_id"])}
             doc.update(rundown)

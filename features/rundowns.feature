@@ -324,7 +324,7 @@ Feature: Rundowns
                     "id": "main",
                     "refs": [
                         {
-                            "_id": "#archive._id#",
+                            "residRef": "#archive._id#",
                             "planned_duration": 3600,
                             "start_time": "05:00"
                         }
@@ -346,12 +346,20 @@ Feature: Rundowns
         """
         {"_items": [
             {"type": "text", "scope": "rundowns", "_id": "#archive._id#"},
-            {"type": "text", "scope": "rundowns", "duplicate_id": "#archive._id#"},
-            {"type": "composite", "scope": "rundowns", "groups": [{
-                "id": "main",
-                "refs": [
-                    {"planned_duration": 3600, "start_time": "05:00}
-                ]
-            }]}
+            {"type": "text", "scope": "rundowns", "operation": "duplicate"},
+            {"type": "composite", "scope": "rundowns", "groups": [
+                {
+                    "id": "root",
+                    "refs": [
+                        {"idRef": "main"}
+                    ]
+                },
+                {
+                    "id": "main",
+                    "refs": [
+                        {"planned_duration": 3600, "start_time": "05:00"}
+                    ]
+                }
+            ]}
         ]}
         """
