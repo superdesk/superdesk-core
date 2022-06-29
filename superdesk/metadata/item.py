@@ -369,6 +369,7 @@ metadata_schema = {
                         "location": not_analyzed,
                         "headline": {"type": "string"},
                         "slugline": {"type": "string"},
+                        "scope": not_analyzed,
                     },
                 },
             },

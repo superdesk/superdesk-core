@@ -283,3 +283,75 @@ Feature: Rundowns
             {"headline": "Scheduled // 02.01.2030", "rundown_scheduled_on": "2030-01-02T05:00:00+0000"}
         ]}
         """
+
+    @wip
+    @auth
+    Scenario: Add items to rundown template
+        Given "shows"
+        """
+        [
+            {"name": "Test"}
+        ]
+        """
+
+        When we post to "/shows/#shows._id#/templates"
+        """
+        [
+            {
+                "name": "Scheduled",
+                "airtime_time": "06:00",
+                "airtime_date": "2030-01-01",
+                "planned_duration": 3600
+            }
+        ]
+        """
+
+        And we post to "archive"
+        """
+        {
+            "type": "text",
+            "scope": "rundowns",
+            "headline": "Test item"
+        }
+        """
+        Then we get new resource
+
+        When we patch "/shows/#shows._id#/templates/#templates._id#"
+        """
+        {
+            "groups": [
+                {
+                    "id": "main",
+                    "refs": [
+                        {
+                            "_id": "#archive._id#",
+                            "planned_duration": 3600,
+                            "start_time": "05:00"
+                        }
+                    ]
+                }
+            ]
+        }
+        """
+        Then we get ok response
+
+        When we post to "/shows/#shows._id#/rundowns"
+        """
+        {"template": "#templates._id#", "airtime_date": "2055-06-10"}
+        """
+        Then we get new resource
+
+        When we get "archive?scope=rundowns"
+        Then we get list with 3 items
+        """
+        {"_items": [
+            {"type": "text", "scope": "rundowns", "_id": "#archive._id#"},
+            {"type": "text", "scope": "rundowns", "duplicate_id": "#archive._id#"},
+            {"type": "composite", "scope": "rundowns", "groups": [{
+                "id": "main",
+                "refs": [
+                    {"planned_duration": 3600, "start_time": "05:00}
+                ]
+            }]}
+        ]}
+        """

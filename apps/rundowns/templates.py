@@ -1,14 +1,13 @@
-from asyncore import read
 import pytz
 import datetime
 import superdesk
-
 
 from flask import current_app as app
 from flask_babel import _
 from superdesk.errors import DocumentError
 from superdesk.utc import local_to_utc
-from apps.auth import get_user, get_user_id
+from apps.auth import get_user_id
+from superdesk.metadata.item import metadata_schema
 
 from . import privileges, utils
 
@@ -89,6 +88,7 @@ class TemplatesResource(superdesk.Resource):
         },
         "created_by": superdesk.Resource.rel("users", readonly=True),
         "updated_by": superdesk.Resource.rel("users", readonly=True),
+        "groups": metadata_schema["groups"].copy(),
     }
 
     privileges = {"POST": privileges.RUNDOWNS, "PATCH": privileges.RUNDOWNS, "DELETE": privileges.RUNDOWNS}
