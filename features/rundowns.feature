@@ -321,7 +321,7 @@ Feature: Rundowns
         {
             "groups": [
                 {
-                    "id": "main",
+                    "role": "rundown",
                     "refs": [
                         {
                             "residRef": "#archive._id#",
@@ -349,13 +349,7 @@ Feature: Rundowns
             {"type": "text", "scope": "rundowns", "operation": "duplicate"},
             {"type": "composite", "scope": "rundowns", "groups": [
                 {
-                    "id": "root",
-                    "refs": [
-                        {"idRef": "main"}
-                    ]
-                },
-                {
-                    "id": "main",
+                    "role": "rundown",
                     "refs": [
                         {"planned_duration": 3600, "start_time": "05:00"}
                     ]

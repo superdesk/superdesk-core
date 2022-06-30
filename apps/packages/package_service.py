@@ -138,21 +138,24 @@ class PackageService:
             self.update_link(doc, assoc, delete=True)
 
     def check_root_group(self, docs):
-        for groups in [doc.get(GROUPS) for doc in docs if doc.get(GROUPS)]:
-            self.check_all_groups_have_id_set(groups)
-            root_groups = [group for group in groups if group.get(GROUP_ID) == ROOT_GROUP]
+        for doc in docs:
+            if not doc.get(GROUPS) or doc.get("scope"):
+                continue
+            for groups in doc.get(GROUPS):
+                self.check_all_groups_have_id_set(groups)
+                root_groups = [group for group in groups if group.get(GROUP_ID) == ROOT_GROUP]
 
-            if len(root_groups) == 0:
-                message = _("Root group is missing.")
-                logger.error(message)
-                raise SuperdeskApiError.forbiddenError(message=message)
+                if len(root_groups) == 0:
+                    message = _("Root group is missing.")
+                    logger.error(message)
+                    raise SuperdeskApiError.forbiddenError(message=message)
 
-            if len(root_groups) > 1:
-                message = _("Only one root group is allowed.")
-                logger.error(message)
-                raise SuperdeskApiError.forbiddenError(message=message)
+                if len(root_groups) > 1:
+                    message = _("Only one root group is allowed.")
+                    logger.error(message)
+                    raise SuperdeskApiError.forbiddenError(message=message)
 
-            self.check_that_all_groups_are_referenced_in_root(root_groups[0], groups)
+                self.check_that_all_groups_are_referenced_in_root(root_groups[0], groups)
 
     def check_all_groups_have_id_set(self, groups):
         if any(group for group in groups if not group.get(GROUP_ID)):

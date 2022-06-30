@@ -16,13 +16,12 @@ class IEntity(TypedDict, total=False):
 class IRef(TypedDict, total=False):
     _id: str
     idRef: str
-    residRef: str
     planned_duration: int
     start_time: str
 
 
 class IGroup(TypedDict):
-    id: str
+    role: str
     refs: List[IRef]
 
 
@@ -98,19 +97,10 @@ def create_rundown_from_template(
         )
 
     if template.get("groups"):
-        rundown["groups"].append(
-            {
-                "id": "root",
-                "refs": [
-                    {"idRef": "main"},
-                ],
-            }
-        )
-
         for group in template["groups"]:
             rundown["groups"].append(
                 {
-                    "id": group["id"],
+                    "role": group["role"],
                     "refs": [duplicate_group_item(ref) for ref in group["refs"] if ref.get("residRef")],
                 }
             )
