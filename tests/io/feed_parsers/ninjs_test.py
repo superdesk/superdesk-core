@@ -104,3 +104,11 @@ class IPTCMediumTextTestCase(NINJSTestCase):
         self.assertEqual(1, len(self.items))
         self.assertEqual("text-only", self.items[0]["profile"])
         self.assertEqual("en", self.items[0]["language"])
+
+
+class EmbargoedTestCase(NINJSTestCase):
+    filename = "ninjs_embargoed.json"
+
+    def test_embargo(self):
+        self.assertEqual(2, len(self.items))
+        self.assertEqual("2022-06-29T02:30:00+00:00", self.items[1]["embargoed"].isoformat())
