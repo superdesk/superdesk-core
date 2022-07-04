@@ -139,6 +139,9 @@ class NINJSFeedParser(FeedParser):
         if not item.get("body_html") and ninjs.get("body_xhtml"):
             item["body_html"] = ninjs["body_xhtml"]
 
+        if ninjs.get("embargoed"):
+            item["embargoed"] = self.datetime(ninjs.get("embargoed"))
+
         return item
 
     def _format_qcodes(self, items):
@@ -155,7 +158,10 @@ class NINJSFeedParser(FeedParser):
         try:
             return datetime.datetime.strptime(string, "%Y-%m-%dT%H:%M:%S+0000").replace(tzinfo=utc)
         except ValueError:
-            return datetime.datetime.strptime(string, "%Y-%m-%dT%H:%M:%SZ").replace(tzinfo=utc)
+            try:
+                return datetime.datetime.strptime(string, "%Y-%m-%dT%H:%M:%SZ").replace(tzinfo=utc)
+            except ValueError:
+                return datetime.datetime.strptime(string, "%Y-%m-%dT%H:%M:%S+00:00").replace(tzinfo=utc)
 
     def _parse_authors(self, authors):
         return [self._parse_author(author) for author in authors]
