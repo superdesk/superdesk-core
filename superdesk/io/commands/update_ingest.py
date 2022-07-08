@@ -484,6 +484,8 @@ def ingest_cancel(item, feeding_service):
     :param item:
     :return:
     """
+    if item.get("uri") is None:
+        return
     ingest_collection = get_ingest_collection(feeding_service, item)
     ingest_service = superdesk.get_resource_service(ingest_collection)
     lookup = {"uri": item.get("uri")}
