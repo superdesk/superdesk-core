@@ -299,6 +299,9 @@ class RSSFeedingService(HTTPFeedingServiceBase):
 
             item[field.name] = field_value
 
+        for key, value in field_aliases.items():
+            item[value] = data.get(key)
+
             # Some feeds use <content:encoded> tag for storing the main content,
             # and that tag is parsed differently. If the body_html has not been
             # found in its default data field and is not aliased, try to
