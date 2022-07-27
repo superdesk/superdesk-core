@@ -274,7 +274,6 @@ class RSSFeedingService(HTTPFeedingServiceBase):
         aliased_fields = set(field_aliases.values())
 
         item = dict(type=CONTENT_TYPE.TEXT)
-
         # Only consider fields that are not used as an alias (i.e. used to
         # populate another field) - unless those fields have their own
         # aliases, too.
@@ -299,9 +298,6 @@ class RSSFeedingService(HTTPFeedingServiceBase):
 
             item[field.name] = field_value
 
-        for key, value in field_aliases.items():
-            item[value] = data.get(key)
-
             # Some feeds use <content:encoded> tag for storing the main content,
             # and that tag is parsed differently. If the body_html has not been
             # found in its default data field and is not aliased, try to
@@ -311,6 +307,10 @@ class RSSFeedingService(HTTPFeedingServiceBase):
                     item["body_html"] = data.content[0].value
                 except Exception:
                     pass  # content either non-existent or parsed differently
+
+        if field_aliases:
+            for field_value, field_name in field_aliases.items():
+                item[field_name] = data.get(field_value)
 
         if not data.get("guidislink") and data.get("link"):
             item["uri"] = data["link"]
@@ -329,7 +329,6 @@ class RSSFeedingService(HTTPFeedingServiceBase):
 
         if not item.get("versioncreated") and item.get("firstcreated"):
             item["versioncreated"] = item["firstcreated"]
-
         return item
 
     def _create_image_items(self, image_links, text_item):
