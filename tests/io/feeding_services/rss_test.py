@@ -658,6 +658,32 @@ class CreateItemMethodTestCase(RssIngestServiceTest):
             items = self.instance._update(provider, None)[0]
         self.assertEqual("tag:www.nrk.no:finnmark:stanset-ikke-for-fotgjenger-1.13362571", items[0]["guid"])
 
+    def test_aliases_fields_are_mapped_to_data(self):
+        """
+        Test the aliases fields are mapped to the content fields.
+        """
+        data = dict(
+            guid="http://news.com/rss/1234abcd",
+            published_parsed=struct_time([2015, 2, 25, 16, 45, 23, 2, 56, 0]),
+            updated_parsed=struct_time([2015, 2, 25, 17, 52, 11, 2, 56, 0]),
+            title="Breaking News!",
+            body_text="This is body_text.",
+            summary="This is summary text.",
+        )
+        field_aliases = [{"summary": "body_html"}]
+        item = self.instance._create_item(data, field_aliases)
+
+        self.assertIsNone(item.get("abstract"))  # because summary is aliased
+        self.assertEqual(item.get("headline"), "Breaking News!")
+        # summary is mapped to body_html
+        self.assertEqual(
+            item.get("body_html"),
+            (
+                '<p><a href="http://news.com/rss/1234abcd" target="_blank">source</a></p>'
+                "This is summary text.This is body_text."
+            ),
+        )
+
 
 class CreateImageItemsMethodTestCase(RssIngestServiceTest):
     """Tests for the _create_image_items() method."""

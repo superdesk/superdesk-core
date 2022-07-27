@@ -310,7 +310,7 @@ class RSSFeedingService(HTTPFeedingServiceBase):
 
         if field_aliases:
             for field_value, field_name in field_aliases.items():
-                item[field_name] = data.get(field_value)
+                item[field_name] = data.get(field_value) + item[field_name]
 
         if not data.get("guidislink") and data.get("link"):
             item["uri"] = data["link"]
