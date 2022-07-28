@@ -8,14 +8,13 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
-import ssl
 from abc import ABCMeta
 from datetime import timedelta
 
 import arrow
 import requests
+
 from eve.utils import config
-from requests.packages.urllib3.poolmanager import PoolManager
 
 from superdesk import get_resource_service
 from superdesk.errors import IngestApiError
@@ -71,7 +70,6 @@ class HTTPFeedingService(FeedingService, metaclass=ABCMeta):
         :raises: IngestApiError.apiGeneralError() if auth_url is missing in the Ingest Provider configuration
         """
         session = requests.Session()
-        session.mount("https://", SSLAdapter())
 
         auth_url = provider.get("config", {}).get("auth_url", None)
         if not auth_url:
@@ -137,17 +135,3 @@ class HTTPFeedingService(FeedingService, metaclass=ABCMeta):
             return token.get("auth_token")
 
         return self._generate_token_and_update_provider(provider) if update else ""
-
-
-# workaround for ssl version error
-class SSLAdapter(requests.adapters.HTTPAdapter):
-    """
-    SSL Adapter set for ssl tls v1.
-    """
-
-    def init_poolmanager(self, connections, maxsize, **kwargs):
-        """
-        Initializes pool manager to use ssl version v1.
-        """
-
-        self.poolmanager = PoolManager(num_pools=connections, maxsize=maxsize, ssl_version=ssl.PROTOCOL_TLSv1, **kwargs)
