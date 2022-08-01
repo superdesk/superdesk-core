@@ -42,7 +42,7 @@ install_requires = [
     "raven[flask]>=5.10,<7.0",
     "requests>=2.7.0,<3.0",
     "boto3>=1.18.42,<2",
-    "websockets>=3.0,<7.0",
+    "websockets==10.3",
     "mongolock>=1.3.4,<1.4",
     "PyYAML>=4.2b1,<5.0",
     "lxml>=4,<4.7",
