@@ -35,7 +35,8 @@ class NewsroomNinjsFormatter(NINJSFormatter):
 
         if article.get("ingest_id") and article.get("auto_publish"):
             ninjs["guid"] = article.get("ingest_id")
-            ninjs["version"] = article.get("ingest_version")
+            if article.get("ingest_version"):
+                ninjs["version"] = article["ingest_version"]
 
         ninjs["products"] = self._format_products(article)
 
