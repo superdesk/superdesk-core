@@ -20,7 +20,7 @@ jobs:
     - run: pip install -U pip wheel setuptools
     - run: pip install -r dev-requirements.txt
 
-    - run: pytest tests superdesk apps --log-level=ERROR
+    - run: pytest tests superdesk apps --log-level=ERROR --disable-pytest-warnings
 
   behave:
     runs-on: ubuntu-latest
