@@ -86,12 +86,13 @@ def get_meta(file_stream):
         if key == "GPSInfo":
             # lookup GPSInfo description key names
             value = {
-                ExifTags.GPSTAGS[vk].strip(): convert_exif_value(vv, vk) for vk, vv in v.items() if is_serializable(vv)
+                ExifTags.GPSTAGS[vk].strip(): convert_exif_value(vv, vk) for vk, vv in rv.get_ifd(k).items() if is_serializable(vv)
             }
             exif_meta[key] = value
         elif is_serializable(v):
             value = v.decode("UTF-8") if isinstance(v, bytes) else v
             exif_meta[key] = convert_exif_value(value)
+            print("in", v, "out", exif_meta[key])
 
     # Remove this as it's too long to send in headers
     exif_meta.pop("UserComment", None)
