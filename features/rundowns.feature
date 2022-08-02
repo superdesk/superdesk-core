@@ -1,3 +1,4 @@
+@wip
 Feature: Rundowns
 
     @auth
@@ -160,18 +161,18 @@ Feature: Rundowns
             "airtime_date": "2022-06-10",
             "_links": {
                 "self": {
-                    "href": "archive/#rundowns._id#",
-                    "title": "Archive"
+                    "href": "rundowns/#rundowns._id#",
+                    "title": "Rundowns"
                 }
             }
         }
         """
 
-        When we get "archive?scope=rundowns"
+        When we get "/rundowns"
         Then we get list with 1 items
         """
         {"_items": [
-            {"headline": "Marker // 10.06.2022"}
+            {"headline": "Marker // 10.06.2022", "rundown_template": "#rundown_templates._id#"}
         ]}
         """
     
@@ -266,7 +267,7 @@ Feature: Rundowns
         """
 
         When we run task "apps.rundowns.tasks.create_scheduled_rundowns"
-        And we get "archive?scope=rundowns"
+        And we get "/rundowns"
         Then we get list with 1 items
         """
         {"_items": [
@@ -275,7 +276,7 @@ Feature: Rundowns
         """
 
         When we run task "apps.rundowns.tasks.create_scheduled_rundowns"
-        And we get "archive?scope=rundowns"
+        And we get "/rundowns"
         Then we get list with 2 items
         """
         {"_items": [
@@ -284,7 +285,6 @@ Feature: Rundowns
         ]}
         """
 
-    @wip
     @auth
     Scenario: Add items to rundown template
         Given "shows"
@@ -306,11 +306,10 @@ Feature: Rundowns
         ]
         """
 
-        And we post to "archive"
+        And we post to "rundown_items"
         """
         {
-            "type": "text",
-            "scope": "rundowns",
+            "item_type": "text",
             "headline": "Test item"
         }
         """
@@ -324,7 +323,7 @@ Feature: Rundowns
                     "role": "rundown",
                     "refs": [
                         {
-                            "residRef": "#archive._id#",
+                            "residRef": "#rundown_items._id#",
                             "planned_duration": 3600,
                             "start_time": "05:00"
                         }
@@ -341,13 +340,11 @@ Feature: Rundowns
         """
         Then we get new resource
 
-        When we get "archive?scope=rundowns"
-        Then we get list with 3 items
+        When we get "/rundowns"
+        Then we get list with 1 item
         """
         {"_items": [
-            {"type": "text", "scope": "rundowns", "_id": "#archive._id#"},
-            {"type": "text", "scope": "rundowns", "operation": "duplicate"},
-            {"type": "composite", "scope": "rundowns", "groups": [
+            {"type": "composite", "groups": [
                 {
                     "role": "rundown",
                     "refs": [
@@ -357,3 +354,57 @@ Feature: Rundowns
             ]}
         ]}
         """
+        When we get "/rundown_items"
+        Then we get list with 2 items
+        """
+        {"_items": [
+            {"item_type": "text", "_id": "#rundown_item._id#"},
+            {"item_type": "text", "operation": "duplicate"},
+        ]}
+        """
+
+    @wip
+    @auth
+    Scenario: Rundowns CRUD
+        Given "shows"
+        """
+        [
+            {"name": "Test"}
+        ]
+        """
+
+        When we post to "/rundowns"
+        """
+        {
+            "headline": "test",
+            "show": "#shows._id#",
+            "airtime_time": "06:00",
+            "airtime_date": "2030-01-01",
+            "planned_duration": 3600
+        }
+        """
+
+        When we post to "/rundown_items"
+        """
+        {
+            "headline": "test",
+            "planned_duration": 120,
+            "duration": 80,
+            "item_type": "test",
+            "content": "<p>some text</p>"
+        }
+        """
+
+        Then we get OK response
+
+        When we get "/rundowns"
+        Then we get list with 1 items
+
+        When we patch "/rundowns/#rundowns._id#"
+        """
+        {"rundown_items": [
+            {"item": "#rundown_items._id#"}
+        ]}
+        """
+        Then we get OK response
+     

@@ -15,7 +15,9 @@ from eve.auth import BasicAuth
 from typing_extensions import Literal
 
 import superdesk
+
 from eve.utils import config
+from .services import Service
 
 
 log = logging.getLogger(__name__)
@@ -208,6 +210,10 @@ class Resource:
         app.register_resource(self.endpoint_name, endpoint_schema)
         superdesk.resources[self.endpoint_name] = self
 
+        if self.versioning:
+            versioning_resource = self.endpoint_name + "_versions"
+            superdesk.resources[versioning_resource] = VersionsResource(Service(versioning_resource, backend=superdesk.get_backend()))
+
         for request_method in ["GET", "POST", "PATCH", "PUT", "DELETE"]:
             if hasattr(self, "pre_request_" + request_method.lower()):
                 hook_event_name = "on_pre_" + request_method + "_" + self.endpoint_name
@@ -267,3 +273,9 @@ class Resource:
             "type": type,
             "mapping": not_analyzed,
         }
+
+
+class VersionsResource(Resource):
+
+    def __init__(self, service):
+        self.service = service

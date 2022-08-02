@@ -7,7 +7,11 @@ from superdesk.factory.app import SuperdeskEve
 
 SCOPE: Final = "rundowns"
 
-from . import shows, templates, privileges, create, tasks  # noqa: E402
+from . import (
+    shows, templates, privileges, create,
+    tasks,  # noqa: E402
+    rundowns, rundown_items,
+)
 
 
 def init_app(app: SuperdeskEve) -> None:
@@ -18,6 +22,8 @@ def init_app(app: SuperdeskEve) -> None:
     )
 
     superdesk.register_resource("shows", shows.ShowsResource, shows.ShowsService, _app=app)
+    superdesk.register_resource("rundowns", rundowns.RundownsResource, rundowns.RundownsService, _app=app)
+    superdesk.register_resource("rundown_items", rundown_items.RundownItemsResource, rundown_items.RundownItemsService, _app=app)
     superdesk.register_resource("rundown_templates", templates.TemplatesResource, templates.TemplatesService, _app=app)
     superdesk.register_resource(
         "show_rundowns", create.FromTemplateResource, create.FromTemplateService, backend=None, _app=app

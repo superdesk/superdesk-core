@@ -321,11 +321,14 @@ components:
     
     Rundown:
       type: object
-      description: "Package item with extra rundown metadata"
+      description: "Rundown with items"
       properties:
         headline:
           type: string
           example: Marker // 06:00
+        duration:
+          type: number
+          example: 3600
         planned_duration:
           type: number
           example: 3600

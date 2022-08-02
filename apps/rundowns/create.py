@@ -1,9 +1,11 @@
 import datetime
-from apps.packages.package_service import get_item_ref
 import superdesk
 
 from typing import Dict, List, Literal, Optional, TypedDict
+
+from flask import current_app as app
 from eve.methods.common import document_link
+from apps.packages.package_service import get_item_ref
 
 from . import privileges, SCOPE
 
@@ -105,16 +107,16 @@ def create_rundown_from_template(
                 }
             )
 
-    superdesk.get_resource_service("archive").post([rundown])
+    superdesk.get_resource_service("rundowns").post([rundown])
     return rundown
 
 
 def duplicate_group_item(ref: IRef) -> IRef:
-    archive_service = superdesk.get_resource_service("archive")
+    items_service = superdesk.get_resource_service("rundown_items")
     assert "residRef" in ref
-    item = archive_service.find_one(req=None, _id=ref["residRef"])
-    copy_id = archive_service.duplicate_item(item)
-    copy = archive_service.find_one(req=None, _id=copy_id)
+    item = items_service.find_one(req=None, _id=ref["residRef"])
+    copy = items_service.copy_item(item)
+    items_service.post([copy])
     new_ref: IRef = get_item_ref(copy)  # type: ignore
     for field in ("planned_duration", "start_time"):
         if ref.get(field):
@@ -131,8 +133,10 @@ class FromTemplateService(superdesk.Service):
             date = datetime.date.fromisoformat(doc["airtime_date"])
             rundown = create_rundown_from_template(template, date)
             assert "_id" in rundown
-            rundown["_links"] = {"self": document_link("archive", rundown["_id"])}
+            rundown["_links"] = {"self": {
+                "href": f'rundowns/{rundown["_id"]}',
+                "title": "Rundowns",
+            }}
             doc.update(rundown)
             ids.append(rundown["_id"])
-
             return ids
