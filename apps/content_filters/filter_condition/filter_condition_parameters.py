@@ -15,8 +15,9 @@ from flask_babel import _
 from superdesk.resource import Resource
 from superdesk.services import BaseService
 from superdesk.utils import ListCursor
-from superdesk import get_resource_service, config, app
+from superdesk import get_resource_service, config
 from superdesk.io.subjectcodes import get_subjectcodeitems
+from flask import current_app as app
 from eve.utils import ParsedRequest
 
 

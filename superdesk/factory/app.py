@@ -149,6 +149,7 @@ class SuperdeskEve(eve.Eve):
             print("version", resource)
         return super().register_resource(resource, settings)
 
+
 def get_media_storage_class(app_config: Dict[str, Any], use_provider_config: bool = True) -> Type[MediaStorage]:
     if use_provider_config and app_config.get("MEDIA_STORAGE_PROVIDER"):
         if isinstance(app_config["MEDIA_STORAGE_PROVIDER"], str):

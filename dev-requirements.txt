@@ -1,6 +1,6 @@
 flake8
+flake8-bugbear
 flake8-docstrings
-flake8-bugbear==19.8.0
 nose
 pep8
 pyflakes

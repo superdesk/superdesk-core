@@ -45,6 +45,7 @@ _eve_backend = EveBackend()
 default_user_preferences: Dict[str, "UserPreference"] = dict()
 default_session_preferences: Dict[str, Any] = dict()
 logger = logging_lib.getLogger(__name__)
+app = None
 
 
 class UserPreference(NamedTuple):
