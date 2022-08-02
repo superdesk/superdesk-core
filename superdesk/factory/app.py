@@ -114,6 +114,8 @@ class SuperdeskEve(eve.Eve):
 
                 try:
                     create_index(self, resource, name, list_of_keys, index_options)
+                except KeyError:
+                    print("missing resource", self, resource)
                 except DuplicateKeyError as err:
                     # Duplicate key for unique indexes are generally caused by invalid documents in the collection
                     # such as multiple documents not having a value for the attribute used for the index
@@ -142,6 +144,10 @@ class SuperdeskEve(eve.Eve):
                 if versioned_resource in self.config["DOMAIN"]:
                     update_resource_schema(versioned_resource)
 
+    def register_resource(self, resource, settings):
+        if settings.get("versioning"):
+            print("version", resource)
+        return super().register_resource(resource, settings)
 
 def get_media_storage_class(app_config: Dict[str, Any], use_provider_config: bool = True) -> Type[MediaStorage]:
     if use_provider_config and app_config.get("MEDIA_STORAGE_PROVIDER"):
@@ -262,8 +268,10 @@ def get_app(config=None, media_storage=None, config_object=None, init_elastic=No
     for module_name in app.config.get("INSTALLED_APPS", []):
         install_app(module_name)
 
+    app.config.setdefault("DOMAIN", {})
     for resource in superdesk.DOMAIN:
-        app.register_resource(resource, superdesk.DOMAIN[resource])
+        if resource not in app.config["DOMAIN"]:
+            app.register_resource(resource, superdesk.DOMAIN[resource])
 
     for name, jinja_filter in superdesk.JINJA_FILTERS.items():
         app.jinja_env.filters[name] = jinja_filter

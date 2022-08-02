@@ -203,7 +203,7 @@ def setup_config(config):
     logging.getLogger("celery").setLevel(logging.WARNING)
     logging.getLogger("superdesk").setLevel(logging.ERROR)
     logging.getLogger("elasticsearch").setLevel(logging.ERROR)
-    logging.getLogger("superdesk.errors").setLevel(logging.CRITICAL)
+    logging.getLogger("superdesk.errors").setLevel(logging.ERROR)
 
     return {key: deepcopy(val) for key, val in app_config.items()}
 
@@ -525,7 +525,7 @@ class TestCase(unittest.TestCase):
 
     def setUpForChildren(self):
         """Run this `setUp` stuff for each children."""
-        setup(self)
+        setup(self, reset=True)
 
         self.ctx = self.app.app_context()
         self.ctx.push()

@@ -9,10 +9,9 @@
 # at https://www.sourcefabric.org/superdesk/license
 
 
-from abc import abstractclassmethod
 from string import Template
 from types import ModuleType
-from flask import current_app
+from flask import current_app as app
 from superdesk.services import BaseService
 import superdesk
 import getpass
@@ -60,10 +59,9 @@ DEFAULT_DATA_UPDATE_BW_IMPLEMENTATION = "raise NotImplementedError()"
 def get_dirs(only_relative_folder=False):
     dirs = []
     try:
-        with superdesk.app.app_context():
-            dirs.append(current_app.config.get("DATA_UPDATES_PATH", DEFAULT_DATA_UPDATE_DIR_NAME))
-            if current_app.config.get("APPS_DATA_UPDATES_PATHS"):
-                dirs.extend(current_app.config["APPS_DATA_UPDATES_PATHS"])
+        dirs.append(app.config.get("DATA_UPDATES_PATH", DEFAULT_DATA_UPDATE_DIR_NAME))
+        if app.config.get("APPS_DATA_UPDATES_PATHS"):
+            dirs.extend(app.config["APPS_DATA_UPDATES_PATHS"])
     except RuntimeError:
         # working outside of application context
         pass
@@ -313,8 +311,8 @@ superdesk.command("data:downgrade", Downgrade())
 class BaseDataUpdate:
     def apply(self, direction):
         assert direction in ["forwards", "backwards"]
-        collection = current_app.data.get_mongo_collection(self.resource)
-        db = current_app.data.driver.db
+        collection = app.data.get_mongo_collection(self.resource)
+        db = app.data.driver.db
         getattr(self, direction)(collection, db)
 
 

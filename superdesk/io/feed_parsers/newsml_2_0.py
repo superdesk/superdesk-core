@@ -14,7 +14,7 @@ import datetime
 import logging
 
 from flask import current_app as app
-from superdesk import etree as sd_etree, app, get_resource_service
+from superdesk import etree as sd_etree, get_resource_service
 from superdesk.errors import ParserError
 from superdesk.io.registry import register_feed_parser
 from superdesk.io.feed_parsers import XMLFeedParser

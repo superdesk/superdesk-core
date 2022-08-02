@@ -21,8 +21,6 @@ from superdesk.utc import utc
 class EmailFormatterTest(TestCase):
     def setUp(self):
         self.formatter = EmailFormatter()
-        # self.base_formatter = Formatter()
-        init_app(self.app)
 
     def test_formatter(self):
         article = {
