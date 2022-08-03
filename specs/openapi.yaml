@@ -188,6 +188,40 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Rundown'
+  
+  /rundowns:
+    get:
+      summary: List Rundowns
+      tags:
+        - Rundowns
+      responses:
+        '200':
+          description: 'Get list'
+          content:
+            application/json:
+              schema:
+                properties:
+                  _items:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Rundown'
+
+  /rundown_items:
+    get:
+      summary: List Rundown Items
+      tags:
+        - Rundowns
+      responses:
+        '200':
+          description: 'Get list'
+          content:
+            application/json:
+              schema:
+                properties:
+                  _items:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/RundownItem'
 
 components:
 
@@ -219,10 +253,10 @@ components:
       type: object
 
       required:
-        - name
+        - title
 
       properties:
-        name:
+        title:
           type: string
           example: Marker
 
@@ -239,17 +273,17 @@ components:
         created_by:
           $ref: '#/components/schemas/ObjectId'
 
-        updated_by:
+        last_updated_by:
           $ref: '#/components/schemas/ObjectId'
 
     RundownTemplate:
       type: object
 
       required: 
-        - name
+        - title
 
       properties:
-        name:
+        title:
           type: string
           example: Marker Daily
 
@@ -284,7 +318,7 @@ components:
           readOnly: true
           description: When is the next rundown scheduled to be created.
 
-        headline_template:
+        title_template:
           type: object
           required:
             - prefix
@@ -298,6 +332,9 @@ components:
             date_format:
               type: string
               example: "%d.%m.%Y"
+
+        items:
+          $ref: '#/components/schemas/RundownItemRefs'
 
         _created:
           type: string
@@ -323,7 +360,7 @@ components:
       type: object
       description: "Rundown with items"
       properties:
-        headline:
+        title:
           type: string
           example: Marker // 06:00
         duration:
@@ -342,8 +379,51 @@ components:
           example: 06:00
         show:
           $ref: '#/components/schemas/ObjectId'
-        rundown_template:
+        template:
           $ref: '#/components/schemas/ObjectId'
+        items: 
+          $ref: '#/components/schemas/RundownItemRefs'
+          
+    RundownItem:
+      type: object
+      description: "Rundow item"
+      properties:
+        title:
+          type: string
+          example: Intro
+        item_type:
+          type: string
+        content:
+          type: string
+        duration:
+          type: number
+          example: 130
+        planned_duration:
+          type: number
+          example: 120
+        show_part:
+          type: string
+        live_sound:
+          type: string
+        guests:
+          type: string
+        additional_notes:
+          type: string
+        live_captions:
+          type: string
+        last_sentence:
+          type: string
+     
+    RundownItemRefs:
+      type: array
+      items:
+        properties:
+          _id:
+            type: string
+          start_time:
+            type: string
+            format: time
+            example: 05:45
 
     Schedule:
       type: object
