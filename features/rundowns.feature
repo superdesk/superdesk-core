@@ -5,25 +5,25 @@ Feature: Rundowns
     Scenario: Show CRUD
         When we post to "/shows"
         """
-        {"name": "Test", "description": "Test description", "planned_duration": 10.5}
+        {"title": "Test", "description": "Test description", "planned_duration": 10.5}
         """
         Then we get response code 201
 
         When we get "/shows"
         Then we get list with 1 items
         """
-        {"_items": [{"name": "Test"}]}
+        {"_items": [{"title": "Test"}]}
         """
 
         When we get "/shows/#shows._id#"
         Then we get existing resource
         """
-        {"name": "Test", "description": "Test description", "planned_duration": 10.5}
+        {"title": "Test", "description": "Test description", "planned_duration": 10.5}
         """
 
         When we patch "/shows/#shows._id#"
         """
-        {"name": "Updated", "planned_duration": 11.1}
+        {"title": "Updated", "planned_duration": 11.1}
         """
         Then we get OK response
 
@@ -37,16 +37,16 @@ Feature: Rundowns
     Scenario: Templates CRUD
         Given "shows"
         """
-        [{"name": "Test"}]
+        [{"title": "Test"}]
         """
 
         When we post to "/shows/#shows._id#/templates"
         """
         {
-            "name": "test template",
+            "title": "test template",
             "airtime_time": "06:00",
             "airtime_date": "2050-06-22",
-            "headline_template": {
+            "title_template": {
                 "prefix": "Marker",
                 "separator": "//",
                 "date_format": "dd.mm.yy"
@@ -82,7 +82,7 @@ Feature: Rundowns
         Then we get OK response
         """
         {
-            "updated_by": "#CONTEXT_USER_ID#"
+            "last_updated_by": "#CONTEXT_USER_ID#"
         }
         """
 
@@ -99,45 +99,23 @@ Feature: Rundowns
         Then we get list with 0 items
 
     @auth
-    Scenario: Rundown scope
-        When we post to "archive"
-        """
-        {"headline": "test", "scope": "rundowns", "planned_duration": 60}
-        """
-        Then we get OK response
-
-        When we get "archive"
-        Then we get list with 0 items
-
-        When we get "search"
-        Then we get list with 0 items
-
-        When we get "archive?scope=rundowns"
-        Then we get list with 1 items
-        """
-        {"_items": [
-            {"planned_duration": 60}
-        ]}
-        """
-    
-    @auth
     Scenario: Create rundown using template
         Given "shows"
         """
         [
-            {"name": "Test"}
+            {"title": "Test"}
         ]
         """
         And "rundown_templates"
         """
         [
             {
-                "name": "Test",
+                "title": "Test",
                 "show": "#shows._id#",
-                "headline": "Marker",
+                "title": "Marker",
                 "airtime_time": "06:00",
                 "planned_duration": 3600,
-                "headline_template": {
+                "title_template": {
                     "prefix": "Marker",
                     "separator": "//",
                     "date_format": "%d.%m.%Y"
@@ -154,8 +132,8 @@ Feature: Rundowns
         """
         {
             "show": "#shows._id#",
-            "rundown_template": "#rundown_templates._id#",
-            "headline": "Marker // 10.06.2022",
+            "template": "#rundown_templates._id#",
+            "title": "Marker // 10.06.2022",
             "planned_duration": 3600,
             "airtime_time": "06:00",
             "airtime_date": "2022-06-10",
@@ -172,7 +150,7 @@ Feature: Rundowns
         Then we get list with 1 items
         """
         {"_items": [
-            {"headline": "Marker // 10.06.2022", "rundown_template": "#rundown_templates._id#"}
+            {"title": "Marker // 10.06.2022", "template": "#rundown_templates._id#"}
         ]}
         """
     
@@ -181,14 +159,14 @@ Feature: Rundowns
         Given "shows"
         """
         [
-            {"name": "Test"}
+            {"title": "Test"}
         ]
         """
 
         When we post to "shows/#shows._id#/templates"
         """
         {
-            "name": "Test",
+            "title": "Test",
             "airtime_time": "06:00",
             "airtime_date": "2022-06-20"
         }
@@ -201,7 +179,7 @@ Feature: Rundowns
         When we post to "shows/#shows._id#/templates"
         """
         {
-            "name": "Test",
+            "title": "Test",
             "airtime_time": "06:00",
             "airtime_date": "2050-01-01"
         }
@@ -225,14 +203,14 @@ Feature: Rundowns
         Given "shows"
         """
         [
-            {"name": "Test"}
+            {"title": "Test"}
         ]
         """
         And "rundown_templates"
         """
         [
             {
-                "name": "Scheduled",
+                "title": "Scheduled",
                 "show": "#shows._id#",
                 "airtime_time": "06:00",
                 "airtime_date": "2030-01-01",
@@ -241,14 +219,14 @@ Feature: Rundowns
                 "schedule": {
                     "freq": "DAILY"
                 },
-                "headline_template": {
+                "title_template": {
                     "prefix": "Scheduled",
                     "separator": "//",
                     "date_format": "%d.%m.%Y"
                 }
             },
             {
-                "name": "Not Scheduled",
+                "title": "Not Scheduled",
                 "show": "#shows._id#",
                 "airtime_time": "06:00",
                 "airtime_date": "2030-01-01",
@@ -257,7 +235,7 @@ Feature: Rundowns
                 "schedule": {
                     "freq": "DAILY"
                 },
-                "headline_template": {
+                "title_template": {
                     "prefix": "Not Scheduled",
                     "separator": "//",
                     "date_format": "%d.%m.%Y"
@@ -271,7 +249,7 @@ Feature: Rundowns
         Then we get list with 1 items
         """
         {"_items": [
-            {"headline": "Scheduled // 01.01.2030", "rundown_scheduled_on": "2030-01-01T05:00:00+0000"}
+            {"title": "Scheduled // 01.01.2030", "scheduled_on": "2030-01-01T05:00:00+0000"}
         ]}
         """
 
@@ -280,8 +258,8 @@ Feature: Rundowns
         Then we get list with 2 items
         """
         {"_items": [
-            {"headline": "Scheduled // 01.01.2030", "rundown_scheduled_on": "2030-01-01T05:00:00+0000"},
-            {"headline": "Scheduled // 02.01.2030", "rundown_scheduled_on": "2030-01-02T05:00:00+0000"}
+            {"title": "Scheduled // 01.01.2030", "scheduled_on": "2030-01-01T05:00:00+0000"},
+            {"title": "Scheduled // 02.01.2030", "scheduled_on": "2030-01-02T05:00:00+0000"}
         ]}
         """
 
@@ -290,27 +268,25 @@ Feature: Rundowns
         Given "shows"
         """
         [
-            {"name": "Test"}
+            {"title": "Test"}
         ]
         """
 
         When we post to "/shows/#shows._id#/templates"
         """
-        [
-            {
-                "name": "Scheduled",
-                "airtime_time": "06:00",
-                "airtime_date": "2030-01-01",
-                "planned_duration": 3600
-            }
-        ]
+        {
+            "title": "Scheduled",
+            "airtime_time": "06:00",
+            "airtime_date": "2030-01-01",
+            "planned_duration": 3600
+        }
         """
 
         And we post to "rundown_items"
         """
         {
             "item_type": "text",
-            "headline": "Test item"
+            "title": "Test item"
         }
         """
         Then we get new resource
@@ -318,16 +294,10 @@ Feature: Rundowns
         When we patch "/shows/#shows._id#/templates/#templates._id#"
         """
         {
-            "groups": [
+            "items": [
                 {
-                    "role": "rundown",
-                    "refs": [
-                        {
-                            "residRef": "#rundown_items._id#",
-                            "planned_duration": 3600,
-                            "start_time": "05:00"
-                        }
-                    ]
+                    "_id": "#rundown_items._id#",
+                    "start_time": "05:00"
                 }
             ]
         }
@@ -344,39 +314,36 @@ Feature: Rundowns
         Then we get list with 1 item
         """
         {"_items": [
-            {"type": "composite", "groups": [
-                {
-                    "role": "rundown",
-                    "refs": [
-                        {"planned_duration": 3600, "start_time": "05:00"}
-                    ]
-                }
-            ]}
+            {
+                "title": "Scheduled",
+                "items": [
+                    {"start_time": "05:00"}
+                ]
+            }
         ]}
         """
         When we get "/rundown_items"
         Then we get list with 2 items
         """
         {"_items": [
-            {"item_type": "text", "_id": "#rundown_item._id#"},
-            {"item_type": "text", "operation": "duplicate"},
+            {"item_type": "text", "_id": "#rundown_items._id#"},
+            {"item_type": "text", "operation": "duplicate", "original_id": "#rundown_items._id#"}
         ]}
         """
 
-    @wip
     @auth
     Scenario: Rundowns CRUD
         Given "shows"
         """
         [
-            {"name": "Test"}
+            {"title": "Test"}
         ]
         """
 
         When we post to "/rundowns"
         """
         {
-            "headline": "test",
+            "title": "test",
             "show": "#shows._id#",
             "airtime_time": "06:00",
             "airtime_date": "2030-01-01",
@@ -387,9 +354,9 @@ Feature: Rundowns
         When we post to "/rundown_items"
         """
         {
-            "headline": "test",
-            "planned_duration": 120,
+            "title": "test",
             "duration": 80,
+            "planned_duration": 120,
             "item_type": "test",
             "content": "<p>some text</p>"
         }
@@ -402,8 +369,8 @@ Feature: Rundowns
 
         When we patch "/rundowns/#rundowns._id#"
         """
-        {"rundown_items": [
-            {"item": "#rundown_items._id#"}
+        {"items": [
+            {"_id": "#rundown_items._id#"}
         ]}
         """
         Then we get OK response

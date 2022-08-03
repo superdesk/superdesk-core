@@ -7,16 +7,15 @@ from flask_babel import _
 from superdesk.errors import DocumentError
 from superdesk.utc import local_to_utc
 from apps.auth import get_user_id
-from superdesk.metadata.item import metadata_schema
 
-from . import privileges, utils
+from . import privileges, utils, rundowns
 
 
 class TemplatesResource(superdesk.Resource):
     url = r'/shows/<regex("[a-f0-9]{24}"):show>/templates'
     resource_title = "rundown_templates"
     schema = {
-        "name": {
+        "title": {
             "type": "string",
             "required": True,
         },
@@ -61,7 +60,7 @@ class TemplatesResource(superdesk.Resource):
                 },
             },
         },
-        "headline_template": {
+        "title_template": {
             "type": "dict",
             "schema": {
                 "prefix": {
@@ -75,9 +74,6 @@ class TemplatesResource(superdesk.Resource):
                 },
             },
         },
-        "headline": {
-            "type": "string",
-        },
         "scheduled_on": {
             "type": "datetime",
             "readonly": True,
@@ -87,8 +83,8 @@ class TemplatesResource(superdesk.Resource):
             "readonly": True,
         },
         "created_by": superdesk.Resource.rel("users", readonly=True),
-        "updated_by": superdesk.Resource.rel("users", readonly=True),
-        "groups": metadata_schema["groups"].copy(),
+        "last_updated_by": superdesk.Resource.rel("users", readonly=True),
+        "items": rundowns.RundownsResource.schema["items"].copy(),
     }
 
     privileges = {"POST": privileges.RUNDOWNS, "PATCH": privileges.RUNDOWNS, "DELETE": privileges.RUNDOWNS}
@@ -148,7 +144,7 @@ class TemplatesService(superdesk.Service):
 
     def on_update(self, updates, original):
         self.set_scheduled_on(updates, original)
-        updates["updated_by"] = get_user_id()
+        updates["last_updated_by"] = get_user_id()
 
     def on_created(self, docs):
         super().on_created(docs)
@@ -163,3 +159,6 @@ class TemplatesService(superdesk.Service):
     def on_fetched_item(self, doc):
         super().on_fetched_item(doc)
         fix_self_link(doc)
+
+
+templates_service = TemplatesService()

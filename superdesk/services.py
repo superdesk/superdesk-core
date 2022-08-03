@@ -33,6 +33,10 @@ class BaseService:
         self.backend = backend
         self.datasource = datasource
 
+    def init(self, datasource: str, backend = None):
+        self.datasource = datasource
+        self.backend = backend
+
     def on_create(self, docs):
         pass
 

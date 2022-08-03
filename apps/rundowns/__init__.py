@@ -22,9 +22,9 @@ def init_app(app: SuperdeskEve) -> None:
     )
 
     superdesk.register_resource("shows", shows.ShowsResource, shows.ShowsService, _app=app)
-    superdesk.register_resource("rundowns", rundowns.RundownsResource, rundowns.RundownsService, _app=app)
-    superdesk.register_resource("rundown_items", rundown_items.RundownItemsResource, rundown_items.RundownItemsService, _app=app)
-    superdesk.register_resource("rundown_templates", templates.TemplatesResource, templates.TemplatesService, _app=app)
+    superdesk.register_resource("rundowns", rundowns.RundownsResource, service_instance=rundowns.rundowns_service, _app=app)
+    superdesk.register_resource("rundown_items", rundown_items.RundownItemsResource, service_instance=rundown_items.items_service, _app=app)
+    superdesk.register_resource("rundown_templates", templates.TemplatesResource, service_instance=templates.templates_service, _app=app)
     superdesk.register_resource(
         "show_rundowns", create.FromTemplateResource, create.FromTemplateService, backend=None, _app=app
     )

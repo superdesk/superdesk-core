@@ -5,7 +5,7 @@ from . import privileges
 
 class ShowsResource(superdesk.Resource):
     schema = {
-        "name": {
+        "title": {
             "type": "string",
             "required": True,
         },

@@ -9,9 +9,9 @@ class RundownsResource(superdesk.Resource):
     resource_title = "Rundowns"
     schema = {
         "show": superdesk.Resource.rel("shows", required=True),
-        "headline": metadata_schema["headline"],
-        "rundown_template": superdesk.Resource.rel("rundown_templates"),
-        "rundown_scheduled_on": {
+        "title": metadata_schema["headline"],
+        "template": superdesk.Resource.rel("rundown_templates"),
+        "scheduled_on": {
             "type": "datetime",
             "readonly": True,
         },
@@ -31,12 +31,13 @@ class RundownsResource(superdesk.Resource):
         "airtime_datetime": {
             "type": "datetime",
         },
-        "rundown_items": {
+        "items": {
             "type": "list",
             "schema": {
                 "type": "dict",
                 "schema": {
-                    "item": superdesk.Resource.rel("rundown_items", required=True),
+                    "_id": superdesk.Resource.rel("rundown_items", required=True),
+                    "start_time": {"type": "time"},
                 },
             },
         },
@@ -49,5 +50,9 @@ class RundownsResource(superdesk.Resource):
     versioning = True
     privileges = {"POST": privileges.RUNDOWNS, "PATCH": privileges.RUNDOWNS, "PUT": privileges.RUNDOWNS}
 
+
 class RundownsService(superdesk.Service):
     pass
+
+
+rundowns_service = RundownsService()

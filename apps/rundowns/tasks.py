@@ -7,7 +7,7 @@ from datetime import datetime, timedelta
 from flask import current_app as app
 from superdesk.celery_app import celery
 from superdesk.utc import utc_to_local, local_to_utc
-from superdesk.lock import lock, unlock, get_host
+from superdesk.lock import lock, unlock
 
 from . import create
 
@@ -29,7 +29,7 @@ def create_scheduled_rundowns():
         for template in templates_service.find(where=lookup):
             updates = {}
             local_date = utc_to_local(str(tz), template["scheduled_on"])
-            logger.info("Creating Rundown for template %s on %s", template["name"], local_date.isoformat())
+            logger.info("Creating Rundown for template %s on %s", template["title"], local_date.isoformat())
             create.create_rundown_from_template(template, local_date.date(), template["scheduled_on"])
             schedule = template["schedule"]
             assert hasattr(rrule, schedule["freq"].upper())
@@ -46,11 +46,11 @@ def create_scheduled_rundowns():
             )
             for date in dates:
                 if date > template["scheduled_on"] and date > now:
-                    logger.info("Scheduling next Rundown for template %s on %s", template["name"], date.isoformat())
+                    logger.info("Scheduling next Rundown for template %s on %s", template["title"], date.isoformat())
                     updates["scheduled_on"] = local_to_utc(str(tz), date)
                     break
             else:
-                logger.warn("Could not schedule next Rundown for template %s", template["name"])
+                logger.warn("Could not schedule next Rundown for template %s", template["title"])
 
             if updates:
                 templates_service.system_update(template["_id"], updates, template)

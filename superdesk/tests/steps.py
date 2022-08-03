@@ -1091,8 +1091,8 @@ def step_impl_then_get_error(context, code):
         test_json(context)
 
 
-@then("we get list with {total_count} items")
-def step_impl_then_get_list(context, total_count):
+@then("we get list with {total_count} {unit}")
+def step_impl_then_get_list(context, total_count, unit=None):
     assert_200(context.response)
     data = get_json_data(context.response)
     int_count = int(total_count.replace("+", "").replace("<", ""))
