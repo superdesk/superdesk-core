@@ -268,9 +268,11 @@ class Resource:
         }
 
     @staticmethod
-    def not_analyzed_field(type="string"):
+    def not_analyzed_field(type="string", required=False, nullable=False):
         return {
             "type": type,
+            "required": required,
+            "nullable": nullable,
             "mapping": not_analyzed,
         }
 

@@ -1,4 +1,3 @@
-@wip
 Feature: Rundowns
 
     @auth
@@ -99,7 +98,7 @@ Feature: Rundowns
         Then we get list with 0 items
 
     @auth
-    Scenario: Create rundown using template
+    Scenario: Create rundown from template
         Given "shows"
         """
         [
@@ -124,9 +123,9 @@ Feature: Rundowns
         ]
         """
 
-        When we post to "/shows/#shows._id#/rundowns"
+        When we post to "/rundowns"
         """
-        {"template": "#rundown_templates._id#", "airtime_date": "2022-06-10"}
+        {"show": "#shows._id#", "template": "#rundown_templates._id#", "airtime_date": "2022-06-10"}
         """
         Then we get new resource
         """
@@ -136,13 +135,7 @@ Feature: Rundowns
             "title": "Marker // 10.06.2022",
             "planned_duration": 3600,
             "airtime_time": "06:00",
-            "airtime_date": "2022-06-10",
-            "_links": {
-                "self": {
-                    "href": "rundowns/#rundowns._id#",
-                    "title": "Rundowns"
-                }
-            }
+            "airtime_date": "2022-06-10"
         }
         """
 
@@ -153,7 +146,7 @@ Feature: Rundowns
             {"title": "Marker // 10.06.2022", "template": "#rundown_templates._id#"}
         ]}
         """
-    
+
     @auth
     Scenario: Validate airtime date when creating/updating template
         Given "shows"
@@ -304,9 +297,9 @@ Feature: Rundowns
         """
         Then we get ok response
 
-        When we post to "/shows/#shows._id#/rundowns"
+        When we post to "/rundowns"
         """
-        {"template": "#templates._id#", "airtime_date": "2055-06-10"}
+        {"show": "#shows._id#", "template": "#templates._id#", "airtime_date": "2055-06-10"}
         """
         Then we get new resource
 
@@ -350,6 +343,7 @@ Feature: Rundowns
             "planned_duration": 3600
         }
         """
+        Then we get ok response
 
         When we post to "/rundown_items"
         """

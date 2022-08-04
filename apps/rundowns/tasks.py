@@ -9,7 +9,7 @@ from superdesk.celery_app import celery
 from superdesk.utc import utc_to_local, local_to_utc
 from superdesk.lock import lock, unlock
 
-from . import create
+from . import templates, rundowns
 
 
 logger = logging.getLogger(__name__)
@@ -18,6 +18,7 @@ logger = logging.getLogger(__name__)
 @celery.task(soft_time_limit=300)
 def create_scheduled_rundowns():
     lock_id = "rundowns-create-scheduled-rundowns"
+    templates_service = templates.templates_service
     if not lock(lock_id, expire=300):
         return
     try:
@@ -25,12 +26,11 @@ def create_scheduled_rundowns():
         now = datetime.utcnow().replace(tzinfo=pytz.utc, microsecond=0)
         buffer = timedelta(hours=app.config["RUNDOWNS_SCHEDULE_HOURS"])
         lookup = {"scheduled_on": {"$lt": now + buffer}, "repeat": True, "schedule.freq": {"$exists": True}}
-        templates_service = superdesk.get_resource_service("rundown_templates")
         for template in templates_service.find(where=lookup):
             updates = {}
             local_date = utc_to_local(str(tz), template["scheduled_on"])
             logger.info("Creating Rundown for template %s on %s", template["title"], local_date.isoformat())
-            create.create_rundown_from_template(template, local_date.date(), template["scheduled_on"])
+            rundowns.rundowns_service.create_from_template(template, local_date.date(), template["scheduled_on"])
             schedule = template["schedule"]
             assert hasattr(rrule, schedule["freq"].upper())
             dates = list(

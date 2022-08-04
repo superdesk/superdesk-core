@@ -3,49 +3,34 @@ import superdesk
 from typing import Final
 from flask_babel import lazy_gettext
 
-from superdesk.factory.app import SuperdeskEve
+from superdesk.factory.app import SuperdeskApp
 
 SCOPE: Final = "rundowns"
 
-from . import (
-    shows, templates, privileges, create,
-    tasks,  # noqa: E402
-    rundowns, rundown_items,
+from . import (  # noqa: E402
+    shows,
+    templates,
+    privileges,
+    rundowns,
+    rundown_items,
+    tasks,
 )
 
 
-def init_app(app: SuperdeskEve) -> None:
+def init_app(app: SuperdeskApp) -> None:
     superdesk.privilege(
         name=privileges.RUNDOWNS,
         label=lazy_gettext("Rundowns"),
         description=lazy_gettext("Rundowns management"),
     )
 
-    superdesk.register_resource("shows", shows.ShowsResource, shows.ShowsService, _app=app)
-    superdesk.register_resource("rundowns", rundowns.RundownsResource, service_instance=rundowns.rundowns_service, _app=app)
-    superdesk.register_resource("rundown_items", rundown_items.RundownItemsResource, service_instance=rundown_items.items_service, _app=app)
-    superdesk.register_resource("rundown_templates", templates.TemplatesResource, service_instance=templates.templates_service, _app=app)
+    superdesk.register_resource("shows", shows.ShowsResource, service_instance=shows.shows_service, _app=app)
     superdesk.register_resource(
-        "show_rundowns", create.FromTemplateResource, create.FromTemplateService, backend=None, _app=app
+        "rundowns", rundowns.RundownsResource, service_instance=rundowns.rundowns_service, _app=app
     )
-
-    app.item_scope(
-        SCOPE,
-        schema={
-            "show": superdesk.Resource.rel("shows"),
-            "rundown_template": superdesk.Resource.rel("rundown_templates"),
-            "rundown_scheduled_on": {
-                "type": "datetime",
-                "readonly": True,
-            },
-            "planned_duration": {
-                "type": "number",
-            },
-            "airtime_time": {
-                "type": "string",
-            },
-            "airtime_date": {
-                "type": "string",
-            },
-        },
+    superdesk.register_resource(
+        "rundown_items", rundown_items.RundownItemsResource, service_instance=rundown_items.items_service, _app=app
+    )
+    superdesk.register_resource(
+        "rundown_templates", templates.TemplatesResource, service_instance=templates.templates_service, _app=app
     )

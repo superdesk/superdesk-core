@@ -275,3 +275,6 @@ def get_app(config=None, media_storage=None, config_object=None, init_elastic=No
     configure_logging(app.config["LOG_CONFIG_FILE"])
 
     return app
+
+
+SuperdeskApp = SuperdeskEve

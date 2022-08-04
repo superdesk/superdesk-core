@@ -15,8 +15,8 @@ class ShowsResource(superdesk.Resource):
         "planned_duration": {
             "type": "number",
         },
-        "created_by": superdesk.Resource.rel("users"),
-        "updated_by": superdesk.Resource.rel("users"),
+        "created_by": superdesk.Resource.rel("users", readonly=True),
+        "last_updated_by": superdesk.Resource.rel("users", readonly=True),
     }
 
     privileges = {"POST": privileges.RUNDOWNS, "PATCH": privileges.RUNDOWNS, "DELETE": privileges.RUNDOWNS}
@@ -24,3 +24,6 @@ class ShowsResource(superdesk.Resource):
 
 class ShowsService(superdesk.Service):
     pass
+
+
+shows_service = ShowsService()

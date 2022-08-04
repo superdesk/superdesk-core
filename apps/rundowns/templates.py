@@ -1,3 +1,4 @@
+from typing import Optional
 import pytz
 import datetime
 import superdesk
@@ -8,7 +9,7 @@ from superdesk.errors import DocumentError
 from superdesk.utc import local_to_utc
 from apps.auth import get_user_id
 
-from . import privileges, utils, rundowns
+from . import privileges, utils, types
 
 
 class TemplatesResource(superdesk.Resource):
@@ -84,7 +85,16 @@ class TemplatesResource(superdesk.Resource):
         },
         "created_by": superdesk.Resource.rel("users", readonly=True),
         "last_updated_by": superdesk.Resource.rel("users", readonly=True),
-        "items": rundowns.RundownsResource.schema["items"].copy(),
+        "items": {
+            "type": "list",
+            "schema": {
+                "type": "dict",
+                "schema": {
+                    "_id": superdesk.Resource.rel("rundown_items", required=True),
+                    "start_time": {"type": "time"},
+                },
+            },
+        },
     }
 
     privileges = {"POST": privileges.RUNDOWNS, "PATCH": privileges.RUNDOWNS, "DELETE": privileges.RUNDOWNS}
@@ -159,6 +169,10 @@ class TemplatesService(superdesk.Service):
     def on_fetched_item(self, doc):
         super().on_fetched_item(doc)
         fix_self_link(doc)
+
+    def find_one(self, req, **lookup) -> Optional[types.ITemplate]:
+        template: types.ITemplate = super().find_one(req=req, **lookup)
+        return template
 
 
 templates_service = TemplatesService()

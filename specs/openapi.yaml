@@ -158,37 +158,6 @@ paths:
         '204':
           description: No content
 
-  /shows/{showId}/rundowns:
-    parameters:
-      - $ref: '#/components/parameters/showId'
-    post:
-      summary: Create Rundown from template
-      tags:
-        - Rundowns
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              required:
-                - template
-                - airtime_date
-              properties:
-                template:
-                  $ref: '#/components/schemas/ObjectId'
-                airtime_date:
-                  type: string
-                  format: date
-
-      responses:
-        '201':
-          description: 'Created'
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Rundown'
-  
   /rundowns:
     get:
       summary: List Rundowns
@@ -196,7 +165,7 @@ paths:
         - Rundowns
       responses:
         '200':
-          description: 'Get list'
+          description: Get list
           content:
             application/json:
               schema:
@@ -205,6 +174,20 @@ paths:
                     type: array
                     items:
                       $ref: '#/components/schemas/Rundown'
+    post:
+      summary: Create Rundown
+      tags:
+        - Rundowns
+      requestBody:
+        required: true
+        $ref: '#/components/requestBodies/Rundown'
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Rundown'
 
   /rundown_items:
     get:
@@ -222,6 +205,21 @@ paths:
                     type: array
                     items:
                       $ref: '#/components/schemas/RundownItem'
+    post:
+      summary: Create Rundown Item
+      tags:
+        - Rundowns
+      requestBody:
+        required: true
+        $ref: '#/components/requestBodies/RundownItem'
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RundownItem'
+
 
 components:
 
@@ -315,7 +313,6 @@ components:
         scheduled_on:
           type: string
           format: datetime
-          readOnly: true
           description: When is the next rundown scheduled to be created.
 
         title_template:
@@ -340,25 +337,24 @@ components:
           type: string
           format: datetime
           example: 2022-02-16T13:33:40+0000
-          readOnly: true
 
         _updated:
           type: string
           format: datetime
           example: 2022-02-16T13:33:40+0000
-          readOnly: true
 
         created_by:
-          readOnly: true
           $ref: '#/components/schemas/ObjectId'
 
-        updated_by:
-          readOnly: true
+        last_updated_by:
           $ref: '#/components/schemas/ObjectId'
     
     Rundown:
       type: object
       description: "Rundown with items"
+      required:
+        - "show"
+        - "airtime_date"
       properties:
         title:
           type: string
@@ -376,7 +372,7 @@ components:
         airtime_date:
           type: string
           format: date
-          example: 06:00
+          example: 2022-06-20
         show:
           $ref: '#/components/schemas/ObjectId'
         template:
@@ -387,6 +383,8 @@ components:
     RundownItem:
       type: object
       description: "Rundow item"
+      required:
+        - item_type
       properties:
         title:
           type: string
@@ -457,6 +455,25 @@ components:
             type: integer
           description: 0 == MO
           example: [0, 1, 2, 3, 4]
+  
+  requestBodies:
+    Rundown:
+      description: New Rundown
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Rundown'
+
+    RundownItem:
+      description: New Rundown Item
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/RundownItem'
+
+
 
   responses:
     '401':
