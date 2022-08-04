@@ -9,7 +9,7 @@ from superdesk.errors import DocumentError
 from superdesk.utc import local_to_utc
 from apps.auth import get_user_id
 
-from . import privileges, utils, types
+from . import privileges, utils, types, rundowns
 
 
 class TemplatesResource(superdesk.Resource):
@@ -85,16 +85,7 @@ class TemplatesResource(superdesk.Resource):
         },
         "created_by": superdesk.Resource.rel("users", readonly=True),
         "last_updated_by": superdesk.Resource.rel("users", readonly=True),
-        "items": {
-            "type": "list",
-            "schema": {
-                "type": "dict",
-                "schema": {
-                    "_id": superdesk.Resource.rel("rundown_items", required=True),
-                    "start_time": {"type": "time"},
-                },
-            },
-        },
+        "items": rundowns.RundownsResource.schema["items"].copy(),
     }
 
     privileges = {"POST": privileges.RUNDOWNS, "PATCH": privileges.RUNDOWNS, "DELETE": privileges.RUNDOWNS}

@@ -35,7 +35,16 @@ class RundownsResource(superdesk.Resource):
         "airtime_datetime": {
             "type": "datetime",
         },
-        "items": templates.TemplatesResource.schema["items"].copy(),
+        "items": {
+            "type": "list",
+            "schema": {
+                "type": "dict",
+                "schema": {
+                    "_id": superdesk.Resource.rel("rundown_items", required=True),
+                    "start_time": {"type": "time"},
+                },
+            },
+        },
     }
 
     datasource = {
