@@ -33,7 +33,7 @@ class BaseService:
         self.backend = backend
         self.datasource = datasource
 
-    def init(self, datasource: str, backend = None):
+    def init(self, datasource: str, backend=None):
         self.datasource = datasource
         self.backend = backend
 

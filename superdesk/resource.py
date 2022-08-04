@@ -212,7 +212,9 @@ class Resource:
 
         if self.versioning:
             versioning_resource = self.endpoint_name + "_versions"
-            superdesk.resources[versioning_resource] = VersionsResource(Service(versioning_resource, backend=superdesk.get_backend()))
+            superdesk.resources[versioning_resource] = VersionsResource(
+                Service(versioning_resource, backend=superdesk.get_backend())
+            )
 
         for request_method in ["GET", "POST", "PATCH", "PUT", "DELETE"]:
             if hasattr(self, "pre_request_" + request_method.lower()):
@@ -278,6 +280,5 @@ class Resource:
 
 
 class VersionsResource(Resource):
-
     def __init__(self, service):
         self.service = service

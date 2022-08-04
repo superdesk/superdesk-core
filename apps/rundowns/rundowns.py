@@ -1,7 +1,7 @@
 import datetime
 import superdesk
 
-from typing import Optional
+from typing import List, Optional
 
 from superdesk.metadata.item import metadata_schema
 
@@ -32,9 +32,6 @@ class RundownsResource(superdesk.Resource):
         "airtime_date": {
             "type": "string",
         },
-        "airtime_datetime": {
-            "type": "datetime",
-        },
         "items": {
             "type": "list",
             "schema": {
@@ -61,7 +58,9 @@ class RundownsService(superdesk.Service):
         for doc in docs:
             show = shows.shows_service.find_one(req=None, _id=doc["show"])
             assert show is not None, {"show": 1}
-            date = datetime.date.fromisoformat(doc["airtime_date"])
+            date = (
+                datetime.date.fromisoformat(doc["airtime_date"]) if doc.get("airtime_date") else datetime.date.today()
+            )
             if doc.get("template"):
                 template = templates.templates_service.find_one(req=None, _id=doc["template"])
                 assert template is not None, {"template": 1}
@@ -80,7 +79,7 @@ class RundownsService(superdesk.Service):
             "title": doc.get("title") or show["title"],
             "planned_duration": doc.get("planned_duration") or show.get("planned_duration") or 0,
             "airtime_date": date.isoformat(),
-            "airtime_time": doc.get("airtime_time"),
+            "airtime_time": doc["airtime_time"],
             "scheduled_on": None,
             "template": None,
             "items": [],
@@ -118,10 +117,20 @@ class RundownsService(superdesk.Service):
             )
 
         if template.get("items"):
-            rundown["items"] = [rundown_items.items_service.duplicate_ref(ref) for ref in template["items"]]
+            rundown["items"] = [self.get_item_ref(ref) for ref in template["items"]]
 
         super().create([rundown])
         return rundown
+
+    def get_item_ref(self, item_template: types.IRundownItemTemplate) -> types.IRef:
+        item = rundown_items.items_service.create_from_template(item_template)
+        return {"_id": item["_id"]}
+
+    def update(self, id, updates, original):
+        if updates.get("items"):
+            if updates["items"] != original.get("items"):
+                updates["duration"] = rundown_items.items_service.get_durations(updates["items"])
+        return super().update(id, updates, original)
 
 
 rundowns_service = RundownsService()

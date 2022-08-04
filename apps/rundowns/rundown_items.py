@@ -38,22 +38,28 @@ class RundownItemsResource(superdesk.Resource):
 
 
 class RundownItemsService(superdesk.Service):
-    def duplicate_ref(self, ref: types.IRef) -> types.IRef:
-        item = self.find_one(req=None, _id=ref["_id"])
-        copy = self.copy_item(item)
-        self.post([copy])
-        new_ref: types.IRef = {
-            "_id": copy["_id"],
-            "start_time": ref["start_time"],
+    def create_from_template(self, template: types.IRundownItemTemplate) -> types.IRundownItem:
+        item: types.IRundownItem = {
+            "item_type": template["item_type"],
+            "title": template.get("title"),
+            "duration": template.get("duration"),
+            "planned_duration": template.get("planned_duration"),
         }
-        return new_ref
 
-    def copy_item(self, item: Dict):
-        copy = {k: v for k, v in item.items() if k[0] != "_"}
+        self.create([item])
+        return item
 
-        copy["original_id"] = item["_id"]
-        copy["operation"] = ITEM_DUPLICATE
-        return copy
+    def get_durations(self, refs: types.IRefs) -> int:
+        durations = {}
+        cursor = self.get_from_mongo(
+            req=None, lookup={"_id": {"$in": [ref["_id"] for ref in refs]}}, projection={"duration": 1}
+        )
+        for item in cursor:
+            durations[item["_id"]] = item["duration"]
+        duration = 0
+        for ref in refs:
+            duration += durations[ref["_id"]]
+        return duration
 
 
 items_service = RundownItemsService()

@@ -256,6 +256,7 @@ Feature: Rundowns
         ]}
         """
 
+    @wip
     @auth
     Scenario: Add items to rundown template
         Given "shows"
@@ -275,22 +276,13 @@ Feature: Rundowns
         }
         """
 
-        And we post to "rundown_items"
-        """
-        {
-            "item_type": "text",
-            "title": "Test item"
-        }
-        """
-        Then we get new resource
-
         When we patch "/shows/#shows._id#/templates/#templates._id#"
         """
         {
             "items": [
                 {
-                    "_id": "#rundown_items._id#",
-                    "start_time": "05:00"
+                    "item_type": "text",
+                    "title": "Test item"
                 }
             ]
         }
@@ -310,20 +302,20 @@ Feature: Rundowns
             {
                 "title": "Scheduled",
                 "items": [
-                    {"start_time": "05:00"}
+                    {"_id": "__objectid__"}
                 ]
             }
         ]}
         """
         When we get "/rundown_items"
-        Then we get list with 2 items
+        Then we get list with 1 items
         """
         {"_items": [
-            {"item_type": "text", "_id": "#rundown_items._id#"},
-            {"item_type": "text", "operation": "duplicate", "original_id": "#rundown_items._id#"}
+            {"item_type": "text", "title": "Test item"}
         ]}
         """
 
+    @wip
     @auth
     Scenario: Rundowns CRUD
         Given "shows"
@@ -336,7 +328,6 @@ Feature: Rundowns
         When we post to "/rundowns"
         """
         {
-            "title": "test",
             "show": "#shows._id#",
             "airtime_time": "06:00",
             "airtime_date": "2030-01-01",
@@ -360,12 +351,47 @@ Feature: Rundowns
 
         When we get "/rundowns"
         Then we get list with 1 items
+        """
+        {"_items": [
+            {
+                "title": "Test",
+                "show": "#shows._id#",
+                "airtime_time": "06:00",
+                "airtime_date": "2030-01-01",
+                "planned_duration": 3600
+            }
+        ]}
+        """
 
         When we patch "/rundowns/#rundowns._id#"
         """
         {"items": [
+            {"_id": "#rundown_items._id#"},
             {"_id": "#rundown_items._id#"}
         ]}
         """
         Then we get OK response
-     
+
+        When we get "/rundowns/#rundowns._id#"
+        Then we get existing resource
+        """
+        {"duration": 160}
+        """
+
+    @auth
+    Scenario: Create rundown for today
+        Given "shows"
+        """
+        [
+            {"title": "Test"}
+        ]
+        """
+
+        When we post to "/rundowns"
+        """
+        {
+            "show": "#shows._id#",
+            "airtime_time": "06:00"
+        }
+        """
+        Then we get ok response
