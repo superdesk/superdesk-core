@@ -19,8 +19,6 @@ class RundownItemsResource(superdesk.Resource):
         "planned_duration": {
             "type": "number",
         },
-        "operation": superdesk.Resource.not_analyzed_field(),
-        "original_id": superdesk.Resource.not_analyzed_field(),
         "show_part": superdesk.Resource.not_analyzed_field(),
         "live_sound": superdesk.Resource.not_analyzed_field(),
         "guests": superdesk.Resource.not_analyzed_field(),
@@ -41,9 +39,16 @@ class RundownItemsService(superdesk.Service):
     def create_from_template(self, template: types.IRundownItemTemplate) -> types.IRundownItem:
         item: types.IRundownItem = {
             "item_type": template["item_type"],
-            "title": template.get("title"),
-            "duration": template.get("duration"),
-            "planned_duration": template.get("planned_duration"),
+            "title": template.get("title", ""),
+            "duration": template.get("duration", 0),
+            "planned_duration": template.get("planned_duration", 0),
+            "content": template.get("content", ""),
+            "show_part": template.get("show_part", ""),
+            "live_sound": template.get("live_sound", ""),
+            "guests": template.get("guests", ""),
+            "additional_notes": template.get("additional_notes", ""),
+            "live_captions": template.get("live_captions", ""),
+            "last_sentences": template.get("last_sentences", ""),
         }
 
         self.create([item])
