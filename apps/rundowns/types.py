@@ -21,8 +21,8 @@ class IRundownTitleTemplate(TypedDict, total=False):
 
 
 class IRundownBase(IEntity):
-    title: str
     show: str
+    title: str
     airtime_date: str
     airtime_time: str
     planned_duration: int

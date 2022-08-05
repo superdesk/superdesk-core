@@ -20,7 +20,7 @@ import operator
 from unittest import mock
 from copy import deepcopy
 from base64 import b64encode
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, date
 from os.path import basename
 from re import findall
 from unittest.mock import patch
@@ -166,6 +166,12 @@ def json_match(context_data, response_data, json_fields=None):
                 continue
             if context_data[key] == "__now__":
                 assert_is_now(response_data[key], key)
+                continue
+            if context_data[key] == "__today__":
+                assert response_data[key] == date.today().isoformat(), "{date} should be today ({today})".format(
+                    date=response_data[key],
+                    today=date.today().isoformat(),
+                )
                 continue
             if context_data[key] == "__future__":
                 assert arrow.get(response_data[key]) > arrow.get(), "{} should be in future".format(key)
@@ -1248,6 +1254,8 @@ def step_impl_then_get_existing_saved_search(context):
 @then("we get OK response")
 def step_impl_then_get_ok(context):
     assert_200(context.response)
+    if context.text:
+        test_json(context)
 
 
 @then("we get response code {code}")

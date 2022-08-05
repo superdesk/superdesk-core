@@ -16,7 +16,7 @@ logger = logging.getLogger(__name__)
 
 
 @celery.task(soft_time_limit=300)
-def create_scheduled_rundowns():
+def create_scheduled_rundowns() -> None:
     lock_id = "rundowns-create-scheduled-rundowns"
     templates_service = templates.templates_service
     if not lock(lock_id, expire=300):
@@ -30,7 +30,9 @@ def create_scheduled_rundowns():
             updates = {}
             local_date = utc_to_local(str(tz), template["scheduled_on"])
             logger.info("Creating Rundown for template %s on %s", template["title"], local_date.isoformat())
-            rundowns.rundowns_service.create_from_template(template, local_date.date(), template["scheduled_on"])
+            rundowns.rundowns_service.create_from_template(
+                template, local_date.date(), scheduled_on=template["scheduled_on"]
+            )
             schedule = template["schedule"]
             assert hasattr(rrule, schedule["freq"].upper())
             dates = list(

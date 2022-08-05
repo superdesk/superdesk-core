@@ -146,6 +146,24 @@ Feature: Rundowns
             {"title": "Marker // 10.06.2022", "template": "#rundown_templates._id#"}
         ]}
         """
+        
+        When we post to "/rundowns"
+        """
+        {
+            "show": "#shows._id#",
+            "template": "#rundown_templates._id#",
+            "airtime_date": "2022-06-10",
+            "airtime_time": "08:00",
+            "title": "Custom"
+        }
+        """
+        Then we get new resource
+        """
+        {
+            "title": "Custom",
+            "airtime_time": "08:00"
+        }
+        """
 
     @auth
     Scenario: Validate airtime date when creating/updating template
@@ -256,7 +274,6 @@ Feature: Rundowns
         ]}
         """
 
-    @wip
     @auth
     Scenario: Add items to rundown template
         Given "shows"
@@ -315,7 +332,6 @@ Feature: Rundowns
         ]}
         """
 
-    @wip
     @auth
     Scenario: Rundowns CRUD
         Given "shows"
@@ -391,7 +407,16 @@ Feature: Rundowns
         """
         {
             "show": "#shows._id#",
-            "airtime_time": "06:00"
+            "airtime_time": "06:00",
+            "title": "Todays rundown"
         }
         """
+
         Then we get ok response
+        """
+        {
+            "title": "Todays rundown",
+            "airtime_time": "06:00",
+            "airtime_date": "__today__"
+        }
+        """
