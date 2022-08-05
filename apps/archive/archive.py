@@ -171,7 +171,6 @@ def private_content_filter(req=None):
                 "should": [
                     {"bool": private_filter},
                     {"bool": {"must_not": {"term": {"state": "draft"}}}},
-                    {"exists": {"field": "scope"}},  # different scope might have different private definition
                 ],
                 "minimum_should_match": 1,
             },
@@ -705,7 +704,7 @@ class ArchiveService(BaseService):
 
         return self.duplicate_item(original_doc, state, extra_fields)
 
-    def duplicate_item(self, original_doc, state=None, extra_fields=None, operation=None, duplicate_history=True):
+    def duplicate_item(self, original_doc, state=None, extra_fields=None, operation=None):
         """Duplicates an item.
 
         Duplicates the 'original_doc' including it's version history. If the article being duplicated is contained
@@ -729,9 +728,8 @@ class ArchiveService(BaseService):
         transtype_metadata(new_doc)
         signals.item_duplicate.send(self, item=new_doc, original=original_doc, operation=operation)
         get_model(ItemModel).create([new_doc])
-        if duplicate_history:
-            self._duplicate_versions(original_doc["_id"], new_doc)
-            self._duplicate_history(original_doc["_id"], new_doc)
+        self._duplicate_versions(original_doc["_id"], new_doc)
+        self._duplicate_history(original_doc["_id"], new_doc)
         app.on_archive_item_updated({"duplicate_id": new_doc["guid"]}, original_doc, operation or ITEM_DUPLICATE)
 
         if original_doc.get("task"):
