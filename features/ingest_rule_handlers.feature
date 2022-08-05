@@ -3,7 +3,7 @@ Feature: Ingest Rule Handlers
     @auth
     Scenario: Get list of available rule handlers
         When we get "/ingest_rule_handlers"
-        Then we get list with 1 items
+        Then we get list with 2 items
         """
         {"_items": [
             {
@@ -41,6 +41,7 @@ Feature: Ingest Rule Handlers
                         "_allDay": true
                     }
                 }
-            }
+            },
+            {"_id": "planning_publish"}
         ]}
         """
