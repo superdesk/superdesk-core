@@ -86,7 +86,9 @@ def get_meta(file_stream):
         if key == "GPSInfo":
             # lookup GPSInfo description key names
             value = {
-                ExifTags.GPSTAGS[vk].strip(): convert_exif_value(vv, vk) for vk, vv in rv.get_ifd(k).items() if is_serializable(vv)
+                ExifTags.GPSTAGS[vk].strip(): convert_exif_value(vv, vk)
+                for vk, vv in rv.get_ifd(k).items()
+                if is_serializable(vv)
             }
             exif_meta[key] = value
         elif is_serializable(v):
