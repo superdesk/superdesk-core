@@ -62,7 +62,6 @@ class ArchiveSpikeResource(ArchiveResource):
     item_methods = ["PATCH"]
 
     privileges = {"PATCH": "spike"}
-    versioning = False
 
 
 class ArchiveUnspikeResource(ArchiveResource):
@@ -77,7 +76,6 @@ class ArchiveUnspikeResource(ArchiveResource):
     item_methods = ["PATCH"]
 
     privileges = {"PATCH": "unspike"}
-    versioning = False
 
 
 class ArchiveSpikeService(BaseService):
