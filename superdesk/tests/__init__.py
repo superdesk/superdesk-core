@@ -71,7 +71,7 @@ def update_config(conf):
     conf["CONTENTAPI_MONGO_URI"] = get_mongo_uri("CONTENTAPI_MONGO_URI", "sptests_contentapi")
     conf["CONTENTAPI_ELASTICSEARCH_INDEX"] = "sptest_contentapi"
 
-    conf["DEBUG"] = True
+    conf["DEBUG"] = False  # avoid errors when calling init later
     conf["TESTING"] = True
     conf["SUPERDESK_TESTING"] = True
     conf["BCRYPT_GENSALT_WORK_FACTOR"] = 4
