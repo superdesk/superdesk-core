@@ -10,6 +10,7 @@
 
 """Superdesk"""
 
+import eve
 import blinker
 import logging as logging_lib
 
@@ -45,7 +46,7 @@ _eve_backend = EveBackend()
 default_user_preferences: Dict[str, "UserPreference"] = dict()
 default_session_preferences: Dict[str, Any] = dict()
 logger = logging_lib.getLogger(__name__)
-app = None
+app: Optional[eve.Eve] = None
 
 
 class UserPreference(NamedTuple):
