@@ -27,8 +27,6 @@ class ExifMetaExtractionTestCase(TestCase):
         with open(self.img, mode="rb") as f:
             meta = get_meta(f)
 
-        self.assertEqual(meta["ExifImageWidth"], 32)
-        self.assertEqual(meta["ExifImageHeight"], 21)
         self.assertEqual(meta["Make"], "Canon")
         self.assertEqual(meta["Model"], "Canon EOS 60D")
 
@@ -54,8 +52,6 @@ class ExifMetaWithGPSInfoExtractionTestCase(TestCase):
         with open(self.img, mode="rb") as f:
             meta = get_meta(f)
 
-        self.assertEqual(meta.get("ExifImageWidth", None), 400)
-        self.assertEqual(meta.get("ExifImageHeight", None), 300)
         self.assertEqual(meta.get("Make", None), "Apple")
         self.assertEqual(meta.get("Model", None), "iPhone 5")
         self.assertEqual(meta.get("GPSInfo", None), expected_gpsinfo)
