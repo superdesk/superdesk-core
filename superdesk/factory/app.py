@@ -67,7 +67,6 @@ def set_error_handlers(app):
 
     @app.errorhandler(AssertionError)
     def assert_error_handler(error):
-        print("error", error)
         return send_response(None, ({"code": 400, "error": str(error) if str(error) else "assert"}, None, None, 400))
 
     @app.errorhandler(500)
@@ -115,7 +114,8 @@ class SuperdeskEve(eve.Eve):
                 try:
                     create_index(self, resource, name, list_of_keys, index_options)
                 except KeyError:
-                    print("missing resource", self, resource)
+                    logger.warning("resource config missing for %s", resource)
+                    continue
                 except DuplicateKeyError as err:
                     # Duplicate key for unique indexes are generally caused by invalid documents in the collection
                     # such as multiple documents not having a value for the attribute used for the index
@@ -143,11 +143,6 @@ class SuperdeskEve(eve.Eve):
                 versioned_resource = resource + self.config["VERSIONS"]
                 if versioned_resource in self.config["DOMAIN"]:
                     update_resource_schema(versioned_resource)
-
-    def register_resource(self, resource, settings):
-        if settings.get("versioning"):
-            print("version", resource)
-        return super().register_resource(resource, settings)
 
 
 def get_media_storage_class(app_config: Dict[str, Any], use_provider_config: bool = True) -> Type[MediaStorage]:
