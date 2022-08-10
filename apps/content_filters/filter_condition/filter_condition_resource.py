@@ -9,8 +9,9 @@
 # at https://www.sourcefabric.org/superdesk/license
 
 import copy
-from superdesk import get_resource_service, config, app
+from superdesk import get_resource_service, config
 from superdesk.resource import Resource
+from flask import current_app as app
 
 
 default_allowed_filters = [

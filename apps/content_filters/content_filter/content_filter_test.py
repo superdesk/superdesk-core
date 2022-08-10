@@ -9,10 +9,11 @@
 # at https://www.sourcefabric.org/superdesk/license
 import json
 
+from flask import current_app as app
 from eve.utils import ParsedRequest
 from flask_babel import _
 
-from superdesk import get_resource_service, app
+from superdesk import get_resource_service
 from superdesk.resource import Resource
 from superdesk.services import BaseService
 from superdesk.errors import SuperdeskApiError

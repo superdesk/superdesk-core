@@ -13,7 +13,7 @@ import hmac
 import logging
 import requests
 
-from superdesk import app
+from flask import current_app as app
 from superdesk.publish import register_transmitter, registered_transmitter_file_providers
 
 from superdesk.errors import PublishHTTPPushError, PublishHTTPPushServerError, PublishHTTPPushClientError

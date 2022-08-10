@@ -17,7 +17,7 @@ from .app_scaffold_data import AppScaffoldDataCommand  # NOQA
 
 
 def init_app(app) -> None:
-    if superdesk.app.config.get("SUPERDESK_TESTING", False):
+    if app.config.get("SUPERDESK_TESTING", False):
         endpoint_name = "prepopulate"
         service = PrepopulateService(endpoint_name, backend=superdesk.get_backend())
         PrepopulateResource(endpoint_name, app=app, service=service)

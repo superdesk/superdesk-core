@@ -45,6 +45,7 @@ def elastic_filter(req=None):
 
 class LinksResource(ArchiveResource):
     item_methods = []
+    versioning = False
     resource_methods = ["GET"]
     datasource = ArchiveResource.datasource.copy()
     datasource.update(

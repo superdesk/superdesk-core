@@ -25,7 +25,7 @@ from superdesk import get_resource_service
 from superdesk.metadata.item import ITEM_STATE, CONTENT_STATE
 from superdesk.resource import Resource
 from superdesk.services import BaseService
-from superdesk.tests import clean_dbs, use_snapshot
+from superdesk.tests import clean_dbs
 from superdesk.utc import utcnow
 from superdesk.timer import timer
 from apps.search_providers import allowed_search_providers, register_search_provider
