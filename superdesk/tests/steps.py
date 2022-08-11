@@ -2728,3 +2728,13 @@ def when_we_run_task(context, name):
     task = celery.signature(name)
     assert task is not None
     task.apply()
+
+
+@when('the lock expires "{url}"')
+def when_lock_expires(context, url):
+    url = apply_placeholders(context, url).encode("ascii").decode("unicode-escape")
+    resource, _id = url.lstrip("/").rstrip("/").split("/")
+    with context.app.app_context():
+        orig = context.app.data.find_one(resource, req=None, _id=_id)
+        assert orig is not None, "could not find {}/{}".format(resource, _id)
+        context.app.data.update(resource, orig["_id"], {"_lock_time": utcnow() - timedelta(hours=48)}, orig)

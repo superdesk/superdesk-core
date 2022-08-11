@@ -8,6 +8,7 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
+from asyncore import read
 from typing import Dict, Any, List, Optional
 import logging
 
@@ -18,6 +19,8 @@ import superdesk
 
 from eve.utils import config
 from .services import Service
+
+from . import resource_locking
 
 
 log = logging.getLogger(__name__)
@@ -33,6 +36,9 @@ text_with_keyword = {
         "keyword": {"type": "keyword"},
     },
 }
+
+
+FieldTypes = Literal["string", "boolean", "integer", "dict", "list", "datetime"]
 
 
 def build_custom_hateoas(hateoas, doc, **values):
@@ -91,6 +97,7 @@ class Resource:
     item_privileges = False
     notifications = True
     collation: bool = False
+    locking: bool = False
 
     def __init__(self, endpoint_name, app, service, endpoint_schema=None):
         self.endpoint_name = endpoint_name
@@ -156,6 +163,9 @@ class Resource:
                 )
             )
 
+            if self.locking:
+                endpoint_schema["schema"].update(Resource.locking_schema())
+
             if app.config.get("SCHEMA_UPDATE", {}).get(self.endpoint_name):
                 schema_updates = app.config["SCHEMA_UPDATE"][self.endpoint_name]
                 log.warning(
@@ -186,6 +196,9 @@ class Resource:
         on_update_event = getattr(app, "on_update_%s" % self.endpoint_name)
         on_update_event -= service.on_update
         on_update_event += service.on_update
+
+        if self.locking:
+            on_update_event += resource_locking.on_update
 
         on_updated_event = getattr(app, "on_updated_%s" % self.endpoint_name)
         on_updated_event -= service.on_updated
@@ -277,6 +290,28 @@ class Resource:
             "nullable": nullable,
             "mapping": not_analyzed,
         }
+
+    @staticmethod
+    def field(type: FieldTypes, *, nullable=True, readonly=False, required=False, analyzed=False) -> dict:
+        mapping = None
+        if type == "string" and not analyzed:
+            mapping = {"type": "keyword"}
+        return dict(
+            type=type,
+            nullable=nullable,
+            readonly=readonly,
+            required=required,
+            mapping=mapping,
+        )
+
+    @staticmethod
+    def locking_schema() -> dict:
+        return dict(
+            _lock=Resource.field("boolean", nullable=False),
+            _lock_user=Resource.rel("users", readonly=True, nullable=True),
+            _lock_session=Resource.field("string", readonly=True, nullable=True, analyzed=False),
+            _lock_time=Resource.field("datetime", readonly=True, nullable=True),
+        )
 
 
 class VersionsResource(Resource):

@@ -31,6 +31,7 @@ class RundownItemsResource(superdesk.Resource):
         "search_backend": "elastic",
     }
 
+    locking = True
     versioning = True
     privileges = {"POST": privileges.RUNDOWNS, "PATCH": privileges.RUNDOWNS, "PUT": privileges.RUNDOWNS}
 
