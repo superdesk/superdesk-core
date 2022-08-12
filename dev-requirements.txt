@@ -17,5 +17,5 @@ typing_extensions>=3.7.4
 moto[sqs]
 
 -e .
--e git+https://github.com/superdesk/superdesk-planning.git@develop#egg=superdesk-planning
+-e git+https://github.com/superdesk/superdesk-planning.git@release/2.5#egg=superdesk-planning
 -e git+https://github.com/superdesk/sams.git@develop#egg=sams_client&subdirectory=src/clients/python/
