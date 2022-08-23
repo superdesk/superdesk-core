@@ -332,7 +332,7 @@ class IMatrics(AIServiceBase):
             )
 
     def publish(self, data):
-        return self._request("article/concept", data)
+        return self._request("article/store", data)
 
     def feedback(self, data):
         payload = self._transform_to_imatrics(data["item"], publish=True)
