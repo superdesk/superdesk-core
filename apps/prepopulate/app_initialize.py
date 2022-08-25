@@ -11,7 +11,7 @@ import superdesk
 import pymongo
 from eve.utils import config
 from flask import current_app as app
-from superdesk.commands.rebuild_elastic_index import RebuildElasticIndex
+from superdesk.commands.flush_elastic_index import FlushElasticIndex
 
 logger = logging.getLogger(__name__)
 
@@ -287,10 +287,10 @@ class AppInitializeWithDataCommand(superdesk.Command):
             logger.error(err)
 
             if app.config.get("REBUILD_ELASTIC_ON_INIT_DATA_ERROR"):
-                logger.warning("Can't update the mapping, running app:rebuild_elastic_index command now.")
-                RebuildElasticIndex().run()
+                logger.warning("Can't update the mapping, running app:flush_elastic_index command now.")
+                FlushElasticIndex().run(sd_index=True, capi_index=True)
             else:
-                logger.warning("Can't update the mapping, please run app:rebuild_elastic_index command.")
+                logger.warning("Can't update the mapping, please run app:flush_elastic_index command.")
 
         if init_index_only:
             logger.info("Only indexes initialized.")
