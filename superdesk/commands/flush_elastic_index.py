@@ -62,18 +62,18 @@ class FlushElasticIndex(superdesk.Command):
         """
 
         indices = list(self._es.indices.get_alias("{}_*".format(index_prefix)).keys())
-        print("Configured aliases: " + ", ".join(indices))
+        print(f"Configured indices with prefix '{index_prefix}': " + ", ".join(indices))
 
         for es_resource in app.data.get_elastic_resources():
             alias = app.data.elastic._resource_index(es_resource)
             print(f"- Attempting to delete alias {alias}")
             for index in indices:
-                if index.rsplit("_", 1)[0] == alias:
+                if index.rsplit("_", 1)[0] == alias or index == alias:
                     try:
                         print('- Removing elastic index "{}"'.format(index))
                         self._es.indices.delete(index=index)
                     except es_exceptions.NotFoundError:
-                        print('\t- "{}" elastic index was not found. Continue wihout deleting.'.format(index))
+                        print('\t- "{}" elastic index was not found. Continue without deleting.'.format(index))
                     except es_exceptions.TransportError as e:
                         raise SystemExit(
                             '\t- "{}" elastic index was not deleted. Exception: "{}"'.format(index, e.error)
