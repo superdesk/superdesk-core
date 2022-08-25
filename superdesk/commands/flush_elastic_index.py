@@ -62,9 +62,11 @@ class FlushElasticIndex(superdesk.Command):
         """
 
         indices = list(self._es.indices.get_alias("{}_*".format(index_prefix)).keys())
+        print("Configured aliases: " + ", ".join(indices))
 
         for es_resource in app.data.get_elastic_resources():
             alias = app.data.elastic._resource_index(es_resource)
+            print(f"- Attempting to delete alias {alias}")
             for index in indices:
                 if index.rsplit("_", 1)[0] == alias:
                     try:
