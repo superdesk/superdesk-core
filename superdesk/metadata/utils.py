@@ -97,6 +97,7 @@ def _set_highlight_query(source):
     query_string = source.get("query", {}).get("filtered", {}).get("query", {}).get("query_string")
     if query_string:
         query_string.setdefault("analyze_wildcard", app.config["ELASTIC_QUERY_STRING_ANALYZE_WILDCARD"])
+        query_string.setdefault("type", app.config["ELASTIC_QUERY_STRING_TYPE"])
         highlight_query = get_elastic_highlight_query(query_string)
         if highlight_query:
             source["highlight"] = highlight_query
