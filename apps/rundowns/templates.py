@@ -104,6 +104,7 @@ def fix_self_link(doc) -> None:
         show=doc["show"],
         _id=doc["_id"],
     )
+    doc["_links"]["self"]["title"] = TemplatesResource.resource_title
 
 
 class TemplatesService(superdesk.Service):

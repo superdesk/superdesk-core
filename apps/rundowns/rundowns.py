@@ -50,7 +50,12 @@ class RundownsResource(superdesk.Resource):
 
     locking = True
     versioning = True
-    privileges = {"POST": privileges.RUNDOWNS, "PATCH": privileges.RUNDOWNS, "PUT": privileges.RUNDOWNS}
+    privileges = {
+        "POST": privileges.RUNDOWNS,
+        "PATCH": privileges.RUNDOWNS,
+        "PUT": privileges.RUNDOWNS,
+        "DELETE": privileges.RUNDOWNS,
+    }
 
 
 class RundownsService(superdesk.Service):

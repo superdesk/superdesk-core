@@ -1,10 +1,7 @@
 import superdesk
 
-from typing import Dict
-
 from . import privileges, types
 
-from apps.archive.common import ITEM_DUPLICATE
 from superdesk.metadata.item import metadata_schema
 
 
@@ -25,6 +22,7 @@ class RundownItemsResource(superdesk.Resource):
         "additional_notes": superdesk.Resource.not_analyzed_field(),
         "live_captions": superdesk.Resource.not_analyzed_field(),
         "last_sentence": superdesk.Resource.not_analyzed_field(),
+        "fields_meta": metadata_schema["fields_meta"].copy(),
     }
 
     datasource = {
@@ -33,7 +31,12 @@ class RundownItemsResource(superdesk.Resource):
 
     locking = True
     versioning = True
-    privileges = {"POST": privileges.RUNDOWNS, "PATCH": privileges.RUNDOWNS, "PUT": privileges.RUNDOWNS}
+    privileges = {
+        "POST": privileges.RUNDOWNS,
+        "PATCH": privileges.RUNDOWNS,
+        "PUT": privileges.RUNDOWNS,
+        "DELETE": privileges.RUNDOWNS,
+    }
 
 
 class RundownItemsService(superdesk.Service):

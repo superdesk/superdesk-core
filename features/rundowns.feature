@@ -32,6 +32,7 @@ Feature: Rundowns
         When we get "/shows"
         Then we get list with 0 items
 
+    @wip
     @auth
     Scenario: Templates CRUD
         Given "shows"
@@ -65,7 +66,8 @@ Feature: Rundowns
         {
             "_links": {
                 "self": {
-                    "href": "/shows/#shows._id#/templates/#templates._id#"
+                    "href": "/shows/#shows._id#/templates/#templates._id#",
+                    "title": "rundown_templates"
                 }
             },
             "airtime_date": "2050-06-22",
@@ -332,6 +334,7 @@ Feature: Rundowns
         ]}
         """
 
+    @wip
     @auth
     Scenario: Rundowns CRUD
         Given "shows"
@@ -393,6 +396,12 @@ Feature: Rundowns
         """
         {"duration": 160}
         """
+
+        When we delete "/rundowns/#rundowns._id#"
+        Then we get OK response
+
+        When we delete "/rundown_items/#rundown_items._id#"
+        Then we get OK response
 
     @auth
     Scenario: Create rundown for today
