@@ -121,6 +121,7 @@ class SearchService(superdesk.Service):
 
     def _enhance_query_string(self, query_string):
         query_string.setdefault("analyze_wildcard", app.config["ELASTIC_QUERY_STRING_ANALYZE_WILDCARD"])
+        query_string.setdefault("type", app.config["ELASTIC_QUERY_STRING_TYPE"])
 
     def _get_projected_fields(self, req):
         """Get elastic projected fields."""

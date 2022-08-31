@@ -99,6 +99,12 @@ ELASTIC_DEFAULT_SIZE = 10
 #: https://discuss.elastic.co/t/configuring-the-standard-tokenizer/8691/5
 ELASTIC_QUERY_STRING_ANALYZE_WILDCARD = False
 
+#: allow to change type of query string query
+#:
+#: .. versionadded:: 2.5
+#:
+ELASTIC_QUERY_STRING_TYPE = "cross_fields"
+
 #: max api items to get with single query
 #:
 #: .. versionchanged:: 2.4.1
