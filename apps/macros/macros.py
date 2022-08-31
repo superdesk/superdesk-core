@@ -129,4 +129,9 @@ class MacrosResource(superdesk.Resource):
             "type": "string",
             "readonly": True,
         },
+        "order": {"type": "integer", "readonly": True},
+        "shortcut": {
+            "type": "string",
+            "readonly": True,
+        },
     }
