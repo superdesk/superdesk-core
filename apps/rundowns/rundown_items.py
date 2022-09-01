@@ -1,6 +1,6 @@
 import superdesk
 
-from . import privileges, types
+from . import privileges, types, rundowns
 
 from superdesk.metadata.item import metadata_schema
 
@@ -71,6 +71,10 @@ class RundownItemsService(superdesk.Service):
         for ref in refs:
             duration += durations[ref["_id"]]
         return duration
+
+    def on_updated(self, updates, original):
+        if "duration" in updates and original.get("duration") != updates["duration"]:
+            rundowns.rundowns_service.update_durations(original["_id"])
 
 
 items_service = RundownItemsService()

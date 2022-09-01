@@ -403,11 +403,22 @@ Feature: Rundowns
         {"duration": 160}
         """
 
+        When we patch "/rundown_items/#rundown_items._id#"
+        """
+        {"duration": 200}
+        """
+        And we get "/rundowns/#rundowns._id#"
+        Then we get existing resource
+        """
+        {"duration": 400}
+        """
+
         When we delete "/rundowns/#rundowns._id#"
         Then we get OK response
 
         When we delete "/rundown_items/#rundown_items._id#"
         Then we get OK response
+
 
     @auth
     Scenario: Create rundown for today
