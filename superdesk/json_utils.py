@@ -1,5 +1,4 @@
 import arrow
-import superdesk
 
 from arrow.parser import ParserError
 from flask import json
@@ -36,21 +35,20 @@ def try_cast(v):
 
 
 def cast_item(o):
-    with superdesk.app.app_context():
-        if isinstance(o, (int, float, bool)):
-            return o
-        elif isinstance(o, str):
-            return try_cast(o)
-        elif isinstance(o, list):
-            for i, v in enumerate(o):
-                o[i] = cast_item(v)
-            return o
-        elif isinstance(o, dict):
-            for k, v in o.items():
-                o[k] = cast_item(v)
-            return o
-        else:
-            return o
+    if isinstance(o, (int, float, bool)):
+        return o
+    elif isinstance(o, str):
+        return try_cast(o)
+    elif isinstance(o, list):
+        for i, v in enumerate(o):
+            o[i] = cast_item(v)
+        return o
+    elif isinstance(o, dict):
+        for k, v in o.items():
+            o[k] = cast_item(v)
+        return o
+    else:
+        return o
 
 
 def loads(s):
@@ -69,5 +67,4 @@ def loads(s):
 
 
 def dumps(o):
-    with superdesk.app.app_context():
-        return MongoJSONEncoder().encode(o)
+    return MongoJSONEncoder().encode(o)
