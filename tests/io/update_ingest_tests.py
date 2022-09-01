@@ -472,6 +472,8 @@ class UpdateIngestTest(TestCase):
         items[0]["expiry"] = utcnow() + timedelta(hours=11)
         # change the headline
         items[0]["headline"] = "Updated headline"
+        # change version or versioncreated so the item will update
+        items[0]["version"] = 11
 
         # ingest the item again
         self.ingest_items(items, provider, provider_service)
