@@ -9,7 +9,8 @@ from . import privileges, rundown_items, types, templates, shows
 
 
 class RundownsResource(superdesk.Resource):
-    resource_title = "Rundowns"
+    resource_title = "rundowns"
+
     schema = {
         "show": superdesk.Resource.rel("shows", required=True),
         "title": metadata_schema["headline"],

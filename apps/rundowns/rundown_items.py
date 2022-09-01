@@ -6,6 +6,8 @@ from superdesk.metadata.item import metadata_schema
 
 
 class RundownItemsResource(superdesk.Resource):
+    resource_title = "rundown_items"
+
     schema = {
         "title": metadata_schema["headline"],
         "item_type": superdesk.Resource.not_analyzed_field(required=True),

@@ -4,6 +4,8 @@ from . import privileges
 
 
 class ShowsResource(superdesk.Resource):
+    resource_title = "shows"
+
     schema = {
         "title": {
             "type": "string",

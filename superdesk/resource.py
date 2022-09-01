@@ -131,7 +131,10 @@ class Resource:
             if self.internal_resource is not None:
                 endpoint_schema.update({"internal_resource": self.internal_resource})
             if self.resource_title is not None:
-                endpoint_schema.update({"resource_title": self.resource_title})
+                endpoint_schema.update({
+                    "resource_title": self.resource_title,
+                    "item_title": self.resource_title,
+                })
             if self.etag_ignore_fields:
                 endpoint_schema.update({"etag_ignore_fields": self.etag_ignore_fields})
             if self.mongo_prefix:

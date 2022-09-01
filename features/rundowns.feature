@@ -7,6 +7,9 @@ Feature: Rundowns
         {"title": "Test", "description": "Test description", "planned_duration": 10.5}
         """
         Then we get response code 201
+        """
+        {"_links": {"self": {"title": "shows"}}}
+        """
 
         When we get "/shows"
         Then we get list with 1 items
@@ -32,7 +35,6 @@ Feature: Rundowns
         When we get "/shows"
         Then we get list with 0 items
 
-    @wip
     @auth
     Scenario: Templates CRUD
         Given "shows"
@@ -334,7 +336,6 @@ Feature: Rundowns
         ]}
         """
 
-    @wip
     @auth
     Scenario: Rundowns CRUD
         Given "shows"
@@ -354,6 +355,9 @@ Feature: Rundowns
         }
         """
         Then we get ok response
+        """
+        {"_links": {"self": {"title": "rundowns"}}}
+        """
 
         When we post to "/rundown_items"
         """
@@ -365,8 +369,10 @@ Feature: Rundowns
             "content": "<p>some text</p>"
         }
         """
-
         Then we get OK response
+        """
+        {"_links": {"self": {"title": "rundown_items"}}}
+        """
 
         When we get "/rundowns"
         Then we get list with 1 items
@@ -430,7 +436,6 @@ Feature: Rundowns
         }
         """
 
-    @wip
     @auth
     Scenario: Locking
         Given "shows"
