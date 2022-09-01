@@ -366,7 +366,8 @@ Feature: Rundowns
             "duration": 80,
             "planned_duration": 120,
             "item_type": "test",
-            "content": "<p>some text</p>"
+            "content": "<p>some text</p>",
+            "subitems": ["wall", "video"]
         }
         """
         Then we get OK response
