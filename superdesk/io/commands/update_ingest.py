@@ -668,9 +668,9 @@ def ingest_item(item, provider, feeding_service, rule_set=None, routing_scheme=N
             if new_version:
                 ingest_service.patch_in_mongo(old_item[superdesk.config.ID_FIELD], updates, old_item)
                 item.update(updates)
-                item.update(old_item)
                 items_ids.append(item["_id"])
-
+            else:
+                item.update(old_item)
         else:
             if item.get("ingest_provider_sequence") is None:
                 ingest_service.set_ingest_provider_sequence(item, provider)
