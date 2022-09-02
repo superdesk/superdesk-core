@@ -1,5 +1,7 @@
 import superdesk
 
+from typing import Dict
+
 from . import privileges, types, rundowns
 
 from superdesk.metadata.item import metadata_schema
@@ -61,17 +63,21 @@ class RundownItemsService(superdesk.Service):
         self.create([item])
         return item
 
-    def get_durations(self, refs: types.IRefs) -> int:
-        durations = {}
+    def set_durations(self, dest: Dict, refs: types.IRefs) -> None:
+        """Compute duration and planned duration based on referenced items."""
+        durations = {"duration": {}, "planned_duration": {}}
         cursor = self.get_from_mongo(
-            req=None, lookup={"_id": {"$in": [ref["_id"] for ref in refs]}}, projection={"duration": 1}
+            req=None, lookup={"_id": {"$in": [ref["_id"] for ref in refs]}}, projection={key: 1 for key in durations}
         )
+        # first we store durations for each item in a lookup
         for item in cursor:
-            durations[item["_id"]] = item["duration"]
-        duration = 0
-        for ref in refs:
-            duration += durations[ref["_id"]]
-        return duration
+            for key in durations:
+                durations[key][item["_id"]] = item.get(key) or 0
+        # for each duration we iterate over refs and compute durations
+        for key in durations:
+            dest[key] = 0
+            for ref in refs:
+                dest[key] += durations[key][ref["_id"]]
 
     def on_updated(self, updates, original):
         if "duration" in updates and original.get("duration") != updates["duration"]:

@@ -401,17 +401,17 @@ Feature: Rundowns
         When we get "/rundowns/#rundowns._id#"
         Then we get existing resource
         """
-        {"duration": 160}
+        {"duration": 160, "planned_duration": 240}
         """
 
         When we patch "/rundown_items/#rundown_items._id#"
         """
-        {"duration": 200}
+        {"duration": 200, "planned_duration": 300}
         """
         And we get "/rundowns/#rundowns._id#"
         Then we get existing resource
         """
-        {"duration": 400}
+        {"duration": 400, "planned_duration": 600}
         """
 
         When we delete "/rundowns/#rundowns._id#"

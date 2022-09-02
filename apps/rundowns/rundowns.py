@@ -153,13 +153,14 @@ class RundownsService(superdesk.Service):
     def update(self, id, updates, original):
         if updates.get("items"):
             if updates["items"] != original.get("items"):
-                updates["duration"] = rundown_items.items_service.get_durations(updates["items"])
+                rundown_items.items_service.set_durations(updates, updates["items"])
         return super().update(id, updates, original)
 
     def update_durations(self, item_id):
         cursor = self.get_from_mongo(req=None, lookup={"items._id": item_id})
         for rundown in cursor:
-            updates = {"duration": rundown_items.items_service.get_durations(rundown["items"])}
+            updates = {}
+            rundown_items.items_service.set_durations(updates, rundown["items"])
             self.system_update(rundown["_id"], updates, rundown)
 
 
