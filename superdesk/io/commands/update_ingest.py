@@ -667,6 +667,7 @@ def ingest_item(item, provider, feeding_service, rule_set=None, routing_scheme=N
             updates = deepcopy(item)
             if new_version:
                 ingest_service.patch_in_mongo(old_item[superdesk.config.ID_FIELD], updates, old_item)
+                item.update(old_item)
                 item.update(updates)
                 items_ids.append(item["_id"])
             else:
