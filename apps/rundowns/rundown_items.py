@@ -28,6 +28,7 @@ class RundownItemsResource(superdesk.Resource):
         "last_sentence": superdesk.Resource.not_analyzed_field(),
         "fields_meta": metadata_schema["fields_meta"].copy(),
         "subitems": {"type": "list", "mapping": {"type": "keyword"}},
+        "subitem_attachments": {"type": "list", "mapping": {"type": "keyword"}},
     }
 
     datasource = {
