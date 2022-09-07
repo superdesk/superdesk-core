@@ -1,6 +1,6 @@
 import superdesk
 
-from typing import Dict
+from typing import Dict, List
 
 from . import privileges, types, rundowns
 
@@ -79,6 +79,16 @@ class RundownItemsService(superdesk.Service):
             dest[key] = 0
             for ref in refs:
                 dest[key] += durations[key][ref["_id"]]
+
+    def get_rundown_items(self, rundown: types.IRundown) -> List[types.IRundownItem]:
+        if not rundown.get("items"):
+            return []
+        ids = list(set([ref["_id"] for ref in rundown["items"]]))
+        items = {}
+        cursor = self.get_from_mongo(req=None, lookup={"_id": {"$in": ids}})
+        for item in cursor:
+            items[item["_id"]] = item
+        return [items[ref["_id"]] for ref in rundown["items"]]
 
     def on_updated(self, updates, original):
         if "duration" in updates and original.get("duration") != updates["duration"]:

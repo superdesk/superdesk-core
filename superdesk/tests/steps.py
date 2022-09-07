@@ -1263,6 +1263,8 @@ def step_impl_then_get_code(context, code):
     assert context.response.status_code == int(code), "we got code={} data={}".format(
         context.response.status_code, get_response_readable(context.response.data)
     )
+    if context.text:
+        test_json(context)
 
 
 @then("we get updated response")

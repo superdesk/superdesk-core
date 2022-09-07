@@ -1,7 +1,7 @@
 import datetime
 import superdesk
 
-from typing import List, Optional
+from typing import Optional
 
 from superdesk.metadata.item import metadata_schema
 
@@ -89,7 +89,7 @@ class RundownsService(superdesk.Service):
             "airtime_time": doc["airtime_time"],
             "scheduled_on": None,
             "template": None,
-            "items": [],
+            "items": doc["items"] if doc.get("items") else [],
         }
 
         super().create([rundown])

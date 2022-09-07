@@ -11,9 +11,8 @@ class ShowsResource(superdesk.Resource):
             "type": "string",
             "required": True,
         },
-        "description": {
-            "type": "string",
-        },
+        "shortcode": superdesk.Resource.field("string"),
+        "description": superdesk.Resource.field("string"),
         "planned_duration": {
             "type": "number",
         },
