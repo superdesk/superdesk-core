@@ -3,6 +3,7 @@ import superdesk
 
 from flask import current_app as app
 from superdesk.editor_utils import generate_fields, get_field_content_state
+from superdesk.errors import SuperdeskApiError
 
 
 class MediaFixLinksCommand(superdesk.Command):
@@ -56,8 +57,11 @@ class MediaFixLinksCommand(superdesk.Command):
                     if dry_run:
                         print("update", item["_id"], updates.keys())
                     else:
-                        print(".", end="")
-                        service.system_update(item["_id"], updates, orig)
+                        try:
+                            service.system_update(item["_id"], updates, orig)
+                            print(".", end="")
+                        except SuperdeskApiError:
+                            print("x", end="")
             if not dry_run:
                 print("")
             print("Done. Updated", updated, "items.")
