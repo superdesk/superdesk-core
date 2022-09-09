@@ -3,7 +3,6 @@ import superdesk
 from bson import ObjectId
 from flask import Blueprint, url_for, current_app as app, abort
 from typing import List
-from datetime import timezone, datetime, timedelta
 
 from superdesk.utils import ListCursor, jwt_encode, jwt_decode
 

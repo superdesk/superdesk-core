@@ -596,6 +596,15 @@ Feature: Rundowns
                                         "inlineStyleRanges": [],
                                         "entityRanges": [],
                                         "data": {}
+                                    },
+                                    {
+                                        "key": "5lrsd",
+                                        "text": "baz",
+                                        "type": "ordered-list-item",
+                                        "depth": 0,
+                                        "inlineStyleRanges": [],
+                                        "entityRanges": [],
+                                        "data": {}
                                     }
                                 ]
                             }
