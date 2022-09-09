@@ -530,10 +530,12 @@ Feature: Rundowns
     @auth
     Scenario: Export
         When we get "/rundown_export"
-        Then we get list with 1 items
+        Then we get list with 3 items
         """
         {"_items": [
-            {"name": "Prompter", "_id": "prompter-pdf"}
+            {"name": "Prompter PDF", "_id": "prompter-pdf"},
+            {"name": "Realizer CSV", "_id": "table-csv"},
+            {"name": "Realizer PDF", "_id": "table-pdf"}
         ]}
         """
 
@@ -561,7 +563,18 @@ Feature: Rundowns
                                 "blocks": [
                                     {
                                         "key": "41kgq",
-                                        "text": "test",
+                                        "text": "try some really long text so we will see how that wraps and if that will actually add some space after",
+                                        "type": "unstyled",
+                                        "depth": 0,
+                                        "inlineStyleRanges": [],
+                                        "entityRanges": [],
+                                        "data": {
+                                        "MULTIPLE_HIGHLIGHTS": {}
+                                        }
+                                    },
+                                    {
+                                        "key": "42kgq",
+                                        "text": "try some really long text so we will see how that wraps and if that will actually add some space after",
                                         "type": "unstyled",
                                         "depth": 0,
                                         "inlineStyleRanges": [],
@@ -643,5 +656,33 @@ Feature: Rundowns
 
         When we get "#rundown_export.href#"
         Then we get response code 200
-        And we get "Content-Disposition" header with "attachment; filename="Rundown Title.pdf"" type
+        And we get "Content-Disposition" header with "attachment; filename="Prompter-Rundown Title.pdf"" type
+        And we get "Content-Type" header with "application/pdf" type
+
+        When we post to "rundown_export"
+        """
+        {"format": "table-csv", "rundown": "#rundowns._id#"}
+        """
+        Then we get response code 201
+        """
+        {"href": "__any_value__"}
+        """
+
+        When we get "#rundown_export.href#"
+        Then we get response code 200
+        And we get "Content-Disposition" header with "attachment; filename="Realizer-Rundown Title.csv"" type
+        And we get "Content-Type" header with "text/csv; charset=utf-8" type
+
+        When we post to "rundown_export"
+        """
+        {"format": "table-pdf", "rundown": "#rundowns._id#"}
+        """
+        Then we get response code 201
+        """
+        {"href": "__any_value__"}
+        """
+
+        When we get "#rundown_export.href#"
+        Then we get response code 200
+        And we get "Content-Disposition" header with "attachment; filename="Realizer-Rundown Title.pdf"" type
         And we get "Content-Type" header with "application/pdf" type

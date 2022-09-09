@@ -1,12 +1,16 @@
 import io
+import reportlab.lib.colors as colors
+
 from typing import List
 
-from reportlab.platypus import SimpleDocTemplate, Paragraph, ListItem, ListFlowable
+from reportlab.platypus import SimpleDocTemplate, Paragraph, ListItem, ListFlowable, Table
 from reportlab.lib.styles import getSampleStyleSheet
+from reportlab.lib.pagesizes import landscape, A4
 
 from superdesk.editor_utils import get_field_content_state
 
-from . import BaseFormatter
+from . import BaseFormatter, utils
+from .csv import TableCSVFormatter
 
 from superdesk.text_utils import get_text
 
@@ -38,21 +42,35 @@ class PrompterPDFFormatter(BaseFormatter):
     MIMETYPE = "application/pdf"
 
     style = styles["BodyText"]
+    margin = FONT_SIZE
+
+    pagesize = A4
+
+    def filename(self, show, rundown):
+        return f"Prompter-{rundown['title']}.pdf"
 
     def export(self, show, rundown, items):
-        filename = f"{rundown['title']}.pdf"
         output = io.BytesIO()
-
-        margin = 15
         doc = SimpleDocTemplate(
-            output, leftMargin=margin, rightMargin=margin, topMargin=margin, bottomMargin=margin, title=rundown["title"]
+            output,
+            leftMargin=self.margin,
+            rightMargin=self.margin,
+            topMargin=self.margin,
+            bottomMargin=self.margin,
+            title=rundown["title"],
+            pagesize=self.pagesize,
         )
+
+        contents = self.get_contents(show, rundown, items)
+        doc.build(contents)
+
+        return output.getvalue(), self.MIMETYPE, self.filename(show, rundown)
+
+    def get_contents(self, show, rundown, items):
         contents = []
         for item in items:
             self.export_item(contents, show, rundown, item)
-        doc.build(contents)
-
-        return output.getvalue(), self.MIMETYPE, filename
+        return contents
 
     def export_item(self, contents: List, show, rundown, item) -> None:
         title = "-".join(
@@ -109,3 +127,28 @@ class PrompterPDFFormatter(BaseFormatter):
 
     def list(self, items, type):
         return ListFlowable(items, bulletType=type)
+
+
+class TablePDFFormatter(PrompterPDFFormatter):
+
+    MIMETYPE = "application/pdf"
+
+    pagesize = landscape(A4)
+
+    def filename(self, show, rundown):
+        return f"Realizer-{rundown['title']}.pdf"
+
+    def get_contents(self, show, rundown, items):
+        data = [
+            TableCSVFormatter.COLUMNS,
+        ]
+        for i, item in enumerate(items, start=1):
+            data.append(utils.item_table_data(show, rundown, item, i))
+        return [
+            Table(
+                data,
+                style=[
+                    ("GRID", (0, 0), (-1, -1), 0.25, colors.black),
+                ],
+            )
+        ]

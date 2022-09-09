@@ -39,10 +39,15 @@ def init_app(app: SuperdeskApp) -> None:
         "rundown_export", export.ExportResource, service_instance=export.export_service, _app=app
     )
 
-    from .formatters.pdf import PrompterPDFFormatter
+    from .formatters.pdf import PrompterPDFFormatter, TablePDFFormatter
+    from .formatters.csv import TableCSVFormatter
 
-    export.available_services.append(
-        PrompterPDFFormatter("prompter-pdf", "Prompter"),
+    export.available_services.extend(
+        [
+            PrompterPDFFormatter("prompter-pdf", "Prompter PDF"),
+            TableCSVFormatter("table-csv", "Realizer CSV"),
+            TablePDFFormatter("table-pdf", "Realizer PDF"),
+        ]
     )
 
     app.register_blueprint(export.blueprint)
