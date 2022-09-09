@@ -11,15 +11,26 @@ from . import BaseFormatter
 from superdesk.text_utils import get_text
 
 
-FONT_SIZE = 15
+styles = getSampleStyleSheet()
+
+
+FONT_SIZE = 14
+FONT_NAME = styles["Heading1"].fontName
 ORDERED_TYPE = "1"
 UNORDERED_TYPE = "bullet"
 
 
-styles = getSampleStyleSheet()
-styles["OrderedList"].bulletFontSize = FONT_SIZE
 styles["OrderedList"].bulletFormat = "%s."
+styles["OrderedList"].bulletFontSize = FONT_SIZE
+styles["OrderedList"].bulletFontName = FONT_NAME
+styles["OrderedList"].leftIndent = FONT_SIZE * 2
 styles["UnorderedList"].bulletFontSize = FONT_SIZE
+styles["UnorderedList"].bulletFontName = FONT_NAME
+styles["UnorderedList"].leftIndent = FONT_SIZE * 2
+styles["BodyText"].fontName = FONT_NAME
+styles["BodyText"].fontSize = FONT_SIZE
+styles["BodyText"].leading = FONT_SIZE + 5
+styles["BodyText"].spaceAfter = FONT_SIZE
 
 
 class PrompterPDFFormatter(BaseFormatter):
@@ -27,10 +38,6 @@ class PrompterPDFFormatter(BaseFormatter):
     MIMETYPE = "application/pdf"
 
     style = styles["BodyText"]
-    style.fontSize = FONT_SIZE
-    style.spaceAfter = FONT_SIZE
-
-    bullet = "\u2022"  # unicode bullet
 
     def export(self, show, rundown, items):
         filename = f"{rundown['title']}.pdf"
@@ -68,6 +75,7 @@ class PrompterPDFFormatter(BaseFormatter):
             contents.append(Paragraph(text, self.style))
 
         # empty line after item
+        contents.append(Paragraph("", self.style))
         contents.append(Paragraph("", self.style))
 
     def export_item_content_state(self, contents: List, content_state) -> None:
