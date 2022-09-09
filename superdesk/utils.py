@@ -11,6 +11,7 @@
 import os
 import re
 import sys
+import jwt
 import time
 import bcrypt
 import hashlib
@@ -20,14 +21,15 @@ import string
 import logging
 
 from uuid import uuid4
-from datetime import datetime
+from datetime import datetime, timezone, timedelta
 from bson import ObjectId
 from enum import Enum
 from importlib import import_module
 from eve.utils import config
-from typing import Any, Dict, Iterator, List
+from typing import Any, Dict, Iterator
 from superdesk.default_settings import ELASTIC_DATE_FORMAT, ELASTIC_DATETIME_FORMAT
 from superdesk.text_utils import get_text
+from flask import current_app as app
 
 
 logger = logging.getLogger(__name__)
@@ -36,6 +38,7 @@ required_string = {"type": "string", "required": True, "nullable": False, "empty
 
 PWD_ALPHABET = string.ascii_letters + string.digits
 PWD_DEFAULT_LENGHT = 40
+JWT_ALGO = "HS256"
 
 
 if sys.version_info < (3, 6):
@@ -325,3 +328,17 @@ class AllowedContainer:
 
     def __iter__(self) -> Iterator[str]:
         return iter(self.data.keys())
+
+
+def jwt_encode(payload: Dict, expiry=None) -> str:
+    if expiry:
+        payload["exp"] = datetime.now(tz=timezone.utc) + timedelta(days=expiry)
+    payload["iss"] = app.config["APPLICATION_NAME"]
+    return jwt.encode(payload, app.config["SECRET_KEY"], JWT_ALGO)
+
+
+def jwt_decode(token) -> Dict | None:
+    try:
+        return jwt.decode(token, app.config["SECRET_KEY"], [JWT_ALGO])
+    except jwt.InvalidSignatureError:
+        return None

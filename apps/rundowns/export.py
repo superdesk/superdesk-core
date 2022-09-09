@@ -1,25 +1,31 @@
 import superdesk
 
+from bson import ObjectId
+from flask import Blueprint, url_for, current_app as app, abort
 from typing import List
-from flask import Blueprint, url_for, current_app as app
+from datetime import timezone, datetime, timedelta
 
-from superdesk.utils import ListCursor
+from superdesk.utils import ListCursor, jwt_encode, jwt_decode
 
 from . import privileges, rundowns, rundown_items, formatters, shows
 
+EXPORT_EXPIRY_DAYS = 7
 
 available_services: List[formatters.BaseFormatter] = []
 
-blueprint = Blueprint("rundowns_export", __name__)
+blueprint = Blueprint("rundowns_export", __name__, url_prefix="/api")
 
 
-@blueprint.route("/rundowns_export/<format_id>/<rundown_id>", methods=["GET"])
-def export(format_id, rundown_id):
-    rundown = rundowns.rundowns_service.find_one(req=None, _id=rundown_id)
+@blueprint.route("/rundowns_export/<token>", methods=["GET"])
+def export(token):
+    payload = jwt_decode(token)
+    if not payload:
+        return abort(401)
+    rundown = rundowns.rundowns_service.find_one(req=None, _id=ObjectId(payload["rundown"]))
     assert rundown is not None, {"rundown": 1}
     show = shows.shows_service.find_one(req=None, _id=rundown["show"])
     assert show is not None, {"show": 1}
-    formatter = next((service for service in available_services if format_id == service.id), None)
+    formatter = next((service for service in available_services if payload["format"] == service.id), None)
     assert formatter, {"formatter": 1}
     items = rundown_items.items_service.get_rundown_items(rundown)
     output, mimetype, filename = formatter.export(show, rundown, items)
@@ -64,12 +70,18 @@ class ExportService(superdesk.Service):
     def set_link(self, doc):
         doc["href"] = url_for(
             "rundowns_export.export",
-            format_id=doc["format"],
-            rundown_id=doc["rundown"],
+            token=self.get_token(doc),
             _external=True,
             _scheme=app.config["PREFERRED_URL_SCHEME"],
         )
         return doc["rundown"]
+
+    def get_token(self, doc):
+        payload = {
+            "format": doc["format"],
+            "rundown": str(doc["rundown"]),
+        }
+        return jwt_encode(payload, expiry=EXPORT_EXPIRY_DAYS)
 
 
 export_service = ExportService()

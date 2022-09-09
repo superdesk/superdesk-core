@@ -553,7 +553,55 @@ Feature: Rundowns
                 "planned_duration": 120,
                 "item_type": "test",
                 "subitems": ["wall", "video"],
-                "content": "<p>foo</p><p>bar</p>"
+                "content": "<p>foo</p><p>bar</p>",
+                "fields_meta": {
+                    "content": {
+                        "draftjsState": [
+                            {
+                                "blocks": [
+                                    {
+                                        "key": "41kgq",
+                                        "text": "test",
+                                        "type": "unstyled",
+                                        "depth": 0,
+                                        "inlineStyleRanges": [],
+                                        "entityRanges": [],
+                                        "data": {
+                                        "MULTIPLE_HIGHLIGHTS": {}
+                                        }
+                                    },
+                                    {
+                                        "key": "jr6v",
+                                        "text": "list1",
+                                        "type": "unordered-list-item",
+                                        "depth": 0,
+                                        "inlineStyleRanges": [],
+                                        "entityRanges": [],
+                                        "data": {}
+                                    },
+                                    {
+                                        "key": "4grar",
+                                        "text": "list2",
+                                        "type": "unordered-list-item",
+                                        "depth": 0,
+                                        "inlineStyleRanges": [],
+                                        "entityRanges": [],
+                                        "data": {}
+                                    },
+                                    {
+                                        "key": "aiq9u",
+                                        "text": "",
+                                        "type": "unstyled",
+                                        "depth": 0,
+                                        "inlineStyleRanges": [],
+                                        "entityRanges": [],
+                                        "data": {}
+                                    }
+                                ]
+                            }
+                        ]
+                    }
+                }
             }
         ]
         """

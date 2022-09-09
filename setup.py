@@ -64,6 +64,7 @@ install_requires = [
     # Fix an issue with MarkupSafe 2.1.0 not exporting `soft_unicode`
     "MarkupSafe<2.1",
     "reportlab>=3.6.11,<3.7",
+    "pyjwt>=2.4.0,<2.5",
 ]
 
 package_data = {
