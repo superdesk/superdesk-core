@@ -1,13 +1,13 @@
 import pytz
 import logging
-import superdesk
 import dateutil.rrule as rrule
 
-from datetime import datetime, timedelta
 from flask import current_app as app
+from datetime import datetime, timedelta
 from superdesk.celery_app import celery
 from superdesk.utc import utc_to_local, local_to_utc
 from superdesk.lock import lock, unlock
+from apps.rundowns.types import IRRule
 
 from . import templates, rundowns
 
@@ -33,15 +33,16 @@ def create_scheduled_rundowns() -> None:
             rundowns.rundowns_service.create_from_template(
                 template, local_date.date(), scheduled_on=template["scheduled_on"]
             )
-            schedule = template["schedule"]
+            schedule: IRRule = template["schedule"]
             assert hasattr(rrule, schedule["freq"].upper())
             dates = list(
                 rrule.rrule(
                     freq=getattr(rrule, schedule["freq"].upper()),
                     interval=schedule.get("interval", 1),
-                    bymonth=schedule.get("month"),
-                    bymonthday=schedule.get("monthday"),
-                    byweekday=schedule.get("weekday"),
+                    bymonth=schedule.get("by_month"),
+                    bymonthday=schedule.get("by_month_day"),
+                    byweekday=schedule.get("by_day"),
+                    byweekno=schedule.get("by_week_no"),
                     dtstart=local_date,
                     count=10,
                 )

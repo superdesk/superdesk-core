@@ -1,6 +1,6 @@
 import datetime
 
-from typing import List, Optional, TypedDict
+from typing import List, Literal, Optional, TypedDict
 
 
 class IEntity(TypedDict, total=False):
@@ -12,6 +12,14 @@ class IRef(TypedDict):
 
 
 IRefs = List[IRef]
+
+class IRRule(TypedDict, total=False):
+    freq: Literal['DAILY', 'WEEKLY', 'MONTHLY', 'YEARLY']
+    interval: int
+    by_month: List[int]
+    by_month_day: List[int]
+    by_day: List[int]
+    by_week_no: List[int]
 
 
 class IRundownTitleTemplate(TypedDict, total=False):
@@ -41,6 +49,7 @@ class IRundownItemTemplate(TypedDict):
     additional_notes: Optional[str]
     live_captions: Optional[str]
     last_sentence: Optional[str]
+
 
 
 class IRundownItem(IRundownItemTemplate, IEntity):

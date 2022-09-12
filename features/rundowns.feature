@@ -35,6 +35,7 @@ Feature: Rundowns
         When we get "/shows"
         Then we get list with 0 items
 
+    @wip
     @auth
     Scenario: Templates CRUD
         Given "shows"
@@ -57,9 +58,9 @@ Feature: Rundowns
             "schedule": {
                 "freq": "DAILY",
                 "interval": 1,
-                "month": [1],
-                "monthday": [1, -1],
-                "weekday": [1]
+                "by_month": [1],
+                "by_month_day": [1, -1],
+                "by_day": [1]
             }
         }
         """
@@ -80,7 +81,7 @@ Feature: Rundowns
 
         When we patch "/shows/#shows._id#/templates/#templates._id#"
         """
-        {"schedule": {"weekday": [5, 6]}, "repeat": false}
+        {"schedule": {"by_day": [5, 6]}, "repeat": false}
         """
         Then we get OK response
         """
@@ -92,7 +93,7 @@ Feature: Rundowns
         When we get "/shows/#shows._id#/templates"
         Then we get list with 1 items
         """
-        {"_items": [{"schedule": {"weekday": [5, 6]}, "repeat": false}]}
+        {"_items": [{"schedule": {"by_day": [5, 6]}, "repeat": false}]}
         """
 
         When we delete "/shows/#shows._id#/templates/#templates._id#"

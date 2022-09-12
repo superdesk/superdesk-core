@@ -47,17 +47,21 @@ class TemplatesResource(superdesk.Resource):
                     "type": "number",
                     "default": 1,
                 },
-                "month": {
+                "by_month": {
                     "type": "list",
                     "allowed": list(range(1, 13)),
                 },
-                "monthday": {
+                "by_month_day": {
                     "type": "list",
                     "allowed": list(range(-31, 32)),
                 },
-                "weekday": {
+                "by_day": {
                     "type": "list",
                     "allowed": list(range(0, 7)),
+                },
+                "by_week_no": {
+                    "type": "list",
+                    "allowed": list(range(0, 52)),
                 },
             },
         },
