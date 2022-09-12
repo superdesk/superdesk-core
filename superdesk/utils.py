@@ -26,7 +26,7 @@ from bson import ObjectId
 from enum import Enum
 from importlib import import_module
 from eve.utils import config
-from typing import Any, Dict, Iterator
+from typing import Any, Dict, Iterator, Optional
 from superdesk.default_settings import ELASTIC_DATE_FORMAT, ELASTIC_DATETIME_FORMAT
 from superdesk.text_utils import get_text
 from flask import current_app as app
@@ -337,7 +337,7 @@ def jwt_encode(payload: Dict, expiry=None) -> str:
     return jwt.encode(payload, app.config["SECRET_KEY"], JWT_ALGO)
 
 
-def jwt_decode(token) -> Dict | None:
+def jwt_decode(token) -> Optional[Dict]:
     try:
         return jwt.decode(token, app.config["SECRET_KEY"], [JWT_ALGO])
     except jwt.InvalidSignatureError:

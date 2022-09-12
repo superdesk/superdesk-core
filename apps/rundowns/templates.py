@@ -89,7 +89,7 @@ class TemplatesResource(superdesk.Resource):
             "type": "list",
             "schema": {
                 "type": "dict",
-                "schema": rundown_items.RundownItemsResource.schema.copy(),
+                "schema": rundown_items.RundownItemsResource.schema,  # type: ignore
             },
         },
     }

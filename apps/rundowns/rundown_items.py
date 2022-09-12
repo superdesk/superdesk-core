@@ -58,7 +58,7 @@ class RundownItemsService(superdesk.Service):
             "guests": template.get("guests", ""),
             "additional_notes": template.get("additional_notes", ""),
             "live_captions": template.get("live_captions", ""),
-            "last_sentences": template.get("last_sentences", ""),
+            "last_sentence": template.get("last_sentence", ""),
         }
 
         self.create([item])
@@ -66,7 +66,7 @@ class RundownItemsService(superdesk.Service):
 
     def set_durations(self, dest: Dict, refs: types.IRefs) -> None:
         """Compute duration and planned duration based on referenced items."""
-        durations = {"duration": {}, "planned_duration": {}}
+        durations: Dict[str, Dict[str, int]] = {"duration": {}, "planned_duration": {}}
         cursor = self.get_from_mongo(
             req=None, lookup={"_id": {"$in": [ref["_id"] for ref in refs]}}, projection={key: 1 for key in durations}
         )

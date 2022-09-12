@@ -10,7 +10,7 @@ def item_title(show: types.IShow, rundown: types.IRundown, item: types.IRundownI
             [
                 item.get("item_type", "").upper(),
                 show.get("shortcode", "").upper(),
-                item.get("title", "").upper(),
+                (item.get("title") or "").upper(),
             ],
         )
     )

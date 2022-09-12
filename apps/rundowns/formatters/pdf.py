@@ -98,7 +98,7 @@ class PrompterPDFFormatter(BaseFormatter):
 
     def export_item_content_state(self, contents: List, content_state) -> None:
         list_type = None
-        list_items = []
+        list_items: List[ListItem] = []
         for block in content_state["blocks"]:
             if block["type"] == "unstyled":
                 if list_items:

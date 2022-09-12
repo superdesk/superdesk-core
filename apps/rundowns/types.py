@@ -40,7 +40,7 @@ class IRundownItemTemplate(TypedDict):
     guests: Optional[str]
     additional_notes: Optional[str]
     live_captions: Optional[str]
-    last_sentences: Optional[str]
+    last_sentence: Optional[str]
 
 
 class IRundownItem(IRundownItemTemplate, IEntity):
@@ -60,3 +60,4 @@ class IRundown(IRundownBase):
 class IShow(IEntity):
     title: str
     planned_duration: int
+    shortcode: str
