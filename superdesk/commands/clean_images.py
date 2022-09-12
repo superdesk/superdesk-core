@@ -58,7 +58,7 @@ class CleanImages(superdesk.Command):
 
         print("Number of used files: ", len(used_images))
 
-        superdesk.app.media.remove_unreferenced_files(used_images)
+        app.media.remove_unreferenced_files(used_images)
 
     def __add_existing_files(self, used_images, items):
         for item in items:
