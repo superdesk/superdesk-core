@@ -35,7 +35,6 @@ Feature: Rundowns
         When we get "/shows"
         Then we get list with 0 items
 
-    @wip
     @auth
     Scenario: Templates CRUD
         Given "shows"
@@ -527,7 +526,6 @@ Feature: Rundowns
         """
         Then we get ok response
     
-    @wip
     @auth
     Scenario: Export
         When we get "/rundown_export"
@@ -687,3 +685,76 @@ Feature: Rundowns
         Then we get response code 200
         And we get "Content-Disposition" header with "attachment; filename="Realizer-Rundown Title.pdf"" type
         And we get "Content-Type" header with "application/pdf" type
+
+    @wip
+    @auth
+    Scenario: Search rundown by item contents
+        Given "shows"
+        """
+        [
+            {"title": "Test", "shortcode": "MRK"}
+        ]
+        """
+
+        And "rundown_items"
+        """
+        [
+            {
+                "title": "sample",
+                "duration": 80,
+                "planned_duration": 120,
+                "item_type": "test",
+                "subitems": ["wall", "video"],
+                "content": "<p>searchable content</p>"
+            }
+        ]
+        """
+
+        And "rundowns"
+        """
+        [
+            {
+                "show": "#shows._id#",
+                "title": "Rundown Title",
+                "airtime_time": "06:00",
+                "airtime_date": "2030-01-01",
+                "planned_duration": 3600,
+                "items": [
+                    {"_id": "#rundown_items._id#"}
+                ]
+            }
+        ]
+        """
+
+        When we get "/rundowns?q=searchable"
+        Then we get list with 1 items
+
+        When we get "/rundowns?q=title"
+        Then we get list with 1 items
+
+        When we get "/rundowns?q=missing"
+        Then we get list with 0 items
+
+        When we post to "/rundown_items"
+        """
+        {
+            "title": "missing",
+            "duration": 80,
+            "planned_duration": 120,
+            "item_type": "test",
+            "subitems": ["wall", "video"],
+            "content": "<p>content</p>"
+        }
+        """
+        Then we get ok response
+
+        When we patch "/rundowns/#rundowns._id#"
+        """
+        {"items": [
+            {"_id": "#rundown_items._id#"}
+        ], "title": "wat?"}
+        """
+        Then we get ok response
+
+        When we get "/rundowns?q=missing"
+        Then we get list with 1 items

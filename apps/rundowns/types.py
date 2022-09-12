@@ -1,6 +1,6 @@
 import datetime
 
-from typing import List, Literal, Optional, TypedDict
+from typing import Dict, List, Literal, Optional, TypedDict
 
 
 class IEntity(TypedDict, total=False):
@@ -13,8 +13,9 @@ class IRef(TypedDict):
 
 IRefs = List[IRef]
 
+
 class IRRule(TypedDict, total=False):
-    freq: Literal['DAILY', 'WEEKLY', 'MONTHLY', 'YEARLY']
+    freq: Literal["DAILY", "WEEKLY", "MONTHLY", "YEARLY"]
     interval: int
     by_month: List[int]
     by_month_day: List[int]
@@ -51,7 +52,6 @@ class IRundownItemTemplate(TypedDict):
     last_sentence: Optional[str]
 
 
-
 class IRundownItem(IRundownItemTemplate, IEntity):
     pass
 
@@ -61,9 +61,15 @@ class ITemplate(IRundownBase):
     items: List[IRundownItemTemplate]
 
 
-class IRundown(IRundownBase):
+class IRundownPartial(IRundownBase, total=False):
+    duration: int
     template: Optional[str]
     items: IRefs
+    items_data: List[Dict[str, str]]
+
+
+class IRundown(IRundownPartial):
+    pass
 
 
 class IShow(IEntity):

@@ -64,21 +64,30 @@ class RundownItemsService(superdesk.Service):
         self.create([item])
         return item
 
-    def set_durations(self, dest: Dict, refs: types.IRefs) -> None:
-        """Compute duration and planned duration based on referenced items."""
+    def sync_items(self, dest: types.IRundownPartial, refs: types.IRefs) -> None:
+        """Sync items data to rundown."""
         durations: Dict[str, Dict[str, int]] = {"duration": {}, "planned_duration": {}}
-        cursor = self.get_from_mongo(
-            req=None, lookup={"_id": {"$in": [ref["_id"] for ref in refs]}}, projection={key: 1 for key in durations}
-        )
+        cursor = self.get_from_mongo(req=None, lookup={"_id": {"$in": [ref["_id"] for ref in refs]}})
         # first we store durations for each item in a lookup
+        dest["items_data"] = []
         for item in cursor:
             for key in durations:
                 durations[key][item["_id"]] = item.get(key) or 0
+            for key in ("title", "content", "additional_notes", "live_captions"):
+                if item.get(key):
+                    dest["items_data"].append(
+                        {
+                            "_id": item["_id"],
+                            "key": key,
+                            "value": item[key],
+                        }
+                    )
+
         # for each duration we iterate over refs and compute durations
-        for key in durations:
-            dest[key] = 0
+        for key in ("duration", "planned_duration"):
+            dest[key] = 0  # type: ignore
             for ref in refs:
-                dest[key] += durations[key][ref["_id"]]
+                dest[key] += durations[key][ref["_id"]]  # type: ignore
 
     def get_rundown_items(self, rundown: types.IRundown) -> List[types.IRundownItem]:
         if not rundown.get("items"):

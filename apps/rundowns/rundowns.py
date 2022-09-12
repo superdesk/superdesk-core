@@ -43,6 +43,17 @@ class RundownsResource(superdesk.Resource):
                 },
             },
         },
+        "items_data": {
+            "type": "list",
+            "schema": {
+                "type": "dict",
+                "schema": {
+                    "_id": superdesk.Resource.rel("rundown_items"),
+                    "key": superdesk.Resource.not_analyzed_field(),
+                    "value": superdesk.Resource.field("string", analyzed=True),
+                },
+            },
+        },
     }
 
     datasource = {
@@ -74,6 +85,7 @@ class RundownsService(superdesk.Service):
                 rundown = self.create_from_template(template, date, doc=doc)
             else:
                 rundown = self.create_from_show(show, date, doc=doc)
+            print("data", rundown.get("items_data"))
             doc.update(rundown)
             assert "_id" in rundown, {"rundown": {"_id": 1}}
             ids.append(rundown["_id"])
@@ -90,7 +102,11 @@ class RundownsService(superdesk.Service):
             "scheduled_on": None,
             "template": None,
             "items": doc["items"] if doc.get("items") else [],
+            "items_data": [],
         }
+
+        if rundown.get("items"):
+            rundown_items.items_service.sync_items(rundown, rundown["items"])
 
         super().create([rundown])
         return rundown
@@ -114,6 +130,7 @@ class RundownsService(superdesk.Service):
                 "scheduled_on": None,
                 "template": template["_id"],
                 "items": [],
+                "items_data": [],
             }
         rundown: types.IRundown = {
             "show": doc.get("show") or template["show"],
@@ -124,6 +141,7 @@ class RundownsService(superdesk.Service):
             "planned_duration": doc.get("planned_duration") or template.get("planned_duration") or 0,
             "scheduled_on": scheduled_on,
             "items": [],
+            "items_data": [],
         }
 
         if template.get("title_template") and not doc.get("title"):
@@ -141,6 +159,7 @@ class RundownsService(superdesk.Service):
 
         if template.get("items"):
             rundown["items"] = [self.get_item_ref(ref) for ref in template["items"]]
+            rundown_items.items_service.sync_items(rundown, rundown["items"])
 
         super().create([rundown])
         return rundown
@@ -153,14 +172,15 @@ class RundownsService(superdesk.Service):
     def update(self, id, updates, original):
         if updates.get("items"):
             if updates["items"] != original.get("items"):
-                rundown_items.items_service.set_durations(updates, updates["items"])
+                rundown_items.items_service.sync_items(updates, updates["items"])
+                print("IN SYNC", updates)
         return super().update(id, updates, original)
 
     def update_durations(self, item_id):
         cursor = self.get_from_mongo(req=None, lookup={"items._id": item_id})
         for rundown in cursor:
             updates = {}
-            rundown_items.items_service.set_durations(updates, rundown["items"])
+            rundown_items.items_service.sync_items(updates, rundown["items"])
             self.system_update(rundown["_id"], updates, rundown)
 
 
