@@ -77,7 +77,7 @@ class IngestService(BaseService):
         ]
 
         for file_id in file_ids:
-            superdesk.app.media.delete(file_id)
+            app.media.delete(file_id)
 
         ids = [
             ref.get("residRef")
