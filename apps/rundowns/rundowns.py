@@ -98,9 +98,8 @@ class RundownsService(superdesk.Service):
             "title": doc.get("title") or show["title"],
             "planned_duration": doc.get("planned_duration") or show.get("planned_duration") or 0,
             "airtime_date": date.isoformat(),
-            "airtime_time": doc["airtime_time"],
+            "airtime_time": doc["airtime_time"] if "airtime_time" in doc else "",
             "scheduled_on": None,
-            "template": None,
             "items": doc["items"] if doc.get("items") else [],
             "items_data": [],
         }
@@ -113,7 +112,7 @@ class RundownsService(superdesk.Service):
 
     def create_from_template(
         self,
-        template: types.ITemplate,
+        template: types.IRundownTemplate,
         date: datetime.date,
         *,
         doc: Optional[types.IRundown] = None,
@@ -126,6 +125,7 @@ class RundownsService(superdesk.Service):
                 "airtime_time": "",
                 "airtime_date": date.isoformat(),
                 "title": "",
+                "duration": 0,
                 "planned_duration": 0,
                 "scheduled_on": None,
                 "template": template["_id"],
@@ -138,6 +138,7 @@ class RundownsService(superdesk.Service):
             "airtime_time": doc.get("airtime_time") or template.get("airtime_time") or "",
             "title": doc.get("title") or template.get("title", "") or "",
             "template": template["_id"],
+            "duration": 0,
             "planned_duration": doc.get("planned_duration") or template.get("planned_duration") or 0,
             "scheduled_on": scheduled_on,
             "items": [],
@@ -173,15 +174,15 @@ class RundownsService(superdesk.Service):
         if updates.get("items"):
             if updates["items"] != original.get("items"):
                 rundown_items.items_service.sync_items(updates, updates["items"])
-                print("IN SYNC", updates)
         return super().update(id, updates, original)
 
-    def update_durations(self, item_id):
+    def sync_item_changes(self, item_id):
         cursor = self.get_from_mongo(req=None, lookup={"items._id": item_id})
         for rundown in cursor:
-            updates = {}
+            updates: types.IRundown = {}
             rundown_items.items_service.sync_items(updates, rundown["items"])
-            self.system_update(rundown["_id"], updates, rundown)
+            if updates:
+                self.system_update(rundown["_id"], updates, rundown)
 
 
 rundowns_service = RundownsService()

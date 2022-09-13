@@ -1,6 +1,6 @@
 import superdesk
 
-from typing import Dict, List
+from typing import Any, Dict, List, Literal
 
 from . import privileges, types, rundowns
 
@@ -46,6 +46,18 @@ class RundownItemsResource(superdesk.Resource):
 
 
 class RundownItemsService(superdesk.Service):
+    search_fields = [
+        "title",
+        "content",
+        "live_captions",
+        "additional_notes",
+    ]
+
+    duration_fields = [
+        "duration",
+        "planned_duration",
+    ]
+
     def create_from_template(self, template: types.IRundownItemTemplate) -> types.IRundownItem:
         item: types.IRundownItem = {
             "item_type": template["item_type"],
@@ -64,30 +76,33 @@ class RundownItemsService(superdesk.Service):
         self.create([item])
         return item
 
-    def sync_items(self, dest: types.IRundownPartial, refs: types.IRefs) -> None:
+    def sync_items(self, dest: types.IRundown, refs: types.IRefs) -> None:
         """Sync items data to rundown."""
-        durations: Dict[str, Dict[str, int]] = {"duration": {}, "planned_duration": {}}
+        durations: Dict[Literal["duration", "planned_duration"], Dict[str, int]] = {
+            "duration": {},
+            "planned_duration": {},
+        }
         cursor = self.get_from_mongo(req=None, lookup={"_id": {"$in": [ref["_id"] for ref in refs]}})
         # first we store durations for each item in a lookup
         dest["items_data"] = []
         for item in cursor:
             for key in durations:
-                durations[key][item["_id"]] = item.get(key) or 0
-            for key in ("title", "content", "additional_notes", "live_captions"):
-                if item.get(key):
+                durations[key][str(item["_id"])] = item.get(key) or 0
+            for field in self.search_fields:
+                if item.get(field):
                     dest["items_data"].append(
                         {
                             "_id": item["_id"],
-                            "key": key,
-                            "value": item[key],
+                            "key": field,
+                            "value": item[field],
                         }
                     )
 
         # for each duration we iterate over refs and compute durations
-        for key in ("duration", "planned_duration"):
-            dest[key] = 0  # type: ignore
+        for key in durations:
+            dest[key] = 0
             for ref in refs:
-                dest[key] += durations[key][ref["_id"]]  # type: ignore
+                dest[key] += durations[key][str(ref["_id"])]
 
     def get_rundown_items(self, rundown: types.IRundown) -> List[types.IRundownItem]:
         if not rundown.get("items"):
@@ -100,8 +115,10 @@ class RundownItemsService(superdesk.Service):
         return [items[ref["_id"]] for ref in rundown["items"]]
 
     def on_updated(self, updates, original):
-        if "duration" in updates and original.get("duration") != updates["duration"]:
-            rundowns.rundowns_service.update_durations(original["_id"])
+        for field in self.search_fields + self.duration_fields:
+            if field in updates and original.get(field) != updates[field]:
+                rundowns.rundowns_service.sync_item_changes(original["_id"])
+                break
 
 
 items_service = RundownItemsService()

@@ -172,8 +172,8 @@ class TemplatesService(superdesk.Service):
         super().on_fetched_item(doc)
         fix_self_link(doc)
 
-    def find_one(self, req, **lookup) -> Optional[types.ITemplate]:
-        template: types.ITemplate = super().find_one(req=req, **lookup)
+    def find_one(self, req, **lookup) -> Optional[types.IRundownTemplate]:
+        template: types.IRundownTemplate = super().find_one(req=req, **lookup)
         return template
 
 

@@ -23,19 +23,16 @@ class IRRule(TypedDict, total=False):
     by_week_no: List[int]
 
 
+class IShow(IEntity):
+    title: str
+    planned_duration: int
+    shortcode: str
+
+
 class IRundownTitleTemplate(TypedDict, total=False):
     prefix: str
     separator: str
     date_format: str
-
-
-class IRundownBase(IEntity):
-    show: str
-    title: str
-    airtime_date: str
-    airtime_time: str
-    planned_duration: int
-    scheduled_on: Optional[datetime.datetime]
 
 
 class IRundownItemTemplate(TypedDict):
@@ -56,23 +53,22 @@ class IRundownItem(IRundownItemTemplate, IEntity):
     pass
 
 
-class ITemplate(IRundownBase):
-    title_template: IRundownTitleTemplate
-    items: List[IRundownItemTemplate]
-
-
-class IRundownPartial(IRundownBase, total=False):
+class IRundownBase(IEntity, total=False):
+    show: str
+    title: str
+    airtime_date: str
+    airtime_time: str
     duration: int
-    template: Optional[str]
+    planned_duration: int
+    scheduled_on: Optional[datetime.datetime]
+
+
+class IRundownTemplate(IRundownBase):
+    items: List[IRundownItemTemplate]
+    title_template: IRundownTitleTemplate
+
+
+class IRundown(IRundownBase, total=False):
+    template: str
     items: IRefs
     items_data: List[Dict[str, str]]
-
-
-class IRundown(IRundownPartial):
-    pass
-
-
-class IShow(IEntity):
-    title: str
-    planned_duration: int
-    shortcode: str

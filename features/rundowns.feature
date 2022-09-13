@@ -686,7 +686,6 @@ Feature: Rundowns
         And we get "Content-Disposition" header with "attachment; filename="Realizer-Rundown Title.pdf"" type
         And we get "Content-Type" header with "application/pdf" type
 
-    @wip
     @auth
     Scenario: Search rundown by item contents
         Given "shows"
@@ -758,3 +757,10 @@ Feature: Rundowns
 
         When we get "/rundowns?q=missing"
         Then we get list with 1 items
+
+        When we patch "/rundown_items/#rundown_items._id#"
+        """
+        {"content": "<p>another</p>", "title": "another"}
+        """
+        And we get "/rundowns?q=missing"
+        Then we get list with 0 items
