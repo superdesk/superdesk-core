@@ -70,9 +70,11 @@ class RFC822ComplexTestCase(TestCase):
         for item in self.items:
             self.assertIn("versioncreated", item)
 
-    def test_from(self):
         self.assertEqual(self.items[0]["original_source"], "someone <a@a.com.au>")
         self.assertNotIn("original_creator", self.items[0])
+
+        self.assertIn("renditions", self.items[0])
+        self.assertIn("original", self.items[0]["renditions"])
 
 
 class RFC822OddCharSetTestCase(TestCase):
