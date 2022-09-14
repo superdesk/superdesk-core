@@ -340,9 +340,10 @@ metadata_schema = {
             "properties": {
                 "uri": not_analyzed,
                 "parent": not_analyzed,
-                "name": not_analyzed,
+                "name": text_with_keyword,
                 "role": not_analyzed,
                 "jobtitle": not_enabled,
+                "sub_label": text_with_keyword,
             },
         },
     },
