@@ -25,7 +25,9 @@ from superdesk.errors import IngestEmailError
 from superdesk.io.registry import register_feed_parser
 from superdesk.io.feed_parsers import EmailFeedParser
 from superdesk.io.iptc import subject_codes
+from superdesk.media.renditions import generate_renditions, get_renditions_spec
 from superdesk.media.media_operations import process_file_from_stream
+from superdesk.upload import url_for_media
 from superdesk.metadata.item import ITEM_TYPE, CONTENT_TYPE, GUID_TAG, SIGN_OFF, BYLINE, FORMATS, FORMAT
 from superdesk.metadata.utils import generate_guid
 from superdesk.users.errors import UserNotRegisteredException
@@ -158,7 +160,13 @@ class EMailRFC822FeedParser(EmailFeedParser):
                             image_id = self.parser_app.media.put(
                                 content, filename=fileName, content_type=content_type, metadata=metadata
                             )
-                            renditions = {"baseImage": {"href": image_id}}
+
+                            content.seek(0)
+                            rendition_spec = get_renditions_spec(no_custom_crops=True)
+                            renditions = generate_renditions(
+                                content, image_id, [image_id], "image", content_type, rendition_spec, url_for_media
+                            )
+                            item["renditions"] = renditions
 
                             # if we have not got a composite item then create one
                             if not comp_item:
