@@ -23,6 +23,7 @@ from superdesk.default_settings import (  # noqa
     MONGO_URI,
     ELASTICSEARCH_INDEX,
     ELASTICSEARCH_URL,
+    ELASTICSEARCH_SETTINGS,
     AMAZON_ACCESS_KEY_ID,
     AMAZON_SECRET_ACCESS_KEY,
     AMAZON_REGION,
