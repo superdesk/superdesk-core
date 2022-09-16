@@ -53,9 +53,9 @@ class RundownItemsService(superdesk.Service):
         "additional_notes",
     ]
 
-    duration_fields = [
+    duration_fields : List[Literal["duration", "planned_duration"]] = [
         "duration",
-        "planned_duration",
+        # disable auto syncing "planned_duration",
     ]
 
     def create_from_template(self, template: types.IRundownItemTemplate) -> types.IRundownItem:
@@ -99,7 +99,7 @@ class RundownItemsService(superdesk.Service):
                     )
 
         # for each duration we iterate over refs and compute durations
-        for key in durations:
+        for key in self.duration_fields:
             dest[key] = 0
             for ref in refs:
                 dest[key] += durations[key][str(ref["_id"])]
