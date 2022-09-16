@@ -93,7 +93,7 @@ class GMailFeedingService(EmailFeedingService):
             raise IngestEmailError.notConfiguredError(ValueError(l_("You need to log in first")), provider=provider)
         imap = imaplib.IMAP4_SSL("imap.gmail.com")
 
-        if token["expires_at"].timestamp() < time.time() + 600:
+        if token["expires_at"].replace(tzinfo=None).timestamp() < time.time() + 600:
             logger.info("Refreshing token for {provider_name}".format(provider_name=provider["name"]))
             token = oauth.refresh_google_token(token["_id"])
 
