@@ -157,7 +157,7 @@ class EveBackend:
         """
         req.if_modified_since = None
         backend = self._backend(endpoint_name)
-        cursor, _ = backend.find(endpoint_name, req, lookup)
+        cursor, _ = backend.find(endpoint_name, req, lookup, perform_count=False)
         self._cursor_hook(cursor=cursor, req=req)
         return cursor
 

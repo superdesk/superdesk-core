@@ -52,3 +52,16 @@ class DatalayerTestCase(TestCase):
         item = self.app.data.find_one("archive", req=None, guid="foo")
         self.assertIsNotNone(item)
         self.assertEqual("archive", item.get("_type"))
+
+    def test_get_all_batch(self):
+        SIZE = 500
+        items = []
+        for i in range(SIZE):
+            items.append({"_id": "test-{:04d}".format(i)})
+        service = superdesk.get_resource_service("archive")
+        service.create(items)
+        counter = 0
+        for item in service.get_all_batch(size=5):
+            assert item["_id"] == "test-{:04d}".format(counter)
+            counter += 1
+        assert counter == SIZE
