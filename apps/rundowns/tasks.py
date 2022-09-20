@@ -22,6 +22,7 @@ def create_scheduled_rundowns() -> None:
     if not lock(lock_id, expire=300):
         return
     try:
+        logger.info("Checking templates for automatic rundown creation")
         tz = pytz.timezone(app.config["RUNDOWNS_TIMEZONE"])
         now = datetime.utcnow().replace(tzinfo=pytz.utc, microsecond=0)
         buffer = timedelta(hours=app.config["RUNDOWNS_SCHEDULE_HOURS"])
@@ -59,3 +60,4 @@ def create_scheduled_rundowns() -> None:
                 templates_service.system_update(template["_id"], updates, template)
     finally:
         unlock(lock_id)
+        logger.info("Done")

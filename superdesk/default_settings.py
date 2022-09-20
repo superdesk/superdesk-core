@@ -360,7 +360,7 @@ CELERY_BEAT_SCHEDULE = {
     },
     "rundowns:create-scheduled-rundowns": {
         "task": "apps.rundowns.tasks.create_scheduled_rundowns",
-        "schedule": crontab(minute=30),
+        "schedule": crontab(minute="*/5"),
     },
 }
 
@@ -1073,4 +1073,4 @@ RUNDOWNS_TIMEZONE = DEFAULT_TIMEZONE
 #:
 #: .. versionadded:: 2.6
 #:
-RUNDOWNS_SCHEDULE_HOURS = 48
+RUNDOWNS_SCHEDULE_HOURS = 12
