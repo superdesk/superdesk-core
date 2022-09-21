@@ -53,7 +53,7 @@ class RundownItemsService(superdesk.Service):
         "additional_notes",
     ]
 
-    duration_fields : List[Literal["duration", "planned_duration"]] = [
+    duration_fields: List[Literal["duration", "planned_duration"]] = [
         "duration",
         # disable auto syncing "planned_duration",
     ]

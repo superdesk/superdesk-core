@@ -1,4 +1,6 @@
 import datetime
+import dateutil.rrule as rrule
+
 from typing import Optional
 
 
@@ -23,3 +25,28 @@ def combine_date_time(
         tzinfo=tz if tz is not None else time.tzinfo,
         microsecond=0,
     )
+
+
+def get_next_date(start_date: datetime.datetime, schedule) -> Optional[datetime.datetime]:
+    assert start_date.tzinfo is not None, "start_date must be time zone aware"
+    if not schedule.get("freq"):
+        return None
+    freq = schedule.get("freq", "DAILY").upper()
+    assert hasattr(rrule, freq), "Unknown frequency {}".format(freq)
+    now = datetime.datetime.utcnow().replace(tzinfo=datetime.timezone.utc)
+    dates = list(
+        rrule.rrule(
+            freq=getattr(rrule, freq),
+            interval=schedule.get("interval", 1),
+            bymonth=schedule.get("by_month"),
+            bymonthday=schedule.get("by_month_day"),
+            byweekday=schedule.get("by_day"),
+            byweekno=schedule.get("by_week_no"),
+            dtstart=start_date.replace(microsecond=0),
+            count=10,
+        )
+    )
+    for date in dates:
+        if date > now:
+            return date
+    return None

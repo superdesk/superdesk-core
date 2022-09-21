@@ -35,6 +35,7 @@ Feature: Rundowns
         When we get "/shows"
         Then we get list with 0 items
 
+    @wip
     @auth
     Scenario: Templates CRUD
         Given "shows"
@@ -169,8 +170,9 @@ Feature: Rundowns
         }
         """
 
+    @wip
     @auth
-    Scenario: Validate airtime date when creating/updating template
+    Scenario: Reset scheduled_on when updating schedule settings
         Given "shows"
         """
         [
@@ -183,36 +185,39 @@ Feature: Rundowns
         {
             "title": "Test",
             "airtime_time": "06:00",
-            "airtime_date": "2022-06-20"
+            "repeat": true,
+            "schedule": {
+                "freq": "DAILY"
+            }
         }
         """
-        Then we get error 400
-        """
-        {"error": "Airtime must be in the future."}
-        """
+        Then we get ok response
 
-        When we post to "shows/#shows._id#/templates"
+        When we run task "apps.rundowns.tasks.create_scheduled_rundowns"
+        And we get "shows/#shows._id#/templates/#templates._id#"
+        Then we get existing resource
         """
-        {
-            "title": "Test",
-            "airtime_time": "06:00",
-            "airtime_date": "2050-01-01"
-        }
-        """
-        Then we get new resource
-        """
-        {"scheduled_on": "2050-01-01T05:00:00+0000"}
+        {"scheduled_on": "__future__"}
         """
 
         When we patch "shows/#shows._id#/templates/#templates._id#"
         """
-        {"airtime_date": "2022-06-20"}
+        {
+            "title": "Test",
+            "airtime_time": "06:00",
+            "repeat": true,
+            "schedule": {
+                "freq": "DAILY",
+                "by_day": [3]
+            }
+        }
         """
-        Then we get error 400
+        Then we get ok response
         """
-        {"_issues": {"validator exception": "Airtime must be in the future."}}
+        {"scheduled_on": null}
         """
 
+    @wip
     @auth
     Scenario: Create rundown based on template schedule
         Given "shows"
@@ -225,10 +230,9 @@ Feature: Rundowns
         """
         [
             {
-                "title": "Scheduled",
+                "title": "Scheduled one",
                 "show": "#shows._id#",
-                "airtime_time": "06:00",
-                "airtime_date": "2030-01-01",
+                "airtime_time": "18:00",
                 "planned_duration": 3600,
                 "repeat": true,
                 "schedule": {
@@ -237,23 +241,22 @@ Feature: Rundowns
                 "title_template": {
                     "prefix": "Scheduled",
                     "separator": "//",
-                    "date_format": "%d.%m.%Y"
+                    "date_format": "%H:%M"
                 }
             },
             {
-                "title": "Not Scheduled",
+                "title": "Scheduled two",
                 "show": "#shows._id#",
                 "airtime_time": "06:00",
-                "airtime_date": "2030-01-01",
                 "planned_duration": 3600,
-                "repeat": false,
+                "repeat": true,
                 "schedule": {
                     "freq": "DAILY"
                 },
                 "title_template": {
-                    "prefix": "Not Scheduled",
+                    "prefix": "Scheduled",
                     "separator": "//",
-                    "date_format": "%d.%m.%Y"
+                    "date_format": "%H:%M"
                 }
             }
         ]
@@ -261,22 +264,17 @@ Feature: Rundowns
 
         When we run task "apps.rundowns.tasks.create_scheduled_rundowns"
         And we get "/rundowns"
-        Then we get list with 1 items
+        Then we get list with 2 items
         """
         {"_items": [
-            {"title": "Scheduled // 01.01.2030", "scheduled_on": "2030-01-01T05:00:00+0000"}
+            {"title": "Scheduled // 18:00", "scheduled_on": "__future__"},
+            {"title": "Scheduled // 06:00", "scheduled_on": "__future__"}
         ]}
         """
 
         When we run task "apps.rundowns.tasks.create_scheduled_rundowns"
         And we get "/rundowns"
         Then we get list with 2 items
-        """
-        {"_items": [
-            {"title": "Scheduled // 01.01.2030", "scheduled_on": "2030-01-01T05:00:00+0000"},
-            {"title": "Scheduled // 02.01.2030", "scheduled_on": "2030-01-02T05:00:00+0000"}
-        ]}
-        """
 
     @auth
     Scenario: Add items to rundown template
@@ -292,7 +290,6 @@ Feature: Rundowns
         {
             "title": "Scheduled",
             "airtime_time": "06:00",
-            "airtime_date": "2030-01-01",
             "planned_duration": 3600
         }
         """
@@ -312,7 +309,7 @@ Feature: Rundowns
 
         When we post to "/rundowns"
         """
-        {"show": "#shows._id#", "template": "#templates._id#", "airtime_date": "2055-06-10"}
+        {"show": "#shows._id#", "template": "#templates._id#"}
         """
         Then we get new resource
 

@@ -1,15 +1,10 @@
-from typing import Optional
-import pytz
-import datetime
 import superdesk
 
-from flask import current_app as app
-from flask_babel import _
-from superdesk.errors import DocumentError
-from superdesk.utc import local_to_utc
+from typing import Optional
+
 from apps.auth import get_user_id
 
-from . import privileges, utils, types, rundown_items
+from . import privileges, types, rundown_items
 
 
 class TemplatesResource(superdesk.Resource):
@@ -23,21 +18,26 @@ class TemplatesResource(superdesk.Resource):
         "show": superdesk.Resource.rel("shows", required=True),
         "description": {
             "type": "string",
+            "nullable": True,
         },
         "airtime_time": {
             "type": "time",
+            "nullable": True,
         },
         "airtime_date": {
             "type": "date",
+            "nullable": True,
         },
         "planned_duration": {
             "type": "number",
+            "nullable": True,
         },
         "repeat": {
             "type": "boolean",
         },
         "schedule": {
             "type": "dict",
+            "nullable": True,
             "schema": {
                 "freq": {
                     "type": "string",
@@ -67,6 +67,7 @@ class TemplatesResource(superdesk.Resource):
         },
         "title_template": {
             "type": "dict",
+            "nullable": True,
             "schema": {
                 "prefix": {
                     "type": "string",
@@ -82,10 +83,12 @@ class TemplatesResource(superdesk.Resource):
         "scheduled_on": {
             "type": "datetime",
             "readonly": True,
+            "nullable": True,
         },
         "last_scheduled_on": {
             "type": "datetime",
             "readonly": True,
+            "nullable": True,
         },
         "created_by": superdesk.Resource.rel("users", readonly=True),
         "last_updated_by": superdesk.Resource.rel("users", readonly=True),
@@ -111,43 +114,17 @@ def fix_self_link(doc) -> None:
     doc["_links"]["self"]["title"] = TemplatesResource.resource_title
 
 
+def empty_schedule(updates):
+    updates["scheduled_on"] = None
+
+
 class TemplatesService(superdesk.Service):
     def set_scheduled_on(self, updates, original=None):
+        """Reset current schedule when schedule config changes."""
         if original is None:
             original = {}
-
-        def is_updated(field):
-            return updates.get(field) and updates[field] != original.get(field)
-
-        def is_none(field):
-            return field in updates and updates[field] is None
-
-        date_time_updated = is_updated("airtime_date") or is_updated("airtime_time")
-        if not date_time_updated:
-            return
-
-        if is_none("airtime_date") or is_none("airtime_time"):
+        if any([updates.get(field) != original.get(field) for field in ["schedule", "airtime_time", "repeat"]]):
             updates["scheduled_on"] = None
-            return
-
-        airtime_date = updates.get("airtime_date") or original.get("airtime_date")
-        airtime_time = updates.get("airtime_time") or original.get("airtime_time")
-        if not airtime_date or not airtime_time:
-            updates["scheduled_on"] = None
-            return
-
-        tz = pytz.timezone(app.config["RUNDOWNS_TIMEZONE"])
-        now = datetime.datetime.now(tz=tz)
-        date = utils.parse_date(airtime_date)
-        time = utils.parse_time(airtime_time)
-        scheduled_on = utils.combine_date_time(date, time, tz)
-
-        if scheduled_on < now:
-            raise DocumentError(_("Airtime must be in the future."))
-
-        if scheduled_on >= now:
-            updates["scheduled_on"] = local_to_utc(str(tz), scheduled_on)
-            return
 
     def on_create(self, docs):
         for doc in docs:

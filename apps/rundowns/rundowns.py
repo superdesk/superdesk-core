@@ -85,7 +85,6 @@ class RundownsService(superdesk.Service):
                 rundown = self.create_from_template(template, date, doc=doc)
             else:
                 rundown = self.create_from_show(show, date, doc=doc)
-            print("data", rundown.get("items_data"))
             doc.update(rundown)
             assert "_id" in rundown, {"rundown": {"_id": 1}}
             ids.append(rundown["_id"])
@@ -113,7 +112,7 @@ class RundownsService(superdesk.Service):
     def create_from_template(
         self,
         template: types.IRundownTemplate,
-        date: datetime.date,
+        date: datetime.datetime,
         *,
         doc: Optional[types.IRundown] = None,
         scheduled_on: Optional[datetime.datetime] = None,
