@@ -29,9 +29,11 @@ class RundownsResource(superdesk.Resource):
         },
         "airtime_time": {
             "type": "string",
+            "mapping": {"type": "keyword"},
         },
         "airtime_date": {
             "type": "string",
+            "mapping": {"type": "keyword"},
         },
         "items": {
             "type": "list",
