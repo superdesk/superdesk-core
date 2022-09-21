@@ -35,7 +35,6 @@ Feature: Rundowns
         When we get "/shows"
         Then we get list with 0 items
 
-    @wip
     @auth
     Scenario: Templates CRUD
         Given "shows"
@@ -170,7 +169,6 @@ Feature: Rundowns
         }
         """
 
-    @wip
     @auth
     Scenario: Reset scheduled_on when updating schedule settings
         Given "shows"
@@ -264,17 +262,16 @@ Feature: Rundowns
 
         When we run task "apps.rundowns.tasks.create_scheduled_rundowns"
         And we get "/rundowns"
-        Then we get list with 2 items
+        Then we get list with 1 items
         """
         {"_items": [
-            {"title": "Scheduled // 18:00", "scheduled_on": "__future__"},
-            {"title": "Scheduled // 06:00", "scheduled_on": "__future__"}
+            {"scheduled_on": "__future__"}
         ]}
         """
 
         When we run task "apps.rundowns.tasks.create_scheduled_rundowns"
         And we get "/rundowns"
-        Then we get list with 2 items
+        Then we get list with 1 items
 
     @auth
     Scenario: Add items to rundown template

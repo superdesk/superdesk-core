@@ -33,7 +33,7 @@ def get_next_date(start_date: datetime.datetime, schedule) -> Optional[datetime.
         return None
     freq = schedule.get("freq", "DAILY").upper()
     assert hasattr(rrule, freq), "Unknown frequency {}".format(freq)
-    now = datetime.datetime.utcnow().replace(tzinfo=datetime.timezone.utc)
+    now = datetime.datetime.utcnow().replace(tzinfo=datetime.timezone.utc).replace(microsecond=0)
     dates = list(
         rrule.rrule(
             freq=getattr(rrule, freq),
@@ -47,6 +47,7 @@ def get_next_date(start_date: datetime.datetime, schedule) -> Optional[datetime.
         )
     )
     for date in dates:
-        if date > now:
+        if date > now and date > start_date:
+            print("DATE", date, start_date)
             return date
     return None
