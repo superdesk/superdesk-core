@@ -12,7 +12,7 @@ class RundownItemsResource(superdesk.Resource):
 
     schema = {
         "title": metadata_schema["headline"],
-        "item_type": superdesk.Resource.not_analyzed_field(required=True),
+        "item_type": superdesk.Resource.not_analyzed_field(required=True, nullable=True),
         "content": metadata_schema["body_html"],
         "duration": {
             "type": "number",
@@ -29,6 +29,7 @@ class RundownItemsResource(superdesk.Resource):
         "fields_meta": metadata_schema["fields_meta"].copy(),
         "subitems": {"type": "list", "mapping": {"type": "keyword"}},
         "subitem_attachments": {"type": "list", "mapping": {"type": "keyword"}},
+        "status": superdesk.Resource.not_analyzed_field(nullable=True),
     }
 
     datasource = {
