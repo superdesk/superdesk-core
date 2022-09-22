@@ -15,6 +15,7 @@ from . import (  # noqa: E402
     rundown_items,
     tasks,
     export,
+    comments,
 )
 
 
@@ -37,6 +38,9 @@ def init_app(app: SuperdeskApp) -> None:
     )
     superdesk.register_resource(
         "rundown_export", export.ExportResource, service_instance=export.export_service, _app=app
+    )
+    superdesk.register_resource(
+        "rundown_comments", comments.RundownCommentsResource, service_instance=comments.comments_service, _app=app
     )
 
     from .formatters.pdf import PrompterPDFFormatter, TablePDFFormatter

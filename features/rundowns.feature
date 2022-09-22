@@ -215,7 +215,6 @@ Feature: Rundowns
         {"scheduled_on": null}
         """
 
-    @wip
     @auth
     Scenario: Create rundown based on template schedule
         Given "shows"
@@ -758,3 +757,19 @@ Feature: Rundowns
         """
         And we get "/rundowns?q=missing"
         Then we get list with 0 items
+
+    @auth
+    Scenario: Rundown comments
+        When we post to "/rundown_comments"
+        """
+        {"text": "test", "item": "foo", "rundown": "bar"}
+        """
+        Then we get ok response
+
+        When we get "/rundown_comments?where={"item": "foo"}"
+        Then we get list with 1 items
+        """
+        {"_items": [
+            {"text": "test", "user": "#CONTEXT_USER_ID#"}
+        ]}
+        """
