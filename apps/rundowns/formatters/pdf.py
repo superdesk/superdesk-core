@@ -19,8 +19,8 @@ from superdesk.text_utils import get_text
 
 styles = getSampleStyleSheet()
 
-FONT_NAME = 'DejaVuSans'
-pdfmetrics.registerFont(TTFont('DejaVuSans', 'DejaVuSans.ttf'))
+FONT_NAME = "DejaVuSans"
+pdfmetrics.registerFont(TTFont("DejaVuSans", "DejaVuSans.ttf"))
 
 FONT_SIZE = 14
 ORDERED_TYPE = "1"

@@ -1,9 +1,11 @@
 import datetime
 import superdesk
 
+from flask import json
 from typing import Optional
 
 from superdesk.metadata.item import metadata_schema
+from werkzeug.datastructures import ImmutableMultiDict
 
 from . import privileges, rundown_items, types, templates, shows
 
@@ -55,6 +57,22 @@ class RundownsResource(superdesk.Resource):
                     "value": superdesk.Resource.field("string", analyzed=True),
                 },
             },
+            "mapping": {
+                "type": "nested",
+                "properties": {
+                    "_id": {"type": "keyword"},
+                    "key": {"type": "keyword"},
+                    "value": metadata_schema["body_html"]["mapping"],
+                },
+            },
+        },
+        "rundown": {
+            "type": "dict",
+            "readonly": True,
+        },
+        "rundown_items": {
+            "type": "list",
+            "readonly": True,
         },
     }
 
@@ -184,6 +202,72 @@ class RundownsService(superdesk.Service):
             rundown_items.items_service.sync_items(updates, rundown["items"])
             if updates:
                 self.system_update(rundown["_id"], updates, rundown)
+
+    def get(self, req, lookup):
+        if req and req.args.get("q"):
+            query_string_query = {
+                "query_string": {
+                    "query": req.args.get("q"),
+                    "default_operator": "AND",
+                    "lenient": True,
+                },
+            }
+
+            items_query = {
+                "nested": {
+                    "path": "items_data",
+                    "query": query_string_query,
+                    "inner_hits": {"name": "rundown_items"},
+                },
+            }
+
+            query = {
+                "bool": {
+                    "should": [
+                        query_string_query,
+                        items_query,
+                    ],
+                    "minimum_should_match": 1,
+                }
+            }
+
+            source = json.loads(req.args.get("source")) if req.args.get("source") else {}
+            if source.get("query"):
+                old_query = source["query"]
+                source["query"] = query
+                query["bool"]["must"] = old_query
+            else:
+                source["query"] = query
+
+            args = req.args.to_dict()
+            args.pop("q")
+            args["source"] = json.dumps(source)
+            req.args = ImmutableMultiDict(args)
+            cursor = super().get(req, lookup)
+            matching_items = set()
+            for item in cursor.hits["hits"]["hits"]:
+                if item.get("inner_hits"):
+                    ids = [hit["_source"]["_id"] for hit in item["inner_hits"]["rundown_items"]["hits"]["hits"]]
+                    for id in ids:
+                        matching_items.add(id)
+            if matching_items:
+                items = list(
+                    rundown_items.items_service.get_from_mongo(req=None, lookup={"_id": {"$in": list(matching_items)}})
+                )
+                for rundown in cursor:
+                    data = rundown.copy()
+                    rundown.clear()
+                    rundown["rundown"] = data
+                    if not data.get("items"):
+                        continue
+                    inner_items = []
+                    for ref in data["items"]:
+                        for item in items:
+                            if str(item["_id"]) == str(ref["_id"]):
+                                inner_items.append(item)
+                    rundown["rundown_items"] = inner_items
+            return cursor
+        return super().get(req, lookup)
 
 
 rundowns_service = RundownsService()

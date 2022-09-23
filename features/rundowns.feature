@@ -688,6 +688,7 @@ Feature: Rundowns
         And we get "Content-Disposition" header with "attachment; filename="Realizer-Rundown Title.pdf"" type
         And we get "Content-Type" header with "application/pdf" type
 
+    @wip
     @auth
     Scenario: Search rundown by item contents
         Given "shows"
@@ -729,6 +730,18 @@ Feature: Rundowns
 
         When we get "/rundowns?q=searchable"
         Then we get list with 1 items
+        """
+        {
+            "_items": [
+                {
+                    "rundown": {"title": "Rundown Title"},
+                    "rundown_items": [
+                        {"title": "sample"}
+                    ]
+                }
+            ]
+        }
+        """
 
         When we get "/rundowns?q=title"
         Then we get list with 1 items
