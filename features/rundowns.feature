@@ -610,6 +610,15 @@ Feature: Rundowns
                                         "inlineStyleRanges": [],
                                         "entityRanges": [],
                                         "data": {}
+                                    },
+                                    {
+                                        "key": "6lrsd",
+                                        "type": "unstyled",
+                                        "depth": 0,
+                                        "text": "Šta nas čeka od jeseni? Najave poskupljenja osnovnih životnih namirnica, zabrinutost kako i čime ćemo da se grejemo sledeće zime, strepnja od poskupljenja, samo su neki od strahova s kojima dočekujemo leto.",
+                                        "inlineStyleRanges": [],
+                                        "entityRanges": [],
+                                        "data": {}
                                     }
                                 ]
                             }
@@ -758,7 +767,6 @@ Feature: Rundowns
         And we get "/rundowns?q=missing"
         Then we get list with 0 items
 
-    @wip
     @auth
     Scenario: Rundown comments
         Given "rundown_items"

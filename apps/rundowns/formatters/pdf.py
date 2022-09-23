@@ -6,6 +6,8 @@ from typing import List
 from reportlab.platypus import SimpleDocTemplate, Paragraph, ListItem, ListFlowable, Table
 from reportlab.lib.styles import getSampleStyleSheet
 from reportlab.lib.pagesizes import landscape, A4
+from reportlab.pdfbase import pdfmetrics
+from reportlab.pdfbase.ttfonts import TTFont
 
 from superdesk.editor_utils import get_field_content_state
 
@@ -17,12 +19,12 @@ from superdesk.text_utils import get_text
 
 styles = getSampleStyleSheet()
 
+FONT_NAME = 'DejaVuSans'
+pdfmetrics.registerFont(TTFont('DejaVuSans', 'DejaVuSans.ttf'))
 
 FONT_SIZE = 14
-FONT_NAME = styles["Heading1"].fontName
 ORDERED_TYPE = "1"
 UNORDERED_TYPE = "bullet"
-
 
 styles["OrderedList"].bulletFormat = "%s."
 styles["OrderedList"].bulletFontSize = FONT_SIZE
@@ -57,7 +59,7 @@ class PrompterPDFFormatter(BaseFormatter):
             rightMargin=self.margin,
             topMargin=self.margin,
             bottomMargin=self.margin,
-            title=rundown["title"],
+            title=rundown.get("title", ""),
             pagesize=self.pagesize,
         )
 
