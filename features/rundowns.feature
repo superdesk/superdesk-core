@@ -758,15 +758,22 @@ Feature: Rundowns
         And we get "/rundowns?q=missing"
         Then we get list with 0 items
 
+    @wip
     @auth
     Scenario: Rundown comments
+        Given "rundown_items"
+        """
+        [
+            {"title": "Test"}
+        ]
+        """
         When we post to "/rundown_comments"
         """
-        {"text": "test", "item": "foo", "rundown": "bar"}
+        {"text": "test", "item": "#rundown_items._id#", "rundown": null}
         """
         Then we get ok response
 
-        When we get "/rundown_comments?where={"item": "foo"}"
+        When we get "/rundown_comments?where={"item":"#rundown_items._id#"}"
         Then we get list with 1 items
         """
         {"_items": [

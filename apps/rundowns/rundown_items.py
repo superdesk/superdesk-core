@@ -12,7 +12,7 @@ class RundownItemsResource(superdesk.Resource):
 
     schema = {
         "title": metadata_schema["headline"],
-        "item_type": superdesk.Resource.not_analyzed_field(required=True, nullable=True),
+        "item_type": superdesk.Resource.not_analyzed_field(nullable=True),
         "content": metadata_schema["body_html"],
         "duration": {
             "type": "number",
