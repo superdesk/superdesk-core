@@ -66,11 +66,7 @@ class RundownsResource(superdesk.Resource):
                 },
             },
         },
-        "rundown": {
-            "type": "dict",
-            "readonly": True,
-        },
-        "rundown_items": {
+        "matching_items": {
             "type": "list",
             "readonly": True,
         },
@@ -255,17 +251,13 @@ class RundownsService(superdesk.Service):
                     rundown_items.items_service.get_from_mongo(req=None, lookup={"_id": {"$in": list(matching_items)}})
                 )
                 for rundown in cursor:
-                    data = rundown.copy()
-                    rundown.clear()
-                    rundown["rundown"] = data
-                    if not data.get("items"):
+                    rundown["matching_items"] = []
+                    if not rundown.get("items"):
                         continue
-                    inner_items = []
-                    for ref in data["items"]:
+                    for ref in rundown["items"]:
                         for item in items:
                             if str(item["_id"]) == str(ref["_id"]):
-                                inner_items.append(item)
-                    rundown["rundown_items"] = inner_items
+                                rundown["matching_items"].append(item)
             return cursor
         return super().get(req, lookup)
 

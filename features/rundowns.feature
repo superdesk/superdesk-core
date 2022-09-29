@@ -734,8 +734,8 @@ Feature: Rundowns
         {
             "_items": [
                 {
-                    "rundown": {"title": "Rundown Title"},
-                    "rundown_items": [
+                    "title": "Rundown Title",
+                    "matching_items": [
                         {"title": "sample"}
                     ]
                 }
@@ -745,6 +745,17 @@ Feature: Rundowns
 
         When we get "/rundowns?q=title"
         Then we get list with 1 items
+        """
+        {
+            "_items": [
+                {
+                    "title": "Rundown Title",
+                    "matching_items": [
+                    ]
+                }
+            ]
+        }
+        """
 
         When we get "/rundowns?q=missing"
         Then we get list with 0 items
