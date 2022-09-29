@@ -17,6 +17,7 @@ from lxml import html as lxml_html
 from lxml.html import clean
 from flask import current_app as app
 import chardet
+import html
 
 logger = logging.getLogger(__name__)
 
@@ -187,3 +188,33 @@ def decode(bytes_str):
             return bytes_str.decode(chardet.detect(bytes_str)["encoding"])
         except Exception:
             return bytes_str.decode("utf-8", "ignore")
+
+
+def plain_text_to_html(text: str) -> str:
+    """Converts plain text to HTML
+
+    This attempts to search for and convert:
+    * Email address' to ``mailto`` HTML links
+    * URL address' to HTML links
+    * Newlines to a pair of ``<p>`` tags
+    """
+
+    EMAIL_REGEX = re.compile(r"([\w\-\.]+@(\w[\w\-]+\.)+[\w\-]+)", re.MULTILINE | re.UNICODE | re.IGNORECASE)
+    URL_REGEX = re.compile(
+        '((?:<a href[^>]+>)|(?:<a href="))?((https?://)?((?:[\w-]+\.)+[a-z]+(?:/\S*?)?)(?=[\.,)]?(?:\s|$)))',
+        re.MULTILINE | re.UNICODE | re.IGNORECASE,
+    )
+
+    def replacement(match_object):
+        groups = match_object.groups()
+        if groups[0] is not None:
+            # Since it has an anchor tag, this isn't what we want to change,
+            # so return the whole match.
+            return match_object.group(0)
+        else:
+            return '<a href="{0}" target="_blank">{1}</a>'.format(html.unescape(groups[1]), groups[1])
+
+    value = EMAIL_REGEX.sub(r'<a href="mailto:\1">\1</a>', text)
+    value = re.sub(URL_REGEX, replacement, value)
+    html_paragraphs = [line.strip() for line in value.splitlines()]
+    return "<p>" + "</p><p>".join(html_paragraphs) + "</p>"
