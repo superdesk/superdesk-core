@@ -136,3 +136,36 @@ class WordCountTestCase(unittest.TestCase):
         )
 
         self.assertEqual(0, text_utils.get_par_count(None))
+
+    def test_convert_plain_text_to_html(self):
+        test_strings = [
+            ["plain text", "<p>plain text</p>"],
+            ["email me at baz@foobar.com", '<p>email me at <a href="mailto:baz@foobar.com">baz@foobar.com</a></p>'],
+            ["find me on foobar.com", '<p>find me on <a href="foobar.com" target="_blank">foobar.com</a></p>'],
+            [
+                "https://www.foobar.com",
+                '<p><a href="https://www.foobar.com" target="_blank">https://www.foobar.com</a></p>',
+            ],
+            [
+                "https://www.foobar.com/test?one=two&three=4",
+                '<p><a href="https://www.foobar.com/test?one=two&three=4" target="_blank">'
+                "https://www.foobar.com/test?one=two&three=4</a></p>",
+            ],
+            ["https://foobar.com", '<p><a href="https://foobar.com" target="_blank">https://foobar.com</a></p>'],
+            ["www.foobar.com", '<p><a href="www.foobar.com" target="_blank">www.foobar.com</a></p>'],
+            [
+                """Foo Bar
+
+Foo Bar PTY LTD
+Ph +61 23456789
+Email: baz@foobar.com Website: www.foobar.com""",
+                "<p>Foo Bar</p>"
+                "<p></p>"
+                "<p>Foo Bar PTY LTD</p>"
+                "<p>Ph +61 23456789</p>"
+                '<p>Email: <a href="mailto:baz@foobar.com">baz@foobar.com</a> '
+                'Website: <a href="www.foobar.com" target="_blank">www.foobar.com</a></p>',
+            ],
+        ]
+        for tests in test_strings:
+            self.assertEqual(text_utils.plain_text_to_html(tests[0]), tests[1])
