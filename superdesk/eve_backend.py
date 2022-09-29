@@ -157,7 +157,7 @@ class EveBackend:
         """
         req.if_modified_since = None
         backend = self._backend(endpoint_name)
-        cursor, _ = backend.find(endpoint_name, req, lookup)
+        cursor, _ = backend.find(endpoint_name, req, lookup, perform_count=False)
         self._cursor_hook(cursor=cursor, req=req)
         return cursor
 
@@ -295,7 +295,11 @@ class EveBackend:
                 if item:
                     self.remove_from_search(endpoint_name, item)
                 raise SuperdeskApiError.notFoundError()
-            search_backend.update(endpoint_name, id, doc)
+            try:
+                search_backend.update(endpoint_name, id, doc)
+            except NotFoundError:
+                logger.warning("Item is missing in elastic resource=%s id=%s", endpoint_name, id)
+                search_backend.insert(endpoint_name, [doc])
 
         return updates
 

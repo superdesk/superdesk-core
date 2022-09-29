@@ -1,5 +1,17 @@
 # Superdesk Server Changelog
 
+## [2.4.3] 2022-09-20
+
+[Changes](https://github.com/superdesk/superdesk-core/milestone/126?closed=1)
+
+## [2.4.2] 2022-09-13
+
+[Changes](https://github.com/superdesk/superdesk-core/milestone/125?closed=1)
+
+## [2.4.1] 2022-08-01
+
+[Changes](https://github.com/superdesk/superdesk-core/milestone/123?closed=1)
+
 ## [2.4.0] 2022-02-23
 
 [Changes](https://github.com/superdesk/superdesk-core/milestone/109?closed=1)

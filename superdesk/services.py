@@ -8,10 +8,9 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
-from typing import Dict, Any
 import logging
 
-from typing import Union
+from typing import Dict, Any, Union
 from flask import current_app as app, json
 from eve.utils import ParsedRequest, config
 from eve.methods.common import resolve_document_etag
@@ -19,7 +18,7 @@ from superdesk.errors import SuperdeskApiError
 from superdesk.utc import utcnow
 
 
-log = logging.getLogger(__name__)
+logger = logging.getLogger(__name__)
 
 
 class BaseService:
@@ -130,6 +129,28 @@ class BaseService:
     def find_and_modify(self, query, update, **kwargs):
         res = self.backend.find_and_modify(self.datasource, query=query, update=update, **kwargs)
         return res
+
+    def get_all_batch(self, size=500, max_iterations=10000):
+        """Gets all items using multiple queries.
+
+        When processing big collection and doing something time consuming you might get
+        a mongo cursor timeout, this should avoid it fetching `size` items in memory
+        and closing the cursor in between.
+        """
+        last_id = None
+        for i in range(max_iterations):
+            if last_id is not None:
+                lookup = {"_id": {"$gt": last_id}}
+            else:
+                lookup = {}
+            items = list(self.get_from_mongo(req=None, lookup=lookup).sort("_id").limit(size))
+            if not len(items):
+                break
+            for item in items:
+                yield item
+                last_id = item["_id"]
+        else:
+            logger.warning("Not enough iterations for resource %s", self.datasource)
 
     def _validator(self, skip_validation=False):
         resource_def = app.config["DOMAIN"][self.datasource]
