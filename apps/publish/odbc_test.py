@@ -81,19 +81,19 @@ class ODBCTests(TestCase):
     ]
 
     def setUp(self):
-        self.subscribers[0]["destinations"][0]["config"]["connection_string"] = superdesk.app.config[
+        self.subscribers[0]["destinations"][0]["config"]["connection_string"] = self.app.config[
             "ODBC_TEST_CONNECTION_STRING"
         ]
         self.app.data.insert("subscribers", self.subscribers)
 
-        self.queue_items[0]["destination"]["config"]["connection_string"] = superdesk.app.config[
+        self.queue_items[0]["destination"]["config"]["connection_string"] = self.app.config[
             "ODBC_TEST_CONNECTION_STRING"
         ]
         self.app.data.insert("publish_queue", self.queue_items)
         init_app(self.app)
 
     def test_transmit(self):
-        if superdesk.app.config["ODBC_PUBLISH"]:
+        if self.app.config["ODBC_PUBLISH"]:
             subscriber = self.app.data.find("subscribers", None, None)[0]
 
             publish_service = ODBCPublishService()

@@ -118,6 +118,9 @@ class SuperdeskEve(eve.Eve):
 
                 try:
                     create_index(self, resource, name, list_of_keys, index_options)
+                except KeyError:
+                    logger.warning("resource config missing for %s", resource)
+                    continue
                 except DuplicateKeyError as err:
                     # Duplicate key for unique indexes are generally caused by invalid documents in the collection
                     # such as multiple documents not having a value for the attribute used for the index
@@ -266,8 +269,10 @@ def get_app(config=None, media_storage=None, config_object=None, init_elastic=No
     for module_name in app.config.get("INSTALLED_APPS", []):
         install_app(module_name)
 
+    app.config.setdefault("DOMAIN", {})
     for resource in superdesk.DOMAIN:
-        app.register_resource(resource, superdesk.DOMAIN[resource])
+        if resource not in app.config["DOMAIN"]:
+            app.register_resource(resource, superdesk.DOMAIN[resource])
 
     for name, jinja_filter in superdesk.JINJA_FILTERS.items():
         app.jinja_env.filters[name] = jinja_filter

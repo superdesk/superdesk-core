@@ -9,6 +9,7 @@
 # at https://www.sourcefabric.org/superdesk/license
 
 import superdesk
+from flask import current_app as app
 from superdesk.logging import logger
 from superdesk.utc import utcnow
 from superdesk.notification import push_notification
@@ -88,7 +89,7 @@ def remove_expired_data(provider):
 
     for file_id in file_ids:
         logger.info("Deleting file: %s" % file_id)
-        superdesk.app.media.delete(file_id)
+        app.media.delete(file_id)
 
     logger.info(
         "Removed expired content for provider: {0} count: {1}".format(provider.get("_id", "Detached items"), len(ids))

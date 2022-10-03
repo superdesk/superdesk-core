@@ -45,12 +45,12 @@ class FlushElasticIndex(superdesk.Command):
         if not (sd_index or capi_index):
             raise SystemExit("You must specify at least one elastic index to flush. " "Options: `--sd`, `--capi`")
 
-        self._es = get_es(superdesk.app.config["ELASTICSEARCH_URL"])
+        self._es = get_es(app.config["ELASTICSEARCH_URL"])
 
         if sd_index:
-            self._delete_elastic(superdesk.app.config["ELASTICSEARCH_INDEX"])
+            self._delete_elastic(app.config["ELASTICSEARCH_INDEX"])
         if capi_index:
-            self._delete_elastic(superdesk.app.config["CONTENTAPI_ELASTICSEARCH_INDEX"])
+            self._delete_elastic(app.config["CONTENTAPI_ELASTICSEARCH_INDEX"])
 
         self._index_from_mongo(sd_index, capi_index)
 
@@ -62,16 +62,18 @@ class FlushElasticIndex(superdesk.Command):
         """
 
         indices = list(self._es.indices.get_alias("{}_*".format(index_prefix)).keys())
+        print(f"Configured indices with prefix '{index_prefix}': " + ", ".join(indices))
 
         for es_resource in app.data.get_elastic_resources():
             alias = app.data.elastic._resource_index(es_resource)
+            print(f"- Attempting to delete alias {alias}")
             for index in indices:
-                if index.rsplit("_", 1)[0] == alias:
+                if index.rsplit("_", 1)[0] == alias or index == alias:
                     try:
                         print('- Removing elastic index "{}"'.format(index))
                         self._es.indices.delete(index=index)
                     except es_exceptions.NotFoundError:
-                        print('\t- "{}" elastic index was not found. Continue wihout deleting.'.format(index))
+                        print('\t- "{}" elastic index was not found. Continue without deleting.'.format(index))
                     except es_exceptions.TransportError as e:
                         raise SystemExit(
                             '\t- "{}" elastic index was not deleted. Exception: "{}"'.format(index, e.error)
@@ -95,21 +97,17 @@ class FlushElasticIndex(superdesk.Command):
 
         for resource in resources:
             # get es prefix per resource
-            es_backend = superdesk.app.data._search_backend(resource)
+            es_backend = app.data._search_backend(resource)
             resource_es_prefix = es_backend._resource_prefix(resource)
 
             if resource_es_prefix == SD_ELASTIC_PREFIX and sd_index:
-                print(
-                    '- Indexing mongo collections into "{}" elastic index.'.format(
-                        superdesk.app.config["ELASTICSEARCH_INDEX"]
-                    )
-                )
+                print('- Indexing mongo collections into "{}" elastic index.'.format(app.config["ELASTICSEARCH_INDEX"]))
                 IndexFromMongo.copy_resource(resource, IndexFromMongo.default_page_size)
 
             if resource_es_prefix == CAPI_ELASTIC_PREFIX and capi_index:
                 print(
                     '- Indexing mongo collections into "{}" elastic index.'.format(
-                        superdesk.app.config["CONTENTAPI_ELASTICSEARCH_INDEX"]
+                        app.config["CONTENTAPI_ELASTICSEARCH_INDEX"]
                     )
                 )
                 IndexFromMongo.copy_resource(resource, IndexFromMongo.default_page_size)

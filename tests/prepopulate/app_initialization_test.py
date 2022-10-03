@@ -7,7 +7,7 @@ from unittest.mock import patch
 from apps.prepopulate.app_initialize import AppInitializeWithDataCommand
 from apps.prepopulate.app_scaffold_data import AppScaffoldDataCommand
 from apps.prepopulate.app_initialize import fillEnvironmentVariables
-from superdesk import get_resource_service, app
+from superdesk import get_resource_service
 from superdesk.tests import TestCase
 
 
@@ -65,7 +65,7 @@ class AppInitializeWithDataCommandTestCase(TestCase):
     def test_app_initialization_index_creation(self):
         result = self._run()
         self.assertEqual(result, 0)
-        result = app.data.mongo.pymongo(resource="archive").db["archive"].index_information()
+        result = self.app.data.mongo.pymongo(resource="archive").db["archive"].index_information()
         self.assertTrue("groups.refs.residRef_1" in result)
         self.assertTrue(result["groups.refs.residRef_1"]["sparse"])
 

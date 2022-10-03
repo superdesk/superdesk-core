@@ -665,10 +665,13 @@ def ingest_item(item, provider, feeding_service, rule_set=None, routing_scheme=N
         if old_item:
             new_version = is_new_version(item, old_item)
             updates = deepcopy(item)
-            ingest_service.patch_in_mongo(old_item[superdesk.config.ID_FIELD], updates, old_item)
-            item.update(old_item)
-            item.update(updates)
-            items_ids.append(item["_id"])
+            if new_version:
+                ingest_service.patch_in_mongo(old_item[superdesk.config.ID_FIELD], updates, old_item)
+                item.update(old_item)
+                item.update(updates)
+                items_ids.append(item["_id"])
+            else:
+                item.update(old_item)
         else:
             if item.get("ingest_provider_sequence") is None:
                 ingest_service.set_ingest_provider_sequence(item, provider)

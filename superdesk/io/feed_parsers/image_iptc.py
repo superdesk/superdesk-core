@@ -119,6 +119,11 @@ class ImageIPTCFeedParser(FileFeedParser):
                 item[dest_key] = metadata[source_key]
             except KeyError:
                 continue
+
+        # SDESK-6566
+        if isinstance(item.get("keywords"), str):
+            item["keywords"] = [item["keywords"]]
+
         return item
 
 

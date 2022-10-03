@@ -26,7 +26,6 @@ def get_test_settings():
     test_settings["CONTENTAPI_ELASTICSEARCH_INDEX"] = TEST_DBNAME
     test_settings["MONGO_DBNAME"] = TEST_DBNAME
     test_settings["MONGO_URI"] = "mongodb://localhost/%s" % TEST_DBNAME
-    test_settings["DEBUG"] = True
     test_settings["TESTING"] = True
     test_settings["SUPERDESK_TESTING"] = True
     test_settings["CONTENT_EXPIRY_MINUTES"] = 99

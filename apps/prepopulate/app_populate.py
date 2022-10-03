@@ -24,7 +24,7 @@ def populate_table_json(service_name, json_data):
     for item in json_data:
         id_name = item.get("_id")
 
-        if service.find_one(_id=id_name, req=None):
+        if id_name and service.find_one(_id=id_name, req=None):
             service.put(id_name, item)
         else:
             service.post([item])

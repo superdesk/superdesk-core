@@ -31,7 +31,7 @@ class IMatricsTransmitterTestCase(unittest.TestCase):
             with patch.dict(superdesk.resources, resources):
                 responses.add(
                     responses.POST,
-                    url=self.app.config["IMATRICS_BASE_URL"] + "article/concept",
+                    url=self.app.config["IMATRICS_BASE_URL"] + "article/store",
                     json={"uuid": "guid"},
                 )
                 formatter = IMatricsFormatter()

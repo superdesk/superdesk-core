@@ -48,7 +48,7 @@ class RebuildElasticIndex(superdesk.Command):
                 current_app.data.elastic.reindex(resource)
             except elasticsearch.exceptions.NotFoundError as nfe:
                 print(nfe)
-            print('Index {} rebuilt successfully.'.format(resource_name))
+            print('Index {} rebuilt successfully.'.format(resource))
 
 
 superdesk.command('app:rebuild_elastic_index', RebuildElasticIndex())

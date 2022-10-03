@@ -10,11 +10,12 @@
 
 """Superdesk"""
 
+import eve
 import blinker
 import logging as logging_lib
 
 from typing import Any, Dict, NamedTuple, Optional
-from flask import abort, json, Blueprint, current_app as app
+from flask import abort, json, Blueprint
 from flask_babel.speaklater import LazyString
 from flask_script import Command as BaseCommand, Option
 from eve.utils import config  # noqa
@@ -45,6 +46,7 @@ _eve_backend = EveBackend()
 default_user_preferences: Dict[str, "UserPreference"] = dict()
 default_session_preferences: Dict[str, Any] = dict()
 logger = logging_lib.getLogger(__name__)
+app: Optional[eve.Eve] = None
 
 
 class UserPreference(NamedTuple):
@@ -92,7 +94,7 @@ setattr(HTTPException, "get_headers", get_headers)
 
 def domain(resource, res_config):
     """Register domain resource"""
-    DOMAIN[resource] = res_config
+    app.register_resource(resource, res_config)
 
 
 def command(name, command):
