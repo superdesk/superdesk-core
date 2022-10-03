@@ -39,16 +39,29 @@ bp = superdesk.Blueprint("upload_raw", __name__)
 logger = logging.getLogger(__name__)
 
 
-@bp.route("/upload/<path:media_id>/raw", methods=["GET"])
+def handle_cors():
+    """Return headers to avoid CORS problems."""
+    response = make_response()
+    response.headers.add("Access-Control-Allow-Origin", "*")
+    response.headers.add("Access-Control-Allow-Headers", "*")
+    response.headers.add("Access-Control-Allow-Methods", "POST")
+    return response
+
+
+@bp.route("/upload/<path:media_id>/raw", methods=["GET", "OPTIONS"])
 @blueprint_auth()
 def get_upload_as_data_uri_bc(media_id):
+    if request.method == "OPTIONS":
+        return handle_cors()
     """Keep previous url for backward compatibility"""
     return redirect(upload_url(media_id))
 
 
-@bp.route("/upload-raw/<path:media_id>", methods=["GET"])
+@bp.route("/upload-raw/<path:media_id>", methods=["GET", "OPTIONS"])
 @blueprint_auth()
 def get_upload_as_data_uri(media_id):
+    if request.method == "OPTIONS":
+        return handle_cors()
     if not request.args.get("resource"):
         media_file = app.media.get_by_filename(media_id)
     else:
@@ -63,12 +76,7 @@ def get_upload_as_data_uri(media_id):
 @blueprint_auth()
 def upload_config_file():
     if request.method == "OPTIONS":
-        # return headers to avoid CORS problems
-        response = make_response()
-        response.headers.add("Access-Control-Allow-Origin", "*")
-        response.headers.add("Access-Control-Allow-Headers", "*")
-        response.headers.add("Access-Control-Allow-Methods", "POST")
-        return response
+        return handle_cors()
 
     _resource = request.args.get("resource")
     if not _resource:
