@@ -8,7 +8,6 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
-from asyncore import read
 from typing import Dict, Any, List, Optional
 import logging
 
@@ -299,11 +298,11 @@ class Resource:
         }
 
     @staticmethod
-    def field(type: FieldTypes, *, nullable=True, readonly=False, required=False, analyzed=False) -> dict:
+    def field(type: FieldTypes, *, nullable=True, readonly=False, required=False, analyzed=False, allowed=None) -> dict:
         mapping = None
         if type == "string" and not analyzed:
             mapping = {"type": "keyword"}
-        return dict(
+        specs = dict(
             type=type,
             nullable=nullable,
             readonly=readonly,
@@ -311,13 +310,21 @@ class Resource:
             mapping=mapping,
         )
 
+        if allowed is not None:
+            specs["allowed"] = allowed
+
+        return specs
+
     @staticmethod
     def locking_schema() -> dict:
         return dict(
-            _lock=Resource.field("boolean", nullable=False),
+            _lock=Resource.field(
+                "string", nullable=True, allowed=[action.value for action in resource_locking.LockActions]
+            ),
             _lock_user=Resource.rel("users", readonly=True, nullable=True),
             _lock_session=Resource.field("string", readonly=True, nullable=True, analyzed=False),
             _lock_time=Resource.field("datetime", readonly=True, nullable=True),
+            _lock_expiry=Resource.field("datetime", readonly=True, nullable=True),
         )
 
 

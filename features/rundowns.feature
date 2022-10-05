@@ -461,12 +461,12 @@ Feature: Rundowns
 
         When we patch "/rundowns/#rundowns._id#"
         """
-        {"_lock": true}
+        {"_lock": "lock"}
         """
         Then we get ok response
         """
         {
-            "_lock": true,
+            "_lock": "lock",
             "_lock_user": "#CONTEXT_USER_ID#",
             "_lock_time": "__now__"
         }
@@ -487,6 +487,22 @@ Feature: Rundowns
         """
         {"_error": {"message": "Resource is locked."}}
         """
+        When we patch "/rundowns/#rundowns._id#"
+        """
+        {"_lock": "unlock"}
+        """
+        Then we get error 412
+        When we patch "/rundowns/#rundowns._id#"
+        """
+        {"_lock": "lock"}
+        """
+        Then we get error 412
+
+        When we patch "/rundowns/#rundowns._id#"
+        """
+        {"_lock": "force-lock"}
+        """
+        Then we get ok response
 
         When the lock expires "/rundowns/#rundowns._id#"
 
@@ -498,13 +514,44 @@ Feature: Rundowns
 
         When we patch "/rundowns/#rundowns._id#"
         """
-        {"_lock": true}
+        {"_lock": "lock"}
         """
         Then we get ok response
 
         When we patch "/rundowns/#rundowns._id#"
         """
-        {"_lock": false}
+        {"_lock": "unlock"}
+        """
+        Then we get ok response
+        """
+        {"_lock_user": null, "_lock_time": null, "_lock_session": null}
+        """
+
+        When we login as user "foo2" with password "bar" and user type "administrator"
+
+        And we patch "/rundowns/#rundowns._id#"
+        """
+        {"title": "bar"}
+        """
+        Then we get ok response
+
+        When the lock expires "/rundowns/#rundowns._id#"
+
+        When we patch "/rundowns/#rundowns._id#"
+        """
+        {"title": "bar"}
+        """
+        Then we get ok response
+
+        When we patch "/rundowns/#rundowns._id#"
+        """
+        {"_lock": "lock"}
+        """
+        Then we get ok response
+
+        When we patch "/rundowns/#rundowns._id#"
+        """
+        {"_lock": "unlock"}
         """
         Then we get ok response
         """
@@ -688,7 +735,6 @@ Feature: Rundowns
         And we get "Content-Disposition" header with "attachment; filename="Realizer-Rundown Title.pdf"" type
         And we get "Content-Type" header with "application/pdf" type
 
-    @wip
     @auth
     Scenario: Search rundown by item contents
         Given "shows"
