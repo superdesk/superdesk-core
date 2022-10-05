@@ -66,6 +66,8 @@ class IRundownBase(IEntity, total=False):
 class IRundownTemplate(IRundownBase):
     items: List[IRundownItemTemplate]
     title_template: IRundownTitleTemplate
+    autocreate_on: str
+    autocreate_before_seconds: Optional[int]
 
 
 class IRundown(IRundownBase, total=False):

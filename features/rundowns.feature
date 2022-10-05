@@ -47,7 +47,7 @@ Feature: Rundowns
         {
             "title": "test template",
             "airtime_time": "06:00",
-            "airtime_date": "2050-06-22",
+            "airtime_date": "2030-06-22",
             "title_template": {
                 "prefix": "Marker",
                 "separator": "//",
@@ -57,10 +57,9 @@ Feature: Rundowns
             "schedule": {
                 "freq": "DAILY",
                 "interval": 1,
-                "by_month": [1],
-                "by_month_day": [1, -1],
-                "by_day": [1]
-            }
+                "by_day": [0]
+            },
+            "autocreate_before_seconds": 3600
         }
         """
         Then we get new resource
@@ -72,9 +71,11 @@ Feature: Rundowns
                     "title": "rundown_templates"
                 }
             },
-            "airtime_date": "2050-06-22",
+            "airtime_date": "2030-06-22",
             "airtime_time": "06:00",
-            "created_by": "#CONTEXT_USER_ID#"
+            "created_by": "#CONTEXT_USER_ID#",
+            "scheduled_on": "2030-06-24T04:00:00+0000",
+            "autocreate_on": "2030-06-24T03:00:00+0000"
         }
         """
 
@@ -170,52 +171,6 @@ Feature: Rundowns
         """
 
     @auth
-    Scenario: Reset scheduled_on when updating schedule settings
-        Given "shows"
-        """
-        [
-            {"title": "Test"}
-        ]
-        """
-
-        When we post to "shows/#shows._id#/templates"
-        """
-        {
-            "title": "Test",
-            "airtime_time": "06:00",
-            "repeat": true,
-            "schedule": {
-                "freq": "DAILY"
-            }
-        }
-        """
-        Then we get ok response
-
-        When we run task "apps.rundowns.tasks.create_scheduled_rundowns"
-        And we get "shows/#shows._id#/templates/#templates._id#"
-        Then we get existing resource
-        """
-        {"scheduled_on": "__future__"}
-        """
-
-        When we patch "shows/#shows._id#/templates/#templates._id#"
-        """
-        {
-            "title": "Test",
-            "airtime_time": "06:00",
-            "repeat": true,
-            "schedule": {
-                "freq": "DAILY",
-                "by_day": [3]
-            }
-        }
-        """
-        Then we get ok response
-        """
-        {"scheduled_on": null}
-        """
-
-    @auth
     Scenario: Create rundown based on template schedule
         Given "shows"
         """
@@ -239,7 +194,8 @@ Feature: Rundowns
                     "prefix": "Scheduled",
                     "separator": "//",
                     "date_format": "%H:%M"
-                }
+                },
+                "autocreate_before_seconds": 1
             },
             {
                 "title": "Scheduled two",
@@ -254,7 +210,8 @@ Feature: Rundowns
                     "prefix": "Scheduled",
                     "separator": "//",
                     "date_format": "%H:%M"
-                }
+                },
+                "autocreate_before_seconds": 86400
             }
         ]
         """
@@ -264,7 +221,7 @@ Feature: Rundowns
         Then we get list with 1 items
         """
         {"_items": [
-            {"scheduled_on": "__future__"}
+            {"title": "Scheduled // 06:00", "scheduled_on": "__future__"}
         ]}
         """
 

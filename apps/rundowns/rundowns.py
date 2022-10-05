@@ -148,7 +148,7 @@ class RundownsService(superdesk.Service):
                 "items_data": [],
             }
         rundown: types.IRundown = {
-            "show": doc.get("show") or template["show"],
+            "show": doc.get("show") or template.get("show") or "",
             "airtime_date": date.isoformat(),
             "airtime_time": doc.get("airtime_time") or template.get("airtime_time") or "",
             "title": doc.get("title") or template.get("title", "") or "",

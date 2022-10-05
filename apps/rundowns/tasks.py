@@ -19,42 +19,18 @@ def create_scheduled_rundowns() -> None:
     lock_id = "rundowns-create-scheduled-rundowns"
     if not lock(lock_id, expire=300):
         return
+    logger.info("Starting to create scheduled rundowns")
     try:
         now = utcnow()
         tz = pytz.timezone(app.config["RUNDOWNS_TIMEZONE"])
-        populate_schedule(now, tz)
         create_scheduled(now, tz)
     finally:
         unlock(lock_id)
         logger.info("Done")
 
 
-def populate_schedule(now: datetime, tz: tzinfo):
-    logger.info("Set schedule where missing")
-    local_now = utc_to_local(str(tz), now)
-    lookup = {
-        "scheduled_on": None,
-        "repeat": True,
-        "schedule.freq": {"$exists": True},
-        "airtime_time": {"$exists": True},
-    }
-    for template in templates.templates_service.find(where=lookup):
-        time = utils.parse_time(template["airtime_time"])
-        start = local_now.replace(hour=time.hour, minute=time.minute, second=time.second)
-        next_date = utils.get_next_date(start, template["schedule"])
-        if not next_date:
-            logger.warn("Could not schedule next Rundown for template %s", template["title"])
-            continue
-        else:
-            logger.info("Next rundown for template %s scheduled on %s", template["title"], next_date.isoformat())
-        updates = {"scheduled_on": local_to_utc(str(tz), next_date)}
-        templates.templates_service.system_update(template["_id"], updates, template)
-
-
 def create_scheduled(now: datetime, tz: tzinfo):
-    logger.info("Create scheduled rundowns")
-    buffer = timedelta(hours=app.config["RUNDOWNS_SCHEDULE_HOURS"])
-    lookup = {"scheduled_on": {"$lt": now + buffer}, "repeat": True, "schedule.freq": {"$exists": True}}
+    lookup = {"autocreate_on": {"$lte": now}, "repeat": True, "schedule.freq": {"$exists": True}}
     for template in templates.templates_service.find(where=lookup):
         updates = {}
         local_date = utc_to_local(str(tz), template["scheduled_on"])
@@ -69,12 +45,12 @@ def create_scheduled(now: datetime, tz: tzinfo):
         else:
             logger.info("Rundown already exists for template %s on %s", template["title"], local_date.isoformat())
         schedule: IRRule = template["schedule"]
-        next_date = utils.get_next_date(local_date, schedule)
+        next_date = utils.get_next_date(schedule, local_date)
         if not next_date:
             logger.warn("Could not schedule next Rundown for template %s", template["title"])
             updates["repeat"] = False
         else:
             logger.info("Scheduling next Rundown for template %s on %s", template["title"], next_date.isoformat())
-            updates["scheduled_on"] = local_to_utc(str(tz), next_date)
+            utils.set_autocreate_schedule(updates, next_date, template)
         if updates:
             templates.templates_service.system_update(template["_id"], updates, template)

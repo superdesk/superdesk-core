@@ -1,10 +1,15 @@
+import copy
+import logging
 import superdesk
 
 from typing import Optional
 
 from apps.auth import get_user_id
 
-from . import privileges, types, rundown_items
+from . import privileges, types, rundown_items, utils
+
+
+logger = logging.getLogger(__name__)
 
 
 class TemplatesResource(superdesk.Resource):
@@ -85,11 +90,12 @@ class TemplatesResource(superdesk.Resource):
             "readonly": True,
             "nullable": True,
         },
-        "last_scheduled_on": {
+        "autocreate_on": {
             "type": "datetime",
             "readonly": True,
             "nullable": True,
         },
+        "autocreate_before_seconds": {"type": "number", "nullable": True},
         "created_by": superdesk.Resource.rel("users", readonly=True),
         "last_updated_by": superdesk.Resource.rel("users", readonly=True),
         "items": {
@@ -123,8 +129,24 @@ class TemplatesService(superdesk.Service):
         """Reset current schedule when schedule config changes."""
         if original is None:
             original = {}
-        if any([updates.get(field) != original.get(field) for field in ["schedule", "airtime_time", "repeat"]]):
-            updates["scheduled_on"] = None
+
+        updated = copy.copy(original)
+        updated.update(updates)
+
+        if any(
+            [
+                updates.get(field) != original.get(field)
+                for field in ["schedule", "airtime_time", "airtime_date", "repeat", "autocreate_before_seconds"]
+            ]
+        ):
+            time = utils.parse_time(updated["airtime_time"]) if updated.get("airtime_time") else None
+            date = utils.parse_date(updated["airtime_date"]) if updated.get("airtime_date") else None
+            if not time or not updated.get("repeat") or not updated.get("schedule"):
+                updates["scheduled_on"] = updates["autocreate_on"] = None
+                return
+            start_datetime = utils.get_start_datetime(date=date, time=time)
+            scheduled_on_local = utils.get_next_date(updated["schedule"], start_datetime, include_start=True)
+            utils.set_autocreate_schedule(updates, scheduled_on_local, updated)
 
     def on_create(self, docs):
         for doc in docs:

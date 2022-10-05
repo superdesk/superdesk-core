@@ -1,7 +1,13 @@
+import logging
 import datetime
 import dateutil.rrule as rrule
 
 from typing import Optional
+from flask import current_app as app
+
+from superdesk.utc import utcnow, utc_to_local, local_to_utc
+
+logger = logging.getLogger(__name__)
 
 
 def parse_time(timestr: str) -> datetime.time:
@@ -27,7 +33,21 @@ def combine_date_time(
     )
 
 
-def get_next_date(start_date: datetime.datetime, schedule) -> Optional[datetime.datetime]:
+def to_utc(date: datetime.datetime) -> datetime.datetime:
+    local = local_to_utc(app.config["RUNDOWNS_TIMEZONE"], date)
+    assert local is not None
+    return local
+
+
+def get_start_datetime(time: datetime.time, date: Optional[datetime.date]) -> datetime.datetime:
+    now = utcnow()
+    local_now = utc_to_local(app.config["RUNDOWNS_TIMEZONE"], now)
+    if date is None or date < local_now.date():
+        date = local_now.date()
+    return combine_date_time(date, time, local_now.tzinfo)
+
+
+def get_next_date(schedule, start_date: datetime.datetime, include_start=False) -> Optional[datetime.datetime]:
     assert start_date.tzinfo is not None, "start_date must be time zone aware"
     if not schedule.get("freq"):
         return None
@@ -47,7 +67,25 @@ def get_next_date(start_date: datetime.datetime, schedule) -> Optional[datetime.
         )
     )
     for date in dates:
-        if date > now and date > start_date:
+        if date > now and (include_start or date > start_date):
             print("DATE", date, start_date)
             return date
     return None
+
+
+def set_autocreate_schedule(updates, local_date: Optional[datetime.datetime], template):
+    if local_date is None:
+        logger.warning("Could not schedule next Rundown for template %s", template["title"])
+        updates["scheduled_on"] = updates["autocreate_on"] = None
+        return
+
+    create_before = (
+        datetime.timedelta(seconds=template["autocreate_before_seconds"])
+        if template.get("autocreate_before_seconds")
+        else (datetime.timedelta(hours=app.config["RUNDOWNS_SCHEDULE_HOURS"]))
+    )
+
+    updates["scheduled_on"] = to_utc(local_date)
+    updates["autocreate_on"] = updates["scheduled_on"] - create_before
+
+    logger.info("Next rundown for template %s scheduled on %s", template["title"], updates["scheduled_on"].isoformat())
