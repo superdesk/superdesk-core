@@ -29,15 +29,16 @@ def on_update(updates: dict, original: dict):
 
     # check the lock if present
     if is_locked(original, now):
-        if updates.get("_lock") == LockActions.FORCE_LOCK.value:
+        if updates.get("_lock_action") == LockActions.FORCE_LOCK.value:
             pass  # force locking, might need specific permissions eventually
         elif auth["_id"] != original.get("_lock_session"):
             flask.abort(412, description=_("Resource is locked."))
 
     # lock
-    if updates.get("_lock") in LOCKED_ACTIONS:
+    if updates.get("_lock_action") in LOCKED_ACTIONS:
         auth = get_auth()
         updates.update(
+            _lock=True,
             _lock_user=auth["user"],
             _lock_session=auth["_id"],
             _lock_time=now,
@@ -45,8 +46,9 @@ def on_update(updates: dict, original: dict):
         )
 
     # unlock
-    if updates.get("_lock") in UNLOCKED_ACTIONS:
+    if updates.get("_lock_action") in UNLOCKED_ACTIONS:
         updates.update(
+            _lock=False,
             _lock_user=None,
             _lock_session=None,
             _lock_time=None,
@@ -55,4 +57,4 @@ def on_update(updates: dict, original: dict):
 
 
 def is_locked(item, now: datetime.datetime) -> bool:
-    return item.get("_lock") in LOCKED_ACTIONS and item.get("_lock_expiry") > now
+    return item.get("_lock") and item.get("_lock_expiry") > now

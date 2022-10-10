@@ -318,7 +318,8 @@ class Resource:
     @staticmethod
     def locking_schema() -> dict:
         return dict(
-            _lock=Resource.field(
+            _lock=Resource.field("boolean", readonly=True, nullable=True),
+            _lock_action=Resource.field(
                 "string", nullable=True, allowed=[action.value for action in resource_locking.LockActions]
             ),
             _lock_user=Resource.rel("users", readonly=True, nullable=True),

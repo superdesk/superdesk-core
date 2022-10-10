@@ -418,12 +418,12 @@ Feature: Rundowns
 
         When we patch "/rundowns/#rundowns._id#"
         """
-        {"_lock": "lock"}
+        {"_lock_action": "lock"}
         """
         Then we get ok response
         """
         {
-            "_lock": "lock",
+            "_lock": true,
             "_lock_user": "#CONTEXT_USER_ID#",
             "_lock_time": "__now__"
         }
@@ -446,20 +446,23 @@ Feature: Rundowns
         """
         When we patch "/rundowns/#rundowns._id#"
         """
-        {"_lock": "unlock"}
+        {"_lock_action": "unlock"}
         """
         Then we get error 412
         When we patch "/rundowns/#rundowns._id#"
         """
-        {"_lock": "lock"}
+        {"_lock_action": "lock"}
         """
         Then we get error 412
 
         When we patch "/rundowns/#rundowns._id#"
         """
-        {"_lock": "force-lock"}
+        {"_lock_action": "force-lock"}
         """
         Then we get ok response
+        """
+        {"_lock": true}
+        """
 
         When the lock expires "/rundowns/#rundowns._id#"
 
@@ -471,17 +474,17 @@ Feature: Rundowns
 
         When we patch "/rundowns/#rundowns._id#"
         """
-        {"_lock": "lock"}
+        {"_lock_action": "lock"}
         """
         Then we get ok response
 
         When we patch "/rundowns/#rundowns._id#"
         """
-        {"_lock": "unlock"}
+        {"_lock_action": "unlock"}
         """
         Then we get ok response
         """
-        {"_lock_user": null, "_lock_time": null, "_lock_session": null}
+        {"_lock_user": null, "_lock_time": null, "_lock_session": null, "_lock": false}
         """
 
         When we login as user "foo2" with password "bar" and user type "administrator"
@@ -502,13 +505,13 @@ Feature: Rundowns
 
         When we patch "/rundowns/#rundowns._id#"
         """
-        {"_lock": "lock"}
+        {"_lock_action": "lock"}
         """
         Then we get ok response
 
         When we patch "/rundowns/#rundowns._id#"
         """
-        {"_lock": "unlock"}
+        {"_lock_action": "unlock"}
         """
         Then we get ok response
         """
