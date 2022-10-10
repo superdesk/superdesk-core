@@ -15,7 +15,7 @@ import blinker
 import logging as logging_lib
 
 from typing import Any, Dict, NamedTuple, Optional
-from flask import abort, json, Blueprint
+from flask import abort, json, Blueprint, current_app
 from flask_babel.speaklater import LazyString
 from flask_script import Command as BaseCommand, Option
 from eve.utils import config  # noqa
@@ -82,8 +82,8 @@ def get_headers(self, environ=None):
     """
     return [
         ("Content-Type", "text/html"),
-        ("Access-Control-Allow-Origin", app.config["CLIENT_URL"]),
-        ("Access-Control-Allow-Headers", ",".join(app.config["X_HEADERS"])),
+        ("Access-Control-Allow-Origin", current_app.config["CLIENT_URL"]),
+        ("Access-Control-Allow-Headers", ",".join(current_app.config["X_HEADERS"])),
         ("Access-Control-Allow-Credentials", "true"),
         ("Access-Control-Allow-Methods", "*"),
     ]
