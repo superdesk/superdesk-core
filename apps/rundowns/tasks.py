@@ -2,9 +2,9 @@ import pytz
 import logging
 
 from flask import current_app as app
-from datetime import datetime, timedelta, tzinfo
+from datetime import datetime, tzinfo
 from superdesk.celery_app import celery
-from superdesk.utc import utc_to_local, local_to_utc, utcnow
+from superdesk.utc import utc_to_local, utcnow
 from superdesk.lock import lock, unlock
 from apps.rundowns.types import IRRule
 
@@ -26,7 +26,7 @@ def create_scheduled_rundowns() -> None:
         create_scheduled(now, tz)
     finally:
         unlock(lock_id)
-        logger.info("Done")
+        logger.info("Done creating scheduled rundowns")
 
 
 def create_scheduled(now: datetime, tz: tzinfo):

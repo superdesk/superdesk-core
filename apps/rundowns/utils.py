@@ -68,7 +68,6 @@ def get_next_date(schedule, start_date: datetime.datetime, include_start=False) 
     )
     for date in dates:
         if date > now and (include_start or date > start_date):
-            print("DATE", date, start_date)
             return date
     return None
 
