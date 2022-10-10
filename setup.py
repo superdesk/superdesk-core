@@ -58,7 +58,6 @@ install_requires = [
     "regex==2020.7.14",
     "flask-oidc-ex==0.5.5",
     # to be replaced by stdlib version when we use Python 3.8+
-    "importlib_metadata<3.2",
     "typing_extensions>=3.7.4",
     "elastic-apm[flask]>=6.7,<6.8",
     # Fix an issue with MarkupSafe 2.1.0 not exporting `soft_unicode`
