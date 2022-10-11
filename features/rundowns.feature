@@ -525,7 +525,7 @@ Feature: Rundowns
         {"title": "bar"}
         """
         Then we get ok response
-    
+
     @auth
     Scenario: Export
         When we get "/rundown_export"
@@ -641,7 +641,7 @@ Feature: Rundowns
         [
             {
                 "show": "#shows._id#",
-                "title": "Rundown Title",
+                "title": "Rundown Title // 10.10.2022",
                 "airtime_time": "06:00",
                 "airtime_date": "2030-01-01",
                 "planned_duration": 3600,
@@ -664,7 +664,7 @@ Feature: Rundowns
 
         When we get "#rundown_export.href#"
         Then we get response code 200
-        And we get "Content-Disposition" header with "attachment; filename="Prompter-Rundown Title.pdf"" type
+        And we get "Content-Disposition" header with "attachment; filename="Prompter-Rundown_Title_10.10.2022.pdf"" type
         And we get "Content-Type" header with "application/pdf" type
 
         When we post to "rundown_export"
@@ -678,7 +678,7 @@ Feature: Rundowns
 
         When we get "#rundown_export.href#"
         Then we get response code 200
-        And we get "Content-Disposition" header with "attachment; filename="Realizer-Rundown Title.csv"" type
+        And we get "Content-Disposition" header with "attachment; filename="Realizer-Rundown_Title_10.10.2022.csv"" type
         And we get "Content-Type" header with "text/csv; charset=utf-8" type
 
         When we post to "rundown_export"
@@ -692,7 +692,7 @@ Feature: Rundowns
 
         When we get "#rundown_export.href#"
         Then we get response code 200
-        And we get "Content-Disposition" header with "attachment; filename="Realizer-Rundown Title.pdf"" type
+        And we get "Content-Disposition" header with "attachment; filename="Realizer-Rundown_Title_10.10.2022.pdf"" type
         And we get "Content-Type" header with "application/pdf" type
 
     @auth

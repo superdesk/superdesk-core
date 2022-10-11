@@ -3,6 +3,7 @@ import superdesk
 from bson import ObjectId
 from flask import Blueprint, url_for, current_app as app, abort
 from typing import List
+from werkzeug.utils import secure_filename
 
 from superdesk.utils import ListCursor, jwt_encode, jwt_decode
 
@@ -29,9 +30,7 @@ def export(token):
     items = rundown_items.items_service.get_rundown_items(rundown)
     output, mimetype, filename = formatter.export(show, rundown, items)
     response = app.response_class(output, mimetype=mimetype)
-    response.headers["Content-Disposition"] = f'attachment; filename="{filename}"'
-    with open(f"/tmp/rundowns-export-{filename}", "wb") as out:
-        out.write(output)
+    response.headers["Content-Disposition"] = f'attachment; filename="{secure_filename(filename)}"'
     return response
 
 
