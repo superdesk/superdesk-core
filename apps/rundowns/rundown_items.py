@@ -1,6 +1,7 @@
+import bson
 import superdesk
 
-from typing import Any, Dict, List, Literal
+from typing import Dict, List, Literal
 
 from . import privileges, types, rundowns
 
@@ -108,12 +109,12 @@ class RundownItemsService(superdesk.Service):
     def get_rundown_items(self, rundown: types.IRundown) -> List[types.IRundownItem]:
         if not rundown.get("items"):
             return []
-        ids = list(set([ref["_id"] for ref in rundown["items"]]))
+        ids = list(set([bson.ObjectId(ref["_id"]) for ref in rundown["items"]]))
         items = {}
         cursor = self.get_from_mongo(req=None, lookup={"_id": {"$in": ids}})
         for item in cursor:
-            items[item["_id"]] = item
-        return [items[ref["_id"]] for ref in rundown["items"]]
+            items[str(item["_id"])] = item
+        return [items[str(ref["_id"])] for ref in rundown["items"] if items.get(str(ref["_id"]))]
 
     def on_updated(self, updates, original):
         for field in self.search_fields + self.duration_fields:

@@ -1,3 +1,4 @@
+import bson
 import datetime
 import superdesk
 
@@ -183,7 +184,7 @@ class RundownsService(superdesk.Service):
     def get_item_ref(self, item_template: types.IRundownItemTemplate) -> types.IRef:
         item = rundown_items.items_service.create_from_template(item_template)
         assert "_id" in item, {"rundown_item": {"_id": 1}}
-        return {"_id": item["_id"]}
+        return {"_id": bson.ObjectId(item["_id"])}
 
     def update(self, id, updates, original):
         if updates.get("items"):

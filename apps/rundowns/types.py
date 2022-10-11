@@ -1,3 +1,4 @@
+import bson
 import datetime
 
 from typing import Dict, List, Literal, Optional, TypedDict
@@ -8,7 +9,7 @@ class IEntity(TypedDict, total=False):
 
 
 class IRef(TypedDict):
-    _id: str
+    _id: bson.ObjectId
 
 
 IRefs = List[IRef]
