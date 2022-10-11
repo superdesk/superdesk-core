@@ -7,12 +7,16 @@ from superdesk.editor_utils import get_field_content_state
 from .. import types
 
 
+def to_string(item, key) -> str:
+    return item.get(key) or ""
+
+
 def item_title(show: types.IShow, rundown: types.IRundown, item: types.IRundownItem) -> str:
     return "-".join(
         filter(
             None,
             [
-                item.get("item_type", "").upper(),
+                to_string(item, "item_type").upper(),
                 show.get("shortcode", "").upper(),
                 (item.get("title") or "").upper(),
             ],
@@ -50,7 +54,7 @@ def format_duration(duration) -> str:
 def item_table_data(show: types.IShow, rundown: types.IRundown, item: types.IRundownItem, order: int) -> List[str]:
     return [
         str(order),
-        item["item_type"].upper(),
+        to_string(item, "item_type").upper(),
         item_title(show, rundown, item),
         "Tone" if item.get("live_sound") else "OFF",
         item.get("additional_notes") or "",
