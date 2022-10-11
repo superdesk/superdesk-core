@@ -31,6 +31,9 @@ def export(token):
     output, mimetype, filename = formatter.export(show, rundown, items)
     response = app.response_class(output, mimetype=mimetype)
     response.headers["Content-Disposition"] = f'attachment; filename="{secure_filename(filename)}"'
+    if app.testing:
+        with open(f"/tmp/rundowns-export-{secure_filename(filename)}", "wb") as out:
+            out.write(output)
     return response
 
 

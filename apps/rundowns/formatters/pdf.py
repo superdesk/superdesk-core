@@ -20,7 +20,9 @@ from superdesk.text_utils import get_text
 styles = getSampleStyleSheet()
 
 FONT_NAME = "DejaVuSans"
-pdfmetrics.registerFont(TTFont("DejaVuSans", "DejaVuSans.ttf"))
+MONO_FONT_NAME = "DejaVuSansMono"
+pdfmetrics.registerFont(TTFont(FONT_NAME, "DejaVuSans.ttf"))
+pdfmetrics.registerFont(TTFont(MONO_FONT_NAME, "DejaVuSansMono.ttf"))
 
 FONT_SIZE = 14
 ORDERED_TYPE = "1"
@@ -151,6 +153,7 @@ class TablePDFFormatter(PrompterPDFFormatter):
                 data,
                 style=[
                     ("GRID", (0, 0), (-1, -1), 0.25, colors.black),
+                    ("FONTNAME", (0, 0), (-1, -1), MONO_FONT_NAME),
                 ],
             )
         ]

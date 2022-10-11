@@ -1,4 +1,5 @@
 from typing import List
+from datetime import datetime, timedelta
 
 from .. import types
 
@@ -16,6 +17,13 @@ def item_title(show: types.IShow, rundown: types.IRundown, item: types.IRundownI
     )
 
 
+def format_duration(duration) -> str:
+    if duration:
+        delta = timedelta(seconds=int(duration))
+        return (datetime(year=1, month=1, day=1) + delta).strftime("%H:%M:%S")
+    return ""
+
+
 def item_table_data(show: types.IShow, rundown: types.IRundown, item: types.IRundownItem, order: int) -> List[str]:
     return [
         str(order),
@@ -25,5 +33,5 @@ def item_table_data(show: types.IShow, rundown: types.IRundown, item: types.IRun
         item.get("additional_notes") or "",
         item.get("live_captions") or "",
         item.get("last_sentence") or "",
-        str(item.get("duration", 0)),
+        format_duration(item.get("duration")),
     ]
