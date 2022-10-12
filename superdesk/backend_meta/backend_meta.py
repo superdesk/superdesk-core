@@ -22,7 +22,7 @@ except ImportError:
     # settings doesn't exist during tests
     settings = None
 import logging
-from importlib_metadata import version as pkg_version, PackageNotFoundError
+from importlib.metadata import version as pkg_version, PackageNotFoundError
 
 
 logger = logging.getLogger(__name__)
