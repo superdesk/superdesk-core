@@ -9,6 +9,8 @@
 # at https://www.sourcefabric.org/superdesk/license
 
 from typing import Dict, Any
+
+import pymongo
 import logging
 
 from typing import Union
@@ -181,7 +183,7 @@ class BaseService:
             lookup = {}
             docs = []
         else:
-            docs = list(doc for doc in self.get_from_mongo(None, lookup))
+            docs = list(doc for doc in self.get_from_mongo(None, lookup).sort("_id", pymongo.ASCENDING))
         for doc in docs:
             self.on_delete(doc)
         res = self.delete(lookup)
