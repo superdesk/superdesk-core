@@ -8,9 +8,10 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
+import pymongo
 import logging
 
-from typing import Dict, Any, Union
+from typing import Dict, Any, Optional, Union
 from flask import current_app as app, json
 from eve.utils import ParsedRequest, config
 from eve.methods.common import resolve_document_etag
@@ -28,7 +29,7 @@ class BaseService:
 
     datasource: Union[str, None]
 
-    def __init__(self, datasource: str = None, backend=None):
+    def __init__(self, datasource: Optional[str] = None, backend=None):
         self.backend = backend
         self.datasource = datasource
 
@@ -202,7 +203,7 @@ class BaseService:
             lookup = {}
             docs = []
         else:
-            docs = list(doc for doc in self.get_from_mongo(None, lookup))
+            docs = list(doc for doc in self.get_from_mongo(None, lookup).sort("_id", pymongo.ASCENDING))
         for doc in docs:
             self.on_delete(doc)
         res = self.delete(lookup)
