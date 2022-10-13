@@ -43,6 +43,7 @@ class IngestProviderResource(Resource):
     :param feed_parser: feed parser name
     :param content_types: list of content types of items to ingest from provider
     :param allow_remove_ingested: allow deleting of items from ingest
+    :param disable_item_updates: disables updating items from ingest
     :param content_expiry: ttl for ingested items in minutes
     :param config: provider specific config
     :param private: can contain any data useful for provider (e.g. to manage feeds position)
@@ -72,6 +73,7 @@ class IngestProviderResource(Resource):
             "feed_parser": {"type": "string", "nullable": True, "allowed": allowed_feed_parsers},
             "content_types": {"type": "list", "default": tuple(CONTENT_TYPE), "allowed": tuple(CONTENT_TYPE)},
             "allow_remove_ingested": {"type": "boolean", "default": False},
+            "disable_item_updates": {"type": "boolean", "default": False},
             "content_expiry": {"type": "integer", "default": app.config["INGEST_EXPIRY_MINUTES"]},
             "config": {
                 "type": "dict",
