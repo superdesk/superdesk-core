@@ -91,7 +91,7 @@ def is_closed(provider):
 def is_not_expired(item, delta):
     if item.get("expiry") or item.get("versioncreated"):
         try:
-            expiry = item.get("expiry", item["versioncreated"] + delta)
+            expiry = item.get("expiry") or item.get("versioncreated") + delta
         except OverflowError:  # this will never expire
             return True
         if expiry.tzinfo:
