@@ -854,9 +854,11 @@ class BasePublishService(BaseService):
                     # if main item is scheduled we must also schedule associations
                     self._inherit_publish_schedule(original, updates, associated_item)
 
+                    associated_item_updates = associated_item.copy()
                     get_resource_service("archive_publish").patch(
-                        id=associated_item.pop(config.ID_FIELD), updates=associated_item
+                        id=associated_item[config.ID_FIELD], updates=associated_item_updates
                     )
+                    sync_associated_item_changes(associated_item, associated_item_updates)
                     associated_item["state"] = updates.get("state", self.published_state)
                     associated_item["operation"] = self.publish_type
                     updates[ASSOCIATIONS] = updates.get(ASSOCIATIONS, {})
@@ -874,13 +876,15 @@ class BasePublishService(BaseService):
                         # there is no update for this item
                         associated_item.get("task", {}).pop("stage", None)
                         remove_unwanted(associated_item)
-                        publish_service.patch(id=associated_item.pop(config.ID_FIELD), updates=associated_item)
+                        associated_item_updates = associated_item.copy()
+                        publish_service.patch(id=associated_item[config.ID_FIELD], updates=associated_item_updates)
+                        sync_associated_item_changes(associated_item, associated_item_updates)
                         continue
 
                     if association_updates.get("state") not in PUBLISH_STATES:
                         # There's an update to the published associated item
                         remove_unwanted(association_updates)
-                        publish_service.patch(id=association_updates.pop(config.ID_FIELD), updates=association_updates)
+                        publish_service.patch(id=associated_item[config.ID_FIELD], updates=association_updates)
 
             # When there is an associated item which is published, Inserts the latest version of that associated item into archive_versions.
             insert_into_versions(doc=associated_item)
@@ -934,6 +938,17 @@ def update_item_data(item, data, keys=None, keep_existing=False):
                 item.setdefault(key, data[key])
             else:
                 item[key] = data[key]
+
+
+def sync_associated_item_changes(associated_item, updates):
+    """Sync changes to the associated item reference after publishing the item.
+
+    We want to get there all system changes, but not content fields which would
+    override local changes done on the association.
+    """
+    for key in updates:
+        if key not in DEFAULT_SCHEMA.keys() and updates.get(key):
+            associated_item[key] = updates[key]
 
 
 superdesk.workflow_state("published")
