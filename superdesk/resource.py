@@ -323,9 +323,9 @@ class Resource:
                 "string", nullable=True, allowed=[action.value for action in resource_locking.LockActions]
             ),
             _lock_user=Resource.rel("users", readonly=True, nullable=True),
-            _lock_session=Resource.field("string", readonly=True, nullable=True, analyzed=False),
             _lock_time=Resource.field("datetime", readonly=True, nullable=True),
             _lock_expiry=Resource.field("datetime", readonly=True, nullable=True),
+            _lock_session=Resource.field("string", readonly=True, nullable=True, analyzed=False),
         )
 
 

@@ -57,4 +57,4 @@ def on_update(updates: dict, original: dict):
 
 
 def is_locked(item, now: datetime.datetime) -> bool:
-    return item.get("_lock") and item.get("_lock_expiry") > now
+    return item.get("_lock") and item.get("_lock_expiry") and item["_lock_expiry"] > now
