@@ -116,7 +116,6 @@ class DataUpdateCommand(superdesk.Command):
             "-i",
             dest="data_update_id",
             required=False,
-            choices=get_data_updates_files(strip_file_extension=True),
             help="Data update id to run last",
         ),
         superdesk.Option(
@@ -181,6 +180,12 @@ class Upgrade(DataUpdateCommand):
     """
 
     def run(self, data_update_id=None, fake=False, dry=False):
+        if data_update_id and data_update_id not in get_data_updates_files(strip_file_extension=True):
+            print(
+                "Error argument --id/-i: invalid choice: '{}'"
+                " (choose from  {})".format(data_update_id, get_data_updates_files(strip_file_extension=True))
+            )
+            return
         super().run(data_update_id, fake, dry)
         data_updates_files = self.data_updates_files
         # drops updates that already have been applied
@@ -218,6 +223,12 @@ class Downgrade(DataUpdateCommand):
     """
 
     def run(self, data_update_id=None, fake=False, dry=False):
+        if data_update_id and data_update_id not in get_data_updates_files(strip_file_extension=True):
+            print(
+                "Error argument --id/-i: invalid choice: '{}'"
+                " (choose from  {})".format(data_update_id, get_data_updates_files(strip_file_extension=True))
+            )
+            return
         super().run(data_update_id, fake, dry)
         data_updates_files = self.data_updates_files
         # check if there is something to downgrade
