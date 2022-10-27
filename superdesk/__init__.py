@@ -10,11 +10,12 @@
 
 """Superdesk"""
 
+import eve
 import blinker
 import logging as logging_lib
 
 from typing import Any, Dict, NamedTuple, Optional
-from flask import abort, json, Blueprint, current_app as app
+from flask import abort, json, Blueprint, current_app
 from flask_babel.speaklater import LazyString
 from flask_script import Command as BaseCommand, Option
 from eve.utils import config  # noqa
@@ -31,7 +32,7 @@ from .signals import *  # noqa
 from apps.common.models.base_model import BaseModel
 from apps.common.components.base_component import BaseComponent
 
-__version__ = "2.5.dev0"
+__version__ = "2.6.dev0"
 
 API_NAME = "Superdesk API"
 SCHEMA_VERSION = 2
@@ -45,6 +46,7 @@ _eve_backend = EveBackend()
 default_user_preferences: Dict[str, "UserPreference"] = dict()
 default_session_preferences: Dict[str, Any] = dict()
 logger = logging_lib.getLogger(__name__)
+app: Optional[eve.Eve] = None
 
 
 class UserPreference(NamedTuple):
@@ -80,8 +82,8 @@ def get_headers(self, environ=None):
     """
     return [
         ("Content-Type", "text/html"),
-        ("Access-Control-Allow-Origin", app.config["CLIENT_URL"]),
-        ("Access-Control-Allow-Headers", ",".join(app.config["X_HEADERS"])),
+        ("Access-Control-Allow-Origin", current_app.config["CLIENT_URL"]),
+        ("Access-Control-Allow-Headers", ",".join(current_app.config["X_HEADERS"])),
         ("Access-Control-Allow-Credentials", "true"),
         ("Access-Control-Allow-Methods", "*"),
     ]
@@ -92,7 +94,7 @@ setattr(HTTPException, "get_headers", get_headers)
 
 def domain(resource, res_config):
     """Register domain resource"""
-    DOMAIN[resource] = res_config
+    app.register_resource(resource, res_config)
 
 
 def command(name, command):

@@ -23,6 +23,7 @@ from superdesk.default_settings import (  # noqa
     MONGO_URI,
     ELASTICSEARCH_INDEX,
     ELASTICSEARCH_URL,
+    ELASTICSEARCH_SETTINGS,
     AMAZON_ACCESS_KEY_ID,
     AMAZON_SECRET_ACCESS_KEY,
     AMAZON_REGION,
@@ -33,6 +34,8 @@ from superdesk.default_settings import (  # noqa
     PAGINATION_LIMIT,
     APM_SERVER_URL,
     APM_SECRET_TOKEN,
+    APM_SERVICE_NAME,
+    CLIENT_URL,
 )
 
 SECRET_KEY = env("PRODAPI_SECRET_KEY", "")

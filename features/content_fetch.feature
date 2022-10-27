@@ -610,7 +610,7 @@ Feature: Fetch Items from Ingest
         When we get "/ingest/ingest1"
         Then we get existing resource
         """
-        {"profile": "bar"}
+        {"profile": "__none__"}
         """
 
         When we post to "/desks"
@@ -625,7 +625,7 @@ Feature: Fetch Items from Ingest
         """
         Then we get new resource
         """
-        {"profile": "bar"}
+        {"profile": "foo"}
         """
 
         When we post to "/ingest/ingest2/fetch"
@@ -635,6 +635,21 @@ Feature: Fetch Items from Ingest
         Then we get new resource
         """
         {"profile": "picture"}
+        """
+
+        When we post to "/desks"
+        """
+        {"name": "finance"}
+        """
+        Then we get new resource
+
+        When we post to "/ingest/ingest1/fetch"
+        """
+        {"desk": "#desks._id#"}
+        """
+        Then we get new resource
+        """
+        {"profile": "bar"}
         """
 
     @auth
@@ -781,3 +796,60 @@ Feature: Fetch Items from Ingest
         }
         ]}
       """
+
+    @auth
+    Scenario: Fetch item with associations
+        Given "ingest"
+        """
+        [
+            {
+                "_id": "picture",
+                "type": "picture",
+                "state": "ingested"
+            },
+            {
+                "_id": "text",
+                "type": "text",
+                "associations": {
+                    "featured": {
+                        "_id": "picture",
+                        "type": "picture",
+                        "state": "ingested"
+                    }
+                }
+            }
+        ]
+        """
+        And "desks"
+        """
+        [{"name": "Sports"}]
+        """
+
+        When we post to "/ingest/text/fetch"
+        """
+        {"desk": "#desks._id#"}
+        """
+        Then we get new resource
+        When we get "archive"
+        Then we get list with 2 items
+        """
+        {
+            "_items": [
+                {
+                    "type": "picture",
+                    "_current_version": 1,
+                    "state": "fetched"
+                },
+                {
+                    "type": "text",
+                    "_current_version": 1,
+                    "associations": {
+                        "featured": {
+                            "_current_version": 1,
+                            "state": "fetched"
+                        }
+                    }
+                }
+            ]
+        }
+        """

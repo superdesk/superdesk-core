@@ -60,6 +60,7 @@ works and can be developed further.
     extending
     authentication
     cli
+    database_recording
     signals
     testing
     notifications

@@ -25,7 +25,7 @@ from eve.io.mongo.mongo import _create_index as create_index
 from eve.io.media import MediaStorage
 from eve.render import send_response
 from flask_babel import Babel
-from flask import g
+from flask import g, json
 from babel import parse_locale
 from pymongo.errors import DuplicateKeyError
 
@@ -67,7 +67,6 @@ def set_error_handlers(app):
 
     @app.errorhandler(AssertionError)
     def assert_error_handler(error):
-        print("error", error)
         return send_response(None, ({"code": 400, "error": str(error) if str(error) else "assert"}, None, None, 400))
 
     @app.errorhandler(500)
@@ -114,6 +113,9 @@ class SuperdeskEve(eve.Eve):
 
                 try:
                     create_index(self, resource, name, list_of_keys, index_options)
+                except KeyError:
+                    logger.warning("resource config missing for %s", resource)
+                    continue
                 except DuplicateKeyError as err:
                     # Duplicate key for unique indexes are generally caused by invalid documents in the collection
                     # such as multiple documents not having a value for the attribute used for the index
@@ -122,6 +124,25 @@ class SuperdeskEve(eve.Eve):
 
                     if not ignore_duplicate_keys:
                         raise
+
+    def item_scope(self, name, schema=None):
+        """Register item scope."""
+        self.config.setdefault("item_scope", {})[name] = {
+            "schema": schema,
+        }
+
+        def update_resource_schema(resource):
+            assert schema
+            self.config["DOMAIN"][resource]["schema"].update(schema)
+            for key in schema:
+                self.config["DOMAIN"][resource]["datasource"]["projection"][key] = 1
+
+        if schema is not None:
+            for resource in ("archive", "archive_autosave", "published", "archived"):
+                update_resource_schema(resource)
+                versioned_resource = resource + self.config["VERSIONS"]
+                if versioned_resource in self.config["DOMAIN"]:
+                    update_resource_schema(versioned_resource)
 
 
 def get_media_storage_class(app_config: Dict[str, Any], use_provider_config: bool = True) -> Type[MediaStorage]:
@@ -243,8 +264,10 @@ def get_app(config=None, media_storage=None, config_object=None, init_elastic=No
     for module_name in app.config.get("INSTALLED_APPS", []):
         install_app(module_name)
 
+    app.config.setdefault("DOMAIN", {})
     for resource in superdesk.DOMAIN:
-        app.register_resource(resource, superdesk.DOMAIN[resource])
+        if resource not in app.config["DOMAIN"]:
+            app.register_resource(resource, superdesk.DOMAIN[resource])
 
     for name, jinja_filter in superdesk.JINJA_FILTERS.items():
         app.jinja_env.filters[name] = jinja_filter

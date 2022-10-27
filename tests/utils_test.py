@@ -27,3 +27,10 @@ class UtilsTestCase(unittest.TestCase):
         self.assertIsNotNone(timer.stop("test"))
         self.assertRaises(KeyError, timer.split, "test")
         self.assertRaises(KeyError, timer.split, "bla")
+
+    def test_allowed_container(self):
+        container = utils.AllowedContainer({"foo": 1})
+        self.assertIn("foo", container)
+        self.assertNotIn("bar", container)
+        allowed = [x for x in container]
+        self.assertEqual(["foo"], allowed)

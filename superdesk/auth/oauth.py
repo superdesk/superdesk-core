@@ -29,7 +29,7 @@ from datetime import datetime
 from typing import Optional, List, Tuple
 from bson import ObjectId
 import superdesk
-from flask import url_for, render_template
+from flask import url_for, render_template, current_app as app
 from flask_babel import lazy_gettext as l_
 from eve.utils import config
 from authlib.integrations.flask_client import OAuth
@@ -149,16 +149,16 @@ def configure_google(app, extra_scopes: Optional[List[str]] = None, refresh: boo
             if OAuth is used for Superdesk login, url_id is None.
             Otherwise, it is used to associate the token with the provider needing it
         """
-        superdesk.app.redis.set(KEY_GOOGLE_PROVIDER_ID, url_id or "", ex=TTL_GOOGLE_PROVIDER_ID)
+        app.redis.set(KEY_GOOGLE_PROVIDER_ID, url_id or "", ex=TTL_GOOGLE_PROVIDER_ID)
         redirect_uri = url_for(".google_authorized", _external=True)
         return oauth.google.authorize_redirect(redirect_uri)
 
     @bp.route("/login/google_authorized")
     def google_authorized():
-        token_id = superdesk.app.redis.get(KEY_GOOGLE_PROVIDER_ID)
+        token_id = app.redis.get(KEY_GOOGLE_PROVIDER_ID)
         if token_id is not None:
             token_id = token_id.decode()
-            superdesk.app.redis.delete(KEY_GOOGLE_PROVIDER_ID)
+            app.redis.delete(KEY_GOOGLE_PROVIDER_ID)
 
         token = oauth.google.authorize_access_token()
         if not token:

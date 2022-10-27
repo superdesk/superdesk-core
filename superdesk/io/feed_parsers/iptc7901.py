@@ -98,7 +98,7 @@ class IPTC7901FeedParser(FileFeedParser):
             raise ParserError.IPTC7901ParserError(exception=ex, provider=provider)
 
     def map_category(self, source_category):
-        if source_category == "x" or source_category == "X":
+        if source_category.lower() == "u" or source_category.lower() == "x":
             return "i"
         else:
             return source_category

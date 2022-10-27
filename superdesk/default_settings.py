@@ -99,7 +99,17 @@ ELASTIC_DEFAULT_SIZE = 10
 #: https://discuss.elastic.co/t/configuring-the-standard-tokenizer/8691/5
 ELASTIC_QUERY_STRING_ANALYZE_WILDCARD = False
 
-PAGINATION_LIMIT = 200
+#: allow to change type of query string query
+#:
+#: .. versionadded:: 2.5
+#:
+ELASTIC_QUERY_STRING_TYPE = "cross_fields"
+
+#: max api items to get with single query
+#:
+#: .. versionchanged:: 2.4.1
+#:
+PAGINATION_LIMIT = 500
 
 MERGE_NESTED_DOCUMENTS = False
 
@@ -452,6 +462,7 @@ CORE_APPS.extend(
         "superdesk.io.iptc",
         "superdesk.io.mediatopics",
         "superdesk.text_checkers.spellcheckers",
+        "superdesk.text_checkers.spellcheckers.default",
         "superdesk.text_checkers.ai",
         "apps.io",
         "apps.io.feeding_services",
@@ -503,6 +514,7 @@ CORE_APPS.extend(
         "superdesk.places",
         "apps.desk_routing",
         "apps.system_message",
+        "apps.rundowns",
     ]
 )
 
@@ -514,6 +526,13 @@ VERSION = "_current_version"
 
 #: media storage provider
 MEDIA_STORAGE_PROVIDER = env("MEDIA_STORAGE_PROVIDER")
+
+#: avoid checking if media exists
+#:
+#: it should only check during migration, otherwise this generates unnecessary load on the s3
+#:
+#: .. versionadded:: 2.5
+PROXY_MEDIA_STORAGE_CHECK_EXISTS = strtobool(env("PROXY_MEDIA_STORAGE_CHECK_EXISTS", "false"))
 
 #: uses for generation of media url ``(<media_prefix>/<media_id>)``::
 MEDIA_PREFIX = env("MEDIA_PREFIX", "%s/upload-raw" % SERVER_URL.rstrip("/"))
@@ -751,6 +770,7 @@ GOOGLE_CLIENT_SECRET = env("GOOGLE_CLIENT_SECRET")
 GOOGLE_LOGIN = True
 GOOGLE_GMAIL = True
 
+PREFERRED_URL_SCHEME = env("PREFERRED_URL_SCHEME", "https")
 
 # SAML Auth settings
 SAML_PATH = env("SAML_PATH")
@@ -1026,6 +1046,7 @@ OIDC_BROWSER_REDIRECT_URL = env("OIDC_BROWSER_REDIRECT_URL", CLIENT_URL)
 #: .. versionadded:: 2.1
 #:
 APPS_DATA_UPDATES_PATHS = []
+
 PUBLISH_ASSOCIATIONS_RESEND = "new"
 
 #: Elastic APM
@@ -1034,3 +1055,21 @@ PUBLISH_ASSOCIATIONS_RESEND = "new"
 #:
 APM_SERVER_URL = env("APM_SERVER_URL")
 APM_SECRET_TOKEN = env("APM_SECRET_TOKEN")
+
+#: Elastic APM Service name
+#:
+#: APM service name
+#:
+#: .. versionadded:: 2.4.1
+#:
+APM_SERVICE_NAME = env("APM_SERVICE_NAME")
+
+
+#: Default Timezone for Rundowns Shows/Templates
+#:
+#: .. versionadded:: 2.6
+#:
+RUNDOWNS_TIMEZONE = DEFAULT_TIMEZONE
+
+
+REBUILD_ELASTIC_ON_INIT_DATA_ERROR = strtobool(env("REBUILD_ELASTIC_ON_INIT_DATA_ERROR", "true"))

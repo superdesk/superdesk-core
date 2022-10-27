@@ -22,3 +22,8 @@ class ItemExpiryTestCase(TestCase):
         item = {"versioncreated": datetime.now()}
         delta = timedelta(minutes=999999999999)
         self.assertTrue(is_not_expired(item, delta))
+
+    def test_expiry_None(self):
+        item = {"expiry": None, "versioncreated": datetime.now()}
+        delta = timedelta(minutes=5)
+        self.assertTrue(is_not_expired(item, delta))

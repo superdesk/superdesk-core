@@ -276,7 +276,7 @@ class RemoveExpiredContent(superdesk.Command):
                 continue
             signals.archived_item_removed.send(archived_service, item=item)
             if not app.config.get("LEGAL_ARCHIVE") and not archived_service.find_one(req=None, item_id=item["item_id"]):
-                remove_media_files(item)
+                remove_media_files(item, published=True)
 
     def _can_remove_item(self, item, processed_item=None, preserve_published_desks=None):
         """Recursively checks if the item can be removed.
@@ -419,7 +419,6 @@ class RemoveExpiredContent(superdesk.Command):
                 logger.info("{} Archived published item: {}".format(self.log_msg, item_id))
                 published_service.delete_by_article_id(item_id)
                 logger.info("{} Deleted published item. {}".format(self.log_msg, item_id))
-
             archive_service.delete_by_article_ids([item_id])
             logger.info("{} Deleted archive item. {}".format(self.log_msg, item_id))
         except Exception:
@@ -479,6 +478,9 @@ class RemoveExpiredContent(superdesk.Command):
         :param dict items_to_expire:
         :return dict: dict of items having issues.
         """
+        if not app.config.get("LEGAL_ARCHIVE"):
+            return []
+
         logger.info("{} checking for items in legal archive. Items: {}".format(self.log_msg, items_to_expire.keys()))
 
         items_not_moved_to_legal = get_resource_service("published").get_published_items_by_moved_to_legal(

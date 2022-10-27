@@ -35,6 +35,8 @@ class ResendResource(ArchiveResource):
     resource_methods = ["POST"]
     privileges = {"POST": "resend"}
 
+    versioning = False
+
 
 class ResendService(Service):
 

@@ -71,7 +71,6 @@ def update_config(conf):
     conf["CONTENTAPI_MONGO_URI"] = get_mongo_uri("CONTENTAPI_MONGO_URI", "sptests_contentapi")
     conf["CONTENTAPI_ELASTICSEARCH_INDEX"] = "sptest_contentapi"
 
-    conf["DEBUG"] = True
     conf["TESTING"] = True
     conf["SUPERDESK_TESTING"] = True
     conf["BCRYPT_GENSALT_WORK_FACTOR"] = 4
@@ -106,6 +105,7 @@ def update_config(conf):
     # misc
     conf["GEONAMES_USERNAME"] = "superdesk_dev"
     conf["PUBLISH_ASSOCIATED_ITEMS"] = True
+    conf["PAGINATION_LIMIT"] = conf["PAGINATION_DEFAULT"] = 200
 
     # auth server
     conf["AUTH_SERVER_SHARED_SECRET"] = "some secret"
@@ -191,7 +191,6 @@ def setup_config(config):
         config or {},
         **{
             "APP_ABSPATH": app_abspath,
-            "DEBUG": True,
             "TESTING": True,
         },
     )
@@ -202,7 +201,7 @@ def setup_config(config):
     logging.getLogger("celery").setLevel(logging.WARNING)
     logging.getLogger("superdesk").setLevel(logging.ERROR)
     logging.getLogger("elasticsearch").setLevel(logging.ERROR)
-    logging.getLogger("superdesk.errors").setLevel(logging.CRITICAL)
+    logging.getLogger("superdesk.errors").setLevel(logging.ERROR)
 
     return {key: deepcopy(val) for key, val in app_config.items()}
 
@@ -385,7 +384,7 @@ def set_placeholder(context, name, value):
 
 
 def get_prefixed_url(current_app, endpoint):
-    if endpoint.startswith("http://"):
+    if endpoint.startswith("http://") or endpoint.startswith("https://"):
         return endpoint
 
     endpoint = endpoint.lstrip("/")
@@ -524,7 +523,7 @@ class TestCase(unittest.TestCase):
 
     def setUpForChildren(self):
         """Run this `setUp` stuff for each children."""
-        setup(self)
+        setup(self, reset=True)
 
         self.ctx = self.app.app_context()
         self.ctx.push()

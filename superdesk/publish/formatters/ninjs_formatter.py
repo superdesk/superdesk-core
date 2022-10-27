@@ -101,6 +101,9 @@ class NINJSFormatter(Formatter):
     and ``type``. In the latest case the items are sent separately before the package item.
     """
 
+    type = "ninjs"
+    name = "NINJS"
+
     direct_copy_properties: Tuple[str, ...] = (
         "versioncreated",
         "usageterms",
@@ -613,6 +616,9 @@ class NINJS2Formatter(NINJSFormatter):
     - add ``rewrite_of`` field
 
     """
+
+    name = "NINJSv2"
+    type = "ninjs2"
 
     direct_copy_properties = NINJSFormatter.direct_copy_properties + (
         "rewrite_sequence",

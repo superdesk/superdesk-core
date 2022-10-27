@@ -20,6 +20,7 @@ class SuperdeskMediaStorageTestCase(unittest.TestCase):
             )
         )
         self.storage = ProxyMediaStorage(self.app)
+        self.storage.check_exists = True
         self.storage._storage = [
             create_autospec(SuperdeskGridFSMediaStorage),
             create_autospec(AmazonMediaStorage),
@@ -61,3 +62,12 @@ class SuperdeskMediaStorageTestCase(unittest.TestCase):
         with patch.object(amazon, "get") as get_mock:
             amazon.get_by_filename("{}.jpg".format(str(_id)))
             get_mock.assert_called_once_with(str(_id))
+
+    def test_url_for_media(self):
+        self.storage.check_exists = False
+        self.storage._storage[0].exists.return_value = False
+        self.storage._storage[0].url_for_media.return_value = "first"
+        self.storage._storage[1].exists.return_value = True
+        self.storage._storage[1].url_for_media.return_value = "second"
+        href = self.storage.url_for_media("medid")
+        self.assertEqual(href, "first")

@@ -9,11 +9,11 @@
 # at https://www.sourcefabric.org/superdesk/license
 
 import superdesk
-from superdesk import app
 from datetime import timedelta
 from superdesk.utc import utcnow
 from eve.utils import date_to_str
 from superdesk import get_resource_service
+from flask import current_app as app
 import logging
 
 logger = logging.getLogger(__name__)

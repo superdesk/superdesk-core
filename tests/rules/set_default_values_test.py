@@ -1,11 +1,11 @@
 from superdesk.tests import TestCase
-from apps.rules.routing_rules import RoutingRuleSchemeService
+from apps.rules.rule_handlers import DeskFetchPublishRoutingRuleHandler
 
 
 class SetDefaultValuesTestCase(TestCase):
     def test_setting_default_values(self):
 
-        instance = RoutingRuleSchemeService()
+        instance = DeskFetchPublishRoutingRuleHandler()
         category = [{"qcode": "a", "name": "Australian General News"}]
         result = instance._assign_default_values({"anpa_category": category}, None)
         self.assertEqual(result["anpa_category"], [{"qcode": "a", "name": "Australian General News"}])
@@ -29,7 +29,7 @@ class SetDefaultValuesTestCase(TestCase):
             }
         ]
 
-        instance = RoutingRuleSchemeService()
+        instance = DeskFetchPublishRoutingRuleHandler()
 
         with self.app.app_context():
             self.app.data.insert("vocabularies", vocabularies)

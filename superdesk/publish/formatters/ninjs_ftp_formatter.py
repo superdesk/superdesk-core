@@ -20,6 +20,10 @@ logger = logging.getLogger(__name__)
 
 
 class FTPNinjsFormatter(NINJSFormatter):
+
+    name = "NINJS FTP"
+    type = "ftp ninjs"
+
     def __init__(self):
         super().__init__()
         self.format_type = "ftp ninjs"

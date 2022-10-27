@@ -58,7 +58,7 @@ from .common import (
     transtype_metadata,
 )
 from superdesk.media.crop import CropService
-from flask import current_app as app, json
+from flask import current_app as app, json, request
 from superdesk import get_resource_service
 from superdesk.errors import SuperdeskApiError
 from eve.versioning import resolve_document_version, versioned_id_field
@@ -107,7 +107,7 @@ def format_subj_qcode(subj):
     return ":".join([code for code in [subj.get("scheme"), subj.get("qcode")] if code])
 
 
-def private_content_filter():
+def private_content_filter(req=None):
     """Filter out other users private content if this is a user request.
 
     As private we treat items where user is creator, last version creator,
@@ -116,6 +116,17 @@ def private_content_filter():
     Also filter out content of stages not visible to current user (if any).
     """
     user = getattr(flask.g, "user", None)
+    query = {
+        "bool": {
+            "must": [
+                {"exists": {"field": "task.desk"}},
+            ],
+            "must_not": [
+                {"term": {"state": "draft"}},
+            ],
+        },
+    }
+
     if user:
         private_filter = {
             "should": [
@@ -155,7 +166,7 @@ def private_content_filter():
                 {"terms": {"task.desk": [str(d["_id"]) for d in desks]}},
             )
 
-        return {
+        query = {
             "bool": {
                 "should": [
                     {"bool": private_filter},
@@ -164,13 +175,12 @@ def private_content_filter():
                 "minimum_should_match": 1,
             },
         }
-    else:  # no user specific filtering, filter out private content
-        return {
-            "bool": {
-                "must": {"exists": {"field": "task.desk"}},
-                "must_not": {"term": {"state": "draft"}},
-            },
-        }
+
+    if req is not None and req.args is not None and req.args.get("scope"):
+        query["bool"].setdefault("must", []).append({"term": {"scope": req.args.get("scope")}})
+    else:
+        query["bool"].setdefault("must_not", []).append({"exists": {"field": "scope"}})
+    return query
 
 
 def update_image_caption(body, name, caption):
@@ -258,6 +268,7 @@ class ArchiveVersionsResource(Resource):
     internal_resource = True
     privileges = {"PATCH": "archive"}
     collation = False
+    versioning = False
     mongo_indexes = {
         "guid": ([("guid", 1)], {"background": True}),
         "_id_document_1": ([("_id_document", 1)], {"background": True}),
@@ -266,7 +277,7 @@ class ArchiveVersionsResource(Resource):
 
 class ArchiveVersionsService(BaseService):
     def on_deleted(self, doc):
-        remove_media_files(doc)
+        remove_media_files(doc, published=False)
 
 
 class ArchiveResource(Resource):
@@ -342,7 +353,7 @@ class ArchiveService(BaseService):
             editor_utils.generate_fields(doc)
             self._test_readonly_stage(doc)
 
-            doc["version_creator"] = doc["original_creator"]
+            doc["version_creator"] = doc["original_creator"] or None  # avoid ""
             remove_unwanted(doc)
             update_word_count(doc)
             set_item_expiry({}, doc)
@@ -429,7 +440,7 @@ class ArchiveService(BaseService):
         """
         user = get_user()
 
-        editor_utils.generate_fields(updates)
+        editor_utils.generate_fields(updates, original=original)
         if ITEM_TYPE in updates:
             del updates[ITEM_TYPE]
 
@@ -578,7 +589,7 @@ class ArchiveService(BaseService):
         if doc[ITEM_TYPE] == CONTENT_TYPE.COMPOSITE:
             self.packageService.on_deleted(doc)
 
-        remove_media_files(doc)
+        remove_media_files(doc, published=False)
         self._remove_from_translations(doc)
 
         add_activity(
@@ -617,7 +628,8 @@ class ArchiveService(BaseService):
         return req
 
     def get(self, req, lookup):
-        req = self._get_highlight_query(req)
+        if req is not None:
+            req = self._get_highlight_query(req)
 
         if req is None and lookup is not None and "$or" in lookup:
             # embedded resource generates mongo query which doesn't work with elastic

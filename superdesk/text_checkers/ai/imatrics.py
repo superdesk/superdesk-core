@@ -11,17 +11,18 @@ import logging
 import requests
 import superdesk
 
-from flask import current_app, json
+from flask import current_app
 from collections import OrderedDict
 from typing import Optional, Dict, List, Tuple
 from urllib.parse import urljoin
-from superdesk.default_settings import SCHEMA
 from superdesk.text_utils import get_text
 from superdesk.errors import SuperdeskApiError
 from .base import AIServiceBase
 
 logger = logging.getLogger(__name__)
-TIMEOUT = 30
+session = requests.Session()
+
+TIMEOUT = (5, 30)
 
 # iMatrics concept type to SD type mapping
 CONCEPT_MAPPING = OrderedDict(
@@ -173,26 +174,27 @@ class IMatrics(AIServiceBase):
                     pass
         return analyzed_data
 
-    def analyze(self, item: dict) -> dict:
-        """Analyze article to get tagging suggestions"""
-        if not self.base_url or not self.user or not self.key:
-            logger.warning("IMatrics is not configured propertly, can't analyze article")
-            return {}
+    def _transform_to_imatrics(self, item, publish=False):
         body = get_item_body(item)
         headline = item.get("headline", "")
-        if not body and not headline:
-            logger.warning("no body nor headline found in item {item_id!r}".format(item_id=item["guid"]))
-            # we return an empty result
-            return {"subject": []}
-
-        data = {
+        return {
             "uuid": item["guid"],
-            "pubStatus": False,
+            "pubStatus": publish,
             "headline": headline,
             "body": body,
             "language": item["language"],
         }
 
+    def analyze(self, item: dict) -> dict:
+        """Analyze article to get tagging suggestions"""
+        if not self.base_url or not self.user or not self.key:
+            logger.warning("IMatrics is not configured propertly, can't analyze article")
+            return {}
+        data = self._transform_to_imatrics(item)
+        if not data.get("headline") and not data.get("body"):
+            logger.warning("no body nor headline found in item {item_id!r}".format(item_id=item["guid"]))
+            # we return an empty result
+            return {"subject": []}
         r_data = self._analyze(data)
         return self._parse_concepts(r_data["concepts"] + r_data["broader"])
 
@@ -321,17 +323,27 @@ class IMatrics(AIServiceBase):
         elif operation == "delete":
             self.check_verb("POST", verb, operation)
             return self.delete(data)
+        elif operation == "feedback":
+            self.check_verb("POST", verb, operation)
+            return self.feedback(data)
         else:
             raise SuperdeskApiError.badRequestError(
                 "[{name}] Unexpected operation: {operation}".format(name=name, operation=operation)
             )
 
     def publish(self, data):
-        return self._request("article/concept", data)
+        return self._request("article/store", data)
+
+    def feedback(self, data):
+        payload = self._transform_to_imatrics(data["item"], publish=True)
+        payload["concepts"] = self._format_concepts(data["tags"])
+        self.publish(payload)
+        return {}
 
     def _request(self, service, data=None, method="POST", params=None):
         url = urljoin(self.base_url, service)
-        r = requests.request(method, url, json=data, auth=(self.user, self.key), params=params, timeout=TIMEOUT)
+        r = session.request(method, url, json=data, auth=(self.user, self.key), params=params, timeout=TIMEOUT)
+
         if r.status_code != 200:
             raise SuperdeskApiError.proxyError(
                 "Unexpected return code ({status_code}) from {name}: {msg}".format(
@@ -342,6 +354,36 @@ class IMatrics(AIServiceBase):
             )
         return r.json()
 
+    def _format_concepts(self, tags):
+        concepts = []
+        if tags.get("subject"):
+            concepts.extend(
+                [
+                    {
+                        "title": subj["name"],
+                        "type": "topic" if subj.get("scheme") == "imatrics_topic" else "category",
+                        "uuid": subj["altids"]["imatrics"],
+                    }
+                    for subj in tags["subject"]
+                    if subj.get("altids") and subj["altids"].get("imatrics")
+                ]
+            )
+        for _type in ("organisation", "person", "place", "event", "object"):
+            if not tags.get(_type):
+                continue
+            concepts.extend(
+                [
+                    {
+                        "type": _type,
+                        "title": concept["name"],
+                        "uuid": concept["altids"]["imatrics"],
+                    }
+                    for concept in tags[_type]
+                    if concept.get("altids") and concept["altids"].get("imatrics")
+                ]
+            )
+        return concepts
+
 
 def get_item_body(item):
     body = []
@@ -351,3 +393,7 @@ def get_item_body(item):
         except KeyError:
             pass
     return body
+
+
+def init_app(app):
+    IMatrics(app)

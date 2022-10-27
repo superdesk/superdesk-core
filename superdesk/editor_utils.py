@@ -476,6 +476,11 @@ class DraftJSHTMLExporter:
                     content_state = cells[row_idx][col_idx]
                 except IndexError:
                     continue
+                except KeyError:
+                    try:
+                        content_state = cells[str(row_idx)][str(col_idx)]
+                    except KeyError:
+                        continue
                 try:
                     content = DOM.parse_html(self.exporter.render(content_state))
                 except etree.ParserError:
@@ -777,7 +782,7 @@ def filter_blocks(item, field, filter, is_html=True):
     editor.update_item()
 
 
-def generate_fields(item, fields=None, force=False, reload=False):
+def generate_fields(item, fields=None, force=False, reload=False, original=None):
     """Generate item fields from editor states
 
     :param item: item containing Draft.js ContentState
@@ -787,6 +792,9 @@ def generate_fields(item, fields=None, force=False, reload=False):
     """
     if fields is None:
         fields = get_content_state_fields(item)
+
+    if original is not None and original.get("extra"):
+        item.setdefault("extra", original["extra"])
 
     for field in fields:
         client_value = get_field_value(item, field)

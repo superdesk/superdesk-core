@@ -1,8 +1,13 @@
 import copy
+import logging
 import superdesk
 
 from flask import current_app as app
 from superdesk.editor_utils import generate_fields, get_field_content_state
+from superdesk.errors import SuperdeskApiError
+
+
+logger = logging.getLogger(__name__)
 
 
 class MediaFixLinksCommand(superdesk.Command):
@@ -56,8 +61,12 @@ class MediaFixLinksCommand(superdesk.Command):
                     if dry_run:
                         print("update", item["_id"], updates.keys())
                     else:
-                        print(".", end="")
-                        service.system_update(item["_id"], updates, orig)
+                        try:
+                            service.system_update(item["_id"], updates, orig)
+                            print(".", end="")
+                        except SuperdeskApiError as err:
+                            print("x")  # add line break so the exception starts on its own line
+                            logger.exception(err)
             if not dry_run:
                 print("")
             print("Done. Updated", updated, "items.")

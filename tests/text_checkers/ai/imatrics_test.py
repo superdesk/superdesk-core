@@ -8,6 +8,7 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
+import json
 import responses
 from urllib.parse import urljoin
 from superdesk.tests import TestCase
@@ -17,7 +18,6 @@ from superdesk.text_checkers.ai.base import registered_ai_services, AIServiceBas
 from superdesk.errors import SuperdeskApiError
 from superdesk import get_resource_service
 
-ai.AUTO_IMPORT = False
 TEST_BASE_URL = "https://something.example.org"
 
 
@@ -359,3 +359,119 @@ class IMatricsTestCase(TestCase):
         ai_data_op_service.create([doc])
 
         self.assertEqual(doc["result"], {})
+
+    @responses.activate
+    def test_feedback(self):
+        """Send feedback to the service on save."""
+        doc = {
+            "service": "imatrics",
+            "operation": "feedback",
+            "data": {
+                "item": {
+                    "guid": "afc7e49d-57d0-34af-b184-b7600af362a9",
+                    "language": "en",
+                    "headline": "test",
+                    "body_html": "<p>body</p>",
+                },
+                "tags": {
+                    "subject": [
+                        {
+                            "name": "medier",
+                            "description": "The various means of disseminating news and information to the public",
+                            "qcode": "20000304",
+                            "source": "imatrics",
+                            "altids": {
+                                "imatrics": "7ac790f9-e6d1-3972-a28c-e7ddbe6161df",
+                                "medtop": "20000304",
+                                "wikidata": "Q56611639",
+                            },
+                            "parent": "20000209",
+                            "scheme": "topics",
+                            "aliases": [],
+                            "original_source": None,
+                        },
+                        {
+                            "name": "massemedier",
+                            "description": "Media addressing a large audience",
+                            "qcode": "20000045",
+                            "source": "imatrics",
+                            "altids": {
+                                "imatrics": "20727888-04fa-3d53-9a8b-47ccd89a1a6d",
+                                "medtop": "20000045",
+                                "wikidata": "Q11033",
+                            },
+                            "parent": "01000000",
+                            "scheme": "topics",
+                            "aliases": [],
+                            "original_source": None,
+                        },
+                    ],
+                    "organisation": [
+                        {
+                            "name": "CNN",
+                            "description": "internasjonal nyhets-tv-kanal",
+                            "qcode": "88dc48b5-72ed-35cb-9a6a-56981e12b414",
+                            "source": "imatrics",
+                            "altids": {"imatrics": "88dc48b5-72ed-35cb-9a6a-56981e12b414", "wikidata": "Q48340"},
+                            "aliases": ["Cable News Network"],
+                            "original_source": "wikidata",
+                        }
+                    ],
+                    "place": [
+                        {
+                            "name": "Hongkong",
+                            "description": "administrativ region i Kina",
+                            "qcode": "3b7a17e2-18f5-36d0-8d87-a5daf9595fef",
+                            "source": "imatrics",
+                            "altids": {"imatrics": "3b7a17e2-18f5-36d0-8d87-a5daf9595fef", "wikidata": "Q8646"},
+                            "aliases": ["Hong Kong"],
+                            "original_source": "1013",
+                            "scheme": "place_custom",
+                        }
+                    ],
+                },
+            },
+        }
+
+        responses.add(
+            responses.POST,
+            url=self.app.config["IMATRICS_BASE_URL"] + "/article/store",
+            json={"uuid": "guid"},
+        )
+
+        ai_data_op_service = get_resource_service("ai_data_op")
+        ai_data_op_service.create([doc])
+
+        self.assertEqual(len(responses.calls), 1)
+        self.assertEqual(
+            {
+                "uuid": "afc7e49d-57d0-34af-b184-b7600af362a9",
+                "language": "en",
+                "headline": "test",
+                "body": ["body"],
+                "pubStatus": True,
+                "concepts": [
+                    {
+                        "title": "medier",
+                        "type": "category",
+                        "uuid": "7ac790f9-e6d1-3972-a28c-e7ddbe6161df",
+                    },
+                    {
+                        "title": "massemedier",
+                        "type": "category",
+                        "uuid": "20727888-04fa-3d53-9a8b-47ccd89a1a6d",
+                    },
+                    {
+                        "title": "CNN",
+                        "type": "organisation",
+                        "uuid": "88dc48b5-72ed-35cb-9a6a-56981e12b414",
+                    },
+                    {
+                        "title": "Hongkong",
+                        "type": "place",
+                        "uuid": "3b7a17e2-18f5-36d0-8d87-a5daf9595fef",
+                    },
+                ],
+            },
+            json.loads(responses.calls[0].request.body.decode()),
+        )

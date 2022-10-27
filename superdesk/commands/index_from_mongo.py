@@ -61,7 +61,7 @@ class IndexFromMongo(superdesk.Command):
 
             for i in range(1, 4):
                 try:
-                    success, failed = superdesk.app.data._search_backend(resource).bulk_insert(resource, items)
+                    success, failed = app.data._search_backend(resource).bulk_insert(resource, items)
                 except Exception as ex:
                     print("Exception thrown on insert to elastic {}", ex)
                     time.sleep(10)

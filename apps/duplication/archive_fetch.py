@@ -154,7 +154,7 @@ class FetchService(BaseService):
                 new_item["stage"] = stage
                 new_item["state"] = state
                 new_ids = self.fetch([new_item], id=None, notify=False)
-                item[config.ID_FIELD] = new_ids[0]
+                item.update(new_item)
 
     def __fetch_items_in_package(self, dest_doc, desk, stage, state):
         # Note: macro and target information is not user for package publishing.

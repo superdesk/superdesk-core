@@ -34,6 +34,7 @@ from superdesk.metadata.item import (
     CONTENT_TYPE,
     CONTENT_STATE,
     ITEM_STATE,
+    PUB_STATUS,
 )
 from superdesk.metadata.utils import generate_guid
 from superdesk.notification import push_notification
@@ -90,7 +91,7 @@ def is_closed(provider):
 def is_not_expired(item, delta):
     if item.get("expiry") or item.get("versioncreated"):
         try:
-            expiry = item.get("expiry", item["versioncreated"] + delta)
+            expiry = item.get("expiry") or item.get("versioncreated") + delta
         except OverflowError:  # this will never expire
             return True
         if expiry.tzinfo:
@@ -484,6 +485,8 @@ def ingest_cancel(item, feeding_service):
     :param item:
     :return:
     """
+    if item.get("uri") is None:
+        return
     ingest_collection = get_ingest_collection(feeding_service, item)
     ingest_service = superdesk.get_resource_service(ingest_collection)
     lookup = {"uri": item.get("uri")}
@@ -555,12 +558,29 @@ def ingest_item(item, provider, feeding_service, rule_set=None, routing_scheme=N
         ingest_collection = get_ingest_collection(feeding_service, item)
         ingest_service = superdesk.get_resource_service(ingest_collection)
 
+        try:
+            _is_new_version = ingest_service.is_new_version
+        except AttributeError:
+            _is_new_version = is_new_version
+
+        try:
+            _ingest_cancel = ingest_service.ingest_cancel
+        except AttributeError:
+            _ingest_cancel = ingest_cancel
+
         # determine if we already have this item
         old_item = ingest_service.find_one(guid=item[GUID_FIELD], req=None)
 
         if not old_item:
             item.setdefault(superdesk.config.ID_FIELD, generate_guid(type=GUID_NEWSML))
             item[FAMILY_ID] = item[superdesk.config.ID_FIELD]
+        elif provider.get("disable_item_updates", False):
+            logger.warning(
+                f"Resource '{ingest_collection}' "
+                f"item '{item[GUID_FIELD]}' already exists, "
+                f"updating items is disabled on provider '{provider['name']}'."
+            )
+            return False, []
 
         item["ingest_provider"] = str(provider[superdesk.config.ID_FIELD])
         item.setdefault("source", provider.get("source", ""))
@@ -598,9 +618,9 @@ def ingest_item(item, provider, feeding_service, rule_set=None, routing_scheme=N
 
         apply_rule_set(item, provider, rule_set)
 
-        if item.get("pubstatus", "") == "canceled":
+        if item.get("pubstatus", "") in [PUB_STATUS.CANCELED, "cancelled"]:  # Planning module uses "cancelled" value
             item[ITEM_STATE] = CONTENT_STATE.KILLED
-            ingest_cancel(item, feeding_service)
+            _ingest_cancel(item, feeding_service)
 
         rend = item.get("renditions", {})
         if rend:
@@ -622,7 +642,7 @@ def ingest_item(item, provider, feeding_service, rule_set=None, routing_scheme=N
                     assoc["_id"] = ingested["_id"]
                     # update expiry so assoc will stay as long as the item using it
                     ingest_service.system_update(ingested["_id"], {"expiry": item["expiry"]}, ingested)
-                    if is_new_version(assoc, ingested) and assoc.get("renditions"):  # new version
+                    if _is_new_version(assoc, ingested) and assoc.get("renditions"):  # new version
                         logger.info("new assoc version - re-transfer renditions for %s", assoc_name)
                         try:
                             transfer_renditions(assoc["renditions"])
@@ -661,12 +681,15 @@ def ingest_item(item, provider, feeding_service, rule_set=None, routing_scheme=N
 
         new_version = True
         if old_item:
-            new_version = is_new_version(item, old_item)
+            new_version = _is_new_version(item, old_item)
             updates = deepcopy(item)
-            ingest_service.patch_in_mongo(old_item[superdesk.config.ID_FIELD], updates, old_item)
-            item.update(old_item)
-            item.update(updates)
-            items_ids.append(item["_id"])
+            if new_version:
+                ingest_service.patch_in_mongo(old_item[superdesk.config.ID_FIELD], updates, old_item)
+                item.update(old_item)
+                item.update(updates)
+                items_ids.append(item["_id"])
+            else:
+                item.update(old_item)
         else:
             if item.get("ingest_provider_sequence") is None:
                 ingest_service.set_ingest_provider_sequence(item, provider)
@@ -724,8 +747,11 @@ def get_ingest_collection(feeding_service, item):
         ingest_collection = feeding_service.service
 
     # If the type of item is event, set the collection to events
+    # If the type of item is planning, set the collection to planning
     elif item.get(ITEM_TYPE) == "event":
         ingest_collection = "events"
+    elif item.get(ITEM_TYPE) == "planning":
+        ingest_collection = "planning"
     else:
         ingest_collection = "ingest"
 

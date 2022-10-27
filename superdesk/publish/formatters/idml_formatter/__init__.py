@@ -13,6 +13,9 @@ class IDMLFormatter(Formatter):
     Format items to `IDML <https://fileinfo.com/extension/idml>`
     """
 
+    name = "Adobe InDesign (IDML)"
+    type = "idml"
+
     def __init__(self):
         # works with python 3.6
         # https://code.i-harness.com/en/q/c84c47

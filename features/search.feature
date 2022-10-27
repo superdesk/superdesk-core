@@ -504,3 +504,45 @@ Feature: Search Feature
             ]
         }
         """
+
+    @auth
+    Scenario: Search by multiple words each matching in different field
+        Given "desks"
+        """
+        [{"name": "Sports Desk", "content_expiry": 60}]
+        """
+        Given "archive"
+        """
+        [
+            {
+                "guid": "1",
+                "state": "in_progress",
+                "task": {"desk": "#desks._id#"},
+                "headline": "headline",
+                "body_html": "body"
+            },
+            {
+                "guid": "2",
+                "state": "in_progress",
+                "task": {"desk": "#desks._id#"},
+                "headline": "something completely different",
+                "body_html": "body"
+            },
+            {
+                "guid": "3",
+                "state": "in_progress",
+                "task": {"desk": "#desks._id#"},
+                "headline": "headline",
+                "body_html": "something completely different"
+            }
+        ]
+        """
+        When we get "/search?source={"query": {"filtered": {"query": {"query_string": {"query": "headline body", "lenient": true, "default_operator": "AND"}}}}}"
+        Then we get list with 1 items
+        """
+        {
+            "_items": [
+                {"guid": "1"}
+            ]
+        }
+        """

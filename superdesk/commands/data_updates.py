@@ -9,15 +9,16 @@
 # at https://www.sourcefabric.org/superdesk/license
 
 
-from abc import abstractclassmethod
 from string import Template
 from types import ModuleType
-from flask import current_app
+from flask import current_app as app
+from superdesk.services import BaseService
 import superdesk
 import getpass
 import os
 import re
 import time
+from typing import Optional, Tuple
 from eve.utils import ParsedRequest
 
 
@@ -58,10 +59,9 @@ DEFAULT_DATA_UPDATE_BW_IMPLEMENTATION = "raise NotImplementedError()"
 def get_dirs(only_relative_folder=False):
     dirs = []
     try:
-        with superdesk.app.app_context():
-            dirs.append(current_app.config.get("DATA_UPDATES_PATH", DEFAULT_DATA_UPDATE_DIR_NAME))
-            if current_app.config.get("APPS_DATA_UPDATES_PATHS"):
-                dirs.extend(current_app.config["APPS_DATA_UPDATES_PATHS"])
+        dirs.append(app.config.get("DATA_UPDATES_PATH", DEFAULT_DATA_UPDATE_DIR_NAME))
+        if app.config.get("APPS_DATA_UPDATES_PATHS"):
+            dirs.extend(app.config["APPS_DATA_UPDATES_PATHS"])
     except RuntimeError:
         # working outside of application context
         pass
@@ -92,6 +92,14 @@ def get_data_updates_files(strip_file_extension=False):
     if strip_file_extension:
         files = [f.rstrip(".py") for f in files]
     return files
+
+
+def get_applied_updates(data_updates_service: Optional[BaseService] = None) -> Tuple[str]:
+    if data_updates_service is None:
+        data_updates_service = superdesk.get_resource_service("data_updates")
+    req = ParsedRequest()
+    req.sort = "-name"
+    return tuple(data_updates_service.get(req=req, lookup={}))  # type: ignore
 
 
 class DataUpdateCommand(superdesk.Command):
@@ -125,16 +133,11 @@ class DataUpdateCommand(superdesk.Command):
         ),
     ]
 
-    def get_applied_updates(self):
-        req = ParsedRequest()
-        req.sort = "-name"
-        return tuple(self.data_updates_service.get(req=req, lookup={}))
-
     def run(self, data_update_id=None, fake=False, dry=False):
         self.data_updates_service = superdesk.get_resource_service("data_updates")
         self.data_updates_files = get_data_updates_files(strip_file_extension=True)
         # retrieve existing data updates in database
-        data_updates_applied = self.get_applied_updates()
+        data_updates_applied = get_applied_updates(self.data_updates_service)
         self.last_data_update = data_updates_applied and data_updates_applied[-1] or None
         if self.last_data_update:
             if self.last_data_update["name"] not in self.data_updates_files:
@@ -160,7 +163,7 @@ class DataUpdateCommand(superdesk.Command):
         return module
 
     def in_db(self, update):
-        return update in map(lambda _: _["name"], self.get_applied_updates())
+        return update in map(lambda _: _["name"], get_applied_updates(self.data_updates_service))
 
 
 class Upgrade(DataUpdateCommand):
@@ -308,8 +311,8 @@ superdesk.command("data:downgrade", Downgrade())
 class BaseDataUpdate:
     def apply(self, direction):
         assert direction in ["forwards", "backwards"]
-        collection = current_app.data.get_mongo_collection(self.resource)
-        db = current_app.data.driver.db
+        collection = app.data.get_mongo_collection(self.resource)
+        db = app.data.driver.db
         getattr(self, direction)(collection, db)
 
 

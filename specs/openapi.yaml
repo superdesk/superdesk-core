@@ -1,0 +1,312 @@
+openapi: '3.0.2'
+
+info:
+  title: Superdesk Rundowns API
+  version: "2.5"
+
+paths:
+  /rundown_shows:
+    get:
+      summary: List Shows
+      tags:
+        - Rundowns
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                properties:
+                  _items:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/RundownShow'
+    post:
+      summary: Create Show
+      tags:
+        - Rundowns
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RundownShow'
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RundownShow'
+
+  /rundown_shows/{id}:
+    parameters:
+      - $ref: '#/components/parameters/idParam'
+
+    get:
+      summary: Get Show
+      tags:
+        - Rundowns
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RundownShow'
+
+    patch:
+      summary: Update Show
+      tags:
+       - Rundowns
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RundownShow'
+      responses:
+        '200':
+          description: OK
+    
+    delete:
+      summary: Delete Show
+      tags:
+        - Rundowns
+      responses:
+        '204':
+          description: No content
+  
+  /rundown_templates:
+    get:
+      summary: List Templates
+      tags:
+        - Rundowns
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                properties:
+                  _items:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/RundownTemplate'
+    
+    post:
+      summary: Create Template
+      tags:
+        - Rundowns
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RundownTemplate'
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RundownTemplate'
+  
+  /rundown_templates/{id}:
+    parameters:
+      - $ref: '#/components/parameters/idParam'
+    
+    get:
+      summary: Get Template
+      tags:
+        - Rundowns
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RundownTemplate'
+    
+    patch:
+      summary: Update Template
+      tags:
+        - Rundowns
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RundownTemplate'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RundownTemplate'
+
+    delete:
+      summary: Delete Template
+      tags:
+        - Rundowns
+      responses:
+        '204':
+          description: No content
+
+  /rundown_from_template:
+    post:
+      summary: Create Rundown from template
+      tags:
+        - Rundowns
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                template:
+                  $ref: '#/components/schemas/ObjectId'
+      responses:
+        '201':
+          description: 'Created'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Rundown'
+
+components:
+
+  parameters:
+
+    idParam:
+      in: path
+      name: id
+      schema:
+        type: string
+      required: true
+
+  schemas:
+
+    ObjectId:
+      type: string
+      example: 629864349728636e382c74ce
+
+    RundownShow:
+      type: object
+
+      required:
+        - name
+
+      properties:
+        name:
+          type: string
+          example: Marker
+
+        description:
+          type: string
+          example: Morning show
+
+        duration:
+          type: number
+          format: float
+          example: 3600.0
+          description: Show duration in seconds.
+
+        created_by:
+          $ref: '#/components/schemas/ObjectId'
+
+        updated_by:
+          $ref: '#/components/schemas/ObjectId'
+
+    RundownTemplate:
+      type: object
+
+      required: 
+        - name
+        - show
+
+      properties:
+        show:
+          $ref: '#/components/schemas/ObjectId'
+
+        name:
+          type: string
+          example: Marker Daily
+
+        air_time:
+          type: string
+          format: time
+          example: 06:00
+
+        duration:
+          type: number
+          format: float
+          example: 3600.0
+          description: Show duration in seconds.
+        
+        schedule:
+          type: object
+          properties:
+            is_active:
+              type: boolean
+              example: true
+            day_of_week:
+              type: array
+              items:
+                type: string
+                enum:
+                  - MON
+                  - TUE
+                  - WED
+                  - THU
+                  - FRI
+                  - SAT
+                  - SUN
+              example:
+                - MON
+                - TUE
+                - WED
+                - THU
+                - FRI
+            auto_create_items:
+              type: boolean
+              example: true
+
+        headline_template:
+          type: object
+          properties:
+            prefix:
+              type: string
+              example: Marker
+            separator:
+              type: string
+              example: //
+            date_format:
+              type: string
+              example: dd.MM.yyyy
+
+        _created:
+          type: string
+          format: datetime
+          example: 2022-02-16T13:33:40+0000
+
+        _updated:
+          type: string
+          format: datetime
+          example: 2022-02-16T13:33:40+0000
+
+        created_by:
+          $ref: '#/components/schemas/ObjectId'
+
+        updated_by:
+          $ref: '#/components/schemas/ObjectId'
+    
+    Rundown:
+      type: object
+      description: "Package item with extra rundown metadata"
+      properties:
+        headline:
+          type: string
+          example: Marker // 06:00

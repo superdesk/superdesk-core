@@ -52,6 +52,7 @@ Feature: Routing Scheme and Routing Rules
           "rules": [
             {
               "name": "Sports Rule",
+              "handler": "desk_fetch_publish",
               "filter": "#FILTER_ID#",
               "actions": {
                 "fetch": [
@@ -76,6 +77,7 @@ Feature: Routing Scheme and Routing Rules
               "rules": [
                 {
                   "name": "Sports Rule",
+                  "handler": "desk_fetch_publish",
                   "filter": "#FILTER_ID#",
                   "actions": {
                     "fetch": [{"desk": "#desks._id#", "stage": "#desks.incoming_stage#", "macro": "transform"}]
@@ -94,6 +96,7 @@ Feature: Routing Scheme and Routing Rules
           "rules": [
             {
               "name": "Sports Rule",
+              "handler": "desk_fetch_publish",
               "filter": "#FILTER_ID#",
               "actions": {
                 "publish": [
@@ -116,6 +119,7 @@ Feature: Routing Scheme and Routing Rules
           "rules": [
             {
               "name": "Sports Rule",
+              "handler": "desk_fetch_publish",
               "filter": "#FILTER_ID#",
               "actions": {
                 "publish": [
@@ -171,6 +175,7 @@ Feature: Routing Scheme and Routing Rules
           "rules": [
             {
               "name": "Sports Rule",
+              "handler": "desk_fetch_publish",
               "filter": "#FILTER_ID#",
               "actions": {
                 "fetch": [{"desk": "#desks._id#", "stage": "#desks.incoming_stage#"}]
@@ -189,6 +194,7 @@ Feature: Routing Scheme and Routing Rules
           "rules": [
             {
               "name": "Sports Rule",
+              "handler": "desk_fetch_publish",
               "filter": "#FILTER_ID#",
               "actions": {
                 "fetch": [{"desk": "#desks._id#", "stage": "#desks.incoming_stage#"}]
@@ -274,6 +280,7 @@ Feature: Routing Scheme and Routing Rules
           "rules": [
             {
               "name": "Content Rule",
+              "handler": "desk_fetch_publish",
               "filter": "#FILTER_1_ID#",
               "actions": {
                 "fetch": [{"desk": "#desks._id#", "stage": "#desks.incoming_stage#"}]
@@ -281,6 +288,7 @@ Feature: Routing Scheme and Routing Rules
             },
             {
               "name": "Content Rule",
+              "handler": "desk_fetch_publish",
               "filter": "#FILTER_2_ID#",
               "actions": {
                 "fetch": [{"desk": "#desks._id#", "stage": "#desks.incoming_stage#"}]
@@ -308,6 +316,7 @@ Feature: Routing Scheme and Routing Rules
           "name": "routing rule scheme 1",
           "rules": [{
             "name": "Sports Rule",
+            "handler": "desk_fetch_publish",
             "filter": null,
             "actions": {
                 "fetch": [{"desk": "#desks._id#", "stage": "#desks.incoming_stage#"}]
@@ -351,6 +360,7 @@ Feature: Routing Scheme and Routing Rules
           "name": "routing rule scheme 1",
           "rules": [{
             "name": "Sports Rule",
+            "handler": "desk_fetch_publish",
             "filter": "#FILTER_ID#",
             "actions": {}
           }]
@@ -400,6 +410,7 @@ Feature: Routing Scheme and Routing Rules
           "rules": [
             {
               "name": "Sports Rule",
+              "handler": "desk_fetch_publish",
               "filter": "#FILTER_ID#",
               "actions": {
                 "fetch": [{"desk": "#desks._id#", "stage": "#desks.incoming_stage#"}]
@@ -422,6 +433,7 @@ Feature: Routing Scheme and Routing Rules
           "rules": [
             {
               "name": "Sports Rule",
+              "handler": "desk_fetch_publish",
               "filter": "#FILTER_ID#",
               "actions": {
                 "fetch": [{"desk": "#desks._id#", "stage": "#desks.incoming_stage#"}]
@@ -446,6 +458,7 @@ Feature: Routing Scheme and Routing Rules
           "rules": [
             {
               "name": "Sports Rule",
+              "handler": "desk_fetch_publish",
               "filter": "#FILTER_ID#",
               "actions": {
                 "fetch": [{"desk": "#desks._id#", "stage": "#desks.incoming_stage#"}]
@@ -470,6 +483,7 @@ Feature: Routing Scheme and Routing Rules
           "rules": [
             {
               "name": "Sports Rule",
+              "handler": "desk_fetch_publish",
               "filter": "#FILTER_ID#",
               "actions": {
                 "fetch": [{"desk": "#desks._id#", "stage": "#desks.incoming_stage#"}]
@@ -494,6 +508,7 @@ Feature: Routing Scheme and Routing Rules
           "rules": [
             {
               "name": "Sports Rule",
+              "handler": "desk_fetch_publish",
               "filter": "#FILTER_ID#",
               "actions": {
                 "fetch": [{"desk": "#desks._id#", "stage": "#desks.incoming_stage#"}]
@@ -519,6 +534,7 @@ Feature: Routing Scheme and Routing Rules
           "rules": [
             {
               "name": "Sports Rule",
+              "handler": "desk_fetch_publish",
               "filter": "#FILTER_ID#",
               "actions": {
                 "fetch": [{"desk": "#desks._id#", "stage": "#desks.incoming_stage#"}]
@@ -543,6 +559,7 @@ Feature: Routing Scheme and Routing Rules
           "rules": [
             {
               "name": "Sports Rule",
+              "handler": "desk_fetch_publish",
               "filter": "#FILTER_ID#",
               "actions": {
                 "fetch": [{"desk": "#desks._id#", "stage": "#desks.incoming_stage#"}]
@@ -574,6 +591,7 @@ Feature: Routing Scheme and Routing Rules
           "rules": [
             {
               "name": "Sports Rule",
+              "handler": "desk_fetch_publish",
               "filter": null,
               "actions": {
                 "fetch": [{"desk": "#desks._id#", "stage": "#desks.incoming_stage#"}]
@@ -646,6 +664,7 @@ Feature: Routing Scheme and Routing Rules
           "rules": [
             {
               "name": "Sports Rule",
+              "handler": "desk_fetch_publish",
               "filter": "#FILTER_1_ID#",
               "actions": {
                 "fetch": [{"desk": "#desks._id#", "stage": "#desks.incoming_stage#"}]
@@ -662,6 +681,7 @@ Feature: Routing Scheme and Routing Rules
         "rules": [
           {
             "name": "Sports Rule",
+            "handler": "desk_fetch_publish",
             "filter": "#FILTER_1_ID#",
             "actions": {
               "fetch": [{"desk": "#desks._id#", "stage": "#desks.incoming_stage#", "macro": "transform"}]
@@ -669,6 +689,7 @@ Feature: Routing Scheme and Routing Rules
           },
           {
             "name": "Non-Sports Rule",
+            "handler": "desk_fetch_publish",
             "filter": "#FILTER_2_ID#",
             "actions": {
               "fetch": [{"desk": "#desks._id#", "stage": "#desks.incoming_stage#"}]
@@ -717,6 +738,7 @@ Feature: Routing Scheme and Routing Rules
           "rules": [
             {
               "name": "Sports Rule",
+              "handler": "desk_fetch_publish",
               "filter": "#FILTER_ID#",
               "actions": {
                 "fetch": [{"desk": "#desks._id#", "stage": "#desks.incoming_stage#"}]
@@ -746,6 +768,7 @@ Feature: Routing Scheme and Routing Rules
             "rules": [
               {
                 "name": "Sports Rule",
+                "handler": "desk_fetch_publish",
                 "filter": null,
                 "actions": {
                     "fetch": [{"desk": "#desks._id#", "stage": "#desks.incoming_stage#"}]
@@ -778,6 +801,7 @@ Feature: Routing Scheme and Routing Rules
           "rules": [
             {
               "name": "Sports Rule",
+              "handler": "desk_fetch_publish",
               "filter": null,
               "actions": {
                   "fetch": [{"desk": "#desks._id#", "stage": "#desks.incoming_stage#"}]

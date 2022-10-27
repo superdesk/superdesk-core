@@ -11,7 +11,15 @@
 from typing import NamedTuple
 from copy import deepcopy
 
-from superdesk.resource import Resource, not_analyzed, not_indexed, not_enabled, text_with_keyword, not_dynamic
+from superdesk.resource import (
+    Resource,
+    not_analyzed,
+    not_indexed,
+    not_enabled,
+    text_with_keyword,
+    not_dynamic,
+    string_with_analyzer,
+)
 from .packages import LINKED_IN_PACKAGES, PACKAGE
 from eve.utils import config
 from superdesk.utils import SuperdeskBaseEnum
@@ -44,10 +52,11 @@ class ContentTypes(NamedTuple):
     GRAPHIC: str
     COMPOSITE: str
     EVENT: str
+    PLANNING: str
 
 
 CONTENT_TYPE: ContentTypes = ContentTypes(
-    "text", "preformatted", "audio", "video", "picture", "graphic", "composite", "event"
+    "text", "preformatted", "audio", "video", "picture", "graphic", "composite", "event", "planning"
 )
 
 MEDIA_TYPES = ("audio", "video", "picture", "graphic")
@@ -241,14 +250,11 @@ metadata_schema = {
     "abstract": {
         "type": "string",
         "nullable": True,
+        "mapping": string_with_analyzer,
     },
     "headline": {
         "type": "string",
-        "mapping": {
-            "type": "string",
-            "analyzer": "html_field_analyzer",
-            "search_analyzer": "html_field_analyzer",
-        },
+        "mapping": string_with_analyzer,
     },
     "slugline": {
         "type": "string",
@@ -259,12 +265,12 @@ metadata_schema = {
                 "phrase": {
                     "type": "string",
                     "analyzer": "phrase_prefix_analyzer",
-                    "search_analyzer": "phrase_prefix_analyzer",
                     "fielddata": True,
                 },
                 "keyword": {
                     "type": "keyword",
                 },
+                "text": string_with_analyzer,
             },
         },
     },
@@ -288,7 +294,7 @@ metadata_schema = {
         "type": "integer",
         "nullable": True,
     },
-    "keywords": {"type": "list", "mapping": {"type": "string"}},
+    "keywords": {"type": "list", "mapping": string_with_analyzer},
     "word_count": {"type": "integer"},
     "priority": {"type": "integer", "nullable": True},
     "urgency": {"type": "integer", "nullable": True},
@@ -326,10 +332,12 @@ metadata_schema = {
     BYLINE: {
         "type": "string",
         "nullable": True,
+        "mapping": string_with_analyzer,
     },
     "ednote": {
         "type": "string",
         "nullable": True,
+        "mapping": string_with_analyzer,
     },
     "authors": {
         "type": "list",
@@ -340,13 +348,14 @@ metadata_schema = {
             "properties": {
                 "uri": not_analyzed,
                 "parent": not_analyzed,
-                "name": not_analyzed,
+                "name": text_with_keyword,
                 "role": not_analyzed,
                 "jobtitle": not_enabled,
+                "sub_label": text_with_keyword,
             },
         },
     },
-    "description_text": {"type": "string", "nullable": True},
+    "description_text": {"type": "string", "nullable": True, "mapping": string_with_analyzer},
     # This is a description of the item as recieved from its source.
     "archive_description": {"type": "string", "nullable": True},
     "groups": {
@@ -381,11 +390,12 @@ metadata_schema = {
     "body_html": {
         "type": "string",
         "nullable": True,
-        "mapping": {"type": "string", "analyzer": "html_field_analyzer", "search_analyzer": "html_field_analyzer"},
+        "mapping": string_with_analyzer,
     },
     "body_text": {
         "type": "string",
         "nullable": True,
+        "mapping": string_with_analyzer,
     },
     "dateline": {
         "type": "dict",
@@ -460,7 +470,7 @@ metadata_schema = {
         "allow_unknown": True,
         "mapping": not_enabled,
     },
-    "filemeta_json": {"type": "string"},
+    "filemeta_json": {"type": "string", "mapping": not_indexed},
     "media_file": {"type": "string"},
     "contents": {"type": "list"},
     ASSOCIATIONS: {
@@ -570,6 +580,7 @@ metadata_schema = {
     SIGN_OFF: {
         "type": "string",
         "nullable": True,
+        "mapping": string_with_analyzer,
     },
     # Desk and Stage Details
     "task": {
@@ -724,6 +735,7 @@ metadata_schema = {
         },
     },
     "target_subscribers": {"type": "list", "nullable": True},
+    "scope": {"type": "string", "scope": True, "mapping": not_analyzed},
 }
 
 metadata_schema["lock_user"]["versioned"] = False

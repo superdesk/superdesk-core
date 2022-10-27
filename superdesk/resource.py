@@ -25,8 +25,10 @@ not_indexed = {"type": "string", "index": "no"}  # noqa
 not_analyzed = {"type": "string", "index": "not_analyzed"}
 not_enabled = {"type": "object", "enabled": False}  # noqa
 not_dynamic = {"type": "object", "dynamic": False}  # noqa
+string_with_analyzer = {"type": "string", "analyzer": "html_field_analyzer"}  # noqa
 text_with_keyword = {
     "type": "text",
+    "analyzer": "html_field_analyzer",
     "fields": {
         "keyword": {"type": "keyword"},
     },
@@ -88,7 +90,7 @@ class Resource:
     projection: bool = True
     item_privileges = False
     notifications = True
-    collation = True
+    collation: bool = False
 
     def __init__(self, endpoint_name, app, service, endpoint_schema=None):
         self.endpoint_name = endpoint_name

@@ -7,7 +7,7 @@ from apps.archive.archive import ArchiveResource, ArchiveService
 from apps.archive.common import CUSTOM_HATEOAS
 
 
-def elastic_filter():
+def elastic_filter(req=None):
     where = request.args.get("where")
     assert where, "where not set"
 
@@ -45,6 +45,7 @@ def elastic_filter():
 
 class LinksResource(ArchiveResource):
     item_methods = []
+    versioning = False
     resource_methods = ["GET"]
     datasource = ArchiveResource.datasource.copy()
     datasource.update(

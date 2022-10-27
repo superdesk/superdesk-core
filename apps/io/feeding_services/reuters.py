@@ -23,8 +23,6 @@ from superdesk.utc import utcnow
 from urllib.parse import urlparse, urlunparse
 from flask_babel import _
 
-requests.packages.urllib3.disable_warnings()
-
 
 class ReutersHTTPFeedingService(HTTPFeedingService):
     """
