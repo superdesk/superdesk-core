@@ -23,7 +23,6 @@ from superdesk.metadata.utils import (
     aggregations,
     is_normal_package,
     get_elastic_highlight_query,
-    _set_highlight_query,
 )
 from .common import (
     remove_unwanted,
@@ -97,7 +96,7 @@ from .usage import track_usage, update_refs
 from superdesk.utc import utcnow
 from superdesk.vocabularies import is_related_content
 from flask_babel import _
-from werkzeug.datastructures import ImmutableMultiDict
+from apps.archive.highlights_search_mixin import HighlightsSearchMixin
 
 EDITOR_KEY_PREFIX = "editor_"
 logger = logging.getLogger(__name__)
@@ -325,7 +324,7 @@ class ArchiveResource(Resource):
     }
 
 
-class ArchiveService(BaseService):
+class ArchiveService(BaseService, HighlightsSearchMixin):
     packageService = PackageService()
     mediaService = ArchiveMediaService()
     cropService = CropService()
@@ -604,35 +603,8 @@ class ArchiveService(BaseService):
     def replace(self, id, document, original):
         return self.restore_version(id, document, original) or super().replace(id, document, original)
 
-    def _get_highlight_query(self, req):
-        """Get and set highlight query
-
-        :param req parsed request
-        """
-        args = getattr(req, "args", {})
-        source = json.loads(args.get("source")) if args.get("source") else {"query": {"filtered": {}}}
-        if source:
-            _set_highlight_query(source)
-
-            # update req args
-            try:
-                req.args = req.args.to_dict()
-            except AttributeError:
-                pass
-            req.args["source"] = json.dumps(source)
-            req.args = ImmutableMultiDict(req.args)
-
-        return req
-
     def get(self, req, lookup):
-        if req is not None:
-            req = self._get_highlight_query(req)
-
-        if req is None and lookup is not None and "$or" in lookup:
-            # embedded resource generates mongo query which doesn't work with elastic
-            # so it needs to be fixed here
-            return super().get(req, lookup["$or"][0])
-
+        req, lookup = self._get_highlight(req, lookup)
         return super().get(req, lookup)
 
     def find_one(self, req, **lookup):

@@ -30,8 +30,7 @@ from apps.archive.common import handle_existing_data, item_schema
 from superdesk.publish.publish_queue import PUBLISHED_IN_PACKAGE
 from apps.content import push_content_notification
 from flask_babel import _
-from superdesk.metadata.utils import _set_highlight_query
-from werkzeug.datastructures import ImmutableMultiDict
+from apps.archive.highlights_search_mixin import HighlightsSearchMixin
 
 logger = logging.getLogger(__name__)
 
@@ -121,7 +120,7 @@ class PublishedItemResource(Resource):
     }
 
 
-class PublishedItemService(BaseService):
+class PublishedItemService(BaseService, HighlightsSearchMixin):
     """
     PublishedItemService class is the base class for ArchivedService.
     """
@@ -409,31 +408,6 @@ class PublishedItemService(BaseService):
 
         return []
 
-    def _get_highlight_query(self, req):
-        """Get and set highlight query
-        :param req parsed request
-        """
-        args = getattr(req, "args", {})
-        source = json.loads(args.get("source")) if args.get("source") else {"query": {"filtered": {}}}
-        if source:
-            _set_highlight_query(source)
-
-            # update req args
-            try:
-                req.args = req.args.to_dict()
-            except AttributeError:
-                pass
-            req.args["source"] = json.dumps(source)
-            req.args = ImmutableMultiDict(req.args)
-
-        return req
-
     def get(self, req, lookup):
-        req = self._get_highlight_query(req)
-
-        if req is None and lookup is not None and "$or" in lookup:
-            # embedded resource generates mongo query which doesn't work with elastic
-            # so it needs to be fixed here
-            return super().get(req, lookup["$or"][0])
-
+        req, lookup = self._get_highlight(req, lookup)
         return super().get(req, lookup)
