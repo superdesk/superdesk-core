@@ -30,6 +30,7 @@ from apps.archive.common import handle_existing_data, item_schema
 from superdesk.publish.publish_queue import PUBLISHED_IN_PACKAGE
 from apps.content import push_content_notification
 from flask_babel import _
+from apps.archive.highlights_search_mixin import HighlightsSearchMixin
 
 logger = logging.getLogger(__name__)
 
@@ -119,7 +120,7 @@ class PublishedItemResource(Resource):
     }
 
 
-class PublishedItemService(BaseService):
+class PublishedItemService(BaseService, HighlightsSearchMixin):
     """
     PublishedItemService class is the base class for ArchivedService.
     """
@@ -406,3 +407,7 @@ class PublishedItemService(BaseService):
                 )
 
         return []
+
+    def get(self, req, lookup):
+        req, lookup = self._get_highlight(req, lookup)
+        return super().get(req, lookup)

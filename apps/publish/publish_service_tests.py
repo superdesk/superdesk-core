@@ -16,6 +16,10 @@ from superdesk.errors import PublishQueueError
 from superdesk.publish import SUBSCRIBER_TYPES
 from superdesk.publish.publish_service import PublishService
 from superdesk.tests import TestCase
+import json
+from werkzeug.datastructures import ImmutableMultiDict
+from eve.utils import ParsedRequest
+import superdesk
 
 
 class PublishServiceTests(TestCase):
@@ -85,3 +89,28 @@ class PublishServiceTests(TestCase):
             subscriber = self.app.data.find_one("subscribers", None)
             self.assertFalse(subscriber.get("is_active"))
             self.assertIsNotNone(subscriber.get("last_closed"))
+
+    def test_highlight_query(self):
+        source_query = {
+            "query": {
+                "filtered": {"query": {"query_string": {"query": "TEST", "lenient": True, "default_operator": "AND"}}}
+            }
+        }
+
+        req = ParsedRequest()
+        req.args = {"source": json.dumps(source_query)}
+        req.args = ImmutableMultiDict(req.args)
+
+        archive_service = superdesk.get_resource_service("published")
+        req = archive_service._get_highlight_query(req)
+
+        args = getattr(req, "args", {})
+        source = json.loads(args.get("source")) if args.get("source") else {"query": {"filtered": {}}}
+
+        self.assertEqual(len(source), 2)
+        self.assertIn("query", source)
+        self.assertIn("highlight", source)
+        self.assertIn("fields", source["highlight"])
+        self.assertEqual(
+            ["body_html", "body_footer", "headline", "slugline", "abstract"], list(source["highlight"]["fields"].keys())
+        )
