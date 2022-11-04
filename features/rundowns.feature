@@ -291,7 +291,7 @@ Feature: Rundowns
         Given "shows"
         """
         [
-            {"title": "Test"}
+            {"title": "Test", "shortcode": "SHO"}
         ]
         """
 
@@ -312,17 +312,18 @@ Feature: Rundowns
         When we post to "/rundown_items"
         """
         {
-            "title": "test",
+            "title": "test title",
             "duration": 80,
             "planned_duration": 120,
-            "item_type": "test",
+            "item_type": "PRLG",
             "content": "<p>some text</p>",
-            "subitems": ["wall", "video"]
+            "subitems": ["wall", "video"],
+            "rundown": "#rundowns._id#"
         }
         """
         Then we get OK response
         """
-        {"_links": {"self": {"title": "rundown_items"}}}
+        {"_links": {"self": {"title": "rundown_items"}}, "technical_title": "PRLG-SHO-TEST-TITLE"}
         """
 
         When we get "/rundowns"
@@ -356,9 +357,14 @@ Feature: Rundowns
 
         When we patch "/rundown_items/#rundown_items._id#"
         """
-        {"duration": 200, "planned_duration": 300}
+        {"duration": 200, "planned_duration": 300, "item_type": "FOO"}
         """
-        And we get "/rundowns/#rundowns._id#"
+        Then we get OK response
+        """
+        {"technical_title": "TEST TITLE"}
+        """
+
+        When we get "/rundowns/#rundowns._id#"
         Then we get existing resource
         """
         {"duration": 400, "planned_duration": 3600}
@@ -695,12 +701,26 @@ Feature: Rundowns
         And we get "Content-Disposition" header with "attachment; filename="Realizer-Rundown_Title_10.10.2022.pdf"" type
         And we get "Content-Type" header with "application/pdf" type
 
+    @wip
     @auth
     Scenario: Search rundown by item contents
         Given "shows"
         """
         [
             {"title": "Test", "shortcode": "MRK"}
+        ]
+        """
+
+        And "rundowns"
+        """
+        [
+            {
+                "show": "#shows._id#",
+                "title": "Rundown Title",
+                "airtime_time": "06:00",
+                "airtime_date": "2030-01-01",
+                "planned_duration": 3600
+            }
         ]
         """
 
@@ -713,25 +733,19 @@ Feature: Rundowns
                 "planned_duration": 120,
                 "item_type": "test",
                 "subitems": ["wall", "video"],
-                "content": "<p>searchable content</p>"
+                "content": "<p>searchable content</p>",
+                "rundown": "#rundowns._id#"
             }
         ]
         """
 
-        And "rundowns"
+        When we patch "/rundowns/#rundowns._id#"
         """
-        [
-            {
-                "show": "#shows._id#",
-                "title": "Rundown Title",
-                "airtime_time": "06:00",
-                "airtime_date": "2030-01-01",
-                "planned_duration": 3600,
-                "items": [
-                    {"_id": "#rundown_items._id#"}
-                ]
-            }
-        ]
+        {
+            "items": [
+                {"_id": "#rundown_items._id#"}
+            ]
+        }
         """
 
         When we get "/rundowns?q=searchable"
@@ -774,7 +788,8 @@ Feature: Rundowns
             "planned_duration": 120,
             "item_type": "test",
             "subitems": ["wall", "video"],
-            "content": "<p>content</p>"
+            "content": "<p>content</p>",
+            "rundown": "#rundowns._id#"
         }
         """
         Then we get ok response

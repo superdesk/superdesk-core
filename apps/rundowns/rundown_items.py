@@ -3,7 +3,7 @@ import superdesk
 
 from typing import Dict, List, Literal
 
-from . import privileges, types, rundowns
+from . import privileges, types, rundowns, shows
 
 from superdesk.metadata.item import metadata_schema
 
@@ -12,9 +12,10 @@ class RundownItemsResource(superdesk.Resource):
     resource_title = "rundown_items"
 
     schema = {
-        "title": metadata_schema["headline"],
+        "title": metadata_schema["headline"].copy(),
+        "technical_title": metadata_schema["headline"].copy(),
         "item_type": superdesk.Resource.not_analyzed_field(nullable=True),
-        "content": metadata_schema["body_html"],
+        "content": metadata_schema["body_html"].copy(),
         "duration": {
             "type": "number",
         },
@@ -27,7 +28,10 @@ class RundownItemsResource(superdesk.Resource):
         "subitems": {"type": "list", "mapping": {"type": "keyword"}},
         "subitem_attachments": {"type": "list", "mapping": {"type": "keyword"}},
         "status": superdesk.Resource.not_analyzed_field(nullable=True),
+        "rundown": superdesk.Resource.rel("rundowns", required=True),
     }
+
+    schema["technical_title"]["readonly"] = True
 
     datasource = {
         "search_backend": "elastic",
@@ -47,7 +51,6 @@ class RundownItemsService(superdesk.Service):
     search_fields = [
         "title",
         "content",
-        "live_captions",
         "additional_notes",
     ]
 
@@ -56,7 +59,34 @@ class RundownItemsService(superdesk.Service):
         # disable auto syncing "planned_duration",
     ]
 
-    def create_from_template(self, template: types.IRundownItemTemplate) -> types.IRundownItem:
+    def on_create(self, docs):
+        for doc in docs:
+            doc["technical_title"] = self.get_technical_title(doc)
+
+    def on_update(self, updates, original):
+        updated = original.copy()
+        updated.update(updates)
+        updates["technical_title"] = self.get_technical_title(updated)
+
+    def get_technical_title(self, item) -> str:
+        if item.get("item_type") and item["item_type"].upper() in ("PRLG", "AACC"):
+            rundown = rundowns.rundowns_service.find_one(req=None, _id=item["rundown"])
+            assert rundown is not None
+            show = shows.shows_service.find_one(req=None, _id=rundown["show"])
+            assert show is not None
+            return "-".join(
+                filter(
+                    None,
+                    [
+                        item["item_type"],
+                        show.get("shortcode"),
+                        (item.get("title") or "").replace(" ", "-"),
+                    ],
+                )
+            ).upper()
+        return (item.get("title") or "").upper()
+
+    def create_from_template(self, template: types.IRundownItemTemplate, rundown: types.IRundown) -> types.IRundownItem:
         item: types.IRundownItem = {
             "item_type": template["item_type"],
             "title": template.get("title", ""),
@@ -64,11 +94,8 @@ class RundownItemsService(superdesk.Service):
             "planned_duration": template.get("planned_duration", 0),
             "content": template.get("content"),
             "show_part": template.get("show_part"),
-            "live_sound": template.get("live_sound"),
-            "guests": template.get("guests"),
             "additional_notes": template.get("additional_notes"),
-            "live_captions": template.get("live_captions", ""),
-            "last_sentence": template.get("last_sentence", ""),
+            "rundown": rundown.get("_id", ""),
         }
 
         self.create([item])

@@ -386,6 +386,7 @@ components:
       type: object
       description: "Rundow item"
       required:
+        - rundown
         - item_type
       properties:
         title:
@@ -403,16 +404,10 @@ components:
           example: 120
         show_part:
           type: string
-        live_sound:
-          type: string
-        guests:
-          type: string
         additional_notes:
           type: string
-        live_captions:
-          type: string
-        last_sentence:
-          type: string
+        rundown:
+          $ref: '#/components/schemas/ObjectId'
      
     RundownItemRefs:
       type: array

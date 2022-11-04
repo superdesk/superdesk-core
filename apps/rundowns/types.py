@@ -43,11 +43,8 @@ class IRundownItemTemplate(TypedDict):
     planned_duration: Optional[int]
     content: Optional[str]
     show_part: Optional[str]
-    live_sound: Optional[str]
-    guests: Optional[str]
     additional_notes: Optional[str]
-    live_captions: Optional[str]
-    last_sentence: Optional[str]
+    rundown: str
 
 
 class IRundownItem(IRundownItemTemplate, IEntity):
