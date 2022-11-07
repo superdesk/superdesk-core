@@ -7,6 +7,8 @@ from flask import current_app as app
 
 from superdesk.utc import utcnow, utc_to_local, local_to_utc
 
+from . import types
+
 logger = logging.getLogger(__name__)
 
 
@@ -88,3 +90,21 @@ def set_autocreate_schedule(updates, local_date: Optional[datetime.datetime], te
     updates["autocreate_on"] = updates["scheduled_on"] - create_before
 
     logger.info("Next rundown for template %s scheduled on %s", template["title"], updates["scheduled_on"].isoformat())
+
+
+def item_title(show: types.IShow, rundown: types.IRundown, item: types.IRundownItem, with_camera=True) -> str:
+    if item.get("item_type") and item["item_type"].upper() in ("PRLG", "AACC"):
+        pieces = [
+            item["item_type"],
+            show.get("shortcode"),
+            (item.get("title") or "").replace(" ", "-"),
+        ]
+        if with_camera and item.get("camera"):
+            pieces.extend(item["camera"])
+        return "-".join(
+            filter(
+                None,
+                pieces,
+            )
+        ).upper()
+    return (item.get("title") or "").upper()

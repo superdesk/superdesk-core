@@ -49,8 +49,8 @@ def init_app(app: SuperdeskApp) -> None:
     export.available_services.extend(
         [
             PrompterPDFFormatter("prompter-pdf", "Prompter PDF"),
-            TableCSVFormatter("table-csv", "Realizer CSV"),
-            TablePDFFormatter("table-pdf", "Realizer PDF"),
+            TableCSVFormatter("table-csv", "Technical CSV"),
+            TablePDFFormatter("table-pdf", "Technical PDF"),
         ]
     )
 

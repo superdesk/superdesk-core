@@ -3,7 +3,7 @@ import superdesk
 
 from typing import Dict, List, Literal
 
-from . import privileges, types, rundowns, shows
+from . import privileges, types, rundowns, shows, utils
 
 from superdesk.metadata.item import metadata_schema
 
@@ -69,23 +69,12 @@ class RundownItemsService(superdesk.Service):
         updated.update(updates)
         updates["technical_title"] = self.get_technical_title(updated)
 
-    def get_technical_title(self, item) -> str:
+    def get_technical_title(self, item, with_camera=True) -> str:
         if item.get("item_type") and item["item_type"].upper() in ("PRLG", "AACC"):
             rundown = rundowns.rundowns_service.find_one(req=None, _id=item["rundown"])
-            assert rundown is not None
             show = shows.shows_service.find_one(req=None, _id=rundown["show"])
-            assert show is not None
-            return "-".join(
-                filter(
-                    None,
-                    [
-                        item["item_type"],
-                        show.get("shortcode"),
-                        (item.get("title") or "").replace(" ", "-"),
-                    ],
-                )
-            ).upper()
-        return (item.get("title") or "").upper()
+            return utils.item_title(show, rundown, item, with_camera=with_camera)
+        return utils.item_title(None, None, item, False)
 
     def create_from_template(self, template: types.IRundownItemTemplate, rundown: types.IRundown) -> types.IRundownItem:
         item: types.IRundownItem = {

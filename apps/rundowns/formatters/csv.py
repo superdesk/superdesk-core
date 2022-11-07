@@ -8,16 +8,13 @@ class TableCSVFormatter(BaseFormatter):
     COLUMNS = [
         "Order",
         "Type",
-        "Title",
-        "Tone/Off",
+        "Technical Title",
         "Additional realizer info",
-        "Live Captions",
-        "Part of the last spoken sentence",
         "Duration",
     ]
 
     def export(self, show, rundown, items):
-        filename = f"Realizer-{rundown['title']}.csv"
+        filename = f"Technical-{rundown['title']}.csv"
         data = "\n".join(
             [self.SEPARATOR.join(self.COLUMNS)]
             + [

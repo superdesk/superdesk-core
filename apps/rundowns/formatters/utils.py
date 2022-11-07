@@ -4,44 +4,11 @@ from datetime import datetime, timedelta
 from superdesk.text_utils import get_text
 from superdesk.editor_utils import get_field_content_state
 
-from .. import types
+from .. import types, utils as rundown_utils
 
 
 def to_string(item, key) -> str:
     return item.get(key) or ""
-
-
-def item_title(show: types.IShow, rundown: types.IRundown, item: types.IRundownItem) -> str:
-    return "-".join(
-        filter(
-            None,
-            [
-                to_string(item, "item_type").upper(),
-                show.get("shortcode", "").upper(),
-                (item.get("title") or "").upper(),
-            ],
-        )
-    )
-
-
-def format_last_sentence(item) -> str:
-    text = ""
-    content_state = get_field_content_state(item, "content")
-    if content_state:
-        for block in content_state["blocks"]:
-            if block.get("text"):
-                text = block.get("text")
-    elif item.get("content"):
-        text = get_text(item["content"], "html", lf_on_block=True).strip()
-    words = []
-    for line in text.splitlines():
-        for word in line.split():
-            words.append(word)
-    for i in range(-5, -1):
-        output = " ".join(words[i:])
-        if len(output) < 30:
-            return output
-    return ""
 
 
 def format_duration(duration) -> str:
@@ -55,10 +22,7 @@ def item_table_data(show: types.IShow, rundown: types.IRundown, item: types.IRun
     return [
         str(order),
         to_string(item, "item_type").upper(),
-        item_title(show, rundown, item),
-        "Tone" if item.get("live_sound") else "OFF",
-        item.get("additional_notes") or "",
-        item.get("live_captions") or "",
-        format_last_sentence(item),
+        rundown_utils.item_title(show, rundown, item),
+        to_string(item, "additional_notes"),
         format_duration(item.get("duration")),
     ]

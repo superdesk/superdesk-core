@@ -286,6 +286,7 @@ Feature: Rundowns
         ]}
         """
 
+    @wip
     @auth
     Scenario: Rundowns CRUD
         Given "shows"
@@ -318,12 +319,13 @@ Feature: Rundowns
             "item_type": "PRLG",
             "content": "<p>some text</p>",
             "subitems": ["wall", "video"],
-            "rundown": "#rundowns._id#"
+            "rundown": "#rundowns._id#",
+            "camera": ["k1", "k2"]
         }
         """
         Then we get OK response
         """
-        {"_links": {"self": {"title": "rundown_items"}}, "technical_title": "PRLG-SHO-TEST-TITLE"}
+        {"_links": {"self": {"title": "rundown_items"}}, "technical_title": "PRLG-SHO-TEST-TITLE-K1-K2"}
         """
 
         When we get "/rundowns"
@@ -532,6 +534,7 @@ Feature: Rundowns
         """
         Then we get ok response
 
+    @wip
     @auth
     Scenario: Export
         When we get "/rundown_export"
@@ -539,8 +542,8 @@ Feature: Rundowns
         """
         {"_items": [
             {"name": "Prompter PDF", "_id": "prompter-pdf"},
-            {"name": "Realizer CSV", "_id": "table-csv"},
-            {"name": "Realizer PDF", "_id": "table-pdf"}
+            {"name": "Technical CSV", "_id": "table-csv"},
+            {"name": "Technical PDF", "_id": "table-pdf"}
         ]}
         """
 
@@ -551,6 +554,19 @@ Feature: Rundowns
         ]
         """
 
+        And "rundowns"
+        """
+        [
+            {
+                "show": "#shows._id#",
+                "title": "Rundown Title // 10.10.2022",
+                "airtime_time": "06:00",
+                "airtime_date": "2030-01-01",
+                "planned_duration": 3600
+            }
+        ]
+        """
+
         And "rundown_items"
         """
         [
@@ -558,9 +574,12 @@ Feature: Rundowns
                 "title": "sample",
                 "duration": 80,
                 "planned_duration": 120,
-                "item_type": "test",
+                "item_type": "PRLG",
                 "subitems": ["wall", "video"],
                 "content": "<p>foo</p><p>bar</p>",
+                "camera": ["K1", "K2"],
+                "additional_notes": "Some extra notes",
+                "rundown": "#rundowns._id#",
                 "fields_meta": {
                     "content": {
                         "draftjsState": [
@@ -642,22 +661,17 @@ Feature: Rundowns
         ]
         """
 
-        And "rundowns"
+        When we patch "rundowns/#rundowns._id#"
         """
-        [
-            {
-                "show": "#shows._id#",
-                "title": "Rundown Title // 10.10.2022",
-                "airtime_time": "06:00",
-                "airtime_date": "2030-01-01",
-                "planned_duration": 3600,
-                "items": [
-                    {"_id": "#rundown_items._id#"},
-                    {"_id": "#rundown_items._id#"}
-                ]
-            }
-        ]
+        {
+            "items": [
+                {"_id": "#rundown_items._id#"},
+                {"_id": "#rundown_items._id#"}
+            ]
+        }
+
         """
+        Then we get OK response
 
         When we post to "rundown_export"
         """
@@ -684,7 +698,7 @@ Feature: Rundowns
 
         When we get "#rundown_export.href#"
         Then we get response code 200
-        And we get "Content-Disposition" header with "attachment; filename="Realizer-Rundown_Title_10.10.2022.csv"" type
+        And we get "Content-Disposition" header with "attachment; filename="Technical-Rundown_Title_10.10.2022.csv"" type
         And we get "Content-Type" header with "text/csv; charset=utf-8" type
 
         When we post to "rundown_export"
@@ -698,7 +712,7 @@ Feature: Rundowns
 
         When we get "#rundown_export.href#"
         Then we get response code 200
-        And we get "Content-Disposition" header with "attachment; filename="Realizer-Rundown_Title_10.10.2022.pdf"" type
+        And we get "Content-Disposition" header with "attachment; filename="Technical-Rundown_Title_10.10.2022.pdf"" type
         And we get "Content-Type" header with "application/pdf" type
 
     @wip
