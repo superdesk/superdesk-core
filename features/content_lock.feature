@@ -452,3 +452,28 @@ Feature: Content Locking
 
         When we get "/workqueue"
         Then we get list with 0 items
+
+    @auth
+    Scenario: Unlocking an item with earlier publish schedule
+        Given "archive"
+        """
+        [{"_id": "item-1", "guid": "item-1", "headline": "test", "_current_version": 1}]
+        """
+
+        When we post to "archive_autosave"
+        """
+        {"_id": "item-1", "guid": "item-1", "publish_schedule": "2021-06-06T13:25:00+0000"}
+        """
+        Then we get ok response
+
+        When we post to "/archive/item-1/lock"
+        """
+        {}
+        """
+        Then we get ok response
+
+        When we post to "/archive/item-1/unlock"
+        """
+        {}
+        """
+        Then we get ok response
