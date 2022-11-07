@@ -1082,7 +1082,7 @@ class ArchiveService(BaseService, HighlightsSearchMixin):
 
             update_schedule_settings(updated, PUBLISH_SCHEDULE, updated.get(PUBLISH_SCHEDULE))
 
-            if updates.get(PUBLISH_SCHEDULE) and updates.get("state") != CONTENT_STATE.PUBLISHED:
+            if updates.get(PUBLISH_SCHEDULE) and updates.get("state") != CONTENT_STATE.PUBLISHED and not force_unlock:
                 validate_schedule(updated.get(SCHEDULE_SETTINGS, {}).get("utc_{}".format(PUBLISH_SCHEDULE)))
 
             updates[SCHEDULE_SETTINGS] = updated.get(SCHEDULE_SETTINGS, {})

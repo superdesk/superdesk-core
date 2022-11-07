@@ -149,7 +149,7 @@ class ItemLock(BaseComponent):
                 push_content_notification([item])
             else:
                 updates = {}
-                set_unlock_updates(updates)
+                set_unlock_updates(updates, True)
                 autosave = superdesk.get_resource_service("archive_autosave").find_one(req=None, _id=item["_id"])
                 if autosave and item[ITEM_STATE] not in PUBLISH_STATES:
                     if not hasattr(flask.g, "user"):  # user is not set when session expires
