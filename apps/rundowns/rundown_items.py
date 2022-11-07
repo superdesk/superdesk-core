@@ -29,6 +29,7 @@ class RundownItemsResource(superdesk.Resource):
         "subitem_attachments": {"type": "list", "mapping": {"type": "keyword"}},
         "status": superdesk.Resource.not_analyzed_field(nullable=True),
         "rundown": superdesk.Resource.rel("rundowns", required=True),
+        "camera": {"type": "list", "mapping": {"type": "keyword"}},
     }
 
     schema["technical_title"]["readonly"] = True
