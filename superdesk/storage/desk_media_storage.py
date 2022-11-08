@@ -8,6 +8,7 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
+from typing import Optional
 import logging
 import json
 import mimetypes
@@ -65,7 +66,7 @@ class SuperdeskGridFSMediaStorage(SuperdeskMediaStorage, GridFSMediaStorage):
         """
         return self.app.download_url(str(media_id))
 
-    def url_for_external(self, media_id: str, resource: str = None) -> str:
+    def url_for_external(self, media_id: str, resource: Optional[str] = None) -> str:
         """Returns a URL for external use
 
         Returns a URL for use with the Content/Production API
