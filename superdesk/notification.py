@@ -77,11 +77,14 @@ def push_notification(name, filters: Optional[WebsocketMessageFilterConditions] 
         return
 
     try:
-        message = _create_socket_message(**WebsocketMessageData(
+        msg_kwargs = WebsocketMessageData(
             event=name,
             extra=kwargs,
-            filters=filters
-        ))
+        )
+        if filters:
+            msg_kwargs["filters"] = filters
+
+        message = _create_socket_message(**msg_kwargs)
         logger.debug("Sending the message: {} to the broker.".format(message))
         app.notification_client.send(message)
     except Exception as err:
