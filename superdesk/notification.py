@@ -10,6 +10,7 @@
 
 """Superdesk push notifications"""
 
+from typing import Optional
 import logging
 import os
 import json
@@ -18,6 +19,7 @@ from datetime import datetime
 from flask import current_app as app
 from superdesk.utils import json_serialize_datetime_objectId
 from superdesk.websockets_comms import SocketMessageProducer
+from superdesk.types import WebsocketMessageData, WebsocketMessageFilterConditions
 
 
 logger = logging.getLogger(__name__)
@@ -44,19 +46,20 @@ def init_app(app) -> None:
         app.notification_client = ClosedSocket()
 
 
-def _create_socket_message(**kwargs):
+def _create_socket_message(**kwargs) -> str:
     """Send out all kwargs as json string."""
     kwargs.setdefault("_created", datetime.utcnow().isoformat())
     kwargs.setdefault("_process", os.getpid())
     return json.dumps(kwargs, default=json_serialize_datetime_objectId)
 
 
-def push_notification(name, **kwargs):
+def push_notification(name, filters: Optional[WebsocketMessageFilterConditions] = None, **kwargs):
     """Push notification to broker.
 
     In case connection is closed it will try to reconnect.
 
     :param name: event name
+    :param filters: filter out websocket consumers by certain conditions
     """
     logger.debug("pushing event {0} ({1})".format(name, json.dumps(kwargs, default=json_serialize_datetime_objectId)))
 
@@ -74,7 +77,11 @@ def push_notification(name, **kwargs):
         return
 
     try:
-        message = _create_socket_message(event=name, extra=kwargs)
+        message = _create_socket_message(**WebsocketMessageData(
+            event=name,
+            extra=kwargs,
+            filters=filters
+        ))
         logger.debug("Sending the message: {} to the broker.".format(message))
         app.notification_client.send(message)
     except Exception as err:
