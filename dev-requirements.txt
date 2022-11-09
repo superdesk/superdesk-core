@@ -1,6 +1,6 @@
 flake8
+flake8-bugbear
 flake8-docstrings
-flake8-bugbear==19.8.0
 nose
 pep8
 pyflakes
@@ -17,5 +17,5 @@ typing_extensions>=3.7.4
 moto[sqs]
 
 -e .
--e git+https://github.com/superdesk/superdesk-planning.git@develop#egg=superdesk-planning
+-e git+https://github.com/superdesk/superdesk-planning.git@v2.4.0#egg=superdesk-planning
 -e git+https://github.com/superdesk/sams.git@develop#egg=sams_client&subdirectory=src/clients/python/
