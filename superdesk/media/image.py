@@ -37,7 +37,9 @@ def fix_orientation(file_stream):
     @param file_stream: stream
     """
     file_stream.seek(0)
-    img = Image.open(file_stream)
+
+    # For PNG image we are getting mode RGBA so fix it while croping png image
+    img = Image.open(file_stream).convert("RGB")
     file_stream.seek(0)
     if not hasattr(img, "_getexif"):
         return file_stream
@@ -84,7 +86,9 @@ def get_meta(file_stream):
         if key == "GPSInfo":
             # lookup GPSInfo description key names
             value = {
-                ExifTags.GPSTAGS[vk].strip(): convert_exif_value(vv, vk) for vk, vv in v.items() if is_serializable(vv)
+                ExifTags.GPSTAGS[vk].strip(): convert_exif_value(vv, vk)
+                for vk, vv in rv.get_ifd(k).items()
+                if is_serializable(vv)
             }
             exif_meta[key] = value
         elif is_serializable(v):
