@@ -3,6 +3,7 @@ import asyncio
 import unittest
 from json import dumps
 from datetime import datetime, timedelta
+from uuid import uuid4
 from superdesk.websockets_comms import SocketCommunication
 from superdesk.types import WebsocketMessageData
 
@@ -12,6 +13,7 @@ class TestClient:
         self.open = True
         self.messages: List[str] = []
         self.path = path
+        self.id = uuid4()
 
     def send(self, message):
         self.messages.append(message)
