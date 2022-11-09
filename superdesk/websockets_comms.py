@@ -16,9 +16,10 @@ import arrow
 import logging
 import asyncio
 import websockets
-from websockets.client import WebSocketClientProtocol
+from websockets.server import WebSocketServerProtocol
 import signal
 from urllib.parse import parse_qs
+from uuid import UUID
 
 from datetime import timedelta, datetime
 from threading import Thread
@@ -162,7 +163,7 @@ class SocketCommunication:
     Responsible for websocket comms.
     """
 
-    clients: Set[WebSocketClientProtocol] = set()
+    clients: Set[WebSocketServerProtocol] = set()
 
     def __init__(
         self,
@@ -177,6 +178,7 @@ class SocketCommunication:
         self.broker_url = broker_url
         self.exchange_name = exchange_name
         self.subscribe_prefix = subscribe_prefix
+        self.client_url_args: Dict[UUID, Dict[str, str]] = {}
         self.messages: Dict[str, datetime] = {}
         self.event_interval = {
             "ingest:update": 5,
@@ -184,6 +186,21 @@ class SocketCommunication:
             "content:expired": 5,
             "publish_queue:update": 5,
         }
+
+    def _add_client(self, websocket: WebSocketServerProtocol):
+        self.clients.add(websocket)
+
+        # Store client URL args for use with message filters
+        if not websocket.path.startswith(self.subscribe_prefix):
+            self.client_url_args[websocket.id] = {}
+        else:
+            self.client_url_args[websocket.id] = {
+                key: val[0] for key, val in parse_qs(websocket.path.replace(self.subscribe_prefix, "")).items()
+            }
+
+    def _remove_client(self, websocket: WebSocketServerProtocol):
+        self.clients.remove(websocket)
+        self.client_url_args.pop(websocket.id, None)
 
     @asyncio.coroutine
     def _client_loop(self, websocket):
@@ -204,7 +221,7 @@ class SocketCommunication:
             pings += 1
             yield from websocket.send(json.dumps({"ping": pings, "clients": len(websocket.ws_server.websockets)}))
 
-    def get_message_recipients(self, message_data: WebsocketMessageData) -> Set[WebSocketClientProtocol]:
+    def get_message_recipients(self, message_data: WebsocketMessageData) -> Set[WebSocketServerProtocol]:
         """Filter consumers by message filter attributes
 
         When client's connect, they can provide a set of URL arguments as to what they need to subscribe to
@@ -225,17 +242,14 @@ class SocketCommunication:
         if not filters["include"] and not filters["exclude"]:
             return clients
 
-        def _filter(websocket: WebSocketClientProtocol) -> bool:
-            if filters["include"] and not websocket.path.startswith(self.subscribe_prefix):
+        def _filter(websocket: WebSocketServerProtocol) -> bool:
+            url_args = self.client_url_args.get(websocket.id)
+            if filters["include"] and not url_args:
                 # If ``filter.include`` is defined, client must provide url args in websocket path
                 # as we're explicitly including only clients that have args in this list
                 return False
 
             try:
-                url_args: Dict[str, str] = {
-                    key: val[0] for key, val in parse_qs(websocket.path.replace(self.subscribe_prefix, "")).items()
-                }
-
                 for key, values in filters["include"].items():
                     if url_args.get(key) not in values:
                         return False
@@ -316,9 +330,9 @@ class SocketCommunication:
             self._log("server done", websocket)
         else:
             self._log("client open", websocket)
-            self.clients.add(websocket)
+            self._add_client(websocket)
             yield from self._client_loop(websocket)
-            self.clients.remove(websocket)
+            self._remove_client(websocket)
             self._log("client done", websocket)
 
     def run_server(self):
