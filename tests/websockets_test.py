@@ -59,10 +59,16 @@ class WebsocketsTestCase(unittest.TestCase):
         client_user_abc123_sess_12345 = TestClient("/subscribe?user=abc123&session=12345")
         client_user_abc123_sess_67890 = TestClient("/subscribe?user=abc123&session=67890")
         client_user_def456 = TestClient("/subscribe?user=def456")
-        com.clients.add(client_no_user)
-        com.clients.add(client_user_abc123_sess_12345)
-        com.clients.add(client_user_abc123_sess_67890)
-        com.clients.add(client_user_def456)
+        com._add_client(client_no_user)
+        com._add_client(client_user_abc123_sess_12345)
+        com._add_client(client_user_abc123_sess_67890)
+        com._add_client(client_user_def456)
+
+        # Test stored client URL args
+        self.assertEqual(com.client_url_args[client_no_user.id], {})
+        self.assertEqual(com.client_url_args[client_user_abc123_sess_12345.id], {"user": "abc123", "session": "12345"})
+        self.assertEqual(com.client_url_args[client_user_abc123_sess_67890.id], {"user": "abc123", "session": "67890"})
+        self.assertEqual(com.client_url_args[client_user_def456.id], {"user": "def456"})
 
         # 1. Send to all consumers
         loop.run_until_complete(com.broadcast(dumps({"event": "new_items", "_created": datetime.now().isoformat()})))
@@ -71,7 +77,7 @@ class WebsocketsTestCase(unittest.TestCase):
         self.assertEqual(1, len(client_user_abc123_sess_67890.messages))
         self.assertEqual(1, len(client_user_def456.messages))
 
-        # Send to user: abc123
+        # 2. Send to user: abc123
         loop.run_until_complete(
             com.broadcast(
                 dumps(
@@ -88,7 +94,7 @@ class WebsocketsTestCase(unittest.TestCase):
         self.assertEqual(2, len(client_user_abc123_sess_67890.messages))
         self.assertEqual(1, len(client_user_def456.messages))
 
-        # Send to users: abc123 & def456
+        # 3. Send to users: abc123 & def456
         loop.run_until_complete(
             com.broadcast(
                 dumps(
@@ -105,7 +111,7 @@ class WebsocketsTestCase(unittest.TestCase):
         self.assertEqual(3, len(client_user_abc123_sess_67890.messages))
         self.assertEqual(2, len(client_user_def456.messages))
 
-        # Send to user: abc123, session: 67890
+        # 4. Send to user: abc123, session: 67890
         loop.run_until_complete(
             com.broadcast(
                 dumps(
@@ -122,7 +128,7 @@ class WebsocketsTestCase(unittest.TestCase):
         self.assertEqual(4, len(client_user_abc123_sess_67890.messages))
         self.assertEqual(2, len(client_user_def456.messages))
 
-        # Send to all consumers except user: abc123
+        # 5. Send to all consumers except user: abc123
         loop.run_until_complete(
             com.broadcast(
                 dumps(
