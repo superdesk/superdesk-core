@@ -243,7 +243,7 @@ class SocketCommunication:
             return clients
 
         def _filter(websocket: WebSocketServerProtocol) -> bool:
-            url_args = self.client_url_args.get(websocket.id)
+            url_args = self.client_url_args.get(websocket.id) or {}
             if filters["include"] and not url_args:
                 # If ``filter.include`` is defined, client must provide url args in websocket path
                 # as we're explicitly including only clients that have args in this list
