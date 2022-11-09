@@ -11,7 +11,7 @@
 
 import logging
 import json
-from typing import List, Union, Any, Dict
+from typing import List, Any, Dict, Optional
 
 from flask import request, current_app as app
 from eve.utils import config
@@ -443,7 +443,12 @@ class VocabulariesService(BaseService):
         return article_item
 
     def get_items(
-        self, _id: str, qcode: str = None, is_active: bool = True, name: str = None, lang: str = None
+        self,
+        _id: str,
+        qcode: Optional[str] = None,
+        is_active: bool = True,
+        name: Optional[str] = None,
+        lang: Optional[str] = None,
     ) -> List:
         """
         Return `items` with specified filters from the CV with specified `_id`.

@@ -9,20 +9,25 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
+from typing import Dict, Set, Optional, Union
+from superdesk.types import WebsocketMessageData, WebsocketMessageFilterConditions
 
 import arrow
 import logging
 import asyncio
 import websockets
+from websockets.server import WebSocketServerProtocol
 import signal
+from urllib.parse import parse_qs
+from uuid import UUID
 
-from datetime import timedelta
+from datetime import timedelta, datetime
 from threading import Thread
 from kombu import Queue, Exchange, Connection
 from kombu.mixins import ConsumerMixin
 from kombu.pools import producers
 from superdesk.utc import utcnow
-from superdesk.utils import get_random_string
+from superdesk.utils import get_random_string, json_serialize_datetime_objectId
 from superdesk.default_settings import celery_queue, WS_HEART_BEAT
 from flask import json
 
@@ -158,20 +163,44 @@ class SocketCommunication:
     Responsible for websocket comms.
     """
 
-    clients = set()
+    clients: Set[WebSocketServerProtocol] = set()
 
-    def __init__(self, host, port, broker_url, exchange_name=None):
+    def __init__(
+        self,
+        host: str,
+        port: Union[int, str],
+        broker_url: str,
+        exchange_name: Optional[str] = None,
+        subscribe_prefix: str = "/subscribe?",
+    ):
         self.host = host
         self.port = port
         self.broker_url = broker_url
         self.exchange_name = exchange_name
-        self.messages = {}
+        self.subscribe_prefix = subscribe_prefix
+        self.client_url_args: Dict[UUID, Dict[str, str]] = {}
+        self.messages: Dict[str, datetime] = {}
         self.event_interval = {
             "ingest:update": 5,
             "ingest:cleaned": 5,
             "content:expired": 5,
             "publish_queue:update": 5,
         }
+
+    def _add_client(self, websocket: WebSocketServerProtocol):
+        self.clients.add(websocket)
+
+        # Store client URL args for use with message filters
+        if not websocket.path.startswith(self.subscribe_prefix):
+            self.client_url_args[websocket.id] = {}
+        else:
+            self.client_url_args[websocket.id] = {
+                key: val[0] for key, val in parse_qs(websocket.path.replace(self.subscribe_prefix, "")).items()
+            }
+
+    def _remove_client(self, websocket: WebSocketServerProtocol):
+        self.clients.remove(websocket)
+        self.client_url_args.pop(websocket.id, None)
 
     @asyncio.coroutine
     def _client_loop(self, websocket):
@@ -191,6 +220,49 @@ class SocketCommunication:
                 break
             pings += 1
             yield from websocket.send(json.dumps({"ping": pings, "clients": len(websocket.ws_server.websockets)}))
+
+    def get_message_recipients(self, message_data: WebsocketMessageData) -> Set[WebSocketServerProtocol]:
+        """Filter consumers by message filter attributes
+
+        When client's connect, they can provide a set of URL arguments as to what they need to subscribe to
+        Such as specific user and/or company combination.
+        These URL arguments are then checked against the filter conditions in the ``message_data``
+        to determine which clients this ``message_data`` is to be sent to
+        """
+
+        clients = self.clients.copy()
+
+        if not message_data.get("filters"):
+            return clients
+
+        filters: WebsocketMessageFilterConditions = message_data.pop("filters", {})
+        filters.setdefault("include", {})
+        filters.setdefault("exclude", {})
+
+        if not filters["include"] and not filters["exclude"]:
+            return clients
+
+        def _filter(websocket: WebSocketServerProtocol) -> bool:
+            url_args = self.client_url_args.get(websocket.id) or {}
+            if filters["include"] and not url_args:
+                # If ``filter.include`` is defined, client must provide url args in websocket path
+                # as we're explicitly including only clients that have args in this list
+                return False
+
+            try:
+                for key, values in filters["include"].items():
+                    if url_args.get(key) not in values:
+                        return False
+
+                for key, values in filters["exclude"].items():
+                    if url_args.get(key) in values:
+                        return False
+            except (KeyError, ValueError, IndexError):
+                return False
+
+            return True
+
+        return set(filter(_filter, clients))
 
     @asyncio.coroutine
     def broadcast(self, message):
@@ -214,10 +286,12 @@ class SocketCommunication:
             self.messages[message_id] = message_created
 
         logger.debug("broadcast %s" % message)
-        for websocket in self.clients.copy():
+        for websocket in self.get_message_recipients(message_data):
             try:
                 if websocket.open:
-                    yield from websocket.send(message)
+                    # Reconstruct the message string
+                    # as not to send the ``message.filter`` dictionary to clients
+                    yield from websocket.send(json.dumps(message_data, default=json_serialize_datetime_objectId))
             except Exception:
                 yield
 
@@ -256,9 +330,9 @@ class SocketCommunication:
             self._log("server done", websocket)
         else:
             self._log("client open", websocket)
-            self.clients.add(websocket)
+            self._add_client(websocket)
             yield from self._client_loop(websocket)
-            self.clients.remove(websocket)
+            self._remove_client(websocket)
             self._log("client done", websocket)
 
     def run_server(self):

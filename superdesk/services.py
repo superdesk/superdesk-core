@@ -8,7 +8,7 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
-from typing import Dict, Any
+from typing import Dict, Any, Optional
 
 import pymongo
 import logging
@@ -31,7 +31,7 @@ class BaseService:
 
     datasource: Union[str, None]
 
-    def __init__(self, datasource: str = None, backend=None):
+    def __init__(self, datasource: Optional[str] = None, backend=None):
         self.backend = backend
         self.datasource = datasource
 
