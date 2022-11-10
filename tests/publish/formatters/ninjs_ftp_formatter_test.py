@@ -375,6 +375,7 @@ class FTPNinjsFormatterTest(TestCase):
                         }
                     },
                     "description_text": "Steam rises from the brown coal-fired power plant",
+                    "description_html": "<p>Steam rises from the brown coal-fired power plant</p>",
                     "pubstatus": "usable",
                     "version": "1",
                     "body_text": "Power plant",

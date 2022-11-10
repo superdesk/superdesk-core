@@ -344,6 +344,7 @@ class NinjsFormatterTest(TestCase):
                     "task": {},
                     "copyrightholder": "Foo ltd.",
                     "description_text": "Foo picture",
+                    "abstract": "",
                     "renditions": {
                         "original": {
                             "href": "http://example.com",
@@ -534,7 +535,7 @@ class NinjsFormatterTest(TestCase):
         seq, doc = self.formatter.format(article, {"name": "Test Subscriber"})[0]
         return json.loads(doc)
 
-    def test_empty_amstract(self):
+    def test_empty_abstract(self):
         article = {"_id": "urn:bar", "_current_version": 1, "guid": "urn:bar", "type": "text", "abstract": ""}
 
         seq, doc = self.formatter.format(article, {"name": "Test Subscriber"})[0]

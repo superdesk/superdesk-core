@@ -224,12 +224,16 @@ class NINJSFormatter(Formatter):
             ninjs["order"] = article["order"]
 
         # SDPA-317
-        if "abstract" in article:
-            abstract = article.get("abstract", "")
-            ninjs["description_html"] = abstract
-            ninjs["description_text"] = text_utils.get_text(abstract)
+        if article.get("abstract"):
+            ninjs["description_html"] = article["abstract"]
+            ninjs["description_text"] = text_utils.get_text(article["abstract"])
         elif article.get("description_text"):
-            ninjs["description_text"] = article.get("description_text")
+            ninjs["description_text"] = article["description_text"]
+            ninjs["description_html"] = article.get("description_html") or "<p>{}</p>".format(
+                article["description_text"]
+            )
+        elif "abstract" in article:  # BC
+            ninjs["description_text"] = ninjs["description_html"] = ""
 
         if article.get("company_codes"):
             ninjs["organisation"] = [
