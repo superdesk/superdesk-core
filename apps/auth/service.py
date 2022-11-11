@@ -146,13 +146,9 @@ class UserSessionClearService(BaseService):
 
         Operation is invalid if one of the below is True:
             1. Check if the user exists.
-            2. Check if the user is clearing his/her own sessions.
 
         :return: error message if invalid.
         """
 
         if not user:
             return "Invalid user to clear sessions."
-
-        if str(user[config.ID_FIELD]) == str(flask.g.user[config.ID_FIELD]):
-            return "Not allowed to clear your own sessions."
