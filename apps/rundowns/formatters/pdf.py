@@ -108,11 +108,11 @@ class TablePDFFormatter(PrompterPDFFormatter):
         return f"Technical-{rundown['title']}.pdf"
 
     def get_contents(self, show, rundown, items):
-        data = [
-            TableCSVFormatter.COLUMNS,
-        ]
+        subitems = utils.get_subitems()
+        columns = utils.item_table_columns(subitems)
+        data = [columns]
         for i, item in enumerate(items, start=1):
-            data.append(utils.item_table_data(show, rundown, item, i))
+            data.append(utils.item_table_data(show, rundown, item, i, subitems))
         return [
             Table(
                 data,

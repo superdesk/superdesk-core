@@ -92,6 +92,10 @@ def set_autocreate_schedule(updates, local_date: Optional[datetime.datetime], te
     logger.info("Next rundown for template %s scheduled on %s", template["title"], updates["scheduled_on"].isoformat())
 
 
+def item_title_fallback(item: types.IRundownItem) -> str:
+    return (item.get("title") or "").upper()
+
+
 def item_title(show: types.IShow, rundown: types.IRundown, item: types.IRundownItem, with_camera=True) -> str:
     if item.get("item_type") and item["item_type"].upper() in ("PRLG", "AACC"):
         pieces = [
@@ -107,4 +111,4 @@ def item_title(show: types.IShow, rundown: types.IRundown, item: types.IRundownI
                 pieces,
             )
         ).upper()
-    return (item.get("title") or "").upper()
+    return item_title_fallback(item)

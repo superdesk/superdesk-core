@@ -15,6 +15,11 @@ class IRef(TypedDict):
 IRefs = List[IRef]
 
 
+class ISubject(TypedDict):
+    name: str
+    qcode: str
+
+
 class IRRule(TypedDict, total=False):
     freq: Literal["DAILY", "WEEKLY", "MONTHLY", "YEARLY"]
     interval: int
@@ -36,6 +41,12 @@ class IRundownTitleTemplate(TypedDict, total=False):
     date_format: str
 
 
+class ISubitem(TypedDict, total=False):
+    qcode: str
+    content: str
+    technical_info: str
+
+
 class IRundownItemTemplate(TypedDict):
     item_type: str
     title: Optional[str]
@@ -45,6 +56,8 @@ class IRundownItemTemplate(TypedDict):
     show_part: Optional[str]
     additional_notes: Optional[str]
     rundown: str
+    camera: List[str]
+    subitems: List[ISubitem]
 
 
 class IRundownItem(IRundownItemTemplate, IEntity):

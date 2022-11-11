@@ -25,8 +25,17 @@ class RundownItemsResource(superdesk.Resource):
         "show_part": superdesk.Resource.not_analyzed_field(nullable=True),
         "additional_notes": superdesk.Resource.not_analyzed_field(nullable=True),
         "fields_meta": metadata_schema["fields_meta"].copy(),
-        "subitems": {"type": "list", "mapping": {"type": "keyword"}},
-        "subitem_attachments": {"type": "list", "mapping": {"type": "keyword"}},
+        "subitems": {
+            "type": "list",
+            "schema": {
+                "type": "dict",
+                "schema": {
+                    "qcode": {"type": "string", "mapping": {"type": "keyword"}},
+                    "technical_info": {"type": "string"},
+                    "content": metadata_schema["body_html"].copy(),
+                },
+            },
+        },
         "status": superdesk.Resource.not_analyzed_field(nullable=True),
         "rundown": superdesk.Resource.rel("rundowns", required=True),
         "camera": {"type": "list", "mapping": {"type": "keyword"}},
@@ -74,7 +83,7 @@ class RundownItemsService(superdesk.Service):
             rundown = rundowns.rundowns_service.find_one(req=None, _id=item["rundown"])
             show = shows.shows_service.find_one(req=None, _id=rundown["show"])
             return utils.item_title(show, rundown, item, with_camera=with_camera)
-        return utils.item_title(None, None, item, False)
+        return utils.item_title_fallback(item)
 
     def create_from_template(self, template: types.IRundownItemTemplate, rundown: types.IRundown) -> types.IRundownItem:
         item: types.IRundownItem = {
@@ -86,6 +95,8 @@ class RundownItemsService(superdesk.Service):
             "show_part": template.get("show_part"),
             "additional_notes": template.get("additional_notes"),
             "rundown": rundown.get("_id", ""),
+            "camera": [],
+            "subitems": [],
         }
 
         self.create([item])

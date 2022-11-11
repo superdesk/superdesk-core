@@ -5,20 +5,15 @@ class TableCSVFormatter(BaseFormatter):
 
     MIMETYPE = "text/csv"
     SEPARATOR = "\t"
-    COLUMNS = [
-        "Order",
-        "Type",
-        "Technical Title",
-        "Additional realizer info",
-        "Duration",
-    ]
 
     def export(self, show, rundown, items):
         filename = f"Technical-{rundown['title']}.csv"
+        subitems = utils.get_subitems()
+        columns = utils.item_table_columns(subitems)
         data = "\n".join(
-            [self.SEPARATOR.join(self.COLUMNS)]
+            [self.SEPARATOR.join(columns)]
             + [
-                self.SEPARATOR.join(utils.item_table_data(show, rundown, item, i))
+                self.SEPARATOR.join(utils.item_table_data(show, rundown, item, i, subitems))
                 for i, item in enumerate(items, start=1)
             ]
         )

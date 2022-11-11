@@ -318,7 +318,10 @@ Feature: Rundowns
             "planned_duration": 120,
             "item_type": "PRLG",
             "content": "<p>some text</p>",
-            "subitems": ["wall", "video"],
+            "subitems": [
+                {"qcode": "wall"},
+                {"qcode": "video"}
+            ],
             "rundown": "#rundowns._id#",
             "camera": ["k1", "k2"]
         }
@@ -537,6 +540,17 @@ Feature: Rundowns
     @wip
     @auth
     Scenario: Export
+        Given "vocabularies"
+        """
+        [
+            {"_id": "rundown_subitem_types", "items": [
+                {"name": "PRLG", "qcode": "PRLG", "is_active": true},
+                {"name": "WALL", "qcode": "WALL", "is_active": true},
+                {"name": "GRAF", "qcode": "GRAF", "is_active": true}
+            ]}
+        ]
+        """
+
         When we get "/rundown_export"
         Then we get list with 3 items
         """
@@ -575,7 +589,6 @@ Feature: Rundowns
                 "duration": 80,
                 "planned_duration": 120,
                 "item_type": "PRLG",
-                "subitems": ["wall", "video"],
                 "content": "<p>foo</p><p>bar</p>",
                 "camera": ["K1", "K2"],
                 "additional_notes": "Some extra notes",
@@ -656,7 +669,19 @@ Feature: Rundowns
                             }
                         ]
                     }
-                }
+                },
+                "subitems": [
+                    {
+                        "qcode": "WALL",
+                        "technical_info": "wall info",
+                        "content": "some content"
+                    },
+                    {
+                        "qcode": "PRLG",
+                        "technical_info": "prlg info",
+                        "content": "another content"
+                    }
+                ]
             }
         ]
         """
@@ -715,7 +740,6 @@ Feature: Rundowns
         And we get "Content-Disposition" header with "attachment; filename="Technical-Rundown_Title_10.10.2022.pdf"" type
         And we get "Content-Type" header with "application/pdf" type
 
-    @wip
     @auth
     Scenario: Search rundown by item contents
         Given "shows"
@@ -746,7 +770,10 @@ Feature: Rundowns
                 "duration": 80,
                 "planned_duration": 120,
                 "item_type": "test",
-                "subitems": ["wall", "video"],
+                "subitems": [
+                    {"qcode": "wall"},
+                    {"qcode": "video"}
+                ],
                 "content": "<p>searchable content</p>",
                 "rundown": "#rundowns._id#"
             }
@@ -801,7 +828,10 @@ Feature: Rundowns
             "duration": 80,
             "planned_duration": 120,
             "item_type": "test",
-            "subitems": ["wall", "video"],
+            "subitems": [
+                {"qcode": "wall"},
+                {"qcode": "video"}
+            ],
             "content": "<p>content</p>",
             "rundown": "#rundowns._id#"
         }
