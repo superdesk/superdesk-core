@@ -169,18 +169,20 @@ class SuperdeskTokenAuth(TokenAuth):
 
             return self.check_permissions(resource, method, flask.g.user)
 
+        # pop invalid session
+        session.pop("session_token", None)
+        return False
+
     def authorized(self, allowed_roles, resource, method):
         """Ignores auth on home endpoint."""
         if not resource:
             return True
-        elif session.get("session_token"):
-            if get_resource_service("auth").find_one(token=session["session_token"], req=None):
-                # If the ``session_token`` is valid, continue on with ``check_auth``
-                return self.check_auth(session["session_token"], allowed_roles, resource, method)
 
-            # Otherwise remove ``session_token`` from the session cookie
-            # and continue authentication using the HTTP ``Authorization`` Header
-            session.pop("session_token")
+        # authenticate using session token only if there is no authorization header
+        if session.get("session_token") and not request.headers.get("Authorization"):
+            return self.check_auth(session["session_token"], allowed_roles, resource, method)
+
+        # use authorization token
         return super(SuperdeskTokenAuth, self).authorized(allowed_roles, resource, method)
 
     def authenticate(self):

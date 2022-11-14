@@ -1,6 +1,7 @@
 from unittest.mock import patch
 from bson import ObjectId
 from datetime import timedelta
+from flask import session
 
 from superdesk.utc import utcnow
 from superdesk.tests import TestCase
@@ -77,3 +78,29 @@ class AuthTestCase(TestCase):
             self.app.auth.check_auth("foo", [], "users", "POST")
             auth = self.app.data.find_one("auth", None, token="foo")
             self.assertLess(auth["_updated"], utcnow() - timedelta(seconds=1))
+
+    def test_session_with_auth_token(self):
+        user_ids = self.app.data.insert(
+            "users",
+            [
+                {"username": "foo", "user_type": "administrator"},
+                {"username": "bar", "user_type": "user"},
+            ],
+        )
+        auth_ids = self.app.data.insert(
+            "auth",
+            [
+                {"user": user_ids[0], "_updated": utcnow(), "token": "foo"},
+                {"user": user_ids[1], "_updated": utcnow(), "token": "bar"},
+            ],
+        )
+        headers = {"Authorization": "token foo"}
+
+        client = self.app.test_client()
+        with client.session_transaction() as sess:
+            sess["session_token"] = "bar"
+
+        with client:
+            response = client.get("/api/users", headers=headers)
+            self.assertEqual(200, response.status_code)
+            assert session["session_token"] == "foo"
