@@ -38,10 +38,11 @@ class IndexFromMongo(superdesk.Command):
         superdesk.Option("--all", action="store_true", dest="all_collections"),
         superdesk.Option("--page-size", "-p"),
         superdesk.Option("--last-id"),
+        superdesk.Option("--string-id", dest="string_id", action="store_true", help="Treat the id's as strings"),
     ]
     default_page_size = 500
 
-    def run(self, collection_name, all_collections, page_size, last_id):
+    def run(self, collection_name, all_collections, page_size, last_id, string_id):
         if not collection_name and not all_collections:
             raise SystemExit("Specify --all to index from all collections")
         elif all_collections:
@@ -50,11 +51,11 @@ class IndexFromMongo(superdesk.Command):
             for resource in resources:
                 self.copy_resource(resource, page_size)
         else:
-            self.copy_resource(collection_name, page_size, last_id)
+            self.copy_resource(collection_name, page_size, last_id, string_id)
 
     @classmethod
-    def copy_resource(cls, resource, page_size, last_id=None):
-        for items in cls.get_mongo_items(resource, page_size, last_id):
+    def copy_resource(cls, resource, page_size, last_id=None, string_id=False):
+        for items in cls.get_mongo_items(resource, page_size, last_id, string_id):
             print("{} Inserting {} items".format(time.strftime("%X %x %Z"), len(items)))
             s = time.time()
             success, failed = 0, 0
@@ -78,7 +79,7 @@ class IndexFromMongo(superdesk.Command):
         return "Finished indexing collection {}".format(resource)
 
     @classmethod
-    def get_mongo_items(cls, mongo_collection_name, page_size, last_id):
+    def get_mongo_items(cls, mongo_collection_name, page_size, last_id, string_id):
         """Generate list of items from given mongo collection per page size.
 
         :param mongo_collection_name: Name of the collection to get the items
@@ -93,10 +94,11 @@ class IndexFromMongo(superdesk.Command):
 
         while True:
             if last_id:
-                try:
-                    last_id = ObjectId(last_id)
-                except Exception:
-                    pass
+                if not string_id:
+                    try:
+                        last_id = ObjectId(last_id)
+                    except Exception:
+                        pass
                 args.update({"filter": {config.ID_FIELD: {"$gt": last_id}}})
 
             cursor = db.find(**args)
