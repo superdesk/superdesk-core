@@ -70,7 +70,7 @@ class LegalService(Service):
         if req and req.args.get("query"):
             lookup["$text"] = {"$search": req.args["query"]}
 
-        return super().get(req, lookup)
+        return super().get_from_mongo(req, lookup)
 
     def find_one(self, req, **lookup):
         """Runs on find_one
