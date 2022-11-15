@@ -130,9 +130,11 @@ class UserSessionClearService(BaseService):
         if error_message:
             raise SuperdeskApiError.forbiddenError(message=error_message)
 
-        # Delete all the sessions
+        # Delete all the sessions except current session
         for session in sessions:
-            get_resource_service("auth").delete_action({config.ID_FIELD: str(session[config.ID_FIELD])})
+            current_session_id = auth.get_auth().get("_id")
+            if str(session[config.ID_FIELD]) != str(current_session_id):
+                get_resource_service("auth").delete_action({config.ID_FIELD: str(session[config.ID_FIELD])})
 
         # Check if any orphan session_preferences exist for the user
         if user.get("session_preferences"):
