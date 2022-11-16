@@ -27,7 +27,6 @@ def get_test_prodapi_app(extra_config=None):
     :return: eve.flaskapp.Eve
     """
     test_config = {
-        "DEBUG": True,
         "TESTING": True,
         "SUPERDESK_TESTING": True,
         "MONGO_CONNECT": False,

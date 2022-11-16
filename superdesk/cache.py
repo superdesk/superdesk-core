@@ -1,21 +1,13 @@
-import redis
 import hermes
 import hermes.backend
-import hermes.backend.dict
 import hermes.backend.redis
+import hermes.backend.inprocess
+
+from urllib.parse import urlparse
 
 from flask import current_app as app
 from superdesk import json_utils
 from superdesk.logging import logger
-
-
-class SuperdeskRedisBackend(hermes.backend.redis.Backend):
-    """Updated init to create redis from URL instead of parsing params."""
-
-    def __init__(self, mangler, **kwargs):
-        self.mangler = mangler
-        self.client = redis.StrictRedis.from_url(kwargs.pop("url"))
-        self._options = kwargs
 
 
 class SuperdeskMangler(hermes.Mangler):
@@ -53,15 +45,18 @@ class SuperdeskCacheBackend(hermes.backend.AbstractBackend):
         if not app.cache:
             cache_url = app.config.get("CACHE_URL", "")
             if "redis" in cache_url or "unix" in cache_url:
-                app.cache = SuperdeskRedisBackend(self.mangler, url=cache_url)
+                parsed_url = urlparse(cache_url)
+                assert parsed_url.hostname
+                app.cache = hermes.backend.redis.Backend(
+                    self.mangler,
+                    host=parsed_url.hostname,
+                    password=parsed_url.password if parsed_url.password else None,
+                    port=int(parsed_url.port) if parsed_url.port else 6379,
+                    db=int(parsed_url.path[1:]) if parsed_url.path else 0,
+                )
                 logger.info("using redis cache backend")
-            elif cache_url:
-                import hermes.backend.memcached
-
-                app.cache = hermes.backend.memcached.Backend(self.mangler, servers=[cache_url])
-                logger.info("using memcached cache backend")
             else:
-                app.cache = hermes.backend.dict.Backend(self.mangler)
+                app.cache = hermes.backend.inprocess.Backend(self.mangler)
                 logger.info("using dict cache backend")
 
         return app.cache
@@ -69,8 +64,8 @@ class SuperdeskCacheBackend(hermes.backend.AbstractBackend):
     def lock(self, key):
         return self._backend.lock(key)
 
-    def save(self, key=None, value=None, mapping=None, ttl=None):
-        return self._backend.save(key, value, mapping, ttl)
+    def save(self, mapping, *, ttl=None):
+        return self._backend.save(mapping, ttl=ttl)
 
     def load(self, keys):
         val = self._backend.load(keys)
@@ -83,4 +78,4 @@ class SuperdeskCacheBackend(hermes.backend.AbstractBackend):
         return self._backend.clean()
 
 
-cache = hermes.Hermes(SuperdeskCacheBackend, SuperdeskMangler, ttl=600)
+cache = hermes.Hermes(SuperdeskCacheBackend, mangler=SuperdeskMangler(), ttl=600)

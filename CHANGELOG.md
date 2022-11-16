@@ -1,5 +1,21 @@
 # Superdesk Server Changelog
 
+## [2.4.5] 2022-11-16
+
+## Bug
+
+### [SDESK-6662](https://sofab.atlassian.net/browse/SDESK-6662) PNG image upload fails \(EWTN\)
+
+### [SDESK-6675](https://sofab.atlassian.net/browse/SDESK-6675) Unable to unlock article \(EWTN\)
+
+### [SDESK-6707](https://sofab.atlassian.net/browse/SDESK-6707) fix empty description in ninjs when abstract is present
+
+[Changes](https://github.com/superdesk/superdesk-core/milestone/130?closed=1)
+
+## [2.4.4] 2022-10-19
+
+[Changes](https://github.com/superdesk/superdesk-core/milestone/129?closed=1)
+
 ## [2.5.1] 2022-10-17
 
 [Changes](https://github.com/superdesk/superdesk-core/milestone/127?closed=1)

@@ -51,8 +51,7 @@ class PictureCropServiceTest(TestCase):
             service.post(images)
 
         self.assertEqual(images[0]["metadata"].get("datetime"), '"2015:07:06 16:30:23"')
-        self.assertEqual(images[0]["metadata"].get("exifimagewidth"), "400")
-        self.assertEqual(images[0]["metadata"].get("exifimageheight"), "300")
+        self.assertEqual(images[0]["metadata"].get("length"), "144732")
 
     def test_get_crop_size_fixes_crop_aspect_ratio(self):
         crop_data = {"CropLeft": 0, "CropRight": 1620, "CropTop": 0, "CropBottom": 1230, "width": 800, "height": 600}

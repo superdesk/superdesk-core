@@ -3,75 +3,44 @@ name: "Test"
 on: [push, pull_request]
 
 jobs:
-  nose:
+  pytest:
     runs-on: ubuntu-latest
 
     strategy:
       matrix:
-        python-version: [3.8]
+        python-version: ['3.8', '3.10']
 
     steps:
-    - uses: actions/checkout@v2
-
-    - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v2
+    - uses: actions/checkout@v3
+    - uses: actions/setup-python@v4
       with:
         python-version: ${{ matrix.python-version }}
 
-    - name: Install packages
-      run: ./scripts/tests_setup
+    - run: ./scripts/tests_setup
+    - run: pip install -U pip wheel setuptools
+    - run: pip install -r dev-requirements.txt
 
-    - name: Cache pip
-      uses: actions/cache@v2
-      with:
-        path: ~/.cache/pip
-        key: ${{ runner.os }}-pip-${{ hashFiles('dev-requirements.txt') }}
-        restore-keys: |
-          ${{ runner.os }}-pip
-          ${{ runner.os }}-
-
-    - name: Install dependencies
-      run: |
-        python -m pip install --upgrade 'pip<21.3' wheel setuptools
-        pip install -r dev-requirements.txt
-
-    - name: Nosetests
-      run: nosetests --logging-level=ERROR
+    - run: pytest --log-level=ERROR --disable-warnings
 
   behave:
     runs-on: ubuntu-latest
 
     strategy:
       matrix:
-        python-version: [3.8]
+        python-version: ['3.8', '3.10']
 
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
 
-    - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v2
+    - uses: actions/setup-python@v4
       with:
         python-version: ${{ matrix.python-version }}
 
-    - name: Install packages
-      run: ./scripts/tests_setup
+    - run: ./scripts/tests_setup
+    - run: pip install -U pip wheel setuptools
+    - run: pip install -r dev-requirements.txt
 
-    - name: Cache pip
-      uses: actions/cache@v2
-      with:
-        path: ~/.cache/pip
-        key: ${{ runner.os }}-pip-${{ hashFiles('dev-requirements.txt') }}
-        restore-keys: |
-          ${{ runner.os }}-pip
-          ${{ runner.os }}-
-
-    - name: Install dependencies
-      run: |
-        python -m pip install --upgrade 'pip<21.3' wheel setuptools
-        pip install -r dev-requirements.txt
-
-    - name: Behave
-      run: behave --tags=-sams --format progress2 --logging-level=ERROR
+    - run: behave --tags=-sams --format progress2 --logging-level=ERROR
 
   behave-sams:
 
@@ -79,38 +48,22 @@ jobs:
 
     strategy:
       matrix:
-        python-version: [3.8]
+        python-version: ['3.8', '3.10']
 
     steps:
-      - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
 
-      - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v2
-        with:
-          python-version: ${{ matrix.python-version }}
+    - uses: actions/setup-python@v4
+      with:
+        python-version: ${{ matrix.python-version }}
 
-      - name: Install packages
-        run: ./scripts/tests_setup
+    - run: ./scripts/tests_setup
+    - run: ./scripts/install-start-sams
 
-      - name: Start SAMS
-        run: ./scripts/install-start-sams
+    - run: pip install -U pip wheel setuptools
+    - run: pip install -r dev-requirements.txt
 
-      - name: Cache pip
-        uses: actions/cache@v2
-        with:
-          path: ~/.cache/pip
-          key: ${{ runner.os }}-pip-${{ hashFiles('dev-requirements.txt') }}
-          restore-keys: |
-            ${{ runner.os }}-pip
-            ${{ runner.os }}-
-
-      - name: Install dependencies
-        run: |
-          python -m pip install --upgrade 'pip<21.3' wheel setuptools
-          pip install -r dev-requirements.txt
-
-      - name: Behave
-        run: behave --tags=sams --format progress2 --logging-level=ERROR
+    - run: behave --tags=sams --format progress2 --logging-level=ERROR
 
   prodapi:
 
@@ -118,32 +71,18 @@ jobs:
 
     strategy:
       matrix:
-        python-version: [3.8]
+        python-version: ['3.8', '3.10']
 
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
 
-    - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v2
+    - uses: actions/setup-python@v4
       with:
         python-version: ${{ matrix.python-version }}
 
-    - name: Install packages
-      run: ./scripts/tests_setup
+    - run: ./scripts/tests_setup
+    - run: pip install -U pip wheel setuptools
+    - run: pip install -r dev-requirements.txt
 
-    - name: Cache pip
-      uses: actions/cache@v2
-      with:
-        path: ~/.cache/pip
-        key: ${{ runner.os }}-pip-${{ hashFiles('dev-requirements.txt') }}
-        restore-keys: |
-          ${{ runner.os }}-pip
-          ${{ runner.os }}-
-
-    - name: Install dependencies
-      run: |
-        python -m pip install --upgrade 'pip<21.3' wheel setuptools
-        pip install -r dev-requirements.txt
-
-    - name: prodapi-pytest
-      run: cd prod_api && time pytest
+    - run: pytest prod_api
+  

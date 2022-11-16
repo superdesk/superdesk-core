@@ -2645,7 +2645,7 @@ Feature: Content Publishing
         {
                "guid": "234", "type": "picture", "slugline": "234", "headline": "234", "state": "in_progress",
             "task": {"desk": "#desks._id#", "stage": "#desks.incoming_stage#", "user": "#CONTEXT_USER_ID#"},
-            "renditions": {}
+            "renditions": {}, "byline": "original byline"
         },
           {
               "guid": "123", "type": "text", "headline": "test", "state": "in_progress", "profile": "profile1",
@@ -2664,7 +2664,8 @@ Feature: Content Publishing
                     "subject": [{"name": "subject", "parent": "05000000", "qcode": "05007000"}],
                     "anpa_category": [{"qcode": "category", "name": "categories"}],
                     "renditions": {},
-                    "task": {"desk": "#desks._id#", "stage": "#desks.incoming_stage#", "user": "#CONTEXT_USER_ID#"}
+                    "task": {"desk": "#desks._id#", "stage": "#desks.incoming_stage#", "user": "#CONTEXT_USER_ID#"},
+                    "byline": ""
                 },
                 "related--1": {
                   "_id": "text",
@@ -2686,7 +2687,8 @@ Feature: Content Publishing
         "associations": {
             "media--1": {
               "state": "published",
-              "task": {"desk": "#desks._id#", "stage": "#desks.incoming_stage#"}
+              "task": {"desk": "#desks._id#", "stage": "#desks.incoming_stage#"},
+              "byline": ""
             }
         },
         "task":{"desk": "#desks._id#", "stage": "#desks.incoming_stage#"}
