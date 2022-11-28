@@ -21,15 +21,16 @@ def get_subitems() -> List[types.ISubject]:
     return get_resource_service("vocabularies").get_items("rundown_subitem_types")
 
 
-def item_table_columns(subitems: List[types.ISubject]) -> List[str]:
+def table_columns(subitems: List[types.ISubject], items: List[types.IRundownItem]) -> List[str]:
     columns = [
         "Order",
         "Type",
         "Technical Title",
     ]
 
-    for item in subitems:
-        columns.append(item["name"])
+    for subitem_type in subitems:
+        if any([has_subitems(item, subitem_type) for item in items]):
+            columns.append(subitem_type["name"])
 
     columns.extend(
         [
@@ -42,11 +43,15 @@ def item_table_columns(subitems: List[types.ISubject]) -> List[str]:
 
 
 def item_table_data(
-    show: types.IShow, rundown: types.IRundown, item: types.IRundownItem, order: int, subitems: List[types.ISubject]
+    show: types.IShow,
+    rundown: types.IRundown,
+    item: types.IRundownItem,
+    order: int,
+    subitems: List[types.ISubject],
 ) -> List[str]:
     data = [
         str(order),
-        to_string(item, "item_type").upper(),
+        rundown_utils.item_type_name(item["item_type"]).upper() if item.get("item_type") else "",
         rundown_utils.item_title(show, rundown, item),
     ]
 
@@ -55,6 +60,8 @@ def item_table_data(
             for subitem in item["subitems"]:
                 if subitem.get("qcode") == subitem_type["qcode"]:
                     data.append(subitem.get("technical_info") or "")
+                    if subitem.get("qcode") == "PRLG":
+                        data[1] += "-PRLG"
                     break
             else:
                 data.append("")
@@ -69,3 +76,11 @@ def item_table_data(
     )
 
     return data
+
+
+def has_subitems(item: types.IRundownItem, subitem_type: types.ISubject) -> bool:
+    if item.get("subitems"):
+        for subitem in item["subitems"]:
+            if subitem.get("qcode") == subitem_type["qcode"]:
+                return True
+    return False

@@ -109,7 +109,7 @@ class TablePDFFormatter(PrompterPDFFormatter):
 
     def get_contents(self, show, rundown, items):
         subitems = utils.get_subitems()
-        columns = utils.item_table_columns(subitems)
+        columns = utils.table_columns(subitems, items)
         data = [columns]
         for i, item in enumerate(items, start=1):
             data.append(utils.item_table_data(show, rundown, item, i, subitems))

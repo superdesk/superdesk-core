@@ -5,6 +5,7 @@ import dateutil.rrule as rrule
 from typing import Optional
 from flask import current_app as app
 
+from superdesk import get_resource_service
 from superdesk.utc import utcnow, utc_to_local, local_to_utc
 
 from . import types
@@ -96,10 +97,18 @@ def item_title_fallback(item: types.IRundownItem) -> str:
     return (item.get("title") or "").upper()
 
 
+def item_type_name(item_type_qcode):
+    items = get_resource_service("vocabularies").get_items("rundown_item_types")
+    for item in items:
+        if item.get("qcode") == item_type_qcode:
+            return item.get("name")
+    return item_type_qcode
+
+
 def item_title(show: types.IShow, rundown: types.IRundown, item: types.IRundownItem, with_camera=True) -> str:
     if item.get("item_type") and item["item_type"].upper() in ("PRLG", "AACC"):
         pieces = [
-            item["item_type"],
+            item_type_name(item["item_type"]),
             show.get("shortcode"),
             (item.get("title") or "").replace(" ", "-"),
         ]
@@ -111,4 +120,7 @@ def item_title(show: types.IShow, rundown: types.IRundown, item: types.IRundownI
                 pieces,
             )
         ).upper()
-    return item_title_fallback(item)
+    pieces = [item_title_fallback(item)]
+    if with_camera and item.get("camera"):
+        pieces.extend(item["camera"])
+    return "-".join(pieces)

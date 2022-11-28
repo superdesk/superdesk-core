@@ -547,6 +547,9 @@ Feature: Rundowns
                 {"name": "PRLG", "qcode": "PRLG", "is_active": true},
                 {"name": "WALL", "qcode": "WALL", "is_active": true},
                 {"name": "GRAF", "qcode": "GRAF", "is_active": true}
+            ]},
+            {"_id": "rundown_item_types", "items": [
+                {"name": "PRLG Name", "qcode": "PRLG"}
             ]}
         ]
         """
