@@ -21,7 +21,12 @@ def get_subitems() -> List[types.ISubject]:
     return get_resource_service("vocabularies").get_items("rundown_subitem_types")
 
 
-def table_columns(subitems: List[types.ISubject], items: List[types.IRundownItem]) -> List[str]:
+def get_active_subitems(items: List[types.IRundownItem]) -> List[types.ISubject]:
+    subitems = get_subitems()
+    return [subitem for subitem in subitems if any([has_subitems(item, subitem) for item in items])]
+
+
+def table_columns(subitems: List[types.ISubject]) -> List[str]:
     columns = [
         "Order",
         "Type",
@@ -29,8 +34,7 @@ def table_columns(subitems: List[types.ISubject], items: List[types.IRundownItem
     ]
 
     for subitem_type in subitems:
-        if any([has_subitems(item, subitem_type) for item in items]):
-            columns.append(subitem_type["name"])
+        columns.append(subitem_type["name"])
 
     columns.extend(
         [

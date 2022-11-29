@@ -8,8 +8,8 @@ class TableCSVFormatter(BaseFormatter):
 
     def export(self, show, rundown, items):
         filename = f"Technical-{rundown['title']}.csv"
-        subitems = utils.get_subitems()
-        columns = utils.table_columns(subitems, items)
+        subitems = utils.get_active_subitems(items)
+        columns = utils.table_columns(subitems)
         data = "\n".join(
             [self.SEPARATOR.join(columns)]
             + [

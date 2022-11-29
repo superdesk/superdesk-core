@@ -3,7 +3,7 @@ import reportlab.lib.colors as colors
 
 from typing import List
 
-from reportlab.platypus import SimpleDocTemplate, Paragraph, ListItem, ListFlowable, Table
+from reportlab.platypus import SimpleDocTemplate, Paragraph, Flowable, Table
 from reportlab.lib.styles import getSampleStyleSheet
 from reportlab.lib.pagesizes import landscape, A4
 from reportlab.pdfbase import pdfmetrics
@@ -107,18 +107,18 @@ class TablePDFFormatter(PrompterPDFFormatter):
     def filename(self, show, rundown):
         return f"Technical-{rundown['title']}.pdf"
 
-    def get_contents(self, show, rundown, items):
-        subitems = utils.get_subitems()
-        columns = utils.table_columns(subitems, items)
+    def get_contents(self, show, rundown, items) -> List[Flowable]:
+        subitems = utils.get_active_subitems(items)
+        columns = utils.table_columns(subitems)
         data = [columns]
         for i, item in enumerate(items, start=1):
             data.append(utils.item_table_data(show, rundown, item, i, subitems))
-        return [
-            Table(
-                data,
-                style=[
-                    ("GRID", (0, 0), (-1, -1), 0.25, colors.black),
-                    ("FONTNAME", (0, 0), (-1, -1), MONO_FONT_NAME),
-                ],
-            )
-        ]
+        t = Table(
+            data,
+            style=[
+                ("GRID", (0, 0), (-1, -1), 0.25, colors.black),
+                ("FONTNAME", (0, 0), (-1, -1), MONO_FONT_NAME),
+            ],
+        )
+        t.hAlign = "LEFT"
+        return [t]
