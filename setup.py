@@ -19,7 +19,8 @@ install_requires = [
     # and https://github.com/psf/requests/pull/5651)
     "urllib3<1.26",
     "eve==1.1.2",
-    "eve-elastic==7.2.0",
+    # "eve-elastic==7.2.0",
+    "eve-elastic @ git+https://github.com/MarkLark86/eve-elastic.git@support-match-query#egg=eve-elastic",
     "flask>=1.1,<1.2",
     "flask-mail>=0.9,<0.10",
     "flask-script>=2.0.5,<3.0",
