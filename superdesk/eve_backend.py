@@ -110,7 +110,7 @@ class EveBackend:
         req.args = {"source": json.dumps(source)}
         search_backend = self._lookup_backend(endpoint_name)
         if search_backend:
-            return search_backend.find(endpoint_name, req, {})
+            return search_backend.find(endpoint_name, req, {})[0]
         else:
             logger.warn("there is no search backend for %s" % endpoint_name)
 
