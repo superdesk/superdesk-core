@@ -52,7 +52,7 @@ class MediaFixLinksCommand(superdesk.Command):
                 continue
             print("Updating resource", res)
             service = superdesk.get_resource_service(res)
-            for item in service.get_all():
+            for item in service.get_all_batch():
                 orig = copy.deepcopy(item)
                 hrefs = {}
                 updates = self.get_updates(item, prefix, hrefs)

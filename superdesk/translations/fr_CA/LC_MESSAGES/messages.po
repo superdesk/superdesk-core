@@ -6,11 +6,11 @@
 # 
 # Translators:
 # Petr Jašek <petr.jasek@sourcefabric.org>, 2020
-# Gideon Lehmann <gideon.lehmann@sourcefabric.org>, 2021
 # Evzen Deulin <evgeny.deulin@sourcefabric.org>, 2021
 # Simon Peacock <simon.peacock@gmail.com>, 2021
-# Charles-Philippe Giroux <charles-philippe.giroux@lapressecanadienne.com>, 2021
 # Marie-Eve Ouellette <marie-eve.ouellette@lapressecanadienne.com>, 2021
+# Gideon Lehmann <gideon.lehmann@sourcefabric.org>, 2022
+# Charles-Philippe Giroux <charles-philippe.giroux@lapressecanadienne.com>, 2022
 # 
 #, fuzzy
 msgid ""
@@ -19,14 +19,14 @@ msgstr ""
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
 "POT-Creation-Date: 2021-02-25 14:27+0100\n"
 "PO-Revision-Date: 2019-04-04 09:17+0000\n"
-"Last-Translator: Marie-Eve Ouellette <marie-eve.ouellette@lapressecanadienne.com>, 2021\n"
+"Last-Translator: Charles-Philippe Giroux <charles-philippe.giroux@lapressecanadienne.com>, 2022\n"
 "Language-Team: French (Canada) (https://www.transifex.com/sourcefabric/teams/6584/fr_CA/)\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 2.8.0\n"
 "Language: fr_CA\n"
-"Plural-Forms: nplurals=2; plural=(n > 1);\n"
+"Plural-Forms: nplurals=3; plural=(n == 0 || n == 1) ? 0 : n != 0 && n % 1000000 == 0 ? 1 : 2;\n"
 
 #: superdesk/activity.py:81
 msgid "Send notifications via email"
@@ -42,7 +42,7 @@ msgstr "Autoriser les notifications de bureau"
 
 #: superdesk/internal_destinations.py:102
 msgid "Internal Destinations"
-msgstr ""
+msgstr "Destinations internes"
 
 #: superdesk/internal_destinations.py:103
 msgid "User can manage internal destinations."
@@ -70,7 +70,7 @@ msgstr ""
 
 #: superdesk/io/__init__.py:74
 msgid "Ingest Channels"
-msgstr ""
+msgstr "Canaux d'ingestion"
 
 #: superdesk/io/__init__.py:75
 msgid "User can maintain Ingest Channels."
@@ -207,7 +207,7 @@ msgstr ""
 
 #: superdesk/roles/__init__.py:23
 msgid "Roles Management"
-msgstr ""
+msgstr "Gestion des statuts"
 
 #: superdesk/roles/__init__.py:23
 msgid "User can manage roles."
@@ -239,7 +239,7 @@ msgstr ""
 
 #: apps/ldap/__init__.py:26 superdesk/users/__init__.py:25
 msgid "User Management"
-msgstr ""
+msgstr "Gestion des utilisateurs"
 
 #: apps/ldap/__init__.py:26 superdesk/users/__init__.py:25
 msgid "User can manage users."
@@ -255,7 +255,7 @@ msgstr "paramètres personnalisés"
 
 #: superdesk/vocabularies/vocabularies.py:38
 msgid "Vocabularies Management"
-msgstr ""
+msgstr "Gestion des index"
 
 #: superdesk/vocabularies/vocabularies.py:39
 msgid "User can manage vocabularies' contents."
@@ -276,7 +276,7 @@ msgstr ""
 
 #: apps/desks.py:104
 msgid "Desk Management"
-msgstr ""
+msgstr "Gestion du pupitre"
 
 #: apps/desks.py:104
 msgid "User can manage desks."
@@ -284,7 +284,7 @@ msgstr "L'utilisateur peut faire la gestion des pupitres."
 
 #: apps/desks.py:107
 msgid "Master Desk"
-msgstr ""
+msgstr "Pupitre principal"
 
 #: apps/desks.py:107
 msgid "User can access master desk."
@@ -319,7 +319,7 @@ msgstr ""
 
 #: apps/feature_preview.py:7
 msgid "Feature Preview"
-msgstr ""
+msgstr "Fonctionnalités à venir"
 
 #: apps/feature_preview.py:8
 msgid "Let user toggle Feature Preview on/off."
@@ -446,7 +446,7 @@ msgstr ""
 
 #: apps/tasks.py:328
 msgid "Tasks Management"
-msgstr ""
+msgstr "Gestion des tâches"
 
 #: apps/archive/__init__.py:112
 msgid "Access to Monitoring view in left toolbar"
@@ -707,7 +707,7 @@ msgstr "La date {} n'est pas reconnue"
 
 #: apps/archive_broadcast/__init__.py:28
 msgid "Broadcast"
-msgstr ""
+msgstr "Bulletin"
 
 #: apps/archive_broadcast/__init__.py:29
 msgid "Allows user to create broadcast content."
@@ -855,7 +855,7 @@ msgstr ""
 
 #: apps/content_filters/__init__.py:48
 msgid "Content Filters"
-msgstr ""
+msgstr "Filtres de contenu"
 
 #: apps/content_filters/__init__.py:49
 msgid "User can manage content filters"
@@ -1006,7 +1006,7 @@ msgstr ""
 
 #: apps/content_types/__init__.py:13
 msgid "Content Profile"
-msgstr ""
+msgstr "Profil de contenu"
 
 #: apps/content_types/__init__.py:14
 msgid "Manage content profiles"
@@ -1030,7 +1030,7 @@ msgstr ""
 
 #: apps/dictionaries/__init__.py:24
 msgid "Dictionaries List Management"
-msgstr ""
+msgstr "Gestion des listes de dictionnaires"
 
 #: apps/dictionaries/__init__.py:25
 msgid "User can manage dictionaries lists."
@@ -1135,7 +1135,7 @@ msgstr ""
 
 #: apps/highlights/__init__.py:31
 msgid "Highlights/Summary List Management"
-msgstr ""
+msgstr "Éléments de budget/Gestion du sommaire"
 
 #: apps/highlights/__init__.py:32
 msgid "User can manage highlights/summary lists."
@@ -1143,7 +1143,7 @@ msgstr ""
 
 #: apps/highlights/__init__.py:36
 msgid "Mark items for Highlights/Summary Lists"
-msgstr ""
+msgstr "Éléments signalés pour le budget ou les sommaires"
 
 #: apps/highlights/__init__.py:37
 msgid "User can mark items for Highlights/Summary Lists."
@@ -1210,7 +1210,7 @@ msgstr "L'utilisateur existe déjà dans le système."
 
 #: apps/legal_archive/__init__.py:62
 msgid "Legal Archive"
-msgstr ""
+msgstr "Archives juridiques"
 
 #: apps/legal_archive/__init__.py:63
 msgid "Read from legal archive"
@@ -1324,7 +1324,7 @@ msgstr ""
 
 #: apps/publish/__init__.py:75
 msgid "Subscribers"
-msgstr ""
+msgstr "Abonnés"
 
 #: apps/publish/__init__.py:75
 msgid "User can manage subscribers"
@@ -1332,7 +1332,7 @@ msgstr ""
 
 #: apps/publish/__init__.py:77
 msgid "Publish"
-msgstr ""
+msgstr "Publier"
 
 #: apps/publish/__init__.py:77
 msgid "Publish a content"
@@ -1340,7 +1340,7 @@ msgstr ""
 
 #: apps/publish/__init__.py:78
 msgid "Kill"
-msgstr ""
+msgstr "Supprimer"
 
 #: apps/publish/__init__.py:78
 msgid "Kill a published content"
@@ -1348,7 +1348,7 @@ msgstr ""
 
 #: apps/publish/__init__.py:80
 msgid "Correction"
-msgstr ""
+msgstr "Correction"
 
 #: apps/publish/__init__.py:80
 msgid "Correction to a published content"
@@ -1356,7 +1356,7 @@ msgstr ""
 
 #: apps/publish/__init__.py:84
 msgid "Publish Queue"
-msgstr ""
+msgstr "File d'attente de publication"
 
 #: apps/publish/__init__.py:85
 msgid "User can update publish queue"
@@ -1384,7 +1384,7 @@ msgstr ""
 
 #: apps/publish/__init__.py:99
 msgid "Unpublish"
-msgstr ""
+msgstr "Annuler la publication"
 
 #: apps/publish/__init__.py:99
 msgid "Unpublish a published content"
@@ -1603,7 +1603,7 @@ msgstr "Erreur dans le formatage de l'article: {exception}"
 
 #: apps/rules/__init__.py:35
 msgid "Transformation Rules Management"
-msgstr ""
+msgstr "Gestion des règles de transformation"
 
 #: apps/rules/__init__.py:36
 msgid "User can setup transformation rules for ingest content."
@@ -1611,7 +1611,7 @@ msgstr ""
 
 #: apps/rules/__init__.py:41
 msgid "Routing Rules Management"
-msgstr ""
+msgstr "Gestion des règles de routage"
 
 #: apps/rules/__init__.py:42
 msgid "User can manage routing rules which are executed on ingested articles."
@@ -1684,7 +1684,7 @@ msgstr ""
 
 #: apps/saved_searches/__init__.py:60
 msgid "Manage Global Saved Searches"
-msgstr ""
+msgstr "Gestion des recherches enregistrées globales"
 
 #: apps/saved_searches/__init__.py:61
 msgid "User can manage other users' global saved searches"
@@ -1751,7 +1751,7 @@ msgstr "Recherche enregistrée invalide"
 
 #: apps/search_providers/__init__.py:29
 msgid "Manage Search Providers"
-msgstr ""
+msgstr "Gestion des fournisseurs de recherche"
 
 #: apps/search_providers/__init__.py:30
 msgid "User can manage search providers."
@@ -1995,7 +1995,7 @@ msgstr ""
 
 #: apps/workspace/__init__.py:24
 msgid "Dashboard"
-msgstr ""
+msgstr "Tableau de bord"
 
 #: apps/workspace/__init__.py:24
 msgid "Can access dashboard."

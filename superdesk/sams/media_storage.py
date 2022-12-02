@@ -8,7 +8,7 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
-from typing import Dict, Any, BinaryIO, Union
+from typing import Dict, Any, BinaryIO, Union, Optional
 import logging
 from os import path
 
@@ -75,7 +75,7 @@ class SAMSMediaStorage(MediaStorage, MimetypeMixin):
         self._fallback = fallback_klass(self.app)
         self._client: SamsClient = get_sams_client(self.app)
 
-    def url_for_external(self, media_id: str, resource: str = None) -> str:
+    def url_for_external(self, media_id: str, resource: Optional[str] = None) -> str:
         """Returns a URL for external use
 
         Returns a URL for use with the SAMS FileServer (if the Asset is public),
@@ -97,7 +97,7 @@ class SAMSMediaStorage(MediaStorage, MimetypeMixin):
 
         return self._fallback.url_for_external(media_id)
 
-    def get(self, id_or_filename: Union[ObjectId, str], resource: str = None, **kwargs) -> SuperdeskFile:
+    def get(self, id_or_filename: Union[ObjectId, str], resource: Optional[str] = None, **kwargs) -> SuperdeskFile:
         """Attempts to retrieve the file from SAMS or the `_fallback` provider"""
 
         if resource is not None and SAMS_RESOURCE_ENABLED.get(resource, False):
@@ -110,9 +110,9 @@ class SAMSMediaStorage(MediaStorage, MimetypeMixin):
     def put(
         self,
         content: BinaryIO,
-        filename: str = None,
-        content_type: str = None,
-        resource: str = None,
+        filename: Optional[str] = None,
+        content_type: Optional[str] = None,
+        resource: Optional[str] = None,
         **kwargs: Dict[str, Any],
     ) -> ObjectId:
         """Attempts to upload the file to SAMS or the `_fallback` provider"""
@@ -134,7 +134,7 @@ class SAMSMediaStorage(MediaStorage, MimetypeMixin):
 
         return self._fallback.put(content, filename=filename, content_type=content_type, resource=resource, **kwargs)
 
-    def delete(self, id_or_filename: Union[ObjectId, str], resource: str = None, **kwargs):
+    def delete(self, id_or_filename: Union[ObjectId, str], resource: Optional[str] = None, **kwargs):
         """Ignored if the file is stored in SAMS, otherwise deletes from the `_fallback` provider"""
 
         if resource is not None and SAMS_RESOURCE_ENABLED.get(resource, False):
@@ -145,7 +145,7 @@ class SAMSMediaStorage(MediaStorage, MimetypeMixin):
 
         self._fallback.delete(id_or_filename, resource=resource, **kwargs)
 
-    def exists(self, id_or_filename: Union[ObjectId, str], resource: str = None, **kwargs) -> bool:
+    def exists(self, id_or_filename: Union[ObjectId, str], resource: Optional[str] = None, **kwargs) -> bool:
         """Returns True if the file is available in SAMS or the `_fallback` provider"""
 
         if resource is not None and SAMS_RESOURCE_ENABLED.get(resource, False):

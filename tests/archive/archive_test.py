@@ -448,5 +448,5 @@ class ArchiveTestCase(TestCase):
         self.assertIn("highlight", source)
         self.assertIn("fields", source["highlight"])
         self.assertEqual(
-            ["abstract", "body_footer", "body_html", "headline", "slugline"], list(source["highlight"]["fields"].keys())
+            ["body_html", "body_footer", "headline", "slugline", "abstract"], list(source["highlight"]["fields"].keys())
         )

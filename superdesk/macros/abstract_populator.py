@@ -39,4 +39,4 @@ callback = populate
 desks = ["POLITICS"]
 access_type = "frontend"
 action_type = "direct"
-replace_type = "keep-style-replace"
+replace_type = "simple-replace"
