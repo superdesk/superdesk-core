@@ -519,7 +519,7 @@ def remove_media_files(doc, published=False):
 
 def remove_media_references(item_id, published):
     get_resource_service("media_references").delete_action({"item_id": item_id, "published": published})
-    get_resource_service("media_references").delete_action({"association_id": item_id, "published": published})
+    get_resource_service("media_references").delete_action({"associated_id": item_id, "published": published})
 
 
 def is_assigned_to_a_desk(doc):
