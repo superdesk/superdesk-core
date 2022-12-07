@@ -152,6 +152,7 @@ class VocabulariesResource(Resource):
                     "type": "integer",
                 },
             },
+            "allow_unknown": True,
         },
         "translations": {
             "type": "dict",
