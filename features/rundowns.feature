@@ -286,7 +286,6 @@ Feature: Rundowns
         ]}
         """
 
-    @wip
     @auth
     Scenario: Rundowns CRUD
         Given "shows"
@@ -537,7 +536,6 @@ Feature: Rundowns
         """
         Then we get ok response
 
-    @wip
     @auth
     Scenario: Export
         Given "vocabularies"
@@ -860,18 +858,43 @@ Feature: Rundowns
         Then we get list with 0 items
 
     @auth
+    @notification
     Scenario: Rundown comments
-        Given "rundown_items"
+        Given "shows"
+        """
+        [
+            {"title": "Test", "shortcode": "MRK"}
+        ]
+        """
+
+        And "rundowns"
+        """
+        [
+            {
+                "show": "#shows._id#",
+                "title": "Rundown Title",
+                "planned_duration": 3600
+            }
+        ]
+        """
+
+        And "rundown_items"
         """
         [
             {"title": "Test"}
         ]
         """
+
         When we post to "/rundown_comments"
         """
-        {"text": "test", "item": "#rundown_items._id#", "rundown": null}
+        {"text": "test", "item": "#rundown_items._id#", "rundown": "#rundowns._id#"}
         """
+
         Then we get ok response
+        And we get notifications
+        """
+        [{"event": "rundown-item-comment", "extra": {"message": "test", "rundownId": "#rundowns._id#", "rundownItemId": "#rundown_items._id#", "extension": "broadcasting"}}]
+        """
 
         When we get "/rundown_comments?where={"item":"#rundown_items._id#"}"
         Then we get list with 1 items
