@@ -10,6 +10,7 @@
 
 """Superdesk storage module."""
 
+from typing import Optional
 import abc
 
 from eve.io.media import MediaStorage
@@ -28,7 +29,7 @@ class SuperdeskMediaStorage(MediaStorage, MimetypeMixin):
         raise NotImplementedError
 
     @abc.abstractmethod
-    def url_for_external(self, media_id: str, resource: str = None) -> str:
+    def url_for_external(self, media_id: str, resource: Optional[str] = None) -> str:
         raise NotImplementedError
 
     @abc.abstractmethod

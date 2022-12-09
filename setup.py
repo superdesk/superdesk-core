@@ -19,7 +19,7 @@ install_requires = [
     # and https://github.com/psf/requests/pull/5651)
     "urllib3<1.26",
     "eve==1.1.2",
-    "eve-elastic==7.2.1",
+    "eve-elastic==7.3.0",
     "flask>=1.1,<1.2",
     "flask-mail>=0.9,<0.10",
     "flask-script>=2.0.5,<3.0",
@@ -58,7 +58,6 @@ install_requires = [
     "regex==2020.7.14",
     "flask-oidc-ex==0.5.5",
     # to be replaced by stdlib version when we use Python 3.8+
-    "importlib_metadata<3.2",
     "typing_extensions>=3.7.4",
     "elastic-apm[flask]>=6.7,<6.8",
     # Fix an issue with MarkupSafe 2.1.0 not exporting `soft_unicode`
@@ -87,7 +86,7 @@ package_data = {
 
 setup(
     name="Superdesk-Core",
-    version="2.5.dev0",
+    version="2.6.rc1",
     description="Superdesk Core library",
     long_description=LONG_DESCRIPTION,
     author="petr jasek",

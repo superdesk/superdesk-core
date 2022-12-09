@@ -8,6 +8,7 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
+from typing import Optional
 from io import BytesIO
 from datetime import datetime
 
@@ -34,7 +35,7 @@ def generate_response_for_file(
     file: SuperdeskFile,
     cache_for: int = 3600 * 24 * 30,  # 30d cache
     buffer_size: int = 1024 * 256,
-    content_disposition: str = None,
+    content_disposition: Optional[str] = None,
 ):
     data = wrap_file(request.environ, file, buffer_size=buffer_size)
     response = app.response_class(data, mimetype=file.content_type, direct_passthrough=True)

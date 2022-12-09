@@ -10,6 +10,7 @@
 
 """Amazon media storage module."""
 
+from typing import Optional
 import re
 import boto3
 import json
@@ -74,7 +75,7 @@ class AmazonMediaStorage(SuperdeskMediaStorage):
     def url_for_download(self, media_id, content_type=None):
         return self.app.download_url(str(media_id))
 
-    def url_for_external(self, media_id: str, resource: str = None) -> str:
+    def url_for_external(self, media_id: str, resource: Optional[str] = None) -> str:
         """Returns a URL for external use
 
         Returns a URL for use with the Content/Production API

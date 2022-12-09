@@ -354,6 +354,14 @@ Feature: Search Feature
             }
         ]
         """
+        And "ingest"
+        """
+        [{"guid": "1","headline": "test-ingested","body_html": "test-body"}]
+        """
+        And "published"
+        """
+        [{"_id": "1","headline": "test-published","body_html": "test-body", "state": "published"}]
+        """
         When we get "/search?source={"query": {"filtered": {"query": {"query_string": {"query": "(foo)", "lenient": true, "default_operator": "AND"}}}}}"
         Then we get list with 1 items
         """
@@ -430,6 +438,42 @@ Feature: Search Feature
                     }
                 }
             ]
+        }
+        """
+        When we get "/archive?es_highlight=1&source={"query": {"filtered": {"query": {"query_string": {"query": "(foo)", "lenient": true, "default_operator": "AND"}}}}}"
+        Then we get list with 1 items
+        """
+        {
+            "_items": [{"guid": "1", "state": "in_progress", "task": {"desk": "#desks._id#"},
+                        "headline": "Foo", "body_html": "foo",
+                        "es_highlight": {
+                            "headline": ["<span class=\"es-highlight\">Foo</span>"],
+                            "body_html": ["<span class=\"es-highlight\">foo</span>"]
+                        }}]
+        }
+        """
+        When we get "/ingest?es_highlight=1&source={"query": {"filtered": {"query": {"query_string": {"query": "(test)", "lenient": true, "default_operator": "AND"}}}}}"
+        Then we get list with 1 items
+        """
+        {
+            "_items": [{"guid": "1", "state": "ingested",
+                        "headline": "test-ingested", "body_html": "test-body",
+                        "es_highlight": {
+                            "body_html": ["<span class=\"es-highlight\">test</span>-body"],
+                            "headline": ["<span class=\"es-highlight\">test</span>-ingested"]
+                        }}]
+        }
+        """
+        When we get "/published?es_highlight=1&source={"query": {"filtered": {"query": {"query_string": {"query": "(test)", "lenient": true, "default_operator": "AND"}}}}}"
+        Then we get list with 1 items
+        """
+        {
+            "_items": [{"_id": "1", "state": "published",
+                        "headline": "test-published", "body_html": "test-body",
+                        "es_highlight": {
+                            "body_html": ["<span class=\"es-highlight\">test</span>-body"],
+                            "headline": ["<span class=\"es-highlight\">test</span>-published"]
+                        }}]
         }
         """
 

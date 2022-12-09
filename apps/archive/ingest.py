@@ -16,9 +16,10 @@ from eve.utils import config
 
 from superdesk.io.ingest import IngestResource, IngestService  # NOQA
 from flask import current_app as app
+from apps.archive.highlights_search_mixin import HighlightsSearchMixin
 
 
-class AppIngestService(IngestService):
+class AppIngestService(IngestService, HighlightsSearchMixin):
     def on_fetched(self, docs):
         """Items when ingested have different case for pubstatus.
 
@@ -37,4 +38,8 @@ class AppIngestService(IngestService):
             handle_existing_data(doc, doc_type="ingest")
             update_word_count(doc)
 
-        on_create_item(docs, repo_type="ingest")  # do it after setting the state otherwise it will make it draft
+        on_create_item(docs, repo_type="ingest")  # do it after setting the state otherwise it will make it
+
+    def get(self, req, lookup):
+        req, lookup = self._get_highlight(req, lookup)
+        return super().get(req, lookup)

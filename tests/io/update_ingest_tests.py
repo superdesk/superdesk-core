@@ -224,7 +224,7 @@ class UpdateIngestTest(TestCase):
         self.assertEqual(1, after.count())
 
         req = ParsedRequest()
-        self.assertEqual(1, self.app.data.elastic.find("ingest", req, {}).count())
+        self.assertEqual(1, self.app.data.elastic.find("ingest", req, {})[1])
         self.assertEqual(1, self.app.data.mongo.find("ingest", req, {})[1])
 
     def test_removing_expired_items_from_elastic_only(self):
@@ -238,7 +238,7 @@ class UpdateIngestTest(TestCase):
         )
 
         RemoveExpiredContent().run()
-        self.assertEqual(1, self.app.data.elastic.find("ingest", ParsedRequest(), {}).count())
+        self.assertEqual(1, self.app.data.elastic.find("ingest", ParsedRequest(), {})[1])
 
     def test_expiring_content_with_files(self):
         provider, provider_service = self.setup_reuters_provider()
