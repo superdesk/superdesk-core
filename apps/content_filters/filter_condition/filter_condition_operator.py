@@ -109,7 +109,7 @@ class NotLikeOperator(FilterConditionOperator):
         self.elastic_operator = "query_string"
 
     def does_match(self, article_value, filter_value):
-        return filter_value.match(article_value) is None
+        return filter_value.search(article_value) is None
 
     def contains_not(self):
         return True
@@ -174,7 +174,7 @@ class RegexOperator(FilterConditionOperator):
         self.elastic_operator = "query_string"
 
     def does_match(self, article_value, filter_value):
-        return filter_value.match(article_value) is not None
+        return filter_value.search(article_value) is not None
 
 
 class MatchOperator(FilterConditionOperator):

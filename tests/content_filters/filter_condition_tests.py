@@ -465,7 +465,7 @@ class FilterConditionTests(TestCase):
         self.assertEqual(f.value.get_mongo_value(f.field), re.compile("^test", re.IGNORECASE))
 
         f = FilterCondition("headline", "endswith", "test")
-        self.assertEqual(f.value.get_mongo_value(f.field), re.compile(".*test", re.IGNORECASE))
+        self.assertEqual(f.value.get_mongo_value(f.field), re.compile(".*test$", re.IGNORECASE))
 
     def test_does_match_with_eq(self):
         f = FilterCondition("urgency", "eq", "1")
@@ -557,6 +557,15 @@ class FilterConditionTests(TestCase):
         self.assertFalse(f.does_match(self.articles[3]))
         self.assertFalse(f.does_match(self.articles[4]))
         self.assertFalse(f.does_match(self.articles[5]))
+
+    def test_does_match_with_like_complex(self):
+        f = FilterCondition("headline", "like", "Foo|Bar|Baz|Test Multiword")
+        self.assertTrue(f.does_match({"headline": "Bar"}))
+        self.assertTrue(f.does_match({"headline": "Bar Something"}))
+        self.assertTrue(f.does_match({"headline": "Something Bar"}))
+        self.assertTrue(f.does_match({"headline": "Something Baz"}))
+        self.assertFalse(f.does_match({"headline": "Something Test"}))
+        self.assertTrue(f.does_match({"headline": "Something Test Multiword"}))
 
     def test_does_match_with_startswith_filter(self):
         f = FilterCondition("headline", "startswith", "Sto")
