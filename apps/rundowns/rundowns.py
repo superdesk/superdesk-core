@@ -175,12 +175,15 @@ class RundownsService(superdesk.Service):
             )
 
         super().create([rundown])
+        assert "_id" in rundown
 
         if template.get("items"):
-            rundown["items"] = [self.get_item_ref(ref, rundown) for ref in template["items"]]
-            rundown_items.items_service.sync_items(rundown, rundown["items"])
+            updates: types.IRundown = {}
+            updates["items"] = [self.get_item_ref(ref, rundown) for ref in template["items"]]
+            rundown_items.items_service.sync_items(updates, updates["items"])
+            super().system_update(bson.ObjectId(rundown["_id"]), updates, rundown)
+            rundown.update(updates)
 
-        super().create([rundown])
         return rundown
 
     def get_item_ref(self, item_template: types.IRundownItemTemplate, rundown: types.IRundown) -> types.IRef:
@@ -194,7 +197,7 @@ class RundownsService(superdesk.Service):
                 rundown_items.items_service.sync_items(updates, updates["items"])
         return super().update(id, updates, original)
 
-    def sync_item_changes(self, item_id):
+    def sync_item_changes(self, item_id) -> None:
         cursor = self.get_from_mongo(req=None, lookup={"items._id": item_id})
         for rundown in cursor:
             updates: types.IRundown = {}

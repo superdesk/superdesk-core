@@ -123,7 +123,19 @@ Feature: Rundowns
                     "prefix": "Marker",
                     "separator": "//",
                     "date_format": "%d.%m.%Y"
-                }
+                },
+                "items": [
+                    {
+                        "duration": 600,
+                        "item_type": "Test",
+                        "title": "Item title"
+                    },
+                    {
+                        "duration": 400,
+                        "item_type": "Test2",
+                        "title": "Item title 2"
+                    }
+                ]
             }
         ]
         """
@@ -140,7 +152,11 @@ Feature: Rundowns
             "title": "Marker // 10.06.2022",
             "planned_duration": 3600,
             "airtime_time": "06:00",
-            "airtime_date": "2022-06-10"
+            "airtime_date": "2022-06-10",
+            "items": [
+                {"_id": "__objectid__"},
+                {"_id": "__objectid__"}
+            ]
         }
         """
 
@@ -148,10 +164,30 @@ Feature: Rundowns
         Then we get list with 1 items
         """
         {"_items": [
-            {"title": "Marker // 10.06.2022", "template": "#rundown_templates._id#"}
+            {"title": "Marker // 10.06.2022", "template": "#rundown_templates._id#", "items": [
+                {"_id": "__objectid__"},
+                {"_id": "__objectid__"}
+            ]}
         ]}
         """
-        
+
+        When we get "/rundown_items"
+        Then we get list with 2 items
+
+        When we patch "/rundowns/#rundowns._id#"
+        """
+        {"_lock_action": "lock"}
+        """
+        Then we get OK response
+        """
+        {
+            "items": [
+                {"_id": "__objectid__"},
+                {"_id": "__objectid__"}
+            ]
+        }
+        """
+
         When we post to "/rundowns"
         """
         {
@@ -166,7 +202,11 @@ Feature: Rundowns
         """
         {
             "title": "Custom",
-            "airtime_time": "08:00"
+            "airtime_time": "08:00",
+            "items": [
+                {"_id": "__objectid__"},
+                {"_id": "__objectid__"}
+            ]
         }
         """
 
