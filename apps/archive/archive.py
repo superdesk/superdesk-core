@@ -310,7 +310,7 @@ class ArchiveResource(Resource):
         },
         "elastic_filter_callback": private_content_filter,
     }
-    etag_ignore_fields = ["highlights", "broadcast"]
+    etag_ignore_fields = ["broadcast"]
     resource_methods = ["GET", "POST"]
     item_methods = ["GET", "PATCH", "PUT"]
     versioning = True
