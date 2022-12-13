@@ -21,7 +21,7 @@ class FilterConditionValue:
         FilterConditionOperatorsEnum.startswith: "^{}",
         FilterConditionOperatorsEnum.like: ".*{}.*",
         FilterConditionOperatorsEnum.notlike: ".*{}.*",
-        FilterConditionOperatorsEnum.endswith: ".*{}",
+        FilterConditionOperatorsEnum.endswith: ".*{}$",
     }
 
     elastic_mapper = {
