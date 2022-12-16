@@ -723,7 +723,7 @@ class BasePublishService(BaseService):
             return
 
         for key in DEFAULT_SCHEMA.keys():
-            if doc.get(key):
+            if doc.get(key) and not updates.get(key):
                 updates[key] = doc[key]
 
     def _refresh_associated_items(self, original, skip_related=False):
