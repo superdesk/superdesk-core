@@ -144,8 +144,6 @@ class BasePublishService(BaseService):
 
     def on_update(self, updates, original):
         self._refresh_associated_items(original)
-        print("updateasdssddsdfndsf", updates)
-        print("ooooooooooooooooooooooooo", original)
         self._set_updates_for_media_items(original, updates)
         self._validate(original, updates)
         self._set_updates(
@@ -723,7 +721,7 @@ class BasePublishService(BaseService):
     def _set_updates_for_media_items(self, doc, updates):
         if doc.get("type") not in MEDIA_TYPES:
             return
-        print("upatessssssssssssssssss", updates)
+
         for key in DEFAULT_SCHEMA.keys():
             if doc.get(key) and updates.get("operation") == "publish":
                 updates[key] = doc[key]
