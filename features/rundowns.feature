@@ -927,19 +927,27 @@ Feature: Rundowns
 
         When we post to "/rundown_comments"
         """
-        {"text": "test", "item": "#rundown_items._id#", "rundown": "#rundowns._id#"}
+        {"text": "test @test_user", "item": "#rundown_items._id#", "rundown": "#rundowns._id#"}
         """
-
         Then we get ok response
-        And we get notifications
-        """
-        [{"event": "rundown-item-comment", "extra": {"message": "test", "rundownId": "#rundowns._id#", "rundownItemId": "#rundown_items._id#", "extension": "broadcasting"}}]
-        """
 
         When we get "/rundown_comments?where={"item":"#rundown_items._id#"}"
         Then we get list with 1 items
         """
         {"_items": [
-            {"text": "test", "user": "#CONTEXT_USER_ID#"}
+            {"text": "test @test_user", "user": "#CONTEXT_USER_ID#"}
+        ]}
+        """
+
+        When we get "/activity"
+        Then we get list with 1+ items
+        """
+        {"_items": [
+            {"name": "rundown-item-comment", "data": {
+                "message": "test @test_user",
+                "rundownId": "#rundowns._id#",
+                "rundownItemId": "#rundown_items._id#",
+                "extension": "broadcasting"
+            }}
         ]}
         """
