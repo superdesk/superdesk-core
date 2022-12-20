@@ -719,7 +719,7 @@ class BasePublishService(BaseService):
             import_into_legal_archive.apply_async(countdown=3, kwargs=kwargs)  # @UndefinedVariable
 
     def _set_updates_for_media_items(self, doc, updates):
-        if doc.get("type") not in MEDIA_TYPES:
+        if doc.get("type") not in MEDIA_TYPES or updates.get("operation") != "publish":
             return
 
         for key in DEFAULT_SCHEMA.keys():

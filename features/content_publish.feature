@@ -4775,4 +4775,77 @@ Feature: Content Publishing
             "state": "published",
             "operation": "publish"
         }
+      """
+
+    @auth
+    Scenario: We can correct a media associated item
+      Given config update
+      """
+      { "PUBLISH_ASSOCIATED_ITEMS": true}
+      """
+      And "validators"
         """
+        [
+            {"_id": "publish_text", "act": "publish", "type": "text", "schema":{}}
+        ]
+        """
+      And "desks"
+        """
+        [{"name": "Sports", "members":[{"user":"#CONTEXT_USER_ID#"}]}]
+        """
+      And "archive"
+        """
+        [
+            {
+                "_id": "1234",
+                "guid": "1234",
+                "slugline": "picture",
+                "headline": "picture",
+                "alt_text": "alt_text",
+                "description_text": "description_text",
+                "type": "picture",
+                "state": "in_progress",
+                "operation": "update",
+                "task": {
+                    "desk": "#desks._id#",
+                    "stage": "#desks.incoming_stage#",
+                    "user": "#CONTEXT_USER_ID#"
+                }
+            }
+        ]
+      """
+      When we publish "1234" with "publish" type and "published" state
+      Then we get OK response
+      And we get existing resource
+      """
+        {
+            "_id": "1234",
+            "guid": "1234",
+            "_current_version": 2,
+            "slugline": "picture",
+            "headline": "picture",
+            "alt_text": "alt_text",
+            "description_text": "description_text",
+            "type": "picture",
+            "state": "published",
+            "operation": "publish"
+        }
+      """
+      When we publish "1234" with "correct" type and "corrected" state
+      """
+      {
+        "headline": "corrected",
+        "correction_sequence": "2"
+      }
+      """
+      Then we get OK response
+      And we get existing resource
+      """
+      {
+          "_id": "1234",
+          "guid": "1234",
+          "slugline": "picture",
+          "headline": "corrected"
+      }
+
+      """
