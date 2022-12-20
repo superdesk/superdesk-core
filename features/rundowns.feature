@@ -897,6 +897,7 @@ Feature: Rundowns
         And we get "/rundowns?q=missing"
         Then we get list with 0 items
 
+    @wip
     @auth
     @notification
     Scenario: Rundown comments
@@ -943,11 +944,15 @@ Feature: Rundowns
         Then we get list with 1+ items
         """
         {"_items": [
-            {"name": "rundown-item-comment", "data": {
-                "message": "test @test_user",
-                "rundownId": "#rundowns._id#",
-                "rundownItemId": "#rundown_items._id#",
-                "extension": "broadcasting"
-            }}
+            {
+                "name": "rundown-item-comment",
+                "message": "You were mentioned in \"Test\" (\"Rundown Title\") comment by test_user.",
+                "data": {
+                    "message": "test @test_user",
+                    "rundownId": "#rundowns._id#",
+                    "rundownItemId": "#rundown_items._id#",
+                    "extension": "broadcasting"
+                }
+            }
         ]}
         """
