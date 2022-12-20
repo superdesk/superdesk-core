@@ -921,13 +921,13 @@ Feature: Rundowns
         And "rundown_items"
         """
         [
-            {"title": "Test"}
+            {"title": "Test", "rundown": "#rundowns._id#"}
         ]
         """
 
         When we post to "/rundown_comments"
         """
-        {"text": "test @test_user", "item": "#rundown_items._id#", "rundown": "#rundowns._id#"}
+        {"text": "test @test_user", "item": "#rundown_items._id#"}
         """
         Then we get ok response
 
