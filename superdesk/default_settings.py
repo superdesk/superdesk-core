@@ -1072,4 +1072,8 @@ APM_SERVICE_NAME = env("APM_SERVICE_NAME")
 RUNDOWNS_TIMEZONE = DEFAULT_TIMEZONE
 
 
-REBUILD_ELASTIC_ON_INIT_DATA_ERROR = strtobool(env("REBUILD_ELASTIC_ON_INIT_DATA_ERROR", "true"))
+#: Rebuild elastic indexes on a mapping error when running app:initialize_data command
+#:
+#: .. versionadded:: 2.6
+#:
+REBUILD_ELASTIC_ON_INIT_DATA_ERROR = strtobool(env("REBUILD_ELASTIC_ON_INIT_DATA_ERROR", "false"))
