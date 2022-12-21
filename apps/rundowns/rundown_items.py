@@ -1,7 +1,7 @@
 import bson
 import superdesk
 
-from typing import Dict, List, Literal
+from typing import Any, Dict, List, Literal
 
 from . import privileges, types, rundowns, shows, utils
 
@@ -11,7 +11,7 @@ from superdesk.metadata.item import metadata_schema
 class RundownItemsResource(superdesk.Resource):
     resource_title = "rundown_items"
 
-    schema = {
+    schema: Dict[str, Any] = {
         "title": metadata_schema["headline"].copy(),
         "technical_title": metadata_schema["headline"].copy(),
         "item_type": superdesk.Resource.not_analyzed_field(nullable=True),

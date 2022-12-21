@@ -35,11 +35,12 @@ Feature: Rundowns
         When we get "/shows"
         Then we get list with 0 items
 
+    @wip
     @auth
     Scenario: Templates CRUD
         Given "shows"
         """
-        [{"title": "Test"}]
+        [{"title": "Test", "shortcode": "TST"}]
         """
 
         When we post to "/shows/#shows._id#/templates"
@@ -59,7 +60,24 @@ Feature: Rundowns
                 "interval": 1,
                 "by_day": [0]
             },
-            "autocreate_before_seconds": 3600
+            "autocreate_before_seconds": 3600,
+            "items": [
+                {
+                    "planned_duration": 600,
+                    "item_type": "PRLG",
+                    "title": "Item title"
+                },
+                {
+                    "planned_duration": 400,
+                    "item_type": "AACC",
+                    "title": "Item title 2"
+                },
+                {
+                    "planned_duration": 200,
+                    "item_type": "another",
+                    "title": "Foo"
+                }
+            ]
         }
         """
         Then we get new resource
@@ -75,7 +93,18 @@ Feature: Rundowns
             "airtime_time": "06:00",
             "created_by": "#CONTEXT_USER_ID#",
             "scheduled_on": "2030-06-24T04:00:00+0000",
-            "autocreate_on": "2030-06-24T03:00:00+0000"
+            "autocreate_on": "2030-06-24T03:00:00+0000",
+            "items": [
+                {
+                    "technical_title": "PRLG-TST-ITEM-TITLE"
+                },
+                {
+                    "technical_title": "AACC-TST-ITEM-TITLE-2"
+                },
+                {
+                    "technical_title": "FOO"
+                }
+            ]
         }
         """
 
@@ -897,7 +926,6 @@ Feature: Rundowns
         And we get "/rundowns?q=missing"
         Then we get list with 0 items
 
-    @wip
     @auth
     @notification
     Scenario: Rundown comments
