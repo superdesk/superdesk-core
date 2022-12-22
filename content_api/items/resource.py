@@ -77,6 +77,7 @@ schema = {
     "prints": Resource.not_analyzed_field("list"),  # list of user ids who printed this item
     "copies": Resource.not_analyzed_field("list"),  # list of user ids who copied this item
     "extra": metadata_schema["extra"],
+    "extra_items": metadata_schema["extra"],
     "authors": metadata_schema["authors"],
     "wordcount": metadata_schema["word_count"],
     "charcount": {"type": "integer"},
