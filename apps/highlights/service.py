@@ -130,7 +130,7 @@ class MarkedForHighlightsService(BaseService):
                 highlights = [h for h in highlights if h != doc["highlights"]]
                 highlight_on = False  # highlight toggled off
 
-            updates = {"highlights": highlights, "_updated": item["_updated"], "_etag": item["_etag"]}
+            updates = {"highlights": highlights, "_etag": item["_etag"]}
             service.update(item["_id"], updates, item)
 
             publishedItems = publishedService.find({"item_id": item["_id"]})
