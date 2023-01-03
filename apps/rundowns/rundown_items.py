@@ -42,8 +42,6 @@ class RundownItemsResource(superdesk.Resource):
         "camera": {"type": "list", "mapping": {"type": "keyword"}},
     }
 
-    schema["technical_title"]["readonly"] = True
-
     datasource = {
         "search_backend": "elastic",
     }
