@@ -12,7 +12,7 @@
 import bson
 import logging
 from datetime import timedelta, timezone, datetime
-
+import pytz
 from flask import current_app as app
 from werkzeug.exceptions import HTTPException
 
@@ -47,6 +47,7 @@ UPDATE_SCHEDULE_DEFAULT = {"minutes": 5}
 LAST_UPDATED = "last_updated"
 LAST_INGESTED_ID = "last_ingested_id"
 LAST_ITEM_UPDATE = "last_item_update"
+LAST_ITEM_ARRIVED = "last_item_arrived"
 IDLE_TIME_DEFAULT = {"hours": 0, "minutes": 0}
 
 UPDATE_TTL = 1800
@@ -315,6 +316,10 @@ def update_provider(provider, rule_set=None, routing_scheme=None, sync=False):
                 items = generator.send(failed)
                 failed = ingest_items(items, provider, feeding_service, rule_set, routing_scheme)
                 update_last_item_updated(update, items)
+
+                if not update.get(LAST_ITEM_ARRIVED) or update[LAST_ITEM_ARRIVED] < datetime.now(tz=pytz.utc):
+                    update[LAST_ITEM_ARRIVED] = datetime.now(tz=pytz.utc)
+
             except StopIteration:
                 break
 
