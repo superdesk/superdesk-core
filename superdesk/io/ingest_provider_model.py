@@ -111,6 +111,7 @@ class IngestProviderResource(Resource):
             "last_updated": {"type": "datetime"},
             "last_ingested_id": {"type": "string"},  # this id is ingest provider internal value
             "last_item_update": {"type": "datetime"},
+            "last_item_arrived": {"type": "datetime"},
             "rule_set": Resource.rel("rule_sets", nullable=True),
             "routing_scheme": Resource.rel("routing_schemes", nullable=True),
             "notifications": {
