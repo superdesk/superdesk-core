@@ -181,6 +181,8 @@ class SchemaValidator(Validator):
 
         for key in mandatory:
             for key_field in mandatory[key]:
+                if mandatory[key][key_field] is None:
+                    print("WAT", field, key, key_field)
                 if mandatory[key][key_field]["required"]:
                     if (
                         value

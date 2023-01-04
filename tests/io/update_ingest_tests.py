@@ -656,6 +656,6 @@ class UpdateIngestTest(TestCase):
 
         content_types = [{"_id": "story", "name": "story"}]
         self.app.data.insert("content_types", content_types)
-        items[0]["profile"] = "story"
-        ingest_item(items[0], provider, provider_service)
-        self.assertEqual("story", items[0].get("profile"))
+        items[1]["profile"] = "story"
+        ingest_item(items[1], provider, provider_service)
+        self.assertEqual("story", items[1].get("profile"))
