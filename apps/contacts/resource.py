@@ -8,7 +8,7 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
-from superdesk.resource import Resource, text_with_keyword
+from superdesk.resource import Resource, text_with_keyword, not_analyzed
 
 CONTACTS_PRIVILEDGE = "contacts"
 VIEW_CONTACTS = "view_contacts"
@@ -28,6 +28,8 @@ class ContactsResource(Resource):
         # flag to indicate that the contact item should not be publicly visible, for example if the item relates to
         # a contact that can not be distributed due to privacy concerns
         "public": {"type": "boolean", "default": False},
+        # global identifier, could be used for external contacts
+        "uri": {"type": "string", "mapping": {"type": "keyword"}},
         "organisation": {
             "type": "string",
             "required": False,
