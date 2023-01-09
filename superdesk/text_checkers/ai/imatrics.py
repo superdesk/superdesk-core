@@ -78,6 +78,15 @@ class IMatrics(AIServiceBase):
     def key(self):
         return current_app.config.get("IMATRICS_KEY", os.environ.get("IMATRICS_KEY"))
 
+    @property
+    def image_base_url(self):
+        return current_app.config.get("IMATRICS_IMAGE_BASE_URL", os.environ.get("IMATRICS_IMAGE_BASE_URL"))
+
+    @property
+    def image_key(self):
+        return current_app.config.get("IMATRICS_IMAGE_KEY", os.environ.get("IMATRICS_IMAGE_KEY"))
+
+
     def concept2tag_data(self, concept: dict) -> Tuple[dict, str]:
         """Convert an iMatrics concept to Superdesk friendly data"""
         tag_data = {
@@ -205,6 +214,25 @@ class IMatrics(AIServiceBase):
             params=dict(
                 conceptFields="uuid,title,type,shortDescription,aliases,source,author,weight,broader,links",
                 **params,
+            ),
+        )
+
+    def search_images(self, item: list) -> list:
+        """fetch image suggestions"""
+        print(item)
+        if not self.base_url or not self.user or not self.key:
+            logger.warning("IMatrics is not configured propertly, can't fetch images")
+            return {}
+        data = item
+        r_data = self._search_images(data)
+        return r_data
+
+    def _search_images(self, data, **params):
+        return self._request_images(
+            "images/search",
+            data,
+            params=dict(
+                **params
             ),
         )
 
@@ -354,6 +382,19 @@ class IMatrics(AIServiceBase):
             )
         return r.json()
 
+    def _request_images(self, service, data=None, method="POST", params=None):
+        url = urljoin(self.image_base_url, service)
+        r = session.request(method, url, json=data, headers={"x-api-key": self.image_key}, params=params, timeout=TIMEOUT)
+        if r.status_code != 200:
+            raise SuperdeskApiError.proxyError(
+                "Unexpected return code ({status_code}) from {name}: {msg}".format(
+                    name=self.name,
+                    status_code=r.status_code,
+                    msg=r.text,
+                )
+            )
+        return r.json()
+        
     def _format_concepts(self, tags):
         concepts = []
         if tags.get("subject"):
