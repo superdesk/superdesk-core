@@ -96,7 +96,10 @@ class RundownItemsService(superdesk.Service):
             "rundown": rundown.get("_id", ""),
             "camera": [],
             "subitems": [],
+            "technical_title": "",
         }
+
+        item["technical_title"] = self.get_technical_title(item)
 
         self.create([item])
         return item

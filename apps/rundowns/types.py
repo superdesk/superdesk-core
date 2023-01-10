@@ -58,6 +58,7 @@ class IRundownItemTemplate(TypedDict):
     rundown: str
     camera: List[str]
     subitems: List[ISubitem]
+    technical_title: Optional[str]
 
 
 class IRundownItem(IRundownItemTemplate, IEntity):

@@ -35,7 +35,6 @@ Feature: Rundowns
         When we get "/shows"
         Then we get list with 0 items
 
-    @wip
     @auth
     Scenario: Templates CRUD
         Given "shows"
@@ -280,7 +279,19 @@ Feature: Rundowns
                     "separator": "//",
                     "date_format": "%H:%M"
                 },
-                "autocreate_before_seconds": 86400
+                "autocreate_before_seconds": 86400,
+                "items": [
+                    {
+                        "duration": 600,
+                        "item_type": "Test",
+                        "title": "Item title"
+                    },
+                    {
+                        "duration": 400,
+                        "item_type": "Test2",
+                        "title": "Item title 2"
+                    }
+                ]
             }
         ]
         """
@@ -292,6 +303,17 @@ Feature: Rundowns
         {"_items": [
             {"title": "Scheduled // 06:00", "scheduled_on": "__future__"}
         ]}
+        """
+
+        When we get "/rundown_items"
+        Then we get list with 2 items
+        """
+        {
+            "_items": [
+                {"technical_title": "ITEM TITLE"},
+                {"technical_title": "ITEM TITLE 2"}
+            ]
+        }
         """
 
         When we run task "apps.rundowns.tasks.create_scheduled_rundowns"
