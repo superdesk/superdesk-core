@@ -86,7 +86,6 @@ class IMatrics(AIServiceBase):
     def image_key(self):
         return current_app.config.get("IMATRICS_IMAGE_KEY", os.environ.get("IMATRICS_IMAGE_KEY"))
 
-
     def concept2tag_data(self, concept: dict) -> Tuple[dict, str]:
         """Convert an iMatrics concept to Superdesk friendly data"""
         tag_data = {
@@ -217,9 +216,8 @@ class IMatrics(AIServiceBase):
             ),
         )
 
-    def search_images(self, item: list) -> list:
+    def search_images(self, item: list) -> dict:
         """fetch image suggestions"""
-        print(item)
         if not self.base_url or not self.user or not self.key:
             logger.warning("IMatrics is not configured propertly, can't fetch images")
             return {}
@@ -394,7 +392,7 @@ class IMatrics(AIServiceBase):
                 )
             )
         return r.json()
-        
+
     def _format_concepts(self, tags):
         concepts = []
         if tags.get("subject"):

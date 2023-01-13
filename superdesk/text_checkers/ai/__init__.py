@@ -88,7 +88,6 @@ class AIService(BaseService):
         docs[0].update({"analysis": analyzed_data})
         return [0]
 
-
 class AIDataOpResource(Resource):
     schema = {
         "service": {
@@ -157,7 +156,6 @@ class AIDataOpService(BaseService):
         result = service.data_operation("POST", operation, name, data)
         docs[0].update({"result": result})
         return [0]
-
 
 
 class AIImageResource(Resource):
