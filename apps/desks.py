@@ -49,7 +49,7 @@ desks_schema = {
     "working_stage": Resource.rel("stages", True),
     "content_expiry": {"type": "integer"},
     "source": {"type": "string"},
-    "send_to_desk_allowed": {"type": "boolean"},
+    "send_to_desk_allowed": {"type": "boolean", "required": True, "nullable": False, "empty": False},
     "monitoring_settings": {
         "type": "list",
         "schema": {
