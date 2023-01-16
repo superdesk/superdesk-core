@@ -580,6 +580,9 @@ class NINJSFormatter(Formatter):
                 "biography": user.get("biography", author.get("biography", "")),
             }
 
+            if user.get("_id"):
+                author["uri"] = "domain:user:" + str(user["_id"])
+
             # include socials only if they are non-empty
             socials = ("facebook", "twitter", "instagram")
             for social in socials:
