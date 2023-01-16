@@ -130,6 +130,11 @@ server_url = urlparse(SERVER_URL)
 SERVER_DOMAIN = server_url.netloc or "localhost"
 URL_PREFIX = env("URL_PREFIX", server_url.path.lstrip("/")) or ""
 
+#: Used when generating GUIDs or URNs to fill in the domain portion
+#:
+#: .. versionadded: 2.4.6
+URN_DOMAIN = env("URN_DOMAIN", SERVER_DOMAIN)
+
 # map package name => github repo name, to be filled when a custom version of a package is used
 REPO_OVERRIDE = {}
 
