@@ -574,7 +574,7 @@ def apply_schema(item):
     :param item: item to apply schema to
     """
     # fields that can be added to article without being added to CP eg: using widgets
-    allowed_keys = ["attachments", "refs", "place", "organisation", "person"]
+    allowed_keys = ["attachments", "refs", "place", "organisation", "person", "authors"]
 
     if item.get("type") == "event":
         return item.copy()
