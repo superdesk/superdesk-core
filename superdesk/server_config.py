@@ -2,6 +2,7 @@ import superdesk
 
 from flask import current_app as app
 from apps.auth import is_current_user_admin
+from superdesk.utc import utcnow
 
 
 class ConfigResource(superdesk.Resource):
@@ -34,7 +35,11 @@ class ConfigService(superdesk.Service):
 
     def set(self, key, val, namespace="superdesk"):
         coll = app.data.mongo.get_collection_with_write_concern("config", "config")
-        updates = {f"val.{k}": v for k, v in val.items()} if val else {}
+        if isinstance(val, dict):
+            updates = {f"val.{k}": v for k, v in val.items()} if val else {}
+        else:
+            updates = {"val": val}
+        updates["_updated"] = utcnow()
         coll.update_one({"_id": key}, {"$set": dict(_id=key, **updates)}, upsert=True)
 
     def get(self, key, namespace="superdesk"):

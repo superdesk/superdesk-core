@@ -8,6 +8,7 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
+import time
 
 from bson import ObjectId
 from pytz import timezone
@@ -16,6 +17,7 @@ from copy import deepcopy
 from unittest import mock
 
 import superdesk
+from superdesk.metadata.utils import generate_guid, GUID_TAG
 import superdesk.signals as signals
 from superdesk.errors import SuperdeskApiError
 from superdesk.tests import TestCase
@@ -449,3 +451,36 @@ class ArchiveTestCase(TestCase):
         self.assertEqual(
             ["body_html", "body_footer", "headline", "slugline", "abstract"], list(source["highlight"]["fields"].keys())
         )
+
+    def test_get_expired_items(self):
+        now = utcnow()
+        items = []
+        for i in range(1000):
+            items.append(
+                {
+                    "_id": generate_guid(type=GUID_TAG),
+                    "type": "text",
+                    "expiry": now - timedelta(days=1),
+                    "task": {"desk": "foo"},
+                    "state": "published",
+                }
+            )
+
+        service = superdesk.get_resource_service("archive")
+        service.create(items)
+
+        counter = 0
+        for _items in service.get_expired_items(now):
+            for item in _items:
+                counter += 1
+
+        assert 1000 == counter
+
+        counter = 0
+        ids = sorted([item["_id"] for item in items])
+        last_id = ids[499]
+        for _items in service.get_expired_items(now, last_id=last_id):
+            for item in _items:
+                counter += 1
+
+        assert 500 == counter

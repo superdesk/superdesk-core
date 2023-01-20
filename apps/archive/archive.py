@@ -1145,7 +1145,7 @@ class ArchiveService(BaseService, HighlightsSearchMixin):
         if updates.get("force_unlock", False):
             del updates["force_unlock"]
 
-    def get_expired_items(self, expiry_datetime, invalid_only=False):
+    def get_expired_items(self, expiry_datetime, last_id=None, invalid_only=False):
         """Get the expired items.
 
         Where content state is not scheduled and the item matches given parameters
@@ -1154,13 +1154,10 @@ class ArchiveService(BaseService, HighlightsSearchMixin):
         :param bool invalid_only: True only invalid items
         :return pymongo.cursor: expired non published items.
         """
-        last_id = None
         for i in range(app.config["MAX_EXPIRY_LOOPS"]):  # avoid blocking forever just in case
-            req = ParsedRequest()
-            req.sort = "_id"
             query = {
                 "$and": [
-                    {"expiry": {"$lte": date_to_str(expiry_datetime)}},
+                    {"expiry": {"$lte": expiry_datetime}},
                     {"$or": [{"task.desk": {"$ne": None}}, {ITEM_STATE: CONTENT_STATE.SPIKED, "task.desk": None}]},
                 ]
             }
@@ -1173,17 +1170,20 @@ class ArchiveService(BaseService, HighlightsSearchMixin):
             if last_id:
                 query["$and"].append({"_id": {"$gt": last_id}})
 
+            req = ParsedRequest()
+            req.sort = "_id"
+            req.max_results = app.config["MAX_EXPIRY_QUERY_LIMIT"]
             req.where = json.dumps(query)
-            req.max_results = config.MAX_EXPIRY_QUERY_LIMIT
 
-            items = list(self.get_from_mongo(req=req, lookup=None))
+            items = list(self.get_from_mongo(req=req, lookup={}))
+
+            yield items  # we need to yield the empty list too to signal it's the end
 
             if not len(items):
                 break
+            else:
+                last_id = items[-1]["_id"]
 
-            last_id = items[-1]["_id"]
-
-            yield items
         else:
             logger.warning("get_expired_items did not finish in %d loops", app.config["MAX_EXPIRY_LOOPS"])
 

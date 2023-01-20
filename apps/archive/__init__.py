@@ -25,7 +25,7 @@ from .archive import (
     AutoSaveResource,
     ArchiveSaveService,
 )
-from .commands import RemoveExpiredContent
+from .commands import RemoveExpiredContent, LOCK_EXPIRY
 from .ingest import IngestResource, AppIngestService
 from .user_content import UserContentResource, UserContentService
 from .archive_lock import ArchiveLockResource, ArchiveUnlockResource, ArchiveLockService, ArchiveUnlockService
@@ -144,6 +144,6 @@ def init_app(app) -> None:
     superdesk.intrinsic_privilege(ArchiveUnlockResource.endpoint_name, method=["POST"])
 
 
-@celery.task(soft_time_limit=3600)
+@celery.task(soft_time_limit=LOCK_EXPIRY - 300)  # should finish before the lock is gone
 def content_expiry():
     RemoveExpiredContent().run()
