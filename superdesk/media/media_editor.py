@@ -34,7 +34,7 @@ class MediaEditorResource(Resource):
             "type": "dict",
         },
         "edit": {
-            "type": "dict",
+            "type": "list",
             "required": True,
         },
         "renditions": {
@@ -50,7 +50,7 @@ class MediaEditorResource(Resource):
 class MediaEditorService(BaseService):
     """Service givin metadata on backend itself"""
 
-    def transform(self, im, operation, param):
+    def transform(self, im, operation):
         """Apply image transformation
 
         :param Image im: image to transform
@@ -58,29 +58,32 @@ class MediaEditorService(BaseService):
         :param param: parameters of the operation
         :return Image: resulting image
         """
-        if operation == "rotate":
+        operationType = operation[0]
+        param = operation[1]
+
+        if operationType == "rotate":
             return im.rotate(int(param), expand=1)
 
-        elif operation == "flip":
+        elif operationType == "flip":
             if param in ("vertical", "both"):
                 im = im.transpose(Image.FLIP_TOP_BOTTOM)
             if param in ("horizontal", "both"):
                 im = im.transpose(Image.FLIP_LEFT_RIGHT)
             return im
 
-        elif operation == "brightness":
+        elif operationType == "brightness":
             return ImageEnhance.Brightness(im).enhance(float(param))
 
-        elif operation == "contrast":
+        elif operationType == "contrast":
             return ImageEnhance.Contrast(im).enhance(float(param))
 
-        elif operation == "grayscale":
+        elif operationType == "grayscale":
             return im.convert("L")
 
-        elif operation == "saturation":
+        elif operationType == "saturation":
             return ImageEnhance.Color(im).enhance(float(param))
 
-        logger.warning("unhandled operation: {operation} {param}".format(operation=operation, param=param))
+        logger.warning("unhandled operation: {operation} {param}".format(operation=operationType, param=param))
 
         return im
 
@@ -110,14 +113,14 @@ class MediaEditorService(BaseService):
             out = im = Image.open(media)
 
             # we apply all requested operations on original media
-            for operation, param in edit.items():
+            for operation in edit:
                 try:
-                    out = self.transform(out, operation, param)
+                    out = self.transform(out, operation)
                 except ValueError:
                     # if the operation can't be applied just ignore it
                     logger.warning(
                         "failed to apply operation: {operation} {param} for media {id}".format(
-                            operation=operation, param=param, id=media_id
+                            operation=operation[0], param=operation[1], id=media_id
                         )
                     )
             buf = BytesIO()
