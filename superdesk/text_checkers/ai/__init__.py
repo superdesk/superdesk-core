@@ -164,13 +164,13 @@ class AIImageResource(Resource):
             "type": "string",
             "required": True,
         },
-        "item": {
+        "items": {
             "type": "list",
             "required": True,
             "schema": {
                 "type": "dict",
                 "schema": {
-                    "title": {"type": "string", "required": False},
+                    "title": {"type": "string", "required": True},
                     "type": {"type": "string", "required": False},
                     "pubStatus": {"type": "boolean", "required": False},
                     "weight": {"type": "integer", "required": False},
@@ -195,7 +195,7 @@ class AIImageSuggestionService(BaseService):
     key           explanation
     ============  ===========
     service \*    name of the service to use
-    item          argument of use for the operation
+    items          argument of use for the operation
     ============  ===========
 
     e.g. to search for tags with iMatrics service:
@@ -204,20 +204,20 @@ class AIImageSuggestionService(BaseService):
 
         {
             "service": "imatrics_image_suggestions",
-            "item": [{"title": "some_string", "type": "some_string", "pubStatus": "some_boolean", "weight": "some_integer"}],
+            "items": [{"title": "some_string", "type": "some_string", "pubStatus": "some_boolean", "weight": "some_integer"}],
         }
     """
 
     def create(self, docs, **kwargs):
         doc = docs[0]
         service = doc["service"]
-        item = doc["item"]
+        items = doc["items"]
         try:
             service = registered_ai_services[service]
         except KeyError:
             raise SuperdeskApiError.notFoundError("{service} service can't be found".format(service=service))
 
-        res_data = service.search_images(item)
+        res_data = service.search_images(items)
         docs[0].update({"result": res_data})
         return [0]
 
