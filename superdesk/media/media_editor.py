@@ -58,32 +58,32 @@ class MediaEditorService(BaseService):
         :param param: parameters of the operation
         :return Image: resulting image
         """
-        operationType = operation[0]
+        operation_type = operation[0]
         param = operation[1]
 
-        if operationType == "rotate":
+        if operation_type == "rotate":
             return im.rotate(int(param), expand=1)
 
-        elif operationType == "flip":
+        elif operation_type == "flip":
             if param in ("vertical", "both"):
                 im = im.transpose(Image.FLIP_TOP_BOTTOM)
             if param in ("horizontal", "both"):
                 im = im.transpose(Image.FLIP_LEFT_RIGHT)
             return im
 
-        elif operationType == "brightness":
+        elif operation_type == "brightness":
             return ImageEnhance.Brightness(im).enhance(float(param))
 
-        elif operationType == "contrast":
+        elif operation_type == "contrast":
             return ImageEnhance.Contrast(im).enhance(float(param))
 
-        elif operationType == "grayscale":
+        elif operation_type == "grayscale":
             return im.convert("L")
 
-        elif operationType == "saturation":
+        elif operation_type == "saturation":
             return ImageEnhance.Color(im).enhance(float(param))
 
-        logger.warning("unhandled operation: {operation} {param}".format(operation=operationType, param=param))
+        logger.warning("unhandled operation: {operation} {param}".format(operation=operation_type, param=param))
 
         return im
 
