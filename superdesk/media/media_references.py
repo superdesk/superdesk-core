@@ -32,3 +32,4 @@ class MediaReferencesResource(Resource):
         "associated_id": [("associated_id", 1)],
     }
     query_objectid_as_string = True
+    notifications = False

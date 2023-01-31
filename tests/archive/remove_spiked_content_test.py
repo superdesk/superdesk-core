@@ -175,11 +175,14 @@ class RemoveSpikedContentTestCase(TestCase):
             ],
         )
 
-        expired_items = get_resource_service(ARCHIVE).get_expired_items(now)
         now = utcnow()
         for expired_items in get_resource_service(ARCHIVE).get_expired_items(now):
-            self.assertEquals(1, len(expired_items))
-            self.assertEquals(100, expired_items[0]["unique_id"])
+            if expired_items:
+                self.assertEquals(1, len(expired_items))
+                self.assertEquals(100, expired_items[0]["unique_id"])
+                break
+        else:
+            assert False, "break was not called"
 
     def test_remove_media_files_for_picture(self):
         item = {"_id": "testimage", "type": "picture", "renditions": self.media}

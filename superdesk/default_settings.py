@@ -333,11 +333,11 @@ CELERY_BEAT_SCHEDULE = {
     },
     "ingest:gc": {
         "task": "superdesk.io.gc_ingest",
-        "schedule": timedelta(minutes=5),
+        "schedule": timedelta(minutes=15),
     },
-    "audit:gc": {"task": "superdesk.audit.gc_audit", "schedule": crontab(minute="0", hour=local_to_utc_hour(1))},
+    "audit:gc": {"task": "superdesk.audit.gc_audit", "schedule": crontab(minute="8", hour=local_to_utc_hour(1))},
     "session:gc": {"task": "apps.auth.session_purge", "schedule": timedelta(minutes=5)},
-    "content:gc": {"task": "apps.archive.content_expiry", "schedule": crontab(minute="*/30")},
+    "content:gc": {"task": "apps.archive.content_expiry", "schedule": timedelta(minutes=30)},
     "temp_files:gc": {
         "task": "superdesk.commands.temp_file_expiry",
         "schedule": crontab(minute="0", hour=local_to_utc_hour(3)),
@@ -631,17 +631,26 @@ PUBLISHED_CONTENT_EXPIRY_MINUTES = int(env("PUBLISHED_CONTENT_EXPIRY_MINUTES", 0
 #: The number of minutes before audit content is purged
 #:
 #: .. versionchanged:: 2.4.0
-#     Changed default to 14 days (was previously disabled)
+#:    Changed default to 14 days (was previously disabled)
+#:
 AUDIT_EXPIRY_MINUTES = int(env("AUDIT_EXPIRY_MINUTES", 60 * 24 * 14))
 
 #: The number records to be fetched for expiry.
 MAX_EXPIRY_QUERY_LIMIT = int(env("MAX_EXPIRY_QUERY_LIMIT", 100))
 
 #: Number of loops to do on each run
-MAX_EXPIRY_LOOPS = 50
+#:
+#: .. versionchanged:: 2.7.0
+#:    Changed default to 100 from 50.
+#:
+MAX_EXPIRY_LOOPS = 100
 
 #: The number of minutes before Publish Queue is purged
-PUBLISH_QUEUE_EXPIRY_MINUTES = int(env("PUBLISH_QUEUE_EXPIRY_MINUTES", 0))
+#:
+#: .. versionchanged:: 2.7.0
+#:    Changed default to 14 days (was previously disabled)
+#:
+PUBLISH_QUEUE_EXPIRY_MINUTES = int(env("PUBLISH_QUEUE_EXPIRY_MINUTES", 60 * 24 * 14))
 
 # This setting can be used to apply a limit on the elastic search queries, it is a limit per shard.
 # A value of -1 indicates that no limit will be applied.
