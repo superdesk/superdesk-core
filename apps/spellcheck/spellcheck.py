@@ -43,7 +43,6 @@ def norvig_suggest(word, model):
 
 
 class SpellcheckResource(superdesk.Resource):
-
     resource_methods = ["POST"]
     item_methods = []
 

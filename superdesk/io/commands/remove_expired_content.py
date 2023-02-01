@@ -46,7 +46,6 @@ class RemoveExpiredContent(superdesk.Command):
             return
 
         try:
-
             remove_expired_data(provider)
             push_notification("ingest:cleaned")
         except Exception as err:

@@ -92,7 +92,6 @@ class ArchivePublishService(BasePublishService):
             and request.args
             and request.args.get("desk_id")
         ):
-
             desk_id = request.args["desk_id"]
             updates["task"] = updates.get("task", original.get("task", {}))
             updates["task"]["desk"] = desk_id

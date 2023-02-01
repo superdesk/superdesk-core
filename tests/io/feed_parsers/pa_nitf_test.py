@@ -16,7 +16,6 @@ from lxml import etree
 
 
 class PANITFFileTestCase(TestCase):
-
     vocab = [{"_id": "genre", "items": [{"name": "Current"}]}]
 
     def setUpForChildren(self):
@@ -32,7 +31,6 @@ class PANITFFileTestCase(TestCase):
 
 
 class PAFileWithNoSubjects(PANITFFileTestCase):
-
     filename = "pa2.xml"
 
     def test_headline(self):
@@ -43,7 +41,6 @@ class PAFileWithNoSubjects(PANITFFileTestCase):
 
 
 class PATestCase(PANITFFileTestCase):
-
     filename = "pa1.xml"
 
     def test_slugline(self):
@@ -58,7 +55,6 @@ class PATestCase(PANITFFileTestCase):
 
 
 class PAEmbargoTestCase(PANITFFileTestCase):
-
     filename = "pa3.xml"
 
     def test_slugline(self):
@@ -66,7 +62,6 @@ class PAEmbargoTestCase(PANITFFileTestCase):
 
 
 class PAEntertainmentTest(PANITFFileTestCase):
-
     filename = "pa4.xml"
 
     def test_entertainment_category(self):
@@ -74,7 +69,6 @@ class PAEntertainmentTest(PANITFFileTestCase):
 
 
 class PACharsetConversionTest(PANITFFileTestCase):
-
     filename = "pa5.xml"
 
     def test_charset(self):

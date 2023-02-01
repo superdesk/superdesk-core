@@ -2,7 +2,6 @@ from superdesk import SearchProvider
 
 
 class TestSearchProvider(SearchProvider):
-
     label = "Foo"
 
     def find(self, query):
