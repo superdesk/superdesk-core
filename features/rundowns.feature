@@ -770,7 +770,7 @@ Feature: Rundowns
                     },
                     {
                         "qcode": "PRLG",
-                        "technical_info": "prlg info",
+                        "technical_info": "prlg info, some other info",
                         "content": "another content"
                     }
                 ]
