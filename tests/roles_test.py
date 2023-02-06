@@ -13,7 +13,6 @@ from superdesk import get_resource_service
 
 
 class RolesTestCase(TestCase):
-
     roles = [{"name": "test", "privileges": {"ingest": 1, "archive": 1, "fetch": 1}}]
 
     users = [

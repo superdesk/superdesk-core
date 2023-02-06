@@ -14,7 +14,6 @@ import superdesk
 
 
 class NewsroomNinjsFormatter(NINJSFormatter):
-
     name = "Newsroom NINJS"
     type = "newsroom ninjs"
 

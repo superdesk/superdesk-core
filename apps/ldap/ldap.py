@@ -126,7 +126,6 @@ class ADAuth:
 
 class ADAuthService(AuthService):
     def on_create(self, docs):
-
         user_service = get_resource_service("users")
         for doc in docs:
             user = self.authenticate(doc)
@@ -196,7 +195,6 @@ class ImportUserProfileService(UsersService):
     """Service Class for endpoint /import_profile"""
 
     def on_create(self, docs):
-
         logged_in_user = get_user().get("username")
         for index, doc in enumerate(docs):
             # ensuring the that logged in user is importing the profile.

@@ -19,11 +19,9 @@ fixtures = os.path.join(os.path.abspath(os.path.dirname(__file__)), "fixtures")
 
 
 class ExifMetaExtractionTestCase(TestCase):
-
     img = os.path.join(fixtures, "canon_exif.JPG")
 
     def test_extract_meta_json_serialization(self):
-
         with open(self.img, mode="rb") as f:
             meta = get_meta(f)
 
@@ -32,7 +30,6 @@ class ExifMetaExtractionTestCase(TestCase):
 
 
 class ExifMetaWithGPSInfoExtractionTestCase(TestCase):
-
     img = os.path.join(fixtures, "iphone_gpsinfo_exif.JPG")
     maxDiff = None
 
@@ -58,12 +55,10 @@ class ExifMetaWithGPSInfoExtractionTestCase(TestCase):
 
 
 class ExifMetaExtractionUserCommentRemovedTestCase(TestCase):
-
     # this image has UserComment exif data value as 'test'
     img = os.path.join(fixtures, "iphone_gpsinfo_exif.JPG")
 
     def test_extract_meta_json_serialization(self):
-
         with open(self.img, mode="rb") as f:
             meta = get_meta(f)
 
@@ -71,7 +66,6 @@ class ExifMetaExtractionUserCommentRemovedTestCase(TestCase):
 
 
 class MediaOperationsTestCase(TestCase):
-
     img = os.path.join(fixtures, "canon_exif.JPG")
 
     crop_data = {

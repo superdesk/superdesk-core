@@ -24,7 +24,6 @@ from apps.legal_archive.commands import LegalArchiveImport
 
 
 class LegalArchiveTestCase(TestCase):
-
     desks = [{"_id": "123", "name": "Sports"}]
     users = [{"_id": "123", "username": "test1", "first_name": "test", "last_name": "user", "email": "a@a.com"}]
     stages = [{"_id": "123", "name": "working stage", "desk": "123"}]

@@ -366,7 +366,6 @@ class UserDesksService(BaseService):
 
 
 class SluglineDesksResource(Resource):
-
     url = 'desks/<regex("[a-f0-9]{24}"):desk_id>/sluglines'
     datasource = {
         "source": "published",

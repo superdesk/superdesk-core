@@ -55,7 +55,6 @@ class FilterCondition:
         return self.operator.contains_not()
 
     def does_match(self, article):
-
         if not self.field.is_in_article(article) and type(self.operator) is not ExistsOperator:
             return (
                 type(self.operator) is NotInOperator

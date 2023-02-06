@@ -119,7 +119,7 @@ def decode_val(string_val):
     try:
         arrow.get(val, "YYYY-MM-DD")  # test if it will get matched by elastic
         return str(arrow.get(val))
-    except (Exception):
+    except Exception:
         return val
 
 

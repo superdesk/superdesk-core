@@ -56,7 +56,6 @@ class ArchiveBroadcastResource(Resource):
 
 
 class ArchiveBroadcastService(BaseService):
-
     packageService = PackageService()
 
     def create(self, docs):

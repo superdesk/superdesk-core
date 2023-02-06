@@ -91,7 +91,6 @@ class RemoveExpiredContent(superdesk.Command):
         logger.info("{} Starting to remove expired content.".format(self.log_msg))
 
         try:
-
             logger.info("{} Removing expired content for expiry.".format(self.log_msg))
             # all functions should be called, even the first one throw exception,
             # so they are wrapped with log_exeption

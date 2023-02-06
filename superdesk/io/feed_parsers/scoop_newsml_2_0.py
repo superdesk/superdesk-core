@@ -23,7 +23,6 @@ from superdesk.etree import parse_html, to_string
 
 
 class ScoopNewsMLTwoFeedParser(NewsMLTwoFeedParser):
-
     NAME = "scoop_newsml2"
 
     label = "Scoop Media News ML-G2 Parser"

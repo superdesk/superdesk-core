@@ -62,7 +62,6 @@ def ingest_items(generator, ingest_status=True):
 
 
 class FakeFTP(mock.MagicMock):
-
     files = [
         ftp_file("filename_1.xml", "20170517164739"),
         ftp_file("filename_2.xml", "20170517164739"),
@@ -90,7 +89,6 @@ class FakeFTP(mock.MagicMock):
 
 
 class FakeFTPRecentFiles(FakeFTP):
-
     files = [
         ftp_file("old_file.xml", "20170517164756"),
         # we need a file ingested now, before INGEST_OLD_CONTENT_MINUTES is expired
