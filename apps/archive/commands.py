@@ -29,15 +29,20 @@ from superdesk.metadata.item import (
     MEDIA_TYPES,
     PUBLISH_STATES,
 )
-from superdesk.lock import lock, unlock, remove_locks, touch
+from superdesk.lock import lock, unlock, remove_locks
 from superdesk.notification import push_notification
 from superdesk import get_resource_service
 from bson.objectid import ObjectId
 from datetime import timedelta
 from werkzeug.exceptions import Conflict
 from .common import remove_media_files
+from celery.exceptions import SoftTimeLimitExceeded
 
 logger = logging.getLogger(__name__)
+
+
+LOCK_EXPIRY = 3600 * 2
+LAST_ID_CONFIG = "archive_expiry_last_id"
 
 
 def log_exeption(fn):
@@ -45,6 +50,9 @@ def log_exeption(fn):
     def inner(*a, **kw):
         try:
             return fn(*a, **kw)
+        except SoftTimeLimitExceeded as e:
+            logger.error(e)
+            raise  # on soft time limit raise to unlock and stop
         except Exception as e:
             logger.exception(e)
 
@@ -68,30 +76,35 @@ class RemoveExpiredContent(superdesk.Command):
 
     """
 
-    log_msg = ""
+    log_msg = None
+    lock_name = None
 
     def run(self):
         now = utcnow()
         self.log_msg = "Expiry Time: {}.".format(now)
-        logger.info("{} Starting to remove expired content at.".format(self.log_msg))
-        lock_name = get_lock_id("archive", "remove_expired")
+        self.lock_name = get_lock_id("archive", "remove_expired")
 
-        if not lock(lock_name, expire=1800):
+        if not lock(self.lock_name, expire=LOCK_EXPIRY):
             logger.info("{} Remove expired content task is already running.".format(self.log_msg))
             return
 
-        logger.info("{} Removing expired content for expiry.".format(self.log_msg))
-        # all functions should be called, even the first one throw exception,
-        # so they are wrapped with log_exeption
-        self._remove_expired_publish_queue_items(now)
-        self._remove_expired_items(now, lock_name)
-        self._remove_expired_archived_items(now, lock_name)
-        unlock(lock_name)
+        logger.info("{} Starting to remove expired content.".format(self.log_msg))
 
-        push_notification("content:expired")
-        logger.info("{} Completed remove expired content.".format(self.log_msg))
+        try:
 
-        remove_locks()
+            logger.info("{} Removing expired content for expiry.".format(self.log_msg))
+            # all functions should be called, even the first one throw exception,
+            # so they are wrapped with log_exeption
+            self._remove_expired_publish_queue_items(now)
+            self._remove_expired_items(now)
+            self._remove_expired_archived_items(now)
+
+            push_notification("content:expired")
+            logger.info("{} Completed remove expired content.".format(self.log_msg))
+
+            remove_locks()
+        finally:
+            unlock(self.lock_name)
 
     @log_exeption
     def _remove_expired_publish_queue_items(self, now):
@@ -102,7 +115,7 @@ class RemoveExpiredContent(superdesk.Command):
             get_resource_service("publish_queue").delete(_get_expired_mongo_ids_query(expire_interval, now))
 
     @log_exeption
-    def _remove_expired_items(self, expiry_datetime, lock_name):
+    def _remove_expired_items(self, expiry_datetime):
         """Remove the expired items.
 
         :param datetime expiry_datetime: expiry datetime
@@ -110,6 +123,7 @@ class RemoveExpiredContent(superdesk.Command):
         :param str lock_name: lock name to touch
         """
         logger.info("{} Starting to remove published expired items.".format(self.log_msg))
+        config_service = get_resource_service("config")
         archive_service = get_resource_service(ARCHIVE)
         published_service = get_resource_service("published")
         preserve_published_desks = {
@@ -117,18 +131,23 @@ class RemoveExpiredContent(superdesk.Command):
             for desk in get_resource_service("desks").find(where={"preserve_published_content": True})
         }
 
-        for expired_items in archive_service.get_expired_items(expiry_datetime):
+        last_id = config_service.get(LAST_ID_CONFIG)
+        if last_id:
+            logger.info("%s Continuing from id %s", self.log_msg, last_id)
+
+        for expired_items in archive_service.get_expired_items(expiry_datetime, last_id=last_id):
             items_to_remove = set()
             items_to_be_archived = dict()
             items_having_issues = dict()
 
             if len(expired_items) == 0:
                 logger.info("{} No items found to expire.".format(self.log_msg))
+                config_service.set(LAST_ID_CONFIG, "")
                 return
-
-            if not touch(lock_name, expire=600):
-                logger.warning("{} lost lock while removing expired items.".format(self.log_msg))
-                return
+            else:
+                logger.info("{} Processing {} expired items.".format(self.log_msg, len(expired_items)))
+                last_id = expired_items[-1]["_id"]
+                config_service.set(LAST_ID_CONFIG, last_id)
 
             # delete spiked items
             self.delete_spiked_items(expired_items)
@@ -172,7 +191,7 @@ class RemoveExpiredContent(superdesk.Command):
                 if (
                     item_id not in items_to_be_archived
                     and item_id not in items_having_issues
-                    and self._can_remove_item(item, processed_items, preserve_published_desks)
+                    and self._can_remove_item(item, expiry_datetime, processed_items, preserve_published_desks)
                 ):
                     # item can be archived and removed from the database
                     logger.info("{} Removing item. {}".format(self.log_msg, expiry_msg))
@@ -250,13 +269,8 @@ class RemoveExpiredContent(superdesk.Command):
                 except Exception:
                     logger.exception("{} Failed to set expiry status for item. {}".format(self.log_msg, msg))
 
-            logger.info("{} Deleting killed from archive.".format(self.log_msg))
-
     @log_exeption
-    def _remove_expired_archived_items(self, now, lock_name):
-        if not touch(lock_name, expire=600):
-            logger.warning("{} Lost lock before removing expired items from archived.".format(self.log_msg))
-            return
+    def _remove_expired_archived_items(self, now):
         EXPIRY_MINUTES = app.config.get("ARCHIVED_EXPIRY_MINUTES")
         EXPIRY_LIMIT = app.config.get("MAX_EXPIRY_QUERY_LIMIT", 100)
         if not EXPIRY_MINUTES:
@@ -278,7 +292,7 @@ class RemoveExpiredContent(superdesk.Command):
             if not app.config.get("LEGAL_ARCHIVE") and not archived_service.find_one(req=None, item_id=item["item_id"]):
                 remove_media_files(item, published=True)
 
-    def _can_remove_item(self, item, processed_item=None, preserve_published_desks=None):
+    def _can_remove_item(self, item, now, processed_item=None, preserve_published_desks=None):
         """Recursively checks if the item can be removed.
 
         :param dict item: item to be remove
@@ -317,7 +331,8 @@ class RemoveExpiredContent(superdesk.Command):
         item_refs.extend(package_service.get_linked_in_package_ids(item))
 
         # check item refs in the ids to remove set
-        is_expired = item.get("expiry") and item.get("expiry") < utcnow()
+        is_expired = item.get("expiry") and item.get("expiry") < now
+        reason = "expiry" if not is_expired else ""
 
         # if the item is published or corrected and desk has preserve_published_content as true
         if (
@@ -326,6 +341,7 @@ class RemoveExpiredContent(superdesk.Command):
             and item.get("task").get("desk") in preserve_published_desks
         ):
             is_expired = False
+            reason = "Desk config"
 
         # If the item is associated with a planning assignment and not published then preserve it
         if item.get("assignment_id") and item.get(ITEM_STATE) not in PUBLISH_STATES:
@@ -333,25 +349,29 @@ class RemoveExpiredContent(superdesk.Command):
                 assignment = superdesk.get_resource_service("assignments").find_one(req=None, _id=item["assignment_id"])
                 if assignment is not None:
                     is_expired = False
+                    reason = "Existing assignment"
             except KeyError:  # planning is not enabled
                 pass
 
         if is_expired:
             # now check recursively for all references
-            if item.get(config.ID_FIELD) in processed_item:
+            if item[config.ID_FIELD] in processed_item:
                 return is_expired
 
-            processed_item[item.get(config.ID_FIELD)] = item
+            processed_item[item[config.ID_FIELD]] = item
             if item_refs:
                 archive_items = archive_service.get_from_mongo(req=None, lookup={"_id": {"$in": item_refs}})
                 for archive_item in archive_items:
-                    is_expired = self._can_remove_item(archive_item, processed_item, preserve_published_desks)
+                    is_expired = self._can_remove_item(archive_item, now, processed_item, preserve_published_desks)
                     if not is_expired:
+                        reason = "References"
                         break
 
         # If this item is not expired then it is potentially keeping it's parent alive.
         if not is_expired:
-            logger.info("{} Item ID: [{}] has not expired".format(self.log_msg, item.get(config.ID_FIELD)))
+            logger.info(
+                "{} Item ID: [{}] has not expired. Reason: {}".format(self.log_msg, item[config.ID_FIELD], reason)
+            )
         return is_expired
 
     def _get_associated_media_id(self, item):
