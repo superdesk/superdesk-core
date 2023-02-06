@@ -85,7 +85,7 @@ class UsersResource(Resource):
                 "schema": {},
                 "allow_unknown": True,
             },
-            "user_type": {"type": "string", "allowed": ["user", "administrator"], "default": "user"},
+            "user_type": {"type": "string", "allowed": ["user", "administrator", "external"], "default": "user"},
             "is_support": {"type": "boolean", "default": False},
             "is_author": {"type": "boolean", "default": True},
             "private": {"type": "boolean", "default": False, "nullable": True},
