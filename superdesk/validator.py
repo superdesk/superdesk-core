@@ -293,3 +293,11 @@ class SuperdeskValidator(Validator):
         registered = app.config.get("item_scope") or {}
         if checked and value not in registered:
             self._error(field, _("Unknown scope %(name)s", name=value))
+
+    def _validate_email_is_required(self,enabled, field, value):
+        """
+        {'type': 'boolean'}
+        """
+        update = self.document or {}
+        if enabled and update.get("user_type") in ["user", "administrator"] and update.get("email") is None:
+            self._error(field, ERROR_REQUIRED)
