@@ -483,7 +483,6 @@ class EnqueueService:
             queued = False
             no_formatters = []
             for subscriber in subscribers:
-
                 try:
                     if (
                         doc[ITEM_TYPE] not in [CONTENT_TYPE.TEXT, CONTENT_TYPE.PREFORMATTED]

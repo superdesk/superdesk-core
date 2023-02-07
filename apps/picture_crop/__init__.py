@@ -83,7 +83,6 @@ class PictureCropService(superdesk.Service):
 
 
 class PictureCropResource(superdesk.Resource):
-
     item_methods = []
     resource_methods = ["POST"]
     privileges = {"POST": "archive"}

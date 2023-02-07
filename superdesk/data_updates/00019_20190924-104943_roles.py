@@ -11,7 +11,6 @@ from superdesk.commands.data_updates import BaseDataUpdate
 
 
 class DataUpdate(BaseDataUpdate):
-
     resource = "roles"
     privileges = [
         "publisher_dashboard",

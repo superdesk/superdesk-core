@@ -173,7 +173,6 @@ class VocabulariesResource(Resource):
 
 
 class VocabulariesService(BaseService):
-
     system_keys = set(DEFAULT_SCHEMA.keys()).union(set(DEFAULT_EDITOR.keys()))
 
     def _validate_items(self, update):

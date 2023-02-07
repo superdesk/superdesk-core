@@ -12,7 +12,6 @@ from superdesk import get_resource_service
 
 
 class DataUpdate(BaseDataUpdate):
-
     resource = "vocabularies"
     product_types = {
         "_id": "product_types",

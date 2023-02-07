@@ -505,6 +505,7 @@ class TestCase(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         """Wrap `setUp` and `tearDown` methods to run `setUpForChildren` and `tearDownForChildren`."""
+
         # setUp
         def wrapper(self, *args, **kwargs):
             """Combine `setUp` with `setUpForChildren`."""

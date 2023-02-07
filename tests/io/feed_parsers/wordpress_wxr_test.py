@@ -98,7 +98,6 @@ class WPWXRTestBase(TestCase):
 
 
 class WPWXRTestCase(WPWXRTestBase):
-
     filename = "wordpress_wxr.xml"
 
     def test_guid(self):
@@ -231,7 +230,6 @@ class WPWXRTestCase(WPWXRTestBase):
 
 
 class WPWXRThumbnailTestCase(WPWXRTestBase):
-
     filename = "wordpress_wxr_thumb.xml"
 
     def test_skipped(self):
@@ -280,7 +278,6 @@ class WPWXRThumbnailTestCase(WPWXRTestBase):
 
 
 class FunkeWXRTestCase(WPWXRTestBase):
-
     filename = "wordpress_wxr_funke.xml"
 
     def test_body_html(self):

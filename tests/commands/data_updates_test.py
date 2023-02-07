@@ -14,7 +14,6 @@ MAIN_DATA_UPDATES_DIR = "/tmp/global_data_updates"
 
 class DataUpdatesTestCase(TestCase):
     def setUp(self):
-
         dirs = (
             ("DEFAULT_DATA_UPDATE_DIR_NAME", "/tmp/data_updates"),
             ("MAIN_DATA_UPDATES_DIR", "/tmp/global_data_updates"),

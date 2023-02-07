@@ -22,7 +22,6 @@ from ..media import get_picture_fixture
 
 
 class CropTestCase(TestCase):
-
     crop_sizes = {
         "_id": "crop_sizes",
         "display_name": "Image Crop Sizes",

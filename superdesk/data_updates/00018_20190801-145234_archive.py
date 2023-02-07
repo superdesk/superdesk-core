@@ -15,7 +15,6 @@ from superdesk.vocabularies import is_related_content
 
 
 class DataUpdate(BaseDataUpdate):
-
     resource = "archive"
 
     def forwards(self, mongodb_collection, mongodb_database):

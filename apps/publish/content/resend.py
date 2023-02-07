@@ -39,7 +39,6 @@ class ResendResource(ArchiveResource):
 
 
 class ResendService(Service):
-
     digital = partial(
         filter, lambda s: (s.get("subscriber_type", "") in {SUBSCRIBER_TYPES.DIGITAL, SUBSCRIBER_TYPES.ALL})
     )

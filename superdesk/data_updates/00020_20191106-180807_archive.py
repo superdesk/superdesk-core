@@ -14,7 +14,6 @@ from datetime import datetime
 
 
 class DataUpdate(BaseDataUpdate):
-
     resource = "archive"
 
     def forwards(self, mongodb_collection, mongodb_database):
@@ -24,7 +23,6 @@ class DataUpdate(BaseDataUpdate):
             print('No field with "date" type, there is nothing to do')
         else:
             for resource in ["archive", "archive_autosave", "published"]:
-
                 collection = mongodb_database[resource]
 
                 for item in collection.find({"extra": {"$exists": True, "$ne": {}}}):
@@ -45,7 +43,6 @@ class DataUpdate(BaseDataUpdate):
             print('No field with "date" type, there is nothing to do')
         else:
             for resource in ["archive", "archive_autosave", "published"]:
-
                 collection = mongodb_database[resource]
 
                 for item in collection.find({"extra": {"$exists": True, "$ne": {}}}):

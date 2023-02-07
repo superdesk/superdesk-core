@@ -41,11 +41,9 @@ class TreeNode:
 
 
 class DataUpdate(BaseDataUpdate):
-
     resource = "archive"
 
     def forwards(self, mongodb_collection, mongodb_database):
-
         # building multiple trees
         tree_items = {}
         for item in mongodb_collection.find({"translated_from": {"$exists": True}}):
