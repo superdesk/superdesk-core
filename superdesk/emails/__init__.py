@@ -113,6 +113,7 @@ def send_user_status_changed_email(recipients, status):
     html_body = render_template("account_status_changed.html", app_name=app_name, status=status)
     send_email.delay(subject=subject, sender=admins[0], recipients=recipients, text_body=text_body, html_body=html_body)
 
+
 def send_user_type_changed_email(recipients):
     admins = app.config["ADMINS"]
     app_name = app.config["APPLICATION_NAME"]
@@ -120,6 +121,7 @@ def send_user_type_changed_email(recipients):
     text_body = render_template("account_type_changed.txt", app_name=app_name)
     html_body = render_template("account_type_changed.html", app_name=app_name)
     send_email.delay(subject=subject, sender=admins[0], recipients=recipients, text_body=text_body, html_body=html_body)
+
 
 def send_reset_password_email(doc, token_ttl):
     admins = app.config["ADMINS"]

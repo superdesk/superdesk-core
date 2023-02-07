@@ -33,7 +33,12 @@ class UsersResource(Resource):
             "first_name": {"type": "string", "readonly": self.readonly},
             "last_name": {"type": "string", "readonly": self.readonly},
             "display_name": {"type": "string"},
-            "email": {"unique": True, "type": "email","email_is_required": True,"coerce": lambda s: s.lower(),},
+            "email": {
+                "unique": True,
+                "type": "email",
+                "email_is_required": True,
+                "coerce": lambda s: s.lower(),
+            },
             "phone": {"type": "string", "nullable": True},
             "job_title": {
                 "type": "string",
