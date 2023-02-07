@@ -2,7 +2,6 @@ from . import BaseFormatter, utils
 
 
 class TableCSVFormatter(BaseFormatter):
-
     MIMETYPE = "text/csv"
     SEPARATOR = ","
 

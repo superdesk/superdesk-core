@@ -43,7 +43,6 @@ styles["BodyText"].spaceAfter = FONT_SIZE
 
 
 class PrompterPDFFormatter(BaseFormatter):
-
     MIMETYPE = "application/pdf"
 
     style = styles["BodyText"]
@@ -99,7 +98,6 @@ class PrompterPDFFormatter(BaseFormatter):
 
 
 class TablePDFFormatter(PrompterPDFFormatter):
-
     MIMETYPE = "application/pdf"
 
     pagesize = landscape(A4)
