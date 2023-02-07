@@ -230,8 +230,15 @@ class UsersService(BaseService):
         renditions = get_resource_service("upload").find_one(req=None, _id=doc)
         return renditions.get("renditions") if renditions is not None else None
 
+    def is_email_required(self, doc):
+        if doc["user_type"] in ["user", "administrator"] and doc.get("email") is None:
+            raise SuperdeskApiError.badRequestError(
+                message="Request is not valid", payload={"email": "This field is required"}
+            )
+
     def on_create(self, docs):
         for user_doc in docs:
+            self.is_email_required(user_doc)
             user_doc.setdefault("password_changed_on", utcnow())
             user_doc.setdefault("display_name", get_display_name(user_doc))
             user_doc.setdefault(SIGN_OFF, set_sign_off(user_doc))
