@@ -29,7 +29,6 @@ class BBCNINJSTestCase(TestCase):
 
 
 class SimpleTestCase(BBCNINJSTestCase):
-
     filename = "bbc-ninjs-text-test.json"
 
     def test_trans_attributes(self):
@@ -42,7 +41,6 @@ class SimpleTestCase(BBCNINJSTestCase):
 
 
 class CompositeTestCase(BBCNINJSTestCase):
-
     filename = "bbc-ninjs-comp-test.json"
 
     def test_parsed_items(self):

@@ -18,7 +18,6 @@ from superdesk.io.feed_parsers.nitf import NITFFeedParser
 
 
 class NITFTestCase(TestCase):
-
     vocab = [{"_id": "genre", "items": [{"name": "Current"}]}]
 
     def setUp(self):
@@ -33,7 +32,6 @@ class NITFTestCase(TestCase):
 
 
 class AAPTestCase(NITFTestCase):
-
     filename = "aap.xml"
 
     def test_headline(self):
@@ -92,7 +90,6 @@ class AAPTestCase(NITFTestCase):
 
 
 class APExampleTestCase(NITFTestCase):
-
     filename = "ap-nitf.xml"
 
     def test_headline(self):
@@ -109,7 +106,6 @@ class APExampleTestCase(NITFTestCase):
 
 
 class IPTCExampleTestCase(NITFTestCase):
-
     filename = "nitf-fishing.xml"
 
     def test_headline(self):
@@ -148,7 +144,6 @@ class IPTCExampleTestCase(NITFTestCase):
 
 
 class PATestCase(NITFTestCase):
-
     filename = "pa1.xml"
 
     def test_headline(self):
@@ -172,7 +167,6 @@ class PATestCase(NITFTestCase):
 
 
 class PATestCase2(NITFTestCase):
-
     filename = "pa2.xml"
 
     def test_headline(self):
@@ -229,7 +223,6 @@ class ParseSubjects(TestCase):
 
 
 class MappingTestCase(TestCase):
-
     filename = "mapping_test.xml"
     mapping = {
         "subject": {"update": True, "key_hook": lambda item, value: item.setdefault("subject", []).extend(value)},
@@ -262,7 +255,6 @@ class MappingTestCase(TestCase):
 
 
 class HandleInvalidFieldsTestCase(NITFTestCase):
-
     filename = "handle_invalid_fields.xml"
 
     def test_dates(self):
@@ -277,7 +269,6 @@ class HandleInvalidFieldsTestCase(NITFTestCase):
 
 
 class NTBTestCase(NITFTestCase):
-
     filename = "nitf-ntb.xml"
 
     def test_place(self):

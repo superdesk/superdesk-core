@@ -25,7 +25,6 @@ class AutocompleteResource(superdesk.Resource):
 
 
 class AutocompleteService(superdesk.Service):
-
     field_mapping = {
         "slugline": "slugline.keyword",
     }

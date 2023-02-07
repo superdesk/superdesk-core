@@ -13,7 +13,6 @@ from eve.utils import config
 
 # This script replaces the whole json of related item with respective _id only
 class DataUpdate(BaseDataUpdate):
-
     resource = "archive"
 
     def forwards(self, mongodb_collection, mongodb_database):

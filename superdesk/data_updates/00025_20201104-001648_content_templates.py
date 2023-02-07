@@ -13,7 +13,6 @@ from superdesk.commands.data_updates import BaseDataUpdate
 
 
 class DataUpdate(BaseDataUpdate):
-
     resource = "content_templates"
 
     def forwards(self, mongodb_collection, mongodb_database):

@@ -21,7 +21,6 @@ def fixture(filename):
 
 
 class ANPATestCase(TestCase):
-
     parser = ANPAFeedParser()
 
     def open(self, filename):

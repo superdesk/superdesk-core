@@ -14,7 +14,6 @@ from content_api.items.resource import schema
 
 
 class SearchResource(Resource):
-
     item_url = 'regex("[\w,.:-]+")'
     schema = schema
 

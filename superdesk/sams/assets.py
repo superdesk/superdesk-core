@@ -97,7 +97,6 @@ def create():
     response = post_response.json()
     if post_response.status_code == 201:
         if response.get("mimetype", "").startswith("image/"):
-
             # Create renditions.
             renditions = [k for k in app.config["RENDITIONS"]["sams"].keys()]
             for rendition in renditions:
@@ -256,7 +255,6 @@ def unlock_asset_by_user(user_id, session_id):
 
 @assets_bp.route("/sams/assets/tags", methods=["GET"])
 def get_assets_tags():
-
     search_query = request.args.to_dict().get("query")
     query = {
         "bool": {

@@ -136,7 +136,6 @@ def get_sign_off(user):
 
 
 class UsersService(BaseService):
-
     _updating_stage_visibility = True
 
     def __is_invalid_operation(self, user, updates, method):

@@ -61,7 +61,6 @@ class LegalArchiveImport:
         :param dict item_id: id of the document from 'archive' collection.
         """
         try:
-
             logger.info("Import item into legal {}.".format(item_id))
 
             doc = get_resource_service(ARCHIVE).find_one(req=None, _id=item_id)
@@ -169,7 +168,6 @@ class LegalArchiveImport:
                 and article_in_legal_archive[config.VERSION] < legal_archive_doc[config.VERSION]
                 and len(versions_to_insert) == 0
             ):
-
                 resource_def = app.config["DOMAIN"][ARCHIVE]
                 versioned_doc = deepcopy(legal_archive_doc)
                 versioned_doc[versioned_id_field(resource_def)] = legal_archive_doc[config.ID_FIELD]
