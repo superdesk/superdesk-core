@@ -489,7 +489,7 @@ class DBUsersService(UsersService):
         resetService = get_resource_service("reset_user_password")
         activate_ttl = app.config["ACTIVATE_ACCOUNT_TOKEN_TIME_TO_LIVE"]
         for doc in docs:
-            if self.user_is_waiting_activation(doc):
+            if self.user_is_waiting_activation(doc) and doc["user_type"]!= "external":
                 tokenDoc = {"user": doc["_id"], "email": doc["email"]}
                 id = resetService.store_reset_password_token(tokenDoc, doc["email"], activate_ttl, doc["_id"])
                 if not id:
