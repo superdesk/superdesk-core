@@ -19,7 +19,7 @@ class MediaTopicsTestCase(unittest.TestCase):
         self.topics = MediaTopicsIndex()
 
     def test_all_subjects_map_to_a_media_topic(self):
-        for (k, v) in sorted(subject_codes.items()):
+        for k, v in sorted(subject_codes.items()):
             topic = self.topics.get_media_topic(k)
             self.assertIsNotNone(topic)
             # print(k, v, '\t---->\t',topic, self.topics.get_media_topic_item(topic).get('prefLabel').get('en-GB'))
@@ -33,7 +33,7 @@ class MediaTopicsTestCase(unittest.TestCase):
 
     def test_get_media_topics(self):
         items = self.topics.get_media_topics()
-        for (i, v) in items.items():
+        for i, v in items.items():
             subject = self.topics.get_subject_code(i)
             self.assertIsNotNone(subject)
             # print(i, v.get('prefLabel').get('en-GB'), '\t---->\t', subject, subject_codes.get(subject))

@@ -23,7 +23,6 @@ logger = logging.getLogger(__name__)
 
 
 class EnqueueKilledService(EnqueueService):
-
     publish_type = "kill"
     published_state = "killed"
 

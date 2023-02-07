@@ -19,7 +19,6 @@ def get_mime_type(formatter_qcode):
 @bp.route("/format-document-for-preview/", methods=["GET", "OPTIONS"])
 @blueprint_auth()
 def format_document():
-
     document_id = request.args.get("document_id")
     subscriber_id = request.args.get("subscriber_id")
     formatter_qcode = request.args.get("formatter")
@@ -42,5 +41,4 @@ def format_document():
 
 
 def init_app(app) -> None:
-
     superdesk.blueprint(bp, app)

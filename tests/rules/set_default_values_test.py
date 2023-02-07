@@ -4,7 +4,6 @@ from apps.rules.rule_handlers import DeskFetchPublishRoutingRuleHandler
 
 class SetDefaultValuesTestCase(TestCase):
     def test_setting_default_values(self):
-
         instance = DeskFetchPublishRoutingRuleHandler()
         category = [{"qcode": "a", "name": "Australian General News"}]
         result = instance._assign_default_values({"anpa_category": category}, None)

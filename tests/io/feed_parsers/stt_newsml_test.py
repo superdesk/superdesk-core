@@ -189,7 +189,6 @@ class STTLocationTestCase(BaseSTTNewsMLTestCase):
 
 
 class STTRichLocationTestCase(BaseSTTNewsMLTestCase):
-
     filename = "stt_newsml_location_rich.xml"
 
     def test_location(self):

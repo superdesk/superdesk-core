@@ -29,7 +29,6 @@ class APMediaTestCase(TestCase):
 
 
 class SimpleTestCase(APMediaTestCase):
-
     filename = "ap_media_picture.json"
 
     def test_headline(self):

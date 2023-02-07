@@ -266,7 +266,6 @@ class XMLFeedParser(FeedParser, metaclass=ABCMeta):
                             continue
                 else:
                     for idx, current_value in enumerate(values):
-
                         if isinstance(current_value, etree._Element):
                             # do we want a filter or the content?
                             try:

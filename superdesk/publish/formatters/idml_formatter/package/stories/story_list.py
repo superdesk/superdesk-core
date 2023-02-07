@@ -63,7 +63,6 @@ class StoryList(Story):
         list_item_height = 0
 
         for el in story._etree.xpath(".//ParagraphStyleRange")[0].iterchildren():
-
             if el.tag == "Br":
                 if list_item_height < 20:
                     list_item_height = 20

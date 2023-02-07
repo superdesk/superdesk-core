@@ -49,7 +49,6 @@ class TreeNode:
 
 
 class DataUpdate(BaseDataUpdate):
-
     resource = "archive"  # will use multiple resources, keeping this here so validation passes
 
     def forwards(self, mongodb_collection, mongodb_database):

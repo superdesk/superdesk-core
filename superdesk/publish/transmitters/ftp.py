@@ -68,7 +68,6 @@ class FTPPublishService(PublishService):
 
         try:
             with ftp_connect(config) as ftp:
-
                 if config.get("push_associated", False):
                     # Set the working directory for the associated files
                     if "associated_path" in config and config.get("associated_path"):

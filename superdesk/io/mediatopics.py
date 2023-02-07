@@ -82,7 +82,7 @@ class MediaTopicsIndex:
 
         # Construct a list in order of how close the match is, in some cases there may be for example multiple exact
         # matches, in this case the first one is chosen
-        for (k, v) in working_map.items():
+        for k, v in working_map.items():
             matches = v.get("exactMatch", []) if "exactMatch" in v else []
             matches = matches + (v.get("closeMatch", []) if "closeMatch" in v else [])
             matches = matches + (v.get("broadMatch", []) if "broadMatch" in v else [])
@@ -169,7 +169,7 @@ class MediaTopicsIndex:
         Each topic is a dict with `qcode`, `name` and `parent` and list of 'children' keys.
         """
         items = []
-        for (_k, code) in self.media_topic_map.items():
+        for _k, code in self.media_topic_map.items():
             if not code.get("retired"):
                 items.append(
                     {

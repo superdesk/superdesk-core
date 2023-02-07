@@ -11,7 +11,6 @@ from superdesk.commands.data_updates import BaseDataUpdate
 
 
 class DataUpdate(BaseDataUpdate):
-
     resource = "content_types"
 
     def forwards(self, mongodb_collection, mongodb_database):

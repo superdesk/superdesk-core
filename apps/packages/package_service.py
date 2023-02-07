@@ -107,7 +107,7 @@ class PackageService:
         package_create_signal.send(self, docs=docs)
 
     def on_created(self, docs):
-        for (doc, assoc) in [(doc, assoc) for doc in docs for assoc in self._get_associations(doc)]:
+        for doc, assoc in [(doc, assoc) for doc in docs for assoc in self._get_associations(doc)]:
             self.update_link(doc, assoc)
 
     def on_update(self, updates, original):
@@ -181,7 +181,7 @@ class PackageService:
             raise SuperdeskApiError.forbiddenError(message=message)
 
     def check_package_associations(self, docs):
-        for (doc, group) in ((doc, group) for doc in docs for group in doc.get(GROUPS, [])):
+        for doc, group in ((doc, group) for doc in docs for group in doc.get(GROUPS, [])):
             associations = group.get(REFS, [])
             self.check_for_duplicates(doc, associations)
             for assoc in associations:
