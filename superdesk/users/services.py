@@ -18,7 +18,7 @@ from superdesk.metadata.item import SIGN_OFF
 from superdesk.services import BaseService
 from superdesk.utils import is_hashed, get_hash, compare_preferences
 from superdesk import get_resource_service
-from superdesk.emails import send_user_status_changed_email, send_activate_account_email
+from superdesk.emails import send_user_status_changed_email, send_activate_account_email, send_user_type_changed_email
 from superdesk.utc import utcnow
 from superdesk.privilege import get_item_privilege_name, get_privilege_list
 from superdesk.errors import SuperdeskApiError
@@ -229,6 +229,14 @@ class UsersService(BaseService):
         renditions = get_resource_service("upload").find_one(req=None, _id=doc)
         return renditions.get("renditions") if renditions is not None else None
 
+    def handle_user_type_changed(self, updates, user):
+        user_type = updates.get("user_type", None)
+
+        if user_type is not None and user_type == "external":
+            can_send_mail = get_resource_service("preferences").email_notification_is_enabled(user_id=user["_id"])
+            if can_send_mail:
+                send_user_type_changed_email([user.get("email")])
+
     def on_create(self, docs):
         for user_doc in docs:
             user_doc.setdefault("password_changed_on", utcnow())
@@ -276,6 +284,7 @@ class UsersService(BaseService):
         if "role" in updates or "privileges" in updates:
             get_resource_service("preferences").on_update(updates, user)
         self.__handle_status_changed(updates, user)
+        self.handle_user_type_changed(updates, user)
         self.__send_notification(updates, user)
 
     def on_delete(self, user):
@@ -481,7 +490,7 @@ class DBUsersService(UsersService):
         resetService = get_resource_service("reset_user_password")
         activate_ttl = app.config["ACTIVATE_ACCOUNT_TOKEN_TIME_TO_LIVE"]
         for doc in docs:
-            if self.user_is_waiting_activation(doc) and doc["user_type"]!= "external":
+            if self.user_is_waiting_activation(doc) and doc["user_type"] != "external":
                 tokenDoc = {"user": doc["_id"], "email": doc["email"]}
                 id = resetService.store_reset_password_token(tokenDoc, doc["email"], activate_ttl, doc["_id"])
                 if not id:
