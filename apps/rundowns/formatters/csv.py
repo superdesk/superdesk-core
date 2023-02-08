@@ -1,3 +1,6 @@
+import io
+import csv
+
 from . import BaseFormatter, utils
 
 
@@ -9,11 +12,11 @@ class TableCSVFormatter(BaseFormatter):
         filename = f"Technical-{rundown['title']}.csv"
         subitems = utils.get_active_subitems(items)
         columns = utils.table_columns(subitems)
-        data = "\n".join(
-            [self.SEPARATOR.join(columns)]
-            + [
-                self.SEPARATOR.join(utils.item_table_data(show, rundown, item, i, subitems))
-                for i, item in enumerate(items, start=1)
-            ]
-        )
-        return data.encode("utf-8"), self.MIMETYPE, filename
+        output = io.StringIO(newline="\n")
+        writer = csv.writer(output)
+        writer.writerow(columns)
+        writer.writerows([
+            utils.item_table_data(show, rundown, item, i, subitems)
+            for i, item in enumerate(items, start=1)
+        ])
+        return output.getvalue().encode("utf-8"), self.MIMETYPE, filename
