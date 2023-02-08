@@ -15,8 +15,7 @@ class TableCSVFormatter(BaseFormatter):
         output = io.StringIO(newline="\n")
         writer = csv.writer(output)
         writer.writerow(columns)
-        writer.writerows([
-            utils.item_table_data(show, rundown, item, i, subitems)
-            for i, item in enumerate(items, start=1)
-        ])
+        writer.writerows(
+            [utils.item_table_data(show, rundown, item, i, subitems) for i, item in enumerate(items, start=1)]
+        )
         return output.getvalue().encode("utf-8"), self.MIMETYPE, filename
