@@ -203,37 +203,38 @@ class RoutingRuleSchemeService(BaseService):
         filters_service = superdesk.get_resource_service("content_filters")
 
         now = datetime.utcnow()
+        item_id = ingest_item.get("guid") or ingest_item.get("_id")
 
         for rule in self._get_scheduled_routing_rules(rules, now):
             content_filter = rule.get("filter", {})
             logger.info(
                 "Applying rule. Item: %s . Routing Scheme: %s. Rule Name %s."
-                % (ingest_item.get("guid"), routing_scheme.get("name"), rule.get("name"))
+                % (item_id, routing_scheme.get("name"), rule.get("name"))
             )
 
             rule_handler = get_routing_rule_handler(rule)
             if not rule_handler.can_handle(rule, ingest_item, routing_scheme):
                 logger.info(
                     "Routing rule %s of Routing Scheme %s for Provider %s does not support item %s"
-                    % (rule.get("name"), routing_scheme.get("name"), provider.get("name"), ingest_item[config.ID_FIELD])
+                    % (rule.get("name"), routing_scheme.get("name"), provider.get("name"), item_id)
                 )
             elif filters_service.does_match(content_filter, ingest_item):
                 logger.info(
                     "Filter matched. Item: %s. Routing Scheme: %s. Rule Name %s."
-                    % (ingest_item.get("guid"), routing_scheme.get("name"), rule.get("name"))
+                    % (item_id, routing_scheme.get("name"), rule.get("name"))
                 )
 
                 rule_handler.apply_rule(rule, ingest_item, routing_scheme)
                 if rule.get("actions", {}).get("exit", False):
                     logger.info(
                         "Exiting routing scheme. Item: %s . Routing Scheme: %s. "
-                        "Rule Name %s." % (ingest_item.get("guid"), routing_scheme.get("name"), rule.get("name"))
+                        "Rule Name %s." % (item_id, routing_scheme.get("name"), rule.get("name"))
                     )
                     break
             else:
                 logger.info(
                     "Routing rule %s of Routing Scheme %s for Provider %s did not match for item %s"
-                    % (rule.get("name"), routing_scheme.get("name"), provider.get("name"), ingest_item[config.ID_FIELD])
+                    % (rule.get("name"), routing_scheme.get("name"), provider.get("name"), item_id)
                 )
 
     def _adjust_for_empty_schedules(self, routing_scheme):
