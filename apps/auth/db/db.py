@@ -12,7 +12,7 @@ import bcrypt
 from flask import g
 from apps.auth.service import AuthService
 from superdesk import get_resource_service
-from apps.auth.errors import CredentialsAuthError, PasswordExpiredError
+from apps.auth.errors import CredentialsAuthError, PasswordExpiredError, ExternalUserError
 from flask import current_app as app
 from superdesk.utc import utcnow
 import datetime
@@ -23,6 +23,12 @@ class DbAuthService(AuthService):
         user = get_resource_service("auth_users").find_one(req=None, username=credentials.get("username"))
         if not user:
             raise CredentialsAuthError(credentials)
+
+        _user = get_resource_service("users").find_one(req=None, username=credentials.get("username"))
+        if _user.get("user_type") == "external":
+            raise ExternalUserError(
+                message="Oops!This account has been changed to External. External accounts have no login capability."
+            )
 
         password = credentials.get("password").encode("UTF-8")
         hashed = user.get("password").encode("UTF-8")
