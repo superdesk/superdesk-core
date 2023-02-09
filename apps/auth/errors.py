@@ -49,4 +49,3 @@ class ExternalUserError(SuperdeskApiError):
 
     status_code = 403
     payload = {"user_type": "external"}
-    message = "Oops! This account has been changed to External. External accounts have no login capability."
