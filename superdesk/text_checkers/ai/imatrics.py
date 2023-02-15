@@ -185,14 +185,12 @@ class IMatrics(AIServiceBase):
             "language": item["language"],
         }
 
-    def analyze(self, item: dict, tags: Optional[dict] = None) -> dict:
+    def analyze(self, item: dict) -> dict:
         """Analyze article to get tagging suggestions"""
         if not self.base_url or not self.user or not self.key:
             logger.warning("IMatrics is not configured propertly, can't analyze article")
             return {}
         data = self._transform_to_imatrics(item)
-        if tags is not None:
-            data["concepts"] = self._format_concepts(tags)
         if not data.get("headline") and not data.get("body"):
             logger.warning("no body nor headline found in item {item_id!r}".format(item_id=item["guid"]))
             # we return an empty result
