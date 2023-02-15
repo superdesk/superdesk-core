@@ -18,7 +18,7 @@ import asyncio
 import websockets
 from websockets.server import WebSocketServerProtocol
 import signal
-from urllib.parse import parse_qs
+from urllib.parse import urlparse, parse_qs
 from uuid import UUID
 
 from datetime import timedelta, datetime
@@ -191,12 +191,12 @@ class SocketCommunication:
         self.clients.add(websocket)
 
         # Store client URL args for use with message filters
-        if not websocket.path.startswith(self.subscribe_prefix):
+        if self.subscribe_prefix not in websocket.path:
             self.client_url_args[websocket.id] = {}
         else:
-            self.client_url_args[websocket.id] = {
-                key: val[0] for key, val in parse_qs(websocket.path.replace(self.subscribe_prefix, "")).items()
-            }
+            parsed_url = urlparse(websocket.path)
+            url_params = parse_qs(parsed_url.query)
+            self.client_url_args[websocket.id] = {key: val[0] for key, val in url_params.items()}
 
     def _remove_client(self, websocket: WebSocketServerProtocol):
         self.clients.remove(websocket)
