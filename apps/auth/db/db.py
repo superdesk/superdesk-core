@@ -16,7 +16,7 @@ from apps.auth.errors import CredentialsAuthError, PasswordExpiredError, Externa
 from flask import current_app as app
 from superdesk.utc import utcnow
 import datetime
-from superdesk.text_utils import get_text
+from flask_babel import _
 
 
 class DbAuthService(AuthService):
@@ -28,9 +28,7 @@ class DbAuthService(AuthService):
         _user = get_resource_service("users").find_one(req=None, username=credentials.get("username"))
         if _user.get("user_type") == "external":
             raise ExternalUserError(
-                message=get_text(
-                    "Oops!This account has been changed to External. External accounts have no login capability."
-                )
+                message=_("Oops!This account has been changed to External. External accounts have no login capability.")
             )
 
         password = credentials.get("password").encode("UTF-8")
