@@ -73,7 +73,7 @@ class HTTPFeedingServiceBase(FeedingService):
     # Set to True if authentication is mandatory, False if there is no authentication
     # and None to add authentication if user and password are defined.
     # If auth_required is defined in config fields, it will override this value.
-    HTTP_AUTH = True
+    HTTP_AUTH: Optional[bool] = True
 
     # use this when auth is always required
     AUTH_FIELDS: List[Dict] = [
