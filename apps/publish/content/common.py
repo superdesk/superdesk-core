@@ -649,15 +649,11 @@ class BasePublishService(BaseService):
             # make sure no items are killed or recalled or spiked
             # using the latest version of the item from archive
             doc_item_state = orig.get(ITEM_STATE, CONTENT_STATE.PUBLISHED)
-            if (
-                doc_item_state
-                in {
-                    CONTENT_STATE.KILLED,
-                    CONTENT_STATE.RECALLED,
-                    CONTENT_STATE.SPIKED,
-                }
-                or (doc_item_state == CONTENT_STATE.SCHEDULED and main_publish_schedule is None)
-            ):
+            if doc_item_state in {
+                CONTENT_STATE.KILLED,
+                CONTENT_STATE.RECALLED,
+                CONTENT_STATE.SPIKED,
+            } or (doc_item_state == CONTENT_STATE.SCHEDULED and main_publish_schedule is None):
                 validation_errors.append(_("Item cannot contain associated {state} item.").format(state=doc_item_state))
             elif doc_item_state == CONTENT_STATE.SCHEDULED:
                 item_schedule = get_utc_schedule(orig, PUBLISH_SCHEDULE)
