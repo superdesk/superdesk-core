@@ -21,7 +21,6 @@ class RundownItemsResource(superdesk.Resource):
         },
         "planned_duration": {
             "type": "number",
-            "required": True,
         },
         "show_part": superdesk.Resource.not_analyzed_field(nullable=True),
         "additional_notes": superdesk.Resource.not_analyzed_field(nullable=True),
