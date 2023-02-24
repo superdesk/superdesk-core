@@ -36,6 +36,7 @@ DUMMY_RE = re.compile(r"</?dummy_tag>")
 ANNOTATION = "ANNOTATION"
 MEDIA = "MEDIA"
 TABLE = "TABLE"
+MULTI_LINE_QUOTE = "MULTI-LINE_QUOTE"
 
 EDITOR_STATE = "draftjsState"
 ENTITY_MAP = "entityMap"
@@ -306,6 +307,7 @@ class DraftJSHTMLExporter:
                     MEDIA: self.render_media,
                     ANNOTATION: self.render_annotation,
                     TABLE: self.render_table,
+                    MULTI_LINE_QUOTE: self.render_table,
                 },
             }
         )
