@@ -8,7 +8,7 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
-from typing import List, Dict, Optional
+from typing import List, Dict, Optional, Union
 import traceback
 import requests
 from superdesk.errors import IngestApiError, SuperdeskIngestError

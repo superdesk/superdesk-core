@@ -8,7 +8,7 @@
 # Carl Gustafsson <carl@cubefive.com>, 2020
 # Lars Kajes <mintlars@hotmail.com>, 2021
 # Eva Borgström <eva.stjerne@gmail.com>, 2021
-# Anton Borgström <anton.borgstrom@etc.se>, 2022
+# Anton Borgström <anton.borgstrom@etc.se>, 2023
 # 
 #, fuzzy
 msgid ""
@@ -17,7 +17,7 @@ msgstr ""
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
 "POT-Creation-Date: 2022-09-05 14:47+0200\n"
 "PO-Revision-Date: 2019-04-04 09:17+0000\n"
-"Last-Translator: Anton Borgström <anton.borgstrom@etc.se>, 2022\n"
+"Last-Translator: Anton Borgström <anton.borgstrom@etc.se>, 2023\n"
 "Language-Team: Swedish (Sweden) (https://www.transifex.com/sourcefabric/teams/6584/sv_SE/)\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -104,11 +104,11 @@ msgstr "Skriv in standardmall Metadata"
 
 #: superdesk/macros/take_key_validator.py:25
 msgid "validate take key"
-msgstr "godkänn version"
+msgstr "validera take key"
 
 #: superdesk/macros/validate_for_publish.py:29
 msgid "Validate for Publish"
-msgstr "Godkänn för publicering"
+msgstr "Validera för publicering"
 
 #: superdesk/macros/imperial/area_acre_to_metric.py:47
 msgid "Area acres to metric"
@@ -584,7 +584,7 @@ msgstr "Embargo kan inte vara tidigare än nu"
 
 #: apps/archive/archive.py:992
 msgid "Rewrites doesn't support Embargo"
-msgstr "Omskrivningar stöder inte Embargo"
+msgstr "Rewrites stöder inte Embargo"
 
 #: apps/archive/archive.py:995
 msgid "Invalid Embargo"
@@ -655,7 +655,7 @@ msgstr "Artikel har redan skrivits om !"
 
 #: apps/archive/archive_rewrite.py:165
 msgid "Rewrite is not published. Cannot rewrite the story again."
-msgstr "Omskrivning ej publicerad. Går inte att skriva om storyn igen."
+msgstr "Rewrite ej publicerad. Går inte att skriva om storyn igen."
 
 #: apps/archive/archive_rewrite.py:171
 msgid "Rewrite story has been used as update before !"
@@ -1073,7 +1073,7 @@ msgstr "Översätt innehåll inom en desk"
 
 #: apps/duplication/__init__.py:69 apps/duplication/__init__.py:70
 msgid "Send Content to Personal desk"
-msgstr "Skicka innehåll till personlig desk"
+msgstr "Skicka innehåll till privat desk"
 
 #: apps/duplication/archive_copy.py:54
 #: apps/duplication/archive_duplication.py:130
