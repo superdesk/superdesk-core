@@ -226,7 +226,7 @@ class IMatrics(AIServiceBase):
             r_data = self._search_images(data)
         except:
             return {"result": []}
-        return r_data
+        return [image for image in r_data if type(image["imageUrl"]) == str and image["imageUrl"] != ""]
 
     def _search_images(self, data, **params):
         return self._request_images(
