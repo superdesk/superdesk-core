@@ -8,6 +8,7 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
+from typing import Optional
 from bson import ObjectId
 
 import logging
@@ -698,7 +699,7 @@ def update_schedule_settings(updates, field_name, value):
     updates[SCHEDULE_SETTINGS] = schedule_settings
 
 
-def get_utc_schedule(doc, field_name):
+def get_utc_schedule(doc, field_name) -> Optional[datetime]:
     """Gets the utc value of the given field.
 
     :param doc: Article
@@ -713,7 +714,8 @@ def get_utc_schedule(doc, field_name):
     ):
         update_schedule_settings(doc, field_name, doc.get(field_name))
 
-    return doc.get(SCHEDULE_SETTINGS, {}).get(utc_field_name)
+    value = doc.get(SCHEDULE_SETTINGS, {}).get(utc_field_name)
+    return get_date(value) if value else value
 
 
 def item_schema(extra=None):
