@@ -39,7 +39,7 @@ from superdesk.metadata.utils import item_url
 from superdesk.notification import push_notification
 from superdesk.publish import SUBSCRIBER_TYPES
 from superdesk.services import BaseService
-from superdesk.utc import utcnow
+from superdesk.utc import utcnow, get_date
 from superdesk.workflow import is_workflow_state_transition_valid
 from superdesk.validation import ValidationError
 
@@ -432,6 +432,8 @@ class BasePublishService(BaseService):
         """
         desk_id = original.get("task", {}).get("desk")
         stage_id = original.get("task", {}).get("stage")
+
+        offset = None
 
         if EMBARGO in updates or PUBLISH_SCHEDULE in updates:
             offset = get_utc_schedule(updates, PUBLISH_SCHEDULE) or get_utc_schedule(updates, EMBARGO)

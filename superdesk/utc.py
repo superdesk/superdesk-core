@@ -9,6 +9,7 @@
 # at https://www.sourcefabric.org/superdesk/license
 
 
+from typing import Optional
 import arrow
 import datetime
 import pytz
@@ -30,9 +31,10 @@ def utcnow():
     return now.replace(microsecond=0)
 
 
-def get_date(date_or_string):
+def get_date(date_or_string) -> Optional[datetime.datetime]:
     if date_or_string:
         return arrow.get(date_or_string).datetime
+    return None
 
 
 def get_expiry_date(minutes, offset=None):
