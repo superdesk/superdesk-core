@@ -41,7 +41,7 @@ install_requires = [
     "tzlocal>=2.1,<3.0",
     "raven[flask]>=5.10,<7.0",
     "requests>=2.7.0,<3.0",
-    "boto3>=1.18.42,<2",
+    "boto3>=1.26,<2.0",
     "websockets==10.3",
     "mongolock>=1.3.4,<1.4",
     "PyYAML>=5.3.1,<6.0",
