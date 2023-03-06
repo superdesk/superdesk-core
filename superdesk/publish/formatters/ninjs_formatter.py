@@ -41,6 +41,7 @@ from superdesk.publish.formatters import Formatter
 from superdesk.errors import FormatterError
 from superdesk.metadata.item import ITEM_TYPE, CONTENT_TYPE, EMBARGO, GUID_FIELD, ASSOCIATIONS
 from superdesk.metadata.packages import RESIDREF, GROUP_ID, GROUPS, ROOT_GROUP, REFS
+from superdesk.metadata.utils import generate_urn
 from superdesk.utils import json_serialize_datetime_objectId
 from superdesk.media.renditions import get_renditions_spec
 from superdesk.vocabularies import is_related_content
@@ -572,6 +573,9 @@ class NINJSFormatter(Formatter):
                 "role": author.get("role", ""),
                 "biography": user.get("biography", author.get("biography", "")),
             }
+
+            if user.get("_id"):
+                author["uri"] = generate_urn("user", user["_id"])
 
             # include socials only if they are non-empty
             socials = ("facebook", "twitter", "instagram")
