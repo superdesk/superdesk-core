@@ -56,9 +56,9 @@ class WebsocketsTestCase(unittest.TestCase):
         com = SocketCommunication("host", "port", "url")
 
         client_no_user = TestClient("")
-        client_user_abc123_sess_12345 = TestClient("/subscribe?user=abc123&session=12345")
-        client_user_abc123_sess_67890 = TestClient("/subscribe?user=abc123&session=67890")
-        client_user_def456 = TestClient("/subscribe?user=def456")
+        client_user_abc123_sess_12345 = TestClient("/ws/subscribe?user=abc123&session=12345")
+        client_user_abc123_sess_67890 = TestClient("/ws/subscribe?user=abc123&session=67890")
+        client_user_def456 = TestClient("/ws/subscribe?user=def456")
         com._add_client(client_no_user)
         com._add_client(client_user_abc123_sess_12345)
         com._add_client(client_user_abc123_sess_67890)

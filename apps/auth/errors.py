@@ -42,3 +42,10 @@ class CredentialsAuthError(SuperdeskApiError):
         logger.warning("Login failure: %s" % json.dumps(credentials))
         if error:
             logger.error("Exception occurred: {}".format(error))
+
+
+class ExternalUserError(SuperdeskApiError):
+    """User is external, access restricted"""
+
+    status_code = 403
+    payload = {"user_type": "external"}

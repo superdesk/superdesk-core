@@ -1,0 +1,5 @@
+{% extends "email_layout.txt" %}
+
+{% block content %}
+Your {{app_name}} user account has been changed to External
+{% endblock %}

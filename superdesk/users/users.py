@@ -33,7 +33,12 @@ class UsersResource(Resource):
             "first_name": {"type": "string", "readonly": self.readonly},
             "last_name": {"type": "string", "readonly": self.readonly},
             "display_name": {"type": "string"},
-            "email": {"unique": True, "type": "email", "required": True, "coerce": lambda s: s.lower()},
+            "email": {
+                "unique": True,
+                "type": "email",
+                "email_is_required": True,
+                "coerce": lambda s: s.lower(),
+            },
             "phone": {"type": "string", "nullable": True},
             "job_title": {
                 "type": "string",
@@ -85,7 +90,7 @@ class UsersResource(Resource):
                 "schema": {},
                 "allow_unknown": True,
             },
-            "user_type": {"type": "string", "allowed": ["user", "administrator"], "default": "user"},
+            "user_type": {"type": "string", "allowed": ["user", "administrator", "external"], "default": "user"},
             "is_support": {"type": "boolean", "default": False},
             "is_author": {"type": "boolean", "default": True},
             "private": {"type": "boolean", "default": False, "nullable": True},
