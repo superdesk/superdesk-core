@@ -334,11 +334,11 @@ def jwt_encode(payload: Dict, expiry=None) -> str:
     if expiry:
         payload["exp"] = datetime.now(tz=timezone.utc) + timedelta(days=expiry)
     payload["iss"] = app.config["APPLICATION_NAME"]
-    return jwt.encode(payload, app.config["SECRET_KEY"], JWT_ALGO)
+    return jwt.encode(payload, app.config["SECRET_KEY"], JWT_ALGO).decode()
 
 
 def jwt_decode(token) -> Optional[Dict]:
     try:
-        return jwt.decode(token, app.config["SECRET_KEY"], [JWT_ALGO])
+        return jwt.decode(token, app.config["SECRET_KEY"], algorithms=[JWT_ALGO])
     except jwt.InvalidSignatureError:
         return None
