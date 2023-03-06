@@ -13,6 +13,6 @@ class MediaOperationsTestCase(unittest.TestCase):
         body = io.BytesIO(b"data")
         with app.app_context():
             with requests_mock.mock() as mock:
-                mock.get("https://localhost/test/foo.jpg", body=body)
+                mock.get("http://localhost/test/foo.jpg", body=body)
                 out = download_file_from_url("/test/foo.jpg")
         self.assertEqual(b"data", out[0].read())

@@ -49,13 +49,13 @@ def init_app(app) -> None:
     service: Any = AppIngestService(endpoint_name, backend=superdesk.get_backend())
     IngestResource(endpoint_name, app=app, service=service)
 
-    endpoint_name = "archive_versions"
-    service = ArchiveVersionsService(endpoint_name, backend=superdesk.get_backend())
-    ArchiveVersionsResource(endpoint_name, app=app, service=service)
-
     endpoint_name = "archive"
     service = ArchiveService(endpoint_name, backend=superdesk.get_backend())
     ArchiveResource(endpoint_name, app=app, service=service)
+
+    endpoint_name = "archive_versions"
+    service = ArchiveVersionsService(endpoint_name, backend=superdesk.get_backend())
+    ArchiveVersionsResource(endpoint_name, app=app, service=service)
 
     endpoint_name = "archive_lock"
     service = ArchiveLockService(endpoint_name, backend=superdesk.get_backend())
