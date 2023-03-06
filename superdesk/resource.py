@@ -15,7 +15,11 @@ from eve.auth import BasicAuth
 from typing_extensions import Literal
 
 import superdesk
+
 from eve.utils import config
+from .services import Service
+
+from . import resource_locking
 
 
 log = logging.getLogger(__name__)
@@ -33,6 +37,9 @@ text_with_keyword = {
         "keyword": {"type": "keyword"},
     },
 }
+
+
+FieldTypes = Literal["string", "boolean", "integer", "dict", "list", "datetime"]
 
 
 def build_custom_hateoas(hateoas, doc, **values):
@@ -91,6 +98,7 @@ class Resource:
     item_privileges = False
     notifications = True
     collation: bool = False
+    locking: bool = False
 
     def __init__(self, endpoint_name, app, service, endpoint_schema=None):
         self.endpoint_name = endpoint_name
@@ -124,7 +132,12 @@ class Resource:
             if self.internal_resource is not None:
                 endpoint_schema.update({"internal_resource": self.internal_resource})
             if self.resource_title is not None:
-                endpoint_schema.update({"resource_title": self.resource_title})
+                endpoint_schema.update(
+                    {
+                        "resource_title": self.resource_title,
+                        "item_title": self.resource_title,
+                    }
+                )
             if self.etag_ignore_fields:
                 endpoint_schema.update({"etag_ignore_fields": self.etag_ignore_fields})
             if self.mongo_prefix:
@@ -155,6 +168,9 @@ class Resource:
                     collation=self.collation,
                 )
             )
+
+            if self.locking:
+                endpoint_schema["schema"].update(Resource.locking_schema())
 
             if app.config.get("SCHEMA_UPDATE", {}).get(self.endpoint_name):
                 schema_updates = app.config["SCHEMA_UPDATE"][self.endpoint_name]
@@ -187,6 +203,9 @@ class Resource:
         on_update_event -= service.on_update
         on_update_event += service.on_update
 
+        if self.locking:
+            on_update_event += resource_locking.on_update
+
         on_updated_event = getattr(app, "on_updated_%s" % self.endpoint_name)
         on_updated_event -= service.on_updated
         on_updated_event += service.on_updated
@@ -209,6 +228,12 @@ class Resource:
 
         app.register_resource(self.endpoint_name, endpoint_schema)
         superdesk.resources[self.endpoint_name] = self
+
+        if self.versioning:
+            versioning_resource = self.endpoint_name + "_versions"
+            superdesk.resources[versioning_resource] = VersionsResource(
+                Service(versioning_resource, backend=superdesk.get_backend())
+            )
 
         for request_method in ["GET", "POST", "PATCH", "PUT", "DELETE"]:
             if hasattr(self, "pre_request_" + request_method.lower()):
@@ -264,8 +289,46 @@ class Resource:
         }
 
     @staticmethod
-    def not_analyzed_field(type="string"):
+    def not_analyzed_field(type="string", required=False, nullable=False):
         return {
             "type": type,
+            "required": required,
+            "nullable": nullable,
             "mapping": not_analyzed,
         }
+
+    @staticmethod
+    def field(type: FieldTypes, *, nullable=True, readonly=False, required=False, analyzed=False, allowed=None) -> dict:
+        mapping = None
+        if type == "string" and not analyzed:
+            mapping = {"type": "keyword"}
+        specs = dict(
+            type=type,
+            nullable=nullable,
+            readonly=readonly,
+            required=required,
+            mapping=mapping,
+        )
+
+        if allowed is not None:
+            specs["allowed"] = allowed
+
+        return specs
+
+    @staticmethod
+    def locking_schema() -> dict:
+        return dict(
+            _lock=Resource.field("boolean", readonly=True, nullable=True),
+            _lock_action=Resource.field(
+                "string", nullable=True, allowed=[action.value for action in resource_locking.LockActions]
+            ),
+            _lock_user=Resource.rel("users", readonly=True, nullable=True),
+            _lock_time=Resource.field("datetime", readonly=True, nullable=True),
+            _lock_expiry=Resource.field("datetime", readonly=True, nullable=True),
+            _lock_session=Resource.field("string", readonly=True, nullable=True, analyzed=False),
+        )
+
+
+class VersionsResource(Resource):
+    def __init__(self, service):
+        self.service = service

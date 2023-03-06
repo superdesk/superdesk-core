@@ -12,7 +12,6 @@ from eve.utils import config
 
 
 class DataUpdate(BaseDataUpdate):
-
     resource = "vocabularies"
 
     def forwards(self, mongodb_collection, mongodb_database):

@@ -12,7 +12,6 @@ from superdesk.commands.data_updates import BaseDataUpdate
 
 
 class DataUpdate(BaseDataUpdate):
-
     resource = "vocabularies"
     update_fields = ["name", "qcode"]
 

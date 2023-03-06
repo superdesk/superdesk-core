@@ -43,7 +43,6 @@ class CreateUserCommand(superdesk.Command):
     )
 
     def run(self, username, password, email, admin=False, support=False):
-
         # force type conversion to boolean
         user_type = "administrator" if admin else "user"
 

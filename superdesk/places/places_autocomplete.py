@@ -6,7 +6,6 @@ from superdesk.geonames import geonames_request, format_geoname_item
 
 
 class PlacesAutocompleteResource(superdesk.Resource):
-
     resource_methods = ["GET"]
     item_methods = []
     schema = {

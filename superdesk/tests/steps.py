@@ -11,21 +11,22 @@
 
 import os
 import time
+import arrow
+import celery
 import shutil
+import responses
 import operator
 
 from unittest import mock
 from copy import deepcopy
 from base64 import b64encode
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, date
 from os.path import basename
 from re import findall
 from unittest.mock import patch
 from urllib.parse import urlparse
 from pathlib import Path
 
-import arrow
-import responses
 from behave import given, when, then  # @UnresolvedImport
 from bson import ObjectId
 from eve.io.mongo import MongoJSONEncoder
@@ -161,6 +162,12 @@ def json_match(context_data, response_data, json_fields=None, parent=None):
                 continue
             if context_data[key] == "__now__":
                 assert_is_now(response_data[key], key)
+                continue
+            if context_data[key] == "__today__":
+                assert response_data[key] == date.today().isoformat(), "{date} should be today ({today})".format(
+                    date=response_data[key],
+                    today=date.today().isoformat(),
+                )
                 continue
             if context_data[key] == "__future__":
                 assert arrow.get(response_data[key]) > arrow.get(), "{} should be in future".format(key)
@@ -1093,8 +1100,8 @@ def step_impl_then_get_error(context, code):
         test_json(context)
 
 
-@then("we get list with {total_count} items")
-def step_impl_then_get_list(context, total_count):
+@then("we get list with {total_count} {unit}")
+def step_impl_then_get_list(context, total_count, unit=None):
     assert_200(context.response)
     data = get_json_data(context.response)
     int_count = int(total_count.replace("+", "").replace("<", ""))
@@ -1250,6 +1257,8 @@ def step_impl_then_get_existing_saved_search(context):
 @then("we get OK response")
 def step_impl_then_get_ok(context):
     assert_200(context.response)
+    if context.text:
+        test_json(context)
 
 
 @then("we get response code {code}")
@@ -1257,6 +1266,8 @@ def step_impl_then_get_code(context, code):
     assert context.response.status_code == int(code), "we got code={} data={}".format(
         context.response.status_code, get_response_readable(context.response.data)
     )
+    if context.text:
+        test_json(context)
 
 
 @then("we get updated response")
@@ -2715,3 +2726,20 @@ def step_impl_then_we_dont_get_access_token(context):
 def setp_impl_when_we_init_data(context, entity):
     with context.app.app_context():
         AppInitializeWithDataCommand().run(entity)
+
+
+@when('we run task "{name}"')
+def when_we_run_task(context, name):
+    task = celery.signature(name)
+    assert task is not None
+    task.apply()
+
+
+@when('the lock expires "{url}"')
+def when_lock_expires(context, url):
+    url = apply_placeholders(context, url).encode("ascii").decode("unicode-escape")
+    resource, _id = url.lstrip("/").rstrip("/").split("/")
+    with context.app.app_context():
+        orig = context.app.data.find_one(resource, req=None, _id=_id)
+        assert orig is not None, "could not find {}/{}".format(resource, _id)
+        context.app.data.update(resource, orig["_id"], {"_lock_time": utcnow() - timedelta(hours=48)}, orig)

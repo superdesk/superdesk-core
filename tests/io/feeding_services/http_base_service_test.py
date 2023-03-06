@@ -4,7 +4,6 @@ from superdesk.io.feeding_services.http_base_service import HTTPFeedingServiceBa
 
 
 class FeedingServiceWithUrl(HTTPFeedingServiceBase):
-
     URL = "http://example.com"
 
     fields = []

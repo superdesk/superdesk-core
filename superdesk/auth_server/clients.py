@@ -20,7 +20,6 @@ logger = logging.getLogger(__name__)
 
 
 class AuthServerClientsResource(superdesk.Resource):
-
     schema = {
         "name": {
             "type": "string",

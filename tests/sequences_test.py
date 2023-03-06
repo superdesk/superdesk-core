@@ -35,7 +35,6 @@ class SequencesTestCase(TestCase):
 
     def test_rotate_sequence_number(self):
         with self.app.app_context():
-
             last_sequence_number = None
             for i in range(self.max_seq_number):
                 last_sequence_number = self.service.get_next_sequence_number(

@@ -15,7 +15,6 @@ import os
 
 
 class BaseRitzauTestCase(TestCase):
-
     vocab = [{"_id": "genre", "items": [{"name": "Current"}]}]
 
     def setUp(self):

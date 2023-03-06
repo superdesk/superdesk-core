@@ -22,7 +22,6 @@ TEST_BASE_URL = "https://something.example.org"
 
 
 class IMatricsTestCase(TestCase):
-
     maxDiff = None
 
     item = {

@@ -49,6 +49,7 @@ desks_schema = {
     "working_stage": Resource.rel("stages", True),
     "content_expiry": {"type": "integer"},
     "source": {"type": "string"},
+    "send_to_desk_not_allowed": {"type": "boolean"},
     "monitoring_settings": {
         "type": "list",
         "schema": {
@@ -365,7 +366,6 @@ class UserDesksService(BaseService):
 
 
 class SluglineDesksResource(Resource):
-
     url = 'desks/<regex("[a-f0-9]{24}"):desk_id>/sluglines'
     datasource = {
         "source": "published",

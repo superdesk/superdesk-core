@@ -4,7 +4,6 @@ from superdesk.schema import Schema, StringField, IntegerField, ListField, DictF
 
 
 class TestSchema(Schema):
-
     string_field = StringField()
 
     integer_field = IntegerField()

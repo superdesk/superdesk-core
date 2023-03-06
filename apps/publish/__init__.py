@@ -38,7 +38,6 @@ logger = logging.getLogger(__name__)
 
 
 def init_app(app) -> None:
-
     endpoint_name = "archive_publish"
     service: Any = ArchivePublishService(endpoint_name, backend=get_backend())
     ArchivePublishResource(endpoint_name, app=app, service=service)

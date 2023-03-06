@@ -1,0 +1,13 @@
+<!DOCTYPE html>
+<html>
+<head>
+</head>
+<body>
+    {% for item in items %}
+    <p>{{ item.item_type | upper }}-{{ show.shortcode | upper }}-{{ item.title | upper }}</p>
+    {% if item | rundown_item_content %}
+    <p>{{ item | rundown_item_content }}</p>
+    {% endif %}
+    {% endfor %}
+</body>
+</html>

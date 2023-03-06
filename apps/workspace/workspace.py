@@ -13,7 +13,6 @@ from flask import request
 
 
 class WorkspaceResource(superdesk.Resource):
-
     schema = {
         "name": {"type": "string", "unique_to_user": True},
         "widgets": {"type": "list"},

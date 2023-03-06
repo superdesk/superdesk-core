@@ -26,12 +26,10 @@ def get_updated_editor_state(editor_state):
 
 
 class DataUpdate(BaseDataUpdate):
-
     resource = "archive"  # will use multiple resources, keeping this here so validation passes
 
     def forwards(self, mongodb_collection, mongodb_database):
         for resource in ["archive", "archive_autosave", "published"]:
-
             collection = mongodb_database[resource]
 
             for item in collection.find({"editor_state": {"$exists": True}}):

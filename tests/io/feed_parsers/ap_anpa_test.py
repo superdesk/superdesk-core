@@ -21,7 +21,6 @@ def fixture(filename):
 
 
 class ANPATestCase(TestCase):
-
     parser = AP_ANPAFeedParser()
 
     def setUp(self):

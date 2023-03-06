@@ -137,7 +137,6 @@ def __get_redis(app_ctx):
 
 
 def update_key(key, flag=False, db=None):
-
     if db is None:
         db = app.redis
 

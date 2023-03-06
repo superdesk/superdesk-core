@@ -150,7 +150,7 @@ def register_default_session_preference(preference_name, preference):
     default_session_preferences[preference_name] = preference
 
 
-def register_resource(name, resource, service=None, backend=None, privilege=None, _app=None):
+def register_resource(name, resource, service=None, backend=None, privilege=None, _app=None, service_instance=None):
     """Shortcut for registering resource and service together.
 
     :param name: resource name
@@ -168,7 +168,10 @@ def register_resource(name, resource, service=None, backend=None, privilege=None
         intrinsic_privilege(name, privilege)
     if not _app:
         _app = app
-    service_instance = service(name, backend=backend)
+    if service_instance is None:
+        service_instance = service(name, backend=backend)
+    else:
+        service_instance.init(name, backend)
     resource(name, app=_app, service=service_instance)
 
 

@@ -93,14 +93,14 @@ class MediaEditorTestCase(BaseMediaEditorTestCase):
 
     def test_edition(self):
         """Test basic edition instructions"""
-        item = self.do_edit({"contrast": 1.2, "rotate": "90"})
+        item = self.do_edit([["contrast", 1.2], ["rotate", "90"]])
         image = self.image(item, "original")
         self.assertEqual(500, image.width)
         self.assertEqual(1000, image.height)
 
     def test_saturation(self):
         """Test saturation change"""
-        item = self.do_edit({"saturation": 0})
+        item = self.do_edit([["saturation", 0]])
         image = self.image(item, "original")
         # not sure how to test saturation, so just checking
         # the size remained the same
@@ -110,7 +110,7 @@ class MediaEditorTestCase(BaseMediaEditorTestCase):
     def test_update(self):
         """Test that item is updated correctly"""
         original_media_id = self.item["renditions"]["original"]["media"]
-        item = self.do_edit({"rotate": "270", "saturation": "0"}, item=self.item)
+        item = self.do_edit([["rotate", "270"], ["saturation", "0"]], item=self.item)
         image = self.image(item, "original")
         self.assertEqual(500, image.width)
         self.assertEqual(1000, image.height)
