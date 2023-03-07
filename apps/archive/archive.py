@@ -261,10 +261,12 @@ def remove_is_queued(item):
 
 class ArchiveVersionsResource(Resource):
     schema = item_schema()
-    schema.update({
-        "_id_document": Resource.not_analyzed_field(),
-        "_current_version": Resource.field("integer"),
-    })
+    schema.update(
+        {
+            "_id_document": Resource.not_analyzed_field(),
+            "_current_version": Resource.field("integer"),
+        }
+    )
     extra_response_fields = extra_response_fields
     item_url = item_url
     resource_methods = []
