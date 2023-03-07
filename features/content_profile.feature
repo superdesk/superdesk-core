@@ -711,7 +711,7 @@ Feature: Content Profile
         When we delete "content_types/foo"
         Then we get response code 202
         """
-        {"is_used": true}
+        {"_issues": {"is_used": true}}
         """
 
         When we patch "archive/#archive._id#"

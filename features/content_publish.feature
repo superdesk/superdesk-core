@@ -659,7 +659,7 @@ Feature: Content Publishing
       When we publish "#archive._id#" with "publish" type and "published" state
       Then we get response code 400
       """
-        {"_issues": {"validator exception": "Publish failed due to {'headline': 'required field'}"}, "_status": "ERR"}
+        {"_issues": {"fields": {"headline": "required field"}, "validator exception": "[['HEADLINE is a required field']]"}, "_status": "ERR"}
       """
 
     @auth

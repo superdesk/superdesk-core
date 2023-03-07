@@ -334,7 +334,10 @@ def jwt_encode(payload: Dict, expiry=None) -> str:
     if expiry:
         payload["exp"] = datetime.now(tz=timezone.utc) + timedelta(days=expiry)
     payload["iss"] = app.config["APPLICATION_NAME"]
-    return jwt.encode(payload, app.config["SECRET_KEY"], JWT_ALGO).decode()
+    token = jwt.encode(payload, app.config["SECRET_KEY"], JWT_ALGO)
+    if isinstance(token, str):
+        return token
+    return token.decode()
 
 
 def jwt_decode(token) -> Optional[Dict]:
