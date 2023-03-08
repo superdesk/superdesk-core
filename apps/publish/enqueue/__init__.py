@@ -8,10 +8,11 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
-import cProfile
 import logging
+import elasticapm
 import superdesk
 import superdesk.signals as signals
+
 from flask import current_app as app
 
 from superdesk import get_resource_service
@@ -38,7 +39,6 @@ from superdesk.publish.publish_content import publish
 
 logger = logging.getLogger(__name__)
 
-profile = cProfile.Profile()
 
 UPDATE_SCHEDULE_DEFAULT = {"seconds": 10}
 

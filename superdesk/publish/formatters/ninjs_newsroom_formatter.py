@@ -11,6 +11,7 @@
 
 from .ninjs_formatter import NINJSFormatter
 import superdesk
+import elasticapm
 
 
 class NewsroomNinjsFormatter(NINJSFormatter):
@@ -23,6 +24,7 @@ class NewsroomNinjsFormatter(NINJSFormatter):
         self.can_export = False
         self.internal_renditions = ["original", "viewImage", "baseImage"]
 
+    @elasticapm.capture_span()
     def _format_products(self, article):
         """
         Return a list of API product id's that the article matches.
@@ -30,9 +32,10 @@ class NewsroomNinjsFormatter(NINJSFormatter):
         :param article:
         :return:
         """
-        result = superdesk.get_resource_service("product_tests").test_products(article, lookup=None)
+        result = superdesk.get_resource_service("product_tests").test_products(article)
         return [{"code": p["product_id"], "name": p.get("name")} for p in result if p.get("matched", False)]
 
+    @elasticapm.capture_span()
     def _transform_to_ninjs(self, article, subscriber, recursive=True):
         ninjs = super()._transform_to_ninjs(article, subscriber, recursive)
 

@@ -7,12 +7,16 @@
 # For the full copyright and license information, please see the
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
+
+from typing import Dict
 from enum import Enum
 from lxml import etree
+from flask import g
 from superdesk.text_utils import get_text
 from superdesk.utc import utcnow
 from superdesk import get_resource_service
 from superdesk.errors import SuperdeskApiError
+from superdesk.cache import cache
 from flask_babel import _
 
 
@@ -40,16 +44,30 @@ class FilterConditionFieldsEnum(Enum):
     languages = 21
 
 
+@cache(ttl=3600, tags=("vocabularies",))
+def _get_field_type_map() -> Dict[str, str]:
+    field_type_map = {}
+    cvs = get_resource_service("vocabularies").get_from_mongo(req=None, lookup=None, projection={"field_type": 1})
+    for cv in cvs:
+        field_type_map[cv["_id"]] = cv.get("field_type", "")
+    return field_type_map
+
+
+def get_field_type_map() -> Dict[str, str]:
+    if not hasattr(g, "field_type_map"):
+        g.field_type_map = _get_field_type_map()
+    return g.field_type_map
+
+
 class FilterConditionField:
     @staticmethod
     def factory(field):
         if field not in FilterConditionFieldsEnum.__members__:
-            vocabulary = get_resource_service("vocabularies").find_one(req=None, _id=field)
-            if vocabulary:
-                if vocabulary.get("field_type", "") == "text":
-                    return FilterConditionCustomTextField(field)
-                else:
-                    return FilterConditionControlledVocabularyField(field)
+            field_types = get_field_type_map()
+            if field_types.get(field) == "text":
+                return FilterConditionCustomTextField(field)
+            elif field in field_types:
+                return FilterConditionControlledVocabularyField(field)
             raise SuperdeskApiError.internalError(_("Invalid filter conditions field {field}").format(field=field))
         if FilterConditionFieldsEnum[field] == FilterConditionFieldsEnum.desk:
             return FilterConditionDeskField(field)

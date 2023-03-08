@@ -13,14 +13,14 @@ import logging
 
 from copy import deepcopy
 
+from flask import current_app as app
 from superdesk import get_resource_service
 from eve.utils import ParsedRequest, config
 from superdesk.utils import ListCursor
 from superdesk.resource import Resource, build_custom_hateoas
-from superdesk.services import BaseService
+from superdesk.services import CacheableService
 from superdesk.errors import SuperdeskApiError
 from superdesk.publish import SUBSCRIBER_TYPES  # NOQA
-from flask import current_app as app
 from superdesk.metadata.utils import ProductTypes
 from superdesk.notification import push_notification
 
@@ -99,14 +99,16 @@ class SubscribersResource(Resource):
     }
 
 
-class SubscribersService(BaseService):
+class SubscribersService(CacheableService):
+    cache_lookup = {"is_active": True}
+
     def get(self, req, lookup):
         if req is None:
             req = ParsedRequest()
         if req.args and req.args.get("filter_condition"):
             filter_condition = json.loads(req.args.get("filter_condition"))
             return ListCursor(self._get_subscribers_by_filter_condition(filter_condition))
-        return super().get(req=req, lookup=lookup)
+        return super().get_from_mongo(req=req, lookup=lookup)
 
     def on_create(self, docs):
         for doc in docs:
@@ -143,8 +145,7 @@ class SubscribersService(BaseService):
         :param filter_condition: Filter condition to test
         :return: List of subscribers
         """
-        req = ParsedRequest()
-        all_subscribers = list(super().get(req=req, lookup=None))
+        all_subscribers = list(super().get_from_mongo(req=None, lookup=None))
         selected_products = {}
         selected_subscribers = {}
         selected_content_filters = {}
@@ -153,7 +154,7 @@ class SubscribersService(BaseService):
         content_filter_service = get_resource_service("content_filters")
         product_service = get_resource_service("products")
 
-        existing_products = list(product_service.get(req=req, lookup=None))
+        existing_products = list(product_service.get_from_mongo(req=None, lookup=None))
         existing_filter_conditions = filter_condition_service.check_similar(filter_condition)
         for fc in existing_filter_conditions:
             existing_content_filters = content_filter_service.get_content_filters_by_filter_condition(fc["_id"])
@@ -235,7 +236,7 @@ class SubscribersService(BaseService):
         :param dict lookup: search criteria
         :return list: list of subscriber name
         """
-        subscribers = list(self.get(req=None, lookup=lookup))
+        subscribers = list(self.get_from_mongo(req=None, lookup=lookup))
         return [subscriber["name"] for subscriber in subscribers]
 
     def _validate_seq_num_settings(self, subscriber):
@@ -287,3 +288,6 @@ class SubscribersService(BaseService):
             max_seq_number=max_seq_number,
             min_seq_number=min_seq_number,
         )
+
+    def get_active(self):
+        return self.get_cached()

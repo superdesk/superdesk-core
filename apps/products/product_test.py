@@ -9,7 +9,6 @@
 # at https://www.sourcefabric.org/superdesk/license
 
 import logging
-from eve.utils import ParsedRequest
 from superdesk import get_resource_service
 from superdesk.resource import Resource
 from superdesk.services import BaseService
@@ -61,10 +60,9 @@ class ProductTestService(BaseService):
         doc["_items"] = results
         return [article_id]
 
-    def test_products(self, article, lookup=None):
-        req = ParsedRequest()
+    def test_products(self, article):
         results = []
-        products = list(get_resource_service("products").get(req=req, lookup=lookup))
+        products = get_resource_service("products").get_active()
         service = get_enqueue_service(article.get(ITEM_OPERATION, "publish"))
         for product in products:
             result = {"product_id": product["_id"], "matched": True, "name": product.get("name", "")}
