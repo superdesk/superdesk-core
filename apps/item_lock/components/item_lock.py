@@ -44,7 +44,7 @@ def push_unlock_notification(item, user_id, session_id):
         item_version=str(item.get(config.VERSION)),
         state=item.get(ITEM_STATE),
         user=str(user_id),
-        lock_session=str(session_id),
+        lock_session=item.get(LOCK_SESSION) or str(session_id),
         _etag=item.get(config.ETAG),
     )
 
@@ -170,9 +170,9 @@ class ItemLock(BaseComponent):
 
         return item
 
-    def unlock_session(self, user_id, session_id):
+    def unlock_session(self, user_id, session_id, is_last_session):
         item_model = get_model(ItemModel)
-        items = item_model.find({LOCK_SESSION: str(session_id)})
+        items = item_model.find({LOCK_SESSION: str(session_id)} if not is_last_session else {LOCK_USER: str(user_id)})
 
         for item in items:
             self.unlock({"_id": item["_id"]}, user_id, session_id, None)
@@ -212,5 +212,5 @@ class ItemLock(BaseComponent):
 
         return True, ""
 
-    def on_session_end(self, user_id, session_id):
-        self.unlock_session(user_id, session_id)
+    def on_session_end(self, user_id, session_id, is_last_session):
+        self.unlock_session(user_id, session_id, is_last_session)
