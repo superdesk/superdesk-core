@@ -76,7 +76,6 @@ class ValidateMultipleEmailsTestCase(SuperdeskValidatorTest):
         self.validator.document = {}
 
     def test_does_not_raise_error_on_inputs_containing_email(self, fake_superdesk):
-
         field = "field_name"
         value = "abc@abc.com"
 

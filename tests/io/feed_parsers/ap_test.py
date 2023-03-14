@@ -16,7 +16,6 @@ import os
 
 
 class BaseAPTestCase(TestCase):
-
     vocab = [{"_id": "genre", "items": [{"name": "Current"}]}]
 
     def setUp(self):

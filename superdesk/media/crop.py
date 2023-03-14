@@ -27,7 +27,6 @@ logger = logging.getLogger(__name__)
 
 
 class CropService:
-
     crop_sizes = []
 
     def validate_crop(self, original, updates, crop_name):

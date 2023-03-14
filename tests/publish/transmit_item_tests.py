@@ -53,7 +53,6 @@ class TransmitItemTestCase(TestCase):
 
     @mock.patch("superdesk.publish.publish_content.get_resource_service")
     def test_marks_items_as_retrying_second_time_incase_of_failure(self, *mocks):
-
         fake_get_service = mocks[0]
         fake_get_service().patch.side_effect = Exception("Error patching item")
 
@@ -82,7 +81,6 @@ class TransmitItemTestCase(TestCase):
 
     @mock.patch("superdesk.publish.publish_content.get_resource_service")
     def test_marks_items_failed_to_transmit_after_all_retry_attempts(self, *mocks):
-
         fake_get_service = mocks[0]
         fake_get_service().patch.side_effect = Exception("Error patching item")
         self.app.config["MAX_TRANSMIT_RETRY_ATTEMPT"] = 4

@@ -21,7 +21,6 @@ def fixture(filename):
 
 
 class IptcTestCase(TestCase):
-
     parser = IPTC7901FeedParser()
 
     def open(self, filename):

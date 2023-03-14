@@ -84,7 +84,6 @@ class SuperdeskErrorTestCase(unittest.TestCase):
 
 
 class ErrorsTestCase(TestCase):
-
     mock_logger_handler = {}
 
     def setUp(self):

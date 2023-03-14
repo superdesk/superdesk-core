@@ -15,7 +15,6 @@ from superdesk.io.feed_parsers.efe_nitf import EFEFeedParser
 
 
 class EFENITFTestCase(TestCase):
-
     filename = "efe_nitf.xml"
 
     def setUp(self):

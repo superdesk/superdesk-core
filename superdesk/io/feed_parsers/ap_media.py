@@ -26,7 +26,6 @@ logger = logging.getLogger(__name__)
 
 
 class APMediaFeedParser(FeedParser):
-
     NAME = "ap_media"
 
     label = "AP Media API"

@@ -18,7 +18,6 @@ logger = logging.getLogger(__name__)
 
 
 def init_app(app) -> None:
-
     endpoint_name = ARCHIVE_BROADCAST_NAME
     service = ArchiveBroadcastService(endpoint_name, backend=superdesk.get_backend())
     ArchiveBroadcastResource(endpoint_name, app=app, service=service)

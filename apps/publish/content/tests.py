@@ -905,7 +905,6 @@ class ArchivePublishTestCase(TestCase):
 
 
 class TimeoutTest(TestCase):
-
     published_items = [
         {
             "_id": ObjectId("58006b8d1d41c88eace5179d"),

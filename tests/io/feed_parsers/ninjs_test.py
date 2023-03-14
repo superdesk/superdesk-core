@@ -27,7 +27,6 @@ class NINJSTestCase(TestCase):
 
 
 class SimpleTestCase(NINJSTestCase):
-
     filename = "ninjs1.json"
 
     def test_headline(self):
@@ -49,7 +48,6 @@ class SimpleTestCase(NINJSTestCase):
 
 
 class AssociatedTestCase(NINJSTestCase):
-
     filename = "ninjs2.json"
 
     def test_parsed_items(self):
@@ -78,7 +76,6 @@ class AssociatedTestCase(NINJSTestCase):
 
 
 class PictureTestCase(NINJSTestCase):
-
     filename = "ninjs3.json"
 
     def test_headline(self):
