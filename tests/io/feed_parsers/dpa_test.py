@@ -21,7 +21,6 @@ def fixture(filename):
 
 
 class DPAIptcTestCase(TestCase):
-
     parser = DPAIPTC7901FeedParser()
 
     def open(self, filename):

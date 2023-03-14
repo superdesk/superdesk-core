@@ -16,7 +16,6 @@ from apps.content_filters.filter_condition.filter_condition_operator import (
 
 
 class FilterConditionValue:
-
     mongo_mapper = {
         FilterConditionOperatorsEnum.startswith: "^{}",
         FilterConditionOperatorsEnum.like: ".*{}.*",

@@ -36,6 +36,7 @@ from superdesk.default_settings import (  # noqa
     APM_SERVER_URL,
     APM_SECRET_TOKEN,
     DEBUG,
+    URN_DOMAIN,
 )
 
 CONTENTAPI_INSTALLED_APPS = [

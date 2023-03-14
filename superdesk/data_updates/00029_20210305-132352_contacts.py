@@ -13,7 +13,6 @@ from eve.utils import config
 
 
 class DataUpdate(BaseDataUpdate):
-
     resource = "contacts"
 
     def forwards(self, mongodb_collection, mongodb_database):

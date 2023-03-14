@@ -25,7 +25,6 @@ class MissingMediaError(ValueError):
 
 
 class ProxyMediaStorage(SuperdeskMediaStorage):
-
     _storage: List[SuperdeskMediaStorage]
 
     def __init__(self, app):

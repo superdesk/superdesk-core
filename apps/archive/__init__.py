@@ -45,7 +45,6 @@ logger = logging.getLogger(__name__)
 
 
 def init_app(app) -> None:
-
     endpoint_name = "ingest"
     service: Any = AppIngestService(endpoint_name, backend=superdesk.get_backend())
     IngestResource(endpoint_name, app=app, service=service)

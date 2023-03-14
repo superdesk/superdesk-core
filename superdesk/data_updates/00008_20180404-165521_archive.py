@@ -11,12 +11,10 @@ from superdesk.commands.data_updates import BaseDataUpdate
 
 
 class DataUpdate(BaseDataUpdate):
-
     resource = "archive"  # will use multiple resources, keeping this here so validation passes
 
     def forwards(self, mongodb_collection, mongodb_database):
         for resource in ["archive", "archive_autosave", "published"]:
-
             collection = mongodb_database[resource]
 
             for item in collection.find({"editor_state": {"$exists": True}}):
@@ -30,7 +28,6 @@ class DataUpdate(BaseDataUpdate):
 
     def backwards(self, mongodb_collection, mongodb_database):
         for resource in ["archive", "archive_autosave", "published"]:
-
             collection = mongodb_database[resource]
 
             for item in collection.find({"fields_meta": {"$exists": True}}):

@@ -19,7 +19,6 @@ from superdesk.celery_task_utils import mark_task_as_not_running, is_task_runnin
 
 
 class CeleryTestCase(TestCase):
-
     _id = ObjectId("528de7b03b80a13eefc5e610")
 
     def test_cast_objectid(self):

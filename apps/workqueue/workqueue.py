@@ -21,5 +21,4 @@ class WorkqueueResource(superdesk.Resource):
 
 
 class WorkqueueService(superdesk.Service):
-
     pass
