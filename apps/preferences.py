@@ -233,9 +233,13 @@ class PreferencesResource(Resource):
 
 
 class PreferencesService(BaseService):
-    def on_session_end(self, user_id, session_id):
+    def on_session_end(self, user_id, session_id, is_last_session):
         service = get_resource_service("users")
         user_doc = service.find_one(req=None, _id=user_id)
+
+        if is_last_session:
+            service.system_update(user_id, {_session_preferences_key: {}}, user_doc)
+
         session_prefs = user_doc.get(_session_preferences_key, {}).copy()
 
         if not isinstance(session_id, str):
