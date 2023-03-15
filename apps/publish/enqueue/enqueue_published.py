@@ -8,13 +8,16 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
+import elasticapm
+
+from eve.utils import config
 from superdesk import get_resource_service
 from superdesk.metadata.item import ITEM_TYPE, CONTENT_TYPE, CONTENT_STATE
-from eve.utils import config
 from apps.publish.enqueue.enqueue_service import EnqueueService
 
 
 class EnqueuePublishedService(EnqueueService):
+    @elasticapm.capture_span()
     def get_subscribers(self, doc, target_media_type):
         """Get the subscribers for this document based on the target_media_type for publishing.
 
@@ -32,10 +35,7 @@ class EnqueuePublishedService(EnqueueService):
         associations, rewrite_associations = {}, {}
 
         rewrite_of = doc.get("rewrite_of")
-
-        # Step 1
-        query = {"is_active": True}
-        subscribers = list(get_resource_service("subscribers").get(req=None, lookup=query))
+        subscribers = get_resource_service("subscribers").get_active()
 
         # Step 2b
         if doc.get(ITEM_TYPE) in [CONTENT_TYPE.TEXT, CONTENT_TYPE.PREFORMATTED]:

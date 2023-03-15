@@ -11,12 +11,13 @@
 import pymongo
 import logging
 
-from typing import Dict, Any, Optional, Union
-from flask import current_app as app, json
+from typing import Dict, Any, List, Optional, Union
+from flask import current_app as app, json, g
 from eve.utils import ParsedRequest, config
 from eve.methods.common import resolve_document_etag
 from superdesk.errors import SuperdeskApiError
 from superdesk.utc import utcnow
+from superdesk.cache import cache
 
 
 logger = logging.getLogger(__name__)
@@ -266,3 +267,32 @@ class BaseService:
 
 class Service(BaseService):
     pass
+
+
+class CacheableService(BaseService):
+    """Handles caching for the resource, will invalidate on any changes to the resource."""
+
+    datasource: str
+    cache_lookup = {}
+
+    @property
+    def cache_key(self) -> str:
+        return "cached:{}".format(self.datasource)
+
+    def get_cached(self) -> List[Dict[str, Any]]:
+        @cache(ttl=3600, tags=(self.datasource,), key=lambda fn: f"_cache_mixin:{self.datasource}")
+        def _get_cached_from_db():
+            return list(self.get_from_mongo(req=None, lookup=self.cache_lookup))
+
+        if not hasattr(g, self.cache_key):
+            setattr(g, self.cache_key, _get_cached_from_db())
+
+        return getattr(g, self.cache_key)
+
+    def get_cached_by_id(self, _id):
+        cached = self.get_cached()
+        for item in cached:
+            if item.get("_id") == _id:
+                return item
+        logger.warning("Cound not find item in cache resource=%s id=%s", self.datasource, _id)
+        return self.find_one(req=None, _id=_id)

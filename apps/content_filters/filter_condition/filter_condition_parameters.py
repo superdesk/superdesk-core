@@ -178,11 +178,14 @@ class FilterConditionParametersService(BaseService):
         fields.extend(self._get_vocabulary_fields(values))
         return ListCursor(fields)
 
+    def get_from_mongo(self, req, lookup, projection=None):
+        return self.get(req, lookup)
+
     def _get_vocabulary_fields(self, values):
         excluded_vocabularies = copy.copy(app.config.get("EXCLUDED_VOCABULARY_FIELDS", []))
         excluded_vocabularies.extend(values)
         lookup = {"_id": {"$nin": excluded_vocabularies}, "type": "manageable"}
-        for vocabulary in get_resource_service("vocabularies").get(req=None, lookup=lookup):
+        for vocabulary in get_resource_service("vocabularies").get_from_mongo(req=None, lookup=lookup):
             field = {"field": vocabulary[config.ID_FIELD], "label": vocabulary["display_name"]}
 
             if vocabulary.get("field_type") and vocabulary.get("field_type", "") != "text":

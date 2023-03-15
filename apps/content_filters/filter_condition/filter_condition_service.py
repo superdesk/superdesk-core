@@ -11,13 +11,13 @@ import logging
 import re
 from superdesk.errors import SuperdeskApiError
 from superdesk import get_resource_service
-from superdesk.services import BaseService
+from superdesk.services import CacheableService
 from flask_babel import _
 
 logger = logging.getLogger(__name__)
 
 
-class FilterConditionService(BaseService):
+class FilterConditionService(CacheableService):
     def on_create(self, docs):
         self._check_equals(docs)
         self._check_parameters(docs)
@@ -39,11 +39,11 @@ class FilterConditionService(BaseService):
 
     def _get_referenced_filter_conditions(self, id):
         lookup = {"content_filter.expression.fc": {"$in": [id]}}
-        content_filters = get_resource_service("content_filters").get(req=None, lookup=lookup)
+        content_filters = get_resource_service("content_filters").get_from_mongo(req=None, lookup=lookup)
         return content_filters
 
     def _check_parameters(self, docs):
-        parameters = get_resource_service("filter_condition_parameters").get(req=None, lookup=None)
+        parameters = get_resource_service("filter_condition_parameters").get_from_mongo(req=None, lookup=None)
         for doc in docs:
             parameter = [p for p in parameters if p["field"] == doc["field"]]
             if not parameter or len(parameter) == 0:
@@ -67,7 +67,7 @@ class FilterConditionService(BaseService):
         already exists
         """
         for doc in docs:
-            existing_docs = self.get(None, {"field": doc["field"], "operator": doc["operator"]})
+            existing_docs = self.get_from_mongo(None, {"field": doc["field"], "operator": doc["operator"]})
             for existing_doc in existing_docs:
                 if "_id" in doc and doc["_id"] == existing_doc["_id"]:
                     continue
@@ -88,12 +88,16 @@ class FilterConditionService(BaseService):
         :param filter_condition: Filter conditions to be tested
         :return: Returns the list of matching filter conditions
         """
-        parameters = get_resource_service("filter_condition_parameters").get(req=None, lookup=None)
+        parameters = list(
+            get_resource_service("filter_condition_parameters").get_from_mongo(
+                req=None, lookup={"field": filter_condition["field"]}
+            )
+        )
         parameter = [p for p in parameters if p["field"] == filter_condition["field"]]
         if "in" in parameter[0]["operators"] or "nin" in parameter[0]["operators"]:
             # this is a controlled vocabulary field so find the overlapping values
             existing_docs = list(
-                self.get(
+                self.get_from_mongo(
                     None,
                     {
                         "field": filter_condition["field"],
@@ -105,7 +109,7 @@ class FilterConditionService(BaseService):
             parameter[0]["operators"].remove(filter_condition["operator"])
             existing_docs.extend(
                 list(
-                    self.get(
+                    self.get_from_mongo(
                         None,
                         {
                             "field": filter_condition["field"],
@@ -118,7 +122,7 @@ class FilterConditionService(BaseService):
         else:
             # find the exact matches
             existing_docs = list(
-                self.get(
+                self.get_from_mongo(
                     None,
                     {
                         "field": filter_condition["field"],

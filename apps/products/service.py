@@ -9,14 +9,14 @@
 # at https://www.sourcefabric.org/superdesk/license
 
 from superdesk import get_resource_service
-from superdesk.services import BaseService
-from eve.utils import ParsedRequest, config
+from superdesk.services import CacheableService
+from eve.utils import config
 from superdesk.errors import SuperdeskApiError
 from superdesk.metadata.utils import ProductTypes
 from flask_babel import _
 
 
-class ProductsService(BaseService):
+class ProductsService(CacheableService):
     def on_update(self, updates, original):
         self._validate_product_type(updates, original)
 
@@ -65,6 +65,9 @@ class ProductsService(BaseService):
         :param dict lookup: search criteria
         :return list: list of product names
         """
-        req = ParsedRequest()
-        products = list(get_resource_service("products").get(req=req, lookup=lookup))
+        products = list(get_resource_service("products").get_from_mongo(req=None, lookup=lookup))
         return [product["name"] for product in products]
+
+    def get_active(self):
+        """There is no way to disable product atm, but we might add it."""
+        return self.get_cached()

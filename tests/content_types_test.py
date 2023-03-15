@@ -14,6 +14,9 @@ class MockService:
     def find_one(self, req, **lookup):
         return {"schema": {"headline": {}}}
 
+    def get_cached_by_id(self, _id):
+        return self.find_one(None)
+
 
 class MockVocabulariesService:
     def get_forbiden_custom_vocabularies(self):
