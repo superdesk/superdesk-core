@@ -9,6 +9,8 @@
 # at https://www.sourcefabric.org/superdesk/license
 
 import logging
+import warnings
+
 from superdesk import get_resource_service
 from superdesk.resource import Resource
 from superdesk.services import BaseService
@@ -60,7 +62,9 @@ class ProductTestService(BaseService):
         doc["_items"] = results
         return [article_id]
 
-    def test_products(self, article):
+    def test_products(self, article, lookup=None):
+        if lookup is not None:
+            warnings.warn("lookup param is deprecated")
         results = []
         products = get_resource_service("products").get_active()
         service = get_enqueue_service(article.get(ITEM_OPERATION, "publish"))
