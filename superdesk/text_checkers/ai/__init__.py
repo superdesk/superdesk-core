@@ -19,6 +19,9 @@ AI_SERVICE_ENDPOINT = "ai"
 #: endpoint to manipulate AI Services data
 AI_DATA_OP_ENDPOINT = "ai_data_op"
 
+#: endpoint to image suggestion based on AI service tags
+AI_IMAGE_SUGGESTIONS_ENDPOINT = "ai_image_suggestions"
+
 
 class AIResource(Resource):
     schema = {
@@ -156,6 +159,70 @@ class AIDataOpService(BaseService):
         return [0]
 
 
+class AIImageResource(Resource):
+    schema = {
+        "service": {
+            "type": "string",
+            "required": True,
+        },
+        "items": {
+            "type": "list",
+            "required": True,
+            "schema": {
+                "type": "dict",
+                "schema": {
+                    "title": {"type": "string", "required": True},
+                    "type": {"type": "string", "required": False},
+                    "pubStatus": {"type": "boolean", "required": False},
+                    "weight": {"type": "integer", "required": False},
+                },
+            },
+        },
+    }
+    datasource = {"projection": {"result": 1}}
+    internal_resource = False
+    resource_methods = ["POST"]
+    item_methods = []
+
+
+class AIImageSuggestionService(BaseService):
+    r"""Service to get image suggestions
+
+    When doing a POST request on this service, the following keys can be used (keys
+    with a \* are required):
+
+
+    ============  ===========
+    key           explanation
+    ============  ===========
+    service \*    name of the service to use
+    items          argument of use for the operation
+    ============  ===========
+
+    e.g. to search for tags with iMatrics service:
+
+    .. sourcecode:: json
+
+        {
+            "service": "imatrics_image_suggestions",
+            "items": [{"title": "some_string", "type": "some_string", "pubStatus": "some_boolean", "weight": "some_integer"}],
+        }
+    """
+
+    def create(self, docs, **kwargs):
+        doc = docs[0]
+        service = doc["service"]
+        items = doc["items"]
+        try:
+            service = registered_ai_services[service]
+        except KeyError:
+            raise SuperdeskApiError.notFoundError("{service} service can't be found".format(service=service))
+
+        res_data = service.search_images(items)
+        docs[0].update({"result": res_data})
+        return [0]
+
+
 def init_app(app) -> None:
     allowed_service = AllowedContainer(registered_ai_services)
 
@@ -169,4 +236,10 @@ def init_app(app) -> None:
     service = AIDataOpService(endpoint_name, backend=superdesk.get_backend())
     AIDataOpResource.schema["service"]["allowed"] = allowed_service
     AIDataOpResource(endpoint_name, app=app, service=service)
+    superdesk.intrinsic_privilege(endpoint_name, method=["POST"])
+
+    endpoint_name = AI_IMAGE_SUGGESTIONS_ENDPOINT
+    service = AIImageSuggestionService(endpoint_name, backend=superdesk.get_backend())
+    AIImageResource.schema["service"]["allowed"] = allowed_service
+    AIImageResource(endpoint_name, app=app, service=service)
     superdesk.intrinsic_privilege(endpoint_name, method=["POST"])
