@@ -76,7 +76,7 @@ def lock(task, host=None, expire=300, timeout=None):
     return got_lock
 
 
-def unlock(task, host=None, remove=False):
+def unlock(task, host=None, remove=True):
     """Release lock on given task.
 
     Lock can be only released by host which locked it.

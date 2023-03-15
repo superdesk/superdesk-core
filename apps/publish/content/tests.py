@@ -871,38 +871,6 @@ class ArchivePublishTestCase(TestCase):
         self.assertEqual(len(removed_items), 0)
         self.assertEqual(len(added_items), 0)
 
-    def test_reload_filters_if_updated(self):
-        self.app.data.insert(
-            "vocabularies",
-            [
-                {"_id": "categories", "items": []},
-                {"_id": "urgency", "items": []},
-                {"_id": "priority", "items": []},
-                {"_id": "type", "items": []},
-                {"_id": "genre", "items": []},
-                {"_id": "place", "items": []},
-            ],
-        )
-        product = self.products[0]
-        product["content_filter"] = {"filter_id": 1, "filter_type": "blocking"}
-        self.app.data.insert(
-            "filter_conditions",
-            [
-                {
-                    "_id": "1",
-                    "field": "headline",
-                    "operator": "like",
-                    "value": "tor",
-                    "name": "test-1",
-                    "_updated": utcnow() - timedelta(days=10),
-                }
-            ],
-        )
-        get_enqueue_service("publish")
-        get_resource_service("filter_conditions").patch("1", updates={"name": "test-1 updated"})
-        service2 = get_enqueue_service("publish")
-        self.assertGreater(service2.filters["latest_filter_conditions"], utcnow() - timedelta(seconds=10))
-
 
 class TimeoutTest(TestCase):
     published_items = [

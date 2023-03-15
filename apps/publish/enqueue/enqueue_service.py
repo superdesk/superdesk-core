@@ -11,11 +11,12 @@
 import io
 import json
 import logging
+import elasticapm
+import content_api
 
 from bson import ObjectId
 from functools import partial
-import content_api
-from flask import current_app as app
+from flask import current_app as app, g
 from superdesk import get_resource_service
 from superdesk.errors import SuperdeskApiError, SuperdeskPublishError
 from superdesk.metadata.item import CONTENT_TYPE, ITEM_TYPE, ITEM_STATE, PUBLISH_SCHEDULE, ASSOCIATIONS, MEDIA_TYPES
@@ -31,8 +32,6 @@ from apps.archive.common import get_user, get_utc_schedule
 from apps.packages.package_service import PackageService
 from apps.publish.published_item import PUBLISH_STATE, QUEUE_STATE
 from apps.content_types import apply_schema
-from datetime import datetime
-import pytz
 from flask_babel import _
 
 logger = logging.getLogger(__name__)
@@ -58,54 +57,29 @@ class EnqueueService:
         if published_state is not None:
             self.published_state = published_state
 
+    @elasticapm.capture_span()
     def get_filters(self):
         """Retrieve all of the available filter conditions and content filters if they have not yet been retrieved or
         they have been updated. This avoids the filtering functions having to repeatedly retireve the individual filter
         records.
-
-        :return:
         """
+        if not hasattr(g, "enqueue_service_filters"):
+            self.filters = dict(
+                filter_conditions={},
+                content_filters={},
+            )
 
-        # Get the most recent update time to the filter conditions and content_filters
-        req = ParsedRequest()
-        req.sort = "-_updated"
-        req.max_results = 1
-        mindate = datetime.min.replace(tzinfo=pytz.UTC)
-        latest_fc = next(get_resource_service("filter_conditions").get_from_mongo(req=req, lookup=None), {}).get(
-            "_updated", mindate
-        )
-        latest_cf = next(get_resource_service("content_filters").get_from_mongo(req=req, lookup=None), {}).get(
-            "_updated", mindate
-        )
-
-        if (
-            not self.filters
-            or latest_fc > self.filters.get("latest_filter_conditions", mindate)
-            or latest_fc == mindate
-            or latest_cf > self.filters.get("latest_content_filters", mindate)
-            or latest_cf == mindate
-        ):
-            logger.debug("Getting content filters and filter conditions")
-            self.filters = dict()
-            self.filters["filter_conditions"] = dict()
-            self.filters["content_filters"] = dict()
-            for fc in get_resource_service("filter_conditions").get(req=None, lookup={}):
+            for fc in get_resource_service("filter_conditions").get_cached():
                 self.filters["filter_conditions"][fc.get("_id")] = {"fc": fc}
-                self.filters["latest_filter_conditions"] = (
-                    fc.get("_updated")
-                    if fc.get("_updated") > self.filters.get("latest_filter_conditions", mindate)
-                    else self.filters.get("latest_filter_conditions", mindate)
-                )
-            for cf in get_resource_service("content_filters").get(req=None, lookup={}):
-                self.filters["content_filters"][cf.get("_id")] = {"cf": cf}
-                self.filters["latest_content_filters"] = (
-                    cf.get("_updated")
-                    if cf.get("_updated") > self.filters.get("latest_content_filters", mindate)
-                    else self.filters.get("latest_content_filters", mindate)
-                )
-        else:
-            logger.debug("Using chached content filters and filters conditions")
 
+            for cf in get_resource_service("content_filters").get_cached():
+                self.filters["content_filters"][cf.get("_id")] = {"cf": cf}
+
+            g.enqueue_service_filters = self.filters
+
+        return self.filters
+
+    @elasticapm.capture_span()
     def _enqueue_item(self, item, content_type=None):
         item_to_queue = deepcopy(item)
         if item[ITEM_TYPE] == CONTENT_TYPE.COMPOSITE:
@@ -121,6 +95,7 @@ class EnqueueService:
         else:
             return self.publish(item_to_queue, None)
 
+    @elasticapm.capture_span()
     def _publish_package_items(self, package):
         """Publishes all items of a package recursively then publishes the package itself
 
@@ -257,7 +232,9 @@ class EnqueueService:
         sent = False
 
         # Step 1
+
         subscribers, subscriber_codes, associations = self.get_subscribers(doc, target_media_type)
+
         # Step 2
         no_formatters, queued = self.queue_transmission(
             deepcopy(doc), subscribers, subscriber_codes, associations, sent
@@ -284,6 +261,7 @@ class EnqueueService:
 
         return queued
 
+    @elasticapm.capture_span()
     def publish_content_api(self, doc, subscribers):
         """
         Publish item to content api
@@ -396,6 +374,7 @@ class EnqueueService:
                 "Nothing is saved to publish queue for story: {} for action: {}".format(doc[config.ID_FIELD], "resend")
             )
 
+    @elasticapm.capture_span()
     def publish_package(self, package, target_subscribers):
         """Publishes a given package to given subscribers.
 
@@ -451,6 +430,7 @@ class EnqueueService:
             destinations.append({"name": "content api", "delivery_type": "content_api", "format": "ninjs"})
         return destinations
 
+    @elasticapm.capture_span()
     def queue_transmission(self, doc, subscribers, subscriber_codes=None, associations=None, sent=False):
         """Method formats and then queues the article for transmission to the passed subscribers.
 
@@ -482,6 +462,7 @@ class EnqueueService:
 
             queued = False
             no_formatters = []
+            filtered_document = self.filter_document(doc)
             for subscriber in subscribers:
                 try:
                     if (
@@ -510,7 +491,9 @@ class EnqueueService:
 
                         formatter.set_destination(destination, subscriber)
                         formatted_docs = formatter.format(
-                            self.filter_document(doc), subscriber, subscriber_codes.get(subscriber[config.ID_FIELD])
+                            self.filter_document(doc) if embed_package_items else filtered_document.copy(),
+                            subscriber,
+                            subscriber_codes.get(subscriber[config.ID_FIELD]),
                         )
 
                         for idx, publish_data in enumerate(formatted_docs):
@@ -642,11 +625,11 @@ class EnqueueService:
         :param dict lookup: elastic query to filter the publish queue
         :return: list of subscribers and list of product codes per subscriber
         """
-        req = ParsedRequest()
         subscribers = []
         subscriber_codes = {}
         associations = {}
-        queued_items = list(get_resource_service("publish_queue").get(req=req, lookup=lookup))
+        active_subscribers = get_resource_service("subscribers").get_active()
+        queued_items = list(get_resource_service("publish_queue").get_from_mongo(req=None, lookup=lookup))
 
         if len(queued_items) > 0:
             subscriber_ids = {}
@@ -663,8 +646,8 @@ class EnqueueService:
                         set(associations.get(subscriber_id, [])) | set(queue_item.get("associated_items", []))
                     )
 
-            query = {"$and": [{config.ID_FIELD: {"$in": list(subscriber_ids.keys())}}]}
-            subscribers = list(get_resource_service("subscribers").get(req=None, lookup=query))
+            subscribers = [s.copy() for s in active_subscribers if s["_id"] in subscriber_ids]
+
             for s in subscribers:
                 s["api_enabled"] = subscriber_ids.get(s.get(config.ID_FIELD))
 
@@ -680,9 +663,7 @@ class EnqueueService:
         """
         filtered_subscribers = []
         subscriber_codes = {}
-        existing_products = {
-            p[config.ID_FIELD]: p for p in list(get_resource_service("products").get(req=None, lookup=None))
-        }
+        existing_products = {p[config.ID_FIELD]: p for p in get_resource_service("products").get_active()}
         global_filters = deepcopy(
             [gf["cf"] for gf in self.filters.get("content_filters", {}).values() if gf["cf"].get("is_global", True)]
         )
@@ -757,20 +738,21 @@ class EnqueueService:
         if not products:
             return add_subscriber, product_codes
 
-        for product_id in products:
-            # check if the product filter conforms with the story
-            product = existing_products.get(product_id)
+        with elasticapm.capture_span("check products"):
+            for product_id in products:
+                # check if the product filter conforms with the story
+                product = existing_products.get(product_id)
 
-            if not product:
-                continue
+                if not product:
+                    continue
 
-            if not self.conforms_product_targets(product, doc):
-                continue
+                if not self.conforms_product_targets(product, doc):
+                    continue
 
-            if self.conforms_content_filter(product, doc):
-                # gather the codes of products
-                product_codes.extend(self._get_codes(product))
-                add_subscriber = True
+                if self.conforms_content_filter(product, doc):
+                    # gather the codes of products
+                    product_codes.extend(self._get_codes(product))
+                    add_subscriber = True
 
         return add_subscriber, product_codes
 

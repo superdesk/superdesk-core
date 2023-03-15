@@ -23,6 +23,7 @@ from flask import json, Config
 
 from apps.ldap import ADAuth
 from superdesk import get_resource_service
+from superdesk.cache import cache
 from superdesk.factory import get_app
 from superdesk.factory.app import get_media_storage_class
 from superdesk.storage.amazon_media_storage import AmazonMediaStorage
@@ -361,6 +362,7 @@ def setup(context=None, config=None, app_factory=get_app, reset=False):
     with app.app_context():
         clean_dbs(app, force=bool(config))
         app.data.elastic.init_index()
+        cache.clean()
 
 
 def setup_auth_user(context, user=None):

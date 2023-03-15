@@ -7,7 +7,10 @@
 # For the full copyright and license information, please see the
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
-from superdesk.services import BaseService
+
+import logging
+
+from superdesk.services import CacheableService
 from eve.utils import ParsedRequest
 from superdesk.errors import SuperdeskApiError
 from superdesk import get_resource_service
@@ -15,7 +18,10 @@ from apps.content_filters.filter_condition.filter_condition import FilterConditi
 from flask_babel import _
 
 
-class ContentFilterService(BaseService):
+logger = logging.getLogger(__name__)
+
+
+class ContentFilterService(CacheableService):
     def get(self, req, lookup):
         if req is None:
             req = ParsedRequest()
@@ -60,7 +66,7 @@ class ContentFilterService(BaseService):
 
     def _get_content_filters_by_content_filter(self, content_filter_id):
         lookup = {"content_filter.expression.pf": {"$in": [content_filter_id]}}
-        content_filters = get_resource_service("content_filters").get(req=None, lookup=lookup)
+        content_filters = get_resource_service("content_filters").get_from_mongo(req=None, lookup=lookup)
         return content_filters
 
     def _get_referencing_subscribers(self, filter_id):
@@ -74,11 +80,13 @@ class ContentFilterService(BaseService):
         products_service = get_resource_service("products")
         subscribers = []
 
-        products = products_service.get(req=None, lookup={"content_filter.filter_id": filter_id})
+        products = products_service.get_from_mongo(req=None, lookup={"content_filter.filter_id": filter_id})
 
         for p in products:
             subs = list(
-                subscribers_service.get(req=None, lookup={"$or": [{"products": p["_id"]}, {"api_products": p["_id"]}]})
+                subscribers_service.get_from_mongo(
+                    req=None, lookup={"$or": [{"products": p["_id"]}, {"api_products": p["_id"]}]}
+                )
             )
             subscribers.extend(subs)
 
@@ -92,13 +100,13 @@ class ContentFilterService(BaseService):
         :rtype: :py:class:`pymongo.cursor.Cursor`
         """
         routing_schemes_service = get_resource_service("routing_schemes")
-        schemes = routing_schemes_service.get(req=None, lookup={"rules.filter": filter_id})
+        schemes = routing_schemes_service.get_from_mongo(req=None, lookup={"rules.filter": filter_id})
         return schemes
 
     def get_content_filters_by_filter_condition(self, filter_condition_id):
         lookup = {"content_filter.expression.fc": {"$in": [filter_condition_id]}}
-        content_filters = super().get(req=None, lookup=lookup)
-        all_content_filters = self._get_referenced_content_filters(list(content_filters), None)
+        content_filters = list(super().get_from_mongo(req=None, lookup=lookup))
+        all_content_filters = self._get_referenced_content_filters(content_filters, None)
         return all_content_filters
 
     def _get_referenced_content_filters(self, content_filters, pf_list):
@@ -201,18 +209,20 @@ class ContentFilterService(BaseService):
                     fc = (
                         filters.get("filter_conditions", {}).get(f, {}).get("fc")
                         if filters
-                        else filter_condition_service.find_one(req=None, _id=f)
+                        else filter_condition_service.get_cached_by_id(f)
                     )
                     filter_condition = FilterCondition.parse(fc)
                     filter_conditions.append(filter_condition.does_match(article))
             if "pf" in expression.get("expression", {}):
                 for f in expression["expression"]["pf"]:
                     current_filter = (
-                        filters.get("content_filters", {}).get(f, {}).get("cf")
-                        if filters
-                        else super().find_one(req=None, _id=f)
+                        filters.get("content_filters", {}).get(f, {}).get("cf") if filters else self.get_cached_by_id(f)
                     )
-                    filter_conditions.append(self.does_match(current_filter, article))
+                    filter_conditions.append(self.does_match(current_filter, article, filters=filters))
 
             expressions.append(all(filter_conditions))
         return any(expressions)
+
+    def get_api_blocking_filters(self):
+        cached = self.get_cached()
+        return [f for f in cached if f.get("api_block")]

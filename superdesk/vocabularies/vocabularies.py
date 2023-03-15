@@ -17,6 +17,7 @@ from flask import request, current_app as app
 from eve.utils import config
 from eve.methods.common import serialize_value
 from flask_babel import _, lazy_gettext
+from superdesk.cache import cache
 
 from superdesk import privilege, get_resource_service
 from superdesk.notification import push_notification
@@ -363,11 +364,11 @@ class VocabulariesService(BaseService):
             return {}
 
     def get_extra_fields(self):
-        return list(self.get(req=None, lookup={"field_type": {"$exists": True, "$ne": None}}))
+        return list(self.get_from_mongo(req=None, lookup={"field_type": {"$exists": True, "$ne": None}}))
 
     def get_custom_vocabularies(self):
         return list(
-            self.get(
+            self.get_from_mongo(
                 req=None,
                 lookup={
                     "field_type": None,
@@ -378,7 +379,7 @@ class VocabulariesService(BaseService):
 
     def get_forbiden_custom_vocabularies(self):
         return list(
-            self.get(
+            self.get_from_mongo(
                 req=None,
                 lookup={
                     "field_type": None,
@@ -526,11 +527,18 @@ class VocabulariesService(BaseService):
         return cv and cv.get("field_options") or {}
 
 
+@cache(ttl=3600, tags=("vocabularies",))
+def get_related_field_ids():
+    return list(
+        get_resource_service("vocabularies").get_from_mongo(
+            req=None, lookup={"field_type": "related_content"}, projection={"field_type": 1}
+        )
+    )
+
+
 def is_related_content(item_name, related_content=None):
     if related_content is None:
-        related_content = list(
-            get_resource_service("vocabularies").get(req=None, lookup={"field_type": "related_content"})
-        )
+        related_content = get_related_field_ids()
 
     if related_content and item_name.split("--")[0] in [content["_id"] for content in related_content]:
         return True

@@ -105,7 +105,7 @@ def get_queue_items(retries=False, subscriber_id=None, priority=None):
     request = ParsedRequest()
     request.max_results = app.config.get("MAX_TRANSMIT_QUERY_LIMIT", 100)  # limit per subscriber now
     request.sort = '[("_created", 1), ("published_seq_num", 1)]'
-    return get_resource_service(PUBLISH_QUEUE).get(req=request, lookup=lookup)
+    return get_resource_service(PUBLISH_QUEUE).get_from_mongo(req=request, lookup=lookup)
 
 
 def _get_queue(priority=None):
