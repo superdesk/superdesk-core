@@ -216,16 +216,16 @@ class IMatrics(AIServiceBase):
             ),
         )
 
-    def search_images(self, items: list) -> dict:
+    def search_images(self, items: list) -> list:
         """Fetch image suggestions"""
         if not self.base_url or not self.user or not self.key:
             logger.warning("IMatrics is not configured properly, can't fetch images")
-            return {"result": []}
+            return []
         data = items
         try:
             r_data = self._search_images(data)
         except Exception:
-            return {"result": []}
+            return []
         return [image for image in r_data if type(image["imageUrl"]) == str and image["imageUrl"] != ""]
 
     def _search_images(self, data, **params):
