@@ -5,7 +5,7 @@ import hermes.backend.inprocess
 
 from urllib.parse import urlparse
 
-from flask import current_app as app
+from flask import current_app
 from superdesk import json_utils
 from superdesk.logging import logger
 
@@ -37,17 +37,16 @@ class SuperdeskCacheBackend(hermes.backend.AbstractBackend):
     or memcached.
     """
 
-    @property
-    def _backend(self):
-        if not app:
-            raise RuntimeError("You can only use cache within app context.")
+    def init_app(self, app):
+        if not hasattr(app, "extensions"):
+            app.extensions = {}
 
-        if not app.cache:
+        if not app.extensions.get("superdesk_cache"):
             cache_url = app.config.get("CACHE_URL", "")
             if "redis" in cache_url or "unix" in cache_url:
                 parsed_url = urlparse(cache_url)
                 assert parsed_url.hostname
-                app.cache = hermes.backend.redis.Backend(
+                app.extensions["superdesk_cache"] = hermes.backend.redis.Backend(
                     self.mangler,
                     host=parsed_url.hostname,
                     password=parsed_url.password if parsed_url.password else None,
@@ -56,10 +55,15 @@ class SuperdeskCacheBackend(hermes.backend.AbstractBackend):
                 )
                 logger.info("using redis cache backend")
             else:
-                app.cache = hermes.backend.inprocess.Backend(self.mangler)
+                app.extensions["superdesk_cache"] = hermes.backend.inprocess.Backend(self.mangler)
                 logger.info("using dict cache backend")
 
-        return app.cache
+    @property
+    def _backend(self):
+        if not current_app:
+            raise RuntimeError("You can only use cache within app context.")
+        self.init_app(current_app)
+        return current_app.extensions["superdesk_cache"]
 
     def lock(self, key):
         return self._backend.lock(key)
@@ -78,4 +82,5 @@ class SuperdeskCacheBackend(hermes.backend.AbstractBackend):
         return self._backend.clean()
 
 
-cache = hermes.Hermes(SuperdeskCacheBackend, mangler=SuperdeskMangler(), ttl=600)
+cache_backend = SuperdeskCacheBackend(SuperdeskMangler())
+cache = hermes.Hermes(cache_backend, mangler=cache_backend.mangler, ttl=600)
