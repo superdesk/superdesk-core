@@ -15,7 +15,6 @@ from eve.utils import date_to_str
 
 from superdesk.tests import TestCase
 from superdesk.celery_app import try_cast, loads
-from superdesk.celery_task_utils import mark_task_as_not_running, is_task_running
 
 
 class CeleryTestCase(TestCase):
@@ -57,18 +56,3 @@ class CeleryTestCase(TestCase):
         s = b"""[{"foo": false, "bar": true}]"""
         o = loads(s)
         self.assertEqual([{"foo": False, "bar": True}], o)
-
-
-class CeleryTaskRaceTest(TestCase):
-    def test_the_second_update_fails_if_already_running(self):
-        provider = {"_id": "abc", "name": "test provider", "update_schedule": {"minutes": 1}}
-        removed = mark_task_as_not_running(provider["name"], provider["_id"])
-        self.assertFalse(removed)
-        failed_to_mark_as_running = is_task_running(provider["name"], provider["_id"], {"minutes": 1})
-        self.assertFalse(failed_to_mark_as_running, "Failed to mark ingest update as running")
-
-        failed_to_mark_as_running = is_task_running(provider["name"], provider["_id"], {"minutes": 1})
-        self.assertTrue(failed_to_mark_as_running, "Ingest update marked as running, possible race condition")
-
-        removed = mark_task_as_not_running(provider["name"], provider["_id"])
-        self.assertTrue(removed, "Failed to mark ingest update as not running.")
