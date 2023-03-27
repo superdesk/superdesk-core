@@ -22,6 +22,22 @@ jobs:
 
     - run: pytest --log-level=ERROR --disable-warnings
 
+  pip-compile:
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        python-version: ['3.8', '3.10']
+
+    steps:
+    - uses: actions/checkout@v3
+    - uses: actions/setup-python@v4
+      with:
+        python-version: ${{ matrix.python-version }}
+
+    - run: pip install -U pip wheel setuptools pip-tools
+    - run: pip-compile -U --resolver=backtracking setup.py
+
   behave:
     runs-on: ubuntu-latest
 
