@@ -15,7 +15,17 @@ from superdesk.metadata.item import get_schema
 
 class WorkqueueResource(superdesk.Resource):
     endpoint_name = "workqueue"
-    datasource = {"source": "archive"}
+    datasource = {
+        "source": "archive",
+        "search_backend": "elastic",
+        "elastic_filter": {
+            "bool": {
+                "must_not": [
+                    {"terms": {"state": ["spiked"]}},
+                ],
+            },
+        },
+    }
     schema = get_schema()
     item_methods = ["GET"]
 
