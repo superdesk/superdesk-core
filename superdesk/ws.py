@@ -26,7 +26,7 @@ def create_server(config):
         host = config["WS_HOST"]
         port = int(config["WS_PORT"])
         broker_url = config["BROKER_URL"]
-        exchange_name = config.get("WEBSOCKET_EXCHANGE")
+        exchange_name = config.get("WEBSOCKET_EXCHANGE", "superdesk_notification")
         comms = SocketCommunication(host, port, broker_url, exchange_name)
         comms.run_server()
     except Exception:
