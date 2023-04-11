@@ -34,7 +34,6 @@ from superdesk.default_settings import WS_HEART_BEAT
 
 
 logger = logging.getLogger(__name__)
-logger.setLevel(logging.INFO)
 
 
 class SocketBrokerClient:
