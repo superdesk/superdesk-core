@@ -25,6 +25,7 @@ from eve.methods.common import resolve_document_etag
 from elasticsearch.exceptions import RequestError, NotFoundError
 from superdesk.errors import SuperdeskApiError
 from superdesk.notification import push_notification as _push_notification
+from superdesk.cache import cache
 
 
 SYSTEM_KEYS = set(
@@ -138,7 +139,7 @@ class EveBackend:
         self._cursor_hook(cursor=cursor, req=req)
         return cursor
 
-    def get_from_mongo(self, endpoint_name, req, lookup):
+    def get_from_mongo(self, endpoint_name, req, lookup, perform_count=False):
         """Get list of items from mongo.
 
         No matter if there is elastic configured, this will use mongo.
@@ -149,7 +150,7 @@ class EveBackend:
         """
         req.if_modified_since = None
         backend = self._backend(endpoint_name)
-        cursor, _ = backend.find(endpoint_name, req, lookup, perform_count=False)
+        cursor, _ = backend.find(endpoint_name, req, lookup, perform_count=perform_count)
         self._cursor_hook(cursor=cursor, req=req)
         return cursor
 
@@ -164,7 +165,9 @@ class EveBackend:
         if kwargs.get("query"):
             kwargs["query"] = backend._mongotize(kwargs["query"], endpoint_name)
 
-        return backend.driver.db[endpoint_name].find_and_modify(**kwargs)
+        result = backend.driver.db[endpoint_name].find_and_modify(**kwargs)
+        cache.clean([endpoint_name])
+        return result
 
     def create(self, endpoint_name, docs, **kwargs):
         """Insert documents into given collection.
@@ -176,6 +179,7 @@ class EveBackend:
             doc.pop("_type", None)
         ids = self.create_in_mongo(endpoint_name, docs, **kwargs)
         self.create_in_search(endpoint_name, docs, **kwargs)
+        cache.clean([endpoint_name])
 
         for doc in docs:
             self._push_resource_notification("created", endpoint_name, _id=str(doc["_id"]))
@@ -293,6 +297,7 @@ class EveBackend:
                 logger.warning("Item is missing in elastic resource=%s id=%s", endpoint_name, id)
                 search_backend.insert(endpoint_name, [doc])
 
+        cache.clean([endpoint_name])
         return updates
 
     def replace(self, endpoint_name, id, document, original):
@@ -305,6 +310,7 @@ class EveBackend:
         """
         res = self.replace_in_mongo(endpoint_name, id, document, original)
         self.replace_in_search(endpoint_name, id, document, original)
+        cache.clean([endpoint_name])
         return res
 
     def update_in_mongo(self, endpoint_name, id, updates, original):
@@ -362,6 +368,7 @@ class EveBackend:
         removed_ids = self.delete_docs(endpoint_name, docs)
         if len(docs) and not len(removed_ids):
             logger.warn("No documents for %s resource were deleted using lookup %s", endpoint_name, lookup)
+        cache.clean([endpoint_name])
         return removed_ids
 
     def delete_docs(self, endpoint_name, docs):

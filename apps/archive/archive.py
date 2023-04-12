@@ -800,7 +800,7 @@ class ArchiveService(BaseService, HighlightsSearchMixin):
         """
         resource_def = app.config["DOMAIN"]["archive"]
         version_id = versioned_id_field(resource_def)
-        old_versions = get_resource_service("archive_versions").get(req=None, lookup={version_id: old_id})
+        old_versions = get_resource_service("archive_versions").get_from_mongo(req=None, lookup={version_id: old_id})
 
         new_versions = []
         for old_version in old_versions:
@@ -831,7 +831,7 @@ class ArchiveService(BaseService, HighlightsSearchMixin):
         :param old_id: identifier to fetch history
         :param new_doc: identifiers from this doc will be used to create version history for the duplicated item.
         """
-        old_history_items = get_resource_service("archive_history").get(req=None, lookup={"item_id": old_id})
+        old_history_items = get_resource_service("archive_history").get_from_mongo(req=None, lookup={"item_id": old_id})
 
         new_history_items = []
         for old_history_item in old_history_items:

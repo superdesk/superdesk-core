@@ -380,7 +380,7 @@ Feature: Archive history
         Then we get list with 1 items
         """
         {"_items": [{"headline": "test", "highlights": ["#highlights._id#"],
-                    "_updated": "#archive._updated#", "_etag": "#archive._etag#"}]}
+                     "_etag": "#archive._etag#"}]}
         """
         When we get "/archive_history?where=item_id==%22#archive._id#%22"
         Then we get list with 2 items
@@ -397,7 +397,7 @@ Feature: Archive history
         And we get "archive"
         Then we get list with 1 items
         """
-        {"_items": [{"highlights": [], "_updated": "#archive._updated#", "_etag": "#archive._etag#"}]}
+        {"_items": [{"highlights": [], "_etag": "#archive._etag#"}]}
         """
         When we get "/archive_history?where=item_id==%22#archive._id#%22"
         Then we get list with 3 items

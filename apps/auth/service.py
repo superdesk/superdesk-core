@@ -88,7 +88,8 @@ class AuthService(BaseService):
         flask.session.pop("session_token", None)
 
         # notify that the session has ended
-        app.on_session_end(doc["user"], doc["_id"])
+        sessions = self.get(req=None, lookup={"user": doc["user"]})
+        app.on_session_end(doc["user"], doc["_id"], is_last_session=not sessions.count())
         self.set_user_last_activity(doc["user"], done=True)
 
     def is_authorized(self, **kwargs) -> bool:

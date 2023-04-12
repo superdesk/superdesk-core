@@ -13,6 +13,7 @@ from eve.utils import ParsedRequest
 from superdesk.resource import build_custom_hateoas
 from flask_babel import _
 from superdesk.utc import utcnow
+from superdesk.services import CacheableService
 
 
 CONTENT_TYPE_PRIVILEGE = "content_type"
@@ -114,7 +115,7 @@ class ContentTypesResource(superdesk.Resource):
     }
 
 
-class ContentTypesService(superdesk.Service):
+class ContentTypesService(CacheableService):
     def _set_updated_by(self, doc):
         doc["updated_by"] = get_user_id()
 
@@ -590,11 +591,13 @@ def apply_schema(item):
 
     if item.get("type") == "event":
         return item.copy()
-    try:
-        profile = get_resource_service("content_types").find_one(req=None, _id=item["profile"])
-        schema = profile["schema"]
-    except Exception:
-        schema = DEFAULT_SCHEMA
+
+    schema = DEFAULT_SCHEMA
+    if item.get("profile"):
+        profile = get_profile(item["profile"])
+        if profile and profile.get("schema"):
+            schema = profile["schema"]
+
     return {key: val for key, val in item.items() if is_enabled(key, schema) or key in allowed_keys}
 
 
@@ -609,3 +612,7 @@ def remove_profile_from_templates(item):
     for template in templates:
         template.get("data", {}).pop("profile", None)
         superdesk.get_resource_service("content_templates").patch(template[config.ID_FIELD], template)
+
+
+def get_profile(_id):
+    return get_resource_service("content_types").get_cached_by_id(_id)

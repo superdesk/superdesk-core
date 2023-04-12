@@ -12,7 +12,7 @@ import logging
 from typing import Dict
 
 from copy import copy
-from eve.utils import config, ParsedRequest
+from eve.utils import config
 
 from superdesk.utc import utcnow
 from superdesk.services import BaseService
@@ -136,16 +136,16 @@ class PublishService(BaseService):
         :param item:
         :return: True of the item is blocked, False if it is OK to publish it on the API.
         """
+        filter_service = get_resource_service("content_filters")
+
         # Get the API blocking Filters
-        req = ParsedRequest()
-        filter_conditions = list(get_resource_service("content_filters").get(req=req, lookup={"api_block": True}))
+        filters = filter_service.get_api_blocking_filters()
 
         # No API blocking filters
-        if not filter_conditions:
+        if not filters:
             return False
 
-        filter_service = get_resource_service("content_filters")
-        for fc in filter_conditions:
+        for fc in filters:
             if filter_service.does_match(fc, item):
                 logger.info("API Filter block {} matched for item {}.".format(fc, item.get(config.ID_FIELD)))
                 return True

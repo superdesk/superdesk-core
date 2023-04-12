@@ -37,6 +37,7 @@ from superdesk.logging import configure_logging
 from superdesk.storage import ProxyMediaStorage
 from superdesk.validator import SuperdeskValidator
 from superdesk.json_utils import SuperdeskJSONEncoder
+from superdesk.cache import cache_backend
 from .elastic_apm import setup_apm
 
 SUPERDESK_PATH = os.path.abspath(os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
@@ -90,6 +91,7 @@ class SuperdeskEve(eve.Eve):
         self.babel_translations = None
         self.notification_client = None
         self.lock = None
+        self._superdesk_cache = None
 
         super().__init__(**kwargs)
 
@@ -222,6 +224,7 @@ def get_app(config=None, media_storage=None, config_object=None, init_elastic=No
     app.jinja_loader = custom_loader
     app.mail = Mail(app)
     app.sentry = SuperdeskSentry(app)
+    cache_backend.init_app(app)
     setup_apm(app)
 
     # setup babel
@@ -253,6 +256,7 @@ def get_app(config=None, media_storage=None, config_object=None, init_elastic=No
         return response
 
     init_celery(app)
+
     installed = set()
 
     def install_app(module_name):
