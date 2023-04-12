@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<nitf version="-//IPTC//DTD NITF 3.4//EN" change.date="October 18, 2006" change.time="19:30">
+<nitf xmlns="http://iptc.org/std/NITF/2006-10-18/" version="-//IPTC//DTD NITF 3.4//EN" change.date="October 18, 2006"
+      change.time="19:30">
     <head>
         <docdata>
             <doc-id regsrc="AP"/>
