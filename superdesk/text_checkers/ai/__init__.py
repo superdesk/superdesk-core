@@ -40,6 +40,10 @@ class AIResource(Resource):
                 "body_html": {"type": "string", "required": True},
             },
         },
+        "tags": {
+            "type": "dict",
+            "required": False,
+        },
     }
     datasource = {"projection": {"analysis": 1}}
     internal_resource = False
@@ -84,7 +88,7 @@ class AIService(BaseService):
         except KeyError:
             raise SuperdeskApiError.notFoundError("{service} service can't be found".format(service=service))
 
-        analyzed_data = service.analyze(item)
+        analyzed_data = service.analyze(item, doc.get("tags"))
         docs[0].update({"analysis": analyzed_data})
         return [0]
 
