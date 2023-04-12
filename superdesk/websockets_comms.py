@@ -13,9 +13,10 @@
 import arrow
 import logging
 import asyncio
-import websockets
 import signal
+import websockets
 
+from flask import json
 from datetime import timedelta
 from threading import Thread
 from kombu import Queue, Exchange, Connection
@@ -23,8 +24,7 @@ from kombu.mixins import ConsumerMixin
 from kombu.pools import producers
 from superdesk.utc import utcnow
 from superdesk.utils import get_random_string
-from superdesk.default_settings import celery_queue, WS_HEART_BEAT
-from flask import json
+from superdesk.default_settings import WS_HEART_BEAT
 
 
 logger = logging.getLogger(__name__)
@@ -35,15 +35,16 @@ class SocketBrokerClient:
     Base class for web socket notification using broker (redis or rabbitmq)
     """
 
-    connection = None
+    url: str
+    exchange_name: str
+    connection: Connection
+    socket_exchange: Exchange
 
-    def __init__(self, url, exchange_name=None):
+    def __init__(self, url, exchange_name):
         self.url = url
         self.connect()
-        self.exchange_name = exchange_name if exchange_name else celery_queue("socket_notification")
-        self.channel = self.connection.channel()
-        self.socket_exchange = Exchange(self.exchange_name, type="fanout", channel=self.channel)
-        self.socket_exchange.declare()
+        self.exchange_name = exchange_name
+        self.socket_exchange = Exchange(self.exchange_name, type="fanout")
 
     def open(self):
         """Test if connection is open.
@@ -58,14 +59,12 @@ class SocketBrokerClient:
         self._close()
         logger.info("Connecting to broker {}".format(self.url))
         self.connection = Connection(self.url, heartbeat=WS_HEART_BEAT)
-        self.connection.connect()
         logger.info("Connected to broker {}".format(self.url))
 
     def _close(self):
         if hasattr(self, "connection") and self.connection:
             logger.info("Closing connecting to broker {}".format(self.url))
             self.connection.release()
-            self.connection = None
             logger.info("Connection closed to broker {}".format(self.url))
 
     def close(self):
@@ -75,10 +74,6 @@ class SocketBrokerClient:
 class SocketMessageProducer(SocketBrokerClient):
     """Used by backeend processes to send messages."""
 
-    """
-    Publishes messages to a exchange (fanout).
-    """
-
     def send(self, message):
         """
         Publishes the message to an exchange
@@ -87,8 +82,8 @@ class SocketMessageProducer(SocketBrokerClient):
         """
         try:
             with producers[self.connection].acquire(block=True) as producer:
-                producer.publish(message, exchange=self.socket_exchange)
-                logger.debug("message:{} published to broker:{}.".format(message, self.url))
+                producer.publish(message, exchange=self.socket_exchange, declare=[self.socket_exchange], retry=True)
+                logger.debug("message %s published to broker=%s exchange=%s.", message, self.url, self.socket_exchange)
         except Exception:
             logger.exception("Failed to publish message {} to broker.".format(message))
 
@@ -98,7 +93,9 @@ class SocketMessageConsumer(SocketBrokerClient, ConsumerMixin):
     Consumer of the message.
     """
 
-    def __init__(self, url, callback, exchange_name=None):
+    queue: Queue
+
+    def __init__(self, url, callback, exchange_name):
         """Create consumer.
 
         :param string url: Broker URL
@@ -107,14 +104,17 @@ class SocketMessageConsumer(SocketBrokerClient, ConsumerMixin):
         """
         super().__init__(url, exchange_name)
         self.callback = callback
-        self.queue_name = "socket_consumer_{}".format(get_random_string())
-        # expire message after 10 seconds and queue after 60 seconds
+        self.queue_name = "websocket_queue_{}".format(get_random_string())
         self.queue = Queue(
             self.queue_name,
             exchange=self.socket_exchange,
-            channel=self.channel,
-            queue_arguments={"x-message-ttl": 10000, "x-expires": 60000},
+            message_ttl=10,
+            expires=60,
+            channel=self.connection.channel(),
+            exclusive=True,
         )
+
+        logger.info("Websocket queue created %s", self.queue_name)
 
     def get_consumers(self, Consumer, channel):
         return [Consumer(queues=[self.queue], callbacks=[self.on_message])]

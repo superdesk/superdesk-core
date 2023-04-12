@@ -131,6 +131,8 @@ APPLICATION_NAME = env("APP_NAME", "Superdesk")
 #: public client url - used to create links within emails etc, ``SUPERDESK_CLIENT_URL`` env
 CLIENT_URL = env("SUPERDESK_CLIENT_URL", "http://localhost:9000")
 
+WEBSOCKET_EXCHANGE = "superdesk_notification"
+
 SERVER_URL = env("SUPERDESK_URL", "http://localhost:5000/api")
 server_url = urlparse(SERVER_URL)
 SERVER_DOMAIN = server_url.netloc or "localhost"
