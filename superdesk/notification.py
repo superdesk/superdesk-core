@@ -38,7 +38,7 @@ class ClosedSocket:
 
 def init_app(app) -> None:
     try:
-        app.notification_client = SocketMessageProducer(app.config["BROKER_URL"], app.config.get("WEBSOCKET_EXCHANGE"))
+        app.notification_client = SocketMessageProducer(app.config["BROKER_URL"], app.config["WEBSOCKET_EXCHANGE"])
     except (RuntimeError, OSError):
         # not working now, but we can try later when actually sending something
         app.notification_client = ClosedSocket()
