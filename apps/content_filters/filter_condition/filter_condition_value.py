@@ -69,6 +69,7 @@ class FilterConditionValue:
 
     def _get_value(self, field):
         t = field.get_type()
-        if self.value.find(",") > 0:
-            return [t(x) for x in self.value.strip().split(",")]
-        return [t(self.value)]
+        value = str(self.value)
+        if value.find(",") > 0:
+            return [t(x) for x in value.strip().split(",")]
+        return [t(value)]

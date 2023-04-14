@@ -218,8 +218,8 @@ class EnqueueContent(superdesk.Command):
         for queue_item in published_items:
             try:
                 self.enqueue_item(queue_item)
-            except Exception:
-                logger.exception("Failed to queue item {}".format(queue_item.get("_id")))
+            except Exception as err:
+                logger.exception(err)
                 failed_items[str(queue_item.get("_id"))] = queue_item
 
         if len(failed_items) > 0:
