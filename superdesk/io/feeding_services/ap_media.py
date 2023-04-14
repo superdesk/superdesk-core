@@ -25,6 +25,8 @@ from datetime import timedelta, datetime
 
 logger = logging.getLogger(__name__)
 
+nitf_namespace = {"nitf": "http://iptc.org/std/NITF/2006-10-18/"}
+
 
 class APMediaFeedingService(HTTPFeedingServiceBase):
     """
@@ -181,6 +183,14 @@ class APMediaFeedingService(HTTPFeedingServiceBase):
                     logger.info("Get AP nitf : {}".format(nitf_ref))
                     r = self.api_get(nitf_ref, provider)
                     root_elt = etree.fromstring(r.content)
+
+                    # If the default namespace definition is the nitf namespace then remove it
+                    if root_elt.nsmap and root_elt.nsmap.get(None) == nitf_namespace["nitf"]:
+                        for elem in root_elt.getiterator():
+                            if elem.tag:
+                                elem.tag = elem.tag.replace("{" + nitf_namespace["nitf"] + "}", "")
+                        etree.cleanup_namespaces(root_elt)
+
                     nitf_item = nitf.NITFFeedParser().parse(root_elt)
                     complete_item["nitf"] = nitf_item
                 else:

@@ -260,6 +260,15 @@ Feature: Templates
 
     @auth
     Scenario: Apply template to an item
+        Given "desks"
+        """
+        [{"name": "sports"}]
+        """
+        And "stages"
+        """
+        [{"name": "schedule", "desk": "#desks._id#"}]
+        """
+
         When we post to "content_templates"
         """
         {
@@ -288,6 +297,10 @@ Feature: Templates
                     "urgency": 5, "priority": 6,
                     "dateline": {
                         "text": "Prague, 9 May (SAP)"
+                    },
+                    "task": {
+                        "desk" : "#desks._id#",
+                        "last_authoring_desk" : "#desks._id#"
                     },
                     "versioncreated": "2015-01-01T22:54:53+0000",
                     "fields_meta": {

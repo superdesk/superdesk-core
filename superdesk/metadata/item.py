@@ -588,10 +588,12 @@ metadata_schema = {
         "schema": {
             "user": {"type": "string", "mapping": not_analyzed, "nullable": True},
             "desk": {"type": "string", "mapping": not_analyzed, "nullable": True},
-            "desk_history": {"type": "list", "mapping": not_analyzed},
-            "last_desk": {"type": "string", "mapping": not_analyzed},
+            DESK_HISTORY: {"type": "list", "mapping": not_analyzed},
+            LAST_DESK: {"type": "string", "mapping": not_analyzed},
             "stage": {"type": "string", "mapping": not_analyzed, "nullable": True},
             "status": {"type": "string", "mapping": not_analyzed},
+            LAST_AUTHORING_DESK: {"type": "string", "mapping": not_analyzed},
+            LAST_PRODUCTION_DESK: {"type": "string", "mapping": not_analyzed},
         },
     },
     # Task and Lock Details
