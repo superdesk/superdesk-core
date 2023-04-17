@@ -30,6 +30,10 @@ class FilterConditionOperatorsEnum(Enum):
 
 
 class FilterConditionOperator:
+    operator: FilterConditionOperatorsEnum
+    mongo_operator: str
+    elastic_operator: str
+
     @staticmethod
     def factory(operator):
         if operator + "_" == FilterConditionOperatorsEnum.in_.name:

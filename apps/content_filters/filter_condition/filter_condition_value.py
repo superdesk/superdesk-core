@@ -9,6 +9,7 @@
 # at https://www.sourcefabric.org/superdesk/license
 import re
 from apps.content_filters.filter_condition.filter_condition_operator import (
+    FilterConditionOperator,
     FilterConditionOperatorsEnum,
     ComparisonOperator,
     ExistsOperator,
@@ -31,9 +32,9 @@ class FilterConditionValue:
         FilterConditionOperatorsEnum.match: "{}:{}",
     }
 
-    def __init__(self, operator, value):
+    def __init__(self, operator: FilterConditionOperator, value):
         self.operator = operator
-        self.value = value
+        self.value = str(value)
         self.mongo_regex = self.mongo_mapper.get(operator.operator)
         self.elastic_regex = self.elastic_mapper.get(operator.operator)
 
@@ -41,7 +42,7 @@ class FilterConditionValue:
         if isinstance(operator, ComparisonOperator) or isinstance(operator, ExistsOperator):
             t = field.get_type()
             if t is bool:
-                return self.value.lower() in ("yes", "true", "t", "1")
+                return self.is_true()
             return t(self.value)
         else:
             return self.get_mongo_value(field)
@@ -56,7 +57,7 @@ class FilterConditionValue:
         if isinstance(operator, ComparisonOperator):
             t = field.get_type()
             if t is bool:
-                return self.value.lower() in ("yes", "true", "t", "1"), field.get_entity_name()
+                return self.is_true(), field.get_entity_name()
             return t(self.value), field.get_entity_name()
 
         if self.elastic_regex:
@@ -69,7 +70,12 @@ class FilterConditionValue:
 
     def _get_value(self, field):
         t = field.get_type()
-        value = str(self.value)
-        if value.find(",") > 0:
-            return [t(x) for x in value.strip().split(",")]
-        return [t(value)]
+        if self.value.find(",") > 0:
+            return [t(x) for x in self.value.strip().split(",")]
+        return [t(self.value)]
+
+    def is_true(self) -> bool:
+        return self.value.lower() in ("yes", "true", "t", "1")
+
+    def is_false(self) -> bool:
+        return self.value.lower() in ("no", "false", "f", "0")

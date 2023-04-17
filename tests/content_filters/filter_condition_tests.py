@@ -8,11 +8,13 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 import json
+import bson
 import re
 import os
 from datetime import timedelta
 
 from eve.utils import ParsedRequest
+from apps.content_filters.filter_condition.filter_condition_field import FilterConditionDeskField
 
 from superdesk.utc import utcnow
 from superdesk import get_resource_service
@@ -20,6 +22,7 @@ from superdesk.tests import TestCase
 from apps.content_filters.filter_condition.filter_condition_service import FilterConditionService
 from apps.content_filters.filter_condition.filter_condition import FilterCondition
 from apps.content_filters.filter_condition.filter_condition_operator import FilterConditionOperator
+from apps.content_filters.filter_condition.filter_condition_value import FilterConditionValue
 from apps.prepopulate.app_populate import AppPopulateCommand
 
 
@@ -807,3 +810,9 @@ class FilterConditionTests(TestCase):
             doc_ids = [d["_id"] for d in docs]
             self.assertEqual(1, docs.count())
             self.assertTrue("4" in doc_ids)
+
+    def test_filter_condition_value_deserialized(self):
+        desk_id = bson.ObjectId()
+        field = FilterConditionDeskField("")
+        value = FilterConditionValue(FilterConditionOperator.factory("in"), desk_id)
+        self.assertEqual([str(desk_id)], value._get_value(field))
