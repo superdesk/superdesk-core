@@ -211,6 +211,9 @@ class ContentFilterService(CacheableService):
                         if filters
                         else filter_condition_service.get_cached_by_id(f)
                     )
+                    if not fc:
+                        logger.error("Missing filter condition %s in content filter %s", f, content_filter.get("name"))
+                        return False
                     filter_condition = FilterCondition.parse(fc)
                     filter_conditions.append(filter_condition.does_match(article))
             if "pf" in expression.get("expression", {}):
