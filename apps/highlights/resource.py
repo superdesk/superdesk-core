@@ -32,5 +32,5 @@ class HighlightsResource(Resource):
 class MarkedForHighlightsResource(Resource):
     """Marked for highlights Schema"""
 
-    schema = {"highlights": {"type": "string", "required": True}, "marked_item": {"type": "string", "required": True}}
+    schema = {"highlights": {"type": "list", "required": True}, "marked_item": {"type": "string", "required": True}}
     privileges = {"POST": "mark_for_highlights"}
