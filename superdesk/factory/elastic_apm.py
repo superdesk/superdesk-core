@@ -16,7 +16,6 @@ def setup_apm(app: flask.Flask, service="Core API") -> None:
             "SERVICE_NAME": "{app} - {service}".format(
                 app=app.config.get("APM_SERVICE_NAME") or app.config.get("APPLICATION_NAME"), service=service
             ),
-            "SPAN_STACK_TRACE_MIN_DURATION": "-1ms",
         }
 
         app.apm = ElasticAPM(app)
