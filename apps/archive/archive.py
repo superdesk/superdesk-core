@@ -870,8 +870,6 @@ class ArchiveService(BaseService, HighlightsSearchMixin):
         :param original: original is document.
         """
         updates[ITEM_STATE] = CONTENT_STATE.PROGRESS
-        updates[PUBLISH_SCHEDULE] = original[PUBLISH_SCHEDULE]
-        updates[SCHEDULE_SETTINGS] = original[SCHEDULE_SETTINGS]
         updates[ITEM_OPERATION] = ITEM_DESCHEDULE
         updates["firstpublished"] = None
         # delete entry from published repo
