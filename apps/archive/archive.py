@@ -896,7 +896,7 @@ class ArchiveService(BaseService, HighlightsSearchMixin):
                     # update associated item info in the original
                     orig_associated_item = archive_service.find_one(req=None, _id=associated_item[config.ID_FIELD])
                     orig_associated_item[PUBLISH_SCHEDULE] = None
-                    orig_associated_item[SCHEDULE_SETTINGS] = None
+                    orig_associated_item[SCHEDULE_SETTINGS] = {}
                     updates.setdefault(ASSOCIATIONS, {})[associations_key] = orig_associated_item
 
     def can_edit(self, item, user_id):
