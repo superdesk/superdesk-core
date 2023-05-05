@@ -453,7 +453,10 @@ class NINJSFormatter(Formatter):
                 continue
             formatted[field] = rendition[field]
             if field in ("width", "height"):
-                formatted[field] = int(rendition[field])
+                if rendition.get(field):
+                    formatted[field] = int(rendition[field])
+                else:
+                    formatted.pop(field, None)
         return formatted
 
     def _format_place(self, article):
