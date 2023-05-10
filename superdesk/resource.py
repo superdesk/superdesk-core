@@ -61,6 +61,7 @@ class Resource:
     endpoint_name: Optional[str] = None
     url: Optional[str] = None
     item_url: Optional[str] = None
+    regex_url: Optional[str] = None
     additional_lookup: Optional[Dict[str, str]] = None
     schema = {}
     allow_unknown: bool = False
@@ -117,6 +118,8 @@ class Resource:
                 endpoint_schema.update({"url": self.url})
             if self.item_url is not None:
                 endpoint_schema.update({"item_url": self.item_url})
+            if self.regex_url is not None:
+                endpoint_schema["regex_url"] = self.regex_url
             if self.embedded_fields is not None:
                 endpoint_schema.update({"embedded_fields": self.embedded_fields})
             if self.versioning is not None:
