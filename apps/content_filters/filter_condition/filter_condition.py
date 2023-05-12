@@ -60,10 +60,7 @@ class FilterCondition:
                 type(self.operator) is NotInOperator
                 or type(self.operator) is NotLikeOperator
                 or self.operator.operator is FilterConditionOperatorsEnum.ne
-                or (
-                    self.operator.operator is FilterConditionOperatorsEnum.eq
-                    and self.value.value.lower() in ("no", "false", "f", "0")
-                )
+                or (self.operator.operator is FilterConditionOperatorsEnum.eq and self.value.is_false())
             )
 
         article_value = self.field.get_value(article)

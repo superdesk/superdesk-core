@@ -162,6 +162,8 @@ class NinjsFormatterTest(TestCase):
                 "original": {
                     "href": "https://one-api.aap.com.au/api/v3/Assets/20150723001158606583/Original/download",
                     "mimetype": "image/jpeg",
+                    "width": None,
+                    "height": None,
                 },
                 "custom": None,  # simulate custom crop which is too big
             },

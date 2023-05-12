@@ -22,7 +22,7 @@ import superdesk.signals as signals
 from superdesk.errors import SuperdeskApiError
 from superdesk.tests import TestCase
 from superdesk.utc import utcnow
-from superdesk.metadata.item import CONTENT_STATE
+from superdesk.metadata.item import CONTENT_STATE, PUBLISH_SCHEDULE, SCHEDULE_SETTINGS
 from apps.archive.archive import update_image_caption, update_associations
 from apps.archive.common import (
     validate_schedule,
@@ -485,3 +485,72 @@ class ArchiveTestCase(TestCase):
                 counter += 1
 
         assert 500 == counter
+
+    def test_republished_associated_item_datetime(self):
+        """
+        check rescheduled item and its associated item has same published_schedule date time
+        """
+        archive_service = superdesk.get_resource_service("archive")
+        publish_service = superdesk.get_resource_service("archive_publish")
+        item = {
+            "_id": "foo",
+            "guid": "foo",
+            "unique_name": "foo",
+            "type": "text",
+            "state": CONTENT_STATE.PROGRESS,
+            "_current_version": 1,
+            "associations": {
+                "featuremedia": {
+                    "_id": "foo_img",
+                    "guid": "foo_img",
+                    "unique_name": "foo_img",
+                    "type": "picture",
+                }
+            },
+        }
+        archive_service.create([item])
+        feature_item = {
+            "_id": "foo_img",
+            "guid": "foo_img",
+            "unique_name": "foo_img",
+            "type": "picture",
+            "state": CONTENT_STATE.PROGRESS,
+            "_current_version": 1,
+        }
+        archive_service.create([feature_item])
+        publish_service.patch("foo", {"body_html": "original", "publish_schedule": NOW + timedelta(minutes=60)})
+        created_item = publish_service.find_one(None, _id="foo")
+
+        self.assertEqual(created_item[PUBLISH_SCHEDULE], NOW + timedelta(minutes=60))
+        self.assertEqual(created_item["state"], CONTENT_STATE.SCHEDULED)
+
+        associate_item = created_item["associations"]["featuremedia"]
+
+        self.assertEqual(associate_item[PUBLISH_SCHEDULE], NOW + timedelta(minutes=60))
+        self.assertEqual(
+            associate_item[SCHEDULE_SETTINGS], {"utc_publish_schedule": NOW + timedelta(minutes=60), "time_zone": None}
+        )
+        self.assertEqual(associate_item["state"], CONTENT_STATE.SCHEDULED)
+
+        # De-scheduled an item
+        archive_service.patch("foo", {"publish_schedule": None})
+        descheduled_item = archive_service.find_one(None, _id="foo")
+        self.assertEqual(descheduled_item["operation"], "deschedule")
+        self.assertEqual(descheduled_item["state"], CONTENT_STATE.PROGRESS)
+        self.assertEqual(descheduled_item["associations"]["featuremedia"][SCHEDULE_SETTINGS], {})
+        self.assertEqual(descheduled_item["associations"]["featuremedia"][PUBLISH_SCHEDULE], None)
+
+        # resheduled an item
+        publish_service.patch("foo", {"publish_schedule": NOW + timedelta(minutes=100)})
+        rescheduled_item = publish_service.find_one(None, _id="foo")
+        self.assertEqual(rescheduled_item[PUBLISH_SCHEDULE], NOW + timedelta(minutes=100))
+        self.assertEqual(rescheduled_item["state"], CONTENT_STATE.SCHEDULED)
+
+        corrected_associate_item = rescheduled_item["associations"]["featuremedia"]
+
+        self.assertEqual(corrected_associate_item[PUBLISH_SCHEDULE], NOW + timedelta(minutes=100))
+        self.assertEqual(
+            corrected_associate_item[SCHEDULE_SETTINGS],
+            {"utc_publish_schedule": NOW + timedelta(minutes=100), "time_zone": None},
+        )
+        self.assertEqual(corrected_associate_item["state"], CONTENT_STATE.SCHEDULED)

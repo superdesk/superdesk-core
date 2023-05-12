@@ -878,9 +878,14 @@ class ArchiveService(BaseService, HighlightsSearchMixin):
         :param dict updates: updates for the document
         :param original: original is document.
         """
+        if all(item.get("auto_publish", False) for item in (updates, original)):
+            updates[PUBLISH_SCHEDULE] = None
+            updates[SCHEDULE_SETTINGS] = None
+        else:
+            updates[PUBLISH_SCHEDULE] = original[PUBLISH_SCHEDULE]
+            updates[SCHEDULE_SETTINGS] = original[SCHEDULE_SETTINGS]
+
         updates[ITEM_STATE] = CONTENT_STATE.PROGRESS
-        updates[PUBLISH_SCHEDULE] = original[PUBLISH_SCHEDULE]
-        updates[SCHEDULE_SETTINGS] = original[SCHEDULE_SETTINGS]
         updates[ITEM_OPERATION] = ITEM_DESCHEDULE
         updates["firstpublished"] = None
         # delete entry from published repo
@@ -899,6 +904,8 @@ class ArchiveService(BaseService, HighlightsSearchMixin):
                     archive_service.patch(id=associated_item[config.ID_FIELD], updates={PUBLISH_SCHEDULE: None})
                     # update associated item info in the original
                     orig_associated_item = archive_service.find_one(req=None, _id=associated_item[config.ID_FIELD])
+                    orig_associated_item[PUBLISH_SCHEDULE] = None
+                    orig_associated_item[SCHEDULE_SETTINGS] = {}
                     updates.setdefault(ASSOCIATIONS, {})[associations_key] = orig_associated_item
 
     def can_edit(self, item, user_id):

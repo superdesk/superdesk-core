@@ -58,7 +58,7 @@ install_requires = [
     "flask-oidc-ex==0.5.5",
     # to be replaced by stdlib version when we use Python 3.8+
     "typing_extensions>=3.7.4",
-    "elastic-apm[flask]>=6.15.1,<7.0.0",
+    "elastic-apm[flask]>=6.15.1,<7.0",
     # Fix an issue with MarkupSafe 2.1.0 not exporting `soft_unicode`
     "MarkupSafe<2.1",
     "reportlab>=3.6.11,<3.7",
