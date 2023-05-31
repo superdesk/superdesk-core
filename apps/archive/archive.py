@@ -321,6 +321,7 @@ class ArchiveResource(Resource):
         "ingest_id_1": ([("ingest_id", 1)], {"background": True}),
         "unique_id_1": ([("unique_id", 1)], {"background": True}),
         "processed_from_1": ([(PROCESSED_FROM, 1)], {"background": True}),
+        "assignment_id_1": ([("assignment_id", 1)], {"background": True}),
     }
 
 
