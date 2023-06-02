@@ -488,7 +488,7 @@ class ArchiveTestCase(TestCase):
 
     def test_republished_associated_item_datetime(self):
         """
-        check rescheduled item and its associated item has same published_schedule date time
+        Check rescheduled item and its associated item has same published_schedule date time
         """
         archive_service = superdesk.get_resource_service("archive")
         publish_service = superdesk.get_resource_service("archive_publish")

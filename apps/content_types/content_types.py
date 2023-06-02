@@ -452,7 +452,10 @@ def get_subject_name(fields_map):
 
 def set_field_name(editor, field_names):
     for field, name in field_names.items():
-        editor.setdefault(field, {})["field_name"] = name
+        try:
+            editor.setdefault(field, {})["field_name"] = name
+        except TypeError:
+            pass
 
 
 def prepare_for_save_content_type(original, updates):
