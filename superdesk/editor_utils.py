@@ -36,6 +36,7 @@ DUMMY_RE = re.compile(r"</?dummy_tag>")
 ANNOTATION = "ANNOTATION"
 MEDIA = "MEDIA"
 TABLE = "TABLE"
+IMAGE = "IMAGE"
 
 EDITOR_STATE = "draftjsState"
 ENTITY_MAP = "entityMap"
@@ -306,6 +307,7 @@ class DraftJSHTMLExporter:
                     MEDIA: self.render_media,
                     ANNOTATION: self.render_annotation,
                     TABLE: self.render_table,
+                    IMAGE: self.render_image,
                 },
             }
         )
@@ -489,6 +491,10 @@ class DraftJSHTMLExporter:
                     DOM.append_child(td, content)
 
         return table
+
+    def render_image(self, props):
+        elem_props = {key: val for key, val in props.items() if key in ("src", "alt", "width", "height") and val}
+        return DOM.create_element("img", elem_props)
 
     def style_fallback(self, props):
         type_ = props["inline_style_range"]["style"]
@@ -824,6 +830,8 @@ def is_html(field) -> bool:
 
 
 def render_fragment(elem) -> str:
+    if isinstance(elem, str):
+        return elem
     if elem.tag == "p" and not elem.text and not len(elem):
         # client renders empty paragraph as `<p><br></p>`
         etree.SubElement(elem, "br", nsmap=None, attrib=None)

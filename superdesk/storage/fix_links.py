@@ -3,7 +3,7 @@ import logging
 import superdesk
 
 from flask import current_app as app
-from superdesk.editor_utils import generate_fields, get_field_content_state
+from superdesk.editor_utils import get_field_content_state, get_field_value, set_field_value
 from superdesk.errors import SuperdeskApiError
 
 
@@ -105,10 +105,22 @@ class MediaFixLinksCommand(superdesk.Command):
                 if entity.get("type") == "MEDIA" and entity.get("data") and entity["data"].get("media"):
                     entity_updates = self.get_updates(entity["data"]["media"], prefix, hrefs)
                     if entity_updates:
-                        generate_fields(item, [field], force=True)
                         updates["fields_meta"] = fields_meta
-                        if item.get(field):
-                            updates[field] = item[field]
+                if entity.get("type") == "IMAGE" and entity.get("data") and entity["data"].get("src"):
+                    if entity["data"]["src"].startswith(prefix):
+                        _href = entity["data"]["src"]
+                        media = _href.replace(prefix, "").lstrip("/")
+                        hrefs[_href] = app.media.url_for_media(media)
+                        entity["data"]["src"] = hrefs[_href]
+                        updates["fields_meta"] = fields_meta
+
+            orig_value = value = get_field_value(item, field)
+            if not value:
+                continue
+            for old_url, new_url in hrefs.items():
+                value = value.replace(old_url, new_url)
+            if orig_value != value:
+                set_field_value(updates, field, value)
 
         body_html = item.get("body_html")
         if item.get("body_html") and hrefs:
