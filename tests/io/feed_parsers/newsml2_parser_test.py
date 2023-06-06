@@ -34,7 +34,7 @@ class BaseNewMLTwoTestCase(unittest.TestCase):
 
 
 class ReutersTestCase(BaseNewMLTwoTestCase):
-    filename = "tag:reuters.com,0000:newsml_L4N1FL0N0:1132689232"
+    filename = "tag_reuters.com,0000_newsml_L4N1FL0N0_1132689232"
 
     def test_content(self):
         self.assertEqual(self.item[0].get("headline"), "PRECIOUS-Gold rises as Trump policy fuels safe haven demand")
@@ -51,7 +51,7 @@ class ReutersTestCase(BaseNewMLTwoTestCase):
 
 
 class ResutersResultsTestCase(BaseNewMLTwoTestCase):
-    filename = "tag:reuters.com,0000:newsml_ISS149709:1618095828"
+    filename = "tag_reuters.com,0000_newsml_ISS149709_1618095828"
 
     def test_results(self):
         self.assertTrue(
@@ -72,7 +72,7 @@ class ANSATestCase(BaseNewMLTwoTestCase):
 
 
 class ReutersOptaTestCase(BaseNewMLTwoTestCase):
-    filename = "tag:reuters.com,2018:newsml_MTZXEE13ZXCZES:2"
+    filename = "tag_reuters.com,2018_newsml_MTZXEE13ZXCZES_2"
 
     def test_body(self):
         self.assertTrue(
