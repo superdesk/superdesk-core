@@ -102,11 +102,11 @@ Feature: Highlights
 		"""
 		When we post to "marked_for_highlights"
 		"""
-		[{"highlights": "#highlights._id#", "marked_item": "#archive._id#"}]
+		[{"highlights": ["#highlights._id#"], "marked_item": "#archive._id#"}]
 		"""
 		Then we get new resource
         """
-        {"highlights": "#highlights._id#", "marked_item": "#archive._id#"}
+        {"highlights": ["#highlights._id#"], "marked_item": "#archive._id#"}
         """
         When we get "archive"
         Then we get list with 1 items
@@ -117,7 +117,7 @@ Feature: Highlights
 
         When we post to "marked_for_highlights"
         """
-        [{"highlights": "#highlights._id#", "marked_item": "marked_item": "#archive._id#"}]
+        [{"highlights": ["#highlights._id#"], "marked_item": "marked_item": "#archive._id#"}]
         """
         And we get "archive"
         Then we get list with 1 items
@@ -137,11 +137,11 @@ Feature: Highlights
         """
 		When we post to "marked_for_highlights"
 		"""
-		[{"highlights": "#highlights._id#", "marked_item": "not_available_item_id"}]
+		[{"highlights": ["#highlights._id#"], "marked_item": "not_available_item_id"}]
 		"""
 		Then we get new resource
         """
-        {"_id": "__any_value__","highlights": "#highlights._id#", "marked_item": "not_available_item_id"}
+        {"_id": "__any_value__","highlights": ["#highlights._id#"], "marked_item": "not_available_item_id"}
         """
         When we get "archive"
         Then we get list with 0 items
@@ -167,7 +167,7 @@ Feature: Highlights
         """
 		When we post to "marked_for_highlights"
 		"""
-		[{"highlights": "#highlights._id#", "marked_item": "#archive._id#"}]
+		[{"highlights": ["#highlights._id#"], "marked_item": "#archive._id#"}]
 		"""
 		When we delete "highlights/#highlights._id#"
 		Then we get response code 204
@@ -200,8 +200,7 @@ Feature: Highlights
         """
 		When we post to "marked_for_highlights"
 		"""
-		[{"highlights": "111111111111111111111111", "marked_item": "#archive._id#"},
-		{"highlights": "222222222222222222222222", "marked_item": "#archive._id#"}]
+		{"highlights": ["111111111111111111111111", "222222222222222222222222"], "marked_item": "#archive._id#"}
 		"""
 		When we get "archive"
         Then we get list with 1 items

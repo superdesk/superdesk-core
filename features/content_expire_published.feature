@@ -173,11 +173,11 @@ Feature: Content Expiry Published Items
   Scenario: Highlights and mark desks are removed from archived
     When we post to "marked_for_highlights"
     """
-    [{"highlights": "#highlights._id#", "marked_item": "#archive._id#"}]
+    [{"highlights": ["#highlights._id#"], "marked_item": "#archive._id#"}]
     """
     Then we get new resource
     """
-    {"highlights": "#highlights._id#", "marked_item": "#archive._id#"}
+    {"highlights": ["#highlights._id#"], "marked_item": "#archive._id#"}
     """
     When we post to "/marked_for_desks" with success
     """

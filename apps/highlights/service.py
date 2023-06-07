@@ -1,4 +1,5 @@
 import json
+from typing import Any, List, Union
 
 import apps.archive  # NOQA
 
@@ -15,6 +16,7 @@ from superdesk.notification import push_notification
 from superdesk.utc import get_timezone_offset, utcnow
 from eve.utils import config
 from apps.archive.common import ITEM_MARK, ITEM_UNMARK
+from bson import ObjectId
 
 
 def init_parsed_request(elastic_query):
@@ -119,23 +121,26 @@ class MarkedForHighlightsService(BaseService):
                 ids.append(None)
                 continue
             ids.append(item["_id"])
-            highlights = item.get("highlights", [])
-            if not highlights:
-                highlights = []
+            highlights = item.get("highlights") or []
 
-            if doc["highlights"] not in highlights:
-                highlights.append(doc["highlights"])
-                highlight_on = True  # highlight toggled on
-            else:
-                highlights = [h for h in highlights if h != doc["highlights"]]
-                highlight_on = False  # highlight toggled off
+            doc_highlights: List[Union[ObjectId, str]] = doc["highlights"] or []
+            if doc_highlights and not isinstance(doc_highlights, list):
+                doc_highlights = [doc_highlights]
+            status = {}
+            for highlight in doc_highlights:
+                if highlight not in highlights:
+                    highlights.append(highlight)
+                    status[str(highlight)] = ITEM_MARK
+                else:
+                    highlights = [h for h in highlights if h != highlight]
+                    status[str(highlight)] = ITEM_UNMARK
 
             updates = {"highlights": highlights, "_etag": item["_etag"]}
             service.update(item["_id"], updates, item)
 
             publishedItems = publishedService.find({"item_id": item["_id"]})
             for publishedItem in publishedItems:
-                if publishedItem["_current_version"] == item["_current_version"] or not highlight_on:
+                if publishedItem["_current_version"] == item["_current_version"]:
                     updates = {
                         "highlights": highlights,
                         "_updated": publishedItem["_updated"],
@@ -143,22 +148,19 @@ class MarkedForHighlightsService(BaseService):
                     }
                     publishedService.update(publishedItem["_id"], updates, publishedItem)
 
-            if highlight_on:
+            for highlight in doc_highlights:
                 app.on_archive_item_updated(
-                    {"highlight_id": doc["highlights"], "highlight_name": get_highlight_name(doc["highlights"])},
+                    {"highlight_id": highlight, "highlight_name": get_highlight_name(highlight)},
                     item,
-                    ITEM_MARK,
-                )
-            else:
-                app.on_archive_item_updated(
-                    {"highlight_id": doc["highlights"], "highlight_name": get_highlight_name(doc["highlights"])},
-                    item,
-                    ITEM_UNMARK,
+                    status[str(highlight)],
                 )
 
-            push_notification(
-                "item:highlights", marked=int(highlight_on), item_id=item["_id"], mark_id=str(doc["highlights"])
-            )
+                push_notification(
+                    "item:highlights",
+                    marked=int(status[str(highlight)] == ITEM_MARK),
+                    item_id=item["_id"],
+                    mark_id=str(highlight),
+                )
 
         return ids
 
