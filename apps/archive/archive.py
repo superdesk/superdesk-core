@@ -344,7 +344,7 @@ class ArchiveService(BaseService, HighlightsSearchMixin):
             handle_existing_data(item)
 
     def on_create(self, docs):
-        on_create_item(docs)
+        on_create_item(docs, media_service=self.mediaService)
 
         for doc in docs:
             if doc.get("body_footer") and is_normal_package(doc):
@@ -371,9 +371,6 @@ class ArchiveService(BaseService, HighlightsSearchMixin):
                 if not is_related_content(key):
                     self._set_association_timestamps(assoc, doc)
                     remove_unwanted(assoc)
-
-            if doc.get("media"):
-                self.mediaService.on_create([doc])
 
             # let client create version 0 docs
             if doc.get("version") == 0:
