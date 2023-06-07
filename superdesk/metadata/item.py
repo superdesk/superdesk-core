@@ -639,6 +639,7 @@ metadata_schema = {
     },
     "annotations": {
         "type": "list",
+        "nullable": True,
         "mapping": not_enabled,
         "schema": {
             "type": "dict",
