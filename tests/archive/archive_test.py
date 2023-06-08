@@ -518,7 +518,9 @@ class ArchiveTestCase(TestCase):
             "_current_version": 1,
         }
         archive_service.create([feature_item])
-        publish_service.patch("foo", {"body_html": "original", "headline": "test", "publish_schedule": NOW + timedelta(minutes=60)})
+        publish_service.patch(
+            "foo", {"body_html": "original", "headline": "test", "publish_schedule": NOW + timedelta(minutes=60)}
+        )
         created_item = publish_service.find_one(None, _id="foo")
 
         self.assertEqual(created_item[PUBLISH_SCHEDULE], NOW + timedelta(minutes=60))
