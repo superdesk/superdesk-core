@@ -62,8 +62,8 @@ class CreateMethodTestCase(MarkedForHighlightsServiceTest):
         fake_get_service.return_value = fake_archive_service
 
         # items' data in HTTP request
-        req_item_1 = {"marked_item": "tag:item_1", "highlights": "highlight_X"}
-        req_item_2 = {"marked_item": "tag:item_2", "highlights": "highlight_Y"}
+        req_item_1 = {"marked_item": "tag:item_1", "highlights": ["highlight_X"]}
+        req_item_2 = {"marked_item": "tag:item_2", "highlights": ["highlight_Y"]}
 
         self.instance.create([req_item_1, req_item_2])
 
@@ -87,8 +87,8 @@ class CreateMethodTestCase(MarkedForHighlightsServiceTest):
         fake_get_service.return_value = fake_archive_service
 
         # items' data in HTTP request
-        req_item_1 = {"marked_item": "tag:item_1", "highlights": "highlight_X"}
-        req_item_2 = {"marked_item": "tag:item_2", "highlights": "highlight_Y"}
+        req_item_1 = {"marked_item": "tag:item_1", "highlights": ["highlight_X"]}
+        req_item_2 = {"marked_item": "tag:item_2", "highlights": ["highlight_Y"]}
 
         self.instance.create([req_item_1, req_item_2])
 

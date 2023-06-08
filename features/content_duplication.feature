@@ -400,7 +400,7 @@ Feature: Duplication of Content
       """
       And we post to "marked_for_highlights"
       """
-      [{"highlights": "#highlights._id#", "marked_item": "123"}]
+      [{"highlights": ["#highlights._id#"], "marked_item": "123"}]
       """
       And we post to "/marked_for_desks" with success
       """
