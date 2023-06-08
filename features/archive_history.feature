@@ -370,11 +370,11 @@ Feature: Archive history
         """
 		When we post to "marked_for_highlights"
 		"""
-		[{"highlights": "#highlights._id#", "marked_item": "#archive._id#"}]
+		[{"highlights": ["#highlights._id#"], "marked_item": "#archive._id#"}]
 		"""
 		Then we get new resource
         """
-        {"highlights": "#highlights._id#", "marked_item": "#archive._id#"}
+        {"highlights": ["#highlights._id#"], "marked_item": "#archive._id#"}
         """
         When we get "archive"
         Then we get list with 1 items
@@ -392,7 +392,7 @@ Feature: Archive history
         """
         When we post to "marked_for_highlights"
         """
-        [{"highlights": "#highlights._id#", "marked_item": "#archive._id#"}]
+        [{"highlights": ["#highlights._id#"], "marked_item": "#archive._id#"}]
         """
         And we get "archive"
         Then we get list with 1 items
