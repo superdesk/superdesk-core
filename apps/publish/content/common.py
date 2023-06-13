@@ -106,6 +106,10 @@ PRESERVED_FIELDS = [
 ]
 
 
+def get_utc_publish_schedule(item):
+    return item.get(SCHEDULE_SETTINGS, {}).get("utc_{}".format(PUBLISH_SCHEDULE))
+
+
 class BasePublishResource(ArchiveResource):
     """
     Base resource class for "publish" endpoint.
@@ -295,13 +299,9 @@ class BasePublishService(BaseService):
 
         if self.publish_type == "publish":
             # The publish schedule has not been cleared
-            if (
-                updates.get(PUBLISH_SCHEDULE)
-                or updated.get(SCHEDULE_SETTINGS, {}).get("utc_{}".format(PUBLISH_SCHEDULE))
-                or not original.get(PUBLISH_SCHEDULE)
-            ):
+            if updates.get(PUBLISH_SCHEDULE) or get_utc_publish_schedule(updated) or not original.get(PUBLISH_SCHEDULE):
                 update_schedule_settings(updated, PUBLISH_SCHEDULE, updated.get(PUBLISH_SCHEDULE))
-                validate_schedule(updated.get(SCHEDULE_SETTINGS, {}).get("utc_{}".format(PUBLISH_SCHEDULE)))
+                validate_schedule(get_utc_publish_schedule(updated))
 
         if original[ITEM_TYPE] != CONTENT_TYPE.COMPOSITE and updated.get(EMBARGO):
             # Update the schedule_settings for ``EMBARGO``
@@ -328,7 +328,14 @@ class BasePublishService(BaseService):
 
         if self.publish_type == ITEM_PUBLISH and updated.get("rewrite_of"):
             rewrite_of = get_resource_service(ARCHIVE).find_one(req=None, _id=updated.get("rewrite_of"))
-            if rewrite_of and rewrite_of.get(ITEM_STATE) not in PUBLISH_STATES:
+            update_publish_schedule = get_utc_publish_schedule(updated) or utcnow()
+            if rewrite_of and (
+                rewrite_of.get(ITEM_STATE) not in PUBLISH_STATES
+                or (
+                    rewrite_of.get(ITEM_STATE) == CONTENT_STATE.SCHEDULED
+                    and get_utc_publish_schedule(rewrite_of) >= update_publish_schedule
+                )
+            ):
                 raise SuperdeskApiError.badRequestError(_("Can't publish update until original story is published."))
 
         publish_type = "auto_publish" if updates.get("auto_publish") else self.publish_type
