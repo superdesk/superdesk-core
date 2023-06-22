@@ -409,6 +409,9 @@ class ItemsService(BaseService):
         date_filter = self._create_date_range_filter(start_date, end_date)
         if date_filter:
             filters.append(date_filter)
+        self._set_request_filters(req, filters)
+
+    def _set_request_filters(self, req, filters):
         if filters:
             req.args["filter"] = json.dumps({"bool": {"must": filters}})
 

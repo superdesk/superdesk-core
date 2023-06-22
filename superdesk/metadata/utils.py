@@ -8,8 +8,10 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
+from typing import Union
 from datetime import datetime
 from uuid import uuid4
+from bson import ObjectId
 from urllib.parse import urlparse
 from flask import current_app as app
 from contextlib import contextmanager
@@ -120,14 +122,19 @@ def generate_guid(**hints):
     t = datetime.today()
 
     if hints["type"].lower() == GUID_TAG:
-        return tag_guid_format % {"domain": app.config["SERVER_DOMAIN"], "year": t.year, "identifier": hints["id"]}
+        return tag_guid_format % {"domain": app.config["URN_DOMAIN"], "year": t.year, "identifier": hints["id"]}
     elif hints["type"].lower() == GUID_NEWSML:
         return newsml_guid_format % {
-            "domain": app.config["SERVER_DOMAIN"],
+            "domain": app.config["URN_DOMAIN"],
             "timestamp": t.isoformat(),
             "identifier": hints["id"],
         }
     return None
+
+
+def generate_urn(resource_name: str, resource_id: Union[ObjectId, str]) -> str:
+    domain = app.config["URN_DOMAIN"]
+    return f"urn:{domain}:{resource_name}:{resource_id}"
 
 
 def generate_tag(domain, id, prefix="tag"):
