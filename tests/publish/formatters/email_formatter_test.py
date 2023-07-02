@@ -335,3 +335,59 @@ class EmailFormatterTest(TestCase):
 
         item = json.loads(doc)
         self.assertIn("<p>abcdefghijklmnopqrstuvwxyz</p>\r\n", item.get("message_html"))
+
+    def test_remove_embedded_content(self):
+        article = {
+            "_id": "urn:newsml:localhost:2023-05-10T14:28:37.121795:62fc7a2b-a69a-4c47-8540-49c075a4d62c",
+            "body_html": '<p>pre amble</p>\n<!-- EMBED START Audio {id: "editor_0"} -->\n<figure>'
+            '    <audio controls src="http://localhost:5000/api/upload-raw/64081e26b7c313e2fbbd21ae.mp3"'
+            'alt="Minns" width="100%" height="100%" />'
+            "    <figcaption>Minns</figcaption>\n</figure>"
+            '<!-- EMBED END Audio {id: "editor_0"} -->\n<p>post amble</p>',
+            "headline": "Budget with a pic",
+            "fields_meta": {
+                "body_html": {
+                    "draftjsState": [
+                        {
+                            "blocks": [
+                                {
+                                    "key": "77gu7",
+                                    "text": " pre amble",
+                                    "type": "unstyled",
+                                    "depth": 0,
+                                    "inlineStyleRanges": [],
+                                    "entityRanges": [],
+                                    "data": {"MULTIPLE_HIGHLIGHTS": {}},
+                                },
+                                {
+                                    "key": "cj518",
+                                    "text": " ",
+                                    "type": "atomic",
+                                    "depth": 0,
+                                    "inlineStyleRanges": [],
+                                    "entityRanges": [{"offset": 0, "length": 1, "key": 0}],
+                                    "data": {},
+                                },
+                                {
+                                    "key": "ambpd",
+                                    "text": "post amble",
+                                    "type": "unstyled",
+                                    "depth": 0,
+                                    "inlineStyleRanges": [],
+                                    "entityRanges": [],
+                                    "data": {},
+                                },
+                            ],
+                            "entityMap": {"0": {"type": "MEDIA", "mutability": "MUTABLE", "data": {"media": {}}}},
+                        }
+                    ]
+                }
+            },
+            "type": "text",
+            "pubstatus": "usable",
+            "format": "HTML",
+            "guid": "urn:newsml:localhost:2023-05-10T14:28:37.121795:62fc7a2b-a69a-4c47-8540-49c075a4d62c",
+        }
+        seq, doc = self.formatter.format(article, {"name": "Test Subscriber"})[0]
+        self.assertNotIn("EMBED", doc)
+        self.assertNotIn("<audio", doc)

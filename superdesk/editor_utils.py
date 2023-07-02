@@ -167,6 +167,10 @@ class EntitySequence(MutableSequence):
         self._ranges.insert(index, value.ranges)
         self._mapping[value.key] = value.data
 
+    def clear(self):
+        for idx, kk in enumerate(self._ranges):
+            del self[kk.get("key")]
+
 
 class Block:
     """Abstraction of DraftJS block"""
@@ -855,3 +859,34 @@ def copy_fields(source: Dict, dest: Dict, ignore_empty: bool = False):
         for field in source["fields_meta"]:
             if ignore_empty is False or not is_empty_content_state(source, field):
                 dest.setdefault("fields_meta", {})[field] = source["fields_meta"][field].copy()
+
+
+def remove_all_embeds(article):
+    """
+    Removes any embeds from the draftjs state and regenerates the html, can be used by text only
+    formatters to remove embeds from the article
+    :param article:
+    :return:
+    """
+
+    # List of keys of the removed entities
+    keys = []
+
+    def not_embed(block):
+        if block.type.lower() == "atomic":
+            keys.extend([e.key for e in block.entities])
+            block.entities.clear()
+            return False
+        return True
+
+    fields = get_content_state_fields(article)
+    for field in fields:
+        filter_blocks(article, field, not_embed)
+
+    # Remove the corresponding items from the associations and refs
+    for key_suffix in keys:
+        key = "editor_{}".format(key_suffix)
+        if article.get("associations", {}).get(key):
+            article.get("associations").pop(key)
+        if "refs" in article:
+            article["refs"] = [r for r in article.get("refs", []) if r["key"] != key]

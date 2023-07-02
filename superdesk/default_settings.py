@@ -1062,3 +1062,9 @@ APM_SECRET_TOKEN = env("APM_SECRET_TOKEN")
 #: .. versionadded:: 2.4.1
 #:
 APM_SERVICE_NAME = env("APM_SERVICE_NAME")
+
+#: Apply product filtering to embedded media items
+#:
+#: .. versionadded::
+#:
+EMBED_PRODUCT_FILTERING = strtobool(env("EMBED_PRODUCT_FILTERING", "false"))
