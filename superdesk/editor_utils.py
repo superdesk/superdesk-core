@@ -367,14 +367,14 @@ class DraftJSHTMLExporter:
             embed_type = "Video"
             elt = DOM.create_element(
                 "video",
-                {"control": "control", "src": rendition["href"], "alt": alt_text, "width": "100%", "height": "100%"},
+                {"controls": "", "src": rendition["href"], "alt": alt_text, "width": "100%", "height": "100%"},
                 props["children"],
             )
         elif media_type == "audio":
             embed_type = "Audio"
             elt = DOM.create_element(
                 "audio",
-                {"control": "control", "src": rendition["href"], "alt": alt_text, "width": "100%", "height": "100%"},
+                {"controls": "", "src": rendition["href"], "alt": alt_text, "width": "100%", "height": "100%"},
                 props["children"],
             )
         else:
