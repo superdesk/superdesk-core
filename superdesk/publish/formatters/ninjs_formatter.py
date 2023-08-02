@@ -294,7 +294,7 @@ class NINJSFormatter(Formatter):
         if article.get("extra"):
             ninjs["extra"] = article["extra"]
             for key, value in ninjs["extra"].items():
-                if type(value) == dict and "embed" in value:
+                if isinstance(value, dict) and "embed" in value:
                     value.setdefault("description", "")
 
         return ninjs
