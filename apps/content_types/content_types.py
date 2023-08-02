@@ -387,7 +387,7 @@ def set_enabled_for_custom(editor, allowed, fields_map):
 
 def set_required_for_custom(editor, schema, mandatory, fields_map):
     # old notation where `value` is string
-    for field, value in tuple((k, v) for k, v in mandatory.items() if type(v) == str):
+    for field, value in tuple((k, v) for k, v in mandatory.items() if isinstance(v, str)):
         if field == value or field == "subject":
             try:
                 editor[fields_map.get(field, field)]["required"] = value is not None
@@ -395,7 +395,7 @@ def set_required_for_custom(editor, schema, mandatory, fields_map):
             except KeyError:
                 continue
     # new notation where `value` is dict
-    for field, value in tuple((k, v) for k, v in mandatory.items() if type(v) == dict):
+    for field, value in tuple((k, v) for k, v in mandatory.items() if isinstance(v, dict)):
         if (field is not None and value.get("required", False)) or field == "subject":
             try:
                 editor[fields_map.get(field, field)]["required"] = value.get("required", False)
@@ -406,14 +406,14 @@ def set_required_for_custom(editor, schema, mandatory, fields_map):
 
 def set_readonly_for_custom(editor, schema, mandatory, fields_map):
     # old notation where `value` is string
-    for field, value in tuple((k, v) for k, v in mandatory.items() if type(v) == str):
+    for field, value in tuple((k, v) for k, v in mandatory.items() if isinstance(v, str)):
         try:
             editor[fields_map.get(field, field)]["readonly"] = False
             schema[fields_map.get(field, field)]["readonly"] = False
         except KeyError:
             continue
     # new notation where `value` is dict
-    for field, value in tuple((k, v) for k, v in mandatory.items() if type(v) == dict):
+    for field, value in tuple((k, v) for k, v in mandatory.items() if isinstance(v, dict)):
         if (field is not None and value.get("readonly", False)) or field == "subject":
             try:
                 editor[fields_map.get(field, field)]["readonly"] = value.get("readonly", False)

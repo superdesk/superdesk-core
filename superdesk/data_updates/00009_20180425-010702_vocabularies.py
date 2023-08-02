@@ -21,7 +21,7 @@ class DataUpdate(BaseDataUpdate):
             if "schema" in vocabulary:
                 schema = vocabulary["schema"]
                 for field in self.update_fields:
-                    if field in vocabulary["schema"] and type(vocabulary["schema"]) == dict:
+                    if field in vocabulary["schema"] and isinstance(vocabulary["schema"], dict):
                         schema[field]["required"] = True
                 mongodb_collection.update({"_id": vocabulary.get(config.ID_FIELD)}, {"$set": {"schema": schema}})
 
