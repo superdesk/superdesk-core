@@ -168,8 +168,8 @@ class EntitySequence(MutableSequence):
         self._mapping[value.key] = value.data
 
     def clear(self):
-        for idx, kk in enumerate(self._ranges):
-            del self[kk.get("key")]
+        for idx, _range in enumerate(self._ranges):
+            del self[idx]
 
 
 class Block:

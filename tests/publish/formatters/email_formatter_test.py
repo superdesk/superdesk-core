@@ -369,6 +369,24 @@ class EmailFormatterTest(TestCase):
                                     "data": {},
                                 },
                                 {
+                                    "key": "8e23v",
+                                    "text": " ",
+                                    "type": "atomic",
+                                    "depth": 0,
+                                    "inlineStyleRanges": [],
+                                    "entityRanges": [{"offset": 0, "length": 1, "key": 1}],
+                                    "data": {},
+                                },
+                                {
+                                    "key": "an34p",
+                                    "text": " ",
+                                    "type": "atomic",
+                                    "depth": 0,
+                                    "inlineStyleRanges": [],
+                                    "entityRanges": [{"offset": 0, "length": 1, "key": 2}],
+                                    "data": {},
+                                },
+                                {
                                     "key": "ambpd",
                                     "text": "post amble",
                                     "type": "unstyled",
@@ -378,7 +396,19 @@ class EmailFormatterTest(TestCase):
                                     "data": {},
                                 },
                             ],
-                            "entityMap": {"0": {"type": "MEDIA", "mutability": "MUTABLE", "data": {"media": {}}}},
+                            "entityMap": {
+                                "0": {"type": "MEDIA", "mutability": "MUTABLE", "data": {"media": {}}},
+                                "1": {
+                                    "type": "EMBED",
+                                    "mutability": "MUTABLE",
+                                    "data": {"data": {"html": "<blockquote></blockquote>"}},
+                                },
+                                "2": {
+                                    "type": "EMBED",
+                                    "mutability": "MUTABLE",
+                                    "data": {"data": {"html": "<blockquote></blockquote>"}},
+                                },
+                            },
                         }
                     ]
                 }
