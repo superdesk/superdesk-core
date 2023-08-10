@@ -22,7 +22,7 @@ install_requires = [
     'flask-script>=2.0.5,<3.0',
     'flask_pymongo>=0.5.2,<1.0',
     'flask-babel==0.12.2',
-    'pillow>=9.2,<9.3',
+    'pillow>=8.1,<8.2',
     'arrow>=0.4,<=0.13',
     'asyncio>=3.4,<3.5',
     'bcrypt>=3.1.1,<3.2',
