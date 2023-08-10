@@ -84,6 +84,7 @@ class PictureCropService(superdesk.Service):
                 doc['href'] = app.media.url_for_media(media, orig['mimetype'])
                 doc['width'] = output.width
                 doc['height'] = output.height
+                doc['metadata'] = metadata
                 ids.append(media)
         return ids
 

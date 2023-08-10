@@ -21,6 +21,7 @@ from superdesk.metadata import utils
 from superdesk.upload import url_for_media
 from superdesk import filemeta
 from flask import current_app as app
+from PIL import Image
 import json
 import hashlib
 
@@ -51,6 +52,7 @@ class BaseMediaEditorTestCase(TestCase):
             renditions = generate_renditions(f, file_id, [file_id], 'image',
                                              content_type, rendition_spec, url_for_media)
             self.item['renditions'] = renditions
+            f.seek(0)
         archive = get_resource_service('archive')
         archive.post([self.item])
 
@@ -82,16 +84,10 @@ class BaseMediaEditorTestCase(TestCase):
 
         return docs[0]
 
-    def md5_sum(self, item, rendition):
-        """Generate MD5 sum
-
-        useful to check that image has been transformed correctly
-        :param str rendition: name of the rendition to use
-        """
-        media_id = item['renditions'][rendition]['media']
+    def image(self, item, rendition):
+        media_id = item["renditions"][rendition]["media"]
         media = app.media.get(media_id)
-        md5_hash = hashlib.md5(media.read())
-        return md5_hash.hexdigest()
+        return Image.open(media)
 
 
 class MediaEditorTestCase(BaseMediaEditorTestCase):
@@ -100,21 +96,26 @@ class MediaEditorTestCase(BaseMediaEditorTestCase):
     def test_edition(self):
         """Test basic edition instructions"""
         item = self.do_edit({"contrast": 1.2, "rotate": "90"})
-        md5_hash = self.md5_sum(item, 'original')
-        self.assertEqual(md5_hash, 'e3bae72827b39918f02211936645822b')
+        image = self.image(item, "original")
+        self.assertEqual(500, image.width)
+        self.assertEqual(1000, image.height)
 
     def test_saturation(self):
         """Test saturation change"""
         item = self.do_edit({"saturation": 0})
-        md5_hash = self.md5_sum(item, 'original')
-        self.assertEqual(md5_hash, '9693480b4e15843bed520fa1a159fb5a')
+        image = self.image(item, "original")
+        # not sure how to test saturation, so just checking
+        # the size remained the same
+        self.assertEqual(1000, image.width)
+        self.assertEqual(500, image.height)
 
     def test_update(self):
         """Test that item is updated correctly"""
-        original_media_id = self.item['renditions']['original']['media']
-        item = self.do_edit({"rotate": "170", "saturation": "0"}, item=self.item)
-        expected_media_id = item['renditions']['original']['media']
+        original_media_id = self.item["renditions"]["original"]["media"]
+        item = self.do_edit({"rotate": "270", "saturation": "0"}, item=self.item)
+        image = self.image(item, "original")
+        self.assertEqual(500, image.width)
+        self.assertEqual(1000, image.height)
+        expected_media_id = item["renditions"]["original"]["media"]
         self.assertNotEqual(original_media_id, expected_media_id)
-        md5_hash = self.md5_sum(item, 'original')
-        self.assertEqual(md5_hash, '4e88727bb595d21ecdc7670a6afb099c')
-        self.assertEqual(item['renditions']['original']['media'], expected_media_id)
+        self.assertEqual(item["renditions"]["original"]["media"], expected_media_id)

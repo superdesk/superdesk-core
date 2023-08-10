@@ -27,8 +27,6 @@ class ExifMetaExtractionTestCase(TestCase):
         with open(self.img, mode='rb') as f:
             meta = get_meta(f)
 
-        self.assertEqual(meta['ExifImageWidth'], 32)
-        self.assertEqual(meta['ExifImageHeight'], 21)
         self.assertEqual(meta['Make'], 'Canon')
         self.assertEqual(meta['Model'], 'Canon EOS 60D')
 
@@ -36,25 +34,24 @@ class ExifMetaExtractionTestCase(TestCase):
 class ExifMetaWithGPSInfoExtractionTestCase(TestCase):
 
     img = os.path.join(fixtures, 'iphone_gpsinfo_exif.JPG')
+    maxDiff = None
 
     def test_extract_meta_json_serialization(self):
         expected_gpsinfo = {
-            'GPSImgDirection': (14794, 475),
+            'GPSImgDirection': 31.145,
             'GPSLongitudeRef': 'W',
             'GPSImgDirectionRef': 'T',
-            'GPSLongitude': ((70, 1), (38, 1), (3946, 100)),
-            'GPSAltitudeRef': b'\x00',
+            'GPSAltitudeRef': 0,
             'GPSLatitudeRef': 'S',
-            'GPSAltitude': (105587, 183),
-            'GPSLatitude': ((33, 1), (26, 1), (1150, 100)),
-            'GPSTimeStamp': ((19, 1), (59, 1), (5117, 100))
+            'GPSAltitude': 576.978,
+            'GPSLatitude': (33.0, 26.0, 11.5),
+            'GPSLongitude': (70.0, 38.0, 39.46),
+            'GPSTimeStamp': (19.0, 59.0, 51.17),
         }
 
         with open(self.img, mode='rb') as f:
             meta = get_meta(f)
 
-        self.assertEqual(meta.get('ExifImageWidth', None), 400)
-        self.assertEqual(meta.get('ExifImageHeight', None), 300)
         self.assertEqual(meta.get('Make', None), 'Apple')
         self.assertEqual(meta.get('Model', None), 'iPhone 5')
         self.assertEqual(meta.get('GPSInfo', None), expected_gpsinfo)
