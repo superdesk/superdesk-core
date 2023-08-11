@@ -35,7 +35,7 @@ CONCEPT_MAPPING = OrderedDict(
         ("topic", "subject"),
         ("organisation", "organisation"),
         ("Name LastName", "person"),
-        # both Name LastName and person are seens in iMatrics examples and docs
+        # both Name LastName and person are seen in iMatrics examples and docs
         ("person", "person"),
         ("place", "place"),
     ]
@@ -53,7 +53,7 @@ DEFAULT_CONCEPT_TYPE = "topic"
 class IMatrics(AIServiceBase):
     """IMatrics autotagging service
 
-    The IMATRICS_BASE_URL, IMATRICS_USER and IMATRICS_KEY setting (or environment variable) must be set
+    The SEMAPHORE_BASE_URL and IMATRICS_KEY setting (or environment variable) must be set
     IMATRICS_AUTHOR can be used to set ``author`` of concept (which translates to ``source`` in Superdesk)
     """
 
@@ -62,21 +62,13 @@ class IMatrics(AIServiceBase):
 
     def __init__(self, app):
         super().__init__(app)
-        self.convept_map_inv = {v: k for k, v in CONCEPT_MAPPING.items()}
+        self.concept_map_inv = {v: k for k, v in CONCEPT_MAPPING.items()}
         self._subjects = []
         self._places = None
 
     @property
-    def base_url(self):
-        return current_app.config.get("IMATRICS_BASE_URL", os.environ.get("IMATRICS_BASE_URL"))
-
-    @property
-    def user(self):
-        return current_app.config.get("IMATRICS_USER", os.environ.get("IMATRICS_USER"))
-
-    @property
-    def key(self):
-        return current_app.config.get("IMATRICS_KEY", os.environ.get("IMATRICS_KEY"))
+    def semaphore_base_url(self):
+        return current_app.config.get("SEMAPHORE_BASE_URL", os.environ.get("SEMAPHORE_BASE_URL"))
 
     @property
     def image_base_url(self):
@@ -108,11 +100,6 @@ class IMatrics(AIServiceBase):
         except KeyError:
             logger.warning("no mapping for concept type {concept_type!r}".format(concept_type=concept["type"]))
             tag_type = concept["type"]
-
-        try:
-            tag_data["weight"] = concept["weight"]
-        except KeyError:
-            pass
 
         for link in concept.get("links", []):
             if link.get("source").lower() == "iptc" and link.get("relationType") == "exactMatch" and link.get("id"):
@@ -180,6 +167,10 @@ class IMatrics(AIServiceBase):
                     del tag["weight"]
                 except KeyError:
                     pass
+		
+		
+		logger.info("_parse_concepts Response")
+		logger.info("analyzed_data")
         return analyzed_data
 
     def _transform_to_imatrics(self, item, publish=False):
@@ -194,39 +185,95 @@ class IMatrics(AIServiceBase):
         }
 
     def analyze(self, item: dict, tags: Optional[dict] = None) -> dict:
-        """Analyze article to get tagging suggestions"""
-        if not self.base_url or not self.user or not self.key:
-            logger.warning("IMatrics is not configured propertly, can't analyze article")
+        if not self.semaphore_base_url:
+            logger.warning("Semaphore base URL is not configured properly, can't analyze article")
             return {}
+
+        access_token = self.get_access_token()
+        if not access_token:
+            logger.warning("Failed to get access token for Semaphore")
+            return {}
+
         data = self._transform_to_imatrics(item)
         if tags is not None:
             data["concepts"] = self._format_concepts(tags)
         if not data.get("headline") and not data.get("body"):
-            logger.warning("no body nor headline found in item {item_id!r}".format(item_id=item["guid"]))
-            # we return an empty result
+            logger.warning("No body nor headline found in item {item_id!r}".format(item_id=item["guid"]))
             return {"subject": []}
+        
         r_data = self._analyze(data)
         return self._parse_concepts(r_data["concepts"] + r_data["broader"])
 
+
     def _analyze(self, data, **params):
+        headers = {"Authorization": f"Bearer {self.access_token}"}
         return self._request(
             "article/analysis",
             data,
+            headers=headers,
             params=dict(
                 conceptFields="uuid,title,type,shortDescription,aliases,source,author,weight,broader,links",
                 **params,
             ),
         )
+  
 
-    def search_images(self, items: list) -> list:
+	
+		
+	def _request(self, service, data=None, method="POST", params=None):
+        url = self.base_url
+        access_token = self.get_access_token()
+
+        if not access_token:
+            raise SuperdeskApiError.proxyError("Failed to get access token")
+
+        headers = {"Authorization": f"Bearer {access_token}"}
+        r = session.request(method, url, json=data, headers=headers, params=params, timeout=TIMEOUT)
+
+        if r.status_code != 200:
+            raise SuperdeskApiError.proxyError(
+                "Unexpected return code ({status_code}) from {name}: {msg}".format(
+                    name=self.name,
+                    status_code=r.status_code,
+                    msg=r.text,
+                )
+            )
+		print(r)
+		logger.info("In _request. The response is :")
+		logger.info(r.json())
+        return r.json()
+	
+
+    def get_access_token(self):
+        token_endpoint = os.environ.get("semaphore_token_endpoint")
+        api_key = os.environ.get("semaphore_api_key")
+        data = {
+            'grant_type': 'apiKey',
+            'key': api_key
+        }
+
+        response = session.post(token_endpoint, data=data, timeout=TIMEOUT)
+
+        if response.status_code == 200:
+            token_data = response.json()
+            access_token = token_data.get('access_token')
+            return access_token
+        else:
+            logger.warning('Token renewal request failed:', response.text)
+            return None
+			
+			
+
+	def search_images(self, items: list) -> list:
         """Fetch image suggestions"""
-        if not self.base_url or not self.user or not self.key:
+        if not self.semaphore_base_url:
             logger.warning("IMatrics is not configured properly, can't fetch images")
             return []
         data = items
         try:
             r_data = self._search_images(data)
         except Exception:
+			logger.warning("Stopped at search_images")
             return []
         return [image for image in r_data if type(image["imageUrl"]) == str and image["imageUrl"] != ""]
 
@@ -427,6 +474,7 @@ class IMatrics(AIServiceBase):
                 ]
             )
         return concepts
+
 
 
 def get_item_body(item):
