@@ -169,8 +169,8 @@ class IMatrics(AIServiceBase):
                     pass
 		
 		
-		logger.info("_parse_concepts Response")
-		logger.info("analyzed_data")
+	logger.info("_parse_concepts Response")
+	logger.info("analyzed_data")
         return analyzed_data
 
     def _transform_to_imatrics(self, item, publish=False):
@@ -216,11 +216,8 @@ class IMatrics(AIServiceBase):
                 **params,
             ),
         )
-  
-
-	
-		
-	def _request(self, service, data=None, method="POST", params=None):
+  		
+    def _request(self, service, data=None, method="POST", params=None):
         url = self.base_url
         access_token = self.get_access_token()
 
@@ -238,9 +235,9 @@ class IMatrics(AIServiceBase):
                     msg=r.text,
                 )
             )
-		print(r)
-		logger.info("In _request. The response is :")
-		logger.info(r.json())
+		
+	logger.info("In _request. The response is :")
+	logger.info(r.json())
         return r.json()
 	
 
