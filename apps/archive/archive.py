@@ -464,8 +464,13 @@ class ArchiveService(BaseService):
 
             item_id = item_obj[config.ID_FIELD]
             media_item = self.find_one(req=None, _id=item_id)
-            if app.settings.get("COPY_METADATA_FROM_PARENT") and item_obj.get(ITEM_TYPE) in MEDIA_TYPES:
-                stored_item = (original.get(ASSOCIATIONS) or {}).get(item_name) or item_obj
+            parent = (original.get(ASSOCIATIONS) or {}).get(item_name) or item_obj
+            if (
+                app.settings.get("COPY_METADATA_FROM_PARENT")
+                and item_obj.get(ITEM_TYPE) in MEDIA_TYPES
+                and item_id == parent.get(config.ID_FIELD)
+            ):
+                stored_item = parent
             else:
                 stored_item = media_item
                 if not stored_item:
