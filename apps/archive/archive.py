@@ -940,7 +940,7 @@ class ArchiveService(BaseService, HighlightsSearchMixin):
         super().delete_action({config.ID_FIELD: {"$in": ids}})
 
     def _set_association_timestamps(self, assoc_item, updates, new=True):
-        if type(assoc_item) == dict:
+        if isinstance(assoc_item, dict):
             assoc_item[config.LAST_UPDATED] = updates.get(config.LAST_UPDATED, datetime.datetime.now())
             if new:
                 assoc_item[config.DATE_CREATED] = datetime.datetime.now()

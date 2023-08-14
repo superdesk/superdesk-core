@@ -682,6 +682,21 @@ Feature: Rewrite content
         }
         """
 
+        When we publish "#archive._id#" with "publish" type and "published" state
+        """
+        {"publish_schedule": "#DATE+2#"}
+        """
+        Then we get OK response
+
+        When we publish "#REWRITE_ID#" with "publish" type and "published" state
+        Then we get error 400
+
+        When we publish "#REWRITE_ID#" with "publish" type and "published" state
+        """
+        {"publish_schedule": "#DATE+3#"}
+        """
+        Then we get OK response
+
     @auth
     Scenario: Cannot create rewrite of a rewrite if the original rewrite is not published
         Given the "validators"

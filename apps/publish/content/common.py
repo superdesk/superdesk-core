@@ -106,6 +106,10 @@ PRESERVED_FIELDS = [
 ]
 
 
+def get_utc_publish_schedule(item):
+    return item.get(SCHEDULE_SETTINGS, {}).get("utc_{}".format(PUBLISH_SCHEDULE))
+
+
 class BasePublishResource(ArchiveResource):
     """
     Base resource class for "publish" endpoint.
@@ -295,13 +299,9 @@ class BasePublishService(BaseService):
 
         if self.publish_type == "publish":
             # The publish schedule has not been cleared
-            if (
-                updates.get(PUBLISH_SCHEDULE)
-                or updated.get(SCHEDULE_SETTINGS, {}).get("utc_{}".format(PUBLISH_SCHEDULE))
-                or not original.get(PUBLISH_SCHEDULE)
-            ):
+            if updates.get(PUBLISH_SCHEDULE) or get_utc_publish_schedule(updated) or not original.get(PUBLISH_SCHEDULE):
                 update_schedule_settings(updated, PUBLISH_SCHEDULE, updated.get(PUBLISH_SCHEDULE))
-                validate_schedule(updated.get(SCHEDULE_SETTINGS, {}).get("utc_{}".format(PUBLISH_SCHEDULE)))
+                validate_schedule(get_utc_publish_schedule(updated))
 
         if original[ITEM_TYPE] != CONTENT_TYPE.COMPOSITE and updated.get(EMBARGO):
             # Update the schedule_settings for ``EMBARGO``
@@ -328,7 +328,14 @@ class BasePublishService(BaseService):
 
         if self.publish_type == ITEM_PUBLISH and updated.get("rewrite_of"):
             rewrite_of = get_resource_service(ARCHIVE).find_one(req=None, _id=updated.get("rewrite_of"))
-            if rewrite_of and rewrite_of.get(ITEM_STATE) not in PUBLISH_STATES:
+            update_publish_schedule = get_utc_publish_schedule(updated) or utcnow()
+            if rewrite_of and (
+                rewrite_of.get(ITEM_STATE) not in PUBLISH_STATES
+                or (
+                    rewrite_of.get(ITEM_STATE) == CONTENT_STATE.SCHEDULED
+                    and get_utc_publish_schedule(rewrite_of) >= update_publish_schedule
+                )
+            ):
                 raise SuperdeskApiError.badRequestError(_("Can't publish update until original story is published."))
 
         publish_type = "auto_publish" if updates.get("auto_publish") else self.publish_type
@@ -636,7 +643,7 @@ class BasePublishService(BaseService):
 
         for item in items:
             orig = None
-            if type(item) == dict and item.get(config.ID_FIELD):
+            if isinstance(item, dict) and item.get(config.ID_FIELD):
                 orig = super().find_one(req=None, _id=item[config.ID_FIELD]) or {}
                 doc = copy(orig)
                 doc.update(item)
@@ -678,7 +685,7 @@ class BasePublishService(BaseService):
             # don't validate items that already have published
             if doc_item_state not in [CONTENT_STATE.PUBLISHED, CONTENT_STATE.CORRECTED]:
                 validate_item = {"act": self.publish_type, "type": doc[ITEM_TYPE], "validate": doc}
-                if type(item) == dict:
+                if isinstance(item, dict):
                     validate_item["embedded"] = True
                 errors = get_resource_service("validate").post([validate_item], headline=True, fields=True)[0]
                 if errors[0]:
@@ -734,7 +741,7 @@ class BasePublishService(BaseService):
         """
         associations = original.get(ASSOCIATIONS) or {}
         for name, item in associations.items():
-            if type(item) == dict and item.get(config.ID_FIELD) and (not skip_related or len(item.keys()) > 2):
+            if isinstance(item, dict) and item.get(config.ID_FIELD) and (not skip_related or len(item.keys()) > 2):
                 keys = [key for key in DEFAULT_SCHEMA.keys() if key not in PRESERVED_FIELDS]
 
                 if app.settings.get("COPY_METADATA_FROM_PARENT") and item.get(ITEM_TYPE) in MEDIA_TYPES:
@@ -791,7 +798,7 @@ class BasePublishService(BaseService):
         for associations_key, associated_item in associations.items():
             if associated_item is None:
                 continue
-            if type(associated_item) == dict and associated_item.get(config.ID_FIELD):
+            if isinstance(associated_item, dict) and associated_item.get(config.ID_FIELD):
                 if not config.PUBLISH_ASSOCIATED_ITEMS or not publish_service:
                     if original.get(ASSOCIATIONS, {}).get(associations_key):
                         # Not allowed to publish

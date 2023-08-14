@@ -819,7 +819,7 @@ def transtype_metadata(doc, original=None):
             continue
 
         if value_type == "date":
-            if value and type(value) != datetime:
+            if value and not isinstance(value, datetime):
                 try:
                     extra[key] = date_parse(value)
                 except Exception as e:
