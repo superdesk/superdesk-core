@@ -815,7 +815,8 @@ def transtype_metadata(doc, original=None):
     for key, value in extra.items():
         try:
             value_type = profile["schema"][key]["type"]
-        except KeyError:
+        except (KeyError, TypeError):
+            logger.info("extra field %s is missing in schema", key)
             continue
 
         if value_type == "date":
