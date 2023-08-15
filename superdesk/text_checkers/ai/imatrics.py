@@ -59,7 +59,9 @@ class IMatrics(AIServiceBase):
 
     name = "imatrics"
     label = "IMatrics autotagging service"
-
+	
+	logger.warning('In CLass IMatrics')
+	
     def __init__(self, app):
         super().__init__(app)
         self.concept_map_inv = {v: k for k, v in CONCEPT_MAPPING.items()}
@@ -69,6 +71,7 @@ class IMatrics(AIServiceBase):
     @property
     def semaphore_base_url(self):
         return current_app.config.get("SEMAPHORE_BASE_URL", os.environ.get("SEMAPHORE_BASE_URL"))
+		
 
     @property
     def image_base_url(self):
@@ -96,6 +99,8 @@ class IMatrics(AIServiceBase):
             tag_data["description"] = concept["shortDescription"].strip()
 
         try:
+			logger.warning('IN COncept Data')
+			
             tag_type = CONCEPT_MAPPING[concept["type"]]
         except KeyError:
             logger.warning("no mapping for concept type {concept_type!r}".format(concept_type=concept["type"]))
@@ -185,6 +190,9 @@ class IMatrics(AIServiceBase):
         }
 
     def analyze(self, item: dict, tags: Optional[dict] = None) -> dict:
+		
+		logger.warning('SEMAPHORE_BASE_URL is ')
+		logger.warning(semaphore_base_url)
         if not self.semaphore_base_url:
             logger.warning("Semaphore base URL is not configured properly, can't analyze article")
             return {}
@@ -485,4 +493,5 @@ def get_item_body(item):
 
 
 def init_app(app):
+	logger.warning('In IMatrics Code. Lets see')
     IMatrics(app)
