@@ -1,6 +1,9 @@
 from superdesk.text_utils import get_text
 from .ninjs_formatter import NINJSFormatter
+import logging
 
+logging.basicConfig(level=logging.DEBUG) 
+logger = logging.getLogger(__name__)
 
 def format_datetime(date):
     return date.isoformat()
@@ -11,6 +14,10 @@ class IMatricsFormatter(NINJSFormatter):
         return format_type.lower() == "imatrics" and article.get("type") == "text"
 
     def _transform_to_ninjs(self, article, subscriber, recursive=True):
+
+        logger.warning('In Formatter IMatrics. lets log.')
+        logging.debug("Transforming article to NINJS: %s", article)
+        
         return {
             "uuid": article["guid"],
             "createdTimestamp": format_datetime(article["firstcreated"]),
