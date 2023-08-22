@@ -59,9 +59,9 @@ class IMatrics(AIServiceBase):
 
     name = "imatrics"
     label = "IMatrics autotagging service"
-	
-	logger.warning('In CLass IMatrics')
-	
+
+    logger.warning('In CLass IMatrics')
+
     def __init__(self, app):
         super().__init__(app)
         self.concept_map_inv = {v: k for k, v in CONCEPT_MAPPING.items()}
@@ -71,7 +71,7 @@ class IMatrics(AIServiceBase):
     @property
     def semaphore_base_url(self):
         return current_app.config.get("SEMAPHORE_BASE_URL", os.environ.get("SEMAPHORE_BASE_URL"))
-		
+
 
     @property
     def image_base_url(self):
@@ -99,8 +99,8 @@ class IMatrics(AIServiceBase):
             tag_data["description"] = concept["shortDescription"].strip()
 
         try:
-			logger.warning('IN COncept Data')
-			
+            logger.warning('IN COncept Data')
+
             tag_type = CONCEPT_MAPPING[concept["type"]]
         except KeyError:
             logger.warning("no mapping for concept type {concept_type!r}".format(concept_type=concept["type"]))
@@ -172,10 +172,9 @@ class IMatrics(AIServiceBase):
                     del tag["weight"]
                 except KeyError:
                     pass
-		
-		
-	logger.info("_parse_concepts Response")
-	logger.info("analyzed_data")
+
+        logger.info("_parse_concepts Response")
+        logger.info("analyzed_data")
         return analyzed_data
 
     def _transform_to_imatrics(self, item, publish=False):
@@ -190,9 +189,9 @@ class IMatrics(AIServiceBase):
         }
 
     def analyze(self, item: dict, tags: Optional[dict] = None) -> dict:
-		
-		logger.warning('SEMAPHORE_BASE_URL is ')
-		logger.warning(semaphore_base_url)
+
+        logger.warning('SEMAPHORE_BASE_URL is ')
+        logger.warning(semaphore_base_url)
         if not self.semaphore_base_url:
             logger.warning("Semaphore base URL is not configured properly, can't analyze article")
             return {}
@@ -208,7 +207,7 @@ class IMatrics(AIServiceBase):
         if not data.get("headline") and not data.get("body"):
             logger.warning("No body nor headline found in item {item_id!r}".format(item_id=item["guid"]))
             return {"subject": []}
-        
+
         r_data = self._analyze(data)
         return self._parse_concepts(r_data["concepts"] + r_data["broader"])
 
@@ -224,7 +223,7 @@ class IMatrics(AIServiceBase):
                 **params,
             ),
         )
-  		
+
     def _request(self, service, data=None, method="POST", params=None):
         url = self.base_url
         access_token = self.get_access_token()
@@ -243,11 +242,10 @@ class IMatrics(AIServiceBase):
                     msg=r.text,
                 )
             )
-		
-	logger.info("In _request. The response is :")
-	logger.info(r.json())
+
+        logger.info("In _request. The response is :")
+        logger.info(r.json())
         return r.json()
-	
 
     def get_access_token(self):
         token_endpoint = os.environ.get("semaphore_token_endpoint")
@@ -266,10 +264,8 @@ class IMatrics(AIServiceBase):
         else:
             logger.warning('Token renewal request failed:', response.text)
             return None
-			
-			
 
-	def search_images(self, items: list) -> list:
+    def search_images(self, items: list) -> list:
         """Fetch image suggestions"""
         if not self.semaphore_base_url:
             logger.warning("IMatrics is not configured properly, can't fetch images")
@@ -278,7 +274,7 @@ class IMatrics(AIServiceBase):
         try:
             r_data = self._search_images(data)
         except Exception:
-			logger.warning("Stopped at search_images")
+            logger.warning("Stopped at search_images")
             return []
         return [image for image in r_data if type(image["imageUrl"]) == str and image["imageUrl"] != ""]
 
@@ -493,5 +489,5 @@ def get_item_body(item):
 
 
 def init_app(app):
-	logger.warning('In IMatrics Code. Lets see')
+    logger.warning('In IMatrics Code. Lets see')
     IMatrics(app)
