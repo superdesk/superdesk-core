@@ -40,7 +40,7 @@ class SuperdeskDataLayer(DataLayer):
     def pymongo(self, resource=None, prefix=None):
         return self.mongo.pymongo(resource, prefix)
 
-    def init_elastic(self, app):
+    def init_elastic(self, app, raise_on_mapping_error=False):
         """Init elastic index.
 
         It will create index and put mapping. It should run only once so locks are in place.
@@ -49,7 +49,7 @@ class SuperdeskDataLayer(DataLayer):
         with app.app_context():
             if lock("elastic", expire=10):
                 try:
-                    self.elastic.init_index()
+                    self.elastic.init_index(raise_on_mapping_error=raise_on_mapping_error)
                 finally:
                     unlock("elastic")
 
