@@ -89,6 +89,7 @@ def handle_item_published(sender, item, desk=None, **extra):
                         new_item,
                         dest_desk_id=dest.get("desk"),
                         dest_stage_id=dest.get("stage"),
+                        internal_destination=dest,
                     )
                 except StopDuplication:
                     continue
