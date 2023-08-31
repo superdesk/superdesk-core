@@ -125,12 +125,12 @@ class EveBackend:
         backend = self._lookup_backend(endpoint_name, fallback=True)
         is_mongo = self._backend(endpoint_name) == backend
 
-        cursor, count = backend.find(endpoint_name, req, lookup)
+        cursor, count = backend.find(endpoint_name, req, lookup, perform_count=req.if_modified_since)
 
         if req.if_modified_since and count:
             # fetch all items, not just updated
             req.if_modified_since = None
-            cursor, count = backend.find(endpoint_name, req, lookup)
+            cursor, count = backend.find(endpoint_name, req, lookup, perform_count=False)
 
         source_config = app.config["DOMAIN"][endpoint_name]
         if is_mongo and source_config.get("collation"):
