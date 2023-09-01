@@ -53,14 +53,16 @@ class SuperdeskDataLayer(DataLayer):
                 finally:
                     unlock("elastic")
 
-    def find(self, resource, req, lookup, perform_count=None):
+    def find(self, resource, req, lookup, perform_count=True):
         cursor = superdesk.get_resource_service(resource).get(req=req, lookup=lookup)
-        return cursor, cursor.count()
+        if perform_count:
+            return cursor, cursor.count()
+        return cursor, None
 
     def find_all(self, resource, max_results=1000):
         req = ParsedRequest()
         req.max_results = max_results
-        cursor, count = self._backend(resource).find(resource, req, None)
+        cursor, _ = self._backend(resource).find(resource, req, None, perform_count=False)
         return cursor
 
     def find_one(self, resource, req, check_auth_value=True, force_auth_field_projection=False, **lookup):
