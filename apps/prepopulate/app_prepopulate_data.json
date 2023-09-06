@@ -197,42 +197,7 @@
 
     {
         "data": {
-            "members": [{
-                "user": "-id user admin-"
-            }, {
-                "user": "-id user admin1-"
-            }, {
-                "user": "-id user admin2-"
-            }, {
-                "user": "-id user admin3-"
-            }],
-            "name": "Sports Desk",
-            "desk_type": "authoring"
-        },
-        "resource": "desks",
-        "username": "admin",
-        "id_name": "-id desk Sports Desks-"
-    },
-
-    {
-        "data": {
-            "members": [{
-                "user": "-id user admin-"
-            }, {
-                "user": "-id user admin4-"
-            }, {
-                "user": "-id user admin1-"
-            }],
-            "name": "Politic Desk",
-            "desk_type": "production"
-        },
-        "resource": "desks",
-        "username": "admin",
-        "id_name": "-id desk Politic Desks-"
-    },
-
-    {
-        "data": {
+            "type": "text",
             "label": "editor3",
             "enabled": true,
             "schema": {
@@ -315,9 +280,7 @@
     },
     {
         "data": {
-            "_id": "text",
-            "type": "text",
-            "label": "Text",
+            "label": "Plain text",
             "schema": {
                 "abstract": {
                     "type": "string",
@@ -585,6 +548,7 @@
             "is_used": true
         },
         "resource": "content_types",
+        "id_name": "-id content profile plain text-",
         "username": "admin"
     },
 
@@ -965,6 +929,23 @@
 
     {
         "data": {
+            "type": "text",
+            "is_public": true,
+            "template_name": "Plain text",
+            "content_type": "create",
+            "template_desks": ["-id desk Politic Desks-", "-id desk Sports Desks-"],
+            "data": {
+                "profile": "-id content profile plain text-"
+            }
+        },
+        "resource": "content_templates",
+        "username": "admin",
+        "id_name": "-id template plain text-"
+    },
+
+    {
+        "data": {
+            "type": "text",
             "is_public": true,
             "template_name": "editor3 template",
             "content_type": "create",
@@ -979,6 +960,7 @@
 
     {
         "data": {
+            "type": "text",
             "is_public": true,
             "template_name": "testing",
             "content_type": "create",
@@ -1004,6 +986,44 @@
         "resource": "desks",
         "username": "admin",
         "id_name": "-id desk Editor3 Desks-"
+    },
+
+    {
+        "data": {
+            "members": [{
+                "user": "-id user admin-"
+            }, {
+                "user": "-id user admin1-"
+            }, {
+                "user": "-id user admin2-"
+            }, {
+                "user": "-id user admin3-"
+            }],
+            "name": "Sports Desk",
+            "desk_type": "authoring",
+            "default_content_template": "-id template editor3-"
+        },
+        "resource": "desks",
+        "username": "admin",
+        "id_name": "-id desk Sports Desks-"
+    },
+
+    {
+        "data": {
+            "members": [{
+                "user": "-id user admin-"
+            }, {
+                "user": "-id user admin4-"
+            }, {
+                "user": "-id user admin1-"
+            }],
+            "name": "Politic Desk",
+            "desk_type": "production",
+            "default_content_template": "-id template editor3-"
+        },
+        "resource": "desks",
+        "username": "admin",
+        "id_name": "-id desk Politic Desks-"
     },
 
     {
@@ -2183,6 +2203,7 @@
 
     {
         "data": {
+            "type": "text",
             "template_name": "custom_highlight",
             "template_type": "highlights",
             "data": {
@@ -2195,6 +2216,7 @@
 
     {
         "data": {
+            "type": "text",
             "template_name": "kill",
             "template_type": "kill",
             "data": {
@@ -2210,6 +2232,7 @@
 
     {
         "data": {
+            "type": "text",
             "template_name": "takedown",
             "template_type": "kill",
             "data": {
@@ -2268,6 +2291,7 @@
         "resource": "archive",
         "username": "admin",
         "data": {
+            "profile": "-id content profile plain text-",
             "headline": "item1",
             "type": "text",
             "guid": "item1",
@@ -2288,6 +2312,7 @@
         "resource": "archive",
         "username": "admin",
         "data": {
+            "profile": "-id content profile plain text-",
             "headline": "item2",
             "type": "text",
             "guid": "item2",
@@ -2306,6 +2331,7 @@
         "resource": "archive",
         "username": "admin",
         "data": {
+            "profile": "-id content profile plain text-",
             "headline": "item3",
             "slugline": "item3 slugline",
             "type": "text",
@@ -2332,6 +2358,7 @@
         "resource": "archive",
         "username": "admin",
         "data": {
+            "profile": "-id content profile plain text-",
             "headline": "item4",
             "slugline": "item4 slugline",
             "type": "text",
@@ -2357,6 +2384,7 @@
         "resource": "archive",
         "username": "admin",
         "data": {
+            "profile": "-id content profile plain text-",
             "headline": "item5",
             "slugline": "item5 slugline one/two",
             "body_html": "<p>item5 text</p>",
@@ -2401,6 +2429,7 @@
         "resource": "archive",
         "username": "admin",
         "data": {
+            "profile": "-id content profile plain text-",
             "headline": "item9",
             "slugline": "item9 slugline",
             "body_html": "<p>item9 text</p>",
@@ -2439,6 +2468,7 @@
         "resource": "archive",
         "username": "admin",
         "data": {
+            "profile": "-id content profile plain text-",
             "headline": "item7",
             "slugline": "item7 slugline",
             "body_html": "<p>item7 text</p>",
@@ -2490,6 +2520,7 @@
         "resource": "archive",
         "username": "admin",
         "data": {
+            "profile": "-id content profile plain text-",
             "headline": "item8",
             "slugline": "item8 slugline",
             "body_html": "<p>item8 text</p>",
@@ -2525,6 +2556,7 @@
         "resource": "archive",
         "username": "admin",
         "data": {
+            "profile": "-id content profile plain text-",
             "headline": "item6",
             "slugline": "item6 slugline",
             "body_html": "<p>item6 text</p>",
@@ -2662,6 +2694,7 @@
                         "location": "archive",
                         "residRef": "item5",
                         "slugline": "item5 slugline",
+                        "profile": "-id content profile plain text-",
                         "type": "text"
                     }]
                 },
@@ -2673,6 +2706,7 @@
                         "location": "archive",
                         "residRef": "item9",
                         "slugline": "item9 slugline",
+                        "profile": "-id content profile plain text-",
                         "type": "text"
                     }]
                 }
@@ -2714,6 +2748,7 @@
         "resource": "legal_archive",
         "username": "admin",
         "data": {
+            "profile": "-id content profile plain text-",
             "headline": "item1 in legal archive",
             "slugline": "item1 slugline",
             "type": "text",
@@ -2735,6 +2770,7 @@
         "resource": "legal_archive",
         "username": "admin",
         "data": {
+            "profile": "-id content profile plain text-",
             "headline": "item2 in legal archive",
             "slugline": "item2 slugline",
             "type": "text",
@@ -2756,6 +2792,7 @@
         "resource": "legal_archive",
         "username": "admin",
         "data": {
+            "profile": "-id content profile plain text-",
             "headline": "item3 in legal archive",
             "slugline": "item3 slugline",
             "type": "text",
@@ -2796,6 +2833,7 @@
                 {
                     "refs": [{
                             "renditions": {},
+                            "profile": "-id content profile plain text-",
                             "type": "text",
                             "slugline": "item1 slugline",
                             "headline": "item1 in legal archive",
@@ -2807,6 +2845,7 @@
                         },
                         {
                             "renditions": {},
+                            "profile": "-id content profile plain text-",
                             "type": "text",
                             "slugline": "item3 slugline",
                             "headline": "item3 in legal archive",
@@ -2834,6 +2873,7 @@
         "resource": "archived",
         "username": "admin",
         "data": {
+            "profile": "-id content profile plain text-",
             "headline": "item1 in archived",
             "slugline": "item1 slugline",
             "type": "text",
@@ -2856,6 +2896,7 @@
         "resource": "archived",
         "username": "admin",
         "data": {
+            "profile": "-id content profile plain text-",
             "headline": "item3 in archived",
             "slugline": "item3 slugline",
             "type": "text",
@@ -2897,6 +2938,7 @@
                 },
                 {
                     "refs": [{
+                            "profile": "-id content profile plain text-",
                             "renditions": {},
                             "type": "text",
                             "slugline": "item1 slugline",
@@ -2908,6 +2950,7 @@
                             "location": "archived"
                         },
                         {
+                            "profile": "-id content profile plain text-",
                             "renditions": {},
                             "type": "text",
                             "slugline": "item3 slugline",
