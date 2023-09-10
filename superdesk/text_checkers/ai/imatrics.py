@@ -180,13 +180,18 @@ class IMatrics(AIServiceBase):
     def _transform_to_imatrics(self, item, publish=False):
         body = get_item_body(item)
         headline = item.get("headline", "")
-        return {
-            "uuid": item["guid"],
-            "pubStatus": publish,
-            "headline": headline,
-            "body": body,
-            "language": item["language"],
-        }
+        xml_input = '''<?xml version="1.0" encoding="UTF-8"?>
+          <request op="CLASSIFY">
+            <document>
+              <title>{headline}</title>
+              <body>{body}</body>
+            </document>
+            <multiarticle />
+          </request>'''.format(headline=headline, body=body)
+
+        logger.info(f"Received item for transformation: {item}")
+        logger.info(f"Transformed item to XML: {xml_input}")
+        return {"XML_INPUT": xml_input}
 
     def analyze(self, item: dict, tags: Optional[dict] = None) -> dict:
 
@@ -225,27 +230,28 @@ class IMatrics(AIServiceBase):
         )
 
     def _request(self, service, data=None, method="POST", params=None):
-        url = self.base_url
-        access_token = self.get_access_token()
-
-        if not access_token:
-            raise SuperdeskApiError.proxyError("Failed to get access token")
-
-        headers = {"Authorization": f"Bearer {access_token}"}
-        r = session.request(method, url, json=data, headers=headers, params=params, timeout=TIMEOUT)
-
-        if r.status_code != 200:
-            raise SuperdeskApiError.proxyError(
-                "Unexpected return code ({status_code}) from {name}: {msg}".format(
-                    name=self.name,
-                    status_code=r.status_code,
-                    msg=r.text,
+        url = urljoin(self.base_url, service)
+        try:
+            logger.info(f"Making a {method} request to {url} with data: {data} and params: {params}")
+            r = session.request(method, url, json=data, auth=(self.user, self.key), params=params, timeout=TIMEOUT)
+            logger.info(f"Received response: {r.text}")
+            if r.status_code != 200:
+                logger.error(f"Unexpected return code ({r.status_code}) from {self.name}: {r.text}")
+                raise SuperdeskApiError.proxyError(
+                    "Unexpected return code ({status_code}) from {name}: {msg}".format(
+                        name=self.name,
+                        status_code=r.status_code,
+                        msg=r.text,
+                    )
                 )
-            )
+            return r.json()
+        except Exception as e:
+            logger.error(f"An error occurred while making a request to {url}: {str(e)}")
+            logger.error(traceback.format_exc())  # This will log the full traceback
+            raise
+            
 
-        logger.info("In _request. The response is :")
-        logger.info(r.json())
-        return r.json()
+
 
     def get_access_token(self):
         token_endpoint = os.environ.get("semaphore_token_endpoint")
@@ -254,17 +260,21 @@ class IMatrics(AIServiceBase):
             'grant_type': 'apiKey',
             'key': api_key
         }
-
+    
+        logger.info(f"Fetching access token from {token_endpoint} with API key: {api_key}")
+    
         response = session.post(token_endpoint, data=data, timeout=TIMEOUT)
-
+    
         if response.status_code == 200:
             token_data = response.json()
             access_token = token_data.get('access_token')
+            logger.info(f"Successfully fetched access token: {access_token}")
             return access_token
         else:
-            logger.warning('Token renewal request failed:', response.text)
+            logger.error(f"Token renewal request failed with status {response.status_code}. Response: {response.text}")
             return None
 
+    
     def search_images(self, items: list) -> list:
         """Fetch image suggestions"""
         if not self.semaphore_base_url:
