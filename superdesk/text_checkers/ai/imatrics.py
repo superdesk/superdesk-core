@@ -68,6 +68,10 @@ class IMatrics(AIServiceBase):
         self._subjects = []
         self._places = None
 
+        console.warning("Semaphore Base URL:", self.semaphore_base_url)
+        console.warning("Image Base URL:", self.image_base_url)
+    
+
     @property
     def semaphore_base_url(self):
         return current_app.config.get("SEMAPHORE_BASE_URL", os.environ.get("SEMAPHORE_BASE_URL"))
