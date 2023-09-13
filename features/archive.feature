@@ -1538,3 +1538,17 @@ Feature: News Items Archive
             }
         }
         """
+
+    @auth
+    @vocabulary
+    Scenario: Uploaded image should not get DEFAULT_CONTENT_TYPE assigned
+        Given config
+        """
+        {"DEFAULT_CONTENT_TYPE": "bar"}
+        """
+        Given empty "archive"
+        When we upload a file "bike.jpg" to "archive"
+        Then we get new resource
+        """
+        {"profile": "__no_value__"}
+        """

@@ -155,10 +155,13 @@ def update_version(updates, original):
         updates.setdefault("version", updates[config.VERSION])
 
 
-def on_create_item(docs, repo_type=ARCHIVE):
+def on_create_item(docs, repo_type=ARCHIVE, media_service=None):
     """Make sure item has basic fields populated."""
 
     for doc in docs:
+        if doc.get("media") and media_service:
+            media_service.on_create([doc])
+
         editor_utils.generate_fields(doc)
         update_dates_for(doc)
         set_original_creator(doc)
@@ -182,8 +185,8 @@ def on_create_item(docs, repo_type=ARCHIVE):
             # set the source for the article
             set_default_source(doc)
 
-            if "profile" not in doc and app.config.get("DEFAULT_CONTENT_TYPE"):
-                doc["profile"] = app.config.get("DEFAULT_CONTENT_TYPE", None)
+            if doc.get("type", "text") == "text" and app.config.get("DEFAULT_CONTENT_TYPE"):
+                doc.setdefault("profile", app.config["DEFAULT_CONTENT_TYPE"])
 
         copy_metadata_from_profile(doc)
         copy_metadata_from_user_preferences(doc, repo_type)
