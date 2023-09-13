@@ -129,7 +129,6 @@ class FTPNinjsFormatter(NINJSFormatter):
 
 
 class NinjsFTPExporter(DraftJSHTMLExporter):
-
     formatter = None
 
     def set_formatter(self, formatter):
