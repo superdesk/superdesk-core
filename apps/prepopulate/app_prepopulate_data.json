@@ -928,21 +928,7 @@
         "resource": "content_types"
     },
 
-    {
-        "data": {
-            "type": "text",
-            "is_public": true,
-            "template_name": "Plain text",
-            "content_type": "create",
-            "template_desks": ["-id desk Politic Desks-", "-id desk Sports Desks-"],
-            "data": {
-                "profile": "-id content profile plain text-"
-            }
-        },
-        "resource": "content_templates",
-        "username": "admin",
-        "id_name": "-id template plain text-"
-    },
+
 
     {
         "data": {
@@ -957,22 +943,6 @@
         "resource": "content_templates",
         "username": "admin",
         "id_name": "-id template editor3-"
-    },
-
-    {
-        "data": {
-            "type": "text",
-            "is_public": true,
-            "template_name": "testing",
-            "content_type": "create",
-            "template_desks": ["-id desk Politic Desks-", "-id desk Sports Desks-"],
-            "data": {
-                "profile": "-id profile testing-"
-            }
-        },
-        "resource": "content_templates",
-        "username": "admin",
-        "id_name": "-id template testing-"
     },
 
     {
@@ -1025,6 +995,38 @@
         "resource": "desks",
         "username": "admin",
         "id_name": "-id desk Politic Desks-"
+    },
+
+    {
+        "data": {
+            "type": "text",
+            "is_public": true,
+            "template_name": "testing",
+            "content_type": "create",
+            "template_desks": ["-id desk Politic Desks-", "-id desk Sports Desks-"],
+            "data": {
+                "profile": "-id profile testing-"
+            }
+        },
+        "resource": "content_templates",
+        "username": "admin",
+        "id_name": "-id template testing-"
+    },
+
+    {
+        "data": {
+            "type": "text",
+            "is_public": true,
+            "template_name": "Plain text",
+            "content_type": "create",
+            "template_desks": ["-id desk Politic Desks-", "-id desk Sports Desks-"],
+            "data": {
+                "profile": "-id content profile plain text-"
+            }
+        },
+        "resource": "content_templates",
+        "username": "admin",
+        "id_name": "-id template plain text-"
     },
 
     {
