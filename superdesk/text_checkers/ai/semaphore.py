@@ -22,15 +22,15 @@ class Semaphore(AIServiceBase):
 
     @property
     def base_url(self):
-        return current_app.config.get("SEMAPHORE_BASE_URL", os.environ.get("SEMAPHORE_BASE_URL"))
+        return current_app.config.get("semaphore_token_endpoint", os.environ.get("semaphore_token_endpoint"))
 
     @property
     def analyze_url(self):
-        return current_app.config.get("SEMAPHORE_ANALYZE_URL", os.environ.get("SEMAPHORE_ANALYZE_URL"))
+        return current_app.config.get("SEMAPHORE_BASE_URL", os.environ.get("SEMAPHORE_BASE_URL"))
 
     @property
     def api_key(self):
-        return current_app.config.get("SEMAPHORE_API_KEY", os.environ.get("SEMAPHORE_API_KEY"))
+        return current_app.config.get("semaphore_api_key", os.environ.get("semaphore_api_key"))
 
     def get_access_token(self):
         """Get access token for Semaphore."""
