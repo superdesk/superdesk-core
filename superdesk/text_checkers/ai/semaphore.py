@@ -20,18 +20,12 @@ class Semaphore(AIServiceBase):
     name = "semaphore"
     label = "Semaphore autotagging service"
 
-    @property
-    def base_url(self):
-        return current_app.config.get("semaphore_token_endpoint", os.environ.get("semaphore_token_endpoint"))
+    # Set the values of environment variables directly within the class
+    base_url = "https://ca.cloud.smartlogic.com/token"  
+    analyze_url = "https://ca.cloud.smartlogic.com/svc/5457e590-c2cc-4219-8947-e7f74c8675be/?operation=classify"  
+    api_key = "OoP3QRRkLVCzo4sRa6iAyg==" 
 
-    @property
-    def analyze_url(self):
-        return current_app.config.get("SEMAPHORE_BASE_URL", os.environ.get("SEMAPHORE_BASE_URL"))
-
-    @property
-    def api_key(self):
-        return current_app.config.get("semaphore_api_key", os.environ.get("semaphore_api_key"))
-
+    
     def get_access_token(self):
         """Get access token for Semaphore."""
         url = self.base_url
