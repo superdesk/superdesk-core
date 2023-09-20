@@ -2,7 +2,7 @@ import os
 import logging
 import requests
 import xml.etree.ElementTree as ET
-from flask import current_app
+from flask import current_app, abort, jsonify
 from superdesk.errors import SuperdeskApiError
 from .base import AIServiceBase
 
@@ -45,26 +45,34 @@ class Semaphore(AIServiceBase):
 
   
     def analyze(self, html_content: str) -> dict:
-        """Analyze HTML content to get tagging suggestions using Semaphore."""
-        if not self.base_url or not self.api_key:
-            logger.warning("Semaphore is not configured properly, can't analyze content")
-            return {}
+        try:
+            if not self.base_url or not self.api_key:
+                logger.warning("Semaphore is not configured properly, can't analyze content")
+                abort(500, description="Semaphore is not configured properly, can't analyze content")
 
-        # Convert HTML to XML
-        xml_payload = self.html_to_xml(html_content)  # Define this method to convert HTML to XML
+            # Convert HTML to XML
+            xml_payload = self.html_to_xml(html_content)  # Define this method to convert HTML to XML
 
-        # Make a POST request using XML payload
-        headers = {
-            "Authorization": f"bearer {self.get_access_token()}"
-        }
-        response = session.post(self.analyze_url, headers=headers, data=xml_payload, timeout=TIMEOUT)
-        response.raise_for_status()
+            # Make a POST request using XML payload
+            headers = {
+                "Authorization": f"bearer {self.get_access_token()}"
+            }
+            response = session.post(self.analyze_url, headers=headers, data=xml_payload, timeout=TIMEOUT)
+            response.raise_for_status()
 
-        # Convert XML response to JSON
-        json_response = self.xml_to_json(response.text)  # Define this method to convert XML to JSON
+            # Convert XML response to JSON
+            json_response = self.xml_to_json(response.text)  # Define this method to convert XML to JSON
 
-        return json_response
+            return json_response
+            
+        except requests.exceptions.RequestException as e:
+            logger.error(f"Semaphore request failed: {str(e)}")
+            abort(500, description=f"Semaphore request failed: {str(e)}")
+        except Exception as e:
+            logger.error(f"An error occurred: {str(e)}")
+            abort(500, description=f"An error occurred: {str(e)}")
 
+    
     def html_to_xml(self, html_content: str) -> str:
         """Convert HTML content to XML. This needs to be defined based on the required format."""
         # TODO: Add conversion logic here
