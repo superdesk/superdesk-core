@@ -44,7 +44,7 @@ class SuperdeskDataLayer(DataLayer):
     def pymongo(self, resource=None, prefix=None):
         return self.mongo.pymongo(resource, prefix)
 
-    def init_elastic(self, app):
+    def init_elastic(self, app, raise_on_mapping_error=False):
         """Init elastic index.
 
         It will create index and put mapping. It should run only once so locks are in place.
@@ -53,18 +53,20 @@ class SuperdeskDataLayer(DataLayer):
         with app.app_context():
             if lock("elastic", expire=10):
                 try:
-                    self.elastic.init_index()
+                    self.elastic.init_index(raise_on_mapping_error=raise_on_mapping_error)
                 finally:
                     unlock("elastic")
 
-    def find(self, resource, req, lookup, perform_count=None):
+    def find(self, resource, req, lookup, perform_count=True):
         cursor = superdesk.get_resource_service(resource).get(req=req, lookup=lookup)
-        return cursor, cursor.count()
+        if perform_count:
+            return cursor, cursor.count()
+        return cursor, None
 
     def find_all(self, resource, max_results=1000):
         req = ParsedRequest()
         req.max_results = max_results
-        cursor, count = self._backend(resource).find(resource, req, None)
+        cursor, _ = self._backend(resource).find(resource, req, None, perform_count=False)
         return cursor
 
     def find_one(self, resource, req, check_auth_value=True, force_auth_field_projection=False, **lookup):

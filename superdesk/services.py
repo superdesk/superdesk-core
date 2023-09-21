@@ -8,6 +8,7 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
+import random
 import pymongo
 import logging
 
@@ -284,7 +285,11 @@ class CacheableService(BaseService):
         return "cached:{}".format(self.datasource)
 
     def get_cached(self) -> List[Dict[str, Any]]:
-        @cache(ttl=3600, tags=(self.datasource,), key=lambda fn: f"_cache_mixin:{self.datasource}")
+        @cache(
+            ttl=3600 + random.randrange(1, 300),
+            tags=(self.datasource,),
+            key=lambda fn: f"_cache_mixin:{self.datasource}",
+        )
         def _get_cached_from_db():
             return list(self.get_from_mongo(req=None, lookup=self.cache_lookup))
 

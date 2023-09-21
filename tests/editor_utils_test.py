@@ -2076,3 +2076,39 @@ class Editor3TestCase(unittest.TestCase):
         body_editor = Editor3Content(item_editor3)
         item = body_editor.html_exporter.render_table(data)
         self.assertEqual(expected, lxml.etree.tostring(item, encoding="unicode"))
+
+    def test_export_image(self):
+        draftjs_data = {
+            "blocks": [
+                {
+                    "entityRanges": [
+                        {"key": 1, "offset": 7, "length": 1},
+                    ],
+                    "text": "image: 📷",
+                    "type": "atomic",
+                    "key": "crs2m",
+                    "depth": 0,
+                },
+            ],
+            "entityMap": {
+                "1": {
+                    "type": "IMAGE",
+                    "data": {
+                        "src": "https://example.com/picture.jpg",
+                        "alt": "test",
+                        "width": "800",
+                        "height": "600",
+                    },
+                    "mutability": "MUTABLE",
+                },
+            },
+        }
+
+        expected = """
+            image:\n<img src="https://example.com/picture.jpg" alt="test" width="800" height="600">
+        """.strip()
+
+        item = self.build_item(draftjs_data)
+        editor = Editor3Content(item)
+        html = editor.html
+        self.assertEqual(html, expected)

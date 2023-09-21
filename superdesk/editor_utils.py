@@ -37,6 +37,7 @@ ANNOTATION = "ANNOTATION"
 MEDIA = "MEDIA"
 TABLE = "TABLE"
 MULTI_LINE_QUOTE = "MULTI-LINE_QUOTE"
+IMAGE = "IMAGE"
 
 EDITOR_STATE = "draftjsState"
 ENTITY_MAP = "entityMap"
@@ -166,6 +167,10 @@ class EntitySequence(MutableSequence):
             raise TypeError("an Entity instance is expected")
         self._ranges.insert(index, value.ranges)
         self._mapping[value.key] = value.data
+
+    def clear(self):
+        for idx, _range in enumerate(self._ranges):
+            del self[idx]
 
 
 class Block:
@@ -308,6 +313,7 @@ class DraftJSHTMLExporter:
                     ANNOTATION: self.render_annotation,
                     TABLE: self.render_table,
                     MULTI_LINE_QUOTE: self.render_table,
+                    IMAGE: self.render_image,
                 },
             }
         )
@@ -367,14 +373,14 @@ class DraftJSHTMLExporter:
             embed_type = "Video"
             elt = DOM.create_element(
                 "video",
-                {"control": "control", "src": rendition["href"], "alt": alt_text, "width": "100%", "height": "100%"},
+                {"controls": "", "src": rendition["href"], "alt": alt_text, "width": "100%", "height": "100%"},
                 props["children"],
             )
         elif media_type == "audio":
             embed_type = "Audio"
             elt = DOM.create_element(
                 "audio",
-                {"control": "control", "src": rendition["href"], "alt": alt_text, "width": "100%", "height": "100%"},
+                {"controls": "", "src": rendition["href"], "alt": alt_text, "width": "100%", "height": "100%"},
                 props["children"],
             )
         else:
@@ -491,6 +497,10 @@ class DraftJSHTMLExporter:
                     DOM.append_child(td, content)
 
         return table
+
+    def render_image(self, props):
+        elem_props = {key: val for key, val in props.items() if key in ("src", "alt", "width", "height") and val}
+        return DOM.create_element("img", elem_props)
 
     def style_fallback(self, props):
         type_ = props["inline_style_range"]["style"]
@@ -826,6 +836,8 @@ def is_html(field) -> bool:
 
 
 def render_fragment(elem) -> str:
+    if isinstance(elem, str):
+        return elem
     if elem.tag == "p" and not elem.text and not len(elem):
         # client renders empty paragraph as `<p><br></p>`
         etree.SubElement(elem, "br", nsmap=None, attrib=None)
@@ -849,3 +861,34 @@ def copy_fields(source: Dict, dest: Dict, ignore_empty: bool = False):
         for field in source["fields_meta"]:
             if ignore_empty is False or not is_empty_content_state(source, field):
                 dest.setdefault("fields_meta", {})[field] = source["fields_meta"][field].copy()
+
+
+def remove_all_embeds(article):
+    """
+    Removes any embeds from the draftjs state and regenerates the html, can be used by text only
+    formatters to remove embeds from the article
+    :param article:
+    :return:
+    """
+
+    # List of keys of the removed entities
+    keys = []
+
+    def not_embed(block):
+        if block.type.lower() == "atomic":
+            keys.extend([e.key for e in block.entities])
+            block.entities.clear()
+            return False
+        return True
+
+    fields = get_content_state_fields(article)
+    for field in fields:
+        filter_blocks(article, field, not_embed)
+
+    # Remove the corresponding items from the associations and refs
+    for key_suffix in keys:
+        key = "editor_{}".format(key_suffix)
+        if article.get("associations", {}).get(key):
+            article.get("associations").pop(key)
+        if "refs" in article:
+            article["refs"] = [r for r in article.get("refs", []) if r["key"] != key]

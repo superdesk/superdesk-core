@@ -44,10 +44,7 @@ class RebuildElasticIndex(superdesk.Command):
         elif resource_name:
             raise ValueError("Resource {} is not configured".format(resource_name))
         for resource in resources:
-            try:
-                current_app.data.elastic.reindex(resource)
-            except elasticsearch.exceptions.NotFoundError as nfe:
-                print(nfe)
+            current_app.data.elastic.reindex(resource)
             print('Index {} rebuilt successfully.'.format(resource))
 
 

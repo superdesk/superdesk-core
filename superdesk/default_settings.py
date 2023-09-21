@@ -1084,7 +1084,6 @@ APM_SECRET_TOKEN = env("APM_SECRET_TOKEN")
 #:
 APM_SERVICE_NAME = env("APM_SERVICE_NAME")
 
-
 #: Default Timezone for Rundowns Shows/Templates
 #:
 #: .. versionadded:: 2.6
@@ -1102,3 +1101,9 @@ RUNDOWNS_SCHEDULE_HOURS = 12
 #: .. versionadded:: 2.6
 #:
 REBUILD_ELASTIC_ON_INIT_DATA_ERROR = strtobool(env("REBUILD_ELASTIC_ON_INIT_DATA_ERROR", "false"))
+
+#: Apply product filtering to embedded media items
+#:
+#: .. versionadded:: 2.5.4
+#:
+EMBED_PRODUCT_FILTERING = strtobool(env("EMBED_PRODUCT_FILTERING", "false"))
