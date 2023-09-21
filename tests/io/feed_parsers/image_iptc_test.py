@@ -44,3 +44,10 @@ class ImageIPTCTestCase(BaseImageIPTCTestCase):
         self.assertEqual(item["copyrightnotice"], "Copyright (Notice) 2017.1 IPTC - www.iptc.org  (ref2017.1)")
         self.assertEqual(item["assignment_id"], "Job Id (ref2017.1)")
         self.assertEqual(item["firstcreated"].isoformat(), "2017-07-13T17:01:00+00:00")
+
+
+class ImageCPTestCase(BaseImageIPTCTestCase):
+    filename = "GAC103-thumb.jpg"
+
+    def test_content(self):
+        assert self.item
