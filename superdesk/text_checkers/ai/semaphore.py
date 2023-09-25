@@ -75,7 +75,7 @@ class Semaphore(AIServiceBase):
             logger.error(xml_dummy)
             root = ET.fromstring(xml_dummy.strip())
             
-            json_response = self.xml_to_json(root)  # Define this method to convert XML to JSON
+            json_response = xml_to_json(root)  # Define this method to convert XML to JSON
 
             return json_response
             
