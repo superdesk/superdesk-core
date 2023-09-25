@@ -1100,3 +1100,10 @@ REBUILD_ELASTIC_ON_INIT_DATA_ERROR = strtobool(env("REBUILD_ELASTIC_ON_INIT_DATA
 #: .. versionadded:: 2.5.4
 #:
 EMBED_PRODUCT_FILTERING = strtobool(env("EMBED_PRODUCT_FILTERING", "false"))
+
+#: When enabled it will unpublish article to matching subscribers
+#: if there are no records in publish queue for it.
+#:
+#: .. versionadded:: 2.7
+#:
+UNPUBLISH_TO_MATCHING_SUBSCRIBERS = True
