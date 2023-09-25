@@ -88,7 +88,8 @@ class AIService(BaseService):
         except KeyError:
             raise SuperdeskApiError.notFoundError("{service} service can't be found".format(service=service))
 
-        analyzed_data = service.analyze(item, doc.get("tags"))
+        # analyzed_data = service.analyze(item, doc.get("tags"))
+        analyzed_data = service.analyze(item)
         docs[0].update({"analysis": analyzed_data})
         return [0]
 
