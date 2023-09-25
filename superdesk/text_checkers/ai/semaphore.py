@@ -53,7 +53,7 @@ class Semaphore(AIServiceBase):
         try:
             if not self.base_url or not self.api_key:
                 logger.warning("Semaphore is not configured properly, can't analyze content")
-                console.warning("Semaphore is not configured properly, can't analyze content")
+                
                 
             # Convert HTML to XML
             xml_payload = self.html_to_xml(html_content)  # Define this method to convert HTML to XML
@@ -62,11 +62,17 @@ class Semaphore(AIServiceBase):
             headers = {
                 "Authorization": f"bearer {self.get_access_token()}"
             }
-            response = session.post(self.analyze_url, headers=headers, data=xml_payload, timeout=TIMEOUT)
+
+                        
+            payload = {'XML_INPUT': xml_payload}
+            
+            response = session.post(self.analyze_url, headers=headers, data=payload, timeout=TIMEOUT)
+            logger.error(response.text)
             response.raise_for_status()
 
             # Convert XML response to JSON
             xml_dummy = response.text
+            logger.error(xml_dummy)
             root = ET.fromstring(xml_dummy.strip())
             
             json_response = self.xml_to_json(root)  # Define this method to convert XML to JSON
@@ -75,23 +81,13 @@ class Semaphore(AIServiceBase):
             
         except requests.exceptions.RequestException as e:  
             logger.error(f"Semaphore request failed. We are in analyze RequestError exception: {str(e)}")
-            console.warning("Semaphore request failed. We are in analyze RequestError exception:")
               
         except Exception as e:
             logger.error(f"An error occurred. We are in analyze exception: {str(e)}")
-            console.warning("Semaphore request failed. We are in analyze exception:")
-
+            
     
     def html_to_xml(self, html_content: str) -> str:
-        dummy_xml = """<?xml version="1.0" ?>
-              <request op="CLASSIFY">
-                <document>
-                  <title>Test</title>
-                  <body>This is a test</body>
-                </document>
-                <multiarticle />
-              </request>
-              """
+        dummy_xml = """<?xml version="1.0" ?><request op="CLASSIFY"><document><title>Test</title><body>This is a test</body></document><multiarticle /></request>"""
         return dummy_xml
 
     
