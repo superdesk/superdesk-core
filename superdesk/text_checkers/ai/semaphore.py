@@ -2,14 +2,47 @@ import os
 import logging
 import requests
 import xml.etree.ElementTree as ET
-from flask import current_app, abort, jsonify
-from superdesk.errors import SuperdeskApiError
+from flask import current_app, abort
 from .base import AIServiceBase
+from html.parser import HTMLParser
 
-logger = logging.getLogger(__name__)
-session = requests.Session()
+class MyHTMLParser(HTMLParser):
+    def __init__(self):
+        super().__init__()
+        self.xml_string = '<?xml version="1.0" ?>\n<request op="CLASSIFY">\n'
+        self.in_title = False
+        self.in_body = False
+        
+    def handle_starttag(self, tag, attrs):
+        if tag == "title":
+            self.xml_string += '  <document>\n    <title>'
+            self.in_title = True
+        elif tag == "body":
+            self.xml_string += '    <body>'
+            self.in_body = True
+            
+    def handle_endtag(self, tag):
+        if tag == "title":
+            self.xml_string += '</title>\n'
+            self.in_title = False
+        elif tag == "body":
+            self.xml_string += '</body>\n  </document>\n  <multiarticle />\n</request>'
+            self.in_body = False
+            
+    def handle_data(self, data):
+        if self.in_title or self.in_body:
+            self.xml_string += data
+        
+    def get_xml_string(self):
+        return self.xml_string
 
-TIMEOUT = (5, 30)
+def convert_html_to_xml(html_string):
+    parser = MyHTMLParser()
+    parser.feed(html_string)
+    return parser.get_xml_string()
+
+
+
 
 class Semaphore(AIServiceBase):
     """Semaphore autotagging service
@@ -20,11 +53,20 @@ class Semaphore(AIServiceBase):
     name = "semaphore"
     label = "Semaphore autotagging service"
 
-    # Set the values of environment variables directly within the class
-    base_url = "https://ca.cloud.smartlogic.com/token"  
-    analyze_url = "https://ca.cloud.smartlogic.com/svc/5457e590-c2cc-4219-8947-e7f74c8675be/?operation=classify"  
-    api_key = "ota1b5FACNdPLEAo8Ue8Hg==" 
 
+
+    def __init__(self,data):
+
+        self.base_url = "https://ca.cloud.smartlogic.com/token"  
+        self.analyze_url = "https://ca.cloud.smartlogic.com/svc/5457e590-c2cc-4219-8947-e7f74c8675be/?operation=classify"  
+        self.api_key = "ota1b5FACNdPLEAo8Ue8Hg=="   
+
+        self.session = requests.Session()  # Defining session
+        self.TIMEOUT = 10  # Defining TIMEOUT
+        self.logger = logging.getLogger(__name__)  # Defining logger
+        
+        self.output = self.analyze(data)
+        
     
     def get_access_token(self):
         """Get access token for Semaphore."""
@@ -59,19 +101,20 @@ class Semaphore(AIServiceBase):
 
             return json_response
             
-        except requests.exceptions.RequestException as e:
-            logger.error(f"Semaphore request failed: {str(e)}")
-            abort(500, description=f"Semaphore request failed: {str(e)}")
+        except requests.exceptions.RequestError as e:  # Corrected exception
+            logger.error(f"Semaphore request failed. We are in analyze RequestError exception: {str(e)}")
+            abort(500, description=f"Semaphore request failed. We are in analyze RequestError exception: {str(e)}")
+        
         except Exception as e:
-            logger.error(f"An error occurred: {str(e)}")
-            abort(500, description=f"An error occurred: {str(e)}")
+            logger.error(f"An error occurred. We are in analyze exception: {str(e)}")
+            abort(500, description=f"An error occurred.We are in analyze exception: {str(e)}")
 
     
     def html_to_xml(self, html_content: str) -> str:
-        """Convert HTML content to XML. This needs to be defined based on the required format."""
-        # TODO: Add conversion logic here
-        return ""
+        """Convert HTML content to XML."""
+        return convert_html_to_xml(html_content) 
 
+    
     def xml_to_json(self, xml_content: str) -> dict:
         """Convert XML content to JSON."""
         root = ET.fromstring(xml_content)
@@ -84,4 +127,5 @@ class Semaphore(AIServiceBase):
 
 
 def init_app(app):
-    Semaphore(app)
+    a = Semaphore(app)
+    return a.output
