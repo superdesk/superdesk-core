@@ -79,28 +79,7 @@ class Semaphore(AIServiceBase):
 
     
     def html_to_xml(self, html_content: str) -> str:
-        """Convert HTML content to XML."""
-        xml_string = '<?xml version="1.0" ?>\n<request op="CLASSIFY">\n'
-        
-        # Extract title content
-        title_start = html_content.find('<title>') + len('<title>')
-        title_end = html_content.find('</title>')
-        if title_start != -1 and title_end != -1:
-            title_content = html_content[title_start:title_end].strip()
-            xml_string += f'  <document>\n    <title>{title_content}</title>\n'
-        else:
-            xml_string += '  <document>\n    <title></title>\n'
-        
-        # Extract body content
-        body_start = html_content.find('<body>') + len('<body>')
-        body_end = html_content.find('</body>')
-        if body_start != -1 and body_end != -1:
-            body_content = html_content[body_start:body_end].strip()
-            xml_string += f'    <body>{body_content}</body>\n  </document>\n  <multiarticle />\n</request>'
-        else:
-            xml_string += '    <body></body>\n  </document>\n  <multiarticle />\n</request>'
-        
-        return xml_string
+        return html_content
 
     
     def xml_to_json(self, xml_content: str) -> dict:
