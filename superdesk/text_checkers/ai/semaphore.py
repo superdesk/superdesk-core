@@ -33,7 +33,7 @@ class Semaphore(AIServiceBase):
         self.session = requests.Session()  
         self.TIMEOUT = 10 
         self.logger = logging.getLogger(__name__) 
-        
+        logger.error(data)
         self.output = self.analyze(data)
         
     
