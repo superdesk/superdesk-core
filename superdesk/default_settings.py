@@ -269,6 +269,9 @@ REDIS_URL = env("REDIS_URL", "redis://localhost:6379")
 #: cache url - superdesk will try to figure out if it's redis or memcached
 CACHE_URL = env("SUPERDESK_CACHE_URL", REDIS_URL)
 
+#: cache type - set explicit cache type if it wouldn't get it right from url
+CACHE_TYPE = env("SUPERDESK_CACHE_TYPE")
+
 #: celery broker
 BROKER_URL = env("CELERY_BROKER_URL", REDIS_URL)
 CELERY_BROKER_URL = BROKER_URL
