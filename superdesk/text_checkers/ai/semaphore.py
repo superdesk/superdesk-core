@@ -4,44 +4,12 @@ import requests
 import xml.etree.ElementTree as ET
 from flask import current_app, abort
 from .base import AIServiceBase
-from html.parser import HTMLParser
-
-class MyHTMLParser(HTMLParser):
-    def __init__(self):
-        super().__init__()
-        self.xml_string = '<?xml version="1.0" ?>\n<request op="CLASSIFY">\n'
-        self.in_title = False
-        self.in_body = False
-        
-    def handle_starttag(self, tag, attrs):
-        if tag == "title":
-            self.xml_string += '  <document>\n    <title>'
-            self.in_title = True
-        elif tag == "body":
-            self.xml_string += '    <body>'
-            self.in_body = True
-            
-    def handle_endtag(self, tag):
-        if tag == "title":
-            self.xml_string += '</title>\n'
-            self.in_title = False
-        elif tag == "body":
-            self.xml_string += '</body>\n  </document>\n  <multiarticle />\n</request>'
-            self.in_body = False
-            
-    def handle_data(self, data):
-        if self.in_title or self.in_body:
-            self.xml_string += data
-        
-    def get_xml_string(self):
-        return self.xml_string
-
-def convert_html_to_xml(html_string):
-    parser = MyHTMLParser()
-    parser.feed(html_string)
-    return parser.get_xml_string()
 
 
+logger = logging.getLogger(__name__)
+session = requests.Session()
+
+TIMEOUT = (5, 30)
 
 
 class Semaphore(AIServiceBase):
@@ -61,9 +29,9 @@ class Semaphore(AIServiceBase):
         self.analyze_url = "https://ca.cloud.smartlogic.com/svc/5457e590-c2cc-4219-8947-e7f74c8675be/?operation=classify"  
         self.api_key = "ota1b5FACNdPLEAo8Ue8Hg=="   
 
-        self.session = requests.Session()  # Defining session
-        self.TIMEOUT = 10  # Defining TIMEOUT
-        self.logger = logging.getLogger(__name__)  # Defining logger
+        self.session = requests.Session()  
+        self.TIMEOUT = 10 
+        self.logger = logging.getLogger(__name__) 
         
         self.output = self.analyze(data)
         
@@ -112,7 +80,27 @@ class Semaphore(AIServiceBase):
     
     def html_to_xml(self, html_content: str) -> str:
         """Convert HTML content to XML."""
-        return convert_html_to_xml(html_content) 
+        xml_string = '<?xml version="1.0" ?>\n<request op="CLASSIFY">\n'
+        
+        # Extract title content
+        title_start = html_string.find('<title>') + len('<title>')
+        title_end = html_string.find('</title>')
+        if title_start != -1 and title_end != -1:
+            title_content = html_string[title_start:title_end].strip()
+            xml_string += f'  <document>\n    <title>{title_content}</title>\n'
+        else:
+            xml_string += '  <document>\n    <title></title>\n'
+        
+        # Extract body content
+        body_start = html_string.find('<body>') + len('<body>')
+        body_end = html_string.find('</body>')
+        if body_start != -1 and body_end != -1:
+            body_content = html_string[body_start:body_end].strip()
+            xml_string += f'    <body>{body_content}</body>\n  </document>\n  <multiarticle />\n</request>'
+        else:
+            xml_string += '    <body></body>\n  </document>\n  <multiarticle />\n</request>'
+        
+        return xml_string
 
     
     def xml_to_json(self, xml_content: str) -> dict:
