@@ -6,6 +6,7 @@ from flask import current_app, abort
 from .base import AIServiceBase
 
 
+
 logger = logging.getLogger(__name__)
 session = requests.Session()
 
@@ -52,8 +53,8 @@ class Semaphore(AIServiceBase):
         try:
             if not self.base_url or not self.api_key:
                 logger.warning("Semaphore is not configured properly, can't analyze content")
-                abort(500, description="Semaphore is not configured properly, can't analyze content")
-
+                console.warning("Semaphore is not configured properly, can't analyze content")
+                
             # Convert HTML to XML
             xml_payload = self.html_to_xml(html_content)  # Define this method to convert HTML to XML
 
@@ -65,31 +66,51 @@ class Semaphore(AIServiceBase):
             response.raise_for_status()
 
             # Convert XML response to JSON
-            json_response = self.xml_to_json(response.text)  # Define this method to convert XML to JSON
+            xml_dummy = response.text
+            root = ET.fromstring(xml_dummy.strip())
+            
+            json_response = self.xml_to_json(root)  # Define this method to convert XML to JSON
 
             return json_response
             
         except requests.exceptions.RequestException as e:  
             logger.error(f"Semaphore request failed. We are in analyze RequestError exception: {str(e)}")
-            abort(500, description=f"Semaphore request failed. We are in analyze RequestError exception: {str(e)}")
-        
+            console.warning("Semaphore request failed. We are in analyze RequestError exception:")
+              
         except Exception as e:
             logger.error(f"An error occurred. We are in analyze exception: {str(e)}")
-            abort(500, description=f"An error occurred.We are in analyze exception: {str(e)}")
+            console.warning("Semaphore request failed. We are in analyze exception:")
 
     
     def html_to_xml(self, html_content: str) -> str:
-        return html_content
+        dummy_xml = """<?xml version="1.0" ?>
+              <request op="CLASSIFY">
+                <document>
+                  <title>Test</title>
+                  <body>This is a test</body>
+                </document>
+                <multiarticle />
+              </request>
+              """
+        return dummy_xml
 
     
-    def xml_to_json(self, xml_content: str) -> dict:
-        """Convert XML content to JSON."""
-        root = ET.fromstring(xml_content)
-        # Conversion logic to be added here based on the XML structure
-        # For simplicity, this is a basic example and might not work for complex XML structures
+
+    def xml_to_json(element: ET.Element) -> dict:
+        """Convert XML Element to JSON."""
         json_data = {}
-        for child in root:
-            json_data[child.tag] = child.text
+        if element.attrib:
+            json_data["@attributes"] = element.attrib
+        if element.text and element.text.strip():
+            json_data["#text"] = element.text.strip()
+        for child in element:
+            child_data = xml_to_json(child)
+            if child.tag in json_data:
+                if not isinstance(json_data[child.tag], list):
+                    json_data[child.tag] = [json_data[child.tag]]
+                json_data[child.tag].append(child_data)
+            else:
+                json_data[child.tag] = child_data
         return json_data
 
 
