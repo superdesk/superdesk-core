@@ -14,10 +14,10 @@ import glob
 import os
 import shutil
 import tempfile
-from unittest import mock
 import datetime
 import pytz
 
+from unittest import mock
 from superdesk.tests import setup
 from superdesk.tests import TestCase as CoreTestCase
 from superdesk.io.feeding_services import ftp
@@ -62,25 +62,24 @@ def ingest_items(generator, ingest_status=True):
 
 
 class FakeFTP(mock.MagicMock):
-    def __init__(self):
-        self.files = [
-            ftp_file("filename_1.xml", "20170517164739"),
-            ftp_file("filename_2.xml", "20170517164739"),
-            ftp_file("filename_3.xml", "20170517164739"),
-            ftp_file("filename_4.xml", "20170517164739"),
-            ftp_file("filename_5.xml", "20170517164745"),
-            ftp_file("filename_6.xml", "20170517164745"),
-            ftp_file("filename_7.xml", "20170517164745"),
-            ftp_file("filename_8.xml", "20170517164745"),
-            ftp_file("filename_9.xml", "20170517164746"),
-            ftp_file("filename_10.xml", "20170517164748"),
-            ftp_file("filename_11.xml", "20170517164748"),
-            ftp_file("filename_12.xml", "20170517164748"),
-            ftp_file("filename_13.xml", "20170517164748"),
-            ftp_file("filename_14.xml", "20170517164748"),
-            ftp_file("filename_15.xml", "20170517164755"),
-            ftp_file("filename_16.xml", "20170517164756"),
-        ]
+    files = [
+        ftp_file("filename_1.xml", "20170517164739"),
+        ftp_file("filename_2.xml", "20170517164739"),
+        ftp_file("filename_3.xml", "20170517164739"),
+        ftp_file("filename_4.xml", "20170517164739"),
+        ftp_file("filename_5.xml", "20170517164745"),
+        ftp_file("filename_6.xml", "20170517164745"),
+        ftp_file("filename_7.xml", "20170517164745"),
+        ftp_file("filename_8.xml", "20170517164745"),
+        ftp_file("filename_9.xml", "20170517164746"),
+        ftp_file("filename_10.xml", "20170517164748"),
+        ftp_file("filename_11.xml", "20170517164748"),
+        ftp_file("filename_12.xml", "20170517164748"),
+        ftp_file("filename_13.xml", "20170517164748"),
+        ftp_file("filename_14.xml", "20170517164748"),
+        ftp_file("filename_15.xml", "20170517164755"),
+        ftp_file("filename_16.xml", "20170517164756"),
+    ]
 
     def mlsd(self, path=""):
         return iter(self.files)
@@ -90,12 +89,12 @@ class FakeFTP(mock.MagicMock):
 
 
 class FakeFTPRecentFiles(FakeFTP):
-    def __init__(self):
-        self.files = [
-            ftp_file("old_file.xml", "20170517164756"),
-            # we need a file ingested now, before INGEST_OLD_CONTENT_MINUTES is expired
-            ftp_file("recent_file.xml", datetime.datetime.today().strftime("%Y%m%d%H%M%S")),
-        ]
+    files = [
+        ftp_file("old_file.xml", "20170517164756"),
+        # we need a file ingested now, before INGEST_OLD_CONTENT_MINUTES is expired
+        # adding extra time to make sure that the file won't expire before the test runs
+        ftp_file("recent_file.xml", (datetime.datetime.today() + datetime.timedelta(hours=1)).strftime("%Y%m%d%H%M%S")),
+    ]
 
 
 class FakeFeedParser(mock.MagicMock):
