@@ -101,7 +101,7 @@ class Semaphore(AIServiceBase):
 
             return json_response
             
-        except requests.exceptions.RequestError as e:  # Corrected exception
+        except requests.exceptions.RequestException as e:  
             logger.error(f"Semaphore request failed. We are in analyze RequestError exception: {str(e)}")
             abort(500, description=f"Semaphore request failed. We are in analyze RequestError exception: {str(e)}")
         
