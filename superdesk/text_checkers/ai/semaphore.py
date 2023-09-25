@@ -74,8 +74,27 @@ class Semaphore(AIServiceBase):
             xml_dummy = response.text
             logger.error(xml_dummy)
             root = ET.fromstring(xml_dummy.strip())
+
+            def xml_to_json(element: ET.Element) -> dict:
+                """Convert XML Element to JSON."""
+                json_data = {}
+                if element.attrib:
+                    json_data["@attributes"] = element.attrib
+                if element.text and element.text.strip():
+                    json_data["#text"] = element.text.strip()
+                for child in element:
+                    child_data = xml_to_json(child)
+                    if child.tag in json_data:
+                        if not isinstance(json_data[child.tag], list):
+                            json_data[child.tag] = [json_data[child.tag]]
+                        json_data[child.tag].append(child_data)
+                    else:
+                        json_data[child.tag] = child_data
+                return json_data
+
+
             
-            json_response = self.xml_to_json(root)  # Define this method to convert XML to JSON
+            json_response = xml_to_json(root)  # Define this method to convert XML to JSON
 
             return json_response
             
@@ -92,22 +111,22 @@ class Semaphore(AIServiceBase):
 
     
 
-    def xml_to_json(self,element: ET.Element) -> dict:
-        """Convert XML Element to JSON."""
-        json_data = {}
-        if element.attrib:
-            json_data["@attributes"] = element.attrib
-        if element.text and element.text.strip():
-            json_data["#text"] = element.text.strip()
-        for child in element:
-            child_data = xml_to_json(child)
-            if child.tag in json_data:
-                if not isinstance(json_data[child.tag], list):
-                    json_data[child.tag] = [json_data[child.tag]]
-                json_data[child.tag].append(child_data)
-            else:
-                json_data[child.tag] = child_data
-        return json_data
+    # def xml_to_json(self,element: ET.Element) -> dict:
+    #     """Convert XML Element to JSON."""
+    #     json_data = {}
+    #     if element.attrib:
+    #         json_data["@attributes"] = element.attrib
+    #     if element.text and element.text.strip():
+    #         json_data["#text"] = element.text.strip()
+    #     for child in element:
+    #         child_data = xml_to_json(child)
+    #         if child.tag in json_data:
+    #             if not isinstance(json_data[child.tag], list):
+    #                 json_data[child.tag] = [json_data[child.tag]]
+    #             json_data[child.tag].append(child_data)
+    #         else:
+    #             json_data[child.tag] = child_data
+    #     return json_data
 
 
 def init_app(app):
