@@ -23,7 +23,7 @@ class Semaphore(AIServiceBase):
     # Set the values of environment variables directly within the class
     base_url = "https://ca.cloud.smartlogic.com/token"  
     analyze_url = "https://ca.cloud.smartlogic.com/svc/5457e590-c2cc-4219-8947-e7f74c8675be/?operation=classify"  
-    api_key = "OoP3QRRkLVCzo4sRa6iAyg==" 
+    api_key = "ota1b5FACNdPLEAo8Ue8Hg==" 
 
     
     def get_access_token(self):
