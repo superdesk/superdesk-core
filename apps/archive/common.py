@@ -204,7 +204,7 @@ def on_create_item(docs, repo_type=ARCHIVE, media_service=None):
             and doc.get("type") == "text"
             and app.config.get("DEFAULT_CONTENT_TYPE", None)
         ):
-            doc.setdefault("profile", app.config["DEFAULT_CONTENT_TYPE"])
+            doc["profile"] = app.config["DEFAULT_CONTENT_TYPE"]
 
         copy_metadata_from_profile(doc)
         copy_metadata_from_user_preferences(doc, repo_type)
