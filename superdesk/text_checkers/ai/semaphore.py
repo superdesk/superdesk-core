@@ -58,7 +58,8 @@ class Semaphore(AIServiceBase):
             # Convert HTML to XML
             logger.info("HTML INPUT")
             logger.info(html_content)
-            
+            logger.info(type(html_content))
+
             xml_payload = self.html_to_xml(html_content)  # Define this method to convert HTML to XML
             
             logger.info("xml payload from html_to_xml ")
@@ -169,11 +170,12 @@ class Semaphore(AIServiceBase):
             </request>
             """
             # Embed the HTML content into the XML template
-            body_html = html_input['body_html']
+            body_html = html_content['body_html']
             xml_output = xml_template.format(body_html)
 
         except Exception as e:
             logger.error(f"An error occurred. We are in xml to json: {str(e)}")
+            return ""
         
         return xml_output
 
