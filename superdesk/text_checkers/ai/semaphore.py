@@ -150,13 +150,13 @@ class Semaphore(AIServiceBase):
             
     
             # Create the XML template with triple-quotes for multi-line content
-            xml_template = '''<?xml version="1.0" ?>
+            xml_template = """<?xml version="1.0" ?>
             <request op="CLASSIFY">
                 <document>
                     <body>{}</body>
                 </document>
             </request>
-            '''
+            """
 
             body_html = html_content['body_html']
             # Embed the 'body_html' into the XML template
