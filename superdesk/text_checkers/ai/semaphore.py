@@ -69,11 +69,20 @@ class Semaphore(AIServiceBase):
                 "Authorization": f"bearer {self.get_access_token()}"
             }
 
+            try:
                         
-            payload = {'XML_INPUT': xml_payload}
+                payload = {'XML_INPUT': xml_payload}
+
+            except Exception as e:
+                logger.error(f"An error occurred. We are inputting payload: {str(e)}")
+        
+            try:
+                response = session.post(self.analyze_url, headers=headers, data=payload, timeout=TIMEOUT)
+                logger.info(response.text)
             
-            response = session.post(self.analyze_url, headers=headers, data=payload, timeout=TIMEOUT)
-            logger.error(response.text)
+            except Exception as e:
+                logger.error(f"An error occurred. We are making the request: {str(e)}")
+        
             response.raise_for_status()
 
             logger.info("Response Content")
@@ -125,25 +134,48 @@ class Semaphore(AIServiceBase):
             
     
 
-    def html_to_xml(self, html_content: str) -> str:
-        # Create the root element
-        root = ET.Element("request")
-        root.set("op", "CLASSIFY")
-    
-        # Create the document element
-        document = ET.SubElement(root, "document")
-    
-        # Create the body element
-        body = ET.SubElement(document, "body")
-    
-        # Set the text of the body element to the HTML content
-        body.text = html_content
-    
-        # Convert the XML tree to a string
-        xml_output = ET.tostring(root, encoding="utf-8", method="xml").decode("utf-8")
-    
-        return xml_output
+    # def html_to_xml(self, html_content: str) -> str:
+    #     # Create the root element
 
+    #     try:
+    #         root = ET.Element("request")
+    #         root.set("op", "CLASSIFY")
+        
+    #         # Create the document element
+    #         document = ET.SubElement(root, "document")
+        
+    #         # Create the body element
+    #         body = ET.SubElement(document, "body")
+        
+    #         # Set the text of the body element to the HTML content
+    #         body.text = html_content
+        
+    #         # Convert the XML tree to a string
+    #         xml_output = ET.tostring(root, encoding="utf-8", method="xml").decode("utf-8")
+
+    #     except Exception as e:
+    #             logger.error(f"An error occurred. We are in xml to json: {str(e)}")
+        
+    #     return xml_output
+
+    def html_to_xml(self, html_content: str) -> str:
+        # Create the XML string
+        try:
+            xml_template = """<?xml version="1.0" ?>
+            <request op="CLASSIFY">
+                <document>
+                    <body_html>{}</body_html>
+                </document>
+            </request>
+            """
+            # Embed the HTML content into the XML template
+            body_html = html_input['body_html']
+            xml_output = xml_template.format(body_html)
+
+        except Exception as e:
+            logger.error(f"An error occurred. We are in xml to json: {str(e)}")
+        
+        return xml_output
 
     # def xml_to_json(self,element: ET.Element) -> dict:
     #     """Convert XML Element to JSON."""
