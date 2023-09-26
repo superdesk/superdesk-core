@@ -57,8 +57,8 @@ class Semaphore(AIServiceBase):
                 
             # Convert HTML to XML
             logger.info("HTML INPUT")
-            logger.info(html_content)
-            logger.info(type(html_content))
+            # logger.info(html_content)
+            # logger.info(type(html_content))
 
             xml_payload = self.html_to_xml(html_content)  # Define this method to convert HTML to XML
             
@@ -73,12 +73,13 @@ class Semaphore(AIServiceBase):
             try:
                         
                 payload = {'XML_INPUT': xml_payload}
-
+                logger.info(payload)
+                
             except Exception as e:
                 logger.error(f"An error occurred. We are inputting payload: {str(e)}")
         
             try:
-                response = session.post(self.analyze_url, headers=headers, data=payload, timeout=TIMEOUT)
+                response = session.post(self.analyze_url, headers=headers, data=payload)
                 logger.info(response.text)
             
             except Exception as e:
