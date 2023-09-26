@@ -136,51 +136,31 @@ class Semaphore(AIServiceBase):
             
     
 
-    # def html_to_xml(self, html_content: str) -> str:
-    #     # Create the root element
-
-    #     try:
-    #         root = ET.Element("request")
-    #         root.set("op", "CLASSIFY")
-        
-    #         # Create the document element
-    #         document = ET.SubElement(root, "document")
-        
-    #         # Create the body element
-    #         body = ET.SubElement(document, "body")
-        
-    #         # Set the text of the body element to the HTML content
-    #         body.text = html_content
-        
-    #         # Convert the XML tree to a string
-    #         xml_output = ET.tostring(root, encoding="utf-8", method="xml").decode("utf-8")
-
-    #     except Exception as e:
-    #             logger.error(f"An error occurred. We are in xml to json: {str(e)}")
-        
-    #     return xml_output
-
     def html_to_xml(self, html_content: str) -> str:
-        try:
-            # Create the XML string template
-            xml_template = """<?xml version="1.0" ?>
-            <request op="CLASSIFY">
-                <document>
-                    <body>{}</body>
-                </document>
-            </request>
-            """
-    
-            # Embed the HTML content into the XML template while escaping inner XML content
-            body_html = html_content['body_html']
-            escaped_body_html = html.escape(body_html)  # Escape HTML entities
-            xml_output = xml_template.format(escaped_body_html)
-    
-            return xml_output
-        except Exception as e:
-            logger.error(f"An error occurred while converting HTML to XML: {str(e)}")
-            return ""
+        # Create the root element
 
+        try:
+            root = ET.Element("request")
+            root.set("op", "CLASSIFY")
+        
+            # Create the document element
+            document = ET.SubElement(root, "document")
+        
+            # Create the body element
+            body = ET.SubElement(document, "body")
+        
+            # Set the text of the body element to the HTML content
+            body.text = html_content
+        
+            # Convert the XML tree to a string
+            xml_output = ET.tostring(root, encoding="utf-8", method="xml").decode("utf-8")
+
+        except Exception as e:
+                logger.error(f"An error occurred. We are in xml to json: {str(e)}")
+        
+        return xml_output
+
+    
     # def xml_to_json(self,element: ET.Element) -> dict:
     #     """Convert XML Element to JSON."""
     #     json_data = {}
