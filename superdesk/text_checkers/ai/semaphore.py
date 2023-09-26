@@ -72,7 +72,10 @@ class Semaphore(AIServiceBase):
 
             try:
                         
-                payload = {'XML_INPUT': xml_payload}
+                # payload = {'XML_INPUT': xml_payload}
+
+                payload = f"{{'XML_INPUT': '{xml_payload}'}}"
+
                 logger.info(payload)
                 
             except Exception as e:
@@ -137,28 +140,26 @@ class Semaphore(AIServiceBase):
     
 
     def html_to_xml(self, html_content: str) -> str:
-        # Create the root element
-
         try:
-            root = ET.Element("request")
-            root.set("op", "CLASSIFY")
-        
-            # Create the document element
-            document = ET.SubElement(root, "document")
-        
-            # Create the body element
-            body = ET.SubElement(document, "body")
-        
-            # Set the text of the body element to the HTML content
-            body.text = html_content
-        
-            # Convert the XML tree to a string
-            xml_output = ET.tostring(root, encoding="utf-8", method="xml").decode("utf-8")
-
+            # Extract 'body_html' from the HTML content
+            
+    
+            # Create the XML template with triple-quotes for multi-line content
+            xml_template = '''<?xml version="1.0" ?>
+            <request op="CLASSIFY">
+                <document>
+                    <body>{}</body>
+                </document>
+            </request>
+            '''
+    
+            # Embed the 'body_html' into the XML template
+            xml_output = xml_template.format(html_content)
+    
+            return xml_output
+    
         except Exception as e:
-                logger.error(f"An error occurred. We are in xml to json: {str(e)}")
-        
-        return xml_output
+            logger.error(f"An error occurred in html_to_xml: {str(e)}")
 
     
     # def xml_to_json(self,element: ET.Element) -> dict:
