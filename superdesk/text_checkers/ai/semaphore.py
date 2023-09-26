@@ -4,6 +4,7 @@ import requests
 import xml.etree.ElementTree as ET
 from flask import current_app, abort
 from .base import AIServiceBase
+import traceback
 
 
 
@@ -72,13 +73,14 @@ class Semaphore(AIServiceBase):
 
             try:
                         
-                # payload = {'XML_INPUT': xml_payload}
+                payload = {'XML_INPUT': xml_payload}
 
-                payload = f"{{'XML_INPUT': '{xml_payload}'}}"
+                # payload = f"{{'XML_INPUT': '{xml_payload}'}}"
 
                 logger.info(payload)
                 
             except Exception as e:
+                traceback.print_exc()
                 logger.error(f"An error occurred. We are inputting payload: {str(e)}")
         
             try:
@@ -86,6 +88,7 @@ class Semaphore(AIServiceBase):
                 logger.info(response.text)
             
             except Exception as e:
+                traceback.print_exc()
                 logger.error(f"An error occurred. We are making the request: {str(e)}")
         
             response.raise_for_status()
@@ -132,9 +135,11 @@ class Semaphore(AIServiceBase):
             return json_response
             
         except requests.exceptions.RequestException as e:  
+            traceback.print_exc()
             logger.error(f"Semaphore request failed. We are in analyze RequestError exception: {str(e)}")
               
         except Exception as e:
+            traceback.print_exc()
             logger.error(f"An error occurred. We are in analyze exception: {str(e)}")
             
     
@@ -160,6 +165,7 @@ class Semaphore(AIServiceBase):
             return xml_output
     
         except Exception as e:
+            traceback.print_exc()
             logger.error(f"An error occurred in html_to_xml: {str(e)}")
 
     
