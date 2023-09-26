@@ -808,4 +808,72 @@ Feature: Internal Destinations
         Then we get list with 0 items
         When we get "/published"
         Then we get list with 1 items
+    @auth
+    Scenario: Item created sucessfully for destinations on publish does not depend on send_after_schedule internal destinations
+        When we post to "archive" with success
+        """
+        [{
+            "guid": "123",
+            "type": "text",
+            "headline": "Take-1 headline",
+            "abstract": "Take-1 abstract",
+            "task": {
+                "user": "#CONTEXT_USER_ID#",
+                "desk": "#origin_desk#",
+                "stage": "#origin_stage#"
+            },
+            "body_html": "Body",
+            "state": "submitted",
+            "slugline": "Take-1 slugline",
+            "urgency": "4",
+            "pubstatus": "usable",
+            "subject":[{"qcode": "17004000", "name": "Statistics"}],
+            "anpa_category": [{"qcode": "A", "name": "Sport"}],
+            "anpa_take_key": "Take"
+        }]
+        """
+        Given "internal_destinations"
+        """
+        [{"name": "copy", "is_active": true,  "desk": "#destination_desk#", "macro": "Internal_Destination_Auto_Publish",
+        "send_after_schedule": true}]
+        """
+        When we publish "#archive._id#" with "publish" type and "published" state
+        Then we get OK response
+        When we get "/archive"
+        Then we get list with 0 items
+        When we get "/published"
+        Then we get list with 2 items
 
+        When we post to "archive" with success
+        """
+        [{
+            "guid": "1234",
+            "type": "text",
+            "headline": "Take-2 headline",
+            "abstract": "Take-2 abstract",
+            "task": {
+                "user": "#CONTEXT_USER_ID#",
+                "desk": "#origin_desk#",
+                "stage": "#origin_stage#"
+            },
+            "body_html": "Body",
+            "state": "submitted",
+            "slugline": "Take-2 slugline",
+            "urgency": "4",
+            "pubstatus": "usable",
+            "subject":[{"qcode": "17004000", "name": "Statistics"}],
+            "anpa_category": [{"qcode": "A", "name": "Sport"}],
+            "anpa_take_key": "Take"
+        }]
+        """
+        Given "internal_destinations"
+        """
+        [{"name": "copy", "is_active": true,  "desk": "#destination_desk#", "macro": "Internal_Destination_Auto_Publish",
+        "send_after_schedule": false}]
+        """
+        When we publish "#archive._id#" with "publish" type and "published" state
+        Then we get OK response
+        When we get "/archive"
+        Then we get list with 0 items
+        When we get "/published"
+        Then we get list with 4 items
