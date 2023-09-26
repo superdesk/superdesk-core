@@ -161,8 +161,8 @@ class Semaphore(AIServiceBase):
     #     return xml_output
 
     def html_to_xml(self, html_content: str) -> str:
-        # Create the XML string
         try:
+            # Create the XML string template
             xml_template = """<?xml version="1.0" ?>
             <request op="CLASSIFY">
                 <document>
@@ -170,15 +170,16 @@ class Semaphore(AIServiceBase):
                 </document>
             </request>
             """
-            # Embed the HTML content into the XML template
+    
+            # Embed the HTML content into the XML template while escaping inner XML content
             body_html = html_content['body_html']
-            xml_output = xml_template.format(body_html)
-
+            escaped_body_html = html.escape(body_html)  # Escape HTML entities
+            xml_output = xml_template.format(escaped_body_html)
+    
+            return xml_output
         except Exception as e:
-            logger.error(f"An error occurred. We are in xml to json: {str(e)}")
+            logger.error(f"An error occurred while converting HTML to XML: {str(e)}")
             return ""
-        
-        return xml_output
 
     # def xml_to_json(self,element: ET.Element) -> dict:
     #     """Convert XML Element to JSON."""
