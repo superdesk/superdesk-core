@@ -119,20 +119,21 @@ class Semaphore(AIServiceBase):
     
 
     def html_to_xml(self, html_content: str) -> str:
-        # Create the XML string
-        xml_template = """<?xml version="1.0" ?>
-        <request op="CLASSIFY">
-            <document>
-                <body_html>{}</body_html>
-            </document>
-        </request>
-        """
-        # Embed the HTML content into the XML template
-        xml_output = xml_template.format(html_content)
+        # Create the root element
+        root = ET.Element("request")
+        root.set("op", "CLASSIFY")
+    
+        # Create the document element
+        document = ET.SubElement(root, "document")
+    
+        # Create the body_html element and set its text to the HTML content
+        body_html = ET.SubElement(document, "body_html")
+        body_html.text = html_content
+    
+        # Convert the XML tree to a string
+        xml_output = ET.tostring(root, encoding="utf-8", method="xml").decode("utf-8")
         
         return xml_output
-
-    
 
     # def xml_to_json(self,element: ET.Element) -> dict:
     #     """Convert XML Element to JSON."""
