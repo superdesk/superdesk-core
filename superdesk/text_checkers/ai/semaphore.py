@@ -152,9 +152,10 @@ class Semaphore(AIServiceBase):
                 </document>
             </request>
             '''
-    
+
+            body_html = html_content['body_html']
             # Embed the 'body_html' into the XML template
-            xml_output = xml_template.format(html_content)
+            xml_output = xml_template.format(body_html)
     
             return xml_output
     
