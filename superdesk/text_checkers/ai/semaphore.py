@@ -165,7 +165,7 @@ class Semaphore(AIServiceBase):
             xml_template = """<?xml version="1.0" ?>
             <request op="CLASSIFY">
                 <document>
-                    <body_html>{}</body_html>
+                    <body>{}</body>
                 </document>
             </request>
             """
