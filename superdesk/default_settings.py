@@ -269,6 +269,9 @@ REDIS_URL = env("REDIS_URL", "redis://localhost:6379")
 #: cache url - superdesk will try to figure out if it's redis or memcached
 CACHE_URL = env("SUPERDESK_CACHE_URL", REDIS_URL)
 
+#: cache type - set explicit cache type if it wouldn't get it right from url
+CACHE_TYPE = env("SUPERDESK_CACHE_TYPE")
+
 #: celery broker
 BROKER_URL = env("CELERY_BROKER_URL", REDIS_URL)
 CELERY_BROKER_URL = BROKER_URL
@@ -1107,3 +1110,10 @@ REBUILD_ELASTIC_ON_INIT_DATA_ERROR = strtobool(env("REBUILD_ELASTIC_ON_INIT_DATA
 #: .. versionadded:: 2.5.4
 #:
 EMBED_PRODUCT_FILTERING = strtobool(env("EMBED_PRODUCT_FILTERING", "false"))
+
+#: When enabled it will unpublish article to matching subscribers
+#: if there are no records in publish queue for it.
+#:
+#: .. versionadded:: 2.7
+#:
+UNPUBLISH_TO_MATCHING_SUBSCRIBERS = True

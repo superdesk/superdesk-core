@@ -120,7 +120,7 @@ def convert_exif_value(val, key=None):
 def is_serializable(val):
     try:
         json.dumps(convert_exif_value(val))
-    except (TypeError, UnicodeError):
+    except (TypeError, ValueError):
         return False
     return True
 
