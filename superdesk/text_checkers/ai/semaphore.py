@@ -60,6 +60,9 @@ class Semaphore(AIServiceBase):
             logger.info(html_content)
             
             xml_payload = self.html_to_xml(html_content)  # Define this method to convert HTML to XML
+            
+            logger.info("xml payload from html_to_xml ")
+            logger.info(xml_payload)
 
             # Make a POST request using XML payload
             headers = {
@@ -73,6 +76,10 @@ class Semaphore(AIServiceBase):
             logger.error(response.text)
             response.raise_for_status()
 
+            logger.info("Response Content")
+            logger.info(response.text)
+
+            
             # Convert XML response to JSON
             xml_dummy = response.text
             logger.error(xml_dummy)
@@ -126,14 +133,17 @@ class Semaphore(AIServiceBase):
         # Create the document element
         document = ET.SubElement(root, "document")
     
-        # Create the body_html element and set its text to the HTML content
-        body_html = ET.SubElement(document, "body_html")
-        body_html.text = html_content
+        # Create the body element
+        body = ET.SubElement(document, "body")
+    
+        # Set the text of the body element to the HTML content
+        body.text = html_content
     
         # Convert the XML tree to a string
         xml_output = ET.tostring(root, encoding="utf-8", method="xml").decode("utf-8")
-        
+    
         return xml_output
+
 
     # def xml_to_json(self,element: ET.Element) -> dict:
     #     """Convert XML Element to JSON."""
