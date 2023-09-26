@@ -56,6 +56,9 @@ class Semaphore(AIServiceBase):
                 
                 
             # Convert HTML to XML
+            logger.info("HTML INPUT")
+            logger.info(html_content)
+            
             xml_payload = self.html_to_xml(html_content)  # Define this method to convert HTML to XML
 
             # Make a POST request using XML payload
@@ -74,24 +77,33 @@ class Semaphore(AIServiceBase):
             xml_dummy = response.text
             logger.error(xml_dummy)
             root = ET.fromstring(xml_dummy.strip())
+            
+            logger.info("XML Output from API")
+            logger.info(root)
+            
 
+            
             def xml_to_json(element: ET.Element) -> dict:
                 """Convert XML Element to JSON."""
-                json_data = {}
-                if element.attrib:
-                    json_data["@attributes"] = element.attrib
-                if element.text and element.text.strip():
-                    json_data["#text"] = element.text.strip()
-                for child in element:
-                    child_data = xml_to_json(child)
-                    if child.tag in json_data:
-                        if not isinstance(json_data[child.tag], list):
-                            json_data[child.tag] = [json_data[child.tag]]
-                        json_data[child.tag].append(child_data)
-                    else:
-                        json_data[child.tag] = child_data
-                return json_data
-
+                try:
+                    json_data = {}
+                    if element.attrib:
+                        json_data["@attributes"] = element.attrib
+                    if element.text and element.text.strip():
+                        json_data["#text"] = element.text.strip()
+                    for child in element:
+                        child_data = xml_to_json(child)
+                        if child.tag in json_data:
+                            if not isinstance(json_data[child.tag], list):
+                                json_data[child.tag] = [json_data[child.tag]]
+                            json_data[child.tag].append(child_data)
+                        else:
+                            json_data[child.tag] = child_data
+                    return json_data
+                    
+                except Exception as e:
+                    logger.error(f"An error occurred. We are in xml_to_json exception: {str(e)}")
+        
 
             
             json_response = xml_to_json(root)  # Define this method to convert XML to JSON
@@ -105,9 +117,20 @@ class Semaphore(AIServiceBase):
             logger.error(f"An error occurred. We are in analyze exception: {str(e)}")
             
     
+
     def html_to_xml(self, html_content: str) -> str:
-        dummy_xml = """<?xml version="1.0" ?><request op="CLASSIFY"><document><title>Test</title><body>This is a test</body></document><multiarticle /></request>"""
-        return dummy_xml
+        # Create the XML string
+        xml_template = """<?xml version="1.0" ?>
+        <request op="CLASSIFY">
+            <document>
+                <body_html>{}</body_html>
+            </document>
+        </request>
+        """
+        # Embed the HTML content into the XML template
+        xml_output = xml_template.format(html_content)
+        
+        return xml_output
 
     
 
