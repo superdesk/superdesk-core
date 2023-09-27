@@ -97,28 +97,53 @@ class Semaphore(AIServiceBase):
             logger.info(response.text)
 
             
-            def transform_xml_response(xml_response):
-                # Parse the XML response
-                root = ET.fromstring(xml_response)
+            def transform_xml_response(xml_data):
+                # Parse the XML data
+                root = ET.fromstring(xml_data)
             
-                # Initialize a dictionary to store the transformed data
-                transformed_data = {}
+                # Initialize a dictionary to hold the transformed data
+                response_dict = {
+                    "subject": [],
+                    "organisation": [],
+                    "person": [],
+                    "event": [],
+                    "place": [],
+                    "object": []
+                }
             
-                # Iterate over the META elements within the STRUCTUREDDOCUMENT element
-                for meta_element in root.findall('.//STRUCTUREDDOCUMENT/META'):
-                    name = meta_element.get('name')
-                    value = meta_element.get('value')
-                    score = float(meta_element.get('score', 0.0))  # Convert score to float
+                # Iterate through the XML elements and populate the dictionary
+                for element in root.iter():
+                    if element.tag == "META":
+                        meta_name = element.get("name")
+                        meta_value = element.get("value")
+                        meta_score = element.get("score", "0.0")  # Default score if not present
             
-                    # Check if the name already exists in the transformed_data
-                    if name not in transformed_data:
-                        transformed_data[name] = []
+                        # Determine the appropriate group based on the meta name
+                        group = None
+                        if meta_name == "TEXTMINE_Organization":
+                            group = "organisation"
+                        elif meta_name == "TEXTMINE_Person":
+                            group = "person"
+                        elif meta_name == "Event":
+                            group = "event"
+                        elif meta_name == "Media Topic":
+                            group = "place"  # Assuming "Media Topic" corresponds to "place"
             
-                    # Append the data to the corresponding name in the dictionary
-                    transformed_data[name].append({"name": value, "score": score})
+                        if group:
+                            tag_data = {
+                                "name": meta_value,
+                                "qcode": meta_score,  # Use score as a temporary qcode
+                                "source": "source_value",  # You can replace with actual source value
+                                "altids": {"source_name": "source_id"},  # Replace with actual source name and id
+                                "aliases": [],  # You can add aliases if available
+                                "original_source": "original_source_value",  # Replace with actual original source value
+                                "scheme": "scheme_value",  # Replace with actual scheme value
+                            }
             
-                # Return the transformed data
-                return transformed_data
+                            response_dict[group].append(tag_data)
+            
+                return response_dict
+
 
             
           
