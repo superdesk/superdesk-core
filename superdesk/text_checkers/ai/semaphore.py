@@ -145,6 +145,16 @@ class Semaphore(AIServiceBase):
     
 
     def html_to_xml(self, html_content: str) -> str:
+        
+        def clean_html_content(input_str):
+            # Remove full HTML tags using regular expressions
+            your_string = input_str.replace('<p>', '')
+            your_string = your_string.replace('</p>', '')
+            
+            return your_string
+
+
+        
         try:
             # Extract 'body_html' from the HTML content
             
@@ -158,7 +168,10 @@ class Semaphore(AIServiceBase):
             </request>
             """
 
+            
             body_html = html_content['body_html']
+            body_html = clean_html_content(body_html)
+            
             # Embed the 'body_html' into the XML template
             xml_output = xml_template.format(body_html)
     
