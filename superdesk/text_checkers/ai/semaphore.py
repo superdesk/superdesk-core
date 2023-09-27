@@ -155,20 +155,10 @@ class Semaphore(AIServiceBase):
             logger.info("JSON Payload from transform_xml_response ")
             logger.info(json_response)
 
-            dummy_tag_data = {
-                "name": "Sample Concept",
-                "qcode": "12345-67890",
-                "parent": "Parent Concept",
-                "source": "imatrics",
-                "aliases": ["Alias1", "Alias2"],
-                "original_source": "Original Source",
-                "altids": {
-                    "imatrics": "12345-67890"
-                }
-            }
+            
 
             
-            return dummy_tag_data
+            return json_response
             
         except requests.exceptions.RequestException as e:  
             traceback.print_exc()
