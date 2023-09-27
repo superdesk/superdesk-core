@@ -57,14 +57,14 @@ class Semaphore(AIServiceBase):
                 
                 
             # Convert HTML to XML
-            logger.info("HTML INPUT")
+            # logger.info("HTML INPUT")
             # logger.info(html_content)
             # logger.info(type(html_content))
 
             xml_payload = self.html_to_xml(html_content)  # Define this method to convert HTML to XML
             
-            logger.info("xml payload from html_to_xml ")
-            logger.info(xml_payload)
+            # logger.info("xml payload from html_to_xml ")
+            # logger.info(xml_payload)
 
             # Make a POST request using XML payload
             headers = {
@@ -77,7 +77,7 @@ class Semaphore(AIServiceBase):
 
                 # payload = f"{{'XML_INPUT': '{xml_payload}'}}"
 
-                logger.info(payload)
+                # logger.info(payload)
                 
             except Exception as e:
                 traceback.print_exc()
@@ -97,41 +97,40 @@ class Semaphore(AIServiceBase):
             logger.info(response.text)
 
             
-            # Convert XML response to JSON
-            xml_dummy = response.text
-            logger.error(xml_dummy)
-            root = ET.fromstring(xml_dummy.strip())
+            def transform_xml_response(xml_response):
+                # Parse the XML response
+                root = ET.fromstring(xml_response)
             
-            logger.info("XML Output from API")
-            logger.info(root)
+                # Initialize a dictionary to store the transformed data
+                transformed_data = {}
             
+                # Iterate over the META elements within the STRUCTUREDDOCUMENT element
+                for meta_element in root.findall('.//STRUCTUREDDOCUMENT/META'):
+                    name = meta_element.get('name')
+                    value = meta_element.get('value')
+                    score = float(meta_element.get('score', 0.0))  # Convert score to float
+            
+                    # Check if the name already exists in the transformed_data
+                    if name not in transformed_data:
+                        transformed_data[name] = []
+            
+                    # Append the data to the corresponding name in the dictionary
+                    transformed_data[name].append({"name": value, "score": score})
+            
+                # Return the transformed data
+                return transformed_data
 
             
-            def xml_to_json(element: ET.Element) -> dict:
-                """Convert XML Element to JSON."""
-                try:
-                    json_data = {}
-                    if element.attrib:
-                        json_data["@attributes"] = element.attrib
-                    if element.text and element.text.strip():
-                        json_data["#text"] = element.text.strip()
-                    for child in element:
-                        child_data = xml_to_json(child)
-                        if child.tag in json_data:
-                            if not isinstance(json_data[child.tag], list):
-                                json_data[child.tag] = [json_data[child.tag]]
-                            json_data[child.tag].append(child_data)
-                        else:
-                            json_data[child.tag] = child_data
-                    return json_data
-                    
-                except Exception as e:
-                    logger.error(f"An error occurred. We are in xml_to_json exception: {str(e)}")
+          
         
-
+            root = response.text
             
-            json_response = xml_to_json(root)  # Define this method to convert XML to JSON
+            json_response = transform_xml_response(root)  # Define this method to convert XML to JSON
 
+            logger.info("JSON Payload from transform_xml_response ")
+            logger.info(json_response)
+            
+            
             return json_response
             
         except requests.exceptions.RequestException as e:  
