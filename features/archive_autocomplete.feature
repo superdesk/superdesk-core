@@ -34,3 +34,14 @@ Feature: Archive autocomplete
             {"value": "PUBLISHED-C"}
         ]}
         """
+        When we get "/archive_autocomplete?field=slugline&language=en&resources=archive"
+        Then we get list with 3 items
+        """
+        {"_items": [
+            {"value": "PUBLISHED-A"},
+            {"value": "PUBLISHED-B"},
+            {"value": "PUBLISHED-C"}
+        ]}
+        """
+        When we get "/archive_autocomplete?field=slugline&language=en&resources=no_such_resource"
+        Then we get error 404
