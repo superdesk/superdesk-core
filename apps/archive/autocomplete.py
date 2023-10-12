@@ -1,4 +1,4 @@
-from typing import List, Dict, Callable, Set
+from typing import List, Dict, Callable
 import warnings
 import superdesk
 
@@ -16,7 +16,7 @@ SETTING_HOURS = "ARCHIVE_AUTOCOMPLETE_HOURS"
 SETTING_LIMIT = "ARCHIVE_AUTOCOMPLETE_LIMIT"
 
 
-AutocompleteSuggestionProvider = Callable[[str, str], Set[str]]
+AutocompleteSuggestionProvider = Callable[[str, str], Dict[str, int]]
 _registered_autocomplete_resources: Dict[str, AutocompleteSuggestionProvider] = {}
 
 
@@ -29,6 +29,7 @@ class AutocompleteResource(superdesk.Resource):
     resource_methods = ["GET"]
     schema = {
         "value": {"type": "string"},
+        "count": {"type": "integer"},
     }
 
 
@@ -42,7 +43,7 @@ class AutocompleteService(superdesk.Service):
         field: str = request.args.get("field", "slugline")
         language: str = request.args.get("language", app.config.get("DEFAULT_LANGUAGE", "en"))
 
-        all_suggestions: Set[str] = set()
+        all_suggestions: Dict[str, int] = {}
         for resource in resources:
             get_suggestions = _registered_autocomplete_resources.get(resource)
             if not get_suggestions:
@@ -50,14 +51,14 @@ class AutocompleteService(superdesk.Service):
                     _(f"Autocomplete suggestion for resource type '{resource}' not registered"), 404
                 )
 
-            suggestions = get_suggestions(field, language)
-            if suggestions:
-                all_suggestions = all_suggestions.union(suggestions)
+            for key, count in get_suggestions(field, language).items():
+                all_suggestions.setdefault(key, 0)
+                all_suggestions[key] += count
 
-        return ListCursor([{"value": suggestion} for suggestion in sorted(all_suggestions)])
+        return ListCursor([{"value": key, "count": all_suggestions[key]} for key in sorted(all_suggestions.keys())])
 
 
-def get_archive_suggestions(field: str, language: str) -> Set[str]:
+def get_archive_suggestions(field: str, language: str) -> Dict[str, int]:
     if not app.config.get(SETTING_ENABLED):
         raise SuperdeskApiError(_("Archive autocomplete is not enabled"), 404)
 
@@ -97,7 +98,7 @@ def get_archive_suggestions(field: str, language: str) -> Set[str]:
         },
     }
     res = app.data.elastic.search(query, "archive", params={"size": 0})
-    return set([bucket["key"] for bucket in res.hits["aggregations"]["values"]["buckets"]])
+    return {bucket["key"]: bucket["doc_count"] for bucket in res.hits["aggregations"]["values"]["buckets"]}
 
 
 def init_app(_app) -> None:
