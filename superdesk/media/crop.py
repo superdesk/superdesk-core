@@ -266,7 +266,9 @@ class CropService:
             original_crop = original.get("renditions", {}).get(key, {})
             fields = ("CropLeft", "CropTop", "CropRight", "CropBottom")
             crop_data = update_renditions.get(key, {})
-            if any(crop_data.get(name) != original_crop.get(name) for name in fields) and not crop_data.get("media"):
+            if original_crop is None or (
+                any(crop_data.get(name) != original_crop.get(name) for name in fields) and not crop_data.get("media")
+            ):
                 rendition = self.create_crop(original_image, key, crop_data)
                 renditions[key] = rendition
 
