@@ -18,6 +18,7 @@ Feature: Archive autocomplete
         """
         [
             {"slugline": "PUBLISHED-A", "state": "published", "versioncreated": "2019-01-01T00:00:00+0000"},
+            {"slugline": "PUBLISHED-A", "state": "published", "versioncreated": "2019-01-01T01:00:00+0000"},
             {"slugline": "PUBLISHED-OLD", "state": "published", "versioncreated": "1919-01-01T00:00:00+0000"},
             {"slugline": "DRAFT", "state": "draft", "versioncreated": "2019-01-01T00:00:00+0000"},
             {"slugline": "CZECH", "state": "published", "versioncreated": "2019-01-01T00:00:00+0000", "language": "cs"},
@@ -29,8 +30,19 @@ Feature: Archive autocomplete
         Then we get list with 3 items
         """
         {"_items": [
-            {"value": "PUBLISHED-A"},
-            {"value": "PUBLISHED-B"},
-            {"value": "PUBLISHED-C"}
+            {"value": "PUBLISHED-A", "count": 2},
+            {"value": "PUBLISHED-B", "count": 1},
+            {"value": "PUBLISHED-C", "count": 1}
         ]}
         """
+        When we get "/archive_autocomplete?field=slugline&language=en&resources=archive"
+        Then we get list with 3 items
+        """
+        {"_items": [
+            {"value": "PUBLISHED-A", "count": 2},
+            {"value": "PUBLISHED-B", "count": 1},
+            {"value": "PUBLISHED-C", "count": 1}
+        ]}
+        """
+        When we get "/archive_autocomplete?field=slugline&language=en&resources=no_such_resource"
+        Then we get error 404
