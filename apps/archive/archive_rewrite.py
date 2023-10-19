@@ -44,7 +44,7 @@ from superdesk.errors import SuperdeskApiError, InvalidStateTransitionError
 from superdesk.notification import push_notification
 from superdesk.signals import item_rewrite
 from apps.archive.archive import update_associations
-from superdesk.editor_utils import generate_fields, copy_fields
+from superdesk.editor_utils import generate_fields, copy_fields, get_content_state_fields
 from flask_babel import _
 from superdesk.utc import utcnow
 
@@ -95,6 +95,8 @@ class ArchiveRewriteService(Service):
         copy_fields(original, rewrite, ignore_empty=True)
 
         if update_document:
+            fields = set(get_content_state_fields(rewrite)) | set(get_content_state_fields(update_document))
+            generate_fields(update_document, fields=fields, force=True)
             # copy editor state from existing item to preserve those
             copy_fields(update_document, rewrite, ignore_empty=True)
 
