@@ -194,7 +194,7 @@ class IMatrics(AIServiceBase):
         }
 
 #    def analyze(self, item: dict, tags: Optional[dict] = None) -> dict:
-   def analyze(self, item: dict, tags: Optional[dict] = None) -> dict:
+    def analyze(self, item: dict, tags: Optional[dict] = None) -> dict:
         logger.warning("IMatrics will return sample data")
         sample_data = {
             "entities": [
