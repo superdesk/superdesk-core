@@ -170,4 +170,6 @@ Email: baz@foobar.com Website: www.foobar.com""",
         for tests in test_strings:
             self.assertEqual(text_utils.plain_text_to_html(tests[0]), tests[1])
 
-        self.assertEqual(text_utils.plain_text_to_html("foo.com"),'<p><a href="https://foo.com" target="_blank">foo.com</a></p>')
+        self.assertEqual(
+            text_utils.plain_text_to_html("foo.com"), '<p><a href="https://foo.com" target="_blank">foo.com</a></p>'
+        )
