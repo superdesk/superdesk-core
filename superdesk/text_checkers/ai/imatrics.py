@@ -194,64 +194,58 @@ class IMatrics(AIServiceBase):
         }
 
 #    def analyze(self, item: dict, tags: Optional[dict] = None) -> dict:
-    def analyze(self, item: dict, tags: Optional[dict] = None) -> Dict[str, List]:
-        """Analyze article to get tagging suggestions"""
+   def analyze(self, item: dict, tags: Optional[dict] = None) -> dict:
         logger.warning("IMatrics will return sample data")
-        return {
-            "subject": [
+        sample_data = {
+            "entities": [
                 {
-                    "name": "IT",
+                    "name": "Organisations",
                     "qcode": "e3c482c0-08a4-3b31-a7f1-e231f1ddffc4",
-                    "scheme": "imatrics_topic",
+                    "scheme": "Organisations",
                     "source": "imatrics",
-                    "altids": {
-                        "imatrics": "e3c482c0-08a4-3b31-a7f1-e231f1ddffc4",
-                    },
-                    "original_source": None,
-                    "aliases": [],
-                    "parent": None,
                 },
                 {
-                    "name": "superdesk name",
-                    "qcode": "20000763",
-                    "scheme": "topics",
+                    "name": "People",
+                    "qcode": "john_doe_qcode",
+                    "scheme": "person",
                     "source": "imatrics",
-                    "altids": {
-                        "imatrics": "c8a83204-29e0-3a7f-9a0e-51e76d885f7f",
-                        "medtop": "20000763",
-                    },
-                    "original_source": "source",
-                    "aliases": ["foo"],
-                    "parent": None,
                 },
                 {
-                    "name": "Service",
-                    "qcode": "44f52663-52f9-3836-ac45-ae862fe945a3",
-                    "scheme": "imatrics_topic",
+                    "name": "Places",
+                    "qcode": "bfcce613-c5b0-3274-be62-9e314c8ad8b9",
+                    "scheme": "place",
                     "source": "imatrics",
-                    "altids": {
-                        "imatrics": "44f52663-52f9-3836-ac45-ae862fe945a3",
-                    },
-                    "original_source": None,
-                    "aliases": [],
-                    "parent": None,
                 },
             ],
-            "place": [
+            "others": [
                 {
-                    "name": "test-place",
-                    "qcode": "123",
-                    "scheme": "place_custom",
-                    "original_source": None,
-                    "aliases": [],
-                    "altids": {
-                        "imatrics": "123",
-                    },
-                    "parent": None,
+                    "name": "Media topics",
+                    "qcode": "sample_topic_qcode",
+                    "scheme": "topics",
+                    "source": "imatrics",
+                },
+                {
+                    "name": "Entities",
+                    "qcode": "some_entity_qcode",
+                    "scheme": "Entities",
+                    "source": "imatrics",
+                },
+                {
+                    "name": "Category",
+                    "qcode": "category_qcode",
+                    "scheme": "imatrics_category",
+                    "source": "imatrics",
+                },
+                {
+                    "name": "Topics",
+                    "qcode": "another_topic_qcode",
+                    "scheme": "imatrics_topic",
                     "source": "imatrics",
                 },
             ],
         }
+        ordered_sample_data = OrderedDict([("analysis", sample_data)])
+        return ordered_sample_data
 
 #    def analyze(self, item: dict, tags: Optional[dict] = None) -> dict:
 #        """Analyze article to get tagging suggestions"""
