@@ -196,56 +196,89 @@ class IMatrics(AIServiceBase):
 #    def analyze(self, item: dict, tags: Optional[dict] = None) -> dict:
     def analyze(self, item: dict, tags: Optional[dict] = None) -> dict:
         logger.warning("IMatrics will return sample data")
-        sample_data = {
-            "entities": [
-                {
-                    "name": "Organisations",
-                    "qcode": "e3c482c0-08a4-3b31-a7f1-e231f1ddffc4",
-                    "scheme": "Organisations",
-                    "source": "imatrics",
-                },
-                {
-                    "name": "People",
-                    "qcode": "john_doe_qcode",
-                    "scheme": "person",
-                    "source": "imatrics",
-                },
-                {
-                    "name": "Places",
-                    "qcode": "bfcce613-c5b0-3274-be62-9e314c8ad8b9",
-                    "scheme": "place",
-                    "source": "imatrics",
-                },
-            ],
-            "others": [
-                {
-                    "name": "Media topics",
-                    "qcode": "sample_topic_qcode",
-                    "scheme": "topics",
-                    "source": "imatrics",
-                },
-                {
-                    "name": "Entities",
-                    "qcode": "some_entity_qcode",
-                    "scheme": "Entities",
-                    "source": "imatrics",
-                },
-                {
-                    "name": "Category",
-                    "qcode": "category_qcode",
-                    "scheme": "imatrics_category",
-                    "source": "imatrics",
-                },
-                {
-                    "name": "Topics",
-                    "qcode": "another_topic_qcode",
-                    "scheme": "imatrics_topic",
-                    "source": "imatrics",
-                },
-            ],
+        return {
+              "analysis": {
+                  'subject': [
+                    {
+                        'name': 'sosiale medier',
+                        'description': 'Content created to be shared within online social networks',
+                        'qcode': '20001182',
+                        'source': 'imatrics',
+                        'altids': {
+                            'imatrics': '586685f3-4fa3-30d0-aa4b-b183e55dd7d7',
+                            'medtop': '20001182',
+                            'wikidata': 'Q202833'
+                        },
+                        'parent': '20000045',
+                        'scheme': 'topics',
+                        'aliases': [],
+                        'original_source': None
+                    },
+                    {
+                        'name': 'massemedier',
+                        'description': 'Media addressing a large audience',
+                        'qcode': '20000045',
+                        'source': 'imatrics',
+                        'altids': {
+                            'imatrics': '20727888-04fa-3d53-9a8b-47ccd89a1a6d',
+                            'medtop': '20000045',
+                            'wikidata': 'Q11033'
+                        },
+                        'parent': '01000000',
+                        'scheme': 'topics',
+                        'aliases': [],
+                        'original_source': None
+                    },
+                    {
+                        'name': 'kultur, underholdning og medier',
+                        'description': 'Alle former for kunst, kultur, underholdning og medier.',
+                        'qcode': '01000000',
+                        'source': 'imatrics',
+                        'altids': {
+                            'imatrics': '6779fa16-9f9d-38d8-9abc-ac532d335ff6',
+                            'medtop': '01000000'
+                        },
+                        'parent': None,
+                        'scheme': 'topics',
+                        'aliases': [],
+                        'original_source': None
+                    },
+                ],
+                'organisation': [
+                    {
+                        'name': 'Hamas',
+                        'description': 'palestinsk, sunnimuslimsk organisasjon med en tilhørende militær gren',
+                        'qcode': 'c14240d7-670b-3de9-89bd-594ab47e0e1e',
+                        'source': 'imatrics',
+                        'altids': {
+                            'imatrics': 'c14240d7-670b-3de9-89bd-594ab47e0e1e',
+                            'wikidata': 'Q38799'
+                        },
+                        'aliases': [
+                            'Islamic Resistance Movement'
+                        ],
+                        'original_source': '1013'
+                    }
+                ],
+                'place': [
+                    {
+                        'name': 'Israel',
+                        'description': 'land i Vest-Asia (Midtøsten)',
+                        'qcode': 'f6ad537d-404b-3a05-920b-a0d4223734b3',
+                        'source': 'imatrics',
+                        'altids': {
+                            'imatrics': 'f6ad537d-404b-3a05-920b-a0d4223734b3',
+                            'wikidata': 'Q801'
+                        },
+                        'aliases': [
+                            'Staten Israel'
+                        ],
+                        'original_source': '1013',
+                        'scheme': 'place'
+                    },
+                ]
+              }
         }
-        ordered_sample_data = OrderedDict([("analysis", sample_data)])
-        return ordered_sample_data
 
 #    def analyze(self, item: dict, tags: Optional[dict] = None) -> dict:
 #        """Analyze article to get tagging suggestions"""
