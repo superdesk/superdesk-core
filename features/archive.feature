@@ -1549,5 +1549,5 @@ Feature: News Items Archive
         When we upload a file "bike.jpg" to "archive"
         Then we get new resource
         """
-        {"profile": "__no_value__"}
+        {"profile": "picture"}
         """
