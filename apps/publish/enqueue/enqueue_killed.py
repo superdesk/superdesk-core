@@ -11,6 +11,7 @@
 import logging
 
 from eve.utils import config
+from flask import current_app as app
 
 from apps.archive.common import ITEM_OPERATION
 from apps.publish.content.kill import ITEM_KILL
@@ -44,6 +45,10 @@ class EnqueueKilledService(EnqueueService):
             ]
         }
         subscribers, subscriber_codes, associations = self._get_subscribers_for_previously_sent_items(query)
+
+        if not subscribers and app.config.get("UNPUBLISH_TO_MATCHING_SUBSCRIBERS", False):
+            active_subscribers = get_resource_service("subscribers").get_active()
+            subscribers, subscriber_codes = self.filter_subscribers(doc, active_subscribers, target_media_type)
 
         return subscribers, subscriber_codes, associations
 

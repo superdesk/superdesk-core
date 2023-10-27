@@ -19,7 +19,7 @@ install_requires = [
     # and https://github.com/psf/requests/pull/5651)
     "urllib3<1.26",
     "eve==1.1.2",
-    "eve-elastic>=7.3.0,<7.4.0",
+    "eve-elastic>=7.3.2,<7.4.0",
     "flask>=1.1,<1.2",
     "flask-mail>=0.9,<0.10",
     "flask-script>=2.0.5,<3.0",
@@ -67,6 +67,7 @@ install_requires = [
     "Jinja2>=2.11,<3.0",
     "Click>=8.0.3,<9.0",
     "itsdangerous>=1.1,<2.0",
+    "pymemcache>=4.0,<4.1",
 ]
 
 package_data = {

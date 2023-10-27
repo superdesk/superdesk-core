@@ -14,10 +14,10 @@ import glob
 import os
 import shutil
 import tempfile
-from unittest import mock
 import datetime
 import pytz
 
+from unittest import mock
 from superdesk.tests import setup
 from superdesk.tests import TestCase as CoreTestCase
 from superdesk.io.feeding_services import ftp
@@ -92,7 +92,8 @@ class FakeFTPRecentFiles(FakeFTP):
     files = [
         ftp_file("old_file.xml", "20170517164756"),
         # we need a file ingested now, before INGEST_OLD_CONTENT_MINUTES is expired
-        ftp_file("recent_file.xml", datetime.datetime.today().strftime("%Y%m%d%H%M%S")),
+        # adding extra time to make sure that the file won't expire before the test runs
+        ftp_file("recent_file.xml", (datetime.datetime.today() + datetime.timedelta(hours=1)).strftime("%Y%m%d%H%M%S")),
     ]
 
 

@@ -63,9 +63,13 @@ def handle_item_published(sender, item, desk=None, **extra):
                 continue
             if not filters_service.does_match(content_filter, item):
                 continue
-
-        if dest.get("send_after_schedule", False) and item.get("state") != "published":
-            # if send_after_schedule is set to True and item state is other than published
+        if not extra.get("after_scheduled") and item[PUBLISH_SCHEDULE] is not None and dest.get("send_after_schedule"):
+            # if "after_schedule" is set to False  and item[PUBLISH_SCHEDULE] is not None (in case of scheduled item)
+            # and send_after_schedule is True then don't execute
+            # item is being published immediately not depend on config send_after_schedule
+            continue
+        if extra.get("after_scheduled") and not dest.get("send_after_schedule"):
+            # if after_schedule is set to True and send_after_schedule is False
             # then don't execute
             continue
         elif item.get("state") == "published":
@@ -89,6 +93,7 @@ def handle_item_published(sender, item, desk=None, **extra):
                         new_item,
                         dest_desk_id=dest.get("desk"),
                         dest_stage_id=dest.get("stage"),
+                        internal_destination=dest,
                     )
                 except StopDuplication:
                     continue

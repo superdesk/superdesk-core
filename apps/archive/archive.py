@@ -327,6 +327,7 @@ class ArchiveResource(Resource):
         "ingest_id_1": ([("ingest_id", 1)], {"background": True}),
         "unique_id_1": ([("unique_id", 1)], {"background": True}),
         "processed_from_1": ([(PROCESSED_FROM, 1)], {"background": True}),
+        "assignment_id_1": ([("assignment_id", 1)], {"background": True}),
     }
 
 
@@ -349,7 +350,7 @@ class ArchiveService(BaseService, HighlightsSearchMixin):
             handle_existing_data(item)
 
     def on_create(self, docs):
-        on_create_item(docs)
+        on_create_item(docs, media_service=self.mediaService)
 
         for doc in docs:
             if doc.get("body_footer") and is_normal_package(doc):
@@ -376,9 +377,6 @@ class ArchiveService(BaseService, HighlightsSearchMixin):
                 if not is_related_content(key):
                     self._set_association_timestamps(assoc, doc)
                     remove_unwanted(assoc)
-
-            if doc.get("media"):
-                self.mediaService.on_create([doc])
 
             if doc.get("type"):
                 doc.setdefault("profile", doc["type"])
@@ -483,8 +481,13 @@ class ArchiveService(BaseService, HighlightsSearchMixin):
 
             item_id = item_obj[config.ID_FIELD]
             media_item = self.find_one(req=None, _id=item_id)
-            if app.settings.get("COPY_METADATA_FROM_PARENT") and item_obj.get(ITEM_TYPE) in MEDIA_TYPES:
-                stored_item = (original.get(ASSOCIATIONS) or {}).get(item_name) or item_obj
+            parent = (original.get(ASSOCIATIONS) or {}).get(item_name) or item_obj
+            if (
+                app.settings.get("COPY_METADATA_FROM_PARENT")
+                and item_obj.get(ITEM_TYPE) in MEDIA_TYPES
+                and item_id == parent.get(config.ID_FIELD)
+            ):
+                stored_item = parent
             else:
                 stored_item = media_item
                 if not stored_item:

@@ -1,4 +1,4 @@
-import locale
+from typing import List, Dict, Callable
 import warnings
 import superdesk
 
@@ -16,62 +16,89 @@ SETTING_HOURS = "ARCHIVE_AUTOCOMPLETE_HOURS"
 SETTING_LIMIT = "ARCHIVE_AUTOCOMPLETE_LIMIT"
 
 
+AutocompleteSuggestionProvider = Callable[[str, str], Dict[str, int]]
+_registered_autocomplete_resources: Dict[str, AutocompleteSuggestionProvider] = {}
+
+
+def register_autocomplete_suggestion_provider(resource: str, provider: AutocompleteSuggestionProvider):
+    _registered_autocomplete_resources[resource] = provider
+
+
 class AutocompleteResource(superdesk.Resource):
     item_methods = []
     resource_methods = ["GET"]
     schema = {
         "value": {"type": "string"},
+        "count": {"type": "integer"},
     }
 
 
 class AutocompleteService(superdesk.Service):
-    field_mapping = {
-        "slugline": "slugline.keyword",
-    }
-
     def get(self, req, lookup):
-        field = request.args.get("field", "slugline")
-        language = request.args.get("language", app.config.get("DEFAULT_LANGUAGE", "en"))
+        resources: List[str] = (
+            _registered_autocomplete_resources.keys()
+            if not request.args.get("resources")
+            else request.args.get("resources").split(",")
+        )
+        field: str = request.args.get("field", "slugline")
+        language: str = request.args.get("language", app.config.get("DEFAULT_LANGUAGE", "en"))
 
-        if not app.config.get(SETTING_ENABLED):
-            raise SuperdeskApiError(_("Archive autocomplete is not enabled"), 404)
+        all_suggestions: Dict[str, int] = {}
+        for resource in resources:
+            get_suggestions = _registered_autocomplete_resources.get(resource)
+            if not get_suggestions:
+                raise SuperdeskApiError(
+                    _(f"Autocomplete suggestion for resource type '{resource}' not registered"), 404
+                )
 
-        if field not in self.field_mapping:
-            raise SuperdeskApiError(_("Field %(field)s is not allowed", field=field), 400)
+            for key, count in get_suggestions(field, language).items():
+                all_suggestions.setdefault(key, 0)
+                all_suggestions[key] += count
 
-        versioncreated_min = (
-            utcnow()
-            - timedelta(
-                days=app.config[SETTING_DAYS],
-                hours=app.config[SETTING_HOURS],
-            )
-        ).replace(
-            microsecond=0
-        )  # avoid different microsecond each time so elastic has 1s to cache
+        return ListCursor([{"value": key, "count": all_suggestions[key]} for key in sorted(all_suggestions.keys())])
 
-        query = {
-            "query": {
-                "bool": {
-                    "filter": [
-                        {"term": {"state": "published"}},
-                        {"term": {"language": language}},
-                        {"range": {"versioncreated": {"gte": versioncreated_min}}},
-                    ],
+
+def get_archive_suggestions(field: str, language: str) -> Dict[str, int]:
+    if not app.config.get(SETTING_ENABLED):
+        raise SuperdeskApiError(_("Archive autocomplete is not enabled"), 404)
+
+    field_mapping = {"slugline": "slugline.keyword"}
+
+    if field not in field_mapping:
+        raise SuperdeskApiError(_("Field %(field)s is not allowed", field=field), 400)
+
+    versioncreated_min = (
+        utcnow()
+        - timedelta(
+            days=app.config[SETTING_DAYS],
+            hours=app.config[SETTING_HOURS],
+        )
+    ).replace(
+        microsecond=0
+    )  # avoid different microsecond each time so elastic has 1s to cache
+
+    query = {
+        "query": {
+            "bool": {
+                "filter": [
+                    {"term": {"state": "published"}},
+                    {"term": {"language": language}},
+                    {"range": {"versioncreated": {"gte": versioncreated_min}}},
+                ],
+            },
+        },
+        "aggs": {
+            "values": {
+                "terms": {
+                    "field": field_mapping[field],
+                    "size": app.config[SETTING_LIMIT],
+                    "order": {"_key": "asc"},
                 },
             },
-            "aggs": {
-                "values": {
-                    "terms": {
-                        "field": self.field_mapping[field],
-                        "size": app.config[SETTING_LIMIT],
-                        "order": {"_key": "asc"},
-                    },
-                },
-            },
-        }
-        res = app.data.elastic.search(query, "archive", params={"size": 0})
-        docs = [{"value": bucket["key"]} for bucket in res.hits["aggregations"]["values"]["buckets"]]
-        return ListCursor(docs)
+        },
+    }
+    res = app.data.elastic.search(query, "archive", params={"size": 0})
+    return {bucket["key"]: bucket["doc_count"] for bucket in res.hits["aggregations"]["values"]["buckets"]}
 
 
 def init_app(_app) -> None:
@@ -87,3 +114,4 @@ def init_app(_app) -> None:
         )
 
     superdesk.register_resource("archive_autocomplete", AutocompleteResource, AutocompleteService, _app=_app)
+    register_autocomplete_suggestion_provider("archive", get_archive_suggestions)
