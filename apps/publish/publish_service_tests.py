@@ -160,7 +160,7 @@ class PublishServiceTests(TestCase):
             ["body_html", "body_footer", "headline", "slugline", "abstract"], list(source["highlight"]["fields"].keys())
         )
 
-    def test_subscribers_secret_token(self):
+    def test_subscribers_secret_keys(self):
         subscriber_service = superdesk.get_resource_service("subscribers")
         data = list(subscriber_service.get(req=None, lookup={}))
         item = data[1]
