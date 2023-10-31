@@ -107,8 +107,9 @@ class SubscribersService(CacheableService):
             req = ParsedRequest()
         if req.args and req.args.get("filter_condition"):
             filter_condition = json.loads(req.args.get("filter_condition"))
-            return ListCursor(self._get_subscribers_by_filter_condition(filter_condition))
-        return super().get_from_mongo(req=req, lookup=lookup)
+            return self.hideConfigField(self._get_subscribers_by_filter_condition(filter_condition), "secret_token")
+
+        return self.hideConfigField(list(super().get_from_mongo(req=req, lookup=lookup)), "secret_token")
 
     def on_create(self, docs):
         for doc in docs:
@@ -291,3 +292,11 @@ class SubscribersService(CacheableService):
 
     def get_active(self):
         return self.get_cached()
+
+    def hideConfigField(self, docs, field_name):
+        for doc in docs:
+            for destination in doc["destinations"]:
+                config = destination.get("config", {})
+                if config.get(field_name):
+                    del config[field_name]
+        return ListCursor(docs)
