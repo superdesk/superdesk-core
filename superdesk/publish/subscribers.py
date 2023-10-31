@@ -103,13 +103,14 @@ class SubscribersService(CacheableService):
     cache_lookup = {"is_active": True}
 
     def get(self, req, lookup):
+        fields = ("secret_token", "password", "apiKey", "access_key_id", "secret_access_key")
         if req is None:
             req = ParsedRequest()
         if req.args and req.args.get("filter_condition"):
             filter_condition = json.loads(req.args.get("filter_condition"))
-            return self.hideConfigField(self._get_subscribers_by_filter_condition(filter_condition), "secret_token")
+            return self.hideConfigField(self._get_subscribers_by_filter_condition(filter_condition), fields)
 
-        return self.hideConfigField(list(super().get_from_mongo(req=req, lookup=lookup)), "secret_token")
+        return self.hideConfigField(list(super().get_from_mongo(req=req, lookup=lookup)), fields)
 
     def on_create(self, docs):
         for doc in docs:
@@ -293,10 +294,19 @@ class SubscribersService(CacheableService):
     def get_active(self):
         return self.get_cached()
 
-    def hideConfigField(self, docs, field_name):
-        for doc in docs:
-            for destination in doc.get("destinations", {}):
-                config = destination.get("config", {})
-                if config.get(field_name):
-                    del config[field_name]
-        return ListCursor(docs)
+    def hideConfigField(self, docs, fields):
+        return ListCursor(
+            [
+                {
+                    **doc,
+                    "destinations": [
+                        {
+                            **destination,
+                            "config": {key: value for key, value in destination["config"].items() if key not in fields},
+                        }
+                        for destination in doc.get("destinations", [])
+                    ],
+                }
+                for doc in docs
+            ]
+        )

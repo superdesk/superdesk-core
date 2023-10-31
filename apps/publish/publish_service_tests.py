@@ -67,6 +67,29 @@ class PublishServiceTests(TestCase):
                 }
             ],
         },
+        {
+            "_id": "3",
+            "name": "Test3",
+            "subscriber_type": SUBSCRIBER_TYPES.WIRE,
+            "media_type": "media",
+            "is_active": True,
+            "sequence_num_settings": {"max": 10, "min": 1},
+            "critical_errors": {"9004": True},
+            "destinations": [
+                {
+                    "name": "AMAZON SQS",
+                    "delivery_type": "amazon_sqs_fifo",
+                    "format": "nitf",
+                    "config": {
+                        "access_key_id": "demokeyaccess",
+                        "attach_media": False,
+                        "message_group_id": "messageGroupId",
+                        "queue_name": "demo test",
+                        "secret_access_key": "accesskey",
+                    },
+                }
+            ],
+        },
     ]
 
     def setUp(self):
@@ -143,3 +166,8 @@ class PublishServiceTests(TestCase):
         item = data[1]
         self.assertEqual("Test2", item["name"])
         self.assertNotIn("secret_token", item["destinations"][0]["config"])
+
+        item = data[2]
+        self.assertEqual("Test3", item["name"])
+        self.assertNotIn("access_key_id", item["destinations"][0]["config"])
+        self.assertNotIn("secret_access_key", item["destinations"][0]["config"])
