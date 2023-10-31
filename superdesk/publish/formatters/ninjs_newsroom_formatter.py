@@ -48,7 +48,9 @@ class NewsroomNinjsFormatter(NINJSFormatter):
     def _transform_to_ninjs(self, article, subscriber, recursive=True):
         ninjs = super()._transform_to_ninjs(article, subscriber, recursive)
 
-        if article.get("ingest_id") and article.get("auto_publish"):
+        if article.get("ingest_id") and (
+            article.get("auto_publish") or (article.get("extra") or {}).get("publish_ingest_id_as_guid")
+        ):
             ninjs["guid"] = article.get("ingest_id")
             if article.get("ingest_version"):
                 ninjs["version"] = article["ingest_version"]

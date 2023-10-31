@@ -61,7 +61,9 @@ class NINJSFeedParser(FeedParser):
                 ninjs = json.load(f)
                 if ninjs.get("uri") or ninjs.get("guid"):
                     return True
-        except Exception:
+        except Exception as err:
+            logger.exception(err)
+            logger.error("Failed to ingest json file")
             pass
         return False
 

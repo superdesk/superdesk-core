@@ -136,11 +136,10 @@ class FetchService(BaseService):
         Checks if guid contains the version for the ingested item and returns the guid without version
         """
         try:
-            if not version:
-                return guid
-
-            if guid.endswith(":{}".format(str(version))):
+            if version and guid.endswith(":{}".format(str(version))):
                 return guid[: -1 * (len(str(version)) + 1)]
+            else:
+                return guid
         except Exception:
             return guid
 
