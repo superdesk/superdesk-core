@@ -295,7 +295,7 @@ class SubscribersService(CacheableService):
 
     def hideConfigField(self, docs, field_name):
         for doc in docs:
-            for destination in doc["destinations"]:
+            for destination in doc.get("destinations", {}):
                 config = destination.get("config", {})
                 if config.get(field_name):
                     del config[field_name]
