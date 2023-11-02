@@ -85,7 +85,7 @@ def get_dest_path(dest: Union[Path, str], dump: bool = True) -> Path:
         base / dest.with_suffix(".json"),
     ):
         if test_path.exists():
-            return test_path.resolve()
+            return test_path
     raise ValueError(f"There is no {'dump' if dump else 'record'} at {dest}.")
 
 
@@ -404,7 +404,7 @@ class StorageDump(superdesk.Command):
         dump_msg = "dumping {name} ({idx}/{total})"
         metadata = {
             "started": now,
-            "executable": sys.executable,
+            "description": "",
         }
         if description:
             metadata["description"] = description
@@ -575,7 +575,7 @@ class StorageStartRecording(superdesk.Command):
         version = tuple(int(v) for v in pymongo.cx.server_info()["version"].split("."))
         if version < (4, 0):
             raise NotImplementedError("You need to use MongoDB version 4.0 or above to use the record feature")
-        metadata = {"started": now, "executable": sys.executable, "applied_updates": applied_updates}
+        metadata = {"started": now, "applied_updates": applied_updates}
         if base_dump is not None:
             # base dump may be the direct path of the dump to load…
             base_dump_p = get_dest_path(base_dump)
@@ -660,7 +660,7 @@ class StorageRestoreRecord(superdesk.Command):
                 if skip_base_dump:
                     print(f"{INFO} skipping base dump restoration as requested")
                 else:
-                    base_dump_p = Path(base_dump)
+                    base_dump_p = get_dest_path(base_dump, dump=True)
                     if not base_dump_p.exists():
                         raise ValueError(f"There is no database dump at {base_dump_p}")
                     if not force_db_reset:
