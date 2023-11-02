@@ -44,7 +44,52 @@ class PublishServiceTests(TestCase):
             "sequence_num_settings": {"max": 10, "min": 1},
             "critical_errors": {"9004": True},
             "destinations": [{"name": "NITF", "delivery_type": "ftp", "format": "nitf", "config": {}}],
-        }
+        },
+        {
+            "_id": "2",
+            "name": "Test2",
+            "subscriber_type": SUBSCRIBER_TYPES.WIRE,
+            "media_type": "media",
+            "is_active": True,
+            "sequence_num_settings": {"max": 10, "min": 1},
+            "critical_errors": {"9004": True},
+            "destinations": [
+                {
+                    "name": "HTTP PUSH",
+                    "delivery_type": "http_push",
+                    "format": "nitf",
+                    "config": {
+                        "resource_url": "http://localhost:5050/push",
+                        "assets_url": "http://localhost:5050/push_binary",
+                        "packaged": "true",
+                        "secret_token": "newsroom",
+                    },
+                }
+            ],
+        },
+        {
+            "_id": "3",
+            "name": "Test3",
+            "subscriber_type": SUBSCRIBER_TYPES.WIRE,
+            "media_type": "media",
+            "is_active": True,
+            "sequence_num_settings": {"max": 10, "min": 1},
+            "critical_errors": {"9004": True},
+            "destinations": [
+                {
+                    "name": "AMAZON SQS",
+                    "delivery_type": "amazon_sqs_fifo",
+                    "format": "nitf",
+                    "config": {
+                        "access_key_id": "demokeyaccess",
+                        "attach_media": False,
+                        "message_group_id": "messageGroupId",
+                        "queue_name": "demo test",
+                        "secret_access_key": "accesskey",
+                    },
+                }
+            ],
+        },
     ]
 
     def setUp(self):
@@ -114,3 +159,15 @@ class PublishServiceTests(TestCase):
         self.assertEqual(
             ["body_html", "body_footer", "headline", "slugline", "abstract"], list(source["highlight"]["fields"].keys())
         )
+
+    def test_subscribers_secret_keys(self):
+        subscriber_service = superdesk.get_resource_service("subscribers")
+        data = list(subscriber_service.get(req=None, lookup={}))
+        item = data[1]
+        self.assertEqual("Test2", item["name"])
+        self.assertNotIn("secret_token", item["destinations"][0]["config"])
+
+        item = data[2]
+        self.assertEqual("Test3", item["name"])
+        self.assertNotIn("access_key_id", item["destinations"][0]["config"])
+        self.assertNotIn("secret_access_key", item["destinations"][0]["config"])
