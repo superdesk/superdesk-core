@@ -183,8 +183,10 @@ MONGO_DBNAME = env("MONGO_DBNAME", "superdesk")
 #: full mongodb connection uri, overrides ``MONGO_DBNAME`` if set
 MONGO_URI = env("MONGO_URI", "mongodb://localhost/%s" % MONGO_DBNAME)
 
-#: allow all mongo queries
-MONGO_QUERY_BLACKLIST = []
+#: don't allow js mongo queries which can be used to leak sensitive info
+#:
+#: More info in `SDESK-7092<https://sofab.atlassian.net/browse/SDESK-7092>`_.
+MONGO_QUERY_BLACKLIST = ["$where", "$expr"]
 
 MONGO_LOCALE = "en_US"
 
