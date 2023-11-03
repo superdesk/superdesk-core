@@ -8,6 +8,7 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
+import flask
 import logging
 
 from superdesk.services import CacheableService
@@ -195,7 +196,15 @@ class ContentFilterService(CacheableService):
     def does_match(self, content_filter, article, filters=None):
         if not content_filter:
             return True  # a non-existing filter matches every thing
+        cache_id = "filter-match-{filter}-{article}".format(
+            filter=content_filter.get("_id") or content_filter.get("name"),
+            article=article.get("_id") or article.get("guid"),
+        )
+        if not hasattr(flask.g, cache_id):
+            setattr(flask.g, cache_id, self._does_match(content_filter, article, filters))
+        return getattr(flask.g, cache_id)
 
+    def _does_match(self, content_filter, article, filters):
         filter_condition_service = get_resource_service("filter_conditions")
         expressions = []
         for index, expression in enumerate(content_filter.get("content_filter", [])):

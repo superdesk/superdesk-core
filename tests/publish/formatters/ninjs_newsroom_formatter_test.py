@@ -150,7 +150,7 @@ class NewsroomNinjsFormatterTest(TestCase):
             "products": [{"code": 1, "name": "p-1"}],
         }
         self.assertEqual(json.loads(doc), expected)
-        article["urgency"] = 1
+        article.update(urgency=1, _id="v2")
         seq, doc = self.formatter.format(article, {"name": "Test Subscriber"})[0]
         expected = {
             "guid": "tag:aap.com.au:20150613:12345",
