@@ -11,6 +11,13 @@ from werkzeug.datastructures import ImmutableMultiDict
 from . import privileges, rundown_items, types, templates, shows
 
 
+def get_date_format(_format: Optional[str] = None) -> str:
+    """Convert client format to python format."""
+    if not _format:
+        _format = "DD.MM.YYYY"
+    return _format.replace("DD", "%d").replace("MM", "%m").replace("YYYY", "%Y")
+
+
 class RundownsResource(superdesk.Resource):
     resource_title = "rundowns"
 
@@ -169,7 +176,7 @@ class RundownsService(superdesk.Service):
                     [
                         title_template.get("prefix") or "",
                         title_template.get("separator", " ").strip(),
-                        date.strftime(title_template.get("date_format", "%d.%m.%Y")),
+                        date.strftime(get_date_format(title_template.get("date_format"))),
                     ],
                 )
             )
