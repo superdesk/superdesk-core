@@ -150,7 +150,7 @@ Feature: Rundowns
                 "title_template": {
                     "prefix": "Marker",
                     "separator": "//",
-                    "date_format": "%d.%m.%Y"
+                    "date_format": "DD.MM.YYYY"
                 },
                 "items": [
                     {
