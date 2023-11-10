@@ -142,7 +142,7 @@ class NINJSFormatter(Formatter):
         self.format_type = "ninjs"
         self.can_preview = True
         self.can_export = True
-        self.internal_renditions = ["original"]
+        self.internal_renditions = ["original", "baseImage"]
 
     def format(self, article, subscriber, codes=None):
         try:
