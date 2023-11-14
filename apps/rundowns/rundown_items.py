@@ -14,7 +14,7 @@ class RundownItemsResource(superdesk.Resource):
     schema: Dict[str, Any] = {
         "title": metadata_schema["headline"].copy(),
         "technical_title": metadata_schema["headline"].copy(),
-        "item_type": superdesk.Resource.not_analyzed_field(nullable=True),
+        "item_type": superdesk.Resource.not_analyzed_field(nullable=True, required=True),
         "content": metadata_schema["body_html"].copy(),
         "duration": {
             "type": "number",
@@ -85,7 +85,7 @@ class RundownItemsService(superdesk.Service):
 
     def create_from_template(self, template: types.IRundownItemTemplate, rundown: types.IRundown) -> types.IRundownItem:
         item: types.IRundownItem = {
-            "item_type": template["item_type"],
+            "item_type": template.get("item_type") or "",
             "title": template.get("title", ""),
             "duration": template.get("duration", 0),
             "planned_duration": template.get("planned_duration", 0),
