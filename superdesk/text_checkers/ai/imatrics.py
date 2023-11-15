@@ -35,7 +35,7 @@ CONCEPT_MAPPING = OrderedDict(
         ("topic", "subject"),
         ("organisation", "organisation"),
         ("Name LastName", "person"),
-        # both Name LastName and person are seens in iMatrics examples and docs
+        # both Name LastName and person are seen in iMatrics examples and docs
         ("person", "person"),
         ("place", "place"),
     ]
@@ -53,30 +53,29 @@ DEFAULT_CONCEPT_TYPE = "topic"
 class IMatrics(AIServiceBase):
     """IMatrics autotagging service
 
-    The IMATRICS_BASE_URL, IMATRICS_USER and IMATRICS_KEY setting (or environment variable) must be set
+    The SEMAPHORE_BASE_URL and IMATRICS_KEY setting (or environment variable) must be set
     IMATRICS_AUTHOR can be used to set ``author`` of concept (which translates to ``source`` in Superdesk)
     """
 
     name = "imatrics"
     label = "IMatrics autotagging service"
 
+    logger.warning('In CLass IMatrics')
+
     def __init__(self, app):
         super().__init__(app)
-        self.convept_map_inv = {v: k for k, v in CONCEPT_MAPPING.items()}
+        self.concept_map_inv = {v: k for k, v in CONCEPT_MAPPING.items()}
         self._subjects = []
         self._places = None
 
-    @property
-    def base_url(self):
-        return current_app.config.get("IMATRICS_BASE_URL", os.environ.get("IMATRICS_BASE_URL"))
+        console.warning("Semaphore Base URL:", self.semaphore_base_url)
+        console.warning("Image Base URL:", self.image_base_url)
+    
 
     @property
-    def user(self):
-        return current_app.config.get("IMATRICS_USER", os.environ.get("IMATRICS_USER"))
+    def semaphore_base_url(self):
+        return current_app.config.get("SEMAPHORE_BASE_URL", os.environ.get("SEMAPHORE_BASE_URL"))
 
-    @property
-    def key(self):
-        return current_app.config.get("IMATRICS_KEY", os.environ.get("IMATRICS_KEY"))
 
     @property
     def image_base_url(self):
@@ -104,15 +103,12 @@ class IMatrics(AIServiceBase):
             tag_data["description"] = concept["shortDescription"].strip()
 
         try:
+            logger.warning('IN COncept Data')
+
             tag_type = CONCEPT_MAPPING[concept["type"]]
         except KeyError:
             logger.warning("no mapping for concept type {concept_type!r}".format(concept_type=concept["type"]))
             tag_type = concept["type"]
-
-        try:
-            tag_data["weight"] = concept["weight"]
-        except KeyError:
-            pass
 
         for link in concept.get("links", []):
             if link.get("source").lower() == "iptc" and link.get("relationType") == "exactMatch" and link.get("id"):
@@ -180,140 +176,121 @@ class IMatrics(AIServiceBase):
                     del tag["weight"]
                 except KeyError:
                     pass
+
+        logger.info("_parse_concepts Response")
+        logger.info("analyzed_data")
         return analyzed_data
 
     def _transform_to_imatrics(self, item, publish=False):
         body = get_item_body(item)
         headline = item.get("headline", "")
-        return {
-            "uuid": item["guid"],
-            "pubStatus": publish,
-            "headline": headline,
-            "body": body,
-            "language": item["language"],
-        }
+        xml_input = '''<?xml version="1.0" encoding="UTF-8"?>
+          <request op="CLASSIFY">
+            <document>
+              <title>{headline}</title>
+              <body>{body}</body>
+            </document>
+            <multiarticle />
+          </request>'''.format(headline=headline, body=body)
 
-#    def analyze(self, item: dict, tags: Optional[dict] = None) -> dict:
+        logger.info(f"Received item for transformation: {item}")
+        logger.info(f"Transformed item to XML: {xml_input}")
+        return {"XML_INPUT": xml_input}
+
     def analyze(self, item: dict, tags: Optional[dict] = None) -> dict:
-        logger.warning("IMatrics will return sample data")
-        return {
-              'subject': [
-                {
-                    'name': 'sosiale medier',
-                    'description': 'Content created to be shared within online social networks',
-                    'qcode': '20001182',
-                    'source': 'imatrics',
-                    'altids': {
-                        'imatrics': '586685f3-4fa3-30d0-aa4b-b183e55dd7d7',
-                        'medtop': '20001182',
-                        'wikidata': 'Q202833'
-                    },
-                    'parent': '20000045',
-                    'scheme': 'topics',
-                    'aliases': [],
-                    'original_source': None
-                },
-                {
-                    'name': 'massemedier',
-                    'description': 'Media addressing a large audience',
-                    'qcode': '20000045',
-                    'source': 'imatrics',
-                    'altids': {
-                        'imatrics': '20727888-04fa-3d53-9a8b-47ccd89a1a6d',
-                        'medtop': '20000045',
-                        'wikidata': 'Q11033'
-                    },
-                    'parent': '01000000',
-                    'scheme': 'topics',
-                    'aliases': [],
-                    'original_source': None
-                },
-                {
-                    'name': 'kultur, underholdning og medier',
-                    'description': 'Alle former for kunst, kultur, underholdning og medier.',
-                    'qcode': '01000000',
-                    'source': 'imatrics',
-                    'altids': {
-                        'imatrics': '6779fa16-9f9d-38d8-9abc-ac532d335ff6',
-                        'medtop': '01000000'
-                    },
-                    'parent': None,
-                    'scheme': 'topics',
-                    'aliases': [],
-                    'original_source': None
-                },
-            ],
-            'organisation': [
-                {
-                    'name': 'Hamas',
-                    'description': 'palestinsk, sunnimuslimsk organisasjon med en tilhørende militær gren',
-                    'qcode': 'c14240d7-670b-3de9-89bd-594ab47e0e1e',
-                    'source': 'imatrics',
-                    'altids': {
-                        'imatrics': 'c14240d7-670b-3de9-89bd-594ab47e0e1e',
-                        'wikidata': 'Q38799'
-                    },
-                    'aliases': [
-                        'Islamic Resistance Movement'
-                    ],
-                    'original_source': '1013'
-                }
-            ],
-            'place': [
-                {
-                    'name': 'Israel',
-                    'description': 'land i Vest-Asia (Midtøsten)',
-                    'qcode': 'f6ad537d-404b-3a05-920b-a0d4223734b3',
-                    'source': 'imatrics',
-                    'altids': {
-                        'imatrics': 'f6ad537d-404b-3a05-920b-a0d4223734b3',
-                        'wikidata': 'Q801'
-                    },
-                    'aliases': [
-                        'Staten Israel'
-                    ],
-                    'original_source': '1013',
-                    'scheme': 'place'
-                },
-            ]
-          }
 
-#    def analyze(self, item: dict, tags: Optional[dict] = None) -> dict:
-#        """Analyze article to get tagging suggestions"""
-#        if not self.base_url or not self.user or not self.key:
-#            logger.warning("IMatrics is not configured propertly, can't analyze article")
-#            return {}
-#        data = self._transform_to_imatrics(item)
-#        if tags is not None:
-#            data["concepts"] = self._format_concepts(tags)
-#        if not data.get("headline") and not data.get("body"):
-#            logger.warning("no body nor headline found in item {item_id!r}".format(item_id=item["guid"]))
-#            # we return an empty result
-#            return {"subject": []}
-#        r_data = self._analyze(data)
-#        return self._parse_concepts(r_data["concepts"] + r_data["broader"])
+        logger.warning('SEMAPHORE_BASE_URL is ')
+        logger.warning(semaphore_base_url)
+        if not self.semaphore_base_url:
+            logger.warning("Semaphore base URL is not configured properly, can't analyze article")
+            return {}
+
+        access_token = self.get_access_token()
+        if not access_token:
+            logger.warning("Failed to get access token for Semaphore")
+            return {}
+
+        data = self._transform_to_imatrics(item)
+        if tags is not None:
+            data["concepts"] = self._format_concepts(tags)
+        if not data.get("headline") and not data.get("body"):
+            logger.warning("No body nor headline found in item {item_id!r}".format(item_id=item["guid"]))
+            return {"subject": []}
+
+        r_data = self._analyze(data)
+        return self._parse_concepts(r_data["concepts"] + r_data["broader"])
+
 
     def _analyze(self, data, **params):
+        headers = {"Authorization": f"Bearer {self.access_token}"}
         return self._request(
             "article/analysis",
             data,
+            headers=headers,
             params=dict(
                 conceptFields="uuid,title,type,shortDescription,aliases,source,author,weight,broader,links",
                 **params,
             ),
         )
 
+    def _request(self, service, data=None, method="POST", params=None):
+        url = urljoin(self.base_url, service)
+        try:
+            logger.info(f"Making a {method} request to {url} with data: {data} and params: {params}")
+            r = session.request(method, url, json=data, auth=(self.user, self.key), params=params, timeout=TIMEOUT)
+            logger.info(f"Received response: {r.text}")
+            if r.status_code != 200:
+                logger.error(f"Unexpected return code ({r.status_code}) from {self.name}: {r.text}")
+                raise SuperdeskApiError.proxyError(
+                    "Unexpected return code ({status_code}) from {name}: {msg}".format(
+                        name=self.name,
+                        status_code=r.status_code,
+                        msg=r.text,
+                    )
+                )
+            return r.json()
+        except Exception as e:
+            logger.error(f"An error occurred while making a request to {url}: {str(e)}")
+            logger.error(traceback.format_exc())  # This will log the full traceback
+            raise
+            
+
+
+
+    def get_access_token(self):
+        token_endpoint = os.environ.get("semaphore_token_endpoint")
+        api_key = os.environ.get("semaphore_api_key")
+        data = {
+            'grant_type': 'apiKey',
+            'key': api_key
+        }
+    
+        logger.info(f"Fetching access token from {token_endpoint} with API key: {api_key}")
+    
+        response = session.post(token_endpoint, data=data, timeout=TIMEOUT)
+    
+        if response.status_code == 200:
+            token_data = response.json()
+            access_token = token_data.get('access_token')
+            logger.info(f"Successfully fetched access token: {access_token}")
+            return access_token
+        else:
+            logger.error(f"Token renewal request failed with status {response.status_code}. Response: {response.text}")
+            return None
+
+    
     def search_images(self, items: list) -> list:
         """Fetch image suggestions"""
-        if not self.base_url or not self.user or not self.key:
+        if not self.semaphore_base_url:
             logger.warning("IMatrics is not configured properly, can't fetch images")
             return []
         data = items
         try:
             r_data = self._search_images(data)
         except Exception:
+            logger.warning("Stopped at search_images")
             return []
-        return [image for image in r_data if isinstance(image["imageUrl"], str) and image["imageUrl"] != ""]
+        return [image for image in r_data if type(image["imageUrl"]) == str and image["imageUrl"] != ""]
 
     def _search_images(self, data, **params):
         return self._request_images(
@@ -514,6 +491,7 @@ class IMatrics(AIServiceBase):
         return concepts
 
 
+
 def get_item_body(item):
     body = []
     for field in ("body_html", "abstract"):
@@ -525,4 +503,5 @@ def get_item_body(item):
 
 
 def init_app(app):
+    logger.warning('In IMatrics Code. Lets see')
     IMatrics(app)
