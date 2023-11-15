@@ -29,7 +29,7 @@ class Semaphore(AIServiceBase):
 
         self.base_url = "https://ca.cloud.smartlogic.com/token"  
         self.analyze_url = "https://ca.cloud.smartlogic.com/svc/5457e590-c2cc-4219-8947-e7f74c8675be/?operation=classify"  
-        self.api_key = "-gR4LeNRkdsQ1tSIwRVPUA=="   
+        self.api_key = "Oqmna6Nx2t-WkZoIb64-_w=="   
 
         self.session = requests.Session()  
         self.TIMEOUT = 10 
