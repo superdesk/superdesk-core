@@ -121,7 +121,7 @@ class NINJSFeedParser(FeedParser):
                 item["associations"][key] = deepcopy(associated_item)
 
         if ninjs.get("renditions"):
-            item["renditions"] = ninjs["renditions"]
+            item["renditions"] = self.parse_renditions(ninjs["renditions"])
 
         if ninjs.get("located"):
             item["dateline"] = {"located": {"city": ninjs.get("located")}}
@@ -145,6 +145,42 @@ class NINJSFeedParser(FeedParser):
             item["embargoed"] = self.datetime(ninjs.get("embargoed"))
 
         return item
+
+    def parse_renditions(self, renditions):
+        rend = []
+        for rendition_name, rendition_data in renditions.items():
+            parsed_rendition = {}
+
+            # Parse href
+            href = rendition_data.get("href", "")
+            if isinstance(href, str) and href:
+                parsed_rendition["href"] = href
+
+            # Parse width and height
+            width = rendition_data.get("width")
+            height = rendition_data.get("height")
+            if isinstance(width, int) and isinstance(height, int):
+                parsed_rendition["width"] = width
+                parsed_rendition["height"] = height
+
+            # Parse mimetype
+            mimetype = rendition_data.get("mimetype", "")
+            if isinstance(mimetype, str) and mimetype:
+                parsed_rendition["mimetype"] = mimetype
+
+            # Parse poi
+            poi = rendition_data.get("poi", {})
+            if isinstance(poi, dict) and "x" in poi and "y" in poi:
+                parsed_rendition["poi"] = {"x": poi["x"], "y": poi["y"]}
+
+            # Parse media
+            media = rendition_data.get("media", "")
+            if isinstance(media, str) and media:
+                parsed_rendition["media"] = media
+
+            if parsed_rendition:
+                rend.append({rendition_name: parsed_rendition})
+        return rend
 
     def _format_qcodes(self, items):
         subjects = []
