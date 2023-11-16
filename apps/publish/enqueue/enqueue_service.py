@@ -25,6 +25,7 @@ from superdesk.notification import push_notification
 from superdesk.publish import SUBSCRIBER_TYPES
 from superdesk.publish.publish_queue import PUBLISHED_IN_PACKAGE
 from superdesk.publish.formatters import get_formatter
+from apps.publish.content.utils import filter_digital, filter_non_digital
 from apps.publish.content.common import BasePublishService
 from copy import deepcopy
 from eve.utils import config, ParsedRequest
@@ -45,10 +46,6 @@ class EnqueueService:
     publish_type = "publish"
     published_state = "published"
 
-    non_digital = partial(filter, lambda s: s.get("subscriber_type", "") == SUBSCRIBER_TYPES.WIRE)
-    digital = partial(
-        filter, lambda s: (s.get("subscriber_type", "") in {SUBSCRIBER_TYPES.DIGITAL, SUBSCRIBER_TYPES.ALL})
-    )
     package_service = PackageService()
 
     filters = None
@@ -318,8 +315,8 @@ class EnqueueService:
         :return:
         """
         subscriber_codes = self._get_subscriber_codes(subscribers)
-        wire_subscribers = list(self.non_digital(subscribers))
-        digital_subscribers = list(self.digital(subscribers))
+        wire_subscribers = filter_non_digital(subscribers)
+        digital_subscribers = filter_digital(subscribers)
 
         for subscriber in wire_subscribers:
             subscriber["api_enabled"] = len(subscriber.get("api_products") or []) > 0
