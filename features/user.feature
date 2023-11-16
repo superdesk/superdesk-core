@@ -568,3 +568,16 @@ Feature: User Resource
         """
         {}
         """
+
+    @auth
+    Scenario: Restrict queries using $where
+    Given "users"
+    """
+    [
+        {"username": "test", "password": "test"}
+    ]
+    """
+
+    When we get "users?where={"username": "test", "$where": "this.password[0] == '$'"}"
+    Then we get error 400
+ 

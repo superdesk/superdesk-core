@@ -34,7 +34,8 @@ class AuthService(BaseService):
 
     def on_create(self, docs):
         # Clear the session data when creating a new session
-        flask.session.pop("session_token", None)
+        if flask.session:
+            flask.session.pop("session_token", None)
         for doc in docs:
             user = self.authenticate(doc)
             if not user:
