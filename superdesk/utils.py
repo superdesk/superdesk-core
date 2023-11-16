@@ -19,6 +19,7 @@ import base64
 import tempfile
 import string
 import logging
+import flask
 
 from uuid import uuid4
 from datetime import datetime, timezone, timedelta
@@ -345,3 +346,20 @@ def jwt_decode(token) -> Optional[Dict]:
         return jwt.decode(token, app.config["SECRET_KEY"], algorithms=[JWT_ALGO])
     except jwt.InvalidSignatureError:
         return None
+
+
+def get_cors_headers(methods="*"):
+    return [
+        ("Access-Control-Allow-Origin", app.config["CLIENT_URL"]),
+        ("Access-Control-Allow-Headers", ",".join(app.config["X_HEADERS"])),
+        ("Access-Control-Allow-Credentials", "true"),
+        ("Access-Control-Allow-Methods", methods),
+    ]
+
+
+def abort(status: int, message: str) -> None:
+    """Will return a json response with proper CORS headers."""
+    response = flask.make_response({"message": message}, status)
+    for key, val in get_cors_headers():
+        response.headers[key] = val
+    flask.abort(response)

@@ -29,10 +29,39 @@ Feature: Rundowns
         """
         Then we get OK response
 
+        When we post to "/shows/#shows._id#/templates"
+        """
+        {
+            "title": "test"
+        }
+        """
+        Then we get OK response
+
+        When we get "/shows/#shows._id#/templates"
+        Then we get list with 1 items
+
+        When we post to "/rundowns"
+        """
+        {"show": "#shows._id#", "airtime_date": "2022-06-10"}
+        """
+        Then we get OK response
+
+        When we delete "/shows/#shows._id#"
+        Then we get error 409
+        """
+        {"message": "Can't remove show if there are rundowns."}
+        """
+
+        When we delete "/rundowns/#rundowns._id#"
+        Then we get OK response
+
         When we delete "/shows/#shows._id#"
         Then we get OK response
 
         When we get "/shows"
+        Then we get list with 0 items
+
+        When we get "/shows/#shows._id#/templates"
         Then we get list with 0 items
 
     @auth
@@ -162,6 +191,10 @@ Feature: Rundowns
                         "duration": 400,
                         "item_type": "Test2",
                         "title": "Item title 2"
+                    },
+                    {
+                        "duration": 200,
+                        "title": "test"
                     }
                 ]
             }
@@ -200,7 +233,7 @@ Feature: Rundowns
         """
 
         When we get "/rundown_items"
-        Then we get list with 2 items
+        Then we get list with 3 items
 
         When we patch "/rundowns/#rundowns._id#"
         """
@@ -243,7 +276,7 @@ Feature: Rundowns
         Given "shows"
         """
         [
-            {"title": "Test"}
+            {"title": "Test", "shortcode": "foo"}
         ]
         """
         And "rundown_templates"
@@ -288,7 +321,7 @@ Feature: Rundowns
                     },
                     {
                         "duration": 400,
-                        "item_type": "Test2",
+                        "item_type": "AACC",
                         "title": "Item title 2"
                     }
                 ]
@@ -311,7 +344,7 @@ Feature: Rundowns
         {
             "_items": [
                 {"technical_title": "ITEM TITLE"},
-                {"technical_title": "ITEM TITLE 2"}
+                {"technical_title": "AACC-FOO-ITEM-TITLE-2"}
             ]
         }
         """

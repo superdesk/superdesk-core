@@ -41,7 +41,12 @@ def create_scheduled(now: datetime, tz: tzinfo):
             is None
         ):
             logger.info("Creating Rundown for template %s on %s", template["title"], local_date.isoformat())
-            rundowns.rundowns_service.create_from_template(template, local_date, scheduled_on=template["scheduled_on"])
+            try:
+                rundowns.rundowns_service.create_from_template(
+                    template, local_date, scheduled_on=template["scheduled_on"]
+                )
+            except Exception as err:
+                logger.exception(err)
         else:
             logger.info("Rundown already exists for template %s on %s", template["title"], local_date.isoformat())
         schedule: IRRule = template["schedule"]

@@ -186,14 +186,14 @@ class RundownsService(superdesk.Service):
 
         if template.get("items"):
             updates: types.IRundown = {}
-            updates["items"] = [self.get_item_ref(ref, rundown) for ref in template["items"]]
+            updates["items"] = [self.create_template_item(ref, rundown) for ref in template["items"]]
             rundown_items.items_service.sync_items(updates, updates["items"])
             super().system_update(bson.ObjectId(rundown["_id"]), updates, rundown)
             rundown.update(updates)
 
         return rundown
 
-    def get_item_ref(self, item_template: types.IRundownItemTemplate, rundown: types.IRundown) -> types.IRef:
+    def create_template_item(self, item_template: types.IRundownItemTemplate, rundown: types.IRundown) -> types.IRef:
         item = rundown_items.items_service.create_from_template(item_template, rundown)
         assert "_id" in item, {"rundown_item": {"_id": 1}}
         return {"_id": bson.ObjectId(item["_id"])}
