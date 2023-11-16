@@ -147,7 +147,7 @@ class NINJSFeedParser(FeedParser):
         return item
 
     def parse_renditions(self, renditions):
-        rend = []
+        rend = {}
         for rendition_name, rendition_data in renditions.items():
             parsed_rendition = {}
 
@@ -179,7 +179,7 @@ class NINJSFeedParser(FeedParser):
                 parsed_rendition["media"] = media
 
             if parsed_rendition:
-                rend.append({rendition_name: parsed_rendition})
+                rend.update({rendition_name: parsed_rendition})
         return rend
 
     def _format_qcodes(self, items):
