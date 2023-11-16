@@ -120,10 +120,9 @@ class NINJSFeedParser(FeedParser):
                     associated_item["versioncreated"] = self.datetime(associated_item["versioncreated"])
                 item["associations"][key] = deepcopy(associated_item)
 
-        renditions = ninjs.get("renditions", {})
-        if renditions.get("baseImage") or renditions.get("original"):
-            href = ninjs.get("renditions", {}).get("original", {}).get("href")
-            item["renditions"] = {"baseImage": {"href": href}, "original": {"href": href}}
+        if ninjs.get("renditions"):
+            item["renditions"] = ninjs["renditions"]
+
         if ninjs.get("located"):
             item["dateline"] = {"located": {"city": ninjs.get("located")}}
 
