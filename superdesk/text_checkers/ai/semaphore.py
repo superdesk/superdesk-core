@@ -189,6 +189,7 @@ class Semaphore(AIServiceBase):
             xml_template = """<?xml version="1.0" ?>
             <request op="CLASSIFY">
                 <document>
+                    <title>{}</title>
                     <body>{}</body>
                 </document>
             </request>
@@ -196,10 +197,11 @@ class Semaphore(AIServiceBase):
 
             
             body_html = html_content['body_html']
+            title = html_content['headline']
             body_html = clean_html_content(body_html)
             
             # Embed the 'body_html' into the XML template
-            xml_output = xml_template.format(body_html)
+            xml_output = xml_template.format(title,body_html)
     
             return xml_output
     
