@@ -157,11 +157,10 @@ class NINJSFeedParser(FeedParser):
                 parsed_rendition["href"] = href
 
             # Parse width and height
-            width = rendition_data.get("width")
-            height = rendition_data.get("height")
-            if isinstance(width, int):
+            width = rendition_data.get("width", None)
+            height = rendition_data.get("height", None)
+            if isinstance(width, int) and isinstance(height, int):
                 parsed_rendition["width"] = width
-            if isinstance(height, int):
                 parsed_rendition["height"] = height
 
             # Parse mimetype

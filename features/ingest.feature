@@ -542,7 +542,7 @@ Feature: Fetch From Ingest
     @provider
     Scenario: Ingest ninjs with embedded items
         Given empty "ingest"
-        When we fetch from "ninjs" ingest "ninjs4.json" (mocking with "ninjs4_mock.json")
+        When we fetch from "ninjs" ingest "ninjs4.json"
         And we get "/ingest"
         Then we get existing resource
         """
