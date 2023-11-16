@@ -477,18 +477,29 @@ Feature: Fetch From Ingest
                  "type":"picture",
                  "state":"ingested",
                  "renditions":{
-                    "baseImage":{
-                       "width":1400
+                    "original": {
+                        "poi": {
+                            "y": 1193,
+                            "x": 2128
+                        },
+                        "href": "http://content.reuters.com/auth-server/content/tag_reuters.com_2014_newsml_LYNXMPEA6F0MT_2/tag_reuters.com_2014_binary_LYNXMPEA6F0MT-BASEIMAGE?auth_token=fake_token",
+                        "mimetype": "image/jpeg",
+                        "media": "599e31ec1d41c833e0b8a830",
+                        "width": 3489,
+                        "height": 2296
                     },
-                    "thumbnail":{
-
-                    },
-                    "original":{
-
-                    },
-                    "viewImage":{
+                    "baseImage": {
+                        "poi": {
+                            "y": 478,
+                            "x": 854
+                        },
+                        "href": "http://content.reuters.com/auth-server/content/tag_reuters.com_2014_newsml_LYNXMPEA6F0MT_2/tag_reuters.com_2014_binary_LYNXMPEA6F0MT-BASEIMAGE?auth_token=fake_token",
+                        "mimetype": "image/jpeg",
+                        "media": "599e31ed1d41c833e0b8a840",
+                        "width": 1400,
+                        "height": 921
                     }
-                 }
+                }
               },
               {
                  "type":"text",
@@ -497,11 +508,28 @@ Feature: Fetch From Ingest
                     "featuremedia":{
                        "state": "ingested",
                        "renditions":{
-                          "baseImage":{
-                             "width":1400
-                          },
-                          "original":{
-                          }
+                            "original": {
+                                "poi": {
+                                    "y": 1193,
+                                    "x": 2128
+                                },
+                                "href": "http://content.reuters.com/auth-server/content/tag_reuters.com_2014_newsml_LYNXMPEA6F0MT_2/tag_reuters.com_2014_binary_LYNXMPEA6F0MT-BASEIMAGE?auth_token=fake_token",
+                                "mimetype": "image/jpeg",
+                                "media": "599e31ec1d41c833e0b8a830",
+                                "width": 3489,
+                                "height": 2296
+                            },
+                            "baseImage": {
+                                "poi": {
+                                    "y": 478,
+                                    "x": 854
+                                },
+                                "href": "http://content.reuters.com/auth-server/content/tag_reuters.com_2014_newsml_LYNXMPEA6F0MT_2/tag_reuters.com_2014_binary_LYNXMPEA6F0MT-BASEIMAGE?auth_token=fake_token",
+                                "mimetype": "image/jpeg",
+                                "media": "599e31ed1d41c833e0b8a840",
+                                "width": 1400,
+                                "height": 921
+                            }
                        }
                     }
                  }
@@ -524,19 +552,22 @@ Feature: Fetch From Ingest
                  "type":"picture",
                  "state":"ingested",
                  "headline": "Polizeihunde sollen effizienter trainiert werden – Klone sollen die Lösung sein.",
-                 "renditions":{
-                    "baseImage":{
-                       "width":1400
+                "renditions": {
+                    "original": {
+                        "media": "Polizeihund-China-2.jpg",
+                        "href": "https://img.futurezone.de/img/science/origs216742511/239706555-w1280-h960-q85/Polizeihund-China-2.jpg",
+                        "mimetype": "image\/jpeg",
+                        "height": 853,
+                        "width": 1280
                     },
-                    "thumbnail":{
-
-                    },
-                    "original":{
-
-                    },
-                    "viewImage":{
+                    "baseImage": {
+                        "media": "Polizeihund-China-2.jpg",
+                        "href": "https://img.futurezone.de/img/science/origs216742511/239706555-w1280-h960-q85/Polizeihund-China-2.jpg",
+                        "mimetype": "image\/jpeg",
+                        "height": 853,
+                        "width": 1280
                     }
-                 }
+			        }
               },
               {
                  "type":"picture",
@@ -549,13 +580,22 @@ Feature: Fetch From Ingest
                  "associations":{
                     "featuremedia":{
                        "state": "ingested",
-                       "renditions":{
-                          "baseImage":{
-                             "width":1400
-                          },
-                          "original":{
-                          }
-                       }
+                        "renditions": {
+                            "original": {
+                                "media": "Polizeihund-China-2.jpg",
+                                "href": "https://img.futurezone.de/img/science/origs216742511/239706555-w1280-h960-q85/Polizeihund-China-2.jpg",
+                                "mimetype": "image\/jpeg",
+                                "height": 853,
+                                "width": 1280
+                            },
+                            "baseImage": {
+                                "media": "Polizeihund-China-2.jpg",
+                                "href": "https://img.futurezone.de/img/science/origs216742511/239706555-w1280-h960-q85/Polizeihund-China-2.jpg",
+                                "mimetype": "image\/jpeg",
+                                "height": 853,
+                                "width": 1280
+                            }
+			            }
                     }
                  }
               }
@@ -591,25 +631,27 @@ Feature: Fetch From Ingest
                  "headline":"German Air Force Museum",
                  "state":"ingested",
                  "renditions":{
-                    "baseImage" : {
-                       "width" : 1400,
-                       "height" : 1074,
-                       "mimetype" : "image/jpeg"
+                    "baseImage": {
+                        "poi": {
+                            "y": 382,
+                            "x": 784
+                        },
+                        "media": "599faa351d41c8fdc696d904",
+                        "width": 1400,
+                        "height": 934,
+                        "mimetype": "image/jpeg",
+                        "href": "http://localhost:5000/api/upload-raw/599faa351d41c8fdc696d904?_schema=http"
                     },
-                    "thumbnail" : {
-                        "width":156,
-                        "height":120,
-                        "mimetype" : "image/jpeg"
-                    },
-                    "original" : {
-                       "width" : 800,
-                       "height" : 614,
-                       "mimetype" : "image/jpeg"
-                    },
-                    "viewImage":{
-                        "width" : 640,
-                        "height" : 491,
-                        "mimetype" : "image/jpeg"
+                    "original": {
+                        "poi": {
+                            "y": 1646,
+                            "x": 3368
+                        },
+                        "media": "599faa331d41c8fdc696d8b4",
+                        "width": 6016,
+                        "height": 4016,
+                        "mimetype": "image/jpeg",
+                        "href": "http://content.reuters.com/auth-server/content/tag_reuters.com_2014_newsml_LYNXMPEA6F0MT_2/tag_reuters.com_2014_binary_LYNXMPEA6F0MT-BASEIMAGE?auth_token=fake_token"
                     }
                  }
               }

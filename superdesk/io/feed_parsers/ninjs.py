@@ -159,8 +159,9 @@ class NINJSFeedParser(FeedParser):
             # Parse width and height
             width = rendition_data.get("width")
             height = rendition_data.get("height")
-            if isinstance(width, int) and isinstance(height, int):
+            if isinstance(width, int):
                 parsed_rendition["width"] = width
+            if isinstance(height, int):
                 parsed_rendition["height"] = height
 
             # Parse mimetype
@@ -179,7 +180,7 @@ class NINJSFeedParser(FeedParser):
                 parsed_rendition["media"] = media
 
             if parsed_rendition:
-                rend.update({rendition_name: parsed_rendition})
+                rend[rendition_name] = parsed_rendition
         return rend
 
     def _format_qcodes(self, items):
