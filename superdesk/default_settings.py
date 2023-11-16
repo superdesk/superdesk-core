@@ -581,6 +581,7 @@ RENDITIONS = {
     },
 }
 
+NINJS_COMMON_RENDITIONS = list(RENDITIONS["picture"].keys())
 
 #: BCRYPT work factor
 BCRYPT_GENSALT_WORK_FACTOR = 12
