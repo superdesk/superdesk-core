@@ -187,6 +187,12 @@ class NinjsFormatterTest(TestCase):
                     "href": "https://one-api.aap.com.au/api/v3/Assets/20150723001158606583/Original/download",
                     "mimetype": "image/jpeg",
                 },
+                "viewImage": {
+                    "height": 401,
+                    "href": "http://localhost:5000/api/upload/55b032041d41c8d278d21b6f/raw?_schema=http",
+                    "mimetype": "image/jpeg",
+                    "width": 640,
+                },
             },
             "headline": "AMAZING PICTURE",
             "pubstatus": "usable",
@@ -203,7 +209,7 @@ class NinjsFormatterTest(TestCase):
             "embargoed": embargoed.isoformat(),
         }
         self.assertEqual(expected, json.loads(doc))
-        self.assertNotIn("viewImage", json.loads(doc).get("renditions"))
+        self.assertIn("viewImage", json.loads(doc).get("renditions"))
 
     def test_composite_formatter(self):
         article = {
