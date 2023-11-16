@@ -14,7 +14,6 @@ import superdesk.signals as signals
 
 from copy import copy
 from copy import deepcopy
-from functools import partial
 from flask import current_app as app
 
 from superdesk import get_resource_service
@@ -37,7 +36,6 @@ from superdesk.metadata.item import (
 from superdesk.metadata.packages import LINKED_IN_PACKAGES, PACKAGE, PACKAGE_TYPE
 from superdesk.metadata.utils import item_url
 from superdesk.notification import push_notification
-from superdesk.publish import SUBSCRIBER_TYPES
 from superdesk.services import BaseService
 from superdesk.utc import utcnow, get_date
 from superdesk.workflow import is_workflow_state_transition_valid
@@ -139,11 +137,6 @@ class BasePublishService(BaseService):
     publish_type = "publish"
     published_state = "published"
     item_operation = ITEM_PUBLISH
-
-    non_digital = partial(filter, lambda s: s.get("subscriber_type", "") == SUBSCRIBER_TYPES.WIRE)
-    digital = partial(
-        filter, lambda s: (s.get("subscriber_type", "") in {SUBSCRIBER_TYPES.DIGITAL, SUBSCRIBER_TYPES.ALL})
-    )
     package_service = PackageService()
 
     def on_update(self, updates, original):

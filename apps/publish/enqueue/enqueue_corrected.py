@@ -8,6 +8,7 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
+from apps.publish.content.utils import filter_non_digital
 from superdesk import get_resource_service
 from superdesk.metadata.item import CONTENT_STATE
 from eve.utils import config
@@ -56,7 +57,7 @@ class EnqueueCorrectedService(EnqueueService):
             if len(subscribers_yet_to_receive) > 0:
                 # Step 3
                 if doc.get("target_regions"):
-                    subscribers_yet_to_receive = list(self.non_digital(subscribers_yet_to_receive))
+                    subscribers_yet_to_receive = filter_non_digital(subscribers_yet_to_receive)
                 # Step 4
                 subscribers_yet_to_receive, codes = self.filter_subscribers(
                     doc, subscribers_yet_to_receive, target_media_type
