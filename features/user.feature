@@ -526,7 +526,7 @@ Feature: User Resource
         [{"username": "foo", "email": "foo@bar.com", "is_active": true}]
         """
 
-        When we get "users/?where={"$or":[{"username":{"$regex":"fo","$options":"-i"}}]}"
+        When we get "users/?where={"$or":[{"username":{"$regex":"fo","$options":"i"}}]}"
         Then we get list with 1 items
 
     @auth
