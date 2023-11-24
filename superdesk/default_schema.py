@@ -134,7 +134,7 @@ DEFAULT_EDITOR = {
     "company_codes": {"order": 12, "sdWidth": "full", "enabled": False},
     "ednote": {"order": 13, "sdWidth": "full", "enabled": True},
     "authors": {"order": 14, "sdWidth": "full", "enabled": True},
-    "headline": {"order": 15, "formatOptions": [], "enabled": True},
+    "headline": {"order": 15, "sdWidth": "full", "formatOptions": [], "enabled": True},
     "sms": {"order": 16, "enabled": False},
     "abstract": {
         "order": 17,
