@@ -1,6 +1,5 @@
 import superdesk
 import bson
-from copy import deepcopy
 
 
 class UpdateWidthForProfiles(superdesk.Command):
