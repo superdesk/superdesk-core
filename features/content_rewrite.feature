@@ -2649,3 +2649,96 @@ Feature: Rewrite content
           }
         }
         """
+
+    @auth
+    Scenario: Sync editor3 fields when linking updates with no draft state
+        Given "desks"
+        """
+        [{"name": "Sports"}]
+        """
+        And "content_types"
+        """
+        [
+          {"_id": "story", "schema": {
+            "headline": {},
+            "body_html": {}
+          },
+          "editor": {
+            "headline": {
+            },
+            "body_html": {
+              "editor3" : true
+            }
+          }
+          }
+        ]
+        """
+        And "archive"
+        """
+        [
+          {
+            "guid": "1", "type": "text", "headline": "headline 1", "_current_version": 1, "state": "fetched",
+            "profile": "story",
+            "task": {"desk": "#desks._id#", "stage": "#desks.incoming_stage#", "user": "#CONTEXT_USER_ID#"},
+            "body_html": "<p>body 1</p>",
+            "fields_meta": {
+              "body_html": {
+                "draftjsState": [
+                  {"blocks": [
+                    { "type": "unstyled",
+                      "text": "body 1"}
+                  ]}
+                ]
+              },
+              "headline": {
+                "draftjsState": [
+                  {"blocks": [
+                    { "type": "unstyled",
+                      "text": "headline 1"}
+                  ]}
+                ]
+              }
+            }
+          },
+          {
+            "guid": "2", "type": "text", "headline": "headline 2", "_current_version": 1, "state": "fetched",
+            "profile": "story",
+            "task": {"desk": "#desks._id#", "stage": "#desks.incoming_stage#", "user": "#CONTEXT_USER_ID#"},
+            "body_html": "body 2"
+          }
+        ]
+        """
+        When we rewrite "1"
+        """
+        {"update": {
+            "_id": "2", "guid": "2", "body_html": "<p>body 3</p>",
+            "profile": "story", "type": "text", "headline": "headline 3"
+        }}
+        """
+        Then we get OK response
+        When we get "archive/2"
+        Then we get existing resource
+        """
+        {
+          "headline": "headline 3",
+          "body_html": "<p>body 3</p>",
+          "fields_meta": {
+            "body_html": {
+                "draftjsState": [
+                  {"blocks": [
+                    { "type": "unstyled",
+                      "text": "body 3"}
+                  ]}
+                ]
+              },
+              "headline": {
+                "draftjsState": [
+                  {"blocks": [
+                    { "type": "unstyled",
+                      "text": "headline 3"}
+                  ]}
+                ]
+              }
+          }
+        }
+        """
