@@ -354,7 +354,7 @@ class ValidateService(superdesk.Service):
         try:
             # avoid errors when cv is removed and value is still there
             schema["subject"]["schema"]["schema"]["scheme"].pop("allowed", None)
-        except KeyError:
+        except (KeyError, TypeError):
             pass
         return [{"schema": schema}]
 
