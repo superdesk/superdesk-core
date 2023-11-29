@@ -170,7 +170,7 @@ def clean_html(elem):
     :return html.HtmlElement: cleaned element
     """
     if not isinstance(elem, html.HtmlElement):
-        elem = html.fromstring(etree.tostring(elem))
+        elem = html.fromstring(etree.tostring(elem, encoding="unicode"))
     safe_attrs = set(html.defs.safe_attrs)
     safe_attrs.remove("class")
     cleaner = html.clean.Cleaner(
