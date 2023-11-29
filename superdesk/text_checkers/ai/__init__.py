@@ -37,6 +37,7 @@ class AIResource(Resource):
                 "abstract": {"type": "string", "required": False},
                 "language": {"type": "string", "required": True},
                 "headline": {"type": "string", "nullable": True},
+                "slugline": {"type": "string", "required": True},
                 "body_html": {"type": "string", "required": True},
             },
         },
