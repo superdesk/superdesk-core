@@ -196,45 +196,61 @@ class ContentFilterService(CacheableService):
     def does_match(self, content_filter, article, filters=None):
         if not content_filter:
             return True  # a non-existing filter matches every thing
-        cache_id = "filter-match-{filter}-{article}".format(
-            filter=content_filter.get("_id") or content_filter.get("name"),
-            article=article.get("_id") or article.get("guid"),
-        )
+        cache_id = _cache_id("filter-match", content_filter.get("_id") or content_filter.get("name"), article)
         if not hasattr(flask.g, cache_id):
             setattr(flask.g, cache_id, self._does_match(content_filter, article, filters))
         return getattr(flask.g, cache_id)
 
     def _does_match(self, content_filter, article, filters):
-        filter_condition_service = get_resource_service("filter_conditions")
-        expressions = []
         for index, expression in enumerate(content_filter.get("content_filter", [])):
             if not expression.get("expression"):
                 raise SuperdeskApiError.badRequestError(
                     _("Filter statement {index} does not have a filter condition").format(index=index + 1)
                 )
-            filter_conditions = []
             if "fc" in expression.get("expression", {}):
-                for f in expression["expression"]["fc"]:
-                    fc = (
-                        filters.get("filter_conditions", {}).get(f, {}).get("fc")
-                        if filters
-                        else filter_condition_service.get_cached_by_id(f)
-                    )
-                    if not fc:
-                        logger.error("Missing filter condition %s in content filter %s", f, content_filter.get("name"))
-                        return False
-                    filter_condition = FilterCondition.parse(fc)
-                    filter_conditions.append(filter_condition.does_match(article))
+                if not self._does_filter_condition_match(content_filter, article, filters, expression):
+                    continue
             if "pf" in expression.get("expression", {}):
-                for f in expression["expression"]["pf"]:
-                    current_filter = (
-                        filters.get("content_filters", {}).get(f, {}).get("cf") if filters else self.get_cached_by_id(f)
-                    )
-                    filter_conditions.append(self.does_match(current_filter, article, filters=filters))
+                if not self._does_content_filter_match(content_filter, article, filters, expression):
+                    continue
+            return True
+        return False
 
-            expressions.append(all(filter_conditions))
-        return any(expressions)
+    def _does_filter_condition_match(self, content_filter, article, filters, expression) -> bool:
+        filter_condition_service = get_resource_service("filter_conditions")
+        for f in expression["expression"]["fc"]:
+            cache_id = _cache_id("filter-condition-match", f, article)
+            if not hasattr(flask.g, cache_id):
+                fc = (
+                    filters.get("filter_conditions", {}).get(f, {}).get("fc")
+                    if filters
+                    else filter_condition_service.get_cached_by_id(f)
+                )
+                if not fc:
+                    logger.error("Missing filter condition %s in content filter %s", f, content_filter.get("name"))
+                    return False
+                filter_condition = FilterCondition.parse(fc)
+                setattr(flask.g, cache_id, filter_condition.does_match(article))
+            if not getattr(flask.g, cache_id):
+                return False
+        return True
+
+    def _does_content_filter_match(self, content_filter, article, filters, expression) -> bool:
+        for f in expression["expression"]["pf"]:
+            cache_id = _cache_id("content-filter-match", f, article)
+            if not hasattr(flask.g, cache_id):
+                current_filter = (
+                    filters.get("content_filters", {}).get(f, {}).get("cf") if filters else self.get_cached_by_id(f)
+                )
+                setattr(flask.g, cache_id, self.does_match(current_filter, article, filters=filters))
+            if not getattr(flask.g, cache_id):
+                return False
+        return True
 
     def get_api_blocking_filters(self):
         cached = self.get_cached()
         return [f for f in cached if f.get("api_block")]
+
+
+def _cache_id(prefix, _id, article) -> str:
+    return "-".join([prefix, str(_id), str(article.get("_id") or article.get("guid"))])
