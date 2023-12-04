@@ -98,6 +98,10 @@ class ContentTypesResource(superdesk.Resource):
             "type": "boolean",
             "default": False,
         },
+        "embeddable": {
+            "type": "boolean",
+            "default": False,
+        },
         "created_by": superdesk.Resource.rel("users", nullable=True),
         "updated_by": superdesk.Resource.rel("users", nullable=True),
         "init_version": {"type": "integer"},
