@@ -89,6 +89,7 @@ schema = {
     "agenda_id": metadata_schema["guid"],
     "agenda_href": metadata_schema["guid"],
     "refs": metadata_schema["refs"],
+    "expiry": {"type": "datetime", "readonly": True},
 }
 
 
@@ -109,7 +110,10 @@ class ItemsResource(Resource):
         "default_sort": [("versioncreated", -1)],
     }
 
-    mongo_indexes = {"_ancestors_": [("ancestors", 1)]}
+    mongo_indexes = {
+        "_ancestors_": [("ancestors", 1)],
+        "expiry_1": [("expiry", 1)],
+    }
 
     item_methods = ["GET"]
     resource_methods = ["GET"]
