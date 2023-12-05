@@ -207,10 +207,10 @@ class ItemsService(BaseService):
             expiry_datetime = utcnow()
 
         if expiry_days is None:
-            expiry_days = app.settings["CONTENT_API_EXPIRY_DAYS"]
+            expiry_days = app.config["CONTENT_API_EXPIRY_DAYS"]
 
         if max_results is None:
-            max_results = app.settings["MAX_EXPIRY_QUERY_LIMIT"]
+            max_results = app.config["MAX_EXPIRY_QUERY_LIMIT"]
 
         last_id = None
         expire_at = date_to_str(expiry_datetime - timedelta(days=expiry_days))

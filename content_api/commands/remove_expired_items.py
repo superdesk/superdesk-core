@@ -41,8 +41,8 @@ class RemoveExpiredItems(superdesk.Command):
     def run(self, expiry_days=None):
         if expiry_days:
             self.expiry_days = int(expiry_days)
-        elif app.settings.get("CONTENT_API_EXPIRY_DAYS"):
-            self.expiry_days = app.settings["CONTENT_API_EXPIRY_DAYS"]
+        elif app.config.get("CONTENT_API_EXPIRY_DAYS"):
+            self.expiry_days = app.config["CONTENT_API_EXPIRY_DAYS"]
 
         if self.expiry_days == 0:
             logger.info("Expiry days is set to 0, therefor no items will be removed.")
