@@ -33,12 +33,13 @@ class AIResource(Resource):
             "type": "dict",
             "required": True,
             "schema": {
-                "guid": {"type": "string", "required": True},
+                "guid": {"type": "string", "required": False},
                 "abstract": {"type": "string", "required": False},
-                "language": {"type": "string", "required": True},
-                "headline": {"type": "string", "nullable": True},
-                "slugline": {"type": "string", "required": True},
-                "body_html": {"type": "string", "required": True},
+                "language": {"type": "string", "required": False},
+                "headline": {"type": "string", "nullable": False},
+                "slugline": {"type": "string", "required": False},
+                "searchString": {"type": "string", "required": False},
+                "body_html": {"type": "string", "required": False},
             },
         },
         "tags": {
