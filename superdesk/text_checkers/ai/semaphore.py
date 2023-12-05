@@ -6,6 +6,7 @@ from flask import current_app, abort
 from .base import AIServiceBase
 import traceback
 import io
+import json
 
 
 
@@ -23,6 +24,7 @@ class Semaphore(AIServiceBase):
 
     name = "semaphore"
     label = "Semaphore autotagging service"
+    print(AIServiceBase)
 
 
 	
@@ -33,6 +35,7 @@ class Semaphore(AIServiceBase):
         self.analyze_url = "https://ca.cloud.smartlogic.com/svc/5457e590-c2cc-4219-8947-e7f74c8675be/?operation=classify"
         # self.analyze_url = "https://ca.cloud.smartlogic.com/svc/5457e590-c2cc-4219-8947-e7f74c8675be/"  
         self.api_key = "OoP3QRRkLVCzo4sRa6iAyg=="
+        self.search_url = "https://ca.cloud.smartlogic.com/svc/5457e590-c2cc-4219-8947-e7f74c8675be/SES//CPKnowledgeSystem/en/hints/"
 
         
 
@@ -40,8 +43,11 @@ class Semaphore(AIServiceBase):
         self.TIMEOUT = 10 
         self.logger = logging.getLogger(__name__) 
         logger.error(data)
+        
+
         self.output = self.analyze(data)
-    
+
+ 
     
     def get_access_token(self):
         """Get access token for Semaphore."""
@@ -57,11 +63,112 @@ class Semaphore(AIServiceBase):
         return response.json().get("access_token")
 
     
+    def analyze_2(self, html_content: str) -> dict:
+        try:
+            if not self.base_url or not self.api_key:
+                logger.warning("Semaphore Search is not configured properly, can't analyze content")
+                return {}
+            
+            print(html_content['searchString'])
+            query = html_content['searchString']
+            
+            new_url = self.search_url+query+".json"
+
+            # Make a POST request using XML payload
+            headers = {
+                "Authorization": f"bearer {self.get_access_token()}"
+            }
+
+            
+            try:
+                response = session.get(new_url, headers=headers)
+                print('response is')
+                print(response)
+
+                response.raise_for_status()
+            except Exception as e:
+                traceback.print_exc()
+                logger.error(f"An error occurred while making the request: {str(e)}")
+
+            root = response.text
+            print('Root is')
+            print(root)
+
+            print(type(root))
+
+          
+
+            # def transform_xml_response(xml_data):
+            def transform_xml_response(api_response):
+                # Initialize the result dictionary
+                result = {
+                    "subject": [],
+                    "organisation": [],
+                    "person": [],
+                    "event": [],
+                    "place": []
+                }
+
+                # Iterate through the termHints in the API response
+                for item in api_response["termHints"]:
+                    entry = {
+                        "name": item["name"],
+                        "qcode": item["id"],
+                        "source": "Semaphore",  # Replace with actual source if available
+                        "altids": {"source_name": "source_id"},  # Replace with actual source name and id
+                        "original_source": "original_source_value",  # Replace with actual original source value
+                        "scheme": "http://cv.cp.org/"  # Replace with actual scheme value
+                    }
+
+                    # Check the classes and add to the appropriate category
+                    if "Organization" in item["classes"]:
+                        result["organisation"].append(entry)
+                    elif "People" in item["classes"]:
+                        result["person"].append(entry)
+                    elif "Event" in item["classes"]:
+                        result["event"].append(entry)
+                    elif "Place" in item["classes"]:
+                        result["place"].append(entry)
+                    else:
+                        entry["scheme"] = "media topics"
+                        result["subject"].append(entry)
+
+                return result
+                              
+                
+            # root = root.replace('<?xml version="1.0" encoding="UTF-8"?>','')
+            root = json.loads(root)
+            json_response = transform_xml_response(root)
+
+            print('Json Response is ')
+            print(json_response)
+
+
+            return json_response
+        
+        except requests.exceptions.RequestException as e:
+            traceback.print_exc()
+            logger.error(f"Semaphore Search request failed. We are in analyze RequestError exception: {str(e)}")
+
+
     def analyze(self, html_content: str) -> dict:
         try:
             if not self.base_url or not self.api_key:
                 logger.warning("Semaphore is not configured properly, can't analyze content")
                 return {}
+            
+            try:
+                for key,value in html_content.items():
+                    if key == 'searchString':
+                        print('______________________________________---------------------------------------')
+                        print('Running for Search')
+                        print(value)
+                        self.output = self.analyze_2(html_content)
+                        return self.output
+                    else:
+                        print('###########################################################################')
+            except TypeError:
+                pass
 
             # Convert HTML to XML
             xml_payload = self.html_to_xml(html_content)
@@ -94,9 +201,11 @@ class Semaphore(AIServiceBase):
             
 
 
-            def transform_xml_response(root):
-    # Parse the XML data
-                root = ET.fromstring(root)
+            
+
+            def transform_xml_response(xml_data):
+                # Parse the XML data
+                root = ET.fromstring(xml_data)
 
                 # Initialize a dictionary to hold the transformed data
                 response_dict = {
@@ -104,51 +213,77 @@ class Semaphore(AIServiceBase):
                     "organisation": [],
                     "person": [],
                     "event": [],
-                    "place": [],
-                    "object": []
+                    "place": []                   
                 }
+
+                # Temporary storage for path labels and GUIDs
+                path_labels = {}
+                path_guids = {}
+
+                # Helper function to add data to the dictionary if it's not a duplicate and has a qcode
+                def add_to_dict(group, tag_data):
+                    if tag_data["qcode"] and tag_data not in response_dict[group]:
+                        response_dict[group].append(tag_data)
 
                 # Iterate through the XML elements and populate the dictionary
                 for element in root.iter():
                     if element.tag == "META":
                         meta_name = element.get("name")
                         meta_value = element.get("value")
-
+                        meta_score = element.get("score")
                         meta_id = element.get("id")
-                        print(meta_id)
 
-                        # Determine the appropriate group based on the meta name
-                        group = None
-                        if meta_name == "Organization":
-                            group = "organisation"
-                        elif meta_name == "Person":
-                            group = "person"
-                        elif meta_name == "Event":
-                            group = "event"
-                        elif meta_name == "Place":
-                            group = "place"
-                        elif meta_name == "Media Topic":
-                            group = "object"
+                        # Process 'Media Topic_PATH_LABEL' and 'Media Topic_PATH_GUID'
+                        if meta_name == "Media Topic_PATH_LABEL":
+                            path_labels[meta_score] = meta_value.split("/")[1:]
+                        elif meta_name == "Media Topic_PATH_GUID":
+                            path_guids[meta_score] = meta_value.split("/")[1:]
 
-                        if group:
-                            tag_data = {
-                                "name": meta_value,
-                                "qcode": meta_id if meta_id else "",  # Use 'id' if available, otherwise an empty string
-                                "source": "Semaphore",  # You can replace with actual source value
-                                "altids": {"source_name": "source_id"},  # Replace with actual source name and id
-                                "original_source": "original_source_value",  # Replace with actual original source value
-                                "scheme": "scheme_value",  # Replace with actual scheme value
-                            }
-                            # Create the category in response_dict if it doesn't exist
-                            response_dict.setdefault(group, []).append(tag_data)
+                        # Process other categories
+                        else:
+                            group = None
+                            if "Organization" in meta_name:
+                                group = "organisation"
+                            elif "Person" in meta_name:
+                                group = "person"
+                            elif "Event" in meta_name:
+                                group = "event"
+                            elif "Place" in meta_name:
+                                group = "place"
 
-                print('response dict is')
-                print(response_dict)
+                            if group:
+                                tag_data = {
+                                    "name": meta_value,
+                                    "qcode": meta_id if meta_id else "",
+                                    "source": "source_value",
+                                    "altids": {"source_name": "source_id"},
+                                    "original_source": "original_source_value",
+                                    "scheme": "http://cv.cp.org/"
+                                }
+                                add_to_dict(group, tag_data)
+
+                # Match path labels with path GUIDs based on scores
+                for score, labels in path_labels.items():
+                    guids = path_guids.get(score, [])
+                    if len(labels) != len(guids):
+                        continue  # Skip if there's a mismatch in the number of labels and GUIDs
+
+                    parent_qcode = None  # Track the parent qcode
+                    for label, guid in zip(labels, guids):
+                        tag_data = {
+                            "name": label,
+                            "qcode": guid,
+                            "parent": parent_qcode,
+                            "source": "source_value",
+                            "altids": {"source_name": "source_id"},
+                            "original_source": "original_source_value",
+                            "scheme": "media topics"
+                        }
+                        add_to_dict("subject", tag_data)
+                        parent_qcode = guid  # Update the parent qcode for the next iteration
 
                 return response_dict
-                
-
-               
+                                          
                 
             # root = root.replace('<?xml version="1.0" encoding="UTF-8"?>','')
             json_response = transform_xml_response(root)
@@ -175,6 +310,12 @@ class Semaphore(AIServiceBase):
             your_string = input_str.replace('<p>', '')
             your_string = your_string.replace('</p>', '')
             your_string = your_string.replace('<br>', '')
+            your_string = your_string.replace('&nbsp;', '')
+            your_string = your_string.replace('&amp;', '')
+            your_string = your_string.replace('&lt;&gt;', '')
+            # your_string = your_string.replace('&lt;', '')
+            # your_string = your_string.replace('&gt;', '')
+            
 
             
             return your_string    
@@ -210,16 +351,12 @@ class Semaphore(AIServiceBase):
             
         return xml_output
 		
-		
-		
-        
-        
-        
 
-    
-  
+
 
 
 def init_app(app):
+    print(type(app))
+    print(app)
     a = Semaphore(app)
     return a.output
