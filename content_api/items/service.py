@@ -216,7 +216,12 @@ class ItemsService(BaseService):
         expire_at = date_to_str(expiry_datetime - timedelta(days=expiry_days))
 
         while True:
-            query = {"$and": [{"_updated": {"$lte": expire_at}}]}
+            query = {
+                "$and": [
+                    {"_updated": {"$lte": expire_at}},
+                    {"expiry": None},
+                ]
+            }
 
             if last_id is not None:
                 query["$and"].append({"_id": {"$gt": last_id}})

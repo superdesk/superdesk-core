@@ -341,3 +341,15 @@ class STTSubjectTestCase(BaseSTTNewsMLTestCase):
             },
             item["subject"],
         )
+
+
+class STTTruncatedTestCase(BaseSTTNewsMLTestCase):
+    filename = "stt_newsml_no_truncated_text_test.xml"
+
+    def test_no_truncated_text(self):
+        item = self.item[0]
+        self.assertIn(
+            "Poliisin tarkastaessa miehen tietoja kävikin ilmi, että hä"
+            "n oli Vastaamo-tietomurrosta epäilty suomalaismies",
+            item["body_html"],
+        )
