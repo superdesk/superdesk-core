@@ -75,9 +75,16 @@ def get_locale_name(item, language):
 
 def format_cv_item(item, language):
     """Format item from controlled vocabulary for output."""
-    return filter_empty_vals(
-        {"code": item.get("qcode"), "name": get_locale_name(item, language), "scheme": item.get("scheme")}
+    if item.get("scheme") == "subject":
+
+        return filter_empty_vals(
+        {"code": item.get("qcode"), "name": get_locale_name(item, language), "scheme": "http://cv.iptc.org/newscodes/mediatopic/"}
     )
+    else:
+
+        return filter_empty_vals(
+            {"code": item.get("qcode"), "name": get_locale_name(item, language), "scheme": item.get("scheme")}
+        )
 
 
 class NINJSFormatter(Formatter):
@@ -213,8 +220,12 @@ class NINJSFormatter(Formatter):
         else:
             ninjs["priority"] = 5
 
-        if article.get("subject"):
-            ninjs["subject"] = self._get_subject(article)
+        
+        if article.get("subject") or article.get("organisation") or article.get("place") or article.get("event") or article.get("person"):
+            combined_subjects = (self._get_subject(article) + self._get_organisation(article) + 
+                                self._get_place(article) + self._get_event(article) + 
+                                self._get_person(article))
+            ninjs["subject"] = combined_subjects
 
         if article.get("anpa_category"):
             ninjs["service"] = self._get_service(article)
@@ -414,9 +425,27 @@ class NINJSFormatter(Formatter):
         lang = article.get("language", "")
         return [format_cv_item(item, lang) for item in article["genre"]]
 
+
+    #  Updated Code here for Subjects and entities
     def _get_subject(self, article):
         """Get subject list for article."""
+        # return[{"code": "02011001", "name": "hello", "scheme": "custom"}]
         return [format_cv_item(item, article.get("language", "")) for item in article.get("subject", [])]
+    
+    def _get_organisation(self, article):
+        return [format_cv_item(item, article.get("language", "")) for item in article.get("organisation", [])]
+
+    def _get_place(self, article):
+        """Get place list for article."""
+        return [format_cv_item(item, article.get("language", "")) for item in article.get("place", [])]
+
+    def _get_event(self, article):
+        """Get event list for article."""
+        return [format_cv_item(item, article.get("language", "")) for item in article.get("event", [])]
+
+    def _get_person(self, article):
+        """Get person list for article."""
+        return [format_cv_item(item, article.get("language", "")) for item in article.get("person", [])]
 
     def _get_service(self, article):
         """Get service list for article.
