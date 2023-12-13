@@ -86,6 +86,7 @@ desks_schema = {
     "preserve_published_content": {"type": "boolean", "required": False, "default": False},
     # Store SAMS's Desk settings on the Desk items
     "sams_settings": {"type": "dict", "allow_unknown": True, "schema": {"allowed_sets": {"type": "list"}}},
+    "email": {"type": "string", "nullable": True},
 }
 
 
