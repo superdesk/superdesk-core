@@ -33,9 +33,10 @@ class Semaphore(AIServiceBase):
 
         self.base_url = "https://ca.cloud.smartlogic.com/token"  
         self.analyze_url = "https://ca.cloud.smartlogic.com/svc/5457e590-c2cc-4219-8947-e7f74c8675be/?operation=classify"
-        # self.analyze_url = "https://ca.cloud.smartlogic.com/svc/5457e590-c2cc-4219-8947-e7f74c8675be/"  
+  
         self.api_key = "OoP3QRRkLVCzo4sRa6iAyg=="
         self.search_url = "https://ca.cloud.smartlogic.com/svc/5457e590-c2cc-4219-8947-e7f74c8675be/SES//CPKnowledgeSystem/en/hints/"
+        self.get_parent_url = "https://ca.cloud.smartlogic.com/svc/5457e590-c2cc-4219-8947-e7f74c8675be/SES/CPKnowledgeSystem/relatedFrom/"
 
         
 
@@ -47,7 +48,25 @@ class Semaphore(AIServiceBase):
 
         self.output = self.analyze(data)
 
- 
+    
+    def convert_to_desired_format(input_data):
+        result = {
+            "result": {
+                "tags": {
+                    "subject": input_data['subject'],
+                    "organisation": input_data['organisation'],
+                    "person": input_data['person'],
+                    "event": input_data['event'],
+                    "place": input_data['place'],
+                    "object": []  # Assuming no data for 'object'
+                },
+                "broader": {
+                    "subject": input_data['broader']
+                }
+            }
+        }
+
+        return result
     
     def get_access_token(self):
         """Get access token for Semaphore."""
@@ -62,6 +81,35 @@ class Semaphore(AIServiceBase):
         response.raise_for_status()
         return response.json().get("access_token")
 
+
+    def fetch_parent_info(self,qcode):
+    
+        headers = {"Authorization": f"Bearer {self.get_access_token()}"}
+        try:
+            frank = f"?relationshipType=has%20broader"
+
+            query = qcode
+            parent_url = self.get_parent_url+query+frank
+
+            response = requests.get(parent_url, headers=headers)
+            response.raise_for_status()
+            root = ET.fromstring(response.text)
+            path = root.find(".//PATH[@TYPE='Narrower Term']")
+            parent_info = []
+            if path is not None:
+                for field in path.findall('FIELD'):
+                    if field.find('CLASS').get('NAME') == 'Topic':
+                        parent_info.append({
+                            "name": field.get('NAME'),
+                            "qcode": field.get('ID'),
+                            "parent": None  # Set to None initially
+                        })
+            return parent_info, parent_info[::-1]
+            # return parent_info[::-1]  # Reverse to get ancestors in order
+        except Exception as e:
+            logger.error(f"Error fetching parent info: {str(e)}")
+            return [] 
+    
     
     def analyze_2(self, html_content: str) -> dict:
         try:
@@ -100,27 +148,48 @@ class Semaphore(AIServiceBase):
 
             # def transform_xml_response(xml_data):
             def transform_xml_response(api_response):
-                # Initialize the result dictionary
                 result = {
                     "subject": [],
                     "organisation": [],
                     "person": [],
                     "event": [],
-                    "place": []
+                    "place": [],
+                    "broader": []
                 }
 
-                # Iterate through the termHints in the API response
+                # Process each termHint item in the API response
                 for item in api_response["termHints"]:
+                    
+                    scheme_url = "http://cv.cp.org/"
+
+                    if "Organization" in item["classes"]:
+                        scheme_url = "http://cv.cp.org/Organizations/"
+                        category = "organisation"
+                    elif "People" in item["classes"]:
+                        scheme_url = "http://cv.cp.org/People/"
+                        category = "person"
+                    elif "Event" in item["classes"]:
+                        scheme_url = "http://cv.cp.org/Events/"
+                        category = "event"
+                    elif "Place" in item["classes"]:
+                        scheme_url = "http://cv.cp.org/Places/"
+                        category = "place"
+                    else:
+                        # For 'subject', a different scheme might be used
+                        category = "subject"
+                        scheme_url = "http://cv.iptc.org/newscodes/mediatopic/"
+
                     entry = {
                         "name": item["name"],
                         "qcode": item["id"],
-                        "source": "Semaphore",  # Replace with actual source if available
-                        "altids": {"source_name": "source_id"},  # Replace with actual source name and id
-                        "original_source": "original_source_value",  # Replace with actual original source value
-                        "scheme": "http://cv.cp.org/"  # Replace with actual scheme value
+                        "source": "Semaphore",
+                        "altids": {"source_name": "source_id"},
+                        "original_source": "original_source_value",
+                        "scheme": scheme_url,
+                        "parent": None  # Initial parent assignment
                     }
 
-                    # Check the classes and add to the appropriate category
+                    # Assign to correct category based on class
                     if "Organization" in item["classes"]:
                         result["organisation"].append(entry)
                     elif "People" in item["classes"]:
@@ -130,15 +199,57 @@ class Semaphore(AIServiceBase):
                     elif "Place" in item["classes"]:
                         result["place"].append(entry)
                     else:
-                        entry["scheme"] = "media topics"
+                        # Fetch parent info for each subject item
+                        parent_info, reversed_parent_info = self.fetch_parent_info(item["id"])
+
+                        # Assign the immediate parent to the subject item
+                        if parent_info:
+                            entry["parent"] = reversed_parent_info[0]["qcode"]  # Immediate parent is the first in the list
+                            entry["scheme"] = "http://cv.iptc.org/newscodes/mediatopic/"
+
                         result["subject"].append(entry)
 
+                        # Process broader items using reversed_parent_info
+                        for i in range(len(reversed_parent_info)):
+                            broader_entry = {
+                                "name": reversed_parent_info[i]["name"],
+                                "qcode": reversed_parent_info[i]["qcode"],
+                                "parent": reversed_parent_info[i + 1]["qcode"] if i + 1 < len(reversed_parent_info) else None,
+                                "source": "Semaphore",
+                                "altids": {"source_name": "source_id"},
+                                "original_source": "original_source_value",
+                                "scheme": "http://cv.iptc.org/newscodes/mediatopic/"
+                            }
+                            result["broader"].append(broader_entry)
+
                 return result
-                              
-                
+            
+
+            def convert_to_desired_format(input_data):
+                result = {
+                    "result": {
+                        "tags": {
+                            "subject": input_data['subject'],
+                            "organisation": input_data['organisation'],
+                            "person": input_data['person'],
+                            "event": input_data['event'],
+                            "place": input_data['place'],
+                            "object": []  # Assuming no data for 'object'
+                        },
+                        "broader": {
+                            "subject": input_data['broader']
+                        }
+                    }
+                }
+
+                return result
+                            
+                            
             # root = root.replace('<?xml version="1.0" encoding="UTF-8"?>','')
             root = json.loads(root)
-            json_response = transform_xml_response(root)
+            json_response = transform_xml_response(root)          
+
+            json_response = convert_to_desired_format(json_response)
 
             print('Json Response is ')
             print(json_response)
@@ -165,8 +276,10 @@ class Semaphore(AIServiceBase):
                         print(value)
                         self.output = self.analyze_2(html_content)
                         return self.output
-                    else:
-                        print('###########################################################################')
+                    
+                    
+
+                        
             except TypeError:
                 pass
 
@@ -244,21 +357,25 @@ class Semaphore(AIServiceBase):
                             group = None
                             if "Organization" in meta_name:
                                 group = "organisation"
+                                scheme_url = "http://cv.cp.org/Organizations/"
                             elif "Person" in meta_name:
                                 group = "person"
+                                scheme_url = "http://cv.cp.org/People/"
                             elif "Event" in meta_name:
                                 group = "event"
+                                scheme_url = "http://cv.cp.org/Events/"
                             elif "Place" in meta_name:
                                 group = "place"
+                                scheme_url = "http://cv.cp.org/Places/"
 
                             if group:
                                 tag_data = {
                                     "name": meta_value,
                                     "qcode": meta_id if meta_id else "",
-                                    "source": "source_value",
+                                    "source": "Semaphore",
                                     "altids": {"source_name": "source_id"},
                                     "original_source": "original_source_value",
-                                    "scheme": "http://cv.cp.org/"
+                                    "scheme": scheme_url
                                 }
                                 add_to_dict(group, tag_data)
 
@@ -274,10 +391,10 @@ class Semaphore(AIServiceBase):
                             "name": label,
                             "qcode": guid,
                             "parent": parent_qcode,
-                            "source": "source_value",
+                            "source": "Semaphore",
                             "altids": {"source_name": "source_id"},
                             "original_source": "original_source_value",
-                            "scheme": "media topics"
+                            "scheme": "http://cv.iptc.org/newscodes/mediatopic/"
                         }
                         add_to_dict("subject", tag_data)
                         parent_qcode = guid  # Update the parent qcode for the next iteration
