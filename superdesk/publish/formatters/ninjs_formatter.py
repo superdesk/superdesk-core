@@ -220,6 +220,12 @@ class NINJSFormatter(Formatter):
         else:
             ninjs["priority"] = 5
 
+        # Merging Various Entities into Subjects for ninjs Response
+        # ---------------------------------------------------------
+        # This section of the code is responsible for aggregating different entity types 
+        # like 'organisation', 'place', 'event', and 'person' along with 'subject' into 
+        # a single list.
+        
         
         if article.get("subject") or article.get("organisation") or article.get("place") or article.get("event") or article.get("person"):
             combined_subjects = (self._get_subject(article) + self._get_organisation(article) + 
@@ -426,27 +432,31 @@ class NINJSFormatter(Formatter):
         return [format_cv_item(item, lang) for item in article["genre"]]
 
 
-    #  Updated Code here for Subjects and entities
+    
+    
     def _get_subject(self, article):
         """Get subject list for article."""
-        # return[{"code": "02011001", "name": "hello", "scheme": "custom"}]
         return [format_cv_item(item, article.get("language", "")) for item in article.get("subject", [])]
-    
+
+    #  Updated Code here to fetch Organisations from Article
     def _get_organisation(self, article):
         return [format_cv_item(item, article.get("language", "")) for item in article.get("organisation", [])]
 
+    #  Updated Code here to fetch Places from Article
     def _get_place(self, article):
         """Get place list for article."""
         return [format_cv_item(item, article.get("language", "")) for item in article.get("place", [])]
 
+    #  Updated Code here to fetch Events from Article
     def _get_event(self, article):
         """Get event list for article."""
         return [format_cv_item(item, article.get("language", "")) for item in article.get("event", [])]
 
+    #  Updated Code here to fetch Person from Article
     def _get_person(self, article):
         """Get person list for article."""
         return [format_cv_item(item, article.get("language", "")) for item in article.get("person", [])]
-
+    
     def _get_service(self, article):
         """Get service list for article.
 
