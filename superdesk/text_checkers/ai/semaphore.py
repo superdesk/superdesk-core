@@ -19,7 +19,7 @@ TIMEOUT = (5, 30)
 class Semaphore(AIServiceBase):
     """Semaphore autotagging service
     
-    Environment variables SEMAPHORE_BASE_URL, SEMAPHORE_ANALYZE_URL, and SEMAPHORE_API_KEY must be set.
+    Environment variables SEMAPHORE_BASE_URL, SEMAPHORE_ANALYZE_URL, SEMAPHORE_SEARCH_URL, SEMAPHORE_GET_PARENT_URL and SEMAPHORE_API_KEY must be set.
     """
 
     name = "semaphore"
@@ -31,12 +31,20 @@ class Semaphore(AIServiceBase):
 	
     def __init__(self,data):
 
-        self.base_url = "https://ca.cloud.smartlogic.com/token"  
-        self.analyze_url = "https://ca.cloud.smartlogic.com/svc/5457e590-c2cc-4219-8947-e7f74c8675be/?operation=classify"
-  
-        self.api_key = "OoP3QRRkLVCzo4sRa6iAyg=="
-        self.search_url = "https://ca.cloud.smartlogic.com/svc/5457e590-c2cc-4219-8947-e7f74c8675be/SES//CPKnowledgeSystem/en/hints/"
-        self.get_parent_url = "https://ca.cloud.smartlogic.com/svc/5457e590-c2cc-4219-8947-e7f74c8675be/SES/CPKnowledgeSystem/relatedFrom/"
+	# SEMAPHORE_BASE_URL OR TOKEN_ENDPOINT Goes Here
+        self.base_url =  os.getenv('SEMAPHORE_BASE_URL')
+
+	#  SEMAPHORE_ANALYZE_URL Goes Here
+        self.analyze_url = os.getenv(' SEMAPHORE_ANALYZE_URL')
+
+	#  SEMAPHORE_API_KEY Goes Here
+        self.api_key = os.getenv('SEMAPHORE_API_KEY')
+
+	#  SEMAPHORE_SEARCH_URL Goes Here
+        self.search_url = os.getenv('SEMAPHORE_SEARCH_URL')
+
+	#  SEMAPHORE_GET_PARENT_URL Goes Here
+        self.get_parent_url = os.getenv('SEMAPHORE_GET_PARENT_URL')
 
         
 
@@ -105,7 +113,7 @@ class Semaphore(AIServiceBase):
                             "parent": None  # Set to None initially
                         })
             return parent_info, parent_info[::-1]
-            # return parent_info[::-1]  # Reverse to get ancestors in order
+            
         except Exception as e:
             logger.error(f"Error fetching parent info: {str(e)}")
             return [] 
@@ -117,7 +125,7 @@ class Semaphore(AIServiceBase):
                 logger.warning("Semaphore Search is not configured properly, can't analyze content")
                 return {}
             
-            print(html_content['searchString'])
+            
             query = html_content['searchString']
             
             new_url = self.search_url+query+".json"
@@ -130,8 +138,7 @@ class Semaphore(AIServiceBase):
             
             try:
                 response = session.get(new_url, headers=headers)
-                print('response is')
-                print(response)
+                
 
                 response.raise_for_status()
             except Exception as e:
@@ -139,11 +146,7 @@ class Semaphore(AIServiceBase):
                 logger.error(f"An error occurred while making the request: {str(e)}")
 
             root = response.text
-            print('Root is')
-            print(root)
-
-            print(type(root))
-
+            
           
 
             # def transform_xml_response(xml_data):
@@ -245,15 +248,13 @@ class Semaphore(AIServiceBase):
                 return result
                             
                             
-            # root = root.replace('<?xml version="1.0" encoding="UTF-8"?>','')
+            
             root = json.loads(root)
             json_response = transform_xml_response(root)          
 
             json_response = convert_to_desired_format(json_response)
 
-            print('Json Response is ')
-            print(json_response)
-
+            
 
             return json_response
         
@@ -273,7 +274,7 @@ class Semaphore(AIServiceBase):
                     if key == 'searchString':
                         print('______________________________________---------------------------------------')
                         print('Running for Search')
-                        print(value)
+                        
                         self.output = self.analyze_2(html_content)
                         return self.output
                     
@@ -288,8 +289,7 @@ class Semaphore(AIServiceBase):
 			
             payload = {'XML_INPUT': xml_payload}
 
-            print("payload is ")
-            print(payload)
+            
 
             # Make a POST request using XML payload
             headers = {
@@ -299,8 +299,7 @@ class Semaphore(AIServiceBase):
             
             try:
                 response = session.post(self.analyze_url, headers=headers, data=payload)
-                print('response is')
-                print(response)
+                
 
                 response.raise_for_status()
             except Exception as e:
@@ -308,8 +307,7 @@ class Semaphore(AIServiceBase):
                 logger.error(f"An error occurred while making the request: {str(e)}")
 
             root = response.text
-            print('Root is')
-            print(root)
+            
 
             
 
@@ -402,12 +400,10 @@ class Semaphore(AIServiceBase):
                 return response_dict
                                           
                 
-            # root = root.replace('<?xml version="1.0" encoding="UTF-8"?>','')
+            
             json_response = transform_xml_response(root)
 
-            print('Json Response is ')
-            print(json_response)
-
+            
 
             return json_response
 
@@ -430,8 +426,7 @@ class Semaphore(AIServiceBase):
             your_string = your_string.replace('&nbsp;', '')
             your_string = your_string.replace('&amp;', '')
             your_string = your_string.replace('&lt;&gt;', '')
-            # your_string = your_string.replace('&lt;', '')
-            # your_string = your_string.replace('&gt;', '')
+            
             
 
             
@@ -460,9 +455,8 @@ class Semaphore(AIServiceBase):
         headline = html_content['headline']
         headline_extended = html_content['abstract']
         slugline = html_content['slugline']
-        #  &lt;slugline&gt;{}&lt;/slugline&gt;
-
-				# Embed the 'body_html' into the XML template		
+        
+	# Embed the 'body_html' into the XML template		
         xml_output = xml_template.format(headline,headline_extended,body_html,slugline)
         xml_output = clean_html_content(xml_output)
             
