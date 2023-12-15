@@ -467,7 +467,6 @@ class Semaphore(AIServiceBase):
 
 
 def init_app(app):
-    print(type(app))
-    print(app)
+    
     a = Semaphore(app)
     return a.output
