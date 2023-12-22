@@ -38,6 +38,7 @@ MEDIA = "MEDIA"
 TABLE = "TABLE"
 MULTI_LINE_QUOTE = "MULTI-LINE_QUOTE"
 IMAGE = "IMAGE"
+ARTICLE_EMBED = "ARTICLE_EMBED"
 
 EDITOR_STATE = "draftjsState"
 ENTITY_MAP = "entityMap"
@@ -314,6 +315,8 @@ class DraftJSHTMLExporter:
                     TABLE: self.render_table,
                     MULTI_LINE_QUOTE: self.render_table,
                     IMAGE: self.render_image,
+                    # TODO: needs to be fixed. I added this for now to simply avoid it from crashing.
+                    ARTICLE_EMBED: lambda props: DOM.create_element("hr"),
                 },
             }
         )
