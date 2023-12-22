@@ -315,7 +315,6 @@ class DraftJSHTMLExporter:
                     TABLE: self.render_table,
                     MULTI_LINE_QUOTE: self.render_table,
                     IMAGE: self.render_image,
-
                     # TODO: needs to be fixed. I added this for now to simply avoid it from crashing.
                     ARTICLE_EMBED: lambda props: DOM.create_element("hr"),
                 },
