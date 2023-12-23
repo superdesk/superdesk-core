@@ -47,11 +47,6 @@ class Semaphore(AIServiceBase):
         self.get_parent_url = os.getenv('SEMAPHORE_GET_PARENT_URL')
 
         
-
-        self.session = requests.Session()  
-        self.TIMEOUT = 10 
-        self.logger = logging.getLogger(__name__) 
-        logger.error(data)
         
 
         self.output = self.analyze(data)
@@ -99,7 +94,7 @@ class Semaphore(AIServiceBase):
             query = qcode
             parent_url = self.get_parent_url+query+frank
 
-            response = requests.get(parent_url, headers=headers)
+            response = session.get(parent_url, headers=headers)
             response.raise_for_status()
             root = ET.fromstring(response.text)
             path = root.find(".//PATH[@TYPE='Narrower Term']")
