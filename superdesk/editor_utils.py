@@ -68,7 +68,7 @@ TEXT_FIELDS = ["headline", "slugline"]
 def get_field_content_state(item, field):
     try:
         return item["fields_meta"][field][EDITOR_STATE][0]
-    except (KeyError, AttributeError):
+    except (KeyError, AttributeError, TypeError):
         return None
 
 
