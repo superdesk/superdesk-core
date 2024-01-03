@@ -186,7 +186,7 @@ def transmit_item(queue_item_id, is_async=False):
         retry_attempt_delay = app.config.get("TRANSMIT_RETRY_ATTEMPT_DELAY_MINUTES")
         try:
             orig_item = publish_queue_service.find_one(req=None, _id=queue_item["_id"])
-            timeout = min(2 ** min(6, orig_item.get("retry_attempt", retry_attempt_delay)), 60)
+            timeout = 2 ** min(6, orig_item.get("retry_attempt", retry_attempt_delay))
             updates = {config.LAST_UPDATED: utcnow()}
 
             if orig_item.get("retry_attempt", 0) < max_retry_attempt and not isinstance(e, PublishHTTPPushClientError):
