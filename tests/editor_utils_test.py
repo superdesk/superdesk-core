@@ -16,7 +16,7 @@ import flask
 import lxml.etree
 import superdesk.editor_utils as editor_utils
 
-from superdesk.editor_utils import DraftJSHTMLExporter, Editor3Content
+from superdesk.editor_utils import Editor3Content
 
 
 class Editor3TestCase(unittest.TestCase):
@@ -2076,3 +2076,13 @@ class Editor3TestCase(unittest.TestCase):
         body_editor = Editor3Content(item_editor3)
         item = body_editor.html_exporter.render_table(data)
         self.assertEqual(expected, lxml.etree.tostring(item, encoding="unicode"))
+
+    def test_field_data_none(self):
+        item = {
+            "headline": "foo",
+            "fields_meta": {
+                "headline": None,
+            },
+        }
+
+        editor_utils.generate_fields(item, fields=["headline"])
