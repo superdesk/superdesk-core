@@ -33,13 +33,11 @@ class AIResource(Resource):
             "type": "dict",
             "required": True,
             "schema": {
-                "guid": {"type": "string", "required": False},
+                "guid": {"type": "string", "required": True},
                 "abstract": {"type": "string", "required": False},
-                "language": {"type": "string", "required": False},
-                "headline": {"type": "string", "nullable": False},
-                "slugline": {"type": "string", "required": False},
-                "searchString": {"type": "string", "required": False},
-                "body_html": {"type": "string", "required": False},
+                "language": {"type": "string", "required": True},
+                "headline": {"type": "string", "nullable": True},
+                "body_html": {"type": "string", "required": True},
             },
         },
         "tags": {
@@ -90,8 +88,7 @@ class AIService(BaseService):
         except KeyError:
             raise SuperdeskApiError.notFoundError("{service} service can't be found".format(service=service))
 
-        # analyzed_data = service.analyze(item, doc.get("tags"))
-        analyzed_data = service.analyze(item)
+        analyzed_data = service.analyze(item, doc.get("tags"))
         docs[0].update({"analysis": analyzed_data})
         return [0]
 
