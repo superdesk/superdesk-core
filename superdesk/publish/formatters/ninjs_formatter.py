@@ -75,16 +75,9 @@ def get_locale_name(item, language):
 
 def format_cv_item(item, language):
     """Format item from controlled vocabulary for output."""
-    if item.get("scheme") == "subject":
-
-        return filter_empty_vals(
-        {"code": item.get("qcode"), "name": get_locale_name(item, language), "scheme": "http://cv.iptc.org/newscodes/mediatopic/"}
+    return filter_empty_vals(
+        {"code": item.get("qcode"), "name": get_locale_name(item, language), "scheme": item.get("scheme")}
     )
-    else:
-
-        return filter_empty_vals(
-            {"code": item.get("qcode"), "name": get_locale_name(item, language), "scheme": item.get("scheme")}
-        )
 
 
 class NINJSFormatter(Formatter):
@@ -220,18 +213,8 @@ class NINJSFormatter(Formatter):
         else:
             ninjs["priority"] = 5
 
-        # Merging Various Entities into Subjects for ninjs Response
-        # ---------------------------------------------------------
-        # This section of the code is responsible for aggregating different entity types 
-        # like 'organisation', 'place', 'event', and 'person' along with 'subject' into 
-        # a single list.
-        
-        
-        if article.get("subject") or article.get("organisation") or article.get("place") or article.get("event") or article.get("person"):
-            combined_subjects = (self._get_subject(article) + self._get_organisation(article) + 
-                                self._get_place(article) + self._get_event(article) + 
-                                self._get_person(article))
-            ninjs["subject"] = combined_subjects
+        if article.get("subject"):
+            ninjs["subject"] = self._get_subject(article)
 
         if article.get("anpa_category"):
             ninjs["service"] = self._get_service(article)
@@ -431,32 +414,10 @@ class NINJSFormatter(Formatter):
         lang = article.get("language", "")
         return [format_cv_item(item, lang) for item in article["genre"]]
 
-
-    
-    
     def _get_subject(self, article):
         """Get subject list for article."""
         return [format_cv_item(item, article.get("language", "")) for item in article.get("subject", [])]
 
-    #  Updated Code here to fetch Organisations from Article
-    def _get_organisation(self, article):
-        return [format_cv_item(item, article.get("language", "")) for item in article.get("organisation", [])]
-
-    #  Updated Code here to fetch Places from Article
-    def _get_place(self, article):
-        """Get place list for article."""
-        return [format_cv_item(item, article.get("language", "")) for item in article.get("place", [])]
-
-    #  Updated Code here to fetch Events from Article
-    def _get_event(self, article):
-        """Get event list for article."""
-        return [format_cv_item(item, article.get("language", "")) for item in article.get("event", [])]
-
-    #  Updated Code here to fetch Person from Article
-    def _get_person(self, article):
-        """Get person list for article."""
-        return [format_cv_item(item, article.get("language", "")) for item in article.get("person", [])]
-    
     def _get_service(self, article):
         """Get service list for article.
 
