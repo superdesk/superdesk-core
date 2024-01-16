@@ -63,25 +63,24 @@ class EnqueueService:
         they have been updated. This avoids the filtering functions having to repeatedly retireve the individual filter
         records.
         """
-        if self.filters is None:
-            if hasattr(g, "enqueue_service_filters"):
-                # Filters may have already been loaded from a different EnqueueService instance
-                # So load it from the global object
-                self.filters = g.enqueue_service_filters
-            else:
-                # Filters have not been loaded yet, store them on this instance and the global object
-                self.filters = dict(
-                    filter_conditions={},
-                    content_filters={},
-                )
+        if hasattr(g, "enqueue_service_filters"):
+            # Filters may have already been loaded from a different EnqueueService instance
+            # So load it from the global object
+            self.filters = g.enqueue_service_filters
+        else:
+            # Filters have not been loaded yet, store them on this instance and the global object
+            self.filters = dict(
+                filter_conditions={},
+                content_filters={},
+            )
 
-                for fc in get_resource_service("filter_conditions").get_cached():
-                    self.filters["filter_conditions"][fc.get("_id")] = {"fc": fc}
+            for fc in get_resource_service("filter_conditions").get_cached():
+                self.filters["filter_conditions"][fc.get("_id")] = {"fc": fc}
 
-                for cf in get_resource_service("content_filters").get_cached():
-                    self.filters["content_filters"][cf.get("_id")] = {"cf": cf}
+            for cf in get_resource_service("content_filters").get_cached():
+                self.filters["content_filters"][cf.get("_id")] = {"cf": cf}
 
-                g.enqueue_service_filters = self.filters
+            g.enqueue_service_filters = self.filters
 
         return self.filters
 
