@@ -60,7 +60,12 @@ class EnqueueService:
         they have been updated. This avoids the filtering functions having to repeatedly retireve the individual filter
         records.
         """
-        if not hasattr(g, "enqueue_service_filters"):
+        if hasattr(g, "enqueue_service_filters"):
+            # Filters may have already been loaded from a different EnqueueService instance
+            # So load it from the global object
+            self.filters = g.enqueue_service_filters
+        else:
+            # Filters have not been loaded yet, store them on this instance and the global object
             self.filters = dict(
                 filter_conditions={},
                 content_filters={},
