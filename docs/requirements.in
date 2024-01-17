@@ -1,0 +1,4 @@
+sphinx
+docutils
+sphinx-autobuild
+sphinxcontrib-plantuml
