@@ -1,4 +1,5 @@
-sphinx
+sphinx<7.0
 docutils
 sphinx-autobuild
 sphinxcontrib-plantuml
+jinja2<3.0
