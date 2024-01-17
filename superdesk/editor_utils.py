@@ -315,8 +315,7 @@ class DraftJSHTMLExporter:
                     TABLE: self.render_table,
                     MULTI_LINE_QUOTE: self.render_table,
                     IMAGE: self.render_image,
-                    # TODO: needs to be fixed. I added this for now to simply avoid it from crashing.
-                    ARTICLE_EMBED: lambda props: DOM.create_element("hr"),
+                    ARTICLE_EMBED: self.render_article_embed,
                 },
             }
         )
@@ -444,6 +443,13 @@ class DraftJSHTMLExporter:
             DOM.append_child(div, p)
 
         return div
+
+    def render_article_embed(self, props):
+        if props.get("html"):
+            div = parse_html(props["html"], content="html")
+            div.set("class", "article-embed-block")
+            return div
+        return DOM.create_element("p")
 
     def render_table(self, props):
         num_cols = props["data"]["numCols"]
