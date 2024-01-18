@@ -1,0 +1,6 @@
+sphinx
+docutils
+sphinx-autobuild
+sphinxcontrib-plantuml
+jinja2<3.0
+markupsafe<2.1
