@@ -14,6 +14,7 @@ import uuid
 import unittest
 import flask
 import lxml.etree
+import pathlib
 import superdesk.editor_utils as editor_utils
 
 from superdesk.editor_utils import Editor3Content
@@ -2122,3 +2123,15 @@ class Editor3TestCase(unittest.TestCase):
         }
 
         editor_utils.generate_fields(item, fields=["headline"])
+
+    def test_export_embedded_article(self):
+        with open(pathlib.Path(__file__).parent / "fixtures" / "article_with_embedded_article.json") as fixture:
+            item = json.load(fixture)
+            body_html = item.pop("body_html", "")
+        editor_utils.generate_fields(item, fields=["body_html"])
+        assert (
+            """
+        <p> test it</p>\n<div class="article-embed-block"><p>some embed body here</p></div>
+        """.strip()
+            == item["body_html"]
+        )
