@@ -69,7 +69,7 @@ class EveBackend:
         backend = self._backend(endpoint_name)
         item = backend.find_one(endpoint_name, req=req, **lookup)
         search_backend = self._lookup_backend(endpoint_name, fallback=True)
-        if search_backend:
+        if search_backend and app.config.get("BACKEND_FIND_ONE_SEARCH_TEST", False):
             # set the parent for the parent child in elastic search
             self._set_parent(endpoint_name, item, lookup)
             item_search = search_backend.find_one(endpoint_name, req=req, **lookup)

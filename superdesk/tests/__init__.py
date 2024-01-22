@@ -112,6 +112,10 @@ def update_config(conf):
 
     # auth server
     conf["AUTH_SERVER_SHARED_SECRET"] = "some secret"
+
+    # todo: only activate it for specific tests
+    conf["BACKEND_FIND_ONE_SEARCH_TEST"] = True
+
     return conf
 
 
