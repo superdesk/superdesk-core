@@ -9,7 +9,7 @@
 # at https://www.sourcefabric.org/superdesk/license
 
 
-from .ninjs_formatter import NINJSFormatter
+from .ninjs_formatter_2 import NINJSFormatter_2
 from superdesk.media.renditions import get_rendition_file_name
 from lxml import html as lxml_html
 from superdesk.etree import to_string
@@ -19,7 +19,7 @@ import re
 logger = logging.getLogger(__name__)
 
 
-class FTPNinjsFormatter(NINJSFormatter):
+class FTPNinjsFormatter(NINJSFormatter_2):
     name = "NINJS FTP"
     type = "ftp ninjs"
 
