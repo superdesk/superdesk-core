@@ -33,11 +33,13 @@ class AIResource(Resource):
             "type": "dict",
             "required": True,
             "schema": {
-                "guid": {"type": "string", "required": True},
+                "guid": {"type": "string", "required": False},
                 "abstract": {"type": "string", "required": False},
-                "language": {"type": "string", "required": True},
-                "headline": {"type": "string", "nullable": True},
-                "body_html": {"type": "string", "required": True},
+                "language": {"type": "string", "required": False},
+                "headline": {"type": "string", "nullable": False},
+                "slugline": {"type": "string", "required": False},
+                "searchString": {"type": "string", "required": False},
+                "body_html": {"type": "string", "required": False},
             },
         },
         "tags": {
@@ -88,7 +90,8 @@ class AIService(BaseService):
         except KeyError:
             raise SuperdeskApiError.notFoundError("{service} service can't be found".format(service=service))
 
-        analyzed_data = service.analyze(item, doc.get("tags"))
+        # analyzed_data = service.analyze(item, doc.get("tags"))
+        analyzed_data = service.analyze(item)
         docs[0].update({"analysis": analyzed_data})
         return [0]
 
@@ -148,6 +151,8 @@ class AIDataOpService(BaseService):
     """
 
     def create(self, docs, **kwargs):
+
+        
         doc = docs[0]
         service = doc["service"]
         operation = doc["operation"]
@@ -158,7 +163,9 @@ class AIDataOpService(BaseService):
         except KeyError:
             raise SuperdeskApiError.notFoundError("{service} service can't be found".format(service=service))
 
-        result = service.data_operation("POST", operation, name, data)
+        # result = service.data_operation("POST", operation, name, data)
+        result = service.analyze(docs)
+
         docs[0].update({"result": result})
         return [0]
 
