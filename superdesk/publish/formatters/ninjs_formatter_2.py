@@ -8,7 +8,7 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
-"""NINJS formatter for Superdesk
+"""NINJS formatter_2 for The Canadian Press's Superdesk
 
 .. versionadded:: 1.8
     Added *source* field.
@@ -87,7 +87,7 @@ def format_cv_item(item, language):
         )
 
 
-class NINJSFormatter(Formatter):
+class NINJSFormatter_2(Formatter):
     """
     The schema we use for the ninjs format is an extension
     of `the standard ninjs schema <http://www.iptc.org/std/ninjs/ninjs-schema_1.1.json>`_.
@@ -658,12 +658,12 @@ class NINJSFormatter(Formatter):
             raise Exception()
 
 
-class NINJS2Formatter(NINJSFormatter):
+class NINJS2Formatter(NINJSFormatter_2):
     """NINJS formatter v2
 
     .. versionadded:: 2.0
 
-    Extending :py:class:`NINJSFormatter` to avoid breaking changes.
+    Extending :py:class:`NINJSFormatter_2` to avoid breaking changes.
 
     *Changes*:
 
@@ -676,7 +676,7 @@ class NINJS2Formatter(NINJSFormatter):
     name = "NINJSv2"
     type = "ninjs2"
 
-    direct_copy_properties = NINJSFormatter.direct_copy_properties + (
+    direct_copy_properties = NINJSFormatter_2.direct_copy_properties + (
         "rewrite_sequence",
         "rewrite_of",
     )
