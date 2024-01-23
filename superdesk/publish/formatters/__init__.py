@@ -148,7 +148,7 @@ def get_all_formatters() -> List[Formatter]:
 
 
 from .nitf_formatter import NITFFormatter  # NOQA
-from .ninjs_formatter import NINJSFormatter, NINJS2Formatter  # NOQA
+from .ninjs_formatter_2 import NINJSFormatter_2, NINJS2Formatter  # NOQA
 from .newsml_1_2_formatter import NewsML12Formatter  # NOQA
 from .newsml_g2_formatter import NewsMLG2Formatter  # NOQA
 from .email_formatter import EmailFormatter  # NOQA
