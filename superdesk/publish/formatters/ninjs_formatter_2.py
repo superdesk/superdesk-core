@@ -199,15 +199,15 @@ class NINJSFormatter_2(Formatter):
         if recursive:
             if article[ITEM_TYPE] == CONTENT_TYPE.COMPOSITE:
                 ninjs[ASSOCIATIONS] = self._get_associations(article, subscriber)
-                if article.get(ASSOCIATIONS):
-                    associations, extra_items = self._format_related(article, subscriber)
-                    ninjs[ASSOCIATIONS].update(associations)
-            elif article.get(ASSOCIATIONS):
-                ninjs[ASSOCIATIONS], extra_items = self._format_related(article, subscriber)
-        elif article.get(ASSOCIATIONS) and recursive:
-            ninjs[ASSOCIATIONS], extra_items = self._format_related(article, subscriber)
-        if extra_items:
-            ninjs.setdefault(EXTRA_ITEMS, {}).update(extra_items)
+        #         if article.get(ASSOCIATIONS):
+        #             associations, extra_items = self._format_related(article, subscriber)
+        #             ninjs[ASSOCIATIONS].update(associations)
+        #     elif article.get(ASSOCIATIONS):
+        #         ninjs[ASSOCIATIONS], extra_items = self._format_related(article, subscriber)
+        # elif article.get(ASSOCIATIONS) and recursive:
+        #     ninjs[ASSOCIATIONS], extra_items = self._format_related(article, subscriber)
+        # if extra_items:
+        #     ninjs.setdefault(EXTRA_ITEMS, {}).update(extra_items)
 
         if article.get("embargoed"):
             ninjs["embargoed"] = article["embargoed"].isoformat()
@@ -305,6 +305,10 @@ class NINJSFormatter_2(Formatter):
 
         if (article.get("schedule_settings") or {}).get("utc_publish_schedule"):
             ninjs["publish_schedule"] = article["schedule_settings"]["utc_publish_schedule"]
+        
+        #  Added Code to create Original_id attribute
+        if article.get("family_id"):
+            ninjs["original_id"] = article["family_id"]
 
         # set description for custom embed field
         if article.get("extra"):
@@ -347,11 +351,7 @@ class NINJSFormatter_2(Formatter):
                 if RESIDREF in ref:
                     item = {}
                     item["guid"] = ref[RESIDREF]
-                    item[ITEM_TYPE] = ref.get(ITEM_TYPE, "text")
-                    if "label" in ref:
-                        item["label"] = ref.get("label")
-                    if ref.get("package_item"):
-                        item.update(self._transform_to_ninjs(ref["package_item"], subscriber, recursive=False))
+                    
                     group_items.append(item)
             if len(group_items) == 1:
                 associations[group[GROUP_ID]] = group_items[0]
@@ -673,8 +673,8 @@ class NINJS2Formatter(NINJSFormatter_2):
 
     """
 
-    name = "NINJSv2"
-    type = "ninjs2"
+    name = "NINJSv3"
+    type = "ninjs3"
 
     direct_copy_properties = NINJSFormatter_2.direct_copy_properties + (
         "rewrite_sequence",
@@ -683,9 +683,10 @@ class NINJS2Formatter(NINJSFormatter_2):
 
     def __init__(self):
         super().__init__()
-        self.format_type = "ninjs2"
+        self.format_type = "ninjs3"
 
     def _transform_to_ninjs(self, article, subscriber, recursive=True):
+        print('Using NinjsFormatter 2')
         ninjs = super()._transform_to_ninjs(article, subscriber, recursive)
         ninjs["version"] = str(article.get("correction_sequence", 1))
         return ninjs
