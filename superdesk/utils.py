@@ -363,3 +363,7 @@ def abort(status: int, message: str) -> None:
     for key, val in get_cors_headers():
         response.headers[key] = val
     flask.abort(response)
+
+
+def get_list_chunks(items, chunk_size=100):
+    return [items[i : i + chunk_size] for i in range(0, len(items), chunk_size)]
