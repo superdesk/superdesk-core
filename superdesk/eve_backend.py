@@ -26,6 +26,7 @@ from elasticsearch.exceptions import RequestError, NotFoundError
 from superdesk.errors import SuperdeskApiError
 from superdesk.notification import push_notification as _push_notification
 from superdesk.cache import cache
+from superdesk.utils import get_list_chunks
 
 
 SYSTEM_KEYS = set(
@@ -391,7 +392,8 @@ class EveBackend:
                 except Exception:
                     logger.exception("item can not be removed from elastic _id=%s" % (doc[config.ID_FIELD],))
         if len(removed_ids):
-            backend.remove(endpoint_name, {config.ID_FIELD: {"$in": removed_ids}})
+            for chunk in get_list_chunks(removed_ids):
+                backend.remove(endpoint_name, {config.ID_FIELD: {"$in": chunk}})
             logger.info("Removed %d documents from %s.", len(removed_ids), endpoint_name)
             for doc in docs:
                 self._push_resource_notification("deleted", endpoint_name, _id=str(doc["_id"]))

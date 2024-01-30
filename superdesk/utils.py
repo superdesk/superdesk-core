@@ -325,3 +325,7 @@ class AllowedContainer:
 
     def __iter__(self) -> Iterator[str]:
         return iter(self.data.keys())
+
+
+def get_list_chunks(items, chunk_size=100):
+    return [items[i : i + chunk_size] for i in range(0, len(items), chunk_size)]
