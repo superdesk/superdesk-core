@@ -294,8 +294,12 @@ class DesksService(BaseService):
                     desk=desk.get("name"),
                 )
                 push_notification("activity", _dest=activity["recipients"])
+                get_resource_service("users").update_stage_visibility_for_user(user)
 
-            get_resource_service("users").update_stage_visibility_for_users()
+            for removed_user in removed:
+                user = superdesk.get_resource_service("users").find_one(req=None, _id=removed_user)
+                get_resource_service("users").update_stage_visibility_for_user(user)
+
         else:
             push_notification(self.notification_key, updated=1, desk_id=str(desk.get(config.ID_FIELD)))
 
