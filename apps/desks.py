@@ -298,7 +298,7 @@ class DesksService(BaseService):
                 users_service.update_stage_visibility_for_user(user)
 
             for removed_user in removed:
-                user = users_service.get_resource_service("users").find_one(req=None, _id=removed_user)
+                user = users_service.find_one(req=None, _id=removed_user)
                 users_service.update_stage_visibility_for_user(user)
 
         else:
