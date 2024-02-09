@@ -275,6 +275,7 @@ class DesksService(BaseService):
 
     def __send_notification(self, updates, desk):
         desk_id = desk[config.ID_FIELD]
+        users_service = superdesk.get_resource_service("users")
 
         if "members" in updates:
             added, removed = self.__compare_members(desk.get("members", {}), updates["members"])
@@ -284,7 +285,7 @@ class DesksService(BaseService):
                 )
 
             for added_user in added:
-                user = superdesk.get_resource_service("users").find_one(req=None, _id=added_user)
+                user = users_service.find_one(req=None, _id=added_user)
                 activity = add_activity(
                     ACTIVITY_UPDATE,
                     "user {{user}} has been added to desk {{desk}}: Please re-login.",
@@ -295,8 +296,12 @@ class DesksService(BaseService):
                     desk=desk.get("name"),
                 )
                 push_notification("activity", _dest=activity["recipients"])
+                users_service.update_stage_visibility_for_user(user)
 
-            get_resource_service("users").update_stage_visibility_for_users()
+            for removed_user in removed:
+                user = users_service.find_one(req=None, _id=removed_user)
+                users_service.update_stage_visibility_for_user(user)
+
         else:
             push_notification(self.notification_key, updated=1, desk_id=str(desk.get(config.ID_FIELD)))
 
