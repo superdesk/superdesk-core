@@ -260,9 +260,9 @@ class EveBackend:
             else:
                 backend.update(endpoint_name, id, updates, original)
             if push_notification:
-                self._push_resource_notification(
-                    "updated", endpoint_name, _id=str(id), fields=get_diff_keys(updates, original)
-                )
+                updated_fields = get_diff_keys(updates, original)
+                if updated_fields:
+                    self._push_resource_notification("updated", endpoint_name, _id=str(id), fields=updated_fields)
         except eve.io.base.DataLayer.OriginalChangedError:
             if not backend.find_one(endpoint_name, req=None, _id=id) and search_backend:
                 # item is in elastic, not in mongo - not good
