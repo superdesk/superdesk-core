@@ -109,7 +109,7 @@ def parse_html(html, content="xml", lf_on_block=False, space_on_elements=False, 
     if content == "xml":
         # to preserve 'carriage return' otherwise it gets stripped.
         html = html.replace("\r", "&#13;")
-        parser = etree.XMLParser(recover=True, remove_blank_text=True)
+        parser = etree.XMLParser(recover=True, remove_blank_text=True, resolve_entities=False)
         root = etree.fromstring("<div>" + html + "</div>", parser)
     elif content == "html":
         parser = etree.HTMLParser(recover=True, remove_blank_text=True)
