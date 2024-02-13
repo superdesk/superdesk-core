@@ -47,7 +47,7 @@ install_requires = [
     "PyYAML>=6.0.1",
     "lxml>=4,<4.7",
     "python-twitter==3.5",
-    "chardet<4.0",
+    "chardet<6.0",
     "pymongo>=3.8,<3.12",
     "croniter<0.4",
     "python-dateutil<2.8",
