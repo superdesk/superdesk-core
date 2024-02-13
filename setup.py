@@ -50,7 +50,7 @@ install_requires = [
     "chardet<6.0",
     "pymongo>=3.8,<3.12",
     "croniter<0.4",
-    "python-dateutil<2.8",
+    "python-dateutil<2.9",
     "unidecode==0.04.21",
     "authlib>0.14,<0.15",
     "draftjs-exporter[lxml]<2.2",
