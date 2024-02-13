@@ -1,4 +1,7 @@
-# Superdesk Core library [![Build Status](https://github.com/superdesk/superdesk-core/workflows/CI/badge.svg)](https://github.com/superdesk/superdesk-core/actions) [![Documentation Status](https://readthedocs.org/projects/superdesk/badge/?version=latest)](https://superdesk.readthedocs.io/en/latest/?badge=latest)
+# Superdesk Core library
+[![Test](https://github.com/superdesk/superdesk-core/actions/workflows/nose-tests.yml/badge.svg)](https://github.com/superdesk/superdesk-core/actions/workflows/nose-tests.yml)
+[![Lint](https://github.com/superdesk/superdesk-core/actions/workflows/lint.yml/badge.svg)](https://github.com/superdesk/superdesk-core/actions/workflows/lint.yml)
+[![Documentation Status](https://readthedocs.org/projects/superdesk/badge/?version=latest)](https://superdesk.readthedocs.io/en/latest/?badge=latest)
 
 Utilities for building Superdesk applications.
 
