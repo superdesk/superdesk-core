@@ -7,9 +7,9 @@ latest 2 minor releases.
 
 | Version | Supported          |
 | ------- | ------------------ |
-| 2.4.x   | 🟢                 |
-| 2.3.x   | 🟢                 |
-| < 2.3   | 🔴                 |
+| 2.6.x   | 🟢                 |
+| 2.5.x   | 🟢                 |
+| < 2.5   | 🔴                 |
 
 ## Reporting a Vulnerability
 
