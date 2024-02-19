@@ -17,7 +17,7 @@ from superdesk.io.registry import register_feed_parser
 from superdesk.io.feed_parsers import FeedParser
 from superdesk.utc import utc
 from superdesk.metadata.utils import generate_tag_from_url
-from typing import Optional
+from typing import Optional, Dict, List, Any
 
 logger = logging.getLogger(__name__)
 
@@ -183,7 +183,7 @@ class NINJSFeedParser(FeedParser):
                 rend[rendition_name] = parsed_rendition
         return rend
 
-    def _format_qcodes(self, items, language=None):
+    def _format_qcodes(self, items: List[Dict[str, Any]], language: Optional[str] = None):
         subjects = []
         for item in items:
             subject = {
