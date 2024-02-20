@@ -210,7 +210,7 @@ class NINJSFeedParser(FeedParser):
             self._cv_items[_id] = get_resource_service("vocabularies").get_items(_id=_id, is_active=True)
         return self._cv_items[_id]
 
-    def find_cv_item(self, _id: str, qcode: str):
+    def find_cv_item(self, _id: str, qcode: Optional[str]):
         for item in self._get_cv_items(_id):
             if item["qcode"] == qcode:
                 return item
