@@ -19,6 +19,7 @@ from superdesk.utc import utc
 from superdesk.metadata.utils import generate_tag_from_url
 from typing import Optional, Dict, List, Any
 from superdesk import get_resource_service
+import collections
 
 logger = logging.getLogger(__name__)
 
@@ -53,8 +54,6 @@ class NINJSFeedParser(FeedParser):
     )
 
     items = []
-
-    _cv_items = {}
 
     def __init__(self):
         super().__init__()
@@ -101,10 +100,10 @@ class NINJSFeedParser(FeedParser):
             item["genre"] = self._format_qcodes(ninjs["genre"])
 
         if ninjs.get("service"):
-            item["anpa_category"] = self._format_qcodes(ninjs["service"], ninjs.get("language"), "categories")
+            item["anpa_category"] = self._format_qcodes(ninjs["service"], "categories")
 
         if ninjs.get("subject"):
-            item["subject"] = self._format_qcodes(ninjs["subject"], ninjs.get("language"))
+            item["subject"] = self._format_qcodes(ninjs["subject"])
 
         if ninjs.get("versioncreated"):
             item["versioncreated"] = self.datetime(ninjs.get("versioncreated"))
@@ -186,30 +185,28 @@ class NINJSFeedParser(FeedParser):
                 rend[rendition_name] = parsed_rendition
         return rend
 
-    def _format_qcodes(
-        self, items: List[Dict[str, Any]], language: Optional[str] = None, cv_name: Optional[str] = None
-    ) -> List[Dict[str, Any]]:
+    def _format_qcodes(self, items: List[Dict[str, Any]], cv_name: Optional[str] = None) -> List[Dict[str, Any]]:
         subjects = []
-        for item in items:
-            if cv_name:
-                cv_data = self.find_cv_item(cv_name, item.get("code"))
-                item = cv_data if cv_data else item
+        cv_items = collections.defaultdict(dict)
+        cursor = get_resource_service("vocabularies").get_from_mongo(req=None, lookup={"_id": cv_name}) or {}
+        for doc in cursor:
+            cv_items.update({item["qcode"]: item for item in doc.get("items")})
 
-            subject = {
-                "name": item.get("translations", {}).get("name", {}).get(language) or item.get("name"),
-                "qcode": item.get("code") or item.get("qcode"),
-            }
-            if item.get("scheme"):
-                subject["scheme"] = item.get("scheme")
+        for item in items:
+            if cv_items.get(item.get("code")):
+                subject = cv_items[item["code"]]
+            else:
+                subject = {
+                    "name": item.get("name"),
+                    "qcode": item.get("code"),
+                }
+            if not subject.get("translations") and item.get("translations"):
+                subject["translations"] = item["translations"]
+            if not subject.get("scheme") and item.get("scheme"):
+                subject["scheme"] = item["scheme"]
             subjects.append(subject)
 
         return subjects
-
-    def find_cv_item(self, _id: str, qcode: Optional[str]):
-        for doc in get_resource_service("vocabularies").get_from_mongo(req=None, lookup={"_id": _id}):
-            for item in doc.get("items"):
-                if item.get("qcode") == qcode:
-                    return item
 
     def datetime(self, string):
         try:
