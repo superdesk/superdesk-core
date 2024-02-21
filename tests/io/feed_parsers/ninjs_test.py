@@ -24,7 +24,7 @@ class NINJSTestCase(TestCase):
                     "name": "Advisory",
                     "qcode": "m",
                     "translations": {"name": {"en": "Advisory", "fr": "Avis"}},
-                }
+                },
             ],
         },
     ]
@@ -60,7 +60,7 @@ class SimpleTestCase(NINJSTestCase):
 
     def test_translated_value(self):
         self.assertEqual(self.items[0].get("headline"), "headline")
-        self.assertEqual(self.items[0].get("anpa_category"), [{"name": "Avis", "qcode": "m", "scheme": "categories"}])
+        self.assertEqual(self.items[0].get("anpa_category"), [{"name": "Avis", "qcode": "m"}])
 
 
 class AssociatedTestCase(NINJSTestCase):

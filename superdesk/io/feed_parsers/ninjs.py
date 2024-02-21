@@ -191,7 +191,7 @@ class NINJSFeedParser(FeedParser):
     ) -> List[Dict[str, Any]]:
         subjects = []
         for item in items:
-            if cv_name and not item.get("translations"):
+            if cv_name:
                 cv_data = self.find_cv_item(cv_name, item.get("code"))
                 item = cv_data if cv_data else item
 
@@ -205,15 +205,11 @@ class NINJSFeedParser(FeedParser):
 
         return subjects
 
-    def _get_cv_items(self, _id: str) -> List:
-        if _id not in self._cv_items:
-            self._cv_items[_id] = get_resource_service("vocabularies").get_items(_id=_id, is_active=True)
-        return self._cv_items[_id]
-
     def find_cv_item(self, _id: str, qcode: Optional[str]):
-        for item in self._get_cv_items(_id):
-            if item["qcode"] == qcode:
-                return item
+        for doc in get_resource_service("vocabularies").get_from_mongo(req=None, lookup={"_id": _id}):
+            for item in doc.get("items"):
+                if item.get("qcode") == qcode:
+                    return item
 
     def datetime(self, string):
         try:
