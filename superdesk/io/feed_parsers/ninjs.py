@@ -187,10 +187,8 @@ class NINJSFeedParser(FeedParser):
 
     def _format_qcodes(self, items: List[Dict[str, Any]], cv_name: Optional[str] = None) -> List[Dict[str, Any]]:
         subjects = []
-        cv_items = collections.defaultdict(dict)
-        cursor = get_resource_service("vocabularies").get_from_mongo(req=None, lookup={"_id": cv_name}) or {}
-        for doc in cursor:
-            cv_items.update({item["qcode"]: item for item in doc.get("items")})
+        cv = get_resource_service("vocabularies").find_one(req=None, _id=cv_name) or {}
+        cv_items = {item["qcode"]: item for item in cv.get("items") or []}
 
         for item in items:
             if cv_items.get(item.get("code")):
