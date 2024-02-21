@@ -19,7 +19,6 @@ from superdesk.utc import utc
 from superdesk.metadata.utils import generate_tag_from_url
 from typing import Optional, Dict, List, Any
 from superdesk import get_resource_service
-import collections
 
 logger = logging.getLogger(__name__)
 
