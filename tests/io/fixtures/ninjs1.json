@@ -28,10 +28,11 @@
     "firstcreated": "2017-08-24T04:37:19+0000",
     "description_html": "<p>abstract</p>",
     "slugline": "slugline",
+    "language": "fr",
     "service": [
         {
-            "code": "i",
-            "name": "International News"
+            "name": "Advisory",
+            "code": "m"
         }
     ],
     "usageterms": "Usage",

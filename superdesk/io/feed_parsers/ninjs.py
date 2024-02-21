@@ -17,6 +17,8 @@ from superdesk.io.registry import register_feed_parser
 from superdesk.io.feed_parsers import FeedParser
 from superdesk.utc import utc
 from superdesk.metadata.utils import generate_tag_from_url
+from typing import Optional, Dict, List, Any
+from superdesk import get_resource_service
 
 logger = logging.getLogger(__name__)
 
@@ -97,7 +99,7 @@ class NINJSFeedParser(FeedParser):
             item["genre"] = self._format_qcodes(ninjs["genre"])
 
         if ninjs.get("service"):
-            item["anpa_category"] = self._format_qcodes(ninjs["service"])
+            item["anpa_category"] = self._format_qcodes(ninjs["service"], "categories")
 
         if ninjs.get("subject"):
             item["subject"] = self._format_qcodes(ninjs["subject"])
@@ -182,12 +184,23 @@ class NINJSFeedParser(FeedParser):
                 rend[rendition_name] = parsed_rendition
         return rend
 
-    def _format_qcodes(self, items):
+    def _format_qcodes(self, items: List[Dict[str, Any]], cv_name: Optional[str] = None) -> List[Dict[str, Any]]:
         subjects = []
+        cv = get_resource_service("vocabularies").find_one(req=None, _id=cv_name) or {}
+        cv_items = {item["qcode"]: item for item in cv.get("items") or []}
+
         for item in items:
-            subject = {"name": item.get("name"), "qcode": item.get("code")}
-            if item.get("scheme"):
-                subject["scheme"] = item.get("scheme")
+            if cv_items.get(item.get("code")):
+                subject = cv_items[item["code"]]
+            else:
+                subject = {
+                    "name": item.get("name"),
+                    "qcode": item.get("code"),
+                }
+            if not subject.get("translations") and item.get("translations"):
+                subject["translations"] = item["translations"]
+            if not subject.get("scheme") and item.get("scheme"):
+                subject["scheme"] = item["scheme"]
             subjects.append(subject)
 
         return subjects
