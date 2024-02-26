@@ -47,7 +47,7 @@ sphinx==7.2.6
     #   -r docs/requirements.in
     #   sphinx-autobuild
     #   sphinxcontrib-plantuml
-sphinx-autobuild==2021.3.14
+sphinx-autobuild==2024.2.4
     # via -r docs/requirements.in
 sphinxcontrib-applehelp==1.0.8
     # via sphinx
