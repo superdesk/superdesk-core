@@ -18,7 +18,7 @@ install_requires = [
     # (cf. https://github.com/psf/requests/issues/5654
     # and https://github.com/psf/requests/pull/5651)
     "urllib3<1.26",
-    "eve==2.1.0",
+    "eve>=1.1.2,<=2.1.0",
     "eve-elastic>=7.3.2,<7.4.0",
     "flask>=1.1,<1.2",
     "flask-mail>=0.9,<0.10",
