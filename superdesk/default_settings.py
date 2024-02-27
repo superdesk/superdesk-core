@@ -530,7 +530,6 @@ CORE_APPS.extend(
         "superdesk.places",
         "apps.desk_routing",
         "apps.system_message",
-        "apps.rundowns",
     ]
 )
 

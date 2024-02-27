@@ -93,7 +93,7 @@ def update_config(conf):
     conf["MACROS_MODULE"] = "superdesk.macros"
     conf["DEFAULT_TIMEZONE"] = "Europe/Prague"
     conf["LEGAL_ARCHIVE"] = True
-    conf["INSTALLED_APPS"].extend(["planning", "superdesk.macros.imperial"])
+    conf["INSTALLED_APPS"].extend(["planning", "superdesk.macros.imperial", "apps.rundowns"])
 
     # limit mongodb connections
     conf["MONGO_CONNECT"] = False
