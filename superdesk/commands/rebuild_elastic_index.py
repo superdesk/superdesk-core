@@ -10,11 +10,8 @@
 
 
 import superdesk
-import elasticsearch
 
-from flask import current_app
-from eve_elastic import get_es, get_indices, reindex
-from superdesk.utils import get_random_string
+from flask import current_app as app
 
 
 class RebuildElasticIndex(superdesk.Command):
@@ -33,18 +30,19 @@ class RebuildElasticIndex(superdesk.Command):
     """
 
     option_list = [
-        superdesk.Option('--resource', '-r', dest='resource_name')
+        superdesk.Option('--resource', '-r', dest='resource_name'),
+        superdesk.Option('--requests-per-second', dest='requests_per_second'),
     ]
 
-    def run(self, resource_name=None):
+    def run(self, resource_name=None, requests_per_second=1000):
         # if no index name is passed then use the configured one
-        resources = list(current_app.data.elastic._get_elastic_resources().keys())
+        resources = list(app.data.elastic._get_elastic_resources().keys())
         if resource_name and resource_name in resources:
             resources = [resource_name]
         elif resource_name:
             raise ValueError("Resource {} is not configured".format(resource_name))
         for resource in resources:
-            current_app.data.elastic.reindex(resource)
+            app.data.elastic.reindex(resource, requests_per_second=requests_per_second)
             print('Index {} rebuilt successfully.'.format(resource))
 
 
