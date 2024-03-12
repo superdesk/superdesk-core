@@ -23,7 +23,7 @@ install_requires = [
     "flask>=1.1,<1.2",
     "flask-mail>=0.9,<0.10",
     "flask-script>=2.0.5,<3.0",
-    "flask-babel>=1.0,<1.1",
+    "flask-babel>=1.0,<4.1",
     "pillow>=9.2,<9.3",
     "arrow>=0.4,<=0.13",
     "bcrypt>=3.1.1,<3.2",
