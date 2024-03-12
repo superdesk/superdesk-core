@@ -362,8 +362,9 @@ def setup(context=None, config=None, app_factory=get_app, reset=False):
     if context:
         context.app = app
         context.client = app.test_client()
-        if not hasattr(context, "BEHAVE"):
-            app.test_request_context().push()
+        if not hasattr(context, "BEHAVE") and not hasattr(context, "test_context"):
+            context.test_context = app.test_request_context()
+            context.test_context.push()
 
     with app.app_context():
         clean_dbs(app, force=bool(config))
