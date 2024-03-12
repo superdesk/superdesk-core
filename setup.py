@@ -19,7 +19,8 @@ install_requires = [
     # and https://github.com/psf/requests/pull/5651)
     "urllib3<1.26",
     "eve==1.1.2",
-    "eve-elastic>=7.3.2,<7.4.0",
+    "eve-elastic>=7.4.0,<7.5.0",
+    "elasticsearch<7.14",  # we are using oss version on test server
     "flask>=1.1,<1.2",
     "flask-mail>=0.9,<0.10",
     "flask-script>=2.0.5,<3.0",
