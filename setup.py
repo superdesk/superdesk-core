@@ -18,20 +18,20 @@ install_requires = [
     # (cf. https://github.com/psf/requests/issues/5654
     # and https://github.com/psf/requests/pull/5651)
     "urllib3<1.26",
-    "eve==1.1.2",
+    "eve>=1.1.2,<=2.1.0",
     "eve-elastic>=7.4.0,<7.5.0",
     "elasticsearch<7.14",  # we are using oss version on test server
     "flask>=1.1,<1.2",
     "flask-mail>=0.9,<0.10",
     "flask-script>=2.0.5,<3.0",
-    "flask-babel>=1.0,<1.1",
+    "flask-babel>=1.0,<4.1",
     "pillow>=9.2,<9.3",
     "arrow>=0.4,<=0.13",
     "bcrypt>=3.1.1,<3.2",
     "blinker>=1.3,<1.8",
     "celery[redis]>=5.2.7,<5.3",
     "cerberus>=1.3.2,<1.4",
-    "redis>=4.5.2,<4.6",
+    "redis>=4.5.2,<5.1",
     "kombu>=5.2.4,<5.3",
     "feedparser>=6.0.8,<6.1",
     "hachoir<=3.0a3",
