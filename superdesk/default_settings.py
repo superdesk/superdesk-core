@@ -412,6 +412,7 @@ CORE_APPS = [
     "superdesk.locales",
     "apps.usage_metrics",
     "superdesk.system.health",
+    "apps.languages",
 ]
 
 #: Specify what modules should be enabled
