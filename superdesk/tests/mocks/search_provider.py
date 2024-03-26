@@ -68,7 +68,7 @@ FIXTURES = [
         "language": "fr",
         "word_count": 3,
         "_fetchable": False,
-    }
+    },
 ]
 
 
@@ -79,14 +79,7 @@ class TestSearchProvider(SearchProvider):
         return ListCursor(FIXTURES)
 
     def fetch(self, guid):
-        item = next(
-            (
-                item
-                for item in FIXTURES
-                if item.get("_id") == guid
-            ),
-            None
-        )
+        item = next((item for item in FIXTURES if item.get("_id") == guid), None)
         if item is None:
             raise SuperdeskApiError.notFoundError("Search item not found")
         return item
