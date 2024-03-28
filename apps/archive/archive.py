@@ -759,6 +759,7 @@ class ArchiveService(BaseService, HighlightsSearchMixin):
                 "translation_id",
                 "translated_from",
                 "firstpublished",
+                "auto_publish",
             ]
         )
         if delete_keys:
