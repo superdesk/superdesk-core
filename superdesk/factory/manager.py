@@ -20,3 +20,12 @@ def get_manager(app):
     :param app: superdesk app instance
     """
     return SuperdeskManager(app, superdesk.COMMANDS)
+
+
+if __name__ == "__main__":
+    from .app import get_app
+    import superdesk.commands
+
+    app = get_app()
+
+    get_manager(app).run()
