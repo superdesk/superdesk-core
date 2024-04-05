@@ -38,7 +38,6 @@ def table_columns(subitems: List[types.ISubject]) -> List[str]:
 
     columns.extend(
         [
-            "Additional realizer info",
             "Duration",
         ]
     )
@@ -74,7 +73,6 @@ def item_table_data(
 
     data.extend(
         [
-            to_string(item, "additional_notes"),
             format_duration(item.get("duration")),
         ]
     )
