@@ -52,7 +52,7 @@ install_requires = [
     "pymongo>=3.8,<3.12",
     "croniter<0.4",
     "python-dateutil<2.10",
-    "unidecode==1.3.8",
+    "unidecode>=0.04.21,<=1.3.8",
     "authlib>0.14,<0.15",
     "draftjs-exporter[lxml]<2.2",
     "regex==2020.7.14",
