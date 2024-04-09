@@ -386,7 +386,7 @@ def update_renditions(item, href, old_item, request_kwargs=None):
         raise
 
 
-def transfer_renditions(renditions):
+def transfer_renditions(renditions, request_kwargs=None):
     """Transfer the passed renditions to localy held renditions
 
     Download the renditions as passed and upload them to this instances storage
@@ -403,7 +403,7 @@ def transfer_renditions(renditions):
                 rend["href"] = app.media.url_for_media(rend["media"], local.content_type)
                 continue
 
-        content, filename, content_type = download_file_from_url(rend.get("href"))
+        content, filename, content_type = download_file_from_url(rend.get("href"), request_kwargs)
         file_type, ext = content_type.split("/")
         metadata = process_file(content, file_type)
         file_guid = app.media.put(content, filename=filename, content_type=content_type, metadata=metadata)

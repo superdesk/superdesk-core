@@ -1120,3 +1120,6 @@ EMBED_PRODUCT_FILTERING = strtobool(env("EMBED_PRODUCT_FILTERING", "false"))
 #: .. versionadded:: 2.7
 #:
 UNPUBLISH_TO_MATCHING_SUBSCRIBERS = True
+
+
+AP_MEDIA_API_VERIFY_SSL = strtobool(env("AP_MEDIA_API_VERIFY_SSL", "true"))

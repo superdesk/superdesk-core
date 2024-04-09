@@ -8,6 +8,7 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
+from typing import Dict, Any
 import logging
 import warnings
 from abc import ABCMeta, abstractmethod
@@ -248,6 +249,9 @@ class FeedingService(metaclass=ABCMeta):
         :rtype: str
         """
         return href
+
+    def get_request_kwargs(self) -> Dict[str, Any]:
+        return {}
 
     def get_feed_parser(self, provider, article=None):
         """

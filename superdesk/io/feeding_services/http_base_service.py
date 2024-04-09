@@ -184,8 +184,12 @@ class HTTPFeedingServiceBase(FeedingService):
                 params.update(self.HTTP_DEFAULT_PARAMETERS)
             kwargs["params"] = params
 
+        # Let the provided ``kwargs`` override the feeding service's ``kwargs``
+        request_kwargs = self.get_request_kwargs()
+        request_kwargs.update(kwargs)
+
         try:
-            response = requests.get(url, timeout=self.HTTP_TIMEOUT, **kwargs)
+            response = requests.get(url, timeout=self.HTTP_TIMEOUT, **request_kwargs)
         except requests.exceptions.Timeout as exception:
             raise IngestApiError.apiTimeoutError(exception, self.provider)
         except requests.exceptions.ConnectionError as exception:
