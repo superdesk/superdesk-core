@@ -50,7 +50,7 @@ install_requires = [
     "python-twitter==3.5",
     "chardet<6.0",
     "pymongo>=3.8,<3.12",
-    "croniter<0.4",
+    "croniter<2.1",
     "python-dateutil<2.10",
     "unidecode>=0.04.21,<=1.3.8",
     "authlib>0.14,<0.15",
