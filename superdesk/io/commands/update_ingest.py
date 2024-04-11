@@ -601,13 +601,7 @@ def ingest_item(item, provider, feeding_service, rule_set=None, routing_scheme=N
                 item.pop("profile")
 
         set_default_state(item, CONTENT_STATE.INGESTED)
-        item["expiry"] = (
-            get_expiry_date(
-                provider.get("content_expiry") or app.config["INGEST_EXPIRY_MINUTES"], item.get("versioncreated")
-            )
-            if not expiry
-            else expiry
-        )  # when fetching associated item set expiry to match parent
+        set_expiry(item, provider, parent_expiry=expiry)
 
         if "anpa_category" in item:
             process_anpa_category(item, provider)
@@ -761,6 +755,20 @@ def get_ingest_collection(feeding_service, item):
         ingest_collection = "ingest"
 
     return ingest_collection
+
+
+def set_expiry(item, provider, parent_expiry=None):
+    if parent_expiry:
+        item["expiry"] = parent_expiry
+        return
+
+    expiry_offset = item.get("versioncreated") or utcnow()
+    if item.get("dates") and item["dates"].get("end"):
+        expiry_offset = item["dates"]["end"]
+
+    item["expiry"] = get_expiry_date(
+        provider.get("content_expiry") or app.config["INGEST_EXPIRY_MINUTES"], expiry_offset
+    )
 
 
 superdesk.command("ingest:update", UpdateIngest())

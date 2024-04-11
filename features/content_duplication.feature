@@ -638,3 +638,16 @@ Feature: Duplication of Content
       """
       When we get "/archive/#duplicate._id#"
       Then we get "assignment_id" does not exist
+
+    @auth
+    Scenario: Auto publish flag is removed on duplication
+      When we patch given
+      """
+      {"auto_publish": true}
+      """
+      When we post to "/archive/123/duplicate" with success
+      """
+      {"desk": "#desks._id#","type": "archive"}
+      """
+      When we get "/archive/#duplicate._id#"
+      Then we get "auto_publish" does not exist
