@@ -8,7 +8,7 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
-
+from typing import Dict, Any, Optional, Tuple
 import arrow
 import magic
 import base64
@@ -28,6 +28,7 @@ from .video import get_meta as video_meta
 from superdesk.errors import SuperdeskApiError
 from flask import current_app as app
 from mimetypes import guess_extension
+from superdesk import __version__ as superdesk_version
 
 logger = logging.getLogger(__name__)
 
@@ -55,21 +56,32 @@ def fix_content_type(content_type, content):
     return str(content_type)
 
 
-def download_file_from_url(url, request_kwargs=None):
+def download_file_from_url(
+    url: str, request_kwargs: Optional[Dict[str, Any]] = None, session: Optional[requests.Session] = None
+) -> Tuple[BytesIO, str, str]:
     """Download file from given url.
 
     In case url is relative it will prefix it with current host.
 
     :param url: file url
+    :param request_kwargs: Additional keyword arguments to pass to requests.Session.request
+    :param session: requests.Session instance (one will be created if not supplied)
     """
 
     if not request_kwargs:
         request_kwargs = {}
 
+    request_kwargs.setdefault("timeout", (5, 25))
+    request_kwargs.setdefault("headers", {})
+    request_kwargs["headers"]["User-Agent"] = f"Superdesk-{superdesk_version}"
+
+    if session is None:
+        session = requests.Session()
+
     try:
-        rv = requests.get(url, headers={"User-Agent": "Superdesk-1.0"}, timeout=(5, 25), **request_kwargs)
+        rv = session.get(url, **request_kwargs)
     except requests.exceptions.MissingSchema:  # any route will do here, we only need host
-        rv = requests.get(urljoin(url_for("static", filename="x", _external=True), url), timeout=15, **request_kwargs)
+        rv = session.get(urljoin(url_for("static", filename="x", _external=True), url), timeout=15, **request_kwargs)
     if rv.status_code not in (200, 201):
         raise SuperdeskApiError.internalError("Failed to retrieve file from URL: %s" % url)
     content = BytesIO(rv.content)

@@ -343,7 +343,7 @@ def get_renditions_spec(without_internal_renditions=False, no_custom_crops=False
     return rendition_spec
 
 
-def update_renditions(item, href, old_item, request_kwargs=None):
+def update_renditions(item, href, old_item, request_kwargs=None, feeding_service=None):
     """Update renditions for an item.
 
     If the old_item has renditions uploaded in to media then the old rendition details are
@@ -367,7 +367,10 @@ def update_renditions(item, href, old_item, request_kwargs=None):
                 item["filemeta_json"] = old_item.get("filemeta_json")
                 return
 
-        content, filename, content_type = download_file_from_url(href, request_kwargs)
+        if feeding_service is not None and getattr(feeding_service, "download_file"):
+            content, filename, content_type = feeding_service.download_file(href, **request_kwargs or {})
+        else:
+            content, filename, content_type = download_file_from_url(href, request_kwargs)
         file_type, ext = content_type.split("/")
         metadata = process_file(content, file_type)
         file_guid = app.media.put(content, filename=filename, content_type=content_type, metadata=metadata)
@@ -386,7 +389,7 @@ def update_renditions(item, href, old_item, request_kwargs=None):
         raise
 
 
-def transfer_renditions(renditions, request_kwargs=None):
+def transfer_renditions(renditions, request_kwargs=None, feeding_service=None):
     """Transfer the passed renditions to localy held renditions
 
     Download the renditions as passed and upload them to this instances storage
@@ -403,7 +406,10 @@ def transfer_renditions(renditions, request_kwargs=None):
                 rend["href"] = app.media.url_for_media(rend["media"], local.content_type)
                 continue
 
-        content, filename, content_type = download_file_from_url(rend.get("href"), request_kwargs)
+        if feeding_service is not None and getattr(feeding_service, "download_file"):
+            content, filename, content_type = feeding_service.download_file(rend.get("href"), **request_kwargs or {})
+        else:
+            content, filename, content_type = download_file_from_url(rend.get("href"), request_kwargs)
         file_type, ext = content_type.split("/")
         metadata = process_file(content, file_type)
         file_guid = app.media.put(content, filename=filename, content_type=content_type, metadata=metadata)

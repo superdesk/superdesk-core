@@ -8,11 +8,13 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
-from typing import List, Dict, Optional, Union
+from typing import List, Dict, Optional, Tuple, Any
+from io import BytesIO
 import traceback
 import requests
 from superdesk.errors import IngestApiError, SuperdeskIngestError
 from superdesk.io.feeding_services import FeedingService
+from superdesk.media.media_operations import download_file_from_url
 
 
 class HTTPFeedingServiceBase(FeedingService):
@@ -111,6 +113,7 @@ class HTTPFeedingServiceBase(FeedingService):
     def __init__(self):
         super().__init__()
         self.token = None
+        self.session = requests.Session()
 
     @property
     def auth_info(self):
@@ -190,7 +193,7 @@ class HTTPFeedingServiceBase(FeedingService):
         request_kwargs.setdefault("timeout", self.HTTP_TIMEOUT)
 
         try:
-            response = requests.get(url, **request_kwargs)
+            response = self.session.get(url, **request_kwargs)
         except requests.exceptions.Timeout as exception:
             raise IngestApiError.apiTimeoutError(exception, self.provider)
         except requests.exceptions.ConnectionError as exception:
@@ -211,6 +214,12 @@ class HTTPFeedingServiceBase(FeedingService):
                 raise IngestApiError.apiGeneralError(exc, self.provider)
 
         return response
+
+    def download_file(self, url: str, **kwargs: Dict[str, Any]) -> Tuple[BytesIO, str, str]:
+        request_kwargs = self.get_request_kwargs()
+        request_kwargs.update(kwargs)
+        request_kwargs.setdefault("timeout", self.HTTP_TIMEOUT)
+        return download_file_from_url(url, request_kwargs, self.session)
 
     def update(self, provider, update):
         self.provider = provider
