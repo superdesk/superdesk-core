@@ -102,7 +102,7 @@ class APMediaFeedingService(HTTPFeedingServiceBase):
         :param provider:
         :return:
         """
-        r = requests.get(
+        r = self.session.get(
             provider.get("config", {}).get("products_url"),
             **self.get_request_kwargs(),
         )

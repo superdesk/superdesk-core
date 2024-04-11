@@ -148,6 +148,9 @@ class HTTPFeedingServiceBase(FeedingService):
         if url and not url.strip().startswith("http"):
             raise SuperdeskIngestError.notConfiguredError(Exception("URL must be a valid HTTP link."))
 
+    def get_request_kwargs(self) -> Dict[str, Any]:
+        return {}
+
     def get_url(self, url=None, **kwargs):
         """Do an HTTP Get on URL
 
