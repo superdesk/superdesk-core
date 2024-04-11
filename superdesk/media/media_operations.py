@@ -81,7 +81,7 @@ def download_file_from_url(
     try:
         rv = session.get(url, **request_kwargs)
     except requests.exceptions.MissingSchema:  # any route will do here, we only need host
-        rv = session.get(urljoin(url_for("static", filename="x", _external=True), url), timeout=15, **request_kwargs)
+        rv = session.get(urljoin(url_for("static", filename="x", _external=True), url), **request_kwargs)
     if rv.status_code not in (200, 201):
         raise SuperdeskApiError.internalError("Failed to retrieve file from URL: %s" % url)
     content = BytesIO(rv.content)

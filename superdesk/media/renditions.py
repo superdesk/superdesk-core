@@ -367,7 +367,7 @@ def update_renditions(item, href, old_item, request_kwargs=None, feeding_service
                 item["filemeta_json"] = old_item.get("filemeta_json")
                 return
 
-        if feeding_service is not None and getattr(feeding_service, "download_file"):
+        if feeding_service is not None and hasattr(feeding_service, "download_file"):
             content, filename, content_type = feeding_service.download_file(href, **request_kwargs or {})
         else:
             content, filename, content_type = download_file_from_url(href, request_kwargs)
@@ -406,7 +406,7 @@ def transfer_renditions(renditions, request_kwargs=None, feeding_service=None):
                 rend["href"] = app.media.url_for_media(rend["media"], local.content_type)
                 continue
 
-        if feeding_service is not None and getattr(feeding_service, "download_file"):
+        if feeding_service is not None and hasattr(feeding_service, "download_file"):
             content, filename, content_type = feeding_service.download_file(rend.get("href"), **request_kwargs or {})
         else:
             content, filename, content_type = download_file_from_url(rend.get("href"), request_kwargs)
