@@ -586,6 +586,9 @@ def ingest_item(item, provider, feeding_service, rule_set=None, routing_scheme=N
                 f"updating items is disabled on provider '{provider['name']}'."
             )
             return False, []
+        elif old_item and old_item.get("version_creator"):
+            logger.warning(f"Resource '{ingest_collection}' " f"item '{item[GUID_FIELD]}' is already edited in SD .")
+            return False, []
 
         item["ingest_provider"] = str(provider[superdesk.config.ID_FIELD])
         item.setdefault("source", provider.get("source", ""))

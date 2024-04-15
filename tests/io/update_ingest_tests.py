@@ -36,7 +36,7 @@ from superdesk.io.commands.update_ingest import (
     get_is_idle,
     ingest_item,
 )
-
+import flask
 
 reuters_guid = "tag_reuters.com_2014_newsml_KBN0FL0NM:10"
 
@@ -659,3 +659,51 @@ class UpdateIngestTest(TestCase):
         items[1]["profile"] = "story"
         ingest_item(items[1], provider, provider_service)
         self.assertEqual("story", items[1].get("profile"))
+
+    def test_edited_planning_item_is_not_update(self):
+        item = {
+            "guid": "urn:onclusive:4112034",
+            "type": "event",
+            "state": "ingested",
+            "occur_status": {
+                "qcode": "eocstat:eos5",
+                "name": "Planned, occurs certainly",
+                "label": "Planned, occurs certainly",
+            },
+            "pubstatus": "usable",
+            "versioncreated": datetime(2022, 5, 10, 11, 14, 34),
+            "firstcreated": datetime(2022, 5, 10, 11, 14, 34),
+            "name": "Annual Forum on Anti-Money Laundering and Financial Crime",
+            "definition_short": "",
+            "dates": {
+                "start": datetime(2022, 5, 10, 11, 14, 34),
+                "end": datetime(2022, 5, 10, 11, 14, 34),
+                "all_day": True,
+            },
+        }
+        flask.g.user = {"_id": "current_user_id"}
+
+        provider = {
+            "_id": "asdnjsandkajsdnjkasnd",
+            "source": "sf",
+            "name": "Onclusive",
+            "content_expiry": 525700,
+        }
+        event_service = get_resource_service("events")
+        ingested, ids = ingest_item(item, provider=provider, feeding_service={})
+        self.assertTrue(ingested)
+        self.assertIn(item["guid"], ids)
+
+        dest = list(event_service.get_from_mongo(req=None, lookup={"guid": item["guid"]}))[0]
+        self.assertEqual(dest["name"], "Annual Forum on Anti-Money Laundering and Financial Crime")
+        self.assertEqual(dest["state"], "ingested")
+        self.assertEqual(dest.get("version_creator"), None)
+
+        event_service.patch(dest["_id"], {"name": "Edit event Name", "update_method": "single"})
+        dest = list(event_service.get_from_mongo(req=None, lookup={"guid": item["guid"]}))[0]
+        self.assertEqual(dest.get("version_creator"), "current_user_id")
+
+        # version_creator, if it is there then cancel the update and return []
+        ingested, ids = ingest_item(item, provider=provider, feeding_service={})
+        self.assertFalse(ingested)
+        self.assertNotIn(item["guid"], ids)
