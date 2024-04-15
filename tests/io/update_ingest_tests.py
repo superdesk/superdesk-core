@@ -690,6 +690,9 @@ class UpdateIngestTest(TestCase):
             "content_expiry": 525700,
         }
         event_service = get_resource_service("events")
+        events_post_service = get_resource_service("events_post")
+
+        # ingest first version
         ingested, ids = ingest_item(item, provider=provider, feeding_service={})
         self.assertTrue(ingested)
         self.assertIn(item["guid"], ids)
@@ -699,11 +702,80 @@ class UpdateIngestTest(TestCase):
         self.assertEqual(dest["state"], "ingested")
         self.assertEqual(dest.get("version_creator"), None)
 
+        # edit event
         event_service.patch(dest["_id"], {"name": "Edit event Name", "update_method": "single"})
         dest = list(event_service.get_from_mongo(req=None, lookup={"guid": item["guid"]}))[0]
         self.assertEqual(dest.get("version_creator"), "current_user_id")
 
-        # version_creator, if it is there then cancel the update and return []
+        # update event
         ingested, ids = ingest_item(item, provider=provider, feeding_service={})
         self.assertFalse(ingested)
-        self.assertNotIn(item["guid"], ids)
+        self.assertEqual([], ids)
+
+    def test_unpublished_event_is_not_update(self):
+        item = {
+            "guid": "urn:onclusive:411202222",
+            "type": "event",
+            "state": "ingested",
+            "occur_status": {
+                "qcode": "eocstat:eos5",
+                "name": "Planned, occurs certainly",
+                "label": "Planned, occurs certainly",
+            },
+            "pubstatus": "usable",
+            "versioncreated": datetime(2022, 5, 10, 11, 14, 34),
+            "firstcreated": datetime(2022, 5, 10, 11, 14, 34),
+            "name": "Annual Forum on Anti-Money Laundering and Financial Crime",
+            "definition_short": "",
+            "dates": {
+                "start": datetime(2022, 5, 10, 11, 14, 34),
+                "end": datetime(2022, 5, 10, 11, 14, 34),
+                "all_day": True,
+            },
+        }
+        flask.g.user = {"_id": "current_user_id"}
+
+        provider = {
+            "_id": "asdnjsandkajsdnjkasnd",
+            "source": "sf",
+            "name": "Onclusive",
+            "content_expiry": 525700,
+        }
+        event_service = get_resource_service("events")
+        events_post_service = get_resource_service("events_post")
+
+        # ingest first version
+        ingested, ids = ingest_item(item, provider=provider, feeding_service={})
+        self.assertTrue(ingested)
+        self.assertIn(item["guid"], ids)
+
+        # post an event
+        events_post_service.post(
+            [
+                {
+                    "event": item["_id"],
+                    "pubstatus": "usable",
+                    "update_method": "single",
+                }
+            ]
+        )
+        dest = list(event_service.get_from_mongo(req=None, lookup={"guid": item["guid"]}))[0]
+        self.assertEqual(dest.get("state"), "scheduled")
+
+        # Un-post an event
+        events_post_service.post(
+            [
+                {
+                    "event": item["_id"],
+                    "pubstatus": "cancelled",
+                    "update_method": "single",
+                }
+            ]
+        )
+        dest = list(event_service.get_from_mongo(req=None, lookup={"guid": item["guid"]}))[0]
+        self.assertEqual(dest.get("state"), "killed")
+
+        # update an event
+        ingested, ids = ingest_item(item, provider=provider, feeding_service={})
+        self.assertFalse(ingested)
+        self.assertEqual([], ids)
