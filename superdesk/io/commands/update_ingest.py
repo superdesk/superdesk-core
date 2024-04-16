@@ -586,7 +586,7 @@ def ingest_item(item, provider, feeding_service, rule_set=None, routing_scheme=N
                 f"updating items is disabled on provider '{provider['name']}'."
             )
             return False, []
-        elif old_item and not ingest_service.should_update(old_item):
+        elif old_item and not ingest_service.should_update(old_item, item, provider):
             logger.warning(f"Resource '{ingest_collection}' " f"item '{item[GUID_FIELD]}' is already edited in SD .")
             return False, []
 
