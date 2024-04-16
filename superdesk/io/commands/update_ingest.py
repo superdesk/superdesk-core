@@ -626,7 +626,7 @@ def ingest_item(item, provider, feeding_service, rule_set=None, routing_scheme=N
             baseImageRend = rend.get("baseImage") or next(iter(rend.values()))
             if baseImageRend and not baseImageRend.get("media"):  # if there is media should be processed already
                 href = feeding_service.prepare_href(baseImageRend["href"], rend.get("mimetype"))
-                update_renditions(item, href, old_item)
+                update_renditions(item, href, old_item, feeding_service=feeding_service)
 
         # if the item has associated media
         for key, assoc in item.get("associations", {}).items():
@@ -644,7 +644,7 @@ def ingest_item(item, provider, feeding_service, rule_set=None, routing_scheme=N
                     if _is_new_version(assoc, ingested) and assoc.get("renditions"):  # new version
                         logger.info("new assoc version - re-transfer renditions for %s", assoc_name)
                         try:
-                            transfer_renditions(assoc["renditions"])
+                            transfer_renditions(assoc["renditions"], feeding_service=feeding_service)
                         except SuperdeskApiError:
                             logger.exception(
                                 "failed to update associated item renditions",
@@ -660,7 +660,7 @@ def ingest_item(item, provider, feeding_service, rule_set=None, routing_scheme=N
                     if assoc.get("renditions") and has_system_renditions(assoc):  # all set, just download
                         logger.info("new association with system renditions - transfer %s", assoc_name)
                         try:
-                            transfer_renditions(assoc["renditions"])
+                            transfer_renditions(assoc["renditions"], feeding_service=feeding_service)
                         except SuperdeskApiError:
                             logger.exception(
                                 "failed to download renditions",
