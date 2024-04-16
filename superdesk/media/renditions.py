@@ -25,7 +25,6 @@ from eve.utils import config
 from superdesk import get_resource_service
 from superdesk.filemeta import set_filemeta
 import os
-from superdesk.io.feeding_services import FeedingService
 
 
 logger = logging.getLogger(__name__)
@@ -346,7 +345,7 @@ def get_renditions_spec(without_internal_renditions=False, no_custom_crops=False
 
 
 def download_file_from_feeding_service_or_directly(
-    url: str, feeding_service: Optional[FeedingService] = None, **kwargs: Dict[str, Any]
+    url: str, feeding_service: Optional[Any] = None, **kwargs: Dict[str, Any]
 ) -> Tuple[BytesIO, str, str]:
     if feeding_service is not None and hasattr(feeding_service, "download_file"):
         return feeding_service.download_file(url, **kwargs)
@@ -358,7 +357,7 @@ def update_renditions(
     href: str,
     old_item: Optional[Dict[str, Any]],
     request_kwargs: Optional[Dict[str, Any]] = None,
-    feeding_service: Optional[FeedingService] = None,
+    feeding_service: Optional[Any] = None,
 ):
     """Update renditions for an item.
 
@@ -409,7 +408,7 @@ def update_renditions(
 def transfer_renditions(
     renditions: Dict[str, Any],
     request_kwargs: Optional[Dict[str, Any]] = None,
-    feeding_service: Optional[FeedingService] = None,
+    feeding_service: Optional[Any] = None,
 ):
     """Transfer the passed renditions to localy held renditions
 
