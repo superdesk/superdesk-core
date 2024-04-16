@@ -1094,3 +1094,9 @@ RUNDOWNS_TIMEZONE = DEFAULT_TIMEZONE
 #: .. versionadded:: 2.6
 #:
 REBUILD_ELASTIC_ON_INIT_DATA_ERROR = strtobool(env("REBUILD_ELASTIC_ON_INIT_DATA_ERROR", "false"))
+
+#: If disabled, it will disable SSL verification for AP Media ingest feeds
+#:
+#: .. versionadded:: 2.6.8
+#:
+AP_MEDIA_API_VERIFY_SSL = strtobool(env("AP_MEDIA_API_VERIFY_SSL", "true"))
