@@ -121,17 +121,15 @@ class HttpProxyTestCase(TestCase):
 
     def test_supports_multiple_proxies(self):
         self.setupAuthUser()
-        second_proxy = HTTPProxy(
-            "second_proxy", internal_url="test/proxy2", external_url="http://localhost:5012/api/v2"
-        )
-        second_proxy.session.request = MagicMock()
-        second_proxy.session.request.return_value = MagicMock(ok=False, status_code=201)
-        register_http_proxy(self.app, second_proxy)
+        third_proxy = HTTPProxy("third_proxy", internal_url="test/proxy3", external_url="http://localhost:5025/api/v3")
+        third_proxy.session.request = MagicMock()
+        third_proxy.session.request.return_value = MagicMock(ok=False, status_code=201)
+        register_http_proxy(self.app, third_proxy)
 
         response = self.client.get("/api/test/proxy", headers=self.headers)
         self.assertEqual(response.status_code, 200)
 
-        response = self.client.get("/api/test/proxy2", headers=self.headers)
+        response = self.client.get("/api/test/proxy3", headers=self.headers)
         self.assertEqual(response.status_code, 201)
 
     def test_json_body(self):
