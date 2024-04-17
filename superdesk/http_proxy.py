@@ -1,6 +1,7 @@
 from typing import List, Optional, Dict, Any
 import requests
 from flask import Flask, request, current_app, Response as FlaskResponse, make_response
+from superdesk import __version__ as superdesk_version
 
 
 class HTTPProxy:
@@ -10,10 +11,10 @@ class HTTPProxy:
     ----------
     endpoint_name : str
         The endpoint name used when registering the proxy with Flask (used in ``url_for``)
-    service_url : str
-        The external URL used to proxy the requests to
-    base_url : int
+    internal_url : str
         The internal URL used to proxy requests from
+    external_url : str
+        The external URL used to proxy the requests to
     http_methods: list[str]
         list of HTTP methods allowed for this proxy
     auth: bool
@@ -28,25 +29,25 @@ class HTTPProxy:
         register_http_proxy(
             application,
             HTTPProxy(
-                endpoint_name="belga_ai_proxy",
-                service_url="belga/ai",
-                base_url="http://localhost:5001",
+                endpoint_name="belga.ai_proxy",
+                internal_url="belga/ai",
+                external_url="http://localhost:5001",
             )
         )
 
-    Note: The ``service_url`` is prefixed with the ``URL_PREFIX`` config (defaults to ``api``).
+    Note: The ``internal_url`` is prefixed with the ``URL_PREFIX`` config (defaults to ``api``).
 
     Example Requests:
     ::
         http://localhost:5000/api/belga/ai                 -> http://localhost:5001
         http://localhost:5000/api/belga/ai/articles/123456 -> http://localhost:5001/articles/123456
-        url_for("belga_ai_proxy")                          -> /api/belga/ai
-        url_for("belga_ai_proxy", _external=True)          -> http://localhost:5000/api/belga/ai
+        url_for("belga.ai_proxy")                          -> /api/belga/ai
+        url_for("belga.ai_proxy", _external=True)          -> http://localhost:5000/api/belga/ai
     """
 
     endpoint_name: str
-    service_url: str
-    base_url: str
+    internal_url: str
+    external_url: str
     http_methods: List[str]
     auth: bool
     use_cors: bool
@@ -55,25 +56,25 @@ class HTTPProxy:
     def __init__(
         self,
         endpoint_name: str,
-        base_url: str,
-        service_url: str,
+        internal_url: str,
+        external_url: str,
         http_methods: Optional[List[str]] = None,
         auth: bool = True,
         use_cors: bool = True,
     ):
         self.endpoint_name = endpoint_name
-        self.base_url = base_url.lstrip("/").rstrip("/")
-        self.service_url = service_url
-        self.http_methods = http_methods or ["OPTIONS", "GET", "POST", "PATCH", "DELETE"]
+        self.internal_url = internal_url.lstrip("/").rstrip("/")
+        self.external_url = external_url
+        self.http_methods = http_methods or ["OPTIONS", "GET", "POST", "PATCH", "PUT", "DELETE"]
         self.auth = auth
         self.use_cors = use_cors
         self.session = requests.Session()
 
-    def get_base_url(self, app: Optional[Flask] = None) -> str:
+    def get_internal_url(self, app: Optional[Flask] = None) -> str:
         """Returns the base URL route used when registering the proxy with Flask"""
 
         url_prefix = ((app or current_app).config["URL_PREFIX"]).lstrip("/")
-        return f"/{url_prefix}/{self.base_url}"
+        return f"/{url_prefix}/{self.internal_url}"
 
     def process_request(self, path: str) -> FlaskResponse:
         """The main function used for processing requests from the client"""
@@ -81,9 +82,7 @@ class HTTPProxy:
         self.authenticate()
         if request.method == "OPTIONS":
             return self.construct_cors_response()
-
-        result = self.session.request(**self.get_proxy_request_kwargs())
-        return self.construct_response(result)
+        return self.send_proxy_request()
 
     def authenticate(self):
         """If auth is enabled, make sure the current session is authenticated"""
@@ -104,21 +103,30 @@ class HTTPProxy:
             response.headers.add("Access-Control-Allow-Credentials", "true")
         return response
 
+    def send_proxy_request(self) -> FlaskResponse:
+        result = self.session.request(**self.get_proxy_request_kwargs())
+        return self.construct_response(result)
+
     def get_proxy_request_kwargs(self) -> Dict[str, Any]:
         """Returns the kwargs used when executing the ``requests.request`` call to the external service"""
 
-        proxied_path = request.full_path.replace(self.get_base_url(), "")
+        proxied_path = request.full_path.replace(self.get_internal_url(), "")
         if proxied_path == "?":
-            proxied_url = self.service_url
+            proxied_url = self.external_url
         elif proxied_path.startswith("/"):
-            proxied_url = self.service_url.rstrip("/") + "/" + proxied_path.lstrip("/")
+            proxied_url = self.external_url.rstrip("/") + "/" + proxied_path.lstrip("/")
         else:
-            proxied_url = self.service_url + proxied_path
+            proxied_url = self.external_url + proxied_path
+
+        headers = {
+            k: v for k, v in request.headers if k.lower() not in ("host", "authorization", "cookie")
+        }  # exclude "host" & "authorization" headers
+        headers["User-Agent"] = f"Superdesk-{superdesk_version}"
 
         return dict(
             url=proxied_url,
             method=request.method,
-            headers={k: v for k, v in request.headers if k.lower() != "host"},  # exclude 'host' header
+            headers=headers,
             data=request.get_data(),
             allow_redirects=True,
             stream=True,
@@ -153,8 +161,10 @@ class HTTPProxy:
 def register_http_proxy(app: Flask, proxy: HTTPProxy):
     """Register a HTTPProxy instance by adding URL rules to Flask"""
 
-    base_url = proxy.get_base_url(app)
+    internal_url = proxy.get_internal_url(app)
     app.add_url_rule(
-        base_url, proxy.endpoint_name, proxy.process_request, defaults={"path": ""}, methods=proxy.http_methods
+        internal_url, proxy.endpoint_name, proxy.process_request, defaults={"path": ""}, methods=proxy.http_methods
     )
-    app.add_url_rule(f"{base_url}/<path:path>", proxy.endpoint_name, proxy.process_request, methods=proxy.http_methods)
+    app.add_url_rule(
+        f"{internal_url}/<path:path>", proxy.endpoint_name, proxy.process_request, methods=proxy.http_methods
+    )
