@@ -2,6 +2,7 @@ from typing import List, Optional, Dict, Any
 import requests
 from flask import Flask, request, current_app, Response as FlaskResponse, make_response
 from superdesk import __version__ as superdesk_version
+from superdesk.utils import get_cors_headers
 
 
 class HTTPProxy:
@@ -26,14 +27,18 @@ class HTTPProxy:
 
     Example:
     ::
-        register_http_proxy(
-            application,
-            HTTPProxy(
-                endpoint_name="belga.ai_proxy",
-                internal_url="belga/ai",
-                external_url="http://localhost:5001",
+        from flask import Flask
+        from superdesk.http_proxy import HTTPProxy, register_http_proxy
+
+        def init_app(app: Flask) -> None:
+            register_http_proxy(
+                app,
+                HTTPProxy(
+                    endpoint_name="belga.ai_proxy",
+                    internal_url="belga/ai",
+                    external_url="http://localhost:5001",
+                )
             )
-        )
 
     Note: The ``internal_url`` is prefixed with the ``URL_PREFIX`` config (defaults to ``api``).
 
@@ -80,9 +85,11 @@ class HTTPProxy:
         """The main function used for processing requests from the client"""
 
         self.authenticate()
-        if request.method == "OPTIONS":
-            return self.construct_cors_response()
-        return self.send_proxy_request()
+        response = make_response() if request.method == "OPTIONS" else self.send_proxy_request()
+        if self.use_cors:
+            # Ignore following type check, as ``typing--Werkzeug=1.0.9`` is missing stub for ``update`` method
+            response.headers.update(get_cors_headers(",".join(self.http_methods)))  # type: ignore
+        return response
 
     def authenticate(self):
         """If auth is enabled, make sure the current session is authenticated"""
@@ -91,17 +98,6 @@ class HTTPProxy:
         if self.auth and not current_app.auth.authorized([], "_blueprint", request.method):
             # Calling ``auth.authenticate`` raises a ``SuperdeskApiError.unauthorizedError()`` exception
             current_app.auth.authenticate()
-
-    def construct_cors_response(self):
-        """Constructs the CORS response for the request, if enabled"""
-
-        response = make_response()
-        if self.use_cors:
-            response.headers.add("Access-Control-Allow-Origin", current_app.config["CLIENT_URL"])
-            response.headers.add("Access-Control-Allow-Headers", ", ".join(current_app.config["X_HEADERS"]))
-            response.headers.add("Access-Control-Allow-Methods", ", ".join(self.http_methods))
-            response.headers.add("Access-Control-Allow-Credentials", "true")
-        return response
 
     def send_proxy_request(self) -> FlaskResponse:
         result = self.session.request(**self.get_proxy_request_kwargs())
