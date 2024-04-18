@@ -751,6 +751,12 @@ FTP_TIMEOUT = 300
 #: default timeout when publishing using the `http_push` transmitter
 HTTP_PUSH_TIMEOUT = (5, 30)
 
+#: Default timeout when proxying requests through the HTTPProxy endpoint(s)
+#:
+#: ..versionadded: 1.7.0
+#:
+HTTP_PROXY_TIMEOUT = (5, 30)
+
 #: default amount of files which can processed during one iteration of ftp ingest
 FTP_INGEST_FILES_LIST_LIMIT = 100
 
