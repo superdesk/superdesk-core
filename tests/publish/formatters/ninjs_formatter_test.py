@@ -1381,7 +1381,7 @@ class NinjsFormatterTest(TestCase):
                     "order": 2,
                     "version": "1",
                 },
-                "custom_media_field_multi_1--3": {
+                "custom_media_field_multi_1--0": {
                     "guid": "tag:localhost:5000:2018:3710ef88-9567-4dbb-a96b-cb53df15b66e",
                     "priority": 5,
                     "renditions": {
