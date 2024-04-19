@@ -69,6 +69,7 @@ install_requires = [
     "Click>=8.0.3,<9.0",
     "itsdangerous>=1.1,<2.0",
     "pymemcache>=4.0,<4.1",
+    "xmlsec==1.3.13"
 ]
 
 package_data = {
