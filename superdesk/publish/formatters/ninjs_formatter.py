@@ -192,12 +192,10 @@ class NINJSFormatter(Formatter):
         extra_items = None
         if recursive:
             if article[ITEM_TYPE] == CONTENT_TYPE.COMPOSITE:
-                ninjs[ASSOCIATIONS] = self._get_associations(article, subscriber)
-                if article.get(ASSOCIATIONS):
-                    associations, extra_items = self._format_related(article, subscriber)
-                    ninjs[ASSOCIATIONS].update(associations)
-            elif article.get(ASSOCIATIONS):
-                ninjs[ASSOCIATIONS], extra_items = self._format_related(article, subscriber)
+                ninjs[ASSOCIATIONS] = self._get_groups(article, subscriber)
+            if article.get(ASSOCIATIONS):
+                associations, extra_items = self._format_related(article, subscriber)
+                ninjs.setdefault(ASSOCIATIONS, {}).update(associations)
         elif article.get(ASSOCIATIONS) and recursive:
             ninjs[ASSOCIATIONS], extra_items = self._format_related(article, subscriber)
         if extra_items:
@@ -319,7 +317,7 @@ class NINJSFormatter(Formatter):
             return CONTENT_TYPE.TEXT
         return article[ITEM_TYPE]
 
-    def _get_associations(self, article, subscriber):
+    def _get_groups(self, article, subscriber):
         """Create associations dict for package groups."""
         associations = dict()
         for group in article.get(GROUPS, []):
@@ -372,7 +370,6 @@ class NINJSFormatter(Formatter):
                         if rendition != "original" and renditions.get(rendition, {}).get("poi"):
                             renditions[rendition].pop("poi", None)
 
-                associations[key] = item  # all items should stay in associations
                 match = MEDIA_FIELD_RE.match(key)
                 if match:
                     # item id seems to be build from a custom id
@@ -384,6 +381,10 @@ class NINJSFormatter(Formatter):
                         version = match.group("version")
                         media.setdefault(field_id, []).append((version, item))
                         extra_items[field_id] = {"type": field_schema.get("type")}
+                    order = item.get("order", match.group("version"))
+                    key = f"{field_id}--{order}"  # set keys according to order value
+
+                associations[key] = item  # all items should stay in associations
 
         if media:
             # we have custom media fields, we now order them
