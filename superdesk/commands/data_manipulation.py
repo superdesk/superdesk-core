@@ -34,6 +34,7 @@ import superdesk
 from superdesk.timer import timer
 from superdesk.resource import Resource
 from superdesk.services import BaseService
+from superdesk.cache import cache
 from . import data_updates, flush_elastic_index
 
 
@@ -488,6 +489,7 @@ class StorageRestore(superdesk.Command):
             except Exception:
                 logger.exception("😭 Something went wrong")
                 sys.exit(1)
+        cache.clean()
         print("🏁 All done")
 
     def restore_file(self, archive_path: Path):
