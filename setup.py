@@ -43,11 +43,11 @@ install_requires = [
     "raven[flask]>=5.10,<7.0",
     "requests>=2.7.0,<3.0",
     "boto3>=1.26,<2.0",
-    "websockets==10.3",
+    "websockets>=10.3,<10.4",
     "mongolock>=1.3.4,<1.4",
     "PyYAML>=6.0.1",
     "lxml>=4,<4.7",
-    "python-twitter==3.5",
+    "python-twitter>=3.5,<3.6",
     "chardet<6.0",
     "pymongo>=3.8,<3.12",
     "croniter<2.1",
@@ -55,8 +55,8 @@ install_requires = [
     "unidecode>=0.04.21,<=1.3.8",
     "authlib>0.14,<0.15",
     "draftjs-exporter[lxml]<2.2",
-    "regex==2020.7.14",
-    "flask-oidc-ex==0.5.5",
+    "regex>=2020.7.14,<2020.8",
+    "flask-oidc-ex>=0.5.5,<0.6",
     # to be replaced by stdlib version when we use Python 3.8+
     "typing_extensions>=3.7.4",
     "elastic-apm[flask]>=6.15.1,<7.0",
@@ -69,7 +69,7 @@ install_requires = [
     "Click>=8.0.3,<9.0",
     "itsdangerous>=1.1,<2.0",
     "pymemcache>=4.0,<4.1",
-    "xmlsec==1.3.13",  # pin xmlsec due to https://github.com/xmlsec/python-xmlsec/issues/314
+    "xmlsec>=1.3.13,<1.3.14",  # pin xmlsec due to https://github.com/xmlsec/python-xmlsec/issues/314
 ]
 
 package_data = {
