@@ -1,11 +1,12 @@
 import io
 import reportlab.lib.colors as colors
 
-from typing import List
+from typing import List, Sequence, Union
 
 from reportlab.platypus import SimpleDocTemplate, Paragraph, Flowable, Table
 from reportlab.lib.styles import getSampleStyleSheet
 from reportlab.lib.pagesizes import landscape, A4
+from reportlab.lib.units import cm, inch
 from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
 
@@ -110,12 +111,18 @@ class TablePDFFormatter(PrompterPDFFormatter):
         columns = utils.table_columns(subitems)
         data = [columns]
         for i, item in enumerate(items, start=1):
-            data.append(utils.item_table_data(show, rundown, item, i, subitems))
+            item_cols = utils.item_table_data(show, rundown, item, i, subitems)
+            for i in range(1, len(item_cols) - 1):
+                # use paragraph for all columns but first and last, it allows for line breaks
+                item_cols[i] = Paragraph(item_cols[i])
+            data.append(item_cols)
         t = Table(
             data,
+            colWidths=[inch, 1.5 * inch, 2.5 * inch, 2.5 * inch, 2.5 * inch, inch],
             style=[
                 ("GRID", (0, 0), (-1, -1), 0.25, colors.black),
                 ("FONTNAME", (0, 0), (-1, -1), MONO_FONT_NAME),
+                ("VALIGN", (0, 0), (-1, -1), "TOP"),
             ],
         )
         t.hAlign = "LEFT"

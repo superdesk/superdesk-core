@@ -798,7 +798,7 @@ Feature: Rundowns
                 "subitems": [
                     {
                         "qcode": "WALL",
-                        "technical_info": "wall info",
+                        "technical_info": "wall info something much longer so we will see what this does to the pdf",
                         "content": "some content"
                     },
                     {
