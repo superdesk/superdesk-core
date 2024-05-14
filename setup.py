@@ -69,7 +69,7 @@ install_requires = [
     "Click>=8.0.3,<9.0",
     "itsdangerous>=1.1,<2.0",
     "pymemcache>=4.0,<4.1",
-    "xmlsec>=1.3.13,<1.3.14",  # pin xmlsec due to https://github.com/xmlsec/python-xmlsec/issues/314
+    "xmlsec>=1.3.13,<1.3.15",  # pin xmlsec due to https://github.com/xmlsec/python-xmlsec/issues/314
 ]
 
 package_data = {
