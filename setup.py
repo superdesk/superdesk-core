@@ -46,7 +46,8 @@ install_requires = [
     "websockets>=10.3,<10.4",
     "mongolock>=1.3.4,<1.4",
     "PyYAML>=6.0.1",
-    "lxml>=4,<4.7",
+    "lxml>=5.2.2,<5.3",
+    "lxml_html_clean>=0.1.1,<0.2",
     "python-twitter>=3.5,<3.6",
     "chardet<6.0",
     "pymongo>=3.8,<3.12",
@@ -69,7 +70,7 @@ install_requires = [
     "Click>=8.0.3,<9.0",
     "itsdangerous>=1.1,<2.0",
     "pymemcache>=4.0,<4.1",
-    "xmlsec>=1.3.13,<1.3.14",  # pin xmlsec due to https://github.com/xmlsec/python-xmlsec/issues/314
+    "xmlsec>=1.3.13,<1.3.15",
 ]
 
 package_data = {
