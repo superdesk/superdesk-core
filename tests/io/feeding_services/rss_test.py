@@ -18,7 +18,6 @@ from superdesk.tests import TestCase
 from superdesk.io.commands.update_ingest import LAST_ITEM_UPDATE
 
 feed_parse = MagicMock()
-requests_get = MagicMock()
 
 nrk_xml = """
 <rss version="2.0">
@@ -240,25 +239,24 @@ class UpdateMethodTestCase(RssIngestServiceTest):
         self.assertCountEqual(items, expected_items)
 
 
-@mock.patch("superdesk.io.feeding_services.http_base_service.requests.get", requests_get)
 @mock.patch("superdesk.io.feeding_services.http_base_service.IngestApiError", FakeIngestApiError)
 class FetchDataMethodTestCase(RssIngestServiceTest):
     """Tests for the _fetch_data() method."""
 
     def setUp(self):
-        requests_get.reset_mock()
+        self.instance.session.get = MagicMock()
         self.fake_provider = MagicMock(name="fake provider")
         self.instance.provider = self.fake_provider
         self.fake_provider.__getitem__.return_value = self.config
         self.fake_provider.setdefault.return_value = self.config
 
     def test_retrieves_feed_from_correct_url(self):
-        requests_get.return_value = MagicMock(ok=True)
+        self.instance.session.get.return_value = MagicMock(ok=True)
         self.config.update(dict(url="http://news.com/rss"))
 
         self.instance._fetch_data()
 
-        call_args = requests_get.call_args[0]
+        call_args = self.instance.session.get.call_args[0]
         self.assertEqual(call_args[0], "http://news.com/rss")
 
     def test_stores_auth_info_in_instance_if_auth_required(self):
@@ -271,7 +269,7 @@ class FetchDataMethodTestCase(RssIngestServiceTest):
             }
         )
 
-        requests_get.return_value = MagicMock(ok=False)
+        self.instance.session.get.return_value = MagicMock(ok=False)
 
         try:
             self.instance._update(self.fake_provider, {})
@@ -281,16 +279,16 @@ class FetchDataMethodTestCase(RssIngestServiceTest):
         self.assertEqual(self.instance.auth_info, {"username": "james", "password": "bond+007"})
 
     def test_provides_auth_info_if_required(self):
-        requests_get.return_value = MagicMock(ok=True)
+        self.instance.session.get.return_value = MagicMock(ok=True)
         self.config.update(dict(url="http://news.com/rss", auth_required=True, username="johndoe", password="secret"))
 
         self.instance._fetch_data()
 
-        kw_call_args = requests_get.call_args[1]
+        kw_call_args = self.instance.session.get.call_args[1]
         self.assertEqual(kw_call_args.get("auth"), ("johndoe", "secret"))
 
     def test_returns_fetched_data_on_success(self):
-        requests_get.return_value = MagicMock(ok=True, content="<rss>X</rss>")
+        self.instance.session.get.return_value = MagicMock(ok=True, content="<rss>X</rss>")
         self.config.update(dict(url="http://news.com/rss"))
 
         response = self.instance._fetch_data()
@@ -298,7 +296,7 @@ class FetchDataMethodTestCase(RssIngestServiceTest):
         self.assertEqual(response, "<rss>X</rss>")
 
     def test_raises_auth_error_on_401(self):
-        requests_get.return_value = MagicMock(ok=False, status_code=401, reason="invalid credentials")
+        self.instance.session.get.return_value = MagicMock(ok=False, status_code=401, reason="invalid credentials")
         self.config.update(dict(url="http://news.com/rss"))
 
         try:
@@ -313,7 +311,7 @@ class FetchDataMethodTestCase(RssIngestServiceTest):
         self.assertIs(ex.provider, self.fake_provider)
 
     def test_raises_auth_error_on_403(self):
-        requests_get.return_value = MagicMock(ok=False, status_code=403, reason="access forbidden")
+        self.instance.session.get.return_value = MagicMock(ok=False, status_code=403, reason="access forbidden")
         self.config.update(dict(url="http://news.com/rss"))
 
         try:
@@ -328,7 +326,7 @@ class FetchDataMethodTestCase(RssIngestServiceTest):
         self.assertIs(ex.provider, self.fake_provider)
 
     def test_raises_not_found_error_on_404(self):
-        requests_get.return_value = MagicMock(ok=False, status_code=404, reason="resource not found")
+        self.instance.session.get.return_value = MagicMock(ok=False, status_code=404, reason="resource not found")
         self.config.update(dict(url="http://news.com/rss"))
 
         try:
@@ -343,7 +341,7 @@ class FetchDataMethodTestCase(RssIngestServiceTest):
         self.assertIs(ex.provider, self.fake_provider)
 
     def test_raises_general_error_on_unknown_error(self):
-        requests_get.return_value = MagicMock(ok=False, status_code=500, reason="server down")
+        self.instance.session.get.return_value = MagicMock(ok=False, status_code=500, reason="server down")
         self.config.update(dict(url="http://news.com/rss"))
 
         try:
@@ -643,8 +641,9 @@ class CreateItemMethodTestCase(RssIngestServiceTest):
 
     def test_guid_not_permalink(self):
         self.instance.provider = provider = {"config": {"url": "http://example.com/rss"}}
-        with mock.patch("superdesk.io.feeding_services.http_base_service.requests.get", return_value=RssResponse()):
-            items = self.instance._update(provider, None)[0]
+        self.instance.session.get = MagicMock()
+        self.instance.session.get.return_value = RssResponse()
+        items = self.instance._update(provider, None)[0]
         self.assertEqual(1, len(items))
         self.assertEqual("https://www.nrk.no/finnmark/stanset-ikke-for-fotgjenger-1.13362571", items[0]["uri"])
         self.assertEqual("tag:www.nrk.no:1.13362571", items[0]["guid"])
@@ -654,8 +653,9 @@ class CreateItemMethodTestCase(RssIngestServiceTest):
         self.instance.provider = provider = {"config": {"url": "http://example.com/rss"}}
         response = RssResponse()
         response.content = nrk_xml.replace('<guid isPermaLink="false">1.13362571</guid>', "")
-        with mock.patch("superdesk.io.feeding_services.http_base_service.requests.get", return_value=response):
-            items = self.instance._update(provider, None)[0]
+        self.instance.session.get = MagicMock()
+        self.instance.session.get.return_value = response
+        items = self.instance._update(provider, None)[0]
         self.assertEqual("tag:www.nrk.no:finnmark:stanset-ikke-for-fotgjenger-1.13362571", items[0]["guid"])
 
 

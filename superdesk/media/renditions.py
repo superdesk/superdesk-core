@@ -9,6 +9,7 @@
 # at https://www.sourcefabric.org/superdesk/license
 
 from __future__ import absolute_import
+from typing import Dict, Optional, Tuple, Any
 from PIL import Image
 from io import BytesIO
 import logging
@@ -343,7 +344,21 @@ def get_renditions_spec(without_internal_renditions=False, no_custom_crops=False
     return rendition_spec
 
 
-def update_renditions(item, href, old_item, request_kwargs=None):
+def download_file_from_feeding_service_or_directly(
+    url: str, feeding_service: Optional[Any] = None, **kwargs: Dict[str, Any]
+) -> Tuple[BytesIO, str, str]:
+    if feeding_service is not None and hasattr(feeding_service, "download_file"):
+        return feeding_service.download_file(url, **kwargs)
+    return download_file_from_url(url, kwargs)
+
+
+def update_renditions(
+    item: Dict[str, Any],
+    href: str,
+    old_item: Optional[Dict[str, Any]],
+    request_kwargs: Optional[Dict[str, Any]] = None,
+    feeding_service: Optional[Any] = None,
+):
     """Update renditions for an item.
 
     If the old_item has renditions uploaded in to media then the old rendition details are
@@ -353,6 +368,8 @@ def update_renditions(item, href, old_item, request_kwargs=None):
     :param item: parsed item from source
     :param href: reference to original
     :param old_item: the item that we have already ingested, if it exists
+    :param request_kwargs: Optional keyword arguments for the download request
+    :param feeding_service: Optional Feeding Service to use for downloading the renditions
     :return: item with renditions
     """
     inserted = []
@@ -367,7 +384,9 @@ def update_renditions(item, href, old_item, request_kwargs=None):
                 item["filemeta_json"] = old_item.get("filemeta_json")
                 return
 
-        content, filename, content_type = download_file_from_url(href, request_kwargs)
+        content, filename, content_type = download_file_from_feeding_service_or_directly(
+            href, feeding_service, **request_kwargs or {}
+        )
         file_type, ext = content_type.split("/")
         metadata = process_file(content, file_type)
         file_guid = app.media.put(content, filename=filename, content_type=content_type, metadata=metadata)
@@ -386,12 +405,18 @@ def update_renditions(item, href, old_item, request_kwargs=None):
         raise
 
 
-def transfer_renditions(renditions):
+def transfer_renditions(
+    renditions: Dict[str, Any],
+    request_kwargs: Optional[Dict[str, Any]] = None,
+    feeding_service: Optional[Any] = None,
+):
     """Transfer the passed renditions to localy held renditions
 
     Download the renditions as passed and upload them to this instances storage
     Adjust the rendition references
-    :param renditions:
+    :param renditions: A dictionary of renditions to transfer
+    :param request_kwargs: Optional keyword arguments for the download request
+    :param feeding_service: Optional Feeding Service to use for downloading the renditions
     :return: Updated renditions
     """
     if not renditions:
@@ -403,7 +428,9 @@ def transfer_renditions(renditions):
                 rend["href"] = app.media.url_for_media(rend["media"], local.content_type)
                 continue
 
-        content, filename, content_type = download_file_from_url(rend.get("href"))
+        content, filename, content_type = download_file_from_feeding_service_or_directly(
+            rend.get("href"), feeding_service, **request_kwargs or {}
+        )
         file_type, ext = content_type.split("/")
         metadata = process_file(content, file_type)
         file_guid = app.media.put(content, filename=filename, content_type=content_type, metadata=metadata)
