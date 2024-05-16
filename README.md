@@ -1,3 +1,4 @@
+.
 # Superdesk Core library [![Build Status](https://github.com/superdesk/superdesk-core/workflows/CI/badge.svg)](https://github.com/superdesk/superdesk-core/actions) [![Documentation Status](https://readthedocs.org/projects/superdesk/badge/?version=latest)](https://superdesk.readthedocs.io/en/latest/?badge=latest)
 
 Utilities for building Superdesk applications.
