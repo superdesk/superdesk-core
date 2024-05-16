@@ -46,7 +46,7 @@ install_requires = [
     "websockets>=10.3,<10.4",
     "mongolock>=1.3.4,<1.4",
     "PyYAML>=6.0.1",
-    "lxml>=5.2.2,<5.3",
+    "lxml>=4.0,<5.3",
     "lxml_html_clean>=0.1.1,<0.2",
     "python-twitter>=3.5,<3.6",
     "chardet<6.0",
