@@ -14,7 +14,7 @@ pytest
 pytest-env
 python3-saml>=1.9,<1.10
 typing_extensions>=3.7.4
-moto[sqs]
+moto[sqs]<5.0
 
 -e .
 -e git+https://github.com/superdesk/superdesk-planning.git@v2.5.0-rc6#egg=superdesk-planning
