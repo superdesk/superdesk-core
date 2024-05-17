@@ -231,7 +231,7 @@ class APMediaFeedParser(FeedParser):
 
         if in_item.get("type") == "picture":
             if in_item.get("renditions"):
-                self._parse_renditions(in_item["renditions"], item, provider)
+                self._parse_renditions(in_item["renditions"], item)
 
             if in_item.get("description_caption"):
                 item["description_text"] = in_item.get("description_caption")
@@ -278,31 +278,19 @@ class APMediaFeedParser(FeedParser):
             for key, raw in associations.items():
                 item["associations"]["{}--{}".format(related_id, key)] = self.parse(raw, provider)
 
-    def _parse_renditions(self, renditions, item, provider=None):
+    def _parse_renditions(self, renditions, item):
         try:
             item["renditions"] = {}
             for dest, src in self.RENDITIONS_MAPPING.items():
                 rend = renditions[src]
                 item["renditions"][dest] = {
-                    "href": with_apikey(rend["href"], provider),
+                    "href": rend["href"],
                     "mimetype": rend["mimetype"],
                     "width": rend["width"],
                     "height": rend["height"],
                 }
         except KeyError:
             pass
-
-
-def with_apikey(href, provider):
-    if "apikey" in href:
-        return href
-    try:
-        key = provider["config"]["apikey"]
-        separator = "?" if "?" not in href else "&"
-        return f"{href}{separator}apikey={key}"
-    except (KeyError, TypeError):
-        pass
-    return href
 
 
 register_feed_parser(APMediaFeedParser.NAME, APMediaFeedParser())
