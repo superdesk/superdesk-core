@@ -29,12 +29,12 @@
 """
 
 
+import re
 import json
 import superdesk
 import logging
-import re
-from typing import Tuple
 
+from typing import List, Literal, Sequence, Tuple, TypedDict
 from flask import current_app as app
 from eve.utils import config
 from superdesk.publish.formatters import Formatter
@@ -42,6 +42,7 @@ from superdesk.errors import FormatterError
 from superdesk.metadata.item import ITEM_TYPE, CONTENT_TYPE, EMBARGO, GUID_FIELD, ASSOCIATIONS
 from superdesk.metadata.packages import RESIDREF, GROUP_ID, GROUPS, ROOT_GROUP, REFS
 from superdesk.metadata.utils import generate_urn
+from superdesk.types import Item
 from superdesk.utils import json_serialize_datetime_objectId
 from superdesk.media.renditions import get_renditions_spec
 from superdesk.vocabularies import is_related_content
@@ -60,6 +61,31 @@ EXTRA_ITEMS = "extra_items"
 SCHEME_MAP = {
     "sig": "http://cv.iptc.org/newscodes/signal/",
 }
+
+
+class QCode(TypedDict):
+    name: str
+    qcode: str
+
+
+class NinjsAuthorMandatory(TypedDict):
+    code: str
+    name: str
+    role: str
+    biography: str
+
+
+class NinjsAuthor(NinjsAuthorMandatory, total=False):
+    uri: str
+    email: str
+    twitter: str
+    facebook: str
+    instagram: str
+    avatar_url: str
+    jobtitle: QCode
+
+
+AuthorFields = Literal["email", "twitter", "facebook", "instagram"]
 
 
 def filter_empty_vals(data):
@@ -137,6 +163,8 @@ class NINJSFormatter(Formatter):
             "size": "size",
         }
     )
+
+    author_user_fields: Sequence[AuthorFields] = ("facebook", "twitter", "instagram")
 
     def __init__(self):
         self.format_type = "ninjs"
@@ -541,7 +569,7 @@ class NINJSFormatter(Formatter):
                 )
         return output
 
-    def _format_authors(self, article):
+    def _format_authors(self, article: Item) -> List[NinjsAuthor]:
         users_service = superdesk.get_resource_service("users")
         vocabularies_service = superdesk.get_resource_service("vocabularies")
         job_titles_voc = vocabularies_service.find_one(None, _id="job_titles")
@@ -549,54 +577,60 @@ class NINJSFormatter(Formatter):
             job_titles_voc["items"] = vocabularies_service.get_locale_vocabulary(
                 job_titles_voc.get("items"), article.get("language")
             )
+
         job_titles_map = {v["qcode"]: v["name"] for v in job_titles_voc["items"]} if job_titles_voc is not None else {}
 
         authors = []
-        for author in article["authors"]:
+        for author_ref in article["authors"]:
             try:
-                user_id = author["parent"]
+                user_id = author_ref["parent"]
             except KeyError:
                 # XXX: in some older items, parent may be missing, we try to find user with name in this case
                 try:
-                    user = next(users_service.find({"display_name": author["name"]}))
+                    user = next(users_service.find({"display_name": author_ref["name"]}))
                 except (StopIteration, KeyError):
                     logger.warning("unknown user")
-                    user = {}
+                    user = None
             else:
                 try:
                     user = next(users_service.find({"_id": user_id}))
                 except StopIteration:
                     logger.warning("unknown user: {user_id}".format(user_id=user_id))
-                    user = {}
+                    user = None
 
-            avatar_url = user.get("picture_url", author.get("avatar_url"))
-
-            author = {
-                "code": str(user.get("_id", author.get("name", ""))),
-                "name": user.get("display_name", author.get("name", "")),
-                "role": author.get("role", ""),
-                "biography": user.get("biography", author.get("biography", "")),
-            }
-
-            if user.get("_id"):
-                author["uri"] = generate_urn("user", user["_id"])
-
-            # include socials only if they are non-empty
-            socials = ("facebook", "twitter", "instagram")
-            for social in socials:
-                social_data = user.get(social, author.get(social, ""))
-                if social_data:
-                    author[social] = social_data
-
-            if avatar_url:
-                author["avatar_url"] = avatar_url
-
-            job_title_qcode = user.get("job_title")
-            if job_title_qcode is not None:
-                author["jobtitle"] = {"qcode": job_title_qcode, "name": job_titles_map.get(job_title_qcode, "")}
-
+            author = self._format_author(author_ref, user, job_titles_map=job_titles_map)
             authors.append(author)
         return authors
+
+    def _format_author(self, author_ref, user, *, job_titles_map) -> NinjsAuthor:
+        if user is None:
+            user = {}
+
+        avatar_url = user.get("picture_url", author_ref.get("avatar_url"))
+
+        author: NinjsAuthor = {
+            "code": str(user.get("_id", author_ref.get("name", ""))),
+            "name": user.get("display_name", author_ref.get("name", "")),
+            "role": author_ref.get("role", ""),
+            "biography": user.get("biography", author_ref.get("biography", "")),
+        }
+
+        if user.get("_id"):
+            author["uri"] = generate_urn("user", user["_id"])
+
+        # copy user fields
+        for field in self.author_user_fields:
+            if user.get(field):
+                author[field] = user[field]
+
+        if avatar_url:
+            author["avatar_url"] = avatar_url
+
+        job_title_qcode = user.get("job_title")
+        if job_title_qcode is not None:
+            author["jobtitle"] = {"qcode": job_title_qcode, "name": job_titles_map.get(job_title_qcode, "")}
+
+        return author
 
     def _format_signal(self, signal):
         scheme, code = signal["qcode"].split(":")

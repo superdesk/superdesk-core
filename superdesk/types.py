@@ -12,3 +12,16 @@ class WebsocketMessageData(TypedDict, total=False):
     extra: Dict[str, Any]
     _created: str  # isoformat
     _process: int
+
+
+class ItemAuthor(TypedDict):
+    uri: str
+    parent: str
+    name: str
+    role: str
+    jobtitle: str
+    sub_label: str
+
+
+class Item(TypedDict, total=False):
+    authors: List[ItemAuthor]
