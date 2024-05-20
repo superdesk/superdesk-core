@@ -29,7 +29,6 @@ class FTPNinjsFormatter(NINJSFormatter):
 
     def __init__(self):
         super().__init__()
-        self.format_type = "ftp ninjs"
         self.internal_renditions = []
         self.path = None
 

@@ -21,7 +21,6 @@ class NewsroomNinjsFormatter(NINJSFormatter):
     type = "newsroom ninjs"
 
     def __init__(self):
-        self.format_type = "newsroom ninjs"
         self.can_preview = False
         self.can_export = False
         self.internal_renditions = ["original", "viewImage", "baseImage"]

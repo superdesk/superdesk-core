@@ -167,7 +167,6 @@ class NINJSFormatter(Formatter):
     author_user_fields: Sequence[AuthorFields] = ("facebook", "twitter", "instagram")
 
     def __init__(self):
-        self.format_type = "ninjs"
         self.can_preview = True
         self.can_export = True
         self.internal_renditions = app.config.get("NINJS_COMMON_RENDITIONS", []) + ["original"]
@@ -338,7 +337,7 @@ class NINJSFormatter(Formatter):
         return renditions
 
     def can_format(self, format_type, article):
-        return format_type == self.format_type
+        return format_type == self.type
 
     def _get_type(self, article):
         if article[ITEM_TYPE] == CONTENT_TYPE.PREFORMATTED:
@@ -641,7 +640,7 @@ class NINJSFormatter(Formatter):
         )
 
     def export(self, item):
-        if self.can_format(self.format_type, item):
+        if self.can_format(self.type, item):
             sequence, formatted_doc = self.format(item, {"_id": "0"}, None)[0]
             return formatted_doc.replace("''", "'")
         else:
@@ -670,10 +669,6 @@ class NINJS2Formatter(NINJSFormatter):
         "rewrite_sequence",
         "rewrite_of",
     )
-
-    def __init__(self):
-        super().__init__()
-        self.format_type = "ninjs2"
 
     def _transform_to_ninjs(self, article, subscriber, recursive=True):
         ninjs = super()._transform_to_ninjs(article, subscriber, recursive)
