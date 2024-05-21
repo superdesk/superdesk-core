@@ -2,6 +2,7 @@ import superdesk
 
 from typing import Final
 from flask_babel import lazy_gettext
+from celery.schedules import crontab
 
 from superdesk.factory.app import SuperdeskApp
 
@@ -53,3 +54,10 @@ def init_app(app: SuperdeskApp) -> None:
     ]
 
     app.register_blueprint(export.blueprint)
+
+    app.config["CELERY_BEAT_SCHEDULE"]["rundowns:create-scheduled-rundowns"] = (
+        {
+            "task": "apps.rundowns.tasks.create_scheduled_rundowns",
+            "schedule": crontab(minute="*/15"),
+        },
+    )

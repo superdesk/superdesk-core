@@ -777,7 +777,11 @@ class NinjsFormatterTest(TestCase):
                     "parent": "subject:01000000",
                     "qcode": "subject:01000002",
                     "translations": {
-                        "name": {"de": "Ergebnisorientiert", "it": "Orientato ai risultati ", "ja": "アウトカム・オリエンティッド"}
+                        "name": {
+                            "de": "Ergebnisorientiert",
+                            "it": "Orientato ai risultati ",
+                            "ja": "アウトカム・オリエンティッド",
+                        }
                     },
                     "scheme": "subject_custom",
                 },
@@ -1786,8 +1790,8 @@ class Ninjs2FormatterTest(TestCase):
     def setUp(self):
         self.formatter = NINJS2Formatter()
 
-    def test_format_type(self):
-        self.assertEqual("ninjs2", self.formatter.format_type)
+    def test_can_format(self):
+        self.assertTrue(self.formatter.can_format("ninjs2", {}))
 
     def test_correction_sequence_number(self):
         article = {
