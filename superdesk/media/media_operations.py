@@ -205,7 +205,7 @@ def crop_image(content, file_name, cropping_data, exact_size=None, image_format=
         img = Image.open(content)
         cropped = img.crop(cropping_data)
         if exact_size and "width" in exact_size and "height" in exact_size:
-            cropped = cropped.resize((int(exact_size["width"]), int(exact_size["height"])), Image.ANTIALIAS)
+            cropped = cropped.resize((int(exact_size["width"]), int(exact_size["height"])), Image.LANCZOS)
         logger.debug("Cropped image {} from stream, going to save it".format(file_name))
         try:
             out = BytesIO()
