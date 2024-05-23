@@ -55,9 +55,7 @@ def init_app(app: SuperdeskApp) -> None:
 
     app.register_blueprint(export.blueprint)
 
-    app.config["CELERY_BEAT_SCHEDULE"]["rundowns:create-scheduled-rundowns"] = (
-        {
-            "task": "apps.rundowns.tasks.create_scheduled_rundowns",
-            "schedule": crontab(minute="*/15"),
-        },
-    )
+    app.config["CELERY_BEAT_SCHEDULE"]["rundowns:create-scheduled-rundowns"] = {
+        "task": "apps.rundowns.tasks.create_scheduled_rundowns",
+        "schedule": crontab(minute="*/15"),
+    }
