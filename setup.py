@@ -22,7 +22,7 @@ install_requires = [
     "flask-script>=2.0.5,<3.0",
     "flask-babel>=1.0,<4.1",
     "pillow>=9.2,<9.3",
-    "arrow>=0.4,<=0.13",
+    "arrow>=0.4,<=1.3.0",
     "bcrypt>=3.1.1,<4.2",
     "blinker>=1.3,<1.8",
     "celery[redis]>=5.2.7,<5.3",
