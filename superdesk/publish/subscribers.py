@@ -16,7 +16,7 @@ from copy import deepcopy
 from flask import current_app as app
 from superdesk import get_resource_service
 from eve.utils import ParsedRequest, config
-from superdesk.utils import ListCursor
+from superdesk.utils import ListCursor, get_dict_hash
 from superdesk.resource import Resource, build_custom_hateoas
 from superdesk.services import CacheableService
 from superdesk.errors import SuperdeskApiError
@@ -26,6 +26,12 @@ from superdesk.notification import push_notification
 
 
 logger = logging.getLogger(__name__)
+
+
+def get_destination_id(destination) -> str:
+    if destination.get("_id"):
+        return destination["_id"]
+    return get_dict_hash(destination)
 
 
 class SubscribersResource(Resource):
@@ -60,6 +66,7 @@ class SubscribersResource(Resource):
                     "preview_endpoint_url": {"type": "string"},
                     "delivery_type": {"type": "string", "required": True},
                     "config": {"type": "dict"},
+                    "_id": {"type": "string"},
                 },
             },
         },
@@ -125,6 +132,20 @@ class SubscribersService(CacheableService):
         subscriber = deepcopy(original)
         subscriber.update(updates)
         self._validate_products_destinations(subscriber)
+        self.keep_destinations_secrets(updates, original)
+
+    def keep_destinations_secrets(self, updates, original):
+        """Populate the secrets removed on fetch so those won't be overriden on save."""
+        original_destinations = original.get("destinations") or []
+        updates_destinations = updates.get("destinations") or []
+        for destination in original_destinations:
+            if not destination.get("config"):
+                continue
+            dest_id = get_destination_id(destination)
+            for update_destination in updates_destinations:
+                if dest_id == update_destination.get("_id"):
+                    for field, value in destination["config"].items():
+                        update_destination["config"].setdefault(field, value)
 
     def on_updated(self, updates, original):
         push_notification("subscriber:update", _id=[original.get(config.ID_FIELD)])
@@ -303,6 +324,7 @@ class SubscribersService(CacheableService):
                         {
                             **destination,
                             "config": {key: value for key, value in destination["config"].items() if key not in fields},
+                            "_id": get_destination_id(destination),
                         }
                         for destination in doc.get("destinations", [])
                     ],
