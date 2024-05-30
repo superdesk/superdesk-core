@@ -128,7 +128,7 @@ class AmazonMediaStorage(SuperdeskMediaStorage):
         and additional *version* option to have automatic version or not to have,
         or to send a `string` one.
         """
-        path = urlparse(filename).path
+        path = urlparse(filename).path.split("/")[-1]
         file_extension = splitext(path)[1]
 
         extension = ""

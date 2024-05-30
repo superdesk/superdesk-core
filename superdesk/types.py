@@ -24,4 +24,7 @@ class ItemAuthor(TypedDict):
 
 
 class Item(TypedDict, total=False):
+    headline: str
+    slugline: str
     authors: List[ItemAuthor]
+    extra: Dict[str, Any]

@@ -67,6 +67,7 @@ install_requires = [
     "itsdangerous>=1.1,<2.0",
     "pymemcache>=4.0,<4.1",
     "xmlsec>=1.3.13,<1.3.15",
+    "pyexiv2>=2.12.0,<2.13",
 ]
 
 package_data = {

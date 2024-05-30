@@ -116,6 +116,8 @@ def update_config(conf):
     # todo: only activate it for specific tests
     conf["BACKEND_FIND_ONE_SEARCH_TEST"] = True
 
+    conf["PROXY_MEDIA_STORAGE_CHECK_EXISTS"] = True
+
     return conf
 
 

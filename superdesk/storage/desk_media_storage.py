@@ -9,6 +9,7 @@
 # at https://www.sourcefabric.org/superdesk/license
 
 from typing import Optional
+from flask import current_app as app
 import logging
 import json
 import mimetypes
@@ -57,14 +58,14 @@ class SuperdeskGridFSMediaStorage(SuperdeskMediaStorage, GridFSMediaStorage):
         ext = mimetypes.guess_extension(content_type or "") or ""
         if ext in (".jpe", ".jpeg"):
             ext = ".jpg"
-        return self.app.upload_url(str(media_id) + ext)
+        return app.upload_url(str(media_id) + ext)
 
     def url_for_download(self, media_id, content_type=None):
         """Return url for download.
 
         :param media_id: media id from media_id method
         """
-        return self.app.download_url(str(media_id))
+        return app.download_url(str(media_id))
 
     def url_for_external(self, media_id: str, resource: Optional[str] = None) -> str:
         """Returns a URL for external use
@@ -117,7 +118,7 @@ class SuperdeskGridFSMediaStorage(SuperdeskMediaStorage, GridFSMediaStorage):
 
     def fs(self, resource=None):
         resource = resource or "upload"
-        driver = self.app.data.mongo
+        driver = app.data.mongo
         px = driver.current_mongo_prefix(resource)
         if px not in self._fs:
             self._fs[px] = gridfs.GridFS(driver.pymongo(prefix=px).db)
@@ -171,9 +172,9 @@ class SuperdeskGridFSMediaStorage(SuperdeskMediaStorage, GridFSMediaStorage):
                 logging.warning("Failed to get file attributes. {}".format(e))
         return files
 
-    def exists(self, id_or_filename, resource):
+    def exists(self, id_or_filename, resource=None):
         _id = format_id(id_or_filename)
-        return super().exists(_id)
+        return super().exists(_id, resource)
 
     def get_by_filename(self, filename):
         _id, _ = os.path.splitext(filename)

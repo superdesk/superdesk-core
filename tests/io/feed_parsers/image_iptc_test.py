@@ -15,6 +15,8 @@ import os
 
 
 class BaseImageIPTCTestCase(TestCase):
+    filename = ""
+
     def setUp(self):
         dirname = os.path.dirname(os.path.realpath(__file__))
         self.image_path = os.path.normpath(os.path.join(dirname, "../fixtures", self.filename))

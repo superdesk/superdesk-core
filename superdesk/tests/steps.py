@@ -32,7 +32,7 @@ from bson import ObjectId
 from eve.io.mongo import MongoJSONEncoder
 from eve.methods.common import parse
 from eve.utils import ParsedRequest, config
-from flask import json
+from flask import json, render_template_string
 from wooper.assertions import assert_in, assert_equal, assertions
 from wooper.general import fail_and_print_body, apply_path, parse_json_response, WooperAssertionError
 from wooper.expect import (
@@ -52,6 +52,7 @@ from superdesk.io.commands import update_ingest
 from superdesk.io.commands.update_ingest import LAST_ITEM_UPDATE
 from superdesk.io.feeding_services import ftp
 from superdesk.io.feed_parsers import XMLFeedParser, EMailRFC822FeedParser, STTNewsMLFeedParser
+from superdesk.media.image import read_metadata
 from superdesk.utc import utcnow, get_expiry_date
 from superdesk.tests import get_prefixed_url, set_placeholder
 from apps.dictionaries.resource import DICTIONARY_FILE
@@ -783,6 +784,8 @@ def store_placeholder(context, url):
         if item["_status"] == "OK" and item.get("_id"):
             try:
                 setattr(context, get_resource_name(url), item)
+                context.placeholders = getattr(context, "placeholders", {})
+                context.placeholders[get_resource_name(url)] = item
             except (IndexError, KeyError):
                 pass
 
@@ -1117,6 +1120,8 @@ def step_impl_then_get_list(context, total_count, unit=None):
         )
     if context.text:
         test_json(context)
+
+    set_placeholder(context, "items", data["_items"])
 
 
 @then("we get list ordered by {field} with {total_count} items")
@@ -2743,3 +2748,14 @@ def when_lock_expires(context, url):
         orig = context.app.data.find_one(resource, req=None, _id=_id)
         assert orig is not None, "could not find {}/{}".format(resource, _id)
         context.app.data.update(resource, orig["_id"], {"_lock_time": utcnow() - timedelta(hours=48)}, orig)
+
+
+@then('we get picture metadata "{media}"')
+def then_we_get_picture_metadta(context, media):
+    with context.app.app_context():
+        media = render_template_string(media, **getattr(context, "placeholders", {}))
+        binary = context.app.media.get(media)
+        assert binary, "Binary for media id {} not found".format(media)
+        metadata = read_metadata(binary.read())
+    context_data = json.loads(apply_placeholders(context, context.text))
+    assert json_match(context_data, metadata), str(context_data) + "\n != \n" + str(metadata)

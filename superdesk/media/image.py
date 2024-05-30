@@ -11,12 +11,17 @@
 """Utilities for extractid metadata from image files."""
 
 import io
+import pyexiv2
+
+from typing import BinaryIO, Dict, List, Literal, Mapping, TypedDict, Union
 from superdesk.text_utils import decode
 from PIL import Image, ExifTags
 from PIL import IptcImagePlugin
 from PIL.TiffImagePlugin import IFDRational
 from flask import json
-from .iim_codes import iim_codes
+
+from superdesk.types import Item
+from .iim_codes import TAG, iim_codes
 
 ORIENTATIONS = {
     1: ("Normal", 0),
@@ -125,7 +130,7 @@ def is_serializable(val):
     return True
 
 
-def get_meta_iptc(file_stream):
+def get_meta_iptc(file_stream: BinaryIO):
     """Returns the image IPTC metadata in a dictionary of tag:value pairs.
 
     @param file_stream: stream
@@ -133,7 +138,7 @@ def get_meta_iptc(file_stream):
     file_stream.seek(0)
     img = Image.open(file_stream)
     iptc_raw = IptcImagePlugin.getiptcinfo(img)
-    metadata = {}
+    metadata: Dict[TAG, Union[str, List[str]]] = {}
 
     if iptc_raw is None:
         return metadata
@@ -149,3 +154,117 @@ def get_meta_iptc(file_stream):
             value = decode(value)
         metadata[tag] = value
     return metadata
+
+
+class PhotoMetadata(TypedDict, total=False):
+    Description: str
+    DescriptionWriter: str
+    Headline: str
+    Instructions: str
+    JobId: str
+    Title: str
+    Creator: List[str]
+    CreatorsJobtitle: str
+    City: str
+    ProvinceState: str
+    Country: str
+    CountryCode: str
+    CopyrightNotice: str
+    CreditLine: str
+
+
+PhotoMetadataKeys = Literal[
+    "Description",
+    "DescriptionWriter",
+    "Headline",
+    "Instructions",
+    "JobId",
+    "Title",
+    "Creator",
+    "CreatorsJobtitle",
+    "City",
+    "ProvinceState",
+    "Country",
+    "CountryCode",
+    "CopyrightNotice",
+    "CreditLine",
+]
+
+PhotoMetadataMapping = Dict[str, PhotoMetadataKeys]
+
+
+def read_metadata(input: bytes) -> PhotoMetadata:
+    """Reads the metadata from the image file.
+
+    @param file_stream: stream
+    """
+    with pyexiv2.ImageData(input) as img:
+        xmp = img.read_xmp()
+    return {
+        "Description": get_xmp_lang_string(xmp.get("Xmp.dc.description")),
+        "DescriptionWriter": xmp.get("Xmp.photoshop.CaptionWriter", ""),
+        "Headline": xmp.get("Xmp.photoshop.Headline", ""),
+        "Instructions": xmp.get("Xmp.photoshop.Instructions", ""),
+        "JobId": xmp.get("Xmp.photoshop.TransmissionReference", ""),
+        "Title": get_xmp_lang_string(xmp.get("Xmp.dc.title")),
+        "Creator": xmp.get("Xmp.dc.creator", []),
+        "CreatorsJobtitle": xmp.get("Xmp.photoshop.AuthorsPosition", ""),
+        "CopyrightNotice": get_xmp_lang_string(xmp.get("Xmp.dc.rights", "")),
+        "City": xmp.get("Xmp.photoshop.City", ""),
+        "Country": xmp.get("Xmp.photoshop.Country", ""),
+        "CountryCode": xmp.get("Xmp.iptc.CountryCode", ""),
+        "CreditLine": xmp.get("Xmp.photoshop.Credit", ""),
+        "ProvinceState": xmp.get("Xmp.photoshop.State", ""),
+    }
+
+
+def get_xmp_lang_string(value, lang="x-default"):
+    lang_key = 'lang="{}"'.format(lang)
+    if value and isinstance(value, dict) and value.get(lang_key):
+        return value[lang_key]
+    if value and isinstance(value, str):
+        return value
+    return ""
+
+
+def write_metadata(input: bytes, metadata: PhotoMetadata) -> bytes:
+    """Writes the metadata to the image file.
+
+    @param file_stream: stream
+    @param metadata: dict
+    """
+    xmp = {
+        "Xmp.dc.description": metadata.get("Description", ""),
+        "Xmp.photoshop.CaptionWriter": metadata.get("DescriptionWriter", ""),
+        "Xmp.photoshop.Headline": metadata.get("Headline", ""),
+        "Xmp.photoshop.Instructions": metadata.get("Instructions", ""),
+        "Xmp.photoshop.TransmissionReference": metadata.get("JobId", ""),
+        "Xmp.dc.title": metadata.get("Title", ""),
+        "Xmp.dc.creator": metadata.get("Creator", []),
+        "Xmp.photoshop.AuthorsPosition": metadata.get("CreatorsJobtitle", ""),
+        "Xmp.dc.rights": metadata.get("CopyrightNotice", ""),
+        "Xmp.photoshop.City": metadata.get("City", ""),
+        "Xmp.photoshop.Country": metadata.get("Country", ""),
+        "Xmp.iptc.CountryCode": metadata.get("CountryCode", ""),
+        "Xmp.photoshop.Credit": metadata.get("CreditLine", ""),
+        "Xmp.photoshop.State": metadata.get("ProvinceState", ""),
+    }
+    with pyexiv2.ImageData(input) as img:
+        img.modify_xmp(xmp)
+        return img.get_bytes()
+
+
+def get_metadata_from_item(item: Item, mapping: PhotoMetadataMapping) -> PhotoMetadata:
+    metadata = PhotoMetadata()
+    for src, dest in mapping.items():
+        value = get_item_value(item, src)
+        if value is not None:
+            metadata[dest] = value
+    return metadata
+
+
+def get_item_value(item, src: str):
+    if src.startswith("extra."):
+        extra = item.get("extra") or {}
+        return extra.get(src[6:])
+    return item.get(src)
