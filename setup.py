@@ -63,7 +63,6 @@ install_requires = [
     "elastic-apm[flask]>=6.7,<6.8",
     # Fix an issue with MarkupSafe 2.1.0 not exporting `soft_unicode`
     "MarkupSafe<2.1",
-    "xmlsec==1.3.13",  # pin xmlsec due to https://github.com/xmlsec/python-xmlsec/issues/314
 ]
 
 package_data = {
