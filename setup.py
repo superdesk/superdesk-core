@@ -45,7 +45,8 @@ install_requires = [
     "websockets>=3.0,<7.0",
     "mongolock>=1.3.4,<1.4",
     "PyYAML>=6.0.1",
-    "lxml>=4,<4.7",
+    "lxml>=5.2.2,<5.3",
+    "lxml_html_clean>=0.1.1,<0.2",
     "python-twitter==3.5",
     "chardet<4.0",
     "pymongo>=3.8,<3.12",
@@ -63,7 +64,7 @@ install_requires = [
     "elastic-apm[flask]>=6.7,<6.8",
     # Fix an issue with MarkupSafe 2.1.0 not exporting `soft_unicode`
     "MarkupSafe<2.1",
-    "xmlsec==1.3.13",  # pin xmlsec due to https://github.com/xmlsec/python-xmlsec/issues/314
+    "xmlsec>=1.3.13,<1.3.15",
 ]
 
 package_data = {
