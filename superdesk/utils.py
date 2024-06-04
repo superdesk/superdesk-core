@@ -26,8 +26,8 @@ from datetime import datetime, timezone, timedelta
 from bson import ObjectId
 from enum import Enum
 from importlib import import_module
-from eve.utils import config
-from typing import Any, Dict, Iterator, Optional
+from eve.utils import config, document_etag
+from typing import Any, Dict, Iterator, Mapping, Optional
 from superdesk.default_settings import ELASTIC_DATE_FORMAT, ELASTIC_DATETIME_FORMAT
 from superdesk.text_utils import get_text
 from flask import current_app as app
@@ -367,3 +367,7 @@ def abort(status: int, message: str) -> None:
 
 def get_list_chunks(items, chunk_size=100):
     return [items[i : i + chunk_size] for i in range(0, len(items), chunk_size)]
+
+
+def get_dict_hash(data: Mapping) -> str:
+    return document_etag(data)
