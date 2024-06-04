@@ -303,7 +303,7 @@ class SchemaValidator(Validator):
                     self._error("media's " + field, REQUIRED_FIELD)
                 try:
                     max_length = int(schema["maxlength"])
-                except KeyError:
+                except (KeyError, TypeError):
                     pass
                 except ValueError:
                     logger.error("Invalid max length value for media field {field}".format(field=field))
