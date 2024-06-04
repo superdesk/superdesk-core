@@ -259,8 +259,9 @@ class UpdateIngestTest(TestCase):
         current_files = self.app.media.storage().fs("upload").find()
         self.assertEqual(4, current_files.count())
 
-        remove = RemoveExpiredContent()
-        remove.run(provider.get("type"))
+        with patch("superdesk.io.commands.remove_expired_content.utcnow", return_value=now + timedelta(hours=20)):
+            remove = RemoveExpiredContent()
+            remove.run(provider.get("type"))
 
         # all gone
         current_files = self.app.media.storage().fs("upload").find()
