@@ -67,7 +67,6 @@ install_requires = [
     "itsdangerous>=1.1,<2.0",
     "pymemcache>=4.0,<4.1",
     "xmlsec>=1.3.13,<1.3.15",
-    "pyexiv2>=2.12.0,<2.13; sys_platform == 'linux'",
 ]
 
 package_data = {
@@ -103,6 +102,9 @@ setup(
     include_package_data=True,
     # setup_requires=["setuptools_scm"],
     install_requires=install_requires,
+    extras_require={
+        "exiv2": ["pyexiv2>=2.12.0,<2.13"],
+    },
     classifiers=[
         "Development Status :: 4 - Beta",
         "Environment :: Web Environment",
