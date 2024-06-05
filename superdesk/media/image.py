@@ -11,7 +11,7 @@
 """Utilities for extractid metadata from image files."""
 
 import io
-import pyexiv2
+import logging
 
 from typing import BinaryIO, Dict, List, Literal, Mapping, TypedDict, Union
 from superdesk.text_utils import decode
@@ -22,6 +22,15 @@ from flask import json
 
 from superdesk.types import Item
 from .iim_codes import TAG, iim_codes
+
+logger = logging.getLogger(__name__)
+
+try:
+    import pyexiv2
+except ImportError:
+    logging.warning("pyexiv2 is not installed, writing picture metadata will not work")
+    pass
+
 
 ORIENTATIONS = {
     1: ("Normal", 0),
