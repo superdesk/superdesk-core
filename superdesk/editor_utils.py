@@ -37,6 +37,7 @@ ANNOTATION = "ANNOTATION"
 MEDIA = "MEDIA"
 TABLE = "TABLE"
 MULTI_LINE_QUOTE = "MULTI-LINE_QUOTE"
+CUSTOM_BLOCK = "CUSTOM_BLOCK"
 IMAGE = "IMAGE"
 ARTICLE_EMBED = "ARTICLE_EMBED"
 
@@ -314,6 +315,7 @@ class DraftJSHTMLExporter:
                     ANNOTATION: self.render_annotation,
                     TABLE: self.render_table,
                     MULTI_LINE_QUOTE: self.render_table,
+                    CUSTOM_BLOCK: self.render_table,
                     IMAGE: self.render_image,
                     ARTICLE_EMBED: self.render_article_embed,
                 },

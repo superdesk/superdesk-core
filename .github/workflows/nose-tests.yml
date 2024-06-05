@@ -101,3 +101,23 @@ jobs:
     - run: pip install -r dev-requirements.txt
 
     - run: pytest prod_api
+
+  macos-install:
+
+    strategy:
+      fail-fast: false
+      matrix:
+        os: ['macos-13', 'macos-14']
+        python-version: ['3.10']
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+    - uses: actions/checkout@v3
+
+    - uses: actions/setup-python@v4
+      with:
+        python-version: ${{ matrix.python-version }}
+
+    - run: pip install -U pip wheel setuptools
+    - run: pip install -Ur dev-requirements.txt

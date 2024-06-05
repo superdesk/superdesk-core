@@ -18,7 +18,7 @@ install_requires = [
     "eve-elastic>=7.4.0,<7.5.0",
     "elasticsearch<7.14",  # we are using oss version on test server
     "flask>=1.1,<1.2",
-    "flask-mail>=0.9,<0.10",
+    "flask-mail>=0.9,<0.11",
     "flask-script>=2.0.5,<3.0",
     "flask-babel>=1.0,<4.1",
     "arrow>=0.4,<=1.3.0",
@@ -33,7 +33,7 @@ install_requires = [
     "hachoir<=3.3.0",
     "HermesCache>=0.10.0,<0.11.0",
     "python-magic>=0.4,<0.5",
-    "ldap3>=2.2.4,<2.6",
+    "ldap3>=2.2.4,<2.10",
     "pytz>=2021.3",
     "tzlocal>=2.1,<3.0",
     "raven[flask]>=5.10,<7.0",
@@ -51,7 +51,7 @@ install_requires = [
     "python-dateutil<2.10",
     "unidecode>=0.04.21,<=1.3.8",
     "authlib>0.14,<0.15",
-    "draftjs-exporter[lxml]<2.2",
+    "draftjs-exporter[lxml]<5.1",
     "regex>=2020.7.14,<=2024.4.28",
     "flask-oidc-ex>=0.5.5,<0.6",
     # to be replaced by stdlib version when we use Python 3.8+

@@ -769,8 +769,8 @@ def set_expiry(item, provider, parent_expiry=None):
     if item.get("dates") and item["dates"].get("end"):
         expiry_offset = item["dates"]["end"]
 
-    item["expiry"] = get_expiry_date(
-        provider.get("content_expiry") or app.config["INGEST_EXPIRY_MINUTES"], expiry_offset
+    item.setdefault(
+        "expiry", get_expiry_date(provider.get("content_expiry") or app.config["INGEST_EXPIRY_MINUTES"], expiry_offset)
     )
 
 
