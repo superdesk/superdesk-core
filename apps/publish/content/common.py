@@ -37,9 +37,10 @@ from superdesk.metadata.packages import LINKED_IN_PACKAGES, PACKAGE, PACKAGE_TYP
 from superdesk.metadata.utils import item_url
 from superdesk.notification import push_notification
 from superdesk.services import BaseService
-from superdesk.utc import utcnow, get_date
+from superdesk.utc import utcnow
 from superdesk.workflow import is_workflow_state_transition_valid
 from superdesk.validation import ValidationError
+from superdesk.media.image import get_metadata_from_item, write_metadata
 
 from eve.utils import config
 from eve.versioning import resolve_document_version
@@ -222,6 +223,9 @@ class BasePublishService(BaseService):
 
                 if updated.get(ASSOCIATIONS):
                     self._fix_related_references(updated, updates)
+
+                if updated[ITEM_TYPE] == "picture":
+                    self._update_picture_metadata(updates, original, updated)
 
                 signals.item_publish.send(self, item=updated, updates=updates)
                 self._update_archive(original, updates, should_insert_into_versions=auto_publish)
@@ -913,6 +917,34 @@ class BasePublishService(BaseService):
             if publish_schedule and not associated_item.get(PUBLISH_SCHEDULE):
                 associated_item[PUBLISH_SCHEDULE] = publish_schedule
                 associated_item[SCHEDULE_SETTINGS] = schedule_settings
+
+    def _update_picture_metadata(self, updates, original, updated):
+        renditions = updated.get("renditions") or {}
+        mapping = app.config.get("PHOTO_METADATA_MAPPING")
+        if not mapping or not renditions:
+            return
+        try:
+            media_id = renditions["original"]["media"]
+        except (KeyError, TypeError):
+            return
+        if not media_id:
+            return
+
+        picture = app.media.get(media_id)
+        binary = picture.read()
+        metadata = get_metadata_from_item(updated, mapping)
+        updated_binary = write_metadata(binary, metadata)
+        if updated_binary != binary:
+            updated_media_id = app.media.put(
+                updated_binary, content_type=picture.content_type, filename=picture.filename
+            )
+            updates.setdefault("renditions", deepcopy(renditions))["original"].update(
+                {
+                    "media": updated_media_id,
+                    "href": app.media.url_for_media(updated_media_id, picture.content_type),
+                }
+            )
+            updated["renditions"] = updates["renditions"]
 
 
 def get_crop(rendition):

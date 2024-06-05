@@ -4852,3 +4852,34 @@ Feature: Content Publishing
       }
 
       """
+
+    @auth
+    Scenario: We update picture metadata on publish
+      Given config update
+      """
+      {"PHOTO_METADATA_MAPPING": {"slugline": "Title", "extra.transref": "JobId"}}
+      """
+      And "desks"
+        """
+        [{"name": "Sports", "members":[{"user":"#CONTEXT_USER_ID#"}]}]
+        """
+      When we upload a file "bike.jpg" to "archive"
+      When we publish "#archive._id#" with "publish" type and "published" state
+      """
+      {
+        "slugline": "test publish",
+        "extra": {"transref": "1234"}
+      }
+      """
+      Then we get OK response
+      And we get picture metadata "{{ archive_publish.renditions.original.media }}"
+      """
+      {"JobId": "1234", "Title": "test publish"}
+      """
+
+      When we get "/published"
+      Then we get list with 1 items
+      And we get picture metadata "{{ items.0.renditions.original.media }}"
+      """
+      {"JobId": "1234", "Title": "test publish"}
+      """

@@ -10,6 +10,7 @@
 
 """Superdesk storage module."""
 
+from flask import current_app as app
 from typing import Optional
 import abc
 
@@ -47,7 +48,7 @@ class SuperdeskMediaStorage(MediaStorage, MimetypeMixin):
 
 class SimpleMediaStorage(GridFSMediaStorage):
     def fs(self, resource):
-        driver = self.app.data.mongo
+        driver = app.data.mongo
 
         px = driver.current_mongo_prefix(resource)
         if px not in self._fs:

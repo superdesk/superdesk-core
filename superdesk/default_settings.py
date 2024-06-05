@@ -1129,3 +1129,9 @@ UNPUBLISH_TO_MATCHING_SUBSCRIBERS = True
 #: .. versionadded:: 2.7
 #:
 AP_MEDIA_API_VERIFY_SSL = strtobool(env("AP_MEDIA_API_VERIFY_SSL", "true"))
+
+#: Map picture item data to photo metadata. When set picture binary will be updated on publish.
+#:
+#: .. versionadded:: 2.8
+#:
+PHOTO_METADATA_MAPPING = {}
