@@ -299,6 +299,8 @@ class SchemaValidator(Validator):
             if not media_metadata_schema:
                 continue
             for field, schema in media_metadata_schema.items():
+                if schema is None:
+                    continue
                 if schema.get("required", False) and not assoc_data.get(field):
                     self._error("media's " + field, REQUIRED_FIELD)
                 try:
