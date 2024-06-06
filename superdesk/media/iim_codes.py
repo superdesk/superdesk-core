@@ -12,11 +12,10 @@
 # codes extracted from IPTC IIM v4.2 specifications
 
 
-from enum import Enum
 from typing import Dict, Tuple
 
 
-class TAG(Enum):
+class TAG:
     RECORD_VERSION = "Record Version"
     OBJECT_TYPE_REFERENCE = "Object Type Reference"
     OBJECT_ATTRIBUTE_REFERENCE = "Object Attribute Reference"
@@ -76,7 +75,7 @@ class TAG(Enum):
     OBJECTDATA_PREVIEW_DATA = "ObjectData Preview Data"
 
 
-iim_codes: Dict[Tuple[int, int], TAG] = {
+iim_codes = {
     (2, 0): TAG.RECORD_VERSION,
     (2, 3): TAG.OBJECT_TYPE_REFERENCE,
     (2, 4): TAG.OBJECT_ATTRIBUTE_REFERENCE,
