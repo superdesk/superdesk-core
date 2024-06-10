@@ -147,7 +147,7 @@ def get_meta_iptc(file_stream: BinaryIO):
     file_stream.seek(0)
     img = Image.open(file_stream)
     iptc_raw = IptcImagePlugin.getiptcinfo(img)
-    metadata: Dict[TAG, Union[str, List[str]]] = {}
+    metadata: Dict[str, Union[str, List[str]]] = {}
 
     if iptc_raw is None:
         return metadata
