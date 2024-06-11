@@ -24,7 +24,7 @@ install_requires = [
     "arrow>=0.4,<=1.3.0",
     "pillow>=9.2,<10.4",
     "bcrypt>=3.1.1,<4.2",
-    "blinker>=1.3,<1.8",
+    "blinker>=1.3,<1.9",
     "celery[redis]>=5.2.7,<5.3",
     "cerberus>=1.3.2,<1.4",
     "redis>=4.5.2,<5.1",
