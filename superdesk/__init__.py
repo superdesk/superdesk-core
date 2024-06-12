@@ -22,6 +22,7 @@ from eve.utils import config  # noqa
 from eve.methods.common import document_link  # noqa
 from werkzeug.exceptions import HTTPException
 
+from .core.app import SuperdeskAsyncApp
 from .eve_backend import EveBackend
 from .datalayer import SuperdeskDataLayer  # noqa
 from .services import BaseService as Service  # noqa
@@ -32,7 +33,7 @@ from .signals import *  # noqa
 from apps.common.models.base_model import BaseModel
 from apps.common.components.base_component import BaseComponent
 
-__version__ = "2.7.0rc5"
+__version__ = "3.0.0.dev0"
 
 API_NAME = "Superdesk API"
 SCHEMA_VERSION = 2
@@ -47,6 +48,7 @@ default_user_preferences: Dict[str, "UserPreference"] = dict()
 default_session_preferences: Dict[str, Any] = dict()
 logger = logging_lib.getLogger(__name__)
 app: Optional[eve.Eve] = None
+async_app: Optional[SuperdeskAsyncApp] = None
 
 
 class UserPreference(NamedTuple):

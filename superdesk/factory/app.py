@@ -39,6 +39,7 @@ from superdesk.validator import SuperdeskValidator
 from superdesk.json_utils import SuperdeskJSONEncoder
 from superdesk.cache import cache_backend
 from .elastic_apm import setup_apm
+from superdesk.core.app import SuperdeskAsyncApp
 
 SUPERDESK_PATH = os.path.abspath(os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
 
@@ -282,6 +283,8 @@ def get_app(config=None, media_storage=None, config_object=None, init_elastic=No
         app.jinja_env.filters[name] = jinja_filter
 
     configure_logging(app.config["LOG_CONFIG_FILE"])
+    superdesk.async_app = SuperdeskAsyncApp(app)
+    superdesk.async_app.start()
 
     return app
 
