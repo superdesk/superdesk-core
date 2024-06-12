@@ -89,7 +89,7 @@ package_data = {
 
 setup(
     name="Superdesk-Core",
-    version="2.7.0rc5",
+    version="3.0.0.dev0",
     description="Superdesk Core library",
     long_description=LONG_DESCRIPTION,
     author="petr jasek",
@@ -97,6 +97,7 @@ setup(
     url="https://github.com/superdesk/superdesk-core",
     license="GPLv3",
     platforms=["any"],
+    python_requires=">=3.10",
     packages=find_packages(exclude=["tests*", "features*"]),
     package_data=package_data,
     include_package_data=True,
