@@ -2,5 +2,5 @@ sphinx
 docutils
 sphinx-autobuild
 sphinxcontrib-plantuml
-jinja2<4.0
+jinja2<3.0
 markupsafe<2.1
