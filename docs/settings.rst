@@ -55,6 +55,17 @@ Default: ``[]``
 
 You can install additional modules by adding their names here.
 
+.. _settings.modules:
+
+``MODULES``
+^^^^^^^^^^^
+
+.. versionadded:: 3.0.0
+
+Default: ``[]``
+
+You can install additional modules by adding their names here.
+
 ``CONTENT_EXPIRY_MINUTES``
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
 
