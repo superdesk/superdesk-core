@@ -12,6 +12,7 @@ requests-mock==1.11.0
 responses
 pytest
 pytest-env
+pytest-asyncio
 python3-saml>=1.9,<1.17
 typing_extensions>=3.7.4
 moto[sqs]<5.0
