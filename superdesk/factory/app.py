@@ -83,6 +83,8 @@ def set_error_handlers(app):
 
 
 class SuperdeskEve(eve.Eve):
+    async_app: SuperdeskAsyncApp
+
     def __init__(self, **kwargs):
         # set attributes to avoid event slots being created
         # when getattr is called on those, thx to eve
@@ -93,6 +95,7 @@ class SuperdeskEve(eve.Eve):
         self.notification_client = None
         self.lock = None
         self._superdesk_cache = None
+        self.async_app = SuperdeskAsyncApp(self)
 
         super().__init__(**kwargs)
 
@@ -132,6 +135,8 @@ class SuperdeskEve(eve.Eve):
 
                     if not ignore_duplicate_keys:
                         raise
+
+        self.async_app.mongo.create_indexes_for_all_resources()
 
     def item_scope(self, name, schema=None):
         """Register item scope."""
@@ -283,8 +288,7 @@ def get_app(config=None, media_storage=None, config_object=None, init_elastic=No
         app.jinja_env.filters[name] = jinja_filter
 
     configure_logging(app.config["LOG_CONFIG_FILE"])
-    superdesk.async_app = SuperdeskAsyncApp(app)
-    superdesk.async_app.start()
+    app.async_app.stop()
 
     return app
 

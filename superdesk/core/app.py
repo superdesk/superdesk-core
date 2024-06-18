@@ -21,10 +21,14 @@ class SuperdeskAsyncApp:
     #: A class instance that adheres to the WSGI protocol
     wsgi: WSGIApp
 
+    #: MongoResources instance used to manage mongo config, clients and resources
+    mongo: "MongoResources"
+
     def __init__(self, wsgi: WSGIApp):
         self._running = False
         self._imported_modules = {}
         self.wsgi = wsgi
+        self.mongo = MongoResources(self)
 
     @property
     def running(self) -> bool:
@@ -75,5 +79,25 @@ class SuperdeskAsyncApp:
         self._load_modules(self.wsgi.config.get("MODULES", []))
         self._running = True
 
+    def stop(self):
+        """Stops the app
+
+        This tells :attr:`MongoResources to stop <superdesk.core.mongo.MongoResources.stop>`, clears imported modules
+        and sets :attr:`running <superdesk.core.app.SuperdeskAsyncApp.running>` to False
+        """
+
+        self.mongo.stop()
+        self._imported_modules.clear()
+        self._running = False
+
+
+def get_current_app() -> SuperdeskAsyncApp:
+    """Retrieve the current app instance"""
+
+    from flask import current_app
+
+    return current_app.async_app
+
 
 from .module import Module  # noqa: E402
+from .mongo import MongoResources  # noqa: E402
