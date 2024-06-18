@@ -53,7 +53,7 @@ install_requires = [
     "authlib>0.14,<0.15",
     "draftjs-exporter[lxml]<5.1",
     "regex>=2020.7.14,<=2024.5.15",
-    "flask-oidc-ex>=0.5.5,<0.6",
+    "flask-oidc-ex>=0.5.5,<0.7",
     # to be replaced by stdlib version when we use Python 3.8+
     "typing_extensions>=3.7.4",
     "elastic-apm[flask]>=6.15.1,<7.0",
