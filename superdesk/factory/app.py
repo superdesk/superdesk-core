@@ -288,7 +288,7 @@ def get_app(config=None, media_storage=None, config_object=None, init_elastic=No
         app.jinja_env.filters[name] = jinja_filter
 
     configure_logging(app.config["LOG_CONFIG_FILE"])
-    app.async_app.stop()
+    app.async_app.start()
 
     return app
 
