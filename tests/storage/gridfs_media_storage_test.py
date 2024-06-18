@@ -3,7 +3,7 @@ import io
 import eve
 import bson
 import unittest
-from unittest.mock import Mock
+from unittest.mock import Mock, ANY
 from superdesk.upload import bp, upload_url
 from superdesk.datalayer import SuperdeskDataLayer
 from superdesk.storage import SuperdeskGridFSMediaStorage
@@ -51,6 +51,7 @@ class GridFSMediaStorageTestCase(unittest.TestCase):
             "filename": filename,
             "metadata": None,
             "_id": _id,
+            "md5": ANY,
         }
 
         gridfs.put.assert_called_once_with(data, **kwargs)
@@ -65,7 +66,12 @@ class GridFSMediaStorageTestCase(unittest.TestCase):
         with self.app.app_context():
             self.media.put(data, filename=filename, content_type="text/plain", folder=folder)
 
-        kwargs = {"content_type": "text/plain", "filename": "{}/{}".format(folder, filename), "metadata": None}
+        kwargs = {
+            "content_type": "text/plain",
+            "filename": "{}/{}".format(folder, filename),
+            "metadata": None,
+            "md5": ANY,
+        }
 
         gridfs.put.assert_called_once_with(data, **kwargs)
 
@@ -117,6 +123,7 @@ class GridFSMediaStorageTestCase(unittest.TestCase):
             "filename": filename,
             "metadata": None,
             "_id": _id,
+            "md5": ANY,
         }
         gridfs.put.assert_called_once_with(content, **kwargs)
 
@@ -133,6 +140,7 @@ class GridFSMediaStorageTestCase(unittest.TestCase):
             "filename": filename,
             "metadata": None,
             "_id": _id,
+            "md5": ANY,
         }
         gridfs.put.assert_called_once_with(content, **kwargs)
 
@@ -148,6 +156,7 @@ class GridFSMediaStorageTestCase(unittest.TestCase):
             "filename": filename,
             "metadata": None,
             "_id": _id,
+            "md5": ANY,
         }
         gridfs.put.assert_called_once_with(content, **kwargs)
 
@@ -165,6 +174,7 @@ class GridFSMediaStorageTestCase(unittest.TestCase):
                 "filename": filename,
                 "metadata": None,
                 "_id": _id,
+                "md5": ANY,
             }
             gridfs.put.assert_called_once_with(content, **kwargs)
 
@@ -180,6 +190,7 @@ class GridFSMediaStorageTestCase(unittest.TestCase):
                 "filename": filename,
                 "metadata": None,
                 "_id": _id,
+                "md5": ANY,
             }
             gridfs.put.assert_called_once_with(content, **kwargs)
 
@@ -195,6 +206,7 @@ class GridFSMediaStorageTestCase(unittest.TestCase):
                 "filename": filename,
                 "metadata": None,
                 "_id": _id,
+                "md5": ANY,
             }
             gridfs.put.assert_called_once_with(content, **kwargs)
 
@@ -210,5 +222,6 @@ class GridFSMediaStorageTestCase(unittest.TestCase):
                 "filename": filename,
                 "metadata": None,
                 "_id": _id,
+                "md5": ANY,
             }
             gridfs.put.assert_called_once_with(content, **kwargs)

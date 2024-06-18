@@ -40,13 +40,12 @@ install_requires = [
     "requests>=2.7.0,<3.0",
     "boto3>=1.26,<2.0",
     "websockets>=10.3,<10.4",
-    "mongolock>=1.3.4,<1.4",
     "PyYAML>=6.0.1",
     "lxml>=5.2.2,<5.3",
     "lxml_html_clean>=0.1.1,<0.2",
     "python-twitter>=3.5,<3.6",
     "chardet<6.0",
-    "pymongo>=3.8,<3.12",
+    "pymongo>=4.7.3,<4.8",
     "croniter<2.1",
     "python-dateutil<2.10",
     "unidecode>=0.04.21,<=1.3.8",
@@ -67,6 +66,8 @@ install_requires = [
     "itsdangerous>=1.1,<2.0",
     "pymemcache>=4.0,<4.1",
     "xmlsec>=1.3.13,<1.3.15",
+    # Async libraries
+    "motor>=3.4.0,<4.0",
 ]
 
 package_data = {

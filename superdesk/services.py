@@ -134,8 +134,7 @@ class BaseService:
         return self.get_from_mongo(None, {}).sort("_id")
 
     def find_and_modify(self, query, update, **kwargs):
-        res = self.backend.find_and_modify(self.datasource, query=query, update=update, **kwargs)
-        return res
+        return self.backend.find_and_modify(self.datasource, filter=query, update=update, **kwargs)
 
     def get_all_batch(self, size=500, max_iterations=10000, lookup=None):
         """Gets all items using multiple queries.

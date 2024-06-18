@@ -257,7 +257,7 @@ class UpdateIngestTest(TestCase):
 
         # four files in grid fs
         current_files = self.app.media.storage().fs("upload").find()
-        self.assertEqual(4, current_files.count())
+        self.assertEqual(4, len(list(current_files)))
 
         with patch("superdesk.io.commands.remove_expired_content.utcnow", return_value=now + timedelta(hours=20)):
             remove = RemoveExpiredContent()
@@ -265,7 +265,7 @@ class UpdateIngestTest(TestCase):
 
         # all gone
         current_files = self.app.media.storage().fs("upload").find()
-        self.assertEqual(0, current_files.count())
+        self.assertEqual(0, len(list(current_files)))
 
     def test_apply_rule_set(self):
         item = {"body_html": "@@body@@"}
@@ -328,7 +328,7 @@ class UpdateIngestTest(TestCase):
 
         # 12 files in grid fs
         current_files = self.app.media.storage().fs("upload").find()
-        self.assertEqual(12, current_files.count())
+        self.assertEqual(12, len(list(current_files)))
 
     def test_anpa_category_to_subject_derived_ingest(self):
         vocab = [

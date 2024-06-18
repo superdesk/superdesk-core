@@ -10,6 +10,7 @@
 
 from typing import Optional
 from flask import current_app as app
+from flask_babel import _
 import logging
 import json
 import mimetypes
@@ -17,9 +18,11 @@ import bson
 import bson.errors
 import gridfs
 import os.path
+import hashlib
 
 from eve.io.mongo.media import GridFSMediaStorage
 
+from superdesk.errors import SuperdeskApiError
 from . import SuperdeskMediaStorage
 
 
@@ -108,10 +111,29 @@ class SuperdeskGridFSMediaStorage(SuperdeskMediaStorage, GridFSMediaStorage):
             if filename:
                 filename = "{}/{}".format(folder, filename)
 
+        if hasattr(content, "read"):
+            data = content.read()
+            if hasattr(data, "encode"):
+                data = data.encode("utf-8")
+            hash_data = hashlib.md5(data)
+            if hasattr(content, "seek"):
+                content.seek(0)
+        elif isinstance(content, bytes):
+            hash_data = hashlib.md5(content)
+        elif isinstance(content, str):
+            hash_data = hashlib.md5(content.encode("utf-8"))
+        else:
+            raise SuperdeskApiError.badRequestError(_("Unsupported content type"))
+
         try:
             logger.info("Adding file {} to the GridFS".format(filename))
             return self.fs(resource).put(
-                content, content_type=content_type, filename=filename, metadata=metadata, **kwargs
+                content,
+                content_type=content_type,
+                filename=filename,
+                metadata=metadata,
+                md5=hash_data.hexdigest(),
+                **kwargs,
             )
         except gridfs.errors.FileExists:
             logger.info("File exists filename=%s id=%s" % (filename, kwargs["_id"]))

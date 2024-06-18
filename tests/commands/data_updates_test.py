@@ -56,7 +56,7 @@ class DataUpdatesTestCase(TestCase):
 
     def test_dry_data_update(self):
         superdesk.commands.data_updates.DEFAULT_DATA_UPDATE_FW_IMPLEMENTATION = """
-            count = mongodb_collection.find({}).count()
+            count = mongodb_collection.count_documents({})
             assert count == 0, count
         """
         self.assertEqual(self.number_of_data_updates_applied(), 0)
@@ -79,18 +79,18 @@ class DataUpdatesTestCase(TestCase):
         # create migrations
         for index in range(40):
             superdesk.commands.data_updates.DEFAULT_DATA_UPDATE_FW_IMPLEMENTATION = """
-            assert mongodb_collection
-            count = mongodb_collection.find({}).count()
+            assert mongodb_collection is not None
+            count = mongodb_collection.count_documents({})
             assert count == %d, count
-            assert mongodb_database
+            assert mongodb_database is not None
             """ % (
                 index
             )
             superdesk.commands.data_updates.DEFAULT_DATA_UPDATE_BW_IMPLEMENTATION = """
-            assert mongodb_collection
-            count = mongodb_collection.find({}).count()
+            assert mongodb_collection is not None
+            count = mongodb_collection.count_documents({})
             assert count == %d, count
-            assert mongodb_database
+            assert mongodb_database is not None
             """ % (
                 index + 1
             )
