@@ -126,9 +126,14 @@ class EveBackend:
         backend = self._lookup_backend(endpoint_name, fallback=True)
         is_mongo = self._backend(endpoint_name) == backend
 
-        cursor, count = backend.find(endpoint_name, req, lookup, perform_count=req.if_modified_since)
+        cursor, _ = backend.find(endpoint_name, req, lookup, perform_count=False)
 
-        if req.if_modified_since and count:
+        try:
+            has_items = cursor[0] is not None
+        except IndexError:
+            has_items = False
+
+        if req.if_modified_since and has_items:
             # fetch all items, not just updated
             req.if_modified_since = None
             cursor, count = backend.find(endpoint_name, req, lookup, perform_count=False)
@@ -137,7 +142,7 @@ class EveBackend:
         if is_mongo and source_config.get("collation"):
             cursor.collation(Collation(locale=app.config.get("MONGO_LOCALE", "en_US")))
 
-        self._cursor_hook(cursor=cursor, req=req)
+        self._cursor_hook(cursor=cursor, endpoint_name=endpoint_name, req=req, lookup=lookup)
         return cursor
 
     def get_from_mongo(self, endpoint_name, req, lookup, perform_count=False):
@@ -151,8 +156,8 @@ class EveBackend:
         """
         req.if_modified_since = None
         backend = self._backend(endpoint_name)
-        cursor, _ = backend.find(endpoint_name, req, lookup, perform_count=perform_count)
-        self._cursor_hook(cursor=cursor, req=req)
+        cursor, _ = backend.find(endpoint_name, req, lookup, perform_count=False)
+        self._cursor_hook(cursor=cursor, endpoint_name=endpoint_name, req=req, lookup=lookup)
         return cursor
 
     def find_and_modify(self, endpoint_name, **kwargs):
@@ -166,7 +171,7 @@ class EveBackend:
         if kwargs.get("query"):
             kwargs["query"] = backend._mongotize(kwargs["query"], endpoint_name)
 
-        result = backend.driver.db[endpoint_name].find_and_modify(**kwargs)
+        result = backend.driver.db[endpoint_name].find_one_and_update(**kwargs)
         cache.clean([endpoint_name])
         return result
 
@@ -464,8 +469,31 @@ class EveBackend:
             if parent:
                 lookup["parent"] = parent
 
-    def _cursor_hook(self, cursor, req):
+    def construct_count_function(self, resource, req, lookup):
+        backend = self._backend(resource)
+
+        client_sort = backend._convert_sort_request_to_dict(req)
+        spec = backend._convert_where_request_to_dict(resource, req)
+
+        if lookup:
+            spec = backend.combine_queries(spec, lookup)
+
+        spec = backend._mongotize(spec, resource)
+        client_projection = backend._client_projection(req)
+
+        datasource, spec, projection, sort = backend._datasource_ex(resource, spec, client_projection, client_sort)
+        target = backend.pymongo(resource).db[datasource]
+
+        def count_function():
+            return target.count_documents(spec)
+
+        return count_function
+
+    def _cursor_hook(self, cursor, endpoint_name, req, lookup):
         """Apply additional methods for cursor"""
+
+        if not hasattr(cursor, "count"):
+            setattr(cursor, "count", self.construct_count_function(endpoint_name, req, lookup))
 
         if not req or not req.args:
             return

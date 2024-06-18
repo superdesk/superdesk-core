@@ -42,13 +42,13 @@ class ContentAPITestCase(TestCase):
     def test_publish_to_content_api(self):
         item = {"guid": "foo", "type": "text", "task": {"desk": "foo"}, "rewrite_of": "bar"}
         self.content_api.publish(item)
-        self.assertEqual(1, self.db.items.count())
+        self.assertEqual(1, self.db.items.count_documents({}))
         self.assertNotIn("task", self.db.items.find_one())
         self.assertEqual("foo", self.db.items.find_one()["_id"])
 
         item["_current_version"] = "2"
         self.content_api.publish(item)
-        self.assertEqual(1, self.db.items.count())
+        self.assertEqual(1, self.db.items.count_documents({}))
 
         item["_current_version"] = "3"
         item["headline"] = "foo"
@@ -56,7 +56,7 @@ class ContentAPITestCase(TestCase):
         self.assertEqual("foo", self.db.items.find_one()["headline"])
         self.assertEqual("bar", self.db.items.find_one()["evolvedfrom"])
 
-        self.assertEqual(3, self.db.items_versions.count())
+        self.assertEqual(3, self.db.items_versions.count_documents({}))
 
     def test_create_keeps_planning_metadata(self):
         item = {
@@ -76,8 +76,8 @@ class ContentAPITestCase(TestCase):
         subscribers = [{"_id": ObjectId()}, {"_id": ObjectId()}]
 
         self.content_api.publish(item, subscribers)
-        self.assertEqual(1, self.db.items.find({"subscribers": str(subscribers[0]["_id"])}).count())
-        self.assertEqual(0, self.db.items.find({"subscribers": "foo"}).count())
+        self.assertEqual(1, self.db.items.count_documents({"subscribers": str(subscribers[0]["_id"])}))
+        self.assertEqual(0, self.db.items.count_documents({"subscribers": "foo"}))
 
     def test_content_filtering_by_subscriber(self):
         subscriber = {"_id": "sub1"}
@@ -451,9 +451,9 @@ class ContentAPITestCase(TestCase):
         self.app.data.insert("content_filters", [content_filter])
 
         self.content_api.publish({"_id": "foo", "source": "fred", "type": "text", "guid": "foo"})
-        self.assertEqual(0, self.db.items.count())
+        self.assertEqual(0, self.db.items.count_documents({}))
         self.content_api.publish({"_id": "bar", "source": "jane", "type": "text", "guid": "bar"})
-        self.assertEqual(1, self.db.items.count())
+        self.assertEqual(1, self.db.items.count_documents({}))
 
     def test_item_versions_api(self):
         subscriber = {"_id": "sub1"}
@@ -521,9 +521,9 @@ class ContentAPITestCase(TestCase):
         item["_current_version"] = 2
         self.content_api.publish(item, [subscriber])
 
-        self.assertEqual(1, self.db.items.count())
+        self.assertEqual(1, self.db.items.count_documents({}))
         self.assertEqual("canceled", self.db.items.find_one()["pubstatus"])
-        self.assertEqual(2, self.db.items_versions.count())
+        self.assertEqual(2, self.db.items_versions.count_documents({}))
         for i in self.db.items_versions.find():
             self.assertEqual(i.get("pubstatus"), "canceled")
 
@@ -538,14 +538,14 @@ class ContentAPITestCase(TestCase):
     def test_publish_item_with_ancestors(self):
         item = {"guid": "foo", "type": "text", "task": {"desk": "foo"}, "bookmarks": [ObjectId()]}
         self.content_api.publish(item)
-        self.assertEqual(1, self.db.items.count())
+        self.assertEqual(1, self.db.items.count_documents({}))
         self.assertNotIn("ancestors", self.db.items.find_one({"_id": "foo"}))
 
         item["guid"] = "bar"
         item["rewrite_of"] = "foo"
         self.content_api.publish(item)
 
-        self.assertEqual(2, self.db.items.count())
+        self.assertEqual(2, self.db.items.count_documents({}))
         bar = self.db.items.find_one({"_id": "bar"})
         self.assertEqual(["foo"], bar.get("ancestors", []))
         self.assertEqual("foo", bar.get("evolvedfrom"))
@@ -556,7 +556,7 @@ class ContentAPITestCase(TestCase):
         item["rewrite_of"] = "bar"
         self.content_api.publish(item)
 
-        self.assertEqual(3, self.db.items.count())
+        self.assertEqual(3, self.db.items.count_documents({}))
         fun = self.db.items.find_one({"_id": "fun"})
         self.assertEqual(["foo", "bar"], fun.get("ancestors", []))
         self.assertEqual("bar", fun.get("evolvedfrom"))
@@ -707,7 +707,7 @@ class ContentAPITestCase(TestCase):
         subscriber1 = {"_id": "sub1"}
         subscriber2 = {"_id": "sub2"}
         self.content_api.publish(item, [subscriber1, subscriber2])
-        self.assertEqual(1, self.db.items.count())
+        self.assertEqual(1, self.db.items.count_documents({}))
         with self.capi.test_client() as c:
             response = c.get("items/foo", headers=self._auth_headers(subscriber1))
             data = json.loads(response.data)

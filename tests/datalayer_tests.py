@@ -40,7 +40,9 @@ class DatalayerTestCase(TestCase):
         )
 
         self.assertEqual(1, service.find({"resource": {"$in": ["foo"]}}).count())
-        self.assertEqual(1, service.find({}, max_results=1).count(True))
+        # We no longer support ``with_limit_and_skip`` attribute with count
+        # it was only supported in MongoCursor anyway
+        self.assertEqual(2, service.find({}, max_results=1).count())
 
     def test_set_custom_etag_on_create(self):
         service = superdesk.get_resource_service("activity")
