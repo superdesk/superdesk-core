@@ -414,6 +414,12 @@ CORE_APPS = [
 #: Specify what modules should be enabled
 INSTALLED_APPS = []
 
+#: List of modules to load, using ``superdesk.core.module.Module`` instance
+#:
+#: ..versionadded: 3.0.0
+#:
+MODULES = []
+
 #: LDAP Server (eg: ldap://sourcefabric.org)
 LDAP_SERVER = env("LDAP_SERVER", "")
 #: LDAP Server port

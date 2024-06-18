@@ -45,6 +45,7 @@ works and can be developed further.
     :maxdepth: 2
 
     architecture
+    superdesk_core
     publish
     ingest
     spellchecking
