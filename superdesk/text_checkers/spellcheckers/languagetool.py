@@ -64,10 +64,10 @@ class Languagetool(SpellcheckerBase):
 
         return self._languagetool_config
 
-    def check(self, text, language='auto'):
+    def check(self, text, language=None):
         payload = {
             'text': text,
-            'language': language,
+            'language': language or 'auto',
         }
 
         # Add apiKey and additional options from the environment variable
@@ -117,10 +117,10 @@ class Languagetool(SpellcheckerBase):
         check_data = {"errors": err_list}
         return check_data
 
-    def suggest(self, text, language='auto'):
+    def suggest(self, text, language=None):
         payload = {
             'text': text,
-            'language': language,
+            'language': language or 'auto',
         }
 
         # Add apiKey and additional options from the environment variable
