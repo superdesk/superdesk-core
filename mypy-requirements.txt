@@ -11,7 +11,7 @@ types-python-dateutil
 types-pytz
 types-PyYAML
 types-redis
-types-requests<2.31.0.7  # https://github.com/python/typeshed/issues/10825
+types-requests<2.32.0.20240623  # https://github.com/python/typeshed/issues/10825
 types-tzlocal
 types-Werkzeug
 types-jwt
