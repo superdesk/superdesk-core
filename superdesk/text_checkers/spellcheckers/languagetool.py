@@ -77,7 +77,6 @@ class Languagetool(SpellcheckerBase):
         try:
             # Send the POST request to the LanguageTool API
             response = requests.post(self.api_url + '/check', data=payload)
-            logger.info("Language payload: %s", json.dumps(payload, indent=2))
             response.raise_for_status()
             response_data = response.json()
         except (requests.RequestException, json.JSONDecodeError) as e:
