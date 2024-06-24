@@ -157,28 +157,6 @@ class Languagetool(SpellcheckerBase):
                 )
             )
             return False
-
-        payload = {
-            'text': 'test',
-            'language': 'auto',
-        }
-        additional_options = self.languagetool_config()
-        payload.update(additional_options)
-
-        try:
-            # Send the POST request to the LanguageTool API
-            response = requests.post(self.api_url, data=payload)
-            response.raise_for_status()
-        except (requests.RequestException, json.JSONDecodeError) as e:
-            logger.warning(
-                "can't request {label} URL ({url}): {e}".format(label=self.label, url=self.api_url, e=str(e))
-            )
-            return False
-        if response.status_code != 200:
-            logger.warning(
-                "{label} URL ({url}) is not returning the expected status".format(label=self.label, url=self.api_url)
-            )
-            return False
         return True
 
 
