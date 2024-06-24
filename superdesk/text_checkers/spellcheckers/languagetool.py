@@ -36,7 +36,7 @@ class Languagetool(SpellcheckerBase):
     def __init__(self, app):
         super().__init__(app)
         self.api_url = self.config.get(API_URL, os.environ.get(API_URL))
-        self.api_config = None
+        self._languagetool_config = None
 
     @property
     def languagetool_config(self):
@@ -44,23 +44,23 @@ class Languagetool(SpellcheckerBase):
 
         config is cached once retrieved
         """
-        if self.api_config is None:
-            opt_config = self.config.get(OPT_CONFIG, {})
+        if self._languagetool_config is None:
+            config = self.config.get(OPT_CONFIG, {})
             api_key = self.config.get(OPT_API_KEY, os.environ.get(OPT_API_KEY))
             if api_key:
-                opt_config['apiKey'] = api_key
+                config['apiKey'] = api_key
             try:
                 env_config = json.loads(os.environ[OPT_CONFIG])
             except (KeyError, json.JSONDecodeError):
                 env_config = {}
-            if not isinstance(opt_config, dict) or not isinstance(env_config, dict):
+            if not isinstance(config, dict) or not isinstance(env_config, dict):
                 logger.warning("Invalid type for {label} configuration, must be a dictionary".format(label=self.label))
-                self.api_config = {}
-                return self.api_config
-            opt_config.update(env_config)
-            self.api_config = opt_config
+                self._languagetool_config = {}
+                return self._languagetool_config
+            config.update(env_config)
+            self._languagetool_config = config
 
-        return self.api_config
+        return self._languagetool_config
 
     def check(self, text, language=None):
         payload = {
@@ -69,7 +69,7 @@ class Languagetool(SpellcheckerBase):
         }
 
         # Add apiKey and additional options from the environment variable
-        additional_options = self.languagetool_config()
+        additional_options = self.languagetool_config
         payload.update(additional_options)
 
         try:
@@ -121,7 +121,7 @@ class Languagetool(SpellcheckerBase):
         }
 
         # Add apiKey and additional options from the environment variable
-        additional_options = self.languagetool_config()
+        additional_options = self.languagetool_config
         payload.update(additional_options)
 
         try:
