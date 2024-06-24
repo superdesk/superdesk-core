@@ -177,7 +177,7 @@ def send_activity_emails(activity, recipients):
     subject = render_template("notification_subject.txt", notification=notification)
 
     send_email.delay(subject=subject, sender=admins[0], recipients=recipients, text_body=text_body, html_body=html_body)
-    email_timestamps.update({"_id": message_id}, {"_id": message_id, "_created": now}, upsert=True)
+    email_timestamps.update_one({"_id": message_id}, {"$set": {"_id": message_id, "_created": now}}, upsert=True)
 
 
 def send_article_killed_email(article, recipients, transmitted_at):

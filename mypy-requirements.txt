@@ -17,3 +17,4 @@ types-Werkzeug
 types-jwt
 typing-extensions
 boto3-stubs[s3,sqs]
+motor-types

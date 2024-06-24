@@ -1,12 +1,9 @@
 from typing import Dict, Any
 from dataclasses import dataclass
 from unittest import TestCase, mock
+
 from superdesk.core.app import SuperdeskAsyncApp
-
-
-@dataclass
-class WSGI:
-    config: Dict[str, Any]
+from superdesk.tests.asyncio import WSGI
 
 
 class SuperdeskAsyncAppTestCase(TestCase):

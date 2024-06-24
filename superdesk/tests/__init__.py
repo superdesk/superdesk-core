@@ -167,7 +167,6 @@ def drop_mongo(app):
             dbname = app.config[name]
             dbconn = app.data.mongo.pymongo(prefix=prefix).cx
             dbconn.drop_database(dbname)
-            dbconn.close()
 
 
 def setup_config(config):
@@ -356,6 +355,14 @@ use_snapshot.cache = {}  # type: ignore
 
 def setup(context=None, config=None, app_factory=get_app, reset=False):
     if not hasattr(setup, "app") or setup.reset or config:
+        if hasattr(setup, "app"):
+            # Close all PyMongo Connections (new ones will be created with ``app_factory`` call)
+            for key, val in setup.app.extensions["pymongo"].items():
+                val[0].close()
+
+            if hasattr(setup.app, "async_app"):
+                setup.app.async_app.stop()
+
         cfg = setup_config(config)
         setup.app = app_factory(cfg)
         setup.reset = reset

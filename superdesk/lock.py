@@ -4,7 +4,9 @@ import socket
 import logging
 
 from datetime import datetime
-from mongolock import MongoLock, MongoLockException
+
+# from mongolock import MongoLock, MongoLockException
+from superdesk.mongolock import MongoLock, MongoLockException
 from werkzeug.local import LocalProxy
 from flask import current_app as app
 from superdesk.logging import logger
