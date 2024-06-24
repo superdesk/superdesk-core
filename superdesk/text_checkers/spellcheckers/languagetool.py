@@ -64,7 +64,7 @@ class Languagetool(SpellcheckerBase):
 
         return self._languagetool_config
 
-    def check(self, text, language=None):
+    def check(self, text, language='auto'):
         payload = {
             'text': text,
             'language': language,
@@ -77,6 +77,7 @@ class Languagetool(SpellcheckerBase):
         try:
             # Send the POST request to the LanguageTool API
             response = requests.post(self.api_url + '/check', data=payload)
+            logger.info("Language payload: %s", json.dumps(payload, indent=2))
             response.raise_for_status()
             response_data = response.json()
         except (requests.RequestException, json.JSONDecodeError) as e:
@@ -116,7 +117,7 @@ class Languagetool(SpellcheckerBase):
         check_data = {"errors": err_list}
         return check_data
 
-    def suggest(self, text, language=None):
+    def suggest(self, text, language='auto'):
         payload = {
             'text': text,
             'language': language,
