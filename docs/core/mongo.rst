@@ -1,56 +1,10 @@
-.. superdesk_core:
-
-New Core Framework
-==================
-This is the new core application framework, starting from v3.0 onwards.
-
-Modules
--------
-
-.. module:: superdesk.core
-
-The :class:`Module <module.Module>` class is used to register modules with the system, and provides attributes
-used to define certain behaviour of the module.
-
-An example of a module's root file::
-
-    # file: my/module/__init__py
-    from superdesk.core.module import Module, SuperdeskAsyncApp
-
-    def init(app: SuperdeskAsyncApp):
-        ...
-
-    module = Module(
-        name="my.module",
-        init=init,
-        frozen=True,
-        priority=100
-    )
-
-Then you would add the following to your :ref:`settings.modules` config::
-
-    # file: settings.py
-    MODULES = ["my.module"]
-
-The system would then load this module when the application starts
-
-
-App
----
-The :class:`SuperdeskAsyncApp <app.SuperdeskAsyncApp>` app is built for us automatically in the `SuperdeskEve` app.
-You can retrieve an instance of this app from the :meth:`get_current_app <app.get_current_app>` method.::
-
-    from superdesk.core.app import get_current_app
-
-    def test():
-        get_current_app().get_module_list()
-
+.. core_mongo:
 
 MongoDB
--------
+=======
 
 MongoResources Instance
-^^^^^^^^^^^^^^^^^^^^^^^
+-----------------------
 The :class:`MongoResources <mongo.MongoResources>` instance provides access to the MongoDB resource configs,
 client and database connections. This instance is available under the :attr:`SuperdeskAsyncApp.mongo <app.SuperdeskAsyncApp.mongo>`
 attribute.
@@ -72,7 +26,7 @@ For example::
 
 
 Registering Resources
-^^^^^^^^^^^^^^^^^^^^^
+---------------------
 The :meth:`MongoResources.register_resource_config <mongo.MongoResources.register_resource_config>` method provides a way to
 register resources for use with MongoDB, using :class:`MongoResourceConfig <mongo.MongoResourceConfig>` and
 :class:`MongoIndexOptions <mongo.MongoIndexOptions>` classes.
@@ -112,31 +66,8 @@ Example resource registration::
     module = Module(name="tests.users", init=init)
 
 
-API References
---------------
-App
-^^^
-
-.. autofunction:: superdesk.core.app.get_current_app
-
-.. autoclass:: superdesk.core.app.SuperdeskAsyncApp
-    :member-order: bysource
-    :members:
-
-.. autoclass:: superdesk.core.wsgi.WSGIApp
-    :member-order: bysource
-    :members:
-    :undoc-members:
-
-Module
-^^^^^^
-.. autoclass:: superdesk.core.module::Module
-    :member-order: bysource
-    :members:
-
-
-MongoDB
-^^^^^^^
+Mongo References
+----------------
 .. autoclass:: superdesk.core.mongo.MongoResourceConfig
     :member-order: bysource
     :members:
