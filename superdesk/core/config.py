@@ -10,11 +10,26 @@
 
 from typing import Dict, Any, Optional, TypeVar, Type, Union
 
-from pydantic import BaseModel, ConfigDict, ValidationError
+from pydantic import BaseModel, ConfigDict
 
 
 class ConfigModel(BaseModel):
     model_config = ConfigDict(validate_assignment=True)
+    _loaded: bool = False
+
+    def __eq__(self, other: Any) -> bool:
+        # We only support checking config instances vs other config instances
+        return False if not isinstance(other, ConfigModel) else self.__dict__ == other.__dict__
+
+    def __getattribute__(self, name: str):
+        # Allow unrestricted access to private and pydantic private attributes
+        if name.startswith("_") or name.startswith("model_"):
+            return BaseModel.__getattribute__(self, name)
+
+        if not self._loaded:
+            raise RuntimeError(f"Config {self.__class__} not loaded, while accessing attribute '{name}'")
+
+        return BaseModel.__getattribute__(self, name)
 
 
 ConfigClassType = TypeVar("ConfigClassType", bound=ConfigModel)
@@ -54,6 +69,7 @@ def get_config_instance(
     config_instance = config_class.model_validate(_get_config_dict(app_config, config_class, prefix))
     if freeze:
         config_instance.model_config["frozen"] = True
+    config_instance._loaded = True
     return config_instance
 
 
@@ -76,5 +92,6 @@ def load_config_instance(
         setattr(config_instance, key, val)
 
     config_instance.model_config["frozen"] = freeze
+    config_instance._loaded = True
 
     return config_instance

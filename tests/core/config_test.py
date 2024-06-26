@@ -10,6 +10,13 @@ from .modules import module_with_config
 
 
 class ConfigTestCase(unittest.TestCase):
+    def test_restricted_access_to_config_if_not_loaded(self):
+        config = module_with_config.ModuleConfig()
+        with self.assertRaises(RuntimeError):
+            self.assertEqual(config.default_string, "test-default")
+        config._loaded = True
+        self.assertEqual(config.default_string, "test-default")
+
     def test_default_values(self):
         # Test default values
         self.assertEqual(
@@ -83,10 +90,7 @@ class ModuleConfigTestCase(AsyncTestCase):
         await super().asyncSetUp()
 
     def test_module_config(self):
-        print(self.app_config)
         self.setupApp()
-        print(module_with_config.ModuleConfig())
-        print(module_with_config.config)
         self.assertEqual(module_with_config.ModuleConfig(), module_with_config.config)
 
     def test_app_fails_to_start_with_invalid_config(self):
