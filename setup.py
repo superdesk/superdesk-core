@@ -68,6 +68,7 @@ install_requires = [
     "xmlsec>=1.3.13,<1.3.15",
     # Async libraries
     "motor>=3.4.0,<4.0",
+    "pydantic>=2.7.4,<3.0",
 ]
 
 package_data = {
