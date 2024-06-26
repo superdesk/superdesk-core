@@ -14,8 +14,11 @@ class ConfigTestCase(unittest.TestCase):
         config = module_with_config.ModuleConfig()
         with self.assertRaises(RuntimeError):
             self.assertEqual(config.default_string, "test-default")
-        config._loaded = True
-        self.assertEqual(config.default_string, "test-default")
+        load_config_instance({"DEFAULT_STRING": "test-loaded-values"}, config)
+        self.assertEqual(config.default_string, "test-loaded-values")
+
+        new_config = get_config_instance({}, module_with_config.ModuleConfig)
+        self.assertEqual(new_config.default_string, "test-default")
 
     def test_default_values(self):
         # Test default values
