@@ -11,6 +11,8 @@
 from typing import Callable, Optional
 from dataclasses import dataclass
 
+from .config import ConfigModel
+
 
 @dataclass
 class Module:
@@ -31,6 +33,15 @@ class Module:
 
     #: path to the loaded module, populated by the app on load
     path: str = ""
+
+    #: ConfigModel instance to be automatically populated by the app
+    config: Optional[ConfigModel] = None
+
+    #: Config prefix to use when loading config from ``settings.py``
+    config_prefix: Optional[str] = None
+
+    #: If ``True``, this modules config values cannot be changed once loaded
+    freeze_config: bool = True
 
 
 from .app import SuperdeskAsyncApp  # noqa: E402
