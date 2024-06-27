@@ -25,27 +25,24 @@ class WSGI:
 class AsyncTestCase(unittest.IsolatedAsyncioTestCase):
     app: SuperdeskAsyncApp
     app_config: Dict[str, Any] = {}
+    autorun: bool = True
 
-    def setup(self):
+    def setupApp(self):
         self.app_config = setup_config(self.app_config)
         self.app = SuperdeskAsyncApp(WSGI(config=self.app_config))
         self.app.start()
-
-        for resource_config in self.app.mongo.get_all_resource_configs():
-            client, db = self.app.mongo.get_client(resource_config.name)
-            client.drop_database(db)
-
-    def teardown(self):
-        self.app.stop()
 
     async def asyncSetUp(self):
-        self.app_config = setup_config(self.app_config)
-        self.app = SuperdeskAsyncApp(WSGI(config=self.app_config))
-        self.app.start()
+        if not self.autorun:
+            return
 
+        self.setupApp()
         for resource_config in self.app.mongo.get_all_resource_configs():
             client, db = self.app.mongo.get_client_async(resource_config.name)
             await client.drop_database(db)
 
     async def asyncTearDown(self):
+        if not self.app:
+            return
+
         self.app.stop()

@@ -18,6 +18,8 @@ from pymongo.database import Database
 from pymongo.errors import OperationFailure, DuplicateKeyError
 from motor.motor_asyncio import AsyncIOMotorClient, AsyncIOMotorDatabase
 
+from .config import ConfigModel
+
 logger = logging.getLogger(__name__)
 
 
@@ -57,7 +59,7 @@ class MongoIndexOptions:
     sparse: bool = True
 
     #: allows users to specify language-specific rules for string comparison
-    collation: Optional[Dict[str, Any]] = None
+    collation: Optional[MongoIndexCollation] = None
 
 
 @dataclass
@@ -75,48 +77,47 @@ class MongoResourceConfig:
     versioning: bool = False
 
 
+class MongoClientConfig(ConfigModel):
+    host: str = "localhost"
+    port: int = 27017
+    appname: str = "superdesk"
+    dbname: str = "superdesk"
+    connect: bool = True
+    tz_aware: bool = True
+    write_concern: Optional[Dict[str, Any]] = {"w": 1}
+    replicaSet: Optional[str] = None
+    uri: Optional[str] = None
+    document_class: Optional[type] = None
+    username: Optional[str] = None
+    password: Optional[str] = None
+    options: Optional[Dict[str, Any]] = None
+    auth_mechanism: Optional[str] = None
+    auth_source: Optional[str] = None
+    auth_mechanism_properties: Optional[str] = None
+
+
 def _get_mongo_client_config(app_config: Dict[str, Any], prefix: str = "MONGO") -> Tuple[Dict[str, Any], str]:
-    def key(suffice: str) -> str:
-        return f"{prefix}_{suffice}"
+    config = MongoClientConfig.create_from_dict(app_config, prefix)
 
-    def config_to_kwargs(mapping):
-        """
-        Convert config options to kwargs according to provided mapping
-        information.
-        """
-        kwargs = {}
-        for option, arg in mapping.items():
-            if key(option) in app_config:
-                kwargs[arg] = app_config[key(option)]
-        return kwargs
-
-    # Copied from flask_pymongo, so we're not relying on Flask but instead the WSGIApp protocol
-    config = {
-        key("HOST"): app_config.get(key("HOST"), "localhost"),
-        key("PORT"): app_config.get(key("PORT"), 27017),
-        key("DBNAME"): app_config.get(key("DBNAME"), "superdesk"),
-        key("WRITE_CONCERN"): app_config.get(key("WRITE_CONCERN"), {"w": 1}),
+    client_kwargs: Dict[str, Any] = {
+        "appname": config.appname,
+        "connect": config.connect,
+        "tz_aware": config.tz_aware,
     }
 
-    client_kwargs = {
-        "appname": "superdesk",
-        "connect": True,  # TODO: Connects straight away, do we change this to False (to connect on first operation)
-        "tz_aware": True,
-    }
-    if key("OPTIONS") in app_config:
-        client_kwargs.update(app_config[key("OPTIONS")])
+    if config.options is not None:
+        client_kwargs.update(config.options)
 
-    if key("WRITE_CONCERN") in app_config:
-        # w, wtimeout, j and fsync
-        client_kwargs.update(app_config[key("WRITE_CONCERN")])
+    if config.write_concern is not None:
+        client_kwargs.update(config.write_concern)
 
-    if key("REPLICA_SET") in app_config:
-        client_kwargs["replicaset"] = app_config[key("REPLICA_SET")]
+    if config.replicaSet is not None:
+        client_kwargs["replicaset"] = config.replicaSet
 
     uri_parser.validate_options(client_kwargs)
 
-    if key("URI") in app_config:
-        host = app_config[key("URI")]
+    if config.uri is not None:
+        host = config.uri
         # raises an exception if uri is invalid
         mongo_settings = uri_parser.parse_uri(host)
 
@@ -128,41 +129,40 @@ def _get_mongo_client_config(app_config: Dict[str, Any], prefix: str = "MONGO") 
         # extract default database from uri
         dbname = mongo_settings.get("database")
         if not dbname:
-            dbname = config[key("DBNAME")]
+            dbname = config.dbname
 
         # extract auth source from uri
         auth_source = mongo_settings["options"].get("authSource")
         if not auth_source:
             auth_source = dbname
     else:
-        dbname = config[key("DBNAME")]
+        dbname = config.dbname
         auth_source = dbname
-        host = config[key("HOST")]
-        client_kwargs["port"] = config[key("PORT")]
+        host = config.host
+        client_kwargs["port"] = config.port
 
     client_kwargs["host"] = host
     client_kwargs["authSource"] = auth_source
 
-    if key("DOCUMENT_CLASS") in app_config:
-        client_kwargs["document_class"] = app_config[key("DOCUMENT_CLASS")]
+    if config.document_class is not None:
+        client_kwargs["document_class"] = config.document_class
 
-    auth_kwargs = {}
-    if key("USERNAME") in app_config:
-        app_config.setdefault(key("PASSWORD"), None)
-        username = app_config[key("USERNAME")]
-        password = app_config[key("PASSWORD")]
+    auth_kwargs: Dict[str, Any] = {}
+    if config.username is not None:
+        username = config.username
+        password = config.password
         auth = (username, password)
         if any(auth) and not all(auth):
             raise Exception("Must set both USERNAME and PASSWORD or neither")
         client_kwargs["username"] = username
         client_kwargs["password"] = password
         if any(auth):
-            auth_mapping = {
-                "AUTH_MECHANISM": "authMechanism",
-                "AUTH_SOURCE": "authSource",
-                "AUTH_MECHANISM_PROPERTIES": "authMechanismProperties",
-            }
-            auth_kwargs = config_to_kwargs(auth_mapping)
+            if config.auth_mechanism is not None:
+                auth_kwargs["authMechanism"] = config.auth_mechanism
+            if config.auth_source is not None:
+                auth_kwargs["authSource"] = config.auth_source
+            if config.auth_mechanism_properties is not None:
+                auth_kwargs["authMechanismProperties"] = config.auth_mechanism_properties
 
     return {**client_kwargs, **auth_kwargs}, dbname
 
