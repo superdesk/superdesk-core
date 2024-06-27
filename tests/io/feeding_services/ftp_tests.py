@@ -455,3 +455,18 @@ class FTPTestCase(TestCase):
         )
 
         self.assertEqual(mock_ftp.rename.call_count, 16)
+
+    @mock.patch.object(ftp, "ftp_connect", new_callable=FakeFTP)
+    @mock.patch.object(ftp.FTPFeedingService, "get_feed_parser", FakeFeedParser())
+    @mock.patch.object(ftp.FTPFeedingService, "_retrieve_and_parse")
+    def test_allowed_extension_config(self, ftp_connect, *mocks):
+        provider = copy.deepcopy(PROVIDER)
+        service = ftp.FTPFeedingService()
+        with mock.patch.object(service, "_retrieve_and_parse", return_value=True) as mock_retrieve_and_parse:
+            provider["config"]["allowed_extension"] = "json"
+            ingest_items(service.update(provider, {}))
+            mock_retrieve_and_parse.assert_not_called()
+
+            provider["config"]["allowed_extension"] = "json,xml"
+            ingest_items(service.update(provider, {}))
+            mock_retrieve_and_parse.assert_called()
