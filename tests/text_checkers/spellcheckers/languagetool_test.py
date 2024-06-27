@@ -23,6 +23,7 @@ from superdesk import get_resource_service
 MODEL = {
     "misstake": 1,
 }
+TEST_URL = "https://api.languagetoolplus.com/v2"
 
 
 @responses.activate
@@ -30,7 +31,7 @@ def load_spellcheckers():
     registered_spellcheckers.clear()
     app = Flask(__name__)
     app.config[OPT_API_KEY] = ""
-    app.config[API_URL] = "https://api.languagetoolplus.com/v2/check"
+    app.config[API_URL] = TEST_URL
     tools.import_services(app, spellcheckers.__name__, SpellcheckerBase)
 
 
@@ -71,7 +72,7 @@ class LanguagetoolTestCase(TestCase):
             "use_internal_dict": use_internal_dict,
         }
         spellchecker = get_resource_service("spellchecker")
-        check_url = self.config.get(API_URL)
+        check_url = TEST_URL + '/check'
         responses.add(
             responses.POST,
             check_url,
@@ -158,7 +159,7 @@ class LanguagetoolTestCase(TestCase):
 
         doc = {"spellchecker": "languagetool", "text": "misstake", "suggestions": True}
         spellchecker = get_resource_service("spellchecker")
-        check_url = self.config.get(API_URL)
+        check_url = TEST_URL + '/check'
         responses.add(
             responses.POST,
             check_url,
