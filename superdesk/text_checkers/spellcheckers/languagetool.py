@@ -39,6 +39,7 @@ class Languagetool(SpellcheckerBase):
         if self.api_url:
             self.api_url = self.api_url.rstrip('/')
         self._languagetool_config = None
+        self.session = requests.Session()
 
     @property
     def languagetool_config(self):
@@ -76,7 +77,7 @@ class Languagetool(SpellcheckerBase):
 
         try:
             # Send the POST request to the LanguageTool API
-            response = requests.post(self.api_url + '/check', data=payload)
+            response = self.session.post(self.api_url + '/check', data=payload)
             response.raise_for_status()
             response_data = response.json()
         except (requests.RequestException, json.JSONDecodeError) as e:
@@ -128,7 +129,7 @@ class Languagetool(SpellcheckerBase):
 
         try:
             # Send the POST request to the LanguageTool API
-            response = requests.post(self.api_url + '/check', data=payload)
+            response = self.session.post(self.api_url + '/check', data=payload)
             response.raise_for_status()
             response_data = response.json()
         except (requests.RequestException, json.JSONDecodeError) as e:
