@@ -1,9 +1,6 @@
 import unittest
-from dataclasses import dataclass
 
 from pydantic import ValidationError
-
-from superdesk.core.config import get_config_instance, load_config_instance
 
 from superdesk.tests.asyncio import AsyncTestCase
 from .modules import module_with_config
@@ -14,20 +11,20 @@ class ConfigTestCase(unittest.TestCase):
         config = module_with_config.ModuleConfig()
         with self.assertRaises(RuntimeError):
             self.assertEqual(config.default_string, "test-default")
-        load_config_instance({"DEFAULT_STRING": "test-loaded-values"}, config)
+        config.load_from_dict({"DEFAULT_STRING": "test-loaded-values"})
         self.assertEqual(config.default_string, "test-loaded-values")
 
-        new_config = get_config_instance({}, module_with_config.ModuleConfig)
+        new_config = module_with_config.ModuleConfig.create_from_dict({})
         self.assertEqual(new_config.default_string, "test-default")
 
     def test_default_values(self):
         # Test default values
         self.assertEqual(
-            get_config_instance({}, module_with_config.ModuleConfig),
+            module_with_config.ModuleConfig.create_from_dict({}),
             module_with_config.ModuleConfig(),
         )
         self.assertEqual(
-            get_config_instance({}, module_with_config.ModuleConfig),
+            module_with_config.ModuleConfig.create_from_dict({}),
             module_with_config.ModuleConfig(
                 default_string="test-default",
                 optional_string=None,
@@ -40,45 +37,31 @@ class ConfigTestCase(unittest.TestCase):
     def test_key_name_format(self):
         # Test default values with prefix
         self.assertEqual(
-            get_config_instance({"CUSTOM_DEFAULT_STRING": "test-modified"}, module_with_config.ModuleConfig, "CUSTOM"),
+            module_with_config.ModuleConfig.create_from_dict({"CUSTOM_DEFAULT_STRING": "test-modified"}, "CUSTOM"),
             module_with_config.ModuleConfig(default_string="test-modified"),
         )
 
         # Test keys must use capital letters
         self.assertEqual(
-            get_config_instance({"default_string": "modified-value"}, module_with_config.ModuleConfig),
+            module_with_config.ModuleConfig.create_from_dict({"default_string": "modified-value"}),
             module_with_config.ModuleConfig(default_string="test-default"),
         )
         self.assertEqual(
-            get_config_instance({"DEFAULT_STRING": "test-modified-2"}, module_with_config.ModuleConfig),
+            module_with_config.ModuleConfig.create_from_dict({"DEFAULT_STRING": "test-modified-2"}),
             module_with_config.ModuleConfig(default_string="test-modified-2"),
         )
 
     def test_config_validation(self):
         # Providing str instead of int
         with self.assertRaises(ValidationError):
-            get_config_instance({"CUSTOM_INT": "val"}, module_with_config.ModuleConfig)
+            module_with_config.ModuleConfig.create_from_dict({"CUSTOM_INT": "val"})
 
         # Incorrect dict type
         with self.assertRaises(ValidationError):
-            get_config_instance(
-                {"INT_DICT": {"key1": True, "key2": "val", "key3": 23}},
-                module_with_config.ModuleConfig,
-            )
+            module_with_config.ModuleConfig.create_from_dict({"INT_DICT": {"key1": True, "key2": "val", "key3": 23}})
 
         # Test dict with ``Any`` value
-        get_config_instance(
-            {"ANY_DICT": {"key1": True, "key2": "val", "key3": 23}},
-            module_with_config.ModuleConfig,
-        )
-
-        # Invalid config class type
-        @dataclass
-        class DataConfig:
-            name: str = "test-name"
-
-        with self.assertRaises(AttributeError):
-            get_config_instance({}, DataConfig)
+        module_with_config.ModuleConfig.create_from_dict({"ANY_DICT": {"key1": True, "key2": "val", "key3": 23}})
 
 
 class ModuleConfigTestCase(AsyncTestCase):
@@ -87,7 +70,7 @@ class ModuleConfigTestCase(AsyncTestCase):
 
     async def asyncSetUp(self, force: bool = False):
         self.app_config = {"MODULES": ["tests.core.modules.module_with_config"]}
-        load_config_instance({}, module_with_config.config, freeze=False)
+        module_with_config.config.load_from_dict({}, freeze=False)
         module_with_config.module.config_prefix = None
         module_with_config.module.freeze_config = True
         await super().asyncSetUp()

@@ -12,7 +12,6 @@ from typing import Dict, List
 import importlib
 
 from .wsgi import WSGIApp
-from .config import load_config_instance
 
 
 class SuperdeskAsyncApp:
@@ -64,9 +63,8 @@ class SuperdeskAsyncApp:
         # init all configs first (in case ``module.init`` requires config from another module)
         for module in self.get_module_list():
             if module.config is not None:
-                load_config_instance(
+                module.config.load_from_dict(
                     self.wsgi.config,
-                    module.config,
                     prefix=module.config_prefix,
                     freeze=module.freeze_config,
                 )

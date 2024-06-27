@@ -111,11 +111,19 @@ instance.::
 
 
 When the app loads the module, it will populate the values in the config based on attributes from `settings.py`.
-The following::
+For example, the following::
 
     MONGO_URI = "remote_host.com"
     MONGO_PORT = 37017
     MONGO_OPTIONS = {"w": 3}
+
+is the same as::
+
+    ModuleConfig(
+        uri="remote_host.com",
+        port=37017,
+        options=dict(w=3)
+    )
 
 Validation will also occur when loading the module config, so if the value in `settings.py` is invalid with regards
 to the ConfigModel used, then the app will refuse to load and throw an error, such as::

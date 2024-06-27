@@ -22,13 +22,18 @@ Define the available fields like you would a `TypedDict`::
 Loading Configs
 ---------------
 
-You can use the config system to manually load configs on demand. This is used by resource systems, such as mongo,
+Configs must be loaded before they can be used. If you attempt to access a value in a config before it has been
+loaded, a `RuntimeError` will be raised. You can load a config in the following 2 days:
+
+* By the :func:`ConfigModel.create_from_dict` class level method, which will create and load a config instance for us
+* Or by the :func:`ConfigModel.load_from_dict` instance level method, which will load an already created config instance.
+
+This allows us to manually load configs on demand. This is used by resource systems, such as mongo,
 to load different config options based on a prefix, such as `MONGO` or `CONTENTAPI_MONGO`.
 
-Using the above config model, you can load it using the :func:`get_config_instance` method::
+The following are examples on how to load a config::
 
     from typing import Dict, Any
-    from superdesk.core.config import get_config_instance
 
     def test_custom_config():
         # Mock app config
@@ -38,12 +43,15 @@ Using the above config model, you can load it using the :func:`get_config_instan
             "MY_PASSWORD": "bars",
         }
 
+        # Using the class level method to create the instance for us
+        config = MyConfig.create_from_dict(app_config, prefix="MY")
+
+        # Loading an already constructed config instance
+        config = MyConfig()
+        config.load_from_dict(app_config, prefix="MY")
+
         # Get the instance, and assert it's values
-        config = get_config_instance(
-            app_config,
-            MyConfig,
-            prefix="MY"
-        )
+        config = MyConfig.create_from_dict(app_config, prefix="MY")
         assert config.url == "localhost:5700"
         assert config.username = "monkey"
         assert config.password = "bars"
@@ -51,7 +59,7 @@ Using the above config model, you can load it using the :func:`get_config_instan
         # The following line would raise a pydantic.ValidationError
         # because not all of the required fields of the config
         # would be populated from the supplied app config
-        get_config_instance({}, MyConfig, prefix="MY")
+        MyConfig.create_from_dict({}, prefix="MY")
 
 
 You can also load the config from the currently running app config::
@@ -59,9 +67,8 @@ You can also load the config from the currently running app config::
     from superdesk.core.app import get_current_app
 
     def test_config_from_app():
-        config = get_config_instance(
+        config = MyConfig.create_from_dict(
             get_current_app().wsgi.config,
-            MyConfig,
             prefix="MY"
         )
 
@@ -77,7 +84,7 @@ will be raised.::
             "MY_URL": "localhost:5700",
             "MY_USERNAME": 1234,
         }
-        get_config_instance(app_config, MyConfig, prefix="MY")
+        MyConfig.create_from_dict(app_config, prefix="MY")
 
 The above will fail validation because **MY_USERNAME** is the incorrect data type, and **MY_PASSWORD** is missing
 from the supplied config.
@@ -86,8 +93,8 @@ from the supplied config.
 Config Reference
 ----------------
 
+.. autoclass:: superdesk.core.config.ConfigModel
+    :member-order: bysource
+    :members: create_from_dict, load_from_dict
+
 .. autofunction:: superdesk.core.config.get_config_key
-
-.. autofunction:: superdesk.core.config.get_config_instance
-
-.. autofunction:: superdesk.core.config.load_config_instance

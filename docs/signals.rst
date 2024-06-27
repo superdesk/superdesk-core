@@ -27,7 +27,7 @@ Core Signals
     :annotation:
 
 .. autodata:: item_updated
-    :annotation:
+    create_from_dict
 
 .. autodata:: item_publish
     :annotation:

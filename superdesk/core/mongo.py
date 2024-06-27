@@ -18,7 +18,7 @@ from pymongo.database import Database
 from pymongo.errors import OperationFailure, DuplicateKeyError
 from motor.motor_asyncio import AsyncIOMotorClient, AsyncIOMotorDatabase
 
-from .config import ConfigModel, get_config_instance
+from .config import ConfigModel
 
 logger = logging.getLogger(__name__)
 
@@ -97,7 +97,7 @@ class MongoClientConfig(ConfigModel):
 
 
 def _get_mongo_client_config(app_config: Dict[str, Any], prefix: str = "MONGO") -> Tuple[Dict[str, Any], str]:
-    config = get_config_instance(app_config, MongoClientConfig, prefix)
+    config = MongoClientConfig.create_from_dict(app_config, prefix)
 
     client_kwargs: Dict[str, Any] = {
         "appname": config.appname,
