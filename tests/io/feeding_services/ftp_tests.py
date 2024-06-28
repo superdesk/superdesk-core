@@ -467,6 +467,6 @@ class FTPTestCase(TestCase):
             ingest_items(service.update(provider, {}))
             mock_retrieve_and_parse.assert_not_called()
 
-            provider["config"]["allowed_extension"] = "json,xml"
+            provider["config"]["allowed_extension"] = "json,XML"
             ingest_items(service.update(provider, {}))
             mock_retrieve_and_parse.assert_called()
