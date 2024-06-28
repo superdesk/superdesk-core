@@ -37,7 +37,7 @@ class Languagetool(SpellcheckerBase):
         super().__init__(app)
         self.api_url = self.config.get(API_URL, os.environ.get(API_URL))
         if self.api_url:
-            self.api_url = self.api_url.rstrip('/')
+            self.api_url = self.api_url.rstrip("/")
         self._languagetool_config = None
         self.session = requests.Session()
 
@@ -51,7 +51,7 @@ class Languagetool(SpellcheckerBase):
             config = self.config.get(OPT_CONFIG, {})
             api_key = self.config.get(OPT_API_KEY, os.environ.get(OPT_API_KEY))
             if api_key:
-                config['apiKey'] = api_key
+                config["apiKey"] = api_key
             try:
                 env_config = json.loads(os.environ[OPT_CONFIG])
             except (KeyError, json.JSONDecodeError):
@@ -67,8 +67,8 @@ class Languagetool(SpellcheckerBase):
 
     def check(self, text, language=None):
         payload = {
-            'text': text,
-            'language': language or 'auto',
+            "text": text,
+            "language": language or "auto",
         }
 
         # Add apiKey and additional options from the environment variable
@@ -77,39 +77,39 @@ class Languagetool(SpellcheckerBase):
 
         try:
             # Send the POST request to the LanguageTool API
-            response = self.session.post(self.api_url + '/check', data=payload)
+            response = self.session.post(self.api_url + "/check", data=payload)
             response.raise_for_status()
             response_data = response.json()
         except (requests.RequestException, json.JSONDecodeError) as e:
             raise SuperdeskApiError.internalError(
-                "Unexpected error from {label}: {e}".format(
-                    label=self.label, e=str(e)
-                ), exception=e
+                "Unexpected error from {label}: {e}".format(label=self.label, e=str(e)), exception=e
             )
 
         # Initialize an empty list to store errors
         err_list = []
 
         # Iterate over the matches in the response
-        matches = response_data.get('matches', [])
+        matches = response_data.get("matches", [])
         if not isinstance(matches, list):
             logger.warning("Unexpected {label} response format: 'matches' should be a list.".format(label=self.label))
             return {"errors": []}
 
         for match in matches:
-            issue_type = match.get('rule', {}).get('issueType')
-            if issue_type in ['misspelling', 'whitespace', 'other']:
-                error_type = 'spelling'
-            elif issue_type in ['grammar', 'characters', 'typographical', 'locale-violation']:
-                error_type = 'grammar'
+            issue_type = match.get("rule", {}).get("issueType")
+            if issue_type in ["misspelling", "whitespace", "other"]:
+                error_type = "spelling"
+            elif issue_type in ["grammar", "characters", "typographical", "locale-violation"]:
+                error_type = "grammar"
             else:
                 continue
 
             error = {
-                "message": match.get('message', ''),
-                "startOffset": match.get('offset', -1),
-                "suggestions": [{"text": replacement.get('value', '')} for replacement in match.get('replacements', [])],
-                "text": text[match.get('offset', 0):match.get('offset', 0) + match.get('length', 0)],
+                "message": match.get("message", ""),
+                "startOffset": match.get("offset", -1),
+                "suggestions": [
+                    {"text": replacement.get("value", "")} for replacement in match.get("replacements", [])
+                ],
+                "text": text[match.get("offset", 0) : match.get("offset", 0) + match.get("length", 0)],
                 "type": error_type,
             }
             err_list.append(error)
@@ -119,8 +119,8 @@ class Languagetool(SpellcheckerBase):
 
     def suggest(self, text, language=None):
         payload = {
-            'text': text,
-            'language': language or 'auto',
+            "text": text,
+            "language": language or "auto",
         }
 
         # Add apiKey and additional options from the environment variable
@@ -129,26 +129,35 @@ class Languagetool(SpellcheckerBase):
 
         try:
             # Send the POST request to the LanguageTool API
-            response = self.session.post(self.api_url + '/check', data=payload)
+            response = self.session.post(self.api_url + "/check", data=payload)
             response.raise_for_status()
             response_data = response.json()
         except (requests.RequestException, json.JSONDecodeError) as e:
             raise SuperdeskApiError.internalError(
-                "Unexpected error from {label}: {e}".format(label=self.label, e=str(e)), exception=e)
+                "Unexpected error from {label}: {e}".format(label=self.label, e=str(e)), exception=e
+            )
 
         # Initialize an empty list to store all replacement suggestions
         replacements = []
 
-        matches = response_data.get('matches', [])
+        matches = response_data.get("matches", [])
         if not isinstance(matches, list):
             logger.warning("Unexpected {label} response format: 'matches' should be a list.".format(label=self.label))
             return []
 
         for match in matches:
-            issue_type = match.get('rule', {}).get('issueType')
-            if issue_type in ['misspelling', 'whitespace', 'other', 'grammar', 'characters', 'typographical', 'locale-violation']:
-                for replacement in match.get('replacements', []):
-                    replacements.append(replacement.get('value', ''))
+            issue_type = match.get("rule", {}).get("issueType")
+            if issue_type in [
+                "misspelling",
+                "whitespace",
+                "other",
+                "grammar",
+                "characters",
+                "typographical",
+                "locale-violation",
+            ]:
+                for replacement in match.get("replacements", []):
+                    replacements.append(replacement.get("value", ""))
 
         return {"suggestions": self.list2suggestions(replacements)}
 

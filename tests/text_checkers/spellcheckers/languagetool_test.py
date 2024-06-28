@@ -21,7 +21,7 @@ from superdesk.text_checkers.spellcheckers.languagetool import Languagetool, API
 from superdesk import get_resource_service
 
 MODEL = {
-    "misstake": 1,
+    "speling": 1,
 }
 TEST_URL = "https://api.languagetoolplus.com/v2"
 
@@ -72,34 +72,32 @@ class LanguagetoolTestCase(TestCase):
             "use_internal_dict": use_internal_dict,
         }
         spellchecker = get_resource_service("spellchecker")
-        check_url = TEST_URL + '/check'
+        check_url = TEST_URL + "/check"
         responses.add(
             responses.POST,
             check_url,
             json={
                 "software": {
-                    "name": "LanguageTool", "version": "6.5.9", "apiVersion": 1, "premium": True, "status": ""
+                    "name": "LanguageTool",
+                    "version": "6.5.9",
+                    "apiVersion": 1,
+                    "premium": True,
+                    "status": "",
                 },
                 "warnings": {"incompleteResults": False},
                 "language": {
-                    "name": "English (US)", "code": "en-US", "detectedLanguage": {"name": "English (US)", "code": "en-US", "confidence": 1.0, "source": "ngram"}
+                    "name": "English (US)",
+                    "code": "en-US",
+                    "detectedLanguage": {"name": "English (US)", "code": "en-US", "confidence": 1.0, "source": "ngram"},
                 },
                 "matches": [
                     {
                         "message": "Possible spelling mistake found.",
                         "shortMessage": "Spelling mistake",
-                        "replacements": [
-                            {"value": "spelling"},
-                            {"value": "spewing"},
-                            {"value": "spieling"}
-                        ],
+                        "replacements": [{"value": "spelling"}, {"value": "spewing"}, {"value": "spieling"}],
                         "offset": 29,
                         "length": 7,
-                        "context": {
-                            "text": "This is a simple text with a speling mistake.",
-                            "offset": 29,
-                            "length": 7
-                        },
+                        "context": {"text": "This is a simple text with a speling mistake.", "offset": 29, "length": 7},
                         "sentence": "This is a simple text with a speling mistake.",
                         "type": {"typeName": "UnknownWord"},
                         "rule": {
@@ -107,21 +105,17 @@ class LanguagetoolTestCase(TestCase):
                             "description": "Possible spelling mistake",
                             "issueType": "misspelling",
                             "category": {"id": "TYPOS", "name": "Possible Typo"},
-                            "isPremium": False, "confidence": 0.68
+                            "isPremium": False,
+                            "confidence": 0.68,
                         },
-                        "ignoreForIncompleteSentence": False, "contextForSureMatch": 0
+                        "ignoreForIncompleteSentence": False,
+                        "contextForSureMatch": 0,
                     }
                 ],
-                "sentenceRanges": [
-                    [0, 45]
-                ],
+                "sentenceRanges": [[0, 45]],
                 "extendedSentenceRanges": [
-                    {
-                        "from": 0, "to": 45, "detectedLanguages": [
-                            {"language": "en", "rate": 1.0}
-                        ]
-                    }
-                ]
+                    {"from": 0, "to": 45, "detectedLanguages": [{"language": "en", "rate": 1.0}]}
+                ],
             },
         )
         spellchecker.create([doc])
@@ -131,13 +125,9 @@ class LanguagetoolTestCase(TestCase):
                 {
                     "message": "Possible spelling mistake found.",
                     "startOffset": 29,
-                    "suggestions": [
-                        {"text": "spelling"},
-                        {"text": "spewing"},
-                        {"text": "spieling"}
-                    ],
+                    "suggestions": [{"text": "spelling"}, {"text": "spewing"}, {"text": "spieling"}],
                     "text": "speling",
-                    "type": "spelling"
+                    "type": "spelling",
                 }
             ]
 
@@ -147,9 +137,9 @@ class LanguagetoolTestCase(TestCase):
     def test_checker_with_internal_dict(self):
         """Check that words in personal dictionary are discarded correctly
 
-        This test re-uses test_checker but activate "use_internal_dict" option and mock dictionary to have "misstake" inside
+        This test re-uses test_checker but activate "use_internal_dict" option and mock dictionary to have "speling" inside
         """
-        # misstake is in personal dictionary, so no spelling error should be returned
+        # speling is in personal dictionary, so no spelling error should be returned
         expected = []
         self.test_checker(expected=expected, use_internal_dict=True)
 
@@ -159,7 +149,7 @@ class LanguagetoolTestCase(TestCase):
 
         doc = {"spellchecker": "languagetool", "text": "misstake", "suggestions": True}
         spellchecker = get_resource_service("spellchecker")
-        check_url = TEST_URL + '/check'
+        check_url = TEST_URL + "/check"
         responses.add(
             responses.POST,
             check_url,
@@ -169,17 +159,18 @@ class LanguagetoolTestCase(TestCase):
                 "language": {
                     "name": "English (US)",
                     "code": "en-US",
-                    "detectedLanguage": {"name": "English (US)", "code": "en-US", "confidence": 0.56296706, "source": "ngram"}
+                    "detectedLanguage": {
+                        "name": "English (US)",
+                        "code": "en-US",
+                        "confidence": 0.56296706,
+                        "source": "ngram",
+                    },
                 },
                 "matches": [
                     {
                         "message": "Possible spelling mistake found.",
                         "shortMessage": "Spelling mistake",
-                        "replacements": [
-                            {"value": "mistake"},
-                            {"value": "misstate"},
-                            {"value": "miss take"}
-                        ],
+                        "replacements": [{"value": "mistake"}, {"value": "misstate"}, {"value": "miss take"}],
                         "offset": 0,
                         "length": 8,
                         "context": {"text": "misstake", "offset": 0, "length": 8},
@@ -190,14 +181,17 @@ class LanguagetoolTestCase(TestCase):
                             "description": "Possible spelling mistake",
                             "issueType": "misspelling",
                             "category": {"id": "TYPOS", "name": "Possible Typo"},
-                            "isPremium": False, "confidence": 0.68
+                            "isPremium": False,
+                            "confidence": 0.68,
                         },
                         "ignoreForIncompleteSentence": False,
-                        "contextForSureMatch": 0
+                        "contextForSureMatch": 0,
                     }
                 ],
                 "sentenceRanges": [[0, 8]],
-                "extendedSentenceRanges": [{"from": 0, "to": 8, "detectedLanguages": [{"language": "en", "rate": 1.0}]}]
+                "extendedSentenceRanges": [
+                    {"from": 0, "to": 8, "detectedLanguages": [{"language": "en", "rate": 1.0}]}
+                ],
             },
         )
         spellchecker.create([doc])
