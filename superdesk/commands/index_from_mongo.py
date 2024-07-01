@@ -17,6 +17,8 @@ from superdesk.errors import BulkIndexError
 from superdesk import config
 from bson.objectid import ObjectId
 
+from superdesk.core.app import get_current_app
+
 
 class IndexFromMongo(superdesk.Command):
     """Index the specified mongo collection in the specified elastic collection/type.
@@ -48,13 +50,25 @@ class IndexFromMongo(superdesk.Command):
         elif all_collections:
             app.data.init_elastic(app)
             resources = app.data.get_elastic_resources()
+            resources_processed = []
+            for resource_config in get_current_app().resources.get_all_configs():
+                if resource_config.elastic is None:
+                    continue
+                self.copy_resource(resource_config.name, page_size)
+                resources_processed.append(resource_config.name)
+
             for resource in resources:
+                if resource in resources_processed:
+                    # This resource has already been processed by the new app
+                    # No need to re-index this resource
+                    continue
                 self.copy_resource(resource, page_size)
         else:
             self.copy_resource(collection_name, page_size, last_id, string_id)
 
     @classmethod
     def copy_resource(cls, resource, page_size, last_id=None, string_id=False):
+        new_app = get_current_app()
         for items in cls.get_mongo_items(resource, page_size, last_id, string_id):
             print("{} Inserting {} items".format(time.strftime("%X %x %Z"), len(items)))
             s = time.time()
@@ -62,7 +76,10 @@ class IndexFromMongo(superdesk.Command):
 
             for i in range(1, 4):
                 try:
-                    success, failed = app.data._search_backend(resource).bulk_insert(resource, items)
+                    try:
+                        success, failed = new_app.elastic.get_client(resource).bulk_insert(items)
+                    except KeyError:
+                        success, failed = app.data._search_backend(resource).bulk_insert(resource, items)
                 except Exception as ex:
                     print("Exception thrown on insert to elastic {}", ex)
                     time.sleep(10)
@@ -89,7 +106,11 @@ class IndexFromMongo(superdesk.Command):
         bucket_size = int(page_size) if page_size else cls.default_page_size
         print("Indexing data from mongo/{} to elastic/{}".format(mongo_collection_name, mongo_collection_name))
 
-        db = app.data.get_mongo_collection(mongo_collection_name)
+        try:
+            db = get_current_app().mongo.get_collection(mongo_collection_name)
+        except KeyError:
+            db = app.data.get_mongo_collection(mongo_collection_name)
+
         args = {"limit": bucket_size, "sort": [(config.ID_FIELD, pymongo.ASCENDING)]}
 
         while True:
@@ -102,10 +123,10 @@ class IndexFromMongo(superdesk.Command):
                 args.update({"filter": {config.ID_FIELD: {"$gt": last_id}}})
 
             cursor = db.find(**args)
-            if not cursor.count():
+            items = list(cursor)
+            if not len(items):
                 print("Last id", mongo_collection_name, last_id)
                 break
-            items = list(cursor)
             last_id = items[-1][config.ID_FIELD]
             yield items
 
