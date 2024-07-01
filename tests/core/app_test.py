@@ -1,5 +1,3 @@
-from typing import Dict, Any
-from dataclasses import dataclass
 from unittest import TestCase, mock
 
 from superdesk.core.app import SuperdeskAsyncApp
