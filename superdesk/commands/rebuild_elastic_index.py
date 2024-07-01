@@ -12,6 +12,7 @@
 import superdesk
 
 from flask import current_app as app
+from superdesk.core.app import get_current_app
 
 
 class RebuildElasticIndex(superdesk.Command):
@@ -41,7 +42,21 @@ class RebuildElasticIndex(superdesk.Command):
             resources = [resource_name]
         elif resource_name:
             raise ValueError("Resource {} is not configured".format(resource_name))
+
+        resources_processed = []
+        new_app = get_current_app()
+        for config in new_app.resources.get_all_configs():
+            if config.elastic is None:
+                continue
+            new_app.elastic.reindex(config.name, requests_per_second=requests_per_second)
+            resources_processed.append(config.name)
+            print(f"Index {config.name} rebuilt successfully")
+
         for resource in resources:
+            if resource in resources_processed:
+                # This resource has already been processed by the new app
+                # No need to rebuilt its index
+                continue
             app.data.elastic.reindex(resource, requests_per_second=requests_per_second)
             print('Index {} rebuilt successfully.'.format(resource))
 

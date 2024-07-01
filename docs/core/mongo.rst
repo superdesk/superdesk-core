@@ -3,11 +3,13 @@
 MongoDB
 =======
 
+.. module:: superdesk.core.mongo
+
 MongoResources Instance
 -----------------------
-The :class:`MongoResources <mongo.MongoResources>` instance provides access to the MongoDB resource configs,
-client and database connections. This instance is available under the :attr:`SuperdeskAsyncApp.mongo <app.SuperdeskAsyncApp.mongo>`
-attribute.
+The :class:`MongoResources` instance provides access to the MongoDB resource configs,
+client and database connections. This instance is available under the
+:attr:`SuperdeskAsyncApp.mongo <superdesk.core.app.SuperdeskAsyncApp.mongo>` attribute.
 
 There are 2 groups of functions to use. 1 for standard synchronous connections and another for asynchronous connections.
 The functions ending in ``_async`` provide the asynchronous version.
@@ -25,46 +27,11 @@ For example::
         user = await users.find_one({"_id": "abcd123"})
 
 
-Registering Resources
----------------------
-The :meth:`MongoResources.register_resource_config <mongo.MongoResources.register_resource_config>` method provides a way to
-register resources for use with MongoDB, using :class:`MongoResourceConfig <mongo.MongoResourceConfig>` and
-:class:`MongoIndexOptions <mongo.MongoIndexOptions>` classes.
+The :attr:`get_db <MongoResources.get_db>` method returns an instance of a
+`PyMongo Database <https://pymongo.readthedocs.io/en/stable/api/pymongo/database.html>`_.
 
-The details of the registered resource is later used to create client connections,
-create indexes etc for the specific resource. The :attr:`prefix <mongo.MongoResourceConfig.prefix>` config provides the same
-``prefix`` capabilities to older style resources.
-
-Example resource registration::
-
-    from superdesk.core.module import Module, SuperdeskAsyncApp
-    from superdesk.core.mongo import MongoResourceConfig, MongoIndexOptions
-
-    user_mongo_resource = MongoResourceConfig(
-        name="users",
-        indexes=[
-            MongoIndexOptions(
-                name="users_name_1",
-                keys=[("first_name", 1)],
-            ),
-            MongoIndexOptions(
-                name="combined_name_1",
-                keys=[("first_name", 1), ("last_name", -1)],
-                background=False,
-                unique=False,
-                sparse=False,
-                collation={"locale": "en", "strength": 1},
-            ),
-        ],
-    )
-
-
-    def init(app: SuperdeskAsyncApp):
-        app.mongo.register_resource_config(user_mongo_resource)
-
-
-    module = Module(name="tests.users", init=init)
-
+The :attr:`get_db_async <MongoResources.get_db_async>` method returns an instance of a
+`Motor AsyncIOMotorDatabase <https://motor.readthedocs.io/en/stable/api-asyncio/asyncio_motor_database.html>`_.
 
 Mongo References
 ----------------

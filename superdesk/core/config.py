@@ -26,13 +26,16 @@ class ConfigModel(BaseModel):
 
     def __getattribute__(self, name: str):
         # Allow unrestricted access to private and pydantic private attributes
-        if name.startswith("_") or name.startswith("model_") or name == "load_from_dict":
+        if name.startswith("_") or name.startswith("model_") or name in ["load_from_dict", "set_frozen"]:
             return BaseModel.__getattribute__(self, name)
 
         if not self._loaded:
             raise RuntimeError(f"Config {self.__class__} not loaded, while accessing attribute '{name}'")
 
         return BaseModel.__getattribute__(self, name)
+
+    def set_frozen(self, frozen: bool):
+        self.model_config["frozen"] = frozen
 
     @classmethod
     def create_from_dict(cls, config: Dict[str, Any], prefix: Optional[str] = None, freeze: bool = True) -> Self:
@@ -46,8 +49,7 @@ class ConfigModel(BaseModel):
         """
 
         config_instance = cls.model_validate(_get_config_dict(config, cls, prefix))
-        if freeze:
-            config_instance.model_config["frozen"] = True
+        config_instance.set_frozen(freeze)
         config_instance._loaded = True
         return config_instance
 
@@ -65,12 +67,12 @@ class ConfigModel(BaseModel):
         # If the ``config_instance`` is currently frozen, temporarily un-freeze it, so we can update it
         # and then freeze it again after updating the values
         if self.model_config.get("frozen", False):
-            self.model_config["frozen"] = False
+            self.set_frozen(False)
 
         for key, val in _get_config_dict(config, self, prefix).items():
             setattr(self, key, val)
 
-        self.model_config["frozen"] = freeze
+        self.set_frozen(freeze)
         self._loaded = True
 
 

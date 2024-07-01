@@ -18,6 +18,8 @@ from flask import current_app
 from superdesk.lock import lock, unlock
 from superdesk.json_utils import SuperdeskJSONEncoder
 
+from superdesk.core.app import get_current_app
+
 
 class SuperdeskDataLayer(DataLayer):
     """Superdesk Data Layer.
@@ -53,7 +55,14 @@ class SuperdeskDataLayer(DataLayer):
         with app.app_context():
             if lock("elastic", expire=10):
                 try:
-                    self.elastic.init_index(raise_on_mapping_error=raise_on_mapping_error)
+                    resources_indexed = get_current_app().elastic.init_all_indexes(
+                        raise_on_mapping_error=raise_on_mapping_error
+                    )
+                    for resource in self.get_elastic_resources():
+                        if resource in resources_indexed:
+                            continue
+                        self.elastic.init_index(resource, raise_on_mapping_error=raise_on_mapping_error)
+
                 finally:
                     unlock("elastic")
 
