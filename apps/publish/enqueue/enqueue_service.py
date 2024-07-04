@@ -15,13 +15,11 @@ import elasticapm
 import content_api
 
 from bson import ObjectId
-from functools import partial
 from flask import current_app as app, g
 from superdesk import get_resource_service
 from superdesk.errors import SuperdeskApiError, SuperdeskPublishError
 from superdesk.metadata.item import CONTENT_TYPE, ITEM_TYPE, ITEM_STATE, PUBLISH_SCHEDULE, ASSOCIATIONS, MEDIA_TYPES
 from superdesk.metadata.packages import GROUPS, ROOT_GROUP, GROUP_ID, REFS, RESIDREF
-from superdesk.notification import push_notification
 from superdesk.publish import SUBSCRIBER_TYPES
 from superdesk.publish.publish_queue import PUBLISHED_IN_PACKAGE
 from superdesk.publish.formatters import get_formatter
@@ -29,7 +27,7 @@ from apps.publish.content.utils import filter_digital, filter_non_digital
 from apps.publish.content.common import BasePublishService
 from copy import deepcopy
 from eve.utils import config, ParsedRequest
-from apps.archive.common import get_user, get_utc_schedule
+from apps.archive.common import get_utc_schedule
 from apps.packages.package_service import PackageService
 from apps.publish.published_item import PUBLISH_STATE, QUEUE_STATE
 from apps.content_types import apply_schema
@@ -220,9 +218,8 @@ class EnqueueService:
 
         1. Get the subscribers.
         2. Queue the content for subscribers
-        3. Sends notification if no formatter has found for any of the formats configured in Subscriber.
-        4. If not queued and not formatters then raise exception.
-        5. Publish the content to content api.
+        3. If not queued and not formatters then raise exception.
+        4. Publish the content to content api.
 
         :param dict doc: document to publish
         :param str target_media_type: Valid values are - Wire, Digital.
@@ -231,33 +228,35 @@ class EnqueueService:
         :raises PublishQueueError.item_not_queued_error:
                 If the nothing is queued.
         """
-        sent = False
-
         # Step 1
-
         subscribers, subscriber_codes, associations = self.get_subscribers(doc, target_media_type)
 
-        # Step 2
-        no_formatters, queued = self.queue_transmission(
-            deepcopy(doc), subscribers, subscriber_codes, associations, sent
-        )
+        queued = False
 
-        # Step 3
-        self._push_formatter_notification(doc, no_formatters)
-
-        # Step 4
-        if not target_media_type and not queued:
-            level = logging.INFO
-            if app.config["PUBLISH_NOT_QUEUED_ERROR"] and not app.config.get("SUPERDESK_TESTING"):
-                level = logging.ERROR
-            logger.log(
-                level,
-                "Nothing is saved to publish queue for story: {} for action: {}".format(
-                    doc[config.ID_FIELD], self.publish_type
-                ),
+        if not subscribers:
+            logger.info("No subscribers found for the item_id: %s", doc[config.ID_FIELD])
+        else:
+            # Step 2
+            queued = self.queue_transmission(
+                deepcopy(doc),
+                subscribers,
+                subscriber_codes,
+                associations,
             )
 
-        # Step 5
+            # Step 3
+            if not target_media_type and not queued:
+                level = logging.INFO
+                if app.config["PUBLISH_NOT_QUEUED_ERROR"] and not app.config.get("SUPERDESK_TESTING"):
+                    level = logging.ERROR
+                logger.log(
+                    level,
+                    "Nothing is saved to publish queue for story: {} for action: {}".format(
+                        doc[config.ID_FIELD], self.publish_type
+                    ),
+                )
+
+        # Step 4
         if not content_type:
             self.publish_content_api(doc, [s for s in subscribers if s.get("api_enabled")])
 
@@ -276,21 +275,6 @@ class EnqueueService:
         except Exception:
             logger.exception(
                 "Failed to queue item to API for item: {} for action {}".format(doc[config.ID_FIELD], self.publish_type)
-            )
-
-    def _push_formatter_notification(self, doc, no_formatters=None):
-        if no_formatters is None:
-            no_formatters = []
-
-        if len(no_formatters) > 0:
-            user = get_user()
-            push_notification(
-                "item:publish:wrong:format",
-                item=str(doc[config.ID_FIELD]),
-                unique_name=doc.get("unique_name"),
-                desk=str(doc.get("task", {}).get("desk", "")),
-                user=str(user.get(config.ID_FIELD, "")),
-                formats=no_formatters,
             )
 
     def _get_subscriber_codes(self, subscribers):
@@ -369,15 +353,14 @@ class EnqueueService:
     def _resend_to_subscribers(self, doc, subscribers, subscriber_codes, associations=None):
         if associations is None:
             associations = {}
-        formatter_messages, queued = self.queue_transmission(doc, subscribers, subscriber_codes, associations)
-        self._push_formatter_notification(doc, formatter_messages)
+        queued = self.queue_transmission(doc, subscribers, subscriber_codes, associations)
         if not queued:
             logger.exception(
                 "Nothing is saved to publish queue for story: {} for action: {}".format(doc[config.ID_FIELD], "resend")
             )
 
     @elasticapm.capture_span()
-    def publish_package(self, package, target_subscribers):
+    def publish_package(self, package, target_subscribers) -> bool:
         """Publishes a given package to given subscribers.
 
         For each subscriber updates the package definition with the wanted_items for that subscriber
@@ -388,7 +371,7 @@ class EnqueueService:
         :param target_subscribers: List of subscriber and items-per-subscriber
         """
         all_items = self.package_service.get_residrefs(package)
-        no_formatters, queued = [], False
+        queued = False
         subscribers = []
         for items in target_subscribers.values():
             updated = deepcopy(package)
@@ -401,19 +384,18 @@ class EnqueueService:
                 if not still_items_left and self.publish_type != "correct":
                     # if nothing left in the package to be published and
                     # if not correcting then don't send the package
-                    return
+                    return False
             for key in wanted_items:
                 try:
                     self.package_service.replace_ref_in_package(updated, key, items["items"][key])
                 except KeyError:
                     continue
 
-            formatters, temp_queued = self.queue_transmission(
+            temp_queued = self.queue_transmission(
                 updated, [subscriber], {subscriber[config.ID_FIELD]: codes}, sent=True
             )
 
             subscribers.append(subscriber)
-            no_formatters.extend(formatters)
             if temp_queued:
                 queued = temp_queued
 
@@ -433,7 +415,7 @@ class EnqueueService:
         return destinations
 
     @elasticapm.capture_span()
-    def queue_transmission(self, doc, subscribers, subscriber_codes=None, associations=None, sent=False):
+    def queue_transmission(self, doc, subscribers, subscriber_codes=None, associations=None, sent=False) -> bool:
         """Method formats and then queues the article for transmission to the passed subscribers.
 
         ::Important Note:: Format Type across Subscribers can repeat. But we can't have formatted item generated once
@@ -449,110 +431,106 @@ class EnqueueService:
         if subscriber_codes is None:
             subscriber_codes = {}
 
-        try:
-            if config.PUBLISH_ASSOCIATIONS_RESEND and not sent:
-                is_correction = doc.get("state") in ["corrected", "being_corrected"]
-                is_update = doc.get("rewrite_of")
-                is_new = not is_correction and not is_update
+        if config.PUBLISH_ASSOCIATIONS_RESEND and not sent:
+            is_correction = doc.get("state") in ["corrected", "being_corrected"]
+            is_update = doc.get("rewrite_of")
+            is_new = not is_correction and not is_update
 
-                if config.PUBLISH_ASSOCIATIONS_RESEND == "new" and is_new:
-                    self.resend_association_items(doc)
-                elif config.PUBLISH_ASSOCIATIONS_RESEND == "corrections":
-                    self.resend_association_items(doc)
-                elif config.PUBLISH_ASSOCIATIONS_RESEND == "updates" and not is_correction:
-                    self.resend_association_items(doc)
+            if config.PUBLISH_ASSOCIATIONS_RESEND == "new" and is_new:
+                self.resend_association_items(doc)
+            elif config.PUBLISH_ASSOCIATIONS_RESEND == "corrections":
+                self.resend_association_items(doc)
+            elif config.PUBLISH_ASSOCIATIONS_RESEND == "updates" and not is_correction:
+                self.resend_association_items(doc)
 
-            queued = False
-            no_formatters = []
-            filtered_document = self.filter_document(doc)
-            for subscriber in subscribers:
-                try:
-                    if (
-                        doc[ITEM_TYPE] not in [CONTENT_TYPE.TEXT, CONTENT_TYPE.PREFORMATTED]
-                        and subscriber.get("subscriber_type", "") == SUBSCRIBER_TYPES.WIRE
-                    ):
-                        # wire subscribers can get only text and preformatted stories
+        queued = False
+        filtered_document = self.filter_document(doc)
+        for subscriber in subscribers:
+            try:
+                if (
+                    doc[ITEM_TYPE] not in [CONTENT_TYPE.TEXT, CONTENT_TYPE.PREFORMATTED]
+                    and subscriber.get("subscriber_type", "") == SUBSCRIBER_TYPES.WIRE
+                ):
+                    # wire subscribers can get only text and preformatted stories
+                    continue
+
+                for destination in self.get_destinations(subscriber):
+                    embed_package_items = doc[ITEM_TYPE] == CONTENT_TYPE.COMPOSITE and (
+                        destination.get("config") or {}
+                    ).get("packaged", False)
+                    if embed_package_items:
+                        doc = self._embed_package_items(doc)
+
+                    if doc.get(PUBLISHED_IN_PACKAGE) and (destination.get("config") or {}).get("packaged", False):
                         continue
 
-                    for destination in self.get_destinations(subscriber):
-                        embed_package_items = doc[ITEM_TYPE] == CONTENT_TYPE.COMPOSITE and (
-                            destination.get("config") or {}
-                        ).get("packaged", False)
-                        if embed_package_items:
-                            doc = self._embed_package_items(doc)
+                    # Step 2(a)
+                    formatter = get_formatter(destination["format"], doc)
 
-                        if doc.get(PUBLISHED_IN_PACKAGE) and (destination.get("config") or {}).get("packaged", False):
-                            continue
+                    if not formatter:
+                        logger.warning("Formatter not found for format: %s", destination["format"])
+                        continue
 
-                        # Step 2(a)
-                        formatter = get_formatter(destination["format"], doc)
-
-                        if not formatter:  # if formatter not found then record it
-                            no_formatters.append(destination["format"])
-                            continue
-
-                        formatter.set_destination(destination, subscriber)
-                        formatted_docs = formatter.format(
-                            self.filter_document(doc) if embed_package_items else filtered_document.copy(),
-                            subscriber,
-                            subscriber_codes.get(subscriber[config.ID_FIELD]),
-                        )
-
-                        for idx, publish_data in enumerate(formatted_docs):
-                            if not isinstance(publish_data, dict):
-                                pub_seq_num, formatted_doc = publish_data
-                                formatted_docs[idx] = {
-                                    "published_seq_num": pub_seq_num,
-                                    "formatted_item": formatted_doc,
-                                }
-                            else:
-                                assert (
-                                    "published_seq_num" in publish_data and "formatted_item" in publish_data
-                                ), "missing keys in publish_data"
-
-                        for publish_queue_item in formatted_docs:
-                            publish_queue_item["item_id"] = doc["item_id"]
-                            publish_queue_item["item_version"] = doc[config.VERSION]
-                            publish_queue_item["subscriber_id"] = subscriber[config.ID_FIELD]
-                            publish_queue_item["codes"] = subscriber_codes.get(subscriber[config.ID_FIELD])
-                            publish_queue_item["destination"] = destination
-                            # publish_schedule is just to indicate in the queue item is create via scheduled item
-                            publish_queue_item[PUBLISH_SCHEDULE] = get_utc_schedule(doc, PUBLISH_SCHEDULE) or None
-                            publish_queue_item["unique_name"] = doc.get("unique_name", None)
-                            publish_queue_item["content_type"] = doc.get("type", None)
-                            publish_queue_item["headline"] = doc.get("headline", None)
-                            publish_queue_item["publishing_action"] = self.published_state
-                            publish_queue_item["ingest_provider"] = (
-                                ObjectId(doc.get("ingest_provider")) if doc.get("ingest_provider") else None
-                            )
-                            publish_queue_item["associated_items"] = associations.get(subscriber[config.ID_FIELD], [])
-                            publish_queue_item["priority"] = subscriber.get("priority")
-
-                            if doc.get(PUBLISHED_IN_PACKAGE):
-                                publish_queue_item[PUBLISHED_IN_PACKAGE] = doc[PUBLISHED_IN_PACKAGE]
-                            try:
-                                encoded_item = publish_queue_item.pop("encoded_item")
-                            except KeyError:
-                                pass
-                            else:
-                                binary = io.BytesIO(encoded_item)
-                                publish_queue_item["encoded_item_id"] = app.storage.put(binary)
-                            publish_queue_item.pop(ITEM_STATE, None)
-
-                            # content api delivery will be marked as SUCCESS in queue
-                            get_resource_service("publish_queue").post([publish_queue_item])
-                            queued = True
-
-                except Exception:
-                    logger.exception(
-                        "Failed to queue item for id {} with headline {} for subscriber {}.".format(
-                            doc.get(config.ID_FIELD), doc.get("headline"), subscriber.get("name")
-                        )
+                    formatter.set_destination(destination, subscriber)
+                    formatted_docs = formatter.format(
+                        self.filter_document(doc) if embed_package_items else filtered_document.copy(),
+                        subscriber,
+                        subscriber_codes.get(subscriber[config.ID_FIELD]),
                     )
 
-            return no_formatters, queued
-        except Exception:
-            raise
+                    for idx, publish_data in enumerate(formatted_docs):
+                        if not isinstance(publish_data, dict):
+                            pub_seq_num, formatted_doc = publish_data
+                            formatted_docs[idx] = {
+                                "published_seq_num": pub_seq_num,
+                                "formatted_item": formatted_doc,
+                            }
+                        else:
+                            assert (
+                                "published_seq_num" in publish_data and "formatted_item" in publish_data
+                            ), "missing keys in publish_data"
+
+                    for publish_queue_item in formatted_docs:
+                        publish_queue_item["item_id"] = doc["item_id"]
+                        publish_queue_item["item_version"] = doc[config.VERSION]
+                        publish_queue_item["subscriber_id"] = subscriber[config.ID_FIELD]
+                        publish_queue_item["codes"] = subscriber_codes.get(subscriber[config.ID_FIELD])
+                        publish_queue_item["destination"] = destination
+                        # publish_schedule is just to indicate in the queue item is create via scheduled item
+                        publish_queue_item[PUBLISH_SCHEDULE] = get_utc_schedule(doc, PUBLISH_SCHEDULE) or None
+                        publish_queue_item["unique_name"] = doc.get("unique_name", None)
+                        publish_queue_item["content_type"] = doc.get("type", None)
+                        publish_queue_item["headline"] = doc.get("headline", None)
+                        publish_queue_item["publishing_action"] = self.published_state
+                        publish_queue_item["ingest_provider"] = (
+                            ObjectId(doc.get("ingest_provider")) if doc.get("ingest_provider") else None
+                        )
+                        publish_queue_item["associated_items"] = associations.get(subscriber[config.ID_FIELD], [])
+                        publish_queue_item["priority"] = subscriber.get("priority")
+
+                        if doc.get(PUBLISHED_IN_PACKAGE):
+                            publish_queue_item[PUBLISHED_IN_PACKAGE] = doc[PUBLISHED_IN_PACKAGE]
+                        try:
+                            encoded_item = publish_queue_item.pop("encoded_item")
+                        except KeyError:
+                            pass
+                        else:
+                            binary = io.BytesIO(encoded_item)
+                            publish_queue_item["encoded_item_id"] = app.storage.put(binary)
+                        publish_queue_item.pop(ITEM_STATE, None)
+
+                        # content api delivery will be marked as SUCCESS in queue
+                        get_resource_service("publish_queue").post([publish_queue_item])
+                        queued = True
+
+            except Exception:
+                logger.exception(
+                    "Failed to queue item for id {} with headline {} for subscriber {}.".format(
+                        doc.get(config.ID_FIELD), doc.get("headline"), subscriber.get("name")
+                    )
+                )
+
+        return queued
 
     def get_unique_associations(self, associated_items):
         """This method is used for the removing duplicate associate items
