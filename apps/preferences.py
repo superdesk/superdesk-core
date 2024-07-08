@@ -407,7 +407,7 @@ class PreferencesService(BaseService):
             preferences = self.get_user_preference(user_id)
         send_email = preferences.get("assignment:notification", {}) if isinstance(preferences, dict) else {}
         return send_email and send_email.get("enabled", False)
-    
+
     def mark_for_user_notification_is_enabled(self, user_id=None, preferences=None):
         """
         This function checks if email notification is enabled or not based on the preferences.
