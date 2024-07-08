@@ -398,3 +398,21 @@ class PreferencesService(BaseService):
             return [priv for pref in prefs for priv in pref.get("privileges", []) if not privileges.get(priv)]
 
         doc[_user_preferences_key] = {k: v for k, v in preferences.items() if not has_missing_privileges(v)}
+
+    def assignment_notification_is_enabled(self, user_id=None, preferences=None):
+        """
+        This function checks if email notification is enabled or not based on the preferences.
+        """
+        if user_id:
+            preferences = self.get_user_preference(user_id)
+        send_email = preferences.get("assignment:notification", {}) if isinstance(preferences, dict) else {}
+        return send_email and send_email.get("enabled", False)
+    
+    def mark_for_user_notification_is_enabled(self, user_id=None, preferences=None):
+        """
+        This function checks if email notification is enabled or not based on the preferences.
+        """
+        if user_id:
+            preferences = self.get_user_preference(user_id)
+        send_email = preferences.get("mark_for_user:notification", {}) if isinstance(preferences, dict) else {}
+        return send_email and send_email.get("enabled", False)
