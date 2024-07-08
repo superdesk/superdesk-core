@@ -1275,6 +1275,11 @@ class ArchiveService(BaseService, HighlightsSearchMixin):
         :param data: kwargs
         """
 
+        user = get_user()
+        # No notification sent if user is not enabled mark for user notification
+        if not superdesk.get_resource_service("preferences").mark_for_user_notification_is_enabled(user_id=user.get("_id")):
+            return
+        
         if item.get("type") == "text":
             link_id = item.get("guid", item.get("_id"))
         else:
