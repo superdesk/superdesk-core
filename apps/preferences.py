@@ -212,6 +212,28 @@ class PreferencesResource(Resource):
         category=lazy_gettext("contacts"),
     )
 
+    superdesk.register_default_user_preference(
+        "assignment:notification",
+        {
+            "type": "bool",
+            "enabled": True,
+            "default": True,
+        },
+        label=lazy_gettext("Send Assignment notifications via email"),
+        category=lazy_gettext("notifications"),
+    )
+
+    superdesk.register_default_user_preference(
+        "mark_for_user:notification",
+        {
+            "type": "bool",
+            "enabled": True,
+            "default": True,
+        },
+        label=lazy_gettext("Send Mark for User notifications via email"),
+        category=lazy_gettext("notifications"),
+    )
+
     superdesk.register_default_user_preference("destination:active", {})
 
     superdesk.register_default_user_preference("extensions", {})
