@@ -8,7 +8,7 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
-from typing_extensions import TypeVar, Generic, ClassVar, Dict, Any, cast, Type
+from typing_extensions import TypeVar, Generic, ClassVar, Dict, Any, cast, Type, Callable
 
 from datetime import datetime
 from pydantic_core import core_schema
@@ -31,19 +31,19 @@ DefaultModelConfig = ConfigDict(
 
 
 def get_core_schema_from_type(class_type: Type) -> core_schema.CoreSchema:
-    if class_type == str:
-        return core_schema.str_schema()
-    elif class_type == int:
-        return core_schema.int_schema()
-    elif class_type == float:
-        return core_schema.float_schema()
-    elif class_type == bool:
-        return core_schema.bool_schema()
-    elif class_type == bytes:
-        return core_schema.bytes_schema()
-    elif class_type == datetime:
-        return core_schema.datetime_schema()
-    raise RuntimeError(f"Unsupported base class type: {class_type}")
+    schema_mapping: Dict[Type, Callable[[], core_schema.CoreSchema]] = {
+        str: core_schema.str_schema,
+        int: core_schema.int_schema,
+        float: core_schema.float_schema,
+        bool: core_schema.bool_schema,
+        bytes: core_schema.bytes_schema,
+        datetime: core_schema.datetime_schema,
+    }
+
+    try:
+        return schema_mapping[class_type]()
+    except KeyError:
+        raise RuntimeError(f"Unsupported base class type: {class_type}")
 
 
 class BaseCustomField:
