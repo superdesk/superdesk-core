@@ -17,7 +17,7 @@ from superdesk.errors import BulkIndexError
 from superdesk import config
 from bson.objectid import ObjectId
 
-from superdesk.core.app import get_current_app
+from superdesk.core.app import get_current_async_app
 
 
 class IndexFromMongo(superdesk.Command):
@@ -51,7 +51,7 @@ class IndexFromMongo(superdesk.Command):
             app.data.init_elastic(app)
             resources = app.data.get_elastic_resources()
             resources_processed = []
-            for resource_config in get_current_app().resources.get_all_configs():
+            for resource_config in get_current_async_app().resources.get_all_configs():
                 if resource_config.elastic is None:
                     continue
                 self.copy_resource(resource_config.name, page_size)
@@ -68,7 +68,7 @@ class IndexFromMongo(superdesk.Command):
 
     @classmethod
     def copy_resource(cls, resource, page_size, last_id=None, string_id=False):
-        new_app = get_current_app()
+        new_app = get_current_async_app()
         for items in cls.get_mongo_items(resource, page_size, last_id, string_id):
             print("{} Inserting {} items".format(time.strftime("%X %x %Z"), len(items)))
             s = time.time()
@@ -107,7 +107,7 @@ class IndexFromMongo(superdesk.Command):
         print("Indexing data from mongo/{} to elastic/{}".format(mongo_collection_name, mongo_collection_name))
 
         try:
-            db = get_current_app().mongo.get_collection(mongo_collection_name)
+            db = get_current_async_app().mongo.get_collection(mongo_collection_name)
         except KeyError:
             db = app.data.get_mongo_collection(mongo_collection_name)
 

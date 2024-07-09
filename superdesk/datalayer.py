@@ -18,7 +18,7 @@ from flask import current_app
 from superdesk.lock import lock, unlock
 from superdesk.json_utils import SuperdeskJSONEncoder
 
-from superdesk.core.app import get_current_app
+from superdesk.core.app import get_current_async_app
 
 
 class SuperdeskDataLayer(DataLayer):
@@ -55,7 +55,7 @@ class SuperdeskDataLayer(DataLayer):
         with app.app_context():
             if lock("elastic", expire=10):
                 try:
-                    resources_indexed = get_current_app().elastic.init_all_indexes(
+                    resources_indexed = get_current_async_app().elastic.init_all_indexes(
                         raise_on_mapping_error=raise_on_mapping_error
                     )
                     for resource in self.get_elastic_resources():

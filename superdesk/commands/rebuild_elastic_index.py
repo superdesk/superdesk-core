@@ -12,7 +12,7 @@
 import superdesk
 
 from flask import current_app as app
-from superdesk.core.app import get_current_app
+from superdesk.core.app import get_current_async_app
 
 
 class RebuildElasticIndex(superdesk.Command):
@@ -44,7 +44,7 @@ class RebuildElasticIndex(superdesk.Command):
             raise ValueError("Resource {} is not configured".format(resource_name))
 
         resources_processed = []
-        new_app = get_current_app()
+        new_app = get_current_async_app()
         for config in new_app.resources.get_all_configs():
             if config.elastic is None:
                 continue

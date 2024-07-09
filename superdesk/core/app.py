@@ -108,7 +108,7 @@ class SuperdeskAsyncApp:
         self._running = False
 
 
-def get_current_app() -> SuperdeskAsyncApp:
+def get_current_async_app() -> SuperdeskAsyncApp:
     """Retrieve the current app instance"""
 
     from flask import current_app
