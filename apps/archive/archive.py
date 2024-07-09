@@ -1275,12 +1275,14 @@ class ArchiveService(BaseService, HighlightsSearchMixin):
         :param data: kwargs
         """
 
-        user = get_user()
         # No notification sent if user is not enabled mark for user notification
-        if not superdesk.get_resource_service("preferences").mark_for_user_notification_is_enabled(
-            user_id=user.get("_id")
-        ):
-            return
+        filter_user_list = [
+            user
+            for user in user_list
+            if superdesk.get_resource_service("preferences").mark_for_user_notification_is_enabled(
+                user_id=user.get("_id")
+            )
+        ]
 
         if item.get("type") == "text":
             link_id = item.get("guid", item.get("_id"))
@@ -1295,11 +1297,11 @@ class ArchiveService(BaseService, HighlightsSearchMixin):
 
         if add_activity:
             notify_and_add_activity(
-                activity_name, msg, resource=resource, item=item, user_list=user_list, link=link, **data
+                activity_name, msg, resource=resource, item=item, user_list=filter_user_list, link=link, **data
             )
         # send separate notification for markForUser extension
         push_notification(
-            activity_name, item_id=item.get(config.ID_FIELD), user_list=user_list, extension="markForUser"
+            activity_name, item_id=item.get(config.ID_FIELD), user_list=filter_user_list, extension="markForUser"
         )
 
     def get_items_chain(self, item):
