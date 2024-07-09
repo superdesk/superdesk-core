@@ -1276,7 +1276,7 @@ class ArchiveService(BaseService, HighlightsSearchMixin):
         """
 
         # No notification sent if user is not enabled mark for user notification
-        filter_user_list = [
+        users_with_enabled_notifications = [
             user
             for user in user_list
             if superdesk.get_resource_service("preferences").mark_for_user_notification_is_enabled(
@@ -1297,7 +1297,13 @@ class ArchiveService(BaseService, HighlightsSearchMixin):
 
         if add_activity:
             notify_and_add_activity(
-                activity_name, msg, resource=resource, item=item, user_list=filter_user_list, link=link, **data
+                activity_name,
+                msg,
+                resource=resource,
+                item=item,
+                user_list=users_with_enabled_notifications,
+                link=link,
+                **data,
             )
         # send separate notification for markForUser extension
         push_notification(
