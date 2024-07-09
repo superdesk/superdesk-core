@@ -24,10 +24,7 @@ def utcnow():
     Remove microseconds which can't be persisted by mongo so we have
     the values consistent in both mongo and elastic.
     """
-    if hasattr(datetime.datetime, "now"):
-        now = datetime.datetime.now(tz=utc)
-    else:
-        now = datetime.datetime.utcnow()
+    now = datetime.datetime.now(tz=utc)
     return now.replace(microsecond=0)
 
 

@@ -1,13 +1,14 @@
 import arrow
 
 from arrow.parser import ParserError
-from flask import json
+from flask import Flask, json
 from bson import ObjectId
 from bson.errors import InvalidId
 from eve.utils import str_to_date
 from eve.io.mongo import MongoJSONEncoder
 from eve_elastic import ElasticJSONSerializer
 from flask_babel import LazyString
+from flask.json.provider import DefaultJSONProvider
 
 
 class SuperdeskJSONEncoder(MongoJSONEncoder, ElasticJSONSerializer):
@@ -17,6 +18,31 @@ class SuperdeskJSONEncoder(MongoJSONEncoder, ElasticJSONSerializer):
         if isinstance(obj, LazyString):
             return str(obj)
         return super().default(obj)
+
+
+class SuperdeskFlaskJSONProvider(DefaultJSONProvider, SuperdeskJSONEncoder):
+    """
+    Custom JSON provider for flask that can handle `bson.ObjectId`s
+    and bunch of other complex types.
+
+    This provider attempts to serialize objects using custom encoders for MongoDB
+    and Elasticsearch types before falling back to the default Flask JSON encoder.
+    """
+
+    def __init__(self, app: Flask = None):
+        """
+        Initialize the SuperdeskFlaskJSONProvider.
+
+        The initialization explicitly calls the __init__ method of DefaultJSONProvider
+        to ensure compatibility with Flask 3.0's new way of setting custom JSON providers.
+        """
+        DefaultJSONProvider.__init__(self, app)
+
+    def default(self, obj):
+        try:
+            return super(SuperdeskJSONEncoder, self).default(obj)
+        except TypeError:
+            return super(DefaultJSONProvider, self).default(obj)
 
 
 def try_cast(v):

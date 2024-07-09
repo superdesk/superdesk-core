@@ -36,7 +36,7 @@ from superdesk.factory.sentry import SuperdeskSentry
 from superdesk.logging import configure_logging
 from superdesk.storage import ProxyMediaStorage
 from superdesk.validator import SuperdeskValidator
-from superdesk.json_utils import SuperdeskJSONEncoder
+from superdesk.json_utils import SuperdeskFlaskJSONProvider, SuperdeskJSONEncoder
 from superdesk.cache import cache_backend
 from .elastic_apm import setup_apm
 from superdesk.core.app import SuperdeskAsyncApp
@@ -96,6 +96,7 @@ class SuperdeskEve(eve.Eve):
         self.lock = None
         self._superdesk_cache = None
         self.async_app = SuperdeskAsyncApp(self)
+        self.json_provider_class = SuperdeskFlaskJSONProvider
 
         super().__init__(**kwargs)
 
@@ -210,7 +211,6 @@ def get_app(config=None, media_storage=None, config_object=None, init_elastic=No
     )
 
     app.jinja_options = {"autoescape": False}
-    app.json_encoder = SuperdeskJSONEncoder  # seems like eve param doesn't set it on flask
 
     # init client_config with default config
     app.client_config = {
