@@ -34,7 +34,7 @@ class AppScaffoldDataCommand(superdesk.Command):
 
     """
 
-    option_list = [superdesk.Option("--no-of-stories", "-n", dest="no_of_stories", default="200")]
+    # option_list = [superdesk.Option("--no-of-stories", "-n", dest="no_of_stories", default="200")]
 
     def run(self, no_of_stories):
         logger.info("Starting scaffolding")

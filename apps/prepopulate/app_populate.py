@@ -65,7 +65,7 @@ class AppPopulateCommand(superdesk.Command):
 
     """
 
-    option_list = (superdesk.Option("--filepath", "-f", dest="filepath", required=True),)
+    # option_list = (superdesk.Option("--filepath", "-f", dest="filepath", required=True),)
 
     def run(self, filepath):
         process_file(filepath)

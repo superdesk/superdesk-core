@@ -69,12 +69,12 @@ class GenerateVocabularies(superdesk.Command):
     """
 
     option_list = [
-        superdesk.Option("-k", "--keys-map", help="key mapping json file"),
-        superdesk.Option("-b", "--base", help="json array to use as base vocabularies"),
-        superdesk.Option(
-            "-f", "--force", action="store_true", help='overwritte "vocabularies.json" if it already exists'
-        ),
-        superdesk.Option("source_file", help="plain text file with the vocabularies to create"),
+        # superdesk.Option("-k", "--keys-map", help="key mapping json file"),
+        # superdesk.Option("-b", "--base", help="json array to use as base vocabularies"),
+        # superdesk.Option(
+        #     "-f", "--force", action="store_true", help='overwritte "vocabularies.json" if it already exists'
+        # ),
+        # superdesk.Option("source_file", help="plain text file with the vocabularies to create"),
     ]
 
     def get_path(self, path):

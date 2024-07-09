@@ -30,7 +30,7 @@ class RemoveExpiredContent(superdesk.Command):
 
     """
 
-    option_list = (superdesk.Option("--provider", "-p", dest="provider_name"),)
+    # option_list = (superdesk.Option("--provider", "-p", dest="provider_name"),)
 
     def run(self, provider_name=None):
         providers = list(superdesk.get_resource_service("ingest_providers").get(req=None, lookup={}))

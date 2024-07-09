@@ -32,11 +32,11 @@ class MediaFixLinksCommand(superdesk.Command):
 
     """
 
-    option_list = [
-        superdesk.Option("--prefix", "-p", dest="prefix", required=True),
-        superdesk.Option("--resource", "-r", dest="resource", default=None),
-        superdesk.Option("--dry-run", "-d", dest="dry_run", default=False, action="store_true"),
-    ]
+    # option_list = [
+    #     superdesk.Option("--prefix", "-p", dest="prefix", required=True),
+    #     superdesk.Option("--resource", "-r", dest="resource", default=None),
+    #     superdesk.Option("--dry-run", "-d", dest="dry_run", default=False, action="store_true"),
+    # ]
 
     resources = [
         "archive",

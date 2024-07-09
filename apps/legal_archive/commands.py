@@ -464,7 +464,7 @@ class ImportLegalPublishQueueCommand(superdesk.Command):
 
     default_page_size = 500
 
-    option_list = [superdesk.Option("--page-size", "-p", dest="page_size", required=False)]
+    # option_list = [superdesk.Option("--page-size", "-p", dest="page_size", required=False)]
 
     def run(self, page_size=None):
         if not is_legal_archive_enabled():
@@ -497,7 +497,7 @@ class ImportLegalArchiveCommand(superdesk.Command):
 
     default_page_size = 500
 
-    option_list = [superdesk.Option("--page-size", "-p", dest="page_size", required=False)]
+    # option_list = [superdesk.Option("--page-size", "-p", dest="page_size", required=False)]
 
     def run(self, page_size=None):
         if not is_legal_archive_enabled():

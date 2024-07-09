@@ -109,27 +109,27 @@ class DataUpdateCommand(superdesk.Command):
     """
 
     option_list = [
-        superdesk.Option(
-            "--id",
-            "-i",
-            dest="data_update_id",
-            required=False,
-            help="Data update id to run last",
-        ),
-        superdesk.Option(
-            "--fake-init",
-            dest="fake",
-            required=False,
-            action="store_true",
-            help="Mark data updates as run without actually running them",
-        ),
-        superdesk.Option(
-            "--dry-run",
-            dest="dry",
-            required=False,
-            action="store_true",
-            help="Does not mark data updates as done. This can be useful for development.",
-        ),
+        # superdesk.Option(
+        #     "--id",
+        #     "-i",
+        #     dest="data_update_id",
+        #     required=False,
+        #     help="Data update id to run last",
+        # ),
+        # superdesk.Option(
+        #     "--fake-init",
+        #     dest="fake",
+        #     required=False,
+        #     action="store_true",
+        #     help="Mark data updates as run without actually running them",
+        # ),
+        # superdesk.Option(
+        #     "--dry-run",
+        #     dest="dry",
+        #     required=False,
+        #     action="store_true",
+        #     help="Does not mark data updates as done. This can be useful for development.",
+        # ),
     ]
 
     def run(self, data_update_id=None, fake=False, dry=False):
@@ -274,15 +274,15 @@ class GenerateUpdate(superdesk.Command):
     """
 
     option_list = [
-        superdesk.Option("--resource", "-r", dest="resource_name", required=True, help="Resource to update"),
-        superdesk.Option(
-            "--global",
-            "-g",
-            dest="global_update",
-            required=False,
-            action="store_true",
-            help="This data update belongs to superdesk core",
-        ),
+        # superdesk.Option("--resource", "-r", dest="resource_name", required=True, help="Resource to update"),
+        # superdesk.Option(
+        #     "--global",
+        #     "-g",
+        #     dest="global_update",
+        #     required=False,
+        #     action="store_true",
+        #     help="This data update belongs to superdesk core",
+        # ),
     ]
 
     def run(self, resource_name, global_update=False):

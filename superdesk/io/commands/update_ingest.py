@@ -247,8 +247,8 @@ class UpdateIngest(superdesk.Command):
     """
 
     option_list = (
-        superdesk.Option("--provider", "-p", dest="provider_name"),
-        superdesk.Option("--sync", "-s", dest="sync", action="store_true"),
+        # superdesk.Option("--provider", "-p", dest="provider_name"),
+        # superdesk.Option("--sync", "-s", dest="sync", action="store_true"),
     )
 
     def run(self, provider_name=None, sync=False):

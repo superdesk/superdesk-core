@@ -7,11 +7,11 @@ from flask import current_app as app
 class MigrateMediaCommand(superdesk.Command):
     """It will migrate files from Mongo GridFS into Amazon S3 storage."""
 
-    option_list = [
-        superdesk.Option("--limit", "-l", dest="limit", required=False, default=50, type=int),
-        superdesk.Option("--skip", "-s", dest="skip", required=False, default=0, type=int),
-        superdesk.Option("--delete", "-d", dest="delete", required=False, default=False, action="store_true"),
-    ]
+    # option_list = [
+    #     superdesk.Option("--limit", "-l", dest="limit", required=False, default=50, type=int),
+    #     superdesk.Option("--skip", "-s", dest="skip", required=False, default=0, type=int),
+    #     superdesk.Option("--delete", "-d", dest="delete", required=False, default=False, action="store_true"),
+    # ]
 
     def run(self, limit, skip, delete):
         mongo = app.media._storage[1]
