@@ -255,6 +255,8 @@ class AppInitializeWithDataCommand(superdesk.Command):
 
     """
 
+    name = "app:initialize_data"
+
     option_list = [
         superdesk.Option("--entity-name", "-n", action="append"),
         superdesk.Option("--full-path", "-p", dest="path"),
@@ -263,7 +265,7 @@ class AppInitializeWithDataCommand(superdesk.Command):
         superdesk.Option("--init-index-only", "-i", action="store_true"),
     ]
 
-    def run(self, entity_name=None, path=None, sample_data=False, force=False, init_index_only=False):
+    def run(self, entity_name=None, path=None, sample_data=False, force=False, init_index_only=False, **kwargs):
         """Run the initialization
 
         :param str,list,NoneType entity_name: entity(ies) to initialize
@@ -412,4 +414,4 @@ def fillEnvironmentVariables(item):
     return json.loads(text)
 
 
-superdesk.command("app:initialize_data", AppInitializeWithDataCommand())
+superdesk.register_command(AppInitializeWithDataCommand)
