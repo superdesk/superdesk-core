@@ -7,24 +7,24 @@ Elasticsearch
 
 ElasticResources Instance
 -------------------------
-The :class:`ElasticResources <resources.ElasticResources>` instance provides access to the Elasticsearch clients. This instance is available under the
-:attr:`SuperdeskAsyncApp.mongo <superdesk.core.app.SuperdeskAsyncApp.mongo>`.
+The :class:`ElasticResources <resources.ElasticResources>` instance provides access to the Elasticsearch clients.
+This instance is available under the :attr:`SuperdeskAsyncApp.elastic <superdesk.core.app.SuperdeskAsyncApp.elastic>`.
 
-There are 2 types of clients you can use. 1 for standard synchronous connections and another for asynchronous connections.
-The functions ending in ``_async`` provide the asynchronous version.
+There are two types of clients you can use: one for standard synchronous connections and another for asynchronous
+connections. The functions ending in ``_async`` provide the asynchronous version.
 
 For example::
 
-    from superdesk.core.app import get_current_app
+    from superdesk.core.app import get_current_async_app
 
     def test():
-        client = get_current_app().elastic.get_client("users")
+        client = get_current_async_app().elastic.get_client("users")
         users = client.search(
             {"query": {"term": {"first_name": "monkey"}}}
         )
 
     async def test_async():
-        client = get_current_app().elastic.get_client_async("users")
+        client = get_current_async_app().elastic.get_client_async("users")
         users = await client.search(
             {"query": {"term": {"first_name": "monkey"}}}
         )

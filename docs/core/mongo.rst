@@ -11,19 +11,19 @@ The :class:`MongoResources` instance provides access to the MongoDB resource con
 client and database connections. This instance is available under the
 :attr:`SuperdeskAsyncApp.mongo <superdesk.core.app.SuperdeskAsyncApp.mongo>` attribute.
 
-There are 2 groups of functions to use. 1 for standard synchronous connections and another for asynchronous connections.
-The functions ending in ``_async`` provide the asynchronous version.
+There are two groups of functions to use: one for standard synchronous connections and another for asynchronous
+connections. The functions ending in ``_async`` provide the asynchronous version.
 
 For example::
 
-    from superdesk.core.app import get_current_app
+    from superdesk.core.app import get_current_async_app
 
     def test():
-        users = get_current_app().mongo.get_db("users")
+        users = get_current_async_app().mongo.get_db("users")
         user = users.find_one({"_id": "abcd123"})
 
     async def test_async()
-        users = get_current_app().mongo.get_db_async("users")
+        users = get_current_async_app().mongo.get_db_async("users")
         user = await users.find_one({"_id": "abcd123"})
 
 
