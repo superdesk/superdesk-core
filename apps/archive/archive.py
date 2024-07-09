@@ -1301,7 +1301,7 @@ class ArchiveService(BaseService, HighlightsSearchMixin):
             )
         # send separate notification for markForUser extension
         push_notification(
-            activity_name, item_id=item.get(config.ID_FIELD), user_list=filter_user_list, extension="markForUser"
+            activity_name, item_id=item.get(config.ID_FIELD), user_list=user_list, extension="markForUser"
         )
 
     def get_items_chain(self, item):
