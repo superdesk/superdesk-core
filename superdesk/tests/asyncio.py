@@ -37,12 +37,14 @@ class AsyncTestCase(unittest.IsolatedAsyncioTestCase):
             return
 
         self.setupApp()
-        for resource_config in self.app.mongo.get_all_resource_configs():
-            client, db = self.app.mongo.get_client_async(resource_config.name)
+        for resource_name, resource_config in self.app.mongo.get_all_resource_configs().items():
+            client, db = self.app.mongo.get_client_async(resource_name)
             await client.drop_database(db)
 
     async def asyncTearDown(self):
         if not self.app:
             return
 
+        self.app.elastic.drop_indexes()
         self.app.stop()
+        await self.app.elastic.stop()

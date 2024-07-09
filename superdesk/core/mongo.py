@@ -14,9 +14,9 @@ from copy import deepcopy
 import logging
 
 from pymongo import MongoClient, uri_parser
-from pymongo.database import Database
+from pymongo.database import Database, Collection
 from pymongo.errors import OperationFailure, DuplicateKeyError
-from motor.motor_asyncio import AsyncIOMotorClient, AsyncIOMotorDatabase
+from motor.motor_asyncio import AsyncIOMotorClient, AsyncIOMotorDatabase, AsyncIOMotorCollection
 
 from .config import ConfigModel
 
@@ -64,10 +64,9 @@ class MongoIndexOptions:
 
 @dataclass
 class MongoResourceConfig:
-    #: Name of the Resource (also used for the MongoDB Collection name)
-    name: str
+    """Resource config for use with MongoDB, to be included with the ResourceConfig"""
 
-    #: Config suffix to be used
+    #: Config prefix to be used
     prefix: str = "MONGO"
 
     #: Optional list of mongo indexes to be created for this resource
@@ -181,16 +180,16 @@ class MongoResources:
         self._mongo_clients_async = {}
         self.app = app
 
-    def register_resource_config(self, config: MongoResourceConfig):
+    def register_resource_config(self, name: str, config: MongoResourceConfig):
         """Register a Mongo resource config
 
         :raises KeyError: if a resource with the same name already exists
         """
 
-        if config.name in self._resource_configs:
-            raise KeyError(f"Resource '{config.name}' already registered")
+        if name in self._resource_configs:
+            raise KeyError(f"Resource '{name}' already registered")
 
-        self._resource_configs[config.name] = deepcopy(config)
+        self._resource_configs[name] = deepcopy(config)
 
     def get_resource_config(self, resource_name: str) -> MongoResourceConfig:
         """Gets a resource config from a registered resource
@@ -202,22 +201,22 @@ class MongoResources:
 
         return deepcopy(self._resource_configs[resource_name])
 
-    def get_all_resource_configs(self) -> List[MongoResourceConfig]:
+    def get_all_resource_configs(self) -> Dict[str, MongoResourceConfig]:
         """Get configs from all registered resources
 
         Returns a deepcopy of all configs, so the originals cannot be modified
         """
 
-        return deepcopy(list(self._resource_configs.values()))
+        return deepcopy(self._resource_configs)
+        # return deepcopy(list(self._resource_configs.values()))
 
     def close_all_clients(self):
         """Closes all clients (sync and async) to the Mongo database(s)"""
 
-        for resource_config in self.get_all_resource_configs():
-            client, _db = self.get_client(resource_config.name)
+        for client, _db in self._mongo_clients.values():
             client.close()
 
-            client, _db = self.get_client_async(resource_config.name)
+        for client, _db in self._mongo_clients_async.values():
             client.close()
 
         self._mongo_clients.clear()
@@ -260,6 +259,17 @@ class MongoResources:
 
         return self.get_client(resource_name)[1]
 
+    def get_collection(self, resource_name) -> Collection:
+        """Get a collection connection from a registered resource
+
+        Caches the database connection based on the ``resource_name``, so subsequent calls re-use the same
+        connection.
+
+        :raises KeyError: if a resource with the provided ``resource_name`` is not registered
+        """
+
+        return self.get_db(resource_name).get_collection(resource_name)
+
     def create_resource_indexes(self, resource_name: str, ignore_duplicate_keys=False):
         """Creates indexes for a resource
 
@@ -270,11 +280,9 @@ class MongoResources:
         """
 
         resource_config = self.get_resource_config(resource_name)
-        db = self.get_client(resource_config.name)[1]
+        db = self.get_client(resource_name)[1]
         collection_names = (
-            [resource_config.name]
-            if not resource_config.versioning
-            else [resource_config.name, f"{resource_config.name}_versions"]
+            [resource_name] if not resource_config.versioning else [resource_name, f"{resource_name}_versions"]
         )
 
         for collection_name in collection_names:
@@ -314,8 +322,8 @@ class MongoResources:
     def create_indexes_for_all_resources(self):
         """Creates indexes for all registered resources"""
 
-        for resource_config in self.get_all_resource_configs():
-            self.create_resource_indexes(resource_config.name)
+        for resource_name, resource_config in self.get_all_resource_configs().items():
+            self.create_resource_indexes(resource_name)
 
     # Async access
     def get_client_async(self, resource_name: str) -> Tuple[AsyncIOMotorClient, AsyncIOMotorDatabase]:
@@ -347,6 +355,17 @@ class MongoResources:
         """
 
         return self.get_client_async(resource_name)[1]
+
+    def get_collection_async(self, resource_name: str) -> AsyncIOMotorCollection:
+        """Get an asynchronous collection connection from a registered resource
+
+        Caches the database connection based on the ``resource_name``, so subsequent calls re-use the same
+        connection.
+
+        :raises KeyError: if a resource with the provided ``resource_name`` is not registered
+        """
+
+        return self.get_db_async(resource_name).get_collection(resource_name)
 
 
 from .app import SuperdeskAsyncApp  # noqa: E402

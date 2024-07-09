@@ -4,14 +4,14 @@ from pymongo.errors import DuplicateKeyError
 from motor.motor_asyncio import AsyncIOMotorClient, AsyncIOMotorDatabase
 
 from superdesk.tests.asyncio import AsyncTestCase
-from .modules.users import user_mongo_resource
+from .modules.users import user_model_config
 
 
 class MongoClientTestCase(AsyncTestCase):
     app_config = {"MODULES": ["tests.core.modules.users"]}
 
     def test_mongo_resource_registration(self):
-        assert self.app.mongo.get_resource_config("users") == user_mongo_resource
+        assert self.app.mongo.get_resource_config("users") == user_model_config.mongo
 
         with self.assertRaises(KeyError):
             self.app.mongo.get_resource_config("profiles")

@@ -46,6 +46,8 @@ existing code to the new framework.
    core/config
    core/modules
    core/mongo
+   core/elastic
+   core/resources
 
 .. _reference:
 

@@ -24,11 +24,18 @@ class SuperdeskAsyncApp:
     #: MongoResources instance used to manage mongo config, clients and resources
     mongo: "MongoResources"
 
+    #: ElasticResources instance used to manage elastic config, clients and resources
+    elastic: "ElasticResources"
+
+    resources: "Resources"
+
     def __init__(self, wsgi: WSGIApp):
         self._running = False
         self._imported_modules = {}
         self.wsgi = wsgi
         self.mongo = MongoResources(self)
+        self.elastic = ElasticResources(self)
+        self.resources = Resources(self)
 
     @property
     def running(self) -> bool:
@@ -101,7 +108,7 @@ class SuperdeskAsyncApp:
         self._running = False
 
 
-def get_current_app() -> SuperdeskAsyncApp:
+def get_current_async_app() -> SuperdeskAsyncApp:
     """Retrieve the current app instance"""
 
     from flask import current_app
@@ -111,3 +118,5 @@ def get_current_app() -> SuperdeskAsyncApp:
 
 from .module import Module  # noqa: E402
 from .mongo import MongoResources  # noqa: E402
+from .elastic import ElasticResources  # noqa: E402
+from .resources import Resources  # noqa: E402

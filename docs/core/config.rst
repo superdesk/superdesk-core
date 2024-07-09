@@ -64,11 +64,11 @@ The following are examples on how to load a config::
 
 You can also load the config from the currently running app config::
 
-    from superdesk.core.app import get_current_app
+    from superdesk.core.app import get_current_async_app
 
     def test_config_from_app():
         config = MyConfig.create_from_dict(
-            get_current_app().wsgi.config,
+            get_current_async_app().wsgi.config,
             prefix="MY"
         )
 
