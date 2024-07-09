@@ -7,18 +7,18 @@ Getting App Instance
 --------------------
 
 The :class:`SuperdeskAsyncApp <app.SuperdeskAsyncApp>` app is built for us automatically in the `SuperdeskEve` app.
-You can retrieve an instance of this app from the :meth:`get_current_app <app.get_current_app>` method.::
+You can retrieve an instance of this app from the :meth:`get_current_async_app <app.get_current_async_app>` method.::
 
-    from superdesk.core.app import get_current_app
+    from superdesk.core.app import get_current_async_app
 
     def test():
-        get_current_app().get_module_list()
+        get_current_async_app().get_module_list()
 
 
 APP References
 --------------
 
-.. autofunction:: superdesk.core.app.get_current_app
+.. autofunction:: superdesk.core.app.get_current_async_app
 
 .. autoclass:: superdesk.core.app.SuperdeskAsyncApp
     :member-order: bysource

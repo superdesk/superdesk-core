@@ -16,7 +16,7 @@ install_requires = [
     "urllib3>=1.26,<3",
     "eve>=1.1.2,<=2.1.0",
     "eve-elastic>=7.4.0,<7.5.0",
-    "elasticsearch<7.14",  # we are using oss version on test server
+    "elasticsearch[async]<7.18",  # we are using oss version on test server
     "flask>=3.0",
     "flask-mail>=0.9,<0.11",
     "flask-babel>=1.0,<4.1",
