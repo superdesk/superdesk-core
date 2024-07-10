@@ -13,7 +13,7 @@ from setuptools import setup, find_packages
 LONG_DESCRIPTION = "Superdesk Server Core"
 
 install_requires = [
-    "urllib3>=2,<3",
+    "urllib3>=1.26,<3",
     "eve>=1.1.2,<=2.1.0",
     "eve-elastic>=7.4.0,<7.5.0",
     "elasticsearch[async]<7.18",  # we are using oss version on test server
