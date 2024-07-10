@@ -213,17 +213,6 @@ class PreferencesResource(Resource):
     )
 
     superdesk.register_default_user_preference(
-        "assignment:notification",
-        {
-            "type": "bool",
-            "enabled": True,
-            "default": True,
-        },
-        label=lazy_gettext("Send Assignment notifications via email"),
-        category=lazy_gettext("notifications"),
-    )
-
-    superdesk.register_default_user_preference(
         "mark_for_user:notification",
         {
             "type": "bool",
@@ -360,6 +349,8 @@ class PreferencesService(BaseService):
         This function returns preferences for the user.
         """
         doc = get_resource_service("users").find_one(req=None, _id=user_id)
+        if doc is None:
+            return {}
         prefs = doc.get(_user_preferences_key, {})
         return prefs
 
