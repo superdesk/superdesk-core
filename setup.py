@@ -13,7 +13,7 @@ from setuptools import setup, find_packages
 LONG_DESCRIPTION = "Superdesk Server Core"
 
 install_requires = [
-    "urllib3>=1.26,<3",
+    "urllib3>=2,<3",
     "eve>=1.1.2,<=2.1.0",
     "eve-elastic>=7.4.0,<7.5.0",
     "elasticsearch[async]<7.18",  # we are using oss version on test server
@@ -62,7 +62,6 @@ install_requires = [
     "Werkzeug>=3.0",
     "Jinja2>=3.1",
     "Click>=8.1.7,<9.0",
-    "itsdangerous>=2.2",
     "pymemcache>=4.0,<4.1",
     "xmlsec>=1.3.13,<1.3.15",
     # Async libraries
