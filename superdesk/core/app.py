@@ -8,7 +8,7 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
-from typing import Dict, List
+from typing import Dict, List, Optional
 import importlib
 
 from .wsgi import WSGIApp
@@ -76,6 +76,11 @@ class SuperdeskAsyncApp:
                     freeze=module.freeze_config,
                 )
 
+        # Now register all resources
+        for module in self.get_module_list():
+            for resource_config in module.resources or []:
+                self.resources.register(resource_config)
+
         # then init all modules
         for module in self.get_module_list():
             if module.init is not None:
@@ -93,6 +98,7 @@ class SuperdeskAsyncApp:
         if self.running:
             raise RuntimeError("App is already running")
 
+        self._store_app()
         self._load_modules(self.wsgi.config.get("MODULES", []))
         self._running = True
 
@@ -105,7 +111,32 @@ class SuperdeskAsyncApp:
 
         self.mongo.stop()
         self._imported_modules.clear()
+        self._remove_app()
         self._running = False
+
+    def _store_app(self):
+        from flask import current_app
+
+        try:
+            setattr(current_app, "async_app", self)
+        except RuntimeError:
+            # Flask context not available
+            pass
+
+        global _global_app
+        _global_app = self
+
+    def _remove_app(self):
+        from flask import current_app
+
+        try:
+            setattr(current_app, "async_app", None)
+        except RuntimeError:
+            # Flask context not available
+            pass
+
+        global _global_app
+        _global_app = None
 
 
 def get_current_async_app() -> SuperdeskAsyncApp:
@@ -113,7 +144,22 @@ def get_current_async_app() -> SuperdeskAsyncApp:
 
     from flask import current_app
 
-    return current_app.async_app
+    try:
+        if current_app.async_app is not None:
+            return current_app.async_app
+    except RuntimeError:
+        # Flask context not available
+        pass
+
+    global _global_app
+
+    if _global_app is None:
+        raise RuntimeError("Superdesk app is not running")
+
+    return _global_app
+
+
+_global_app: Optional[SuperdeskAsyncApp] = None
 
 
 from .module import Module  # noqa: E402
