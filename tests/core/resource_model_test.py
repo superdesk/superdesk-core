@@ -5,51 +5,19 @@ from pydantic import ValidationError
 from superdesk.core.resources import fields
 from superdesk.core.elastic.resources import get_elastic_mapping_from_model
 
-from .modules.users import User, RelatedItems, Category
-
-profile_id = fields.ObjectId()
-related_item1_id = fields.ObjectId()
-related_item2_id = fields.ObjectId()
-test_user = User(
-    id="user_1",
-    first_name="John",
-    last_name="Doe",
-    profile_id=profile_id,
-    bio=fields.HTML("<p>This is my bio</p>"),
-    categories=[
-        Category(qcode="sports", name="Sports", scheme="category"),
-        Category(qcode="swimming", name="Swimming", scheme="sports"),
-    ],
-    related_items=[
-        RelatedItems(id=related_item1_id, link_type=fields.Keyword("text"), slugline=fields.HTML("sports-results")),
-        RelatedItems(id=related_item2_id, link_type=fields.Keyword("photo"), slugline=fields.HTML("sports-results")),
-    ],
-)
-test_user_dict = dict(
-    _id="user_1",
-    first_name="John",
-    last_name="Doe",
-    profile_id=str(profile_id),
-    bio="<p>This is my bio</p>",
-    categories=[
-        dict(qcode="sports", name="Sports", scheme="category"),
-        dict(qcode="swimming", name="Swimming", scheme="sports"),
-    ],
-    related_items=[
-        dict(_id=str(related_item1_id), link_type="text", slugline="sports-results"),
-        dict(_id=str(related_item2_id), link_type="photo", slugline="sports-results"),
-    ],
-)
+from .modules.users import User
+from .fixtures.users import john_doe, profile_id, john_doe_dict
 
 
 class ResourceModelTest(TestCase):
     def test_resource_model(self):
+        test_user = john_doe()
         self.assertEqual(test_user.profile_id, profile_id)
 
         # Test converting model to dict, excluding unset values
         self.assertEqual(
             test_user.model_dump(exclude_unset=True, by_alias=True),
-            test_user_dict,
+            john_doe_dict(),
         )
 
         # Test ``code`` is now included
@@ -61,13 +29,11 @@ class ResourceModelTest(TestCase):
         self.assertEqual(test_user.model_dump(exclude_unset=True, by_alias=True)["code"], None)
 
     def test_resource_from_dict(self):
+        test_user_dict = john_doe_dict()
         user = User.model_validate(test_user_dict)
-
         self.assertEqual(user.model_dump(exclude_unset=True, by_alias=True), test_user_dict)
 
     def test_resource_validation(self):
-        profile_id = fields.ObjectId()
-
         with self.assertRaises(ValidationError):
             user = User()
 
@@ -93,9 +59,13 @@ class ResourceModelTest(TestCase):
             get_elastic_mapping_from_model("users", User),
             {
                 "properties": {
+                    "_created": {"type": "date"},
+                    "_updated": {"type": "date"},
                     "first_name": {"type": "text"},
                     "last_name": {"type": "text"},
+                    "email": {"type": "text"},
                     "name": {"type": "text", "fields": {"keyword": {"type": "keyword"}}},
+                    "username": {"type": "text"},
                     "code": {"type": "keyword"},
                     "bio": {"type": "text", "analyzer": "html_field_analyzer"},
                     "categories": {
@@ -116,9 +86,11 @@ class ResourceModelTest(TestCase):
                         },
                     },
                     "custom_field": {"type": "text", "analyzer": "html_field_analyzer"},
-                    "score": {"type": "double"},
+                    "score": {"type": "integer"},
                     "location": {"type": "geo_point"},
                     "my_dict": {"type": "object", "enabled": False},
+                    "created_by": {"type": "text"},
+                    "updated_by": {"type": "text"},
                 },
             },
         )
