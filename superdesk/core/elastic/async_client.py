@@ -14,7 +14,8 @@ from elasticsearch import AsyncElasticsearch
 from elasticsearch.exceptions import NotFoundError, TransportError, RequestError
 from elasticsearch.helpers import async_bulk
 
-from .base_client import BaseElasticResourceClient, ElasticCursor, SearchRequest, InvalidSearchString
+from ..resources.cursor import SearchRequest
+from .base_client import BaseElasticResourceClient, ElasticCursor, InvalidSearchString
 
 
 class ElasticResourceAsyncClient(BaseElasticResourceClient):
@@ -70,14 +71,14 @@ class ElasticResourceAsyncClient(BaseElasticResourceClient):
 
         return await self.elastic.index(**self._get_replace_args(item_id, updates))
 
-    def remove(self, item_id: str) -> Any:
+    async def remove(self, item_id: str) -> Any:
         """Delete a document from Elasticsearch
 
         :param item_id: ID of the document to delete.
         :return: The response from Elasticsearch.
         """
 
-        return self.elastic.delete(**self._get_remove_args(item_id))
+        return await self.elastic.delete(**self._get_remove_args(item_id))
 
     async def count(self, query: Optional[Dict[str, Any]] = None) -> int:
         """Get the number of documents in Elasticsearch that match the search query
