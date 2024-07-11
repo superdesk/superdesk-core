@@ -41,7 +41,6 @@ Resource Fields
 The following are fields available::
 
     from typing import Optional, List, Dict, Set, Annotated
-    from typing_extensions import Annotated
     from superdesk.core.resources import (
         ResourceModel,
         dataclass,
@@ -99,10 +98,11 @@ Then use it in your model like so::
 Validation
 ----------
 
-Custom validation can be added to your models or dataclasses in 2 different ways.
+Validation can be added to fields, either by using Pydantic's `Field <https://docs.pydantic.dev/latest/concepts/fields/>`_
+class, validators provided by Superdesk, or build your own custom validation. These validations are synchronous,
+and are validated when the model instance is constructed.
 
-The first is to use Pydantic's `Field <https://docs.pydantic.dev/latest/concepts/fields/>`_ class
-to apply pre-defined validations. For example::
+Example using Pydantic's Field for validation::
 
     from pydantic import Field
     from superdesk.core.resources import dataclass
@@ -113,8 +113,164 @@ to apply pre-defined validations. For example::
         long: float = Field(ge=-180, le=180)
 
 
-Or you can use `model_validator <https://docs.pydantic.dev/latest/api/functional_validators/#pydantic.functional_validators.model_validator>`_
-decorator if you need to provide custom validation. For example::
+Superdesk provides the following set of validators:
+
+.. autofunction:: superdesk.core.resources.validators.validate_email
+
+.. autofunction:: superdesk.core.resources.validators.validate_minlength
+
+.. autofunction:: superdesk.core.resources.validators.validate_maxlength
+
+Example using Superdesk provided validations::
+
+    from typing import Optional, List, Dict, Set, Annotated
+    from superdesk.core.resources import ResourceModel
+    from superdesk.core.resources.validators import (
+        validate_email,
+        validate_minlength,
+        validate_maxlength,
+    )
+
+    class User(ResourceModel):
+        email: Annotated[
+            str,
+            validate_email(),
+            validate_minlength(1),
+            validate_maxlength(255),
+        ]
+
+
+Async Validation
+----------------
+
+Superdesk also provides async validators. Async validators provide a way to validate data using async code.
+Common use cases are unique values or data relationships. These validators are not executed when the model
+instance is created, but must be manually run using the ``validate_async`` function.
+
+The following async validators are provided:
+
+.. autofunction:: superdesk.core.resources.validators.validate_data_relation_async
+
+.. autofunction:: superdesk.core.resources.validators.validate_unique_value_async
+
+.. autofunction:: superdesk.core.resources.validators.validate_iunique_value_async
+
+Applying async validators to a field is no different than with regular sync validators.::
+
+    from typing import Optional
+    from superdesk.core.resources.validators import (
+        validate_data_relation_async,
+        validate_iunique_value_async,
+    )
+
+    class User(ResourceModel):
+        email: Annotated[
+            str,
+            validate_iunique_value_async("users", "email"),
+        ]
+        created_by: Annotated[
+            Optional[str],
+            validate_data_relation_async("users", "_id")
+        ] = None
+
+    async def test_user():
+        user1 = User(
+            id="user_1",
+            email="john@doe.org",
+            created_by="user_unknown"
+        )
+
+        # This next line will raise a ValidationError
+        # because no user with ``_id=="user_unknown"`` exists
+        await user1.validate_async()
+
+
+Custom Validator
+----------------
+
+Custom validators can be developed and added to any field in a model, just like existing validators.
+
+Example synchronous validator::
+
+    from typing import Annotated, Optional
+    import re
+    from pydantic import AfterValidator
+
+    from superdesk.core.resources import ResourceModel
+    from superdesk.core.resources.validators import validate_maxlength
+
+    MinMaxAcceptedTypes = Union[str, list, int, float, None]
+
+    # Define your custom validation function wrapper here
+    def validate_minlength(min_length: int) -> AfterValidator:
+        """Validates that the value has a minimum length"""
+
+        def _validate_minlength(value: MinMaxAcceptedTypes) -> MinMaxAcceptedTypes:
+            # Validate the actual field value inside the wrapper
+            if isinstance(value, (type(""), list)):
+                if len(value) < min_length:
+                    raise ValueError(f"Invalid minlength: {value}")
+            elif isinstance(value, (int, float)):
+                if value < min_length:
+                    raise ValueError(f"Invalid minlength: {value}")
+            return value
+
+        # Return the validation function with
+        # Pydantic's ``AfterValidator`` wrapper
+        return AfterValidator(_validate_minlength)
+
+    class User(ResourceModel):
+        ...
+        score: Annotated[
+            Optional[int],
+            validate_minlength(1),
+            validate_maxlength(100),
+        ] = None
+
+
+Example asynchronous validator::
+
+    from superdesk.core.app import get_current_async_app
+    from superdesk.core.resources.validators import AsyncValidator
+
+    # Define your custom async validation function wrapper here
+    def validate_data_relation_async(
+        resource_name: str,
+        external_field: str = "_id"
+    ) -> AsyncValidator:
+
+        async def validate_resource_exists(
+            item_id: Union[str, ObjectId, None]
+        ) -> None:
+            # Validate the actual field value inside the wrapper
+            if item_id is None:
+                return
+
+            app = get_current_async_app()
+            resource_config = app.resources.get_config(resource_name)
+            collection = app.mongo.get_collection_async(
+                resource_config.name
+            )
+            if not await collection.find_one({external_field: item_id}):
+                raise ValueError(
+                    f"{resource_name} with ID {item_id} does not exist"
+                )
+
+        return AsyncValidator(validate_resource_exists)
+
+    class User(ResourceModel):
+        ...
+        created_by: Annotated[
+            Optional[str],
+            validate_data_relation_async("users", "_id")
+        ] = None
+
+
+Custom Model Validation
+-----------------------
+
+You can add custom validation specific to a model by using Pydantic's `model_validator <https://docs.pydantic.dev/latest/api/functional_validators/#pydantic.functional_validators.model_validator>`_
+to decorate a classmethod on your model. For example::
 
     from typing_extensions import Self
 
@@ -124,6 +280,7 @@ decorator if you need to provide custom validation. For example::
         long: float
 
         @model_validator(mode="after")
+        @classmethod
         def post_validate(self) -> Self:
             if self.lat < -90.0 or self.lat > 90.0:
                 raise ValueError(
@@ -181,12 +338,10 @@ data type that has a different mapping than the default, you can inherit from th
         }
 
 
-Resource Registration
+Registering Resources
 ---------------------
 The :meth:`Resources.register <model.Resources.register>` method provides a way to register a resource with the system,
 using the :class:`ResourceModelConfig <model.ResourceModelConfig>` class to provide the resource config.
-
-
 
 This will register the resource with MongoDB and optionally the Elasticsearch system. See
 :class:`MongoResourceConfig <superdesk.core.mongo.MongoResourceConfig>` and
@@ -237,8 +392,16 @@ Example module::
     module = Module(name="tests.users", init=init)
 
 
-Resources References
---------------------
+You can also use the ``resources`` config from a Module to automatically register resources.::
+
+    module = Module(
+        name="tests.users",
+        resources=[user_model_config],
+    )
+
+
+API References
+--------------
 
 .. autoclass:: superdesk.core.resources.model.Resources
     :member-order: bysource
