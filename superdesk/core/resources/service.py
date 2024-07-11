@@ -61,8 +61,6 @@ class AsyncResourceService(Generic[ResourceModelType]):
             instance.config = resource_config
             setattr(cls, "_instance", instance)
 
-            # cls.events = cls.Events()
-
         return instance
 
     @property
@@ -87,23 +85,10 @@ class AsyncResourceService(Generic[ResourceModelType]):
         :return: Instance of ``ResourceModel`` for this resource
         """
 
-        # TODO: For some reason, I cannot add `_type` to the model, and validate it
-        # print(self.data_class.model_fields)
-        # print(item)
-        # return self.data_class.model_validate(item)
+        # We can't use ``model_construct`` method to construct instance without validation
+        # because nested models are not being converted to model instances
         data.pop("_type", None)
         return cast(ResourceModelType, self.config.data_class.model_validate(data))
-
-        # Use `model_construct` as we do not want validation to run here
-        # As the data is validated before going into the DBs
-        # return cast(ResourceModelType, self.config.data_class.model_construct(**data))
-
-    def _set_default_dates(self, item: ResourceModelType) -> None:
-        now = utcnow()
-        if item.created is None:
-            item.created = now
-        if item.updated is None:
-            item.updated = now
 
     async def find_one(self, **lookup) -> Optional[ResourceModelType]:
         """Find a resource by ID
@@ -166,7 +151,10 @@ class AsyncResourceService(Generic[ResourceModelType]):
         """
 
         for doc in docs:
-            self._set_default_dates(doc)
+            if doc.created is None:
+                doc.created = utcnow()
+            if doc.updated is None:
+                doc.updated = doc.created
 
     async def validate_create(self, doc: ResourceModelType):
         """Validate the provided doc for creation

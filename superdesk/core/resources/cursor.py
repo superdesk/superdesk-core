@@ -93,11 +93,17 @@ class ResourceCursorAsync(Generic[ResourceModelType]):
         raise NotImplementedError()
 
     def get_model_instance(self, data: Dict[str, Any]):
-        # TODO: We can't use ``model_construct`` method to construct instance without validation
+        """Get a model instance from a dictionary of values
+
+        :param data: Dictionary containing values to get a model instance from
+        :rtype: ResourceModelType
+        :return: A model instance
+        """
+
+        # We can't use ``model_construct`` method to construct instance without validation
         # because nested models are not being converted to model instances
         data.pop("_type", None)
         return self.data_class(**data)
-        # return self.data_class.model_construct(**data)
 
 
 class ElasticsearchResourceCursorAsync(ResourceCursorAsync):
