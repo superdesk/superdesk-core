@@ -8,14 +8,15 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
-from typing import Dict, Any, Optional, Iterator, List, Tuple, Union, Set, Literal, TypedDict
+from typing import Dict, Any, Optional, Iterator, List, Tuple, Union, TypedDict
 import ast
 
 import simplejson as json
 from eve.io.mongo.parser import parse
 
 from superdesk.errors import SuperdeskApiError
-from .common import ElasticClientConfig, ElasticResourceConfig, SearchRequest, ProjectedFieldArg
+from ..resources.cursor import ProjectedFieldArg, SearchRequest
+from .common import ElasticClientConfig, ElasticResourceConfig
 
 
 class InvalidSearchString(Exception):
