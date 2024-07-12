@@ -368,21 +368,21 @@ class StorageDump(superdesk.Command):
     """
 
     option_list = [
-        superdesk.Option("-n", "--name", help=f'destination file or directory (default: "{DUMP_NAME}_<datetime>")'),
-        superdesk.Option(
-            "--dest-dir",
-            default=DUMP_DIR,
-            help='destination directory (default: "dump", will be created if necessary)',
-        ),
-        superdesk.Option("-D", "--description", help="description of the archive"),
-        superdesk.Option("-s", "--single", action="store_true", help="dump data in a single JSON file"),
-        superdesk.Option(
-            "-c",
-            "--collection",
-            dest="collections",
-            action="append",
-            help="collection to dump (DEFAULT: dump all collections)",
-        ),
+        # superdesk.Option("-n", "--name", help=f'destination file or directory (default: "{DUMP_NAME}_<datetime>")'),
+        # superdesk.Option(
+        #     "--dest-dir",
+        #     default=DUMP_DIR,
+        #     help='destination directory (default: "dump", will be created if necessary)',
+        # ),
+        # superdesk.Option("-D", "--description", help="description of the archive"),
+        # superdesk.Option("-s", "--single", action="store_true", help="dump data in a single JSON file"),
+        # superdesk.Option(
+        #     "-c",
+        #     "--collection",
+        #     dest="collections",
+        #     action="append",
+        #     help="collection to dump (DEFAULT: dump all collections)",
+        # ),
     ]
 
     def run(
@@ -463,9 +463,9 @@ class StorageRestore(superdesk.Command):
     """
 
     option_list = [
-        superdesk.Option("--keep-existing", action="store_true", help="don't clear collections before inserting items"),
-        superdesk.Option("--no-flush", action="store_true", help="don't flush ElasticSearch indexes"),
-        superdesk.Option("dump_path", help="file or directory containing the database dump"),
+        # superdesk.Option("--keep-existing", action="store_true", help="don't clear collections before inserting items"),
+        # superdesk.Option("--no-flush", action="store_true", help="don't flush ElasticSearch indexes"),
+        # superdesk.Option("dump_path", help="file or directory containing the database dump"),
     ]
 
     def run(self, dump_path: Union[Path, str], keep_existing: bool = False, no_flush: bool = False) -> None:
@@ -533,32 +533,32 @@ class StorageStartRecording(superdesk.Command):
     """
 
     option_list = [
-        superdesk.Option("-n", "--name", help='destination file (default: "{RECORD_NAME}_<datetime>)'),
-        superdesk.Option(
-            "--dest-dir",
-            default=RECORD_DIR,
-            help='destination directory (default: "dump", will be created if necessary)',
-        ),
-        superdesk.Option("-D", "--description", help="description of the record"),
-        superdesk.Option("-b", "--base-dump", help="base full dump from which the record must be started"),
-        superdesk.Option(
-            "--force-db-reset",
-            action="store_true",
-            help="reset database before starting record without confirmation (⚠️ you'll loose all data)",
-        ),
-        superdesk.Option(
-            "-F",
-            "--full-document",
-            action="store_true",
-            help="for update operation, store full document in addition to delta)",
-        ),
-        superdesk.Option(
-            "-c",
-            "--collection",
-            dest="collections",
-            action="append",
-            help="collections to record (DEFAULT: record all collections)",
-        ),
+        # superdesk.Option("-n", "--name", help='destination file (default: "{RECORD_NAME}_<datetime>)'),
+        # superdesk.Option(
+        #     "--dest-dir",
+        #     default=RECORD_DIR,
+        #     help='destination directory (default: "dump", will be created if necessary)',
+        # ),
+        # superdesk.Option("-D", "--description", help="description of the record"),
+        # superdesk.Option("-b", "--base-dump", help="base full dump from which the record must be started"),
+        # superdesk.Option(
+        #     "--force-db-reset",
+        #     action="store_true",
+        #     help="reset database before starting record without confirmation (⚠️ you'll loose all data)",
+        # ),
+        # superdesk.Option(
+        #     "-F",
+        #     "--full-document",
+        #     action="store_true",
+        #     help="for update operation, store full document in addition to delta)",
+        # ),
+        # superdesk.Option(
+        #     "-c",
+        #     "--collection",
+        #     dest="collections",
+        #     action="append",
+        #     help="collections to record (DEFAULT: record all collections)",
+        # ),
     ]
 
     def run(
@@ -649,13 +649,13 @@ class StorageRestoreRecord(superdesk.Command):
     """
 
     option_list = [
-        superdesk.Option(
-            "--force-db-reset",
-            action="store_true",
-            help="reset database before applying record without confirmation (⚠️ you'll loose all data)",
-        ),
-        superdesk.Option("--skip-base-dump", action="store_true", help="do not restore base dump if any is specified"),
-        superdesk.Option("record_file", help="file containing the record"),
+        # superdesk.Option(
+        #     "--force-db-reset",
+        #     action="store_true",
+        #     help="reset database before applying record without confirmation (⚠️ you'll loose all data)",
+        # ),
+        # superdesk.Option("--skip-base-dump", action="store_true", help="do not restore base dump if any is specified"),
+        # superdesk.Option("record_file", help="file containing the record"),
     ]
 
     def run(self, record_file: Union[Path, str], force_db_reset: bool = False, skip_base_dump: bool = False) -> None:

@@ -31,8 +31,8 @@ class RebuildElasticIndex(superdesk.Command):
     """
 
     option_list = [
-        superdesk.Option('--resource', '-r', dest='resource_name'),
-        superdesk.Option('--requests-per-second', dest='requests_per_second'),
+        # superdesk.Option('--resource', '-r', dest='resource_name'),
+        # superdesk.Option('--requests-per-second', dest='requests_per_second'),
     ]
 
     def run(self, resource_name=None, requests_per_second=1000):

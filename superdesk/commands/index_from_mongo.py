@@ -36,11 +36,11 @@ class IndexFromMongo(superdesk.Command):
     """
 
     option_list = [
-        superdesk.Option("--from", "-f", dest="collection_name"),
-        superdesk.Option("--all", action="store_true", dest="all_collections"),
-        superdesk.Option("--page-size", "-p"),
-        superdesk.Option("--last-id"),
-        superdesk.Option("--string-id", dest="string_id", action="store_true", help="Treat the id's as strings"),
+        # superdesk.Option("--from", "-f", dest="collection_name"),
+        # superdesk.Option("--all", action="store_true", dest="all_collections"),
+        # superdesk.Option("--page-size", "-p"),
+        # superdesk.Option("--last-id"),
+        # superdesk.Option("--string-id", dest="string_id", action="store_true", help="Treat the id's as strings"),
     ]
     default_page_size = 500
 

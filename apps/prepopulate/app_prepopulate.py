@@ -210,8 +210,8 @@ class AppPrepopulateCommand(superdesk.Command):
     """
 
     option_list = [
-        superdesk.Option("--file", "-f", dest="prepopulate_file", default="app_prepopulate_data.json"),
-        superdesk.Option("--dir", "-d", dest="directory", default=None),
+        # superdesk.Option("--file", "-f", dest="prepopulate_file", default="app_prepopulate_data.json"),
+        # superdesk.Option("--dir", "-d", dest="directory", default=None),
     ]
 
     def run(self, prepopulate_file, directory=None):

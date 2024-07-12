@@ -37,8 +37,8 @@ class FlushElasticIndex(superdesk.Command):
     """
 
     option_list = [
-        superdesk.Option("--sd", action="store_true", dest="sd_index"),
-        superdesk.Option("--capi", action="store_true", dest="capi_index"),
+        # superdesk.Option("--sd", action="store_true", dest="sd_index"),
+        # superdesk.Option("--capi", action="store_true", dest="capi_index"),
     ]
 
     def run(self, sd_index, capi_index):

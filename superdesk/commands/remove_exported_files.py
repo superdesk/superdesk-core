@@ -34,7 +34,7 @@ class RemoveExportedFiles(superdesk.Command):
     log_msg = ""
     expire_hours = 24
 
-    option_list = [superdesk.Option("--expire-hours", "-e", dest="expire_hours", required=False, type=int)]
+    # option_list = [superdesk.Option("--expire-hours", "-e", dest="expire_hours", required=False, type=int)]
 
     def run(self, expire_hours=None):
         if expire_hours:

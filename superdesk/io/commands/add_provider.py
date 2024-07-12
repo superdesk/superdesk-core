@@ -29,7 +29,7 @@ class AddProvider(superdesk.Command):
     """
 
     option_list = {
-        superdesk.Option("--provider", "-p", dest="provider", required=True),
+        # superdesk.Option("--provider", "-p", dest="provider", required=True),
     }
 
     def run(self, provider):

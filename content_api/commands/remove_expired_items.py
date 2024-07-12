@@ -36,7 +36,8 @@ class RemoveExpiredItems(superdesk.Command):
     log_msg = ""
     expiry_days = 0  # by default this should not run
 
-    option_list = [superdesk.Option("--expiry", "-m", dest="expiry_days", required=False)]
+    # option_list = [superdesk.Option("--expiry", "-m", dest="expiry_days", required=False)]
+    option_list = []
 
     def run(self, expiry_days=None):
         if expiry_days:

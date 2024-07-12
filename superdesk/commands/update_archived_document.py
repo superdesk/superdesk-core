@@ -35,10 +35,10 @@ class UpdateArchivedDocumentCommand(superdesk.Command):
     """
 
     option_list = [
-        superdesk.Option("--ids", "-i", dest="ids", required=True),
-        superdesk.Option("--field", "-f", dest="field", required=True),
-        superdesk.Option("--value", "-v", dest="value", required=True),
-        superdesk.Option("--parseNeeded", "-p", dest="parseNeeded", default=False),
+        # superdesk.Option("--ids", "-i", dest="ids", required=True),
+        # superdesk.Option("--field", "-f", dest="field", required=True),
+        # superdesk.Option("--value", "-v", dest="value", required=True),
+        # superdesk.Option("--parseNeeded", "-p", dest="parseNeeded", default=False),
     ]
 
     def run(self, ids, field, value, parseNeeded=False):

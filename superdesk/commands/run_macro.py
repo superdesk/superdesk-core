@@ -22,8 +22,8 @@ class RunMacro(superdesk.Command):
     """
 
     option_list = [
-        superdesk.Option("--name", "-n", dest="macro_name", required=True),
-        superdesk.Option("--kwargs", "-k", dest="kwargs", required=False),
+        # superdesk.Option("--name", "-n", dest="macro_name", required=True),
+        # superdesk.Option("--kwargs", "-k", dest="kwargs", required=False),
     ]
 
     def run(self, macro_name, kwargs):

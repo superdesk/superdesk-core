@@ -27,9 +27,9 @@ class ImportCommand(superdesk.Command):
     """
 
     option_list = [
-        superdesk.Option("parser", help="name of the feed parser"),
-        superdesk.Option("path", help="path to the archive file to parse"),
-        superdesk.Option("--profile", "-p", help="name of the profile to use (case sensitive"),
+        # superdesk.Option("parser", help="name of the feed parser"),
+        # superdesk.Option("path", help="path to the archive file to parse"),
+        # superdesk.Option("--profile", "-p", help="name of the profile to use (case sensitive"),
     ]
 
     def run(self, parser, path, profile):
