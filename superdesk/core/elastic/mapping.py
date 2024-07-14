@@ -11,7 +11,7 @@
 from typing import Dict, Any, Optional
 import logging
 
-from ..resources import ResourceModel
+from pydantic import BaseModel
 
 logger = logging.getLogger(__name__)
 
@@ -101,7 +101,7 @@ def json_schema_to_elastic_mapping(json_schema: Dict[str, Any]) -> Dict[str, Any
 
 
 def get_elastic_mapping_from_model(
-    name: str, model_class: type[ResourceModel], schema_overrides: Optional[Dict[str, Any]] = None
+    name: str, model_class: type[BaseModel], schema_overrides: Optional[Dict[str, Any]] = None
 ) -> Dict[str, Any]:
     """Constructs an Elasticsearch mapping from a ResourceModel
 
@@ -119,4 +119,5 @@ def get_elastic_mapping_from_model(
 
     # Remove ``_id`` field, as Elasticsearch already provides this for us
     mapping["properties"].pop("_id", None)
+    mapping["properties"].pop("_type", None)
     return mapping

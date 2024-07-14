@@ -8,7 +8,7 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
-from typing import Callable, Optional
+from typing import Callable, Optional, List
 from dataclasses import dataclass
 
 from .config import ConfigModel
@@ -43,5 +43,9 @@ class Module:
     #: If ``True``, this modules config values cannot be changed once loaded
     freeze_config: bool = True
 
+    #: Optional list of resources to automatically register
+    resources: Optional[List["ResourceModelConfig"]] = None
+
 
 from .app import SuperdeskAsyncApp  # noqa: E402
+from .resources.model import ResourceModelConfig  # noqa: E402

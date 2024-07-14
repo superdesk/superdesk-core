@@ -360,7 +360,7 @@ def setup(context=None, config=None, app_factory=get_app, reset=False):
             for key, val in setup.app.extensions["pymongo"].items():
                 val[0].close()
 
-            if hasattr(setup.app, "async_app"):
+            if getattr(setup.app, "async_app", None):
                 setup.app.async_app.stop()
 
         cfg = setup_config(config)

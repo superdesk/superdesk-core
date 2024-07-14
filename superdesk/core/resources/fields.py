@@ -8,6 +8,7 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
+from typing import TYPE_CHECKING, Annotated
 from typing_extensions import TypeVar, Generic, ClassVar, Dict, Any, cast, Type, Callable
 
 from datetime import datetime
@@ -107,38 +108,46 @@ class CustomStringField(Generic[CustomStringFieldType], BaseCustomField):
         )
 
 
-class Keyword(CustomStringField, str):
-    """Elasticsearch keyword field"""
+if TYPE_CHECKING:
+    Keyword = Annotated[str, ...]
+    TextWithKeyword = Annotated[str, ...]
+    HTML = Annotated[str, ...]
+    ObjectId = Annotated[BsonObjectId, ...]
+else:
 
-    elastic_mapping = {"type": "keyword"}
+    class Keyword(CustomStringField, str):
+        """Elasticsearch keyword field"""
+
+        elastic_mapping = {"type": "keyword"}
+
+    class TextWithKeyword(CustomStringField):
+        """Elasticsearch text field with a keyword sub-field"""
+
+        elastic_mapping = {
+            "type": "text",
+            "fields": {"keyword": {"type": "keyword"}},
+        }
+
+    class HTML(str, CustomStringField):
+        """Elasticsearch HTML field, used the 'html_field_analyzer' analyzer"""
+
+        json_schema = {"type": "string", "format": "html"}
+        elastic_mapping = {"type": "text", "analyzer": "html_field_analyzer"}
+
+    class ObjectId(BsonObjectId, CustomStringField[BsonObjectId]):
+        """Elasticsearch ObjectId field"""
+
+        json_schema = {"type": "string", "format": "objectid"}
+        elastic_mapping = {"type": "text"}
+        core_type = BsonObjectId
+
+        @classmethod
+        def _validate(cls, value: str) -> BsonObjectId:
+            return BsonObjectId(value)
 
 
-class TextWithKeyword(CustomStringField):
-    """Elasticsearch text field with a keyword sub-field"""
-
-    elastic_mapping = {
-        "type": "text",
-        "fields": {"keyword": {"type": "keyword"}},
-    }
-
-
-class HTML(str, CustomStringField):
-    """Elasticsearch HTML field, used the 'html_field_analyzer' analyzer"""
-
-    json_schema = {"type": "string", "format": "html"}
-    elastic_mapping = {"type": "text", "analyzer": "html_field_analyzer"}
-
-
-class ObjectId(BsonObjectId, CustomStringField[BsonObjectId]):
-    """Elasticsearch ObjectId field"""
-
-    json_schema = {"type": "string", "format": "objectid"}
-    elastic_mapping = {"type": "text"}
-    core_type = BsonObjectId
-
-    @classmethod
-    def _validate(cls, value: str) -> BsonObjectId:
-        return BsonObjectId(value)
+def keyword_mapping() -> WithJsonSchema:
+    return Field(json_schema_extra={"elastic_mapping": {"type": "keyword"}})
 
 
 def nested_list() -> WithJsonSchema:

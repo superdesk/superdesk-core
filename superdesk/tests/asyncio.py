@@ -28,6 +28,9 @@ class AsyncTestCase(unittest.IsolatedAsyncioTestCase):
     autorun: bool = True
 
     def setupApp(self):
+        if getattr(self, "app", None):
+            self.app.stop()
+
         self.app_config = setup_config(self.app_config)
         self.app = SuperdeskAsyncApp(WSGI(config=self.app_config))
         self.app.start()
@@ -42,7 +45,7 @@ class AsyncTestCase(unittest.IsolatedAsyncioTestCase):
             await client.drop_database(db)
 
     async def asyncTearDown(self):
-        if not self.app:
+        if not getattr(self, "app", None):
             return
 
         self.app.elastic.drop_indexes()
