@@ -9,16 +9,18 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
-from typing import Dict, Any, Type
+from typing import Dict, Any, Type, List, Optional, Union, Mapping, cast
 
 import os
 import eve
 import flask
+from werkzeug.exceptions import NotFound
 import jinja2
 import importlib
 import superdesk
 import logging
 
+from pydantic import BaseModel
 from flask_mail import Mail
 from eve.auth import TokenAuth
 from eve.io.mongo.mongo import _create_index as create_index
@@ -40,10 +42,40 @@ from superdesk.json_utils import SuperdeskFlaskJSONProvider, SuperdeskJSONEncode
 from superdesk.cache import cache_backend
 from .elastic_apm import setup_apm
 from superdesk.core.app import SuperdeskAsyncApp
+from superdesk.core.http.types import HTTPEndpoint, HTTPRequest, HTTPEndpointGroup, HTTP_METHOD
 
 SUPERDESK_PATH = os.path.abspath(os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
 
 logger = logging.getLogger(__name__)
+
+
+class HttpFlaskRequest(HTTPRequest):
+    endpoint: HTTPEndpoint
+    request: flask.Request
+
+    def __init__(self, endpoint: HTTPEndpoint, request: flask.Request):
+        self.endpoint = endpoint
+        self.request = request
+
+    @property
+    def method(self) -> HTTP_METHOD:
+        return cast(HTTP_METHOD, self.request.method)
+
+    @property
+    def path(self) -> str:
+        return self.request.path
+
+    def get_header(self, key: str) -> Optional[str]:
+        return self.request.headers.get(key)
+
+    async def get_json(self) -> Union[Any, None]:
+        return self.request.get_json()
+
+    async def get_form(self) -> Mapping:
+        return self.request.form.deepcopy()
+
+    async def get_data(self) -> Union[bytes, str]:
+        return self.request.get_data()
 
 
 def set_error_handlers(app):
@@ -84,6 +116,8 @@ def set_error_handlers(app):
 
 class SuperdeskEve(eve.Eve):
     async_app: SuperdeskAsyncApp
+    _endpoints: List[HTTPEndpoint]
+    _endpoint_groups: List[HTTPEndpointGroup]
 
     def __init__(self, **kwargs):
         # set attributes to avoid event slots being created
@@ -97,6 +131,8 @@ class SuperdeskEve(eve.Eve):
         self._superdesk_cache = None
         self.async_app = SuperdeskAsyncApp(self)
         self.json_provider_class = SuperdeskFlaskJSONProvider
+        self._endpoints = []
+        self._endpoint_groups = []
 
         super().__init__(**kwargs)
 
@@ -157,6 +193,38 @@ class SuperdeskEve(eve.Eve):
                 versioned_resource = resource + self.config["VERSIONS"]
                 if versioned_resource in self.config["DOMAIN"]:
                     update_resource_schema(versioned_resource)
+
+    def register_endpoint(self, endpoint: HTTPEndpoint):
+        url = f"{self.api_prefix}/{endpoint.url}"
+
+        self.add_url_rule(
+            url,
+            endpoint.name,
+            view_func=self._process_async_endpoint,
+            methods=endpoint.methods,
+        )
+        self._endpoints.append(endpoint)
+
+    def register_endpoint_group(self, group: HTTPEndpointGroup):
+        for endpoint in group.endpoints:
+            self.register_endpoint(endpoint)
+
+    async def _process_async_endpoint(self, **kwargs):
+        # Get HTTPEndpoint instance
+        from flask import request as flask_request
+
+        endpoint_name = flask_request.endpoint
+        endpoint: Optional[HTTPEndpoint] = next((e for e in self._endpoints if e.name == endpoint_name), None)
+        if endpoint is None:
+            raise NotFound()
+
+        response = await endpoint(
+            kwargs,
+            dict(flask_request.args.deepcopy()),
+            HttpFlaskRequest(endpoint, flask_request),
+        )
+
+        return response.body, response.status_code, response.headers
 
 
 def get_media_storage_class(app_config: Dict[str, Any], use_provider_config: bool = True) -> Type[MediaStorage]:
@@ -237,18 +305,19 @@ def get_app(config=None, media_storage=None, config_object=None, init_elastic=No
     app.config.setdefault("BABEL_TRANSLATION_DIRECTORIES", os.path.join(SUPERDESK_PATH, "translations"))
     babel = Babel(app, configure_jinja=False)
 
-    @babel.localeselector
-    def get_locale():
-        user = getattr(g, "user", {})
-        user_language = user.get("language", app.config.get("DEFAULT_LANGUAGE", "en"))
-        try:
-            # Attempt to load the local using Babel.parse_local
-            parse_locale(user_language.replace("-", "_"))
-        except ValueError:
-            # If Babel fails to recognise the locale, then use the default language
-            user_language = app.config.get("DEFAULT_LANGUAGE", "en")
-
-        return user_language.replace("-", "_")
+    # TODO: Fix this after Flask3 upgrade
+    # @babel.localeselector
+    # def get_locale():
+    #     user = getattr(g, "user", {})
+    #     user_language = user.get("language", app.config.get("DEFAULT_LANGUAGE", "en"))
+    #     try:
+    #         # Attempt to load the local using Babel.parse_local
+    #         parse_locale(user_language.replace("-", "_"))
+    #     except ValueError:
+    #         # If Babel fails to recognise the locale, then use the default language
+    #         user_language = app.config.get("DEFAULT_LANGUAGE", "en")
+    #
+    #     return user_language.replace("-", "_")
 
     set_error_handlers(app)
 

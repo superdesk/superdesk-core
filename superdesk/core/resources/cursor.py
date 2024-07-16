@@ -8,9 +8,11 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
-from typing import Dict, Any, Generic, TypeVar, Type, Optional, TypedDict, List, Union, Literal
+from typing import Dict, Any, Generic, TypeVar, Type, Optional, List, Union, Literal
+from typing_extensions import TypedDict
 from dataclasses import dataclass
 
+from pydantic import BaseModel, ConfigDict
 from motor.motor_asyncio import AsyncIOMotorCollection, AsyncIOMotorCursor
 
 
@@ -47,9 +49,10 @@ class SearchArgs(TypedDict, total=False):
     projections: str
 
 
-@dataclass
-class SearchRequest:
+class SearchRequest(BaseModel):
     """Dataclass containing Elasticsearch request arguments"""
+
+    model_config = ConfigDict(extra="allow")
 
     #: Argument for the search filters
     args: Optional[SearchArgs] = None
@@ -58,7 +61,7 @@ class SearchRequest:
     sort: Optional[str] = None
 
     #: Maximum number of documents to be returned
-    max_results: Optional[int] = None
+    max_results: int = 25
 
     #: The page number to be returned
     page: int = 1
@@ -136,6 +139,13 @@ class ElasticsearchResourceCursorAsync(ResourceCursorAsync):
             elif isinstance(total, dict) and total.get("value"):
                 return int(total["value"])
         return 0
+
+    def extra(self, response: Dict[str, Any]):
+        """Add extra info to response"""
+        if "facets" in self.hits:
+            response["_facets"] = self.hits["facets"]
+        if "aggregations" in self.hits:
+            response["_aggregations"] = self.hits["aggregations"]
 
 
 class MongoResourceCursorAsync(ResourceCursorAsync):

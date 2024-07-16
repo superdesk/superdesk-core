@@ -8,10 +8,11 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
-from typing import Callable, Optional, List
+from typing import Callable, Optional, List, Union
 from dataclasses import dataclass
 
 from .config import ConfigModel
+from .http.wsgi import HTTPEndpoint, HTTPEndpointGroup
 
 
 @dataclass
@@ -45,6 +46,9 @@ class Module:
 
     #: Optional list of resources to automatically register
     resources: Optional[List["ResourceModelConfig"]] = None
+
+    #: Optional list of HTTP endpoints to register with the system
+    http_endpoints: Optional[List[Union[HTTPEndpoint, HTTPEndpointGroup]]] = None
 
 
 from .app import SuperdeskAsyncApp  # noqa: E402

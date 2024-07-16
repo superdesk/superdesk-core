@@ -201,9 +201,17 @@ class Resources:
                 config.elastic,
             )
 
-        if config.service is not None:
-            config.service.resource_name = config.name
-            self._resource_services[config.name] = config.service()
+        if config.service is None:
+
+            class GenericResourceService(AsyncResourceService):
+                pass
+
+            GenericResourceService.resource_name = config.name
+            GenericResourceService.config = config
+            config.service = GenericResourceService
+
+        config.service.resource_name = config.name
+        self._resource_services[config.name] = config.service()
 
     def get_config(self, name: str) -> ResourceModelConfig:
         """Get the config for a registered resource

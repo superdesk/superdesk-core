@@ -8,12 +8,16 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
-from typing import Callable, Any, Awaitable, Union
+from typing import Callable, Any, Awaitable, Union, Dict, List
 import re
+import logging
 
-from pydantic import AfterValidator
+from pydantic import AfterValidator, ValidationError
 
 from .fields import ObjectId
+
+
+logger = logging.getLogger(__name__)
 
 
 def validate_email() -> AfterValidator:
@@ -141,6 +145,23 @@ def validate_iunique_value_async(resource_name: str, field_name: str) -> AsyncVa
             raise ValueError(f"Resource '{resource_name}' with '{field_name}=={name}' already exists")
 
     return AsyncValidator(validate_iunique_value_in_resource)
+
+
+def convert_pydantic_validation_error_for_response(validation_error: ValidationError) -> Dict[str, Any]:
+    issues: Dict[str, Dict[str, str]] = {}
+    for error in validation_error.errors():
+        try:
+            field = ".".join(reversed([str(loc) for loc in error["loc"]]))
+            issues.setdefault(field, {})
+            issues[field][error["type"]] = error["msg"]
+        except (KeyError, TypeError, ValueError) as error:
+            logger.warning(error)
+
+    return {
+        "_status": "ERR",
+        "_error": {"code": 403, "message": "Insertion failure: 1 document(s) contain(s) error(s)"},
+        "_issues": issues,
+    }
 
 
 from .model import ResourceModel  # noqa: E402
