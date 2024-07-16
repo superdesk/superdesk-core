@@ -8,7 +8,7 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
-from typing import Optional, List, Dict, Any, Tuple
+from typing import Optional, List, Dict, Any, Tuple, cast
 
 from elasticsearch import AsyncElasticsearch
 from elasticsearch.exceptions import NotFoundError, TransportError, RequestError
@@ -38,7 +38,7 @@ class ElasticResourceAsyncClient(BaseElasticResourceClient):
 
         return ids
 
-    async def bulk_insert(self, docs: List[Dict[str, Any]]) -> Tuple[int, int]:
+    async def bulk_insert(self, docs: List[Dict[str, Any]]) -> Tuple[int, List[Dict[str, Any]]]:
         """Insert a list of documents into Elasticsearch.
 
         :param docs: List of documents to insert.
@@ -49,7 +49,9 @@ class ElasticResourceAsyncClient(BaseElasticResourceClient):
         if self.config.force_refresh:
             await self.elastic.indices.refresh(index=self.config.index)
 
-        return success, failed
+        # Cast `failed` to dict, because if we pass `stats_only=False`, then we get the full document
+        # where as if `stats_only=True`, then `failed` is just a number
+        return success, cast(List[Dict[str, Any]], failed)
 
     async def update(self, item_id: str, updates: Dict[str, Any]) -> Any:
         """Update a document in Elasticsearch
