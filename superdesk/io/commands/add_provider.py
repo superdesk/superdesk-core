@@ -28,9 +28,9 @@ class AddProvider(superdesk.Command):
 
     """
 
-    option_list = {
+    option_list = [
         # superdesk.Option("--provider", "-p", dest="provider", required=True),
-    }
+    ]
 
     def run(self, provider):
         try:

@@ -32,12 +32,12 @@ class ImportUserProfileFromADCommand(superdesk.Command):
 
     """
 
-    option_list = (
+    option_list = [
         # superdesk.Option("--ad_username", "-adu", dest="ad_username", required=True),
         # superdesk.Option("--ad_password", "-adp", dest="ad_password", required=True),
         # superdesk.Option("--username_to_import", "-u", dest="username", required=True),
         # superdesk.Option("--admin", "-a", dest="admin", required=False),
-    )
+    ]
 
     def run(self, ad_username, ad_password, username, admin="false"):
         """Imports or Updates a User Profile from AD to Mongo.
