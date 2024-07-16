@@ -295,9 +295,10 @@ class AsyncResourceService(Generic[ResourceModelType]):
         return ids
 
     async def on_deleted(self, doc: ResourceModelType):
-        """HOok to run after deleting a resource
+        """Hook to run after deleting a resource
 
-        :param doc: Instance of ``ResourceModel`` for the resource to delete"""
+        :param doc: Instance of ``ResourceModel`` for the resource to delete
+        """
 
         pass
 

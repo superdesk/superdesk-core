@@ -1,3 +1,4 @@
+from typing import Optional
 import arrow
 
 from arrow.parser import ParserError
@@ -29,14 +30,15 @@ class SuperdeskFlaskJSONProvider(DefaultJSONProvider, SuperdeskJSONEncoder):
     and Elasticsearch types before falling back to the default Flask JSON encoder.
     """
 
-    def __init__(self, app: Flask = None):
+    def __init__(self, app: Flask):
         """
         Initialize the SuperdeskFlaskJSONProvider.
 
         The initialization explicitly calls the __init__ method of DefaultJSONProvider
         to ensure compatibility with Flask 3.0's new way of setting custom JSON providers.
         """
-        DefaultJSONProvider.__init__(self, app)
+
+        DefaultJSONProvider.__init__(self, app)  # type: ignore  # mypy is not seeing Flask as App here
 
     def default(self, obj):
         try:
