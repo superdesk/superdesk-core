@@ -30,8 +30,7 @@ class TestResourceService(AsyncTestCase):
 
     async def asyncSetUp(self):
         await super().asyncSetUp()
-        print("TestResourceService.asyncSetUp")
-        self.app.elastic.init_index("users")
+        self.app.elastic.init_index("users_async")
         self.service = UserResourceService()
 
     @mock.patch("superdesk.core.resources.service.utcnow", return_value=NOW)

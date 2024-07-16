@@ -34,7 +34,7 @@ def john_doe():
 def john_doe_dict():
     return dict(
         _id="user_1",
-        _type="users",
+        _type="users_async",
         first_name="John",
         last_name="Doe",
         email="john@doe.org",

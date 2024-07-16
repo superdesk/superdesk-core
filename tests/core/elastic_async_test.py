@@ -11,8 +11,8 @@ class ElasticAsyncClientTestCase(AsyncTestCase):
     app_config = {"MODULES": ["tests.core.modules.users"]}
 
     async def test_insert(self):
-        self.app.elastic.init_index("users")
-        client = self.app.elastic.get_client_async("users")
+        self.app.elastic.init_index("users_async")
+        client = self.app.elastic.get_client_async("users_async")
         test_user = john_doe()
         item_ids = await client.insert([test_user.model_dump(by_alias=True, exclude_unset=True)])
         self.assertEqual(item_ids, [test_user.id])
@@ -20,8 +20,8 @@ class ElasticAsyncClientTestCase(AsyncTestCase):
         self.assertEqual(response, test_user.model_dump(by_alias=True, exclude_unset=True))
 
     async def test_count(self):
-        self.app.elastic.init_index("users")
-        client = self.app.elastic.get_client_async("users")
+        self.app.elastic.init_index("users_async")
+        client = self.app.elastic.get_client_async("users_async")
         self.assertEqual(await client.count(), 0)
         self.assertTrue(await client.is_empty())
 
@@ -31,8 +31,8 @@ class ElasticAsyncClientTestCase(AsyncTestCase):
         self.assertFalse(await client.is_empty())
 
     async def test_bulk_insert(self):
-        self.app.elastic.init_index("users")
-        client = self.app.elastic.get_client_async("users")
+        self.app.elastic.init_index("users_async")
+        client = self.app.elastic.get_client_async("users_async")
         count, errors = await client.bulk_insert(
             [
                 User(id="user_1", first_name="John", last_name="Doe").model_dump(by_alias=True, exclude_unset=True),
@@ -45,8 +45,8 @@ class ElasticAsyncClientTestCase(AsyncTestCase):
         self.assertEqual(await client.count(), 3)
 
     async def test_update(self):
-        self.app.elastic.init_index("users")
-        client = self.app.elastic.get_client_async("users")
+        self.app.elastic.init_index("users_async")
+        client = self.app.elastic.get_client_async("users_async")
 
         test_user = john_doe()
         await client.insert([test_user.model_dump(by_alias=True, exclude_unset=True)])
@@ -60,8 +60,8 @@ class ElasticAsyncClientTestCase(AsyncTestCase):
         self.assertEqual(response["last_name"], "Monkeys")
 
     async def test_replace(self):
-        self.app.elastic.init_index("users")
-        client = self.app.elastic.get_client_async("users")
+        self.app.elastic.init_index("users_async")
+        client = self.app.elastic.get_client_async("users_async")
 
         test_user = john_doe()
         await client.insert([test_user.model_dump(by_alias=True, exclude_unset=True)])
@@ -74,12 +74,12 @@ class ElasticAsyncClientTestCase(AsyncTestCase):
         self.assertEqual(response["_id"], test_user.id)
         self.assertEqual(
             await client.find_by_id(test_user.id),
-            dict(_id="user_1", first_name="Monkey", last_name="Bars", _type="users"),
+            dict(_id="user_1", first_name="Monkey", last_name="Bars", _type="users_async"),
         )
 
     async def test_remove(self):
-        self.app.elastic.init_index("users")
-        client = self.app.elastic.get_client_async("users")
+        self.app.elastic.init_index("users_async")
+        client = self.app.elastic.get_client_async("users_async")
 
         test_user = john_doe()
         await client.insert([test_user.model_dump(by_alias=True, exclude_unset=True)])
@@ -92,8 +92,8 @@ class ElasticAsyncClientTestCase(AsyncTestCase):
         self.assertEqual(await client.count(), 0)
 
     async def test_search(self):
-        self.app.elastic.init_index("users")
-        client = self.app.elastic.get_client_async("users")
+        self.app.elastic.init_index("users_async")
+        client = self.app.elastic.get_client_async("users_async")
 
         test_user = john_doe()
         await client.insert([test_user.model_dump(by_alias=True, exclude_unset=True)])
@@ -138,8 +138,8 @@ class ElasticAsyncClientTestCase(AsyncTestCase):
         self.assertEqual(len(response["hits"]["hits"]), 0)
 
     async def test_find_by_id(self):
-        self.app.elastic.init_index("users")
-        client = self.app.elastic.get_client_async("users")
+        self.app.elastic.init_index("users_async")
+        client = self.app.elastic.get_client_async("users_async")
 
         test_user = john_doe()
         await client.insert([test_user.model_dump(by_alias=True, exclude_unset=True)])
@@ -149,8 +149,8 @@ class ElasticAsyncClientTestCase(AsyncTestCase):
         self.assertIsNone(await client.find_by_id("user_2"))
 
     async def test_find(self):
-        self.app.elastic.init_index("users")
-        client = self.app.elastic.get_client_async("users")
+        self.app.elastic.init_index("users_async")
+        client = self.app.elastic.get_client_async("users_async")
 
         # Test search using nested query
         test_user = john_doe()
