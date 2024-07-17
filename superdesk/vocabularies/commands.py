@@ -103,7 +103,7 @@ class UpdateVocabulariesInItemsCommand(superdesk.Command):
 
     """
 
-    option_list = ()
+    option_list = []
 
     def run(self):
         fields = ["subject", "genre", "place", "anpa_category"]

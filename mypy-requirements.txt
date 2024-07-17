@@ -19,3 +19,4 @@ typing-extensions
 boto3-stubs[s3,sqs]
 motor-types
 pydantic
+flask[async]
