@@ -246,10 +246,10 @@ class UpdateIngest(superdesk.Command):
 
     """
 
-    option_list = (
+    option_list = [
         # superdesk.Option("--provider", "-p", dest="provider_name"),
         # superdesk.Option("--sync", "-s", dest="sync", action="store_true"),
-    )
+    ]
 
     def run(self, provider_name=None, sync=False):
         lookup = {} if not provider_name else {"name": provider_name}

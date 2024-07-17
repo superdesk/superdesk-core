@@ -62,7 +62,7 @@ class PurgeAudit(superdesk.Command):
 
     not_item_entry_query = {"$or": [{"resource": {"$nin": item_resources}}, {"audit_id": {"$in": [None, ""]}}]}
 
-    option_list = (superdesk.Option("--expiry_minutes", "-e", dest="expiry", required=False),)
+    option_list = [superdesk.Option("--expiry_minutes", "-e", dest="expiry", required=False)]
 
     def run(self, expiry=None):
         if expiry is not None:
