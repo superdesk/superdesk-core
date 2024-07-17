@@ -114,14 +114,14 @@ that creates a REST endpoint for us based on a registered resource. This will au
 create, declare, register and process the endpoints for us.
 
 All it requires to be used is to create an instance of the group type, providing the
-:class:`ResourceModelConfig <superdesk.core.resources.model.ResourceModelConfig>` for the desired resource, then
+:class:`ResourceConfig <superdesk.core.resources.model.ResourceConfig>` for the desired resource, then
 register the group like any other HTTPEndpointGroup.
 
 For example::
 
     from superdesk.core.module import Module
     from superdesk.core.resources import (
-        ResourceModelConfig,
+        ResourceConfig,
         ResourceModel,
     )
     from superdesk.core.http.resource_endpoints import (
@@ -133,7 +133,7 @@ For example::
         first_name: str
         last_name: str
 
-    user_resource_config = ResourceModelConfig(
+    user_resource_config = ResourceConfig(
         name="users",
         data_class=User,
     )

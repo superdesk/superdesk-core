@@ -1,7 +1,7 @@
 from superdesk.core.mongo import MongoResourceConfig, MongoIndexOptions
 from superdesk.core.elastic.resources import ElasticResourceConfig
 
-from superdesk.core.resources import ResourceModelConfig
+from superdesk.core.resources import ResourceConfig
 from superdesk.core.resources.service import AsyncResourceService
 from superdesk.core.http.resource_endpoints import ResourceEndpoints
 
@@ -13,7 +13,7 @@ class UserResourceService(AsyncResourceService[User]):
     resource_name = "users_async"
 
 
-user_model_config = ResourceModelConfig(
+user_model_config = ResourceConfig(
     name="users_async",
     data_class=User,
     mongo=MongoResourceConfig(

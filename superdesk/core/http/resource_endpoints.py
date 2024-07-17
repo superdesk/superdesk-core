@@ -20,7 +20,7 @@ from superdesk.metadata.utils import generate_guid
 from superdesk.core.app import get_current_async_app
 from superdesk.errors import SuperdeskApiError
 
-from ..resources.model import ResourceModelConfig
+from ..resources.model import ResourceConfig
 from .types import HTTPEndpoint, HTTPEndpointGroup, HTTP_METHOD, HTTPRequest, HTTPResponse, RestGetResponse
 from ..resources.cursor import SearchRequest, SearchArgs
 from ..resources.validators import convert_pydantic_validation_error_for_response
@@ -34,7 +34,7 @@ class ResourceEndpoints(HTTPEndpointGroup):
     """Custom HTTPEndpointGroup for REST resources"""
 
     #: The config for the resource to use
-    resource_config: ResourceModelConfig
+    resource_config: ResourceConfig
 
     #: Optional list of resource level methods, defaults to ["GET", "POST"]
     resource_methods: List[HTTP_METHOD]
@@ -44,7 +44,7 @@ class ResourceEndpoints(HTTPEndpointGroup):
 
     def __init__(
         self,
-        resource_config: ResourceModelConfig,
+        resource_config: ResourceConfig,
         resource_methods: Optional[List[HTTP_METHOD]] = None,
         item_methods: Optional[List[HTTP_METHOD]] = None,
     ):

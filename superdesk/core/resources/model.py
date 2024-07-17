@@ -141,7 +141,7 @@ class ResourceModelWithObjectId(ResourceModel):
 
 
 @python_dataclass
-class ResourceModelConfig:
+class ResourceConfig:
     """A config for a Resource to be registered"""
 
     #: Name of the resource (must be unique in the system)
@@ -162,7 +162,7 @@ class ResourceModelConfig:
 class Resources:
     """A high level resource class used to manage all resources in the system"""
 
-    _resource_configs: Dict[str, ResourceModelConfig]
+    _resource_configs: Dict[str, ResourceConfig]
 
     _resource_services: Dict[str, "AsyncResourceService"]
 
@@ -174,12 +174,12 @@ class Resources:
         self._resource_services = {}
         self.app = app
 
-    def register(self, config: ResourceModelConfig):
+    def register(self, config: ResourceConfig):
         """Register a new resource in the system
 
         This will also register the resource with Mongo and optionally Elasticsearch
 
-        :param config: A ResourceModelConfig of the resource to be registered
+        :param config: A ResourceConfig of the resource to be registered
         :raises KeyError: If the resource has already been registered
         """
 
@@ -213,17 +213,17 @@ class Resources:
         config.service.resource_name = config.name
         self._resource_services[config.name] = config.service()
 
-    def get_config(self, name: str) -> ResourceModelConfig:
+    def get_config(self, name: str) -> ResourceConfig:
         """Get the config for a registered resource
 
         :param name: The name of the registered resource
-        :return: A copy of the ResourceModelConfig of the registered resource
+        :return: A copy of the ResourceConfig of the registered resource
         :raises KeyError: If the resource is not registered
         """
 
         return deepcopy(self._resource_configs[name])
 
-    def get_all_configs(self) -> List[ResourceModelConfig]:
+    def get_all_configs(self) -> List[ResourceConfig]:
         """Get a copy of the configs for all the registered resources in the system"""
 
         return deepcopy(list(self._resource_configs.values()))

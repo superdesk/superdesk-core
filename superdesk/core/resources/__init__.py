@@ -8,13 +8,13 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
-from .model import Resources, ResourceModel, ResourceModelWithObjectId, ResourceModelConfig, dataclass
+from .model import Resources, ResourceModel, ResourceModelWithObjectId, ResourceConfig, dataclass
 
 __all__ = [
     "Resources",
     "ResourceModel",
     "ResourceModelWithObjectId",
-    "ResourceModelConfig",
+    "ResourceConfig",
     "dataclass",
     "fields",
 ]

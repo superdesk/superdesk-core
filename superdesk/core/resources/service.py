@@ -43,7 +43,7 @@ ResourceModelType = TypeVar("ResourceModelType", bound="ResourceModel")
 
 class AsyncResourceService(Generic[ResourceModelType]):
     resource_name: ClassVar[str]
-    config: "ResourceModelConfig"
+    config: "ResourceConfig"
     app: SuperdeskAsyncApp
 
     def __new__(cls):
@@ -430,4 +430,4 @@ class AsyncResourceService(Generic[ResourceModelType]):
         return client_sort
 
 
-from .model import ResourceModelConfig, ResourceModel  # noqa: E402
+from .model import ResourceConfig, ResourceModel  # noqa: E402

@@ -45,11 +45,11 @@ class Module:
     freeze_config: bool = True
 
     #: Optional list of resources to automatically register
-    resources: Optional[List["ResourceModelConfig"]] = None
+    resources: Optional[List["ResourceConfig"]] = None
 
     #: Optional list of HTTP endpoints to register with the system
     http_endpoints: Optional[List[Union[HTTPEndpoint, HTTPEndpointGroup]]] = None
 
 
 from .app import SuperdeskAsyncApp  # noqa: E402
-from .resources.model import ResourceModelConfig  # noqa: E402
+from .resources.model import ResourceConfig  # noqa: E402
