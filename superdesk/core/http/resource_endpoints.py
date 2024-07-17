@@ -9,21 +9,17 @@
 # at https://www.sourcefabric.org/superdesk/license
 
 from typing import List, Optional, cast, Dict, Any
-from datetime import datetime
 import math
 
-from pytz import utc
 from pydantic import BaseModel, ValidationError
 from eve.utils import querydef
 from werkzeug.datastructures import MultiDict
-from bson import ObjectId
 
 from superdesk.metadata.item import GUID_NEWSML
 from superdesk.metadata.utils import generate_guid
 from superdesk.core.app import get_current_async_app
 from superdesk.errors import SuperdeskApiError
 
-from ..resources.fields import ObjectId as ObjectIdField
 from ..resources.model import ResourceModelConfig
 from .types import HTTPEndpoint, HTTPEndpointGroup, HTTP_METHOD, HTTPRequest, HTTPResponse, RestGetResponse
 from ..resources.cursor import SearchRequest, SearchArgs
@@ -183,9 +179,12 @@ class ResourceEndpoints(HTTPEndpointGroup):
         service = get_current_async_app().resources.get_resource_service(self.resource_config.name)
         original = await service.find_by_id(args.item_id)
 
-        if original:
-            await service.delete({"_id": original.id})
+        if not original:
+            raise SuperdeskApiError.notFoundError(
+                f"{self.resource_config.name} resource with ID '{args.item_id}' not found"
+            )
 
+        await service.delete(original)
         return HTTPResponse({}, 204, ())
 
     async def process_get_request(

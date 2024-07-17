@@ -242,9 +242,7 @@ class AsyncResourceService(Generic[ResourceModelType]):
 
         pass
 
-    async def on_update(
-        self, item_id: Union[str, ObjectId], updates: Dict[str, Any], original: ResourceModelType
-    ) -> None:
+    async def on_update(self, updates: Dict[str, Any], original: ResourceModelType) -> None:
         """Hook to run before updating a resource
 
         :param item_id: ID of item to update
@@ -269,7 +267,7 @@ class AsyncResourceService(Generic[ResourceModelType]):
         if original is None:
             raise SuperdeskApiError.notFoundError()
 
-        await self.on_update(item_id, updates, original)
+        await self.on_update(updates, original)
         await self.validate_update(updates, original)
         response = await self.mongo.update_one({"_id": item_id}, {"$set": updates})
         try:
@@ -295,7 +293,21 @@ class AsyncResourceService(Generic[ResourceModelType]):
 
         pass
 
-    async def delete(self, lookup: Dict[str, Any]) -> List[str]:
+    async def delete(self, doc: ResourceModelType):
+        """Deletes a resource
+
+        :param doc: Instance of ``ResourceModel`` for the resource to delete
+        """
+
+        await self.on_delete(doc)
+        await self.mongo.delete_one({"_id": doc.id})
+        try:
+            await self.elastic.remove(doc.id)
+        except KeyError:
+            pass
+        await self.on_deleted(doc)
+
+    async def delete_many(self, lookup: Dict[str, Any]) -> List[str]:
         """Deletes resource(s) using a lookup
 
         :param lookup: Dictionary for the lookup to find items to delete
@@ -322,7 +334,7 @@ class AsyncResourceService(Generic[ResourceModelType]):
     async def on_deleted(self, doc: ResourceModelType):
         """Hook to run after deleting a resource
 
-        :param doc: Instance of ``ResourceModel`` for the resource to delete
+        :param doc: Instance of ``ResourceModel`` for the resource that was deleted
         """
 
         pass

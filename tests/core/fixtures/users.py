@@ -69,7 +69,7 @@ def minimal_user():
     return User(id="user_3", first_name="Foo", last_name="Bar")
 
 
-def test_users():
+def all_users():
     return [
         john_doe(),
         jane_doe(),

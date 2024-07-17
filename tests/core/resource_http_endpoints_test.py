@@ -110,6 +110,10 @@ class TestResourceHTTPEndpointsTestCase(AsyncFlaskTestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual((await response.get_json())["_meta"]["total"], 0)
 
+        # Raises `notFoundError` is Resource with ID does not exist
+        response = await self.test_client.delete(f"/api/users_async/{test_user.id}")
+        self.assertEqual(response.status_code, 404)
+
     @mock.patch("superdesk.core.resources.service.utcnow", return_value=NOW)
     async def test_search(self, mock_utcnow):
         test_user = john_doe()

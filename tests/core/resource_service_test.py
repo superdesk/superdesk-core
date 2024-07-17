@@ -10,7 +10,7 @@ from superdesk.utils import format_time
 from superdesk.tests.asyncio import AsyncTestCase
 
 from .modules.users import UserResourceService
-from .fixtures.users import test_users, john_doe
+from .fixtures.users import all_users, john_doe
 
 
 NOW = utcnow()
@@ -119,13 +119,33 @@ class TestResourceService(AsyncTestCase):
 
         # Now delete the user, and make sure it is gone from both MongoDB, Elastic
         # and the resource service
-        await self.service.delete({"_id": test_user.id})
+        await self.service.delete(test_user)
         self.assertIsNone(await self.service.mongo.find_one({"_id": test_user.id}))
         self.assertIsNone(await self.service.elastic.find_by_id(test_user.id))
         self.assertIsNone(await self.service.find_one(_id=test_user.id))
 
+    async def test_delete_many(self):
+        users = all_users()
+        await self.service.create(users)
+        self.assertEqual(await (await self.service.search({})).count(), 3)
+
+        self.service.on_delete = mock.AsyncMock()
+        self.service.on_deleted = mock.AsyncMock()
+        await self.service.delete_many({"_id": {"$in": [users[0].id, users[1].id]}})
+        self.assertEqual(await (await self.service.search({})).count(), 1)
+
+        self.assertEqual(self.service.on_delete.call_count, 2)
+        self.service.on_delete.assert_has_calls(
+            [mock.call(users[0]), mock.call(users[1])],
+            any_order=True,
+        )
+        self.service.on_deleted.assert_has_calls(
+            [mock.call(users[0]), mock.call(users[1])],
+            any_order=True,
+        )
+
     async def test_get_all(self):
-        users = test_users()
+        users = all_users()
         item_ids = await self.service.create(users)
         self.assertEqual(item_ids, [user.id for user in users])
         docs = []
@@ -139,7 +159,7 @@ class TestResourceService(AsyncTestCase):
             )
 
     async def test_get_all_batch(self):
-        users = test_users()
+        users = all_users()
         await self.service.create(users)
 
         docs = []
@@ -165,7 +185,7 @@ class TestResourceService(AsyncTestCase):
             )
 
     async def test_elastic_search(self):
-        users = test_users()
+        users = all_users()
         await self.service.create(users)
 
         docs = []
@@ -200,7 +220,7 @@ class TestResourceService(AsyncTestCase):
         self.assertEqual(users[1], docs[1])
 
     async def test_mongo_search(self):
-        users = test_users()
+        users = all_users()
         await self.service.create(users)
 
         docs = []
@@ -244,18 +264,18 @@ class TestResourceService(AsyncTestCase):
         self.service.on_updated = mock.AsyncMock()
         updates = {"first_name": "Foo", "last_name": "Bar"}
         await self.service.update(test_user.id, updates)
-        self.service.on_update.assert_called_once_with(test_user.id, updates, test_user)
+        self.service.on_update.assert_called_once_with(updates, test_user)
         self.service.on_updated.assert_called_once_with(updates, test_user)
 
         self.service.on_delete = mock.AsyncMock()
         self.service.on_deleted = mock.AsyncMock()
-        await self.service.delete(dict(_id=test_user.id))
         updated_test_user = test_user.model_copy(update=updates, deep=True)
+        await self.service.delete(updated_test_user)
         self.service.on_delete.assert_called_once_with(updated_test_user)
         self.service.on_deleted.assert_called_once_with(updated_test_user)
 
     async def test_elastic_find(self):
-        users = test_users()
+        users = all_users()
         await self.service.create(users)
 
         find_query = {
