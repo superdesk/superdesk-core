@@ -34,13 +34,13 @@ class CreateUserCommand(superdesk.Command):
 
     """
 
-    option_list = (
+    option_list = [
         superdesk.Option("--username", "-u", dest="username", required=True),
         superdesk.Option("--password", "-p", dest="password", required=True),
         superdesk.Option("--email", "-e", dest="email", required=True),
         superdesk.Option("--admin", "-a", dest="admin", required=False, action="store_true"),
         superdesk.Option("--support", "-s", dest="support", required=False, action="store_true"),
-    )
+    ]
 
     def run(self, username, password, email, admin=False, support=False):
         # force type conversion to boolean
@@ -112,11 +112,11 @@ class ImportUsersCommand(superdesk.Command):
 
     """
 
-    option_list = (
+    option_list = [
         superdesk.Option("--field", "-f", dest="fields", action="append"),
         superdesk.Option("--activation-email", "-a", dest="activation_email", required=False, action="store_true"),
         superdesk.Option("import_file"),
-    )
+    ]
 
     def run(self, fields, import_file, activation_email=False):
         import_path = Path(import_file)
@@ -253,10 +253,10 @@ class GetAuthTokenCommand(superdesk.Command):
 
     """
 
-    option_list = (
+    option_list = [
         superdesk.Option("--username", "-u", dest="username", required=True),
         superdesk.Option("--password", "-p", dest="password", required=True),
-    )
+    ]
 
     def run(self, username, password):
         credentials = {"username": username, "password": password}

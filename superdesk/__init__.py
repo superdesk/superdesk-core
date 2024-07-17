@@ -77,7 +77,10 @@ class Option(click.Option):
         if choices:
             attrs["type"] = click.Choice(choices)
 
-        super().__init__(param_decls, **attrs)
+        try:
+            super().__init__(param_decls, **attrs)
+        except Exception:
+            pass
 
 
 class Command(click.Command):
@@ -90,7 +93,7 @@ class Command(click.Command):
         option_list (list): A list of option instances.
     """
 
-    name = None
+    name: str = ""
     option_list: List[Option] = []
 
     def __init__(self, *args, **kwargs):

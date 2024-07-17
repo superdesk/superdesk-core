@@ -10,7 +10,8 @@
 
 from flask import g, request
 from flask_babel import _
-from flask_oidc_ex import OpenIDConnect
+
+# from flask_oidc_ex import OpenIDConnect
 
 import superdesk
 from apps.auth.errors import CredentialsAuthError
@@ -36,7 +37,8 @@ superdesk.intrinsic_privilege("auth_oidc", method=["DELETE"])
 class OIDCAuthService(AuthService):
     def __init__(self, datasource=None, backend=None, app=None):
         super().__init__(datasource=datasource, backend=backend)
-        self.oidc = OpenIDConnect(app)
+        # TODO: Fix this after Flask3 upgrade
+        # self.oidc = OpenIDConnect(app)
 
     def authenticate(self, credentials):
         auth_header = request.headers.get("Authorization", "").split(" ", 1)

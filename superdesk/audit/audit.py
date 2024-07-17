@@ -118,8 +118,6 @@ class AuditService(BaseService):
             # do not return an id for items that have a dictionary id
             if not isinstance(id, dict):
                 return id
-            else:
-                None
         except Exception:
             return None
         return None

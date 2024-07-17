@@ -237,18 +237,19 @@ def get_app(config=None, media_storage=None, config_object=None, init_elastic=No
     app.config.setdefault("BABEL_TRANSLATION_DIRECTORIES", os.path.join(SUPERDESK_PATH, "translations"))
     babel = Babel(app, configure_jinja=False)
 
-    @babel.localeselector
-    def get_locale():
-        user = getattr(g, "user", {})
-        user_language = user.get("language", app.config.get("DEFAULT_LANGUAGE", "en"))
-        try:
-            # Attempt to load the local using Babel.parse_local
-            parse_locale(user_language.replace("-", "_"))
-        except ValueError:
-            # If Babel fails to recognise the locale, then use the default language
-            user_language = app.config.get("DEFAULT_LANGUAGE", "en")
-
-        return user_language.replace("-", "_")
+    # TODO: Fix this after Flask3 upgrade
+    # @babel.localeselector
+    # def get_locale():
+    #     user = getattr(g, "user", {})
+    #     user_language = user.get("language", app.config.get("DEFAULT_LANGUAGE", "en"))
+    #     try:
+    #         # Attempt to load the local using Babel.parse_local
+    #         parse_locale(user_language.replace("-", "_"))
+    #     except ValueError:
+    #         # If Babel fails to recognise the locale, then use the default language
+    #         user_language = app.config.get("DEFAULT_LANGUAGE", "en")
+    #
+    #     return user_language.replace("-", "_")
 
     set_error_handlers(app)
 
