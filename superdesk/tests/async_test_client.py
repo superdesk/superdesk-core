@@ -9,76 +9,91 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
-from typing import Any, Callable, TypeVar
+from typing import Any, AnyStr
 
-from asyncio import get_running_loop
-from werkzeug import Response
-from flask.testing import FlaskClient
+from urllib.request import Request as U2Request
+from asgiref.wsgi import WsgiToAsgi
+from werkzeug.datastructures import Headers, Authorization
+from flask import Flask
+from quart import Response
+from quart.datastructures import FileStorage
+from quart.testing import QuartClient
+from quart.testing.utils import make_test_headers_path_and_query_string, make_test_body_with_headers, make_test_scope
+from quart.testing.client import _TestCookieJarResponse
 
 from superdesk.core.resources.model import ResourceModel
 
 
-T = TypeVar("T")
-
-
-async def call(f: Callable[[], T]) -> T:
-    loop = get_running_loop()
-    return await loop.run_in_executor(executor=None, func=f)
-
-
-class AsyncTestClient(FlaskClient):
-    """A facade for the flask test client."""
-
-    async_app = None
-
-    def __init__(self, async_app, *args: Any, **kwargs: Any):
-        super().__init__(*args, **kwargs)
-        self.async_app = async_app
+class AsyncTestClient(QuartClient):
+    def __init__(self, app: Flask, asgi_app: WsgiToAsgi) -> None:
+        setattr(asgi_app, "config", app.config)
+        setattr(asgi_app, "response_class", Response)
+        super().__init__(asgi_app)  # type: ignore
 
     def model_instance_to_json(self, model_instance: ResourceModel):
         return model_instance.model_dump(by_alias=True, exclude_unset=True, mode="json")
 
-    async def _reset_db_connections(self):
-        # TODO: Remove this when we migrate from Flask to Quart
-        self.async_app.mongo.reset_all_async_connections()
-        await self.async_app.elastic.reset_all_async_connections()
-
-    async def get(self, *args, **kwargs) -> Response:
-        parent = super()
-        await self._reset_db_connections()
-
-        response = await call(lambda: parent.get(*args, **kwargs))
-        await self._reset_db_connections()
-        return response
-
     async def post(self, *args, **kwargs) -> Response:
-        parent = super()
-        await self._reset_db_connections()
-
         if "json" in kwargs and isinstance(kwargs["json"], ResourceModel):
             kwargs["json"] = self.model_instance_to_json(kwargs["json"])
 
-        response = await call(lambda: parent.post(*args, **kwargs))
-        await self._reset_db_connections()
-        return response
+        return await super().post(*args, **kwargs)
 
-    async def patch(self, *args, **kwargs) -> Response:
-        parent = super()
-        await self._reset_db_connections()
-        response = await call(lambda: parent.patch(*args, **kwargs))
-        await self._reset_db_connections()
-        return response
+    async def _make_request(
+        self,
+        path: str,
+        method: str,
+        headers: dict | Headers | None,
+        data: AnyStr | None,
+        form: dict | None,
+        files: dict[str, FileStorage] | None,
+        query_string: dict | None,
+        json: Any,
+        scheme: str,
+        root_path: str,
+        http_version: str,
+        scope_base: dict | None,
+        auth: Authorization | tuple[str, str] | None = None,
+        subdomain: str | None = None,
+    ) -> Response:
+        # TODO: Remove once we migrate to Quart
+        # Copied from ``QuartClient._make_request`` so we can populate ``Content-Length`` header
+        # Otherwise asgiref.wsgi.WsgiToAsgi won't pass length through, and Flask will ignore the request body
 
-    async def delete(self, *args, **kwargs) -> Response:
-        parent = super()
-        await self._reset_db_connections()
-        response = await call(lambda: parent.delete(*args, **kwargs))
-        await self._reset_db_connections()
-        return response
+        headers, path, query_string_bytes = make_test_headers_path_and_query_string(
+            self.app, path, headers, query_string, auth, subdomain
+        )
+        request_data, body_headers = make_test_body_with_headers(
+            data=data, form=form, files=files, json=json, app=self.app
+        )
+        headers.update(**body_headers)
+        if not headers.get("Content-Length"):
+            headers.set("Content-Length", str(len(request_data)))
 
-    async def put(self, *args, **kwargs) -> Response:
-        parent = super()
-        await self._reset_db_connections()
-        response = await call(lambda: parent.put(*args, **kwargs))
-        await self._reset_db_connections()
+        if self.cookie_jar is not None:
+            for cookie in self.cookie_jar:
+                headers.add("cookie", f"{cookie.name}={cookie.value}")
+
+        scope = make_test_scope(
+            "http",
+            path,
+            method,
+            headers,
+            query_string_bytes,
+            scheme,
+            root_path,
+            http_version,
+            scope_base,
+            _preserve_context=self.preserve_context,
+        )
+        async with self.http_connection_class(self.app, scope, _preserve_context=self.preserve_context) as connection:
+            await connection.send(request_data)
+            await connection.send_complete()
+        response = await connection.as_response()
+        if self.cookie_jar is not None:
+            self.cookie_jar.extract_cookies(
+                _TestCookieJarResponse(response.headers),  # type: ignore
+                U2Request(f"{scheme}://{headers['host']}{path}"),
+            )
+        self.push_promises.extend(connection.push_promises)
         return response

@@ -12,7 +12,7 @@ from typing import Dict, Any
 import unittest
 from dataclasses import dataclass
 
-from werkzeug import Response
+from asgiref.wsgi import WsgiToAsgi
 
 from superdesk.factory.app import SuperdeskApp
 from superdesk.core.app import SuperdeskAsyncApp
@@ -69,6 +69,7 @@ class AsyncTestCase(unittest.IsolatedAsyncioTestCase):
 class AsyncFlaskTestCase(AsyncTestCase):
     async_app: SuperdeskAsyncApp
     app: SuperdeskApp
+    asgi_app: WsgiToAsgi
     test_client: AsyncTestClient
 
     async def asyncSetUp(self):
@@ -78,7 +79,8 @@ class AsyncFlaskTestCase(AsyncTestCase):
 
         setup(self, config=self.app_config, reset=True)
         self.async_app = self.app.async_app
-        self.test_client = AsyncTestClient(self.async_app, self.app, Response, True)
+        self.asgi_app = WsgiToAsgi(self.app)
+        self.test_client = AsyncTestClient(self.app, self.asgi_app)
         self.ctx = self.app.app_context()
         self.ctx.push()
 

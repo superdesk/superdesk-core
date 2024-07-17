@@ -46,7 +46,6 @@ class TestResourceHTTPEndpointsTestCase(AsyncFlaskTestCase):
 
     @mock.patch("superdesk.core.resources.service.utcnow", return_value=NOW)
     async def test_get_item(self, mock_utcnow):
-        self.maxDiff = None
         test_user = john_doe()
         response = await self.test_client.post("/api/users_async", json=test_user)
         self.assertEqual(response.status_code, 201)
@@ -55,11 +54,11 @@ class TestResourceHTTPEndpointsTestCase(AsyncFlaskTestCase):
         test_user_dict = self.test_client.model_instance_to_json(test_user)
         test_user_dict.update(
             dict(
-                _created=format_time(NOW) + "Z",
-                _updated=format_time(NOW) + "Z",
+                _created=format_time(NOW) + "+00:00",
+                _updated=format_time(NOW) + "+00:00",
             )
         )
-        self.assertEqual(response.json, test_user_dict)
+        self.assertEqual(await response.get_json(), test_user_dict)
 
     @mock.patch("superdesk.core.resources.service.utcnow", return_value=NOW)
     async def test_patch(self, mock_utcnow):
@@ -80,20 +79,21 @@ class TestResourceHTTPEndpointsTestCase(AsyncFlaskTestCase):
         test_user_dict = self.test_client.model_instance_to_json(test_user)
         test_user_dict.update(
             dict(
-                _created=format_time(NOW) + "Z",
-                _updated=format_time(NOW) + "Z",
+                _created=format_time(NOW) + "+00:00",
+                _updated=format_time(NOW) + "+00:00",
                 first_name="Foo",
                 last_name="Bar",
             )
         )
-        self.assertEqual(response.json, test_user_dict)
+        self.assertEqual(await response.get_json(), test_user_dict)
 
     async def test_delete(self):
         # Test resource is empty
         response = await self.test_client.get("/api/users_async")
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.json["_items"], [])
-        self.assertEqual(response.json["_meta"]["total"], 0)
+        json_data = await response.get_json()
+        self.assertEqual(json_data["_items"], [])
+        self.assertEqual(json_data["_meta"]["total"], 0)
 
         # Add a new user, and search returns it
         test_user = john_doe()
@@ -101,14 +101,14 @@ class TestResourceHTTPEndpointsTestCase(AsyncFlaskTestCase):
         self.assertEqual(response.status_code, 201)
         response = await self.test_client.get("/api/users_async")
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.json["_meta"]["total"], 1)
+        self.assertEqual((await response.get_json())["_meta"]["total"], 1)
 
         # Delete the user, and make sure search is empty
         response = await self.test_client.delete(f"/api/users_async/{test_user.id}")
         self.assertEqual(response.status_code, 204)
         response = await self.test_client.get("/api/users_async")
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.json["_meta"]["total"], 0)
+        self.assertEqual((await response.get_json())["_meta"]["total"], 0)
 
     @mock.patch("superdesk.core.resources.service.utcnow", return_value=NOW)
     async def test_search(self, mock_utcnow):
@@ -116,8 +116,8 @@ class TestResourceHTTPEndpointsTestCase(AsyncFlaskTestCase):
         test_user_dict = self.test_client.model_instance_to_json(test_user)
         test_user_dict.update(
             dict(
-                _created=format_time(NOW) + "Z",
-                _updated=format_time(NOW) + "Z",
+                _created=format_time(NOW) + "+00:00",
+                _updated=format_time(NOW) + "+00:00",
             )
         )
 
@@ -125,17 +125,19 @@ class TestResourceHTTPEndpointsTestCase(AsyncFlaskTestCase):
         self.assertEqual(response.status_code, 201)
 
         response = await self.test_client.get("""/api/users_async?source={"query":{"match":{"first_name":"John"}}}""")
-        self.assertEqual(response.json["_meta"]["total"], 1)
-        self.assertEqual(response.json["_items"], [test_user_dict])
+        json_data = await response.get_json()
+        self.assertEqual(json_data["_meta"]["total"], 1)
+        self.assertEqual(json_data["_items"], [test_user_dict])
 
         response = await self.test_client.get("""/api/users_async?source={"query":{"match":{"first_name":"James"}}}""")
-        self.assertEqual(response.json["_meta"]["total"], 0)
+        self.assertEqual((await response.get_json())["_meta"]["total"], 0)
 
     async def test_hateoas(self):
         # Test hateoas with empty resource
         response = await self.test_client.get("/api/users_async")
+        json_data = await response.get_json()
         self.assertEqual(
-            response.json["_meta"],
+            json_data["_meta"],
             {
                 "max_results": 25,
                 "page": 1,
@@ -143,7 +145,7 @@ class TestResourceHTTPEndpointsTestCase(AsyncFlaskTestCase):
             },
         )
         self.assertEqual(
-            response.json["_links"],
+            json_data["_links"],
             {
                 "parent": {
                     "href": "/",
@@ -166,8 +168,9 @@ class TestResourceHTTPEndpointsTestCase(AsyncFlaskTestCase):
         assert response.status_code == 201
 
         response = await self.test_client.get("/api/users_async")
+        json_data = await response.get_json()
         self.assertEqual(
-            response.json["_meta"],
+            json_data["_meta"],
             {
                 "max_results": 25,
                 "page": 1,
@@ -175,7 +178,7 @@ class TestResourceHTTPEndpointsTestCase(AsyncFlaskTestCase):
             },
         )
         self.assertEqual(
-            response.json["_links"],
+            json_data["_links"],
             {
                 "parent": {
                     "href": "/",
@@ -206,13 +209,13 @@ class TestResourceHTTPEndpointsTestCase(AsyncFlaskTestCase):
             """/api/users_async?source={"aggs":{"codes":{"terms":{"field":"code"}}}}"""
         )
         assert response.status_code == 200
-        assert response.json["_aggregations"]["codes"]["buckets"] == [{"doc_count": 1, "key": "my codes"}]
+        assert (await response.get_json())["_aggregations"]["codes"]["buckets"] == [{"doc_count": 1, "key": "my codes"}]
 
     async def test_post_validation(self):
         # Empty body
         response = await self.test_client.post("/api/users_async", json={})
         assert response.status_code == 403
-        assert response.json == {
+        assert (await response.get_json()) == {
             "_status": "ERR",
             "_error": {"code": 403, "message": "Insertion failure: 1 document(s) contain(s) error(s)"},
             "_issues": {"first_name": {"missing": "Field required"}, "last_name": {"missing": "Field required"}},
@@ -228,7 +231,7 @@ class TestResourceHTTPEndpointsTestCase(AsyncFlaskTestCase):
             },
         )
         assert response.status_code == 403
-        assert response.json == {
+        assert (await response.get_json()) == {
             "_status": "ERR",
             "_error": {"code": 403, "message": "Insertion failure: 1 document(s) contain(s) error(s)"},
             "_issues": {
@@ -260,7 +263,7 @@ class TestResourceHTTPEndpointsTestCase(AsyncFlaskTestCase):
             json={"email": "incorrect email"},
         )
         assert response.status_code == 403
-        assert response.json == {
+        assert (await response.get_json()) == {
             "_status": "ERR",
             "_error": {"code": 403, "message": "Insertion failure: 1 document(s) contain(s) error(s)"},
             "_issues": {
@@ -286,13 +289,13 @@ class TestResourceHTTPEndpointsTestCase(AsyncFlaskTestCase):
         # Use the custom endpoint to get the resource
         response = await self.test_client.get(f"/api/test_simple_route/{test_user.id}?resource=users_async")
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.json, test_user_dict)
+        self.assertEqual(await response.get_json(), test_user_dict)
 
         # Use another custom endpoint to get all user IDs
         response = await self.test_client.get("/api/get_user_ids")
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.json, {"ids": ["user_1"]})
+        self.assertEqual(await response.get_json(), {"ids": ["user_1"]})
 
         response = await self.test_client.get("/api/hello/world")
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.json, {"hello": "world"})
+        self.assertEqual(await response.get_json(), {"hello": "world"})
