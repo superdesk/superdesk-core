@@ -16,12 +16,14 @@ from pytz import utc
 from pydantic import BaseModel, ValidationError
 from eve.utils import querydef
 from werkzeug.datastructures import MultiDict
+from bson import ObjectId
 
 from superdesk.metadata.item import GUID_NEWSML
 from superdesk.metadata.utils import generate_guid
 from superdesk.core.app import get_current_async_app
 from superdesk.errors import SuperdeskApiError
 
+from ..resources.fields import ObjectId as ObjectIdField
 from ..resources.model import ResourceModelConfig
 from .types import HTTPEndpoint, HTTPEndpointGroup, HTTP_METHOD, HTTPRequest, HTTPResponse, RestGetResponse
 from ..resources.cursor import SearchRequest, SearchArgs
@@ -115,14 +117,16 @@ class ResourceEndpoints(HTTPEndpointGroup):
         """Processes a get single item request"""
 
         service = get_current_async_app().resources.get_resource_service(self.resource_config.name)
-        item = await service.find_by_id(args.item_id)
+        item = await service.find_by_id_raw(args.item_id)
         if not item:
             raise SuperdeskApiError.notFoundError(
                 f"{self.resource_config.name} resource with ID '{args.item_id}' not found"
             )
 
         return HTTPResponse(
-            body=item.model_dump(by_alias=True, exclude_unset=True, mode="json"), status_code=200, headers=()
+            body=item,
+            status_code=200,
+            headers=(),
         )
 
     async def process_post_item_request(self, request: HTTPRequest) -> HTTPResponse:
@@ -198,26 +202,16 @@ class ResourceEndpoints(HTTPEndpointGroup):
         count = await cursor.count()
 
         response = RestGetResponse(
-            _items=[],
+            _items=await cursor.to_list_raw(),
             _meta=dict(
                 page=params.page,
                 max_results=params.max_results,
                 total=count,
             ),
         )
-        epoch = datetime(1970, 1, 1, tzinfo=utc)
-        last_update = datetime(1970, 1, 1, tzinfo=utc)
 
-        async for item in cursor:
-            if item.updated > last_update:
-                last_update = item.updated
-            response["_items"].append(item.model_dump(by_alias=True, exclude_unset=True, mode="json"))
-
-        last_modified = last_update if last_update > epoch else None
         status = 200
-        etag = None
         headers = [("X-Total-Count", count)]
-
         response["_links"] = self._build_hateoas(self.resource_config.name, params, count, request)
         response["_meta"] = dict(
             page=params.page,

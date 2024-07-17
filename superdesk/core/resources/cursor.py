@@ -92,6 +92,18 @@ class ResourceCursorAsync(Generic[ResourceModelType]):
     async def __anext__(self) -> ResourceModelType:
         raise NotImplementedError()
 
+    async def next_raw(self) -> Optional[Dict[str, Any]]:
+        raise NotImplementedError()
+
+    async def to_list_raw(self) -> List[Dict[str, Any]]:
+        items: List[Dict[str, Any]] = []
+        item = await self.next_raw()
+        while item is not None:
+            item["_type"] = self.data_class.model_resource_name
+            items.append(item)
+            item = await self.next_raw()
+        return items
+
     async def count(self):
         raise NotImplementedError()
 
@@ -130,6 +142,17 @@ class ElasticsearchResourceCursorAsync(ResourceCursorAsync):
         except (IndexError, KeyError, TypeError):
             raise StopAsyncIteration
 
+    async def next_raw(self) -> Optional[Dict[str, Any]]:
+        try:
+            data = self.hits["hits"]["hits"][self._index]
+            source = data["_source"]
+            source["_id"] = data["_id"]
+            source.pop("_resource", None)
+            self._index += 1
+            return source
+        except (IndexError, KeyError, TypeError):
+            return None
+
     async def count(self):
         hits = self.hits.get("hits")
         if hits:
@@ -163,6 +186,12 @@ class MongoResourceCursorAsync(ResourceCursorAsync):
 
     async def __anext__(self):
         return self.get_model_instance(await self.cursor.next())
+
+    async def next_raw(self) -> Optional[Dict[str, Any]]:
+        try:
+            return dict(await self.cursor.next())
+        except StopAsyncIteration:
+            return None
 
     async def count(self):
         return await self.collection.count_documents(self.lookup)
