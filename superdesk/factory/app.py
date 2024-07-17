@@ -9,7 +9,7 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
-from typing import Dict, Any, Type, List, Optional, Union, Mapping, cast
+from typing import Dict, Any, Type, List, Optional, Union, Mapping, cast, NoReturn
 
 import os
 import eve
@@ -42,7 +42,7 @@ from superdesk.json_utils import SuperdeskFlaskJSONProvider, SuperdeskJSONEncode
 from superdesk.cache import cache_backend
 from .elastic_apm import setup_apm
 from superdesk.core.app import SuperdeskAsyncApp
-from superdesk.core.http.types import HTTPEndpoint, HTTPRequest, HTTPEndpointGroup, HTTP_METHOD
+from superdesk.core.http.types import HTTPEndpoint, HTTPRequest, HTTPEndpointGroup, HTTP_METHOD, HTTPResponse
 
 SUPERDESK_PATH = os.path.abspath(os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
 
@@ -76,6 +76,9 @@ class HttpFlaskRequest(HTTPRequest):
 
     async def get_data(self) -> Union[bytes, str]:
         return self.request.get_data()
+
+    async def abort(self, code: int, *args: Any, **kwargs: Any) -> NoReturn:
+        flask.abort(code, *args, **kwargs)
 
 
 def set_error_handlers(app):
@@ -195,7 +198,7 @@ class SuperdeskEve(eve.Eve):
                     update_resource_schema(versioned_resource)
 
     def register_endpoint(self, endpoint: HTTPEndpoint):
-        url = f"{self.api_prefix}/{endpoint.url}"
+        url = f"{self.api_prefix}/{endpoint.url}" if not endpoint.url.startswith("/") else endpoint.url
 
         self.add_url_rule(
             url,
@@ -223,6 +226,10 @@ class SuperdeskEve(eve.Eve):
             dict(flask_request.args.deepcopy()),
             HttpFlaskRequest(endpoint, flask_request),
         )
+        if not isinstance(response, HTTPResponse):
+            # We may have received a different response, such as a flask redirect call
+            # So we return it here
+            return response
 
         return response.body, response.status_code, response.headers
 

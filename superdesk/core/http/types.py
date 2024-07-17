@@ -22,6 +22,7 @@ from typing import (
     Union,
     TypedDict,
     Dict,
+    NoReturn,
 )
 from inspect import signature
 
@@ -179,6 +180,9 @@ class HTTPRequest(Protocol):
 
     async def get_data(self) -> Union[bytes, str]:
         """Get the body of the current request in raw bytes format"""
+        ...
+
+    async def abort(self, code: int, *args: Any, **kwargs: Any) -> NoReturn:
         ...
 
 
