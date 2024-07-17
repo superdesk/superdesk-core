@@ -61,6 +61,9 @@ class MongoIndexOptions:
     #: allows users to specify language-specific rules for string comparison
     collation: Optional[MongoIndexCollation] = None
 
+    #: allows to filter documents for this index
+    partialFilterExpression: Optional[Dict[str, Any]] = None
+
 
 @dataclass
 class MongoResourceConfig:
