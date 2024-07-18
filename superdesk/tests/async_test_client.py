@@ -17,14 +17,35 @@ from werkzeug.datastructures import Headers, Authorization
 from flask import Flask
 from quart import Response
 from quart.datastructures import FileStorage
+from quart.utils import decode_headers
 from quart.testing import QuartClient
 from quart.testing.utils import make_test_headers_path_and_query_string, make_test_body_with_headers, make_test_scope
 from quart.testing.client import _TestCookieJarResponse
+from quart.testing.connections import TestHTTPConnection as QuartTestHTTPConnection, HTTPDisconnectError
+from hypercorn.typing import ASGISendEvent
 
 from superdesk.core.resources.model import ResourceModel
 
 
+class TestHTTPConnection(QuartTestHTTPConnection):
+    # Copied from ``quart.testing.connections.TestHTTPConnection`` to fix issue with
+    # message["body"] raising a KeyError (due to asgiref lib, and test client)
+    # should be fine in a running server
+    async def _asgi_send(self, message: ASGISendEvent) -> None:
+        if message["type"] == "http.response.start":
+            self.headers = decode_headers(message["headers"])
+            self.status_code = message["status"]
+        elif message["type"] == "http.response.body":
+            await self._receive_queue.put(message.get("body") or b"")
+        elif message["type"] == "http.response.push":
+            self.push_promises.append((message["path"], decode_headers(message["headers"])))
+        elif message["type"] == "http.disconnect":
+            await self._receive_queue.put(HTTPDisconnectError())
+
+
 class AsyncTestClient(QuartClient):
+    http_connection_class = TestHTTPConnection
+
     def __init__(self, app: Flask, asgi_app: WsgiToAsgi) -> None:
         setattr(asgi_app, "config", app.config)
         setattr(asgi_app, "response_class", Response)
