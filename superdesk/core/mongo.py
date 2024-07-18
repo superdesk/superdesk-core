@@ -306,7 +306,7 @@ class MongoResources:
                     (key[0], key[1])
                     for key in index_details.keys
                 ]
-                kwargs = {key: val for key, val in asdict(index_details).items() if key != "keys"}
+                kwargs = {key: val for key, val in asdict(index_details).items() if key != "keys" and val is not None}
 
                 try:
                     collection.create_index(keys, **kwargs)
