@@ -12,7 +12,7 @@ from typing import Callable, Optional, List, Union
 from dataclasses import dataclass
 
 from .config import ConfigModel
-from .http.wsgi import HTTPEndpoint, HTTPEndpointGroup
+from .web import Endpoint, EndpointGroup
 
 
 @dataclass
@@ -48,8 +48,8 @@ class Module:
     resources: Optional[List["ResourceConfig"]] = None
 
     #: Optional list of HTTP endpoints to register with the system
-    http_endpoints: Optional[List[Union[HTTPEndpoint, HTTPEndpointGroup]]] = None
+    endpoints: Optional[List[Union[Endpoint, EndpointGroup]]] = None
 
 
 from .app import SuperdeskAsyncApp  # noqa: E402
-from .resources.model import ResourceConfig  # noqa: E402
+from .resources import ResourceConfig  # noqa: E402

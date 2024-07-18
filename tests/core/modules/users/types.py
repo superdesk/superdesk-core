@@ -4,8 +4,7 @@ from enum import Enum
 
 from pydantic import Field
 
-from superdesk.core.resources import ResourceModel, fields, dataclass
-from superdesk.core.resources import validators
+from superdesk.core.resources import ResourceModel, fields, dataclass, validators
 
 
 @dataclass

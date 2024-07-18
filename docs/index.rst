@@ -47,7 +47,7 @@ existing code to the new framework.
    core/modules
    core/resources
    core/resource_management
-   core/http
+   core/web
    core/mongo
    core/elastic
 

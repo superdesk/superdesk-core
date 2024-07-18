@@ -1,10 +1,11 @@
-from superdesk.core.mongo import MongoResourceConfig, MongoIndexOptions
-from superdesk.core.elastic.resources import ElasticResourceConfig
-
-from superdesk.core.resources import ResourceConfig
-from superdesk.core.resources.service import AsyncResourceService
-from superdesk.core.http.resource_endpoints import ResourceEndpoints
-
+from superdesk.core.resources import (
+    ResourceConfig,
+    RestEndpointConfig,
+    AsyncResourceService,
+    MongoResourceConfig,
+    MongoIndexOptions,
+    ElasticResourceConfig,
+)
 
 from .types import User
 
@@ -34,10 +35,5 @@ user_model_config = ResourceConfig(
     ),
     elastic=ElasticResourceConfig(),
     service=UserResourceService,
-)
-
-users_resource_endpoints = ResourceEndpoints(
-    user_model_config,
-    resource_methods=["GET", "POST"],
-    item_methods=["GET", "PATCH", "DELETE"],
+    rest_endpoints=RestEndpointConfig(),
 )

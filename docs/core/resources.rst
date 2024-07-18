@@ -357,12 +357,10 @@ Example module::
         ResourceModel,
         ResourceConfig,
         fields,
-    )
-    from superdesk.core.mongo import (
         MongoResourceConfig,
         MongoIndexOptions,
+        ElasticResourceConfig,
     )
-    from superdesk.core.elastic.resources import ElasticResourceConfig
 
     # Define your user model
     class User(ResourceModel):

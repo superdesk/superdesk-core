@@ -9,6 +9,10 @@
 # at https://www.sourcefabric.org/superdesk/license
 
 from .model import Resources, ResourceModel, ResourceModelWithObjectId, ResourceConfig, dataclass
+from .resource_rest_endpoints import RestEndpointConfig
+from .service import AsyncResourceService
+from ..mongo import MongoResourceConfig, MongoIndexOptions
+from ..elastic.resources import ElasticResourceConfig
 
 __all__ = [
     "Resources",
@@ -17,4 +21,9 @@ __all__ = [
     "ResourceConfig",
     "dataclass",
     "fields",
+    "RestEndpointConfig",
+    "AsyncResourceService",
+    "MongoResourceConfig",
+    "MongoIndexOptions",
+    "ElasticResourceConfig",
 ]

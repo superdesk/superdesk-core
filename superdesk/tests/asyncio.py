@@ -31,9 +31,6 @@ class MockWSGI:
     def register_endpoint(self, endpoint):
         pass
 
-    def register_endpoint_group(self, group):
-        pass
-
 
 class AsyncTestCase(unittest.IsolatedAsyncioTestCase):
     app: SuperdeskAsyncApp

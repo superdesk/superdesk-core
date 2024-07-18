@@ -30,10 +30,13 @@ import simplejson as json
 
 from superdesk.errors import SuperdeskApiError
 from superdesk.utc import utcnow
+from superdesk.metadata.item import GUID_NEWSML
+from superdesk.metadata.utils import generate_guid
 
 from ..app import SuperdeskAsyncApp, get_current_async_app
 from .fields import ObjectId as ObjectIdField
 from .cursor import ElasticsearchResourceCursorAsync, MongoResourceCursorAsync, ResourceCursorAsync, SearchRequest
+from .utils import resource_uses_objectid_for_id
 
 logger = logging.getLogger(__name__)
 
@@ -69,10 +72,10 @@ class AsyncResourceService(Generic[ResourceModelType]):
         return instance
 
     def id_uses_objectid(self) -> bool:
-        try:
-            return self.config.data_class.model_fields["id"].annotation == ObjectIdField
-        except KeyError:
-            return False
+        return resource_uses_objectid_for_id(self.config.data_class)
+
+    def generate_id(self) -> str | ObjectId:
+        return ObjectIdField() if self.id_uses_objectid() else generate_guid(type=GUID_NEWSML)
 
     @property
     def mongo(self):

@@ -8,108 +8,80 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
-from typing import List, Optional, cast, Dict, Any
+from typing import List, Optional, cast, Dict, Any, TypedDict, Type
 import math
 
-from pydantic import BaseModel, ValidationError
+from dataclasses import dataclass
+from pydantic import ValidationError
 from eve.utils import querydef
 from werkzeug.datastructures import MultiDict
 
-from superdesk.metadata.item import GUID_NEWSML
-from superdesk.metadata.utils import generate_guid
 from superdesk.core.app import get_current_async_app
 from superdesk.errors import SuperdeskApiError
 
-from ..resources.model import ResourceConfig
-from .types import HTTPEndpoint, HTTPEndpointGroup, HTTP_METHOD, HTTPRequest, HTTPResponse, RestGetResponse
-from ..resources.cursor import SearchRequest, SearchArgs
-from ..resources.validators import convert_pydantic_validation_error_for_response
+from ..web.types import HTTP_METHOD, Request, Response, RestGetResponse
+from ..web.rest_endpoints import RestEndpoints, ItemRequestViewArgs
+
+from .model import ResourceConfig, ResourceModel
+from .cursor import SearchRequest, SearchArgs
+from .validators import convert_pydantic_validation_error_for_response
+from .utils import resource_uses_objectid_for_id
 
 
-class ItemRequestViewArgs(BaseModel):
-    item_id: str
+@dataclass
+class RestEndpointConfig:
+    #: Optional list of resource level methods, defaults to ["GET", "POST"]
+    resource_methods: Optional[List[HTTP_METHOD]] = None
+
+    #: Optional list of item level methods, defaults to ["GET", "PATCH", "DELETE"]
+    item_methods: Optional[List[HTTP_METHOD]] = None
+
+    #: Optional EndpointGroup, will default to `ResourceRestEndpoints`
+    endpoints_class: Optional[Type["ResourceRestEndpoints"]] = None
+
+    #: Optionally set a custom URL ID param syntax for item routes
+    id_param_type: Optional[str] = None
 
 
-class ResourceEndpoints(HTTPEndpointGroup):
-    """Custom HTTPEndpointGroup for REST resources"""
+def get_id_url_type(data_class: type[ResourceModel]) -> str:
+    """Get the URL param type for the ID field for route registration"""
+
+    if resource_uses_objectid_for_id(data_class):
+        return 'regex("[a-f0-9]{24}")'
+    else:
+        return 'regex("[\w,.:_-]+")'
+
+
+class ResourceRestEndpoints(RestEndpoints):
+    """Custom EndpointGroup for REST resources"""
 
     #: The config for the resource to use
     resource_config: ResourceConfig
 
-    #: Optional list of resource level methods, defaults to ["GET", "POST"]
-    resource_methods: List[HTTP_METHOD]
-
-    #: Optional list of item level methods, defaults to ["GET", "PATCH", "DELETE"]
-    item_methods: List[HTTP_METHOD]
+    #: REST endpoint config
+    endpoint_config: RestEndpointConfig
 
     def __init__(
         self,
         resource_config: ResourceConfig,
-        resource_methods: Optional[List[HTTP_METHOD]] = None,
-        item_methods: Optional[List[HTTP_METHOD]] = None,
+        endpoint_config: RestEndpointConfig,
     ):
-        super().__init__()
+        super().__init__(
+            url=resource_config.name,
+            name=resource_config.name,
+            resource_methods=endpoint_config.resource_methods,
+            item_methods=endpoint_config.item_methods,
+            id_param_type=endpoint_config.id_param_type or get_id_url_type(resource_config.data_class),
+        )
         self.resource_config = resource_config
-        self.resource_methods = resource_methods or ["GET", "POST"]
-        self.item_methods = item_methods or ["GET", "PATCH", "DELETE"]
-
-        if "GET" in self.resource_methods:
-            self.endpoints.append(
-                HTTPEndpoint(
-                    url=self.resource_config.name,
-                    name=f"{self.resource_config.name}|resource_get",
-                    func=self.process_get_request,
-                    methods=["GET"],
-                )
-            )
-
-        if "POST" in self.resource_methods:
-            self.endpoints.append(
-                HTTPEndpoint(
-                    url=self.resource_config.name,
-                    name=f"{self.resource_config.name}|resource_post",
-                    func=self.process_post_item_request,
-                    methods=["POST"],
-                )
-            )
-
-        item_url = f"{self.resource_config.name}/<string:item_id>"
-        if "GET" in self.item_methods:
-            self.endpoints.append(
-                HTTPEndpoint(
-                    url=item_url,
-                    name=f"{self.resource_config.name}|item_get",
-                    func=self.process_get_item_request,
-                    methods=["GET"],
-                )
-            )
-
-        if "PATCH" in self.item_methods:
-            self.endpoints.append(
-                HTTPEndpoint(
-                    url=item_url,
-                    name=f"{self.resource_config.name}|item_patch",
-                    func=self.process_patch_item_request,
-                    methods=["PATCH"],
-                )
-            )
-
-        if "DELETE" in self.item_methods:
-            self.endpoints.append(
-                HTTPEndpoint(
-                    url=item_url,
-                    name=f"{self.resource_config.name}|item_delete",
-                    func=self.process_delete_item_request,
-                    methods=["DELETE"],
-                )
-            )
+        self.endpoint_config = endpoint_config
 
     async def process_get_item_request(
         self,
         args: ItemRequestViewArgs,
         params: None,
-        request: HTTPRequest,
-    ) -> HTTPResponse:
+        request: Request,
+    ) -> Response:
         """Processes a get single item request"""
 
         service = get_current_async_app().resources.get_resource_service(self.resource_config.name)
@@ -119,13 +91,13 @@ class ResourceEndpoints(HTTPEndpointGroup):
                 f"{self.resource_config.name} resource with ID '{args.item_id}' not found"
             )
 
-        return HTTPResponse(
+        return Response(
             body=item,
             status_code=200,
             headers=(),
         )
 
-    async def process_post_item_request(self, request: HTTPRequest) -> HTTPResponse:
+    async def process_post_item_request(self, request: Request) -> Response:
         """Processes a create item request"""
 
         service = get_current_async_app().resources.get_resource_service(self.resource_config.name)
@@ -141,21 +113,22 @@ class ResourceEndpoints(HTTPEndpointGroup):
         for value in payload:
             # Validate the provided item,
             try:
-                value.setdefault("_id", generate_guid(type=GUID_NEWSML))
+                if "_id" not in value:
+                    value["_id"] = service.generate_id()
                 model_instance = self.resource_config.data_class.model_validate(value)
                 model_instances.append(model_instance)
             except ValidationError as validation_error:
-                return HTTPResponse(convert_pydantic_validation_error_for_response(validation_error), 403, ())
+                return Response(convert_pydantic_validation_error_for_response(validation_error), 403, ())
 
         ids = await service.create(model_instances)
-        return HTTPResponse(ids, 201, ())
+        return Response(ids, 201, ())
 
     async def process_patch_item_request(
         self,
         args: ItemRequestViewArgs,
         params: None,
-        request: HTTPRequest,
-    ) -> HTTPResponse:
+        request: Request,
+    ) -> Response:
         """Processes an update item request"""
 
         service = get_current_async_app().resources.get_resource_service(self.resource_config.name)
@@ -167,13 +140,11 @@ class ResourceEndpoints(HTTPEndpointGroup):
         try:
             await service.update(args.item_id, payload)
         except ValidationError as validation_error:
-            return HTTPResponse(convert_pydantic_validation_error_for_response(validation_error), 403, ())
+            return Response(convert_pydantic_validation_error_for_response(validation_error), 403, ())
 
-        return HTTPResponse({}, 200, ())
+        return Response({}, 200, ())
 
-    async def process_delete_item_request(
-        self, args: ItemRequestViewArgs, params: None, request: HTTPRequest
-    ) -> HTTPResponse:
+    async def process_delete_item_request(self, args: ItemRequestViewArgs, params: None, request: Request) -> Response:
         """Processes a delete item request"""
 
         service = get_current_async_app().resources.get_resource_service(self.resource_config.name)
@@ -185,14 +156,14 @@ class ResourceEndpoints(HTTPEndpointGroup):
             )
 
         await service.delete(original)
-        return HTTPResponse({}, 204, ())
+        return Response({}, 204, ())
 
     async def process_get_request(
         self,
         args: None,
         params: SearchRequest,
-        request: HTTPRequest,
-    ) -> HTTPResponse:
+        request: Request,
+    ) -> Response:
         """Processes a search request"""
 
         service = get_current_async_app().resources.get_resource_service(self.resource_config.name)
@@ -220,10 +191,10 @@ class ResourceEndpoints(HTTPEndpointGroup):
         if hasattr(cursor, "extra"):
             getattr(cursor, "extra")(response)
 
-        return HTTPResponse(response, status, headers)
+        return Response(response, status, headers)
 
     def _build_hateoas(
-        self, resource_name: str, req: SearchRequest, doc_count: Optional[int], request: HTTPRequest
+        self, resource_name: str, req: SearchRequest, doc_count: Optional[int], request: Request
     ) -> Dict[str, Any]:
         links = {
             "parent": {

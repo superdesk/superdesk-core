@@ -11,7 +11,7 @@
 from typing import Dict, List, Optional
 import importlib
 
-from .http.wsgi import WSGIApp, HTTPEndpoint, HTTPEndpointGroup
+from .web import WSGIApp
 
 
 class SuperdeskAsyncApp:
@@ -83,11 +83,22 @@ class SuperdeskAsyncApp:
 
         # Now register all http endpoints
         for module in self.get_module_list():
-            for endpoint in module.http_endpoints or []:
-                if isinstance(endpoint, HTTPEndpoint):
-                    self.wsgi.register_endpoint(endpoint)
-                elif isinstance(endpoint, HTTPEndpointGroup):
-                    self.wsgi.register_endpoint_group(endpoint)
+            from .resources.resource_rest_endpoints import ResourceRestEndpoints
+
+            if module.endpoints is None:
+                module.endpoints = []
+            for resource_config in module.resources or []:
+                # If REST endpoints are enabled for this resource
+                # then add the endpoint group to this module's `endpoints` config
+                rest_endpoint_config = resource_config.rest_endpoints
+                if rest_endpoint_config is None:
+                    continue
+
+                endpoint_class = rest_endpoint_config.endpoints_class or ResourceRestEndpoints
+                module.endpoints.append(endpoint_class(resource_config, rest_endpoint_config))
+
+            for endpoint in module.endpoints or []:
+                self.wsgi.register_endpoint(endpoint)
 
         # then init all modules
         for module in self.get_module_list():

@@ -20,7 +20,6 @@ import importlib
 import superdesk
 import logging
 
-from pydantic import BaseModel
 from flask_mail import Mail
 from eve.auth import TokenAuth
 from eve.io.mongo.mongo import _create_index as create_index
@@ -42,18 +41,18 @@ from superdesk.json_utils import SuperdeskFlaskJSONProvider, SuperdeskJSONEncode
 from superdesk.cache import cache_backend
 from .elastic_apm import setup_apm
 from superdesk.core.app import SuperdeskAsyncApp
-from superdesk.core.http.types import HTTPEndpoint, HTTPRequest, HTTPEndpointGroup, HTTP_METHOD, HTTPResponse
+from superdesk.core.web import Endpoint, Request, EndpointGroup, HTTP_METHOD, Response
 
 SUPERDESK_PATH = os.path.abspath(os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
 
 logger = logging.getLogger(__name__)
 
 
-class HttpFlaskRequest(HTTPRequest):
-    endpoint: HTTPEndpoint
+class HttpFlaskRequest(Request):
+    endpoint: Endpoint
     request: flask.Request
 
-    def __init__(self, endpoint: HTTPEndpoint, request: flask.Request):
+    def __init__(self, endpoint: Endpoint, request: flask.Request):
         self.endpoint = endpoint
         self.request = request
 
@@ -119,8 +118,8 @@ def set_error_handlers(app):
 
 class SuperdeskEve(eve.Eve):
     async_app: SuperdeskAsyncApp
-    _endpoints: List[HTTPEndpoint]
-    _endpoint_groups: List[HTTPEndpointGroup]
+    _endpoints: List[Endpoint]
+    _endpoint_groups: List[EndpointGroup]
 
     def __init__(self, **kwargs):
         # set attributes to avoid event slots being created
@@ -197,27 +196,28 @@ class SuperdeskEve(eve.Eve):
                 if versioned_resource in self.config["DOMAIN"]:
                     update_resource_schema(versioned_resource)
 
-    def register_endpoint(self, endpoint: HTTPEndpoint):
-        url = f"{self.api_prefix}/{endpoint.url}" if not endpoint.url.startswith("/") else endpoint.url
+    def register_endpoint(self, endpoint: Endpoint | EndpointGroup):
+        if isinstance(endpoint, EndpointGroup):
+            for sub_endpoint in endpoint.endpoints:
+                self.register_endpoint(sub_endpoint)
+            self._endpoint_groups.append(endpoint)
+        else:
+            url = f"{self.api_prefix}/{endpoint.url}" if not endpoint.url.startswith("/") else endpoint.url
 
-        self.add_url_rule(
-            url,
-            endpoint.name,
-            view_func=self._process_async_endpoint,
-            methods=endpoint.methods,
-        )
-        self._endpoints.append(endpoint)
-
-    def register_endpoint_group(self, group: HTTPEndpointGroup):
-        for endpoint in group.endpoints:
-            self.register_endpoint(endpoint)
+            self.add_url_rule(
+                url,
+                endpoint.name,
+                view_func=self._process_async_endpoint,
+                methods=endpoint.methods,
+            )
+            self._endpoints.append(endpoint)
 
     async def _process_async_endpoint(self, **kwargs):
-        # Get HTTPEndpoint instance
+        # Get Endpoint instance
         from flask import request as flask_request
 
         endpoint_name = flask_request.endpoint
-        endpoint: Optional[HTTPEndpoint] = next((e for e in self._endpoints if e.name == endpoint_name), None)
+        endpoint: Optional[Endpoint] = next((e for e in self._endpoints if e.name == endpoint_name), None)
         if endpoint is None:
             raise NotFound()
 
@@ -226,7 +226,7 @@ class SuperdeskEve(eve.Eve):
             dict(flask_request.args.deepcopy()),
             HttpFlaskRequest(endpoint, flask_request),
         )
-        if not isinstance(response, HTTPResponse):
+        if not isinstance(response, Response):
             # We may have received a different response, such as a flask redirect call
             # So we return it here
             return response

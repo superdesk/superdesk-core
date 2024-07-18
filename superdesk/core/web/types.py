@@ -30,11 +30,13 @@ from dataclasses import dataclass
 from pydantic import BaseModel
 
 HTTP_METHOD = Literal["GET", "POST", "PATCH", "PUT", "DELETE", "HEAD", "OPTIONS"]
+
+
 PydanticModelType = TypeVar("PydanticModelType", bound=BaseModel)
 
 
 @dataclass
-class HTTPResponse:
+class Response:
     """Dataclass for endpoints to return response from a request"""
 
     #: The body of the response (Flask will determine data type for us)
@@ -47,58 +49,58 @@ class HTTPResponse:
     headers: Sequence
 
 
-#: Function for use with a HTTPEndpoint registration and request processing
+#: Function for use with a Endpoint registration and request processing
 #:
 #: Supported endpoint signatures::
 #:
 #:      # Request Only
-#:      async def test1(request: HTTPRequest) -> HTTPResponse
+#:      async def test1(request: Request) -> Response
 #:
 #:      # Args and Request
 #:      async def test2(
 #:          args: Pydantic.BaseModel,
 #:          params: None,
-#:          request: HTTPRequest
-#:      ) -> HTTPResponse
+#:          request: Request
+#:      ) -> Response
 #:
 #:      # Params and Request
 #:      async def test3(
 #:          args: None,
 #:          params: Pydantic.BaseModel,
-#:          request: HTTPRequest
-#:      ) -> HTTPResponse
+#:          request: Request
+#:      ) -> Response
 #:
 #:      # Args, Params and Request
 #:      async def test4(
 #:          args: Pydantic.BaseModel,
 #:          params: Pydantic.BaseModel,
-#:          request: HTTPRequest
-#:      ) -> HTTPResponse
-HTTPEndpointFunction = Union[
+#:          request: Request
+#:      ) -> Response
+EndpointFunction = Union[
     Callable[
-        ["HTTPRequest"],
-        Awaitable[HTTPResponse],
+        ["Request"],
+        Awaitable[Response],
     ],
     Callable[
-        [PydanticModelType, PydanticModelType, "HTTPRequest"],
-        Awaitable[HTTPResponse],
+        [PydanticModelType, PydanticModelType, "Request"],
+        Awaitable[Response],
     ],
     Callable[
-        [None, PydanticModelType, "HTTPRequest"],
-        Awaitable[HTTPResponse],
+        [None, PydanticModelType, "Request"],
+        Awaitable[Response],
     ],
     Callable[
-        [PydanticModelType, None, "HTTPRequest"],
-        Awaitable[HTTPResponse],
+        [PydanticModelType, None, "Request"],
+        Awaitable[Response],
     ],
     Callable[
-        [None, None, "HTTPRequest"],
-        Awaitable[HTTPResponse],
+        [None, None, "Request"],
+        Awaitable[Response],
     ],
 ]
 
 
-class HTTPEndpoint:
+class Endpoint:
     """Base class used for registering and processing endpoints"""
 
     #: URL for the endpoint
@@ -111,12 +113,12 @@ class HTTPEndpoint:
     methods: List[HTTP_METHOD]
 
     #: The callback function used to process the request
-    func: HTTPEndpointFunction
+    func: EndpointFunction
 
     def __init__(
         self,
         url: str,
-        func: HTTPEndpointFunction,
+        func: EndpointFunction,
         methods: Optional[List[HTTP_METHOD]] = None,
         name: Optional[str] = None,
     ):
@@ -125,7 +127,7 @@ class HTTPEndpoint:
         self.methods = methods or ["GET"]
         self.name = name or func.__name__
 
-    def __call__(self, args: Dict[str, Any], params: Dict[str, Any], request: "HTTPRequest"):
+    def __call__(self, args: Dict[str, Any], params: Dict[str, Any], request: "Request"):
         func_params = signature(self.func).parameters
         if "args" not in func_params and "params" not in func_params:
             return self.func(request)  # type: ignore[call-arg,arg-type]
@@ -147,14 +149,14 @@ class HTTPEndpoint:
         return self.func(request_args, url_params, request)  # type: ignore[call-arg,arg-type]
 
 
-class HTTPRequest(Protocol):
+class Request(Protocol):
     """Protocol to define common request functionality
 
     This is implemented in `SuperdeskEve` app using Flask to provide the required functionality.
     """
 
-    #: The current HTTPEndpoint being processed
-    endpoint: HTTPEndpoint
+    #: The current Endpoint being processed
+    endpoint: Endpoint
 
     @property
     def method(self) -> HTTP_METHOD:
@@ -186,14 +188,14 @@ class HTTPRequest(Protocol):
         ...
 
 
-class HTTPEndpointGroup:
+class EndpointGroup:
     """Base class used for registering a group of endpoints"""
 
     #: Optional url prefix to be added to all routes of this group
     url_prefix: Optional[str]
 
     #: List of endpoints registered with this group
-    endpoints: List[HTTPEndpoint]
+    endpoints: List[Endpoint]
 
     def __init__(self, url_prefix: Optional[str] = None):
         self.url_prefix = url_prefix
@@ -212,9 +214,9 @@ class HTTPEndpointGroup:
         :param methods: The optional list of HTTP methods allowed
         """
 
-        def fdec(func: HTTPEndpointFunction):
+        def fdec(func: EndpointFunction):
             self.endpoints.append(
-                HTTPEndpoint(
+                Endpoint(
                     f"{self.url_prefix}/{url}" if self.url_prefix else url,
                     func,
                     methods=methods,
@@ -251,8 +253,8 @@ class RestGetResponse(TypedDict, total=False):
     _meta: RestResponseMeta
 
 
-def http_endpoint(url: str, name: Optional[str] = None, methods: Optional[List[HTTP_METHOD]] = None):
-    """Decorator function to convert a pure function to a HTTPEndpoint instance
+def endpoint(url: str, name: Optional[str] = None, methods: Optional[List[HTTP_METHOD]] = None):
+    """Decorator function to convert a pure function to an Endpoint instance
 
     This is then later used to register with a Module or the app.
 
@@ -261,8 +263,8 @@ def http_endpoint(url: str, name: Optional[str] = None, methods: Optional[List[H
     :param methods: The optional list of HTTP methods allowed
     """
 
-    def convert_to_endpoint(func: HTTPEndpointFunction):
-        return HTTPEndpoint(
+    def convert_to_endpoint(func: EndpointFunction):
+        return Endpoint(
             url=url,
             name=name,
             methods=methods,
@@ -270,3 +272,18 @@ def http_endpoint(url: str, name: Optional[str] = None, methods: Optional[List[H
         )
 
     return convert_to_endpoint
+
+
+class WSGIApp(Protocol):
+    """Protocol for defining functionality from a WSGI application (such as Eve/Flask)
+
+    A class instance that adheres to this protocol is passed into the SuperdeskAsyncApp constructor.
+    This way the SuperdeskAsyncApp does not need to know the underlying WSGI application, just that
+    it provides certain functionality.
+    """
+
+    #: Config for the application
+    config: Dict[str, Any]
+
+    def register_endpoint(self, endpoint: Endpoint | EndpointGroup):
+        ...

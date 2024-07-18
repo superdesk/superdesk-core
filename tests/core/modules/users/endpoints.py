@@ -3,7 +3,7 @@ from typing import Optional
 from pydantic import BaseModel
 
 from superdesk.core.app import get_current_async_app
-from superdesk.core.http.types import HTTPRequest, HTTPResponse, HTTPEndpointGroup, http_endpoint
+from superdesk.core.web import Request, Response, EndpointGroup, endpoint
 from superdesk.errors import SuperdeskApiError
 
 
@@ -15,7 +15,7 @@ class RequestParams(BaseModel):
     resource: Optional[str] = None
 
 
-endpoints = HTTPEndpointGroup()
+endpoints = EndpointGroup()
 
 
 @endpoints.endpoint(
@@ -23,7 +23,7 @@ endpoints = HTTPEndpointGroup()
     methods=["GET"],
     name="test_simple_route|test",
 )
-async def test_simple_route(args: RequestArgs, params: RequestParams, request: HTTPRequest) -> HTTPResponse:
+async def test_simple_route(args: RequestArgs, params: RequestParams, request: Request) -> Response:
     item_id = args.item_id
     resource = params.resource or "users_async"
     app = get_current_async_app()
@@ -31,11 +31,11 @@ async def test_simple_route(args: RequestArgs, params: RequestParams, request: H
     item = await app.resources.get_resource_service(resource).find_by_id(item_id)
     if item is None:
         raise SuperdeskApiError.notFoundError("Item not found")
-    return HTTPResponse(item.model_dump(by_alias=True, exclude_unset=True, mode="json"), 200, ())
+    return Response(item.model_dump(by_alias=True, exclude_unset=True, mode="json"), 200, ())
 
 
 @endpoints.endpoint(url="get_user_ids", methods=["GET"], name="get_user_ids|test")
-async def get_user_ids(request: HTTPRequest) -> HTTPResponse:
+async def get_user_ids(request: Request) -> Response:
     app = get_current_async_app()
     item_ids = []
 
@@ -43,9 +43,9 @@ async def get_user_ids(request: HTTPRequest) -> HTTPResponse:
     async for item in cursor:
         item_ids.append(item.id)
 
-    return HTTPResponse({"ids": item_ids}, 200, ())
+    return Response({"ids": item_ids}, 200, ())
 
 
-@http_endpoint("hello/world", methods=["GET"])
-async def hello_world(request: HTTPRequest) -> HTTPResponse:
-    return HTTPResponse({"hello": "world"}, 200, ())
+@endpoint("hello/world", methods=["GET"])
+async def hello_world(request: Request) -> Response:
+    return Response({"hello": "world"}, 200, ())

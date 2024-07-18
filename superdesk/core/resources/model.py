@@ -36,6 +36,7 @@ model_config = ConfigDict(
     populate_by_name=True,
     revalidate_instances="always",
     extra="forbid",
+    protected_namespaces=(),
 )
 
 
@@ -156,7 +157,11 @@ class ResourceConfig:
     #: The config used for Elasticsearch, if `None` then this resource will not be available in Elasticsearch
     elastic: Optional["ElasticResourceConfig"] = None
 
+    #: Optional ResourceService class, if not provided the system will create a generic one, with no resource type
     service: Optional[Type["AsyncResourceService"]] = None
+
+    #: Optional config to be used for REST endpoints. If not provided, REST will not be available for this resource
+    rest_endpoints: Optional["RestEndpointConfig"] = None
 
 
 class Resources:
@@ -237,3 +242,4 @@ from .service import AsyncResourceService  # noqa: E402
 from ..mongo import MongoResourceConfig  # noqa: E402
 from ..elastic import ElasticResourceConfig  # noqa: E402
 from .validators import AsyncValidator  # noqa: E402
+from .resource_rest_endpoints import RestEndpointConfig  # noqa: E402
