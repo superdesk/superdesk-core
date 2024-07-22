@@ -29,6 +29,7 @@ from superdesk.utc import utcnow
 
 from ..app import SuperdeskAsyncApp, get_current_async_app
 from .cursor import ElasticsearchResourceCursorAsync, MongoResourceCursorAsync, ResourceCursorAsync, SearchRequest
+from .utils import resource_uses_objectid_for_id
 
 logger = logging.getLogger(__name__)
 
@@ -62,6 +63,9 @@ class AsyncResourceService(Generic[ResourceModelType]):
             setattr(cls, "_instance", instance)
 
         return instance
+
+    def id_uses_objectid(self) -> bool:
+        return resource_uses_objectid_for_id(self.config.data_class)
 
     @property
     def mongo(self):
