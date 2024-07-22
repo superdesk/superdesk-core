@@ -203,6 +203,9 @@ class AsyncResourceService(Generic[ResourceModelType]):
         for doc in docs:
             await self.validate_create(doc)
             doc_dict = doc.model_dump(by_alias=True, exclude_unset=True)
+            if self.id_uses_objectid():
+                # Make sure to convert the ID into an ObjectId instance
+                doc_dict["_id"] = ObjectId(doc_dict["_id"])
             response = await self.mongo.insert_one(doc_dict)
             ids.append(response.inserted_id)
             try:
