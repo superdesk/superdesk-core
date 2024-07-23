@@ -229,7 +229,7 @@ def add_activity(
 
 
 def notify_and_add_activity(
-    activity_name, msg, resource=None, item=None, user_list=None, users_with_enabled_email_notifications=None, **data
+    activity_name, msg, resource=None, item=None, user_list=None, preference_notification_name=None, **data
 ):
     """
     Adds the activity and notify enabled and active users via email.
@@ -244,8 +244,8 @@ def notify_and_add_activity(
         **data,
     )
 
-    if activity_name == ACTIVITY_ERROR or users_with_enabled_email_notifications:
-        recipients = get_recipients(users_with_enabled_email_notifications, activity_name)
+    if activity_name == ACTIVITY_ERROR or user_list:
+        recipients = get_recipients(user_list, activity_name, preference_notification_name)
 
         if activity_name != ACTIVITY_ERROR:
             current_user = getattr(g, "user", None)
@@ -262,7 +262,7 @@ def notify_and_add_activity(
             send_activity_emails(activity=activity, recipients=recipients)
 
 
-def get_recipients(user_list, activity_name):
+def get_recipients(user_list, activity_name, preference_notification_name=None):
     if not user_list and activity_name == ACTIVITY_ERROR:
         user_list = get_resource_service("users").get_users_by_user_type("administrator")
 
@@ -274,6 +274,12 @@ def get_recipients(user_list, activity_name):
         and user.get("is_active", False)
         and get_resource_service("preferences").email_notification_is_enabled(
             preferences=user.get("user_preferences", {})
+        )
+        and (
+            preference_notification_name
+            and get_resource_service("preferences").check_notification_is_enabled(
+                preference_notification_name, preferences=user.get("user_preferences", {})
+            )
         )
     ]
 
