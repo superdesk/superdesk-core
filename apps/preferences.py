@@ -213,7 +213,7 @@ class PreferencesResource(Resource):
     )
 
     superdesk.register_default_user_preference(
-        "mark_for_user:notification",
+        "email:notification:mark_for_user",
         {
             "type": "bool",
             "enabled": True,
@@ -412,22 +412,15 @@ class PreferencesService(BaseService):
 
         doc[_user_preferences_key] = {k: v for k, v in preferences.items() if not has_missing_privileges(v)}
 
-    def assignment_notification_is_enabled(self, user_id=None, preferences=None):
+    def check_preference_email_notification_is_enabled(self, preference_name, user_id=None, preferences=None):
         """
-        This function checks if email notification is enabled or not based on the preferences.
-        """
-        if user_id:
-            preferences = self.get_user_preference(user_id)
-        send_email = preferences.get("assignment:notification", {}) if isinstance(preferences, dict) else {}
-        return send_email and send_email.get("enabled", False)
-
-    def check_notification_is_enabled(self, preference_name, user_id=None, preferences=None):
-        """
-        This function checks if email notification is enabled or not based on the preferences.
+        This function checks if email notification is enabled or not based on the preference.
         """
         send_email = {}
         if user_id:
             preferences = self.get_user_preference(user_id)
         if preference_name:
-            send_email = preferences.get(f"{preference_name}:notification", {}) if isinstance(preferences, dict) else {}
+            send_email = (
+                preferences.get(f"email:notification:{preference_name}", {}) if isinstance(preferences, dict) else {}
+            )
         return send_email and send_email.get("enabled", False)
