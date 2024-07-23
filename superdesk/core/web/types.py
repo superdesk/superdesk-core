@@ -191,13 +191,27 @@ class Request(Protocol):
 class EndpointGroup:
     """Base class used for registering a group of endpoints"""
 
+    #: Name for this endpoint group. Will be prepended to each endpoint name
+    name: str
+
+    #: The import name of the module where this object is defined.
+    #: Usually :attr:`__name__` should be used.
+    import_name: str
+
     #: Optional url prefix to be added to all routes of this group
     url_prefix: Optional[str]
 
     #: List of endpoints registered with this group
     endpoints: List[Endpoint]
 
-    def __init__(self, url_prefix: Optional[str] = None):
+    def __init__(
+        self,
+        name: str,
+        import_name: str,
+        url_prefix: Optional[str] = None
+    ):
+        self.name = name
+        self.import_name = import_name
         self.url_prefix = url_prefix
         self.endpoints = []
 

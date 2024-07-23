@@ -73,7 +73,11 @@ There are three ways to declare a function as an HTTP endpoint.
         EndpointGroup,
     )
 
-    group = EndpointGroup(url_prefix="hello)
+    group = EndpointGroup(
+        name="tests",
+        import_name=__name__,
+        url_prefix="hello"
+    )
 
     @group.endpoint(url="world", methods=["GET"])
     async def hello_world(request: Request) -> Response:

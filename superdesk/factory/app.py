@@ -198,8 +198,16 @@ class SuperdeskEve(eve.Eve):
 
     def register_endpoint(self, endpoint: Endpoint | EndpointGroup):
         if isinstance(endpoint, EndpointGroup):
+            blueprint = flask.Blueprint(endpoint.name, endpoint.import_name)
             for sub_endpoint in endpoint.endpoints:
-                self.register_endpoint(sub_endpoint)
+                blueprint.add_url_rule(
+                    sub_endpoint.url,
+                    sub_endpoint.name,
+                    view_func=self._process_async_endpoint,
+                    methods=sub_endpoint.methods,
+                )
+                self._endpoints.append(sub_endpoint)
+            self.register_blueprint(blueprint)
             self._endpoint_groups.append(endpoint)
         else:
             url = f"{self.api_prefix}/{endpoint.url}" if not endpoint.url.startswith("/") else endpoint.url

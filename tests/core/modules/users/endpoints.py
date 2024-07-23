@@ -15,7 +15,7 @@ class RequestParams(BaseModel):
     resource: Optional[str] = None
 
 
-endpoints = EndpointGroup()
+endpoints = EndpointGroup("users", __name__)
 
 
 @endpoints.endpoint(
