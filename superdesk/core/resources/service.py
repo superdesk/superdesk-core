@@ -104,7 +104,7 @@ class AsyncResourceService(Generic[ResourceModelType]):
         try:
             item = await self.elastic.find_one(**lookup)
         except KeyError:
-            item = await self.mongo.find_one(**lookup)
+            item = await self.mongo.find_one(lookup)
 
         if item is None:
             return None
