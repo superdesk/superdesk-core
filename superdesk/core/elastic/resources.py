@@ -214,6 +214,10 @@ class ElasticResources:
         """Drops Elasticsearch indexes for all registered resources"""
 
         for config in self.app.resources.get_all_configs():
+            if config.elastic is None:
+                # Elasticsearch is not configured for this resource
+                continue
+
             resource_client = self.get_client(config.name)
 
             try:
