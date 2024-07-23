@@ -1214,6 +1214,7 @@ class ArchiveService(BaseService, HighlightsSearchMixin):
         :param original: original item version before update
         :param add_activity: flag to decide whether to add notification as activity or not
         """
+
         marked_user = marked_for_user = None
         orig_marked_user = original.get("marked_for_user", None)
         new_marked_user = updates.get("marked_for_user", None)
@@ -1275,15 +1276,6 @@ class ArchiveService(BaseService, HighlightsSearchMixin):
         :param data: kwargs
         """
 
-        # No notification sent if user is not enabled mark for user notification
-        users_with_enabled_notifications = [
-            user
-            for user in user_list
-            if superdesk.get_resource_service("preferences").mark_for_user_notification_is_enabled(
-                user_id=user.get("_id")
-            )
-        ]
-
         if item.get("type") == "text":
             link_id = item.get("guid", item.get("_id"))
         else:
@@ -1301,8 +1293,9 @@ class ArchiveService(BaseService, HighlightsSearchMixin):
                 msg,
                 resource=resource,
                 item=item,
-                user_list=users_with_enabled_notifications,
+                user_list=user_list,
                 link=link,
+                preference_notification_name="mark_for_user",
                 **data,
             )
         # send separate notification for markForUser extension
