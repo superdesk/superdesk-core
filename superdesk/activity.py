@@ -228,7 +228,9 @@ def add_activity(
     return activity
 
 
-def notify_and_add_activity(activity_name, msg, resource=None, item=None, user_list=None, **data):
+def notify_and_add_activity(
+    activity_name, msg, resource=None, item=None, user_list=None, users_with_enabled_email_notifications=None, **data
+):
     """
     Adds the activity and notify enabled and active users via email.
     """
@@ -242,8 +244,8 @@ def notify_and_add_activity(activity_name, msg, resource=None, item=None, user_l
         **data,
     )
 
-    if activity_name == ACTIVITY_ERROR or user_list:
-        recipients = get_recipients(user_list, activity_name)
+    if activity_name == ACTIVITY_ERROR or users_with_enabled_email_notifications:
+        recipients = get_recipients(users_with_enabled_email_notifications, activity_name)
 
         if activity_name != ACTIVITY_ERROR:
             current_user = getattr(g, "user", None)
