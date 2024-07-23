@@ -1215,7 +1215,6 @@ class ArchiveService(BaseService, HighlightsSearchMixin):
         :param add_activity: flag to decide whether to add notification as activity or not
         """
 
-        print("\n\n\n\n\n\n\jkdskfjdsjfbsdjfbdsjkb")
         marked_user = marked_for_user = None
         orig_marked_user = original.get("marked_for_user", None)
         new_marked_user = updates.get("marked_for_user", None)
