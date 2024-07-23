@@ -276,8 +276,8 @@ def get_recipients(user_list, activity_name, preference_notification_name=None):
             preferences=user.get("user_preferences", {})
         )
         and (
-            preference_notification_name
-            and get_resource_service("preferences").check_preference_email_notification_is_enabled(
+            not preference_notification_name
+            or get_resource_service("preferences").check_preference_email_notification_is_enabled(
                 preference_notification_name, preferences=user.get("user_preferences", {})
             )
         )
