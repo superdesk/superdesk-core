@@ -201,7 +201,11 @@ class SuperdeskEve(eve.Eve):
             blueprint = flask.Blueprint(endpoint.name, endpoint.import_name)
             for sub_endpoint in endpoint.endpoints:
                 blueprint.add_url_rule(
-                    sub_endpoint.url,
+                    (
+                        f"{self.api_prefix}/{sub_endpoint.url}"
+                        if endpoint.url_prefix is None and not sub_endpoint.url.startswith("/")
+                        else sub_endpoint.url
+                    ),
                     sub_endpoint.name,
                     view_func=self._process_async_endpoint,
                     methods=sub_endpoint.methods,
