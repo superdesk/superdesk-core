@@ -54,7 +54,7 @@ class RestEndpoints(EndpointGroup):
             self.endpoints.append(
                 Endpoint(
                     url=self.url,
-                    name=f"{self.name}|resource_get",
+                    name="resource_get",
                     func=self.process_get_request,
                     methods=["GET"],
                 )
@@ -64,7 +64,7 @@ class RestEndpoints(EndpointGroup):
             self.endpoints.append(
                 Endpoint(
                     url=self.url,
-                    name=f"{self.name}|resource_post",
+                    name="resource_post",
                     func=self.process_post_item_request,
                     methods=["POST"],
                 )
@@ -75,7 +75,7 @@ class RestEndpoints(EndpointGroup):
             self.endpoints.append(
                 Endpoint(
                     url=item_url,
-                    name=f"{self.name}|item_get",
+                    name="item_get",
                     func=self.process_get_item_request,
                     methods=["GET"],
                 )
@@ -85,7 +85,7 @@ class RestEndpoints(EndpointGroup):
             self.endpoints.append(
                 Endpoint(
                     url=item_url,
-                    name=f"{self.name}|item_patch",
+                    name="item_patch",
                     func=self.process_patch_item_request,
                     methods=["PATCH"],
                 )
@@ -95,7 +95,7 @@ class RestEndpoints(EndpointGroup):
             self.endpoints.append(
                 Endpoint(
                     url=item_url,
-                    name=f"{self.name}|item_delete",
+                    name="item_delete",
                     func=self.process_delete_item_request,
                     methods=["DELETE"],
                 )
