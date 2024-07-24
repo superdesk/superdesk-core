@@ -23,27 +23,29 @@ class ItemRequestViewArgs(BaseModel):
 class RestEndpoints(EndpointGroup):
     """Custom EndpointGroup for REST resources"""
 
+    #: The URL for this resource
     url: str
 
-    name: str
-
+    #: The list of HTTP methods for the resource endpoints
     resource_methods: List[HTTP_METHOD]
 
+    #: The list of HTTP methods for the resource item endpoints
     item_methods: List[HTTP_METHOD]
 
+    #: Optionally set the route param type for the ID, defaults to ``string``
     id_param_type: str
 
     def __init__(
         self,
         url: str,
         name: str,
+        import_name: Optional[str] = None,
         resource_methods: Optional[List[HTTP_METHOD]] = None,
         item_methods: Optional[List[HTTP_METHOD]] = None,
         id_param_type: Optional[str] = None,
     ):
-        super().__init__()
+        super().__init__(name, import_name or __name__)
         self.url = url
-        self.name = name
         self.resource_methods = resource_methods or ["GET", "POST"]
         self.item_methods = item_methods or ["GET", "PATCH", "DELETE"]
         self.id_param_type = id_param_type or "string"
@@ -52,7 +54,7 @@ class RestEndpoints(EndpointGroup):
             self.endpoints.append(
                 Endpoint(
                     url=self.url,
-                    name=f"{self.name}|resource_get",
+                    name="resource_get",
                     func=self.process_get_request,
                     methods=["GET"],
                 )
@@ -62,7 +64,7 @@ class RestEndpoints(EndpointGroup):
             self.endpoints.append(
                 Endpoint(
                     url=self.url,
-                    name=f"{self.name}|resource_post",
+                    name="resource_post",
                     func=self.process_post_item_request,
                     methods=["POST"],
                 )
@@ -73,7 +75,7 @@ class RestEndpoints(EndpointGroup):
             self.endpoints.append(
                 Endpoint(
                     url=item_url,
-                    name=f"{self.name}|item_get",
+                    name="item_get",
                     func=self.process_get_item_request,
                     methods=["GET"],
                 )
@@ -83,7 +85,7 @@ class RestEndpoints(EndpointGroup):
             self.endpoints.append(
                 Endpoint(
                     url=item_url,
-                    name=f"{self.name}|item_patch",
+                    name="item_patch",
                     func=self.process_patch_item_request,
                     methods=["PATCH"],
                 )
@@ -93,7 +95,7 @@ class RestEndpoints(EndpointGroup):
             self.endpoints.append(
                 Endpoint(
                     url=item_url,
-                    name=f"{self.name}|item_delete",
+                    name="item_delete",
                     func=self.process_delete_item_request,
                     methods=["DELETE"],
                 )

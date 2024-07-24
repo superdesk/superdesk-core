@@ -69,6 +69,7 @@ class ResourceRestEndpoints(RestEndpoints):
         super().__init__(
             url=resource_config.name,
             name=resource_config.name,
+            import_name=resource_config.__module__,
             resource_methods=endpoint_config.resource_methods,
             item_methods=endpoint_config.item_methods,
             id_param_type=endpoint_config.id_param_type or get_id_url_type(resource_config.data_class),

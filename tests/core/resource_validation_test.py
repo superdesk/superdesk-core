@@ -25,6 +25,21 @@ class ResourceValidationTest(AsyncTestCase):
             score=100,
         )
 
+        # Test list of values and validation errors
+        with self.assertRaises(ValueError):
+            User(id="user_1", first_name="John", last_name="Doe", scores=[0])
+
+        with self.assertRaises(ValueError):
+            User(id="user_1", first_name="John", last_name="Doe", scores=[101])
+
+        with self.assertRaises(ValueError):
+            User(id="user_1", first_name="John", last_name="Doe", scores=[1, 2, 3, 4, 5, -1])
+
+        with self.assertRaises(ValueError):
+            User(id="user_1", first_name="John", last_name="Doe", scores=[1, 2, 3, 4, 5, 101])
+
+        User(id="user_1", first_name="John", last_name="Doe", scores=[1, 5, 99, 100])
+
     def test_validate_email(self):
         with self.assertRaises(ValueError):
             User(id="user_1", first_name="John", last_name="Doe", email="incorrect email")

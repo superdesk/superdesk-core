@@ -201,7 +201,11 @@ class SuperdeskEve(eve.Eve):
             blueprint = flask.Blueprint(endpoint.name, endpoint.import_name)
             for sub_endpoint in endpoint.endpoints:
                 blueprint.add_url_rule(
-                    sub_endpoint.url,
+                    (
+                        f"{self.api_prefix}/{sub_endpoint.url}"
+                        if endpoint.url_prefix is None and not sub_endpoint.url.startswith("/")
+                        else sub_endpoint.url
+                    ),
                     sub_endpoint.name,
                     view_func=self._process_async_endpoint,
                     methods=sub_endpoint.methods,
@@ -225,7 +229,26 @@ class SuperdeskEve(eve.Eve):
         from flask import request as flask_request
 
         endpoint_name = flask_request.endpoint
-        endpoint: Optional[Endpoint] = next((e for e in self._endpoints if e.name == endpoint_name), None)
+
+        # Using the requests Blueprint, determine if this request is for an EndpointGroup
+        blueprint_name = flask_request.blueprint
+        endpoint_group = (
+            None
+            if not blueprint_name
+            else next((group for group in self._endpoint_groups if group.name == blueprint_name), None)
+        )
+        endpoint: Optional[Endpoint] = None
+        if endpoint_group is not None:
+            # It seems this request is for an EndpointGroup
+            # Try and find the specific Endpoint this request is for
+            endpoint_name = endpoint_name.replace(f"{blueprint_name}.", "")
+            endpoint = next((e for e in endpoint_group.endpoints if e.name == endpoint_name), None)
+
+        # We were unable to find the Endpoint, falling back to directly registered endpoints
+        if endpoint is None:
+            endpoint = next((e for e in self._endpoints if e.name == endpoint_name), None)
+
+        # We were still unable to find the final Endpoint, return a 404 now
         if endpoint is None:
             raise NotFound()
 

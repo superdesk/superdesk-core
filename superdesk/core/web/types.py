@@ -204,12 +204,7 @@ class EndpointGroup:
     #: List of endpoints registered with this group
     endpoints: List[Endpoint]
 
-    def __init__(
-        self,
-        name: str,
-        import_name: str,
-        url_prefix: Optional[str] = None
-    ):
+    def __init__(self, name: str, import_name: str, url_prefix: Optional[str] = None):
         self.name = name
         self.import_name = import_name
         self.url_prefix = url_prefix

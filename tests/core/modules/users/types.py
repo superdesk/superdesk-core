@@ -48,6 +48,11 @@ class User(ResourceModel):
         validators.validate_minlength(1),
         validators.validate_maxlength(100),
     ] = None
+    scores: Annotated[
+        Optional[List[int]],
+        validators.validate_minlength(1, validate_list_elements=True),
+        validators.validate_maxlength(100, validate_list_elements=True),
+    ] = None
     bio: Optional[fields.HTML] = None
     code: Optional[fields.Keyword] = None
     categories: Annotated[Optional[List[Category]], fields.nested_list()] = []

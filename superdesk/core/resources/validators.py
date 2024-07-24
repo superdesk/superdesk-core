@@ -8,44 +8,58 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
-from typing import Callable, Any, Awaitable, Union, Dict, List
+from typing import Callable, Any, Awaitable, Dict
 import re
 import logging
 
 from pydantic import AfterValidator, ValidationError
-
-from .fields import ObjectId
+from bson import ObjectId
 
 
 logger = logging.getLogger(__name__)
 
 
+EmailValueType = str | list[str] | None
+
+
 def validate_email() -> AfterValidator:
     """Validates that the value is a valid email address"""
 
-    def _validate_email(value: str) -> str:
-        # it's tricky to write proper regex for email validation, so we
-        # should use simple one, or use libraries like
-        # - https://pypi.python.org/pypi/email_validator
-        # - https://pypi.python.org/pypi/pyIsEmail
-        # given that admins are usually create users, not users by themself,
-        # probably just check for @ is enough
-        # https://davidcel.is/posts/stop-validating-email-addresses-with-regex/
-        if not re.match(".+@.+", value, re.IGNORECASE):
+    def _validate_email(value: EmailValueType) -> EmailValueType:
+        if value is None:
+            return None
+        elif isinstance(value, list):
+            for email in value:
+                _validate_email(email)
+        elif not re.match(".+@.+", value, re.IGNORECASE):
+            # it's tricky to write proper regex for email validation, so we
+            # should use simple one, or use libraries like
+            # - https://pypi.python.org/pypi/email_validator
+            # - https://pypi.python.org/pypi/pyIsEmail
+            # given that admins are usually create users, not users by themself,
+            # probably just check for @ is enough
+            # https://davidcel.is/posts/stop-validating-email-addresses-with-regex/
             raise ValueError(f"Invalid email: {value}")
         return value
 
     return AfterValidator(_validate_email)
 
 
-MinMaxAcceptedTypes = Union[str, list, int, float, None]
+MinMaxValueType = str | int | float | list[str] | list[int] | list[float] | None
 
 
-def validate_minlength(min_length: int) -> AfterValidator:
-    """Validates that the value has a minimum length"""
+def validate_minlength(min_length: int, validate_list_elements: bool = False) -> AfterValidator:
+    """Validates that the value has a minimum length
 
-    def _validate_minlength(value: MinMaxAcceptedTypes) -> MinMaxAcceptedTypes:
-        if isinstance(value, (type(""), list)):
+    :param min_length: The minimum length of the value
+    :param validate_list_elements: Whether to validate the elements in the list or the list length
+    """
+
+    def _validate_minlength(value: MinMaxValueType) -> MinMaxValueType:
+        if isinstance(value, list) and validate_list_elements:
+            for val in value:
+                _validate_minlength(val)
+        elif isinstance(value, (type(""), list)):
             if len(value) < min_length:
                 raise ValueError(f"Invalid minlength: {value}")
         elif isinstance(value, (int, float)):
@@ -56,11 +70,18 @@ def validate_minlength(min_length: int) -> AfterValidator:
     return AfterValidator(_validate_minlength)
 
 
-def validate_maxlength(max_length: int) -> AfterValidator:
-    """Validates that the value has a maximum length (strings or arrays)"""
+def validate_maxlength(max_length: int, validate_list_elements: bool = False) -> AfterValidator:
+    """Validates that the value has a maximum length (strings or arrays)
 
-    def _validate_maxlength(value: MinMaxAcceptedTypes) -> MinMaxAcceptedTypes:
-        if isinstance(value, (type(""), list)):
+    :param max_length: The maximum length of the value
+    :param validate_list_elements: Whether to validate the elements in the list or the list length
+    """
+
+    def _validate_maxlength(value: MinMaxValueType) -> MinMaxValueType:
+        if isinstance(value, list) and validate_list_elements:
+            for val in value:
+                _validate_maxlength(val)
+        elif isinstance(value, (type(""), list)):
             if len(value) > max_length:
                 raise ValueError(f"Invalid maxlength: {value}")
         elif isinstance(value, (int, float)):
@@ -78,26 +99,51 @@ class AsyncValidator:
         self.func = func
 
 
-def validate_data_relation_async(resource_name: str, external_field: str = "_id") -> AsyncValidator:
+DataRelationValueType = str | ObjectId | list[str] | list[ObjectId] | None
+
+
+def validate_data_relation_async(
+    resource_name: str, external_field: str = "_id", convert_to_objectid: bool = False
+) -> AsyncValidator:
     """Validate the ID on the resource points to an existing resource
 
     :param resource_name: The name of the resource type the ID points to
     :param external_field: The field used to find the resource
+    :param convert_to_objectid: If True, will convert the ID to an ObjectId instance
     """
 
-    async def validate_resource_exists(item: ResourceModel, item_id: Union[str, ObjectId, None]) -> None:
+    async def validate_resource_exists(item: ResourceModel, item_id: DataRelationValueType) -> None:
         if item_id is None:
             return
+        elif isinstance(item_id, list):
+            for value in item_id:
+                await validate_resource_exists(item, value)
+        else:
+            if convert_to_objectid:
+                item_id = ObjectId(item_id)
 
-        from superdesk.core.app import get_current_async_app
+            from superdesk.core.app import get_current_async_app
 
-        app = get_current_async_app()
-        resource_config = app.resources.get_config(resource_name)
-        collection = app.mongo.get_collection_async(resource_config.name)
-        if not await collection.find_one({external_field: item_id}):
-            raise ValueError(f"Resource '{resource_name}' with ID '{item_id}' does not exist")
+            app = get_current_async_app()
+            try:
+                resource_config = app.resources.get_config(resource_name)
+                collection = app.mongo.get_collection_async(resource_config.name)
+                if not await collection.find_one({external_field: item_id}):
+                    raise ValueError(f"Resource '{resource_name}' with ID '{item_id}' does not exist")
+            except KeyError:
+                # Resource is not registered with async resources
+                # Try legacy resources instead
+                from superdesk import get_resource_service
+
+                service = get_resource_service(resource_name)
+                item = service.find_one(req=None, **{external_field: item_id})
+                if item is None:
+                    raise ValueError(f"Resource '{resource_name}' with ID '{item_id}' does not exist")
 
     return AsyncValidator(validate_resource_exists)
+
+
+UniqueValueType = str | list[str] | None
 
 
 def validate_unique_value_async(resource_name: str, field_name: str) -> AsyncValidator:
@@ -107,7 +153,7 @@ def validate_unique_value_async(resource_name: str, field_name: str) -> AsyncVal
     :param field_name: The name of the field where the field must be unique
     """
 
-    async def validate_unique_value_in_resource(item: ResourceModel, name: Union[str, None]) -> None:
+    async def validate_unique_value_in_resource(item: ResourceModel, name: UniqueValueType) -> None:
         if name is None:
             return
 
@@ -117,7 +163,8 @@ def validate_unique_value_async(resource_name: str, field_name: str) -> AsyncVal
         resource_config = app.resources.get_config(resource_name)
         collection = app.mongo.get_collection_async(resource_config.name)
 
-        if await collection.find_one({field_name: name, "_id": {"$ne": item.id}}):
+        query = {"_id": {"$ne": item.id}, field_name: {"$in": name} if isinstance(name, list) else name}
+        if await collection.find_one(query):
             raise ValueError(f"Resource '{resource_name}' with '{field_name}=={name}' already exists")
 
     return AsyncValidator(validate_unique_value_in_resource)
@@ -130,7 +177,7 @@ def validate_iunique_value_async(resource_name: str, field_name: str) -> AsyncVa
     :param field_name: The name of the field where the field must be unique
     """
 
-    async def validate_iunique_value_in_resource(item: ResourceModel, name: Union[str, None]) -> None:
+    async def validate_iunique_value_in_resource(item: ResourceModel, name: UniqueValueType) -> None:
         if name is None:
             return
 
@@ -140,8 +187,16 @@ def validate_iunique_value_async(resource_name: str, field_name: str) -> AsyncVa
         resource_config = app.resources.get_config(resource_name)
         collection = app.mongo.get_collection_async(resource_config.name)
 
-        pattern = "^{}$".format(re.escape(name.strip()))
-        if await collection.find_one({field_name: re.compile(pattern, re.IGNORECASE), "_id": {"$ne": item.id}}):
+        query = {
+            "_id": {"$ne": item.id},
+            field_name: (
+                {"$in": [re.compile("^{}$".format(re.escape(value.strip())), re.IGNORECASE) for value in name]}
+                if isinstance(name, list)
+                else re.compile("^{}$".format(re.escape(name.strip())), re.IGNORECASE)
+            ),
+        }
+
+        if await collection.find_one(query):
             raise ValueError(f"Resource '{resource_name}' with '{field_name}=={name}' already exists")
 
     return AsyncValidator(validate_iunique_value_in_resource)

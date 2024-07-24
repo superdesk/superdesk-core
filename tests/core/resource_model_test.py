@@ -87,6 +87,7 @@ class ResourceModelTest(TestCase):
                     },
                     "custom_field": {"type": "text", "analyzer": "html_field_analyzer"},
                     "score": {"type": "integer"},
+                    "scores": {"type": "integer"},
                     "location": {"type": "geo_point"},
                     "my_dict": {"type": "object", "enabled": False},
                     "created_by": {"type": "text"},

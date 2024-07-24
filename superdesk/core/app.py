@@ -85,8 +85,6 @@ class SuperdeskAsyncApp:
         for module in self.get_module_list():
             from .resources.resource_rest_endpoints import ResourceRestEndpoints
 
-            if module.endpoints is None:
-                module.endpoints = []
             for resource_config in module.resources or []:
                 # If REST endpoints are enabled for this resource
                 # then add the endpoint group to this module's `endpoints` config
@@ -95,7 +93,7 @@ class SuperdeskAsyncApp:
                     continue
 
                 endpoint_class = rest_endpoint_config.endpoints_class or ResourceRestEndpoints
-                module.endpoints.append(endpoint_class(resource_config, rest_endpoint_config))
+                self.wsgi.register_endpoint(endpoint_class(resource_config, rest_endpoint_config))
 
             for endpoint in module.endpoints or []:
                 self.wsgi.register_endpoint(endpoint)
