@@ -9,11 +9,12 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
-from typing import Dict, Any, Type
+from typing import Dict, Any, Type, List, Optional, Union, Mapping, cast, NoReturn
 
 import os
 import eve
 import flask
+from werkzeug.exceptions import NotFound
 import jinja2
 import importlib
 import superdesk
@@ -40,10 +41,43 @@ from superdesk.json_utils import SuperdeskFlaskJSONProvider, SuperdeskJSONEncode
 from superdesk.cache import cache_backend
 from .elastic_apm import setup_apm
 from superdesk.core.app import SuperdeskAsyncApp
+from superdesk.core.web import Endpoint, Request, EndpointGroup, HTTP_METHOD, Response
 
 SUPERDESK_PATH = os.path.abspath(os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
 
 logger = logging.getLogger(__name__)
+
+
+class HttpFlaskRequest(Request):
+    endpoint: Endpoint
+    request: flask.Request
+
+    def __init__(self, endpoint: Endpoint, request: flask.Request):
+        self.endpoint = endpoint
+        self.request = request
+
+    @property
+    def method(self) -> HTTP_METHOD:
+        return cast(HTTP_METHOD, self.request.method)
+
+    @property
+    def path(self) -> str:
+        return self.request.path
+
+    def get_header(self, key: str) -> Optional[str]:
+        return self.request.headers.get(key)
+
+    async def get_json(self) -> Union[Any, None]:
+        return self.request.get_json()
+
+    async def get_form(self) -> Mapping:
+        return self.request.form.deepcopy()
+
+    async def get_data(self) -> Union[bytes, str]:
+        return self.request.get_data()
+
+    async def abort(self, code: int, *args: Any, **kwargs: Any) -> NoReturn:
+        flask.abort(code, *args, **kwargs)
 
 
 def set_error_handlers(app):
@@ -84,6 +118,8 @@ def set_error_handlers(app):
 
 class SuperdeskEve(eve.Eve):
     async_app: SuperdeskAsyncApp
+    _endpoints: List[Endpoint]
+    _endpoint_groups: List[EndpointGroup]
 
     def __init__(self, **kwargs):
         # set attributes to avoid event slots being created
@@ -97,6 +133,8 @@ class SuperdeskEve(eve.Eve):
         self._superdesk_cache = None
         self.async_app = SuperdeskAsyncApp(self)
         self.json_provider_class = SuperdeskFlaskJSONProvider
+        self._endpoints = []
+        self._endpoint_groups = []
 
         super().__init__(**kwargs)
 
@@ -157,6 +195,51 @@ class SuperdeskEve(eve.Eve):
                 versioned_resource = resource + self.config["VERSIONS"]
                 if versioned_resource in self.config["DOMAIN"]:
                     update_resource_schema(versioned_resource)
+
+    def register_endpoint(self, endpoint: Endpoint | EndpointGroup):
+        if isinstance(endpoint, EndpointGroup):
+            blueprint = flask.Blueprint(endpoint.name, endpoint.import_name)
+            for sub_endpoint in endpoint.endpoints:
+                blueprint.add_url_rule(
+                    sub_endpoint.url,
+                    sub_endpoint.name,
+                    view_func=self._process_async_endpoint,
+                    methods=sub_endpoint.methods,
+                )
+                self._endpoints.append(sub_endpoint)
+            self.register_blueprint(blueprint)
+            self._endpoint_groups.append(endpoint)
+        else:
+            url = f"{self.api_prefix}/{endpoint.url}" if not endpoint.url.startswith("/") else endpoint.url
+
+            self.add_url_rule(
+                url,
+                endpoint.name,
+                view_func=self._process_async_endpoint,
+                methods=endpoint.methods,
+            )
+            self._endpoints.append(endpoint)
+
+    async def _process_async_endpoint(self, **kwargs):
+        # Get Endpoint instance
+        from flask import request as flask_request
+
+        endpoint_name = flask_request.endpoint
+        endpoint: Optional[Endpoint] = next((e for e in self._endpoints if e.name == endpoint_name), None)
+        if endpoint is None:
+            raise NotFound()
+
+        response = await endpoint(
+            kwargs,
+            dict(flask_request.args.deepcopy()),
+            HttpFlaskRequest(endpoint, flask_request),
+        )
+        if not isinstance(response, Response):
+            # We may have received a different response, such as a flask redirect call
+            # So we return it here
+            return response
+
+        return response.body, response.status_code, response.headers
 
 
 def get_media_storage_class(app_config: Dict[str, Any], use_provider_config: bool = True) -> Type[MediaStorage]:

@@ -4,13 +4,7 @@ from enum import Enum
 
 from pydantic import Field
 
-from superdesk.core.module import Module
-from superdesk.core.mongo import MongoResourceConfig, MongoIndexOptions
-from superdesk.core.elastic.resources import ElasticResourceConfig
-
-from superdesk.core.resources import ResourceModel, ResourceModelConfig, fields, dataclass
-from superdesk.core.resources.service import AsyncResourceService
-from superdesk.core.resources import validators
+from superdesk.core.resources import ResourceModel, fields, dataclass, validators
 
 
 @dataclass
@@ -42,12 +36,12 @@ class User(ResourceModel):
     email: Annotated[
         Optional[str],
         validators.validate_email(),
-        validators.validate_iunique_value_async(resource_name="users", field_name="email"),
+        validators.validate_iunique_value_async(resource_name="users_async", field_name="email"),
     ] = None
     name: Optional[fields.TextWithKeyword] = None
     username: Annotated[
         Optional[str],
-        validators.validate_unique_value_async(resource_name="users", field_name="username"),
+        validators.validate_unique_value_async(resource_name="users_async", field_name="username"),
     ] = None
     score: Annotated[
         Optional[int],
@@ -67,40 +61,9 @@ class User(ResourceModel):
 
     created_by: Annotated[
         Optional[str],
-        validators.validate_data_relation_async(resource_name="users", external_field="_id"),
+        validators.validate_data_relation_async(resource_name="users_async", external_field="_id"),
     ] = None
     updated_by: Annotated[
         Optional[str],
-        validators.validate_data_relation_async(resource_name="users", external_field="_id"),
+        validators.validate_data_relation_async(resource_name="users_async", external_field="_id"),
     ] = None
-
-
-class UserResourceService(AsyncResourceService[User]):
-    pass
-
-
-user_model_config = ResourceModelConfig(
-    name="users",
-    data_class=User,
-    mongo=MongoResourceConfig(
-        indexes=[
-            MongoIndexOptions(
-                name="users_name_1",
-                keys=[("first_name", 1)],
-            ),
-            MongoIndexOptions(
-                name="combined_name_1",
-                keys=[("first_name", 1), ("last_name", -1)],
-                background=False,
-                unique=False,
-                sparse=False,
-                collation={"locale": "en", "strength": 1},
-            ),
-        ],
-    ),
-    elastic=ElasticResourceConfig(),
-    service=UserResourceService,
-)
-
-
-module = Module(name="tests.users", resources=[user_model_config])

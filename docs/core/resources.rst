@@ -341,7 +341,7 @@ data type that has a different mapping than the default, you can inherit from th
 Registering Resources
 ---------------------
 The :meth:`Resources.register <model.Resources.register>` method provides a way to register a resource with the system,
-using the :class:`ResourceModelConfig <model.ResourceModelConfig>` class to provide the resource config.
+using the :class:`ResourceConfig <model.ResourceConfig>` class to provide the resource config.
 
 This will register the resource with MongoDB and optionally the Elasticsearch system. See
 :class:`MongoResourceConfig <superdesk.core.mongo.MongoResourceConfig>` and
@@ -355,14 +355,12 @@ Example module::
     from superdesk.core.module import Module, SuperdeskAsyncApp
     from superdesk.core.resources import (
         ResourceModel,
-        ResourceModelConfig,
+        ResourceConfig,
         fields,
-    )
-    from superdesk.core.mongo import (
         MongoResourceConfig,
         MongoIndexOptions,
+        ElasticResourceConfig,
     )
-    from superdesk.core.elastic.resources import ElasticResourceConfig
 
     # Define your user model
     class User(ResourceModel):
@@ -373,7 +371,7 @@ Example module::
         code: Optional[fields.Keyword] = None
 
     # Define the resource config
-    user_model_config = ResourceModelConfig(
+    user_model_config = ResourceConfig(
         name="users",
         data_class=User,
         mongo=[
@@ -418,7 +416,7 @@ Resource Model
     :member-order: bysource
     :members: id
 
-.. autoclass:: superdesk.core.resources.model.ResourceModelConfig
+.. autoclass:: superdesk.core.resources.model.ResourceConfig
     :member-order: bysource
     :members:
 

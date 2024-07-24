@@ -19,15 +19,22 @@ from typing import (
     AsyncIterable,
     Union,
     cast,
+    Tuple,
+    Literal,
 )
 import logging
+import ast
 
 from bson import ObjectId
+import simplejson as json
 
 from superdesk.errors import SuperdeskApiError
 from superdesk.utc import utcnow
+from superdesk.metadata.item import GUID_NEWSML
+from superdesk.metadata.utils import generate_guid
 
 from ..app import SuperdeskAsyncApp, get_current_async_app
+from .fields import ObjectId as ObjectIdField
 from .cursor import ElasticsearchResourceCursorAsync, MongoResourceCursorAsync, ResourceCursorAsync, SearchRequest
 from .utils import resource_uses_objectid_for_id
 
@@ -39,7 +46,7 @@ ResourceModelType = TypeVar("ResourceModelType", bound="ResourceModel")
 
 class AsyncResourceService(Generic[ResourceModelType]):
     resource_name: ClassVar[str]
-    config: "ResourceModelConfig"
+    config: "ResourceConfig"
     app: SuperdeskAsyncApp
 
     def __new__(cls):
@@ -66,6 +73,9 @@ class AsyncResourceService(Generic[ResourceModelType]):
 
     def id_uses_objectid(self) -> bool:
         return resource_uses_objectid_for_id(self.config.data_class)
+
+    def generate_id(self) -> str | ObjectId:
+        return ObjectIdField() if self.id_uses_objectid() else generate_guid(type=GUID_NEWSML)
 
     @property
     def mongo(self):
@@ -118,6 +128,17 @@ class AsyncResourceService(Generic[ResourceModelType]):
         :return: ``None`` if resource not found, otherwise an instance of ``ResourceModel`` for this resource
         """
 
+        item = await self.find_by_id_raw(item_id)
+        return None if item is None else self.get_model_instance_from_dict(item)
+
+    async def find_by_id_raw(self, item_id: Union[str, ObjectId]) -> Optional[Dict[str, Any]]:
+        """Find a resource by ID
+
+        :param item_id: ID of item to find
+        :return: ``None`` if resource not found, otherwise a dictionary of the item
+        """
+
+        item_id = ObjectId(item_id) if self.id_uses_objectid() else item_id
         try:
             item = await self.elastic.find_by_id(item_id)
         except KeyError:
@@ -126,7 +147,7 @@ class AsyncResourceService(Generic[ResourceModelType]):
         if item is None:
             return None
 
-        return self.get_model_instance_from_dict(item)
+        return item
 
     async def search(self, lookup: Dict[str, Any], use_mongo=False) -> ResourceCursorAsync:
         """Search the resource using the provided ``lookup``
@@ -227,7 +248,7 @@ class AsyncResourceService(Generic[ResourceModelType]):
 
         pass
 
-    async def on_update(self, item_id: str, updates: Dict[str, Any], original: ResourceModelType) -> None:
+    async def on_update(self, updates: Dict[str, Any], original: ResourceModelType) -> None:
         """Hook to run before updating a resource
 
         :param item_id: ID of item to update
@@ -237,7 +258,7 @@ class AsyncResourceService(Generic[ResourceModelType]):
 
         updates.setdefault("_updated", utcnow())
 
-    async def update(self, item_id: str, updates: Dict[str, Any]) -> None:
+    async def update(self, item_id: Union[str, ObjectId], updates: Dict[str, Any]) -> None:
         """Updates an existing resource
 
         Will automatically update the resource in both Elasticsearch (if configured for this resource)
@@ -247,11 +268,12 @@ class AsyncResourceService(Generic[ResourceModelType]):
         :param updates: Dictionary to update
         """
 
+        item_id = ObjectId(item_id) if self.id_uses_objectid() else item_id
         original = await self.find_by_id(item_id)
         if original is None:
             raise SuperdeskApiError.notFoundError()
 
-        await self.on_update(item_id, updates, original)
+        await self.on_update(updates, original)
         await self.validate_update(updates, original)
         response = await self.mongo.update_one({"_id": item_id}, {"$set": updates})
         try:
@@ -277,7 +299,21 @@ class AsyncResourceService(Generic[ResourceModelType]):
 
         pass
 
-    async def delete(self, lookup: Dict[str, Any]) -> List[str]:
+    async def delete(self, doc: ResourceModelType):
+        """Deletes a resource
+
+        :param doc: Instance of ``ResourceModel`` for the resource to delete
+        """
+
+        await self.on_delete(doc)
+        await self.mongo.delete_one({"_id": doc.id})
+        try:
+            await self.elastic.remove(doc.id)
+        except KeyError:
+            pass
+        await self.on_deleted(doc)
+
+    async def delete_many(self, lookup: Dict[str, Any]) -> List[str]:
         """Deletes resource(s) using a lookup
 
         :param lookup: Dictionary for the lookup to find items to delete
@@ -304,7 +340,7 @@ class AsyncResourceService(Generic[ResourceModelType]):
     async def on_deleted(self, doc: ResourceModelType):
         """Hook to run after deleting a resource
 
-        :param doc: Instance of ``ResourceModel`` for the resource to delete
+        :param doc: Instance of ``ResourceModel`` for the resource that was deleted
         """
 
         pass
@@ -361,7 +397,43 @@ class AsyncResourceService(Generic[ResourceModelType]):
             cursor, count = await self.elastic.find(req)
             return ElasticsearchResourceCursorAsync(self.config.data_class, cursor.hits)
         except KeyError:
-            raise SuperdeskApiError.notFoundError("Elasticsearch not configured for this resource")
+            return await self._mongo_find(req)
+
+    async def _mongo_find(self, req: SearchRequest) -> MongoResourceCursorAsync:
+        args: Dict[str, Any] = {}
+
+        if req.max_results:
+            args["limit"] = req.max_results
+        if req.page > 1:
+            args["skip"] = (req.page - 1) * req.max_results
+
+        sort = self._convert_req_to_mongo_sort(req)
+        if sort:
+            args["sort"] = sort
+
+        where = json.loads(req.where or "{}")
+        cursor = self.mongo.find(**args)
+
+        return MongoResourceCursorAsync(self.config.data_class, self.mongo, cursor, where)
+
+    def _convert_req_to_mongo_sort(self, req: SearchRequest) -> List[Tuple[str, Literal[1, -1]]]:
+        if not req.sort:
+            return []
+
+        client_sort: List[Tuple[str, Literal[1, -1]]] = []
+        try:
+            # assume it's mongo syntax, i.e. ?sort=[("name", 1)]
+            client_sort = ast.literal_eval(req.sort)
+        except ValueError:
+            # It's not mongo so let's see if it's a comma delimited string
+            # instead, i.e. "?sort=-age, name"
+            for sort_arg in [s.strip() for s in req.sort.split(",")]:
+                if sort_arg[0] == "-":
+                    client_sort.append((sort_arg[1:], -1))
+                else:
+                    client_sort.append((sort_arg, 1))
+
+        return client_sort
 
 
-from .model import ResourceModelConfig, ResourceModel  # noqa: E402
+from .model import ResourceConfig, ResourceModel  # noqa: E402

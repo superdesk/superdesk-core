@@ -8,13 +8,22 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
-from .model import Resources, ResourceModel, ResourceModelWithObjectId, ResourceModelConfig, dataclass
+from .model import Resources, ResourceModel, ResourceModelWithObjectId, ResourceConfig, dataclass
+from .resource_rest_endpoints import RestEndpointConfig
+from .service import AsyncResourceService
+from ..mongo import MongoResourceConfig, MongoIndexOptions
+from ..elastic.resources import ElasticResourceConfig
 
 __all__ = [
     "Resources",
     "ResourceModel",
     "ResourceModelWithObjectId",
-    "ResourceModelConfig",
+    "ResourceConfig",
     "dataclass",
     "fields",
+    "RestEndpointConfig",
+    "AsyncResourceService",
+    "MongoResourceConfig",
+    "MongoIndexOptions",
+    "ElasticResourceConfig",
 ]

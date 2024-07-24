@@ -213,6 +213,14 @@ class MongoResources:
         return deepcopy(self._resource_configs)
         # return deepcopy(list(self._resource_configs.values()))
 
+    def reset_all_async_connections(self):
+        for client, _db in self._mongo_clients_async.values():
+            client.close()
+
+        self._mongo_clients_async.clear()
+        for config in self.app.resources.get_all_configs():
+            self.get_client_async(config.name)
+
     def close_all_clients(self):
         """Closes all clients (sync and async) to the Mongo database(s)"""
 
@@ -298,7 +306,7 @@ class MongoResources:
                     (key[0], key[1])
                     for key in index_details.keys
                 ]
-                kwargs = {key: val for key, val in asdict(index_details).items() if key != "keys"}
+                kwargs = {key: val for key, val in asdict(index_details).items() if key != "keys" and val is not None}
 
                 try:
                     collection.create_index(keys, **kwargs)

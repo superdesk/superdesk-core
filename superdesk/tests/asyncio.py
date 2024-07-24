@@ -12,14 +12,24 @@ from typing import Dict, Any
 import unittest
 from dataclasses import dataclass
 
+from asgiref.wsgi import WsgiToAsgi
+
+from superdesk.factory.app import SuperdeskApp
 from superdesk.core.app import SuperdeskAsyncApp
 
-from . import setup_config
+from . import setup_config, setup
+from .async_test_client import AsyncTestClient
 
 
 @dataclass
-class WSGI:
+class MockWSGI:
     config: Dict[str, Any]
+
+    def add_url_rule(self, *args, **kwargs):
+        pass
+
+    def register_endpoint(self, endpoint):
+        pass
 
 
 class AsyncTestCase(unittest.IsolatedAsyncioTestCase):
@@ -32,7 +42,7 @@ class AsyncTestCase(unittest.IsolatedAsyncioTestCase):
             self.app.stop()
 
         self.app_config = setup_config(self.app_config)
-        self.app = SuperdeskAsyncApp(WSGI(config=self.app_config))
+        self.app = SuperdeskAsyncApp(MockWSGI(config=self.app_config))
         self.app.start()
 
     async def asyncSetUp(self):
@@ -51,3 +61,40 @@ class AsyncTestCase(unittest.IsolatedAsyncioTestCase):
         self.app.elastic.drop_indexes()
         self.app.stop()
         await self.app.elastic.stop()
+
+
+class AsyncFlaskTestCase(AsyncTestCase):
+    async_app: SuperdeskAsyncApp
+    app: SuperdeskApp
+    asgi_app: WsgiToAsgi
+    test_client: AsyncTestClient
+
+    async def asyncSetUp(self):
+        if getattr(self, "async_app", None):
+            self.async_app.stop()
+            await self.async_app.elastic.stop()
+
+        setup(self, config=self.app_config, reset=True)
+        self.async_app = self.app.async_app
+        self.asgi_app = WsgiToAsgi(self.app)
+        self.test_client = AsyncTestClient(self.app, self.asgi_app)
+        self.ctx = self.app.app_context()
+        self.ctx.push()
+
+        def clean_ctx():
+            if self.ctx:
+                try:
+                    self.ctx.pop()
+                except Exception:
+                    pass
+
+        self.addCleanup(clean_ctx)
+        self.async_app.elastic.init_all_indexes()
+
+    async def asyncTearDown(self):
+        if not getattr(self, "async_app", None):
+            return
+
+        self.async_app.elastic.drop_indexes()
+        self.async_app.stop()
+        await self.async_app.elastic.stop()

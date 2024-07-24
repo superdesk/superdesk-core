@@ -20,3 +20,4 @@ boto3-stubs[s3,sqs]
 motor-types
 pydantic
 flask[async]
+quart>=0.19.6,<0.20.0

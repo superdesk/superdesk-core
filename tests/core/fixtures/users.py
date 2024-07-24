@@ -34,7 +34,7 @@ def john_doe():
 def john_doe_dict():
     return dict(
         _id="user_1",
-        _type="users",
+        _type="users_async",
         first_name="John",
         last_name="Doe",
         email="john@doe.org",
@@ -69,7 +69,7 @@ def minimal_user():
     return User(id="user_3", first_name="Foo", last_name="Bar")
 
 
-def test_users():
+def all_users():
     return [
         john_doe(),
         jane_doe(),
