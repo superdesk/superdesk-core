@@ -8,10 +8,11 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
-from typing import Callable, Optional, List
+from typing import Callable, Optional, List, Union
 from dataclasses import dataclass
 
 from .config import ConfigModel
+from .web import Endpoint, EndpointGroup
 
 
 @dataclass
@@ -44,8 +45,11 @@ class Module:
     freeze_config: bool = True
 
     #: Optional list of resources to automatically register
-    resources: Optional[List["ResourceModelConfig"]] = None
+    resources: Optional[List["ResourceConfig"]] = None
+
+    #: Optional list of HTTP endpoints to register with the system
+    endpoints: Optional[List[Union[Endpoint, EndpointGroup]]] = None
 
 
 from .app import SuperdeskAsyncApp  # noqa: E402
-from .resources.model import ResourceModelConfig  # noqa: E402
+from .resources import ResourceConfig  # noqa: E402

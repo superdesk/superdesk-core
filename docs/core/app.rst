@@ -23,8 +23,3 @@ APP References
 .. autoclass:: superdesk.core.app.SuperdeskAsyncApp
     :member-order: bysource
     :members:
-
-.. autoclass:: superdesk.core.wsgi.WSGIApp
-    :member-order: bysource
-    :members:
-    :undoc-members:

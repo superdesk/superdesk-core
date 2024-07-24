@@ -36,6 +36,7 @@ model_config = ConfigDict(
     populate_by_name=True,
     revalidate_instances="always",
     extra="forbid",
+    protected_namespaces=(),
 )
 
 
@@ -141,7 +142,7 @@ class ResourceModelWithObjectId(ResourceModel):
 
 
 @python_dataclass
-class ResourceModelConfig:
+class ResourceConfig:
     """A config for a Resource to be registered"""
 
     #: Name of the resource (must be unique in the system)
@@ -156,13 +157,17 @@ class ResourceModelConfig:
     #: The config used for Elasticsearch, if `None` then this resource will not be available in Elasticsearch
     elastic: Optional["ElasticResourceConfig"] = None
 
+    #: Optional ResourceService class, if not provided the system will create a generic one, with no resource type
     service: Optional[Type["AsyncResourceService"]] = None
+
+    #: Optional config to be used for REST endpoints. If not provided, REST will not be available for this resource
+    rest_endpoints: Optional["RestEndpointConfig"] = None
 
 
 class Resources:
     """A high level resource class used to manage all resources in the system"""
 
-    _resource_configs: Dict[str, ResourceModelConfig]
+    _resource_configs: Dict[str, ResourceConfig]
 
     _resource_services: Dict[str, "AsyncResourceService"]
 
@@ -174,12 +179,12 @@ class Resources:
         self._resource_services = {}
         self.app = app
 
-    def register(self, config: ResourceModelConfig):
+    def register(self, config: ResourceConfig):
         """Register a new resource in the system
 
         This will also register the resource with Mongo and optionally Elasticsearch
 
-        :param config: A ResourceModelConfig of the resource to be registered
+        :param config: A ResourceConfig of the resource to be registered
         :raises KeyError: If the resource has already been registered
         """
 
@@ -201,21 +206,29 @@ class Resources:
                 config.elastic,
             )
 
-        if config.service is not None:
-            config.service.resource_name = config.name
-            self._resource_services[config.name] = config.service()
+        if config.service is None:
 
-    def get_config(self, name: str) -> ResourceModelConfig:
+            class GenericResourceService(AsyncResourceService):
+                pass
+
+            GenericResourceService.resource_name = config.name
+            GenericResourceService.config = config
+            config.service = GenericResourceService
+
+        config.service.resource_name = config.name
+        self._resource_services[config.name] = config.service()
+
+    def get_config(self, name: str) -> ResourceConfig:
         """Get the config for a registered resource
 
         :param name: The name of the registered resource
-        :return: A copy of the ResourceModelConfig of the registered resource
+        :return: A copy of the ResourceConfig of the registered resource
         :raises KeyError: If the resource is not registered
         """
 
         return deepcopy(self._resource_configs[name])
 
-    def get_all_configs(self) -> List[ResourceModelConfig]:
+    def get_all_configs(self) -> List[ResourceConfig]:
         """Get a copy of the configs for all the registered resources in the system"""
 
         return deepcopy(list(self._resource_configs.values()))
@@ -229,3 +242,4 @@ from .service import AsyncResourceService  # noqa: E402
 from ..mongo import MongoResourceConfig  # noqa: E402
 from ..elastic import ElasticResourceConfig  # noqa: E402
 from .validators import AsyncValidator  # noqa: E402
+from .resource_rest_endpoints import RestEndpointConfig  # noqa: E402

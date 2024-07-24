@@ -169,6 +169,13 @@ class ElasticResources:
         self._elastic_async_connections.clear()
         self._resource_async_clients.clear()
 
+    async def reset_all_async_connections(self):
+        for client in self._elastic_async_connections.values():
+            await client.close()
+        self._elastic_async_connections.clear()
+        for config in self.app.resources.get_all_configs():
+            self.get_client_async(config.name)
+
     def init_index(self, resource_name: str, raise_on_mapping_error: bool = False):
         """Init an Elasticsearch index for the provided resource
 
@@ -180,7 +187,7 @@ class ElasticResources:
         resource_client = self.get_client(resource_name)
 
         try:
-            if not resource_client.elastic.indices.exists(resource_client.config.index):
+            if not resource_client.elastic.indices.exists(index=resource_client.config.index):
                 self._create_index_from_alias(resource_client)
             elif resource_client.config.settings:
                 self._put_settings(resource_client)
@@ -214,15 +221,19 @@ class ElasticResources:
         """Drops Elasticsearch indexes for all registered resources"""
 
         for config in self.app.resources.get_all_configs():
+            if config.elastic is None:
+                # Elasticsearch is not configured for this resource
+                continue
+
             resource_client = self.get_client(config.name)
 
             try:
                 alias_info = resource_client.elastic.indices.get_alias(name=resource_client.config.index)
                 for index in alias_info:
-                    resource_client.elastic.indices.delete(index)
+                    resource_client.elastic.indices.delete(index=index)
             except NotFoundError:
                 try:
-                    resource_client.elastic.indices.delete(resource_client.config.index)
+                    resource_client.elastic.indices.delete(index=resource_client.config.index)
                 except NotFoundError:
                     pass
 
@@ -232,7 +243,7 @@ class ElasticResources:
             resource_client.elastic.indices.create(
                 index=index, body={} if not resource_client.config.settings else resource_client.config.settings
             )
-            resource_client.elastic.indices.put_alias(index, resource_client.config.index)
+            resource_client.elastic.indices.put_alias(index=index, name=resource_client.config.index)
             logger.info(f"created index alias={resource_client.config.index} index={index}")
         except TransportError:  # index exists
             pass
@@ -270,7 +281,7 @@ class ElasticResources:
 
         resource_client.elastic.indices.close(index=resource_client.config.index)
         resource_client.elastic.indices.put_settings(
-            index=resource_client.config.index, body=resource_client.config.settings
+            index=resource_client.config.index, body=resource_client.config.settings or {}
         )
         resource_client.elastic.indices.open(index=resource_client.config.index)
 

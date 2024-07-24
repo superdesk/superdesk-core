@@ -56,7 +56,7 @@ class ResourceModelTest(TestCase):
     def test_elastic_mapping(self):
         # Test the generated mapping
         self.assertEqual(
-            get_elastic_mapping_from_model("users", User),
+            get_elastic_mapping_from_model("users_async", User),
             {
                 "properties": {
                     "_created": {"type": "date"},

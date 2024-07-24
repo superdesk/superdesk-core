@@ -8,9 +8,11 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
-from typing import Dict, Any, Generic, TypeVar, Type, Optional, TypedDict, List, Union, Literal
+from typing import Dict, Any, Generic, TypeVar, Type, Optional, List, Union, Literal
+from typing_extensions import TypedDict
 from dataclasses import dataclass
 
+from pydantic import BaseModel, ConfigDict
 from motor.motor_asyncio import AsyncIOMotorCollection, AsyncIOMotorCursor
 
 
@@ -47,9 +49,10 @@ class SearchArgs(TypedDict, total=False):
     projections: str
 
 
-@dataclass
-class SearchRequest:
+class SearchRequest(BaseModel):
     """Dataclass containing Elasticsearch request arguments"""
+
+    model_config = ConfigDict(extra="allow")
 
     #: Argument for the search filters
     args: Optional[SearchArgs] = None
@@ -58,7 +61,7 @@ class SearchRequest:
     sort: Optional[str] = None
 
     #: Maximum number of documents to be returned
-    max_results: Optional[int] = None
+    max_results: int = 25
 
     #: The page number to be returned
     page: int = 1
@@ -88,6 +91,18 @@ class ResourceCursorAsync(Generic[ResourceModelType]):
 
     async def __anext__(self) -> ResourceModelType:
         raise NotImplementedError()
+
+    async def next_raw(self) -> Optional[Dict[str, Any]]:
+        raise NotImplementedError()
+
+    async def to_list_raw(self) -> List[Dict[str, Any]]:
+        items: List[Dict[str, Any]] = []
+        item = await self.next_raw()
+        while item is not None:
+            item["_type"] = self.data_class.model_resource_name
+            items.append(item)
+            item = await self.next_raw()
+        return items
 
     async def count(self):
         raise NotImplementedError()
@@ -127,6 +142,17 @@ class ElasticsearchResourceCursorAsync(ResourceCursorAsync):
         except (IndexError, KeyError, TypeError):
             raise StopAsyncIteration
 
+    async def next_raw(self) -> Optional[Dict[str, Any]]:
+        try:
+            data = self.hits["hits"]["hits"][self._index]
+            source = data["_source"]
+            source["_id"] = data["_id"]
+            source.pop("_resource", None)
+            self._index += 1
+            return source
+        except (IndexError, KeyError, TypeError):
+            return None
+
     async def count(self):
         hits = self.hits.get("hits")
         if hits:
@@ -136,6 +162,13 @@ class ElasticsearchResourceCursorAsync(ResourceCursorAsync):
             elif isinstance(total, dict) and total.get("value"):
                 return int(total["value"])
         return 0
+
+    def extra(self, response: Dict[str, Any]):
+        """Add extra info to response"""
+        if "facets" in self.hits:
+            response["_facets"] = self.hits["facets"]
+        if "aggregations" in self.hits:
+            response["_aggregations"] = self.hits["aggregations"]
 
 
 class MongoResourceCursorAsync(ResourceCursorAsync):
@@ -153,6 +186,12 @@ class MongoResourceCursorAsync(ResourceCursorAsync):
 
     async def __anext__(self):
         return self.get_model_instance(await self.cursor.next())
+
+    async def next_raw(self) -> Optional[Dict[str, Any]]:
+        try:
+            return dict(await self.cursor.next())
+        except StopAsyncIteration:
+            return None
 
     async def count(self):
         return await self.collection.count_documents(self.lookup)
