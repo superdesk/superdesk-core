@@ -40,6 +40,7 @@ class AIResource(Resource):
                 "headline": {"type": "string", "required": False},
                 "slugline": {"type": "string", "required": False},
             },
+            "allow_unknown": True,
         },
         "tags": {
             "type": "dict",
