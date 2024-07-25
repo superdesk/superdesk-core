@@ -8,12 +8,13 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
+import json
 import logging
 import gridfs
 from bson import ObjectId
 
 from typing import Any, BinaryIO, Dict, Optional, Union
-from motor.motor_asyncio import AsyncIOMotorGridFSBucket
+from motor.motor_asyncio import AsyncIOMotorGridFSBucket, AsyncIOMotorGridOut
 
 from superdesk.core.app import SuperdeskAsyncApp
 from superdesk.storage.desk_media_storage import format_id
@@ -57,7 +58,7 @@ class GridFSMediaStorageAsync(SuperdeskMediaStorage):
         :return str: The ID that was generated for this object
         """
 
-        # try to determine mimetype on the server
+        # try to determine mimetype
         content_type = self._get_mimetype(content, filename, content_type)
 
         if folder:
@@ -98,6 +99,20 @@ class GridFSMediaStorageAsync(SuperdeskMediaStorage):
         except gridfs.errors.FileExists:
             logger.info("File exists filename=%s id=%s" % (filename, kwargs["_id"]))
 
+    async def get(self, file_id: ObjectId | Any, resource: str = None):
+        logger.debug("Getting media file with id= %s" % file_id)
+        file_id = format_id(file_id)
+
+        try:
+            fs = await self.fs(resource)
+            media_file = await fs.open_download_stream(file_id)
+        except Exception:
+            media_file = None
+
+        self._try_parse_metadata(media_file, file_id)
+
+        return media_file
+
     async def fs(self, resource: str = None) -> AsyncIOMotorGridFSBucket:
         resource = resource or "upload"
         mongo = self.app.mongo
@@ -108,3 +123,14 @@ class GridFSMediaStorageAsync(SuperdeskMediaStorage):
             self._fs[px] = AsyncIOMotorGridFSBucket(db)
 
         return self._fs[px]
+
+    def _try_parse_metadata(self, media_file: AsyncIOMotorGridOut, file_id: ObjectId | Any):
+        if not (media_file and media_file.metadata):
+            return
+
+        for k, v in media_file.metadata.items():
+            if isinstance(v, str):
+                try:
+                    media_file.metadata[k] = json.loads(v)
+                except ValueError:
+                    logger.info("Non JSON metadata for file: %s with key: %s and value: %s", file_id, k, v)

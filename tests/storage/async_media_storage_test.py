@@ -58,3 +58,22 @@ class GridFSMediaStorageAsyncTestCase(AsyncTestCase):
         retrieved_content = await file.read()
 
         self.assertEqual(retrieved_content, b"File with custom ID")
+
+    async def test_get_file(self):
+        content = BytesIO(b"Hello, GridFS!")
+        filename = "testfile.txt"
+        metadata = {"description": "Test file"}
+
+        file_id = await self.storage.put(content, filename, metadata=metadata)
+        media_file = await self.storage.get(file_id)
+
+        self.assertEqual(media_file.filename, filename)
+        self.assertEqual(media_file.metadata["description"], metadata["description"])
+
+        retrieved_content = await media_file.read()
+        self.assertEqual(retrieved_content, b"Hello, GridFS!")
+
+    async def test_get_nonexistent_file(self):
+        file_id = bson.ObjectId()
+        media_file = await self.storage.get(file_id)
+        self.assertIsNone(media_file)
