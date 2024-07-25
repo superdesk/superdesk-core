@@ -10,14 +10,12 @@
 
 import logging
 import gridfs
-import bson
-import bson.errors
+from bson import ObjectId
 
-from flask_babel import _
 from typing import Any, BinaryIO, Dict, Optional, Union
 from motor.motor_asyncio import AsyncIOMotorGridFSBucket
 
-from superdesk.core.app import get_current_async_app
+from superdesk.core.app import SuperdeskAsyncApp
 from superdesk.storage.desk_media_storage import format_id
 from .. import SuperdeskMediaStorage
 
@@ -31,8 +29,11 @@ class GridFSMediaStorageAsync(SuperdeskMediaStorage):
     using asynchrounous approach.
     """
 
-    def __init__(self, app=None):
-        super().__init__(app)
+    _fs: Dict[str, AsyncIOMotorGridFSBucket]
+    app: SuperdeskAsyncApp
+
+    def __init__(self, app: SuperdeskAsyncApp = None):
+        self.app = app
         self._fs = {}
 
     async def put(
@@ -44,7 +45,7 @@ class GridFSMediaStorageAsync(SuperdeskMediaStorage):
         resource: Optional[str] = None,
         folder: Optional[str] = None,
         **kwargs: Dict[str, Any],
-    ) -> Any:
+    ) -> ObjectId:
         """Store content in gridfs.
 
         :param content: binary stream
@@ -58,9 +59,6 @@ class GridFSMediaStorageAsync(SuperdeskMediaStorage):
 
         # try to determine mimetype on the server
         content_type = self._get_mimetype(content, filename, content_type)
-
-        if "_id" in kwargs:
-            kwargs["_id"] = format_id(kwargs["_id"])
 
         if folder:
             if folder[-1] == "/":
@@ -84,18 +82,25 @@ class GridFSMediaStorageAsync(SuperdeskMediaStorage):
             metadata["contentType"] = content_type
 
             fs = await self.fs(resource)
+
+            if "_id" in kwargs:
+                file_id = format_id(kwargs["_id"])
+                await fs.upload_from_stream_with_id(file_id, filename, content, metadata=metadata)
+                return file_id
+
             return await fs.upload_from_stream(
                 filename,
                 content,
                 metadata=metadata,
                 **kwargs,
             )
+
         except gridfs.errors.FileExists:
             logger.info("File exists filename=%s id=%s" % (filename, kwargs["_id"]))
 
     async def fs(self, resource: str = None) -> AsyncIOMotorGridFSBucket:
         resource = resource or "upload"
-        mongo = get_current_async_app().mongo
+        mongo = self.app.mongo
 
         px = mongo.get_resource_config(resource).prefix
         if px not in self._fs:

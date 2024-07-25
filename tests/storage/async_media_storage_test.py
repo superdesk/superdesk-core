@@ -22,6 +22,9 @@ class GridFSMediaStorageAsyncTestCase(AsyncTestCase):
         await super().asyncSetUp()
         self.storage = GridFSMediaStorageAsync(self.app)
 
+    # async def asyncTearDown(self):
+    #     await super().asyncTearDown()
+
     async def test_put_and_get_file(self):
         content = BytesIO(b"Hello, GridFS!")
         filename = "testfile.txt"
@@ -33,13 +36,25 @@ class GridFSMediaStorageAsyncTestCase(AsyncTestCase):
         fs = await self.storage.fs()
         file = await fs.open_download_stream(file_id)
 
-        assert file.filename == filename
-        assert file.metadata["description"] == metadata["description"]
+        self.assertEqual(file.filename, filename)
+        self.assertEqual(file.metadata["description"], metadata["description"])
 
         retrieved_content = await file.read()
-        assert retrieved_content == b"Hello, GridFS!"
+        self.assertEqual(retrieved_content, b"Hello, GridFS!")
 
     async def test_put_with_invalid_content_type(self):
         content = BytesIO(b"Invalid content type")
         with self.assertRaises(TypeError):
             await self.storage.put(content, content_type="invalid/type")
+
+    async def test_put_and_get_file_with_existing_id(self):
+        content = BytesIO(b"File with custom ID")
+        filename = "file_with_id.txt"
+        file_id = bson.ObjectId()
+
+        await self.storage.put(content, filename, _id=file_id)
+        fs = await self.storage.fs()
+        file = await fs.open_download_stream(file_id)
+        retrieved_content = await file.read()
+
+        self.assertEqual(retrieved_content, b"File with custom ID")
