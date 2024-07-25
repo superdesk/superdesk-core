@@ -174,6 +174,27 @@ class GridFSMediaStorageAsync(SuperdeskMediaStorage):
                 logging.warning("Failed to get file attributes. {}".format(e))
         return files
 
+    async def exists(self, id_or_query: Union[ObjectId, Any, Dict[str, Any]], resource: str = None) -> bool:
+        """
+        Check if a file exists in GridFS by its file ID or a query.
+
+        :param id_or_query: The ID of the file to check or a dictionary specifying the search query.
+                            This can be either a bson.ObjectId or any type that can be converted to
+                            a bson.ObjectId, or a query dictionary.
+        :param resource: The resource type to use. Defaults to "upload" if not specified.
+        :return: True if the file exists, False otherwise.
+        """
+        if isinstance(id_or_query, dict):
+            query = id_or_query
+        else:
+            file_id = format_id(id_or_query)
+            query = {"_id": file_id}
+
+        fs = await self.fs(resource)
+        cursor = fs.find(query).limit(1)
+        file_exists = await cursor.to_list(length=1)
+        return len(file_exists) > 0
+
     async def fs(self, resource: str = None) -> AsyncIOMotorGridFSBucket:
         resource = resource or "upload"
         mongo = self.app.mongo

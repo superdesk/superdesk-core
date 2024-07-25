@@ -23,9 +23,6 @@ class GridFSMediaStorageAsyncTestCase(AsyncTestCase):
         await super().asyncSetUp()
         self.storage = GridFSMediaStorageAsync(self.app)
 
-    # async def asyncTearDown(self):
-    #     await super().asyncTearDown()
-
     async def test_put_and_get_file(self):
         content = BytesIO(b"Hello, GridFS!")
         filename = "testfile.txt"
@@ -120,3 +117,34 @@ class GridFSMediaStorageAsyncTestCase(AsyncTestCase):
         # find files with upload date greater than now
         files = await self.storage.find(upload_date={"$gt": past_date})
         self.assertTrue(any(file["filename"] == "testfile_future.txt" for file in files))
+
+    async def test_exists_by_id(self):
+        content = BytesIO(b"Hello, GridFS!")
+        filename = "testfile.txt"
+        metadata = {"description": "Test file"}
+
+        file_id = await self.storage.put(content, filename, metadata=metadata)
+        self.assertIsInstance(file_id, bson.ObjectId)
+
+        exists = await self.storage.exists(file_id)
+        self.assertTrue(exists)
+
+        non_existent_id = bson.ObjectId()
+        exists = await self.storage.exists(non_existent_id)
+        self.assertFalse(exists)
+
+    async def test_exists_by_query(self):
+        content = BytesIO(b"Hello, GridFS!")
+        filename = "testfile_query.txt"
+        metadata = {"description": "Test file for query"}
+
+        file_id = await self.storage.put(content, filename, metadata=metadata)
+        self.assertIsInstance(file_id, bson.ObjectId)
+
+        query = {"filename": filename}
+        exists = await self.storage.exists(query)
+        self.assertTrue(exists)
+
+        non_existent_query = {"filename": "non_existent_file.txt"}
+        exists = await self.storage.exists(non_existent_query)
+        self.assertFalse(exists)
