@@ -99,7 +99,19 @@ class GridFSMediaStorageAsync(SuperdeskMediaStorage):
         except gridfs.errors.FileExists:
             logger.info("File exists filename=%s id=%s" % (filename, kwargs["_id"]))
 
-    async def get(self, file_id: ObjectId | Any, resource: str = None):
+    async def get(self, file_id: ObjectId | Any, resource: str = None) -> AsyncIOMotorGridOut | None:
+        """
+        Retrieve a file from GridFS by its file ID.
+
+        This method fetches a file from GridFS based on the provided file ID. It attempts to parse the
+        file's metadata as JSON if possible, logging a warning if any metadata entries are not valid JSON.
+
+        :param file_id: The ID of the file to retrieve. This can be either a bson.ObjectId or any type
+                        that can be converted to a bson.ObjectId.
+        :param resource: The resource type to use. Defaults to "upload" if not specified.
+        :return: The file object retrieved from GridFS, or None if the file does not exist or an error occurs.
+        """
+
         logger.debug("Getting media file with id= %s" % file_id)
         file_id = format_id(file_id)
 
@@ -112,6 +124,55 @@ class GridFSMediaStorageAsync(SuperdeskMediaStorage):
         self._try_parse_metadata(media_file, file_id)
 
         return media_file
+
+    async def find(
+        self, folder: Optional[str] = None, upload_date: Optional[Dict[str, Any]] = None, resource: Optional[str] = None
+    ) -> list:
+        """
+        Search for files in the GridFS.
+
+        Searches for files in the GridFS using a combination of folder name and/or upload date
+        comparisons. The upload date comparisons use the same MongoDB BSON comparison operators,
+        i.e., `$eq`, `$gt`, `$gte`, `$lt`, `$lte`, and `$ne`, and can be combined together.
+
+        :param folder: Folder name to search within. Only files within this folder will be returned.
+                    If not specified, files from all folders will be included.
+        :param upload_date: A dictionary specifying the upload date comparison operator and value.
+                            For example: {"$lt": datetime.now(timezone.utc)}
+        :param resource: The resource type to use. Defaults to "upload".
+        :return: A list of files that matched the provided parameters. Each file is represented as
+                a dictionary with keys: '_id', 'filename', 'upload_date', and 'size'.
+        """
+
+        folder_query = {"filename": {"$regex": "^{}/".format(folder)}} if folder else None
+        date_query = {"uploadDate": upload_date} if upload_date else None
+
+        if folder and upload_date:
+            query = {"$and": [folder_query, date_query]}
+        elif folder:
+            query = folder_query
+        elif date_query:
+            query = date_query
+        else:
+            query = {}
+
+        files = []
+        fs = await self.fs(resource)
+
+        async for file in fs.find(query):
+            try:
+                files.append(
+                    {
+                        "_id": file._id,
+                        "filename": file.filename,
+                        "upload_date": file.uploadDate,
+                        "size": file.length,
+                        # "_etag": file.md5,
+                    }
+                )
+            except AttributeError as e:
+                logging.warning("Failed to get file attributes. {}".format(e))
+        return files
 
     async def fs(self, resource: str = None) -> AsyncIOMotorGridFSBucket:
         resource = resource or "upload"

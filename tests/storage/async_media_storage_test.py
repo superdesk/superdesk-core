@@ -10,6 +10,7 @@
 
 import bson
 from io import BytesIO
+from datetime import datetime, timezone, timedelta
 
 from superdesk.tests.asyncio import AsyncTestCase
 from superdesk.storage.async_storage import GridFSMediaStorageAsync
@@ -77,3 +78,45 @@ class GridFSMediaStorageAsyncTestCase(AsyncTestCase):
         file_id = bson.ObjectId()
         media_file = await self.storage.get(file_id)
         self.assertIsNone(media_file)
+
+    async def test_find_by_folder(self):
+        content = BytesIO(b"Hello, GridFS!")
+        filename = "folder1/testfile1.txt"
+        metadata = {"description": "Test file in folder1"}
+        await self.storage.put(content, filename, metadata=metadata)
+
+        filename = "folder1/testfile2.txt"
+        metadata = {"description": "Another test file in folder1"}
+        await self.storage.put(content, filename, metadata=metadata)
+
+        filename = "folder2/testfile3.txt"
+        metadata = {"description": "Test file in folder2"}
+        await self.storage.put(content, filename, metadata=metadata)
+
+        # find files in folder1
+        files = await self.storage.find(folder="folder1")
+        self.assertEqual(len(files), 2)
+        self.assertTrue(all("folder1/" in file["filename"] for file in files))
+
+    async def test_find_by_upload_date(self):
+        # store files with different upload dates
+        now = datetime.now(timezone.utc)
+        past_date = now - timedelta(days=1)
+        future_date = now + timedelta(days=1)
+
+        content = BytesIO(b"File content")
+        filename = "testfile_past.txt"
+        metadata = {"description": "Test file in the past"}
+        await self.storage.put(content, filename, metadata=metadata)
+
+        filename = "testfile_future.txt"
+        metadata = {"description": "Test file in the future"}
+        await self.storage.put(content, filename, metadata=metadata)
+
+        # find files with upload date less than now
+        files = await self.storage.find(upload_date={"$lt": future_date})
+        self.assertTrue(any(file["filename"] == "testfile_past.txt" for file in files))
+
+        # find files with upload date greater than now
+        files = await self.storage.find(upload_date={"$gt": past_date})
+        self.assertTrue(any(file["filename"] == "testfile_future.txt" for file in files))
