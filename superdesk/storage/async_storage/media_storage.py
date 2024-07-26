@@ -77,7 +77,7 @@ class GridFSMediaStorageAsync(SuperdeskMediaStorage):
                 content.seek(0)
 
         try:
-            logger.info("Adding file {} to the GridFS".format(filename))
+            logger.info(f"Adding file {filename} to the GridFS")
 
             metadata = metadata or {}
             metadata["contentType"] = content_type
@@ -97,7 +97,7 @@ class GridFSMediaStorageAsync(SuperdeskMediaStorage):
             )
 
         except gridfs.errors.FileExists:
-            logger.info("File exists filename=%s id=%s" % (filename, kwargs["_id"]))
+            logger.info(f"File exists filename={filename} id={kwargs.get('_id')}")
 
     async def get(self, file_id: ObjectId | Any, resource: str = None) -> AsyncIOMotorGridOut | None:
         """
@@ -195,6 +195,24 @@ class GridFSMediaStorageAsync(SuperdeskMediaStorage):
         file_exists = await cursor.to_list(length=1)
         return len(file_exists) > 0
 
+    async def delete(self, file_id: Union[ObjectId, Any], resource: str = None) -> None:
+        """
+        Delete a file from GridFS by its file ID.
+
+        :param file_id: The ID of the file to delete. This can be either a bson.ObjectId or any type
+                        that can be converted to a bson.ObjectId.
+        :param resource: The resource type to use. Defaults to "upload" if not specified.
+
+        .. note:: Deletes of non-existent files are considered successful since the end result is the same.
+        """
+        media_id = ObjectId(file_id) if ObjectId.is_valid(file_id) else file_id
+        fs = await self.fs(resource)
+
+        try:
+            await fs.delete(media_id)
+        except gridfs.errors.NoFile:
+            logger.info(f"File with id: {file_id} was not found")
+
     async def fs(self, resource: str = None) -> AsyncIOMotorGridFSBucket:
         resource = resource or "upload"
         mongo = self.app.mongo
@@ -215,4 +233,4 @@ class GridFSMediaStorageAsync(SuperdeskMediaStorage):
                 try:
                     media_file.metadata[k] = json.loads(v)
                 except ValueError:
-                    logger.info("Non JSON metadata for file: %s with key: %s and value: %s", file_id, k, v)
+                    logger.info(f"Non JSON metadata for file: {file_id} with key: {k} and value: {v}")

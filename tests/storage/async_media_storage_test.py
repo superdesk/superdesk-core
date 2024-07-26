@@ -148,3 +148,27 @@ class GridFSMediaStorageAsyncTestCase(AsyncTestCase):
         non_existent_query = {"filename": "non_existent_file.txt"}
         exists = await self.storage.exists(non_existent_query)
         self.assertFalse(exists)
+
+    async def test_delete_existing_file(self):
+        content = BytesIO(b"Hello, GridFS!")
+        filename = "testfile_to_delete.txt"
+        metadata = {"description": "File to be deleted"}
+
+        file_id = await self.storage.put(content, filename, metadata=metadata)
+        self.assertIsInstance(file_id, bson.ObjectId)
+
+        exists = await self.storage.exists(file_id)
+        self.assertTrue(exists)
+
+        await self.storage.delete(file_id)
+
+        exists = await self.storage.exists(file_id)
+        self.assertFalse(exists)
+
+    async def test_delete_nonexistent_file(self):
+        non_existent_id = bson.ObjectId()
+
+        await self.storage.delete(non_existent_id)
+
+        exists = await self.storage.exists(non_existent_id)
+        self.assertFalse(exists)
