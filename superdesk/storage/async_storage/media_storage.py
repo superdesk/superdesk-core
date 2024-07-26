@@ -17,15 +17,16 @@ from bson import ObjectId
 from typing import Any, BinaryIO, Dict, Optional, Union
 from motor.motor_asyncio import AsyncIOMotorGridFSBucket, AsyncIOMotorGridOut
 
+from eve.io.media import MediaStorage
 from superdesk.core.app import SuperdeskAsyncApp
 from superdesk.storage.desk_media_storage import format_id
-from .. import SuperdeskMediaStorage
+from superdesk.storage.mimetype_mixin import MimetypeMixin
 
 
 logger = logging.getLogger(__name__)
 
 
-class GridFSMediaStorageAsync(SuperdeskMediaStorage):
+class GridFSMediaStorageAsync(MediaStorage, MimetypeMixin):
     """
     The GridFSMediaStorageAsync class stores files into GridFS
     using asynchrounous approach.
