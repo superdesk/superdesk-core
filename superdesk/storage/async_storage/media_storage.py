@@ -8,9 +8,10 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
+import os
 import json
-import logging
 import gridfs
+import logging
 from bson import ObjectId
 
 from typing import Any, BinaryIO, Dict, Optional, Union
@@ -99,7 +100,7 @@ class GridFSMediaStorageAsync(SuperdeskMediaStorage):
         except gridfs.errors.FileExists:
             logger.info(f"File exists filename={filename} id={kwargs.get('_id')}")
 
-    async def get(self, file_id: ObjectId | Any, resource: str = None) -> AsyncIOMotorGridOut | None:
+    async def get(self, file_id: ObjectId | Any, resource: str = None) -> Optional[AsyncIOMotorGridOut]:
         """
         Retrieve a file from GridFS by its file ID.
 
@@ -118,7 +119,11 @@ class GridFSMediaStorageAsync(SuperdeskMediaStorage):
         try:
             fs = await self.fs(resource)
             media_file = await fs.open_download_stream(file_id)
-        except Exception:
+        except gridfs.errors.NoFile:
+            logger.info(f"No file found with id: {file_id}")
+            media_file = None
+        except Exception as e:
+            logger.error(f"Unexpected exception occurred while getting file with id: {file_id}", exc_info=e)
             media_file = None
 
         self._try_parse_metadata(media_file, file_id)
@@ -212,6 +217,18 @@ class GridFSMediaStorageAsync(SuperdeskMediaStorage):
             await fs.delete(media_id)
         except gridfs.errors.NoFile:
             logger.info(f"File with id: {file_id} was not found")
+
+    async def get_by_filename(self, filename: str, resource: str = None) -> Optional[AsyncIOMotorGridOut]:
+        """
+        Retrieve a file from GridFS by its filename.
+
+        :param filename: The filename of the file to retrieve. The filename is expected to include
+                        an extension that will be removed to get the file ID.
+        :param resource: The resource type to use. Defaults to "upload" if not specified.
+        :return: The file object retrieved from GridFS, or None if the file does not exist.
+        """
+        file_id, _ = os.path.splitext(filename)
+        return await self.get(file_id, resource)
 
     async def fs(self, resource: str = None) -> AsyncIOMotorGridFSBucket:
         resource = resource or "upload"

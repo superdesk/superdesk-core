@@ -8,8 +8,9 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
-import bson
+import os
 from io import BytesIO
+from bson import ObjectId
 from datetime import datetime, timezone, timedelta
 
 from superdesk.tests.asyncio import AsyncTestCase
@@ -29,7 +30,7 @@ class GridFSMediaStorageAsyncTestCase(AsyncTestCase):
         metadata = {"description": "Test file"}
 
         file_id = await self.storage.put(content, filename, metadata=metadata)
-        self.assertIsInstance(file_id, bson.ObjectId)
+        self.assertIsInstance(file_id, ObjectId)
 
         fs = await self.storage.fs()
         file = await fs.open_download_stream(file_id)
@@ -48,7 +49,7 @@ class GridFSMediaStorageAsyncTestCase(AsyncTestCase):
     async def test_put_and_get_file_with_existing_id(self):
         content = BytesIO(b"File with custom ID")
         filename = "file_with_id.txt"
-        file_id = bson.ObjectId()
+        file_id = ObjectId()
 
         await self.storage.put(content, filename, _id=file_id)
         fs = await self.storage.fs()
@@ -72,7 +73,7 @@ class GridFSMediaStorageAsyncTestCase(AsyncTestCase):
         self.assertEqual(retrieved_content, b"Hello, GridFS!")
 
     async def test_get_nonexistent_file(self):
-        file_id = bson.ObjectId()
+        file_id = ObjectId()
         media_file = await self.storage.get(file_id)
         self.assertIsNone(media_file)
 
@@ -124,12 +125,12 @@ class GridFSMediaStorageAsyncTestCase(AsyncTestCase):
         metadata = {"description": "Test file"}
 
         file_id = await self.storage.put(content, filename, metadata=metadata)
-        self.assertIsInstance(file_id, bson.ObjectId)
+        self.assertIsInstance(file_id, ObjectId)
 
         exists = await self.storage.exists(file_id)
         self.assertTrue(exists)
 
-        non_existent_id = bson.ObjectId()
+        non_existent_id = ObjectId()
         exists = await self.storage.exists(non_existent_id)
         self.assertFalse(exists)
 
@@ -139,7 +140,7 @@ class GridFSMediaStorageAsyncTestCase(AsyncTestCase):
         metadata = {"description": "Test file for query"}
 
         file_id = await self.storage.put(content, filename, metadata=metadata)
-        self.assertIsInstance(file_id, bson.ObjectId)
+        self.assertIsInstance(file_id, ObjectId)
 
         query = {"filename": filename}
         exists = await self.storage.exists(query)
@@ -155,7 +156,7 @@ class GridFSMediaStorageAsyncTestCase(AsyncTestCase):
         metadata = {"description": "File to be deleted"}
 
         file_id = await self.storage.put(content, filename, metadata=metadata)
-        self.assertIsInstance(file_id, bson.ObjectId)
+        self.assertIsInstance(file_id, ObjectId)
 
         exists = await self.storage.exists(file_id)
         self.assertTrue(exists)
@@ -166,9 +167,30 @@ class GridFSMediaStorageAsyncTestCase(AsyncTestCase):
         self.assertFalse(exists)
 
     async def test_delete_nonexistent_file(self):
-        non_existent_id = bson.ObjectId()
+        non_existent_id = ObjectId()
 
         await self.storage.delete(non_existent_id)
 
         exists = await self.storage.exists(non_existent_id)
         self.assertFalse(exists)
+
+    async def test_get_by_filename(self):
+        content = BytesIO(b"Hello, GridFS!")
+        filename = "testfile_by_filename.txt"
+        metadata = {"description": "Test file for get_by_filename"}
+
+        custom_id, _ = os.path.splitext(filename)
+        await self.storage.put(content, filename, metadata=metadata, _id=custom_id)
+        media_file = await self.storage.get_by_filename(filename)
+
+        self.assertIsNotNone(media_file)
+        self.assertEqual(media_file.filename, filename)
+        self.assertEqual(media_file.metadata["description"], metadata["description"])
+
+        retrieved_content = await media_file.read()
+        self.assertEqual(retrieved_content, b"Hello, GridFS!")
+
+    async def test_get_by_nonexistent_filename(self):
+        non_existent_filename = "non_existent_file.txt"
+        media_file = await self.storage.get_by_filename(non_existent_filename)
+        self.assertIsNone(media_file)
