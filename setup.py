@@ -40,7 +40,6 @@ install_requires = [
     "requests>=2.7.0,<3.0",
     "boto3>=1.26,<2.0",
     "websockets>=10.3,<10.4",
-    "mongolock>=1.3.4,<1.4",
     "PyYAML>=6.0.1",
     "lxml>=5.2.2,<5.3",
     "lxml_html_clean>=0.1.1,<0.2",
@@ -67,6 +66,7 @@ install_requires = [
     "itsdangerous>=1.1,<2.0",
     "pymemcache>=4.0,<4.1",
     "xmlsec>=1.3.13,<1.3.15",
+    "mongolock @ git+https://github.com/superdesk/mongolock.git@v1",
 ]
 
 package_data = {
