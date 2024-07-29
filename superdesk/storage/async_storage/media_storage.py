@@ -32,6 +32,7 @@ class GridFSMediaStorageAsync(MediaStorage, MimetypeMixin):
 
     .. versionadded:: 3.0
     """
+
     _fs: Dict[str, AsyncIOMotorGridFSBucket]
 
     app: SuperdeskAsyncApp
