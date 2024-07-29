@@ -13,11 +13,7 @@ from setuptools import setup, find_packages
 LONG_DESCRIPTION = "Superdesk Server Core"
 
 install_requires = [
-    # temporary requirement to get urllib in a version compatible with requests
-    # to be kept until requests update its requirements
-    # (cf. https://github.com/psf/requests/issues/5654
-    # and https://github.com/psf/requests/pull/5651)
-    "urllib3<1.26",
+    "urllib3>=1.26,<2.0",
     "eve>=1.1.2,<=2.1.0",
     "eve-elastic>=7.4.0,<7.5.0",
     "elasticsearch<7.14",  # we are using oss version on test server
