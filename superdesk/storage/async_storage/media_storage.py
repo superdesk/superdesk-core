@@ -29,9 +29,11 @@ class GridFSMediaStorageAsync(MediaStorage, MimetypeMixin):
     """
     The GridFSMediaStorageAsync class stores files into GridFS
     using asynchronous approach.
-    """
 
+    .. versionadded:: 3.0
+    """
     _fs: Dict[str, AsyncIOMotorGridFSBucket]
+
     app: SuperdeskAsyncApp
 
     def __init__(self, app: SuperdeskAsyncApp):
@@ -104,7 +106,7 @@ class GridFSMediaStorageAsync(MediaStorage, MimetypeMixin):
 
         :param file_id: The ID of the file to retrieve. This can be either a bson.ObjectId or any type
                         that can be converted to a bson.ObjectId.
-        :param resource: The resource type to use. Defaults to "upload" if not specified.
+        :param resource: The resource to use. Defaults to "upload" if not specified.
         :return: The file object retrieved from GridFS, or None if the file does not exist or an error occurs.
         """
         logger.debug("Getting media file with id= %s" % file_id)
@@ -138,7 +140,7 @@ class GridFSMediaStorageAsync(MediaStorage, MimetypeMixin):
                     If not specified, files from all folders will be included.
         :param upload_date: A dictionary specifying the upload date comparison operator and value.
                             For example: {"$lt": datetime.now(timezone.utc)}
-        :param resource: The resource type to use. Defaults to "upload".
+        :param resource: The resource to use. Defaults to "upload".
         :return: A list of files that matched the provided parameters. Each file is represented as
                 a dictionary with keys: '_id', 'filename', 'upload_date', and 'size'.
         """
@@ -181,7 +183,7 @@ class GridFSMediaStorageAsync(MediaStorage, MimetypeMixin):
         :param id_or_query: The ID of the file to check or a dictionary specifying the search query.
                             This can be either a bson.ObjectId or any type that can be converted to
                             a bson.ObjectId, or a query dictionary.
-        :param resource: The resource type to use. Defaults to "upload" if not specified.
+        :param resource: The resource to use. Defaults to "upload" if not specified.
         :return: True if the file exists, False otherwise.
         """
         if isinstance(id_or_query, dict):
@@ -201,7 +203,7 @@ class GridFSMediaStorageAsync(MediaStorage, MimetypeMixin):
 
         :param file_id: The ID of the file to delete. This can be either a bson.ObjectId or any type
                         that can be converted to a bson.ObjectId.
-        :param resource: The resource type to use. Defaults to "upload" if not specified.
+        :param resource: The resource to use. Defaults to "upload" if not specified.
 
         .. note:: Deletes of non-existent files are considered successful since the end result is the same.
         """
@@ -219,7 +221,7 @@ class GridFSMediaStorageAsync(MediaStorage, MimetypeMixin):
 
         :param filename: The filename of the file to retrieve. The filename is expected to include
                         an extension that will be removed to get the file ID.
-        :param resource: The resource type to use. Defaults to "upload" if not specified.
+        :param resource: The resource to use. Defaults to "upload" if not specified.
         :return: The file object retrieved from GridFS, or None if the file does not exist.
         """
         file_id, _ = os.path.splitext(filename)
@@ -229,7 +231,7 @@ class GridFSMediaStorageAsync(MediaStorage, MimetypeMixin):
         """
         Get the GridFS bucket for the given resource.
 
-        :param resource: The resource type to use. Defaults to "upload".
+        :param resource: The resource to use. Defaults to "upload".
         :return: The GridFS bucket.
         """
         resource = resource or "upload"
