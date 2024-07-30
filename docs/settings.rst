@@ -6,11 +6,11 @@
 Configuration
 =============
 
-We use ``flask.app.config``, so to use it do::
+We use ``superdesk.core.get_app_config``, so to use it do::
 
-    from flask import current_app as app
+    from superdesk.core import get_app_config
 
-    print(app.config['SERVER_DOMAIN'])
+    print(get_app_config("SERVER_DOMAIN"))
 
 Configuration is combination of default settings module and settings module
 in `application repo <https://github.com/superdesk/superdesk/blob/master/server/settings.py>`_.
