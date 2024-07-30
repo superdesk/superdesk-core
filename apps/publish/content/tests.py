@@ -17,9 +17,10 @@ from unittest import mock
 from unittest.mock import MagicMock
 
 from bson.objectid import ObjectId
-from eve.utils import config, ParsedRequest
+from eve.utils import ParsedRequest
 from eve.versioning import versioned_id_field
 
+from superdesk.resource_fields import ID_FIELD, VERSION
 from apps.archive.archive import SOURCE as ARCHIVE
 from apps.packages.package_service import PackageService
 from apps.publish.content.common import BasePublishService
@@ -160,7 +161,7 @@ class ArchivePublishTestCase(TestCase):
                 "_id": "1",
                 ITEM_TYPE: CONTENT_TYPE.TEXT,
                 "last_version": 3,
-                config.VERSION: 4,
+                VERSION: 4,
                 "body_html": "Test body",
                 "anpa_category": [{"qcode": "A", "name": "Sport"}],
                 "urgency": 4,
@@ -183,7 +184,7 @@ class ArchivePublishTestCase(TestCase):
                 "guid": "tag:localhost:2015:69b961ab-2816-4b8a-a974-xy4532fe33f9",
                 "_id": "2",
                 "last_version": 3,
-                config.VERSION: 4,
+                VERSION: 4,
                 "body_html": "Test body of the second article",
                 "slugline": "story slugline",
                 "urgency": 4,
@@ -208,7 +209,7 @@ class ArchivePublishTestCase(TestCase):
                 "guid": "tag:localhost:2015:69b961ab-2816-4b8a-a584-a7b402fed4fa",
                 "_id": "3",
                 "last_version": 3,
-                config.VERSION: 4,
+                VERSION: 4,
                 "body_html": "Test body",
                 "slugline": "story slugline",
                 "urgency": 4,
@@ -231,7 +232,7 @@ class ArchivePublishTestCase(TestCase):
                 "guid": "8",
                 "_id": "8",
                 "last_version": 3,
-                config.VERSION: 4,
+                VERSION: 4,
                 "target_regions": [{"qcode": "NSW", "name": "New South Wales", "allow": True}],
                 "body_html": "Take-1 body",
                 "urgency": 4,
@@ -255,7 +256,7 @@ class ArchivePublishTestCase(TestCase):
                 "_id": "9",
                 "urgency": 3,
                 "last_version": 3,
-                config.VERSION: 4,
+                VERSION: 4,
                 "headline": "creator",
                 "task": {"user": "1", "desk": "123456789ABCDEF123456789"},
                 ITEM_STATE: CONTENT_STATE.FETCHED,
@@ -264,7 +265,7 @@ class ArchivePublishTestCase(TestCase):
                 "guid": "tag:localhost:2015:69b961ab-a7b402fed4fb",
                 "_id": "test_item_9",
                 "last_version": 3,
-                config.VERSION: 4,
+                VERSION: 4,
                 "body_html": "Student Crime. Police Missing.",
                 "urgency": 4,
                 "headline": "Police Missing",
@@ -285,7 +286,7 @@ class ArchivePublishTestCase(TestCase):
             {
                 "guid": "tag:localhost:10:10:10:2015:69b961ab-2816-4b8a-a584-a7b402fed4fc",
                 "_id": "100",
-                config.VERSION: 3,
+                VERSION: 3,
                 "task": {"user": "1", "desk": "123456789ABCDEF123456789"},
                 ITEM_TYPE: CONTENT_TYPE.COMPOSITE,
                 "groups": [
@@ -344,7 +345,7 @@ class ArchivePublishTestCase(TestCase):
                 "guid": "tag:localhost:2015:69b961ab-2816-4b8a-a584-a7b402fed4f9",
                 version_id: "1",
                 ITEM_TYPE: CONTENT_TYPE.TEXT,
-                config.VERSION: 1,
+                VERSION: 1,
                 "urgency": 4,
                 "pubstatus": "usable",
                 "firstcreated": utcnow(),
@@ -360,7 +361,7 @@ class ArchivePublishTestCase(TestCase):
                 "guid": "tag:localhost:2015:69b961ab-2816-4b8a-a584-a7b402fed4f9",
                 version_id: "1",
                 ITEM_TYPE: CONTENT_TYPE.TEXT,
-                config.VERSION: 2,
+                VERSION: 2,
                 "urgency": 4,
                 "headline": "Two students missing",
                 "pubstatus": "usable",
@@ -377,7 +378,7 @@ class ArchivePublishTestCase(TestCase):
                 "guid": "tag:localhost:2015:69b961ab-2816-4b8a-a584-a7b402fed4f9",
                 version_id: "1",
                 ITEM_TYPE: CONTENT_TYPE.TEXT,
-                config.VERSION: 3,
+                VERSION: 3,
                 "urgency": 4,
                 "headline": "Two students missing",
                 "pubstatus": "usable",
@@ -395,7 +396,7 @@ class ArchivePublishTestCase(TestCase):
                 "guid": "tag:localhost:2015:69b961ab-2816-4b8a-a584-a7b402fed4f9",
                 version_id: "1",
                 ITEM_TYPE: CONTENT_TYPE.TEXT,
-                config.VERSION: 4,
+                VERSION: 4,
                 "body_html": "Test body",
                 "urgency": 4,
                 "headline": "Two students missing",
@@ -448,7 +449,7 @@ class ArchivePublishTestCase(TestCase):
         get_resource_service(ARCHIVE_PUBLISH).patch(id=doc["_id"], updates={ITEM_STATE: CONTENT_STATE.PUBLISHED})
         published_doc = get_resource_service(ARCHIVE).find_one(req=None, _id=doc["_id"])
         self.assertIsNotNone(published_doc)
-        self.assertEqual(published_doc[config.VERSION], doc[config.VERSION] + 1)
+        self.assertEqual(published_doc[VERSION], doc[VERSION] + 1)
         self.assertEqual(published_doc[ITEM_STATE], ArchivePublishService().published_state)
 
     def test_versions_across_collections_after_publish(self):
@@ -458,30 +459,28 @@ class ArchivePublishTestCase(TestCase):
         doc = self.articles[3]
         original = doc.copy()
 
-        published_version_number = original[config.VERSION] + 1
+        published_version_number = original[VERSION] + 1
         get_resource_service(ARCHIVE_PUBLISH).patch(
-            id=doc[config.ID_FIELD],
-            updates={ITEM_STATE: CONTENT_STATE.PUBLISHED, config.VERSION: published_version_number},
+            id=doc[ID_FIELD],
+            updates={ITEM_STATE: CONTENT_STATE.PUBLISHED, VERSION: published_version_number},
         )
 
-        article_in_production = get_resource_service(ARCHIVE).find_one(req=None, _id=original[config.ID_FIELD])
+        article_in_production = get_resource_service(ARCHIVE).find_one(req=None, _id=original[ID_FIELD])
         self.assertIsNotNone(article_in_production)
         self.assertEqual(article_in_production[ITEM_STATE], CONTENT_STATE.PUBLISHED)
-        self.assertEqual(article_in_production[config.VERSION], published_version_number)
+        self.assertEqual(article_in_production[VERSION], published_version_number)
 
         enqueue_published()
 
-        lookup = {"item_id": original[config.ID_FIELD], "item_version": published_version_number}
+        lookup = {"item_id": original[ID_FIELD], "item_version": published_version_number}
         queue_items = list(get_resource_service(PUBLISH_QUEUE).get(req=None, lookup=lookup))
-        assert len(queue_items) > 0, "Transmission Details are empty for published item %s" % original[config.ID_FIELD]
+        assert len(queue_items) > 0, "Transmission Details are empty for published item %s" % original[ID_FIELD]
 
-        lookup = {"item_id": original[config.ID_FIELD], config.VERSION: published_version_number}
+        lookup = {"item_id": original[ID_FIELD], VERSION: published_version_number}
         request = ParsedRequest()
         request.args = {"aggregations": 0}
         items_in_published_collection = list(get_resource_service(PUBLISHED).get(req=request, lookup=lookup))
-        assert len(items_in_published_collection) > 0, (
-            "Item not found in published collection %s" % original[config.ID_FIELD]
-        )
+        assert len(items_in_published_collection) > 0, "Item not found in published collection %s" % original[ID_FIELD]
 
     def test_queue_transmission_for_item_scheduled_future(self):
         self._is_publish_queue_empty()
@@ -696,7 +695,7 @@ class ArchivePublishTestCase(TestCase):
 
     def test_targeted_for_includes_digital_subscribers(self):
         updates = {"target_regions": [{"qcode": "NSW", "name": "New South Wales", "allow": True}]}
-        doc_id = self.articles[5][config.ID_FIELD]
+        doc_id = self.articles[5][ID_FIELD]
         get_resource_service(ARCHIVE).patch(id=doc_id, updates=updates)
 
         get_resource_service(ARCHIVE_PUBLISH).patch(id=doc_id, updates={ITEM_STATE: CONTENT_STATE.PUBLISHED})
@@ -722,12 +721,10 @@ class ArchivePublishTestCase(TestCase):
             request.args = {"source": json.dumps(query), "aggregations": 0}
             return self.app.data.find(PUBLISHED, req=request, lookup=None)[0]
 
-        get_resource_service(ARCHIVE).patch(id=self.articles[1][config.ID_FIELD], updates={"publish_schedule": None})
+        get_resource_service(ARCHIVE).patch(id=self.articles[1][ID_FIELD], updates={"publish_schedule": None})
 
-        doc = get_resource_service(ARCHIVE).find_one(req=None, _id=self.articles[1][config.ID_FIELD])
-        get_resource_service(ARCHIVE_PUBLISH).patch(
-            id=doc[config.ID_FIELD], updates={ITEM_STATE: CONTENT_STATE.PUBLISHED}
-        )
+        doc = get_resource_service(ARCHIVE).find_one(req=None, _id=self.articles[1][ID_FIELD])
+        get_resource_service(ARCHIVE_PUBLISH).patch(id=doc[ID_FIELD], updates={ITEM_STATE: CONTENT_STATE.PUBLISHED})
 
         enqueue_published()
 
@@ -737,12 +734,10 @@ class ArchivePublishTestCase(TestCase):
         request.args = {"aggregations": 0}
         published_items = self.app.data.find(PUBLISHED, request, None)[0]
         self.assertEqual(1, published_items.count())
-        published_doc = next((item for item in published_items if item.get("item_id") == doc[config.ID_FIELD]), None)
+        published_doc = next((item for item in published_items if item.get("item_id") == doc[ID_FIELD]), None)
         self.assertEqual(published_doc[LAST_PUBLISHED_VERSION], True)
 
-        get_resource_service(ARCHIVE_CORRECT).patch(
-            id=doc[config.ID_FIELD], updates={ITEM_STATE: CONTENT_STATE.CORRECTED}
-        )
+        get_resource_service(ARCHIVE_CORRECT).patch(id=doc[ID_FIELD], updates={ITEM_STATE: CONTENT_STATE.CORRECTED})
 
         enqueue_published()
 

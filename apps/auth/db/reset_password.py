@@ -11,7 +11,9 @@
 import logging
 import superdesk
 from datetime import timedelta
-from flask import current_app as app
+
+from superdesk.core import get_app_config
+from superdesk.resource_fields import DATE_CREATED, LAST_UPDATED
 from superdesk.resource import Resource
 from superdesk.services import BaseService
 from superdesk.utc import utcnow
@@ -78,8 +80,8 @@ class ResetPasswordService(BaseService):
 
     def store_reset_password_token(self, doc, email, days_alive, user_id):
         now = utcnow()
-        doc[app.config["DATE_CREATED"]] = now
-        doc[app.config["LAST_UPDATED"]] = now
+        doc[DATE_CREATED] = now
+        doc[LAST_UPDATED] = now
         doc["expire_time"] = now + timedelta(days=days_alive)
         doc["user"] = user_id
         doc["token"] = get_random_string()
@@ -87,7 +89,7 @@ class ResetPasswordService(BaseService):
         return ids
 
     def initialize_reset_password(self, doc, email):
-        token_ttl = app.config["RESET_PASSWORD_TOKEN_TIME_TO_LIVE"]
+        token_ttl = get_app_config("RESET_PASSWORD_TOKEN_TIME_TO_LIVE")
 
         user = superdesk.get_resource_service("users").find_one(req=None, email=email)
         if not user:

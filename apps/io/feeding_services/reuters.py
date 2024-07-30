@@ -12,8 +12,9 @@ import datetime
 import traceback
 import superdesk
 import requests
-from flask import current_app as app
 
+from superdesk.core import get_app_config
+from superdesk.resource_fields import ID_FIELD
 from superdesk.errors import IngestApiError
 from superdesk.etree import etree, ParseError
 from superdesk.io.registry import register_feeding_service, register_feeding_service_parser
@@ -71,7 +72,7 @@ class ReutersHTTPFeedingService(HTTPFeedingService):
         updated = utcnow()
 
         last_updated = provider.get("last_updated")
-        ttl_minutes = app.config["INGEST_EXPIRY_MINUTES"]
+        ttl_minutes = get_app_config("INGEST_EXPIRY_MINUTES")
         if not last_updated or last_updated < updated - datetime.timedelta(minutes=ttl_minutes):
             last_updated = updated - datetime.timedelta(minutes=ttl_minutes)
 
@@ -235,14 +236,14 @@ class ReutersHTTPFeedingService(HTTPFeedingService):
         """
         # get the provider in case it has been updated by another channel
         ingest_provider_service = superdesk.get_resource_service("ingest_providers")
-        provider = ingest_provider_service.find_one(req=None, _id=self.provider[superdesk.config.ID_FIELD])
+        provider = ingest_provider_service.find_one(req=None, _id=self.provider[ID_FIELD])
         provider_token = provider.get("tokens")
         if "poll_tokens" not in provider_token:
             provider_token["poll_tokens"] = {channel: poll_token}
         else:
             provider_token["poll_tokens"][channel] = poll_token
         upd_provider = {"tokens": provider_token}
-        ingest_provider_service.system_update(self.provider[superdesk.config.ID_FIELD], upd_provider, self.provider)
+        ingest_provider_service.system_update(self.provider[ID_FIELD], upd_provider, self.provider)
 
     def _get_poll_token(self, channel):
         """Get the poll token from provider config if it is available.

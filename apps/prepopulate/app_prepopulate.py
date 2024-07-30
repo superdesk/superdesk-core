@@ -10,16 +10,18 @@
 
 import os
 import json
-import flask
 import logging
 import superdesk
 import multiprocessing
 import werkzeug.exceptions
 
-from flask import current_app as app
 from eve.utils import date_to_str
 from eve.versioning import insert_versioning_documents
 from bson.objectid import ObjectId
+
+from superdesk.core import get_current_app, get_app_config
+from superdesk.resource_fields import VERSION
+from superdesk.flask import g
 from apps.archive.common import ITEM_OPERATION
 from superdesk import get_resource_service
 from superdesk.metadata.item import ITEM_STATE, CONTENT_STATE
@@ -48,8 +50,8 @@ def set_logged_user(username, password):
         user = {"username": username, "password": password}
         get_resource_service("auth_db").post([user])
         auth_token = get_resource_service("auth").find_one(username=username, req=None)
-    flask.g.user = get_resource_service("users").find_one(req=None, username=username)
-    flask.g.auth = auth_token
+    g.user = get_resource_service("users").find_one(req=None, username=username)
+    g.auth = auth_token
 
 
 def get_default_user():
@@ -76,6 +78,7 @@ def prepopulate_data(file_name, default_user=None, directory=None):
     users = {default_user["username"]: default_user["password"]}
     default_username = default_user["username"]
     file = os.path.join(directory, file_name)
+    app = get_current_app()
     with open(file, "rt", encoding="utf8") as app_prepopulation:
         json_data = json.load(app_prepopulation)
         for item in json_data:
@@ -114,8 +117,8 @@ def prepopulate_data(file_name, default_user=None, directory=None):
                 if id_name:
                     placeholders[id_name] = str(ids[0])
 
-            if app.config["VERSION"] in data:
-                number_of_versions_to_insert = data[app.config["VERSION"]]
+            if VERSION in data:
+                number_of_versions_to_insert = data[VERSION]
                 doc_versions = []
 
                 if data[ITEM_STATE] not in [CONTENT_STATE.PUBLISHED, CONTENT_STATE.CORRECTED, CONTENT_STATE.KILLED]:
@@ -130,7 +133,7 @@ def prepopulate_data(file_name, default_user=None, directory=None):
                         published_version = data.copy()
                         published_version[ITEM_STATE] = CONTENT_STATE.PUBLISHED
                         published_version[ITEM_OPERATION] = "publish"
-                        published_version[app.config["VERSION"]] = number_of_versions_to_insert - 1
+                        published_version[VERSION] = number_of_versions_to_insert - 1
                         doc_versions.append(published_version)
 
                         number_of_versions_to_insert -= 2
@@ -143,7 +146,7 @@ def prepopulate_data(file_name, default_user=None, directory=None):
                         doc = data.copy()
                         doc[ITEM_STATE] = CONTENT_STATE.PROGRESS
                         doc.pop(ITEM_OPERATION, "")
-                        doc[app.config["VERSION"]] = number_of_versions_to_insert
+                        doc[VERSION] = number_of_versions_to_insert
                         doc_versions.append(doc)
 
                         number_of_versions_to_insert -= 1
@@ -167,6 +170,7 @@ class PrepopulateResource(Resource):
 
 class PrepopulateService(BaseService):
     def _create(self, docs):
+        app = get_current_app()
         for doc in docs:
             if doc.get("remove_first"):
                 clean_dbs(app, force=True)
@@ -189,7 +193,7 @@ class PrepopulateService(BaseService):
         with multiprocessing.Lock() as lock:
             with timer("prepopulate"):
                 self._create(docs)
-            if app.config.get("SUPERDESK_TESTING"):
+            if get_app_config("SUPERDESK_TESTING"):
                 for provider in ["paimg", "aapmm"]:
                     if provider not in allowed_search_providers:
                         register_search_provider(provider, provider)

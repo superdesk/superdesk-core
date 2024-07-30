@@ -10,7 +10,7 @@
 
 from superdesk.errors import SuperdeskApiError
 import logging
-from flask import json
+from superdesk.core import json
 
 
 logger = logging.getLogger(__name__)

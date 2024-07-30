@@ -16,10 +16,11 @@ from pytz import all_timezones_set
 
 from enum import Enum
 from datetime import datetime, timedelta
+
+from superdesk.resource_fields import ID_FIELD
 from superdesk.resource import Resource
 from superdesk.services import BaseService
 from superdesk.errors import SuperdeskApiError
-from eve.utils import config
 from superdesk.utc import set_time
 from flask_babel import _
 
@@ -183,7 +184,7 @@ class RoutingRuleSchemeService(BaseService):
         Will throw BadRequestError if any of the pre-conditions fail.
         """
 
-        if self.backend.find_one("ingest_providers", req=None, routing_scheme=doc[config.ID_FIELD]):
+        if self.backend.find_one("ingest_providers", req=None, routing_scheme=doc[ID_FIELD]):
             raise SuperdeskApiError.forbiddenError(_("Routing scheme is applied to channel(s). It cannot be deleted."))
 
     def apply_routing_scheme(self, ingest_item, provider, routing_scheme):

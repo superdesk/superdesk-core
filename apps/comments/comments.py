@@ -8,7 +8,7 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
-from flask import g, current_app as app
+from superdesk.core import get_current_app, get_app_config
 from superdesk.resource import Resource
 from superdesk.notification import push_notification
 from superdesk.services import BaseService
@@ -74,9 +74,10 @@ class CommentsService(BaseService):
     notifications = True
 
     def on_create(self, docs):
+        app = get_current_app()
         for doc in docs:
             sent_user = doc.get("user", None)
-            user = g.user
+            user = app.get_current_user_dict()
             if sent_user and sent_user != str(user["_id"]):
                 message = _("Commenting on behalf of someone else is prohibited.")
                 raise SuperdeskApiError.forbiddenError(message)
@@ -100,7 +101,7 @@ class CommentsService(BaseService):
             decode_keys(doc, "mentioned_desks")
 
         if self.notifications:
-            notify_mentioned_users(docs, app.config.get("CLIENT_URL", "").rstrip("/"))
+            notify_mentioned_users(docs, get_app_config("CLIENT_URL", "").rstrip("/"))
             notify_mentioned_desks(docs)
 
     def on_updated(self, updates, original):

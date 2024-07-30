@@ -1,5 +1,7 @@
 import logging
 import re
+
+from superdesk.core import get_current_app
 from superdesk.services import BaseService
 from superdesk import get_resource_service
 from superdesk.errors import SuperdeskApiError
@@ -8,7 +10,6 @@ from superdesk.utils import get_random_string
 from superdesk.validation import ValidationError
 from io import BytesIO
 from zipfile import ZipFile
-from flask import current_app as app
 from flask_babel import _
 
 logger = logging.getLogger(__name__)
@@ -51,6 +52,7 @@ class ExportService(BaseService):
             # Store the zip file on media_storage
             # only if at least one item is formatted successfully
             if unsuccessful_exports < len(doc.get("item_ids")):
+                app = get_current_app()
                 zip_id = app.media.put(
                     in_memory_zip.getvalue(),
                     filename="export_{}.zip".format(get_random_string()),

@@ -1,5 +1,5 @@
 import superdesk
-from flask import current_app as app
+from superdesk.core import get_current_app
 from superdesk.media.renditions import generate_renditions, get_renditions_spec
 from apps.picture_crop import get_file
 
@@ -12,6 +12,7 @@ class PictureRenditionsService(superdesk.Service):
     """
 
     def create(self, docs, **kwargs):
+        app = get_current_app()
         ids = []
         for doc in docs:
             item = doc.pop("item")

@@ -11,8 +11,8 @@
 import logging
 import superdesk
 
-from flask import request
-from eve.utils import config
+from superdesk.resource_fields import ID_FIELD
+from superdesk.flask import request
 from superdesk.resource import Resource
 from superdesk.services import BaseService
 from superdesk import get_backend
@@ -377,14 +377,14 @@ class PreferencesService(BaseService):
         if not role_users or not role:
             return
 
-        logger.info("On_Role_Privileges_Updated: Updating Users for Role:{}.".format(role.get(config.ID_FIELD)))
+        logger.info("On_Role_Privileges_Updated: Updating Users for Role:{}.".format(role.get(ID_FIELD)))
         for user in role_users:
             try:
-                super().update(user[config.ID_FIELD], {}, user)
+                super().update(user[ID_FIELD], {}, user)
             except Exception:
                 logger.warn(
                     "On_Role_Privileges_Updated:Failed to update user:{} with role:{}.".format(
-                        user.get(config.ID_FIELD), role.get(config.ID_FIELD)
+                        user.get(ID_FIELD), role.get(ID_FIELD)
                     ),
                     exc_info=True,
                 )

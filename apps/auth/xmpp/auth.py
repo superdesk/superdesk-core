@@ -8,13 +8,13 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
+from superdesk.core import get_app_config
 from apps.auth.service import AuthService
 from superdesk import get_resource_service
 from superdesk.resource import Resource
 from apps.auth.errors import CredentialsAuthError
 from superdesk.errors import SuperdeskApiError
 from superdesk import utils
-from flask import current_app as app
 import requests
 import superdesk
 
@@ -36,10 +36,10 @@ superdesk.intrinsic_privilege("auth_xmpp", method=["DELETE"])
 
 class XMPPAuthService(AuthService):
     def authenticate(self, credentials):
-        auth_url = app.config["XMPP_AUTH_URL"]
+        auth_url = get_app_config("XMPP_AUTH_URL")
         if not auth_url:
             raise SuperdeskApiError.notConfiguredError()
-        domain = app.config["XMPP_AUTH_DOMAIN"]
+        domain = get_app_config("XMPP_AUTH_DOMAIN")
         jid = credentials.get("jid")
         if not jid:
             raise CredentialsAuthError(credentials)
@@ -49,7 +49,7 @@ class XMPPAuthService(AuthService):
 
         try:
             r = requests.post(
-                app.config["XMPP_AUTH_URL"],
+                get_app_config("XMPP_AUTH_URL"),
                 data={"jid": jid, "domain": domain, "transaction_id": credentials.get("transactionId")},
             )
         except Exception:

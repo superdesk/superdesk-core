@@ -12,10 +12,10 @@
 import logging
 import superdesk
 
-from flask import json
 from flask_babel import _
-from eve.utils import config
 
+from superdesk.core import json
+from superdesk.resource_fields import ID_FIELD
 from superdesk import get_resource_service
 from superdesk.utc import utcnow
 from superdesk.errors import SuperdeskApiError, ProviderError
@@ -68,14 +68,14 @@ class SearchIngestService(superdesk.Service):
             new_guids.append(dest_doc["guid"])
 
             if provider:
-                dest_doc["ingest_provider"] = str(provider[superdesk.config.ID_FIELD])
+                dest_doc["ingest_provider"] = str(provider[ID_FIELD])
 
             superdesk.get_resource_service(ARCHIVE).post([dest_doc])
-            insert_into_versions(dest_doc.get("_id"))
+            insert_into_versions(dest_doc.get(ID_FIELD))
 
         if new_guids:
             get_resource_service("search_providers").system_update(
-                provider.get(config.ID_FIELD), {"last_item_update": utcnow()}, provider
+                provider.get(ID_FIELD), {"last_item_update": utcnow()}, provider
             )
 
         return new_guids
@@ -86,7 +86,7 @@ class SearchIngestService(superdesk.Service):
             query = self._get_query(req)
             results = self.backend.find(self.source, query, None)
             for doc in results.docs:
-                doc["ingest_provider"] = str(provider[superdesk.config.ID_FIELD])
+                doc["ingest_provider"] = str(provider[ID_FIELD])
             return results
         else:
             raise ProviderNotFoundError(_("provider not found source={source}").format(source=self.source))

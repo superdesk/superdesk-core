@@ -8,9 +8,9 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
+from superdesk.core import get_current_app
 from superdesk.activity import add_activity
 from eve.utils import ParsedRequest
-from flask import g
 from superdesk.emails import send_user_mentioned_email
 import re
 import superdesk
@@ -41,7 +41,8 @@ def send_email_to_mentioned_users(doc, mentioned_users, origin):
             user_doc = superdesk.get_resource_service("users").find_one(req=None, _id=user)
             recipients.append(user_doc["email"])
     if recipients:
-        username = g.user.get("display_name") or g.user.get("username")
+        user = get_current_app().get_current_user_dict() or {}
+        username = user.get("display_name") or user.get("username")
         url = "{}/#/workspace?item={}&action=edit&comments={}".format(origin, doc["item"], doc["_id"])
         send_user_mentioned_email(recipients, username, doc, url)
 

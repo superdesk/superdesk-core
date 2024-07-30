@@ -1,8 +1,8 @@
 from flask_babel import _
 
 import superdesk
+from superdesk.resource_fields import ID_FIELD
 from apps.archive.common import ARCHIVE
-from superdesk import config
 from superdesk.errors import SuperdeskApiError
 from superdesk.media.video_editor import VideoEditorWrapper
 from superdesk.metadata.utils import item_url
@@ -22,7 +22,7 @@ class VideoEditService(superdesk.Service):
         ids = []
         for doc in docs:
             item = doc.get("item")
-            item_id = item[config.ID_FIELD]
+            item_id = item[ID_FIELD]
             renditions = item["renditions"]
             video_id = renditions["original"].get("video_editor_id")
             if not video_id:
@@ -75,7 +75,7 @@ class VideoEditService(superdesk.Service):
             response = self.video_editor.create_timeline_thumbnails(
                 video_id, req.args.get("amount", TIMELINE_THUMBNAILS_AMOUNT)
             )
-            return {config.ID_FIELD: video_id, **response}
+            return {ID_FIELD: video_id, **response}
         res["project"] = self.video_editor.find_one(video_id)
         return res
 
@@ -126,7 +126,7 @@ class VideoEditResource(superdesk.Resource):
             "required": False,
             "empty": True,
             "schema": {
-                config.ID_FIELD: {
+                ID_FIELD: {
                     "type": "string",
                     "required": True,
                 },

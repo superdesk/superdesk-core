@@ -28,7 +28,9 @@ from superdesk.privilege import GLOBAL_SEARCH_PRIVILEGE
 import pytz
 from croniter import croniter
 from datetime import datetime
-from flask import render_template, current_app as app
+
+from superdesk.core import get_app_config, get_current_app
+from superdesk.flask import render_template
 from superdesk import emails
 import json
 
@@ -84,7 +86,7 @@ def get_next_date(scheduling, base=None):
     :return datetime: date of next schedule
     """
     if base is None:
-        tz = pytz.timezone(app.config["DEFAULT_TIMEZONE"])
+        tz = pytz.timezone(get_app_config("DEFAULT_TIMEZONE"))
         base = datetime.now(tz=tz)
     cron_iter = croniter(scheduling, base)
     return cron_iter.get_next(datetime)
@@ -99,13 +101,13 @@ def send_report_email(user_id, search, docs):
     users_service = get_resource_service("users")
     user_data = next(users_service.find({"_id": user_id}))
     recipients = [user_data["email"]]
-    admins = app.config["ADMINS"]
+    admins = get_app_config("ADMINS")
     subject = "Saved searches report"
     context = {
-        "app_name": app.config["APPLICATION_NAME"],
+        "app_name": get_app_config("APPLICATION_NAME"),
         "search": search,
         "docs": docs,
-        "client_url": app.config["CLIENT_URL"].rstrip("/"),
+        "client_url": get_app_config("CLIENT_URL").rstrip("/"),
     }
     text_body = render_template("saved_searches_report.txt", **context)
     html_body = render_template("saved_searches_report.html", **context)
@@ -119,7 +121,7 @@ def publish_report(user_id, search_data):
     search_filter = json.loads(search_data["filter"])
     query = es_utils.filter2query(search_filter, user_id=user_id)
     repos = es_utils.filter2repos(search_filter) or es_utils.REPOS.copy()
-    docs = list(app.data.elastic.search(query, repos))
+    docs = list(get_current_app().data.elastic.search(query, repos))
     send_report_email(user_id, search_data, docs)
 
 
@@ -154,7 +156,7 @@ def report():
     try:
         saved_searches = get_resource_service("saved_searches")
         subscribed_searches = saved_searches.find({"subscribers": {"$exists": 1}})
-        tz = pytz.timezone(app.config["DEFAULT_TIMEZONE"])
+        tz = pytz.timezone(get_app_config("DEFAULT_TIMEZONE"))
         now = datetime.now(tz=tz)
         for search in subscribed_searches:
             do_update = False

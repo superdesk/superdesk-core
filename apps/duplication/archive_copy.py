@@ -10,10 +10,11 @@
 
 import superdesk
 
-from flask import request, current_app as app
 from flask_babel import _
-from eve.utils import config
 
+from superdesk.core import get_app_config
+from superdesk.resource_fields import ID_FIELD
+from superdesk.flask import request
 from superdesk import get_resource_service
 from superdesk.errors import SuperdeskApiError, InvalidStateTransitionError
 from superdesk.metadata.item import ITEM_STATE, CONTENT_STATE
@@ -55,7 +56,7 @@ class CopyService(BaseService):
                 )
 
             current_desk_of_item = archived_doc.get("task", {}).get("desk")
-            if current_desk_of_item and not app.config["WORKFLOW_ALLOW_COPY_TO_PERSONAL"]:
+            if current_desk_of_item and not get_app_config("WORKFLOW_ALLOW_COPY_TO_PERSONAL"):
                 raise SuperdeskApiError.preconditionFailedError(message=_("Copy is not allowed on items in a desk."))
             elif current_desk_of_item:
                 archived_doc["task"] = {}
@@ -69,7 +70,7 @@ class CopyService(BaseService):
 
         if kwargs.get("notify", True):
             user = get_user()
-            push_notification("item:copy", copied=1, user=str(user.get(config.ID_FIELD, "")))
+            push_notification("item:copy", copied=1, user=str(user.get(ID_FIELD, "")))
 
         return guid_of_copied_items
 

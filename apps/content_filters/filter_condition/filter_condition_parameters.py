@@ -12,12 +12,14 @@ import json
 import copy
 import logging
 from flask_babel import _
+
+from superdesk.core import get_app_config
+from superdesk.resource_fields import ID_FIELD
 from superdesk.resource import Resource
 from superdesk.services import BaseService
 from superdesk.utils import ListCursor
-from superdesk import get_resource_service, config
+from superdesk import get_resource_service
 from superdesk.io.subjectcodes import get_subjectcodeitems
-from flask import current_app as app
 from eve.utils import ParsedRequest
 
 
@@ -164,7 +166,7 @@ class FilterConditionParametersService(BaseService):
             },
         ]
 
-        if "planning" in app.config.get("INSTALLED_APPS", []):
+        if "planning" in get_app_config("INSTALLED_APPS", []):
             fields.append(
                 {
                     "field": "agendas",
@@ -182,11 +184,11 @@ class FilterConditionParametersService(BaseService):
         return self.get(req, lookup)
 
     def _get_vocabulary_fields(self, values):
-        excluded_vocabularies = copy.copy(app.config.get("EXCLUDED_VOCABULARY_FIELDS", []))
+        excluded_vocabularies = copy.copy(get_app_config("EXCLUDED_VOCABULARY_FIELDS", []))
         excluded_vocabularies.extend(values)
         lookup = {"_id": {"$nin": excluded_vocabularies}, "type": "manageable"}
         for vocabulary in get_resource_service("vocabularies").get_from_mongo(req=None, lookup=lookup):
-            field = {"field": vocabulary[config.ID_FIELD], "label": vocabulary["display_name"]}
+            field = {"field": vocabulary[ID_FIELD], "label": vocabulary["display_name"]}
 
             if vocabulary.get("field_type") and vocabulary.get("field_type", "") != "text":
                 continue

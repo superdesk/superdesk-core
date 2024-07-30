@@ -1,8 +1,9 @@
+from typing import cast
 import pytz
 import logging
-
-from flask import current_app as app
 from datetime import datetime, tzinfo
+
+from superdesk.core import get_app_config
 from superdesk.celery_app import celery
 from superdesk.utc import utc_to_local, utcnow
 from superdesk.lock import lock, unlock
@@ -22,7 +23,7 @@ def create_scheduled_rundowns() -> None:
     logger.info("Starting to create scheduled rundowns")
     try:
         now = utcnow()
-        tz = pytz.timezone(app.config["RUNDOWNS_TIMEZONE"])
+        tz = pytz.timezone(cast(str, get_app_config("RUNDOWNS_TIMEZONE")))
         create_scheduled(now, tz)
     finally:
         unlock(lock_id)

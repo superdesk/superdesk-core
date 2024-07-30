@@ -14,12 +14,12 @@ import sys
 import imp
 import os
 
-from flask import current_app
+from superdesk.core import get_current_app
 
 
 def load_macros(app=None):
     if not app:
-        app = current_app
+        app = get_current_app()
     module = app.config.get("MACROS_MODULE", "superdesk.macros")
     load_module(module)
 
@@ -41,7 +41,7 @@ def load_module(module):
 
     m = sys.modules[module]
     if getattr(m, "init_app", None):
-        m.init_app(current_app)
+        m.init_app(get_current_app())
 
     register_macros()
 

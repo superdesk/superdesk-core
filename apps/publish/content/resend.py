@@ -13,8 +13,11 @@ import logging
 from apps.archive.archive import ArchiveResource, SOURCE as ARCHIVE, remove_is_queued
 from apps.publish.content.utils import filter_digital
 from superdesk.metadata.utils import item_url
-from flask import request, current_app as app
-from superdesk import get_resource_service, Service, config, signals
+
+from superdesk.core import get_current_app, get_app_config
+from superdesk.resource_fields import ID_FIELD, VERSION
+from superdesk.flask import request
+from superdesk import get_resource_service, Service, signals
 from superdesk.errors import SuperdeskApiError
 from superdesk.metadata.item import CONTENT_TYPE, ITEM_TYPE, ITEM_STATE, CONTENT_STATE
 from superdesk.publish import SUBSCRIBER_TYPES
@@ -49,6 +52,8 @@ class ResendService(Service):
         remove_is_queued(article)
         signals.item_resend.send(self, item=article)
         get_enqueue_service(article.get(ITEM_OPERATION)).resend(article, subscribers)
+
+        app = get_current_app().as_any()
         app.on_archive_item_updated({"subscribers": doc.get("subscribers")}, article, ITEM_RESEND)
         signals.item_resent.send(self, item=article)
         return [article_id]
@@ -57,7 +62,7 @@ class ResendService(Service):
         if not subscriber_ids:
             raise SuperdeskApiError.badRequestError(message=_("No subscribers selected!"))
 
-        query = {"$and": [{config.ID_FIELD: {"$in": list(subscriber_ids)}}, {"is_active": True}]}
+        query = {"$and": [{ID_FIELD: {"$in": list(subscriber_ids)}}, {"is_active": True}]}
         subscribers = list(get_resource_service("subscribers").get(req=None, lookup=query))
 
         if len(subscribers) == 0:
@@ -73,7 +78,7 @@ class ResendService(Service):
     def _validate_article(self, article_id, article_version):
         article = get_resource_service(ARCHIVE).find_one(req=None, _id=article_id)
 
-        if app.config.get("CORRECTIONS_WORKFLOW") and article.get(ITEM_STATE) == "correction":
+        if get_app_config("CORRECTIONS_WORKFLOW") and article.get(ITEM_STATE) == "correction":
             publish_service = get_resource_service("published")
             article = publish_service.find_one(req=None, guid=article.get("guid"), state="being_corrected")
 
@@ -93,9 +98,9 @@ class ResendService(Service):
                 message=_("Only published, corrected or killed stories can be resent!")
             )
 
-        if article[config.VERSION] != article_version:
+        if article[VERSION] != article_version:
             raise SuperdeskApiError.badRequestError(
-                message=_("Please use the newest version {version} to resend!").format(version=article[config.VERSION])
+                message=_("Please use the newest version {version} to resend!").format(version=article[VERSION])
             )
 
         if article.get("rewritten_by"):

@@ -13,8 +13,9 @@ import superdesk
 from lxml import html
 from copy import deepcopy
 from datetime import datetime
-from flask import current_app as app, json
 from eve.io.mongo import Validator
+
+from superdesk.core import get_app_config
 from superdesk.metadata.item import ITEM_TYPE
 from superdesk.logging import logger
 from superdesk.text_utils import get_text
@@ -279,7 +280,7 @@ class SchemaValidator(Validator):
         if value:
             value = str(html.fromstring(value).text_content())
 
-        disallowed_characters = app.config.get("DISALLOWED_CHARACTERS")
+        disallowed_characters = get_app_config("DISALLOWED_CHARACTERS")
 
         if validate and disallowed_characters and value:
             invalid_chars = [char for char in disallowed_characters if char in value]
@@ -370,13 +371,13 @@ class ValidateService(superdesk.Service):
         profile_id = doc["validate"].get("profile") or item_type
 
         # use content profile if exists
-        if profile_id and (app.config["AUTO_PUBLISH_CONTENT_PROFILE"] or doc["act"] != "auto_publish"):
+        if profile_id and (get_app_config("AUTO_PUBLISH_CONTENT_PROFILE") or doc["act"] != "auto_publish"):
             content_type = superdesk.get_resource_service("content_types").find_one(req=None, _id=profile_id)
             if content_type:
                 return self._get_profile_schema(content_type.get("schema", {}), doc)
 
         # use custom schema like profile schema
-        custom_schema = app.config.get("SCHEMA", {}).get(doc[ITEM_TYPE])
+        custom_schema = get_app_config("SCHEMA", {}).get(doc[ITEM_TYPE])
         if custom_schema:
             return self._get_profile_schema(custom_schema, doc)
 
@@ -497,7 +498,7 @@ class ValidateService(superdesk.Service):
         :return:
         """
         if doc.get("associations"):
-            schema.setdefault("associations", {})["media_metadata"] = app.config.get(
+            schema.setdefault("associations", {})["media_metadata"] = get_app_config(
                 "VALIDATE_MEDIA_METADATA_ON_PUBLISH", True
             )
 

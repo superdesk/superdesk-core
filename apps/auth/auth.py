@@ -8,13 +8,15 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
-import flask
 import logging
 import superdesk
 
 from datetime import timedelta
-from flask import request, current_app as app, session
 from eve.auth import TokenAuth
+
+from superdesk.core import get_app_config
+from superdesk.resource_fields import LAST_UPDATED
+from superdesk.flask import g, session, request
 from superdesk.resource import Resource
 from superdesk.errors import SuperdeskApiError
 from superdesk import (
@@ -101,7 +103,7 @@ class SuperdeskTokenAuth(TokenAuth):
             return True
 
         # Step 2: Get User's Privileges
-        get_resource_service("users").set_privileges(user, flask.g.role)
+        get_resource_service("users").set_privileges(user, g.role)
 
         try:
             resource_privileges = get_resource_privileges(resource).get(method, None)
@@ -149,25 +151,20 @@ class SuperdeskTokenAuth(TokenAuth):
             if session.get("session_token") != token:
                 session["session_token"] = token
             user_id = str(auth_token["user"])
-            flask.g.user = user_service.find_one(req=None, _id=user_id)
-            flask.g.role = user_service.get_role(flask.g.user)
-            flask.g.auth = auth_token
-            flask.g.auth_value = auth_token["user"]
+            g.user = user_service.find_one(req=None, _id=user_id)
+            g.role = user_service.get_role(g.user)
+            g.auth = auth_token
+            g.auth_value = auth_token["user"]
             if method in ("POST", "PUT", "PATCH") or method == "GET" and not request.args.get("auto"):
                 now = utcnow()
                 auth_updated = False
-                if (
-                    auth_token[app.config["LAST_UPDATED"]] + timedelta(seconds=app.config["SESSION_UPDATE_SECONDS"])
-                    < now
-                ):
-                    auth_service.update_session({app.config["LAST_UPDATED"]: now})
+                if auth_token[LAST_UPDATED] + timedelta(seconds=get_app_config("SESSION_UPDATE_SECONDS")) < now:
+                    auth_service.update_session({LAST_UPDATED: now})
                     auth_updated = True
-                if not flask.g.user.get("last_activity_at") or auth_updated:
-                    user_service.system_update(
-                        flask.g.user["_id"], {"last_activity_at": now, "_updated": now}, flask.g.user
-                    )
+                if not g.user.get("last_activity_at") or auth_updated:
+                    user_service.system_update(g.user["_id"], {"last_activity_at": now, "_updated": now}, g.user)
 
-            return self.check_permissions(resource, method, flask.g.user)
+            return self.check_permissions(resource, method, g.user)
 
         # pop invalid session
         session.pop("session_token", None)

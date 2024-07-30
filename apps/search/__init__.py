@@ -11,9 +11,10 @@
 import superdesk
 
 from copy import deepcopy
-from flask import current_app as app, json, g
 from eve_elastic.elastic import set_filters
 
+from superdesk.core import json, get_current_app, get_app_config
+from superdesk.resource_fields import ITEMS
 from superdesk import get_resource_service
 from superdesk.metadata.item import CONTENT_STATE, ITEM_STATE, get_schema
 from superdesk.metadata.utils import aggregations as common_aggregations, item_url, _set_highlight_query
@@ -34,7 +35,7 @@ class SearchService(superdesk.Service):
 
     @property
     def elastic(self):
-        return app.data.elastic
+        return get_current_app().data.elastic
 
     def __init__(self, datasource, backend):
         super().__init__(datasource=datasource, backend=backend)
@@ -111,6 +112,7 @@ class SearchService(superdesk.Service):
         except KeyError:
             pass
 
+        app = get_current_app()
         if app.data.elastic.should_aggregate(req):
             source["aggs"] = self.aggregations
 
@@ -120,11 +122,12 @@ class SearchService(superdesk.Service):
         return source
 
     def _enhance_query_string(self, query_string):
-        query_string.setdefault("analyze_wildcard", app.config["ELASTIC_QUERY_STRING_ANALYZE_WILDCARD"])
-        query_string.setdefault("type", app.config["ELASTIC_QUERY_STRING_TYPE"])
+        query_string.setdefault("analyze_wildcard", get_app_config("ELASTIC_QUERY_STRING_ANALYZE_WILDCARD"))
+        query_string.setdefault("type", get_app_config("ELASTIC_QUERY_STRING_TYPE"))
 
     def _get_projected_fields(self, req):
         """Get elastic projected fields."""
+        app = get_current_app()
         if app.data.elastic.should_project(req):
             return app.data.elastic.get_projected_fields(req)
 
@@ -149,7 +152,7 @@ class SearchService(superdesk.Service):
         """
         Returns the list of the current users invisible stages
         """
-        user = g.get("user", {})
+        user = get_current_app().get_current_user_dict() or {}
         if "invisible_stages" in user:
             stages = user.get("invisible_stages")
         else:
@@ -169,8 +172,8 @@ class SearchService(superdesk.Service):
         filters = self._get_filters(types, excluded_stages)
 
         # if the system has a setting value for the maximum search depth then apply the filter
-        if not app.settings["MAX_SEARCH_DEPTH"] == -1:
-            query["terminate_after"] = app.settings["MAX_SEARCH_DEPTH"]
+        if not get_app_config("MAX_SEARCH_DEPTH") == -1:
+            query["terminate_after"] = get_app_config("MAX_SEARCH_DEPTH")
 
         if filters:
             set_filters(query, filters)
@@ -182,7 +185,8 @@ class SearchService(superdesk.Service):
         docs = self.elastic.search(query, types, params)
 
         for resource in types:
-            response = {app.config["ITEMS"]: [doc for doc in docs if doc["_type"] == resource]}
+            response = {ITEMS: [doc for doc in docs if doc["_type"] == resource]}
+            app = get_current_app().as_any()
             getattr(app, "on_fetched_resource")(resource, response)
             getattr(app, "on_fetched_resource_%s" % resource)(response)
 
@@ -215,7 +219,7 @@ class SearchService(superdesk.Service):
         :type doc: dict
         """
 
-        docs = doc[app.config["ITEMS"]]
+        docs = doc[ITEMS]
         for item in docs:
             build_custom_hateoas({"self": {"title": item["_type"], "href": "/{}/{{_id}}".format(item["_type"])}}, item)
 
@@ -243,4 +247,4 @@ def init_app(app) -> None:
     SearchResource("search", app=app, service=search_service)
 
     # Set the start of week config for use in both server and client
-    app.client_config["start_of_week"] = app.config.get("START_OF_WEEK") or 0
+    app.client_config["start_of_week"] = get_app_config("START_OF_WEEK") or 0

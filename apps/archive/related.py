@@ -1,4 +1,4 @@
-from flask import abort, request
+from superdesk.flask import abort, request
 from superdesk.resource import Resource
 from superdesk.services import Service
 from superdesk.metadata.utils import item_url

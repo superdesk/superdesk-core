@@ -9,11 +9,11 @@
 # at https://www.sourcefabric.org/superdesk/license
 
 import bcrypt
-from flask import g
+from superdesk.core import get_app_config
+from superdesk.flask import g
 from apps.auth.service import AuthService
 from superdesk import get_resource_service
 from apps.auth.errors import CredentialsAuthError, PasswordExpiredError, ExternalUserError
-from flask import current_app as app
 from superdesk.utc import utcnow
 import datetime
 from flask_babel import _
@@ -40,8 +40,8 @@ class DbAuthService(AuthService):
         if not bcrypt.checkpw(password, hashed):
             raise CredentialsAuthError(credentials)
 
-        if not ignore_expire and app.settings.get("PASSWORD_EXPIRY_DAYS", 0) > 0:
-            days = app.settings.get("PASSWORD_EXPIRY_DAYS")
+        if not ignore_expire and get_app_config("PASSWORD_EXPIRY_DAYS", 0) > 0:
+            days = get_app_config("PASSWORD_EXPIRY_DAYS")
             date = user.get("password_changed_on")
             if date is None or (date + datetime.timedelta(days=days)) < utcnow():
                 raise PasswordExpiredError()

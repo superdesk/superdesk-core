@@ -11,9 +11,10 @@
 from typing import Dict, Any
 import logging
 
-from eve.utils import config
 from flask_babel import lazy_gettext, LazyString
 
+from superdesk.core import get_app_config
+from superdesk.resource_fields import ID_FIELD
 from superdesk import get_resource_service, Resource, Service
 from superdesk.metadata.item import CONTENT_STATE, ITEM_TYPE, CONTENT_TYPE, MEDIA_TYPES
 from superdesk.utils import ListCursor
@@ -131,7 +132,7 @@ class DeskFetchPublishRoutingRuleHandler(RoutingRuleHandler):
                 stage_id = ingest_item["task"]["stage"]
             else:
                 stage_id = desk["incoming_stage"]
-            self.__fetch(ingest_item, [{"desk": desk[config.ID_FIELD], "stage": stage_id}], rule)
+            self.__fetch(ingest_item, [{"desk": desk[ID_FIELD], "stage": stage_id}], rule)
             fetch_actions = [
                 f for f in rule.get("actions", {}).get("fetch", []) if f.get("desk") != ingest_item["task"]["desk"]
             ]
@@ -155,7 +156,7 @@ class DeskFetchPublishRoutingRuleHandler(RoutingRuleHandler):
                 item_id = get_resource_service("fetch").fetch(
                     [
                         {
-                            config.ID_FIELD: ingest_item[config.ID_FIELD],
+                            ID_FIELD: ingest_item[ID_FIELD],
                             "desk": str(destination.get("desk")),
                             "stage": str(destination.get("stage")),
                             "state": CONTENT_STATE.ROUTED,
@@ -212,7 +213,7 @@ class DeskFetchPublishRoutingRuleHandler(RoutingRuleHandler):
 
     def _set_default_values(self, archive_item):
         """Assigns the default values to the item that about to be auto published"""
-        default_categories = self._get_categories(config.DEFAULT_CATEGORY_QCODES_FOR_AUTO_PUBLISHED_ARTICLES)
+        default_categories = self._get_categories(get_app_config("DEFAULT_CATEGORY_QCODES_FOR_AUTO_PUBLISHED_ARTICLES"))
         default_values = self._assign_default_values(archive_item, default_categories)
         get_resource_service("archive").patch(archive_item["_id"], default_values)
 

@@ -13,10 +13,13 @@ import superdesk
 import logging
 import jinja2.exceptions
 
-from flask import g, render_template_string, current_app as app
 from copy import deepcopy
+
+from superdesk.core import get_current_app, get_app_config
+from superdesk.resource_fields import ID_FIELD, DATE_CREATED, LAST_UPDATED, ETAG, VERSION, ITEMS
+from superdesk.flask import render_template_string
 from superdesk.services import BaseService
-from superdesk import Resource, Service, config, get_resource_service
+from superdesk import Resource, Service, get_resource_service
 from superdesk.utils import SuperdeskBaseEnum, plaintext_filter
 from superdesk.resource import build_custom_hateoas
 from superdesk.utc import utcnow, local_to_utc, utc_to_local
@@ -46,11 +49,11 @@ CONTENT_TEMPLATE_PRIVILEGE = CONTENT_TEMPLATE_RESOURCE
 KILL_TEMPLATE_NOT_REQUIRED_FIELDS = ["schedule", "dateline", "template_desks", "schedule_desk", "schedule_stage"]
 PLAINTEXT_FIELDS = {"headline"}
 TEMPLATE_DATA_IGNORE_FIELDS = {  # fields to be ignored when creating item from template
-    config.ID_FIELD,
-    config.LAST_UPDATED,
-    config.DATE_CREATED,
-    config.ETAG,
-    config.VERSION,
+    ID_FIELD,
+    LAST_UPDATED,
+    DATE_CREATED,
+    ETAG,
+    VERSION,
     "task",
     "firstcreated",
     "versioncreated",
@@ -127,7 +130,7 @@ def push_template_notification(docs, event="template:update"):
         if doc.get("template_desks"):
             template_desks.update([str(template) for template in doc.get("template_desks")])
 
-    push_notification(event, user=str(user.get(config.ID_FIELD, "")), desks=list(template_desks))
+    push_notification(event, user=str(user.get(ID_FIELD, "")), desks=list(template_desks))
 
 
 class ContentTemplatesResource(Resource):
@@ -194,7 +197,7 @@ class ContentTemplatesResource(Resource):
 
 class ContentTemplatesService(BaseService):
     def get(self, req, lookup):
-        active_user = g.get("user", {})
+        active_user = get_current_app().get_current_user_dict() or {}
         privileges = active_user.get("active_privileges", {})
         if not lookup:
             lookup = {}
@@ -230,7 +233,7 @@ class ContentTemplatesService(BaseService):
             if doc.get("template_type") == TemplateType.KILL.value:
                 self._validate_kill_template(doc)
             if get_user():
-                doc.setdefault("user", get_user()[config.ID_FIELD])
+                doc.setdefault("user", get_user()[ID_FIELD])
             self._validate_template_desks(doc)
 
     def on_created(self, docs):
@@ -265,7 +268,7 @@ class ContentTemplatesService(BaseService):
         push_template_notification([updates, original])
 
     def on_fetched(self, docs):
-        self.enhance_items(docs[config.ITEMS])
+        self.enhance_items(docs[ITEMS])
 
     def on_fetched_item(self, doc):
         self.enhance_items([doc])
@@ -319,7 +322,7 @@ class ContentTemplatesService(BaseService):
         for template in templates:
             data, processed = self._reset_fields(template, updates)
             if processed:
-                self.patch(template.get(config.ID_FIELD), {"data": data})
+                self.patch(template.get(ID_FIELD), {"data": data})
 
     def _reset_fields(self, template, profile_data):
         """
@@ -421,7 +424,7 @@ class ContentTemplatesService(BaseService):
                 doc[key] = None
 
     def _validate_privileges(self, doc, action=None):
-        active_user = g.get("user")
+        active_user = get_current_app().get_current_user_dict() or {}
         user = doc.get("user")
         privileges = active_user.get("active_privileges", {}) if active_user else {}
         if (active_user and active_user.get("user_type")) == "administrator":
@@ -430,7 +433,7 @@ class ContentTemplatesService(BaseService):
             active_user
             and user
             and not doc.get("is_public")
-            and active_user.get(config.ID_FIELD) != doc.get("user")
+            and active_user.get(ID_FIELD) != doc.get("user")
             and not privileges.get("personal_template")
         ):
             raise SuperdeskApiError.badRequestError(
@@ -487,7 +490,7 @@ class ContentTemplatesApplyService(Service):
 
         docs[0] = item
         build_custom_hateoas(CUSTOM_HATEOAS, docs[0])
-        return [docs[0].get(config.ID_FIELD)]
+        return [docs[0].get(ID_FIELD)]
 
 
 def render_content_template_by_name(item, template_name):
@@ -597,7 +600,7 @@ def set_template_timestamps(template, now):
         "next_run": get_next_run(template.get("schedule"), now),
     }
     service = superdesk.get_resource_service("content_templates")
-    service.update(template[config.ID_FIELD], updates, template)
+    service.update(template[ID_FIELD], updates, template)
 
 
 def get_item_from_template(template):
@@ -636,7 +639,7 @@ def filter_plaintext_fields(item):
 
 
 def apply_null_override_for_kill(item):
-    for key in app.config["KILL_TEMPLATE_NULL_FIELDS"]:
+    for key in get_app_config("KILL_TEMPLATE_NULL_FIELDS"):
         if key in item:
             item[key] = None
 
@@ -657,11 +660,11 @@ def create_scheduled_content(now=None):
         for template in templates:
             set_template_timestamps(template, now)
             item = get_item_from_template(template)
-            item[config.VERSION] = 1
+            item[VERSION] = 1
             production.post([item])
             insert_into_versions(doc=item)
             try:
-                apply_onstage_rule(item, item.get(config.ID_FIELD))
+                apply_onstage_rule(item, item.get(ID_FIELD))
             except Exception as ex:  # noqa
                 logger.exception("Failed to apply on stage rule while scheduling template.")
             items.append(item)
@@ -686,7 +689,7 @@ def create_template_for_profile(items):
                 {
                     "template_name": profile.get("label"),
                     "is_public": True,
-                    "data": {"profile": str(profile.get(config.ID_FIELD))},
+                    "data": {"profile": str(profile.get(ID_FIELD))},
                 }
             )
     if templates:
@@ -699,8 +702,8 @@ def remove_profile_from_templates(item):
     :param item: deleted content profile
     """
     templates = list(
-        superdesk.get_resource_service(CONTENT_TEMPLATE_RESOURCE).get_templates_by_profile_id(item.get(config.ID_FIELD))
+        superdesk.get_resource_service(CONTENT_TEMPLATE_RESOURCE).get_templates_by_profile_id(item.get(ID_FIELD))
     )
     for template in templates:
         template.get("data", {}).pop("profile", None)
-        superdesk.get_resource_service(CONTENT_TEMPLATE_RESOURCE).patch(template[config.ID_FIELD], template)
+        superdesk.get_resource_service(CONTENT_TEMPLATE_RESOURCE).patch(template[ID_FIELD], template)

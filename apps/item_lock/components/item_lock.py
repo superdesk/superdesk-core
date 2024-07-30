@@ -8,17 +8,17 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
-import flask
 import logging
-import superdesk
 
+from superdesk.resource_fields import ID_FIELD, VERSION, ETAG
+from superdesk.flask import g
+import superdesk
 from superdesk.metadata.item import ITEM_STATE, CONTENT_STATE, ITEM_TYPE, CONTENT_TYPE, PUBLISH_STATES
 from superdesk.errors import SuperdeskApiError
 from superdesk.notification import push_notification
 from superdesk.users.services import current_user_has_privilege
 from superdesk.utc import utcnow
 from superdesk.lock import lock, unlock
-from eve.utils import config
 from eve.versioning import resolve_document_version, insert_versioning_documents
 
 from apps.common.components.base_component import BaseComponent
@@ -40,12 +40,12 @@ logger = logging.getLogger(__name__)
 def push_unlock_notification(item, user_id, session_id):
     push_notification(
         "item:unlock",
-        item=str(item.get(config.ID_FIELD)),
-        item_version=str(item.get(config.VERSION)),
+        item=str(item.get(ID_FIELD)),
+        item_version=str(item.get(VERSION)),
         state=item.get(ITEM_STATE),
         user=str(user_id),
         lock_session=item.get(LOCK_SESSION) or str(session_id),
-        _etag=item.get(config.ETAG),
+        _etag=item.get(ETAG),
     )
 
 
@@ -75,7 +75,7 @@ class ItemLock(BaseComponent):
         item = item_model.find_one(item_filter)
 
         # set the lock_id it per item
-        lock_id = "item_lock {}".format(item.get(config.ID_FIELD))
+        lock_id = "item_lock {}".format(item.get(ID_FIELD))
 
         if not item:
             raise SuperdeskApiError.notFoundError()
@@ -100,18 +100,18 @@ class ItemLock(BaseComponent):
                     updates[TASK] = {"user": user_id}
 
                 # tasks service will update the user
-                superdesk.get_resource_service("tasks").assign_user(item[config.ID_FIELD], updates)
+                superdesk.get_resource_service("tasks").assign_user(item[ID_FIELD], updates)
 
                 item = item_model.find_one(item_filter)
                 self.app.on_item_locked(item, user_id)
                 push_notification(
                     "item:lock",
-                    item=str(item.get(config.ID_FIELD)),
-                    item_version=str(item.get(config.VERSION)),
+                    item=str(item.get(ID_FIELD)),
+                    item_version=str(item.get(VERSION)),
                     user=str(user_id),
                     lock_time=updates[LOCK_TIME],
                     lock_session=str(session_id),
-                    _etag=item.get(config.ETAG),
+                    _etag=item.get(ETAG),
                 )
             else:
                 raise SuperdeskApiError.forbiddenError(message=error_message)
@@ -140,7 +140,7 @@ class ItemLock(BaseComponent):
 
             # delete the item if nothing is saved so far
             # version 0 created on lock item
-            if item.get(config.VERSION, 0) == 0 and item[ITEM_STATE] == CONTENT_STATE.DRAFT:
+            if item.get(VERSION, 0) == 0 and item[ITEM_STATE] == CONTENT_STATE.DRAFT:
                 if item.get(ITEM_TYPE) == CONTENT_TYPE.COMPOSITE:
                     # if item is composite then update referenced items in package.
                     PackageService().update_groups({}, item)
@@ -152,8 +152,8 @@ class ItemLock(BaseComponent):
                 set_unlock_updates(updates, True)
                 autosave = superdesk.get_resource_service("archive_autosave").find_one(req=None, _id=item["_id"])
                 if autosave and item[ITEM_STATE] not in PUBLISH_STATES:
-                    if not hasattr(flask.g, "user"):  # user is not set when session expires
-                        flask.g.user = superdesk.get_resource_service("users").find_one(req=None, _id=user_id)
+                    if not hasattr(g, "user"):  # user is not set when session expires
+                        g.user = superdesk.get_resource_service("users").find_one(req=None, _id=user_id)
                     autosave.update(updates)
                     resolve_document_version(autosave, "archive", "PATCH", item)
                     superdesk.get_resource_service("archive").patch(item["_id"], autosave)

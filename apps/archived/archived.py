@@ -10,12 +10,13 @@
 
 from operator import itemgetter
 from copy import deepcopy
-from flask import current_app as app
-from eve.utils import config, ParsedRequest
+from eve.utils import ParsedRequest
 import logging
 
 from eve.versioning import resolve_document_version
 
+from superdesk.core import get_current_app
+from superdesk.resource_fields import ID_FIELD, VERSION, ETAG, LAST_UPDATED
 from apps.legal_archive.commands import import_into_legal_archive
 from apps.legal_archive.resource import LEGAL_PUBLISH_QUEUE_NAME
 from apps.publish.content.common import ITEM_KILL
@@ -98,7 +99,7 @@ class ArchivedService(BaseService):
             doc.pop("lock_session", None)
             doc.pop("highlights", None)
             doc.pop("marked_desks", None)
-            doc["archived_id"] = self._get_archived_id(doc.get("item_id"), doc.get(config.VERSION))
+            doc["archived_id"] = self._get_archived_id(doc.get("item_id"), doc.get(VERSION))
 
             if doc.get(ITEM_TYPE) == CONTENT_TYPE.COMPOSITE:
                 for ref in package_service.get_item_refs(doc):
@@ -124,11 +125,11 @@ class ArchivedService(BaseService):
 
         bad_req_error = SuperdeskApiError.badRequestError
 
-        id_field = doc[config.ID_FIELD]
+        id_field = doc[ID_FIELD]
         item_id = doc["item_id"]
 
         doc["item_id"] = id_field
-        doc[config.ID_FIELD] = item_id
+        doc[ID_FIELD] = item_id
 
         if not allow_all_types and doc[ITEM_TYPE] != CONTENT_TYPE.TEXT:
             raise bad_req_error(message=_("Only Text articles are allowed to be Killed in Archived repo"))
@@ -153,7 +154,7 @@ class ArchivedService(BaseService):
                 raise bad_req_error(message=_("Can't Kill as the Digital Story is still available in production"))
 
             req = ParsedRequest()
-            req.sort = '[("%s", -1)]' % config.VERSION
+            req.sort = '[("%s", -1)]' % VERSION
             takes_package = list(self.get(req=req, lookup={"item_id": takes_package_id}))
             if not takes_package:
                 raise bad_req_error(message=_("Digital Story of the article not found in Archived repo"))
@@ -175,13 +176,13 @@ class ArchivedService(BaseService):
                         raise bad_req_error(message=_("Can't kill as one of Take(s) is part of a Package"))
 
         doc["item_id"] = item_id
-        doc[config.ID_FIELD] = id_field
+        doc[ID_FIELD] = id_field
 
     def on_delete(self, doc):
         self.validate_delete_action(doc)
 
     def delete(self, lookup):
-        if app.testing and len(lookup) == 0:
+        if get_current_app().testing and len(lookup) == 0:
             super().delete(lookup)
             return
 
@@ -241,14 +242,14 @@ class ArchivedService(BaseService):
             # An email is sent to all subscribers
             if original.get("flags", {}).get("marked_archived_only", False):
                 super().delete({"item_id": article["item_id"]})
-                logger.info("Delete for article: {}".format(article[config.ID_FIELD]))
+                logger.info("Delete for article: {}".format(article[ID_FIELD]))
                 kill_service.broadcast_kill_email(article, updates_copy)
-                logger.info("Broadcast kill email for article: {}".format(article[config.ID_FIELD]))
+                logger.info("Broadcast kill email for article: {}".format(article[ID_FIELD]))
                 continue
 
             # Step 3(i)
             self._remove_and_set_kill_properties(article, articles_to_kill, updated)
-            logger.info("Removing and setting properties for article: {}".format(article[config.ID_FIELD]))
+            logger.info("Removing and setting properties for article: {}".format(article[ID_FIELD]))
 
             # Step 3(ii)
             transmission_details = list(
@@ -260,11 +261,11 @@ class ArchivedService(BaseService):
                     article, transmission_details
                 )
 
-            article[config.ID_FIELD] = article.pop("item_id", article["item_id"])
+            article[ID_FIELD] = article.pop("item_id", article["item_id"])
 
             # Step 3(iv)
-            super().delete({"item_id": article[config.ID_FIELD]})
-            logger.info("Delete for article: {}".format(article[config.ID_FIELD]))
+            super().delete({"item_id": article[ID_FIELD]})
+            logger.info("Delete for article: {}".format(article[ID_FIELD]))
 
             # Step 3(i) - Creating entries in published collection
             docs = [article]
@@ -273,21 +274,19 @@ class ArchivedService(BaseService):
             published_doc = deepcopy(article)
             published_doc[QUEUE_STATE] = PUBLISH_STATE.QUEUED
             get_resource_service("published").post([published_doc])
-            logger.info("Insert into archive and published for article: {}".format(article[config.ID_FIELD]))
+            logger.info("Insert into archive and published for article: {}".format(article[ID_FIELD]))
 
             # Step 3(iii)
-            import_into_legal_archive.apply_async(countdown=3, kwargs={"item_id": article[config.ID_FIELD]})
-            logger.info("Legal Archive import for article: {}".format(article[config.ID_FIELD]))
+            import_into_legal_archive.apply_async(countdown=3, kwargs={"item_id": article[ID_FIELD]})
+            logger.info("Legal Archive import for article: {}".format(article[ID_FIELD]))
 
             # Step 3(v)
             kill_service.broadcast_kill_email(article, updates_copy)
-            logger.info("Broadcast kill email for article: {}".format(article[config.ID_FIELD]))
+            logger.info("Broadcast kill email for article: {}".format(article[ID_FIELD]))
 
     def on_updated(self, updates, original):
         user = get_user()
-        push_notification(
-            "item:deleted:archived", item=str(original[config.ID_FIELD]), user=str(user.get(config.ID_FIELD))
-        )
+        push_notification("item:deleted:archived", item=str(original[ID_FIELD]), user=str(user.get(ID_FIELD)))
 
     def on_fetched_item(self, doc):
         doc["_type"] = "archived"
@@ -297,7 +296,7 @@ class ArchivedService(BaseService):
 
     def get_archived_takes_package(self, package_id, take_id, version, include_other_takes=True):
         req = ParsedRequest()
-        req.sort = '[("%s", -1)]' % config.VERSION
+        req.sort = '[("%s", -1)]' % VERSION
         take_packages = list(self.get(req=req, lookup={"item_id": package_id}))
 
         for take_package in take_packages:
@@ -322,7 +321,7 @@ class ArchivedService(BaseService):
             return
 
         req = ParsedRequest()
-        req.sort = '[("%s", -1)]' % config.VERSION
+        req.sort = '[("%s", -1)]' % VERSION
         archived_doc = list(self.get(req=req, lookup={"item_id": archived_doc["item_id"]}))[0]
         articles_to_kill = [archived_doc]
         takes_package_id = self._get_take_package_id(archived_doc)
@@ -355,7 +354,7 @@ class ArchivedService(BaseService):
         article.pop("_type", None)
         article.pop("_links", None)
         article.pop("queue_state", None)
-        article.pop(config.ETAG, None)
+        article.pop(ETAG, None)
 
         for field in ["headline", "abstract", "body_html"]:
             article[field] = updates.get(field, article.get(field, ""))
@@ -363,10 +362,10 @@ class ArchivedService(BaseService):
         article[ITEM_STATE] = CONTENT_STATE.KILLED if updates[ITEM_OPERATION] == ITEM_KILL else CONTENT_STATE.RECALLED
         article[ITEM_OPERATION] = updates[ITEM_OPERATION]
         article["pubstatus"] = PUB_STATUS.CANCELED
-        article[config.LAST_UPDATED] = utcnow()
+        article[LAST_UPDATED] = utcnow()
 
         user = get_user()
-        article["version_creator"] = str(user[config.ID_FIELD])
+        article["version_creator"] = str(user[ID_FIELD])
 
         resolve_document_version(article, ARCHIVE, "PATCH", article)
 
@@ -375,10 +374,10 @@ class ArchivedService(BaseService):
             item_refs = package_service.get_item_refs(article)
             for ref in item_refs:
                 item_in_package = [
-                    item for item in articles_to_kill if item.get("item_id", item.get(config.ID_FIELD)) == ref[RESIDREF]
+                    item for item in articles_to_kill if item.get("item_id", item.get(ID_FIELD)) == ref[RESIDREF]
                 ]
                 ref["location"] = ARCHIVE
-                ref[config.VERSION] = item_in_package[0][config.VERSION]
+                ref[VERSION] = item_in_package[0][VERSION]
 
     def _get_take_package_id(self, item):
         """Checks if the item is in a 'takes' package and returns the package id
@@ -391,7 +390,7 @@ class ArchivedService(BaseService):
             if package.get(PACKAGE_TYPE) == TAKES_PACKAGE
         ]
         if len(takes_package) > 1:
-            message = "Multiple takes found for item: {0}".format(item[config.ID_FIELD])
+            message = "Multiple takes found for item: {0}".format(item[ID_FIELD])
             logger.error(message)
         return takes_package[0] if takes_package else None
 

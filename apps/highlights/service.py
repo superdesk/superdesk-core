@@ -7,14 +7,13 @@ import apps.archive  # NOQA
 # package_service, caused by circular dependencies.
 # When that issue is resolved, the workaround should be removed.
 
+from superdesk.core import get_current_app, get_app_config
 import apps.packages.package_service as package
-from flask import current_app as app
 from superdesk import get_resource_service
 from superdesk.services import BaseService
 from eve.utils import ParsedRequest
 from superdesk.notification import push_notification
 from superdesk.utc import get_timezone_offset, utcnow
-from eve.utils import config
 from apps.archive.common import ITEM_MARK, ITEM_UNMARK
 from bson import ObjectId
 
@@ -37,7 +36,7 @@ def get_highlighted_items(highlights_id):
                             "range": {
                                 "versioncreated": {
                                     "gte": highlight.get("auto_insert", "now/d"),
-                                    "time_zone": get_timezone_offset(config.DEFAULT_TIMEZONE, utcnow()),
+                                    "time_zone": get_timezone_offset(get_app_config("DEFAULT_TIMEZONE"), utcnow()),
                                 }
                             }
                         },
@@ -101,6 +100,7 @@ class HighlightsService(BaseService):
         query = {"query": {"filtered": {"filter": {"term": {"highlights": highlights_id}}}}}
         req = init_parsed_request(query)
         proposedItems = service.get(req=req, lookup=None)
+        app = get_current_app().as_any()
         for item in proposedItems:
             app.on_archive_item_updated(
                 {"highlight_id": highlights_id, "highlight_name": get_highlight_name(highlights_id)}, item, ITEM_UNMARK
@@ -115,6 +115,7 @@ class MarkedForHighlightsService(BaseService):
         service = get_resource_service("archive")
         publishedService = get_resource_service("published")
         ids = []
+        app = get_current_app().as_any()
         for doc in docs:
             item = service.find_one(req=None, _id=doc["marked_item"])
             if not item:

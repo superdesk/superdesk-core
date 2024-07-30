@@ -9,12 +9,11 @@
 # at https://www.sourcefabric.org/superdesk/license
 
 import logging
-import elasticapm
+
+from superdesk.core import get_current_app
+from superdesk.resource_fields import ID_FIELD, VERSION
 import superdesk
 import superdesk.signals as signals
-
-from flask import current_app as app
-
 from superdesk import get_resource_service
 from superdesk.celery_task_utils import get_lock_id
 from superdesk.lock import lock, unlock
@@ -26,7 +25,7 @@ from apps.publish.enqueue.enqueue_killed import EnqueueKilledService
 from apps.publish.enqueue.enqueue_published import EnqueuePublishedService
 from apps.publish.published_item import PUBLISH_STATE, QUEUE_STATE, PUBLISHED, ERROR_MESSAGE
 from bson.objectid import ObjectId
-from eve.utils import config, ParsedRequest
+from eve.utils import ParsedRequest
 from eve.versioning import resolve_document_version
 from superdesk.celery_app import celery
 from superdesk.utc import utcnow
@@ -100,7 +99,7 @@ class EnqueueContent(superdesk.Command):
         """
         Creates the corresponding entries in the publish queue for the given item
         """
-        published_item_id = ObjectId(published_item[config.ID_FIELD])
+        published_item_id = ObjectId(published_item[ID_FIELD])
         published_service = get_resource_service(PUBLISHED)
         archive_service = get_resource_service(ARCHIVE)
         published_update = {QUEUE_STATE: PUBLISH_STATE.IN_PROGRESS, "last_queue_event": utcnow()}
@@ -128,7 +127,7 @@ class EnqueueContent(superdesk.Command):
                     document=item_updates,
                     resource=ARCHIVE,
                     method="PATCH",
-                    latest_doc={config.VERSION: published_item.get(config.VERSION, 1)},
+                    latest_doc={VERSION: published_item.get(VERSION, 1)},
                 )
 
                 # update the archive collection
@@ -136,7 +135,9 @@ class EnqueueContent(superdesk.Command):
                 archive_service.system_update(published_item["item_id"], item_updates, archive_item)
                 # insert into version.
                 insert_into_versions(published_item["item_id"], doc=None)
+
                 # update archive history
+                app = get_current_app().as_any()
                 app.on_archive_item_updated(item_updates, archive_item, ITEM_PUBLISH)
                 # import to legal archive
                 import_into_legal_archive.apply_async(countdown=3, kwargs={"item_id": published_item["item_id"]})
@@ -149,7 +150,7 @@ class EnqueueContent(superdesk.Command):
                     {
                         "versioncreated": versioncreated,
                         ITEM_STATE: CONTENT_STATE.PUBLISHED,
-                        config.VERSION: item_updates[config.VERSION],
+                        VERSION: item_updates[VERSION],
                     }
                 )
                 # send a notification to the clients

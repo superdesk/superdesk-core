@@ -1,10 +1,10 @@
+from typing import Optional, cast
+
 import logging
 import datetime
 import dateutil.rrule as rrule
 
-from typing import Optional
-from flask import current_app as app
-
+from superdesk.core import get_app_config
 from superdesk import get_resource_service
 from superdesk.utc import utcnow, utc_to_local, local_to_utc
 
@@ -37,14 +37,14 @@ def combine_date_time(
 
 
 def to_utc(date: datetime.datetime) -> datetime.datetime:
-    local = local_to_utc(app.config["RUNDOWNS_TIMEZONE"], date)
+    local = local_to_utc(get_app_config("RUNDOWNS_TIMEZONE"), date)
     assert local is not None
     return local
 
 
 def get_start_datetime(time: datetime.time, date: Optional[datetime.date]) -> datetime.datetime:
     now = utcnow()
-    local_now = utc_to_local(app.config["RUNDOWNS_TIMEZONE"], now)
+    local_now = utc_to_local(get_app_config("RUNDOWNS_TIMEZONE"), now)
     if date is None or date < local_now.date():
         date = local_now.date()
     return combine_date_time(date, time, local_now.tzinfo)
@@ -84,7 +84,7 @@ def set_autocreate_schedule(updates, local_date: Optional[datetime.datetime], te
     create_before = (
         datetime.timedelta(seconds=template["autocreate_before_seconds"])
         if template.get("autocreate_before_seconds")
-        else (datetime.timedelta(hours=app.config["RUNDOWNS_SCHEDULE_HOURS"]))
+        else (datetime.timedelta(hours=cast(int, get_app_config("RUNDOWNS_SCHEDULE_HOURS"))))
     )
 
     updates["scheduled_on"] = to_utc(local_date)

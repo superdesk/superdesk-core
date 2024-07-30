@@ -11,7 +11,7 @@
 import urllib
 import requests
 
-from flask import current_app as app
+from superdesk.core import get_app_config
 from superdesk.errors import SuperdeskApiError
 from flask_babel import _
 
@@ -23,13 +23,16 @@ class AlchemyKeywordsProvider:
         self._http = requests.Session()
 
     def get_keywords(self, text):
-        if not app.config["KEYWORDS_KEY_API"]:
+        if not get_app_config("KEYWORDS_KEY_API"):
             raise SuperdeskApiError.notFoundError(_("AlchemyAPI key is not set"))
 
-        params = {"apikey": app.config["KEYWORDS_KEY_API"], "outputMode": "json"}
+        params = {"apikey": get_app_config("KEYWORDS_KEY_API"), "outputMode": "json"}
 
         url = (
-            app.config["KEYWORDS_BASE_URL"] + "/text/TextGetRankedNamedEntities" + "?" + urllib.parse.urlencode(params)
+            get_app_config("KEYWORDS_BASE_URL")
+            + "/text/TextGetRankedNamedEntities"
+            + "?"
+            + urllib.parse.urlencode(params)
         )
 
         values = {"text": text}

@@ -10,12 +10,13 @@
 
 import json
 import html
-from flask import render_template
 
 from eve.versioning import resolve_document_version
 from apps.templates.content_templates import render_content_template_by_name
 from .common import BasePublishService, BasePublishResource, ITEM_KILL
-from eve.utils import config
+
+from superdesk.resource_fields import ID_FIELD, LAST_UPDATED
+from superdesk.flask import render_template
 from superdesk.metadata.item import CONTENT_STATE, ITEM_STATE, PUB_STATUS, EMBARGO, SCHEDULE_SETTINGS, PUBLISH_SCHEDULE
 from superdesk import get_resource_service
 from superdesk.utc import utcnow
@@ -63,7 +64,7 @@ class KillPublishService(BasePublishService):
         # check if we are trying to kill an item that is contained in package
         # and the package itself is not killed.
 
-        packages = self.package_service.get_packages(original[config.ID_FIELD])
+        packages = self.package_service.get_packages(original[ID_FIELD])
         if self.package_workflow == PACKAGE_WORKFLOW.RAISE:
             if packages and packages.count() > 0:
                 for package in packages:
@@ -145,9 +146,9 @@ class KillPublishService(BasePublishService):
         # resolve the document version
         resolve_document_version(document=updates_data, resource=ARCHIVE, method="PATCH", latest_doc=original)
         # kill the item
-        self.patch(original.get(config.ID_FIELD), updates_data)
+        self.patch(original.get(ID_FIELD), updates_data)
         # insert into versions
-        insert_into_versions(id_=original[config.ID_FIELD])
+        insert_into_versions(id_=original[ID_FIELD])
 
     def apply_kill_template(self, item):
         # apply the kill template
@@ -167,14 +168,14 @@ class KillPublishService(BasePublishService):
         try:
             if item.get("_type") == "archive":
                 # attempt to find the published item as this will have an accurate time of publication
-                published_item = get_resource_service(PUBLISHED).get_last_published_version(item.get(config.ID_FIELD))
+                published_item = get_resource_service(PUBLISHED).get_last_published_version(item.get(ID_FIELD))
                 versioncreated = (
                     published_item.get("versioncreated")
                     if published_item
-                    else item.get("versioncreated", item.get(config.LAST_UPDATED))
+                    else item.get("versioncreated", item.get(LAST_UPDATED))
                 )
             else:
-                versioncreated = item.get("versioncreated", item.get(config.LAST_UPDATED))
+                versioncreated = item.get("versioncreated", item.get(LAST_UPDATED))
             desk_name = get_resource_service("desks").get_desk_name(item.get("task", {}).get("desk"))
             city = get_dateline_city(item.get("dateline"))
             kill_header = json.loads(

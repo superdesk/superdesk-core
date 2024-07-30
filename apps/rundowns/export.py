@@ -1,10 +1,11 @@
 import superdesk
 
 from bson import ObjectId
-from flask import Blueprint, url_for, current_app as app, abort
 from typing import List
 from werkzeug.utils import secure_filename
 
+from superdesk.core import get_current_app, get_app_config
+from superdesk.flask import Blueprint, url_for, abort
 from superdesk.utils import ListCursor, jwt_encode, jwt_decode
 
 from . import privileges, rundowns, rundown_items, formatters, shows
@@ -29,6 +30,8 @@ def export(token):
     assert formatter, {"formatter": 1}
     items = rundown_items.items_service.get_rundown_items(rundown)
     output, mimetype, filename = formatter.export(show, rundown, items)
+
+    app = get_current_app()
     response = app.response_class(output, mimetype=mimetype)
     response.headers["Content-Disposition"] = f'attachment; filename="{secure_filename(filename)}"'
     if app.testing:
@@ -73,7 +76,7 @@ class ExportService(superdesk.Service):
             "rundowns_export.export",
             token=self.get_token(doc),
             _external=True,
-            _scheme=app.config["PREFERRED_URL_SCHEME"],
+            _scheme=get_app_config("PREFERRED_URL_SCHEME"),
         )
         return doc["rundown"]
 

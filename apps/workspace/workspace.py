@@ -9,7 +9,7 @@
 # at https://www.sourcefabric.org/superdesk/license
 
 import superdesk
-from flask import request
+from superdesk.flask import request
 
 
 class WorkspaceResource(superdesk.Resource):

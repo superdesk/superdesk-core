@@ -10,9 +10,8 @@
 
 import logging
 
-from eve.utils import config
-from flask import current_app as app
-
+from superdesk.core import get_app_config
+from superdesk.resource_fields import ID_FIELD
 from apps.archive.common import ITEM_OPERATION
 from apps.publish.content.kill import ITEM_KILL
 from superdesk import get_resource_service
@@ -46,7 +45,7 @@ class EnqueueKilledService(EnqueueService):
         }
         subscribers, subscriber_codes, associations = self._get_subscribers_for_previously_sent_items(query)
 
-        if not subscribers and app.config.get("UNPUBLISH_TO_MATCHING_SUBSCRIBERS", False):
+        if not subscribers and get_app_config("UNPUBLISH_TO_MATCHING_SUBSCRIBERS", False):
             active_subscribers = get_resource_service("subscribers").get_active()
             subscribers, subscriber_codes = self.filter_subscribers(doc, active_subscribers, target_media_type)
 
@@ -64,12 +63,12 @@ class EnqueueKilledService(EnqueueService):
             for t in transmission_details
             if t.get("destination", {}).get("delivery_type") == "content_api"
         }
-        query = {"$and": [{config.ID_FIELD: {"$in": subscriber_ids}}]}
+        query = {"$and": [{ID_FIELD: {"$in": subscriber_ids}}]}
         subscribers = list(get_resource_service("subscribers").get(req=None, lookup=query))
 
         for subscriber in subscribers:
-            subscriber["api_enabled"] = subscriber.get(config.ID_FIELD) in api_subscribers
+            subscriber["api_enabled"] = subscriber.get(ID_FIELD) in api_subscribers
 
         self.queue_transmission(item, subscribers)
-        logger.info("Queued Transmission for article: {}".format(item[config.ID_FIELD]))
+        logger.info("Queued Transmission for article: {}".format(item[ID_FIELD]))
         self.publish_content_api(item, [subscriber for subscriber in subscribers if subscriber["api_enabled"]])

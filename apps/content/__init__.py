@@ -1,7 +1,7 @@
 """Content related helpers and utils.
 """
 
-from eve.utils import config
+from superdesk.resource_fields import ID_FIELD, VERSION
 from superdesk.notification import push_notification
 from apps.auth import get_user
 
@@ -26,7 +26,7 @@ def push_content_notification(items, event="content:update"):
         if task.get("stage"):
             stages[str(task.get("stage", ""))] = 1
     user = get_user()
-    push_notification(event, user=str(user.get(config.ID_FIELD, "")), items=ids, desks=desks, stages=stages)
+    push_notification(event, user=str(user.get(ID_FIELD, "")), items=ids, desks=desks, stages=stages)
 
 
 def push_item_move_notification(original, doc, event="item:move"):
@@ -41,9 +41,9 @@ def push_item_move_notification(original, doc, event="item:move"):
     user = get_user()
     push_notification(
         event,
-        user=str(user.get(config.ID_FIELD, "")),
-        item=str(original.get(config.ID_FIELD)),
-        item_version=str(original.get(config.VERSION)),
+        user=str(user.get(ID_FIELD, "")),
+        item=str(original.get(ID_FIELD)),
+        item_version=str(original.get(VERSION)),
         from_desk=str(from_task.get("desk")),
         from_stage=str(from_task.get("stage")),
         to_desk=str(to_task.get("desk")),

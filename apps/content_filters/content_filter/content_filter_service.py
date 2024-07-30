@@ -8,9 +8,9 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
-import flask
 import logging
 
+from superdesk.flask import g
 from superdesk.services import CacheableService
 from eve.utils import ParsedRequest
 from superdesk.errors import SuperdeskApiError
@@ -197,9 +197,9 @@ class ContentFilterService(CacheableService):
         if not content_filter:
             return True  # a non-existing filter matches every thing
         cache_id = _cache_id("filter-match", content_filter.get("_id") or content_filter.get("name"), article)
-        if not hasattr(flask.g, cache_id):
-            setattr(flask.g, cache_id, self._does_match(content_filter, article, filters))
-        return getattr(flask.g, cache_id)
+        if not hasattr(g, cache_id):
+            setattr(g, cache_id, self._does_match(content_filter, article, filters))
+        return getattr(g, cache_id)
 
     def _does_match(self, content_filter, article, filters):
         for index, expression in enumerate(content_filter.get("content_filter", [])):
@@ -220,7 +220,7 @@ class ContentFilterService(CacheableService):
         filter_condition_service = get_resource_service("filter_conditions")
         for f in expression["expression"]["fc"]:
             cache_id = _cache_id("filter-condition-match", f, article)
-            if not hasattr(flask.g, cache_id):
+            if not hasattr(g, cache_id):
                 fc = (
                     filters.get("filter_conditions", {}).get(f, {}).get("fc")
                     if filters
@@ -230,20 +230,20 @@ class ContentFilterService(CacheableService):
                     logger.error("Missing filter condition %s in content filter %s", f, content_filter.get("name"))
                     return False
                 filter_condition = FilterCondition.parse(fc)
-                setattr(flask.g, cache_id, filter_condition.does_match(article))
-            if not getattr(flask.g, cache_id):
+                setattr(g, cache_id, filter_condition.does_match(article))
+            if not getattr(g, cache_id):
                 return False
         return True
 
     def _does_content_filter_match(self, content_filter, article, filters, expression) -> bool:
         for f in expression["expression"]["pf"]:
             cache_id = _cache_id("content-filter-match", f, article)
-            if not hasattr(flask.g, cache_id):
+            if not hasattr(g, cache_id):
                 current_filter = (
                     filters.get("content_filters", {}).get(f, {}).get("cf") if filters else self.get_cached_by_id(f)
                 )
-                setattr(flask.g, cache_id, self.does_match(current_filter, article, filters=filters))
-            if not getattr(flask.g, cache_id):
+                setattr(g, cache_id, self.does_match(current_filter, article, filters=filters))
+            if not getattr(g, cache_id):
                 return False
         return True
 

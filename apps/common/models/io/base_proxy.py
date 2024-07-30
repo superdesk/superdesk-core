@@ -9,8 +9,9 @@
 # at https://www.sourcefabric.org/superdesk/license
 
 from .data_layer import DataLayer
-from eve.utils import ParsedRequest, config, document_etag
-from eve import ID_FIELD
+from eve.utils import ParsedRequest, document_etag
+
+from superdesk.resource_fields import ID_FIELD, ETAG
 
 
 class BaseProxy(DataLayer):
@@ -23,7 +24,7 @@ class BaseProxy(DataLayer):
         self.data_layer = data_layer
 
     def etag(self, doc):
-        return doc.get(config.ETAG, document_etag(doc))
+        return doc.get(ETAG, document_etag(doc))
 
     def find_one(self, resource, filter, projection):
         req = ParsedRequest()

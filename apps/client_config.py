@@ -1,6 +1,6 @@
 import superdesk
 
-from flask import current_app as app
+from superdesk.core import get_current_app
 from superdesk.utils import ListCursor
 from superdesk.default_schema import DEFAULT_SCHEMA, DEFAULT_EDITOR
 
@@ -16,7 +16,7 @@ class ClientConfigService(superdesk.Service):
         return ListCursor()
 
     def on_fetched(self, docs):
-        docs["config"] = getattr(app, "client_config", {})
+        docs["config"] = getattr(get_current_app(), "client_config", {})
 
 
 def init_app(app) -> None:

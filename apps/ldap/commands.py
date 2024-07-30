@@ -9,11 +9,11 @@
 # at https://www.sourcefabric.org/superdesk/license
 
 import logging
-from flask import current_app as app
+
+from superdesk.core import get_app_config
 from superdesk.errors import SuperdeskApiError
 import superdesk
 from .ldap import ADAuth, add_default_values, get_user_query
-from flask_babel import _
 
 logger = logging.getLogger(__name__)
 
@@ -52,14 +52,13 @@ class ImportUserProfileFromADCommand(superdesk.Command):
         user_type = "administrator" if admin is not None and admin.lower() == "true" else "user"
 
         # Authenticate and fetch profile from AD
-        settings = app.settings
         ad_auth = ADAuth(
-            settings["LDAP_SERVER"],
-            settings["LDAP_SERVER_PORT"],
-            settings["LDAP_BASE_FILTER"],
-            settings["LDAP_USER_FILTER"],
-            settings["LDAP_USER_ATTRIBUTES"],
-            settings["LDAP_FQDN"],
+            get_app_config("LDAP_SERVER"),
+            get_app_config("LDAP_SERVER_PORT"),
+            get_app_config("LDAP_BASE_FILTER"),
+            get_app_config("LDAP_USER_FILTER"),
+            get_app_config("LDAP_USER_ATTRIBUTES"),
+            get_app_config("LDAP_FQDN"),
         )
 
         user_data = ad_auth.authenticate_and_fetch_profile(ad_username, ad_password, username)

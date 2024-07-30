@@ -1,10 +1,12 @@
-from typing import List, Dict, Callable
+from typing import List, Dict, Callable, cast
 import warnings
 import superdesk
 
-from flask import current_app as app, request
 from flask_babel import _
 from datetime import timedelta
+
+from superdesk.core import get_current_app, get_app_config
+from superdesk.flask import request
 from superdesk.utils import ListCursor
 from superdesk.utc import utcnow
 from superdesk.errors import SuperdeskApiError
@@ -41,7 +43,7 @@ class AutocompleteService(superdesk.Service):
             else request.args.get("resources").split(",")
         )
         field: str = request.args.get("field", "slugline")
-        language: str = request.args.get("language", app.config.get("DEFAULT_LANGUAGE", "en"))
+        language: str = request.args.get("language", get_app_config("DEFAULT_LANGUAGE", "en"))
 
         all_suggestions: Dict[str, int] = {}
         for resource in resources:
@@ -59,7 +61,7 @@ class AutocompleteService(superdesk.Service):
 
 
 def get_archive_suggestions(field: str, language: str) -> Dict[str, int]:
-    if not app.config.get(SETTING_ENABLED):
+    if not get_app_config(SETTING_ENABLED):
         raise SuperdeskApiError(_("Archive autocomplete is not enabled"), 404)
 
     field_mapping = {"slugline": "slugline.keyword"}
@@ -70,8 +72,8 @@ def get_archive_suggestions(field: str, language: str) -> Dict[str, int]:
     versioncreated_min = (
         utcnow()
         - timedelta(
-            days=app.config[SETTING_DAYS],
-            hours=app.config[SETTING_HOURS],
+            days=cast(int, get_app_config(SETTING_DAYS)),
+            hours=cast(int, get_app_config(SETTING_HOURS)),
         )
     ).replace(
         microsecond=0
@@ -91,13 +93,13 @@ def get_archive_suggestions(field: str, language: str) -> Dict[str, int]:
             "values": {
                 "terms": {
                     "field": field_mapping[field],
-                    "size": app.config[SETTING_LIMIT],
+                    "size": get_app_config(SETTING_LIMIT),
                     "order": {"_key": "asc"},
                 },
             },
         },
     }
-    res = app.data.elastic.search(query, "archive", params={"size": 0})
+    res = get_current_app().data.elastic.search(query, "archive", params={"size": 0})
     return {bucket["key"]: bucket["doc_count"] for bucket in res.hits["aggregations"]["values"]["buckets"]}
 
 

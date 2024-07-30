@@ -11,10 +11,11 @@
 import functools as ft
 import logging
 import superdesk
+from superdesk.core import get_app_config
+from superdesk.resource_fields import ID_FIELD, VERSION
 import superdesk.signals as signals
 
-from flask import current_app as app
-from eve.utils import config, ParsedRequest
+from eve.utils import ParsedRequest
 from copy import deepcopy
 from apps.packages import PackageService
 from superdesk.celery_task_utils import get_lock_id
@@ -107,7 +108,7 @@ class RemoveExpiredContent(superdesk.Command):
 
     @log_exeption
     def _remove_expired_publish_queue_items(self, now):
-        expire_interval = app.config.get("PUBLISH_QUEUE_EXPIRY_MINUTES", 0)
+        expire_interval = get_app_config("PUBLISH_QUEUE_EXPIRY_MINUTES", 0)
         if expire_interval:
             expire_time = now - timedelta(minutes=expire_interval)
             logger.info("{} Removing publish queue items created before {}".format(self.log_msg, str(expire_time)))
@@ -126,7 +127,7 @@ class RemoveExpiredContent(superdesk.Command):
         archive_service = get_resource_service(ARCHIVE)
         published_service = get_resource_service("published")
         preserve_published_desks = {
-            desk.get(config.ID_FIELD): 1
+            desk.get(ID_FIELD): 1
             for desk in get_resource_service("desks").find(where={"preserve_published_content": True})
         }
 
@@ -153,7 +154,7 @@ class RemoveExpiredContent(superdesk.Command):
 
             # get killed items
             killed_items = {
-                item.get(config.ID_FIELD): item
+                item.get(ID_FIELD): item
                 for item in expired_items
                 if item.get(ITEM_STATE) in {CONTENT_STATE.KILLED, CONTENT_STATE.RECALLED}
             }
@@ -168,7 +169,7 @@ class RemoveExpiredContent(superdesk.Command):
 
             # Get the not killed and spiked items
             not_killed_items = {
-                item.get(config.ID_FIELD): item
+                item.get(ID_FIELD): item
                 for item in expired_items
                 if item.get(ITEM_STATE) not in {CONTENT_STATE.KILLED, CONTENT_STATE.SPIKED, CONTENT_STATE.RECALLED}
             }
@@ -180,7 +181,7 @@ class RemoveExpiredContent(superdesk.Command):
 
             # Processing items to expire
             for item_id, item in not_killed_items.items():
-                item.setdefault(config.VERSION, 1)
+                item.setdefault(VERSION, 1)
                 item.setdefault("expiry", expiry_datetime)
                 item.setdefault("unique_name", "")
                 expiry_msg = log_msg_format.format(**item)
@@ -263,15 +264,15 @@ class RemoveExpiredContent(superdesk.Command):
             for _item_id, item in items_having_issues.items():
                 msg = log_msg_format.format(**item)
                 try:
-                    archive_service.system_update(item.get(config.ID_FIELD), {"expiry_status": "invalid"}, item)
+                    archive_service.system_update(item.get(ID_FIELD), {"expiry_status": "invalid"}, item)
                     logger.info("{} Setting item expiry status. {}".format(self.log_msg, msg))
                 except Exception:
                     logger.exception("{} Failed to set expiry status for item. {}".format(self.log_msg, msg))
 
     @log_exeption
     def _remove_expired_archived_items(self, now):
-        EXPIRY_MINUTES = app.config.get("ARCHIVED_EXPIRY_MINUTES")
-        EXPIRY_LIMIT = app.config.get("MAX_EXPIRY_QUERY_LIMIT", 100)
+        EXPIRY_MINUTES = get_app_config("ARCHIVED_EXPIRY_MINUTES")
+        EXPIRY_LIMIT = get_app_config("MAX_EXPIRY_QUERY_LIMIT", 100)
         if not EXPIRY_MINUTES:
             return
         logger.info("%s Starting to remove expired items from archived.", self.log_msg)
@@ -288,7 +289,7 @@ class RemoveExpiredContent(superdesk.Command):
                 logger.error("%s Item was not removed from archived item=%s", self.log_msg, item["item_id"])
                 continue
             signals.archived_item_removed.send(archived_service, item=item)
-            if not app.config.get("LEGAL_ARCHIVE") and not archived_service.find_one(req=None, item_id=item["item_id"]):
+            if not get_app_config("LEGAL_ARCHIVE") and not archived_service.find_one(req=None, item_id=item["item_id"]):
                 remove_media_files(item, published=True)
 
     def _can_remove_item(self, item, now, processed_item=None, preserve_published_desks=None):
@@ -314,7 +315,7 @@ class RemoveExpiredContent(superdesk.Command):
             broadcast_items = get_resource_service("archive_broadcast").get_broadcast_items_from_master_story(item)
             # If master story expires then check if broadcast item is included in a package.
             # If included in a package then check the package expiry.
-            item_refs.extend([broadcast_item.get(config.ID_FIELD) for broadcast_item in broadcast_items])
+            item_refs.extend([broadcast_item.get(ID_FIELD) for broadcast_item in broadcast_items])
 
             if item.get("rewrite_of"):
                 item_refs.append(item.get("rewrite_of"))
@@ -354,10 +355,10 @@ class RemoveExpiredContent(superdesk.Command):
 
         if is_expired:
             # now check recursively for all references
-            if item[config.ID_FIELD] in processed_item:
+            if item[ID_FIELD] in processed_item:
                 return is_expired
 
-            processed_item[item[config.ID_FIELD]] = item
+            processed_item[item[ID_FIELD]] = item
             if item_refs:
                 archive_items = archive_service.get_from_mongo(req=None, lookup={"_id": {"$in": item_refs}})
                 for archive_item in archive_items:
@@ -368,9 +369,7 @@ class RemoveExpiredContent(superdesk.Command):
 
         # If this item is not expired then it is potentially keeping it's parent alive.
         if not is_expired:
-            logger.info(
-                "{} Item ID: [{}] has not expired. Reason: {}".format(self.log_msg, item[config.ID_FIELD], reason)
-            )
+            logger.info("{} Item ID: [{}] has not expired. Reason: {}".format(self.log_msg, item[ID_FIELD], reason))
         return is_expired
 
     def _get_associated_media_id(self, item):
@@ -381,7 +380,7 @@ class RemoveExpiredContent(superdesk.Command):
         ids = []
         for _key, associated_item in (item.get(ASSOCIATIONS) or {}).items():
             if associated_item:
-                ids.append(associated_item.get(config.ID_FIELD))
+                ids.append(associated_item.get(ID_FIELD))
         return ids
 
     def _get_associated_items(self, item):
@@ -393,7 +392,7 @@ class RemoveExpiredContent(superdesk.Command):
             return []
 
         associated_items = list(
-            get_resource_service("media_references").get(req=None, lookup={"associated_id": item.get(config.ID_FIELD)})
+            get_resource_service("media_references").get(req=None, lookup={"associated_id": item.get(ID_FIELD)})
         )
 
         ids = set()
@@ -403,7 +402,7 @@ class RemoveExpiredContent(superdesk.Command):
         # extra query just to ensure that item is not deleted
         # get the associated items from the archive collection
         archive_docs = list(get_resource_service(ARCHIVE).get_from_mongo(req=None, lookup={"_id": {"$in": list(ids)}}))
-        return [doc.get(config.ID_FIELD) for doc in archive_docs]
+        return [doc.get(ID_FIELD) for doc in archive_docs]
 
     def _move_to_archived(self, item, filter_conditions):
         """Moves all the published version of an article to archived.
@@ -416,7 +415,7 @@ class RemoveExpiredContent(superdesk.Command):
         published_service = get_resource_service("published")
         archived_service = get_resource_service("archived")
         archive_service = get_resource_service("archive")
-        item_id = item.get(config.ID_FIELD)
+        item_id = item.get(ID_FIELD)
         moved_to_archived = self._conforms_to_archived_filter(item, filter_conditions)
         published_items = list(published_service.get_from_mongo(req=None, lookup={"item_id": item_id}))
 
@@ -441,7 +440,7 @@ class RemoveExpiredContent(superdesk.Command):
             archive_service.delete_by_article_ids([item_id])
             logger.info("{} Deleted archive item. {}".format(self.log_msg, item_id))
         except Exception:
-            failed_items = [item.get(config.ID_FIELD) for item in published_items]
+            failed_items = [item.get(ID_FIELD) for item in published_items]
             logger.exception("{} Failed to move to archived. {}".format(self.log_msg, failed_items))
 
     def _conforms_to_archived_filter(self, item, filter_conditions):
@@ -453,23 +452,17 @@ class RemoveExpiredContent(superdesk.Command):
         """
         if not filter_conditions:
             logger.info(
-                "{} No filter conditions specified for Archiving item {}.".format(
-                    self.log_msg, item.get(config.ID_FIELD)
-                )
+                "{} No filter conditions specified for Archiving item {}.".format(self.log_msg, item.get(ID_FIELD))
             )
             return True
 
         filter_service = get_resource_service("content_filters")
         for fc in filter_conditions:
             if filter_service.does_match(fc, item):
-                logger.info(
-                    "{} Filter conditions {} matched for item {}.".format(self.log_msg, fc, item.get(config.ID_FIELD))
-                )
+                logger.info("{} Filter conditions {} matched for item {}.".format(self.log_msg, fc, item.get(ID_FIELD)))
                 return False
 
-        logger.info(
-            "{} No filter conditions matched Archiving item {}.".format(self.log_msg, item.get(config.ID_FIELD))
-        )
+        logger.info("{} No filter conditions matched Archiving item {}.".format(self.log_msg, item.get(ID_FIELD)))
         return True
 
     def delete_spiked_items(self, items):
@@ -480,7 +473,7 @@ class RemoveExpiredContent(superdesk.Command):
         try:
             logger.info("{} deleting spiked items.".format(self.log_msg))
             spiked_ids = [
-                item.get(config.ID_FIELD)
+                item.get(ID_FIELD)
                 for item in items
                 if item.get(ITEM_STATE) == CONTENT_STATE.SPIKED and not self._get_associated_items(item)
             ]
@@ -497,7 +490,7 @@ class RemoveExpiredContent(superdesk.Command):
         :param dict items_to_expire:
         :return dict: dict of items having issues.
         """
-        if not app.config.get("LEGAL_ARCHIVE"):
+        if not get_app_config("LEGAL_ARCHIVE"):
             return []
 
         logger.info("{} checking for items in legal archive. Items: {}".format(self.log_msg, items_to_expire.keys()))

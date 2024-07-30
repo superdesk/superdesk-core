@@ -8,14 +8,16 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
-import flask
 import logging
 import datetime
+from copy import copy, deepcopy
+
 import superdesk
 import superdesk.signals as signals
 from superdesk import editor_utils
-
-from copy import copy, deepcopy
+from superdesk.core import json, get_current_app, get_app_config
+from superdesk.resource_fields import ID_FIELD, ITEMS, VERSION, LAST_UPDATED, DATE_CREATED, ETAG
+from superdesk.flask import request, abort
 from superdesk.resource import Resource
 from superdesk.metadata.utils import (
     extra_response_fields,
@@ -57,12 +59,11 @@ from .common import (
     transtype_metadata,
 )
 from superdesk.media.crop import CropService
-from flask import current_app as app, json, request
 from superdesk import get_resource_service
 from superdesk.errors import SuperdeskApiError
 from eve.versioning import resolve_document_version, versioned_id_field
 from superdesk.activity import add_activity, notify_and_add_activity, ACTIVITY_CREATE, ACTIVITY_UPDATE, ACTIVITY_DELETE
-from eve.utils import parse_request, config, date_to_str, ParsedRequest
+from eve.utils import parse_request, ParsedRequest
 from superdesk.services import BaseService
 from superdesk.users.services import current_user_has_privilege, is_admin
 from superdesk.metadata.item import (
@@ -114,7 +115,7 @@ def private_content_filter(req=None):
 
     Also filter out content of stages not visible to current user (if any).
     """
-    user = getattr(flask.g, "user", None)
+    user = get_current_app().get_current_user_dict()
     query = {
         "bool": {
             "must": [
@@ -250,7 +251,7 @@ def flush_renditions(updates, original):
 
 
 def remove_is_queued(item):
-    if config.PUBLISH_ASSOCIATED_ITEMS:
+    if get_app_config("PUBLISH_ASSOCIATED_ITEMS"):
         associations = item.get("associations") or {}
         for associations_key, associated_item in associations.items():
             if not associated_item:
@@ -340,7 +341,7 @@ class ArchiveService(BaseService, HighlightsSearchMixin):
         """
         Overriding this to handle existing data in Mongo & Elastic
         """
-        self.enhance_items(docs[config.ITEMS])
+        self.enhance_items(docs[ITEMS])
 
     def on_fetched_item(self, doc):
         self.enhance_items([doc])
@@ -383,7 +384,7 @@ class ArchiveService(BaseService, HighlightsSearchMixin):
 
             # let client create version 0 docs
             if doc.get("version") == 0:
-                doc[config.VERSION] = doc["version"]
+                doc[VERSION] = doc["version"]
 
             convert_task_attributes_to_objectId(doc)
             transtype_metadata(doc)
@@ -399,6 +400,7 @@ class ArchiveService(BaseService, HighlightsSearchMixin):
         if packages:
             self.packageService.on_created(packages)
 
+        app = get_current_app().as_any()
         profiles = set()
         for doc in docs:
             subject = get_subject(doc)
@@ -453,7 +455,7 @@ class ArchiveService(BaseService, HighlightsSearchMixin):
         self._validate_updates(original, updates, user)
 
         if self.__is_req_for_save(updates):
-            publish_from_personal = flask.request.args.get("publish_from_personal") if flask.request else False
+            publish_from_personal = request.args.get("publish_from_personal") if request else False
             update_state(original, updates, publish_from_personal)
 
         remove_unwanted(updates)
@@ -476,16 +478,16 @@ class ArchiveService(BaseService, HighlightsSearchMixin):
 
         # iterate over associations. Validate and process them if they are stored in database
         for item_name, item_obj in updates.get(ASSOCIATIONS).items():
-            if not (item_obj and config.ID_FIELD in item_obj):
+            if not (item_obj and ID_FIELD in item_obj):
                 continue
 
-            item_id = item_obj[config.ID_FIELD]
+            item_id = item_obj[ID_FIELD]
             media_item = self.find_one(req=None, _id=item_id)
             parent = (original.get(ASSOCIATIONS) or {}).get(item_name) or item_obj
             if (
-                app.settings.get("COPY_METADATA_FROM_PARENT")
+                get_app_config("COPY_METADATA_FROM_PARENT")
                 and item_obj.get(ITEM_TYPE) in MEDIA_TYPES
-                and item_id == parent.get(config.ID_FIELD)
+                and item_id == parent.get(ID_FIELD)
             ):
                 stored_item = parent
             else:
@@ -545,13 +547,13 @@ class ArchiveService(BaseService, HighlightsSearchMixin):
         updated = copy(original)
         updated.update(updates)
 
-        if config.VERSION in updates:
+        if VERSION in updates:
             add_activity(
                 ACTIVITY_UPDATE,
                 'created new version {{ version }} for item {{ type }} about "{{ subject }}"',
                 self.datasource,
                 item=updated,
-                version=updates[config.VERSION],
+                version=updates[VERSION],
                 subject=get_subject(updates, original),
                 type=updated[ITEM_TYPE],
             )
@@ -608,8 +610,9 @@ class ArchiveService(BaseService, HighlightsSearchMixin):
             type=doc[ITEM_TYPE],
             subject=get_subject(doc),
         )
-        push_expired_notification([doc.get(config.ID_FIELD)])
+        push_expired_notification([doc.get(ID_FIELD)])
 
+        app = get_current_app().as_any()
         app.on_archive_item_deleted(doc)
 
     def replace(self, id, document, original):
@@ -647,7 +650,7 @@ class ArchiveService(BaseService, HighlightsSearchMixin):
         if curr is None:
             raise SuperdeskApiError.notFoundError(_("Invalid item id {item_id}").format(item_id=item_id))
 
-        if curr[config.VERSION] != last_version:
+        if curr[VERSION] != last_version:
             raise SuperdeskApiError.preconditionFailedError(
                 _("Invalid last version {last_version}").format(last_version=last_version)
             )
@@ -715,6 +718,8 @@ class ArchiveService(BaseService, HighlightsSearchMixin):
         get_model(ItemModel).create([new_doc])
         self._duplicate_versions(original_doc["_id"], new_doc)
         self._duplicate_history(original_doc["_id"], new_doc)
+
+        app = get_current_app().as_any()
         app.on_archive_item_updated({"duplicate_id": new_doc["guid"]}, original_doc, operation or ITEM_DUPLICATE)
 
         if original_doc.get("task"):
@@ -740,16 +745,14 @@ class ArchiveService(BaseService, HighlightsSearchMixin):
         :param extra_fields: extra fields to copy besides content fields
         """
         # get the archive schema keys
-        archive_schema_keys = list(app.config["DOMAIN"][SOURCE]["schema"].keys())
-        archive_schema_keys.extend(
-            [config.ID_FIELD, config.LAST_UPDATED, config.DATE_CREATED, config.VERSION, config.ETAG]
-        )
+        archive_schema_keys = list(get_app_config("DOMAIN")[SOURCE]["schema"].keys())
+        archive_schema_keys.extend([ID_FIELD, LAST_UPDATED, DATE_CREATED, VERSION, ETAG])
 
         # Delete the keys that are not part of archive schema.
         keys_to_delete = [key for key in copied_item.keys() if key not in archive_schema_keys]
         keys_to_delete.extend(
             [
-                config.ID_FIELD,
+                ID_FIELD,
                 "guid",
                 LINKED_IN_PACKAGES,
                 EMBARGO,
@@ -802,20 +805,20 @@ class ArchiveService(BaseService, HighlightsSearchMixin):
         :param old_id: identifier to fetch versions
         :param new_doc: identifiers from this doc will be used to create versions for the duplicated item.
         """
-        resource_def = app.config["DOMAIN"]["archive"]
+        resource_def = get_app_config("DOMAIN")["archive"]
         version_id = versioned_id_field(resource_def)
         old_versions = get_resource_service("archive_versions").get_from_mongo(req=None, lookup={version_id: old_id})
 
         new_versions = []
         for old_version in old_versions:
-            old_version[version_id] = new_doc[config.ID_FIELD]
-            del old_version[config.ID_FIELD]
+            old_version[version_id] = new_doc[ID_FIELD]
+            del old_version[ID_FIELD]
 
             old_version["guid"] = new_doc["guid"]
             old_version["unique_name"] = new_doc["unique_name"]
             old_version["unique_id"] = new_doc["unique_id"]
             old_version["versioncreated"] = utcnow()
-            if old_version[config.VERSION] == new_doc[config.VERSION]:
+            if old_version[VERSION] == new_doc[VERSION]:
                 old_version[ITEM_OPERATION] = new_doc[ITEM_OPERATION]
             new_versions.append(old_version)
 
@@ -839,7 +842,7 @@ class ArchiveService(BaseService, HighlightsSearchMixin):
 
         new_history_items = []
         for old_history_item in old_history_items:
-            del old_history_item[config.ID_FIELD]
+            del old_history_item[ID_FIELD]
             old_history_item["item_id"] = new_doc["guid"]
             if not old_history_item.get("original_item_id"):
                 old_history_item["original_item_id"] = old_id
@@ -896,18 +899,18 @@ class ArchiveService(BaseService, HighlightsSearchMixin):
         get_resource_service("published").delete_by_article_id(original["_id"])
 
         # deschedule scheduled associations
-        if config.PUBLISH_ASSOCIATED_ITEMS:
+        if get_app_config("PUBLISH_ASSOCIATED_ITEMS"):
             associations = original.get(ASSOCIATIONS) or {}
             archive_service = get_resource_service("archive")
             for associations_key, associated_item in associations.items():
                 if not associated_item:
                     continue
-                orig_associated_item = archive_service.find_one(req=None, _id=associated_item[config.ID_FIELD])
+                orig_associated_item = archive_service.find_one(req=None, _id=associated_item[ID_FIELD])
                 if orig_associated_item and orig_associated_item.get("state") == CONTENT_STATE.SCHEDULED:
                     # deschedule associated item itself
-                    archive_service.patch(id=associated_item[config.ID_FIELD], updates={PUBLISH_SCHEDULE: None})
+                    archive_service.patch(id=associated_item[ID_FIELD], updates={PUBLISH_SCHEDULE: None})
                     # update associated item info in the original
-                    orig_associated_item = archive_service.find_one(req=None, _id=associated_item[config.ID_FIELD])
+                    orig_associated_item = archive_service.find_one(req=None, _id=associated_item[ID_FIELD])
                     orig_associated_item[PUBLISH_SCHEDULE] = None
                     orig_associated_item[SCHEDULE_SETTINGS] = {}
                     updates.setdefault(ASSOCIATIONS, {})[associations_key] = orig_associated_item
@@ -939,17 +942,17 @@ class ArchiveService(BaseService, HighlightsSearchMixin):
 
         :param list ids: list of ids to be removed
         """
-        version_field = versioned_id_field(app.config["DOMAIN"]["archive_versions"])
+        version_field = versioned_id_field(get_app_config("DOMAIN")["archive_versions"])
         get_resource_service("archive_versions").delete_action(lookup={version_field: {"$in": ids}})
-        super().delete_action({config.ID_FIELD: {"$in": ids}})
+        super().delete_action({ID_FIELD: {"$in": ids}})
 
     def _set_association_timestamps(self, assoc_item, updates, new=True):
         if isinstance(assoc_item, dict):
-            assoc_item[config.LAST_UPDATED] = updates.get(config.LAST_UPDATED, datetime.datetime.now())
+            assoc_item[LAST_UPDATED] = updates.get(LAST_UPDATED, datetime.datetime.now())
             if new:
-                assoc_item[config.DATE_CREATED] = datetime.datetime.now()
-            elif config.DATE_CREATED in assoc_item:
-                del assoc_item[config.DATE_CREATED]
+                assoc_item[DATE_CREATED] = datetime.datetime.now()
+            elif DATE_CREATED in assoc_item:
+                del assoc_item[DATE_CREATED]
 
     def __is_req_for_save(self, doc):
         """Checks if doc contains req_for_save key.
@@ -1014,7 +1017,7 @@ class ArchiveService(BaseService, HighlightsSearchMixin):
         def abort_if_readonly_stage(stage_id):
             stage = superdesk.get_resource_service("stages").find_one(req=None, _id=stage_id)
             if stage.get("local_readonly"):
-                flask.abort(403, response={"readonly": True})
+                abort(403, response={"readonly": True})
 
         orig_stage_id = item.get("task", {}).get("stage")
         if orig_stage_id and get_user() and not item.get(INGEST_ID):
@@ -1058,7 +1061,7 @@ class ArchiveService(BaseService, HighlightsSearchMixin):
 
         lock_user = original.get("lock_user", None)
         force_unlock = updates.get("force_unlock", False)
-        str_user_id = str(user.get(config.ID_FIELD)) if user else None
+        str_user_id = str(user.get(ID_FIELD)) if user else None
 
         if lock_user and str(lock_user) != str_user_id and not force_unlock:
             raise SuperdeskApiError.forbiddenError(_("The item was locked by another user"))
@@ -1145,7 +1148,7 @@ class ArchiveService(BaseService, HighlightsSearchMixin):
         updates[ITEM_OPERATION] = ITEM_UPDATE
         updates.setdefault("original_creator", original.get("original_creator"))
         updates["versioncreated"] = utcnow()
-        updates["version_creator"] = str(user.get(config.ID_FIELD)) if user else None
+        updates["version_creator"] = str(user.get(ID_FIELD)) if user else None
 
         update_word_count(updates, original)
         update_version(updates, original)
@@ -1174,7 +1177,7 @@ class ArchiveService(BaseService, HighlightsSearchMixin):
         :param bool invalid_only: True only invalid items
         :return pymongo.cursor: expired non published items.
         """
-        for i in range(app.config["MAX_EXPIRY_LOOPS"]):  # avoid blocking forever just in case
+        for i in range(get_app_config("MAX_EXPIRY_LOOPS")):  # avoid blocking forever just in case
             query = {
                 "$and": [
                     {"expiry": {"$lte": expiry_datetime}},
@@ -1192,7 +1195,7 @@ class ArchiveService(BaseService, HighlightsSearchMixin):
 
             req = ParsedRequest()
             req.sort = "_id"
-            req.max_results = app.config["MAX_EXPIRY_QUERY_LIMIT"]
+            req.max_results = get_app_config("MAX_EXPIRY_QUERY_LIMIT")
             req.where = json.dumps(query)
 
             items = list(self.get_from_mongo(req=req, lookup={}))
@@ -1205,7 +1208,7 @@ class ArchiveService(BaseService, HighlightsSearchMixin):
                 last_id = items[-1]["_id"]
 
         else:
-            logger.warning("get_expired_items did not finish in %d loops", app.config["MAX_EXPIRY_LOOPS"])
+            logger.warning("get_expired_items did not finish in %d loops", get_app_config("MAX_EXPIRY_LOOPS"))
 
     def handle_mark_user_notifications(self, updates, original, add_activity=True):
         """Notify user when item is marked or unmarked
@@ -1283,7 +1286,7 @@ class ArchiveService(BaseService, HighlightsSearchMixin):
             # and item_id for published media items as _id or guid does not match _id in archive for media items
             link_id = item.get("item_id") if item.get("state") in PUBLISH_STATES else item.get("_id")
 
-        client_url = app.config.get("CLIENT_URL", "").rstrip("/")
+        client_url = get_app_config("CLIENT_URL", "").rstrip("/")
         link = "{}/#/workspace?item={}&action=view".format(client_url, link_id)
 
         if add_activity:
@@ -1291,9 +1294,7 @@ class ArchiveService(BaseService, HighlightsSearchMixin):
                 activity_name, msg, resource=resource, item=item, user_list=user_list, link=link, **data
             )
         # send separate notification for markForUser extension
-        push_notification(
-            activity_name, item_id=item.get(config.ID_FIELD), user_list=user_list, extension="markForUser"
-        )
+        push_notification(activity_name, item_id=item.get(ID_FIELD), user_list=user_list, extension="markForUser")
 
     def get_items_chain(self, item):
         """

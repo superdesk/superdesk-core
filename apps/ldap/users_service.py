@@ -9,7 +9,8 @@
 # at https://www.sourcefabric.org/superdesk/license
 
 import logging
-from eve.utils import config
+
+from superdesk.core import get_app_config
 from superdesk.users import UsersService, UsersResource, is_admin  # NOQA
 
 
@@ -38,7 +39,7 @@ class ADUsersService(UsersService):
         :param dict doc: user
         """
         readonly = {}
-        user_attributes = config.LDAP_USER_ATTRIBUTES
+        user_attributes = get_app_config("LDAP_USER_ATTRIBUTES")
         for value in user_attributes.values():
             if value in self.readonly_fields:
                 readonly[value] = True

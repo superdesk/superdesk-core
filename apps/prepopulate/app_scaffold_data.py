@@ -10,8 +10,9 @@
 
 import superdesk
 import logging
+
+from superdesk.resource_fields import ID_FIELD, VERSION
 from superdesk import get_resource_service
-from flask import current_app as app
 from apps.archive.archive import SOURCE as ARCHIVE
 from apps.archive.common import generate_unique_id_and_name, remove_unwanted, insert_into_versions
 from superdesk.metadata.item import GUID_TAG, FAMILY_ID, ITEM_STATE, CONTENT_STATE
@@ -68,11 +69,11 @@ class AppScaffoldDataCommand(superdesk.Command):
             for item in items:
                 dest_doc = dict(item)
                 new_id = generate_guid(type=GUID_TAG)
-                dest_doc[app.config["ID_FIELD"]] = new_id
+                dest_doc[ID_FIELD] = new_id
                 dest_doc["guid"] = new_id
                 generate_unique_id_and_name(dest_doc)
 
-                dest_doc[app.config["VERSION"]] = 1
+                dest_doc[VERSION] = 1
                 dest_doc[ITEM_STATE] = CONTENT_STATE.FETCHED
                 user_id = desk.get("members", [{"user": None}])[0].get("user")
                 dest_doc["original_creator"] = user_id
@@ -81,7 +82,7 @@ class AppScaffoldDataCommand(superdesk.Command):
                 from apps.tasks import send_to
 
                 send_to(dest_doc, desk_id=desk_id, stage_id=stage_id, user_id=user_id)
-                dest_doc[app.config["VERSION"]] = 1  # Above step increments the version and needs to reset
+                dest_doc[VERSION] = 1  # Above step increments the version and needs to reset
                 dest_doc[FAMILY_ID] = item["_id"]
 
                 remove_unwanted(dest_doc)
@@ -89,7 +90,7 @@ class AppScaffoldDataCommand(superdesk.Command):
 
             get_resource_service(ARCHIVE).post(archive_items)
             for item in archive_items:
-                insert_into_versions(id_=item[app.config["ID_FIELD"]])
+                insert_into_versions(id_=item[ID_FIELD])
 
 
 superdesk.command("app:scaffold_data", AppScaffoldDataCommand())

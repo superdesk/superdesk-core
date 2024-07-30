@@ -11,9 +11,11 @@
 from collections import namedtuple
 import json
 import logging
-import flask
+
+from superdesk.core import get_current_app
+from superdesk.resource_fields import ID_FIELD, ITEMS, DATE_CREATED, LAST_UPDATED, VERSION
+from superdesk.flask import request
 from superdesk import get_resource_service
-import superdesk
 from superdesk.errors import SuperdeskApiError
 from superdesk.metadata.item import not_analyzed, ITEM_STATE, PUBLISH_STATES
 from superdesk.metadata.utils import aggregations, get_elastic_highlight_query
@@ -22,8 +24,7 @@ from superdesk.services import BaseService
 from superdesk.utc import utcnow
 
 from bson.objectid import ObjectId
-from eve.utils import ParsedRequest, config
-from flask import current_app as app, request
+from eve.utils import ParsedRequest
 
 from apps.archive.archive import SOURCE as ARCHIVE
 from apps.archive.common import handle_existing_data, item_schema
@@ -82,7 +83,7 @@ def get_content_filter(req=None):
 
     :return:
     """
-    user = getattr(flask.g, "user", None)
+    user = get_current_app().get_current_user_dict()
     if user:
         if "invisible_stages" in user:
             stages = user.get("invisible_stages")
@@ -107,7 +108,7 @@ class PublishedItemResource(Resource):
     }
 
     schema = item_schema(published_item_fields)
-    etag_ignore_fields = [config.ID_FIELD, "highlights", "item_id", LAST_PUBLISHED_VERSION, "moved_to_legal"]
+    etag_ignore_fields = [ID_FIELD, "highlights", "item_id", LAST_PUBLISHED_VERSION, "moved_to_legal"]
 
     privileges = {"POST": "publish_queue", "PATCH": "publish_queue"}
     item_methods = ["GET", "PATCH"]
@@ -132,7 +133,7 @@ class PublishedItemService(BaseService, HighlightsSearchMixin):
         Overriding this to enhance the published article with the one in archive collection
         """
 
-        self.enhance_with_archive_items(docs[config.ITEMS])
+        self.enhance_with_archive_items(docs[ITEMS])
 
     def on_fetched_item(self, doc):
         """
@@ -150,7 +151,7 @@ class PublishedItemService(BaseService, HighlightsSearchMixin):
 
         for doc in docs:
             self.raise_if_not_marked_for_publication(doc)
-            doc[config.LAST_UPDATED] = doc[config.DATE_CREATED] = utcnow()
+            doc[LAST_UPDATED] = doc[DATE_CREATED] = utcnow()
             self.set_defaults(doc)
 
     def on_update(self, updates, original):
@@ -175,10 +176,10 @@ class PublishedItemService(BaseService, HighlightsSearchMixin):
             )
 
     def set_defaults(self, doc):
-        doc["item_id"] = doc[config.ID_FIELD]
+        doc["item_id"] = doc[ID_FIELD]
         doc["versioncreated"] = utcnow()
         doc["publish_sequence_no"] = get_resource_service("sequences").get_next_sequence_number(self.SEQ_KEY_NAME)
-        doc.pop(config.ID_FIELD, None)
+        doc.pop(ID_FIELD, None)
         doc.pop("lock_user", None)
         doc.pop("lock_time", None)
         doc.pop("lock_action", None)
@@ -190,24 +191,22 @@ class PublishedItemService(BaseService, HighlightsSearchMixin):
             archive_items = []
             archive_lookup = {}
             if ids:
-                query = {"$and": [{config.ID_FIELD: {"$in": ids}}]}
+                query = {"$and": [{ID_FIELD: {"$in": ids}}]}
                 archive_req = ParsedRequest()
                 archive_req.max_results = len(ids)
                 # can't access published from elastic due filter on the archive resource hence going to mongo
-                archive_items = list(
-                    superdesk.get_resource_service(ARCHIVE).get_from_mongo(req=archive_req, lookup=query)
-                )
+                archive_items = list(get_resource_service(ARCHIVE).get_from_mongo(req=archive_req, lookup=query))
 
                 for item in archive_items:
                     handle_existing_data(item)
-                    archive_lookup[item[config.ID_FIELD]] = item
+                    archive_lookup[item[ID_FIELD]] = item
 
             for item in items:
-                archive_item = archive_lookup.get(item.get("item_id"), {config.VERSION: item.get(config.VERSION, 1)})
+                archive_item = archive_lookup.get(item.get("item_id"), {VERSION: item.get(VERSION, 1)})
 
                 updates = {
-                    config.ID_FIELD: item.get("item_id"),
-                    "item_id": item.get(config.ID_FIELD),
+                    ID_FIELD: item.get("item_id"),
+                    "item_id": item.get(ID_FIELD),
                     "lock_user": archive_item.get("lock_user", None),
                     "lock_time": archive_item.get("lock_time", None),
                     "lock_action": archive_item.get("lock_action", None),
@@ -216,7 +215,7 @@ class PublishedItemService(BaseService, HighlightsSearchMixin):
                 }
 
                 if request and request.args.get("published_id") == "1":
-                    updates.pop(config.ID_FIELD)
+                    updates.pop(ID_FIELD)
                     updates.pop("item_id")
 
                 item.update(updates)
@@ -228,7 +227,7 @@ class PublishedItemService(BaseService, HighlightsSearchMixin):
         Overriding to avoid other services from invoking this method accidentally.
         """
 
-        if app.testing:
+        if get_current_app().testing:
             super().on_delete(doc)
         else:
             raise NotImplementedError(
@@ -241,7 +240,7 @@ class PublishedItemService(BaseService, HighlightsSearchMixin):
         Overriding to avoid other services from invoking this method accidentally.
         """
 
-        if app.testing:
+        if get_current_app().testing:
             super().delete_action(lookup)
         else:
             raise NotImplementedError(
@@ -254,7 +253,7 @@ class PublishedItemService(BaseService, HighlightsSearchMixin):
         Overriding to avoid other services from invoking this method accidentally.
         """
 
-        if app.testing:
+        if get_current_app().testing:
             super().on_deleted(doc)
         else:
             raise NotImplementedError(
@@ -332,10 +331,10 @@ class PublishedItemService(BaseService, HighlightsSearchMixin):
         items = self.get_other_published_items(_id)
         for item in items:
             try:
-                super().system_update(ObjectId(item[config.ID_FIELD]), {field: state}, item)
+                super().system_update(ObjectId(item[ID_FIELD]), {field: state}, item)
             except Exception:
                 # This part is used in unit testing
-                super().system_update(item[config.ID_FIELD], {field: state}, item)
+                super().system_update(item[ID_FIELD], {field: state}, item)
 
     def delete_by_article_id(self, _id):
         """Removes the article from the published collection.
@@ -372,8 +371,8 @@ class PublishedItemService(BaseService, HighlightsSearchMixin):
 
         for item in items:
             try:
-                if item.get(config.VERSION) <= version and not item.get("moved_to_legal", False):
-                    super().system_update(ObjectId(item.get(config.ID_FIELD)), {"moved_to_legal": status}, item)
+                if item.get(VERSION) <= version and not item.get("moved_to_legal", False):
+                    super().system_update(ObjectId(item.get(ID_FIELD)), {"moved_to_legal": status}, item)
             except Exception:
                 logger.exception(
                     "Failed to set the moved_to_legal flag " "for item {} and version {}".format(item_id, version)

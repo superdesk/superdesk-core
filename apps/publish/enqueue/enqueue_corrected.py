@@ -8,10 +8,10 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
+from superdesk.resource_fields import ID_FIELD
 from apps.publish.content.utils import filter_non_digital
 from superdesk import get_resource_service
 from superdesk.metadata.item import CONTENT_STATE
-from eve.utils import config
 from apps.publish.enqueue.enqueue_service import EnqueueService
 
 
@@ -51,7 +51,7 @@ class EnqueueCorrectedService(EnqueueService):
             query = {"is_active": True}
             active_subscribers = list(get_resource_service("subscribers").get(req=None, lookup=query))
             subscribers_yet_to_receive = [
-                a for a in active_subscribers if not any(a[config.ID_FIELD] == s[config.ID_FIELD] for s in subscribers)
+                a for a in active_subscribers if not any(a[ID_FIELD] == s[ID_FIELD] for s in subscribers)
             ]
 
             if len(subscribers_yet_to_receive) > 0:
