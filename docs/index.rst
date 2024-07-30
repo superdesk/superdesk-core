@@ -50,7 +50,7 @@ existing code to the new framework.
    core/web
    core/mongo
    core/elastic
-   storage/async_storage
+   core/storage
 
 .. _reference:
 

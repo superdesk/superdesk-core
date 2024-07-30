@@ -1,9 +1,9 @@
-.. storage_async_storage:
+.. core_storage:
 
-Async Storage
+Storage
 =============
 
-.. module:: superdesk.storage.async_storage.media_storage
+.. module:: superdesk.core.storage
 
 
 GridFSMediaStorageAsync
@@ -43,7 +43,7 @@ For example::
 Module References
 -----------------
 
-.. autoclass:: superdesk.storage.async_storage.media_storage.GridFSMediaStorageAsync
+.. autoclass:: superdesk.core.storage.GridFSMediaStorageAsync
     :show-inheritance:
 
     .. rubric:: Methods
