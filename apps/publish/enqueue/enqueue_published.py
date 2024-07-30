@@ -8,12 +8,15 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
+import logging
 import elasticapm
 
 from eve.utils import config
 from superdesk import get_resource_service
 from superdesk.metadata.item import ITEM_TYPE, CONTENT_TYPE, CONTENT_STATE
 from apps.publish.enqueue.enqueue_service import EnqueueService
+
+logger = logging.getLogger(__name__)
 
 
 class EnqueuePublishedService(EnqueueService):
@@ -40,13 +43,9 @@ class EnqueuePublishedService(EnqueueService):
         # Step 2b
         if doc.get(ITEM_TYPE) in [CONTENT_TYPE.TEXT, CONTENT_TYPE.PREFORMATTED]:
             if rewrite_of:
-                item_ids = [rewrite_of]
-
                 query = {
-                    "$and": [
-                        {"item_id": {"$in": item_ids}},
-                        {"publishing_action": {"$in": [CONTENT_STATE.PUBLISHED, CONTENT_STATE.CORRECTED]}},
-                    ]
+                    "item_id": rewrite_of,
+                    "publishing_action": {"$in": [CONTENT_STATE.PUBLISHED, CONTENT_STATE.CORRECTED]},
                 }
 
                 (
@@ -54,6 +53,9 @@ class EnqueuePublishedService(EnqueueService):
                     rewrite_codes,
                     rewrite_associations,
                 ) = self._get_subscribers_for_previously_sent_items(query)
+
+                if not rewrite_subscribers:
+                    logger.info("No previous subscribers found for rewrite item: %s", rewrite_of)
 
         # Step 2
         subscribers, codes = self.filter_subscribers(doc, subscribers, target_media_type)

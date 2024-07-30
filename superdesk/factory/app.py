@@ -122,15 +122,6 @@ class SuperdeskEve(eve.Eve):
     _endpoint_groups: List[EndpointGroup]
 
     def __init__(self, **kwargs):
-        # set attributes to avoid event slots being created
-        # when getattr is called on those, thx to eve
-        self.apm = None
-        self.babel_tzinfo = None
-        self.babel_locale = None
-        self.babel_translations = None
-        self.notification_client = None
-        self.lock = None
-        self._superdesk_cache = None
         self.async_app = SuperdeskAsyncApp(self)
         self.json_provider_class = SuperdeskFlaskJSONProvider
         self._endpoints = []
@@ -139,10 +130,10 @@ class SuperdeskEve(eve.Eve):
         super().__init__(**kwargs)
 
     def __getattr__(self, name):
-        """Workaround for https://github.com/pyeve/eve/issues/1087"""
-        if name in {"im_self", "im_func"}:
-            raise AttributeError("type object '%s' has no attribute '%s'" % (self.__class__.__name__, name))
-        return super(SuperdeskEve, self).__getattr__(name)
+        """Only use events for on_* methods."""
+        if name.startswith("on_"):
+            return super(SuperdeskEve, self).__getattr__(name)
+        raise AttributeError("type object '%s' has no attribute '%s'" % (self.__class__.__name__, name))
 
     def init_indexes(self, ignore_duplicate_keys=False):
         for resource, resource_config in self.config["DOMAIN"].items():

@@ -213,43 +213,55 @@ class RundownsService(superdesk.Service):
                 self.system_update(rundown["_id"], updates, rundown)
 
     def get(self, req, lookup):
-        if req and req.args.get("q"):
-            query_string_query = {
-                "query_string": {
-                    "query": req.args.get("q"),
-                    "default_operator": "AND",
-                    "lenient": True,
-                },
-            }
-
-            items_query = {
-                "nested": {
-                    "path": "items_data",
-                    "query": query_string_query,
-                    "inner_hits": {"name": "rundown_items"},
-                },
-            }
-
-            query = {
-                "bool": {
-                    "should": [
-                        query_string_query,
-                        items_query,
-                    ],
-                    "minimum_should_match": 1,
-                }
-            }
-
+        if req:
             source = json.loads(req.args.get("source")) if req.args.get("source") else {}
+            query_string_query = None
             if source.get("query"):
-                old_query = source["query"]
-                source["query"] = query
-                query["bool"]["must"] = old_query
-            else:
-                source["query"] = query
+                try:
+                    query_string_query = source["query"]["filtered"]["query"]["query_string"]
+                    query_string_query = {"query_string": query_string_query}
+                    source["query"].pop("filtered")
+                except KeyError:
+                    query_string_query = None
+
+            if req.args.get("q"):
+                query_string_query = {
+                    "query_string": {
+                        "query": req.args.get("q"),
+                        "default_operator": "AND",
+                        "lenient": True,
+                    },
+                }
+
+            if query_string_query:
+                items_query = {
+                    "nested": {
+                        "path": "items_data",
+                        "query": query_string_query,
+                        "inner_hits": {"name": "rundown_items"},
+                    },
+                }
+
+                query = {
+                    "bool": {
+                        "should": [
+                            query_string_query,
+                            items_query,
+                        ],
+                        "minimum_should_match": 1,
+                    }
+                }
+
+                if source.get("query"):
+                    old_query = source["query"]
+                    source["query"] = query
+                    query["bool"]["must"] = old_query
+                else:
+                    source["query"] = query
 
             args = req.args.to_dict()
-            args.pop("q")
+            if args.get("q"):
+                args.pop("q")
             args["source"] = json.dumps(source)
             req.args = ImmutableMultiDict(args)
             cursor = super().get(req, lookup)
