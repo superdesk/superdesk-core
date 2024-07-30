@@ -28,3 +28,35 @@ class Item(TypedDict, total=False):
     slugline: str
     authors: List[ItemAuthor]
     extra: Dict[str, Any]
+
+
+class UserMandatory(TypedDict):
+    email: str
+    username: str
+
+
+class DefaultNotificationPreference(TypedDict, total=False):
+    enabled: bool
+
+
+class NotificationPreference(TypedDict, total=False):
+    email: bool
+    desktop: bool
+
+
+UserPreferences = TypedDict(
+    "UserPreferences",
+    {
+        "notifications": Dict[str, NotificationPreference],
+        "email:notification": DefaultNotificationPreference,
+        "desktop:notification": DefaultNotificationPreference,
+    },
+    total=False,
+)
+
+
+class User(UserMandatory, total=False):
+    user_preferences: UserPreferences
+    needs_activation: bool
+    is_enabled: bool
+    is_active: bool
