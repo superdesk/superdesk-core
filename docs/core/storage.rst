@@ -1,7 +1,7 @@
 .. core_storage:
 
 Storage
-=============
+=======
 
 .. module:: superdesk.core.storage
 
