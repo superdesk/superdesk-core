@@ -1295,9 +1295,10 @@ class ArchiveService(BaseService, HighlightsSearchMixin):
                 item=item,
                 user_list=user_list,
                 link=link,
-                preference_notification_name="mark_for_user",
+                notification_name="mark_for_user",
                 **data,
             )
+
         # send separate notification for markForUser extension
         push_notification(
             activity_name, item_id=item.get(config.ID_FIELD), user_list=user_list, extension="markForUser"
