@@ -1,4 +1,4 @@
-from flask import json
+from superdesk.core import json
 
 
 def set_filemeta(item, metadata):

@@ -8,25 +8,27 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
+from datetime import datetime
+import mimetypes
+import logging
+import os.path
 import arrow
+
+from superdesk.core import get_current_app
+from superdesk.resource_fields import VERSION, ITEM_TYPE
 from superdesk.io.feed_parsers import FileFeedParser
 from superdesk.io.registry import register_feed_parser
 from superdesk.errors import ParserError
 from superdesk.media.media_operations import process_file_from_stream
 from superdesk.media.image import get_meta_iptc
 from superdesk.media.iim_codes import TAG
-from superdesk.metadata.item import GUID_TAG, ITEM_TYPE, CONTENT_TYPE
+from superdesk.metadata.item import GUID_TAG, CONTENT_TYPE
 from superdesk.metadata import utils
 from superdesk.media.renditions import generate_renditions, get_renditions_spec
 from superdesk.upload import url_for_media
 from superdesk.utc import utcnow
 from superdesk import filemeta
-from flask import current_app as app
-from eve.utils import config
-from datetime import datetime
-import mimetypes
-import logging
-import os.path
+
 
 logger = logging.getLogger(__name__)
 
@@ -73,7 +75,7 @@ class ImageIPTCFeedParser(FileFeedParser):
         item = {
             "guid": guid,
             "uri": guid,
-            config.VERSION: 1,
+            VERSION: 1,
             ITEM_TYPE: CONTENT_TYPE.PICTURE,
             "mimetype": content_type,
             "versioncreated": utcnow(),
@@ -81,6 +83,7 @@ class ImageIPTCFeedParser(FileFeedParser):
         with open(image_path, "rb") as f:
             _, content_type, file_metadata = process_file_from_stream(f, content_type=content_type)
             f.seek(0)
+            app = get_current_app()
             file_id = app.media.put(f, filename=filename, content_type=content_type, metadata=file_metadata)
             filemeta.set_filemeta(item, file_metadata)
             f.seek(0)

@@ -7,23 +7,24 @@
 # For the full copyright and license information, please see the
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
-from eve.utils import config
 from eve.versioning import versioned_id_field
+
+from superdesk.core import get_app_config
+from superdesk.resource_fields import ID_FIELD
 from superdesk.services import BaseService
-from flask import current_app as app
 from superdesk.utils import ListCursor
 
 
 class ItemsVersionsService(BaseService):
     def get(self, req, lookup):
-        resource_def = app.config["DOMAIN"]["items"]
+        resource_def = get_app_config("DOMAIN")["items"]
         id_field = versioned_id_field(resource_def)
 
         lookup = {"$and": [lookup, {"pubstatus": {"$ne": "canceled"}}]}
         version_history = list(super().get_from_mongo(req=req, lookup=lookup))
 
         for doc in version_history:
-            doc[config.ID_FIELD] = doc[id_field]
+            doc[ID_FIELD] = doc[id_field]
 
         return ListCursor(version_history)
 

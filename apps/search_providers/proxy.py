@@ -1,8 +1,9 @@
 import bson
 import bson.errors
-import superdesk
 
-from flask import abort, request, json
+import superdesk
+from superdesk.core import json
+from superdesk.flask import abort, request
 from superdesk.utc import utcnow
 from superdesk.utils import ListCursor
 from apps.search_providers.registry import registered_search_providers

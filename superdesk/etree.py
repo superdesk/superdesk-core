@@ -11,7 +11,6 @@
 from lxml import etree  # noqa
 from lxml.etree import ParseError  # noqa
 from lxml import html
-from superdesk import config
 
 
 # from https://developer.mozilla.org/en-US/docs/Web/HTML/Block-level_elements
@@ -169,12 +168,14 @@ def clean_html(elem):
     :param etree._Element elem: element to clean (will be converted to HtmlElement if it is not already one
     :return html.HtmlElement: cleaned element
     """
+    from superdesk.core import get_app_config
+
     if not isinstance(elem, html.HtmlElement):
         elem = html.fromstring(etree.tostring(elem, encoding="unicode"))
     safe_attrs = set(html.defs.safe_attrs)
     safe_attrs.remove("class")
     cleaner = html.clean.Cleaner(
-        allow_tags=config.HTML_TAGS_WHITELIST, remove_unknown_tags=False, safe_attrs=safe_attrs
+        allow_tags=get_app_config("HTML_TAGS_WHITELIST"), remove_unknown_tags=False, safe_attrs=safe_attrs
     )
     return cleaner.clean_html(elem)
 

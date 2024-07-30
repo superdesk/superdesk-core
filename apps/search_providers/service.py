@@ -11,8 +11,8 @@
 import logging
 
 from flask_babel import _
-from eve.utils import config
 
+from superdesk.resource_fields import ID_FIELD
 from apps.search_providers import allowed_search_providers
 from superdesk.errors import SuperdeskApiError
 from superdesk.services import BaseService
@@ -56,7 +56,7 @@ class SearchProviderService(BaseService):
         for doc in docs:
             if doc.get("is_default"):
                 self.find_and_modify(
-                    query={"$and": [{"_id": {"$ne": doc[config.ID_FIELD]}}, {"is_default": True}]},
+                    query={"$and": [{"_id": {"$ne": doc[ID_FIELD]}}, {"is_default": True}]},
                     update={"$set": {"is_default": False}},
                     upsert=False,
                 )
@@ -64,7 +64,7 @@ class SearchProviderService(BaseService):
     def on_updated(self, updates, original):
         if updates.get("is_default"):
             self.find_and_modify(
-                query={"$and": [{"_id": {"$ne": original[config.ID_FIELD]}}, {"is_default": True}]},
+                query={"$and": [{"_id": {"$ne": original[ID_FIELD]}}, {"is_default": True}]},
                 update={"$set": {"is_default": False}},
                 upsert=False,
             )

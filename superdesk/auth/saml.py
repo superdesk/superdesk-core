@@ -36,7 +36,8 @@ import logging
 
 from urllib.parse import urlparse
 
-from flask import current_app as app, request, redirect, make_response, session, jsonify, json
+from superdesk.core import get_app_config
+from superdesk.flask import request, redirect, make_response, session, jsonify, Blueprint
 from superdesk.auth import auth_user
 
 try:
@@ -51,7 +52,7 @@ SESSION_NAME_ID = "samlNameId"
 SESSION_SESSION_ID = "samlSessionIndex"
 SESSION_USERDATA_KEY = "samlUserdata"
 
-bp = superdesk.Blueprint("saml", __name__)
+bp = Blueprint("saml", __name__)
 logger = logging.getLogger(__name__)
 
 
@@ -65,15 +66,16 @@ def init_app(app) -> None:
 
 
 def init_saml_auth(req):
-    auth = OneLogin_Saml2_Auth(req, custom_base_path=app.config["SAML_PATH"])
+    auth = OneLogin_Saml2_Auth(req, custom_base_path=get_app_config("SAML_PATH"))
     return auth
 
 
 def prepare_flask_request(request):
     url_data = urlparse(request.url)
     scheme = request.scheme
-    if app.config.get("SERVER_URL"):
-        scheme = urlparse(app.config["SERVER_URL"]).scheme or request.scheme
+    server_url = get_app_config("SERVER_URL")
+    if server_url:
+        scheme = urlparse(server_url).scheme or request.scheme
     return {
         "https": "on" if scheme == "https" else "off",
         "http_host": request.host,

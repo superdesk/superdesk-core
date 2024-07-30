@@ -12,7 +12,7 @@ import logging
 import superdesk
 from datetime import timedelta
 
-from flask import current_app as app
+from superdesk.core import get_current_app
 from superdesk.celery_task_utils import get_lock_id
 from superdesk.lock import lock, unlock
 from superdesk.utc import utcnow
@@ -37,6 +37,7 @@ class RemoveExportedFiles(superdesk.Command):
     # option_list = [superdesk.Option("--expire-hours", "-e", dest="expire_hours", required=False, type=int)]
 
     def run(self, expire_hours=None):
+        app = get_current_app()
         if expire_hours:
             self.expire_hours = expire_hours
         elif "TEMP_FILE_EXPIRY_HOURS" in app.config:
@@ -61,11 +62,12 @@ class RemoveExportedFiles(superdesk.Command):
 
     def _remove_exported_files(self, expire_at):
         logger.info("{} Beginning to remove exported files from storage".format(self.log_msg))
+        app = get_current_app()
         for file_id in self._get_file_ids(expire_at):
             app.media.delete(file_id)
 
     def _get_file_ids(self, expire_at):
-        files = app.media.find(folder="temp", upload_date={"$lte": expire_at})
+        files = get_current_app().media.find(folder="temp", upload_date={"$lte": expire_at})
         return [file["_id"] for file in files]
 
 

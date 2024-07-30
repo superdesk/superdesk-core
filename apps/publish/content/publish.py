@@ -9,6 +9,8 @@
 # at https://www.sourcefabric.org/superdesk/license
 
 import logging
+
+from superdesk.flask import request
 from superdesk.errors import SuperdeskApiError
 from superdesk.metadata.item import (
     CONTENT_TYPE,
@@ -27,7 +29,6 @@ from superdesk.utc import utcnow
 
 from .common import BasePublishService, BasePublishResource, ITEM_PUBLISH
 from flask_babel import _
-from flask import request
 
 logger = logging.getLogger(__name__)
 

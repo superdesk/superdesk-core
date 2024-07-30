@@ -17,6 +17,7 @@ from copy import copy
 from eve.utils import ParsedRequest
 from eve.versioning import resolve_document_version
 
+from superdesk.resource_fields import ID_FIELD
 from superdesk.users.services import current_user_has_privilege
 from superdesk.resource import Resource
 from superdesk.errors import StopDuplication, SuperdeskApiError, InvalidStateTransitionError
@@ -25,7 +26,7 @@ from superdesk.utc import utcnow
 from superdesk.metadata.utils import item_url
 from superdesk.services import BaseService
 from superdesk.metadata.item import metadata_schema, ITEM_STATE, CONTENT_STATE, ITEM_TYPE
-from superdesk import get_resource_service, config
+from superdesk import get_resource_service
 from superdesk.activity import add_activity, ACTIVITY_CREATE, ACTIVITY_UPDATE
 from superdesk.workflow import is_workflow_state_transition_valid
 from apps.archive.common import (
@@ -163,7 +164,7 @@ def apply_onstage_rule(doc, _id):
     :param _id:
     :return:
     """
-    doc[config.ID_FIELD] = _id
+    doc[ID_FIELD] = _id
     stage = get_resource_service("stages").find_one(req=None, _id=doc.get("task", {}).get("stage"))
     if stage:
         apply_stage_rule(doc, None, stage, "onstage")

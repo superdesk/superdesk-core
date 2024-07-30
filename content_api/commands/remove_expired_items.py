@@ -12,7 +12,7 @@ import logging
 import superdesk
 from datetime import timedelta
 
-from flask import current_app as app
+from superdesk.core import get_app_config
 from superdesk import get_resource_service
 from superdesk.celery_task_utils import get_lock_id
 from superdesk.lock import lock, unlock
@@ -42,8 +42,8 @@ class RemoveExpiredItems(superdesk.Command):
     def run(self, expiry_days=None):
         if expiry_days:
             self.expiry_days = int(expiry_days)
-        elif app.config.get("CONTENT_API_EXPIRY_DAYS"):
-            self.expiry_days = app.config["CONTENT_API_EXPIRY_DAYS"]
+        elif get_app_config("CONTENT_API_EXPIRY_DAYS"):
+            self.expiry_days = get_app_config("CONTENT_API_EXPIRY_DAYS")
 
         if self.expiry_days == 0:
             logger.info("Expiry days is set to 0, therefor no items will be removed.")

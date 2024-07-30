@@ -4,8 +4,9 @@ from copy import deepcopy
 from urllib.parse import urlencode
 import requests
 import requests_mock
-from flask import json, url_for, Response as FlaskResponse
 
+from superdesk.core import json
+from superdesk.flask import url_for, Response as FlaskResponse
 from superdesk import __version__ as superdesk_version
 from superdesk.tests import TestCase, setup_auth_user
 from superdesk.http_proxy import HTTPProxy, register_http_proxy
@@ -70,7 +71,6 @@ class HttpProxyTestCase(TestCase):
 
     def test_http_methods(self, mock_request):
         mock_request.request(requests_mock.ANY, requests_mock.ANY, status_code=200)
-        self.setupAuthUser()
         second_proxy = HTTPProxy(
             "second_proxy",
             internal_url="test/proxy2",
@@ -78,6 +78,7 @@ class HttpProxyTestCase(TestCase):
             http_methods=["GET", "DELETE"],
         )
         register_http_proxy(self.app, second_proxy)
+        self.setupAuthUser()
 
         # Test already registered proxy, allowing all methods
         self.assertEqual(self.client.options("/api/test/proxy", headers=self.headers).status_code, 200)
@@ -114,9 +115,9 @@ class HttpProxyTestCase(TestCase):
     def test_supports_multiple_proxies(self, mock_request):
         mock_request.get("http://localhost:5001/api", status_code=200)
         mock_request.get("http://localhost:5025/api/v3", status_code=201)
-        self.setupAuthUser()
         third_proxy = HTTPProxy("third_proxy", internal_url="test/proxy3", external_url="http://localhost:5025/api/v3")
         register_http_proxy(self.app, third_proxy)
+        self.setupAuthUser()
 
         response = self.client.get("/api/test/proxy", headers=self.headers)
         self.assertEqual(response.status_code, 200)

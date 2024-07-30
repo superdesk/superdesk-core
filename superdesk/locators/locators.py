@@ -10,7 +10,9 @@
 
 from operator import itemgetter
 from eve.render import send_response
-from flask import Blueprint, current_app as app
+
+from superdesk.core import get_current_app
+from superdesk.flask import Blueprint
 from superdesk.utc import utcnow
 from superdesk.auth.decorator import blueprint_auth
 
@@ -123,7 +125,7 @@ def get_cities(country_code=None, state_code=None):
         Returns HTTP Response with body {'_items': cities, '_meta': {'total': City Count}}.
     """
 
-    cities = app.locators.find_cities(country_code=country_code, state_code=state_code)
+    cities = get_current_app().locators.find_cities(country_code=country_code, state_code=state_code)
 
     if cities and len(cities):
         response_data = {"_items": cities, "_meta": {"total": len(cities)}}

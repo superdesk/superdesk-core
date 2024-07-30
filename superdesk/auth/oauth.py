@@ -29,12 +29,13 @@ from datetime import datetime
 from typing import Optional, List, Tuple
 from bson import ObjectId
 import superdesk
-from flask import url_for, render_template, current_app as app
 from flask_babel import lazy_gettext as l_
-from eve.utils import config
 from authlib.integrations.flask_client import OAuth
 from authlib.integrations.requests_client import OAuth2Session
 from authlib.oauth2.rfc6749.wrappers import OAuth2Token
+
+from superdesk.resource_fields import ID_FIELD
+from superdesk.flask import url_for, render_template, Blueprint
 from superdesk.resource import Resource
 from superdesk.services import BaseService
 from superdesk.errors import SuperdeskApiError
@@ -44,7 +45,7 @@ from superdesk.auth import auth_user, AUTHORIZED_TEMPLATE, ERROR_TEMPLATE
 
 logger = logging.getLogger(__name__)
 
-bp = superdesk.Blueprint("oauth", __name__)
+bp = Blueprint("oauth", __name__)
 oauth: Optional[OAuth] = None
 TOKEN_ENDPOINT = "https://oauth2.googleapis.com/token"
 REVOKE_ENDPOINT = "https://oauth2.googleapis.com/revoke"
@@ -200,7 +201,7 @@ def configure_google(app, extra_scopes: Optional[List[str]] = None, refresh: boo
                 logger.warning(f"No provider is corresponding to the id used with the token {token_id!r}")
             else:
                 ingest_providers_service.update(
-                    provider[config.ID_FIELD], updates={"config.email": user["email"]}, original=provider
+                    provider[ID_FIELD], updates={"config.email": user["email"]}, original=provider
                 )
 
             return render_template(AUTHORIZED_TEMPLATE, data={})
@@ -252,9 +253,9 @@ def revoke_google_token(token_id: ObjectId) -> None:
         raise SuperdeskApiError.proxyError(
             f"Can't revoke token {token_id} (HTTP status {resp.status_code}): {resp.text}"
         )
-    oauth2_token_service.delete({config.ID_FIELD: token_id})
+    oauth2_token_service.delete({ID_FIELD: token_id})
     ingest_providers_service = superdesk.get_resource_service("ingest_providers")
     provider = ingest_providers_service.find_one(req=None, _id=token_id)
     if provider is not None:
-        ingest_providers_service.update(provider[config.ID_FIELD], updates={"config.email": None}, original=provider)
+        ingest_providers_service.update(provider[ID_FIELD], updates={"config.email": None}, original=provider)
     logger.info(f"OAUTH token {token_id!r} has been revoked")

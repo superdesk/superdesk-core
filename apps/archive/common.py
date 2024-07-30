@@ -12,15 +12,15 @@ from typing import Optional
 from bson import ObjectId
 
 import logging
-from eve.utils import config
 from datetime import datetime
 from dateutil.parser import parse as date_parse
-from flask import current_app as app
 from eve.versioning import insert_versioning_documents
 from pytz import timezone
 from copy import deepcopy
 from dateutil.parser import parse
 
+from superdesk.core import get_app_config, get_current_app
+from superdesk.resource_fields import ID_FIELD, VERSION
 import superdesk
 from superdesk import editor_utils
 from superdesk.users.services import get_sign_off
@@ -157,13 +157,13 @@ DEFAULT_PROFILES = set(
 
 
 def get_default_source():
-    return app.config.get("DEFAULT_SOURCE_VALUE_FOR_MANUAL_ARTICLES", "")
+    return get_app_config("DEFAULT_SOURCE_VALUE_FOR_MANUAL_ARTICLES", "")
 
 
 def update_version(updates, original):
     """Increment version number if possible."""
-    if config.VERSION in updates and original.get("version", 0) == 0:
-        updates.setdefault("version", updates[config.VERSION])
+    if VERSION in updates and original.get("version", 0) == 0:
+        updates.setdefault("version", updates[VERSION])
 
 
 def on_create_item(docs, repo_type=ARCHIVE, media_service=None):
@@ -190,7 +190,7 @@ def on_create_item(docs, repo_type=ARCHIVE, media_service=None):
             doc["event_id"] = generate_guid(type=GUID_TAG)
 
         set_default_state(doc, CONTENT_STATE.DRAFT)
-        doc.setdefault(config.ID_FIELD, doc[GUID_FIELD])
+        doc.setdefault(ID_FIELD, doc[GUID_FIELD])
 
         if repo_type == ARCHIVE:
             # set the source for the article
@@ -202,15 +202,15 @@ def on_create_item(docs, repo_type=ARCHIVE, media_service=None):
         if (
             doc.get("profile") in ignore_profiles
             and doc.get("type") == "text"
-            and app.config.get("DEFAULT_CONTENT_TYPE", None)
+            and get_app_config("DEFAULT_CONTENT_TYPE", None)
         ):
-            doc["profile"] = app.config["DEFAULT_CONTENT_TYPE"]
+            doc["profile"] = get_app_config("DEFAULT_CONTENT_TYPE")
 
         copy_metadata_from_profile(doc)
         copy_metadata_from_user_preferences(doc, repo_type)
 
         if "language" not in doc:
-            doc["language"] = app.config.get("DEFAULT_LANGUAGE", "en")
+            doc["language"] = get_app_config("DEFAULT_LANGUAGE", "en")
 
             if doc.get("task", None) and doc["task"].get("desk", None):
                 desk = superdesk.get_resource_service("desks").find_one(req=None, _id=doc["task"]["desk"])
@@ -350,8 +350,9 @@ def clear_rewritten_flag(event_id, rewrite_id, rewrite_field):
         event_id, rewrite_id, rewrite_field
     )
     processed_items = set()
+    app = get_current_app().as_any()
     for doc in published_rewritten_stories:
-        doc_id = doc.get(config.ID_FIELD)
+        doc_id = doc.get(ID_FIELD)
         publish_service.update_published_items(doc_id, rewrite_field, None)
         if doc_id not in processed_items:
             # clear the flag from the archive as well.
@@ -398,7 +399,7 @@ def set_sign_off(updates, original=None, repo_type=ARCHIVE, user=None):
         return
 
     # remove the sign off from the list if already there
-    if not app.config.get("FULL_SIGN_OFF"):
+    if not get_app_config("FULL_SIGN_OFF"):
         current_sign_off = current_sign_off.replace(sign_off + "/", "")
 
     updated_sign_off = "{}/{}".format(current_sign_off, sign_off)
@@ -443,7 +444,7 @@ def insert_into_versions(id_=None, doc=None):
         raise SuperdeskApiError.badRequestError(message=_("Document not found in archive collection"))
 
     remove_unwanted(doc_in_archive_collection)
-    if app.config["VERSION"] in doc_in_archive_collection:
+    if VERSION in doc_in_archive_collection:
         insert_versioning_documents(ARCHIVE, doc_in_archive_collection)
 
 
@@ -471,20 +472,20 @@ def fetch_item(doc, desk_id, stage_id, state=None, target=None):
     if doc.get("guid"):
         dest_doc.setdefault("uri", doc[GUID_FIELD])
 
-    dest_doc[config.ID_FIELD] = new_id
+    dest_doc[ID_FIELD] = new_id
     dest_doc[GUID_FIELD] = new_id
     generate_unique_id_and_name(dest_doc)
 
     # avoid circular import
     from apps.tasks import send_to
 
-    dest_doc[config.VERSION] = 1
+    dest_doc[VERSION] = 1
     dest_doc["versioncreated"] = utcnow()
     send_to(doc=dest_doc, desk_id=desk_id, stage_id=stage_id)
     dest_doc[ITEM_STATE] = state or CONTENT_STATE.FETCHED
 
-    dest_doc[FAMILY_ID] = doc[config.ID_FIELD]
-    dest_doc[INGEST_ID] = doc[config.ID_FIELD]
+    dest_doc[FAMILY_ID] = doc[ID_FIELD]
+    dest_doc[INGEST_ID] = doc[ID_FIELD]
     dest_doc[ITEM_OPERATION] = ITEM_FETCH
 
     remove_unwanted(dest_doc)
@@ -518,6 +519,7 @@ def remove_media_files(doc, published=False):
     if doc.get("guid"):
         remove_media_references(doc["guid"], published)
 
+    app = get_current_app()
     for renditions in references:
         for rendition in renditions.values():
             if not rendition.get("media"):
@@ -569,7 +571,7 @@ def get_item_expiry(desk, stage, offset=None):
     :param datetime offset: datetime passed in case of embargo.
     :return datetime: expiry datetime
     """
-    expiry_minutes = app.settings["CONTENT_EXPIRY_MINUTES"]
+    expiry_minutes = get_app_config("CONTENT_EXPIRY_MINUTES")
     if stage and (stage.get("content_expiry") or 0) > 0:
         expiry_minutes = stage.get("content_expiry")
     elif desk and (desk.get("content_expiry") or 0) > 0:
@@ -839,9 +841,9 @@ def copy_metadata_from_profile(doc):
     :param doc
     """
     defaults = {}
-    defaults.setdefault("priority", config.DEFAULT_PRIORITY_VALUE_FOR_MANUAL_ARTICLES)
-    defaults.setdefault("urgency", config.DEFAULT_URGENCY_VALUE_FOR_MANUAL_ARTICLES)
-    defaults.setdefault("genre", config.DEFAULT_GENRE_VALUE_FOR_MANUAL_ARTICLES)
+    defaults.setdefault("priority", get_app_config("DEFAULT_PRIORITY_VALUE_FOR_MANUAL_ARTICLES"))
+    defaults.setdefault("urgency", get_app_config("DEFAULT_URGENCY_VALUE_FOR_MANUAL_ARTICLES"))
+    defaults.setdefault("genre", get_app_config("DEFAULT_GENRE_VALUE_FOR_MANUAL_ARTICLES"))
     for field in defaults:
         if field in doc and not doc[field]:
             del doc[field]

@@ -11,9 +11,9 @@
 from unittest import mock
 from datetime import timedelta
 
+from superdesk.resource_fields import ID_FIELD
 from apps.publish import init_app
 from apps.publish.enqueue import EnqueueContent
-from superdesk import config
 from superdesk.publish.publish_content import get_queue_items
 from superdesk.tests import TestCase
 from superdesk.utc import utcnow
@@ -113,7 +113,7 @@ class PublishContentTests(TestCase):
             self.app.data.insert("publish_queue", self.queue_items)
             items = get_queue_items()
             self.assertEqual(3, items.count())
-            ids = [item[config.ID_FIELD] for item in items]
+            ids = [item[ID_FIELD] for item in items]
             self.assertNotIn(4, ids)
 
     @mock.patch("apps.publish.enqueue.EnqueueContent.enqueue_item")
@@ -127,5 +127,5 @@ class PublishContentTests(TestCase):
         self.app.data.insert("published", self.published_items)
         items = EnqueueContent().get_published_items()
         self.assertEqual(2, len(items))
-        ids = [item[config.ID_FIELD] for item in items]
+        ids = [item[ID_FIELD] for item in items]
         self.assertNotIn(3, ids)

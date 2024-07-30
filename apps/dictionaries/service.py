@@ -13,10 +13,11 @@ import re
 import logging
 import collections
 
-from flask import json, current_app as app, request
 from simplejson.errors import JSONDecodeError
-from eve.utils import config
 
+from superdesk.core import json, get_current_app
+from superdesk.resource_fields import ID_FIELD
+from superdesk.flask import request
 from superdesk.errors import SuperdeskApiError
 from superdesk.services import BaseService
 from superdesk.notification import push_notification
@@ -88,7 +89,7 @@ def fetch_dict(doc):
     :param doc
     """
     if doc and doc.get(FILE_ID):
-        content_file = app.storage.get(doc[FILE_ID])
+        content_file = get_current_app().storage.get(doc[FILE_ID])
         content = json.loads(content_file.read())
         return content
 
@@ -107,6 +108,7 @@ def store_dict(updates, original):
     :param original
     """
     content = updates.pop("content", {})
+    app = get_current_app()
     if content:
         content_json = json.dumps(content)
         if is_big(content_json):
@@ -323,7 +325,7 @@ class DictionaryService(BaseService):
         self.__enhance_items([doc])
 
     def on_fetched(self, docs):
-        self.__enhance_items(docs[config.ITEMS])
+        self.__enhance_items(docs[ID_FIELD])
 
     def __enhance_items(self, docs):
         for doc in docs:

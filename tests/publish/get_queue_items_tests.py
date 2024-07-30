@@ -162,8 +162,9 @@ class QueueItemsTestCase(TestCase):
         # because the tuple should be in (published_seq_num, formatted_item) format
         self.assertFalse(fake_post.called)
 
-    @mock.patch.object(publish_queue, "app")
-    def test_delete_encoded_item(self, fake_app):
+    @mock.patch.object(publish_queue, "get_current_app", return_value=MagicMock())
+    def test_delete_encoded_item(self, get_fake_app):
+        fake_app = get_fake_app()
         fake_storage = fake_app.storage
         fake_storage_delete = fake_storage.delete
         service = publish_queue.PublishQueueService(backend=MagicMock())

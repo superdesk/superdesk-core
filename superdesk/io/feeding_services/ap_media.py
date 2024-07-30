@@ -16,9 +16,9 @@ import logging
 from datetime import timedelta, datetime
 
 from lxml import etree
-from flask import current_app as app
 
 import superdesk
+from superdesk.core import get_app_config
 from superdesk.io.registry import register_feeding_service
 from superdesk.io.feeding_services.http_base_service import HTTPFeedingServiceBase
 from superdesk.errors import IngestApiError
@@ -223,7 +223,7 @@ class APMediaFeedingService(HTTPFeedingServiceBase):
     def get_request_kwargs(self) -> Dict[str, Any]:
         request_kwargs = dict(
             timeout=self.HTTP_TIMEOUT,
-            verify=app.config.get("AP_MEDIA_API_VERIFY_SSL", True),
+            verify=get_app_config("AP_MEDIA_API_VERIFY_SSL", True),
             allow_redirects=True,
         )
         try:

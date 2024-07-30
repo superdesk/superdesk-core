@@ -13,8 +13,9 @@ from io import BytesIO
 from datetime import datetime
 
 from werkzeug.wsgi import wrap_file
-from flask import request, current_app as app
 
+from superdesk.core import get_current_app
+from superdesk.flask import request
 from superdesk.default_settings import strtobool
 
 
@@ -38,7 +39,7 @@ def generate_response_for_file(
     content_disposition: Optional[str] = None,
 ):
     data = wrap_file(request.environ, file, buffer_size=buffer_size)
-    response = app.response_class(data, mimetype=file.content_type, direct_passthrough=True)
+    response = get_current_app().response_class(data, mimetype=file.content_type, direct_passthrough=True)
     response.content_length = file.length
     response.last_modified = file.upload_date
     response.set_etag(file.md5)

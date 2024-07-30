@@ -9,10 +9,9 @@
 # at https://www.sourcefabric.org/superdesk/license
 
 
+from superdesk.resource_fields import ID_FIELD
 from superdesk.services import Service
 from superdesk.notification import push_notification
-
-from eve.utils import config
 from apps.auth import get_user_id
 
 
@@ -27,7 +26,7 @@ class SystemMessagesService(Service):
         :param docs:
         :return:
         """
-        push_notification("system_message:created", _id=[doc.get(config.ID_FIELD) for doc in docs])
+        push_notification("system_message:created", _id=[doc.get(ID_FIELD) for doc in docs])
 
     def on_update(self, updates, original):
         updates["user_id"] = get_user_id()
@@ -39,7 +38,7 @@ class SystemMessagesService(Service):
         :param original:
         :return:
         """
-        push_notification("system_message:updated", _id=[original.get(config.ID_FIELD)])
+        push_notification("system_message:updated", _id=[original.get(ID_FIELD)])
 
     def on_deleted(self, doc):
         """
@@ -47,4 +46,4 @@ class SystemMessagesService(Service):
         :param doc:
         :return:
         """
-        push_notification("system_message:deleted", _id=[doc.get(config.ID_FIELD)])
+        push_notification("system_message:deleted", _id=[doc.get(ID_FIELD)])

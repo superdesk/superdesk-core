@@ -10,7 +10,8 @@
 
 from urllib.parse import urljoin
 import responses
-from flask import Flask
+
+from superdesk.flask import Flask
 from superdesk.tests import TestCase
 from superdesk.text_checkers import tools
 from superdesk.text_checkers import spellcheckers

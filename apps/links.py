@@ -1,6 +1,6 @@
 import superdesk
-
-from flask import request, current_app as app, json
+from superdesk.core import json, get_app_config
+from superdesk.flask import request
 from superdesk.resource import build_custom_hateoas
 
 from apps.archive.archive import ArchiveResource, ArchiveService
@@ -25,7 +25,7 @@ def elastic_filter(req=None):
         },
     }
 
-    LINKS_HOURS = app.config.get("LINKS_MAX_HOURS")
+    LINKS_HOURS = get_app_config("LINKS_MAX_HOURS")
     if LINKS_HOURS:
         query["bool"].update(
             {

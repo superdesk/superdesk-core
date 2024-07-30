@@ -11,6 +11,7 @@
 from typing import NamedTuple
 from copy import deepcopy
 
+from superdesk.resource_fields import ID_FIELD
 from superdesk.resource import (
     Resource,
     not_analyzed,
@@ -21,7 +22,6 @@ from superdesk.resource import (
     string_with_analyzer,
 )
 from .packages import LINKED_IN_PACKAGES, PACKAGE
-from eve.utils import config
 from superdesk.utils import SuperdeskBaseEnum
 
 GUID_TAG = "tag"
@@ -163,7 +163,7 @@ entity_metadata = {
 }
 
 metadata_schema = {
-    config.ID_FIELD: {"type": "string", "unique": True},
+    ID_FIELD: {"type": "string", "unique": True},
     #: Identifiers
     "guid": {"type": "string", "unique": True, "mapping": not_analyzed},
     "uri": {

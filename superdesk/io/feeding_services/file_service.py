@@ -13,7 +13,8 @@ import os
 import shutil
 from datetime import datetime
 from lxml import etree
-from flask import current_app as app
+
+from superdesk.core import get_current_app
 from superdesk.errors import IngestFileError, ParserError, ProviderError
 from superdesk.io.registry import register_feeding_service
 from superdesk.io.feed_parsers import XMLFeedParser
@@ -62,6 +63,7 @@ class FileFeedingService(FeedingService):
 
     def _update(self, provider, update):
         # check if deprecated FILE_INGEST_OLD_CONTENT_MINUTES setting is still used
+        app = get_current_app()
         if "FILE_INGEST_OLD_CONTENT_MINUTES" in app.config:
             deprecated_cont_min = app.config["FILE_INGEST_OLD_CONTENT_MINUTES"]
             cont_min = app.config[OLD_CONTENT_MINUTES]

@@ -14,14 +14,14 @@ from PIL import Image
 from io import BytesIO
 import logging
 from copy import deepcopy
-from flask import current_app as app
+
+from superdesk.core import get_current_app, get_app_config
 from .media_operations import process_file_from_stream
 from .media_operations import crop_image
 from .media_operations import download_file_from_url
 from .media_operations import process_file
 from .media_operations import guess_media_extension
 from .image import fix_orientation
-from eve.utils import config
 from superdesk import get_resource_service
 from superdesk.filemeta import set_filemeta
 import os
@@ -55,6 +55,7 @@ def generate_renditions(
                            files in "temp" folder will be removed after 24 hours
     :return: dict of renditions
     """
+    app = get_current_app()
     rend = {"href": app.media.url_for_media(media_id, content_type), "media": media_id, "mimetype": content_type}
     renditions = {"original": rend}
 
@@ -74,7 +75,7 @@ def generate_renditions(
         if rendition not in rendition_config:
             continue
         if not can_generate_custom_crop_from_original(width, height, crop):
-            if rendition in config.RENDITIONS["picture"]:
+            if rendition in get_app_config("RENDITIONS", {})["picture"]:
                 logger.info(
                     'image is too small for rendition "{rendition}", but it is an internal one, '
                     "so we keep it".format(rendition=rendition)
@@ -98,7 +99,9 @@ def generate_renditions(
         # reset
         base.seek(0)
         # create the rendition (can be based on ratio or pixels)
-        if rsize.get("width") and rsize.get("height") and rendition not in config.RENDITIONS["picture"]:  # custom crop
+        if (
+            rsize.get("width") and rsize.get("height") and rendition not in get_app_config("RENDITIONS", {})["picture"]
+        ):  # custom crop
             resized, width, height, cropping_data = _crop_image_center(base, ext, rsize["width"], rsize["height"])
             # we need crop data for original size image
             cropping_data = _get_center_crop(original, rsize["width"], rsize["height"])
@@ -171,7 +174,7 @@ def delete_file_on_error(doc, file_id):
     # Don't delete the file if we are on the import from storage flow
     if doc.get("_import", None):
         return
-    app.media.delete(file_id)
+    get_current_app().media.delete(file_id)
 
 
 def _crop_image(content, format, ratio):
@@ -332,7 +335,7 @@ def get_renditions_spec(without_internal_renditions=False, no_custom_crops=False
     rendition_spec = {}
     # renditions required by superdesk
     if not without_internal_renditions:
-        rendition_spec = deepcopy(config.RENDITIONS["picture"])
+        rendition_spec = deepcopy(get_app_config("RENDITIONS", {})["picture"])
 
     if not no_custom_crops:
         # load custom renditions sizes
@@ -373,6 +376,7 @@ def update_renditions(
     :return: item with renditions
     """
     inserted = []
+    app = get_current_app()
     try:
         # If there is an existing set of renditions we keep those
         if old_item:
@@ -421,6 +425,7 @@ def transfer_renditions(
     """
     if not renditions:
         return
+    app = get_current_app()
     for rend in iter(renditions.values()):
         if rend.get("media"):
             local = app.media.get(rend["media"])

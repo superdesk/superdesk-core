@@ -1,9 +1,9 @@
 import os
 import shutil
 import tempfile
-from flask import json
 from unittest.mock import patch
 
+from superdesk.core import json
 from apps.prepopulate.app_initialize import AppInitializeWithDataCommand
 from apps.prepopulate.app_scaffold_data import AppScaffoldDataCommand
 from apps.prepopulate.app_initialize import fillEnvironmentVariables

@@ -15,11 +15,13 @@ from bson.objectid import ObjectId
 
 import superdesk
 from copy import deepcopy
-from flask import current_app as app
 from eve.utils import ParsedRequest
 from eve.versioning import versioned_id_field
+
+from superdesk.core import get_app_config
+from superdesk.resource_fields import ID_FIELD, VERSION, ETAG
 from superdesk.celery_app import celery
-from superdesk import get_resource_service, config
+from superdesk import get_resource_service
 from superdesk.celery_task_utils import get_lock_id
 from .resource import (
     LEGAL_ARCHIVE_NAME,
@@ -41,7 +43,7 @@ logger = logging.getLogger(__name__)
 
 def is_legal_archive_enabled():
     """Test if legal archive is enabled."""
-    return app.config["LEGAL_ARCHIVE"]
+    return get_app_config("LEGAL_ARCHIVE")
 
 
 class LegalArchiveImport:
@@ -71,7 +73,7 @@ class LegalArchiveImport:
 
             # setting default values in case they are missing other log message will fail.
             doc.setdefault("unique_name", "NO UNIQUE NAME")
-            doc.setdefault(config.VERSION, 1)
+            doc.setdefault(VERSION, 1)
             doc.setdefault("expiry", utcnow())
 
             if not doc.get(ITEM_STATE) in PUBLISH_STATES:
@@ -90,11 +92,11 @@ class LegalArchiveImport:
             legal_archive_history_service = get_resource_service(LEGAL_ARCHIVE_HISTORY_NAME)
 
             log_msg = self.log_msg_format.format(**legal_archive_doc)
-            version_id_field = versioned_id_field(app.config["DOMAIN"][ARCHIVE])
+            version_id_field = versioned_id_field(get_app_config("DOMAIN")[ARCHIVE])
             logger.info("Preparing Article to be inserted into Legal Archive " + log_msg)
 
             # Removing irrelevant properties
-            legal_archive_doc.pop(config.ETAG, None)
+            legal_archive_doc.pop(ETAG, None)
             legal_archive_doc.pop("lock_user", None)
             legal_archive_doc.pop("lock_session", None)
             legal_archive_doc.pop("lock_time", None)
@@ -103,16 +105,14 @@ class LegalArchiveImport:
             logger.info("Removed irrelevant properties from the article {}".format(log_msg))
 
             # Step 1
-            article_in_legal_archive = legal_archive_service.find_one(req=None, _id=legal_archive_doc[config.ID_FIELD])
+            article_in_legal_archive = legal_archive_service.find_one(req=None, _id=legal_archive_doc[ID_FIELD])
 
-            if article_in_legal_archive and article_in_legal_archive.get(config.VERSION, 0) > legal_archive_doc.get(
-                config.VERSION
-            ):
+            if article_in_legal_archive and article_in_legal_archive.get(VERSION, 0) > legal_archive_doc.get(VERSION):
                 logger.info(
                     "Item {} version: {} already in legal archive. Legal Archive document version {}".format(
-                        legal_archive_doc.get(config.ID_FIELD),
-                        legal_archive_doc.get(config.VERSION),
-                        article_in_legal_archive.get(config.VERSION),
+                        legal_archive_doc.get(ID_FIELD),
+                        legal_archive_doc.get(VERSION),
+                        article_in_legal_archive.get(VERSION),
                     )
                 )
                 self._set_moved_to_legal(doc)
@@ -126,12 +126,12 @@ class LegalArchiveImport:
             logger.info("Upserting Legal Archive Repo with article {}".format(log_msg))
 
             if article_in_legal_archive:
-                legal_archive_service.put(legal_archive_doc[config.ID_FIELD], legal_archive_doc)
+                legal_archive_service.put(legal_archive_doc[ID_FIELD], legal_archive_doc)
             else:
                 legal_archive_service.post([legal_archive_doc])
 
             # Step 4 - Get Versions and De-normalize and Inserting Legal Archive Versions
-            lookup = {version_id_field: legal_archive_doc[config.ID_FIELD]}
+            lookup = {version_id_field: legal_archive_doc[ID_FIELD]}
             versions = list(get_resource_service("archive_versions").get(req=None, lookup=lookup))
             legal_versions = list(legal_archive_versions_service.get(req=None, lookup=lookup))
 
@@ -140,14 +140,12 @@ class LegalArchiveImport:
                 version
                 for version in versions
                 if not any(
-                    legal_version
-                    for legal_version in legal_versions
-                    if version[config.VERSION] == legal_version[config.VERSION]
+                    legal_version for legal_version in legal_versions if version[VERSION] == legal_version[VERSION]
                 )
             ]
 
             # Step 5 - Get History and de-normalize and insert into Legal Archive History
-            lookup = {"item_id": legal_archive_doc[config.ID_FIELD]}
+            lookup = {"item_id": legal_archive_doc[ID_FIELD]}
             history_items = list(get_resource_service("archive_history").get(req=None, lookup=lookup))
             legal_history_items = list(legal_archive_history_service.get(req=None, lookup=lookup))
 
@@ -158,20 +156,20 @@ class LegalArchiveImport:
                 if not any(
                     legal_version
                     for legal_version in legal_history_items
-                    if history[config.ID_FIELD] == legal_version[config.ID_FIELD]
+                    if history[ID_FIELD] == legal_version[ID_FIELD]
                 )
             ]
 
             # This happens when user kills an article from Dusty Archive
             if (
                 article_in_legal_archive
-                and article_in_legal_archive[config.VERSION] < legal_archive_doc[config.VERSION]
+                and article_in_legal_archive[VERSION] < legal_archive_doc[VERSION]
                 and len(versions_to_insert) == 0
             ):
-                resource_def = app.config["DOMAIN"][ARCHIVE]
+                resource_def = get_resource_service("DOMAIN")[ARCHIVE]
                 versioned_doc = deepcopy(legal_archive_doc)
-                versioned_doc[versioned_id_field(resource_def)] = legal_archive_doc[config.ID_FIELD]
-                versioned_doc[config.ID_FIELD] = ObjectId()
+                versioned_doc[versioned_id_field(resource_def)] = legal_archive_doc[ID_FIELD]
+                versioned_doc[ID_FIELD] = ObjectId()
                 versions_to_insert.append(versioned_doc)
 
             for version_doc in versions_to_insert:
@@ -180,11 +178,11 @@ class LegalArchiveImport:
                     self.log_msg_format.format(
                         _id=version_doc[version_id_field],
                         unique_name=version_doc.get("unique_name"),
-                        _current_version=version_doc[config.VERSION],
+                        _current_version=version_doc[VERSION],
                         expiry=version_doc.get("expiry"),
                     ),
                 )
-                version_doc.pop(config.ETAG, None)
+                version_doc.pop(ETAG, None)
 
             if versions_to_insert:
                 legal_archive_versions_service.post(versions_to_insert)
@@ -192,7 +190,7 @@ class LegalArchiveImport:
 
             for history_doc in history_to_insert:
                 self._denormalize_history(history_doc)
-                history_doc.pop(config.ETAG, None)
+                history_doc.pop(ETAG, None)
 
             if history_to_insert:
                 legal_archive_history_service.post(history_to_insert)
@@ -293,7 +291,7 @@ class LegalArchiveImport:
 
         :param dict doc: document
         """
-        get_resource_service("published").set_moved_to_legal(doc.get(config.ID_FIELD), doc.get(config.VERSION), True)
+        get_resource_service("published").set_moved_to_legal(doc.get(ID_FIELD), doc.get(VERSION), True)
 
     def import_legal_publish_queue(self, force_move=False, page_size=500):
         """Import legal publish queue.
@@ -322,15 +320,15 @@ class LegalArchiveImport:
         logger.info("Items to import {}.".format(len(queue_items)))
         logger.info("Get subscribers info for de-normalising queue items.")
         subscriber_ids = list({str(queue_item["subscriber_id"]) for queue_item in queue_items})
-        query = {"$and": [{config.ID_FIELD: {"$in": subscriber_ids}}]}
+        query = {"$and": [{ID_FIELD: {"$in": subscriber_ids}}]}
         subscribers = list(get_resource_service("subscribers").get(req=None, lookup=query))
-        subscribers = {str(subscriber[config.ID_FIELD]): subscriber for subscriber in subscribers}
+        subscribers = {str(subscriber[ID_FIELD]): subscriber for subscriber in subscribers}
 
         for queue_item in queue_items:
             try:
                 self._upsert_into_legal_archive_publish_queue(queue_item, subscribers, force_move)
             except Exception:
-                logger.exception("Failed to import publish queue item. {}".format(queue_item.get(config.ID_FIELD)))
+                logger.exception("Failed to import publish queue item. {}".format(queue_item.get(ID_FIELD)))
 
     def _upsert_into_legal_archive_publish_queue(self, queue_item, subscribers, force_move):
         """Upsert into legal publish queue.
@@ -351,7 +349,7 @@ class LegalArchiveImport:
 
         logger.info("Processing queue item: {}".format(log_msg))
 
-        existing_queue_item = legal_publish_queue_service.find_one(req=None, _id=legal_queue_item.get(config.ID_FIELD))
+        existing_queue_item = legal_publish_queue_service.find_one(req=None, _id=legal_queue_item.get(ID_FIELD))
         if str(queue_item["subscriber_id"]) in subscribers:
             legal_queue_item["subscriber_id"] = subscribers[str(queue_item["subscriber_id"])]["name"]
             legal_queue_item["_subscriber_id"] = queue_item["subscriber_id"]
@@ -364,7 +362,7 @@ class LegalArchiveImport:
             legal_publish_queue_service.post([legal_queue_item])
             logger.info("Inserted queue item: {}".format(log_msg))
         else:
-            legal_publish_queue_service.put(existing_queue_item.get(config.ID_FIELD), legal_queue_item)
+            legal_publish_queue_service.put(existing_queue_item.get(ID_FIELD), legal_queue_item)
             logger.info("Updated queue item: {}".format(log_msg))
 
         if (
@@ -375,9 +373,7 @@ class LegalArchiveImport:
             updates["moved_to_legal"] = True
 
             try:
-                get_resource_service("publish_queue").system_update(
-                    queue_item.get(config.ID_FIELD), updates, queue_item
-                )
+                get_resource_service("publish_queue").system_update(queue_item.get(ID_FIELD), updates, queue_item)
                 logger.info("Queue item moved to legal. {}".format(log_msg))
             except Exception:
                 logger.exception("Failed to set moved to legal flag for queue item {}.".format(log_msg))
@@ -410,7 +406,7 @@ class LegalArchiveImport:
         no_of_pages = 0
         if count:
             no_of_pages = len(range(0, count, page_size))
-            queue_id = cursor[0][config.ID_FIELD]
+            queue_id = cursor[0][ID_FIELD]
         logger.info("Number of items to move to legal archive publish queue: {}, pages={}".format(count, no_of_pages))
 
         for page in range(0, no_of_pages):
@@ -425,7 +421,7 @@ class LegalArchiveImport:
             cursor = service.get(req=req, lookup=None)
             items = list(cursor)
             if len(items) > 0:
-                queue_id = items[len(items) - 1][config.ID_FIELD]
+                queue_id = items[len(items) - 1][ID_FIELD]
             logger.info(
                 "Fetched No. of Items: {} for page: {} "
                 "For import in to legal archive publish_queue.".format(len(items), (page + 1))
@@ -514,12 +510,12 @@ class ImportLegalArchiveCommand(superdesk.Command):
             expired_items = set()
             for items in self.get_expired_items(page_size):
                 for item in items:
-                    self._move_to_legal(item.get("item_id"), item.get(config.VERSION), expired_items)
+                    self._move_to_legal(item.get("item_id"), item.get(VERSION), expired_items)
 
             # get the invalid items from archive.
             for items in get_resource_service(ARCHIVE).get_expired_items(utcnow(), invalid_only=True):
                 for item in items:
-                    self._move_to_legal(item.get(config.ID_FIELD), item.get(config.VERSION), expired_items)
+                    self._move_to_legal(item.get(ID_FIELD), item.get(VERSION), expired_items)
 
             # if publish item is moved but publish_queue item is not.
             if len(expired_items):

@@ -12,11 +12,11 @@ import datetime
 import logging
 
 from bson.objectid import ObjectId
-from flask import g
 from flask_babel import _, lazy_gettext
 
 import superdesk
 from superdesk import get_resource_service
+from superdesk.core import get_current_app
 from superdesk.emails import send_activity_emails
 from superdesk.errors import SuperdeskApiError, add_notifier
 from superdesk.notification import push_notification
@@ -97,7 +97,7 @@ class ActivityService(BaseService):
         """Filter out personal activity on personal items if inquired by another user."""
         if req is None:
             req = ParsedRequest()
-        user = getattr(g, "user", None)
+        user = get_current_app().get_current_user_dict()
         if not user:
             raise SuperdeskApiError.notFoundError("Can not determine user")
         where_cond = {}
@@ -120,7 +120,7 @@ class ActivityService(BaseService):
         :param original:
         :return:
         """
-        user = getattr(g, "user", None)
+        user = get_current_app().get_current_user_dict()
         if not user:
             raise SuperdeskApiError.notFoundError("Can not determine user")
         user_id = user.get("_id")
@@ -194,7 +194,7 @@ def add_activity(
 
     activity = {"name": activity_name, "message": msg, "data": data, "resource": resource}
 
-    user = getattr(g, "user", None)
+    user = get_current_app().get_current_user_dict()
     if user:
         activity["user"] = user.get("_id")
         activity["user_name"] = user.get("display_name", user.get("username"))
@@ -248,7 +248,7 @@ def notify_and_add_activity(
         recipients = get_recipients(user_list, activity_name, preference_notification_name)
 
         if activity_name != ACTIVITY_ERROR:
-            current_user = getattr(g, "user", None)
+            current_user = get_current_app().get_current_user_dict()
             activity = {
                 "name": activity_name,
                 "message": current_user.get("display_name") + " " + msg if current_user else msg,

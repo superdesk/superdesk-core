@@ -8,11 +8,11 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
-import flask
-from flask import request, current_app as app
 from flask_babel import _
-from eve.utils import config
 
+from superdesk.core import get_current_app
+from superdesk.resource_fields import ID_FIELD
+from superdesk.flask import request, session as flask_session, g
 from superdesk import utils as utils, get_resource_service, get_resource_privileges
 from superdesk.services import BaseService
 from superdesk.errors import SuperdeskApiError
@@ -34,8 +34,8 @@ class AuthService(BaseService):
 
     def on_create(self, docs):
         # Clear the session data when creating a new session
-        if flask.session:
-            flask.session.pop("session_token", None)
+        if flask_session:
+            flask_session.pop("session_token", None)
         for doc in docs:
             user = self.authenticate(doc)
             if not user:
@@ -73,7 +73,7 @@ class AuthService(BaseService):
         """
         if not updates:
             updates = {}
-        self.system_update(flask.g.auth["_id"], updates, flask.g.auth)
+        self.system_update(g.auth["_id"], updates, g.auth)
 
     def on_fetched_item(self, doc: dict) -> None:
         if str(doc["user"]) != str(auth.get_user_id()):
@@ -86,10 +86,11 @@ class AuthService(BaseService):
         :return:
         """
         # Clear the session data when session has ended
-        flask.session.pop("session_token", None)
+        flask_session.pop("session_token", None)
 
         # notify that the session has ended
         sessions = self.get(req=None, lookup={"user": doc["user"]})
+        app = get_current_app().as_any()
         app.on_session_end(doc["user"], doc["_id"], is_last_session=not sessions.count())
         self.set_user_last_activity(doc["user"], done=True)
 
@@ -135,13 +136,13 @@ class UserSessionClearService(BaseService):
         # Delete all the sessions except current session
         current_session_id = auth.get_auth().get("_id")
         for session in sessions:
-            if str(session[config.ID_FIELD]) != str(current_session_id):
-                get_resource_service("auth").delete_action({config.ID_FIELD: str(session[config.ID_FIELD])})
+            if str(session[ID_FIELD]) != str(current_session_id):
+                get_resource_service("auth").delete_action({ID_FIELD: str(session[ID_FIELD])})
 
         # Check if any orphan session_preferences exist for the user
         if user.get("session_preferences"):
             # Delete the orphan sessions
-            users_service.patch(user[config.ID_FIELD], {"session_preferences": {}})
+            users_service.patch(user[ID_FIELD], {"session_preferences": {}})
 
         return [{"complete": True}]
 

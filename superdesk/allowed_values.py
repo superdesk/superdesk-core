@@ -10,8 +10,8 @@
 # at https://www.sourcefabric.org/superdesk/license
 
 import superdesk
+from superdesk.core import get_app_config
 from superdesk.utils import ListCursor
-from flask import current_app as app
 
 
 class AllowedValuesResource(superdesk.Resource):
@@ -29,7 +29,7 @@ class AllowedValuesResource(superdesk.Resource):
 class AllowedValuesService(superdesk.Service):
     def get(self, req, lookup):
         allowed = []
-        for resource, config in app.config.get("DOMAIN", {}).items():
+        for resource, config in get_app_config("DOMAIN", {}).items():
             for field, field_config in config.get("schema", {}).items():
                 if field_config.get("allowed"):
                     allowed.append(

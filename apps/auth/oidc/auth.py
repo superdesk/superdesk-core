@@ -8,15 +8,15 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
-from flask import g, request
 from flask_babel import _
 
 # from flask_oidc_ex import OpenIDConnect
 
+from superdesk.resource_fields import ID_FIELD
+from superdesk.flask import g, request
 import superdesk
 from apps.auth.errors import CredentialsAuthError
 from apps.auth.service import AuthService
-from eve.utils import config
 from superdesk import get_resource_service
 from superdesk.resource import Resource
 from superdesk.utils import ignorecase_query
@@ -87,7 +87,7 @@ class OIDCAuthService(AuthService):
             )
             users_service.post([sync_data])
         else:
-            users_service.patch(user[config.ID_FIELD], sync_data)
+            users_service.patch(user[ID_FIELD], sync_data)
 
         user.update(sync_data)
         return user

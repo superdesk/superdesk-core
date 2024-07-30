@@ -11,12 +11,12 @@
 import logging
 from typing import Dict, Any
 
+from superdesk.core import get_current_app
 from superdesk import get_resource_service
 from superdesk.notification import push_notification
 from superdesk.resource import Resource
 from superdesk.services import BaseService
 from superdesk.utils import SuperdeskBaseEnum
-from flask import current_app as app
 
 logger = logging.getLogger(__name__)
 
@@ -132,7 +132,7 @@ class PublishQueueService(BaseService):
             except KeyError:
                 pass
             else:
-                app.storage.delete(encoded_item_id)
+                get_current_app().storage.delete(encoded_item_id)
         return super().delete(lookup)
 
     def delete_by_article_id(self, _id):

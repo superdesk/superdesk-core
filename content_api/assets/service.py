@@ -9,8 +9,8 @@
 # at https://www.sourcefabric.org/superdesk/license
 
 from bson import ObjectId
-from flask import current_app as app
 
+from superdesk.core import get_current_app
 from superdesk.errors import SuperdeskApiError
 from superdesk.media.media_operations import (
     download_file_from_encoded_str,
@@ -42,6 +42,7 @@ class AssetsService(BaseService):
 
     def store_file(self, doc, content, filename, content_type):
         # retrieve file name and metadata from file
+        app = get_current_app()
         file_name, content_type, metadata = process_file_from_stream(content, content_type=content_type)
         try:
             content.seek(0)

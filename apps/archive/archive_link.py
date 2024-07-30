@@ -7,9 +7,10 @@
 # For the full copyright and license information, please see the
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
-from eve.utils import config
-from flask import request, current_app as app
 
+from superdesk.core import get_current_app
+from superdesk.resource_fields import ID_FIELD
+from superdesk.flask import request
 from superdesk import get_resource_service, Service
 from superdesk.metadata.item import GUID_TAG
 from superdesk.resource import Resource
@@ -72,5 +73,6 @@ class ArchiveLinkService(Service):
 
         archive_service.system_update(target_id, updates, target)
         user = get_user(required=True)
-        push_notification("item:unlink", item=target_id, user=str(user.get(config.ID_FIELD)))
+        push_notification("item:unlink", item=target_id, user=str(user.get(ID_FIELD)))
+        app = get_current_app().as_any()
         app.on_archive_item_updated(updates, target, ITEM_UNLINK)

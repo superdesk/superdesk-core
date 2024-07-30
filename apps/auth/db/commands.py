@@ -13,7 +13,7 @@ import json
 import csv
 from pathlib import Path
 from base64 import b64encode
-from flask import current_app as app
+from superdesk.core import get_app_config, get_current_app
 import superdesk
 from superdesk.utils import get_hash, is_hashed
 
@@ -56,10 +56,11 @@ class CreateUserCommand(superdesk.Command):
             "needs_activation": not admin,
         }
 
+        app = get_current_app().as_any()
         with app.test_request_context("/users", method="POST"):
             if userdata.get("password", None) and not is_hashed(userdata.get("password")):
                 userdata["password"] = get_hash(
-                    userdata.get("password"), app.config.get("BCRYPT_GENSALT_WORK_FACTOR", 12)
+                    userdata.get("password"), get_app_config("BCRYPT_GENSALT_WORK_FACTOR", 12)
                 )
 
             user = superdesk.get_resource_service("users").find_one(username=userdata.get("username"), req=None)
@@ -234,7 +235,7 @@ class HashUserPasswordsCommand(superdesk.Command):
             pwd = user.get("password")
             if not is_hashed(pwd):
                 updates = {}
-                hashed = get_hash(user["password"], app.config.get("BCRYPT_GENSALT_WORK_FACTOR", 12))
+                hashed = get_hash(user["password"], get_app_config("BCRYPT_GENSALT_WORK_FACTOR", 12))
                 user_id = user.get("_id")
                 updates["password"] = hashed
                 superdesk.get_resource_service("users").patch(user_id, updates=updates)

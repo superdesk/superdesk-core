@@ -8,10 +8,24 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Any, cast
 import importlib
 
 from .web import WSGIApp
+
+
+def get_app_config(key: str, default: Optional[Any] = None) -> Optional[Any]:
+    from flask import current_app
+
+    try:
+        return current_app.config.get(key, default)
+    except RuntimeError:
+        pass
+
+    if _global_app is None:
+        raise RuntimeError("Superdesk app is not running")
+
+    return _global_app.wsgi.config.get(key, default)
 
 
 class SuperdeskAsyncApp:
@@ -36,6 +50,7 @@ class SuperdeskAsyncApp:
         self.mongo = MongoResources(self)
         self.elastic = ElasticResources(self)
         self.resources = Resources(self)
+        self._store_app()
 
     @property
     def running(self) -> bool:
@@ -156,14 +171,23 @@ class SuperdeskAsyncApp:
         _global_app = None
 
 
+def get_current_app() -> WSGIApp:
+    """Retrieve the current WSGI app instance"""
+
+    from flask import current_app
+
+    return cast(WSGIApp, current_app)
+
+
 def get_current_async_app() -> SuperdeskAsyncApp:
     """Retrieve the current app instance"""
 
     from flask import current_app
 
     try:
-        if current_app.async_app is not None:
-            return current_app.async_app
+        async_app = getattr(current_app, "async_app", None)
+        if async_app is not None:
+            return async_app
     except RuntimeError:
         # Flask context not available
         pass

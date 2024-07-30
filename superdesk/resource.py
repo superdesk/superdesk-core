@@ -15,8 +15,8 @@ from eve.auth import BasicAuth
 from typing_extensions import Literal
 
 import superdesk
+from superdesk.resource_fields import LINKS
 
-from eve.utils import config
 from .services import Service
 
 from . import resource_locking
@@ -44,10 +44,10 @@ FieldTypes = Literal["string", "boolean", "integer", "dict", "list", "datetime"]
 
 def build_custom_hateoas(hateoas, doc, **values):
     values.update(doc)
-    links = doc.get(config.LINKS)
+    links = doc.get(LINKS)
     if not links:
         links = {}
-        doc[config.LINKS] = links
+        doc[LINKS] = links
 
     for link_name in hateoas.keys():
         link = hateoas[link_name]

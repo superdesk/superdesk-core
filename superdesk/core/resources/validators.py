@@ -122,7 +122,7 @@ def validate_data_relation_async(
             if convert_to_objectid:
                 item_id = ObjectId(item_id)
 
-            from superdesk.core.app import get_current_async_app
+            from superdesk.core import get_current_async_app
 
             app = get_current_async_app()
             try:
@@ -157,7 +157,7 @@ def validate_unique_value_async(resource_name: str, field_name: str) -> AsyncVal
         if name is None:
             return
 
-        from superdesk.core.app import get_current_async_app
+        from superdesk.core import get_current_async_app
 
         app = get_current_async_app()
         resource_config = app.resources.get_config(resource_name)
@@ -181,7 +181,7 @@ def validate_iunique_value_async(resource_name: str, field_name: str) -> AsyncVa
         if name is None:
             return
 
-        from superdesk.core.app import get_current_async_app
+        from superdesk.core import get_current_async_app
 
         app = get_current_async_app()
         resource_config = app.resources.get_config(resource_name)

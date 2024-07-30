@@ -9,11 +9,11 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
+from superdesk.core import get_current_app
 from superdesk.io.feed_parsers.nitf import NITFFeedParser
 from superdesk.io.registry import register_feed_parser
 from superdesk.metadata.item import FORMAT
 from superdesk.io.iptc import subject_codes
-from flask import current_app as app
 from apps.archive.common import format_dateline_to_locmmmddsrc
 from superdesk.utc import get_date
 import logging
@@ -90,7 +90,7 @@ class EFEFeedParser(NITFFeedParser):
         """
         try:
             if len(item.get("place", [])) == 1:
-                cities = app.locators.find_cities()
+                cities = get_current_app().locators.find_cities()
                 city = item.get("place", "")[0].get("name", "")
                 if city:
                     located = [c for c in cities if c["city"].lower() == city.lower()]

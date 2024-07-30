@@ -13,7 +13,7 @@ import arrow
 import datetime
 import logging
 
-from flask import current_app as app
+from superdesk.core import get_current_app, get_app_config
 from superdesk import etree as sd_etree, get_resource_service
 from superdesk.errors import ParserError
 from superdesk.io.registry import register_feed_parser
@@ -78,7 +78,7 @@ class NewsMLTwoFeedParser(XMLFeedParser):
     def parse_item(self, tree):
         # config is not accessible during __init__, so we check it here
         if self.__class__.missing_voc is None:
-            self.__class__.missing_voc = app.config.get("QCODE_MISSING_VOC", "continue")
+            self.__class__.missing_voc = get_app_config("QCODE_MISSING_VOC", "continue")
             if self.__class__.missing_voc not in ("reject", "create", "continue"):
                 logger.warning(
                     'Bad QCODE_MISSING_VOC value ({value}) using default ("continue")'.format(value=self.missing_voc)
@@ -220,6 +220,7 @@ class NewsMLTwoFeedParser(XMLFeedParser):
     def parse_content_subject(self, tree, item):
         """Parse subj type subjects into subject list."""
         item["subject"] = []
+        app = get_current_app()
         for subject_elt in tree.findall(self.qname("subject")):
             qcode_parts = subject_elt.get("qcode", "").split(":")
             if len(qcode_parts) == 2 and qcode_parts[0] in self.SUBJ_QCODE_PREFIXES:

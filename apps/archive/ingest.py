@@ -12,10 +12,10 @@ from superdesk.metadata.item import CONTENT_STATE, ITEM_PRIORITY, ITEM_URGENCY
 from superdesk.workflow import set_default_state
 from .common import on_create_item, handle_existing_data
 from .archive import update_word_count
-from eve.utils import config
 
+from superdesk.core import get_app_config
+from superdesk.resource_fields import ITEMS
 from superdesk.io.ingest import IngestResource, IngestService  # NOQA
-from flask import current_app as app
 from apps.archive.highlights_search_mixin import HighlightsSearchMixin
 
 
@@ -26,15 +26,15 @@ class AppIngestService(IngestService, HighlightsSearchMixin):
         Overriding this to handle existing data in Mongo & Elastic
         """
 
-        for item in docs[config.ITEMS]:
+        for item in docs[ITEMS]:
             handle_existing_data(item, doc_type="ingest")
 
     def on_create(self, docs):
         for doc in docs:
             set_default_state(doc, CONTENT_STATE.INGESTED)
-            if not app.config.get("DEFAULT_CONTENT_TYPE", None):
-                doc.setdefault(ITEM_PRIORITY, int(config.DEFAULT_PRIORITY_VALUE_FOR_INGESTED_ARTICLES))
-                doc.setdefault(ITEM_URGENCY, int(config.DEFAULT_URGENCY_VALUE_FOR_INGESTED_ARTICLES))
+            if not get_app_config("DEFAULT_CONTENT_TYPE", None):
+                doc.setdefault(ITEM_PRIORITY, int(get_app_config("DEFAULT_PRIORITY_VALUE_FOR_INGESTED_ARTICLES")))
+                doc.setdefault(ITEM_URGENCY, int(get_app_config("DEFAULT_URGENCY_VALUE_FOR_INGESTED_ARTICLES")))
             handle_existing_data(doc, doc_type="ingest")
             update_word_count(doc)
 

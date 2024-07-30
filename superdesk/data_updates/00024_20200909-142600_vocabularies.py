@@ -8,7 +8,7 @@
 # Creation: 2020-09-09 14:08
 
 from superdesk.commands.data_updates import BaseDataUpdate
-from eve.utils import config
+from superdesk.resource_fields import ID_FIELD
 
 
 class DataUpdate(BaseDataUpdate):
@@ -17,9 +17,7 @@ class DataUpdate(BaseDataUpdate):
     def forwards(self, mongodb_collection, mongodb_database):
         for vocabulary in mongodb_collection.find({"_id": "usageterms"}):
             if "schema_field" not in vocabulary:
-                mongodb_collection.update(
-                    {"_id": vocabulary.get(config.ID_FIELD)}, {"$set": {"schema_field": "usageterms"}}
-                )
+                mongodb_collection.update({"_id": vocabulary.get(ID_FIELD)}, {"$set": {"schema_field": "usageterms"}})
 
     def backwards(self, mongodb_collection, mongodb_database):
         pass

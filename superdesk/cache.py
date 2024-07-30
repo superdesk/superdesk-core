@@ -6,7 +6,6 @@ import hermes.backend.inprocess
 
 from urllib.parse import urlparse
 
-from flask import current_app
 from superdesk import json_utils
 from superdesk.logging import logger
 
@@ -74,6 +73,9 @@ class SuperdeskCacheBackend(hermes.backend.AbstractBackend):
 
     @property
     def _backend(self):
+        from superdesk.core import get_current_app
+
+        current_app = get_current_app().as_any()
         if not current_app:
             raise RuntimeError("You can only use cache within app context.")
         self.init_app(current_app)

@@ -10,8 +10,8 @@
 
 
 import requests_mock
-from flask import json
 from behave import when, then  # @UnresolvedImport
+from superdesk.core import json
 from apps.publish.enqueue import enqueue_published
 from superdesk.tests.steps import assert_200, apply_placeholders, json_match, get_json_data, test_json, format_items
 from wooper.general import fail_and_print_body

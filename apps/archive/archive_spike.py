@@ -11,10 +11,10 @@
 
 import logging
 
-from flask import current_app as app
-
+from superdesk.core import get_current_app, get_app_config
+from superdesk.resource_fields import ID_FIELD
 import superdesk
-from superdesk import get_resource_service, config
+from superdesk import get_resource_service
 from superdesk.errors import SuperdeskApiError, InvalidStateTransitionError
 from superdesk.metadata.item import (
     ITEM_STATE,
@@ -97,7 +97,7 @@ class ArchiveSpikeService(BaseService):
         """
         packages = [x.get(PACKAGE) for x in original.get(LINKED_IN_PACKAGES, [])]
         if packages:
-            query = {"$and": [{config.ID_FIELD: {"$in": packages}}]}
+            query = {"$and": [{ID_FIELD: {"$in": packages}}]}
             cursor = get_resource_service(ARCHIVE).get_from_mongo(req=None, lookup=query)
             if cursor.count() > 0:
                 raise SuperdeskApiError.badRequestError(
@@ -108,7 +108,7 @@ class ArchiveSpikeService(BaseService):
     def update_rewrite(self, original):
         """Removes the reference from the rewritten story in published collection."""
         if original.get("rewrite_of") and original.get(ITEM_EVENT_ID):
-            clear_rewritten_flag(original.get(ITEM_EVENT_ID), original[config.ID_FIELD], "rewritten_by")
+            clear_rewritten_flag(original.get(ITEM_EVENT_ID), original[ID_FIELD], "rewritten_by")
 
         # write the rewritten_by to the story before spiked
         archive_service = get_resource_service(ARCHIVE)
@@ -119,6 +119,7 @@ class ArchiveSpikeService(BaseService):
             rewrite_id = original.get("rewritten_by")
             rewritten_by = archive_service.find_one(req=None, _id=rewrite_id)
             archive_service.system_update(rewrite_id, {"rewrite_of": None, "rewrite_sequence": 0}, rewritten_by)
+            app = get_current_app().as_any()
             app.on_archive_item_updated({"rewrite_of": None, "rewrite_sequence": 0}, original, ITEM_UNLINK)
 
     def _removed_refs_from_package(self, item):
@@ -138,10 +139,10 @@ class ArchiveSpikeService(BaseService):
         :return:
         """
         # If no maximum spike expiry is set then return the desk/stage values
-        if app.settings["SPIKE_EXPIRY_MINUTES"] is None:
+        if get_app_config("SPIKE_EXPIRY_MINUTES") is None:
             return get_expiry(desk_id=desk_id, stage_id=stage_id)
         else:
-            return get_expiry_date(app.settings["SPIKE_EXPIRY_MINUTES"])
+            return get_expiry_date(get_app_config("SPIKE_EXPIRY_MINUTES"))
 
     def update(self, id, updates, original):
         original_state = original[ITEM_STATE]
@@ -181,12 +182,12 @@ class ArchiveSpikeService(BaseService):
             updates["translated_from"] = None
             updates["translation_id"] = None
 
-            id_to_remove = original.get(config.ID_FIELD)
+            id_to_remove = original.get(ID_FIELD)
 
             # Remove the translated item from the list of translations in the original item
             # where orignal item can be in archive or in both archive and published resource as well
             translated_from = archive_service.find_one(req=None, _id=original.get("translated_from"))
-            translated_from_id = translated_from.get(config.ID_FIELD)
+            translated_from_id = translated_from.get(ID_FIELD)
             self._remove_translations(archive_service, translated_from, id_to_remove)
 
             if translated_from.get("state") in PUBLISH_STATES:
@@ -219,10 +220,10 @@ class ArchiveSpikeService(BaseService):
                     linked_in_packages = [
                         linked
                         for linked in package_item.get(LINKED_IN_PACKAGES, [])
-                        if linked.get(PACKAGE) != original.get(config.ID_FIELD)
+                        if linked.get(PACKAGE) != original.get(ID_FIELD)
                     ]
                     super().system_update(
-                        package_item[config.ID_FIELD], {LINKED_IN_PACKAGES: linked_in_packages}, package_item
+                        package_item[ID_FIELD], {LINKED_IN_PACKAGES: linked_in_packages}, package_item
                     )
 
             # keep the structure of old group in order to be able to unspike the package
@@ -231,11 +232,12 @@ class ArchiveSpikeService(BaseService):
             updates["groups"] = []
 
         item = self.backend.update(self.datasource, id, updates, original)
-        push_notification("item:spike", item=str(id), user=str(user.get(config.ID_FIELD)))
+        push_notification("item:spike", item=str(id), user=str(user.get(ID_FIELD)))
 
         history_updates = dict(updates)
         if original.get("task"):
             history_updates["task"] = original.get("task")
+        app = get_current_app().as_any()
         app.on_archive_item_updated(history_updates, original, ITEM_SPIKE)
         self._removed_refs_from_package(id)
         return item
@@ -260,7 +262,7 @@ class ArchiveSpikeService(BaseService):
         """
 
         translations = article.get("translations")
-        article_id = article.get(config.ID_FIELD)
+        article_id = article.get(ID_FIELD)
 
         if ObjectId.is_valid(article_id) and not isinstance(article_id, ObjectId):
             article_id = ObjectId(article_id)
@@ -298,7 +300,7 @@ class ArchiveUnspikeService(BaseService):
             stage_id = None
 
         if not stage_id and desk_id:  # get incoming stage for selected desk
-            desk = app.data.find_one("desks", None, _id=desk_id)
+            desk = get_current_app().data.find_one("desks", None, _id=desk_id)
             stage_id = desk["incoming_stage"] if desk else stage_id
 
         updates["task"] = {"desk": desk_id, "stage": stage_id, "user": None}
@@ -320,11 +322,11 @@ class ArchiveUnspikeService(BaseService):
                     linked_in_packages = [
                         linked
                         for linked in package_item.get(LINKED_IN_PACKAGES, [])
-                        if linked.get(PACKAGE) != original.get(config.ID_FIELD)
+                        if linked.get(PACKAGE) != original.get(ID_FIELD)
                     ]
-                    linked_in_packages.append({PACKAGE: original.get(config.ID_FIELD)})
+                    linked_in_packages.append({PACKAGE: original.get(ID_FIELD)})
                     super().system_update(
-                        package_item[config.ID_FIELD], {LINKED_IN_PACKAGES: linked_in_packages}, package_item
+                        package_item[ID_FIELD], {LINKED_IN_PACKAGES: linked_in_packages}, package_item
                     )
 
     def on_update(self, updates, original):
@@ -345,7 +347,8 @@ class ArchiveUnspikeService(BaseService):
         self.backend.update(self.datasource, id, updates, original)
 
         item = get_resource_service(ARCHIVE).find_one(req=None, _id=id)
-        push_notification("item:unspike", item=str(id), user=str(user.get(config.ID_FIELD)))
+        push_notification("item:unspike", item=str(id), user=str(user.get(ID_FIELD)))
+        app = get_current_app().as_any()
         app.on_archive_item_updated(updates, original, ITEM_UNSPIKE)
 
         return item

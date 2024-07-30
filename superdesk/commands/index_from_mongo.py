@@ -12,12 +12,11 @@ import time
 import pymongo
 import superdesk
 
-from flask import current_app as app
+from superdesk.resource_fields import ID_FIELD
 from superdesk.errors import BulkIndexError
-from superdesk import config
 from bson.objectid import ObjectId
 
-from superdesk.core.app import get_current_async_app
+from superdesk.core import get_current_async_app
 
 
 class IndexFromMongo(superdesk.Command):
@@ -48,10 +47,12 @@ class IndexFromMongo(superdesk.Command):
         if not collection_name and not all_collections:
             raise SystemExit("Specify --all to index from all collections")
         elif all_collections:
+            async_app = get_current_async_app()
+            app = async_app.wsgi
             app.data.init_elastic(app)
             resources = app.data.get_elastic_resources()
             resources_processed = []
-            for resource_config in get_current_async_app().resources.get_all_configs():
+            for resource_config in async_app.resources.get_all_configs():
                 if resource_config.elastic is None:
                     continue
                 self.copy_resource(resource_config.name, page_size)
@@ -68,7 +69,7 @@ class IndexFromMongo(superdesk.Command):
 
     @classmethod
     def copy_resource(cls, resource, page_size, last_id=None, string_id=False):
-        new_app = get_current_async_app()
+        async_app = get_current_async_app()
         for items in cls.get_mongo_items(resource, page_size, last_id, string_id):
             print("{} Inserting {} items".format(time.strftime("%X %x %Z"), len(items)))
             s = time.time()
@@ -77,8 +78,9 @@ class IndexFromMongo(superdesk.Command):
             for i in range(1, 4):
                 try:
                     try:
-                        success, failed = new_app.elastic.get_client(resource).bulk_insert(items)
+                        success, failed = async_app.elastic.get_client(resource).bulk_insert(items)
                     except KeyError:
+                        app = async_app.wsgi
                         success, failed = app.data._search_backend(resource).bulk_insert(resource, items)
                 except Exception as ex:
                     print("Exception thrown on insert to elastic {}", ex)
@@ -105,13 +107,15 @@ class IndexFromMongo(superdesk.Command):
         """
         bucket_size = int(page_size) if page_size else cls.default_page_size
         print("Indexing data from mongo/{} to elastic/{}".format(mongo_collection_name, mongo_collection_name))
+        async_app = get_current_async_app()
 
         try:
-            db = get_current_async_app().mongo.get_collection(mongo_collection_name)
+            db = async_app.mongo.get_collection(mongo_collection_name)
         except KeyError:
+            app = async_app.wsgi
             db = app.data.get_mongo_collection(mongo_collection_name)
 
-        args = {"limit": bucket_size, "sort": [(config.ID_FIELD, pymongo.ASCENDING)]}
+        args = {"limit": bucket_size, "sort": [(ID_FIELD, pymongo.ASCENDING)]}
 
         while True:
             if last_id:
@@ -120,14 +124,14 @@ class IndexFromMongo(superdesk.Command):
                         last_id = ObjectId(last_id)
                     except Exception:
                         pass
-                args.update({"filter": {config.ID_FIELD: {"$gt": last_id}}})
+                args.update({"filter": {ID_FIELD: {"$gt": last_id}}})
 
             cursor = db.find(**args)
             items = list(cursor)
             if not len(items):
                 print("Last id", mongo_collection_name, last_id)
                 break
-            last_id = items[-1][config.ID_FIELD]
+            last_id = items[-1][ID_FIELD]
             yield items
 
 

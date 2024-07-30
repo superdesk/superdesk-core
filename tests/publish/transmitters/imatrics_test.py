@@ -1,5 +1,4 @@
 import pytz
-import flask
 import base64
 import unittest
 import responses
@@ -8,6 +7,9 @@ import superdesk
 from datetime import datetime, timedelta
 from unittest.mock import patch
 from tests.mock import resources
+
+from superdesk.core import json
+from superdesk.flask import Flask
 from superdesk.json_utils import SuperdeskJSONEncoder
 from superdesk.publish.formatters.imatrics import IMatricsFormatter
 from superdesk.publish.transmitters.imatrics import IMatricsTransmitter
@@ -15,7 +17,7 @@ from superdesk.publish.transmitters.imatrics import IMatricsTransmitter
 
 class IMatricsTransmitterTestCase(unittest.TestCase):
     def setUp(self):
-        self.app = flask.Flask(__name__)
+        self.app = Flask(__name__)
         self.app.config.update(
             {
                 "IMATRICS_BASE_URL": "https://webdemo.imatrics.com/api/",
@@ -170,5 +172,5 @@ class IMatricsTransmitterTestCase(unittest.TestCase):
                             "another one",
                         ],
                     },
-                    flask.json.loads(responses.calls[0].request.body.decode()),
+                    json.loads(responses.calls[0].request.body.decode()),
                 )

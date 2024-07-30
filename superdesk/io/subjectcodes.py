@@ -11,9 +11,11 @@
 
 import re
 import superdesk
-from flask import Blueprint, current_app as app
 from datetime import datetime
 from eve.render import send_response
+
+from superdesk.core import get_current_app
+from superdesk.flask import Blueprint
 from superdesk.auth.decorator import blueprint_auth
 
 
@@ -75,12 +77,12 @@ def get_parent_subjectcode(code):
 def render_subjectcodes():
     items = get_subjectcodeitems()
     response_data = {"_items": items, "_meta": {"total": len(items)}}
-    return send_response(None, (response_data, app.subjects.last_modified, None, 200))
+    return send_response(None, (response_data, get_current_app().subjects.last_modified, None, 200))
 
 
 def get_subjectcodeitems():
     """Get subjects for current app."""
-    return app.subjects.get_items()
+    return get_current_app().subjects.get_items()
 
 
 def init_app(app) -> None:

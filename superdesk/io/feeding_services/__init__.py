@@ -13,8 +13,9 @@ import warnings
 from abc import ABCMeta, abstractmethod
 from datetime import timedelta, datetime
 from pytz import utc
-from flask import current_app as app
-import superdesk
+
+from superdesk.core import get_app_config
+from superdesk.resource_fields import ID_FIELD
 from superdesk import get_resource_service
 from superdesk.errors import SuperdeskApiError, SuperdeskIngestError
 from superdesk.io.registry import registered_feed_parsers, restricted_feeding_service_parsers
@@ -196,9 +197,7 @@ class FeedingService(metaclass=ABCMeta):
                 },
             }
 
-            get_resource_service("ingest_providers").system_update(
-                provider[superdesk.config.ID_FIELD], updates, provider
-            )
+            get_resource_service("ingest_providers").system_update(provider[ID_FIELD], updates, provider)
 
     def add_timestamps(self, item):
         warnings.warn("deprecated, use localize_timestamps", DeprecationWarning)
@@ -218,7 +217,7 @@ class FeedingService(metaclass=ABCMeta):
         if not provider_last_updated:
             provider_last_updated = utcnow() - timedelta(days=7)
 
-        return provider_last_updated - timedelta(minutes=app.config[OLD_CONTENT_MINUTES]) < last_updated
+        return provider_last_updated - timedelta(minutes=get_app_config(OLD_CONTENT_MINUTES)) < last_updated
 
     def is_old_content(self, last_updated):
         """Test if file is old so it wouldn't probably work in is_latest_content next time.
@@ -227,7 +226,7 @@ class FeedingService(metaclass=ABCMeta):
 
         :param last_updated: file last updated datetime
         """
-        return last_updated < utcnow() - timedelta(minutes=app.config[OLD_CONTENT_MINUTES])
+        return last_updated < utcnow() - timedelta(minutes=get_app_config(OLD_CONTENT_MINUTES))
 
     def log_item_error(self, err, item, provider):
         """TODO: put item into provider error basket."""

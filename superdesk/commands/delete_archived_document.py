@@ -8,9 +8,11 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
-import superdesk
 import json
-from eve.utils import ParsedRequest, config
+from eve.utils import ParsedRequest
+
+import superdesk
+from superdesk.resource_fields import ID_FIELD
 
 
 class DeleteArchivedDocumentCommand(superdesk.Command):
@@ -63,14 +65,14 @@ class DeleteArchivedDocumentCommand(superdesk.Command):
 
         archived_service = superdesk.get_resource_service("archived")
         for item in items:
-            articles_to_kill = archived_service.find_articles_to_kill({"_id": item[config.ID_FIELD]}, False)
+            articles_to_kill = archived_service.find_articles_to_kill({"_id": item[ID_FIELD]}, False)
 
             if not articles_to_kill:
                 continue
 
             for article in articles_to_kill:
-                archived_service.command_delete({"_id": article[config.ID_FIELD]})
-                print("Deleted item {} ".format(article[config.ID_FIELD]))
+                archived_service.command_delete({"_id": article[ID_FIELD]})
+                print("Deleted item {} ".format(article[ID_FIELD]))
 
     def run(self, ids):
         if ids and len(ids) > 0:

@@ -11,9 +11,11 @@
 import logging
 
 from eve.versioning import versioned_id_field
-from flask import g, current_app as app
-from eve.utils import config, ParsedRequest
+from eve.utils import ParsedRequest
 from .resource import LEGAL_ARCHIVE_NAME
+
+from superdesk.core import get_current_app, get_app_config
+from superdesk.resource_fields import ID_FIELD, ITEMS
 from superdesk import Service, get_resource_privileges
 from superdesk.errors import SuperdeskApiError
 from superdesk.metadata.item import ITEM_TYPE, GUID_FIELD, CONTENT_TYPE
@@ -39,7 +41,7 @@ class LegalService(Service):
         super().on_create(docs)
         for doc in docs:
             if ITEM_TYPE in doc:
-                doc.setdefault(config.ID_FIELD, doc.get(GUID_FIELD))
+                doc.setdefault(ID_FIELD, doc.get(GUID_FIELD))
                 if doc[ITEM_TYPE] == CONTENT_TYPE.COMPOSITE:
                     self._change_location_of_items_in_package(doc)
             set_mongo_lang(doc)
@@ -94,10 +96,11 @@ class LegalService(Service):
         :raises: SuperdeskApiError.forbiddenError() if user is unauthorized to access the Legal Archive resources.
         """
 
-        if not hasattr(g, "user"):
+        user = get_current_app().get_current_user_dict()
+        if user is None:
             return
 
-        privileges = g.user.get("active_privileges", {})
+        privileges = user.get("active_privileges", {})
         resource_privileges = get_resource_privileges(self.datasource).get("GET", None)
         if privileges.get(resource_privileges, 0) == 0:
             raise SuperdeskApiError.forbiddenError()
@@ -131,7 +134,7 @@ class LegalArchiveService(LegalService):
         Overriding this to enhance the published article with the one in archive collection
         """
 
-        self.enhance(docs[config.ITEMS])
+        self.enhance(docs[ITEMS])
 
     def on_fetched_item(self, doc):
         """
@@ -153,8 +156,8 @@ class LegalPublishQueueService(LegalService):
         ids = []
         for doc in docs:
             doc_if_exists = None
-            if doc.get(config.ID_FIELD):
-                doc_if_exists = self.find_one(req=None, _id=doc.get(config.ID_FIELD))
+            if doc.get(ID_FIELD):
+                doc_if_exists = self.find_one(req=None, _id=doc.get(ID_FIELD))
             if doc_if_exists is None:
                 ids.extend(super().create([doc]))
 
@@ -171,7 +174,7 @@ class LegalArchiveVersionsService(LegalService):
         for doc in docs:
             doc_if_exists = None
 
-            if config.ID_FIELD in doc:  # This happens when inserting docs from pre-populate command
+            if ID_FIELD in doc:  # This happens when inserting docs from pre-populate command
                 doc_if_exists = self.find_one(req=None, _id=doc["_id"])
 
             # This also happens when inserting docs from pre-populate command
@@ -188,18 +191,18 @@ class LegalArchiveVersionsService(LegalService):
         Version of an article in Legal Archive isn't maintained by Eve. Overriding this to fetch the version history.
         """
 
-        resource_def = app.config["DOMAIN"][LEGAL_ARCHIVE_NAME]
+        resource_def = get_app_config("DOMAIN")[LEGAL_ARCHIVE_NAME]
         id_field = versioned_id_field(resource_def)
 
-        if req and req.args and req.args.get(config.ID_FIELD):
+        if req and req.args and req.args.get(ID_FIELD):
             version_history = list(
-                super().get_from_mongo(req=ParsedRequest(), lookup={id_field: req.args.get(config.ID_FIELD)})
+                super().get_from_mongo(req=ParsedRequest(), lookup={id_field: req.args.get(ID_FIELD)})
             )
         else:
             version_history = list(super().get_from_mongo(req=req, lookup=lookup))
 
         for doc in version_history:
-            doc[config.ID_FIELD] = doc[id_field]
+            doc[ID_FIELD] = doc[id_field]
             self.enhance(doc)
 
         return ListCursor(version_history)

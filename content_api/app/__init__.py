@@ -19,11 +19,11 @@ thus essentially just a normal `Flask <http://flask.pocoo.org/>`_ application.
 """
 
 import os
-import flask
 import importlib
 
 from eve.io.mongo.mongo import MongoJSONEncoder
 
+from superdesk.flask import Config
 from content_api.tokens import SubscriberTokenAuth
 from superdesk.datalayer import SuperdeskDataLayer
 from superdesk.factory.elastic_apm import setup_apm
@@ -40,7 +40,7 @@ def get_app(config=None):
         from `settings.py`
     :return: a new SuperdeskEve app instance
     """
-    app_config = flask.Config(".")
+    app_config = Config(".")
 
     # get content api default conf
     app_config.from_object("content_api.app.settings")

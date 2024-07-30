@@ -9,9 +9,9 @@
 # at https://www.sourcefabric.org/superdesk/license
 
 import logging
-from eve.utils import config
 from copy import deepcopy
 
+from superdesk.resource_fields import ID_FIELD, VERSION
 from superdesk import get_resource_service
 from superdesk.resource import Resource
 from superdesk.services import BaseService
@@ -77,14 +77,14 @@ class ArchiveHistoryService(BaseService):
             self._save_history(item, updates, operation or ITEM_UPDATE)
 
     def on_item_deleted(self, doc):
-        lookup = {"item_id": doc[config.ID_FIELD]}
+        lookup = {"item_id": doc[ID_FIELD]}
         self.delete(lookup=lookup)
 
     def on_item_locked(self, item, user_id):
         self._save_lock_history(item, "item_lock")
 
     def on_item_unlocked(self, item, user_id):
-        if item.get(config.VERSION, 1) == 0:
+        if item.get(VERSION, 1) == 0:
             # version 0 items get deleted on unlock, along with all history documents
             # so there is no need to record a history item here
             return
@@ -95,7 +95,7 @@ class ArchiveHistoryService(BaseService):
         self.post(
             [
                 {
-                    "item_id": item[config.ID_FIELD],
+                    "item_id": item[ID_FIELD],
                     "user_id": self.get_user_id(item),
                     "operation": operation,
                     "update": {
@@ -104,7 +104,7 @@ class ArchiveHistoryService(BaseService):
                         LOCK_ACTION: item.get(LOCK_ACTION),
                         LOCK_TIME: item.get(LOCK_TIME),
                     },
-                    "version": item.get(config.VERSION, 1),
+                    "version": item.get(VERSION, 1),
                 }
             ]
         )
@@ -112,7 +112,7 @@ class ArchiveHistoryService(BaseService):
     def get_user_id(self, item):
         user = get_user()
         if user:
-            return user.get(config.ID_FIELD)
+            return user.get(ID_FIELD)
 
     def _save_history(self, item, update, operation):
         # in case of auto-routing, if the original_creator exists in our database
@@ -127,11 +127,11 @@ class ArchiveHistoryService(BaseService):
 
             if user:
                 history = {
-                    "item_id": item[config.ID_FIELD],
-                    "user_id": user.get(config.ID_FIELD),
+                    "item_id": item[ID_FIELD],
+                    "user_id": user.get(ID_FIELD),
                     "operation": ITEM_CREATE,
                     "update": self._remove_unwanted_fields(update, item),
-                    "version": item.get(config.VERSION, 1),
+                    "version": item.get(VERSION, 1),
                     "_created": firstcreated,
                     "_updated": firstcreated,
                 }
@@ -139,11 +139,11 @@ class ArchiveHistoryService(BaseService):
                 self.post([history])
 
         history = {
-            "item_id": item[config.ID_FIELD],
+            "item_id": item[ID_FIELD],
             "user_id": self.get_user_id(item),
             "operation": operation,
             "update": self._remove_unwanted_fields(update, item),
-            "version": item.get(config.VERSION, 1),
+            "version": item.get(VERSION, 1),
         }
 
         self.post([history])

@@ -10,10 +10,12 @@
 
 import logging
 from eve.versioning import resolve_document_version
-from flask import current_app as app
+
+from superdesk.core import get_current_app, get_app_config
+from superdesk.resource_fields import ID_FIELD, LAST_UPDATED
 import superdesk
 from collections import Counter
-from eve.utils import config, ParsedRequest
+from eve.utils import ParsedRequest
 from superdesk.errors import SuperdeskApiError
 from superdesk import get_resource_service
 from superdesk.metadata.item import ITEM_TYPE, CONTENT_TYPE, EMBARGO
@@ -99,7 +101,7 @@ class PackageService:
 
         for doc in docs:
             if not doc.get("ingest_provider"):
-                doc["source"] = app.config.get("DEFAULT_SOURCE_VALUE_FOR_MANUAL_ARTICLES")
+                doc["source"] = get_app_config("DEFAULT_SOURCE_VALUE_FOR_MANUAL_ARTICLES")
 
             if "highlight" in doc:
                 copy_metadata_from_highlight_template(doc)
@@ -235,7 +237,7 @@ class PackageService:
         # skip root node
         if assoc.get(ID_REF):
             return
-        package_id = package[config.ID_FIELD]
+        package_id = package[ID_FIELD]
 
         item, item_id, endpoint = self.get_associated_item(assoc, not delete)
         if not item and delete:
@@ -253,7 +255,7 @@ class PackageService:
 
     def check_for_duplicates(self, package, associations):
         counter = Counter()
-        package_id = package[config.ID_FIELD]
+        package_id = package[ID_FIELD]
         for itemRef in [assoc[RESIDREF] for assoc in associations if assoc.get(RESIDREF)]:
             if itemRef == package_id:
                 message = _("Trying to self reference as an association.")
@@ -290,7 +292,7 @@ class PackageService:
         query = {"$and": [{ITEM_TYPE: CONTENT_TYPE.COMPOSITE}, {"groups.refs.residRef": doc_id}]}
 
         if not_package_id:
-            query["$and"].append({config.ID_FIELD: {"$ne": not_package_id}})
+            query["$and"].append({ID_FIELD: {"$ne": not_package_id}})
 
         request = ParsedRequest()
         request.max_results = 100
@@ -399,14 +401,16 @@ class PackageService:
                 return self.remove_refs_in_package(sub_package, ref_id_to_remove)
 
         new_groups = self.remove_group_ref(package, ref_id_to_remove)
-        updates = {config.LAST_UPDATED: utcnow(), GROUPS: new_groups}
+        updates = {LAST_UPDATED: utcnow(), GROUPS: new_groups}
 
         resolve_document_version(updates, ARCHIVE, "PATCH", package)
-        get_resource_service(ARCHIVE).patch(package[config.ID_FIELD], updates)
-        app.on_archive_item_updated(updates, package, ITEM_UNLINK)
-        insert_into_versions(id_=package[config.ID_FIELD])
+        get_resource_service(ARCHIVE).patch(package[ID_FIELD], updates)
 
-        sub_package_ids.append(package[config.ID_FIELD])
+        app = get_current_app().as_any()
+        app.on_archive_item_updated(updates, package, ITEM_UNLINK)
+        insert_into_versions(id_=package[ID_FIELD])
+
+        sub_package_ids.append(package[ID_FIELD])
         return sub_package_ids
 
     def _get_associations(self, doc):
@@ -419,7 +423,7 @@ class PackageService:
 
         processed_packages = []
         for package in packages:
-            if str(package[config.ID_FIELD]) in processed_packages:
+            if str(package[ID_FIELD]) in processed_packages:
                 continue
 
             processed_packages.extend(self.remove_refs_in_package(package, doc_id, processed_packages))

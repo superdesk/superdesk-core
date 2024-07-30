@@ -11,7 +11,7 @@
 from .anpa import ANPAFeedParser
 from superdesk.io.registry import register_feed_parser
 from superdesk.io.iptc import subject_codes
-from flask import current_app as app
+from superdesk.core import get_current_app
 from apps.archive.common import format_dateline_to_locmmmddsrc
 from superdesk.utc import get_date
 from superdesk import get_resource_service
@@ -128,7 +128,7 @@ class AP_ANPAFeedParser(ANPAFeedParser):
                         city = city.split(",")[0]
                         if any(char.isdigit() for char in city):
                             return
-                        cities = app.locators.find_cities()
+                        cities = get_current_app().locators.find_cities()
                         located = [c for c in cities if c["city"].lower() == city.lower()]
                         item.setdefault("dateline", {})
                         item["dateline"]["located"] = (

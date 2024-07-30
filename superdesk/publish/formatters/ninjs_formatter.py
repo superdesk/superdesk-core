@@ -35,8 +35,9 @@ import superdesk
 import logging
 
 from typing import List, Literal, Sequence, Tuple, TypedDict
-from flask import current_app as app
-from eve.utils import config
+
+from superdesk.core import get_app_config
+from superdesk.resource_fields import VERSION
 from superdesk.publish.formatters import Formatter
 from superdesk.errors import FormatterError
 from superdesk.metadata.item import ITEM_TYPE, CONTENT_TYPE, EMBARGO, GUID_FIELD, ASSOCIATIONS
@@ -169,7 +170,7 @@ class NINJSFormatter(Formatter):
     def __init__(self):
         self.can_preview = True
         self.can_export = True
-        self.internal_renditions = app.config.get("NINJS_COMMON_RENDITIONS", []) + ["original"]
+        self.internal_renditions = get_app_config("NINJS_COMMON_RENDITIONS", []) + ["original"]
 
     def format(self, article, subscriber, codes=None):
         try:
@@ -183,7 +184,7 @@ class NINJSFormatter(Formatter):
     def _transform_to_ninjs(self, article, subscriber, recursive=True):
         ninjs = {
             "guid": article.get(GUID_FIELD, article.get("uri")),
-            "version": str(article.get(config.VERSION, 1)),
+            "version": str(article.get(VERSION, 1)),
             "type": self._get_type(article),
         }
 
@@ -503,7 +504,7 @@ class NINJSFormatter(Formatter):
             if item.get("scheme") == "geonames":
                 places.append(self._format_geonames(item))
             else:
-                if config.NINJS_PLACE_EXTENDED:
+                if get_app_config("NINJS_PLACE_EXTENDED"):
                     place = {}
                     for key in item.keys():
                         if item.get(key):
@@ -523,7 +524,7 @@ class NINJSFormatter(Formatter):
 
     def _format_geonames(self, place):
         fields = ["scheme", "code", "name"]
-        if app.config.get("NINJS_PLACE_EXTENDED"):
+        if get_app_config("NINJS_PLACE_EXTENDED"):
             fields.extend(
                 [
                     "state",
@@ -533,7 +534,7 @@ class NINJSFormatter(Formatter):
                 ]
             )
         geo = {k: v for k, v in place.items() if k in fields}
-        if app.config.get("NINJS_PLACE_EXTENDED") and place.get("location"):
+        if get_app_config("NINJS_PLACE_EXTENDED") and place.get("location"):
             geo["geometry_point"] = {
                 "type": "Point",
                 "coordinates": [place["location"].get("lat"), place["location"].get("lon")],

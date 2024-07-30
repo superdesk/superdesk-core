@@ -9,9 +9,11 @@
 # at https://www.sourcefabric.org/superdesk/license
 import json
 
-from eve.utils import config, ParsedRequest
-from flask import request, current_app as app
+from eve.utils import ParsedRequest
 
+from superdesk.core import get_app_config
+from superdesk.resource_fields import ID_FIELD
+from superdesk.flask import request
 import superdesk
 from apps.archive.archive import SOURCE as ARCHIVE, remove_is_queued
 from apps.auth import get_user, get_user_id
@@ -50,7 +52,7 @@ class DuplicateResource(Resource):
 class DuplicateService(BaseService):
     def on_create(self, docs):
         for doc in docs:
-            if not doc.get("desk") and not app.config["WORKFLOW_ALLOW_COPY_TO_PERSONAL"]:
+            if not doc.get("desk") and not get_app_config("WORKFLOW_ALLOW_COPY_TO_PERSONAL"):
                 raise SuperdeskApiError.forbiddenError(message=_("Duplicate to Personal space is not allowed."))
 
     def create(self, docs, **kwargs):
@@ -136,7 +138,7 @@ class DuplicateService(BaseService):
         lock_user = doc_in_archive.get("lock_user", None)
         force_unlock = doc_in_archive.get("force_unlock", False)
         user = get_user()
-        str_user_id = str(user.get(config.ID_FIELD)) if user else None
+        str_user_id = str(user.get(ID_FIELD)) if user else None
         if lock_user and str(lock_user) != str_user_id and not force_unlock:
             raise SuperdeskApiError.forbiddenError(_("The item was locked by another user"))
 

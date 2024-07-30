@@ -8,16 +8,17 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
-from typing import Dict, Any, BinaryIO, Union, Optional
+from typing import Dict, Any, BinaryIO, Union, Optional, cast
 import logging
 from os import path
 
 from eve.flaskapp import Eve
 from eve.io.mongo.media import MediaStorage
 from bson import ObjectId
-from flask import current_app, request
 from werkzeug.utils import secure_filename
 
+from superdesk.core import get_current_app, get_app_config
+from superdesk.flask import request
 from superdesk.factory.app import get_media_storage_class
 from superdesk.default_settings import strtobool
 from superdesk.storage.mimetype_mixin import MimetypeMixin
@@ -42,7 +43,7 @@ SAMS_RESOURCE_ENABLED: Dict[str, bool] = {ATTACHMENTS_RESOURCE: True}
 
 
 def get_sams_values_from_resource_schema(resource: str, data: Dict[str, Any]):
-    schema = current_app.config["DOMAIN"][resource]["schema"]
+    schema = cast(dict[str, Any], get_app_config("DOMAIN"))[resource]["schema"]
 
     def _get_field(field: str):
         sams_mapping = (schema.get(field) or {}).get("sams") or {}
@@ -69,11 +70,11 @@ class SAMSMediaStorage(MediaStorage, MimetypeMixin):
     """
 
     def __init__(self, app: Eve = None):
-        super(SAMSMediaStorage, self).__init__(app or current_app)
+        super(SAMSMediaStorage, self).__init__(app or get_current_app())
 
         fallback_klass = get_media_storage_class(self.app.config, False)
         self._fallback = fallback_klass(self.app)
-        self._client: SamsClient = get_sams_client(self.app)
+        self._client: SamsClient = get_sams_client()
 
     def url_for_external(self, media_id: str, resource: Optional[str] = None) -> str:
         """Returns a URL for external use

@@ -1,8 +1,8 @@
 from unittest.mock import patch
 from bson import ObjectId
 from datetime import timedelta
-from flask import session
 
+from superdesk.flask import session
 from superdesk.utc import utcnow
 from superdesk.tests import TestCase
 from apps.auth.session_purge import RemoveExpiredSessions

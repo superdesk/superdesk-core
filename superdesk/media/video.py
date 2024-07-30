@@ -11,8 +11,8 @@
 from hachoir.stream import InputIOStream
 from hachoir.parser import guessParser
 from hachoir.metadata import extractMetadata
-from flask import json
 import logging
+from superdesk.core import json
 
 
 logger = logging.getLogger(__name__)

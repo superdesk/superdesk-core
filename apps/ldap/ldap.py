@@ -12,12 +12,13 @@ import logging
 import re
 from ldap3 import Server, Connection, SUBTREE
 from ldap3.core.exceptions import LDAPException
+
+from superdesk.core import get_app_config
 from apps.auth.service import AuthService
 from superdesk.users.services import UsersService
 from superdesk import get_resource_service
 from superdesk.errors import SuperdeskApiError
 from superdesk.resource import Resource
-from flask import current_app as app
 import superdesk
 from apps.auth.errors import CredentialsAuthError
 from apps.auth import get_user
@@ -141,14 +142,13 @@ class ADAuthService(AuthService):
         :param credentials: an object having "username" and "password" attributes
         :return: if success returns User object, otherwise throws Error
         """
-        settings = app.settings
         ad_auth = ADAuth(
-            settings["LDAP_SERVER"],
-            settings["LDAP_SERVER_PORT"],
-            settings["LDAP_BASE_FILTER"],
-            settings["LDAP_USER_FILTER"],
-            settings["LDAP_USER_ATTRIBUTES"],
-            settings["LDAP_FQDN"],
+            get_app_config("LDAP_SERVER"),
+            get_app_config("LDAP_SERVER_PORT"),
+            get_app_config("LDAP_BASE_FILTER"),
+            get_app_config("LDAP_USER_FILTER"),
+            get_app_config("LDAP_USER_ATTRIBUTES"),
+            get_app_config("LDAP_FQDN"),
         )
 
         username = credentials.get("username")
@@ -171,12 +171,12 @@ class ADAuthService(AuthService):
         user = superdesk.get_resource_service("users").find_one(req=None, **query)
 
         if (
-            app.settings.get("LDAP_SET_DISPLAY_NAME", False)
+            get_app_config("LDAP_SET_DISPLAY_NAME", False)
             and "display_name" in user_data
-            and all(f in user_data for f in app.settings.get("LDAP_SET_DISPLAY_NAME_FIELDS", []))
+            and all(f in user_data for f in get_app_config("LDAP_SET_DISPLAY_NAME_FIELDS", []))
         ):
-            user_data["display_name"] = app.settings.get("LDAP_SET_DISPLAY_NAME_FORMAT", "").format(
-                *[user_data.get(f) for f in app.settings.get("LDAP_SET_DISPLAY_NAME_FIELDS", [])]
+            user_data["display_name"] = get_app_config("LDAP_SET_DISPLAY_NAME_FORMAT", "").format(
+                *[user_data.get(f) for f in get_app_config("LDAP_SET_DISPLAY_NAME_FIELDS", [])]
             )
 
         if not user:

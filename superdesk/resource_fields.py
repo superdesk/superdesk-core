@@ -8,13 +8,19 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
-from flask import json
-from .app import get_app_config, get_current_app, get_current_async_app
+ID_FIELD = "_id"
+ITEM_TYPE = "type"
+ITEM_STATE = "state"
 
-
-__all__ = [
-    "get_current_app",
-    "get_current_async_app",
-    "json",
-    "get_app_config",
-]
+STATUS_OK = "OK"
+STATUS_ERR = "ERR"
+LAST_UPDATED = "_updated"
+DATE_CREATED = "_created"
+ISSUES = "_issues"
+STATUS = "_status"
+ERROR = "_error"
+ITEMS = "_items"
+LINKS = "_links"
+ETAG = "_etag"
+VERSION = "_current_version"
+META = "_meta"

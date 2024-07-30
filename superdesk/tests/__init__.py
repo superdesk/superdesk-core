@@ -19,8 +19,8 @@ from copy import deepcopy
 from base64 import b64encode
 from unittest.mock import patch
 
-from flask import json, Config
-
+from superdesk.core import json
+from superdesk.flask import Config
 from apps.ldap import ADAuth
 from superdesk import get_resource_service
 from superdesk.cache import cache
@@ -79,7 +79,6 @@ def update_config(conf):
     conf["CELERY_BEAT_SCHEDULE_FILENAME"] = "./testschedule.db"
     conf["CELERY_BEAT_SCHEDULE"] = {}
     conf["CONTENT_EXPIRY_MINUTES"] = 99
-    conf["VERSION"] = "_current_version"
     conf["SECRET_KEY"] = "test-secret"
     conf["JSON_SORT_KEYS"] = True
     conf["ELASTICSEARCH_INDEXES"] = {

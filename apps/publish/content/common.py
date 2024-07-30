@@ -12,10 +12,11 @@ import logging
 import superdesk
 import superdesk.signals as signals
 
-from copy import copy
-from copy import deepcopy
-from flask import current_app as app
+from copy import copy, deepcopy
 
+from superdesk.core import get_app_config, get_current_app, json
+from superdesk.resource_fields import ID_FIELD, LAST_UPDATED, VERSION
+from superdesk.flask import request
 from superdesk import get_resource_service
 from apps.content import push_content_notification
 from apps.content_types.content_types import DEFAULT_SCHEMA
@@ -42,7 +43,6 @@ from superdesk.workflow import is_workflow_state_transition_valid
 from superdesk.validation import ValidationError
 from superdesk.media.image import get_metadata_from_item, write_metadata
 
-from eve.utils import config
 from eve.versioning import resolve_document_version
 
 from apps.archive.archive import ArchiveResource, SOURCE as ARCHIVE
@@ -75,7 +75,6 @@ from superdesk.default_settings import strtobool
 from apps.item_lock.components.item_lock import set_unlock_updates
 
 from flask_babel import _
-from flask import request, json
 
 
 logger = logging.getLogger(__name__)
@@ -147,7 +146,7 @@ class BasePublishService(BaseService):
         self._set_updates(
             original,
             updates,
-            updates.get(config.LAST_UPDATED, utcnow()),
+            updates.get(LAST_UPDATED, utcnow()),
             preserve_state=original.get("state") in (CONTENT_STATE.SCHEDULED,) and "pubstatus" not in updates,
         )
         convert_task_attributes_to_objectId(updates)  # ???
@@ -157,7 +156,7 @@ class BasePublishService(BaseService):
         update_refs(updates, original)
 
     def on_updated(self, updates, original):
-        original = super().find_one(req=None, _id=original[config.ID_FIELD])
+        original = super().find_one(req=None, _id=original[ID_FIELD])
         updates.update(original)
 
         if updates[ITEM_OPERATION] not in {ITEM_KILL, ITEM_TAKEDOWN} and original.get(ITEM_TYPE) in [
@@ -172,7 +171,7 @@ class BasePublishService(BaseService):
         CropService().update_media_references(updates, original, True)
         signals.item_published.send(self, item=original, after_scheduled=False)
 
-        packages = self.package_service.get_packages(original[config.ID_FIELD])
+        packages = self.package_service.get_packages(original[ID_FIELD])
         if packages and packages.count() > 0:
             archive_correct = get_resource_service("archive_correct")
             processed_packages = []
@@ -181,23 +180,23 @@ class BasePublishService(BaseService):
                 if (
                     package[ITEM_STATE] in [CONTENT_STATE.PUBLISHED, CONTENT_STATE.CORRECTED]
                     and package.get(PACKAGE_TYPE, "") == ""
-                    and str(package[config.ID_FIELD]) not in processed_packages
+                    and str(package[ID_FIELD]) not in processed_packages
                 ):
                     original_updates["groups"] = package["groups"]
 
                     if updates.get("headline"):
                         self.package_service.update_field_in_package(
-                            original_updates, original[config.ID_FIELD], "headline", updates.get("headline")
+                            original_updates, original[ID_FIELD], "headline", updates.get("headline")
                         )
 
                     if updates.get("slugline"):
                         self.package_service.update_field_in_package(
-                            original_updates, original[config.ID_FIELD], "slugline", updates.get("slugline")
+                            original_updates, original[ID_FIELD], "slugline", updates.get("slugline")
                         )
 
-                    archive_correct.patch(id=package[config.ID_FIELD], updates=original_updates)
-                    insert_into_versions(id_=package[config.ID_FIELD])
-                    processed_packages.append(package[config.ID_FIELD])
+                    archive_correct.patch(id=package[ID_FIELD], updates=original_updates)
+                    insert_into_versions(id_=package[ID_FIELD])
+                    processed_packages.append(package[ID_FIELD])
 
     def update(self, id, updates, original):
         """
@@ -229,7 +228,7 @@ class BasePublishService(BaseService):
 
                 signals.item_publish.send(self, item=updated, updates=updates)
                 self._update_archive(original, updates, should_insert_into_versions=auto_publish)
-                self.update_published_collection(published_item_id=original[config.ID_FIELD], updated=updated)
+                self.update_published_collection(published_item_id=original[ID_FIELD], updated=updated)
 
             from apps.publish.enqueue import enqueue_published
 
@@ -240,7 +239,7 @@ class BasePublishService(BaseService):
                 item=str(id),
                 unique_name=original["unique_name"],
                 desk=str(original.get("task", {}).get("desk", "")),
-                user=str(user.get(config.ID_FIELD, "")),
+                user=str(user.get(ID_FIELD, "")),
             )
 
             if updates.get("previous_marked_user") and not updates.get("marked_for_user"):
@@ -353,7 +352,7 @@ class BasePublishService(BaseService):
             return
 
         if (
-            config.PUBLISH_ASSOCIATED_ITEMS
+            get_app_config("PUBLISH_ASSOCIATED_ITEMS")
             or not original.get(ASSOCIATIONS)
             or self.publish_type not in [ITEM_PUBLISH, ITEM_CORRECT]
         ):
@@ -421,7 +420,7 @@ class BasePublishService(BaseService):
             updates["source"] = (
                 desk["source"]
                 if desk and desk.get("source", "")
-                else app.settings["DEFAULT_SOURCE_VALUE_FOR_MANUAL_ARTICLES"]
+                else get_app_config("DEFAULT_SOURCE_VALUE_FOR_MANUAL_ARTICLES")
             )
         updates["pubstatus"] = PUB_STATUS.CANCELED if self.publish_type == ITEM_KILL else PUB_STATUS.USABLE
         self._set_item_expiry(updates, original)
@@ -441,8 +440,8 @@ class BasePublishService(BaseService):
         elif EMBARGO in original or PUBLISH_SCHEDULE in original:
             offset = get_utc_schedule(original, PUBLISH_SCHEDULE) or get_utc_schedule(original, EMBARGO)
 
-        if app.settings.get("PUBLISHED_CONTENT_EXPIRY_MINUTES"):
-            updates["expiry"] = get_expiry_date(app.settings["PUBLISHED_CONTENT_EXPIRY_MINUTES"], offset=offset)
+        if get_app_config("PUBLISHED_CONTENT_EXPIRY_MINUTES"):
+            updates["expiry"] = get_expiry_date(get_app_config("PUBLISHED_CONTENT_EXPIRY_MINUTES"), offset=offset)
         else:
             updates["expiry"] = get_expiry(desk_id, stage_id, offset=offset)
 
@@ -490,18 +489,18 @@ class BasePublishService(BaseService):
                         )
                     else:
                         # publish the item
-                        package_item[PUBLISHED_IN_PACKAGE] = package[config.ID_FIELD]
-                        archive_publish.patch(id=package_item.pop(config.ID_FIELD), updates=package_item)
+                        package_item[PUBLISHED_IN_PACKAGE] = package[ID_FIELD]
+                        archive_publish.patch(id=package_item.pop(ID_FIELD), updates=package_item)
 
                     insert_into_versions(id_=guid)
 
                 elif guid in added_items:
                     linked_in_packages = package_item.get(LINKED_IN_PACKAGES, [])
-                    if package[config.ID_FIELD] not in (lp.get(PACKAGE) for lp in linked_in_packages):
-                        linked_in_packages.append({PACKAGE: package[config.ID_FIELD]})
+                    if package[ID_FIELD] not in (lp.get(PACKAGE) for lp in linked_in_packages):
+                        linked_in_packages.append({PACKAGE: package[ID_FIELD]})
                         super().system_update(
                             guid,
-                            {LINKED_IN_PACKAGES: linked_in_packages, PUBLISHED_IN_PACKAGE: package[config.ID_FIELD]},
+                            {LINKED_IN_PACKAGES: linked_in_packages, PUBLISHED_IN_PACKAGE: package[ID_FIELD]},
                             package_item,
                         )
 
@@ -510,24 +509,24 @@ class BasePublishService(BaseService):
                     linked_in_packages = [
                         linked
                         for linked in package_item.get(LINKED_IN_PACKAGES, [])
-                        if linked.get(PACKAGE) != package.get(config.ID_FIELD)
+                        if linked.get(PACKAGE) != package.get(ID_FIELD)
                     ]
                     super().system_update(guid, {LINKED_IN_PACKAGES: linked_in_packages}, package_item)
 
                 package_item = super().find_one(req=None, _id=guid)
 
                 self.package_service.update_field_in_package(
-                    updates, package_item[config.ID_FIELD], config.VERSION, package_item[config.VERSION]
+                    updates, package_item[ID_FIELD], VERSION, package_item[VERSION]
                 )
 
                 if package_item.get(ASSOCIATIONS):
                     self.package_service.update_field_in_package(
-                        updates, package_item[config.ID_FIELD], ASSOCIATIONS, package_item[ASSOCIATIONS]
+                        updates, package_item[ID_FIELD], ASSOCIATIONS, package_item[ASSOCIATIONS]
                     )
 
         updated = deepcopy(package)
         updated.update(updates)
-        self.update_published_collection(published_item_id=package[config.ID_FIELD], updated=updated)
+        self.update_published_collection(published_item_id=package[ID_FIELD], updated=updated)
 
     def update_published_collection(self, published_item_id, updated=None):
         """Updates the published collection with the published item.
@@ -564,14 +563,14 @@ class BasePublishService(BaseService):
         """
         if not preserve_state:
             self.set_state(original, updates)
-        updates.setdefault(config.LAST_UPDATED, last_updated)
+        updates.setdefault(LAST_UPDATED, last_updated)
 
-        if original[config.VERSION] == updates.get(config.VERSION, original[config.VERSION]):
+        if original[VERSION] == updates.get(VERSION, original[VERSION]):
             resolve_document_version(document=updates, resource=ARCHIVE, method="PATCH", latest_doc=original)
 
         user = get_user()
-        if user and user.get(config.ID_FIELD):
-            updates["version_creator"] = user[config.ID_FIELD]
+        if user and user.get(ID_FIELD):
+            updates["version_creator"] = user[ID_FIELD]
 
     def _update_archive(self, original, updates, versioned_doc=None, should_insert_into_versions=True):
         """Updates the articles into archive collection and inserts the latest into archive_versions.
@@ -581,16 +580,18 @@ class BasePublishService(BaseService):
         :param: versioned_doc: doc which can be inserted into archive_versions
         :param: should_insert_into_versions if True inserts the latest document into versions collection
         """
-        self.backend.update(self.datasource, original[config.ID_FIELD], updates, original)
+        self.backend.update(self.datasource, original[ID_FIELD], updates, original)
+
+        app = get_current_app().as_any()
         app.on_archive_item_updated(updates, original, updates[ITEM_OPERATION])
 
         if should_insert_into_versions:
             if versioned_doc is None:
-                insert_into_versions(id_=original[config.ID_FIELD])
+                insert_into_versions(id_=original[ID_FIELD])
             else:
                 insert_into_versions(doc=versioned_doc)
 
-        get_component(ItemAutosave).clear(original[config.ID_FIELD])
+        get_component(ItemAutosave).clear(original[ID_FIELD])
 
     def _get_changed_items(self, existing_items, updates):
         """Returns the added and removed items from existing_items.
@@ -637,8 +638,8 @@ class BasePublishService(BaseService):
 
         for item in items:
             orig = None
-            if isinstance(item, dict) and item.get(config.ID_FIELD):
-                orig = super().find_one(req=None, _id=item[config.ID_FIELD]) or {}
+            if isinstance(item, dict) and item.get(ID_FIELD):
+                orig = super().find_one(req=None, _id=item[ID_FIELD]) or {}
                 doc = copy(orig)
                 doc.update(item)
                 try:
@@ -689,7 +690,7 @@ class BasePublishService(BaseService):
                     ]
                     validation_errors.extend(pre_errors)
 
-            if config.PUBLISH_ASSOCIATED_ITEMS:
+            if get_app_config("PUBLISH_ASSOCIATED_ITEMS"):
                 # check the locks on the items
                 if doc.get("lock_user"):
                     if original_item["lock_user"] != doc["lock_user"]:
@@ -717,7 +718,7 @@ class BasePublishService(BaseService):
         """
 
         if doc.get(ITEM_STATE) != CONTENT_STATE.SCHEDULED:
-            kwargs = {"item_id": doc.get(config.ID_FIELD)}
+            kwargs = {"item_id": doc.get(ID_FIELD)}
             # countdown=3 is for elasticsearch to be refreshed with archive and published changes
             import_into_legal_archive.apply_async(countdown=3, kwargs=kwargs)  # @UndefinedVariable
 
@@ -735,14 +736,14 @@ class BasePublishService(BaseService):
         """
         associations = original.get(ASSOCIATIONS) or {}
         for name, item in associations.items():
-            if isinstance(item, dict) and item.get(config.ID_FIELD) and (not skip_related or len(item.keys()) > 2):
+            if isinstance(item, dict) and item.get(ID_FIELD) and (not skip_related or len(item.keys()) > 2):
                 keys = [key for key in DEFAULT_SCHEMA.keys() if key not in PRESERVED_FIELDS]
 
-                if app.settings.get("COPY_METADATA_FROM_PARENT") and item.get(ITEM_TYPE) in MEDIA_TYPES:
+                if get_app_config("COPY_METADATA_FROM_PARENT") and item.get(ITEM_TYPE) in MEDIA_TYPES:
                     updates = original
                     keys = FIELDS_TO_COPY_FOR_ASSOCIATED_ITEM
                 else:
-                    updates = super().find_one(req=None, _id=item[config.ID_FIELD]) or {}
+                    updates = super().find_one(req=None, _id=item[ID_FIELD]) or {}
 
                 try:
                     is_db_item_bigger_ver = updates["_current_version"] > item["_current_version"]
@@ -751,7 +752,7 @@ class BasePublishService(BaseService):
                 else:
                     # if copying from parent the don't keep the existing
                     # otherwise check the value is_db_item_bigger_ver
-                    keep_existing = not app.settings.get("COPY_METADATA_FROM_PARENT") and not is_db_item_bigger_ver
+                    keep_existing = not get_app_config("COPY_METADATA_FROM_PARENT") and not is_db_item_bigger_ver
                     update_item_data(item, updates, keys, keep_existing=keep_existing)
 
     def _fix_related_references(self, updated, updates):
@@ -792,8 +793,8 @@ class BasePublishService(BaseService):
         for associations_key, associated_item in associations.items():
             if associated_item is None:
                 continue
-            if isinstance(associated_item, dict) and associated_item.get(config.ID_FIELD):
-                if not config.PUBLISH_ASSOCIATED_ITEMS or not publish_service:
+            if isinstance(associated_item, dict) and associated_item.get(ID_FIELD):
+                if not get_app_config("PUBLISH_ASSOCIATED_ITEMS") or not publish_service:
                     if original.get(ASSOCIATIONS, {}).get(associations_key):
                         # Not allowed to publish
                         original[ASSOCIATIONS][associations_key]["state"] = self.published_state
@@ -810,7 +811,7 @@ class BasePublishService(BaseService):
 
                 if associated_item.get("state") == CONTENT_STATE.UNPUBLISHED:
                     # get the original associated item from archive
-                    orig_associated_item = archive_service.find_one(req=None, _id=associated_item[config.ID_FIELD])
+                    orig_associated_item = archive_service.find_one(req=None, _id=associated_item[ID_FIELD])
 
                     orig_associated_item["state"] = updates.get("state", self.published_state)
                     orig_associated_item["operation"] = self.publish_type
@@ -819,7 +820,7 @@ class BasePublishService(BaseService):
                     self._inherit_publish_schedule(original, updates, orig_associated_item)
 
                     get_resource_service("archive_publish").patch(
-                        id=orig_associated_item.pop(config.ID_FIELD), updates=orig_associated_item
+                        id=orig_associated_item.pop(ID_FIELD), updates=orig_associated_item
                     )
                     continue
 
@@ -828,7 +829,7 @@ class BasePublishService(BaseService):
                     remove_unwanted(associated_item)
 
                     # get the original associated item from archive
-                    orig_associated_item = archive_service.find_one(req=None, _id=associated_item[config.ID_FIELD])
+                    orig_associated_item = archive_service.find_one(req=None, _id=associated_item[ID_FIELD])
 
                     # check if the original associated item exists in archive
                     if not orig_associated_item:
@@ -859,7 +860,7 @@ class BasePublishService(BaseService):
 
                     associated_item_updates = associated_item.copy()
                     get_resource_service("archive_publish").patch(
-                        id=associated_item[config.ID_FIELD], updates=associated_item_updates
+                        id=associated_item[ID_FIELD], updates=associated_item_updates
                     )
                     sync_associated_item_changes(associated_item, associated_item_updates)
                     associated_item["state"] = updates.get("state", self.published_state)
@@ -880,14 +881,14 @@ class BasePublishService(BaseService):
                         associated_item.get("task", {}).pop("stage", None)
                         remove_unwanted(associated_item)
                         associated_item_updates = associated_item.copy()
-                        publish_service.patch(id=associated_item[config.ID_FIELD], updates=associated_item_updates)
+                        publish_service.patch(id=associated_item[ID_FIELD], updates=associated_item_updates)
                         sync_associated_item_changes(associated_item, associated_item_updates)
                         continue
 
                     if association_updates.get("state") not in PUBLISH_STATES:
                         # There's an update to the published associated item
                         remove_unwanted(association_updates)
-                        publish_service.patch(id=associated_item[config.ID_FIELD], updates=association_updates)
+                        publish_service.patch(id=associated_item[ID_FIELD], updates=association_updates)
 
             # When there is an associated item which is published, Inserts the latest version of that associated item into archive_versions.
             insert_into_versions(doc=associated_item)
@@ -898,11 +899,11 @@ class BasePublishService(BaseService):
             return
 
         for item_name, item_obj in updates.get(ASSOCIATIONS).items():
-            if not item_obj or config.ID_FIELD not in item_obj:
+            if not item_obj or ID_FIELD not in item_obj:
                 continue
-            item_id = item_obj[config.ID_FIELD]
+            item_id = item_obj[ID_FIELD]
             media_item = self.find_one(req=None, _id=item_id)
-            if app.settings.get("COPY_METADATA_FROM_PARENT") and item_obj.get(ITEM_TYPE) in MEDIA_TYPES:
+            if get_app_config("COPY_METADATA_FROM_PARENT") and item_obj.get(ITEM_TYPE) in MEDIA_TYPES:
                 stored_item = (original.get(ASSOCIATIONS) or {}).get(item_name) or item_obj
             else:
                 stored_item = media_item
@@ -920,7 +921,7 @@ class BasePublishService(BaseService):
 
     def _update_picture_metadata(self, updates, original, updated):
         renditions = updated.get("renditions") or {}
-        mapping = app.config.get("PHOTO_METADATA_MAPPING")
+        mapping = get_app_config("PHOTO_METADATA_MAPPING")
         if not mapping or not renditions:
             return
         try:
@@ -930,6 +931,7 @@ class BasePublishService(BaseService):
         if not media_id:
             return
 
+        app = get_current_app()
         picture = app.media.get(media_id)
         binary = picture.read()
         metadata = get_metadata_from_item(updated, mapping)

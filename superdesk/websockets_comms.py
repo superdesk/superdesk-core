@@ -22,12 +22,12 @@ from websockets.server import WebSocketServerProtocol
 from typing import Dict, Set, Optional, Union
 from superdesk.types import WebsocketMessageData, WebsocketMessageFilterConditions
 
-from flask import json
 from datetime import timedelta, datetime
 from threading import Thread
 from kombu import Queue, Exchange, Connection
 from kombu.mixins import ConsumerMixin
 from kombu.pools import producers
+from superdesk.core import json
 from superdesk.utc import utcnow
 from superdesk.utils import get_random_string, json_serialize_datetime_objectId
 from superdesk.default_settings import WS_HEART_BEAT

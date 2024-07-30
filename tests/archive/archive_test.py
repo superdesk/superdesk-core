@@ -17,6 +17,7 @@ from copy import deepcopy
 from unittest import mock
 
 import superdesk
+from superdesk.core import json
 from superdesk.metadata.utils import generate_guid, GUID_TAG
 import superdesk.signals as signals
 from superdesk.errors import SuperdeskApiError
@@ -38,7 +39,6 @@ from apps.search_providers import register_search_provider, registered_search_pr
 
 from werkzeug.datastructures import ImmutableMultiDict
 from eve.utils import ParsedRequest
-from flask import json
 
 NOW = utcnow()
 

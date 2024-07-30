@@ -14,8 +14,7 @@ from datetime import timedelta
 import arrow
 import requests
 
-from eve.utils import config
-
+from superdesk.resource_fields import ID_FIELD
 from superdesk import get_resource_service
 from superdesk.errors import IngestApiError
 from superdesk.io.feeding_services import FeedingService
@@ -54,7 +53,7 @@ class HTTPFeedingService(FeedingService, metaclass=ABCMeta):
         """
         token = {"auth_token": self._generate_auth_token(provider), "created": utcnow()}
         get_resource_service("ingest_providers").system_update(
-            provider[config.ID_FIELD], updates={"tokens": token}, original=provider
+            provider[ID_FIELD], updates={"tokens": token}, original=provider
         )
         provider["tokens"] = token
         return token["auth_token"]

@@ -8,11 +8,11 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
-import flask
 import logging
 from flask_babel import _
-from eve.utils import config
 
+from superdesk.resource_fields import ID_FIELD
+from superdesk.flask import g
 import superdesk
 from superdesk.errors import SuperdeskApiError
 from superdesk.services import BaseService
@@ -59,8 +59,8 @@ def get_user(required=False):
 
     :param boolean required: if True and there is no user it will raise an error
     """
-    user = flask.g.get("user", {})
-    if config.ID_FIELD not in user and required:
+    user = g.get("user", {})
+    if ID_FIELD not in user and required:
         raise SuperdeskApiError.notFoundError(_("Invalid user."))
     return user
 
@@ -71,12 +71,12 @@ def get_user_id(required=False):
     :param boolean required: if True and there is no user it will raise an error
     """
     user = get_user(required)
-    return user.get(config.ID_FIELD)
+    return user.get(ID_FIELD)
 
 
 def get_auth():
     """Get authenticated session data."""
-    auth = flask.g.get("auth", {})
+    auth = g.get("auth", {})
     return auth
 
 

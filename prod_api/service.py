@@ -11,7 +11,7 @@
 import operator
 from functools import reduce
 import superdesk
-from flask import current_app as app
+from superdesk.core import get_current_app
 
 
 class ProdApiService(superdesk.Service):
@@ -77,6 +77,7 @@ class ProdApiService(superdesk.Service):
         """
 
         def _process(item):
+            app = get_current_app()
             for _k, v in item.get("renditions", {}).items():
                 if v and "media" in v:
                     media = v.pop("media")

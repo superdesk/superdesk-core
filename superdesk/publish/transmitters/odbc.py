@@ -10,7 +10,7 @@
 
 import json
 
-from flask import current_app as app
+from superdesk.core import get_app_config
 from superdesk.publish import register_transmitter
 from superdesk.publish.publish_service import PublishService
 from superdesk.errors import PublishODBCError
@@ -43,7 +43,7 @@ class ODBCPublishService(PublishService):
         Configuration must have connection string and the name of a stored procedure.
         """
 
-        if not app.config["ODBC_PUBLISH"] or not pyodbc_available:
+        if not get_app_config("ODBC_PUBLISH") or not pyodbc_available:
             raise PublishODBCError()
 
         config = queue_item.get("destination", {}).get("config", {})

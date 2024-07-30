@@ -1,13 +1,12 @@
-import flask
 import unittest
 
-
+from superdesk.flask import Flask
 from superdesk.io.subjectcodes import init_app
 
 
 class SubjectsTestCase(unittest.TestCase):
     def test_app_subjects(self):
-        app = flask.Flask(__name__)
+        app = Flask(__name__)
         app.api_prefix = "/test"
         init_app(app)
         with app.app_context():

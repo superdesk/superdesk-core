@@ -11,10 +11,10 @@
 import superdesk
 
 from copy import deepcopy
-from flask import request
 from flask_babel import _
-from eve.utils import config
 
+from superdesk.resource_fields import ID_FIELD
+from superdesk.flask import request
 from apps.archive.usage import update_refs
 from apps.archive.archive import SOURCE as ARCHIVE
 from apps.content import push_item_move_notification
@@ -62,7 +62,7 @@ class FetchService(BaseService):
         id_of_fetched_items = []
 
         for doc in docs:
-            id_of_item_to_be_fetched = doc.get(config.ID_FIELD) if id is None else id
+            id_of_item_to_be_fetched = doc.get(ID_FIELD) if id is None else id
 
             desk_id = doc.get("desk")
             stage_id = doc.get("stage")
@@ -99,10 +99,10 @@ class FetchService(BaseService):
                 target=ingest_doc.get("target", doc.get("target")),
             )
 
-            id_of_fetched_items.append(dest_doc[config.ID_FIELD])
+            id_of_fetched_items.append(dest_doc[ID_FIELD])
             ingest_service.patch(id_of_item_to_be_fetched, {"archived": dest_doc["versioncreated"]})
 
-            dest_doc[FAMILY_ID] = ingest_doc[config.ID_FIELD]
+            dest_doc[FAMILY_ID] = ingest_doc[ID_FIELD]
             dest_doc[INGEST_ID] = self.__strip_version_from_guid(ingest_doc[GUID_FIELD], ingest_doc.get("version"))
             dest_doc[INGEST_VERSION] = ingest_doc.get("version")
 
@@ -160,7 +160,7 @@ class FetchService(BaseService):
             ref["location"] = ARCHIVE
 
         refs = [
-            {config.ID_FIELD: ref.get(RESIDREF), "desk": desk, "stage": stage, ITEM_STATE: state}
+            {ID_FIELD: ref.get(RESIDREF), "desk": desk, "stage": stage, ITEM_STATE: state}
             for group in dest_doc.get(GROUPS, [])
             for ref in group.get(REFS, [])
             if ref.get(RESIDREF)

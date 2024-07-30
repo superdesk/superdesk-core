@@ -3,7 +3,8 @@ import bson
 import superdesk
 
 from copy import deepcopy
-from eve.utils import config
+
+from superdesk.resource_fields import ID_FIELD
 from superdesk import get_resource_service
 from superdesk.errors import SuperdeskApiError
 from superdesk.default_schema import DEFAULT_SCHEMA, DEFAULT_EDITOR, DEFAULT_SCHEMA_MAP
@@ -147,7 +148,7 @@ class ContentTypesService(CacheableService):
     def on_delete_res_vocabularies(self, doc):
         req = ParsedRequest()
         req.projection = '{"label": 1}'
-        res = self.get(req=req, lookup={"schema." + doc[config.ID_FIELD]: {"$type": 3}})
+        res = self.get(req=req, lookup={"schema." + doc[ID_FIELD]: {"$type": 3}})
         if res.count():
             payload = {"content_types": [doc_hateoas for doc_hateoas in map(self._build_hateoas, res)]}
             message = _("Vocabulary {vocabulary} is used in {count} content type(s)").format(
@@ -615,11 +616,11 @@ def remove_profile_from_templates(item):
     :param item: deleted content profile
     """
     templates = list(
-        superdesk.get_resource_service("content_templates").get_templates_by_profile_id(item.get(config.ID_FIELD))
+        superdesk.get_resource_service("content_templates").get_templates_by_profile_id(item.get(ID_FIELD))
     )
     for template in templates:
         template.get("data", {}).pop("profile", None)
-        superdesk.get_resource_service("content_templates").patch(template[config.ID_FIELD], template)
+        superdesk.get_resource_service("content_templates").patch(template[ID_FIELD], template)
 
 
 def get_profile(_id):

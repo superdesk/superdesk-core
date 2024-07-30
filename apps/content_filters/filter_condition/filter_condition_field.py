@@ -11,7 +11,8 @@
 from typing import Dict
 from enum import Enum
 from lxml import etree
-from flask import g
+
+from superdesk.flask import g
 from superdesk.text_utils import get_text
 from superdesk.utc import utcnow
 from superdesk import get_resource_service

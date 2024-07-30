@@ -5,7 +5,7 @@ import requests
 from urllib.parse import urljoin
 from urllib3.util.retry import Retry
 
-from flask import current_app as app
+from superdesk.core import get_app_config
 
 session = requests.Session()
 retries = Retry(total=3, backoff_factor=0.1)
@@ -59,14 +59,14 @@ def format_geoname_item(item):
 def geonames_request(service, service_params):
     params = [
         ("type", "json"),
-        ("username", app.config.get("GEONAMES_USERNAME", "")),
+        ("username", get_app_config("GEONAMES_USERNAME", "")),
     ]
 
-    if app.config.get("GEONAMES_TOKEN"):
-        params.append(("token", app.config["GEONAMES_TOKEN"]))
+    if get_app_config("GEONAMES_TOKEN"):
+        params.append(("token", get_app_config("GEONAMES_TOKEN")))
 
     params.extend(service_params)
-    url = urljoin(app.config["GEONAMES_URL"], service)
+    url = urljoin(get_app_config("GEONAMES_URL"), service)
     res = session.get(url, params=params, timeout=10)
     if res.status_code != 200:
         res.raise_for_status()

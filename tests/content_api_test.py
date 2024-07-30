@@ -5,8 +5,10 @@ import superdesk
 
 from bson import ObjectId
 from copy import copy
-from flask import json, request
 from datetime import timedelta
+
+from superdesk.core import json
+from superdesk.flask import request
 from superdesk.tests import TestCase
 from superdesk.utc import utcnow
 from content_api.publish import MONGO_PREFIX

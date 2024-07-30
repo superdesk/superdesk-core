@@ -13,8 +13,8 @@ import json
 import requests
 
 from eve.render import send_response
-from flask import Blueprint
 
+from superdesk.flask import Blueprint
 from superdesk.utc import utcnow
 
 

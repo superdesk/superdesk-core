@@ -9,8 +9,9 @@ from pathlib import Path
 
 import superdesk
 import pymongo
-from eve.utils import config
-from flask import current_app as app
+
+from superdesk.core import get_current_app, get_app_config
+from superdesk.resource_fields import ETAG
 from superdesk.commands.flush_elastic_index import FlushElasticIndex
 
 logger = logging.getLogger(__name__)
@@ -205,7 +206,7 @@ def get_filepath(filename, path=None):
         dirs = [path]
     else:
         dirs = [
-            app.config.get("INIT_DATA_PATH", INIT_DATA_PATH),
+            get_app_config("INIT_DATA_PATH", INIT_DATA_PATH),
             INIT_DATA_PATH,
         ]
 
@@ -275,14 +276,15 @@ class AppInitializeWithDataCommand(superdesk.Command):
         :param bool init_index_only: if True, it only initializes index only
         """
         logger.info("Starting data initialization")
-        logger.info("Config: %s", app.config["APP_ABSPATH"])
+        logger.info("Config: %s", get_app_config("APP_ABSPATH"))
 
         # create indexes in mongo
         # We can safely ignore duplicate key errors as this only affects performance
         # As we want the rest of this command to still execute
+        app = get_current_app()
         app.init_indexes(ignore_duplicate_keys=True)
 
-        rebuild_elastic_on_init_data_error = app.config.get("REBUILD_ELASTIC_ON_INIT_DATA_ERROR")
+        rebuild_elastic_on_init_data_error = get_app_config("REBUILD_ELASTIC_ON_INIT_DATA_ERROR")
 
         # put mapping to elastic
         try:
@@ -345,6 +347,8 @@ class AppInitializeWithDataCommand(superdesk.Command):
         """
         logger.info("Process %r", entity_name)
         file_path = file_name and get_filepath(file_name, path)
+        app = get_current_app()
+
         if not file_path:
             pass
         elif not file_path.exists():
@@ -376,8 +380,8 @@ class AppInitializeWithDataCommand(superdesk.Command):
 
                     if data:
                         for item in data:
-                            if not item.get(config.ETAG):
-                                item.setdefault(config.ETAG, "init")
+                            if not item.get(ETAG):
+                                item.setdefault(ETAG, "init")
                         service.post(data)
 
                     if existing_data and do_patch:

@@ -13,8 +13,10 @@ import superdesk
 import superdesk.publish
 
 from datetime import timedelta
-from eve.utils import config, ParsedRequest
-from flask import current_app as app
+from eve.utils import ParsedRequest
+
+from superdesk.resource_fields import ID_FIELD, LAST_UPDATED
+from superdesk.core import get_app_config, get_current_app
 from superdesk import get_resource_service
 from superdesk.celery_task_utils import get_lock_id
 from superdesk.errors import PublishHTTPPushClientError
@@ -94,6 +96,7 @@ def _get_queue_lookup(retries=False, priority=None):
 
 def get_queue_subscribers(retries=False, priority=None):
     lookup = _get_queue_lookup(retries, priority)
+    app = get_current_app()
     return app.data.mongo.pymongo(resource=PUBLISH_QUEUE).db[PUBLISH_QUEUE].distinct("subscriber_id", lookup)
 
 
@@ -102,14 +105,14 @@ def get_queue_items(retries=False, subscriber_id=None, priority=None):
     if subscriber_id:
         lookup["$and"].append({"subscriber_id": subscriber_id})
     request = ParsedRequest()
-    request.max_results = app.config.get("MAX_TRANSMIT_QUERY_LIMIT", 100)  # limit per subscriber now
+    request.max_results = get_app_config("MAX_TRANSMIT_QUERY_LIMIT", 100)  # limit per subscriber now
     request.sort = '[("_created", 1), ("published_seq_num", 1)]'
     return get_resource_service(PUBLISH_QUEUE).get_from_mongo(req=request, lookup=lookup)
 
 
 def _get_queue(priority=None):
-    if priority and app.config.get("HIGH_PRIORITY_QUEUE_ENABLED"):
-        return app.config["HIGH_PRIORITY_QUEUE"]
+    if priority and get_app_config("HIGH_PRIORITY_QUEUE_ENABLED"):
+        return get_app_config("HIGH_PRIORITY_QUEUE")
 
 
 @celery.task(soft_time_limit=600, expires=10)
@@ -124,7 +127,7 @@ def transmit_subscriber_items(subscriber, retries=False, priority=None):
     try:
         queue_items = get_queue_items(retries, subscriber, priority)
         for queue_item in queue_items:
-            args = [queue_item[config.ID_FIELD]]
+            args = [queue_item[ID_FIELD]]
             kwargs = {"is_async": is_async}
             if is_async:
                 transmit_item.apply_async(
@@ -154,7 +157,7 @@ def transmit_item(queue_item_id, is_async=False):
         if queue_item.get("state") not in [QueueState.PENDING.value, QueueState.RETRYING.value]:
             logger.info(
                 "Transmit State is not pending/retrying for queue item: {}. It is in {}".format(
-                    queue_item.get(config.ID_FIELD), queue_item.get("state")
+                    queue_item.get(ID_FIELD), queue_item.get("state")
                 )
             )
             return
@@ -166,7 +169,7 @@ def transmit_item(queue_item_id, is_async=False):
 
         # update the status of the item to in-progress
         queue_update = {"state": "in-progress", "transmit_started_at": utcnow()}
-        publish_queue_service.patch(queue_item.get(config.ID_FIELD), queue_update)
+        publish_queue_service.patch(queue_item.get(ID_FIELD), queue_update)
         logger.info("Transmitting queue item {}".format(log_msg))
 
         destination = queue_item["destination"]
@@ -181,12 +184,12 @@ def transmit_item(queue_item_id, is_async=False):
     except Exception as e:
         logger.exception("Failed to transmit queue item {}".format(log_msg))
 
-        max_retry_attempt = app.config.get("MAX_TRANSMIT_RETRY_ATTEMPT")
-        retry_attempt_delay = app.config.get("TRANSMIT_RETRY_ATTEMPT_DELAY_MINUTES")
+        max_retry_attempt = get_app_config("MAX_TRANSMIT_RETRY_ATTEMPT")
+        retry_attempt_delay = get_app_config("TRANSMIT_RETRY_ATTEMPT_DELAY_MINUTES")
         try:
             orig_item = publish_queue_service.find_one(req=None, _id=queue_item["_id"])
             timeout = 2 ** min(6, orig_item.get("retry_attempt", retry_attempt_delay))
-            updates = {config.LAST_UPDATED: utcnow()}
+            updates = {LAST_UPDATED: utcnow()}
 
             if orig_item.get("retry_attempt", 0) < max_retry_attempt and not isinstance(e, PublishHTTPPushClientError):
                 updates["retry_attempt"] = orig_item.get("retry_attempt", 0) + 1
@@ -196,7 +199,7 @@ def transmit_item(queue_item_id, is_async=False):
                 # all retry attempts exhausted marking the item as failed.
                 updates["state"] = QueueState.FAILED.value
 
-            publish_queue_service.system_update(orig_item.get(config.ID_FIELD), updates, orig_item)
+            publish_queue_service.system_update(orig_item.get(ID_FIELD), updates, orig_item)
         except Exception:
             logger.error("Failed to set the state for failed publish queue item {}.".format(queue_item["_id"]))
 

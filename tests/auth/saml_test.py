@@ -1,5 +1,4 @@
-import flask
-import unittest
+from superdesk.flask import session
 import superdesk.tests as tests
 import superdesk.auth.saml as saml
 
@@ -40,8 +39,8 @@ class SamlAuthTestCase(tests.TestCase):
     @patch("superdesk.auth.saml.init_saml_auth")
     def test_create_missing_user(self, init_mock):
         with self.app.test_client() as c:
-            flask.session[saml.SESSION_NAME_ID] = "foo.bar@example.com"
-            flask.session[saml.SESSION_USERDATA_KEY] = SAML_DATA
+            session[saml.SESSION_NAME_ID] = "foo.bar@example.com"
+            session[saml.SESSION_USERDATA_KEY] = SAML_DATA
 
             resp = saml.index()
             self.assertIn(ERROR, resp)
@@ -76,9 +75,9 @@ class SamlAuthTestCase(tests.TestCase):
     def test_create_missing_user_missing_userdata(self, init_mock):
         with self.app.test_client() as c:
             # with missing data it can't work
-            flask.session[saml.SESSION_NAME_ID] = "foo.bar@example.com"
-            flask.session[saml.SESSION_USERDATA_KEY] = SAML_DATA.copy()
-            flask.session[saml.SESSION_USERDATA_KEY].update(
+            session[saml.SESSION_NAME_ID] = "foo.bar@example.com"
+            session[saml.SESSION_USERDATA_KEY] = SAML_DATA.copy()
+            session[saml.SESSION_USERDATA_KEY].update(
                 {
                     "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name": [],
                 }
@@ -91,8 +90,8 @@ class SamlAuthTestCase(tests.TestCase):
     def test_handle_saml_name_id_not_email(self, init_mock):
         with self.app.test_client() as c:
             # with missing data it can't work
-            flask.session[saml.SESSION_NAME_ID] = "something_weird_like_guid"
-            flask.session[saml.SESSION_USERDATA_KEY] = SAML_DATA.copy()
+            session[saml.SESSION_NAME_ID] = "something_weird_like_guid"
+            session[saml.SESSION_USERDATA_KEY] = SAML_DATA.copy()
             with patch.dict(self.app.config, {"USER_EXTERNAL_CREATE": True}):
                 resp = saml.index()
             self.assertNotIn(ERROR, resp)
@@ -101,8 +100,8 @@ class SamlAuthTestCase(tests.TestCase):
     def test_update_user_data_when_it_changes(self, init_mock):
         with self.app.test_client() as c:
             # with missing data it can't work
-            flask.session[saml.SESSION_NAME_ID] = "nameId"
-            flask.session[saml.SESSION_USERDATA_KEY] = SAML_DATA.copy()
+            session[saml.SESSION_NAME_ID] = "nameId"
+            session[saml.SESSION_USERDATA_KEY] = SAML_DATA.copy()
             with patch.dict(
                 self.app.config,
                 {
@@ -126,7 +125,7 @@ class SamlAuthTestCase(tests.TestCase):
                 user,
             )
 
-            flask.session[saml.SESSION_USERDATA_KEY].update(
+            session[saml.SESSION_USERDATA_KEY].update(
                 {
                     "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/givenname": ["John"],
                     "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/surname": ["Doe"],

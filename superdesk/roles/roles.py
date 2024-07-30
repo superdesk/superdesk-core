@@ -11,7 +11,7 @@
 import logging
 import superdesk
 
-from flask import current_app as app
+from superdesk.core import get_current_app
 from superdesk.activity import add_activity, ACTIVITY_UPDATE
 from superdesk.services import BaseService
 from superdesk import get_resource_service
@@ -116,6 +116,7 @@ class RolesService(BaseService):
                 push_notification("activity", _dest=activity["recipients"])
                 privileges_updated = True
             if privileges_updated:
+                app = get_current_app().as_any()
                 app.on_role_privileges_updated(role, role_users)
 
         else:

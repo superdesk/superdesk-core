@@ -13,7 +13,7 @@ import hmac
 import logging
 import requests
 
-from flask import current_app as app
+from superdesk.core import get_current_app, get_app_config
 from superdesk.publish import register_transmitter, registered_transmitter_file_providers
 
 from superdesk.errors import PublishHTTPPushError, PublishHTTPPushServerError, PublishHTTPPushClientError
@@ -120,6 +120,7 @@ class HTTPPushService(PublishService):
         for get_files in registered_transmitter_file_providers:
             media.update(get_files(self.NAME, item))
 
+        app = get_current_app()
         for media_id, rendition in media.items():
             if not self._media_exists(media_id, destination):
                 binary = app.media.get(media_id, resource=rendition.get("resource", "upload"))
@@ -168,7 +169,7 @@ class HTTPPushService(PublishService):
         return response.status_code == requests.codes.ok  # @UndefinedVariable
 
     def _get_timeout(self):
-        return app.config.get("HTTP_PUSH_TIMEOUT", (5, 30))
+        return get_app_config("HTTP_PUSH_TIMEOUT", (5, 30))
 
     def _get_headers(self, data, destination, current_headers):
         secret_token = self._get_secret_token(destination)

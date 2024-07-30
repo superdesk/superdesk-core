@@ -11,7 +11,7 @@
 import logging
 import elasticapm
 
-from eve.utils import config
+from superdesk.resource_fields import ID_FIELD
 from superdesk import get_resource_service
 from superdesk.metadata.item import ITEM_TYPE, CONTENT_TYPE, CONTENT_STATE
 from apps.publish.enqueue.enqueue_service import EnqueueService
@@ -61,8 +61,8 @@ class EnqueuePublishedService(EnqueueService):
         subscribers, codes = self.filter_subscribers(doc, subscribers, target_media_type)
 
         if rewrite_subscribers:
-            subscribers_ids = set(s[config.ID_FIELD] for s in rewrite_subscribers)
-            subscribers = rewrite_subscribers + [s for s in subscribers if s[config.ID_FIELD] not in subscribers_ids]
+            subscribers_ids = set(s[ID_FIELD] for s in rewrite_subscribers)
+            subscribers = rewrite_subscribers + [s for s in subscribers if s[ID_FIELD] not in subscribers_ids]
 
         if rewrite_codes:
             # join the codes

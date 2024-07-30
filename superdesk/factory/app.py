@@ -13,7 +13,6 @@ from typing import Dict, Any, Type, List, Optional, Union, Mapping, cast, NoRetu
 
 import os
 import eve
-import flask
 from werkzeug.exceptions import NotFound
 import jinja2
 import importlib
@@ -26,10 +25,10 @@ from eve.io.mongo.mongo import _create_index as create_index
 from eve.io.media import MediaStorage
 from eve.render import send_response
 from flask_babel import Babel
-from flask import g, json
 from babel import parse_locale
 from pymongo.errors import DuplicateKeyError
 
+from superdesk.flask import g, url_for, Config, Request as FlaskRequest, abort, Blueprint, request as flask_request
 from superdesk.celery_app import init_celery
 from superdesk.datalayer import SuperdeskDataLayer  # noqa
 from superdesk.errors import SuperdeskError, SuperdeskApiError, DocumentError
@@ -50,9 +49,9 @@ logger = logging.getLogger(__name__)
 
 class HttpFlaskRequest(Request):
     endpoint: Endpoint
-    request: flask.Request
+    request: FlaskRequest
 
-    def __init__(self, endpoint: Endpoint, request: flask.Request):
+    def __init__(self, endpoint: Endpoint, request: FlaskRequest):
         self.endpoint = endpoint
         self.request = request
 
@@ -77,7 +76,7 @@ class HttpFlaskRequest(Request):
         return self.request.get_data()
 
     async def abort(self, code: int, *args: Any, **kwargs: Any) -> NoReturn:
-        flask.abort(code, *args, **kwargs)
+        abort(code, *args, **kwargs)
 
 
 def set_error_handlers(app):
@@ -120,6 +119,9 @@ class SuperdeskEve(eve.Eve):
     async_app: SuperdeskAsyncApp
     _endpoints: List[Endpoint]
     _endpoint_groups: List[EndpointGroup]
+
+    media: Any
+    data: Any
 
     def __init__(self, **kwargs):
         self.async_app = SuperdeskAsyncApp(self)
@@ -189,7 +191,7 @@ class SuperdeskEve(eve.Eve):
 
     def register_endpoint(self, endpoint: Endpoint | EndpointGroup):
         if isinstance(endpoint, EndpointGroup):
-            blueprint = flask.Blueprint(endpoint.name, endpoint.import_name)
+            blueprint = Blueprint(endpoint.name, endpoint.import_name)
             for sub_endpoint in endpoint.endpoints:
                 blueprint.add_url_rule(
                     (
@@ -217,7 +219,6 @@ class SuperdeskEve(eve.Eve):
 
     async def _process_async_endpoint(self, **kwargs):
         # Get Endpoint instance
-        from flask import request as flask_request
 
         endpoint_name = flask_request.endpoint
 
@@ -255,6 +256,16 @@ class SuperdeskEve(eve.Eve):
 
         return response.body, response.status_code, response.headers
 
+    def get_current_user_dict(self) -> Optional[Dict[str, Any]]:
+        return getattr(g, "user", None)
+
+    def download_url(self, media_id: str) -> str:
+        prefered_url_scheme = self.config.get("PREFERRED_URL_SCHEME", "http")
+        return url_for("download_raw.download_file", id=media_id, _external=True, _scheme=prefered_url_scheme)
+
+    def as_any(self) -> Any:
+        return self
+
 
 def get_media_storage_class(app_config: Dict[str, Any], use_provider_config: bool = True) -> Type[MediaStorage]:
     if use_provider_config and app_config.get("MEDIA_STORAGE_PROVIDER"):
@@ -280,7 +291,7 @@ def get_app(config=None, media_storage=None, config_object=None, init_elastic=No
     """
 
     abs_path = SUPERDESK_PATH
-    app_config = flask.Config(abs_path)
+    app_config = Config(abs_path)
     app_config.from_object("superdesk.default_settings")
     app_config.setdefault("APP_ABSPATH", abs_path)
     app_config.setdefault("DOMAIN", {})
@@ -316,6 +327,7 @@ def get_app(config=None, media_storage=None, config_object=None, init_elastic=No
     }
 
     superdesk.app = app
+    app.async_app.start()
 
     custom_loader = jinja2.ChoiceLoader(
         [
@@ -386,7 +398,6 @@ def get_app(config=None, media_storage=None, config_object=None, init_elastic=No
         app.jinja_env.filters[name] = jinja_filter
 
     configure_logging(app.config["LOG_CONFIG_FILE"])
-    app.async_app.start()
 
     return app
 

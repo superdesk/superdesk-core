@@ -8,7 +8,7 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
-from flask import request
+from superdesk.flask import request
 from superdesk.resource import Resource, build_custom_hateoas
 from superdesk.metadata.item import get_schema
 from superdesk.metadata.utils import item_url

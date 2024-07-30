@@ -8,14 +8,16 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
-import superdesk
 import logging
 import datetime
-from superdesk.utc import utcnow
-from eve.utils import date_to_str, ParsedRequest, config
+from eve.utils import ParsedRequest
 from copy import deepcopy
 from bson import ObjectId
 from time import time
+
+import superdesk
+from superdesk.core import get_app_config
+from superdesk.utc import utcnow
 
 logger = logging.getLogger(__name__)
 
@@ -68,10 +70,10 @@ class PurgeAudit(superdesk.Command):
         if expiry is not None:
             self.expiry = utcnow() - datetime.timedelta(minutes=int(expiry))
         else:
-            if config.AUDIT_EXPIRY_MINUTES == 0:
+            if get_app_config("AUDIT_EXPIRY_MINUTES") == 0:
                 logger.info("Audit purge is not enabled")
                 return
-            self.expiry = utcnow() - datetime.timedelta(minutes=config.AUDIT_EXPIRY_MINUTES)
+            self.expiry = utcnow() - datetime.timedelta(minutes=get_app_config("AUDIT_EXPIRY_MINUTES"))
         logger.info("Starting audit purge for items older than {}".format(self.expiry))
         # self.purge_orphaned_item_audits()
         self.purge_old_entries()

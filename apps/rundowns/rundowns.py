@@ -2,9 +2,9 @@ import bson
 import datetime
 import superdesk
 
-from flask import json
 from typing import Optional
 
+from superdesk.core import json
 from superdesk.metadata.item import metadata_schema
 from werkzeug.datastructures import ImmutableMultiDict
 

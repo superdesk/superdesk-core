@@ -10,10 +10,10 @@
 
 import cProfile
 import logging
+
+from superdesk.resource_fields import ID_FIELD
 from superdesk.errors import SuperdeskApiError
 from superdesk.services import BaseService
-
-from eve.utils import config
 
 
 logger = logging.getLogger(__name__)
@@ -49,7 +49,7 @@ class ProfilingService(BaseService):
 
     def on_create(self, docs):
         for doc in docs:
-            doc[config.ID_FIELD] = doc["name"]
+            doc[ID_FIELD] = doc["name"]
 
     def delete(self, lookup):
         """

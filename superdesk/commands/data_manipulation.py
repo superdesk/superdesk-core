@@ -20,7 +20,6 @@ import bz2
 import pymongo.database
 
 from multiprocessing import Process, Lock
-from flask import current_app as app
 import multiprocessing.synchronize
 from contextlib import contextmanager
 from datetime import datetime
@@ -31,6 +30,7 @@ from typing import Optional, Union, List, Iterator
 from bson.json_util import dumps, loads
 from pymongo.errors import OperationFailure
 import superdesk
+from superdesk.core import get_current_app
 from superdesk.timer import timer
 from superdesk.resource import Resource
 from superdesk.services import BaseService
@@ -175,7 +175,7 @@ def parse_dump_file(
     :return: metadata
     """
     if db is None:
-        db = app.data.pymongo().db
+        db = get_current_app().data.pymongo().db
     # we use a state machine to parse JSON progressively, and avoid memory issue for huge databases
     if single_file:
         collection_name = None
@@ -473,7 +473,7 @@ class StorageRestore(superdesk.Command):
         if keep_existing is False:
             for db in get_dbs():
                 db.client.drop_database(db)
-            app.init_indexes()
+            get_current_app().init_indexes()
         if archive_path.is_file():
             self.restore_file(archive_path)
         elif archive_path.is_dir():
@@ -577,7 +577,7 @@ class StorageStartRecording(superdesk.Command):
         dest_dir_p.mkdir(parents=True, exist_ok=True)
         dest_path = (dest_dir_p / name).with_suffix(".json.bz2")
         applied_updates = list(data_updates.get_applied_updates())
-        pymongo = app.data.pymongo()
+        pymongo = get_current_app().data.pymongo()
         db = pymongo.db
         version = tuple(int(v) for v in pymongo.cx.server_info()["version"].split("."))
         if version < (4, 0):
@@ -658,7 +658,7 @@ class StorageRestoreRecord(superdesk.Command):
 
     def run(self, record_file: Union[Path, str], force_db_reset: bool = False, skip_base_dump: bool = False) -> None:
         file_path = get_dest_path(record_file, dump=False)
-        db = app.data.pymongo().db
+        db = get_current_app().data.pymongo().db
         with open_dump(file_path) as f:
             record_data = loads(f.read())
             metadata = record_data["metadata"]
@@ -975,4 +975,5 @@ superdesk.command("storage:upgrade-dumps", StorageMigrateDumps())
 
 
 def get_dbs():
+    app = get_current_app()
     return [app.data.pymongo(prefix=prefix).db for prefix in [None, "ARCHIVED", "LEGAL_ARCHIVE", "CONTENTAPI_MONGO"]]

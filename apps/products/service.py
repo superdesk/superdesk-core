@@ -8,9 +8,9 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
+from superdesk.resource_fields import ID_FIELD
 from superdesk import get_resource_service
 from superdesk.services import CacheableService
-from eve.utils import config
 from superdesk.errors import SuperdeskApiError
 from superdesk.metadata.utils import ProductTypes
 from flask_babel import _
@@ -41,7 +41,7 @@ class ProductsService(CacheableService):
         if updates.get("product_type", "both") != original.get("product_type", "both"):
             if updates.get("product_type") == ProductTypes.DIRECT.value:
                 names = get_resource_service("subscribers").get_subscriber_names(
-                    {"api_products": original.get(config.ID_FIELD)}
+                    {"api_products": original.get(ID_FIELD)}
                 )
                 if names:
                     raise SuperdeskApiError.badRequestError(
@@ -50,9 +50,7 @@ class ProductsService(CacheableService):
                         )
                     )
             elif updates.get("product_type") == ProductTypes.API.value:
-                names = get_resource_service("subscribers").get_subscriber_names(
-                    {"products": original.get(config.ID_FIELD)}
-                )
+                names = get_resource_service("subscribers").get_subscriber_names({"products": original.get(ID_FIELD)})
                 if names:
                     raise SuperdeskApiError.badRequestError(
                         message=_("Product is used for direct publishing for the subscriber(s): {subscribers}").format(

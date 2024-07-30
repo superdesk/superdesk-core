@@ -8,6 +8,7 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
+from superdesk.core import get_current_app, get_app_config
 from superdesk import get_resource_service, editor_utils
 from superdesk.media.crop import CropService
 from superdesk.metadata.item import ITEM_STATE, EMBARGO, SCHEDULE_SETTINGS
@@ -20,7 +21,6 @@ from apps.auth import get_user_id
 from .common import BasePublishService, BasePublishResource, ITEM_CORRECT
 from superdesk.emails import send_translation_changed
 from superdesk.activity import add_activity
-from flask import g, current_app as app
 
 
 def send_translation_notifications(original):
@@ -50,7 +50,8 @@ def send_translation_notifications(original):
     if len(recipients) == 0:
         return
 
-    username = g.user.get("display_name") or g.user.get("username")
+    user = get_current_app().get_current_user_dict() or {}
+    username = user.get("display_name") or user.get("username")
     send_translation_changed(username, changed_article, recipients)
 
 
@@ -80,7 +81,7 @@ class CorrectPublishService(BasePublishService):
             super().set_state(original, updates)
 
     def change_being_corrected_to_published(self, updates, original):
-        if app.config.get("CORRECTIONS_WORKFLOW") and original.get("state") == "correction":
+        if get_app_config("CORRECTIONS_WORKFLOW") and original.get("state") == "correction":
             publish_service = get_resource_service("published")
             being_corrected_article = publish_service.find_one(
                 req=None, guid=original.get("guid"), state="being_corrected"

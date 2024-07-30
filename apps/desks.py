@@ -13,12 +13,13 @@ import itertools
 from typing import Dict, Any, List
 
 import superdesk
-from flask import current_app as app, request
 
+from superdesk.core import get_app_config, get_current_app
+from superdesk.resource_fields import ID_FIELD
+from superdesk.flask import request
 from superdesk import get_resource_service
 from superdesk.errors import SuperdeskApiError
 from superdesk.resource import Resource
-from superdesk import config
 from superdesk.utils import SuperdeskBaseEnum
 from superdesk.timer import timer
 from bson.objectid import ObjectId
@@ -141,7 +142,7 @@ class DesksService(BaseService):
             self._ensure_unique_members(desk)
 
             if desk.get("content_expiry") == 0:
-                desk["content_expiry"] = app.settings["CONTENT_EXPIRY_MINUTES"]
+                desk["content_expiry"] = get_app_config("CONTENT_EXPIRY_MINUTES")
 
             if "working_stage" not in desk:
                 stages_to_be_linked_with_desk.append("working_stage")
@@ -156,20 +157,20 @@ class DesksService(BaseService):
             desk.setdefault("desk_type", DeskTypes.authoring.value)
             super().create([desk], **kwargs)
             for stage_type in stages_to_be_linked_with_desk:
-                stage_service.patch(desk[stage_type], {"desk": desk[config.ID_FIELD]})
+                stage_service.patch(desk[stage_type], {"desk": desk[ID_FIELD]})
 
             # make the desk available in default content template
             content_templates = get_resource_service("content_templates")
             template = content_templates.find_one(req=None, _id=desk.get("default_content_template"))
             if template:
-                template.setdefault("template_desks", []).append(desk.get(config.ID_FIELD))
+                template.setdefault("template_desks", []).append(desk.get(ID_FIELD))
                 content_templates.patch(desk.get("default_content_template"), template)
 
-        return [doc[config.ID_FIELD] for doc in docs]
+        return [doc[ID_FIELD] for doc in docs]
 
     def on_created(self, docs):
         for doc in docs:
-            push_notification(self.notification_key, created=1, desk_id=str(doc.get(config.ID_FIELD)))
+            push_notification(self.notification_key, created=1, desk_id=str(doc.get(ID_FIELD)))
             get_resource_service("users").update_stage_visibility_for_users()
 
     def on_update(self, updates, original):
@@ -181,8 +182,8 @@ class DesksService(BaseService):
         if updates.get("desk_type") and updates.get("desk_type") != original.get("desk_type", ""):
             archive_versions_query = {
                 "$or": [
-                    {"task.last_authoring_desk": str(original[config.ID_FIELD])},
-                    {"task.last_production_desk": str(original[config.ID_FIELD])},
+                    {"task.last_authoring_desk": str(original[ID_FIELD])},
+                    {"task.last_production_desk": str(original[ID_FIELD])},
                 ]
             }
 
@@ -210,7 +211,7 @@ class DesksService(BaseService):
             3. The desk is associated with routing rule(s)
         """
 
-        as_default_desk = superdesk.get_resource_service("users").get(req=None, lookup={"desk": desk[config.ID_FIELD]})
+        as_default_desk = superdesk.get_resource_service("users").get(req=None, lookup={"desk": desk[ID_FIELD]})
         if as_default_desk and as_default_desk.count():
             raise SuperdeskApiError.preconditionFailedError(
                 message=_("Cannot delete desk as it is assigned as default desk to user(s).")
@@ -218,8 +219,8 @@ class DesksService(BaseService):
 
         routing_rules_query = {
             "$or": [
-                {"rules.actions.fetch.desk": desk[config.ID_FIELD]},
-                {"rules.actions.publish.desk": desk[config.ID_FIELD]},
+                {"rules.actions.fetch.desk": desk[ID_FIELD]},
+                {"rules.actions.publish.desk": desk[ID_FIELD]},
             ]
         }
         routing_rules = superdesk.get_resource_service("routing_schemes").get(req=None, lookup=routing_rules_query)
@@ -230,9 +231,9 @@ class DesksService(BaseService):
 
         archive_versions_query = {
             "$or": [
-                {"task.desk": str(desk[config.ID_FIELD])},
-                {"task.last_authoring_desk": str(desk[config.ID_FIELD])},
-                {"task.last_production_desk": str(desk[config.ID_FIELD])},
+                {"task.desk": str(desk[ID_FIELD])},
+                {"task.last_authoring_desk": str(desk[ID_FIELD])},
+                {"task.last_production_desk": str(desk[ID_FIELD])},
             ]
         }
 
@@ -257,14 +258,12 @@ class DesksService(BaseService):
         Overriding to delete stages before deleting a desk
         """
 
-        superdesk.get_resource_service("stages").delete(lookup={"desk": lookup.get(config.ID_FIELD)})
+        superdesk.get_resource_service("stages").delete(lookup={"desk": lookup.get(ID_FIELD)})
         super().delete(lookup)
 
     def on_deleted(self, doc):
         desk_user_ids = [str(member["user"]) for member in doc.get("members", [])]
-        push_notification(
-            self.notification_key, deleted=1, user_ids=desk_user_ids, desk_id=str(doc.get(config.ID_FIELD))
-        )
+        push_notification(self.notification_key, deleted=1, user_ids=desk_user_ids, desk_id=str(doc.get(ID_FIELD)))
 
     def __compare_members(self, original, updates):
         original_members = set([member["user"] for member in original])
@@ -274,7 +273,7 @@ class DesksService(BaseService):
         return added, removed
 
     def __send_notification(self, updates, desk):
-        desk_id = desk[config.ID_FIELD]
+        desk_id = desk[ID_FIELD]
         users_service = superdesk.get_resource_service("users")
 
         if "members" in updates:
@@ -303,7 +302,7 @@ class DesksService(BaseService):
                 users_service.update_stage_visibility_for_user(user)
 
         else:
-            push_notification(self.notification_key, updated=1, desk_id=str(desk.get(config.ID_FIELD)))
+            push_notification(self.notification_key, updated=1, desk_id=str(desk.get(ID_FIELD)))
 
     def get_desk_name(self, desk_id):
         """Return the item desk.
@@ -320,7 +319,7 @@ class DesksService(BaseService):
 
     def on_fetched(self, res):
         members_set = set()
-        db_users = app.data.mongo.pymongo("users").db["users"]
+        db_users = get_current_app().data.mongo.pymongo("users").db["users"]
 
         # find display_name from the users document for each member in desks document
         for desk in res["_items"]:
@@ -627,7 +626,7 @@ class OverviewService(BaseService):
             agg_query["aggs"]["overview"]["aggs"] = {"top_docs": {"top_hits": {"size": 100}}}
 
         with timer(timer_label):
-            response = app.data.elastic.search(agg_query, collection, params={"size": 0})
+            response = get_current_app().data.elastic.search(agg_query, collection, params={"size": 0})
 
         doc["_items"] = [
             {
@@ -672,6 +671,7 @@ class OverviewService(BaseService):
         for d in found:
             members.update({m["user"] for m in d.get("members", [])})
 
+        app = get_current_app()
         users_aggregation = app.data.pymongo().db.users.aggregate(
             [
                 {"$match": {"_id": {"$in": list(members)}}},
@@ -766,9 +766,9 @@ def remove_profile_from_desks(item):
     req = ParsedRequest()
     desks = list(superdesk.get_resource_service("desks").get(req=req, lookup={}))
     for desk in desks:
-        if desk.get("default_content_profile") == str(item.get(config.ID_FIELD)):
+        if desk.get("default_content_profile") == str(item.get(ID_FIELD)):
             desk["default_content_profile"] = None
-            superdesk.get_resource_service("desks").patch(desk[config.ID_FIELD], desk)
+            superdesk.get_resource_service("desks").patch(desk[ID_FIELD], desk)
 
 
 def format_buckets(aggs):

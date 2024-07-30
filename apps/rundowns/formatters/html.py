@@ -1,9 +1,8 @@
 import base64
 
-from flask import render_template
-
 from . import BaseFormatter
 
+from superdesk.flask import render_template
 from superdesk.text_utils import get_text
 
 

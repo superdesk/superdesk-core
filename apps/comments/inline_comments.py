@@ -1,7 +1,7 @@
 import re
 import bson
 
-from flask import current_app as app
+from superdesk.core import get_app_config
 
 from .user_mentions import notify_mentioned_users
 
@@ -28,7 +28,7 @@ def handle_inline_mentions(sender, updates, original):
                             "mentioned_users": {user: bson.ObjectId(user) for user in users},
                         }
                     ],
-                    app.config.get("CLIENT_URL", "").rstrip("/"),
+                    get_app_config("CLIENT_URL", "").rstrip("/"),
                     item=updated,
                 )
             comment["notified"] = True

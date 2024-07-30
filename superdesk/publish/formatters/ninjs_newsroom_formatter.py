@@ -9,8 +9,8 @@
 # at https://www.sourcefabric.org/superdesk/license
 
 
-import flask
 import superdesk
+from superdesk.flask import g
 import elasticapm
 
 from .ninjs_formatter import NINJSFormatter
@@ -34,14 +34,14 @@ class NewsroomNinjsFormatter(NINJSFormatter):
         :return:
         """
         cache_id = "article-products-{_id}".format(_id=article.get("_id") or article.get("guid"))
-        if not hasattr(flask.g, cache_id):
+        if not hasattr(g, cache_id):
             matches = superdesk.get_resource_service("product_tests").test_products(article)
             setattr(
-                flask.g,
+                g,
                 cache_id,
                 [{"code": p["product_id"], "name": p.get("name")} for p in matches if p.get("matched", False)],
             )
-        return getattr(flask.g, cache_id)
+        return getattr(g, cache_id)
 
     @elasticapm.capture_span()
     def _transform_to_ninjs(self, article, subscriber, recursive=True):

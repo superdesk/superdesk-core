@@ -10,9 +10,9 @@
 
 import logging
 
-from eve.utils import config
-from flask import g, current_app as app
-
+from superdesk.resource_fields import ID_FIELD
+from superdesk.core import get_app_config
+from superdesk.flask import g
 import superdesk
 from superdesk import get_resource_service
 from superdesk.activity import (
@@ -74,7 +74,7 @@ class IngestProviderResource(Resource):
             "content_types": {"type": "list", "default": tuple(CONTENT_TYPE), "allowed": tuple(CONTENT_TYPE)},
             "allow_remove_ingested": {"type": "boolean", "default": False},
             "disable_item_updates": {"type": "boolean", "default": False},
-            "content_expiry": {"type": "integer", "default": app.config["INGEST_EXPIRY_MINUTES"]},
+            "content_expiry": {"type": "integer", "default": get_app_config("INGEST_EXPIRY_MINUTES")},
             "config": {
                 "type": "dict",
                 "schema": {},
@@ -183,7 +183,7 @@ class IngestProviderService(BaseService):
         for doc in docs:
             content_expiry = doc.get("content_expiry", 0)
             if content_expiry == 0:
-                doc["content_expiry"] = app.config["INGEST_EXPIRY_MINUTES"]
+                doc["content_expiry"] = get_app_config("INGEST_EXPIRY_MINUTES")
                 self._set_provider_status(doc, doc.get("last_closed", {}).get("message", ""))
             elif content_expiry < 0:
                 doc["content_expiry"] = None
@@ -210,7 +210,7 @@ class IngestProviderService(BaseService):
             content_expiry = None
         else:
             if content_expiry == 0:
-                content_expiry = app.config["INGEST_EXPIRY_MINUTES"]
+                content_expiry = get_app_config("INGEST_EXPIRY_MINUTES")
             elif content_expiry < 0:
                 content_expiry = None
             updates["content_expiry"] = content_expiry
@@ -281,12 +281,10 @@ class IngestProviderService(BaseService):
             item=None,
             user_list=self.user_service.get_users_by_user_type("administrator"),
             name=doc.get("name"),
-            provider_id=doc.get(config.ID_FIELD),
+            provider_id=doc.get(ID_FIELD),
         )
-        push_notification("ingest_provider:delete", provider_id=str(doc.get(config.ID_FIELD)))
-        get_resource_service("sequences").delete(
-            lookup={"key": "ingest_providers_{_id}".format(_id=doc[config.ID_FIELD])}
-        )
+        push_notification("ingest_provider:delete", provider_id=str(doc.get(ID_FIELD)))
+        get_resource_service("sequences").delete(lookup={"key": "ingest_providers_{_id}".format(_id=doc[ID_FIELD])})
         logger.info("Deleted Ingest Channel. Data:{}".format(doc))
 
     def _test_config(self, updates, original=None):

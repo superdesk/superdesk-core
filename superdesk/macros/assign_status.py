@@ -8,7 +8,7 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
-from eve.utils import config
+from superdesk.resource_fields import ID_FIELD
 from superdesk import get_resource_service
 from planning.common import ASSIGNMENT_WORKFLOW_STATE
 from copy import deepcopy
@@ -25,7 +25,7 @@ def update_on_assign_id(item, **kwargs):
         if assignment["assigned_to"]["state"] == ASSIGNMENT_WORKFLOW_STATE.ASSIGNED:
             updates = {"assigned_to": deepcopy(assignment.get("assigned_to"))}
             updates["assigned_to"]["state"] = ASSIGNMENT_WORKFLOW_STATE.IN_PROGRESS
-            assignments_service.patch(assignment[config.ID_FIELD], updates)
+            assignments_service.patch(assignment[ID_FIELD], updates)
     return item
 
 

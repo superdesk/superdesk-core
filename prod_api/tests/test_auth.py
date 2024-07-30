@@ -2,8 +2,8 @@ import json
 import time
 import pytest
 from requests.auth import _basic_auth_str
-from flask import url_for
 
+from superdesk.flask import url_for
 from superdesk.auth_server.scopes import Scope
 
 from ..conftest import get_test_prodapi_app

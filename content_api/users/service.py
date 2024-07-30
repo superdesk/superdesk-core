@@ -11,8 +11,8 @@
 import logging
 
 import bcrypt
-from flask import current_app as app
 
+from superdesk.core import get_app_config
 from superdesk.services import BaseService
 from superdesk.utils import is_hashed, get_hash
 
@@ -39,7 +39,7 @@ class UsersService(BaseService):
             updates["password"] = self._get_password_hash(updates["password"])
 
     def _get_password_hash(self, password):
-        return get_hash(password, app.config.get("BCRYPT_GENSALT_WORK_FACTOR", 12))
+        return get_hash(password, get_app_config("BCRYPT_GENSALT_WORK_FACTOR", 12))
 
     def password_match(self, password, hashed_password):
         """Return true if the given password matches the hashed password

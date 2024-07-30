@@ -16,13 +16,15 @@ import json as std_json
 from typing_extensions import Literal
 from pymongo.cursor import Cursor as MongoCursor
 from pymongo.collation import Collation
-from flask import current_app as app, json
-from eve.utils import document_etag, config, ParsedRequest
+from eve.utils import document_etag, ParsedRequest
 from eve.io.mongo import MongoJSONEncoder
 from superdesk.utc import utcnow
 from superdesk.logging import logger, item_msg
 from eve.methods.common import resolve_document_etag
 from elasticsearch.exceptions import RequestError, NotFoundError
+
+from superdesk.core import json, get_app_config, get_current_app
+from superdesk.resource_fields import ID_FIELD, ETAG, LAST_UPDATED, DATE_CREATED
 from superdesk.errors import SuperdeskApiError
 from superdesk.notification import push_notification as _push_notification
 from superdesk.cache import cache
@@ -31,9 +33,9 @@ from superdesk.utils import get_list_chunks
 
 SYSTEM_KEYS = set(
     [
-        "_etag",
-        "_updated",
-        "_created",
+        ETAG,
+        LAST_UPDATED,
+        DATE_CREATED,
     ]
 )
 
@@ -70,7 +72,7 @@ class EveBackend:
         backend = self._backend(endpoint_name)
         item = backend.find_one(endpoint_name, req=req, **lookup)
         search_backend = self._lookup_backend(endpoint_name, fallback=True)
-        if search_backend and app.config.get("BACKEND_FIND_ONE_SEARCH_TEST", False):
+        if search_backend and get_app_config("BACKEND_FIND_ONE_SEARCH_TEST", False):
             # set the parent for the parent child in elastic search
             self._set_parent(endpoint_name, item, lookup)
             item_search = search_backend.find_one(endpoint_name, req=req, **lookup)
@@ -138,9 +140,9 @@ class EveBackend:
             req.if_modified_since = None
             cursor, count = backend.find(endpoint_name, req, lookup, perform_count=False)
 
-        source_config = app.config["DOMAIN"][endpoint_name]
+        source_config = get_app_config("DOMAIN")[endpoint_name]
         if is_mongo and source_config.get("collation"):
-            cursor.collation(Collation(locale=app.config.get("MONGO_LOCALE", "en_US")))
+            cursor.collation(Collation(locale=get_app_config("MONGO_LOCALE", "en_US")))
 
         self._cursor_hook(cursor=cursor, endpoint_name=endpoint_name, req=req, lookup=lookup)
         return cursor
@@ -200,8 +202,8 @@ class EveBackend:
         """
         for doc in docs:
             self.set_default_dates(doc)
-            if not doc.get(config.ETAG):
-                doc[config.ETAG] = document_etag(doc)
+            if not doc.get(ETAG):
+                doc[ETAG] = document_etag(doc)
 
         backend = self._backend(endpoint_name)
         ids = backend.insert(endpoint_name, docs)
@@ -226,13 +228,13 @@ class EveBackend:
         :param original: original document
         """
         # change etag on update so following request will refetch it
-        updates.setdefault(config.LAST_UPDATED, utcnow())
-        if config.ETAG not in updates:
+        updates.setdefault(LAST_UPDATED, utcnow())
+        if ETAG not in updates:
             updated = original.copy()
             updated.update(updates)
             resolve_document_etag(updated, endpoint_name)
-            if config.IF_MATCH:
-                updates[config.ETAG] = updated[config.ETAG]
+            if get_app_config("IF_MATCH"):
+                updates[ETAG] = updated[ETAG]
         return self._change_request(endpoint_name, id, updates, original)
 
     def system_update(self, endpoint_name, id, updates, original, change_request=False, push_notification=True):
@@ -248,9 +250,9 @@ class EveBackend:
         :param push_notification: if False it won't send resource: notifications for update
         """
         if not change_request:
-            updates.setdefault(config.LAST_UPDATED, utcnow())
+            updates.setdefault(LAST_UPDATED, utcnow())
         updated = original.copy()
-        updated.pop(config.ETAG, None)  # make sure we update
+        updated.pop(ETAG, None)  # make sure we update
         return self._change_request(
             endpoint_name, id, updates, updated, change_request=change_request, push_notification=push_notification
         )
@@ -329,12 +331,12 @@ class EveBackend:
         :param updates: updates to item to be saved
         :param original: current version of the item
         """
-        updates.setdefault(config.LAST_UPDATED, utcnow())
-        if config.ETAG not in updates:
+        updates.setdefault(LAST_UPDATED, utcnow())
+        if ETAG not in updates:
             updated = original.copy()
             updated.update(updates)
             resolve_document_etag(updated, endpoint_name)
-            updates[config.ETAG] = updated[config.ETAG]
+            updates[ETAG] = updated[ETAG]
         backend = self._backend(endpoint_name)
         res = backend.update(endpoint_name, id, updates, original)
         return res if res is not None else updates
@@ -381,7 +383,7 @@ class EveBackend:
         """Delete using list of documents."""
         backend = self._backend(endpoint_name)
         search_backend = self._lookup_backend(endpoint_name)
-        ids = [doc[config.ID_FIELD] for doc in docs]
+        ids = [doc[ID_FIELD] for doc in docs]
         removed_ids = ids
         logger.info("total documents to be removed {}".format(len(ids)))
         if search_backend and ids:
@@ -390,15 +392,15 @@ class EveBackend:
             for doc in docs:
                 try:
                     self.remove_from_search(endpoint_name, doc)
-                    removed_ids.append(doc[config.ID_FIELD])
+                    removed_ids.append(doc[ID_FIELD])
                 except NotFoundError:
-                    logger.warning("item missing from elastic _id=%s" % (doc[config.ID_FIELD],))
-                    removed_ids.append(doc[config.ID_FIELD])
+                    logger.warning("item missing from elastic _id=%s" % (doc[ID_FIELD],))
+                    removed_ids.append(doc[ID_FIELD])
                 except Exception:
-                    logger.exception("item can not be removed from elastic _id=%s" % (doc[config.ID_FIELD],))
+                    logger.exception("item can not be removed from elastic _id=%s" % (doc[ID_FIELD],))
         if len(removed_ids):
             for chunk in get_list_chunks(removed_ids):
-                backend.remove(endpoint_name, {config.ID_FIELD: {"$in": chunk}})
+                backend.remove(endpoint_name, {ID_FIELD: {"$in": chunk}})
             logger.info("Removed %d documents from %s.", len(removed_ids), endpoint_name)
             for doc in docs:
                 self._push_resource_notification("deleted", endpoint_name, _id=str(doc["_id"]))
@@ -413,7 +415,7 @@ class EveBackend:
         :return:
         """
 
-        self.delete_from_mongo(endpoint_name, {config.ID_FIELD: {"$in": ids}})
+        self.delete_from_mongo(endpoint_name, {ID_FIELD: {"$in": ids}})
         return ids
 
     def delete_from_mongo(self, endpoint_name: str, lookup: Dict[str, Any]):
@@ -438,18 +440,20 @@ class EveBackend:
         :param endpoint_name
         :param dict doc: Document to delete
         """
-        search_backend = app.data._search_backend(endpoint_name)
+
+        search_backend = get_current_app().data._search_backend(endpoint_name)
         search_backend.remove(
-            endpoint_name, {"_id": doc.get(config.ID_FIELD)}, search_backend.get_parent_id(endpoint_name, doc)
+            endpoint_name, {"_id": doc.get(ID_FIELD)}, search_backend.get_parent_id(endpoint_name, doc)
         )
 
     def _datasource(self, endpoint_name):
-        return app.data.datasource(endpoint_name)[0]
+        return get_current_app().data.datasource(endpoint_name)[0]
 
     def _backend(self, endpoint_name):
-        return app.data._backend(endpoint_name)
+        return get_current_app().data._backend(endpoint_name)
 
     def _lookup_backend(self, endpoint_name, fallback=False):
+        app = get_current_app()
         backend = app.data._search_backend(endpoint_name)
         if backend is None and fallback:
             backend = app.data._backend(endpoint_name)
@@ -458,8 +462,8 @@ class EveBackend:
     def set_default_dates(self, doc):
         """Helper to populate ``_created`` and ``_updated`` timestamps."""
         now = utcnow()
-        doc.setdefault(config.DATE_CREATED, now)
-        doc.setdefault(config.LAST_UPDATED, now)
+        doc.setdefault(DATE_CREATED, now)
+        doc.setdefault(LAST_UPDATED, now)
 
     def _set_parent(self, endpoint_name, doc, lookup):
         """Set the parent id for parent child document in elastic"""
@@ -507,7 +511,7 @@ class EveBackend:
 
     def notify_on_change(self, endpoint_name):
         """Test if we should push notifications for given resource."""
-        source_config = app.config["DOMAIN"][endpoint_name]
+        source_config = get_app_config("DOMAIN")[endpoint_name]
         return source_config["notifications"] is True
 
     def _push_resource_notification(self, action: Literal["created", "updated", "deleted"], endpoint_name, **kwargs):

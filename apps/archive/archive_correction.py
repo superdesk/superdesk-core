@@ -10,8 +10,11 @@
 
 import logging
 from apps.auth import get_user
-from flask import request, current_app as app
-from superdesk import get_resource_service, Service, config
+
+from superdesk.core import get_current_app, get_app_config
+from superdesk.resource_fields import ID_FIELD
+from superdesk.flask import request
+from superdesk import get_resource_service, Service
 from superdesk.metadata.item import ITEM_STATE, CONTENT_STATE, metadata_schema
 from superdesk.resource import Resource
 from apps.archive.common import ARCHIVE, ITEM_CANCEL_CORRECTION, ITEM_CORRECTION
@@ -46,7 +49,7 @@ class ArchiveCorrectionService(Service):
         self._validate_correction(original)
         archive_service = get_resource_service(ARCHIVE)
         published_service = get_resource_service("published")
-        archive_item = archive_service.find_one(req=None, _id=original.get(config.ID_FIELD))
+        archive_item = archive_service.find_one(req=None, _id=original.get(ID_FIELD))
 
         if remove_correction:
             published_article = published_service.find_one(
@@ -96,7 +99,7 @@ class ArchiveCorrectionService(Service):
         try:
             # modify item in published.
             _published_item = published_service.system_update(
-                published_article.get(config.ID_FIELD), published_item_updates, published_article
+                published_article.get(ID_FIELD), published_item_updates, published_article
             )
             assert (
                 remove_correction
@@ -108,7 +111,8 @@ class ArchiveCorrectionService(Service):
             ), "Being corrected is not generated"
 
             # modify item in archive.
-            archive_service.system_update(archive_item.get(config.ID_FIELD), archive_item_updates, archive_item)
+            archive_service.system_update(archive_item.get(ID_FIELD), archive_item_updates, archive_item)
+            app = get_current_app().as_any()
             app.on_archive_item_updated(archive_item_updates, archive_item, ITEM_CORRECTION)
 
         except Exception as e:
@@ -118,7 +122,7 @@ class ArchiveCorrectionService(Service):
             )
 
         user = get_user(required=True)
-        push_notification("item:correction", item=original.get(config.ID_FIELD), user=str(user.get(config.ID_FIELD)))
+        push_notification("item:correction", item=original.get(ID_FIELD), user=str(user.get(ID_FIELD)))
 
     def _validate_correction(self, original):
         """Validates the article to be corrected.
@@ -129,8 +133,7 @@ class ArchiveCorrectionService(Service):
         if not original:
             raise SuperdeskApiError.notFoundError(message=_("Cannot find the article"))
 
-        if (
-            not is_workflow_state_transition_valid("correction", original[ITEM_STATE])
-            and not config.ALLOW_UPDATING_SCHEDULED_ITEMS
+        if not is_workflow_state_transition_valid("correction", original[ITEM_STATE]) and not get_app_config(
+            "ALLOW_UPDATING_SCHEDULED_ITEMS"
         ):
             raise InvalidStateTransitionError()

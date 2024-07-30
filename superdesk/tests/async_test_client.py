@@ -14,7 +14,8 @@ from typing import Any, AnyStr
 from urllib.request import Request as U2Request
 from asgiref.wsgi import WsgiToAsgi
 from werkzeug.datastructures import Headers, Authorization
-from flask import Flask
+
+from superdesk.flask import Flask
 from quart import Response
 from quart.datastructures import FileStorage
 from quart.utils import decode_headers

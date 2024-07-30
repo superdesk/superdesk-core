@@ -1,7 +1,6 @@
 import codecs
 import superdesk
-
-from flask import current_app as app
+from superdesk.core import get_current_app
 
 
 class MigrateMediaCommand(superdesk.Command):
@@ -14,6 +13,7 @@ class MigrateMediaCommand(superdesk.Command):
     # ]
 
     def run(self, limit, skip, delete):
+        app = get_current_app()
         mongo = app.media._storage[1]
         amazon = app.media._storage[0]
 

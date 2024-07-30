@@ -1,6 +1,5 @@
 import superdesk
-
-from flask import current_app as app, json
+from superdesk.core import json, get_current_app
 from superdesk.utils import get_random_string
 from superdesk.media.media_operations import crop_image, process_image, encode_metadata
 from apps.search_providers.proxy import PROXY_ENDPOINT
@@ -13,7 +12,7 @@ def get_file(rendition, item):
             return superdesk.get_resource_service(item["fetch_endpoint"]).fetch_rendition(rendition, item=item)
         return superdesk.get_resource_service(item["fetch_endpoint"]).fetch_rendition(rendition)
     else:
-        return app.media.fetch_rendition(rendition)
+        return get_current_app().media.fetch_rendition(rendition)
 
 
 def get_crop_size(crop, width=800, height=600):
@@ -61,6 +60,7 @@ class PictureCropService(superdesk.Service):
 
     def create(self, docs, **kwargs):
         ids = []
+        app = get_current_app()
         for doc in docs:
             item = doc.pop("item")
             crop = doc.pop("crop")

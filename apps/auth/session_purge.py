@@ -13,7 +13,7 @@ from datetime import timedelta
 from superdesk.utc import utcnow
 from eve.utils import date_to_str
 from superdesk import get_resource_service
-from flask import current_app as app
+from superdesk.core import get_app_config
 import logging
 
 logger = logging.getLogger(__name__)
@@ -36,7 +36,7 @@ class RemoveExpiredSessions(superdesk.Command):
 
     def remove_expired_sessions(self):
         auth_service = get_resource_service("auth")
-        expiry_minutes = app.settings["SESSION_EXPIRY_MINUTES"]
+        expiry_minutes = get_app_config("SESSION_EXPIRY_MINUTES")
         expiration_time = utcnow() - timedelta(minutes=expiry_minutes)
         logger.info("Deleting session not updated since {}".format(expiration_time))
         query = {"_updated": {"$lte": date_to_str(expiration_time)}}

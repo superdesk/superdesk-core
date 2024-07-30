@@ -2,7 +2,7 @@ import socket
 import ftplib
 
 from contextlib import contextmanager
-from flask import current_app as app
+from superdesk.core import get_app_config
 
 from superdesk.errors import IngestFtpError
 
@@ -17,7 +17,7 @@ def ftp_connect(config):
     """
     if config.get("use_ftps", False):
         try:
-            ftp = ftplib.FTP_TLS(config.get("host"), timeout=app.config.get("FTP_TIMEOUT", 300))
+            ftp = ftplib.FTP_TLS(config.get("host"), timeout=get_app_config("FTP_TIMEOUT", 300))
         except socket.gaierror as e:
             raise IngestFtpError.ftpHostError(exception=e)
 
@@ -28,7 +28,7 @@ def ftp_connect(config):
             raise IngestFtpError.ftpAuthError(exception=ae)
     else:
         try:
-            ftp = ftplib.FTP(config.get("host"), timeout=app.config.get("FTP_TIMEOUT", 300))
+            ftp = ftplib.FTP(config.get("host"), timeout=get_app_config("FTP_TIMEOUT", 300))
         except socket.gaierror as e:
             raise IngestFtpError.ftpHostError(exception=e)
 

@@ -9,9 +9,11 @@
 # at https://www.sourcefabric.org/superdesk/license
 
 import copy
-from superdesk import get_resource_service, config
+
+from superdesk.core import get_app_config
+from superdesk.resource_fields import ID_FIELD
+from superdesk import get_resource_service
 from superdesk.resource import Resource
-from flask import current_app as app
 
 
 default_allowed_filters = [
@@ -92,7 +94,7 @@ class FilterConditionResource(Resource):
 
     def _init_allowed_filters(self):
         self.schema["field"]["allowed"] = copy.copy(default_allowed_filters)
-        self.schema["field"]["allowed"].extend(app.config.get("EXCLUDED_VOCABULARY_FIELDS", []))
+        self.schema["field"]["allowed"].extend(get_app_config("EXCLUDED_VOCABULARY_FIELDS", []))
         lookup = {"_id": {"$nin": self.schema["field"]["allowed"]}, "type": "manageable"}
         for vocabulary in get_resource_service("vocabularies").get_from_mongo(req=None, lookup=lookup):
-            self.schema["field"]["allowed"].append(vocabulary[config.ID_FIELD])
+            self.schema["field"]["allowed"].append(vocabulary[ID_FIELD])

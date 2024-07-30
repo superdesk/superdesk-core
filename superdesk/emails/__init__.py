@@ -18,7 +18,8 @@ from superdesk.lock import lock, unlock
 from bson.json_util import dumps
 from flask_mail import Message
 from superdesk.celery_app import celery
-from flask import current_app as app, render_template, render_template_string
+from superdesk.core import get_current_app, get_app_config
+from superdesk.flask import render_template, render_template_string
 from superdesk import get_resource_service
 
 logger = logging.getLogger(__name__)
@@ -66,8 +67,8 @@ def send_email(self, subject, sender, recipients, text_body, html_body, cc=None,
             html=html_body,
             attachments=attachments,
         )
-        if app.config.get("E2E") is not True:
-            return app.mail.send(msg)
+        if get_app_config("E2E") is not True:
+            return get_current_app().mail.send(msg)
     except OSError:
         logger.exception("can not send email %s", subject)
     finally:
@@ -77,9 +78,9 @@ def send_email(self, subject, sender, recipients, text_body, html_body, cc=None,
 def send_activate_account_email(doc, activate_ttl):
     user = get_resource_service("users").find_one(req=None, _id=doc["user"])
     first_name = user.get("first_name")
-    app_name = app.config["APPLICATION_NAME"]
-    admins = app.config["ADMINS"]
-    client_url = app.config["CLIENT_URL"].rstrip("/")
+    app_name = get_app_config("APPLICATION_NAME")
+    admins = get_app_config("ADMINS")
+    client_url = get_app_config("CLIENT_URL").rstrip("/")
     url = "{}/#/reset-password?token={}".format(client_url, doc["token"])
     hours = activate_ttl * 24
     subject = render_template("account_created_subject.txt", app_name=app_name)
@@ -107,8 +108,8 @@ def send_activate_account_email(doc, activate_ttl):
 
 
 def send_user_status_changed_email(recipients, status):
-    admins = app.config["ADMINS"]
-    app_name = app.config["APPLICATION_NAME"]
+    admins = get_app_config("ADMINS")
+    app_name = get_app_config("APPLICATION_NAME")
     subject = render_template("account_status_changed_subject.txt", app_name=app_name, status=status)
     text_body = render_template("account_status_changed.txt", app_name=app_name, status=status)
     html_body = render_template("account_status_changed.html", app_name=app_name, status=status)
@@ -116,8 +117,8 @@ def send_user_status_changed_email(recipients, status):
 
 
 def send_user_type_changed_email(recipients):
-    admins = app.config["ADMINS"]
-    app_name = app.config["APPLICATION_NAME"]
+    admins = get_app_config("ADMINS")
+    app_name = get_app_config("APPLICATION_NAME")
     subject = render_template("account_type_changed_subject.txt", app_name=app_name)
     text_body = render_template("account_type_changed.txt", app_name=app_name)
     html_body = render_template("account_type_changed.html", app_name=app_name)
@@ -125,9 +126,9 @@ def send_user_type_changed_email(recipients):
 
 
 def send_reset_password_email(doc, token_ttl):
-    admins = app.config["ADMINS"]
-    client_url = app.config["CLIENT_URL"].rstrip("/")
-    app_name = app.config["APPLICATION_NAME"]
+    admins = get_app_config("ADMINS")
+    client_url = get_app_config("CLIENT_URL").rstrip("/")
+    app_name = get_app_config("APPLICATION_NAME")
     url = "{}/#/reset-password?token={}".format(client_url, doc["token"])
     hours = token_ttl * 24
     subject = render_template("reset_password_subject.txt")
@@ -140,8 +141,8 @@ def send_reset_password_email(doc, token_ttl):
 
 def send_user_mentioned_email(recipients, user_name, doc, url):
     logging.info("sending mention email to: %s", recipients)
-    admins = app.config["ADMINS"]
-    app_name = app.config["APPLICATION_NAME"]
+    admins = get_app_config("ADMINS")
+    app_name = get_app_config("APPLICATION_NAME")
     subject = render_template("user_mention_subject.txt", username=user_name)
     text_body = render_template("user_mention.txt", text=doc["text"], username=user_name, link=url, app_name=app_name)
     html_body = render_template("user_mention.html", text=doc["text"], username=user_name, link=url, app_name=app_name)
@@ -150,7 +151,7 @@ def send_user_mentioned_email(recipients, user_name, doc, url):
 
 def get_activity_digest(value):
     h = hashlib.sha1()
-    json_encoder = app.data.json_encoder_class()
+    json_encoder = get_current_app().data.json_encoder_class()
     h.update(dumps(value, sort_keys=True, default=json_encoder.default).encode("utf-8"))
     return h.hexdigest()
 
@@ -160,15 +161,15 @@ def send_activity_emails(activity, recipients):
     message_id = get_activity_digest(activity)
     # there is no resource for email timestamps registered,
     # so use users resoure to get pymongo db
-    email_timestamps = app.data.mongo.pymongo("users").db[EMAIL_TIMESTAMP_RESOURCE]
+    email_timestamps = get_current_app().data.mongo.pymongo("users").db[EMAIL_TIMESTAMP_RESOURCE]
     last_message_info = email_timestamps.find_one(message_id)
-    resend_interval = app.config.get("EMAIL_NOTIFICATION_RESEND", 24)
+    resend_interval = get_app_config("EMAIL_NOTIFICATION_RESEND", 24)
 
     if last_message_info and last_message_info["_created"] + timedelta(hours=resend_interval) > now:
         return
 
-    admins = app.config["ADMINS"]
-    app_name = app.config["APPLICATION_NAME"]
+    admins = get_app_config("ADMINS")
+    app_name = get_app_config("APPLICATION_NAME")
     link = activity.get("data", {}).get("link", None)
 
     notification = render_template_string(activity.get("message"), **activity.get("data"))
@@ -181,8 +182,8 @@ def send_activity_emails(activity, recipients):
 
 
 def send_article_killed_email(article, recipients, transmitted_at):
-    admins = app.config["ADMINS"]
-    app_name = app.config["APPLICATION_NAME"]
+    admins = get_app_config("ADMINS")
+    app_name = get_app_config("APPLICATION_NAME")
     place = next(iter(article.get("place") or []), "")
     if place:
         place = place.get("qcode", "")
@@ -198,9 +199,9 @@ def send_article_killed_email(article, recipients, transmitted_at):
 
 
 def send_translation_changed(username, article, recipients):
-    admins = app.config["ADMINS"]
-    app_name = app.config["APPLICATION_NAME"]
-    client_url = app.config.get("CLIENT_URL", "").rstrip("/")
+    admins = get_app_config("ADMINS")
+    app_name = get_app_config("APPLICATION_NAME")
+    client_url = get_app_config("CLIENT_URL", "").rstrip("/")
 
     link = "{}/#/workspace?item={}&action=edit".format(client_url, article["guid"])
     headline = article.get("headline", link)

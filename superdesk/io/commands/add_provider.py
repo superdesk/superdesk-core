@@ -9,7 +9,7 @@
 # at https://www.sourcefabric.org/superdesk/license
 
 import superdesk
-from flask import current_app as app
+from superdesk.core import get_app_config, get_current_app, json
 from superdesk import get_resource_service
 from superdesk.errors import ProviderError
 
@@ -35,10 +35,11 @@ class AddProvider(superdesk.Command):
     def run(self, provider):
         try:
             data = {}
-            data = superdesk.json.loads(provider)
-            data.setdefault("content_expiry", app.config["INGEST_EXPIRY_MINUTES"])
+            data = json.loads(provider)
+            data.setdefault("content_expiry", get_app_config("INGEST_EXPIRY_MINUTES"))
 
-            validator = app.validator(app.config["DOMAIN"]["ingest_providers"]["schema"], "ingest_providers")
+            app = get_current_app()
+            validator = app.validator(get_app_config("DOMAIN")["ingest_providers"]["schema"], "ingest_providers")
             validation = validator.validate(data)
 
             if validation:

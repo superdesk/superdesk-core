@@ -11,7 +11,7 @@
 import superdesk
 from lxml import etree as etree
 from lxml.etree import SubElement
-from flask import current_app as app
+from superdesk.core import get_app_config
 from superdesk.publish.formatters import Formatter
 from superdesk.errors import FormatterError
 from superdesk.metadata.item import ITEM_TYPE, CONTENT_TYPE, EMBARGO, FORMAT, FORMATS
@@ -151,7 +151,7 @@ class NITFFormatter(Formatter):
             raise FormatterError.nitfFormatterError(ex, subscriber)
 
     def get_nitf(self, article, destination, pub_seq_num):
-        if app.config.get("NITF_INCLUDE_SCHEMA", False):
+        if get_app_config("NITF_INCLUDE_SCHEMA", False):
             self._message_attrib.update(self._debug_message_extra)
         nitf = etree.Element("nitf", attrib=self._message_attrib)
         head = SubElement(nitf, "head")

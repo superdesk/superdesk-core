@@ -22,11 +22,11 @@
 
 import ast
 import logging
-from flask import request, current_app as app
 from flask_babel import _
 from bson import ObjectId
 
-import superdesk
+from superdesk.core import get_app_config
+from superdesk.flask import request, Blueprint
 from superdesk.errors import SuperdeskApiError
 from superdesk.notification import push_notification
 from superdesk.storage.superdesk_file import generate_response_for_file
@@ -38,7 +38,7 @@ from .utils import get_file_from_sams, get_attachments_from_asset_id, get_image_
 from .client import get_sams_client
 
 logger = logging.getLogger(__name__)
-assets_bp = superdesk.Blueprint("sams_assets", __name__)
+assets_bp = Blueprint("sams_assets", __name__)
 
 
 @assets_bp.route("/sams/assets", methods=["GET"])
@@ -98,9 +98,9 @@ def create():
     if post_response.status_code == 201:
         if response.get("mimetype", "").startswith("image/"):
             # Create renditions.
-            renditions = [k for k in app.config["RENDITIONS"]["sams"].keys()]
+            renditions = [k for k in get_app_config("RENDITIONS")["sams"].keys()]
             for rendition in renditions:
-                dimensions = app.config["RENDITIONS"]["sams"][rendition]
+                dimensions = get_app_config("RENDITIONS")["sams"][rendition]
                 rendition_response = sams_client.images.generate_rendition(
                     response["_id"],
                     width=dimensions.get("width"),

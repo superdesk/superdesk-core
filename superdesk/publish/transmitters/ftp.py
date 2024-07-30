@@ -13,8 +13,8 @@ import logging
 import superdesk
 from urllib.parse import urlparse
 from io import BytesIO
-from flask import current_app as app
 
+from superdesk.core import get_current_app
 from superdesk.ftp import ftp_connect
 from superdesk.publish import register_transmitter, registered_transmitter_file_providers
 from superdesk.publish.publish_service import get_publish_service, PublishService
@@ -98,6 +98,7 @@ class FTPPublishService(PublishService):
         remote_items = []
         ftp.retrlines("LIST", remote_items.append)
 
+        app = get_current_app()
         for media_id, rendition in media.items():
             if not self._media_exists(rendition, remote_items):
                 binary = app.media.get(media_id, resource=rendition.get("resource", "upload"))

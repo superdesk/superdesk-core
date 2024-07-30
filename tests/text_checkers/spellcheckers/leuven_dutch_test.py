@@ -12,7 +12,8 @@ from functools import partial
 from unittest.mock import MagicMock, patch
 from .utils import mock_dictionaries
 import responses
-from flask import Flask
+
+from superdesk.flask import Flask
 from superdesk.tests import TestCase
 from superdesk.text_checkers import tools
 from superdesk.text_checkers.spellcheckers.base import registered_spellcheckers, SpellcheckerBase

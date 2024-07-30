@@ -9,7 +9,7 @@
 # at https://www.sourcefabric.org/superdesk/license
 
 import logging
-from flask import g
+from superdesk.flask import g
 from superdesk.resource import Resource
 from superdesk.services import BaseService
 

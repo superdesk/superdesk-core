@@ -11,10 +11,11 @@ import logging
 import requests
 import superdesk
 
-from flask import current_app
 from collections import OrderedDict
 from typing import Optional, Dict, List, Tuple
 from urllib.parse import urljoin
+
+from superdesk.core import get_app_config
 from superdesk.text_utils import get_text
 from superdesk.errors import SuperdeskApiError
 from .base import AIServiceBase
@@ -68,23 +69,23 @@ class IMatrics(AIServiceBase):
 
     @property
     def base_url(self):
-        return current_app.config.get("IMATRICS_BASE_URL", os.environ.get("IMATRICS_BASE_URL"))
+        return get_app_config("IMATRICS_BASE_URL", os.environ.get("IMATRICS_BASE_URL"))
 
     @property
     def user(self):
-        return current_app.config.get("IMATRICS_USER", os.environ.get("IMATRICS_USER"))
+        return get_app_config("IMATRICS_USER", os.environ.get("IMATRICS_USER"))
 
     @property
     def key(self):
-        return current_app.config.get("IMATRICS_KEY", os.environ.get("IMATRICS_KEY"))
+        return get_app_config("IMATRICS_KEY", os.environ.get("IMATRICS_KEY"))
 
     @property
     def image_base_url(self):
-        return current_app.config.get("IMATRICS_IMAGE_BASE_URL", os.environ.get("IMATRICS_IMAGE_BASE_URL"))
+        return get_app_config("IMATRICS_IMAGE_BASE_URL", os.environ.get("IMATRICS_IMAGE_BASE_URL"))
 
     @property
     def image_key(self):
-        return current_app.config.get("IMATRICS_IMAGE_KEY", os.environ.get("IMATRICS_IMAGE_KEY"))
+        return get_app_config("IMATRICS_IMAGE_KEY", os.environ.get("IMATRICS_IMAGE_KEY"))
 
     def concept2tag_data(self, concept: dict) -> Tuple[dict, str]:
         """Convert an iMatrics concept to Superdesk friendly data"""
@@ -139,7 +140,7 @@ class IMatrics(AIServiceBase):
         return tag_data, tag_type
 
     def find_subject(self, topic_id):
-        SCHEME_ID = current_app.config.get("IMATRICS_SUBJECT_SCHEME")
+        SCHEME_ID = get_app_config("IMATRICS_SUBJECT_SCHEME")
         if not SCHEME_ID:
             return
         if not self._subjects:

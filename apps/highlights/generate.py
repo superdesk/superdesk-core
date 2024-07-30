@@ -1,9 +1,18 @@
 import superdesk
-from superdesk.metadata.item import ITEM_TYPE, CONTENT_TYPE, CONTENT_STATE, ITEM_STATE, get_schema
-from flask import render_template, render_template_string
+from superdesk.metadata.item import CONTENT_TYPE, CONTENT_STATE, get_schema
+
+from superdesk.core import get_current_app
+from superdesk.resource_fields import (
+    ID_FIELD,
+    DATE_CREATED,
+    LAST_UPDATED,
+    ETAG,
+    VERSION,
+    ITEM_STATE,
+    ITEM_TYPE,
+)
+from superdesk.flask import render_template, render_template_string, abort
 from superdesk.errors import SuperdeskApiError
-from eve.utils import config
-from flask import current_app as app
 from .service import get_highlight_name
 from apps.archive.common import ITEM_EXPORT_HIGHLIGHT, ITEM_CREATE_HIGHLIGHT
 
@@ -22,10 +31,10 @@ PACKAGE_FIELDS = {
     "lock_time",
     "lock_user",
     "lock_session",
-    config.ID_FIELD,
-    config.LAST_UPDATED,
-    config.DATE_CREATED,
-    config.ETAG,
+    ID_FIELD,
+    LAST_UPDATED,
+    DATE_CREATED,
+    ETAG,
     "version",
     "_current_version",
     "version_creator",
@@ -57,11 +66,12 @@ class GenerateHighlightsService(superdesk.Service):
         If doc.preview is True it won't save the item, only return.
         """
         service = superdesk.get_resource_service("archive")
+        app = get_current_app().as_any()
         for doc in docs:
             preview = doc.get("preview", False)
             package = service.find_one(req=None, _id=doc["package"])
             if not package:
-                superdesk.abort(404)
+                abort(404)
             export = doc.get("export")
             template = get_template(package.get("highlight"))
             stringTemplate = None
@@ -72,7 +82,7 @@ class GenerateHighlightsService(superdesk.Service):
             doc[ITEM_TYPE] = CONTENT_TYPE.TEXT
             doc["family_id"] = package.get("guid")
             doc[ITEM_STATE] = CONTENT_STATE.SUBMITTED
-            doc[config.VERSION] = 1
+            doc[VERSION] = 1
 
             for field in package:
                 if field not in PACKAGE_FIELDS:

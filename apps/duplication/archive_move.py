@@ -11,11 +11,12 @@
 import superdesk
 import superdesk.signals as signals
 
-from eve.utils import config
 from eve.versioning import resolve_document_version
-from flask import request, current_app as app
 from copy import deepcopy
 
+from superdesk.core import get_current_app
+from superdesk.resource_fields import ID_FIELD, ETAG
+from superdesk.flask import request
 from apps.tasks import send_to, apply_onstage_rule
 from apps.desks import DeskTypes
 from superdesk import get_resource_service
@@ -91,7 +92,7 @@ class MoveService(BaseService):
             # doc represents the target desk and stage
             doc = docs[0]
             moved_item = self.move_content(guid_of_item_to_be_moved, doc)
-            guid_of_moved_items.append(moved_item.get(config.ID_FIELD))
+            guid_of_moved_items.append(moved_item.get(ID_FIELD))
 
             if moved_item.get("type", None) == "composite" and doc.get("allPackageItems", False):
                 try:
@@ -105,7 +106,7 @@ class MoveService(BaseService):
                         item_lock_id = "item_move {}".format(item_id)
                         if lock(item_lock_id, expire=5):
                             item = self.move_content(item_id, doc)
-                            guid_of_moved_items.append(item.get(config.ID_FIELD))
+                            guid_of_moved_items.append(item.get(ID_FIELD))
                             unlock(item_lock_id, remove=True)
                             item_lock_id = None
                         else:
@@ -146,7 +147,7 @@ class MoveService(BaseService):
             doc=archived_doc,
             desk_id=doc.get("task", {}).get("desk"),
             stage_id=doc.get("task", {}).get("stage"),
-            user_id=user.get(config.ID_FIELD),
+            user_id=user.get(ID_FIELD),
         )
         if archived_doc[ITEM_STATE] not in (
             {
@@ -166,20 +167,22 @@ class MoveService(BaseService):
         convert_task_attributes_to_objectId(archived_doc)
         resolve_document_version(archived_doc, ARCHIVE, "PATCH", original)
 
-        del archived_doc[config.ID_FIELD]
-        del archived_doc[config.ETAG]  # force etag update
+        del archived_doc[ID_FIELD]
+        del archived_doc[ETAG]  # force etag update
         archived_doc["versioncreated"] = utcnow()
 
         signals.item_move.send(self, item=archived_doc, original=original)
-        archive_service.update(original[config.ID_FIELD], archived_doc, original)
+        archive_service.update(original[ID_FIELD], archived_doc, original)
 
-        insert_into_versions(id_=original[config.ID_FIELD])
+        insert_into_versions(id_=original[ID_FIELD])
         push_item_move_notification(original, archived_doc)
+
+        app = get_current_app().as_any()
         app.on_archive_item_updated(archived_doc, original, ITEM_MOVE)
 
         # make sure `item._id` is there in signal
         moved_item = archived_doc.copy()
-        moved_item[config.ID_FIELD] = original[config.ID_FIELD]
+        moved_item[ID_FIELD] = original[ID_FIELD]
         signals.item_moved.send(self, item=moved_item, original=original)
 
     def _validate(self, archived_doc, doc):

@@ -10,8 +10,9 @@
 
 import logging
 
-from flask import abort, current_app as app
-from eve.utils import config
+from superdesk.core import get_current_app, get_app_config
+from superdesk.resource_fields import ID_FIELD, VERSION
+from superdesk.flask import abort
 from apps.archive.common import copy_metadata_from_user_preferences
 from superdesk.media.media_operations import process_file_from_stream, decode_metadata
 from superdesk.media.renditions import generate_renditions, delete_file_on_error, get_renditions_spec
@@ -41,6 +42,7 @@ class ArchiveMediaService:
     def on_create(self, docs):
         """Create corresponding item on file upload."""
 
+        app = get_current_app()
         for doc in docs:
             if "media" not in doc or doc["media"] is None:
                 abort(400, description="No media found")
@@ -48,7 +50,7 @@ class ArchiveMediaService:
             content_type = app.media._get_mimetype(doc["media"])
             doc["media"].seek(0)
             file_type = content_type.split("/")[0]
-            if file_type == "video" and app.config.get("VIDEO_SERVER_ENABLED"):
+            if file_type == "video" and get_app_config("VIDEO_SERVER_ENABLED"):
                 # upload media to video server
                 res, renditions, metadata = self.upload_file_to_video_server(doc)
                 # get thumbnails for timeline bar
@@ -58,7 +60,7 @@ class ArchiveMediaService:
                 inserted = [doc["media"]]
                 # if no_custom_crops is set to False the custom crops are generated automatically on media upload
                 # see (SDESK-4742)
-                rendition_spec = get_renditions_spec(no_custom_crops=app.config.get("NO_CUSTOM_CROPS"))
+                rendition_spec = get_renditions_spec(no_custom_crops=get_app_config("NO_CUSTOM_CROPS"))
                 with timer("archive:renditions"):
                     renditions = generate_renditions(
                         file, doc["media"], inserted, file_type, content_type, rendition_spec, url_for_media
@@ -94,8 +96,8 @@ class ArchiveMediaService:
         update_dates_for(doc)
         generate_unique_id_and_name(doc)
         doc.setdefault("guid", generate_guid(type=GUID_TAG))
-        doc.setdefault(config.ID_FIELD, doc["guid"])
-        doc[config.VERSION] = 1
+        doc.setdefault(ID_FIELD, doc["guid"])
+        doc[VERSION] = 1
         set_item_expiry({}, doc)
 
         if not doc.get("_import", None):
@@ -104,7 +106,7 @@ class ArchiveMediaService:
         doc.setdefault(ITEM_STATE, CONTENT_STATE.DRAFT)
 
         if not doc.get("ingest_provider"):
-            doc["source"] = app.config.get("DEFAULT_SOURCE_VALUE_FOR_MANUAL_ARTICLES")
+            doc["source"] = get_app_config("DEFAULT_SOURCE_VALUE_FOR_MANUAL_ARTICLES")
 
         copy_metadata_from_user_preferences(doc)
 
@@ -118,6 +120,7 @@ class ArchiveMediaService:
             file_name, content_type, metadata = res
             logger.debug("Going to save media file with %s " % file_name)
             content.seek(0)
+            app = get_current_app()
             with timer("media:put.original"):
                 doc["media"] = app.media.put(content, filename=file_name, content_type=content_type, metadata=metadata)
             return content, content_type, decode_metadata(metadata)

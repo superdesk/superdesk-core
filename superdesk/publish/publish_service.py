@@ -12,9 +12,11 @@ import logging
 import superdesk
 
 from bson import ObjectId
-from flask import current_app as app
 from typing import Any, Dict, Optional
-from superdesk import get_resource_service, config
+
+from superdesk.resource_fields import ID_FIELD
+from superdesk.core import get_current_app
+from superdesk import get_resource_service
 from superdesk.utc import utcnow
 from superdesk.errors import SubscriberError, SuperdeskPublishError, PublishQueueError
 
@@ -56,7 +58,7 @@ class PublishServiceBase:
                 # we fill encoded_item using "formatted_item" and "item_encoding"
                 if "encoded_item_id" in queue_item:
                     encoded_item_id = queue_item["encoded_item_id"]
-                    queue_item["encoded_item"] = app.storage.get(encoded_item_id).read()
+                    queue_item["encoded_item"] = get_current_app().storage.get(encoded_item_id).read()
                 else:
                     encoding = queue_item.get("item_encoding", "utf-8")
                     queue_item["encoded_item"] = queue_item["formatted_item"].encode(encoding, errors="replace")
@@ -87,7 +89,7 @@ class PublishServiceBase:
                 },
             }
 
-            get_resource_service("subscribers").system_update(subscriber[config.ID_FIELD], update, subscriber)
+            get_resource_service("subscribers").system_update(subscriber[ID_FIELD], update, subscriber)
 
     def update_item_status(self, queue_item, status, error=None):
         try:

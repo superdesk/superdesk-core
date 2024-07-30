@@ -9,8 +9,8 @@
 # at https://www.sourcefabric.org/superdesk/license
 
 from content_api.items.service import ItemsService
-from flask import g
 
+from superdesk.flask import g
 from superdesk import get_resource_privileges
 from superdesk.errors import SuperdeskApiError
 

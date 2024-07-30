@@ -11,9 +11,12 @@
 import logging
 from apps.auth import get_user, get_user_id
 from eve.versioning import resolve_document_version
-from flask import request, current_app as app
+
+from superdesk.core import get_current_app, get_app_config
+from superdesk.resource_fields import ID_FIELD
+from superdesk.flask import request
 from apps.archive import ArchiveSpikeService
-from superdesk import get_resource_service, Service, config
+from superdesk import get_resource_service, Service
 from superdesk.metadata.item import (
     ITEM_STATE,
     EMBARGO,
@@ -105,13 +108,14 @@ class ArchiveRewriteService(Service):
 
         # signal
         item_rewrite.send(self, item=rewrite, original=original)
+        app = get_current_app().as_any()
 
         if update_document:
             # process the existing story
-            archive_service.patch(update_document[config.ID_FIELD], rewrite)
+            archive_service.patch(update_document[ID_FIELD], rewrite)
             app.on_archive_item_updated(rewrite, update_document, ITEM_LINK)
-            rewrite[config.ID_FIELD] = update_document[config.ID_FIELD]
-            ids = [update_document[config.ID_FIELD]]
+            rewrite[ID_FIELD] = update_document[ID_FIELD]
+            ids = [update_document[ID_FIELD]]
         else:
             # Set the version.
             resolve_document_version(rewrite, ARCHIVE, "POST")
@@ -150,16 +154,15 @@ class ArchiveRewriteService(Service):
         if original.get("rewritten_by"):
             raise SuperdeskApiError.badRequestError(message=_("Article has been rewritten before !"))
 
-        if (
-            not is_workflow_state_transition_valid("rewrite", original[ITEM_STATE])
-            and not config.ALLOW_UPDATING_SCHEDULED_ITEMS
+        if not is_workflow_state_transition_valid("rewrite", original[ITEM_STATE]) and not get_app_config(
+            "ALLOW_UPDATING_SCHEDULED_ITEMS"
         ):
             raise InvalidStateTransitionError()
 
         if (
             original.get("rewrite_of")
             and not (original.get(ITEM_STATE) in PUBLISH_STATES)
-            and not app.config["WORKFLOW_ALLOW_MULTIPLE_UPDATES"]
+            and not get_app_config("WORKFLOW_ALLOW_MULTIPLE_UPDATES")
         ):
             raise SuperdeskApiError.badRequestError(
                 message=_("Rewrite is not published. Cannot rewrite the story again.")
@@ -216,8 +219,8 @@ class ArchiveRewriteService(Service):
         ]
         existing_item_preserve_fields = (ASSOCIATIONS, "flags", "extra")
 
-        if app.config.get("COPY_ON_REWRITE_FIELDS"):
-            fields.extend(app.config["COPY_ON_REWRITE_FIELDS"])
+        if get_app_config("COPY_ON_REWRITE_FIELDS"):
+            fields.extend(get_app_config("COPY_ON_REWRITE_FIELDS"))
 
         if existing_item:
             # for associate an existing file as update merge subjects
@@ -276,11 +279,11 @@ class ArchiveRewriteService(Service):
             rewrite["flags"]["marked_for_sms"] = False
 
         # SD-4595 - Default value for the update article to be set based on the system config.
-        if config.RESET_PRIORITY_VALUE_FOR_UPDATE_ARTICLES:
+        if get_app_config("RESET_PRIORITY_VALUE_FOR_UPDATE_ARTICLES"):
             # if True then reset to the default priority value.
-            rewrite["priority"] = int(config.DEFAULT_PRIORITY_VALUE_FOR_MANUAL_ARTICLES)
+            rewrite["priority"] = int(get_app_config("DEFAULT_PRIORITY_VALUE_FOR_MANUAL_ARTICLES"))
 
-        rewrite["rewrite_of"] = original[config.ID_FIELD]
+        rewrite["rewrite_of"] = original[ID_FIELD]
         rewrite["rewrite_sequence"] = (original.get("rewrite_sequence") or 0) + 1
         rewrite.pop(PROCESSED_FROM, None)
 
@@ -309,15 +312,12 @@ class ArchiveRewriteService(Service):
         :param dict original: item on which rewrite is triggered
         :param dict rewrite: rewritten document
         """
-        get_resource_service("published").update_published_items(
-            original[config.ID_FIELD], "rewritten_by", rewrite[config.ID_FIELD]
-        )
+        get_resource_service("published").update_published_items(original[ID_FIELD], "rewritten_by", rewrite[ID_FIELD])
 
         # modify the original item as well.
-        get_resource_service(ARCHIVE).system_update(
-            original[config.ID_FIELD], {"rewritten_by": rewrite[config.ID_FIELD]}, original
-        )
-        app.on_archive_item_updated({"rewritten_by": rewrite[config.ID_FIELD]}, original, ITEM_REWRITE)
+        get_resource_service(ARCHIVE).system_update(original[ID_FIELD], {"rewritten_by": rewrite[ID_FIELD]}, original)
+        app = get_current_app().as_any()
+        app.on_archive_item_updated({"rewritten_by": rewrite[ID_FIELD]}, original, ITEM_REWRITE)
 
     def _set_take_key(self, rewrite):
         """Sets the anpa take key of the rewrite with ordinal.
@@ -368,5 +368,6 @@ class ArchiveRewriteService(Service):
 
         archive_service.system_update(target_id, updates, target)
         user = get_user(required=True)
-        push_notification("item:unlink", item=target_id, user=str(user.get(config.ID_FIELD)))
+        push_notification("item:unlink", item=target_id, user=str(user.get(ID_FIELD)))
+        app = get_current_app().as_any()
         app.on_archive_item_updated(updates, target, ITEM_UNLINK)

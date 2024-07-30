@@ -12,8 +12,8 @@ import logging
 from typing import Dict
 
 from copy import copy
-from eve.utils import config
 
+from superdesk.resource_fields import ID_FIELD, VERSION
 from superdesk.utc import utcnow
 from superdesk.services import BaseService
 from superdesk.publish.formatters.ninjs_newsroom_formatter import NewsroomNinjsFormatter
@@ -51,10 +51,10 @@ class PublishService(BaseService):
             now = utcnow()
             doc.setdefault("firstcreated", now)
             doc.setdefault("versioncreated", now)
-            doc.setdefault(config.VERSION, item.get(config.VERSION, 1))
+            doc.setdefault(VERSION, item.get(VERSION, 1))
             for _, assoc in doc.get(ASSOCIATIONS, {}).items():
                 if assoc:
-                    assoc.setdefault("subscribers", [str(subscriber[config.ID_FIELD]) for subscriber in subscribers])
+                    assoc.setdefault("subscribers", [str(subscriber[ID_FIELD]) for subscriber in subscribers])
             doc["subscribers"] = [str(sub["_id"]) for sub in subscribers]
             doc["original_id"] = doc["guid"]
             if "evolvedfrom" in doc:
@@ -89,7 +89,7 @@ class PublishService(BaseService):
         """Create a new item or update existing."""
         item = copy(doc)
         item.setdefault("_id", item.get("guid"))
-        _id = item[config.ID_FIELD] = item.pop("guid")
+        _id = item[ID_FIELD] = item.pop("guid")
 
         # merging the existing and new subscribers
         original = self.find_one(req=None, _id=_id)
@@ -147,7 +147,7 @@ class PublishService(BaseService):
 
         for fc in filters:
             if filter_service.does_match(fc, item):
-                logger.info("API Filter block {} matched for item {}.".format(fc, item.get(config.ID_FIELD)))
+                logger.info("API Filter block {} matched for item {}.".format(fc, item.get(ID_FIELD)))
                 return True
 
         return False
@@ -180,7 +180,7 @@ class PublishService(BaseService):
             if original:
                 original_assoc = (original.get("associations") or {}).get(assoc)
 
-                if original_assoc and original_assoc.get(config.ID_FIELD) == update_assoc.get(config.ID_FIELD):
+                if original_assoc and original_assoc.get(ID_FIELD) == update_assoc.get(ID_FIELD):
                     update_assoc["subscribers"] = list(
                         set(original_assoc.get("subscribers") or []) | set(update_assoc.get("subscribers") or [])
                     )

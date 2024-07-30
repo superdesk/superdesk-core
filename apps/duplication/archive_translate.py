@@ -10,6 +10,7 @@
 
 
 import superdesk
+from superdesk.core import get_app_config
 from apps.archive.archive import SOURCE as ARCHIVE, remove_is_queued
 from apps.content import push_content_notification
 from apps.auth import get_user_id
@@ -23,7 +24,6 @@ from superdesk.workflow import is_workflow_state_transition_valid
 from superdesk.utc import utcnow
 from apps.packages import PackageService
 from flask_babel import _
-from flask import current_app as app
 
 
 package_service = PackageService()
@@ -86,7 +86,7 @@ class TranslateService(BaseService):
 
         extra_fields = ["translation_id", "translated_from"]
 
-        UPDATE_TRANSLATION_METADATA_MACRO = app.config.get("UPDATE_TRANSLATION_METADATA_MACRO")
+        UPDATE_TRANSLATION_METADATA_MACRO = get_app_config("UPDATE_TRANSLATION_METADATA_MACRO")
 
         if UPDATE_TRANSLATION_METADATA_MACRO and macros_service.get_macro_by_name(UPDATE_TRANSLATION_METADATA_MACRO):
             macros_service.execute_macro(item, UPDATE_TRANSLATION_METADATA_MACRO)

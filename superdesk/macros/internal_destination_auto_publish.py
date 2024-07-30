@@ -10,7 +10,9 @@
 
 import json
 from copy import deepcopy
-from eve.utils import config, ParsedRequest
+from eve.utils import ParsedRequest
+
+from superdesk.resource_fields import ID_FIELD
 from superdesk import get_resource_service
 from superdesk.errors import StopDuplication, InvalidStateTransitionError
 from superdesk.metadata.item import (
@@ -46,7 +48,7 @@ def internal_destination_auto_publish(item, **kwargs):
     # if any macro is doing publishing then we need the duplicate item that was published earlier
     req = ParsedRequest()
     req.where = json.dumps(
-        {"$and": [{PROCESSED_FROM: item.get(config.ID_FIELD)}, {"task.desk": str(item.get("task").get("desk"))}]}
+        {"$and": [{PROCESSED_FROM: item.get(ID_FIELD)}, {"task.desk": str(item.get("task").get("desk"))}]}
     )
     req.max_results = 1
     overwrite_item = next((archive_service.get_from_mongo(req=req, lookup=None)), None)
@@ -56,7 +58,7 @@ def internal_destination_auto_publish(item, **kwargs):
     if item.get(ITEM_STATE) == CONTENT_STATE.PUBLISHED or not overwrite_item:
         new_id = archive_service.duplicate_content(item, state="routed", extra_fields=extra_fields)
         updates[ITEM_STATE] = item.get(ITEM_STATE)
-        updates[PROCESSED_FROM] = item[config.ID_FIELD]
+        updates[PROCESSED_FROM] = item[ID_FIELD]
 
         get_resource_service("archive_publish").patch(id=new_id, updates=updates)
     else:
@@ -75,7 +77,7 @@ def internal_destination_auto_publish(item, **kwargs):
                 }
             )
 
-            archive_action_service.patch(id=overwrite_item[config.ID_FIELD], updates=updates)
+            archive_action_service.patch(id=overwrite_item[ID_FIELD], updates=updates)
 
     # raise stop duplication on successful completion so that
     # internal destination superdesk.internal_destination.handle_item_published

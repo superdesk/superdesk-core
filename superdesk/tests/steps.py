@@ -31,8 +31,7 @@ from behave import given, when, then  # @UnresolvedImport
 from bson import ObjectId
 from eve.io.mongo import MongoJSONEncoder
 from eve.methods.common import parse
-from eve.utils import ParsedRequest, config
-from flask import json, render_template_string
+from eve.utils import ParsedRequest
 from wooper.assertions import assert_in, assert_equal, assertions
 from wooper.general import fail_and_print_body, apply_path, parse_json_response, WooperAssertionError
 from wooper.expect import (
@@ -44,7 +43,10 @@ from wooper.expect import (
     expect_headers_contain,
 )
 
+from superdesk.resource_fields import ID_FIELD, LAST_UPDATED, DATE_CREATED, VERSION, ETAG
 import superdesk
+from superdesk.core import json
+from superdesk.flask import render_template_string
 from superdesk import tests
 from superdesk import get_resource_service, utc, etree
 from superdesk.io import get_feeding_service
@@ -2565,7 +2567,7 @@ def we_assert_content_api_item_is_not_published(context, item_id):
 @then("we ensure that archived schema extra fields are not present in duplicated item")
 def we_ensure_that_archived_schema_extra_fields_are_not_present(context):
     with context.app.test_request_context(context.app.config["URL_PREFIX"]):
-        eve_keys = set([config.ID_FIELD, config.LAST_UPDATED, config.DATE_CREATED, config.VERSION, config.ETAG])
+        eve_keys = set([ID_FIELD, LAST_UPDATED, DATE_CREATED, VERSION, ETAG])
         archived_schema_keys = set(context.app.config["DOMAIN"]["archived"]["schema"].keys()).union(eve_keys)
         archive_schema_keys = set(context.app.config["DOMAIN"]["archive"]["schema"].keys()).union(eve_keys)
         extra_fields = [key for key in archived_schema_keys if key not in archive_schema_keys]

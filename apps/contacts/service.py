@@ -10,10 +10,10 @@
 
 
 from superdesk import get_resource_service
+from superdesk.resource_fields import ID_FIELD
 from superdesk.services import Service
 from superdesk.notification import push_notification
 from superdesk.errors import SuperdeskApiError
-from eve.utils import config
 from eve.utils import ParsedRequest
 from flask_babel import _
 from copy import deepcopy
@@ -37,7 +37,7 @@ class ContactsService(Service):
         :param docs:
         :return:
         """
-        push_notification("contacts:create", _id=[doc.get(config.ID_FIELD) for doc in docs])
+        push_notification("contacts:create", _id=[doc.get(ID_FIELD) for doc in docs])
 
     def on_update(self, updates, original):
         item = deepcopy(original)
@@ -51,7 +51,7 @@ class ContactsService(Service):
         :param original:
         :return:
         """
-        push_notification("contacts:update", _id=[original.get(config.ID_FIELD)])
+        push_notification("contacts:update", _id=[original.get(ID_FIELD)])
 
     def on_deleted(self, doc):
         """
@@ -59,7 +59,7 @@ class ContactsService(Service):
         :param doc:
         :return:
         """
-        push_notification("contacts:deleted", _id=[doc.get(config.ID_FIELD)])
+        push_notification("contacts:deleted", _id=[doc.get(ID_FIELD)])
 
     def _validate_assignable(self, contact):
         """Validates a required email address if the contact_type has assignable flag turned on"""

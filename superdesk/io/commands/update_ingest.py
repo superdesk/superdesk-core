@@ -13,9 +13,10 @@ import bson
 import logging
 from datetime import timedelta, timezone, datetime
 import pytz
-from flask import current_app as app
 from werkzeug.exceptions import HTTPException
 
+from superdesk.core import get_app_config, get_current_app
+from superdesk.resource_fields import ID_FIELD
 import superdesk
 from superdesk.activity import ACTIVITY_EVENT, notify_and_add_activity
 from superdesk.celery_app import celery
@@ -130,7 +131,7 @@ def filter_expired_items(provider, items):
                 del provider["content_expiry"]
                 content_expiry = None
 
-        delta = timedelta(minutes=content_expiry or app.config["INGEST_EXPIRY_MINUTES"])
+        delta = timedelta(minutes=content_expiry or get_app_config("INGEST_EXPIRY_MINUTES"))
         filtered_items = [
             item
             for item in items
@@ -221,7 +222,7 @@ def get_is_idle(provider):
 
 
 def get_task_id(provider):
-    return "update-ingest-{0}-{1}".format(provider.get("name"), provider.get(superdesk.config.ID_FIELD))
+    return "update-ingest-{0}-{1}".format(provider.get("name"), provider.get(ID_FIELD))
 
 
 def has_system_renditions(item):
@@ -290,7 +291,7 @@ def update_provider(provider, rule_set=None, routing_scheme=None, sync=False):
     :param routing_scheme: Routing Scheme if one is associated with Ingest Provider.
     :param sync: Running in sync mode from cli.
     """
-    lock_name = get_lock_id("ingest", provider["name"], provider[superdesk.config.ID_FIELD])
+    lock_name = get_lock_id("ingest", provider["name"], provider[ID_FIELD])
 
     if not lock(lock_name, expire=UPDATE_TTL + 10):
         if sync:
@@ -311,7 +312,7 @@ def update_provider(provider, rule_set=None, routing_scheme=None, sync=False):
         while True:
             try:
                 if not touch(lock_name, expire=UPDATE_TTL):
-                    logger.warning("lock expired while updating provider %s", provider[superdesk.config.ID_FIELD])
+                    logger.warning("lock expired while updating provider %s", provider[ID_FIELD])
                     return
                 items = generator.send(failed)
                 failed = ingest_items(items, provider, feeding_service, rule_set, routing_scheme)
@@ -326,8 +327,8 @@ def update_provider(provider, rule_set=None, routing_scheme=None, sync=False):
         # Some Feeding Services update the collection and by this time the _etag might have been changed.
         # So it's necessary to fetch it once again. Otherwise, OriginalChangedError is raised.
         ingest_provider_service = superdesk.get_resource_service("ingest_providers")
-        provider = ingest_provider_service.find_one(req=None, _id=provider[superdesk.config.ID_FIELD])
-        ingest_provider_service.system_update(provider[superdesk.config.ID_FIELD], update, provider)
+        provider = ingest_provider_service.find_one(req=None, _id=provider[ID_FIELD])
+        ingest_provider_service.system_update(provider[ID_FIELD], update, provider)
 
         if LAST_ITEM_UPDATE not in update and get_is_idle(provider):
             admins = superdesk.get_resource_service("users").get_users_by_user_type("administrator")
@@ -340,10 +341,10 @@ def update_provider(provider, rule_set=None, routing_scheme=None, sync=False):
                 last=provider[LAST_ITEM_UPDATE].replace(tzinfo=timezone.utc).astimezone(tz=None).strftime("%c"),
             )
 
-        logger.info("Provider {0} updated".format(provider[superdesk.config.ID_FIELD]))
+        logger.info("Provider {0} updated".format(provider[ID_FIELD]))
 
         if LAST_ITEM_UPDATE in update:  # Only push a notification if there has been an update
-            push_notification("ingest:update", provider_id=str(provider[superdesk.config.ID_FIELD]))
+            push_notification("ingest:update", provider_id=str(provider[ID_FIELD]))
     except Exception as e:
         logger.error("Failed to ingest file: {error}".format(error=e))
         raise IngestFileError(3000, e, provider)
@@ -536,7 +537,7 @@ def ingest_items(items, provider, feeding_service, rule_set=None, routing_scheme
                 ref.setdefault("renditions", itemRendition)
             ref[GUID_FIELD] = ref["residRef"]
             if items_dict.get(ref["residRef"]):
-                ref["residRef"] = items_dict.get(ref["residRef"], {}).get(superdesk.config.ID_FIELD)
+                ref["residRef"] = items_dict.get(ref["residRef"], {}).get(ID_FIELD)
         if item[GUID_FIELD] in failed_items:
             continue
         ingested, ids = ingest_item(item, provider, feeding_service, rule_set, routing_scheme)
@@ -551,6 +552,7 @@ def ingest_items(items, provider, feeding_service, rule_set=None, routing_scheme
         ingest_collection = feeding_service.service if hasattr(feeding_service, "service") else "ingest"
     ingest_service = superdesk.get_resource_service(ingest_collection)
     updated_items = ingest_service.find({"_id": {"$in": created_ids}}, max_results=len(created_ids))
+    app = get_current_app()
     app.data._search_backend(ingest_collection).bulk_insert(ingest_collection, list(updated_items))
     if failed_items:
         logger.error("Failed to ingest the following items: %s", failed_items)
@@ -577,8 +579,8 @@ def ingest_item(item, provider, feeding_service, rule_set=None, routing_scheme=N
         old_item = ingest_service.find_one(guid=item[GUID_FIELD], req=None)
 
         if not old_item:
-            item.setdefault(superdesk.config.ID_FIELD, generate_guid(type=GUID_NEWSML))
-            item[FAMILY_ID] = item[superdesk.config.ID_FIELD]
+            item.setdefault(ID_FIELD, generate_guid(type=GUID_NEWSML))
+            item[FAMILY_ID] = item[ID_FIELD]
         elif provider.get("disable_item_updates", False):
             logger.warning(
                 f"Resource '{ingest_collection}' "
@@ -590,7 +592,7 @@ def ingest_item(item, provider, feeding_service, rule_set=None, routing_scheme=N
             logger.info(f"Resource '{ingest_collection}' " f"item '{item[GUID_FIELD]}' should not be updated")
             return False, []
 
-        item["ingest_provider"] = str(provider[superdesk.config.ID_FIELD])
+        item["ingest_provider"] = str(provider[ID_FIELD])
         item.setdefault("source", provider.get("source", ""))
         item.setdefault("uri", item[GUID_FIELD])  # keep it as original guid
 
@@ -610,7 +612,7 @@ def ingest_item(item, provider, feeding_service, rule_set=None, routing_scheme=N
             process_anpa_category(item, provider)
 
         if "subject" in item:
-            if not app.config.get("INGEST_SKIP_IPTC_CODES", False):
+            if not get_app_config("INGEST_SKIP_IPTC_CODES", False):
                 # FIXME: temporary fix for SDNTB-344, need to be removed once SDESK-439 is implemented
                 process_iptc_codes(item, provider)
             if "anpa_category" not in item:
@@ -686,7 +688,7 @@ def ingest_item(item, provider, feeding_service, rule_set=None, routing_scheme=N
             new_version = _is_new_version(item, old_item)
             updates = deepcopy(item)
             if new_version:
-                ingest_service.patch_in_mongo(old_item[superdesk.config.ID_FIELD], updates, old_item)
+                ingest_service.patch_in_mongo(old_item[ID_FIELD], updates, old_item)
                 item.update(old_item)
                 item.update(updates)
                 items_ids.append(item["_id"])
@@ -702,7 +704,7 @@ def ingest_item(item, provider, feeding_service, rule_set=None, routing_scheme=N
                 raise e
 
         if routing_scheme and new_version:
-            routed = ingest_service.find_one(_id=item[superdesk.config.ID_FIELD], req=None)
+            routed = ingest_service.find_one(_id=item[ID_FIELD], req=None)
             superdesk.get_resource_service("routing_schemes").apply_routing_scheme(routed, provider, routing_scheme)
 
     except Exception as ex:
@@ -770,7 +772,8 @@ def set_expiry(item, provider, parent_expiry=None):
         expiry_offset = item["dates"]["end"]
 
     item.setdefault(
-        "expiry", get_expiry_date(provider.get("content_expiry") or app.config["INGEST_EXPIRY_MINUTES"], expiry_offset)
+        "expiry",
+        get_expiry_date(provider.get("content_expiry") or get_app_config("INGEST_EXPIRY_MINUTES"), expiry_offset),
     )
 
 

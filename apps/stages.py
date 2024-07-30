@@ -9,8 +9,7 @@
 # at https://www.sourcefabric.org/superdesk/license
 
 import superdesk
-
-from superdesk import config
+from superdesk.resource_fields import ID_FIELD
 from superdesk.notification import push_notification
 from superdesk.resource import Resource
 from superdesk.services import BaseService
@@ -101,7 +100,7 @@ class StagesService(BaseService):
                 push_notification(
                     self.notification_key,
                     created=1,
-                    stage_id=str(doc.get(config.ID_FIELD)),
+                    stage_id=str(doc.get(ID_FIELD)),
                     desk_id=str(doc.get("desk")),
                     is_visible=doc.get("is_visible", True),
                 )
@@ -136,7 +135,7 @@ class StagesService(BaseService):
             if desk_id and superdesk.get_resource_service("desks").find_one(req=None, _id=desk_id):
                 raise SuperdeskApiError.preconditionFailedError(message=_("Cannot delete a Incoming Stage."))
 
-        archive_versions_query = {"task.stage": str(doc[config.ID_FIELD])}
+        archive_versions_query = {"task.stage": str(doc[ID_FIELD])}
         items = superdesk.get_resource_service("archive_versions").get(req=None, lookup=archive_versions_query)
         if items and items.count():
             raise SuperdeskApiError.preconditionFailedError(
@@ -144,7 +143,7 @@ class StagesService(BaseService):
             )
 
         # check if the stage is referred to in a ingest routing rule
-        rules = self._stage_in_rule(doc[config.ID_FIELD])
+        rules = self._stage_in_rule(doc[ID_FIELD])
         if rules.count() > 0:
             rule_names = ", ".join(rule.get("name") for rule in rules)
             raise SuperdeskApiError.preconditionFailedError(
@@ -153,7 +152,7 @@ class StagesService(BaseService):
 
     def on_deleted(self, doc):
         push_notification(
-            self.notification_key, deleted=1, stage_id=str(doc.get(config.ID_FIELD)), desk_id=str(doc.get("desk"))
+            self.notification_key, deleted=1, stage_id=str(doc.get(ID_FIELD)), desk_id=str(doc.get("desk"))
         )
 
     def on_update(self, updates, original):
@@ -183,7 +182,7 @@ class StagesService(BaseService):
             push_notification(
                 "stage_visibility_updated",
                 updated=1,
-                stage_id=str(original[config.ID_FIELD]),
+                stage_id=str(original[ID_FIELD]),
                 desk_id=str(original["desk"]),
                 is_visible=updates.get("is_visible", original.get("is_visible", True)),
             )
@@ -192,7 +191,7 @@ class StagesService(BaseService):
             push_notification(
                 self.notification_key,
                 updated=1,
-                stage_id=str(original.get(config.ID_FIELD)),
+                stage_id=str(original.get(ID_FIELD)),
                 desk_id=str(original.get("desk")),
             )
 
