@@ -943,6 +943,21 @@ Feature: Rundowns
         }
         """
 
+        When we get "/rundowns?source={"sort":[{"_updated":"desc"}],"size":50,"from":0,"query":{"filtered":{"query":{"query_string":{"query":"searchable"}}}}}"
+        Then we get list with 1 items
+        """
+        {
+            "_items": [
+                {
+                    "title": "Rundown Title",
+                    "matching_items": [
+                        {"title": "sample"}
+                    ]
+                }
+            ]
+        }
+        """
+
         When we get "/rundowns?q=missing"
         Then we get list with 0 items
 
