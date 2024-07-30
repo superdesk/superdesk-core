@@ -3,9 +3,9 @@ import json
 import pytest
 from pathlib import Path
 from bson import ObjectId
-from flask import url_for
 from requests.auth import _basic_auth_str
 
+from superdesk.flask import url_for
 from superdesk.tests import get_mongo_uri, setup, clean_dbs
 from superdesk.factory import get_app as get_sd_app
 from superdesk.auth_server.clients import RegisterClient

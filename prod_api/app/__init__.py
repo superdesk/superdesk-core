@@ -17,12 +17,11 @@ thus essentially just a normal `Flask <http://flask.pocoo.org/>`_ application.
 """
 
 import os
-import flask
 import importlib
 
-from eve import Eve
 from eve.io.mongo.mongo import MongoJSONEncoder
 
+from superdesk.flask import Config
 from superdesk.datalayer import SuperdeskDataLayer
 from superdesk.factory.elastic_apm import setup_apm
 from superdesk.validator import SuperdeskValidator
@@ -41,7 +40,7 @@ def get_app(config=None):
     :return: a new SuperdeskEve app instance
     """
 
-    app_config = flask.Config(".")
+    app_config = Config(".")
 
     # default config
     app_config.from_object("prod_api.app.settings")

@@ -1,10 +1,10 @@
 from time import time
 from authlib.jose import jwt
 from authlib.jose.errors import BadSignatureError, ExpiredTokenError, DecodeError
-from flask import abort, make_response, jsonify
-from flask import current_app as app
 from eve.auth import TokenAuth
 
+from superdesk.core import get_app_config
+from superdesk.flask import abort, make_response, jsonify
 from superdesk import get_resource_privileges
 
 
@@ -24,12 +24,12 @@ class JWTAuth(TokenAuth):
         :param method: HTTP method being executed (POST, GET, etc.)
         """
 
-        if not app.config.get("AUTH_SERVER_SHARED_SECRET"):
+        if not get_app_config("AUTH_SERVER_SHARED_SECRET"):
             return False
 
         # decode jwt
         try:
-            decoded_jwt = jwt.decode(token, key=app.config.get("AUTH_SERVER_SHARED_SECRET"))
+            decoded_jwt = jwt.decode(token, key=get_app_config("AUTH_SERVER_SHARED_SECRET"))
             decoded_jwt.validate_exp(now=time(), leeway=0)
         except (BadSignatureError, ExpiredTokenError, DecodeError):
             return False
