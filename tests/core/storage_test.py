@@ -14,7 +14,7 @@ from bson import ObjectId
 from datetime import datetime, timezone, timedelta
 
 from superdesk.tests.asyncio import AsyncTestCase
-from superdesk.storage.async_storage import GridFSMediaStorageAsync
+from superdesk.core.storage import GridFSMediaStorageAsync
 
 
 class GridFSMediaStorageAsyncTestCase(AsyncTestCase):
