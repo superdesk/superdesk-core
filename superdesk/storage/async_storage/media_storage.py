@@ -17,15 +17,14 @@ from bson import ObjectId
 from motor.motor_asyncio import AsyncIOMotorGridFSBucket, AsyncIOMotorGridOut
 from typing import Any, BinaryIO, Dict, MutableMapping, Optional, Union, List, cast
 
-from eve.io.media import MediaStorage
-from superdesk.core.app import SuperdeskAsyncApp
+from superdesk.core.app import get_current_async_app
 from superdesk.storage.desk_media_storage import format_id
 from superdesk.storage.mimetype_mixin import MimetypeMixin
 
 logger = logging.getLogger(__name__)
 
 
-class GridFSMediaStorageAsync(MediaStorage, MimetypeMixin):
+class GridFSMediaStorageAsync(MimetypeMixin):
     """
     The GridFSMediaStorageAsync class stores files into GridFS
     using asynchronous approach.
@@ -35,10 +34,7 @@ class GridFSMediaStorageAsync(MediaStorage, MimetypeMixin):
 
     _fs: Dict[str, AsyncIOMotorGridFSBucket]
 
-    app: SuperdeskAsyncApp
-
-    def __init__(self, app: SuperdeskAsyncApp):
-        self.app = app
+    def __init__(self):
         self._fs = {}
 
     async def put(
@@ -236,11 +232,11 @@ class GridFSMediaStorageAsync(MediaStorage, MimetypeMixin):
         :return: The GridFS bucket.
         """
         resource = resource or "upload"
-        mongo = self.app.mongo
-
+        mongo = get_current_async_app().mongo
         px = mongo.get_resource_config(resource).prefix
+
         if px not in self._fs:
-            db = mongo.get_db_async(resource)
+            _, db = mongo.get_client_async(resource)
             self._fs[px] = AsyncIOMotorGridFSBucket(db)
 
         return self._fs[px]

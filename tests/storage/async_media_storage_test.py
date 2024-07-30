@@ -22,7 +22,7 @@ class GridFSMediaStorageAsyncTestCase(AsyncTestCase):
 
     async def asyncSetUp(self):
         await super().asyncSetUp()
-        self.storage = GridFSMediaStorageAsync(self.app)
+        self.storage = GridFSMediaStorageAsync()
 
     async def test_put_and_get_file(self):
         content = BytesIO(b"Hello, GridFS!")
