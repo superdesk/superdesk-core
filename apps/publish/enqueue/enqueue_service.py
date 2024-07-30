@@ -17,6 +17,7 @@ import content_api
 from bson import ObjectId
 from copy import deepcopy
 from eve.utils import ParsedRequest
+from flask_babel import _
 
 from superdesk.core import get_current_app, get_app_config
 from superdesk.resource_fields import ID_FIELD, VERSION
@@ -35,7 +36,6 @@ from apps.archive.common import get_user, get_utc_schedule
 from apps.packages.package_service import PackageService
 from apps.publish.published_item import PUBLISH_STATE, QUEUE_STATE
 from apps.content_types import apply_schema
-from flask_babel import _
 
 logger = logging.getLogger(__name__)
 
@@ -452,16 +452,17 @@ class EnqueueService:
             subscriber_codes = {}
 
         try:
-            if get_app_config("PUBLISH_ASSOCIATIONS_RESEND") and not sent:
+            publish_associations_resend = get_app_config("PUBLISH_ASSOCIATIONS_RESEND")
+            if publish_associations_resend and not sent:
                 is_correction = doc.get("state") in ["corrected", "being_corrected"]
                 is_update = doc.get("rewrite_of")
                 is_new = not is_correction and not is_update
 
-                if get_app_config("PUBLISH_ASSOCIATIONS_RESEND") == "new" and is_new:
+                if publish_associations_resend == "new" and is_new:
                     self.resend_association_items(doc)
-                elif get_app_config("PUBLISH_ASSOCIATIONS_RESEND") == "corrections":
+                elif publish_associations_resend == "corrections":
                     self.resend_association_items(doc)
-                elif get_app_config("PUBLISH_ASSOCIATIONS_RESEND") == "updates" and not is_correction:
+                elif publish_associations_resend == "updates" and not is_correction:
                     self.resend_association_items(doc)
 
             queued = False

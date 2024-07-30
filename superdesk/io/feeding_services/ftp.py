@@ -31,6 +31,8 @@ logger = logging.getLogger(__name__)
 DEFAULT_SUCCESS_PATH = "_PROCESSED"
 DEFAULT_FAILURE_PATH = "_ERROR"
 
+ALLOWED_EXTENSIONS_CONFIG = "allowed_extension"
+
 
 class EmptyFile(Exception):
     """Raised when a file is empty thus ignored"""
@@ -100,6 +102,13 @@ class FTPFeedingService(FeedingService):
             "placeholder": "FTP Server Path, keep empty to use default path",
             "required": False,
             "show_expression": "provider.config.move === true",
+        },
+        {
+            "id": ALLOWED_EXTENSIONS_CONFIG,
+            "type": "text",
+            "label": "Allowed file extensions",
+            "placeholder": "json,xml",
+            "required": False,
         },
     ]
 
@@ -285,6 +294,8 @@ class FTPFeedingService(FeedingService):
         limit = get_app_config("FTP_INGEST_FILES_LIST_LIMIT", 100)
         registered_parser = self.get_feed_parser(provider)
         allowed_ext = getattr(registered_parser, "ALLOWED_EXT", self.ALLOWED_EXT_DEFAULT)
+        if config.get(ALLOWED_EXTENSIONS_CONFIG):
+            allowed_ext = set(map(_format_extension, config.get(ALLOWED_EXTENSIONS_CONFIG).split(",")))
 
         try:
             self._timer.start("ftp_connect")
@@ -367,3 +378,7 @@ class FTPFeedingService(FeedingService):
 
 
 register_feeding_service(FTPFeedingService)
+
+
+def _format_extension(ext: str) -> str:
+    return ext.strip().lower() if ext.startswith(".") else ".{ext}".format(ext=ext.strip().lower())

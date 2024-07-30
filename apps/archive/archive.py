@@ -1217,6 +1217,7 @@ class ArchiveService(BaseService, HighlightsSearchMixin):
         :param original: original item version before update
         :param add_activity: flag to decide whether to add notification as activity or not
         """
+
         marked_user = marked_for_user = None
         orig_marked_user = original.get("marked_for_user", None)
         new_marked_user = updates.get("marked_for_user", None)
@@ -1291,7 +1292,14 @@ class ArchiveService(BaseService, HighlightsSearchMixin):
 
         if add_activity:
             notify_and_add_activity(
-                activity_name, msg, resource=resource, item=item, user_list=user_list, link=link, **data
+                activity_name,
+                msg,
+                resource=resource,
+                item=item,
+                user_list=user_list,
+                link=link,
+                preference_notification_name="mark_for_user",
+                **data,
             )
         # send separate notification for markForUser extension
         push_notification(activity_name, item_id=item.get(ID_FIELD), user_list=user_list, extension="markForUser")

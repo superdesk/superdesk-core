@@ -162,6 +162,7 @@ class PublishService(BaseService):
         for assoc, assoc_item in (item.get("associations") or {}).items():
             if not assoc_item:
                 continue
+            doc["associations"][assoc] = assoc_item.copy()
             doc["associations"][assoc]["subscribers"] = list(map(str, assoc_item.get("subscribers") or []))
 
     def _process_associations(self, updates, original):

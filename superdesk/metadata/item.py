@@ -220,7 +220,12 @@ metadata_schema = {
     },
     "subject": {
         "type": "list",
-        "mapping": {"type": "object", "dynamic": False, "properties": {"qcode": not_analyzed, "name": not_analyzed}},
+        "mapping": {
+            "type": "nested",
+            "include_in_parent": True,
+            "dynamic": False,
+            "properties": {"qcode": not_analyzed, "name": not_analyzed, "scheme": not_analyzed},
+        },
     },
     "genre": {
         "type": "list",

@@ -212,6 +212,17 @@ class PreferencesResource(Resource):
         category=lazy_gettext("contacts"),
     )
 
+    superdesk.register_default_user_preference(
+        "email:notification:mark_for_user",
+        {
+            "type": "bool",
+            "enabled": True,
+            "default": True,
+        },
+        label=lazy_gettext("Send Mark for User notifications via email"),
+        category=lazy_gettext("notifications"),
+    )
+
     superdesk.register_default_user_preference("destination:active", {})
 
     superdesk.register_default_user_preference("extensions", {})
@@ -338,6 +349,8 @@ class PreferencesService(BaseService):
         This function returns preferences for the user.
         """
         doc = get_resource_service("users").find_one(req=None, _id=user_id)
+        if doc is None:
+            return {}
         prefs = doc.get(_user_preferences_key, {})
         return prefs
 
@@ -398,3 +411,16 @@ class PreferencesService(BaseService):
             return [priv for pref in prefs for priv in pref.get("privileges", []) if not privileges.get(priv)]
 
         doc[_user_preferences_key] = {k: v for k, v in preferences.items() if not has_missing_privileges(v)}
+
+    def check_preference_email_notification_is_enabled(self, preference_name, user_id=None, preferences=None):
+        """
+        This function checks if email notification is enabled or not based on the preference.
+        """
+        send_email = {}
+        if user_id:
+            preferences = self.get_user_preference(user_id)
+        if preference_name:
+            send_email = (
+                preferences.get(f"email:notification:{preference_name}", {}) if isinstance(preferences, dict) else {}
+            )
+        return send_email and send_email.get("enabled", False)

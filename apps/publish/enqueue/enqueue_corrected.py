@@ -8,11 +8,16 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
+import logging
+
 from superdesk.resource_fields import ID_FIELD
 from apps.publish.content.utils import filter_non_digital
 from superdesk import get_resource_service
 from superdesk.metadata.item import CONTENT_STATE
 from apps.publish.enqueue.enqueue_service import EnqueueService
+
+
+logger = logging.getLogger(__name__)
 
 
 class EnqueueCorrectedService(EnqueueService):
@@ -38,18 +43,15 @@ class EnqueueCorrectedService(EnqueueService):
 
         # step 1
         query = {
-            "$and": [
-                {"item_id": doc["item_id"]},
-                {"publishing_action": {"$in": [CONTENT_STATE.PUBLISHED, CONTENT_STATE.CORRECTED]}},
-            ]
+            "item_id": doc["item_id"],
+            "publishing_action": {"$in": [CONTENT_STATE.PUBLISHED, CONTENT_STATE.CORRECTED]},
         }
 
         subscribers, subscriber_codes, previous_associations = self._get_subscribers_for_previously_sent_items(query)
 
         if subscribers:
             # Step 2
-            query = {"is_active": True}
-            active_subscribers = list(get_resource_service("subscribers").get(req=None, lookup=query))
+            active_subscribers = list(get_resource_service("subscribers").get_active())
             subscribers_yet_to_receive = [
                 a for a in active_subscribers if not any(a[ID_FIELD] == s[ID_FIELD] for s in subscribers)
             ]
@@ -64,6 +66,8 @@ class EnqueueCorrectedService(EnqueueService):
                 )
                 if codes:
                     subscriber_codes.update(codes)
+        else:
+            logger.info("No previous subscribers found for item %s", doc["item_id"])
 
         subscribers = subscribers + subscribers_yet_to_receive
         associations = self._filter_subscribers_for_associations(

@@ -581,17 +581,15 @@ class ArchivePublishTestCase(TestCase):
         service = get_enqueue_service(doc[ITEM_OPERATION])
 
         subscribers, subscriber_codes, associations = service.get_subscribers(doc, SUBSCRIBER_TYPES.DIGITAL)
-        no_formatters, queued = get_enqueue_service("publish").queue_transmission(doc, subscribers, subscriber_codes)
+        queued = get_enqueue_service("publish").queue_transmission(doc, subscribers, subscriber_codes)
         queue_items = self.app.data.find(PUBLISH_QUEUE, None, None)[0]
         self.assertEqual(1, queue_items.count())
-        self.assertEqual(0, len(no_formatters))
         self.assertTrue(queued)
 
         subscribers, subscriber_codes, associations = service.get_subscribers(doc, SUBSCRIBER_TYPES.WIRE)
-        no_formatters, queued = get_enqueue_service("publish").queue_transmission(doc, subscribers)
+        queued = get_enqueue_service("publish").queue_transmission(doc, subscribers)
         queue_items = self.app.data.find(PUBLISH_QUEUE, None, None)[0]
         self.assertEqual(2, queue_items.count())
-        self.assertEqual(0, len(no_formatters))
         self.assertTrue(queued)
 
     def test_delete_from_queue_by_article_id(self):
