@@ -4,8 +4,9 @@ import socket
 import logging
 
 from datetime import datetime
+from pymongo import MongoClient
 
-# from mongolock import MongoLock, MongoLockException
+from superdesk.core.mongo import get_mongo_client_config
 from superdesk.mongolock import MongoLock, MongoLockException
 from werkzeug.local import LocalProxy
 from flask import current_app as app
@@ -49,8 +50,11 @@ class SuperdeskMongoLock(MongoLock):
 
 def _get_lock():
     """Get mongolock instance using app mongodb."""
-    app.register_resource("_lock", _lock_resource_settings)  # setup dummy resource for locks
-    return SuperdeskMongoLock(client=app.data.mongo.pymongo("_lock").db)
+
+    client_config, dbname = get_mongo_client_config(app.config)
+    client = MongoClient(**client_config)
+    collection = client.get_database(dbname).get_collection("_lock")
+    return SuperdeskMongoLock(collection=collection)
 
 
 _lock = LocalProxy(_get_lock)
