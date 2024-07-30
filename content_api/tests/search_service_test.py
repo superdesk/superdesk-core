@@ -10,8 +10,9 @@
 
 from unittest import mock
 from unittest.mock import MagicMock
-from flask import Flask
 from werkzeug.datastructures import MultiDict
+
+from superdesk.flask import Flask
 from content_api.tests import ApiTestCase
 
 

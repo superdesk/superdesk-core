@@ -8,9 +8,9 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
-from flask import Flask
 from unittest import mock
 
+from superdesk.flask import Flask
 from content_api.tests import ApiTestCase
 
 

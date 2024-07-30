@@ -12,17 +12,19 @@
 import superdesk
 import bson.errors
 
-from flask import request, current_app as app
+from superdesk.core import get_current_app
+from superdesk.flask import request, Blueprint
 from content_api.errors import FileNotFoundError
 from superdesk import get_resource_service
 from superdesk.upload import upload_url as _upload_url
 from superdesk.storage.superdesk_file import generate_response_for_file
 
-bp = superdesk.Blueprint("assets", __name__)
+bp = Blueprint("assets", __name__)
 
 
 @bp.route("/assets/<path:media_id>", methods=["GET"])
 def get_media_streamed(media_id):
+    app = get_current_app()
     if not app.auth.authorized([], "assets", "GET"):
         return app.auth.authenticate()
     try:

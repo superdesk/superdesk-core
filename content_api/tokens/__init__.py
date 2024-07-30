@@ -10,8 +10,10 @@
 
 import superdesk
 
-from flask import current_app as app, g
 from eve.auth import TokenAuth
+
+from superdesk.core import get_current_app
+from superdesk.flask import g
 from superdesk.utc import utcnow
 from superdesk.publish.subscriber_token import SubscriberTokenResource, SubscriberTokenService
 
@@ -30,6 +32,7 @@ class AuthSubscriberTokenResource(SubscriberTokenResource):
 class SubscriberTokenAuth(TokenAuth):
     def check_auth(self, token, allowed_roles, resource, method):
         """Try to find auth token and if valid put subscriber id into ``g.user``."""
+        app = get_current_app()
         data = app.data.mongo.find_one(TOKEN_RESOURCE, req=None, _id=token)
         if not data:
             return False

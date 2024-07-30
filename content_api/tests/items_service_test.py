@@ -11,10 +11,12 @@
 import json
 from datetime import date, timedelta
 from eve.utils import ParsedRequest
-from flask import Flask
+
 from unittest import mock
 from unittest.mock import MagicMock
 from werkzeug.datastructures import MultiDict
+
+from superdesk.flask import Flask
 from superdesk import resources
 from content_api.tests import ApiTestCase
 from superdesk.tests import TestCase

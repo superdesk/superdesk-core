@@ -9,8 +9,9 @@
 # at https://www.sourcefabric.org/superdesk/license
 
 from superdesk.services import BaseService
-from flask import g, request, current_app as app
-from eve.utils import config
+from superdesk.core import get_app_config
+from superdesk.resource_fields import ID_FIELD
+from superdesk.flask import g, request
 
 
 class ApiAuditService(BaseService):
@@ -35,12 +36,12 @@ class ApiAuditService(BaseService):
     def _audit_docs(self, docs):
         if not len(docs):
             return
-        if not app.config.get("CONTENTAPI_AUDIT", True):
+        if not get_app_config("CONTENTAPI_AUDIT", True):
             return
         subscriber = getattr(g, "user", None)
         # in behave testing we get user (dict)
         if isinstance(subscriber, dict):
-            subscriber = subscriber.get(config.ID_FIELD)
+            subscriber = subscriber.get(ID_FIELD)
         audit_docs = [
             {
                 "type": item.get("type", ""),
