@@ -16,7 +16,7 @@ retrieving files by ID or filename, searching for files based on criteria, check
 For example::
 
     async def example_usage():
-        storage = GridFSMediaStorageAsync(app)
+        storage = GridFSMediaStorageAsync()
         content = BytesIO(b"Hello, GridFS!")
         filename = "example.txt"
 
@@ -53,7 +53,7 @@ Module References
         Example usage::
 
             async def example_put():
-                storage = GridFSMediaStorageAsync(app)
+                storage = GridFSMediaStorageAsync()
                 content = BytesIO(b"Hello, GridFS!")
                 filename = "example.txt"
                 file_id = await storage.put(content, filename, metadata={"description": "Example file"})
@@ -64,7 +64,7 @@ Module References
         Example usage::
 
             async def example_get():
-                storage = GridFSMediaStorageAsync(app)
+                storage = GridFSMediaStorageAsync()
                 file_id = ObjectId("60c72b2f9af1c7268b8b4567")
                 media_file = await storage.get(file_id)
                 if media_file:
@@ -76,7 +76,7 @@ Module References
         Example usage::
 
             async def example_find():
-                storage = GridFSMediaStorageAsync(app)
+                storage = GridFSMediaStorageAsync()
                 files = await storage.find(folder="example_folder")
                 for file in files:
                     print(f"Found file: {file['filename']}")
@@ -86,7 +86,7 @@ Module References
         Example usage::
 
             async def example_exists():
-                storage = GridFSMediaStorageAsync(app)
+                storage = GridFSMediaStorageAsync()
                 file_id = ObjectId("60c72b2f9af1c7268b8b4567")
                 exists = await storage.exists(file_id)
                 print(f"File exists: {exists}")
@@ -96,7 +96,7 @@ Module References
         Example usage::
 
             async def example_delete():
-                storage = GridFSMediaStorageAsync(app)
+                storage = GridFSMediaStorageAsync()
                 file_id = ObjectId("60c72b2f9af1c7268b8b4567")
                 await storage.delete(file_id)
                 print("File deleted")
@@ -106,7 +106,7 @@ Module References
         Example usage::
 
             async def example_get_by_filename():
-                storage = GridFSMediaStorageAsync(app)
+                storage = GridFSMediaStorageAsync()
                 filename = "example.txt"
                 media_file = await storage.get_by_filename(filename)
                 if media_file:
