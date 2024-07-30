@@ -13,9 +13,10 @@ import logging
 
 from copy import deepcopy
 
-from flask import current_app as app
+from superdesk.resource_fields import ID_FIELD
+from superdesk.core import get_app_config
 from superdesk import get_resource_service
-from eve.utils import ParsedRequest, config
+from eve.utils import ParsedRequest
 from superdesk.utils import ListCursor, get_dict_hash
 from superdesk.resource import Resource, build_custom_hateoas
 from superdesk.services import CacheableService
@@ -125,7 +126,7 @@ class SubscribersService(CacheableService):
             self._validate_products_destinations(doc)
 
     def on_created(self, docs):
-        push_notification("subscriber:create", _id=[doc.get(config.ID_FIELD) for doc in docs])
+        push_notification("subscriber:create", _id=[doc.get(ID_FIELD) for doc in docs])
 
     def on_update(self, updates, original):
         self._validate_seq_num_settings(updates)
@@ -148,12 +149,10 @@ class SubscribersService(CacheableService):
                         update_destination["config"].setdefault(field, value)
 
     def on_updated(self, updates, original):
-        push_notification("subscriber:update", _id=[original.get(config.ID_FIELD)])
+        push_notification("subscriber:update", _id=[original.get(ID_FIELD)])
 
     def on_deleted(self, doc):
-        get_resource_service("sequences").delete(
-            lookup={"key": "ingest_providers_{_id}".format(_id=doc[config.ID_FIELD])}
-        )
+        get_resource_service("sequences").delete(lookup={"key": "ingest_providers_{_id}".format(_id=doc[ID_FIELD])})
 
     def is_async(self, subscriber_id):
         subscriber = self.find_one(req=None, _id=subscriber_id)
@@ -236,7 +235,7 @@ class SubscribersService(CacheableService):
             )
 
         if subscriber.get("products"):
-            lookup = {config.ID_FIELD: {"$in": subscriber.get("products")}, "product_type": ProductTypes.API.value}
+            lookup = {ID_FIELD: {"$in": subscriber.get("products")}, "product_type": ProductTypes.API.value}
             products = get_resource_service("products").get_product_names(lookup)
             if products:
                 raise SuperdeskApiError.badRequestError(
@@ -244,7 +243,7 @@ class SubscribersService(CacheableService):
                 )
         if subscriber.get("api_products"):
             lookup = {
-                config.ID_FIELD: {"$in": subscriber.get("api_products")},
+                ID_FIELD: {"$in": subscriber.get("api_products")},
                 "product_type": ProductTypes.DIRECT.value,
             }
             products = get_resource_service("products").get_product_names(lookup)
@@ -275,7 +274,7 @@ class SubscribersService(CacheableService):
 
         if subscriber.get("sequence_num_settings"):
             min = subscriber.get("sequence_num_settings").get("min", 1)
-            max = subscriber.get("sequence_num_settings").get("max", app.config["MAX_VALUE_OF_PUBLISH_SEQUENCE"])
+            max = subscriber.get("sequence_num_settings").get("max", get_app_config("MAX_VALUE_OF_PUBLISH_SEQUENCE"))
 
             if min <= 0:
                 raise SuperdeskApiError.badRequestError(
@@ -301,13 +300,13 @@ class SubscribersService(CacheableService):
 
         assert subscriber is not None, "Subscriber can't be null"
         min_seq_number = 1
-        max_seq_number = app.config["MAX_VALUE_OF_PUBLISH_SEQUENCE"]
+        max_seq_number = get_app_config("MAX_VALUE_OF_PUBLISH_SEQUENCE")
         if subscriber.get("sequence_num_settings"):
             min_seq_number = subscriber["sequence_num_settings"]["min"]
             max_seq_number = subscriber["sequence_num_settings"]["max"]
 
         return get_resource_service("sequences").get_next_sequence_number(
-            key_name="subscribers_{_id})".format(_id=subscriber[config.ID_FIELD]),
+            key_name="subscribers_{_id})".format(_id=subscriber[ID_FIELD]),
             max_seq_number=max_seq_number,
             min_seq_number=min_seq_number,
         )

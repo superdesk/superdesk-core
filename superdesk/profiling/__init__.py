@@ -16,9 +16,7 @@ import re
 from flask_babel import lazy_gettext
 from superdesk import get_resource_service
 import superdesk
-
-from flask import current_app as app
-
+from superdesk.core import get_app_config
 from superdesk.profiling.resource import ProfilingResource
 from superdesk.profiling.service import ProfilingService, profile
 
@@ -46,11 +44,11 @@ class ProfileManager:
         self.name = name
 
     def __enter__(self):
-        if app.config.get("ENABLE_PROFILING"):
+        if get_app_config("ENABLE_PROFILING"):
             profile.enable()
 
     def __exit__(self, exc_type, exc_value, traceback):
-        if app.config.get("ENABLE_PROFILING"):
+        if get_app_config("ENABLE_PROFILING"):
             profile.disable()
             dump_stats(profile, self.name)
 

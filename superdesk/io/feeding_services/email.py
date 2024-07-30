@@ -12,8 +12,9 @@ from typing import List
 import socket
 import imaplib
 
-from flask import current_app as app
 from flask_babel import lazy_gettext as l_
+
+from superdesk.core import get_app_config
 from superdesk.errors import IngestEmailError
 from superdesk.io.registry import register_feeding_service, register_feeding_service_parser
 from superdesk.io.feeding_services import FeedingService
@@ -79,7 +80,7 @@ class EmailFeedingService(FeedingService):
         server = config.get("server", "")
         port = int(config.get("port", 993))
         try:
-            socket.setdefaulttimeout(app.config.get("EMAIL_TIMEOUT", 10))
+            socket.setdefaulttimeout(get_app_config("EMAIL_TIMEOUT", 10))
             imap = imaplib.IMAP4_SSL(host=server, port=port)
         except (socket.gaierror, OSError) as e:
             raise IngestEmailError.emailHostError(exception=e, provider=provider)

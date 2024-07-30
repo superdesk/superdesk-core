@@ -283,6 +283,20 @@ def endpoint(url: str, name: Optional[str] = None, methods: Optional[List[HTTP_M
     return convert_to_endpoint
 
 
+class NotificationClientProtocol(Protocol):
+    open: bool
+    messages: Sequence[str]
+
+    def close(self) -> None:
+        ...
+
+    def send(self, message: str) -> None:
+        ...
+
+    def reset(self) -> None:
+        ...
+
+
 class WSGIApp(Protocol):
     """Protocol for defining functionality from a WSGI application (such as Eve/Flask)
 
@@ -294,5 +308,68 @@ class WSGIApp(Protocol):
     #: Config for the application
     config: Dict[str, Any]
 
+    #: Config for the front-end application
+    client_config: Dict[str, Any]
+
+    testing: Optional[bool]
+
+    #: Interface to upload/download/query media
+    media: Any
+
+    mail: Any
+
+    data: Any
+
+    storage: Any
+
+    auth: Any
+
+    subjects: Any
+
+    notification_client: NotificationClientProtocol
+
+    locators: Any
+
+    celery: Any
+
+    redis: Any
+
+    jinja_loader: Any
+
+    jinja_env: Any
+
+    extensions: Dict[str, Any]
+
     def register_endpoint(self, endpoint: Endpoint | EndpointGroup):
         ...
+
+    def register_resource(self, name: str, settings: Dict[str, Any]):
+        ...
+
+    def upload_url(self, media_id: str) -> str:
+        ...
+
+    def download_url(self, media_id: str) -> str:
+        ...
+
+    # TODO: Provide proper type here, context manager
+    def app_context(self):
+        ...
+
+    def get_current_user_dict(self) -> Optional[Dict[str, Any]]:
+        ...
+
+    def response_class(self, *args, **kwargs) -> Any:
+        ...
+
+    def validator(self, *args, **kwargs) -> Any:
+        ...
+
+    def init_indexes(self, ignore_duplicate_keys: bool = False) -> None:
+        ...
+
+    def as_any(self) -> Any:
+        ...
+
+    # TODO: Change how we use events on the app
+    # def on_role_privileges_updated(self, role: Any, role_users: Any) -> None: ...

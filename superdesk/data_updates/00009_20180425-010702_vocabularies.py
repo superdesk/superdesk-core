@@ -7,7 +7,7 @@
 # Author  : mugur
 # Creation: 2018-04-25 01:07
 
-from eve.utils import config
+from superdesk.resource_fields import ID_FIELD
 from superdesk.commands.data_updates import BaseDataUpdate
 
 
@@ -22,7 +22,7 @@ class DataUpdate(BaseDataUpdate):
                 for field in self.update_fields:
                     if field in vocabulary["schema"] and isinstance(vocabulary["schema"], dict):
                         schema[field]["required"] = True
-                mongodb_collection.update({"_id": vocabulary.get(config.ID_FIELD)}, {"$set": {"schema": schema}})
+                mongodb_collection.update({"_id": vocabulary.get(ID_FIELD)}, {"$set": {"schema": schema}})
 
     def backwards(self, mongodb_collection, mongodb_database):
         pass

@@ -2,7 +2,7 @@ import copy
 import logging
 import superdesk
 
-from flask import current_app as app
+from superdesk.core import get_current_app
 from superdesk.editor_utils import get_field_content_state, get_field_value, set_field_value
 from superdesk.errors import SuperdeskApiError
 
@@ -76,6 +76,7 @@ class MediaFixLinksCommand(superdesk.Command):
 
         # check renditions
         renditions = item.get("renditions") or {}
+        app = get_current_app()
         for rendition in renditions.values():
             if rendition and rendition.get("href") and rendition["href"].startswith(prefix):
                 media = rendition.get("media")

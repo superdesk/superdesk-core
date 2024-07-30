@@ -12,7 +12,7 @@ from abc import ABCMeta, abstractmethod
 
 from superdesk.etree import etree as sd_etree
 from superdesk.errors import SkipValue
-from flask import current_app as app
+from superdesk.core import get_current_app, get_app_config
 from superdesk.metadata.item import Priority
 from collections import OrderedDict
 import inspect
@@ -72,7 +72,7 @@ class FeedParser(metaclass=ABCMeta):
         item.setdefault("dateline", {})
 
         if city:
-            cities = app.locators.find_cities()
+            cities = get_current_app().locators.find_cities()
             located = [c for c in cities if c["city"] == city]
             item["dateline"]["located"] = (
                 located[0] if len(located) > 0 else {"city_code": city, "city": city, "tz": "UTC", "dateline": "city"}
@@ -184,7 +184,7 @@ class XMLFeedParser(FeedParser, metaclass=ABCMeta):
             class_mapping = {}
 
         if setting_param_name is not None:
-            settings_mapping = getattr(superdesk.config, setting_param_name)
+            settings_mapping = get_app_config(setting_param_name)
             if settings_mapping is None:
                 logging.info("No mapping found in settings for NITF parser, using default one")
                 settings_mapping = {}

@@ -11,7 +11,7 @@
 """IPTC module"""
 
 import os
-from superdesk import json
+from superdesk.core import json
 from datetime import datetime
 
 

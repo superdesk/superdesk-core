@@ -9,7 +9,6 @@
 # at https://www.sourcefabric.org/superdesk/license
 
 from typing import Optional
-from flask import current_app as app
 from flask_babel import _
 import logging
 import json
@@ -22,6 +21,7 @@ import hashlib
 
 from eve.io.mongo.media import GridFSMediaStorage
 
+from superdesk.core import get_current_app
 from superdesk.errors import SuperdeskApiError
 from . import SuperdeskMediaStorage
 
@@ -61,14 +61,14 @@ class SuperdeskGridFSMediaStorage(SuperdeskMediaStorage, GridFSMediaStorage):
         ext = mimetypes.guess_extension(content_type or "") or ""
         if ext in (".jpe", ".jpeg"):
             ext = ".jpg"
-        return app.upload_url(str(media_id) + ext)
+        return get_current_app().upload_url(str(media_id) + ext)
 
     def url_for_download(self, media_id, content_type=None):
         """Return url for download.
 
         :param media_id: media id from media_id method
         """
-        return app.download_url(str(media_id))
+        return get_current_app().download_url(str(media_id))
 
     def url_for_external(self, media_id: str, resource: Optional[str] = None) -> str:
         """Returns a URL for external use
@@ -140,7 +140,7 @@ class SuperdeskGridFSMediaStorage(SuperdeskMediaStorage, GridFSMediaStorage):
 
     def fs(self, resource=None):
         resource = resource or "upload"
-        driver = app.data.mongo
+        driver = get_current_app().data.mongo
         px = driver.current_mongo_prefix(resource)
         if px not in self._fs:
             self._fs[px] = gridfs.GridFS(driver.pymongo(prefix=px).db)

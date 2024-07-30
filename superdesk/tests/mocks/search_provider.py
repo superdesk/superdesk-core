@@ -1,6 +1,6 @@
-from flask import json
 from eve.utils import ParsedRequest
 
+from superdesk.core import json
 from superdesk import SearchProvider, register_search_provider, get_resource_service
 from superdesk.errors import SuperdeskApiError
 from apps.search_providers import allowed_search_providers

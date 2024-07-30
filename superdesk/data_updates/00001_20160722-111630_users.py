@@ -9,7 +9,7 @@
 
 from superdesk.commands.data_updates import BaseDataUpdate
 from superdesk import get_resource_service
-from eve.utils import config
+from superdesk.resource_fields import ID_FIELD
 
 
 class DataUpdate(BaseDataUpdate):
@@ -22,8 +22,8 @@ class DataUpdate(BaseDataUpdate):
 
     def forwards(self, mongodb_collection, mongodb_database):
         for user in mongodb_collection.find({}):
-            stages = get_resource_service(self.resource).get_invisible_stages_ids(user.get(config.ID_FIELD))
-            print(mongodb_collection.update({"_id": user.get(config.ID_FIELD)}, {"$set": {"invisible_stages": stages}}))
+            stages = get_resource_service(self.resource).get_invisible_stages_ids(user.get(ID_FIELD))
+            print(mongodb_collection.update({"_id": user.get(ID_FIELD)}, {"$set": {"invisible_stages": stages}}))
 
     def backwards(self, mongodb_collection, mongodb_database):
         print(mongodb_collection.update({}, {"$unset": {"invisible_stages": []}}, upsert=False, multi=True))

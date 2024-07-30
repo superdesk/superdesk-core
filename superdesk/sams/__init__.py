@@ -10,7 +10,7 @@ from .client import get_sams_client
 
 
 def init_app(app: Eve):
-    client = get_sams_client(app)
+    client = get_sams_client()
 
     if not app.config["RENDITIONS"].get("sams"):
         # if SAMS renditions are not defined, then copy them from default settings

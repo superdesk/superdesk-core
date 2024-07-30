@@ -10,7 +10,7 @@
 
 
 from .ninjs_formatter import NINJSFormatter
-from flask import current_app as app
+from superdesk.core import get_app_config
 from superdesk.media.renditions import get_rendition_file_name
 from superdesk import get_resource_service
 from superdesk.editor_utils import get_content_state_fields, Editor3Content, DraftJSHTMLExporter
@@ -72,7 +72,7 @@ class FTPNinjsFormatter(NINJSFormatter):
         :param subscriber:
         :return:
         """
-        if not app.config["EMBED_PRODUCT_FILTERING"]:
+        if not get_app_config("EMBED_PRODUCT_FILTERING"):
             return
 
         remove_keys = []

@@ -1,4 +1,4 @@
-from flask import Flask
+from superdesk.flask import Flask
 import superdesk
 
 

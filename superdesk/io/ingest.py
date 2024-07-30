@@ -8,16 +8,15 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
-import superdesk
-
+from superdesk.resource_fields import ID_FIELD
 from superdesk.resource import Resource
 from superdesk.services import BaseService
 from superdesk.metadata.item import metadata_schema
 from superdesk.metadata.utils import extra_response_fields, item_url, aggregations, get_elastic_highlight_query
 from eve.methods.common import resolve_document_etag
 from superdesk import get_resource_service
-from eve.utils import config
-from flask import current_app as app
+
+from superdesk.core import get_app_config, get_current_app
 from apps.auth import get_user
 from superdesk.notification import push_notification
 from superdesk.privilege import GLOBAL_SEARCH_PRIVILEGE
@@ -62,8 +61,8 @@ class IngestService(BaseService):
         :param provider: ingest_provider object, used to build the key name of sequence
         """
         sequence_number = get_resource_service("sequences").get_next_sequence_number(
-            key_name="ingest_providers_{_id}".format(_id=provider[config.ID_FIELD]),
-            max_seq_number=app.config["MAX_VALUE_OF_INGEST_SEQUENCE"],
+            key_name="ingest_providers_{_id}".format(_id=provider[ID_FIELD]),
+            max_seq_number=get_app_config("MAX_VALUE_OF_INGEST_SEQUENCE"),
         )
         item["ingest_provider_sequence"] = str(sequence_number)
 
@@ -76,6 +75,7 @@ class IngestService(BaseService):
             if not doc.get("archived") and rend.get("media")
         ]
 
+        app = get_current_app()
         for file_id in file_ids:
             app.media.delete(file_id)
 
@@ -92,7 +92,7 @@ class IngestService(BaseService):
 
         user = get_user(required=True)
         if docs:
-            push_notification("item:deleted", item=str(docs[0].get(config.ID_FIELD)), user=str(user))
+            push_notification("item:deleted", item=str(docs[0].get(ID_FIELD)), user=str(user))
 
     def should_update(self, old_item, new_item, provider):
         return True

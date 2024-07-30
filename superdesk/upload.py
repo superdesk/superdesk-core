@@ -11,10 +11,9 @@
 """Upload module"""
 import logging
 
-from eve.utils import config
-from flask import request, current_app as app, redirect, make_response, jsonify
-
 import superdesk
+from superdesk.core import get_app_config, get_current_app
+from superdesk.flask import request, redirect, make_response, jsonify, Blueprint
 import json
 import os
 from superdesk.errors import SuperdeskApiError
@@ -35,7 +34,7 @@ from .resource import Resource
 from .services import BaseService
 
 
-bp = superdesk.Blueprint("upload_raw", __name__)
+bp = Blueprint("upload_raw", __name__)
 logger = logging.getLogger(__name__)
 
 
@@ -60,6 +59,8 @@ def get_upload_as_data_uri_bc(media_id):
 @bp.route("/upload-raw/<path:media_id>", methods=["GET", "OPTIONS"])
 @blueprint_auth()
 def get_upload_as_data_uri(media_id):
+    app = get_current_app()
+
     if request.method == "OPTIONS":
         return handle_cors()
     if not request.args.get("resource"):
@@ -117,11 +118,11 @@ def upload_config_file():
 
 
 def url_for_media(media_id, mimetype=None):
-    return app.media.url_for_media(media_id, mimetype)
+    return get_current_app().media.url_for_media(media_id, mimetype)
 
 
 def upload_url(media_id, view="upload_raw.get_upload_as_data_uri"):
-    media_prefix = app.config.get("MEDIA_PREFIX").rstrip("/")
+    media_prefix = get_app_config("MEDIA_PREFIX").rstrip("/")
     return "%s/%s" % (media_prefix, media_id)
 
 
@@ -199,7 +200,7 @@ class UploadService(BaseService):
         try:
             logger.debug("Going to save media file with %s " % file_name)
             out.seek(0)
-            file_id = app.media.put(
+            file_id = get_current_app().media.put(
                 out, filename=file_name, content_type=content_type, resource=self.datasource, metadata=metadata
             )
             doc["media"] = file_id
@@ -207,7 +208,7 @@ class UploadService(BaseService):
             set_filemeta(doc, decode_metadata(metadata))
             inserted = [doc["media"]]
             file_type = content_type.split("/")[0]
-            rendition_spec = config.RENDITIONS["avatar"]
+            rendition_spec = get_app_config("RENDITIONS", {}).get("avatar")
             renditions = generate_renditions(
                 out, file_id, inserted, file_type, content_type, rendition_spec, url_for_media
             )

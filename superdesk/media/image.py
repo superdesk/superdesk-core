@@ -18,8 +18,8 @@ from superdesk.text_utils import decode
 from PIL import Image, ExifTags
 from PIL import IptcImagePlugin
 from PIL.TiffImagePlugin import IFDRational
-from flask import json
 
+from superdesk.core import json
 from superdesk.types import Item
 from .iim_codes import TAG, iim_codes
 

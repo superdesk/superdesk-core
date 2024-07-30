@@ -11,9 +11,9 @@
 from superdesk.resource import Resource
 from superdesk.services import BaseService
 from superdesk.io.commands import update_ingest
-from flask import request, abort
 import os
 import superdesk
+from superdesk.flask import request, abort
 import logging
 
 logger = logging.getLogger(__name__)

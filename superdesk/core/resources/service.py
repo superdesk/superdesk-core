@@ -30,8 +30,6 @@ import simplejson as json
 
 from superdesk.errors import SuperdeskApiError
 from superdesk.utc import utcnow
-from superdesk.metadata.item import GUID_NEWSML
-from superdesk.metadata.utils import generate_guid
 
 from ..app import SuperdeskAsyncApp, get_current_async_app
 from .fields import ObjectId as ObjectIdField
@@ -75,6 +73,9 @@ class AsyncResourceService(Generic[ResourceModelType]):
         return resource_uses_objectid_for_id(self.config.data_class)
 
     def generate_id(self) -> str | ObjectId:
+        from superdesk.metadata.item import GUID_NEWSML
+        from superdesk.metadata.utils import generate_guid
+
         return ObjectIdField() if self.id_uses_objectid() else generate_guid(type=GUID_NEWSML)
 
     @property

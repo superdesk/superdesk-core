@@ -8,11 +8,12 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
-import flask
 import logging
 from bson import ObjectId
-from flask import current_app as app
-from eve.utils import config
+
+from superdesk.resource_fields import ID_FIELD, VERSION, LAST_UPDATED
+from superdesk.core import get_app_config
+from superdesk.flask import g
 from superdesk.activity import add_activity, ACTIVITY_CREATE, ACTIVITY_UPDATE
 from superdesk.metadata.item import SIGN_OFF
 from superdesk.services import BaseService
@@ -75,9 +76,9 @@ def current_user_has_privilege(privilege):
 
     :param privilege
     """
-    if not getattr(flask.g, "user", None):  # no user - worker can do it
+    if not getattr(g, "user", None):  # no user - worker can do it
         return True
-    privileges = get_privileges(flask.g.user, getattr(flask.g, "role", None))
+    privileges = get_privileges(g.user, getattr(g, "role", None))
     return privileges.get(privilege, False)
 
 
@@ -103,7 +104,7 @@ def set_sign_off(user):
     """
 
     if SIGN_OFF not in user or user[SIGN_OFF] is None:
-        sign_off_mapping = app.config.get("SIGN_OFF_MAPPING", None)
+        sign_off_mapping = get_app_config("SIGN_OFF_MAPPING", None)
         if sign_off_mapping and sign_off_mapping in user:
             user[SIGN_OFF] = user[sign_off_mapping]
         elif SIGN_OFF in user and user[SIGN_OFF] is None:
@@ -119,7 +120,7 @@ def update_sign_off(updates):
     Update sign_off property on user if the mapped field is changed.
     """
 
-    sign_off_mapping = app.config.get("SIGN_OFF_MAPPING", None)
+    sign_off_mapping = get_app_config("SIGN_OFF_MAPPING", None)
     if sign_off_mapping and sign_off_mapping in updates:
         updates[SIGN_OFF] = updates[sign_off_mapping]
 
@@ -149,20 +150,20 @@ class UsersService(BaseService):
         :return: error message if invalid.
         """
 
-        if "user" in flask.g:
+        if "user" in g:
             if method == "PATCH":
                 if "is_active" in updates or "is_enabled" in updates:
-                    if str(user["_id"]) == str(flask.g.user["_id"]):
+                    if str(user["_id"]) == str(g.user["_id"]):
                         return "Not allowed to change your own status"
                     elif not current_user_has_privilege("users"):
                         return "Insufficient privileges to change user state"
                 if (
-                    str(user["_id"]) != str(flask.g.user["_id"])
+                    str(user["_id"]) != str(g.user["_id"])
                     and user.get("session_preferences")
                     and is_sensitive_update(updates)
                 ):
                     return "Not allowed to change the role/user_type/privileges of a logged-in user"
-            elif method == "DELETE" and str(user["_id"]) == str(flask.g.user["_id"]):
+            elif method == "DELETE" and str(user["_id"]) == str(g.user["_id"]):
                 return "Not allowed to disable your own profile."
 
         if method == "PATCH" and is_sensitive_update(updates) and not current_user_has_privilege("users"):
@@ -327,7 +328,7 @@ class UsersService(BaseService):
         if items_locked_by_user and items_locked_by_user.count():
             for item in items_locked_by_user:
                 # delete the item if nothing is saved so far
-                if item[config.VERSION] == 0 and item["state"] == "draft":
+                if item[VERSION] == 0 and item["state"] == "draft":
                     get_resource_service("archive").delete(lookup={"_id": item["_id"]})
                 else:
                     archive_service.update(item["_id"], doc_to_unlock, item)
@@ -364,7 +365,7 @@ class UsersService(BaseService):
         doc.setdefault("display_name", get_display_name(doc))
         doc.setdefault("is_enabled", doc.get("is_active"))
         doc.setdefault(SIGN_OFF, set_sign_off(doc))
-        doc["dateline_source"] = app.config["ORGANIZATION_NAME_ABBREVIATION"]
+        doc["dateline_source"] = get_app_config("ORGANIZATION_NAME_ABBREVIATION")
 
     def user_is_waiting_activation(self, doc):
         return doc.get("needs_activation", False)
@@ -456,16 +457,16 @@ class UsersService(BaseService):
         if not self._updating_stage_visibility:
             return
         try:
-            logger.info("Updating Stage Visibility for user {}.".format(user.get(config.ID_FIELD)))
-            stages = self.get_invisible_stages_ids(user.get(config.ID_FIELD))
-            self.system_update(user.get(config.ID_FIELD), {"invisible_stages": stages}, user)
+            logger.info("Updating Stage Visibility for user {}.".format(user.get(ID_FIELD)))
+            stages = self.get_invisible_stages_ids(user.get(ID_FIELD))
+            self.system_update(user.get(ID_FIELD), {"invisible_stages": stages}, user)
             user["invisible_stages"] = stages
-            logger.info("Updated Stage Visibility for user {}.".format(user.get(config.ID_FIELD)))
+            logger.info("Updated Stage Visibility for user {}.".format(user.get(ID_FIELD)))
         except Exception:
-            logger.exception("Failed to update the stage visibility " "for user: {}".format(user.get(config.ID_FIELD)))
+            logger.exception("Failed to update the stage visibility " "for user: {}".format(user.get(ID_FIELD)))
 
     def stop_updating_stage_visibility(self):
-        if not app.config.get("SUPERDESK_TESTING"):
+        if not get_app_config("SUPERDESK_TESTING"):
             raise RuntimeError("Only allowed during testing")
         self._updating_stage_visibility = False
 
@@ -482,13 +483,13 @@ class DBUsersService(UsersService):
         super().on_create(docs)
         for doc in docs:
             if doc.get("password", None) and not is_hashed(doc.get("password")):
-                doc["password"] = get_hash(doc.get("password"), app.config.get("BCRYPT_GENSALT_WORK_FACTOR", 12))
+                doc["password"] = get_hash(doc.get("password"), get_app_config("BCRYPT_GENSALT_WORK_FACTOR", 12))
 
     def on_created(self, docs):
         """Send email to user with reset password token."""
         super().on_created(docs)
         resetService = get_resource_service("reset_user_password")
-        activate_ttl = app.config["ACTIVATE_ACCOUNT_TOKEN_TIME_TO_LIVE"]
+        activate_ttl = get_app_config("ACTIVATE_ACCOUNT_TOKEN_TIME_TO_LIVE")
         for doc in docs:
             if self.user_is_waiting_activation(doc) and doc["user_type"] != "external":
                 tokenDoc = {"user": doc["_id"], "email": doc["email"]}
@@ -526,9 +527,9 @@ class DBUsersService(UsersService):
             raise UserInactiveError()
 
         updates = {
-            "password": get_hash(password, app.config.get("BCRYPT_GENSALT_WORK_FACTOR", 12)),
+            "password": get_hash(password, get_app_config("BCRYPT_GENSALT_WORK_FACTOR", 12)),
             "password_changed_on": utcnow(),
-            app.config["LAST_UPDATED"]: utcnow(),
+            LAST_UPDATED: utcnow(),
         }
 
         if self.user_is_waiting_activation(user):
@@ -551,8 +552,8 @@ class DBUsersService(UsersService):
             role = get_resource_service("roles").find_one(req=None, name=ignorecase_query(role_name))
             if role:
                 data["role"] = role["_id"]
-        if not update and (data.get("desk") or app.config.get("USER_EXTERNAL_DESK")):
-            desk_name = data.pop("desk", None) or app.config.get("USER_EXTERNAL_DESK")
+        if not update and (data.get("desk") or get_app_config("USER_EXTERNAL_DESK")):
+            desk_name = data.pop("desk", None) or get_app_config("USER_EXTERNAL_DESK")
             desk = get_resource_service("desks").find_one(req=None, name=ignorecase_query(desk_name))
             if desk:
                 data["desk"] = desk["_id"]
@@ -562,7 +563,7 @@ class DBUsersService(UsersService):
             data.pop("email", None)
             data.pop("username", None)
         elif data.get("username"):
-            if app.config.get("USER_EXTERNAL_USERNAME_STRIP_DOMAIN"):
+            if get_app_config("USER_EXTERNAL_USERNAME_STRIP_DOMAIN"):
                 data["username"] = data["username"].split("@")[0]
             data["username"] = data["username"].replace("@", ".")  # @ breaks mentioning
         validator = self._validator()

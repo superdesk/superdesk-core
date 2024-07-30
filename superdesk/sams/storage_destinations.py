@@ -21,11 +21,11 @@
 """
 
 import logging
-import superdesk
+from superdesk.flask import Blueprint
 from .client import get_sams_client
 
 logger = logging.getLogger(__name__)
-destinations_bp = superdesk.Blueprint("sams_destinations", __name__)
+destinations_bp = Blueprint("sams_destinations", __name__)
 
 
 @destinations_bp.route("/sams/destinations", methods=["GET"])

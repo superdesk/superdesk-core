@@ -1,22 +1,17 @@
-from typing import Optional
-from flask import current_app
-from eve.flaskapp import Eve
 from sams_client import SamsClient
+from superdesk.core import get_app_config
 
 _client: SamsClient = None
 
 
-def get_sams_client(app: Optional[Eve] = None) -> SamsClient:
+def get_sams_client() -> SamsClient:
     global _client
 
     if not _client:
-        if app is None:
-            app = current_app
-
         _client = SamsClient(
             {
-                "HOST": app.config.get("SAMS_HOST"),
-                "PORT": app.config.get("SAMS_PORT"),
+                "HOST": get_app_config("SAMS_HOST"),
+                "PORT": get_app_config("SAMS_PORT"),
             }
         )
 

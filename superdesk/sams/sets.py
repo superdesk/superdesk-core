@@ -22,14 +22,16 @@
 
 import logging
 import superdesk
-from flask import request, current_app as app
+
+from superdesk.core import get_current_app
+from superdesk.flask import Blueprint, request
 from superdesk.errors import SuperdeskApiError
 from superdesk.notification import push_notification
 from apps.auth import get_auth, get_user_id
 from .client import get_sams_client
 
 logger = logging.getLogger(__name__)
-sets_bp = superdesk.Blueprint("sams_sets", __name__)
+sets_bp = Blueprint("sams_sets", __name__)
 
 
 @sets_bp.route("/sams/sets", methods=["GET"])
@@ -101,7 +103,7 @@ def remove_set_restriction_from_desks(set_id_to_remove: str):
     """
 
     desk_service = superdesk.get_resource_service("desks")
-    desks_db = app.data.mongo.pymongo("desks").db["desks"]
+    desks_db = get_current_app().data.mongo.pymongo("desks").db["desks"]
 
     # Use pymongo directly as this query doesn't work through services
     for desk in desks_db.find({"sams_settings.allowed_sets": set_id_to_remove}):

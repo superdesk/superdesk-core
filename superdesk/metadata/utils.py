@@ -13,9 +13,9 @@ from datetime import datetime
 from uuid import uuid4
 from bson import ObjectId
 from urllib.parse import urlparse
-from flask import current_app as app
 from contextlib import contextmanager
 
+from superdesk.core import get_app_config
 from superdesk.utils import SuperdeskBaseEnum
 from .item import GUID_TAG, GUID_NEWSML, GUID_FIELD, ITEM_TYPE, CONTENT_TYPE
 
@@ -98,8 +98,8 @@ def get_elastic_highlight_query(query_string):
 def _set_highlight_query(source):
     query_string = source.get("query", {}).get("filtered", {}).get("query", {}).get("query_string")
     if query_string:
-        query_string.setdefault("analyze_wildcard", app.config["ELASTIC_QUERY_STRING_ANALYZE_WILDCARD"])
-        query_string.setdefault("type", app.config["ELASTIC_QUERY_STRING_TYPE"])
+        query_string.setdefault("analyze_wildcard", get_app_config("ELASTIC_QUERY_STRING_ANALYZE_WILDCARD"))
+        query_string.setdefault("type", get_app_config("ELASTIC_QUERY_STRING_TYPE"))
         highlight_query = get_elastic_highlight_query(query_string)
         if highlight_query:
             source["highlight"] = highlight_query
@@ -116,16 +116,16 @@ def generate_guid(**hints):
     if not hints.get("id"):
         hints["id"] = str(uuid4())
 
-    if app.config.get("GENERATE_SHORT_GUID", False):
+    if get_app_config("GENERATE_SHORT_GUID", False):
         return hints["id"]
 
     t = datetime.today()
 
     if hints["type"].lower() == GUID_TAG:
-        return tag_guid_format % {"domain": app.config["URN_DOMAIN"], "year": t.year, "identifier": hints["id"]}
+        return tag_guid_format % {"domain": get_app_config("URN_DOMAIN"), "year": t.year, "identifier": hints["id"]}
     elif hints["type"].lower() == GUID_NEWSML:
         return newsml_guid_format % {
-            "domain": app.config["URN_DOMAIN"],
+            "domain": get_app_config("URN_DOMAIN"),
             "timestamp": t.isoformat(),
             "identifier": hints["id"],
         }
@@ -133,7 +133,7 @@ def generate_guid(**hints):
 
 
 def generate_urn(resource_name: str, resource_id: Union[ObjectId, str]) -> str:
-    domain = app.config["URN_DOMAIN"]
+    domain = get_app_config("URN_DOMAIN")
     return f"urn:{domain}:{resource_name}:{resource_id}"
 
 

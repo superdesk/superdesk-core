@@ -21,8 +21,8 @@ The authentication flow with js client is:
 import logging
 import superdesk
 
-from flask import render_template, current_app as app
-
+from superdesk.core import get_app_config
+from superdesk.flask import render_template
 from apps.auth.auth import AuthResource
 from apps.auth.service import AuthService
 from superdesk.validation import ValidationError
@@ -69,7 +69,7 @@ def auth_user(email, userdata=None):
             superdesk.get_resource_service("users").update_external_user(data[0]["user"], userdata)
         return render_template(AUTHORIZED_TEMPLATE, data=data[0])
     except ValueError:
-        if not app.config["USER_EXTERNAL_CREATE"] or not userdata:
+        if not get_app_config("USER_EXTERNAL_CREATE") or not userdata:
             return render_template(AUTHORIZED_TEMPLATE, data={"error": 404})
 
     # create new user using userdata

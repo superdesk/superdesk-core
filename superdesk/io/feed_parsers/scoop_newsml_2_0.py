@@ -11,13 +11,13 @@
 import pytz
 import datetime
 import superdesk
+from superdesk.core import get_current_app
 from .newsml_2_0 import NewsMLTwoFeedParser
 from superdesk.io.registry import register_feed_parser
 from superdesk.errors import ParserError
 from superdesk.metadata.item import ITEM_TYPE
 from superdesk.io.iptc import subject_codes
 from superdesk.text_utils import get_word_count
-from flask import current_app as app
 from dateutil.parser import parse as date_parser
 from superdesk.etree import parse_html, to_string
 
@@ -43,6 +43,7 @@ class ScoopNewsMLTwoFeedParser(NewsMLTwoFeedParser):
         self.root = xml
         items = []
         try:
+            app = get_current_app()
             for item_set in xml.findall(self.qname("itemSet")):
                 for item_tree in item_set:
                     # Ignore the packageItem, it has no guid

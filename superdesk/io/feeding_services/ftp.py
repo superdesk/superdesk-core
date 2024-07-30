@@ -18,7 +18,7 @@ import lxml.etree as etree
 from datetime import datetime
 from urllib.parse import urlparse
 
-from flask import current_app as app
+from superdesk.core import get_app_config
 from superdesk.io.registry import register_feeding_service
 from superdesk.io.feed_parsers import XMLFeedParser
 from superdesk.utc import utc, utcnow
@@ -282,7 +282,7 @@ class FTPFeedingService(FeedingService):
         config = provider.get("config", {})
         do_move = config.get("move", False)
         last_processed_file_modify = provider.get("private", {}).get("last_processed_file_modify")
-        limit = app.config.get("FTP_INGEST_FILES_LIST_LIMIT", 100)
+        limit = get_app_config("FTP_INGEST_FILES_LIST_LIMIT", 100)
         registered_parser = self.get_feed_parser(provider)
         allowed_ext = getattr(registered_parser, "ALLOWED_EXT", self.ALLOWED_EXT_DEFAULT)
 

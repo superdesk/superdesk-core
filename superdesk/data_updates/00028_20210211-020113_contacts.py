@@ -9,7 +9,7 @@
 
 from superdesk import get_resource_service
 from superdesk.commands.data_updates import BaseDataUpdate
-from eve.utils import config
+from superdesk.resource_fields import ID_FIELD
 
 
 class DataUpdate(BaseDataUpdate):
@@ -22,7 +22,7 @@ class DataUpdate(BaseDataUpdate):
                 country = [t for t in countries.get("items") if t.get("name") == document["country"]]
                 if country:
                     mongodb_collection.update(
-                        {"_id": document.get(config.ID_FIELD)},
+                        {"_id": document.get(ID_FIELD)},
                         {
                             "$set": {
                                 "country": {

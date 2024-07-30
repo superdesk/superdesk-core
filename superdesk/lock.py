@@ -3,14 +3,11 @@ import re
 import socket
 import logging
 
-from datetime import datetime
-
-# from mongolock import MongoLock, MongoLockException
-from superdesk.mongolock import MongoLock, MongoLockException
 from werkzeug.local import LocalProxy
-from flask import current_app as app
+from superdesk.core import get_current_app
 from superdesk.logging import logger
 from superdesk.utc import utcnow
+from superdesk.mongolock import MongoLock, MongoLockException
 
 
 _lock_resource_settings = {
@@ -49,6 +46,7 @@ class SuperdeskMongoLock(MongoLock):
 
 def _get_lock():
     """Get mongolock instance using app mongodb."""
+    app = get_current_app()
     app.register_resource("_lock", _lock_resource_settings)  # setup dummy resource for locks
     return SuperdeskMongoLock(client=app.data.mongo.pymongo("_lock").db)
 

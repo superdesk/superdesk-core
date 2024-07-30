@@ -14,7 +14,7 @@ import logging
 import json
 import pytz
 from datetime import datetime
-from flask import current_app as app
+from superdesk.core import get_app_config, get_current_app
 
 logger = logging.getLogger(__name__)
 
@@ -51,9 +51,10 @@ def get_index(repos=None):
     """Get index id for all repos."""
     if repos is None:
         repos = REPOS
+    app = get_current_app()
     indexes = {app.data.elastic.index}
     for repo in repos:
-        indexes.add(app.config["ELASTICSEARCH_INDEXES"].get(repo, app.data.elastic.index))
+        indexes.add(get_app_config("ELASTICSEARCH_INDEXES").get(repo, app.data.elastic.index))
     return ",".join(indexes)
 
 
@@ -85,7 +86,7 @@ def filter2query(filter_, user_id=None):
     post_filter_must_not = []
 
     # controlled vocabularies can be overriden in settings
-    search_cvs = app.config.get("search_cvs", SEARCH_CVS)
+    search_cvs = get_app_config("search_cvs", SEARCH_CVS)
 
     for cv in search_cvs:
         if cv["id"] in search_query and cv["field"] != cv["id"]:
@@ -203,7 +204,7 @@ def filter2query(filter_, user_id=None):
         post_filter.append({"terms": {"credit": [v["value"] for v in values]}})
 
     # date filters
-    tz = pytz.timezone(app.config["DEFAULT_TIMEZONE"])
+    tz = pytz.timezone(get_app_config("DEFAULT_TIMEZONE"))
     range_ = {}
     to_delete = []
     for field in DATE_FIELDS:
@@ -267,7 +268,7 @@ def filter2query(filter_, user_id=None):
         query["post_filter"] = {"bool": {"must": post_filter, "must_not": post_filter_must_not}}
 
     query["sort"] = {"versioncreated": "desc"}
-    query.setdefault("size", app.config["ELASTIC_DEFAULT_SIZE"])
+    query.setdefault("size", get_app_config("ELASTIC_DEFAULT_SIZE"))
 
     search_query.pop("repo", None)
 

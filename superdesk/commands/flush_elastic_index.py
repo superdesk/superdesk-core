@@ -9,8 +9,8 @@
 # at https://www.sourcefabric.org/superdesk/license
 
 from elasticsearch import exceptions as es_exceptions
-from flask import current_app as app
 from eve_elastic import get_es
+from superdesk.core import get_app_config, get_current_app
 import superdesk
 from content_api import ELASTIC_PREFIX as CAPI_ELASTIC_PREFIX
 
@@ -45,12 +45,12 @@ class FlushElasticIndex(superdesk.Command):
         if not (sd_index or capi_index):
             raise SystemExit("You must specify at least one elastic index to flush. " "Options: `--sd`, `--capi`")
 
-        self._es = get_es(app.config["ELASTICSEARCH_URL"])
+        self._es = get_es(get_app_config("ELASTICSEARCH_URL"))
 
         if sd_index:
-            self._delete_elastic(app.config["ELASTICSEARCH_INDEX"])
+            self._delete_elastic(get_app_config("ELASTICSEARCH_INDEX"))
         if capi_index:
-            self._delete_elastic(app.config["CONTENTAPI_ELASTICSEARCH_INDEX"])
+            self._delete_elastic(get_app_config("CONTENTAPI_ELASTICSEARCH_INDEX"))
 
         self._index_from_mongo(sd_index, capi_index)
 
@@ -64,6 +64,7 @@ class FlushElasticIndex(superdesk.Command):
         indices = list(self._es.indices.get_alias("{}_*".format(index_prefix)).keys())
         print(f"Configured indices with prefix '{index_prefix}': " + ", ".join(indices))
 
+        app = get_current_app()
         for es_resource in app.data.get_elastic_resources():
             alias = app.data.elastic._resource_index(es_resource)
             print(f"- Attempting to delete alias {alias}")
@@ -92,6 +93,7 @@ class FlushElasticIndex(superdesk.Command):
         :param bool capi_index:nFlag to index content api elastic index.
         """
         # get all es resources
+        app = get_current_app()
         app.data.init_elastic(app)
         resources = app.data.get_elastic_resources()
 

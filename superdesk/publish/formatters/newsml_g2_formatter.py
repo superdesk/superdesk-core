@@ -14,8 +14,9 @@ import superdesk
 
 from lxml import etree
 from lxml.etree import SubElement
-from flask import current_app as app
 
+from superdesk.core import get_app_config
+from superdesk.resource_fields import VERSION
 from superdesk import text_utils
 from superdesk.publish.formatters import Formatter
 from superdesk.metadata.item import ITEM_TYPE, CONTENT_TYPE, EMBARGO, FORMATS, FORMAT
@@ -32,7 +33,7 @@ XML_LANG = "{http://www.w3.org/XML/1998/namespace}lang"
 
 
 def get_newsml_provider_id():
-    return app.config.get("NEWSML_PROVIDER_ID")
+    return get_app_config("NEWSML_PROVIDER_ID")
 
 
 def _get_cv_qcode(item):
@@ -147,7 +148,7 @@ class NewsMLG2Formatter(Formatter):
                 "standard": "NewsML-G2",
                 "standardversion": "2.18",
                 "guid": article["guid"],
-                "version": str(article[superdesk.config.VERSION]),
+                "version": str(article[VERSION]),
                 XML_LANG: self._get_lang(article),
                 "conformance": "power",
             },
@@ -595,11 +596,11 @@ class NewsMLG2Formatter(Formatter):
             return translations["name"][lang], lang
         except KeyError:
             pass
-        return subject.get("name", ""), app.config["DEFAULT_LANGUAGE"]
+        return subject.get("name", ""), get_app_config("DEFAULT_LANGUAGE")
 
     def _format_translated_name(self, dest, subject, article):
         name, lang = self._get_translated_name(subject, article)
         SubElement(dest, "name", attrib={XML_LANG: lang}).text = name
 
     def _get_lang(self, article):
-        return article.get("language", app.config["DEFAULT_LANGUAGE"])
+        return article.get("language", get_app_config("DEFAULT_LANGUAGE"))

@@ -13,8 +13,8 @@ import superdesk
 
 from superdesk.publish.formatters import Formatter
 from superdesk.metadata.item import ITEM_TYPE, CONTENT_TYPE, FORMAT, FORMATS
-from flask import render_template
 from copy import deepcopy
+from superdesk.flask import render_template
 from superdesk.errors import FormatterError
 from superdesk import etree as sd_etree
 from superdesk.editor_utils import remove_all_embeds

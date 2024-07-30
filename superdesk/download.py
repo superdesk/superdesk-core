@@ -16,9 +16,10 @@ from superdesk.auth.decorator import blueprint_auth
 from werkzeug.wsgi import wrap_file
 from .resource import Resource
 from .services import BaseService
-from flask import url_for, request, current_app as app
+from superdesk.core import get_current_app
+from superdesk.flask import request, Blueprint
 
-bp = superdesk.Blueprint("download_raw", __name__)
+bp = Blueprint("download_raw", __name__)
 logger = logging.getLogger(__name__)
 
 
@@ -27,6 +28,7 @@ logger = logging.getLogger(__name__)
 @blueprint_auth()
 def download_file(id, folder=None):
     filename = "{}/{}".format(folder, id) if folder else id
+    app = get_current_app()
 
     file = app.media.get(filename, "download")
     if file:
@@ -39,14 +41,14 @@ def download_file(id, folder=None):
     raise SuperdeskApiError.notFoundError("File not found on media storage.")
 
 
-def download_url(media_id):
-    prefered_url_scheme = app.config.get("PREFERRED_URL_SCHEME", "http")
-    return url_for("download_raw.download_file", id=media_id, _external=True, _scheme=prefered_url_scheme)
+# def download_url(media_id):
+#     prefered_url_scheme = app.config.get("PREFERRED_URL_SCHEME", "http")
+#     return url_for("download_raw.download_file", id=media_id, _external=True, _scheme=prefered_url_scheme)
 
 
 def init_app(app) -> None:
     endpoint_name = "download"
-    app.download_url = download_url
+    # app.download_url = download_url
     superdesk.blueprint(bp, app)
     service = BaseService(endpoint_name, backend=superdesk.get_backend())
     DownloadResource(endpoint_name, app=app, service=service)

@@ -9,9 +9,9 @@
 # at https://www.sourcefabric.org/superdesk/license
 
 import os
-from flask import json
 from copy import deepcopy
 
+from superdesk.core import json
 from apps.prepopulate.app_populate import AppPopulateCommand
 from apps.prepopulate.app_initialize import AppInitializeWithDataCommand
 from superdesk import tests

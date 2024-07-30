@@ -23,7 +23,7 @@ from celery import Celery
 from kombu.serialization import register
 from eve.io.mongo import MongoJSONEncoder
 from eve.utils import str_to_date
-from flask import json, current_app as app
+from superdesk.core import json, get_current_app, get_app_config
 from superdesk.errors import SuperdeskError
 from superdesk.logging import logger
 
@@ -48,13 +48,13 @@ def try_cast(v):
 
 
 def dumps(o):
-    with superdesk.app.app_context():
+    with get_current_app().app_context():
         return MongoJSONEncoder().encode(o)
 
 
 def loads(s):
     o = json.loads(s)
-    with superdesk.app.app_context():
+    with get_current_app().app_context():
         return serialize(o)
 
 
@@ -86,14 +86,14 @@ class AppContextTask(TaskBase):  # type: ignore
     )
 
     def __call__(self, *args, **kwargs):
-        with superdesk.app.app_context():
+        with get_current_app().app_context():
             try:
                 return super().__call__(*args, **kwargs)
             except self.app_errors as e:
                 handle_exception(e)
 
     def on_failure(self, exc, task_id, args, kwargs, einfo):
-        with superdesk.app.app_context():
+        with get_current_app().app_context():
             handle_exception(exc)
 
 
@@ -138,7 +138,7 @@ def __get_redis(app_ctx):
 
 def update_key(key, flag=False, db=None):
     if db is None:
-        db = app.redis
+        db = get_current_app().redis
 
     if flag:
         crt_value = db.incr(key)
@@ -154,7 +154,7 @@ def update_key(key, flag=False, db=None):
 
 
 def _update_subtask_progress(task_id, current=None, total=None, done=None):
-    redis_db = redis.from_url(app.config["REDIS_URL"])
+    redis_db = redis.from_url(get_app_config("REDIS_URL"))
     try:
         current_key = "current_%s" % task_id
         total_key = "total_%s" % task_id

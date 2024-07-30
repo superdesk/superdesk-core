@@ -13,12 +13,12 @@ import logging
 import json
 from typing import List, Any, Dict, Optional
 
-from flask import request, current_app as app
-from eve.utils import config
 from eve.methods.common import serialize_value
 from flask_babel import _, lazy_gettext
-from superdesk.cache import cache
 
+from superdesk.resource_fields import ID_FIELD, ITEMS, LAST_UPDATED, DATE_CREATED
+from superdesk.flask import request
+from superdesk.cache import cache
 from superdesk import privilege, get_resource_service
 from superdesk.notification import push_notification
 from superdesk.resource import Resource
@@ -227,10 +227,8 @@ class VocabulariesService(BaseService):
 
     def on_replace(self, document, original):
         self._validate_items(document)
-        document[app.config["LAST_UPDATED"]] = utcnow()
-        document[app.config["DATE_CREATED"]] = (
-            original.get(app.config["DATE_CREATED"], utcnow()) if original else utcnow()
-        )
+        document[LAST_UPDATED] = utcnow()
+        document[DATE_CREATED] = original.get(DATE_CREATED, utcnow()) if original else utcnow()
         logger.info("updating vocabulary item: %s", document["_id"])
 
     def on_fetched(self, doc):
@@ -244,7 +242,7 @@ class VocabulariesService(BaseService):
             if where_clause.get("type") == "manageable":
                 return doc
 
-        for item in doc[config.ITEMS]:
+        for item in doc[ITEMS]:
             self._filter_inactive_vocabularies(item)
             self._cast_items(item)
 
@@ -336,7 +334,7 @@ class VocabulariesService(BaseService):
         push_notification(
             event,
             vocabulary=updated_vocabulary.get("display_name"),
-            user=str(user[config.ID_FIELD]) if user else None,
+            user=str(user[ID_FIELD]) if user else None,
             vocabulary_id=updated_vocabulary["_id"],
         )
 

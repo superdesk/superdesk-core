@@ -11,7 +11,7 @@
 
 import superdesk
 
-from flask import current_app as app
+from superdesk.core import get_app_config, get_current_app
 from superdesk.metadata.item import ASSOCIATIONS
 
 
@@ -47,7 +47,7 @@ class CleanImages(superdesk.Command):
         upload_items = superdesk.get_resource_service("upload").get_from_mongo(req=None, lookup={})
         self.__add_existing_files(used_images, upload_items)
 
-        if app.config.get("LEGAL_ARCHIVE"):
+        if get_app_config("LEGAL_ARCHIVE"):
             legal_archive_items = superdesk.get_resource_service("legal_archive").get_from_mongo(None, query)
             self.__add_existing_files(used_images, legal_archive_items)
 
@@ -57,8 +57,7 @@ class CleanImages(superdesk.Command):
             self.__add_existing_files(used_images, legal_archive_version_items)
 
         print("Number of used files: ", len(used_images))
-
-        app.media.remove_unreferenced_files(used_images)
+        get_current_app().media.remove_unreferenced_files(used_images)
 
     def __add_existing_files(self, used_images, items):
         for item in items:

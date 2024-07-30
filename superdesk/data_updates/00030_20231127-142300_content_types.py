@@ -8,7 +8,7 @@
 # Creation: 2023-11-27 14:23
 
 from superdesk.commands.data_updates import BaseDataUpdate
-from eve.utils import config
+from superdesk.resource_fields import ID_FIELD
 
 
 class DataUpdate(BaseDataUpdate):
@@ -22,9 +22,7 @@ class DataUpdate(BaseDataUpdate):
                     if properties and "sdWidth" not in properties:
                         properties["sdWidth"] = "full"
 
-                mongodb_collection.update(
-                    {"_id": profile.get(config.ID_FIELD)}, {"$set": {"editor": profile["editor"]}}
-                )
+                mongodb_collection.update({"_id": profile.get(ID_FIELD)}, {"$set": {"editor": profile["editor"]}})
                 print(f"Content Profile {profile['_id']} updated successfully")
             except Exception as e:
                 print(f"Error updating Content Profile {profile['_id']}: {str(e)}")

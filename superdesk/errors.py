@@ -10,13 +10,13 @@
 
 import logging
 
-from flask import current_app as app
 from cerberus import DocumentError
 from eve.endpoints import send_response
 from werkzeug.exceptions import HTTPException
 from elasticsearch.exceptions import ConnectionTimeout  # noqa
 
 from superdesk.utils import save_error_data
+from superdesk.resource_fields import STATUS, STATUS_ERR, ISSUES
 
 
 logger = logging.getLogger(__name__)
@@ -68,7 +68,9 @@ def log_exception(message, extra=None, data=None):
 
 def notifications_enabled():
     """Test if notifications are enabled in config."""
-    return app.config.get("ERROR_NOTIFICATIONS", True)
+    from superdesk.core import get_app_config
+
+    return get_app_config("ERROR_NOTIFICATIONS", True)
 
 
 class SuperdeskError(DocumentError):
@@ -127,10 +129,10 @@ class SuperdeskApiError(SuperdeskError):
     def to_dict(self):
         """Create dict for json response."""
         rv = {}
-        rv[app.config["STATUS"]] = app.config["STATUS_ERR"]
+        rv[STATUS] = STATUS_ERR
         rv["_message"] = self.message or ""
         if hasattr(self, "payload"):
-            rv[app.config["ISSUES"]] = self.payload
+            rv[ISSUES] = self.payload
         return rv
 
     def __str__(self):
@@ -764,13 +766,14 @@ class SuperdeskValidationError(HTTPException):
         Exception.__init__(self)
         self.errors = errors
         self.fields = fields
+
         try:
             self.response = send_response(
                 None,
                 (
                     {
-                        app.config["STATUS"]: app.config["STATUS_ERR"],
-                        app.config["ISSUES"]: {
+                        STATUS: STATUS_ERR,
+                        ISSUES: {
                             "validator exception": str([self.errors]),  # BC
                             "fields": self.fields,
                         },

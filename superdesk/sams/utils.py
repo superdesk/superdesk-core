@@ -13,10 +13,10 @@ from typing import Dict, Any, Optional, Union
 from bson import ObjectId
 from eve.utils import str_to_date
 from pymongo.cursor import Cursor as MongoCursor
-from flask import current_app as app
 from requests import Response
 from requests.exceptions import HTTPError
 
+from superdesk.core import get_current_app
 from superdesk.errors import SuperdeskApiError
 from superdesk.storage.superdesk_file import SuperdeskFile
 from sams_client import SamsClient
@@ -118,7 +118,7 @@ def get_attachments_from_asset_id(asset_id: Union[ObjectId, str]) -> MongoCursor
     """Returns the list of Attachments that use this SAMS Asset"""
 
     # use PyMongo directly as searching with `media: str` doesnt work for Superdesk's datalayer
-    db_attachments = app.data.get_mongo_collection("attachments")
+    db_attachments = get_current_app().data.get_mongo_collection("attachments")
     return db_attachments.find({"media": str(asset_id)})
 
 

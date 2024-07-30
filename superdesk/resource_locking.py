@@ -1,9 +1,9 @@
 import enum
-import flask
 import datetime
 
 from flask_babel import _
 
+from superdesk.flask import abort
 from superdesk.utc import utcnow
 
 
@@ -32,7 +32,7 @@ def on_update(updates: dict, original: dict):
         if updates.get("_lock_action") == LockActions.FORCE_LOCK.value:
             pass  # force locking, might need specific permissions eventually
         elif auth["_id"] != original.get("_lock_session"):
-            flask.abort(412, description=_("Resource is locked."))
+            abort(412, description=_("Resource is locked."))
 
     # lock
     if updates.get("_lock_action") in LOCKED_ACTIONS:

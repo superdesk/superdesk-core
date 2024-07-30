@@ -9,7 +9,7 @@
 
 from copy import deepcopy
 from superdesk.commands.data_updates import BaseDataUpdate
-from eve.utils import config
+from superdesk.resource_fields import ID_FIELD
 
 
 class DataUpdate(BaseDataUpdate):
@@ -47,7 +47,7 @@ class DataUpdate(BaseDataUpdate):
             if original_schema != content_type["schema"]:
                 print("update schema in content type", content_type["label"])
                 mongodb_collection.update(
-                    {"_id": content_type.get(config.ID_FIELD)}, {"$set": {"schema": content_type["schema"]}}
+                    {"_id": content_type.get(ID_FIELD)}, {"$set": {"schema": content_type["schema"]}}
                 )
 
     def backwards(self, mongodb_collection, mongodb_database):

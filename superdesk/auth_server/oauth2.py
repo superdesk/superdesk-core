@@ -11,7 +11,7 @@ import logging
 from authlib.integrations.flask_oauth2 import AuthorizationServer
 from authlib.oauth2.rfc6749 import grants
 from authlib.jose import jwt
-import superdesk
+from superdesk.flask import Blueprint
 from .models import query_client, save_token
 
 
@@ -23,7 +23,7 @@ authorization = AuthorizationServer(
 )
 
 
-bp = superdesk.Blueprint("auth_server", __name__)
+bp = Blueprint("auth_server", __name__)
 
 TOKEN_ENDPOINT = "/auth_server/token"
 shared_secret = None

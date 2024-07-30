@@ -3,8 +3,9 @@ from typing import Optional, Dict, Any
 import superdesk
 from superdesk.logging import logger
 
-from flask import current_app, request
 from werkzeug.utils import secure_filename
+from superdesk.core import get_current_app
+from superdesk.flask import request
 from apps.auth import get_user_id
 
 
@@ -38,6 +39,7 @@ class AttachmentsResource(superdesk.Resource):
 
 class AttachmentsService(superdesk.Service):
     def on_create(self, docs):
+        current_app = get_current_app()
         for doc in docs:
             doc["user"] = get_user_id()
 
@@ -53,7 +55,7 @@ class AttachmentsService(superdesk.Service):
                 doc.setdefault("length", getattr(media, "length"))
 
     def on_deleted(self, doc):
-        current_app.media.delete(doc["media"], RESOURCE)
+        get_current_app().media.delete(doc["media"], RESOURCE)
 
 
 def is_attachment_public(attachment):
@@ -90,7 +92,7 @@ def get_attachment_public_url(attachment: Dict[str, Any]) -> Optional[str]:
 
         return None
 
-    return current_app.media.url_for_external(attachment["media"], RESOURCE)
+    return get_current_app().media.url_for_external(attachment["media"], RESOURCE)
 
 
 def init_app(app) -> None:

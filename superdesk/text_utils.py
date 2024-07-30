@@ -15,7 +15,6 @@ from lxml import etree  # noqa
 from superdesk import etree as sd_etree
 from lxml import html as lxml_html
 from lxml.html import clean
-from flask import current_app as app
 import chardet
 import html
 
@@ -139,7 +138,9 @@ def get_reading_time(html, word_count=None, language=None):
     :return int: estimated number of minute to read the text
     """
     if language and language.startswith("ja"):
-        return round(len(re.sub(r"[\s]", "", get_text(html))) / app.config["JAPANESE_CHARACTERS_PER_MINUTE"])
+        from superdesk.core import get_app_config
+
+        return round(len(re.sub(r"[\s]", "", get_text(html))) / get_app_config("JAPANESE_CHARACTERS_PER_MINUTE"))
     if not word_count:
         word_count = get_word_count(html)
     reading_time_float = word_count / 250

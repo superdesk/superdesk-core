@@ -16,15 +16,13 @@ import click
 import logging as logging_lib
 
 from typing import Any, Dict, List, NamedTuple, Optional
-from flask import Flask, abort, json, Blueprint, current_app
-from flask.cli import ScriptInfo, with_appcontext
 from flask_babel.speaklater import LazyString
 
 # from flask_script import Command as BaseCommand, Option
-from eve.utils import config  # noqa
 from eve.methods.common import document_link  # noqa
 from werkzeug.exceptions import HTTPException
 
+from .core import get_app_config, json
 from .eve_backend import EveBackend
 from .datalayer import SuperdeskDataLayer  # noqa
 from .services import BaseService as Service  # noqa
@@ -132,10 +130,11 @@ def get_headers(self, environ=None):
 
     todo(petr): put in in custom flask error handler instead
     """
+
     return [
         ("Content-Type", "text/html"),
-        ("Access-Control-Allow-Origin", current_app.config["CLIENT_URL"]),
-        ("Access-Control-Allow-Headers", ",".join(current_app.config["X_HEADERS"])),
+        ("Access-Control-Allow-Origin", get_app_config("CLIENT_URL")),
+        ("Access-Control-Allow-Headers", ",".join(get_app_config("X_HEADERS"))),
         ("Access-Control-Allow-Credentials", "true"),
         ("Access-Control-Allow-Methods", "*"),
     ]

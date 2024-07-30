@@ -11,6 +11,7 @@
 import logging
 import datetime
 
+from superdesk.core import get_current_app, get_app_config
 from superdesk.utc import utc
 from superdesk.io.registry import register_feed_parser
 from superdesk.io.feed_parsers import FeedParser
@@ -18,7 +19,6 @@ from superdesk.io.iptc import subject_codes
 from superdesk.metadata.item import ITEM_URGENCY, ITEM_PRIORITY, Priority
 from apps.archive.common import format_dateline_to_locmmmddsrc
 from superdesk.utc import get_date
-from flask import current_app as app
 from superdesk import get_resource_service
 
 
@@ -189,7 +189,7 @@ class APMediaFeedParser(FeedParser):
             item["original_source"] = ",".join([n.get("name") for n in in_item.get("infosource", [])])
 
         if in_item.get("datelinelocation"):
-            cities = app.locators.find_cities()
+            cities = get_current_app().locators.find_cities()
             # Try to find a single matching city either by city and country or city country and state
             located = [
                 c
@@ -271,7 +271,7 @@ class APMediaFeedParser(FeedParser):
         return item
 
     def _parse_associations(self, associations, item, provider=None):
-        related_id = getattr(self, "RELATED_ID", app.config.get("INGEST_AP_RELATED_ID"))
+        related_id = getattr(self, "RELATED_ID", get_app_config("INGEST_AP_RELATED_ID"))
         if related_id:
             item["associations"] = {}
             for key, raw in associations.items():

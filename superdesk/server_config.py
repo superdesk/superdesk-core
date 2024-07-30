@@ -1,6 +1,6 @@
 import superdesk
 
-from flask import current_app as app
+from superdesk.core import get_current_app
 from apps.auth import is_current_user_admin
 from superdesk.utc import utcnow
 
@@ -34,7 +34,7 @@ class ConfigService(superdesk.Service):
         return ids
 
     def set(self, key, val, namespace="superdesk"):
-        coll = app.data.mongo.get_collection_with_write_concern("config", "config")
+        coll = get_current_app().data.mongo.get_collection_with_write_concern("config", "config")
         if isinstance(val, dict):
             updates = {f"val.{k}": v for k, v in val.items()} if val else {}
         else:

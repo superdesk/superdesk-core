@@ -22,11 +22,12 @@ from urllib.parse import urljoin
 from bson import ObjectId
 from io import BytesIO
 from PIL import Image, ImageEnhance
-from flask import json, url_for
 from .image import get_meta
 from .video import get_meta as video_meta
+
+from superdesk.core import json, get_app_config
+from superdesk.flask import url_for
 from superdesk.errors import SuperdeskApiError
-from flask import current_app as app
 from mimetypes import guess_extension
 from superdesk import __version__ as superdesk_version
 
@@ -227,11 +228,11 @@ def get_watermark(image):
     :return: watermarked image
     """
     image = image.copy()
-    if not app.config.get("WATERMARK_IMAGE"):
+    if not get_app_config("WATERMARK_IMAGE"):
         return image
     if image.mode != "RGBA":
         image = image.convert("RGBA")
-    path = os.path.join(app.config["ABS_PATH"], app.config["WATERMARK_IMAGE"])
+    path = os.path.join(get_app_config("ABS_PATH"), get_app_config("WATERMARK_IMAGE"))
     if not os.path.isfile(path):
         logger.warning("No water mark file found at : {}".format(path))
         return image

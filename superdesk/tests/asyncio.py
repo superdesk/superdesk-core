@@ -16,6 +16,7 @@ from asgiref.wsgi import WsgiToAsgi
 
 from superdesk.factory.app import SuperdeskApp
 from superdesk.core.app import SuperdeskAsyncApp
+from superdesk.core import app as core_app
 
 from . import setup_config, setup
 from .async_test_client import AsyncTestClient
@@ -40,6 +41,8 @@ class AsyncTestCase(unittest.IsolatedAsyncioTestCase):
     def setupApp(self):
         if getattr(self, "app", None):
             self.app.stop()
+
+        core_app._global_app = None
 
         self.app_config = setup_config(self.app_config)
         self.app = SuperdeskAsyncApp(MockWSGI(config=self.app_config))

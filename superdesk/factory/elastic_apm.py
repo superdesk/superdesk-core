@@ -1,11 +1,11 @@
 import re
-import flask
 
 from typing import Literal
 from elasticapm.contrib.flask import ElasticAPM
+from superdesk.flask import Flask
 
 
-def setup_apm(app: flask.Flask, service="Core API") -> None:
+def setup_apm(app: Flask, service="Core API") -> None:
     if getattr(app, "apm", None) is None and app.config.get("APM_SERVER_URL") and app.config.get("APM_SECRET_TOKEN"):
         app.config["ELASTIC_APM"] = {
             "DEBUG": app.debug,
@@ -21,7 +21,7 @@ def setup_apm(app: flask.Flask, service="Core API") -> None:
         app.apm = ElasticAPM(app)
 
 
-def get_environment(app: flask.Flask) -> Literal["testing", "staging", "production"]:
+def get_environment(app: Flask) -> Literal["testing", "staging", "production"]:
     if app.config.get("CLIENT_URL"):
         if "localhost" in app.config["CLIENT_URL"] or app.debug:
             return "testing"

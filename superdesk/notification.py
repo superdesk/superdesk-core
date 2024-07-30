@@ -16,7 +16,7 @@ import os
 import json
 
 from datetime import datetime
-from flask import current_app as app
+from superdesk.core import get_current_app
 from superdesk.utils import json_serialize_datetime_objectId
 from superdesk.websockets_comms import SocketMessageProducer
 from superdesk.types import WebsocketMessageData, WebsocketMessageFilterConditions
@@ -60,6 +60,7 @@ def push_notification(name, filters: Optional[WebsocketMessageFilterConditions] 
     :param filters: filter out websocket consumers by certain conditions
     """
     logger.debug("pushing event {0} ({1})".format(name, json.dumps(kwargs, default=json_serialize_datetime_objectId)))
+    app = get_current_app()
 
     if not getattr(app, "notification_client", None):
         # not initialized - ignore

@@ -3,8 +3,8 @@ from urllib.parse import urljoin
 
 import requests
 from bson import json_util
-from flask import current_app as app
 
+from superdesk.core import get_app_config
 from superdesk.errors import SuperdeskApiError
 
 logger = logging.getLogger(__name__)
@@ -20,7 +20,7 @@ class VideoEditorWrapper:
         self.session.headers.update({"User-Agent": "superdesk"})
 
     def get_base_url(self):
-        return app.config.get("VIDEO_SERVER_URL") + "/projects/"
+        return get_app_config("VIDEO_SERVER_URL") + "/projects/"
 
     def create(self, file):
         return self._post(file)

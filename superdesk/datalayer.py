@@ -12,13 +12,11 @@ import superdesk
 
 from eve.io.base import DataLayer
 from eve.io.mongo import Mongo
-from eve.utils import config, ParsedRequest
+from eve.utils import ParsedRequest
 from eve_elastic import Elastic, InvalidSearchString  # noqa
-from flask import current_app
+from superdesk.core import get_current_async_app, get_app_config
 from superdesk.lock import lock, unlock
 from superdesk.json_utils import SuperdeskJSONEncoder
-
-from superdesk.core.app import get_current_async_app
 
 
 class SuperdeskDataLayer(DataLayer):
@@ -114,15 +112,15 @@ class SuperdeskDataLayer(DataLayer):
         return self._backend(resource).is_empty(resource)
 
     def _search_backend(self, resource):
-        if resource.endswith(current_app.config["VERSIONS"]):
+        if resource.endswith(get_app_config("VERSIONS")):
             return
         datasource = self.datasource(resource)
-        backend = config.SOURCES.get(datasource[0], {}).get("search_backend", None)
+        backend = get_app_config("SOURCES", {}).get(datasource[0], {}).get("search_backend", None)
         return getattr(self, backend) if backend is not None else None
 
     def _backend(self, resource):
         datasource = self.datasource(resource)
-        backend = config.SOURCES.get(datasource[0], {"backend": "mongo"}).get("backend", "mongo")
+        backend = get_app_config("SOURCES", {}).get(datasource[0], {"backend": "mongo"}).get("backend", "mongo")
         return getattr(self, backend)
 
     def get_mongo_collection(self, resource):
@@ -131,7 +129,7 @@ class SuperdeskDataLayer(DataLayer):
     def get_elastic_resources(self):
         """Get set of available elastic resources."""
         resources = set()
-        for resource in config.SOURCES:
+        for resource in get_app_config("SOURCES", {}):
             datasource = self.datasource(resource)[0]
             if self._search_backend(datasource):
                 resources.add(datasource)

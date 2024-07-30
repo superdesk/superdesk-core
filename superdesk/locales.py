@@ -1,18 +1,19 @@
 import pytz
-import flask
 import babel.dates as dates
 
+from superdesk.core import get_app_config
+from superdesk.flask import Blueprint, request
 from superdesk.auth.decorator import blueprint_auth
 from apps.auth import get_user
 from eve.render import send_response
 
 
-bp = flask.Blueprint("locales", __name__)
+bp = Blueprint("locales", __name__)
 
 
 def get_timezones():
     user = get_user()
-    lang = user.get("language", flask.current_app.config.get("DEFAULT_LANGUAGE", "en")).replace("-", "_")
+    lang = user.get("language", get_app_config("DEFAULT_LANGUAGE", "en")).replace("-", "_")
     return [
         {
             "id": tz,
@@ -27,7 +28,7 @@ def get_timezones():
 @blueprint_auth("locales")
 def locales_view():
     resp = None
-    if flask.request.method == "GET":
+    if request.method == "GET":
         resp = {"timezones": get_timezones()}
     return send_response(None, (resp, None, None, 200))
 
