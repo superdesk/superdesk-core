@@ -3,17 +3,14 @@ import re
 import socket
 import logging
 
+from pymongo import MongoClient
 from werkzeug.local import LocalProxy
+
+from superdesk.core.mongo import get_mongo_client_config
 from superdesk.core import get_current_app
-from superdesk.logging import logger
 from superdesk.utc import utcnow
 from superdesk.mongolock import MongoLock, MongoLockException
 
-
-_lock_resource_settings = {
-    "internal_resource": True,
-    "versioning": False,
-}
 
 logger = logging.getLogger(__name__)
 
@@ -46,9 +43,10 @@ class SuperdeskMongoLock(MongoLock):
 
 def _get_lock():
     """Get mongolock instance using app mongodb."""
-    app = get_current_app()
-    app.register_resource("_lock", _lock_resource_settings)  # setup dummy resource for locks
-    return SuperdeskMongoLock(client=app.data.mongo.pymongo("_lock").db)
+    client_config, dbname = get_mongo_client_config(get_current_app().config)
+    client = MongoClient(**client_config)
+    collection = client.get_database(dbname).get_collection("_lock")
+    return SuperdeskMongoLock(collection=collection)
 
 
 _lock = LocalProxy(_get_lock)

@@ -98,7 +98,7 @@ class MongoClientConfig(ConfigModel):
     auth_mechanism_properties: Optional[str] = None
 
 
-def _get_mongo_client_config(app_config: Dict[str, Any], prefix: str = "MONGO") -> Tuple[Dict[str, Any], str]:
+def get_mongo_client_config(app_config: Dict[str, Any], prefix: str = "MONGO") -> Tuple[Dict[str, Any], str]:
     config = MongoClientConfig.create_from_dict(app_config, prefix)
 
     client_kwargs: Dict[str, Any] = {
@@ -252,7 +252,7 @@ class MongoResources:
         resource_config = self.get_resource_config(resource_name)
 
         if not self._mongo_clients.get(resource_config.prefix):
-            client_config, dbname = _get_mongo_client_config(self.app.wsgi.config, resource_config.prefix)
+            client_config, dbname = get_mongo_client_config(self.app.wsgi.config, resource_config.prefix)
             client: MongoClient = MongoClient(**client_config)
             db = client.get_database(dbname)
             self._mongo_clients[resource_config.prefix] = (client, db)
@@ -349,7 +349,7 @@ class MongoResources:
         resource_config = self.get_resource_config(resource_name)
 
         if not self._mongo_clients_async.get(resource_config.prefix):
-            client_config, dbname = _get_mongo_client_config(self.app.wsgi.config, resource_config.prefix)
+            client_config, dbname = get_mongo_client_config(self.app.wsgi.config, resource_config.prefix)
             client = AsyncIOMotorClient(**client_config)
             db = client.get_database(dbname)
             self._mongo_clients_async[resource_config.prefix] = (client, db)
