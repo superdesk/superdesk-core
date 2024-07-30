@@ -1,9 +1,9 @@
 import io
 import bson
-import flask
 import unittest
-
 from unittest.mock import create_autospec, patch
+
+from superdesk.flask import Flask
 from superdesk.storage.proxy import ProxyMediaStorage
 from superdesk.storage.desk_media_storage import SuperdeskGridFSMediaStorage
 from superdesk.storage.amazon_media_storage import AmazonMediaStorage
@@ -11,7 +11,7 @@ from superdesk.storage.amazon_media_storage import AmazonMediaStorage
 
 class SuperdeskMediaStorageTestCase(unittest.TestCase):
     def setUp(self):
-        self.app = flask.Flask(__name__)
+        self.app = Flask(__name__)
         self.app.config.update(
             dict(
                 AMAZON_ACCESS_KEY_ID="foo",

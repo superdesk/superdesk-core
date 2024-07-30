@@ -8,7 +8,7 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
-from flask import render_template_string
+from superdesk.flask import render_template_string
 from superdesk.tests import TestCase
 import datetime
 

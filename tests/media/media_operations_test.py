@@ -1,14 +1,14 @@
 import io
-import flask
 import unittest
 import requests_mock
 
+from superdesk.flask import Flask
 from superdesk.media.media_operations import download_file_from_url
 
 
 class MediaOperationsTestCase(unittest.TestCase):
     def test_download_file_from_url_relative(self):
-        app = flask.Flask(__name__)
+        app = Flask(__name__)
         app.config["SERVER_NAME"] = "localhost"
         body = io.BytesIO(b"data")
         with app.app_context():

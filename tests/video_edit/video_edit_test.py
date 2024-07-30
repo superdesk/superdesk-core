@@ -18,7 +18,7 @@ import requests_mock
 from werkzeug.datastructures import FileStorage
 
 import superdesk
-from superdesk import config
+from superdesk.resource_fields import ID_FIELD
 from superdesk.errors import SuperdeskApiError
 from superdesk.tests import TestCase
 
@@ -77,13 +77,13 @@ class VideoEditTestCase(TestCase):
         )
 
     def test_missing_video_id(self):
-        doc = {"item": {config.ID_FIELD: "123", "renditions": {"original": {}}}}
+        doc = {"item": {ID_FIELD: "123", "renditions": {"original": {}}}}
         with self.assertRaises(SuperdeskApiError) as ex:
             self.video_edit.create([doc])
         self.assertEqual(ex.exception.message, '"video_editor_id" is required')
 
     def test_missing_action(self):
-        doc = {"item": {config.ID_FIELD: "123", "renditions": {"original": {"video_editor_id": "video_id"}}}}
+        doc = {"item": {ID_FIELD: "123", "renditions": {"original": {"video_editor_id": "video_id"}}}}
         with self.assertRaises(SuperdeskApiError) as ex:
             self.video_edit.create([doc])
         self.assertEqual(ex.exception.message, '"capture" or "edit" is required')
@@ -92,7 +92,7 @@ class VideoEditTestCase(TestCase):
         project_data = copy.deepcopy(self.project_data)
         doc = {
             "item": {
-                config.ID_FIELD: self.item[config.ID_FIELD],
+                ID_FIELD: self.item[ID_FIELD],
                 "renditions": self.item["renditions"],
             },
             "edit": {"crop": "0,0,200,500", "rotate": -90, "trim": "5,15"},
@@ -118,7 +118,7 @@ class VideoEditTestCase(TestCase):
     def test_capture_thumbnail(self):
         doc = {
             "item": {
-                config.ID_FIELD: self.item[config.ID_FIELD],
+                ID_FIELD: self.item[ID_FIELD],
                 "renditions": self.item["renditions"],
             },
             "capture": {"crop": "0,0,200,500", "rotate": -90, "trim": "5,10"},
@@ -173,5 +173,5 @@ class VideoEditTestCase(TestCase):
             req = Req()
             setattr(req, "args", {"action": "timeline"})
             res = self.video_edit.find_one(req, _id=self.item["_id"])
-            self.assertEqual(res[config.ID_FIELD], video_info["_id"])
+            self.assertEqual(res[ID_FIELD], video_info["_id"])
             self.assertTrue(res["processing"])

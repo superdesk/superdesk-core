@@ -1,4 +1,4 @@
-from flask import json
+from superdesk.core import json
 from superdesk.tests import TestCase, setup_auth_user
 
 

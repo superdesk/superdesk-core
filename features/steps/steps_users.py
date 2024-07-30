@@ -1,5 +1,5 @@
 from behave import then
-from flask import json
+from superdesk.core import json
 
 
 @then("we get users")

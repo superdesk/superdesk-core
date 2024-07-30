@@ -13,10 +13,10 @@ import io
 import os
 import hmac
 import json
-import flask
 import unittest
 import requests
 
+from superdesk.flask import Flask
 from superdesk.publish import SUBSCRIBER_TYPES
 from superdesk.publish.transmitters.http_push import HTTPPushService
 
@@ -107,7 +107,7 @@ class HTTPPushServiceTestCase(unittest.TestCase):
         }
 
         self.destination = self.item.get("destination", {})
-        self.app = flask.Flask(__name__)
+        self.app = Flask(__name__)
 
     def is_item_published(self, item_id):
         """Return True if the item was published, False otherwise.
@@ -199,11 +199,12 @@ class HTTPPushServiceTestCase(unittest.TestCase):
             with self.app.app_context():
                 service._push_item(self.destination, json.dumps(self.item))
 
-    @mock.patch("superdesk.publish.transmitters.http_push.app")
+    @mock.patch("superdesk.publish.transmitters.http_push.get_current_app", return_value=mock.MagicMock())
+    @mock.patch("superdesk.publish.transmitters.http_push.get_app_config", return_value=(5, 30))
     @mock.patch("superdesk.publish.transmitters.http_push.requests.Session.send", return_value=CreatedResponse)
     @mock.patch("requests.get", return_value=NotFoundResponse)
-    def test_push_associated_assets(self, get_mock, send_mock, app_mock):
-        app_mock.config = {}
+    def test_push_associated_assets(self, get_mock, send_mock, get_config_mock, get_app_mock):
+        app_mock = get_app_mock()
         app_mock.media.get.return_value = TestMedia(b"bin")
 
         dest = {"config": {"assets_url": "http://example.com"}}
@@ -229,11 +230,12 @@ class HTTPPushServiceTestCase(unittest.TestCase):
         for media in images:
             get_mock.assert_any_call("http://example.com/%s" % media, timeout=(5, 30))
 
-    @mock.patch("superdesk.publish.transmitters.http_push.app")
+    @mock.patch("superdesk.publish.transmitters.http_push.get_current_app", return_value=mock.MagicMock())
+    @mock.patch("superdesk.publish.transmitters.http_push.get_app_config", return_value=(5, 30))
     @mock.patch("superdesk.publish.transmitters.http_push.requests.Session.send", return_value=CreatedResponse)
     @mock.patch("requests.get", return_value=NotFoundResponse)
-    def test_push_attachments(self, get_mock, send_mock, app_mock):
-        app_mock.config = {}
+    def test_push_attachments(self, get_mock, send_mock, get_config_mock, get_app_mock):
+        app_mock = get_app_mock()
         app_mock.media.get.return_value = TestMedia(b"bin")
 
         dest = {"config": {"assets_url": "http://example.com", "secret_token": "foo"}}
@@ -260,11 +262,11 @@ class HTTPPushServiceTestCase(unittest.TestCase):
             request.headers["x-superdesk-signature"], "sha1=%s" % hmac.new(b"foo", request.body, "sha1").hexdigest()
         )
 
-    @mock.patch("superdesk.publish.transmitters.http_push.app")
+    @mock.patch("superdesk.publish.transmitters.http_push.get_current_app", return_value=mock.MagicMock())
+    @mock.patch("superdesk.publish.transmitters.http_push.get_app_config", return_value=(5, 30))
     @mock.patch("superdesk.publish.transmitters.http_push.requests.Session.send", return_value=CreatedResponse)
     @mock.patch("requests.get", return_value=NotFoundResponse)
-    def test_push_binaries(self, get_mock, send_mock, app_mock):
-        app_mock.config = {}
+    def test_push_binaries(self, get_mock, send_mock, *args):
         media = TestMedia(b"content")
         dest = {"config": {"assets_url": "http://example.com", "secret_token": "foo"}}
         service = HTTPPushService()

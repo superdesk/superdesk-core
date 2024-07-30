@@ -18,6 +18,7 @@ from bson import ObjectId
 from eve.utils import ParsedRequest
 from nose.tools import assert_raises
 
+from superdesk.flask import g
 from superdesk import get_resource_service, etree
 from superdesk.utc import utcnow
 from superdesk.errors import SuperdeskApiError, ProviderError
@@ -36,7 +37,6 @@ from superdesk.io.commands.update_ingest import (
     get_is_idle,
     ingest_item,
 )
-import flask
 
 reuters_guid = "tag_reuters.com_2014_newsml_KBN0FL0NM:10"
 
@@ -682,7 +682,7 @@ class UpdateIngestTest(TestCase):
                 "all_day": True,
             },
         }
-        flask.g.user = {"_id": "current_user_id"}
+        g.user = {"_id": "current_user_id"}
 
         provider = {
             "_id": "asdnjsandkajsdnjkasnd",
@@ -734,7 +734,7 @@ class UpdateIngestTest(TestCase):
                 "all_day": True,
             },
         }
-        flask.g.user = {"_id": "current_user_id"}
+        g.user = {"_id": "current_user_id"}
 
         provider = {
             "_id": "asdnjsandkajsdnjkasnd",

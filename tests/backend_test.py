@@ -10,6 +10,8 @@
 
 from datetime import timedelta
 from unittest.mock import patch, ANY
+
+from superdesk.resource_fields import DATE_CREATED, LAST_UPDATED, ETAG
 from superdesk.tests import TestCase
 from superdesk import get_backend
 from superdesk.utc import utcnow
@@ -25,7 +27,7 @@ class BackendTestCase(TestCase):
             doc_old = backend.find_one("ingest", None, _id=ids[0])
             backend.update("ingest", ids[0], updates, doc_old)
             doc_new = backend.find_one("ingest", None, _id=ids[0])
-            self.assertNotEqual(doc_old[self.app.config["ETAG"]], doc_new[self.app.config["ETAG"]])
+            self.assertNotEqual(doc_old[ETAG], doc_new[ETAG])
 
     def test_check_default_dates_on_create(self):
         backend = get_backend()
@@ -33,24 +35,24 @@ class BackendTestCase(TestCase):
         with self.app.app_context():
             ids = backend.create("ingest", [item])
             doc = backend.find_one("ingest", None, _id=ids[0])
-            self.assertIn(self.app.config["DATE_CREATED"], doc)
-            self.assertIn(self.app.config["LAST_UPDATED"], doc)
+            self.assertIn(DATE_CREATED, doc)
+            self.assertIn(LAST_UPDATED, doc)
 
     def test_check_default_dates_on_update(self):
         backend = get_backend()
         past = (utcnow() + timedelta(seconds=-2)).replace(microsecond=0)
-        item = {"name": "foo", self.app.config["DATE_CREATED"]: past, self.app.config["LAST_UPDATED"]: past}
+        item = {"name": "foo", DATE_CREATED: past, LAST_UPDATED: past}
         updates = {"name": "bar"}
         with self.app.app_context():
             ids = backend.create("ingest", [item])
             doc_old = backend.find_one("ingest", None, _id=ids[0])
             backend.update("ingest", ids[0], updates, doc_old)
             doc_new = backend.find_one("ingest", None, _id=ids[0])
-            date1 = doc_old[self.app.config["LAST_UPDATED"]]
-            date2 = doc_new[self.app.config["LAST_UPDATED"]]
+            date1 = doc_old[LAST_UPDATED]
+            date2 = doc_new[LAST_UPDATED]
             self.assertGreaterEqual(date2, date1)
-            date1 = doc_old[self.app.config["DATE_CREATED"]]
-            date2 = doc_new[self.app.config["DATE_CREATED"]]
+            date1 = doc_old[DATE_CREATED]
+            date2 = doc_new[DATE_CREATED]
             self.assertEqual(date1, date2)
 
     @patch("superdesk.eve_backend._push_notification")

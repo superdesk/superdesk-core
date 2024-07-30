@@ -12,9 +12,10 @@
 import json
 import uuid
 import unittest
-import flask
 import lxml.etree
 import pathlib
+
+from superdesk.flask import Flask
 import superdesk.editor_utils as editor_utils
 
 from superdesk.editor_utils import Editor3Content
@@ -24,7 +25,7 @@ class Editor3TestCase(unittest.TestCase):
     maxDiff = None
 
     def setUp(self):
-        self.app = flask.Flask(__name__)
+        self.app = Flask(__name__)
         self.app.app_context().push()
         super().setUp()
         if "EMBED_PRE_PROCESS" in self.app.config:

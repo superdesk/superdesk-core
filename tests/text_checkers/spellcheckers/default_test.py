@@ -10,8 +10,9 @@
 
 from functools import partial
 from unittest.mock import MagicMock, patch
-from flask import Flask
 from .utils import mock_dictionaries
+
+from superdesk.flask import Flask
 from superdesk.tests import TestCase
 from superdesk.text_checkers import tools
 from superdesk.text_checkers import spellcheckers

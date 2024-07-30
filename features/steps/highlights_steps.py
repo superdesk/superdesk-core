@@ -1,5 +1,5 @@
-from flask import json
 from behave import given, when, then  # @UnresolvedImport
+from superdesk.core import json
 from superdesk import get_resource_service
 from superdesk.tests import get_prefixed_url
 from superdesk.utc import utcnow

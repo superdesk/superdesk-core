@@ -7,8 +7,8 @@
 # For the full copyright and license information, please see the
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
-import flask
 
+from superdesk.flask import g
 from superdesk import get_backend
 from superdesk.tests import TestCase
 from superdesk.users.services import UsersService, compare_preferences
@@ -35,7 +35,7 @@ class PrivilegesTestCase(TestCase):
 
     def test_user_with_privilege_can_change_his_role(self):
         with self.app.app_context():
-            flask.g.user = {"user_type": "administrator"}
+            g.user = {"user_type": "administrator"}
             ids = self.service.create([{"name": "user", "user_type": "administrator"}])
             doc_old = self.service.find_one(None, _id=ids[0])
             self.service.update(ids[0], {"role": "1"}, doc_old)

@@ -10,6 +10,8 @@
 
 import mimetypes
 from datetime import datetime
+
+from superdesk.core import get_current_app
 from superdesk.tests import TestCase
 from superdesk import get_resource_service
 from superdesk.media.media_operations import process_file_from_stream
@@ -20,7 +22,6 @@ from superdesk.media.renditions import generate_renditions, get_renditions_spec
 from superdesk.metadata import utils
 from superdesk.upload import url_for_media
 from superdesk import filemeta
-from flask import current_app as app
 from PIL import Image
 import json
 
@@ -44,7 +45,7 @@ class BaseMediaEditorTestCase(TestCase):
         with open(image_path, "rb") as f:
             _, content_type, file_metadata = process_file_from_stream(f, content_type=content_type)
             f.seek(0)
-            file_id = app.media.put(f, filename=self.filename, content_type=content_type, metadata=file_metadata)
+            file_id = self.app.media.put(f, filename=self.filename, content_type=content_type, metadata=file_metadata)
             filemeta.set_filemeta(self.item, file_metadata)
             f.seek(0)
             rendition_spec = get_renditions_spec()
@@ -84,7 +85,7 @@ class BaseMediaEditorTestCase(TestCase):
 
     def image(self, item, rendition):
         media_id = item["renditions"][rendition]["media"]
-        media = app.media.get(media_id)
+        media = get_current_app().media.get(media_id)
         return Image.open(media)
 
 

@@ -1,12 +1,12 @@
-import flask
 import unittest.mock
 
+from superdesk.flask import Flask
 from apps.content import push_content_notification
 
 
 class PushContentNotificationTestCase(unittest.TestCase):
     def setUp(self):
-        self.app = flask.Flask(__name__)
+        self.app = Flask(__name__)
         self.ctx = self.app.app_context()
         self.ctx.push()
 

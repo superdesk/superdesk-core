@@ -8,19 +8,18 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
-import flask
 import unittest
-
 from unittest.mock import patch
 from datetime import datetime, timedelta
 
+from superdesk.flask import Flask
 from apps.templates.filters import format_datetime_filter
 from apps.templates.content_templates import get_item_from_template, render_content_template
 
 
 class RenderTemplateTestCase(unittest.TestCase):
     def setUp(self):
-        self.app = flask.Flask(__name__)
+        self.app = Flask(__name__)
         self.app.app_context().push()
         self.app.jinja_env.filters["format_datetime"] = format_datetime_filter
 

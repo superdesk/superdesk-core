@@ -10,9 +10,9 @@
 
 
 import os
-from superdesk import config
-from superdesk.tests import TestCase
 
+from superdesk.core import get_current_app
+from superdesk.tests import TestCase
 from superdesk.etree import etree
 from superdesk.io.feed_parsers.nitf import NITFFeedParser
 
@@ -233,7 +233,7 @@ class MappingTestCase(TestCase):
     }
 
     def setUp(self):
-        config.NITF_MAPPING = self.mapping
+        get_current_app().config["NITF_MAPPING"] = self.mapping
         dirname = os.path.dirname(os.path.realpath(__file__))
         fixture = os.path.normpath(os.path.join(dirname, "../fixtures", self.filename))
         provider = {"name": "Test"}
@@ -251,7 +251,7 @@ class MappingTestCase(TestCase):
         self.assertIn("TEST OK", subjects)
 
     def tearDown(self):
-        del config.NITF_MAPPING
+        get_current_app().config.pop("NITF_MAPPING", None)
 
 
 class HandleInvalidFieldsTestCase(NITFTestCase):

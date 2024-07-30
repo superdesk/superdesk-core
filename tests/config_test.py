@@ -1,6 +1,7 @@
 import os
-import flask
 import unittest
+
+from superdesk.flask import Config
 
 
 class TestConfig:
@@ -9,7 +10,7 @@ class TestConfig:
 
 class ConfigTestCase(unittest.TestCase):
     def test_config_update(self):
-        config = flask.Config(os.path.abspath(os.path.dirname(__file__)))
+        config = Config(os.path.abspath(os.path.dirname(__file__)))
         config.update({"X": True})
         self.assertTrue(config.get("X"))
         config.update({"X": False})
