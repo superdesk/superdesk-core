@@ -351,6 +351,8 @@ class PreferencesService(BaseService):
         """
         if user_id:
             user = get_resource_service("users").find_one(req=None, _id=user_id)
+            if not user:
+                return False
             return get_user_notification_preferences(user)["email"]
         return False
 

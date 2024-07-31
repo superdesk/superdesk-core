@@ -243,7 +243,7 @@ def notify_and_add_activity(
     notify_users = [
         str(user.get("_id"))
         for user in user_list
-        if not notification_name or get_user_notification_preferences(user, notification_name)["desktop"]
+        if get_user_notification_preferences(user, notification_name)["desktop"]
     ]
 
     add_activity(
