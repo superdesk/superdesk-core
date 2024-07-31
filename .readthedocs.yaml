@@ -12,6 +12,7 @@ build:
     python: "3.10"
   apt_packages:
       - libxmlsec1-dev
+      - libmagic1
 
 python:
   install:
