@@ -35,28 +35,8 @@ class UserMandatory(TypedDict):
     username: str
 
 
-class DefaultNotificationPreference(TypedDict, total=False):
-    enabled: bool
-
-
-class NotificationPreference(TypedDict, total=False):
-    email: bool
-    desktop: bool
-
-
-UserPreferences = TypedDict(
-    "UserPreferences",
-    {
-        "notifications": Dict[str, NotificationPreference],
-        "email:notification": DefaultNotificationPreference,
-        "desktop:notification": DefaultNotificationPreference,
-    },
-    total=False,
-)
-
-
 class User(UserMandatory, total=False):
-    user_preferences: UserPreferences
+    user_preferences: Dict[str, Any]
     needs_activation: bool
     is_enabled: bool
     is_active: bool
