@@ -66,7 +66,7 @@ class ResourceModel(BaseModel):
     id: Annotated[Union[str, ObjectId], Field(alias="_id")]
 
     #: Etag of the document
-    etag: Annotated[Optional[str], Field(alias="_etag")]
+    etag: Annotated[Optional[str], Field(alias="_etag")] = None
 
     #: Datetime the document was created
     created: Annotated[Optional[datetime], Field(alias="_created")] = None
