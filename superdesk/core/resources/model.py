@@ -24,7 +24,8 @@ from copy import deepcopy
 from inspect import get_annotations
 from datetime import datetime
 
-from pydantic import BaseModel, ConfigDict, Field, computed_field
+from pydantic import BaseModel, ConfigDict, Field, computed_field, ValidationError
+from pydantic_core import InitErrorDetails, PydanticCustomError
 from pydantic.dataclasses import dataclass as pydataclass
 
 from .fields import ObjectId
@@ -63,6 +64,9 @@ class ResourceModel(BaseModel):
 
     #: ID of the document
     id: Annotated[Union[str, ObjectId], Field(alias="_id")]
+
+    #: Etag of the document
+    etag: Annotated[Optional[str], Field(alias="_etag")] = None
 
     #: Datetime the document was created
     created: Annotated[Optional[datetime], Field(alias="_created")] = None
@@ -118,20 +122,45 @@ async def _run_async_validators_from_model_class(
         value = getattr(model_instance, field_name)
         metadata = getattr(annotation, "__metadata__", None)
 
-        if metadata is not None:
-            for m in metadata:
-                if isinstance(m, AsyncValidator):
-                    try:
+        try:
+            if metadata is not None:
+                for m in metadata:
+                    if isinstance(m, AsyncValidator):
                         await m.func(root_item, value)
-                    except ValueError as e:
-                        field_full_name = ".".join(field_name_stack + [field_name])
-                        raise ValueError(f"Invalid value '{field_full_name}={value}': {e}")
 
-        if isinstance(value, list):
-            for val in value:
-                await _run_async_validators_from_model_class(val, root_item, field_name_stack + [field_name])
-        else:
-            await _run_async_validators_from_model_class(value, root_item, field_name_stack + [field_name])
+            if isinstance(value, list):
+                for val in value:
+                    await _run_async_validators_from_model_class(val, root_item, field_name_stack + [field_name])
+            else:
+                await _run_async_validators_from_model_class(value, root_item, field_name_stack + [field_name])
+        except PydanticCustomError as error:
+            raise ValidationError.from_exception_data(
+                model_instance.__class__.__name__,
+                line_errors=[
+                    InitErrorDetails(
+                        type=error,
+                        loc=tuple(field_name_stack + [field_name]),
+                        input=value,
+                        ctx=dict(
+                            error=str(error),
+                        ),
+                    )
+                ],
+            )
+        except ValueError as error:
+            raise ValidationError.from_exception_data(
+                model_instance.__class__.__name__,
+                line_errors=[
+                    InitErrorDetails(
+                        type="value_error",
+                        loc=tuple(field_name_stack + [field_name]),
+                        input=value,
+                        ctx=dict(
+                            error=str(error),
+                        ),
+                    )
+                ],
+            )
 
 
 class ResourceModelWithObjectId(ResourceModel):

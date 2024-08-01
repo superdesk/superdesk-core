@@ -222,7 +222,10 @@ class ResourceEndpointsTestCase(AsyncFlaskTestCase):
         assert (await response.get_json()) == {
             "_status": "ERR",
             "_error": {"code": 403, "message": "Insertion failure: 1 document(s) contain(s) error(s)"},
-            "_issues": {"first_name": {"missing": "Field required"}, "last_name": {"missing": "Field required"}},
+            "_issues": {
+                "first_name": {"required": "Field is required"},
+                "last_name": {"required": "Field is required"},
+            },
         }
 
         # Invalid data types
@@ -239,7 +242,7 @@ class ResourceEndpointsTestCase(AsyncFlaskTestCase):
             "_status": "ERR",
             "_error": {"code": 403, "message": "Insertion failure: 1 document(s) contain(s) error(s)"},
             "_issues": {
-                "email": {"value_error": "Value error, Invalid email: incorrect email"},
+                "email": {"email": "Invalid email address"},
             },
         }
 
@@ -271,7 +274,7 @@ class ResourceEndpointsTestCase(AsyncFlaskTestCase):
             "_status": "ERR",
             "_error": {"code": 403, "message": "Insertion failure: 1 document(s) contain(s) error(s)"},
             "_issues": {
-                "email": {"value_error": "Value error, Invalid email: incorrect email"},
+                "email": {"email": "Invalid email address"},
             },
         }
 

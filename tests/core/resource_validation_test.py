@@ -1,6 +1,9 @@
+from pydantic import ValidationError
+
+from superdesk.core.resources.validators import get_field_errors_from_pydantic_validation_error
 from superdesk.tests.asyncio import AsyncTestCase
 
-from .modules.users import User, Category, UserResourceService
+from .modules.users import User, UserResourceService
 
 
 class ResourceValidationTest(AsyncTestCase):
@@ -116,3 +119,36 @@ class ResourceValidationTest(AsyncTestCase):
             last_name="Doe",
             email="jane@doe.org",
         ).validate_async()
+
+    def test_convert_validation_error_to_dict(self):
+        self.maxDiff = None
+
+        try:
+            User(id="user_1", first_name="John", last_name="Doe", email="incorrect email")
+        except ValidationError as error:
+            issues = get_field_errors_from_pydantic_validation_error(error)
+            self.assertEqual(issues, dict(email=dict(email="Invalid email address")))
+
+        try:
+            User(id="user_1", first_name="John", last_name="Doe", related_items=[])
+        except ValidationError as error:
+            issues = get_field_errors_from_pydantic_validation_error(error)
+            self.assertEqual(
+                issues,
+                {
+                    "related_items.0._id": dict(required="Field is required"),
+                    "related_items.0.link_type": dict(required="Field is required"),
+                    "related_items.0.slugline": dict(required="Field is required"),
+                },
+            )
+
+    async def test_convert_validation_error_to_dict_async(self):
+        service = UserResourceService()
+        await service.create([User(id="user_1", first_name="John", last_name="Doe", username="John.Doe")])
+
+        try:
+            await User(id="user_2", first_name="Jane", last_name="Doe", username="John.Doe").validate_async()
+        except ValidationError as error:
+            print(error)
+            issues = get_field_errors_from_pydantic_validation_error(error)
+            self.assertEqual(issues, dict(username=dict(unique="Value must be unique")))

@@ -61,6 +61,7 @@ class ResourceModelTest(TestCase):
                 "properties": {
                     "_created": {"type": "date"},
                     "_updated": {"type": "date"},
+                    "_etag": {"type": "text"},
                     "first_name": {"type": "text"},
                     "last_name": {"type": "text"},
                     "email": {"type": "text"},

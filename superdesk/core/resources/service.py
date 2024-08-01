@@ -27,6 +27,7 @@ import ast
 
 from bson import ObjectId
 import simplejson as json
+from motor.motor_asyncio import AsyncIOMotorCursor
 
 from superdesk.errors import SuperdeskApiError
 from superdesk.utc import utcnow
@@ -352,10 +353,12 @@ class AsyncResourceService(Generic[ResourceModelType]):
         :return: An async iterable with ``ResourceModel`` instances
         """
 
-        cursor = self.mongo.find({}).sort("_id")
-        async for data in cursor:
-            doc = self.get_model_instance_from_dict(data)
+        async for data in self.get_all_raw():
+            doc = self.get_model_instance_from_dict(dict(data))
             yield doc
+
+    def get_all_raw(self) -> AsyncIOMotorCursor:
+        return self.mongo.find({}).sort("_id")
 
     async def get_all_batch(self, size=500, max_iterations=10000, lookup=None) -> AsyncIterable[ResourceModelType]:
         """Helper function to get all items from this resource, in batches
