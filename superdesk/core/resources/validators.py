@@ -12,7 +12,9 @@ from typing import Callable, Any, Awaitable, Dict
 import re
 import logging
 
+from flask_babel import gettext
 from pydantic import AfterValidator, ValidationError
+from pydantic_core import PydanticCustomError
 from bson import ObjectId
 
 
@@ -39,7 +41,7 @@ def validate_email() -> AfterValidator:
             # given that admins are usually create users, not users by themself,
             # probably just check for @ is enough
             # https://davidcel.is/posts/stop-validating-email-addresses-with-regex/
-            raise ValueError(f"Invalid email: {value}")
+            raise PydanticCustomError("email", gettext("Invalid email address"))
         return value
 
     return AfterValidator(_validate_email)
@@ -61,10 +63,10 @@ def validate_minlength(min_length: int, validate_list_elements: bool = False) ->
                 _validate_minlength(val)
         elif isinstance(value, (type(""), list)):
             if len(value) < min_length:
-                raise ValueError(f"Invalid minlength: {value}")
+                raise PydanticCustomError("minlength", gettext("Not enough"))
         elif isinstance(value, (int, float)):
             if value < min_length:
-                raise ValueError(f"Invalid minlength: {value}")
+                raise PydanticCustomError("min_length", gettext("Too short"))
         return value
 
     return AfterValidator(_validate_minlength)
@@ -83,10 +85,10 @@ def validate_maxlength(max_length: int, validate_list_elements: bool = False) ->
                 _validate_maxlength(val)
         elif isinstance(value, (type(""), list)):
             if len(value) > max_length:
-                raise ValueError(f"Invalid maxlength: {value}")
+                raise PydanticCustomError("maxlength", gettext("Too many"))
         elif isinstance(value, (int, float)):
             if value > max_length:
-                raise ValueError(f"Invalid maxlength: {value}")
+                raise PydanticCustomError("maxlength", gettext("Too short"))
         return value
 
     return AfterValidator(_validate_maxlength)
@@ -129,7 +131,14 @@ def validate_data_relation_async(
                 resource_config = app.resources.get_config(resource_name)
                 collection = app.mongo.get_collection_async(resource_config.name)
                 if not await collection.find_one({external_field: item_id}):
-                    raise ValueError(f"Resource '{resource_name}' with ID '{item_id}' does not exist")
+                    raise PydanticCustomError(
+                        "data_relation",
+                        gettext("Resource '{resource_name}' with ID '{item_id}' does not exist"),
+                        dict(
+                            resource_name=resource_name,
+                            item_id=item_id,
+                        ),
+                    )
             except KeyError:
                 # Resource is not registered with async resources
                 # Try legacy resources instead
@@ -138,7 +147,14 @@ def validate_data_relation_async(
                 service = get_resource_service(resource_name)
                 item = service.find_one(req=None, **{external_field: item_id})
                 if item is None:
-                    raise ValueError(f"Resource '{resource_name}' with ID '{item_id}' does not exist")
+                    raise PydanticCustomError(
+                        "data_relation",
+                        gettext("Resource '{resource_name}' with ID '{item_id}' does not exist"),
+                        dict(
+                            resource_name=resource_name,
+                            item_id=item_id,
+                        ),
+                    )
 
     return AsyncValidator(validate_resource_exists)
 
@@ -165,7 +181,7 @@ def validate_unique_value_async(resource_name: str, field_name: str) -> AsyncVal
 
         query = {"_id": {"$ne": item.id}, field_name: {"$in": name} if isinstance(name, list) else name}
         if await collection.find_one(query):
-            raise ValueError(f"Resource '{resource_name}' with '{field_name}=={name}' already exists")
+            raise PydanticCustomError("unique", gettext("Value must be unique"))
 
     return AsyncValidator(validate_unique_value_in_resource)
 
@@ -197,26 +213,34 @@ def validate_iunique_value_async(resource_name: str, field_name: str) -> AsyncVa
         }
 
         if await collection.find_one(query):
-            raise ValueError(f"Resource '{resource_name}' with '{field_name}=={name}' already exists")
+            raise PydanticCustomError("unique", gettext("Value must be unique"))
 
     return AsyncValidator(validate_iunique_value_in_resource)
 
 
 def convert_pydantic_validation_error_for_response(validation_error: ValidationError) -> Dict[str, Any]:
-    issues: Dict[str, Dict[str, str]] = {}
-    for error in validation_error.errors():
-        try:
-            field = ".".join(reversed([str(loc) for loc in error["loc"]]))
-            issues.setdefault(field, {})
-            issues[field][error["type"]] = error["msg"]
-        except (KeyError, TypeError, ValueError) as error:
-            logger.warning(error)
-
     return {
         "_status": "ERR",
         "_error": {"code": 403, "message": "Insertion failure: 1 document(s) contain(s) error(s)"},
-        "_issues": issues,
+        "_issues": get_field_errors_from_pydantic_validation_error(validation_error),
     }
+
+
+def get_field_errors_from_pydantic_validation_error(validation_error: ValidationError) -> Dict[str, Dict[str, str]]:
+    issues: Dict[str, Dict[str, str]] = {}
+    for error in validation_error.errors():
+        try:
+            field = ".".join([str(loc) for loc in error["loc"]])
+            issues.setdefault(field, {})
+            if error["type"] == "missing":
+                # Validations provided by Pydantic
+                issues[field]["required"] = gettext("Field is required")
+            else:
+                issues[field][error["type"]] = error["msg"]
+        except (KeyError, TypeError, ValueError) as error:
+            logger.warning(error)
+
+    return issues
 
 
 from .model import ResourceModel  # noqa: E402
