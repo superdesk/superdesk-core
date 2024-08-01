@@ -67,14 +67,6 @@ class GridFSMediaStorageAsync(MimetypeMixin):
             if filename:
                 filename = f"{folder}/{filename}"
 
-        if hasattr(content, "read"):
-            data = content.read()
-
-            if hasattr(data, "encode"):
-                data = data.encode("utf-8")
-            if hasattr(content, "seek"):
-                content.seek(0)
-
         try:
             logger.info(f"Adding file {filename} to the GridFS")
 
