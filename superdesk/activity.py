@@ -84,6 +84,13 @@ class ActivityResource(Resource):
         category=lazy_gettext("notifications"),
     )
     superdesk.register_default_user_preference(
+        "notifications",
+        {
+            "type": "dict",
+            "schema": {},
+        },
+    )
+    superdesk.register_default_user_preference(
         "desktop:notification",
         {
             "type": "bool",
