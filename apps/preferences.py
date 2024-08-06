@@ -216,7 +216,6 @@ class PreferencesResource(Resource):
     superdesk.register_default_user_preference("destination:active", {})
 
     superdesk.register_default_user_preference("extensions", {})
-    superdesk.register_default_session_preference("notifications", {})
 
     superdesk.register_default_user_preference(
         "search:filters_panel_open", {"type": "bool", "enabled": True, "default": True}
