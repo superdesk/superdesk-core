@@ -1236,7 +1236,7 @@ class ArchiveService(BaseService, HighlightsSearchMixin):
             )
 
             self._send_mark_user_notifications(
-                "item:unmarked",
+                "item:marked",
                 message,
                 resource=self.datasource,
                 item=original,
@@ -1298,9 +1298,9 @@ class ArchiveService(BaseService, HighlightsSearchMixin):
                 item=item,
                 user_list=user_list,
                 link=link,
-                preference_notification_name="mark_for_user",
                 **data,
             )
+
         # send separate notification for markForUser extension
         push_notification(activity_name, item_id=item.get(ID_FIELD), user_list=user_list, extension="markForUser")
 
