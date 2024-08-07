@@ -1233,7 +1233,7 @@ class ArchiveService(BaseService, HighlightsSearchMixin):
             )
 
             self._send_mark_user_notifications(
-                "item:unmarked",
+                "item:marked",
                 message,
                 resource=self.datasource,
                 item=original,
@@ -1295,7 +1295,6 @@ class ArchiveService(BaseService, HighlightsSearchMixin):
                 item=item,
                 user_list=user_list,
                 link=link,
-                notification_name="mark_for_user",
                 **data,
             )
 
