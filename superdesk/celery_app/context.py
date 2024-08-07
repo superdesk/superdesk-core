@@ -30,25 +30,16 @@ class HybridAppContextTask(Task):
         """
         with current_app.app_context():
             task_func = self.run
-            if asyncio.iscoroutinefunction(task_func):
-                return self.run_async(task_func, *args, **kwargs)
-            return self.run_sync(*args, **kwargs)
 
-    def run_sync(self, *args: Any, **kwargs: Any) -> Any:
-        """
-        Runs the task synchronously within the App context.
+            try:
+                # handle async tasks if needed
+                if asyncio.iscoroutinefunction(task_func):
+                    return self.run_async(task_func, *args, **kwargs)
 
-        Args:
-            args: Positional arguments for the task.
-            kwargs: Keyword arguments for the task.
-
-        Returns:
-            The result of the synchronous task execution.
-        """
-        try:
-            return super().__call__(*args, **kwargs)
-        except self.app_errors as e:
-            self.handle_exception(e)
+                # run sync otherwise
+                return super().__call__(*args, **kwargs)
+            except self.app_errors as e:
+                self.handle_exception(e)
 
     async def run_async(self, task_func: Callable, *args: Any, **kwargs: Any) -> Any:
         """
@@ -65,8 +56,13 @@ class HybridAppContextTask(Task):
         Raises:
             Captures and handles exceptions defined in `app_errors`.
         """
+
+        loop = asyncio.get_event_loop()
+
+        # Handle exceptions inside the async function because asyncio does not propagate them
+        # in the same way as synchronous exceptions. This ensures that all exceptions,
+        # are managed and logged regardless of where they occur within the event loop.
         try:
-            loop = asyncio.get_event_loop()
             if not loop.is_running():
                 return loop.run_until_complete(task_func(*args, **kwargs))
             return await task_func(*args, **kwargs)
@@ -77,7 +73,7 @@ class HybridAppContextTask(Task):
         """
         Logs an exception using the configured logger from `superdesk.logging`.
         """
-        logger.exception("Error handling task: %s", str(exc))
+        logger.exception(f"Error handling task: {str(exc)}")
 
     def on_failure(self, exc: Exception, task_id: str, args: Tuple, kwargs: Dict, einfo: str) -> None:
         """
