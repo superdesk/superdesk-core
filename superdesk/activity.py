@@ -247,6 +247,9 @@ def notify_and_add_activity(
     if user_list is None:
         user_list = []
 
+    if notification_name is None:
+        notification_name = activity_name
+
     notify_users = [
         str(user.get("_id"))
         for user in user_list
