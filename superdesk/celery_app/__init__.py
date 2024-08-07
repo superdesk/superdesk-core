@@ -10,10 +10,12 @@
 
 import redis
 from celery import Celery
-from .context import HybridAppContextTask
+
+from .context_task import HybridAppContextTask
 from .serializer import CELERY_SERIALIZER_NAME, ContextAwareSerializerFactory
-from superdesk.core import get_current_app, get_app_config
+
 from superdesk.logging import logger
+from superdesk.core import get_current_app, get_app_config
 
 
 # custom serializer with Kombu for Celery's message serialization
