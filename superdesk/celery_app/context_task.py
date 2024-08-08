@@ -2,7 +2,7 @@ import asyncio
 import werkzeug
 
 from celery import Task
-from flask import current_app
+from asyncio import Future
 from typing import Any, Callable, Tuple, Dict
 
 from superdesk.logging import logger
@@ -20,6 +20,15 @@ class HybridAppContextTask(Task):
     serializer = CELERY_SERIALIZER_NAME
     app_errors = (SuperdeskError, werkzeug.exceptions.InternalServerError)
 
+    def get_current_app(self):
+        """
+        Method that is intended to be overwritten so the module gets to use the right app
+        context
+        """
+        from superdesk.core import get_current_app
+
+        return get_current_app()
+
     def __call__(self, *args: Any, **kwargs: Any) -> Any:
         """
         Executes the task function, determining if it should be run synchronously or asynchronously.
@@ -28,7 +37,7 @@ class HybridAppContextTask(Task):
             args: Positional arguments passed to the task function.
             kwargs: Keyword arguments passed to the task function.
         """
-        with current_app.app_context():
+        with self.get_current_app().app_context():
             task_func = self.run
 
             try:
@@ -41,9 +50,10 @@ class HybridAppContextTask(Task):
             except self.app_errors as e:
                 self.handle_exception(e)
 
-    async def run_async(self, task_func: Callable, *args: Any, **kwargs: Any) -> Any:
+    def run_async(self, task_func: Callable, *args: Any, **kwargs: Any) -> Any:
         """
-        Runs the task asynchronously, utilizing the current asyncio event loop.
+        Runs the task asynchronously, utilizing the current asyncio event loop. Captures
+        and handles exceptions defined in `app_errors`.
 
         Args:
             task_func: The coroutine function representing the task to be executed.
@@ -51,23 +61,26 @@ class HybridAppContextTask(Task):
             kwargs: Keyword arguments for the task.
 
         Returns:
-            The result of the asynchronous task execution.
-
-        Raises:
-            Captures and handles exceptions defined in `app_errors`.
+            If the event loop is running, returns an asyncio.Task that represents the execution of the coroutine.
+            Otherwise it runs the tasks and returns the result of the task.
         """
 
         loop = asyncio.get_event_loop()
 
-        # Handle exceptions inside the async function because asyncio does not propagate them
-        # in the same way as synchronous exceptions. This ensures that all exceptions,
-        # are managed and logged regardless of where they occur within the event loop.
-        try:
-            if not loop.is_running():
-                return loop.run_until_complete(task_func(*args, **kwargs))
-            return await task_func(*args, **kwargs)
-        except self.app_errors as e:
-            self.handle_exception(e)
+        # We need a wrapper to handle exceptions inside the async function because asyncio
+        # does not propagate them in the same way as synchronous exceptions. This ensures that
+        # all exceptions are managed and logged regardless of where they occur within the event loop
+        async def wrapper():
+            try:
+                return await task_func(*args, **kwargs)
+            except self.app_errors as e:
+                self.handle_exception(e)
+                return None
+
+        if not loop.is_running():
+            return loop.run_until_complete(wrapper())
+
+        return asyncio.create_task(wrapper())
 
     def handle_exception(self, exc: Exception) -> None:
         """
@@ -79,5 +92,5 @@ class HybridAppContextTask(Task):
         """
         Handles task failure by logging the exception within the Flask application context.
         """
-        with current_app.app_context():
+        with self.get_current_app().app_context():
             self.handle_exception(exc)

@@ -29,7 +29,7 @@ class TestHybridAppContextTask(AsyncFlaskTestCase):
         def sync_task_exception():
             raise SuperdeskError("Test exception")
 
-        with patch("superdesk.celery_app.context.logger") as mock_logger:
+        with patch("superdesk.celery_app.context_task.logger") as mock_logger:
             sync_task_exception.apply_async().get(propagate=True)
             expected_exc = SuperdeskError("Test exception")
             expected_msg = f"Error handling task: {str(expected_exc)}"
@@ -40,7 +40,7 @@ class TestHybridAppContextTask(AsyncFlaskTestCase):
         async def async_task_exception():
             raise SuperdeskError("Async exception")
 
-        with patch("superdesk.celery_app.context.logger") as mock_logger:
+        with patch("superdesk.celery_app.context_task.logger") as mock_logger:
             await async_task_exception.apply_async().get()
 
             expected_exc = SuperdeskError("Async exception")
