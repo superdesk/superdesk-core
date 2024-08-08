@@ -2,102 +2,29 @@
 #
 # This file is part of Superdesk.
 #
-# Copyright 2013, 2014 Sourcefabric z.u. and contributors.
+# Copyright 2013 to present Sourcefabric z.u. and contributors.
 #
 # For the full copyright and license information, please see the
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
-"""
-Created on May 29, 2014
-
-@author: ioan
-"""
-
 import redis
-import arrow
-import werkzeug
-import superdesk
-from bson import ObjectId
 from celery import Celery
-from kombu.serialization import register
-from eve.io.mongo import MongoJSONEncoder
-from eve.utils import str_to_date
-from superdesk.core import json, get_current_app, get_app_config
-from superdesk.errors import SuperdeskError
+
+from .context_task import HybridAppContextTask
+from .serializer import CELERY_SERIALIZER_NAME, ContextAwareSerializerFactory
+
 from superdesk.logging import logger
+from superdesk.core import get_current_app, get_app_config
 
 
+# custom serializer with Kombu for Celery's message serialization
+serializer_factory = ContextAwareSerializerFactory(get_current_app)
+serializer_factory.register_serializer(CELERY_SERIALIZER_NAME)
+
+# set up celery with our custom Task which handles async/sync tasks + app context
 celery = Celery(__name__)
-TaskBase = celery.Task
-
-
-def try_cast(v):
-    # False and 0 are getting converted to datetime by arrow
-    if v is None or isinstance(v, bool) or v == 0:
-        return v
-
-    try:
-        str_to_date(v)  # try if it matches format
-        return arrow.get(v).datetime  # return timezone aware time
-    except Exception:
-        try:
-            return ObjectId(v)
-        except Exception:
-            return v
-
-
-def dumps(o):
-    with get_current_app().app_context():
-        return MongoJSONEncoder().encode(o)
-
-
-def loads(s):
-    o = json.loads(s)
-    with get_current_app().app_context():
-        return serialize(o)
-
-
-def serialize(o):
-    if isinstance(o, list):
-        return [serialize(item) for item in o]
-    elif isinstance(o, dict):
-        if o.get("kwargs") and not isinstance(o["kwargs"], dict):
-            o["kwargs"] = json.loads(o["kwargs"])
-        return {k: serialize(v) for k, v in o.items()}
-    else:
-        return try_cast(o)
-
-
-register("eve/json", dumps, loads, content_type="application/json")
-
-
-def handle_exception(exc):
-    """Log exception to logger."""
-    logger.exception(exc)
-
-
-class AppContextTask(TaskBase):  # type: ignore
-    abstract = True
-    serializer = "eve/json"
-    app_errors = (
-        SuperdeskError,
-        werkzeug.exceptions.InternalServerError,  # mongo layer err
-    )
-
-    def __call__(self, *args, **kwargs):
-        with get_current_app().app_context():
-            try:
-                return super().__call__(*args, **kwargs)
-            except self.app_errors as e:
-                handle_exception(e)
-
-    def on_failure(self, exc, task_id, args, kwargs, einfo):
-        with get_current_app().app_context():
-            handle_exception(exc)
-
-
-celery.Task = AppContextTask
+celery.Task = HybridAppContextTask
 
 
 def init_celery(app):
