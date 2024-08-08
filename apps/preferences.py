@@ -14,7 +14,8 @@ import superdesk
 from superdesk.flask import request
 from superdesk.resource_fields import ID_FIELD
 from superdesk.preferences import get_user_notification_preferences
-from superdesk.resource import Resource, BaseService
+from superdesk.resource import Resource
+from superdesk.services import BaseService
 from superdesk import get_backend, get_resource_service
 from superdesk.workflow import get_privileged_actions
 from superdesk.validation import ValidationError
