@@ -11,8 +11,8 @@
 import logging
 import superdesk
 
-from superdesk.resource_fields import ID_FIELD
 from superdesk.flask import request
+from superdesk.resource_fields import ID_FIELD
 from superdesk.preferences import get_user_notification_preferences
 from superdesk.resource import Resource
 from superdesk.services import BaseService
