@@ -2,7 +2,6 @@ import asyncio
 import werkzeug
 
 from celery import Task
-from asyncio import Future
 from typing import Any, Callable, Tuple, Dict
 
 from superdesk.logging import logger
@@ -37,6 +36,7 @@ class HybridAppContextTask(Task):
             args: Positional arguments passed to the task function.
             kwargs: Keyword arguments passed to the task function.
         """
+        # TODO-ASYNC: update once we are fully using Quart
         with self.get_current_app().app_context():
             task_func = self.run
 
@@ -92,5 +92,6 @@ class HybridAppContextTask(Task):
         """
         Handles task failure by logging the exception within the Flask application context.
         """
+        # TODO-ASYNC: update once we are fully using Quart
         with self.get_current_app().app_context():
             self.handle_exception(exc)
