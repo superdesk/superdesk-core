@@ -10,14 +10,17 @@
 
 
 import bson
-import logging
-from datetime import timedelta, timezone, datetime
 import pytz
+import logging
+import superdesk
+
+from datetime import timedelta, timezone, datetime
 from werkzeug.exceptions import HTTPException
 
+from superdesk.celery_app import CELERY_SERIALIZER_NAME
 from superdesk.core import get_app_config, get_current_app
 from superdesk.resource_fields import ID_FIELD
-import superdesk
+
 from superdesk.activity import ACTIVITY_EVENT, notify_and_add_activity
 from superdesk.celery_app import celery
 from superdesk.celery_task_utils import get_lock_id
@@ -270,7 +273,9 @@ class UpdateIngest(superdesk.Command):
                 if sync:
                     update_provider.apply(kwargs=kwargs)
                 else:
-                    update_provider.apply_async(expires=get_task_ttl(provider), kwargs=kwargs, serializer="eve/json")
+                    update_provider.apply_async(
+                        expires=get_task_ttl(provider), kwargs=kwargs, serializer=CELERY_SERIALIZER_NAME
+                    )
 
 
 def update_last_item_updated(update, items):
