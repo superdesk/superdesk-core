@@ -3,9 +3,10 @@ from datetime import datetime
 from unittest.mock import MagicMock
 
 from superdesk.celery_app.serializer import ContextAwareSerializerFactory
-from superdesk.tests import TestCase
+from superdesk.tests import TestCase, markers
 
 
+@markers.requires_async_celery
 class TestContextAwareSerializerFactory(TestCase):
     def setUp(self):
         self.get_current_app = MagicMock(return_value=self.app)
