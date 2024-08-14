@@ -37,7 +37,7 @@ from apps.archive.common import insert_into_versions, ITEM_UNLINK
 from apps.archive.archive import SOURCE as ARCHIVE
 from superdesk.utc import utcnow
 from superdesk.default_settings import VERSION
-from flask_babel import _
+from quart_babel import gettext as _
 from superdesk.signals import signals
 from superdesk.validation import ValidationError
 

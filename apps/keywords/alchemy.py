@@ -13,7 +13,7 @@ import requests
 
 from superdesk.core import get_app_config
 from superdesk.errors import SuperdeskApiError
-from flask_babel import _
+from quart_babel import gettext as _
 
 
 class AlchemyKeywordsProvider:

@@ -1,4 +1,4 @@
-from flask_babel import lazy_gettext
+from quart_babel import lazy_gettext
 import superdesk
 
 from superdesk.notification import push_notification

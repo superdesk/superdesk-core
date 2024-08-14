@@ -36,7 +36,7 @@ from apps.packages import PackageService
 from superdesk.metadata.packages import LINKED_IN_PACKAGES, PACKAGE
 from superdesk.utc import get_expiry_date, utcnow
 from apps.item_lock.components.item_lock import push_unlock_notification
-from flask_babel import _
+from quart_babel import gettext as _
 from bson.objectid import ObjectId
 
 logger = logging.getLogger(__name__)

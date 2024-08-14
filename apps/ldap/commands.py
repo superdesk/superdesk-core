@@ -62,6 +62,7 @@ class ImportUserProfileFromADCommand(superdesk.Command):
         )
 
         user_data = ad_auth.authenticate_and_fetch_profile(ad_username, ad_password, username)
+        print(user_data)
 
         if len(user_data) == 0:
             raise SuperdeskApiError.notFoundError("Username not found")
@@ -75,6 +76,7 @@ class ImportUserProfileFromADCommand(superdesk.Command):
             add_default_values(user_data, username, user_type=user_type)
             superdesk.get_resource_service("users").post([user_data])
 
+        print(user_data)
         return user_data
 
 

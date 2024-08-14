@@ -10,7 +10,7 @@ from superdesk.utils import get_random_string
 from superdesk.validation import ValidationError
 from io import BytesIO
 from zipfile import ZipFile
-from flask_babel import _
+from quart_babel import gettext as _
 
 logger = logging.getLogger(__name__)
 

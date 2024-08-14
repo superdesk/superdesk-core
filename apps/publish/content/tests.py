@@ -33,7 +33,7 @@ from superdesk.metadata.item import ITEM_STATE, CONTENT_STATE, ITEM_TYPE, CONTEN
 from superdesk.metadata.packages import RESIDREF
 from superdesk.publish import init_app, publish_queue
 from superdesk.publish.subscribers import SUBSCRIBER_TYPES
-from superdesk.tests import TestCase
+from superdesk.tests import TestCase, markers
 from superdesk.utc import utcnow
 from apps.archive.common import ITEM_OPERATION
 from celery.exceptions import SoftTimeLimitExceeded
@@ -304,7 +304,8 @@ class ArchivePublishTestCase(TestCase):
             },
         ]
 
-    def setUp(self):
+    async def asyncSetUp(self):
+        await super().asyncSetUp()
         self.init_data()
 
         self.app.data.insert("users", self.users)
@@ -334,8 +335,9 @@ class ArchivePublishTestCase(TestCase):
         self._put = self.app.media.put
         self.app.media.put = MagicMock(return_value="media_id")
 
-    def tearDown(self):
+    async def asyncTearDown(self):
         self.app.media.put = self._put
+        await super().asyncTearDown()
 
     def _init_article_versions(self):
         resource_def = self.app.config["DOMAIN"]["archive_versions"]
@@ -444,7 +446,8 @@ class ArchivePublishTestCase(TestCase):
             ]
         )
 
-    def test_publish(self):
+    @markers.requires_async_celery
+    async def test_publish(self):
         doc = self.articles[3].copy()
         get_resource_service(ARCHIVE_PUBLISH).patch(id=doc["_id"], updates={ITEM_STATE: CONTENT_STATE.PUBLISHED})
         published_doc = get_resource_service(ARCHIVE).find_one(req=None, _id=doc["_id"])
@@ -452,7 +455,8 @@ class ArchivePublishTestCase(TestCase):
         self.assertEqual(published_doc[VERSION], doc[VERSION] + 1)
         self.assertEqual(published_doc[ITEM_STATE], ArchivePublishService().published_state)
 
-    def test_versions_across_collections_after_publish(self):
+    @markers.requires_async_celery
+    async def test_versions_across_collections_after_publish(self):
         self.app.data.insert("archive_versions", self.article_versions)
 
         # Publishing an Article
@@ -482,7 +486,8 @@ class ArchivePublishTestCase(TestCase):
         items_in_published_collection = list(get_resource_service(PUBLISHED).get(req=request, lookup=lookup))
         assert len(items_in_published_collection) > 0, "Item not found in published collection %s" % original[ID_FIELD]
 
-    def test_queue_transmission_for_item_scheduled_future(self):
+    @markers.requires_eve_resource_async_event
+    async def test_queue_transmission_for_item_scheduled_future(self):
         self._is_publish_queue_empty()
 
         doc = copy(self.articles[5])
@@ -495,7 +500,8 @@ class ArchivePublishTestCase(TestCase):
         queue_items = self.app.data.find(PUBLISH_QUEUE, None, None)[0]
         self.assertEqual(0, queue_items.count())
 
-    def test_queue_transmission_for_item_scheduled_elapsed(self):
+    @markers.requires_async_celery
+    async def test_queue_transmission_for_item_scheduled_elapsed(self):
         self._is_publish_queue_empty()
 
         doc = copy(self.articles[5])
@@ -516,7 +522,7 @@ class ArchivePublishTestCase(TestCase):
         queue_items = self.app.data.find(PUBLISH_QUEUE, None, None)[0]
         self.assertEqual(1, queue_items.count())
 
-    def test_queue_transmission_for_digital_channels(self):
+    async def test_queue_transmission_for_digital_channels(self):
         self._is_publish_queue_empty()
 
         doc = copy(self.articles[1])
@@ -532,7 +538,7 @@ class ArchivePublishTestCase(TestCase):
         for item in queue_items:
             self.assertIn(item["subscriber_id"], expected_subscribers, "item {}".format(item))
 
-    def test_queue_transmission_for_wire_channels_with_codes(self):
+    async def test_queue_transmission_for_wire_channels_with_codes(self):
         self._is_publish_queue_empty()
 
         doc = copy(self.articles[1])
@@ -554,7 +560,7 @@ class ArchivePublishTestCase(TestCase):
                 self.assertIn("xyz", item["codes"])
                 self.assertIn("klm", item["codes"])
 
-    def test_get_subscribers_without_product(self):
+    async def test_get_subscribers_without_product(self):
         doc = copy(self.articles[1])
         doc["item_id"] = doc["_id"]
 
@@ -572,7 +578,7 @@ class ArchivePublishTestCase(TestCase):
         self.assertEqual(0, len(subscribers))
         self.assertDictEqual({}, subscriber_codes)
 
-    def test_queue_transmission_wrong_article_type_fails(self):
+    async def test_queue_transmission_wrong_article_type_fails(self):
         self._is_publish_queue_empty()
 
         doc = copy(self.articles[0])
@@ -592,7 +598,8 @@ class ArchivePublishTestCase(TestCase):
         self.assertEqual(2, queue_items.count())
         self.assertTrue(queued)
 
-    def test_delete_from_queue_by_article_id(self):
+    @markers.requires_async_celery
+    async def test_delete_from_queue_by_article_id(self):
         self._is_publish_queue_empty()
 
         doc = copy(self.articles[3])
@@ -610,7 +617,7 @@ class ArchivePublishTestCase(TestCase):
         queue_items = self.app.data.find(PUBLISH_QUEUE, None, None)[0]
         self.assertEqual(0, queue_items.count())
 
-    def test_conform_target_regions(self):
+    async def test_conform_target_regions(self):
         doc = {"headline": "test"}
         product = {"geo_restrictions": "QLD"}
         self.assertFalse(get_enqueue_service("publish").conforms_product_targets(product, doc))
@@ -625,7 +632,7 @@ class ArchivePublishTestCase(TestCase):
         doc = {"headline": "test", "target_regions": [{"qcode": "QLD", "name": "Queensland", "allow": False}]}
         self.assertFalse(get_enqueue_service("publish").conforms_product_targets(product, doc))
 
-    def test_conform_target_subscribers(self):
+    async def test_conform_target_subscribers(self):
         doc = {"headline": "test"}
         subscriber = {"_id": 1}
         self.assertTupleEqual(
@@ -646,7 +653,7 @@ class ArchivePublishTestCase(TestCase):
             (True, False), get_enqueue_service("publish").conforms_subscriber_targets(subscriber, doc)
         )
 
-    def test_can_publish_article(self):
+    async def test_can_publish_article(self):
         product = self.products[0]
         self._add_content_filters(product, is_global=False)
 
@@ -659,7 +666,7 @@ class ArchivePublishTestCase(TestCase):
         self.assertTrue(can_it)
         product.pop("content_filter")
 
-    def test_can_publish_article_with_global_filters(self):
+    async def test_can_publish_article_with_global_filters(self):
         subscriber = self.subscribers[0]
         product = self.products[0]
         self._add_content_filters(product, is_global=True)
@@ -679,7 +686,7 @@ class ArchivePublishTestCase(TestCase):
 
         product.pop("content_filter")
 
-    def test_is_targeted(self):
+    async def test_is_targeted(self):
         doc = {"headline": "test"}
         self.assertFalse(BasePublishService().is_targeted(doc))
         doc = {"headline": "test", "target_regions": []}
@@ -691,7 +698,8 @@ class ArchivePublishTestCase(TestCase):
         doc = {"headline": "test", "target_regions": [], "target_types": [{"qcode": "digital"}]}
         self.assertTrue(BasePublishService().is_targeted(doc))
 
-    def test_targeted_for_includes_digital_subscribers(self):
+    @markers.requires_eve_resource_async_event
+    async def test_targeted_for_includes_digital_subscribers(self):
         updates = {"target_regions": [{"qcode": "NSW", "name": "New South Wales", "allow": True}]}
         doc_id = self.articles[5][ID_FIELD]
         get_resource_service(ARCHIVE).patch(id=doc_id, updates=updates)
@@ -704,7 +712,8 @@ class ArchivePublishTestCase(TestCase):
         for item in queue_items:
             self.assertIn(item["subscriber_id"], expected_subscribers, "item {}".format(item))
 
-    def test_maintain_latest_version_for_published(self):
+    @markers.requires_eve_resource_async_event
+    async def test_maintain_latest_version_for_published(self):
         def get_publish_items(item_id, last_version):
             query = {
                 "query": {
@@ -746,7 +755,7 @@ class ArchivePublishTestCase(TestCase):
         last_published = get_publish_items(published_doc["item_id"], True)
         self.assertEqual(1, last_published.count())
 
-    def test_added_removed_in_a_package(self):
+    async def test_added_removed_in_a_package(self):
         package = {
             "groups": [
                 {"id": "root", "refs": [{"idRef": "main"}], "role": "grpRole:NEP"},
@@ -856,7 +865,8 @@ class ArchivePublishTestCase(TestCase):
         self.assertEqual(len(removed_items), 1)
         self.assertEqual(len(added_items), 1)
 
-    def test_get_changed_items_no_item_found(self):
+    @markers.requires_async_celery
+    async def test_get_changed_items_no_item_found(self):
         # dummy publishing so that elastic mappings are created.
         doc = self.articles[3].copy()
         get_resource_service(ARCHIVE_PUBLISH).patch(id=doc["_id"], updates={ITEM_STATE: CONTENT_STATE.PUBLISHED})
@@ -878,12 +888,13 @@ class TimeoutTest(TestCase):
         }
     ]
 
-    def setUp(self):
-        with self.app.app_context():
-            init_app(self.app)
+    async def asyncSetUp(self):
+        await super().asyncSetUp()
+        init_app(self.app)
 
+    @markers.requires_async_celery
     @mock.patch("apps.publish.enqueue.get_enqueue_service", side_effect=SoftTimeLimitExceeded())
-    def test_soft_timeout_gets_re_queued(self, mock):
+    async def test_soft_timeout_gets_re_queued(self, mock):
         self.app.data.insert("published", self.published_items)
         enqueue_published()
         published = self.app.data.find(PUBLISHED, None, None)[0]

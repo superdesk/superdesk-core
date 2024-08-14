@@ -1,7 +1,7 @@
 import superdesk
 
 from typing import Final
-from flask_babel import lazy_gettext
+from quart_babel import lazy_gettext
 from celery.schedules import crontab
 
 from superdesk.factory.app import SuperdeskApp

@@ -11,7 +11,7 @@
 import logging
 from typing import Any
 
-from flask_babel import lazy_gettext
+from quart_babel import lazy_gettext
 import superdesk
 from .service import ContactsService, OrganisationService
 from .resource import ContactsResource, CONTACTS_PRIVILEDGE, VIEW_CONTACTS, OrganisationSearchResource

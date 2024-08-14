@@ -26,7 +26,7 @@ from superdesk import (
     get_intrinsic_privileges,
 )
 from superdesk.utc import utcnow
-from flask_babel import _
+from quart_babel import gettext as _
 
 logger = logging.getLogger(__name__)
 
@@ -147,6 +147,7 @@ class SuperdeskTokenAuth(TokenAuth):
         auth_service = get_resource_service("auth")
         user_service = get_resource_service("users")
         auth_token = auth_service.find_one(token=token, req=None)
+        # TODO-ASYNC: Fix auth token passing in headers (see superdesk.tests.markers.requires_auth_headers_fix)
         if auth_token:
             if session.get("session_token") != token:
                 session["session_token"] = token

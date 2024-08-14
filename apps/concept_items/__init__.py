@@ -10,7 +10,7 @@
 
 import superdesk
 
-from flask_babel import lazy_gettext
+from quart_babel import lazy_gettext
 from .resource import ConceptItemsResource, CONCEPT_ITEMS_PRIVELEGE
 from .service import ConceptItemsService
 

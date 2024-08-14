@@ -17,6 +17,7 @@ from typing import Any
 import superdesk
 from superdesk.celery_app import celery
 
+from .common import ARCHIVE  # noqa  - fixes circular imports
 from .archive import (
     ArchiveResource,
     ArchiveService,
@@ -39,7 +40,7 @@ from apps.item_lock.models.item import ItemModel
 from apps.common.models.io.eve_proxy import EveProxy
 from .archive_rewrite import ArchiveRewriteResource, ArchiveRewriteService
 from .news import NewsResource, NewsService
-from flask_babel import _, lazy_gettext
+from quart_babel import lazy_gettext
 
 logger = logging.getLogger(__name__)
 

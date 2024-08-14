@@ -30,7 +30,7 @@ from apps.archive.archive import SOURCE as ARCHIVE
 from apps.archive.common import handle_existing_data, item_schema
 from superdesk.publish.publish_queue import PUBLISHED_IN_PACKAGE
 from apps.content import push_content_notification
-from flask_babel import _
+from quart_babel import gettext as _
 from apps.archive.highlights_search_mixin import HighlightsSearchMixin
 
 logger = logging.getLogger(__name__)

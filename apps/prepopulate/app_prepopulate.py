@@ -176,6 +176,7 @@ class PrepopulateService(BaseService):
                 clean_dbs(app, force=True)
 
             app.init_indexes()
+            # TODO-ASYNC: Support async (see superdesk.tests.markers.requires_eve_resource_async_event)
             app.data.init_elastic(app)
 
             get_resource_service("users").stop_updating_stage_visibility()

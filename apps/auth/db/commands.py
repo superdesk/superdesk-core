@@ -42,7 +42,7 @@ class CreateUserCommand(superdesk.Command):
         superdesk.Option("--support", "-s", dest="support", required=False, action="store_true"),
     ]
 
-    def run(self, username, password, email, admin=False, support=False):
+    async def run(self, username, password, email, admin=False, support=False):
         # force type conversion to boolean
         user_type = "administrator" if admin else "user"
 
@@ -57,7 +57,7 @@ class CreateUserCommand(superdesk.Command):
         }
 
         app = get_current_app().as_any()
-        with app.test_request_context("/users", method="POST"):
+        async with app.test_request_context("/users", method="POST"):
             if userdata.get("password", None) and not is_hashed(userdata.get("password")):
                 userdata["password"] = get_hash(
                     userdata.get("password"), get_app_config("BCRYPT_GENSALT_WORK_FACTOR", 12)
@@ -158,12 +158,16 @@ class ImportUsersCommand(superdesk.Command):
         created_users = 0
 
         for user_data in data:
+            print("Step 1")
+            print("Processing user")
+            print(user_data)
             if not isinstance(user_data, dict):
                 self.parser.error(
                     "Invalid user data when importing {path!r}: user data must be an object, not {data_type}:\ndata: "
                     "{data!r}".format(path=import_file, data_type=type(user_data), data=user_data)
                 )
 
+            print("Step 2")
             try:
                 username = user_data["username"]
                 email = user_data["email"]
@@ -176,6 +180,7 @@ class ImportUsersCommand(superdesk.Command):
                 )
                 continue
 
+            print("Step 3")
             diff_fields = set(user_data) - USER_FIELDS_NAMES
             if diff_fields:
                 logger.warning(
@@ -185,8 +190,10 @@ class ImportUsersCommand(superdesk.Command):
                     )
                 )
 
+            print("Step 4")
             clean_data = {"needs_activation": activation_email}
             try:
+                print("Step 4.1")
                 for field_name in USER_FIELDS_NAMES.intersection(user_data):
                     value = user_data[field_name]
                     if field_name == "role":
@@ -204,12 +211,13 @@ class ImportUsersCommand(superdesk.Command):
 
                 user_id = users_service.post([clean_data])[0]
             except Exception as e:
-                logger.warning(
+                logger.exception(
                     "Can't create user {username!r}: {reason}\n{data!r}".format(username=username, reason=e, data=data)
                 )
                 continue
             logger.info("user {username!r} created with id '{user_id}'".format(username=username, user_id=user_id))
 
+            print("Step 5")
             created_users += 1
 
         print(

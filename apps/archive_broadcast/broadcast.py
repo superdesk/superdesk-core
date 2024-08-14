@@ -28,7 +28,7 @@ from superdesk.errors import SuperdeskApiError
 from apps.archive.archive import SOURCE
 from apps.publish.content.common import ITEM_CORRECT, ITEM_PUBLISH
 from superdesk.utc import utcnow
-from flask_babel import _
+from quart_babel import gettext as _
 
 
 logger = logging.getLogger(__name__)

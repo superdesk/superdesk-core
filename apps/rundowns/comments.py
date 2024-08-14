@@ -1,5 +1,5 @@
 from copy import deepcopy
-from flask_babel import _
+from quart_babel import gettext as _
 from apps.comments import CommentsResource, CommentsService
 from superdesk import get_resource_service
 from superdesk.resource import Resource
@@ -30,6 +30,7 @@ class RundownCommentsService(CommentsService):
             user = get_resource_service("users").find_one(req=None, _id=doc["user"])
             rundown = rundowns.rundowns_service.find_one(req=None, _id=item["rundown"])
             assert item is not None
+            # TODO-ASYNC: Support async (see superdesk.tests.markers.requires_eve_resource_async_event)
             notify_and_add_activity(
                 "rundown-item-comment",
                 _(

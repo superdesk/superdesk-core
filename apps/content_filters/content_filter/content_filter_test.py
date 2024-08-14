@@ -10,7 +10,7 @@
 import json
 
 from eve.utils import ParsedRequest
-from flask_babel import _
+from quart_babel import gettext as _
 
 from superdesk.core import get_app_config
 from superdesk import get_resource_service

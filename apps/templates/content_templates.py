@@ -40,7 +40,7 @@ from superdesk.lock import lock, unlock
 from superdesk.celery_task_utils import get_lock_id
 from croniter import croniter
 from datetime import datetime
-from flask_babel import _
+from quart_babel import gettext as _
 from superdesk.notification import push_notification
 from superdesk import editor_utils
 
@@ -525,7 +525,7 @@ def render_content_template_by_id(item, template_id, update=False):
     return render_content_template(item, template, update)
 
 
-def render_content_template(item, template, update=False):
+async def render_content_template(item, template, update=False):
     """Render the template.
 
     :param dict item: item on which template is applied
@@ -543,7 +543,7 @@ def render_content_template(item, template, update=False):
 
     template_data = template.get("data", {}) if template else {}
 
-    def render_content_template_fields(data, dest=None, top=True):
+    async def render_content_template_fields(data, dest=None, top=True):
         updates = {}
         for key, value in data.items():
             if (top and key in new_template_data_ignore_fields) or not value:
@@ -555,7 +555,7 @@ def render_content_template(item, template, update=False):
                     item.setdefault(key, {}).update(updates[key])
             elif isinstance(value, str):
                 try:
-                    updates[key] = render_template_string(value, **kwargs)
+                    updates[key] = await render_template_string(value, **kwargs)
                 except jinja2.exceptions.UndefinedError as err:
                     logger.error(err, extra=dict(field=key, template=value))
                 except jinja2.exceptions.TemplateSyntaxError as err:
@@ -577,7 +577,7 @@ def render_content_template(item, template, update=False):
                     item[key] = value
         return updates
 
-    return render_content_template_fields(template_data, dest=item)
+    return await render_content_template_fields(template_data, dest=item)
 
 
 def get_scheduled_templates(now):

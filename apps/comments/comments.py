@@ -14,7 +14,7 @@ from superdesk.notification import push_notification
 from superdesk.services import BaseService
 from superdesk.errors import SuperdeskApiError
 from .user_mentions import get_users, get_desks, get_mentions, notify_mentioned_users, notify_mentioned_desks
-from flask_babel import _
+from quart_babel import gettext as _
 
 comments_schema = {
     "text": {
@@ -101,6 +101,7 @@ class CommentsService(BaseService):
             decode_keys(doc, "mentioned_desks")
 
         if self.notifications:
+            # TODO-ASYNC: Support async (see superdesk.tests.markers.requires_eve_resource_async_event)
             notify_mentioned_users(docs, get_app_config("CLIENT_URL", "").rstrip("/"))
             notify_mentioned_desks(docs)
 

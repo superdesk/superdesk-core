@@ -22,7 +22,7 @@ from superdesk.errors import SuperdeskApiError
 from superdesk.services import BaseService
 from superdesk.notification import push_notification
 from apps.dictionaries.resource import DICTIONARY_FILE, DictionaryType
-from flask_babel import _
+from quart_babel import gettext as _
 
 
 FILE_ID = "_file_id"

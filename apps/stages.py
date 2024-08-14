@@ -19,7 +19,7 @@ from eve.utils import ParsedRequest
 from apps.tasks import task_statuses
 from superdesk.metadata.item import CONTENT_STATE, ITEM_STATE
 from apps.archive.archive import SOURCE as ARCHIVE
-from flask_babel import _
+from quart_babel import gettext as _
 
 
 def init_app(_app) -> None:

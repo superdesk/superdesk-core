@@ -16,7 +16,7 @@ from superdesk import get_resource_service
 from apps.auth.errors import CredentialsAuthError, PasswordExpiredError, ExternalUserError
 from superdesk.utc import utcnow
 import datetime
-from flask_babel import _
+from quart_babel import gettext as _
 
 
 class DbAuthService(AuthService):

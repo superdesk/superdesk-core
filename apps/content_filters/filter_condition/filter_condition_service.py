@@ -12,7 +12,7 @@ import re
 from superdesk.errors import SuperdeskApiError
 from superdesk import get_resource_service
 from superdesk.services import CacheableService
-from flask_babel import _
+from quart_babel import gettext as _
 
 logger = logging.getLogger(__name__)
 

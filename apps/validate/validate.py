@@ -23,7 +23,7 @@ from superdesk import get_resource_service
 from _collections_abc import MutableMapping  # typing: ignore
 from superdesk.signals import item_validate
 from superdesk.validator import BaseErrorHandler
-from flask_babel import lazy_gettext, _
+from quart_babel import lazy_gettext, gettext as _
 from superdesk.default_schema import DEFAULT_SCHEMA_MAP
 
 

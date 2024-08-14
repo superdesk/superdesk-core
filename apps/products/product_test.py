@@ -18,7 +18,7 @@ from superdesk.errors import SuperdeskApiError
 from apps.publish.enqueue import get_enqueue_service
 from apps.archive.common import ITEM_OPERATION
 from apps.publish.content.common import BasePublishService
-from flask_babel import _
+from quart_babel import gettext as _
 
 logger = logging.getLogger(__name__)
 

@@ -8,7 +8,7 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
-from flask_babel import lazy_gettext
+from quart_babel import lazy_gettext
 from apps.search_providers import allowed_search_providers
 from superdesk.resource import Resource
 from superdesk.utils import required_string

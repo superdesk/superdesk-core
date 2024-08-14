@@ -29,7 +29,7 @@ from superdesk.activity import add_activity, ACTIVITY_UPDATE
 from superdesk.metadata.item import FAMILY_ID, ITEM_STATE, CONTENT_STATE
 from eve.utils import ParsedRequest
 from superdesk.utils import ListCursor
-from flask_babel import _, lazy_gettext
+from quart_babel import gettext as _, lazy_gettext
 
 
 logger = logging.getLogger(__name__)

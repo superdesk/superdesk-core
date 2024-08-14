@@ -24,7 +24,7 @@ from superdesk.publish import SUBSCRIBER_TYPES
 from apps.archive.common import is_genre, BROADCAST_GENRE, ITEM_RESEND
 from apps.publish.enqueue import get_enqueue_service
 from apps.archive.common import ITEM_OPERATION
-from flask_babel import _
+from quart_babel import gettext as _
 
 logger = logging.getLogger(__name__)
 

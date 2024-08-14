@@ -20,7 +20,7 @@ from superdesk.utc import utcnow
 from superdesk.utils import get_random_string
 from superdesk.emails import send_reset_password_email
 from superdesk.errors import SuperdeskApiError
-from flask_babel import _
+from quart_babel import gettext as _
 
 logger = logging.getLogger(__name__)
 
@@ -71,6 +71,7 @@ class ResetPasswordService(BaseService):
                 return self.reset_password(doc)
             if email:
                 email = email.lower()
+                # TODO-ASYNC: Support async (see superdesk.tests.markers.requires_eve_resource_async_event)
                 return self.initialize_reset_password(doc, email)
             if key:
                 token_req = self.check_if_valid_token(key)
@@ -88,7 +89,7 @@ class ResetPasswordService(BaseService):
         ids = super().create([doc])
         return ids
 
-    def initialize_reset_password(self, doc, email):
+    async def initialize_reset_password(self, doc, email):
         token_ttl = get_app_config("RESET_PASSWORD_TOKEN_TIME_TO_LIVE")
 
         user = superdesk.get_resource_service("users").find_one(req=None, email=email)
@@ -105,7 +106,7 @@ class ResetPasswordService(BaseService):
             raise SuperdeskApiError.forbiddenError(_("User not active"))
 
         ids = self.store_reset_password_token(doc, email, token_ttl, user["_id"])
-        send_reset_password_email(doc, token_ttl)
+        await send_reset_password_email(doc, token_ttl)
         self.remove_private_data(doc)
         return ids
 

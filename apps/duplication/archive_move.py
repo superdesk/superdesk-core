@@ -46,7 +46,7 @@ from apps.archive.archive import SOURCE as ARCHIVE
 from superdesk.workflow import is_workflow_state_transition_valid
 from apps.content import push_item_move_notification
 from superdesk.lock import lock, unlock
-from flask_babel import _
+from quart_babel import gettext as _
 from superdesk.utc import utcnow
 
 ITEM_MOVE = "move"

@@ -1,4 +1,4 @@
-from flask_babel import lazy_gettext
+from quart_babel import lazy_gettext
 import superdesk
 from .content_types import ContentTypesResource, ContentTypesService, CONTENT_TYPE_PRIVILEGE
 from .content_types import apply_schema  # noqa

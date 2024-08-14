@@ -12,7 +12,7 @@
 import logging
 import superdesk
 
-from flask_babel import _
+from quart_babel import gettext as _
 
 from superdesk.core import json
 from superdesk.resource_fields import ID_FIELD

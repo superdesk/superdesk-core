@@ -11,7 +11,7 @@
 
 import logging
 from typing import Any
-from flask_babel import lazy_gettext
+from quart_babel import lazy_gettext
 
 from .routing_rules import RoutingRuleSchemeResource, RoutingRuleSchemeService
 from .rule_sets import RuleSetsService, RuleSetsResource

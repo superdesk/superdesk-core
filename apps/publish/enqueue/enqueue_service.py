@@ -17,7 +17,7 @@ import content_api
 from bson import ObjectId
 from copy import deepcopy
 from eve.utils import ParsedRequest
-from flask_babel import _
+from quart_babel import gettext as _
 
 from superdesk.core import get_current_app, get_app_config
 from superdesk.resource_fields import ID_FIELD, VERSION

@@ -17,7 +17,7 @@ from .content_templates import ContentTemplatesApplyResource, ContentTemplatesAp
 from .content_templates import create_scheduled_content  # noqa
 from .content_templates import create_template_for_profile
 from .filters import format_datetime_filter, first_paragraph_filter, iso_datetime, add_timedelta
-from flask_babel import lazy_gettext
+from quart_babel import lazy_gettext
 
 
 def init_app(app) -> None:

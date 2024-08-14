@@ -3,7 +3,7 @@ from typing import List
 from superdesk import Resource, Service
 from superdesk.utils import ListCursor
 from superdesk.errors import AlreadyExistsError
-from flask_babel import _
+from quart_babel import gettext as _
 
 registered_search_providers = {}
 
