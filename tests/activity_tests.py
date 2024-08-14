@@ -8,22 +8,10 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
-from unittest import mock
-
-from superdesk.activity import ActivityService, ACTIVITY_ERROR, get_recipients
+from superdesk.activity import ActivityService, get_recipients
 from superdesk.publish import init_app
 from superdesk.tests import TestCase
-
-
-def mock_get_resource_service(resource_name):
-    return MockPreferenceService()
-
-
-class MockPreferenceService:
-    def email_notification_is_enabled(self, preferences=None):
-        send_email = preferences.get("email:notification", {}) if isinstance(preferences, dict) else {}
-
-        return send_email and send_email.get("enabled", False)
+from superdesk.types import User
 
 
 class ActivityTestCase(TestCase):
@@ -45,24 +33,51 @@ class ActivityTestCase(TestCase):
         self.assertFalse(ActivityService().is_read(activity, "2"))
         self.assertFalse(ActivityService().is_read(activity, "3"))
 
-    @mock.patch("superdesk.activity.get_resource_service", mock_get_resource_service)
     def test_get_recipients_filters_out_users_not_activated(self):
         users = [
-            {
-                "email": "test_1@test.com",
-                "needs_activation": False,
-                "is_enabled": True,
-                "is_active": True,
-                "user_preferences": {"email:notification": {"enabled": True}},
-            },
-            {
-                "email": "test_2@test.com",
-                "needs_activation": True,
-                "is_enabled": True,
-                "is_active": True,
-                "user_preferences": {"email:notification": {"enabled": True}},
-            },
+            User(
+                {
+                    "username": "test1",
+                    "email": "test_1@test.com",
+                    "needs_activation": False,
+                    "is_enabled": True,
+                    "is_active": True,
+                    "user_preferences": {"email:notification": {"enabled": True}},
+                }
+            ),
+            User(
+                {
+                    "username": "test2",
+                    "email": "test_2@test.com",
+                    "needs_activation": True,
+                    "is_enabled": True,
+                    "is_active": True,
+                    "user_preferences": {"email:notification": {"enabled": True}},
+                }
+            ),
         ]
 
-        recipients = get_recipients(user_list=users, activity_name=ACTIVITY_ERROR)
+        recipients = get_recipients(user_list=users)
         self.assertEqual(len(recipients), 1)
+        self.assertEqual(recipients[0], "test_1@test.com")
+
+    def test_get_recipients_filters_out_users_with_disabled_notification(self):
+        users = [
+            User(
+                {
+                    "username": "test1",
+                    "email": "test_1@test.com",
+                    "needs_activation": False,
+                    "is_enabled": True,
+                    "is_active": True,
+                    "user_preferences": {"email:notification": {"enabled": False}},
+                }
+            ),
+        ]
+
+        recipients = get_recipients(user_list=users, notification_name="test")
+        assert len(recipients) == 0
+
+        users[0]["user_preferences"]["email:notification"]["enabled"] = True
+        recipients = get_recipients(user_list=users, notification_name="test")
+        assert len(recipients) == 1

@@ -11,7 +11,9 @@
 # at https://www.sourcefabric.org/superdesk/license
 
 from apps.preferences import PreferencesService
+from superdesk.preferences import get_user_notification_preferences
 from superdesk.tests import TestCase
+from superdesk.types import User
 
 
 class PreferenceTests(TestCase):
@@ -113,3 +115,62 @@ class PreferenceTests(TestCase):
 
         PreferencesService.update_user_prefs(self, update, existing_user_settings)
         self.assertEqual(update["user_preferences"]["archive:view"]["label"], "Testing user preferences")
+
+    def test_get_user_notification_preferences(self):
+        user = User(
+            email="foo",
+            username="foo",
+        )
+        preferences = get_user_notification_preferences(user, "test")
+        assert preferences["desktop"] is False, "By default desktop notifications are disabled"
+        assert preferences["email"] is False, "By default email notifications are disabled"
+
+        user["user_preferences"] = {
+            "email:notification": {"enabled": True},
+            "desktop:notification": {"enabled": True},
+        }
+
+        preferences = get_user_notification_preferences(user, "test")
+        assert preferences["desktop"] is True
+        assert preferences["email"] is True
+
+        user["user_preferences"]["notifications"] = {"test": {"desktop": False, "email": True}}
+        preferences = get_user_notification_preferences(user, "test")
+        assert preferences["desktop"] is False
+        assert preferences["email"] is True
+
+        user["user_preferences"]["notifications"] = {"test": {"desktop": True, "email": False}}
+        preferences = get_user_notification_preferences(user, "test")
+        assert preferences["desktop"] is True
+        assert preferences["email"] is False
+
+        user["user_preferences"]["notifications"] = {"test": {"desktop": True, "email": True}}
+        preferences = get_user_notification_preferences(user, "test")
+        assert preferences["desktop"] is True
+        assert preferences["email"] is True
+
+        user["user_preferences"]["email:notification"] = {"enabled": False}
+        user["user_preferences"]["desktop:notification"] = {"enabled": False}
+        preferences = get_user_notification_preferences(user, "test")
+        assert preferences["desktop"] is False
+        assert preferences["email"] is False
+
+    def test_get_user_notification_preferences_with_email_prefix(self):
+        user = User(
+            email="foo",
+            username="foo",
+            user_preferences={
+                "email:notification": {"enabled": True},
+                "email:notification:test": {"enabled": False},
+            },
+        )
+        preferences = get_user_notification_preferences(user, "test")
+        assert preferences["email"] is False
+
+        user["user_preferences"]["email:notification:test"] = {"enabled": True}
+        preferences = get_user_notification_preferences(user, "test")
+        assert preferences["email"] is True
+
+        user["user_preferences"]["email:notification"] = {"enabled": False}
+        preferences = get_user_notification_preferences(user, "test")
+        assert preferences["email"] is False

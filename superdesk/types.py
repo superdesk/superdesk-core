@@ -28,3 +28,15 @@ class Item(TypedDict, total=False):
     slugline: str
     authors: List[ItemAuthor]
     extra: Dict[str, Any]
+
+
+class UserMandatory(TypedDict):
+    email: str
+    username: str
+
+
+class User(UserMandatory, total=False):
+    user_preferences: Dict[str, Any]
+    needs_activation: bool
+    is_enabled: bool
+    is_active: bool
