@@ -19,7 +19,8 @@ from superdesk.utc import utcnow
 
 
 class TemplatesTestCase(TestCase):
-    def setUp(self):
+    async def asyncSetUp(self):
+        await super().asyncSetUp()
         # now is today at 09:05:03
         self.now = datetime.utcnow().replace(hour=9, minute=5, second=3)
         self.weekdays = [day.name for day in Weekdays]
@@ -62,7 +63,7 @@ class TemplatesTestCase(TestCase):
         delta = self.get_delta("09:05:00", self.weekdays)
         self.assertEqual(delta.seconds, 24 * 60 * 60 - 1)
 
-    def test_get_item_from_template(self):
+    async def test_get_item_from_template(self):
         template = {
             "_id": "foo",
             "name": "test",
@@ -77,8 +78,7 @@ class TemplatesTestCase(TestCase):
             },
         }
         now = utcnow()
-        with self.app.app_context():
-            item = get_item_from_template(template)
+        item = get_item_from_template(template)
         self.assertNotIn("_id", item)
         self.assertEqual("foo", item.get("template"))
         self.assertEqual("Foo", item.get("headline"))

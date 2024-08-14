@@ -8,13 +8,13 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
+import unittest
+import logging
+
 from superdesk import errors
 from superdesk.errors import IngestApiError, IngestFileError, ParserError, ProviderError, IngestFtpError
 from superdesk.tests import TestCase, setup_notification
 from nose.tools import assert_raises
-from superdesk.tests import setup
-import logging
-import unittest
 
 
 class MockLoggingHandler(logging.Handler):
@@ -86,8 +86,8 @@ class SuperdeskErrorTestCase(unittest.TestCase):
 class ErrorsTestCase(TestCase):
     mock_logger_handler = {}
 
-    def setUp(self):
-        setup(context=self)
+    async def asyncSetUp(self):
+        await super().asyncSetUp()
         setup_notification(context=self)
         mock_logger = logging.getLogger("test")
         self.mock_logger_handler = MockLoggingHandler()

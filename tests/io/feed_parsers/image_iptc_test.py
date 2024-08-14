@@ -17,7 +17,8 @@ import os
 class BaseImageIPTCTestCase(TestCase):
     filename = ""
 
-    def setUp(self):
+    async def asyncSetUp(self):
+        await super().asyncSetUp()
         dirname = os.path.dirname(os.path.realpath(__file__))
         self.image_path = os.path.normpath(os.path.join(dirname, "../fixtures", self.filename))
         provider = {"name": "Test"}

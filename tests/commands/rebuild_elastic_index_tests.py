@@ -19,7 +19,6 @@ RESOURCE = 'ingest'
 
 
 class RebuildIndexTestCase(TestCase):
-
     @property
     def data(self):
         return [
@@ -33,7 +32,7 @@ class RebuildIndexTestCase(TestCase):
         req.max_results = 25
         return get_resource_service('ingest').get(req, {})
 
-    def test_retrieve_items_after_index_rebuilt(self):
+    async def test_retrieve_items_after_index_rebuilt(self):
         elastic = self.app.data.elastic
         alias = elastic._resource_index(RESOURCE)
         alias_info = elastic.elastic(RESOURCE).indices.get_alias(name=alias)
@@ -46,7 +45,7 @@ class RebuildIndexTestCase(TestCase):
         items = self.query_items()
         self.assertEqual(10, items.count())
 
-    def test_rebuild_with_missing_index_wont_fail(self):
+    async def test_rebuild_with_missing_index_wont_fail(self):
         elastic = self.app.data.elastic
         alias = elastic._resource_index(RESOURCE)
         index = elastic.get_index(RESOURCE)
@@ -58,7 +57,7 @@ class RebuildIndexTestCase(TestCase):
 
         assert es.indices.exists_alias(alias)
 
-    def test_rebuild_with_index_without_alias(self):
+    async def test_rebuild_with_index_without_alias(self):
         elastic = self.app.data.elastic
         alias = elastic._resource_index(RESOURCE)
         index = elastic.get_index(RESOURCE)

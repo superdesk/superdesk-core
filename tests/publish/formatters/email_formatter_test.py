@@ -19,10 +19,11 @@ from superdesk.utc import utc
 
 @mock.patch("superdesk.publish.subscribers.SubscribersService.generate_sequence_number", lambda self, subscriber: 1)
 class EmailFormatterTest(TestCase):
-    def setUp(self):
+    async def asyncSetUp(self):
+        await super().asyncSetUp()
         self.formatter = EmailFormatter()
 
-    def test_formatter(self):
+    async def test_formatter(self):
         article = {
             "source": "AAP",
             "headline": "This is a test headline",
@@ -46,7 +47,7 @@ class EmailFormatterTest(TestCase):
         article["versioncreated"] = datetime.datetime(
             year=2015, month=1, day=30, hour=2, minute=40, second=56, tzinfo=utc
         )
-        seq, doc = self.formatter.format(article, {"name": "Test Subscriber"})[0]
+        seq, doc = (await self.formatter.format(article, {"name": "Test Subscriber"}))[0]
         item = json.loads(doc)
         self.assertEqual(item["message_subject"], "This is a test headline")
         self.assertEqual(
@@ -67,7 +68,7 @@ class EmailFormatterTest(TestCase):
             " body of the story so far\n\nAAP aa/bb\n",
         )
 
-    def test_preserved_formatter(self):
+    async def test_preserved_formatter(self):
         article = {
             "source": "AAP",
             "headline": "This is a test headline",
@@ -90,12 +91,12 @@ class EmailFormatterTest(TestCase):
         article["versioncreated"] = datetime.datetime(
             year=2015, month=1, day=30, hour=2, minute=40, second=56, tzinfo=utc
         )
-        seq, doc = self.formatter.format(article, {"name": "Test Subscriber"})[0]
+        seq, doc = (await self.formatter.format(article, {"name": "Test Subscriber"}))[0]
         item = json.loads(doc)
         self.assertEqual(item["message_subject"], "This is a test headline")
         self.assertEqual(item["message_html"], None)
 
-    def test_no_place_formatter(self):
+    async def test_no_place_formatter(self):
         article = {
             "source": "AAP",
             "headline": "This is a test headline",
@@ -118,7 +119,7 @@ class EmailFormatterTest(TestCase):
         article["versioncreated"] = datetime.datetime(
             year=2015, month=1, day=30, hour=2, minute=40, second=56, tzinfo=utc
         )
-        seq, doc = self.formatter.format(article, {"name": "Test Subscriber"})[0]
+        seq, doc = (await self.formatter.format(article, {"name": "Test Subscriber"}))[0]
         item = json.loads(doc)
         self.assertEqual(item["message_subject"], "This is a test headline")
         self.assertEqual(
@@ -139,7 +140,7 @@ class EmailFormatterTest(TestCase):
             " body of the story so far\n\nAAP aa/bb\n",
         )
 
-    def test_none_place_formatter(self):
+    async def test_none_place_formatter(self):
         article = {
             "source": "AAP",
             "headline": "This is a test headline",
@@ -163,7 +164,7 @@ class EmailFormatterTest(TestCase):
         article["versioncreated"] = datetime.datetime(
             year=2015, month=1, day=30, hour=2, minute=40, second=56, tzinfo=utc
         )
-        seq, doc = self.formatter.format(article, {"name": "Test Subscriber"})[0]
+        seq, doc = (await self.formatter.format(article, {"name": "Test Subscriber"}))[0]
         item = json.loads(doc)
         self.assertEqual(item["message_subject"], "This is a test headline")
         self.assertEqual(
@@ -184,7 +185,7 @@ class EmailFormatterTest(TestCase):
             " story body of the story so far\n\nAAP aa/bb\n",
         )
 
-    def test_none_takekey_ednote(self):
+    async def test_none_takekey_ednote(self):
         article = {
             "source": "AAP",
             "headline": "This is a test headline",
@@ -208,7 +209,7 @@ class EmailFormatterTest(TestCase):
         article["versioncreated"] = datetime.datetime(
             year=2015, month=1, day=30, hour=2, minute=40, second=56, tzinfo=utc
         )
-        seq, doc = self.formatter.format(article, {"name": "Test Subscriber"})[0]
+        seq, doc = (await self.formatter.format(article, {"name": "Test Subscriber"}))[0]
         item = json.loads(doc)
         self.assertEqual(item["message_subject"], "This is a test headline")
         self.assertEqual(
@@ -228,13 +229,13 @@ class EmailFormatterTest(TestCase):
             " body of the story so far\n\nAAP aa/bb\n",
         )
 
-    def test_subject_cyrilic(self):
+    async def test_subject_cyrilic(self):
         article = {"headline": "Неправильная музыка Джамала Али"}
-        seq, doc = self.formatter.format(article, {"name": "Test"})[0]
+        seq, doc = (await self.formatter.format(article, {"name": "Test"}))[0]
         item = json.loads(doc)
         self.assertEqual(article["headline"], item["message_subject"])
 
-    def test_paragraphs(self):
+    async def test_paragraphs(self):
         """Test that paragraphs (block elements) are followed by line feed in text version
 
         SDESK-824 regression test
@@ -255,7 +256,7 @@ class EmailFormatterTest(TestCase):
         article["versioncreated"] = datetime.datetime(
             year=2017, month=2, day=24, hour=16, minute=40, second=56, tzinfo=utc
         )
-        seq, doc = self.formatter.format(article, {"name": "Test Subscriber"})[0]
+        seq, doc = (await self.formatter.format(article, {"name": "Test Subscriber"}))[0]
 
         item = json.loads(doc)
         self.assertEqual(
@@ -266,17 +267,17 @@ class EmailFormatterTest(TestCase):
             "paragraph 2\nparagraph 3\n\nAAP aa/bb\n",
         )
 
-    def test_dateline_html(self):
+    async def test_dateline_html(self):
         """Check that message_html output is producted even without a dateline
 
         SDESK-836 regression test
         """
         article = {"format": "HTML", "type": "text", "body_html": "<p>some HTML</p>"}
-        _, doc = self.formatter.format(article, {"name": "Test Subscriber"})[0]
+        _, doc = (await self.formatter.format(article, {"name": "Test Subscriber"}))[0]
         item = json.loads(doc)
         self.assertIsNotNone(item["message_html"])
 
-    def test_featuremedia(self):
+    async def test_featuremedia(self):
         article = {
             "source": "AAP",
             "anpa_take_key": "take",
@@ -308,11 +309,11 @@ class EmailFormatterTest(TestCase):
         article["versioncreated"] = datetime.datetime(
             year=2017, month=2, day=24, hour=16, minute=40, second=56, tzinfo=utc
         )
-        seq, doc = self.formatter.format(article, {"name": "Test Subscriber"})[0]
+        seq, doc = (await self.formatter.format(article, {"name": "Test Subscriber"}))[0]
         item = json.loads(doc)
         self.assertEqual(item["renditions"]["viewImage"]["media"], "5c11ece81d41c89113ed202b")
 
-    def test_unbroken_html(self):
+    async def test_unbroken_html(self):
         article = {
             "source": "AAP",
             "anpa_take_key": "take",
@@ -329,12 +330,12 @@ class EmailFormatterTest(TestCase):
         article["versioncreated"] = datetime.datetime(
             year=2017, month=2, day=24, hour=16, minute=40, second=56, tzinfo=utc
         )
-        seq, doc = self.formatter.format(article, {"name": "Test Subscriber"})[0]
+        seq, doc = (await self.formatter.format(article, {"name": "Test Subscriber"}))[0]
 
         item = json.loads(doc)
         self.assertIn("<p>abcdefghijklmnopqrstuvwxyz</p>\r\n", item.get("message_html"))
 
-    def test_remove_embedded_content(self):
+    async def test_remove_embedded_content(self):
         article = {
             "_id": "urn:newsml:localhost:2023-05-10T14:28:37.121795:62fc7a2b-a69a-4c47-8540-49c075a4d62c",
             "body_html": '<p>pre amble</p>\n<!-- EMBED START Audio {id: "editor_0"} -->\n<figure>'
@@ -416,6 +417,6 @@ class EmailFormatterTest(TestCase):
             "format": "HTML",
             "guid": "urn:newsml:localhost:2023-05-10T14:28:37.121795:62fc7a2b-a69a-4c47-8540-49c075a4d62c",
         }
-        seq, doc = self.formatter.format(article, {"name": "Test Subscriber"})[0]
+        seq, doc = (await self.formatter.format(article, {"name": "Test Subscriber"}))[0]
         self.assertNotIn("EMBED", doc)
         self.assertNotIn("<audio", doc)

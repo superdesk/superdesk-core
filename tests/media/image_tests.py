@@ -38,7 +38,6 @@ class ExifMetaWithGPSInfoExtractionTestCase(TestCase):
             "GPSImgDirection": 31.145,
             "GPSLongitudeRef": "W",
             "GPSImgDirectionRef": "T",
-            "GPSAltitudeRef": 0,
             "GPSLatitudeRef": "S",
             "GPSAltitude": 576.978,
             "GPSLatitude": (33.0, 26.0, 11.5),

@@ -21,12 +21,13 @@ from superdesk.publish import init_app
 
 @mock.patch("superdesk.publish.subscribers.SubscribersService.generate_sequence_number", lambda self, subscriber: 1)
 class NinjsFormatterTest(TestCase):
-    def setUp(self):
+    async def asyncSetUp(self):
+        await super().asyncSetUp()
         self.formatter = NINJSFormatter()
         init_app(self.app)
         self.maxDiff = None
 
-    def test_text_formatter(self):
+    async def test_text_formatter(self):
         self.app.data.insert(
             "vocabularies",
             [
@@ -133,7 +134,7 @@ class NinjsFormatterTest(TestCase):
         }
         self.assertEqual(json.loads(doc), expected)
 
-    def test_picture_formatter(self):
+    async def test_picture_formatter(self):
         self.app.data.insert(
             "vocabularies",
             [
@@ -211,7 +212,7 @@ class NinjsFormatterTest(TestCase):
         self.assertEqual(expected, json.loads(doc))
         self.assertIn("viewImage", json.loads(doc).get("renditions"))
 
-    def test_composite_formatter(self):
+    async def test_composite_formatter(self):
         article = {
             "guid": "urn:newsml:localhost:2015-07-24T15:05:00.116047:435c93c2-492c-4668-ab47-ae6e2b9b1c2c",
             "groups": [
@@ -336,7 +337,7 @@ class NinjsFormatterTest(TestCase):
         }
         self.assertEqual(expected, json.loads(doc))
 
-    def test_item_with_usable_associations(self):
+    async def test_item_with_usable_associations(self):
         article = {
             "_id": "urn:bar",
             "guid": "urn:bar",
@@ -383,7 +384,7 @@ class NinjsFormatterTest(TestCase):
         self.assertEqual("image/jpeg", rendition["mimetype"])
         self.assertNotIn("CropLeft", rendition)
 
-    def test_item_with_empty_associations(self):
+    async def test_item_with_empty_associations(self):
         article = {
             "_id": "urn:bar",
             "guid": "urn:bar",
@@ -397,7 +398,7 @@ class NinjsFormatterTest(TestCase):
         self.assertIn("associations", formatted)
         self.assertNotIn("image", formatted["associations"])
 
-    def test_vidible_formatting(self):
+    async def test_vidible_formatting(self):
         article = {
             "_id": "tag:aap.com.au:20150613:12345",
             "guid": "tag:aap.com.au:20150613:12345",
@@ -470,7 +471,7 @@ class NinjsFormatterTest(TestCase):
         }
         self.assertEqual(json.loads(doc), expected)
 
-    def test_copyright_holder_notice(self):
+    async def test_copyright_holder_notice(self):
         self.app.data.insert(
             "vocabularies",
             [
@@ -498,7 +499,7 @@ class NinjsFormatterTest(TestCase):
         self.assertEqual("copyright notice", data["copyrightnotice"])
         self.assertEqual("", data["usageterms"])
 
-    def test_body_html(self):
+    async def test_body_html(self):
         article = {
             "_id": "urn:bar",
             "_current_version": 1,
@@ -514,7 +515,7 @@ class NinjsFormatterTest(TestCase):
         self.assertEqual(data["wordcount"], 1460)
         self.assertEqual(data["readtime"], 6)
 
-    def test_body_text(self):
+    async def test_body_text(self):
         article = {
             "_id": "urn:bar",
             "_current_version": 1,
@@ -543,7 +544,7 @@ class NinjsFormatterTest(TestCase):
         seq, doc = self.formatter.format(article, {"name": "Test Subscriber"})[0]
         return json.loads(doc)
 
-    def test_empty_abstract(self):
+    async def test_empty_abstract(self):
         article = {"_id": "urn:bar", "_current_version": 1, "guid": "urn:bar", "type": "text", "abstract": ""}
 
         seq, doc = self.formatter.format(article, {"name": "Test Subscriber"})[0]
@@ -552,7 +553,7 @@ class NinjsFormatterTest(TestCase):
         self.assertEqual(data["description_html"], "")
         self.assertEqual(data["description_text"], "")
 
-    def test_authors(self):
+    async def test_authors(self):
         self.app.data.insert(
             "users",
             [
@@ -646,7 +647,7 @@ class NinjsFormatterTest(TestCase):
         ]
         self.assertEqual(data["authors"], expected)
 
-    def test_author_missing_parent(self):
+    async def test_author_missing_parent(self):
         """Test that older items with missing parent don't make the formatter crashing"""
         article = {
             "_id": "urn:bar",
@@ -680,7 +681,7 @@ class NinjsFormatterTest(TestCase):
 
         self.assertEqual(data, expected)
 
-    def test_place(self):
+    async def test_place(self):
         self.app.data.insert(
             "vocabularies",
             [
@@ -752,7 +753,7 @@ class NinjsFormatterTest(TestCase):
 
         self.assertEqual(data["place"], [{"code": "UK", "name": "Europe"}])
 
-    def test_translations(self):
+    async def test_translations(self):
         """Check that fields are correctly translated"""
         article = {
             "_id": "5a68a134cc3a2d4bd6399177",
@@ -812,7 +813,7 @@ class NinjsFormatterTest(TestCase):
         ]
         self.assertEqual(ninjs["subject"], expected_subject)
 
-    def test_place_geonames(self):
+    async def test_place_geonames(self):
         article = {
             "_id": "urn:bar",
             "_current_version": 1,
@@ -858,7 +859,7 @@ class NinjsFormatterTest(TestCase):
             ninjs["place"][0],
         )
 
-    def test_custom_media(self):
+    async def test_custom_media(self):
         """Test that custom media are put in "groups" field and not associations (SDESK-2955)"""
         self.app.data.insert(
             "content_types",
@@ -1010,7 +1011,7 @@ class NinjsFormatterTest(TestCase):
         self.assertEqual(ninjs, expected)
 
     # Keep only the original POI and remove all other POI.
-    def test_picture_poi(self):
+    async def test_picture_poi(self):
         self.app.data.insert(
             "vocabularies",
             [
@@ -1131,7 +1132,7 @@ class NinjsFormatterTest(TestCase):
         ninjs = json.loads(doc)
         self.assertEqual(ninjs, expected)
 
-    def test_custom_related_items(self):
+    async def test_custom_related_items(self):
         self.app.data.insert(
             "content_types",
             [
@@ -1266,7 +1267,7 @@ class NinjsFormatterTest(TestCase):
         ninjs = json.loads(doc)
         self.assertEqual(ninjs, expected)
 
-    def test_custom_media_ordering_in_extra_fields(self):
+    async def test_custom_media_ordering_in_extra_fields(self):
         """Test that custom media items are in right order inside extra field SDESK-4423"""
         self.app.data.insert(
             "content_types",
@@ -1470,7 +1471,7 @@ class NinjsFormatterTest(TestCase):
         ninjs = json.loads(doc)
         self.assertEqual(ninjs, expected)
 
-    def test_custom_related_items_ordering_in_associations(self):
+    async def test_custom_related_items_ordering_in_associations(self):
         """Test that custom related items are in right order inside associations SDESK-4463"""
         self.app.data.insert(
             "content_types",
@@ -1725,7 +1726,7 @@ class NinjsFormatterTest(TestCase):
         ninjs = json.loads(doc)
         self.assertEqual(ninjs, expected)
 
-    def test_empty_genre(self):
+    async def test_empty_genre(self):
         seq, doc = self.formatter.format(
             {
                 "type": "text",
@@ -1737,7 +1738,7 @@ class NinjsFormatterTest(TestCase):
         ninjs = json.loads(doc)
         self.assertIsNotNone(ninjs)
 
-    def test_attachments_href(self):
+    async def test_attachments_href(self):
         attachment_id = ObjectId()
         media_id = ObjectId()
 
@@ -1787,13 +1788,14 @@ class NinjsFormatterTest(TestCase):
 
 @mock.patch("superdesk.publish.subscribers.SubscribersService.generate_sequence_number", lambda self, subscriber: 1)
 class Ninjs2FormatterTest(TestCase):
-    def setUp(self):
+    async def asyncSetUp(self):
+        await super().asyncSetUp()
         self.formatter = NINJS2Formatter()
 
-    def test_can_format(self):
+    async def test_can_format(self):
         self.assertTrue(self.formatter.can_format("ninjs2", {}))
 
-    def test_correction_sequence_number(self):
+    async def test_correction_sequence_number(self):
         article = {
             "guid": "bar",
             "type": "text",

@@ -23,13 +23,12 @@ class CeleryTestCase(TestCase):
     def test_cast_objectid(self):
         self.assertEqual(try_cast(str(self._id)), self._id)
 
-    def test_cast_datetime(self):
+    async def test_cast_datetime(self):
         date = datetime(2012, 12, 12, 12, 12, 12, 0)
-        with self.app.app_context():
-            s = date_to_str(date)
-            self.assertEqual(try_cast(s).day, date.day)
+        s = date_to_str(date)
+        self.assertEqual(try_cast(s).day, date.day)
 
-    def test_loads_args(self):
+    async def test_loads_args(self):
         s = b'{"args": [{"_id": "528de7b03b80a13eefc5e610", "_updated": "2014-09-10T14:31:09+0000"}]}'
         o = loads(s)
         self.assertEqual(o["args"][0]["_id"], self._id)

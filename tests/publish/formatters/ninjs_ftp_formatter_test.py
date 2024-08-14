@@ -21,13 +21,14 @@ from superdesk.utc import utcnow
 
 @mock.patch("superdesk.publish.subscribers.SubscribersService.generate_sequence_number", lambda self, subscriber: 1)
 class FTPNinjsFormatterTest(TestCase):
-    def setUp(self):
+    async def asyncSetUp(self):
+        await super().asyncSetUp()
         self.formatter = FTPNinjsFormatter()
         init_app(self.app)
         self.maxDiff = None
         self.app.config["EMBED_PRODUCT_FILTERING"] = True
 
-    def test_picture_formatter(self):
+    async def test_picture_formatter(self):
         self.app.data.insert(
             "vocabularies",
             [
@@ -118,7 +119,7 @@ class FTPNinjsFormatterTest(TestCase):
         self.assertEqual(expected, json.loads(doc))
         self.assertNotIn("viewImage", json.loads(doc).get("renditions"))
 
-    def test_picture_formatter_with_original(self):
+    async def test_picture_formatter_with_original(self):
         self.app.data.insert(
             "vocabularies",
             [
@@ -215,7 +216,7 @@ class FTPNinjsFormatterTest(TestCase):
         self.assertEqual(expected, json.loads(doc))
         self.assertNotIn("viewImage", json.loads(doc).get("renditions"))
 
-    def test_embedded_image(self):
+    async def test_embedded_image(self):
         self.app.data.insert(
             "filter_conditions",
             [{"_id": 1, "field": "type", "operator": "eq", "value": "picture", "name": "Picture fc"}],
@@ -429,7 +430,7 @@ class FTPNinjsFormatterTest(TestCase):
         }
         self.assertEqual(expected, json.loads(doc))
 
-    def test_embedded_image_rendition_set(self):
+    async def test_embedded_image_rendition_set(self):
         self.app.data.insert(
             "vocabularies",
             [
@@ -608,7 +609,7 @@ class FTPNinjsFormatterTest(TestCase):
         }
         self.assertEqual(expected, json.loads(doc))
 
-    def test_product_match(self):
+    async def test_product_match(self):
         self.app.data.insert(
             "filter_conditions",
             [{"_id": 1, "field": "type", "operator": "eq", "value": "video", "name": "ALL Video fc"}],

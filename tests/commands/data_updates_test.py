@@ -13,7 +13,8 @@ MAIN_DATA_UPDATES_DIR = "/tmp/global_data_updates"
 
 
 class DataUpdatesTestCase(TestCase):
-    def setUp(self):
+    async def asyncSetUp(self):
+        await super().asyncSetUp()
         dirs = (
             ("DEFAULT_DATA_UPDATE_DIR_NAME", "/tmp/data_updates"),
             ("MAIN_DATA_UPDATES_DIR", "/tmp/global_data_updates"),
@@ -54,7 +55,7 @@ class DataUpdatesTestCase(TestCase):
     def number_of_data_updates_applied(self):
         return get_resource_service("data_updates").find({}).count()
 
-    def test_dry_data_update(self):
+    async def test_dry_data_update(self):
         superdesk.commands.data_updates.DEFAULT_DATA_UPDATE_FW_IMPLEMENTATION = """
             count = mongodb_collection.count_documents({})
             assert count == 0, count
@@ -64,7 +65,7 @@ class DataUpdatesTestCase(TestCase):
         Upgrade().run(dry=True)
         self.assertEqual(self.number_of_data_updates_applied(), 0)
 
-    def test_fake_data_update(self):
+    async def test_fake_data_update(self):
         self.assertEqual(self.number_of_data_updates_applied(), 0)
         superdesk.commands.data_updates.DEFAULT_DATA_UPDATE_FW_IMPLEMENTATION = "raise Exception()"
         superdesk.commands.data_updates.DEFAULT_DATA_UPDATE_BW_IMPLEMENTATION = "raise Exception()"
@@ -75,7 +76,7 @@ class DataUpdatesTestCase(TestCase):
         Downgrade().run(fake=True)
         self.assertEqual(self.number_of_data_updates_applied(), 0)
 
-    def test_data_update(self):
+    async def test_data_update(self):
         # create migrations
         for index in range(40):
             superdesk.commands.data_updates.DEFAULT_DATA_UPDATE_FW_IMPLEMENTATION = """

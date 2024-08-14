@@ -24,7 +24,7 @@ class PrivilegeTestCase(TestCase):
 
         self.addCleanup(revert)
 
-    def test_privilege_registration(self):
+    async def test_privilege_registration(self):
         _privileges.clear()
 
         privilege(name="ingest", label="Ingest")

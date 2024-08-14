@@ -20,7 +20,7 @@ from superdesk.io.subjectcodes import init_app as init_subjects
 
 
 class BaseNewMLTwoTestCase(unittest.TestCase):
-    def setUp(self):
+    async def test_app_subjects(self):
         app = Flask(__name__)
         app.api_prefix = "/api"
         init_subjects(app)
@@ -30,14 +30,14 @@ class BaseNewMLTwoTestCase(unittest.TestCase):
         with open(fixture, "rb") as f:
             self.parser = NewsMLTwoFeedParser()
             self.xml = ElementTree.parse(f)
-            with app.app_context():
+            async with app.app_context():
                 self.item = self.parser.parse(self.xml.getroot(), provider)
 
 
 class ReutersTestCase(BaseNewMLTwoTestCase):
     filename = "tag_reuters.com,0000_newsml_L4N1FL0N0_1132689232"
 
-    def test_content(self):
+    async def test_content(self):
         self.assertEqual(self.item[0].get("headline"), "PRECIOUS-Gold rises as Trump policy fuels safe haven demand")
         self.assertEqual(self.item[0].get("guid"), "tag:reuters.com,0000:newsml_L4N1FL0N0:1132689232")
         self.assertEqual(self.item[0].get("uri"), "tag:reuters.com,0000:newsml_L4N1FL0N0")
@@ -47,14 +47,14 @@ class ReutersTestCase(BaseNewMLTwoTestCase):
         self.assertNotIn("archive_description", self.item[0])
         self.assertEqual(self.item[0].get("word_count"), 348)
 
-    def test_can_parse(self):
+    async def test_can_parse(self):
         self.assertTrue(NewsMLTwoFeedParser().can_parse(self.xml.getroot()))
 
 
 class ResutersResultsTestCase(BaseNewMLTwoTestCase):
     filename = "tag_reuters.com,0000_newsml_ISS149709_1618095828"
 
-    def test_results(self):
+    async def test_results(self):
         self.assertTrue(
             self.item[0]
             .get("body_html")
@@ -68,14 +68,14 @@ class ResutersResultsTestCase(BaseNewMLTwoTestCase):
 class ANSATestCase(BaseNewMLTwoTestCase):
     filename = "ansa-newsmlg2-text.xml"
 
-    def test_language(self):
+    async def test_language(self):
         self.assertEqual("it", self.item[0]["language"])
 
 
 class ReutersOptaTestCase(BaseNewMLTwoTestCase):
     filename = "tag_reuters.com,2018_newsml_MTZXEE13ZXCZES_2"
 
-    def test_body(self):
+    async def test_body(self):
         self.assertTrue(
             self.item[0].get("body_html").startswith("<pre>Jan 3 (OPTA) - Results and fixtures for the " "Primeira")
         )
@@ -84,7 +84,7 @@ class ReutersOptaTestCase(BaseNewMLTwoTestCase):
 class IPTCExampleTextTestCase(BaseNewMLTwoTestCase):
     filename = "LISTING 1 A NewsML-G2 News Item.xml"
 
-    def test_news_item_parsing(self):
+    async def test_news_item_parsing(self):
         self.assertEqual(1, len(self.item))
         item = self.item[0]
         self.assertEqual("urn:newsml:acmenews.com:20161018:US-FINANCE-FED", item["uri"])
@@ -93,23 +93,23 @@ class IPTCExampleTextTestCase(BaseNewMLTwoTestCase):
         self.assertEqual(1, len(item["authors"]))
         self.assertEqual("2016-10-23T12:00:00+00:00", item["embargoed"].isoformat())
 
-    def test_can_parse(self):
+    async def test_can_parse(self):
         self.assertTrue(self.parser.can_parse(self.xml.getroot()))
 
 
 class IPTCExamplePackage(BaseNewMLTwoTestCase):
     filename = "LISTING 6 Simple NewsML-G2 Package.xml"
 
-    def test_news_item_parsing(self):
+    async def test_news_item_parsing(self):
         self.assertEqual(1, len(self.item))
 
-    def test_can_parse(self):
+    async def test_can_parse(self):
         self.assertTrue(self.parser.can_parse(self.xml.getroot()))
 
 
 class ANSACultureParser(BaseNewMLTwoTestCase):
     filename = "ansa_culture.xml"
 
-    def test_content_parsing(self):
+    async def test_content_parsing(self):
         self.assertIn("(ANSA) - ROMA, 1 LUG - TEST FROM XAWES", self.item[0]["body_html"])
         self.assertNotIn("urgency", self.item[0])

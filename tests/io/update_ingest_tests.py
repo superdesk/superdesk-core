@@ -22,7 +22,7 @@ from superdesk.flask import g
 from superdesk import get_resource_service, etree
 from superdesk.utc import utcnow
 from superdesk.errors import SuperdeskApiError, ProviderError
-from superdesk.tests import TestCase
+from superdesk.tests import TestCase, markers
 from superdesk.tests.setup_teardown import setup_providers, teardown_providers
 from superdesk.io import get_feeding_service
 from superdesk.io.commands.remove_expired_content import RemoveExpiredContent, get_expired_items
@@ -55,8 +55,9 @@ def get_file(url, request_kwargs=None):
 
 
 class UpdateIngestTest(TestCase):
-    def setUp(self):
-        setup_providers(self)
+    async def asyncSetUp(self):
+        await super().asyncSetUp()
+        await setup_providers(self)
 
     def tearDown(self):
         teardown_providers(self)
@@ -75,14 +76,14 @@ class UpdateIngestTest(TestCase):
         provider_service.URL = provider.get("config", {}).get("url")
         return provider, provider_service
 
-    def test_ingest_items(self):
+    async def test_ingest_items(self):
         provider, provider_service = self.setup_reuters_provider()
         items = provider_service.fetch_ingest(reuters_guid)
         items.extend(provider_service.fetch_ingest(reuters_guid))
         self.assertEqual(12, len(items))
         self.ingest_items(items, provider, provider_service)
 
-    def test_ingest_item_expiry(self):
+    async def test_ingest_item_expiry(self):
         provider, provider_service = self.setup_reuters_provider()
         items = provider_service.fetch_ingest(reuters_guid)
         self.assertIsNone(items[1].get("expiry"))
@@ -90,7 +91,7 @@ class UpdateIngestTest(TestCase):
         self.ingest_items([items[1]], provider, provider_service)
         self.assertIsNotNone(items[1].get("expiry"))
 
-    def test_ingest_item_sync_if_missing_from_elastic(self):
+    async def test_ingest_item_sync_if_missing_from_elastic(self):
         provider, provider_service = self.setup_reuters_provider()
         item = provider_service.fetch_ingest(reuters_guid)[0]
         # insert in mongo
@@ -105,7 +106,7 @@ class UpdateIngestTest(TestCase):
         elastic_item = self.app.data._search_backend("ingest").find_one("ingest", _id=ids[0], req=None)
         self.assertIsNotNone(elastic_item)
 
-    def test_ingest_provider_closed_raises_exception(self):
+    async def test_ingest_provider_closed_raises_exception(self):
         provider = {
             "name": "aap",
             "is_closed": True,
@@ -121,7 +122,7 @@ class UpdateIngestTest(TestCase):
         ex = error_context.exception
         self.assertTrue(ex.status_code == 500)
 
-    def test_ingest_provider_closed_when_critical_error_raised(self):
+    async def test_ingest_provider_closed_when_critical_error_raised(self):
         provider_name = "AAP"
         provider = self._get_provider(provider_name)
         self.assertFalse(provider.get("is_closed"))
@@ -131,7 +132,7 @@ class UpdateIngestTest(TestCase):
         provider = self._get_provider(provider_name)
         self.assertTrue(provider.get("is_closed"))
 
-    def test_ingest_provider_calls_close_provider(self):
+    async def test_ingest_provider_calls_close_provider(self):
         def mock_update(provider, update):
             raise ProviderError.anpaError()
 
@@ -146,7 +147,7 @@ class UpdateIngestTest(TestCase):
         provider = self._get_provider(provider_name)
         self.assertTrue(provider.get("is_closed"))
 
-    def test_is_scheduled(self):
+    async def test_is_scheduled(self):
         self.assertTrue(is_scheduled({}), "run after create")
         self.assertFalse(is_scheduled({"last_updated": utcnow()}), "wait default time 5m")
         self.assertTrue(is_scheduled({"last_updated": utcnow() - timedelta(minutes=6)}), "run after 5m")
@@ -159,7 +160,8 @@ class UpdateIngestTest(TestCase):
             "and run eventually",
         )
 
-    def test_change_last_updated(self):
+    @markers.requires_async_celery
+    async def test_change_last_updated(self):
         ingest_provider = {"name": "test", "feeding_service": "file", "feed_parser": "nitf", "_etag": "test"}
         self.app.data.insert("ingest_providers", [ingest_provider])
 
@@ -168,19 +170,19 @@ class UpdateIngestTest(TestCase):
         self.assertGreaterEqual(utcnow(), provider.get("last_updated"))
         self.assertEqual("test", provider.get("_etag"))
 
-    def test_filter_expired_items(self):
+    async def test_filter_expired_items(self):
         provider, provider_service = self.setup_reuters_provider()
         items = provider_service.fetch_ingest(reuters_guid)
         for item in items[:4]:
             item["expiry"] = utcnow() + timedelta(minutes=11)
         self.assertEqual(4, len(filter_expired_items(provider, items)))
 
-    def test_filter_expired_items_with_no_expiry(self):
+    async def test_filter_expired_items_with_no_expiry(self):
         provider, provider_service = self.setup_reuters_provider()
         items = provider_service.fetch_ingest(reuters_guid)
         self.assertEqual(0, len(filter_expired_items(provider, items)))
 
-    def test_query_getting_expired_content(self):
+    async def test_query_getting_expired_content(self):
         provider, provider_service = self.setup_reuters_provider()
         items = provider_service.fetch_ingest(reuters_guid)
         now = utcnow()
@@ -197,7 +199,7 @@ class UpdateIngestTest(TestCase):
         expiredItems = get_expired_items(provider, "ingest")
         self.assertEqual(5, expiredItems.count())
 
-    def test_expiring_with_content(self):
+    async def test_expiring_with_content(self):
         provider, provider_service = self.setup_reuters_provider()
         items = provider_service.fetch_ingest(reuters_guid)
         now = utcnow()
@@ -227,7 +229,7 @@ class UpdateIngestTest(TestCase):
         self.assertEqual(1, self.app.data.elastic.find("ingest", req, {})[1])
         self.assertEqual(1, self.app.data.mongo.find("ingest", req, {})[1])
 
-    def test_removing_expired_items_from_elastic_only(self):
+    async def test_removing_expired_items_from_elastic_only(self):
         now = utcnow()
         self.app.data.elastic.insert(
             "ingest",
@@ -240,7 +242,7 @@ class UpdateIngestTest(TestCase):
         RemoveExpiredContent().run()
         self.assertEqual(1, self.app.data.elastic.find("ingest", ParsedRequest(), {})[1])
 
-    def test_expiring_content_with_files(self):
+    async def test_expiring_content_with_files(self):
         provider, provider_service = self.setup_reuters_provider()
         items = provider_service.fetch_ingest(reuters_guid)
         for item in items:
@@ -267,7 +269,7 @@ class UpdateIngestTest(TestCase):
         current_files = self.app.media.storage().fs("upload").find()
         self.assertEqual(0, len(list(current_files)))
 
-    def test_apply_rule_set(self):
+    async def test_apply_rule_set(self):
         item = {"body_html": "@@body@@"}
 
         provider_name = "reuters"
@@ -279,14 +281,14 @@ class UpdateIngestTest(TestCase):
         provider = self._get_provider(provider_name)
         self.assertEqual("@@body@@", apply_rule_set(item, provider)["body_html"])
 
-    def test_all_ingested_items_have_sequence(self):
+    async def test_all_ingested_items_have_sequence(self):
         provider, provider_service = self.setup_reuters_provider()
         guid = "tag_reuters.com_2014_newsml_KBN0FL0NM:10"
         item = provider_service.fetch_ingest(guid)[0]
         get_resource_service("ingest").set_ingest_provider_sequence(item, provider)
         self.assertIsNotNone(item["ingest_provider_sequence"])
 
-    def test_get_task_ttl(self):
+    async def test_get_task_ttl(self):
         self.assertEqual(300, get_task_ttl({}))
         provider = {"update_schedule": {"minutes": 10}}
         self.assertEqual(600, get_task_ttl(provider))
@@ -294,11 +296,11 @@ class UpdateIngestTest(TestCase):
         provider["update_schedule"]["minutes"] = 1
         self.assertEqual(3660, get_task_ttl(provider))
 
-    def test_get_task_id(self):
+    async def test_get_task_id(self):
         provider = {"name": "foo", "_id": "abc"}
         self.assertEqual("update-ingest-foo-abc", get_task_id(provider))
 
-    def test_is_idle(self):
+    async def test_is_idle(self):
         provider = dict(idle_time=dict(hours=1, minutes=0))
         provider["last_item_update"] = utcnow()
         self.assertEqual(get_is_idle(provider), False)
@@ -307,7 +309,7 @@ class UpdateIngestTest(TestCase):
         provider["idle_time"] = dict(hours=0, minutes=0)
         self.assertEqual(get_is_idle(provider), False)
 
-    def test_files_dont_duplicate_ingest(self):
+    async def test_files_dont_duplicate_ingest(self):
         provider, provider_service = self.setup_reuters_provider()
         items = provider_service.fetch_ingest(reuters_guid)
 
@@ -330,7 +332,7 @@ class UpdateIngestTest(TestCase):
         current_files = self.app.media.storage().fs("upload").find()
         self.assertEqual(12, len(list(current_files)))
 
-    def test_anpa_category_to_subject_derived_ingest(self):
+    async def test_anpa_category_to_subject_derived_ingest(self):
         vocab = [
             {
                 "_id": "categories",
@@ -350,7 +352,7 @@ class UpdateIngestTest(TestCase):
         self.ingest_items(items, provider, provider_service)
         self.assertEqual(items[0]["subject"][0]["qcode"], "15000000")
 
-    def test_anpa_category_to_subject_derived_ingest_ignores_inactive_categories(self):
+    async def test_anpa_category_to_subject_derived_ingest_ignores_inactive_categories(self):
         vocab = [
             {
                 "_id": "categories",
@@ -370,7 +372,7 @@ class UpdateIngestTest(TestCase):
         self.ingest_items(items, provider, provider_service)
         self.assertNotIn("subject", items[0])
 
-    def test_subject_to_anpa_category_derived_ingest(self):
+    async def test_subject_to_anpa_category_derived_ingest(self):
         vocab = [
             {
                 "_id": "iptc_category_map",
@@ -404,7 +406,7 @@ class UpdateIngestTest(TestCase):
             self.ingest_items(items, provider, provider_service)
             self.assertEqual(items[0]["anpa_category"][0]["qcode"], "f")
 
-    def test_subject_to_anpa_category_derived_ingest_ignores_inactive_map_entries(self):
+    async def test_subject_to_anpa_category_derived_ingest_ignores_inactive_map_entries(self):
         vocab = [
             {
                 "_id": "iptc_category_map",
@@ -435,7 +437,7 @@ class UpdateIngestTest(TestCase):
             self.ingest_items(items, provider, provider_service)
             self.assertNotIn("anpa_category", items[0])
 
-    def test_ingest_cancellation(self):
+    async def test_ingest_cancellation(self):
         provider, provider_service = self.setup_reuters_provider()
         guid = "tag_reuters.com_2016_newsml_L1N14N0FF:978556838"
         items = provider_service.fetch_ingest(guid)
@@ -457,7 +459,7 @@ class UpdateIngestTest(TestCase):
             self.assertEqual(relative["pubstatus"], "canceled")
             self.assertEqual(relative["state"], "killed")
 
-    def test_ingest_update(self):
+    async def test_ingest_update(self):
         provider, provider_service = self.setup_reuters_provider()
         items = provider_service.fetch_ingest(reuters_guid)
         items[0]["ingest_provider"] = provider["_id"]
@@ -485,7 +487,7 @@ class UpdateIngestTest(TestCase):
         self.assertEqual(elastic_item["unique_id"], 1)
         self.assertEqual(elastic_item["unique_name"], "#1")
 
-    def test_get_article_ids(self):
+    async def test_get_article_ids(self):
         provider_name = "reuters"
         provider, provider_service = self.setup_reuters_provider()
         ids = provider_service._get_article_ids("channel1", utcnow(), utcnow() + timedelta(minutes=-10))
@@ -493,7 +495,7 @@ class UpdateIngestTest(TestCase):
         provider = get_resource_service("ingest_providers").find_one(name=provider_name, req=None)
         self.assertEqual(provider["tokens"]["poll_tokens"]["channel1"], "ExwaY31kfnR2Z2J1cWZ2YnxoYH9kfw==")
 
-    def test_unknown_category_ingested_is_removed(self):
+    async def test_unknown_category_ingested_is_removed(self):
         vocab = [
             {
                 "_id": "categories",
@@ -518,7 +520,7 @@ class UpdateIngestTest(TestCase):
         self.ingest_items(items, provider, provider_service)
         self.assertTrue(len(items[0]["anpa_category"]) == 0)
 
-    def test_ingest_with_routing_keeps_elastic_in_sync(self):
+    async def test_ingest_with_routing_keeps_elastic_in_sync(self):
         provider, provider_service = self.setup_reuters_provider()
 
         desk = {"name": "foo"}
@@ -602,7 +604,7 @@ class UpdateIngestTest(TestCase):
             self.assertEqual(mongo_item["_etag"], elastic_item["_etag"], mongo_item["guid"])
 
     @patch("superdesk.media.renditions.download_file_from_url", get_file)
-    def test_ingest_associated_item_renditions(self):
+    async def test_ingest_associated_item_renditions(self):
         provider = {"feeding_service": "ninjs", "_id": self.providers["ninjs"]}
         provider_service = FileFeedingService()
         item = {
@@ -649,7 +651,7 @@ class UpdateIngestTest(TestCase):
         self.assertIn("thumbnail", item["associations"]["featuremedia"]["renditions"])
         self.assertIn("thumbnail", item["associations"]["foo"]["renditions"])
 
-    def test_ingest_profile_if_exists(self):
+    async def test_ingest_profile_if_exists(self):
         provider, provider_service = self.setup_reuters_provider()
         items = provider_service.fetch_ingest(reuters_guid)
         ingest_item(items[0], provider, provider_service)
@@ -661,7 +663,8 @@ class UpdateIngestTest(TestCase):
         ingest_item(items[1], provider, provider_service)
         self.assertEqual("story", items[1].get("profile"))
 
-    def test_edited_planning_item_is_not_update(self):
+    @markers.requires_async_celery
+    async def test_edited_planning_item_is_not_update(self):
         item = {
             "guid": "urn:onclusive:4112034",
             "type": "event",
@@ -713,7 +716,8 @@ class UpdateIngestTest(TestCase):
         self.assertFalse(ingested)
         self.assertEqual([], ids)
 
-    def test_unpublished_event_is_not_update(self):
+    @markers.requires_async_celery
+    async def test_unpublished_event_is_not_update(self):
         item = {
             "guid": "urn:onclusive:411202222",
             "type": "event",

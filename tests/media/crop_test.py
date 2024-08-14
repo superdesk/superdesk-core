@@ -32,7 +32,8 @@ class CropTestCase(TestCase):
         ],
     }
 
-    def setUp(self):
+    async def asyncSetUp(self):
+        await super().asyncSetUp()
         self.service = CropService()
         populate_table_json("vocabularies", [self.crop_sizes])
 
@@ -58,7 +59,7 @@ class CropTestCase(TestCase):
         crop = {"height": 600, "width": 800}
         self.assertIsNone(self.service._validate_aspect_ratio(crop, doc))
 
-    def test_get_crop_by_name(self):
+    async def test_get_crop_by_name(self):
         self.assertIsNotNone(self.service.get_crop_by_name("16-9"))
         self.assertIsNotNone(self.service.get_crop_by_name("4-3"))
         self.assertIsNone(self.service.get_crop_by_name("d"))
@@ -96,7 +97,7 @@ class CropTestCase(TestCase):
         self.assertEqual(ex.message, "Missing original rendition!")
         self.assertEqual(ex.status_code, 400)
 
-    def test_validate_crop_raises_error_if_crop_name_is_unknown(self):
+    async def test_validate_crop_raises_error_if_crop_name_is_unknown(self):
         original = {
             "type": "picture",
             "renditions": {"original": {"CropLeft": 0, "CropRight": 800, "CropTop": 0, "CropBottom": 600}},
@@ -109,7 +110,7 @@ class CropTestCase(TestCase):
         self.assertEqual(ex.message, "Unknown crop name! (name=d)")
         self.assertEqual(ex.status_code, 400)
 
-    def test_add_crop_raises_error_if_original_missing(self):
+    async def test_add_crop_raises_error_if_original_missing(self):
         original = {"renditions": {"4-3": {}}}
         doc = {"CropLeft": 0, "CropRight": 800, "CropTop": 0, "CropBottom": 600}
         with self.assertRaises(SuperdeskApiError) as context:
@@ -130,7 +131,7 @@ class CropTestCase(TestCase):
             self.assertEqual(context.exception.message, "Invalid value for width in renditions")
 
     @mock.patch("superdesk.media.crop.crop_image", return_value=(False, "test"))
-    def test_add_crop_raises_error(self, crop_name):
+    async def test_add_crop_raises_error(self, crop_name):
         original = {"renditions": {"original": {}}}
 
         media = mock.MagicMock()
@@ -166,7 +167,7 @@ class CropTestCase(TestCase):
         for crop in self.crop_sizes.get("items"):
             self.assertNotIn(crop["name"], renditions)
 
-    def test_get_rendition_spec_with_custom_crop(self):
+    async def test_get_rendition_spec_with_custom_crop(self):
         renditions = get_renditions_spec()
         for crop in self.crop_sizes.get("items"):
             self.assertIn(crop["name"], renditions)

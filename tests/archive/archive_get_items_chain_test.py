@@ -207,10 +207,11 @@ class ArchiveGetItemsChainTestCase(TestCase):
         },
     ]
 
-    def setUp(self):
+    async def asyncSetUp(self):
+        await super().asyncSetUp()
         self.app.data.insert("archive", self.archive)
 
-    def test_get_items_chain(self):
+    async def test_get_items_chain(self):
         archive_service = superdesk.get_resource_service("archive")
 
         original = self.archive[0]

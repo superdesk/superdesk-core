@@ -18,7 +18,8 @@ from superdesk.errors import PublishFileError
 
 
 class FilePublishServiceTest(TestCase):
-    def setUp(self):
+    async def asyncSetUp(self):
+        await super().asyncSetUp()
         self.fixtures = os.path.join(os.path.abspath(os.path.dirname(__file__)))
         self.subscribers = [
             {
@@ -34,7 +35,7 @@ class FilePublishServiceTest(TestCase):
             }
         ]
 
-    def test_file_write(self):
+    async def test_file_write(self):
         item = {
             "item_id": "test_file_name",
             "item_version": 1,
@@ -58,7 +59,7 @@ class FilePublishServiceTest(TestCase):
             if os.path.isfile(path):
                 os.remove(path)
 
-    def test_format_default_file_extension(self):
+    async def test_format_default_file_extension(self):
         item = {
             "item_id": "test_file_name",
             "item_version": 1,
@@ -91,7 +92,7 @@ class FilePublishServiceTest(TestCase):
             if os.path.isfile(path):
                 os.remove(path)
 
-    def test_file_write_fail(self):
+    async def test_file_write_fail(self):
         self.fixtures = os.path.join(os.path.abspath(os.path.dirname(__file__) + "/xyz"))
         item = {
             "item_id": "test_file_name",
@@ -107,10 +108,10 @@ class FilePublishServiceTest(TestCase):
             },
         }
 
-        with self.app.app_context():
-            service = FilePublishService()
-            try:
-                service._transmit(item, self.subscribers)
-            except PublishFileError as ex:
-                self.assertEqual(str(ex), "PublishFileError Error 13000 - File publish error")
-                self.assertEqual(ex.code, 13000)
+        # with self.app.app_context():
+        service = FilePublishService()
+        try:
+            service._transmit(item, self.subscribers)
+        except PublishFileError as ex:
+            self.assertEqual(str(ex), "PublishFileError Error 13000 - File publish error")
+            self.assertEqual(ex.code, 13000)

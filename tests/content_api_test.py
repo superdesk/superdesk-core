@@ -6,6 +6,7 @@ import superdesk
 from bson import ObjectId
 from copy import copy
 from datetime import timedelta
+from quart.datastructures import FileStorage
 
 from superdesk.core import json
 from superdesk.flask import request
@@ -19,7 +20,8 @@ from werkzeug.datastructures import MultiDict
 
 
 class ContentAPITestCase(TestCase):
-    def setUp(self):
+    async def asyncSetUp(self):
+        await super().asyncSetUp()
         self.content_api = superdesk.get_resource_service("content_api")
         self.db = self.app.data.mongo.pymongo(prefix=MONGO_PREFIX).db
         self.app.config["SECRET_KEY"] = "secret"
@@ -41,7 +43,7 @@ class ContentAPITestCase(TestCase):
         headers = {"Authorization": "Token " + token}
         return headers
 
-    def test_publish_to_content_api(self):
+    async def test_publish_to_content_api(self):
         item = {"guid": "foo", "type": "text", "task": {"desk": "foo"}, "rewrite_of": "bar"}
         self.content_api.publish(item)
         self.assertEqual(1, self.db.items.count_documents({}))
@@ -60,7 +62,7 @@ class ContentAPITestCase(TestCase):
 
         self.assertEqual(3, self.db.items_versions.count_documents({}))
 
-    def test_create_keeps_planning_metadata(self):
+    async def test_create_keeps_planning_metadata(self):
         item = {
             "guid": "foo",
             "type": "text",
@@ -73,7 +75,7 @@ class ContentAPITestCase(TestCase):
         self.assertEqual(item["coverage_id"], self.db.items.find_one()["coverage_id"])
         self.assertEqual(item["agenda_id"], self.db.items.find_one()["agenda_id"])
 
-    def test_publish_with_subscriber_ids(self):
+    async def test_publish_with_subscriber_ids(self):
         item = {"guid": "foo", "type": "text"}
         subscribers = [{"_id": ObjectId()}, {"_id": ObjectId()}]
 
@@ -81,7 +83,7 @@ class ContentAPITestCase(TestCase):
         self.assertEqual(1, self.db.items.count_documents({"subscribers": str(subscribers[0]["_id"])}))
         self.assertEqual(0, self.db.items.count_documents({"subscribers": "foo"}))
 
-    def test_content_filtering_by_subscriber(self):
+    async def test_content_filtering_by_subscriber(self):
         subscriber = {"_id": "sub1"}
         headers = self._auth_headers(subscriber)
 
@@ -90,12 +92,12 @@ class ContentAPITestCase(TestCase):
         self.content_api.publish({"_id": "pkg", "guid": "pkg", "type": "composite"}, [subscriber])
         self.content_api.publish({"_id": "pkg2", "guid": "pkg2", "type": "composite"}, [])
 
-        with self.capi.test_client() as c:
-            response = c.get("items")
+        async with self.capi.test_client() as c:
+            response = await c.get("items")
             self.assertEqual(401, response.status_code)
-            response = c.get("items", headers=headers)
+            response = await c.get("items", headers=headers)
             self.assertEqual(200, response.status_code)
-            data = json.loads(response.data)
+            data = json.loads(await response.get_data())
             self.assertEqual(1, len(data["_items"]))
             self.assertNotIn("subscribers", data["_items"][0])
             self.assertIn("items/foo", data["_items"][0]["uri"])
@@ -103,35 +105,35 @@ class ContentAPITestCase(TestCase):
             audit_entries = superdesk.get_resource_service("api_audit").get(req=None, lookup={})
             self.assertEqual(1, audit_entries.count())
 
-            response = c.get("packages", headers=headers)
-            data = json.loads(response.data)
+            response = await c.get("packages", headers=headers)
+            data = json.loads(await response.get_data())
             self.assertEqual(1, len(data["_items"]))
             self.assertIn("packages/pkg", data["_items"][0]["uri"])
 
             audit_entries = superdesk.get_resource_service("api_audit").get(req=None, lookup={})
             self.assertEqual(2, audit_entries.count())
 
-    def test_content_filtering_by_arguments(self):
+    async def test_content_filtering_by_arguments(self):
         subscriber = {"_id": "sub1"}
         headers = self._auth_headers(subscriber)
 
         self.content_api.publish({"_id": "foo", "guid": "foo", "urgency": "3", "type": "text"}, [subscriber])
         self.content_api.publish({"_id": "bar", "guid": "bar", "urgency": "4", "type": "text"}, [subscriber])
 
-        with self.capi.test_client() as c:
-            response = c.get("items")
+        async with self.capi.test_client() as c:
+            response = await c.get("items")
             self.assertEqual(401, response.status_code)
-            response = c.get("items", headers=headers)
+            response = await c.get("items", headers=headers)
             self.assertEqual(200, response.status_code)
-            data = json.loads(response.data)
+            data = json.loads(await response.get_data())
             self.assertEqual(2, len(data["_items"]))
 
-            response = c.get('items?filter=[{"term":{"urgency": 3}}]', headers=headers)
+            response = await c.get('items?filter=[{"term":{"urgency": 3}}]', headers=headers)
             self.assertEqual(200, response.status_code)
-            data = json.loads(response.data)
+            data = json.loads(await response.get_data())
             self.assertEqual(1, len(data["_items"]))
 
-    def test_content_api_picture(self):
+    async def test_content_api_picture(self):
         self.content_api.publish(
             {
                 "_id": "foo",
@@ -152,35 +154,35 @@ class ContentAPITestCase(TestCase):
 
         headers = self._auth_headers()
 
-        with self.capi.test_client() as c:
-            response = c.get("items/foo", headers=headers)
+        async with self.capi.test_client() as c:
+            response = await c.get("items/foo", headers=headers)
             self.assertEqual(200, response.status_code)
-            data = json.loads(response.data)
+            data = json.loads(await response.get_data())
             self.assertIn("renditions", data)
             rendition = data["renditions"]["original"]
             self.assertNotIn("media", rendition)
             self.assertIn("assets/abcd1234", rendition["href"])
 
-            response = c.get(rendition["href"])
+            response = await c.get(rendition["href"])
             self.assertEqual(401, response.status_code)
 
-            response = c.get(rendition["href"], headers=headers)
+            response = await c.get(rendition["href"], headers=headers)
             self.assertEqual(404, response.status_code)
 
-            with self.app.app_context():
-                data = io.BytesIO(b"content")
-                media_id = self.app.media.put(data, resource="upload")
-                self.assertIsInstance(media_id, ObjectId, media_id)
+            # with self.app.app_context():
+            data = io.BytesIO(b"content")
+            media_id = self.app.media.put(data, resource="upload")
+            self.assertIsInstance(media_id, ObjectId, media_id)
 
             url = "assets/%s" % media_id
-            response = c.get(url, headers=headers)
+            response = await c.get(url, headers=headers)
             self.assertEqual(200, response.status_code, url)
-            self.assertEqual(b"content", response.data)
+            self.assertEqual(b"content", await response.get_data())
 
             audit_entries = superdesk.get_resource_service("api_audit").get(req=None, lookup={"type": "asset"})
             self.assertEqual(1, audit_entries.count())
 
-    def test_update_picture(self):
+    async def test_update_picture(self):
         picture = {
             "_id": "foo",
             "guid": "foo",
@@ -210,13 +212,13 @@ class ContentAPITestCase(TestCase):
         self.content_api.publish(picture)
 
         headers = self._auth_headers()
-        with self.capi.test_client() as c:
-            response = c.get("items/foo", headers=headers)
-            data = json.loads(response.data)
+        async with self.capi.test_client() as c:
+            response = await c.get("items/foo", headers=headers)
+            data = json.loads(await response.get_data())
             self.assertIn("viewImage", data["renditions"])
             self.assertNotIn("thumbnail", data["renditions"])
 
-    def test_text_with_pic_associations(self):
+    async def test_text_with_pic_associations(self):
         subscriber = {"_id": "sub1"}
         self.content_api.publish(
             {
@@ -250,15 +252,15 @@ class ContentAPITestCase(TestCase):
         )
 
         headers = self._auth_headers(subscriber)
-        with self.capi.test_client() as c:
-            response = c.get("items/text", headers=headers)
-            data = json.loads(response.data)
+        async with self.capi.test_client() as c:
+            response = await c.get("items/text", headers=headers)
+            data = json.loads(await response.get_data())
             self.assertEqual(1, len(data["associations"]))
             renditions = data["associations"]["foo"]["renditions"]
             self.assertIn("assets/bar", renditions["original"]["href"])
             self.assertNotIn("http://localhost:5000/api/upload/", data["body_html"])
 
-    def test_association_update(self):
+    async def test_association_update(self):
         subscribers = [self.subscriber["_id"]]
         self.content_api.publish(
             {
@@ -293,7 +295,7 @@ class ContentAPITestCase(TestCase):
             [self.subscriber],
         )
 
-        data = self.get_json("items/text")
+        data = await self.get_json("items/text")
         picture = data["associations"]["foo"]
         self.assertIn("viewImage", picture["renditions"])
 
@@ -330,7 +332,7 @@ class ContentAPITestCase(TestCase):
             [self.subscriber],
         )
 
-        data = self.get_json("items/text")
+        data = await self.get_json("items/text")
         picture = data["associations"]["foo"]
         self.assertNotIn("viewImage", picture["renditions"])
         self.assertIn("baseImage", picture["renditions"])
@@ -345,17 +347,17 @@ class ContentAPITestCase(TestCase):
             [self.subscriber],
         )
 
-        data = self.get_json("items/text")
+        data = await self.get_json("items/text")
         self.assertEqual({}, data["associations"])
 
-    def get_json(self, url, subscriber=None):
+    async def get_json(self, url, subscriber=None):
         headers = self._auth_headers(subscriber)
-        with self.capi.test_client() as c:
-            response = c.get(url, headers=headers)
-            data = json.loads(response.data)
+        async with self.capi.test_client() as c:
+            response = await c.get(url, headers=headers)
+            data = json.loads(await response.get_data())
             return data
 
-    def test_content_filtering(self):
+    async def test_content_filtering(self):
         item = {
             "guid": "u3",
             "type": "text",
@@ -374,56 +376,56 @@ class ContentAPITestCase(TestCase):
 
         headers = self._auth_headers()
 
-        with self.capi.test_client() as c:
-            response = c.get('items?where={"urgency":3}', headers=headers)
-            data = json.loads(response.data)
+        async with self.capi.test_client() as c:
+            response = await c.get('items?where={"urgency":3}', headers=headers)
+            data = json.loads(await response.get_data())
             self.assertEqual(1, data["_meta"]["total"])
             self.assertEqual(3, data["_items"][0]["urgency"])
 
-            response = c.get("items?q=urgency:3", headers=headers)
-            data = json.loads(response.data)
+            response = await c.get("items?q=urgency:3", headers=headers)
+            data = json.loads(await response.get_data())
             self.assertEqual(1, data["_meta"]["total"])
             self.assertEqual(3, data["_items"][0]["urgency"])
 
-            response = c.get("items?urgency=3", headers=headers)
-            data = json.loads(response.data)
+            response = await c.get("items?urgency=3", headers=headers)
+            data = json.loads(await response.get_data())
             self.assertEqual(1, data["_meta"]["total"])
             self.assertEqual(3, data["_items"][0]["urgency"])
 
-            response = c.get("items?urgency=[3,2]", headers=headers)
-            data = json.loads(response.data)
+            response = await c.get("items?urgency=[3,2]", headers=headers)
+            data = json.loads(await response.get_data())
             self.assertEqual(2, data["_meta"]["total"])
 
-            response = c.get("items?item_source=foo", headers=headers)
-            data = json.loads(response.data)
+            response = await c.get("items?item_source=foo", headers=headers)
+            data = json.loads(await response.get_data())
             self.assertEqual(1, data["_meta"]["total"])
             self.assertEqual("foo", data["_items"][0]["source"])
 
-            response = c.get('items?item_source=["foo","bar"]', headers=headers)
-            data = json.loads(response.data)
+            response = await c.get('items?item_source=["foo","bar"]', headers=headers)
+            data = json.loads(await response.get_data())
             self.assertEqual(2, data["_meta"]["total"])
 
-            response = c.get("items?related_to=u2", headers=headers)
+            response = await c.get("items?related_to=u2", headers=headers)
             self.assertEqual(200, response.status_code)
-            data = json.loads(response.data)
+            data = json.loads(await response.get_data())
             self.assertEqual(1, data["_meta"]["total"])
 
-            response = c.get("items?related_to=empty", headers=headers)
+            response = await c.get("items?related_to=empty", headers=headers)
             self.assertEqual(200, response.status_code)
-            data = json.loads(response.data)
+            data = json.loads(await response.get_data())
             self.assertEqual(0, data["_meta"]["total"])
 
-            response = c.get("items?related_source=bar", headers=headers)
+            response = await c.get("items?related_source=bar", headers=headers)
             self.assertEqual(200, response.status_code)
-            data = json.loads(response.data)
+            data = json.loads(await response.get_data())
             self.assertEqual(1, data["_meta"]["total"])
 
-            response = c.get("items?related_source=empty", headers=headers)
+            response = await c.get("items?related_source=empty", headers=headers)
             self.assertEqual(200, response.status_code)
-            data = json.loads(response.data)
+            data = json.loads(await response.get_data())
             self.assertEqual(0, data["_meta"]["total"])
 
-    def test_generate_token_service(self):
+    async def test_generate_token_service(self):
         service = superdesk.get_resource_service("subscriber_token")
         payload = {"subscriber": "foo", "expiry_days": 7}
         ids = service.create([payload])
@@ -440,7 +442,7 @@ class ContentAPITestCase(TestCase):
         self.assertFalse(self.capi.auth.check_auth(token, [], "items", "get"))
         self.assertIsNone(service.find_one(None, _id=token))
 
-    def test_api_block(self):
+    async def test_api_block(self):
         self.app.data.insert(
             "filter_conditions", [{"_id": 1, "operator": "eq", "field": "source", "value": "fred", "name": "Fred"}]
         )
@@ -457,7 +459,7 @@ class ContentAPITestCase(TestCase):
         self.content_api.publish({"_id": "bar", "source": "jane", "type": "text", "guid": "bar"})
         self.assertEqual(1, self.db.items.count_documents({}))
 
-    def test_item_versions_api(self):
+    async def test_item_versions_api(self):
         subscriber = {"_id": "sub1"}
         headers = self._auth_headers(subscriber)
 
@@ -468,16 +470,16 @@ class ContentAPITestCase(TestCase):
         item["_current_version"] = 3
         self.content_api.publish(item, [subscriber])
 
-        with self.capi.test_client() as c:
-            response = c.get("items/foo?version=all", headers=headers)
-            data = json.loads(response.data)
+        async with self.capi.test_client() as c:
+            response = await c.get("items/foo?version=all", headers=headers)
+            data = json.loads(await response.get_data())
             self.assertEqual(3, data["_meta"]["total"])
 
-            response = c.get("items/foo?version=2", headers=headers)
-            data = json.loads(response.data)
+            response = await c.get("items/foo?version=2", headers=headers)
+            data = json.loads(await response.get_data())
             self.assertEqual(str(2), data["version"])
 
-    def test_package_version(self):
+    async def test_package_version(self):
         subscriber = {"_id": "sub1"}
         headers = self._auth_headers(subscriber)
 
@@ -490,33 +492,33 @@ class ContentAPITestCase(TestCase):
         item = {"guid": "foo", "type": "text", "task": {"desk": "foo"}, "rewrite_of": "bar", "_current_version": 1}
         self.content_api.publish(item, [subscriber])
 
-        with self.capi.test_client() as c:
-            response = c.get("packages", headers=headers)
-            data = json.loads(response.data)
+        async with self.capi.test_client() as c:
+            response = await c.get("packages", headers=headers)
+            data = json.loads(await response.get_data())
             self.assertEqual(1, len(data["_items"]))
             self.assertIn("packages/pkg", data["_items"][0]["uri"])
 
-            response = c.get("packages/pkg?version=all", headers=headers)
-            data = json.loads(response.data)
+            response = await c.get("packages/pkg?version=all", headers=headers)
+            data = json.loads(await response.get_data())
             self.assertEqual(3, data["_meta"]["total"])
 
-            response = c.get("packages/pkg?version=2", headers=headers)
-            data = json.loads(response.data)
+            response = await c.get("packages/pkg?version=2", headers=headers)
+            data = json.loads(await response.get_data())
             self.assertEqual(str(2), data["version"])
 
-    def test_publish_kill_to_content_api(self):
+    async def test_publish_kill_to_content_api(self):
         subscriber = {"_id": "sub1"}
         headers = self._auth_headers(subscriber)
         item = {"guid": "foo", "type": "text", "task": {"desk": "foo"}, "rewrite_of": "bar", "pubstatus": "usable"}
         self.content_api.publish(item, [subscriber])
 
-        with self.capi.test_client() as c:
-            response = c.get("items/foo?version=all", headers=headers)
-            data = json.loads(response.data)
+        async with self.capi.test_client() as c:
+            response = await c.get("items/foo?version=all", headers=headers)
+            data = json.loads(await response.get_data())
             self.assertEqual(1, data["_meta"]["total"])
 
-            response = c.get("items/foo?version=1", headers=headers)
-            data = json.loads(response.data)
+            response = await c.get("items/foo?version=1", headers=headers)
+            data = json.loads(await response.get_data())
             self.assertEqual("1", data["version"])
 
         item["pubstatus"] = "canceled"
@@ -529,15 +531,15 @@ class ContentAPITestCase(TestCase):
         for i in self.db.items_versions.find():
             self.assertEqual(i.get("pubstatus"), "canceled")
 
-        with self.capi.test_client() as c:
-            response = c.get("items/foo?version=all", headers=headers)
-            data = json.loads(response.data)
+        async with self.capi.test_client() as c:
+            response = await c.get("items/foo?version=all", headers=headers)
+            data = json.loads(await response.get_data())
             self.assertEqual(0, data["_meta"]["total"])
 
-            response = c.get("items/foo?version=1", headers=headers)
+            response = await c.get("items/foo?version=1", headers=headers)
             self.assertEqual(404, response._status_code)
 
-    def test_publish_item_with_ancestors(self):
+    async def test_publish_item_with_ancestors(self):
         item = {"guid": "foo", "type": "text", "task": {"desk": "foo"}, "bookmarks": [ObjectId()]}
         self.content_api.publish(item)
         self.assertEqual(1, self.db.items.count_documents({}))
@@ -563,7 +565,7 @@ class ContentAPITestCase(TestCase):
         self.assertEqual(["foo", "bar"], fun.get("ancestors", []))
         self.assertEqual("bar", fun.get("evolvedfrom"))
 
-    def test_sync_bookmarks_on_publish(self):
+    async def test_sync_bookmarks_on_publish(self):
         item = {"guid": "foo", "type": "text", "task": {"desk": "foo"}}
         self.content_api.publish(item)
         self.db.items.update_one({"_id": "foo"}, {"$set": {"bookmarks": [ObjectId()]}})
@@ -575,7 +577,7 @@ class ContentAPITestCase(TestCase):
         bar = self.db.items.find_one({"_id": "bar"})
         self.assertEqual(1, len(bar["bookmarks"]))
 
-    def test_search_capi(self):
+    async def test_search_capi(self):
         subscriber = {"_id": "sub1"}
 
         self.content_api.publish(
@@ -605,7 +607,7 @@ class ContentAPITestCase(TestCase):
         resp = test.get(req=req, lookup=None)
         self.assertEqual(resp.count(), 1)
 
-    def test_search_capi_filter(self):
+    async def test_search_capi_filter(self):
         subscriber = {"_id": "sub1"}
 
         self.content_api.publish(
@@ -667,7 +669,7 @@ class ContentAPITestCase(TestCase):
         self.assertEqual(resp.docs[0].get("subscribers")[0], "sub2")
         self.assertEqual(resp.docs[1].get("subscribers")[0], "sub2")
 
-    def test_search_capi_aggregations(self):
+    async def test_search_capi_aggregations(self):
         self.content_api.publish(
             {
                 "_id": "1",
@@ -699,7 +701,7 @@ class ContentAPITestCase(TestCase):
         resp = test.get(req=req, lookup=None)
         self.assertEqual(resp.hits["aggregations"]["category"]["buckets"][0]["doc_count"], 2)
 
-    def test_associated_item_filter_by_subscriber(self):
+    async def test_associated_item_filter_by_subscriber(self):
         item = {
             "guid": "foo",
             "type": "text",
@@ -710,23 +712,23 @@ class ContentAPITestCase(TestCase):
         subscriber2 = {"_id": "sub2"}
         self.content_api.publish(item, [subscriber1, subscriber2])
         self.assertEqual(1, self.db.items.count_documents({}))
-        with self.capi.test_client() as c:
-            response = c.get("items/foo", headers=self._auth_headers(subscriber1))
-            data = json.loads(response.data)
+        async with self.capi.test_client() as c:
+            response = await c.get("items/foo", headers=self._auth_headers(subscriber1))
+            data = json.loads(await response.get_data())
             self.assertIn("items/foo", data["uri"])
             self.assertEqual(data["associations"]["featuremedia"]["guid"], "a1")
 
-            response = c.get("items/foo", headers=self._auth_headers(subscriber2))
-            data = json.loads(response.data)
+            response = await c.get("items/foo", headers=self._auth_headers(subscriber2))
+            data = json.loads(await response.get_data())
             self.assertIn("items/foo", data["uri"])
             self.assertNotIn("featuremedia", data["associations"])
 
-    def test_publish_item_with_attachments(self):
+    async def test_publish_item_with_attachments(self):
         media = io.BytesIO(b"content")
-        data = {"media": (media, "media.txt")}
+        files = dict(media=FileStorage(media, filename="media.txt"))
         attachment = {"title": "Test", "description": "test"}
-        with self.app.test_request_context("attachments", method="POST", data=data):
-            attachment["media"] = request.files["media"]
+        async with self.app.test_request_context("attachments", method="POST", files=files):
+            attachment["media"] = (await request.files)["media"]
             store_media_files(attachment, "attachments")  # this would happen automatically otherwise
             superdesk.get_resource_service("attachments").post([attachment])
         self.assertIn("_id", attachment)
@@ -741,9 +743,9 @@ class ContentAPITestCase(TestCase):
 
         subscriber = {"_id": "sub"}
         self.content_api.publish(item, [subscriber])
-        with self.capi.test_client() as c:
-            response = c.get("items/foo", headers=self._auth_headers(subscriber))
-            data = json.loads(response.data)
+        async with self.capi.test_client() as c:
+            response = await c.get("items/foo", headers=self._auth_headers(subscriber))
+            data = json.loads(await response.get_data())
 
         self.assertIn("attachments", data)
         attachments = data["attachments"]
@@ -757,18 +759,18 @@ class ContentAPITestCase(TestCase):
         self.assertIn("media", attachments[0])
         self.assertIn('data-attachment="{}"'.format(attachments[0]["id"]), data["body_html"])
 
-        with self.capi.test_client() as c:
-            response = c.get(attachments[0]["href"], headers=self._auth_headers(subscriber))
+        async with self.capi.test_client() as c:
+            response = await c.get(attachments[0]["href"], headers=self._auth_headers(subscriber))
             self.assertEqual(200, response.status_code, attachments[0]["href"])
 
-    def test_publish_item_with_internal_attachments(self):
+    async def test_publish_item_with_internal_attachments(self):
         media = io.BytesIO(b"content")
-        data = {"media": (media, "media.txt")}
+        files = dict(media=FileStorage(media, filename="media.txt"))
         internal_attachment = {"title": "Test Internal", "description": "test", "internal": True}
         public_attachment = {"title": "Test", "description": "test", "internal": False}
-        with self.app.test_request_context("attachments", method="POST", data=data):
-            internal_attachment["media"] = request.files["media"]
-            public_attachment["media"] = request.files["media"]
+        async with self.app.test_request_context("attachments", method="POST", files=files):
+            internal_attachment["media"] = (await request.files)["media"]
+            public_attachment["media"] = (await request.files)["media"]
             store_media_files(internal_attachment, "attachments")
             store_media_files(public_attachment, "attachments")
             superdesk.get_resource_service("attachments").post([internal_attachment, public_attachment])
@@ -786,9 +788,9 @@ class ContentAPITestCase(TestCase):
 
         subscriber = {"_id": "sub"}
         self.content_api.publish(item, [subscriber])
-        with self.capi.test_client() as c:
-            response = c.get("items/foo-internal", headers=self._auth_headers(subscriber))
-            data = json.loads(response.data)
+        async with self.capi.test_client() as c:
+            response = await c.get("items/foo-internal", headers=self._auth_headers(subscriber))
+            data = json.loads(await response.get_data())
 
         self.assertIn("attachments", data)
         attachments = data["attachments"]
@@ -796,7 +798,7 @@ class ContentAPITestCase(TestCase):
         self.assertEqual(1, len(attachments))
         self.assertEqual(str(public_attachment["_id"]), attachments[0]["id"])
 
-    def test_items_default_sorting(self):
+    async def test_items_default_sorting(self):
         subscriber = {"_id": "sub1"}
         headers = self._auth_headers(subscriber)
 
@@ -825,26 +827,26 @@ class ContentAPITestCase(TestCase):
             {"_id": "eeee", "guid": "eee", "urgency": "5", "type": "text", "source": "foo"}, [subscriber]
         )
 
-        with self.capi.test_client() as c:
+        async with self.capi.test_client() as c:
             # no filters
-            response = c.get("items", headers=headers)
+            response = await c.get("items", headers=headers)
             self.assertEqual(200, response.status_code)
-            data = json.loads(response.data)
+            data = json.loads(await response.get_data())
             self.assertListEqual([i["urgency"] for i in data["_items"]], ["5", "4", "3", "2", "1"])
 
             # with filtering
-            response = c.get('items?item_source=["foo"]', headers=headers)
+            response = await c.get('items?item_source=["foo"]', headers=headers)
             self.assertEqual(200, response.status_code)
-            data = json.loads(response.data)
+            data = json.loads(await response.get_data())
             self.assertListEqual([i["urgency"] for i in data["_items"]], ["5", "3", "2", "1"])
 
             # with filtering and custom sorting
-            response = c.get('items?item_source=["foo"]&sort=[("versioncreated",1)]', headers=headers)
+            response = await c.get('items?item_source=["foo"]&sort=[("versioncreated",1)]', headers=headers)
             self.assertEqual(200, response.status_code)
-            data = json.loads(response.data)
+            data = json.loads(await response.get_data())
             self.assertListEqual([i["urgency"] for i in data["_items"]], ["1", "2", "3", "5"])
 
-    def test_items_custom_sorting(self):
+    async def test_items_custom_sorting(self):
         subscriber = {"_id": "sub1"}
         headers = self._auth_headers(subscriber)
 
@@ -864,21 +866,21 @@ class ContentAPITestCase(TestCase):
             {"_id": "eeee", "guid": "eee", "urgency": "5", "type": "text", "source": "foo"}, [subscriber]
         )
 
-        with self.capi.test_client() as c:
+        async with self.capi.test_client() as c:
             # urgency desc
-            response = c.get('items?sort=[("urgency",-1)]', headers=headers)
+            response = await c.get('items?sort=[("urgency",-1)]', headers=headers)
             self.assertEqual(200, response.status_code)
-            data = json.loads(response.data)
+            data = json.loads(await response.get_data())
             self.assertListEqual([i["urgency"] for i in data["_items"]], ["5", "4", "3", "2", "1"])
 
             # urgency asc
-            response = c.get('items?sort=[("urgency",1)]', headers=headers)
+            response = await c.get('items?sort=[("urgency",1)]', headers=headers)
             self.assertEqual(200, response.status_code)
-            data = json.loads(response.data)
+            data = json.loads(await response.get_data())
             self.assertListEqual([i["urgency"] for i in data["_items"]], ["1", "2", "3", "4", "5"])
 
             # urgency asc + filter
-            response = c.get('items?sort=[("urgency",1)]&item_source=["foo"]', headers=headers)
+            response = await c.get('items?sort=[("urgency",1)]&item_source=["foo"]', headers=headers)
             self.assertEqual(200, response.status_code)
-            data = json.loads(response.data)
+            data = json.loads(await response.get_data())
             self.assertListEqual([i["urgency"] for i in data["_items"]], ["1", "2", "3", "5"])

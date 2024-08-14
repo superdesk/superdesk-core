@@ -25,7 +25,8 @@ from superdesk.metadata.item import CONTENT_TYPE, ITEM_TYPE
 class QueueItemsTestCase(TestCase):
     """Tests for the get_queue_items() function."""
 
-    def setUp(self):
+    async def asyncSetUp(self):
+        await super().asyncSetUp()
         try:
             from superdesk.publish.publish_content import get_queue_items
         except ImportError:
@@ -89,19 +90,19 @@ class QueueItemsTestCase(TestCase):
             ]
             self.app.data.insert("publish_queue", self.queue_items)
 
-    def test_get_queue_items(self):
+    async def test_get_queue_items(self):
         items = list(self.func_under_test())
         self.assertEqual(len(items), 1)
         for item in items:
             self.assertIn(item["item_id"], ["item_1"])
 
-    def test_get_retry_queue_items(self):
+    async def test_get_retry_queue_items(self):
         items = list(self.func_under_test(True))
         self.assertEqual(len(items), 1)
         for item in items:
             self.assertIn(item["item_id"], ["item_6"])
 
-    def test_get_queue_items_with_retrying_items(self):
+    async def test_get_queue_items_with_retrying_items(self):
         item = self.app.data.find_one("publish_queue", req=None, _id=self.queue_items[1]["_id"])
         self.app.data.update(
             "publish_queue", item.get("_id"), {"next_retry_attempt_at": utcnow() - timedelta(minutes=30)}, item

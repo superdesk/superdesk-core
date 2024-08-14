@@ -10,11 +10,11 @@
 
 from datetime import datetime, timedelta
 
-from superdesk.tests import TestCase
+from superdesk.tests import AsyncTestCase
 from superdesk.io.commands.update_ingest import is_not_expired
 
 
-class ItemExpiryTestCase(TestCase):
+class ItemExpiryTestCase(AsyncTestCase):
     def test_expiry_no_dateinfo(self):
         self.assertTrue(is_not_expired({}, None))
 

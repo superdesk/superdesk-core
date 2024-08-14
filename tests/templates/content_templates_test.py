@@ -19,7 +19,8 @@ from superdesk.utc import utcnow
 
 
 class TemplatesTestCase(TestCase):
-    def setUp(self):
+    async def asyncSetUp(self):
+        await super().asyncSetUp()
         # now is today at 09:05:03
         self.now = datetime.utcnow().replace(hour=9, minute=5, second=3)
         self.weekdays = [day.name for day in Weekdays]
@@ -62,7 +63,7 @@ class TemplatesTestCase(TestCase):
         delta = self.get_delta("09:05:00", self.weekdays)
         self.assertEqual(delta.seconds, 24 * 60 * 60 - 1)
 
-    def test_get_item_from_template(self):
+    async def test_get_item_from_template(self):
         template = {
             "_id": "foo",
             "name": "test",
@@ -77,8 +78,7 @@ class TemplatesTestCase(TestCase):
             },
         }
         now = utcnow()
-        with self.app.app_context():
-            item = get_item_from_template(template)
+        item = get_item_from_template(template)
         self.assertNotIn("_id", item)
         self.assertEqual("foo", item.get("template"))
         self.assertEqual("Foo", item.get("headline"))
@@ -111,7 +111,7 @@ class TemplatesTestCase(TestCase):
 
 
 class RenderTemplateTestCase(TestCase):
-    def test_render_content_template(self):
+    async def test_render_content_template(self):
         template = {
             "_id": "foo",
             "template_name": "test",
@@ -140,7 +140,7 @@ class RenderTemplateTestCase(TestCase):
             "place": ["NSW"],
         }
 
-        updates = render_content_template(item, template)
+        updates = await render_content_template(item, template)
         self.assertEqual(updates["headline"], "Foo Template: Test Template")
         self.assertEqual(updates["urgency"], 1)
         self.assertEqual(updates["priority"], 3)
@@ -150,10 +150,10 @@ class RenderTemplateTestCase(TestCase):
         )
         self.assertListEqual(updates["place"], ["Australia"])
 
-    def test_headline_strip_tags(self):
+    async def test_headline_strip_tags(self):
         template = {"data": {"headline": " test\nit<br>"}}
 
-        updates = render_content_template({}, template)
+        updates = await render_content_template({}, template)
         self.assertEqual("test it", updates["headline"])
 
         item = get_item_from_template(template)

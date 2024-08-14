@@ -571,7 +571,8 @@ class Newsml12FormatterTest(TestCase):
 
     now = datetime.datetime(2015, 6, 13, 11, 45, 19, 0)
 
-    def setUp(self):
+    async def asyncSetUp(self):
+        await super().asyncSetUp()
         self.article["state"] = "published"
         self._setup_dates(
             [
@@ -589,16 +590,15 @@ class Newsml12FormatterTest(TestCase):
         self.formatter = NewsML12Formatter()
         self.formatter.now = self.now
         self.formatter.string_now = self.now.strftime("%Y%m%dT%H%M%S+0000")
-        with self.app.app_context():
-            init_app(self.app)
-            self.app.data.insert("vocabularies", self.vocab)
+        init_app(self.app)
+        self.app.data.insert("vocabularies", self.vocab)
 
     def _setup_dates(self, item_list):
         for item in item_list:
             item["firstcreated"] = self.now
             item["versioncreated"] = self.now
 
-    def test_format_news_envelope(self):
+    async def test_format_news_envelope(self):
         self.formatter._format_news_envelope(self.article, self.newsml, 7)
         self.assertEqual(self.newsml.find("TransmissionId").text, "7")
         self.assertEqual(self.newsml.find("DateAndTime").text, "20150613T114519+0000")
@@ -607,7 +607,7 @@ class Newsml12FormatterTest(TestCase):
         self.formatter._format_news_envelope(self.preformatted, newsml, 7)
         self.assertEqual(newsml.find("Priority").get("FormalName"), "5")
 
-    def test_format_identification(self):
+    async def test_format_identification(self):
         self.formatter._format_identification(self.article, self.newsml)
         self.assertEqual(self.newsml.find("Identification/NewsIdentifier/ProviderId").text, "sourcefabric.org")
         self.assertEqual(self.newsml.find("Identification/NewsIdentifier/DateId").text, "20150613")
@@ -618,7 +618,7 @@ class Newsml12FormatterTest(TestCase):
         )
         self.assertEqual(self.newsml.find("Identification/DateLabel").text, "Saturday 13 June 2015")
 
-    def test_format_identification_for_corrections(self):
+    async def test_format_identification_for_corrections(self):
         self.article["state"] = "corrected"
         self.article["_current_version"] = 7
         self.formatter._format_identification(self.article, self.newsml)
@@ -629,7 +629,7 @@ class Newsml12FormatterTest(TestCase):
         self.assertEqual(self.newsml.find("Identification/NewsIdentifier/RevisionId").get("PreviousRevision"), "6")
         self.assertEqual(self.newsml.find("Identification/NewsIdentifier/RevisionId").get("Update"), "N")
 
-    def test_format_news_management(self):
+    async def test_format_news_management(self):
         self.formatter._format_news_management(self.article, self.newsml)
         self.assertEqual(self.newsml.find("NewsManagement/NewsItemType").get("FormalName"), "News")
         self.assertEqual(self.newsml.find("NewsManagement/FirstCreated").text, "20150613T114519+0000")
@@ -638,12 +638,12 @@ class Newsml12FormatterTest(TestCase):
         self.assertEqual(self.newsml.find("NewsManagement/Urgency").get("FormalName"), "2")
         self.assertEqual(self.newsml.find("NewsManagement/Instruction").get("FormalName"), "Update")
 
-    def test_format_news_management_for_corrections(self):
+    async def test_format_news_management_for_corrections(self):
         self.article["state"] = "corrected"
         self.formatter._format_news_management(self.article, self.newsml)
         self.assertEqual(self.newsml.find("NewsManagement/Instruction").get("FormalName"), "Correction")
 
-    def test_format_news_component(self):
+    async def test_format_news_component(self):
         self.formatter._format_news_component(self.article, self.newsml)
         self.assertEqual(self.newsml.find("NewsComponent/NewsComponent/Role").get("FormalName"), "Main")
         self.assertEqual(
@@ -691,7 +691,7 @@ class Newsml12FormatterTest(TestCase):
         company_info = self.newsml.find('NewsComponent/NewsComponent/Metadata/Property[@FormalName="Exchange"]')
         self.assertEqual(company_info.attrib["Value"], "ASX")
 
-    def test_format_news_management_for_embargo(self):
+    async def test_format_news_management_for_embargo(self):
         embargo_ts = utcnow() + datetime.timedelta(days=2)
         doc = self.article.copy()
         doc["embargo"] = embargo_ts
@@ -707,7 +707,7 @@ class Newsml12FormatterTest(TestCase):
         self.assertEqual(self.newsml.find("NewsManagement/StatusWillChange/FutureStatus").get("FormalName"), "usable")
         self.assertEqual(self.newsml.find("NewsManagement/StatusWillChange/DateAndTime").text, embargo_ts.isoformat())
 
-    def test_format_place(self):
+    async def test_format_place(self):
         doc = self.article.copy()
         self.formatter._format_place(doc, self.newsml)
         self.assertEqual(
@@ -716,21 +716,21 @@ class Newsml12FormatterTest(TestCase):
         self.assertEqual(self.newsml.find('Location/Property[@FormalName="Country"]').get("Value"), "Australia")
         self.assertEqual(self.newsml.find('Location/Property[@FormalName="WorldRegion"]').get("Value"), "Oceania")
 
-    def test_format_dateline(self):
+    async def test_format_dateline(self):
         doc = self.article.copy()
         self.formatter._format_dateline(doc, self.newsml)
         self.assertEqual(self.newsml.find('Location/Property[@FormalName="City"]').get("Value"), "Los Angeles")
         self.assertEqual(self.newsml.find('Location/Property[@FormalName="CountryArea"]').get("Value"), "California")
         self.assertEqual(self.newsml.find('Location/Property[@FormalName="Country"]').get("Value"), "USA")
 
-    def test_duration(self):
+    async def test_duration(self):
         self.assertEqual(self.formatter._get_total_duration(None), 0)
         self.assertEqual(self.formatter._get_total_duration("dsf"), 0)
         self.assertEqual(self.formatter._get_total_duration("0:1:0.0000"), 60)
         self.assertEqual(self.formatter._get_total_duration("0:1:10.0000"), 70)
         self.assertEqual(self.formatter._get_total_duration("1:1:10.0000"), 3670)
 
-    def test_format_picture(self):
+    async def test_format_picture(self):
         doc = self.picture.copy()
         seq, xml_str = self.formatter.format(doc, {"name": "Test Subscriber"})[0]
         xml = etree.fromstring(xml_str)
@@ -764,7 +764,7 @@ class Newsml12FormatterTest(TestCase):
                 str(value.get("height")),
             )
 
-    def test_format_video(self):
+    async def test_format_video(self):
         doc = self.video.copy()
         seq, xml_str = self.formatter.format(doc, {"name": "Test Subscriber"})[0]
         xml = etree.fromstring(xml_str)
@@ -792,7 +792,7 @@ class Newsml12FormatterTest(TestCase):
                 content_item.find('Characteristics/Property[@FormalName="TotalDuration"]').get("Value"), "10"
             )
 
-    def test_format_package(self):
+    async def test_format_package(self):
         doc = self.package.copy()
         seq, xml_str = self.formatter.format(doc, {"name": "Test Subscriber"})[0]
         xml = etree.fromstring(xml_str)
@@ -804,7 +804,7 @@ class Newsml12FormatterTest(TestCase):
             "tag:localhost:2015:5838657b-b3ec-4e5a-9b39-36039e16400b:4N",
         )
 
-    def test_format_picture_package(self):
+    async def test_format_picture_package(self):
         doc = self.picture_package.copy()
         seq, xml_str = self.formatter.format(doc, {"name": "Test Subscriber"})[0]
         xml = etree.fromstring(xml_str)
@@ -816,7 +816,7 @@ class Newsml12FormatterTest(TestCase):
             "tag:localhost:2015:0c12aa0a-82ef-4c58-a363-c5bd8a368037:4N",
         )
 
-    def test_format_picture_text_package(self):
+    async def test_format_picture_text_package(self):
         doc = self.picture_text_package.copy()
         seq, xml_str = self.formatter.format(doc, {"name": "Test Subscriber"})[0]
         xml = etree.fromstring(xml_str)

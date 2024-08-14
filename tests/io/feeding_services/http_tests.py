@@ -71,7 +71,7 @@ class GetTokenTestCase(TestCase):
         provider = setup_provider("abc", 24)
         self.assertEquals("", TestFeedingService()._get_auth_token(provider))
 
-    def test_fetch_token(self):
+    async def test_fetch_token(self):
         # TODO: need some rewriting
         # this test is not working anymore
         # try to fill os.environ['REUTERS_USERNAME']
@@ -93,7 +93,7 @@ class GetTokenTestCase(TestCase):
             dbprovider = superdesk.get_resource_service("ingest_providers").find_one(name="test http", req=None)
             self.assertEquals(token, dbprovider["tokens"]["auth_token"])
 
-    def test_generate_auth_token_raise_on_error(self):
+    async def test_generate_auth_token_raise_on_error(self):
         provider = setup_provider("abc", 24)
         provider["config"] = {"auth_url": "http://example.com"}
         with patch("requests.Session", new=ErrorResponseSession):

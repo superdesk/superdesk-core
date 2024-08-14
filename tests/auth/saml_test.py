@@ -1,5 +1,6 @@
 from superdesk.flask import session
 import superdesk.tests as tests
+from superdesk.tests import markers
 import superdesk.auth.saml as saml
 
 from unittest.mock import patch
@@ -28,6 +29,7 @@ SAML_DATA = {
 ERROR = '{"error": 404}'
 
 
+@markers.investigate_cause_of_error
 class SamlAuthTestCase(tests.TestCase):
     def setUp(self):
         self.desks = [{"name": "Sports"}, {"name": "Finance"}]

@@ -96,7 +96,8 @@ def mockGet(self, _id, resource=None):
 
 
 class FTPPublishServiceTestCase(TestCase):
-    def setUp(self):
+    async def asyncSetUp(self):
+        await super().asyncSetUp()
         init_app(self.app)
 
     item = {"item_id": "abc", "format": "NITF", "formatted_item": "1234567890"}
@@ -113,7 +114,7 @@ class FTPPublishServiceTestCase(TestCase):
                     return True
             return False
 
-    def test_it_can_connect(self):
+    async def test_it_can_connect(self):
         service = FTPPublishService()
 
         if "FTP_URL" not in os.environ:
@@ -134,7 +135,7 @@ class FTPPublishServiceTestCase(TestCase):
         "superdesk.publish.transmitters.file_providers.associations.get_renditions_spec",
         return_value={"16-9": {}, "4-3": {}},
     )
-    def test_with_associations(self, mock_ftp_constructor, *args):
+    async def test_with_associations(self, mock_ftp_constructor, *args):
         item = {
             "associations": {
                 "featuremedia": ASSOCIATIONS["featuremedia"],
@@ -155,7 +156,7 @@ class FTPPublishServiceTestCase(TestCase):
         "superdesk.publish.transmitters.file_providers.associations.get_renditions_spec",
         return_value={"16-9": {}, "4-3": {}},
     )
-    def test_with_association_and_embed(self, mock_ftp_constructor, *args):
+    async def test_with_association_and_embed(self, mock_ftp_constructor, *args):
         item = {"associations": ASSOCIATIONS}
 
         service = FTPPublishService()
@@ -170,7 +171,7 @@ class FTPPublishServiceTestCase(TestCase):
 
     @mock.patch("superdesk.publish.transmitters.ftp.ftp_connect")
     @mock.patch("superdesk.storage.ProxyMediaStorage.get", mockGet)
-    def test_publish_non_ninjs_item_assoc(self, ftp_connect_mock, *args):
+    async def test_publish_non_ninjs_item_assoc(self, ftp_connect_mock, *args):
         service = FTPPublishService()
         queue_item = {
             "item_id": "someid",

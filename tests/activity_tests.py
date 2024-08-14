@@ -27,7 +27,8 @@ class MockPreferenceService:
 
 
 class ActivityTestCase(TestCase):
-    def setUp(self):
+    async def asyncSetUp(self):
+        await super().asyncSetUp()
         init_app(self.app)
 
     def test_if_user_is_in_recipients(self):

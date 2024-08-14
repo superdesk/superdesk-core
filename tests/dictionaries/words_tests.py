@@ -11,9 +11,10 @@ from superdesk.tests import TestCase
 
 
 class WordsTestCase(TestCase):
-    def setUp(self):
+    async def asyncSetUp(self):
+        await super().asyncSetUp()
         self.req = ParsedRequest()
-        with self.app.test_request_context(self.app.config.get("URL_PREFIX")):
+        async with self.app.test_request_context(self.app.config.get("URL_PREFIX")):
             self.dictionaries = [
                 {"_id": "1", "name": "Eng", "language_id": "en"},
                 {"_id": "2", "name": "Eng AUs", "language_id": "en-AU", "is_active": "true"},
@@ -32,14 +33,13 @@ class WordsTestCase(TestCase):
         self.assertEqual(DictionaryService().get_base_language("en-AU"), "en")
         self.assertIsNone(DictionaryService().get_base_language("en"))
 
-    def test_get_dictionary(self):
-        with self.app.app_context():
-            dicts = get_resource_service("dictionaries").get_dictionaries("en")
-            self.assertEqual(len(dicts), 1)
-            self.assertEqual(dicts[0]["language_id"], "en")
-            dicts = get_resource_service("dictionaries").get_dictionaries("en-AU")
-            self.assertEqual(len(dicts), 1)
-            self.assertEqual(dicts[0]["language_id"], "en-AU")
+    async def test_get_dictionary(self):
+        dicts = get_resource_service("dictionaries").get_dictionaries("en")
+        self.assertEqual(len(dicts), 1)
+        self.assertEqual(dicts[0]["language_id"], "en")
+        dicts = get_resource_service("dictionaries").get_dictionaries("en-AU")
+        self.assertEqual(len(dicts), 1)
+        self.assertEqual(dicts[0]["language_id"], "en-AU")
 
     def test_store_dict_small(self):
         content = {"foo": 1}
@@ -48,7 +48,7 @@ class WordsTestCase(TestCase):
         self.assertEqual(json.dumps(content), dictionary.get("content"))
         self.assertEqual(content, fetch_dict(dictionary))
 
-    def test_store_dict_big(self):
+    async def test_store_dict_big(self):
         content = self._get_big_dict()
         dictionary = {"content": content}
         self.assertGreater(len(json.dumps(dictionary, cls=MongoJSONEncoder)), 1000000)
@@ -57,14 +57,14 @@ class WordsTestCase(TestCase):
         self.assertEqual(content, fetch_dict(dictionary))
         self.assertLess(len(json.dumps(dictionary, cls=MongoJSONEncoder)), 100)
 
-    def test_store_big_after_small(self):
+    async def test_store_big_after_small(self):
         original = {"content": {"foo": 1}}
         updates = {"content": self._get_big_dict()}
         store_dict(updates, original)
         self.assertIsNone(updates["content"])
         self.assertIsNotNone(updates[FILE_ID])
 
-    def test_small_after_big(self):
+    async def test_small_after_big(self):
         updates = {"content": self._get_big_dict()}
         store_dict(updates, {})
         file_id = updates[FILE_ID]

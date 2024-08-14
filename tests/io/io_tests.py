@@ -21,6 +21,8 @@ from superdesk.io.feed_parsers.newsml_2_0 import NewsMLTwoFeedParser
 from superdesk.io.feed_parsers.nitf import NITFFeedParser
 from superdesk.io.feeding_services.file_service import FileFeedingService
 
+from superdesk.tests import TestCase, AsyncTestCase
+
 
 def get_etree(filename):
     dirname = os.path.dirname(os.path.realpath(__file__))
@@ -28,7 +30,7 @@ def get_etree(filename):
         return etree.fromstring(f.read().encode("utf-8"))
 
 
-class UtilsTest(unittest.TestCase):
+class UtilsTest(AsyncTestCase):
     def test_get_word_count(self):
         self.assertEqual(2, get_word_count("plain text"), "plain text")
         self.assertEqual(2, get_word_count("<p> html text </p>"), "paragraph")
@@ -75,7 +77,7 @@ class UtilsTest(unittest.TestCase):
         self.assertTrue(service.is_old_content(utcnow() - timedelta(minutes=11)))
 
 
-class ItemTest(unittest.TestCase):
+class ItemTest(TestCase):
     def setUpFixture(self, filename):
         self.tree = get_etree(filename)
         provider = {"name": "Test"}
@@ -86,7 +88,8 @@ class ItemTest(unittest.TestCase):
 
 
 class TextParserTest(ItemTest):
-    def setUp(self):
+    async def asyncSetUp(self):
+        await super().asyncSetUp()
         self.setUpFixture("text.xml")
 
     def test_instance(self):
@@ -130,7 +133,8 @@ class TextParserTest(ItemTest):
 
 
 class PictureParserTest(ItemTest):
-    def setUp(self):
+    async def asyncSetUp(self):
+        await super().asyncSetUp()
         self.setUpFixture("picture.xml")
 
     def test_type(self):
@@ -175,7 +179,8 @@ class PictureParserTest(ItemTest):
 
 
 class SNEPParserTest(ItemTest):
-    def setUp(self):
+    async def asyncSetUp(self):
+        await super().asyncSetUp()
         self.setUpFixture("snep.xml")
 
     def test_content_set(self):

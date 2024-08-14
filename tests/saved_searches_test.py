@@ -3,7 +3,7 @@ from datetime import datetime
 from bson import ObjectId
 from apps import saved_searches
 from apps.saved_searches.saved_searches import encode_filter, decode_filter
-from superdesk.tests import TestCase
+from superdesk.tests import TestCase, markers
 
 
 class SavedSearchesTestCase(TestCase):
@@ -17,7 +17,8 @@ class SavedSearchesTestCase(TestCase):
         self.assertEqual(data, decode_filter(decoded))
 
     @mock.patch.object(saved_searches, "send_report_email")
-    def test_publish_report(self, send_report_email):
+    @markers.requires_async_celery
+    async def test_publish_report(self, send_report_email):
         """Check that publish_report is called correctly"""
         self.app.data.insert(
             "archive",
@@ -82,8 +83,7 @@ class SavedSearchesTestCase(TestCase):
             ],
         )
 
-        with self.app.app_context():
-            saved_searches.report()
+        saved_searches.report()
 
         self.assertTrue(send_report_email.called)
         self.assertEqual(send_report_email.call_count, 2)

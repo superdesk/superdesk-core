@@ -21,7 +21,7 @@ from superdesk.core import json
 from superdesk.metadata.utils import generate_guid, GUID_TAG
 import superdesk.signals as signals
 from superdesk.errors import SuperdeskApiError
-from superdesk.tests import TestCase
+from superdesk.tests import TestCase, markers
 from superdesk.utc import utcnow
 from superdesk.metadata.item import CONTENT_STATE, PUBLISH_SCHEDULE, SCHEDULE_SETTINGS
 from apps.archive.archive import update_image_caption, update_associations
@@ -44,8 +44,8 @@ NOW = utcnow()
 
 
 class ArchiveTestCase(TestCase):
-    def setUp(self):
-        super().setUp()
+    async def asyncSetUp(self):
+        await super().asyncSetUp()
         search_provider = {"_id": 1, "source": "ABC", "name": "ABC", "search_provider": "ABC"}
         self.app.data.insert("search_providers", [search_provider])
         if not registered_search_providers.get("ABC"):
@@ -130,7 +130,7 @@ class ArchiveTestCase(TestCase):
         self.assertEqual(doc["task"]["last_authoring_desk"], 3245)
         self.assertIsNone(doc["task"]["last_production_desk"])
 
-    def test_if_metadata_are_transtyped(self):
+    async def test_if_metadata_are_transtyped(self):
         """Check that date metadata in extra are transtyped correctly"""
         content_type = {
             "_id": "type_1",
@@ -155,7 +155,7 @@ class ArchiveTestCase(TestCase):
         transtype_metadata(doc)
         self.assertIsInstance(doc["extra"]["test_date_field"], datetime)
 
-    def test_if_no_source_defined_on_desk(self):
+    async def test_if_no_source_defined_on_desk(self):
         desk = {"name": "sports"}
         self.app.data.insert("desks", [desk])
         located, formatted_date, current_ts = self._get_located_and_current_utc_ts()
@@ -170,7 +170,7 @@ class ArchiveTestCase(TestCase):
         self.assertEqual(doc["dateline"]["source"], get_default_source())
         self.assertEqual(doc["dateline"]["text"], "SYDNEY, %s %s -" % (formatted_date, get_default_source()))
 
-    def test_if_source_defined_on_desk(self):
+    async def test_if_source_defined_on_desk(self):
         source = "FOO"
         desk = {"name": "sports", "source": source}
         self.app.data.insert("desks", [desk])
@@ -186,7 +186,7 @@ class ArchiveTestCase(TestCase):
         self.assertEqual(doc["dateline"]["source"], source)
         self.assertEqual(doc["dateline"]["text"], "SYDNEY, %s %s -" % (formatted_date, source))
 
-    def test_if_ingest_provider_source_is_preserved(self):
+    async def test_if_ingest_provider_source_is_preserved(self):
         desk = {"name": "sports", "source": "FOO"}
         self.app.data.insert("desks", [desk])
         ingest_provider = {"_id": 1, "source": "ABC"}
@@ -204,7 +204,7 @@ class ArchiveTestCase(TestCase):
         self.assertEqual(doc["dateline"]["source"], "ABC")
         self.assertEqual(doc["dateline"]["text"], "SYDNEY, %s %s -" % (formatted_date, "ABC"))
 
-    def test_if_ingest_provider_source_is_not_preserved_for_default_ingest(self):
+    async def test_if_ingest_provider_source_is_not_preserved_for_default_ingest(self):
         desk = {"name": "sports", "source": "FOO"}
         self.app.data.insert("desks", [desk])
         ingest_provider = {"_id": 1, "source": "AAP"}
@@ -222,7 +222,7 @@ class ArchiveTestCase(TestCase):
         self.assertEqual(doc["dateline"]["source"], "FOO")
         self.assertEqual(doc["dateline"]["text"], "SYDNEY, %s %s -" % (formatted_date, "FOO"))
 
-    def test_if_search_provider_source_is_preserved(self):
+    async def test_if_search_provider_source_is_preserved(self):
         desk = {"name": "sports", "source": "FOO"}
         self.app.data.insert("desks", [desk])
         doc = {
@@ -235,7 +235,7 @@ class ArchiveTestCase(TestCase):
         set_default_source(doc)
         self.assertEqual(doc["source"], "ABC")
 
-    def test_if_item_has_source_then_search_provider_source_is_not_used(self):
+    async def test_if_item_has_source_then_search_provider_source_is_not_used(self):
         desk = {"name": "sports", "source": "FOO"}
         self.app.data.insert("desks", [desk])
         doc = {
@@ -334,7 +334,8 @@ class ArchiveTestCase(TestCase):
     def test_get_dateline_city_from_text_with_city_state(self):
         self.assertEqual(get_dateline_city({"located": None, "text": "City, State, 9 July AAP"}), "City, State")
 
-    def test_firstpublished(self):
+    @markers.requires_async_celery
+    async def test_firstpublished(self):
         """Check that "firstpublihed" field is set correctly
 
         the test create a story, check firstpublished field, then correct it
@@ -365,7 +366,8 @@ class ArchiveTestCase(TestCase):
         self.assertEqual("corrected", corrected["body_html"])
         self.assertEqual(NOW, corrected["firstpublished"])
 
-    def test_update_signals(self):
+    @markers.requires_async_celery
+    async def test_update_signals(self):
         def handler(sender, **kwargs):
             pass
 
@@ -390,7 +392,7 @@ class ArchiveTestCase(TestCase):
         signals.item_update.disconnect(item_update_mock)
         signals.item_updated.disconnect(item_updated_mock)
 
-    def test_duplicate_signals(self):
+    async def test_duplicate_signals(self):
         def handler(sender, item, original, operation):
             pass
 
@@ -453,7 +455,7 @@ class ArchiveTestCase(TestCase):
             ["body_html", "body_footer", "headline", "slugline", "abstract"], list(source["highlight"]["fields"].keys())
         )
 
-    def test_get_expired_items(self):
+    async def test_get_expired_items(self):
         now = utcnow()
         items = []
         for i in range(1000):
@@ -486,7 +488,8 @@ class ArchiveTestCase(TestCase):
 
         assert 500 == counter
 
-    def test_republished_associated_item_datetime(self):
+    @markers.requires_async_celery
+    async def test_republished_associated_item_datetime(self):
         """
         Check rescheduled item and its associated item has same published_schedule date time
         """

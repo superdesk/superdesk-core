@@ -95,16 +95,16 @@ class ConceptItemsServiceTestCase(TestCase):
         },
     ]
 
-    def setUp(self):
-        with self.app.app_context():
-            self.app.data.insert("concept_items", self.concept_items)
+    async def asyncSetUp(self):
+        await super().asyncSetUp()
+        self.app.data.insert("concept_items", self.concept_items)
 
-    def test_query_all_items(self):
+    async def test_query_all_items(self):
         service = get_resource_service("concept_items")
 
         self.assertEqual(len(list(service.get_from_mongo(req=None, lookup={}))), len(self.concept_items))
 
-    def test_query_sort_by_name_case_sensetive(self):
+    async def test_query_sort_by_name_case_sensetive(self):
         service = get_resource_service("concept_items")
         names = [
             "A Message to Garcia",
@@ -128,7 +128,7 @@ class ConceptItemsServiceTestCase(TestCase):
         cursor = service.get_from_mongo(req=req, lookup={})
         self.assertEqual([i["name"] for i in cursor], names)
 
-    def test_query_sort_by_name_case_insensetive(self):
+    async def test_query_sort_by_name_case_insensetive(self):
         service = get_resource_service("concept_items")
         names = [
             "A Message to Garcia",
@@ -154,7 +154,7 @@ class ConceptItemsServiceTestCase(TestCase):
         cursor = service.get_from_mongo(req=req, lookup={})
         self.assertEqual([i["name"] for i in cursor], names)
 
-    def test_service_adding_case_insensetive_collation(self):
+    async def test_service_adding_case_insensetive_collation(self):
         service = get_resource_service("concept_items")
         names = [
             "A Message to Garcia",
@@ -204,7 +204,7 @@ class ConceptItemsServiceTestCase(TestCase):
         cursor = service.get(req=req, lookup={})
         self.assertEqual([i["definition_text"] for i in cursor], definitions)
 
-    def test_service_use_definition_text_instead_of_definition_html(self):
+    async def test_service_use_definition_text_instead_of_definition_html(self):
         service = get_resource_service("concept_items")
         definitions = [
             "A Message to Garcia is a widely distributed essay written by Elbert Hubbard in 1899, "

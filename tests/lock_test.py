@@ -5,7 +5,7 @@ from superdesk.lock import lock, unlock, touch
 
 
 class LockTestCase(TestCase):
-    def test_lock(self):
+    async def test_lock(self):
         task = "test"
 
         self.assertTrue(lock(task, expire=2))

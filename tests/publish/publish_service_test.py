@@ -14,9 +14,8 @@ from importlib import reload
 
 
 class Base(TestCase):
-    def setUpForChildren(self):
-        super().setUpForChildren()
-
+    async def asyncSetUp(self):
+        await super().asyncSetUp()
         reload(publish_service)
         self.service = publish_service.PublishService()
         self.fake_item = {
@@ -65,7 +64,8 @@ class FilenameTest(Base):
 
 
 class FilenameCustomizedExtTest(Base):
-    def setUp(self):
+    async def asyncSetUp(self):
+        await super().asyncSetUp()
         self.service.register_file_extension("custom_format", "custom_ext")
 
     def test_get_extension(self):
@@ -92,7 +92,8 @@ class CustomizedService(publish_service.PublishServiceBase):
 
 
 class FilenameCustomizedServiceTest(Base):
-    def setUp(self):
+    async def asyncSetUp(self):
+        await super().asyncSetUp()
         publish_service.set_publish_service(CustomizedService)
         self.service = publish_service.PublishService()
 

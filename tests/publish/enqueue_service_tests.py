@@ -181,11 +181,11 @@ class EnqueueServiceTest(TestCase):
         "genre": [{"name": "Article (news)", "code": "Article"}],
     }
 
-    def setUp(self):
-        with self.app.app_context():
-            self.app.data.insert("publish_queue", self.queue_items)
+    async def asyncSetUp(self):
+        await super().asyncSetUp()
+        self.app.data.insert("publish_queue", self.queue_items)
 
-    def test_previously_sent_item_association_for_one_subscriber(self):
+    async def test_previously_sent_item_association_for_one_subscriber(self):
         service = EnqueueService()
         subscribers, subscriber_codes, associated_items = service._get_subscribers_for_previously_sent_items(
             {"item_id": "1"}
@@ -194,7 +194,7 @@ class EnqueueServiceTest(TestCase):
         self.assertIn("sub1", list(associated_items.keys()))
         self.assertIn("123", associated_items["sub1"])
 
-    def test_previously_sent_item_association_for_multiple_subscribers(self):
+    async def test_previously_sent_item_association_for_multiple_subscribers(self):
         service = EnqueueService()
         subscribers, subscriber_codes, associated_items = service._get_subscribers_for_previously_sent_items(
             {"item_id": "2"}
@@ -207,7 +207,7 @@ class EnqueueServiceTest(TestCase):
         self.assertIn("123", associated_items["sub4"])
         self.assertIn("456", associated_items["sub4"])
 
-    def test_previously_sent_item_association_for_removed_associations(self):
+    async def test_previously_sent_item_association_for_removed_associations(self):
         service = EnqueueService()
         subscribers, subscriber_codes, associated_items = service._get_subscribers_for_previously_sent_items(
             {"item_id": "3"}
@@ -216,7 +216,7 @@ class EnqueueServiceTest(TestCase):
         self.assertIn("sub3", list(associated_items.keys()))
         self.assertIn("786", associated_items["sub3"])
 
-    def test_previously_sent_item_association_for_no_associations(self):
+    async def test_previously_sent_item_association_for_no_associations(self):
         service = EnqueueService()
         subscribers, subscriber_codes, associated_items = service._get_subscribers_for_previously_sent_items(
             {"item_id": "5"}
@@ -228,7 +228,7 @@ class EnqueueServiceTest(TestCase):
     @mock.patch.object(EnqueueService, "_extend_subscriber_items", _fake_extend_subscriber_items)
     @mock.patch.object(EnqueueService, "queue_transmission", lambda *a, **kw: ([], True))
     @mock.patch.object(PublishService, "publish")
-    def test_content_api_package_publishing(self, content_api_publish):
+    async def test_content_api_package_publishing(self, content_api_publish):
         service = EnqueueService()
         service.enqueue_item(self.content_api_package)
         # Mock.assert_called_once is only available in Python 3.6

@@ -557,7 +557,8 @@ class NewsMLG2FormatterTest(TestCase):
 
     now = datetime.datetime(2015, 6, 13, 11, 45, 19, 0)
 
-    def setUp(self):
+    async def asyncSetUp(self):
+        await super().asyncSetUp()
         self.article["state"] = "published"
         self.article["firstcreated"] = self.now
         self.article["versioncreated"] = self.now
@@ -569,7 +570,7 @@ class NewsMLG2FormatterTest(TestCase):
         self.app.data.insert("vocabularies", self.vocab)
         self.app.data.insert("archive", self.packaged_articles)
 
-    def test_formatter(self):
+    async def test_formatter(self):
         seq, doc = self.formatter.format(self.article, {"name": "Test Subscriber"})[0]
         xml = etree.fromstring(doc.encode("utf-8"))
         content_meta = xml.find(ns("itemSet")).find(ns("newsItem")).find(ns("contentMeta"))
@@ -690,7 +691,7 @@ class NewsMLG2FormatterTest(TestCase):
         self.assertEqual("Article (News)", genre[0].find(ns("name")).text)
         self.assertEqual("custom:foo", genre[1].get("qcode"))
 
-    def testPreservedFomat(self):
+    async def testPreservedFomat(self):
         article = dict(self.article)
         article["format"] = "preserved"
         seq, doc = self.formatter.format(article, {"name": "Test Subscriber"})[0]
@@ -703,7 +704,7 @@ class NewsMLG2FormatterTest(TestCase):
             "The story body",
         )
 
-    def testDefaultRightsFomatter(self):
+    async def testDefaultRightsFomatter(self):
         article = dict(self.article)
         article["source"] = "BOGUS"
         seq, doc = self.formatter.format(article, {"name": "Test Subscriber"})[0]
@@ -716,7 +717,7 @@ class NewsMLG2FormatterTest(TestCase):
             "default terms",
         )
 
-    def testPackagePublish(self):
+    async def testPackagePublish(self):
         article = dict(self.package)
         article["firstcreated"] = self.now
         article["versioncreated"] = self.now
@@ -736,7 +737,7 @@ class NewsMLG2FormatterTest(TestCase):
             "tag:localhost:2015:5838657b-b3ec-4e5a-9b39-36039e16400b",
         )
 
-    def testPicturePackagePublish(self):
+    async def testPicturePackagePublish(self):
         article = dict(self.picture_package)
         article["firstcreated"] = self.now
         article["versioncreated"] = self.now
@@ -763,7 +764,7 @@ class NewsMLG2FormatterTest(TestCase):
             "tag:localhost:2015:0c12aa0a-82ef-4c58-a363-c5bd8a368037",
         )
 
-    def testPicturePublish(self):
+    async def testPicturePublish(self):
         article = dict(self.picture)
         article["firstcreated"] = self.now
         article["versioncreated"] = self.now
@@ -806,7 +807,7 @@ class NewsMLG2FormatterTest(TestCase):
             "image/jpeg",
         )
 
-    def testVideoPublish(self):
+    async def testVideoPublish(self):
         article = dict(self.video)
         article["firstcreated"] = self.now
         article["versioncreated"] = self.now
@@ -857,7 +858,7 @@ class NewsMLG2FormatterTest(TestCase):
             "video/mp4",
         )
 
-    def testPictureTextPackage(self):
+    async def testPictureTextPackage(self):
         article = dict(self.picture_text_package)
         article["firstcreated"] = self.now
         article["versioncreated"] = self.now
@@ -878,7 +879,7 @@ class NewsMLG2FormatterTest(TestCase):
             item_refs[1].find("{http://iptc.org/std/nar/2006-10-01/}pubStatus").get("qcode"), "stat:usable"
         )
 
-    def testPictureTextPackageMultiGroup(self):
+    async def testPictureTextPackageMultiGroup(self):
         article = dict(self.picture_text_package_multi_group)
         article["firstcreated"] = self.now
         article["versioncreated"] = self.now
@@ -912,7 +913,7 @@ class NewsMLG2FormatterTest(TestCase):
         self.assertEqual(group_ref[0].get("idref"), "main")
         self.assertEqual(group_ref[1].get("idref"), "picture")
 
-    def testPlace(self):
+    async def testPlace(self):
         article = self.article.copy()
         seq, doc = self.formatter.format(article, {"name": "Test Subscriber"})[0]
         xml = etree.fromstring(doc.encode("utf-8"))
@@ -984,7 +985,7 @@ class NewsMLG2FormatterTest(TestCase):
         )
         self.assertIsNone(content_meta.find("{http://iptc.org/std/nar/2006-10-01/}" 'subject[@qcode="loctyp:Country"]'))
 
-    def testPlaceGeonames(self):
+    async def testPlaceGeonames(self):
         article = self.article.copy()
         article["place"] = [
             {
@@ -1084,7 +1085,7 @@ class NewsMLG2FormatterTest(TestCase):
         item = root.find("itemSet", NSMAP).find("newsItem", NSMAP)
         return item
 
-    def test_lang_fr(self):
+    async def test_lang_fr(self):
         item = self.format(
             {
                 "language": "fr-CA",

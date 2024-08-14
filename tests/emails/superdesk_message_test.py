@@ -10,10 +10,10 @@ from superdesk.emails import SuperdeskMessage
 class SuperdeskMessageTestCase(unittest.TestCase):
     subject = "темы для выделения выделения выделения"
 
-    def test_unicode_subject(self):
+    async def test_unicode_subject(self):
         app = Flask(__name__)
         flask_mail.Mail(app)
-        with app.app_context():
+        async with app.app_context():
             msg = SuperdeskMessage(self.subject, sender="root", body="test")
             out = msg.as_bytes()
         parsed = Parser().parsestr(out.decode("utf-8"), headersonly=True)
