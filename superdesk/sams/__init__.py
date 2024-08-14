@@ -5,7 +5,7 @@ from .storage_destinations import destinations_bp
 from .sets import sets_bp
 from superdesk.auth.decorator import blueprint_auth
 from superdesk.default_settings import RENDITIONS
-from flask_babel import _
+from quart_babel import gettext as _
 from .client import get_sams_client
 
 

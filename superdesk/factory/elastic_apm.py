@@ -18,7 +18,7 @@ def setup_apm(app: Flask, service="Core API") -> None:
             ),
         }
 
-        app.apm = ElasticAPM(app)
+        app.apm = ElasticAPM(app)  # type: ignore
 
 
 def get_environment(app: Flask) -> Literal["testing", "staging", "production"]:

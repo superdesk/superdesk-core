@@ -1,7 +1,7 @@
 import enum
 import datetime
 
-from flask_babel import _
+from quart_babel import gettext as _
 
 from superdesk.flask import abort
 from superdesk.utc import utcnow

@@ -17,7 +17,7 @@ from bson.errors import InvalidId
 from cerberus import errors
 from eve.io.mongo import Validator
 from eve.auth import auth_field_and_value
-from flask_babel import _
+from quart_babel import gettext as _
 from eve.validation import SingleErrorAsStringErrorHandler
 from werkzeug.datastructures import FileStorage
 

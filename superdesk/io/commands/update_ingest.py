@@ -283,7 +283,7 @@ def update_last_item_updated(update, items):
 
 
 @celery.task(soft_time_limit=UPDATE_TTL)
-def update_provider(provider, rule_set=None, routing_scheme=None, sync=False):
+async def update_provider(provider, rule_set=None, routing_scheme=None, sync=False):
     """Fetch items from ingest provider, ingest them into Superdesk and update the provider.
 
     :param provider: Ingest Provider data
@@ -332,7 +332,7 @@ def update_provider(provider, rule_set=None, routing_scheme=None, sync=False):
 
         if LAST_ITEM_UPDATE not in update and get_is_idle(provider):
             admins = superdesk.get_resource_service("users").get_users_by_user_type("administrator")
-            notify_and_add_activity(
+            await notify_and_add_activity(
                 ACTIVITY_EVENT,
                 "Provider {{name}} has gone strangely quiet. Last activity was on {{last}}",
                 resource="ingest_providers",

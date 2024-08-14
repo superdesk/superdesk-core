@@ -191,6 +191,7 @@ class IngestProviderService(BaseService):
 
     def on_created(self, docs):
         for doc in docs:
+            # TODO-ASYNC: Support async (see superdesk.tests.markers.requires_eve_resource_async_event)
             notify_and_add_activity(
                 ACTIVITY_CREATE,
                 "Created Ingest Channel {{name}}",
@@ -223,6 +224,7 @@ class IngestProviderService(BaseService):
         do_notification = updates.get("notifications", {}).get(
             "on_update", original.get("notifications", {}).get("on_update", True)
         )
+        # TODO-ASYNC: Support async (see superdesk.tests.markers.requires_eve_resource_async_event)
         notify_and_add_activity(
             ACTIVITY_UPDATE,
             "updated Ingest Channel {{name}}",
@@ -248,6 +250,7 @@ class IngestProviderService(BaseService):
                     "on_open", original.get("notifications", {}).get("on_open", True)
                 )
 
+            # TODO-ASYNC: Support async (see superdesk.tests.markers.requires_eve_resource_async_event)
             notify_and_add_activity(
                 ACTIVITY_EVENT,
                 "{{status}} Ingest Channel {{name}}",
@@ -274,6 +277,7 @@ class IngestProviderService(BaseService):
         """
         Overriding to send notification and record activity about channel deletion.
         """
+        # TODO-ASYNC: Support async (see superdesk.tests.markers.requires_eve_resource_async_event)
         notify_and_add_activity(
             ACTIVITY_DELETE,
             "Deleted Ingest Channel {{name}}",

@@ -9,7 +9,7 @@
 # at https://www.sourcefabric.org/superdesk/license
 from decimal import Decimal
 from . import unit_base
-from flask_babel import lazy_gettext
+from quart_babel import lazy_gettext
 
 SQUARE_METER_SYMBOL = "square meter"
 SQUARE_CENTIMETER_SYMBOL = "square cm"

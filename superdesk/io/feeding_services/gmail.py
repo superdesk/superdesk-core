@@ -13,7 +13,7 @@ from bson import ObjectId
 from os.path import join
 import time
 import logging
-from flask_babel import lazy_gettext as l_
+from quart_babel import lazy_gettext as l_
 import superdesk
 from superdesk.auth import oauth
 from superdesk.errors import IngestEmailError

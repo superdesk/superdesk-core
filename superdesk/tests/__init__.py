@@ -12,7 +12,6 @@ import os
 import functools
 import logging
 import socket
-import unittest
 from pathlib import Path
 
 from copy import deepcopy
@@ -29,6 +28,10 @@ from superdesk.factory.app import get_media_storage_class
 from superdesk.storage.amazon_media_storage import AmazonMediaStorage
 from superdesk.storage.proxy import ProxyMediaStorage
 
+from .asyncio import AsyncFlaskTestCase, AsyncTestCase
+
+
+TestCase = AsyncFlaskTestCase
 logger = logging.getLogger(__name__)
 test_user = {
     "username": "test_user",
@@ -152,14 +155,14 @@ def foreach_mongo(fn):
     return inner
 
 
-def drop_mongo(app):
+async def drop_mongo(app):
     pairs = (
         ("MONGO", "MONGO_DBNAME"),
         ("ARCHIVED", "ARCHIVED_DBNAME"),
         ("LEGAL_ARCHIVE", "LEGAL_ARCHIVE_DBNAME"),
         ("CONTENTAPI_MONGO", "CONTENTAPI_MONGO_DBNAME"),
     )
-    with app.app_context():
+    async with app.app_context():
         for prefix, name in pairs:
             if not app.config.get(name):
                 continue
@@ -228,9 +231,9 @@ def update_config_from_step(context, config):
             m.start()
 
 
-def clean_dbs(app, force=False):
-    _clean_es(app)
-    drop_mongo(app)
+async def clean_dbs(app, force=False):
+    await _clean_es(app)
+    await drop_mongo(app)
 
 
 def retry(exc, count=1):
@@ -254,13 +257,13 @@ def retry(exc, count=1):
     return wrapper
 
 
-def _clean_es(app):
-    with app.app_context():
+async def _clean_es(app):
+    async with app.app_context():
         app.data.elastic.drop_index()
 
 
 @retry(socket.timeout, 2)
-def clean_es(app, force=False):
+async def clean_es(app, force=False):
     use_snapshot(app, "clean", [snapshot_es], force)(_clean_es)(app)
 
 
@@ -352,7 +355,7 @@ def use_snapshot(app, name, funcs=(snapshot_es, snapshot_mongo), force=False):
 use_snapshot.cache = {}  # type: ignore
 
 
-def setup(context=None, config=None, app_factory=get_app, reset=False):
+async def setup(context=None, config=None, app_factory=get_app, reset=False):
     if not hasattr(setup, "app") or setup.reset or config:
         if hasattr(setup, "app"):
             # Close all PyMongo Connections (new ones will be created with ``app_factory`` call)
@@ -371,21 +374,22 @@ def setup(context=None, config=None, app_factory=get_app, reset=False):
         context.app = app
         context.client = app.test_client()
         if not hasattr(context, "BEHAVE") and not hasattr(context, "test_context"):
-            context.test_context = app.test_request_context()
+            context.test_context = app.test_request_context("/")
             context.test_context.push()
 
-    with app.app_context():
-        clean_dbs(app, force=bool(config))
+    async with app.app_context():
+        await clean_dbs(app, force=bool(config))
         app.data.elastic.init_index()
         cache.clean()
 
 
-def setup_auth_user(context, user=None):
-    setup_db_user(context, user)
+async def setup_auth_user(context, user=None):
+    await setup_db_user(context, user)
 
 
 def add_to_context(context, token, user, auth_id=None):
     context.headers.append(("Authorization", b"basic " + b64encode(token + b":")))
+
     if getattr(context, "user", None):
         context.previous_user = context.user
     context.user = user
@@ -411,14 +415,14 @@ def get_prefixed_url(current_app, endpoint):
     return url_prefix + endpoint
 
 
-def setup_db_user(context, user):
+async def setup_db_user(context, user):
     """Setup the user for the DB authentication.
 
     :param context: test context
     :param dict user: user
     """
     user = user or test_user
-    with context.app.test_request_context(context.app.config["URL_PREFIX"]):
+    async with context.app.test_request_context(context.app.config["URL_PREFIX"]):
         original_password = user["password"]
 
         user.setdefault("user_type", "administrator")
@@ -428,11 +432,11 @@ def setup_db_user(context, user):
 
         user["password"] = original_password
         auth_data = json.dumps({"username": user["username"], "password": user["password"]})
-        auth_response = context.client.post(
+        auth_response = await context.client.post(
             get_prefixed_url(context.app, "/auth_db"), data=auth_data, headers=context.headers
         )
 
-        auth_data = json.loads(auth_response.get_data())
+        auth_data = json.loads(await auth_response.get_data())
         token = auth_data.get("token").encode("ascii")
         auth_id = auth_data.get("_id")
         add_to_context(context, token, user, auth_id)
@@ -507,54 +511,3 @@ def setup_notification(context):
 
 def teardown_notification(context):
     context.app.notification_client = context.app.notification_client.client
-
-
-class TestCase(unittest.TestCase):
-    def __init__(self, *a, **kw):
-        super().__init__(*a, **kw)
-
-        self.app = None
-        self.client = None
-        self.ctx = None
-
-    @classmethod
-    def setUpClass(cls):
-        """Wrap `setUp` and `tearDown` methods to run `setUpForChildren` and `tearDownForChildren`."""
-
-        # setUp
-        def wrapper(self, *args, **kwargs):
-            """Combine `setUp` with `setUpForChildren`."""
-            self.setUpForChildren()
-            return orig_setup(self, *args, **kwargs)
-
-        orig_setup = cls.setUp
-        cls.setUp = wrapper
-
-        # tearDown
-        def wrapper(self, *args, **kwargs):
-            """Combine `tearDown` with `tearDownForChildren`."""
-            self.tearDownForChildren()
-            return orig_teardown(self, *args, **kwargs)
-
-        orig_teardown = cls.tearDown
-        cls.tearDown = wrapper
-
-    def setUpForChildren(self):
-        """Run this `setUp` stuff for each children."""
-        setup(self, reset=True)
-
-        self.ctx = self.app.app_context()
-        self.ctx.push()
-
-        def clean_ctx():
-            if self.ctx:
-                self.ctx.pop()
-
-        self.addCleanup(clean_ctx)
-
-    def tearDownForChildren(self):
-        """Run this `tearDown` stuff for each children."""
-
-    def get_fixture_path(self, filename):
-        rootpath = os.path.abspath(os.path.dirname(os.path.dirname(__file__)))
-        return os.path.join(rootpath, "features", "steps", "fixtures", filename)

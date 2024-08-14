@@ -9,7 +9,7 @@
 # at https://www.sourcefabric.org/superdesk/license
 
 
-from flask_babel import lazy_gettext
+from quart_babel import lazy_gettext
 from .roles import RolesResource, RolesService
 import superdesk
 

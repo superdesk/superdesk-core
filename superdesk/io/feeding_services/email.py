@@ -12,7 +12,7 @@ from typing import List
 import socket
 import imaplib
 
-from flask_babel import lazy_gettext as l_
+from quart_babel import lazy_gettext as l_
 
 from superdesk.core import get_app_config
 from superdesk.errors import IngestEmailError

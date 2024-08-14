@@ -92,18 +92,24 @@ def get_meta(file_stream):
 
     exif_meta = {}
     for k, v in exif.items():
+        print(f"Attempting exif key {k}, val {v}")
         try:
             key = ExifTags.TAGS[k].strip()
         except KeyError:
+            print("\tKey not found")
             continue
 
+        print(f"\tUpdated key = {key}")
+
         if key == "GPSInfo":
+            print("\tKey is for GPS Info")
             # lookup GPSInfo description key names
             value = {
                 ExifTags.GPSTAGS[vk].strip(): convert_exif_value(vv, vk)
                 for vk, vv in rv.get_ifd(k).items()
                 if is_serializable(vv)
             }
+            print(value)
             exif_meta[key] = value
         elif is_serializable(v):
             value = v.decode("UTF-8") if isinstance(v, bytes) else v

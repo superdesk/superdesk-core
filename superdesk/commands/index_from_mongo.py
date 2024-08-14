@@ -43,13 +43,13 @@ class IndexFromMongo(superdesk.Command):
     ]
     default_page_size = 500
 
-    def run(self, collection_name, all_collections, page_size, last_id, string_id):
+    async def run(self, collection_name, all_collections, page_size, last_id, string_id):
         if not collection_name and not all_collections:
             raise SystemExit("Specify --all to index from all collections")
         elif all_collections:
             async_app = get_current_async_app()
             app = async_app.wsgi
-            app.data.init_elastic(app)
+            await app.data.init_elastic(app)
             resources = app.data.get_elastic_resources()
             resources_processed = []
             for resource_config in async_app.resources.get_all_configs():

@@ -10,6 +10,8 @@
 
 import os
 from copy import deepcopy
+import asyncio
+import logging
 
 from superdesk.core import json
 from apps.prepopulate.app_populate import AppPopulateCommand
@@ -22,6 +24,7 @@ from superdesk.tests.steps import get_macro_path
 from superdesk.tests.setup_teardown import setup_providers, teardown_providers
 
 
+logger = logging.getLogger(__name__)
 readonly_fields = ["display_name", "password", "phone", "first_name", "last_name"]
 LDAP_SERVER = os.environ.get("LDAP_SERVER")
 
@@ -36,11 +39,11 @@ def setup_before_all(context, config, app_factory):
     setup_before_all.app_factory = app_factory
 
 
-def setup_before_scenario(context, scenario, config, app_factory):
+async def setup_before_scenario(context, scenario, config, app_factory):
     if scenario.status != "skipped" and "notesting" in scenario.tags:
         config["SUPERDESK_TESTING"] = False
 
-    tests.setup(context, config, app_factory, bool(config))
+    await tests.setup(context, config, app_factory, bool(config))
 
     context.headers = [("Content-Type", "application/json"), ("Origin", "localhost")]
 
@@ -59,19 +62,19 @@ def setup_before_scenario(context, scenario, config, app_factory):
     setup_search_provider(context.app)
 
     if scenario.status != "skipped" and "auth" in scenario.tags:
-        setup_auth_user(context)
+        await setup_auth_user(context)
 
     if scenario.status != "skipped" and "provider" in scenario.tags:
-        setup_providers(context)
+        await setup_providers(context)
 
     if scenario.status != "skipped" and "vocabulary" in scenario.tags:
-        with context.app.app_context():
+        async with context.app.app_context():
             cmd = AppPopulateCommand()
             filename = os.path.join(os.path.abspath(os.path.dirname("features/steps/fixtures/")), "vocabularies.json")
             cmd.run(filename)
 
     if scenario.status != "skipped" and "content_type" in scenario.tags:
-        with context.app.app_context():
+        async with context.app.app_context():
             cmd = AppPopulateCommand()
             filename = os.path.join(os.path.abspath(os.path.dirname("features/steps/fixtures/")), "content_types.json")
             cmd.run(filename)
@@ -80,7 +83,7 @@ def setup_before_scenario(context, scenario, config, app_factory):
         tests.setup_notification(context)
 
     if scenario.status != "skipped" and "app_init" in scenario.tags:
-        with context.app.app_context():
+        async with context.app.app_context():
             command = AppInitializeWithDataCommand()
             command.run()
 
@@ -91,6 +94,16 @@ def before_all(context):
 
 
 def before_feature(context, feature):
+    try:
+        loop = asyncio.get_event_loop()
+        loop.run_until_complete(before_scenario_async(context, feature))
+    except Exception as e:
+        # Make sure exceptions raised are printed to the console
+        logger.exception(e)
+        raise e
+
+
+async def before_feature_async(context, feature):
     config = getattr(setup_before_all, "config", None)
     if config is not None:
         app_factory = setup_before_all.app_factory
@@ -104,7 +117,7 @@ def before_feature(context, feature):
     # set the MAX_TRANSMIT_RETRY_ATTEMPT to zero so that transmit does not retry
     config["MAX_TRANSMIT_RETRY_ATTEMPT"] = 0
     os.environ["BEHAVE_TESTING"] = "1"
-    tests.setup(context, config, app_factory=app_factory)
+    await tests.setup(context, config, app_factory=app_factory)
 
     if "tobefixed" in feature.tags:
         feature.mark_skipped()
@@ -117,8 +130,18 @@ def before_feature(context, feature):
 
 
 def before_scenario(context, scenario):
+    try:
+        loop = asyncio.get_event_loop()
+        loop.run_until_complete(before_scenario_async(context, scenario))
+    except Exception as e:
+        # Make sure exceptions raised are printed to the console
+        logger.exception(e)
+        raise e
+
+
+async def before_scenario_async(context, scenario):
     config = {}
-    setup_before_scenario(context, scenario, config, app_factory=get_app)
+    await setup_before_scenario(context, scenario, config, app_factory=get_app)
 
 
 def after_scenario(context, scenario):

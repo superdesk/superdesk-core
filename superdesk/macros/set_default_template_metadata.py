@@ -1,6 +1,6 @@
 import logging
 
-from flask_babel import lazy_gettext
+from quart_babel import lazy_gettext
 from superdesk.core import get_app_config
 from superdesk import get_resource_service
 

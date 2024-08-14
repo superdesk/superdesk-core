@@ -13,7 +13,7 @@ import logging
 import pstats
 import re
 
-from flask_babel import lazy_gettext
+from quart_babel import lazy_gettext
 from superdesk import get_resource_service
 import superdesk
 from superdesk.core import get_app_config

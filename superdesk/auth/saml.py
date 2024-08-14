@@ -70,7 +70,7 @@ def init_saml_auth(req):
     return auth
 
 
-def prepare_flask_request(request):
+async def prepare_flask_request(request):
     url_data = urlparse(request.url)
     scheme = request.scheme
     server_url = get_app_config("SERVER_URL")
@@ -82,7 +82,7 @@ def prepare_flask_request(request):
         "server_port": url_data.port,
         "script_name": request.path,
         "get_data": request.args.copy(),
-        "post_data": request.form.copy(),
+        "post_data": (await request.form).copy(),
     }
 
 
@@ -108,8 +108,8 @@ def get_userdata(saml_data):
 
 
 @bp.route("/login/saml", methods=["GET", "POST"])
-def index():
-    req = prepare_flask_request(request)
+async def index():
+    req = await prepare_flask_request(request)
     auth = init_saml_auth(req)
     errors = []
 
@@ -149,14 +149,14 @@ def index():
                 return redirect(url)
 
     if session.get(SESSION_NAME_ID):
-        return auth_user(session[SESSION_NAME_ID], get_userdata(session[SESSION_USERDATA_KEY]))
+        return await auth_user(session[SESSION_NAME_ID], get_userdata(session[SESSION_USERDATA_KEY]))
 
     return redirect(auth.login())
 
 
 @bp.route("/login/saml_metadata")
-def metadata():
-    req = prepare_flask_request(request)
+async def metadata():
+    req = await prepare_flask_request(request)
     auth = init_saml_auth(req)
     settings = auth.get_settings()
     metadata = settings.get_sp_metadata()

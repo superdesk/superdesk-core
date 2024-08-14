@@ -48,14 +48,16 @@ def try_cast(v):
 
 
 def dumps(o):
-    with get_current_app().app_context():
-        return MongoJSONEncoder().encode(o)
+    # TODO-ASYNC: Create a JSONEncoder instance without requiring app_context
+    # with get_current_app().app_context():
+    return MongoJSONEncoder().encode(o)
 
 
 def loads(s):
+    # TODO-ASYNC: Create a JSONDecoder instance without requiring app_context
     o = json.loads(s)
-    with get_current_app().app_context():
-        return serialize(o)
+    # with get_current_app().app_context():
+    return serialize(o)
 
 
 def serialize(o):

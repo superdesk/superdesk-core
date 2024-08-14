@@ -12,7 +12,7 @@ from superdesk import get_resource_service
 from superdesk.resource_fields import ID_FIELD
 from superdesk.validation import ValidationError
 from apps.publish.content.common import ITEM_PUBLISH
-from flask_babel import lazy_gettext
+from quart_babel import lazy_gettext
 import json
 
 

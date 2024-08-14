@@ -6,7 +6,7 @@ from bson.errors import InvalidId
 from eve.utils import str_to_date
 from eve.io.mongo import MongoJSONEncoder
 from eve_elastic import ElasticJSONSerializer
-from flask_babel import LazyString
+from quart_babel.speaklater import LazyString
 
 from superdesk.core import json
 from superdesk.flask import Flask, DefaultJSONProvider

@@ -47,7 +47,7 @@ class OAuthService(AuthService):
         return superdesk.get_resource_service("auth_users").find_one(req=None, email=document["email"].lower())
 
 
-def auth_user(email, userdata=None):
+async def auth_user(email, userdata=None):
     """Authenticate user via email.
 
     This will create new session for user and render template with session data
@@ -60,23 +60,23 @@ def auth_user(email, userdata=None):
         email = userdata["email"]
     data = [{"email": email}]
     if not email:
-        return render_template(AUTHORIZED_TEMPLATE, data={"error": 404})
+        return await render_template(AUTHORIZED_TEMPLATE, data={"error": 404})
     try:
         superdesk.get_resource_service(RESOURCE).post(data)
         data[0]["_id"] = str(data[0]["_id"])
         data[0]["user"] = str(data[0]["user"])
         if userdata:
             superdesk.get_resource_service("users").update_external_user(data[0]["user"], userdata)
-        return render_template(AUTHORIZED_TEMPLATE, data=data[0])
+        return await render_template(AUTHORIZED_TEMPLATE, data=data[0])
     except ValueError:
         if not get_app_config("USER_EXTERNAL_CREATE") or not userdata:
-            return render_template(AUTHORIZED_TEMPLATE, data={"error": 404})
+            return await render_template(AUTHORIZED_TEMPLATE, data={"error": 404})
 
     # create new user using userdata
     # and re-run auth
     try:
         user = superdesk.get_resource_service("users").create_external_user(userdata)
-        return auth_user(user["email"])
+        return await auth_user(user["email"])
     except ValidationError as err:  # can't create user, so let it fail on next iteration
         logger.error(
             "can not create user automaticaly, userdata is not valid",
@@ -86,7 +86,7 @@ def auth_user(email, userdata=None):
             },
         )
 
-    return auth_user(None)
+    return await auth_user(None)
 
 
 def init_app(app) -> None:

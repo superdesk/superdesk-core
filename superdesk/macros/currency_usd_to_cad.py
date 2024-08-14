@@ -11,7 +11,7 @@
 import os
 from . import currency_base
 from decimal import Decimal
-from flask_babel import lazy_gettext
+from quart_babel import lazy_gettext
 
 USD_TO_CAD = Decimal("1.3139")  # backup
 

@@ -1,9 +1,11 @@
 from typing import List, Optional, Dict, Any, cast
 import requests
 
+from quart.typing import ResponseTypes
+
 from superdesk import __version__ as superdesk_version
 from superdesk.core import get_app_config, get_current_app
-from superdesk.flask import request, Response as FlaskResponse, make_response, Flask
+from superdesk.flask import request, make_response, Flask
 from superdesk.utils import get_cors_headers
 
 
@@ -83,11 +85,11 @@ class HTTPProxy:
         url_prefix = cast(str, get_app_config("URL_PREFIX")).lstrip("/")
         return f"/{url_prefix}/{self.internal_url}"
 
-    def process_request(self, path: str) -> FlaskResponse:
+    async def process_request(self, path: str) -> ResponseTypes:
         """The main function used for processing requests from the client"""
 
         self.authenticate()
-        response = make_response() if request.method == "OPTIONS" else self.send_proxy_request()
+        response = await (make_response() if request.method == "OPTIONS" else self.send_proxy_request())
         if self.use_cors:
             # Ignore following type check, as ``typing--Werkzeug=1.0.9`` is missing stub for ``update`` method
             response.headers.set("Access-Control-Allow-Origin", "*")
@@ -105,11 +107,11 @@ class HTTPProxy:
             # Calling ``auth.authenticate`` raises a ``SuperdeskApiError.unauthorizedError()`` exception
             current_app.auth.authenticate()
 
-    def send_proxy_request(self) -> FlaskResponse:
-        result = self.session.request(**self.get_proxy_request_kwargs())
+    async def send_proxy_request(self) -> ResponseTypes:
+        result = self.session.request(**(await self.get_proxy_request_kwargs()))
         return self.construct_response(result)
 
-    def get_proxy_request_kwargs(self) -> Dict[str, Any]:
+    async def get_proxy_request_kwargs(self) -> Dict[str, Any]:
         """Returns the kwargs used when executing the ``requests.request`` call to the external service"""
 
         proxied_path = request.full_path.replace(self.get_internal_url(), "")
@@ -129,13 +131,13 @@ class HTTPProxy:
             url=proxied_url,
             method=request.method,
             headers=headers,
-            data=request.get_data(),
+            data=await request.get_data(),
             allow_redirects=True,
             stream=True,
             timeout=get_app_config("HTTP_PROXY_TIMEOUT"),
         )
 
-    def construct_response(self, result: requests.Response) -> FlaskResponse:
+    def construct_response(self, result: requests.Response) -> ResponseTypes:
         """Returns the Flask.Response instance based on the response from the external service"""
 
         # Exclude "Hop-by-hop" headers

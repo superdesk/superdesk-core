@@ -9,7 +9,7 @@
 # at https://www.sourcefabric.org/superdesk/license
 
 from typing import Optional
-from flask_babel import _
+from quart_babel import gettext as _
 import logging
 import json
 import mimetypes
@@ -24,6 +24,7 @@ from eve.io.mongo.media import GridFSMediaStorage
 from superdesk.core import get_current_app
 from superdesk.errors import SuperdeskApiError
 from . import SuperdeskMediaStorage
+from .superdesk_file import SuperdeskFile
 
 
 logger = logging.getLogger(__name__)
@@ -34,6 +35,27 @@ def format_id(_id):
         return bson.ObjectId(_id)
     except bson.errors.InvalidId:
         return _id
+
+
+class GridFSObjectWrapper(SuperdeskFile):
+    def __init__(self, media_file: gridfs.GridOut):
+        super().__init__()
+
+        blocksize = 65636
+        buf = media_file.read(blocksize)
+        while len(buf) > 0:
+            self.write(buf)
+            buf = media_file.read(blocksize)
+
+        self.seek(0)
+        self.content_type = media_file.content_type  # type: ignore
+        self.length = media_file.length
+        self._name = media_file.name
+        self.filename = media_file.filename
+        self.metadata = media_file.metadata
+        self.upload_date = media_file.upload_date
+        self.md5 = media_file.md5  # type: ignore
+        self._id = media_file._id
 
 
 class SuperdeskGridFSMediaStorage(SuperdeskMediaStorage, GridFSMediaStorage):
@@ -51,7 +73,7 @@ class SuperdeskGridFSMediaStorage(SuperdeskMediaStorage, GridFSMediaStorage):
                         media_file.metadata[k] = json.loads(v)
                     except ValueError:
                         logger.info("Non JSON metadata for file: %s with key: %s and value: %s", _id, k, v)
-        return media_file
+        return GridFSObjectWrapper(media_file) if media_file else None
 
     def url_for_media(self, media_id, content_type=None):
         """Return url for given media id.

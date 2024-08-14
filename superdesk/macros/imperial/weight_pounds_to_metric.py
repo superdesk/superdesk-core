@@ -9,7 +9,7 @@
 # at https://www.sourcefabric.org/superdesk/license
 from decimal import Decimal
 from . import unit_base
-from flask_babel import lazy_gettext
+from quart_babel import lazy_gettext
 
 CUBIC_METER_SYMBOL = "kg"
 

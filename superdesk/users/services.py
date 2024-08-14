@@ -189,6 +189,7 @@ class UsersService(BaseService):
                 status = "enabled and active" if active else "enabled but inactive"
 
             if can_send_mail:
+                # TODO-ASYNC: Support async (see superdesk.tests.markers.requires_eve_resource_async_event)
                 send_user_status_changed_email([user.get("email")], status)
 
     def __send_notification(self, updates, user):
@@ -236,6 +237,7 @@ class UsersService(BaseService):
         if user_type is not None and user_type == "external":
             can_send_mail = get_resource_service("preferences").email_notification_is_enabled(user_id=user["_id"])
             if can_send_mail:
+                # TODO-ASYNC: Support async (see superdesk.tests.markers.requires_eve_resource_async_event)
                 send_user_type_changed_email([user.get("email")])
 
     def on_create(self, docs):
@@ -497,6 +499,8 @@ class DBUsersService(UsersService):
                 if not id:
                     raise SuperdeskApiError.internalError("Failed to send account activation email.")
                 tokenDoc.update({"username": doc["username"]})
+
+                # TODO-ASYNC: Support async (see superdesk.tests.markers.requires_eve_resource_async_event)
                 send_activate_account_email(tokenDoc, activate_ttl)
 
     def on_update(self, updates, user):

@@ -29,7 +29,6 @@ from enum import Enum
 from importlib import import_module
 from eve.utils import document_etag
 
-from superdesk.flask import make_response, abort as flask_abort
 from superdesk.default_settings import ELASTIC_DATE_FORMAT, ELASTIC_DATETIME_FORMAT
 from superdesk.text_utils import get_text
 
@@ -366,14 +365,6 @@ def get_cors_headers(methods="*"):
         ("Access-Control-Allow-Credentials", "true"),
         ("Access-Control-Allow-Methods", methods),
     ]
-
-
-def abort(status: int, message: str) -> None:
-    """Will return a json response with proper CORS headers."""
-    response = make_response({"message": message}, status)
-    for key, val in get_cors_headers():
-        response.headers[key] = val
-    flask_abort(response)
 
 
 def get_list_chunks(items, chunk_size=100):

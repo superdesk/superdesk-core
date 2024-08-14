@@ -12,6 +12,7 @@
 from typing import Dict, Any, Type, List, Optional, Union, Mapping, cast, NoReturn
 
 import os
+import asyncio
 import eve
 from werkzeug.exceptions import NotFound
 import jinja2
@@ -24,10 +25,11 @@ from eve.auth import TokenAuth
 from eve.io.mongo.mongo import _create_index as create_index
 from eve.io.media import MediaStorage
 from eve.render import send_response
-from flask_babel import Babel
+from quart_babel import Babel
 from babel import parse_locale
 from pymongo.errors import DuplicateKeyError
 
+from quart import Quart
 from superdesk.flask import g, url_for, Config, Request as FlaskRequest, abort, Blueprint, request as flask_request
 from superdesk.celery_app import init_celery
 from superdesk.datalayer import SuperdeskDataLayer  # noqa
@@ -67,13 +69,13 @@ class HttpFlaskRequest(Request):
         return self.request.headers.get(key)
 
     async def get_json(self) -> Union[Any, None]:
-        return self.request.get_json()
+        return await self.request.get_json()
 
     async def get_form(self) -> Mapping:
-        return self.request.form.deepcopy()
+        return (await self.request.form).deepcopy()
 
     async def get_data(self) -> Union[bytes, str]:
-        return self.request.get_data()
+        return await self.request.get_data()
 
     async def abort(self, code: int, *args: Any, **kwargs: Any) -> NoReturn:
         abort(code, *args, **kwargs)

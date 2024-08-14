@@ -14,7 +14,7 @@ import logging
 from typing import Any
 
 import superdesk
-from flask_babel import lazy_gettext
+from quart_babel import lazy_gettext
 from superdesk.celery_app import celery
 from superdesk.io.ingest import IngestResource, IngestService
 from superdesk.io.registry import registered_feed_parsers, allowed_feed_parsers  # noqa

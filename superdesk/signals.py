@@ -10,6 +10,8 @@
 
 import blinker
 
+# TODO-ASYNC: Support async signals
+
 __all__ = [
     "item_create",
     "item_publish",

@@ -9,17 +9,18 @@
 # at https://www.sourcefabric.org/superdesk/license
 
 from typing import Dict, Any
+import os
 import unittest
 from dataclasses import dataclass
-
-from asgiref.wsgi import WsgiToAsgi
+from quart import Response
+from quart.testing import QuartClient
 
 from superdesk.factory.app import SuperdeskApp
 from superdesk.core.app import SuperdeskAsyncApp
 from superdesk.core import app as core_app
+from superdesk.core.resources import ResourceModel
 
 from . import setup_config, setup
-from .async_test_client import AsyncTestClient
 
 
 @dataclass
@@ -65,33 +66,46 @@ class AsyncTestCase(unittest.IsolatedAsyncioTestCase):
         self.app.stop()
         await self.app.elastic.stop()
 
+    def get_fixture_path(self, filename):
+        rootpath = os.path.abspath(os.path.dirname(os.path.dirname(__file__)))
+        return os.path.join(rootpath, "features", "steps", "fixtures", filename)
+
+
+class TestClient(QuartClient):
+    def model_instance_to_json(self, model_instance: ResourceModel):
+        return model_instance.model_dump(by_alias=True, exclude_unset=True, mode="json")
+
+    async def post(self, *args, **kwargs) -> Response:
+        if "json" in kwargs and isinstance(kwargs["json"], ResourceModel):
+            kwargs["json"] = self.model_instance_to_json(kwargs["json"])
+
+        return await super().post(*args, **kwargs)
+
 
 class AsyncFlaskTestCase(AsyncTestCase):
     async_app: SuperdeskAsyncApp
     app: SuperdeskApp
-    asgi_app: WsgiToAsgi
-    test_client: AsyncTestClient
 
     async def asyncSetUp(self):
         if getattr(self, "async_app", None):
             self.async_app.stop()
             await self.async_app.elastic.stop()
 
-        setup(self, config=self.app_config, reset=True)
+        await setup(self, config=self.app_config, reset=True)
         self.async_app = self.app.async_app
-        self.asgi_app = WsgiToAsgi(self.app)
-        self.test_client = AsyncTestClient(self.app, self.asgi_app)
+        self.app.test_client_class = TestClient
+        self.test_client = self.app.test_client()
         self.ctx = self.app.app_context()
-        self.ctx.push()
+        await self.ctx.push()
 
-        def clean_ctx():
+        async def clean_ctx():
             if self.ctx:
                 try:
-                    self.ctx.pop()
+                    await self.ctx.pop()
                 except Exception:
                     pass
 
-        self.addCleanup(clean_ctx)
+        self.addAsyncCleanup(clean_ctx)
         self.async_app.elastic.init_all_indexes()
 
     async def asyncTearDown(self):

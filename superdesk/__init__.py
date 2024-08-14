@@ -16,7 +16,7 @@ import click
 import logging as logging_lib
 
 from typing import Any, Dict, List, NamedTuple, Optional
-from flask_babel.speaklater import LazyString
+from quart_babel.speaklater import LazyString
 
 # from flask_script import Command as BaseCommand, Option
 from eve.methods.common import document_link  # noqa

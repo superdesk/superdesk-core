@@ -10,7 +10,7 @@
 
 import re
 from superdesk.text_utils import get_text
-from flask_babel import lazy_gettext
+from quart_babel import lazy_gettext
 
 p = re.compile("(?i)(?<=[.?!])\\S+(?=[a-z])")
 

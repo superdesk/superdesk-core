@@ -1,7 +1,7 @@
 from superdesk import get_resource_service
 from superdesk.utc import utcnow
 from superdesk.logging import logger
-from flask_babel import lazy_gettext
+from quart_babel import lazy_gettext
 
 
 def get_destination_desk(desk, limit=10):

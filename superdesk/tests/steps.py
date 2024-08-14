@@ -28,20 +28,14 @@ from urllib.parse import urlparse
 from pathlib import Path
 
 from behave import given, when, then  # @UnresolvedImport
+from behave.api.async_step import async_run_until_complete
 from bson import ObjectId
 from eve.io.mongo import MongoJSONEncoder
 from eve.methods.common import parse
 from eve.utils import ParsedRequest
-from wooper.assertions import assert_in, assert_equal, assertions
-from wooper.general import fail_and_print_body, apply_path, parse_json_response, WooperAssertionError
-from wooper.expect import (
-    expect_status_in,
-    expect_json,
-    expect_json_length,
-    expect_json_contains,
-    expect_json_not_contains,
-    expect_headers_contain,
-)
+from wooper.assertions import assert_in, assert_equal, assertions, assert_not_equal, assert_not_in
+from wooper.general import fail, apply_path, WooperAssertionError, parse_json_input
+from wooper.expect import expect_status_in, expect_headers_contain
 
 from superdesk.resource_fields import ID_FIELD, LAST_UPDATED, DATE_CREATED, VERSION, ETAG
 import superdesk
@@ -73,31 +67,139 @@ ANALYTICS_DATETIME_FORMAT = "%Y-%m-%d %H:00:00"
 os.environ["AUTHLIB_INSECURE_TRANSPORT"] = "1"
 
 
-def expect_status(response, code):
+async def expect_status(response, code):
     assert int(code) == response.status_code, "exptected {expected}, got {code}, reason={reason}".format(
         code=response.status_code,
         expected=code,
-        reason=response.get_data().decode("utf-8"),
+        reason=(await response.get_data()).decode("utf-8"),
     )
 
 
-def test_json(context, json_fields=None):
+def format_message_text_and_body(text, message):
+    return "{message}\n" "Response body:" '"""' "{text}" '"""'.format(message=message, text=text)
+
+
+async def get_body_text_async(response):
+    body = await response.get_data(as_text=True)
+    if not body:
+        try:
+            body = await response.get_data().decode("utf-8")
+        except UnicodeDecodeError:
+            body = await response.get_data()
+        except Exception:
+            body = "%%%_not_text_%%%"
+
+    return body
+
+
+async def fail_and_print_body_async(response, message):
+    fail(format_message_text_and_body(await get_body_text_async(response), message))
+
+
+async def expect_json_async(response, expected_json, path=None):
+    """
+    checks if json response equals some json,
+
+    Note: Copied from wooper.expect.expect_json to support Quart ``await response.get_data()``
+
+    :param expected_json: JSON object to compare with
+    :type expected_json: str, list, dict
+
+    :param path: Path inside response json,
+        separated by slashes, ie 'foo/bar/spam', 'foo/[0]/bar'
+    :type path: str, optional
+
+    """
+
+    expected_json = parse_json_input(expected_json)
+    json_response = apply_path(json.loads(await response.get_data()), path)
+    assert_equal(expected_json, json_response, "JSON not matches")
+
+
+async def assert_and_print_body_async(response, assert_function, first, second, message):
+    return assert_function(first, second, format_message_text_and_body(await get_body_text_async(response), message))
+
+
+async def expect_json_contains_async(response, expected_json, path=None, reverse_expectation=False):
+    """
+    checks if json response contains some json subset,
+
+    Note: Copied from wooper.expect.expect_json_contains_async to support Quart ``await response.get_data()``
+
+    :param expected_json: JSON object to compare with
+    :type expected_json: str, list, dict
+
+    :param path: Path inside response json,
+        separated by slashes, ie 'foo/bar/spam', 'foo/[0]/bar'
+    :type path: str, optional
+
+    """
+    assert_item = assert_equal
+    assert_sequence = assert_in
+    key_message = "JSON response does not contain such key"
+    value_message = "JSON response does not contain such value"
+    if reverse_expectation:
+        assert_item = assert_not_equal
+        assert_sequence = assert_not_in
+        key_message = "JSON response contains such key"
+        value_message = "JSON response contains such value"
+
+    expected_json = parse_json_input(expected_json)
+    json_response = apply_path(json.loads(await response.get_data()), path)
+
+    if isinstance(expected_json, dict) and isinstance(json_response, dict):
+        for key in expected_json.keys():
+            if not reverse_expectation:
+                await assert_and_print_body_async(response, assert_sequence, key, json_response, key_message)
+            await assert_and_print_body_async(
+                response, assert_item, expected_json[key], json_response[key], value_message
+            )
+    else:
+        await assert_and_print_body_async(response, assert_sequence, expected_json, json_response, value_message)
+
+
+async def expect_json_not_contains_async(response, expected_json, path=None):
+    """
+    checks if json response not contains some json subset,
+
+    Note: Copied from wooper.expect.expect_json_not_contains to support Quart ``await response.get_data()``
+
+    :param expected_json: JSON object to compare with
+    :type expected_json: str, list, dict
+
+    :param path: Path inside response json,
+        separated by slashes, ie 'foo/bar/spam', 'foo/[0]/bar'
+    :type path: str, optional
+
+    """
+
+    return await expect_json_contains_async(response, expected_json, path, reverse_expectation=True)
+
+
+async def parse_json_response_async(response):
+    try:
+        return json.loads(await response.get_data())
+    except ValueError:
+        await fail_and_print_body_async(response, "Response is not a valid JSON")
+
+
+async def test_json(context, json_fields=None):
     if json_fields is None:
         json_fields = []
     try:
-        response_data = json.loads(context.response.get_data())
+        response_data = json.loads(await context.response.get_data())
     except Exception:
-        fail_and_print_body(context.response, "response is not valid json")
+        await fail_and_print_body_async(context.response, "response is not valid json")
     context_data = json.loads(apply_placeholders(context, context.text))
     assert json_match(context_data, response_data, json_fields), str(context_data) + "\n != \n" + str(response_data)
     return response_data
 
 
-def test_json_with_string_field_value(context, field):
+async def test_json_with_string_field_value(context, field):
     try:
-        response_data = json.loads(context.response.get_data())
+        response_data = json.loads(await context.response.get_data())
     except Exception:
-        fail_and_print_body(context.response, "response is not valid json")
+        await fail_and_print_body_async(context.response, "response is not valid json")
     context_data = json.loads(apply_placeholders(context, context.text))
 
     assert_equal(
@@ -188,7 +290,9 @@ def json_match(context_data, response_data, json_fields=None, parent=None):
                 try:
                     response_field = json.loads(response_data[key])
                 except Exception:
-                    fail_and_print_body(response_data, "response does not contain a valid %s field" % key)
+                    fail(
+                        format_message_text_and_body(response_data, "response does not contain a valid %s field" % key)
+                    )
             if not json_match(context_data[key], response_field, json_fields, parent=key):
                 print("key {} does not match in {}".format(key, parent or context_data))
                 return False
@@ -225,10 +329,11 @@ def get_self_href(resource, context):
     return resource["_links"]["self"]["href"]
 
 
-def get_res(url, context):
-    response = context.client.get(get_prefixed_url(context.app, url), headers=context.headers)
-    expect_status(response, 200)
-    return json.loads(response.get_data())
+async def get_res(url, context):
+    async with context.app.test_request_context(url):
+        response = await context.client.get(get_prefixed_url(context.app, url), headers=context.headers)
+    await expect_status(response, 200)
+    return json.loads(await response.get_data())
 
 
 def parse_date(datestr):
@@ -253,19 +358,20 @@ def assert_404(response):
     assert response.status_code == 404, "Expected 404, got %d" % (response.status_code)
 
 
-def assert_ok(response):
+async def assert_ok(response):
     """Assert we get ok status within api response."""
     expect_status_in(response, (200, 201))
-    expect_json_contains(response, {"_status": "OK"})
+    data = await get_json_data(response)
+    assert data.get("_status") == "OK"
 
 
-def get_json_data(response):
-    return json.loads(response.get_data())
+async def get_json_data(response):
+    return json.loads(await response.get_data())
 
 
-def get_it(context):
+async def get_it(context):
     it = context.data[0]
-    res = get_res("/%s/%s" % (context.resource, it["_id"]), context)
+    res = await get_res("/%s/%s" % (context.resource, it["_id"]), context)
     return get_self_href(res, context), res.get("_etag")
 
 
@@ -297,16 +403,16 @@ def unique_headers(headers_to_add, old_headers):
     return unique_headers
 
 
-def patch_current_user(context, data):
-    response = context.client.get(
+async def patch_current_user(context, data):
+    response = await context.client.get(
         get_prefixed_url(context.app, "/users/%s" % context.user["_id"]), headers=context.headers
     )
-    user = json.loads(response.get_data())
+    user = json.loads(await response.get_data())
     headers = if_match(context, user.get("_etag"))
-    response = context.client.patch(
+    response = await context.client.patch(
         get_prefixed_url(context.app, "/users/%s" % context.user["_id"]), data=data, headers=headers
     )
-    assert_ok(response)
+    await assert_ok(response)
     return response
 
 
@@ -371,16 +477,18 @@ def format_items(items):
 
 
 @given('empty "{resource}"')
-def step_impl_given_empty(context, resource):
+@async_run_until_complete
+async def step_impl_given_empty(context, resource):
     if not is_user_resource(resource):
-        with context.app.test_request_context(context.app.config["URL_PREFIX"]):
+        async with context.app.test_request_context(context.app.config["URL_PREFIX"]):
             get_resource_service(resource).delete_action()
 
 
 @given('"{resource}"')
-def step_impl_given_(context, resource):
+@async_run_until_complete
+async def step_impl_given_(context, resource):
     data = apply_placeholders(context, context.text)
-    with context.app.test_request_context(context.app.config["URL_PREFIX"]):
+    async with context.app.test_request_context(context.app.config["URL_PREFIX"]):
         if not is_user_resource(resource):
             get_resource_service(resource).delete_action()
 
@@ -399,9 +507,10 @@ def step_impl_given_(context, resource):
 
 
 @given('"{resource}" with objectid')
-def step_impl_given_with_objectid(context, resource):
+@async_run_until_complete
+async def step_impl_given_with_objectid(context, resource):
     data = apply_placeholders(context, context.text)
-    with context.app.test_request_context(context.app.config["URL_PREFIX"]):
+    async with context.app.test_request_context(context.app.config["URL_PREFIX"]):
         items = [parse(item, resource) for item in json.loads(data)]
         for item in items:
             if "_id" in item:
@@ -414,8 +523,9 @@ def step_impl_given_with_objectid(context, resource):
 
 
 @given('the "{resource}"')
-def step_impl_given_the(context, resource):
-    with context.app.test_request_context(context.app.config["URL_PREFIX"]):
+@async_run_until_complete
+async def step_impl_given_the(context, resource):
+    async with context.app.test_request_context(context.app.config["URL_PREFIX"]):
         if not is_user_resource(resource):
             get_resource_service(resource).delete_action()
 
@@ -427,9 +537,10 @@ def step_impl_given_the(context, resource):
 
 
 @given('ingest from "{provider}"')
-def step_impl_given_resource_with_provider(context, provider):
+@async_run_until_complete
+async def step_impl_given_resource_with_provider(context, provider):
     resource = "ingest"
-    with context.app.test_request_context(context.app.config["URL_PREFIX"]):
+    async with context.app.test_request_context(context.app.config["URL_PREFIX"]):
         get_resource_service(resource).delete_action()
         items = [parse(item, resource) for item in json.loads(context.text)]
         ingest_provider = get_resource_service("ingest_providers").find_one(req=None, _id=context.providers[provider])
@@ -447,36 +558,40 @@ def given_config_update(context):
 
 
 @given("config")
-def step_impl_given_config(context):
-    tests.setup(context, json.loads(context.text))
-    tests.setup_auth_user(context)
+@async_run_until_complete
+async def step_impl_given_config(context):
+    await tests.setup(context, json.loads(context.text))
+    await tests.setup_auth_user(context)
 
 
 @given('we have "{role_name}" role')
-def step_impl_given_role(context, role_name):
-    with context.app.test_request_context(context.app.config["URL_PREFIX"]):
+@async_run_until_complete
+async def step_impl_given_role(context, role_name):
+    async with context.app.test_request_context(context.app.config["URL_PREFIX"]):
         role = get_resource_service("roles").find_one(name=role_name, req=None)
         data = MongoJSONEncoder().encode({"role": role.get("_id")})
-    response = patch_current_user(context, data)
-    assert_ok(response)
+    response = await patch_current_user(context, data)
+    await assert_ok(response)
 
 
 @given('we have "{user_type}" as type of user')
-def step_impl_given_user_type(context, user_type):
-    with context.app.test_request_context(context.app.config["URL_PREFIX"]):
+@async_run_until_complete
+async def step_impl_given_user_type(context, user_type):
+    async with context.app.test_request_context(context.app.config["URL_PREFIX"]):
         data = json.dumps({"user_type": user_type})
-    response = patch_current_user(context, data)
-    assert_ok(response)
+    response = await patch_current_user(context, data)
+    await assert_ok(response)
 
 
 @when("we post to auth_db")
-def step_impl_when_auth(context):
+@async_run_until_complete
+async def step_impl_when_auth(context):
     data = context.text
-    context.response = context.client.post(
+    context.response = await context.client.post(
         get_prefixed_url(context.app, "/auth_db"), data=data, headers=context.headers
     )
     if context.response.status_code == 200 or context.response.status_code == 201:
-        item = json.loads(context.response.get_data())
+        item = json.loads(await context.response.get_data())
         if item.get("_id"):
             set_placeholder(context, "AUTH_ID", item["_id"])
         context.headers.append(("Authorization", b"basic " + b64encode(item["token"].encode("ascii") + b":")))
@@ -496,14 +611,16 @@ def step_create_new_macro(context, macro_name):
 
 
 @when('we fetch from "{provider_name}" ingest "{guid}"')
-def step_impl_fetch_from_provider_ingest(context, provider_name, guid):
-    with context.app.test_request_context(context.app.config["URL_PREFIX"]):
+@async_run_until_complete
+async def step_impl_fetch_from_provider_ingest(context, provider_name, guid):
+    async with context.app.test_request_context(context.app.config["URL_PREFIX"]):
         fetch_from_provider(context, provider_name, guid)
 
 
 @when('we fetch from "{provider_name}" ingest "{guid}" (mocking with "{mock_file}")')
-def step_impl_fetch_from_provider_ingest_with_mocking(context, provider_name, guid, mock_file):
-    with context.app.test_request_context(context.app.config["URL_PREFIX"]):
+@async_run_until_complete
+async def step_impl_fetch_from_provider_ingest_with_mocking(context, provider_name, guid, mock_file):
+    async with context.app.test_request_context(context.app.config["URL_PREFIX"]):
         ingest_provider_service = get_resource_service("ingest_providers")
         provider = ingest_provider_service.find_one(name=provider_name, req=None)
 
@@ -513,8 +630,9 @@ def step_impl_fetch_from_provider_ingest_with_mocking(context, provider_name, gu
 
 
 @when('we run update_ingest command for "{provider_name}"')
-def step_impl_run_update_ingest_command(context, provider_name):
-    with context.app.test_request_context(context.app.config["URL_PREFIX"]):
+@async_run_until_complete
+async def step_impl_run_update_ingest_command(context, provider_name):
+    async with context.app.test_request_context(context.app.config["URL_PREFIX"]):
         ingest_provider_service = get_resource_service("ingest_providers")
 
         # close other providers except `provider_name`
@@ -608,8 +726,9 @@ def embed_routing_scheme_rules(scheme):
 
 
 @when('we fetch from "{provider_name}" ingest "{guid}" using routing_scheme')
-def step_impl_fetch_from_provider_ingest_using_routing(context, provider_name, guid):
-    with context.app.test_request_context(context.app.config["URL_PREFIX"]):
+@async_run_until_complete
+async def step_impl_fetch_from_provider_ingest_using_routing(context, provider_name, guid):
+    async with context.app.test_request_context(context.app.config["URL_PREFIX"]):
         _id = apply_placeholders(context, context.text)
         routing_scheme = get_resource_service("routing_schemes").find_one(_id=_id, req=None)
         embed_routing_scheme_rules(routing_scheme)
@@ -617,8 +736,9 @@ def step_impl_fetch_from_provider_ingest_using_routing(context, provider_name, g
 
 
 @when('we ingest and fetch "{provider_name}" "{guid}" to desk "{desk}" stage "{stage}" using routing_scheme')
-def step_impl_fetch_from_provider_ingest_using_routing_with_desk(context, provider_name, guid, desk, stage):
-    with context.app.test_request_context(context.app.config["URL_PREFIX"]):
+@async_run_until_complete
+async def step_impl_fetch_from_provider_ingest_using_routing_with_desk(context, provider_name, guid, desk, stage):
+    async with context.app.test_request_context(context.app.config["URL_PREFIX"]):
         _id = apply_placeholders(context, context.text)
         desk_id = apply_placeholders(context, desk)
         stage_id = apply_placeholders(context, stage)
@@ -628,8 +748,9 @@ def step_impl_fetch_from_provider_ingest_using_routing_with_desk(context, provid
 
 
 @when('we ingest with routing scheme "{provider_name}" "{guid}"')
-def step_impl_ingest_with_routing_scheme(context, provider_name, guid):
-    with context.app.test_request_context(context.app.config["URL_PREFIX"]):
+@async_run_until_complete
+async def step_impl_ingest_with_routing_scheme(context, provider_name, guid):
+    async with context.app.test_request_context(context.app.config["URL_PREFIX"]):
         _id = apply_placeholders(context, context.text)
         routing_scheme = get_resource_service("routing_schemes").find_one(_id=_id, req=None)
         embed_routing_scheme_rules(routing_scheme)
@@ -738,14 +859,16 @@ def apply_mock_file(rsps, mock_file, fixture_path=None):
 
 
 @when('we post to "{url}"')
-def step_impl_when_post_url(context, url):
-    post_data(context, url)
+@async_run_until_complete
+async def step_impl_when_post_url(context, url):
+    await post_data(context, url)
 
 
 @when('we post to "{url}" with delay')
-def step_impl_when_post_url_delay(context, url):
+@async_run_until_complete
+async def step_impl_when_post_url_delay(context, url):
     time.sleep(1)
-    post_data(context, url)
+    await post_data(context, url)
 
 
 def set_user_default(url, data):
@@ -755,34 +878,37 @@ def set_user_default(url, data):
         data = json.dumps(user)
 
 
-def get_response_etag(response):
-    return json.loads(response.get_data())["_etag"]
+async def get_response_etag(response):
+    return json.loads(await response.get_data())["_etag"]
 
 
 @then("we save etag")
-def step_when_we_save_etag(context):
-    context.etag = get_response_etag(context.response)
+@async_run_until_complete
+async def step_when_we_save_etag(context):
+    context.etag = await get_response_etag(context.response)
 
 
 @then("we get matching etag")
-def step_then_we_get_same_etag(context):
-    assert context.etag == get_response_etag(context.response), "etags not matching %s != %s" % (
+@async_run_until_complete
+async def step_then_we_get_same_etag(context):
+    assert context.etag == await get_response_etag(context.response), "etags not matching %s != %s" % (
         context.etag,
-        get_response_etag(context.response),
+        await get_response_etag(context.response),
     )
 
 
 @then("we get different etag")
-def step_then_we_get_different_etag(context):
-    assert context.etag != get_response_etag(context.response), "etags are matching"
+@async_run_until_complete
+async def step_then_we_get_different_etag(context):
+    assert context.etag != await get_response_etag(context.response), "etags are matching"
 
 
-def store_placeholder(context, url):
+async def store_placeholder(context, url):
     if context.response.status_code in (200, 201):
         try:
-            item = json.loads(context.response.get_data())
+            item = json.loads(await context.response.get_data())
         except ValueError:
-            assert False, context.response.get_data()
+            assert False, await context.response.get_data()
         if item["_status"] == "OK" and item.get("_id"):
             try:
                 setattr(context, get_resource_name(url), item)
@@ -792,54 +918,65 @@ def store_placeholder(context, url):
                 pass
 
 
-def post_data(context, url, success=False):
+async def post_data(context, url, success=False):
     with context.app.mail.record_messages() as outbox:
         data = apply_placeholders(context, context.text)
         url = apply_placeholders(context, url)
         set_user_default(url, data)
-        context.response = context.client.post(get_prefixed_url(context.app, url), data=data, headers=context.headers)
+        context.response = await context.client.post(
+            get_prefixed_url(context.app, url), data=data, headers=context.headers
+        )
         if success:
-            assert_ok(context.response)
+            await assert_ok(context.response)
 
-        item = json.loads(context.response.get_data())
+        item = await get_json_data(context.response)
         context.outbox = outbox
-        store_placeholder(context, url)
+        await store_placeholder(context, url)
         return item
 
 
 @when('we post to "{url}" with "{tag}" and success')
-def step_impl_when_post_url_with_tag(context, url, tag):
-    item = post_data(context, url, True)
+@async_run_until_complete
+async def step_impl_when_post_url_with_tag(context, url, tag):
+    item = await post_data(context, url, True)
     if item.get("_id"):
         set_placeholder(context, tag, item.get("_id"))
 
 
 @given('we have "{url}" with "{tag}" and success')
-def step_impl_given_post_url_with_tag(context, url, tag):
-    item = post_data(context, url, True)
+@async_run_until_complete
+async def step_impl_given_post_url_with_tag(context, url, tag):
+    item = await post_data(context, url, True)
     if item.get("_id"):
         set_placeholder(context, tag, item.get("_id"))
 
 
 @when('we post to "{url}" with success')
-def step_impl_when_post_url_with_success(context, url):
-    post_data(context, url, True)
+@async_run_until_complete
+async def step_impl_when_post_url_with_success(context, url):
+    await post_data(context, url, True)
 
 
 @when('we put to "{url}"')
-def step_impl_when_put_url(context, url):
+@async_run_until_complete
+async def step_impl_when_put_url(context, url):
     with context.app.mail.record_messages() as outbox:
         url = apply_placeholders(context, url)
-        res = get_res(url, context)
+        res = await get_res(url, context)
         headers = if_match(context, res.get("_etag"))
         data = apply_placeholders(context, context.text)
         href = get_prefixed_url(context.app, url)
-        context.response = context.client.put(href, data=data, headers=headers)
+        context.response = await context.client.put(href, data=data, headers=headers)
         context.outbox = outbox
 
 
 @when('we get "{url}"')
-def when_we_get_url(context, url):
+@async_run_until_complete
+async def _when_we_get_url(context, url):
+    await when_we_get_url(context, url)
+
+
+async def when_we_get_url(context, url):
     url = apply_placeholders(context, url).encode("ascii").decode("unicode-escape")
     headers = []
     if context.text:
@@ -848,202 +985,225 @@ def when_we_get_url(context, url):
             headers.append((key, val))
     headers = unique_headers(headers, context.headers)
     url = apply_placeholders(context, url)
-    context.response = context.client.get(get_prefixed_url(context.app, url), headers=headers)
+    async with context.app.app_context():
+        context.response = await context.client.get(get_prefixed_url(context.app, url), headers=headers)
 
 
 @when('we get dictionary "{dictionary_id}"')
-def when_we_get_dictionary(context, dictionary_id):
+@async_run_until_complete
+async def when_we_get_dictionary(context, dictionary_id):
     dictionary_id = apply_placeholders(context, dictionary_id)
     url = "/dictionaries/" + dictionary_id + '?projection={"content": 1}'
-    return when_we_get_url(context, url)
+    return await when_we_get_url(context, url)
 
 
 @then("we get latest")
-def step_impl_we_get_latest(context):
-    data = get_json_data(context.response)
+@async_run_until_complete
+async def step_impl_we_get_latest(context):
+    data = await get_json_data(context.response)
     href = get_self_href(data, context)
     headers = if_match(context, data.get("_etag"))
     href = get_prefixed_url(context.app, href)
-    context.response = context.client.get(href, headers=headers)
+    context.response = await context.client.get(href, headers=headers)
     assert_200(context.response)
 
 
 @when('we find for "{resource}" the id as "{name}" by "{search_criteria}"')
-def when_we_find_for_resource_the_id_as_name_by_search_criteria(context, resource, name, search_criteria):
+@async_run_until_complete
+async def when_we_find_for_resource_the_id_as_name_by_search_criteria(context, resource, name, search_criteria):
     url = "/" + resource + "?" + search_criteria
-    context.response = context.client.get(get_prefixed_url(context.app, url), headers=context.headers)
+    context.response = await context.client.get(get_prefixed_url(context.app, url), headers=context.headers)
     if context.response.status_code == 200:
-        expect_json_length(context.response, 1, path="_items")
-        item = json.loads(context.response.get_data())
-        item = item["_items"][0]
+        data = await get_json_data(context.response)
+        assert len(data.get("_items", [])) == 1
+        item = data["_items"][0]
         if item.get("_id"):
             set_placeholder(context, name, item["_id"])
 
 
 @when('we delete "{url}"')
-def step_impl_when_delete_url(context, url):
+@async_run_until_complete
+async def step_impl_when_delete_url(context, url):
     with context.app.mail.record_messages() as outbox:
         url = apply_placeholders(context, url)
-        res = get_res(url, context)
+        res = await get_res(url, context)
         href = get_self_href(res, context)
         headers = if_match(context, res.get("_etag"))
         href = get_prefixed_url(context.app, href)
-        context.response = context.client.delete(href, headers=headers)
+        async with context.app.test_request_context(href):
+            context.response = await context.client.delete(href, headers=headers)
         context.outbox = outbox
 
 
 @when('we delete link "{url}"')
-def step_impl_when_delete_link_url(context, url):
+@async_run_until_complete
+async def step_impl_when_delete_link_url(context, url):
     with context.app.mail.record_messages() as outbox:
         url = apply_placeholders(context, url)
         headers = context.headers
-        context.response = context.client.delete(get_prefixed_url(context.app, url), headers=headers)
+        context.response = await context.client.delete(get_prefixed_url(context.app, url), headers=headers)
         context.outbox = outbox
 
 
 @when('we delete all sessions "{url}"')
-def step_impl_when_delete_all_url(context, url):
+@async_run_until_complete
+async def step_impl_when_delete_all_url(context, url):
     with context.app.mail.record_messages() as outbox:
         url = apply_placeholders(context, url)
         headers = context.headers
         href = get_prefixed_url(context.app, url)
-        context.response = context.client.delete(href, headers=headers)
+        context.response = await context.client.delete(href, headers=headers)
         context.outbox = outbox
 
 
 @when("we delete latest")
-def when_we_delete_it(context):
+@async_run_until_complete
+async def when_we_delete_it(context):
     with context.app.mail.record_messages() as outbox:
-        res = get_json_data(context.response)
+        res = await get_json_data(context.response)
         href = get_self_href(res, context)
         headers = if_match(context, res.get("_etag"))
         href = get_prefixed_url(context.app, href)
-        context.response = context.client.delete(href, headers=headers)
+        context.response = await context.client.delete(href, headers=headers)
         context.email = outbox
 
 
 @when('we patch "{url}"')
-def step_impl_when_patch_url(context, url):
+@async_run_until_complete
+async def step_impl_when_patch_url(context, url):
     with context.app.mail.record_messages() as outbox:
         url = apply_placeholders(context, url)
-        res = get_res(url, context)
+        res = await get_res(url, context)
         href = get_self_href(res, context)
         headers = if_match(context, res.get("_etag"))
         data = apply_placeholders(context, context.text)
         href = get_prefixed_url(context.app, href)
-        context.response = context.client.patch(href, data=data, headers=headers)
+        context.response = await context.client.patch(href, data=data, headers=headers)
         context.outbox = outbox
 
 
 @when("we patch latest")
-def step_impl_when_patch_again(context):
+@async_run_until_complete
+async def step_impl_when_patch_again(context):
     with context.app.mail.record_messages() as outbox:
-        data = get_json_data(context.response)
+        data = await get_json_data(context.response)
         href = get_prefixed_url(context.app, get_self_href(data, context))
         headers = if_match(context, data.get("_etag"))
         data2 = apply_placeholders(context, context.text)
-        context.response = context.client.patch(href, data=data2, headers=headers)
+        context.response = await context.client.patch(href, data=data2, headers=headers)
         if context.response.status_code in (200, 201):
-            item = json.loads(context.response.get_data())
+            item = await get_json_data(context.response)
             if item["_status"] == "OK" and item.get("_id"):
                 setattr(context, get_resource_name(href), item)
-        assert_ok(context.response)
+        await assert_ok(context.response)
         context.outbox = outbox
 
 
 @when("we patch latest without assert")
-def step_impl_when_patch_without_assert(context):
-    data = get_json_data(context.response)
+@async_run_until_complete
+async def step_impl_when_patch_without_assert(context):
+    data = await get_json_data(context.response)
     href = get_prefixed_url(context.app, get_self_href(data, context))
     headers = if_match(context, data.get("_etag"))
     data2 = apply_placeholders(context, context.text)
-    context.response = context.client.patch(href, data=data2, headers=headers)
+    context.response = await context.client.patch(href, data=data2, headers=headers)
 
 
 @when('we patch routing scheme "{url}"')
-def step_impl_when_patch_routing_scheme(context, url):
+@async_run_until_complete
+async def step_impl_when_patch_routing_scheme(context, url):
     with context.app.mail.record_messages() as outbox:
         url = apply_placeholders(context, url)
-        res = get_res(url, context)
+        res = await get_res(url, context)
         href = get_self_href(res, context)
         headers = if_match(context, res.get("_etag"))
         data = json.loads(apply_placeholders(context, context.text))
         res.get("rules", []).append(data)
-        context.response = context.client.patch(
+        context.response = await context.client.patch(
             get_prefixed_url(context.app, href), data=json.dumps({"rules": res.get("rules", [])}), headers=headers
         )
         context.outbox = outbox
 
 
 @when("we patch given")
-def step_impl_when_patch(context):
+@async_run_until_complete
+async def step_impl_when_patch(context):
     with context.app.mail.record_messages() as outbox:
-        href, etag = get_it(context)
+        href, etag = await get_it(context)
         headers = if_match(context, etag)
-        context.response = context.client.patch(get_prefixed_url(context.app, href), data=context.text, headers=headers)
-        assert_ok(context.response)
+        context.response = await context.client.patch(
+            get_prefixed_url(context.app, href), data=context.text, headers=headers
+        )
+        await assert_ok(context.response)
         context.outbox = outbox
 
 
 @when("we get given")
-def step_impl_when_get(context):
-    href, _etag = get_it(context)
-    context.response = context.client.get(get_prefixed_url(context.app, href), headers=context.headers)
+@async_run_until_complete
+async def step_impl_when_get(context):
+    href, _etag = await get_it(context)
+    context.response = await context.client.get(get_prefixed_url(context.app, href), headers=context.headers)
 
 
 @when("we restore version {version}")
-def step_impl_when_restore_version(context, version):
-    data = get_json_data(context.response)
+@async_run_until_complete
+async def step_impl_when_restore_version(context, version):
+    data = await get_json_data(context.response)
     href = get_self_href(data, context)
     headers = if_match(context, data.get("_etag"))
     text = '{"type": "text", "old_version": %s, "last_version": %s}' % (version, data.get("_current_version"))
-    context.response = context.client.put(get_prefixed_url(context.app, href), data=text, headers=headers)
-    assert_ok(context.response)
+    context.response = await context.client.put(get_prefixed_url(context.app, href), data=text, headers=headers)
+    await assert_ok(context.response)
 
 
 @when('we upload a file "{filename}" to "{dest}"')
-def step_impl_when_upload_image(context, filename, dest):
+@async_run_until_complete
+async def step_impl_when_upload_image(context, filename, dest):
     data = {} if not context.text else json.loads(apply_placeholders(context, context.text))
-    upload_file(context, dest, filename, "media", data)
+    await upload_file(context, dest, filename, "media", data)
 
 
 @when("we upload a binary file with cropping")
-def step_impl_when_upload_with_crop(context):
+@async_run_until_complete
+async def step_impl_when_upload_with_crop(context):
     data = {"CropTop": "0", "CropLeft": "0", "CropBottom": "333", "CropRight": "333"}
-    upload_file(context, "/upload", "bike.jpg", "media", data)
+    await upload_file(context, "/upload", "bike.jpg", "media", data)
 
 
 @when('upload a file "{file_name}" to "{destination}" with "{guid}"')
-def step_impl_when_upload_image_with_guid(context, file_name, destination, guid):
+@async_run_until_complete
+async def step_impl_when_upload_image_with_guid(context, file_name, destination, guid):
     metadata = {
         "guid": guid,
         "headline": file_name,
         "alt_text": file_name,
         "description_text": file_name,
     }
-    upload_file(context, destination, file_name, "media", metadata)
+    await upload_file(context, destination, file_name, "media", metadata)
     if destination == "archive":
         set_placeholder(context, "original.href", context.archive["renditions"]["original"]["href"])
         set_placeholder(context, "original.media", context.archive["renditions"]["original"]["media"])
 
 
 @when("we upload a new dictionary with success")
-def when_upload_dictionary(context):
+@async_run_until_complete
+async def when_upload_dictionary(context):
     data = json.loads(apply_placeholders(context, context.text))
-    upload_file(context, "/dictionaries", "test_dict.txt", DICTIONARY_FILE, data)
-    assert_ok(context.response)
+    await upload_file(context, "/dictionaries", "test_dict.txt", DICTIONARY_FILE, data)
+    await assert_ok(context.response)
 
 
 @when("we upload to an existing dictionary with success")
-def when_upload_patch_dictionary(context):
+@async_run_until_complete
+async def when_upload_patch_dictionary(context):
     data = json.loads(apply_placeholders(context, context.text))
     url = apply_placeholders(context, "/dictionaries/#dictionaries._id#")
     etag = apply_placeholders(context, "#dictionaries._etag#")
-    upload_file(context, url, "test_dict2.txt", DICTIONARY_FILE, data, "patch", [("If-Match", etag)])
-    assert_ok(context.response)
+    await upload_file(context, url, "test_dict2.txt", DICTIONARY_FILE, data, "patch", [("If-Match", etag)])
+    await assert_ok(context.response)
 
 
-def upload_file(context, dest, filename, file_field, extra_data=None, method="post", user_headers=None):
+async def upload_file(context, dest, filename, file_field, extra_data=None, method="post", user_headers=None):
     if user_headers is None:
         user_headers = []
     with open(get_fixture_path(context, filename), "rb") as f:
@@ -1054,13 +1214,14 @@ def upload_file(context, dest, filename, file_field, extra_data=None, method="po
         headers.extend(user_headers)
         headers = unique_headers(headers, context.headers)
         url = get_prefixed_url(context.app, dest)
-        context.response = getattr(context.client, method)(url, data=data, headers=headers)
-        assert_ok(context.response)
-        store_placeholder(context, url)
+        context.response = await getattr(context.client, method)(url, data=data, headers=headers)
+        await assert_ok(context.response)
+        await store_placeholder(context, url)
 
 
 @when("we upload a file from URL")
-def step_impl_when_upload_from_url(context):
+@async_run_until_complete
+async def step_impl_when_upload_from_url(context):
     data = {"URL": external_url}
     headers = [("Content-Type", "multipart/form-data")]
     headers = unique_headers(headers, context.headers)
@@ -1068,11 +1229,14 @@ def step_impl_when_upload_from_url(context):
 
     with responses.RequestsMock() as rsps:
         apply_mock_file(rsps, "upload_from_url_mock.json", fixture_path=fixture_path)
-        context.response = context.client.post(get_prefixed_url(context.app, "/upload"), data=data, headers=headers)
+        context.response = await context.client.post(
+            get_prefixed_url(context.app, "/upload"), data=data, headers=headers
+        )
 
 
 @when("we upload a file from URL with cropping")
-def step_impl_when_upload_from_url_with_crop(context):
+@async_run_until_complete
+async def step_impl_when_upload_from_url_with_crop(context):
     data = {"URL": external_url, "CropTop": "0", "CropLeft": "0", "CropBottom": "333", "CropRight": "333"}
     headers = [("Content-Type", "multipart/form-data")]
     headers = unique_headers(headers, context.headers)
@@ -1080,36 +1244,47 @@ def step_impl_when_upload_from_url_with_crop(context):
 
     with responses.RequestsMock() as rsps:
         apply_mock_file(rsps, "upload_from_url_mock.json", fixture_path=fixture_path)
-        context.response = context.client.post(get_prefixed_url(context.app, "/upload"), data=data, headers=headers)
+        context.response = await context.client.post(
+            get_prefixed_url(context.app, "/upload"), data=data, headers=headers
+        )
 
 
 @when("we get user profile")
-def step_impl_when_get_user(context):
+@async_run_until_complete
+async def step_impl_when_get_user(context):
     profile_url = "/%s/%s" % ("users", context.user["_id"])
-    context.response = context.client.get(get_prefixed_url(context.app, profile_url), headers=context.headers)
+    context.response = await context.client.get(get_prefixed_url(context.app, profile_url), headers=context.headers)
 
 
 @then("we get new resource")
-def step_impl_then_get_new(context):
-    assert_ok(context.response)
-    expect_json_contains(context.response, "self", path="_links")
+@async_run_until_complete
+async def step_impl_then_get_new(context):
+    await assert_ok(context.response)
+    await expect_json_contains_async(context.response, "self", path="_links")
     if context.text is not None:
-        return test_json(context)
+        return await test_json(context)
 
 
 @then("we get error {code}")
-def step_impl_then_get_error(context, code):
-    expect_status(context.response, int(code))
+@async_run_until_complete
+async def step_impl_then_get_error(context, code):
+    await expect_status(context.response, int(code))
     if context.text:
-        print("got", context.response.get_data().decode("utf-8"))
-        test_json(context)
+        print("got", (await context.response.get_data()).decode("utf-8"))
+        await test_json(context)
 
 
 @then("we get list with {total_count} {unit}")
-def step_impl_then_get_list(context, total_count, unit=None):
+@async_run_until_complete
+async def _step_impl_then_get_list(context, total_count, unit=None):
+    await step_impl_then_get_list(context, total_count, unit)
+
+
+async def step_impl_then_get_list(context, total_count, unit=None):
     assert_200(context.response)
-    data = get_json_data(context.response)
+    data = await get_json_data(context.response)
     int_count = int(total_count.replace("+", "").replace("<", ""))
+    print(data["_meta"])
 
     if "+" in total_count:
         assert int_count <= data["_meta"]["total"], "%d items is not enough" % data["_meta"]["total"]
@@ -1121,23 +1296,25 @@ def step_impl_then_get_list(context, total_count, unit=None):
             format_items(data["_items"]),
         )
     if context.text:
-        test_json(context)
+        await test_json(context)
 
     set_placeholder(context, "items", data["_items"])
 
 
 @then("we get list ordered by {field} with {total_count} items")
-def step_impl_ordered_by_field_list(context, field, total_count):
-    step_impl_then_get_list(context, total_count)
-    data = get_json_data(context.response)
+@async_run_until_complete
+async def step_impl_ordered_by_field_list(context, field, total_count):
+    await step_impl_then_get_list(context, total_count)
+    data = await get_json_data(context.response)
     items = data["_items"]
     assert sorted(items, key=operator.itemgetter(field)) == items
 
 
 @then("we get ordered list with {total_count} items")
-def step_impl_get_ordered_list(context, total_count):
-    step_impl_then_get_list(context, total_count)
-    data = get_json_data(context.response)
+@async_run_until_complete
+async def step_impl_get_ordered_list(context, total_count):
+    await step_impl_then_get_list(context, total_count)
+    data = await get_json_data(context.response)
     server_items = data["_items"]
     context_items = json.loads(apply_placeholders(context, context.text))["_items"]
     idgetter = operator.itemgetter("_id")
@@ -1147,10 +1324,11 @@ def step_impl_get_ordered_list(context, total_count):
 
 
 @then('we get "{value}" in formatted output')
-def step_impl_then_get_formatted_output(context, value):
+@async_run_until_complete
+async def step_impl_then_get_formatted_output(context, value):
     assert_200(context.response)
     value = apply_placeholders(context, value)
-    data = get_json_data(context.response)
+    data = await get_json_data(context.response)
     for item in data["_items"]:
         if value in item["formatted_item"]:
             return
@@ -1158,10 +1336,11 @@ def step_impl_then_get_formatted_output(context, value):
 
 
 @then('we get "{value}" in formatted output as "{group}" story for subscriber "{sub}"')
-def step_impl_then_get_formatted_output_as_story(context, value, group, sub):
+@async_run_until_complete
+async def step_impl_then_get_formatted_output_as_story(context, value, group, sub):
     assert_200(context.response)
     value = apply_placeholders(context, value)
-    data = get_json_data(context.response)
+    data = await get_json_data(context.response)
     for item in data["_items"]:
         if item["subscriber_id"] != sub:
             continue
@@ -1179,10 +1358,11 @@ def step_impl_then_get_formatted_output_as_story(context, value, group, sub):
 
 
 @then('we get "{value}" as "{group}" story for subscriber "{sub}" in package "{pck}"')
-def step_impl_then_get_formatted_output_pck(context, value, group, sub, pck):
+@async_run_until_complete
+async def step_impl_then_get_formatted_output_pck(context, value, group, sub, pck):
     assert_200(context.response)
     value = apply_placeholders(context, value)
-    data = get_json_data(context.response)
+    data = await get_json_data(context.response)
     for item in data["_items"]:
         if item["item_id"] != pck:
             continue
@@ -1203,10 +1383,11 @@ def step_impl_then_get_formatted_output_pck(context, value, group, sub, pck):
 
 
 @then('we get "{value}" as "{group}" story for subscriber "{sub}" not in package "{pck}" version "{v}"')
-def step_impl_then_get_formatted_output_pck_version(context, value, group, sub, pck, v):
+@async_run_until_complete
+async def step_impl_then_get_formatted_output_pck_version(context, value, group, sub, pck, v):
     assert_200(context.response)
     value = apply_placeholders(context, value)
-    data = get_json_data(context.response)
+    data = await get_json_data(context.response)
     for item in data["_items"]:
         if item["item_id"] == pck:
             if item["subscriber_id"] == sub and str(item["item_version"]) == v:
@@ -1226,10 +1407,11 @@ def step_impl_then_get_formatted_output_pck_version(context, value, group, sub, 
 
 
 @then('we get "{value}" in formatted output as "{group}" newsml12 story')
-def step_impl_then_get_formatted_output_newsml(context, value, group):
+@async_run_until_complete
+async def step_impl_then_get_formatted_output_newsml(context, value, group):
     assert_200(context.response)
     value = apply_placeholders(context, value)
-    data = get_json_data(context.response)
+    data = await get_json_data(context.response)
     for item in data["_items"]:
         if "<" + group + ">" + value + "</" + group + ">" in item["formatted_item"]:
             return
@@ -1237,69 +1419,79 @@ def step_impl_then_get_formatted_output_newsml(context, value, group):
 
 
 @then('we get no "{field}"')
-def step_impl_then_get_nofield(context, field):
+@async_run_until_complete
+async def step_impl_then_get_nofield(context, field):
     assert_200(context.response)
-    expect_json_not_contains(context.response, field)
+    await expect_json_not_contains_async(context.response, field)
 
 
 @then('expect json in "{path}"')
-def step_impl_then_get_nofield_in_path(context, path):
+@async_run_until_complete
+async def step_impl_then_get_nofield_in_path(context, path):
     assert_200(context.response)
-    expect_json(context.response, context.text, path)
+    await expect_json_async(context.response, context.text, path)
 
 
 @then("we get existing resource")
-def step_impl_then_get_existing(context):
+@async_run_until_complete
+async def step_impl_then_get_existing(context):
     assert_200(context.response)
-    print("got", get_response_readable(context.response.data))
-    test_json(context)
+    print("got", get_response_readable(await context.response.get_data()))
+    await test_json(context)
 
 
 @then("we get existing saved search")
-def step_impl_then_get_existing_saved_search(context):
+@async_run_until_complete
+async def step_impl_then_get_existing_saved_search(context):
     assert_200(context.response)
-    test_json_with_string_field_value(context, "filter")
+    await test_json_with_string_field_value(context, "filter")
 
 
 @then("we get OK response")
-def step_impl_then_get_ok(context):
+@async_run_until_complete
+async def step_impl_then_get_ok(context):
     assert_200(context.response)
     if context.text:
-        test_json(context)
+        await test_json(context)
 
 
 @then("we get response code {code}")
-def step_impl_then_get_code(context, code):
+@async_run_until_complete
+async def step_impl_then_get_code(context, code):
     assert context.response.status_code == int(code), "we got code={} data={}".format(
-        context.response.status_code, get_response_readable(context.response.data)
+        context.response.status_code, get_response_readable(await context.response.get_data())
     )
     if context.text:
-        test_json(context)
+        await test_json(context)
 
 
 @then("we get updated response")
-def step_impl_then_get_updated(context):
-    assert_ok(context.response)
+@async_run_until_complete
+async def step_impl_then_get_updated(context):
+    await assert_ok(context.response)
     if context.text:
-        test_json(context)
+        await test_json(context)
 
 
 @then('we get "{key}" in "{url}"')
-def step_impl_then_get_key_in_url(context, key, url):
+@async_run_until_complete
+async def step_impl_then_get_key_in_url(context, key, url):
     url = apply_placeholders(context, url)
-    res = context.client.get(get_prefixed_url(context.app, url), headers=context.headers)
+    res = await context.client.get(get_prefixed_url(context.app, url), headers=context.headers)
     assert_200(res)
-    expect_json_contains(res, key)
+    await expect_json_contains_async(res, key)
 
 
 @then("we get file metadata")
-def step_impl_then_get_file_meta(context):
-    assert len(json.loads(apply_path(parse_json_response(context.response), "filemeta_json")).items()) > 0
+@async_run_until_complete
+async def step_impl_then_get_file_meta(context):
+    assert len(json.loads(apply_path(await parse_json_response_async(context.response), "filemeta_json")).items()) > 0
     "expected non empty metadata dictionary"
 
 
 @then('we get "{filename}" metadata')
-def step_impl_then_get_given_file_meta(context, filename):
+@async_run_until_complete
+async def step_impl_then_get_given_file_meta(context, filename):
     if filename == "bike.jpg":
         metadata = {
             "ycbcrpositioning": 1,
@@ -1372,111 +1564,123 @@ def step_impl_then_get_given_file_meta(context, filename):
         raise NotImplementedError("No metadata for file '{}'.".format(filename))
 
     assertions.maxDiff = None
-    data = json.loads(context.response.get_data())
+    data = await get_json_data(context.response)
     filemeta = get_filemeta(data)
     json_match(filemeta, metadata)
 
 
 @then('we get "{type}" renditions')
-def step_impl_then_get_renditions(context, type):
-    expect_json_contains(context.response, "renditions")
-    renditions = apply_path(parse_json_response(context.response), "renditions")
+@async_run_until_complete
+async def step_impl_then_get_renditions(context, type):
+    await expect_json_contains_async(context.response, "renditions")
+    renditions = apply_path(await parse_json_response_async(context.response), "renditions")
     assert isinstance(renditions, dict), "expected dict for image renditions"
     for rend_name in context.app.config["RENDITIONS"][type]:
         desc = renditions[rend_name]
         assert isinstance(desc, dict), "expected dict for rendition description"
         assert "href" in desc, "expected href in rendition description"
         assert "media" in desc, "expected media identifier in rendition description"
-        we_can_fetch_a_file(context, desc["href"], "image/jpeg")
+        await we_can_fetch_a_file(context, desc["href"], "image/jpeg")
 
 
 @then('we get "{crop_name}" in renditions')
-def step_impl_then_get_crop_renditions(context, crop_name):
-    expect_json_contains(context.response, "renditions")
-    renditions = apply_path(parse_json_response(context.response), "renditions")
+@async_run_until_complete
+async def step_impl_then_get_crop_renditions(context, crop_name):
+    await expect_json_contains_async(context.response, "renditions")
+    renditions = apply_path(await parse_json_response_async(context.response), "renditions")
     assert isinstance(renditions, dict), "expected dict for image renditions"
     desc = renditions[crop_name]
     assert isinstance(desc, dict), "expected dict for rendition description"
     assert "href" in desc, "expected href in rendition description"
     assert "media" in desc, "expected media identifier in rendition description"
-    we_can_fetch_a_file(context, desc["href"], "image/jpeg")
+    await we_can_fetch_a_file(context, desc["href"], "image/jpeg")
 
 
 @then('we get "{crop_name}" not in renditions')
-def step_impl_then_crop_not_in_renditions(context, crop_name):
-    expect_json_contains(context.response, "renditions")
-    renditions = apply_path(parse_json_response(context.response), "renditions")
+@async_run_until_complete
+async def step_impl_then_crop_not_in_renditions(context, crop_name):
+    await expect_json_contains_async(context.response, "renditions")
+    renditions = apply_path(await parse_json_response_async(context.response), "renditions")
     assert isinstance(renditions, dict), "expected dict for image renditions"
     assert crop_name not in renditions, "expected crop not in renditions"
 
 
 @then('item "{item_id}" is unlocked')
-def then_item_is_unlocked(context, item_id):
+@async_run_until_complete
+async def then_item_is_unlocked(context, item_id):
     assert_200(context.response)
-    data = json.loads(context.response.get_data())
+    data = await get_json_data(context.response)
     assert data.get("lock_user", None) is None, "item is locked by user #{0}".format(data.get("lock_user"))
 
 
 @then('item "{item_id}" is locked')
-def then_item_is_locked(context, item_id):
+@async_run_until_complete
+async def then_item_is_locked(context, item_id):
     assert_200(context.response)
-    resp = parse_json_response(context.response)
+    resp = await parse_json_response_async(context.response)
     assert resp["lock_user"] is not None
 
 
 @then('item "{item_id}" is assigned')
-def then_item_is_assigned(context, item_id):
-    resp = parse_json_response(context.response)
+@async_run_until_complete
+async def then_item_is_assigned(context, item_id):
+    resp = await parse_json_response_async(context.response)
     assert resp["task"].get("user", None) is not None, "item is not assigned"
 
 
 @then('we get rendition "{name}" with mimetype "{mimetype}"')
-def step_impl_then_get_rendition_with_mimetype(context, name, mimetype):
-    expect_json_contains(context.response, "renditions")
-    renditions = apply_path(parse_json_response(context.response), "renditions")
+@async_run_until_complete
+async def step_impl_then_get_rendition_with_mimetype(context, name, mimetype):
+    await expect_json_contains_async(context.response, "renditions")
+    renditions = apply_path(await parse_json_response_async(context.response), "renditions")
     assert isinstance(renditions, dict), "expected dict for image renditions"
     desc = renditions[name]
     assert isinstance(desc, dict), "expected dict for rendition description"
     assert "href" in desc, "expected href in rendition description"
-    we_can_fetch_a_file(context, desc["href"], mimetype)
+    await we_can_fetch_a_file(context, desc["href"], mimetype)
     set_placeholder(context, "rendition.{}.href".format(name), desc["href"])
 
 
 @when("we get updated media from archive")
-def get_updated_media_from_archive(context):
+@async_run_until_complete
+async def get_updated_media_from_archive(context):
     url = "archive/%s" % context._id
-    when_we_get_url(context, url)
+    await when_we_get_url(context, url)
     assert_200(context.response)
 
 
 @then("baseImage rendition is updated")
-def check_base_image_rendition(context):
-    check_rendition(context, "baseImage")
+@async_run_until_complete
+async def check_base_image_rendition(context):
+    await check_rendition(context, "baseImage")
 
 
 @then('original rendition is updated with link to file having mimetype "{mimetype}"')
-def check_original_rendition(context, mimetype):
-    rv = parse_json_response(context.response)
+@async_run_until_complete
+async def check_original_rendition(context, mimetype):
+    rv = await parse_json_response_async(context.response)
     link_to_file = rv["renditions"]["original"]["href"]
     assert link_to_file
-    we_can_fetch_a_file(context, link_to_file, mimetype)
+    await we_can_fetch_a_file(context, link_to_file, mimetype)
 
 
 @then("thumbnail rendition is updated")
-def check_thumbnail_rendition(context):
-    check_rendition(context, "thumbnail")
+@async_run_until_complete
+async def check_thumbnail_rendition(context):
+    await check_rendition(context, "thumbnail")
 
 
-def check_rendition(context, rendition_name):
-    rv = parse_json_response(context.response)
+async def check_rendition(context, rendition_name):
+    rv = await parse_json_response_async(context.response)
     assert rv["renditions"][rendition_name] != context.renditions[rendition_name], rv["renditions"]
 
 
 @then('we get "{key}"')
-def step_impl_then_get_key(context, key):
+@async_run_until_complete
+async def step_impl_then_get_key(context, key):
     assert_200(context.response)
-    expect_json_contains(context.response, key)
-    item = json.loads(context.response.get_data())
+    await expect_json_contains_async(context.response, key)
+    item = await get_json_data(context.response)
     set_placeholder(context, "%s" % key, item[key])
 
 
@@ -1486,26 +1690,28 @@ def step_impl_then_we_store_key_value_to_context(context, key, value):
 
 
 @then("we get action in user activity")
-def step_impl_then_get_action(context):
-    response = context.client.get(get_prefixed_url(context.app, "/activity"), headers=context.headers)
-    expect_json_contains(response, "_items")
+@async_run_until_complete
+async def step_impl_then_get_action(context):
+    response = await context.client.get(get_prefixed_url(context.app, "/activity"), headers=context.headers)
+    await expect_json_contains_async(response, "_items")
 
 
 @then("we get a file reference")
-def step_impl_then_get_file(context):
+@async_run_until_complete
+async def step_impl_then_get_file(context):
     assert_200(context.response)
-    expect_json_contains(context.response, "renditions")
-    data = get_json_data(context.response)
+    await expect_json_contains_async(context.response, "renditions")
+    data = await get_json_data(context.response)
     url = "/upload/%s" % data["_id"]
     headers = [("Accept", "application/json")]
     headers = unique_headers(headers, context.headers)
-    response = context.client.get(get_prefixed_url(context.app, url), headers=headers)
+    response = await context.client.get(get_prefixed_url(context.app, url), headers=headers)
     assert_200(response)
-    assert len(response.get_data()), response
+    assert len(await response.get_data()), response
     assert response.mimetype == "application/json", response.mimetype
-    expect_json_contains(response, "renditions")
-    expect_json_contains(response, {"mimetype": "image/jpeg"})
-    fetched_data = get_json_data(context.response)
+    await expect_json_contains_async(response, "renditions")
+    await expect_json_contains_async(response, {"mimetype": "image/jpeg"})
+    fetched_data = await get_json_data(context.response)
     context.fetched_data = fetched_data
 
 
@@ -1515,50 +1721,55 @@ def step_impl_then_get_cropped_file(context, max_size):
 
 
 @then("we can fetch a data_uri")
-def step_impl_we_fetch_data_uri(context):
-    we_can_fetch_a_file(context, context.fetched_data["renditions"]["original"]["href"], "image/jpeg")
+@async_run_until_complete
+async def step_impl_we_fetch_data_uri(context):
+    await we_can_fetch_a_file(context, context.fetched_data["renditions"]["original"]["href"], "image/jpeg")
 
 
 @then('we fetch a file "{url}"')
-def step_impl_we_cannot_fetch_file(context, url):
+@async_run_until_complete
+async def step_impl_we_cannot_fetch_file(context, url):
     url = apply_placeholders(context, url)
     assert "#" not in url, "missing placeholders for url %s %s" % (url, getattr(context, "placeholders", {}))
     headers = [("Accept", "application/json")]
     headers = unique_headers(headers, context.headers)
-    context.response = context.client.get(get_prefixed_url(context.app, url), headers=headers)
+    context.response = await context.client.get(get_prefixed_url(context.app, url), headers=headers)
 
 
-def we_can_fetch_a_file(context, url, mimetype):
+async def we_can_fetch_a_file(context, url, mimetype):
     headers = [("Accept", "application/json")]
     headers = unique_headers(headers, context.headers)
-    response = context.client.get(get_prefixed_url(context.app, url), headers=headers)
+    response = await context.client.get(get_prefixed_url(context.app, url), headers=headers)
     assert_200(response)
-    assert len(response.get_data()), response
+    assert len(await response.get_data()), response
     assert response.mimetype == mimetype, response.mimetype
 
 
 @then("we can delete that file")
-def step_impl_we_delete_file(context):
+@async_run_until_complete
+async def step_impl_we_delete_file(context):
     url = "/upload/%s" % context.fetched_data["_id"]
     context.headers.append(("Accept", "application/json"))
     headers = if_match(context, context.fetched_data.get("_etag"))
-    response = context.client.delete(get_prefixed_url(context.app, url), headers=headers)
+    response = await context.client.delete(get_prefixed_url(context.app, url), headers=headers)
     assert_200(response)
-    response = context.client.get(get_prefixed_url(context.app, url), headers=headers)
+    response = await context.client.get(get_prefixed_url(context.app, url), headers=headers)
     assert_404(response)
 
 
 @then("we get a picture url")
-def step_impl_then_get_picture(context):
-    assert_ok(context.response)
-    expect_json_contains(context.response, "picture_url")
+@async_run_until_complete
+async def step_impl_then_get_picture(context):
+    await assert_ok(context.response)
+    await expect_json_contains_async(context.response, "picture_url")
 
 
 @then('we get aggregations "{keys}"')
-def step_impl_then_get_aggs(context, keys):
+@async_run_until_complete
+async def step_impl_then_get_aggs(context, keys):
     assert_200(context.response)
-    expect_json_contains(context.response, "_aggregations")
-    data = get_json_data(context.response)
+    await expect_json_contains_async(context.response, "_aggregations")
+    data = await get_json_data(context.response)
     aggs = data["_aggregations"]
     for key in keys.split(","):
         assert_in(key, aggs)
@@ -1572,30 +1783,34 @@ def step_impl_then_file(context):
 
 
 @then("we get version {version}")
-def step_impl_then_get_version(context, version):
+@async_run_until_complete
+async def step_impl_then_get_version(context, version):
     assert_200(context.response)
-    expect_json_contains(context.response, {"_current_version": int(version)})
+    await expect_json_contains_async(context.response, {"_current_version": int(version)})
 
 
 @then('the field "{field}" value is "{value}"')
-def step_impl_then_get_field_value(context, field, value):
+@async_run_until_complete
+async def step_impl_then_get_field_value(context, field, value):
     assert_200(context.response)
-    expect_json_contains(context.response, {field: value})
+    await expect_json_contains_async(context.response, {field: value})
 
 
 @then('we get etag matching "{url}"')
-def step_impl_then_get_etag(context, url):
+@async_run_until_complete
+async def step_impl_then_get_etag(context, url):
     if context.app.config["IF_MATCH"]:
         assert_200(context.response)
-        expect_json_contains(context.response, "_etag")
-        etag = get_json_data(context.response).get("_etag")
-        response = context.client.get(get_prefixed_url(context.app, url), headers=context.headers)
-        expect_json_contains(response, {"_etag": etag})
+        await expect_json_contains_async(context.response, "_etag")
+        etag = (await get_json_data(context.response)).get("_etag")
+        response = await context.client.get(get_prefixed_url(context.app, url), headers=context.headers)
+        await expect_json_contains_async(response, {"_etag": etag})
 
 
 @then("we get not modified response")
-def step_impl_then_not_modified(context):
-    expect_status(context.response, 304)
+@async_run_until_complete
+async def step_impl_then_not_modified(context):
+    await expect_status(context.response, 304)
 
 
 @then('we get "{header}" header')
@@ -1609,8 +1824,9 @@ def step_impl_then_get_header_with_type(context, header, type):
 
 
 @then('we get link to "{resource}"')
-def then_we_get_link_to_resource(context, resource):
-    doc = get_json_data(context.response)
+@async_run_until_complete
+async def then_we_get_link_to_resource(context, resource):
+    doc = await get_json_data(context.response)
     self_link = doc.get("_links").get("self")
     assert resource in self_link["href"], 'expect link to "%s", got %s' % (resource, self_link)
 
@@ -1621,12 +1837,13 @@ def then_we_get_deleted_response(context):
 
 
 @when('we post "{email}" to reset_password we get email with token')
-def we_post_to_reset_password(context, email):
+@async_run_until_complete
+async def we_post_to_reset_password(context, email):
     data = {"email": email}
     headers = [("Content-Type", "multipart/form-data")]
     headers = unique_headers(headers, context.headers)
     with context.app.mail.record_messages() as outbox:
-        context.response = context.client.post(
+        context.response = await context.client.post(
             get_prefixed_url(context.app, "/reset_user_password"), data=data, headers=headers
         )
         expect_status_in(context.response, (200, 201))
@@ -1642,19 +1859,21 @@ def we_post_to_reset_password(context, email):
 
 
 @then("we can check if token is valid")
-def we_can_check_token_is_valid(context):
+@async_run_until_complete
+async def we_can_check_token_is_valid(context):
     data = {"token": context.token}
     headers = [("Content-Type", "multipart/form-data")]
     headers = unique_headers(headers, context.headers)
-    context.response = context.client.post(
+    context.response = await context.client.post(
         get_prefixed_url(context.app, "/reset_user_password"), data=data, headers=headers
     )
     expect_status_in(context.response, (200, 201))
 
 
 @then("we update token to be expired")
-def we_update_token_to_expired(context):
-    with context.app.test_request_context(context.app.config["URL_PREFIX"]):
+@async_run_until_complete
+async def we_update_token_to_expired(context):
+    async with context.app.test_request_context(context.app.config["URL_PREFIX"]):
         expiry = utc.utcnow() - timedelta(days=2)
         reset_request = get_resource_service("reset_user_password").find_one(req=None, token=context.token)
         reset_request["expire_time"] = expiry
@@ -1663,53 +1882,59 @@ def we_update_token_to_expired(context):
 
 
 @then("token is invalid")
-def check_token_invalid(context):
+@async_run_until_complete
+async def check_token_invalid(context):
     data = {"token": context.token}
     headers = [("Content-Type", "multipart/form-data")]
     headers = unique_headers(headers, context.headers)
-    context.response = context.client.post(
+    context.response = await context.client.post(
         get_prefixed_url(context.app, "/reset_user_password"), data=data, headers=headers
     )
     expect_status_in(context.response, (403, 401))
 
 
 @when("we post to reset_password we do not get email with token")
-def we_post_to_reset_password_it_fails(context):
+@async_run_until_complete
+async def we_post_to_reset_password_it_fails(context):
     data = {"email": "foo@bar.org"}
     headers = [("Content-Type", "multipart/form-data")]
     headers = unique_headers(headers, context.headers)
     with context.app.mail.record_messages() as outbox:
-        context.response = context.client.post(
+        context.response = await context.client.post(
             get_prefixed_url(context.app, "/reset_user_password"), data=data, headers=headers
         )
         expect_status_in(context.response, (200, 201))
         assert len(outbox) == 0
 
 
-def start_reset_password_for_user(context):
+async def start_reset_password_for_user(context):
     data = {"token": context.token, "password": "test_pass"}
     headers = [("Content-Type", "multipart/form-data")]
     headers = unique_headers(headers, context.headers)
-    context.response = context.client.post(
+    context.response = await context.client.post(
         get_prefixed_url(context.app, "/reset_user_password"), data=data, headers=headers
     )
 
 
 @then("we fail to reset password for user")
-def we_fail_to_reset_password_for_user(context):
-    start_reset_password_for_user(context)
-    step_impl_then_get_error(context, 403)
+@async_run_until_complete
+async def we_fail_to_reset_password_for_user(context):
+    await start_reset_password_for_user(context)
+    await step_impl_then_get_error(context, 403)
 
 
 @then("we reset password for user")
-def we_reset_password_for_user(context):
-    start_reset_password_for_user(context)
+@async_run_until_complete
+async def we_reset_password_for_user(context):
+    await start_reset_password_for_user(context)
     expect_status_in(context.response, (200, 201))
 
     auth_data = {"username": "foo", "password": "test_pass"}
     headers = [("Content-Type", "multipart/form-data")]
     headers = unique_headers(headers, context.headers)
-    context.response = context.client.post(get_prefixed_url(context.app, "/auth_db"), data=auth_data, headers=headers)
+    context.response = await context.client.post(
+        get_prefixed_url(context.app, "/auth_db"), data=auth_data, headers=headers
+    )
     expect_status_in(context.response, (200, 201))
 
 
@@ -1732,26 +1957,29 @@ def when_we_setup_test_user(context):
 
 
 @when('we get my "{url}"')
-def when_we_get_my_url(context, url):
+@async_run_until_complete
+async def when_we_get_my_url(context, url):
     user_id = str(context.user.get("_id"))
     my_url = "{0}?where={1}".format(url, json.dumps({"user": user_id}))
-    return when_we_get_url(context, my_url)
+    return await when_we_get_url(context, my_url)
 
 
 @when('we get user "{resource}"')
-def when_we_get_user_resource(context, resource):
+@async_run_until_complete
+async def when_we_get_user_resource(context, resource):
     url = "/users/{0}/{1}".format(str(context.user.get("_id")), resource)
-    return when_we_get_url(context, url)
+    return await when_we_get_url(context, url)
 
 
 @then("we get embedded items")
-def we_get_embedded_items(context):
-    response_data = json.loads(context.response.get_data())
+@async_run_until_complete
+async def we_get_embedded_items(context):
+    response_data = json.loads(await context.response.get_data())
     href = get_self_href(response_data, context)
     url = href + '/?embedded={"items": 1}'
-    context.response = context.client.get(get_prefixed_url(context.app, url), headers=context.headers)
+    context.response = await context.client.get(get_prefixed_url(context.app, url), headers=context.headers)
     assert_200(context.response)
-    context.response_data = json.loads(context.response.get_data())
+    context.response_data = await get_json_data(context.response)
     assert len(context.response_data["items"]["view_items"]) == 2
 
 
@@ -1778,42 +2006,46 @@ def then_we_get_no_notifications(context):
 
 
 @then("we get default preferences")
-def get_default_prefs(context):
-    response_data = json.loads(context.response.get_data())
+@async_run_until_complete
+async def get_default_prefs(context):
+    response_data = await get_json_data(context.response)
     data = {}
     enhance_document_with_default_prefs(data)
     assert_equal(response_data["user_preferences"], data["user_preferences"])
 
 
 @when('we spike "{item_id}"')
-def step_impl_when_spike_url(context, item_id):
+@async_run_until_complete
+async def step_impl_when_spike_url(context, item_id):
     item_id = apply_placeholders(context, item_id)
-    res = get_res("/archive/" + item_id, context)
+    res = await get_res("/archive/" + item_id, context)
     headers = if_match(context, res.get("_etag"))
 
-    context.response = context.client.patch(
+    context.response = await context.client.patch(
         get_prefixed_url(context.app, "/archive/spike/" + item_id), data='{"state": "spiked"}', headers=headers
     )
 
 
 @when("we spike fetched item")
-def step_impl_when_spike_fetched_item(context):
+@async_run_until_complete
+async def step_impl_when_spike_fetched_item(context):
     data = json.loads(apply_placeholders(context, context.text))
     item_id = data["_id"]
-    res = get_res("/archive/" + item_id, context)
+    res = await get_res("/archive/" + item_id, context)
     headers = if_match(context, res.get("_etag"))
 
-    context.response = context.client.patch(
+    context.response = await context.client.patch(
         get_prefixed_url(context.app, "/archive/spike/" + item_id), data='{"state": "spiked"}', headers=headers
     )
 
 
 @when('we unspike "{item_id}"')
-def step_impl_when_unspike_url(context, item_id):
+@async_run_until_complete
+async def step_impl_when_unspike_url(context, item_id):
     item_id = apply_placeholders(context, item_id)
-    res = get_res("/archive/" + item_id, context)
+    res = await get_res("/archive/" + item_id, context)
     headers = if_match(context, res.get("_etag"))
-    context.response = context.client.patch(
+    context.response = await context.client.patch(
         get_prefixed_url(context.app, "/archive/unspike/" + item_id),
         data=apply_placeholders(context, context.text or "{}"),
         headers=headers,
@@ -1821,24 +2053,26 @@ def step_impl_when_unspike_url(context, item_id):
 
 
 @then('we get spiked content "{item_id}"')
-def get_spiked_content(context, item_id):
+@async_run_until_complete
+async def get_spiked_content(context, item_id):
     item_id = apply_placeholders(context, item_id)
     url = "archive/{0}".format(item_id)
-    when_we_get_url(context, url)
+    await when_we_get_url(context, url)
     assert_200(context.response)
-    response_data = json.loads(context.response.get_data())
+    response_data = await get_json_data(context.response)
     assert_equal(response_data["state"], "spiked")
     assert_equal(response_data["operation"], "spike")
 
 
 @then('we get unspiked content "{id}"')
-def get_unspiked_content(context, id):
+@async_run_until_complete
+async def get_unspiked_content(context, id):
     text = context.text
     context.text = ""
     url = "archive/{0}".format(id)
-    when_we_get_url(context, url)
+    await when_we_get_url(context, url)
     assert_200(context.response)
-    response_data = json.loads(context.response.get_data())
+    response_data = await get_json_data(context.response)
     assert_equal(response_data["state"], "draft")
     assert_equal(response_data["operation"], "unspike")
     # Tolga Akin (05/11/14)
@@ -1850,28 +2084,32 @@ def get_unspiked_content(context, id):
 
 
 @then("we get global content expiry")
-def get_global_content_expiry(context):
-    validate_expired_content(context, context.app.config["CONTENT_EXPIRY_MINUTES"], utcnow())
+@async_run_until_complete
+async def get_global_content_expiry(context):
+    await validate_expired_content(context, context.app.config["CONTENT_EXPIRY_MINUTES"], utcnow())
 
 
 @then("we get content expiry {minutes}")
-def get_content_expiry(context, minutes):
-    validate_expired_content(context, minutes, utcnow())
+@async_run_until_complete
+async def get_content_expiry(context, minutes):
+    await validate_expired_content(context, minutes, utcnow())
 
 
 @then('we get expiry for schedule and embargo content {minutes} minutes after "{future_date}"')
-def get_content_expiry_schedule(context, minutes, future_date):
+@async_run_until_complete
+async def get_content_expiry_schedule(context, minutes, future_date):
     future_date = parse_date(apply_placeholders(context, future_date))
-    validate_expired_content(context, minutes, future_date)
+    await validate_expired_content(context, minutes, future_date)
 
 
 @then('we get desk spike expiry after "{test_minutes}"')
-def get_desk_spike_expiry(context, test_minutes):
-    validate_expired_content(context, test_minutes, utcnow())
+@async_run_until_complete
+async def get_desk_spike_expiry(context, test_minutes):
+    await validate_expired_content(context, test_minutes, utcnow())
 
 
-def validate_expired_content(context, minutes, start_datetime):
-    response_data = json.loads(context.response.get_data())
+async def validate_expired_content(context, minutes, start_datetime):
+    response_data = await get_json_data(context.response)
     assert response_data["expiry"]
     response_expiry = parse_date(response_data["expiry"])
     expiry = start_datetime + timedelta(minutes=int(minutes))
@@ -1879,9 +2117,10 @@ def validate_expired_content(context, minutes, start_datetime):
 
 
 @when('we mention user in comment for "{url}"')
-def we_mention_user_in_comment(context, url):
+@async_run_until_complete
+async def we_mention_user_in_comment(context, url):
     with context.app.mail.record_messages() as outbox:
-        step_impl_when_post_url(context, url)
+        await post_data(context, url)
         assert len(outbox) == 1
         assert_equal(outbox[0].subject, "You were mentioned in a comment by test_user")
         email_text = outbox[0].body
@@ -1899,34 +2138,38 @@ def we_change_user_status(context, status, url):
 
 
 @when("we get the default incoming stage")
-def we_get_default_incoming_stage(context):
-    data = json.loads(context.response.get_data())
+@async_run_until_complete
+async def we_get_default_incoming_stage(context):
+    data = await get_json_data(context.response)
     incoming_stage = data["_items"][0]["incoming_stage"] if "_items" in data else data["incoming_stage"]
     assert incoming_stage
     url = "stages/{0}".format(incoming_stage)
-    when_we_get_url(context, url)
+    await when_we_get_url(context, url)
     assert_200(context.response)
-    data = json.loads(context.response.get_data())
+    data = await get_json_data(context.response)
     assert data["default_incoming"] is True
     assert data["name"] == "Incoming Stage"
 
 
 @then("we get stage filled in to default_incoming")
-def we_get_stage_filled_in(context):
-    data = json.loads(context.response.get_data())
+@async_run_until_complete
+async def we_get_stage_filled_in(context):
+    data = await get_json_data(context.response)
     assert data["task"]["stage"]
 
 
 @then("we get null stage")
-def we_get_null_stage(context):
-    data = json.loads(context.response.get_data())
+@async_run_until_complete
+async def we_get_null_stage(context):
+    data = await get_json_data(context.response)
     assert data["task"].get("stage", None) is None
 
 
 @given('we have sessions "{url}"')
-def we_have_sessions_get_id(context, url):
-    when_we_get_url(context, url)
-    item = json.loads(context.response.get_data())
+@async_run_until_complete
+async def we_have_sessions_get_id(context, url):
+    await when_we_get_url(context, url)
+    item = await get_json_data(context.response)
     context.session_id = item["_items"][0]["_id"]
     context.data = item
     set_placeholder(context, "SESSION_ID", item["_items"][0]["_id"])
@@ -1934,10 +2177,11 @@ def we_have_sessions_get_id(context, url):
 
 
 @then("we get session by id")
-def we_get_session_by_id(context):
+@async_run_until_complete
+async def we_get_session_by_id(context):
     url = "sessions/" + context.session_id
-    when_we_get_url(context, url)
-    item = json.loads(context.response.get_data())
+    await when_we_get_url(context, url)
+    item = await get_json_data(context.response)
     returned_id = item["_id"]
     assert context.session_id == returned_id
 
@@ -1950,10 +2194,11 @@ def we_delete_session_by_id(context):
 
 
 @when("we create a new user")
-def step_create_a_user(context):
+@async_run_until_complete
+async def step_create_a_user(context):
     data = apply_placeholders(context, context.text)
     with context.app.mail.record_messages() as outbox:
-        context.response = context.client.post(
+        context.response = await context.client.post(
             get_prefixed_url(context.app, "/users"), data=data, headers=context.headers
         )
         expect_status_in(context.response, (200, 201))
@@ -2012,13 +2257,14 @@ def check_if_email_sent(context, spec):
 
 
 @then("we get activity")
-def then_we_get_activity(context):
+@async_run_until_complete
+async def then_we_get_activity(context):
     url = apply_placeholders(context, '/activity?where={"name": {"$in": ["notify", "user:mention" , "desk:mention"]}}')
-    context.response = context.client.get(get_prefixed_url(context.app, url), headers=context.headers)
+    context.response = await context.client.get(get_prefixed_url(context.app, url), headers=context.headers)
     if context.response.status_code == 200:
-        expect_json_length(context.response, 1, path="_items")
-        item = json.loads(context.response.get_data())
-        item = item["_items"][0]
+        data = await get_json_data(context.response)
+        assert len(data.get("_items", [])) == 1
+        item = data["_items"][0]
         if item.get("_id"):
             setattr(context, "activity", item)
             set_placeholder(context, "USERS_ID", item["user"])
@@ -2055,84 +2301,94 @@ def is_user_resource(resource):
 
 
 @then("we get {no_of_stages} invisible stages")
-def when_we_get_invisible_stages(context, no_of_stages):
-    with context.app.test_request_context(context.app.config["URL_PREFIX"]):
+@async_run_until_complete
+async def when_we_get_invisible_stages(context, no_of_stages):
+    async with context.app.test_request_context(context.app.config["URL_PREFIX"]):
         stages = get_resource_service("stages").get_stages_by_visibility(is_visible=False)
         assert len(stages) == int(no_of_stages)
 
 
 @then("we get {no_of_stages} visible stages")
-def when_we_get_visible_stages(context, no_of_stages):
-    with context.app.test_request_context(context.app.config["URL_PREFIX"]):
+@async_run_until_complete
+async def when_we_get_visible_stages(context, no_of_stages):
+    async with context.app.test_request_context(context.app.config["URL_PREFIX"]):
         stages = get_resource_service("stages").get_stages_by_visibility(is_visible=True)
         assert len(stages) == int(no_of_stages)
 
 
 @then("we get {no_of_stages} invisible stages for user")
-def when_we_get_invisible_stages_for_user(context, no_of_stages):
+@async_run_until_complete
+async def when_we_get_invisible_stages_for_user(context, no_of_stages):
     data = json.loads(apply_placeholders(context, context.text))
-    with context.app.test_request_context(context.app.config["URL_PREFIX"]):
+    async with context.app.test_request_context(context.app.config["URL_PREFIX"]):
         stages = get_resource_service("users").get_invisible_stages(data["user"])
         assert len(stages) == int(no_of_stages)
 
 
 @then('we get "{field_name}" populated')
-def then_field_is_populated(context, field_name):
-    resp = parse_json_response(context.response)
+@async_run_until_complete
+async def then_field_is_populated(context, field_name):
+    resp = await parse_json_response_async(context.response)
     assert resp[field_name].get("user", None) is not None, "item is not populated"
 
 
 @then('we get "{field_name}" not populated')
-def then_field_is_not_populated(context, field_name):
-    resp = parse_json_response(context.response)
+@async_run_until_complete
+async def then_field_is_not_populated(context, field_name):
+    resp = await parse_json_response_async(context.response)
     assert resp.get(field_name) is None, "%s should be none, but it is %s in %s" % (field_name, resp[field_name], resp)
 
 
 @then('the field "{field_name}" value is not "{field_value}"')
-def then_field_value_is_not_same(context, field_name, field_value):
-    resp = parse_json_response(context.response)
+@async_run_until_complete
+async def then_field_value_is_not_same(context, field_name, field_value):
+    resp = await parse_json_response_async(context.response)
     assert resp[field_name] != field_value, "values are the same"
 
 
 @then('we get "{field_name}" not populated in results')
-def then_field_is_not_populated_in_results(context, field_name):
-    resps = parse_json_response(context.response)
+@async_run_until_complete
+async def then_field_is_not_populated_in_results(context, field_name):
+    resps = await parse_json_response_async(context.response)
     for resp in resps["_items"]:
         assert resp[field_name] is None, "item is not populated"
 
 
 @when('we delete content filter "{name}"')
-def step_delete_content_filter(context, name):
-    with context.app.test_request_context(context.app.config["URL_PREFIX"]):
+@async_run_until_complete
+async def step_delete_content_filter(context, name):
+    async with context.app.test_request_context(context.app.config["URL_PREFIX"]):
         filter = get_resource_service("content_filters").find_one(req=None, name=name)
         url = "/content_filters/{}".format(filter["_id"])
         headers = if_match(context, filter.get("_etag"))
-        context.response = context.client.delete(get_prefixed_url(context.app, url), headers=headers)
+        context.response = await context.client.delete(get_prefixed_url(context.app, url), headers=headers)
 
 
 @when('we rewrite "{item_id}"')
-def step_impl_when_rewrite(context, item_id):
+@async_run_until_complete
+async def step_impl_when_rewrite(context, item_id):
     context_data = {}
     _id = apply_placeholders(context, item_id)
     if context.text:
         context_data.update(json.loads(apply_placeholders(context, context.text)))
     data = json.dumps(context_data)
-    context.response = context.client.post(
+    context.response = await context.client.post(
         get_prefixed_url(context.app, "/archive/{}/rewrite".format(_id)), data=data, headers=context.headers
     )
     if context.response.status_code == 400:
         return
 
-    expect_status(context.response, 201)
-    resp = parse_json_response(context.response)
+    await expect_status(context.response, 201)
+    resp = await parse_json_response_async(context.response)
 
     set_placeholder(context, "REWRITE_OF", _id)
     set_placeholder(context, "REWRITE_ID", resp["_id"])
 
 
 @then('we get "{field_name}" does not exist')
-def step_field_name_does_exist(context, field_name):
-    resps = parse_json_response(context.response)
+@async_run_until_complete
+async def step_field_name_does_exist(context, field_name):
+    resps = await parse_json_response_async(context.response)
 
     if "_items" in resps:
         for resp in resps["_items"]:
@@ -2142,43 +2398,48 @@ def step_field_name_does_exist(context, field_name):
 
 
 @then('we get "{field_name}" does exist')
-def step_field_name_does_not_exist(context, field_name):
-    resps = parse_json_response(context.response)
+@async_run_until_complete
+async def step_field_name_does_not_exist(context, field_name):
+    resps = await parse_json_response_async(context.response)
     for resp in resps["_items"]:
         assert field_name in resp, "field does not exist"
 
 
 @when('we publish "{item_id}" with "{pub_type}" type and "{state}" state')
-def step_impl_when_publish_url(context, item_id, pub_type, state):
+@async_run_until_complete
+async def step_impl_when_publish_url(context, item_id, pub_type, state):
     item_id = apply_placeholders(context, item_id)
-    res = get_res("/archive/" + item_id, context)
+    res = await get_res("/archive/" + item_id, context)
     headers = if_match(context, res.get("_etag"))
     context_data = {"state": state}
     if context.text:
         data = apply_placeholders(context, context.text)
         context_data.update(json.loads(data))
     data = json.dumps(context_data)
-    context.response = context.client.patch(
+    context.response = await context.client.patch(
         get_prefixed_url(context.app, "/archive/{}/{}".format(pub_type, item_id)), data=data, headers=headers
     )
-    store_placeholder(context, "archive_{}".format(pub_type))
+    await store_placeholder(context, "archive_{}".format(pub_type))
 
 
 @then('the ingest item is routed based on routing scheme and rule "{rule_name}"')
-def then_ingest_item_is_routed_based_on_routing_scheme(context, rule_name):
-    with context.app.test_request_context(context.app.config["URL_PREFIX"]):
+@async_run_until_complete
+async def then_ingest_item_is_routed_based_on_routing_scheme(context, rule_name):
+    async with context.app.test_request_context(context.app.config["URL_PREFIX"]):
         validate_routed_item(context, rule_name, True)
 
 
 @then('the ingest item is routed and transformed based on routing scheme and rule "{rule_name}"')
-def then_ingest_item_is_routed_transformed_based_on_routing_scheme(context, rule_name):
-    with context.app.test_request_context(context.app.config["URL_PREFIX"]):
+@async_run_until_complete
+async def then_ingest_item_is_routed_transformed_based_on_routing_scheme(context, rule_name):
+    async with context.app.test_request_context(context.app.config["URL_PREFIX"]):
         validate_routed_item(context, rule_name, True, True)
 
 
 @then('the ingest item is not routed based on routing scheme and rule "{rule_name}"')
-def then_ingest_item_is_not_routed_based_on_routing_scheme(context, rule_name):
-    with context.app.test_request_context(context.app.config["URL_PREFIX"]):
+@async_run_until_complete
+async def then_ingest_item_is_not_routed_based_on_routing_scheme(context, rule_name):
+    async with context.app.test_request_context(context.app.config["URL_PREFIX"]):
         validate_routed_item(context, rule_name, False)
 
 
@@ -2218,11 +2479,12 @@ def validate_routed_item(context, rule_name, is_routed, is_transformed=False):
 
 
 @when('we schedule the routing scheme "{scheme_id}"')
-def when_we_schedule_the_routing_scheme(context, scheme_id):
-    with context.app.test_request_context(context.app.config["URL_PREFIX"]):
+@async_run_until_complete
+async def when_we_schedule_the_routing_scheme(context, scheme_id):
+    async with context.app.test_request_context(context.app.config["URL_PREFIX"]):
         scheme_id = apply_placeholders(context, scheme_id)
         url = apply_placeholders(context, "routing_schemes/%s" % scheme_id)
-        res = get_res(url, context)
+        res = await get_res(url, context)
         href = get_self_href(res, context)
         headers = if_match(context, res.get("_etag"))
         rule = res.get("rules")[0]
@@ -2239,7 +2501,7 @@ def when_we_schedule_the_routing_scheme(context, scheme_id):
             rule = res.get("rules")[1]
             rule["schedule"] = {"day_of_week": [Weekdays.dayname(now)]}
 
-        context.response = context.client.patch(
+        context.response = await context.client.patch(
             get_prefixed_url(context.app, href), data=json.dumps({"rules": res.get("rules", [])}), headers=headers
         )
         assert_200(context.response)
@@ -2283,34 +2545,39 @@ def logout(context):
 
 
 @then('we get "{url}" and match')
-def we_get_and_match(context, url):
+@async_run_until_complete
+async def we_get_and_match(context, url):
     url = apply_placeholders(context, url)
-    response_data = get_res(url, context)
+    response_data = await get_res(url, context)
     context_data = json.loads(apply_placeholders(context, context.text))
     assert_equal(json_match(context_data, response_data), True, msg=str(context_data) + "\n != \n" + str(response_data))
 
 
 @then('there is no "{key}" in response')
-def there_is_no_key_in_response(context, key):
-    data = get_json_data(context.response)
+@async_run_until_complete
+async def there_is_no_key_in_response(context, key):
+    data = await get_json_data(context.response)
     assert key not in data, 'key "%s" is in %s' % (key, data)
 
 
 @then('there is no "{key}" in task')
-def there_is_no_key_in_preferences(context, key):
-    data = get_json_data(context.response)["task"]
+@async_run_until_complete
+async def there_is_no_key_in_preferences(context, key):
+    data = await get_json_data(context.response)["task"]
     assert key not in data, 'key "%s" is in task' % key
 
 
 @then('there is no "{key}" in data')
-def there_is_no_profile_in_data(context, key):
-    data = get_json_data(context.response)["_items"][0]["data"]
+@async_run_until_complete
+async def there_is_no_profile_in_data(context, key):
+    data = await get_json_data(context.response)["_items"][0]["data"]
     assert key not in data, 'key "%s" is in data' % key
 
 
 @then('broadcast "{key}" has value "{value}"')
-def broadcast_key_has_value(context, key, value):
-    data = get_json_data(context.response).get("broadcast", {})
+@async_run_until_complete
+async def broadcast_key_has_value(context, key, value):
+    data = (await get_json_data(context.response)).get("broadcast", {})
     value = apply_placeholders(context, value)
     if value.lower() == "none":
         assert data[key] is None, 'key "%s" is not none and has value "%s"' % (key, data[key])
@@ -2319,58 +2586,63 @@ def broadcast_key_has_value(context, key, value):
 
 
 @then('there is no "{key}" preference')
-def there_is_no_preference(context, key):
-    data = get_json_data(context.response)
+@async_run_until_complete
+async def there_is_no_preference(context, key):
+    data = await get_json_data(context.response)
     assert key not in data["user_preferences"], "%s is in %s" % (key, data["user_preferences"].keys())
 
 
 @then('there is no "{key}" in "{namespace}" preferences')
-def there_is_no_key_in_namespace_preferences(context, key, namespace):
-    data = get_json_data(context.response)["user_preferences"]
+@async_run_until_complete
+async def there_is_no_key_in_namespace_preferences(context, key, namespace):
+    data = (await get_json_data(context.response))["user_preferences"]
     assert key not in data[namespace], 'key "%s" is in %s' % (key, data[namespace])
 
 
 @then("we check if article has Embargo")
-def step_impl_then_check_embargo(context):
+@async_run_until_complete
+async def step_impl_then_check_embargo(context):
     assert_200(context.response)
     try:
-        response_data = json.loads(context.response.get_data())
+        response_data = json.loads(await context.response.get_data())
     except Exception:
-        fail_and_print_body(context.response, "response is not valid json")
+        await fail_and_print_body_async(context.response, "response is not valid json")
 
     if response_data.get("_meta") and response_data.get("_items"):
         for item in response_data.get("_items"):
-            assert_embargo(context, item)
+            await assert_embargo(context, item)
     else:
-        assert_embargo(context, response_data)
+        await assert_embargo(context, response_data)
 
 
-def assert_embargo(context, item):
+async def assert_embargo(context, item):
     if not item.get("embargo"):
-        fail_and_print_body(context, context.response, "Embargo not found")
+        await fail_and_print_body_async(context, context.response, "Embargo not found")
 
 
 @when('embargo lapses for "{item_id}"')
-def embargo_lapses(context, item_id):
+@async_run_until_complete
+async def embargo_lapses(context, item_id):
     item_id = apply_placeholders(context, item_id)
-    item = get_res("/archive/%s" % item_id, context)
+    item = await get_res("/archive/%s" % item_id, context)
 
     updates = {
         "embargo": (utcnow() - timedelta(minutes=10)),
         "schedule_settings": {"utc_embargo": (utcnow() - timedelta(minutes=10))},
     }
 
-    with context.app.test_request_context(context.app.config["URL_PREFIX"]):
+    async with context.app.test_request_context(context.app.config["URL_PREFIX"]):
         get_resource_service("archive").system_update(id=item["_id"], original=item, updates=updates)
 
 
 @then("we validate the published item expiry to be after publish expiry set in desk settings {publish_expiry_in_desk}")
-def validate_published_item_expiry(context, publish_expiry_in_desk):
+@async_run_until_complete
+async def validate_published_item_expiry(context, publish_expiry_in_desk):
     assert_200(context.response)
     try:
-        response_data = json.loads(context.response.get_data())
+        response_data = json.loads(await context.response.get_data())
     except Exception:
-        fail_and_print_body(context.response, "response is not valid json")
+        await fail_and_print_body_async(context.response, "response is not valid json")
 
     if response_data.get("_meta") and response_data.get("_items"):
         for item in response_data.get("_items"):
@@ -2380,8 +2652,9 @@ def validate_published_item_expiry(context, publish_expiry_in_desk):
 
 
 @then('we get updated timestamp "{field}"')
-def step_we_get_updated_timestamp(context, field):
-    data = get_json_data(context.response)
+@async_run_until_complete
+async def step_we_get_updated_timestamp(context, field):
+    data = await get_json_data(context.response)
     timestamp = arrow.get(data[field])
     now = utcnow()
     assert timestamp + timedelta(seconds=5) > now, "timestamp < now (%s, %s)" % (timestamp, now)  # 5s tolerance
@@ -2406,16 +2679,18 @@ def assert_expiry(item, publish_expiry_in_desk):
 
 
 @when("run import legal publish queue")
-def run_import_legal_publish_queue(context):
-    with context.app.test_request_context(context.app.config["URL_PREFIX"]):
+@async_run_until_complete
+async def run_import_legal_publish_queue(context):
+    async with context.app.test_request_context(context.app.config["URL_PREFIX"]):
         from apps.legal_archive import ImportLegalPublishQueueCommand
 
         ImportLegalPublishQueueCommand().run()
 
 
 @when("we expire items")
-def expire_content(context):
-    with context.app.test_request_context(context.app.config["URL_PREFIX"]):
+@async_run_until_complete
+async def expire_content(context):
+    async with context.app.test_request_context(context.app.config["URL_PREFIX"]):
         ids = json.loads(apply_placeholders(context, context.text))
         expiry = utcnow() - timedelta(minutes=5)
         for item_id in ids:
@@ -2429,8 +2704,9 @@ def expire_content(context):
 
 
 @when("the publish schedule lapses")
-def run_overdue_schedule_jobs(context):
-    with context.app.test_request_context(context.app.config["URL_PREFIX"]):
+@async_run_until_complete
+async def run_overdue_schedule_jobs(context):
+    async with context.app.test_request_context(context.app.config["URL_PREFIX"]):
         ids = json.loads(apply_placeholders(context, context.text))
         lapse_time = utcnow() - timedelta(minutes=5)
         updates = {
@@ -2448,23 +2724,26 @@ def run_overdue_schedule_jobs(context):
 
 
 @when("we transmit items")
-def transmit_items(context):
-    with context.app.test_request_context(context.app.config["URL_PREFIX"]):
+@async_run_until_complete
+async def transmit_items(context):
+    async with context.app.test_request_context(context.app.config["URL_PREFIX"]):
         from superdesk.publish.publish_content import PublishContent
 
         PublishContent().run()
 
 
 @when('we remove item "{_id}" from mongo')
-def remove_item_from_mongo(context, _id):
-    with context.app.app_context():
+@async_run_until_complete
+async def remove_item_from_mongo(context, _id):
+    async with context.app.app_context():
         context.app.data.mongo.remove("archive", {"_id": _id})
 
 
 @then('we get text "{text}" in response field "{field}"')
-def we_get_text_in_field(context, text, field):
-    with context.app.test_request_context(context.app.config["URL_PREFIX"]):
-        resp = parse_json_response(context.response)
+@async_run_until_complete
+async def we_get_text_in_field(context, text, field):
+    async with context.app.test_request_context(context.app.config["URL_PREFIX"]):
+        resp = await parse_json_response_async(context.response)
         assert field in resp, "Field {} not found in response.".format(field)
         assert isinstance(resp.get(field), str), "Invalid type"
         assert text in resp.get(field, ""), "{} contains text: {}. Text To find: {}".format(
@@ -2478,26 +2757,29 @@ def we_get_reset_default_priority_for_updated_articles(context):
 
 
 @then("we mark the items not moved to legal")
-def we_mark_the_items_not_moved_to_legal(context):
-    with context.app.test_request_context(context.app.config["URL_PREFIX"]):
+@async_run_until_complete
+async def we_mark_the_items_not_moved_to_legal(context):
+    async with context.app.test_request_context(context.app.config["URL_PREFIX"]):
         ids = json.loads(apply_placeholders(context, context.text))
         for item_id in ids:
             get_resource_service("published").update_published_items(item_id, "moved_to_legal", False)
 
 
 @when("we run import legal archive command")
-def we_run_import_legal_archive_command(context):
-    with context.app.test_request_context(context.app.config["URL_PREFIX"]):
+@async_run_until_complete
+async def we_run_import_legal_archive_command(context):
+    async with context.app.test_request_context(context.app.config["URL_PREFIX"]):
         from apps.legal_archive.commands import ImportLegalArchiveCommand
 
         ImportLegalArchiveCommand().run()
 
 
 @then('we find no reference of package "{reference}" in item')
-def we_find_no_reference_of_package_in_item(context, reference):
-    with context.app.test_request_context(context.app.config["URL_PREFIX"]):
+@async_run_until_complete
+async def we_find_no_reference_of_package_in_item(context, reference):
+    async with context.app.test_request_context(context.app.config["URL_PREFIX"]):
         reference = apply_placeholders(context, reference)
-        resp = parse_json_response(context.response)
+        resp = await parse_json_response_async(context.response)
         linked_in_packages = resp.get("linked_in_packages", [])
         assert reference not in [
             p.get("package") for p in linked_in_packages
@@ -2520,8 +2802,9 @@ def we_set_copy_metadata_from_parent(context):
 
 
 @then('we assert the content api item "{item_id}" is published to subscriber "{subscriber}"')
-def we_assert_content_api_item_is_published_to_subscriber(context, item_id, subscriber):
-    with context.app.test_request_context(context.app.config["URL_PREFIX"]):
+@async_run_until_complete
+async def we_assert_content_api_item_is_published_to_subscriber(context, item_id, subscriber):
+    async with context.app.test_request_context(context.app.config["URL_PREFIX"]):
         item_id = apply_placeholders(context, item_id)
         subscriber = apply_placeholders(context, subscriber)
         req = ParsedRequest()
@@ -2535,8 +2818,9 @@ def we_assert_content_api_item_is_published_to_subscriber(context, item_id, subs
 
 
 @then('we assert the content api item "{item_id}" is not published to subscriber "{subscriber}"')
-def we_assert_content_api_item_is_not_published_to_subscriber(context, item_id, subscriber):
-    with context.app.test_request_context(context.app.config["URL_PREFIX"]):
+@async_run_until_complete
+async def we_assert_content_api_item_is_not_published_to_subscriber(context, item_id, subscriber):
+    async with context.app.test_request_context(context.app.config["URL_PREFIX"]):
         item_id = apply_placeholders(context, item_id)
         subscriber = apply_placeholders(context, subscriber)
         req = ParsedRequest()
@@ -2551,8 +2835,9 @@ def we_assert_content_api_item_is_not_published_to_subscriber(context, item_id, 
 
 
 @then('we assert the content api item "{item_id}" is not published to any subscribers')
-def we_assert_content_api_item_is_not_published(context, item_id):
-    with context.app.test_request_context(context.app.config["URL_PREFIX"]):
+@async_run_until_complete
+async def we_assert_content_api_item_is_not_published(context, item_id):
+    async with context.app.test_request_context(context.app.config["URL_PREFIX"]):
         item_id = apply_placeholders(context, item_id)
         req = ParsedRequest()
         req.projection = json.dumps({"subscribers": 1})
@@ -2565,20 +2850,22 @@ def we_assert_content_api_item_is_not_published(context, item_id):
 
 
 @then("we ensure that archived schema extra fields are not present in duplicated item")
-def we_ensure_that_archived_schema_extra_fields_are_not_present(context):
-    with context.app.test_request_context(context.app.config["URL_PREFIX"]):
+@async_run_until_complete
+async def we_ensure_that_archived_schema_extra_fields_are_not_present(context):
+    async with context.app.test_request_context(context.app.config["URL_PREFIX"]):
         eve_keys = set([ID_FIELD, LAST_UPDATED, DATE_CREATED, VERSION, ETAG])
         archived_schema_keys = set(context.app.config["DOMAIN"]["archived"]["schema"].keys()).union(eve_keys)
         archive_schema_keys = set(context.app.config["DOMAIN"]["archive"]["schema"].keys()).union(eve_keys)
         extra_fields = [key for key in archived_schema_keys if key not in archive_schema_keys]
-        duplicate_item = json.loads(context.response.get_data())
+        duplicate_item = await get_json_data(context.response)
         for field in extra_fields:
             assert field not in duplicate_item, "Field {} found the duplicate item".format(field)
 
 
 @then('we assert content api item "{item_id}" with associated item "{embedded_id}" is published to "{subscriber}"')
-def we_assert_that_associated_item_for_subscriber(context, item_id, embedded_id, subscriber):
-    with context.app.test_request_context(context.app.config["URL_PREFIX"]):
+@async_run_until_complete
+async def we_assert_that_associated_item_for_subscriber(context, item_id, embedded_id, subscriber):
+    async with context.app.test_request_context(context.app.config["URL_PREFIX"]):
         item_id = apply_placeholders(context, item_id)
         subscriber = apply_placeholders(context, subscriber)
         embedded_id = apply_placeholders(context, embedded_id)
@@ -2593,8 +2880,9 @@ def we_assert_that_associated_item_for_subscriber(context, item_id, embedded_id,
 
 
 @then('we assert content api item "{item_id}" with associated item "{embedded_id}" is not published to "{subscriber}"')
-def we_assert_content_api_not_published(context, item_id, embedded_id, subscriber):
-    with context.app.test_request_context(context.app.config["URL_PREFIX"]):
+@async_run_until_complete
+async def we_assert_content_api_not_published(context, item_id, embedded_id, subscriber):
+    async with context.app.test_request_context(context.app.config["URL_PREFIX"]):
         item_id = apply_placeholders(context, item_id)
         subscriber = apply_placeholders(context, subscriber)
         embedded_id = apply_placeholders(context, embedded_id)
@@ -2614,37 +2902,41 @@ def then_file_exists(context, path):
 
 
 @then("we get package items")
-def then_we_get_package_item(context):
-    package = json.loads(context.response.get_data())
+@async_run_until_complete
+async def then_we_get_package_item(context):
+    package = await get_json_data(context.response)
     items = []
     for group in package.get("groups", []):
         for ref in group.get("refs", []):
             if ref.get("residRef"):
                 url = get_prefixed_url(context.app, "%s/%s" % (ref.get("location", "archive"), ref["residRef"]))
-                response = context.client.get(url, headers=context.headers)
+                response = await context.client.get(url, headers=context.headers)
                 assert response.status_code == 200, response.status_code
-                items.append(json.loads(response.get_data()))
+                items.append(json.loads(await response.get_data()))
     context_items = json.loads(context.text)
     test_items_contain_items(items, context_items)
 
 
 @then('we store "{tag}" with first item')
-def step_impl_store_first_item_to_ctx(context, tag):
-    data = get_json_data(context.response)
+@async_run_until_complete
+async def step_impl_store_first_item_to_ctx(context, tag):
+    data = await get_json_data(context.response)
     first_item = data["_items"][0]
     setattr(context, tag, first_item)
 
 
 @then('we store "{tag}" with {index} item')
-def step_impl_store_indexed_item_to_ctx(context, tag, index):
-    data = get_json_data(context.response)
+@async_run_until_complete
+async def step_impl_store_indexed_item_to_ctx(context, tag, index):
+    data = await get_json_data(context.response)
     item = data["_items"][int(index) - 1]
     setattr(context, tag, item)
 
 
 @then('we store response in "{tag}"')
-def step_impl_store_response_in_cts(context, tag):
-    data = get_json_data(context.response)
+@async_run_until_complete
+async def step_impl_store_response_in_cts(context, tag):
+    data = await get_json_data(context.response)
     setattr(context, tag, data)
 
 
@@ -2659,8 +2951,9 @@ def test_items_contain_items(items, context_items):
 
 
 @then("we get desk members count as {count}")
-def step_impl_we_get_desk_members_count(context, count):
-    desk = get_json_data(context.response) or {}
+@async_run_until_complete
+async def step_impl_we_get_desk_members_count(context, count):
+    desk = await get_json_data(context.response) or {}
     assert len(desk.get("members") or []) == int(count), "Invalid desk members"
 
 
@@ -2673,17 +2966,19 @@ def when_register_custom_schema_field(context, name):
 
 
 @given("authorized clients")
-def step_impl_given_authorized_client(context):
+@async_run_until_complete
+async def step_impl_given_authorized_client(context):
     from superdesk.auth_server import clients
 
     clients_data = json.loads(context.text)
-    with context.app.app_context():
+    async with context.app.app_context():
         for client_data in clients_data:
             clients.RegisterClient().run(**client_data)
 
 
 @when('we do OAuth2 client authentication with id "{client_id}" and password "{password}"')
-def step_impl_when_oauth2_client_auth(context, client_id, password):
+@async_run_until_complete
+async def step_impl_when_oauth2_client_auth(context, client_id, password):
     from superdesk.auth_server.oauth2 import TOKEN_ENDPOINT
 
     encoded_user_pass = b64encode(b"%s:%s" % (client_id.encode(), password.encode())).decode("ascii")
@@ -2692,15 +2987,16 @@ def step_impl_when_oauth2_client_auth(context, client_id, password):
         ("Authorization", "Basic {}".format(encoded_user_pass)),
     ]
     headers = unique_headers(headers, context.headers)
-    context.response = context.client.post(
+    context.response = await context.client.post(
         get_prefixed_url(context.app, TOKEN_ENDPOINT), data={"grant_type": "client_credentials"}, headers=headers
     )
 
 
 @then("we get a valid access token")
-def step_impl_then_we_get_access_token(context):
+@async_run_until_complete
+async def step_impl_then_we_get_access_token(context):
     assert context.response.status_code == 200
-    resp = json.loads(context.response.data)
+    resp = json.loads(await context.response.get_data())
     assert set(resp).issuperset({"expires_in", "token_type", "access_token"})
     # we now validate JWT signature and payload
 
@@ -2723,15 +3019,17 @@ def step_impl_then_we_get_access_token(context):
 
 
 @then("we don't get an access token")
-def step_impl_then_we_dont_get_access_token(context):
-    resp = json.loads(context.response.data)
+@async_run_until_complete
+async def step_impl_then_we_dont_get_access_token(context):
+    resp = json.loads(await context.response.get_data())
     assert context.response.status_code == 401
     assert resp == {"error": "invalid_client"}
 
 
 @when('we init data "{entity}"')
-def setp_impl_when_we_init_data(context, entity):
-    with context.app.app_context():
+@async_run_until_complete
+async def setp_impl_when_we_init_data(context, entity):
+    async with context.app.app_context():
         AppInitializeWithDataCommand().run(entity)
 
 
@@ -2743,19 +3041,21 @@ def when_we_run_task(context, name):
 
 
 @when('the lock expires "{url}"')
-def when_lock_expires(context, url):
+@async_run_until_complete
+async def when_lock_expires(context, url):
     url = apply_placeholders(context, url).encode("ascii").decode("unicode-escape")
     resource, _id = url.lstrip("/").rstrip("/").split("/")
-    with context.app.app_context():
+    async with context.app.app_context():
         orig = context.app.data.find_one(resource, req=None, _id=_id)
         assert orig is not None, "could not find {}/{}".format(resource, _id)
         context.app.data.update(resource, orig["_id"], {"_lock_time": utcnow() - timedelta(hours=48)}, orig)
 
 
 @then('we get picture metadata "{media}"')
-def then_we_get_picture_metadta(context, media):
-    with context.app.app_context():
-        media = render_template_string(media, **getattr(context, "placeholders", {}))
+@async_run_until_complete
+async def then_we_get_picture_metadta(context, media):
+    async with context.app.app_context():
+        media = await render_template_string(media, **getattr(context, "placeholders", {}))
         binary = context.app.media.get(media)
         assert binary, "Binary for media id {} not found".format(media)
         metadata = read_metadata(binary.read())

@@ -10,7 +10,7 @@
 
 from superdesk import etree as sd_etree
 from lxml import etree
-from flask_babel import lazy_gettext
+from quart_babel import lazy_gettext
 
 
 def extract_html_macro(item, **kwargs):
