@@ -1,7 +1,7 @@
 from pydantic import ValidationError
 
 from superdesk.core.resources.validators import get_field_errors_from_pydantic_validation_error
-from superdesk.tests.asyncio import AsyncTestCase
+from superdesk.tests import AsyncTestCase
 
 from .modules.users import User, UserResourceService
 

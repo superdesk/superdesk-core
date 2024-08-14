@@ -3,7 +3,7 @@ from unittest.mock import patch
 
 from superdesk.errors import SuperdeskError
 from superdesk.celery_app import HybridAppContextTask
-from superdesk.tests.asyncio import AsyncFlaskTestCase
+from superdesk.tests import AsyncFlaskTestCase
 
 
 class TestHybridAppContextTask(AsyncFlaskTestCase):

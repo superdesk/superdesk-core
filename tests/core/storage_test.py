@@ -13,7 +13,7 @@ from io import BytesIO
 from bson import ObjectId
 from datetime import datetime, timezone, timedelta
 
-from superdesk.tests.asyncio import AsyncTestCase
+from superdesk.tests import AsyncTestCase
 from superdesk.core.storage import GridFSMediaStorageAsync
 
 
