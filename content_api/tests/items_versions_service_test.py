@@ -16,7 +16,8 @@ from superdesk import get_resource_service
 class ItemDeleteTestCase(TestCase):
     """Tests that item_version documents are deleted when the items document is deleted"""
 
-    def setUp(self):
+    async def asyncSetUp(self):
+        await super().asyncSetUp()
         self.app.data.insert(
             "items",
             [
@@ -38,7 +39,7 @@ class ItemDeleteTestCase(TestCase):
             ],
         )
 
-    def test_event_fired(self):
+    async def test_event_fired(self):
         items_service = get_resource_service("items")
         items_versions_service = get_resource_service("items_versions")
 
