@@ -1,4 +1,5 @@
 import asyncio
+from inspect import isawaitable
 import werkzeug
 
 from celery import Task
@@ -60,7 +61,8 @@ class HybridAppContextTask(Task):
         async def wrapper():
             try:
                 async with self.get_current_app().app_context():
-                    return await self.run(*args, **kwargs)
+                    response = self.run(*args, **kwargs)
+                    return await response if isawaitable(response) else response
             except self.app_errors as e:
                 self.handle_exception(e)
                 return None
