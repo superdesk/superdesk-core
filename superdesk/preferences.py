@@ -26,9 +26,10 @@ def get_user_notification_preferences(user: User, notification: Optional[str] = 
     if notification_preferences is None:
         # BC: Check for the old email:notification:<notification> preference
         email_notification_name = f"email:notification:{notification}"
-        if user_preferences.get(email_notification_name):
+        user_email_preferences = user_preferences.get("notifications", {}).get(email_notification_name)
+        if user_email_preferences:
             return NotificationPreferences(
-                email=email_enabled and is_enabled(email_notification_name),
+                email=email_enabled and user_email_preferences.get("email"),
                 desktop=desktop_enabled,
             )
         else:
