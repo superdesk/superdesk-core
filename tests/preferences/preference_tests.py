@@ -176,3 +176,8 @@ class PreferenceTests(TestCase):
         user["user_preferences"]["notifications"]["email:notification:test"] = {"email": False}
         preferences = get_user_notification_preferences(user, "test")
         assert preferences["email"] is False
+
+        user["user_preferences"]["email:notification"] = {"enabled": True}
+        user["user_preferences"]["notifications"]["email:notification:test"] = {"email": False}
+        preferences = get_user_notification_preferences(user, "test")
+        assert preferences["email"] is False
