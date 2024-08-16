@@ -13,20 +13,22 @@ from unittest import mock
 from unittest.mock import MagicMock, ANY
 from datetime import timedelta
 
-from superdesk.tests import TestCase
+from superdesk.tests import TestCase, markers
 from superdesk.utc import utcnow
 from superdesk.errors import PublishHTTPPushServerError, PublishHTTPPushClientError
 from superdesk.publish.publish_content import transmit_item
 
 
+@markers.requires_async_celery
 class TransmitItemTestCase(TestCase):
     """Tests for the transmit_item() function."""
 
-    def setUp(self):
+    async def asyncSetUp(self):
+        await super().asyncSetUp()
         self.func_under_test = transmit_item
 
     @mock.patch("superdesk.publish.publish_content.get_resource_service")
-    def test_marks_items_as_retrying_in_case_of_failure(self, *mocks):
+    async def test_marks_items_as_retrying_in_case_of_failure(self, *mocks):
         fake_get_service = mocks[0]
         fake_get_service().patch.side_effect = Exception("Error patching item")
 
@@ -52,7 +54,7 @@ class TransmitItemTestCase(TestCase):
         )
 
     @mock.patch("superdesk.publish.publish_content.get_resource_service")
-    def test_marks_items_as_retrying_second_time_incase_of_failure(self, *mocks):
+    async def test_marks_items_as_retrying_second_time_incase_of_failure(self, *mocks):
         fake_get_service = mocks[0]
         fake_get_service().patch.side_effect = Exception("Error patching item")
 
@@ -80,7 +82,7 @@ class TransmitItemTestCase(TestCase):
         )
 
     @mock.patch("superdesk.publish.publish_content.get_resource_service")
-    def test_marks_items_failed_to_transmit_after_all_retry_attempts(self, *mocks):
+    async def test_marks_items_failed_to_transmit_after_all_retry_attempts(self, *mocks):
         fake_get_service = mocks[0]
         fake_get_service().patch.side_effect = Exception("Error patching item")
         self.app.config["MAX_TRANSMIT_RETRY_ATTEMPT"] = 4
@@ -105,7 +107,7 @@ class TransmitItemTestCase(TestCase):
 
     @mock.patch("superdesk.publish.publish_content.logger")
     @mock.patch("superdesk.publish.publish_content.get_resource_service")
-    def test_logs_error_even_when_marking_failed_items_fails(self, *mocks):
+    async def test_logs_error_even_when_marking_failed_items_fails(self, *mocks):
         fake_get_service = mocks[0]
         fake_get_service().patch.side_effect = Exception("Error patching item")
         fake_get_service().system_update.side_effect = Exception("Update error")
@@ -127,7 +129,7 @@ class TransmitItemTestCase(TestCase):
         expected_msg = "Failed to set the state for failed publish queue item item_1."
         fake_logger.error.assert_any_call(expected_msg)
 
-    def test_transmit_failure(self):
+    async def test_transmit_failure(self):
         subscriber = {
             "_id": ObjectId("56c11bd78b84bb00b0a1905e"),
             "sequence_num_settings": {"max": 9999, "min": 1},
@@ -161,7 +163,7 @@ class TransmitItemTestCase(TestCase):
 
     @mock.patch("superdesk.publish.publish_content.get_resource_service")
     @mock.patch("superdesk.publish.registered_transmitters")
-    def test_no_retry_on_http_push_client_error(self, *mocks):
+    async def test_no_retry_on_http_push_client_error(self, *mocks):
         self.app.config["MAX_TRANSMIT_RETRY_ATTEMPT"] = 4
 
         item_1 = {
@@ -191,7 +193,7 @@ class TransmitItemTestCase(TestCase):
 
     @mock.patch("superdesk.publish.publish_content.get_resource_service")
     @mock.patch("superdesk.publish.registered_transmitters")
-    def test_retry_on_http_push_server_error(self, *mocks):
+    async def test_retry_on_http_push_server_error(self, *mocks):
         self.app.config["MAX_TRANSMIT_RETRY_ATTEMPT"] = 4
 
         item_1 = {

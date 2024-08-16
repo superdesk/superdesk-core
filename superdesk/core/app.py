@@ -15,17 +15,17 @@ from .web import WSGIApp
 
 
 def get_app_config(key: str, default: Optional[Any] = None) -> Optional[Any]:
-    from flask import current_app
+    if _global_app is not None:
+        return _global_app.wsgi.config.get(key, default)
+
+    from quart import current_app
 
     try:
         return current_app.config.get(key, default)
     except RuntimeError:
         pass
 
-    if _global_app is None:
-        raise RuntimeError("Superdesk app is not running")
-
-    return _global_app.wsgi.config.get(key, default)
+    raise RuntimeError("Superdesk app is not running")
 
 
 class SuperdeskAsyncApp:
@@ -147,7 +147,7 @@ class SuperdeskAsyncApp:
         self._running = False
 
     def _store_app(self):
-        from flask import current_app
+        from quart import current_app
 
         try:
             setattr(current_app, "async_app", self)
@@ -159,7 +159,7 @@ class SuperdeskAsyncApp:
         _global_app = self
 
     def _remove_app(self):
-        from flask import current_app
+        from quart import current_app
 
         try:
             setattr(current_app, "async_app", None)
@@ -174,7 +174,7 @@ class SuperdeskAsyncApp:
 def get_current_app() -> WSGIApp:
     """Retrieve the current WSGI app instance"""
 
-    from flask import current_app
+    from quart import current_app
 
     return cast(WSGIApp, current_app)
 
@@ -182,7 +182,12 @@ def get_current_app() -> WSGIApp:
 def get_current_async_app() -> SuperdeskAsyncApp:
     """Retrieve the current app instance"""
 
-    from flask import current_app
+    global _global_app
+
+    if _global_app is not None:
+        return _global_app
+
+    from quart import current_app
 
     try:
         async_app = getattr(current_app, "async_app", None)
@@ -192,12 +197,7 @@ def get_current_async_app() -> SuperdeskAsyncApp:
         # Flask context not available
         pass
 
-    global _global_app
-
-    if _global_app is None:
-        raise RuntimeError("Superdesk app is not running")
-
-    return _global_app
+    raise RuntimeError("Superdesk app is not running")
 
 
 _global_app: Optional[SuperdeskAsyncApp] = None

@@ -112,8 +112,10 @@ class GenerateHighlightsService(superdesk.Service):
                                 )
 
             if stringTemplate:
+                # TODO-ASYNC: Support async (see superdesk.tests.markers.requires_eve_resource_async_event)
                 doc["body_html"] = render_template_string(stringTemplate, package=package, items=items)
             else:
+                # TODO-ASYNC: Support async (see superdesk.tests.markers.requires_eve_resource_async_event)
                 doc["body_html"] = render_template("default_highlight_template.txt", package=package, items=items)
         if preview:
             return ["" for doc in docs]

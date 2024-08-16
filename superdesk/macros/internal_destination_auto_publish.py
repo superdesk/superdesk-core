@@ -26,7 +26,7 @@ from superdesk.metadata.item import (
 from apps.archive.common import ITEM_OPERATION
 from apps.publish.content.common import publish_services
 from apps.content_types import apply_schema
-from flask_babel import lazy_gettext
+from quart_babel import lazy_gettext
 
 
 def internal_destination_auto_publish(item, **kwargs):

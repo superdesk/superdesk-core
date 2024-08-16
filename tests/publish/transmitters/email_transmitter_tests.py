@@ -12,7 +12,7 @@ import os
 from unittest.mock import Mock
 
 from superdesk.publish.transmitters.email import EmailPublishService
-from superdesk.tests import TestCase
+from superdesk.tests import TestCase, markers
 from superdesk.publish import init_app
 
 
@@ -53,18 +53,21 @@ class MockMail:
 class EmailPublishServiceTest(TestCase):
     filename = "IPTC-PhotometadataRef-Std2017.1.jpg"
 
-    def setUp(self):
+    async def asyncSetUp(self):
+        await super().asyncSetUp()
         init_app(self.app)
         self._media = self.app.media
         self.app.media = MockMediaFS()
         self._mail = self.app.mail
         self.app.mail = MockMail()
 
-    def tearDown(self):
+    async def asyncTearDown(self):
         self.app.mail = self._mail
         self.app.media = self._media
+        await super().asyncTearDown()
 
-    def test_attachment(self):
+    @markers.requires_async_celery
+    async def test_attachment(self):
         queue_item = {
             "item_id": "123",
             "destination": {

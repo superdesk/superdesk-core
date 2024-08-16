@@ -11,7 +11,7 @@
 import superdesk
 
 from copy import deepcopy
-from flask_babel import _
+from quart_babel import gettext as _
 
 from superdesk.resource_fields import ID_FIELD
 from superdesk.flask import request

@@ -4,8 +4,8 @@ from apps.publish.enqueue.enqueue_service import EnqueueService
 
 
 class NoTakesEnqueueTestCase(TestCase):
-    def setUp(self):
-        super().setUp()
+    async def asyncSetUp(self):
+        await super().asyncSetUp()
 
         self.product_ids = self.app.data.insert(
             "products",
@@ -30,7 +30,7 @@ class NoTakesEnqueueTestCase(TestCase):
 
         self.service = EnqueueService()
 
-    def test_resend_no_takes(self):
+    async def test_resend_no_takes(self):
         doc = {"_id": "test"}
         subscribers = [s for s in self.app.data.find_all("subscribers")]
         subscriber_codes = self.service._get_subscriber_codes(subscribers)

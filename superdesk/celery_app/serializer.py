@@ -61,8 +61,9 @@ class ContextAwareSerializerFactory:
         Returns:
             str: The serialized JSON string.
         """
-        with self.get_current_app().app_context():
-            return MongoJSONEncoder().encode(o)
+        # TODO-ASYNC: Create a JSONEncoder instance without requiring app_context
+        # async with self.get_current_app().app_context():
+        return MongoJSONEncoder().encode(o)
 
     def loads(self, s: str) -> Any:
         """
@@ -75,8 +76,9 @@ class ContextAwareSerializerFactory:
             Any: The deserialized object.
         """
         o = json.loads(s)
-        with self.get_current_app().app_context():
-            return self.serialize(o)
+        # TODO-ASYNC: Create a JSONDecoder instance without requiring app_context
+        # async with self.get_current_app().app_context():
+        return self.serialize(o)
 
     def serialize(self, o: Any) -> Any:
         """

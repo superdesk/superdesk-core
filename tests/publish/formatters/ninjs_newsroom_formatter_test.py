@@ -24,12 +24,13 @@ import planning.planning as planning_planning
 
 @mock.patch("superdesk.publish.subscribers.SubscribersService.generate_sequence_number", lambda self, subscriber: 1)
 class NewsroomNinjsFormatterTest(TestCase):
-    def setUp(self):
+    async def asyncSetUp(self):
+        await super().asyncSetUp()
         self.formatter = NewsroomNinjsFormatter()
         init_app(self.app)
         self.maxDiff = None
 
-    def test_products(self):
+    async def test_products(self):
         self.app.data.insert(
             "content_filters",
             [{"_id": 3, "content_filter": [{"expression": {"pf": [1], "fc": [2]}}], "name": "soccer-only3"}],
@@ -192,10 +193,7 @@ class NewsroomNinjsFormatterTest(TestCase):
         }
         self.assertEqual(json.loads(doc), expected)
 
-    def test_planning_data(self):
-        planning_assignments.init_app(self.app)
-        planning_planning.init_app(self.app)
-
+    async def test_planning_data(self):
         assignments = [{"coverage_item": "urn:coverage-id", "planning_item": "urn:planning-id"}]
         self.app.data.insert("assignments", assignments)
 
@@ -213,7 +211,7 @@ class NewsroomNinjsFormatterTest(TestCase):
         self.assertEqual("urn:planning-id", data["planning_id"])
         self.assertEqual("urn:coverage-id", data["coverage_id"])
 
-    def test_picture_formatter(self):
+    async def test_picture_formatter(self):
         article = {
             "guid": "20150723001158606583",
             "_current_version": 1,
@@ -274,7 +272,7 @@ class NewsroomNinjsFormatterTest(TestCase):
         self.assertEqual(expected, json.loads(doc))
         self.assertIn("viewImage", json.loads(doc).get("renditions"))
 
-    def test_auto_published_item(self):
+    async def test_auto_published_item(self):
         article = {
             "guid": "foo",
             "_current_version": 1,

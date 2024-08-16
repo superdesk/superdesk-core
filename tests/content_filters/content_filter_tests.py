@@ -22,9 +22,10 @@ from superdesk.tests import TestCase
 
 
 class ContentFilterTests(TestCase):
-    def setUp(self):
+    async def asyncSetUp(self):
+        await super().asyncSetUp()
         self.req = ParsedRequest()
-        with self.app.test_request_context(self.app.config.get("URL_PREFIX")):
+        async with self.app.test_request_context(self.app.config.get("URL_PREFIX")):
             self.f = ContentFilterService(datasource="content_filters", backend=get_backend())
             self.s = SubscribersService(datasource="subscribers", backend=get_backend())
 
@@ -152,325 +153,296 @@ class ContentFilterTests(TestCase):
 
 
 class RetrievingDataTests(ContentFilterTests):
-    def test_build_mongo_query_using_like_filter_single_fc(self):
+    async def test_build_mongo_query_using_like_filter_single_fc(self):
         doc = {"content_filter": [{"expression": {"fc": [1]}}], "name": "pf-1"}
-        with self.app.app_context():
-            query = self.f.build_mongo_query(doc)
-            docs = get_resource_service("archive").get_from_mongo(req=self.req, lookup=query)
-            doc_ids = [d["_id"] for d in docs]
-            self.assertEqual(3, docs.count())
-            self.assertTrue("1" in doc_ids)
-            self.assertTrue("2" in doc_ids)
-            self.assertTrue("3" in doc_ids)
+        query = self.f.build_mongo_query(doc)
+        docs = get_resource_service("archive").get_from_mongo(req=self.req, lookup=query)
+        doc_ids = [d["_id"] for d in docs]
+        self.assertEqual(3, docs.count())
+        self.assertTrue("1" in doc_ids)
+        self.assertTrue("2" in doc_ids)
+        self.assertTrue("3" in doc_ids)
 
-    def test_build_mongo_query_using_like_filter_single_pf(self):
+    async def test_build_mongo_query_using_like_filter_single_pf(self):
         doc = {"content_filter": [{"expression": {"pf": [1]}}], "name": "pf-1"}
-        with self.app.app_context():
-            query = self.f.build_mongo_query(doc)
-            docs = get_resource_service("archive").get_from_mongo(req=self.req, lookup=query)
-            doc_ids = [d["_id"] for d in docs]
-            self.assertEqual(3, docs.count())
-            self.assertTrue("1" in doc_ids)
-            self.assertTrue("2" in doc_ids)
-            self.assertTrue("3" in doc_ids)
+        query = self.f.build_mongo_query(doc)
+        docs = get_resource_service("archive").get_from_mongo(req=self.req, lookup=query)
+        doc_ids = [d["_id"] for d in docs]
+        self.assertEqual(3, docs.count())
+        self.assertTrue("1" in doc_ids)
+        self.assertTrue("2" in doc_ids)
+        self.assertTrue("3" in doc_ids)
 
-    def test_build_mongo_query_using_like_filter_multi_filter_condition(self):
+    async def test_build_mongo_query_using_like_filter_multi_filter_condition(self):
         doc = {"content_filter": [{"expression": {"fc": [1]}}, {"expression": {"fc": [2]}}], "name": "pf-1"}
-        with self.app.app_context():
-            query = self.f.build_mongo_query(doc)
-            docs = get_resource_service("archive").get_from_mongo(req=self.req, lookup=query)
-            doc_ids = [d["_id"] for d in docs]
-            self.assertEqual(4, docs.count())
-            self.assertTrue("1" in doc_ids)
-            self.assertTrue("2" in doc_ids)
-            self.assertTrue("5" in doc_ids)
+        query = self.f.build_mongo_query(doc)
+        docs = get_resource_service("archive").get_from_mongo(req=self.req, lookup=query)
+        doc_ids = [d["_id"] for d in docs]
+        self.assertEqual(4, docs.count())
+        self.assertTrue("1" in doc_ids)
+        self.assertTrue("2" in doc_ids)
+        self.assertTrue("5" in doc_ids)
 
-    def test_build_mongo_query_using_like_filter_multi_pf(self):
+    async def test_build_mongo_query_using_like_filter_multi_pf(self):
         doc = {"content_filter": [{"expression": {"pf": [1]}}, {"expression": {"fc": [2]}}], "name": "pf-1"}
-        with self.app.app_context():
-            query = self.f.build_mongo_query(doc)
-            docs = get_resource_service("archive").get_from_mongo(req=self.req, lookup=query)
-            doc_ids = [d["_id"] for d in docs]
-            self.assertEqual(4, docs.count())
-            self.assertTrue("1" in doc_ids)
-            self.assertTrue("2" in doc_ids)
-            self.assertTrue("5" in doc_ids)
+        query = self.f.build_mongo_query(doc)
+        docs = get_resource_service("archive").get_from_mongo(req=self.req, lookup=query)
+        doc_ids = [d["_id"] for d in docs]
+        self.assertEqual(4, docs.count())
+        self.assertTrue("1" in doc_ids)
+        self.assertTrue("2" in doc_ids)
+        self.assertTrue("5" in doc_ids)
 
-    def test_build_mongo_query_using_like_filter_multi_filter_condition2(self):
+    async def test_build_mongo_query_using_like_filter_multi_filter_condition2(self):
         doc = {"content_filter": [{"expression": {"fc": [3, 4]}}], "name": "pf-1"}
-        with self.app.app_context():
-            query = self.f.build_mongo_query(doc)
-            docs = get_resource_service("archive").get_from_mongo(req=self.req, lookup=query)
-            doc_ids = [d["_id"] for d in docs]
-            self.assertEqual(1, docs.count())
-            self.assertTrue("3" in doc_ids)
+        query = self.f.build_mongo_query(doc)
+        docs = get_resource_service("archive").get_from_mongo(req=self.req, lookup=query)
+        doc_ids = [d["_id"] for d in docs]
+        self.assertEqual(1, docs.count())
+        self.assertTrue("3" in doc_ids)
 
-    def test_build_mongo_query_using_like_filter_multi_pf2(self):
+    async def test_build_mongo_query_using_like_filter_multi_pf2(self):
         doc = {"content_filter": [{"expression": {"pf": [2]}}], "name": "pf-1"}
-        with self.app.app_context():
-            query = self.f.build_mongo_query(doc)
-            docs = get_resource_service("archive").get_from_mongo(req=self.req, lookup=query)
-            doc_ids = [d["_id"] for d in docs]
-            self.assertEqual(1, docs.count())
-            self.assertTrue("3" in doc_ids)
+        query = self.f.build_mongo_query(doc)
+        docs = get_resource_service("archive").get_from_mongo(req=self.req, lookup=query)
+        doc_ids = [d["_id"] for d in docs]
+        self.assertEqual(1, docs.count())
+        self.assertTrue("3" in doc_ids)
 
-    def test_build_mongo_query_using_like_filter_multi_condition3(self):
+    async def test_build_mongo_query_using_like_filter_multi_condition3(self):
         doc = {"content_filter": [{"expression": {"fc": [3, 4]}}, {"expression": {"fc": [1, 2]}}], "name": "pf-1"}
-        with self.app.app_context():
-            query = self.f.build_mongo_query(doc)
-            docs = get_resource_service("archive").get_from_mongo(req=self.req, lookup=query)
-            doc_ids = [d["_id"] for d in docs]
-            self.assertEqual(1, docs.count())
-            self.assertTrue("3" in doc_ids)
+        query = self.f.build_mongo_query(doc)
+        docs = get_resource_service("archive").get_from_mongo(req=self.req, lookup=query)
+        doc_ids = [d["_id"] for d in docs]
+        self.assertEqual(1, docs.count())
+        self.assertTrue("3" in doc_ids)
 
-    def test_build_mongo_query_using_like_filter_multi_pf3(self):
+    async def test_build_mongo_query_using_like_filter_multi_pf3(self):
         doc = {"content_filter": [{"expression": {"pf": [2]}}, {"expression": {"pf": [1], "fc": [2]}}], "name": "pf-1"}
-        with self.app.app_context():
-            query = self.f.build_mongo_query(doc)
-            docs = get_resource_service("archive").get_from_mongo(req=self.req, lookup=query)
-            doc_ids = [d["_id"] for d in docs]
-            self.assertEqual(1, docs.count())
-            self.assertTrue("3" in doc_ids)
+        query = self.f.build_mongo_query(doc)
+        docs = get_resource_service("archive").get_from_mongo(req=self.req, lookup=query)
+        doc_ids = [d["_id"] for d in docs]
+        self.assertEqual(1, docs.count())
+        self.assertTrue("3" in doc_ids)
 
-    def test_build_elastic_query_using_like_filter_single_filter_condition(self):
+    async def test_build_elastic_query_using_like_filter_single_filter_condition(self):
         doc = {"content_filter": [{"expression": {"fc": [1]}}], "name": "pf-1"}
-        with self.app.app_context():
-            query = {"query": {"filtered": {"query": self.f._get_elastic_query(doc)}}}
-            self.req.args = {"source": json.dumps(query)}
-            docs = get_resource_service("archive").get(req=self.req, lookup=None)
-            doc_ids = [d["_id"] for d in docs]
-            self.assertEqual(3, docs.count())
-            self.assertTrue("1" in doc_ids)
-            self.assertTrue("2" in doc_ids)
-            self.assertTrue("3" in doc_ids)
+        query = {"query": {"filtered": {"query": self.f._get_elastic_query(doc)}}}
+        self.req.args = {"source": json.dumps(query)}
+        docs = get_resource_service("archive").get(req=self.req, lookup=None)
+        doc_ids = [d["_id"] for d in docs]
+        self.assertEqual(3, docs.count())
+        self.assertTrue("1" in doc_ids)
+        self.assertTrue("2" in doc_ids)
+        self.assertTrue("3" in doc_ids)
 
-    def test_build_elastic_query_using_like_filter_single_content_filter(self):
+    async def test_build_elastic_query_using_like_filter_single_content_filter(self):
         doc = {"content_filter": [{"expression": {"pf": [1]}}], "name": "pf-1"}
-        with self.app.app_context():
-            query = {"query": {"filtered": {"query": self.f._get_elastic_query(doc)}}}
-            self.req.args = {"source": json.dumps(query)}
-            docs = get_resource_service("archive").get(req=self.req, lookup=None)
-            doc_ids = [d["_id"] for d in docs]
-            self.assertEqual(3, docs.count())
-            self.assertTrue("1" in doc_ids)
-            self.assertTrue("2" in doc_ids)
-            self.assertTrue("3" in doc_ids)
+        query = {"query": {"filtered": {"query": self.f._get_elastic_query(doc)}}}
+        self.req.args = {"source": json.dumps(query)}
+        docs = get_resource_service("archive").get(req=self.req, lookup=None)
+        doc_ids = [d["_id"] for d in docs]
+        self.assertEqual(3, docs.count())
+        self.assertTrue("1" in doc_ids)
+        self.assertTrue("2" in doc_ids)
+        self.assertTrue("3" in doc_ids)
 
-    def test_build_elastic_query_using_like_filter_multi_filter_condition(self):
+    async def test_build_elastic_query_using_like_filter_multi_filter_condition(self):
         doc = {"content_filter": [{"expression": {"fc": [1]}}, {"expression": {"fc": [2]}}], "name": "pf-1"}
-        with self.app.app_context():
-            query = {"query": {"filtered": {"query": self.f._get_elastic_query(doc)}}}
-            self.req.args = {"source": json.dumps(query)}
-            docs = get_resource_service("archive").get(req=self.req, lookup=None)
-            doc_ids = [d["_id"] for d in docs]
-            self.assertEqual(4, docs.count())
-            self.assertTrue("1" in doc_ids)
-            self.assertTrue("2" in doc_ids)
-            self.assertTrue("3" in doc_ids)
-            self.assertTrue("5" in doc_ids)
+        query = {"query": {"filtered": {"query": self.f._get_elastic_query(doc)}}}
+        self.req.args = {"source": json.dumps(query)}
+        docs = get_resource_service("archive").get(req=self.req, lookup=None)
+        doc_ids = [d["_id"] for d in docs]
+        self.assertEqual(4, docs.count())
+        self.assertTrue("1" in doc_ids)
+        self.assertTrue("2" in doc_ids)
+        self.assertTrue("3" in doc_ids)
+        self.assertTrue("5" in doc_ids)
 
-    def test_build_mongo_query_using_like_filter_multi_content_filter(self):
+    async def test_build_mongo_query_using_like_filter_multi_content_filter(self):
         doc = {"content_filter": [{"expression": {"pf": [1]}}, {"expression": {"fc": [2]}}], "name": "pf-1"}
-        with self.app.app_context():
-            query = {"query": {"filtered": {"query": self.f._get_elastic_query(doc)}}}
-            self.req.args = {"source": json.dumps(query)}
-            docs = get_resource_service("archive").get(req=self.req, lookup=None)
-            doc_ids = [d["_id"] for d in docs]
-            self.assertEqual(4, docs.count())
-            self.assertTrue("1" in doc_ids)
-            self.assertTrue("2" in doc_ids)
-            self.assertTrue("3" in doc_ids)
-            self.assertTrue("5" in doc_ids)
+        query = {"query": {"filtered": {"query": self.f._get_elastic_query(doc)}}}
+        self.req.args = {"source": json.dumps(query)}
+        docs = get_resource_service("archive").get(req=self.req, lookup=None)
+        doc_ids = [d["_id"] for d in docs]
+        self.assertEqual(4, docs.count())
+        self.assertTrue("1" in doc_ids)
+        self.assertTrue("2" in doc_ids)
+        self.assertTrue("3" in doc_ids)
+        self.assertTrue("5" in doc_ids)
 
-    def test_build_elastic_query_using_like_filter_multi_filter_condition2(self):
+    async def test_build_elastic_query_using_like_filter_multi_filter_condition2(self):
         doc = {"content_filter": [{"expression": {"fc": [3, 4]}}, {"expression": {"fc": [1, 2]}}], "name": "pf-1"}
-        with self.app.app_context():
-            query = {"query": {"filtered": {"query": self.f._get_elastic_query(doc)}}}
-            self.req.args = {"source": json.dumps(query)}
-            docs = get_resource_service("archive").get(req=self.req, lookup=None)
-            doc_ids = [d["_id"] for d in docs]
-            self.assertEqual(1, docs.count())
-            self.assertTrue("3" in doc_ids)
+        query = {"query": {"filtered": {"query": self.f._get_elastic_query(doc)}}}
+        self.req.args = {"source": json.dumps(query)}
+        docs = get_resource_service("archive").get(req=self.req, lookup=None)
+        doc_ids = [d["_id"] for d in docs]
+        self.assertEqual(1, docs.count())
+        self.assertTrue("3" in doc_ids)
 
-    def test_build_elastic_query_using_like_filter_multi_content_filter2(self):
+    async def test_build_elastic_query_using_like_filter_multi_content_filter2(self):
         doc = {
             "content_filter": [{"expression": {"fc": [4, 3]}}, {"expression": {"pf": [1], "fc": [2]}}],
             "name": "pf-1",
         }
-        with self.app.app_context():
-            query = {"query": {"filtered": {"query": self.f._get_elastic_query(doc)}}}
-            self.req.args = {"source": json.dumps(query)}
-            docs = get_resource_service("archive").get(req=self.req, lookup=None)
-            doc_ids = [d["_id"] for d in docs]
-            self.assertEqual(1, docs.count())
-            self.assertTrue("3" in doc_ids)
+        query = {"query": {"filtered": {"query": self.f._get_elastic_query(doc)}}}
+        self.req.args = {"source": json.dumps(query)}
+        docs = get_resource_service("archive").get(req=self.req, lookup=None)
+        doc_ids = [d["_id"] for d in docs]
+        self.assertEqual(1, docs.count())
+        self.assertTrue("3" in doc_ids)
 
-    def test_build_elastic_query_using_like_filter_multi_content_filter3(self):
+    async def test_build_elastic_query_using_like_filter_multi_content_filter3(self):
         doc = {"content_filter": [{"expression": {"pf": [2]}}, {"expression": {"pf": [1], "fc": [2]}}], "name": "pf-1"}
-        with self.app.app_context():
-            query = {"query": {"filtered": {"query": self.f._get_elastic_query(doc)}}}
-            self.req.args = {"source": json.dumps(query)}
-            docs = get_resource_service("archive").get(req=self.req, lookup=None)
-            doc_ids = [d["_id"] for d in docs]
-            self.assertEqual(1, docs.count())
-            self.assertTrue("3" in doc_ids)
+        query = {"query": {"filtered": {"query": self.f._get_elastic_query(doc)}}}
+        self.req.args = {"source": json.dumps(query)}
+        docs = get_resource_service("archive").get(req=self.req, lookup=None)
+        doc_ids = [d["_id"] for d in docs]
+        self.assertEqual(1, docs.count())
+        self.assertTrue("3" in doc_ids)
 
-    def test_build_elastic_query_using_like_filter_multi_content_filter4(self):
+    async def test_build_elastic_query_using_like_filter_multi_content_filter4(self):
         doc = {"content_filter": [{"expression": {"pf": [2]}}, {"expression": {"pf": [3]}}], "name": "pf-1"}
-        with self.app.app_context():
-            query = {"query": {"filtered": {"query": self.f._get_elastic_query(doc)}}}
-            self.req.args = {"source": json.dumps(query)}
-            docs = get_resource_service("archive").get(req=self.req, lookup=None)
-            doc_ids = [d["_id"] for d in docs]
-            self.assertEqual(1, docs.count())
-            self.assertTrue("3" in doc_ids)
+        query = {"query": {"filtered": {"query": self.f._get_elastic_query(doc)}}}
+        self.req.args = {"source": json.dumps(query)}
+        docs = get_resource_service("archive").get(req=self.req, lookup=None)
+        doc_ids = [d["_id"] for d in docs]
+        self.assertEqual(1, docs.count())
+        self.assertTrue("3" in doc_ids)
 
-    def test_build_elastic_query_using_like_filter_multi_content_filter5(self):
+    async def test_build_elastic_query_using_like_filter_multi_content_filter5(self):
         doc = {"content_filter": [{"expression": {"pf": [4], "fc": [4]}}], "name": "pf-1"}
-        with self.app.app_context():
-            query = {"query": {"filtered": {"query": self.f._get_elastic_query(doc)}}}
-            self.req.args = {"source": json.dumps(query)}
-            docs = get_resource_service("archive").get(req=self.req, lookup=None)
-            doc_ids = [d["_id"] for d in docs]
-            self.assertEqual(1, docs.count())
-            self.assertTrue("3" in doc_ids)
+        query = {"query": {"filtered": {"query": self.f._get_elastic_query(doc)}}}
+        self.req.args = {"source": json.dumps(query)}
+        docs = get_resource_service("archive").get(req=self.req, lookup=None)
+        doc_ids = [d["_id"] for d in docs]
+        self.assertEqual(1, docs.count())
+        self.assertTrue("3" in doc_ids)
 
 
 class FilteringDataTests(ContentFilterTests):
-    def test_does_match_returns_true_for_nonexisting_filter(self):
+    async def test_does_match_returns_true_for_nonexisting_filter(self):
         for article in self.articles:
             self.assertTrue(self.f.does_match(None, article))
 
-    def test_does_match_custom_vocabularies(self):
+    async def test_does_match_custom_vocabularies(self):
         doc1 = {"content_filter": [{"expression": {"fc": [6]}}], "name": "mv-1"}
         doc2 = {"content_filter": [{"expression": {"fc": [7]}}], "name": "ct-1"}
-        with self.app.app_context():
-            self.assertTrue(self.f.does_match(doc1, self.articles[6]))
-            self.assertTrue(self.f.does_match(doc2, self.articles[7]))
+        self.assertTrue(self.f.does_match(doc1, self.articles[6]))
+        self.assertTrue(self.f.does_match(doc2, self.articles[7]))
 
-    def test_does_match_using_like_filter_single_fc(self):
+    async def test_does_match_using_like_filter_single_fc(self):
         doc = {"content_filter": [{"expression": {"fc": [1]}}], "name": "pf-1"}
-        with self.app.app_context():
-            self.assertTrue(self.f.does_match(doc, self.articles[0]))
-            self.assertTrue(self.f.does_match(doc, self.articles[1]))
-            self.assertTrue(self.f.does_match(doc, self.articles[2]))
-            self.assertFalse(self.f.does_match(doc, self.articles[3]))
-            self.assertFalse(self.f.does_match(doc, self.articles[4]))
-            self.assertFalse(self.f.does_match(doc, self.articles[5]))
+        self.assertTrue(self.f.does_match(doc, self.articles[0]))
+        self.assertTrue(self.f.does_match(doc, self.articles[1]))
+        self.assertTrue(self.f.does_match(doc, self.articles[2]))
+        self.assertFalse(self.f.does_match(doc, self.articles[3]))
+        self.assertFalse(self.f.does_match(doc, self.articles[4]))
+        self.assertFalse(self.f.does_match(doc, self.articles[5]))
 
-    def test_does_match_using_like_filter_single_pf(self):
+    async def test_does_match_using_like_filter_single_pf(self):
         doc = {"content_filter": [{"expression": {"pf": [1]}}], "name": "pf-1"}
-        with self.app.app_context():
-            self.assertTrue(self.f.does_match(doc, self.articles[0]))
-            self.assertTrue(self.f.does_match(doc, self.articles[1]))
-            self.assertTrue(self.f.does_match(doc, self.articles[2]))
-            self.assertFalse(self.f.does_match(doc, self.articles[3]))
-            self.assertFalse(self.f.does_match(doc, self.articles[4]))
-            self.assertFalse(self.f.does_match(doc, self.articles[5]))
+        self.assertTrue(self.f.does_match(doc, self.articles[0]))
+        self.assertTrue(self.f.does_match(doc, self.articles[1]))
+        self.assertTrue(self.f.does_match(doc, self.articles[2]))
+        self.assertFalse(self.f.does_match(doc, self.articles[3]))
+        self.assertFalse(self.f.does_match(doc, self.articles[4]))
+        self.assertFalse(self.f.does_match(doc, self.articles[5]))
 
-    def test_does_match_using_like_filter_multi_fc(self):
+    async def test_does_match_using_like_filter_multi_fc(self):
         doc = {"content_filter": [{"expression": {"fc": [1]}}, {"expression": {"fc": [2]}}], "name": "pf-1"}
-        with self.app.app_context():
-            self.assertTrue(self.f.does_match(doc, self.articles[0]))
-            self.assertTrue(self.f.does_match(doc, self.articles[1]))
-            self.assertTrue(self.f.does_match(doc, self.articles[2]))
-            self.assertFalse(self.f.does_match(doc, self.articles[3]))
-            self.assertTrue(self.f.does_match(doc, self.articles[4]))
-            self.assertFalse(self.f.does_match(doc, self.articles[5]))
+        self.assertTrue(self.f.does_match(doc, self.articles[0]))
+        self.assertTrue(self.f.does_match(doc, self.articles[1]))
+        self.assertTrue(self.f.does_match(doc, self.articles[2]))
+        self.assertFalse(self.f.does_match(doc, self.articles[3]))
+        self.assertTrue(self.f.does_match(doc, self.articles[4]))
+        self.assertFalse(self.f.does_match(doc, self.articles[5]))
 
-    def test_does_match_using_like_filter_multi_pf(self):
+    async def test_does_match_using_like_filter_multi_pf(self):
         doc = {"content_filter": [{"expression": {"pf": [1]}}, {"expression": {"fc": [2]}}], "name": "pf-1"}
-        with self.app.app_context():
-            self.assertTrue(self.f.does_match(doc, self.articles[0]))
-            self.assertTrue(self.f.does_match(doc, self.articles[1]))
-            self.assertTrue(self.f.does_match(doc, self.articles[2]))
-            self.assertFalse(self.f.does_match(doc, self.articles[3]))
-            self.assertTrue(self.f.does_match(doc, self.articles[4]))
-            self.assertFalse(self.f.does_match(doc, self.articles[5]))
+        self.assertTrue(self.f.does_match(doc, self.articles[0]))
+        self.assertTrue(self.f.does_match(doc, self.articles[1]))
+        self.assertTrue(self.f.does_match(doc, self.articles[2]))
+        self.assertFalse(self.f.does_match(doc, self.articles[3]))
+        self.assertTrue(self.f.does_match(doc, self.articles[4]))
+        self.assertFalse(self.f.does_match(doc, self.articles[5]))
 
-    def test_does_match_using_like_filter_multi_fc2(self):
+    async def test_does_match_using_like_filter_multi_fc2(self):
         doc = {"content_filter": [{"expression": {"fc": [3, 4]}}], "name": "pf-1"}
-        with self.app.app_context():
-            self.assertFalse(self.f.does_match(doc, self.articles[0]))
-            self.assertFalse(self.f.does_match(doc, self.articles[1]))
-            self.assertTrue(self.f.does_match(doc, self.articles[2]))
-            self.assertFalse(self.f.does_match(doc, self.articles[3]))
-            self.assertFalse(self.f.does_match(doc, self.articles[4]))
-            self.assertFalse(self.f.does_match(doc, self.articles[5]))
+        self.assertFalse(self.f.does_match(doc, self.articles[0]))
+        self.assertFalse(self.f.does_match(doc, self.articles[1]))
+        self.assertTrue(self.f.does_match(doc, self.articles[2]))
+        self.assertFalse(self.f.does_match(doc, self.articles[3]))
+        self.assertFalse(self.f.does_match(doc, self.articles[4]))
+        self.assertFalse(self.f.does_match(doc, self.articles[5]))
 
-    def test_does_match_using_like_filter_multi_pf2(self):
+    async def test_does_match_using_like_filter_multi_pf2(self):
         doc = {"content_filter": [{"expression": {"pf": [2]}}], "name": "pf-1"}
-        with self.app.app_context():
-            self.assertFalse(self.f.does_match(doc, self.articles[0]))
-            self.assertFalse(self.f.does_match(doc, self.articles[1]))
-            self.assertTrue(self.f.does_match(doc, self.articles[2]))
-            self.assertFalse(self.f.does_match(doc, self.articles[3]))
-            self.assertFalse(self.f.does_match(doc, self.articles[4]))
-            self.assertFalse(self.f.does_match(doc, self.articles[5]))
+        self.assertFalse(self.f.does_match(doc, self.articles[0]))
+        self.assertFalse(self.f.does_match(doc, self.articles[1]))
+        self.assertTrue(self.f.does_match(doc, self.articles[2]))
+        self.assertFalse(self.f.does_match(doc, self.articles[3]))
+        self.assertFalse(self.f.does_match(doc, self.articles[4]))
+        self.assertFalse(self.f.does_match(doc, self.articles[5]))
 
-    def test_does_match_using_like_filter_multi_fc3(self):
+    async def test_does_match_using_like_filter_multi_fc3(self):
         doc = {"content_filter": [{"expression": {"fc": [3, 4]}}, {"expression": {"fc": [1, 2]}}], "name": "pf-1"}
-        with self.app.app_context():
-            self.assertFalse(self.f.does_match(doc, self.articles[0]))
-            self.assertFalse(self.f.does_match(doc, self.articles[1]))
-            self.assertTrue(self.f.does_match(doc, self.articles[2]))
-            self.assertFalse(self.f.does_match(doc, self.articles[3]))
-            self.assertFalse(self.f.does_match(doc, self.articles[4]))
-            self.assertFalse(self.f.does_match(doc, self.articles[5]))
+        self.assertFalse(self.f.does_match(doc, self.articles[0]))
+        self.assertFalse(self.f.does_match(doc, self.articles[1]))
+        self.assertTrue(self.f.does_match(doc, self.articles[2]))
+        self.assertFalse(self.f.does_match(doc, self.articles[3]))
+        self.assertFalse(self.f.does_match(doc, self.articles[4]))
+        self.assertFalse(self.f.does_match(doc, self.articles[5]))
 
-    def test_does_match_using_like_filter_multi_pf3(self):
+    async def test_does_match_using_like_filter_multi_pf3(self):
         doc = {"content_filter": [{"expression": {"pf": [4], "fc": [4]}}], "name": "pf-1"}
-        with self.app.app_context():
-            self.assertFalse(self.f.does_match(doc, self.articles[0]))
-            self.assertFalse(self.f.does_match(doc, self.articles[1]))
-            self.assertTrue(self.f.does_match(doc, self.articles[2]))
-            self.assertFalse(self.f.does_match(doc, self.articles[3]))
-            self.assertFalse(self.f.does_match(doc, self.articles[4]))
-            self.assertFalse(self.f.does_match(doc, self.articles[5]))
+        self.assertFalse(self.f.does_match(doc, self.articles[0]))
+        self.assertFalse(self.f.does_match(doc, self.articles[1]))
+        self.assertTrue(self.f.does_match(doc, self.articles[2]))
+        self.assertFalse(self.f.does_match(doc, self.articles[3]))
+        self.assertFalse(self.f.does_match(doc, self.articles[4]))
+        self.assertFalse(self.f.does_match(doc, self.articles[5]))
 
-    def test_if_pf_is_used(self):
-        with self.app.app_context():
-            self.assertTrue(self.f._get_content_filters_by_content_filter(1).count() == 1)
-            self.assertTrue(self.f._get_content_filters_by_content_filter(4).count() == 0)
+    async def test_if_pf_is_used(self):
+        self.assertTrue(self.f._get_content_filters_by_content_filter(1).count() == 1)
+        self.assertTrue(self.f._get_content_filters_by_content_filter(4).count() == 0)
 
-    def test_if_fc_is_used(self):
-        with self.app.app_context():
-            self.assertTrue(len(self.f.get_content_filters_by_filter_condition(1)) == 2)
-            self.assertTrue(len(self.f.get_content_filters_by_filter_condition(3)) == 2)
-            self.assertTrue(len(self.f.get_content_filters_by_filter_condition(2)) == 1)
+    async def test_if_fc_is_used(self):
+        self.assertTrue(len(self.f.get_content_filters_by_filter_condition(1)) == 2)
+        self.assertTrue(len(self.f.get_content_filters_by_filter_condition(3)) == 2)
+        self.assertTrue(len(self.f.get_content_filters_by_filter_condition(2)) == 1)
 
-    def test_get_subscribers_by_filter_condition(self):
+    async def test_get_subscribers_by_filter_condition(self):
         filter_condition1 = {"field": "urgency", "operator": "in", "value": "2"}
         filter_condition2 = {"field": "urgency", "operator": "in", "value": "1"}
         filter_condition3 = {"field": "headline", "operator": "like", "value": "tor"}
         filter_condition4 = {"field": "urgency", "operator": "nin", "value": "3"}
 
-        with self.app.app_context():
-            cmd = AppPopulateCommand()
-            filename = os.path.join(
-                os.path.abspath(os.path.dirname("apps/prepopulate/data_init/vocabularies.json")), "vocabularies.json"
-            )
-            cmd.run(filename)
-            r1 = self.s._get_subscribers_by_filter_condition(filter_condition1)
-            r2 = self.s._get_subscribers_by_filter_condition(filter_condition2)
-            r3 = self.s._get_subscribers_by_filter_condition(filter_condition3)
-            r4 = self.s._get_subscribers_by_filter_condition(filter_condition4)
-            self.assertTrue(len(r1[0]["selected_subscribers"]) == 1)
-            self.assertTrue(len(r2[0]["selected_subscribers"]) == 0)
-            self.assertTrue(len(r3[0]["selected_subscribers"]) == 2)
-            self.assertTrue(len(r4[0]["selected_subscribers"]) == 1)
+        cmd = AppPopulateCommand()
+        filename = os.path.join(
+            os.path.abspath(os.path.dirname("apps/prepopulate/data_init/vocabularies.json")), "vocabularies.json"
+        )
+        cmd.run(filename)
+        r1 = self.s._get_subscribers_by_filter_condition(filter_condition1)
+        r2 = self.s._get_subscribers_by_filter_condition(filter_condition2)
+        r3 = self.s._get_subscribers_by_filter_condition(filter_condition3)
+        r4 = self.s._get_subscribers_by_filter_condition(filter_condition4)
+        self.assertTrue(len(r1[0]["selected_subscribers"]) == 1)
+        self.assertTrue(len(r2[0]["selected_subscribers"]) == 0)
+        self.assertTrue(len(r3[0]["selected_subscribers"]) == 2)
+        self.assertTrue(len(r4[0]["selected_subscribers"]) == 1)
 
 
 class DeleteMethodTestCase(ContentFilterTests):
     """Tests for the delete() method."""
 
-    def test_raises_error_if_filter_referenced_by_subscribers(self):
+    async def test_raises_error_if_filter_referenced_by_subscribers(self):
         with self.assertRaises(SuperdeskApiError) as ctx:
             self.f.delete({"_id": 1})
 
         self.assertEqual(ctx.exception.status_code, 400)  # bad request error
 
-    def test_raises_error_if_filter_referenced_by_routing_rules(self):
+    async def test_raises_error_if_filter_referenced_by_routing_rules(self):
         with self.assertRaises(SuperdeskApiError) as ctx:
             self.f.delete({"_id": 4})
 

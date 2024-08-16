@@ -4,7 +4,7 @@ import simplejson as json
 from superdesk.utc import utcnow
 from superdesk.utils import format_time
 
-from superdesk.tests.asyncio import AsyncFlaskTestCase
+from superdesk.tests import AsyncFlaskTestCase
 
 from .modules.users import UserResourceService
 from .fixtures.users import john_doe

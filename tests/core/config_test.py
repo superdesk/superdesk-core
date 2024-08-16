@@ -2,7 +2,7 @@ import unittest
 
 from pydantic import ValidationError
 
-from superdesk.tests.asyncio import AsyncTestCase
+from superdesk.tests import AsyncTestCase
 from .modules import module_with_config
 
 

@@ -22,7 +22,7 @@ from superdesk.io.feeding_services.http_service import HTTPFeedingService
 from superdesk.logging import logger
 from superdesk.utc import utcnow
 from urllib.parse import urlparse, urlunparse
-from flask_babel import _
+from quart_babel import gettext as _
 
 
 class ReutersHTTPFeedingService(HTTPFeedingService):

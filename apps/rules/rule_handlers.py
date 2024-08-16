@@ -11,7 +11,8 @@
 from typing import Dict, Any
 import logging
 
-from flask_babel import lazy_gettext, LazyString
+from quart_babel import lazy_gettext
+from quart_babel.speaklater import LazyString
 
 from superdesk.core import get_app_config
 from superdesk.resource_fields import ID_FIELD

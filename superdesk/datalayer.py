@@ -44,13 +44,13 @@ class SuperdeskDataLayer(DataLayer):
     def pymongo(self, resource=None, prefix=None):
         return self.mongo.pymongo(resource, prefix)
 
-    def init_elastic(self, app, raise_on_mapping_error=False):
+    async def init_elastic(self, app, raise_on_mapping_error=False):
         """Init elastic index.
 
         It will create index and put mapping. It should run only once so locks are in place.
         Thus mongo must be already setup before running this.
         """
-        with app.app_context():
+        async with app.app_context():
             if lock("elastic", expire=10):
                 try:
                     resources_indexed = get_current_async_app().elastic.init_all_indexes(

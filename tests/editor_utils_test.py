@@ -11,23 +11,21 @@
 
 import json
 import uuid
-import unittest
 import lxml.etree
 import pathlib
 
-from superdesk.flask import Flask
 import superdesk.editor_utils as editor_utils
-
 from superdesk.editor_utils import Editor3Content
+from superdesk.tests import TestCase
 
 
-class Editor3TestCase(unittest.TestCase):
+class Editor3TestCase(TestCase):
     maxDiff = None
 
-    def setUp(self):
-        self.app = Flask(__name__)
-        self.app.app_context().push()
-        super().setUp()
+    async def asyncSetUp(self):
+        # self.app = Flask(__name__)
+        # self.app.app_context().push()
+        await super().asyncSetUp()
         if "EMBED_PRE_PROCESS" in self.app.config:
             del self.app.config["EMBED_PRE_PROCESS"]
 

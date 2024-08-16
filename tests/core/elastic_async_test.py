@@ -1,6 +1,6 @@
 import simplejson as json
 
-from superdesk.tests.asyncio import AsyncTestCase
+from superdesk.tests import AsyncTestCase
 from superdesk.core.resources.cursor import SearchRequest
 
 from .modules.users import User

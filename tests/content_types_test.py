@@ -43,7 +43,7 @@ class ContentTypesTestCase(TestCase):
         self.assertEqual({"headline": "foo", "guid": "1", "profile": "test"}, apply_schema(item))
 
     @mock.patch.object(content_types, "get_fields_map_and_names", lambda: ({}, {}))
-    def test_minlength(self):
+    async def test_minlength(self):
         """Check that minlength is not modified when it is set
 
         check is done with required set
@@ -77,7 +77,7 @@ class ContentTypesTestCase(TestCase):
     # Do not remove or modify the following line, the test would always pass without
     # the dict with "hashtags" returned by "get_fields_map_and_names"
     @mock.patch.object(content_types, "get_fields_map_and_names", lambda: ({"hashtags": "hashtags"}, {}))
-    def test_subject(self):
+    async def test_subject(self):
         """Check that subject is not set if it's not present in editor (SDESK-3745)
 
         If we had custom vocabularies in schema, subject was added to "schema" even if not
@@ -108,7 +108,7 @@ class ContentTypesTestCase(TestCase):
         content_types.ContentTypesService().on_update(updates, original)
         self.assertFalse(updates["schema"]["subject"]["required"])
 
-    def test_prepare_for_edit_updated_now(self):
+    async def test_prepare_for_edit_updated_now(self):
         doc = {
             "editor": {},
             "schema": {},

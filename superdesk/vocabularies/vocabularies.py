@@ -14,7 +14,7 @@ import json
 from typing import List, Any, Dict, Optional
 
 from eve.methods.common import serialize_value
-from flask_babel import _, lazy_gettext
+from quart_babel import gettext as _, lazy_gettext
 
 from superdesk.resource_fields import ID_FIELD, ITEMS, LAST_UPDATED, DATE_CREATED
 from superdesk.flask import request

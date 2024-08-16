@@ -19,7 +19,7 @@ from superdesk.validation import ValidationError
 from superdesk.errors import SuperdeskApiError
 from superdesk.services import BaseService
 from superdesk.metadata.packages import GROUPS, GROUP_ID, REFS, RESIDREF, ROOT_GROUP, ID_REF, PACKAGE_TYPE
-from flask_babel import _
+from quart_babel import gettext as _
 
 
 class PublishedPackageItemsResource(Resource):

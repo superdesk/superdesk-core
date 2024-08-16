@@ -19,7 +19,8 @@ from superdesk.publish import init_app
 
 @mock.patch("superdesk.publish.subscribers.SubscribersService.generate_sequence_number", lambda self, subscriber: 1)
 class NitfFormatterTest(TestCase):
-    def setUp(self):
+    async def asyncSetUp(self):
+        await super().asyncSetUp()
         self.formatter = NITFFormatter()
         self.base_formatter = Formatter()
         init_app(self.app)

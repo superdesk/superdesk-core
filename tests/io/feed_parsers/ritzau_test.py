@@ -17,9 +17,9 @@ import os
 class BaseRitzauTestCase(TestCase):
     vocab = [{"_id": "genre", "items": [{"name": "Current"}]}]
 
-    def setUp(self):
-        with self.app.app_context():
-            self.app.data.insert("vocabularies", self.vocab)
+    async def asyncSetUp(self):
+        await super().asyncSetUp()
+        self.app.data.insert("vocabularies", self.vocab)
 
     def _parse_file(self, filename):
         dirname = os.path.dirname(os.path.realpath(__file__))

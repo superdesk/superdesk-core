@@ -6,7 +6,7 @@ from superdesk import get_resource_service
 
 
 class AuditTestCase(TestCase):
-    def testAuditPurge(self):
+    async def testAuditPurge(self):
         now = datetime.utcnow()
         self.app.data.insert("archive", [{"_id": 2}])
         self.app.data.insert(

@@ -8,7 +8,7 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
-from superdesk.tests import TestCase
+from superdesk.tests import TestCase, markers
 from unittest import mock
 
 
@@ -94,6 +94,7 @@ class ValidateMultipleEmailsTestCase(SuperdeskValidatorTest):
         except Exception as ex:
             self.fail("Error unexpectedly raised: {}".format(ex))
 
+    @markers.investigate_cause_of_error
     def test_raise_error_on_inputs_containing_emails(self, fake_superdesk):
         field = "field_name"
         value = "abc@abc.com,test"

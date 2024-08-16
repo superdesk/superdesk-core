@@ -23,7 +23,7 @@ bp = Blueprint("assets", __name__)
 
 
 @bp.route("/assets/<path:media_id>", methods=["GET"])
-def get_media_streamed(media_id):
+async def get_media_streamed(media_id):
     app = get_current_app()
     if not app.auth.authorized([], "assets", "GET"):
         return app.auth.authenticate()
@@ -34,7 +34,7 @@ def get_media_streamed(media_id):
         media_file = None
     if media_file:
         get_resource_service("api_audit").audit_item({"type": "asset", "uri": request.url}, media_id)
-        return generate_response_for_file(
+        return await generate_response_for_file(
             media_file, cache_for=3600 * 24 * 7, content_disposition="inline"  # 7 days cache
         )
     raise FileNotFoundError("File not found on media storage.")

@@ -16,7 +16,8 @@ BIG_IMG_PATH = os.path.join(
 
 
 class GenerateRenditionsTestCase(TestCase):
-    def setUp(self):
+    async def asyncSetUp(self):
+        await super().asyncSetUp()
         self.app.data.insert(
             "vocabularies",
             [
@@ -39,7 +40,7 @@ class GenerateRenditionsTestCase(TestCase):
             image.save(out, "jpeg")
             print("saved", path)
 
-    def test_generate_renditions_custom_crop(self):
+    async def test_generate_renditions_custom_crop(self):
         inserted = []
         renditions = get_renditions_spec()
         with open(IMG_PATH, "rb") as original:
@@ -72,7 +73,7 @@ class GenerateRenditionsTestCase(TestCase):
         self.assertEqual(87, portrait["CropLeft"])
         self.assertEqual(312, portrait["CropRight"])
 
-    def test_generate_renditions_base_image(self):
+    async def test_generate_renditions_base_image(self):
         inserted = []
         renditions = get_renditions_spec()
         with open(BIG_IMG_PATH, "rb") as original:

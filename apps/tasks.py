@@ -41,7 +41,7 @@ from apps.archive.common import (
     ARCHIVE,
     get_subject,
 )
-from flask_babel import _, lazy_gettext
+from quart_babel import gettext as _, lazy_gettext
 
 task_statuses = ["todo", "in_progress", "done"]
 default_status = "todo"

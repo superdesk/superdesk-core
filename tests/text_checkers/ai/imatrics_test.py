@@ -37,7 +37,8 @@ class IMatricsTestCase(TestCase):
         "slugline": "test imatrics",
     }
 
-    def setUp(self):
+    async def asyncSetUp(self):
+        await super().asyncSetUp()
         self.app.config["IMATRICS_BASE_URL"] = TEST_BASE_URL
         self.app.config["IMATRICS_USER"] = "some_user"
         self.app.config["IMATRICS_KEY"] = "some_secret_key"
@@ -46,7 +47,7 @@ class IMatricsTestCase(TestCase):
         tools.import_services(self.app, ai.__name__, AIServiceBase)
 
     @responses.activate
-    def test_autotagging(self):
+    async def test_autotagging(self):
         """Check that autotagging is working"""
         self.app.data.insert(
             "vocabularies",

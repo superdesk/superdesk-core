@@ -41,7 +41,7 @@ class FlushElasticIndex(superdesk.Command):
         # superdesk.Option("--capi", action="store_true", dest="capi_index"),
     ]
 
-    def run(self, sd_index, capi_index):
+    async def run(self, sd_index, capi_index):
         if not (sd_index or capi_index):
             raise SystemExit("You must specify at least one elastic index to flush. " "Options: `--sd`, `--capi`")
 
@@ -52,7 +52,7 @@ class FlushElasticIndex(superdesk.Command):
         if capi_index:
             self._delete_elastic(get_app_config("CONTENTAPI_ELASTICSEARCH_INDEX"))
 
-        self._index_from_mongo(sd_index, capi_index)
+        await self._index_from_mongo(sd_index, capi_index)
 
     def _delete_elastic(self, index_prefix):
         """Deletes elastic indices with `index_prefix`
@@ -83,7 +83,7 @@ class FlushElasticIndex(superdesk.Command):
                         print('\t- "{}" elastic index was deleted.'.format(index))
                         break
 
-    def _index_from_mongo(self, sd_index, capi_index):
+    async def _index_from_mongo(self, sd_index, capi_index):
         """Index elastic search from mongo.
 
         if `sd_index` is true only superdesk elastic index will be indexed.
@@ -94,7 +94,7 @@ class FlushElasticIndex(superdesk.Command):
         """
         # get all es resources
         app = get_current_app()
-        app.data.init_elastic(app)
+        await app.data.init_elastic(app)
         resources = app.data.get_elastic_resources()
 
         for resource in resources:

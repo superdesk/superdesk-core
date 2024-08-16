@@ -167,7 +167,7 @@ class HTTPPushServiceTestCase(unittest.TestCase):
 
     @mock.patch("superdesk.errors.notifiers")
     @mock.patch("requests.post")
-    def test_client_publish_error_thrown(self, fake_post, fake_notifiers):
+    async def test_client_publish_error_thrown(self, fake_post, fake_notifiers):
         with self.app.app_context():
             raise_http_exception = Mock(side_effect=PublishHTTPPushClientError.httpPushError(Exception("client 4xx")))
 
@@ -179,12 +179,12 @@ class HTTPPushServiceTestCase(unittest.TestCase):
         service = HTTPPushService()
 
         with self.assertRaises(PublishHTTPPushClientError):
-            with self.app.app_context():
+            async with self.app.app_context():
                 service._push_item(self.destination, json.dumps(self.item))
 
     @mock.patch("superdesk.errors.notifiers")
     @mock.patch("requests.post")
-    def test_server_publish_error_thrown(self, fake_post, fake_notifiers):
+    async def test_server_publish_error_thrown(self, fake_post, fake_notifiers):
         with self.app.app_context():
             raise_http_exception = Mock(side_effect=PublishHTTPPushServerError.httpPushError(Exception("server 5xx")))
 
@@ -196,7 +196,7 @@ class HTTPPushServiceTestCase(unittest.TestCase):
         service = HTTPPushService()
 
         with self.assertRaises(PublishHTTPPushServerError):
-            with self.app.app_context():
+            async with self.app.app_context():
                 service._push_item(self.destination, json.dumps(self.item))
 
     @mock.patch("superdesk.publish.transmitters.http_push.get_current_app", return_value=mock.MagicMock())

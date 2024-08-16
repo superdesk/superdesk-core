@@ -15,12 +15,13 @@ from unittest.mock import MagicMock
 from celery.exceptions import SoftTimeLimitExceeded
 
 import superdesk
-from superdesk.tests import TestCase
+from superdesk.tests import TestCase, markers
 
 
 class SoftTimeLimitTestCase(TestCase):
+    @markers.requires_async_celery
     @mock.patch("superdesk.publish.registered_transmitters")
-    def test_softtimeout_exception(self, *mocks):
+    async def test_softtimeout_exception(self, *mocks):
         self.app.config["MAX_TRANSMIT_RETRY_ATTEMPT"] = 4
         self.app.config["CELERY_TASK_ALWAYS_EAGER"] = False
         subscriber = {

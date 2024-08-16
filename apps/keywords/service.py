@@ -10,7 +10,7 @@
 
 from superdesk.errors import SuperdeskApiError
 from superdesk.services import BaseService
-from flask_babel import _
+from quart_babel import gettext as _
 
 
 class KeywordsService(BaseService):

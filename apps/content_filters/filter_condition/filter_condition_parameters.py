@@ -11,7 +11,7 @@
 import json
 import copy
 import logging
-from flask_babel import _
+from quart_babel import gettext as _
 
 from superdesk.core import get_app_config
 from superdesk.resource_fields import ID_FIELD

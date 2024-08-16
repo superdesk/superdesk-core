@@ -10,11 +10,11 @@
 
 from copy import deepcopy
 
-from superdesk.tests import TestCase
+from superdesk.tests import AsyncTestCase
 from superdesk.io.commands.update_ingest import process_iptc_codes
 
 
-class IPTCCodesTestCase(TestCase):
+class IPTCCodesTestCase(AsyncTestCase):
     def test_unknown_iptc(self):
         """Test if an unknown IPTC code is not causing a crash"""
         item = {
@@ -24,6 +24,5 @@ class IPTCCodesTestCase(TestCase):
         # item should not be modified
         expected = deepcopy(item)
 
-        with self.app.app_context():
-            process_iptc_codes(item, {})
+        process_iptc_codes(item, {})
         self.assertEqual(item, expected)

@@ -52,7 +52,7 @@ from superdesk.services import BaseService
 from superdesk.resource import Resource
 from superdesk.utc import utcnow
 from apps.publish.content import KillPublishService, TakeDownPublishService
-from flask_babel import _, lazy_gettext
+from quart_babel import gettext as _, lazy_gettext
 
 logger = logging.getLogger(__name__)
 PACKAGE_TYPE = "package_type"
@@ -236,6 +236,7 @@ class ArchivedService(BaseService):
 
         for article in articles_to_kill:
             updates_copy = deepcopy(updates)
+            # TODO-ASYNC: Support async (see superdesk.tests.markers.requires_eve_resource_async_event)
             kill_service.apply_kill_override(article, updates_copy)
             updated.update(updates_copy)
             # Step 2, If it is flagged as archived only it has no related items in the system so can be deleted.

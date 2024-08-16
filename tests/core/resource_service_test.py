@@ -7,7 +7,7 @@ from superdesk.core.resources.cursor import SearchRequest
 from superdesk.utc import utcnow
 from superdesk.utils import format_time
 
-from superdesk.tests.asyncio import AsyncTestCase
+from superdesk.tests import AsyncTestCase
 
 from .modules.users import UserResourceService
 from .fixtures.users import all_users, john_doe

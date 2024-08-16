@@ -17,7 +17,8 @@ from superdesk.io.feed_parsers.efe_nitf import EFEFeedParser
 class EFENITFTestCase(TestCase):
     filename = "efe_nitf.xml"
 
-    def setUp(self):
+    async def asyncSetUp(self):
+        await super().asyncSetUp()
         dirname = os.path.dirname(os.path.realpath(__file__))
         fixture = os.path.normpath(os.path.join(dirname, "../fixtures", self.filename))
         provider = {"name": "Test"}

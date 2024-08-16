@@ -9,7 +9,7 @@
 # at https://www.sourcefabric.org/superdesk/license
 
 from typing import Any
-from flask_babel import lazy_gettext
+from quart_babel import lazy_gettext
 import superdesk
 from apps.auth import AuthResource
 from .ldap import ADAuthService, ADAuth, ImportUserProfileResource, ImportUserProfileService  # noqa

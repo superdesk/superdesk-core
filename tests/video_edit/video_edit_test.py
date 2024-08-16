@@ -46,7 +46,8 @@ class VideoEditTestCase(TestCase):
         "version": 1,
     }
 
-    def setUp(self):
+    async def asyncSetUp(self):
+        await super().asyncSetUp()
         self.video_edit = superdesk.get_resource_service("video_edit")
         self.app.config["VIDEO_SERVER_ENABLED"] = "true"
         self.app.config["VIDEO_SERVER_URL"] = "http://localhost"
@@ -64,7 +65,7 @@ class VideoEditTestCase(TestCase):
             magic.from_buffer.return_value = "video/mp4"
             self.item = archive_service.find_one(req=None, _id=archive_service.post([doc])[0])
 
-    def test_get_video(self):
+    async def test_get_video(self):
         with requests_mock.mock() as mock:
             mock.get("http://localhost/projects/video_id", json=video_info)
             res = self.video_edit.find_one(Req(), _id=self.item["_id"])
@@ -88,7 +89,7 @@ class VideoEditTestCase(TestCase):
             self.video_edit.create([doc])
         self.assertEqual(ex.exception.message, '"capture" or "edit" is required')
 
-    def test_edit_video(self):
+    async def test_edit_video(self):
         project_data = copy.deepcopy(self.project_data)
         doc = {
             "item": {
@@ -115,7 +116,7 @@ class VideoEditTestCase(TestCase):
                 },
             )
 
-    def test_capture_thumbnail(self):
+    async def test_capture_thumbnail(self):
         doc = {
             "item": {
                 ID_FIELD: self.item[ID_FIELD],
@@ -163,7 +164,7 @@ class VideoEditTestCase(TestCase):
             )
             self.assertEqual(res["renditions"]["viewImage"]["mimetype"], "image/jpeg")
 
-    def test_capture_timeline(self):
+    async def test_capture_timeline(self):
         with requests_mock.mock() as mock:
             mock.get(
                 "http://localhost/projects/video_id/thumbnails?type=timeline&amount=60",

@@ -3,7 +3,8 @@ from superdesk.tests import TestCase
 
 
 class VocabulariesServiceGetItemsTestCase(TestCase):
-    def setUp(self):
+    async def asyncSetUp(self):
+        await super().asyncSetUp()
         self.app.data.insert(
             "vocabularies",
             [
@@ -68,7 +69,7 @@ class VocabulariesServiceGetItemsTestCase(TestCase):
             ],
         )
 
-    def test_search_by_id(self):
+    async def test_search_by_id(self):
         items = superdesk.get_resource_service("vocabularies").get_items(_id="funny-keywords")
         self.assertEqual(len(items), 3)
 
@@ -78,7 +79,7 @@ class VocabulariesServiceGetItemsTestCase(TestCase):
         items = superdesk.get_resource_service("vocabularies").get_items(_id="not-found-id")
         self.assertEqual(items, [])
 
-    def test_search_by_qcode(self):
+    async def test_search_by_qcode(self):
         items = superdesk.get_resource_service("vocabularies").get_items(_id="funny-keywords", qcode="PREVIEW")
         self.assertEqual(
             items,
@@ -94,14 +95,14 @@ class VocabulariesServiceGetItemsTestCase(TestCase):
         items = superdesk.get_resource_service("vocabularies").get_items(_id="funny-keywords", qcode="not found")
         self.assertEqual(items, [])
 
-    def test_search_by_is_active(self):
+    async def test_search_by_is_active(self):
         items = superdesk.get_resource_service("vocabularies").get_items(_id="funny-keywords", is_active=False)
         self.assertEqual(len(items), 2)
 
         items = superdesk.get_resource_service("vocabularies").get_items(_id="funny-keywords", is_active=True)
         self.assertEqual(len(items), 3)
 
-    def test_search_by_name(self):
+    async def test_search_by_name(self):
         items = superdesk.get_resource_service("vocabularies").get_items(
             _id="funny-keywords", name="BRIEF", is_active=False
         )
@@ -120,7 +121,7 @@ class VocabulariesServiceGetItemsTestCase(TestCase):
         items = superdesk.get_resource_service("vocabularies").get_items(_id="funny-keywords", name="not found")
         self.assertEqual(items, [])
 
-    def test_search_by_translation_name(self):
+    async def test_search_by_translation_name(self):
         items = superdesk.get_resource_service("vocabularies").get_items(
             _id="funny-keywords",
             name="Avant-Papier",
@@ -162,7 +163,7 @@ class VocabulariesServiceGetItemsTestCase(TestCase):
         )
         self.assertEqual(items, [])
 
-    def test_search_by_all_fields(self):
+    async def test_search_by_all_fields(self):
         items = superdesk.get_resource_service("vocabularies").get_items(
             _id="funny-keywords",
             qcode="PREVIEW",

@@ -13,7 +13,7 @@ import logging
 from typing import List
 
 from bson.objectid import ObjectId
-from flask_babel import _, lazy_gettext
+from quart_babel import gettext as _, lazy_gettext
 
 import superdesk
 from superdesk import get_resource_service
@@ -238,7 +238,7 @@ def add_activity(
     return activity
 
 
-def notify_and_add_activity(
+async def notify_and_add_activity(
     activity_name, msg, resource=None, item=None, user_list=None, notification_name=None, **data
 ):
     """
@@ -283,7 +283,7 @@ def notify_and_add_activity(
             activity = {"name": activity_name, "message": "System " + msg, "data": data, "resource": resource}
 
         if recipients:
-            send_activity_emails(activity=activity, recipients=recipients)
+            await send_activity_emails(activity=activity, recipients=recipients)
 
 
 def get_recipients(user_list: List[User], notification_name=None) -> List[str]:

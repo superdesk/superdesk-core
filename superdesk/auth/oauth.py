@@ -29,7 +29,7 @@ from datetime import datetime
 from typing import Optional, List, Tuple
 from bson import ObjectId
 import superdesk
-from flask_babel import lazy_gettext as l_
+from quart_babel import lazy_gettext as l_
 from authlib.integrations.flask_client import OAuth
 from authlib.integrations.requests_client import OAuth2Session
 from authlib.oauth2.rfc6749.wrappers import OAuth2Token
@@ -155,7 +155,7 @@ def configure_google(app, extra_scopes: Optional[List[str]] = None, refresh: boo
         return oauth.google.authorize_redirect(redirect_uri)
 
     @bp.route("/login/google_authorized")
-    def google_authorized():
+    async def google_authorized():
         token_id = app.redis.get(KEY_GOOGLE_PROVIDER_ID)
         if token_id is not None:
             token_id = token_id.decode()
@@ -163,7 +163,7 @@ def configure_google(app, extra_scopes: Optional[List[str]] = None, refresh: boo
 
         token = oauth.google.authorize_access_token()
         if not token:
-            return render_template(AUTHORIZED_TEMPLATE, data={}) if token_id else auth_user()
+            return await (render_template(AUTHORIZED_TEMPLATE, data={}) if token_id else auth_user(None))
         user = oauth.google.parse_id_token(token)
         if token_id:
             # token_id is used to link token with provider, we need to store the token
@@ -192,7 +192,7 @@ def configure_google(app, extra_scopes: Optional[List[str]] = None, refresh: boo
                         '"security/Third-party apps with account access") then try to log-in again'
                     )
                     logger.warning(message)
-                    return render_template(ERROR_TEMPLATE, message=message)
+                    return await render_template(ERROR_TEMPLATE, message=message)
 
             # token_id is actually the provider id
             ingest_providers_service = superdesk.get_resource_service("ingest_providers")
@@ -204,19 +204,19 @@ def configure_google(app, extra_scopes: Optional[List[str]] = None, refresh: boo
                     provider[ID_FIELD], updates={"config.email": user["email"]}, original=provider
                 )
 
-            return render_template(AUTHORIZED_TEMPLATE, data={})
+            return await render_template(AUTHORIZED_TEMPLATE, data={})
         else:
             # no token_id, OAuth is only used for log-in
-            return auth_user(user["email"], {"needs_activation": False})
+            return await auth_user(user["email"], {"needs_activation": False})
 
     @bp.route("/logout/google/<url_id>")
-    def google_logout(url_id: str):
+    async def google_logout(url_id: str):
         """Revoke token
 
         :param url_id: used to identify the token
         """
         revoke_google_token(ObjectId(url_id))
-        return render_template(AUTHORIZED_TEMPLATE, data={})
+        return await render_template(AUTHORIZED_TEMPLATE, data={})
 
     superdesk.blueprint(bp, app)
 

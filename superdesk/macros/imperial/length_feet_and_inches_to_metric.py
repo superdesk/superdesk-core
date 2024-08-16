@@ -11,7 +11,7 @@
 import re
 from . import unit_base
 from decimal import Decimal
-from flask_babel import lazy_gettext
+from quart_babel import lazy_gettext
 
 
 def convert(feet, inches):

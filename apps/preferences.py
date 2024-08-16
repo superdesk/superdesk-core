@@ -19,7 +19,7 @@ from superdesk.services import BaseService
 from superdesk import get_backend, get_resource_service
 from superdesk.workflow import get_privileged_actions
 from superdesk.validation import ValidationError
-from flask_babel import _, lazy_gettext
+from quart_babel import gettext as _, lazy_gettext
 
 
 _preferences_key = "preferences"

@@ -9,7 +9,7 @@
 # at https://www.sourcefabric.org/superdesk/license
 
 import logging
-from flask_babel import _
+from quart_babel import gettext as _
 
 from superdesk.resource_fields import ID_FIELD
 from superdesk.flask import g

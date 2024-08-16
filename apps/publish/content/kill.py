@@ -27,7 +27,7 @@ from superdesk.errors import SuperdeskApiError
 from apps.archive.common import ITEM_OPERATION, ARCHIVE, insert_into_versions, get_dateline_city
 from itertools import chain
 from apps.publish.published_item import PUBLISHED, LAST_PUBLISHED_VERSION
-from flask_babel import _
+from quart_babel import gettext as _
 from enum import Enum
 from bson.objectid import ObjectId
 from apps.content import push_content_notification
@@ -102,14 +102,16 @@ class KillPublishService(BasePublishService):
         updates[SCHEDULE_SETTINGS] = {}
         updates_copy = deepcopy(updates)
         original_copy = deepcopy(original)
+        # TODO-ASYNC: Support async (see superdesk.tests.markers.requires_eve_resource_async_event)
         self.apply_kill_override(original_copy, updates)
+        # TODO-ASYNC: Support async (see superdesk.tests.markers.requires_eve_resource_async_event)
         self.broadcast_kill_email(original, updates)
         super().update(id, updates, original)
         updated = deepcopy(original)
         updated.update(updates)
         get_resource_service("archive_broadcast").kill_broadcast(updates_copy, original_copy, self.item_operation)
 
-    def broadcast_kill_email(self, original, updates):
+    async def broadcast_kill_email(self, original, updates):
         """Sends the broadcast email to all subscribers (including in-active subscribers)
 
         :param dict original: Document to kill
@@ -129,7 +131,7 @@ class KillPublishService(BasePublishService):
         )
         kill_article["city"] = get_dateline_city(kill_article.get("dateline"))
         kill_article["action"] = self.item_operation
-        send_article_killed_email(kill_article, recipients, utcnow())
+        await send_article_killed_email(kill_article, recipients, utcnow())
 
     def kill_item(self, updates, original):
         """Kill the item after applying the template.
@@ -155,7 +157,7 @@ class KillPublishService(BasePublishService):
         updates = render_content_template_by_name(item, self.item_operation)
         return updates
 
-    def apply_kill_override(self, item, updates):
+    async def apply_kill_override(self, item, updates):
         """Applies kill override.
 
         Kill requires content to be generate based on the item getting killed (and not the
@@ -179,7 +181,7 @@ class KillPublishService(BasePublishService):
             desk_name = get_resource_service("desks").get_desk_name(item.get("task", {}).get("desk"))
             city = get_dateline_city(item.get("dateline"))
             kill_header = json.loads(
-                render_template(
+                await render_template(
                     "article_killed_override.json",
                     slugline=item.get("slugline", ""),
                     headline=item.get("headline", ""),

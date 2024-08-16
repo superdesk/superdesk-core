@@ -1,4 +1,4 @@
-from flask_babel import _
+from quart_babel import gettext as _
 
 from .common import BasePublishResource, ITEM_UNPUBLISH, CONTENT_STATE, ITEM_KILL
 from .kill import KillPublishService, PACKAGE_WORKFLOW
@@ -21,7 +21,7 @@ class UnpublishService(KillPublishService):
     def __init__(self, datasource=None, backend=None):
         super().__init__(datasource=datasource, backend=backend)
 
-    def apply_kill_override(self, item, updates):
+    async def apply_kill_override(self, item, updates):
         pass
 
     def apply_kill_template(self, item):

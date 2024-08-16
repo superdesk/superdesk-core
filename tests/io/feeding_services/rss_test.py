@@ -78,8 +78,9 @@ class FakeParseError(Exception):
 class RssIngestServiceTest(TestCase):
     """Base class for RSSFeedingService tests."""
 
-    def setUpForChildren(self):
-        super().setUpForChildren()
+    async def asyncSetUp(self):
+        await super().asyncSetUp()
+        # super().setUpForChildren()
         try:
             from superdesk.io.feeding_services.rss import RSSFeedingService
         except ImportError:
@@ -132,7 +133,8 @@ class UpdateMethodTestCase(RssIngestServiceTest):
         mock.return_value = MagicMock(name="mock()")
         mock.side_effect = None
 
-    def setUp(self):
+    async def asyncSetUp(self):
+        await super().asyncSetUp()
         self._hard_reset_mock(feed_parse)
         self.instance._fetch_data = MagicMock(return_value="<rss>foo</rss>")
         self.instance._create_item = MagicMock(return_value={})
@@ -243,7 +245,8 @@ class UpdateMethodTestCase(RssIngestServiceTest):
 class FetchDataMethodTestCase(RssIngestServiceTest):
     """Tests for the _fetch_data() method."""
 
-    def setUp(self):
+    async def asyncSetUp(self):
+        await super().asyncSetUp()
         self.instance.session.get = MagicMock()
         self.fake_provider = MagicMock(name="fake provider")
         self.instance.provider = self.fake_provider

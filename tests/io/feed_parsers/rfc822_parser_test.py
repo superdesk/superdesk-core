@@ -21,22 +21,21 @@ from superdesk.users.services import UsersService
 class RFC822TestCase(TestCase):
     filename = "simple_email.txt"
 
-    def setUp(self):
-        setup(context=self)
-        with self.app.app_context():
-            # mock one user:
-            user_service = UsersService("users", backend=superdesk.get_backend())
-            self.user_id = user_service.create(
-                [{"name": "user", "user_type": "administrator", "email": "asender@a.com.au"}]
-            )[0]
+    async def asyncSetUp(self):
+        await super().asyncSetUp()
+        # mock one user:
+        user_service = UsersService("users", backend=superdesk.get_backend())
+        self.user_id = user_service.create(
+            [{"name": "user", "user_type": "administrator", "email": "asender@a.com.au"}]
+        )[0]
 
-            provider = {"name": "Test"}
-            dirname = os.path.dirname(os.path.realpath(__file__))
-            fixture = os.path.normpath(os.path.join(dirname, "../fixtures", self.filename))
-            with open(fixture, mode="rb") as f:
-                bytes = f.read()
-            parser = EMailRFC822FeedParser()
-            self.items = parser.parse([(1, bytes)], provider)
+        provider = {"name": "Test"}
+        dirname = os.path.dirname(os.path.realpath(__file__))
+        fixture = os.path.normpath(os.path.join(dirname, "../fixtures", self.filename))
+        with open(fixture, mode="rb") as f:
+            bytes = f.read()
+        parser = EMailRFC822FeedParser()
+        self.items = parser.parse([(1, bytes)], provider)
 
     def test_headline(self):
         self.assertEqual(self.items[0]["headline"], "Test message 1234")
@@ -54,16 +53,15 @@ class RFC822TestCase(TestCase):
 class RFC822ComplexTestCase(TestCase):
     filename = "composite_email.txt"
 
-    def setUp(self):
-        setup(context=self)
-        with self.app.app_context():
-            provider = {"name": "Test"}
-            dirname = os.path.dirname(os.path.realpath(__file__))
-            fixture = os.path.normpath(os.path.join(dirname, "../fixtures", self.filename))
-            with open(fixture, mode="rb") as f:
-                bytes = f.read()
-            parser = EMailRFC822FeedParser()
-            self.items = parser.parse([(1, bytes)], provider)
+    async def asyncSetUp(self):
+        await super().asyncSetUp()
+        provider = {"name": "Test"}
+        dirname = os.path.dirname(os.path.realpath(__file__))
+        fixture = os.path.normpath(os.path.join(dirname, "../fixtures", self.filename))
+        with open(fixture, mode="rb") as f:
+            bytes = f.read()
+        parser = EMailRFC822FeedParser()
+        self.items = parser.parse([(1, bytes)], provider)
 
     def test_composite(self):
         self.assertEqual(len(self.items), 3)
@@ -80,16 +78,15 @@ class RFC822ComplexTestCase(TestCase):
 class RFC822OddCharSetTestCase(TestCase):
     filename = "odd_charset_email.txt"
 
-    def setUp(self):
-        setup(context=self)
-        with self.app.app_context():
-            provider = {"name": "Test"}
-            dirname = os.path.dirname(os.path.realpath(__file__))
-            fixture = os.path.normpath(os.path.join(dirname, "../fixtures", self.filename))
-            with open(fixture, mode="rb") as f:
-                bytes = f.read()
-            parser = EMailRFC822FeedParser()
-            self.items = parser.parse([(1, bytes)], provider)
+    async def asyncSetUp(self):
+        await super().asyncSetUp()
+        provider = {"name": "Test"}
+        dirname = os.path.dirname(os.path.realpath(__file__))
+        fixture = os.path.normpath(os.path.join(dirname, "../fixtures", self.filename))
+        with open(fixture, mode="rb") as f:
+            bytes = f.read()
+        parser = EMailRFC822FeedParser()
+        self.items = parser.parse([(1, bytes)], provider)
 
     def test_headline(self):
         # This tests a subject that fails to decode but we just try a string conversion
@@ -102,16 +99,15 @@ class RFC822OddCharSetTestCase(TestCase):
 class RFC822CharSetInSubjectTestCase(TestCase):
     filename = "charset_in_subject_email.txt"
 
-    def setUp(self):
-        setup(context=self)
-        with self.app.app_context():
-            provider = {"name": "Test"}
-            dirname = os.path.dirname(os.path.realpath(__file__))
-            fixture = os.path.normpath(os.path.join(dirname, "../fixtures", self.filename))
-            with open(fixture, mode="rb") as f:
-                bytes = f.read()
-            parser = EMailRFC822FeedParser()
-            self.items = parser.parse([(1, bytes)], provider)
+    async def asyncSetUp(self):
+        await super().asyncSetUp()
+        provider = {"name": "Test"}
+        dirname = os.path.dirname(os.path.realpath(__file__))
+        fixture = os.path.normpath(os.path.join(dirname, "../fixtures", self.filename))
+        with open(fixture, mode="rb") as f:
+            bytes = f.read()
+        parser = EMailRFC822FeedParser()
+        self.items = parser.parse([(1, bytes)], provider)
 
     def test_headline(self):
         # This test a subject that has a charset that decodes correctly
@@ -119,33 +115,32 @@ class RFC822CharSetInSubjectTestCase(TestCase):
 
 
 class RFC822FormattedEmailTestCase(TestCase):
-    def setUp(self):
-        setup(context=self)
-        with self.app.app_context():
-            self.app.data.insert(
-                "users",
-                [
-                    {
-                        "_id": 123,
-                        "name": "user",
-                        "user_type": "administrator",
-                        "email": "eharvey@aap.com.au",
-                        "byline": "E Harvey",
-                    }
-                ],
-            )
-            self.app.data.insert("desks", [{"_id": 1, "name": "new zealand"}])
-            self.app.data.insert(
-                "vocabularies",
-                [
-                    {"_id": "locators", "items": [{"is_active": True, "name": "ADV", "qcode": "ADV", "group": ""}]},
-                    {"_id": "priority", "items": [{"is_active": True, "name": "Urgent", "qcode": "3"}]},
-                ],
-            )
+    async def asyncSetUp(self):
+        await super().asyncSetUp()
+        self.app.data.insert(
+            "users",
+            [
+                {
+                    "_id": 123,
+                    "name": "user",
+                    "user_type": "administrator",
+                    "email": "eharvey@aap.com.au",
+                    "byline": "E Harvey",
+                }
+            ],
+        )
+        self.app.data.insert("desks", [{"_id": 1, "name": "new zealand"}])
+        self.app.data.insert(
+            "vocabularies",
+            [
+                {"_id": "locators", "items": [{"is_active": True, "name": "ADV", "qcode": "ADV", "group": ""}]},
+                {"_id": "priority", "items": [{"is_active": True, "name": "Urgent", "qcode": "3"}]},
+            ],
+        )
 
-            self.provider = {"name": "Test", "config": {"formatted": True}}
+        self.provider = {"name": "Test", "config": {"formatted": True}}
 
-    def test_parsed_values(self):
+    async def test_parsed_values(self):
         filename = "googleform.txt"
         dirname = os.path.dirname(os.path.realpath(__file__))
         fixture = os.path.normpath(os.path.join(dirname, "../fixtures", filename))
@@ -164,7 +159,7 @@ class RFC822FormattedEmailTestCase(TestCase):
         self.assertEqual(self.items[0]["priority"], 3)
         self.assertEqual(self.items[0]["byline"], "E Harvey")
 
-    def test_parsed_values_Email_Address(self):
+    async def test_parsed_values_Email_Address(self):
         filename = "googleform1.txt"
         dirname = os.path.dirname(os.path.realpath(__file__))
         fixture = os.path.normpath(os.path.join(dirname, "../fixtures", filename))
@@ -185,14 +180,14 @@ class RFC822JsonEmailTestCase(TestCase):
     desk = [{"_id": 1, "name": "Brisbane"}]
     user = [{"_id": 1, "email": "mock@mail.com.au", "byline": "A Mock Up", "sign_off": "TA"}]
 
-    def setUp(self):
+    async def asyncSetUp(self):
+        await super().asyncSetUp()
         self.app.data.insert("vocabularies", self.vocab)
         self.app.data.insert("desks", self.desk)
         self.app.data.insert("users", self.user)
-        with self.app.app_context():
-            self.provider = {"name": "Test", "config": {"formatted": True}}
+        self.provider = {"name": "Test", "config": {"formatted": True}}
 
-    def test_formatted_email_parser(self):
+    async def test_formatted_email_parser(self):
         filename = "json-email.txt"
         dirname = os.path.dirname(os.path.realpath(__file__))
         fixture = os.path.join(dirname, "../fixtures", filename)
@@ -216,7 +211,7 @@ class RFC822JsonEmailTestCase(TestCase):
         self.assertEqual(self.items[0]["slugline"], "Slugline-2")
         self.assertEqual(self.items[0]["byline"], "A Mock Up")
 
-    def test_bad_user(self):
+    async def test_bad_user(self):
         filename = "json-email-bad-user.txt"
         dirname = os.path.dirname(os.path.realpath(__file__))
         fixture = os.path.join(dirname, "../fixtures", filename)

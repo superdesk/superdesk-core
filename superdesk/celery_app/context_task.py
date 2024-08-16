@@ -1,8 +1,9 @@
 import asyncio
+from inspect import isawaitable
 import werkzeug
 
 from celery import Task
-from typing import Any, Callable, Tuple, Dict
+from typing import Any, Tuple, Dict
 
 from superdesk.logging import logger
 from superdesk.errors import SuperdeskError
@@ -36,27 +37,14 @@ class HybridAppContextTask(Task):
             args: Positional arguments passed to the task function.
             kwargs: Keyword arguments passed to the task function.
         """
-        # TODO-ASYNC: update once we are fully using Quart
-        with self.get_current_app().app_context():
-            task_func = self.run
+        return self.run_async(*args, **kwargs)
 
-            try:
-                # handle async tasks if needed
-                if asyncio.iscoroutinefunction(task_func):
-                    return self.run_async(task_func, *args, **kwargs)
-
-                # run sync otherwise
-                return super().__call__(*args, **kwargs)
-            except self.app_errors as e:
-                self.handle_exception(e)
-
-    def run_async(self, task_func: Callable, *args: Any, **kwargs: Any) -> Any:
+    def run_async(self, *args: Any, **kwargs: Any) -> Any:
         """
         Runs the task asynchronously, utilizing the current asyncio event loop. Captures
         and handles exceptions defined in `app_errors`.
 
         Args:
-            task_func: The coroutine function representing the task to be executed.
             args: Positional arguments for the task.
             kwargs: Keyword arguments for the task.
 
@@ -72,7 +60,9 @@ class HybridAppContextTask(Task):
         # all exceptions are managed and logged regardless of where they occur within the event loop
         async def wrapper():
             try:
-                return await task_func(*args, **kwargs)
+                async with self.get_current_app().app_context():
+                    response = self.run(*args, **kwargs)
+                    return await response if isawaitable(response) else response
             except self.app_errors as e:
                 self.handle_exception(e)
                 return None
@@ -92,6 +82,6 @@ class HybridAppContextTask(Task):
         """
         Handles task failure by logging the exception within the Flask application context.
         """
-        # TODO-ASYNC: update once we are fully using Quart
-        with self.get_current_app().app_context():
-            self.handle_exception(exc)
+        # TODO-ASYNC: Support async with ``on_failure`` method
+        # async with self.get_current_app().app_context():
+        self.handle_exception(exc)

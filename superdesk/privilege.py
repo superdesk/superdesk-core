@@ -11,7 +11,7 @@
 """Privileges registry."""
 from typing import Optional
 from .errors import PrivilegeNameError
-from flask_babel.speaklater import LazyString
+from quart_babel.speaklater import LazyString
 
 import superdesk
 

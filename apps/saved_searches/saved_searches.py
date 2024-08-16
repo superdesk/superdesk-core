@@ -23,7 +23,7 @@ from superdesk.notification import push_notification
 from superdesk.users.services import current_user_has_privilege
 from superdesk.metadata.item import get_schema
 from apps.auth import get_user_id
-from flask_babel import _
+from quart_babel import gettext as _
 
 logger = logging.getLogger(__name__)
 

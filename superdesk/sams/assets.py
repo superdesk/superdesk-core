@@ -22,7 +22,7 @@
 
 import ast
 import logging
-from flask_babel import _
+from quart_babel import gettext as _
 from bson import ObjectId
 
 from superdesk.core import get_app_config
@@ -61,17 +61,17 @@ def find_one(item_id):
 
 
 @assets_bp.route("/sams/assets/binary/<item_id>", methods=["GET"])
-def get_binary(item_id):
+async def get_binary(item_id):
     """
     Uses item_id and returns the corresponding
     asset binary
     """
     file = get_file_from_sams(get_sams_client(), item_id)
-    return generate_response_for_file(file)
+    return await generate_response_for_file(file)
 
 
 @assets_bp.route("/sams/assets/images/<item_id>", methods=["GET"])
-def download_image(item_id: str):
+async def download_image(item_id: str):
     """Downloads an image from SAMS and sends back to the requestee"""
 
     width = int(request.args["width"]) if request.args.get("width") else None
@@ -82,16 +82,16 @@ def download_image(item_id: str):
     if not file:
         raise SuperdeskApiError.notFoundError(_("SAMS Image Asset not found"))
 
-    return generate_response_for_file(file)
+    return await generate_response_for_file(file)
 
 
 @assets_bp.route("/sams/assets", methods=["POST"])
-def create():
+async def create():
     """
     Creates new Asset
     """
-    files = {"binary": request.files["binary"]}
-    docs = request.form.to_dict()
+    files = {"binary": (await request.files)["binary"]}
+    docs = (await request.form).to_dict()
     sams_client = get_sams_client()
     post_response = sams_client.assets.create(docs=docs, files=files, external_user_id=get_user_id(True))
     response = post_response.json()
@@ -156,7 +156,7 @@ def delete(item_id):
 
 
 @assets_bp.route("/sams/assets/<item_id>", methods=["PATCH"])
-def update(item_id):
+async def update(item_id):
     """
     Uses item_id and updates the corresponding asset
     """
@@ -165,11 +165,11 @@ def update(item_id):
     except KeyError:
         raise SuperdeskApiError.badRequestError("If-Match field missing in header")
 
-    if request.files.get("binary"):
+    if (await request.files).get("binary"):
         # The binary data was supplied so this must be a multipart request
         # Get the updates from the `request.form` attribute
-        files = {"binary": request.files["binary"]}
-        updates = request.form.to_dict()
+        files = {"binary": (await request.files)["binary"]}
+        updates = (await request.form).to_dict()
     else:
         # Only the metadata was supplied so this must be a standard JSON request
         # Get the updates from the `request.get_json` function

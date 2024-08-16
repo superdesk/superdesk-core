@@ -8,11 +8,11 @@ from superdesk.io.commands.update_ingest import ingest_items
 from .mocks_reuters import setup_reuters_mock, teardown_reuters_mock
 
 
-def setup_providers(context):
+async def setup_providers(context):
     app = context.app
     context.providers = {}
     context.ingest_items = ingest_items
-    with app.test_request_context(app.config["URL_PREFIX"]):
+    async with app.test_request_context(app.config["URL_PREFIX"]):
         rule_sets = {
             "name": "reuters_rule_sets",
             "rules": [

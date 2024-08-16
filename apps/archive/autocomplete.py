@@ -2,7 +2,7 @@ from typing import List, Dict, Callable, cast
 import warnings
 import superdesk
 
-from flask_babel import _
+from quart_babel import gettext as _
 from datetime import timedelta
 
 from superdesk.core import get_current_app, get_app_config

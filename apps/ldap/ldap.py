@@ -22,7 +22,7 @@ from superdesk.resource import Resource
 import superdesk
 from apps.auth.errors import CredentialsAuthError
 from apps.auth import get_user
-from flask_babel import _
+from quart_babel import gettext as _
 
 logger = logging.getLogger(__name__)
 

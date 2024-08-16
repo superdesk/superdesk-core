@@ -22,7 +22,7 @@ from superdesk.resource import Resource
 from superdesk.services import BaseService
 from superdesk.errors import SuperdeskApiError
 from superdesk.utc import set_time
-from flask_babel import _
+from quart_babel import gettext as _
 
 from .rule_handlers import get_routing_rule_handler
 

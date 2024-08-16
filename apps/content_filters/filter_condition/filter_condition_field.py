@@ -18,7 +18,7 @@ from superdesk.utc import utcnow
 from superdesk import get_resource_service
 from superdesk.errors import SuperdeskApiError
 from superdesk.cache import cache
-from flask_babel import _
+from quart_babel import gettext as _
 
 
 class FilterConditionFieldsEnum(Enum):
@@ -56,8 +56,8 @@ def _get_field_type_map() -> Dict[str, str]:
 
 def get_field_type_map() -> Dict[str, str]:
     if not hasattr(g, "field_type_map"):
-        g.field_type_map = _get_field_type_map()
-    return g.field_type_map
+        g.field_type_map = _get_field_type_map()  # type: ignore
+    return g.field_type_map  # type: ignore
 
 
 class FilterConditionField:

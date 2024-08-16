@@ -14,13 +14,8 @@ LONG_DESCRIPTION = "Superdesk Server Core"
 
 install_requires = [
     "urllib3>=1.26,<3",
-    "eve>=1.1.2,<=2.1.0",
-    "eve-elastic>=7.4.0,<7.5.0",
     "elasticsearch[async]<7.18",  # we are using oss version on test server
-    "flask[async]>=3.0",
-    "quart>=0.19.6,<0.20.0",
     "flask-mail>=0.9,<0.11",
-    "flask-babel>=1.0,<4.1",
     "arrow>=0.4,<=1.3.0",
     "pillow>=9.2,<10.4",
     "bcrypt>=3.1.1,<4.2",
@@ -60,14 +55,19 @@ install_requires = [
     "MarkupSafe>2.1",
     "reportlab<5,>=4.0.4",
     "pyjwt>=2.4.0,<2.5",
-    "Werkzeug>=3.0",
-    "Jinja2>=3.1",
-    "Click>=8.1.7,<9.0",
     "pymemcache>=4.0,<4.1",
     "xmlsec>=1.3.13,<1.3.15",
     # Async libraries
     "motor>=3.4.0,<4.0",
     "pydantic>=2.7.4,<3.0",
+    # Custom repos, with patches applied
+    "eve @ git+https://github.com/MarkLark86/eve@use-quart",
+    "eve-elastic @ git+https://github.com/MarkLark86/eve-elastic@use-quart",
+    "quart @ git+https://github.com/MarkLark86/quart@fix-test-client-with-utf8-url",
+    "quart_babel @ git+https://github.com/MarkLark86/quart-babel@fix-get-format",
+    # Patch Quart, Asyncio to work with Flask extensions
+    # TODO-ASYNC: Remove this with our own flask patch (as quart-flask-patch also patches asyncio)
+    "quart-flask-patch>=0.3.0,<0.4",
 ]
 
 package_data = {

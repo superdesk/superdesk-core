@@ -1,5 +1,5 @@
 import superdesk
-from flask_babel import lazy_gettext
+from quart_babel import lazy_gettext
 
 
 def init_app(app) -> None:

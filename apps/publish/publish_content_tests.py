@@ -104,17 +104,16 @@ class PublishContentTests(TestCase):
         },
     ]
 
-    def setUp(self):
-        with self.app.app_context():
-            init_app(self.app)
+    async def asyncSetUp(self):
+        await super().asyncSetUp()
+        init_app(self.app)
 
-    def test_queue_items(self):
-        with self.app.app_context():
-            self.app.data.insert("publish_queue", self.queue_items)
-            items = get_queue_items()
-            self.assertEqual(3, items.count())
-            ids = [item[ID_FIELD] for item in items]
-            self.assertNotIn(4, ids)
+    async def test_queue_items(self):
+        self.app.data.insert("publish_queue", self.queue_items)
+        items = get_queue_items()
+        self.assertEqual(3, items.count())
+        ids = [item[ID_FIELD] for item in items]
+        self.assertNotIn(4, ids)
 
     @mock.patch("apps.publish.enqueue.EnqueueContent.enqueue_item")
     def test_enqueue_item_not_scheduled(self, *mocks):
@@ -123,7 +122,7 @@ class PublishContentTests(TestCase):
         EnqueueContent().enqueue_items(queue_items)
         fake_enqueue_item.assert_called_with(queue_items[0])
 
-    def test_get_enqueue_items(self):
+    async def test_get_enqueue_items(self):
         self.app.data.insert("published", self.published_items)
         items = EnqueueContent().get_published_items()
         self.assertEqual(2, len(items))

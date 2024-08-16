@@ -28,7 +28,7 @@ foo = Foo()
 
 
 class CacheTestCase(TestCase):
-    def test_cache(self):
+    async def test_cache(self):
         self.assertEqual(1, foo.count_calls())
         self.assertEqual(1, foo.count_calls(), "not using cache")
         sleep(2)
@@ -42,13 +42,13 @@ class CacheTestCase(TestCase):
         self.assertNotEqual(ran, foo.random())
         self.assertEqual(3, foo.count_calls())
 
-    def test_cache_json_serializing(self):
+    async def test_cache_json_serializing(self):
         _id = ObjectId()
         self.assertEqual(_id, foo.identity(_id))
         self.assertNotEqual(_id, foo.identity(ObjectId()))
         self.assertEqual(_id, foo.identity(_id))
 
-    def test_cache_cursor(self):
+    async def test_cache_cursor(self):
         self.app.data.insert("users", [{"username": "foo"}])
 
         @cache(ttl=5)

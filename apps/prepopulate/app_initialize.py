@@ -266,7 +266,7 @@ class AppInitializeWithDataCommand(superdesk.Command):
         superdesk.Option("--init-index-only", "-i", action="store_true"),
     ]
 
-    def run(self, entity_name=None, path=None, sample_data=False, force=False, init_index_only=False, **kwargs):
+    async def run(self, entity_name=None, path=None, sample_data=False, force=False, init_index_only=False, **kwargs):
         """Run the initialization
 
         :param str,list,NoneType entity_name: entity(ies) to initialize
@@ -288,7 +288,7 @@ class AppInitializeWithDataCommand(superdesk.Command):
 
         # put mapping to elastic
         try:
-            app.data.init_elastic(app, raise_on_mapping_error=rebuild_elastic_on_init_data_error)
+            await app.data.init_elastic(app, raise_on_mapping_error=rebuild_elastic_on_init_data_error)
         except elasticsearch.exceptions.TransportError as err:
             logger.error(err)
             if rebuild_elastic_on_init_data_error:

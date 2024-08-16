@@ -16,7 +16,7 @@ from eve.utils import ParsedRequest
 from superdesk.errors import SuperdeskApiError
 from superdesk import get_resource_service
 from apps.content_filters.filter_condition.filter_condition import FilterCondition
-from flask_babel import _
+from quart_babel import gettext as _
 
 
 logger = logging.getLogger(__name__)

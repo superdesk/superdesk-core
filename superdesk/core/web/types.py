@@ -224,14 +224,14 @@ class EndpointGroup:
         """
 
         def fdec(func: EndpointFunction):
-            self.endpoints.append(
-                Endpoint(
-                    f"{self.url_prefix}/{url}" if self.url_prefix else url,
-                    func,
-                    methods=methods,
-                    name=name,
-                )
+            endpoint_func = Endpoint(
+                f"{self.url_prefix}/{url}" if self.url_prefix else url,
+                func,
+                methods=methods,
+                name=name,
             )
+            self.endpoints.append(endpoint_func)
+            return endpoint_func
 
         return fdec
 

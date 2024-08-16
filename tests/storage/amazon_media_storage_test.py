@@ -11,7 +11,8 @@ from superdesk.media.media_operations import guess_media_extension
 
 
 class AmazonMediaStorageTestCase(TestCase):
-    def setUp(self):
+    async def asyncSetUp(self):
+        await super().asyncSetUp()
         self.amazon = AmazonMediaStorage(self.app)
 
         # Patch config with defaults

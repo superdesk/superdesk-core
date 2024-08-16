@@ -23,7 +23,7 @@ from superdesk.emails import send_translation_changed
 from superdesk.activity import add_activity
 
 
-def send_translation_notifications(original):
+async def send_translation_notifications(original):
     translated_items = get_resource_service("published").find(
         {"translation_id": original.get("guid"), "last_published_version": True}
     )
@@ -52,7 +52,7 @@ def send_translation_notifications(original):
 
     user = get_current_app().get_current_user_dict() or {}
     username = user.get("display_name") or user.get("username")
-    send_translation_changed(username, changed_article, recipients)
+    await send_translation_changed(username, changed_article, recipients)
 
 
 class CorrectPublishResource(BasePublishResource):
@@ -111,4 +111,5 @@ class CorrectPublishService(BasePublishService):
 
     def on_updated(self, updates, original):
         super().on_updated(updates, original)
+        # TODO-ASYNC: Support async (see superdesk.tests.markers.requires_eve_resource_async_event)
         send_translation_notifications(original)

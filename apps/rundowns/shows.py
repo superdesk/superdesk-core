@@ -1,7 +1,7 @@
 import superdesk
 import superdesk.utils as utils
 
-from flask_babel import gettext
+from quart_babel import gettext
 
 from . import privileges
 

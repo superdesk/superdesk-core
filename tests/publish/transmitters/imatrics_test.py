@@ -27,9 +27,9 @@ class IMatricsTransmitterTestCase(unittest.TestCase):
         )
 
     @responses.activate
-    def test_publish_article(self):
+    async def test_publish_article(self):
         start = datetime(2020, 10, 8, 10, 0, 0, tzinfo=pytz.UTC)
-        with self.app.app_context():
+        async with self.app.app_context():
             with patch.dict(superdesk.resources, resources):
                 responses.add(
                     responses.POST,

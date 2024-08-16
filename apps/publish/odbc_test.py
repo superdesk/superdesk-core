@@ -80,7 +80,8 @@ class ODBCTests(TestCase):
         }
     ]
 
-    def setUp(self):
+    async def asyncSetUp(self):
+        await super().asyncSetUp()
         self.subscribers[0]["destinations"][0]["config"]["connection_string"] = self.app.config[
             "ODBC_TEST_CONNECTION_STRING"
         ]

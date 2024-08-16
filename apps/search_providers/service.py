@@ -10,7 +10,7 @@
 
 import logging
 
-from flask_babel import _
+from quart_babel import gettext as _
 
 from superdesk.resource_fields import ID_FIELD
 from apps.search_providers import allowed_search_providers

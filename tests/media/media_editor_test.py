@@ -27,8 +27,8 @@ import json
 
 
 class BaseMediaEditorTestCase(TestCase):
-    def setUp(self):
-        super().setUp()
+    async def asyncSetUp(self):
+        await super().asyncSetUp()
         dirname = os.path.dirname(os.path.realpath(__file__))
         image_path = os.path.normpath(os.path.join(dirname, "fixtures", self.filename))
         content_type = mimetypes.guess_type(image_path)[0]
@@ -57,7 +57,7 @@ class BaseMediaEditorTestCase(TestCase):
         archive = get_resource_service("archive")
         archive.post([self.item])
 
-    def do_edit(self, edit, item=None):
+    async def do_edit(self, edit, item=None):
         """Helper method to test edition on current test media
 
         :param dict edit: edition instructions
@@ -76,8 +76,11 @@ class BaseMediaEditorTestCase(TestCase):
                 r["media"] = str(r["media"])
             request_data["item"] = item
         docs = [request_data]
-        with self.app.test_request_context(
-            "media_editor", method="POST", content_type="application/json", data=json.dumps(request_data)
+        async with self.app.test_request_context(
+            # "media_editor", method="POST", content_type="application/json", data=json.dumps(request_data)
+            "media_editor",
+            method="POST",
+            json=request_data,
         ):
             media_editor.create(docs)
 
@@ -92,26 +95,26 @@ class BaseMediaEditorTestCase(TestCase):
 class MediaEditorTestCase(BaseMediaEditorTestCase):
     filename = "IPTC-PhotometadataRef-Std2017.1.jpg"
 
-    def test_edition(self):
+    async def test_edition(self):
         """Test basic edition instructions"""
-        item = self.do_edit([["contrast", 1.2], ["rotate", "90"]])
+        item = await self.do_edit([["contrast", 1.2], ["rotate", "90"]])
         image = self.image(item, "original")
         self.assertEqual(500, image.width)
         self.assertEqual(1000, image.height)
 
-    def test_saturation(self):
+    async def test_saturation(self):
         """Test saturation change"""
-        item = self.do_edit([["saturation", 0]])
+        item = await self.do_edit([["saturation", 0]])
         image = self.image(item, "original")
         # not sure how to test saturation, so just checking
         # the size remained the same
         self.assertEqual(1000, image.width)
         self.assertEqual(500, image.height)
 
-    def test_update(self):
+    async def test_update(self):
         """Test that item is updated correctly"""
         original_media_id = self.item["renditions"]["original"]["media"]
-        item = self.do_edit([["rotate", "270"], ["saturation", "0"]], item=self.item)
+        item = await self.do_edit([["rotate", "270"], ["saturation", "0"]], item=self.item)
         image = self.image(item, "original")
         self.assertEqual(500, image.width)
         self.assertEqual(1000, image.height)

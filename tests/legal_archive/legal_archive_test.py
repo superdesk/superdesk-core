@@ -18,7 +18,7 @@ from eve.utils import ParsedRequest
 
 from apps.archive.common import insert_into_versions, ARCHIVE
 from superdesk import get_resource_service
-from superdesk.tests import TestCase
+from superdesk.tests import TestCase, markers
 from superdesk.utc import utcnow
 from apps.legal_archive.commands import LegalArchiveImport
 
@@ -33,26 +33,27 @@ class LegalArchiveTestCase(TestCase):
         {"task": {"desk": "1234", "stage": "dddd", "user": "test"}},
     ]
 
-    def setUp(self):
+    async def asyncSetUp(self):
+        await super().asyncSetUp()
         self.app.data.insert("desks", self.desks)
         self.app.data.insert("users", self.users)
         self.app.data.insert("stages", self.stages)
 
-    def test_denormalize_desk_user(self):
+    async def test_denormalize_desk_user(self):
         LegalArchiveImport()._denormalize_user_desk(self.archive[0], "")
         task = self.archive[0]["task"]
         self.assertEqual(task.get("desk"), "Sports")
         self.assertEqual(task.get("stage"), "working stage")
         self.assertEqual(task.get("user"), "")
 
-    def test_denormalize_not_configured_desk(self):
+    async def test_denormalize_not_configured_desk(self):
         LegalArchiveImport()._denormalize_user_desk(self.archive[1], "")
         task = self.archive[1]["task"]
         self.assertEqual(task.get("desk"), "1234")
         self.assertEqual(task.get("stage"), None)
         self.assertEqual(task.get("user"), "test user")
 
-    def test_denormalize_not_configured_desk_stage_user(self):
+    async def test_denormalize_not_configured_desk_stage_user(self):
         LegalArchiveImport()._denormalize_user_desk(self.archive[2], "")
         task = self.archive[2]["task"]
         self.assertEqual(task.get("desk"), "1234")
@@ -64,7 +65,8 @@ class ImportLegalArchiveCommandTestCase(TestCase):
     desks = [{"name": "Sports"}]
     users = [{"username": "test1", "first_name": "test", "last_name": "user", "email": "a@a.com"}]
 
-    def setUp(self):
+    async def asyncSetUp(self):
+        await super().asyncSetUp()
         try:
             from apps.legal_archive.commands import ImportLegalArchiveCommand
         except ImportError:
@@ -148,7 +150,8 @@ class ImportLegalArchiveCommandTestCase(TestCase):
                 resolve_document_version(item, ARCHIVE, "POST")
                 insert_into_versions(id_=item["_id"])
 
-    def test_import_into_legal_archive(self):
+    @markers.requires_async_celery
+    async def test_import_into_legal_archive(self):
         archive_publish = get_resource_service("archive_publish")
         archive_correct = get_resource_service("archive_correct")
         legal_archive = get_resource_service("legal_archive")

@@ -1,7 +1,7 @@
 from unittest import TestCase, mock
 
 from superdesk.core.app import SuperdeskAsyncApp
-from superdesk.tests.asyncio import MockWSGI
+from superdesk.tests import MockWSGI
 
 
 class SuperdeskAsyncAppTestCase(TestCase):

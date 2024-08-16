@@ -27,12 +27,13 @@ class RolesTestCase(TestCase):
         }
     ]
 
-    def setUp(self):
+    async def asyncSetUp(self):
+        await super().asyncSetUp()
         self.app.data.insert("roles", self.roles)
         self.users[0]["role"] = self.roles[0]["_id"]
         self.app.data.insert("users", self.users)
 
-    def test_invoking_on_revoked_privileges_event(self):
+    async def test_invoking_on_revoked_privileges_event(self):
         def on_revoke_roles(role, role_users):
             self.assertEqual(role.get("name"), "test")
             self.assertEqual(len(role_users), 1)

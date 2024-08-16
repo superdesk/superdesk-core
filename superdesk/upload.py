@@ -58,7 +58,7 @@ def get_upload_as_data_uri_bc(media_id):
 
 @bp.route("/upload-raw/<path:media_id>", methods=["GET", "OPTIONS"])
 @blueprint_auth()
-def get_upload_as_data_uri(media_id):
+async def get_upload_as_data_uri(media_id):
     app = get_current_app()
 
     if request.method == "OPTIONS":
@@ -68,14 +68,14 @@ def get_upload_as_data_uri(media_id):
     else:
         media_file = app.media.get(media_id, request.args["resource"])
     if media_file:
-        return generate_response_for_file(media_file)
+        return await generate_response_for_file(media_file)
 
     raise SuperdeskApiError.notFoundError("File not found on media storage.")
 
 
 @bp.route("/upload/config-file", methods=["POST", "OPTIONS"])
 @blueprint_auth()
-def upload_config_file():
+async def upload_config_file():
     if request.method == "OPTIONS":
         return handle_cors()
 
@@ -87,7 +87,7 @@ def upload_config_file():
     if not current_user_has_privilege(resource_privileges):
         raise SuperdeskApiError.forbiddenError("You don't have permissions to upload JSON file.")
 
-    json_files = request.files.getlist("json_file")
+    json_files = (await request.files).getlist("json_file")
     if not json_files:
         raise SuperdeskApiError.badRequestError("Provide JSON file with key 'json_file'.")
 

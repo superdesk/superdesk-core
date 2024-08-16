@@ -12,7 +12,7 @@
 Superdesk Web Pubisher specific modules.
 """
 
-from flask_babel import lazy_gettext
+from quart_babel import lazy_gettext
 import superdesk
 
 

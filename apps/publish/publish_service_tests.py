@@ -92,48 +92,45 @@ class PublishServiceTests(TestCase):
         },
     ]
 
-    def setUp(self):
-        with self.app.app_context():
-            self.app.data.insert("subscribers", self.subscribers)
-            self.queue_items[0]["_id"] = ObjectId(self.queue_items[0]["_id"])
-            self.app.data.insert("publish_queue", self.queue_items)
+    async def asyncSetUp(self):
+        await super().asyncSetUp()
+        self.app.data.insert("subscribers", self.subscribers)
+        self.queue_items[0]["_id"] = ObjectId(self.queue_items[0]["_id"])
+        self.app.data.insert("publish_queue", self.queue_items)
 
-            init_app(self.app)
+        init_app(self.app)
 
-    def test_close_subscriber_doesnt_close(self):
-        with self.app.app_context():
-            subscriber = self.app.data.find_one("subscribers", None)
-            self.assertTrue(subscriber.get("is_active"))
+    async def test_close_subscriber_doesnt_close(self):
+        subscriber = self.app.data.find_one("subscribers", None)
+        self.assertTrue(subscriber.get("is_active"))
 
-            PublishService().close_transmitter(subscriber, PublishQueueError.unknown_format_error())
-            subscriber = self.app.data.find_one("subscribers", None)
-            self.assertTrue(subscriber.get("is_active"))
+        PublishService().close_transmitter(subscriber, PublishQueueError.unknown_format_error())
+        subscriber = self.app.data.find_one("subscribers", None)
+        self.assertTrue(subscriber.get("is_active"))
 
-    def test_close_subscriber_does_close(self):
-        with self.app.app_context():
-            subscriber = self.app.data.find_one("subscribers", None)
-            self.assertTrue(subscriber.get("is_active"))
+    async def test_close_subscriber_does_close(self):
+        subscriber = self.app.data.find_one("subscribers", None)
+        self.assertTrue(subscriber.get("is_active"))
 
-            PublishService().close_transmitter(subscriber, PublishQueueError.bad_schedule_error())
-            subscriber = self.app.data.find_one("subscribers", None)
-            self.assertFalse(subscriber.get("is_active"))
+        PublishService().close_transmitter(subscriber, PublishQueueError.bad_schedule_error())
+        subscriber = self.app.data.find_one("subscribers", None)
+        self.assertFalse(subscriber.get("is_active"))
 
-    def test_transmit_closes_subscriber(self):
+    async def test_transmit_closes_subscriber(self):
         def mock_transmit(*args):
             raise PublishQueueError.bad_schedule_error()
 
-        with self.app.app_context():
-            subscriber = self.app.data.find_one("subscribers", None)
+        subscriber = self.app.data.find_one("subscribers", None)
 
-            publish_service = PublishService()
-            publish_service._transmit = mock_transmit
+        publish_service = PublishService()
+        publish_service._transmit = mock_transmit
 
-            with assert_raises(PublishQueueError):
-                publish_service.transmit(self.queue_items[0])
+        with assert_raises(PublishQueueError):
+            publish_service.transmit(self.queue_items[0])
 
-            subscriber = self.app.data.find_one("subscribers", None)
-            self.assertFalse(subscriber.get("is_active"))
-            self.assertIsNotNone(subscriber.get("last_closed"))
+        subscriber = self.app.data.find_one("subscribers", None)
+        self.assertFalse(subscriber.get("is_active"))
+        self.assertIsNotNone(subscriber.get("last_closed"))
 
     def test_highlight_query(self):
         source_query = {
@@ -160,7 +157,7 @@ class PublishServiceTests(TestCase):
             ["body_html", "body_footer", "headline", "slugline", "abstract"], list(source["highlight"]["fields"].keys())
         )
 
-    def test_subscribers_secret_keys(self):
+    async def test_subscribers_secret_keys(self):
         subscriber_service = superdesk.get_resource_service("subscribers")
         data = list(subscriber_service.get(req=None, lookup={}))
         item = data[1]

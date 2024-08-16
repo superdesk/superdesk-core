@@ -16,7 +16,8 @@ from apps.auth.db.reset_password import ResetPasswordService
 
 
 class UserTokenTestCase(TestCase):
-    def setUp(self):
+    async def asyncSetUp(self):
+        await super().asyncSetUp()
         self.service = ResetPasswordService("tokens", backend=get_backend())
 
     @patch("apps.auth.db.reset_password.get_random_string", return_value="random")

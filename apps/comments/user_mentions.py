@@ -32,7 +32,7 @@ def get_mentions(text):
     return user_names, desk_names
 
 
-def send_email_to_mentioned_users(doc, mentioned_users, origin):
+async def send_email_to_mentioned_users(doc, mentioned_users, origin):
     prefs_service = superdesk.get_resource_service("preferences")
     recipients = []
     for user in mentioned_users:
@@ -44,7 +44,7 @@ def send_email_to_mentioned_users(doc, mentioned_users, origin):
         user = get_current_app().get_current_user_dict() or {}
         username = user.get("display_name") or user.get("username")
         url = "{}/#/workspace?item={}&action=edit&comments={}".format(origin, doc["item"], doc["_id"])
-        send_user_mentioned_email(recipients, username, doc, url)
+        await send_user_mentioned_email(recipients, username, doc, url)
 
 
 def get_users(user_names):
@@ -61,7 +61,7 @@ def get_desks(desk_names):
     return desks
 
 
-def notify_mentioned_users(docs, origin, item=None):
+async def notify_mentioned_users(docs, origin, item=None):
     for doc in docs:
         mentioned_users = doc.get("mentioned_users", {}).values()
         if len(mentioned_users) > 0:
@@ -77,7 +77,7 @@ def notify_mentioned_users(docs, origin, item=None):
                 comment_id=str(doc.get("_id")),
                 notify=mentioned_users,
             )
-            send_email_to_mentioned_users(doc, mentioned_users, origin)
+            await send_email_to_mentioned_users(doc, mentioned_users, origin)
 
 
 def notify_mentioned_desks(docs):

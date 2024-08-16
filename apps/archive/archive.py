@@ -96,7 +96,7 @@ from .archive_media import ArchiveMediaService
 from .usage import track_usage, update_refs
 from superdesk.utc import utcnow
 from superdesk.vocabularies import is_related_content
-from flask_babel import _
+from quart_babel import gettext as _
 from apps.archive.highlights_search_mixin import HighlightsSearchMixin
 
 EDITOR_KEY_PREFIX = "editor_"
@@ -867,6 +867,7 @@ class ArchiveService(BaseService, HighlightsSearchMixin):
             self.deschedule_item(updates, original)  # this is an deschedule action
 
         # send signal
+        # TODO-ASYNC: Support async signals
         signals.item_update.send(self, updates=updates, original=original)
 
         super().update(id, updates, original)
@@ -876,6 +877,7 @@ class ArchiveService(BaseService, HighlightsSearchMixin):
         signals.item_updated.send(self, item=updated, original=original)
 
         if "marked_for_user" in updates:
+            # TODO-ASYNC: Support async (see superdesk.tests.markers.requires_eve_resource_async_event)
             self.handle_mark_user_notifications(updates, original)
 
     def deschedule_item(self, updates, original):
@@ -1210,7 +1212,7 @@ class ArchiveService(BaseService, HighlightsSearchMixin):
         else:
             logger.warning("get_expired_items did not finish in %d loops", get_app_config("MAX_EXPIRY_LOOPS"))
 
-    def handle_mark_user_notifications(self, updates, original, add_activity=True):
+    async def handle_mark_user_notifications(self, updates, original, add_activity=True):
         """Notify user when item is marked or unmarked
 
         :param updates: updates to item that should be saved
@@ -1235,7 +1237,7 @@ class ArchiveService(BaseService, HighlightsSearchMixin):
                 headline=original.get("headline", original.get("slugline", "item")), by_user=by_user
             )
 
-            self._send_mark_user_notifications(
+            await self._send_mark_user_notifications(
                 "item:marked",
                 message,
                 resource=self.datasource,
@@ -1255,7 +1257,7 @@ class ArchiveService(BaseService, HighlightsSearchMixin):
                 by_user=by_user,
             )
 
-            self._send_mark_user_notifications(
+            await self._send_mark_user_notifications(
                 "item:marked",
                 message,
                 resource=self.datasource,
@@ -1265,7 +1267,7 @@ class ArchiveService(BaseService, HighlightsSearchMixin):
                 marked_for_user=marked_for_user,
             )
 
-    def _send_mark_user_notifications(
+    async def _send_mark_user_notifications(
         self, activity_name, msg, resource=None, item=None, user_list=None, add_activity=True, **data
     ):
         """Send notifications on mark or unmark user operation
@@ -1291,7 +1293,7 @@ class ArchiveService(BaseService, HighlightsSearchMixin):
         link = "{}/#/workspace?item={}&action=view".format(client_url, link_id)
 
         if add_activity:
-            notify_and_add_activity(
+            await notify_and_add_activity(
                 activity_name,
                 msg,
                 resource=resource,

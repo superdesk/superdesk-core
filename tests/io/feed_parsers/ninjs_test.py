@@ -29,9 +29,9 @@ class NINJSTestCase(TestCase):
         },
     ]
 
-    def setUp(self):
-        with self.app.app_context():
-            self.app.data.insert("vocabularies", self.vocab)
+    async def asyncSetUp(self):
+        await super().asyncSetUp()
+        self.app.data.insert("vocabularies", self.vocab)
         dirname = os.path.dirname(os.path.realpath(__file__))
         fixture = os.path.normpath(os.path.join(dirname, "../fixtures", self.filename))
         provider = {"name": "Test"}

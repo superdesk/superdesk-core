@@ -12,7 +12,7 @@ import logging
 
 from copy import deepcopy
 
-from flask_babel import lazy_gettext
+from quart_babel import lazy_gettext
 from apps.tasks import send_to
 from superdesk import register_resource, get_resource_service, privilege
 from superdesk.services import Service

@@ -19,7 +19,7 @@ from superdesk.utils import ListCursor
 from superdesk.validation import ValidationError
 from apps.publish.content.common import ITEM_PUBLISH
 from apps.content_types import apply_schema
-from flask_babel import _
+from quart_babel import gettext as _
 
 logger = logging.getLogger(__name__)
 

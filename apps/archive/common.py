@@ -49,7 +49,7 @@ from superdesk.metadata.utils import generate_guid
 from superdesk.errors import SuperdeskApiError, IdentifierGenerationError
 from superdesk.logging import logger
 from apps.auth import get_user, get_auth  # noqa
-from flask_babel import _
+from quart_babel import gettext as _
 
 
 logger = logging.getLogger(__name__)

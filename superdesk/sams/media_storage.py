@@ -108,7 +108,7 @@ class SAMSMediaStorage(MediaStorage, MimetypeMixin):
 
         return self._fallback.get(id_or_filename, resource=resource, **kwargs)
 
-    def put(
+    async def put(
         self,
         content: BinaryIO,
         filename: Optional[str] = None,
@@ -119,7 +119,7 @@ class SAMSMediaStorage(MediaStorage, MimetypeMixin):
         """Attempts to upload the file to SAMS or the `_fallback` provider"""
 
         if resource is not None and SAMS_RESOURCE_ENABLED.get(resource, False):
-            data = request.form.to_dict()
+            data = (await request.form).to_dict()
             metadata = get_sams_values_from_resource_schema(resource, data)
 
             if not metadata.get("set_id"):

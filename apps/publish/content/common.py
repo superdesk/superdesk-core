@@ -74,7 +74,7 @@ from superdesk.vocabularies import is_related_content
 from superdesk.default_settings import strtobool
 from apps.item_lock.components.item_lock import set_unlock_updates
 
-from flask_babel import _
+from quart_babel import gettext as _
 
 
 logger = logging.getLogger(__name__)

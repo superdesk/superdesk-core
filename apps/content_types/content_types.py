@@ -12,7 +12,7 @@ from apps.auth import get_user_id
 from apps.desks import remove_profile_from_desks
 from eve.utils import ParsedRequest
 from superdesk.resource import build_custom_hateoas
-from flask_babel import _
+from quart_babel import gettext as _
 from superdesk.utc import utcnow
 from superdesk.services import CacheableService
 

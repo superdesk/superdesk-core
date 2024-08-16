@@ -12,7 +12,7 @@ import logging
 import superdesk
 from .service import SystemMessagesService
 from .resource import SystemMessagesResource
-from flask_babel import lazy_gettext
+from quart_babel import lazy_gettext
 
 
 logger = logging.getLogger(__name__)

@@ -3,7 +3,7 @@ from superdesk import es_utils
 
 
 class ESUtilsTestCase(TestCase):
-    def test_filter2query(self):
+    async def test_filter2query(self):
         """Check that a saved_searches style filter is converted correctly to Elastic Search DSL"""
         filter_ = {"query": {"spike": "exclude", "notgenre": '["Article (news)"]'}}
         expected = {
@@ -15,11 +15,10 @@ class ESUtilsTestCase(TestCase):
             "size": 10,
         }
 
-        with self.app.app_context():
-            query = es_utils.filter2query(filter_)
+        query = es_utils.filter2query(filter_)
         self.assertEqual(query, expected)
 
-    def test_filter2query_date(self):
+    async def test_filter2query_date(self):
         """Check that date a converted correctly to Elastic Search DSL"""
         filter_ = {
             "query": {
@@ -55,11 +54,10 @@ class ESUtilsTestCase(TestCase):
             "sort": {"versioncreated": "desc"},
             "size": 10,
         }
-        with self.app.app_context():
-            query = es_utils.filter2query(filter_)
+        query = es_utils.filter2query(filter_)
         self.assertEqual(query, expected)
 
-    def test_filter2query_ingest_provider(self):
+    async def test_filter2query_ingest_provider(self):
         """Check that ingest provider is handler correctly"""
         filter_ = {
             "query": {
@@ -72,12 +70,11 @@ class ESUtilsTestCase(TestCase):
 
         expected = {"bool": {"must": [{"term": {"ingest_provider": "5c505c8f0d6f137d69cebc99"}}], "must_not": []}}
 
-        with self.app.app_context():
-            query = es_utils.filter2query(filter_)
+        query = es_utils.filter2query(filter_)
 
         self.assertEqual(query["post_filter"], expected)
 
-    def test_filter2query_raw(self):
+    async def test_filter2query_raw(self):
         filter_ = {
             "query": {
                 "spike": "exclude",
@@ -85,8 +82,7 @@ class ESUtilsTestCase(TestCase):
             },
         }
 
-        with self.app.app_context():
-            query = es_utils.filter2query(filter_)
+        query = es_utils.filter2query(filter_)
 
         self.assertIn(
             {
@@ -99,15 +95,14 @@ class ESUtilsTestCase(TestCase):
             query["query"]["bool"]["must"],
         )
 
-    def test_filter2query_priority(self):
+    async def test_filter2query_priority(self):
         filter_ = {
             "query": {
                 "priority": ["2"],
             },
         }
 
-        with self.app.app_context():
-            query = es_utils.filter2query(filter_)
+        query = es_utils.filter2query(filter_)
 
         self.assertIn(
             {

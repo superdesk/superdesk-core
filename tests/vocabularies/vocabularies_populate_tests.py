@@ -20,7 +20,8 @@ from superdesk.errors import SuperdeskApiError
 
 
 class VocabulariesPopulateTest(TestCase):
-    def setUp(self):
+    async def asyncSetUp(self):
+        await super().asyncSetUp()
         self.filename = os.path.join(os.path.abspath(os.path.dirname(__file__)), "vocabularies.json")
         self.json_data = [
             {
@@ -44,7 +45,11 @@ class VocabulariesPopulateTest(TestCase):
         with open(self.filename, "w+") as file:
             json.dump(self.json_data, file)
 
-    def test_populate_vocabularies(self):
+    async def asyncTearDown(self):
+        await super().asyncTearDown()
+        os.remove(self.filename)
+
+    async def test_populate_vocabularies(self):
         cmd = AppPopulateCommand()
         cmd.run(self.filename)
         service = get_resource_service("vocabularies")
@@ -127,6 +132,3 @@ class VocabulariesPopulateTest(TestCase):
 
         self.assertEqual(result[0]["name"], "FIXME1-fr")
         self.assertEqual(result[1]["name"], "FIXME2-fr")
-
-    def tearDown(self):
-        os.remove(self.filename)

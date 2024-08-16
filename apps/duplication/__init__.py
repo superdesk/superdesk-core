@@ -19,7 +19,7 @@ from .archive_duplication import DuplicateService, DuplicateResource
 from .archive_fetch import FetchResource, FetchService
 from .archive_move import MoveResource, MoveService
 from .archive_translate import TranslateService, TranslateResource
-from flask_babel import lazy_gettext
+from quart_babel import lazy_gettext
 
 
 logger = logging.getLogger(__name__)

@@ -1,4 +1,4 @@
-from flask_babel import _
+from quart_babel import gettext as _
 
 import superdesk
 from superdesk.resource_fields import ID_FIELD

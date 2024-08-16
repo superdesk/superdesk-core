@@ -3,7 +3,7 @@ from pymongo.database import Database
 from pymongo.errors import DuplicateKeyError
 from motor.motor_asyncio import AsyncIOMotorClient, AsyncIOMotorDatabase
 
-from superdesk.tests.asyncio import AsyncTestCase
+from superdesk.tests import AsyncTestCase
 from .modules.users import user_model_config
 
 

@@ -15,7 +15,7 @@ from superdesk.services import Service
 from superdesk.notification import push_notification
 from superdesk.errors import SuperdeskApiError
 from eve.utils import ParsedRequest
-from flask_babel import _
+from quart_babel import gettext as _
 from copy import deepcopy
 
 

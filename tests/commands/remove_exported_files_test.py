@@ -33,7 +33,8 @@ class MockMediaFS:
 
 
 class RemoveExportedFilesTest(TestCase):
-    def setUp(self):
+    async def asyncSetUp(self):
+        await super().asyncSetUp()
         # Create a backup of the original media reference so we can set it back up again later
         self.original_media = self.app.media
         self.now = utcnow()
@@ -57,7 +58,7 @@ class RemoveExportedFilesTest(TestCase):
         """Ensure to restore the original media reference"""
         self.app.media = self.original_media
 
-    def test_get_file_ids(self):
+    async def test_get_file_ids(self):
         expire_at = utcnow() - timedelta(hours=24)
         for file_id in self.command._get_file_ids(expire_at):
             self.assertIn(file_id, self.can_expire)
@@ -65,7 +66,7 @@ class RemoveExportedFilesTest(TestCase):
         kwargs = {"folder": "temp", "upload_date": {"$lte": expire_at}}
         self.app.media.find.assert_called_once_with(**kwargs)
 
-    def test_remove_exported_files(self):
+    async def test_remove_exported_files(self):
         expire_at = utcnow() - timedelta(hours=24)
         self.command._remove_exported_files(expire_at)
 
@@ -75,7 +76,7 @@ class RemoveExportedFilesTest(TestCase):
         self.app.media.delete.assert_has_calls([call("g7"), call("h8")], any_order=True)
         self.assertEqual(self.app.media.delete.call_count, 2)
 
-    def test_run(self):
+    async def test_run(self):
         self.command.run()
         for file_id in self.app.media.files:
             self.assertNotIn(file_id, self.can_expire)

@@ -10,7 +10,7 @@
 
 import logging
 
-from flask_babel import lazy_gettext
+from quart_babel import lazy_gettext
 import superdesk
 from .broadcast import ArchiveBroadcastResource, ArchiveBroadcastService, ARCHIVE_BROADCAST_NAME
 

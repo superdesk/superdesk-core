@@ -10,7 +10,7 @@ from apps.auth import is_current_user_admin
 
 
 class AuthTestCase(TestCase):
-    def test_remove_expired_sessions_syncs_online_users(self):
+    async def test_remove_expired_sessions_syncs_online_users(self):
         sess_id = ObjectId()
         user_ids = self.app.data.insert(
             "users",
@@ -51,7 +51,7 @@ class AuthTestCase(TestCase):
         with patch("apps.auth.get_user", return_value={"user_type": "administrator"}):
             self.assertTrue(is_current_user_admin())
 
-    def test_session_expiry_date_update(self):
+    async def test_session_expiry_date_update(self):
         user_ids = self.app.data.insert(
             "users",
             [
@@ -66,7 +66,7 @@ class AuthTestCase(TestCase):
             ],
         )
 
-        with self.app.test_request_context("/users", method="POST"):
+        async with self.app.test_request_context("/users", method="POST"):
             self.app.auth.check_auth("foo", [], "users", "POST")
             auth = self.app.data.find_one("auth", None, token="foo")
             self.assertGreaterEqual(auth["_updated"], utcnow() - timedelta(seconds=1))
@@ -79,7 +79,7 @@ class AuthTestCase(TestCase):
             auth = self.app.data.find_one("auth", None, token="foo")
             self.assertLess(auth["_updated"], utcnow() - timedelta(seconds=1))
 
-    def test_session_with_auth_token(self):
+    async def test_session_with_auth_token(self):
         user_ids = self.app.data.insert(
             "users",
             [
@@ -97,10 +97,10 @@ class AuthTestCase(TestCase):
         headers = {"Authorization": "token foo"}
 
         client = self.app.test_client()
-        with client.session_transaction() as sess:
+        async with client.session_transaction() as sess:
             sess["session_token"] = "bar"
 
-        with client:
-            response = client.get("/api/users", headers=headers)
+        async with client:
+            response = await client.get("/api/users", headers=headers)
             self.assertEqual(200, response.status_code)
             assert session["session_token"] == "foo"

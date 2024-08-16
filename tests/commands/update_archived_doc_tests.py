@@ -15,7 +15,8 @@ from superdesk.commands.update_archived_document import UpdateArchivedDocumentCo
 
 
 class UpdateArchivedDocumentTestCase(TestCase):
-    def setUp(self):
+    async def asyncSetUp(self):
+        await super().asyncSetUp()
         self.guid = "urn:newsml:localhost:2016-09-12T12:11:40.160498:7237e59f-c42d-4865-aee5-e364aeb2966a"
 
         self.archived_only_data = [
@@ -59,14 +60,14 @@ class UpdateArchivedDocumentTestCase(TestCase):
 
         self.archivedService = get_resource_service("archived")
 
-    def test_update_source(self):
+    async def test_update_source(self):
         self.archivedService.post(self.archived_only_data)
         UpdateArchivedDocumentCommand().run("['588c1b901d41c805dce70df0']", "source", "NTB")
 
         item = self.archivedService.get(req=None, lookup={"_id": "588c1b901d41c805dce70df0"})
         self.assertEqual("NTB", item[0].get("source"))
 
-    def test_update_anpa_category_for_multiple_document(self):
+    async def test_update_anpa_category_for_multiple_document(self):
         self.archivedService.post(self.archived_only_data)
         UpdateArchivedDocumentCommand().run(
             "['588c1b901d41c805dce70df0', '57d224de069b7f038e9d2a53']",

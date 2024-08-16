@@ -48,7 +48,7 @@ from superdesk.notification import push_notification
 from superdesk.signals import item_rewrite
 from apps.archive.archive import update_associations
 from superdesk.editor_utils import generate_fields, copy_fields
-from flask_babel import _
+from quart_babel import gettext as _
 from superdesk.utc import utcnow
 
 logger = logging.getLogger(__name__)

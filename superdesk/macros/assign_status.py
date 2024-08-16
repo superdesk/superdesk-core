@@ -12,7 +12,7 @@ from superdesk.resource_fields import ID_FIELD
 from superdesk import get_resource_service
 from planning.common import ASSIGNMENT_WORKFLOW_STATE
 from copy import deepcopy
-from flask_babel import lazy_gettext
+from quart_babel import lazy_gettext
 
 
 def update_on_assign_id(item, **kwargs):

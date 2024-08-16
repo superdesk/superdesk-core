@@ -23,10 +23,11 @@ class ElasticSearchSettingsTest(TestCase):
         {"_id": "984", "headline": "Test 6", "slugline": "Soccer Germany", "body_html": "Test"},
     ]
 
-    def setUp(self):
+    async def asyncSetUp(self):
+        await super().asyncSetUp()
         get_resource_service("ingest").post(self.items)
 
-    def test_query_prefix_soccer(self):
+    async def test_query_prefix_soccer(self):
         query = {"query": {"filtered": {"query": {"match_phrase_prefix": {"slugline.phrase": "soccer"}}}}}
 
         req = ParsedRequest()
@@ -39,7 +40,7 @@ class ElasticSearchSettingsTest(TestCase):
         self.assertIn("Soccer England", sluglines)
         self.assertIn("Soccer England Result", sluglines)
 
-    def test_query_prefix_soccer_england(self):
+    async def test_query_prefix_soccer_england(self):
         query = {"query": {"filtered": {"query": {"match_phrase_prefix": {"slugline.phrase": "soccer england"}}}}}
 
         req = ParsedRequest()
@@ -51,7 +52,7 @@ class ElasticSearchSettingsTest(TestCase):
         self.assertIn("Soccer England", sluglines)
         self.assertIn("Soccer England Result", sluglines)
 
-    def test_query_prefix_soccer_england_result_without_forward_slash(self):
+    async def test_query_prefix_soccer_england_result_without_forward_slash(self):
         query = {
             "query": {"filtered": {"query": {"match_phrase_prefix": {"slugline.phrase": "soccer-england result"}}}}
         }
@@ -63,7 +64,7 @@ class ElasticSearchSettingsTest(TestCase):
         sluglines = [item.get("slugline") for item in query_result]
         self.assertIn("Soccer England Result", sluglines)
 
-    def test_query_prefix_soccer_england_result_with_forward_slash(self):
+    async def test_query_prefix_soccer_england_result_with_forward_slash(self):
         query = {
             "query": {"filtered": {"query": {"match_phrase_prefix": {"slugline.phrase": "soccer england/result"}}}}
         }

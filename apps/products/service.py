@@ -13,7 +13,7 @@ from superdesk import get_resource_service
 from superdesk.services import CacheableService
 from superdesk.errors import SuperdeskApiError
 from superdesk.metadata.utils import ProductTypes
-from flask_babel import _
+from quart_babel import gettext as _
 
 
 class ProductsService(CacheableService):
