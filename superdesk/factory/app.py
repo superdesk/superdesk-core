@@ -12,7 +12,6 @@
 from typing import Dict, Any, Type, List, Optional, Union, Mapping, cast, NoReturn
 
 import os
-import asyncio
 import eve
 from werkzeug.exceptions import NotFound
 import jinja2

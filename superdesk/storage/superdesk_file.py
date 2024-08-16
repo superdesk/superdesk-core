@@ -39,13 +39,6 @@ async def generate_response_for_file(
     content_disposition: Optional[str] = None,
 ):
     app = get_current_app()
-    # file_body = FileWrapper(file, buffer_size)
-
-    from quart.wrappers.response import IOBody
-
-    print(app.as_any().response_class.io_body_class)
-    print(app.as_any().response_class.io_body_class.__name__)
-    print(app.as_any().response_class.io_body_class.__class__)
     file_body = app.as_any().response_class.io_body_class(file, buffer_size=buffer_size)
     response = app.response_class(file_body, mimetype=file.content_type)
     response.content_length = file.length
