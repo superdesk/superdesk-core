@@ -233,10 +233,8 @@ class PreferencesResource(Resource):
     superdesk.register_default_session_preference("pinned:items", [])
 
     # @deprecated, keep to avoid validation error
-    superdesk.register_default_user_preference(
-        "mark_for_user:notification",
-        {},
-    )
+    superdesk.register_default_user_preference("mark_for_user:notification", {})
+    superdesk.register_default_user_preference("assignment:notification", {})
 
 
 class PreferencesService(BaseService):
