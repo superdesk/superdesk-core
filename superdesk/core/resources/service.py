@@ -194,7 +194,7 @@ class AsyncResourceService(Generic[ResourceModelType]):
 
         await doc.validate_async()
 
-    async def validate_update(self, updates: Dict[str, Any], original: ResourceModelType) -> None:
+    async def validate_update(self, updates: Dict[str, Any], original: ResourceModelType) -> Dict[str, Any]:
         """Validate the provided updates dict against the original model instance
 
         Applies the updates to a copy of the original provided, and runs sync and async validators
@@ -215,6 +215,15 @@ class AsyncResourceService(Generic[ResourceModelType]):
         # Run the async validators
         await model_instance.validate_async()
 
+        # Re-dump the model for use with sending to MongoDB
+        # This will make sure values are of correct type for MongoDB (such as ObjectId)
+        return model_instance.model_dump(
+            by_alias=True,
+            exclude_unset=True,
+            context={"use_objectid": True} if not self.config.query_objectid_as_string else {},
+            include=set(updates.keys()),
+        )
+
     async def create(self, docs: List[ResourceModelType]) -> List[str]:
         """Creates a new resource
 
@@ -229,10 +238,11 @@ class AsyncResourceService(Generic[ResourceModelType]):
         ids: List[str] = []
         for doc in docs:
             await self.validate_create(doc)
-            doc_dict = doc.model_dump(by_alias=True, exclude_unset=True)
-            if self.id_uses_objectid():
-                # Make sure to convert the ID into an ObjectId instance
-                doc_dict["_id"] = ObjectId(doc_dict["_id"])
+            doc_dict = doc.model_dump(
+                by_alias=True,
+                exclude_unset=True,
+                context={"use_objectid": True} if not self.config.query_objectid_as_string else {},
+            )
             response = await self.mongo.insert_one(doc_dict)
             ids.append(response.inserted_id)
             try:
@@ -276,8 +286,8 @@ class AsyncResourceService(Generic[ResourceModelType]):
             raise SuperdeskApiError.notFoundError()
 
         await self.on_update(updates, original)
-        await self.validate_update(updates, original)
-        response = await self.mongo.update_one({"_id": item_id}, {"$set": updates})
+        validated_updates = await self.validate_update(updates, original)
+        response = await self.mongo.update_one({"_id": item_id}, {"$set": validated_updates})
         try:
             await self.elastic.update(item_id, updates)
         except KeyError:

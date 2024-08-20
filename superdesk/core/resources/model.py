@@ -192,6 +192,9 @@ class ResourceConfig:
     #: Optional config to be used for REST endpoints. If not provided, REST will not be available for this resource
     rest_endpoints: Optional["RestEndpointConfig"] = None
 
+    #: Optional config to query and store ObjectIds as strings in MongoDB
+    query_objectid_as_string: bool = False
+
 
 class Resources:
     """A high level resource class used to manage all resources in the system"""

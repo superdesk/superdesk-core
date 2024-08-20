@@ -84,6 +84,10 @@ class CustomStringField(Generic[CustomStringFieldType], BaseCustomField):
         return cast(CustomStringFieldType, value)
 
     @classmethod
+    def serialise_value(cls, value: Any, info: core_schema.FieldSerializationInfo):
+        return str(value)
+
+    @classmethod
     def __get_pydantic_core_schema__(
         cls,
         _source_type: Any,
@@ -104,7 +108,10 @@ class CustomStringField(Generic[CustomStringFieldType], BaseCustomField):
                     from_str_schema,
                 ]
             ),
-            serialization=core_schema.plain_serializer_function_ser_schema(lambda instance: str(instance)),
+            serialization=core_schema.plain_serializer_function_ser_schema(
+                cls.serialise_value,
+                info_arg=True,
+            ),
         )
 
 
@@ -144,6 +151,10 @@ else:
         @classmethod
         def _validate(cls, value: str) -> BsonObjectId:
             return BsonObjectId(value)
+
+        @classmethod
+        def serialise_value(cls, value: Any, info: core_schema.FieldSerializationInfo):
+            return str(value) if not (info.context or {}).get("use_objectid") else BsonObjectId(value)
 
 
 def keyword_mapping() -> WithJsonSchema:
