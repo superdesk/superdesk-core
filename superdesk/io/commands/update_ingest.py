@@ -369,6 +369,11 @@ def process_anpa_category(item, provider):
                     # make the case of the qcode match what we hold in our dictionary
                     item_category["qcode"] = mapped_category[0]["qcode"]
                     item_category["scheme"] = "categories"
+                    if mapped_category[0].get("translations"):
+                        item_category["translations"] = mapped_category[0]["translations"]
+                        if item.get("language"):
+                            set_subject_name_translation(item_category, item["language"])
+
     except Exception as ex:
         raise ProviderError.anpaError(ex, provider)
 
@@ -772,6 +777,13 @@ def set_expiry(item, provider, parent_expiry=None):
     item.setdefault(
         "expiry", get_expiry_date(provider.get("content_expiry") or app.config["INGEST_EXPIRY_MINUTES"], expiry_offset)
     )
+
+
+def set_subject_name_translation(subject, language) -> None:
+    try:
+        subject["name"] = subject["translations"]["name"][language]
+    except (KeyError, TypeError):
+        pass
 
 
 superdesk.command("ingest:update", UpdateIngest())
