@@ -195,6 +195,12 @@ class ResourceConfig:
     #: Optional config to query and store ObjectIds as strings in MongoDB
     query_objectid_as_string: bool = False
 
+    #: Boolean to indicate if etag concurrency control should be used (defaults to ``True``)
+    uses_etag: bool = True
+
+    #: Optional list of resource fields to ignore when generating the etag
+    etag_ignore_fields: Optional[list[str]] = None
+
 
 class Resources:
     """A high level resource class used to manage all resources in the system"""

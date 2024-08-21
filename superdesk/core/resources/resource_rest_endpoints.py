@@ -135,11 +135,17 @@ class ResourceRestEndpoints(RestEndpoints):
         service = get_current_async_app().resources.get_resource_service(self.resource_config.name)
         payload = await request.get_json()
 
+        if_match = request.get_header("If-Match")
+        if self.resource_config.uses_etag and not if_match:
+            raise SuperdeskApiError.preconditionRequiredError(
+                "To edit a document its etag must be provided using the If-Match header"
+            )
+
         if payload is None:
             raise SuperdeskApiError.badRequestError("Empty payload")
 
         try:
-            await service.update(args.item_id, payload)
+            await service.update(args.item_id, payload, if_match)
         except ValidationError as validation_error:
             return Response(convert_pydantic_validation_error_for_response(validation_error), 403, ())
 
@@ -156,7 +162,13 @@ class ResourceRestEndpoints(RestEndpoints):
                 f"{self.resource_config.name} resource with ID '{args.item_id}' not found"
             )
 
-        await service.delete(original)
+        if_match = request.get_header("If-Match")
+        if self.resource_config.uses_etag and not if_match:
+            raise SuperdeskApiError.preconditionRequiredError(
+                "To edit a document its etag must be provided using the If-Match header"
+            )
+
+        await service.delete(original, if_match)
         return Response({}, 204, ())
 
     async def process_get_request(
