@@ -58,7 +58,7 @@ install_requires = [
     "elastic-apm[flask]>=6.15.1,<7.0",
     # Fix an issue with MarkupSafe 2.1.0 not exporting `soft_unicode`
     "MarkupSafe<2.1",
-    "reportlab>=3.6.11,<3.7",
+    "reportlab>=3.6.11,<4.3",
     "pyjwt>=2.4.0,<2.9",
     "Werkzeug>=1.0,<1.1",
     "Jinja2>=2.11,<3.0",
