@@ -45,7 +45,7 @@ install_requires = [
     "lxml_html_clean>=0.1.1,<0.2",
     "python-twitter>=3.5,<3.6",
     "chardet<6.0",
-    "pymongo>=3.8,<3.12",
+    "pymongo>=3.8,<4.9",
     "croniter<2.1",
     "python-dateutil<2.10",
     "unidecode>=0.04.21,<=1.3.8",
