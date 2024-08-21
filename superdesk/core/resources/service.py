@@ -151,7 +151,7 @@ class AsyncResourceService(Generic[ResourceModelType]):
 
         return item
 
-    async def search(self, lookup: Dict[str, Any], use_mongo=False) -> ResourceCursorAsync:
+    async def search(self, lookup: Dict[str, Any], use_mongo=False) -> ResourceCursorAsync[ResourceModelType]:
         """Search the resource using the provided ``lookup``
 
         Will use Elasticsearch if configured for this resource and ``use_mongo == False``.
@@ -399,7 +399,7 @@ class AsyncResourceService(Generic[ResourceModelType]):
         else:
             logger.warning(f"Not enough iterations for resource {self.resource_name}")
 
-    async def find(self, req: SearchRequest) -> ResourceCursorAsync:
+    async def find(self, req: SearchRequest) -> ResourceCursorAsync[ResourceModelType]:
         """Find items from the resource using Elasticsearch
 
         :param req: A SearchRequest instance with the search params to be used
