@@ -313,6 +313,13 @@ class DraftJSHTMLExporter:
                     TABLE: self.render_table,
                     IMAGE: self.render_image,
                 },
+                "block_map": dict(
+                    BLOCK_MAP,
+                    **{
+                        # Provide a fallback for block types.
+                        BLOCK_TYPES.FALLBACK: self.block_fallback
+                    },
+                ),
             }
         )
 
@@ -512,6 +519,12 @@ class DraftJSHTMLExporter:
             return
         logger.info("No style renderer for {type_!r}".format(type_=type_))
         return props["children"]
+
+    def block_fallback(self, props):
+        # <section> and <article> tags are not handled
+        type_ = props["block"]["type"]
+        logging.warning(f'Missing draft_export config for "{type_}". Using p instead.')
+        return DOM.create_element("p", {}, props["children"])
 
 
 class Editor3Content(EditorContent):
