@@ -425,7 +425,11 @@ class AsyncResourceService(Generic[ResourceModelType]):
         if sort:
             args["sort"] = sort
 
-        where = json.loads(req.where or "{}")
+        where = req.where or {}
+        if isinstance(req.where, str):
+            where = json.loads(req.where)
+
+        args["filter"] = where
         cursor = self.mongo.find(**args)
 
         return MongoResourceCursorAsync(self.config.data_class, self.mongo, cursor, where)
