@@ -17,6 +17,7 @@ python3-saml>=1.9,<1.17
 typing_extensions>=3.7.4
 moto[sqs]<5.0
 pyexiv2>=2.12.0,<2.13; sys_platform == 'linux'
+asgiref
 
 -e .
 -e git+https://github.com/superdesk/superdesk-planning.git@async#egg=superdesk_planning

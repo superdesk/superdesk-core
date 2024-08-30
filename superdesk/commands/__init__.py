@@ -10,6 +10,7 @@ from .flush_elastic_index import FlushElasticIndex  # noqa
 from .generate_vocabularies import GenerateVocabularies  # noqa
 from . import data_manipulation  # noqa
 from . import schema  # noqa
+from .async_cli import cli, commands_blueprint  # noqa
 import superdesk
 
 
