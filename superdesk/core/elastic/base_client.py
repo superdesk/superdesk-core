@@ -8,14 +8,14 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
-from typing import Dict, Any, Optional, Iterator, List, Tuple, Union, TypedDict
+from typing import Dict, Any, Optional, Iterator, List, Tuple, Union, TypedDict, Literal
 import ast
 
 import simplejson as json
 from eve.io.mongo.parser import parse
 
 from superdesk.errors import SuperdeskApiError
-from ..resources.cursor import ProjectedFieldArg, SearchRequest
+from superdesk.core.types import ProjectedFieldArg, SearchRequest, SortParam
 from .common import ElasticClientConfig, ElasticResourceConfig
 
 
@@ -172,8 +172,7 @@ class BaseElasticResourceClient:
 
         if "sort" not in query:
             if req.sort:
-                sort = ast.literal_eval(req.sort)
-                _set_sort(query, sort)
+                _set_sort(query, req.sort)
             elif self.resource_config.default_sort:
                 _set_sort(query, self.resource_config.default_sort)
 
@@ -282,9 +281,13 @@ class BaseElasticResourceClient:
         return doc
 
 
-def _set_sort(query, sort):
+def _set_sort(query: dict, sort: SortParam | None) -> None:
+    if sort is None:
+        return
+
     query["sort"] = []
-    for key, sortdir in sort:
+    sort_list = ast.literal_eval(sort) if isinstance(sort, str) else sort
+    for key, sortdir in sort_list:
         sort_dict = dict([(key, "asc" if sortdir > 0 else "desc")])
         query["sort"].append(sort_dict)
 

@@ -1,7 +1,7 @@
 import simplejson as json
 
 from superdesk.tests import AsyncTestCase
-from superdesk.core.resources.cursor import SearchRequest
+from superdesk.core.types import SearchRequest
 
 from .modules.users import User
 from .fixtures.users import john_doe
