@@ -235,17 +235,15 @@ def app_initialize_data_command(*args, **kwargs):
     Supported entities:
     ::
 
-        roles, users, desks, stages, vocabularies, validators,
-        content_templates, content_types, published, activity,
-        archive, archive_versions, ingest, publish_queue, archived,
-        legal_archive, legal_archive_versions, legal_publish_queue,
-        dictionaries, ingest_providers, search_providers, products,
-        subscribers, workspaces, item_comments, audit, contacts,
-        planning_types
+        roles, users, desks, stages, vocabularies, validators, content_templates,
+        content_types, published, activity, archive, archive_versions, ingest,
+        publish_queue, archived, legal_archive, legal_archive_versions, legal_publish_queue,
+        dictionaries, ingest_providers, search_providers, products, subscribers,
+        workspaces, item_comments, audit, contacts, planning_types
 
     If no --entity-name parameter is supplied, all the entities are inserted.
-    The entities:
 
+    The entities:
     ::
 
         vocabularies, validators, content_types, dictionaries, ingest_providers,

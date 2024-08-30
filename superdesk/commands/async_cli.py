@@ -1,4 +1,4 @@
-from typing import Tuple
+from typing import Tuple, cast
 from functools import wraps
 from asgiref.sync import async_to_sync
 
@@ -65,7 +65,7 @@ def create_commands_blueprint(blueprint_name: str) -> Tuple[CommandsBlueprint, A
     """
     blueprint = CommandsBlueprint(blueprint_name, __name__)
 
-    return blueprint, blueprint.cli
+    return blueprint, cast(AsyncAppGroup, blueprint.cli)
 
 
 commands_blueprint, cli = create_commands_blueprint("superdesk")
