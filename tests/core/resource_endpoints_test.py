@@ -31,12 +31,14 @@ class ResourceEndpointsTestCase(AsyncFlaskTestCase):
         test_user.updated = NOW
         test_user_dict = test_user.model_dump(by_alias=True, exclude_unset=True, context={"use_objectid": True})
         mongo_item = await self.service.mongo.find_one({"_id": test_user.id})
+        test_user_dict["_etag"] = mongo_item["_etag"]
         self.assertEqual(mongo_item, test_user_dict)
 
         # Test the User exists in Elasticsearch with correct data
         # (Convert the datetime values to strings, as es client doesn't convert them)
         elastic_item = await self.service.elastic.find_by_id(test_user.id)
         test_user_dict = test_user.model_dump(by_alias=True, exclude_unset=True)
+        test_user_dict["_etag"] = mongo_item["_etag"]
         test_user_dict.update(
             dict(
                 _created=format_time(NOW) + "+00:00",
@@ -52,14 +54,12 @@ class ResourceEndpointsTestCase(AsyncFlaskTestCase):
         self.assertEqual(response.status_code, 201)
 
         response = await self.test_client.get(f"/api/users_async/{test_user.id}")
+        json_data = await response.get_json()
         test_user_dict = self.test_client.model_instance_to_json(test_user)
         test_user_dict.update(
-            dict(
-                _created=format_time(NOW) + "+00:00",
-                _updated=format_time(NOW) + "+00:00",
-            )
+            dict(_created=format_time(NOW) + "+00:00", _updated=format_time(NOW) + "+00:00", _etag=json_data["_etag"])
         )
-        self.assertEqual(await response.get_json(), test_user_dict)
+        self.assertEqual(json_data, test_user_dict)
 
     @mock.patch("superdesk.core.resources.service.utcnow", return_value=NOW)
     async def test_patch(self, mock_utcnow):
@@ -67,26 +67,30 @@ class ResourceEndpointsTestCase(AsyncFlaskTestCase):
         response = await self.test_client.post("/api/users_async", json=test_user)
         self.assertEqual(response.status_code, 201)
 
+        original_etag = await self.get_resource_etag("users_async", test_user.id)
         response = await self.test_client.patch(
             f"/api/users_async/{test_user.id}",
             json={
                 "first_name": "Foo",
                 "last_name": "Bar",
             },
+            headers={"If-Match": original_etag},
         )
         self.assertEqual(response.status_code, 200)
 
         response = await self.test_client.get(f"/api/users_async/{test_user.id}")
+        json_data = await response.get_json()
         test_user_dict = self.test_client.model_instance_to_json(test_user)
         test_user_dict.update(
             dict(
                 _created=format_time(NOW) + "+00:00",
                 _updated=format_time(NOW) + "+00:00",
+                _etag=json_data["_etag"],
                 first_name="Foo",
                 last_name="Bar",
             )
         )
-        self.assertEqual(await response.get_json(), test_user_dict)
+        self.assertEqual(json_data, test_user_dict)
 
     async def test_delete(self):
         # Test resource is empty
@@ -101,11 +105,26 @@ class ResourceEndpointsTestCase(AsyncFlaskTestCase):
         response = await self.test_client.post("/api/users_async", json=test_user)
         self.assertEqual(response.status_code, 201)
         response = await self.test_client.get("/api/users_async")
+        json_data = await response.get_json()
         self.assertEqual(response.status_code, 200)
-        self.assertEqual((await response.get_json())["_meta"]["total"], 1)
+        self.assertEqual(json_data["_meta"]["total"], 1)
+
+        # Test preconditionRequiredError/428 error is raised if etag not provided
+        response = await self.test_client.delete(f"/api/users_async/{test_user.id}")
+        self.assertEqual(response.status_code, 428)
+
+        # Test preconditionFailedError/412 error is raised if etag is incorrect
+        response = await self.test_client.delete(
+            f"/api/users_async/{test_user.id}",
+            headers={"If-Match": "my_etag_123"},
+        )
+        self.assertEqual(response.status_code, 412)
 
         # Delete the user, and make sure search is empty
-        response = await self.test_client.delete(f"/api/users_async/{test_user.id}")
+        response = await self.test_client.delete(
+            f"/api/users_async/{test_user.id}",
+            headers={"If-Match": json_data["_items"][0]["_etag"]},
+        )
         self.assertEqual(response.status_code, 204)
         response = await self.test_client.get("/api/users_async")
         self.assertEqual(response.status_code, 200)
@@ -131,6 +150,7 @@ class ResourceEndpointsTestCase(AsyncFlaskTestCase):
 
         response = await self.test_client.get("""/api/users_async?source={"query":{"match":{"first_name":"John"}}}""")
         json_data = await response.get_json()
+        test_user_dict["_etag"] = json_data["_items"][0]["_etag"]
         self.assertEqual(json_data["_meta"]["total"], 1)
         self.assertEqual(json_data["_items"], [test_user_dict])
 
@@ -259,16 +279,32 @@ class ResourceEndpointsTestCase(AsyncFlaskTestCase):
 
     async def test_patch_validation(self):
         # Test item not found
-        response = await self.test_client.patch("/api/users_async/abcd123", json={})
+        response = await self.test_client.patch("/api/users_async/abcd123", json={}, headers={"If-Match": "something"})
         assert response.status_code == 404
 
         test_user = john_doe()
         response = await self.test_client.post("/api/users_async", json=test_user)
         assert response.status_code == 201
 
+        # Test preconditionRequiredError/428 error is raised if etag not provided
         response = await self.test_client.patch(
             f"/api/users_async/{test_user.id}",
             json={"email": "incorrect email"},
+        )
+        assert response.status_code == 428
+
+        # Test preconditionFailedError/412 error is raised if etag is incorrect
+        response = await self.test_client.patch(
+            f"/api/users_async/{test_user.id}",
+            json={"email": "incorrect email"},
+            headers={"If-Match": "my_etag_123"},
+        )
+        assert response.status_code == 412
+
+        response = await self.test_client.patch(
+            f"/api/users_async/{test_user.id}",
+            json={"email": "incorrect email"},
+            headers={"If-Match": await self.get_resource_etag("users_async", test_user.id)},
         )
         assert response.status_code == 403
         assert (await response.get_json()) == {
@@ -278,6 +314,13 @@ class ResourceEndpointsTestCase(AsyncFlaskTestCase):
                 "email": {"email": "Invalid email address"},
             },
         }
+
+        response = await self.test_client.patch(
+            f"/api/users_async/{test_user.id}",
+            json={"email": "monkey@magic.org"},
+            headers={"If-Match": await self.get_resource_etag("users_async", test_user.id)},
+        )
+        assert response.status_code == 200
 
     @mock.patch("superdesk.core.resources.service.utcnow", return_value=NOW)
     async def test_endpoint(self, mock_utcnow):
@@ -296,8 +339,10 @@ class ResourceEndpointsTestCase(AsyncFlaskTestCase):
 
         # Use the custom endpoint to get the resource
         response = await self.test_client.get(f"/api/test_simple_route/{test_user.id}?resource=users_async")
+        json_data = await response.get_json()
+        test_user_dict["_etag"] = json_data["_etag"]
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(await response.get_json(), test_user_dict)
+        self.assertEqual(json_data, test_user_dict)
 
         # Use another custom endpoint to get all user IDs
         response = await self.test_client.get("/api/get_user_ids")

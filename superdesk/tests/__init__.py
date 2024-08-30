@@ -611,5 +611,8 @@ class AsyncFlaskTestCase(AsyncTestCase):
         self.async_app.stop()
         await self.async_app.elastic.stop()
 
+    async def get_resource_etag(self, resource: str, item_id: str):
+        return (await (await self.test_client.get(f"/api/{resource}/{item_id}")).get_json())["_etag"]
+
 
 TestCase = AsyncFlaskTestCase

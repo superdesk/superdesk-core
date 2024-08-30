@@ -48,6 +48,9 @@ class TestResourceService(AsyncTestCase):
         mongo_item = await self.service.mongo.find_one({"_id": test_user.id})
         self.assertEqual(mongo_item, test_user_dict)
 
+        # Check stored `_etag` vs generated one
+        self.assertEqual(mongo_item.pop("_etag", None), self.service.generate_etag(mongo_item))
+
         # Make sure ObjectIds are not stored as strings
         self.assertTrue(isinstance(mongo_item["profile_id"], ObjectId))
         self.assertTrue(isinstance(mongo_item["related_items"][0]["_id"], ObjectId))
@@ -86,26 +89,24 @@ class TestResourceService(AsyncTestCase):
         new_profile_id = str(ObjectId())
         new_related_item_1_id = str(ObjectId())
         new_related_item_2_id = ObjectId()
-        await self.service.update(
-            test_user.id,
-            dict(
-                first_name="Foo",
-                last_name="Bar",
-                profile_id=new_profile_id,
-                related_items=[
-                    dict(
-                        _id=new_related_item_1_id,
-                        link_type=test_user.related_items[0].link_type,
-                        slugline=test_user.related_items[0].slugline,
-                    ),
-                    dict(
-                        _id=new_related_item_2_id,
-                        link_type=test_user.related_items[1].link_type,
-                        slugline=test_user.related_items[1].slugline,
-                    ),
-                ],
-            ),
+        updates = dict(
+            first_name="Foo",
+            last_name="Bar",
+            profile_id=new_profile_id,
+            related_items=[
+                dict(
+                    _id=new_related_item_1_id,
+                    link_type=test_user.related_items[0].link_type,
+                    slugline=test_user.related_items[0].slugline,
+                ),
+                dict(
+                    _id=new_related_item_2_id,
+                    link_type=test_user.related_items[1].link_type,
+                    slugline=test_user.related_items[1].slugline,
+                ),
+            ],
         )
+        await self.service.update(test_user.id, updates)
 
         test_user.first_name = "Foo"
         test_user.last_name = "Bar"
@@ -114,6 +115,7 @@ class TestResourceService(AsyncTestCase):
         test_user.profile_id = new_profile_id
         test_user.related_items[0].id = new_related_item_1_id
         test_user.related_items[1].id = new_related_item_2_id
+        test_user.etag = updates["_etag"]
         test_user_dict = test_user.model_dump(by_alias=True, exclude_unset=True, context={"use_objectid": True})
 
         # Test the user was updated through the ResourceService
