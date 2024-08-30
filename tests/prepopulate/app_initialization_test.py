@@ -4,7 +4,7 @@ import tempfile
 from unittest.mock import patch
 
 from superdesk.core import json
-from apps.prepopulate.app_initialize import AppInitializeWithDataCommand
+from apps.prepopulate.app_initialize import app_initialize_data_handler
 from apps.prepopulate.app_scaffold_data import AppScaffoldDataCommand
 from apps.prepopulate.app_initialize import fillEnvironmentVariables
 from superdesk import get_resource_service
@@ -13,8 +13,8 @@ from superdesk.tests import TestCase
 
 class AppInitializeWithDataCommandTestCase(TestCase):
     async def _run(self, *a, **kw):
-        command = AppInitializeWithDataCommand()
-        return await command.run(*a, **kw)
+        command = app_initialize_data_handler
+        return await command(*a, **kw)
 
     async def test_app_initialization(self):
         result = await self._run()

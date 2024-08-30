@@ -54,7 +54,7 @@ from superdesk.tests import get_prefixed_url, set_placeholder
 from apps.dictionaries.resource import DICTIONARY_FILE
 from superdesk.filemeta import get_filemeta
 from apps.preferences import enhance_document_with_default_prefs
-from apps.prepopulate.app_initialize import AppInitializeWithDataCommand
+from apps.prepopulate.app_initialize import app_initialize_data_handler
 
 # for auth server
 from authlib.jose import jwt
@@ -702,9 +702,10 @@ def run_update_ingest_ftp(*args):
             ("ninjs2.json", "20181111123456"),
             ("ninjs3.json", "20181111123456"),
         )
-        with mock.patch.object(
-            ftp.FTPFeedingService, "_retrieve_and_parse"
-        ) as retrieve_and_parse_mock, mock.patch.object(ftp.FTPFeedingService, "_is_empty") as empty_file_mock:
+        with (
+            mock.patch.object(ftp.FTPFeedingService, "_retrieve_and_parse") as retrieve_and_parse_mock,
+            mock.patch.object(ftp.FTPFeedingService, "_is_empty") as empty_file_mock,
+        ):
             retrieve_and_parse_mock.side_effect = retrieve_and_parse_side_effect
             empty_file_mock.return_value = False
             # run command
@@ -3030,7 +3031,7 @@ async def step_impl_then_we_dont_get_access_token(context):
 @async_run_until_complete
 async def setp_impl_when_we_init_data(context, entity):
     async with context.app.app_context():
-        AppInitializeWithDataCommand().run(entity)
+        await app_initialize_data_handler(entity)
 
 
 @when('we run task "{name}"')
