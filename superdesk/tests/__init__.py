@@ -565,6 +565,9 @@ class AsyncTestCase(IsolatedAsyncioTestCase):
         rootpath = os.path.abspath(os.path.dirname(os.path.dirname(__file__)))
         return os.path.join(rootpath, "features", "steps", "fixtures", filename)
 
+    def assertDictContains(self, source: dict, contains: dict):
+        self.assertDictEqual({key: val for key, val in source.items() if key in contains}, contains)
+
 
 class TestClient(QuartClient):
     def model_instance_to_json(self, model_instance: ResourceModel):
