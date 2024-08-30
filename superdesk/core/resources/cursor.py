@@ -10,7 +10,6 @@
 
 from typing import Dict, Any, Generic, TypeVar, Type, Optional, List, Union, Literal
 from typing_extensions import TypedDict
-from dataclasses import dataclass
 
 from pydantic import BaseModel, ConfigDict
 from motor.motor_asyncio import AsyncIOMotorCollection, AsyncIOMotorCursor
@@ -66,8 +65,8 @@ class SearchRequest(BaseModel):
     #: The page number to be returned
     page: int = 1
 
-    #: A JSON string contianing an Elasticsearch where query
-    where: Optional[str] = None
+    #: A JSON string containing an Elasticsearch where query
+    where: Optional[Union[str, Dict]] = None
 
     #: If `True`, will include aggregations with the result
     aggregations: bool = False
