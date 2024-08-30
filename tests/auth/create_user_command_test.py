@@ -12,19 +12,18 @@ from superdesk import get_resource_service
 from os.path import dirname, join
 from superdesk.tests import TestCase, markers
 from superdesk.utc import utcnow
-from apps.auth.db.commands import CreateUserCommand, ImportUsersCommand
+from apps.auth.db.commands import create_user_command_handler, ImportUsersCommand
 
 
 class CreateUserCommandTestCase(TestCase):
     async def test_create_user_command(self):
         if not self.app.config.get("LDAP_SERVER"):
             user = {"username": "foo", "password": "bar", "email": "baz", "password_changed_on": utcnow()}
-            cmd = CreateUserCommand()
-            await cmd.run(user["username"], user["password"], user["email"], admin=True)
+            await create_user_command_handler(user["username"], user["password"], user["email"], admin=True)
             auth_user = get_resource_service("auth_db").authenticate(user)
             self.assertEquals(auth_user["username"], user["username"])
 
-            await cmd.run(user["username"], user["password"], user["email"], admin=True)
+            await create_user_command_handler(user["username"], user["password"], user["email"], admin=True)
             auth_user2 = get_resource_service("auth_db").authenticate(user)
             self.assertEquals(auth_user2["username"], user["username"])
             self.assertEquals(auth_user2["_id"], auth_user["_id"])
@@ -32,9 +31,9 @@ class CreateUserCommandTestCase(TestCase):
     async def test_create_user_command_no_update(self):
         if not self.app.config.get("LDAP_SERVER"):
             user = {"username": "foo", "password": "bar", "email": "baz", "password_changed_on": utcnow()}
-            cmd = CreateUserCommand()
-            await cmd.run(user["username"], user["password"], user["email"], admin=True)
-            await cmd.run(user["username"], "new_password", user["email"], admin=True)
+            cmd = create_user_command_handler
+            await cmd(user["username"], user["password"], user["email"], admin=True)
+            await cmd(user["username"], "new_password", user["email"], admin=True)
             get_resource_service("auth_db").authenticate(user)
 
     async def test_import_users(self):
