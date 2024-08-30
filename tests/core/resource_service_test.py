@@ -4,7 +4,7 @@ from pydantic import ValidationError
 import simplejson as json
 from bson import ObjectId
 
-from superdesk.core.resources.cursor import SearchRequest
+from superdesk.core.types import SearchRequest
 from superdesk.utc import utcnow
 from superdesk.utils import format_time
 

@@ -14,7 +14,7 @@ from dataclasses import dataclass
 from uuid import uuid4
 
 from ..config import ConfigModel
-from ..resources.cursor import SearchRequest
+from superdesk.core.types import SearchRequest
 
 
 @dataclass

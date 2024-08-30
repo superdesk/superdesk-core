@@ -14,7 +14,7 @@ from elasticsearch import AsyncElasticsearch
 from elasticsearch.exceptions import NotFoundError, TransportError, RequestError
 from elasticsearch.helpers import async_bulk
 
-from ..resources.cursor import SearchRequest
+from superdesk.core.types import SearchRequest
 from .base_client import BaseElasticResourceClient, ElasticCursor, InvalidSearchString
 
 
