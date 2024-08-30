@@ -8,7 +8,6 @@ import superdesk
 import elasticsearch.exceptions
 
 from pathlib import Path
-from functools import wraps
 from collections import OrderedDict
 
 from superdesk.commands import cli
@@ -224,7 +223,7 @@ def get_filepath(filename, path=None):
 @click.option("--sample-data", is_flag=True, help="Use sample data")
 @click.option("--force", "-f", is_flag=True, help="Update item even if modified by user")
 @click.option("--init-index-only", "-i", is_flag=True, help="Initialize index only")
-def app_initialize_data_command(*args, **kwargs):
+async def app_initialize_data_command(*args, **kwargs):
     """Initialize application with predefined data for various entities.
 
     Loads predefined data (vocabularies, desks, etc..) for instance.
@@ -268,9 +267,8 @@ def app_initialize_data_command(*args, **kwargs):
         $ python manage.py app:initialize_data --entity-name=content_types
 
     """
-    from asgiref.sync import async_to_sync
 
-    return async_to_sync(app_initialize_data_handler)(*args, **kwargs)
+    return await app_initialize_data_handler(*args, **kwargs)
 
 
 async def app_initialize_data_handler(
