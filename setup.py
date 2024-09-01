@@ -22,7 +22,7 @@ install_requires = [
     "flask-script>=2.0.5,<3.0",
     "flask-babel>=1.0,<4.1",
     "arrow>=0.4,<=1.3.0",
-    "pillow>=9.2,<10.4",
+    "pillow>=9.2,<10.5",
     "bcrypt>=3.1.1,<4.2",
     "blinker>=1.3,<1.9",
     "celery[redis]>=5.2.7,<5.5",
@@ -58,7 +58,7 @@ install_requires = [
     "elastic-apm[flask]>=6.15.1,<7.0",
     # Fix an issue with MarkupSafe 2.1.0 not exporting `soft_unicode`
     "MarkupSafe<2.1",
-    "reportlab>=3.6.11,<3.7",
+    "reportlab>=3.6.11,<4.3",
     "pyjwt>=2.4.0,<2.9",
     "Werkzeug>=1.0,<1.1",
     "Jinja2>=2.11,<3.0",
