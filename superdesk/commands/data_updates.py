@@ -182,7 +182,7 @@ async def upgrade_command_handler(data_update_id=None, fake=False, dry=False):
         print(
             "Error argument --id/-i: invalid choice: '{}' (choose from  {})".format(data_update_id, data_updates_files)
         )
-        return False
+        return
 
     # Filter and apply updates
     data_updates_files = [update for update in data_updates_files if not in_db(update, data_updates_service)]
