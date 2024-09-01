@@ -31,6 +31,7 @@ def get_app_config(key: str, default: Optional[Any] = None) -> Optional[Any]:
 class SuperdeskAsyncApp:
     _running: bool
     _imported_modules: Dict[str, "Module"]
+    _module_configs: dict[str, dict]
 
     #: A class instance that adheres to the WSGI protocol
     wsgi: WSGIApp
@@ -46,6 +47,7 @@ class SuperdeskAsyncApp:
     def __init__(self, wsgi: WSGIApp):
         self._running = False
         self._imported_modules = {}
+        self._module_configs = {}
         self.wsgi = wsgi
         self.mongo = MongoResources(self)
         self.elastic = ElasticResources(self)
@@ -63,8 +65,12 @@ class SuperdeskAsyncApp:
 
         return sorted(self._imported_modules.values(), key=lambda x: x.priority, reverse=True)
 
-    def _load_modules(self, paths: List[str]):
+    def _load_modules(self, paths: List[str | tuple[str, dict]]):
         for path in paths:
+            config: dict = {}
+            if isinstance(path, tuple):
+                path, config = path
+
             imported_module = importlib.import_module(path)
             module_instance = getattr(imported_module, "module", None)
 
@@ -81,6 +87,7 @@ class SuperdeskAsyncApp:
 
             module_instance.path = path
             self._imported_modules[module_instance.name] = module_instance
+            self._module_configs[module_instance.name] = config
 
         # init all configs first (in case ``module.init`` requires config from another module)
         for module in self.get_module_list():
@@ -89,6 +96,7 @@ class SuperdeskAsyncApp:
                     self.wsgi.config,
                     prefix=module.config_prefix,
                     freeze=module.freeze_config,
+                    additional=self._module_configs[module.name],
                 )
 
         # Now register all resources

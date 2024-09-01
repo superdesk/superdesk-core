@@ -53,12 +53,15 @@ class ConfigModel(BaseModel):
         config_instance._loaded = True
         return config_instance
 
-    def load_from_dict(self, config: Dict[str, Any], prefix: Optional[str] = None, freeze: bool = True):
+    def load_from_dict(
+        self, config: Dict[str, Any], prefix: Optional[str] = None, freeze: bool = True, additional: dict | None = None
+    ):
         """Reload config instance values, populating them from ``config``
 
         :param config: The config dictionary used to populate the new ConfigModal instance
         :param prefix: Optional prefix to use when looking up field names in the supplied dictionary
         :param freeze: If `True`, will freeze the config instance so values cannot be modified
+        :param additional: Optional additional dictionary to populate config values
 
         This will load a brand-new instance of the config, applying values from ``config`` on top of the
         class' default values. This means any custom changes made before calling this will be lost.
@@ -71,6 +74,10 @@ class ConfigModel(BaseModel):
 
         for key, val in _get_config_dict(config, self, prefix).items():
             setattr(self, key, val)
+
+        if additional is not None:
+            for key, val in additional.items():
+                setattr(self, key, val)
 
         self.set_frozen(freeze)
         self._loaded = True
