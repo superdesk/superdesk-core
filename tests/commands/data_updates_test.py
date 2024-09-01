@@ -4,7 +4,13 @@ from unittest import mock
 
 import superdesk.commands.data_updates
 from superdesk import get_resource_service
-from superdesk.commands.data_updates import get_data_updates_files, GenerateUpdate, Upgrade, Downgrade, get_dirs
+from superdesk.commands.data_updates import (
+    get_data_updates_files,
+    GenerateUpdate,
+    get_dirs,
+    upgrade_command_handler,
+    downgrade_command_handler,
+)
 from superdesk.tests import TestCase
 
 # change the folder where to store updates for test purpose
@@ -62,7 +68,7 @@ class DataUpdatesTestCase(TestCase):
         """
         self.assertEqual(self.number_of_data_updates_applied(), 0)
         GenerateUpdate().run(resource_name="data_updates")
-        Upgrade().run(dry=True)
+        await upgrade_command_handler(dry=True)
         self.assertEqual(self.number_of_data_updates_applied(), 0)
 
     async def test_fake_data_update(self):
@@ -71,9 +77,9 @@ class DataUpdatesTestCase(TestCase):
         superdesk.commands.data_updates.DEFAULT_DATA_UPDATE_BW_IMPLEMENTATION = "raise Exception()"
         GenerateUpdate().run(resource_name="data_updates")
         self.assertEqual(self.number_of_data_updates_applied(), 0)
-        Upgrade().run(fake=True)
+        await upgrade_command_handler(fake=True)
         self.assertEqual(self.number_of_data_updates_applied(), 1)
-        Downgrade().run(fake=True)
+        await downgrade_command_handler(fake=True)
         self.assertEqual(self.number_of_data_updates_applied(), 0)
 
     async def test_data_update(self):
@@ -98,15 +104,15 @@ class DataUpdatesTestCase(TestCase):
             GenerateUpdate().run(resource_name="data_updates")
         assert self.number_of_data_updates_applied() == 0
         thirdieth_update = get_data_updates_files(True)[29]
-        Upgrade().run(data_update_id=thirdieth_update)
+        await upgrade_command_handler(data_update_id=thirdieth_update)
         assert self.number_of_data_updates_applied() == 30
-        Upgrade().run()
+        await upgrade_command_handler()
         assert self.number_of_data_updates_applied() == 40
-        Downgrade().run()
+        await downgrade_command_handler()
         assert self.number_of_data_updates_applied() == 39
-        Downgrade().run(data_update_id=thirdieth_update)
+        await downgrade_command_handler(data_update_id=thirdieth_update)
         assert self.number_of_data_updates_applied() == 29
-        Upgrade().run()
+        await upgrade_command_handler()
 
     def test_multiple_dirs(self):
         with mock.patch.dict(self.app.config, {"APPS_DATA_UPDATES_PATHS": ["/tmp/foo", "tmp/bar"]}):

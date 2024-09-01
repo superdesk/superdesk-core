@@ -8,18 +8,24 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
-
-from string import Template
-from types import ModuleType
-from superdesk.core import get_app_config, get_current_app
-from superdesk.services import BaseService
-import superdesk
-import getpass
+from functools import wraps
 import os
 import re
 import time
+import click
+import getpass
+import superdesk
+
+from string import Template
+from types import ModuleType
 from typing import Optional, Tuple
+
 from eve.utils import ParsedRequest
+
+from superdesk.services import BaseService
+from superdesk.core import get_app_config, get_current_app
+
+from .async_cli import cli
 
 
 DEFAULT_DATA_UPDATE_DIR_NAME = "data_updates"
@@ -102,70 +108,60 @@ def get_applied_updates(data_updates_service: Optional[BaseService] = None) -> T
     return tuple(data_updates_service.get(req=req, lookup={}))  # type: ignore
 
 
-class DataUpdateCommand(superdesk.Command):
-    """Parent class for Upgrade and Downgrade commands.
+async def initialize_data_updates(fake, dry):
+    data_updates_service = superdesk.get_resource_service("data_updates")
+    data_updates_files = get_data_updates_files(strip_file_extension=True)
+    data_updates_applied = get_applied_updates(data_updates_service)
+    last_data_update = data_updates_applied and data_updates_applied[-1] or None
 
-    It defines options and initialize some variables in `run` method.
-    """
-
-    option_list = [
-        # superdesk.Option(
-        #     "--id",
-        #     "-i",
-        #     dest="data_update_id",
-        #     required=False,
-        #     help="Data update id to run last",
-        # ),
-        # superdesk.Option(
-        #     "--fake-init",
-        #     dest="fake",
-        #     required=False,
-        #     action="store_true",
-        #     help="Mark data updates as run without actually running them",
-        # ),
-        # superdesk.Option(
-        #     "--dry-run",
-        #     dest="dry",
-        #     required=False,
-        #     action="store_true",
-        #     help="Does not mark data updates as done. This can be useful for development.",
-        # ),
-    ]
-
-    def run(self, data_update_id=None, fake=False, dry=False):
-        self.data_updates_service = superdesk.get_resource_service("data_updates")
-        self.data_updates_files = get_data_updates_files(strip_file_extension=True)
-        # retrieve existing data updates in database
-        data_updates_applied = get_applied_updates(self.data_updates_service)
-        self.last_data_update = data_updates_applied and data_updates_applied[-1] or None
-        if self.last_data_update:
-            if self.last_data_update["name"] not in self.data_updates_files:
-                print(
-                    "A data update previously applied to this database (%s) can't be found in %s"
-                    % (self.last_data_update["name"], ", ".join(get_dirs()))
-                )
-
-    def compile_update_in_module(self, data_update_name):
-        date_update_script_file = None
-        for folder in get_dirs():
-            date_update_script_file = os.path.join(folder, "%s.py" % (data_update_name))
-            if os.path.exists(date_update_script_file):
-                break
-        assert date_update_script_file is not None, "File %s has not been found" % (data_update_name)
-        # create a module instance to use as scope for our data update
-        module = ModuleType("data_update_module")
-        with open(date_update_script_file) as f:
-            # compile data update script file
-            script = compile(f.read(), date_update_script_file, "exec")
-            # excecute the script in the module
-            exec(script, module.__dict__)
-        return module
-
-    def in_db(self, update):
-        return update in map(lambda _: _["name"], get_applied_updates(self.data_updates_service))
+    if last_data_update and last_data_update["name"] not in data_updates_files:
+        print(
+            "A data update previously applied to this database (%s) can't be found in %s"
+            % (last_data_update["name"], ", ".join(get_dirs()))
+        )
+    return data_updates_service, data_updates_files, last_data_update
 
 
-class Upgrade(DataUpdateCommand):
+def compile_update_in_module(data_update_name):
+    date_update_script_file = None
+    for folder in get_dirs():
+        date_update_script_file = os.path.join(folder, "%s.py" % (data_update_name))
+        if os.path.exists(date_update_script_file):
+            break
+    assert date_update_script_file is not None, "File %s has not been found" % (data_update_name)
+
+    # create a module instance to use as scope for our data update
+    module = ModuleType("data_update_module")
+    with open(date_update_script_file) as f:
+        # compile data update script file
+        script = compile(f.read(), date_update_script_file, "exec")
+        # excecute the script in the module
+        exec(script, module.__dict__)
+
+    return module
+
+
+def in_db(update, data_updates_service):
+    applied_updates = get_applied_updates(data_updates_service)
+    return update in map(lambda _: _["name"], applied_updates)
+
+
+def common_options(func):
+    @click.option("--data-update-id", "-i", type=str, required=False, help="Data update id to run last")
+    @click.option("--fake-init", "fake", is_flag=True, help="Mark data updates as run without actually running them")
+    @click.option(
+        "--dry-run", "dry", is_flag=True, help="Does not mark data updates as done. This can be useful for development."
+    )
+    @wraps(func)
+    def wrapper(*args, **kwargs):
+        return func(*args, **kwargs)
+
+    return wrapper
+
+
+@cli.register_async_command("data:upgrade")
+@common_options
+async def upgrade_command(*args, **kwargs):
     """Runs all the new data updates available.
 
     If ``data_update_id`` is given, runs new data updates until the given one.
@@ -176,39 +172,42 @@ class Upgrade(DataUpdateCommand):
         $ python manage.py data:upgrade
 
     """
-
-    def run(self, data_update_id=None, fake=False, dry=False):
-        if data_update_id and data_update_id not in get_data_updates_files(strip_file_extension=True):
-            print(
-                "Error argument --id/-i: invalid choice: '{}'"
-                " (choose from  {})".format(data_update_id, get_data_updates_files(strip_file_extension=True))
-            )
-            return
-        super().run(data_update_id, fake, dry)
-        data_updates_files = self.data_updates_files
-        # drops updates that already have been applied
-        data_updates_files = [update for update in data_updates_files if not self.in_db(update)]
-        # drop versions after given one
-        if data_update_id:
-            if data_update_id not in data_updates_files:
-                print("Given data update id not found in available updates. It may have been already applied")
-                return False
-            data_updates_files = data_updates_files[: data_updates_files.index(data_update_id) + 1]
-        # apply data updates
-        for data_update_name in data_updates_files:
-            print("data update %s running forward..." % (data_update_name))
-            module_scope = self.compile_update_in_module(data_update_name)
-            # run the data update forward
-            if not fake:
-                module_scope.DataUpdate().apply("forwards")
-            if not dry:
-                # store the applied data update in the database
-                self.data_updates_service.create([{"name": data_update_name}])
-        if not data_updates_files:
-            print("No data update to apply.")
+    return await upgrade_command_handler(*args, **kwargs)
 
 
-class Downgrade(DataUpdateCommand):
+async def upgrade_command_handler(data_update_id=None, fake=False, dry=False):
+    data_updates_service, data_updates_files, _ = await initialize_data_updates(fake, dry)
+
+    if data_update_id and data_update_id not in data_updates_files:
+        print(
+            "Error argument --id/-i: invalid choice: '{}' (choose from  {})".format(data_update_id, data_updates_files)
+        )
+        return False
+
+    # Filter and apply updates
+    data_updates_files = [update for update in data_updates_files if not in_db(update, data_updates_service)]
+    if data_update_id:
+        if data_update_id not in data_updates_files:
+            print("Given data update id not found in available updates. It may have been already applied")
+            return False
+        data_updates_files = data_updates_files[: data_updates_files.index(data_update_id) + 1]
+
+    # apply data updates
+    for data_update_name in data_updates_files:
+        print(f"data update {data_update_name} running forward...")
+        module_scope = compile_update_in_module(data_update_name)
+        if not fake:
+            module_scope.DataUpdate().apply("forwards")
+        if not dry:
+            data_updates_service.create([{"name": data_update_name}])
+
+    if not data_updates_files:
+        print("No data update to apply.")
+
+
+@cli.register_async_command("data:downgrade")
+@common_options
+async def downgrade_command(*args, **kwargs):
     """Runs the latest data update backward.
 
     If ``data_update_id`` is given, runs all the data updates backward until the given one.
@@ -220,47 +219,50 @@ class Downgrade(DataUpdateCommand):
 
     """
 
-    def run(self, data_update_id=None, fake=False, dry=False):
-        if data_update_id and data_update_id not in get_data_updates_files(strip_file_extension=True):
-            print(
-                "Error argument --id/-i: invalid choice: '{}'"
-                " (choose from  {})".format(data_update_id, get_data_updates_files(strip_file_extension=True))
-            )
-            return
-        super().run(data_update_id, fake, dry)
-        data_updates_files = self.data_updates_files
-        # check if there is something to downgrade
-        if not self.last_data_update:
-            print("No data update has been already applied")
-            return False
-        # drops updates which have not been already made (this is rollback mode)
-        data_updates_files = [update for update in data_updates_files if self.in_db(update)]
+    return await downgrade_command_handler(*args, **kwargs)
 
-        # if data_update_id is given, go until this update (drop previous updates)
-        if data_update_id:
-            if data_update_id not in data_updates_files:
-                print("Update %s can't be find. It may have been already downgraded" % (data_update_id))
-                return False
-            data_updates_files = data_updates_files[data_updates_files.index(data_update_id) :]
-        # otherwise, just rollback one update
-        else:
-            print(
-                "No data update id has been provided. Dowgrading to previous version: %s"
-                % self.last_data_update["name"]
-            )
-            data_updates_files = data_updates_files[len(data_updates_files) - 1 :]
-        # apply data updates, in the opposite direction
-        for data_update_name in reversed(data_updates_files):
-            print("data update %s running backward..." % (data_update_name))
-            module_scope = self.compile_update_in_module(data_update_name)
-            # run the data update backward
-            if not fake:
-                module_scope.DataUpdate().apply("backwards")
-            if not dry:
-                # remove the applied data update from the database
-                self.data_updates_service.delete({"name": data_update_name})
-        if not data_updates_files:
-            print("No data update to apply.")
+
+async def downgrade_command_handler(data_update_id=None, fake=False, dry=False):
+    data_updates_service, data_updates_files, last_data_update = await initialize_data_updates(fake, dry)
+
+    if data_update_id and data_update_id not in data_updates_files:
+        print(
+            "Error argument --id/-i: invalid choice: '{}'"
+            " (choose from  {})".format(data_update_id, get_data_updates_files(strip_file_extension=True))
+        )
+        return
+
+    # check if there is something to downgrade
+    if not last_data_update:
+        print("No data update has been already applied")
+        return False
+
+    # drops updates which have not been already made (this is rollback mode)
+    data_updates_files = [update for update in data_updates_files if in_db(update, data_updates_service)]
+
+    # if data_update_id is given, go until this update (drop previous updates)
+    if data_update_id:
+        if data_update_id not in data_updates_files:
+            print(f"Update {data_update_id} can't be find. It may have been already downgraded")
+            return False
+        data_updates_files = data_updates_files[data_updates_files.index(data_update_id) :]
+    # otherwise, just rollback one update
+    else:
+        print(f"No data update id has been provided. Dowgrading to previous version: {last_data_update['name']}")
+        data_updates_files = data_updates_files[len(data_updates_files) - 1 :]
+
+    # apply data updates, in the opposite direction
+    for data_update_name in reversed(data_updates_files):
+        print(f"data update {data_update_name} running backward...")
+        module_scope = compile_update_in_module(data_update_name)
+        # run the data update backward
+        if not fake:
+            module_scope.DataUpdate().apply("backwards")
+        if not dry:
+            # remove the applied data update from the database
+            data_updates_service.delete({"name": data_update_name})
+    if not data_updates_files:
+        print("No data update to apply.")
 
 
 class GenerateUpdate(superdesk.Command):
@@ -315,8 +317,6 @@ class GenerateUpdate(superdesk.Command):
 
 
 superdesk.command("data:generate_update", GenerateUpdate())
-superdesk.command("data:upgrade", Upgrade())
-superdesk.command("data:downgrade", Downgrade())
 
 
 class BaseDataUpdate:
