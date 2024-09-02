@@ -523,8 +523,8 @@ class DraftJSHTMLExporter:
     def block_fallback(self, props):
         # <section> and <article> tags are not handled
         type_ = props["block"]["type"]
-        logging.warning(f'Missing draft_export config for "{type_}". Using p instead.')
-        return DOM.create_element("p", {}, props["children"])
+        logging.warning(f'Missing draft_export config for "{type_}". Using div instead.')
+        return DOM.create_element("div", {}, props["children"])
 
 
 class Editor3Content(EditorContent):

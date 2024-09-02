@@ -2157,9 +2157,9 @@ class Editor3TestCase(unittest.TestCase):
         body_editor.update_item()
         expected = (
             "<h1>Apple</h1>\n"
-            "<p>Introduction This document provides a guide to help with the important task of choosing the "
-            "correct Apple.</p>\n"
-            "<p>Criteria There are many different criteria to be considered when choosing an Apple — size,"
-            " color, firmness, sweetness, tartness...</p>"
+            "<div>Introduction This document provides a guide to help with the important task of choosing the "
+            "correct Apple.</div>\n"
+            "<div>Criteria There are many different criteria to be considered when choosing an Apple — size,"
+            " color, firmness, sweetness, tartness...</div>"
         )
         self.assertEqual(expected, item["body_html"])
