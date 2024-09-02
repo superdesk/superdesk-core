@@ -12,6 +12,7 @@
 
 import superdesk
 
+from superdesk.flask import Flask
 from superdesk.lock import lock, unlock
 from superdesk.core import get_app_config, get_current_app
 from superdesk.commands.rebuild_elastic_index import RebuildElasticIndex
@@ -48,8 +49,8 @@ def update_schema():
     RebuildElasticIndex().run()
 
 
-@cli.register_async_command("schema:migrate")
-async def schema_migrate_command():
+@cli.register_async_command("schema:migrate", pass_current_app=True)
+async def schema_migrate_command(app: Flask):
     """Migrate elastic schema if needed, should be triggered on every deploy.
 
     It compares version set in code (latest) to one stored in db and only updates
@@ -64,8 +65,8 @@ async def schema_migrate_command():
         $ python manage.py schema:migrate
 
     """
-
-    return await schema_migrate_command_handler()
+    async with app.app_context():
+        return await schema_migrate_command_handler()
 
 
 async def schema_migrate_command_handler():
