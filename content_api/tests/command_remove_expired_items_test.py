@@ -9,6 +9,7 @@
 # at https://www.sourcefabric.org/superdesk/license
 import logging
 from datetime import timedelta
+from copy import deepcopy
 
 from superdesk.tests import TestCase
 from superdesk import get_resource_service
@@ -52,7 +53,7 @@ can_expire = [
 
 class RemoveExpiredItemsTest(TestCase):
     def setUp(self):
-        self.app.data.insert("items", items)
+        self.app.data.insert("items", deepcopy(items))
         self.command = RemoveExpiredItems()
         self.command.expiry_days = 8
         self.now = utcnow()
@@ -85,10 +86,10 @@ class RemoveExpiredItemsTest(TestCase):
             self.assertNotIn(item["_id"], can_expire)
 
     def test_has_expired(self):
-        has_expired = self.command._has_expired(items[1], self.now)
+        has_expired = self.command._has_expired(deepcopy(items[1]), self.now)
         self.assertTrue(has_expired)
 
-        has_expired = self.command._has_expired(items[0], self.now)
+        has_expired = self.command._has_expired(deepcopy(items[0]), self.now)
         self.assertFalse(has_expired)
 
     def test_get_children(self):
