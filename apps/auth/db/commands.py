@@ -12,12 +12,14 @@ import csv
 import json
 import click
 import logging
+
 import superdesk
 
 from pathlib import Path
 from base64 import b64encode
 from superdesk.core import get_app_config, get_current_app
 
+from superdesk.flask import Flask
 from superdesk.commands import cli
 from superdesk.utils import get_hash, is_hashed
 
@@ -26,13 +28,13 @@ logger = logging.getLogger(__name__)
 USER_FIELDS_NAMES = {"username", "email", "password", "first_name", "last_name", "sign_off", "role"}
 
 
-@cli.register_async_command("users:create")
+@cli.register_async_command("users:create", pass_current_app=True)
 @click.option("--username", "-u", required=True, help="Username for the new user.")
 @click.option("--password", "-p", required=True, help="Password for the new user.")
 @click.option("--email", "-e", required=True, help="Email address for the new user.")
 @click.option("--admin", "-a", is_flag=True, help="Specify if the user is an administrator.")
 @click.option("--support", "-s", is_flag=True, help="Specify if the user is a support user.")
-async def create_user_command(*args, **kwargs):
+async def create_user_command(app: Flask, *args, **kwargs):
     """Create a user with given username, password and email.
 
     If user with given username exists it's noop.
@@ -43,11 +45,11 @@ async def create_user_command(*args, **kwargs):
         $ python manage.py users:create -u admin -p admin -e 'admin@example.com' --admin
 
     """
+    async with app.app_context():
+        return await create_user_command_handler(*args, **kwargs)
 
-    return await create_user_command_handler(*args, **kwargs)
 
-
-async def create_user_command_handler(username, password, email, admin=False, support=False):
+async def create_user_command_handler(username: str, password: str, email: str, admin=False, support=False):
     user_type = "administrator" if admin else "user"
     userdata = {
         "username": username,

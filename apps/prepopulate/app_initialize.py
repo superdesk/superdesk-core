@@ -10,6 +10,7 @@ import elasticsearch.exceptions
 from pathlib import Path
 from collections import OrderedDict
 
+from superdesk.flask import Flask
 from superdesk.commands import cli
 from superdesk.core import get_current_app, get_app_config
 from superdesk.resource_fields import ETAG
@@ -217,13 +218,13 @@ def get_filepath(filename, path=None):
             return filepath
 
 
-@cli.register_async_command("app:initialize_data")
+@cli.register_async_command("app:initialize_data", pass_current_app=True)
 @click.option("--entity-name", "-n", multiple=True, help="Entity(ies) to initialize")
 @click.option("--full-path", "-p", help="Path of the file to import")
 @click.option("--sample-data", is_flag=True, help="Use sample data")
 @click.option("--force", "-f", is_flag=True, help="Update item even if modified by user")
 @click.option("--init-index-only", "-i", is_flag=True, help="Initialize index only")
-async def app_initialize_data_command(*args, **kwargs):
+async def app_initialize_data_command(app: Flask, *args, **kwargs):
     """Initialize application with predefined data for various entities.
 
     Loads predefined data (vocabularies, desks, etc..) for instance.
@@ -267,8 +268,8 @@ async def app_initialize_data_command(*args, **kwargs):
         $ python manage.py app:initialize_data --entity-name=content_types
 
     """
-
-    return await app_initialize_data_handler(*args, **kwargs)
+    async with app.app_context():
+        return await app_initialize_data_handler(*args, **kwargs)
 
 
 async def app_initialize_data_handler(

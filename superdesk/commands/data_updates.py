@@ -22,6 +22,7 @@ from typing import Optional, Tuple
 
 from eve.utils import ParsedRequest
 
+from superdesk.flask import Flask
 from superdesk.services import BaseService
 from superdesk.core import get_app_config, get_current_app
 
@@ -153,15 +154,15 @@ def common_options(func):
         "--dry-run", "dry", is_flag=True, help="Does not mark data updates as done. This can be useful for development."
     )
     @wraps(func)
-    def wrapper(*args, **kwargs):
-        return func(*args, **kwargs)
+    async def wrapper(*args, **kwargs):
+        return await func(*args, **kwargs)
 
     return wrapper
 
 
-@cli.register_async_command("data:upgrade")
+@cli.register_async_command("data:upgrade", pass_current_app=True)
 @common_options
-async def upgrade_command(*args, **kwargs):
+async def upgrade_command(app: Flask, *args, **kwargs):
     """Runs all the new data updates available.
 
     If ``data_update_id`` is given, runs new data updates until the given one.
@@ -172,7 +173,8 @@ async def upgrade_command(*args, **kwargs):
         $ python manage.py data:upgrade
 
     """
-    return await upgrade_command_handler(*args, **kwargs)
+    async with app.app_context():
+        return await upgrade_command_handler(*args, **kwargs)
 
 
 async def upgrade_command_handler(data_update_id=None, fake=False, dry=False):
@@ -205,9 +207,9 @@ async def upgrade_command_handler(data_update_id=None, fake=False, dry=False):
         print("No data update to apply.")
 
 
-@cli.register_async_command("data:downgrade")
+@cli.register_async_command("data:downgrade", pass_current_app=True)
 @common_options
-async def downgrade_command(*args, **kwargs):
+async def downgrade_command(app: Flask, *args, **kwargs):
     """Runs the latest data update backward.
 
     If ``data_update_id`` is given, runs all the data updates backward until the given one.
@@ -218,8 +220,8 @@ async def downgrade_command(*args, **kwargs):
         $ python manage.py data:downgrade
 
     """
-
-    return await downgrade_command_handler(*args, **kwargs)
+    async with app.app_context():
+        return await downgrade_command_handler(*args, **kwargs)
 
 
 async def downgrade_command_handler(data_update_id=None, fake=False, dry=False):
