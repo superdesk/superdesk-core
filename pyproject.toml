@@ -18,5 +18,5 @@ exclude = '''
 '''
 
 [tool.pytest.ini_options]
-testpaths = ["tests", "superdesk", "apps"]
+testpaths = ["tests", "superdesk", "apps", "content_api"]
 python_files = "*_test.py *_tests.py test_*.py tests_*.py tests.py test.py"
