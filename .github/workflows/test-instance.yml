@@ -1,0 +1,50 @@
+name: "Spawn Test Instance"
+
+on: [push, pull_request]
+
+jobs:
+  pytest:
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        python-version: ['3.10']
+
+    services:
+      mongodb:
+        image: mongo:6
+        ports:
+          - 27017:27017
+      redis:
+        image: redis:alpine
+        ports:
+          - 6379:6379
+      elastic:
+        image: docker.elastic.co/elasticsearch/elasticsearch:7.17.22
+        ports:
+          - 9200:9200
+        env:
+          discovery.type: single-node
+
+    steps:
+    - uses: actions/checkout@v3
+    - uses: actions/setup-python@v4
+      with:
+        python-version: ${{ matrix.python-version }}
+    - run: ./scripts/tests_setup
+
+    - name: Install dependencies
+      working-directory: ./tests/test_instance/server
+      run: |
+        pip install -U pip wheel setuptools
+        pip install -r requirements.txt
+
+    - name: Prepare instance
+      working-directory: ./tests/test_instance/server
+      run: |
+        python manage.py app:initialize_data
+        python manage.py users:create -u admin -p admin -e admin@example.com --admin
+        # python manage.py data:upgrade # until we decide what to do
+        python manage.py schema:migrate
+
+
