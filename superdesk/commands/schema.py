@@ -49,8 +49,8 @@ def update_schema():
     RebuildElasticIndex().run()
 
 
-@cli.register_async_command("schema:migrate", pass_current_app=True)
-async def schema_migrate_command(app: Flask):
+@cli.register_async_command("schema:migrate", with_appcontext=True)
+async def schema_migrate_command():
     """Migrate elastic schema if needed, should be triggered on every deploy.
 
     It compares version set in code (latest) to one stored in db and only updates
@@ -65,8 +65,8 @@ async def schema_migrate_command(app: Flask):
         $ python manage.py schema:migrate
 
     """
-    async with app.app_context():
-        return await schema_migrate_command_handler()
+
+    return await schema_migrate_command_handler()
 
 
 async def schema_migrate_command_handler():

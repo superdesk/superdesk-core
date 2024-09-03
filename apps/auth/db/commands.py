@@ -28,13 +28,13 @@ logger = logging.getLogger(__name__)
 USER_FIELDS_NAMES = {"username", "email", "password", "first_name", "last_name", "sign_off", "role"}
 
 
-@cli.register_async_command("users:create", pass_current_app=True)
+@cli.register_async_command("users:create", with_appcontext=True)
 @click.option("--username", "-u", required=True, help="Username for the new user.")
 @click.option("--password", "-p", required=True, help="Password for the new user.")
 @click.option("--email", "-e", required=True, help="Email address for the new user.")
 @click.option("--admin", "-a", is_flag=True, help="Specify if the user is an administrator.")
 @click.option("--support", "-s", is_flag=True, help="Specify if the user is a support user.")
-async def create_user_command(app: Flask, *args, **kwargs):
+async def create_user_command(*args, **kwargs):
     """Create a user with given username, password and email.
 
     If user with given username exists it's noop.
@@ -45,8 +45,7 @@ async def create_user_command(app: Flask, *args, **kwargs):
         $ python manage.py users:create -u admin -p admin -e 'admin@example.com' --admin
 
     """
-    async with app.app_context():
-        return await create_user_command_handler(*args, **kwargs)
+    return await create_user_command_handler(*args, **kwargs)
 
 
 async def create_user_command_handler(username: str, password: str, email: str, admin=False, support=False):

@@ -16,19 +16,18 @@ class AsyncAppGroup(AppGroup):
     app: Flask
 
     def register_async_command(
-        self, name: Optional[str] = None, pass_current_app=False, **click_kwargs: dict[str, Any]
+        self, name: Optional[str] = None, with_appcontext=False, **click_kwargs: dict[str, Any]
     ) -> Callable[..., Any]:
         """
         A decorator to register an asynchronous command within the Quart CLI app group.
-        If your command needs to use the app context, set `pass_current_app=True` to ensure the current app
-        instance is passed to the command upon execution. This is necessary because `get_current_app` may fail
-        in asynchronous command contexts due to execution in different threads or outside of the normal request
-        context lifecycle.
+        If your command needs to use the app context, pass `with_appcontext=True` to ensure it will be run
+        wrapped with current app context. Otherwise getting current app context will fail in asynchronous
+        command contexts due to execution in different threads or outside of the normal request context lifecycle.
 
         Args:
             name (str, optional): The name of the command. Defaults to the function's name if None.
-            pass_current_app (bool): If True, passes the current app instance to the command function via keyword arguments.
-                                     This allows commands to access the app context directly.
+            with_appcontext (bool): If True, it will wrap the command function in the current_app's context.
+                                    Note that `set_current_app` method has to be called first.
             **click_kwargs: Additional keyword arguments that are passed to the `AppGroup.command` decorator.
 
         Example:
@@ -38,8 +37,9 @@ class AsyncAppGroup(AppGroup):
 
             from superdesk.commands import cli
 
-            @cli.register_async_command(pass_current_app=True)
-            async def my_command("example-command", app):
+            @cli.register_async_command("example-command", with_appcontext=True)
+            async def my_command():
+                app = get_current_app()
                 with app.app_context():
                     # your command logic here
         """
@@ -49,16 +49,21 @@ class AsyncAppGroup(AppGroup):
             # This wrapper will convert the async function to a sync function
             # using async_to_sync when the command is actually called.
             def sync_wrapper(*args, **kwargs) -> Any:
-                if pass_current_app:
-                    kwargs["app"] = self.get_current_app()
-
+                if with_appcontext:
+                    return async_to_sync(self.run_with_appcontext)(func, *args, **kwargs)
                 return async_to_sync(func)(*args, **kwargs)
 
-            # register the sync wrapper as a click command
-            click_command = self.command(name, **click_kwargs)
-            return click_command(sync_wrapper)
+            return self.command(name, **click_kwargs)(sync_wrapper)
 
         return decorator
+
+    async def run_with_appcontext(self, func: Callable[..., Any], *args, **kwargs):
+        current_app = self.get_current_app()
+        if current_app is None:
+            raise RuntimeError("No app instance available. Make sure to run `set_current_app(app_instance)` first.")
+
+        async with current_app.app_context():
+            return await func(*args, **kwargs)
 
     def set_current_app(self, app: Flask):
         """
