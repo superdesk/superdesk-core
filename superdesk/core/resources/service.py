@@ -21,6 +21,7 @@ from typing import (
     cast,
     Tuple,
     Literal,
+    overload,
 )
 import logging
 import ast
@@ -35,10 +36,11 @@ from motor.motor_asyncio import AsyncIOMotorCursor
 from superdesk.errors import SuperdeskApiError
 from superdesk.utc import utcnow
 from superdesk.json_utils import SuperdeskJSONEncoder
+from superdesk.core.types import SearchRequest, SortListParam, SortParam
 
 from ..app import SuperdeskAsyncApp, get_current_async_app
 from .fields import ObjectId as ObjectIdField
-from .cursor import ElasticsearchResourceCursorAsync, MongoResourceCursorAsync, ResourceCursorAsync, SearchRequest
+from .cursor import ElasticsearchResourceCursorAsync, MongoResourceCursorAsync, ResourceCursorAsync
 from .utils import resource_uses_objectid_for_id
 
 logger = logging.getLogger(__name__)
@@ -414,19 +416,52 @@ class AsyncResourceService(Generic[ResourceModelType]):
         else:
             logger.warning(f"Not enough iterations for resource {self.resource_name}")
 
+    @overload
     async def find(self, req: SearchRequest) -> ResourceCursorAsync[ResourceModelType]:
+        ...
+
+    @overload
+    async def find(
+        self, req: dict, page: int = 1, max_results: int = 25, sort: SortParam | None = None
+    ) -> ResourceCursorAsync[ResourceModelType]:
+        ...
+
+    async def find(
+        self,
+        req: SearchRequest | dict,
+        page: int = 1,
+        max_results: int = 25,
+        sort: SortParam | None = None,
+    ) -> ResourceCursorAsync[ResourceModelType]:
         """Find items from the resource using Elasticsearch
 
-        :param req: A SearchRequest instance with the search params to be used
+        :param req: SearchRequest instance, or a lookup dictionary, for the search params to be used
+        :param page: The page number to retrieve (defaults to 1)
+        :param max_results: The maximum number of results to retrieve per page (defaults to 25)
+        :param sort: The sort order to use (defaults to resource default sort, or not sorting applied)
         :return: An async iterable with ``ResourceModel`` instances
         :raises SuperdeskApiError.notFoundError: If Elasticsearch is not configured
         """
 
+        search_request = (
+            req
+            if isinstance(req, SearchRequest)
+            else SearchRequest(
+                where=req if req else None,
+                page=page,
+                max_results=max_results,
+                sort=sort,
+            )
+        )
+
+        if search_request.sort is None:
+            search_request.sort = self.config.default_sort
+
         try:
-            cursor, count = await self.elastic.find(req)
+            cursor, count = await self.elastic.find(search_request)
             return ElasticsearchResourceCursorAsync(self.config.data_class, cursor.hits)
         except KeyError:
-            return await self._mongo_find(req)
+            return await self._mongo_find(search_request)
 
     async def _mongo_find(self, req: SearchRequest) -> MongoResourceCursorAsync:
         args: Dict[str, Any] = {}
@@ -450,6 +485,8 @@ class AsyncResourceService(Generic[ResourceModelType]):
     def _convert_req_to_mongo_sort(self, req: SearchRequest) -> List[Tuple[str, Literal[1, -1]]]:
         if not req.sort:
             return []
+        elif isinstance(req.sort, list):
+            return req.sort
 
         client_sort: List[Tuple[str, Literal[1, -1]]] = []
         try:
