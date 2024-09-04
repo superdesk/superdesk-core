@@ -8,13 +8,19 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
-import logging
-import json
 import csv
+import json
+import click
+import logging
+
+import superdesk
+
 from pathlib import Path
 from base64 import b64encode
 from superdesk.core import get_app_config, get_current_app
-import superdesk
+
+from superdesk.flask import Flask
+from superdesk.commands import cli
 from superdesk.utils import get_hash, is_hashed
 
 
@@ -22,7 +28,13 @@ logger = logging.getLogger(__name__)
 USER_FIELDS_NAMES = {"username", "email", "password", "first_name", "last_name", "sign_off", "role"}
 
 
-class CreateUserCommand(superdesk.Command):
+@cli.register_async_command("users:create", with_appcontext=True)
+@click.option("--username", "-u", required=True, help="Username for the new user.")
+@click.option("--password", "-p", required=True, help="Password for the new user.")
+@click.option("--email", "-e", required=True, help="Email address for the new user.")
+@click.option("--admin", "-a", is_flag=True, help="Specify if the user is an administrator.")
+@click.option("--support", "-s", is_flag=True, help="Specify if the user is a support user.")
+async def create_user_command(*args, **kwargs):
     """Create a user with given username, password and email.
 
     If user with given username exists it's noop.
@@ -33,46 +45,37 @@ class CreateUserCommand(superdesk.Command):
         $ python manage.py users:create -u admin -p admin -e 'admin@example.com' --admin
 
     """
+    return await create_user_command_handler(*args, **kwargs)
 
-    option_list = [
-        superdesk.Option("--username", "-u", dest="username", required=True),
-        superdesk.Option("--password", "-p", dest="password", required=True),
-        superdesk.Option("--email", "-e", dest="email", required=True),
-        superdesk.Option("--admin", "-a", dest="admin", required=False, action="store_true"),
-        superdesk.Option("--support", "-s", dest="support", required=False, action="store_true"),
-    ]
 
-    async def run(self, username, password, email, admin=False, support=False):
-        # force type conversion to boolean
-        user_type = "administrator" if admin else "user"
+async def create_user_command_handler(username: str, password: str, email: str, admin=False, support=False):
+    user_type = "administrator" if admin else "user"
+    userdata = {
+        "username": username,
+        "password": password,
+        "email": email,
+        "user_type": user_type,
+        "is_active": admin,
+        "is_support": support,
+        "needs_activation": not admin,
+    }
 
-        userdata = {
-            "username": username,
-            "password": password,
-            "email": email,
-            "user_type": user_type,
-            "is_active": admin,
-            "is_support": support,
-            "needs_activation": not admin,
-        }
+    app = get_current_app().as_any()
 
-        app = get_current_app().as_any()
-        async with app.test_request_context("/users", method="POST"):
-            if userdata.get("password", None) and not is_hashed(userdata.get("password")):
-                userdata["password"] = get_hash(
-                    userdata.get("password"), get_app_config("BCRYPT_GENSALT_WORK_FACTOR", 12)
-                )
+    async with app.test_request_context("/users", method="POST"):
+        if userdata.get("password", None) and not is_hashed(userdata.get("password")):
+            userdata["password"] = get_hash(userdata.get("password"), get_app_config("BCRYPT_GENSALT_WORK_FACTOR", 12))
 
-            user = superdesk.get_resource_service("users").find_one(username=userdata.get("username"), req=None)
+        user = superdesk.get_resource_service("users").find_one(username=userdata.get("username"), req=None)
 
-            if user:
-                logger.info("user already exists %s" % (userdata))
-            else:
-                logger.info("creating user %s" % (userdata))
-                superdesk.get_resource_service("users").post([userdata])
-                logger.info("user saved %s" % (userdata))
+        if user:
+            logger.info("user already exists %s" % (userdata))
+        else:
+            logger.info("creating user %s" % (userdata))
+            superdesk.get_resource_service("users").post([userdata])
+            logger.info("user saved %s" % (userdata))
 
-            return userdata
+        return userdata
 
 
 class ImportUsersCommand(superdesk.Command):
@@ -279,7 +282,6 @@ class GetAuthTokenCommand(superdesk.Command):
         return encoded_token
 
 
-superdesk.command("users:create", CreateUserCommand())
 superdesk.command("users:import", ImportUsersCommand())
 superdesk.command("users:hash_passwords", HashUserPasswordsCommand())
 superdesk.command("users:get_auth_token", GetAuthTokenCommand())

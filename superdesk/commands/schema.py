@@ -12,9 +12,12 @@
 
 import superdesk
 
-from superdesk.core import get_app_config, get_current_app
+from superdesk.flask import Flask
 from superdesk.lock import lock, unlock
+from superdesk.core import get_app_config, get_current_app
 from superdesk.commands.rebuild_elastic_index import RebuildElasticIndex
+
+from .async_cli import cli
 
 
 VERSION_ID = "schema_version"
@@ -46,7 +49,8 @@ def update_schema():
     RebuildElasticIndex().run()
 
 
-class SchemaMigrateCommand(superdesk.Command):
+@cli.register_async_command("schema:migrate", with_appcontext=True)
+async def schema_migrate_command():
     """Migrate elastic schema if needed, should be triggered on every deploy.
 
     It compares version set in code (latest) to one stored in db and only updates
@@ -62,23 +66,23 @@ class SchemaMigrateCommand(superdesk.Command):
 
     """
 
-    def run(self):
-        lock_name = "schema:migrate"
-
-        if not lock(lock_name, expire=1800):
-            return
-
-        try:
-            app_schema_version = get_schema_version()
-            superdesk_schema_version = get_app_config("SCHEMA_VERSION", superdesk.SCHEMA_VERSION)
-            if app_schema_version < superdesk_schema_version:
-                print("Updating schema from version {} to {}.".format(app_schema_version, superdesk_schema_version))
-                update_schema()
-                set_schema_version(superdesk_schema_version)
-            else:
-                print("App already at version ({}).".format(app_schema_version))
-        finally:
-            unlock(lock_name)
+    return await schema_migrate_command_handler()
 
 
-superdesk.command("schema:migrate", SchemaMigrateCommand())
+async def schema_migrate_command_handler():
+    lock_name = "schema:migrate"
+
+    if not lock(lock_name, expire=1800):
+        return
+
+    try:
+        app_schema_version = get_schema_version()
+        superdesk_schema_version = get_app_config("SCHEMA_VERSION", superdesk.SCHEMA_VERSION)
+        if app_schema_version < superdesk_schema_version:
+            print("Updating schema from version {} to {}.".format(app_schema_version, superdesk_schema_version))
+            update_schema()
+            set_schema_version(superdesk_schema_version)
+        else:
+            print("App already at version ({}).".format(app_schema_version))
+    finally:
+        unlock(lock_name)

@@ -15,7 +15,7 @@ import logging
 
 from superdesk.core import json
 from apps.prepopulate.app_populate import AppPopulateCommand
-from apps.prepopulate.app_initialize import AppInitializeWithDataCommand
+from apps.prepopulate.app_initialize import app_initialize_data_handler
 from superdesk import tests
 from superdesk.factory.app import get_app
 from superdesk.tests import setup_auth_user
@@ -84,8 +84,7 @@ async def setup_before_scenario(context, scenario, config, app_factory):
 
     if scenario.status != "skipped" and "app_init" in scenario.tags:
         async with context.app.app_context():
-            command = AppInitializeWithDataCommand()
-            command.run()
+            await app_initialize_data_handler()
 
 
 def before_all(context):
