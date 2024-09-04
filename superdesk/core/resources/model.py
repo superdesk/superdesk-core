@@ -28,6 +28,7 @@ from pydantic import BaseModel, ConfigDict, Field, computed_field, ValidationErr
 from pydantic_core import InitErrorDetails, PydanticCustomError
 from pydantic.dataclasses import dataclass as pydataclass
 
+from superdesk.core.types import SortListParam
 from .fields import ObjectId
 
 
@@ -201,6 +202,9 @@ class ResourceConfig:
     #: Optional list of resource fields to ignore when generating the etag
     etag_ignore_fields: Optional[list[str]] = None
 
+    #: Optional sorting for this resource
+    default_sort: SortListParam | None = None
+
 
 class Resources:
     """A high level resource class used to manage all resources in the system"""
@@ -239,6 +243,8 @@ class Resources:
         )
 
         if config.elastic is not None:
+            if config.default_sort:
+                config.elastic.default_sort = config.default_sort
             self.app.elastic.register_resource_config(
                 config.name,
                 config.elastic,

@@ -12,8 +12,8 @@ from typing import List, Optional
 
 from pydantic import BaseModel
 
+from superdesk.core.types import SearchRequest
 from .types import Endpoint, EndpointGroup, HTTP_METHOD, Request, Response
-from ..resources.cursor import SearchRequest
 
 
 class ItemRequestViewArgs(BaseModel):
