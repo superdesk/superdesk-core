@@ -161,6 +161,10 @@ class SuperdeskApiError(SuperdeskError):
         return SuperdeskApiError(status_code=412, message=message, payload=payload, exception=exception)
 
     @classmethod
+    def preconditionRequiredError(cls, message=None, payload=None, exception=None):
+        return SuperdeskApiError(status_code=428, message=message, payload=payload, exception=exception)
+
+    @classmethod
     def internalError(cls, message=None, payload=None, exception=None):
         return SuperdeskApiError(status_code=500, message=message, payload=payload, exception=exception)
 

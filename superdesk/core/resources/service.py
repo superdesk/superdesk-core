@@ -24,13 +24,17 @@ from typing import (
 )
 import logging
 import ast
+from copy import deepcopy
+from hashlib import sha1
 
-from bson import ObjectId
+from bson import ObjectId, UuidRepresentation
+from bson.json_util import dumps, DEFAULT_JSON_OPTIONS
 import simplejson as json
 from motor.motor_asyncio import AsyncIOMotorCursor
 
 from superdesk.errors import SuperdeskApiError
 from superdesk.utc import utcnow
+from superdesk.json_utils import SuperdeskJSONEncoder
 
 from ..app import SuperdeskAsyncApp, get_current_async_app
 from .fields import ObjectId as ObjectIdField
@@ -194,15 +198,20 @@ class AsyncResourceService(Generic[ResourceModelType]):
 
         await doc.validate_async()
 
-    async def validate_update(self, updates: Dict[str, Any], original: ResourceModelType) -> Dict[str, Any]:
+    async def validate_update(
+        self, updates: Dict[str, Any], original: ResourceModelType, etag: str | None
+    ) -> Dict[str, Any]:
         """Validate the provided updates dict against the original model instance
 
         Applies the updates to a copy of the original provided, and runs sync and async validators
 
         :param updates: Dictionary of updates to be applied
         :param original: Model instance of the original item to be updated
+        :param etag: Optional etag, if provided will check etag against original item
         :raises ValueError: If the item is not valid
         """
+
+        self.validate_etag(original, etag)
 
         # Construct a new ResourceModelType instance, to allow Pydantic to validate the changes
         # This is not efficient, but will do for now
@@ -221,7 +230,6 @@ class AsyncResourceService(Generic[ResourceModelType]):
             by_alias=True,
             exclude_unset=True,
             context={"use_objectid": True} if not self.config.query_objectid_as_string else {},
-            include=set(updates.keys()),
         )
 
     async def create(self, docs: List[ResourceModelType]) -> List[str]:
@@ -243,6 +251,7 @@ class AsyncResourceService(Generic[ResourceModelType]):
                 exclude_unset=True,
                 context={"use_objectid": True} if not self.config.query_objectid_as_string else {},
             )
+            doc.etag = doc_dict["_etag"] = self.generate_etag(doc_dict, self.config.etag_ignore_fields)
             response = await self.mongo.insert_one(doc_dict)
             ids.append(response.inserted_id)
             try:
@@ -270,7 +279,7 @@ class AsyncResourceService(Generic[ResourceModelType]):
 
         updates.setdefault("_updated", utcnow())
 
-    async def update(self, item_id: Union[str, ObjectId], updates: Dict[str, Any]) -> None:
+    async def update(self, item_id: Union[str, ObjectId], updates: Dict[str, Any], etag: str | None = None) -> None:
         """Updates an existing resource
 
         Will automatically update the resource in both Elasticsearch (if configured for this resource)
@@ -278,6 +287,8 @@ class AsyncResourceService(Generic[ResourceModelType]):
 
         :param item_id: ID of item to update
         :param updates: Dictionary to update
+        :param etag: Optional etag, if provided will check etag against original item
+        :raises SuperdeskApiError.notFoundError: If original item not found
         """
 
         item_id = ObjectId(item_id) if self.id_uses_objectid() else item_id
@@ -286,10 +297,12 @@ class AsyncResourceService(Generic[ResourceModelType]):
             raise SuperdeskApiError.notFoundError()
 
         await self.on_update(updates, original)
-        validated_updates = await self.validate_update(updates, original)
-        response = await self.mongo.update_one({"_id": item_id}, {"$set": validated_updates})
+        validated_updates = await self.validate_update(updates, original, etag)
+        updates_dict = {key: val for key, val in validated_updates.items() if key in updates}
+        updates["_etag"] = updates_dict["_etag"] = self.generate_etag(validated_updates, self.config.etag_ignore_fields)
+        response = await self.mongo.update_one({"_id": item_id}, {"$set": updates_dict})
         try:
-            await self.elastic.update(item_id, updates)
+            await self.elastic.update(item_id, updates_dict)
         except KeyError:
             pass
         await self.on_updated(updates, original)
@@ -311,13 +324,15 @@ class AsyncResourceService(Generic[ResourceModelType]):
 
         pass
 
-    async def delete(self, doc: ResourceModelType):
+    async def delete(self, doc: ResourceModelType, etag: str | None = None):
         """Deletes a resource
 
         :param doc: Instance of ``ResourceModel`` for the resource to delete
+        :param etag: Optional etag, if provided will check etag against original item
         """
 
         await self.on_delete(doc)
+        self.validate_etag(doc, etag)
         await self.mongo.delete_one({"_id": doc.id})
         try:
             await self.elastic.remove(doc.id)
@@ -425,7 +440,9 @@ class AsyncResourceService(Generic[ResourceModelType]):
         if sort:
             args["sort"] = sort
 
-        where = json.loads(req.where or "{}")
+        where = json.loads(req.where) if isinstance(req.where, str) else (req.where or {})
+        args["filter"] = where
+
         cursor = self.mongo.find(**args)
 
         return MongoResourceCursorAsync(self.config.data_class, self.mongo, cursor, where)
@@ -448,6 +465,66 @@ class AsyncResourceService(Generic[ResourceModelType]):
                     client_sort.append((sort_arg, 1))
 
         return client_sort
+
+    def validate_etag(self, original: ResourceModelType, etag: str | None) -> None:
+        """Validate the provided etag against the original
+
+        If the provided ``etag`` argument is ``None``, then validation will not occur
+
+        :param original: Instance of ``ResourceModel`` for the resource to validate etag against
+        :param etag: Etag string to validate
+        :raises SuperdeskApiError.preconditionFailedError: If the provided etag is invalid
+        """
+
+        if not self.config.uses_etag or original.etag is None or etag is None:
+            return
+
+        # allow weak etags (we do not support byte-range requests)
+        if etag.startswith('W/"'):
+            etag = etag.lstrip("W/")
+        # remove double quotes from challenge etag format to allow direct
+        # string comparison with stored values
+        etag = etag.replace('"', "")
+
+        if etag != original.etag:
+            raise SuperdeskApiError.preconditionFailedError("Client and server etags don't match")
+
+    def generate_etag(self, value: dict[str, Any], ignore_fields: list[str] | None = None) -> str:
+        if ignore_fields is not None:
+
+            def filter_ignore_fields(d, fields):
+                # recursive function to remove the fields that they are in d,
+                # field is a list of fields to skip or dotted fields to look up
+                # to nested keys such as  ["foo", "dict.bar", "dict.joe"]
+                for field in fields:
+                    key, _, value = field.partition(".")
+                    if value and key in d:
+                        filter_ignore_fields(d[key], [value])
+                    elif field in d:
+                        d.pop(field)
+                    else:
+                        # not required fields can be not present
+                        pass
+
+            value_ = deepcopy(value)
+            filter_ignore_fields(value_, ignore_fields)
+        else:
+            value_ = value
+
+        h = sha1()
+        json_encoder = SuperdeskJSONEncoder()
+
+        h.update(
+            dumps(
+                value_,
+                sort_keys=True,
+                default=json_encoder.default,
+                json_options=DEFAULT_JSON_OPTIONS.with_options(
+                    uuid_representation=UuidRepresentation.STANDARD,
+                ),
+            ).encode("utf-8")
+        )
+        return h.hexdigest()
 
 
 from .model import ResourceConfig, ResourceModel  # noqa: E402
