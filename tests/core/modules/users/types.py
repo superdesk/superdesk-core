@@ -31,10 +31,10 @@ class MyCustomString(str, fields.CustomStringField):
 
 
 class User(ResourceModel):
-    first_name: str
-    last_name: str
+    first_name: fields.TextWithKeyword
+    last_name: fields.TextWithKeyword
     email: Annotated[
-        Optional[str],
+        Optional[fields.TextWithKeyword],
         validators.validate_email(),
         validators.validate_iunique_value_async(resource_name="users_async", field_name="email"),
     ] = None
