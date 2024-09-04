@@ -53,6 +53,9 @@ class Response:
 #:
 #: Supported endpoint signatures::
 #:
+#:      # Response only
+#:      async def test() -> Response:
+#:
 #:      # Request Only
 #:      async def test1(request: Request) -> Response
 #:
@@ -77,6 +80,10 @@ class Response:
 #:          request: Request
 #:      ) -> Response
 EndpointFunction = Union[
+    Callable[
+        [],
+        Awaitable[Response],
+    ],
     Callable[
         ["Request"],
         Awaitable[Response],
@@ -129,7 +136,9 @@ class Endpoint:
 
     def __call__(self, args: Dict[str, Any], params: Dict[str, Any], request: "Request"):
         func_params = signature(self.func).parameters
-        if "args" not in func_params and "params" not in func_params:
+        if not len(func_params):
+            return self.func()
+        elif "args" not in func_params and "params" not in func_params:
             return self.func(request)  # type: ignore[call-arg,arg-type]
 
         arg_type = func_params["args"] if "args" in func_params else None
