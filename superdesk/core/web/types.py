@@ -137,7 +137,7 @@ class Endpoint:
     def __call__(self, args: Dict[str, Any], params: Dict[str, Any], request: "Request"):
         func_params = signature(self.func).parameters
         if not len(func_params):
-            return self.func()
+            return self.func()  # type: ignore[call-arg,arg-type]
         elif "args" not in func_params and "params" not in func_params:
             return self.func(request)  # type: ignore[call-arg,arg-type]
 
