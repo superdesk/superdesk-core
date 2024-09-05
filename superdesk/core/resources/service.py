@@ -518,7 +518,7 @@ class AsyncResourceService(Generic[ResourceModelType]):
         where = json.loads(req.where or "{}") if isinstance(req.where, str) else req.where
         kwargs["filter"] = where
 
-        cursor = self.mongo.find(where, **kwargs) if not versioned else self.mongo_versioned.find(where, **kwargs)
+        cursor = self.mongo.find(**kwargs) if not versioned else self.mongo_versioned.find(**kwargs)
 
         return MongoResourceCursorAsync(
             self.config.data_class, self.mongo if not versioned else self.mongo_versioned, cursor, where
