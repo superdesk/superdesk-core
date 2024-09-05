@@ -51,6 +51,7 @@ existing code to the new framework.
    core/mongo
    core/elastic
    core/storage
+   core/types
 
 .. _reference:
 

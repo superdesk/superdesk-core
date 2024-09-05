@@ -14,7 +14,7 @@ from dataclasses import dataclass
 from uuid import uuid4
 
 from ..config import ConfigModel
-from ..resources.cursor import SearchRequest
+from superdesk.core.types import SearchRequest, SortParam
 
 
 @dataclass
@@ -25,7 +25,7 @@ class ElasticResourceConfig:
     prefix: str = "ELASTICSEARCH"
 
     #: The default sort
-    default_sort: Optional[str] = None
+    default_sort: SortParam | None = None
 
     #: The default maximum number of documents to be returned
     default_max_results: Optional[int] = None

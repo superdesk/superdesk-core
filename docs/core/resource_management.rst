@@ -62,14 +62,6 @@ Search References
     :member-order: bysource
     :members:
 
-.. autoclass:: superdesk.core.resources.cursor.SearchArgs
-    :member-order: bysource
-    :members:
-
-.. autoclass:: superdesk.core.resources.cursor.SearchRequest
-    :member-order: bysource
-    :members:
-
 .. autoclass:: superdesk.core.resources.cursor.ResourceCursorAsync
     :member-order: bysource
     :members:
@@ -81,5 +73,3 @@ Search References
 .. autoclass:: superdesk.core.resources.cursor.MongoResourceCursorAsync
     :member-order: bysource
     :members:
-
-.. autodata:: superdesk.core.resources.cursor.ProjectedFieldArg

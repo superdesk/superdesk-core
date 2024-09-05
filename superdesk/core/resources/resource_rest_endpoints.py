@@ -18,12 +18,12 @@ from werkzeug.datastructures import MultiDict
 
 from superdesk.core.app import get_current_async_app
 from superdesk.errors import SuperdeskApiError
+from superdesk.core.types import SearchRequest, SearchArgs
 
 from ..web.types import HTTP_METHOD, Request, Response, RestGetResponse
 from ..web.rest_endpoints import RestEndpoints, ItemRequestViewArgs
 
 from .model import ResourceConfig, ResourceModel
-from .cursor import SearchRequest, SearchArgs
 from .validators import convert_pydantic_validation_error_for_response
 from .utils import resource_uses_objectid_for_id
 

@@ -8,74 +8,9 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
-from typing import Dict, Any, Generic, TypeVar, Type, Optional, List, Union, Literal
-from typing_extensions import TypedDict
+from typing import Dict, Any, Generic, TypeVar, Type, Optional, List
 
-from pydantic import BaseModel, ConfigDict
 from motor.motor_asyncio import AsyncIOMotorCollection, AsyncIOMotorCursor
-
-
-#: The data type for projections, either a list of field names, or a dictionary containing
-#: the field and enable/disable state
-ProjectedFieldArg = Union[List[str], Dict[str, Literal[0]], Dict[str, Literal[1]]]
-
-
-class SearchArgs(TypedDict, total=False):
-    """Dictionary containing Elasticsearch search arguments
-
-    This is for use with the `.find` methods in elastic clients
-    """
-
-    #: A JSON string containing an elasticsearch query
-    source: str
-
-    #: A query string
-    q: str
-
-    #: Default field, for use with the query string
-    df: str
-
-    #: Default operator, for use with the query string (defaults to "AND")
-    default_operator: str
-
-    #: A JSON string containing bool query filters, to be applied to the elastic query
-    filter: str
-
-    #: A list of dictionaries containing bool query filters, to be applied to the elastic query
-    filters: List[Dict[str, Any]]
-
-    #: A JSON string containing the field projections to filter out the returned fields
-    projections: str
-
-
-class SearchRequest(BaseModel):
-    """Dataclass containing Elasticsearch request arguments"""
-
-    model_config = ConfigDict(extra="allow")
-
-    #: Argument for the search filters
-    args: Optional[SearchArgs] = None
-
-    #: Sorting to be used
-    sort: Optional[str] = None
-
-    #: Maximum number of documents to be returned
-    max_results: int = 25
-
-    #: The page number to be returned
-    page: int = 1
-
-    #: A JSON string containing an Elasticsearch where query
-    where: Optional[Union[str, Dict]] = None
-
-    #: If `True`, will include aggregations with the result
-    aggregations: bool = False
-
-    #: If `True`, will include highlights with the result
-    highlight: bool = False
-
-    #: The field projections to be applied
-    projection: Optional[ProjectedFieldArg] = None
 
 
 ResourceModelType = TypeVar("ResourceModelType", bound="ResourceModel")
@@ -93,6 +28,14 @@ class ResourceCursorAsync(Generic[ResourceModelType]):
 
     async def next_raw(self) -> Optional[Dict[str, Any]]:
         raise NotImplementedError()
+
+    async def to_list(self) -> List[ResourceModelType]:
+        items: List[ResourceModelType] = []
+        item = await self.next_raw()
+        while item is not None:
+            items.append(self.get_model_instance(item))
+            item = await self.next_raw()
+        return items
 
     async def to_list_raw(self) -> List[Dict[str, Any]]:
         items: List[Dict[str, Any]] = []
