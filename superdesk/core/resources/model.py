@@ -29,6 +29,7 @@ from pydantic import BaseModel, ConfigDict, Field, computed_field, ValidationErr
 from pydantic_core import InitErrorDetails, PydanticCustomError
 from pydantic.dataclasses import dataclass as pydataclass
 
+from superdesk.core.types import SortListParam
 from .fields import ObjectId
 
 
@@ -234,6 +235,9 @@ class ResourceConfig:
     #: Optional list of fields not to store in the versioning resource
     ignore_fields_in_versions: list[str] | None = None
 
+    #: Optional sorting for this resource
+    default_sort: SortListParam | None = None
+
 
 class Resources:
     """A high level resource class used to manage all resources in the system"""
@@ -273,6 +277,8 @@ class Resources:
         self.app.mongo.register_resource_config(config.name, mongo_config)
 
         if config.elastic is not None:
+            if config.default_sort:
+                config.elastic.default_sort = config.default_sort
             self.app.elastic.register_resource_config(
                 config.name,
                 config.elastic,

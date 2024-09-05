@@ -20,6 +20,7 @@ from werkzeug.datastructures import MultiDict
 from superdesk.core.app import get_current_async_app
 from superdesk.core.types import SearchRequest, SearchArgs, VersionParam
 from superdesk.errors import SuperdeskApiError
+from superdesk.core.types import SearchRequest, SearchArgs
 
 from ..web.types import HTTP_METHOD, Request, Response, RestGetResponse
 from ..web.rest_endpoints import RestEndpoints, ItemRequestViewArgs

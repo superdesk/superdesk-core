@@ -17,8 +17,16 @@ from pydantic import BaseModel, ConfigDict, NonNegativeInt
 #: The data type for projections, either a list of field names, or a dictionary containing
 #: the field and enable/disable state
 ProjectedFieldArg = Union[List[str], Dict[str, Literal[0]], Dict[str, Literal[1]]]
+
+#: Type used to provide list of sort params to be used
 SortListParam = list[tuple[str, Literal[1, -1]]]
+
+#: Type used for sort param in service requests
+#: can be a string, which will convert to an :attr:`SortListParam` type
 SortParam = str | SortListParam
+
+#: Type used for version param in service requests
+#: Can be either ``"all"`` or an int ``>= 0``
 VersionParam = Literal["all"] | NonNegativeInt
 
 

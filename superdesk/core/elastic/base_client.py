@@ -203,7 +203,8 @@ class BaseElasticResourceClient:
 
         if req.where:
             try:
-                filters.append({"term": json.loads(req.where)})
+                term = json.loads(req.where) if isinstance(req.where, str) else req.where
+                filters.append({"term": term})
             except ValueError:
                 try:
                     filters.append({"term": parse(req.where)})

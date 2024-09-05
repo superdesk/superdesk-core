@@ -29,6 +29,14 @@ class ResourceCursorAsync(Generic[ResourceModelType]):
     async def next_raw(self) -> Optional[Dict[str, Any]]:
         raise NotImplementedError()
 
+    async def to_list(self) -> List[ResourceModelType]:
+        items: List[ResourceModelType] = []
+        item = await self.next_raw()
+        while item is not None:
+            items.append(self.get_model_instance(item))
+            item = await self.next_raw()
+        return items
+
     async def to_list_raw(self) -> List[Dict[str, Any]]:
         items: List[Dict[str, Any]] = []
         item = await self.next_raw()

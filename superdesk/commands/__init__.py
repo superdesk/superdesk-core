@@ -10,6 +10,7 @@ from .flush_elastic_index import FlushElasticIndex  # noqa
 from .generate_vocabularies import GenerateVocabularies  # noqa
 from . import data_manipulation  # noqa
 from . import schema  # noqa
+from .async_cli import cli, commands_blueprint  # noqa
 import superdesk
 
 
@@ -28,3 +29,12 @@ def init_app(app) -> None:
         data_manipulation.RestoreRecordResource(endpoint_name, app=app, service=service)
 
         superdesk.intrinsic_privilege(resource_name=endpoint_name, method=["POST"])
+
+
+def configure_cli(app) -> None:
+    """
+    Sets the current app instance into the `AsyncAppGroup` to later be passed as context of the commands.
+    It also registers the commands blueprint
+    """
+    cli.set_current_app(app)
+    app.register_blueprint(commands_blueprint)
