@@ -190,7 +190,14 @@ Feature: Rundowns
                     {
                         "duration": 400,
                         "item_type": "Test2",
-                        "title": "Item title 2"
+                        "title": "Item title 2",
+                        "subitems": [
+                            {
+                                "content": "<p>sub content</p>",
+                                "qcode": "TST",
+                                "technical_info": "info"
+                            }
+                        ]
                     },
                     {
                         "duration": 200,
@@ -216,6 +223,7 @@ Feature: Rundowns
             "airtime_date": "2022-06-10",
             "items": [
                 {"_id": "__objectid__"},
+                {"_id": "__objectid__"},
                 {"_id": "__objectid__"}
             ]
         }
@@ -227,6 +235,7 @@ Feature: Rundowns
         {"_items": [
             {"title": "Marker // 10.06.2022", "template": "#rundown_templates._id#", "items": [
                 {"_id": "__objectid__"},
+                {"_id": "__objectid__"},
                 {"_id": "__objectid__"}
             ]}
         ]}
@@ -234,6 +243,19 @@ Feature: Rundowns
 
         When we get "/rundown_items"
         Then we get list with 3 items
+        """
+        {"_items": [
+            {"item_type": "Test"},
+            {"item_type": "Test2", "subitems": [
+                {
+                    "content": "<p>sub content</p>",
+                    "qcode": "TST",
+                    "technical_info": "info"
+                }
+            ]},
+            {"title": "test"}
+        ]}
+        """
 
         When we patch "/rundowns/#rundowns._id#"
         """
