@@ -10,7 +10,7 @@
 
 from .model import Resources, ResourceModel, ResourceModelWithObjectId, ResourceConfig, dataclass
 from .resource_rest_endpoints import RestEndpointConfig
-from .service import AsyncResourceService
+from .service import AsyncResourceService, AsyncCacheableService
 from ..mongo import MongoResourceConfig, MongoIndexOptions
 from ..elastic.resources import ElasticResourceConfig
 
@@ -23,6 +23,7 @@ __all__ = [
     "fields",
     "RestEndpointConfig",
     "AsyncResourceService",
+    "AsyncCacheableService",
     "MongoResourceConfig",
     "MongoIndexOptions",
     "ElasticResourceConfig",
