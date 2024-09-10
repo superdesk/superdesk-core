@@ -43,10 +43,10 @@ class Response:
     body: Any
 
     #: HTTP Status Code of the response
-    status_code: int
+    status_code: int = 200
 
     #: Any additional headers to be added
-    headers: Sequence
+    headers: Sequence = ()
 
 
 #: Function for use with a Endpoint registration and request processing
