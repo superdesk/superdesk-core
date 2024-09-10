@@ -3,8 +3,8 @@
 Resource Management
 ===================
 
-Resource Services:
-------------------
+Resource Services
+-----------------
 
 The management of resources is performed using the :class:`AsyncResourceService <superdesk.core.resources.service.AsyncResourceService>` class
 instances. This is similar to how it is done in Superdesk < v3.0, with some slight improvements.
@@ -71,5 +71,9 @@ Search References
     :members:
 
 .. autoclass:: superdesk.core.resources.cursor.MongoResourceCursorAsync
+    :member-order: bysource
+    :members:
+
+.. autoclass:: superdesk.core.resources.service.AsyncCacheableService
     :member-order: bysource
     :members:
