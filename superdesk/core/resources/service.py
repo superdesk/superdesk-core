@@ -420,14 +420,12 @@ class AsyncResourceService(Generic[ResourceModelType]):
             logger.warning(f"Not enough iterations for resource {self.resource_name}")
 
     @overload
-    async def find(self, req: SearchRequest) -> ResourceCursorAsync[ResourceModelType]:
-        ...
+    async def find(self, req: SearchRequest) -> ResourceCursorAsync[ResourceModelType]: ...
 
     @overload
     async def find(
         self, req: dict, page: int = 1, max_results: int = 25, sort: SortParam | None = None
-    ) -> ResourceCursorAsync[ResourceModelType]:
-        ...
+    ) -> ResourceCursorAsync[ResourceModelType]: ...
 
     async def find(
         self,
@@ -595,6 +593,14 @@ class AsyncCacheableService(AsyncResourceService[ResourceModelType]):
         setattr(g, self.cache_key, value)
 
     async def get_cached(self) -> List[Dict[str, Any]]:
+        """
+        Retrieve cached data for the resource. If the cache is empty, fetches data from the database
+        and sets it in the cache. The cache is automatically refreshed with a time-to-live (TTL).
+
+        Returns:
+            List[Dict[str, Any]]: A list of dictionaries containing the cached data.
+        """
+
         @cache(
             ttl=3600 + random.randrange(1, 300),
             tags=(self.resource_name,),
@@ -612,7 +618,17 @@ class AsyncCacheableService(AsyncResourceService[ResourceModelType]):
 
         return cached_data
 
-    async def get_cached_by_id(self, _id):
+    async def get_cached_by_id(self, _id: str):
+        """
+        Retrieve a specific resource by its ID from the cached data. If the resource is not found in
+        the cache, fetches it directly from the database.
+
+        Args:
+            _id (string): The ID of the resource to retrieve.
+
+        Returns:
+            Optional[Dict[str, Any]]: A dictionary representing the resource if found, otherwise None.
+        """
         cached = await self.get_cached()
         for item in cached:
             if item.get("_id") == _id:
