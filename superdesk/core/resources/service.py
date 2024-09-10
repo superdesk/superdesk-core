@@ -8,6 +8,7 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
+import random
 from typing import (
     Optional,
     Generic,
@@ -25,18 +26,20 @@ from typing import (
 )
 import logging
 import ast
+import simplejson as json
 from copy import deepcopy
 from hashlib import sha1
 
 from bson import ObjectId, UuidRepresentation
 from bson.json_util import dumps, DEFAULT_JSON_OPTIONS
-import simplejson as json
 from motor.motor_asyncio import AsyncIOMotorCursor
 
-from superdesk.errors import SuperdeskApiError
+from superdesk.flask import g
 from superdesk.utc import utcnow
+from superdesk.cache import cache
+from superdesk.errors import SuperdeskApiError
 from superdesk.json_utils import SuperdeskJSONEncoder
-from superdesk.core.types import SearchRequest, SortListParam, SortParam
+from superdesk.core.types import SearchRequest, SortParam
 
 from ..app import SuperdeskAsyncApp, get_current_async_app
 from .fields import ObjectId as ObjectIdField
@@ -417,14 +420,12 @@ class AsyncResourceService(Generic[ResourceModelType]):
             logger.warning(f"Not enough iterations for resource {self.resource_name}")
 
     @overload
-    async def find(self, req: SearchRequest) -> ResourceCursorAsync[ResourceModelType]:
-        ...
+    async def find(self, req: SearchRequest) -> ResourceCursorAsync[ResourceModelType]: ...
 
     @overload
     async def find(
         self, req: dict, page: int = 1, max_results: int = 25, sort: SortParam | None = None
-    ) -> ResourceCursorAsync[ResourceModelType]:
-        ...
+    ) -> ResourceCursorAsync[ResourceModelType]: ...
 
     async def find(
         self,
@@ -562,6 +563,78 @@ class AsyncResourceService(Generic[ResourceModelType]):
             ).encode("utf-8")
         )
         return h.hexdigest()
+
+
+class AsyncCacheableService(AsyncResourceService[ResourceModelType]):
+    """
+    Handles caching for the resource, will invalidate on any changes to the resource.
+
+    Attributes:
+        resource_name (str): The name of the resource this service handles.
+        cache_lookup (dict): A dictionary to specify custom lookup parameters for caching.
+    """
+
+    cache_lookup = {}
+
+    @property
+    def cache_key(self) -> str:
+        return "cached:{}".format(self.resource_name)
+
+    def get_cache(self) -> Any:
+        """
+        Retrieve the cached value from Flask's `g` object if available.
+        """
+        return getattr(g, self.cache_key, None)
+
+    def set_cache(self, value: Any) -> None:
+        """
+        Set the cached value in Flask's `g` object.
+        """
+        setattr(g, self.cache_key, value)
+
+    async def get_cached(self) -> List[Dict[str, Any]]:
+        """
+        Retrieve cached data for the resource. If the cache is empty, fetches data from the database
+        and sets it in the cache. The cache is automatically refreshed with a time-to-live (TTL).
+
+        Returns:
+            List[Dict[str, Any]]: A list of dictionaries containing the cached data.
+        """
+
+        @cache(
+            ttl=3600 + random.randrange(1, 300),
+            tags=(self.resource_name,),
+            key=lambda fn: f"_cache_mixin:{self.resource_name}",
+        )
+        async def _get_cached_from_db():
+            cursor = await self.search(lookup=self.cache_lookup, use_mongo=True)
+            return await cursor.to_list_raw()
+
+        cached_data = self.get_cache()
+
+        if cached_data is None:
+            cached_data = await _get_cached_from_db()
+            self.set_cache(cached_data)
+
+        return cached_data
+
+    async def get_cached_by_id(self, _id: str):
+        """
+        Retrieve a specific resource by its ID from the cached data. If the resource is not found in
+        the cache, fetches it directly from the database.
+
+        Args:
+            _id (string): The ID of the resource to retrieve.
+
+        Returns:
+            Optional[Dict[str, Any]]: A dictionary representing the resource if found, otherwise None.
+        """
+        cached = await self.get_cached()
+        for item in cached:
+            if item.get("_id") == _id:
+                return item
+        logger.warning("Cound not find item in cache resource=%s id=%s", self.resource_name, _id)
+        return await self.find_by_id(_id)
 
 
 from .model import ResourceConfig, ResourceModel  # noqa: E402
