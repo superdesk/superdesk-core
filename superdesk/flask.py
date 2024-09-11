@@ -36,6 +36,7 @@ from quart import (
     abort,
     send_file,
 )
+from quart.cli import AppGroup
 from quart.json.provider import DefaultJSONProvider
 
 
@@ -60,4 +61,5 @@ __all__ = [
     "Request",
     "abort",
     "send_file",
+    "AppGroup",
 ]

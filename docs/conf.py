@@ -140,7 +140,7 @@ html_theme = "alabaster"
 # documentation.
 #
 html_theme_options = {
-    "description": "Superdesk server reference v1.4",
+    "description": "Superdesk v3.0.dev.0",
 }
 
 # Add any paths that contain custom themes here, relative to this directory.

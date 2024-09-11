@@ -28,7 +28,7 @@ from quart_babel import Babel
 from babel import parse_locale
 from pymongo.errors import DuplicateKeyError
 
-from quart import Quart
+from superdesk.commands import configure_cli
 from superdesk.flask import g, url_for, Config, Request as FlaskRequest, abort, Blueprint, request as flask_request
 from superdesk.celery_app import init_celery
 from superdesk.datalayer import SuperdeskDataLayer  # noqa
@@ -39,6 +39,7 @@ from superdesk.storage import ProxyMediaStorage
 from superdesk.validator import SuperdeskValidator
 from superdesk.json_utils import SuperdeskFlaskJSONProvider, SuperdeskJSONEncoder
 from superdesk.cache import cache_backend
+
 from .elastic_apm import setup_apm
 from superdesk.core.app import SuperdeskAsyncApp
 from superdesk.core.web import Endpoint, Request, EndpointGroup, HTTP_METHOD, Response
@@ -405,6 +406,10 @@ def get_app(config=None, media_storage=None, config_object=None, init_elastic=No
         app.jinja_env.filters[name] = jinja_filter
 
     configure_logging(app.config["LOG_CONFIG_FILE"])
+
+    # configure the CLI only after modules and apps have been loaded
+    # to make sure all commands are registered
+    configure_cli(app)
 
     return app
 

@@ -3,7 +3,7 @@ version: "3.2"
 # Note: this file is mainly used for tests. If you want to run Superdesk or its
 # services from docker, please use docker-compose.yml found in main Superdesk
 # repository (https://github.com/superdesk/superdesk)
-
+name: superdesk-core-services
 services:
     elastic:
         image: docker.elastic.co/elasticsearch/elasticsearch:7.17.22

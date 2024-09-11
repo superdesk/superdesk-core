@@ -18,9 +18,10 @@ import platform
 import shutil
 import bz2
 import pymongo.database
-
-from multiprocessing import Process, Lock
 import multiprocessing.synchronize
+
+from asgiref.sync import async_to_sync
+from multiprocessing import Process, Lock
 from contextlib import contextmanager
 from datetime import datetime
 from enum import IntEnum
@@ -841,8 +842,11 @@ class StorageMigrateDumps(superdesk.Command):
                     record_process.start()
                     # we have to wait for the recording to be actually started
                     lock.acquire()
+
                     # recording is started, we can launch the migration scripts
-                    data_updates.Upgrade().run()
+                    # TODO-ASYNC: remove usage of async_to_sync once this command is migrated to async
+                    async_to_sync(data_updates.upgrade_command_handler)()
+
                     # migration is done, we stop the recording
                     if record_process.pid is None:
                         logger.error("Process ID should available!")
@@ -891,7 +895,10 @@ class StorageMigrateDumps(superdesk.Command):
                 metadata = get_dump_metadata(p)
                 StorageRestore().run(keep_existing=False, dump_path=p)
                 print(f"{INFO}Applying data migration scripts")
-                data_updates.Upgrade().run()
+
+                # TODO-ASYNC: remove usage of async_to_sync once this command is migrated to async
+                async_to_sync(data_updates.upgrade_command_handler)()
+
                 print(f"{INFO}Updating dump")
                 if p.is_dir():
                     shutil.rmtree(p)
