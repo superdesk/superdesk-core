@@ -135,7 +135,138 @@ For example::
         rest_endpoints=RestEndpointConfig(),
     )
 
-    module = Module(name="tests.users")
+    module = Module(
+        name="tests.users",
+        resources=[user_resource_config],
+    )
+
+
+Resource REST Endpoint with Parent
+----------------------------------
+
+REST endpoints can also include a parent/child relationship with the resource. This is achieved using the
+:class:`RestParentLink <superdesk.core.resources.resource_rest_endpoints.RestParentLink>`
+attribute on the RestEndpointConfig.
+
+Example config::
+
+    from typing import Annotated
+    from superdesk.core.module import Module
+    from superdesk.core.resources import (
+        ResourceConfig,
+        ResourceModel,
+        RestEndpointConfig,
+        RestParentLink,
+    )
+    from superdesk.core.resources.validators import (
+        validate_data_relation_async,
+    )
+
+    # 1. Define parent resource and config
+    class Company(ResourceModel):
+        name: str
+
+    company_resource_config = ResourceConfig(
+        name="companies",
+        data_class=Company,
+        rest_endpoints=RestEndpointConfig()
+    )
+
+    # 2. Define child resource and config
+    class User(ResourceModel):
+        first_name: str
+        last_name: str
+
+        # 2a. Include a field that references the parent
+        company: Annotated[
+            str,
+            validate_data_relation_async(
+                company_resource_config.name,
+            ),
+        ]
+
+    user_resource_config = ResourceConfig(
+        name="users",
+        data_class=User,
+        rest_endpoints=RestEndpointConfig(
+
+            # 2b. Include a link to Company as a parent resource
+            parent_links=[
+                RestParentLink(
+                    resource_name=company_resource_config.name,
+                    model_id_field="company",
+                ),
+            ],
+        ),
+    )
+
+    # 3. Register the resources with a module
+    module = Module(
+        name="tests.users",
+        resources=[
+            company_resource_config,
+            user_resource_config,
+        ],
+    )
+
+
+The above example exposes the following URLs:
+
+* /api/companies
+* /api/companies/``<item_id>``
+* /api/companies/``<company>``/users
+* /api/companies/``<company>``/users/``<item_id>``
+
+As you can see the ``users`` endpoints are prefixed with ``/api/company/<company>/``.
+
+This provides the following functionality:
+
+* Validation that a Company must exist for the user
+* Populates the ``company`` field of a User with the ID from the URL
+* When searching for users, will only provide users for the specific company provided in the URL of the request
+
+For example::
+
+    async def test_users():
+        # Create the parent Company
+        response = await client.post(
+            "/api/company",
+            json={"name": "Sourcefabric"}
+        )
+
+        # Retrieve the Company ID from the response
+        company_id = (await response.get_json())[0]
+
+        # Attemps to create a user with non-existing company
+        # responds with a 404 - NotFound error
+        response = await client.post(
+            f"/api/company/blah_blah/users",
+            json={"first_name": "Monkey", "last_name": "Mania"}
+        )
+        assert response.status_code == 404
+
+        # Create the new User
+        # Notice the ``company_id`` is used in the URL
+        response = await client.post(
+            f"/api/company/{company_id}/users",
+            json={"first_name": "Monkey", "last_name": "Mania"}
+        )
+        user_id = (await response.get_json())[0]
+
+        # Retrieve the new user
+        response = await client.get(
+            f"/api/company/{company_id}/users/{user_id}"
+        )
+        user_dict = await response.get_json()
+        assert user_dict["company"] == company_id
+
+        # Retrieve all company users
+        response = await client.get(
+            f"/api/company/{company_id}/users"
+        )
+        users_dict = (await response.get_json())["_items"]
+        assert len(users_dict) == 1
+        assert users_dict[0]["_id"] == user_id
 
 
 Validation
@@ -236,6 +367,11 @@ API References
 
 
 .. autoclass:: superdesk.core.resources.resource_rest_endpoints.RestEndpointConfig
+    :member-order: bysource
+    :members:
+    :undoc-members:
+
+.. autoclass:: superdesk.core.resources.resource_rest_endpoints.RestParentLink
     :member-order: bysource
     :members:
     :undoc-members:
