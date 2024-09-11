@@ -237,19 +237,23 @@ class AsyncResourceService(Generic[ResourceModelType]):
             context={"use_objectid": True} if not self.config.query_objectid_as_string else {},
         )
 
-    async def create(self, docs: List[ResourceModelType]) -> List[str]:
+    async def create(self, docs: List[ResourceModelType | dict[str, Any]]) -> List[str]:
         """Creates a new resource
 
         Will automatically create the resource(s) in both Elasticsearch (if configured for this resource)
         and MongoDB.
 
-        :param docs: List of resources to create
+        :param docs: List of resources or dictionaries to create the registries
         :return: List of IDs for the created resources
+        :raises Pydantic.ValidationError: If any of the docs provided are not valid
         """
 
-        await self.on_create(docs)
         ids: List[str] = []
+
         for doc in docs:
+            if isinstance(doc, dict):
+                doc = self.get_model_instance_from_dict(doc)
+            await self.on_create([doc])
             await self.validate_create(doc)
             doc_dict = doc.model_dump(
                 by_alias=True,
