@@ -28,7 +28,7 @@ install_requires = [
     "celery[redis]>=5.2.7,<5.5",
     "cerberus>=1.3.2,<1.4",
     "redis>=4.5.2,<5.1",
-    "kombu>=5.2.4,<5.4",
+    "kombu>=5.2.4,<5.5",
     "feedparser>=6.0.8,<6.1",
     "hachoir<=3.3.0",
     "HermesCache>=0.10.0,<1.1.0",
@@ -46,7 +46,7 @@ install_requires = [
     "python-twitter>=3.5,<3.6",
     "chardet<6.0",
     "pymongo>=3.8,<3.12",
-    "croniter<2.1",
+    "croniter<3.1",
     "python-dateutil<2.10",
     "unidecode>=0.04.21,<=1.3.8",
     "authlib>0.14,<0.15",
@@ -103,7 +103,7 @@ setup(
     # setup_requires=["setuptools_scm"],
     install_requires=install_requires,
     extras_require={
-        "exiv2": ["pyexiv2>=2.12.0,<2.13"],
+        "exiv2": ["pyexiv2>=2.12.0,<2.15"],
     },
     classifiers=[
         "Development Status :: 4 - Beta",
