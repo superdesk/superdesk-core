@@ -85,3 +85,26 @@ class MongoClientTestCase(AsyncTestCase):
         # ``collation`` uses an ``bson.son.SON` instance, so use that for testing here
         self.assertEqual(indexes["combined_name_1"]["collation"].get("locale"), "en")
         self.assertEqual(indexes["combined_name_1"]["collation"].get("strength"), 1)
+
+
+class MongoClientSourceTestCase(AsyncTestCase):
+    app_config = {
+        "MODULES": [
+            "tests.core.modules.users",
+            "tests.core.modules.company",
+            "tests.core.modules.topics",
+        ]
+    }
+
+    def test_mongo_collection_source(self):
+        user_db = self.app.mongo.get_db("user_topic_folders")
+        user_collection = user_db.get_collection("topic_folders")
+        self.assertEqual(self.app.mongo.get_collection("user_topic_folders"), user_collection)
+        self.assertEqual(user_collection.full_name, "sptests.topic_folders")
+
+        company_db = self.app.mongo.get_db("company_topic_folders")
+        company_collection = company_db.get_collection("topic_folders")
+        self.assertEqual(self.app.mongo.get_collection("company_topic_folders"), company_collection)
+        self.assertEqual(company_collection.full_name, "sptests.topic_folders")
+
+        self.assertEqual(user_collection, company_collection)
