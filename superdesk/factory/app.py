@@ -79,6 +79,12 @@ class HttpFlaskRequest(Request):
     async def abort(self, code: int, *args: Any, **kwargs: Any) -> NoReturn:
         abort(code, *args, **kwargs)
 
+    def get_view_args(self, key: str) -> str | None:
+        return None if not self.request.view_args else self.request.view_args.get(key, None)
+
+    def get_url_arg(self, key: str) -> str | None:
+        return self.request.args.get(key, None)
+
 
 def set_error_handlers(app):
     """Set error handlers for the given application object.

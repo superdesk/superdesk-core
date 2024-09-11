@@ -36,7 +36,7 @@ from motor.motor_asyncio import AsyncIOMotorCursor
 from superdesk.errors import SuperdeskApiError
 from superdesk.utc import utcnow
 from superdesk.json_utils import SuperdeskJSONEncoder
-from superdesk.core.types import SearchRequest, SortListParam, SortParam
+from superdesk.core.types import SearchRequest, SortParam
 
 from ..app import SuperdeskAsyncApp, get_current_async_app
 from .fields import ObjectId as ObjectIdField
@@ -112,22 +112,32 @@ class AsyncResourceService(Generic[ResourceModelType]):
         data.pop("_type", None)
         return cast(ResourceModelType, self.config.data_class.model_validate(data))
 
-    async def find_one(self, **lookup) -> Optional[ResourceModelType]:
+    async def find_one_raw(self, use_mongo: bool = False, **lookup) -> dict | None:
         """Find a resource by ID
 
+        :param use_mongo: If ``True`` will force use mongo, else will attempt elastic first
         :param lookup: Dictionary of key/value pairs used to find the document
         :return: ``None`` if resource not found, otherwise an instance of ``ResourceModel`` for this resource
         """
 
         try:
-            item = await self.elastic.find_one(**lookup)
+            if not use_mongo:
+                return await self.elastic.find_one(**lookup)
         except KeyError:
-            item = await self.mongo.find_one(lookup)
+            pass
 
-        if item is None:
-            return None
+        return await self.mongo.find_one(lookup)
 
-        return self.get_model_instance_from_dict(item)
+    async def find_one(self, use_mongo: bool = False, **lookup) -> Optional[ResourceModelType]:
+        """Find a resource by ID
+
+        :param use_mongo: If ``True`` will force use mongo, else will attempt elastic first
+        :param lookup: Dictionary of key/value pairs used to find the document
+        :return: ``None`` if resource not found, otherwise an instance of ``ResourceModel`` for this resource
+        """
+
+        item = await self.find_one_raw(use_mongo=use_mongo, **lookup)
+        return None if not item else self.get_model_instance_from_dict(item)
 
     async def find_by_id(self, item_id: Union[str, ObjectId]) -> Optional[ResourceModelType]:
         """Find a resource by ID

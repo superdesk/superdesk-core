@@ -50,10 +50,11 @@ class RestEndpoints(EndpointGroup):
         self.item_methods = item_methods or ["GET", "PATCH", "DELETE"]
         self.id_param_type = id_param_type or "string"
 
+        resource_url = self.get_resource_url()
         if "GET" in self.resource_methods:
             self.endpoints.append(
                 Endpoint(
-                    url=self.url,
+                    url=resource_url,
                     name="resource_get",
                     func=self.process_get_request,
                     methods=["GET"],
@@ -63,14 +64,14 @@ class RestEndpoints(EndpointGroup):
         if "POST" in self.resource_methods:
             self.endpoints.append(
                 Endpoint(
-                    url=self.url,
+                    url=resource_url,
                     name="resource_post",
                     func=self.process_post_item_request,
                     methods=["POST"],
                 )
             )
 
-        item_url = f"{self.url}/<{self.id_param_type}:item_id>"
+        item_url = self.get_item_url()
         if "GET" in self.item_methods:
             self.endpoints.append(
                 Endpoint(
@@ -100,6 +101,12 @@ class RestEndpoints(EndpointGroup):
                     methods=["DELETE"],
                 )
             )
+
+    def get_resource_url(self):
+        return self.url
+
+    def get_item_url(self, arg_name: str = "item_id"):
+        return f"{self.get_resource_url()}/<{self.id_param_type}:{arg_name}>"
 
     async def process_get_item_request(
         self,
