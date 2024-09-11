@@ -279,7 +279,8 @@ class MongoResources:
         :raises KeyError: if a resource with the provided ``resource_name`` is not registered
         """
 
-        return self.get_db(resource_name).get_collection(resource_name)
+        source_name = self.app.resources.get_config(resource_name).datasource_name or resource_name
+        return self.get_db(resource_name).get_collection(source_name)
 
     def create_resource_indexes(self, resource_name: str, ignore_duplicate_keys=False):
         """Creates indexes for a resource
@@ -376,7 +377,9 @@ class MongoResources:
         :raises KeyError: if a resource with the provided ``resource_name`` is not registered
         """
 
-        return self.get_db_async(resource_name).get_collection(resource_name)
+        resource_config = self.app.resources.get_config(resource_name)
+        source_name = resource_config.datasource_name or resource_config.name
+        return self.get_db_async(resource_name).get_collection(source_name)
 
 
 from .app import SuperdeskAsyncApp  # noqa: E402
