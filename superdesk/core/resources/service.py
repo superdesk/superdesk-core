@@ -430,12 +430,14 @@ class AsyncResourceService(Generic[ResourceModelType]):
             logger.warning(f"Not enough iterations for resource {self.resource_name}")
 
     @overload
-    async def find(self, req: SearchRequest) -> ResourceCursorAsync[ResourceModelType]: ...
+    async def find(self, req: SearchRequest) -> ResourceCursorAsync[ResourceModelType]:
+        ...
 
     @overload
     async def find(
         self, req: dict, page: int = 1, max_results: int = 25, sort: SortParam | None = None
-    ) -> ResourceCursorAsync[ResourceModelType]: ...
+    ) -> ResourceCursorAsync[ResourceModelType]:
+        ...
 
     async def find(
         self,
