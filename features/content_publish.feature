@@ -4857,7 +4857,7 @@ Feature: Content Publishing
     Scenario: We update picture metadata on publish
       Given config update
       """
-      {"PHOTO_METADATA_MAPPING": {"slugline": "Title", "extra.transref": "JobId"}}
+      {"PICTURE_METADATA_MAPPING": {"slugline": "Title", "extra.transref": "JobId"}}
       """
       And "desks"
         """
