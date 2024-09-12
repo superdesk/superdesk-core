@@ -31,8 +31,8 @@ content_model_config = ResourceConfig(
         ],
         version_indexes=[
             MongoIndexOptions(
-                name="_id_document_1",
-                keys=[("_id_document", 1)],
+                name="uri_1",
+                keys=[("uri", 1)],
                 background=True,
                 unique=False,
             )

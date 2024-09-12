@@ -19,6 +19,7 @@ from pymongo.errors import OperationFailure, DuplicateKeyError
 from motor.motor_asyncio import AsyncIOMotorClient, AsyncIOMotorDatabase, AsyncIOMotorCollection
 
 from superdesk.core.types import SortListParam
+from superdesk.resource_fields import VERSION_ID_FIELD, CURRENT_VERSION
 from .config import ConfigModel
 
 logger = logging.getLogger(__name__)
@@ -318,16 +319,16 @@ class MongoResources:
             )
 
         if mongo_config.versioning:
-            indexes += (mongo_config.version_indexes or []) + [
+            indexes = (mongo_config.version_indexes or []) + [
                 MongoIndexOptions(
                     name="_id_document_1",
-                    keys=[("_id_document", 1)],
+                    keys=[(VERSION_ID_FIELD, 1)],
                     background=True,
                     unique=False,
                 ),
                 MongoIndexOptions(
                     name="_id_document_current_version_1",
-                    keys=[("_id_document", 1), ("_current_version", 1)],
+                    keys=[(VERSION_ID_FIELD, 1), (CURRENT_VERSION, 1)],
                     background=True,
                     unique=True,
                 ),

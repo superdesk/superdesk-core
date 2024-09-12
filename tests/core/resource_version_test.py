@@ -324,17 +324,24 @@ class ResourceVersionEndpointsTestCase(AsyncFlaskTestCase):
 
     async def test_mongo_versioned_indexes(self):
         self.app.init_indexes()
+
+        # Make sure the main collection doesn't contain any indexes from the version collection
         collection = self.async_app.mongo.get_collection_async("content_async")
         base_indexes = await collection.index_information()
+        self.assertListEqual(sorted(list(base_indexes.keys())), ["_id_", "guid"])
 
         collection = self.async_app.mongo.get_collection_async("content_async", versioning=True)
         versioned_indexes = await collection.index_information()
 
-        self.assertEqual(base_indexes.get("_id_"), versioned_indexes.get("_id_"))
-        self.assertEqual(base_indexes.get("guid"), versioned_indexes.get("guid"))
+        # Make sure the version collection only contains indexes configured for it
+        self.assertListEqual(
+            sorted(list(versioned_indexes.keys())),
+            ["_id_", "_id_document_1", "_id_document_current_version_1", "uri_1"],
+        )
         self.assertDictContains(
             versioned_indexes["_id_document_1"], dict(background=True, key=[("_id_document", 1)], sparse=True)
         )
+        self.assertDictContains(versioned_indexes["uri_1"], dict(background=True, key=[("uri", 1)], sparse=True))
         self.assertDictContains(
             versioned_indexes["_id_document_current_version_1"],
             dict(
