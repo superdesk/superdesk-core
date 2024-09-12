@@ -197,7 +197,9 @@ class ContentFilterService(CacheableService):
         if not content_filter:
             return True  # a non-existing filter matches every thing
         cache_id = _cache_id("filter-match", content_filter.get("_id") or content_filter.get("name"), article)
-        if not cache or not hasattr(flask.g, cache_id):
+        if not cache:
+            return self._does_match(content_filter, article, filters, cache)
+        elif not hasattr(flask.g, cache_id):
             setattr(flask.g, cache_id, self._does_match(content_filter, article, filters, cache))
         return getattr(flask.g, cache_id)
 
@@ -230,6 +232,8 @@ class ContentFilterService(CacheableService):
                     logger.error("Missing filter condition %s in content filter %s", f, content_filter.get("name"))
                     return False
                 filter_condition = FilterCondition.parse(fc)
+                if not cache:
+                    return filter_condition.does_match(article)
                 setattr(flask.g, cache_id, filter_condition.does_match(article))
             if not getattr(flask.g, cache_id):
                 return False
@@ -242,6 +246,8 @@ class ContentFilterService(CacheableService):
                 current_filter = (
                     filters.get("content_filters", {}).get(f, {}).get("cf") if filters else self.get_cached_by_id(f)
                 )
+                if not cache:
+                    return self.does_match(current_filter, article, filters=filters)
                 setattr(flask.g, cache_id, self.does_match(current_filter, article, filters=filters))
             if not getattr(flask.g, cache_id):
                 return False
