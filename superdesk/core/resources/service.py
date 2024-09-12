@@ -248,12 +248,12 @@ class AsyncResourceService(Generic[ResourceModelType]):
         :raises Pydantic.ValidationError: If any of the docs provided are not valid
         """
 
+        self._convert_dicts_to_model(docs)
+        await self.on_create(docs)
+
         ids: List[str] = []
 
         for doc in docs:
-            if isinstance(doc, dict):
-                doc = self.get_model_instance_from_dict(doc)
-            await self.on_create([doc])
             await self.validate_create(doc)
             doc_dict = doc.model_dump(
                 by_alias=True,
@@ -509,6 +509,11 @@ class AsyncResourceService(Generic[ResourceModelType]):
                     client_sort.append((sort_arg, 1))
 
         return client_sort
+
+    def _convert_dicts_to_model(self, docs: List[ResourceModelType | dict[str, Any]]):
+        for idx, doc in enumerate(docs):
+            if isinstance(doc, dict):
+                docs[idx] = self.get_model_instance_from_dict(doc)
 
     def validate_etag(self, original: ResourceModelType, etag: str | None) -> None:
         """Validate the provided etag against the original
