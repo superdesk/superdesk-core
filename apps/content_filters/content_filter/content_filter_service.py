@@ -193,34 +193,34 @@ class ContentFilterService(CacheableService):
             expressions_list.append({"bool": filter_conditions})
         return {"bool": expressions}
 
-    def does_match(self, content_filter, article, filters=None):
+    def does_match(self, content_filter, article, filters=None, cache=True):
         if not content_filter:
             return True  # a non-existing filter matches every thing
         cache_id = _cache_id("filter-match", content_filter.get("_id") or content_filter.get("name"), article)
-        if not hasattr(flask.g, cache_id):
-            setattr(flask.g, cache_id, self._does_match(content_filter, article, filters))
+        if not cache or not hasattr(flask.g, cache_id):
+            setattr(flask.g, cache_id, self._does_match(content_filter, article, filters, cache))
         return getattr(flask.g, cache_id)
 
-    def _does_match(self, content_filter, article, filters):
+    def _does_match(self, content_filter, article, filters, cache=True):
         for index, expression in enumerate(content_filter.get("content_filter", [])):
             if not expression.get("expression"):
                 raise SuperdeskApiError.badRequestError(
                     _("Filter statement {index} does not have a filter condition").format(index=index + 1)
                 )
             if "fc" in expression.get("expression", {}):
-                if not self._does_filter_condition_match(content_filter, article, filters, expression):
+                if not self._does_filter_condition_match(content_filter, article, filters, expression, cache):
                     continue
             if "pf" in expression.get("expression", {}):
-                if not self._does_content_filter_match(content_filter, article, filters, expression):
+                if not self._does_content_filter_match(content_filter, article, filters, expression, cache):
                     continue
             return True
         return False
 
-    def _does_filter_condition_match(self, content_filter, article, filters, expression) -> bool:
+    def _does_filter_condition_match(self, content_filter, article, filters, expression, cache=True) -> bool:
         filter_condition_service = get_resource_service("filter_conditions")
         for f in expression["expression"]["fc"]:
             cache_id = _cache_id("filter-condition-match", f, article)
-            if not hasattr(flask.g, cache_id):
+            if not cache or not hasattr(flask.g, cache_id):
                 fc = (
                     filters.get("filter_conditions", {}).get(f, {}).get("fc")
                     if filters
@@ -235,10 +235,10 @@ class ContentFilterService(CacheableService):
                 return False
         return True
 
-    def _does_content_filter_match(self, content_filter, article, filters, expression) -> bool:
+    def _does_content_filter_match(self, content_filter, article, filters, expression, cache=True) -> bool:
         for f in expression["expression"]["pf"]:
             cache_id = _cache_id("content-filter-match", f, article)
-            if not hasattr(flask.g, cache_id):
+            if not cache or not hasattr(flask.g, cache_id):
                 current_filter = (
                     filters.get("content_filters", {}).get(f, {}).get("cf") if filters else self.get_cached_by_id(f)
                 )
