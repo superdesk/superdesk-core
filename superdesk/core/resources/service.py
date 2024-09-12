@@ -12,6 +12,7 @@ import random
 from typing import (
     Optional,
     Generic,
+    Sequence,
     TypeVar,
     ClassVar,
     List,
@@ -237,7 +238,7 @@ class AsyncResourceService(Generic[ResourceModelType]):
             context={"use_objectid": True} if not self.config.query_objectid_as_string else {},
         )
 
-    async def create(self, docs: List[ResourceModelType | dict[str, Any]]) -> List[str]:
+    async def create(self, _docs: Sequence[ResourceModelType | dict[str, Any]]) -> List[str]:
         """Creates a new resource
 
         Will automatically create the resource(s) in both Elasticsearch (if configured for this resource)
@@ -248,7 +249,7 @@ class AsyncResourceService(Generic[ResourceModelType]):
         :raises Pydantic.ValidationError: If any of the docs provided are not valid
         """
 
-        self._convert_dicts_to_model(docs)
+        docs = self._convert_dicts_to_model(_docs)
         await self.on_create(docs)
 
         ids: List[str] = []
@@ -510,10 +511,8 @@ class AsyncResourceService(Generic[ResourceModelType]):
 
         return client_sort
 
-    def _convert_dicts_to_model(self, docs: List[ResourceModelType | dict[str, Any]]):
-        for idx, doc in enumerate(docs):
-            if isinstance(doc, dict):
-                docs[idx] = self.get_model_instance_from_dict(doc)
+    def _convert_dicts_to_model(self, docs: Sequence[ResourceModelType | dict[str, Any]]) -> List[ResourceModelType]:
+        return [self.get_model_instance_from_dict(doc) if isinstance(doc, dict) else doc for doc in docs]
 
     def validate_etag(self, original: ResourceModelType, etag: str | None) -> None:
         """Validate the provided etag against the original

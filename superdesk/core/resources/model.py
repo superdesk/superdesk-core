@@ -119,7 +119,7 @@ class ResourceModel(BaseModel):
         :returns: A dictionary representation of the model instance with field aliases.
                 Only fields that are set (non-default) will be included.
         """
-        default_params = {"by_alias": True, "exclude_unset": True}
+        default_params: dict[str, Any] = {"by_alias": True, "exclude_unset": True}
         default_params.update(kwargs)
         return self.model_dump(**default_params)
 
@@ -132,7 +132,7 @@ class ResourceModel(BaseModel):
         :return: A JSON-compatible dictionary representation of the model instance with field aliases.
                 Only fields that are set (non-default) will be included.
         """
-        default_params = {"by_alias": True, "exclude_unset": True}
+        default_params: dict[str, Any] = {"by_alias": True, "exclude_unset": True}
         default_params.update(kwargs)
         return self.model_dump_json(**default_params)
 

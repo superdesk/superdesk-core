@@ -8,7 +8,7 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
-from typing import List, Optional, cast, Dict, Any, TypedDict, Type
+from typing import List, Optional, cast, Dict, Any, Type
 import math
 
 from dataclasses import dataclass
