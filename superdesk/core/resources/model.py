@@ -110,6 +110,32 @@ class ResourceModel(BaseModel):
             obj["_type"] = item_type
         return instance
 
+    def to_dict(self, **kwargs) -> dict[str, Any]:
+        """
+        Convert the model instance to a dictionary representation with non-JSON-serializable Python objects.
+
+        :param kwargs: Optional keyword arguments to override the default parameters of model_dump.
+        :rtype: dict[str, Any]
+        :returns: A dictionary representation of the model instance with field aliases.
+                Only fields that are set (non-default) will be included.
+        """
+        default_params: dict[str, Any] = {"by_alias": True, "exclude_unset": True}
+        default_params.update(kwargs)
+        return self.model_dump(**default_params)
+
+    def to_json(self, **kwargs) -> str:
+        """
+        Convert the model instance to a JSON serializable dictionary.
+
+        :param kwargs: Optional keyword arguments to override the default parameters of model_dump_json.
+        :rtype: str
+        :return: A JSON-compatible dictionary representation of the model instance with field aliases.
+                Only fields that are set (non-default) will be included.
+        """
+        default_params: dict[str, Any] = {"by_alias": True, "exclude_unset": True}
+        default_params.update(kwargs)
+        return self.model_dump_json(**default_params)
+
 
 async def _run_async_validators_from_model_class(
     model_instance: Any, root_item: ResourceModel, field_name_stack: Optional[List[str]] = None

@@ -12,6 +12,7 @@ import random
 from typing import (
     Optional,
     Generic,
+    Sequence,
     TypeVar,
     ClassVar,
     List,
@@ -237,18 +238,22 @@ class AsyncResourceService(Generic[ResourceModelType]):
             context={"use_objectid": True} if not self.config.query_objectid_as_string else {},
         )
 
-    async def create(self, docs: List[ResourceModelType]) -> List[str]:
+    async def create(self, _docs: Sequence[ResourceModelType | dict[str, Any]]) -> List[str]:
         """Creates a new resource
 
         Will automatically create the resource(s) in both Elasticsearch (if configured for this resource)
         and MongoDB.
 
-        :param docs: List of resources to create
+        :param docs: List of resources or dictionaries to create the registries
         :return: List of IDs for the created resources
+        :raises Pydantic.ValidationError: If any of the docs provided are not valid
         """
 
+        docs = self._convert_dicts_to_model(_docs)
         await self.on_create(docs)
+
         ids: List[str] = []
+
         for doc in docs:
             await self.validate_create(doc)
             doc_dict = doc.model_dump(
@@ -420,12 +425,14 @@ class AsyncResourceService(Generic[ResourceModelType]):
             logger.warning(f"Not enough iterations for resource {self.resource_name}")
 
     @overload
-    async def find(self, req: SearchRequest) -> ResourceCursorAsync[ResourceModelType]: ...
+    async def find(self, req: SearchRequest) -> ResourceCursorAsync[ResourceModelType]:
+        ...
 
     @overload
     async def find(
         self, req: dict, page: int = 1, max_results: int = 25, sort: SortParam | None = None
-    ) -> ResourceCursorAsync[ResourceModelType]: ...
+    ) -> ResourceCursorAsync[ResourceModelType]:
+        ...
 
     async def find(
         self,
@@ -503,6 +510,9 @@ class AsyncResourceService(Generic[ResourceModelType]):
                     client_sort.append((sort_arg, 1))
 
         return client_sort
+
+    def _convert_dicts_to_model(self, docs: Sequence[ResourceModelType | dict[str, Any]]) -> List[ResourceModelType]:
+        return [self.get_model_instance_from_dict(doc) if isinstance(doc, dict) else doc for doc in docs]
 
     def validate_etag(self, original: ResourceModelType, etag: str | None) -> None:
         """Validate the provided etag against the original
