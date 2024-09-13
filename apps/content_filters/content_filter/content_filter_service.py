@@ -247,8 +247,8 @@ class ContentFilterService(CacheableService):
                     filters.get("content_filters", {}).get(f, {}).get("cf") if filters else self.get_cached_by_id(f)
                 )
                 if not cache:
-                    return self.does_match(current_filter, article, filters=filters)
-                setattr(flask.g, cache_id, self.does_match(current_filter, article, filters=filters))
+                    return self.does_match(current_filter, article, filters=filters, cache=cache)
+                setattr(flask.g, cache_id, self.does_match(current_filter, article, filters=filters, cache=cache))
             if not getattr(flask.g, cache_id):
                 return False
         return True
