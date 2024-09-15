@@ -336,10 +336,7 @@ class ResourceVersionEndpointsTestCase(AsyncFlaskTestCase):
         # Make sure the version collection only contains indexes configured for it
         self.assertListEqual(
             sorted(list(versioned_indexes.keys())),
-            ["_id_", "_id_document_1", "_id_document_current_version_1", "uri_1"],
-        )
-        self.assertDictContains(
-            versioned_indexes["_id_document_1"], dict(background=True, key=[("_id_document", 1)], sparse=True)
+            ["_id_", "_id_document_current_version_1", "uri_1"],
         )
         self.assertDictContains(versioned_indexes["uri_1"], dict(background=True, key=[("uri", 1)], sparse=True))
         self.assertDictContains(

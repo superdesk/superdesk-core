@@ -321,12 +321,6 @@ class MongoResources:
         if mongo_config.versioning:
             indexes = (mongo_config.version_indexes or []) + [
                 MongoIndexOptions(
-                    name="_id_document_1",
-                    keys=[(VERSION_ID_FIELD, 1)],
-                    background=True,
-                    unique=False,
-                ),
-                MongoIndexOptions(
                     name="_id_document_current_version_1",
                     keys=[(VERSION_ID_FIELD, 1), (CURRENT_VERSION, 1)],
                     background=True,
