@@ -7,7 +7,7 @@ from superdesk.utils import format_time
 from superdesk.tests import AsyncFlaskTestCase
 
 from .modules.users import UserResourceService
-from .fixtures.users import john_doe
+from .fixtures.users import john_doe, jane_doe
 
 
 NOW = utcnow()
@@ -178,18 +178,15 @@ class ResourceEndpointsTestCase(AsyncFlaskTestCase):
                 },
                 "self": {
                     "href": "api/users_async",
-                    "title": "users_async",
-                },
-                "next": {
-                    "href": "api/users_async?max_results=25&page=2",
-                    "title": "next page",
+                    "title": "User",
                 },
             },
         )
 
-        # Now add a user, and make sure hateoas & links are reflected
-        test_user = john_doe()
-        response = await self.test_client.post("/api/users_async", json=test_user)
+        # Now add 2 users, and make sure hateoas & links are reflected
+        response = await self.test_client.post("/api/users_async", json=john_doe())
+        assert response.status_code == 201
+        response = await self.test_client.post("/api/users_async", json=jane_doe())
         assert response.status_code == 201
 
         response = await self.test_client.get("/api/users_async")
@@ -199,7 +196,7 @@ class ResourceEndpointsTestCase(AsyncFlaskTestCase):
             {
                 "max_results": 25,
                 "page": 1,
-                "total": 1,
+                "total": 2,
             },
         )
         self.assertEqual(
@@ -211,14 +208,38 @@ class ResourceEndpointsTestCase(AsyncFlaskTestCase):
                 },
                 "self": {
                     "href": "api/users_async?max_results=25",
-                    "title": "users_async",
+                    "title": "User",
+                },
+            },
+        )
+
+        response = await self.test_client.get("/api/users_async?max_results=1")
+        json_data = await response.get_json()
+        self.assertEqual(
+            json_data["_meta"],
+            {
+                "max_results": 1,
+                "page": 1,
+                "total": 2,
+            },
+        )
+        self.assertEqual(
+            json_data["_links"],
+            {
+                "parent": {
+                    "href": "/",
+                    "title": "home",
+                },
+                "self": {
+                    "href": "api/users_async?max_results=1",
+                    "title": "User",
                 },
                 "next": {
-                    "href": "api/users_async?max_results=25&page=2",
+                    "href": "api/users_async?max_results=1&page=2",
                     "title": "next page",
                 },
                 "last": {
-                    "href": "api/users_async?max_results=25",
+                    "href": "api/users_async?max_results=1&page=2",
                     "title": "last page",
                 },
             },

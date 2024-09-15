@@ -9,6 +9,7 @@
 # at https://www.sourcefabric.org/superdesk/license
 
 ID_FIELD = "_id"
+VERSION_ID_FIELD = "_id_document"
 ITEM_TYPE = "type"
 ITEM_STATE = "state"
 
@@ -22,5 +23,6 @@ ERROR = "_error"
 ITEMS = "_items"
 LINKS = "_links"
 ETAG = "_etag"
-VERSION = "_current_version"
+VERSION = CURRENT_VERSION = "_current_version"
+LATEST_VERSION = "_latest_version"
 META = "_meta"

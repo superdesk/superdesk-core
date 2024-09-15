@@ -8,7 +8,7 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
-from typing import Dict, Any, Optional, Iterator, List, Tuple, Union, TypedDict
+from typing import Dict, Any, Optional, Iterator, List, Tuple, Union, TypedDict, Literal
 import ast
 
 import simplejson as json

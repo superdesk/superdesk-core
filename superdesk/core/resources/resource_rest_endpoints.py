@@ -12,11 +12,13 @@ from typing import List, Optional, cast, Dict, Any, Type
 import math
 
 from dataclasses import dataclass
-from pydantic import ValidationError
+from pydantic import ValidationError, BaseModel, NonNegativeInt
 from eve.utils import querydef
+from typing_extensions import override
 from werkzeug.datastructures import MultiDict
 
 from superdesk.core.app import get_current_async_app
+from superdesk.core.types import SearchRequest, SearchArgs, VersionParam
 from superdesk.errors import SuperdeskApiError
 from superdesk.core.types import SearchRequest, SearchArgs
 
@@ -52,6 +54,12 @@ def get_id_url_type(data_class: type[ResourceModel]) -> str:
         return 'regex("[\w,.:_-]+")'
 
 
+class ItemRequestUrlArgs(BaseModel):
+    version: VersionParam | None = None
+    page: NonNegativeInt = 1
+    max_results: NonNegativeInt = 200
+
+
 class ResourceRestEndpoints(RestEndpoints):
     """Custom EndpointGroup for REST resources"""
 
@@ -77,16 +85,42 @@ class ResourceRestEndpoints(RestEndpoints):
         self.resource_config = resource_config
         self.endpoint_config = endpoint_config
 
-    async def process_get_item_request(
+    @property
+    def service(self):
+        return get_current_async_app().resources.get_resource_service(self.resource_config.name)
+
+    @override
+    async def get_item(
         self,
         args: ItemRequestViewArgs,
-        params: None,
+        params: ItemRequestUrlArgs,
         request: Request,
     ) -> Response:
         """Processes a get single item request"""
 
-        service = get_current_async_app().resources.get_resource_service(self.resource_config.name)
-        item = await service.find_by_id_raw(args.item_id)
+        if params.version == "all":
+            items, count = await self.service.get_all_item_versions(args.item_id, params.max_results, params.page)
+            response = RestGetResponse(
+                _items=items,
+                _meta=dict(
+                    page=params.page,
+                    max_results=params.max_results,
+                    total=count,
+                ),
+                _links=self._build_hateoas(
+                    SearchRequest(
+                        max_results=params.max_results,
+                        page=params.page,
+                        args=dict(version=params.version),
+                    ),
+                    count,
+                    request,
+                ),
+            )
+            return Response(response, 200, [("X-Total-Count", count)])
+
+        item = await self.service.find_by_id_raw(args.item_id, params.version)
+
         if not item:
             raise SuperdeskApiError.notFoundError(
                 f"{self.resource_config.name} resource with ID '{args.item_id}' not found"
@@ -98,10 +132,10 @@ class ResourceRestEndpoints(RestEndpoints):
             headers=(),
         )
 
-    async def process_post_item_request(self, request: Request) -> Response:
+    async def create_item(self, request: Request) -> Response:
         """Processes a create item request"""
 
-        service = get_current_async_app().resources.get_resource_service(self.resource_config.name)
+        service = self.service
         payload = await request.get_json()
 
         if payload is None:
@@ -124,7 +158,7 @@ class ResourceRestEndpoints(RestEndpoints):
         ids = await service.create(model_instances)
         return Response(ids, 201, ())
 
-    async def process_patch_item_request(
+    async def update_item(
         self,
         args: ItemRequestViewArgs,
         params: None,
@@ -132,7 +166,6 @@ class ResourceRestEndpoints(RestEndpoints):
     ) -> Response:
         """Processes an update item request"""
 
-        service = get_current_async_app().resources.get_resource_service(self.resource_config.name)
         payload = await request.get_json()
 
         if_match = request.get_header("If-Match")
@@ -145,16 +178,16 @@ class ResourceRestEndpoints(RestEndpoints):
             raise SuperdeskApiError.badRequestError("Empty payload")
 
         try:
-            await service.update(args.item_id, payload, if_match)
+            await self.service.update(args.item_id, payload, if_match)
         except ValidationError as validation_error:
             return Response(convert_pydantic_validation_error_for_response(validation_error), 403, ())
 
         return Response({}, 200, ())
 
-    async def process_delete_item_request(self, args: ItemRequestViewArgs, params: None, request: Request) -> Response:
+    async def delete_item(self, args: ItemRequestViewArgs, params: None, request: Request) -> Response:
         """Processes a delete item request"""
 
-        service = get_current_async_app().resources.get_resource_service(self.resource_config.name)
+        service = self.service
         original = await service.find_by_id(args.item_id)
 
         if not original:
@@ -171,7 +204,7 @@ class ResourceRestEndpoints(RestEndpoints):
         await service.delete(original, if_match)
         return Response({}, 204, ())
 
-    async def process_get_request(
+    async def search_items(
         self,
         args: None,
         params: SearchRequest,
@@ -179,9 +212,8 @@ class ResourceRestEndpoints(RestEndpoints):
     ) -> Response:
         """Processes a search request"""
 
-        service = get_current_async_app().resources.get_resource_service(self.resource_config.name)
         params.args = cast(SearchArgs, params.model_extra)
-        cursor = await service.find(params)
+        cursor = await self.service.find(params)
         count = await cursor.count()
 
         response = RestGetResponse(
@@ -195,7 +227,7 @@ class ResourceRestEndpoints(RestEndpoints):
 
         status = 200
         headers = [("X-Total-Count", count)]
-        response["_links"] = self._build_hateoas(self.resource_config.name, params, count, request)
+        response["_links"] = self._build_hateoas(params, count, request)
         response["_meta"] = dict(
             page=params.page,
             max_results=params.max_results,
@@ -206,16 +238,14 @@ class ResourceRestEndpoints(RestEndpoints):
 
         return Response(response, status, headers)
 
-    def _build_hateoas(
-        self, resource_name: str, req: SearchRequest, doc_count: Optional[int], request: Request
-    ) -> Dict[str, Any]:
+    def _build_hateoas(self, req: SearchRequest, doc_count: Optional[int], request: Request) -> Dict[str, Any]:
         links = {
             "parent": {
                 "title": "home",
                 "href": "/",
             },
             "self": {
-                "title": resource_name,  # TODO: Get Resource Title,
+                "title": self.resource_config.title or self.resource_config.data_class.__name__,
                 "href": request.path.strip("/"),
             },
         }
@@ -236,18 +266,19 @@ class ResourceRestEndpoints(RestEndpoints):
             if key not in default_params
         )
 
-        q = querydef(req.max_results, req.where, req.sort, None, req.page, other_params)
+        version = (req.args or {}).get("version")
+        q = querydef(req.max_results, req.where, req.sort, version, req.page, other_params)
 
         if doc_count:
             links["self"]["href"] += q
 
         pagination_ink = links["self"]["href"].split("?")[0]
-        if req.page * req.max_results >= (doc_count or 0):
+        if req.page * req.max_results < (doc_count or 0):
             q = querydef(
                 req.max_results,
                 req.where,
                 req.sort,
-                None,
+                version,
                 req.page + 1,
                 other_params,
             )
@@ -259,7 +290,7 @@ class ResourceRestEndpoints(RestEndpoints):
                     req.max_results,
                     req.where,
                     req.sort,
-                    None,
+                    version,
                     last_page,
                     other_params,
                 )
@@ -273,7 +304,7 @@ class ResourceRestEndpoints(RestEndpoints):
                 req.max_results,
                 req.where,
                 req.sort,
-                None,
+                version,
                 req.page - 1,
                 other_params,
             )
