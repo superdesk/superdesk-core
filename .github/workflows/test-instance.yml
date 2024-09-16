@@ -10,6 +10,9 @@ jobs:
       matrix:
         python-version: ['3.10']
 
+    env:
+      SKIP_SERVER_INSTALL: true
+
     services:
       mongodb:
         image: mongo:6
@@ -44,7 +47,5 @@ jobs:
       run: |
         python manage.py app:initialize_data
         python manage.py users:create -u admin -p admin -e admin@example.com --admin
-        # python manage.py data:upgrade # until we decide what to do
+        python manage.py data:upgrade
         python manage.py schema:migrate
-
-
