@@ -145,7 +145,9 @@ class AsyncResourceService(Generic[ResourceModelType]):
 
         return item
 
-    async def find_one(self, use_mongo: bool = False, version: int | None = None, **lookup) -> Optional[ResourceModelType]:
+    async def find_one(
+        self, use_mongo: bool = False, version: int | None = None, **lookup
+    ) -> Optional[ResourceModelType]:
         """Find a resource by ID
 
         :param use_mongo: If ``True`` will force use mongo, else will attempt elastic first

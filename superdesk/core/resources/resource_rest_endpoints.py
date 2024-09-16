@@ -175,7 +175,7 @@ class ResourceRestEndpoints(RestEndpoints):
             item_id = request.get_view_args(parent_link.get_url_arg_name())
             if not item_id:
                 raise SuperdeskApiError.badRequestError("Parent resource ID not provided in URL")
-            item = await service.find_one_raw(use_mongo=True, **{parent_link.parent_id_field: item_id})
+            item = await service.find_one_raw(use_mongo=True, version=None, **{parent_link.parent_id_field: item_id})
             if not item:
                 raise SuperdeskApiError.notFoundError(
                     f"Parent resource {parent_link.resource_name} with ID '{item_id}' not found"
