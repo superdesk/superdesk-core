@@ -219,7 +219,7 @@ class MongoResources:
 
     def get_collection_name(self, resource_name: str, versioning: bool = False) -> str:
         try:
-            source_name = self.app.resources.get_config(resource_name).datasource_name
+            source_name = self.app.resources.get_config(resource_name).datasource_name or resource_name
         except KeyError as _e:
             source_name = resource_name
         return source_name if not versioning else f"{source_name}_versions"
