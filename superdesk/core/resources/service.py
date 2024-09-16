@@ -12,6 +12,7 @@ import random
 from typing import (
     Optional,
     Generic,
+    Sequence,
     TypeVar,
     ClassVar,
     List,
@@ -20,8 +21,6 @@ from typing import (
     AsyncIterable,
     Union,
     cast,
-    Tuple,
-    Literal,
     overload,
 )
 import logging
@@ -34,12 +33,13 @@ from bson import ObjectId, UuidRepresentation
 from bson.json_util import dumps, DEFAULT_JSON_OPTIONS
 from motor.motor_asyncio import AsyncIOMotorCursor
 
+from superdesk.core.types import SearchRequest, SortListParam, SortParam
 from superdesk.flask import g
 from superdesk.utc import utcnow
 from superdesk.cache import cache
 from superdesk.errors import SuperdeskApiError
 from superdesk.json_utils import SuperdeskJSONEncoder
-from superdesk.core.types import SearchRequest, SortParam
+from superdesk.resource_fields import ID_FIELD, VERSION_ID_FIELD, CURRENT_VERSION, LATEST_VERSION
 
 from ..app import SuperdeskAsyncApp, get_current_async_app
 from .fields import ObjectId as ObjectIdField
@@ -95,6 +95,10 @@ class AsyncResourceService(Generic[ResourceModelType]):
         return self.app.mongo.get_collection_async(self.resource_name)
 
     @property
+    def mongo_versioned(self):
+        return self.app.mongo.get_collection_async(self.resource_name, True)
+
+    @property
     def elastic(self):
         """Returns instance of ``ElasticResourceAsyncClient`` for this resource
 
@@ -115,31 +119,42 @@ class AsyncResourceService(Generic[ResourceModelType]):
         data.pop("_type", None)
         return cast(ResourceModelType, self.config.data_class.model_validate(data))
 
-    async def find_one_raw(self, use_mongo: bool = False, **lookup) -> dict | None:
+    async def find_one_raw(self, use_mongo: bool = False, version: int | None = None, **lookup) -> dict | None:
         """Find a resource by ID
 
         :param use_mongo: If ``True`` will force use mongo, else will attempt elastic first
+        :param version: Optional version to get
         :param lookup: Dictionary of key/value pairs used to find the document
         :return: ``None`` if resource not found, otherwise an instance of ``ResourceModel`` for this resource
         """
 
+        item = None
         try:
             if not use_mongo:
-                return await self.elastic.find_one(**lookup)
+                item = await self.elastic.find_one(**lookup)
         except KeyError:
             pass
 
-        return await self.mongo.find_one(lookup)
+        if use_mongo or item is None:
+            item = await self.mongo.find_one(lookup)
 
-    async def find_one(self, use_mongo: bool = False, **lookup) -> Optional[ResourceModelType]:
+        if item is None:
+            return None
+        elif version is not None:
+            item = await self.get_item_version(item, version)
+
+        return item
+
+    async def find_one(self, use_mongo: bool = False, version: int | None = None, **lookup) -> Optional[ResourceModelType]:
         """Find a resource by ID
 
         :param use_mongo: If ``True`` will force use mongo, else will attempt elastic first
+        :param version: Optional version to get
         :param lookup: Dictionary of key/value pairs used to find the document
         :return: ``None`` if resource not found, otherwise an instance of ``ResourceModel`` for this resource
         """
 
-        item = await self.find_one_raw(use_mongo=use_mongo, **lookup)
+        item = await self.find_one_raw(use_mongo=use_mongo, version=version, **lookup)
         return None if not item else self.get_model_instance_from_dict(item)
 
     async def find_by_id(self, item_id: Union[str, ObjectId]) -> Optional[ResourceModelType]:
@@ -152,10 +167,13 @@ class AsyncResourceService(Generic[ResourceModelType]):
         item = await self.find_by_id_raw(item_id)
         return None if item is None else self.get_model_instance_from_dict(item)
 
-    async def find_by_id_raw(self, item_id: Union[str, ObjectId]) -> Optional[Dict[str, Any]]:
+    async def find_by_id_raw(
+        self, item_id: Union[str, ObjectId], version: int | None = None
+    ) -> Optional[Dict[str, Any]]:
         """Find a resource by ID
 
         :param item_id: ID of item to find
+        :param version: Optional version to get
         :return: ``None`` if resource not found, otherwise a dictionary of the item
         """
 
@@ -168,7 +186,7 @@ class AsyncResourceService(Generic[ResourceModelType]):
         if item is None:
             return None
 
-        return item
+        return item if version is None else await self.get_item_version(item, version)
 
     async def search(self, lookup: Dict[str, Any], use_mongo=False) -> ResourceCursorAsync[ResourceModelType]:
         """Search the resource using the provided ``lookup``
@@ -247,20 +265,27 @@ class AsyncResourceService(Generic[ResourceModelType]):
             context={"use_objectid": True} if not self.config.query_objectid_as_string else {},
         )
 
-    async def create(self, docs: List[ResourceModelType]) -> List[str]:
+    async def create(self, _docs: Sequence[ResourceModelType | dict[str, Any]]) -> List[str]:
         """Creates a new resource
 
         Will automatically create the resource(s) in both Elasticsearch (if configured for this resource)
         and MongoDB.
 
-        :param docs: List of resources to create
+        :param docs: List of resources or dictionaries to create the registries
         :return: List of IDs for the created resources
+        :raises Pydantic.ValidationError: If any of the docs provided are not valid
         """
 
+        docs = self._convert_dicts_to_model(_docs)
         await self.on_create(docs)
+
         ids: List[str] = []
+
         for doc in docs:
             await self.validate_create(doc)
+            versioned_model = get_versioned_model(doc)
+            if versioned_model is not None:
+                versioned_model.current_version = 1
             doc_dict = doc.model_dump(
                 by_alias=True,
                 exclude_unset=True,
@@ -273,8 +298,21 @@ class AsyncResourceService(Generic[ResourceModelType]):
                 await self.elastic.insert([doc_dict])
             except KeyError:
                 pass
+
+            if self.config.versioning:
+                await self.mongo_versioned.insert_one(self._get_versioned_document(doc_dict))
+
         await self.on_created(docs)
         return ids
+
+    def _get_versioned_document(self, doc_dict: dict[str, Any]) -> dict[str, Any]:
+        versioned_doc = doc_dict.copy()
+        versioned_doc["_id_document"] = versioned_doc.pop("_id", None)
+
+        for field in self.config.ignore_fields_in_versions or []:
+            versioned_doc.pop(field, None)
+
+        return versioned_doc
 
     async def on_created(self, docs: List[ResourceModelType]) -> None:
         """Hook to run after creating new resource(s)
@@ -293,6 +331,9 @@ class AsyncResourceService(Generic[ResourceModelType]):
         """
 
         updates.setdefault("_updated", utcnow())
+        versioned_original = get_versioned_model(original)
+        if versioned_original:
+            updates["_current_version"] = (versioned_original.current_version or 0) + 1
 
     async def update(self, item_id: Union[str, ObjectId], updates: Dict[str, Any], etag: str | None = None) -> None:
         """Updates an existing resource
@@ -315,11 +356,22 @@ class AsyncResourceService(Generic[ResourceModelType]):
         validated_updates = await self.validate_update(updates, original, etag)
         updates_dict = {key: val for key, val in validated_updates.items() if key in updates}
         updates["_etag"] = updates_dict["_etag"] = self.generate_etag(validated_updates, self.config.etag_ignore_fields)
+
+        # Remove the ``_latest_version`` in case the client sent this to us
+        # as we populate that on fetch of a version
+
+        if model_has_versions(original):
+            updates.pop("_latest_version", None)
+            updates_dict.pop("_latest_version", None)
         response = await self.mongo.update_one({"_id": item_id}, {"$set": updates_dict})
         try:
             await self.elastic.update(item_id, updates_dict)
         except KeyError:
             pass
+
+        if self.config.versioning:
+            await self.mongo_versioned.insert_one(self._get_versioned_document(validated_updates))
+
         await self.on_updated(updates, original)
 
     async def on_updated(self, updates: Dict[str, Any], original: ResourceModelType) -> None:
@@ -476,45 +528,51 @@ class AsyncResourceService(Generic[ResourceModelType]):
         except KeyError:
             return await self._mongo_find(search_request)
 
-    async def _mongo_find(self, req: SearchRequest) -> MongoResourceCursorAsync:
-        args: Dict[str, Any] = {}
+    async def _mongo_find(self, req: SearchRequest, versioned: bool = False) -> MongoResourceCursorAsync:
+        kwargs: Dict[str, Any] = {}
 
         if req.max_results:
-            args["limit"] = req.max_results
+            kwargs["limit"] = req.max_results
         if req.page > 1:
-            args["skip"] = (req.page - 1) * req.max_results
+            kwargs["skip"] = (req.page - 1) * req.max_results
 
-        sort = self._convert_req_to_mongo_sort(req)
-        if sort:
-            args["sort"] = sort
+        if req.sort:
+            sort = req.sort if isinstance(req.sort, list) else self._convert_req_to_mongo_sort(req.sort)
+            if sort:
+                kwargs["sort"] = sort
 
-        where = json.loads(req.where) if isinstance(req.where, str) else (req.where or {})
-        args["filter"] = where
+        where = json.loads(req.where or "{}") if isinstance(req.where, str) else req.where
+        kwargs["filter"] = where
 
-        cursor = self.mongo.find(**args)
+        cursor = self.mongo.find(**kwargs) if not versioned else self.mongo_versioned.find(**kwargs)
 
-        return MongoResourceCursorAsync(self.config.data_class, self.mongo, cursor, where)
+        return MongoResourceCursorAsync(
+            self.config.data_class, self.mongo if not versioned else self.mongo_versioned, cursor, where
+        )
 
-    def _convert_req_to_mongo_sort(self, req: SearchRequest) -> List[Tuple[str, Literal[1, -1]]]:
-        if not req.sort:
+    def _convert_req_to_mongo_sort(self, sort: SortParam | None) -> SortListParam:
+        if not sort:
             return []
-        elif isinstance(req.sort, list):
-            return req.sort
+        elif isinstance(sort, list):
+            return sort
 
-        client_sort: List[Tuple[str, Literal[1, -1]]] = []
+        client_sort: SortListParam = []
         try:
             # assume it's mongo syntax, i.e. ?sort=[("name", 1)]
-            client_sort = ast.literal_eval(req.sort)
+            client_sort = ast.literal_eval(sort)
         except ValueError:
             # It's not mongo so let's see if it's a comma delimited string
             # instead, i.e. "?sort=-age, name"
-            for sort_arg in [s.strip() for s in req.sort.split(",")]:
+            for sort_arg in [s.strip() for s in sort.split(",")]:
                 if sort_arg[0] == "-":
                     client_sort.append((sort_arg[1:], -1))
                 else:
                     client_sort.append((sort_arg, 1))
 
         return client_sort
+
+    def _convert_dicts_to_model(self, docs: Sequence[ResourceModelType | dict[str, Any]]) -> List[ResourceModelType]:
+        return [self.get_model_instance_from_dict(doc) if isinstance(doc, dict) else doc for doc in docs]
 
     def validate_etag(self, original: ResourceModelType, etag: str | None) -> None:
         """Validate the provided etag against the original
@@ -575,6 +633,57 @@ class AsyncResourceService(Generic[ResourceModelType]):
             ).encode("utf-8")
         )
         return h.hexdigest()
+
+    async def get_all_item_versions(
+        self, item_id: str, max_results: int = 200, page: int = 1
+    ) -> tuple[list[dict], int]:
+        if not self.config.versioning:
+            raise SuperdeskApiError.badRequestError("Resource does not support versioning")
+
+        item: dict | None = await self.mongo.find_one({ID_FIELD: item_id})
+        if not item:
+            raise SuperdeskApiError.notFoundError()
+
+        items: list[dict] = []
+
+        req = SearchRequest(
+            where={VERSION_ID_FIELD: item[ID_FIELD]}, max_results=max_results, page=page, sort=[(CURRENT_VERSION, 1)]
+        )
+
+        cursor = await self._mongo_find(req, versioned=True)
+        versioned_item = await cursor.next_raw()
+        while versioned_item is not None:
+            self.convert_versioned_item_for_response(item, versioned_item)
+            items.append(versioned_item)
+            versioned_item = await cursor.next_raw()
+
+        return items, await cursor.count()
+
+    async def get_item_version(self, item: dict, version: int) -> dict:
+        if not self.config.versioning:
+            raise SuperdeskApiError.badRequestError("Resource does not support versioning")
+
+        versioned_item: dict | None = await self.mongo_versioned.find_one(
+            {
+                VERSION_ID_FIELD: item[ID_FIELD],
+                CURRENT_VERSION: version,
+            }
+        )
+        if not versioned_item:
+            raise SuperdeskApiError.notFoundError()
+
+        self.convert_versioned_item_for_response(item, versioned_item)
+        return versioned_item
+
+    def convert_versioned_item_for_response(self, item: dict, versioned_item: dict):
+        versioned_item.update(
+            {
+                ID_FIELD: versioned_item.pop(VERSION_ID_FIELD),
+                LATEST_VERSION: item[CURRENT_VERSION],
+            }
+        )
+        if self.config.ignore_fields_in_versions:
+            versioned_item.update({key: item[key] for key in self.config.ignore_fields_in_versions if item.get(key)})
 
 
 class AsyncCacheableService(AsyncResourceService[ResourceModelType]):
@@ -649,4 +758,4 @@ class AsyncCacheableService(AsyncResourceService[ResourceModelType]):
         return await self.find_by_id(_id)
 
 
-from .model import ResourceConfig, ResourceModel  # noqa: E402
+from .model import ResourceConfig, ResourceModel, get_versioned_model, model_has_versions  # noqa: E402

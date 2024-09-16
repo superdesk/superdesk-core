@@ -8,7 +8,7 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
-from typing import List, Optional
+from typing import List, Optional, Any
 
 from pydantic import BaseModel
 
@@ -56,7 +56,7 @@ class RestEndpoints(EndpointGroup):
                 Endpoint(
                     url=resource_url,
                     name="resource_get",
-                    func=self.process_get_request,
+                    func=self.search_items,
                     methods=["GET"],
                 )
             )
@@ -66,7 +66,7 @@ class RestEndpoints(EndpointGroup):
                 Endpoint(
                     url=resource_url,
                     name="resource_post",
-                    func=self.process_post_item_request,
+                    func=self.create_item,
                     methods=["POST"],
                 )
             )
@@ -77,7 +77,7 @@ class RestEndpoints(EndpointGroup):
                 Endpoint(
                     url=item_url,
                     name="item_get",
-                    func=self.process_get_item_request,
+                    func=self.get_item,
                     methods=["GET"],
                 )
             )
@@ -87,7 +87,7 @@ class RestEndpoints(EndpointGroup):
                 Endpoint(
                     url=item_url,
                     name="item_patch",
-                    func=self.process_patch_item_request,
+                    func=self.update_item,
                     methods=["PATCH"],
                 )
             )
@@ -97,7 +97,7 @@ class RestEndpoints(EndpointGroup):
                 Endpoint(
                     url=item_url,
                     name="item_delete",
-                    func=self.process_delete_item_request,
+                    func=self.delete_item,
                     methods=["DELETE"],
                 )
             )
@@ -108,22 +108,22 @@ class RestEndpoints(EndpointGroup):
     def get_item_url(self, arg_name: str = "item_id"):
         return f"{self.get_resource_url()}/<{self.id_param_type}:{arg_name}>"
 
-    async def process_get_item_request(
+    async def get_item(
         self,
         args: ItemRequestViewArgs,
-        params: None,
+        params: Any,
         request: Request,
     ) -> Response:
         """Processes a get single item request"""
 
         raise NotImplementedError()
 
-    async def process_post_item_request(self, request: Request) -> Response:
+    async def create_item(self, request: Request) -> Response:
         """Processes a create item request"""
 
         raise NotImplementedError()
 
-    async def process_patch_item_request(
+    async def update_item(
         self,
         args: ItemRequestViewArgs,
         params: None,
@@ -133,12 +133,12 @@ class RestEndpoints(EndpointGroup):
 
         raise NotImplementedError()
 
-    async def process_delete_item_request(self, args: ItemRequestViewArgs, params: None, request: Request) -> Response:
+    async def delete_item(self, args: ItemRequestViewArgs, params: None, request: Request) -> Response:
         """Processes a delete item request"""
 
         raise NotImplementedError()
 
-    async def process_get_request(
+    async def search_items(
         self,
         args: None,
         params: SearchRequest,

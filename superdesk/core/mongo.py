@@ -8,7 +8,7 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
-from typing import Dict, List, Optional, Literal, Tuple, Any, TypedDict
+from typing import Dict, List, Optional, Tuple, Any, TypedDict
 from dataclasses import dataclass, asdict
 from copy import deepcopy
 import logging
@@ -18,6 +18,8 @@ from pymongo.database import Database, Collection
 from pymongo.errors import OperationFailure, DuplicateKeyError
 from motor.motor_asyncio import AsyncIOMotorClient, AsyncIOMotorDatabase, AsyncIOMotorCollection
 
+from superdesk.core.types import SortListParam
+from superdesk.resource_fields import VERSION_ID_FIELD, CURRENT_VERSION
 from .config import ConfigModel
 
 logger = logging.getLogger(__name__)
@@ -47,7 +49,7 @@ class MongoIndexOptions:
     name: str
 
     #: List of keys to be used for the MongoDB Index
-    keys: List[Tuple[str, Literal[1, -1]]]
+    keys: SortListParam
 
     #: Ensures that the indexed fields do not store duplicate values
     unique: bool = True
@@ -74,6 +76,9 @@ class MongoResourceConfig:
 
     #: Optional list of mongo indexes to be created for this resource
     indexes: Optional[List[MongoIndexOptions]] = None
+
+    #: Optional list of mongo indexes to be created for the versioning resource
+    version_indexes: Optional[List[MongoIndexOptions]] = None
 
     #: Boolean determining if this resource supports versioning
     versioning: bool = False
@@ -211,7 +216,10 @@ class MongoResources:
         """
 
         return deepcopy(self._resource_configs)
-        # return deepcopy(list(self._resource_configs.values()))
+
+    def get_collection_name(self, resource_name: str, versioning: bool = False) -> str:
+        source_name = self.app.resources.get_config(resource_name).datasource_name or resource_name
+        return source_name if not versioning else f"{source_name}_versions"
 
     def reset_all_async_connections(self):
         for client, _db in self._mongo_clients_async.values():
@@ -240,105 +248,132 @@ class MongoResources:
         self._resource_configs.clear()
 
     # sync access
-    def get_client(self, resource_name: str) -> Tuple[MongoClient, Database]:
+    def get_client(self, resource_name: str, versioning: bool = False) -> Tuple[MongoClient, Database]:
         """Get a synchronous client and a database connection from a registered resource
 
         Caches the client connection based on the ``resource_name``, so subsequent calls re-use the same
         connection.
 
+        :param resource_name: The name of the registered resource
+        :param versioning: If ``True``, will provide client to the versioned collection
         :raises KeyError: if a resource with the provided ``resource_name`` is not registered
         """
 
-        resource_config = self.get_resource_config(resource_name)
+        mongo_config = self.get_resource_config(resource_name)
+        if versioning and not mongo_config.versioning:
+            raise RuntimeError("Attempting to get version client on a resource where it's disabled")
 
-        if not self._mongo_clients.get(resource_config.prefix):
-            client_config, dbname = get_mongo_client_config(self.app.wsgi.config, resource_config.prefix)
+        if not self._mongo_clients.get(mongo_config.prefix):
+            client_config, dbname = get_mongo_client_config(self.app.wsgi.config, mongo_config.prefix)
             client: MongoClient = MongoClient(**client_config)
-            db = client.get_database(dbname)
-            self._mongo_clients[resource_config.prefix] = (client, db)
+            db = client.get_database(dbname if not versioning else f"{dbname}_versions")
+            self._mongo_clients[mongo_config.prefix] = (client, db)
 
-        return self._mongo_clients[resource_config.prefix]
+        return self._mongo_clients[mongo_config.prefix]
 
-    def get_db(self, resource_name: str) -> Database:
+    def get_db(self, resource_name: str, versioning: bool = False) -> Database:
         """Get a synchronous database connection from a registered resource
 
         Caches the database connection based on the ``resource_name``, so subsequent calls re-use the same
         connection.
 
+        :param resource_name: The name of the registered resource
+        :param versioning: If ``True``, will provide client to the versioned collection
         :raises KeyError: if a resource with the provided ``resource_name`` is not registered
         """
 
-        return self.get_client(resource_name)[1]
+        return self.get_client(resource_name, versioning)[1]
 
-    def get_collection(self, resource_name) -> Collection:
+    def get_collection(self, resource_name, versioning: bool = False) -> Collection:
         """Get a collection connection from a registered resource
 
         Caches the database connection based on the ``resource_name``, so subsequent calls re-use the same
         connection.
 
+        :param resource_name: The name of the registered resource
+        :param versioning: If ``True``, will provide client to the versioned collection
         :raises KeyError: if a resource with the provided ``resource_name`` is not registered
         """
 
-        source_name = self.app.resources.get_config(resource_name).datasource_name or resource_name
-        return self.get_db(resource_name).get_collection(source_name)
+        return self.get_db(resource_name, versioning).get_collection(
+            self.get_collection_name(resource_name, versioning)
+        )
 
     def create_resource_indexes(self, resource_name: str, ignore_duplicate_keys=False):
         """Creates indexes for a resource
 
-        If the resource config has ``versioning == True``, then a second index with suffix ``_versions``
-        will be created.
+        If the resource config has ``versioning == True``, then indexes will also be created for the
+        versioning collection.
 
+        :param resource_name: The name of the registered resource
+        :param ignore_duplicate_keys: If ``True``, will ignore duplicate key errors
         :raises KeyError: if a resource with the provided ``resource_name`` is not registered
         """
 
-        resource_config = self.get_resource_config(resource_name)
-        db = self.get_client(resource_name)[1]
-        collection_names = (
-            [resource_name] if not resource_config.versioning else [resource_name, f"{resource_name}_versions"]
-        )
+        mongo_config = self.get_resource_config(resource_name)
+        indexes = mongo_config.indexes or []
+        if indexes:
+            self.create_collection_indexes(
+                self.get_collection(resource_name, versioning=False),
+                indexes,
+                ignore_duplicate_keys,
+            )
 
-        for collection_name in collection_names:
-            collection = db.get_collection(collection_name)
-            if resource_config.indexes is None:
-                continue
-            for index_details in resource_config.indexes:
-                keys = [
-                    # (key.name, key.direction) if key.direction is not None else key.name
-                    (key[0], key[1])
-                    for key in index_details.keys
-                ]
-                kwargs = {key: val for key, val in asdict(index_details).items() if key != "keys" and val is not None}
+        if mongo_config.versioning:
+            indexes = (mongo_config.version_indexes or []) + [
+                MongoIndexOptions(
+                    name="_id_document_current_version_1",
+                    keys=[(VERSION_ID_FIELD, 1), (CURRENT_VERSION, 1)],
+                    background=True,
+                    unique=True,
+                ),
+            ]
 
-                try:
+            self.create_collection_indexes(
+                self.get_collection(resource_name, versioning=True),
+                indexes,
+                ignore_duplicate_keys,
+            )
+
+    def create_collection_indexes(
+        self, collection: Collection, indexes: List[MongoIndexOptions], ignore_duplicate_keys: bool = False
+    ):
+        for index_details in indexes:
+            keys = [(key[0], key[1]) for key in index_details.keys]
+            kwargs = {key: val for key, val in asdict(index_details).items() if key != "keys" and val is not None}
+
+            try:
+                collection.create_index(keys, **kwargs)
+            except DuplicateKeyError as err:
+                # Duplicate key for unique indexes are generally caused by invalid documents in the collection
+                # such as multiple documents not having a value for the attribute used for the index
+                # Log the error so it can be diagnosed and fixed
+                logger.exception(err)
+
+                if not ignore_duplicate_keys:
+                    raise
+            except OperationFailure as e:
+                if e.code in (85, 86):
+                    # raised when the definition of the index has been changed.
+                    # (https://github.com/mongodb/mongo/blob/master/src/mongo/base/error_codes.err#L87)
+
+                    # by default, drop the old index with old configuration and
+                    # create the index again with the new configuration.
+                    collection.drop_index(index_details.name)
                     collection.create_index(keys, **kwargs)
-                except DuplicateKeyError as err:
-                    # Duplicate key for unique indexes are generally caused by invalid documents in the collection
-                    # such as multiple documents not having a value for the attribute used for the index
-                    # Log the error so it can be diagnosed and fixed
-                    logger.exception(err)
-
-                    if not ignore_duplicate_keys:
-                        raise
-                except OperationFailure as e:
-                    if e.code in (85, 86):
-                        # raised when the definition of the index has been changed.
-                        # (https://github.com/mongodb/mongo/blob/master/src/mongo/base/error_codes.err#L87)
-
-                        # by default, drop the old index with old configuration and
-                        # create the index again with the new configuration.
-                        collection.drop_index(index_details.name)
-                        collection.create_index(keys, **kwargs)
-                    else:
-                        raise
+                else:
+                    raise
 
     def create_indexes_for_all_resources(self):
         """Creates indexes for all registered resources"""
 
-        for resource_name, resource_config in self.get_all_resource_configs().items():
+        for resource_name in self.get_all_resource_configs().keys():
             self.create_resource_indexes(resource_name)
 
     # Async access
-    def get_client_async(self, resource_name: str) -> Tuple[AsyncIOMotorClient, AsyncIOMotorDatabase]:
+    def get_client_async(
+        self, resource_name: str, versioning: bool = False
+    ) -> Tuple[AsyncIOMotorClient, AsyncIOMotorDatabase]:
         """Get an asynchronous client and a database connection from a registered resource
 
         Caches the client connection based on the ``resource_name``, so subsequent calls re-use the same
@@ -347,17 +382,19 @@ class MongoResources:
         :raises KeyError: if a resource with the provided ``resource_name`` is not registered
         """
 
-        resource_config = self.get_resource_config(resource_name)
+        mongo_config = self.get_resource_config(resource_name)
+        if versioning and not mongo_config.versioning:
+            raise RuntimeError("Attempting to get version client on a resource where it's disabled")
 
-        if not self._mongo_clients_async.get(resource_config.prefix):
-            client_config, dbname = get_mongo_client_config(self.app.wsgi.config, resource_config.prefix)
+        if not self._mongo_clients_async.get(mongo_config.prefix):
+            client_config, dbname = get_mongo_client_config(self.app.wsgi.config, mongo_config.prefix)
             client = AsyncIOMotorClient(**client_config)
-            db = client.get_database(dbname)
-            self._mongo_clients_async[resource_config.prefix] = (client, db)
+            db = client.get_database(dbname if not versioning else f"{dbname}_versions")
+            self._mongo_clients_async[mongo_config.prefix] = (client, db)
 
-        return self._mongo_clients_async[resource_config.prefix]
+        return self._mongo_clients_async[mongo_config.prefix]
 
-    def get_db_async(self, resource_name: str) -> AsyncIOMotorDatabase:
+    def get_db_async(self, resource_name: str, versioning: bool = False) -> AsyncIOMotorDatabase:
         """Get an asynchronous database connection from a registered resource
 
         Caches the database connection based on the ``resource_name``, so subsequent calls re-use the same
@@ -366,9 +403,9 @@ class MongoResources:
         :raises KeyError: if a resource with the provided ``resource_name`` is not registered
         """
 
-        return self.get_client_async(resource_name)[1]
+        return self.get_client_async(resource_name, versioning)[1]
 
-    def get_collection_async(self, resource_name: str) -> AsyncIOMotorCollection:
+    def get_collection_async(self, resource_name: str, versioning: bool = False) -> AsyncIOMotorCollection:
         """Get an asynchronous collection connection from a registered resource
 
         Caches the database connection based on the ``resource_name``, so subsequent calls re-use the same
@@ -377,9 +414,9 @@ class MongoResources:
         :raises KeyError: if a resource with the provided ``resource_name`` is not registered
         """
 
-        resource_config = self.app.resources.get_config(resource_name)
-        source_name = resource_config.datasource_name or resource_config.name
-        return self.get_db_async(resource_name).get_collection(source_name)
+        return self.get_db_async(resource_name, versioning).get_collection(
+            self.get_collection_name(resource_name, versioning)
+        )
 
 
 from .app import SuperdeskAsyncApp  # noqa: E402

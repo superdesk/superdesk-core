@@ -13,7 +13,7 @@ from superdesk.tests import AsyncTestCase
 
 
 from .modules.users import UserResourceService
-from .fixtures.users import all_users, john_doe
+from .fixtures.users import all_users, john_doe, john_doe_dict
 
 
 NOW = utcnow()
@@ -69,6 +69,23 @@ class TestResourceService(AsyncTestCase):
             )
         )
         self.assertEqual(elastic_item, test_user_dict)
+
+    @mock.patch("superdesk.core.resources.service.utcnow", return_value=NOW)
+    async def test_create_from_dict(self, mock_utcnow):
+        test_user = john_doe_dict()
+
+        # Create the new User
+        await self.service.create([test_user])
+
+        # Test the User exists in MongoDB with correct data
+        test_user["created"] = NOW
+        test_user["updated"] = NOW
+
+        mongo_item = await self.service.find_by_id(test_user["_id"])
+        self.assertIsNotNone(mongo_item)
+        self.assertEqual(mongo_item.id, test_user["_id"])
+        self.assertEqual(mongo_item.created, test_user["created"])
+        self.assertEqual(mongo_item.updated, test_user["updated"])
 
     @mock.patch("superdesk.core.resources.service.utcnow", return_value=NOW)
     async def test_find_one(self, mock_utcnow):

@@ -27,7 +27,7 @@ from typing import (
 from inspect import signature
 
 from dataclasses import dataclass
-from pydantic import BaseModel
+from pydantic import BaseModel, ValidationError
 
 HTTP_METHOD = Literal["GET", "POST", "PATCH", "PUT", "DELETE", "HEAD", "OPTIONS"]
 
@@ -43,10 +43,10 @@ class Response:
     body: Any
 
     #: HTTP Status Code of the response
-    status_code: int
+    status_code: int = 200
 
     #: Any additional headers to be added
-    headers: Sequence
+    headers: Sequence = ()
 
 
 #: Function for use with a Endpoint registration and request processing
@@ -134,12 +134,12 @@ class Endpoint:
         self.methods = methods or ["GET"]
         self.name = name or func.__name__
 
-    def __call__(self, args: Dict[str, Any], params: Dict[str, Any], request: "Request"):
+    async def __call__(self, args: Dict[str, Any], params: Dict[str, Any], request: "Request"):
         func_params = signature(self.func).parameters
         if not len(func_params):
-            return self.func()  # type: ignore[call-arg,arg-type]
+            return await self.func()  # type: ignore[call-arg,arg-type]
         elif "args" not in func_params and "params" not in func_params:
-            return self.func(request)  # type: ignore[call-arg,arg-type]
+            return await self.func(request)  # type: ignore[call-arg,arg-type]
 
         arg_type = func_params["args"] if "args" in func_params else None
         request_args = None
@@ -153,9 +153,18 @@ class Endpoint:
             and param_type.annotation is not None
             and issubclass(param_type.annotation, BaseModel)
         ):
-            url_params = param_type.annotation.model_validate(params)
+            try:
+                url_params = param_type.annotation.model_validate(params)
+            except ValidationError as error:
+                from superdesk.core.resources.validators import get_field_errors_from_pydantic_validation_error
 
-        return self.func(request_args, url_params, request)  # type: ignore[call-arg,arg-type]
+                errors = {
+                    field: list(err.values())[0]
+                    for field, err in get_field_errors_from_pydantic_validation_error(error).items()
+                }
+                return Response(errors, 400, ())
+
+        return await self.func(request_args, url_params, request)  # type: ignore[call-arg,arg-type]
 
 
 class Request(Protocol):

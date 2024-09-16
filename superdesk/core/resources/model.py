@@ -17,6 +17,7 @@ from typing import (
     Type,
     Any,
     ClassVar,
+    cast,
 )
 from typing_extensions import dataclass_transform, override, Self
 from dataclasses import dataclass as python_dataclass, field as dataclass_field
@@ -110,6 +111,32 @@ class ResourceModel(BaseModel):
             obj["_type"] = item_type
         return instance
 
+    def to_dict(self, **kwargs) -> dict[str, Any]:
+        """
+        Convert the model instance to a dictionary representation with non-JSON-serializable Python objects.
+
+        :param kwargs: Optional keyword arguments to override the default parameters of model_dump.
+        :rtype: dict[str, Any]
+        :returns: A dictionary representation of the model instance with field aliases.
+                Only fields that are set (non-default) will be included.
+        """
+        default_params: dict[str, Any] = {"by_alias": True, "exclude_unset": True}
+        default_params.update(kwargs)
+        return self.model_dump(**default_params)
+
+    def to_json(self, **kwargs) -> str:
+        """
+        Convert the model instance to a JSON serializable dictionary.
+
+        :param kwargs: Optional keyword arguments to override the default parameters of model_dump_json.
+        :rtype: str
+        :return: A JSON-compatible dictionary representation of the model instance with field aliases.
+                Only fields that are set (non-default) will be included.
+        """
+        default_params: dict[str, Any] = {"by_alias": True, "exclude_unset": True}
+        default_params.update(kwargs)
+        return self.model_dump_json(**default_params)
+
 
 async def _run_async_validators_from_model_class(
     model_instance: Any, root_item: ResourceModel, field_name_stack: Optional[List[str]] = None
@@ -171,6 +198,29 @@ class ResourceModelWithObjectId(ResourceModel):
     id: Annotated[ObjectId, Field(alias="_id")]
 
 
+@dataclass
+class ModelWithVersions:
+    """Mixin model class to be used to automatically add versions when managed through ``AsyncResourceService``"""
+
+    #: The current version of this document
+    current_version: Annotated[Optional[int], Field(alias="_current_version")] = None
+
+    #: The latest version of this document, populated by the ``AsyncResourceService`` service
+    latest_version: Annotated[Optional[int], Field(alias="_latest_version")] = None
+
+
+def model_has_versions(model: ResourceModel | type[ResourceModel]) -> bool:
+    """Helper function to determine if the provided resource contains the ``ModelWithVersions`` mixin"""
+
+    return issubclass(type(model), ModelWithVersions)
+
+
+def get_versioned_model(model: ResourceModel) -> ModelWithVersions | None:
+    """Helper function to return an instance of ``ModelWithVersions`` if model has versions, else ``None``"""
+
+    return None if not model_has_versions(model) else cast(ModelWithVersions, model)
+
+
 @python_dataclass
 class ResourceConfig:
     """A config for a Resource to be registered"""
@@ -180,6 +230,9 @@ class ResourceConfig:
 
     #: The ResourceModel class for this resource (used to generate the Elasticsearch mapping)
     data_class: type[ResourceModel]
+
+    #: Optional title used in HATEOAS (and docs), will fallback to the class name
+    title: str | None = None
 
     #: The config used for MongoDB
     mongo: Optional["MongoResourceConfig"] = None
@@ -201,6 +254,12 @@ class ResourceConfig:
 
     #: Optional list of resource fields to ignore when generating the etag
     etag_ignore_fields: Optional[list[str]] = None
+
+    #: Boolean to indicate if this resource provides a version resource as well
+    versioning: bool = False
+
+    #: Optional list of fields not to store in the versioning resource
+    ignore_fields_in_versions: list[str] | None = None
 
     #: Optional sorting for this resource
     default_sort: SortListParam | None = None
@@ -242,10 +301,11 @@ class Resources:
         if not config.datasource_name:
             config.datasource_name = config.name
 
-        self.app.mongo.register_resource_config(
-            config.name,
-            config.mongo or MongoResourceConfig(),
-        )
+        mongo_config = config.mongo or MongoResourceConfig()
+        if config.versioning:
+            mongo_config.versioning = True
+
+        self.app.mongo.register_resource_config(config.name, mongo_config)
 
         if config.elastic is not None:
             if config.default_sort:
