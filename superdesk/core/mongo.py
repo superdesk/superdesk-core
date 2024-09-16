@@ -218,7 +218,10 @@ class MongoResources:
         return deepcopy(self._resource_configs)
 
     def get_collection_name(self, resource_name: str, versioning: bool = False) -> str:
-        source_name = self.app.resources.get_config(resource_name).datasource_name or resource_name
+        try:
+            source_name = self.app.resources.get_config(resource_name).datasource_name
+        except KeyError as _e:
+            source_name = resource_name
         return source_name if not versioning else f"{source_name}_versions"
 
     def reset_all_async_connections(self):
