@@ -60,7 +60,7 @@ install_requires = [
     "MarkupSafe<2.1",
     "reportlab>=3.6.11,<4.3",
     "pyjwt>=2.4.0,<2.9",
-    "Werkzeug>=1.0,<1.1",
+    "Werkzeug>=1.0,<3.1",
     "Jinja2>=2.11,<3.0",
     "Click>=8.0.3,<9.0",
     "itsdangerous>=1.1,<2.0",
