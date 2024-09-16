@@ -119,17 +119,23 @@ class AsyncResourceService(Generic[ResourceModelType]):
         data.pop("_type", None)
         return cast(ResourceModelType, self.config.data_class.model_validate(data))
 
-    async def find_one(self, version: int | None = None, **lookup) -> Optional[ResourceModelType]:
+    async def find_one_raw(self, use_mongo: bool = False, version: int | None = None, **lookup) -> dict | None:
         """Find a resource by ID
 
+        :param use_mongo: If ``True`` will force use mongo, else will attempt elastic first
         :param version: Optional version to get
         :param lookup: Dictionary of key/value pairs used to find the document
         :return: ``None`` if resource not found, otherwise an instance of ``ResourceModel`` for this resource
         """
 
+        item = None
         try:
-            item = await self.elastic.find_one(**lookup)
+            if not use_mongo:
+                item = await self.elastic.find_one(**lookup)
         except KeyError:
+            pass
+
+        if use_mongo or item is None:
             item = await self.mongo.find_one(lookup)
 
         if item is None:
@@ -137,7 +143,21 @@ class AsyncResourceService(Generic[ResourceModelType]):
         elif version is not None:
             item = await self.get_item_version(item, version)
 
-        return self.get_model_instance_from_dict(item)
+        return item
+
+    async def find_one(
+        self, use_mongo: bool = False, version: int | None = None, **lookup
+    ) -> Optional[ResourceModelType]:
+        """Find a resource by ID
+
+        :param use_mongo: If ``True`` will force use mongo, else will attempt elastic first
+        :param version: Optional version to get
+        :param lookup: Dictionary of key/value pairs used to find the document
+        :return: ``None`` if resource not found, otherwise an instance of ``ResourceModel`` for this resource
+        """
+
+        item = await self.find_one_raw(use_mongo=use_mongo, version=version, **lookup)
+        return None if not item else self.get_model_instance_from_dict(item)
 
     async def find_by_id(self, item_id: Union[str, ObjectId]) -> Optional[ResourceModelType]:
         """Find a resource by ID

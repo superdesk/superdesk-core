@@ -88,12 +88,13 @@ class ElasticResources:
         client_config = ElasticClientConfig.create_from_dict(
             self.app.wsgi.config, prefix=resource_config.prefix or "ELASTICSEARCH", freeze=False
         )
-        client_config.index += f"_{resource_name}"
+        source_name = self.app.resources.get_config(resource_name).datasource_name or resource_name
+        client_config.index += f"_{source_name}"
         client_config.set_frozen(True)
 
-        self._resource_clients[resource_name] = ElasticResourceClient(resource_name, client_config, resource_config)
+        self._resource_clients[resource_name] = ElasticResourceClient(source_name, client_config, resource_config)
         self._resource_async_clients[resource_name] = ElasticResourceAsyncClient(
-            resource_name, client_config, resource_config
+            source_name, client_config, resource_config
         )
 
     def get_client(self, resource_name) -> ElasticResourceClient:

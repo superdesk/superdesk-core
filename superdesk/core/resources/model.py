@@ -264,6 +264,9 @@ class ResourceConfig:
     #: Optional sorting for this resource
     default_sort: SortListParam | None = None
 
+    #: Optionally override the name used for the MongoDB/Elastic sources
+    datasource_name: str | None = None
+
 
 class Resources:
     """A high level resource class used to manage all resources in the system"""
@@ -295,6 +298,8 @@ class Resources:
         self._resource_configs[config.name] = config
 
         config.data_class.model_resource_name = config.name
+        if not config.datasource_name:
+            config.datasource_name = config.name
 
         mongo_config = config.mongo or MongoResourceConfig()
         if config.versioning:

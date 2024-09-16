@@ -9,7 +9,7 @@
 # at https://www.sourcefabric.org/superdesk/license
 
 from .model import Resources, ResourceModel, ResourceModelWithObjectId, ModelWithVersions, ResourceConfig, dataclass
-from .resource_rest_endpoints import RestEndpointConfig
+from .resource_rest_endpoints import RestEndpointConfig, RestParentLink, get_id_url_type
 from .service import AsyncResourceService, AsyncCacheableService
 from ..mongo import MongoResourceConfig, MongoIndexOptions
 from ..elastic.resources import ElasticResourceConfig
@@ -23,6 +23,8 @@ __all__ = [
     "dataclass",
     "fields",
     "RestEndpointConfig",
+    "RestParentLink",
+    "get_id_url_type",
     "AsyncResourceService",
     "AsyncCacheableService",
     "MongoResourceConfig",

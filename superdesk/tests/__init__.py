@@ -67,7 +67,7 @@ def get_mongo_uri(key, dbname):
     return "/".join([env_host, dbname])
 
 
-def update_config(conf):
+def update_config(conf, auto_add_apps: bool = True):
     conf["ELASTICSEARCH_INDEX"] = "sptest"
     conf["MONGO_DBNAME"] = "sptests"
     conf["MONGO_URI"] = get_mongo_uri("MONGO_URI", "sptests")
@@ -100,7 +100,8 @@ def update_config(conf):
     conf["MACROS_MODULE"] = "superdesk.macros"
     conf["DEFAULT_TIMEZONE"] = "Europe/Prague"
     conf["LEGAL_ARCHIVE"] = True
-    conf["INSTALLED_APPS"].extend(["planning", "superdesk.macros.imperial", "apps.rundowns"])
+    if auto_add_apps:
+        conf["INSTALLED_APPS"].extend(["planning", "superdesk.macros.imperial", "apps.rundowns"])
 
     # limit mongodb connections
     conf["MONGO_CONNECT"] = False
@@ -176,7 +177,7 @@ async def drop_mongo(app):
             dbconn.drop_database(dbname)
 
 
-def setup_config(config):
+def setup_config(config, auto_add_apps: bool = True):
     app_abspath = os.path.abspath(os.path.dirname(os.path.dirname(__file__)))
     app_config = Config(app_abspath)
     app_config.from_object("superdesk.default_settings")
@@ -190,7 +191,7 @@ def setup_config(config):
     else:
         logger.warning("Can't find local settings")
 
-    update_config(app_config)
+    update_config(app_config, auto_add_apps)
 
     app_config.setdefault("INSTALLED_APPS", [])
 
@@ -360,8 +361,8 @@ def use_snapshot(app, name, funcs=(snapshot_es, snapshot_mongo), force=False):
 use_snapshot.cache = {}  # type: ignore
 
 
-async def setup(context=None, config=None, app_factory=get_app, reset=False):
-    if not hasattr(setup, "app") or setup.reset or config:
+async def setup(context=None, config=None, app_factory=get_app, reset=False, auto_add_apps: bool = True):
+    if not hasattr(setup, "app") or setup.reset or config:  # type: ignore[attr-defined]
         if hasattr(setup, "app"):
             # Close all PyMongo Connections (new ones will be created with ``app_factory`` call)
             for key, val in setup.app.extensions["pymongo"].items():
@@ -370,10 +371,10 @@ async def setup(context=None, config=None, app_factory=get_app, reset=False):
             if getattr(setup.app, "async_app", None):
                 setup.app.async_app.stop()
 
-        cfg = setup_config(config)
-        setup.app = app_factory(cfg)
-        setup.reset = reset
-    app = setup.app
+        cfg = setup_config(config, auto_add_apps)
+        setup.app = app_factory(cfg)  # type: ignore[attr-defined]
+        setup.reset = reset  # type: ignore[attr-defined]
+    app = setup.app  # type: ignore[attr-defined]
 
     if context:
         context.app = app
@@ -542,6 +543,9 @@ class AsyncTestCase(IsolatedAsyncioTestCase):
 
         self.app_config = setup_config(self.app_config)
         self.app = SuperdeskAsyncApp(MockWSGI(config=self.app_config))
+        self.startApp()
+
+    def startApp(self):
         self.app.start()
 
     async def asyncSetUp(self):
@@ -574,8 +578,19 @@ class TestClient(QuartClient):
         return model_instance.model_dump(by_alias=True, exclude_unset=True, mode="json")
 
     async def post(self, *args, **kwargs) -> Response:
-        if "json" in kwargs and isinstance(kwargs["json"], ResourceModel):
-            kwargs["json"] = self.model_instance_to_json(kwargs["json"])
+        if "json" in kwargs:
+            if isinstance(kwargs["json"], ResourceModel):
+                kwargs["json"] = self.model_instance_to_json(kwargs["json"])
+            elif isinstance(kwargs["json"], list):
+                kwargs["json"] = [
+                    self.model_instance_to_json(item) if isinstance(item, ResourceModel) else item
+                    for item in kwargs["json"]
+                ]
+            elif isinstance(kwargs["json"], dict):
+                kwargs["json"] = {
+                    key: self.model_instance_to_json(value) if isinstance(value, ResourceModel) else value
+                    for key, value in kwargs["json"].items()
+                }
 
         return await super().post(*args, **kwargs)
 
@@ -583,13 +598,19 @@ class TestClient(QuartClient):
 class AsyncFlaskTestCase(AsyncTestCase):
     async_app: SuperdeskAsyncApp
     app: SuperdeskApp
+    use_default_apps: bool = False
 
     async def asyncSetUp(self):
         if getattr(self, "async_app", None):
             self.async_app.stop()
             await self.async_app.elastic.stop()
 
-        await setup(self, config=self.app_config, reset=True)
+        if self.use_default_apps:
+            await setup(self, config=self.app_config, reset=True, auto_add_apps=True)
+        else:
+            self.app_config.setdefault("CORE_APPS", [])
+            self.app_config.setdefault("INSTALLED_APPS", [])
+            await setup(self, config=self.app_config, reset=True, auto_add_apps=False)
         self.async_app = self.app.async_app
         self.app.test_client_class = TestClient
         self.test_client = self.app.test_client()
@@ -618,4 +639,5 @@ class AsyncFlaskTestCase(AsyncTestCase):
         return (await (await self.test_client.get(f"/api/{resource}/{item_id}")).get_json())["_etag"]
 
 
-TestCase = AsyncFlaskTestCase
+class TestCase(AsyncFlaskTestCase):
+    use_default_apps: bool = True

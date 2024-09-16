@@ -205,6 +205,12 @@ class Request(Protocol):
     async def abort(self, code: int, *args: Any, **kwargs: Any) -> NoReturn:
         ...
 
+    def get_view_args(self, key: str) -> str | None:
+        ...
+
+    def get_url_arg(self, key: str) -> str | None:
+        ...
+
 
 class EndpointGroup:
     """Base class used for registering a group of endpoints"""

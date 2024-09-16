@@ -218,7 +218,8 @@ class MongoResources:
         return deepcopy(self._resource_configs)
 
     def get_collection_name(self, resource_name: str, versioning: bool = False) -> str:
-        return resource_name if not versioning else f"{resource_name}_versions"
+        source_name = self.app.resources.get_config(resource_name).datasource_name or resource_name
+        return source_name if not versioning else f"{source_name}_versions"
 
     def reset_all_async_connections(self):
         for client, _db in self._mongo_clients_async.values():
@@ -265,7 +266,7 @@ class MongoResources:
         if not self._mongo_clients.get(mongo_config.prefix):
             client_config, dbname = get_mongo_client_config(self.app.wsgi.config, mongo_config.prefix)
             client: MongoClient = MongoClient(**client_config)
-            db = client.get_database(self.get_collection_name(dbname, versioning))
+            db = client.get_database(dbname if not versioning else f"{dbname}_versions")
             self._mongo_clients[mongo_config.prefix] = (client, db)
 
         return self._mongo_clients[mongo_config.prefix]
@@ -388,7 +389,7 @@ class MongoResources:
         if not self._mongo_clients_async.get(mongo_config.prefix):
             client_config, dbname = get_mongo_client_config(self.app.wsgi.config, mongo_config.prefix)
             client = AsyncIOMotorClient(**client_config)
-            db = client.get_database(self.get_collection_name(dbname, versioning))
+            db = client.get_database(dbname if not versioning else f"{dbname}_versions")
             self._mongo_clients_async[mongo_config.prefix] = (client, db)
 
         return self._mongo_clients_async[mongo_config.prefix]
