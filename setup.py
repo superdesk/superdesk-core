@@ -23,7 +23,7 @@ install_requires = [
     "flask-babel>=1.0,<4.1",
     "arrow>=0.4,<=1.3.0",
     "pillow>=9.2,<10.5",
-    "bcrypt>=3.1.1,<4.2",
+    "bcrypt>=3.1.1,<4.3",
     "blinker>=1.3,<1.9",
     "celery[redis]>=5.2.7,<5.5",
     "cerberus>=1.3.2,<1.4",
