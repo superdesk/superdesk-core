@@ -22,7 +22,6 @@ from typing import (
     Union,
     cast,
     overload,
-    Literal,
 )
 import logging
 import ast
