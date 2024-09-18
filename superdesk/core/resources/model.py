@@ -29,7 +29,7 @@ from pydantic import BaseModel, ConfigDict, Field, computed_field, ValidationErr
 from pydantic_core import InitErrorDetails, PydanticCustomError
 from pydantic.dataclasses import dataclass as pydataclass
 
-from superdesk.core.types import SortListParam
+from superdesk.core.types import SortListParam, ProjectedFieldArg
 from .fields import ObjectId
 
 
@@ -79,6 +79,17 @@ class ResourceModel(BaseModel):
     async def validate_async(self):
         await _run_async_validators_from_model_class(self, self)
 
+    @classmethod
+    def get_field_names(cls) -> list[str]:
+        return [info.alias or field for field, info in cls.model_fields.items()]
+
+    @classmethod
+    def uses_objectid_for_id(cls) -> bool:
+        try:
+            return cls.model_fields["id"].annotation == ObjectId
+        except KeyError:
+            return False
+
     @override
     @classmethod
     def model_validate(
@@ -88,6 +99,7 @@ class ResourceModel(BaseModel):
         strict: bool | None = None,
         from_attributes: bool | None = None,
         context: dict[str, Any] | None = None,
+        include_unknown: bool = False,
     ) -> Self:
         """Construct a model instance from the provided dictionary, and validate its values
 
@@ -95,20 +107,25 @@ class ResourceModel(BaseModel):
         :param strict: Whether to enforce types strictly
         :param from_attributes: Whether to extract data from object attributes
         :param context: Additional context to pass to the validator
+        :param include_unknown: Whether to include fields not defined in the ResourceModel
         :raises Pydantic.ValidationError: If validation fails
         :rtype: ResourceModel
         :returns: The validated model instance
         """
 
-        item_type = obj.pop("_type", None)
+        if not include_unknown:
+            data = {field: value for field, value in obj.items() if field in cls.get_field_names()}
+        else:
+            data = obj.copy()
+            data.pop("_type", None)
+
         instance = super().model_validate(
-            obj,
+            data,
             strict=strict,
             from_attributes=from_attributes,
             context=context,
         )
-        if item_type is not None:
-            obj["_type"] = item_type
+
         return instance
 
     def to_dict(self, **kwargs) -> dict[str, Any]:
@@ -266,6 +283,9 @@ class ResourceConfig:
 
     #: Optionally override the name used for the MongoDB/Elastic sources
     datasource_name: str | None = None
+
+    #: Optional projection to be used to include/exclude fields
+    projection: ProjectedFieldArg | None = None
 
 
 class Resources:

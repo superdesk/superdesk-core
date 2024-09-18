@@ -8,7 +8,7 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
-from typing import Dict, Any, Optional, Iterator, List, Tuple, Union, TypedDict, Literal
+from typing import Dict, Any, Optional, Iterator, List, Tuple, Union, TypedDict
 import ast
 
 import simplejson as json
@@ -16,6 +16,8 @@ from eve.io.mongo.parser import parse
 
 from superdesk.errors import SuperdeskApiError
 from superdesk.core.types import ProjectedFieldArg, SearchRequest, SortParam
+from superdesk.core.resources import get_projection_from_request
+
 from .common import ElasticClientConfig, ElasticResourceConfig
 
 
@@ -235,27 +237,15 @@ class BaseElasticResourceClient:
             body=query,
         )
 
-    def _get_projected_fields(self, req: SearchRequest) -> Optional[ProjectedFieldSources]:
-        projection_data: ProjectedFieldArg
-        if req.args and req.args.get("projections"):
-            projection_data = json.loads(req.args["projections"])
-        elif req.projection:
-            projection_data = req.projection
-        else:
+    def _get_projected_fields(self, req: SearchRequest) -> ProjectedFieldSources | None:
+        projection_include, projection_fields = get_projection_from_request(req)
+
+        if not projection_fields:
             return None
-
-        if isinstance(projection_data, list):
-            return ProjectedFieldSources(_source=",".join(projection_data + ["_id", "_resource", "_etag"]))
-        elif not isinstance(projection_data, dict):
-            raise SuperdeskApiError.badRequestError("invalid projection type")
-        elif 1 in projection_data.values():
-            return ProjectedFieldSources(_source=",".join(list(projection_data.keys()) + ["_id", "_resource", "_etag"]))
-        elif 0 in projection_data.values():
-            return ProjectedFieldSources(
-                _source_excludes=",".join(list(projection_data.keys()) + ["_id", "_resource", "_etag"])
-            )
-
-        return None
+        elif projection_include:
+            return ProjectedFieldSources(_source=",".join(projection_fields))
+        else:
+            return ProjectedFieldSources(_source_excludes=",".join(projection_fields))
 
     def _parse_hits(self, hits) -> ElasticCursor:
         docs = []

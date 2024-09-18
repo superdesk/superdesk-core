@@ -11,12 +11,16 @@
 from typing import Dict, Any, Optional, List, Union, Literal
 from typing_extensions import TypedDict
 
-from pydantic import BaseModel, ConfigDict, NonNegativeInt
+from pydantic import BaseModel, ConfigDict, NonNegativeInt, field_validator
+
+from . import json
 
 
 #: The data type for projections, either a list of field names, or a dictionary containing
 #: the field and enable/disable state
-ProjectedFieldArg = Union[List[str], Dict[str, Literal[0]], Dict[str, Literal[1]]]
+ProjectedFieldArg = (
+    list[str] | dict[str, Literal[0]] | dict[str, Literal[1]] | dict[str, Literal[True]] | dict[str, Literal[False]]
+)
 
 #: Type used to provide list of sort params to be used
 SortListParam = list[tuple[str, Literal[1, -1]]]
@@ -88,3 +92,11 @@ class SearchRequest(BaseModel):
 
     #: The field projections to be applied
     projection: Optional[ProjectedFieldArg] = None
+
+    @field_validator("projection", mode="before")
+    def parse_projection(cls, value: ProjectedFieldArg | str | None) -> ProjectedFieldArg | None:
+        if not value:
+            return None
+        elif isinstance(value, str):
+            return json.loads(value)
+        return value
