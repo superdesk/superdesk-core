@@ -172,9 +172,11 @@ class ResourceRestEndpoints(RestEndpoints):
         items: dict[str, dict] = {}
         for parent_link in self.endpoint_config.parent_links:
             service = get_current_async_app().resources.get_resource_service(parent_link.resource_name)
-            item_id = request.get_view_args(parent_link.get_url_arg_name())
+            item_id: str | ObjectId | None = request.get_view_args(parent_link.get_url_arg_name())
             if not item_id:
                 raise SuperdeskApiError.badRequestError("Parent resource ID not provided in URL")
+            elif service.id_uses_objectid():
+                item_id = ObjectId(item_id)
             item = await service.find_one_raw(use_mongo=True, version=None, **{parent_link.parent_id_field: item_id})
             if not item:
                 raise SuperdeskApiError.notFoundError(
