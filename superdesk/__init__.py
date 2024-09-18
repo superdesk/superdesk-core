@@ -32,7 +32,7 @@ from .signals import *  # noqa
 from apps.common.models.base_model import BaseModel
 from apps.common.components.base_component import BaseComponent
 
-__version__ = "2.8.0rc1"
+__version__ = "2.9.0.dev"
 
 API_NAME = "Superdesk API"
 SCHEMA_VERSION = 2
