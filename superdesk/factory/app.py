@@ -42,6 +42,7 @@ from superdesk.cache import cache_backend
 
 from .elastic_apm import setup_apm
 from superdesk.core.app import SuperdeskAsyncApp
+from superdesk.core.resources import ResourceModel
 from superdesk.core.web import Endpoint, Request, EndpointGroup, HTTP_METHOD, Response
 
 SUPERDESK_PATH = os.path.abspath(os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
@@ -261,6 +262,8 @@ class SuperdeskEve(eve.Eve):
             # We may have received a different response, such as a flask redirect call
             # So we return it here
             return response
+        elif isinstance(response.body, ResourceModel):
+            response.body = response.body.to_dict()
 
         return response.body, response.status_code, response.headers
 

@@ -102,11 +102,44 @@ class RestEndpoints(EndpointGroup):
                 )
             )
 
-    def get_resource_url(self):
+    def get_resource_url(self) -> str:
+        """Returns the URL for this resource, for registering with WSGI"""
+
         return self.url
 
-    def get_item_url(self, arg_name: str = "item_id"):
+    def get_item_url(self, arg_name: str = "item_id") -> str:
+        """Returns the URL for an item of this resource, for registering with WSGI
+
+        :param arg_name: The name of the URL argument to use for the resource item URL
+        :return: The URL for an item of this resource
+        """
+
         return f"{self.get_resource_url()}/<{self.id_param_type}:{arg_name}>"
+
+    def gen_url_for_item(self, request: Request, item_id: str) -> str:
+        """Ge the URL of an item of this resource, for HATEOAS self link
+
+        :param request: The request instance currently being processed
+        :param item_id: The ID of the item being returned
+        :return: The URL of an item of this resource
+        """
+
+        # Import within this method, otherwise a circular import occurs
+        from superdesk.core import get_app_config
+
+        # Strip the root URL for the API
+        path = request.path.strip("/")
+        url_prefix = get_app_config("URL_PREFIX", "")
+        if url_prefix:
+            url_prefix += "/"
+        api_version = get_app_config("API_VERSION")
+        if api_version:
+            url_prefix += f"{api_version}/"
+
+        if url_prefix and path.startswith(url_prefix):
+            path = path[len(url_prefix) :]
+
+        return f"{path}/{item_id}" if request.method == "POST" else path
 
     async def get_item(
         self,
