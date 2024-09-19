@@ -22,6 +22,7 @@ from superdesk.core import json
 from superdesk.core.app import get_current_async_app
 from superdesk.core.types import SearchRequest, SearchArgs, VersionParam
 from superdesk.errors import SuperdeskApiError
+from superdesk.resource_fields import STATUS, STATUS_OK, ITEMS
 
 from ..web.types import HTTP_METHOD, Request, Response, RestGetResponse
 from ..web.rest_endpoints import RestEndpoints, ItemRequestViewArgs
@@ -119,7 +120,7 @@ class ResourceRestEndpoints(RestEndpoints):
         )
 
     def get_resource_url(self) -> str:
-        """Returns the URL for this resource
+        """Returns the URL for this resource, for registering with WSGI
 
         If the resource has ``parent_links`` configured, these will be used to construct the URL
         with the parent resources URL and item ID
@@ -151,7 +152,7 @@ class ResourceRestEndpoints(RestEndpoints):
         return url + self.url
 
     def get_item_url(self, arg_name: str = "item_id") -> str:
-        """Returns the URL for an item of this resource
+        """Returns the URL for an item of this resource, for registering with WSGI
 
         :param arg_name: The name of the URL argument to use for the resource item URL
         :return: The URL for an item of this resource
@@ -231,7 +232,7 @@ class ResourceRestEndpoints(RestEndpoints):
                     max_results=params.max_results,
                     total=count,
                 ),
-                _links=self._build_hateoas(
+                _links=self._build_resource_hateoas(
                     SearchRequest(
                         max_results=params.max_results,
                         page=params.page,
@@ -254,11 +255,7 @@ class ResourceRestEndpoints(RestEndpoints):
                 f"{self.resource_config.name} resource with ID '{args.item_id}' not found"
             )
 
-        return Response(
-            body=item,
-            status_code=200,
-            headers=(),
-        )
+        return Response(item)
 
     async def create_item(self, request: Request) -> Response:
         """Processes a create item request"""
@@ -288,10 +285,19 @@ class ResourceRestEndpoints(RestEndpoints):
                 model_instance = self.resource_config.data_class.model_validate(value)
                 model_instances.append(model_instance)
             except ValidationError as validation_error:
-                return Response(convert_pydantic_validation_error_for_response(validation_error), 403, ())
+                return Response(convert_pydantic_validation_error_for_response(validation_error), 403)
 
         ids = await service.create(model_instances)
-        return Response(ids, 201, ())
+        if len(ids) == 1:
+            return Response(self._populate_item_hateoas(request, model_instances[0].to_dict()), 201)
+        else:
+            return Response(
+                {
+                    STATUS: STATUS_OK,
+                    ITEMS: [self._populate_item_hateoas(request, item.to_dict()) for item in model_instances],
+                },
+                201,
+            )
 
     async def update_item(
         self,
@@ -316,9 +322,17 @@ class ResourceRestEndpoints(RestEndpoints):
         try:
             await self.service.update(args.item_id, payload, if_match)
         except ValidationError as validation_error:
-            return Response(convert_pydantic_validation_error_for_response(validation_error), 403, ())
+            return Response(convert_pydantic_validation_error_for_response(validation_error), 403)
 
-        return Response({}, 200, ())
+        payload.update(
+            {
+                "_id": args.item_id,
+                STATUS: STATUS_OK,
+            }
+        )
+        self._populate_item_hateoas(request, payload)
+
+        return Response(payload)
 
     async def delete_item(self, args: ItemRequestViewArgs, params: None, request: Request) -> Response:
         """Processes a delete item request"""
@@ -339,7 +353,7 @@ class ResourceRestEndpoints(RestEndpoints):
             )
 
         await service.delete(original, if_match)
-        return Response({}, 204, ())
+        return Response({}, 204)
 
     async def search_items(
         self,
@@ -376,7 +390,7 @@ class ResourceRestEndpoints(RestEndpoints):
 
         status = 200
         headers = [("X-Total-Count", count)]
-        response["_links"] = self._build_hateoas(params, count, request)
+        response["_links"] = self._build_resource_hateoas(params, count, request)
         response["_meta"] = dict(
             page=params.page,
             max_results=params.max_results,
@@ -387,7 +401,7 @@ class ResourceRestEndpoints(RestEndpoints):
 
         return Response(response, status, headers)
 
-    def _build_hateoas(self, req: SearchRequest, doc_count: Optional[int], request: Request) -> Dict[str, Any]:
+    def _build_resource_hateoas(self, req: SearchRequest, doc_count: Optional[int], request: Request) -> Dict[str, Any]:
         links = {
             "parent": {
                 "title": "home",
@@ -463,3 +477,11 @@ class ResourceRestEndpoints(RestEndpoints):
             }
 
         return links
+
+    def _populate_item_hateoas(self, request: Request, item: dict[str, Any]) -> dict[str, Any]:
+        item.setdefault("_links", {})
+        item["_links"]["self"] = {
+            "title": self.resource_config.title or self.resource_config.data_class.__name__,
+            "href": self.gen_url_for_item(request, item["_id"]),
+        }
+        return item
