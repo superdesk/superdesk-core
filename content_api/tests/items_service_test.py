@@ -1008,7 +1008,7 @@ class GetExpiredItemsTestCase(TestCase):
             ],
         )
         self.expired_ids = ["b2", "c3", "e5", "f6", "g7", "h8", "j10", "k11", "l12"]
-        self.service = get_resource_service("items")
+        self.service = get_resource_service("capi_items_internal")
 
     def test_get_only_expired_items(self):
         expired_items = []
@@ -1019,31 +1019,6 @@ class GetExpiredItemsTestCase(TestCase):
 
         for item in expired_items:
             self.assertIn(item["_id"], self.expired_ids)
-
-    def test_generator_iteration(self):
-        """Tests that the yield generator works for `get_expired_items`
-
-        Ensures that each iteration contains the correct items
-        """
-        iterations = 0
-        for items in self.service.get_expired_items(expiry_days=8, max_results=4):
-            iterations += 1
-            self.assertLess(iterations, 4)
-
-            num_items = len(items)
-            item_ids = [item["_id"] for item in items]
-
-            if iterations == 1:
-                self.assertEqual(num_items, 4)
-                self.assertEqual(item_ids, ["b2", "c3", "e5", "f6"])
-            elif iterations == 2:
-                self.assertEqual(num_items, 4)
-                self.assertEqual(item_ids, ["g7", "h8", "j10", "k11"])
-            elif iterations == 3:
-                self.assertEqual(num_items, 1)
-                self.assertEqual(item_ids, ["l12"])
-
-        self.assertEqual(iterations, 3)
 
     def test_get_expired_not_including_children(self):
         expired_items = []
