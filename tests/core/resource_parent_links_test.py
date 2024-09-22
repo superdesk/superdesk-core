@@ -89,11 +89,8 @@ class ResourceParentLinksTestCase(AsyncFlaskTestCase):
             f"/api/users_async/{test_user1.id}/topic_folders", json=dict(name="Sports", section="wire")
         )
         self.assertEqual(response.status_code, 201)
-        folder_id = (await response.get_json())[0]
-
-        # Get the folder, so we can use it's etag
-        response = await self.test_client.get(f"/api/users_async/{test_user1.id}/topic_folders/{folder_id}")
         folder = await response.get_json()
+        folder_id = folder["_id"]
 
         # Update the users folder
         response = await self.test_client.patch(

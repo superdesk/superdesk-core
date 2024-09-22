@@ -25,20 +25,21 @@ class ResourceEndpointsTestCase(AsyncFlaskTestCase):
         test_user = john_doe()
         response = await self.test_client.post("/api/users_async", json=test_user)
         self.assertEqual(response.status_code, 201)
+        post_response_data = await response.get_json()
 
         # Test the User exists in MongoDB with correct data
         test_user.created = NOW
         test_user.updated = NOW
         test_user_dict = test_user.model_dump(by_alias=True, exclude_unset=True, context={"use_objectid": True})
         mongo_item = await self.service.mongo.find_one({"_id": test_user.id})
-        test_user_dict["_etag"] = mongo_item["_etag"]
+        test_user.etag = test_user_dict["_etag"] = mongo_item["_etag"]
         self.assertEqual(mongo_item, test_user_dict)
 
         # Test the User exists in Elasticsearch with correct data
         # (Convert the datetime values to strings, as es client doesn't convert them)
         elastic_item = await self.service.elastic.find_by_id(test_user.id)
         test_user_dict = test_user.model_dump(by_alias=True, exclude_unset=True)
-        test_user_dict["_etag"] = mongo_item["_etag"]
+        # test_user_dict["_etag"] = mongo_item["_etag"]
         test_user_dict.update(
             dict(
                 _created=format_time(NOW) + "+00:00",
@@ -46,6 +47,15 @@ class ResourceEndpointsTestCase(AsyncFlaskTestCase):
             )
         )
         self.assertEqual(elastic_item, test_user_dict)
+
+        # Test the POST response contains the correct etag
+        self.assertDictContains(
+            post_response_data,
+            dict(
+                _id=test_user.id,
+                _etag=test_user.etag,
+            ),
+        )
 
     @mock.patch("superdesk.core.resources.service.utcnow", return_value=NOW)
     async def test_get_item(self, mock_utcnow):
@@ -77,6 +87,7 @@ class ResourceEndpointsTestCase(AsyncFlaskTestCase):
             headers={"If-Match": original_etag},
         )
         self.assertEqual(response.status_code, 200)
+        patch_response_data = await response.get_json()
 
         response = await self.test_client.get(f"/api/users_async/{test_user.id}")
         json_data = await response.get_json()
@@ -91,6 +102,16 @@ class ResourceEndpointsTestCase(AsyncFlaskTestCase):
             )
         )
         self.assertEqual(json_data, test_user_dict)
+        self.assertDictContains(
+            patch_response_data,
+            dict(
+                _id=test_user.id,
+                _etag=json_data["_etag"],
+                _updated=format_time(NOW) + "+0000",
+                first_name="Foo",
+                last_name="Bar",
+            ),
+        )
 
     async def test_delete(self):
         # Test resource is empty
@@ -186,6 +207,20 @@ class ResourceEndpointsTestCase(AsyncFlaskTestCase):
         # Now add 2 users, and make sure hateoas & links are reflected
         response = await self.test_client.post("/api/users_async", json=john_doe())
         assert response.status_code == 201
+        response_json = await response.get_json()
+
+        # Test the POST response contains HATEOAS link for self
+        self_link = response_json["_links"]["self"]
+        self.assertDictEqual(
+            self_link,
+            dict(
+                title="User",
+                href="users_async/user_1",
+            ),
+        )
+        user_1_etag = response_json["_etag"]
+
+        # Add the 2nd user
         response = await self.test_client.post("/api/users_async", json=jane_doe())
         assert response.status_code == 201
 
@@ -243,6 +278,19 @@ class ResourceEndpointsTestCase(AsyncFlaskTestCase):
                     "title": "last page",
                 },
             },
+        )
+
+        # Test the PATCH response contains HATEOAS link for self
+        response = await self.test_client.patch(
+            "/api/users_async/user_1", json={"first_name": "Foo"}, headers={"If-Match": user_1_etag}
+        )
+        response_json = await response.get_json()
+        self.assertDictContains(
+            response_json["_links"]["self"],
+            dict(
+                title="User",
+                href="users_async/user_1",
+            ),
         )
 
     async def test_aggregations(self):
