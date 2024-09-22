@@ -338,6 +338,204 @@ data type that has a different mapping than the default, you can inherit from th
         }
 
 
+Field Projection
+----------------
+
+By default all fields defined in the ResourceModel will be returned from a query. This behaviour can be changed
+by providing a field projection parameter.
+
+Types of Projection:
+^^^^^^^^^^^^^^^^^^^^
+
+There are two types of field projection:
+
+* **include:** Include only the supplied fields in the response::
+
+    # From Python code
+    p1 = ["slugline", "headline"]
+    p2 = {"slugline": 1, "headline": 1}
+    p3 = {"slugline": True, "headline": True}
+
+    # From a HTTP GET request
+    p4 = '?projection=["slugline", "headline"]'
+    p5 = '?projection={"slugline":1, "headline": 1}'
+    p6 = '?projection={"slugline":true, "headline": true}'
+
+* **exclude:** Exclude the supplied fields from the response::
+
+    # From Python code
+    p7 = {"body_html": 0}
+    p8 = {"body_html": False}
+
+    # From a HTTP GET request
+    p9 = '?projection={"body_html": 0}'
+    p10 = '?projection={"body_html": false}'
+
+The following system fields will **always** be returned, regardless of the field projection requested:
+
+* _id
+* _type
+* _resource
+* _etag
+
+Requesting Projection:
+^^^^^^^^^^^^^^^^^^^^^^
+
+Field projection can be requested by using one of the following methods:
+
+1. ResourceModel:
+"""""""""""""""""
+This is the simplest form of field projection. Any data returned will automatically have fields excluded that
+aren't configured on the ResourceModel. This allows to restrict the fields managed by the Resource/Service.
+
+2. ResourceConfig:
+""""""""""""""""""
+You can provide a default projection by defining the
+:attr:`ResourceConfig.projection <model.ResourceConfig.projection>` for the resource.
+This will be used if a field projection is not requested by the client.
+
+3. SearchRequest:
+"""""""""""""""""
+The :attr:`SearchRequest.projection <superdesk.core.types.SearchRequest.projection>` can be used from a client
+to request field projection.
+
+4. Service Find Method:
+"""""""""""""""""""""""
+Directly providing the projection argument to the
+:attr:`AsyncResourceService.find <service.AsyncResourceService.find>` service method.
+
+Example Usage:
+^^^^^^^^^^^^^^
+
+Using the :class:`ResourceModel <model.ResourceModel>` to automatically provide field projection
+so two separate resources can manage data in the same underlying MongoDB Collection (for security reasons)::
+
+    from superdesk.core.resources import (
+        ResourceModelWithObjectId,
+        ResourceConfig,
+        AsyncResourceService,
+    )
+
+    # Define a common base ResourceModel that will be
+    # used by both resources
+    class BaseUserResource(ResourceModelWithObjectId):
+        email: str
+        is_enabled: bool = False
+
+    # Both resources will use the same underlying
+    # MongoDB Collection to store our data
+    DATASOURCE_NAME = "users"
+
+    # Define a ResourceModel to be used to manage
+    # the User's Profile data
+    class UserProfile(BaseUserResource):
+        first_name: str
+        last_name: str
+
+    class UserProfileDB(AsyncResourceService):
+        pass
+
+    user_profile_config = ResourceConfig(
+        name="user_profiles",
+        datasource_name=DATASOURCE_NAME,
+        data_class=UserProfile,
+        service=UserProfiles,
+    )
+
+    # Define a ResourceModel to be used to manage
+    # the User's authentication details
+    class UserAuth(BaseUserResource):
+        password: str
+
+    class UserAuthDB(AsyncResourceService):
+        pass
+
+    user_auth_config = ResourceConfig(
+        name="user_auth",
+        datasource_name=DATASOURCE_NAME,
+        data_class=UserAuth,
+        service=UserAuthDB,
+    )
+
+    async def test_user_management():
+        profile_db = UserProfileDB()
+        auth_db = UserAuthDB()
+
+        # Create the new user
+        user_id = await profile_db.create([dict(
+            email="foo@bar.org",
+            first_name="foo",
+            last_name="bar",
+        )])[0]
+
+        # Assign a password, and enable the User
+        await auth_db.update(user_id, dict(
+            password="some_hash",
+            is_enabled=True,
+        ))
+
+        # The following will raise exceptions if used
+
+        # Can't manage password using UserProfileDB resource
+        await profile_db.update(user_id, dict(
+            password="some_other_password",
+        ))
+
+        # Can't get password using UserProfileDB resource
+        password = (await profile_db.find_one(user_id)).password
+
+        # Can't set names using the UserAuthDB resource
+        await auth_db.update(user_id, dict(
+            first_name="Larry",
+            last_name="Test",
+        ))
+
+        # Can't get names using the UserAuthDB resource
+        first_name = (await auth_db.find_one(user_id)).first_name
+
+        # But both point to the same document in MongoDB Collection
+        profile = (await profile_db.find_one(user_id))
+        auth = (await auth_db.find_one(user_id))
+        assert profile.id == auth.id
+
+
+Another use case is for restricting the amount of data returned, especially if one of the fields
+may contain a lot of data::
+
+    class ContentModel(ResourceModel):
+        slugline: str
+        headline: str
+        body_html: str  # Possibly big in size
+
+    class ContentDB(AsyncResourceService):
+        pass
+
+    content_config = ResourceConfig(
+        name="content",
+        data_class=ContentModel,
+        service=ContentDB
+    )
+
+    async def test_projection():
+        content_db = ContentDB()
+        id = (await content_db.create([dict(
+            slugline="test-content",
+            headline="Some Test Content",
+            body_html="some really" \
+                " really" \
+                " really" \
+                " long" \
+                " text"
+        )]))[0]
+
+        content = await content_db.find(
+            {},
+            projection=dict(body_html=0)
+        )
+        assert "body_html" not in content
+
+
+
 Registering Resources
 ---------------------
 The :meth:`Resources.register <model.Resources.register>` method provides a way to register a resource with the system,
