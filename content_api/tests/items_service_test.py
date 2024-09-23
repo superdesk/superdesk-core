@@ -1009,8 +1009,10 @@ class GetExpiredItemsTestCase(TestCase):
             ],
         )
         self.expired_ids = ["b2", "c3", "e5", "f6", "g7", "h8", "j10", "k11", "l12"]
-        time.sleep(2)  # Ensure that the items are indexed
+        # time.sleep(2)  # Ensure that the items are indexed
         self.service = get_resource_service("capi_items_internal")
+        items, count = self.app.data.find("capi_items_internal", req=None, lookup=None)
+        assert count == 12, items
 
     def test_get_only_expired_items(self):
         expired_items = []
