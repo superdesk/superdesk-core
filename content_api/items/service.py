@@ -620,6 +620,7 @@ class ItemsService(BaseService):
 
 
 class InternalItemsService(BaseService):
+
     def get_expired_items(self, expiry_datetime=None, expiry_days=None, max_results=None, include_children=True):
         """Get the expired items.
 
@@ -659,8 +660,10 @@ class InternalItemsService(BaseService):
 
         source = {
             "query": query,
-            "sort": [{"_id": "asc"}],
+            "sort": [{"_doc": "asc"}],
             "size": max_results or 1000,
         }
+
+        print("SOURCE", source)
 
         yield list(self.search(source))
