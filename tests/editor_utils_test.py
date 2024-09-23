@@ -2112,3 +2112,54 @@ class Editor3TestCase(unittest.TestCase):
         editor = Editor3Content(item)
         html = editor.html
         self.assertEqual(html, expected)
+
+    def test_fallback_on_section(self):
+        field_state = json.loads(
+            """
+            {
+                "entityMap": {},
+                        "blocks" : [
+                        {
+                            "key" : "1sftv",
+                            "text" : "Apple",
+                            "type" : "header-one",
+                            "depth" : 0,
+                            "inlineStyleRanges" : [],
+                            "entityRanges" : [],
+                            "data" : {
+                                "MULTIPLE_HIGHLIGHTS" : {}
+                            }
+                        },
+                        {
+                            "key" : "5fm93",
+                            "text" : "Introduction This document provides a guide to help with the important task of choosing the correct Apple.",
+                            "type" : "section",
+                            "depth" : 0,
+                            "inlineStyleRanges" : [],
+                            "entityRanges" : [],
+                            "data" : {}
+                        },
+                        {
+                            "key" : "1sktt",
+                            "text" : "Criteria There are many different criteria to be considered when choosing an Apple — size, color, firmness, sweetness, tartness...",
+                            "type" : "section",
+                            "depth" : 0,
+                            "inlineStyleRanges" : [],
+                            "entityRanges" : [],
+                            "data" : {}
+                        }
+                    ]
+            }
+        """
+        )
+        item = self.build_item(field_state)
+        body_editor = Editor3Content(item)
+        body_editor.update_item()
+        expected = (
+            "<h1>Apple</h1>\n"
+            "<div>Introduction This document provides a guide to help with the important task of choosing the "
+            "correct Apple.</div>\n"
+            "<div>Criteria There are many different criteria to be considered when choosing an Apple — size,"
+            " color, firmness, sweetness, tartness...</div>"
+        )
+        self.assertEqual(expected, item["body_html"])
