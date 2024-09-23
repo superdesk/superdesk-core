@@ -620,7 +620,6 @@ class ItemsService(BaseService):
 
 
 class InternalItemsService(BaseService):
-
     def get_expired_items(self, expiry_datetime=None, expiry_days=None, max_results=None, include_children=True):
         """Get the expired items.
 
