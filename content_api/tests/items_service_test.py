@@ -1013,6 +1013,7 @@ class GetExpiredItemsTestCase(TestCase):
     def test_get_only_expired_items(self):
         expired_items = []
         for items in self.service.get_expired_items(expiry_days=8):
+            print("ITEMS", items)
             expired_items.extend(items)
 
         self.assertEqual(len(expired_items), 9)
