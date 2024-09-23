@@ -657,6 +657,9 @@ class InternalItemsService(BaseService):
         if not include_children:
             query["bool"]["must_not"].append({"exists": {"field": "ancestors"}})
 
+        # debug
+        query = {"match_all": {}}
+
         source = {
             "query": query,
             "sort": [{"_doc": "asc"}],
