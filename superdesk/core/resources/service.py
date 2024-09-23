@@ -33,7 +33,7 @@ from bson import ObjectId, UuidRepresentation
 from bson.json_util import dumps, DEFAULT_JSON_OPTIONS
 from motor.motor_asyncio import AsyncIOMotorCursor
 
-from superdesk.core.types import SearchRequest, SortListParam, SortParam
+from superdesk.core.types import SearchRequest, SortListParam, SortParam, ProjectedFieldArg
 from superdesk.flask import g
 from superdesk.utc import utcnow
 from superdesk.cache import cache
@@ -44,7 +44,7 @@ from superdesk.resource_fields import ID_FIELD, VERSION_ID_FIELD, CURRENT_VERSIO
 from ..app import SuperdeskAsyncApp, get_current_async_app
 from .fields import ObjectId as ObjectIdField
 from .cursor import ElasticsearchResourceCursorAsync, MongoResourceCursorAsync, ResourceCursorAsync
-from .utils import resource_uses_objectid_for_id
+from .utils import get_projection_from_request
 
 logger = logging.getLogger(__name__)
 
@@ -80,7 +80,7 @@ class AsyncResourceService(Generic[ResourceModelType]):
         return instance
 
     def id_uses_objectid(self) -> bool:
-        return resource_uses_objectid_for_id(self.config.data_class)
+        return self.config.data_class.uses_objectid_for_id()
 
     def generate_id(self) -> str | ObjectId:
         from superdesk.metadata.item import GUID_NEWSML
@@ -116,7 +116,6 @@ class AsyncResourceService(Generic[ResourceModelType]):
 
         # We can't use ``model_construct`` method to construct instance without validation
         # because nested models are not being converted to model instances
-        data.pop("_type", None)
         return cast(ResourceModelType, self.config.data_class.model_validate(data))
 
     async def find_one_raw(self, use_mongo: bool = False, version: int | None = None, **lookup) -> dict | None:
@@ -254,7 +253,8 @@ class AsyncResourceService(Generic[ResourceModelType]):
         updated.update(updates)
         updated.pop("_type", None)
         # Run the Pydantic sync validators, and get a model instance in return
-        model_instance = self.config.data_class.model_validate(updated)
+        # Enable ``include_unknown`` so we get unknown field validation
+        model_instance = self.config.data_class.model_validate(updated, include_unknown=True)
 
         # Run the async validators
         await model_instance.validate_async()
@@ -489,7 +489,13 @@ class AsyncResourceService(Generic[ResourceModelType]):
 
     @overload
     async def find(
-        self, req: dict, page: int = 1, max_results: int = 25, sort: SortParam | None = None
+        self,
+        req: dict,
+        page: int = 1,
+        max_results: int = 25,
+        sort: SortParam | None = None,
+        projection: ProjectedFieldArg | None = None,
+        use_mongo: bool = False,
     ) -> ResourceCursorAsync[ResourceModelType]:
         ...
 
@@ -499,6 +505,8 @@ class AsyncResourceService(Generic[ResourceModelType]):
         page: int = 1,
         max_results: int = 25,
         sort: SortParam | None = None,
+        projection: ProjectedFieldArg | None = None,
+        use_mongo: bool = False,
     ) -> ResourceCursorAsync[ResourceModelType]:
         """Find items from the resource using Elasticsearch
 
@@ -506,6 +514,8 @@ class AsyncResourceService(Generic[ResourceModelType]):
         :param page: The page number to retrieve (defaults to 1)
         :param max_results: The maximum number of results to retrieve per page (defaults to 25)
         :param sort: The sort order to use (defaults to resource default sort, or not sorting applied)
+        :param projection: The field projections to be applied
+        :param use_mongo: If ``True`` will force use mongo, else will attempt elastic first
         :return: An async iterable with ``ResourceModel`` instances
         :raises SuperdeskApiError.notFoundError: If Elasticsearch is not configured
         """
@@ -518,17 +528,24 @@ class AsyncResourceService(Generic[ResourceModelType]):
                 page=page,
                 max_results=max_results,
                 sort=sort,
+                projection=projection,
             )
         )
+
+        if not search_request.projection and self.config.projection:
+            search_request.projection = self.config.projection
 
         if search_request.sort is None:
             search_request.sort = self.config.default_sort
 
         try:
-            cursor, count = await self.elastic.find(search_request)
-            return ElasticsearchResourceCursorAsync(self.config.data_class, cursor.hits)
+            if not use_mongo:
+                cursor, count = await self.elastic.find(search_request)
+                return ElasticsearchResourceCursorAsync(self.config.data_class, cursor.hits)
         except KeyError:
-            return await self._mongo_find(search_request)
+            pass
+
+        return await self._mongo_find(search_request)
 
     async def _mongo_find(self, req: SearchRequest, versioned: bool = False) -> MongoResourceCursorAsync:
         kwargs: Dict[str, Any] = {}
@@ -543,8 +560,14 @@ class AsyncResourceService(Generic[ResourceModelType]):
             if sort:
                 kwargs["sort"] = sort
 
-        where = json.loads(req.where or "{}") if isinstance(req.where, str) else req.where
+        where = json.loads(req.where or "{}") if isinstance(req.where, str) else req.where or {}
         kwargs["filter"] = where
+
+        projection_include, projection_fields = get_projection_from_request(req)
+        if projection_fields:
+            kwargs["projection"] = (
+                projection_fields if projection_include else {field: False for field in projection_fields}
+            )
 
         cursor = self.mongo.find(**kwargs) if not versioned else self.mongo_versioned.find(**kwargs)
 

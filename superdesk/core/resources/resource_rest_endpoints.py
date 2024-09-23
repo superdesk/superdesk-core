@@ -29,7 +29,6 @@ from ..web.rest_endpoints import RestEndpoints, ItemRequestViewArgs
 
 from .model import ResourceConfig, ResourceModel
 from .validators import convert_pydantic_validation_error_for_response
-from .utils import resource_uses_objectid_for_id
 
 
 @dataclass
@@ -82,7 +81,7 @@ class RestEndpointConfig:
 def get_id_url_type(data_class: type[ResourceModel]) -> str:
     """Get the URL param type for the ID field for route registration"""
 
-    if resource_uses_objectid_for_id(data_class):
+    if data_class.uses_objectid_for_id():
         return 'regex("[a-f0-9]{24}")'
     else:
         return 'regex("[\w,.:_-]+")'

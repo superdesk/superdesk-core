@@ -56,7 +56,7 @@ Superdesk commands
 ``app:initialize_data``
 ^^^^^^^^^^^^^^^^^^^^^^^
 
-.. autoclass:: apps.prepopulate.app_initialize.AppInitializeWithDataCommand()
+.. autofunction:: apps.prepopulate.app_initialize.app_initialize_data_command()
 
 ``app:flush_elastic_index``
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -116,12 +116,12 @@ Superdesk commands
 ``data:upgrade``
 ^^^^^^^^^^^^^^^^
 
-.. autoclass:: superdesk.commands.data_updates.Upgrade()
+.. autofunction:: superdesk.commands.data_updates.upgrade_command()
 
 ``data:downgrade``
 ^^^^^^^^^^^^^^^^^^
 
-.. autoclass:: superdesk.commands.data_updates.Downgrade()
+.. autofunction:: superdesk.commands.data_updates.downgrade_command()
 
 ``ingest:clean_expired``
 ^^^^^^^^^^^^^^^^^^^^^^^^
@@ -166,7 +166,7 @@ Superdesk commands
 ``schema:migrate``
 ^^^^^^^^^^^^^^^^^^
 
-.. autoclass:: superdesk.commands.schema.SchemaMigrateCommand()
+.. autofunction:: superdesk.commands.schema.schema_migrate_command()
 
 .. _storage_dumps_records:
 
@@ -218,7 +218,7 @@ Storage Dumps and Records
 ``users:create``
 ^^^^^^^^^^^^^^^^
 
-.. autoclass:: apps.auth.db.commands.CreateUserCommand()
+.. autofunction:: apps.auth.db.commands.create_user_command()
 
 ``users:import``
 ^^^^^^^^^^^^^^^^
