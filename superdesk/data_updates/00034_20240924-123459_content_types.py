@@ -26,6 +26,7 @@ header_fields = [
     'authors',
 ]
 
+
 class DataUpdate(BaseDataUpdate):
     resource = 'content_types'
 
