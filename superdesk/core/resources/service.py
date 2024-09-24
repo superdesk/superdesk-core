@@ -108,11 +108,15 @@ class AsyncResourceService(Generic[ResourceModelType]):
         return self.app.elastic.get_client_async(self.resource_name)
 
     def get_model_instance_from_dict(self, data: Dict[str, Any]) -> ResourceModelType:
-        """Converts a dictionary to an instance of ``ResourceModel`` for this resource
+        """Converts a dictionary to an instance of ``ResourceModel`` for this resource.
+        It generates a value for data's `_id` attribute if it was not provided.
 
         :param data: Dictionary to convert
         :return: Instance of ``ResourceModel`` for this resource
         """
+
+        if not data.get("_id"):
+            data["_id"] = self.generate_id()
 
         # We can't use ``model_construct`` method to construct instance without validation
         # because nested models are not being converted to model instances
