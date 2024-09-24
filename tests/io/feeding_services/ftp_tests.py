@@ -119,12 +119,7 @@ class TestCase(CoreTestCase):
 
         self.ctx = self.app.app_context()
         self.ctx.push()
-
-        def clean_ctx():
-            if self.ctx:
-                self.ctx.pop()
-
-        self.addCleanup(clean_ctx)
+        self.addCleanup(self.ctx.pop)
 
 
 class FTPTestCase(TestCase):

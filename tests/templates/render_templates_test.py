@@ -21,7 +21,9 @@ from apps.templates.content_templates import get_item_from_template, render_cont
 class RenderTemplateTestCase(unittest.TestCase):
     def setUp(self):
         self.app = flask.Flask(__name__)
-        self.app.app_context().push()
+        self.ctx = self.app.app_context()
+        self.ctx.push()
+        self.addCleanup(self.ctx.pop)
         self.app.jinja_env.filters["format_datetime"] = format_datetime_filter
 
     def test_render_content_template(self):

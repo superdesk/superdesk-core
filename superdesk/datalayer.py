@@ -39,7 +39,9 @@ class SuperdeskDataLayer(DataLayer):
         self.mongo = Mongo(app)
         self.driver = self.mongo.driver
         self.storage = self.driver
-        self.elastic = Elastic(app, serializer=SuperdeskJSONEncoder(), skip_index_init=True, retry_on_timeout=True)
+        self.elastic = Elastic(
+            app, serializer=SuperdeskJSONEncoder(), skip_index_init=True, retry_on_timeout=True, max_retries=3
+        )
 
     def pymongo(self, resource=None, prefix=None):
         return self.mongo.pymongo(resource, prefix)

@@ -23,6 +23,7 @@ from superdesk.publish.transmitters.http_push import HTTPPushService
 from unittest import mock
 from unittest.mock import Mock
 from superdesk.errors import PublishHTTPPushServerError, PublishHTTPPushClientError
+from superdesk.tests import AppTestCase
 
 
 def get_fixture(fixture):
@@ -55,8 +56,9 @@ class TestMedia(io.BytesIO):
     mimetype = "text/plain"
 
 
-class HTTPPushServiceTestCase(unittest.TestCase):
+class HTTPPushServiceTestCase(AppTestCase):
     def setUp(self):
+        super().setUp()
         if "HTTP_PUSH_RESOURCE_URL" not in os.environ:
             self.resource_url = ""
         else:
@@ -107,7 +109,6 @@ class HTTPPushServiceTestCase(unittest.TestCase):
         }
 
         self.destination = self.item.get("destination", {})
-        self.app = flask.Flask(__name__)
 
     def is_item_published(self, item_id):
         """Return True if the item was published, False otherwise.
@@ -199,35 +200,32 @@ class HTTPPushServiceTestCase(unittest.TestCase):
             with self.app.app_context():
                 service._push_item(self.destination, json.dumps(self.item))
 
-    @mock.patch("superdesk.publish.transmitters.http_push.app")
     @mock.patch("superdesk.publish.transmitters.http_push.requests.Session.send", return_value=CreatedResponse)
     @mock.patch("requests.get", return_value=NotFoundResponse)
-    def test_push_associated_assets(self, get_mock, send_mock, app_mock):
-        app_mock.config = {}
-        app_mock.media.get.return_value = TestMedia(b"bin")
+    def test_push_associated_assets(self, get_mock, send_mock):
+        with mock.patch.object(self.app.media, "get", return_value=TestMedia(b"bin")):
+            dest = {"config": {"assets_url": "http://example.com"}}
+            item = get_fixture("package")
 
-        dest = {"config": {"assets_url": "http://example.com"}}
-        item = get_fixture("package")
+            service = HTTPPushService()
+            service._copy_published_media_files({}, dest)
 
-        service = HTTPPushService()
-        service._copy_published_media_files({}, dest)
+            get_mock.assert_not_called()
+            send_mock.assert_not_called()
 
-        get_mock.assert_not_called()
-        send_mock.assert_not_called()
+            service._copy_published_media_files(item, dest)
 
-        service._copy_published_media_files(item, dest)
+            images = [
+                # embedded original
+                "2017020111028/9a836848c3c3387a151dbed96e83b7d50e6b0e71ca397e0b1dc0f4b2f4127acd.jpg",
+                # main-0 original
+                "20170201110216/d3ad29bafe0710c42b7cfc201939f266c6ca5c11a713625388decff4da87ba5b.jpg",
+                # embedded thumbnail
+                "2017020111028/a0502320d6d07dd921253171e971943adf791eb2b34dfe82da73c053a343a7c2.jpg",
+            ]
 
-        images = [
-            # embedded original
-            "2017020111028/9a836848c3c3387a151dbed96e83b7d50e6b0e71ca397e0b1dc0f4b2f4127acd.jpg",
-            # main-0 original
-            "20170201110216/d3ad29bafe0710c42b7cfc201939f266c6ca5c11a713625388decff4da87ba5b.jpg",
-            # embedded thumbnail
-            "2017020111028/a0502320d6d07dd921253171e971943adf791eb2b34dfe82da73c053a343a7c2.jpg",
-        ]
-
-        for media in images:
-            get_mock.assert_any_call("http://example.com/%s" % media, timeout=(5, 30))
+            for media in images:
+                get_mock.assert_any_call("http://example.com/%s" % media, timeout=(5, 30))
 
     @mock.patch("superdesk.publish.transmitters.http_push.app")
     @mock.patch("superdesk.publish.transmitters.http_push.requests.Session.send", return_value=CreatedResponse)

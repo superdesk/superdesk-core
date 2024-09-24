@@ -657,15 +657,10 @@ class InternalItemsService(BaseService):
         if not include_children:
             query["bool"]["must_not"].append({"exists": {"field": "ancestors"}})
 
-        # debug
-        query = {"match_all": {}}
-
         source = {
             "query": query,
             "sort": [{"_doc": "asc"}],
             "size": max_results or 1000,
         }
-
-        print("SOURCE", source)
 
         yield list(self.search(source))

@@ -9,7 +9,7 @@
 # at https://www.sourcefabric.org/superdesk/license
 
 import json
-import time
+import unittest
 from datetime import date, timedelta
 from eve.utils import ParsedRequest
 from flask import Flask
@@ -39,17 +39,15 @@ class FakeAuditResource:
         self.service = service
 
 
-class ItemsServiceTestCase(ApiTestCase):
+class ItemsServiceTestCase(unittest.TestCase):
     """Base class for the `items` service tests."""
 
     def setUp(self):
         self.app = Flask(__name__)
         self.ctx = self.app.test_request_context("/")
         self.ctx.push()
+        self.addCleanup(self.ctx.pop)
         resources["api_audit"] = FakeAuditResource(FakeAuditService())
-
-    def tearDown(self):
-        self.ctx.pop()
 
     def _get_target_class(self):
         """Return the class under test.
@@ -803,13 +801,10 @@ class OnFetchedMethodTestCase(ItemsServiceTestCase):
 
         self.app_context = self.app.app_context()
         self.app_context.push()
+        self.addCleanup(self.app_context.pop)
         self.req_context = self.app.test_request_context("items/")
         self.req_context.push()
-
-    def tearDown(self):
-        self.req_context.pop()
-        self.app_context.pop()
-        super().tearDown()
+        self.addCleanup(self.req_context.pop)
 
     def test_sets_uri_field_on_all_fetched_documents(self):
         result = {
@@ -958,10 +953,7 @@ class GetUriMethodTestCase(ItemsServiceTestCase):
 
         self.app_context = self.app.app_context()
         self.app_context.push()
-
-    def tearDown(self):
-        self.app_context.pop()
-        super().tearDown()
+        self.addCleanup(self.app_context.pop)
 
     def test_generates_correct_uri_for_non_composite_items(self):
         document = {"_id": "foo:bar", "type": "picture"}
@@ -1011,6 +1003,9 @@ class GetExpiredItemsTestCase(TestCase):
         self.expired_ids = ["b2", "c3", "e5", "f6", "g7", "h8", "j10", "k11", "l12"]
         # time.sleep(2)  # Ensure that the items are indexed
         self.service = get_resource_service("capi_items_internal")
+        print("SERVICE", self.service)
+        print("APP", self.app)
+        print("SELF", self)
         items, count = self.app.data.find("capi_items_internal", req=None, lookup=None)
         assert count == 12, items
 
