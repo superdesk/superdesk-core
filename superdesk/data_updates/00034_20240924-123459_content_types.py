@@ -11,24 +11,24 @@ from superdesk.commands.data_updates import BaseDataUpdate
 from eve.utils import config
 
 header_fields = [
-    'slugline',
-    'keywords',
-    'genre',
-    'anpa_take_key',
-    'place',
-    'language',
-    'priority',
-    'urgency',
-    'anpa_category',
-    'subject',
-    'company_codes',
-    'ednote',
-    'authors',
+    "slugline",
+    "keywords",
+    "genre",
+    "anpa_take_key",
+    "place",
+    "language",
+    "priority",
+    "urgency",
+    "anpa_category",
+    "subject",
+    "company_codes",
+    "ednote",
+    "authors",
 ]
 
 
 class DataUpdate(BaseDataUpdate):
-    resource = 'content_types'
+    resource = "content_types"
 
     def forwards(self, mongodb_collection, mongodb_database):
         for profile in mongodb_collection.find({}):
@@ -36,7 +36,7 @@ class DataUpdate(BaseDataUpdate):
                 editor = profile.get("editor", {})
                 for field, properties in editor.items():
                     if properties and "section" not in properties:
-                        properties["section"] = 'header' if field in header_fields else 'content'
+                        properties["section"] = "header" if field in header_fields else "content"
 
                 mongodb_collection.update(
                     {"_id": profile.get(config.ID_FIELD)}, {"$set": {"editor": profile["editor"]}}
