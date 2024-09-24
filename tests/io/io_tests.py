@@ -9,9 +9,13 @@
 # at https://www.sourcefabric.org/superdesk/license
 
 import os
+import flask
 import unittest
 
 from datetime import timedelta
+
+from superdesk.tests import AppTestCase
+from superdesk.io.feeding_services import OLD_CONTENT_MINUTES
 from superdesk.utc import utcnow
 from superdesk.etree import etree
 from superdesk.text_utils import get_word_count, get_char_count
@@ -29,6 +33,13 @@ def get_etree(filename):
 
 
 class UtilsTest(unittest.TestCase):
+    def setUp(self):
+        self.app = flask.Flask(__name__)
+        self.app.config[OLD_CONTENT_MINUTES] = 10
+        self.ctx = self.app.app_context()
+        self.ctx.push()
+        self.addCleanup(self.ctx.pop)
+
     def test_get_word_count(self):
         self.assertEqual(2, get_word_count("plain text"), "plain text")
         self.assertEqual(2, get_word_count("<p> html text </p>"), "paragraph")
@@ -75,7 +86,7 @@ class UtilsTest(unittest.TestCase):
         self.assertTrue(service.is_old_content(utcnow() - timedelta(minutes=11)))
 
 
-class ItemTest(unittest.TestCase):
+class ItemTest(AppTestCase):
     def setUpFixture(self, filename):
         self.tree = get_etree(filename)
         provider = {"name": "Test"}
@@ -87,6 +98,7 @@ class ItemTest(unittest.TestCase):
 
 class TextParserTest(ItemTest):
     def setUp(self):
+        super().setUp()
         self.setUpFixture("text.xml")
 
     def test_instance(self):
@@ -131,6 +143,7 @@ class TextParserTest(ItemTest):
 
 class PictureParserTest(ItemTest):
     def setUp(self):
+        super().setUp()
         self.setUpFixture("picture.xml")
 
     def test_type(self):
@@ -176,6 +189,7 @@ class PictureParserTest(ItemTest):
 
 class SNEPParserTest(ItemTest):
     def setUp(self):
+        super().setUp()
         self.setUpFixture("snep.xml")
 
     def test_content_set(self):

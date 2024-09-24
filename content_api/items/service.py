@@ -191,57 +191,6 @@ class ItemsService(BaseService):
         """
         get_resource_service("items_versions").on_item_deleted(document)
 
-    def get_expired_items(self, expiry_datetime=None, expiry_days=None, max_results=None, include_children=True):
-        """Get the expired items.
-
-        Returns a generator for the list of expired items, sorting by `_id` and returning `max_results` per iteration.
-
-        :param datetime expiry_datetime: Expiry date/time used to retrieve the list of items, defaults to `utcnow()`
-        :param int expiry_days: Number of days content expires, defaults to `CONTENT_API_EXPIRY_DAYS`
-        :param int max_results: Maximum results to retrieve per iteration, defaults to `MAX_EXPIRY_QUERY_LIMIT`
-        :param boolean include_children: Include only root item if False, otherwise include the entire item chain
-        :return list: expired content_api items
-        """
-
-        if expiry_datetime is None:
-            expiry_datetime = utcnow()
-
-        if expiry_days is None:
-            expiry_days = app.config["CONTENT_API_EXPIRY_DAYS"]
-
-        if max_results is None:
-            max_results = app.config["MAX_EXPIRY_QUERY_LIMIT"]
-
-        last_id = None
-        expire_at = date_to_str(expiry_datetime - timedelta(days=expiry_days))
-
-        while True:
-            query = {
-                "$and": [
-                    {"_updated": {"$lte": expire_at}},
-                    {"expiry": None},
-                ]
-            }
-
-            if last_id is not None:
-                query["$and"].append({"_id": {"$gt": last_id}})
-
-            if not include_children:
-                query["$and"].append({"ancestors": {"$exists": False}})
-
-            req = ParsedRequest()
-            req.sort = "_id"
-            req.where = json.dumps(query)
-            req.max_results = max_results
-
-            items = list(self.get_from_mongo(req=req, lookup=None))
-
-            if not items:
-                break
-
-            last_id = items[-1]["_id"]
-            yield items
-
     def _is_internal_api(self):
         """Check if request is for internal search_capi endpoint or external items endpoint
 
@@ -668,3 +617,50 @@ class ItemsService(BaseService):
     @staticmethod
     def _format_date(date):
         return datetime.strftime(date, ELASTIC_DATE_FORMAT)
+
+
+class InternalItemsService(BaseService):
+    def get_expired_items(self, expiry_datetime=None, expiry_days=None, max_results=None, include_children=True):
+        """Get the expired items.
+
+        Returns a generator for the list of expired items, sorting by `_id` and returning `max_results` per iteration.
+
+        :param datetime expiry_datetime: Expiry date/time used to retrieve the list of items, defaults to `utcnow()`
+        :param int expiry_days: Number of days content expires, defaults to `CONTENT_API_EXPIRY_DAYS`
+        :param int max_results: Maximum results to retrieve per iteration, defaults to `MAX_EXPIRY_QUERY_LIMIT`
+        :param boolean include_children: Include only root item if False, otherwise include the entire item chain
+        :return list: expired content_api items
+        """
+
+        if expiry_datetime is None:
+            expiry_datetime = utcnow()
+
+        if expiry_days is None:
+            expiry_days = app.config["CONTENT_API_EXPIRY_DAYS"]
+
+        if max_results is None:
+            max_results = app.config["CONTENT_API_EXPIRY_QUERY_LIMIT"]
+
+        expire_at = date_to_str(expiry_datetime - timedelta(days=expiry_days))
+
+        query = {
+            "bool": {
+                "must": [
+                    {"range": {"_updated": {"lte": expire_at}}},
+                ],
+                "must_not": [
+                    {"exists": {"field": "expiry"}},
+                ],
+            }
+        }
+
+        if not include_children:
+            query["bool"]["must_not"].append({"exists": {"field": "ancestors"}})
+
+        source = {
+            "query": query,
+            "sort": [{"_doc": "asc"}],
+            "size": max_results or 1000,
+        }
+
+        yield list(self.search(source))

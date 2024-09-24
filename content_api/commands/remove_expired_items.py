@@ -74,7 +74,7 @@ class RemoveExpiredItems(superdesk.Command):
         :param int expiry_days: The number of days an item will be active
         """
         logger.info("{} Starting to remove expired items.".format(self.log_msg))
-        items_service = get_resource_service("items")
+        items_service = get_resource_service("capi_items_internal")
 
         num_items_removed = 0
         for expired_items in items_service.get_expired_items(

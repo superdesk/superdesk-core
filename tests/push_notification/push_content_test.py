@@ -9,9 +9,7 @@ class PushContentNotificationTestCase(unittest.TestCase):
         self.app = flask.Flask(__name__)
         self.ctx = self.app.app_context()
         self.ctx.push()
-
-    def tearDown(self):
-        self.ctx.pop()
+        self.addCleanup(self.ctx.pop)
 
     @unittest.mock.patch("apps.content.push_notification")
     def test_push_content_notification(self, push_notification):

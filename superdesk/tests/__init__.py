@@ -364,9 +364,10 @@ def setup(context=None, config=None, app_factory=get_app, reset=False):
     if context:
         context.app = app
         context.client = app.test_client()
-        if not hasattr(context, "BEHAVE") and not hasattr(context, "test_context"):
+        if not hasattr(context, "BEHAVE") and not hasattr(context, "test_context") and hasattr(context, "addCleanup"):
             context.test_context = app.test_request_context()
             context.test_context.push()
+            context.addCleanup(context.test_context.pop)
 
     with app.app_context():
         clean_dbs(app, force=bool(config))
@@ -539,12 +540,7 @@ class TestCase(unittest.TestCase):
 
         self.ctx = self.app.app_context()
         self.ctx.push()
-
-        def clean_ctx():
-            if self.ctx:
-                self.ctx.pop()
-
-        self.addCleanup(clean_ctx)
+        self.addCleanup(self.ctx.pop)
 
     def tearDownForChildren(self):
         """Run this `tearDown` stuff for each children."""
@@ -552,3 +548,20 @@ class TestCase(unittest.TestCase):
     def get_fixture_path(self, filename):
         rootpath = os.path.abspath(os.path.dirname(os.path.dirname(__file__)))
         return os.path.join(rootpath, "features", "steps", "fixtures", filename)
+
+
+class AppTestCase(unittest.TestCase):
+    config = {}
+
+    def setUp(self):
+        super().setUp()
+        config = setup_config(self.config)
+        self.app = get_app(config)
+        self.ctx = self.app.app_context()
+        self.ctx.push()
+        self.addCleanup(self.ctx.pop)
+        cache.clean()
+
+    def resetDatabase(self):
+        clean_dbs(self.app)
+        self.app.data.elastic.init_index()
