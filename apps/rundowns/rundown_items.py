@@ -103,7 +103,7 @@ class RundownItemsService(superdesk.Service):
             "additional_notes": template.get("additional_notes"),
             "rundown": rundown.get("_id", ""),
             "camera": [],
-            "subitems": [],
+            "subitems": template.get("subitems") or [],
             "technical_title": "",
         }
 

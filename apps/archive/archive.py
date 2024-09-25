@@ -1411,6 +1411,7 @@ class AutoSaveResource(Resource):
     item_methods = ["GET", "PUT", "PATCH", "DELETE"]
     resource_title = endpoint_name
     privileges = {"POST": "archive", "PATCH": "archive", "PUT": "archive", "DELETE": "archive"}
+    notifications = False
 
 
 class ArchiveSaveService(BaseService):

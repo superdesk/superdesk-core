@@ -1140,4 +1140,4 @@ AP_MEDIA_API_VERIFY_SSL = strtobool(env("AP_MEDIA_API_VERIFY_SSL", "true"))
 #:
 #: .. versionadded:: 2.8
 #:
-PHOTO_METADATA_MAPPING = {}
+PICTURE_METADATA_MAPPING = {}

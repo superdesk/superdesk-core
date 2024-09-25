@@ -382,7 +382,12 @@ class UpdateIngestTest(TestCase):
                 "_id": "categories",
                 "items": [
                     {"is_active": True, "name": "Australian Weather", "qcode": "b", "subject": "17000000"},
-                    {"is_active": True, "name": "Finance", "qcode": "f"},
+                    {
+                        "is_active": True,
+                        "name": "Finance",
+                        "qcode": "f",
+                        "translations": {"name": {"fr": "Finance FR"}},
+                    },
                 ],
             },
             {"_id": "genre", "items": [{"qcode": "feature", "name": "feature"}]},
@@ -401,10 +406,12 @@ class UpdateIngestTest(TestCase):
             for item in items:
                 item["ingest_provider"] = provider["_id"]
                 item["expiry"] = utcnow() + timedelta(hours=11)
+                item["language"] = "fr"
 
             # ingest the items and check the subject code has been derived
             self.ingest_items(items, provider, provider_service)
             self.assertEqual(items[0]["anpa_category"][0]["qcode"], "f")
+            self.assertEqual(items[0]["anpa_category"][0]["name"], "Finance FR")
 
     async def test_subject_to_anpa_category_derived_ingest_ignores_inactive_map_entries(self):
         vocab = [

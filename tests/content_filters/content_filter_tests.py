@@ -432,6 +432,62 @@ class FilteringDataTests(ContentFilterTests):
         self.assertTrue(len(r3[0]["selected_subscribers"]) == 2)
         self.assertTrue(len(r4[0]["selected_subscribers"]) == 1)
 
+    def test_does_match_return_with_caching_mechanism(self):
+        self.app.data.insert(
+            "filter_conditions",
+            [
+                {
+                    "_id": 621,
+                    "operator": "in",
+                    "field": "my_vocabulary",
+                    "value": "BIN/ALG",
+                    "name": "Bin/alg filter_c",
+                },
+            ],
+        )
+        content_filter = [
+            {
+                "_id": 1234,
+                "name": "Bin/ALG Filter",
+                "content_filter": [{"expression": {"fc": [621]}}],
+            },
+        ]
+        self.app.data.insert("content_filters", content_filter)
+
+        item = {
+            "_id": "urn:newsml:localhost:5000:2019-12-10T14:43:46.224107:d13ac5ae-7f43-4b7f-89a5-2c6835389564",
+            "guid": "urn:newsml:localhost:5000:2019-12-10T14:43:46.224107:d13ac5ae-7f43-4b7f-89a5-2c6835389564",
+            "subject": [
+                {
+                    "name": "BIN/ALG",
+                    "qcode": "BIN/ALG",
+                    "parent": "BIN",
+                    "scheme": "my_vocabulary",
+                },
+            ],
+        }
+
+        response = self.f.does_match(content_filter=content_filter[0], article=item)
+        self.assertTrue(response)
+
+        # Modified Item data
+        item["subject"] = [
+            {
+                "name": "BIN/ECO",
+                "qcode": "BIN/ECO",
+                "parent": "BIN",
+                "scheme": "my_vocabulary",
+            },
+        ]
+
+        # Default cache is True
+        response = self.f.does_match(content_filter=content_filter[0], article=item)
+        self.assertTrue(response)
+
+        # with cache = False
+        response = self.f.does_match(content_filter=content_filter[0], article=item, cache=False)
+        self.assertFalse(response)
+
 
 class DeleteMethodTestCase(ContentFilterTests):
     """Tests for the delete() method."""

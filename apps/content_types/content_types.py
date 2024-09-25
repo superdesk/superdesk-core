@@ -67,6 +67,9 @@ class ContentTypesResource(superdesk.Resource):
             "type": "string",
             "iunique": True,
         },
+        "icon": {
+            "type": "string",
+        },
         "description": {
             "type": "string",
         },

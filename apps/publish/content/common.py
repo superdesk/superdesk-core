@@ -921,7 +921,7 @@ class BasePublishService(BaseService):
 
     def _update_picture_metadata(self, updates, original, updated):
         renditions = updated.get("renditions") or {}
-        mapping = get_app_config("PHOTO_METADATA_MAPPING")
+        mapping = get_app_config("PICTURE_METADATA_MAPPING")
         if not mapping or not renditions:
             return
         try:

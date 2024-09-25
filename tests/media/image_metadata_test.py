@@ -18,7 +18,7 @@ def image_binary() -> bytes:
         return f.read()
 
 
-def test_photo_metadata_read_write(image_binary) -> None:
+def test_picture_metadata_read_write(image_binary) -> None:
     metadata = read_metadata(image_binary)
     assert metadata == PhotoMetadata(
         Description="The Montreal Police logo is seen on a police car in Montreal on Wednesday, July 8, 2020. THE CANADIAN PRESS/Paul Chiasson",
