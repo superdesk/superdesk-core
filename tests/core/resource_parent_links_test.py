@@ -93,12 +93,15 @@ class ResourceParentLinksTestCase(AsyncFlaskTestCase):
         folder_id = folder["_id"]
 
         # Update the users folder
+        from pprint import pprint
+
+        pprint(folder)
         response = await self.test_client.patch(
             f"/api/users_async/{test_user1.id}/topic_folders/{folder_id}",
             json=dict(name="Swimming"),
             headers={"If-Match": folder["_etag"]},
         )
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, 200, await response.get_data(as_text=True))
 
         # Delete the users folder
         response = await self.test_client.get(f"/api/users_async/{test_user1.id}/topic_folders/{folder_id}")

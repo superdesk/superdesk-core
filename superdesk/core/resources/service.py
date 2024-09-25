@@ -42,7 +42,6 @@ from superdesk.json_utils import SuperdeskJSONEncoder
 from superdesk.resource_fields import ID_FIELD, VERSION_ID_FIELD, CURRENT_VERSION, LATEST_VERSION
 
 from ..app import SuperdeskAsyncApp, get_current_async_app
-from .fields import ObjectId as ObjectIdField
 from .cursor import ElasticsearchResourceCursorAsync, MongoResourceCursorAsync, ResourceCursorAsync
 from .utils import get_projection_from_request
 
@@ -81,12 +80,6 @@ class AsyncResourceService(Generic[ResourceModelType]):
 
     def id_uses_objectid(self) -> bool:
         return self.config.data_class.uses_objectid_for_id()
-
-    def generate_id(self) -> str | ObjectId:
-        from superdesk.metadata.item import GUID_NEWSML
-        from superdesk.metadata.utils import generate_guid
-
-        return ObjectIdField() if self.id_uses_objectid() else generate_guid(type=GUID_NEWSML)
 
     @property
     def mongo(self):
@@ -249,7 +242,7 @@ class AsyncResourceService(Generic[ResourceModelType]):
 
         # Construct a new ResourceModelType instance, to allow Pydantic to validate the changes
         # This is not efficient, but will do for now
-        updated = original.model_dump(by_alias=True, exclude_unset=True)
+        updated = original.to_dict()
         updated.update(updates)
         updated.pop("_type", None)
         # Run the Pydantic sync validators, and get a model instance in return
@@ -261,9 +254,7 @@ class AsyncResourceService(Generic[ResourceModelType]):
 
         # Re-dump the model for use with sending to MongoDB
         # This will make sure values are of correct type for MongoDB (such as ObjectId)
-        return model_instance.model_dump(
-            by_alias=True,
-            exclude_unset=True,
+        return model_instance.to_dict(
             context={"use_objectid": True} if not self.config.query_objectid_as_string else {},
         )
 
@@ -288,9 +279,7 @@ class AsyncResourceService(Generic[ResourceModelType]):
             versioned_model = get_versioned_model(doc)
             if versioned_model is not None:
                 versioned_model.current_version = 1
-            doc_dict = doc.model_dump(
-                by_alias=True,
-                exclude_unset=True,
+            doc_dict = doc.to_dict(
                 context={"use_objectid": True} if not self.config.query_objectid_as_string else {},
             )
             doc.etag = doc_dict["_etag"] = self.generate_etag(doc_dict, self.config.etag_ignore_fields)

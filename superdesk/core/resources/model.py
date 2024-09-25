@@ -30,6 +30,7 @@ from pydantic_core import InitErrorDetails, PydanticCustomError
 from pydantic.dataclasses import dataclass as pydataclass
 
 from superdesk.core.types import SortListParam, ProjectedFieldArg
+from superdesk.core.utils import generate_guid, GUID_NEWSML
 from .fields import ObjectId
 
 
@@ -65,7 +66,7 @@ class ResourceModel(BaseModel):
         return self.model_resource_name
 
     #: ID of the document
-    id: Annotated[Union[str, ObjectId], Field(alias="_id")]
+    id: Annotated[Union[str, ObjectId], Field(alias="_id", default_factory=lambda: generate_guid(type=GUID_NEWSML))]
 
     #: Etag of the document
     etag: Annotated[Optional[str], Field(alias="_etag")] = None
@@ -139,7 +140,14 @@ class ResourceModel(BaseModel):
         """
         default_params: dict[str, Any] = {"by_alias": True, "exclude_unset": True}
         default_params.update(kwargs)
-        return self.model_dump(**default_params)
+        model_dict = self.model_dump(**default_params)
+
+        if not model_dict.get("_id"):
+            # Make sure to include `id`, in case a default one was provided
+            # as exclude_unset will not include it when serialising
+            model_dict["_id"] = self.id
+
+        return model_dict
 
     def to_json(self, **kwargs) -> str:
         """
@@ -212,7 +220,7 @@ class ResourceModelWithObjectId(ResourceModel):
     """Base ResourceModel class to be used, if the resource uses an ObjectId for it's ID"""
 
     #: ID of the document
-    id: Annotated[ObjectId, Field(alias="_id")]
+    id: Annotated[ObjectId, Field(alias="_id", default_factory=ObjectId)]
 
 
 @dataclass

@@ -46,7 +46,7 @@ class TestResourceService(AsyncTestCase):
         # Test the User exists in MongoDB with correct data
         test_user.created = NOW
         test_user.updated = NOW
-        test_user_dict = test_user.model_dump(by_alias=True, exclude_unset=True, context={"use_objectid": True})
+        test_user_dict = test_user.to_dict(context={"use_objectid": True})
         mongo_item = await self.service.mongo.find_one({"_id": test_user.id})
         self.assertEqual(mongo_item, test_user_dict)
 
@@ -61,7 +61,7 @@ class TestResourceService(AsyncTestCase):
         # Test the User exists in Elasticsearch with correct data
         # (Convert the datetime values to strings, as es client doesn't convert them)
         elastic_item = await self.service.elastic.find_by_id(test_user.id)
-        test_user_dict = test_user.model_dump(by_alias=True, exclude_unset=True)
+        test_user_dict = test_user.to_dict()
         test_user_dict.update(
             dict(
                 _created=format_time(NOW) + "+00:00",
@@ -135,7 +135,7 @@ class TestResourceService(AsyncTestCase):
         test_user.related_items[0].id = new_related_item_1_id
         test_user.related_items[1].id = new_related_item_2_id
         test_user.etag = updates["_etag"]
-        test_user_dict = test_user.model_dump(by_alias=True, exclude_unset=True, context={"use_objectid": True})
+        test_user_dict = test_user.to_dict(context={"use_objectid": True})
 
         # Test the user was updated through the ResourceService
         item = await self.service.find_one(_id=test_user.id)
@@ -153,7 +153,7 @@ class TestResourceService(AsyncTestCase):
         # Test the User was updated in Elasticsearch with correct data
         # (Convert the datetime values to strings, as es client doesn't convert them)
         elastic_item = await self.service.elastic.find_by_id(test_user.id)
-        test_user_dict = test_user.model_dump(by_alias=True, exclude_unset=True)
+        test_user_dict = test_user.to_dict()
         test_user_dict.update(
             dict(
                 _created=format_time(NOW) + "+00:00",
@@ -215,8 +215,8 @@ class TestResourceService(AsyncTestCase):
 
         for i in range(3):
             self.assertEqual(
-                docs[i].model_dump(by_alias=True, exclude_unset=True),
-                users[i].model_dump(by_alias=True, exclude_unset=True),
+                docs[i].to_dict(),
+                users[i].to_dict(),
             )
 
     async def test_get_all_batch(self):
@@ -230,8 +230,8 @@ class TestResourceService(AsyncTestCase):
         self.assertEqual(len(docs), 3)
         for i in range(3):
             self.assertEqual(
-                docs[i].model_dump(by_alias=True, exclude_unset=True),
-                users[i].model_dump(by_alias=True, exclude_unset=True),
+                docs[i].to_dict(),
+                users[i].to_dict(),
             )
 
         docs = []
@@ -241,8 +241,8 @@ class TestResourceService(AsyncTestCase):
         self.assertEqual(len(docs), 2)
         for i in range(2):
             self.assertEqual(
-                docs[i].model_dump(by_alias=True, exclude_unset=True),
-                users[i].model_dump(by_alias=True, exclude_unset=True),
+                docs[i].to_dict(),
+                users[i].to_dict(),
             )
 
     async def test_elastic_search(self):

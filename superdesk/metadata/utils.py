@@ -9,15 +9,16 @@
 # at https://www.sourcefabric.org/superdesk/license
 
 from typing import Union
-from datetime import datetime
-from uuid import uuid4
 from bson import ObjectId
 from urllib.parse import urlparse
 from contextlib import contextmanager
 
+# Moved `generate_guid` from here to superdesk.core.utils
+# Keeping import here so other code still works
+from superdesk.core.utils import generate_guid, GUID_TAG, GUID_NEWSML  # noqa
 from superdesk.core import get_app_config
 from superdesk.utils import SuperdeskBaseEnum
-from .item import GUID_TAG, GUID_NEWSML, GUID_FIELD, ITEM_TYPE, CONTENT_TYPE
+from .item import GUID_FIELD, ITEM_TYPE, CONTENT_TYPE
 
 
 item_url = r'regex("[\w,.:_-]+")'
@@ -103,33 +104,6 @@ def _set_highlight_query(source):
         highlight_query = get_elastic_highlight_query(query_string)
         if highlight_query:
             source["highlight"] = highlight_query
-
-
-def generate_guid(**hints):
-    """Generate a GUID based on given hints
-
-    param: hints: hints used for generating the guid
-    """
-    newsml_guid_format = "urn:newsml:%(domain)s:%(timestamp)s:%(identifier)s"
-    tag_guid_format = "tag:%(domain)s:%(year)d:%(identifier)s"
-
-    if not hints.get("id"):
-        hints["id"] = str(uuid4())
-
-    if get_app_config("GENERATE_SHORT_GUID", False):
-        return hints["id"]
-
-    t = datetime.today()
-
-    if hints["type"].lower() == GUID_TAG:
-        return tag_guid_format % {"domain": get_app_config("URN_DOMAIN"), "year": t.year, "identifier": hints["id"]}
-    elif hints["type"].lower() == GUID_NEWSML:
-        return newsml_guid_format % {
-            "domain": get_app_config("URN_DOMAIN"),
-            "timestamp": t.isoformat(),
-            "identifier": hints["id"],
-        }
-    return None
 
 
 def generate_urn(resource_name: str, resource_id: Union[ObjectId, str]) -> str:

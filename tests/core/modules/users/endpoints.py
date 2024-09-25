@@ -31,7 +31,7 @@ async def test_simple_route(args: RequestArgs, params: RequestParams, request: R
     item = await app.resources.get_resource_service(resource).find_by_id(item_id)
     if item is None:
         raise SuperdeskApiError.notFoundError("Item not found")
-    return Response(item.model_dump(by_alias=True, exclude_unset=True, mode="json"), 200, ())
+    return Response(item.to_dict(mode="json"), 200, ())
 
 
 @endpoints.endpoint(url="get_user_ids", methods=["GET"], name="get_user_ids|test")

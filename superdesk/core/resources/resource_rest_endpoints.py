@@ -273,9 +273,6 @@ class ResourceRestEndpoints(RestEndpoints):
         for value in payload:
             # Validate the provided item,
             try:
-                if "_id" not in value:
-                    value["_id"] = service.generate_id()
-
                 for parent_link in self.endpoint_config.parent_links or []:
                     parent_item = parent_items.get(parent_link.resource_name)
                     if parent_item is not None:
