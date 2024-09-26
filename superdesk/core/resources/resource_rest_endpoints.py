@@ -278,7 +278,7 @@ class ResourceRestEndpoints(RestEndpoints):
                     if parent_item is not None:
                         value[parent_link.get_model_id_field()] = parent_item[parent_link.parent_id_field]
 
-                model_instance = self.resource_config.data_class.model_validate(value)
+                model_instance = self.resource_config.data_class.from_dict(value)
                 model_instances.append(model_instance)
             except ValidationError as validation_error:
                 return Response(convert_pydantic_validation_error_for_response(validation_error), 403)

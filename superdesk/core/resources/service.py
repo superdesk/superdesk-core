@@ -109,7 +109,7 @@ class AsyncResourceService(Generic[ResourceModelType]):
 
         # We can't use ``model_construct`` method to construct instance without validation
         # because nested models are not being converted to model instances
-        return cast(ResourceModelType, self.config.data_class.model_validate(data))
+        return cast(ResourceModelType, self.config.data_class.from_dict(data))
 
     async def find_one_raw(self, use_mongo: bool = False, version: int | None = None, **lookup) -> dict | None:
         """Find a resource by ID
@@ -247,7 +247,7 @@ class AsyncResourceService(Generic[ResourceModelType]):
         updated.pop("_type", None)
         # Run the Pydantic sync validators, and get a model instance in return
         # Enable ``include_unknown`` so we get unknown field validation
-        model_instance = self.config.data_class.model_validate(updated, include_unknown=True)
+        model_instance = self.config.data_class.from_dict(updated, include_unknown=True)
 
         # Run the async validators
         await model_instance.validate_async()

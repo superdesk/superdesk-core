@@ -31,7 +31,7 @@ class ResourceModelTest(TestCase):
 
     def test_resource_from_dict(self):
         test_user_dict = john_doe_dict()
-        user = User.model_validate(test_user_dict)
+        user = User.from_dict(test_user_dict)
         self.assertEqual(user.to_dict(), test_user_dict)
 
     def test_resource_validation(self):
@@ -63,12 +63,12 @@ class ResourceModelTest(TestCase):
 
         self.assertIsInstance(ModelWithStringId(name="foo").id, str)
         self.assertIsInstance(ModelWithStringId(**{"name": "foo"}).id, str)
-        self.assertIsInstance(ModelWithStringId.model_validate({"name": "foo"}).id, str)
+        self.assertIsInstance(ModelWithStringId.from_dict({"name": "foo"}).id, str)
         self.assertIsInstance(ModelWithStringId(id="abcd123", name="foo").id, str)
 
         self.assertIsInstance(ModelWithObjectId(name="foo").id, ObjectId)
         self.assertIsInstance(ModelWithObjectId(**{"name": "foo"}).id, ObjectId)
-        self.assertIsInstance(ModelWithObjectId.model_validate({"name": "foo"}).id, ObjectId)
+        self.assertIsInstance(ModelWithObjectId.from_dict({"name": "foo"}).id, ObjectId)
         self.assertIsInstance(ModelWithObjectId(id=ObjectId(), name="foo").id, ObjectId)
 
     def test_elastic_mapping(self):

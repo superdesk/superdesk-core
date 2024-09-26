@@ -94,8 +94,8 @@ class ResourceModel(BaseModel):
     @override
     @classmethod
     def model_validate(
-        cls: Type[Self],
-        obj: Dict[str, Any],
+        cls,
+        obj: dict[str, Any],
         *,
         strict: bool | None = None,
         from_attributes: bool | None = None,
@@ -128,6 +128,25 @@ class ResourceModel(BaseModel):
         )
 
         return instance
+
+    @classmethod
+    def from_dict(
+        cls,
+        values: dict[str, Any],
+        context: dict[str, Any] | None = None,
+        include_unknown: bool = False,
+    ) -> Self:
+        """Construct a model instance from the provided dictionary, and validate its values
+
+        :param values: Dictionary of values used to construct the model instance
+        :param context: Additional context to pass to the validator
+        :param include_unknown: Whether to include fields not defined in the ResourceModel
+        :raises Pydantic.ValidationError: If validation fails
+        :rtype: ResourceModel
+        :returns: The validated model instance
+        """
+
+        return cls.model_validate(values, context=context, include_unknown=include_unknown)
 
     def to_dict(self, **kwargs) -> dict[str, Any]:
         """
