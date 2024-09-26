@@ -575,7 +575,7 @@ class AsyncTestCase(IsolatedAsyncioTestCase):
 
 class TestClient(QuartClient):
     def model_instance_to_json(self, model_instance: ResourceModel):
-        return model_instance.model_dump(by_alias=True, exclude_unset=True, mode="json")
+        return model_instance.to_dict(mode="json")
 
     async def post(self, *args, **kwargs) -> Response:
         if "json" in kwargs:

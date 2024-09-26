@@ -30,7 +30,7 @@ class ResourceEndpointsTestCase(AsyncFlaskTestCase):
         # Test the User exists in MongoDB with correct data
         test_user.created = NOW
         test_user.updated = NOW
-        test_user_dict = test_user.model_dump(by_alias=True, exclude_unset=True, context={"use_objectid": True})
+        test_user_dict = test_user.to_dict(context={"use_objectid": True})
         mongo_item = await self.service.mongo.find_one({"_id": test_user.id})
         test_user.etag = test_user_dict["_etag"] = mongo_item["_etag"]
         self.assertEqual(mongo_item, test_user_dict)
@@ -38,7 +38,7 @@ class ResourceEndpointsTestCase(AsyncFlaskTestCase):
         # Test the User exists in Elasticsearch with correct data
         # (Convert the datetime values to strings, as es client doesn't convert them)
         elastic_item = await self.service.elastic.find_by_id(test_user.id)
-        test_user_dict = test_user.model_dump(by_alias=True, exclude_unset=True)
+        test_user_dict = test_user.to_dict()
         # test_user_dict["_etag"] = mongo_item["_etag"]
         test_user_dict.update(
             dict(

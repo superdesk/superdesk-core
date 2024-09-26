@@ -1,8 +1,9 @@
 from unittest import TestCase
 
 from pydantic import ValidationError
+from bson import ObjectId
 
-from superdesk.core.resources import fields
+from superdesk.core.resources import fields, ResourceModel, ResourceModelWithObjectId
 from superdesk.core.elastic.resources import get_elastic_mapping_from_model
 
 from .modules.users import User
@@ -16,22 +17,22 @@ class ResourceModelTest(TestCase):
 
         # Test converting model to dict, excluding unset values
         self.assertEqual(
-            test_user.model_dump(exclude_unset=True, by_alias=True),
+            test_user.to_dict(),
             john_doe_dict(),
         )
 
         # Test ``code`` is now included
         test_user.code = "abcd"
-        self.assertEqual(test_user.model_dump(exclude_unset=True, by_alias=True)["code"], "abcd")
+        self.assertEqual(test_user.to_dict()["code"], "abcd")
 
         # Test assigning ``None`` to ``code` (aka nullable)
         test_user.code = None
-        self.assertEqual(test_user.model_dump(exclude_unset=True, by_alias=True)["code"], None)
+        self.assertEqual(test_user.to_dict()["code"], None)
 
     def test_resource_from_dict(self):
         test_user_dict = john_doe_dict()
-        user = User.model_validate(test_user_dict)
-        self.assertEqual(user.model_dump(exclude_unset=True, by_alias=True), test_user_dict)
+        user = User.from_dict(test_user_dict)
+        self.assertEqual(user.to_dict(), test_user_dict)
 
     def test_resource_validation(self):
         with self.assertRaises(ValidationError):
@@ -52,6 +53,23 @@ class ResourceModelTest(TestCase):
         user.location = fields.Geopoint(lat=30, lon=30)
         with self.assertRaises(ValidationError):
             user.location.lat = "efgh"
+
+    def test_resource_default_id(self):
+        class ModelWithStringId(ResourceModel):
+            name: str
+
+        class ModelWithObjectId(ResourceModelWithObjectId):
+            name: str
+
+        self.assertIsInstance(ModelWithStringId(name="foo").id, str)
+        self.assertIsInstance(ModelWithStringId(**{"name": "foo"}).id, str)
+        self.assertIsInstance(ModelWithStringId.from_dict({"name": "foo"}).id, str)
+        self.assertIsInstance(ModelWithStringId(id="abcd123", name="foo").id, str)
+
+        self.assertIsInstance(ModelWithObjectId(name="foo").id, ObjectId)
+        self.assertIsInstance(ModelWithObjectId(**{"name": "foo"}).id, ObjectId)
+        self.assertIsInstance(ModelWithObjectId.from_dict({"name": "foo"}).id, ObjectId)
+        self.assertIsInstance(ModelWithObjectId(id=ObjectId(), name="foo").id, ObjectId)
 
     def test_elastic_mapping(self):
         # Test the generated mapping

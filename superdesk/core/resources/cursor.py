@@ -60,7 +60,7 @@ class ResourceCursorAsync(Generic[ResourceModelType]):
         # We can't use ``model_construct`` method to construct instance without validation
         # because nested models are not being converted to model instances
         data.pop("_type", None)
-        return self.data_class(**data)
+        return self.data_class.from_dict(data)
 
 
 class ElasticsearchResourceCursorAsync(ResourceCursorAsync):
