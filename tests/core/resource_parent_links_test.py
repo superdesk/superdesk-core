@@ -93,9 +93,6 @@ class ResourceParentLinksTestCase(AsyncFlaskTestCase):
         folder_id = folder["_id"]
 
         # Update the users folder
-        from pprint import pprint
-
-        pprint(folder)
         response = await self.test_client.patch(
             f"/api/users_async/{test_user1.id}/topic_folders/{folder_id}",
             json=dict(name="Swimming"),
