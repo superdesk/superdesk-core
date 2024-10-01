@@ -18,11 +18,15 @@ import superdesk
 
 from string import Template
 from types import ModuleType
-from typing import Optional, Tuple
+from typing import Literal, Optional, Tuple
+from inspect import iscoroutinefunction
+
+from pymongo.database import Database, Collection
+from motor.motor_asyncio import AsyncIOMotorDatabase, AsyncIOMotorCollection
 
 from eve.utils import ParsedRequest
 
-from superdesk.flask import Flask
+from superdesk.core.app import get_current_async_app
 from superdesk.services import BaseService
 from superdesk.core import get_app_config, get_current_app
 
@@ -320,13 +324,57 @@ class GenerateUpdate(superdesk.Command):
 superdesk.command("data:generate_update", GenerateUpdate())
 
 
-class BaseDataUpdate:
-    def apply(self, direction):
-        assert direction in ["forwards", "backwards"]
-        app = get_current_app()
-        collection = app.data.get_mongo_collection(self.resource)
+def get_db_and_collection(
+    resource_name: str, is_async: bool = True
+) -> Tuple[AsyncIOMotorCollection, AsyncIOMotorDatabase] | Tuple[Collection, Database]:
+    """
+    Retrieves the appropriate collection and database based on the `is_async` flag.
+
+    Args:
+        resource_name: The name of the resource (collection).
+        is_async: Boolean flag indicating whether the operation is asynchronous or synchronous.
+
+    Returns:
+        Tuple of collection and database corresponding to async or sync versions.
+    """
+
+    async_app = get_current_async_app()
+    app = async_app.wsgi
+
+    if is_async:
+        collection = async_app.mongo.get_collection_async(resource_name)
+        db = async_app.mongo.get_db_async(resource_name)
+    else:
+        collection = app.data.get_mongo_collection(resource_name)
         db = app.data.driver.db
-        getattr(self, direction)(collection, db)
+
+    return collection, db
+
+
+class BaseDataUpdate:
+    resource: str
+
+    async def apply(self, direction: Literal["forwards", "backwards"]):
+        """
+        Applies a data update depending on the direction, either asynchronous or synchronous.
+
+        Args:
+            direction (str): The direction of the update, either 'forwards' or 'backwards'.
+
+        Raises:
+            AssertionError: If the direction is not 'forwards' or 'backwards'.
+        """
+
+        assert direction in ["forwards", "backwards"]
+        direction_func = getattr(self, direction)
+
+        is_async = iscoroutinefunction(direction_func)
+        collection, db = get_db_and_collection(self.resource, is_async)
+
+        if is_async:
+            await direction_func(collection, db)
+        else:
+            direction_func(collection, db)
 
 
 DataUpdate = BaseDataUpdate
