@@ -10,7 +10,6 @@ import elasticsearch.exceptions
 from pathlib import Path
 from collections import OrderedDict
 
-from superdesk.flask import Flask
 from superdesk.commands import cli
 from superdesk.core import get_current_app, get_app_config
 from superdesk.resource_fields import ETAG
@@ -292,7 +291,7 @@ async def app_initialize_data_handler(
         logger.error(err)
         if rebuild_elastic_on_init_data_error:
             logger.warning("Can't update the mapping, running app:flush_elastic_index command now.")
-            FlushElasticIndex().run(sd_index=True, capi_index=True)
+            await FlushElasticIndex().run(sd_index=True, capi_index=True)
         else:
             logger.warning("Can't update the mapping, please run app:flush_elastic_index command.")
 

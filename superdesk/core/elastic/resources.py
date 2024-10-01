@@ -227,16 +227,17 @@ class ElasticResources:
                 continue
 
             resource_client = self.get_client(config.name)
+            delete_index_fn = resource_client.elastic.indices.delete
 
             try:
-                alias_info = resource_client.elastic.indices.get_alias(name=resource_client.config.index)
+                index_alias = resource_client.config.index
+                alias_info = resource_client.elastic.indices.get_alias(name=index_alias)
+
                 for index in alias_info:
-                    resource_client.elastic.indices.delete(index=index)
+                    print(f"deleting index alias={index_alias} index={index}")
+                    delete_index_fn(index=index) or delete_index_fn(index=index_alias)
             except NotFoundError:
-                try:
-                    resource_client.elastic.indices.delete(index=resource_client.config.index)
-                except NotFoundError:
-                    pass
+                pass
 
     def _create_index_from_alias(self, resource_client: ElasticResourceClient):
         try:

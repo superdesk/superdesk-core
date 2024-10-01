@@ -485,7 +485,8 @@ class StorageRestore(superdesk.Command):
         if not no_flush:
             print("🚽 flushing ElasticSearch index")
             try:
-                flush_elastic_index.FlushElasticIndex().run(sd_index=True, capi_index=False)
+                # TODO-ASYNC: remove type ignore once the whole command is migrated
+                flush_elastic_index.FlushElasticIndex().run(sd_index=True, capi_index=False)  # type: ignore
             except Exception:
                 logger.exception("😭 Something went wrong")
                 sys.exit(1)
@@ -726,7 +727,8 @@ class StorageRestoreRecord(superdesk.Command):
 
         print("🚽 flushing ElasticSearch index")
         try:
-            flush_elastic_index.FlushElasticIndex().run(sd_index=True, capi_index=False)
+            # TODO-ASYNC: remove type ignore once the whole command is migrated
+            flush_elastic_index.FlushElasticIndex().run(sd_index=True, capi_index=False)  # type: ignore
         except Exception:
             logger.exception("😭 Something went wrong")
         else:
