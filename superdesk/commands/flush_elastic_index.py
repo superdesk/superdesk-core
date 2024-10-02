@@ -8,6 +8,7 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
+from typing import cast
 import click
 
 from eve_elastic import get_es
@@ -41,8 +42,8 @@ class FlushElasticIndex:
 
         self._es = get_es(get_app_config("ELASTICSEARCH_URL"))
 
-        elastic_index_prefix = get_app_config("ELASTICSEARCH_INDEX")
-        content_api_index_prefix = get_app_config("CONTENTAPI_ELASTICSEARCH_INDEX")
+        elastic_index_prefix = cast(str, get_app_config("ELASTICSEARCH_INDEX"))
+        content_api_index_prefix = cast(str, get_app_config("CONTENTAPI_ELASTICSEARCH_INDEX"))
 
         if sd_index:
             self.delete_elastic(elastic_index_prefix)
