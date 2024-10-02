@@ -49,7 +49,7 @@ def update_schema():
     RebuildElasticIndex().run()
 
 
-@cli.register_async_command("schema:migrate", with_appcontext=True)
+@cli.command("schema:migrate")
 async def schema_migrate_command():
     """Migrate elastic schema if needed, should be triggered on every deploy.
 
