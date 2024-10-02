@@ -36,5 +36,5 @@ def configure_cli(app) -> None:
     Sets the current app instance into the `AsyncAppGroup` to later be passed as context of the commands.
     It also registers the commands blueprint
     """
-    cli.set_current_app(app)
+
     app.register_blueprint(commands_blueprint)

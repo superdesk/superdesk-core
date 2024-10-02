@@ -218,7 +218,7 @@ def get_filepath(filename, path=None):
             return filepath
 
 
-@cli.register_async_command("app:initialize_data", with_appcontext=True)
+@cli.command("app:initialize_data")
 @click.option("--entity-name", "-n", multiple=True, help="Entity(ies) to initialize")
 @click.option("--full-path", "-p", help="Path of the file to import")
 @click.option("--sample-data", is_flag=True, help="Use sample data")

@@ -28,7 +28,7 @@ logger = logging.getLogger(__name__)
 USER_FIELDS_NAMES = {"username", "email", "password", "first_name", "last_name", "sign_off", "role"}
 
 
-@cli.register_async_command("users:create", with_appcontext=True)
+@cli.command("users:create")
 @click.option("--username", "-u", required=True, help="Username for the new user.")
 @click.option("--password", "-p", required=True, help="Password for the new user.")
 @click.option("--email", "-e", required=True, help="Email address for the new user.")

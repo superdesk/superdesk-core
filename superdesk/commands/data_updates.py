@@ -164,7 +164,7 @@ def common_options(func):
     return wrapper
 
 
-@cli.register_async_command("data:upgrade", with_appcontext=True)
+@cli.command("data:upgrade")
 @common_options
 async def upgrade_command(*args, **kwargs):
     """Runs all the new data updates available.
@@ -210,7 +210,7 @@ async def upgrade_command_handler(data_update_id=None, fake=False, dry=False):
         print("No data update to apply.")
 
 
-@cli.register_async_command("data:downgrade", with_appcontext=True)
+@cli.command("data:downgrade")
 @common_options
 async def downgrade_command(*args, **kwargs):
     """Runs the latest data update backward.
