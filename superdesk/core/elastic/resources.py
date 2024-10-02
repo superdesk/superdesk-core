@@ -218,8 +218,11 @@ class ElasticResources:
             resources_indexed.append(config.name)
         return resources_indexed
 
-    def drop_indexes(self):
-        """Drops Elasticsearch indexes for all registered resources"""
+    def drop_indexes(self, index_prefix: str | None = None):
+        """
+        Drops Elasticsearch indexes for all registered resources. If `index_prefix` is provided
+        then it will only drop the indexes that contain such prefix.
+        """
 
         for config in self.app.resources.get_all_configs():
             if config.elastic is None:
@@ -227,14 +230,17 @@ class ElasticResources:
                 continue
 
             resource_client = self.get_client(config.name)
+            index_alias = resource_client.config.index
+
+            # skip if resource does not belong the provided index
+            if index_prefix and index_alias != f"{index_prefix}_{config.name}":
+                continue
+
             delete_index_fn = resource_client.elastic.indices.delete
-
             try:
-                index_alias = resource_client.config.index
                 alias_info = resource_client.elastic.indices.get_alias(name=index_alias)
-
-                for index in alias_info:
-                    print(f"deleting index alias={index_alias} index={index}")
+                for index in alias_info.keys():
+                    print(f"- Removing index alias={index_alias} index={index}")
                     delete_index_fn(index=index) or delete_index_fn(index=index_alias)
             except NotFoundError:
                 pass
@@ -246,7 +252,7 @@ class ElasticResources:
                 index=index, body={} if not resource_client.config.settings else resource_client.config.settings
             )
             resource_client.elastic.indices.put_alias(index=index, name=resource_client.config.index)
-            logger.info(f"created index alias={resource_client.config.index} index={index}")
+            logger.info(f"- Created index alias={resource_client.config.index} index={index}")
         except TransportError:  # index exists
             pass
 
