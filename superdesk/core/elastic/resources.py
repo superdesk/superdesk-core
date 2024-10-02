@@ -239,11 +239,14 @@ class ElasticResources:
             delete_index_fn = resource_client.elastic.indices.delete
             try:
                 alias_info = resource_client.elastic.indices.get_alias(name=index_alias)
-                for index in alias_info.keys():
+                for index in alias_info:
                     print(f"- Removing index alias={index_alias} index={index}")
-                    delete_index_fn(index=index) or delete_index_fn(index=index_alias)
+                    delete_index_fn(index=index)
             except NotFoundError:
-                pass
+                try:
+                    delete_index_fn(index=index_alias)
+                except NotFoundError:
+                    pass
 
     def _create_index_from_alias(self, resource_client: ElasticResourceClient):
         try:

@@ -65,13 +65,12 @@ class FlushElasticIndex:
 
         app = get_current_app()
         for resource in app.data.get_elastic_resources():
-            es_backend = app.data._search_backend(resource)
-            alias = es_backend._resource_index(resource)
+            alias = app.data.elastic._resource_index(resource)
 
             for index in indices:
                 if index.rsplit("_", 1)[0] == alias or index == alias:
                     try:
-                        print('- Removing elastic index "{}"'.format(index))
+                        print(f'- Removing elastic index "{index}"')
                         self._es.indices.delete(index=index)
                     except es_exceptions.NotFoundError:
                         print(f'\t- "{index}" elastic index was not found. Continue without deleting.')
