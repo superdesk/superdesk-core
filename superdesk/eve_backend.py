@@ -365,10 +365,20 @@ class EveBackend:
         :param lookup: User mongo query syntax. example 1. ``{'_id':123}``, 2. ``{'item_id': {'$in': [123, 234]}}``
         :returns: Returns list of ids which were removed.
         """
+        search_backend = self._lookup_backend(endpoint_name)
         docs = list(self.get_from_mongo(endpoint_name, lookup=lookup, req=ParsedRequest()).sort("_id", 1))
-        removed_ids = self.delete_docs(endpoint_name, docs)
-        if len(docs) and not len(removed_ids):
-            logger.warn("No documents for %s resource were deleted using lookup %s", endpoint_name, lookup)
+        removed_ids = []
+        if docs:
+            removed_ids = self.delete_docs(endpoint_name, docs)
+            if not removed_ids:
+                logger.warning("No documents for %s resource were deleted using lookup %s", endpoint_name, lookup)
+        elif "_id" in lookup and search_backend:
+            logger.warning("Item missing in mongo, deleting from elastic resource=%s lookup=%s", endpoint_name, lookup)
+            try:
+                search_backend.remove(endpoint_name, lookup)
+                removed_ids = [lookup["_id"]]
+            except NotFoundError:
+                pass  # not found in elastic and not in mongo
         cache.clean([endpoint_name])
         return removed_ids
 
