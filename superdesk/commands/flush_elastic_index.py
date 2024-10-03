@@ -8,19 +8,19 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
-from elasticsearch import exceptions as es_exceptions
+from typing import cast
+import click
+
 from eve_elastic import get_es
-from superdesk.core import get_app_config, get_current_app
-import superdesk
-from content_api import ELASTIC_PREFIX as CAPI_ELASTIC_PREFIX
+from elasticsearch import exceptions as es_exceptions
+
+from superdesk.commands import cli
+from superdesk.core import get_app_config, get_current_app, get_current_async_app
 
 from .index_from_mongo import IndexFromMongo
 
-# this one is not configurable
-SD_ELASTIC_PREFIX = "ELASTICSEARCH"
 
-
-class FlushElasticIndex(superdesk.Command):
+class FlushElasticIndex:
     """Flush elastic index.
 
     It removes elastic index, creates a new one and index it from mongo.
@@ -36,63 +36,58 @@ class FlushElasticIndex(superdesk.Command):
 
     """
 
-    option_list = [
-        # superdesk.Option("--sd", action="store_true", dest="sd_index"),
-        # superdesk.Option("--capi", action="store_true", dest="capi_index"),
-    ]
-
-    async def run(self, sd_index, capi_index):
+    async def run(self, sd_index: bool, capi_index: bool):
         if not (sd_index or capi_index):
             raise SystemExit("You must specify at least one elastic index to flush. " "Options: `--sd`, `--capi`")
 
         self._es = get_es(get_app_config("ELASTICSEARCH_URL"))
 
+        elastic_index_prefix = cast(str, get_app_config("ELASTICSEARCH_INDEX"))
+        content_api_index_prefix = cast(str, get_app_config("CONTENTAPI_ELASTICSEARCH_INDEX"))
+
         if sd_index:
-            self._delete_elastic(get_app_config("ELASTICSEARCH_INDEX"))
-        if capi_index:
-            self._delete_elastic(get_app_config("CONTENTAPI_ELASTICSEARCH_INDEX"))
+            self.delete_elastic(elastic_index_prefix)
+            await self.index_from_mongo(elastic_index_prefix)
 
-        await self._index_from_mongo(sd_index, capi_index)
+        # delete content_api's index if it's not the same as default one
+        if capi_index and elastic_index_prefix != content_api_index_prefix:
+            self.delete_elastic(content_api_index_prefix)
+            await self.index_from_mongo(content_api_index_prefix)
 
-    def _delete_elastic(self, index_prefix):
+    def delete_elastic(self, index_prefix):
         """Deletes elastic indices with `index_prefix`
 
         :param str index_prefix: elastix index
         :raise: SystemExit exception if delete elastic index response status is not 200 or 404.
         """
 
-        indices = list(self._es.indices.get_alias("{}_*".format(index_prefix)).keys())
+        indices = list(self._es.indices.get_alias(f"{index_prefix}_*").keys())
         print(f"Configured indices with prefix '{index_prefix}': " + ", ".join(indices))
 
         app = get_current_app()
-        for es_resource in app.data.get_elastic_resources():
-            alias = app.data.elastic._resource_index(es_resource)
-            print(f"- Attempting to delete alias {alias}")
+        for resource in app.data.get_elastic_resources():
+            alias = app.data.elastic._resource_index(resource)
+
             for index in indices:
                 if index.rsplit("_", 1)[0] == alias or index == alias:
                     try:
-                        print('- Removing elastic index "{}"'.format(index))
+                        print(f'- Removing elastic index "{index}"')
                         self._es.indices.delete(index=index)
                     except es_exceptions.NotFoundError:
-                        print('\t- "{}" elastic index was not found. Continue without deleting.'.format(index))
+                        print(f'\t- "{index}" elastic index was not found. Continue without deleting.')
                     except es_exceptions.TransportError as e:
-                        raise SystemExit(
-                            '\t- "{}" elastic index was not deleted. Exception: "{}"'.format(index, e.error)
-                        )
+                        raise SystemExit(f'\t- "{index}" elastic index was not deleted. Exception: "{e.error}"')
                     else:
-                        print('\t- "{}" elastic index was deleted.'.format(index))
+                        print(f'\t- "{index}" elastic index was deleted.')
                         break
 
-    async def _index_from_mongo(self, sd_index, capi_index):
-        """Index elastic search from mongo.
+        # now delete indices for async resources
+        get_current_async_app().elastic.drop_indexes(index_prefix)
 
-        if `sd_index` is true only superdesk elastic index will be indexed.
-        if `capi_index` is true only content api elastic index will be indexed.
-
-        :param bool sd_index: Flag to index superdesk elastic index.
-        :param bool capi_index:nFlag to index content api elastic index.
+    async def index_from_mongo(self, index_prefix: str):
         """
-        # get all es resources
+        Index elastic search from mongo for all the resources in the given `index_prefix`.
+        """
         app = get_current_app()
         await app.data.init_elastic(app)
         resources = app.data.get_elastic_resources()
@@ -100,19 +95,47 @@ class FlushElasticIndex(superdesk.Command):
         for resource in resources:
             # get es prefix per resource
             es_backend = app.data._search_backend(resource)
-            resource_es_prefix = es_backend._resource_prefix(resource)
 
-            if resource_es_prefix == SD_ELASTIC_PREFIX and sd_index:
-                print('- Indexing mongo collections into "{}" elastic index.'.format(app.config["ELASTICSEARCH_INDEX"]))
-                IndexFromMongo.copy_resource(resource, IndexFromMongo.default_page_size)
+            # skip those that do not belong to the given index
+            resource_index = es_backend._resource_index(resource)
+            if resource_index != f"{index_prefix}_{resource}":
+                continue
 
-            if resource_es_prefix == CAPI_ELASTIC_PREFIX and capi_index:
-                print(
-                    '- Indexing mongo collections into "{}" elastic index.'.format(
-                        app.config["CONTENTAPI_ELASTICSEARCH_INDEX"]
-                    )
-                )
-                IndexFromMongo.copy_resource(resource, IndexFromMongo.default_page_size)
+            print(f'Indexing mongo collections into "{index_prefix}" elastic index.')
+            IndexFromMongo.copy_resource(resource, IndexFromMongo.default_page_size)
+
+        # let's now index async resources
+        self._index_from_mongo_async_resources(index_prefix)
+
+    def _index_from_mongo_async_resources(self, index_prefix: str | None = None):
+        """
+        Index into elastic search from mongo async resources. If `index_prefix` is provided,
+        only the resources that belong to that index prefix will be indexed.
+        """
+        async_app = get_current_async_app()
+        for config in async_app.resources.get_all_configs():
+            if config.elastic is None:
+                continue
+
+            resource_name = config.name
+            if index_prefix:
+                resource_elastic_config = async_app.elastic.get_client_async(resource_name).config
+                if resource_elastic_config.index != f"{index_prefix}_{resource_name}":
+                    continue
+
+            IndexFromMongo.copy_resource(resource_name, IndexFromMongo.default_page_size)
 
 
-superdesk.command("app:flush_elastic_index", FlushElasticIndex())
+@cli.command("app:flush_elastic_index")
+@click.option("--sd", "sd_index", is_flag=True, help="To flush only superdesk index")
+@click.option("--capi", "capi_index", is_flag=True, help="To flush only content api index")
+async def flush_elastic_index_command(*args, **kwargs):
+    """
+    Flush elastic index.
+
+    It removes elastic index, creates a new one and index it from mongo.
+    You must specify at least one elastic index to flush:
+    ``--sd`` (superdesk) or ``--capi`` (content api)
+    """
+
+    return await FlushElasticIndex().run(*args, **kwargs)
