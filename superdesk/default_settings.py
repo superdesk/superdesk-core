@@ -94,6 +94,11 @@ ELASTIC_DATETIME_FORMAT = "%Y-%m-%dT%H:%M:%S"
 #:
 ELASTIC_DEFAULT_SIZE = 10
 
+#: allow wildcards in query string
+#:
+#: https://discuss.elastic.co/t/configuring-the-standard-tokenizer/8691/5
+ELASTIC_QUERY_STRING_ANALYZE_WILDCARD = False
+
 #: allow to change type of query string query
 #:
 #: .. versionadded:: 2.5
