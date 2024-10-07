@@ -25,7 +25,10 @@ class Editor3TestCase(unittest.TestCase):
 
     def setUp(self):
         self.app = flask.Flask(__name__)
-        self.app.app_context().push()
+        self.ctx = self.app.app_context()
+        self.ctx.push()
+        self.addCleanup(self.ctx.pop)
+
         super().setUp()
         if "EMBED_PRE_PROCESS" in self.app.config:
             del self.app.config["EMBED_PRE_PROCESS"]

@@ -108,6 +108,7 @@ class ItemsResource(Resource):
         "search_backend": "elastic",
         "elastic_filter": {"bool": {"must_not": {"term": {"type": "composite"}}}},
         "default_sort": [("versioncreated", -1)],
+        "source": "items",
     }
 
     mongo_indexes = {
@@ -120,3 +121,9 @@ class ItemsResource(Resource):
     versioning = True
     mongo_prefix = MONGO_PREFIX
     elastic_prefix = ELASTIC_PREFIX
+
+
+class InternalItemsResource(ItemsResource):
+    internal = True
+    mongo_indexes = {}
+    versioning = False
