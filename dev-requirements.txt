@@ -1,7 +1,6 @@
 flake8
 flake8-bugbear
 flake8-docstrings
-nose
 pep8
 pyflakes
 pydocstyle<7.0

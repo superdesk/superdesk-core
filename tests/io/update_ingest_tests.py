@@ -16,7 +16,6 @@ from unittest.mock import patch
 
 from bson import ObjectId
 from eve.utils import ParsedRequest
-from nose.tools import assert_raises
 
 from superdesk import get_resource_service, etree
 from superdesk.utc import utcnow
@@ -115,7 +114,7 @@ class UpdateIngestTest(TestCase):
             "config": {"path": "/"},
         }
 
-        with assert_raises(SuperdeskApiError) as error_context:
+        with self.assertRaises(SuperdeskApiError) as error_context:
             aap = self._get_provider_service(provider)
             aap.update(provider, {})
         ex = error_context.exception
@@ -141,7 +140,7 @@ class UpdateIngestTest(TestCase):
         provider_service = self._get_provider_service(provider)
         provider_service.provider = provider
         provider_service._update = mock_update
-        with assert_raises(ProviderError):
+        with self.assertRaises(ProviderError):
             provider_service.update(provider, {})
         provider = self._get_provider(provider_name)
         self.assertTrue(provider.get("is_closed"))
@@ -660,7 +659,7 @@ class UpdateIngestTest(TestCase):
         provider, provider_service = self.setup_reuters_provider()
         items = provider_service.fetch_ingest(reuters_guid)
         ingest_item(items[0], provider, provider_service)
-        self.assertEquals("composite", items[0].get("profile"))
+        self.assertEqual("composite", items[0].get("profile"))
 
         content_types = [{"_id": "story", "name": "story"}]
         self.app.data.insert("content_types", content_types)
