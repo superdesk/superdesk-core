@@ -14,7 +14,7 @@ pytest
 pytest-env
 python3-saml>=1.9,<1.17
 typing_extensions>=3.7.4
-moto[sqs]==5.0.15
+moto[sqs]==5.0.16
 pyexiv2>=2.12.0,<2.13; sys_platform == 'linux'
 
 -e .
