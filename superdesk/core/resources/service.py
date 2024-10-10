@@ -85,10 +85,16 @@ class AsyncResourceService(Generic[ResourceModelType]):
     def mongo(self):
         """Return instance of MongoCollection for this resource"""
 
+        return self.app.mongo.get_collection(self.resource_name)
+
+    @property
+    def mongo_async(self):
+        """Return instance of async MongoCollection for this resource"""
+
         return self.app.mongo.get_collection_async(self.resource_name)
 
     @property
-    def mongo_versioned(self):
+    def mongo_versioned_async(self):
         return self.app.mongo.get_collection_async(self.resource_name, True)
 
     @property
@@ -128,7 +134,7 @@ class AsyncResourceService(Generic[ResourceModelType]):
             pass
 
         if use_mongo or item is None:
-            item = await self.mongo.find_one(lookup)
+            item = await self.mongo_async.find_one(lookup)
 
         if item is None:
             return None
@@ -175,7 +181,7 @@ class AsyncResourceService(Generic[ResourceModelType]):
         try:
             item = await self.elastic.find_by_id(item_id)
         except KeyError:
-            item = await self.mongo.find_one({"_id": item_id})
+            item = await self.mongo_async.find_one({"_id": item_id})
 
         if item is None:
             return None
@@ -199,8 +205,8 @@ class AsyncResourceService(Generic[ResourceModelType]):
         except KeyError:
             pass
 
-        response = self.mongo.find(lookup)
-        return MongoResourceCursorAsync(self.config.data_class, self.mongo, response, lookup)
+        response = self.mongo_async.find(lookup)
+        return MongoResourceCursorAsync(self.config.data_class, self.mongo_async, response, lookup)
 
     async def on_create(self, docs: List[ResourceModelType]) -> None:
         """Hook to run before creating new resource(s)
@@ -283,7 +289,7 @@ class AsyncResourceService(Generic[ResourceModelType]):
                 context={"use_objectid": True} if not self.config.query_objectid_as_string else {},
             )
             doc.etag = doc_dict["_etag"] = self.generate_etag(doc_dict, self.config.etag_ignore_fields)
-            response = await self.mongo.insert_one(doc_dict)
+            response = await self.mongo_async.insert_one(doc_dict)
             ids.append(response.inserted_id)
             try:
                 await self.elastic.insert([doc_dict])
@@ -291,7 +297,7 @@ class AsyncResourceService(Generic[ResourceModelType]):
                 pass
 
             if self.config.versioning:
-                await self.mongo_versioned.insert_one(self._get_versioned_document(doc_dict))
+                await self.mongo_versioned_async.insert_one(self._get_versioned_document(doc_dict))
 
         await self.on_created(docs)
         return ids
@@ -354,14 +360,14 @@ class AsyncResourceService(Generic[ResourceModelType]):
         if model_has_versions(original):
             updates.pop("_latest_version", None)
             updates_dict.pop("_latest_version", None)
-        response = await self.mongo.update_one({"_id": item_id}, {"$set": updates_dict})
+        response = await self.mongo_async.update_one({"_id": item_id}, {"$set": updates_dict})
         try:
             await self.elastic.update(item_id, updates_dict)
         except KeyError:
             pass
 
         if self.config.versioning:
-            await self.mongo_versioned.insert_one(self._get_versioned_document(validated_updates))
+            await self.mongo_versioned_async.insert_one(self._get_versioned_document(validated_updates))
 
         await self.on_updated(updates, original)
 
@@ -391,7 +397,7 @@ class AsyncResourceService(Generic[ResourceModelType]):
 
         await self.on_delete(doc)
         self.validate_etag(doc, etag)
-        await self.mongo.delete_one({"_id": doc.id})
+        await self.mongo_async.delete_one({"_id": doc.id})
         try:
             await self.elastic.remove(doc.id)
         except KeyError:
@@ -405,14 +411,14 @@ class AsyncResourceService(Generic[ResourceModelType]):
         :return: List of IDs for the deleted resources
         """
 
-        docs_to_delete = self.mongo.find(lookup).sort("_id", 1)
+        docs_to_delete = self.mongo_async.find(lookup).sort("_id", 1)
         ids: List[str] = []
 
         async for data in docs_to_delete:
             doc = self.get_model_instance_from_dict(data)
             await self.on_delete(doc)
             ids.append(str(doc.id))
-            await self.mongo.delete_one({"_id": doc.id})
+            await self.mongo_async.delete_one({"_id": doc.id})
 
             try:
                 await self.elastic.remove(doc.id)
@@ -441,7 +447,7 @@ class AsyncResourceService(Generic[ResourceModelType]):
             yield doc
 
     def get_all_raw(self) -> AsyncIOMotorCursor:
-        return self.mongo.find({}).sort("_id")
+        return self.mongo_async.find({}).sort("_id")
 
     async def get_all_batch(self, size=500, max_iterations=10000, lookup=None) -> AsyncIterable[ResourceModelType]:
         """Helper function to get all items from this resource, in batches
@@ -460,7 +466,7 @@ class AsyncResourceService(Generic[ResourceModelType]):
             if last_id is not None:
                 _lookup.update({"_id": {"$gt": last_id}})
 
-            cursor = self.mongo.find(_lookup).sort("_id").limit(size)
+            cursor = self.mongo_async.find(_lookup).sort("_id").limit(size)
             last_doc = None
             async for data in cursor:
                 last_doc = data
@@ -558,10 +564,10 @@ class AsyncResourceService(Generic[ResourceModelType]):
                 projection_fields if projection_include else {field: False for field in projection_fields}
             )
 
-        cursor = self.mongo.find(**kwargs) if not versioned else self.mongo_versioned.find(**kwargs)
+        cursor = self.mongo_async.find(**kwargs) if not versioned else self.mongo_versioned_async.find(**kwargs)
 
         return MongoResourceCursorAsync(
-            self.config.data_class, self.mongo if not versioned else self.mongo_versioned, cursor, where
+            self.config.data_class, self.mongo_async if not versioned else self.mongo_versioned_async, cursor, where
         )
 
     def _convert_req_to_mongo_sort(self, sort: SortParam | None) -> SortListParam:
@@ -654,7 +660,7 @@ class AsyncResourceService(Generic[ResourceModelType]):
         if not self.config.versioning:
             raise SuperdeskApiError.badRequestError("Resource does not support versioning")
 
-        item: dict | None = await self.mongo.find_one({ID_FIELD: item_id})
+        item: dict | None = await self.mongo_async.find_one({ID_FIELD: item_id})
         if not item:
             raise SuperdeskApiError.notFoundError()
 
@@ -677,7 +683,7 @@ class AsyncResourceService(Generic[ResourceModelType]):
         if not self.config.versioning:
             raise SuperdeskApiError.badRequestError("Resource does not support versioning")
 
-        versioned_item: dict | None = await self.mongo_versioned.find_one(
+        versioned_item: dict | None = await self.mongo_versioned_async.find_one(
             {
                 VERSION_ID_FIELD: item[ID_FIELD],
                 CURRENT_VERSION: version,
@@ -698,6 +704,13 @@ class AsyncResourceService(Generic[ResourceModelType]):
         )
         if self.config.ignore_fields_in_versions:
             versioned_item.update({key: item[key] for key in self.config.ignore_fields_in_versions if item.get(key)})
+
+    async def system_update(self, item_id: ObjectId | str, updates: dict[str, Any]) -> None:
+        await self.mongo_async.update_one({"_id": item_id}, {"$set": updates})
+        try:
+            await self.elastic.update(item_id, updates)
+        except KeyError:
+            pass
 
 
 class AsyncCacheableService(AsyncResourceService[ResourceModelType]):
