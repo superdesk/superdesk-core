@@ -31,7 +31,7 @@ class ResourceEndpointsTestCase(AsyncFlaskTestCase):
         test_user.created = NOW
         test_user.updated = NOW
         test_user_dict = test_user.to_dict(context={"use_objectid": True})
-        mongo_item = await self.service.mongo.find_one({"_id": test_user.id})
+        mongo_item = await self.service.mongo_async.find_one({"_id": test_user.id})
         test_user.etag = test_user_dict["_etag"] = mongo_item["_etag"]
         self.assertEqual(mongo_item, test_user_dict)
 
@@ -181,6 +181,7 @@ class ResourceEndpointsTestCase(AsyncFlaskTestCase):
     async def test_hateoas(self):
         # Test hateoas with empty resource
         response = await self.test_client.get("/api/users_async")
+        self.assertEqual(response.status_code, 200)
         json_data = await response.get_json()
         self.assertEqual(
             json_data["_meta"],

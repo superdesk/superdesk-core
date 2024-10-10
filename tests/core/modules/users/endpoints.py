@@ -3,7 +3,8 @@ from typing import Optional
 from pydantic import BaseModel
 
 from superdesk.core.app import get_current_async_app
-from superdesk.core.web import Request, Response, EndpointGroup, endpoint
+from superdesk.core.types import Request, Response
+from superdesk.core.web import EndpointGroup, endpoint
 from superdesk.errors import SuperdeskApiError
 
 
@@ -15,7 +16,7 @@ class RequestParams(BaseModel):
     resource: Optional[str] = None
 
 
-endpoints = EndpointGroup("users", __name__)
+endpoints = EndpointGroup("users", __name__, auth=False)
 
 
 @endpoints.endpoint(
@@ -46,6 +47,6 @@ async def get_user_ids(request: Request) -> Response:
     return Response({"ids": item_ids}, 200, ())
 
 
-@endpoint("hello/world", methods=["GET"])
+@endpoint("hello/world", methods=["GET"], auth=False)
 async def hello_world(request: Request) -> Response:
     return Response({"hello": "world"}, 200, ())

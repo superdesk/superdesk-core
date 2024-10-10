@@ -19,7 +19,7 @@ content_model_config = ResourceConfig(
     service=ContentResourceService,
     versioning=True,
     ignore_fields_in_versions=["lock_user"],
-    rest_endpoints=RestEndpointConfig(),
+    rest_endpoints=RestEndpointConfig(auth=False),
     mongo=MongoResourceConfig(
         indexes=[
             MongoIndexOptions(

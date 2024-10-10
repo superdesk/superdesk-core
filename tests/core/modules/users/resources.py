@@ -35,5 +35,5 @@ user_model_config = ResourceConfig(
     ),
     elastic=ElasticResourceConfig(),
     service=UserResourceService,
-    rest_endpoints=RestEndpointConfig(),
+    rest_endpoints=RestEndpointConfig(auth=False),
 )
