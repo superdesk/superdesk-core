@@ -11,7 +11,8 @@
 from typing import Dict, List, Optional, Any, cast
 import importlib
 
-from .web import WSGIApp
+from superdesk.core.types import WSGIApp
+from .auth.user_auth import UserAuthProtocol
 
 
 def get_app_config(key: str, default: Optional[Any] = None) -> Optional[Any]:
@@ -44,6 +45,8 @@ class SuperdeskAsyncApp:
 
     resources: "Resources"
 
+    auth: UserAuthProtocol
+
     def __init__(self, wsgi: WSGIApp):
         self._running = False
         self._imported_modules = {}
@@ -52,6 +55,7 @@ class SuperdeskAsyncApp:
         self.mongo = MongoResources(self)
         self.elastic = ElasticResources(self)
         self.resources = Resources(self)
+        self.auth = self.load_auth_module()
         self._store_app()
 
     @property
@@ -64,6 +68,23 @@ class SuperdeskAsyncApp:
         """Returns the list of loaded modules, in descending order based on their priority"""
 
         return sorted(self._imported_modules.values(), key=lambda x: x.priority, reverse=True)
+
+    def load_auth_module(self) -> UserAuthProtocol:
+        auth_module_config = cast(
+            str, self.wsgi.config.get("ASYNC_AUTH_CLASS", "superdesk.core.auth.token_auth:TokenAuthorization")
+        )
+        try:
+            module_path, module_attribute = auth_module_config.split(":")
+        except ValueError as error:
+            raise RuntimeError(f"Invalid config ASYNC_AUTH_MODULE={auth_module_config}: {error}")
+
+        imported_module = importlib.import_module(module_path)
+        auth_class = getattr(imported_module, module_attribute)
+
+        if not issubclass(auth_class, UserAuthProtocol):
+            raise RuntimeError(f"Invalid config ASYNC_AUTH_MODULE={auth_module_config}, invalid auth type {auth_class}")
+
+        return auth_class()
 
     def _load_modules(self, paths: List[str | tuple[str, dict]]):
         for path in paths:
@@ -206,6 +227,10 @@ def get_current_async_app() -> SuperdeskAsyncApp:
         pass
 
     raise RuntimeError("Superdesk app is not running")
+
+
+def get_current_auth() -> UserAuthProtocol:
+    return get_current_async_app().auth
 
 
 _global_app: Optional[SuperdeskAsyncApp] = None
