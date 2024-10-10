@@ -313,12 +313,8 @@ class SuperdeskEve(eve.Eve):
             self._endpoints.append(endpoint)
 
     def get_endpoint_for_current_request(self) -> Endpoint | None:
-        if not flask_request:
+        if not flask_request or flask_request.endpoint is None:
             return None
-
-        if flask_request.endpoint is None:
-            # This should never happen, as we're calling this function from a registered request being processed
-            raise SuperdeskApiError.notFoundError("Request did not match any registered route")
 
         lookup_name = endpoint_name = flask_request.endpoint
 
