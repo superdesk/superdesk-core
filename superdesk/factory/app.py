@@ -363,9 +363,6 @@ class SuperdeskEve(eve.Eve):
             raise NotFound()
 
         # Implement Auth here
-        print("Endpoint auth =")
-        print(request.endpoint.get_auth_rules())
-        print("*******************")
         if request.endpoint.get_auth_rules() is not False:
             response = await self.async_app.auth.authenticate(request)
             if response is not None:
