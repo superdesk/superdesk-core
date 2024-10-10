@@ -7,7 +7,7 @@ from eve.io.mongo import MongoJSONEncoder
 from kombu.serialization import register
 
 from superdesk.core import json
-from superdesk.core.web.types import WSGIApp
+from superdesk.core.types import WSGIApp
 
 
 CELERY_SERIALIZER_NAME = "context-aware/json"

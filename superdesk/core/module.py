@@ -12,7 +12,7 @@ from typing import Callable, Optional, List, Union
 from dataclasses import dataclass
 
 from .config import ConfigModel
-from .web import Endpoint, EndpointGroup
+from superdesk.core.types import Endpoint, EndpointGroup
 
 
 @dataclass
