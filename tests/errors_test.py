@@ -11,7 +11,6 @@
 from superdesk import errors
 from superdesk.errors import IngestApiError, IngestFileError, ParserError, ProviderError, IngestFtpError
 from superdesk.tests import TestCase, setup_notification
-from nose.tools import assert_raises
 from superdesk.tests import setup
 import logging
 import unittest
@@ -97,7 +96,7 @@ class ErrorsTestCase(TestCase):
         self.provider = {"name": "TestProvider"}
 
     def test_raise_apiGeneralError(self):
-        with assert_raises(IngestApiError) as error_context:
+        with self.assertRaises(IngestApiError) as error_context:
             try:
                 ex = Exception("Testing general API error")
                 raise ex
@@ -120,7 +119,7 @@ class ErrorsTestCase(TestCase):
         )
 
     def test_raise_apiRequestError(self):
-        with assert_raises(IngestApiError) as error_context:
+        with self.assertRaises(IngestApiError) as error_context:
             try:
                 ex = Exception("Testing apiRequestError")
                 raise ex
@@ -139,7 +138,7 @@ class ErrorsTestCase(TestCase):
         )
 
     def test_raise_apiTimeoutError(self):
-        with assert_raises(IngestApiError) as error_context:
+        with self.assertRaises(IngestApiError) as error_context:
             try:
                 ex = Exception("Testing apiTimeoutError")
                 raise ex
@@ -158,7 +157,7 @@ class ErrorsTestCase(TestCase):
         )
 
     def test_raise_apiRedirectError(self):
-        with assert_raises(IngestApiError) as error_context:
+        with self.assertRaises(IngestApiError) as error_context:
             try:
                 ex = Exception("Testing apiRedirectError")
                 raise ex
@@ -177,7 +176,7 @@ class ErrorsTestCase(TestCase):
         )
 
     def test_raise_apiUnicodeError(self):
-        with assert_raises(IngestApiError) as error_context:
+        with self.assertRaises(IngestApiError) as error_context:
             try:
                 ex = Exception("Testing apiUnicodeError")
                 raise ex
@@ -196,7 +195,7 @@ class ErrorsTestCase(TestCase):
         )
 
     def test_raise_apiParseError(self):
-        with assert_raises(IngestApiError) as error_context:
+        with self.assertRaises(IngestApiError) as error_context:
             try:
                 ex = Exception("Testing apiParseError")
                 raise ex
@@ -214,7 +213,7 @@ class ErrorsTestCase(TestCase):
         )
 
     def test_raise_apiNotFoundError(self):
-        with assert_raises(IngestApiError) as error_context:
+        with self.assertRaises(IngestApiError) as error_context:
             try:
                 ex = Exception("Testing apiNotFoundError")
                 raise ex
@@ -233,7 +232,7 @@ class ErrorsTestCase(TestCase):
         )
 
     def test_raise_apiAuthError(self):
-        with assert_raises(IngestApiError) as error_context:
+        with self.assertRaises(IngestApiError) as error_context:
             try:
                 ex = Exception("Testing API authorization error")
                 raise ex
@@ -256,7 +255,7 @@ class ErrorsTestCase(TestCase):
         )
 
     def test_raise_folderCreateError(self):
-        with assert_raises(IngestFileError) as error_context:
+        with self.assertRaises(IngestFileError) as error_context:
             try:
                 ex = Exception("Testing folderCreateError")
                 raise ex
@@ -275,7 +274,7 @@ class ErrorsTestCase(TestCase):
         )
 
     def test_raise_fileMoveError(self):
-        with assert_raises(IngestFileError) as error_context:
+        with self.assertRaises(IngestFileError) as error_context:
             try:
                 ex = Exception("Testing fileMoveError")
                 raise ex
@@ -294,7 +293,7 @@ class ErrorsTestCase(TestCase):
         )
 
     def test_raise_parseMessageError(self):
-        with assert_raises(ParserError) as error_context:
+        with self.assertRaises(ParserError) as error_context:
             try:
                 ex = Exception("Testing parseMessageError")
                 raise ex
@@ -314,7 +313,7 @@ class ErrorsTestCase(TestCase):
 
     def test_parse_message_error_save_data(self):
         data = "some data"
-        with assert_raises(ParserError):
+        with self.assertRaises(ParserError):
             try:
                 raise Exception("Err message")
             except Exception as ex:
@@ -327,7 +326,7 @@ class ErrorsTestCase(TestCase):
             self.assertEqual(data, file.read())
 
     def test_raise_parseFileError(self):
-        with assert_raises(ParserError) as error_context:
+        with self.assertRaises(ParserError) as error_context:
             try:
                 raise Exception("Testing parseFileError")
             except Exception as ex:
@@ -345,7 +344,7 @@ class ErrorsTestCase(TestCase):
         self.assertIn("file=test.txt", message)
 
     def test_raise_newsmlOneParserError(self):
-        with assert_raises(ParserError) as error_context:
+        with self.assertRaises(ParserError) as error_context:
             try:
                 raise Exception("Testing newsmlOneParserError")
             except Exception as ex:
@@ -363,7 +362,7 @@ class ErrorsTestCase(TestCase):
         )
 
     def test_raise_newsmlTwoParserError(self):
-        with assert_raises(ParserError) as error_context:
+        with self.assertRaises(ParserError) as error_context:
             try:
                 ex = Exception("Testing newsmlTwoParserError")
                 raise ex
@@ -382,7 +381,7 @@ class ErrorsTestCase(TestCase):
         )
 
     def test_raise_nitfParserError(self):
-        with assert_raises(ParserError) as error_context:
+        with self.assertRaises(ParserError) as error_context:
             try:
                 ex = Exception("Testing nitfParserError")
                 raise ex
@@ -401,7 +400,7 @@ class ErrorsTestCase(TestCase):
         )
 
     def test_raise_providerAddError(self):
-        with assert_raises(ProviderError) as error_context:
+        with self.assertRaises(ProviderError) as error_context:
             try:
                 ex = Exception("Testing providerAddError")
                 raise ex
@@ -420,7 +419,7 @@ class ErrorsTestCase(TestCase):
         )
 
     def test_raise_expiredContentError(self):
-        with assert_raises(ProviderError) as error_context:
+        with self.assertRaises(ProviderError) as error_context:
             try:
                 ex = Exception("Testing expiredContentError")
                 raise ex
@@ -439,7 +438,7 @@ class ErrorsTestCase(TestCase):
         )
 
     def test_raise_ruleError(self):
-        with assert_raises(ProviderError) as error_context:
+        with self.assertRaises(ProviderError) as error_context:
             try:
                 ex = Exception("Testing ruleError")
                 raise ex
@@ -457,7 +456,7 @@ class ErrorsTestCase(TestCase):
         )
 
     def test_raise_ingestError(self):
-        with assert_raises(ProviderError) as error_context:
+        with self.assertRaises(ProviderError) as error_context:
             try:
                 ex = Exception("Testing ingestError")
                 raise ex
@@ -476,7 +475,7 @@ class ErrorsTestCase(TestCase):
         )
 
     def test_raise_anpaError(self):
-        with assert_raises(ProviderError) as error_context:
+        with self.assertRaises(ProviderError) as error_context:
             try:
                 ex = Exception("Testing anpaError")
                 raise ex
@@ -494,7 +493,7 @@ class ErrorsTestCase(TestCase):
         )
 
     def test_raise_providerFilterExpiredContentError(self):
-        with assert_raises(ProviderError) as error_context:
+        with self.assertRaises(ProviderError) as error_context:
             try:
                 ex = Exception("Testing providerFilterExpiredContentError")
                 raise ex
@@ -513,7 +512,7 @@ class ErrorsTestCase(TestCase):
         )
 
     def test_raise_ftpError(self):
-        with assert_raises(IngestFtpError) as error_context:
+        with self.assertRaises(IngestFtpError) as error_context:
             try:
                 ex = Exception("Testing ftpError")
                 raise ex
@@ -531,7 +530,7 @@ class ErrorsTestCase(TestCase):
         )
 
     def test_raise_ftpUnknownParserError(self):
-        with assert_raises(IngestFtpError) as error_context:
+        with self.assertRaises(IngestFtpError) as error_context:
             try:
                 raise Exception("Testing ftpUnknownParserError")
             except Exception as ex:

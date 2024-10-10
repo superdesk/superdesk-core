@@ -11,7 +11,6 @@
 import inspect
 import importlib
 import sys
-import imp
 import os
 
 from flask import current_app
@@ -24,7 +23,7 @@ def load_macros(app=None):
     load_module(module)
 
 
-def load_module(module):
+def load_module(module: str):
     """Loads the given module
 
     If the module is loaded before it will reload it
@@ -32,7 +31,7 @@ def load_module(module):
     :param module: name of he module
     """
     try:
-        imp.reload(sys.modules[module])
+        importlib.reload(sys.modules[module])
     except (AttributeError, KeyError):
         try:
             importlib.import_module(module)

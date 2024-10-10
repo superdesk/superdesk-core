@@ -26,33 +26,33 @@ class TestCase(unittest.TestCase):
             self.item = AFPNewsMLOneFeedParser().parse(etree.fromstring(f.read()), provider)
 
     def test_headline(self):
-        self.assertEquals(self.item.get("headline"), "Sweden court accepts receivership for Saab carmaker")
+        self.assertEqual(self.item.get("headline"), "Sweden court accepts receivership for Saab carmaker")
 
     def test_dateline(self):
-        self.assertEquals(self.item.get("dateline", {}).get("text"), "STOCKHOLM, Aug 29, 2014 (AFP) -")
+        self.assertEqual(self.item.get("dateline", {}).get("text"), "STOCKHOLM, Aug 29, 2014 (AFP) -")
 
     def test_slugline(self):
-        self.assertEquals(self.item.get("slugline"), "Sweden-SAAB")
+        self.assertEqual(self.item.get("slugline"), "Sweden-SAAB")
 
     def test_byline(self):
-        self.assertEquals(self.item.get("byline"), "")
+        self.assertEqual(self.item.get("byline"), "")
 
     def test_language(self):
-        self.assertEquals(self.item.get("language"), "en")
+        self.assertEqual(self.item.get("language"), "en")
 
     def test_guid(self):
-        self.assertEquals(self.item.get("guid"), "urn:newsml:afp.com:20140829T135002Z:TX-PAR-FXW86:1")
+        self.assertEqual(self.item.get("guid"), "urn:newsml:afp.com:20140829T135002Z:TX-PAR-FXW86:1")
 
     def test_coreitemvalues(self):
-        self.assertEquals(self.item.get("type"), "text")
-        self.assertEquals(self.item.get("urgency"), 4)
-        self.assertEquals(self.item.get("version"), "1")
-        self.assertEquals(self.item.get("versioncreated"), utc.localize(datetime.datetime(2014, 8, 29, 13, 49, 51)))
-        self.assertEquals(self.item.get("firstcreated"), utc.localize(datetime.datetime(2014, 8, 29, 13, 49, 51)))
-        self.assertEquals(self.item.get("pubstatus"), "usable")
+        self.assertEqual(self.item.get("type"), "text")
+        self.assertEqual(self.item.get("urgency"), 4)
+        self.assertEqual(self.item.get("version"), "1")
+        self.assertEqual(self.item.get("versioncreated"), utc.localize(datetime.datetime(2014, 8, 29, 13, 49, 51)))
+        self.assertEqual(self.item.get("firstcreated"), utc.localize(datetime.datetime(2014, 8, 29, 13, 49, 51)))
+        self.assertEqual(self.item.get("pubstatus"), "usable")
 
     def test_subjects(self):
-        self.assertEquals(len(self.item.get("subject")), 5)
+        self.assertEqual(len(self.item.get("subject")), 5)
         self.assertIn({"name": "automotive equipment", "qcode": "04011002"}, self.item.get("subject"))
         self.assertIn({"name": "bankruptcy", "qcode": "04016007"}, self.item.get("subject"))
         self.assertIn({"name": "economy, business and finance", "qcode": "04000000"}, self.item.get("subject"))
@@ -62,7 +62,7 @@ class TestCase(unittest.TestCase):
         self.assertIn({"name": "manufacturing and engineering", "qcode": "04011000"}, self.item.get("subject"))
 
     def test_usageterms(self):
-        self.assertEquals(self.item.get("usageterms"), "NO ARCHIVAL USE")
+        self.assertEqual(self.item.get("usageterms"), "NO ARCHIVAL USE")
 
     def test_genre(self):
         self.assertIn({"name": "business"}, self.item.get("genre"))

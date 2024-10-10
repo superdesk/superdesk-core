@@ -22,12 +22,12 @@ class CreateUserCommandTestCase(TestCase):
             cmd = CreateUserCommand()
             cmd.run(user["username"], user["password"], user["email"], admin=True)
             auth_user = get_resource_service("auth_db").authenticate(user)
-            self.assertEquals(auth_user["username"], user["username"])
+            self.assertEqual(auth_user["username"], user["username"])
 
             cmd.run(user["username"], user["password"], user["email"], admin=True)
             auth_user2 = get_resource_service("auth_db").authenticate(user)
-            self.assertEquals(auth_user2["username"], user["username"])
-            self.assertEquals(auth_user2["_id"], auth_user["_id"])
+            self.assertEqual(auth_user2["username"], user["username"])
+            self.assertEqual(auth_user2["_id"], auth_user["_id"])
 
     def test_create_user_command_no_update(self):
         if not self.app.config.get("LDAP_SERVER"):
