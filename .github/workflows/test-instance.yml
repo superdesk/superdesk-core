@@ -3,7 +3,7 @@ name: "Spawn Test Instance"
 on: [push, pull_request]
 
 jobs:
-  pytest:
+  test_instance:
     runs-on: ubuntu-latest
 
     strategy:
