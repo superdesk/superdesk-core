@@ -364,7 +364,9 @@ class SuperdeskEve(eve.Eve):
             request,
         )
 
-        return response if not isinstance(response, Response) else response.body, response.status_code, response.headers
+        return (
+            response if not isinstance(response, Response) else (response.body, response.status_code, response.headers)
+        )
 
     def get_current_user_dict(self) -> dict[str, Any] | None:
         return getattr(g, "user", None)
