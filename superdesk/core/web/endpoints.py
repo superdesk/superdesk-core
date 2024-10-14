@@ -23,8 +23,6 @@ from superdesk.core.types import (
     AuthConfig,
     EndpointGroup as EndpointGroupProtocol,
 )
-from superdesk.core import get_current_async_app
-from superdesk.core.resources import ResourceModel
 
 
 logger = logging.getLogger(__name__)
@@ -34,6 +32,9 @@ class Endpoint(EndpointProtocol):
     """Base class used for registering and processing endpoints"""
 
     async def __call__(self, args: dict[str, Any], params: dict[str, Any], request: Request):
+        from superdesk.core.resources import ResourceModel
+        from superdesk.core import get_current_async_app
+
         # Implement Auth here
         if request.endpoint.get_auth_rules() is not False:
             async_app = get_current_async_app()
