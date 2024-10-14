@@ -358,31 +358,13 @@ class SuperdeskEve(eve.Eve):
         if request is None:
             raise NotFound()
 
-        # Implement Auth here
-        if request.endpoint.get_auth_rules() is not False:
-            response = await self.async_app.auth.authenticate(request)
-            if response is not None:
-                logger.warning("Authenticate returned a non-None value")
-                return response
-            response = await self.async_app.auth.authorize(request)
-            if response is not None:
-                logger.warning("Authorize returned a non-None value")
-                return response
-
         response = await request.endpoint(
             kwargs,
             dict(flask_request.args.deepcopy()),
             request,
         )
 
-        if not isinstance(response, Response):
-            # We may have received a different response, such as a flask redirect call
-            # So we return it here
-            return response
-        elif isinstance(response.body, ResourceModel):
-            response.body = response.body.to_dict()
-
-        return response.body, response.status_code, response.headers
+        return response if not isinstance(response, Response) else response.body, response.status_code, response.headers
 
     def get_current_user_dict(self) -> dict[str, Any] | None:
         return getattr(g, "user", None)

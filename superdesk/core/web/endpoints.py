@@ -8,8 +8,9 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
-from typing import Any
-from inspect import signature
+from typing import Any, Awaitable
+from inspect import signature, isawaitable
+import logging
 
 from pydantic import BaseModel, ValidationError
 
@@ -22,17 +23,52 @@ from superdesk.core.types import (
     AuthConfig,
     EndpointGroup as EndpointGroupProtocol,
 )
+from superdesk.core import get_current_async_app
+from superdesk.core.resources import ResourceModel
+
+
+logger = logging.getLogger(__name__)
 
 
 class Endpoint(EndpointProtocol):
     """Base class used for registering and processing endpoints"""
 
     async def __call__(self, args: dict[str, Any], params: dict[str, Any], request: Request):
+        # Implement Auth here
+        if request.endpoint.get_auth_rules() is not False:
+            async_app = get_current_async_app()
+            response = await async_app.auth.authenticate(request)
+            if response is not None:
+                logger.warning("Authenticate returned a non-None value")
+                return response
+            response = await async_app.auth.authorize(request)
+            if response is not None:
+                logger.warning("Authorize returned a non-None value")
+                return response
+
+        response = self._run_endpoint_func(args, params, request)
+        if isawaitable(response):
+            response = await response
+
+        if not isinstance(response, Response):
+            # TODO-ASYNC: Implement our own wrapper around Response for specific use cases
+            # like redirect or abort and handle these here
+            # We may have received a different response, such as a flask redirect call
+            # So we return it here
+            return response
+        elif isinstance(response.body, ResourceModel):
+            response.body = response.body.to_dict()
+
+        return response
+
+    def _run_endpoint_func(
+        self, args: dict[str, Any], params: dict[str, Any], request: Request
+    ) -> Awaitable[Response] | Response:
         func_params = signature(self.func).parameters
         if not len(func_params):
-            return await self.func()  # type: ignore[call-arg,arg-type]
+            return self.func()  # type: ignore[call-arg,arg-type]
         elif "args" not in func_params and "params" not in func_params:
-            return await self.func(request)  # type: ignore[call-arg,arg-type]
+            return self.func(request)  # type: ignore[call-arg,arg-type]
 
         arg_type = func_params["args"] if "args" in func_params else None
         request_args = None
@@ -57,25 +93,19 @@ class Endpoint(EndpointProtocol):
                 }
                 return Response(errors, 400, ())
 
-        return await self.func(request_args, url_params, request)  # type: ignore[call-arg,arg-type]
+        return self.func(request_args, url_params, request)  # type: ignore[call-arg,arg-type]
+
+
+def return_404() -> Response:
+    return Response("", 404)
 
 
 class NullEndpointClass(Endpoint):
     def __init__(self):
-        async def null_endpoint():
-            return Response("", 404)
-
-        super().__init__(
-            url="<null>",
-            func=null_endpoint,
-        )
+        super().__init__(url="<null>", func=return_404)
 
 
 NullEndpoint = NullEndpointClass()
-
-
-async def return_404() -> Response:
-    return Response("", 404)
 
 
 class EndpointGroup(EndpointGroupProtocol):
@@ -126,7 +156,7 @@ class EndpointGroup(EndpointGroupProtocol):
 
         return fdec
 
-    async def __call__(self, args: dict[str, Any], params: dict[str, Any], request: Request):
+    def __call__(self, args: dict[str, Any], params: dict[str, Any], request: Request):
         return return_404()
 
 

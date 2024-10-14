@@ -194,6 +194,30 @@ EndpointFunction = Union[
         [None, None, "Request"],
         Awaitable[Response],
     ],
+    Callable[
+        [],
+        Response,
+    ],
+    Callable[
+        ["Request"],
+        Response,
+    ],
+    Callable[
+        [PydanticModelType, PydanticModelType, "Request"],
+        Response,
+    ],
+    Callable[
+        [None, PydanticModelType, "Request"],
+        Response,
+    ],
+    Callable[
+        [PydanticModelType, None, "Request"],
+        Response,
+    ],
+    Callable[
+        [None, None, "Request"],
+        Response,
+    ],
 ]
 
 
