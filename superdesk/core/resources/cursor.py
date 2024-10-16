@@ -66,6 +66,8 @@ class ResourceCursorAsync(Generic[ResourceModelType]):
 
 
 class ElasticsearchResourceCursorAsync(ResourceCursorAsync[ResourceModelType], Generic[ResourceModelType]):
+    _index: int
+    hits: dict[str, Any]
     no_hits = {"hits": {"total": 0, "hits": []}}
 
     def __init__(self, data_class: Type[ResourceModelType], hits=None):
