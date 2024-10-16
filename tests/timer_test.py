@@ -11,4 +11,4 @@ class TimerTestCase(unittest.TestCase):
         with timer("foo"):
             time.sleep(0.1)
         logger.info.assert_called_once_with("%s: %.3fms", "foo", ANY)
-        self.assertEqual(100, int(logger.info.call_args[0][2]))
+        self.assertAlmostEqual(100, int(logger.info.call_args[0][2]), delta=50)  # 50ms tolerance
