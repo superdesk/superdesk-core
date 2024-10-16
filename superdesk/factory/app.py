@@ -9,7 +9,7 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
-from typing import Dict, Any, Type, List, Optional, Union, Mapping, cast, NoReturn
+from typing import Dict, Any, Type, Optional, Union, Mapping, cast, NoReturn
 
 import os
 import eve
@@ -29,7 +29,16 @@ from babel import parse_locale
 from pymongo.errors import DuplicateKeyError
 
 from superdesk.commands import configure_cli
-from superdesk.flask import g, url_for, Config, Request as FlaskRequest, abort, Blueprint, request as flask_request
+from superdesk.flask import (
+    g,
+    url_for,
+    Config,
+    Request as FlaskRequest,
+    Blueprint,
+    request as flask_request,
+    redirect,
+    session,
+)
 from superdesk.celery_app import init_celery
 from superdesk.datalayer import SuperdeskDataLayer  # noqa
 from superdesk.errors import SuperdeskError, SuperdeskApiError, DocumentError
@@ -41,26 +50,95 @@ from superdesk.json_utils import SuperdeskFlaskJSONProvider, SuperdeskJSONEncode
 from superdesk.cache import cache_backend
 
 from .elastic_apm import setup_apm
+from superdesk.core.types import (
+    DefaultNoValue,
+    Endpoint,
+    Request,
+    RequestStorage,
+    RequestSessionStorageProvider,
+    EndpointGroup,
+    HTTP_METHOD,
+    Response,
+)
 from superdesk.core.app import SuperdeskAsyncApp
 from superdesk.core.resources import ResourceModel
-from superdesk.core.web import Endpoint, Request, EndpointGroup, HTTP_METHOD, Response
+from superdesk.core.web import NullEndpoint
 
 SUPERDESK_PATH = os.path.abspath(os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
 
 logger = logging.getLogger(__name__)
 
 
+class FlaskStorageProvider:
+    @property
+    def _store(self):
+        raise NotImplementedError()
+
+    def get(self, key: str, default: Any | None = DefaultNoValue) -> Any:
+        return self._store.get(key, default) if default is not DefaultNoValue else self._store.get(key)
+
+    def set(self, key: str, value: Any) -> None:
+        setattr(self._store, key, value)
+        # self._store[key] = value
+
+    def pop(self, key: str, default: Any | None = DefaultNoValue) -> Any:
+        return self._store.pop(key, default) if default is not DefaultNoValue else self._store.pop(key)
+
+
+class FlaskSessionStorage(RequestSessionStorageProvider):
+    def get(self, key: str, default: Any | None = DefaultNoValue) -> Any:
+        return session.get(key, default) if default is not DefaultNoValue else session.get(key)
+
+    def set(self, key: str, value: Any) -> None:
+        session[key] = value
+
+    def pop(self, key: str, default: Any | None = DefaultNoValue) -> Any:
+        session.pop(key, default) if default is not DefaultNoValue else session.pop(key)
+
+    def set_session_permanent(self, value: bool) -> None:
+        session.permanent = value
+
+    def is_session_permanent(self) -> bool:
+        return session.permanent
+
+    def clear(self):
+        session.clear()
+
+
+class FlaskRequestStorage(FlaskStorageProvider):
+    def get(self, key: str, default: Any | None = DefaultNoValue) -> Any:
+        return g.get(key, default) if default is not DefaultNoValue else g.get(key)
+
+    def set(self, key: str, value: Any) -> None:
+        setattr(g, key, value)
+
+    def pop(self, key: str, default: Any | None = DefaultNoValue) -> Any:
+        g.pop(key, default) if default is not DefaultNoValue else g.pop(key)
+
+
+class HttpFlaskRequestStorage(RequestStorage):
+    session = FlaskSessionStorage()
+    request = FlaskRequestStorage()
+
+
 class HttpFlaskRequest(Request):
     endpoint: Endpoint
     request: FlaskRequest
+    storage = HttpFlaskRequestStorage()
+    user: Any | None
 
     def __init__(self, endpoint: Endpoint, request: FlaskRequest):
         self.endpoint = endpoint
         self.request = request
+        self.user = None
 
     @property
     def method(self) -> HTTP_METHOD:
         return cast(HTTP_METHOD, self.request.method)
+
+    @property
+    def url(self) -> str:
+        return self.request.url
 
     @property
     def path(self) -> str:
@@ -79,6 +157,8 @@ class HttpFlaskRequest(Request):
         return await self.request.get_data()
 
     async def abort(self, code: int, *args: Any, **kwargs: Any) -> NoReturn:
+        from quart import abort
+
         abort(code, *args, **kwargs)
 
     def get_view_args(self, key: str) -> str | None:
@@ -86,6 +166,9 @@ class HttpFlaskRequest(Request):
 
     def get_url_arg(self, key: str) -> str | None:
         return self.request.args.get(key, None)
+
+    def redirect(self, location: str, code: int = 302) -> Any:
+        return redirect(location, code)
 
 
 def set_error_handlers(app):
@@ -126,19 +209,22 @@ def set_error_handlers(app):
 
 class SuperdeskEve(eve.Eve):
     async_app: SuperdeskAsyncApp
-    _endpoints: List[Endpoint]
-    _endpoint_groups: List[EndpointGroup]
+    _endpoints: list[Endpoint]
+    _endpoint_groups: list[EndpointGroup]
+    _endpoint_lookup: dict[str, Endpoint | EndpointGroup]
 
     media: Any
     data: Any
 
     def __init__(self, **kwargs):
-        self.async_app = SuperdeskAsyncApp(self)
         self.json_provider_class = SuperdeskFlaskJSONProvider
         self._endpoints = []
         self._endpoint_groups = []
-
+        self._endpoint_lookup = {}
         super().__init__(**kwargs)
+        self.async_app = SuperdeskAsyncApp(self)
+
+        self.teardown_request(self._after_each_request)
 
     def __getattr__(self, name):
         """Only use events for on_* methods."""
@@ -226,10 +312,16 @@ class SuperdeskEve(eve.Eve):
             )
             self._endpoints.append(endpoint)
 
-    async def _process_async_endpoint(self, **kwargs):
-        # Get Endpoint instance
+    def get_endpoint_for_current_request(self) -> Endpoint | None:
+        if not flask_request or flask_request.endpoint is None:
+            return None
 
-        endpoint_name = flask_request.endpoint
+        lookup_name = endpoint_name = flask_request.endpoint
+
+        try:
+            return self._endpoint_lookup[lookup_name]
+        except KeyError:
+            pass
 
         # Using the requests Blueprint, determine if this request is for an EndpointGroup
         blueprint_name = flask_request.blueprint
@@ -249,25 +341,34 @@ class SuperdeskEve(eve.Eve):
         if endpoint is None:
             endpoint = next((e for e in self._endpoints if e.name == endpoint_name), None)
 
+        if endpoint is not None:
+            self._endpoint_lookup[lookup_name] = endpoint
+
+        return endpoint
+
+    def _after_each_request(self, *args, **kwargs):
+        g._request_instance = None
+        g.user_instance = None
+        g.company_instance = None
+
+    async def _process_async_endpoint(self, **kwargs):
+        request = self.get_current_request()
+
         # We were still unable to find the final Endpoint, return a 404 now
-        if endpoint is None:
+        if request is None:
             raise NotFound()
 
-        response = await endpoint(
+        response = await request.endpoint(
             kwargs,
             dict(flask_request.args.deepcopy()),
-            HttpFlaskRequest(endpoint, flask_request),
+            request,
         )
-        if not isinstance(response, Response):
-            # We may have received a different response, such as a flask redirect call
-            # So we return it here
-            return response
-        elif isinstance(response.body, ResourceModel):
-            response.body = response.body.to_dict()
 
-        return response.body, response.status_code, response.headers
+        return (
+            response if not isinstance(response, Response) else (response.body, response.status_code, response.headers)
+        )
 
-    def get_current_user_dict(self) -> Optional[Dict[str, Any]]:
+    def get_current_user_dict(self) -> dict[str, Any] | None:
         return getattr(g, "user", None)
 
     def download_url(self, media_id: str) -> str:
@@ -276,6 +377,24 @@ class SuperdeskEve(eve.Eve):
 
     def as_any(self) -> Any:
         return self
+
+    def get_current_request(self, req=None) -> HttpFlaskRequest | None:
+        try:
+            if not flask_request and not req:
+                return None
+        except AttributeError:
+            return None
+
+        existing_instance = g.get("_request_instance", None)
+        if existing_instance:
+            return cast(HttpFlaskRequest, existing_instance)
+
+        endpoint = self.get_endpoint_for_current_request() or NullEndpoint
+        new_request = HttpFlaskRequest(endpoint, req or flask_request)
+        g._request_instance = new_request  # type: ignore[attr-defined]
+        if not new_request.user:
+            new_request.user = self.async_app.auth.get_current_user(new_request)
+        return new_request
 
 
 def get_media_storage_class(app_config: Dict[str, Any], use_provider_config: bool = True) -> Type[MediaStorage]:

@@ -8,12 +8,12 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
-from typing import List, Optional, Any
+from typing import Any
 
 from pydantic import BaseModel
 
-from superdesk.core.types import SearchRequest
-from .types import Endpoint, EndpointGroup, HTTP_METHOD, Request, Response
+from superdesk.core.types import SearchRequest, AuthConfig, HTTP_METHOD, Request, Response
+from .endpoints import Endpoint, EndpointGroup
 
 
 class ItemRequestViewArgs(BaseModel):
@@ -27,24 +27,27 @@ class RestEndpoints(EndpointGroup):
     url: str
 
     #: The list of HTTP methods for the resource endpoints
-    resource_methods: List[HTTP_METHOD]
+    resource_methods: list[HTTP_METHOD]
 
     #: The list of HTTP methods for the resource item endpoints
-    item_methods: List[HTTP_METHOD]
+    item_methods: list[HTTP_METHOD]
 
     #: Optionally set the route param type for the ID, defaults to ``string``
     id_param_type: str
+
+    auth: AuthConfig = None
 
     def __init__(
         self,
         url: str,
         name: str,
-        import_name: Optional[str] = None,
-        resource_methods: Optional[List[HTTP_METHOD]] = None,
-        item_methods: Optional[List[HTTP_METHOD]] = None,
-        id_param_type: Optional[str] = None,
+        import_name: str | None = None,
+        resource_methods: list[HTTP_METHOD] | None = None,
+        item_methods: list[HTTP_METHOD] | None = None,
+        id_param_type: str | None = None,
+        auth: AuthConfig = None,
     ):
-        super().__init__(name, import_name or __name__)
+        super().__init__(name, import_name or __name__, auth=auth)
         self.url = url
         self.resource_methods = resource_methods or ["GET", "POST"]
         self.item_methods = item_methods or ["GET", "PATCH", "DELETE"]
@@ -58,6 +61,7 @@ class RestEndpoints(EndpointGroup):
                     name="resource_get",
                     func=self.search_items,
                     methods=["GET"],
+                    parent=self,
                 )
             )
 
@@ -68,6 +72,7 @@ class RestEndpoints(EndpointGroup):
                     name="resource_post",
                     func=self.create_item,
                     methods=["POST"],
+                    parent=self,
                 )
             )
 
@@ -79,6 +84,7 @@ class RestEndpoints(EndpointGroup):
                     name="item_get",
                     func=self.get_item,
                     methods=["GET"],
+                    parent=self,
                 )
             )
 
@@ -89,6 +95,7 @@ class RestEndpoints(EndpointGroup):
                     name="item_patch",
                     func=self.update_item,
                     methods=["PATCH"],
+                    parent=self,
                 )
             )
 
@@ -99,6 +106,7 @@ class RestEndpoints(EndpointGroup):
                     name="item_delete",
                     func=self.delete_item,
                     methods=["DELETE"],
+                    parent=self,
                 )
             )
 

@@ -20,12 +20,20 @@ from bson import ObjectId
 
 from superdesk.core import json
 from superdesk.core.app import get_current_async_app
-from superdesk.core.types import SearchRequest, SearchArgs, VersionParam
+from superdesk.core.types import (
+    SearchRequest,
+    SearchArgs,
+    VersionParam,
+    AuthConfig,
+    HTTP_METHOD,
+    Request,
+    Response,
+    RestGetResponse,
+)
 from superdesk.errors import SuperdeskApiError
 from superdesk.resource_fields import STATUS, STATUS_OK, ITEMS
 
-from ..web.types import HTTP_METHOD, Request, Response, RestGetResponse
-from ..web.rest_endpoints import RestEndpoints, ItemRequestViewArgs
+from superdesk.core.web import RestEndpoints, ItemRequestViewArgs
 
 from .model import ResourceConfig, ResourceModel
 from .validators import convert_pydantic_validation_error_for_response
@@ -77,6 +85,8 @@ class RestEndpointConfig:
     #: This will prepend this resources URL with the URL of the parent resource item
     parent_links: list[RestParentLink] | None = None
 
+    auth: AuthConfig = None
+
 
 def get_id_url_type(data_class: type[ResourceModel]) -> str:
     """Get the URL param type for the ID field for route registration"""
@@ -116,6 +126,7 @@ class ResourceRestEndpoints(RestEndpoints):
             resource_methods=endpoint_config.resource_methods,
             item_methods=endpoint_config.item_methods,
             id_param_type=endpoint_config.id_param_type or get_id_url_type(resource_config.data_class),
+            auth=endpoint_config.auth,
         )
 
     def get_resource_url(self) -> str:

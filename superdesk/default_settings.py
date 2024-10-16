@@ -420,6 +420,8 @@ INSTALLED_APPS = []
 #:
 MODULES = []
 
+ASYNC_AUTH_CLASS = "superdesk.core.auth.token_auth:TokenAuthorization"
+
 #: LDAP Server (eg: ldap://sourcefabric.org)
 LDAP_SERVER = env("LDAP_SERVER", "")
 #: LDAP Server port

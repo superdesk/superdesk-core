@@ -47,7 +47,7 @@ class TestResourceService(AsyncTestCase):
         test_user.created = NOW
         test_user.updated = NOW
         test_user_dict = test_user.to_dict(context={"use_objectid": True})
-        mongo_item = await self.service.mongo.find_one({"_id": test_user.id})
+        mongo_item = await self.service.mongo_async.find_one({"_id": test_user.id})
         self.assertEqual(mongo_item, test_user_dict)
 
         # Check stored `_etag` vs generated one
@@ -142,7 +142,7 @@ class TestResourceService(AsyncTestCase):
         self.assertEqual(test_user, item)
 
         # Test the User was updated in MongoDB with correct data
-        mongo_item = await self.service.mongo.find_one({"_id": test_user.id})
+        mongo_item = await self.service.mongo_async.find_one({"_id": test_user.id})
         self.assertEqual(mongo_item, test_user_dict)
 
         # Make sure ObjectIds are not stored as strings
@@ -181,7 +181,7 @@ class TestResourceService(AsyncTestCase):
         # Now delete the user, and make sure it is gone from both MongoDB, Elastic
         # and the resource service
         await self.service.delete(test_user)
-        self.assertIsNone(await self.service.mongo.find_one({"_id": test_user.id}))
+        self.assertIsNone(await self.service.mongo_async.find_one({"_id": test_user.id}))
         self.assertIsNone(await self.service.elastic.find_by_id(test_user.id))
         self.assertIsNone(await self.service.find_one(_id=test_user.id))
 

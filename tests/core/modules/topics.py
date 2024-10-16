@@ -32,6 +32,7 @@ user_folder_config = ResourceConfig(
     data_class=UserFolder,
     service=UserFolderService,
     rest_endpoints=RestEndpointConfig(
+        auth=False,
         parent_links=[
             RestParentLink(
                 resource_name=user_model_config.name,
@@ -57,6 +58,7 @@ company_folder_config = ResourceConfig(
     data_class=CompanyFolder,
     service=CompanyFolderService,
     rest_endpoints=RestEndpointConfig(
+        auth=False,
         parent_links=[
             RestParentLink(
                 resource_name=companies_resource_config.name,

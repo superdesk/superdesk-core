@@ -9,7 +9,7 @@
 # at https://www.sourcefabric.org/superdesk/license
 
 from quart import json
-from .app import get_app_config, get_current_app, get_current_async_app
+from .app import get_app_config, get_current_app, get_current_async_app, get_current_auth
 
 
 __all__ = [
@@ -17,4 +17,5 @@ __all__ = [
     "get_current_async_app",
     "json",
     "get_app_config",
+    "get_current_auth",
 ]

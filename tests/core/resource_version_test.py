@@ -40,15 +40,15 @@ class TestResourceVersion(AsyncTestCase):
     async def test_create_versions(self, *args):
         await self.service.create([Content(id="content_1", guid="content_1", headline="Some article")])
 
-        self.assertEqual(await self.service.mongo_versioned.count_documents({"_id_document": "content_1"}), 1)
-        cursor = self.service.mongo_versioned.find({"_id_document": "content_1"})
+        self.assertEqual(await self.service.mongo_versioned_async.count_documents({"_id_document": "content_1"}), 1)
+        cursor = self.service.mongo_versioned_async.find({"_id_document": "content_1"})
         self.assertIsNotNone(await cursor.next())
         with self.assertRaises(StopAsyncIteration):
             await cursor.next()
 
         await self.service.update("content_1", dict(headline="Some article updated"))
-        self.assertEqual(await self.service.mongo_versioned.count_documents({"_id_document": "content_1"}), 2)
-        cursor = self.service.mongo_versioned.find({"_id_document": "content_1"})
+        self.assertEqual(await self.service.mongo_versioned_async.count_documents({"_id_document": "content_1"}), 2)
+        cursor = self.service.mongo_versioned_async.find({"_id_document": "content_1"})
         self.assertIsNotNone(await cursor.next())
         self.assertIsNotNone(await cursor.next())
 

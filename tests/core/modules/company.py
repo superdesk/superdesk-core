@@ -14,7 +14,7 @@ companies_resource_config = ResourceConfig(
     name="companies",
     data_class=CompanyResource,
     service=CompanyService,
-    rest_endpoints=RestEndpointConfig(),
+    rest_endpoints=RestEndpointConfig(auth=False),
 )
 
 module = Module(name="tests.company", resources=[companies_resource_config])

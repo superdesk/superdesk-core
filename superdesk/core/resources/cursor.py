@@ -12,8 +12,10 @@ from typing import Dict, Any, Generic, TypeVar, Type, Optional, List
 
 from motor.motor_asyncio import AsyncIOMotorCollection, AsyncIOMotorCursor
 
+from .model import ResourceModel
 
-ResourceModelType = TypeVar("ResourceModelType", bound="ResourceModel")
+
+ResourceModelType = TypeVar("ResourceModelType", bound=ResourceModel)
 
 
 class ResourceCursorAsync(Generic[ResourceModelType]):
@@ -63,7 +65,9 @@ class ResourceCursorAsync(Generic[ResourceModelType]):
         return self.data_class.from_dict(data)
 
 
-class ElasticsearchResourceCursorAsync(ResourceCursorAsync):
+class ElasticsearchResourceCursorAsync(ResourceCursorAsync[ResourceModelType], Generic[ResourceModelType]):
+    _index: int
+    hits: dict[str, Any]
     no_hits = {"hits": {"total": 0, "hits": []}}
 
     def __init__(self, data_class: Type[ResourceModelType], hits=None):
@@ -113,7 +117,7 @@ class ElasticsearchResourceCursorAsync(ResourceCursorAsync):
             response["_aggregations"] = self.hits["aggregations"]
 
 
-class MongoResourceCursorAsync(ResourceCursorAsync):
+class MongoResourceCursorAsync(ResourceCursorAsync[ResourceModelType], Generic[ResourceModelType]):
     def __init__(
         self,
         data_class: Type[ResourceModelType],
@@ -137,6 +141,3 @@ class MongoResourceCursorAsync(ResourceCursorAsync):
 
     async def count(self):
         return await self.collection.count_documents(self.lookup)
-
-
-from .model import ResourceModel  # noqa: E402

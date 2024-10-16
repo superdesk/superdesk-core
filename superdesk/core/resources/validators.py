@@ -24,8 +24,11 @@ logger = logging.getLogger(__name__)
 EmailValueType = str | list[str] | None
 
 
-def validate_email() -> AfterValidator:
-    """Validates that the value is a valid email address"""
+def validate_email(error_string: str | None = None) -> AfterValidator:
+    """Validates that the value is a valid email address
+
+    :param error_string: An optional custom error string if validation fails
+    """
 
     def _validate_email(value: EmailValueType) -> EmailValueType:
         if value is None:
@@ -41,7 +44,7 @@ def validate_email() -> AfterValidator:
             # given that admins are usually create users, not users by themself,
             # probably just check for @ is enough
             # https://davidcel.is/posts/stop-validating-email-addresses-with-regex/
-            raise PydanticCustomError("email", gettext("Invalid email address"))
+            raise PydanticCustomError("email", str(error_string) if error_string else gettext("Invalid email address"))
         return value
 
     return AfterValidator(_validate_email)
@@ -50,11 +53,14 @@ def validate_email() -> AfterValidator:
 MinMaxValueType = str | int | float | list[str] | list[int] | list[float] | None
 
 
-def validate_minlength(min_length: int, validate_list_elements: bool = False) -> AfterValidator:
+def validate_minlength(
+    min_length: int, validate_list_elements: bool = False, error_string: str | None = None
+) -> AfterValidator:
     """Validates that the value has a minimum length
 
     :param min_length: The minimum length of the value
     :param validate_list_elements: Whether to validate the elements in the list or the list length
+    :param error_string: An optional custom error string if validation fails
     """
 
     def _validate_minlength(value: MinMaxValueType) -> MinMaxValueType:
@@ -63,20 +69,23 @@ def validate_minlength(min_length: int, validate_list_elements: bool = False) ->
                 _validate_minlength(val)
         elif isinstance(value, (type(""), list)):
             if len(value) < min_length:
-                raise PydanticCustomError("minlength", gettext("Not enough"))
+                raise PydanticCustomError("minlength", str(error_string) if error_string else gettext("Not enough"))
         elif isinstance(value, (int, float)):
             if value < min_length:
-                raise PydanticCustomError("min_length", gettext("Too short"))
+                raise PydanticCustomError("min_length", str(error_string) if error_string else gettext("Too short"))
         return value
 
     return AfterValidator(_validate_minlength)
 
 
-def validate_maxlength(max_length: int, validate_list_elements: bool = False) -> AfterValidator:
+def validate_maxlength(
+    max_length: int, validate_list_elements: bool = False, error_string: str | None = None
+) -> AfterValidator:
     """Validates that the value has a maximum length (strings or arrays)
 
     :param max_length: The maximum length of the value
     :param validate_list_elements: Whether to validate the elements in the list or the list length
+    :param error_string: An optional custom error string if validation fails
     """
 
     def _validate_maxlength(value: MinMaxValueType) -> MinMaxValueType:
@@ -85,10 +94,10 @@ def validate_maxlength(max_length: int, validate_list_elements: bool = False) ->
                 _validate_maxlength(val)
         elif isinstance(value, (type(""), list)):
             if len(value) > max_length:
-                raise PydanticCustomError("maxlength", gettext("Too many"))
+                raise PydanticCustomError("maxlength", str(error_string) if error_string else gettext("Too many"))
         elif isinstance(value, (int, float)):
             if value > max_length:
-                raise PydanticCustomError("maxlength", gettext("Too short"))
+                raise PydanticCustomError("maxlength", str(error_string) if error_string else gettext("Too short"))
         return value
 
     return AfterValidator(_validate_maxlength)
@@ -105,13 +114,14 @@ DataRelationValueType = str | ObjectId | list[str] | list[ObjectId] | None
 
 
 def validate_data_relation_async(
-    resource_name: str, external_field: str = "_id", convert_to_objectid: bool = False
+    resource_name: str, external_field: str = "_id", convert_to_objectid: bool = False, error_string: str | None = None
 ) -> AsyncValidator:
     """Validate the ID on the resource points to an existing resource
 
     :param resource_name: The name of the resource type the ID points to
     :param external_field: The field used to find the resource
     :param convert_to_objectid: If True, will convert the ID to an ObjectId instance
+    :param error_string: An optional custom error string if validation fails
     """
 
     async def validate_resource_exists(item: ResourceModel, item_id: DataRelationValueType) -> None:
@@ -133,7 +143,9 @@ def validate_data_relation_async(
                 if not await collection.find_one({external_field: item_id}):
                     raise PydanticCustomError(
                         "data_relation",
-                        gettext("Resource '{resource_name}' with ID '{item_id}' does not exist"),
+                        str(error_string)
+                        if error_string
+                        else gettext("Resource '{resource_name}' with ID '{item_id}' does not exist"),
                         dict(
                             resource_name=resource_name,
                             item_id=item_id,
@@ -162,11 +174,12 @@ def validate_data_relation_async(
 UniqueValueType = str | list[str] | None
 
 
-def validate_unique_value_async(resource_name: str, field_name: str) -> AsyncValidator:
+def validate_unique_value_async(resource_name: str, field_name: str, error_string: str | None = None) -> AsyncValidator:
     """Validate that the field is unique in the resource (case-sensitive)
 
     :param resource_name: The name of the resource where the field must be unique
     :param field_name: The name of the field where the field must be unique
+    :param error_string: An optional custom error string if validation fails
     """
 
     async def validate_unique_value_in_resource(item: ResourceModel, name: UniqueValueType) -> None:
@@ -181,16 +194,19 @@ def validate_unique_value_async(resource_name: str, field_name: str) -> AsyncVal
 
         query = {"_id": {"$ne": item.id}, field_name: {"$in": name} if isinstance(name, list) else name}
         if await collection.find_one(query):
-            raise PydanticCustomError("unique", gettext("Value must be unique"))
+            raise PydanticCustomError("unique", str(error_string) if error_string else gettext("Value must be unique"))
 
     return AsyncValidator(validate_unique_value_in_resource)
 
 
-def validate_iunique_value_async(resource_name: str, field_name: str) -> AsyncValidator:
+def validate_iunique_value_async(
+    resource_name: str, field_name: str, error_string: str | None = None
+) -> AsyncValidator:
     """Validate that the field is unique in the resource (case-insensitive)
 
     :param resource_name: The name of the resource where the field must be unique
     :param field_name: The name of the field where the field must be unique
+    :param error_string: An optional custom error string if validation fails
     """
 
     async def validate_iunique_value_in_resource(item: ResourceModel, name: UniqueValueType) -> None:
@@ -213,7 +229,7 @@ def validate_iunique_value_async(resource_name: str, field_name: str) -> AsyncVa
         }
 
         if await collection.find_one(query):
-            raise PydanticCustomError("unique", gettext("Value must be unique"))
+            raise PydanticCustomError("unique", str(error_string) if error_string else gettext("Value must be unique"))
 
     return AsyncValidator(validate_iunique_value_in_resource)
 

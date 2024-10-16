@@ -188,7 +188,15 @@ async def _run_async_validators_from_model_class(
     if field_name_stack is None:
         field_name_stack = []
 
-    annotations = get_annotations(model_instance.__class__)
+    model_class = model_instance.__class__
+
+    try:
+        annotations = {}
+        for base_class in reversed(model_class.__mro__):
+            if base_class != ResourceModel and issubclass(base_class, ResourceModel):
+                annotations.update(get_annotations(base_class))
+    except (TypeError, AttributeError):
+        annotations = get_annotations(model_class)
 
     for field_name, annotation in annotations.items():
         value = getattr(model_instance, field_name)
