@@ -22,6 +22,7 @@ from typing import (
     Union,
     cast,
     overload,
+    Type,
 )
 import logging
 import ast
@@ -201,12 +202,14 @@ class AsyncResourceService(Generic[ResourceModelType]):
         try:
             if not use_mongo:
                 response = await self.elastic.search(lookup)
-                return ElasticsearchResourceCursorAsync(self.config.data_class, response)
+                return ElasticsearchResourceCursorAsync(cast(Type[ResourceModelType], self.config.data_class), response)
         except KeyError:
             pass
 
         response = self.mongo_async.find(lookup)
-        return MongoResourceCursorAsync(self.config.data_class, self.mongo_async, response, lookup)
+        return MongoResourceCursorAsync(
+            cast(Type[ResourceModelType], self.config.data_class), self.mongo_async, response, lookup
+        )
 
     async def on_create(self, docs: List[ResourceModelType]) -> None:
         """Hook to run before creating new resource(s)
@@ -536,13 +539,17 @@ class AsyncResourceService(Generic[ResourceModelType]):
         try:
             if not use_mongo:
                 cursor, count = await self.elastic.find(search_request)
-                return ElasticsearchResourceCursorAsync(self.config.data_class, cursor.hits)
+                return ElasticsearchResourceCursorAsync(
+                    cast(Type[ResourceModelType], self.config.data_class), cursor.hits
+                )
         except KeyError:
             pass
 
         return await self._mongo_find(search_request)
 
-    async def _mongo_find(self, req: SearchRequest, versioned: bool = False) -> MongoResourceCursorAsync:
+    async def _mongo_find(
+        self, req: SearchRequest, versioned: bool = False
+    ) -> MongoResourceCursorAsync[ResourceModelType]:
         kwargs: Dict[str, Any] = {}
 
         if req.max_results:
@@ -567,7 +574,10 @@ class AsyncResourceService(Generic[ResourceModelType]):
         cursor = self.mongo_async.find(**kwargs) if not versioned else self.mongo_versioned_async.find(**kwargs)
 
         return MongoResourceCursorAsync(
-            self.config.data_class, self.mongo_async if not versioned else self.mongo_versioned_async, cursor, where
+            cast(Type[ResourceModelType], self.config.data_class),
+            self.mongo_async if not versioned else self.mongo_versioned_async,
+            cursor,
+            where,
         )
 
     def _convert_req_to_mongo_sort(self, sort: SortParam | None) -> SortListParam:
