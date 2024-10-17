@@ -15,7 +15,6 @@ import logging
 
 from typing import BinaryIO, Dict, List, Literal, Mapping, TypedDict, Union
 
-from pyexiv2 import convert_xmp_to_iptc
 from superdesk.text_utils import decode
 from PIL import Image, ExifTags
 from PIL import IptcImagePlugin
@@ -244,6 +243,8 @@ def write_metadata(input: bytes, metadata: PhotoMetadata) -> bytes:
     @param file_stream: stream
     @param metadata: dict
     """
+    from pyexiv2 import convert_xmp_to_iptc
+
     xmp = {
         "Xmp.dc.description": metadata.get("Description"),
         "Xmp.photoshop.CaptionWriter": metadata.get("DescriptionWriter"),
