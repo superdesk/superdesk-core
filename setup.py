@@ -42,7 +42,7 @@ install_requires = [
     "websockets>=10.3,<13.2",
     "PyYAML>=6.0.1",
     "lxml>=5.2.2,<5.3",
-    "lxml_html_clean>=0.1.1,<0.3",
+    "lxml_html_clean>=0.1.1,<0.4",
     "python-twitter>=3.5,<3.6",
     "chardet<6.0",
     "pymongo>=3.8,<3.12",
