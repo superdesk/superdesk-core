@@ -9,6 +9,7 @@
 # at https://www.sourcefabric.org/superdesk/license
 
 ID_FIELD = "_id"
+GUID_FIELD = "guid"
 VERSION_ID_FIELD = "_id_document"
 ITEM_TYPE = "type"
 ITEM_STATE = "state"
