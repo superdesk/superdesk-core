@@ -14,7 +14,7 @@ LONG_DESCRIPTION = "Superdesk Server Core"
 
 install_requires = [
     "urllib3>=1.26,<3",
-    "eve>=1.1.2,<=2.1.0",
+    "eve>=1.1.2,<=2.2.0",
     "eve-elastic>=7.4.0,<7.5.0",
     "elasticsearch<7.18",  # we are using oss version on test server
     "flask>=1.1,<1.2",
