@@ -617,6 +617,25 @@ class AsyncResourceService(Generic[ResourceModelType]):
 
         return await self._mongo_find(search_request)
 
+    async def count(self, lookup: dict[str, Any] | None = None, use_mongo: bool = False) -> int:
+        """Get the number of items that match the lookup, or all items if lookup is not provided
+
+        Will use Elasticsearch if configured for this resource and ``use_mongo == False``.
+        This will not perform a search, but use the item count feature of the underlying data store
+
+        :param lookup: Dictionary to search
+        :param use_mongo: Force to use MongoDB instead of Elasticsearch
+        :return: The number of items that match the lookup
+        """
+
+        try:
+            if not use_mongo:
+                return await self.elastic.count(lookup)
+        except KeyError:
+            pass
+
+        return await self.mongo_async.count_documents(lookup or {})
+
     async def _mongo_find(
         self, req: SearchRequest, versioned: bool = False
     ) -> MongoResourceCursorAsync[ResourceModelType]:
