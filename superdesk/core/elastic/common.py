@@ -28,7 +28,7 @@ class ElasticResourceConfig:
     default_sort: SortParam | None = None
 
     #: The default maximum number of documents to be returned
-    default_max_results: Optional[int] = None
+    default_max_results: int = 25
 
     #: An optional filter to be applied to all searches
     filter: Optional[Dict[str, Any]] = None

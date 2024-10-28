@@ -151,8 +151,9 @@ class BaseElasticResourceClient:
         self, req: SearchRequest, sub_resource_lookup: Optional[Dict[str, Any]] = None
     ) -> Dict[str, Any]:
         args = req.args or {}
+
         if args.get("source"):
-            query: Dict[str, Any] = json.loads(args["source"])
+            query: dict[str, Any] = json.loads(args["source"]) if isinstance(args["source"], str) else args["source"]
             query.setdefault("query", {})
             must = []
             for key, val in query["query"].items():
@@ -162,6 +163,8 @@ class BaseElasticResourceClient:
                 query["query"] = {"bool": {"must": must}}
         else:
             query = {"query": {"bool": {}}}
+
+        req.elastic.generate_query_dict(query)
 
         if args.get("q"):
             query["query"]["bool"].setdefault("must", []).append(
@@ -178,11 +181,10 @@ class BaseElasticResourceClient:
             elif self.resource_config.default_sort:
                 _set_sort(query, self.resource_config.default_sort)
 
-        if not req.max_results and self.resource_config.default_max_results:
-            req.max_results = self.resource_config.default_max_results
+        if req.max_results is None:
+            req.max_results = self.resource_config.default_max_results or 25
 
-        if req.max_results:
-            query.setdefault("size", req.max_results)
+        query.setdefault("size", req.max_results)
 
         if req.page > 1 and req.max_results:
             query.setdefault("from", (req.page - 1) * req.max_results)
@@ -198,7 +200,7 @@ class BaseElasticResourceClient:
             filters.append({"bool": {"must": [{"term": {key: val}} for key, val in sub_resource_lookup.items()]}})
 
         if "filter" in args:
-            filters.append(json.loads(args["filter"]))
+            filters.append(json.loads(args["filter"]) if isinstance(args["filter"], str) else args["filter"])
 
         if "filters" in args:
             filters.extend(args["filters"])
@@ -218,7 +220,9 @@ class BaseElasticResourceClient:
         if self.resource_config.facets:
             query["facets"] = self.resource_config.facets
 
-        if self.resource_config.aggregations and (self.config.auto_aggregations or req.aggregations):
+        if req.elastic.aggs:
+            query["aggs"] = req.elastic.aggs
+        elif self.resource_config.aggregations and (self.config.auto_aggregations or req.aggregations):
             query["aggs"] = self.resource_config.aggregations
 
         if self.resource_config.highlight and req.highlight:
@@ -229,6 +233,20 @@ class BaseElasticResourceClient:
                     if highlights:
                         query["highlight"] = highlights
                         query["highlight"].setdefault("require_field_match", False)
+
+        return dict(
+            index=self.config.index,
+            track_total_hits=self.config.track_total_hits,
+            **(self._get_projected_fields(req) or {}),
+            body=query,
+        )
+
+    def _get_find_one_args(self, req: SearchRequest) -> dict[str, Any]:
+        filters = [{"term": {key: val}} for key, val in req.where.items()] if isinstance(req.where, dict) else []
+        query = {
+            "query": {"bool": {"must": filters}},
+            "size": 1,
+        }
 
         return dict(
             index=self.config.index,

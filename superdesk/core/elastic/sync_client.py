@@ -8,14 +8,14 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
-from typing import Optional, List, Dict, Any, Tuple, cast
+from typing import Optional, List, Dict, Any, Tuple, cast, overload
 
 from elasticsearch import Elasticsearch
 from elasticsearch.exceptions import NotFoundError, TransportError, RequestError
 from elasticsearch.helpers import bulk
 
 from superdesk.core.types import SearchRequest
-from .base_client import BaseElasticResourceClient, ElasticCursor, InvalidSearchString
+from .base_client import BaseElasticResourceClient, ElasticCursor, InvalidSearchString, ProjectedFieldSources
 
 
 class ElasticResourceClient(BaseElasticResourceClient):
@@ -110,7 +110,7 @@ class ElasticResourceClient(BaseElasticResourceClient):
 
         return self.elastic.search(**self._get_search_args(query, indexes))
 
-    def find_by_id(self, item_id: str) -> Optional[Dict[str, Any]]:
+    def find_by_id(self, item_id: str, projection: ProjectedFieldSources | None = None) -> dict[str, Any] | None:
         """Find a single document in Elasticsearch based on its ID
 
         :param item_id: ID of the document to find.
@@ -118,7 +118,7 @@ class ElasticResourceClient(BaseElasticResourceClient):
         """
 
         try:
-            response = self.elastic.get(index=self.config.index, id=item_id)
+            response = self.elastic.get(index=self.config.index, id=item_id, **(projection or {}))
 
             if "exists" in response:
                 response["found"] = response["exists"]
@@ -144,21 +144,28 @@ class ElasticResourceClient(BaseElasticResourceClient):
                     return None
         return None
 
-    def find_one(self, **lookup) -> Optional[Dict[str, Any]]:
+    @overload
+    def find_one(self, req: SearchRequest) -> dict[str, Any] | None:
+        ...
+
+    @overload
+    def find_one(self, req: dict) -> dict[str, Any] | None:
+        ...
+
+    def find_one(self, req: SearchRequest | dict) -> dict[str, Any] | None:
         """Find a single document in Elasticsearch based on the provided search query
 
         :param lookup: kwargs providing the filters used to search for an item
         :return: The document found or None if no document was found.
         """
 
-        if "_id" in lookup:
-            return self.find_by_id(lookup["_id"])
+        search_request = req if isinstance(req, SearchRequest) else SearchRequest(where=req)
 
-        filters = [{"term": {key: val}} for key, val in lookup.items()]
-        query = {"query": {"bool": {"must": filters}}}
+        if isinstance(search_request.where, dict) and set(search_request.where.keys()) == {"_id"}:
+            return self.find_by_id(search_request.where["_id"], self._get_projected_fields(search_request) or {})
 
         try:
-            response = self.elastic.search(index=self.config.index, body=query, size=1)
+            response = self.elastic.search(**self._get_find_one_args(search_request))
 
             docs = self._parse_hits(response)
             return docs.first()
