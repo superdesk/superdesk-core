@@ -118,54 +118,115 @@ class AsyncResourceService(Generic[ResourceModelType]):
         # because nested models are not being converted to model instances
         return cast(ResourceModelType, self.config.data_class.from_dict(data))
 
-    async def find_one_raw(self, use_mongo: bool = False, version: int | None = None, **lookup) -> dict | None:
-        """Find a resource by ID
+    @overload
+    async def find_one_raw(self, req: SearchRequest) -> dict | None:
+        ...
 
-        :param use_mongo: If ``True`` will force use mongo, else will attempt elastic first
-        :param version: Optional version to get
-        :param lookup: Dictionary of key/value pairs used to find the document
-        :return: ``None`` if resource not found, otherwise an instance of ``ResourceModel`` for this resource
-        """
+    @overload
+    async def find_one_raw(
+        self,
+        req: None = None,
+        *,
+        projection: ProjectedFieldArg | None = None,
+        use_mongo: bool = False,
+        version: int | None = None,
+        **lookup,
+    ) -> dict | None:
+        ...
+
+    async def find_one_raw(
+        self,
+        req: SearchRequest | None = None,
+        *,
+        projection: ProjectedFieldArg | None = None,
+        use_mongo: bool = False,
+        version: int | None = None,
+        **lookup,
+    ) -> dict | None:
+        search_request = (
+            req
+            if req is not None
+            else SearchRequest(
+                where=lookup,
+                page=1,
+                max_results=1,
+                projection=projection,
+                use_mongo=use_mongo,
+                version=version,
+            )
+        )
+
+        if not search_request.projection and self.config.projection:
+            search_request.projection = self.config.projection
 
         item = None
         try:
-            if not use_mongo:
-                item = await self.elastic.find_one(**lookup)
+            if not search_request.use_mongo:
+                item = await self.elastic.find_one(search_request)
         except KeyError:
             pass
 
-        if use_mongo or item is None:
-            item = await self.mongo_async.find_one(lookup)
+        if search_request.use_mongo or item is None:
+            kwargs = dict(
+                filter=json.loads(search_request.where or "{}")
+                if isinstance(search_request.where, str)
+                else search_request.where or {}
+            )
+            projection_include, projection_fields = get_projection_from_request(search_request)
+            if projection_fields:
+                kwargs["projection"] = (
+                    projection_fields if projection_include else {field: False for field in projection_fields}
+                )
+            mongo = self.mongo_async if not search_request.version else self.mongo_versioned_async
+            item = await mongo.find_one(**kwargs)
 
         if item is None:
             return None
-        elif version is not None:
-            item = await self.get_item_version(item, version)
+        elif search_request.version is not None:
+            item = await self.get_item_version(item, search_request.version)
 
         return item
 
+    @overload
+    async def find_one(self, req: SearchRequest) -> ResourceModelType | None:
+        ...
+
+    @overload
     async def find_one(
-        self, use_mongo: bool = False, version: int | None = None, **lookup
+        self,
+        req: None = None,
+        projection: ProjectedFieldArg | None = None,
+        use_mongo: bool = False,
+        version: int | None = None,
+        **lookup,
+    ) -> ResourceModelType | None:
+        ...
+
+    async def find_one(
+        self,
+        req: SearchRequest | None = None,
+        projection: ProjectedFieldArg | None = None,
+        use_mongo: bool = False,
+        version: int | None = None,
+        **lookup,
+    ) -> ResourceModelType | None:
+        if req is None:
+            item = await self.find_one_raw(projection=projection, use_mongo=use_mongo, version=version, **lookup)
+        else:
+            item = await self.find_one_raw(req)
+        return None if not item else self.get_model_instance_from_dict(item)
+
+    async def find_by_id(
+        self, item_id: Union[str, ObjectId], version: int | None = None
     ) -> Optional[ResourceModelType]:
         """Find a resource by ID
 
-        :param use_mongo: If ``True`` will force use mongo, else will attempt elastic first
-        :param version: Optional version to get
-        :param lookup: Dictionary of key/value pairs used to find the document
-        :return: ``None`` if resource not found, otherwise an instance of ``ResourceModel`` for this resource
-        """
-
-        item = await self.find_one_raw(use_mongo=use_mongo, version=version, **lookup)
-        return None if not item else self.get_model_instance_from_dict(item)
-
-    async def find_by_id(self, item_id: Union[str, ObjectId]) -> Optional[ResourceModelType]:
-        """Find a resource by ID
-
         :param item_id: ID of item to find
+        :param version: Optional version to get
         :return: ``None`` if resource not found, otherwise an instance of ``ResourceModel`` for this resource
         """
 
-        item = await self.find_by_id_raw(item_id)
+        item = await self.find_by_id_raw(item_id, version)
         return None if item is None else self.get_model_instance_from_dict(item)
 
     async def find_by_id_raw(
@@ -300,10 +361,13 @@ class AsyncResourceService(Generic[ResourceModelType]):
                 pass
 
             if self.config.versioning:
-                await self.mongo_versioned_async.insert_one(self._get_versioned_document(doc_dict))
+                await self.insert_versioned_document(doc_dict)
 
         await self.on_created(docs)
         return ids
+
+    async def insert_versioned_document(self, doc_dict: dict[str, Any]):
+        await self.mongo_versioned_async.insert_one(self._get_versioned_document(doc_dict))
 
     def _get_versioned_document(self, doc_dict: dict[str, Any]) -> dict[str, Any]:
         versioned_doc = doc_dict.copy()
@@ -423,6 +487,9 @@ class AsyncResourceService(Generic[ResourceModelType]):
             ids.append(str(doc.id))
             await self.mongo_async.delete_one({"_id": doc.id})
 
+            if self.config.versioning:
+                await self.mongo_versioned_async.delete_many({VERSION_ID_FIELD: doc.id})
+
             try:
                 await self.elastic.remove(doc.id)
             except KeyError:
@@ -482,7 +549,9 @@ class AsyncResourceService(Generic[ResourceModelType]):
             logger.warning(f"Not enough iterations for resource {self.resource_name}")
 
     @overload
-    async def find(self, req: SearchRequest) -> ResourceCursorAsync[ResourceModelType]:
+    async def find(
+        self, req: SearchRequest
+    ) -> ElasticsearchResourceCursorAsync[ResourceModelType] | MongoResourceCursorAsync[ResourceModelType]:
         ...
 
     @overload
@@ -494,7 +563,7 @@ class AsyncResourceService(Generic[ResourceModelType]):
         sort: SortParam | None = None,
         projection: ProjectedFieldArg | None = None,
         use_mongo: bool = False,
-    ) -> ResourceCursorAsync[ResourceModelType]:
+    ) -> ElasticsearchResourceCursorAsync[ResourceModelType] | MongoResourceCursorAsync[ResourceModelType]:
         ...
 
     async def find(
@@ -505,7 +574,8 @@ class AsyncResourceService(Generic[ResourceModelType]):
         sort: SortParam | None = None,
         projection: ProjectedFieldArg | None = None,
         use_mongo: bool = False,
-    ) -> ResourceCursorAsync[ResourceModelType]:
+        # ) -> ResourceCursorAsync[ResourceModelType]:
+    ) -> ElasticsearchResourceCursorAsync[ResourceModelType] | MongoResourceCursorAsync[ResourceModelType]:
         """Find items from the resource using Elasticsearch
 
         :param req: SearchRequest instance, or a lookup dictionary, for the search params to be used
@@ -522,7 +592,7 @@ class AsyncResourceService(Generic[ResourceModelType]):
             req
             if isinstance(req, SearchRequest)
             else SearchRequest(
-                where=req if req else None,
+                where=req,
                 page=page,
                 max_results=max_results,
                 sort=sort,
@@ -765,13 +835,23 @@ class AsyncCacheableService(AsyncResourceService[ResourceModelType]):
             key=lambda fn: f"_cache_mixin:{self.resource_name}",
         )
         async def _get_cached_from_db():
+            return await _get_from_db()
+
+        async def _get_from_db():
             cursor = await self.search(lookup=self.cache_lookup, use_mongo=True)
             return await cursor.to_list_raw()
 
         cached_data = self.get_cache()
 
         if cached_data is None:
-            cached_data = await _get_cached_from_db()
+            try:
+                cached_data = await _get_cached_from_db()
+            except RuntimeError:
+                # This is sometimes happening, due to lock trying to be released from another thread
+                # I think this is mostly happening in tests, but we require a fallback to make
+                # sure this will always work
+                logger.warning("RuntimeError raised when attempting to get items from cache", exc_info=True)
+                cached_data = await _get_from_db()
             self.set_cache(cached_data)
 
         return cached_data
