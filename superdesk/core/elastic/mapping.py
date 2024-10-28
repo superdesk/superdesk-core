@@ -76,6 +76,10 @@ def _get_field_type_from_json_schema(
                 return None
             elif props.get("nested") or (parent_props is not None and parent_props.get("nested")):
                 mapping["type"] = "nested"
+                if props.get("include_in_parent") or (
+                    parent_props is not None and parent_props.get("include_in_parent")
+                ):
+                    mapping["include_in_parent"] = True
             return mapping
         except KeyError:
             # If ``items`` is not defined, we cannot determine the type
