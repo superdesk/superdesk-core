@@ -170,6 +170,9 @@ class HttpFlaskRequest(Request):
     def redirect(self, location: str, code: int = 302) -> Any:
         return redirect(location, code)
 
+    def is_json_request(self) -> bool:
+        return self.request.accept_mimetypes.best_match(["application/json", "text/html"]) == "application/json"
+
 
 def set_error_handlers(app):
     """Set error handlers for the given application object.
