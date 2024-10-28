@@ -399,11 +399,13 @@ class TestResourceService(AsyncTestCase):
         )
         expected = SearchRequest()
         await assert_es_find_called_with(SearchRequest(), expected=expected)
+        expected.where = {}
         await assert_es_find_called_with({}, expected=expected)
 
         sort_query = [("last_name.keyword", 1), ("first_name.keyword", 1)]
         expected = SearchRequest(sort=sort_query)
         await assert_es_find_called_with(SearchRequest(sort=sort_query), expected=expected)
+        expected.where = {}
         await assert_es_find_called_with({}, sort=sort_query, expected=expected)
 
         kwargs = dict(
@@ -413,6 +415,7 @@ class TestResourceService(AsyncTestCase):
         )
         expected = SearchRequest(**kwargs)
         await assert_es_find_called_with(SearchRequest(**kwargs), expected=expected)
+        expected.where = {}
         await assert_es_find_called_with({}, **kwargs, expected=expected)
 
         # Test with default sort in the resource config
@@ -420,10 +423,12 @@ class TestResourceService(AsyncTestCase):
         self.service.config.default_sort = sort_query
         expected = SearchRequest(sort=sort_query)
         await assert_es_find_called_with(SearchRequest(), expected=expected)
+        expected.where = {}
         await assert_es_find_called_with({}, expected=expected)
 
         # Test passing in sort param with default sort configured
         custom_sort_query = [("scores", 1)]
         expected = SearchRequest(sort=custom_sort_query)
         await assert_es_find_called_with(SearchRequest(sort=custom_sort_query), expected=expected)
+        expected.where = {}
         await assert_es_find_called_with({}, sort=custom_sort_query, expected=expected)
