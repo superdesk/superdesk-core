@@ -143,15 +143,9 @@ class ContentAPIItem(ResourceModel, ModelWithVersions):
     uri: Annotated[fields.Keyword | None, validators.validate_iunique_value_async("items", "uri")] = None
     usageterms: str | None = None
     version: str | None = None
-    versioncreated: datetime = Field(
-        default_factory=datetime.now
-    )
-    firstcreated: datetime = Field(
-        default_factory=datetime.now
-    )
-    firstpublished: datetime = Field(
-        default_factory=datetime.now
-    )
+    versioncreated: datetime = Field(default_factory=datetime.now)
+    firstcreated: datetime = Field(default_factory=datetime.now)
+    firstpublished: datetime = Field(default_factory=datetime.now)
     embargoed: datetime | None = None
     evolvedfrom: fields.Keyword | None = None
     nextversion: fields.Keyword | None = None
@@ -178,9 +172,7 @@ class ContentAPIItem(ResourceModel, ModelWithVersions):
     agenda_id: fields.Keyword | None = None
     agenda_href: fields.Keyword | None = None
 
-    refs: list[ContentReference] = Field(
-        default_factory=list
-    )
+    refs: list[ContentReference] = Field(default_factory=list)
     expiry: datetime = Field(default_factory=datetime.now)
 
     @field_validator("version", mode="before")

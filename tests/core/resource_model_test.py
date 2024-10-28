@@ -82,19 +82,23 @@ class ResourceModelTest(TestCase):
                     "_updated": {"type": "date"},
                     "_etag": {"type": "text"},
                     "first_name": {
-                        "type": "text", "fields": {"keyword": {"type": "keyword"}},
+                        "type": "text",
+                        "fields": {"keyword": {"type": "keyword"}},
                         "analyzer": "html_field_analyzer",
                     },
                     "last_name": {
-                        "type": "text", "fields": {"keyword": {"type": "keyword"}},
+                        "type": "text",
+                        "fields": {"keyword": {"type": "keyword"}},
                         "analyzer": "html_field_analyzer",
                     },
                     "email": {
-                        "type": "text", "fields": {"keyword": {"type": "keyword"}},
+                        "type": "text",
+                        "fields": {"keyword": {"type": "keyword"}},
                         "analyzer": "html_field_analyzer",
                     },
                     "name": {
-                        "type": "text", "fields": {"keyword": {"type": "keyword"}},
+                        "type": "text",
+                        "fields": {"keyword": {"type": "keyword"}},
                         "analyzer": "html_field_analyzer",
                     },
                     "username": {"type": "text"},
