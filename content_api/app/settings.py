@@ -52,6 +52,10 @@ CONTENTAPI_INSTALLED_APPS = [
     "content_api.api_audit",
 ]
 
+MODULES = [
+    "content_api.items.module",
+]
+
 CONTENTAPI_DOMAIN = {}
 
 # NOTE: no trailing slash for the CONTENTAPI_URL setting!

@@ -9,6 +9,7 @@
 # at https://www.sourcefabric.org/superdesk/license
 
 from typing import TYPE_CHECKING, Annotated
+
 from typing_extensions import TypeVar, Generic, ClassVar, Dict, Any, cast, Type, Callable
 
 from datetime import datetime
@@ -128,11 +129,16 @@ else:
         elastic_mapping = {"type": "keyword"}
 
     class TextWithKeyword(CustomStringField):
-        """Elasticsearch text field with a keyword sub-field"""
+        """Elasticsearch text field with a keyword sub-field
+
+        Additionally, adds ``html_field_analyzer`` analyzer, as to keep with the same config
+        defined in original superdesk.resource.text_with_keyword mapping
+        """
 
         elastic_mapping = {
             "type": "text",
             "fields": {"keyword": {"type": "keyword"}},
+            "analyzer": "html_field_analyzer",
         }
 
     class HTML(str, CustomStringField):
@@ -157,31 +163,43 @@ else:
             return str(value) if not (info.context or {}).get("use_objectid") else BsonObjectId(value)
 
 
+def elastic_mapping(mapping: dict[str, Any]) -> WithJsonSchema:
+    return Field(json_schema_extra={"elastic_mapping": mapping})
+
+
 def keyword_mapping() -> WithJsonSchema:
     return Field(json_schema_extra={"elastic_mapping": {"type": "keyword"}})
 
 
-def nested_list() -> WithJsonSchema:
+def mapping_disabled(data_type: str) -> WithJsonSchema:
+    return Field(json_schema_extra={"elastic_mapping": {"type": data_type, "enabled": False}})
+
+
+def nested_list(include_in_parent: bool = False) -> WithJsonSchema:
     """Field modifier, to enabled nested in Elasticsearch for the field
 
     Example usage::
 
-        from typing import List
-        from typing_extensions import Annotated, TypedDict
+        from typing import Annotated
+        from typing_extensions import TypedDict
         from superdesk.core.resources import ResourceModel, fields, dataclass
 
         @dataclass
         class Subjects:
             qcode: str
             name: str
-            scheme: Optional[str] = None
+            scheme: str | None = None
 
         class Content(ResourceModel):
             ...
-            subjects: Annotated[List[Subjects], fields.nested_list()]
+            subjects: Annotated[list[Subjects], fields.nested_list()]
     """
 
-    return Field(json_schema_extra={"nested": True})
+    return Field(json_schema_extra={"nested": True, "include_in_parent": include_in_parent})
+
+
+def not_indexed() -> WithJsonSchema:
+    return Field(json_schema_extra={"elastic_mapping": {"type": "text", "index": False}})
 
 
 @dataclass(config=dict(validate_assignment=True))

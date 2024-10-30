@@ -72,6 +72,7 @@ class ResourceModelTest(TestCase):
         self.assertIsInstance(ModelWithObjectId(id=ObjectId(), name="foo").id, ObjectId)
 
     def test_elastic_mapping(self):
+        self.maxDiff = None
         # Test the generated mapping
         self.assertEqual(
             get_elastic_mapping_from_model("users_async", User),
@@ -80,10 +81,26 @@ class ResourceModelTest(TestCase):
                     "_created": {"type": "date"},
                     "_updated": {"type": "date"},
                     "_etag": {"type": "text"},
-                    "first_name": {"type": "text", "fields": {"keyword": {"type": "keyword"}}},
-                    "last_name": {"type": "text", "fields": {"keyword": {"type": "keyword"}}},
-                    "email": {"type": "text", "fields": {"keyword": {"type": "keyword"}}},
-                    "name": {"type": "text", "fields": {"keyword": {"type": "keyword"}}},
+                    "first_name": {
+                        "type": "text",
+                        "fields": {"keyword": {"type": "keyword"}},
+                        "analyzer": "html_field_analyzer",
+                    },
+                    "last_name": {
+                        "type": "text",
+                        "fields": {"keyword": {"type": "keyword"}},
+                        "analyzer": "html_field_analyzer",
+                    },
+                    "email": {
+                        "type": "text",
+                        "fields": {"keyword": {"type": "keyword"}},
+                        "analyzer": "html_field_analyzer",
+                    },
+                    "name": {
+                        "type": "text",
+                        "fields": {"keyword": {"type": "keyword"}},
+                        "analyzer": "html_field_analyzer",
+                    },
                     "username": {"type": "text"},
                     "code": {"type": "keyword"},
                     "bio": {"type": "text", "analyzer": "html_field_analyzer"},

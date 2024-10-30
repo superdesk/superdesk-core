@@ -19,17 +19,17 @@ from typing import (
     ClassVar,
     cast,
 )
-from typing_extensions import dataclass_transform, override, Self
+from typing_extensions import dataclass_transform
 from dataclasses import dataclass as python_dataclass, field as dataclass_field
 from copy import deepcopy
 from inspect import get_annotations
 from datetime import datetime
 
-from pydantic import BaseModel, ConfigDict, Field, computed_field, ValidationError
+from pydantic import ConfigDict, Field, computed_field, ValidationError
 from pydantic_core import InitErrorDetails, PydanticCustomError
 from pydantic.dataclasses import dataclass as pydataclass
 
-from superdesk.core.types import SortListParam, ProjectedFieldArg
+from superdesk.core.types import SortListParam, ProjectedFieldArg, BaseModel
 from superdesk.core.utils import generate_guid, GUID_NEWSML
 from .fields import ObjectId
 
@@ -81,72 +81,11 @@ class ResourceModel(BaseModel):
         await _run_async_validators_from_model_class(self, self)
 
     @classmethod
-    def get_field_names(cls) -> list[str]:
-        return [info.alias or field for field, info in cls.model_fields.items()]
-
-    @classmethod
     def uses_objectid_for_id(cls) -> bool:
         try:
             return cls.model_fields["id"].annotation == ObjectId
         except KeyError:
             return False
-
-    @override
-    @classmethod
-    def model_validate(
-        cls,
-        obj: dict[str, Any],
-        *,
-        strict: bool | None = None,
-        from_attributes: bool | None = None,
-        context: dict[str, Any] | None = None,
-        include_unknown: bool = False,
-    ) -> Self:
-        """Construct a model instance from the provided dictionary, and validate its values
-
-        :param obj: Dictionary of values used to construct the model instance
-        :param strict: Whether to enforce types strictly
-        :param from_attributes: Whether to extract data from object attributes
-        :param context: Additional context to pass to the validator
-        :param include_unknown: Whether to include fields not defined in the ResourceModel
-        :raises Pydantic.ValidationError: If validation fails
-        :rtype: ResourceModel
-        :returns: The validated model instance
-        """
-
-        if not include_unknown:
-            data = {field: value for field, value in obj.items() if field in cls.get_field_names()}
-        else:
-            data = obj.copy()
-            data.pop("_type", None)
-
-        instance = super().model_validate(
-            data,
-            strict=strict,
-            from_attributes=from_attributes,
-            context=context,
-        )
-
-        return instance
-
-    @classmethod
-    def from_dict(
-        cls,
-        values: dict[str, Any],
-        context: dict[str, Any] | None = None,
-        include_unknown: bool = False,
-    ) -> Self:
-        """Construct a model instance from the provided dictionary, and validate its values
-
-        :param values: Dictionary of values used to construct the model instance
-        :param context: Additional context to pass to the validator
-        :param include_unknown: Whether to include fields not defined in the ResourceModel
-        :raises Pydantic.ValidationError: If validation fails
-        :rtype: ResourceModel
-        :returns: The validated model instance
-        """
-
-        return cls.model_validate(values, context=context, include_unknown=include_unknown)
 
     def to_dict(self, **kwargs) -> dict[str, Any]:
         """
@@ -157,29 +96,12 @@ class ResourceModel(BaseModel):
         :returns: A dictionary representation of the model instance with field aliases.
                 Only fields that are set (non-default) will be included.
         """
-        default_params: dict[str, Any] = {"by_alias": True, "exclude_unset": True}
-        default_params.update(kwargs)
-        model_dict = self.model_dump(**default_params)
-
+        model_dict = super().to_dict(**kwargs)
         if not model_dict.get("_id"):
             # Make sure to include `id`, in case a default one was provided
             # as exclude_unset will not include it when serialising
             model_dict["_id"] = self.id
-
         return model_dict
-
-    def to_json(self, **kwargs) -> str:
-        """
-        Convert the model instance to a JSON serializable dictionary.
-
-        :param kwargs: Optional keyword arguments to override the default parameters of model_dump_json.
-        :rtype: str
-        :return: A JSON-compatible dictionary representation of the model instance with field aliases.
-                Only fields that are set (non-default) will be included.
-        """
-        default_params: dict[str, Any] = {"by_alias": True, "exclude_unset": True}
-        default_params.update(kwargs)
-        return self.model_dump_json(**default_params)
 
 
 async def _run_async_validators_from_model_class(

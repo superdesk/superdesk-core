@@ -188,7 +188,9 @@ class ResourceRestEndpoints(RestEndpoints):
                 raise SuperdeskApiError.badRequestError("Parent resource ID not provided in URL")
             elif service.id_uses_objectid():
                 item_id = ObjectId(item_id)
-            item = await service.find_one_raw(use_mongo=True, version=None, **{parent_link.parent_id_field: item_id})
+
+            # MyPy complains about this next call, but the args are correct
+            item = await service.find_one_raw(use_mongo=True, version=None, **{parent_link.parent_id_field: item_id})  # type: ignore[call-overload]
             if not item:
                 raise SuperdeskApiError.notFoundError(
                     f"Parent resource {parent_link.resource_name} with ID '{item_id}' not found"
@@ -390,7 +392,7 @@ class ResourceRestEndpoints(RestEndpoints):
             _items=await cursor.to_list_raw(),
             _meta=dict(
                 page=params.page,
-                max_results=params.max_results,
+                max_results=params.max_results if params.max_results is not None else 25,
                 total=count,
             ),
         )
@@ -398,11 +400,6 @@ class ResourceRestEndpoints(RestEndpoints):
         status = 200
         headers = [("X-Total-Count", count)]
         response["_links"] = self._build_resource_hateoas(params, count, request)
-        response["_meta"] = dict(
-            page=params.page,
-            max_results=params.max_results,
-            total=count,
-        )
         if hasattr(cursor, "extra"):
             getattr(cursor, "extra")(response)
 

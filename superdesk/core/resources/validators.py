@@ -199,6 +199,7 @@ def validate_unique_value_async(resource_name: str, field_name: str, error_strin
     return AsyncValidator(validate_unique_value_in_resource)
 
 
+# TODO-ASYNC: Allow ``resource_name`` to be optional, and we can obtain datasource/resource name from context
 def validate_iunique_value_async(
     resource_name: str, field_name: str, error_string: str | None = None
 ) -> AsyncValidator:

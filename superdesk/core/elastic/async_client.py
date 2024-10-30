@@ -8,14 +8,18 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
-from typing import Optional, List, Dict, Any, Tuple, cast
+from typing import Optional, List, Dict, Any, Tuple, cast, overload
+import logging
 
 from elasticsearch import AsyncElasticsearch
 from elasticsearch.exceptions import NotFoundError, TransportError, RequestError
 from elasticsearch.helpers import async_bulk
 
 from superdesk.core.types import SearchRequest
-from .base_client import BaseElasticResourceClient, ElasticCursor, InvalidSearchString
+from .base_client import BaseElasticResourceClient, ElasticCursor, InvalidSearchString, ProjectedFieldSources
+
+
+logger = logging.getLogger(__name__)
 
 
 class ElasticResourceAsyncClient(BaseElasticResourceClient):
@@ -110,7 +114,7 @@ class ElasticResourceAsyncClient(BaseElasticResourceClient):
 
         return await self.elastic.search(**self._get_search_args(query, indexes))
 
-    async def find_by_id(self, item_id: str) -> Optional[Dict[str, Any]]:
+    async def find_by_id(self, item_id: str, projection: ProjectedFieldSources | None = None) -> dict[str, Any] | None:
         """Find a single document in Elasticsearch based on its ID
 
         :param item_id: ID of the document to find.
@@ -118,7 +122,7 @@ class ElasticResourceAsyncClient(BaseElasticResourceClient):
         """
 
         try:
-            response = await self.elastic.get(index=self.config.index, id=item_id)
+            response = await self.elastic.get(index=self.config.index, id=item_id, **(projection or {}))
 
             if "exists" in response:
                 response["found"] = response["exists"]
@@ -145,21 +149,28 @@ class ElasticResourceAsyncClient(BaseElasticResourceClient):
                     return None
         return None
 
-    async def find_one(self, **lookup) -> Optional[Dict[str, Any]]:
+    @overload
+    async def find_one(self, req: SearchRequest) -> dict[str, Any] | None:
+        ...
+
+    @overload
+    async def find_one(self, req: dict) -> dict[str, Any] | None:
+        ...
+
+    async def find_one(self, req: SearchRequest | dict) -> Optional[Dict[str, Any]]:
         """Find a single document in Elasticsearch based on the provided search query
 
         :param lookup: kwargs providing the filters used to search for an item
         :return: The document found or None if no document was found.
         """
 
-        if "_id" in lookup:
-            return await self.find_by_id(lookup["_id"])
+        search_request = req if isinstance(req, SearchRequest) else SearchRequest(where=req)
 
-        filters = [{"term": {key: val}} for key, val in lookup.items()]
-        query = {"query": {"bool": {"must": filters}}}
+        if isinstance(search_request.where, dict) and set(search_request.where.keys()) == {"_id"}:
+            return await self.find_by_id(search_request.where["_id"], self._get_projected_fields(search_request) or {})
 
         try:
-            response = await self.elastic.search(index=self.config.index, body=query, size=1)
+            response = await self.elastic.search(**self._get_find_one_args(search_request))
 
             docs = self._parse_hits(response)
             return docs.first()
@@ -188,13 +199,24 @@ class ElasticResourceAsyncClient(BaseElasticResourceClient):
         :return: A tuple containing an ElasticCursor instance and the number of documents found
         """
 
+        args = self._get_find_args(req, sub_resource_lookup)
+
         try:
-            response = await self.elastic.search(**self._get_find_args(req, sub_resource_lookup))
+            response = await self.elastic.search(**args)
         except RequestError as e:
-            if e.status_code == 400 and "No mapping found for" in e.error:
-                response = {}
-            elif e.status_code == 400 and "SearchParseException" in e.error:
-                raise InvalidSearchString
+            if e.status_code == 400:
+                if "No mapping found for" in e.error:
+                    response = {}
+                elif (
+                    "SearchParseException" in e.error
+                    or "x_content_parse_exception" in e.error
+                    or "parsing_exception" in e.error
+                ):
+                    query = args.get("body")
+                    logger.warning(f"Invalid search string: {query}")
+                    raise InvalidSearchString
+                else:
+                    raise
             else:
                 raise
 

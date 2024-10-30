@@ -9,10 +9,7 @@
 # at https://www.sourcefabric.org/superdesk/license
 
 from typing import (
-    Dict,
     Any,
-    Optional,
-    List,
     Literal,
     Sequence,
     Union,
@@ -24,102 +21,13 @@ from typing import (
     NoReturn,
 )
 from typing_extensions import TypedDict
-from dataclasses import dataclass
 
-from pydantic import BaseModel, ConfigDict, NonNegativeInt, field_validator
+from pydantic import BaseModel
+from pydantic.dataclasses import dataclass
 
-DefaultNoValue = object()
-
+from .common import DefaultNoValue
 
 HTTP_METHOD = Literal["GET", "POST", "PATCH", "PUT", "DELETE", "HEAD", "OPTIONS"]
-
-
-#: The data type for projections, either a list of field names, or a dictionary containing
-#: the field and enable/disable state
-ProjectedFieldArg = (
-    list[str] | dict[str, Literal[0]] | dict[str, Literal[1]] | dict[str, Literal[True]] | dict[str, Literal[False]]
-)
-
-#: Type used to provide list of sort params to be used
-SortListParam = list[tuple[str, Literal[1, -1]]]
-
-#: Type used for sort param in service requests
-#: can be a string, which will convert to an :attr:`SortListParam` type
-SortParam = str | SortListParam
-
-#: Type used for version param in service requests
-#: Can be either ``"all"`` or an int ``>= 0``
-VersionParam = Literal["all"] | NonNegativeInt
-
-
-class SearchArgs(TypedDict, total=False):
-    """Dictionary containing Elasticsearch search arguments
-
-    This is for use with the `.find` methods in elastic clients
-    """
-
-    #: A JSON string containing an elasticsearch query
-    source: str
-
-    #: A query string
-    q: str
-
-    #: Default field, for use with the query string
-    df: str
-
-    #: Default operator, for use with the query string (defaults to "AND")
-    default_operator: str
-
-    #: A JSON string containing bool query filters, to be applied to the elastic query
-    filter: str
-
-    #: A list of dictionaries containing bool query filters, to be applied to the elastic query
-    filters: List[Dict[str, Any]]
-
-    #: A JSON string containing the field projections to filter out the returned fields
-    projections: str
-
-    version: VersionParam | None
-
-
-class SearchRequest(BaseModel):
-    """Dataclass containing Elasticsearch request arguments"""
-
-    model_config = ConfigDict(extra="allow")
-
-    #: Argument for the search filters
-    args: Optional[SearchArgs] = None
-
-    #: Sorting to be used
-    sort: SortParam | None = None
-
-    #: Maximum number of documents to be returned
-    max_results: int = 25
-
-    #: The page number to be returned
-    page: int = 1
-
-    #: A JSON string contianing an Elasticsearch where query
-    where: str | dict | None = None
-
-    #: If `True`, will include aggregations with the result
-    aggregations: bool = False
-
-    #: If `True`, will include highlights with the result
-    highlight: bool = False
-
-    #: The field projections to be applied
-    projection: Optional[ProjectedFieldArg] = None
-
-    @field_validator("projection", mode="before")
-    def parse_projection(cls, value: ProjectedFieldArg | str | None) -> ProjectedFieldArg | None:
-        from superdesk.core import json
-
-        if not value:
-            return None
-        elif isinstance(value, str):
-            return json.loads(value)
-        return value
 
 
 @dataclass
@@ -274,11 +182,11 @@ class Request(Protocol):
         """Returns the URL of the current request"""
         ...
 
-    def get_header(self, key: str) -> Optional[str]:
+    def get_header(self, key: str) -> str | None:
         """Get an HTTP header from the current request"""
         ...
 
-    async def get_json(self) -> Union[Any, None]:
+    async def get_json(self) -> Any | None:
         """Get the body of the current request in JSON format"""
         ...
 
@@ -286,7 +194,7 @@ class Request(Protocol):
         """Get the body of the current request in form format"""
         ...
 
-    async def get_data(self) -> Union[bytes, str]:
+    async def get_data(self) -> bytes | str:
         """Get the body of the current request in raw bytes format"""
         ...
 
@@ -300,6 +208,9 @@ class Request(Protocol):
         ...
 
     def redirect(self, location: str, code: int = 302) -> Any:
+        ...
+
+    def is_json_request(self) -> bool:
         ...
 
 
@@ -317,7 +228,7 @@ class Endpoint:
     name: str
 
     #: HTTP Methods allowed for this endpoint
-    methods: List[HTTP_METHOD]
+    methods: list[HTTP_METHOD]
 
     #: The callback function used to process the request
     func: EndpointFunction
@@ -360,10 +271,10 @@ class EndpointGroup(Endpoint):
     import_name: str
 
     #: Optional url prefix to be added to all routes of this group
-    url_prefix: Optional[str]
+    url_prefix: str | None
 
     #: List of endpoints registered with this group
-    endpoints: List[Endpoint]
+    endpoints: list[Endpoint]
 
     def endpoint(
         self,
@@ -372,101 +283,6 @@ class EndpointGroup(Endpoint):
         methods: list[HTTP_METHOD] | None = None,
         auth: AuthConfig = None,
     ):
-        ...
-
-
-class NotificationClientProtocol(Protocol):
-    open: bool
-    messages: Sequence[str]
-
-    def close(self) -> None:
-        ...
-
-    def send(self, message: str) -> None:
-        ...
-
-    def reset(self) -> None:
-        ...
-
-
-class WSGIApp(Protocol):
-    """Protocol for defining functionality from a WSGI application (such as Eve/Flask)
-
-    A class instance that adheres to this protocol is passed into the SuperdeskAsyncApp constructor.
-    This way the SuperdeskAsyncApp does not need to know the underlying WSGI application, just that
-    it provides certain functionality.
-    """
-
-    #: Config for the application
-    config: dict[str, Any]
-
-    #: Config for the front-end application
-    client_config: dict[str, Any]
-
-    testing: bool = False
-
-    #: Interface to upload/download/query media
-    media: Any
-
-    mail: Any
-
-    data: Any
-
-    storage: Any
-
-    auth: Any
-
-    subjects: Any
-
-    notification_client: NotificationClientProtocol
-
-    locators: Any
-
-    celery: Any
-
-    redis: Any
-
-    jinja_loader: Any
-
-    jinja_env: Any
-
-    extensions: Dict[str, Any]
-
-    def register_endpoint(self, endpoint: Endpoint | EndpointGroup):
-        ...
-
-    def register_resource(self, name: str, settings: dict[str, Any]):
-        ...
-
-    def upload_url(self, media_id: str) -> str:
-        ...
-
-    def download_url(self, media_id: str) -> str:
-        ...
-
-    # TODO: Provide proper type here, context manager
-    def app_context(self):
-        ...
-
-    def get_current_user_dict(self) -> dict[str, Any] | None:
-        ...
-
-    def response_class(self, *args, **kwargs) -> Any:
-        ...
-
-    def validator(self, *args, **kwargs) -> Any:
-        ...
-
-    def init_indexes(self, ignore_duplicate_keys: bool = False) -> None:
-        ...
-
-    def as_any(self) -> Any:
-        ...
-
-    def get_current_request(self) -> Request | None:
-        ...
-
-    def get_endpoint_for_current_request(self) -> Endpoint | None:
         ...
 
 
