@@ -52,8 +52,7 @@ class HybridAppContextTask(Task):
             If the event loop is running, returns an asyncio.Task that represents the execution of the coroutine.
             Otherwise it runs the tasks and returns the result of the task.
         """
-
-        loop = asyncio.get_event_loop()
+        is_always_eager = self._is_always_eager()
 
         # We need a wrapper to handle exceptions inside the async function because asyncio
         # does not propagate them in the same way as synchronous exceptions. This ensures that
@@ -67,10 +66,36 @@ class HybridAppContextTask(Task):
                 self.handle_exception(e)
                 return None
 
-        if not loop.is_running():
-            return loop.run_until_complete(wrapper())
+        if is_always_eager:
+            return asyncio.create_task(wrapper())
+        else:
+            background_tasks = set()
+            loop = asyncio.get_event_loop()
 
-        return asyncio.create_task(wrapper())
+            # the loop might not be running even if `CELERY_TASK_ALWAYS_EAGER` is False
+            if not loop.is_running():
+                return loop.run_until_complete(wrapper())
+
+            # **Important** from asyncio documentation
+            # https://docs.python.org/3/library/asyncio-task.html#asyncio.create_task
+            # Save a reference to the result of this function, to avoid a task disappearing mid-execution.
+            # The event loop only keeps weak references to tasks. A task that isn’t referenced elsewhere may get
+            # garbage collected at any time, even before it’s done
+            task = asyncio.create_task(wrapper())
+            background_tasks.add(task)
+            task.add_done_callback(background_tasks.discard)
+            return task
+
+    async def apply_async(self, args: Tuple = (), kwargs: Dict = {}, **other_kwargs) -> Any:
+        """
+        Schedules the task asynchronously. Awaits the result if `CELERY_TASK_ALWAYS_EAGER` is True.
+        """
+        # directly run and await the task if eager
+        if self._is_always_eager():
+            async_result = super().apply_async(args=args, kwargs=kwargs, **other_kwargs)
+            return await async_result.get()
+
+        return super().apply_async(args=args, kwargs=kwargs, **other_kwargs)
 
     def handle_exception(self, exc: Exception) -> None:
         """
@@ -85,3 +110,7 @@ class HybridAppContextTask(Task):
         # TODO-ASYNC: Support async with ``on_failure`` method
         # async with self.get_current_app().app_context():
         self.handle_exception(exc)
+
+    def _is_always_eager(self):
+        app = self.get_current_app()
+        return app.config.get("CELERY_TASK_ALWAYS_EAGER", False)
