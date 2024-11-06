@@ -30,6 +30,10 @@ def _get_field_type_from_json_schema(
             return type_schema["elastic_mapping"]
 
         properties: Dict[str, Any] = {}
+
+        if not type_schema.get("properties"):
+            if "enum" in type_schema:
+                return {"type": "keyword"}
         for type_field, type_props in type_schema["properties"].items():
             type_field_type = _get_field_type_from_json_schema(schema, type_props)
             if type_field_type is not None:

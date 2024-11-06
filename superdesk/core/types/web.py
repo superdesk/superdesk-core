@@ -310,3 +310,6 @@ class RestGetResponse(TypedDict, total=False):
 
     #: Response metadata
     _meta: RestResponseMeta
+
+    #: Elasticsearch aggregations result
+    _aggregations: dict[str, Any]

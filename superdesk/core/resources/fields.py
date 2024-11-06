@@ -171,6 +171,10 @@ def keyword_mapping() -> WithJsonSchema:
     return Field(json_schema_extra={"elastic_mapping": {"type": "keyword"}})
 
 
+def dynamic_mapping() -> WithJsonSchema:
+    return Field(json_schema_extra={"elastic_mapping": {"type": "object", "dynamic": True}})
+
+
 def mapping_disabled(data_type: str) -> WithJsonSchema:
     return Field(json_schema_extra={"elastic_mapping": {"type": data_type, "enabled": False}})
 

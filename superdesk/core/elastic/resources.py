@@ -18,6 +18,8 @@ from bson.dbref import DBRef
 from elasticsearch import AsyncElasticsearch, Elasticsearch, JSONSerializer, TransportError
 from elasticsearch.exceptions import NotFoundError, RequestError
 
+from superdesk.core.errors import ElasticNotConfiguredForResource
+
 from .mapping import get_elastic_mapping_from_model
 from .common import ElasticResourceConfig, ElasticClientConfig, generate_index_name
 from .sync_client import ElasticResourceClient
@@ -131,10 +133,14 @@ class ElasticResources:
         :raises KeyError: If the resource is not registered for use with Elasticsearch
         """
 
-        resource_client = self._resource_async_clients[resource_name]
+        try:
+            resource_client = self._resource_async_clients[resource_name]
+        except KeyError:
+            raise ElasticNotConfiguredForResource(resource_name)
+
         config = self.app.resources.get_config(resource_name)
         if config.elastic is None:
-            raise KeyError(f"Elasticsearch not enabled on resource '{resource_name}'")
+            raise ElasticNotConfiguredForResource(resource_name)
         config_prefix = config.elastic.prefix
 
         if not self._elastic_async_connections.get(config_prefix):
