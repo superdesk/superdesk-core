@@ -9,7 +9,6 @@
 # at https://www.sourcefabric.org/superdesk/license
 
 from bson import ObjectId
-from nose.tools import assert_raises
 
 from apps.publish import init_app
 from superdesk.errors import PublishQueueError
@@ -125,7 +124,7 @@ class PublishServiceTests(TestCase):
         publish_service = PublishService()
         publish_service._transmit = mock_transmit
 
-        with assert_raises(PublishQueueError):
+        with self.assertRaises(PublishQueueError):
             publish_service.transmit(self.queue_items[0])
 
         subscriber = self.app.data.find_one("subscribers", None)

@@ -107,7 +107,12 @@ class BaseService:
         self.backend.delete_from_mongo(self.datasource, lookup)
 
     def delete_docs(self, docs):
-        return self.backend.delete_docs(self.datasource, docs)
+        for doc in docs:
+            self.on_delete(doc)
+        res = self.backend.delete_docs(self.datasource, docs)
+        for doc in docs:
+            self.on_deleted(doc)
+        return res
 
     def find_one(self, req, **lookup):
         res = self.backend.find_one(self.datasource, req=req, **lookup)
@@ -221,12 +226,9 @@ class BaseService:
             docs = []
         else:
             docs = list(doc for doc in self.get_from_mongo(None, lookup).sort("_id", pymongo.ASCENDING))
-        for doc in docs:
-            self.on_delete(doc)
-        res = self.delete(lookup)
-        for doc in docs:
-            self.on_deleted(doc)
-        return res
+        if not docs:
+            return self.delete(lookup)
+        return self.delete_docs(docs)
 
     def is_authorized(self, **kwargs):
         """Subclass should override if the resource handled by the service has intrinsic privileges.

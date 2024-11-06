@@ -9,9 +9,13 @@
 # at https://www.sourcefabric.org/superdesk/license
 
 import os
+import flask
 import unittest
 
 from datetime import timedelta
+
+from superdesk.tests import AppTestCase
+from superdesk.io.feeding_services import OLD_CONTENT_MINUTES
 from superdesk.utc import utcnow
 from superdesk.etree import etree
 from superdesk.text_utils import get_word_count, get_char_count
@@ -31,6 +35,8 @@ def get_etree(filename):
 
 
 class UtilsTest(AsyncTestCase):
+    app_config = {"OLD_CONTENT_MINUTES": 10}
+
     def test_get_word_count(self):
         self.assertEqual(2, get_word_count("plain text"), "plain text")
         self.assertEqual(2, get_word_count("<p> html text </p>"), "paragraph")

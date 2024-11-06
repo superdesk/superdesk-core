@@ -25,6 +25,7 @@ class TransmitItemTestCase(TestCase):
 
     async def asyncSetUp(self):
         await super().asyncSetUp()
+        await super().resetDatabase()
         self.func_under_test = transmit_item
 
     @mock.patch("superdesk.publish.publish_content.get_resource_service")

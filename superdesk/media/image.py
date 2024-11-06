@@ -14,6 +14,7 @@ import io
 import logging
 
 from typing import BinaryIO, Dict, List, Literal, Mapping, TypedDict, Union
+
 from superdesk.text_utils import decode
 from PIL import Image, ExifTags
 from PIL import IptcImagePlugin
@@ -248,24 +249,31 @@ def write_metadata(input: bytes, metadata: PhotoMetadata) -> bytes:
     @param file_stream: stream
     @param metadata: dict
     """
+    from pyexiv2 import convert_xmp_to_iptc
+
     xmp = {
-        "Xmp.dc.description": metadata.get("Description", ""),
-        "Xmp.photoshop.CaptionWriter": metadata.get("DescriptionWriter", ""),
-        "Xmp.photoshop.Headline": metadata.get("Headline", ""),
-        "Xmp.photoshop.Instructions": metadata.get("Instructions", ""),
-        "Xmp.photoshop.TransmissionReference": metadata.get("JobId", ""),
-        "Xmp.dc.title": metadata.get("Title", ""),
-        "Xmp.dc.creator": metadata.get("Creator", []),
-        "Xmp.photoshop.AuthorsPosition": metadata.get("CreatorsJobtitle", ""),
-        "Xmp.dc.rights": metadata.get("CopyrightNotice", ""),
-        "Xmp.photoshop.City": metadata.get("City", ""),
-        "Xmp.photoshop.Country": metadata.get("Country", ""),
-        "Xmp.iptc.CountryCode": metadata.get("CountryCode", ""),
-        "Xmp.photoshop.Credit": metadata.get("CreditLine", ""),
-        "Xmp.photoshop.State": metadata.get("ProvinceState", ""),
+        "Xmp.dc.description": metadata.get("Description"),
+        "Xmp.photoshop.CaptionWriter": metadata.get("DescriptionWriter"),
+        "Xmp.photoshop.Headline": metadata.get("Headline"),
+        "Xmp.photoshop.Instructions": metadata.get("Instructions"),
+        "Xmp.photoshop.TransmissionReference": metadata.get("JobId"),
+        "Xmp.dc.title": metadata.get("Title"),
+        "Xmp.dc.creator": metadata.get("Creator"),
+        "Xmp.photoshop.AuthorsPosition": metadata.get("CreatorsJobtitle"),
+        "Xmp.dc.rights": metadata.get("CopyrightNotice"),
+        "Xmp.photoshop.City": metadata.get("City"),
+        "Xmp.photoshop.Country": metadata.get("Country"),
+        "Xmp.iptc.CountryCode": metadata.get("CountryCode"),
+        "Xmp.photoshop.Credit": metadata.get("CreditLine"),
+        "Xmp.photoshop.State": metadata.get("ProvinceState"),
     }
+
+    xmp = {k: v for k, v in xmp.items() if v}
+    iptc = convert_xmp_to_iptc(xmp)
+
     with pyexiv2.ImageData(input) as img:
         img.modify_xmp(xmp)
+        img.modify_iptc(iptc)
         return img.get_bytes()
 
 

@@ -23,7 +23,7 @@ class WordsTestCase(TestCase):
             self.app.data.insert("dictionaries", self.dictionaries)
 
     def test_words_parsing(self):
-        self.assertEquals(["abc"], words("abc"))
+        self.assertEqual(["abc"], words("abc"))
         self.assertEqual(["abc bce"], words("abc bce"))
         self.assertEqual(["abc bce", "wer tyu"], words("abc bce\nwer tyu"))
         self.assertEqual(["you'd"], words("you'd"))

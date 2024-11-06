@@ -47,11 +47,11 @@ class SearchServiceTestCase(TestCase):
 
     async def test_query_post_processing(self):
         docs = self.app.data.find("search", None, None)[0]
-        self.assertEquals(4, docs.count())
+        self.assertEqual(4, docs.count())
 
         ingest_docs = [doc for doc in docs if doc["_type"] == "ingest"]
-        self.assertEquals("ingest", ingest_docs[0]["_resource_listener"])
-        self.assertEquals(1, ingest_docs[0]["_ingest_listener"])
+        self.assertEqual("ingest", ingest_docs[0]["_resource_listener"])
+        self.assertEqual(1, ingest_docs[0]["_ingest_listener"])
 
         archive_docs = [doc for doc in docs if doc["_type"] == "archive"]
         self.assertNotIn("_ingest_listener", archive_docs[0])
@@ -60,17 +60,17 @@ class SearchServiceTestCase(TestCase):
         req = ParsedRequest()
         req.args = {"repo": "ingest"}
         docs = self.app.data.find("search", req, None)[0]
-        self.assertEquals(1, docs.count())
-        self.assertEquals("ingest", docs[0]["_type"])
+        self.assertEqual(1, docs.count())
+        self.assertEqual("ingest", docs[0]["_type"])
 
     async def test_it_filters_out_private_content(self):
         self.app.data.insert("archive", [{"task": {"desk": None}}, {"task": {}}])
         cursor = self.app.data.find("search", None, None)[0]
-        self.assertEquals(4, cursor.count())
+        self.assertEqual(4, cursor.count())
 
     async def test_it_includes_published_content(self):
         cursor = self.app.data.find("search", None, None)[0]
-        self.assertEquals(4, cursor.count())
+        self.assertEqual(4, cursor.count())
 
     async def test_it_excludes_published_content(self):
         req = ParsedRequest()

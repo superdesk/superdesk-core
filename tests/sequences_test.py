@@ -11,7 +11,6 @@
 
 from superdesk import get_resource_service
 from superdesk.tests import TestCase
-from nose.tools import assert_raises
 
 
 class SequencesTestCase(TestCase):
@@ -22,7 +21,7 @@ class SequencesTestCase(TestCase):
         self.max_seq_number = 10
 
     def test_empty_sequence_name_fails(self):
-        with assert_raises(KeyError):
+        with self.assertRaises(KeyError):
             self.service.get_next_sequence_number(None)
             self.service.get_next_sequence_number("")
 

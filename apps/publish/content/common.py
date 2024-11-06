@@ -728,7 +728,14 @@ class BasePublishService(BaseService):
 
         for key in DEFAULT_SCHEMA.keys():
             if doc.get(key):
-                updates[key] = doc[key]
+                if (
+                    doc.get("_current_version")
+                    and updates.get("_current_version")
+                    and doc["_current_version"] <= updates["_current_version"]
+                ):  # media item was not changed outside, only populate missing data
+                    updates.setdefault(key, doc[key])
+                else:  # media item could be updated outside, so update all fields
+                    updates[key] = doc[key]
 
     def _refresh_associated_items(self, original, skip_related=False):
         """Refreshes associated items with the latest version. Any further updates made to basic metadata done after

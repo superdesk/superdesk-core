@@ -60,7 +60,7 @@ class RemoveExpiredItemsTest(TestCase):
         self.now = utcnow()
 
     def _get_items(self):
-        return list(get_resource_service("items").get_from_mongo(req=None, lookup=None))
+        return list(get_resource_service("capi_items_internal").get(req=None, lookup=None))
 
     @markers.investigate_cause_of_error
     async def test_remove_expired_items(self):

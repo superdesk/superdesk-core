@@ -23,6 +23,7 @@ from superdesk.publish.transmitters.http_push import HTTPPushService
 from unittest import mock
 from unittest.mock import Mock
 from superdesk.errors import PublishHTTPPushServerError, PublishHTTPPushClientError
+from superdesk.tests import TestCase
 
 
 def get_fixture(fixture):
@@ -55,8 +56,9 @@ class TestMedia(io.BytesIO):
     mimetype = "text/plain"
 
 
-class HTTPPushServiceTestCase(unittest.TestCase):
-    def setUp(self):
+class HTTPPushServiceTestCase(TestCase):
+    async def asyncSetUp(self):
+        await super().asyncSetUp()
         if "HTTP_PUSH_RESOURCE_URL" not in os.environ:
             self.resource_url = ""
         else:
@@ -107,7 +109,6 @@ class HTTPPushServiceTestCase(unittest.TestCase):
         }
 
         self.destination = self.item.get("destination", {})
-        self.app = Flask(__name__)
 
     def is_item_published(self, item_id):
         """Return True if the item was published, False otherwise.
@@ -206,7 +207,6 @@ class HTTPPushServiceTestCase(unittest.TestCase):
     def test_push_associated_assets(self, get_mock, send_mock, get_config_mock, get_app_mock):
         app_mock = get_app_mock()
         app_mock.media.get.return_value = TestMedia(b"bin")
-
         dest = {"config": {"assets_url": "http://example.com"}}
         item = get_fixture("package")
 
