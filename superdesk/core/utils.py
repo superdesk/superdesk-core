@@ -57,3 +57,17 @@ def generate_guid(**hints) -> str:
         "timestamp": t.isoformat(),
         "identifier": hints["id"],
     }
+
+
+def str_to_date(value: str | None) -> datetime | None:
+    """Convert a string to a datetime instance"""
+
+    date_format: str = get_app_config("DATE_FORMAT") or "%Y-%m-%dT%H:%M:%S+0000"
+    return datetime.strptime(value, date_format) if value else None
+
+
+def date_to_str(value: datetime | None) -> str | None:
+    """Convert a datetime instance to a string"""
+
+    date_format: str = get_app_config("DATE_FORMAT") or "%Y-%m-%dT%H:%M:%S+0000"
+    return datetime.strftime(value, date_format) if value else None

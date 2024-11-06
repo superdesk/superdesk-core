@@ -31,6 +31,7 @@ ContentAssociation = Annotated[
 class CVItem:
     qcode: fields.Keyword
     name: fields.Keyword
+    scheme: fields.Keyword | None = None
     schema: fields.Keyword | None = None
 
 
@@ -110,6 +111,7 @@ class ContentType(str, Enum):
 
 class ContentAPIItem(ResourceModel, ModelWithVersions):
     id: Annotated[str, Field(alias="_id")]
+    guid: str | None = None
     associations: ContentAssociation | None = None
     anpa_category: list[CVItem] = Field(default_factory=list)
     body_html: fields.HTML | None = None

@@ -35,6 +35,7 @@ from bson.json_util import dumps, DEFAULT_JSON_OPTIONS
 from motor.motor_asyncio import AsyncIOMotorCursor
 
 from superdesk.core.types import SearchRequest, SortListParam, SortParam, ProjectedFieldArg
+from superdesk.core.errors import ElasticNotConfiguredForResource
 from superdesk.flask import g
 from superdesk.utc import utcnow
 from superdesk.cache import cache
@@ -163,7 +164,7 @@ class AsyncResourceService(Generic[ResourceModelType]):
         try:
             if not search_request.use_mongo:
                 item = await self.elastic.find_one(search_request)
-        except KeyError:
+        except ElasticNotConfiguredForResource:
             pass
 
         if search_request.use_mongo or item is None:
@@ -242,13 +243,21 @@ class AsyncResourceService(Generic[ResourceModelType]):
         item_id = ObjectId(item_id) if self.id_uses_objectid() else item_id
         try:
             item = await self.elastic.find_by_id(item_id)
-        except KeyError:
+        except ElasticNotConfiguredForResource:
             item = await self.mongo_async.find_one({"_id": item_id})
 
         if item is None:
             return None
 
         return item if version is None else await self.get_item_version(item, version)
+
+    async def find_by_ids(self, ids: list[str | ObjectId]) -> list[ResourceModelType]:
+        cursor = await self.search({ID_FIELD: {"$in": ids}}, use_mongo=True)
+        return await cursor.to_list()
+
+    async def find_by_ids_raw(self, ids: list[str | ObjectId]) -> list[dict[str, Any]]:
+        cursor = await self.search({ID_FIELD: {"$in": ids}}, use_mongo=True)
+        return await cursor.to_list_raw()
 
     async def search(self, lookup: Dict[str, Any], use_mongo=False) -> ResourceCursorAsync[ResourceModelType]:
         """Search the resource using the provided ``lookup``
@@ -264,7 +273,7 @@ class AsyncResourceService(Generic[ResourceModelType]):
             if not use_mongo:
                 response = await self.elastic.search(lookup)
                 return ElasticsearchResourceCursorAsync(cast(Type[ResourceModelType], self.config.data_class), response)
-        except KeyError:
+        except ElasticNotConfiguredForResource:
             pass
 
         response = self.mongo_async.find(lookup)
@@ -339,12 +348,12 @@ class AsyncResourceService(Generic[ResourceModelType]):
         :raises Pydantic.ValidationError: If any of the docs provided are not valid
         """
 
-        docs = self._convert_dicts_to_model(_docs)
+        docs = await self._convert_dicts_to_model(_docs)
         await self.on_create(docs)
 
         ids: List[str] = []
 
-        for doc in docs:
+        for index, doc in enumerate(docs):
             await self.validate_create(doc)
             versioned_model = get_versioned_model(doc)
             if versioned_model is not None:
@@ -355,9 +364,20 @@ class AsyncResourceService(Generic[ResourceModelType]):
             doc.etag = doc_dict["_etag"] = self.generate_etag(doc_dict, self.config.etag_ignore_fields)
             response = await self.mongo_async.insert_one(doc_dict)
             ids.append(response.inserted_id)
+
+            # Update the provided docs, so the `_id` and `_etag` get applied to the supplied dicts
+            doc.id = response.inserted_id
+            docs_entry = _docs[index]
+            if isinstance(docs_entry, dict):
+                docs_entry.update(
+                    dict(
+                        _id=response.inserted_id,
+                        _etag=doc.etag,
+                    )
+                )
             try:
                 await self.elastic.insert([doc_dict])
-            except KeyError:
+            except ElasticNotConfiguredForResource:
                 pass
 
             if self.config.versioning:
@@ -430,7 +450,7 @@ class AsyncResourceService(Generic[ResourceModelType]):
         response = await self.mongo_async.update_one({"_id": item_id}, {"$set": updates_dict})
         try:
             await self.elastic.update(item_id, updates_dict)
-        except KeyError:
+        except ElasticNotConfiguredForResource:
             pass
 
         if self.config.versioning:
@@ -467,7 +487,7 @@ class AsyncResourceService(Generic[ResourceModelType]):
         await self.mongo_async.delete_one({"_id": doc.id})
         try:
             await self.elastic.remove(doc.id)
-        except KeyError:
+        except ElasticNotConfiguredForResource:
             pass
         await self.on_deleted(doc)
 
@@ -492,7 +512,7 @@ class AsyncResourceService(Generic[ResourceModelType]):
 
             try:
                 await self.elastic.remove(doc.id)
-            except KeyError:
+            except ElasticNotConfiguredForResource:
                 pass
 
             await self.on_deleted(doc)
@@ -612,7 +632,7 @@ class AsyncResourceService(Generic[ResourceModelType]):
                 return ElasticsearchResourceCursorAsync(
                     cast(Type[ResourceModelType], self.config.data_class), cursor.hits
                 )
-        except KeyError:
+        except ElasticNotConfiguredForResource:
             pass
 
         return await self._mongo_find(search_request)
@@ -631,7 +651,7 @@ class AsyncResourceService(Generic[ResourceModelType]):
         try:
             if not use_mongo:
                 return await self.elastic.count(lookup)
-        except KeyError:
+        except ElasticNotConfiguredForResource:
             pass
 
         return await self.mongo_async.count_documents(lookup or {})
@@ -690,7 +710,9 @@ class AsyncResourceService(Generic[ResourceModelType]):
 
         return client_sort
 
-    def _convert_dicts_to_model(self, docs: Sequence[ResourceModelType | dict[str, Any]]) -> List[ResourceModelType]:
+    async def _convert_dicts_to_model(
+        self, docs: Sequence[ResourceModelType | dict[str, Any]]
+    ) -> List[ResourceModelType]:
         return [self.get_model_instance_from_dict(doc) if isinstance(doc, dict) else doc for doc in docs]
 
     def validate_etag(self, original: ResourceModelType, etag: str | None) -> None:
@@ -808,7 +830,7 @@ class AsyncResourceService(Generic[ResourceModelType]):
         await self.mongo_async.update_one({"_id": item_id}, {"$set": updates})
         try:
             await self.elastic.update(item_id, updates)
-        except KeyError:
+        except ElasticNotConfiguredForResource:
             pass
 
 

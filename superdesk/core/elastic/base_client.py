@@ -281,10 +281,10 @@ class BaseElasticResourceClient:
 
         if hit.get("inner_hits"):
             doc["_inner_hits"] = {}
-            for key, value in hit["innter_hits"].items():
-                doc["inner_hits"][key] = []
+            for key, value in hit["inner_hits"].items():
+                doc["_inner_hits"][key] = []
                 for item in value.get("hits", {}).get("hits", []):
-                    doc["_inner_hits"][key].append(item)
+                    doc["_inner_hits"][key].append(item.get("_source", {}))
 
         return doc
 

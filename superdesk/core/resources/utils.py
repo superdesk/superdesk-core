@@ -15,7 +15,7 @@ from superdesk.core.types import SearchRequest, ProjectedFieldArg
 from superdesk.errors import SuperdeskApiError
 
 
-SYSTEM_FIELDS = ["_id", "_type", "_resource", "_etag"]
+SYSTEM_FIELDS = {"_id", "_type", "_resource", "_etag"}
 
 
 def get_projection_from_request(req: SearchRequest) -> tuple[bool, list[str]] | tuple[None, None]:
@@ -38,14 +38,14 @@ def get_projection_from_request(req: SearchRequest) -> tuple[bool, list[str]] | 
     if not projection_data:
         # No projection will be used
         return None, None
-    elif isinstance(projection_data, list):
+    elif isinstance(projection_data, (list, set)):
         # Projection: include these fields only
-        return True, list(set(projection_data + SYSTEM_FIELDS))
+        return True, list(set(projection_data) | SYSTEM_FIELDS)
     elif isinstance(projection_data, dict):
         if next(iter(projection_data.values()), None) in [True, 1]:
             # Projection: include these fields only
             return True, list(
-                set([field for field, value in projection_data.items() if value is True or value == 1] + SYSTEM_FIELDS)
+                set([field for field, value in projection_data.items() if value is True or value == 1]) | SYSTEM_FIELDS
             )
         else:
             # Projection: exclude these fields
