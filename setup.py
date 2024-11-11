@@ -64,7 +64,7 @@ install_requires = [
     "eve @ git+https://github.com/MarkLark86/eve@use-quart",
     "eve-elastic @ git+https://github.com/MarkLark86/eve-elastic@use-quart",
     "quart @ git+https://github.com/MarkLark86/quart@fix-test-client-with-utf8-url",
-    "quart_babel @ git+https://github.com/MarkLark86/quart-babel@fix-get-format",
+    "quart_babel>=1.0.7,<1.1",
     "asgiref>=3.8.1",
     # Patch Quart, Asyncio to work with Flask extensions
     # TODO-ASYNC: Remove this with our own flask patch (as quart-flask-patch also patches asyncio)
