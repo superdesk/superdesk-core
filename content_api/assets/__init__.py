@@ -28,8 +28,10 @@ async def get_media_streamed(media_id):
     if not app.auth.authorized([], "assets", "GET"):
         return app.auth.authenticate()
     try:
-        media_id = media_id.split(".")[0]
         media_file = app.media.get(media_id, "upload")
+        if not media_file:
+            media_id = media_id.split(".")[0]
+            media_file = app.media.get(media_id, "upload")
     except bson.errors.InvalidId:
         media_file = None
     if media_file:
