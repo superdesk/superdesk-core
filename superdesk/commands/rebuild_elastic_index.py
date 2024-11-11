@@ -39,13 +39,15 @@ class RebuildElasticIndex(superdesk.Command):
         async_app = get_current_async_app()
         app = async_app.wsgi
         resources = list(app.data.elastic._get_elastic_resources().keys())
-        if resource_name and resource_name in resources:
+        async_resource_configs = async_app.resources.get_all_configs()
+        async_resources = {config.name for config in async_resource_configs}
+        if resource_name and (resource_name in resources or resource_name in async_resources):
             resources = [resource_name]
         elif resource_name:
             raise ValueError("Resource {} is not configured".format(resource_name))
 
         resources_processed = []
-        for config in async_app.resources.get_all_configs():
+        for config in async_resource_configs:
             if config.elastic is None:
                 continue
             async_app.elastic.reindex(config.name, requests_per_second=requests_per_second)
