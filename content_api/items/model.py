@@ -5,6 +5,7 @@ from enum import Enum, unique
 from pydantic import Field, field_validator
 
 from superdesk.core.resources import ResourceModel, dataclass, fields, validators, ModelWithVersions
+from superdesk.utc import utcnow
 
 
 ContentAssociation = Annotated[
@@ -145,9 +146,9 @@ class ContentAPIItem(ResourceModel, ModelWithVersions):
     uri: Annotated[fields.Keyword | None, validators.validate_iunique_value_async("items", "uri")] = None
     usageterms: str | None = None
     version: str | None = None
-    versioncreated: datetime = Field(default_factory=datetime.now)
-    firstcreated: datetime = Field(default_factory=datetime.now)
-    firstpublished: datetime = Field(default_factory=datetime.now)
+    versioncreated: datetime = Field(default_factory=utcnow)
+    firstcreated: datetime = Field(default_factory=utcnow)
+    firstpublished: datetime = Field(default_factory=utcnow)
     embargoed: datetime | None = None
     evolvedfrom: fields.Keyword | None = None
     nextversion: fields.Keyword | None = None
@@ -175,7 +176,7 @@ class ContentAPIItem(ResourceModel, ModelWithVersions):
     agenda_href: fields.Keyword | None = None
 
     refs: list[ContentReference] = Field(default_factory=list)
-    expiry: datetime = Field(default_factory=datetime.now)
+    expiry: datetime | None = None
 
     @field_validator("version", mode="before")
     def parse_version(cls, value: int | str | None) -> str | None:
