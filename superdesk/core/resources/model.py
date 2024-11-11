@@ -49,6 +49,9 @@ def dataclass(*args, **kwargs):
     """Superdesk Dataclass, that enables same config as `ResourceModel` such as assignment validation"""
 
     config = deepcopy(model_config)
+    # By default, we allow extra values in dataclasses, but they won't be included in to_dict output.
+    # TODO-ASYNC: Fix to_dict to include extra fields not defined in the dataclass
+    config["extra"] = "allow"
     config.update(kwargs.pop("config", {}))
 
     return pydataclass(*args, **kwargs, config=model_config)
