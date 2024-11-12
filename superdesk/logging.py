@@ -46,7 +46,7 @@ def configure_logging(file_path):
 
     try:
         with open(file_path, "r") as f:
-            logging_dict = yaml.load(f)
+            logging_dict = yaml.load(f, Loader=yaml.SafeLoader)
 
         logging.config.dictConfig(logging_dict)
     except Exception:
