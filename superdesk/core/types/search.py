@@ -83,6 +83,7 @@ class ESQuery:
     query: ESBoolQuery = Field(default_factory=ESBoolQuery)
     post_filter: ESBoolQuery = Field(default_factory=ESBoolQuery)
     aggs: dict[str, Any] = Field(default_factory=dict)
+    include_fields: list[str] = Field(default_factory=list)
     exclude_fields: list[str] = Field(default_factory=list)
 
     def generate_query_dict(self, query: dict[str, Any] | None = None) -> dict[str, Any]:
@@ -122,7 +123,10 @@ class ESQuery:
             if self.post_filter.filter:
                 query["post_filter"]["bool"]["filter"] = self.post_filter.filter
 
-        if self.exclude_fields:
+        # these two are mutually exclusive
+        if self.include_fields:
+            query.setdefault("_source", {}).setdefault("includes", []).extend(self.include_fields)
+        elif self.exclude_fields:
             query.setdefault("_source", {}).setdefault("excludes", []).extend(self.exclude_fields)
 
         return query

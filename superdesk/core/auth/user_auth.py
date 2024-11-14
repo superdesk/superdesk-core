@@ -8,6 +8,16 @@ class UserAuthProtocol:
     async def authenticate(self, request: Request) -> Any | None:
         raise SuperdeskApiError.unauthorizedError()
 
+    def get_default_auth_rules(self) -> list[AuthRule]:
+        from .rules import login_required_auth_rule, endpoint_intrinsic_auth_rule
+
+        default_rules: list[AuthRule] = [
+            login_required_auth_rule,
+            endpoint_intrinsic_auth_rule,
+        ]
+
+        return default_rules
+
     async def authorize(self, request: Request) -> Any | None:
         endpoint_rules = request.endpoint.get_auth_rules()
         if endpoint_rules is False:
@@ -17,14 +27,7 @@ class UserAuthProtocol:
         elif isinstance(endpoint_rules, dict):
             endpoint_rules = cast(list[AuthRule], endpoint_rules.get(request.method) or [])
 
-        from .rules import login_required_auth_rule, endpoint_intrinsic_auth_rule
-
-        default_rules: list[AuthRule] = [
-            login_required_auth_rule,
-            endpoint_intrinsic_auth_rule,
-        ]
-
-        for rule in default_rules + (endpoint_rules or []):
+        for rule in self.get_default_auth_rules() + (endpoint_rules or []):
             response = await rule(request)
             if response is not None:
                 return response
