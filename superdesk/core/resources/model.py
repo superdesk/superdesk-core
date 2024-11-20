@@ -19,13 +19,21 @@ from typing import (
     ClassVar,
     cast,
 )
-from typing_extensions import dataclass_transform
+from typing_extensions import dataclass_transform, Self
 from dataclasses import dataclass as python_dataclass, field as dataclass_field
 from copy import deepcopy
 from inspect import get_annotations
 from datetime import datetime
 
-from pydantic import ConfigDict, Field, computed_field, ValidationError
+from pydantic import (
+    ConfigDict,
+    Field,
+    computed_field,
+    ValidationError,
+    model_serializer,
+    SerializerFunctionWrapHandler,
+    RootModel,
+)
 from pydantic_core import InitErrorDetails, PydanticCustomError
 from pydantic.dataclasses import dataclass as pydataclass
 
@@ -34,12 +42,12 @@ from superdesk.core.utils import generate_guid, GUID_NEWSML
 from .fields import ObjectId
 
 
-model_config = ConfigDict(
+default_model_config = ConfigDict(
     arbitrary_types_allowed=True,
     validate_assignment=True,  # Revalidate on field assignment
     populate_by_name=True,
     revalidate_instances="always",
-    extra="forbid",
+    extra="allow",  # Allow any fields not defined in the ResourceModel/dataclass
     protected_namespaces=(),
 )
 
@@ -48,19 +56,48 @@ model_config = ConfigDict(
 def dataclass(*args, **kwargs):
     """Superdesk Dataclass, that enables same config as `ResourceModel` such as assignment validation"""
 
-    config = deepcopy(model_config)
+    config = deepcopy(default_model_config)
     # By default, we allow extra values in dataclasses, but they won't be included in to_dict output.
-    # TODO-ASYNC: Fix to_dict to include extra fields not defined in the dataclass
-    config["extra"] = "allow"
     config.update(kwargs.pop("config", {}))
 
-    return pydataclass(*args, **kwargs, config=model_config)
+    return pydataclass(*args, **kwargs, config=config)
+
+
+class Dataclass:
+    @model_serializer(mode="wrap")
+    def ser_model(self, nxt: SerializerFunctionWrapHandler) -> dict[str, Any]:
+        result = nxt(self)
+
+        # Include extra fields that were not part of the schema for this class
+        for key, value in self.__dict__.items():
+            if key not in result:
+                result[key] = value
+
+        return result
+
+    @classmethod
+    def from_dict(cls, values: dict[str, Any], **kwargs) -> Self:
+        return RootModel.model_validate(values, **kwargs).root
+
+    @classmethod
+    def from_json(cls, data: str | bytes | bytearray, **kwargs) -> Self:
+        return RootModel.model_validate_json(data, **kwargs).root
+
+    def to_dict(self, **kwargs) -> dict[str, Any]:
+        default_params: dict[str, Any] = {"by_alias": True, "exclude_unset": True}
+        default_params.update(kwargs)
+        return RootModel(self).model_dump(**default_params)
+
+    def to_json(self, **kwargs) -> str:
+        default_params: dict[str, Any] = {"by_alias": True, "exclude_unset": True}
+        default_params.update(kwargs)
+        return RootModel(self).model_dump_json(**default_params)
 
 
 class ResourceModel(BaseModel):
     """Base ResourceModel class to be used for all registered resources"""
 
-    model_config = model_config
+    model_config = default_model_config
     model_resource_name: ClassVar[str]  # Automatically set when registered
 
     @computed_field(alias="_type")  # type: ignore[misc]
@@ -105,6 +142,55 @@ class ResourceModel(BaseModel):
             # as exclude_unset will not include it when serialising
             model_dict["_id"] = self.id
         return model_dict
+
+    @classmethod
+    def from_dict(
+        cls,
+        values: dict[str, Any],
+        context: dict[str, Any] | None = None,
+        include_unknown: bool | None = None,
+    ) -> Self:
+        """Construct a model instance from the provided dictionary, and validate its values
+
+        If ``include_unknown`` is not provided it will default to ``True`` if extra fields are allowed, ``False`` otherwise
+
+        :param values: Dictionary of values used to construct the model instance
+        :param context: Additional context to pass to the validator
+        :param include_unknown: Whether to include fields not defined in the ResourceModel
+        :raises Pydantic.ValidationError: If validation fails
+        :rtype: ResourceModel
+        :returns: The validated model instance
+        """
+
+        if include_unknown is None:
+            include_unknown = cls.model_config.get("extra") != "forbid"
+
+        return super().from_dict(values, context, include_unknown)
+
+    @classmethod
+    def get_service(cls) -> "AsyncResourceService[Self]":
+        """Helper function to get the service for this resource, without needing to import the service directly.
+
+        This should help reduce circular imports when all that is required is to use the base resource service,
+        while still providing proper typing.
+
+        Example::
+
+            from bson import ObjectId
+            from newsroom.types import UserResourceModel
+
+            async def get_user_email(user_id: ObjectId) -> str | None:
+                user = await UserResourceModel.get_service().find_by_id(user_id)
+                return user.email if user else None
+
+        :rtype: AsyncResourceService[Self]
+        :returns: Async resource service instance for this resource model
+        """
+
+        from superdesk.core import get_current_async_app
+
+        app = get_current_async_app()
+        return app.resources.get_resource_service(cls.model_resource_name)
 
 
 async def _run_async_validators_from_model_class(

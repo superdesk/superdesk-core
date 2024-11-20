@@ -4,7 +4,7 @@ from enum import Enum
 
 from pydantic import Field
 
-from superdesk.core.resources import ResourceModel, fields, dataclass, validators
+from superdesk.core.resources import ResourceModel, fields, dataclass, validators, default_model_config
 
 
 @dataclass
@@ -31,6 +31,11 @@ class MyCustomString(str, fields.CustomStringField):
 
 
 class User(ResourceModel):
+    model_config = {
+        **default_model_config,
+        "extra": "forbid",
+    }
+
     first_name: fields.TextWithKeyword
     last_name: fields.TextWithKeyword
     email: Annotated[

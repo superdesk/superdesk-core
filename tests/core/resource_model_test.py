@@ -3,7 +3,7 @@ from unittest import TestCase
 from pydantic import ValidationError
 from bson import ObjectId
 
-from superdesk.core.resources import fields, ResourceModel, ResourceModelWithObjectId
+from superdesk.core.resources import fields, ResourceModel, ResourceModelWithObjectId, dataclass, Dataclass
 from superdesk.core.elastic.resources import get_elastic_mapping_from_model
 
 from .modules.users import User
@@ -131,3 +131,34 @@ class ResourceModelTest(TestCase):
                 },
             },
         )
+
+    def test_extra_fields(self):
+        """Test serialising fields not defined in the ResourceModel"""
+
+        @dataclass
+        class Score(Dataclass):
+            name: str
+            score: int
+
+        class Results(ResourceModel):
+            model_resource_name = "Results"
+
+            name: str
+            scores: list[Score]
+
+        score = dict(
+            name="Maths",
+            score=99,
+            notes="Could do better",
+        )
+        data = dict(
+            name="Foo",
+            scores=[score],
+            notes="Could focus more on maths.",
+        )
+
+        results = Results.from_dict(data)
+        self.assertEqual(results.scores[0].to_dict(), score)
+        results_dict = results.to_dict()
+        self.assertEqual(results_dict["notes"], data["notes"])
+        self.assertEqual(results_dict["scores"][0], score)

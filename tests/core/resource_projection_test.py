@@ -2,7 +2,7 @@ from bson import ObjectId
 from pydantic import ValidationError
 
 from superdesk.core import json
-from superdesk.core.resources import ResourceModelWithObjectId, ResourceConfig
+from superdesk.core.resources import ResourceModelWithObjectId, ResourceConfig, default_model_config
 from superdesk.tests import AsyncFlaskTestCase, AsyncTestCase
 
 from .modules.users import UserResourceService
@@ -99,6 +99,11 @@ class ResourceFieldProjectionTestCase(AsyncFlaskTestCase):
 class ResourceModelProjectionTestCase(AsyncTestCase):
     async def test_manual_registration(self):
         class User(ResourceModelWithObjectId):
+            model_config = {
+                **default_model_config,
+                "extra": "forbid",
+            }
+
             email: str
             is_enabled: bool
 

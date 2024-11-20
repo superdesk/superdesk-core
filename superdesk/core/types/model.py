@@ -74,7 +74,7 @@ class BaseModel(PydanticModel):
         cls,
         values: dict[str, Any],
         context: dict[str, Any] | None = None,
-        include_unknown: bool = False,
+        include_unknown: bool | None = None,
     ) -> Self:
         """Construct a model instance from the provided dictionary, and validate its values
 
@@ -86,7 +86,7 @@ class BaseModel(PydanticModel):
         :returns: The validated model instance
         """
 
-        return cls.model_validate(values, context=context, include_unknown=include_unknown)
+        return cls.model_validate(values, context=context, include_unknown=include_unknown or False)
 
     @classmethod
     def from_json(cls, data: str | bytes | bytearray, **kwargs):
