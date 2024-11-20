@@ -5,6 +5,7 @@ import simplejson as json
 from bson import ObjectId
 
 from superdesk.core.types import SearchRequest
+from superdesk.core.resources import AsyncResourceService
 from superdesk.core.elastic.base_client import ElasticCursor
 from superdesk.utc import utcnow
 from superdesk.utils import format_time
@@ -12,7 +13,7 @@ from superdesk.utils import format_time
 from superdesk.tests import AsyncTestCase
 
 
-from .modules.users import UserResourceService
+from .modules.users import UserResourceService, User
 from .fixtures.users import all_users, john_doe, john_doe_dict
 
 
@@ -29,12 +30,12 @@ class ResourceServiceWithoutAppTestCase(AsyncTestCase):
 
 class TestResourceService(AsyncTestCase):
     app_config = {"MODULES": ["tests.core.modules.users"]}
-    service: UserResourceService
+    service: AsyncResourceService[User]
 
     async def asyncSetUp(self):
         await super().asyncSetUp()
         self.app.elastic.init_index("users_async")
-        self.service = UserResourceService()
+        self.service = User.get_service()
 
     @mock.patch("superdesk.core.resources.service.utcnow", return_value=NOW)
     async def test_create(self, mock_utcnow):

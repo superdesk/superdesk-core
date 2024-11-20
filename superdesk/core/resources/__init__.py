@@ -17,6 +17,8 @@ from .model import (
     ModelWithVersions,
     ResourceConfig,
     dataclass,
+    Dataclass,
+    default_model_config,
 )
 from .resource_rest_endpoints import RestEndpointConfig, RestParentLink, get_id_url_type
 from .service import AsyncResourceService, AsyncCacheableService
