@@ -362,7 +362,7 @@ use_snapshot.cache = {}  # type: ignore
 
 
 async def setup(context=None, config=None, app_factory=get_app, reset=False, auto_add_apps: bool = True):
-    if not hasattr(setup, "app") or setup.reset or config:  # type: ignore[attr-defined]
+    if not hasattr(setup, "app") or hasattr(setup, "reset") or config:  # type: ignore[attr-defined]
         if hasattr(setup, "app"):
             # Close all PyMongo Connections (new ones will be created with ``app_factory`` call)
             for key, val in setup.app.extensions["pymongo"].items():
