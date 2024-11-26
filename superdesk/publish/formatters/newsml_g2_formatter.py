@@ -344,7 +344,9 @@ class NewsMLG2Formatter(Formatter):
         :param dict article:
         :param Element content_meta:
         """
-        for category in article.get("anpa_category", []):
+        if not article.get("anpa_category"):
+            return
+        for category in article.get("anpa_category"):
             subject = SubElement(
                 content_meta, "subject", attrib={"type": "cpnat:abstract", "qcode": "cat:" + category["qcode"]}
             )
