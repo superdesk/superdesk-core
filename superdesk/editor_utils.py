@@ -10,14 +10,15 @@
 """This module contains tools to manage content for Superdesk editor"""
 
 import re
-from typing import Dict
 import uuid
 import logging
+import unicodedata
 import lxml.etree as etree
 import lxml.html as lxml_html
 
 import superdesk
 
+from typing import Dict
 from textwrap import dedent
 from collections.abc import MutableSequence
 
@@ -347,6 +348,9 @@ class DraftJSHTMLExporter:
                 block.setdefault("depth", 0)
                 block.setdefault("entityRanges", [])
                 block.setdefault("inlineStyleRanges", [])
+                block.setdefault("text", "")
+                if block.get("text"):
+                    block["text"] = "".join(ch for ch in block["text"] if unicodedata.category(ch) != "Cc")
             html = self.exporter.render(content_state)
         except KeyError as e:
             if e.args == ("text",):
