@@ -52,6 +52,8 @@ class NewsMLG2Formatter(Formatter):
 
     name = "NewsML G2"
     type = "newsmlg2"
+    # Published_seq_num is used if format, so we can't use cache.
+    use_cache = False
 
     _message_nsmap = {
         None: "http://iptc.org/std/nar/2006-10-01/",
@@ -69,7 +71,7 @@ class NewsMLG2Formatter(Formatter):
     def _format_date(self, date):
         return date.strftime("%Y-%m-%dT%H:%M:%S+00:00")
 
-    def format(self, article, subscriber, codes=None):
+    def format(self, article: dict, subscriber: dict, codes: list | None = None) -> list[tuple[int, str] | dict]:
         """Create article in NewsML G2 format
 
         :param dict article:

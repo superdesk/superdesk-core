@@ -55,7 +55,7 @@ class EmailFormatter(Formatter):
             formatted_article["body_html"] = sd_etree.to_string(body_html_elem)
 
     # TODO-ASYNC: Support async formatters in publishing code
-    async def format(self, article, subscriber, codes=None):
+    async def format(self, article: dict, subscriber: dict, codes: list | None = None) -> list[tuple[int, str] | dict]:
         formatted_article = deepcopy(article)
         remove_all_embeds(formatted_article)
         pub_seq_num = superdesk.get_resource_service("subscribers").generate_sequence_number(subscriber)

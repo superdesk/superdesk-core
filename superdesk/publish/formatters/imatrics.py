@@ -22,9 +22,9 @@ class IMatricsFormatter(NINJSFormatter):
             "concepts": self._format_concepts(article),
             "headline": get_text(article["headline"]),
             "preamble": get_text(article["abstract"], lf_on_block=True).strip() if article.get("abstract") else "",
-            "dateline": article["dateline"]["text"]
-            if article.get("dateline") and article["dateline"].get("text")
-            else "",
+            "dateline": (
+                article["dateline"]["text"] if article.get("dateline") and article["dateline"].get("text") else ""
+            ),
             "body": [line.strip() for line in get_text(article["body_html"], lf_on_block=True).split("\n") if line],
         }
 

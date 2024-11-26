@@ -10,8 +10,10 @@
 
 from unittest import mock
 
+from superdesk.resource_fields import ID_FIELD, VERSION
 from superdesk.tests import TestCase
 from content_api.publish.service import PublishService
+from apps.publish.enqueue import enqueue_service
 from apps.publish.enqueue.enqueue_service import EnqueueService
 from apps.packages.package_service import PackageService
 from apps.archive.archive import ArchiveService
@@ -234,3 +236,68 @@ class EnqueueServiceTest(TestCase):
         # Mock.assert_called_once is only available in Python 3.6
         # so we emulate it by counting the number of calls
         assert content_api_publish.call_count == 1
+
+    async def test_queue_transmission_with_cache(self):
+        service = EnqueueService()
+        doc = {
+            ID_FIELD: "test_id",
+            "type": "text",
+            VERSION: 1,
+            "item_id": "test_id",
+            "unique_name": "test_unique_name",
+            "headline": "test_headline",
+            "priority": 1,
+        }
+        subscribers = [
+            {"_id": "sub1", "name": "Subscriber 1", "priority": 1},
+            {"_id": "sub2", "name": "Subscriber 2", "priority": 2},
+        ]
+
+        formatter = mock.Mock()
+        formatter.use_cache = True
+        formatter.format.return_value = [
+            {
+                "published_seq_num": 1,
+                "formatted_item": "formatted_content",
+            }
+        ]
+
+        with mock.patch.object(enqueue_service, "get_formatter", return_value=formatter):
+            with mock.patch.object(
+                EnqueueService, "get_destinations", return_value=[{"format": "ninjs", "delivery_type": "ftp"}]
+            ):
+                # There should be only the first call, to format the document
+                service.queue_transmission(doc, subscribers)
+                formatter.format.assert_called_once()
+
+    async def test_queue_transmission_without_cache(self):
+        service = EnqueueService()
+        doc = {
+            ID_FIELD: "test_id",
+            "type": "text",
+            VERSION: 1,
+            "item_id": "test_id",
+            "unique_name": "test_unique_name",
+            "headline": "test_headline",
+            "priority": 1,
+        }
+        subscribers = [
+            {"_id": "sub1", "name": "Subscriber 1", "priority": 1},
+            {"_id": "sub2", "name": "Subscriber 2", "priority": 2},
+        ]
+
+        formatter = mock.Mock()
+        formatter.use_cache = False
+        formatter.format.return_value = [
+            {
+                "published_seq_num": 1,
+                "formatted_item": "formatted_content",
+            }
+        ]
+
+        with mock.patch.object(enqueue_service, "get_formatter", return_value=formatter):
+            with mock.patch.object(
+                EnqueueService, "get_destinations", return_value=[{"format": "ninjs", "delivery_type": "ftp"}]
+            ):
+                service.queue_transmission(doc, subscribers)
+                self.assertEqual(formatter.format.call_count, 2)
