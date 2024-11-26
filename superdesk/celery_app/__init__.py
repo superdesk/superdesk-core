@@ -8,10 +8,11 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
+from sys import argv
 import redis
 from celery import Celery
 
-from .context_task import HybridAppContextTask
+from .context_task import HybridAppContextTask, HybridAppContextWorkerTask
 from .serializer import CELERY_SERIALIZER_NAME, ContextAwareSerializerFactory
 
 from superdesk.logging import logger
@@ -22,9 +23,12 @@ from superdesk.core import get_current_app, get_app_config
 serializer_factory = ContextAwareSerializerFactory(get_current_app)
 serializer_factory.register_serializer(CELERY_SERIALIZER_NAME)
 
+# If ``celery`` is in the executable path and ``beat`` is in the arguments
+# then this code is running in a celery beat process
+IS_BEAT_PROCESS = "celery" in argv[0] and "beat" in argv
+
 # set up celery with our custom Task which handles async/sync tasks + app context
-celery = Celery(__name__)
-celery.Task = HybridAppContextTask
+celery = Celery(__name__, task_cls=HybridAppContextTask if IS_BEAT_PROCESS else HybridAppContextWorkerTask)
 
 
 def init_celery(app):
