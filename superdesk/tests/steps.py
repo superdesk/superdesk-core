@@ -1952,7 +1952,8 @@ async def we_reset_password_for_user(context):
 
 
 @when("we switch user")
-def when_we_switch_user(context):
+@async_run_until_complete
+async def when_we_switch_user(context):
     user = {
         "username": "test-user-2",
         "password": "pwd",
@@ -1960,13 +1961,14 @@ def when_we_switch_user(context):
         "needs_activation": False,
         "sign_off": "foo",
     }
-    tests.setup_auth_user(context, user)
+    await tests.setup_auth_user(context, user)
     set_placeholder(context, "USERS_ID", str(context.user["_id"]))
 
 
 @when("we setup test user")
-def when_we_setup_test_user(context):
-    tests.setup_auth_user(context, tests.test_user)
+@async_run_until_complete
+async def when_we_setup_test_user(context):
+    await tests.setup_auth_user(context, tests.test_user)
 
 
 @when('we get my "{url}"')
@@ -2285,7 +2287,7 @@ async def then_we_get_activity(context):
             set_placeholder(context, "USERS_ID", item["user"])
 
 
-def login_as(context, username, password, user_type):
+async def login_as(context, username, password, user_type):
     user = {
         "username": username,
         "password": password,
@@ -2298,17 +2300,19 @@ def login_as(context, username, password, user_type):
     if context.text:
         user.update(json.loads(context.text))
 
-    tests.setup_auth_user(context, user)
+    await tests.setup_auth_user(context, user)
 
 
 @given('we login as user "{username}" with password "{password}" and user type "{user_type}"')
-def given_we_login_as_user(context, username, password, user_type):
-    login_as(context, username, password, user_type)
+@async_run_until_complete
+async def given_we_login_as_user(context, username, password, user_type):
+    await login_as(context, username, password, user_type)
 
 
 @when('we login as user "{username}" with password "{password}" and user type "{user_type}"')
-def when_we_login_as_user(context, username, password, user_type):
-    login_as(context, username, password, user_type)
+@async_run_until_complete
+async def when_we_login_as_user(context, username, password, user_type):
+    await login_as(context, username, password, user_type)
 
 
 def is_user_resource(resource):
