@@ -3,7 +3,7 @@ from inspect import isawaitable
 import werkzeug
 
 from celery import Task
-from typing import Any, Tuple, Dict
+from typing import Any
 
 from superdesk.logging import logger
 from superdesk.errors import SuperdeskError
@@ -14,6 +14,8 @@ class HybridAppContextTask(Task):
     """
     A task class that supports running both synchronous and asynchronous tasks within the Flask application context.
     It handles exceptions specifically defined in `app_errors` and logs them.
+
+    Note: For use with celery beat process
     """
 
     abstract = True
@@ -86,24 +88,13 @@ class HybridAppContextTask(Task):
             task.add_done_callback(background_tasks.discard)
             return task
 
-    async def apply_async(self, args: Tuple = (), kwargs: Dict = {}, **other_kwargs) -> Any:
-        """
-        Schedules the task asynchronously. Awaits the result if `CELERY_TASK_ALWAYS_EAGER` is True.
-        """
-        # directly run and await the task if eager
-        if self._is_always_eager():
-            async_result = super().apply_async(args=args, kwargs=kwargs, **other_kwargs)
-            return await async_result.get()
-
-        return super().apply_async(args=args, kwargs=kwargs, **other_kwargs)
-
     def handle_exception(self, exc: Exception) -> None:
         """
         Logs an exception using the configured logger from `superdesk.logging`.
         """
         logger.exception(f"Error handling task: {str(exc)}")
 
-    def on_failure(self, exc: Exception, task_id: str, args: Tuple, kwargs: Dict, einfo: str) -> None:
+    def on_failure(self, exc: Exception, task_id: str, args: tuple, kwargs: dict, einfo: str) -> None:
         """
         Handles task failure by logging the exception within the Flask application context.
         """
@@ -114,3 +105,23 @@ class HybridAppContextTask(Task):
     def _is_always_eager(self):
         app = self.get_current_app()
         return app.config.get("CELERY_TASK_ALWAYS_EAGER", False)
+
+
+class HybridAppContextWorkerTask(HybridAppContextTask):
+    """
+    A task class that supports running both synchronous and asynchronous tasks within the Flask application context.
+    It handles exceptions specifically defined in `app_errors` and logs them.
+
+    Note: For use with celery worker and ASGI processes
+    """
+
+    async def apply_async(self, args: tuple = (), kwargs: dict | None = None, **other_kwargs) -> Any:
+        """
+        Schedules the task asynchronously. Awaits the result if `CELERY_TASK_ALWAYS_EAGER` is True.
+        """
+        # directly run and await the task if eager
+        if self._is_always_eager():
+            async_result = super().apply_async(args=args, kwargs=kwargs, **other_kwargs)
+            return await async_result.get()
+
+        return super().apply_async(args=args, kwargs=kwargs, **other_kwargs)
