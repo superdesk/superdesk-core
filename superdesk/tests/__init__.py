@@ -394,7 +394,8 @@ async def setup_auth_user(context, user=None):
 
 
 def add_to_context(context, token, user, auth_id=None):
-    context.headers.append(("Authorization", b"basic " + b64encode(token + b":")))
+    # context.headers.append(("Authorization", b"basic " + b64encode(token + b":")))
+    context.headers.append(("Authorization", token))
 
     if getattr(context, "user", None):
         context.previous_user = context.user
@@ -443,7 +444,7 @@ async def setup_db_user(context, user):
         )
 
         auth_data = json.loads(await auth_response.get_data())
-        token = auth_data.get("token").encode("ascii")
+        token = auth_data.get("token")
         auth_id = auth_data.get("_id")
         add_to_context(context, token, user, auth_id)
 
