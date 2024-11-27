@@ -23,7 +23,7 @@ from base64 import b64encode
 from datetime import datetime, timedelta, date
 from os.path import basename
 from re import findall
-from unittest.mock import patch
+from inspect import isawaitable
 from urllib.parse import urlparse
 from pathlib import Path
 
@@ -76,6 +76,9 @@ async def expect_status(response, code):
 
 
 async def expect_status_in(response, codes):
+    if isawaitable(response):
+        response = await response
+
     assert response.status_code in [
         int(code) for code in codes
     ], "expected on of {expected}, got {code}, reason={reason}".format(
@@ -1445,6 +1448,11 @@ async def step_impl_then_get_nofield_in_path(context, path):
 
 @then("we get existing resource")
 @async_run_until_complete
+async def step_impl_then_get_existing_resource(context):
+    # split into separate function so can be called/awaited independently
+    await step_impl_then_get_existing(context)
+
+
 async def step_impl_then_get_existing(context):
     await assert_200(context.response)
     print("got", get_response_readable(await context.response.get_data()))
