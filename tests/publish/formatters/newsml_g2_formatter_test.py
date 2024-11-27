@@ -1139,3 +1139,12 @@ class NewsMLG2FormatterTest(TestCase):
         genre = meta.find("genre", NSMAP)
         self.assertEqual("gen fr", genre.find("name", NSMAP).text)
         self.assertEqual("fr", genre.find("name", NSMAP).attrib[XML_LANG])
+
+    def test_null_anpa_category(self):
+        item = self.format(
+            {
+                "headline": "foo",
+                "anpa_category": None,
+            }
+        )
+        assert item
