@@ -121,9 +121,11 @@ class ItemsResource(Resource):
     versioning = True
     mongo_prefix = MONGO_PREFIX
     elastic_prefix = ELASTIC_PREFIX
+    notifications = False
 
 
 class InternalItemsResource(ItemsResource):
     internal = True
     mongo_indexes = {}
     versioning = False
+    notifications = False
