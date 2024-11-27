@@ -23,7 +23,7 @@ from base64 import b64encode
 from datetime import datetime, timedelta, date
 from os.path import basename
 from re import findall
-from unittest.mock import patch
+from inspect import isawaitable
 from urllib.parse import urlparse
 from pathlib import Path
 
@@ -68,7 +68,7 @@ os.environ["AUTHLIB_INSECURE_TRANSPORT"] = "1"
 
 
 async def expect_status(response, code):
-    assert int(code) == response.status_code, "exptected {expected}, got {code}, reason={reason}".format(
+    assert int(code) == response.status_code, "expected {expected}, got {code}, reason={reason}".format(
         code=response.status_code,
         expected=code,
         reason=(await response.get_data()).decode("utf-8"),
@@ -76,9 +76,12 @@ async def expect_status(response, code):
 
 
 async def expect_status_in(response, codes):
+    if isawaitable(response):
+        response = await response
+
     assert response.status_code in [
         int(code) for code in codes
-    ], "exptected on of {expected}, got {code}, reason={reason}".format(
+    ], "expected on of {expected}, got {code}, reason={reason}".format(
         code=response.status_code,
         expected=codes,
         reason=(await response.get_data()).decode("utf-8"),
@@ -1445,6 +1448,11 @@ async def step_impl_then_get_nofield_in_path(context, path):
 
 @then("we get existing resource")
 @async_run_until_complete
+async def step_impl_then_get_existing_resource(context):
+    # split into separate function so can be called/awaited independently
+    await step_impl_then_get_existing(context)
+
+
 async def step_impl_then_get_existing(context):
     await assert_200(context.response)
     print("got", get_response_readable(await context.response.get_data()))
@@ -1952,7 +1960,8 @@ async def we_reset_password_for_user(context):
 
 
 @when("we switch user")
-def when_we_switch_user(context):
+@async_run_until_complete
+async def when_we_switch_user(context):
     user = {
         "username": "test-user-2",
         "password": "pwd",
@@ -1960,13 +1969,14 @@ def when_we_switch_user(context):
         "needs_activation": False,
         "sign_off": "foo",
     }
-    tests.setup_auth_user(context, user)
+    await tests.setup_auth_user(context, user)
     set_placeholder(context, "USERS_ID", str(context.user["_id"]))
 
 
 @when("we setup test user")
-def when_we_setup_test_user(context):
-    tests.setup_auth_user(context, tests.test_user)
+@async_run_until_complete
+async def when_we_setup_test_user(context):
+    await tests.setup_auth_user(context, tests.test_user)
 
 
 @when('we get my "{url}"')
@@ -2285,7 +2295,7 @@ async def then_we_get_activity(context):
             set_placeholder(context, "USERS_ID", item["user"])
 
 
-def login_as(context, username, password, user_type):
+async def login_as(context, username, password, user_type):
     user = {
         "username": username,
         "password": password,
@@ -2298,17 +2308,19 @@ def login_as(context, username, password, user_type):
     if context.text:
         user.update(json.loads(context.text))
 
-    tests.setup_auth_user(context, user)
+    await tests.setup_auth_user(context, user)
 
 
 @given('we login as user "{username}" with password "{password}" and user type "{user_type}"')
-def given_we_login_as_user(context, username, password, user_type):
-    login_as(context, username, password, user_type)
+@async_run_until_complete
+async def given_we_login_as_user(context, username, password, user_type):
+    await login_as(context, username, password, user_type)
 
 
 @when('we login as user "{username}" with password "{password}" and user type "{user_type}"')
-def when_we_login_as_user(context, username, password, user_type):
-    login_as(context, username, password, user_type)
+@async_run_until_complete
+async def when_we_login_as_user(context, username, password, user_type):
+    await login_as(context, username, password, user_type)
 
 
 def is_user_resource(resource):
