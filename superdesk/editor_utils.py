@@ -348,7 +348,6 @@ class DraftJSHTMLExporter:
                 block.setdefault("depth", 0)
                 block.setdefault("entityRanges", [])
                 block.setdefault("inlineStyleRanges", [])
-                block.setdefault("text", "")
                 if block.get("text"):
                     block["text"] = "".join(ch for ch in block["text"] if unicodedata.category(ch) != "Cc")
             html = self.exporter.render(content_state)
