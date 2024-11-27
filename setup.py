@@ -103,7 +103,7 @@ setup(
     # setup_requires=["setuptools_scm"],
     install_requires=install_requires,
     extras_require={
-        "exiv2": ["pyexiv2>=2.12.0,<2.15"],
+        "exiv2": ["pyexiv2>=2.12.0,<2.16"],
     },
     python_requires=">=3.8",
     classifiers=[
