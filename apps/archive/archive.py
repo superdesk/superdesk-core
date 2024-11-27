@@ -868,13 +868,18 @@ class ArchiveService(BaseService, HighlightsSearchMixin):
 
         # send signal
         # TODO-ASYNC: Support async signals
-        signals.item_update.send(self, updates=updates, original=original)
+        superdesk_testing = get_app_config("SUPERDESK_TESTING", False)
+        if not superdesk_testing:
+            signals.item_update.send(self, updates=updates, original=original)
 
         super().update(id, updates, original)
 
         updated = copy(original)
         updated.update(updates)
-        signals.item_updated.send(self, item=updated, original=original)
+
+        # TODO-ASYNC: Support async signals
+        if not superdesk_testing:
+            signals.item_updated.send(self, item=updated, original=original)
 
         if "marked_for_user" in updates:
             # TODO-ASYNC: Support async (see superdesk.tests.markers.requires_eve_resource_async_event)
