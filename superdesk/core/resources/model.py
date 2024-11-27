@@ -39,6 +39,8 @@ from pydantic.dataclasses import dataclass as pydataclass
 
 from superdesk.core.types import SortListParam, ProjectedFieldArg, BaseModel
 from superdesk.core.utils import generate_guid, GUID_NEWSML
+
+from .utils import get_model_aliased_fields
 from .fields import ObjectId
 
 
@@ -65,12 +67,15 @@ def dataclass(*args, **kwargs):
 
 class Dataclass:
     @model_serializer(mode="wrap")
-    def ser_model(self, nxt: SerializerFunctionWrapHandler) -> dict[str, Any]:
+    def ser_model(self, nxt: SerializerFunctionWrapHandler):
+        aliased_fields = get_model_aliased_fields(self.__class__)
         result = nxt(self)
 
         # Include extra fields that were not part of the schema for this class
         for key, value in self.__dict__.items():
-            if key not in result:
+            if key not in result and key not in aliased_fields:
+                # If this key is not already in the result dictionary, and is not an aliased field
+                # then add it to the key, as an unknown field
                 result[key] = value
 
         return result

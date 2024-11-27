@@ -8,6 +8,9 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
+from inspect import get_annotations
+
+from pydantic.fields import FieldInfo
 from quart_babel import gettext
 
 from superdesk.core import json
@@ -61,3 +64,36 @@ def get_projection_from_request(req: SearchRequest) -> tuple[bool, list[str]] | 
             )
 
     raise SuperdeskApiError.badRequestError(gettext("invalid projection type"))
+
+
+def get_model_aliased_fields(class_type: type) -> set[str]:
+    """Returns the list of fields that are aliased
+
+    For example::
+        from superdesk.core.resources import dataclass, Dataclass
+
+        @dataclass
+        class TopicCreatedFilters(Dataclass):
+            created_from: Annotated[str | None, Field(alias="from")] = None
+            created_to: Annotated[str | None, Field(alias="to")] = None
+            date_filter: str | None = None
+
+        assert get_model_aliased_fields(TopicCreatedFilters) == set("created_from", "created_to")
+    """
+
+    annotations = get_annotations(class_type)
+    aliased_fields: set[str] = set()
+
+    for field_name, annotation in annotations.items():
+        field_info: FieldInfo | None = next(
+            (
+                field_metadata
+                for field_metadata in getattr(annotation, "__metadata__", [])
+                if isinstance(field_metadata, FieldInfo)
+            ),
+            None,
+        )
+        if field_info is not None and field_info.alias:
+            aliased_fields.add(field_name)
+
+    return aliased_fields
