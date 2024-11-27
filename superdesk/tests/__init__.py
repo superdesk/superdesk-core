@@ -8,7 +8,7 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
-from typing import Dict, Any
+from typing import Dict, Any, Tuple
 import os
 import functools
 import logging
@@ -17,11 +17,11 @@ from pathlib import Path
 from dataclasses import dataclass
 
 from copy import deepcopy
-from base64 import b64encode
 from unittest.mock import patch
 from unittest import IsolatedAsyncioTestCase
 from quart import Response
 from quart.testing import QuartClient
+from werkzeug.datastructures import Authorization
 
 from superdesk.core import json
 from superdesk.flask import Config
@@ -35,6 +35,7 @@ from superdesk.core import app as core_app
 from superdesk.core.resources import ResourceModel
 from superdesk.storage.amazon_media_storage import AmazonMediaStorage
 from superdesk.storage.proxy import ProxyMediaStorage
+from superdesk.types import User
 
 
 logger = logging.getLogger(__name__)
@@ -393,13 +394,28 @@ async def setup_auth_user(context, user=None):
     await setup_db_user(context, user)
 
 
-def add_to_context(context, token, user, auth_id=None):
-    # context.headers.append(("Authorization", b"basic " + b64encode(token + b":")))
-    context.headers.append(("Authorization", token))
+def token_to_basic_auth_header(token: str) -> Tuple[str, str]:
+    """
+    Use werkzeug's Authorization to create a valid basic auth token. This way we don't
+    need to know how quart/werkzeug handles it convertion to string internally
+    """
+    basic_auth = Authorization("basic", data=dict(username=token, password=""))
+    return ("Authorization", basic_auth.to_header())  # type: ignore[attr-defined]
+
+
+def add_user_info_to_context(context: Any, token: str, user: User, auth_id=None):
+    """
+    Add current user's session information to context headers.
+    It converts the plain string token into a valid basic auth token that
+    will be converted back to string (internal) by quart/werkzeug Request.
+    """
+    basic_token_header = token_to_basic_auth_header(token)
+    context.headers.append(basic_token_header)
 
     if getattr(context, "user", None):
         context.previous_user = context.user
     context.user = user
+
     set_placeholder(context, "CONTEXT_USER_ID", str(user.get("_id")))
     set_placeholder(context, "AUTH_ID", str(auth_id))
 
@@ -446,7 +462,7 @@ async def setup_db_user(context, user):
         auth_data = json.loads(await auth_response.get_data())
         token = auth_data.get("token")
         auth_id = auth_data.get("_id")
-        add_to_context(context, token, user, auth_id)
+        add_user_info_to_context(context, token, user, auth_id)
 
 
 def setup_ad_user(context, user):
@@ -493,7 +509,7 @@ def setup_ad_user(context, user):
         token = auth_response_as_json.get("token").encode("ascii")
         ad_user["_id"] = auth_response_as_json["user"]
 
-        add_to_context(context, token, ad_user)
+        add_user_info_to_context(context, token, ad_user)
 
 
 class NotificationMock:
