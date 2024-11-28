@@ -216,8 +216,18 @@ class TestResourceService(AsyncTestCase):
 
         for i in range(3):
             self.assertEqual(
-                docs[i].to_dict(),
-                users[i].to_dict(),
+                docs[i].to_dict(
+                    context={"use_objectid": True},
+                    exclude_none=True,
+                    exclude_unset=False,
+                    exclude_defaults=False,
+                ),
+                users[i].to_dict(
+                    context={"use_objectid": True},
+                    exclude_none=True,
+                    exclude_unset=False,
+                    exclude_defaults=False,
+                ),
             )
 
     async def test_get_all_batch(self):
@@ -231,8 +241,18 @@ class TestResourceService(AsyncTestCase):
         self.assertEqual(len(docs), 3)
         for i in range(3):
             self.assertEqual(
-                docs[i].to_dict(),
-                users[i].to_dict(),
+                docs[i].to_dict(
+                    context={"use_objectid": True},
+                    exclude_none=True,
+                    exclude_unset=False,
+                    exclude_defaults=False,
+                ),
+                users[i].to_dict(
+                    context={"use_objectid": True},
+                    exclude_none=True,
+                    exclude_unset=False,
+                    exclude_defaults=False,
+                ),
             )
 
         docs = []
@@ -242,8 +262,18 @@ class TestResourceService(AsyncTestCase):
         self.assertEqual(len(docs), 2)
         for i in range(2):
             self.assertEqual(
-                docs[i].to_dict(),
-                users[i].to_dict(),
+                docs[i].to_dict(
+                    context={"use_objectid": True},
+                    exclude_none=True,
+                    exclude_unset=False,
+                    exclude_defaults=False,
+                ),
+                users[i].to_dict(
+                    context={"use_objectid": True},
+                    exclude_none=True,
+                    exclude_unset=False,
+                    exclude_defaults=False,
+                ),
             )
 
     async def test_elastic_search(self):

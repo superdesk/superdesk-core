@@ -360,6 +360,10 @@ class AsyncResourceService(Generic[ResourceModelType]):
                 versioned_model.current_version = 1
             doc_dict = doc.to_dict(
                 context={"use_objectid": True} if not self.config.query_objectid_as_string else {},
+                # Include default values, but exclude ``None`` on creation
+                exclude_none=True,
+                exclude_unset=False,
+                exclude_defaults=False,
             )
             doc.etag = doc_dict["_etag"] = self.generate_etag(doc_dict, self.config.etag_ignore_fields)
             response = await self.mongo_async.insert_one(doc_dict)

@@ -4,7 +4,7 @@ from enum import Enum, unique
 
 from pydantic import Field, field_validator
 
-from superdesk.core.resources import ResourceModel, dataclass, fields, validators, ModelWithVersions
+from superdesk.core.resources import ResourceModel, dataclass, Dataclass, fields, validators, ModelWithVersions
 from superdesk.utc import utcnow
 
 
@@ -29,7 +29,7 @@ ContentAssociation = Annotated[
 
 
 @dataclass
-class CVItem:
+class CVItem(Dataclass):
     qcode: fields.Keyword
     name: fields.Keyword
     scheme: fields.Keyword | None = None
@@ -37,7 +37,7 @@ class CVItem:
 
 
 @dataclass
-class CVItemWithCode:
+class CVItemWithCode(Dataclass):
     code: fields.Keyword
     name: fields.Keyword
     schema: fields.Keyword | None = None
@@ -45,7 +45,7 @@ class CVItemWithCode:
 
 
 @dataclass
-class Place:
+class Place(Dataclass):
     scheme: fields.Keyword | None = None
     qcode: fields.Keyword | None = None
     code: fields.Keyword | None = None
@@ -64,14 +64,14 @@ class Place:
 
 
 @dataclass
-class Annotation:
+class Annotation(Dataclass):
     id: int
     type: fields.Keyword
     body: fields.Keyword
 
 
 @dataclass
-class ContentAuthor:
+class ContentAuthor(Dataclass):
     uri: fields.Keyword | None = None
     parent: fields.Keyword | None = None
     name: fields.TextWithKeyword | None = None
@@ -83,7 +83,7 @@ class ContentAuthor:
 
 
 @dataclass
-class ContentReference:
+class ContentReference(Dataclass):
     id: Annotated[fields.Keyword, Field(alias="_id")]
     key: fields.Keyword | None = None
     uri: fields.Keyword | None = None
