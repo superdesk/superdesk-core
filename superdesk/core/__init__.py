@@ -10,6 +10,7 @@
 
 from quart import json
 from .app import get_app_config, get_current_app, get_current_async_app, get_current_auth
+from .signals import AsyncSignal
 
 
 __all__ = [
@@ -18,4 +19,5 @@ __all__ = [
     "json",
     "get_app_config",
     "get_current_auth",
+    "AsyncSignal",
 ]
