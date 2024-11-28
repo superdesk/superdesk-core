@@ -116,6 +116,7 @@ class AsyncSignal(Generic[Unpack[SignalFunctionSignature]]):
         """
 
         self.connect(callback)
+        return self
 
     def __isub__(self, callback: Callable[[Unpack[SignalFunctionSignature]], Awaitable[None] | None]):
         """Remove a function from this signal
@@ -124,6 +125,7 @@ class AsyncSignal(Generic[Unpack[SignalFunctionSignature]]):
         """
 
         self.disconnect(callback)
+        return self
 
     def __len__(self):
         return len(self._listeners)
