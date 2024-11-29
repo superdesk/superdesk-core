@@ -84,7 +84,7 @@ def update_config(conf, auto_add_apps: bool = True):
     conf["TESTING"] = True
     conf["SUPERDESK_TESTING"] = True
     conf["BCRYPT_GENSALT_WORK_FACTOR"] = 4
-    conf["CELERY_TASK_ALWAYS_EAGER"] = "True"
+    conf["CELERY_TASK_ALWAYS_EAGER"] = True
     conf["CELERY_BEAT_SCHEDULE_FILENAME"] = "./testschedule.db"
     conf["CELERY_BEAT_SCHEDULE"] = {}
     conf["CONTENT_EXPIRY_MINUTES"] = 99
@@ -558,7 +558,7 @@ class AsyncTestCase(IsolatedAsyncioTestCase):
 
         core_app._global_app = None
 
-        self.app_config = setup_config(self.app_config)
+        self.app_config = setup_config(deepcopy(self.app_config))
         self.app = SuperdeskAsyncApp(MockWSGI(config=self.app_config))
         self.startApp()
 
@@ -622,12 +622,14 @@ class AsyncFlaskTestCase(AsyncTestCase):
             self.async_app.stop()
             await self.async_app.elastic.stop()
 
+        config = deepcopy(self.app_config)
+
         if self.use_default_apps:
-            await setup(self, config=self.app_config, reset=True, auto_add_apps=True)
+            await setup(self, config=config, reset=True, auto_add_apps=True)
         else:
-            self.app_config.setdefault("CORE_APPS", [])
-            self.app_config.setdefault("INSTALLED_APPS", [])
-            await setup(self, config=self.app_config, reset=True, auto_add_apps=False)
+            config.setdefault("CORE_APPS", [])
+            config.setdefault("INSTALLED_APPS", [])
+            await setup(self, config=config, reset=True, auto_add_apps=False)
         self.async_app = self.app.async_app
         self.app.test_client_class = TestClient
         self.test_client = self.app.test_client()

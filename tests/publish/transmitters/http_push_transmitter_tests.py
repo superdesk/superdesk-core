@@ -169,8 +169,7 @@ class HTTPPushServiceTestCase(TestCase):
     @mock.patch("superdesk.errors.notifiers")
     @mock.patch("requests.post")
     async def test_client_publish_error_thrown(self, fake_post, fake_notifiers):
-        with self.app.app_context():
-            raise_http_exception = Mock(side_effect=PublishHTTPPushClientError.httpPushError(Exception("client 4xx")))
+        raise_http_exception = Mock(side_effect=PublishHTTPPushClientError.httpPushError(Exception("client 4xx")))
 
         fake_post.return_value = Mock(status_code=401, text="client 4xx", raise_for_status=raise_http_exception)
 
@@ -186,8 +185,7 @@ class HTTPPushServiceTestCase(TestCase):
     @mock.patch("superdesk.errors.notifiers")
     @mock.patch("requests.post")
     async def test_server_publish_error_thrown(self, fake_post, fake_notifiers):
-        with self.app.app_context():
-            raise_http_exception = Mock(side_effect=PublishHTTPPushServerError.httpPushError(Exception("server 5xx")))
+        raise_http_exception = Mock(side_effect=PublishHTTPPushServerError.httpPushError(Exception("server 5xx")))
 
         fake_post.return_value = Mock(status_code=503, text="server 5xx", raise_for_status=raise_http_exception)
 
