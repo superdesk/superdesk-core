@@ -48,6 +48,7 @@ existing code to the new framework.
    core/resources
    core/resource_management
    core/web
+   core/signals
    core/mongo
    core/elastic
    core/storage
