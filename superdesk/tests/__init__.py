@@ -362,16 +362,40 @@ def use_snapshot(app, name, funcs=(snapshot_es, snapshot_mongo), force=False):
 use_snapshot.cache = {}  # type: ignore
 
 
+async def stop_previous_app():
+    if not hasattr(setup, "async_app") and not hasattr(setup, "app"):
+        return
+
+    if hasattr(setup, "async_app"):
+        async_app: SuperdeskAsyncApp | None = getattr(setup, "async_app", None)
+
+        for resource_name, resource_config in async_app.mongo.get_all_resource_configs().items():
+            client, db = async_app.mongo.get_client_async(resource_name)
+            await client.drop_database(db)
+
+        async_app.elastic.drop_indexes()
+        await async_app.elastic.stop()
+
+        for service in async_app.resources._resource_services:
+            if hasattr(service, "_instance"):
+                del service._instance
+
+        async_app.stop()
+        del setup.async_app
+
+    if hasattr(setup, "app"):
+        app: SuperdeskApp | None = getattr(setup, "app", None)
+
+        # Close all PyMongo Connections (new ones will be created with ``app_factory`` call)
+        for key, val in app.extensions["pymongo"].items():
+            val[0].close()
+
+        app.extensions["pymongo"] = {}
+        del setup.app
+
+
 async def setup(context=None, config=None, app_factory=get_app, reset=False, auto_add_apps: bool = True):
     if not hasattr(setup, "app") or hasattr(setup, "reset") or config:  # type: ignore[attr-defined]
-        if hasattr(setup, "app"):
-            # Close all PyMongo Connections (new ones will be created with ``app_factory`` call)
-            for key, val in setup.app.extensions["pymongo"].items():
-                val[0].close()
-
-            if getattr(setup.app, "async_app", None):
-                setup.app.async_app.stop()
-
         cfg = setup_config(config, auto_add_apps)
         setup.app = app_factory(cfg)  # type: ignore[attr-defined]
         setup.reset = reset  # type: ignore[attr-defined]
@@ -553,13 +577,9 @@ class AsyncTestCase(IsolatedAsyncioTestCase):
     autorun: bool = True
 
     def setupApp(self):
-        if getattr(self, "app", None):
-            self.app.stop()
-
-        core_app._global_app = None
-
         self.app_config = setup_config(deepcopy(self.app_config))
         self.app = SuperdeskAsyncApp(MockWSGI(config=self.app_config))
+        setattr(setup, "async_app", self.app)
         self.startApp()
 
     def startApp(self):
@@ -570,17 +590,7 @@ class AsyncTestCase(IsolatedAsyncioTestCase):
             return
 
         self.setupApp()
-        for resource_name, resource_config in self.app.mongo.get_all_resource_configs().items():
-            client, db = self.app.mongo.get_client_async(resource_name)
-            await client.drop_database(db)
-
-    async def asyncTearDown(self):
-        if not getattr(self, "app", None):
-            return
-
-        self.app.elastic.drop_indexes()
-        self.app.stop()
-        await self.app.elastic.stop()
+        self.addAsyncCleanup(stop_previous_app)
 
     def get_fixture_path(self, filename):
         rootpath = os.path.abspath(os.path.dirname(os.path.dirname(__file__)))
@@ -618,10 +628,6 @@ class AsyncFlaskTestCase(AsyncTestCase):
     use_default_apps: bool = False
 
     async def asyncSetUp(self):
-        if getattr(self, "async_app", None):
-            self.async_app.stop()
-            await self.async_app.elastic.stop()
-
         config = deepcopy(self.app_config)
 
         if self.use_default_apps:
@@ -631,6 +637,7 @@ class AsyncFlaskTestCase(AsyncTestCase):
             config.setdefault("INSTALLED_APPS", [])
             await setup(self, config=config, reset=True, auto_add_apps=False)
         self.async_app = self.app.async_app
+        setattr(setup, "async_app", self.async_app)
         self.app.test_client_class = TestClient
         self.test_client = self.app.test_client()
         self.ctx = self.app.app_context()
@@ -644,15 +651,8 @@ class AsyncFlaskTestCase(AsyncTestCase):
                     pass
 
         self.addAsyncCleanup(clean_ctx)
+        self.addAsyncCleanup(stop_previous_app)
         self.async_app.elastic.init_all_indexes()
-
-    async def asyncTearDown(self):
-        if not getattr(self, "async_app", None):
-            return
-
-        self.async_app.elastic.drop_indexes()
-        self.async_app.stop()
-        await self.async_app.elastic.stop()
 
     async def get_resource_etag(self, resource: str, item_id: str):
         return (await (await self.test_client.get(f"/api/{resource}/{item_id}")).get_json())["_etag"]
