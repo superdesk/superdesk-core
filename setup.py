@@ -49,7 +49,7 @@ install_requires = [
     "croniter<3.1",
     "python-dateutil<2.10",
     "unidecode>=0.04.21,<=1.3.8",
-    "authlib>0.14,<0.15",
+    "authlib>0.14,<1.4",
     "draftjs-exporter[lxml]<5.1",
     "regex>=2020.7.14,<=2024.9.11",
     "flask-oidc-ex>=0.5.5,<0.7",
