@@ -20,9 +20,8 @@ jobs:
     - run: ./scripts/tests_setup
     - run: pip install -U pip wheel setuptools
     - run: pip install -r dev-requirements.txt
-    - run: ulimit -n 4096
-    - run: pytest --log-level=ERROR --disable-warnings tests/core
-    - run: pytest --log-level=ERROR --disable-warnings --ignore=tests/core
+    - run: pytest -p no:asyncio --log-level=ERROR --disable-warnings tests/core
+    - run: pytest -p no:asyncio --log-level=ERROR --disable-warnings --ignore=tests/core
 
   pip-compile:
     runs-on: ubuntu-latest
