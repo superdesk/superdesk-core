@@ -48,6 +48,7 @@ class ArchiveHistoryResource(Resource):
     endpoint_name = "archive_history"
     resource_methods = ["GET"]
     item_methods = ["GET"]
+    notifications = False
     schema = {
         "item_id": {"type": "string"},
         "user_id": Resource.rel("users", True),
