@@ -107,17 +107,16 @@ class DataclassBase:
 class DataclassMeta(type):
     """Metaclass to enhance Dataclass functionality."""
 
-    def __new__(cls, name, bases, dct):
-        custom_config = dct.pop("Config", {})
+    def __new__(cls: type, name: str, bases: tuple[type, ...], attrs: dict[str, Any]) -> type:
+        custom_config = attrs.pop("Config", {})
 
         # merge with default configuration
         config = deepcopy(default_model_config)
         config.update(custom_config)
 
         # create the class and apply the Pydantic dataclass decorator
-        new_cls = super().__new__(cls, name, bases, dct)
-        new_cls = pydataclass(new_cls, config=config)
-        return new_cls
+        new_cls = super().__new__(cls, name, bases, attrs)  # type: ignore[misc]
+        return pydataclass(new_cls, config=config)
 
 
 class Dataclass(DataclassBase, metaclass=DataclassMeta):
