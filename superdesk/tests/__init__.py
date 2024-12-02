@@ -406,7 +406,7 @@ async def setup(context=None, config=None, app_factory=get_app, reset=False, aut
         context.client = app.test_client()
         if not hasattr(context, "BEHAVE") and not hasattr(context, "test_context"):
             context.test_context = app.test_request_context("/")
-            context.test_context.push()
+            await context.test_context.push()
 
     async with app.app_context():
         await clean_dbs(app, force=bool(config))
