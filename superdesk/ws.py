@@ -10,10 +10,13 @@
 # at https://www.sourcefabric.org/superdesk/license
 
 
+import os
 import logging
-import logging.handlers
+
 from superdesk.websockets_comms import SocketCommunication
 
+
+logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 
@@ -34,5 +37,11 @@ def create_server(config):
 
 
 if __name__ == "__main__":
-    config = {"WS_HOST": "0.0.0.0", "WS_PORT": "5100", "BROKER_URL": "redis://localhost:6379"}
+    config = {
+        "WS_HOST": os.environ.get("WS_HOST") or "0.0.0.0",
+        "WS_PORT": int(os.environ.get("WS_PORT") or "5100"),
+        "BROKER_URL": os.environ.get("CELERY_BROKER_URL") or os.environ.get("REDIS_URL") or "redis://localhost:6379",
+        "WEBSOCKET_EXCHANGE": "superdesk_notification",
+    }
+
     create_server(config)
