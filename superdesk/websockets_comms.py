@@ -24,19 +24,18 @@ from superdesk.types import WebsocketMessageData, WebsocketMessageFilterConditio
 
 from flask import json
 from datetime import timedelta, datetime
-from threading import Thread
 from kombu import Queue, Exchange, Connection
 from kombu.mixins import ConsumerMixin
 from kombu.pools import producers
 from kombu.common import Broadcast
 from kombu.utils.debug import setup_logging
 from superdesk.utc import utcnow
-from superdesk.utils import get_random_string, json_serialize_datetime_objectId
+from superdesk.utils import json_serialize_datetime_objectId
 from superdesk.default_settings import WS_HEART_BEAT
 
 
 logger = logging.getLogger(__name__)
-logger.setLevel(logging.DEBUG)
+logger.setLevel(logging.INFO)
 logging.getLogger("websockets").setLevel(logging.WARNING)
 setup_logging(logging.WARNING)
 
@@ -341,8 +340,7 @@ class SocketCommunication:
             consumer = None
             # create socket message consumer
             consumer = SocketMessageConsumer(self.broker_url, self.broadcast, self.exchange_name)
-            consumer_thread = Thread(target=consumer.run)
-            consumer_thread.start()
+            loop.run_in_executor(None, consumer.run)
             loop.run_forever()
         except KeyboardInterrupt:
             pass
