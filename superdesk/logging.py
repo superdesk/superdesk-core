@@ -17,13 +17,11 @@ logger = logging.getLogger("superdesk")
 
 # set default levels
 logging.getLogger("ldap3").setLevel(logging.WARNING)
-logging.getLogger("kombu").setLevel(logging.WARNING)
 logging.getLogger("elasticsearch").setLevel(logging.ERROR)
 
 logging.getLogger("apps").setLevel(logging.INFO)
 logging.getLogger("superdesk").setLevel(logging.INFO)
 logging.getLogger("content_api").setLevel(logging.INFO)
-logging.getLogger("superdesk.websockets_comms").setLevel(logging.WARNING)
 
 
 def item_msg(msg, item):
