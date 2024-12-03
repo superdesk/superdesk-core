@@ -8,6 +8,7 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
+from typing import List
 import flask
 import logging
 import datetime
@@ -1328,9 +1329,12 @@ class ArchiveService(BaseService, HighlightsSearchMixin):
         def get_item_translated_from(item):
             _item = item
             for _i in range(50):
-                try:
-                    item = self.find_one(req={}, _id=item["translated_from"])
-                except Exception:
+                if item and item.get("translated_from"):
+                    next_item = self.find_one(req={}, _id=item["translated_from"])
+                    if not next_item:
+                        break
+                    item = next_item
+                else:
                     break
             else:
                 logger.error(
@@ -1339,6 +1343,8 @@ class ArchiveService(BaseService, HighlightsSearchMixin):
             return item
 
         item = get_item_translated_from(item)
+        if not item:
+            return []
         # add item + translations
         items_chain = [item]
         items_chain += self.get_item_translations(item)
@@ -1346,11 +1352,13 @@ class ArchiveService(BaseService, HighlightsSearchMixin):
         for _i in range(50):
             try:
                 item = self.find_one(req={}, _id=item["rewrite_of"])
+                if not item:
+                    break
                 # prepend translations + update
                 items_chain = [item, *self.get_item_translations(item), *items_chain]
-            except Exception:
+            except KeyError:
                 # `item` is not an update, but it can be a translation
-                if "translated_from" in item:
+                if item and item.get("translated_from"):
                     translation_item = item
                     item = get_item_translated_from(item)
                     # add item + translations
@@ -1372,7 +1380,7 @@ class ArchiveService(BaseService, HighlightsSearchMixin):
             logger.error("Failed to retrieve the whole items chain for item {}".format(item.get("_id")))
         return items_chain
 
-    def get_item_translations(self, item):
+    def get_item_translations(self, item) -> List[str]:
         """
         Get list of item's translations.
         :param item: item
@@ -1380,7 +1388,9 @@ class ArchiveService(BaseService, HighlightsSearchMixin):
         :return: list of dicts
         :rtype: list
         """
-        translation_items = []
+        translation_items: List[str] = []
+        if not item or not item.get("translations"):
+            return translation_items
 
         for translation_item_id in item.get("translations", []):
             translation_item = self.find_one(req={}, _id=translation_item_id)
