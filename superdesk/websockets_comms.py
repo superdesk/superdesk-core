@@ -24,16 +24,20 @@ from superdesk.types import WebsocketMessageData, WebsocketMessageFilterConditio
 
 from flask import json
 from datetime import timedelta, datetime
-from threading import Thread
 from kombu import Queue, Exchange, Connection
 from kombu.mixins import ConsumerMixin
 from kombu.pools import producers
+from kombu.common import Broadcast
+from kombu.utils.debug import setup_logging
 from superdesk.utc import utcnow
-from superdesk.utils import get_random_string, json_serialize_datetime_objectId
+from superdesk.utils import json_serialize_datetime_objectId
 from superdesk.default_settings import WS_HEART_BEAT
 
 
 logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
+logging.getLogger("websockets").setLevel(logging.WARNING)
+setup_logging(logging.WARNING)
 
 
 class SocketBrokerClient:
@@ -110,17 +114,8 @@ class SocketMessageConsumer(SocketBrokerClient, ConsumerMixin):
         """
         super().__init__(url, exchange_name)
         self.callback = callback
-        self.queue_name = "websocket_queue_{}".format(get_random_string())
-        self.queue = Queue(
-            self.queue_name,
-            exchange=self.socket_exchange,
-            message_ttl=10,
-            expires=60,
-            channel=self.connection.channel(),
-            exclusive=True,
-        )
-
-        logger.info("Websocket queue created %s", self.queue_name)
+        self.queue = Broadcast(exchange=self.socket_exchange)
+        logger.info("Websocket queue created %s", self.queue.name)
 
     def get_consumers(self, Consumer, channel):
         return [Consumer(queues=[self.queue], callbacks=[self.on_message])]
@@ -138,14 +133,14 @@ class SocketMessageConsumer(SocketBrokerClient, ConsumerMixin):
             except Exception:
                 loop = asyncio.new_event_loop()
 
-            logger.info("Queue: {}. Broadcasting message {}".format(self.queue_name, body))
+            logger.debug("Queue: {}. Broadcasting message {}".format(self.queue.name, body))
             loop.run_until_complete(self.callback(body))
         except Exception:
             logger.exception("Dropping event. Failed to send message {}.".format(body))
         try:
             message.ack()
         except Exception:
-            logger.exception("Failed to ack message {} on queue {}.".format(body, self.queue_name))
+            logger.exception("Failed to ack message {} on queue {}.".format(body, self.queue.name))
 
     def close(self):
         """
@@ -153,10 +148,10 @@ class SocketMessageConsumer(SocketBrokerClient, ConsumerMixin):
 
         :return:
         """
-        logger.info("closing consumer")
+        logger.debug("closing consumer")
         self.should_stop = True
         super().close()
-        logger.info("consumer terminated successfully")
+        logger.debug("consumer terminated successfully")
 
 
 class SocketCommunication:
@@ -345,8 +340,7 @@ class SocketCommunication:
             consumer = None
             # create socket message consumer
             consumer = SocketMessageConsumer(self.broker_url, self.broadcast, self.exchange_name)
-            consumer_thread = Thread(target=consumer.run)
-            consumer_thread.start()
+            loop.run_in_executor(None, consumer.run)
             loop.run_forever()
         except KeyboardInterrupt:
             pass
