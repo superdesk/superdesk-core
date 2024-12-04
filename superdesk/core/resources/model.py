@@ -34,7 +34,7 @@ from pydantic import (
     SerializerFunctionWrapHandler,
     RootModel,
 )
-from pydantic_core import InitErrorDetails, PydanticCustomError
+from pydantic_core import InitErrorDetails, PydanticCustomError, from_json
 from pydantic.dataclasses import dataclass as pydataclass
 
 from superdesk.core.types import SortListParam, ProjectedFieldArg, BaseModel
@@ -86,12 +86,13 @@ class DataclassBase:
         return result
 
     @classmethod
-    def from_dict(cls: type[Self], values: dict[str, Any], **kwargs) -> Self:
-        return RootModel.model_validate(values, **kwargs).root
+    def from_dict(cls: type[Self], values: dict[str, Any]) -> Self:
+        return cls(**values)
 
     @classmethod
-    def from_json(cls: type[Self], data: str | bytes | bytearray, **kwargs) -> Self:
-        return RootModel.model_validate_json(data, **kwargs).root
+    def from_json(cls: type[Self], data: str | bytes | bytearray) -> Self:
+        values = from_json(data)
+        return cls(**values)
 
     def to_dict(self, **kwargs) -> dict[str, Any]:
         default_params: dict[str, Any] = {"by_alias": True, "exclude_unset": True}
@@ -104,6 +105,7 @@ class DataclassBase:
         return RootModel(self).model_dump_json(**default_params)
 
 
+@dataclass_transform(field_specifiers=(dataclass_field, Field))
 class DataclassMeta(type):
     """Metaclass to enhance Dataclass functionality."""
 
