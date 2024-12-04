@@ -11,7 +11,7 @@ from superdesk.tests import AsyncFlaskTestCase
 
 class TestHybridAppContextTask(AsyncFlaskTestCase):
     async def test_sync_task(self):
-        @self.app.celery.task(base=HybridAppContextTask)
+        @self.app.celery.task()
         def sync_task():
             return "sync result"
 
@@ -19,7 +19,7 @@ class TestHybridAppContextTask(AsyncFlaskTestCase):
         self.assertEqual(result, "sync result")
 
     async def test_async_task(self):
-        @self.app.celery.task(base=HybridAppContextTask)
+        @self.app.celery.task()
         async def async_task():
             await asyncio.sleep(0.1)
             return "async result"
@@ -28,7 +28,7 @@ class TestHybridAppContextTask(AsyncFlaskTestCase):
         self.assertEqual(result, "async result")
 
     async def test_sync_task_exception(self):
-        @self.app.celery.task(base=HybridAppContextTask)
+        @self.app.celery.task()
         def sync_task_exception():
             raise SuperdeskError("Test exception")
 
@@ -39,7 +39,7 @@ class TestHybridAppContextTask(AsyncFlaskTestCase):
             mock_logger.exception.assert_called_once_with(expected_msg)
 
     async def test_async_task_exception(self):
-        @self.app.celery.task(base=HybridAppContextTask)
+        @self.app.celery.task()
         async def async_task_exception():
             raise SuperdeskError("Async exception")
 

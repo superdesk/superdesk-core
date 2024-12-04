@@ -3,12 +3,12 @@ from datetime import datetime
 from unittest.mock import MagicMock
 
 from superdesk.celery_app.serializer import ContextAwareSerializerFactory
-from superdesk.tests import TestCase, markers
+from superdesk.tests import AsyncFlaskTestCase
 
 
-@markers.requires_async_celery
-class TestContextAwareSerializerFactory(TestCase):
-    def setUp(self):
+class TestContextAwareSerializerFactory(AsyncFlaskTestCase):
+    async def asyncSetUp(self):
+        await super().asyncSetUp()
         self.get_current_app = MagicMock(return_value=self.app)
         self.factory = ContextAwareSerializerFactory(self.get_current_app)
 
