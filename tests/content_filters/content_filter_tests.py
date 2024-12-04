@@ -432,7 +432,7 @@ class FilteringDataTests(ContentFilterTests):
         self.assertTrue(len(r3[0]["selected_subscribers"]) == 2)
         self.assertTrue(len(r4[0]["selected_subscribers"]) == 1)
 
-    def test_does_match_return_with_caching_mechanism(self):
+    async def test_does_match_return_with_caching_mechanism(self):
         self.app.data.insert(
             "filter_conditions",
             [

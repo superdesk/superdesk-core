@@ -119,7 +119,7 @@ class BackendTestCase(TestCase):
         backend = get_backend()
         updates = {"name": "foo"}
         item = {"name": "bar"}
-        with self.app.app_context():
+        async with self.app.app_context():
             ids = backend.create_in_mongo("ingest", [item])
             items = backend.search("ingest", {"query": {"match_all": {}}})
             self.assertEqual(0, items.count())
@@ -128,10 +128,10 @@ class BackendTestCase(TestCase):
             items = backend.search("ingest", {"query": {"match_all": {}}})
             self.assertEqual(1, items.count())
 
-    def test_delete_item_missing_in_mongo(self):
+    async def test_delete_item_missing_in_mongo(self):
         backend = get_backend()
         item = {"_id": bson.ObjectId(), "name": "bar"}
-        with self.app.app_context():
+        async with self.app.app_context():
             backend.create_in_search("ingest", [item])
             items = backend.search("ingest", {"query": {"match_all": {}}})
             self.assertEqual(1, items.count())
@@ -140,10 +140,10 @@ class BackendTestCase(TestCase):
             items = backend.search("ingest", {"query": {"match_all": {}}})
             self.assertEqual(0, items.count())
 
-    def test_delete_docs_missing_in_mongo(self):
+    async def test_delete_docs_missing_in_mongo(self):
         backend = get_backend()
         item = {"_id": bson.ObjectId(), "name": "bar"}
-        with self.app.app_context():
+        async with self.app.app_context():
             backend.create_in_search("ingest", [item])
             items = backend.search("ingest", {"query": {"match_all": {}}})
             self.assertEqual(1, items.count())

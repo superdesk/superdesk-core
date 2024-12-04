@@ -2,12 +2,12 @@ import arrow
 from bson import ObjectId
 from typing import Any, Callable
 
-from eve.utils import str_to_date
 from eve.io.mongo import MongoJSONEncoder
 from kombu.serialization import register
 
 from superdesk.core import json
 from superdesk.core.types import WSGIApp
+from superdesk.core.utils import str_to_date
 
 
 CELERY_SERIALIZER_NAME = "context-aware/json"
