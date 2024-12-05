@@ -5,7 +5,7 @@ pep8
 pyflakes
 pydocstyle<7.0
 httmock==1.4.0
-watchdog==4.0.1
+watchdog==6.0.0
 wooper==0.4.4
 requests-mock==1.12.1
 responses
