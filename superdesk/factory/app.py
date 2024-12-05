@@ -19,6 +19,9 @@ import importlib
 import superdesk
 import logging
 
+import sentry_sdk
+from sentry_sdk.integrations.asyncio import AsyncioIntegration
+from sentry_sdk.integrations.quart import QuartIntegration
 from flask_mail import Mail
 from eve.auth import TokenAuth
 from eve.io.mongo.mongo import _create_index as create_index
@@ -42,7 +45,6 @@ from superdesk.flask import (
 from superdesk.celery_app import init_celery
 from superdesk.datalayer import SuperdeskDataLayer  # noqa
 from superdesk.errors import SuperdeskError, SuperdeskApiError, DocumentError
-from superdesk.factory.sentry import SuperdeskSentry
 from superdesk.logging import configure_logging
 from superdesk.storage import ProxyMediaStorage
 from superdesk.validator import SuperdeskValidator
@@ -225,8 +227,8 @@ class SuperdeskEve(eve.Eve):
         self._endpoint_groups = []
         self._endpoint_lookup = {}
         super().__init__(**kwargs)
+        self.setup_sentry()
         self.async_app = SuperdeskAsyncApp(self)
-
         self.teardown_request(self._after_each_request)
 
     def __getattr__(self, name):
@@ -399,6 +401,19 @@ class SuperdeskEve(eve.Eve):
             new_request.user = self.async_app.auth.get_current_user(new_request)
         return new_request
 
+    def setup_sentry(self):
+        if not self.config.get("SENTRY_DSN"):
+            return
+
+        # Given how quart_flask_patch patches things, it makes Sentry SDK to think that flask is installed
+        # mistakenly enabling FlaskIntegration, which breaks QuartIntegration, and preventing sentry from working properly.
+        # https://github.com/pgjones/quart-flask-patch/blob/0.3.0/src/quart_flask_patch/_patch.py#L110
+        # This prevents flask integration from being enabled at all until we're can use a newer version of sentry-sdk where
+        # specific integrations can be disabled https://github.com/getsentry/sentry-python/releases/tag/2.11.0
+        sentry_sdk.integrations._processed_integrations.add("flask")
+
+        sentry_sdk.init(dsn=self.config["SENTRY_DSN"], integrations=[QuartIntegration(), AsyncioIntegration()])
+
 
 def get_media_storage_class(app_config: Dict[str, Any], use_provider_config: bool = True) -> Type[MediaStorage]:
     if use_provider_config and app_config.get("MEDIA_STORAGE_PROVIDER"):
@@ -471,7 +486,6 @@ def get_app(config=None, media_storage=None, config_object=None, init_elastic=No
 
     app.jinja_loader = custom_loader
     app.mail = Mail(app)
-    app.sentry = SuperdeskSentry(app)
     cache_backend.init_app(app)
     setup_apm(app)
 
