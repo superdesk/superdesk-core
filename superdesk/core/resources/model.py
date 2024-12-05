@@ -34,7 +34,7 @@ from pydantic import (
     SerializerFunctionWrapHandler,
     RootModel,
 )
-from pydantic_core import InitErrorDetails, PydanticCustomError
+from pydantic_core import InitErrorDetails, PydanticCustomError, from_json
 from pydantic.dataclasses import dataclass as pydataclass
 
 from superdesk.core.types import SortListParam, ProjectedFieldArg, BaseModel
@@ -65,9 +65,14 @@ def dataclass(*args, **kwargs):
     return pydataclass(*args, **kwargs, config=config)
 
 
-class Dataclass:
+class DataclassBase:
+    """Provides type-safe utility methods for Dataclass."""
+
     @model_serializer(mode="wrap")
     def ser_model(self, nxt: SerializerFunctionWrapHandler):
+        """
+        Serialize the model, including extra fields not part of the schema.
+        """
         aliased_fields = get_model_aliased_fields(self.__class__)
         result = nxt(self)
 
@@ -81,12 +86,13 @@ class Dataclass:
         return result
 
     @classmethod
-    def from_dict(cls, values: dict[str, Any], **kwargs) -> Self:
-        return RootModel.model_validate(values, **kwargs).root
+    def from_dict(cls: type[Self], values: dict[str, Any]) -> Self:
+        return cls(**values)
 
     @classmethod
-    def from_json(cls, data: str | bytes | bytearray, **kwargs) -> Self:
-        return RootModel.model_validate_json(data, **kwargs).root
+    def from_json(cls: type[Self], data: str | bytes | bytearray) -> Self:
+        values = from_json(data)
+        return cls(**values)
 
     def to_dict(self, **kwargs) -> dict[str, Any]:
         default_params: dict[str, Any] = {"by_alias": True, "exclude_unset": True}
@@ -97,6 +103,28 @@ class Dataclass:
         default_params: dict[str, Any] = {"by_alias": True, "exclude_unset": True}
         default_params.update(kwargs)
         return RootModel(self).model_dump_json(**default_params)
+
+
+@dataclass_transform(field_specifiers=(dataclass_field, Field))
+class DataclassMeta(type):
+    """Metaclass to enhance Dataclass functionality."""
+
+    def __new__(cls: type, name: str, bases: tuple[type, ...], attrs: dict[str, Any]) -> type:
+        custom_config = attrs.pop("Config", {})
+
+        # merge with default configuration
+        config = deepcopy(default_model_config)
+        config.update(custom_config)
+
+        # create the class and apply the Pydantic dataclass decorator
+        new_cls = super().__new__(cls, name, bases, attrs)  # type: ignore[misc]
+        return pydataclass(new_cls, config=config)
+
+
+class Dataclass(DataclassBase, metaclass=DataclassMeta):
+    """Unified base class for dataclasses with Pydantic features."""
+
+    pass
 
 
 class ResourceModel(BaseModel):
