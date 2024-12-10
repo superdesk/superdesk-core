@@ -436,9 +436,9 @@ class Styles(BasePackageElement):
             },
         )
         properties = etree.SubElement(paragraphstyle, "Properties")
-        etree.SubElement(properties, "BasedOn", attrib={"type": "string"}).text = (
-            "ParagraphStyle/$ID/NormalParagraphStyle"
-        )
+        etree.SubElement(
+            properties, "BasedOn", attrib={"type": "string"}
+        ).text = "ParagraphStyle/$ID/NormalParagraphStyle"
         etree.SubElement(properties, "PreviewColor", attrib={"type": "enumeration"}).text = "Nothing"
         etree.SubElement(properties, "ParagraphShadingColor", attrib={"type": "object"}).text = "Color/Black"
         etree.SubElement(properties, "Leading", attrib={"type": "unit"}).text = "40"
@@ -456,9 +456,9 @@ class Styles(BasePackageElement):
             },
         )
         properties = etree.SubElement(paragraphstyle, "Properties")
-        etree.SubElement(properties, "BasedOn", attrib={"type": "string"}).text = (
-            "ParagraphStyle/$ID/NormalParagraphStyle"
-        )
+        etree.SubElement(
+            properties, "BasedOn", attrib={"type": "string"}
+        ).text = "ParagraphStyle/$ID/NormalParagraphStyle"
         etree.SubElement(properties, "PreviewColor", attrib={"type": "enumeration"}).text = "Nothing"
         etree.SubElement(properties, "ParagraphShadingColor", attrib={"type": "object"}).text = "Color/Black"
         etree.SubElement(properties, "Leading", attrib={"type": "unit"}).text = "30"
@@ -476,9 +476,9 @@ class Styles(BasePackageElement):
             },
         )
         properties = etree.SubElement(paragraphstyle, "Properties")
-        etree.SubElement(properties, "BasedOn", attrib={"type": "string"}).text = (
-            "ParagraphStyle/$ID/NormalParagraphStyle"
-        )
+        etree.SubElement(
+            properties, "BasedOn", attrib={"type": "string"}
+        ).text = "ParagraphStyle/$ID/NormalParagraphStyle"
         etree.SubElement(properties, "PreviewColor", attrib={"type": "enumeration"}).text = "Nothing"
         etree.SubElement(properties, "ParagraphShadingColor", attrib={"type": "object"}).text = "Color/Black"
         etree.SubElement(properties, "Leading", attrib={"type": "unit"}).text = "20"
@@ -496,9 +496,9 @@ class Styles(BasePackageElement):
             },
         )
         properties = etree.SubElement(paragraphstyle, "Properties")
-        etree.SubElement(properties, "BasedOn", attrib={"type": "string"}).text = (
-            "ParagraphStyle/$ID/NormalParagraphStyle"
-        )
+        etree.SubElement(
+            properties, "BasedOn", attrib={"type": "string"}
+        ).text = "ParagraphStyle/$ID/NormalParagraphStyle"
         etree.SubElement(properties, "PreviewColor", attrib={"type": "enumeration"}).text = "Nothing"
         etree.SubElement(properties, "ParagraphShadingColor", attrib={"type": "object"}).text = "Color/Black"
         etree.SubElement(properties, "Leading", attrib={"type": "unit"}).text = "14"
@@ -516,9 +516,9 @@ class Styles(BasePackageElement):
             },
         )
         properties = etree.SubElement(paragraphstyle, "Properties")
-        etree.SubElement(properties, "BasedOn", attrib={"type": "string"}).text = (
-            "ParagraphStyle/$ID/NormalParagraphStyle"
-        )
+        etree.SubElement(
+            properties, "BasedOn", attrib={"type": "string"}
+        ).text = "ParagraphStyle/$ID/NormalParagraphStyle"
         etree.SubElement(properties, "PreviewColor", attrib={"type": "enumeration"}).text = "Nothing"
         etree.SubElement(properties, "ParagraphShadingColor", attrib={"type": "object"}).text = "Color/Black"
         etree.SubElement(properties, "Leading", attrib={"type": "unit"}).text = "11"
@@ -536,9 +536,9 @@ class Styles(BasePackageElement):
             },
         )
         properties = etree.SubElement(paragraphstyle, "Properties")
-        etree.SubElement(properties, "BasedOn", attrib={"type": "string"}).text = (
-            "ParagraphStyle/$ID/NormalParagraphStyle"
-        )
+        etree.SubElement(
+            properties, "BasedOn", attrib={"type": "string"}
+        ).text = "ParagraphStyle/$ID/NormalParagraphStyle"
         etree.SubElement(properties, "PreviewColor", attrib={"type": "enumeration"}).text = "Nothing"
         etree.SubElement(properties, "ParagraphShadingColor", attrib={"type": "object"}).text = "Color/Black"
         etree.SubElement(properties, "Leading", attrib={"type": "unit"}).text = "9"
@@ -674,9 +674,9 @@ class Styles(BasePackageElement):
             },
         )
         properties = etree.SubElement(paragraphstyle, "Properties")
-        etree.SubElement(properties, "BasedOn", attrib={"type": "string"}).text = (
-            "ParagraphStyle/$ID/NormalParagraphStyle"
-        )
+        etree.SubElement(
+            properties, "BasedOn", attrib={"type": "string"}
+        ).text = "ParagraphStyle/$ID/NormalParagraphStyle"
         etree.SubElement(properties, "PreviewColor", attrib={"type": "enumeration"}).text = "Nothing"
         etree.SubElement(properties, "ParagraphShadingColor", attrib={"type": "object"}).text = "Color/Black"
         etree.SubElement(properties, "Leading", attrib={"type": "unit"}).text = "48"
@@ -695,9 +695,9 @@ class Styles(BasePackageElement):
             },
         )
         properties = etree.SubElement(paragraphstyle, "Properties")
-        etree.SubElement(properties, "BasedOn", attrib={"type": "string"}).text = (
-            "ParagraphStyle/$ID/NormalParagraphStyle"
-        )
+        etree.SubElement(
+            properties, "BasedOn", attrib={"type": "string"}
+        ).text = "ParagraphStyle/$ID/NormalParagraphStyle"
         etree.SubElement(properties, "PreviewColor", attrib={"type": "enumeration"}).text = "Nothing"
         etree.SubElement(properties, "ParagraphShadingColor", attrib={"type": "object"}).text = "Color/Black"
         etree.SubElement(properties, "Leading", attrib={"type": "unit"}).text = "20"

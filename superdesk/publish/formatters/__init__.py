@@ -150,6 +150,7 @@ def get_formatter(format_type: str, article: dict) -> Formatter | None:
     for formatter_instance in get_all_formatters():
         if formatter_instance.can_format(format_type, article):
             return formatter_instance
+    return None
 
 
 def get_all_formatters() -> List[Formatter]:

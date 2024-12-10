@@ -11,7 +11,6 @@
 import io
 import json
 import logging
-from typing import cast
 import elasticapm
 import content_api
 
@@ -515,34 +514,37 @@ class EnqueueService:
                         if formatted_docs is None:
                             # Either caching is not available for this formatter, or it's the first time that we format
                             # this document.
-                            formatted_docs = formatter.format(
+                            formatted_docs = []
+                            format_ret = formatter.format(
                                 self.filter_document(doc) if embed_package_items else filtered_document.copy(),
                                 subscriber,
                                 subscriber_codes.get(subscriber[ID_FIELD]),
                             )
 
-                            for idx, publish_data in enumerate(formatted_docs):
+                            for publish_data in format_ret:
                                 if not isinstance(publish_data, dict):
                                     pub_seq_num, formatted_doc = publish_data
-                                    formatted_docs[idx] = {
-                                        "published_seq_num": pub_seq_num,
-                                        "formatted_item": formatted_doc,
-                                    }
+                                    formatted_docs.append(
+                                        {
+                                            "published_seq_num": pub_seq_num,
+                                            "formatted_item": formatted_doc,
+                                        }
+                                    )
                                 else:
                                     assert (
                                         "published_seq_num" in publish_data and "formatted_item" in publish_data
                                     ), "missing keys in publish_data"
-
-                            formatted_docs = cast(list[dict], formatted_docs)
+                                    formatted_docs.append(publish_data)
 
                             if formatter.use_cache:
                                 cache[(formatter, doc[ID_FIELD])] = formatted_docs
                         else:
                             # We have cached documents, we still need to update ``published_seq_num``.
                             resource_service = superdesk.get_resource_service("subscribers")
-                            published_seq_num = resource_service.generate_sequence_number(subscriber)
-                            for formatted_doc in formatted_docs:
-                                formatted_doc["publish_seq_num"] = published_seq_num
+                            published_seq_num = resource_service.generate_sequence_number(subscriber)  # type: ignore
+
+                            for doc in formatted_docs:
+                                doc["publish_seq_num"] = published_seq_num
 
                         for publish_queue_item in formatted_docs:
                             publish_queue_item["item_id"] = doc["item_id"]

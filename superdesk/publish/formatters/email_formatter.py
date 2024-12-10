@@ -9,6 +9,7 @@
 # at https://www.sourcefabric.org/superdesk/license
 
 import json
+from typing import Any
 import superdesk
 
 from superdesk.publish.formatters import Formatter
@@ -55,11 +56,11 @@ class EmailFormatter(Formatter):
             formatted_article["body_html"] = sd_etree.to_string(body_html_elem)
 
     # TODO-ASYNC: Support async formatters in publishing code
-    async def format(self, article: dict, subscriber: dict, codes: list | None = None) -> list[tuple[int, str] | dict]:
+    async def format(self, article: dict, subscriber: dict, codes: list | None = None) -> list[tuple[int, str] | dict]:  # type: ignore
         formatted_article = deepcopy(article)
         remove_all_embeds(formatted_article)
         pub_seq_num = superdesk.get_resource_service("subscribers").generate_sequence_number(subscriber)
-        doc = {}
+        doc: dict[str, Any] = {}
         try:
             if formatted_article.get(FORMAT) == FORMATS.HTML:
                 if formatted_article.get("dateline", {}).get("text"):
