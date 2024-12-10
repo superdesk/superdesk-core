@@ -130,6 +130,15 @@ class PreferencesResource(Resource):
     )
 
     superdesk.register_default_user_preference(
+        "application:theme",
+        {
+            "type": "string",
+            "allowed": ["light-ui", "dark-ui"],
+            "theme": "light-ui",
+        },
+    )
+
+    superdesk.register_default_user_preference(
         "singleline:view",
         {
             "type": "bool",
