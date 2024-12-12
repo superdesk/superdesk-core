@@ -1,7 +1,9 @@
 from typing import Any
+from copy import deepcopy
 from typing_extensions import Self, override
-
 from pydantic import BaseModel as PydanticModel, AliasChoices
+
+from superdesk.utils import merge_dicts_deep
 
 from .web import Request
 
@@ -118,3 +120,21 @@ class BaseModel(PydanticModel):
         default_params: dict[str, Any] = {"by_alias": True, "exclude_unset": True}
         default_params.update(kwargs)
         return self.model_dump_json(**default_params)
+
+    def clone_with(self, updates: dict[str, Any]) -> Self:
+        """
+        Deeply clones the instance and applies updates with proper validation.
+
+        Addresses limitations of Pydantic's `model_copy`, which doesn't handle
+        nested data classes or validate updates the given updates.
+
+        Args:
+            updates (dict[str, Any]): Attributes to update in the cloned instance.
+
+        Returns:
+            Self: A new instance with the applied updates.
+        """
+
+        cloned_data = deepcopy(self.to_dict())
+        cloned_data = dict(merge_dicts_deep(cloned_data, updates))
+        return self.from_dict(cloned_data)
