@@ -85,13 +85,17 @@ class AuthService(BaseService):
         :param doc: A deleted auth doc AKA a session
         :return:
         """
-        # Clear the session data when session has ended
-        flask.session.pop("session_token", None)
+        is_last_session = False
+        if flask.request:
+            # Clear the session data when session has ended
+            flask.session.pop("session_token", None)
+            sessions = self.get(req=None, lookup={"user": doc["user"]})
+            is_last_session = not sessions.count()
 
         # notify that the session has ended
-        sessions = self.get(req=None, lookup={"user": doc["user"]})
-        app.on_session_end(doc["user"], doc["_id"], is_last_session=not sessions.count())
-        self.set_user_last_activity(doc["user"], done=True)
+        app.on_session_end(doc["user"], doc["_id"], is_last_session=is_last_session)
+        if is_last_session:
+            self.set_user_last_activity(doc["user"], done=True)
 
     def is_authorized(self, **kwargs) -> bool:
         """
