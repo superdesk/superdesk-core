@@ -33,6 +33,9 @@ class NewsML12Formatter(Formatter):
     NewsML 1.2 Formatter
     """
 
+    # We can't cache due to the use of publish_sequence_no in formatted output.
+    use_cache = False
+
     XML_ROOT = '<?xml version="1.0"?><!DOCTYPE NewsML SYSTEM "http://www.provider.com/dtd/NewsML_1.2.dtd">'
     newml_content_type = {
         CONTENT_TYPE.PICTURE: "Photo",
@@ -48,7 +51,7 @@ class NewsML12Formatter(Formatter):
     name = "NewsML 1.2"
     type = "newsml12"
 
-    def format(self, article, subscriber, codes=None):
+    def format(self, article: dict, subscriber: dict, codes: list | None = None) -> list[tuple[int, str] | dict]:
         """
         Create article in NewsML1.2 format
 

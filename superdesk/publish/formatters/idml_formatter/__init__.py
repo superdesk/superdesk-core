@@ -23,7 +23,7 @@ class IDMLFormatter(Formatter):
         super(self.__class__, self).__init__()
         self.format_type = "idml"
 
-    def format(self, article, subscriber, codes=None):
+    def format(self, article: dict, subscriber: dict, codes: list | None = None) -> list[tuple[int, str] | dict]:
         try:
             publish_seq_num = superdesk.get_resource_service("subscribers").generate_sequence_number(subscriber)
             idml_bytes = Converter().create_idml(article)

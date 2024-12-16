@@ -29,6 +29,9 @@ class NITFFormatter(Formatter):
     Format items to `NITF <https://iptc.org/standards/nitf/>`_ version *3.6*.
     """
 
+    # We can't use cache due to use of subscriber for formatting.
+    use_cache = False
+
     XML_ROOT = '<?xml version="1.0"?>'
     ENCODING = "UTF-8"
 
@@ -135,7 +138,7 @@ class NITFFormatter(Formatter):
             "style": {"nitf": EraseElement},  # <style> may be there in case of bad paste
         }
 
-    def format(self, article, subscriber, codes=None):
+    def format(self, article: dict, subscriber: dict, codes: list | None = None) -> list[tuple[int, str] | dict]:
         try:
             pub_seq_num = superdesk.get_resource_service("subscribers").generate_sequence_number(subscriber)
 

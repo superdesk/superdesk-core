@@ -11,7 +11,7 @@
 import logging
 
 from lxml import etree
-from typing import List, Optional, Type
+from typing import List, Type
 from superdesk.metadata.item import ITEM_TYPE, CONTENT_TYPE, FORMATS, FORMAT
 from superdesk.etree import parse_html
 from superdesk.text_utils import get_text
@@ -29,7 +29,9 @@ class Formatter:
     # If name is set it will be visible in UI.
     # Set to `None` for base classes which are
     # extended later and shouldn't be used on its own.
-    name: Optional[str]
+    name: str | None
+    #: If set, formatted article will be re-used between destinations and subscribers.
+    use_cache: bool = True
 
     def __init__(self) -> None:
         self.can_preview = False
@@ -41,8 +43,16 @@ class Formatter:
         super().__init_subclass__(**kwargs)
         formatters.append(cls)
 
-    def format(self, article, subscriber, codes=None):
-        """Formats the article and returns the transformed string"""
+    def format(self, article: dict, subscriber: dict, codes: list | None = None) -> list[tuple[int, str] | dict]:
+        """Formats the article.
+
+        :param article: Article to format.
+        :param subscriber: Subscriber to the article.
+        :param codes: Selector codes.
+        :return: list of formatted article, either as a tuple of publish sequence number
+            and formatted article, or as a dict
+        :raises FormatterError: if the formatter fails to format an article
+        """
         raise NotImplementedError()
 
     def export(self, article, subscriber, codes=None):
@@ -136,10 +146,11 @@ class Formatter:
         self.subscriber = subscriber
 
 
-def get_formatter(format_type: str, article):
+def get_formatter(format_type: str, article: dict) -> Formatter | None:
     for formatter_instance in get_all_formatters():
         if formatter_instance.can_format(format_type, article):
             return formatter_instance
+    return None
 
 
 def get_all_formatters() -> List[Formatter]:
