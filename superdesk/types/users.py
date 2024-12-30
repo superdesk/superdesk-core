@@ -39,7 +39,7 @@ class UsersResourceModel(ResourceModel):
     user_info: dict[str, Any] = Field(default_factory=dict)
     picture_url: str | None = None
     avatar: Annotated[ObjectId, validate_data_relation_async("uploads")] | None = None
-    avatar_renditions: dict[str, Any] = Field(default_factory=dict)
+    avatar_renditions: dict[str, Any] | None = Field(default=None)
     role: Annotated[ObjectId, validate_data_relation_async("roles")]
     privileges: dict[str, Any] = Field(default_factory=dict)
     workspace: dict[str, Any] = Field(default_factory=dict)
