@@ -1140,3 +1140,9 @@ AP_MEDIA_API_VERIFY_SSL = strtobool(env("AP_MEDIA_API_VERIFY_SSL", "true"))
 #: .. versionadded:: 2.8
 #:
 PICTURE_METADATA_MAPPING = {}
+
+#: Enable broadcast feature
+#:
+#: .. versionadded:: 2.8
+#:
+BROADCAST_ENABLED = strtobool(env("BROADCAST_ENABLED", "true"))
