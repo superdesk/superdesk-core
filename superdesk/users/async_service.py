@@ -140,7 +140,7 @@ def get_sign_off(user):
     return user[SIGN_OFF]
 
 
-class UsersService(AsyncResourceService[UsersResourceModel]):
+class UsersAsyncService(AsyncResourceService[UsersResourceModel]):
     _updating_stage_visibility = True
 
     async def __is_invalid_operation(
@@ -498,7 +498,7 @@ class UsersService(AsyncResourceService[UsersResourceModel]):
         self._updating_stage_visibility = True
 
 
-class DBUsersService(UsersService):
+class DBUsersAsyncService(UsersAsyncService):
     """
     Async Service class for UsersResource and should be used when AD is inactive.
     """

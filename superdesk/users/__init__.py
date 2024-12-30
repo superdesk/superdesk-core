@@ -11,9 +11,11 @@
 from quart_babel import lazy_gettext
 import superdesk
 from apps import auth
+from superdesk.core.module import Module
 
 from .users import UsersResource
 from .services import UsersService, DBUsersService, is_admin  # noqa
+from .module import users_resource_config
 
 
 def init_app(app) -> None:
@@ -43,3 +45,6 @@ def get_user_from_request(required=False):
     """
 
     return auth.get_user(required)
+
+
+module = Module(name="superdesk.users", resources=[users_resource_config])
