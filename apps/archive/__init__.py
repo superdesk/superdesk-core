@@ -18,12 +18,14 @@ import superdesk
 from superdesk.celery_app import celery
 
 from .archive import (
+    ArchiveInternalResource,
     ArchiveResource,
     ArchiveService,
     ArchiveVersionsResource,
     ArchiveVersionsService,
     AutoSaveResource,
     ArchiveSaveService,
+    archive_internal_service,
 )
 from .commands import RemoveExpiredContent, LOCK_EXPIRY
 from .ingest import IngestResource, AppIngestService
@@ -96,6 +98,9 @@ def init_app(app) -> None:
     endpoint_name = "news"
     service = NewsService(endpoint_name, backend=superdesk.get_backend())
     NewsResource(endpoint_name, app=app, service=service)
+
+    endpoint_name = "archive_internal"
+    ArchiveInternalResource(endpoint_name, app=app, service=archive_internal_service)
 
     from apps.item_autosave.components.item_autosave import ItemAutosave
     from apps.item_autosave.models.item_autosave import ItemAutosaveModel
