@@ -1,0 +1,290 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<newsMessage xmlns="http://iptc.org/std/nar/2006-10-01/" xmlns:dpa="http://www.dpa.com/iptc/nar/2008-12-01/" xmlns:h="http://www.w3.org/1999/xhtml" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <header>
+    <sent>2022-10-11T11:14:42+02:00</sent>
+    <catalogRef href="http://www.iptc.org/std/catalog/catalog.IPTC-G2-Standards_17.xml"/>
+    <catalogRef href="http://g2.dpa.com/catalog/catalog001.xml"/>
+    <origin>ines</origin>
+  </header>
+  <itemSet>
+    <newsItem conformance="power" guid="urn:newsml:dpa.com:20090101:221011-930-4303" standard="NewsML-G2" standardversion="2.23" version="1" xml:lang="de">
+      <catalogRef href="http://g2.dpa.com/catalog/catalog001.xml"/>
+      <catalogRef href="http://www.iptc.org/std/catalog/catalog.IPTC-G2-Standards_25.xml"/>
+      <rightsInfo>
+        <copyrightHolder qcode="nprov:dpa">
+          <name xml:lang="en">Deutsche Presse-Agentur GmbH</name>
+          <definition xml:lang="de">dpa - Deutsche Presse Agentur GmbH / Handelsregister Hamburg, HRB 68431</definition>
+        </copyrightHolder>
+        <copyrightNotice xml:lang="de">Copyright 2022, dpa (www.dpa.de). Alle Rechte vorbehalten</copyrightNotice>
+        <copyrightNotice xml:lang="en">(c) 2022 dpa Deutsche Presse Agentur GmbH</copyrightNotice>
+        <usageTerms xml:lang="de">Nutzung nur nach schriftlicher Vereinbarung mit dpa</usageTerms>
+        <usageTerms xml:lang="en">Use only with the written agreement with dpa</usageTerms>
+      </rightsInfo>
+      <itemMeta>
+        <itemClass qcode="ninat:text">
+          <name xml:lang="en">Text Item(s)</name>
+        </itemClass>
+        <provider qcode="nprov:dpa">
+          <name xml:lang="en">Deutsche Presse-Agentur GmbH</name>
+        </provider>
+        <versionCreated>2022-10-11T11:14:42+02:00</versionCreated>
+        <pubStatus qcode="stat:usable">
+          <name xml:lang="en">Usable</name>
+        </pubStatus>
+        <generator versioninfo="2.0.0">service-ines</generator>
+        <profile versioninfo="2.0.0">dpa-G2</profile>
+        <service qcode="dpasrv:edi">
+          <name role="nrol:full">Europadienst auf AFP ECS uplink</name>
+          <name role="nrol:mnemonic">edi</name>
+        </service>
+        <service qcode="dpasrv:erd">
+          <name role="nrol:display" xml:lang="de">dpa-Europadienst</name>
+          <name role="nrol:mnemonic">erd</name>
+        </service>
+        <service qcode="dpasrv:edt">
+          <name role="nrol:display" xml:lang="de">dpa-Europadienst</name>
+          <name role="nrol:mnemonic">edt</name>
+        </service>
+        <service qcode="dpasrv:hes">
+          <name role="nrol:full">Landesdienst Hessen</name>
+          <name role="nrol:mnemonic">hes</name>
+        </service>
+        <service qcode="dpasrv:bdt">
+          <name role="nrol:full">Basisdienst</name>
+          <name role="nrol:mnemonic">bdt</name>
+        </service>
+        <service qcode="dpasrv:bid">
+          <name role="nrol:full">Basisdienst Inland</name>
+          <name role="nrol:mnemonic">bid</name>
+        </service>
+        <edNote role="dpaednoterole:notepad">
+          <section xmlns="http://www.w3.org/1999/xhtml" class="notepad">
+            <header>
+              <h3>Notizblock</h3>
+            </header>
+            <section class="np-public">
+              <h4>Redaktionelle Hinweise</h4>
+              <ul>
+                <li>Zu diesem Text finden Sie folgende Bilder im dpa Bildangebot:</li>
+                <li>Eintracht Frankfurt - Martin Hinteregger (1 Bild)</li>
+                <li>West Ham United - Eintracht Frankfurt (1 Bild)</li>
+              </ul>
+              <h4>Internet</h4>
+              <ul>
+                <li>
+                  <a href="http://dpaq.de/2N2EL">Champions-League-Homepage</a>
+                </li>
+                <li>
+                  <a href="http://dpaq.de/Ivz8s">Daten zum Spiel</a>
+                </li>
+                <li>
+                  <a href="http://dpaq.de/BTd3n">Tabelle der Gruppe D</a>
+                </li>
+                <li>
+                  <a href="http://dpaq.de/Lh9oi">Kader von Eintracht Frankfurt</a>
+                </li>
+                <li>
+                  <a href="http://dpaq.de/KTUA4">Kader von Tottenham Hotspur</a>
+                </li>
+              </ul>
+              <h4>Orte</h4>
+              <ul>
+                <li>[Tottenham Hotspur Stadium](High Road 782, N17 , Vereinigtes Königreich)</li>
+              </ul>
+            </section>
+            <section class="np-nonpublic">
+              <p class="np-constraint">Die folgenden Informationen sind nicht zur Veröffentlichung bestimmt</p>
+              <h4>Kontakte</h4>
+              <ul>
+                <li>Autor/in: Patrick Reichardt (London), <a href="mailto:reichardt.patrick@dpa.com">reichardt.patrick@dpa.com</a></li>
+                <li>Redaktion: Sandra Degenhardt (Berlin), 030285232232, <a href="mailto:sport@dpa.com">sport@dpa.com</a></li>
+              </ul>
+            </section>
+            <p class="closingline">dpa pre yyhe n1 deg</p>
+          </section>
+        </edNote>
+        <edNote role="dpaednoterole:closingline">dpa pre yyhe n1 deg</edNote>
+        <edNote role="dpaednoterole:editorialnote">Zu diesem Text finden Sie folgende Bilder im dpa Bildangebot:</edNote>
+        <edNote role="dpaednoterole:editorialnote">Eintracht Frankfurt - Martin Hinteregger (1 Bild)</edNote>
+        <edNote role="dpaednoterole:editorialnote">West Ham United - Eintracht Frankfurt (1 Bild)</edNote>
+        <edNote pubconstraint="dpapconstraint:nonpublic" role="dpaednoterole:dpacontacts">Autor/in: Patrick Reichardt (London), reichardt.patrick@dpa.com</edNote>
+        <edNote pubconstraint="dpapconstraint:nonpublic" role="dpaednoterole:dpacontacts">Redaktion: Sandra Degenhardt (Berlin), 030285232232, sport@dpa.com</edNote>
+        <edNote role="dpaednoterole:picture">Foto Archiv</edNote>
+        <link href="https://de.uefa.com/uefachampionsleague/" rank="1" rel="irel:seeAlso">
+          <title>Champions-League-Homepage</title>
+          <link href="http://dpaq.de/2N2EL" rel="dparel:shorturl"/>
+        </link>
+        <link href="https://de.uefa.com/uefachampionsleague/match/2035695--tottenham-vs-frankfurt/" rank="2" rel="irel:seeAlso">
+          <title>Daten zum Spiel</title>
+          <link href="http://dpaq.de/Ivz8s" rel="dparel:shorturl"/>
+        </link>
+        <link href="https://de.uefa.com/uefachampionsleague/match/2035695--tottenham-vs-frankfurt/standings/" rank="3" rel="irel:seeAlso">
+          <title>Tabelle der Gruppe D</title>
+          <link href="http://dpaq.de/BTd3n" rel="dparel:shorturl"/>
+        </link>
+        <link href="https://profis.eintracht.de/2022-2023/kader/" rank="4" rel="irel:seeAlso">
+          <title>Kader von Eintracht Frankfurt</title>
+          <link href="http://dpaq.de/Lh9oi" rel="dparel:shorturl"/>
+        </link>
+        <link href="https://www.tottenhamhotspur.com/teams/men/players/" rank="5" rel="irel:seeAlso">
+          <title>Kader von Tottenham Hotspur</title>
+          <link href="http://dpaq.de/KTUA4" rel="dparel:shorturl"/>
+        </link>
+      </itemMeta>
+      <contentMeta>
+        <urgency>4</urgency>
+        <located>
+          <name>London</name>
+        </located>
+        <creator qcode="dpa-ad:degenhardt.sandra">
+          <name>degenhardt.sandra</name>
+        </creator>
+        <contributor qcode="dpa-ad:degenhardt.sandra">
+          <name>degenhardt.sandra</name>
+        </contributor>
+        <altId environment="dpasrv:bid" type="dpa7901rendition:iptc7901Id">bid:0125:4:sp:226:dpa:0525::20221011111449MESZ</altId>
+        <altId environment="dpasrv:bdt" type="dpa7901rendition:iptc7901Id">bdt:0173:4:sp:226:dpa:0525::20221011111449MESZ</altId>
+        <altId environment="dpasrv:hes" type="dpa7901rendition:iptc7901Id">hes:0019:4:sp:226:lhe:0525::20221011111449MESZ</altId>
+        <altId environment="dpasrv:edt" type="dpa7901rendition:iptc7901Id">edt:0102:4:sp:226:cccce dpa-euro:0525::20221011111449MESZ</altId>
+        <altId environment="dpasrv:erd" type="dpa7901rendition:iptc7901Id">erd:0103:4:sp:226:dpa-euro:0525::20221011111449MESZ</altId>
+        <altId environment="dpasrv:edi" type="dpa7901rendition:iptc7901Id">edi:0102:4:sp:226:cccce dpa-euro:0525::20221011111449MESZ</altId>
+        <genre qcode="dpatextgenre:7">
+          <name xml:lang="de">Extra</name>
+        </genre>
+        <subject qcode="dpacountry:1" rank="1" type="cpnat:geoArea">
+          <name role="nrol:display" xml:lang="de">Deutschland</name>
+          <name role="nrol:short" xml:lang="de">DEU</name>
+          <sameAs qcode="wikidata:Q183">
+            <name role="nrol:display" xml:lang="de">Deutschland</name>
+            <name role="nrol:short" xml:lang="de">DEU</name>
+          </sameAs>
+          <sameAs qcode="iso3166-1a2:DE">
+            <name role="nrol:mnemonic">DE</name>
+          </sameAs>
+          <sameAs qcode="iso3166-1a3:DEU">
+            <name role="nrol:mnemonic">DEU</name>
+          </sameAs>
+          <broader qcode="dpageosbj:44">
+            <name role="nrol:display" xml:lang="de">Europa</name>
+          </broader>
+        </subject>
+        <subject qcode="dpaarea:7" rank="2" type="cpnat:geoArea">
+          <name xml:lang="de">Hessen</name>
+          <sameAs qcode="iso3166-1a2:DE-HE">
+            <name role="nrol:mnemonic">iso3166-1a2:DE-HE</name>
+          </sameAs>
+          <broader qcode="dpacountry:1">
+            <name role="nrol:display" xml:lang="de">Deutschland</name>
+            <name role="nrol:short" xml:lang="de">DEU</name>
+          </broader>
+        </subject>
+        <subject qcode="dpacountry:54" rank="3" type="cpnat:geoArea">
+          <name role="nrol:display" xml:lang="de">Großbritannien</name>
+          <name role="nrol:short" xml:lang="en">Britain</name>
+          <sameAs qcode="wikidata:Q145">
+            <name role="nrol:display" xml:lang="de">Großbritannien</name>
+            <name role="nrol:short" xml:lang="en">Britain</name>
+          </sameAs>
+          <sameAs qcode="iso3166-1a3:GBR">
+            <name role="nrol:mnemonic">GBR</name>
+          </sameAs>
+          <sameAs qcode="iso3166-1a2:GB">
+            <name role="nrol:mnemonic">GB</name>
+          </sameAs>
+          <broader qcode="dpageosbj:44">
+            <name role="nrol:display" xml:lang="de">Europa</name>
+          </broader>
+        </subject>
+        <subject qcode="dpacountry:196" rank="4" type="cpnat:geoArea">
+          <name role="nrol:display" xml:lang="de">International</name>
+          <sameAs qcode="dpageosbj:63">
+            <name role="nrol:display" xml:lang="de">International</name>
+          </sameAs>
+          <sameAs qcode="wikidata:Q1072012">
+            <name role="nrol:display" xml:lang="de">International</name>
+          </sameAs>
+        </subject>
+        <subject qcode="medtop:20001065" rank="1" type="dpatype:dpasubject">
+          <name xml:lang="de">Fußball</name>
+          <sameAs qcode="subj:15054000">
+            <name xml:lang="de">Fußball</name>
+          </sameAs>
+          <sameAs qcode="dpasubject:832">
+            <name xml:lang="de">Fußball</name>
+          </sameAs>
+          <sameAs qcode="dpax-apsubcat:SOC">
+            <name role="nrol:mnemonic">SOC</name>
+          </sameAs>
+          <broader qcode="medtop:20000822">
+            <name xml:lang="de">Disziplin</name>
+          </broader>
+        </subject>
+        <keyword rank="1">Champions League</keyword>
+        <keyword rank="2">Frankfurt</keyword>
+        <keyword rank="3">London</keyword>
+        <subject qcode="dpacat:sp" type="dpatype:category">
+          <name xml:lang="de">Sport</name>
+          <name role="nrol:mnemonic" xml:lang="de">sp</name>
+        </subject>
+        <headline rank="1">Eintracht in London: Hintereggers Tränen und Attacke auf Reporter</headline>
+        <dateline>London (dpa) - </dateline>
+        <creditline>dpa</creditline>
+        <subject literal="ID0E2E" type="cpnat:poi">
+          <name>Tottenham Hotspur Stadium, High Road 782, N17 , Vereinigtes Königreich</name>
+        </subject>
+        <language tag="de"/>
+      </contentMeta>
+      <assert qcode="dpapconstraint:nonpublic">
+        <name xml:lang="de">nicht öffentlich</name>
+      </assert>
+      <assert literal="ID0E2E">
+        <POIDetails>
+          <position latitude="51.60470" longitude="-0.06809"/>
+          <address>
+            <line role="nrol:display">Tottenham Hotspur Stadium</line>
+            <line role="nrol:full">High Road 782, N17 , Vereinigtes Königreich</line>
+            <area role="dpaarearole:area">
+              <name>782 High Rd, London N17, Vereinigtes Königreich</name>
+            </area>
+            <country qcode="dpacountry:54" type="cpnat:geoArea">
+              <name role="nrol:display" xml:lang="de">Großbritannien</name>
+              <name role="nrol:short" xml:lang="en">Britain</name>
+              <sameAs qcode="iso3166-1a2:GB">
+                <name role="nrol:mnemonic">GB</name>
+              </sameAs>
+              <sameAs qcode="wikidata:Q145">
+                <name role="nrol:display" xml:lang="de">Großbritannien</name>
+                <name role="nrol:short" xml:lang="en">Britain</name>
+              </sameAs>
+              <sameAs qcode="iso3166-1a3:GBR">
+                <name role="nrol:mnemonic">GBR</name>
+              </sameAs>
+              <broader qcode="dpageosbj:44">
+                <name role="nrol:display" xml:lang="de">Europa</name>
+              </broader>
+            </country>
+          </address>
+        </POIDetails>
+      </assert>
+      <contentSet>
+        <inlineXML contenttype="application/xhtml+xml" wordcount="226">
+          <html xmlns="http://www.w3.org/1999/xhtml">
+            <head><title>Eintracht in London: Hintereggers Tränen und Attacke auf Reporter</title><meta charset="utf-8"/></head><body><header>  <ul class="slugline">    <li class="subject" data-qcode="medtop:20001065">Fußball</li>
+    <li class="geo" data-qcode="dpacountry:1">Deutschland</li>
+    <li class="geo" data-qcode="dpaarea:7">Hessen</li>
+    <li class="geo" data-qcode="dpacountry:54">Großbritannien</li>
+    <li class="geo" data-qcode="dpacountry:196">International</li>
+    <li class="keyword">Champions League</li>
+    <li class="keyword">Frankfurt</li>
+    <li class="keyword">London</li>
+  </ul>
+  <time class="publicationDate" data-datetime="2022-10-11T11:14:42+02:00">11.10.2022 11:14</time>
+  <p class="genre dpatextgenre-7">Extra</p>
+  <h1>Eintracht in London: Hintereggers Tränen und Attacke auf Reporter</h1>
+</header><section class="main dpatextgenre-7"><p><span class="dateline">London <span class="credit">(dpa)</span> - </span>2019 gab es bittere Tränen in der Kurve, 2022 erst mächtig Wut auf englische Fans und eine Woche später ausgelassenen Jubel: Für Eintracht Frankfurt ist London in den vergangenen Jahren zu einem Standard-Reiseziel im europäischen Fußball-Wettbewerb geworden. Bevor es am Mittwochabend (21.00 Uhr/DAZN) bei Tottenham Hotspur um wichtige Punkte in der Champions League geht, wird sich die Reisegruppe um Torhüter Kevin Trapp und Routinier Makoto Hasebe bestimmt an die vergangenen London-Reisen erinnern.</p><p>Beim Topclub FC Chelsea wollte die damals von Adi Hütter trainierte Eintracht in der Saison 2018/19 ihre Erfolgsserie fortsetzen und nach Inter Mailand und Schachtjor Donezk auch die «Blues» aus der Europa League werfen. Nach zwei 1:1 ging es an der Stamford Bridge in die Verlängerung und ins Elfmeterschießen. Der inzwischen abgetretene Martin Hinteregger vergab vom Punkt, vergoss nach dem bitteren Aus Tränen und wurde anschließend in der Fankurve getröstet.</p><p>Sportlich weckt der 2:1-Erfolg im Halbfinal-Hinspiel bei West Ham United Ende April positive Erinnerungen - schließlich war er der Grundstein für den späteren Triumph in Sevilla. Doch eine Attacke von englischen Fans gegen zwei Journalisten des Hessischen Rundfunks trübte das Bild. Die Rundfunk-Reporter bekamen nach eigenen Angaben «mehrfach Faustschläge an den Hinterkopf, in den Nacken, in den Rücken». West Ham United machte die Täter später ausfindig. Eine Woche später gewann die Eintracht auch das Rückspiel und zog ins Endspiel ein.</p><p> </p></section></body>
+          </html>
+        </inlineXML>
+      </contentSet>
+    </newsItem>
+  </itemSet>
+</newsMessage>
