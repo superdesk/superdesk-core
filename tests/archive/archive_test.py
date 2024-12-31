@@ -459,7 +459,7 @@ class ArchiveTestCase(TestCase):
         for i in range(1000):
             items.append(
                 {
-                    "_id": generate_guid(type=GUID_TAG),
+                    "guid": generate_guid(type=GUID_TAG),
                     "type": "text",
                     "expiry": now - timedelta(days=1),
                     "task": {"desk": "foo"},
@@ -478,7 +478,7 @@ class ArchiveTestCase(TestCase):
         assert 1000 == counter
 
         counter = 0
-        ids = sorted([item["_id"] for item in items])
+        ids = sorted([item["guid"] for item in items])
         last_id = ids[499]
         for _items in service.get_expired_items(now, last_id=last_id):
             for item in _items:

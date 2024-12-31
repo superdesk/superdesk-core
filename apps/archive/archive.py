@@ -1178,33 +1178,47 @@ class ArchiveService(BaseService, HighlightsSearchMixin):
         """
         for i in range(app.config["MAX_EXPIRY_LOOPS"]):  # avoid blocking forever just in case
             query = {
-                "$and": [
-                    {"expiry": {"$lte": expiry_datetime}},
-                    {"$or": [{"task.desk": {"$ne": None}}, {ITEM_STATE: CONTENT_STATE.SPIKED, "task.desk": None}]},
-                ]
+                "bool": {
+                    "must": [
+                        {"range": {"expiry": {"lte": expiry_datetime}}},
+                        {
+                            "bool": {
+                                "should": [
+                                    {"exists": {"field": "task.desk"}},
+                                    {"term": {ITEM_STATE: CONTENT_STATE.SPIKED}},
+                                ],
+                            }
+                        },
+                    ],
+                    "must_not": [],
+                }
             }
 
             if invalid_only:
-                query["$and"].append({"expiry_status": "invalid"})
+                query["bool"]["must"].append({"term": {"expiry_status": "invalid"}})
             else:
-                query["$and"].append({"expiry_status": {"$ne": "invalid"}})
+                query["bool"]["must_not"].append({"term": {"expiry_status": "invalid"}})
 
-            if last_id:
-                query["$and"].append({"_id": {"$gt": last_id}})
+            if last_id:  # elastic does not support range query on _id, so using guid
+                query["bool"]["must"].append({"range": {"guid": {"gt": last_id}}})
 
-            req = ParsedRequest()
-            req.sort = "_id"
-            req.max_results = app.config["MAX_EXPIRY_QUERY_LIMIT"]
-            req.where = json.dumps(query)
+            source = {
+                "query": query,
+                "sort": [{"guid": "asc"}, {"versioncreated": "asc"}],
+                "size": app.config["MAX_EXPIRY_QUERY_LIMIT"],
+            }
 
-            items = list(self.get_from_mongo(req=req, lookup={}))
+            items = list(archive_internal_service.search(source))
 
             yield items  # we need to yield the empty list too to signal it's the end
 
             if not len(items):
                 break
             else:
-                last_id = items[-1]["_id"]
+                try:
+                    last_id = items[-1]["guid"]
+                except KeyError:
+                    pass
 
         else:
             logger.warning("get_expired_items did not finish in %d loops", app.config["MAX_EXPIRY_LOOPS"])
@@ -1442,6 +1456,28 @@ class ArchiveSaveService(BaseService):
     def on_fetched_item(self, item):
         item["_type"] = "archive"
         return item
+
+
+class ArchiveInternalResource(Resource):
+    """Archive Internal Resource without additional filtering."""
+
+    schema = item_schema()
+    datasource = {
+        "source": "archive",
+        "search_backend": "elastic",
+    }
+    resource_methods = []
+    item_methods = []
+    versioning = False
+    collation = False
+    internal_resource = True
+
+
+class ArchiveInternalService(BaseService):
+    pass
+
+
+archive_internal_service = ArchiveInternalService("archive_internal", backend=superdesk.get_backend())
 
 
 superdesk.workflow_state("in_progress")
