@@ -73,5 +73,15 @@ class DPAFeedParser(NewsMLTwoFeedParser):
 
             item["body_html"] = body_html
 
+    def parse_content_meta(self, tree, item):
+        self.parse_keywords(tree, item)
+        return super().parse_content_meta(tree, item)
+
+    def parse_keywords(self, tree, item):
+        item["keywords"] = []
+        meta = tree.find(self.qname("contentMeta"))
+        for keyword in meta.findall(self.qname("keyword")):
+            item["keywords"].append(keyword.text)
+
 
 register_feed_parser(DPAFeedParser.NAME, DPAFeedParser())

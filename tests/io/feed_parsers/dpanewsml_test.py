@@ -109,3 +109,7 @@ class DPANewsMLTestCase(TestCase):
     def test_priority(self):
         with self.app.app_context():
             self.assertEqual(self.item.get("priority"), 5)
+
+    def test_keywords(self):
+        with self.app.app_context():
+            self.assertEqual(self.item.get("keywords"), ["Champions League", "Frankfurt", "London"])
