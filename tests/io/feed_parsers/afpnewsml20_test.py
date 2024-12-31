@@ -8,13 +8,15 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
-import datetime
+
 import os
+import re
+import datetime
 import unittest
 from pytz import utc
 
 from superdesk.etree import etree
-from superdesk.io.feed_parsers.afp_newsml_2_0 import AFPNewsMLFeedParser
+from superdesk.io.feed_parsers.afp_newsml_1_2_new import AFPNewsMLFeedParser
 
 
 class TestCase(unittest.TestCase):
@@ -27,14 +29,14 @@ class TestCase(unittest.TestCase):
 
     def test_headline(self):
         self.assertEqual(
-            self.item.get("headline"), "DÃ©cÃ¨s de Naomi Musenga: l'opÃ©ratrice du Samu dÃ©finitivement condamnÃ©e"
+            self.item.get("headline"), "Décès de Naomi Musenga: l'opératrice du Samu définitivement condamnée"
         )
 
     def test_dateline(self):
         self.assertEqual(self.item.get("dateline", {}).get("text"), "Strasbourg, 10 juil 2024 (AFP)")
 
     def test_slugline(self):
-        self.assertEqual(self.item.get("slugline"), "procÃ¨s-santÃ©-secours")
+        self.assertEqual(self.item.get("slugline"), "procès-santé-secours")
 
     def test_byline(self):
         self.assertEqual(self.item.get("byline"), "")
@@ -53,5 +55,14 @@ class TestCase(unittest.TestCase):
         self.assertEqual(self.item.get("firstcreated"), datetime.datetime(2024, 7, 10, 12, 59, 2, tzinfo=utc))
         self.assertEqual(self.item.get("pubstatus"), "usable")
 
-    def test_content_is_text(self):
-        self.assertIsInstance(self.item.get("body_html"), type(""))
+    def test_body_content(self):
+        expected_output = (
+            "<p>L'opératrice du Samu condamnée pour non-assistance à personne en danger après avoir raillé "
+            "au téléphone Naomi Musenga, jeune femme de 22 ans décédée peu après à l'hôpital, a décidé de ne pas faire appel, "
+            "s'est félicité mercredi l'avocat de la famille Musenga., avait été condamnée à un an de prison avec sursis, le"
+            " 4 juillet, par le tribunal correctionnel de Strasbourg. Contacté par l'AFP, le cabinet d'avocats de Me Thomas Callen,"
+            " qui la défendait, a confirmé qu'elle n'interjetterait pas appel de cette condamnation.</p> <p>L'opératrice, Corinne M.</p>"
+        )
+
+        actual_output = re.sub(r"\s+", " ", self.item.get("body_html")).strip()
+        self.assertIn(expected_output, actual_output)

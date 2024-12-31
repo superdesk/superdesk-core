@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="iso-8859-1"?>
+<?xml version="1.0" encoding="UTF-8"?>
 <NewsML>
   <Catalog Href="http://www.afp.com/dtd/AFPCatalog.xml"/>
   <NewsEnvelope>
@@ -44,17 +44,8 @@
           <MediaType FormalName="Text"/>
           <Format FormalName="bcNITF2.5"/>
           <DataContent>
-            <p> L'opératrice du Samu condamnée pour non-assistance à personne en danger après avoir raillé au téléphone Naomi Musenga, jeune femme de 22 ans décédée peu après à l'hôpital, a décidé de ne pas faire appel, s'est félicité mercredi l'avocat de la famille Musenga.</p>
-            <p>"La famille de Naomi Musenga a pris connaissance de la volonté de Mme M., opératrice du Samu 67, de ne pas relever appel des condamnations prononcées à son encontre", a indiqué dans un communiqué le cabinet d'avocats Coubris &amp; Associés.</p>
-            <p>L'opératrice, Corinne M., avait été condamnée à un an de prison avec sursis, le 4 juillet, par le tribunal correctionnel de Strasbourg. Contacté par l'AFP, le cabinet d'avocats de Me Thomas Callen, qui la défendait, a confirmé qu'elle n'interjetterait pas appel de cette condamnation.</p>
-            <p>"Cette décision est accueillie avec un grand soulagement par les proches de la victime", a indiqué le cabinet Coubris &amp; Associés. Le volet pénal est clos mais "la procédure continuera à la rentrée prochaine, cette fois devant la justice administrative et à l'encontre des Hôpitaux universitaires de Strasbourg, afin d'envisager l'indemnisation de leurs préjudices", a-t-il précisé.</p>
-            <p>Mère d'une enfant de 18 mois, Naomi Musenga est décédée le 29 décembre 2017 à l'hôpital de Strasbourg après avoir été prise en charge avec "un retard global de près de 02H20", selon un rapport de l'Inspection générale des affaires sociales (Igas).</p>
-            <p>Se plaignant d'importantes douleurs au ventre, elle avait pris contact avec les pompiers qui avaient transféré l'appel au Samu.</p>
-            <p>"J'ai très mal au ventre", "je vais mourir...", avait expliqué Naomi Musenga, peinant à s'exprimer. "Oui vous allez mourir, certainement un jour comme tout le monde", avait rétorqué la régulatrice, avant de raccrocher.</p>
-            <p>Naomi Musenga avait finalement été dirigée vers SOS Médecins et hospitalisée mais n'avait pu être sauvée.</p>
-            <p>Selon l'enquête, son décès n'est pas lié au retard de prise en charge. </p>
-            <p>Après la mort de Naomi Musenga, une première expertise, dénoncée par sa famille, avait conclu à un décès consécutif à une "intoxication au paracétamol absorbé par automédication sur plusieurs jours". </p>
-            <p>Mais une deuxième expertise avait réfuté ces conclusions, évoquant un accident vasculaire digestif ayant entraîné une hémorragie.</p>
+            <p>L'opératrice du Samu condamnée pour non-assistance à personne en danger après avoir raillé au téléphone Naomi Musenga, jeune femme de 22 ans décédée peu après à l'hôpital, a décidé de ne pas faire appel, s'est félicité mercredi l'avocat de la famille Musenga., avait été condamnée à un an de prison avec sursis, le 4 juillet, par le tribunal correctionnel de Strasbourg. Contacté par l'AFP, le cabinet d'avocats de Me Thomas Callen, qui la défendait, a confirmé qu'elle n'interjetterait pas appel de cette condamnation.</p>
+            <p>L'opératrice, Corinne M.</p>
           </DataContent>
         </ContentItem>
       </NewsComponent>

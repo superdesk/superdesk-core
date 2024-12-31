@@ -33,9 +33,9 @@ class AFPNewsMLFeedParser(NewsMLOneFeedParser):
                 encoding="unicode",
             )
             .replace("<DataContent>", "")
+            .replace("</DataContent>", "")
             .strip()
         )
-        pass
 
 
 register_feed_parser(AFPNewsMLFeedParser.NAME, AFPNewsMLFeedParser())
