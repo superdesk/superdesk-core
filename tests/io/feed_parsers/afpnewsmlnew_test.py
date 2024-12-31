@@ -24,19 +24,20 @@ class TestCase(unittest.TestCase):
         dirname = os.path.dirname(os.path.realpath(__file__))
         fixture = os.path.join(dirname, "../fixtures", "afp20.xml")
         provider = {"name": "Test"}
-        with open(fixture, "rb") as f:
-            self.item = AFPNewsMLFeedParser().parse(etree.fromstring(f.read()), provider)
+        with open(fixture, "r", encoding="utf-8") as f:
+            xml_content = f.read().encode("iso-8859-1")
+            self.item = AFPNewsMLFeedParser().parse(etree.fromstring(xml_content), provider)
 
     def test_headline(self):
         self.assertEqual(
-            self.item.get("headline"), "DÃ©cÃ¨s de Naomi Musenga: l'opÃ©ratrice du Samu dÃ©finitivement condamnÃ©e"
+            self.item.get("headline"), "Décès de Naomi Musenga: l'opératrice du Samu définitivement condamnée"
         )
 
     def test_dateline(self):
         self.assertEqual(self.item.get("dateline", {}).get("text"), "Strasbourg, 10 juil 2024 (AFP)")
 
     def test_slugline(self):
-        self.assertEqual(self.item.get("slugline"), "procÃ¨s-santÃ©-secours")
+        self.assertEqual(self.item.get("slugline"), "procès-santé-secours")
 
     def test_byline(self):
         self.assertEqual(self.item.get("byline"), "")
@@ -57,12 +58,12 @@ class TestCase(unittest.TestCase):
 
     def test_body_content(self):
         expected_output = (
-            "<p>L'opÃ©ratrice du Samu condamnÃ©e pour non-assistance Ã personne en danger aprÃ¨s avoir raillÃ©"
-            " au tÃ©lÃ©phone Naomi Musenga, jeune femme de 22 ans dÃ©cÃ©dÃ©e peu aprÃ¨s Ã l'hÃ´pital, a dÃ©cidÃ© "
-            "de ne pas faire appel, s'est fÃ©licitÃ© mercredi l'avocat de la famille Musenga., avait Ã©tÃ© condamnÃ©e "
-            "Ã un an de prison avec sursis, le 4 juillet, par le tribunal correctionnel de Strasbourg. ContactÃ© par l'AFP, "
-            "le cabinet d'avocats de Me Thomas Callen, qui la dÃ©fendait, a confirmÃ© qu'elle n'interjetterait pas appel de cette "
-            "condamnation.</p> <p>L'opÃ©ratrice, Corinne M.</p>"
+            "<p>L'opératrice du Samu condamnée pour non-assistance à personne en danger après avoir raillé "
+            "au téléphone Naomi Musenga, jeune femme de 22 ans décédée peu après à l'hôpital, a décidé de ne pas faire appel, "
+            "s'est félicité mercredi l'avocat de la famille Musenga., avait été condamnée à un an de prison avec sursis, le"
+            " 4 juillet, par le tribunal correctionnel de Strasbourg. Contacté par l'AFP, le cabinet d'avocats de Me Thomas Callen,"
+            " qui la défendait, a confirmé qu'elle n'interjetterait pas appel de cette condamnation.</p> <p>L'opératrice, Corinne M.</p>"
         )
         actual_output = re.sub(r"\s+", " ", self.item.get("body_html")).strip()
+        print(actual_output)
         self.assertIn(expected_output, actual_output)
