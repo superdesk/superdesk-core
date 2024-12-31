@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="UTF-8"?>
+<?xml version="1.0" encoding="iso-8859-1"?>
 <NewsML>
   <Catalog Href="http://www.afp.com/dtd/AFPCatalog.xml"/>
   <NewsEnvelope>
@@ -24,8 +24,6 @@
     <NewsComponent>
       <NewsLines>
         <HeadLine>Décès de Naomi Musenga: l'opératrice du Samu définitivement condamnée</HeadLine>
-        
-        
         <DateLine>Strasbourg, 10 juil 2024 (AFP)</DateLine>
         <CopyrightLine>© 2024 AFP</CopyrightLine>
         <SlugLine>procès-santé-secours</SlugLine>
