@@ -24,7 +24,7 @@ class TestCase(unittest.TestCase):
         dirname = os.path.dirname(os.path.realpath(__file__))
         fixture = os.path.join(dirname, "../fixtures", "afp20.xml")
         provider = {"name": "Test"}
-        with open(fixture, "r", encoding="utf-8") as f:
+        with open(fixture, "r") as f:
             xml_content = f.read().encode("iso-8859-1")
             self.item = AFPNewsMLFeedParser().parse(etree.fromstring(xml_content), provider)
 
