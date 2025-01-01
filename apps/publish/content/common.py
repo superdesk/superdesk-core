@@ -230,7 +230,9 @@ class BasePublishService(BaseService):
                 self._update_archive(original, updates, should_insert_into_versions=auto_publish)
                 self.update_published_collection(published_item_id=original[ID_FIELD], updated=updated)
 
-            from apps.publish.enqueue import enqueue_published
+            from apps.publish.enqueue import enqueue_published, push_publish
+
+            push_publish.apply_async(str(id))
 
             enqueue_published.apply_async()
 

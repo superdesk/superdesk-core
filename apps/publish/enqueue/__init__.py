@@ -8,8 +8,11 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
+from datetime import datetime
 import logging
+from typing import cast
 
+from apps.archive.archive import ArchiveService
 from superdesk.core import get_current_app
 from superdesk.resource_fields import ID_FIELD, VERSION
 import superdesk
@@ -31,7 +34,7 @@ from superdesk.celery_app import celery
 from superdesk.utc import utcnow
 from superdesk.profiling import ProfileManager
 from apps.content import push_content_notification
-from superdesk.errors import ConnectionTimeout
+from superdesk.errors import ConnectionTimeout, PublishQueueError
 from celery.exceptions import SoftTimeLimitExceeded
 from superdesk.publish.publish_content import publish
 
@@ -232,7 +235,53 @@ class EnqueueContent(superdesk.Command):
             logger.error("Failed to publish the following items: {}".format(failed_items.keys()))
 
 
+class PushContent(superdesk.Command):
+    """Publish items directly to relevant services.
+
+
+    Example:
+    ::
+
+        $ python manage.py publish:push item_id [content_type]
+
+    """
+
+    def run(self, published_item_id_s: str, content_type: str | None = None) -> None:
+        """Publish item directly in relevant service queue.
+
+
+        :param published_item_id_s: ID of the item to publish.
+        :param content_type: Type of the content.
+        :raises PublishQueueError.article_not_found_error: Could not find item with given ID.
+        """
+        published_item_id = ObjectId(published_item_id_s)
+        archive_service = cast(ArchiveService, get_resource_service(ARCHIVE))
+        published_item = archive_service.find_one(req=None, _id=published_item_id)
+        if published_item is None:
+            logger.error("Can't find item with id {published_item_id_s!r}.")
+            raise PublishQueueError.article_not_found_error()
+        logger.info(
+            "Push publishing item with id: {} and item_id: {}".format(published_item_id, published_item.get("item_id"))
+        )
+
+        if published_item.get(ITEM_STATE) == CONTENT_STATE.SCHEDULED:
+            publish_schedule = published_item.get(PUBLISH_SCHEDULE)
+            if published_item is None:
+                logger.warning(f"Publish schedule is missing: {published_item=}")
+                return
+            if publish_schedule > utcnow():
+                logger.debug(f"Item is scheduled for a later date, we don't push it: {published_item}")
+                return
+
+        try:
+            get_enqueue_service(published_item[ITEM_OPERATION]).enqueue_item(published_item, content_type)
+        except Exception:
+            logger.exception(f"Can't enqueue item: {published_item}")
+            raise
+
+
 superdesk.command("publish:enqueue", EnqueueContent())
+superdesk.command("publish:push", PushContent())
 
 
 @celery.task(soft_time_limit=600)
@@ -240,3 +289,10 @@ def enqueue_published():
     """Pick new items from ``published`` collection and enqueue it."""
     with ProfileManager("publish:enqueue"):
         EnqueueContent().run()
+
+
+@celery.task(soft_time_limit=600)
+def push_publish(published_item_id_s: str, content_type: str | None = None):
+    """Push item directly in destination service queue."""
+    with ProfileManager("publish:push"):
+        PushContent().run(published_item_id_s, content_type)

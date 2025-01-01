@@ -8,15 +8,27 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
+from datetime import datetime, timedelta
 from unittest import mock
 
+from bson import ObjectId
+
+from apps.archive.archive import ArchiveService
+from apps.archive.common import ITEM_OPERATION
+from apps.packages.package_service import PackageService
+from apps.publish.enqueue import enqueue_service, PushContent
+from apps.publish.enqueue import enqueue_published
+from apps.publish.enqueue.enqueue_service import EnqueueService
+from content_api.publish.service import PublishService
+from superdesk.errors import PublishQueueError
+from superdesk.metadata.item import (
+    CONTENT_STATE,
+    ITEM_STATE,
+    PUBLISH_SCHEDULE,
+)
 from superdesk.resource_fields import ID_FIELD, VERSION
 from superdesk.tests import TestCase
-from content_api.publish.service import PublishService
-from apps.publish.enqueue import enqueue_service
-from apps.publish.enqueue.enqueue_service import EnqueueService
-from apps.packages.package_service import PackageService
-from apps.archive.archive import ArchiveService
+from superdesk.utc import utcnow
 
 
 def _fake_extend_subscriber_items(self, subscriber_items, subscribers, package_item, package_item_id, subscriber_codes):
@@ -301,3 +313,93 @@ class EnqueueServiceTest(TestCase):
             ):
                 service.queue_transmission(doc, subscribers)
                 self.assertEqual(formatter.format.call_count, 2)
+
+
+class PushContentTest(TestCase):
+    async def asyncSetUp(self):
+        await super().asyncSetUp()
+        self.test_id_1 = ObjectId()
+        self.test_id_2 = ObjectId()
+        self.test_id_3 = ObjectId()
+
+        self.app.data.insert(
+            "archive",
+            [
+                {
+                    "_id": self.test_id_1,
+                    "item_id": self.test_id_1,
+                    "type": "text",
+                    "headline": "test headline toto",
+                    "version": 1,
+                    "task": {},
+                    ITEM_STATE: CONTENT_STATE.SCHEDULED,
+                    ITEM_OPERATION: "publish",
+                    PUBLISH_SCHEDULE: utcnow() + timedelta(hours=1),
+                },
+                {
+                    "_id": self.test_id_2,
+                    "item_id": "2",
+                    "type": "text",
+                    "headline": "test headline 2",
+                    "version": 1,
+                    "task": {},
+                    ITEM_STATE: CONTENT_STATE.SCHEDULED,
+                    ITEM_OPERATION: "publish",
+                    PUBLISH_SCHEDULE: utcnow() - timedelta(hours=1),
+                },
+                {
+                    "_id": self.test_id_3,
+                    "item_id": "3",
+                    "type": "text",
+                    "headline": "test headline 3",
+                    VERSION: 1,
+                    "task": {},
+                    ITEM_STATE: CONTENT_STATE.PUBLISHED,
+                    ITEM_OPERATION: "publish",
+                },
+            ],
+        )
+
+    @mock.patch.object(EnqueueService, "enqueue_item")
+    async def test_push_scheduled_item_in_future(self, mock_enqueue):
+        """``enqueue_item`` is not called if the item is scheduled in the future."""
+        cmd = PushContent()
+        cmd.run(str(self.test_id_1))
+        mock_enqueue.assert_not_called()
+
+    @mock.patch.object(EnqueueService, "enqueue_item")
+    async def test_push_scheduled_item_in_past(self, mock_enqueue):
+        """``enqueue_item`` is called if the item is scheduled but the publish schedule is passed."""
+        cmd = PushContent()
+        cmd.run(str(self.test_id_2))
+        mock_enqueue.assert_called_once()
+
+    @mock.patch("apps.publish.enqueue.enqueue_service.get_resource_service", return_value=None)
+    async def test_push_non_existent_item(self, mock_get_resource_service):
+        """Exception is raise if item is not found."""
+        cmd = PushContent()
+        non_existent_id = ObjectId()
+        with self.assertRaises(PublishQueueError):
+            cmd.run(str(non_existent_id))
+
+    @mock.patch.object(EnqueueService, "enqueue_item")
+    async def test_push_with_content_type(self, mock_enqueue):
+        """Content type is used when present."""
+        cmd = PushContent()
+        cmd.run(str(self.test_id_2), "test_content_type")
+        mock_enqueue.assert_called_once_with(mock.ANY, "test_content_type")
+
+    @mock.patch.object(EnqueueService, "enqueue_item")
+    async def test_push_publish(self, mock_enqueue):
+        """Push publish calls ``enqueue_item`` when it's not scheduled."""
+        cmd = PushContent()
+        cmd.run(str(self.test_id_3))
+        mock_enqueue.assert_called_once()
+
+    @mock.patch.object(EnqueueService, "enqueue_item", side_effect=Exception("Test error"))
+    async def test_push_with_enqueue_error(self, mock_enqueue):
+        """Exception is propagated when ``enqueue_item`` raises one."""
+        cmd = PushContent()
+        with self.assertRaises(Exception) as context:
+            cmd.run(str(self.test_id_2))
+        assert str(context.exception) == "Test error"
