@@ -767,7 +767,7 @@ class UpdateIngestTest(TestCase):
             ]
         )
         dest = list(event_service.get_from_mongo(req=None, lookup={"guid": item["guid"]}))[0]
-        self.assertEqual(dest.get("state"), "scheduled")
+        self.assertEqual(dest.get("state"), "ingested")
 
         # Un-post an event
         events_post_service.post(

@@ -8,11 +8,10 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
-from typing import Dict, Any, List, Optional
+from typing import Dict, Any, List, Optional, Literal
 import logging
 
 from eve.auth import BasicAuth
-from typing_extensions import Literal
 
 import superdesk
 

@@ -53,8 +53,6 @@ install_requires = [
     "draftjs-exporter[lxml]<5.1",
     "regex>=2020.7.14,<=2024.11.6",
     "flask-oidc-ex>=0.5.5,<0.7",
-    # to be replaced by stdlib version when we use Python 3.8+
-    "typing_extensions>=3.7.4",
     "elastic-apm[flask]>=6.15.1,<7.0",
     # Fix an issue with MarkupSafe 2.1.0 not exporting `soft_unicode`
     "MarkupSafe<2.1",
@@ -105,7 +103,7 @@ setup(
     extras_require={
         "exiv2": ["pyexiv2>=2.12.0,<2.16"],
     },
-    python_requires=">=3.8",
+    python_requires=">=3.9",
     classifiers=[
         "Development Status :: 4 - Beta",
         "Environment :: Web Environment",
