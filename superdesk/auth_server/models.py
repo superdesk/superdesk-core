@@ -36,9 +36,6 @@ class OAuth2Client(ClientMixin):
     def client_id(self):
         return str(self._id)
 
-    def check_token_endpoint_auth_method(self, method):
-        return method == "client_secret_basic"
-
     def check_client_secret(self, client_secret):
         return bcrypt.checkpw(client_secret.encode(), self.pwd_hash.encode())
 
@@ -47,6 +44,11 @@ class OAuth2Client(ClientMixin):
 
     def get_allowed_scope(self, scope):
         return ""
+
+    def check_endpoint_auth_method(self, method, endpoint):
+        if endpoint == "token":
+            return method == "client_secret_basic"
+        return True
 
 
 def query_client(client_id):
