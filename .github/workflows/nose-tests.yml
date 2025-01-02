@@ -4,47 +4,58 @@ on: [push, pull_request]
 
 jobs:
   pytest:
-    runs-on: ubuntu-latest
-
     strategy:
       fail-fast: false
       matrix:
-        python-version: ['3.8', '3.10', '3.12']
+        include:
+          - os: ubuntu-22.04
+            python-version: '3.10'
+          - os: ubuntu-24.04
+            python-version: '3.12'
+
+    runs-on: ${{ matrix.os }}
 
     steps:
     - uses: actions/checkout@v4
     - uses: actions/setup-python@v5
       with:
         python-version: ${{ matrix.python-version }}
+        cache: 'pip'
 
     - run: ./scripts/tests_setup
     - run: pip install -U pip wheel setuptools
-    - run: pip install -r dev-requirements.txt
+    - run: pip install -Ur dev-requirements.txt
 
     - run: pytest --log-level=ERROR --disable-warnings
 
   pip-compile:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
 
     strategy:
       matrix:
-        python-version: ['3.8', '3.10', '3.12']
+        python-version: ['3.10']
 
     steps:
     - uses: actions/checkout@v4
     - uses: actions/setup-python@v5
       with:
         python-version: ${{ matrix.python-version }}
+        cache: 'pip'
 
     - run: pip install -U pip wheel setuptools pip-tools
     - run: pip-compile -U --resolver=backtracking setup.py
 
   behave:
-    runs-on: ubuntu-latest
-
     strategy:
+      fail-fast: false
       matrix:
-        python-version: ['3.8', '3.10', '3.12']
+        include:
+          - os: ubuntu-22.04
+            python-version: '3.10'
+          - os: ubuntu-24.04
+            python-version: '3.12'
+
+    runs-on: ${{ matrix.os }}
 
     steps:
     - uses: actions/checkout@v4
@@ -52,20 +63,25 @@ jobs:
     - uses: actions/setup-python@v5
       with:
         python-version: ${{ matrix.python-version }}
+        cache: 'pip'
 
     - run: ./scripts/tests_setup
     - run: pip install -U pip wheel setuptools
-    - run: pip install -r dev-requirements.txt
+    - run: pip install -Ur dev-requirements.txt
 
     - run: behave --tags=-sams --format progress2 --logging-level=ERROR
 
   behave-sams:
-
-    runs-on: ubuntu-latest
-
     strategy:
+      fail-fast: false
       matrix:
-        python-version: ['3.8', '3.10', '3.12']
+        include:
+          - os: ubuntu-22.04
+            python-version: '3.10'
+          - os: ubuntu-24.04
+            python-version: '3.12'
+
+    runs-on: ${{ matrix.os }}
 
     steps:
     - uses: actions/checkout@v4
@@ -73,22 +89,27 @@ jobs:
     - uses: actions/setup-python@v5
       with:
         python-version: ${{ matrix.python-version }}
+        cache: 'pip'
 
     - run: ./scripts/tests_setup
     - run: ./scripts/install-start-sams
 
     - run: pip install -U pip wheel setuptools
-    - run: pip install -r dev-requirements.txt
+    - run: pip install -Ur dev-requirements.txt
 
     - run: behave --tags=sams --format progress2 --logging-level=ERROR
 
   prodapi:
-
-    runs-on: ubuntu-latest
-
     strategy:
+      fail-fast: false
       matrix:
-        python-version: ['3.8', '3.10', '3.12']
+        include:
+          - os: ubuntu-22.04
+            python-version: '3.10'
+          - os: ubuntu-24.04
+            python-version: '3.12'
+
+    runs-on: ${{ matrix.os }}
 
     steps:
     - uses: actions/checkout@v4
@@ -99,7 +120,7 @@ jobs:
 
     - run: ./scripts/tests_setup
     - run: pip install -U pip wheel setuptools
-    - run: pip install -r dev-requirements.txt
+    - run: pip install -Ur dev-requirements.txt
 
     - run: pytest prod_api
 
