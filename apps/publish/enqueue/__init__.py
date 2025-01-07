@@ -36,7 +36,6 @@ from superdesk.profiling import ProfileManager
 from apps.content import push_content_notification
 from superdesk.errors import ConnectionTimeout, PublishQueueError
 from celery.exceptions import SoftTimeLimitExceeded
-from superdesk.publish.publish_content import publish
 
 
 logger = logging.getLogger(__name__)
@@ -256,9 +255,15 @@ class PushContent(superdesk.Command):
         """
         published_item_id = ObjectId(published_item_id_s)
         archive_service = cast(ArchiveService, get_resource_service(ARCHIVE))
-        published_item = archive_service.find_one(req=None, _id=published_item_id)
+        published_service = get_resource_service(PUBLISHED)
+        try:
+            published_service.patch(published_item_id, {QUEUE_STATE: PUBLISH_STATE.PUSHED})
+            published_item = archive_service.find_one(req=None, _id=published_item_id)
+        except Exception:
+            logger.exception("Can't push publish item.")
+            published_item = None
         if published_item is None:
-            logger.error("Can't find item with id {published_item_id_s!r}.")
+            logger.error(f"Can't find item with id {published_item_id_s!r}.")
             raise PublishQueueError.article_not_found_error()
         logger.info(
             "Push publishing item with id: {} and item_id: {}".format(published_item_id, published_item.get("item_id"))

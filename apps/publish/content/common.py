@@ -8,73 +8,80 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
-import logging
-import superdesk
-import superdesk.signals as signals
-
 from copy import copy, deepcopy
+import logging
 
-from superdesk.core import get_app_config, get_current_app, json
-from superdesk.resource_fields import ID_FIELD, LAST_UPDATED, VERSION
-from superdesk.flask import request
-from superdesk import get_resource_service
+from eve.versioning import resolve_document_version
+from quart_babel import gettext as _
+
+from apps.archive.archive import ArchiveResource, SOURCE as ARCHIVE
+from apps.archive.common import (
+    FIELDS_TO_COPY_FOR_ASSOCIATED_ITEM,
+    get_user,
+    insert_into_versions,
+    item_operations,
+    remove_unwanted,
+)
+from apps.archive.common import (
+    ITEM_OPERATION,
+    convert_task_attributes_to_objectId,
+    get_expiry,
+    get_expiry_date,
+    get_utc_schedule,
+    transtype_metadata,
+    update_schedule_settings,
+    validate_schedule,
+)
+from apps.archive.usage import track_usage, update_refs
+from apps.common.components.utils import get_component
 from apps.content import push_content_notification
 from apps.content_types.content_types import DEFAULT_SCHEMA
-from superdesk.errors import InvalidStateTransitionError, SuperdeskApiError, SuperdeskValidationError
+from apps.item_autosave.components.item_autosave import ItemAutosave
+from apps.item_lock.components.item_lock import set_unlock_updates
+from apps.legal_archive.commands import import_into_legal_archive
+from apps.packages.package_service import PackageService
+from apps.publish.published_item import (
+    LAST_PUBLISHED_VERSION,
+    PUBLISH_STATE,
+    PUBLISHED,
+    PUBLISHED_IN_PACKAGE,
+    QUEUE_STATE,
+)
+import superdesk
+from superdesk import get_resource_service
+from superdesk.core import get_app_config, get_current_app, json
+from superdesk.default_settings import strtobool
+from superdesk.errors import (
+    InvalidStateTransitionError,
+    SuperdeskApiError,
+    SuperdeskValidationError,
+)
+from superdesk.flask import request
+from superdesk.media.crop import CropService
+from superdesk.media.image import get_metadata_from_item, write_metadata
 from superdesk.metadata.item import (
-    CONTENT_TYPE,
-    ITEM_TYPE,
-    ITEM_STATE,
-    CONTENT_STATE,
-    PUBLISH_STATES,
-    EMBARGO,
-    PUB_STATUS,
-    PUBLISH_SCHEDULE,
-    SCHEDULE_SETTINGS,
     ASSOCIATIONS,
+    CONTENT_STATE,
+    CONTENT_TYPE,
+    EMBARGO,
+    ITEM_STATE,
+    ITEM_TYPE,
     MEDIA_TYPES,
+    PUBLISH_SCHEDULE,
+    PUBLISH_STATES,
+    PUB_STATUS,
+    SCHEDULE_SETTINGS,
 )
 from superdesk.metadata.packages import LINKED_IN_PACKAGES, PACKAGE, PACKAGE_TYPE
 from superdesk.metadata.utils import item_url
 from superdesk.notification import push_notification
+from superdesk.resource_fields import ID_FIELD, LAST_UPDATED, VERSION
 from superdesk.services import BaseService
+import superdesk.signals as signals
 from superdesk.utc import utcnow
-from superdesk.workflow import is_workflow_state_transition_valid
 from superdesk.validation import ValidationError
-from superdesk.media.image import get_metadata_from_item, write_metadata
-
-from eve.versioning import resolve_document_version
-
-from apps.archive.archive import ArchiveResource, SOURCE as ARCHIVE
-from apps.archive.common import (
-    get_user,
-    insert_into_versions,
-    item_operations,
-    FIELDS_TO_COPY_FOR_ASSOCIATED_ITEM,
-    remove_unwanted,
-)
-from apps.archive.common import (
-    validate_schedule,
-    ITEM_OPERATION,
-    update_schedule_settings,
-    convert_task_attributes_to_objectId,
-    get_expiry,
-    get_utc_schedule,
-    get_expiry_date,
-    transtype_metadata,
-)
-from apps.archive.usage import track_usage, update_refs
-from apps.common.components.utils import get_component
-from apps.item_autosave.components.item_autosave import ItemAutosave
-from apps.legal_archive.commands import import_into_legal_archive
-from apps.packages.package_service import PackageService
-from apps.publish.published_item import LAST_PUBLISHED_VERSION, PUBLISHED, PUBLISHED_IN_PACKAGE
-from superdesk.media.crop import CropService
 from superdesk.vocabularies import is_related_content
-from superdesk.default_settings import strtobool
-from apps.item_lock.components.item_lock import set_unlock_updates
-
-from quart_babel import gettext as _
+from superdesk.workflow import is_workflow_state_transition_valid
 
 
 logger = logging.getLogger(__name__)
@@ -230,11 +237,15 @@ class BasePublishService(BaseService):
                 self._update_archive(original, updates, should_insert_into_versions=auto_publish)
                 self.update_published_collection(published_item_id=original[ID_FIELD], updated=updated)
 
-            from apps.publish.enqueue import enqueue_published, push_publish
+            if original.get(ITEM_STATE) != CONTENT_STATE.SCHEDULED:
+                # We change the state to "PUSHED", so the item is ignored by `EnqueueContent.enqueue_item`, avoiding
+                # race condition.
+                published_service = get_resource_service(PUBLISHED)
+                assert published_service is not None
+                published_service.patch(id, {QUEUE_STATE: PUBLISH_STATE.PUSHED})
+                from apps.publish.enqueue import push_publish
 
-            push_publish.apply_async(str(id))
-
-            enqueue_published.apply_async()
+                push_publish.apply_async(str(id))
 
             push_notification(
                 "item:publish",
