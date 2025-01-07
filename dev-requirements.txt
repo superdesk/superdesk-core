@@ -12,7 +12,7 @@ pytest==8.3.4
 pytest-env==1.1.5
 python3-saml==1.16.0
 moto[sqs]==5.0.25
-pyexiv2==2.12.0; sys_platform == 'linux'
+pyexiv2==2.15.3; sys_platform == 'linux'
 
 -e .
 -e git+https://github.com/superdesk/superdesk-planning.git@develop#egg=superdesk-planning
