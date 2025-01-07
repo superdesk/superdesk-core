@@ -12,7 +12,6 @@ import logging
 from typing import Any
 from bson import ObjectId
 
-from superdesk.core.resources.cursor import ResourceCursorAsync
 from superdesk.core.types.search import SearchRequest
 from superdesk.resource_fields import VERSION, LAST_UPDATED
 from superdesk.core import get_app_config
@@ -28,8 +27,6 @@ from superdesk.privilege import get_item_privilege_name, get_privilege_list
 from superdesk.errors import SuperdeskApiError
 from superdesk.users.errors import UserInactiveError, UserNotRegisteredException
 from superdesk.notification import push_notification
-from superdesk.validation import ValidationError
-from superdesk.utils import ignorecase_query
 from superdesk.types import UsersResourceModel
 
 logger = logging.getLogger(__name__)
@@ -220,7 +217,7 @@ class UsersAsyncService(AsyncResourceService[UsersResourceModel]):
                 add_activity(
                     ACTIVITY_UPDATE,
                     "user {{user}} has been granted new privileges: Please re-login.",
-                    self.datasource,  # TODO-ASYNC: Confirm datasource change
+                    self.resource_name,
                     notify=[user_id],
                     user=user.to_dict().get("display_name", user.to_dict().get("username")),
                 )
@@ -231,7 +228,7 @@ class UsersAsyncService(AsyncResourceService[UsersResourceModel]):
                 add_activity(
                     ACTIVITY_UPDATE,
                     "user {{user}} is updated to administrator: Please re-login.",
-                    self.datasource,  # TODO-ASYNC: Confirm datasource change
+                    self.resource_name,
                     notify=[user_id],
                     user=user.to_dict().get("display_name", user.to_dict().get("username")),
                 )
@@ -271,7 +268,7 @@ class UsersAsyncService(AsyncResourceService[UsersResourceModel]):
             add_activity(
                 ACTIVITY_CREATE,
                 "created user {{user}}",
-                self.datasource,  # TODO-ASYNC: Confirm datasource change
+                self.resource_name,
                 user=user_doc.to_dict().get("display_name", user_doc.to_dict().get("username")),
             )
             await self.update_stage_visibility_for_user(user_doc)
@@ -360,7 +357,7 @@ class UsersAsyncService(AsyncResourceService[UsersResourceModel]):
         add_activity(
             ACTIVITY_UPDATE,
             "disabled user {{user}}",
-            self.datasource,  # TODO-ASYNC: Confirm datasource change
+            self.resource_name,
             user=doc.to_dict().get("display_name", doc.to_dict().get("username")),
         )
         await self.__clear_locked_items(str(doc.to_dict().get("_id")))
@@ -400,46 +397,6 @@ class UsersAsyncService(AsyncResourceService[UsersResourceModel]):
         user_dict = user.to_dict()
         user_dict["active_privileges"] = get_privileges(user, role)
         user = UsersResourceModel(**user_dict)
-
-    # TODO-ASYNC: Confirm on change to `get` function
-    async def get(self, req, lookup) -> ResourceCursorAsync[UsersResourceModel]:
-        try:
-            is_author = req.args["is_author"]
-        except (AttributeError, TypeError, KeyError):
-            pass
-        else:
-            if is_author in ("0", "1"):
-                lookup["is_author"] = bool(int(is_author))
-            else:
-                logger.warn("bad value of is_author argument ({value})".format(value=is_author))
-
-        """filtering out inactive users and disabled users"""
-
-        args = req.args if req and req.args else {}
-
-        # Filtering inactive users
-        if not args.get("show_inactive"):
-            if lookup is not None:
-                lookup["is_active"] = True
-            else:
-                lookup = {"is_active": True}
-
-        # Filtering disabled users
-        if not args.get("show_disabled"):
-            if lookup is not None:
-                lookup["is_enabled"] = True
-            else:
-                lookup = {"is_enabled": True}
-
-        return await super().search(lookup)
-
-    async def get_users_by_user_type(self, user_type: str = "user") -> list:
-        cursor = await self.get(req=None, lookup={"user_type": user_type})
-        return await cursor.to_list_raw()
-
-    async def get_users_by_role(self, role_id: ObjectId) -> list:
-        cursor = await self.get(req=None, lookup={"role": role_id})
-        return await cursor.to_list_raw()
 
     def get_invisible_stages(self, user_id) -> list:
         return get_invisible_stages(user_id) if user_id else []
@@ -578,42 +535,3 @@ class DBUsersAsyncService(UsersAsyncService):
 
         await super().on_deleted(doc)
         get_resource_service("reset_user_password").remove_all_tokens_for_email(doc.to_dict().get("email"))
-
-    async def _process_external_data(self, _data: dict[str, Any], update=False):
-        data = _data.copy()
-        if data.get("role"):
-            role_name = data.pop("role")
-            role = get_resource_service("roles").find_one(req=None, name=ignorecase_query(role_name))
-            if role:
-                data["role"] = role["_id"]
-        if not update and (data.get("desk") or get_app_config("USER_EXTERNAL_DESK")):
-            desk_name = data.pop("desk", None) or get_app_config("USER_EXTERNAL_DESK")
-            desk = get_resource_service("desks").find_one(req=None, name=ignorecase_query(desk_name))
-            if desk:
-                data["desk"] = desk["_id"]
-        data["needs_activation"] = False
-        if update:
-            data.pop("desk", None)
-            data.pop("email", None)
-            data.pop("username", None)
-        elif data.get("username"):
-            if get_app_config("USER_EXTERNAL_USERNAME_STRIP_DOMAIN"):
-                data["username"] = data["username"].split("@")[0]
-            data["username"] = data["username"].replace("@", ".")  # @ breaks mentioning
-        validator = self._validator()  # TODO-ASYNC: Confirm on usage of validator
-        if not validator.validate(data, update=update):
-            raise ValidationError(validator.errors)
-        return validator.normalized(data) if not update else data
-
-    async def create_external_user(self, data: dict[str, Any]):
-        docs = [await self._process_external_data(data)]
-        await self.on_create(docs)
-        await self.create(docs)
-        for user in docs:
-            if user.get("desk"):
-                get_resource_service("desks").add_member(user["desk"], user["_id"])
-        return docs[0]
-
-    async def update_external_user(self, _id: str, data: dict[str, Any]):
-        updates = await self._process_external_data(data, update=True)
-        await self.system_update(ObjectId(_id), updates)

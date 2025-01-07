@@ -12,12 +12,20 @@
 
 
 from datetime import datetime
+from enum import Enum, unique
 from typing import Annotated, Any
 
 from pydantic import Field
 from superdesk.core.resources import ResourceModel, fields
 from superdesk.core.resources.fields import ObjectId
 from superdesk.core.resources.validators import validate_unique_value_async, validate_data_relation_async
+
+
+@unique
+class UserTypeEnum(str, Enum):
+    USER = "user"
+    ADMINISTRATOR = "administrator"
+    EXTERNAL = "external"
 
 
 class UsersResourceModel(ResourceModel):
@@ -38,12 +46,12 @@ class UsersResourceModel(ResourceModel):
     language: str | None = None
     user_info: dict[str, Any] = Field(default_factory=dict)
     picture_url: str | None = None
-    avatar: Annotated[ObjectId, validate_data_relation_async("uploads")] | None = None
+    avatar: Annotated[ObjectId, validate_data_relation_async("upload")] | None = None
     avatar_renditions: dict[str, Any] | None = Field(default=None)
     role: Annotated[ObjectId, validate_data_relation_async("roles")]
     privileges: dict[str, Any] = Field(default_factory=dict)
     workspace: dict[str, Any] = Field(default_factory=dict)
-    user_type: str = Field(default="user")
+    user_type: UserTypeEnum = Field(default=UserTypeEnum.USER)
     is_support: bool = Field(default=False)
     is_author: bool = Field(default=True)
     private: bool | None = Field(default=False)
