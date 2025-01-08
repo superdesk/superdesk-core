@@ -482,8 +482,8 @@ class DBUsersAsyncService(UsersAsyncService):
                 email = user_dict.get("email")
                 username = user_dict.get("username")
                 tokenDoc = {"user": user_id, "email": email}
-                id = resetService.store_reset_password_token(tokenDoc, email, activate_ttl, user_id)
-                if not id:
+                token_id = resetService.store_reset_password_token(tokenDoc, email, activate_ttl, user_id)
+                if not token_id:
                     raise SuperdeskApiError.internalError("Failed to send account activation email.")
                 tokenDoc.update({"username": username})
 
