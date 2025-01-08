@@ -26,4 +26,4 @@ def init_app(app) -> None:
     app.on_updated_activity += on_activity_updated
 
     # TODO-ASYNC: Support async events
-    superdesk.item_update.connect(handle_inline_mentions)
+    # superdesk.item_update.connect(handle_inline_mentions)
