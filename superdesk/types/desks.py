@@ -18,8 +18,8 @@ class DesksResourceModel(ResourceModel):
     name: Annotated[fields.Keyword, validate_unique_value_async("desks", "name")]
     description: str
     members: list[dict[str, Annotated[ObjectId, validate_data_relation_async("users")]]] = Field(default_factory=list)
-    incoming_stage: Annotated[ObjectId, validate_data_relation_async("stages")]
-    working_stage: Annotated[ObjectId, validate_data_relation_async("stages")]
+    incoming_stage: Annotated[ObjectId, validate_data_relation_async("stages")] | None = None
+    working_stage: Annotated[ObjectId, validate_data_relation_async("stages")] | None = None
     content_expiry: int
     source: str
     send_to_desk_not_allowed: bool = Field(default=False)
