@@ -4,4 +4,4 @@ from .module import desks_resource_config
 
 __all__ = ["DesksAsyncService"]
 
-module = Module(name="apps.desks", resources=[desks_resource_config])
+module = Module(name="apps.desks_async", resources=[desks_resource_config])
