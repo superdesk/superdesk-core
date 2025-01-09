@@ -140,40 +140,6 @@ def get_sign_off(user):
 class UsersAsyncService(AsyncResourceService[UsersResourceModel]):
     _updating_stage_visibility = True
 
-    async def __is_invalid_operation(
-        self, user: UsersResourceModel, updates: dict[str, Any], method: str
-    ) -> str | None:
-        """Checks if the requested 'PATCH' or 'DELETE' operation is Invalid.
-
-        Operation is invalid if one of the below is True:
-            1. Check if the user is updating his/her own status.
-            2. Check if the user is changing the role/user_type/privileges of other logged-in users.
-            3. A user without 'User Management' privilege is changing status/role/user_type/privileges
-
-        :return: error message if invalid.
-        """
-
-        user_id = user.to_dict().get("_id")
-
-        if "user" in g:
-            if method == "PATCH":
-                if "is_active" in updates or "is_enabled" in updates:
-                    if str(user_id) == str(g.user["_id"]):
-                        return "Not allowed to change your own status"
-                    elif not current_user_has_privilege("users"):
-                        return "Insufficient privileges to change user state"
-                if (
-                    str(user_id) != str(g.user["_id"])
-                    and user.to_dict().get("session_preferences")
-                    and is_sensitive_update(updates)
-                ):
-                    return "Not allowed to change the role/user_type/privileges of a logged-in user"
-            elif method == "DELETE" and str(user_id) == str(g.user["_id"]):
-                return "Not allowed to disable your own profile."
-
-        if method == "PATCH" and is_sensitive_update(updates) and not current_user_has_privilege("users"):
-            return "Insufficient privileges to update role/user_type/privileges"
-
     async def __handle_status_changed(self, updates: dict[str, Any], user: UsersResourceModel):
         enabled = updates.get("is_enabled", None)
         active = updates.get("is_active", None)
@@ -282,10 +248,6 @@ class UsersAsyncService(AsyncResourceService[UsersResourceModel]):
             c. A user without 'User Management' privilege is changing role/user_type/privileges
         2. Set Sign Off property if it's not been set already
         """
-        error_message = await self.__is_invalid_operation(original, updates, "PATCH")
-        if error_message:
-            raise SuperdeskApiError.forbiddenError(message=error_message)
-
         if updates.get("is_enabled", False):
             updates["is_active"] = True
 
@@ -309,9 +271,6 @@ class UsersAsyncService(AsyncResourceService[UsersResourceModel]):
         3. A user without 'User Management' privilege is changing role/user_type/privileges
         """
         updates = {"is_enabled": False, "is_active": False}
-        error_message = self.__is_invalid_operation(doc, updates, "DELETE")
-        if error_message:
-            raise SuperdeskApiError.forbiddenError(message=error_message)
 
     async def delete(self, doc: UsersResourceModel, etag: str | None = None):
         """
