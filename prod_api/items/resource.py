@@ -8,7 +8,7 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
-from superdesk.resource import Resource
+from superdesk.resource import Resource, not_analyzed
 from superdesk.metadata.utils import item_url
 from superdesk.metadata.item import metadata_schema
 from superdesk.auth_server.scopes import Scope
@@ -22,6 +22,7 @@ projection = {key: 1 for key in metadata_schema}
 projection.update(
     {
         "fields_meta": 0,
+        "profile_name": {"type": "string", "nullable": True, "mapping": not_analyzed},
     }
 )
 
