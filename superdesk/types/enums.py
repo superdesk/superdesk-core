@@ -23,3 +23,10 @@ class MonitoringViewEnum(str, Enum):
     LIST = "list"
     SWIMLANE = "swimlane"
     PHOTOGRID = "photogrid"
+
+
+@unique
+class UserTypeEnum(str, Enum):
+    USER = "user"
+    ADMINISTRATOR = "administrator"
+    EXTERNAL = "external"
