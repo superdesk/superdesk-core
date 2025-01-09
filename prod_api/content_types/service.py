@@ -8,15 +8,12 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
-from ..service import ProdApiService
 import bson
 import re
 import superdesk
 
 
-class ContentTypesService(ProdApiService):
-    excluded_fields = ProdApiService.excluded_fields
-
+class ContentTypesService(superdesk.Service):
     def get_output_name(self, profile):
         try:
             _id = bson.ObjectId(profile)
@@ -24,4 +21,4 @@ class ContentTypesService(ProdApiService):
             name = item.get("output_name") or item.get("label", str(_id))
             return re.compile("[^0-9a-zA-Z_]").sub("", name)
         except bson.errors.InvalidId:
-            return profile
+            return "None"
