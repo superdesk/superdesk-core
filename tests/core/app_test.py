@@ -1,6 +1,7 @@
 from unittest import TestCase, mock
 
 from superdesk.core.app import SuperdeskAsyncApp
+from superdesk.core.privileges import Privilege
 from superdesk.tests import MockWSGI
 
 
@@ -56,3 +57,17 @@ class SuperdeskAsyncAppTestCase(TestCase):
         app = SuperdeskAsyncApp(MockWSGI(config={"MODULES": ["tests.core.modules.a"]}))
         app.start()
         init.assert_called_once_with(app)
+
+    def test_register_privileges(self):
+        app = SuperdeskAsyncApp(MockWSGI(config={"MODULES": ["tests.core.modules.module_with_privileges"]}))
+        app.start()
+
+        # check privileges are registered
+        registered_privileges = app.privileges.get_all()
+        self.assertEqual(len(registered_privileges), 2)
+        self.assertTrue(app.privileges.is_locked)
+
+        # after app is started, trying to register a privilege raise an exception
+        with self.assertRaises(RuntimeError) as exc:
+            app.privileges.add(Privilege(name="After app started"))
+            self.assertEqual(exc.msg, "Cannot add privileges after the app has started")
