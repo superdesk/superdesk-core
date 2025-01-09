@@ -9,7 +9,19 @@
 # at https://www.sourcefabric.org/superdesk/license
 
 from ..service import ProdApiService
+import bson
+import re
+import superdesk
 
 
 class ContentTypesService(ProdApiService):
     excluded_fields = ProdApiService.excluded_fields
+
+    def get_output_name(self, profile):
+        try:
+            _id = bson.ObjectId(profile)
+            item = superdesk.get_resource_service("content_types").find_one(req=None, _id=_id) or {}
+            name = item.get("output_name") or item.get("label", str(_id))
+            return re.compile("[^0-9a-zA-Z_]").sub("", name)
+        except bson.errors.InvalidId:
+            return profile
