@@ -241,7 +241,8 @@ class ContentTypesService(CacheableService):
         try:
             _id = bson.ObjectId(profile)
             item = self.find_one(req=None, _id=_id) or {}
-            return re.compile("[^0-9a-zA-Z_]").sub("", item.get("label", str(_id)))
+            name = item.get("output_name") or item.get("label", str(_id))
+            return re.compile("[^0-9a-zA-Z_]").sub("", name)
         except bson.errors.InvalidId:
             return profile
 
