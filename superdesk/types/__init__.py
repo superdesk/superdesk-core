@@ -1,4 +1,7 @@
 from typing import TypedDict, Dict, Any, List
+from .users import UsersResourceModel
+
+__all__ = ["UsersResourceModel"]
 
 
 class WebsocketMessageFilterConditions(TypedDict, total=False):
