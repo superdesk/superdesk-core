@@ -13,6 +13,7 @@ from eve.utils import ParsedRequest
 from superdesk.resource import build_custom_hateoas, not_analyzed
 from flask_babel import _
 from superdesk.utc import utcnow
+from superdesk.utils import format_content_type_name
 from superdesk.services import CacheableService
 
 
@@ -241,8 +242,7 @@ class ContentTypesService(CacheableService):
         try:
             _id = bson.ObjectId(profile)
             item = self.find_one(req=None, _id=_id) or {}
-            name = item.get("output_name") or item.get("label", str(_id))
-            return re.compile("[^0-9a-zA-Z_]").sub("", name)
+            return format_content_type_name(item, str(_id))
         except bson.errors.InvalidId:
             return profile
 

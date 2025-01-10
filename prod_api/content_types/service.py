@@ -11,6 +11,7 @@
 import bson
 import re
 import superdesk
+from superdesk.utils import format_content_type_name
 
 
 class ContentTypesService(superdesk.Service):
@@ -18,7 +19,6 @@ class ContentTypesService(superdesk.Service):
         try:
             _id = bson.ObjectId(profile)
             item = superdesk.get_resource_service("content_types").find_one(req=None, _id=_id) or {}
-            name = item.get("output_name") or item.get("label", str(_id))
-            return re.compile("[^0-9a-zA-Z_]").sub("", name)
+            return format_content_type_name(item, str(_id))
         except bson.errors.InvalidId:
             return "None"
