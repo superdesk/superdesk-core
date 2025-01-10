@@ -1,4 +1,3 @@
-from typing import cast
 from dataclasses import dataclass
 from quart_babel.speaklater import LazyString
 
@@ -12,7 +11,10 @@ class Privilege:
 
 
 class PrivilegesRegistry:
-    __privileges: set[Privilege] | frozenset[Privilege] = set()
+    __privileges: set[Privilege] | frozenset[Privilege]
+
+    def __init__(self):
+        self.__privileges = set()
 
     def add(self, privilege: Privilege):
         """Add a privilege if the registry is not locked."""
@@ -20,9 +22,7 @@ class PrivilegesRegistry:
         if self.is_locked:
             raise RuntimeError("Cannot add privileges after the app has started.")
 
-        # mypy does not pick the `is_locked` condition
-        self.__privileges = cast(set[Privilege], self.__privileges)
-        self.__privileges.add(privilege)
+        self.__privileges.add(privilege)  # type: ignore[union-attr]
 
     @property
     def is_locked(self):
