@@ -4,11 +4,7 @@ from superdesk.core.privileges import PrivilegesRegistry, Privilege
 
 @pytest.fixture(scope="function")
 def registry():
-    reg = PrivilegesRegistry()
-    yield reg
-
-    print("*" * 100)
-    reg = None
+    return PrivilegesRegistry()
 
 
 def test_add_privilege_before_lock(registry):
