@@ -9,6 +9,7 @@
 # at https://www.sourcefabric.org/superdesk/license
 
 from ..service import ProdApiService
+from ..content_types.service import ContentTypesService
 
 
 class ItemsService(ProdApiService):
@@ -22,3 +23,10 @@ class ItemsService(ProdApiService):
         "lock_time",
         "lock_user",
     } | ProdApiService.excluded_fields
+
+    def _process_fetched_object(self, doc):
+        super()._process_fetched_object(doc)
+
+        profile_id = doc.get("profile")
+        if profile_id:
+            doc["profile"] = ContentTypesService().get_output_name(profile_id)

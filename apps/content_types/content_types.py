@@ -10,9 +10,10 @@ from superdesk.default_schema import DEFAULT_SCHEMA, DEFAULT_EDITOR, DEFAULT_SCH
 from apps.auth import get_user_id
 from apps.desks import remove_profile_from_desks
 from eve.utils import ParsedRequest
-from superdesk.resource import build_custom_hateoas
+from superdesk.resource import build_custom_hateoas, not_analyzed
 from flask_babel import _
 from superdesk.utc import utcnow
+from superdesk.utils import format_content_type_name
 from superdesk.services import CacheableService
 
 
@@ -108,6 +109,7 @@ class ContentTypesResource(superdesk.Resource):
         "created_by": superdesk.Resource.rel("users", nullable=True),
         "updated_by": superdesk.Resource.rel("users", nullable=True),
         "init_version": {"type": "integer"},
+        "output_name": {"type": "string", "nullable": True},
     }
 
     item_url = r'regex("[\w,.:-]+")'
@@ -240,7 +242,7 @@ class ContentTypesService(CacheableService):
         try:
             _id = bson.ObjectId(profile)
             item = self.find_one(req=None, _id=_id) or {}
-            return re.compile("[^0-9a-zA-Z_]").sub("", item.get("label", str(_id)))
+            return format_content_type_name(item, str(_id))
         except bson.errors.InvalidId:
             return profile
 
