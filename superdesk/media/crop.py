@@ -184,8 +184,6 @@ class CropService:
                     size=(crop.get("width"), crop.get("height")),
                     keepProportions=crop.get("keep_proportions", True),
                 )
-                crop["width"] = width
-                crop["height"] = height
                 out.seek(0)
             return self._save_cropped_image(out, original_image, crop_data)
         except SuperdeskApiError:
@@ -218,6 +216,8 @@ class CropService:
             crop["CropLeft"] = doc.get("CropLeft", None)
             crop["CropRight"] = doc.get("CropRight", None)
             crop["CropBottom"] = doc.get("CropBottom", None)
+            crop["width"] = doc.get("width", None)
+            crop["height"] = doc.get("height", None)
             return crop
         except Exception as ex:
             try:
