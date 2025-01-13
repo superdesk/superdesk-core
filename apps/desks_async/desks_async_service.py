@@ -1,4 +1,4 @@
-from typing import Any
+from typing import Any, Sequence
 from quart_babel import gettext as _
 
 from superdesk import get_resource_service
@@ -15,7 +15,7 @@ from superdesk.types.enums import DeskTypeEnum
 class DesksAsyncService(AsyncResourceService[DesksResourceModel]):
     notification_key = "desk"
 
-    async def create(self, docs: list[DesksResourceModel]) -> list[str]:
+    async def create(self, docs: Sequence[DesksResourceModel | dict[str, Any]]) -> list[str]:
         """Creates new desk.
 
         Overriding to check if the desk being created has Working and Incoming Stages. If not then Working and Incoming
@@ -24,6 +24,7 @@ class DesksAsyncService(AsyncResourceService[DesksResourceModel]):
 
         :return: list of desk id's
         """
+        docs = await self._convert_dicts_to_model(docs)
 
         for desk in docs:
             stages_to_be_linked_with_desk = []
@@ -31,7 +32,7 @@ class DesksAsyncService(AsyncResourceService[DesksResourceModel]):
             self._ensure_unique_members(desk.to_dict())
 
             if desk.content_expiry == 0:
-                desk.content_expiry = get_app_config("CONTENT_EXPIRY_MINUTES")
+                desk.content_expiry = get_app_config("CONTENT_EXPIRY_MINUTES") or 0
 
             if desk.working_stage is None:
                 stages_to_be_linked_with_desk.append("working_stage")
