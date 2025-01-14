@@ -7,7 +7,7 @@ pydocstyle==6.3.0
 httmock==1.4.0
 wooper==0.4.4
 requests-mock==1.12.1
-responses==0.25.3
+responses==0.25.5
 pytest==8.3.4
 pytest-env==1.1.5
 python3-saml==1.16.0
