@@ -25,10 +25,10 @@ class DesksAsyncService(AsyncResourceService[DesksResourceModel]):
         :return: list of desk id's
         """
         docs = await self._convert_dicts_to_model(docs)
+        stage_service = get_resource_service("stages")
 
         for desk in docs:
             stages_to_be_linked_with_desk = []
-            stage_service = get_resource_service("stages")
             self._ensure_unique_members(desk.to_dict())
 
             if desk.content_expiry == 0:
@@ -59,9 +59,10 @@ class DesksAsyncService(AsyncResourceService[DesksResourceModel]):
         return [str(doc.id) for doc in docs]
 
     async def on_created(self, docs: list[DesksResourceModel]) -> None:
+        users_service = get_resource_service("users")
         for doc in docs:
             push_notification(self.notification_key, created=1, desk_id=str(doc.id))
-            get_resource_service("users").update_stage_visibility_for_users()
+            users_service.update_stage_visibility_for_users()
 
     async def on_update(self, updates: dict[str, Any], original: DesksResourceModel) -> None:
         if updates.get("content_expiry") == 0:
