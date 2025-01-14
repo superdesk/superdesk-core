@@ -12,20 +12,13 @@
 
 
 from datetime import datetime
-from enum import Enum, unique
 from typing import Annotated, Any
 
 from pydantic import Field
 from superdesk.core.resources import ResourceModel, fields
 from superdesk.core.resources.fields import ObjectId
 from superdesk.core.resources.validators import validate_unique_value_async, validate_data_relation_async
-
-
-@unique
-class UserTypeEnum(str, Enum):
-    USER = "user"
-    ADMINISTRATOR = "administrator"
-    EXTERNAL = "external"
+from superdesk.types.enums import UserTypeEnum
 
 
 class UsersResourceModel(ResourceModel):

@@ -418,7 +418,7 @@ INSTALLED_APPS = []
 #:
 #: ..versionadded: 3.0.0
 #:
-MODULES = ["superdesk.users"]
+MODULES = ["superdesk.users", "apps.desks_async"]
 
 ASYNC_AUTH_CLASS = "superdesk.core.auth.token_auth:TokenAuthorization"
 
