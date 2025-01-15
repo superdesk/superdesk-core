@@ -1037,6 +1037,10 @@ async def when_we_find_for_resource_the_id_as_name_by_search_criteria(context, r
 
 @when('we delete "{url}"')
 @async_run_until_complete
+async def _step_impl_when_delete_url(context, url):
+    await step_impl_when_delete_url(context, url)
+
+
 async def step_impl_when_delete_url(context, url):
     with context.app.mail.record_messages() as outbox:
         url = apply_placeholders(context, url)
@@ -1084,6 +1088,10 @@ async def when_we_delete_it(context):
 
 @when('we patch "{url}"')
 @async_run_until_complete
+async def _step_impl_when_patch_url(context, url):
+    await step_impl_when_patch_url(context, url)
+
+
 async def step_impl_when_patch_url(context, url):
     with context.app.mail.record_messages() as outbox:
         url = apply_placeholders(context, url)
@@ -1281,6 +1289,10 @@ async def step_impl_then_get_new(context):
 
 @then("we get error {code}")
 @async_run_until_complete
+async def _step_impl_then_get_error(context, code):
+    await step_impl_then_get_error(context, code)
+
+
 async def step_impl_then_get_error(context, code):
     await expect_status(context.response, int(code))
     if context.text:
@@ -2191,6 +2203,10 @@ async def we_get_null_stage(context):
 
 @given('we have sessions "{url}"')
 @async_run_until_complete
+async def _we_have_sessions_get_id(context, url):
+    await we_have_sessions_get_id(context, url)
+
+
 async def we_have_sessions_get_id(context, url):
     await when_we_get_url(context, url)
     item = await get_json_data(context.response)
