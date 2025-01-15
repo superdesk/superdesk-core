@@ -13,14 +13,12 @@ from typing import (
     Annotated,
     Optional,
     List,
-    Dict,
-    Type,
     Any,
     ClassVar,
     cast,
 )
 from typing_extensions import dataclass_transform, Self
-from dataclasses import dataclass as python_dataclass, field as dataclass_field
+from dataclasses import field as dataclass_field
 from copy import deepcopy
 from inspect import get_annotations
 from datetime import datetime
@@ -37,7 +35,7 @@ from pydantic import (
 from pydantic_core import InitErrorDetails, PydanticCustomError, from_json
 from pydantic.dataclasses import dataclass as pydataclass
 
-from superdesk.core.types import SortListParam, ProjectedFieldArg, BaseModel
+from superdesk.core.types import BaseModel
 from superdesk.core.utils import generate_guid, GUID_NEWSML
 
 from .utils import get_model_aliased_fields
@@ -160,6 +158,12 @@ class ResourceModel(BaseModel):
         except KeyError:
             return False
 
+    @classmethod
+    def get_signals(cls) -> "ResourceSignals[Self]":
+        from .resource_signals import get_resource_signals
+
+        return get_resource_signals(cls)
+
     def to_dict(self, **kwargs) -> dict[str, Any]:
         """
         Convert the model instance to a dictionary representation with non-JSON-serializable Python objects.
@@ -229,6 +233,8 @@ class ResourceModel(BaseModel):
 async def _run_async_validators_from_model_class(
     model_instance: Any, root_item: ResourceModel, field_name_stack: Optional[List[str]] = None
 ):
+    from .validators import AsyncValidator
+
     if field_name_stack is None:
         field_name_stack = []
 
@@ -317,137 +323,5 @@ def get_versioned_model(model: ResourceModel) -> ModelWithVersions | None:
     return None if not model_has_versions(model) else cast(ModelWithVersions, model)
 
 
-@python_dataclass
-class ResourceConfig:
-    """A config for a Resource to be registered"""
-
-    #: Name of the resource (must be unique in the system)
-    name: str
-
-    #: The ResourceModel class for this resource (used to generate the Elasticsearch mapping)
-    data_class: type[ResourceModel]
-
-    #: Optional title used in HATEOAS (and docs), will fallback to the class name
-    title: str | None = None
-
-    #: The config used for MongoDB
-    mongo: Optional["MongoResourceConfig"] = None
-
-    #: The config used for Elasticsearch, if `None` then this resource will not be available in Elasticsearch
-    elastic: Optional["ElasticResourceConfig"] = None
-
-    #: Optional ResourceService class, if not provided the system will create a generic one, with no resource type
-    service: Optional[Type["AsyncResourceService"]] = None
-
-    #: Optional config to be used for REST endpoints. If not provided, REST will not be available for this resource
-    rest_endpoints: Optional["RestEndpointConfig"] = None
-
-    #: Optional config to query and store ObjectIds as strings in MongoDB
-    query_objectid_as_string: bool = False
-
-    #: Boolean to indicate if etag concurrency control should be used (defaults to ``True``)
-    uses_etag: bool = True
-
-    #: Optional list of resource fields to ignore when generating the etag
-    etag_ignore_fields: Optional[list[str]] = None
-
-    #: Boolean to indicate if this resource provides a version resource as well
-    versioning: bool = False
-
-    #: Optional list of fields not to store in the versioning resource
-    ignore_fields_in_versions: list[str] | None = None
-
-    #: Optional sorting for this resource
-    default_sort: SortListParam | None = None
-
-    #: Optionally override the name used for the MongoDB/Elastic sources
-    datasource_name: str | None = None
-
-    #: Optional projection to be used to include/exclude fields
-    projection: ProjectedFieldArg | None = None
-
-
-class Resources:
-    """A high level resource class used to manage all resources in the system"""
-
-    _resource_configs: Dict[str, ResourceConfig]
-
-    _resource_services: Dict[str, "AsyncResourceService"]
-
-    #: A reference back to the parent app, for configuration purposes
-    app: "SuperdeskAsyncApp"
-
-    def __init__(self, app: "SuperdeskAsyncApp"):
-        self._resource_configs = {}
-        self._resource_services = {}
-        self.app = app
-
-    def register(self, config: ResourceConfig):
-        """Register a new resource in the system
-
-        This will also register the resource with Mongo and optionally Elasticsearch
-
-        :param config: A ResourceConfig of the resource to be registered
-        :raises KeyError: If the resource has already been registered
-        """
-
-        if config.name in self._resource_configs:
-            raise KeyError(f"Resource '{config.name}' already registered")
-
-        self._resource_configs[config.name] = config
-
-        config.data_class.model_resource_name = config.name
-        if not config.datasource_name:
-            config.datasource_name = config.name
-
-        mongo_config = config.mongo or MongoResourceConfig()
-        if config.versioning:
-            mongo_config.versioning = True
-
-        self.app.mongo.register_resource_config(config.name, mongo_config)
-
-        if config.elastic is not None:
-            if config.default_sort:
-                config.elastic.default_sort = config.default_sort
-            self.app.elastic.register_resource_config(
-                config.name,
-                config.elastic,
-            )
-
-        if config.service is None:
-
-            class GenericResourceService(AsyncResourceService):
-                pass
-
-            GenericResourceService.resource_name = config.name
-            GenericResourceService.config = config
-            config.service = GenericResourceService
-
-        config.service.resource_name = config.name
-        self._resource_services[config.name] = config.service()
-
-    def get_config(self, name: str) -> ResourceConfig:
-        """Get the config for a registered resource
-
-        :param name: The name of the registered resource
-        :return: A copy of the ResourceConfig of the registered resource
-        :raises KeyError: If the resource is not registered
-        """
-
-        return deepcopy(self._resource_configs[name])
-
-    def get_all_configs(self) -> List[ResourceConfig]:
-        """Get a copy of the configs for all the registered resources in the system"""
-
-        return deepcopy(list(self._resource_configs.values()))
-
-    def get_resource_service(self, resource_name: str) -> "AsyncResourceService":
-        return self._resource_services[resource_name]
-
-
-from ..app import SuperdeskAsyncApp  # noqa: E402
 from .service import AsyncResourceService  # noqa: E402
-from ..mongo import MongoResourceConfig  # noqa: E402
-from ..elastic import ElasticResourceConfig  # noqa: E402
-from .validators import AsyncValidator  # noqa: E402
-from .resource_rest_endpoints import RestEndpointConfig  # noqa: E402
+from .resource_signals import ResourceSignals  # noqa: E402
