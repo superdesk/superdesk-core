@@ -35,15 +35,15 @@ The :attr:`get_db_async <MongoResources.get_db_async>` method returns an instanc
 
 Mongo References
 ----------------
-.. autoclass:: superdesk.core.mongo.MongoResourceConfig
+.. autoclass:: superdesk.core.types.MongoResourceConfig
     :member-order: bysource
     :members:
 
-.. autoclass:: superdesk.core.mongo.MongoIndexOptions
+.. autoclass:: superdesk.core.types.MongoIndexOptions
     :member-order: bysource
     :members:
 
-.. autoclass:: superdesk.core.mongo.MongoIndexCollation
+.. autoclass:: superdesk.core.types.MongoIndexCollation
     :member-order: bysource
     :members:
 
