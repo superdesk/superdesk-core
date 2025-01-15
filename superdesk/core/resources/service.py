@@ -13,7 +13,6 @@ from typing import (
     Optional,
     Generic,
     Sequence,
-    TypeVar,
     ClassVar,
     List,
     Dict,
@@ -46,11 +45,9 @@ from superdesk.resource_fields import ID_FIELD, VERSION_ID_FIELD, CURRENT_VERSIO
 from ..app import SuperdeskAsyncApp, get_current_async_app
 from .cursor import ElasticsearchResourceCursorAsync, MongoResourceCursorAsync, ResourceCursorAsync
 from .utils import get_projection_from_request
+from .types import ResourceModelType
 
 logger = logging.getLogger(__name__)
-
-
-ResourceModelType = TypeVar("ResourceModelType", bound="ResourceModel")
 
 
 class AsyncResourceService(Generic[ResourceModelType]):
@@ -107,6 +104,10 @@ class AsyncResourceService(Generic[ResourceModelType]):
         """
 
         return self.app.elastic.get_client_async(self.resource_name)
+
+    @property
+    def signals(self):
+        return self.config.data_class.get_signals()
 
     def get_model_instance_from_dict(self, data: Dict[str, Any]) -> ResourceModelType:
         """Converts a dictionary to an instance of ``ResourceModel`` for this resource
@@ -293,6 +294,8 @@ class AsyncResourceService(Generic[ResourceModelType]):
             if doc.updated is None:
                 doc.updated = doc.created
 
+            await self.signals.data.on_create.send(doc)
+
     async def validate_create(self, doc: ResourceModelType):
         """Validate the provided doc for creation
 
@@ -408,7 +411,8 @@ class AsyncResourceService(Generic[ResourceModelType]):
         :param docs: List of resources that were created
         """
 
-        pass
+        for doc in docs:
+            await self.signals.data.on_created.send(doc)
 
     async def on_update(self, updates: Dict[str, Any], original: ResourceModelType) -> None:
         """Hook to run before updating a resource
@@ -423,7 +427,15 @@ class AsyncResourceService(Generic[ResourceModelType]):
         if versioned_original:
             updates["_current_version"] = (versioned_original.current_version or 0) + 1
 
-    async def update(self, item_id: Union[str, ObjectId], updates: Dict[str, Any], etag: str | None = None) -> None:
+        await self.signals.data.on_update.send(original, updates)
+
+    async def update(
+        self,
+        item_id: Union[str, ObjectId],
+        updates: Dict[str, Any],
+        etag: str | None = None,
+        original: ResourceModelType | None = None,
+    ) -> None:
         """Updates an existing resource
 
         Will automatically update the resource in both Elasticsearch (if configured for this resource)
@@ -432,11 +444,14 @@ class AsyncResourceService(Generic[ResourceModelType]):
         :param item_id: ID of item to update
         :param updates: Dictionary to update
         :param etag: Optional etag, if provided will check etag against original item
+        :param original: Optional original item, if not provided the service will retrieve it
         :raises SuperdeskApiError.notFoundError: If original item not found
         """
 
         item_id = ObjectId(item_id) if self.id_uses_objectid() else item_id
-        original = await self.find_by_id(item_id)
+        if original is None:
+            original = await self.find_by_id(item_id)
+
         if original is None:
             raise SuperdeskApiError.notFoundError()
 
@@ -469,7 +484,7 @@ class AsyncResourceService(Generic[ResourceModelType]):
         :param original: Instance of ``ResourceModel`` for the original resource
         """
 
-        pass
+        await self.signals.data.on_updated.send(original, updates)
 
     async def on_delete(self, doc: ResourceModelType):
         """Hook to run before deleting a resource
@@ -477,7 +492,7 @@ class AsyncResourceService(Generic[ResourceModelType]):
         :param doc: Instance of ``ResourceModel`` for the resource to delete
         """
 
-        pass
+        await self.signals.data.on_delete.send(doc)
 
     async def delete(self, doc: ResourceModelType, etag: str | None = None):
         """Deletes a resource
@@ -528,7 +543,7 @@ class AsyncResourceService(Generic[ResourceModelType]):
         :param doc: Instance of ``ResourceModel`` for the resource that was deleted
         """
 
-        pass
+        await self.signals.data.on_deleted.send(doc)
 
     async def get_all(self) -> AsyncIterable[ResourceModelType]:
         """Helper function to get all items from this resource
@@ -920,4 +935,5 @@ class AsyncCacheableService(AsyncResourceService[ResourceModelType]):
         return await self.find_by_id(_id)
 
 
-from .model import ResourceConfig, ResourceModel, get_versioned_model, model_has_versions  # noqa: E402
+from .resource_config import ResourceConfig  # noqa: E402
+from .model import get_versioned_model, model_has_versions  # noqa: E402
