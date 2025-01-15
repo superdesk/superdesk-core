@@ -15,10 +15,8 @@ import simplejson as json
 from eve.io.mongo.parser import parse
 
 from superdesk.errors import SuperdeskApiError
-from superdesk.core.types import ProjectedFieldArg, SearchRequest, SortParam
+from superdesk.core.types import SearchRequest, SortParam, ElasticResourceConfig, ElasticClientConfig
 from superdesk.core.resources import get_projection_from_request
-
-from .common import ElasticClientConfig, ElasticResourceConfig
 
 
 class InvalidSearchString(Exception):
