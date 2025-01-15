@@ -52,9 +52,9 @@ class SuperdeskAsyncApp:
         self._imported_modules = {}
         self._module_configs = {}
         self.wsgi = wsgi
+        self.resources = Resources(self)
         self.mongo = MongoResources(self)
         self.elastic = ElasticResources(self)
-        self.resources = Resources(self)
         self.auth = self.load_auth_module()
         self._store_app()
 
