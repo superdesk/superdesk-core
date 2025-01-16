@@ -11,8 +11,10 @@
 from typing import Callable, Optional, List, Union
 from dataclasses import dataclass
 
-from .config import ConfigModel
 from superdesk.core.types import Endpoint, EndpointGroup
+
+from .config import ConfigModel
+from .privileges import Privilege
 
 
 @dataclass
@@ -49,6 +51,9 @@ class Module:
 
     #: Optional list of HTTP endpoints to register with the system
     endpoints: Optional[List[Union[Endpoint, EndpointGroup]]] = None
+
+    # Optional list of privileges to register
+    privileges: list[Privilege] | None = None
 
 
 from .app import SuperdeskAsyncApp  # noqa: E402
