@@ -684,7 +684,7 @@ async def ingest_item(item, provider, feeding_service, rule_set=None, routing_sc
                                     name=assoc_name,
                                 ),
                             )
-                    status, ids = ingest_item(assoc, provider, feeding_service, rule_set, expiry=item["expiry"])
+                    status, ids = await ingest_item(assoc, provider, feeding_service, rule_set, expiry=item["expiry"])
                     if status:
                         assoc["_id"] = ids[0]
                         items_ids.extend(ids)
