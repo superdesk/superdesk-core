@@ -187,7 +187,7 @@ class RoutingRuleSchemeService(BaseService):
         if self.backend.find_one("ingest_providers", req=None, routing_scheme=doc[ID_FIELD]):
             raise SuperdeskApiError.forbiddenError(_("Routing scheme is applied to channel(s). It cannot be deleted."))
 
-    def apply_routing_scheme(self, ingest_item, provider, routing_scheme):
+    async def apply_routing_scheme(self, ingest_item, provider, routing_scheme):
         """Applies routing scheme and applies appropriate action (fetch, publish) to the item
 
         :param item: ingest item to which routing scheme needs to applied.
@@ -225,7 +225,7 @@ class RoutingRuleSchemeService(BaseService):
                     % (item_id, routing_scheme.get("name"), rule.get("name"))
                 )
 
-                rule_handler.apply_rule(rule, ingest_item, routing_scheme)
+                await rule_handler.apply_rule(rule, ingest_item, routing_scheme)
                 if rule.get("actions", {}).get("exit", False):
                     logger.info(
                         "Exiting routing scheme. Item: %s . Routing Scheme: %s. "

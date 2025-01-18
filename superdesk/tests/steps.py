@@ -627,7 +627,7 @@ def step_create_new_macro(context, macro_name):
 @async_run_until_complete
 async def step_impl_fetch_from_provider_ingest(context, provider_name, guid):
     async with context.app.test_request_context(context.app.config["URL_PREFIX"]):
-        fetch_from_provider(context, provider_name, guid)
+        await fetch_from_provider(context, provider_name, guid)
 
 
 @when('we fetch from "{provider_name}" ingest "{guid}" (mocking with "{mock_file}")')
@@ -639,7 +639,7 @@ async def step_impl_fetch_from_provider_ingest_with_mocking(context, provider_na
 
         with responses.RequestsMock() as rsps:
             apply_mock_file(rsps, mock_file, fixture_path=get_provider_file_path(provider))
-            fetch_from_provider(context, provider_name, guid)
+            await fetch_from_provider(context, provider_name, guid)
 
 
 @when('we run update_ingest command for "{provider_name}"')
@@ -746,7 +746,7 @@ async def step_impl_fetch_from_provider_ingest_using_routing(context, provider_n
         _id = apply_placeholders(context, context.text)
         routing_scheme = get_resource_service("routing_schemes").find_one(_id=_id, req=None)
         embed_routing_scheme_rules(routing_scheme)
-        fetch_from_provider(context, provider_name, guid, routing_scheme)
+        await fetch_from_provider(context, provider_name, guid, routing_scheme)
 
 
 @when('we ingest and fetch "{provider_name}" "{guid}" to desk "{desk}" stage "{stage}" using routing_scheme')
@@ -758,7 +758,7 @@ async def step_impl_fetch_from_provider_ingest_using_routing_with_desk(context, 
         stage_id = apply_placeholders(context, stage)
         routing_scheme = get_resource_service("routing_schemes").find_one(_id=_id, req=None)
         embed_routing_scheme_rules(routing_scheme)
-        fetch_from_provider(context, provider_name, guid, routing_scheme, desk_id, stage_id)
+        await fetch_from_provider(context, provider_name, guid, routing_scheme, desk_id, stage_id)
 
 
 @when('we ingest with routing scheme "{provider_name}" "{guid}"')
@@ -768,7 +768,7 @@ async def step_impl_ingest_with_routing_scheme(context, provider_name, guid):
         _id = apply_placeholders(context, context.text)
         routing_scheme = get_resource_service("routing_schemes").find_one(_id=_id, req=None)
         embed_routing_scheme_rules(routing_scheme)
-        fetch_from_provider(context, provider_name, guid, routing_scheme)
+        await fetch_from_provider(context, provider_name, guid, routing_scheme)
 
 
 def get_provider_file_path(provider, filename=""):
@@ -778,7 +778,7 @@ def get_provider_file_path(provider, filename=""):
         return os.path.join(provider.get("config", {}).get("path", ""), filename)
 
 
-def fetch_from_provider(context, provider_name, guid, routing_scheme=None, desk_id=None, stage_id=None):
+async def fetch_from_provider(context, provider_name, guid, routing_scheme=None, desk_id=None, stage_id=None):
     ingest_provider_service = get_resource_service("ingest_providers")
     provider = ingest_provider_service.find_one(name=provider_name, req=None)
     provider["routing_scheme"] = routing_scheme
@@ -824,7 +824,7 @@ def fetch_from_provider(context, provider_name, guid, routing_scheme=None, desk_
 
             item["task"] = {"desk": ObjectId(desk_id), "stage": ObjectId(stage_id)}
 
-    failed = context.ingest_items(
+    failed = await context.ingest_items(
         items, provider, provider_service, rule_set=rule_set, routing_scheme=provider.get("routing_scheme")
     )
     assert len(failed) == 0, failed
