@@ -8,9 +8,9 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
-from typing import Dict, Any, Awaitable
 import logging
 
+from typing import Dict, Any
 from quart_babel import lazy_gettext, LazyString
 
 from superdesk.core import get_app_config
@@ -29,7 +29,7 @@ class RoutingRuleHandler:
     supported_configs: Dict[str, bool]
     default_values: Dict[str, Any]
 
-    async def can_handle(self, rule, ingest_item, routing_scheme) -> Awaitable[bool]:
+    async def can_handle(self, rule, ingest_item, routing_scheme) -> bool:
         raise NotImplementedError()
 
     async def apply_rule(self, rule, ingest_item, routing_scheme):
