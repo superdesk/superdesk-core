@@ -26,6 +26,8 @@ from .web import (
     RestResponseMeta,
     RestGetResponse,
 )
+from .mongo import MongoIndexCollation, MongoIndexOptions, MongoResourceConfig, MongoClientConfig
+from .elastic import ElasticResourceConfig, ElasticClientConfig
 
 
 __all__ = [
@@ -59,4 +61,12 @@ __all__ = [
     # system
     "NotificationClientProtocol",
     "WSGIApp",
+    # MongoDB:
+    "MongoIndexCollation",
+    "MongoIndexOptions",
+    "MongoResourceConfig",
+    "MongoClientConfig",
+    # ElasticSearch:
+    "ElasticResourceConfig",
+    "ElasticClientConfig",
 ]

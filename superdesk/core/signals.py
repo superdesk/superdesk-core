@@ -1,83 +1,36 @@
-from typing import Generic, Callable, Awaitable
-from typing_extensions import TypeVarTuple, Unpack
-from inspect import isawaitable
+from typing import Generic, Callable, Awaitable, Iterable, ClassVar
+from typing_extensions import TypeVarTuple, Unpack, Self
+from inspect import isawaitable, iscoroutinefunction, getmembers, get_annotations
 
 
 SignalFunctionSignature = TypeVarTuple("SignalFunctionSignature")
+SignalListener = Callable[[Unpack[SignalFunctionSignature]], None]
+AsyncSignalListener = Callable[[Unpack[SignalFunctionSignature]], Awaitable[None] | None] | SignalListener
 
 
-class AsyncSignal(Generic[Unpack[SignalFunctionSignature]]):
-    """Strictly typed event signal system
-
-    An event signalling system that is strictly typed.
-    This means that we're able to run ``mypy`` to check the types connected to, or executing, signal callbacks,
-    potentially raising type errors before they're able to get to an instance and cause a bug.
-
-    You're able to define a signal with variable number of arguments, without an upper limit on the number of arguments.
-
-    You create a signal by constructing an instance of one, providing the function signature types and name of the signal.
-
-    AsyncSignal[``<function signature>``](``<signal name>``):
-
-    * ``function signature``: A variable list of argument types
-    * ``signal name``: The name of the signal
-
-    The signal supports both sync and async listeners to be added to its listeners.
-
-    Example signal::
-
-        # file: users/signals.py
-        from superdesk.core import AsyncSignal
-        from .types import UserResourceModel
-
-        before_user_created = AsyncSignal[UserResourceModel](
-            "user:before_created"
-        )
-        on_user_created = AsyncSignal[UserResourceModel](
-            "user:on_created"
-        )
-
-        async create_user(user: UserResourceModel):
-            await before_user_created.send(user)
-            await UserResourceModel.get_service().create([user])
-            await on_user_created.send(user)
-
-    Example connecting::
-
-        # file: my/module.py
-        from users import UserResourceModel, signals as user_signals
-
-        async def before_user_created(user: UserResourceModel) -> None:
-            # Do something before the user is created
-            ...
-
-        async def on_user_created(user: UserResourceModel) -> None:
-            # Do something with the user that was just created
-            ...
-
-        async def invalid_signal_callback(arg1: bool) -> str:
-            return "True" if arg1 else "False"
-
-        def init_module():
-            user_signals.before_user_created += before_user_created
-            user_signals.on_user_created += on_user_created
-
-            # This next line will cause ``mypy`` checks to fail
-            # as the signature is invalid for the signal
-            user_signals.on_user_created += invalid_signal_callback
+class Signal(Generic[Unpack[SignalFunctionSignature]]):
+    """
+    A synchronous signal
     """
 
     #: Name of the signal
-    name: str
+    _name: str
 
-    _listeners: set[Callable[[Unpack[SignalFunctionSignature]], Awaitable[None] | None]]
+    _async = False
+    _default_listeners: set[AsyncSignalListener]
+    _listeners: set[AsyncSignalListener]
 
-    def __init__(self, name: str):
-        self.name = name
-        self._listeners = set()
+    def __init__(self, name: str, listeners: Iterable[AsyncSignalListener] | None = None):
+        self._name = name
+        self._default_listeners = set(listeners) if listeners else set()
+        self._listeners = self._default_listeners.copy()
 
     def __repr__(self):
         return f"signal '{self.name}'"
+
+    @property
+    def name(self) -> str:
+        return self._name
 
     def connect(self, callback: Callable[[Unpack[SignalFunctionSignature]], Awaitable[None] | None]) -> None:
         """Connect a function to this signal, to be called when fired
@@ -91,6 +44,9 @@ class AsyncSignal(Generic[Unpack[SignalFunctionSignature]]):
 
         :param callback: function to register with this signal
         """
+
+        if not self._async and iscoroutinefunction(callback):
+            raise RuntimeError(f"Async listener attempting to be added to sync signal: {self}")
 
         self._listeners.add(callback)
 
@@ -108,6 +64,10 @@ class AsyncSignal(Generic[Unpack[SignalFunctionSignature]]):
         """
 
         self._listeners.remove(callback)
+
+    def clear_listeners(self) -> None:
+        self._listeners = set()
+        # self._listeners = self._default_listeners.copy()
 
     def __iadd__(self, callback: Callable[[Unpack[SignalFunctionSignature]], Awaitable[None] | None]):
         """Connect a function to this signal, to be called when fired
@@ -130,10 +90,37 @@ class AsyncSignal(Generic[Unpack[SignalFunctionSignature]]):
     def __len__(self):
         return len(self._listeners)
 
-    async def __call__(self, *args: Unpack[SignalFunctionSignature]) -> None:
+    def __call__(self, *args: Unpack[SignalFunctionSignature]) -> None:
+        self.send(*args)
+
+    def send(self, *args: Unpack[SignalFunctionSignature]) -> None:
+        """Call all the registered callbacks connected to this signal
+
+        You can also use the call operator to call registered callbacks.
+        Example::
+
+            signal.send(args)
+            # is the same as
+            signal(args)
+
+        :param args: The arguments to send to each registered function
+        """
+
+        for callback in self._listeners:
+            callback(*args)
+
+
+class AsyncSignal(Signal[Unpack[SignalFunctionSignature]], Generic[Unpack[SignalFunctionSignature]]):
+    """
+    An asynchronous signal
+    """
+
+    _async = True
+
+    async def __call__(self, *args: Unpack[SignalFunctionSignature]) -> None:  # type: ignore[override]
         await self.send(*args)
 
-    async def send(self, *args: Unpack[SignalFunctionSignature]) -> None:
+    async def send(self, *args: Unpack[SignalFunctionSignature]) -> None:  # type: ignore[override]
         """Call all the registered callbacks connected to this signal
 
         You can also use the call operator to call registered callbacks.
@@ -150,3 +137,64 @@ class AsyncSignal(Generic[Unpack[SignalFunctionSignature]]):
             response = callback(*args)
             if isawaitable(response):
                 await response
+
+
+class SignalGroup:
+    """
+    A mixin for supporting class signal attributes
+
+    * Fields that start with `on_` and have no value, will be auto-initialised
+    * Util methods to:
+        * get instance attributes that are Signal, AsyncSignal, or SignalGroup
+        * clear all listeners
+        * connect another group to common signals in this group
+    """
+
+    #: Optional prefix string used when auto-initialising class signal attributes
+    signal_name_prefix: ClassVar[str] = ""
+
+    def __init__(self):
+        # Initialise all fields that are
+        # * not already defined
+        # * it's type is a sub-class of ``Signal``, ``AsyncSignal`` or ``SignalGroup``
+
+        for field_name, annotation in get_annotations(self.__class__).items():
+            if not field_name.startswith("on_") or getattr(self, field_name, None) is not None:
+                continue
+
+            try:
+                annotation_instance = annotation()
+            except TypeError:
+                annotation_instance = annotation(f"{self.signal_name_prefix}{field_name}")
+
+            if isinstance(annotation_instance, (Signal, AsyncSignal, SignalGroup)):
+                setattr(self, field_name, annotation_instance)
+
+    def __repr__(self):
+        return f"signal group '{self.__class__.__name__}'"
+
+    def get_all_signals(self) -> list[tuple[str, Signal | AsyncSignal]]:
+        """Get all attributes of this class that are a ``Signal`` or ``AsyncSignal`` instance"""
+
+        return getmembers(self, lambda x: isinstance(x, (Signal, AsyncSignal)))
+
+    def get_all_groups(self) -> list[tuple[str, Self]]:
+        """Get all attributes of this class that are an instance of ``SignalGroup``"""
+
+        return getmembers(self, lambda x: isinstance(x, SignalGroup))
+
+    def clear_listeners(self) -> None:
+        """Clear all listeners for all group and signal attributes of this class"""
+
+        for key, group in self.get_all_groups():
+            group.clear_listeners()
+        for key, signal in self.get_all_signals():
+            signal.clear_listeners()
+
+    def connect_group(self, group: Self):
+        """Connect another group to common signals in this group"""
+
+        for key, signal in self.get_all_signals():
+            listener = getattr(group, key, None)
+            if listener is not None:
+                signal.connect(listener)

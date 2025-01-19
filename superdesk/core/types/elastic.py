@@ -1,20 +1,8 @@
-# -*- coding: utf-8; -*-
-#
-# This file is part of Superdesk.
-#
-# Copyright 2024 Sourcefabric z.u. and contributors.
-#
-# For the full copyright and license information, please see the
-# AUTHORS and LICENSE files distributed with this source code, or
-# at https://www.sourcefabric.org/superdesk/license
-
-from typing import Dict, Any, Optional, Callable
+from typing import Any, Callable
 from dataclasses import dataclass
 
-from uuid import uuid4
-
 from ..config import ConfigModel
-from superdesk.core.types import SearchRequest, SortParam
+from .search import SearchRequest, SortParam
 
 
 @dataclass
@@ -31,19 +19,19 @@ class ElasticResourceConfig:
     default_max_results: int = 25
 
     #: An optional filter to be applied to all searches
-    filter: Optional[Dict[str, Any]] = None
+    filter: dict[str, Any] | None = None
 
     #: An optional callback used to construct a filter dynamically, to be applied to all searches
-    filter_callback: Optional[Callable[[Optional[SearchRequest]], Dict[str, Any]]] = None
+    filter_callback: Callable[[SearchRequest | None], dict[str, Any]] | None = None
 
     #: An optional dictionary of field aggregations
-    aggregations: Optional[Dict[str, Any]] = None
+    aggregations: dict[str, Any] | None = None
 
     #: An optional dictionary of highlights to be applied
-    highlight: Optional[Callable[[str], Optional[Dict[str, Any]]]] = None
+    highlight: Callable[[str], dict[str, Any] | None] | None = None
 
     #: An optional list of facets to be applied (Will this be required in new version?)
-    facets: Optional[Dict[str, Any]] = None
+    facets: dict[str, Any] | None = None
 
 
 class ElasticClientConfig(ConfigModel):
@@ -74,12 +62,7 @@ class ElasticClientConfig(ConfigModel):
     retry_on_conflict: int = 5
 
     #: Optional dict to use when connecting to an Elasticsearch instance
-    options: Optional[Dict[str, Any]] = None
+    options: dict[str, Any] | None = None
 
     #: Settings to be placed on the Elasticsearch index when creating it
-    settings: Optional[Dict[str, Any]] = None
-
-
-def generate_index_name(alias: str):
-    random = str(uuid4()).split("-")[0]
-    return "{}_{}".format(alias, random)
+    settings: dict[str, Any] | None = None

@@ -19,9 +19,10 @@ from elasticsearch import AsyncElasticsearch, Elasticsearch, JSONSerializer, Tra
 from elasticsearch.exceptions import NotFoundError, RequestError
 
 from superdesk.core.errors import ElasticNotConfiguredForResource
+from superdesk.core.types import ElasticResourceConfig, ElasticClientConfig
 
 from .mapping import get_elastic_mapping_from_model
-from .common import ElasticResourceConfig, ElasticClientConfig, generate_index_name
+from .utils import generate_index_name
 from .sync_client import ElasticResourceClient
 from .async_client import ElasticResourceAsyncClient
 from .reindex import reindex
@@ -72,6 +73,11 @@ class ElasticResources:
         self._resource_async_clients = {}
 
         self.app = app
+
+        # Import the module from here so we aren't importing from ``core.resources`` module in ``core.elastic``
+        from .signals import on_resource_registered
+
+        self.app.resources.on_resource_registered.connect(on_resource_registered)
 
     def register_resource_config(
         self,

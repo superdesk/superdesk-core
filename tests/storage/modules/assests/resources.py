@@ -1,6 +1,5 @@
-from superdesk.core.elastic.common import ElasticResourceConfig
 from superdesk.core.module import Module
-from superdesk.core.resources import ResourceModel, ResourceConfig
+from superdesk.core.resources import ResourceModel, ResourceConfig, ElasticResourceConfig
 
 
 class Upload(ResourceModel):

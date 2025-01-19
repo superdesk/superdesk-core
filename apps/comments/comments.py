@@ -93,7 +93,7 @@ class CommentsService(BaseService):
             decode_keys(item, "mentioned_users")
             decode_keys(item, "mentioned_desks")
 
-    def on_created(self, docs):
+    async def on_created(self, docs):
         for doc in docs:
             if self.notifications:
                 push_notification(self.notification_key, item=str(doc.get("item")))
@@ -102,7 +102,7 @@ class CommentsService(BaseService):
 
         if self.notifications:
             # TODO-ASYNC: Support async (see superdesk.tests.markers.requires_eve_resource_async_event)
-            notify_mentioned_users(docs, get_app_config("CLIENT_URL", "").rstrip("/"))
+            await notify_mentioned_users(docs, get_app_config("CLIENT_URL", "").rstrip("/"))
             notify_mentioned_desks(docs)
 
     def on_updated(self, updates, original):

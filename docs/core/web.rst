@@ -108,7 +108,7 @@ Resource REST Endpoints
 -----------------------
 
 REST endpoints can be enabled for a resource by defining the
-:attr:`rest_endpoints <superdesk.core.resources.model.ResourceConfig.rest_endpoints>` attribute on the ResourceConfig.
+:attr:`rest_endpoints <superdesk.core.resources.resource_config.ResourceConfig.rest_endpoints>` attribute on the ResourceConfig.
 See :class:`RestEndpointConfig <superdesk.core.resources.resource_rest_endpoints.RestEndpointConfig>` for config
 options.
 
@@ -326,39 +326,39 @@ For example::
 API References
 --------------
 
-.. autoclass:: superdesk.core.web.types.Response
+.. autoclass:: superdesk.core.types.Response
     :member-order: bysource
     :members:
     :undoc-members:
 
-.. autodata:: superdesk.core.web.types.EndpointFunction
+.. autodata:: superdesk.core.types.EndpointFunction
 
-.. autoclass:: superdesk.core.web.types.Endpoint
+.. autoclass:: superdesk.core.types.Endpoint
     :member-order: bysource
     :members:
     :undoc-members:
 
-.. autoclass:: superdesk.core.web.types.Request
+.. autoclass:: superdesk.core.types.Request
     :member-order: bysource
     :members:
     :undoc-members:
 
-.. autoclass:: superdesk.core.web.types.EndpointGroup
+.. autoclass:: superdesk.core.types.EndpointGroup
     :member-order: bysource
     :members:
     :undoc-members:
 
-.. autoclass:: superdesk.core.web.types.RestResponseMeta
+.. autoclass:: superdesk.core.types.RestResponseMeta
     :member-order: bysource
     :members:
     :undoc-members:
 
-.. autoclass:: superdesk.core.web.types.RestGetResponse
+.. autoclass:: superdesk.core.types.RestGetResponse
     :member-order: bysource
     :members:
     :undoc-members:
 
-.. autofunction:: superdesk.core.web.types.endpoint
+.. autofunction:: superdesk.core.web.endpoint
 
 .. autoclass:: superdesk.core.web.rest_endpoints.RestEndpoints
     :member-order: bysource
@@ -381,7 +381,7 @@ API References
     :members:
     :undoc-members:
 
-.. autoclass:: superdesk.core.web.types.WSGIApp
+.. autoclass:: superdesk.core.types.WSGIApp
     :member-order: bysource
     :members:
     :undoc-members:

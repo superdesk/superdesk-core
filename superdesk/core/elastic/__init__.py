@@ -8,10 +8,6 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
-from .common import ElasticResourceConfig
 from .resources import ElasticResources
 
-__all__ = [
-    "ElasticResources",
-    "ElasticResourceConfig",
-]
+__all__ = ["ElasticResources"]
