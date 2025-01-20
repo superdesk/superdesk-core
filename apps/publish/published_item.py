@@ -39,10 +39,19 @@ PUBLISHED = "published"
 LAST_PUBLISHED_VERSION = "last_published_version"
 QUEUE_STATE = "queue_state"
 ERROR_MESSAGE = "error_message"
-queue_states = ["pending", "in_progress", "queued", "queued_not_transmitted", "error"]
-PUBLISH_STATE = namedtuple("PUBLISH_STATE", ["PENDING", "IN_PROGRESS", "QUEUED", "QUEUED_NOT_TRANSMITTED", "ERROR"])(
-    *queue_states
-)
+QUEUE_STATES = [
+    "pending",
+    #: Item is being pushed with ``publish:push``.
+    "pushed",
+    "in_progress",
+    "queued",
+    "queued_not_transmitted",
+    #: Something went wrong.
+    "error",
+]
+PUBLISH_STATE = namedtuple(
+    "PUBLISH_STATE", ["PENDING", "PUSHED", "IN_PROGRESS", "QUEUED", "QUEUED_NOT_TRANSMITTED", "ERROR"]
+)(*QUEUE_STATES)
 
 published_item_fields = {
     "item_id": {"type": "string", "mapping": not_analyzed},
@@ -54,7 +63,7 @@ published_item_fields = {
     QUEUE_STATE: {
         "type": "string",
         "default": "pending",
-        "allowed": queue_states,
+        "allowed": QUEUE_STATES,
     },
     ERROR_MESSAGE: {"type": "string"},
     "is_take_item": {  # deprecated
