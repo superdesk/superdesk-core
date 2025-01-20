@@ -11,7 +11,7 @@ responses==0.25.5
 pytest==8.3.4
 pytest-env==1.1.5
 python3-saml==1.16.0
-moto[sqs]==5.0.25
+moto[sqs]==5.0.27
 pyexiv2==2.15.3; sys_platform == 'linux'
 
 -e .
