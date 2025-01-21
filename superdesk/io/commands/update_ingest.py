@@ -320,7 +320,7 @@ async def update_provider(provider, rule_set=None, routing_scheme=None, sync=Fal
                     logger.warning("lock expired while updating provider %s", provider[ID_FIELD])
                     return
                 items = generator.send(failed)
-                failed = ingest_items(items, provider, feeding_service, rule_set, routing_scheme)
+                failed = await ingest_items(items, provider, feeding_service, rule_set, routing_scheme)
                 update_last_item_updated(update, items)
 
                 if not update.get(LAST_ITEM_ARRIVED) or update[LAST_ITEM_ARRIVED] < datetime.now(tz=pytz.utc):
@@ -512,7 +512,7 @@ def ingest_cancel(item, feeding_service):
         ingest_service.patch(relative["_id"], update)
 
 
-def ingest_items(items, provider, feeding_service, rule_set=None, routing_scheme=None):
+async def ingest_items(items, provider, feeding_service, rule_set=None, routing_scheme=None):
     all_items = filter_expired_items(provider, items)
     items_dict = {doc[GUID_FIELD]: doc for doc in all_items}
     items_in_package = []
@@ -524,7 +524,7 @@ def ingest_items(items, provider, feeding_service, rule_set=None, routing_scheme
         ]
 
     for item in [doc for doc in all_items if doc.get(ITEM_TYPE) != CONTENT_TYPE.COMPOSITE]:
-        ingested, ids = ingest_item(
+        ingested, ids = await ingest_item(
             item,
             provider,
             feeding_service,
@@ -550,7 +550,7 @@ def ingest_items(items, provider, feeding_service, rule_set=None, routing_scheme
                 ref["residRef"] = items_dict.get(ref["residRef"], {}).get(ID_FIELD)
         if item[GUID_FIELD] in failed_items:
             continue
-        ingested, ids = ingest_item(item, provider, feeding_service, rule_set, routing_scheme)
+        ingested, ids = await ingest_item(item, provider, feeding_service, rule_set, routing_scheme)
         if ingested:
             created_ids = created_ids + ids
         else:
@@ -569,7 +569,7 @@ def ingest_items(items, provider, feeding_service, rule_set=None, routing_scheme
     return failed_items
 
 
-def ingest_item(item, provider, feeding_service, rule_set=None, routing_scheme=None, expiry=None):
+async def ingest_item(item, provider, feeding_service, rule_set=None, routing_scheme=None, expiry=None):
     items_ids = []
     try:
         ingest_collection = get_ingest_collection(feeding_service, item)
@@ -684,7 +684,7 @@ def ingest_item(item, provider, feeding_service, rule_set=None, routing_scheme=N
                                     name=assoc_name,
                                 ),
                             )
-                    status, ids = ingest_item(assoc, provider, feeding_service, rule_set, expiry=item["expiry"])
+                    status, ids = await ingest_item(assoc, provider, feeding_service, rule_set, expiry=item["expiry"])
                     if status:
                         assoc["_id"] = ids[0]
                         items_ids.extend(ids)
@@ -715,7 +715,9 @@ def ingest_item(item, provider, feeding_service, rule_set=None, routing_scheme=N
 
         if routing_scheme and new_version:
             routed = ingest_service.find_one(_id=item[ID_FIELD], req=None)
-            superdesk.get_resource_service("routing_schemes").apply_routing_scheme(routed, provider, routing_scheme)
+            await superdesk.get_resource_service("routing_schemes").apply_routing_scheme(
+                routed, provider, routing_scheme
+            )
 
     except Exception as ex:
         logger.exception(ex)

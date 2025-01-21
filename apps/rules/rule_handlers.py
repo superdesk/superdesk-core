@@ -8,11 +8,10 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
-from typing import Dict, Any
 import logging
 
-from quart_babel import lazy_gettext
-from quart_babel.speaklater import LazyString
+from typing import Dict, Any
+from quart_babel import lazy_gettext, LazyString
 
 from superdesk.core import get_app_config
 from superdesk.resource_fields import ID_FIELD
@@ -30,10 +29,10 @@ class RoutingRuleHandler:
     supported_configs: Dict[str, bool]
     default_values: Dict[str, Any]
 
-    def can_handle(self, rule, ingest_item, routing_scheme) -> bool:
+    async def can_handle(self, rule, ingest_item, routing_scheme) -> bool:
         raise NotImplementedError()
 
-    def apply_rule(self, rule, ingest_item, routing_scheme):
+    async def apply_rule(self, rule, ingest_item, routing_scheme):
         raise NotImplementedError()
 
 
@@ -121,12 +120,12 @@ class DeskFetchPublishRoutingRuleHandler(RoutingRuleHandler):
         },
     }
 
-    def can_handle(self, rule, ingest_item, routing_scheme):
+    async def can_handle(self, rule, ingest_item, routing_scheme):
         return ingest_item.get(ITEM_TYPE) in (
             MEDIA_TYPES + (CONTENT_TYPE.TEXT, CONTENT_TYPE.PREFORMATTED, CONTENT_TYPE.COMPOSITE)
         )
 
-    def apply_rule(self, rule, ingest_item, routing_scheme):
+    async def apply_rule(self, rule, ingest_item, routing_scheme):
         if rule.get("actions", {}).get("preserve_desk", False) and ingest_item.get("task", {}).get("desk"):
             desk = get_resource_service("desks").find_one(req=None, _id=ingest_item["task"]["desk"])
             if ingest_item.get("task", {}).get("stage"):

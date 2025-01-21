@@ -8,170 +8,22 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
-from typing import Dict, List, Optional, Tuple, Any, TypedDict
-from dataclasses import dataclass, asdict
+from typing import Dict, List, Tuple
+from dataclasses import asdict
 from copy import deepcopy
 import logging
 
-from pymongo import MongoClient, uri_parser
+from pymongo import MongoClient
 from pymongo.database import Database, Collection
 from pymongo.errors import OperationFailure, DuplicateKeyError
 from motor.motor_asyncio import AsyncIOMotorClient, AsyncIOMotorDatabase, AsyncIOMotorCollection
 
-from superdesk.core.types import SortListParam
 from superdesk.resource_fields import VERSION_ID_FIELD, CURRENT_VERSION
-from .config import ConfigModel
+from superdesk.core.types import MongoIndexOptions, MongoResourceConfig
+
+from .utils import get_mongo_client_config
 
 logger = logging.getLogger(__name__)
-
-
-class MongoIndexCollation(TypedDict):
-    """TypedDict class for ``collation`` config
-
-    See https://www.mongodb.com/docs/manual/core/index-case-insensitive
-    """
-
-    #: Specifies language rules
-    locale: str
-
-    #: Determines comparison rules. A strength value of 1 or 2 indicates case-insensitive collation
-    strength: int
-
-
-@dataclass
-class MongoIndexOptions:
-    """Dataclass for easy construction of Mongo Index options
-
-    See https://mongodb.com/docs/manual/reference/method/db.collection.createIndex
-    """
-
-    #: Name of the MongoDB Index
-    name: str
-
-    #: List of keys to be used for the MongoDB Index
-    keys: SortListParam
-
-    #: Ensures that the indexed fields do not store duplicate values
-    unique: bool = True
-
-    #: Create index in the background, allowing read and write operations to the database while the index builds
-    background: bool = True
-
-    #: If True, the index only references documents with the specified field.
-    sparse: bool = True
-
-    #: allows users to specify language-specific rules for string comparison
-    collation: Optional[MongoIndexCollation] = None
-
-    #: allows to filter documents for this index
-    partialFilterExpression: Optional[Dict[str, Any]] = None
-
-
-@dataclass
-class MongoResourceConfig:
-    """Resource config for use with MongoDB, to be included with the ResourceConfig"""
-
-    #: Config prefix to be used
-    prefix: str = "MONGO"
-
-    #: Optional list of mongo indexes to be created for this resource
-    indexes: Optional[List[MongoIndexOptions]] = None
-
-    #: Optional list of mongo indexes to be created for the versioning resource
-    version_indexes: Optional[List[MongoIndexOptions]] = None
-
-    #: Boolean determining if this resource supports versioning
-    versioning: bool = False
-
-
-class MongoClientConfig(ConfigModel):
-    host: str = "localhost"
-    port: int = 27017
-    appname: str = "superdesk"
-    dbname: str = "superdesk"
-    connect: bool = True
-    tz_aware: bool = True
-    write_concern: Optional[Dict[str, Any]] = {"w": 1}
-    replicaSet: Optional[str] = None
-    uri: Optional[str] = None
-    document_class: Optional[type] = None
-    username: Optional[str] = None
-    password: Optional[str] = None
-    options: Optional[Dict[str, Any]] = None
-    auth_mechanism: Optional[str] = None
-    auth_source: Optional[str] = None
-    auth_mechanism_properties: Optional[str] = None
-
-
-def get_mongo_client_config(app_config: Dict[str, Any], prefix: str = "MONGO") -> Tuple[Dict[str, Any], str]:
-    config = MongoClientConfig.create_from_dict(app_config, prefix)
-
-    client_kwargs: Dict[str, Any] = {
-        "appname": config.appname,
-        "connect": config.connect,
-        "tz_aware": config.tz_aware,
-    }
-
-    if config.options is not None:
-        client_kwargs.update(config.options)
-
-    if config.write_concern is not None:
-        client_kwargs.update(config.write_concern)
-
-    if config.replicaSet is not None:
-        client_kwargs["replicaset"] = config.replicaSet
-
-    uri_parser.validate_options(client_kwargs)
-
-    if config.uri is not None:
-        host = config.uri
-        # raises an exception if uri is invalid
-        mongo_settings = uri_parser.parse_uri(host)
-
-        # extract username and password from uri
-        if mongo_settings.get("username"):
-            client_kwargs["username"] = mongo_settings["username"]
-            client_kwargs["password"] = mongo_settings["password"]
-
-        # extract default database from uri
-        dbname = mongo_settings.get("database")
-        if not dbname:
-            dbname = config.dbname
-
-        # extract auth source from uri
-        auth_source = mongo_settings["options"].get("authSource")
-        if not auth_source:
-            auth_source = dbname
-    else:
-        dbname = config.dbname
-        auth_source = dbname
-        host = config.host
-        client_kwargs["port"] = config.port
-
-    client_kwargs["host"] = host
-    client_kwargs["authSource"] = auth_source
-
-    if config.document_class is not None:
-        client_kwargs["document_class"] = config.document_class
-
-    auth_kwargs: Dict[str, Any] = {}
-    if config.username is not None:
-        username = config.username
-        password = config.password
-        auth = (username, password)
-        if any(auth) and not all(auth):
-            raise Exception("Must set both USERNAME and PASSWORD or neither")
-        client_kwargs["username"] = username
-        client_kwargs["password"] = password
-        if any(auth):
-            if config.auth_mechanism is not None:
-                auth_kwargs["authMechanism"] = config.auth_mechanism
-            if config.auth_source is not None:
-                auth_kwargs["authSource"] = config.auth_source
-            if config.auth_mechanism_properties is not None:
-                auth_kwargs["authMechanismProperties"] = config.auth_mechanism_properties
-
-    return {**client_kwargs, **auth_kwargs}, dbname
 
 
 class MongoResources:
@@ -187,6 +39,11 @@ class MongoResources:
         self._mongo_clients = {}
         self._mongo_clients_async = {}
         self.app = app
+
+        # Import the module from here so we aren't importing from ``core.resources`` module in ``core.mongo``
+        from .signals import on_resource_registered
+
+        self.app.resources.on_resource_registered.connect(on_resource_registered)
 
     def register_resource_config(self, name: str, config: MongoResourceConfig):
         """Register a Mongo resource config
@@ -367,11 +224,13 @@ class MongoResources:
                 else:
                     raise
 
-    def create_indexes_for_all_resources(self):
+    def create_indexes_for_all_resources(self) -> set[str]:
         """Creates indexes for all registered resources"""
 
-        for resource_name in self.get_all_resource_configs().keys():
+        resource_names = set(self.get_all_resource_configs().keys())
+        for resource_name in resource_names:
             self.create_resource_indexes(resource_name)
+        return resource_names
 
     # Async access
     def get_client_async(
@@ -422,4 +281,4 @@ class MongoResources:
         )
 
 
-from .app import SuperdeskAsyncApp  # noqa: E402
+from ..app import SuperdeskAsyncApp  # noqa: E402

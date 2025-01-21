@@ -12,7 +12,9 @@ from typing import Dict, List, Optional, Any, cast
 import importlib
 
 from superdesk.core.types import WSGIApp
+
 from .auth.user_auth import UserAuthProtocol
+from .privileges import PrivilegesRegistry
 
 
 def get_app_config(key: str, default: Optional[Any] = None) -> Optional[Any]:
@@ -47,16 +49,19 @@ class SuperdeskAsyncApp:
 
     auth: UserAuthProtocol
 
+    privileges: PrivilegesRegistry
+
     def __init__(self, wsgi: WSGIApp):
         self._running = False
         self._imported_modules = {}
         self._module_configs = {}
         self.wsgi = wsgi
+        self.resources = Resources(self)
         self.mongo = MongoResources(self)
         self.elastic = ElasticResources(self)
-        self.resources = Resources(self)
         self.auth = self.load_auth_module()
         self._store_app()
+        self.privileges = PrivilegesRegistry()
 
     @property
     def running(self) -> bool:
@@ -142,10 +147,14 @@ class SuperdeskAsyncApp:
             for endpoint in module.endpoints or []:
                 self.wsgi.register_endpoint(endpoint)
 
-        # then init all modules
+        # init all modules
         for module in self.get_module_list():
             if module.init is not None:
                 module.init(self)
+
+            # then register all module privileges
+            for privilege in module.privileges or []:
+                self.privileges.add(privilege)
 
     def start(self):
         """Start the app
@@ -162,6 +171,9 @@ class SuperdeskAsyncApp:
         self._store_app()
         self._load_modules(self.wsgi.config.get("MODULES", []))
         self._running = True
+
+        # after app is running is longer possible to add more privileges
+        self.privileges.lock()
 
     def stop(self):
         """Stops the app

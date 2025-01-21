@@ -13,6 +13,7 @@ build:
   apt_packages:
       - libxmlsec1-dev
       - libmagic1
+      - plantuml
 
 python:
   install:

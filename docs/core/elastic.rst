@@ -38,7 +38,7 @@ The :attr:`get_client_async <resources.ElasticResources.get_client>` method retu
 
 Elastic References
 ------------------
-.. autoclass:: superdesk.core.elastic.common.ElasticResourceConfig
+.. autoclass:: superdesk.core.types.ElasticResourceConfig
     :member-order: bysource
     :members:
 

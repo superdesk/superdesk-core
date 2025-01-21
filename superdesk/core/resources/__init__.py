@@ -8,22 +8,22 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
+from superdesk.core.types import MongoResourceConfig, MongoIndexOptions, ElasticResourceConfig
 from .utils import get_projection_from_request
 from .model import (
     BaseModel,
-    Resources,
     ResourceModel,
     ResourceModelWithObjectId,
     ModelWithVersions,
-    ResourceConfig,
     dataclass,
     Dataclass,
     default_model_config,
 )
+from .resource_config import ResourceConfig
+from .resource_manager import Resources
 from .resource_rest_endpoints import RestEndpointConfig, RestParentLink, get_id_url_type
 from .service import AsyncResourceService, AsyncCacheableService
-from ..mongo import MongoResourceConfig, MongoIndexOptions
-from ..elastic.resources import ElasticResourceConfig
+from .resource_signals import global_signals
 
 __all__ = [
     "get_projection_from_request",
@@ -43,4 +43,5 @@ __all__ = [
     "MongoResourceConfig",
     "MongoIndexOptions",
     "ElasticResourceConfig",
+    "global_signals",
 ]

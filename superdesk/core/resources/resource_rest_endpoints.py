@@ -35,7 +35,8 @@ from superdesk.resource_fields import STATUS, STATUS_OK, ITEMS
 
 from superdesk.core.web import RestEndpoints, ItemRequestViewArgs
 
-from .model import ResourceConfig, ResourceModel
+from .model import ResourceModel
+from .resource_config import ResourceConfig
 from .validators import convert_pydantic_validation_error_for_response
 
 
@@ -233,11 +234,12 @@ class ResourceRestEndpoints(RestEndpoints):
         """Processes a get single item request"""
 
         await self.get_parent_items(request)
-        service = self.service
+        signals = self.resource_config.data_class.get_signals()
+        await signals.web.on_get.send(request)
 
         if params.version == "all":
             items, count = await self.service.get_all_item_versions(args.item_id, params.max_results, params.page)
-            response = RestGetResponse(
+            response_data = RestGetResponse(
                 _items=items,
                 _meta=dict(
                     page=params.page,
@@ -254,20 +256,24 @@ class ResourceRestEndpoints(RestEndpoints):
                     request,
                 ),
             )
-            return Response(response, 200, [("X-Total-Count", count)])
+            response = Response(response_data, 200, [("X-Total-Count", count)])
+            await signals.web.on_get_response.send(request, response)
+            return response
         elif self.endpoint_config.parent_links:
             lookup = self.construct_parent_item_lookup(request)
-            lookup["_id"] = args.item_id if not service.id_uses_objectid() else ObjectId(args.item_id)
-            item = await service.find_one_raw(use_mongo=True, version=params.version, **lookup)
+            lookup["_id"] = args.item_id if not self.service.id_uses_objectid() else ObjectId(args.item_id)
+            item = await self.service.find_one_raw(use_mongo=True, version=params.version, **lookup)
         else:
-            item = await service.find_by_id_raw(args.item_id, params.version)
+            item = await self.service.find_by_id_raw(args.item_id, params.version)
 
         if not item:
             raise SuperdeskApiError.notFoundError(
                 f"{self.resource_config.name} resource with ID '{args.item_id}' not found"
             )
 
-        return Response(item)
+        response = Response(item)
+        await signals.web.on_get_response.send(request, response)
+        return response
 
     async def create_item(self, request: Request) -> Response:
         """Processes a create item request"""
@@ -296,17 +302,22 @@ class ResourceRestEndpoints(RestEndpoints):
             except ValidationError as validation_error:
                 return Response(convert_pydantic_validation_error_for_response(validation_error), 403)
 
+        signals = self.resource_config.data_class.get_signals()
+        await signals.web.on_create.send(request, model_instances)
         ids = await service.create(model_instances)
         if len(ids) == 1:
-            return Response(self._populate_item_hateoas(request, model_instances[0].to_dict()), 201)
+            response = Response(self._populate_item_hateoas(request, model_instances[0].to_dict()), 201)
         else:
-            return Response(
+            response = Response(
                 {
                     STATUS: STATUS_OK,
                     ITEMS: [self._populate_item_hateoas(request, item.to_dict()) for item in model_instances],
                 },
                 201,
             )
+
+        await signals.web.on_create_response.send(request, response)
+        return response
 
     async def update_item(
         self,
@@ -328,8 +339,18 @@ class ResourceRestEndpoints(RestEndpoints):
         if payload is None:
             raise SuperdeskApiError.badRequestError("Empty payload")
 
+        signals = self.resource_config.data_class.get_signals()
+        original = await self.service.find_by_id(args.item_id)
+        if original is None:
+            raise SuperdeskApiError.notFoundError(
+                f"{self.resource_config.name} resource with ID '{args.item_id}' not found"
+            )
+
+        await signals.web.on_update.send(request, original, payload)
+        payload = payload.copy()
+
         try:
-            await self.service.update(args.item_id, payload, if_match)
+            await self.service.update(args.item_id, payload, if_match, original)
         except ValidationError as validation_error:
             return Response(convert_pydantic_validation_error_for_response(validation_error), 403)
 
@@ -341,7 +362,9 @@ class ResourceRestEndpoints(RestEndpoints):
         )
         self._populate_item_hateoas(request, payload)
 
-        return Response(payload)
+        response = Response(payload)
+        await signals.web.on_update_response.send(request, response)
+        return response
 
     async def delete_item(self, args: ItemRequestViewArgs, params: None, request: Request) -> Response:
         """Processes a delete item request"""
@@ -361,8 +384,12 @@ class ResourceRestEndpoints(RestEndpoints):
                 "To edit a document its etag must be provided using the If-Match header"
             )
 
+        signals = self.resource_config.data_class.get_signals()
+        await signals.web.on_delete.send(request, original)
         await service.delete(original, if_match)
-        return Response({}, 204)
+        response = Response({}, 204)
+        await signals.web.on_delete_response.send(request, response)
+        return response
 
     async def search_items(
         self,
@@ -385,10 +412,12 @@ class ResourceRestEndpoints(RestEndpoints):
             params.where.update(lookup)
 
         params.args = cast(SearchArgs, params.model_extra)
+        signals = self.resource_config.data_class.get_signals()
+        await signals.web.on_search.send(request, params)
         cursor = await self.service.find(params)
         count = await cursor.count()
 
-        response = RestGetResponse(
+        response_data = RestGetResponse(
             _items=await cursor.to_list_raw(),
             _meta=dict(
                 page=params.page,
@@ -399,11 +428,13 @@ class ResourceRestEndpoints(RestEndpoints):
 
         status = 200
         headers = [("X-Total-Count", count)]
-        response["_links"] = self._build_resource_hateoas(params, count, request)
+        response_data["_links"] = self._build_resource_hateoas(params, count, request)
         if hasattr(cursor, "extra"):
-            getattr(cursor, "extra")(response)
+            getattr(cursor, "extra")(response_data)
 
-        return Response(response, status, headers)
+        response = Response(response_data, status, headers)
+        await signals.web.on_search_response.send(request, response)
+        return response
 
     def _build_resource_hateoas(self, req: SearchRequest, doc_count: Optional[int], request: Request) -> Dict[str, Any]:
         links = {

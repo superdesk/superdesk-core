@@ -14,7 +14,7 @@ from time import sleep
 from elasticsearch.exceptions import NotFoundError
 from click import progressbar
 
-from .common import generate_index_name
+from .utils import generate_index_name
 from .sync_client import ElasticResourceClient
 
 

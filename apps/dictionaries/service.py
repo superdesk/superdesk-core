@@ -16,7 +16,7 @@ import collections
 from simplejson.errors import JSONDecodeError
 
 from superdesk.core import json, get_current_app
-from superdesk.resource_fields import ID_FIELD
+from superdesk.resource_fields import ITEMS
 from superdesk.flask import request
 from superdesk.errors import SuperdeskApiError
 from superdesk.services import BaseService
@@ -325,7 +325,7 @@ class DictionaryService(BaseService):
         self.__enhance_items([doc])
 
     def on_fetched(self, docs):
-        self.__enhance_items(docs[ID_FIELD])
+        self.__enhance_items(docs[ITEMS])
 
     def __enhance_items(self, docs):
         for doc in docs:

@@ -542,8 +542,8 @@ The :meth:`Resources.register <model.Resources.register>` method provides a way 
 using the :class:`ResourceConfig <model.ResourceConfig>` class to provide the resource config.
 
 This will register the resource with MongoDB and optionally the Elasticsearch system. See
-:class:`MongoResourceConfig <superdesk.core.mongo.MongoResourceConfig>` and
-:class:`ElasticResourceConfig <superdesk.core.elastic.common.ElasticResourceConfig>` for MongoDB and Elastic config options.
+:class:`MongoResourceConfig <superdesk.core.types.MongoResourceConfig>` and
+:class:`ElasticResourceConfig <superdesk.core.types.ElasticResourceConfig>` for MongoDB and Elastic config options.
 
 Example module::
 
@@ -599,7 +599,7 @@ You can also use the ``resources`` config from a Module to automatically registe
 API References
 --------------
 
-.. autoclass:: superdesk.core.resources.model.Resources
+.. autoclass:: superdesk.core.resources.resource_manager.Resources
     :member-order: bysource
     :members:
 
@@ -614,7 +614,7 @@ Resource Model
     :member-order: bysource
     :members: id
 
-.. autoclass:: superdesk.core.resources.model.ResourceConfig
+.. autoclass:: superdesk.core.resources.resource_config.ResourceConfig
     :member-order: bysource
     :members:
 
