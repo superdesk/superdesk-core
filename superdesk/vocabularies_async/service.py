@@ -11,25 +11,24 @@
 
 import json
 import logging
-from typing import Annotated, Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional
 from typing import List
 
 from eve.methods.common import serialize_value
-from pydantic import BaseModel, ConfigDict, Field
 from quart_babel import gettext as _, lazy_gettext
 
 from superdesk import privilege
 from superdesk.cache import cache
-from superdesk.core.resources import ResourceModel, dataclass
+from superdesk.core.resources import ResourceModel
 from superdesk.core.resources.model import ResourceModel
 from superdesk.core.resources.service import AsyncResourceService
-from superdesk.core.resources.validators import validate_maxlength
 from superdesk.core.types import SearchRequest
 from superdesk.default_schema import DEFAULT_EDITOR, DEFAULT_SCHEMA
 from superdesk.errors import SuperdeskApiError
 from superdesk.flask import request
 from superdesk.notification import push_notification
 from superdesk.resource_fields import ID_FIELD
+from superdesk.types.vocabularies import Item, VocabulariesResourceModel
 from superdesk.users import get_user_from_request
 from superdesk.utc import utcnow
 
@@ -52,58 +51,6 @@ vocab_schema = {
         "height": {"type": "integer"},
     }
 }
-
-
-@dataclass
-class Tag:
-    text: str
-
-
-class Item(BaseModel):
-    model_config = ConfigDict(extra="allow")
-    name: str
-    qcode: str
-    is_active: bool = True
-
-
-@dataclass
-class DateShortcut:
-    value: int
-    term: str
-    label: str
-
-
-@dataclass
-class CustomFieldConfig:
-    increment_steps: list[int]
-    initial_offset_minutes: int
-
-
-class VocabulariesResourceModel(ResourceModel):
-    display_name: str
-    description: str | None = None
-    helper_text: Annotated[str | None, validate_maxlength(120)] = None
-    tags: list[Tag] | None = None
-    popup_width: int | None = None
-    type_: str  # Use type_ instead of type due to reserved keyword conflict
-    items: list[Item]
-    selection_type: str | None = None
-    read_only: bool | None = None
-    schema_field: str | None = None
-    dependent: bool = False
-    service: dict[str, int] = Field(default_factory=dict)
-    priority: int = 0
-    unique_field: str | None = None
-    schema_: dict[str, dict]
-    field_type_: str | None = None
-    field_options_: dict[str, Any] = Field(default_factory=dict)
-    init_version: int = 0
-    preffered_items: bool = False
-    disable_entire_category_selection: bool = False
-    date_shortcuts: list[DateShortcut] | None = None
-    custom_field_type: str | None = None
-    custom_field_config: CustomFieldConfig | None = None
-    translations: dict[str, dict[str, Any]] = Field(default_factory=dict)
 
 
 class VocabulariesService(AsyncResourceService[VocabulariesResourceModel]):
@@ -184,7 +131,6 @@ class VocabulariesService(AsyncResourceService[VocabulariesResourceModel]):
     async def on_update(self, updates: dict[str, Any], original: VocabulariesResourceModel) -> None:
         """Checks the duplicates if a unique field is defined"""
         if "items" in updates:
-            # FIXME: `model_copy` doesn't validate updates, is it fine here?
             updated = original.model_copy(deep=True, update=updates)
             await self._validate_items(updated)
         if original.unique_field:
@@ -249,7 +195,6 @@ class VocabulariesService(AsyncResourceService[VocabulariesResourceModel]):
         for item in vocab.items:
             for field, field_schema in schema.items():
                 if hasattr(item, field):
-                    # FIXME: not sure about this one either.
                     setattr(item, field, serialize_value(field_schema["type"], getattr(item, field)))
 
     def _send_notification(self, updated_vocabulary: VocabulariesResourceModel, event="vocabularies:updated") -> None:
