@@ -60,7 +60,7 @@ install_requires = [
     "pydantic>=2.7.4,<3.0",
     # Custom repos, with patches applied
     "eve @ git+https://github.com/MarkLark86/eve@use-quart",
-    "eve-elastic @ git+https://github.com/MarkLark86/eve-elastic@use-quart",
+    "eve-elastic @ git+https://github.com/superdesk/eve-elastic@async",
     "quart @ git+https://github.com/MarkLark86/quart@fix-test-client-with-utf8-url",
     "quart_babel>=1.0.7,<1.1",
     "asgiref>=3.8.1",
