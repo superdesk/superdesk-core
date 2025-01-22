@@ -6,17 +6,17 @@
 #
 alabaster==1.0.0
     # via sphinx
-anyio==4.6.2.post1
+anyio==4.8.0
     # via
     #   starlette
     #   watchfiles
 babel==2.16.0
     # via sphinx
-certifi==2024.8.30
+certifi==2024.12.14
     # via requests
-charset-normalizer==3.4.0
+charset-normalizer==3.4.1
     # via requests
-click==8.1.7
+click==8.1.8
     # via uvicorn
 colorama==0.4.6
     # via sphinx-autobuild
@@ -34,13 +34,13 @@ idna==3.10
     #   requests
 imagesize==1.4.1
     # via sphinx
-jinja2==3.1.4
+jinja2==3.1.5
     # via sphinx
 markupsafe==3.0.2
     # via jinja2
-packaging==24.1
+packaging==24.2
     # via sphinx
-pygments==2.18.0
+pygments==2.19.1
     # via sphinx
 requests==2.32.3
     # via sphinx
@@ -69,21 +69,19 @@ sphinxcontrib-qthelp==2.0.0
     # via sphinx
 sphinxcontrib-serializinghtml==2.0.0
     # via sphinx
-starlette==0.41.2
+starlette==0.45.2
     # via sphinx-autobuild
-tomli==2.0.2
+tomli==2.2.1
     # via sphinx
 typing-extensions==4.12.2
     # via
     #   anyio
     #   uvicorn
-urllib3==1.26.20
-    # via
-    #   -r docs/requirements.in
-    #   requests
-uvicorn==0.32.0
+urllib3==2.3.0
+    # via requests
+uvicorn==0.34.0
     # via sphinx-autobuild
-watchfiles==0.24.0
+watchfiles==1.0.4
     # via sphinx-autobuild
-websockets==13.1
+websockets==14.2
     # via sphinx-autobuild

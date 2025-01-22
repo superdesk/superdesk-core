@@ -373,3 +373,18 @@ def get_list_chunks(items, chunk_size=100):
 
 def get_dict_hash(data: Mapping) -> str:
     return document_etag(data)
+
+
+def format_content_type_name(item: Dict[str, str], default_name: str) -> str:
+    """
+    Extracts and formats the name from the content type item.
+
+    Args:
+        item (Dict[str, str]): The content type item containing details.
+        default_name (str): The default name to use if no valid name is found.
+
+    Returns:
+        str: The formatted and sanitized name.
+    """
+    name = item.get("output_name") or item.get("label", default_name)
+    return re.compile("[^0-9a-zA-Z_]").sub("", name)

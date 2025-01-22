@@ -61,25 +61,16 @@ class FlushElasticIndex:
         :raise: SystemExit exception if delete elastic index response status is not 200 or 404.
         """
 
-        indices = list(self._es.indices.get_alias(f"{index_prefix}_*").keys())
-        print(f"Configured indices with prefix '{index_prefix}': " + ", ".join(indices))
-
-        app = get_current_app()
-        for resource in app.data.get_elastic_resources():
-            alias = app.data.elastic._resource_index(resource)
-
-            for index in indices:
-                if index.rsplit("_", 1)[0] == alias or index == alias:
-                    try:
-                        print(f'- Removing elastic index "{index}"')
-                        self._es.indices.delete(index=index)
-                    except es_exceptions.NotFoundError:
-                        print(f'\t- "{index}" elastic index was not found. Continue without deleting.')
-                    except es_exceptions.TransportError as e:
-                        raise SystemExit(f'\t- "{index}" elastic index was not deleted. Exception: "{e.error}"')
-                    else:
-                        print(f'\t- "{index}" elastic index was deleted.')
-                        break
+        indices = self._es.indices.get(index=f"{index_prefix}_*")
+        for index in indices:
+            try:
+                print("Deleting index", index)
+                self._es.indices.delete(index=index)
+            except es_exceptions.NotFoundError:
+                pass
+            except es_exceptions.RequestError as e:
+                if e.status_code not in [200, 404]:
+                    raise SystemExit(f"Failed to delete elastic index: {e}")
 
         # now delete indices for async resources
         get_current_async_app().elastic.drop_indexes(index_prefix)

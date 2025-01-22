@@ -105,8 +105,8 @@ class TextParserTest(ItemTest):
 
     def test_parse_item_meta(self):
         self.assertEqual("text", self.item.get("type"))
-        self.assertEqual("2013-03-01T15:09:04", self.item.get("versioncreated").isoformat())
-        self.assertEqual("2013-03-01T15:09:04", self.item.get("firstcreated").isoformat())
+        self.assertEqual("2013-03-01T15:09:04+00:00", self.item.get("versioncreated").isoformat())
+        self.assertEqual("2013-03-01T15:09:04+00:00", self.item.get("firstcreated").isoformat())
         self.assertEqual("Editorial Note", self.item.get("ednote"))
 
     def test_parse_content_meta(self):

@@ -40,6 +40,7 @@ from superdesk.default_settings import (  # noqa
     CLIENT_URL,
     DEBUG,
     URN_DOMAIN,
+    PROXY_MEDIA_STORAGE_CHECK_EXISTS,
 )
 
 CONTENTAPI_INSTALLED_APPS = [

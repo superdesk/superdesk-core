@@ -10,6 +10,8 @@ from apps.auth import is_current_user_admin
 
 
 class AuthTestCase(TestCase):
+    test_context = False  # avoid request context
+
     async def test_remove_expired_sessions_syncs_online_users(self):
         sess_id = ObjectId()
         user_ids = self.app.data.insert(
@@ -20,17 +22,28 @@ class AuthTestCase(TestCase):
             ],
         )
         self.assertEqual(2, len(user_ids))
+        sessions = [
+            {"user": user_ids[0], "_updated": utcnow() - timedelta(days=50)},
+            {"user": user_ids[1], "_updated": utcnow()},
+            {"_id": sess_id, "user": user_ids[1], "_updated": utcnow()},
+        ]
 
-        self.app.data.insert(
-            "auth",
-            [
-                {"user": user_ids[0], "_updated": utcnow() - timedelta(days=50)},
-                {"user": user_ids[1], "_updated": utcnow()},
-                {"_id": sess_id, "user": user_ids[1], "_updated": utcnow()},
-            ],
-        )
+        self.app.data.insert("auth", sessions)
         _ids = [_auth["user"] for _auth in self.app.data.find_all("auth")]
         self.assertEqual(3, len(_ids))
+
+        self.app.data.insert(
+            "archive",
+            [
+                {
+                    "_id": "locked-item",
+                    "lock_session": str(sessions[0]["_id"]),
+                    "lock_user": str(user_ids[0]),
+                    "state": "in_progress",
+                    "task": {"desk": ObjectId()},
+                }
+            ],
+        )
 
         RemoveExpiredSessions().run()
 
@@ -43,6 +56,9 @@ class AuthTestCase(TestCase):
         self.assertEqual(2, len(_ids))
         self.assertEqual(user_ids[1], _ids[0])
         self.assertEqual(user_ids[1], _ids[1])
+        items = self.app.data.find_all("archive")
+        assert items[0]["lock_user"] is None
+        assert items[0]["lock_session"] is None
 
     def test_is_current_user_admin(self):
         with patch("apps.auth.get_user", return_value={}):

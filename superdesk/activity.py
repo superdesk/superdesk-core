@@ -69,6 +69,7 @@ class ActivityResource(Resource):
         "resource": {"type": "string"},
     }
     exclude = {endpoint_name, "notification"}
+    notifications = False
     datasource = {
         "default_sort": [("_created", -1)],
         "filter": {"_created": {"$gte": utcnow() - datetime.timedelta(days=1)}},

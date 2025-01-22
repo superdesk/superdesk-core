@@ -2,4 +2,3 @@ sphinx
 docutils
 sphinx-autobuild
 sphinxcontrib-plantuml
-urllib3>=1.26,<2

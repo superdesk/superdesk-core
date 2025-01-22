@@ -205,6 +205,29 @@ class ArchiveGetItemsChainTestCase(TestCase):
             "slugline": "skoda scala",
             "byline": "BELGA",
         },
+        {
+            "_id": "spiked-1",
+            "guid": "spiked-1",
+            "headline": "Spiked",
+            "rewrite_of": "missing",
+            "translations": None,
+            "translation_id": None,
+            "translated_from": None,
+            "language": "en",
+            "type": "text",
+            "version": 1,
+            "profile": "text",
+            "pubstatus": "usable",
+            "format": "HTML",
+            "firstcreated": datetime.datetime(2019, 4, 3, 12, 41, 53),
+            "versioncreated": datetime.datetime(2019, 4, 3, 12, 45, 14),
+            "original_creator": "5d385f31fe985ec67a0ca583",
+            "state": "published",
+            "source": "Belga",
+            "version_creator": "5d385f31fe985ec67a0ca583",
+            "slugline": "skoda scala",
+            "byline": "BELGA",
+        },
     ]
 
     async def asyncSetUp(self):
@@ -315,3 +338,8 @@ class ArchiveGetItemsChainTestCase(TestCase):
                 "update-2-translation-fr-nl-update-2",
             ],
         )
+
+        spiked = self.archive[-1]
+        assert spiked
+        items = archive_service.get_items_chain(spiked)
+        self.assertListEqual([i["_id"] for i in items], ["spiked-1"])

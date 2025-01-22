@@ -9,11 +9,10 @@
 # at https://www.sourcefabric.org/superdesk/license
 
 
-from typing import Dict, Any
+from typing import Dict, Any, Literal
 import eve.io.base
 import json as std_json
 
-from typing_extensions import Literal
 from pymongo.cursor import Cursor as MongoCursor
 from pymongo.collation import Collation
 from eve.utils import document_etag, ParsedRequest

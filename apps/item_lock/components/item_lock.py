@@ -122,7 +122,7 @@ class ItemLock(BaseComponent):
             # unlock the lock :)
             unlock(lock_id, remove=True)
 
-    def unlock(self, item_filter, user_id, session_id, etag):
+    def unlock(self, item_filter, user_id, session_id, etag, force=False):
         item_model = get_model(ItemModel)
         item = item_model.find_one(item_filter)
 
@@ -134,7 +134,7 @@ class ItemLock(BaseComponent):
 
         can_user_unlock, error_message = self.can_unlock(item, user_id)
 
-        if can_user_unlock:
+        if can_user_unlock or force:
             self.app.on_item_unlock(item, user_id)
             updates = {}
 
@@ -172,10 +172,11 @@ class ItemLock(BaseComponent):
 
     def unlock_session(self, user_id, session_id, is_last_session):
         item_model = get_model(ItemModel)
-        items = item_model.find({LOCK_SESSION: str(session_id)} if not is_last_session else {LOCK_USER: str(user_id)})
+        lookup = {LOCK_SESSION: str(session_id)} if not is_last_session else {LOCK_USER: str(user_id)}
+        items = item_model.find(lookup)
 
         for item in items:
-            self.unlock({"_id": item["_id"]}, user_id, session_id, None)
+            self.unlock({"_id": item["_id"]}, user_id, session_id, None, force=True)
 
     def can_lock(self, item, user_id, session_id):
         """

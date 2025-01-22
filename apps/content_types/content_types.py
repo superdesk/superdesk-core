@@ -15,6 +15,7 @@ from superdesk.resource import build_custom_hateoas
 from quart_babel import gettext as _
 from superdesk.utc import utcnow
 from superdesk.services import CacheableService
+from superdesk.utils import format_content_type_name
 
 
 CONTENT_TYPE_PRIVILEGE = "content_type"
@@ -109,6 +110,7 @@ class ContentTypesResource(superdesk.Resource):
         "created_by": superdesk.Resource.rel("users", nullable=True),
         "updated_by": superdesk.Resource.rel("users", nullable=True),
         "init_version": {"type": "integer"},
+        "output_name": {"type": "string", "nullable": True},
     }
 
     item_url = r'regex("[\w,.:-]+")'
@@ -241,7 +243,7 @@ class ContentTypesService(CacheableService):
         try:
             _id = bson.ObjectId(profile)
             item = self.find_one(req=None, _id=_id) or {}
-            return re.compile("[^0-9a-zA-Z_]").sub("", item.get("label", str(_id)))
+            return format_content_type_name(item, str(_id))
         except bson.errors.InvalidId:
             return profile
 

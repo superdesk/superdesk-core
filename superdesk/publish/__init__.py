@@ -15,8 +15,7 @@ Items must be inserted to publish queue in order to get transmitted.
 """
 
 import logging
-from typing import Any, NamedTuple, Dict, List, Callable, Union
-from typing_extensions import TypedDict
+from typing import Any, NamedTuple, Dict, List, Callable, Union, TypedDict
 
 from bson import ObjectId
 

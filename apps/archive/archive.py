@@ -275,6 +275,7 @@ class ArchiveVersionsResource(Resource):
     privileges = {"PATCH": "archive"}
     collation = False
     versioning = False
+    notifications = False
     mongo_indexes = {
         "guid": ([("guid", 1)], {"background": True}),
         "_id_document_1": ([("_id_document", 1)], {"background": True}),
@@ -1186,33 +1187,47 @@ class ArchiveService(BaseService, HighlightsSearchMixin):
         """
         for i in range(get_app_config("MAX_EXPIRY_LOOPS")):  # avoid blocking forever just in case
             query = {
-                "$and": [
-                    {"expiry": {"$lte": expiry_datetime}},
-                    {"$or": [{"task.desk": {"$ne": None}}, {ITEM_STATE: CONTENT_STATE.SPIKED, "task.desk": None}]},
-                ]
+                "bool": {
+                    "must": [
+                        {"range": {"expiry": {"lte": expiry_datetime}}},
+                        {
+                            "bool": {
+                                "should": [
+                                    {"exists": {"field": "task.desk"}},
+                                    {"term": {ITEM_STATE: CONTENT_STATE.SPIKED}},
+                                ],
+                            }
+                        },
+                    ],
+                    "must_not": [],
+                }
             }
 
             if invalid_only:
-                query["$and"].append({"expiry_status": "invalid"})
+                query["bool"]["must"].append({"term": {"expiry_status": "invalid"}})
             else:
-                query["$and"].append({"expiry_status": {"$ne": "invalid"}})
+                query["bool"]["must_not"].append({"term": {"expiry_status": "invalid"}})
 
-            if last_id:
-                query["$and"].append({"_id": {"$gt": last_id}})
+            if last_id:  # elastic does not support range query on _id, so using guid
+                query["bool"]["must"].append({"range": {"guid": {"gt": last_id}}})
 
-            req = ParsedRequest()
-            req.sort = "_id"
-            req.max_results = get_app_config("MAX_EXPIRY_QUERY_LIMIT")
-            req.where = json.dumps(query)
+            source = {
+                "query": query,
+                "sort": [{"guid": "asc"}, {"versioncreated": "asc"}],
+                "size": get_app_config("MAX_EXPIRY_QUERY_LIMIT"),
+            }
 
-            items = list(self.get_from_mongo(req=req, lookup={}))
+            items = list(archive_internal_service.search(source))
 
             yield items  # we need to yield the empty list too to signal it's the end
 
             if not len(items):
                 break
             else:
-                last_id = items[-1]["_id"]
+                try:
+                    last_id = items[-1]["guid"]
+                except KeyError:
+                    pass
 
         else:
             logger.warning("get_expired_items did not finish in %d loops", get_app_config("MAX_EXPIRY_LOOPS"))
@@ -1336,9 +1351,12 @@ class ArchiveService(BaseService, HighlightsSearchMixin):
         def get_item_translated_from(item):
             _item = item
             for _i in range(50):
-                try:
-                    item = self.find_one(req={}, _id=item["translated_from"])
-                except Exception:
+                if item and item.get("translated_from"):
+                    next_item = self.find_one(req={}, _id=item["translated_from"])
+                    if not next_item:
+                        break
+                    item = next_item
+                else:
                     break
             else:
                 logger.error(
@@ -1347,6 +1365,8 @@ class ArchiveService(BaseService, HighlightsSearchMixin):
             return item
 
         item = get_item_translated_from(item)
+        if not item:
+            return []
         # add item + translations
         items_chain = [item]
         items_chain += self.get_item_translations(item)
@@ -1354,11 +1374,13 @@ class ArchiveService(BaseService, HighlightsSearchMixin):
         for _i in range(50):
             try:
                 item = self.find_one(req={}, _id=item["rewrite_of"])
+                if not item:
+                    break
                 # prepend translations + update
                 items_chain = [item, *self.get_item_translations(item), *items_chain]
-            except Exception:
+            except KeyError:
                 # `item` is not an update, but it can be a translation
-                if "translated_from" in item:
+                if item and item.get("translated_from"):
                     translation_item = item
                     item = get_item_translated_from(item)
                     # add item + translations
@@ -1380,7 +1402,7 @@ class ArchiveService(BaseService, HighlightsSearchMixin):
             logger.error("Failed to retrieve the whole items chain for item {}".format(item.get("_id")))
         return items_chain
 
-    def get_item_translations(self, item):
+    def get_item_translations(self, item) -> list[str]:
         """
         Get list of item's translations.
         :param item: item
@@ -1388,7 +1410,9 @@ class ArchiveService(BaseService, HighlightsSearchMixin):
         :return: list of dicts
         :rtype: list
         """
-        translation_items = []
+        translation_items: list[str] = []
+        if not item or not item.get("translations"):
+            return translation_items
 
         for translation_item_id in item.get("translations", []):
             translation_item = self.find_one(req={}, _id=translation_item_id)
@@ -1439,6 +1463,28 @@ class ArchiveSaveService(BaseService):
     def on_fetched_item(self, item):
         item["_type"] = "archive"
         return item
+
+
+class ArchiveInternalResource(Resource):
+    """Archive Internal Resource without additional filtering."""
+
+    schema = item_schema()
+    datasource = {
+        "source": "archive",
+        "search_backend": "elastic",
+    }
+    resource_methods = []
+    item_methods = []
+    versioning = False
+    collation = False
+    internal_resource = True
+
+
+class ArchiveInternalService(BaseService):
+    pass
+
+
+archive_internal_service = ArchiveInternalService("archive_internal", backend=superdesk.get_backend())
 
 
 superdesk.workflow_state("in_progress")

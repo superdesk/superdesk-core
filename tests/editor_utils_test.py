@@ -2134,3 +2134,23 @@ class Editor3TestCase(TestCase):
         """.strip()
             == item["body_html"]
         )
+
+    def test_unicode_error_in_export(self):
+        body_html = {
+            "blocks": [
+                {
+                    "data": {},
+                    "depth": 0,
+                    "entityRanges": [],
+                    "inlineStyleRanges": [],
+                    "key": "9brbn",
+                    "text": "qualité",
+                    "type": "unstyled",
+                },
+            ],
+        }
+
+        item = self.build_item(body_html, field="body_html")
+        editor = Editor3Content(item, field="body_html", is_html=True)
+        editor.update_item()
+        assert item["body_html"] == "<p>qualité</p>"
