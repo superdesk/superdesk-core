@@ -257,7 +257,7 @@ class PushContent(superdesk.Command):
         archive_service = cast(ArchiveService, get_resource_service(ARCHIVE))
         published_service = get_resource_service(PUBLISHED)
         try:
-            published_service.patch(published_item_id, {QUEUE_STATE: PUBLISH_STATE.PUSHED})
+            published_service.patch(published_item_id, {QUEUE_STATE: PUBLISH_STATE.PUSHED})  # type: ignore
             published_item = archive_service.find_one(req=None, _id=published_item_id)
         except Exception:
             logger.exception("Can't push publish item.")

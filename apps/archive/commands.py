@@ -313,7 +313,7 @@ class RemoveExpiredContent(superdesk.Command):
             # Get the item references for is package
             item_refs = package_service.get_residrefs(item)
 
-        if item.get(ITEM_TYPE) in [CONTENT_TYPE.TEXT, CONTENT_TYPE.PREFORMATTED] and app.config.get(
+        if item.get(ITEM_TYPE) in [CONTENT_TYPE.TEXT, CONTENT_TYPE.PREFORMATTED] and get_app_config(
             "BROADCAST_ENABLED", True
         ):
             broadcast_items = get_resource_service("archive_broadcast").get_broadcast_items_from_master_story(item)
