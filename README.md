@@ -1,4 +1,4 @@
-# Superdesk Core library
+.# Superdesk Core library
 [![Test](https://github.com/superdesk/superdesk-core/actions/workflows/nose-tests.yml/badge.svg)](https://github.com/superdesk/superdesk-core/actions/workflows/nose-tests.yml)
 [![Lint](https://github.com/superdesk/superdesk-core/actions/workflows/lint.yml/badge.svg)](https://github.com/superdesk/superdesk-core/actions/workflows/lint.yml)
 [![Documentation Status](https://readthedocs.org/projects/superdesk/badge/?version=latest)](https://superdesk.readthedocs.io/en/latest/?badge=latest)
