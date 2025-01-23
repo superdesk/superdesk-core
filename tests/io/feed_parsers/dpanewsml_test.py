@@ -32,9 +32,7 @@ class DPANewsMLTestCase(TestCase):
             self.item = self.parser.parse(etree.fromstring(self.nitf), provider)[0]
 
     def test_headline(self):
-        self.assertEqual(
-            self.item.get("headline"), "Eintracht in London: Hintereggers Tränen und Attacke auf Reporter"
-        )
+        self.assertEqual(self.item.get("headline"), "Eintracht in London: Hintereggers Tränen und Attacke auf Reporter")
 
     def test_slugline(self):
         self.assertEqual(self.item.get("slugline"), "")
