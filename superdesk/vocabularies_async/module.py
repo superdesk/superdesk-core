@@ -9,6 +9,7 @@
 # at https://www.sourcefabric.org/superdesk/license
 
 from superdesk.core.resources import ResourceConfig, MongoResourceConfig, MongoIndexOptions
+from superdesk.core.resources.resource_rest_endpoints import RestEndpointConfig
 from superdesk.types import VocabulariesResourceModel
 from .service import VocabulariesService
 
@@ -24,5 +25,9 @@ vocabularies_resource_config = ResourceConfig(
                 keys=[("field_type", 1)],
             ),
         ],
+    ),
+    rest_endpoints=RestEndpointConfig(
+        item_methods=["GET", "PATCH", "DELETE"],
+        resource_methods=["GET", "POST"],
     ),
 )
