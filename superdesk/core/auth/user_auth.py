@@ -1,5 +1,6 @@
 from typing import Any, cast
 
+from superdesk.utils import flatten
 from superdesk.errors import SuperdeskApiError
 from superdesk.core.types import Request, AuthRule
 
@@ -27,7 +28,10 @@ class UserAuthProtocol:
         elif isinstance(endpoint_rules, dict):
             endpoint_rules = cast(list[AuthRule], endpoint_rules.get(request.method) or [])
 
-        for rule in self.get_default_auth_rules() + (endpoint_rules or []):
+        auth_rules = self.get_default_auth_rules()
+        auth_rules.append(endpoint_rules or [])
+
+        for rule in flatten(auth_rules):
             response = await rule(request)
             if response is not None:
                 return response
