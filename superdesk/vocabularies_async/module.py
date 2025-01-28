@@ -29,5 +29,6 @@ vocabularies_resource_config = ResourceConfig(
     rest_endpoints=RestEndpointConfig(
         item_methods=["GET", "PATCH", "DELETE"],
         resource_methods=["GET", "POST"],
+        enable_cors=True,
     ),
 )
