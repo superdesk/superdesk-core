@@ -130,7 +130,7 @@ class SuperdeskApiError(SuperdeskError):
         """Create dict for json response."""
         rv = {}
         rv[STATUS] = STATUS_ERR
-        rv["_message"] = self.message or ""
+        rv["_message"] = str(self.message or "")
         if hasattr(self, "payload"):
             rv[ISSUES] = self.payload
         return rv
