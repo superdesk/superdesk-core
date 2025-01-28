@@ -416,7 +416,6 @@ class SuperdeskEve(eve.Eve):
 
         sentry_sdk.init(dsn=self.config["SENTRY_DSN"], integrations=[QuartIntegration(), AsyncioIntegration()])
 
-
     def extend_eve_home_endpoint(self, links: list[dict]) -> None:
         """Adds async resources to Eve's api root endpoint"""
 
