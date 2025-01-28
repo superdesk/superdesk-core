@@ -52,7 +52,9 @@ class RestEndpoints(EndpointGroup):
         self.resource_methods = resource_methods or ["GET", "POST"]
         self.item_methods = item_methods or ["GET", "PATCH", "DELETE"]
         self.id_param_type = id_param_type or "string"
+        self.add_endpoints()
 
+    def add_endpoints(self):
         resource_url = self.get_resource_url()
         if "GET" in self.resource_methods:
             self.endpoints.append(
