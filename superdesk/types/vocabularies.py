@@ -72,7 +72,7 @@ class VocabulariesResourceModel(ResourceModel):
     service: dict[str, int] = Field(default_factory=dict)
     priority: int = 0
     unique_field: str | None = None
-    schema_: dict[str, dict]
+    schema: dict[str, dict]
     field_type_: str | None = None
     field_options_: dict[str, Any] = Field(default_factory=dict)
     init_version: int = 0

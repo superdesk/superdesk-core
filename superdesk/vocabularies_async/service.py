@@ -28,7 +28,7 @@ from superdesk.errors import SuperdeskApiError
 from superdesk.flask import request
 from superdesk.notification import push_notification
 from superdesk.resource_fields import ID_FIELD
-from superdesk.types.vocabularies import Item, VocabulariesResourceModel
+from superdesk.types.vocabularies import Item, VocabulariesResourceModel, CVAccessType
 from superdesk.users import get_user_from_request
 from superdesk.utc import utcnow
 
@@ -58,14 +58,14 @@ class VocabulariesService(AsyncResourceService[VocabulariesResourceModel]):
 
     async def _validate_items(self, update: VocabulariesResourceModel) -> None:
         # if we have qcode and not unique_field set, we want it to be qcode
-        if update.schema_.get("qcode") and update.unique_field is None:
+        if update.schema.get("qcode") and update.unique_field is None:
             update.unique_field = "qcode"
 
         unique_field = update.unique_field
         vocabs = {}
-        if update.schema_ and update.items:
+        if update.schema and update.items:
             for index, item in enumerate(update.items):
-                for field, desc in update.schema_.items():
+                for field, desc in update.schema.items():
                     if (desc.get("required", False) or unique_field == field) and not getattr(item, field, None):
                         msg = f"Required {field} in item {index}"
                         payload = {"error": {"required_field": 1}, "params": {"field": field, "item": index}}
@@ -316,10 +316,10 @@ class VocabulariesService(AsyncResourceService[VocabulariesResourceModel]):
             cv = VocabulariesResourceModel(
                 id=KEYWORDS_CV,
                 items=items,
-                type_="manageable",
+                management_type=CVAccessType.MANAGEABLE,
                 display_name=_("Keywords"),
                 unique_field="name",
-                schema_={
+                schema={
                     "name": {},
                     "qcode": {},
                 },
