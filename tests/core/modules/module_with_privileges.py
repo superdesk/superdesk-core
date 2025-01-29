@@ -1,8 +1,8 @@
 from quart_babel import lazy_gettext
 
-from superdesk.core.auth.privilege_rules import http_method_privilege_based_rules
 from superdesk.core.module import Module
 from superdesk.core.privileges import Privilege
+from superdesk.core.auth.privilege_rules import http_method_privilege_based_rules
 from superdesk.core.resources import ResourceConfig, ResourceModel, RestEndpointConfig
 
 test_privileges = ["can_read", "can_create"]

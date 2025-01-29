@@ -8,10 +8,10 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
-from typing import Dict, List, Tuple
-from dataclasses import asdict
-from copy import deepcopy
 import logging
+from copy import deepcopy
+from dataclasses import asdict
+from typing import Dict, List, Tuple
 
 from pymongo import MongoClient
 from pymongo.database import Database, Collection
@@ -250,7 +250,7 @@ class MongoResources:
 
         if not self._mongo_clients_async.get(mongo_config.prefix):
             client_config, dbname = get_mongo_client_config(self.app.wsgi.config, mongo_config.prefix)
-            client = AsyncIOMotorClient(**client_config)
+            client: AsyncIOMotorClient = AsyncIOMotorClient(**client_config)
             db = client.get_database(dbname if not versioning else f"{dbname}_versions")
             self._mongo_clients_async[mongo_config.prefix] = (client, db)
 

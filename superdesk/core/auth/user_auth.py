@@ -29,7 +29,7 @@ class UserAuthProtocol:
             endpoint_rules = cast(list[AuthRule], endpoint_rules.get(request.method) or [])
 
         auth_rules = self.get_default_auth_rules()
-        auth_rules.append(endpoint_rules or [])
+        auth_rules.append(endpoint_rules or [])  # type: ignore[arg-type]
 
         for rule in flatten(auth_rules):
             response = await rule(request)
