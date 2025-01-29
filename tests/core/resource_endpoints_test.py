@@ -435,9 +435,6 @@ class PrivilegedResourceEndpointsTestCase(AsyncFlaskTestCase):
         ]
     }
 
-    async def asyncSetUp(self):
-        await super().asyncSetUp()
-
     async def _get_auth_token(self, user: dict[str, Any] | None = None):
         self.headers: list = []
         await setup_auth_user(self, user)

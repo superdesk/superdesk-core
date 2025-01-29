@@ -1,9 +1,10 @@
 import pytest
 from unittest.mock import patch, MagicMock
 from superdesk.errors import SuperdeskApiError
-from superdesk.core.auth.privilege_rules import privilege_based_rules, required_privilege_rule
+from superdesk.core.auth.privilege_rules import http_method_privilege_based_rules, required_privilege_rule
 
 
+@pytest.mark.asyncio
 @patch("superdesk.core.auth.privilege_rules.is_admin")
 @patch("superdesk.core.auth.privilege_rules.get_privileges")
 async def test_required_privilege_rule_admin(mock_get_privileges, mock_is_admin):
@@ -18,6 +19,7 @@ async def test_required_privilege_rule_admin(mock_get_privileges, mock_is_admin)
     mock_get_privileges.assert_not_called()
 
 
+@pytest.mark.asyncio
 @patch("superdesk.core.auth.privilege_rules.is_admin")
 @patch("superdesk.core.auth.privilege_rules.get_privileges")
 async def test_required_privilege_rule_insufficient_privileges(mock_get_privileges, mock_is_admin):
@@ -38,6 +40,7 @@ async def test_required_privilege_rule_insufficient_privileges(mock_get_privileg
     mock_get_privileges.assert_called_once_with("test_user", "user_role")
 
 
+@pytest.mark.asyncio
 @patch("superdesk.core.auth.privilege_rules.is_admin")
 @patch("superdesk.core.auth.privilege_rules.get_privileges")
 async def test_required_privilege_rule_sufficient_privileges(mock_get_privileges, mock_is_admin):
@@ -62,7 +65,7 @@ def test_privilege_based_rules():
         "DELETE": "delete_articles",
     }
 
-    auth_rules = privilege_based_rules(rules)
+    auth_rules = http_method_privilege_based_rules(rules)
 
     assert "GET" in auth_rules
     assert "POST" in auth_rules

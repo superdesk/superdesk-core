@@ -27,7 +27,6 @@ def required_privilege_rule(privilege: str) -> AuthRule:
     async def internal_rule(request: Request):
         current_user = request.user
 
-        # TODO-ASYNC: Check if for admin we need to pull all privileges instead
         if is_admin(current_user):
             return None
 
@@ -42,7 +41,7 @@ def required_privilege_rule(privilege: str) -> AuthRule:
     return internal_rule
 
 
-def privilege_based_rules(rules: dict[HTTP_METHOD, str]) -> dict[str, AuthRule]:
+def http_method_privilege_based_rules(rules: dict[HTTP_METHOD, str]) -> dict[str, AuthRule]:
     """
     Generates a dictionary of authentication rules for HTTP methods based on privileges.
 
