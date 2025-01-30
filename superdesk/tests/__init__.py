@@ -479,8 +479,14 @@ async def setup_db_user(context, user):
 
         user["password"] = original_password
         auth_data = json.dumps({"username": user["username"], "password": user["password"]})
+
+        auth_request_headers = deepcopy(context.headers)
+        auth_request_headers.append(["Content-Type", "application/json"])
+
         auth_response = await context.client.post(
-            get_prefixed_url(context.app, "/auth_db"), data=auth_data, headers=context.headers
+            get_prefixed_url(context.app, "/auth_db"),
+            data=auth_data,
+            headers=auth_request_headers,
         )
 
         auth_data = json.loads(await auth_response.get_data())

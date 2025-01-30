@@ -388,3 +388,19 @@ def format_content_type_name(item: Dict[str, str], default_name: str) -> str:
     """
     name = item.get("output_name") or item.get("label", default_name)
     return re.compile("[^0-9a-zA-Z_]").sub("", name)
+
+
+def flatten(nested_list) -> list:
+    """
+    Recursively flattens an arbitrarily nested list into a single flat list.
+
+    Returns:
+        list: A single flat list containing all elements from the nested structure.
+    """
+    result = []
+    for i in nested_list:
+        if isinstance(i, list):
+            result.extend(flatten(i))
+        else:
+            result.append(i)
+    return result

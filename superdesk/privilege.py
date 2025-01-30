@@ -24,9 +24,9 @@ GLOBAL_SEARCH_PRIVILEGE = "use_global_saved_searches"
 
 def privilege(
     name,
-    label: Optional[LazyString] = None,
-    description: Optional[LazyString] = None,
-    category: Optional[LazyString] = None,
+    label: LazyString | str | None = None,
+    description: LazyString | str | None = None,
+    category: LazyString | str | None = None,
     **kwargs,
 ):
     """Register privilege.
