@@ -32,7 +32,7 @@ class TokenAuthorization(UserAuthProtocol):
 
         if token:
             token = token.strip()
-            if token.lower().startswith(("token", "bearer")):
+            if token.lower().startswith(("token", "bearer", "basic")):
                 token = token.split(" ")[1] if " " in token else ""
         else:
             token = request.storage.session.get("session_token")
