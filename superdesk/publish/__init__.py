@@ -84,6 +84,7 @@ def transmit():
 # must be imported for registration
 from superdesk.publish.subscribers import SubscribersResource, SubscribersService  # NOQA
 from superdesk.publish.publish_queue import PublishQueueResource, PublishQueueService  # NOQA
+
 from superdesk.publish.subscriber_token import SubscriberTokenResource, SubscriberTokenService  # NOQA
 
 
@@ -103,7 +104,7 @@ def init_app(app) -> None:
     service = PublishQueueService(endpoint_name, backend=get_backend())
     PublishQueueResource(endpoint_name, app=app, service=service)
 
-    superdesk.register_resource("subscriber_token", SubscriberTokenResource, SubscriberTokenService)
+    # superdesk.register_resource("subscriber_token", SubscriberTokenResource, SubscriberTokenService)
 
     app.client_config.update(
         {

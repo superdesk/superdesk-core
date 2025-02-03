@@ -32,7 +32,7 @@ class TokenAuthorization(UserAuthProtocol):
 
         if token:
             token = token.strip()
-            if token.lower().startswith(("token", "bearer")):
+            if token.lower().startswith(("token", "bearer", "basic")):
                 token = token.split(" ")[1] if " " in token else ""
         else:
             token = request.storage.session.get("session_token")
@@ -79,12 +79,12 @@ class TokenAuthorization(UserAuthProtocol):
     async def continue_session(self, request: Request, user: dict[str, Any], **kwargs) -> None:
         auth_token = request.storage.session.get("session_token")
 
-        if isinstance(auth_token, str):
-            auth_token = json.loads(auth_token)
-
         if not auth_token:
             await self.stop_session(request)
             raise SuperdeskApiError.unauthorizedError()
+
+        if isinstance(auth_token, str):
+            auth_token = json.loads(auth_token)
 
         user_service = get_resource_service("users")
         request.storage.request.set("user", user)

@@ -45,4 +45,5 @@ class SubscriberTokenAuth(TokenAuth):
 
 
 def init_app(app) -> None:
-    superdesk.register_resource(TOKEN_RESOURCE, AuthSubscriberTokenResource, SubscriberTokenService, _app=app)
+    # superdesk.register_resource(TOKEN_RESOURCE, AuthSubscriberTokenResource, SubscriberTokenService, _app=app)
+    pass

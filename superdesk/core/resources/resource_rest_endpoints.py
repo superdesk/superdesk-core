@@ -8,8 +8,9 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
-from typing import List, Optional, cast, Dict, Any, Type
 import math
+from inspect import get_annotations
+from typing import Annotated, List, Optional, cast, Dict, Any, Type, get_args, get_origin, get_type_hints
 
 from dataclasses import dataclass
 from pydantic import ValidationError, BaseModel, NonNegativeInt
@@ -19,7 +20,7 @@ from werkzeug.datastructures import MultiDict
 from bson import ObjectId
 
 from superdesk.core import json
-from superdesk.core.app import get_current_async_app
+from superdesk.core.app import get_app_config, get_current_async_app
 from superdesk.core.types import (
     SearchRequest,
     SearchArgs,
@@ -33,11 +34,11 @@ from superdesk.core.types import (
 from superdesk.errors import SuperdeskApiError
 from superdesk.resource_fields import STATUS, STATUS_OK, ITEMS
 from superdesk.core.web import RestEndpoints, ItemRequestViewArgs, Endpoint
-from superdesk.utils import get_cors_headers
+from superdesk.utils import get_cors_headers, join_url_parts
 
 from .model import ResourceModel
 from .resource_config import ResourceConfig
-from .validators import convert_pydantic_validation_error_for_response
+from .validators import AsyncValidator, convert_pydantic_validation_error_for_response
 
 
 @dataclass
@@ -89,6 +90,9 @@ class RestEndpointConfig:
     auth: AuthConfig = None
 
     enable_cors: bool = False
+
+    # Optionally populate the item nested hateoas
+    populate_item_hateoas: bool = False
 
 
 def get_id_url_type(data_class: type[ResourceModel]) -> str:
@@ -297,7 +301,9 @@ class ResourceRestEndpoints(RestEndpoints):
                 f"{self.resource_config.name} resource with ID '{args.item_id}' not found"
             )
 
+        self._populate_hateoas_if_needed(request, [item])
         response = Response(item, 200, headers)
+
         await signals.web.on_get_response.send(request, response)
         return response
 
@@ -447,8 +453,11 @@ class ResourceRestEndpoints(RestEndpoints):
         cursor = await self.service.find(params)
         count = await cursor.count()
 
+        items = await cursor.to_list_raw()
+        self._populate_hateoas_if_needed(request, items)
+
         response_data = RestGetResponse(
-            _items=await cursor.to_list_raw(),
+            _items=items,
             _meta=dict(
                 page=params.page,
                 max_results=params.max_results if params.max_results is not None else 25,
@@ -483,7 +492,7 @@ class ResourceRestEndpoints(RestEndpoints):
         if not self.endpoint_config.enable_cors:
             return []
 
-        methods = (self.endpoint_config.resource_methods or ["GET", "PATCH", "DELETE"]) + ["OPTIONS", "HEAD"]
+        methods = (self.endpoint_config.item_methods or ["GET", "PATCH", "DELETE"]) + ["OPTIONS", "HEAD"]
         return get_cors_headers(", ".join(methods))
 
     def _build_resource_hateoas(self, req: SearchRequest, doc_count: Optional[int], request: Request) -> Dict[str, Any]:
@@ -563,10 +572,69 @@ class ResourceRestEndpoints(RestEndpoints):
 
         return links
 
-    def _populate_item_hateoas(self, request: Request, item: dict[str, Any]) -> dict[str, Any]:
+    def _populate_hateoas_if_needed(self, request: Request, items: list[dict[str, Any]]):
+        """
+        Populate the hateoas information for a list of items only if the
+        endpoint config `populate_item_hateoas` flag is set to True
+        """
+
+        if not self.endpoint_config.populate_item_hateoas:
+            return
+
+        for item in items:
+            self._populate_item_hateoas(request, item, force_append_id=True)
+
+    def _populate_item_hateoas(
+        self, request: Request, item: dict[str, Any], force_append_id: bool = False
+    ) -> dict[str, Any]:
         item.setdefault("_links", {})
         item["_links"]["self"] = {
             "title": self.resource_config.title or self.resource_config.data_class.__name__,
-            "href": self.gen_url_for_item(request, item["_id"]),
+            "href": self.gen_url_for_item(request, item["_id"], force_append_id),
         }
+
+        # extract related links from the `resource_config.data_class` relations (annotations)
+        related_links = self._get_related_links_from_annotations(item)
+        if related_links:
+            item["_links"]["related"] = related_links
+
         return item
+
+    def _get_related_links_from_annotations(self, item: dict[str, Any]) -> dict[str, Any]:
+        """Extract related links from the `resource_config.data_class` annotations.
+
+        Examines the data class annotations for Annotated fields that contain AsyncValidator metadata.
+        For each field with a resource name specified in its validator, generates a related link
+        if the field has a value in the item.
+        """
+        related_links = {}
+        for field_name, annotation in get_annotations(self.resource_config.data_class).items():
+            if get_origin(annotation) is Annotated:
+                relations = [meta for meta in get_args(annotation) if isinstance(meta, AsyncValidator)]
+                for rel in relations:
+                    field_value = item.get(field_name)
+                    if field_value and rel.resource_name:
+                        related_links[field_name] = {
+                            "title": field_name.title(),
+                            "href": self._gen_url_for_related_resource(rel.resource_name, field_value),
+                        }
+        return related_links
+
+    def _gen_url_for_related_resource(self, resource_name: str, item_id: str) -> str:
+        """Generate a URL for a related resource."""
+
+        # TODO-ASYNC: default to resource_name as not all resources are async ready yet
+        resource_url = resource_name
+
+        try:
+            app = get_current_async_app()
+            resource_config = app.resources.get_config(resource_name)
+            if resource_config.rest_endpoints is not None:
+                resource_url = resource_config.rest_endpoints.url or resource_name
+        except KeyError:
+            pass
+
+        url_prefix = get_app_config("URL_PREFIX") or ""
+        api_version = get_app_config("API_VERSION") or ""
+
+        return join_url_parts(url_prefix, api_version, resource_url, item_id)
