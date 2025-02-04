@@ -422,7 +422,7 @@ MODULES = [
     "superdesk.users",
     "apps.desks_async",
     "superdesk.vocabularies_async",
-    "superdesk.publish.subscriber_token"
+    "superdesk.publish.subscriber_token",
 ]
 
 ASYNC_AUTH_CLASS = "superdesk.core.auth.token_auth:TokenAuthorization"
