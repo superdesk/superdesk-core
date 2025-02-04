@@ -24,7 +24,6 @@ import importlib
 from eve.io.mongo.mongo import MongoJSONEncoder
 
 from superdesk.flask import Config
-from content_api.tokens import SubscriberTokenAuth
 from superdesk.datalayer import SuperdeskDataLayer
 from superdesk.factory.elastic_apm import setup_apm
 from superdesk.validator import SuperdeskValidator
@@ -63,7 +62,6 @@ def get_app(config=None):
     media_storage = get_media_storage_class(app_config)
 
     app = SuperdeskEve(
-        auth=SubscriberTokenAuth,
         settings=app_config,
         data=SuperdeskDataLayer,
         media=media_storage,

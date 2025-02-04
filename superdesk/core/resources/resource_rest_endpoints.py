@@ -10,7 +10,7 @@
 
 import math
 from inspect import get_annotations
-from typing import Annotated, List, Optional, cast, Dict, Any, Type, get_args, get_origin, get_type_hints
+from typing import Annotated, List, Optional, cast, Dict, Any, Type, get_args, get_origin
 
 from dataclasses import dataclass
 from pydantic import ValidationError, BaseModel, NonNegativeInt
