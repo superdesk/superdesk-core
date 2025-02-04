@@ -29,6 +29,8 @@ from superdesk.factory.elastic_apm import setup_apm
 from superdesk.validator import SuperdeskValidator
 from superdesk.factory.app import SuperdeskEve, set_error_handlers, get_media_storage_class
 
+from content_api.tokens.auth import SyncMockTokenAuth
+
 
 def get_app(config=None):
     """
@@ -62,6 +64,7 @@ def get_app(config=None):
     media_storage = get_media_storage_class(app_config)
 
     app = SuperdeskEve(
+        auth=SyncMockTokenAuth,
         settings=app_config,
         data=SuperdeskDataLayer,
         media=media_storage,

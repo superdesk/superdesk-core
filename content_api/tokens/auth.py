@@ -1,11 +1,19 @@
-from typing import Any, cast
 from quart_babel import _
+from eve.auth import TokenAuth
+
 
 from superdesk.utc import utcnow
 from superdesk.core.types.web import Request
 from superdesk.errors import SuperdeskApiError
 from superdesk.core.auth.user_auth import UserAuthProtocol
 from superdesk.publish.subscriber_token import SubscriberTokenService, SubscriberToken
+
+
+# TODO-ASYNC: remove this once everything is async in `content_api`
+# This is just a mock auth to avoid the app from breaking
+class SyncMockTokenAuth(TokenAuth):
+    def check_auth(self, token, allowed_roles, resource, method):
+        return True
 
 
 class SubscriberTokenAuth(UserAuthProtocol):
