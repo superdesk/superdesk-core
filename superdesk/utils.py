@@ -361,7 +361,7 @@ def get_cors_headers(methods="*"):
 
     return [
         ("Access-Control-Allow-Origin", get_app_config("CLIENT_URL")),
-        ("Access-Control-Allow-Headers", ",".join(get_app_config("X_HEADERS"))),
+        ("Access-Control-Allow-Headers", ",".join(get_app_config("X_HEADERS") or [])),
         ("Access-Control-Allow-Credentials", "true"),
         ("Access-Control-Allow-Methods", methods),
     ]

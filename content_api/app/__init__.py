@@ -24,12 +24,11 @@ import importlib
 from eve.io.mongo.mongo import MongoJSONEncoder
 
 from superdesk.flask import Config
+from content_api.tokens.auth import LegacyTokenAuth
 from superdesk.datalayer import SuperdeskDataLayer
 from superdesk.factory.elastic_apm import setup_apm
 from superdesk.validator import SuperdeskValidator
 from superdesk.factory.app import SuperdeskEve, set_error_handlers, get_media_storage_class
-
-from content_api.tokens.auth import SyncMockTokenAuth
 
 
 def get_app(config=None):
@@ -64,7 +63,7 @@ def get_app(config=None):
     media_storage = get_media_storage_class(app_config)
 
     app = SuperdeskEve(
-        auth=SyncMockTokenAuth,
+        auth=LegacyTokenAuth,
         settings=app_config,
         data=SuperdeskDataLayer,
         media=media_storage,
@@ -81,6 +80,8 @@ def get_app(config=None):
             app_module.init_app(app)
         except AttributeError:
             pass
+
+    app.async_app.start()
 
     return app
 
