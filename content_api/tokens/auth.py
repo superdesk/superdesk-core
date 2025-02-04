@@ -36,10 +36,11 @@ class SubscriberTokenAuth(UserAuthProtocol):
 
         token = await token_service.find_by_id(token_id)
         if token is None:
+            await self.stop_session(request)
             raise token_missing_exception
 
         await self.check_token_validity(token)
-        await self.start_session(request, None, token=token)
+        await self.start_session(request, token)
 
     async def check_token_validity(self, token: SubscriberToken) -> None:
         """
@@ -50,11 +51,10 @@ class SubscriberTokenAuth(UserAuthProtocol):
             await SubscriberTokenService().delete(token)
             raise SuperdeskApiError.forbiddenError(message=_("Authorization token expired."))
 
-    async def start_session(self, request: Request, user: Any, **kwargs) -> None:
+    async def start_session(self, request: Request, token: SubscriberToken) -> None:  # type: ignore[override]
         """
         Puts the subscriber id into ``g.user``.
         """
-        token = cast(SubscriberToken, kwargs.get("token"))
         request.storage.request.set("user", str(token.subscriber))
 
     async def stop_session(self, request: Request) -> None:
