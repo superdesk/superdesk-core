@@ -63,7 +63,7 @@ from superdesk.core.types import (
     Response,
 )
 from superdesk.core.app import SuperdeskAsyncApp
-from superdesk.core.resources import ResourceModel
+from superdesk.core.resources import ResourceRestEndpoints
 from superdesk.core.web import NullEndpoint
 
 SUPERDESK_PATH = os.path.abspath(os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
@@ -230,6 +230,8 @@ class SuperdeskEve(eve.Eve):
         self.setup_sentry()
         self.async_app = SuperdeskAsyncApp(self)
         self.teardown_request(self._after_each_request)
+
+        self.on_get_api_root += self.extend_eve_home_endpoint
 
     def __getattr__(self, name):
         """Only use events for on_* methods."""
@@ -413,6 +415,24 @@ class SuperdeskEve(eve.Eve):
         sentry_sdk.integrations._processed_integrations.add("flask")
 
         sentry_sdk.init(dsn=self.config["SENTRY_DSN"], integrations=[QuartIntegration(), AsyncioIntegration()])
+
+    def extend_eve_home_endpoint(self, links: list[dict]) -> None:
+        """Adds async resources to Eve's api root endpoint"""
+
+        for resource_config in self.async_app.resources.get_all_configs():
+            if resource_config.rest_endpoints is None:
+                continue
+
+            # Construct an instance of the class so we can get it's URL
+            endpoint_class = resource_config.rest_endpoints.endpoints_class or ResourceRestEndpoints
+            endpoint = endpoint_class(resource_config, resource_config.rest_endpoints)
+
+            links.append(
+                {
+                    "href": endpoint.get_resource_url(),
+                    "title": resource_config.title or resource_config.name,
+                },
+            )
 
 
 def get_media_storage_class(app_config: Dict[str, Any], use_provider_config: bool = True) -> Type[MediaStorage]:

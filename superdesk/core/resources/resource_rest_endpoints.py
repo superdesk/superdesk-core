@@ -32,8 +32,8 @@ from superdesk.core.types import (
 )
 from superdesk.errors import SuperdeskApiError
 from superdesk.resource_fields import STATUS, STATUS_OK, ITEMS
-
-from superdesk.core.web import RestEndpoints, ItemRequestViewArgs
+from superdesk.core.web import RestEndpoints, ItemRequestViewArgs, Endpoint
+from superdesk.utils import get_cors_headers
 
 from .model import ResourceModel
 from .resource_config import ResourceConfig
@@ -88,6 +88,8 @@ class RestEndpointConfig:
 
     auth: AuthConfig = None
 
+    enable_cors: bool = False
+
 
 def get_id_url_type(data_class: type[ResourceModel]) -> str:
     """Get the URL param type for the ID field for route registration"""
@@ -129,6 +131,29 @@ class ResourceRestEndpoints(RestEndpoints):
             id_param_type=endpoint_config.id_param_type or get_id_url_type(resource_config.data_class),
             auth=endpoint_config.auth,
         )
+
+    def add_endpoints(self):
+        if self.endpoint_config.enable_cors:
+            self.endpoints.append(
+                Endpoint(
+                    url=self.get_resource_url(),
+                    name="resource_options",
+                    func=self.resource_options_endpoint,
+                    methods=["OPTIONS"],
+                    parent=self,
+                )
+            )
+            self.endpoints.append(
+                Endpoint(
+                    url=self.get_item_url(),
+                    name="item_options",
+                    func=self.item_options_endpoint,
+                    methods=["OPTIONS"],
+                    parent=self,
+                )
+            )
+
+        super().add_endpoints()
 
     def get_resource_url(self) -> str:
         """Returns the URL for this resource, for registering with WSGI
@@ -233,6 +258,7 @@ class ResourceRestEndpoints(RestEndpoints):
     ) -> Response:
         """Processes a get single item request"""
 
+        headers = self.get_item_cors_headers()
         await self.get_parent_items(request)
         signals = self.resource_config.data_class.get_signals()
         await signals.web.on_get.send(request)
@@ -256,7 +282,7 @@ class ResourceRestEndpoints(RestEndpoints):
                     request,
                 ),
             )
-            response = Response(response_data, 200, [("X-Total-Count", count)])
+            response = Response(response_data, 200, headers + [("X-Total-Count", count)])
             await signals.web.on_get_response.send(request, response)
             return response
         elif self.endpoint_config.parent_links:
@@ -271,13 +297,14 @@ class ResourceRestEndpoints(RestEndpoints):
                 f"{self.resource_config.name} resource with ID '{args.item_id}' not found"
             )
 
-        response = Response(item)
+        response = Response(item, 200, headers)
         await signals.web.on_get_response.send(request, response)
         return response
 
     async def create_item(self, request: Request) -> Response:
         """Processes a create item request"""
 
+        headers = self.get_resource_cors_headers()
         parent_items = await self.get_parent_items(request)
         service = self.service
         payload = await request.get_json()
@@ -300,13 +327,13 @@ class ResourceRestEndpoints(RestEndpoints):
                 model_instance = self.resource_config.data_class.from_dict(value)
                 model_instances.append(model_instance)
             except ValidationError as validation_error:
-                return Response(convert_pydantic_validation_error_for_response(validation_error), 403)
+                return Response(convert_pydantic_validation_error_for_response(validation_error), 403, headers)
 
         signals = self.resource_config.data_class.get_signals()
         await signals.web.on_create.send(request, model_instances)
         ids = await service.create(model_instances)
         if len(ids) == 1:
-            response = Response(self._populate_item_hateoas(request, model_instances[0].to_dict()), 201)
+            response = Response(self._populate_item_hateoas(request, model_instances[0].to_dict()), 201, headers)
         else:
             response = Response(
                 {
@@ -314,6 +341,7 @@ class ResourceRestEndpoints(RestEndpoints):
                     ITEMS: [self._populate_item_hateoas(request, item.to_dict()) for item in model_instances],
                 },
                 201,
+                headers,
             )
 
         await signals.web.on_create_response.send(request, response)
@@ -327,6 +355,7 @@ class ResourceRestEndpoints(RestEndpoints):
     ) -> Response:
         """Processes an update item request"""
 
+        headers = self.get_item_cors_headers()
         await self.get_parent_items(request)
         payload = await request.get_json()
 
@@ -352,7 +381,7 @@ class ResourceRestEndpoints(RestEndpoints):
         try:
             await self.service.update(args.item_id, payload, if_match, original)
         except ValidationError as validation_error:
-            return Response(convert_pydantic_validation_error_for_response(validation_error), 403)
+            return Response(convert_pydantic_validation_error_for_response(validation_error), 403, headers)
 
         payload.update(
             {
@@ -362,13 +391,14 @@ class ResourceRestEndpoints(RestEndpoints):
         )
         self._populate_item_hateoas(request, payload)
 
-        response = Response(payload)
+        response = Response(payload, 200, headers)
         await signals.web.on_update_response.send(request, response)
         return response
 
     async def delete_item(self, args: ItemRequestViewArgs, params: None, request: Request) -> Response:
         """Processes a delete item request"""
 
+        headers = self.get_item_cors_headers()
         await self.get_parent_items(request)
         service = self.service
         original = await service.find_by_id(args.item_id)
@@ -387,7 +417,7 @@ class ResourceRestEndpoints(RestEndpoints):
         signals = self.resource_config.data_class.get_signals()
         await signals.web.on_delete.send(request, original)
         await service.delete(original, if_match)
-        response = Response({}, 204)
+        response = Response({}, 204, headers)
         await signals.web.on_delete_response.send(request, response)
         return response
 
@@ -427,7 +457,7 @@ class ResourceRestEndpoints(RestEndpoints):
         )
 
         status = 200
-        headers = [("X-Total-Count", count)]
+        headers = [("X-Total-Count", count)] + self.get_resource_cors_headers()
         response_data["_links"] = self._build_resource_hateoas(params, count, request)
         if hasattr(cursor, "extra"):
             getattr(cursor, "extra")(response_data)
@@ -435,6 +465,26 @@ class ResourceRestEndpoints(RestEndpoints):
         response = Response(response_data, status, headers)
         await signals.web.on_search_response.send(request, response)
         return response
+
+    async def resource_options_endpoint(self) -> Response:
+        return Response("", 200, self.get_resource_cors_headers())
+
+    async def item_options_endpoint(self) -> Response:
+        return Response("", 200, self.get_item_cors_headers())
+
+    def get_resource_cors_headers(self):
+        if not self.endpoint_config.enable_cors:
+            return []
+
+        methods = (self.endpoint_config.resource_methods or ["GET", "POST"]) + ["OPTIONS", "HEAD"]
+        return get_cors_headers(", ".join(methods))
+
+    def get_item_cors_headers(self):
+        if not self.endpoint_config.enable_cors:
+            return []
+
+        methods = (self.endpoint_config.resource_methods or ["GET", "PATCH", "DELETE"]) + ["OPTIONS", "HEAD"]
+        return get_cors_headers(", ".join(methods))
 
     def _build_resource_hateoas(self, req: SearchRequest, doc_count: Optional[int], request: Request) -> Dict[str, Any]:
         links = {
