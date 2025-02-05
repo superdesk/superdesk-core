@@ -150,4 +150,4 @@ def gen_url_for_related_resource(resource_name: str, item_id: str) -> str:
     return join_url_parts(url_prefix, api_version, resource_url, item_id)
 
 
-from .model import ResourceModel  # noqa: F401
+from .model import ResourceModel  # noqa: E402

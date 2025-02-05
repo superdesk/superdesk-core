@@ -111,7 +111,7 @@ async def fail_and_print_body_async(response, message):
 
 async def expect_json_async(response, expected_json, path=None):
     """
-    checks if json response equals some json,
+    Checks if json response equals some json,
 
     Note: Copied from wooper.expect.expect_json to support Quart ``await response.get_data()``
 
@@ -135,7 +135,7 @@ async def assert_and_print_body_async(response, assert_function, first, second, 
 
 async def expect_json_contains_async(response, expected_json, path=None, reverse_expectation=False):
     """
-    checks if json response contains some json subset,
+    Checks if json response contains some json subset,
 
     Note: Copied from wooper.expect.expect_json_contains_async to support Quart ``await response.get_data()``
 
@@ -173,7 +173,7 @@ async def expect_json_contains_async(response, expected_json, path=None, reverse
 
 async def expect_json_not_contains_async(response, expected_json, path=None):
     """
-    checks if json response not contains some json subset,
+    Checks if json response not contains some json subset,
 
     Note: Copied from wooper.expect.expect_json_not_contains to support Quart ``await response.get_data()``
 
