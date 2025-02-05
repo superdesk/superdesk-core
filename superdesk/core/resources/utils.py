@@ -8,12 +8,14 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
+from typing import Any
 from inspect import get_annotations
 
 from pydantic.fields import FieldInfo
 from quart_babel import gettext
 
 from superdesk.core import json
+from superdesk.utils import join_url_parts
 from superdesk.core.types import SearchRequest, ProjectedFieldArg
 from superdesk.errors import SuperdeskApiError
 
@@ -97,3 +99,55 @@ def get_model_aliased_fields(class_type: type) -> set[str]:
             aliased_fields.add(field_name)
 
     return aliased_fields
+
+
+def get_model_annotations(model_class: type["ResourceModel"]) -> dict[str, Any]:
+    """Get all annotations from the model class and its parent classes.
+
+    Traverses the class hierarchy up to (but not including) ResourceModel to collect all annotations.
+    Parent class annotations are overridden by child class annotations.
+    """
+    from .model import ResourceModel
+
+    annotations = {}
+
+    # traverse class hierarchy in reverse MRO order (from parent to child)
+    # so child class annotations override parent class annotations
+    for base_class in reversed(model_class.__mro__):
+        try:
+            if base_class != ResourceModel and issubclass(base_class, ResourceModel):
+                annotations.update(get_annotations(base_class))
+        except (TypeError, AttributeError):
+            # skip classes that don't support annotations or have attribute errors
+            continue
+
+    return annotations
+
+
+def gen_url_for_related_resource(resource_name: str, item_id: str) -> str:
+    """Generate a URL for a related resource.
+
+    Uses the resource configuration to generate the proper URL, taking into account:
+    1. Resource's configured URL (if different from resource name)
+    2. Application URL prefix and API version
+    """
+    from superdesk.core import get_current_async_app, get_app_config
+
+    # Default to resource_name as not all resources are async ready yet
+    resource_url = resource_name
+
+    try:
+        app = get_current_async_app()
+        resource_config = app.resources.get_config(resource_name)
+        if resource_config.rest_endpoints is not None:
+            resource_url = resource_config.rest_endpoints.url or resource_name
+    except KeyError:
+        pass
+
+    url_prefix = get_app_config("URL_PREFIX") or ""
+    api_version = get_app_config("API_VERSION") or ""
+
+    return join_url_parts(url_prefix, api_version, resource_url, item_id)
+
+
+from .model import ResourceModel  # noqa: F401

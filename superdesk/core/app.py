@@ -8,8 +8,8 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
-from typing import Dict, List, Optional, Any, cast
 import importlib
+from typing import Dict, List, Optional, Any, cast
 
 from superdesk.core.types import WSGIApp
 

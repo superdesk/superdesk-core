@@ -594,47 +594,7 @@ class ResourceRestEndpoints(RestEndpoints):
         }
 
         # extract related links from the `resource_config.data_class` relations (annotations)
-        related_links = self._get_related_links_from_annotations(item)
-        if related_links:
+        if related_links := self.resource_config.data_class.get_related_links(item):
             item["_links"]["related"] = related_links
 
         return item
-
-    def _get_related_links_from_annotations(self, item: dict[str, Any]) -> dict[str, Any]:
-        """Extract related links from the `resource_config.data_class` annotations.
-
-        Examines the data class annotations for Annotated fields that contain AsyncValidator metadata.
-        For each field with a resource name specified in its validator, generates a related link
-        if the field has a value in the item.
-        """
-        related_links = {}
-        for field_name, annotation in get_annotations(self.resource_config.data_class).items():
-            if get_origin(annotation) is Annotated:
-                relations = [meta for meta in get_args(annotation) if isinstance(meta, AsyncValidator)]
-                for rel in relations:
-                    field_value = item.get(field_name)
-                    if field_value and rel.resource_name:
-                        related_links[field_name] = {
-                            "title": field_name.title(),
-                            "href": self._gen_url_for_related_resource(rel.resource_name, field_value),
-                        }
-        return related_links
-
-    def _gen_url_for_related_resource(self, resource_name: str, item_id: str) -> str:
-        """Generate a URL for a related resource."""
-
-        # TODO-ASYNC: default to resource_name as not all resources are async ready yet
-        resource_url = resource_name
-
-        try:
-            app = get_current_async_app()
-            resource_config = app.resources.get_config(resource_name)
-            if resource_config.rest_endpoints is not None:
-                resource_url = resource_config.rest_endpoints.url or resource_name
-        except KeyError:
-            pass
-
-        url_prefix = get_app_config("URL_PREFIX") or ""
-        api_version = get_app_config("API_VERSION") or ""
-
-        return join_url_parts(url_prefix, api_version, resource_url, item_id)
