@@ -11,7 +11,7 @@
 
 import json
 import logging
-from typing import Any, Dict, List, Optional, cast
+from typing import Any, Dict, List, Optional
 from typing import List
 
 from eve.methods.common import serialize_value
