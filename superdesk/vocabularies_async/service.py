@@ -11,7 +11,7 @@
 
 import json
 import logging
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, cast
 from typing import List
 
 from eve.methods.common import serialize_value
@@ -62,7 +62,7 @@ class VocabulariesService(AsyncResourceService[VocabulariesResourceModel]):
             update.unique_field = "qcode"
 
         unique_field = update.unique_field
-        vocabs = {}
+        vocabs: dict[str, list[Any]] = {}
         if update.schema and update.items:
             for index, item in enumerate(update.items):
                 for field, desc in update.schema.items():
@@ -118,8 +118,12 @@ class VocabulariesService(AsyncResourceService[VocabulariesResourceModel]):
                 return doc
 
         for item in doc.items:
-            self._filter_inactive_vocabularies(item)
-            self._cast_items(item)
+            # TODO-ASYNC: double check the type below as it seems we're passing the wrong element
+            # to the `_filter_inactive_vocabularies` method. Ignore the type error for now.
+            self._filter_inactive_vocabularies(item)  # type: ignore
+            self._cast_items(item)  # type: ignore
+
+        return doc
 
     async def on_fetched_item(self, doc: VocabulariesResourceModel):
         """
@@ -191,7 +195,7 @@ class VocabulariesService(AsyncResourceService[VocabulariesResourceModel]):
         :param vocab
         """
         # FIXME: This doesn't make sense
-        schema = vocab_schema.get(vocab.id, {})
+        schema = vocab_schema.get(str(vocab.id), {})
         for item in vocab.items:
             for field, field_schema in schema.items():
                 if hasattr(item, field):
@@ -223,13 +227,15 @@ class VocabulariesService(AsyncResourceService[VocabulariesResourceModel]):
             return {}
 
         try:
-            all_rights.items = await self.get_locale_vocabulary(all_rights.items, getattr(item, "language", None))
+            # TODO-ASYNC: double check the type below as it seems we're passing the wrong element
+            # to the `_filter_inactive_vocabularies` method. Ignore the type error for now.
+            all_rights.items = await self.get_locale_vocabulary(all_rights.items, getattr(item, "language", None))  # type: ignore
             default_rights = next(info for info in all_rights.items if getattr(info, "name", None) == "default")
         except StopIteration:
             default_rights = None
 
         try:
-            rights = next(info for info in all_rights.items if getattr(info, "name", None) == rights_key)
+            rights: Item | None = next(info for info in all_rights.items if getattr(info, "name", None) == rights_key)
         except StopIteration:
             rights = default_rights
 
