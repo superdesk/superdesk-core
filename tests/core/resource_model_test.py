@@ -5,6 +5,7 @@ from bson import ObjectId
 
 from superdesk.core.resources import fields, ResourceModel, ResourceModelWithObjectId, dataclass, Dataclass
 from superdesk.core.elastic.resources import get_elastic_mapping_from_model
+from tests.core.modules.module_related_resources import RingOfPower
 
 from .modules.users import User
 from .fixtures.users import john_doe, profile_id, john_doe_dict
@@ -162,3 +163,19 @@ class ResourceModelTest(TestCase):
         results_dict = results.to_dict()
         self.assertEqual(results_dict["notes"], data["notes"])
         self.assertEqual(results_dict["scores"][0], score)
+
+    def test_resource_model_class_relations(self):
+        """Quickly tests that the relations are generated correctly"""
+        self.assertEqual(len(User._related_field_definitions.keys()), 2)
+        self.assertIn("created_by", User._related_field_definitions)
+        self.assertIn("updated_by", User._related_field_definitions)
+
+    def test_resource_model_class_calculates_inherited_relations(self):
+        """Makes sure the relations are calculated taking into account parent's class relations"""
+        self.assertEqual(len(RingOfPower._related_field_definitions.keys()), 2)
+
+        # from parent class
+        self.assertIn("bearer", RingOfPower._related_field_definitions)
+
+        # current class
+        self.assertIn("power", RingOfPower._related_field_definitions)
