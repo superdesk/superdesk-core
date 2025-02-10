@@ -8,9 +8,10 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
-from sys import argv
 import redis
+from sys import argv
 from celery import Celery
+from typing import TYPE_CHECKING
 
 from .context_task import HybridAppContextTask, HybridAppContextWorkerTask
 from .serializer import CELERY_SERIALIZER_NAME, ContextAwareSerializerFactory
@@ -18,6 +19,8 @@ from .serializer import CELERY_SERIALIZER_NAME, ContextAwareSerializerFactory
 from superdesk.logging import logger
 from superdesk.core import get_current_app, get_app_config
 
+if TYPE_CHECKING:
+    from superdesk.flask import Quart
 
 # custom serializer with Kombu for Celery's message serialization
 serializer_factory = ContextAwareSerializerFactory(get_current_app)
@@ -31,7 +34,12 @@ IS_BEAT_PROCESS = "celery" in argv[0] and "beat" in argv
 celery = Celery(__name__, task_cls=HybridAppContextTask if IS_BEAT_PROCESS else HybridAppContextWorkerTask)
 
 
-def init_celery(app):
+def init_celery(app: "Quart") -> None:
+    """Initialize Celery with the Quart application.
+
+    1. Configures Celery from the Quart app config
+    2. Sets up Redis connection
+    """
     celery.config_from_object(app.config, namespace="CELERY")
     app.celery = celery
     app.redis = __get_redis(app)
