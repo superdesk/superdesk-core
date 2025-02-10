@@ -269,7 +269,7 @@ class ResourceWebSignalsTestCase(AsyncFlaskTestCase):
                         "_links": {"self": {"title": "User", "href": "users_async/user_1"}},
                     },
                     201,
-                    (),
+                    [],
                 ),
             ],
         )
@@ -290,7 +290,7 @@ class ResourceWebSignalsTestCase(AsyncFlaskTestCase):
                         "_updated": format_time(NOW) + "+00:00",
                     },
                     200,
-                    (),
+                    [],
                 ),
             ],
         )
@@ -363,7 +363,7 @@ class ResourceWebSignalsTestCase(AsyncFlaskTestCase):
                         "_links": {"self": {"title": "User", "href": "users_async/user_1"}},
                     },
                     200,
-                    (),
+                    [],
                 ),
             ],
         )
@@ -374,7 +374,7 @@ class ResourceWebSignalsTestCase(AsyncFlaskTestCase):
             f"/api/users_async/{test_user.id}", headers={"If-Match": test_user.etag}
         )
         self.assertEqual(response.status_code, 204)
-        assert_mocks_called("delete", [ANY, test_user], [ANY, Response({}, 204, ())])
+        assert_mocks_called("delete", [ANY, test_user], [ANY, Response({}, 204, [])])
 
     async def test_modifying_data_from_web_signal(self):
         test_user = john_doe()

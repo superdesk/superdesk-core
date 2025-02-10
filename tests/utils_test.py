@@ -45,3 +45,36 @@ class UtilsTestCase(unittest.TestCase):
         assert [[1, 2, 3, 4, 5]] == chunks
         chunks = utils.get_list_chunks(items, 10)
         assert [[1, 2, 3, 4, 5]] == chunks
+
+
+class JoinUrlPartsTestCase(unittest.TestCase):
+    def test_join_url_parts_basic(self):
+        """Test basic URL path joining"""
+        self.assertEqual(utils.join_url_parts("api", "v1", "items"), "api/v1/items")
+
+    def test_join_url_parts_with_slashes(self):
+        """Test joining parts that contain leading/trailing slashes"""
+        self.assertEqual(utils.join_url_parts("/api/", "/v1/", "/items/"), "api/v1/items")
+
+    def test_join_url_parts_empty_parts(self):
+        """Test joining with empty parts"""
+        self.assertEqual(utils.join_url_parts("api", "", "items"), "api/items")
+        self.assertEqual(utils.join_url_parts("", "api", "items"), "api/items")
+        self.assertEqual(utils.join_url_parts("api", "items", ""), "api/items")
+
+    def test_join_url_parts_single_part(self):
+        """Test joining a single part"""
+        self.assertEqual(utils.join_url_parts("api"), "api")
+
+    def test_join_url_parts_no_parts(self):
+        """Test joining with no parts"""
+        self.assertEqual(utils.join_url_parts(), "")
+
+    def test_join_url_parts_multiple_slashes(self):
+        """Test joining parts with multiple slashes"""
+        self.assertEqual(utils.join_url_parts("api//", "//v1//", "//items"), "api/v1/items")
+
+    def test_join_url_parts_internal_slashes(self):
+        """Test joining parts that contain internal slashes that should be preserved"""
+        self.assertEqual(utils.join_url_parts("api", "v1/latest", "items"), "api/v1/latest/items")
+        self.assertEqual(utils.join_url_parts("/api/", "v1/latest/", "/items/"), "api/v1/latest/items")

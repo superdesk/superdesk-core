@@ -39,7 +39,7 @@ from superdesk.flask import g
 from superdesk.utc import utcnow
 from superdesk.cache import cache
 from superdesk.errors import SuperdeskApiError
-from superdesk.json_utils import SuperdeskJSONEncoder
+from superdesk.json_utils import SuperdeskJSONEncoder, cast_item
 from superdesk.resource_fields import ID_FIELD, VERSION_ID_FIELD, CURRENT_VERSION, LATEST_VERSION
 
 from ..app import SuperdeskAsyncApp, get_current_async_app
@@ -691,6 +691,8 @@ class AsyncResourceService(Generic[ResourceModelType]):
                 kwargs["sort"] = sort
 
         where = json.loads(req.where or "{}") if isinstance(req.where, str) else req.where or {}
+        where = cast_item(where)
+
         kwargs["filter"] = where
 
         projection_include, projection_fields = get_projection_from_request(req)

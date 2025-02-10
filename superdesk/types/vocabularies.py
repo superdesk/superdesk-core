@@ -9,11 +9,11 @@
 # at https://www.sourcefabric.org/superdesk/license
 
 
-from enum import Enum, unique
 import logging
+from enum import Enum, unique
 from typing import Annotated, Any
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, Field
 from quart_babel import gettext as _
 
 from superdesk.core.resources import ResourceModel
@@ -72,7 +72,7 @@ class VocabulariesResourceModel(ResourceModel):
     service: dict[str, int] = Field(default_factory=dict)
     priority: int = 0
     unique_field: str | None = None
-    schema: dict[str, dict]
+    schema: dict[str, dict]  # type: ignore[assignment]
     field_type_: str | None = None
     field_options_: dict[str, Any] = Field(default_factory=dict)
     init_version: int = 0

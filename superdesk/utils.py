@@ -114,7 +114,7 @@ def get_random_token(n=40):
 
     :param n: how many random bytes to generate
     """
-    return base64.b64encode(os.urandom(n)).decode()
+    return base64.urlsafe_b64encode(os.urandom(n)).decode()
 
 
 def import_by_path(path):
@@ -361,7 +361,7 @@ def get_cors_headers(methods="*"):
 
     return [
         ("Access-Control-Allow-Origin", get_app_config("CLIENT_URL")),
-        ("Access-Control-Allow-Headers", ",".join(get_app_config("X_HEADERS"))),
+        ("Access-Control-Allow-Headers", ",".join(get_app_config("X_HEADERS") or [])),
         ("Access-Control-Allow-Credentials", "true"),
         ("Access-Control-Allow-Methods", methods),
     ]
@@ -404,3 +404,13 @@ def flatten(nested_list) -> list:
         else:
             result.append(i)
     return result
+
+
+def join_url_parts(*parts) -> str:
+    """
+    Join a list of URL parts together, ensuring each part is a valid URL segment
+
+    :param parts: The parts of the URL to join
+    :return: A string of the joined URL
+    """
+    return "/".join(str(part).strip("/") for part in parts if part)

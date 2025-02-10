@@ -55,7 +55,10 @@ CONTENTAPI_INSTALLED_APPS = [
 
 MODULES = [
     "content_api.items.module",
+    "superdesk.publish.subscriber_token",
 ]
+
+ASYNC_AUTH_CLASS = "content_api.tokens.auth:SubscriberTokenAuth"
 
 CONTENTAPI_DOMAIN = {}
 

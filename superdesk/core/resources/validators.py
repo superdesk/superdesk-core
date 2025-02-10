@@ -106,8 +106,12 @@ def validate_maxlength(
 class AsyncValidator:
     func: Callable[["ResourceModel", Any], Awaitable[None]]
 
-    def __init__(self, func: Callable[["ResourceModel", Any], Awaitable[None]]):
+    # to create links with the related resource
+    resource_name: str | None = None
+
+    def __init__(self, func: Callable[["ResourceModel", Any], Awaitable[None]], resource_name: str | None = None):
         self.func = func
+        self.resource_name = resource_name
 
 
 DataRelationValueType = str | ObjectId | list[str] | list[ObjectId] | None
@@ -168,7 +172,7 @@ def validate_data_relation_async(
                         ),
                     )
 
-    return AsyncValidator(validate_resource_exists)
+    return AsyncValidator(validate_resource_exists, resource_name)
 
 
 UniqueValueType = str | list[str] | None
