@@ -66,9 +66,6 @@ from superdesk.core.app import SuperdeskAsyncApp
 from superdesk.core.resources import ResourceRestEndpoints
 from superdesk.core.web import NullEndpoint
 
-# listen to signals to ensure app is initialized for celery workers
-from . import celery_signals  # noqa
-
 SUPERDESK_PATH = os.path.abspath(os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
 
 logger = logging.getLogger(__name__)
