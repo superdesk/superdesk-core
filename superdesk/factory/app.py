@@ -12,6 +12,7 @@
 from typing import Dict, Any, Type, Optional, Union, Mapping, cast, NoReturn
 
 import os
+from celery import Celery
 import eve
 from werkzeug.exceptions import NotFound
 import jinja2
@@ -220,6 +221,7 @@ class SuperdeskEve(eve.Eve):
 
     media: Any
     data: Any
+    celery: Celery
 
     def __init__(self, **kwargs):
         self.json_provider_class = SuperdeskFlaskJSONProvider

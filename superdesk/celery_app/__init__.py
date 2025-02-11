@@ -11,16 +11,14 @@
 import redis
 from sys import argv
 from celery import Celery
-from typing import TYPE_CHECKING
+
+from superdesk.factory.app import SuperdeskEve
 
 from .context_task import HybridAppContextTask, HybridAppContextWorkerTask
 from .serializer import CELERY_SERIALIZER_NAME, ContextAwareSerializerFactory
 
 from superdesk.logging import logger
 from superdesk.core import get_current_app, get_app_config
-
-if TYPE_CHECKING:
-    from superdesk.flask import Flask
 
 # custom serializer with Kombu for Celery's message serialization
 serializer_factory = ContextAwareSerializerFactory(get_current_app)
@@ -30,21 +28,21 @@ serializer_factory.register_serializer(CELERY_SERIALIZER_NAME)
 # then this code is running in a celery beat process
 IS_BEAT_PROCESS = "celery" in argv[0] and "beat" in argv
 
-# custom celery Task class which handles async/sync tasks + app context
+# Define BaseTaskClass as a proper type alias
 BaseTaskClass: type[HybridAppContextTask] = HybridAppContextTask if IS_BEAT_PROCESS else HybridAppContextWorkerTask
 
-celery = Celery(__name__)
+celery: Celery = Celery(__name__)
 
 
-def init_celery(app: "Flask") -> None:
-    """Initialize Celery with the Quart application.
+def init_celery(app: SuperdeskEve) -> None:
+    """Initialize Celery with the Superdesk application.
 
-    1. Configures Celery from the Quart app config
+    1. Configures Celery from the Superdesk app config
     2. Sets up Redis connection
     3. Sets up proper app context for the celery task
     """
 
-    class ContextTask(BaseTaskClass):
+    class ContextTask(BaseTaskClass):  # type: ignore
         def get_current_app(self):
             return app
 
