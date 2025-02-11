@@ -37,10 +37,10 @@ from pydantic.dataclasses import dataclass as pydataclass
 
 from superdesk.core.types import BaseModel
 from superdesk.core.utils import generate_guid, GUID_NEWSML
+from superdesk.utils import merge_dicts_deep
 
 from .utils import get_model_aliased_fields
 from .fields import ObjectId
-
 
 default_model_config = ConfigDict(
     arbitrary_types_allowed=True,
@@ -101,6 +101,14 @@ class DataclassBase:
         default_params: dict[str, Any] = {"by_alias": True, "exclude_unset": True}
         default_params.update(kwargs)
         return RootModel(self).model_dump_json(**default_params)
+
+    def clone(self) -> Self:
+        return self.from_dict(deepcopy(self.to_dict()))
+
+    def clone_with(self, updates: dict) -> Self:
+        cloned_data = deepcopy(self.to_dict())
+        cloned_data = dict(merge_dicts_deep(cloned_data, updates))
+        return self.from_dict(cloned_data)
 
 
 @dataclass_transform(field_specifiers=(dataclass_field, Field))
