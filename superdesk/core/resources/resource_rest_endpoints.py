@@ -344,7 +344,9 @@ class ResourceRestEndpoints(RestEndpoints):
         await signals.web.on_create.send(request, model_instances)
         ids = await service.create(model_instances)
         if len(ids) == 1:
-            response = Response(self._populate_item_hateoas(request, model_instances[0].to_dict()), 201, headers)
+            model_instance = model_instances[0].to_dict()
+            model_instance[STATUS] = STATUS_OK
+            response = Response(self._populate_item_hateoas(request, model_instance), 201, headers)
         else:
             response = Response(
                 {
