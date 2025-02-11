@@ -18,7 +18,8 @@ from typing_extensions import override
 from werkzeug.datastructures import MultiDict
 from bson import ObjectId
 
-from superdesk.core import json, get_app_config, get_current_async_app
+from superdesk.core import json
+from superdesk.core.app import get_app_config, get_current_async_app
 from superdesk.core.types import (
     SearchRequest,
     SearchArgs,
