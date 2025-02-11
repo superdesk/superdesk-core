@@ -11,14 +11,16 @@
 import redis
 from sys import argv
 from celery import Celery
-
-from superdesk.factory.app import SuperdeskEve
+from typing import TYPE_CHECKING
 
 from .context_task import HybridAppContextTask, HybridAppContextWorkerTask
 from .serializer import CELERY_SERIALIZER_NAME, ContextAwareSerializerFactory
 
 from superdesk.logging import logger
 from superdesk.core import get_current_app, get_app_config
+
+if TYPE_CHECKING:
+    from superdesk.factory.app import SuperdeskEve
 
 # custom serializer with Kombu for Celery's message serialization
 serializer_factory = ContextAwareSerializerFactory(get_current_app)
@@ -34,7 +36,7 @@ BaseTaskClass: type[HybridAppContextTask] = HybridAppContextTask if IS_BEAT_PROC
 celery: Celery = Celery(__name__)
 
 
-def init_celery(app: SuperdeskEve) -> None:
+def init_celery(app: "SuperdeskEve") -> None:
     """Initialize Celery with the Superdesk application.
 
     1. Configures Celery from the Superdesk app config
