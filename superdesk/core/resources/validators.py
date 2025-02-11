@@ -24,18 +24,22 @@ logger = logging.getLogger(__name__)
 EmailValueType = str | list[str] | None
 
 
-def validate_email(error_string: str | None = None) -> AfterValidator:
+def validate_email(error_string: str | None = None, multi: bool = False) -> AfterValidator:
     """Validates that the value is a valid email address
 
     :param error_string: An optional custom error string if validation fails
+    :param multi: If True will convert the string to a list (comma separated)
     """
 
-    def _validate_email(value: EmailValueType) -> EmailValueType:
+    def _validate_email(value: EmailValueType, check_multi: bool | None = None) -> EmailValueType:
+        if check_multi is None:
+            check_multi = multi
+
         if value is None:
             return None
-        elif isinstance(value, list):
-            for email in value:
-                _validate_email(email)
+        elif check_multi or isinstance(value, list):
+            for email in value.split(",") if isinstance(value, str) else value:
+                _validate_email(email, False)
         elif not re.match(".+@.+", value, re.IGNORECASE):
             # it's tricky to write proper regex for email validation, so we
             # should use simple one, or use libraries like
