@@ -18,7 +18,7 @@ from typing_extensions import override
 from werkzeug.datastructures import MultiDict
 from bson import ObjectId
 
-from superdesk.core import json
+from superdesk.core import json, get_app_config
 from superdesk.core.app import get_current_async_app
 from superdesk.core.types import (
     SearchRequest,
@@ -88,7 +88,7 @@ class RestEndpointConfig:
 
     auth: AuthConfig = None
 
-    enable_cors: bool = False
+    enable_cors: bool | None = None
 
 
 def get_id_url_type(data_class: type[ResourceModel]) -> str:
@@ -122,6 +122,11 @@ class ResourceRestEndpoints(RestEndpoints):
     ):
         self.resource_config = resource_config
         self.endpoint_config = endpoint_config
+
+        if self.endpoint_config.enable_cors is None:
+            # Enable cors by default
+            self.endpoint_config.enable_cors = cast(bool, get_app_config("ASYNC_ENABLE_CORS", True))
+
         super().__init__(
             url=endpoint_config.url or resource_config.name,
             name=resource_config.name,
@@ -297,6 +302,7 @@ class ResourceRestEndpoints(RestEndpoints):
                 f"{self.resource_config.name} resource with ID '{args.item_id}' not found"
             )
 
+        await self.on_fetched_item(request, item)
         response = Response(item, 200, headers)
         await signals.web.on_get_response.send(request, response)
         return response
@@ -421,6 +427,15 @@ class ResourceRestEndpoints(RestEndpoints):
         await signals.web.on_delete_response.send(request, response)
         return response
 
+    def update_where_filter(self, params: SearchRequest, where: dict):
+        if not isinstance(params.where, dict):
+            if params.where is None:
+                params.where = {}
+            elif isinstance(params.where, str):
+                params.where = cast(dict, json.loads(params.where))
+
+        params.where.update(where)
+
     async def search_items(
         self,
         args: None,
@@ -432,14 +447,8 @@ class ResourceRestEndpoints(RestEndpoints):
         await self.get_parent_items(request)
 
         if len(self.endpoint_config.parent_links or []):
-            if not isinstance(params.where, dict):
-                if params.where is None:
-                    params.where = {}
-                elif isinstance(params.where, str):
-                    params.where = cast(dict, json.loads(params.where))
-
             lookup = self.construct_parent_item_lookup(request)
-            params.where.update(lookup)
+            self.update_where_filter(params, lookup)
 
         params.args = cast(SearchArgs, params.model_extra)
         signals = self.resource_config.data_class.get_signals()
@@ -463,6 +472,7 @@ class ResourceRestEndpoints(RestEndpoints):
             getattr(cursor, "extra")(response_data)
 
         response = Response(response_data, status, headers)
+        await self.on_fetched(request, response_data)
         await signals.web.on_search_response.send(request, response)
         return response
 
@@ -570,3 +580,9 @@ class ResourceRestEndpoints(RestEndpoints):
             "href": self.gen_url_for_item(request, item["_id"]),
         }
         return item
+
+    async def on_fetched_item(self, request: Request, doc: dict) -> None:
+        pass
+
+    async def on_fetched(self, request: Request, doc: RestGetResponse) -> None:
+        pass
