@@ -9,26 +9,21 @@
 # at https://www.sourcefabric.org/superdesk/license
 
 
-import json
 import logging
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, Optional
 from typing import List
 
-from eve.methods.common import serialize_value
-from quart_babel import gettext as _, lazy_gettext
+from quart_babel import gettext, lazy_gettext
 
 from superdesk import privilege
 from superdesk.cache import cache
-from superdesk.core.resources import ResourceModel
-from superdesk.core.resources.model import ResourceModel
-from superdesk.core.resources.service import AsyncResourceService
+from superdesk.core.resources import ResourceModel, AsyncResourceService
 from superdesk.core.types import SearchRequest
 from superdesk.default_schema import DEFAULT_EDITOR, DEFAULT_SCHEMA
 from superdesk.errors import SuperdeskApiError
-from superdesk.flask import request
 from superdesk.notification import push_notification
 from superdesk.resource_fields import ID_FIELD
-from superdesk.types.vocabularies import Item, VocabulariesResourceModel, CVAccessType
+from superdesk.types.vocabularies import CVItem, VocabulariesResourceModel, CVAccessType
 from superdesk.users import get_user_from_request
 from superdesk.utc import utcnow
 
@@ -58,14 +53,14 @@ class VocabulariesService(AsyncResourceService[VocabulariesResourceModel]):
 
     async def _validate_items(self, update: VocabulariesResourceModel) -> None:
         # if we have qcode and not unique_field set, we want it to be qcode
-        if update.schema.get("qcode") and update.unique_field is None:
+        if update.schema_.get("qcode") and update.unique_field is None:
             update.unique_field = "qcode"
 
         unique_field = update.unique_field
-        vocabs = {}
-        if update.schema and update.items:
+        vocabs: dict = {}
+        if update.schema_ and update.items:
             for index, item in enumerate(update.items):
-                for field, desc in update.schema.items():
+                for field, desc in update.schema_.items():
                     if (desc.get("required", False) or unique_field == field) and not getattr(item, field, None):
                         msg = f"Required {field} in item {index}"
                         payload = {"error": {"required_field": 1}, "params": {"field": field, "item": index}}
@@ -73,7 +68,7 @@ class VocabulariesService(AsyncResourceService[VocabulariesResourceModel]):
 
                     elif desc.get("link_vocab") and desc.get("link_field"):
                         if not vocabs.get(desc["link_vocab"]):
-                            linked_vocab = await self.find_one(_id=desc["link_vocab"])
+                            linked_vocab = await self.find_by_id(desc["link_vocab"])
                             items = linked_vocab.items if linked_vocab else []
                             vocabs[desc["link_vocab"]] = [getattr(vocab, desc["link_field"], None) for vocab in items]
 
@@ -88,7 +83,7 @@ class VocabulariesService(AsyncResourceService[VocabulariesResourceModel]):
         for doc in docs:
             await self._validate_items(doc)
 
-            if doc.field_type_ and doc.id in self.system_keys:
+            if doc.field_type and doc.id in self.system_keys:
                 raise SuperdeskApiError(message=f"{doc.id} is in use", payload={"_id": {"conflict": 1}})
 
             if await self.find_one(_id=doc.id, _deleted=True):
@@ -106,32 +101,10 @@ class VocabulariesService(AsyncResourceService[VocabulariesResourceModel]):
         document.created = original.created or utcnow()
         logger.info(f"updating vocabulary item: {document.id}")
 
-    async def on_fetched(self, doc: VocabulariesResourceModel) -> (VocabulariesResourceModel | None):
-        """Overriding to filter out inactive vocabularies and pops out 'is_active' property from the response.
-
-        It keeps it when requested for manageable vocabularies.
-        """
-
-        if request and hasattr(request, "args") and request.args.get("where"):
-            where_clause = json.loads(request.args.get("where"))
-            if where_clause.get("type") == "manageable":
-                return doc
-
-        for item in doc.items:
-            self._filter_inactive_vocabularies(item)
-            self._cast_items(item)
-
-    async def on_fetched_item(self, doc: VocabulariesResourceModel):
-        """
-        Overriding to filter out inactive vocabularies and pops out 'is_active' property from the response.
-        """
-        self._filter_inactive_vocabularies(doc)
-        self._cast_items(doc)
-
     async def on_update(self, updates: dict[str, Any], original: VocabulariesResourceModel) -> None:
         """Checks the duplicates if a unique field is defined"""
         if "items" in updates:
-            updated = original.model_copy(deep=True, update=updates)
+            updated = original.clone_with(updates)
             await self._validate_items(updated)
         if original.unique_field:
             self._check_uniqueness(updates.get("items", []), original.unique_field)
@@ -152,7 +125,7 @@ class VocabulariesService(AsyncResourceService[VocabulariesResourceModel]):
         """
         Overriding to validate vocabulary deletion
         """
-        if not doc.field_type_:
+        if not doc.field_type:
             raise SuperdeskApiError.badRequestError("Default vocabularies cannot be deleted")
 
     def _check_uniqueness(self, items: list[dict[str, Any]], unique_field: str) -> None:
@@ -179,24 +152,6 @@ class VocabulariesService(AsyncResourceService[VocabulariesResourceModel]):
 
             unique_values.add(unique_value)
 
-    def _filter_inactive_vocabularies(self, item: VocabulariesResourceModel) -> None:
-        vocs = item.items
-        item.items = [
-            Item(**{k: v for k, v in voc.model_dump().items() if k != "is_active"}) for voc in vocs if voc.is_active
-        ]
-
-    def _cast_items(self, vocab: VocabulariesResourceModel) -> None:
-        """Cast values in vocabulary items using predefined schema.
-
-        :param vocab
-        """
-        # FIXME: This doesn't make sense
-        schema = vocab_schema.get(vocab.id, {})
-        for item in vocab.items:
-            for field, field_schema in schema.items():
-                if hasattr(item, field):
-                    setattr(item, field, serialize_value(field_schema["type"], getattr(item, field)))
-
     def _send_notification(self, updated_vocabulary: VocabulariesResourceModel, event="vocabularies:updated") -> None:
         """
         Sends notification about the updated vocabulary to all the connected clients.
@@ -210,14 +165,15 @@ class VocabulariesService(AsyncResourceService[VocabulariesResourceModel]):
             vocabulary_id=updated_vocabulary.id,
         )
 
-    async def get_rightsinfo(self, item: ResourceModel) -> dict[str, Any]:
+    async def get_rightsinfo(self, item: ResourceModel | dict) -> dict[str, Any]:
         """Retrieve rights information for the given item.
 
         :param item: The item to retrieve rights information for
         :return: Dictionary containing copyright holder, notice and usage terms
         """
+
         rights_key = getattr(item, "source", getattr(item, "original_source", "default"))
-        all_rights = await self.find_one(_id="rightsinfo")
+        all_rights = await self.find_by_id("rightsinfo")
 
         if not all_rights or not all_rights.items:
             return {}
@@ -227,6 +183,8 @@ class VocabulariesService(AsyncResourceService[VocabulariesResourceModel]):
             default_rights = next(info for info in all_rights.items if getattr(info, "name", None) == "default")
         except StopIteration:
             default_rights = None
+
+        rights: CVItem | None
 
         try:
             rights = next(info for info in all_rights.items if getattr(info, "name", None) == rights_key)
@@ -242,17 +200,11 @@ class VocabulariesService(AsyncResourceService[VocabulariesResourceModel]):
         return {}
 
     async def get_extra_fields(self) -> list[VocabulariesResourceModel]:
-        cursor = await self.search(lookup={"field_type": {"$exists": True, "$ne": None}}, use_mongo=True)
+        cursor = await self.search(lookup={"field_type": {"$exists": True, "$ne": None}})
         return await cursor.to_list()
 
     async def get_custom_vocabularies(self) -> list[VocabulariesResourceModel]:
-        cursor = await self.search(
-            lookup={
-                "field_type": None,
-                "service": {"$exists": True},
-            },
-            use_mongo=True,
-        )
+        cursor = await self.search(lookup={"field_type": None, "service": {"$exists": True}})
         return await cursor.to_list()
 
     async def get_forbiden_custom_vocabularies(self) -> list[VocabulariesResourceModel]:
@@ -262,21 +214,18 @@ class VocabulariesService(AsyncResourceService[VocabulariesResourceModel]):
                 "selection_type": "do not show",
                 "service": {"$exists": True},
             },
-            use_mongo=True,
         )
         return await cursor.to_list()
 
-    async def get_locale_vocabulary(
-        self, vocabulary: list[VocabulariesResourceModel], language: str
-    ) -> list[VocabulariesResourceModel]:
+    async def get_locale_vocabulary(self, vocabulary: list[CVItem], language: str | None) -> list[CVItem]:
         if not vocabulary or not language:
             return vocabulary
         locale_vocabulary = []
         for item in vocabulary:
-            if not item.translations:
-                locale_vocabulary.append(item)
+            new_item = item.clone()
+            if not new_item.translations:
+                locale_vocabulary.append(new_item)
                 continue
-            new_item = item.model_copy(deep=True)
             locale_vocabulary.append(new_item)
             for field, values in new_item.translations.items():
                 if hasattr(new_item, field) and language in values:
@@ -287,7 +236,7 @@ class VocabulariesService(AsyncResourceService[VocabulariesResourceModel]):
         # FIXME: language is not use here.
         if not keywords:
             return
-        cv = await self.find_one(_id=KEYWORDS_CV)
+        cv = await self.find_by_id(KEYWORDS_CV)
         if cv:
             existing = {item.name.lower() for item in cv.items}
             missing = [keyword for keyword in keywords if keyword.lower() not in existing]
@@ -295,7 +244,7 @@ class VocabulariesService(AsyncResourceService[VocabulariesResourceModel]):
                 updates = {"items": cv.items.copy()}
                 for keyword in missing:
                     updates["items"].append(
-                        Item(
+                        CVItem(
                             name=keyword,
                             qcode=keyword,
                             is_active=True,
@@ -306,7 +255,7 @@ class VocabulariesService(AsyncResourceService[VocabulariesResourceModel]):
                 await self.on_updated(updates, cv)
         else:
             items = [
-                Item(
+                CVItem(
                     name=keyword,
                     qcode=keyword,
                     is_active=True,
@@ -317,9 +266,9 @@ class VocabulariesService(AsyncResourceService[VocabulariesResourceModel]):
                 id=KEYWORDS_CV,
                 items=items,
                 management_type=CVAccessType.MANAGEABLE,
-                display_name=_("Keywords"),
+                display_name=gettext("Keywords"),
                 unique_field="name",
-                schema={
+                schema_={
                     "name": {},
                     "qcode": {},
                 },
@@ -338,7 +287,7 @@ class VocabulariesService(AsyncResourceService[VocabulariesResourceModel]):
         is_active: bool = True,
         name: Optional[str] = None,
         lang: Optional[str] = None,
-    ) -> List[Item]:
+    ) -> List[CVItem]:
         """
         Return `items` with specified filters from the CV with specified `_id`.
         If `lang` is provided then `name` is looked in `items.translations.name.{lang}`,
@@ -391,7 +340,7 @@ class VocabulariesService(AsyncResourceService[VocabulariesResourceModel]):
         if is_active is not None:
             items = [i for i in items if i.is_active == is_active]
 
-        def format_item(item: Item) -> Item:
+        def format_item(item: CVItem) -> CVItem:
             try:
                 del item.is_active
             except KeyError:
@@ -404,11 +353,11 @@ class VocabulariesService(AsyncResourceService[VocabulariesResourceModel]):
 
         return items
 
-    async def get_languages(self) -> list[Item]:
+    async def get_languages(self) -> list[CVItem]:
         return await self.get_items(_id="languages")
 
     async def get_field_options(self, field) -> dict[str, Any]:
-        cv = await self.find_one(_id=field)
+        cv = await self.find_by_id(field)
         return cv.field_options_ if cv else {}
 
 
