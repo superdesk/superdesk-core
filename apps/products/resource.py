@@ -42,3 +42,5 @@ class ProductsResource(Resource):
     mongo_indexes = {
         "name_1": ([("name", 1)], {"unique": True}),
     }
+
+    internal_resource = True
