@@ -16,12 +16,13 @@ from typing import (
     Any,
     ClassVar,
     cast,
+    get_origin,
+    get_args,
 )
-from typing_extensions import dataclass_transform, Self
-from dataclasses import field as dataclass_field
 from copy import deepcopy
-from inspect import get_annotations
 from datetime import datetime
+from dataclasses import field as dataclass_field
+from typing_extensions import dataclass_transform, Self
 
 from pydantic import (
     ConfigDict,
@@ -32,14 +33,14 @@ from pydantic import (
     SerializerFunctionWrapHandler,
     RootModel,
 )
-from pydantic_core import InitErrorDetails, PydanticCustomError, from_json
 from pydantic.dataclasses import dataclass as pydataclass
+from pydantic_core import InitErrorDetails, PydanticCustomError, from_json
 
 from superdesk.core.types import BaseModel
 from superdesk.core.utils import generate_guid, GUID_NEWSML
 from superdesk.utils import merge_dicts_deep
 
-from .utils import get_model_aliased_fields
+from .utils import get_model_aliased_fields, get_model_annotations, gen_url_for_related_resource
 from .fields import ObjectId
 
 default_model_config = ConfigDict(
@@ -139,6 +140,9 @@ class ResourceModel(BaseModel):
     model_config = default_model_config
     model_resource_name: ClassVar[str]  # Automatically set when registered
 
+    # class variable to store the relations
+    _related_field_definitions: ClassVar[dict[str, str]] = {}  # field_name -> resource_name
+
     @computed_field(alias="_type")  # type: ignore[misc]
     @property
     def type(self) -> str:
@@ -155,6 +159,29 @@ class ResourceModel(BaseModel):
 
     #: Datetime the document was last updated
     updated: Annotated[Optional[datetime], Field(alias="_updated")] = None
+
+    def __init_subclass__(cls) -> None:
+        """
+        Examines the model class annotations for Annotated fields that contain AsyncValidator metadata.
+        For each field with a resource name specified in its validator, stores the relation in
+        _related_field_definitions.
+
+        This is done at class creation time to:
+        1. Cache the relationships to avoid repeated annotation inspection
+        2. Allow lazy generation of related links when needed
+        3. We use __init_subclass__ as ResourceModel is designed to be subclassed, not instantiated directly
+        """
+        from .validators import AsyncValidator
+
+        super().__init_subclass__()
+
+        cls._related_field_definitions = {}
+        for field_name, annotation in get_model_annotations(cls).items():
+            if get_origin(annotation) is Annotated:
+                relations = [meta for meta in get_args(annotation) if isinstance(meta, AsyncValidator)]
+                for rel in relations:
+                    if rel.resource_name:
+                        cls._related_field_definitions[field_name] = rel.resource_name
 
     async def validate_async(self):
         await _run_async_validators_from_model_class(self, self)
@@ -237,6 +264,25 @@ class ResourceModel(BaseModel):
         app = get_current_async_app()
         return app.resources.get_resource_service(cls.model_resource_name)
 
+    @classmethod
+    def get_related_links(cls, item: dict[str, Any]) -> dict[str, Any]:
+        """Generate related links for a dictionary representation of the model.
+
+        This allows generating links without needing to create a model instance,
+        useful when working with raw data from the database.
+
+        :param item: Dictionary containing the raw data
+        :return: Dictionary of related links
+        """
+        links = {}
+        for field_name, resource_name in cls._related_field_definitions.items():
+            if field_value := item.get(field_name):
+                links[field_name] = {
+                    "title": field_name.title(),
+                    "href": gen_url_for_related_resource(resource_name, str(field_value)),
+                }
+        return links
+
 
 async def _run_async_validators_from_model_class(
     model_instance: Any, root_item: ResourceModel, field_name_stack: Optional[List[str]] = None
@@ -246,15 +292,7 @@ async def _run_async_validators_from_model_class(
     if field_name_stack is None:
         field_name_stack = []
 
-    model_class = model_instance.__class__
-
-    try:
-        annotations = {}
-        for base_class in reversed(model_class.__mro__):
-            if base_class != ResourceModel and issubclass(base_class, ResourceModel):
-                annotations.update(get_annotations(base_class))
-    except (TypeError, AttributeError):
-        annotations = get_annotations(model_class)
+    annotations = get_model_annotations(model_instance.__class__)
 
     for field_name, annotation in annotations.items():
         value = getattr(model_instance, field_name)

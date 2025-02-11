@@ -9,11 +9,11 @@
 # at https://www.sourcefabric.org/superdesk/license
 
 
-from enum import Enum, unique
 import logging
+from enum import Enum, unique
 from typing import Annotated, Any
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, Field
 from quart_babel import gettext as _
 
 from superdesk.core.resources import ResourceModel

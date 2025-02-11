@@ -13,7 +13,6 @@ from unittest.mock import MagicMock
 from werkzeug.datastructures import MultiDict
 
 from superdesk.flask import Flask
-from content_api.tests import ApiTestCase
 
 
 class SearchServiceTestCase(IsolatedAsyncioTestCase):

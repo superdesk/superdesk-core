@@ -4,7 +4,6 @@ from superdesk.core.resources import (
     AsyncResourceService,
     MongoResourceConfig,
     MongoIndexOptions,
-    ElasticResourceConfig,
 )
 from .model import Content
 

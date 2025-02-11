@@ -8,8 +8,8 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
-from typing import List, Optional, cast, Dict, Any, Type
 import math
+from typing import List, Optional, cast, Dict, Any, Type
 
 from dataclasses import dataclass
 from pydantic import ValidationError, BaseModel, NonNegativeInt
@@ -18,8 +18,7 @@ from typing_extensions import override
 from werkzeug.datastructures import MultiDict
 from bson import ObjectId
 
-from superdesk.core import json, get_app_config
-from superdesk.core.app import get_current_async_app
+from superdesk.core import json, get_app_config, get_current_async_app
 from superdesk.core.types import (
     SearchRequest,
     SearchArgs,
@@ -89,6 +88,9 @@ class RestEndpointConfig:
     auth: AuthConfig = None
 
     enable_cors: bool | None = None
+
+    # Optionally populate the item nested hateoas
+    populate_item_hateoas: bool = False
 
 
 def get_id_url_type(data_class: type[ResourceModel]) -> str:
@@ -302,8 +304,10 @@ class ResourceRestEndpoints(RestEndpoints):
                 f"{self.resource_config.name} resource with ID '{args.item_id}' not found"
             )
 
+        self._populate_hateoas_if_needed(request, [item])
         await self.on_fetched_item(request, item)
         response = Response(item, 200, headers)
+
         await signals.web.on_get_response.send(request, response)
         return response
 
@@ -456,8 +460,11 @@ class ResourceRestEndpoints(RestEndpoints):
         cursor = await self.service.find(params)
         count = await cursor.count()
 
+        items = await cursor.to_list_raw()
+        self._populate_hateoas_if_needed(request, items)
+
         response_data = RestGetResponse(
-            _items=await cursor.to_list_raw(),
+            _items=items,
             _meta=dict(
                 page=params.page,
                 max_results=params.max_results if params.max_results is not None else 25,
@@ -493,7 +500,7 @@ class ResourceRestEndpoints(RestEndpoints):
         if not self.endpoint_config.enable_cors:
             return []
 
-        methods = (self.endpoint_config.resource_methods or ["GET", "PATCH", "DELETE"]) + ["OPTIONS", "HEAD"]
+        methods = (self.endpoint_config.item_methods or ["GET", "PATCH", "DELETE"]) + ["OPTIONS", "HEAD"]
         return get_cors_headers(", ".join(methods))
 
     def _build_resource_hateoas(self, req: SearchRequest, doc_count: Optional[int], request: Request) -> Dict[str, Any]:
@@ -573,12 +580,31 @@ class ResourceRestEndpoints(RestEndpoints):
 
         return links
 
-    def _populate_item_hateoas(self, request: Request, item: dict[str, Any]) -> dict[str, Any]:
+    def _populate_hateoas_if_needed(self, request: Request, items: list[dict[str, Any]]):
+        """
+        Populate the hateoas information for a list of items only if the
+        endpoint config `populate_item_hateoas` flag is set to True
+        """
+
+        if not self.endpoint_config.populate_item_hateoas:
+            return
+
+        for item in items:
+            self._populate_item_hateoas(request, item, force_append_id=True)
+
+    def _populate_item_hateoas(
+        self, request: Request, item: dict[str, Any], force_append_id: bool = False
+    ) -> dict[str, Any]:
         item.setdefault("_links", {})
         item["_links"]["self"] = {
             "title": self.resource_config.title or self.resource_config.data_class.__name__,
-            "href": self.gen_url_for_item(request, item["_id"]),
+            "href": self.gen_url_for_item(request, item["_id"], force_append_id),
         }
+
+        # extract related links from the `resource_config.data_class` relations (annotations)
+        if related_links := self.resource_config.data_class.get_related_links(item):
+            item["_links"]["related"] = related_links
+
         return item
 
     async def on_fetched_item(self, request: Request, doc: dict) -> None:

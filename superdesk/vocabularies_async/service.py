@@ -57,7 +57,7 @@ class VocabulariesService(AsyncResourceService[VocabulariesResourceModel]):
             update.unique_field = "qcode"
 
         unique_field = update.unique_field
-        vocabs: dict = {}
+        vocabs: dict[str, list[Any]] = {}
         if update.schema_ and update.items:
             for index, item in enumerate(update.items):
                 for field, desc in update.schema_.items():
