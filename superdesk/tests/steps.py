@@ -375,7 +375,8 @@ async def assert_ok(response):
     """Assert we get ok status within api response."""
     await expect_status_in(response, (200, 201))
     data = await get_json_data(response)
-    assert data.get("_status") == "OK"
+    status = data.get("_status")
+    assert status == "OK", f"Expected _status=='OK', got '{status}'"
 
 
 async def get_json_data(response):
