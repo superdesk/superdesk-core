@@ -19,6 +19,17 @@ from .fixtures.users import john_doe
 NOW = utcnow()
 
 
+def get_test_cors_headers(methods: list[str] | None = None) -> list[tuple[str, str]]:
+    if methods is None:
+        methods = ["GET", "POST", "OPTIONS", "HEAD"]
+    return [
+        ("Access-Control-Allow-Origin", "http://localhost:9000"),
+        ("Access-Control-Allow-Headers", "Content-Type,Authorization,If-Match"),
+        ("Access-Control-Allow-Credentials", "true"),
+        ("Access-Control-Allow-Methods", ", ".join(methods)),
+    ]
+
+
 class AsyncSignalsTestCase(IsolatedAsyncioTestCase):
     async def test_signals(self):
         signal = AsyncSignal[str, bool]("on_some_event")
@@ -204,8 +215,6 @@ class ResourceWebSignalsTestCase(AsyncFlaskTestCase):
     async def asyncTearDown(self):
         await super().asyncTearDown()
         clear_all_resource_signal_listeners()
-        # global_signals.clear_listeners()
-        # User.get_signals().clear_listeners()
 
     @mock.patch("superdesk.core.resources.service.utcnow", return_value=NOW)
     async def test_web_signals(self, mock_utcnow):
@@ -269,7 +278,7 @@ class ResourceWebSignalsTestCase(AsyncFlaskTestCase):
                         "_links": {"self": {"title": "User", "href": "users_async/user_1"}},
                     },
                     201,
-                    [],
+                    get_test_cors_headers(),
                 ),
             ],
         )
@@ -290,7 +299,7 @@ class ResourceWebSignalsTestCase(AsyncFlaskTestCase):
                         "_updated": format_time(NOW) + "+00:00",
                     },
                     200,
-                    [],
+                    get_test_cors_headers(["GET", "PATCH", "DELETE", "OPTIONS", "HEAD"]),
                 ),
             ],
         )
@@ -330,7 +339,7 @@ class ResourceWebSignalsTestCase(AsyncFlaskTestCase):
                         "_links": ANY,
                     },
                     200,
-                    [("X-Total-Count", 1)],
+                    [("X-Total-Count", 1)] + get_test_cors_headers(["GET", "POST", "OPTIONS", "HEAD"]),
                 ),
             ],
         )
@@ -363,7 +372,7 @@ class ResourceWebSignalsTestCase(AsyncFlaskTestCase):
                         "_links": {"self": {"title": "User", "href": "users_async/user_1"}},
                     },
                     200,
-                    [],
+                    get_test_cors_headers(["GET", "PATCH", "DELETE", "OPTIONS", "HEAD"]),
                 ),
             ],
         )
@@ -374,7 +383,11 @@ class ResourceWebSignalsTestCase(AsyncFlaskTestCase):
             f"/api/users_async/{test_user.id}", headers={"If-Match": test_user.etag}
         )
         self.assertEqual(response.status_code, 204)
-        assert_mocks_called("delete", [ANY, test_user], [ANY, Response({}, 204, [])])
+        assert_mocks_called(
+            "delete",
+            [ANY, test_user],
+            [ANY, Response({}, 204, get_test_cors_headers(["GET", "PATCH", "DELETE", "OPTIONS", "HEAD"]))],
+        )
 
     async def test_modifying_data_from_web_signal(self):
         test_user = john_doe()
