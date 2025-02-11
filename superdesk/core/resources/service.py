@@ -545,18 +545,30 @@ class AsyncResourceService(Generic[ResourceModelType]):
 
         await self.signals.data.on_deleted.send(doc)
 
-    async def get_all(self) -> AsyncIterable[ResourceModelType]:
+    async def get_all(self, lookup: dict | None = None) -> AsyncIterable[ResourceModelType]:
         """Helper function to get all items from this resource
 
         :return: An async iterable with ``ResourceModel`` instances
         """
 
-        async for data in self.get_all_raw():
+        async for data in self.get_all_raw(lookup):
             doc = self.get_model_instance_from_dict(dict(data))
             yield doc
 
-    def get_all_raw(self) -> AsyncIOMotorCursor:
-        return self.mongo_async.find({}).sort("_id")
+    def get_all_raw(self, lookup: dict | None = None) -> AsyncIOMotorCursor:
+        return self.mongo_async.find(lookup or {}).sort("_id")
+
+    async def get_all_list(self, lookup: dict | None = None) -> list[ResourceModelType]:
+        return [item async for item in self.get_all(lookup)]
+
+    async def get_all_list_raw(self, lookup: dict | None = None) -> list[dict]:
+        return cast(list[dict], [item async for item in self.get_all_raw(lookup)])
+
+    async def get_all_map(self, lookup: dict | None = None) -> dict[str | ObjectId, ResourceModelType]:
+        return {item.id: item async for item in self.get_all(lookup)}
+
+    async def get_all_map_raw(self, lookup: dict | None = None) -> dict[str | ObjectId, dict]:
+        return cast(dict[str | ObjectId, dict], {item[ID_FIELD]: item async for item in self.get_all_raw(lookup)})
 
     async def get_all_batch(self, size=500, max_iterations=10000, lookup=None) -> AsyncIterable[ResourceModelType]:
         """Helper function to get all items from this resource, in batches
