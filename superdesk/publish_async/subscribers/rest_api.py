@@ -62,4 +62,4 @@ class SubscriberRestEndpoints(ResourceRestEndpoints):
         for destination in doc.get("destinations") or []:
             if not destination.get("config"):
                 continue
-            destination["config"] = {key: value for key, value in destination["config"] if key not in fields}
+            destination["config"] = {key: value for key, value in destination["config"].items() if key not in fields}
