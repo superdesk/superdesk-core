@@ -30,6 +30,7 @@ from eve.render import send_response
 from quart_babel import Babel
 from babel import parse_locale
 from pymongo.errors import DuplicateKeyError
+from pydantic import ValidationError
 
 from superdesk.commands import configure_cli
 from superdesk.flask import (
@@ -64,6 +65,7 @@ from superdesk.core.types import (
 )
 from superdesk.core.app import SuperdeskAsyncApp
 from superdesk.core.resources import ResourceRestEndpoints
+from superdesk.core.resources.validators import convert_pydantic_validation_error_for_response
 from superdesk.core.web import NullEndpoint
 
 SUPERDESK_PATH = os.path.abspath(os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
@@ -185,6 +187,16 @@ def set_error_handlers(app):
 
     :param app: an instance of `Eve <http://python-eve.org/>`_ application
     """
+
+    @app.errorhandler(ValidationError)
+    def handle_pydantic_validation_error(error: ValidationError):
+        """
+        Gets the ValidationException error raised from Core framework's models/services, parses and returns it
+        to the client in a valid json format.
+        """
+        logger.error(f"HTTP Exception 400 has been raised: {error}")
+        error_dict = convert_pydantic_validation_error_for_response(error)
+        return send_response(None, (error_dict, None, None, 400))
 
     @app.errorhandler(SuperdeskError)
     def client_error_handler(error):
