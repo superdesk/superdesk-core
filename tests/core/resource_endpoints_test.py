@@ -66,7 +66,12 @@ class ResourceEndpointsTestCase(AsyncFlaskTestCase):
         json_data = await response.get_json()
         test_user_dict = self.test_client.model_instance_to_json(test_user)
         test_user_dict.update(
-            dict(_created=format_time(NOW) + "+00:00", _updated=format_time(NOW) + "+00:00", _etag=json_data["_etag"])
+            dict(
+                _created=format_time(NOW) + "+00:00",
+                _updated=format_time(NOW) + "+00:00",
+                _etag=json_data["_etag"],
+                _links={"self": {"title": "User", "href": "users_async/user_1"}},
+            )
         )
         self.assertEqual(json_data, test_user_dict)
 
@@ -98,6 +103,7 @@ class ResourceEndpointsTestCase(AsyncFlaskTestCase):
                 _etag=json_data["_etag"],
                 first_name="Foo",
                 last_name="Bar",
+                _links={"self": {"title": "User", "href": "users_async/user_1"}},
             )
         )
         self.assertEqual(json_data, test_user_dict)
@@ -171,6 +177,7 @@ class ResourceEndpointsTestCase(AsyncFlaskTestCase):
         response = await self.test_client.get("""/api/users_async?source={"query":{"match":{"first_name":"John"}}}""")
         json_data = await response.get_json()
         test_user_dict["_etag"] = json_data["_items"][0]["_etag"]
+        test_user_dict["_links"] = {"self": {"title": "User", "href": "users_async/user_1"}}
         self.assertEqual(json_data["_meta"]["total"], 1)
         self.assertEqual(json_data["_items"], [test_user_dict])
 

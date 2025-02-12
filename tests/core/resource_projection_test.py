@@ -36,7 +36,7 @@ class ResourceFieldProjectionTestCase(AsyncFlaskTestCase):
             url = "/api/users_async" if not projection else f"/api/users_async?projection={projection_str}"
             response = await self.test_client.get(url)
             item = (await response.get_json())["_items"][0]
-            self.assertListEqual(sorted(list(item.keys())), sorted(expected_keys))
+            self.assertListEqual(sorted(list(item.keys())), sorted(expected_keys + ["_links"]))
 
         # Get baseline of keys to test against
         await assert_projection_result_keys(

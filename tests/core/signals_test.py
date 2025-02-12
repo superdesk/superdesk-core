@@ -275,6 +275,7 @@ class ResourceWebSignalsTestCase(AsyncFlaskTestCase):
                 Response(
                     {
                         **test_user.to_dict(),
+                        "_status": "OK",
                         "_links": {"self": {"title": "User", "href": "users_async/user_1"}},
                     },
                     201,
@@ -297,6 +298,7 @@ class ResourceWebSignalsTestCase(AsyncFlaskTestCase):
                         **test_user.to_dict(),
                         "_created": format_time(NOW) + "+00:00",
                         "_updated": format_time(NOW) + "+00:00",
+                        "_links": {"self": {"title": "User", "href": "users_async/user_1"}},
                     },
                     200,
                     get_test_cors_headers(["GET", "PATCH", "DELETE", "OPTIONS", "HEAD"]),
@@ -307,10 +309,6 @@ class ResourceWebSignalsTestCase(AsyncFlaskTestCase):
         # Test search signals
         response = await self.test_client.get("""/api/users_async?source={"query":{"match":{"first_name":"John"}}}""")
         self.assertEqual(response.status_code, 200)
-        response_data = await response.get_json()
-        from pprint import pprint
-
-        pprint(response_data)
         assert_mocks_called(
             "search",
             [
@@ -329,6 +327,7 @@ class ResourceWebSignalsTestCase(AsyncFlaskTestCase):
                                 **test_user.to_dict(),
                                 "_created": format_time(NOW) + "+00:00",
                                 "_updated": format_time(NOW) + "+00:00",
+                                "_links": {"self": {"title": "User", "href": "users_async/user_1"}},
                             }
                         ],
                         "_meta": {
