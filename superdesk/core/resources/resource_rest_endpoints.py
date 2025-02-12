@@ -91,7 +91,7 @@ class RestEndpointConfig:
     enable_cors: bool | None = None
 
     # Optionally populate the item nested hateoas
-    populate_item_hateoas: bool = False
+    populate_item_hateoas: bool | None = None
 
 
 def get_id_url_type(data_class: type[ResourceModel]) -> str:
@@ -129,6 +129,10 @@ class ResourceRestEndpoints(RestEndpoints):
         if self.endpoint_config.enable_cors is None:
             # Enable cors by default
             self.endpoint_config.enable_cors = cast(bool, get_app_config("ASYNC_ENABLE_CORS", True))
+
+        if self.endpoint_config.populate_item_hateoas is None:
+            # Enable item HATEOAS by default
+            self.endpoint_config.populate_item_hateoas = cast(bool, get_app_config("ASYNC_POPULATE_HATEOAS", True))
 
         super().__init__(
             url=endpoint_config.url or resource_config.name,

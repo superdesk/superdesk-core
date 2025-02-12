@@ -430,6 +430,8 @@ ASYNC_AUTH_CLASS = "superdesk.core.auth.token_auth:TokenAuthorization"
 
 ASYNC_ENABLE_CORS = True
 
+ASYNC_POPULATE_HATEOAS = True
+
 #: LDAP Server (eg: ldap://sourcefabric.org)
 LDAP_SERVER = env("LDAP_SERVER", "")
 #: LDAP Server port
