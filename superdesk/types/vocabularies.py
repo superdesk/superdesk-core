@@ -75,7 +75,7 @@ class VocabulariesResourceModel(ResourceModel):
     unique_field: str | None = None
     schema_: Annotated[dict[str, dict], Field(alias="schema", default_factory=dict)]
     field_type: str | None = None
-    field_options_: dict[str, Any] = Field(default_factory=dict)
+    field_options: dict[str, Any] = Field(default_factory=dict)
     init_version: int = 0
     preffered_items: bool = False
     disable_entire_category_selection: bool = False

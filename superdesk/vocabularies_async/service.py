@@ -358,7 +358,7 @@ class VocabulariesService(AsyncResourceService[VocabulariesResourceModel]):
 
     async def get_field_options(self, field) -> dict[str, Any]:
         cv = await self.find_by_id(field)
-        return cv.field_options_ if cv else {}
+        return cv.field_options if cv else {}
 
 
 @cache(ttl=3600, tags=("vocabularies",))
