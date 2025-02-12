@@ -1,0 +1,50 @@
+# -*- coding: utf-8; -*-
+#
+# This file is part of Superdesk.
+#
+# Copyright 2013, 2025 Sourcefabric z.u. and contributors.
+#
+# For the full copyright and license information, please see the
+# AUTHORS and LICENSE files distributed with this source code, or
+# at https://www.sourcefabric.org/superdesk/license
+
+from superdesk.core.resources import ResourceConfig, MongoResourceConfig, MongoIndexOptions
+from superdesk.core.resources.resource_rest_endpoints import RestEndpointConfig
+from superdesk.types.archive import ArchiveResourceModel
+from .service import ArchiveService
+
+
+archive_resource_config = ResourceConfig(
+    name="archive",
+    data_class=ArchiveResourceModel,
+    service=ArchiveService,
+    mongo=MongoResourceConfig(
+        indexes=[
+            MongoIndexOptions(
+                name="uri_1",
+                keys=[("uri", 1), ("background", 1)],
+            ),
+            MongoIndexOptions(
+                name="ingest_id_1",
+                keys=[("ingest_id", 1), ("background", 1)],
+            ),
+            MongoIndexOptions(
+                name="unique_id_1",
+                keys=[("unique_id", 1), ("background", 1)],
+            ),
+            MongoIndexOptions(
+                name="processed_from_1",
+                keys=[("processed_from", 1), ("background", 1)],
+            ),
+            MongoIndexOptions(
+                name="assignment_id_1",
+                keys=[("assignment_id", 1), ("background", 1)],
+            ),
+        ],
+    ),
+    rest_endpoints=RestEndpointConfig(
+        item_methods=["GET", "PATCH", "PUT"],
+        resource_methods=["GET", "POST"],
+        enable_cors=True,
+    ),
+)
