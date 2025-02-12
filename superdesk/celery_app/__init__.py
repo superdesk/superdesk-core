@@ -45,6 +45,13 @@ def init_celery(app: "SuperdeskEve") -> None:
     """
 
     class ContextTask(BaseTaskClass):  # type: ignore
+        # NOTE: This is a temporary workaround that needs production testing
+        # for potential issues.
+
+        # Future improvement: Use factory pattern where app is created first,
+        # then tasks are registered with Celery. This ensures proper context
+        # by leveraging the app's global state management through Quart's
+        # current_app proxy.
         def get_current_app(self):
             return app
 
