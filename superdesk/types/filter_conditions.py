@@ -71,7 +71,7 @@ async def validate_allowed_filter_fields(item: ResourceModelWithObjectId, field:
     if field not in allowed:
         raise PydanticCustomError(
             "allowed",
-            gettext("Field is not allowed for filtering"),
+            gettext(f"unallowed value {field}"),
         )
 
 
