@@ -61,7 +61,6 @@ async def get_next_sequence_number(
         raise KeyError("Sequence key cannot be empty")
 
     target_resource = SequencesResource.get_service()
-    # target_resource.mongo.find_one_and_update()
     sequence_number = (
         await target_resource.mongo_async.find_one_and_update(
             {"key": key_name}, update={"$inc": {"sequence_number": 1}}, upsert=True, new=True
