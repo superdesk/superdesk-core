@@ -355,10 +355,11 @@ class ResourceRestEndpoints(RestEndpoints):
                 )
             except SuperdeskError as superdesk_error:
                 return_code = superdesk_error.status_code
+                # Let the Superdesk exception populate the issue dictionary
                 issues.append(
                     {
-                        STATUS: STATUS_ERR,
-                        ISSUES: {"validation exception": str(superdesk_error)},
+                        "validation exception": str(superdesk_error),
+                        **superdesk_error.to_dict(),
                     }
                 )
             except Exception as exception:
@@ -442,6 +443,7 @@ class ResourceRestEndpoints(RestEndpoints):
         issues: dict | None = None
         return_code = 200
         updated: dict | None = None
+        response_body: dict | None = None
         try:
             await signals.web.on_update.send(request, original, payload)
             payload = payload.copy()
@@ -451,19 +453,22 @@ class ResourceRestEndpoints(RestEndpoints):
             issues = get_field_errors_from_pydantic_validation_error(validation_error)
         except SuperdeskError as superdesk_error:
             return_code = superdesk_error.status_code
-            issues = {"validator exception": str(superdesk_error)}
+            # Let the Superdesk exception populate the issue dictionary
+            response_body = superdesk_error.to_dict()
+            response_body.setdefault(ISSUES, {})["validator exception"] = str(superdesk_error)
 
-        if issues is not None or updated is None:
-            response_body = {
-                STATUS: STATUS_ERR,
-                ERROR: {"code": return_code, "message": "Update failure: document contains error(s)"},
-                ISSUES: issues,
-            }
-        else:
-            response_body = {
-                **self._populate_item_hateoas(request, updated),
-                STATUS: STATUS_OK,
-            }
+        if not response_body:
+            if issues is not None or updated is None:
+                response_body = {
+                    STATUS: STATUS_ERR,
+                    ERROR: {"code": return_code, "message": "Update failure: document contains error(s)"},
+                    ISSUES: issues,
+                }
+            else:
+                response_body = {
+                    **self._populate_item_hateoas(request, updated),
+                    STATUS: STATUS_OK,
+                }
 
         response = Response(response_body, return_code, headers)
         await signals.web.on_update_response.send(request, response)
