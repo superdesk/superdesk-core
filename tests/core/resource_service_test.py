@@ -208,8 +208,8 @@ class TestResourceService(AsyncTestCase):
 
     async def test_get_all(self):
         users = all_users()
-        item_ids = await self.service.create(users)
-        self.assertEqual(item_ids, [user.id for user in users])
+        items = await self.service.create(users)
+        self.assertEqual([item.id for item in items], [user.id for user in users])
         docs = []
         async for user in self.service.get_all():
             docs.append(user)

@@ -76,7 +76,7 @@ class ResourceWebSignals(SignalGroup, Generic[ResourceModelType]):
     #: Params:
     #:     - request :class:`Request <superdesk.core.types.Request>`: The Web request instance
     #:     - items :class:`list[ResourceModel] <superdesk.core.resources.model.ResourceModel>`: A list of items to be created
-    on_create: AsyncSignal[Request, list[ResourceModelType]]
+    on_create: AsyncSignal[Request, list[dict]]
 
     #: Signal fired before sending Web response from a new resource request
     #:

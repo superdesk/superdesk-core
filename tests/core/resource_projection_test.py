@@ -132,7 +132,7 @@ class ResourceModelProjectionTestCase(AsyncTestCase):
         user_auth = self.app.resources.get_resource_service("user_auth")
 
         # Create the User using the UserProfile resource
-        user_id = (
+        new_user = (
             await user_profiles.create(
                 [
                     UserProfile(
@@ -145,6 +145,7 @@ class ResourceModelProjectionTestCase(AsyncTestCase):
                 ]
             )
         )[0]
+        user_id = new_user.id
 
         # Assign a password using the UserAuth resource
         await user_auth.update(user_id, {"password": "some_hash"})

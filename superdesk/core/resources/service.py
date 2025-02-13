@@ -340,7 +340,7 @@ class AsyncResourceService(Generic[ResourceModelType]):
             context={"use_objectid": True} if not self.config.query_objectid_as_string else {},
         )
 
-    async def create(self, _docs: Sequence[ResourceModelType | dict[str, Any]]) -> List[str]:
+    async def create(self, docs: Sequence[ResourceModelType | dict[str, Any]]) -> List[ResourceModelType]:
         """Creates a new resource
 
         Will automatically create the resource(s) in both Elasticsearch (if configured for this resource)
@@ -351,12 +351,12 @@ class AsyncResourceService(Generic[ResourceModelType]):
         :raises Pydantic.ValidationError: If any of the docs provided are not valid
         """
 
-        docs = await self._convert_dicts_to_model(_docs)
-        await self.on_create(docs)
+        instances = await self._convert_dicts_to_model(docs)
+        await self.on_create(instances)
 
         ids: List[str] = []
 
-        for index, doc in enumerate(docs):
+        for index, doc in enumerate(instances):
             await self.validate_create(doc)
             versioned_model = get_versioned_model(doc)
             if versioned_model is not None:
@@ -374,7 +374,7 @@ class AsyncResourceService(Generic[ResourceModelType]):
 
             # Update the provided docs, so the `_id` and `_etag` get applied to the supplied dicts
             doc.id = response.inserted_id
-            docs_entry = _docs[index]
+            docs_entry = docs[index]
             if isinstance(docs_entry, dict):
                 docs_entry.update(
                     dict(
@@ -390,8 +390,8 @@ class AsyncResourceService(Generic[ResourceModelType]):
             if self.config.versioning:
                 await self.insert_versioned_document(doc_dict)
 
-        await self.on_created(docs)
-        return ids
+        await self.on_created(instances)
+        return instances
 
     async def insert_versioned_document(self, doc_dict: dict[str, Any]):
         await self.mongo_versioned_async.insert_one(self._get_versioned_document(doc_dict))
@@ -435,7 +435,7 @@ class AsyncResourceService(Generic[ResourceModelType]):
         updates: Dict[str, Any],
         etag: str | None = None,
         original: ResourceModelType | None = None,
-    ) -> None:
+    ) -> ResourceModelType:
         """Updates an existing resource
 
         Will automatically update the resource in both Elasticsearch (if configured for this resource)
@@ -476,6 +476,8 @@ class AsyncResourceService(Generic[ResourceModelType]):
             await self.mongo_versioned_async.insert_one(self._get_versioned_document(validated_updates))
 
         await self.on_updated(updates, original)
+
+        return original.clone_with(updates_dict)
 
     async def on_updated(self, updates: Dict[str, Any], original: ResourceModelType) -> None:
         """Hook to run after a resource has been updated

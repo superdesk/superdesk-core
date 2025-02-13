@@ -212,7 +212,7 @@ class QueueItemsTestCase(TestCase):
                 )
             ]
         )
-        queue_id = (
+        queue_item = (
             await service.create(
                 [
                     {
@@ -235,7 +235,7 @@ class QueueItemsTestCase(TestCase):
             )
         )[0]
 
-        item = await service.find_by_id(queue_id)
+        item = await service.find_by_id(queue_item.id)
         await service.delete(item)
 
         assert fake_storage_delete.call_args == mock.call("abcd123")
