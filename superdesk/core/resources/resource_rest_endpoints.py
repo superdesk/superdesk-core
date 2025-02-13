@@ -10,6 +10,7 @@
 
 import math
 from typing import List, Optional, cast, Dict, Any, Type
+from copy import deepcopy
 
 from dataclasses import dataclass
 from pydantic import ValidationError, BaseModel, NonNegativeInt
@@ -335,7 +336,7 @@ class ResourceRestEndpoints(RestEndpoints):
         model_instances = []
         issues = []
         return_code = 201
-        for value in payload:
+        for value in deepcopy(payload):
             # Validate the provided item,
             try:
                 for parent_link in self.endpoint_config.parent_links or []:
