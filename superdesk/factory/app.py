@@ -9,27 +9,28 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
-from typing import Dict, Any, Type, Optional, Union, Mapping, cast, NoReturn
 
 import os
 import eve
-from werkzeug.exceptions import NotFound
 import jinja2
 import importlib
 import superdesk
 import logging
-
 import sentry_sdk
-from sentry_sdk.integrations.asyncio import AsyncioIntegration
-from sentry_sdk.integrations.quart import QuartIntegration
+
+from celery import Celery
 from flask_mail import Mail
-from eve.auth import TokenAuth
-from eve.io.mongo.mongo import _create_index as create_index
-from eve.io.media import MediaStorage
-from eve.render import send_response
 from quart_babel import Babel
 from babel import parse_locale
+from eve.auth import TokenAuth
+from eve.render import send_response
+from eve.io.media import MediaStorage
+from werkzeug.exceptions import NotFound
 from pymongo.errors import DuplicateKeyError
+from sentry_sdk.integrations.quart import QuartIntegration
+from eve.io.mongo.mongo import _create_index as create_index
+from sentry_sdk.integrations.asyncio import AsyncioIntegration
+from typing import Dict, Any, Type, Optional, Union, Mapping, cast, NoReturn
 
 from superdesk.commands import configure_cli
 from superdesk.flask import (
@@ -220,6 +221,7 @@ class SuperdeskEve(eve.Eve):
 
     media: Any
     data: Any
+    celery: Celery
 
     def __init__(self, **kwargs):
         self.json_provider_class = SuperdeskFlaskJSONProvider

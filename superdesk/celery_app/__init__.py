@@ -8,9 +8,10 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
-from sys import argv
 import redis
+from sys import argv
 from celery import Celery
+from typing import TYPE_CHECKING
 
 from .context_task import HybridAppContextTask, HybridAppContextWorkerTask
 from .serializer import CELERY_SERIALIZER_NAME, ContextAwareSerializerFactory
@@ -18,6 +19,8 @@ from .serializer import CELERY_SERIALIZER_NAME, ContextAwareSerializerFactory
 from superdesk.logging import logger
 from superdesk.core import get_current_app, get_app_config
 
+if TYPE_CHECKING:
+    from superdesk.factory.app import SuperdeskEve
 
 # custom serializer with Kombu for Celery's message serialization
 serializer_factory = ContextAwareSerializerFactory(get_current_app)
@@ -27,12 +30,34 @@ serializer_factory.register_serializer(CELERY_SERIALIZER_NAME)
 # then this code is running in a celery beat process
 IS_BEAT_PROCESS = "celery" in argv[0] and "beat" in argv
 
-# set up celery with our custom Task which handles async/sync tasks + app context
-celery = Celery(__name__, task_cls=HybridAppContextTask if IS_BEAT_PROCESS else HybridAppContextWorkerTask)
+# Define BaseTaskClass as a proper type alias
+BaseTaskClass: type[HybridAppContextTask] = HybridAppContextTask if IS_BEAT_PROCESS else HybridAppContextWorkerTask
+
+celery: Celery = Celery(__name__)
 
 
-def init_celery(app):
+def init_celery(app: "SuperdeskEve") -> None:
+    """Initialize Celery with the Superdesk application.
+
+    1. Configures Celery from the Superdesk app config
+    2. Sets up Redis connection
+    3. Sets up proper app context for the celery task
+    """
+
+    class ContextTask(BaseTaskClass):  # type: ignore
+        # NOTE: This is a temporary workaround that needs production testing
+        # for potential issues.
+
+        # Future improvement: Use factory pattern where app is created first,
+        # then tasks are registered with Celery. This ensures proper context
+        # by leveraging the app's global state management through Quart's
+        # current_app proxy.
+        def get_current_app(self):
+            return app
+
     celery.config_from_object(app.config, namespace="CELERY")
+    celery.Task = ContextTask
+
     app.celery = celery
     app.redis = __get_redis(app)
 
