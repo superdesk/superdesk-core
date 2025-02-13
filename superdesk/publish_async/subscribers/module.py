@@ -22,7 +22,7 @@ subscribers_resource_config = ResourceConfig(
     ),
     rest_endpoints=RestEndpointConfig(
         endpoints_class=SubscriberRestEndpoints,
-        item_methods=["GET", "PATCH", "DELETE"],
+        item_methods=["GET", "PATCH"],
         auth=http_method_privilege_based_rules(
             {
                 "POST": "subscribers",

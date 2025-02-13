@@ -23,6 +23,8 @@ class SubscribersService(AsyncResourceService[SubscribersResource]):
         for doc in docs:
             self._validate_seq_num_settings(doc)
             await self._validate_products_destinations(doc)
+            for destination in doc.destinations or []:
+                destination._id = get_subscriber_destination_id(destination)
 
     async def on_created(self, docs: list[SubscribersResource]) -> None:
         await super().on_created(docs)
@@ -32,7 +34,9 @@ class SubscribersService(AsyncResourceService[SubscribersResource]):
         await super().on_update(updates, original)
         subscriber = original.clone_with(updates)
         self._validate_seq_num_settings(subscriber)
-        updates["sequence_num_settings"] = subscriber.sequence_num_settings
+        updates["sequence_num_settings"] = (
+            subscriber.sequence_num_settings.to_dict() if subscriber.sequence_num_settings else None
+        )
 
         await self._validate_products_destinations(subscriber)
         self.keep_destinations_secrets(updates, original)

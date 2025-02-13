@@ -10,6 +10,7 @@ from superdesk.core.resources.validators import (
     validate_data_relation_async,
     validate_iunique_value_async,
     validate_email,
+    validate_not_empty,
 )
 
 
@@ -25,7 +26,7 @@ class SubscriberLastClosed(Dataclass):
 
 
 class SubscriberDestination(Dataclass):
-    name: str
+    name: Annotated[str, validate_not_empty()]
     format: str
     delivery_type: str
     _id: str | None = None
@@ -41,9 +42,9 @@ class SubscriberType(str, Enum):
 
 
 class SubscribersResource(ResourceModelWithObjectId):
-    name: Annotated[str, validate_iunique_value_async("subscribers", "name")]
+    name: Annotated[str, validate_not_empty(), validate_iunique_value_async("subscribers", "name")]
     subscriber_type: SubscriberType
-    email: Annotated[str, validate_email(multi=True)]
+    email: Annotated[str, validate_not_empty(), validate_email(multi=True)]
     media_type: str | None = None
     sequence_num_settings: SubscriberSequenceSettings | None = None
 

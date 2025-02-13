@@ -6,7 +6,7 @@ from superdesk.core.resources import ResourceRestEndpoints, ItemRequestUrlArgs
 from superdesk.core.web import ItemRequestViewArgs
 
 from superdesk.types import SubscribersResource
-from .utils import _get_subscribers_by_filter_condition
+from .utils import _get_subscribers_by_filter_condition, get_subscriber_destination_id
 
 
 class SubscriberRestEndpoints(ResourceRestEndpoints):
@@ -60,6 +60,7 @@ class SubscriberRestEndpoints(ResourceRestEndpoints):
 
     def _hide_config_fields(self, doc: dict, fields: set[str]) -> None:
         for destination in doc.get("destinations") or []:
+            destination["_id"] = get_subscriber_destination_id(destination)
             if not destination.get("config"):
                 continue
             destination["config"] = {key: value for key, value in destination["config"].items() if key not in fields}

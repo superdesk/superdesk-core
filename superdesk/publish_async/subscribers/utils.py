@@ -79,10 +79,15 @@ async def get_next_sequence_number(
     return sequence_number
 
 
-def get_subscriber_destination_id(subscriber_destination: SubscriberDestination) -> str:
-    if subscriber_destination._id:
-        return subscriber_destination._id
-    return get_dict_hash(subscriber_destination.to_dict())
+def get_subscriber_destination_id(subscriber_destination: SubscriberDestination | dict) -> str:
+    destination_dict = (
+        subscriber_destination.to_dict()
+        if isinstance(subscriber_destination, SubscriberDestination)
+        else subscriber_destination
+    )
+    if destination_dict.get("_id"):
+        return destination_dict["_id"]
+    return get_dict_hash(destination_dict)
 
 
 async def _get_subscribers_by_filter_condition(filter_condition: dict) -> GetFilterConditionResponse:
