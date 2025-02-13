@@ -30,14 +30,14 @@ from superdesk.core.types import (
     Response,
     RestGetResponse,
 )
-from superdesk.errors import SuperdeskApiError
-from superdesk.resource_fields import STATUS, STATUS_OK, ITEMS
+from superdesk.errors import SuperdeskApiError, SuperdeskError
+from superdesk.resource_fields import STATUS, STATUS_OK, STATUS_ERR, ITEMS, ISSUES, ERROR
 from superdesk.core.web import RestEndpoints, ItemRequestViewArgs, Endpoint
 from superdesk.utils import get_cors_headers
 
 from .model import ResourceModel
 from .resource_config import ResourceConfig
-from .validators import convert_pydantic_validation_error_for_response
+from .validators import get_field_errors_from_pydantic_validation_error
 
 
 @dataclass
@@ -319,10 +319,9 @@ class ResourceRestEndpoints(RestEndpoints):
     async def create_item(self, request: Request) -> Response:
         """Processes a create item request"""
 
-        headers = self.get_resource_cors_headers()
         parent_items = await self.get_parent_items(request)
         service = self.service
-        payload = await request.get_json()
+        payload: dict | list[dict] | None = await request.get_json()
 
         if payload is None:
             raise SuperdeskApiError.badRequestError("Empty payload")
@@ -330,7 +329,12 @@ class ResourceRestEndpoints(RestEndpoints):
         if isinstance(payload, dict):
             payload = [payload]
 
+        signals = self.resource_config.data_class.get_signals()
+        await signals.web.on_create.send(request, payload)
+
         model_instances = []
+        issues = []
+        return_code = 201
         for value in payload:
             # Validate the provided item,
             try:
@@ -339,27 +343,70 @@ class ResourceRestEndpoints(RestEndpoints):
                     if parent_item is not None:
                         value[parent_link.get_model_id_field()] = parent_item[parent_link.parent_id_field]
 
-                model_instance = self.resource_config.data_class.from_dict(value)
-                model_instances.append(model_instance)
+                create_response = await service.create([value])
+                model_instances.extend(create_response)
             except ValidationError as validation_error:
-                return Response(convert_pydantic_validation_error_for_response(validation_error), 403, headers)
+                return_code = 400
+                issues.append(
+                    {
+                        STATUS: STATUS_ERR,
+                        ISSUES: get_field_errors_from_pydantic_validation_error(validation_error),
+                    }
+                )
+            except SuperdeskError as superdesk_error:
+                return_code = superdesk_error.status_code
+                issues.append(
+                    {
+                        STATUS: STATUS_ERR,
+                        ISSUES: {"validation exception": str(superdesk_error)},
+                    }
+                )
+            except Exception as exception:
+                return_code = 400
+                issues.append(
+                    {
+                        STATUS: STATUS_ERR,
+                        ISSUES: {"exception": str(exception)},
+                    }
+                )
 
-        signals = self.resource_config.data_class.get_signals()
-        await signals.web.on_create.send(request, model_instances)
-        ids = await service.create(model_instances)
-        if len(ids) == 1:
-            model_instance_dict = model_instances[0].to_dict()
-            model_instance_dict[STATUS] = STATUS_OK
-            response = Response(self._populate_item_hateoas(request, model_instance_dict), 201, headers)
+        results: list[dict] = [
+            {
+                **self._populate_item_hateoas(request, model_instance.to_dict()),
+                STATUS: STATUS_OK,
+            }
+            for model_instance in model_instances
+        ] + issues
+
+        if len(results) == 1:
+            response_body = results[0]
         else:
-            response = Response(
+            response_body = {
+                STATUS: STATUS_OK,
+                ITEMS: results,
+            }
+
+        # return_code = 201
+        num_issues = len(issues)
+        if num_issues:
+            # If at least one document got issues, the whole request fails and a
+            # ``400 Bad Request`` status is return.
+            # return_code = 400
+            response_body.update(
                 {
-                    STATUS: STATUS_OK,
-                    ITEMS: [self._populate_item_hateoas(request, item.to_dict()) for item in model_instances],
-                },
-                201,
-                headers,
+                    STATUS: STATUS_ERR,
+                    ERROR: {
+                        "code": return_code,
+                        "message": f"Insertion failure: {num_issues} document(s) contain(s) error(s)",
+                    },
+                }
             )
+
+        response = Response(
+            response_body,
+            return_code,
+            self.get_resource_cors_headers(),
+        )
 
         await signals.web.on_create_response.send(request, response)
         return response
@@ -372,43 +419,53 @@ class ResourceRestEndpoints(RestEndpoints):
     ) -> Response:
         """Processes an update item request"""
 
-        headers = self.get_item_cors_headers()
-        await self.get_parent_items(request)
-        payload = await request.get_json()
-
         if_match = request.get_header("If-Match")
         if self.resource_config.uses_etag and not if_match:
             raise SuperdeskApiError.preconditionRequiredError(
                 "To edit a document its etag must be provided using the If-Match header"
             )
 
-        if payload is None:
+        headers = self.get_item_cors_headers()
+        await self.get_parent_items(request)
+        payload = await request.get_json()
+
+        if not payload:
             raise SuperdeskApiError.badRequestError("Empty payload")
 
-        signals = self.resource_config.data_class.get_signals()
         original = await self.service.find_by_id(args.item_id)
         if original is None:
             raise SuperdeskApiError.notFoundError(
                 f"{self.resource_config.name} resource with ID '{args.item_id}' not found"
             )
 
-        await signals.web.on_update.send(request, original, payload)
-        payload = payload.copy()
-
+        signals = self.resource_config.data_class.get_signals()
+        issues: dict | None = None
+        return_code = 200
+        updated: dict | None = None
         try:
-            await self.service.update(args.item_id, payload, if_match, original)
+            await signals.web.on_update.send(request, original, payload)
+            payload = payload.copy()
+            updated = (await self.service.update(args.item_id, payload, if_match, original)).to_dict()
         except ValidationError as validation_error:
-            return Response(convert_pydantic_validation_error_for_response(validation_error), 403, headers)
+            return_code = 400
+            issues = get_field_errors_from_pydantic_validation_error(validation_error)
+        except SuperdeskError as superdesk_error:
+            return_code = superdesk_error.status_code
+            issues = {"validator exception": str(superdesk_error)}
 
-        payload.update(
-            {
-                "_id": args.item_id,
+        if issues is not None or updated is None:
+            response_body = {
+                STATUS: STATUS_ERR,
+                ERROR: {"code": return_code, "message": "Update failure: document contains error(s)"},
+                ISSUES: issues,
+            }
+        else:
+            response_body = {
+                **self._populate_item_hateoas(request, updated),
                 STATUS: STATUS_OK,
             }
-        )
-        self._populate_item_hateoas(request, payload)
 
-        response = Response(payload, 200, headers)
+        response = Response(response_body, return_code, headers)
         await signals.web.on_update_response.send(request, response)
         return response
 

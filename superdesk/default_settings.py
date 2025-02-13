@@ -432,6 +432,8 @@ ASYNC_ENABLE_CORS = True
 
 ASYNC_POPULATE_HATEOAS = True
 
+ASYNC_RESPOND_NESTED_VALIDATION_ERRORS = True
+
 #: LDAP Server (eg: ldap://sourcefabric.org)
 LDAP_SERVER = env("LDAP_SERVER", "")
 #: LDAP Server port

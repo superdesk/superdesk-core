@@ -264,12 +264,13 @@ class ResourceWebSignalsTestCase(AsyncFlaskTestCase):
         response = await self.test_client.post("/api/users_async", json=test_user)
         self.assertEqual(response.status_code, 201)
         response_data = await response.get_json()
+        expected_web_create_dict = test_user.to_dict()
         test_user.etag = response_data["_etag"]
         test_user.created = NOW
         test_user.updated = NOW
         assert_mocks_called(
             "create",
-            [ANY, [test_user]],
+            [ANY, [expected_web_create_dict]],
             [
                 ANY,
                 Response(
@@ -362,7 +363,7 @@ class ResourceWebSignalsTestCase(AsyncFlaskTestCase):
                 ANY,
                 Response(
                     {
-                        "_id": test_user.id,
+                        **test_user.to_dict(),
                         "_updated": NOW,
                         "_etag": response_data["_etag"],
                         "first_name": "Foo",
@@ -391,9 +392,9 @@ class ResourceWebSignalsTestCase(AsyncFlaskTestCase):
     async def test_modifying_data_from_web_signal(self):
         test_user = john_doe()
 
-        def modify_on_create(request: Request, users: list[User]) -> None:
+        def modify_on_create(request: Request, users: list[dict]) -> None:
             # Test modifying the item before it's inserted into the DB
-            users[0].code = "test_created"
+            users[0]["code"] = "test_created"
 
         def modify_on_update(request: Request, original: User, updates: dict[str, Any]) -> None:
             # Test modifying the item before it's updated in the DB
