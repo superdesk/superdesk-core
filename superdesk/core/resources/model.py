@@ -104,7 +104,7 @@ class DataclassBase:
         return RootModel(self).model_dump_json(**default_params)
 
     def clone(self) -> Self:
-        return self.from_dict(deepcopy(self.to_dict()))
+        return cast(Self, RootModel(self).model_copy())
 
     def clone_with(self, updates: dict) -> Self:
         cloned_data = deepcopy(self.to_dict())
