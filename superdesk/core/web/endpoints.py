@@ -145,7 +145,7 @@ class EndpointGroup(EndpointGroupProtocol):
 
         def fdec(func: EndpointFunction):
             endpoint_func = Endpoint(
-                f"{self.url}/{url}" if self.url else url,
+                f"/{self.url_prefix}{url}" if self.url_prefix else url,
                 func,
                 methods=methods,
                 name=name,
