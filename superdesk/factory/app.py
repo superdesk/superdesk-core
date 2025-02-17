@@ -421,20 +421,29 @@ class SuperdeskEve(eve.Eve):
     def extend_eve_home_endpoint(self, links: list[dict]) -> None:
         """Adds async resources to Eve's api root endpoint"""
 
-        for resource_config in self.async_app.resources.get_all_configs():
-            if resource_config.rest_endpoints is None:
-                continue
+        for module in self.async_app.get_module_list():
+            for resource_config in module.resources or []:
+                if resource_config.rest_endpoints is None:
+                    continue
 
-            # Construct an instance of the class so we can get it's URL
-            endpoint_class = resource_config.rest_endpoints.endpoints_class or ResourceRestEndpoints
-            endpoint = endpoint_class(resource_config, resource_config.rest_endpoints)
+                # Construct an instance of the class so we can get it's URL
+                endpoint_class = resource_config.rest_endpoints.endpoints_class or ResourceRestEndpoints
+                endpoint = endpoint_class(resource_config, resource_config.rest_endpoints)
 
-            links.append(
-                {
-                    "href": endpoint.get_resource_url(),
-                    "title": resource_config.title or resource_config.name,
-                },
-            )
+                links.append(
+                    {
+                        "href": endpoint.get_resource_url(),
+                        "title": resource_config.title or resource_config.name,
+                    },
+                )
+
+            for endpoint in module.endpoints:
+                links.append(
+                    {
+                        "href": f"{self.api_prefix}/{endpoint.url}" if not endpoint.url.startswith("/") else endpoint.url,
+                        "title": endpoint.name or endpoint.url.replace("/", "_")
+                    }
+                )
 
 
 def get_media_storage_class(app_config: Dict[str, Any], use_provider_config: bool = True) -> Type[MediaStorage]:
