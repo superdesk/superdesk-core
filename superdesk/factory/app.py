@@ -437,11 +437,11 @@ class SuperdeskEve(eve.Eve):
                     },
                 )
 
-            for endpoint in module.endpoints:
+            for endpoint in module.endpoints or []:
                 links.append(
                     {
-                        "href": f"{self.api_prefix}/{endpoint.url}" if not endpoint.url.startswith("/") else endpoint.url,
-                        "title": endpoint.name or endpoint.url.replace("/", "_")
+                        "href": endpoint.url,
+                        "title": endpoint.name or endpoint.url.replace("/", "_"),
                     }
                 )
 
