@@ -54,6 +54,7 @@ class SearchArgs(TypedDict, total=False):
     filters: list[dict[str, Any]]
 
     #: A JSON string containing the field projections to filter out the returned fields
+    # Kept for compatibility with python-eve. Use `SearchRequest.projection` preferably.
     projections: str
 
     version: VersionParam | None
