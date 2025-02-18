@@ -125,6 +125,10 @@ class ElasticResourceAsyncClient(BaseElasticResourceClient):
         """
 
         try:
+            # Check if ``_source`` or ``_source_excludes`` keys are in the projection param
+            # These are specific to the ``ProjectedFieldSources`` type and Elasticsearch itself
+            # So if these keys aren't there, then have received an instance of ``ProjectedFieldArg`` type
+            # and need to convert it to a ``ProjectedFieldSources`` instance.
             if (
                 projection
                 and isinstance(projection, dict)
