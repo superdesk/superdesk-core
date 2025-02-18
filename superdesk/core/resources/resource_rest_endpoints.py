@@ -9,7 +9,7 @@
 # at https://www.sourcefabric.org/superdesk/license
 
 import math
-from typing import List, Optional, cast, Dict, Any, Type, Literal
+from typing import Optional, cast, Any, Literal
 from copy import deepcopy
 
 from dataclasses import dataclass
@@ -21,6 +21,8 @@ from werkzeug.datastructures import MultiDict
 from bson import ObjectId
 
 from superdesk.core import json
+from superdesk.utils import get_cors_headers
+from superdesk.errors import SuperdeskApiError, SuperdeskError
 from superdesk.core.app import get_app_config, get_current_async_app
 from superdesk.core.types import (
     SearchRequest,
@@ -33,10 +35,8 @@ from superdesk.core.types import (
     RestGetResponse,
     ProjectedFieldArg,
 )
-from superdesk.errors import SuperdeskApiError, SuperdeskError
 from superdesk.resource_fields import STATUS, STATUS_OK, STATUS_ERR, ITEMS, ISSUES, ERROR
 from superdesk.core.web import RestEndpoints, ItemRequestViewArgs, Endpoint
-from superdesk.utils import get_cors_headers
 
 from .model import ResourceModel
 from .resource_config import ResourceConfig
@@ -72,16 +72,16 @@ class RestParentLink:
 @dataclass
 class RestEndpointConfig:
     #: Optional list of resource level methods, defaults to ["GET", "POST"]
-    resource_methods: Optional[List[HTTP_METHOD]] = None
+    resource_methods: list[HTTP_METHOD] | None = None
 
     #: Optional list of item level methods, defaults to ["GET", "PATCH", "DELETE"]
-    item_methods: Optional[List[HTTP_METHOD]] = None
+    item_methods: list[HTTP_METHOD] | None = None
 
     #: Optional EndpointGroup, will default to `ResourceRestEndpoints`
-    endpoints_class: Optional[Type["ResourceRestEndpoints"]] = None
+    endpoints_class: Optional[type["ResourceRestEndpoints"]] = None
 
     #: Optionally set a custom URL ID param syntax for item routes
-    id_param_type: Optional[str] = None
+    id_param_type: str | None = None
 
     #: Optionally set a custom URL for routes, defaults to ``resource_name``
     url: str | None = None
@@ -621,7 +621,7 @@ class ResourceRestEndpoints(RestEndpoints):
         methods = (self.endpoint_config.item_methods or ["GET", "PATCH", "DELETE"]) + ["OPTIONS", "HEAD"]
         return get_cors_headers(", ".join(methods))
 
-    def _build_resource_hateoas(self, req: SearchRequest, doc_count: Optional[int], request: Request) -> Dict[str, Any]:
+    def _build_resource_hateoas(self, req: SearchRequest, doc_count: int | None, request: Request) -> dict[str, Any]:
         links = {
             "parent": {
                 "title": "home",
