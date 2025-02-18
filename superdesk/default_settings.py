@@ -13,6 +13,7 @@
 
 Environment variables names match config name, with some expections documented below.
 """
+from typing import Any
 import json
 import os
 import pytz
@@ -28,9 +29,9 @@ from distutils.util import strtobool as _strtobool
 logger = logging.getLogger()
 
 
-def strtobool(value):
+def strtobool(value: Any) -> bool:
     try:
-        return bool(_strtobool(value))
+        return bool(_strtobool(value)) if isinstance(value, str) else bool(value)
     except ValueError:
         return False
 

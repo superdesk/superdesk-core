@@ -29,7 +29,7 @@ class Tag(Dataclass):
 
 class CVItem(Dataclass):
     name: str
-    qcode: str
+    qcode: str | int
     is_active: bool = True
     translations: dict[str, dict[str, Any]] | None = None
 

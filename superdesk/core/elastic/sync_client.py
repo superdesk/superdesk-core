@@ -14,7 +14,7 @@ from elasticsearch import Elasticsearch
 from elasticsearch.exceptions import NotFoundError, TransportError, RequestError
 from elasticsearch.helpers import bulk
 
-from superdesk.core.types import SearchRequest
+from superdesk.core.types import SearchRequest, ProjectedFieldArg
 from .base_client import BaseElasticResourceClient, ElasticCursor, InvalidSearchString, ProjectedFieldSources
 
 
@@ -110,14 +110,23 @@ class ElasticResourceClient(BaseElasticResourceClient):
 
         return self.elastic.search(**self._get_search_args(query, indexes))
 
-    def find_by_id(self, item_id: str, projection: ProjectedFieldSources | None = None) -> dict[str, Any] | None:
+    def find_by_id(
+        self, item_id: str, projection: ProjectedFieldSources | ProjectedFieldArg | None = None
+    ) -> dict[str, Any] | None:
         """Find a single document in Elasticsearch based on its ID
 
         :param item_id: ID of the document to find.
+        :param projection: The field projections to be applied
         :return: The document found or None if no document was found.
         """
 
         try:
+            if (
+                projection
+                and isinstance(projection, dict)
+                and not set(projection.keys()).intersection({"_source", "_source_excludes"})
+            ):
+                projection = self._get_projected_fields(SearchRequest(projection=cast(ProjectedFieldArg, projection)))
             response = self.elastic.get(index=self.config.index, id=item_id, **(projection or {}))
 
             if "exists" in response:

@@ -5,6 +5,7 @@ from superdesk.core.auth.privilege_rules import http_method_privilege_based_rule
 from superdesk.types import SubscribersResource
 from .service import SubscribersService
 from .rest_api import SubscriberRestEndpoints
+from .utils import SUBSCRIBER_REST_PROJECTION
 
 
 subscribers_resource_config = ResourceConfig(
@@ -29,5 +30,6 @@ subscribers_resource_config = ResourceConfig(
                 "PATCH": "subscribers",
             }
         ),
+        exclude_fields_in_response=list(SUBSCRIBER_REST_PROJECTION.keys()),
     ),
 )

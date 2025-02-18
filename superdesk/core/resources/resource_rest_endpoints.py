@@ -9,11 +9,12 @@
 # at https://www.sourcefabric.org/superdesk/license
 
 import math
-from typing import List, Optional, cast, Dict, Any, Type
+from typing import List, Optional, cast, Dict, Any, Type, Literal
 from copy import deepcopy
 
 from dataclasses import dataclass
-from pydantic import ValidationError, BaseModel, NonNegativeInt
+from pydantic import ValidationError, BaseModel, NonNegativeInt, field_validator
+from pydantic_core import PydanticCustomError
 from eve.utils import querydef
 from typing_extensions import override
 from werkzeug.datastructures import MultiDict
@@ -30,6 +31,7 @@ from superdesk.core.types import (
     Request,
     Response,
     RestGetResponse,
+    ProjectedFieldArg,
 )
 from superdesk.errors import SuperdeskApiError, SuperdeskError
 from superdesk.resource_fields import STATUS, STATUS_OK, STATUS_ERR, ITEMS, ISSUES, ERROR
@@ -39,6 +41,7 @@ from superdesk.utils import get_cors_headers
 from .model import ResourceModel
 from .resource_config import ResourceConfig
 from .validators import get_field_errors_from_pydantic_validation_error
+from .utils import combine_projection_args
 
 
 @dataclass
@@ -94,6 +97,10 @@ class RestEndpointConfig:
     # Optionally populate the item nested hateoas
     populate_item_hateoas: bool | None = None
 
+    #: Exclude these fields from ALL responses (uses MongoDB or Elasticsearch to provide projection)
+    #: Raises an exception if client specifically requests any of these fields to be included
+    exclude_fields_in_response: list[str] | None = None
+
 
 def get_id_url_type(data_class: type[ResourceModel]) -> str:
     """Get the URL param type for the ID field for route registration"""
@@ -108,6 +115,18 @@ class ItemRequestUrlArgs(BaseModel):
     version: VersionParam | None = None
     page: NonNegativeInt = 1
     max_results: NonNegativeInt = 200
+    projection: ProjectedFieldArg | None = None
+
+    @field_validator("projection", mode="before")
+    def parse_projection(cls, value: ProjectedFieldArg | str | None) -> ProjectedFieldArg | None:
+        try:
+            if isinstance(value, str):
+                return None if not value else json.loads(value)
+            else:
+                return value
+        except Exception as error:
+            # raise error
+            raise PydanticCustomError("json", f"Invalid JSON: {error}")
 
 
 class ResourceRestEndpoints(RestEndpoints):
@@ -262,6 +281,13 @@ class ResourceRestEndpoints(RestEndpoints):
     def service(self):
         return get_current_async_app().resources.get_resource_service(self.resource_config.name)
 
+    def get_exclude_fields_projection(self) -> dict[str, Literal[False]] | None:
+        if self.endpoint_config.exclude_fields_in_response:
+            return cast(
+                dict[str, Literal[False]], {field: False for field in self.endpoint_config.exclude_fields_in_response}
+            )
+        return None
+
     @override
     async def get_item(
         self,
@@ -276,8 +302,11 @@ class ResourceRestEndpoints(RestEndpoints):
         signals = self.resource_config.data_class.get_signals()
         await signals.web.on_get.send(request)
 
+        projection_args = combine_projection_args(self.get_exclude_fields_projection(), params.projection)
         if params.version == "all":
-            items, count = await self.service.get_all_item_versions(args.item_id, params.max_results, params.page)
+            items, count = await self.service.get_all_item_versions(
+                args.item_id, params.max_results, params.page, projection=projection_args
+            )
             response_data = RestGetResponse(
                 _items=items,
                 _meta=dict(
@@ -301,9 +330,11 @@ class ResourceRestEndpoints(RestEndpoints):
         elif self.endpoint_config.parent_links:
             lookup = self.construct_parent_item_lookup(request)
             lookup["_id"] = args.item_id if not self.service.id_uses_objectid() else ObjectId(args.item_id)
-            item = await self.service.find_one_raw(use_mongo=True, version=params.version, **lookup)
+            item = await self.service.find_one_raw(
+                use_mongo=True, version=params.version, projection=projection_args, **lookup
+            )
         else:
-            item = await self.service.find_by_id_raw(args.item_id, params.version)
+            item = await self.service.find_by_id_raw(args.item_id, params.version, projection=projection_args)
 
         if not item:
             raise SuperdeskApiError.notFoundError(
@@ -372,13 +403,23 @@ class ResourceRestEndpoints(RestEndpoints):
                     }
                 )
 
-        results: list[dict] = [
+        if self.endpoint_config.exclude_fields_in_response:
+            # If projection is enabled, we fetch all newly created items with projection applied
+            # That way projection is applied to all Create request responses
+            model_instances = await self.service.find_by_ids(
+                [instance.id for instance in model_instances], projection=self.get_exclude_fields_projection()
+            )
+
+        results: list[dict]
+        results = [
             {
                 **self._populate_item_hateoas(request, model_instance.to_dict()),
                 STATUS: STATUS_OK,
             }
             for model_instance in model_instances
-        ] + issues
+        ]
+
+        results += issues
 
         if len(results) == 1:
             response_body = results[0]
@@ -388,12 +429,10 @@ class ResourceRestEndpoints(RestEndpoints):
                 ITEMS: results,
             }
 
-        # return_code = 201
         num_issues = len(issues)
         if num_issues:
             # If at least one document got issues, the whole request fails and a
             # ``400 Bad Request`` status is return.
-            # return_code = 400
             response_body.update(
                 {
                     STATUS: STATUS_ERR,
@@ -448,7 +487,15 @@ class ResourceRestEndpoints(RestEndpoints):
         try:
             await signals.web.on_update.send(request, original, payload)
             payload = payload.copy()
-            updated = (await self.service.update(args.item_id, payload, if_match, original)).to_dict()
+            updated_instance = await self.service.update(args.item_id, payload, if_match, original)
+            if self.endpoint_config.exclude_fields_in_response:
+                # If projection is enabled, we fetch the updated item with projection applied
+                # That way projection is applied to all Update request responses
+                updated = (
+                    await self.service.find_by_id(args.item_id, projection=self.get_exclude_fields_projection())
+                ).to_dict()
+            else:
+                updated = updated_instance.to_dict()
         except ValidationError as validation_error:
             return_code = 400
             issues = get_field_errors_from_pydantic_validation_error(validation_error)
@@ -527,6 +574,7 @@ class ResourceRestEndpoints(RestEndpoints):
         params.args = cast(SearchArgs, params.model_extra)
         signals = self.resource_config.data_class.get_signals()
         await signals.web.on_search.send(request, params)
+        params.projection = combine_projection_args(self.get_exclude_fields_projection(), params)
         cursor = await self.service.find(params)
         count = await cursor.count()
 

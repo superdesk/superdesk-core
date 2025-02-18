@@ -317,6 +317,7 @@ class ResourceWebSignalsTestCase(AsyncFlaskTestCase):
                 SearchRequest(
                     args={"source": '{"query":{"match":{"first_name":"John"}}}'},
                     source='{"query":{"match":{"first_name":"John"}}}',
+                    projection={"token": False},
                 ),
             ],
             [

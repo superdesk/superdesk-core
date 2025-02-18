@@ -8,7 +8,7 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
-from typing import Any
+from typing import Any, Literal, cast
 from inspect import get_annotations
 
 from pydantic.fields import FieldInfo
@@ -18,6 +18,7 @@ from superdesk.core import json
 from superdesk.utils import join_url_parts
 from superdesk.core.types import SearchRequest, ProjectedFieldArg
 from superdesk.errors import SuperdeskApiError
+from superdesk.default_settings import strtobool
 
 
 SYSTEM_FIELDS = {"_id", "_type", "_resource", "_etag"}
@@ -47,7 +48,14 @@ def get_projection_from_request(req: SearchRequest) -> tuple[bool, list[str]] | 
         # Projection: include these fields only
         return True, list(set(projection_data) | SYSTEM_FIELDS)
     elif isinstance(projection_data, dict):
-        if next(iter(projection_data.values()), None) in [True, 1]:
+        # Determine the projection type, ``True``: include fields, ``False``: exclude fields
+        projection_types = set([strtobool(value) for value in projection_data.values()])
+
+        if len(projection_types) > 1:
+            # This request has both include and exclude projections, which is unsupported
+            raise SuperdeskApiError.badRequestError(gettext("Cannot combine projections of different types"))
+
+        if projection_types.pop():
             # Projection: include these fields only
             return True, list(
                 set([field for field, value in projection_data.items() if value is True or value == 1]) | SYSTEM_FIELDS
@@ -66,6 +74,57 @@ def get_projection_from_request(req: SearchRequest) -> tuple[bool, list[str]] | 
             )
 
     raise SuperdeskApiError.badRequestError(gettext("invalid projection type"))
+
+
+def combine_projection_args(
+    *args: SearchRequest | ProjectedFieldArg | None,
+) -> dict[str, Literal[True]] | dict[str, Literal[False]] | None:
+    """Combines projection arguments into the 1, for use with either MongoDB or Elasticsearch
+
+    This is used to combine projection config from a REST endpoint and projection argument from an API request argument.
+
+    :raises SuperdeskApiError.badRequestError: If the projection type combines both include and exclude
+    """
+    projection: dict[bool, set[str]] = {False: set(), True: set()}
+
+    for arg in args:
+        if arg is None:
+            continue
+
+        projection_args: ProjectedFieldArg | None = None
+        if isinstance(arg, SearchRequest):
+            if arg.args and arg.args.get("projections"):
+                projection_args = json.loads(arg.args["projections"])
+            else:
+                projection_args = arg.projection
+        else:
+            projection_args = arg
+
+        if projection_args is None:
+            continue
+        elif isinstance(projection_args, (list, set)):
+            projection[True].update(projection_args)
+        elif isinstance(projection_args, dict):
+            for key, value in projection_args.items():
+                projection[strtobool(value)].add(key)
+
+    num_includes = len(projection[True])
+    num_excludes = len(projection[False])
+
+    if num_includes and num_excludes:
+        base_include_fields = set([field.split(".", 1)[0] for field in projection[True]])
+        base_exclude_fields = set([field.split(".", 1)[0] for field in projection[False]])
+        if base_include_fields.intersection(base_exclude_fields):
+            raise SuperdeskApiError.badRequestError(
+                gettext("Invalid projection: cannot include and exclude the same field")
+            )
+
+    if num_includes:
+        return cast(dict[str, Literal[True]], {field: True for field in projection[True]})
+    elif num_excludes:
+        return cast(dict[str, Literal[False]], {field: False for field in projection[False]})
+    else:
+        return None
 
 
 def get_model_aliased_fields(class_type: type) -> set[str]:

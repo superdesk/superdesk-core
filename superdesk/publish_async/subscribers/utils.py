@@ -1,4 +1,4 @@
-from typing import TypedDict
+from typing import TypedDict, Literal
 import logging
 import traceback
 
@@ -17,6 +17,14 @@ from superdesk.publish_async.content_filters.utils import get_content_filters_by
 
 
 logger = logging.getLogger(__name__)
+
+SUBSCRIBER_REST_PROJECTION: dict[str, Literal[False]] = {
+    "destinations.config.secret_token": False,
+    "destinations.config.password": False,
+    "destinations.config.apiKey": False,
+    "destinations.config.access_key_id": False,
+    "destinations.config.secret_access_key": False,
+}
 
 
 class GetFilterConditionResponse(TypedDict):
@@ -98,7 +106,11 @@ async def _get_subscribers_by_filter_condition(filter_condition: dict) -> GetFil
     :param filter_condition: Filter condition to test
     :return: List of subscribers
     """
-    all_subscribers: list[SubscribersResource] = await SubscribersResource.get_service().get_all_list()
+
+    all_subscribers: list[SubscribersResource] = await (
+        await SubscribersResource.get_service().find({}, projection=SUBSCRIBER_REST_PROJECTION)
+    ).to_list()
+
     selected_products: dict[str, dict] = {}
     selected_subscribers: dict[str, dict] = {}
     selected_content_filters: dict[str, dict] = {}
