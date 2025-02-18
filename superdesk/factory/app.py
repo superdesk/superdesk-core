@@ -440,22 +440,31 @@ class SuperdeskEve(eve.Eve):
 
                 # Construct an instance of the class so we can get it's URL
                 endpoint_class = resource_config.rest_endpoints.endpoints_class or ResourceRestEndpoints
-                endpoint = endpoint_class(resource_config, resource_config.rest_endpoints)
+                endpoint_instance = endpoint_class(resource_config, resource_config.rest_endpoints)
 
                 links.append(
                     {
-                        "href": endpoint.get_resource_url(),
+                        "href": endpoint_instance.get_resource_url(),
                         "title": resource_config.title or resource_config.name,
                     },
                 )
 
             for endpoint in module.endpoints or []:
-                links.append(
-                    {
-                        "href": endpoint.url,
-                        "title": endpoint.name or endpoint.url.replace("/", "_"),
-                    }
-                )
+                if isinstance(endpoint, EndpointGroup):
+                    for sub_endpoint in endpoint.endpoints:
+                        links.append(
+                            {
+                                "href": sub_endpoint.url,
+                                "title": sub_endpoint.name or sub_endpoint.url.replace("/", "_"),
+                            }
+                        )
+                else:
+                    links.append(
+                        {
+                            "href": endpoint.url,
+                            "title": endpoint.name or endpoint.url.replace("/", "_"),
+                        }
+                    )
 
 
 def get_media_storage_class(app_config: Dict[str, Any], use_provider_config: bool = True) -> Type[MediaStorage]:
