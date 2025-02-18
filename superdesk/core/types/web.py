@@ -222,6 +222,11 @@ class Endpoint:
     """Base class used for registering and processing endpoints"""
 
     #: URL for the endpoint
+    #: If the URL starts with "/", it will be used as-is.
+    #: Otherwise, the API prefix will be prepended to the URL.
+    #: For example:
+    #: - "items" -> "{api_prefix}{api_version}/items"
+    #: - "/custom/path" -> "/custom/path"
     url: str
 
     #: Name of the endpoint (must be unique)

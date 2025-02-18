@@ -9,8 +9,7 @@
 # at https://www.sourcefabric.org/superdesk/license
 
 import math
-from inspect import get_annotations
-from typing import Annotated, List, Optional, cast, Dict, Any, Type, get_args, get_origin
+from typing import List, Optional, cast, Dict, Any, Type
 
 from dataclasses import dataclass
 from pydantic import ValidationError, BaseModel, NonNegativeInt
@@ -20,7 +19,9 @@ from werkzeug.datastructures import MultiDict
 from bson import ObjectId
 
 from superdesk.core import json
-from superdesk.core.app import get_app_config, get_current_async_app
+from superdesk.utils import get_cors_headers
+from superdesk.errors import SuperdeskApiError
+from superdesk.core.app import get_current_async_app
 from superdesk.core.types import (
     SearchRequest,
     SearchArgs,
@@ -31,14 +32,12 @@ from superdesk.core.types import (
     Response,
     RestGetResponse,
 )
-from superdesk.errors import SuperdeskApiError
 from superdesk.resource_fields import STATUS, STATUS_OK, ITEMS
 from superdesk.core.web import RestEndpoints, ItemRequestViewArgs, Endpoint
-from superdesk.utils import get_cors_headers, join_url_parts
 
 from .model import ResourceModel
 from .resource_config import ResourceConfig
-from .validators import AsyncValidator, convert_pydantic_validation_error_for_response
+from .validators import convert_pydantic_validation_error_for_response
 
 
 @dataclass
