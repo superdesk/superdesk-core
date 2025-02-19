@@ -15,7 +15,7 @@ from elasticsearch import AsyncElasticsearch
 from elasticsearch.exceptions import NotFoundError, TransportError, RequestError
 from elasticsearch.helpers import async_bulk
 
-from superdesk.core.types import SearchRequest
+from superdesk.core.types import SearchRequest, ProjectedFieldArg
 from .base_client import BaseElasticResourceClient, ElasticCursor, InvalidSearchString, ProjectedFieldSources
 
 
@@ -114,14 +114,27 @@ class ElasticResourceAsyncClient(BaseElasticResourceClient):
 
         return await self.elastic.search(**self._get_search_args(query, indexes))
 
-    async def find_by_id(self, item_id: str, projection: ProjectedFieldSources | None = None) -> dict[str, Any] | None:
+    async def find_by_id(
+        self, item_id: str, projection: ProjectedFieldSources | ProjectedFieldArg | None = None
+    ) -> dict[str, Any] | None:
         """Find a single document in Elasticsearch based on its ID
 
         :param item_id: ID of the document to find.
+        :param projection: The field projections to be applied
         :return: The document found or None if no document was found.
         """
 
         try:
+            # Check if ``_source`` or ``_source_excludes`` keys are in the projection param
+            # These are specific to the ``ProjectedFieldSources`` type and Elasticsearch itself
+            # So if these keys aren't there, then have received an instance of ``ProjectedFieldArg`` type
+            # and need to convert it to a ``ProjectedFieldSources`` instance.
+            if (
+                projection
+                and isinstance(projection, dict)
+                and not set(projection.keys()).intersection({"_source", "_source_excludes"})
+            ):
+                projection = self._get_projected_fields(SearchRequest(projection=cast(ProjectedFieldArg, projection)))
             response = await self.elastic.get(index=self.config.index, id=item_id, **(projection or {}))
 
             if "exists" in response:

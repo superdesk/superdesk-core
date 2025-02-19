@@ -27,10 +27,11 @@ class Tag(Dataclass):
     text: str
 
 
-class Item(BaseModel):
+class CVItem(Dataclass):
     name: str
-    qcode: str
+    qcode: str | int
     is_active: bool = True
+    translations: dict[str, dict[str, Any]] | None = None
 
 
 class DateShortcut(Dataclass):
@@ -64,7 +65,7 @@ class VocabulariesResourceModel(ResourceModel):
     tags: list[Tag] | None = None
     popup_width: int | None = None
     management_type: Annotated[CVAccessType, Field(alias="type")]
-    items: list[Item]
+    items: list[CVItem]
     selection_type: SelectionType | None = None
     read_only: bool | None = None
     schema_field: str | None = None
@@ -72,9 +73,9 @@ class VocabulariesResourceModel(ResourceModel):
     service: dict[str, int] = Field(default_factory=dict)
     priority: int = 0
     unique_field: str | None = None
-    schema: dict[str, dict]  # type: ignore[assignment]
-    field_type_: str | None = None
-    field_options_: dict[str, Any] = Field(default_factory=dict)
+    schema_: Annotated[dict[str, dict], Field(alias="schema", default_factory=dict)]
+    field_type: str | None = None
+    field_options: dict[str, Any] = Field(default_factory=dict)
     init_version: int = 0
     preffered_items: bool = False
     disable_entire_category_selection: bool = False

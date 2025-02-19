@@ -9,10 +9,12 @@
 # at https://www.sourcefabric.org/superdesk/license
 
 import math
-from typing import List, Optional, cast, Dict, Any, Type
+from typing import Optional, cast, Any, Literal
+from copy import deepcopy
 
 from dataclasses import dataclass
-from pydantic import ValidationError, BaseModel, NonNegativeInt
+from pydantic import ValidationError, BaseModel, NonNegativeInt, field_validator
+from pydantic_core import PydanticCustomError
 from eve.utils import querydef
 from typing_extensions import override
 from werkzeug.datastructures import MultiDict
@@ -20,8 +22,8 @@ from bson import ObjectId
 
 from superdesk.core import json
 from superdesk.utils import get_cors_headers
-from superdesk.errors import SuperdeskApiError
-from superdesk.core.app import get_current_async_app
+from superdesk.errors import SuperdeskApiError, SuperdeskError
+from superdesk.core.app import get_app_config, get_current_async_app
 from superdesk.core.types import (
     SearchRequest,
     SearchArgs,
@@ -31,13 +33,15 @@ from superdesk.core.types import (
     Request,
     Response,
     RestGetResponse,
+    ProjectedFieldArg,
 )
-from superdesk.resource_fields import STATUS, STATUS_OK, ITEMS
+from superdesk.resource_fields import STATUS, STATUS_OK, STATUS_ERR, ITEMS, ISSUES, ERROR
 from superdesk.core.web import RestEndpoints, ItemRequestViewArgs, Endpoint
 
 from .model import ResourceModel
 from .resource_config import ResourceConfig
-from .validators import convert_pydantic_validation_error_for_response
+from .validators import get_field_errors_from_pydantic_validation_error
+from .utils import combine_projection_args
 
 
 @dataclass
@@ -68,16 +72,16 @@ class RestParentLink:
 @dataclass
 class RestEndpointConfig:
     #: Optional list of resource level methods, defaults to ["GET", "POST"]
-    resource_methods: Optional[List[HTTP_METHOD]] = None
+    resource_methods: list[HTTP_METHOD] | None = None
 
     #: Optional list of item level methods, defaults to ["GET", "PATCH", "DELETE"]
-    item_methods: Optional[List[HTTP_METHOD]] = None
+    item_methods: list[HTTP_METHOD] | None = None
 
     #: Optional EndpointGroup, will default to `ResourceRestEndpoints`
-    endpoints_class: Optional[Type["ResourceRestEndpoints"]] = None
+    endpoints_class: Optional[type["ResourceRestEndpoints"]] = None
 
     #: Optionally set a custom URL ID param syntax for item routes
-    id_param_type: Optional[str] = None
+    id_param_type: str | None = None
 
     #: Optionally set a custom URL for routes, defaults to ``resource_name``
     url: str | None = None
@@ -88,10 +92,14 @@ class RestEndpointConfig:
 
     auth: AuthConfig = None
 
-    enable_cors: bool = False
+    enable_cors: bool | None = None
 
     # Optionally populate the item nested hateoas
-    populate_item_hateoas: bool = False
+    populate_item_hateoas: bool | None = None
+
+    #: Exclude these fields from ALL responses (uses MongoDB or Elasticsearch to provide projection)
+    #: Raises an exception if client specifically requests any of these fields to be included
+    exclude_fields_in_response: list[str] | None = None
 
 
 def get_id_url_type(data_class: type[ResourceModel]) -> str:
@@ -107,6 +115,18 @@ class ItemRequestUrlArgs(BaseModel):
     version: VersionParam | None = None
     page: NonNegativeInt = 1
     max_results: NonNegativeInt = 200
+    projection: ProjectedFieldArg | None = None
+
+    @field_validator("projection", mode="before")
+    def parse_projection(cls, value: ProjectedFieldArg | str | None) -> ProjectedFieldArg | None:
+        try:
+            if isinstance(value, str):
+                return None if not value else json.loads(value)
+            else:
+                return value
+        except Exception as error:
+            # raise error
+            raise PydanticCustomError("json", f"Invalid JSON: {error}")
 
 
 class ResourceRestEndpoints(RestEndpoints):
@@ -125,6 +145,15 @@ class ResourceRestEndpoints(RestEndpoints):
     ):
         self.resource_config = resource_config
         self.endpoint_config = endpoint_config
+
+        if self.endpoint_config.enable_cors is None:
+            # Enable cors by default
+            self.endpoint_config.enable_cors = cast(bool, get_app_config("ASYNC_ENABLE_CORS", True))
+
+        if self.endpoint_config.populate_item_hateoas is None:
+            # Enable item HATEOAS by default
+            self.endpoint_config.populate_item_hateoas = cast(bool, get_app_config("ASYNC_POPULATE_HATEOAS", True))
+
         super().__init__(
             url=endpoint_config.url or resource_config.name,
             name=resource_config.name,
@@ -252,6 +281,13 @@ class ResourceRestEndpoints(RestEndpoints):
     def service(self):
         return get_current_async_app().resources.get_resource_service(self.resource_config.name)
 
+    def get_exclude_fields_projection(self) -> dict[str, Literal[False]] | None:
+        if self.endpoint_config.exclude_fields_in_response:
+            return cast(
+                dict[str, Literal[False]], {field: False for field in self.endpoint_config.exclude_fields_in_response}
+            )
+        return None
+
     @override
     async def get_item(
         self,
@@ -266,8 +302,11 @@ class ResourceRestEndpoints(RestEndpoints):
         signals = self.resource_config.data_class.get_signals()
         await signals.web.on_get.send(request)
 
+        projection_args = combine_projection_args(self.get_exclude_fields_projection(), params.projection)
         if params.version == "all":
-            items, count = await self.service.get_all_item_versions(args.item_id, params.max_results, params.page)
+            items, count = await self.service.get_all_item_versions(
+                args.item_id, params.max_results, params.page, projection=projection_args
+            )
             response_data = RestGetResponse(
                 _items=items,
                 _meta=dict(
@@ -291,9 +330,11 @@ class ResourceRestEndpoints(RestEndpoints):
         elif self.endpoint_config.parent_links:
             lookup = self.construct_parent_item_lookup(request)
             lookup["_id"] = args.item_id if not self.service.id_uses_objectid() else ObjectId(args.item_id)
-            item = await self.service.find_one_raw(use_mongo=True, version=params.version, **lookup)
+            item = await self.service.find_one_raw(
+                use_mongo=True, version=params.version, projection=projection_args, **lookup
+            )
         else:
-            item = await self.service.find_by_id_raw(args.item_id, params.version)
+            item = await self.service.find_by_id_raw(args.item_id, params.version, projection=projection_args)
 
         if not item:
             raise SuperdeskApiError.notFoundError(
@@ -301,6 +342,7 @@ class ResourceRestEndpoints(RestEndpoints):
             )
 
         self._populate_hateoas_if_needed(request, [item])
+        await self.on_fetched_item(request, item)
         response = Response(item, 200, headers)
 
         await signals.web.on_get_response.send(request, response)
@@ -309,10 +351,9 @@ class ResourceRestEndpoints(RestEndpoints):
     async def create_item(self, request: Request) -> Response:
         """Processes a create item request"""
 
-        headers = self.get_resource_cors_headers()
         parent_items = await self.get_parent_items(request)
         service = self.service
-        payload = await request.get_json()
+        payload: dict | list[dict] | None = await request.get_json()
 
         if payload is None:
             raise SuperdeskApiError.badRequestError("Empty payload")
@@ -320,8 +361,13 @@ class ResourceRestEndpoints(RestEndpoints):
         if isinstance(payload, dict):
             payload = [payload]
 
+        signals = self.resource_config.data_class.get_signals()
+        await signals.web.on_create.send(request, payload)
+
         model_instances = []
-        for value in payload:
+        issues = []
+        return_code = 201
+        for value in deepcopy(payload):
             # Validate the provided item,
             try:
                 for parent_link in self.endpoint_config.parent_links or []:
@@ -329,25 +375,79 @@ class ResourceRestEndpoints(RestEndpoints):
                     if parent_item is not None:
                         value[parent_link.get_model_id_field()] = parent_item[parent_link.parent_id_field]
 
-                model_instance = self.resource_config.data_class.from_dict(value)
-                model_instances.append(model_instance)
+                create_response = await service.create([value])
+                model_instances.extend(create_response)
             except ValidationError as validation_error:
-                return Response(convert_pydantic_validation_error_for_response(validation_error), 403, headers)
+                return_code = 400
+                issues.append(
+                    {
+                        STATUS: STATUS_ERR,
+                        ISSUES: get_field_errors_from_pydantic_validation_error(validation_error),
+                    }
+                )
+            except SuperdeskError as superdesk_error:
+                return_code = superdesk_error.status_code
+                # Let the Superdesk exception populate the issue dictionary
+                issues.append(
+                    {
+                        "validation exception": str(superdesk_error),
+                        **superdesk_error.to_dict(),
+                    }
+                )
+            except Exception as exception:
+                return_code = 400
+                issues.append(
+                    {
+                        STATUS: STATUS_ERR,
+                        ISSUES: {"exception": str(exception)},
+                    }
+                )
 
-        signals = self.resource_config.data_class.get_signals()
-        await signals.web.on_create.send(request, model_instances)
-        ids = await service.create(model_instances)
-        if len(ids) == 1:
-            response = Response(self._populate_item_hateoas(request, model_instances[0].to_dict()), 201, headers)
-        else:
-            response = Response(
-                {
-                    STATUS: STATUS_OK,
-                    ITEMS: [self._populate_item_hateoas(request, item.to_dict()) for item in model_instances],
-                },
-                201,
-                headers,
+        if self.endpoint_config.exclude_fields_in_response:
+            # If projection is enabled, we fetch all newly created items with projection applied
+            # That way projection is applied to all Create request responses
+            model_instances = await self.service.find_by_ids(
+                [instance.id for instance in model_instances], projection=self.get_exclude_fields_projection()
             )
+
+        results: list[dict]
+        results = [
+            {
+                **self._populate_item_hateoas(request, model_instance.to_dict()),
+                STATUS: STATUS_OK,
+            }
+            for model_instance in model_instances
+        ]
+
+        results += issues
+
+        if len(results) == 1:
+            response_body = results[0]
+        else:
+            response_body = {
+                STATUS: STATUS_OK,
+                ITEMS: results,
+            }
+
+        num_issues = len(issues)
+        if num_issues:
+            # If at least one document got issues, the whole request fails and a
+            # ``400 Bad Request`` status is return.
+            response_body.update(
+                {
+                    STATUS: STATUS_ERR,
+                    ERROR: {
+                        "code": return_code,
+                        "message": f"Insertion failure: {num_issues} document(s) contain(s) error(s)",
+                    },
+                }
+            )
+
+        response = Response(
+            response_body,
+            return_code,
+            self.get_resource_cors_headers(),
+        )
 
         await signals.web.on_create_response.send(request, response)
         return response
@@ -360,43 +460,65 @@ class ResourceRestEndpoints(RestEndpoints):
     ) -> Response:
         """Processes an update item request"""
 
-        headers = self.get_item_cors_headers()
-        await self.get_parent_items(request)
-        payload = await request.get_json()
-
         if_match = request.get_header("If-Match")
         if self.resource_config.uses_etag and not if_match:
             raise SuperdeskApiError.preconditionRequiredError(
                 "To edit a document its etag must be provided using the If-Match header"
             )
 
-        if payload is None:
+        headers = self.get_item_cors_headers()
+        await self.get_parent_items(request)
+        payload = await request.get_json()
+
+        if not payload:
             raise SuperdeskApiError.badRequestError("Empty payload")
 
-        signals = self.resource_config.data_class.get_signals()
         original = await self.service.find_by_id(args.item_id)
         if original is None:
             raise SuperdeskApiError.notFoundError(
                 f"{self.resource_config.name} resource with ID '{args.item_id}' not found"
             )
 
-        await signals.web.on_update.send(request, original, payload)
-        payload = payload.copy()
-
+        signals = self.resource_config.data_class.get_signals()
+        issues: dict | None = None
+        return_code = 200
+        updated: dict | None = None
+        response_body: dict | None = None
         try:
-            await self.service.update(args.item_id, payload, if_match, original)
+            await signals.web.on_update.send(request, original, payload)
+            payload = payload.copy()
+            updated_instance = await self.service.update(args.item_id, payload, if_match, original)
+            if self.endpoint_config.exclude_fields_in_response:
+                # If projection is enabled, we fetch the updated item with projection applied
+                # That way projection is applied to all Update request responses
+                updated = (
+                    await self.service.find_by_id(args.item_id, projection=self.get_exclude_fields_projection())
+                ).to_dict()
+            else:
+                updated = updated_instance.to_dict()
         except ValidationError as validation_error:
-            return Response(convert_pydantic_validation_error_for_response(validation_error), 403, headers)
+            return_code = 400
+            issues = get_field_errors_from_pydantic_validation_error(validation_error)
+        except SuperdeskError as superdesk_error:
+            return_code = superdesk_error.status_code
+            # Let the Superdesk exception populate the issue dictionary
+            response_body = superdesk_error.to_dict()
+            response_body.setdefault(ISSUES, {})["validator exception"] = str(superdesk_error)
 
-        payload.update(
-            {
-                "_id": args.item_id,
-                STATUS: STATUS_OK,
-            }
-        )
-        self._populate_item_hateoas(request, payload)
+        if not response_body:
+            if issues is not None or updated is None:
+                response_body = {
+                    STATUS: STATUS_ERR,
+                    ERROR: {"code": return_code, "message": "Update failure: document contains error(s)"},
+                    ISSUES: issues,
+                }
+            else:
+                response_body = {
+                    **self._populate_item_hateoas(request, updated),
+                    STATUS: STATUS_OK,
+                }
 
-        response = Response(payload, 200, headers)
+        response = Response(response_body, return_code, headers)
         await signals.web.on_update_response.send(request, response)
         return response
 
@@ -426,6 +548,15 @@ class ResourceRestEndpoints(RestEndpoints):
         await signals.web.on_delete_response.send(request, response)
         return response
 
+    def update_where_filter(self, params: SearchRequest, where: dict):
+        if not isinstance(params.where, dict):
+            if params.where is None:
+                params.where = {}
+            elif isinstance(params.where, str):
+                params.where = cast(dict, json.loads(params.where))
+
+        params.where.update(where)
+
     async def search_items(
         self,
         args: None,
@@ -437,18 +568,13 @@ class ResourceRestEndpoints(RestEndpoints):
         await self.get_parent_items(request)
 
         if len(self.endpoint_config.parent_links or []):
-            if not isinstance(params.where, dict):
-                if params.where is None:
-                    params.where = {}
-                elif isinstance(params.where, str):
-                    params.where = cast(dict, json.loads(params.where))
-
             lookup = self.construct_parent_item_lookup(request)
-            params.where.update(lookup)
+            self.update_where_filter(params, lookup)
 
         params.args = cast(SearchArgs, params.model_extra)
         signals = self.resource_config.data_class.get_signals()
         await signals.web.on_search.send(request, params)
+        params.projection = combine_projection_args(self.get_exclude_fields_projection(), params)
         cursor = await self.service.find(params)
         count = await cursor.count()
 
@@ -471,6 +597,7 @@ class ResourceRestEndpoints(RestEndpoints):
             getattr(cursor, "extra")(response_data)
 
         response = Response(response_data, status, headers)
+        await self.on_fetched(request, response_data)
         await signals.web.on_search_response.send(request, response)
         return response
 
@@ -494,7 +621,7 @@ class ResourceRestEndpoints(RestEndpoints):
         methods = (self.endpoint_config.item_methods or ["GET", "PATCH", "DELETE"]) + ["OPTIONS", "HEAD"]
         return get_cors_headers(", ".join(methods))
 
-    def _build_resource_hateoas(self, req: SearchRequest, doc_count: Optional[int], request: Request) -> Dict[str, Any]:
+    def _build_resource_hateoas(self, req: SearchRequest, doc_count: int | None, request: Request) -> dict[str, Any]:
         links = {
             "parent": {
                 "title": "home",
@@ -597,3 +724,9 @@ class ResourceRestEndpoints(RestEndpoints):
             item["_links"]["related"] = related_links
 
         return item
+
+    async def on_fetched_item(self, request: Request, doc: dict) -> None:
+        pass
+
+    async def on_fetched(self, request: Request, doc: RestGetResponse) -> None:
+        pass

@@ -14,11 +14,15 @@ from unittest.mock import MagicMock
 from datetime import timedelta
 from collections import UserList
 
+from superdesk.types import PublishQueueResource, SubscribersResource, SubscriberType
 from superdesk.tests import TestCase
 from superdesk.utc import utcnow
 from apps.publish.enqueue import enqueue_service
 from superdesk.publish.publish_queue import PUBLISHED_IN_PACKAGE
 from superdesk.publish import publish_queue
+
+# from superdesk.publish.publish_content import get_queue_items
+from superdesk.publish_async.publish_queue.utils import get_queue_items
 from superdesk.metadata.item import CONTENT_TYPE, ITEM_TYPE
 
 
@@ -27,90 +31,117 @@ class QueueItemsTestCase(TestCase):
 
     async def asyncSetUp(self):
         await super().asyncSetUp()
-        try:
-            from superdesk.publish.publish_content import get_queue_items
-        except ImportError:
-            self.fail("Could not import function under test (transmit_items).")
-        else:
-            self.func_under_test = get_queue_items
-            self.queue_items = [
-                {
-                    "_id": ObjectId(),
-                    "state": "pending",
-                    "item_id": "item_1",
-                    "item_version": 4,
-                    "headline": "pending headline",
-                    "destination": {},
-                },
-                {
-                    "_id": ObjectId(),
-                    "state": "retrying",
-                    "item_id": "item_2",
-                    "item_version": 4,
-                    "headline": "retrying headline",
-                    "retry_attempt": 2,
-                    "next_retry_attempt_at": utcnow() + timedelta(minutes=30),
-                },
-                {
-                    "_id": ObjectId(),
-                    "state": "success",
-                    "item_id": "item_3",
-                    "item_version": 4,
-                    "headline": "success headline",
-                    "retry_attempt": 4,
-                    "next_retry_attempt_at": utcnow() + timedelta(minutes=-30),
-                },
-                {
-                    "_id": ObjectId(),
-                    "state": "failed",
-                    "item_id": "item_4",
-                    "item_version": 4,
-                    "headline": "failed headline",
-                    "retry_attempt": 10,
-                    "next_retry_attempt_at": utcnow() + timedelta(minutes=-30),
-                },
-                {
-                    "_id": ObjectId(),
-                    "state": "canceled",
-                    "item_id": "item_5",
-                    "item_version": 4,
-                    "headline": "canceled headline",
-                    "retry_attempt": 4,
-                    "next_retry_attempt_at": utcnow() + timedelta(minutes=-30),
-                },
-                {
-                    "_id": ObjectId(),
-                    "state": "retrying",
-                    "item_id": "item_6",
-                    "item_version": 4,
-                    "headline": "retrying headline",
-                    "retry_attempt": 2,
-                    "next_retry_attempt_at": utcnow() + timedelta(minutes=-30),
-                },
+        subscriber_id = ObjectId()
+        await SubscribersResource.get_service().create(
+            [
+                SubscribersResource(
+                    id=subscriber_id,
+                    name="SubA",
+                    subscriber_type=SubscriberType.ALL,
+                    email="suba@test.com",
+                )
             ]
-            self.app.data.insert("publish_queue", self.queue_items)
+        )
+        self.queue_items = [
+            {
+                "_id": ObjectId(),
+                "state": "pending",
+                "item_id": "item_1",
+                "item_version": 4,
+                "headline": "pending headline",
+                "destination": {
+                    "name": "SubA",
+                    "format": "text",
+                    "delivery_type": "file",
+                },
+                "publishing_action": "publish",
+                "formatted_item": "",
+                "subscriber_id": subscriber_id,
+            },
+            {
+                "_id": ObjectId(),
+                "state": "retrying",
+                "item_id": "item_2",
+                "item_version": 4,
+                "headline": "retrying headline",
+                "retry_attempt": 2,
+                "next_retry_attempt_at": utcnow() + timedelta(minutes=30),
+                "publishing_action": "publish",
+                "formatted_item": "",
+                "subscriber_id": subscriber_id,
+            },
+            {
+                "_id": ObjectId(),
+                "state": "success",
+                "item_id": "item_3",
+                "item_version": 4,
+                "headline": "success headline",
+                "retry_attempt": 4,
+                "next_retry_attempt_at": utcnow() + timedelta(minutes=-30),
+                "publishing_action": "publish",
+                "formatted_item": "",
+                "subscriber_id": subscriber_id,
+            },
+            {
+                "_id": ObjectId(),
+                "state": "failed",
+                "item_id": "item_4",
+                "item_version": 4,
+                "headline": "failed headline",
+                "retry_attempt": 10,
+                "next_retry_attempt_at": utcnow() + timedelta(minutes=-30),
+                "publishing_action": "publish",
+                "formatted_item": "",
+                "subscriber_id": subscriber_id,
+            },
+            {
+                "_id": ObjectId(),
+                "state": "canceled",
+                "item_id": "item_5",
+                "item_version": 4,
+                "headline": "canceled headline",
+                "retry_attempt": 4,
+                "next_retry_attempt_at": utcnow() + timedelta(minutes=-30),
+                "publishing_action": "publish",
+                "formatted_item": "",
+                "subscriber_id": subscriber_id,
+            },
+            {
+                "_id": ObjectId(),
+                "state": "retrying",
+                "item_id": "item_6",
+                "item_version": 4,
+                "headline": "retrying headline",
+                "retry_attempt": 2,
+                "next_retry_attempt_at": utcnow() + timedelta(minutes=-30),
+                "publishing_action": "publish",
+                "formatted_item": "",
+                "subscriber_id": subscriber_id,
+            },
+        ]
+        await PublishQueueResource.get_service().create(self.queue_items)
 
     async def test_get_queue_items(self):
-        items = list(self.func_under_test())
-        self.assertEqual(len(items), 1)
-        for item in items:
-            self.assertIn(item["item_id"], ["item_1"])
+        cursor = await get_queue_items()
+        self.assertEqual(await cursor.count(), 1)
+        async for item in cursor:
+            self.assertEqual(item.item_id, "item_1")
 
     async def test_get_retry_queue_items(self):
-        items = list(self.func_under_test(True))
-        self.assertEqual(len(items), 1)
-        for item in items:
-            self.assertIn(item["item_id"], ["item_6"])
+        cursor = await get_queue_items(True)
+        self.assertEqual(await cursor.count(), 1)
+        async for item in cursor:
+            self.assertEqual(item.item_id, "item_6")
 
     async def test_get_queue_items_with_retrying_items(self):
-        item = self.app.data.find_one("publish_queue", req=None, _id=self.queue_items[1]["_id"])
-        self.app.data.update(
-            "publish_queue", item.get("_id"), {"next_retry_attempt_at": utcnow() - timedelta(minutes=30)}, item
-        )
-        items = list(self.func_under_test(True))
-        self.assertEqual(len(items), 2)
-        self.assertListEqual([item_l["item_id"] for item_l in items], ["item_2", "item_6"])
+        service = PublishQueueResource.get_service()
+        item = await service.find_by_id(self.queue_items[1]["_id"])
+        await service.update(item.id, {"next_retry_attempt_at": utcnow() - timedelta(minutes=30)})
+        cursor = await get_queue_items(True)
+        self.assertEqual(await cursor.count(), 2)
+        self.assertListEqual([item_l.item_id async for item_l in cursor], ["item_2", "item_6"])
 
+    # TODO-ASYNC: Update this once the enqueue services are updated to async
     @mock.patch.object(enqueue_service, "ObjectId")
     @mock.patch.object(enqueue_service, "get_utc_schedule")
     @mock.patch.object(enqueue_service, "get_resource_service")
@@ -163,16 +194,48 @@ class QueueItemsTestCase(TestCase):
         # because the tuple should be in (published_seq_num, formatted_item) format
         self.assertFalse(fake_post.called)
 
-    @mock.patch.object(publish_queue, "get_current_app", return_value=MagicMock())
-    def test_delete_encoded_item(self, get_fake_app):
+    @mock.patch("superdesk.publish_async.publish_queue.service.get_current_app", return_value=MagicMock())
+    async def test_delete_encoded_item(self, get_fake_app):
         fake_app = get_fake_app()
         fake_storage = fake_app.storage
         fake_storage_delete = fake_storage.delete
-        service = publish_queue.PublishQueueService(backend=MagicMock())
-        service.get_from_mongo = MagicMock()
-        cursor = UserList([{"_id": "4567", "encoded_item_id": "TEST ID"}])
-        cursor.sort = MagicMock()
-        cursor.sort.return_value = cursor
-        service.get_from_mongo.return_value = cursor
-        service.delete({"_id": "4567"})
-        assert fake_storage_delete.call_args == mock.call("TEST ID")
+
+        service = PublishQueueResource.get_service()
+        subscriber_id = ObjectId()
+        await SubscribersResource.get_service().create(
+            [
+                SubscribersResource(
+                    id=subscriber_id,
+                    name="SubB",
+                    subscriber_type=SubscriberType.ALL,
+                    email="suba@test.com",
+                )
+            ]
+        )
+        queue_item = (
+            await service.create(
+                [
+                    {
+                        "_id": ObjectId(),
+                        "state": "pending",
+                        "item_id": "item_1",
+                        "item_version": 4,
+                        "headline": "pending headline",
+                        "destination": {
+                            "name": "SubA",
+                            "format": "text",
+                            "delivery_type": "file",
+                        },
+                        "publishing_action": "publish",
+                        "formatted_item": "",
+                        "subscriber_id": subscriber_id,
+                        "encoded_item_id": "abcd123",
+                    }
+                ]
+            )
+        )[0]
+
+        item = await service.find_by_id(queue_item.id)
+        await service.delete(item)
+
+        assert fake_storage_delete.call_args == mock.call("abcd123")

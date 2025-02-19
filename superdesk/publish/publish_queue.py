@@ -89,6 +89,7 @@ class PublishQueueResource(Resource):
     privileges = {"POST": "publish_queue", "PATCH": "publish_queue"}
     collation = False
     notifications = False
+    internal_resource = True
 
 
 class PublishQueueService(BaseService):

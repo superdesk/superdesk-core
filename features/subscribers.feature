@@ -329,8 +329,8 @@ Feature: Subscribers
     """
     {"_issues": {"destinations": {"0": {
                                         "name": "empty values not allowed",
-                                        "format": {"required": 1},
-                                        "delivery_type": {"required": 1}}}},
+                                        "format": {"required": "Field is required"},
+                                        "delivery_type": {"required": "Field is required"}}}},
      "_status": "ERR"}
     """
 
@@ -466,23 +466,35 @@ Feature: Subscribers
     When we get "subscribers"
     Then we get existing resource
     """
-    {"_items": [{"name": "Foo", "destinations": [{"name":"newsroom","format": "ninjs", "delivery_type":"http_push","config":{"secret_token":"__no_value__"}, "_id": "8f4ced9c036772413b61fc1ed547cd3cc3a0ffba"}]}]}
+    {"_items": [{"name": "Foo", "destinations": [{"name":"newsroom","format": "ninjs", "delivery_type":"http_push","config":{"secret_token":"__no_value__"}, "_id": "fde52cce4ea17165a35b6c8c1a13792aad416338"}]}]}
     """
-
     When we get "subscribers/#subscribers._id#"
     Then we get existing resource
     """
-    {"name": "Foo", "destinations": [{"name":"newsroom","format": "ninjs", "delivery_type":"http_push","config":{"secret_token":"foo"}}]}
+    {"name": "Foo", "destinations": [{"name":"newsroom","format": "ninjs", "delivery_type":"http_push","config":{"secret_token":"__no_value__"}, "_id": "fde52cce4ea17165a35b6c8c1a13792aad416338"}]}
+    """
+    And we check "subscribers" db item "#subscribers._id#"
+    """
+    {"name": "Foo", "destinations": [{"name":"newsroom","format": "ninjs", "delivery_type":"http_push","config":{"secret_token":"foo"}, "_id": "fde52cce4ea17165a35b6c8c1a13792aad416338"}]}
     """
 
     When we patch "/subscribers/#subscribers._id#"
     """
-    {"name": "Foo", "is_active": true, "destinations": [{"name":"newsroom","format": "ninjs", "delivery_type":"http_push","config":{"resource_url": "example.com"}, "_id": "8f4ced9c036772413b61fc1ed547cd3cc3a0ffba"}]}
+    {"name": "Foo", "is_active": true, "destinations": [{"name":"newsroom","format": "ninjs", "delivery_type":"http_push","config":{"resource_url": "example.com"}, "_id": "fde52cce4ea17165a35b6c8c1a13792aad416338"}]}
     """
     Then we get OK response
 
+    When we get "subscribers"
+    Then we get existing resource
+    """
+    {"_items": [{"name": "Foo", "destinations": [{"name":"newsroom","format": "ninjs", "delivery_type":"http_push","config":{"resource_url": "example.com", "secret_token":"__no_value__"}, "_id": "fde52cce4ea17165a35b6c8c1a13792aad416338"}]}]}
+    """
     When we get "subscribers/#subscribers._id#"
     Then we get existing resource
     """
-    {"name": "Foo", "destinations": [{"name":"newsroom","format": "ninjs", "delivery_type":"http_push","config":{"secret_token":"foo"}, "_id": "8f4ced9c036772413b61fc1ed547cd3cc3a0ffba"}]}
+    {"name": "Foo", "destinations": [{"name":"newsroom","format": "ninjs", "delivery_type":"http_push","config":{"resource_url": "example.com", "secret_token":"__no_value__"}, "_id": "fde52cce4ea17165a35b6c8c1a13792aad416338"}]}
+    """
+    And we check "subscribers" db item "#subscribers._id#"
+    """
+    {"name": "Foo", "destinations": [{"name":"newsroom","format": "ninjs", "delivery_type":"http_push","config":{"resource_url": "example.com", "secret_token":"foo"}, "_id": "fde52cce4ea17165a35b6c8c1a13792aad416338"}]}
     """

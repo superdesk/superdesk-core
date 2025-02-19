@@ -92,7 +92,7 @@ class SuperdeskError(DocumentError):
         desc_text = "" if not self.desc else (" Details: " + self.desc)
         return "{} Error {} - {}{desc}".format(self.__class__.__name__, self.code, self.message, desc=desc_text)
 
-    def to_dict(self):
+    def to_dict(self) -> dict:
         return {
             "code": self.code,
             "desc": self.desc,
@@ -126,7 +126,7 @@ class SuperdeskApiError(SuperdeskError):
         elif message:
             logger.error("HTTP Exception {} has been raised: {}".format(status_code, message))
 
-    def to_dict(self):
+    def to_dict(self) -> dict:
         """Create dict for json response."""
         rv = {}
         rv[STATUS] = STATUS_ERR

@@ -13,6 +13,7 @@
 
 Environment variables names match config name, with some expections documented below.
 """
+from typing import Any
 import json
 import os
 import pytz
@@ -28,9 +29,9 @@ from distutils.util import strtobool as _strtobool
 logger = logging.getLogger()
 
 
-def strtobool(value):
+def strtobool(value: Any) -> bool:
     try:
-        return bool(_strtobool(value))
+        return bool(_strtobool(value)) if isinstance(value, str) else bool(value)
     except ValueError:
         return False
 
@@ -423,9 +424,16 @@ MODULES = [
     "apps.desks_async",
     "superdesk.vocabularies_async",
     "superdesk.publish.subscriber_token",
+    "superdesk.publish_async.module",
 ]
 
 ASYNC_AUTH_CLASS = "superdesk.core.auth.token_auth:TokenAuthorization"
+
+ASYNC_ENABLE_CORS = True
+
+ASYNC_POPULATE_HATEOAS = True
+
+ASYNC_RESPOND_NESTED_VALIDATION_ERRORS = True
 
 #: LDAP Server (eg: ldap://sourcefabric.org)
 LDAP_SERVER = env("LDAP_SERVER", "")

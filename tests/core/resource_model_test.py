@@ -129,6 +129,7 @@ class ResourceModelTest(TestCase):
                     "my_dict": {"type": "object", "enabled": False},
                     "created_by": {"type": "text"},
                     "updated_by": {"type": "text"},
+                    "token": {"type": "text"},
                 },
             },
         )

@@ -1,12 +1,94 @@
+from unittest import TestCase
+
 from bson import ObjectId
 from pydantic import ValidationError
 
 from superdesk.core import json
-from superdesk.core.resources import ResourceModelWithObjectId, ResourceConfig, default_model_config
+from superdesk.core.types import SearchRequest, ProjectedFieldArg
+from superdesk.core.resources import (
+    ResourceModelWithObjectId,
+    ResourceConfig,
+    default_model_config,
+    get_projection_from_request,
+)
+from superdesk.core.resources.utils import combine_projection_args, SYSTEM_FIELDS
 from superdesk.tests import AsyncFlaskTestCase, AsyncTestCase
+from superdesk.errors import SuperdeskApiError
 
 from .modules.users import UserResourceService
 from .fixtures.users import john_doe
+
+
+class ResourceProjectionArgsTestCase(TestCase):
+    def test_search_request_projection_arg(self):
+        # Test empty args
+        self.assertEqual(None, SearchRequest().projection)
+
+        # Test json string loading
+        self.assertEqual(None, SearchRequest(projection="").projection)
+        self.assertEqual([], SearchRequest(projection="[]").projection)
+        self.assertEqual(["name"], SearchRequest(projection='["name"]').projection)
+        self.assertEqual({"name": True}, SearchRequest(projection='{"name": true}').projection)
+        self.assertEqual({"name": 1}, SearchRequest(projection='{"name": 1}').projection)
+        self.assertEqual({"name": False}, SearchRequest(projection='{"name": false}').projection)
+        self.assertEqual({"name": 0}, SearchRequest(projection='{"name": 0}').projection)
+
+        # Test invalid json
+        with self.assertRaises(ValidationError):
+            SearchRequest(projection="1?c")
+
+    def test_combine_projection_arguments(self):
+        self.assertEqual(None, combine_projection_args())
+        self.assertEqual(None, combine_projection_args(None))
+        self.assertEqual(None, combine_projection_args(SearchRequest()))
+        self.assertEqual(None, combine_projection_args(SearchRequest(), SearchRequest()))
+
+        # Test include fields - single value
+        self.assertEqual({"name": True}, combine_projection_args(["name"]))
+        self.assertEqual({"name": True}, combine_projection_args({"name": True}))
+        self.assertEqual({"name": True}, combine_projection_args({"name": 1}))
+        self.assertEqual({"name": True}, combine_projection_args(SearchRequest(projection=["name"])))
+        self.assertEqual({"name": True}, combine_projection_args(SearchRequest(projection={"name": True})))
+        self.assertEqual({"name": True}, combine_projection_args(SearchRequest(projection={"name": 1})))
+        self.assertEqual({"name": True}, combine_projection_args(SearchRequest(args={"projections": '["name"]'})))
+        self.assertEqual({"name": True}, combine_projection_args(SearchRequest(args={"projections": '{"name": true}'})))
+        self.assertEqual({"name": True}, combine_projection_args(SearchRequest(args={"projections": '{"name": 1}'})))
+
+        # Test exclude fields - single value
+        expected_args = {"name": False}
+        self.assertEqual(expected_args, combine_projection_args({"name": False}))
+        self.assertEqual(expected_args, combine_projection_args({"name": 0}))
+        self.assertEqual(expected_args, combine_projection_args(SearchRequest(projection={"name": False})))
+        self.assertEqual(expected_args, combine_projection_args(SearchRequest(projection={"name": 0})))
+        self.assertEqual(expected_args, combine_projection_args(SearchRequest(args={"projections": '{"name": false}'})))
+        self.assertEqual(expected_args, combine_projection_args(SearchRequest(args={"projections": '{"name": 0}'})))
+
+        # Test include fields - multiple values
+        expected_args = {"name": True}
+        self.assertEqual(expected_args, combine_projection_args(["name"], None))
+        self.assertEqual(expected_args, combine_projection_args(["name"], ["name"]))
+        self.assertEqual(expected_args, combine_projection_args(["name"], SearchRequest()))
+        self.assertEqual(expected_args, combine_projection_args(["name"], {"password": False}))
+
+        expected_args = {"name": True, "email": True}
+        self.assertEqual(expected_args, combine_projection_args(["name"], {"email": True}))
+        self.assertEqual(expected_args, combine_projection_args(["name"], SearchRequest(projection=["email"])))
+
+        # Test exclude fields - multiple values
+        expected_args = {"password": False, "token": False}
+        self.assertEqual(expected_args, combine_projection_args({"password": False}, {"token": False}))
+        self.assertEqual(
+            expected_args, combine_projection_args({"password": False}, SearchRequest(projection={"token": False}))
+        )
+
+        # Test invalid projection - multiple values
+        with self.assertRaises(SuperdeskApiError) as error:
+            combine_projection_args({"password": False}, {"password": True})
+        self.assertEqual(error.exception.status_code, 400)
+
+        with self.assertRaises(SuperdeskApiError) as error:
+            combine_projection_args({"destinations.config.secret_token": False}, {"destinations": True})
+        self.assertEqual(error.exception.status_code, 400)
 
 
 class ResourceFieldProjectionTestCase(AsyncFlaskTestCase):
@@ -36,7 +118,7 @@ class ResourceFieldProjectionTestCase(AsyncFlaskTestCase):
             url = "/api/users_async" if not projection else f"/api/users_async?projection={projection_str}"
             response = await self.test_client.get(url)
             item = (await response.get_json())["_items"][0]
-            self.assertListEqual(sorted(list(item.keys())), sorted(expected_keys))
+            self.assertListEqual(sorted(list(item.keys())), sorted(expected_keys + ["_links"]))
 
         # Get baseline of keys to test against
         await assert_projection_result_keys(
@@ -95,6 +177,43 @@ class ResourceFieldProjectionTestCase(AsyncFlaskTestCase):
             ],
         )
 
+    async def test_projection_on_rest_only(self):
+        user = john_doe()
+        user.token = "abcd123"
+        response = await self.test_client.post("/api/users_async", json=user)
+        self.assertEqual(response.status_code, 201)
+
+        # Test the token is not in the create response
+        response_json = await response.get_json()
+        self.assertEqual(response_json.get("token", None), None)
+
+        # Test the item has token in the DB
+        item = await self.service.find_by_id(user.id)
+        self.assertEqual(item.token, "abcd123")
+
+        # Test token is not in a get item response
+        response = await self.test_client.get(f"/api/users_async/{user.id}")
+        response_json = await response.get_json()
+        self.assertEqual(response_json.get("token", None), None)
+
+        # Test token is not in a search response
+        response = await self.test_client.get("/api/users_async")
+        response_json = await response.get_json()
+        self.assertEqual(response_json["_items"][0]["_id"], user.id)
+        self.assertEqual(response_json["_items"][0].get("token"), None)
+
+        # Test token is not in an update response
+        response = await self.test_client.patch(
+            f"/api/users_async/{user.id}",
+            json={"first_name": "Foo", "last_name": "Bar", "token": "9876zyxw"},
+            headers={"If-Match": response_json["_items"][0]["_etag"]},
+        )
+        response_json = await response.get_json()
+        self.assertEqual(response_json.get("token", None), None)
+
+        item = await self.service.find_by_id(user.id)
+        self.assertEqual(item.token, "9876zyxw")
+
 
 class ResourceModelProjectionTestCase(AsyncTestCase):
     async def test_manual_registration(self):
@@ -132,7 +251,7 @@ class ResourceModelProjectionTestCase(AsyncTestCase):
         user_auth = self.app.resources.get_resource_service("user_auth")
 
         # Create the User using the UserProfile resource
-        user_id = (
+        new_user = (
             await user_profiles.create(
                 [
                     UserProfile(
@@ -145,6 +264,7 @@ class ResourceModelProjectionTestCase(AsyncTestCase):
                 ]
             )
         )[0]
+        user_id = new_user.id
 
         # Assign a password using the UserAuth resource
         await user_auth.update(user_id, {"password": "some_hash"})

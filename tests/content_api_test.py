@@ -451,8 +451,8 @@ class ContentAPITestCase(TestCase):
     async def test_generate_token_service(self):
         service = SubscriberTokenService()
 
-        ids = await service.create([{"subscriber": test_subscriber_1_id, "expiry_days": 7}])
-        token = await service.find_by_id(ids[0])
+        item = (await service.create([{"subscriber": test_subscriber_1_id, "expiry_days": 7}]))[0]
+        token = await service.find_by_id(item.id)
 
         self.assertLessEqual((utcnow() + timedelta(days=7)).timestamp() - token.expiry.timestamp(), 1)
 

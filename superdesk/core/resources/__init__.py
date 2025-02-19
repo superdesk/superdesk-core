@@ -21,9 +21,16 @@ from .model import (
 )
 from .resource_config import ResourceConfig
 from .resource_manager import Resources
-from .resource_rest_endpoints import RestEndpointConfig, RestParentLink, get_id_url_type, ResourceRestEndpoints
+from .resource_rest_endpoints import (
+    RestEndpointConfig,
+    RestParentLink,
+    get_id_url_type,
+    ResourceRestEndpoints,
+    ItemRequestUrlArgs,
+)
 from .service import AsyncResourceService, AsyncCacheableService
 from .resource_signals import global_signals
+from .cursor import ResourceCursorAsync
 
 __all__ = [
     "get_projection_from_request",
@@ -45,4 +52,6 @@ __all__ = [
     "ElasticResourceConfig",
     "global_signals",
     "ResourceRestEndpoints",
+    "ItemRequestUrlArgs",
+    "ResourceCursorAsync",
 ]
