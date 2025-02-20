@@ -30,7 +30,15 @@ def create_server(config):
         port = int(config["WS_PORT"])
         broker_url = config["BROKER_URL"]
         exchange_name = config.get("WEBSOCKET_EXCHANGE", "superdesk_notification")
-        comms = SocketCommunication(host, port, broker_url, exchange_name)
+        comms = SocketCommunication(
+            host,
+            port,
+            broker_url,
+            exchange_name,
+            sentry_dsn=os.environ.get("SENTRY_DSN"),
+            sentry_traces_sample_rate=float(os.environ.get("SENTRY_TRACES_SAMPLE_RATE", "0")) or None,
+            debug=bool(int(os.environ.get("SUPERDESK_DEBUG", "0"))),
+        )
         comms.run_server()
     except Exception:
         logger.exception("Failed to start the WebSocket server.")

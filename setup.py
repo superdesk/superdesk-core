@@ -36,10 +36,10 @@ install_requires = [
     "ldap3>=2.2.4,<2.10",
     "pytz>=2021.3",
     "tzlocal>=2.1,<3.0",
-    "raven[flask]>=5.10,<7.0",
+    "sentry-sdk[flask]>=2.0.0,<3.0.0",  # Replacing raven[flask]>=5.10,<7.0
     "requests>=2.7.0,<3.0",
     "boto3>=1.26,<2.0",
-    "websockets>=10.3,<13.2",
+    "websockets>=14.1,<16",
     "PyYAML>=6.0.1",
     "lxml>=5.2.2,<5.4",
     "lxml_html_clean>=0.1.1,<0.5",
