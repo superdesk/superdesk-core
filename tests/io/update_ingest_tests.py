@@ -716,8 +716,8 @@ class UpdateIngestTest(TestCase):
 
         # update event
         ingested, ids = ingest_item(item, provider=provider, feeding_service={})
-        self.assertFalse(ingested)
-        self.assertEqual([], ids)
+        self.assertTrue(ingested)
+        self.assertIn(item["guid"], ids)
 
     def test_unpublished_event_is_not_update(self):
         item = {
@@ -767,7 +767,7 @@ class UpdateIngestTest(TestCase):
             ]
         )
         dest = list(event_service.get_from_mongo(req=None, lookup={"guid": item["guid"]}))[0]
-        self.assertEqual(dest.get("state"), "ingested")
+        self.assertEqual(dest.get("state"), "scheduled")
 
         # Un-post an event
         events_post_service.post(
