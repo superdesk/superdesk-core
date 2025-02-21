@@ -372,6 +372,7 @@ def setup(context=None, config=None, app_factory=get_app, reset=False):
     with app.app_context():
         clean_dbs(app, force=bool(config))
         app.data.elastic.init_index()
+        app.init_indexes()
         cache.clean()
 
 

@@ -52,5 +52,8 @@ class ConceptItemsResource(Resource):
             ],
             {"collation": {"locale": "en", "strength": 1}},
         ),
-        "group_id": ([("group_id", 1), ("language", 1)], {"unique": True}),
+        "group_id": (
+            [("group_id", 1), ("language", 1)],
+            {"unique": True, "partialFilterExpression": {"groupd_id": {"$exists": True}}},
+        ),
     }

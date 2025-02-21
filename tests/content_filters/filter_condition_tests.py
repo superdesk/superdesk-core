@@ -98,15 +98,15 @@ class FilterConditionTests(TestCase):
             )
             self.app.data.insert(
                 "filter_conditions",
-                [{"_id": 3, "field": "urgency", "operator": "in", "value": "3,4,5", "name": "test-2"}],
+                [{"_id": 3, "field": "urgency", "operator": "in", "value": "3,4,5", "name": "test-3"}],
             )
             self.app.data.insert(
                 "filter_conditions",
-                [{"_id": 4, "field": "urgency", "operator": "nin", "value": "1,2,3", "name": "test-2"}],
+                [{"_id": 4, "field": "urgency", "operator": "nin", "value": "1,2,3", "name": "test-4"}],
             )
             self.app.data.insert(
                 "filter_conditions",
-                [{"_id": 5, "field": "urgency", "operator": "in", "value": "2,5", "name": "test-2"}],
+                [{"_id": 5, "field": "urgency", "operator": "in", "value": "2,5", "name": "test-5"}],
             )
             self.app.data.insert(
                 "content_filters", [{"_id": 1, "content_filter": [{"expression": {"fc": [1]}}], "name": "soccer-only"}]
