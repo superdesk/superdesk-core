@@ -39,7 +39,7 @@ install_requires = [
     "sentry-sdk[flask]>=2.0.0,<3.0.0",  # Replacing raven[flask]>=5.10,<7.0
     "requests>=2.7.0,<3.0",
     "boto3>=1.26,<2.0",
-    "websockets>=14.1,<16",
+    "websockets>=14.2,<16",
     "PyYAML>=6.0.1",
     "lxml>=5.2.2,<5.4",
     "lxml_html_clean>=0.1.1,<0.5",
