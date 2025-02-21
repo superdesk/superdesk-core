@@ -691,7 +691,7 @@ Feature: Content Profile
     Scenario: Mark profile when used and prevent delete
         Given "content_types"
         """
-        [{"_id": "foo"}, {"_id": "bar"}]
+        [{"_id": "foo", "label": "Foo"}, {"_id": "bar", "label": "Bar"}]
         """
         When we get "content_types/foo"
         Then we get existing resource
