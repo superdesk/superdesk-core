@@ -6,10 +6,10 @@ from datetime import timedelta
 
 from superdesk.types import PublishQueueResource, PublishQueueState, SubscribersResource, PublishConsumer
 from superdesk.core import get_config
-import superdesk
 from superdesk.errors import PublishHTTPPushClientError
 from superdesk.utc import utcnow
 from superdesk.resource_fields import LAST_UPDATED
+from superdesk.publish import registered_transmitters
 
 logger = logging.getLogger(__name__)
 
@@ -93,9 +93,9 @@ class AsyncioPublishConsumer(PublishConsumer):
             logger.info(f"Transmitting queue item {log_msg}")
 
             try:
-                transmitter = superdesk.publish.registered_transmitters[task.destination.delivery_type]
+                transmitter = registered_transmitters[task.destination.delivery_type]
             except KeyError:
-                print(task.destination.delivery_type not in superdesk.publish.registered_transmitters)
+                print(task.destination.delivery_type not in registered_transmitters)
                 raise
 
             response = transmitter.transmit(task.to_dict())
