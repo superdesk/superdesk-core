@@ -19,8 +19,6 @@ from typing import Any, NamedTuple, Dict, List, Callable, Union, TypedDict
 
 from bson import ObjectId
 
-from superdesk.celery_app import celery
-from superdesk.publish.publish_content import PublishContent
 from superdesk import get_backend
 
 logger = logging.getLogger(__name__)
@@ -73,12 +71,6 @@ def register_transmitter(transmitter_type, transmitter, errors, template_url=Non
 
 def register_transmitter_file_provider(provider: TransmitterFileProvider):
     registered_transmitter_file_providers.append(provider)
-
-
-@celery.task(soft_time_limit=1800, expires=10)
-def transmit():
-    """Transmit items from ``publish_queue`` collection."""
-    PublishContent().run()
 
 
 # must be imported for registration
