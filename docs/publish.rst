@@ -3,6 +3,309 @@
 Publishing
 ==========
 
+Publish Workflow
+----------------
+
+Publishing flow in Superdesk mainly consists of the next stages:
+
+    - `Publish Producer`_
+    - `Publish Exchange`_
+    - `Publish Consumer`_
+
+.. uml ::
+
+    @startuml
+    left to right direction
+
+    actor Action
+    component Producer
+    component Exchange
+
+    component "Consumer" as ConsumerA
+    actor "Subscriber" as SubscriberA
+    component "Consumer" as ConsumerB
+    actor "Subscriber" as SubscriberB
+    component "Consumer" as ConsumerC
+    actor "Subscriber" as SubscriberC
+
+    Action --> Producer
+    Producer --> Exchange
+    Exchange --> ConsumerA
+    ConsumerA --> SubscriberA
+    Exchange --> ConsumerB
+    ConsumerB --> SubscriberB
+    Exchange --> ConsumerC
+    ConsumerC --> SubscriberC
+
+    @enduml
+
+Common Publishing Terms:
+^^^^^^^^^^^^^^^^^^^^^^^^
+
+* **PublishAction:** The initial action that starts a request to publish an item
+* **PublishProducer:** The module that receives a PublishAction, collects data, validates it, and sends a PublishRequest to the PublishExchange
+* **PublishRequest:** Data required by the PublishExchange to process a publish action
+* **PublishExchange:** The module that receives a PublishRequest, performs filtering, formatting and routing to PublishConsumers
+* **PublishRequestResponse:** The response from the PublishExchange after it receives a PublishRequest (to be used in response to a PublishAction)
+* **PublishFormatter:** Code that converts the provided item into the designated format (JSON, XML, HTML etc)
+* **PublishTask:** A single unit of work for the PublishConsumer to consume
+* **PublishQueue:** A database resource used to store PublishTasks and their current state
+* **PublishConsumer:** The module that receives a PublishTask and sends them to PublishTransmitter(s)
+* **PublishTransmitter:** The code that pushed the data to Subscriber Destinations
+* **Subscriber/Destination:** A database resource used to store configs for where to publish items to
+* **Product:** A database resource used to group ContentFilters together, for matching against items
+* **ContentFilter:** A database resource used to group FilterConditions together, for matching against items
+* **FilterCondition:** A database resource for storing the raw content filters
+
+Publish Producer
+----------------
+
+The producer's role is to collect the information from the PublishAction, preprocess the request and construct
+a PublishRequest from it. This PublishRequest is then sent off to the PublishExchange for further processing.
+
+A PublishProducer:
+
+* Validates the PublishAction
+* Populates certain fields (such as ``firstpublished``)
+
+There are multiple types of PublishProducers:
+
+- *publish*
+- *correct*
+- *kill*
+- *unpublish*
+- *takedown*
+- *resend*
+
+.. uml ::
+
+    @startuml
+    left to right direction
+
+    actor "Web API" as WebAPI
+    actor "Ingest Rule" as IngestRule
+    actor "Macro" as Macro
+
+    file "Publish\nAction" as PublishAction
+    file "Publish\nRequest" as PublishRequest
+
+    package "Publish Producer" {
+        database DB
+        file "Item\nto\npublish" as ItemToPublish
+        component "Publish\nProducer" as Producer
+    }
+
+    component "Publish\nExchange" as Exchange
+
+    WebAPI --> PublishAction
+    IngestRule --> PublishAction
+    Macro --> PublishAction
+
+    PublishAction --> Producer
+
+    DB -l-> ItemToPublish
+    ItemToPublish -l-> Producer
+    Producer --> PublishRequest
+    PublishRequest --> Exchange
+
+    @enduml
+
+Publish Exchange
+----------------
+
+The "Publish Exchange" is the workhorse of the publishing system, it performs:
+
+* Filtering - Find matching Subscribers to provided item
+* Formatting - Format the item
+* Routing - Route the item to Consumers
+
+.. uml ::
+
+    @startuml
+    left to right direction
+
+    file "Publish\nRequest" as PublishRequest
+    file "Publish\nTask(s)" as PublishTask
+    package "Publish Exchange" {
+        rectangle "Filter Subscribers" as ExchangeFiltering
+        rectangle "Format Items" as ExchangeFormatting
+        rectangle "Route To Consumers" as ExchangeRouting
+    }
+    component "Consumer(s)" as Consumer
+
+    PublishRequest --> ExchangeFiltering
+    ExchangeFiltering -l-> ExchangeFormatting
+    ExchangeFormatting -l-> ExchangeRouting
+
+    ExchangeRouting --> PublishTask
+    PublishTask --> Consumer
+
+    @enduml
+
+There are multiple different types of PublishExchanges, and the PublishExchangeFactory will route a PublishRequest
+to the appropriate PublishExchange based on certain criteria (such as ContentType, Publish Operation).
+
+In core there are the following PublishExchanges:
+
+* BasicPublishExchange
+* ContentPublishExchange
+* ContentCorrectionExchange
+* ContentKillExchange
+
+.. note::
+    This PublishExchange system allows for lots of flexibility. For example, we have the opportunity to create custom
+    exchanges for customers which require a change in the publish workflow.
+
+Filtering
+^^^^^^^^^
+
+-- TODO-ASYNC: Fill in details
+
+Formatting
+^^^^^^^^^^
+
+-- TODO-ASYNC: Fill in details
+
+Routing
+^^^^^^^
+
+The PublishExchange uses the Subscriber config to determine what PublishConsumer to use for the PublishTask.
+
+If the Subscriber has the `async` flag turned on it will use the `AsyncioPublishConsumer`_, otherwise
+it will use the `CeleryPublishConsumer`_ consumer.
+
+.. note::
+    Currently the routing is very basic, and has lots of room for improvement. It will allow us to add more
+    configuration options on a Subscriber and/or Destination to help determine the Consumer to use. It is also
+    possible that custom consumers can be created for customers which changes how the consumer works.
+
+
+Publish Consumer
+----------------
+
+The PublishConsumer receives PublishTask(s) from the PublishExchange and transmits the item to Subscriber Destinations.
+
+There are currently 2 types of PublishConsumers:
+
+* AsyncioPublishConsumer
+* CeleryPublishConsumer
+
+AsyncioPublishConsumer
+^^^^^^^^^^^^^^^^^^^^^^
+
+This PublishConsumer uses Python's asyncio library to transmit items to their final destination.
+
+Using the asyncio event loop, it allows to transmit multiple items at the same time without using Celery Tasks.
+
+.. note::
+    Currently this consumer is not effective, as the PublishTransmitters don't use asyncio network calls. \
+    Until they are converted to use asyncio, only 1 item can effectively be transmitted at once.
+
+CeleryPublishConsumer
+^^^^^^^^^^^^^^^^^^^^^
+
+This PublishConsumer uses Celery workers to transmit items to their final destination.
+
+Internally it creates a Celery task for each destination, which then uses the AsyncioPublishConsumer to transmit them.
+
+This consumer works much in the same way as the old transmit code (before the async project).
+
+
+Resource Models
+---------------
+
+Subscriber Models
+^^^^^^^^^^^^^^^^^
+
+.. autoclass:: superdesk.types.subscribers.SubscribersResource()
+    :member-order: bysource
+    :members:
+    :undoc-members:
+    :exclude-members: model_config
+
+.. autoclass:: superdesk.types.subscribers.SubscriberDestination()
+    :member-order: bysource
+    :members:
+    :undoc-members:
+
+.. autoclass:: superdesk.types.subscribers.SubscriberLastClosed()
+    :member-order: bysource
+    :members:
+    :undoc-members:
+
+.. autoclass:: superdesk.types.subscribers.SubscriberSequenceSettings()
+    :member-order: bysource
+    :members:
+    :undoc-members:
+
+
+Product Models
+^^^^^^^^^^^^^^
+
+.. autoclass:: superdesk.types.products.ProductsResource()
+    :member-order: bysource
+    :members:
+    :undoc-members:
+    :exclude-members: model_config
+
+.. autoclass:: superdesk.types.products.ProductContentFilter()
+    :member-order: bysource
+    :members:
+    :undoc-members:
+
+.. autoclass:: superdesk.types.products.ProductFilterType()
+    :member-order: bysource
+    :members:
+    :undoc-members:
+
+.. autoclass:: superdesk.types.products.ProductTypes()
+    :member-order: bysource
+    :members:
+    :undoc-members:
+
+
+Content Filter Models
+^^^^^^^^^^^^^^^^^^^^^
+
+.. autoclass:: superdesk.types.content_filters.ContentFiltersResource()
+    :member-order: bysource
+    :members:
+    :undoc-members:
+    :exclude-members: model_config
+
+.. autoclass:: superdesk.types.content_filters.ContentFilter()
+    :member-order: bysource
+    :members:
+    :undoc-members:
+
+.. autoclass:: superdesk.types.content_filters.ContentFilterExpression()
+    :member-order: bysource
+    :members:
+    :undoc-members:
+
+
+Filter Condition Models
+^^^^^^^^^^^^^^^^^^^^^^^
+
+.. autoclass:: superdesk.types.filter_conditions.FilterConditionsResource()
+    :member-order: bysource
+    :members:
+    :undoc-members:
+    :exclude-members: model_config
+
+.. autoclass:: superdesk.types.filter_conditions.FilterConditionFieldParam()
+    :member-order: bysource
+    :members:
+    :undoc-members:
+
+.. autoclass:: superdesk.types.filter_conditions.FilterConditionOperator()
+    :member-order: bysource
+    :members:
+    :undoc-members:
+
+TODO-ASYNC: Remove Old System
+-----------------------------
+
 Publish types
 -------------
 
@@ -227,9 +530,9 @@ Transmission
 
 Last task is to send items to subscribers, that's handled via another async task:
 
-.. autofunction:: superdesk.publish.transmit
+.. autofunction:: superdesk.publish_async.commands.transmit
 
-.. note:: | It's possible to start transmition manually:
+.. note:: | It's possible to start transmission manually:
 
     ``python manage.py publish:transmit``
 
