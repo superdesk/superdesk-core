@@ -21,7 +21,6 @@ from apps.publish.enqueue import enqueue_service
 from superdesk.publish.publish_queue import PUBLISHED_IN_PACKAGE
 from superdesk.publish import publish_queue
 
-# from superdesk.publish.publish_content import get_queue_items
 from superdesk.publish_async.publish_queue.utils import get_queue_items
 from superdesk.metadata.item import CONTENT_TYPE, ITEM_TYPE
 

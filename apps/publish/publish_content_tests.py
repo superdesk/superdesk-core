@@ -14,7 +14,7 @@ from datetime import timedelta
 from superdesk.resource_fields import ID_FIELD
 from apps.publish import init_app
 from apps.publish.enqueue import EnqueueContent
-from superdesk.publish.publish_content import get_queue_items
+from superdesk.publish_async.publish_queue.utils import get_queue_items
 from superdesk.tests import TestCase
 from superdesk.utc import utcnow
 
@@ -109,10 +109,11 @@ class PublishContentTests(TestCase):
         init_app(self.app)
 
     async def test_queue_items(self):
+        # TODO-ASYNC: fix model validation failures
         self.app.data.insert("publish_queue", self.queue_items)
-        items = get_queue_items()
-        self.assertEqual(3, items.count())
-        ids = [item[ID_FIELD] for item in items]
+        items = await get_queue_items()
+        self.assertEqual(3, await items.count())
+        ids = [item[ID_FIELD] async for item in items]
         self.assertNotIn(4, ids)
 
     @mock.patch("apps.publish.enqueue.EnqueueContent.enqueue_item")
