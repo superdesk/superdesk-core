@@ -10,6 +10,7 @@ from .sequences import SequencesResource
 from .content_filters import ContentFilterExpression, ContentFilter, ContentFiltersResource
 from .filter_conditions import FilterConditionOperator, FilterConditionFieldParam, FilterConditionsResource
 from .publish_queue import PublishQueueState, PublishQueueResource
+from .publish import PublishConsumer
 
 __all__ = [
     "UsersResourceModel",
@@ -31,6 +32,7 @@ __all__ = [
     "FilterConditionsResource",
     "PublishQueueState",
     "PublishQueueResource",
+    "PublishConsumer",
 ]
 
 
