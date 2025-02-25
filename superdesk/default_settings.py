@@ -422,6 +422,7 @@ MODULES = [
     "superdesk.users",
     "apps.desks_async",
     "superdesk.vocabularies_async",
+    "superdesk.content_types_async",
     "superdesk.publish.subscriber_token",
 ]
 
