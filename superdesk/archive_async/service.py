@@ -9,20 +9,17 @@
 # at https://www.sourcefabric.org/superdesk/license
 
 
-from typing import List, Dict, Any, Optional
 from quart import abort
 from quart_babel import lazy_gettext as _
 from apps.archive.archive_media import ArchiveMediaService
 from apps.archive.common import handle_existing_data, on_create_item
 from apps.archive.highlights_search_mixin import HighlightsSearchMixin
-from apps.auth import get_user
 from apps.packages.package_service import PackageService
-from apps.stages import StagesService
 from superdesk import editor_utils
 from superdesk.core.resources.service import AsyncResourceService
 from superdesk.errors import SuperdeskApiError
 from superdesk.media.crop import CropService
-from superdesk.metadata.utils import is_normal_package, is_normal_package_async
+from superdesk.metadata.utils import is_normal_package_async
 from superdesk.resource_fields import ITEMS
 from superdesk.types.archive import ArchiveResourceModel
 

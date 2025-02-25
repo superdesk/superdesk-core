@@ -8,12 +8,12 @@
 
 from datetime import datetime
 from enum import Enum
-from enum import Enum
-from typing import Any
+from typing import Annotated, Any
 
 from pydantic import Field
 
 from superdesk.core.resources import ResourceModel, dataclass
+from superdesk.core.resources.validators import validate_data_relation_async
 from superdesk.metadata.item import FORMATS
 
 
@@ -219,14 +219,11 @@ class EntityMetadata:
 
 @dataclass
 class MarkedDesk:
-    # FIXME: Resource.rel
-    desk_id: str | None = None
+    desk_id: Annotated[str | None, validate_data_relation_async("desks")] = None
     date_marked: datetime | None = None
-    # FIXME: Resource.rel
-    user_marked: str | None = None
+    user_marked: Annotated[str | None, validate_data_relation_async("users")] = None
     date_acknowledged: datetime | None = None
-    # FIXME: Resource.rel
-    user_acknowledged: str | None = None
+    user_acknowledged: Annotated[str | None, validate_data_relation_async("users")] = None
 
 
 @dataclass
@@ -311,6 +308,12 @@ class ItemSchema(ResourceModel):
     original_id: str
 
 
+@dataclass
+class LinkedInPackage:
+    package: Annotated[str, validate_data_relation_async("archive")]
+    package_type: str | None = Field(None, deprecated=True)
+
+
 class MetadataResource(ResourceModel):
     guid: str
     uri: str
@@ -321,15 +324,12 @@ class MetadataResource(ResourceModel):
     ingest_version: str
     family_id: str
     related_to: str
-    # FIXME: Resource.rel
-    original_creator: str | None = None
-    # FIXME: Resource.rel
-    version_creator: str | None = None
+    original_creator: Annotated[str | None, validate_data_relation_async("users")] = None
+    version_creator: Annotated[str | None, validate_data_relation_async("users")] = None
     firstcreated: datetime
     versioncreated: datetime
     firstpublished: datetime | None = None
-    # FIXME: Resource.rel
-    ingest_provider: str | None = None
+    ingest_provider: Annotated[str | None, validate_data_relation_async("ingest_providers")] = None
     source: str
     original_source: str
     ingest_provider_sequence: str
@@ -394,26 +394,20 @@ class MetadataResource(ResourceModel):
     object: EntityMetadata | None = None
     organisation: EntityMetadata | None = None
     creditline: str
-    # FIXME: Resource.rel
-    linked_in_packages: list[dict[str, str]] | None = None
-    # FIXME: Resource.rel
-    highlight: str | None = None
-    # FIXME: Resource.rel
-    highlights: list[str] | None = None
+    linked_in_packages: list[LinkedInPackage] | None = None
+    highlight: Annotated[str | None, validate_data_relation_async("highlights")] = None
+    highlights: Annotated[list[str] | None, validate_data_relation_async("highlights")] = None
     marked_desks: list[MarkedDesk] | None = None
     more_coming: bool = Field(False, deprecated=True)
     sign_off: str | None = None
     # FIXME: duplicate of ItemSchema
     task: Task
     task_id: str | None = None
-    # FIXME: Resource.rel
-    lock_user: str | None = None
+    lock_user: Annotated[str | None, validate_data_relation_async("users")] = None
     lock_time: datetime | None = None
-    # FIXME: Resource.rel
-    lock_session: str | None = None
+    lock_session: Annotated[str | None, validate_data_relation_async("auth")] = None
     lock_action: str | None = None
-    # FIXME: Resource.rel
-    template: str | None = None
+    template: Annotated[str | None, validate_data_relation_async("content_templates")] = None
     body_footer: str | None = None
     flags: Flag | None = None
     sms_message: str | None = None
@@ -422,8 +416,7 @@ class MetadataResource(ResourceModel):
     fields_meta: dict[str, dict] | None = None
     annotations: list[Annotation] | None = None
     extra: dict[str, Any] | None = None
-    # FIXME: Resource.rel
-    attachments: list[Attachment] | None = None
+    attachments: Annotated[list[Attachment] | None, validate_data_relation_async("attachments")] = None
     assignment_id: str
     translated_from: str
     translation_id: str
@@ -431,8 +424,7 @@ class MetadataResource(ResourceModel):
     processed_from: str
     embargoed: datetime
     embargoed_text: str
-    # FIXME: Resource.rel
-    marked_for_user: str | None = None
+    marked_for_user: Annotated[str | None, validate_data_relation_async("users")] = None
     marked_for_sign_off: str | None = None
     # FIXME: duplicate of ItemSchema
     broadcast: Broadcast | None = None
