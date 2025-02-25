@@ -8,7 +8,7 @@
 
 
 from copy import deepcopy
-from typing import Any, cast
+from typing import Any, Literal, cast
 
 import bson
 from bson import ObjectId
@@ -23,7 +23,6 @@ from superdesk.core.resources.service import AsyncCacheableService
 from superdesk.core.types.search import ProjectedFieldArg, SearchRequest
 from superdesk.default_schema import DEFAULT_EDITOR, DEFAULT_SCHEMA, DEFAULT_SCHEMA_MAP
 from superdesk.errors import SuperdeskApiError
-from superdesk.resource import build_custom_hateoas
 from superdesk.resource_fields import ID_FIELD
 from superdesk.types.content_types import ContentTypes
 from superdesk.utc import utcnow
@@ -79,7 +78,7 @@ class ContentTypesService(AsyncCacheableService[ContentTypes]):
             raise SuperdeskApiError(status_code=202, payload={"is_used": True})
         await remove_profile_from_templates(doc)
         # FIXME: not async yet
-        remove_profile_from_desks(doc.model_dump())
+        remove_profile_from_desks(doc.to_dict())
 
     async def on_update(self, updates: dict[str, Any], original: ContentTypes) -> None:
         await self._validate_disable(updates, original)
@@ -88,22 +87,13 @@ class ContentTypesService(AsyncCacheableService[ContentTypes]):
         await self._update_template_fields(updates, original)
 
     async def on_delete_res_vocabularies(self, doc: dict[str, Any]) -> None:
-        # FIXME
-        projection = {"label": 1}
+        projection: dict[str, Literal[1]] = {"label": 1}
         cursor = await self.find({"schema." + doc[ID_FIELD]: {"$type": 3}}, projection=projection)
         if cursor.count():
-            # FIXME: hateoas to fix
-            payload = ""
-            # payload = {"content_types": [doc_hateoas for doc_hateoas in map(self._build_hateoas, cursor)]}
             message = _("Vocabulary {vocabulary} is used in {count} content type(s)").format(
                 vocabulary=doc.get("display_name"), count=cursor.count()
             )
-            raise SuperdeskApiError.badRequestError(message, payload)
-
-    async def _build_hateoas(self, doc: dict[str, Any]) -> dict[str, Any]:
-        # FIXME: fix this method
-        build_custom_hateoas({"self": {"title": "Content Profile", "href": "/content_types/{_id}"}}, doc)
-        return doc
+            raise SuperdeskApiError.badRequestError(message)
 
     async def _validate_disable(self, updates: dict[str, Any], original: ContentTypes) -> None:
         """
@@ -170,7 +160,6 @@ class ContentTypesService(AsyncCacheableService[ContentTypes]):
         version: int | None = None,
         **lookup,
     ) -> ContentTypes | None:
-        # FIXME: is `lookup` right here?
         is_edit = req and "edit" in lookup
         doc = await super().find_one(req, **lookup)
         if doc and is_edit:
@@ -180,16 +169,15 @@ class ContentTypesService(AsyncCacheableService[ContentTypes]):
         return doc
 
     async def set_used(self, profile_ids: list[str]) -> None:
-        # FIXME: no find_and_modify yet
         query = {"_id": {"$in": list(profile_ids)}, "is_used": {"$ne": True}}
         update = {"$set": {"is_used": True}}
-        await self.find_and_modify(query=query, update=update)
+        await self.mongo_async.find_and_modify(query=query, update=update)
 
     async def get_output_name(self, profile: str) -> str:
         try:
             _id = ObjectId(profile)
             item = await self.find_by_id(_id)
-            return format_content_type_name(item.model_dump() if item else {}, str(_id))
+            return format_content_type_name(item.to_dict() if item else {}, str(_id))
         except bson.errors.InvalidId:
             return profile
 
@@ -209,7 +197,7 @@ async def clean_doc(doc: ContentTypes) -> None:
 
     vocabularies_service = VocabulariesService()
 
-    vocabularies = list(voc.model_dump() for voc in await vocabularies_service.get_forbiden_custom_vocabularies())
+    vocabularies = list(voc.to_dict() for voc in await vocabularies_service.get_forbiden_custom_vocabularies())
 
     for cv in HARDCODED_CVS:
         vocabularies.append({"_id": cv})
