@@ -1,7 +1,7 @@
 from typing import cast
 from bson import ObjectId
 
-from superdesk.core import get_app_config
+from superdesk.core import get_config
 from superdesk.core.resources import ResourceCursorAsync
 from superdesk.types import PublishQueueState, PublishQueueResource
 from superdesk.utc import utcnow
@@ -34,6 +34,6 @@ async def get_queue_items(
 
     return await PublishQueueResource.get_service().find(
         lookup,
-        max_results=cast(int, get_app_config("MAX_TRANSMIT_QUERY_LIMIT", 100)),  # limit per subscriber now
+        max_results=cast(int, get_config(int, "MAX_TRANSMIT_QUERY_LIMIT")),  # limit per subscriber now
         sort=[("_created", 1), ("published_seq_num", 1)],
     )

@@ -10,59 +10,73 @@
 
 from unittest import mock
 from datetime import timedelta
+from bson import ObjectId
 
+from superdesk.types import (
+    PublishQueueResource,
+    PublishQueueState,
+    SubscribersResource,
+    SubscriberDestination,
+    SubscriberType,
+)
 from superdesk.resource_fields import ID_FIELD
 from apps.publish import init_app
 from apps.publish.enqueue import EnqueueContent
-from superdesk.publish.publish_content import get_queue_items
+from superdesk.publish_async.publish_queue.utils import get_queue_items
 from superdesk.tests import TestCase
 from superdesk.utc import utcnow
 
 
 class PublishContentTests(TestCase):
-    queue_items = [
-        {
-            "_id": 1,
-            "destination": {"delivery_type": "ftp", "config": {}, "name": "destination1"},
-            "_etag": "f28b9af64f169072fb171ec7f316fc03d5826d6b",
-            "subscriber_id": "552ba73f1d41c8437971613e",
-            "state": "pending",
-            "_created": "2015-04-17T13:15:20.000Z",
-            "_updated": "2015-04-20T05:04:25.000Z",
-            "item_id": 1,
-        },
-        {
-            "_id": 2,
-            "destination": {"delivery_type": "ftp", "config": {}, "name": "destination1"},
-            "_etag": "f28b9af64f169072fb171ec7f316fc03d5826d6b",
-            "subscriber_id": "552ba73f1d41c8437971613e",
-            "state": "pending",
-            "_created": "2015-04-17T13:15:20.000Z",
-            "_updated": "2015-04-20T05:04:25.000Z",
-            "item_id": 1,
-            "publish_schedule": utcnow() + timedelta(minutes=10),
-        },
-        {
-            "_id": 3,
-            "destination": {"delivery_type": "ftp", "config": {}, "name": "destination1"},
-            "_etag": "f28b9af64f169072fb171ec7f316fc03d5826d6b",
-            "subscriber_id": "552ba73f1d41c8437971613e",
-            "state": "pending",
-            "_created": "2015-04-17T13:15:20.000Z",
-            "_updated": "2015-04-20T05:04:25.000Z",
-            "item_id": "2",
-            "publish_schedule": "2015-04-20T05:04:25.000Z",
-        },
-        {
-            "_id": 4,
-            "destination": {"delivery_type": "content_api", "format": "ninjs", "config": {}, "name": "destination1"},
-            "_etag": "f28b9af64f169072fb171ec7f316fc03d5826d6b",
-            "subscriber_id": "552ba73f1d41c8437971613e",
-            "state": "success",
-            "_created": "2015-04-17T13:15:20.000Z",
-            "_updated": "2015-04-20T05:04:25.000Z",
-            "item_id": "2",
-        },
+    subscriber = SubscribersResource(
+        name="subscriberA",
+        subscriber_type=SubscriberType.WIRE,
+        email="subscriber@a.org",
+    )
+    queue_items: list[PublishQueueResource] = [
+        PublishQueueResource(
+            destination=SubscriberDestination(format="ninjs", delivery_type="ftp", config={}, name="destination1"),
+            subscriber_id=subscriber.id,
+            state=PublishQueueState.PENDING,
+            item_id="1",
+            publishing_action="publish",
+            item_version=1,
+            formatted_item="",
+        ),
+        PublishQueueResource(
+            destination=SubscriberDestination(format="ninjs", delivery_type="ftp", config={}, name="destination1"),
+            subscriber_id=subscriber.id,
+            state=PublishQueueState.PENDING,
+            item_id="1",
+            publish_schedule=utcnow() + timedelta(minutes=10),
+            publishing_action="publish",
+            item_version=1,
+            formatted_item="",
+        ),
+        PublishQueueResource(
+            destination=SubscriberDestination(format="ninjs", delivery_type="ftp", config={}, name="destination1"),
+            subscriber_id=subscriber.id,
+            state=PublishQueueState.PENDING,
+            item_id="2",
+            publish_schedule=utcnow() - timedelta(minutes=10),
+            publishing_action="publish",
+            item_version=1,
+            formatted_item="",
+        ),
+        PublishQueueResource(
+            destination=SubscriberDestination(
+                delivery_type="content_api",
+                format="ninjs",
+                config={},
+                name="destination1",
+            ),
+            subscriber_id=subscriber.id,
+            state=PublishQueueState.SUCCESS,
+            item_id="2",
+            publishing_action="publish",
+            item_version=1,
+            formatted_item="",
+        ),
     ]
 
     published_items = [
@@ -109,11 +123,13 @@ class PublishContentTests(TestCase):
         init_app(self.app)
 
     async def test_queue_items(self):
-        self.app.data.insert("publish_queue", self.queue_items)
-        items = get_queue_items()
-        self.assertEqual(3, items.count())
-        ids = [item[ID_FIELD] for item in items]
-        self.assertNotIn(4, ids)
+        await SubscribersResource.get_service().create([self.subscriber])
+        await PublishQueueResource.get_service().create(self.queue_items)
+
+        items = await get_queue_items()
+        self.assertEqual(3, await items.count())
+        ids = [item.id async for item in items]
+        self.assertNotIn(self.queue_items[3].id, ids)
 
     @mock.patch("apps.publish.enqueue.EnqueueContent.enqueue_item")
     def test_enqueue_item_not_scheduled(self, *mocks):

@@ -343,7 +343,7 @@ class ResourceModelWithObjectId(ResourceModel):
     """Base ResourceModel class to be used, if the resource uses an ObjectId for it's ID"""
 
     #: ID of the document
-    id: Annotated[ObjectId, Field(alias="_id", default_factory=ObjectId)]
+    id: ObjectId = Field(alias="_id", default_factory=ObjectId)
 
 
 @dataclass

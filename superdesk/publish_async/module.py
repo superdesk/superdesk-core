@@ -10,6 +10,8 @@ from .publish_queue.module import publish_queue_resource_config
 from .sequences import sequences_resource_config
 from .subscribers.module import subscribers_resource_config
 
+from .commands import *  # noqa
+
 
 module = Module(
     name="superdesk.publish_async",
