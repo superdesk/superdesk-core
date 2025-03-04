@@ -17,7 +17,7 @@ from quart_babel import gettext as _
 
 from superdesk.core.resources import ResourceModel
 from superdesk.core.resources.model import ResourceModel
-from superdesk.core.resources.validators import validate_iunique_value_async
+from superdesk.core.resources.validators import validate_data_relation_async, validate_iunique_value_async
 
 logger = logging.getLogger(__name__)
 
@@ -30,7 +30,7 @@ class WidgetConfig(ResourceModel):
 class ContentTypes(ResourceModel):
     type_: Annotated[str | None, Field(alias="type")]
     label: Annotated[str, validate_iunique_value_async("content_types", "label")]
-    icon: str
+    icon: str | None = None
     description: str
     schema: dict[str, Any] = Field(default_factory=dict)  # type: ignore[assignment]
     editor: dict[str, Any] = Field(default_factory=dict)
@@ -39,7 +39,7 @@ class ContentTypes(ResourceModel):
     enabled: bool = False
     is_used: bool = False
     embeddable: bool = False
-    created_by: str | None = None
-    updated_by: str | None = None
-    init_version: int
+    created_by: Annotated[str | None, validate_data_relation_async("users")] = None
+    updated_by: Annotated[str | None, validate_data_relation_async("users")] = None
+    init_version: int | None = None
     output_name: str | None = None

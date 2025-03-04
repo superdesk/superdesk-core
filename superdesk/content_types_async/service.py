@@ -1,4 +1,4 @@
-# This file is part of Superdesk.
+# This file is TODO-ASYNC of Superdesk.
 #
 # Copyright 2013, 2025 Sourcefabric z.u. and contributors.
 #
@@ -16,7 +16,6 @@ from quart_babel import gettext as _
 
 from apps.auth import get_user_id
 from apps.desks import remove_profile_from_desks
-from apps.desks_async.desks_async_service import DesksAsyncService
 from apps.templates.content_templates import ContentTemplatesService
 import superdesk
 from superdesk.core.resources.service import AsyncCacheableService
@@ -25,6 +24,7 @@ from superdesk.default_schema import DEFAULT_EDITOR, DEFAULT_SCHEMA, DEFAULT_SCH
 from superdesk.errors import SuperdeskApiError
 from superdesk.resource_fields import ID_FIELD
 from superdesk.types.content_types import ContentTypes
+from superdesk.types.desks import DesksResourceModel
 from superdesk.utc import utcnow
 from superdesk.utils import format_content_type_name
 from superdesk.vocabularies_async.service import VocabulariesService
@@ -66,32 +66,31 @@ class ContentTypesService(AsyncCacheableService[ContentTypes]):
     resource_name = "content_types"
 
     async def _set_created_by(self, doc: ContentTypes) -> None:
-        doc.created_by = await get_user_id()
+        doc.created_by = get_user_id()
 
     async def on_create(self, docs: list[ContentTypes]) -> None:
         for doc in docs:
-            doc.updated_by = await get_user_id()
+            doc.updated_by = get_user_id()
             await self._set_created_by(doc)
 
     async def on_delete(self, doc: ContentTypes) -> None:
         if doc.is_used:
             raise SuperdeskApiError(status_code=202, payload={"is_used": True})
         await remove_profile_from_templates(doc)
-        # FIXME: not async yet
+        # TODO-ASYNC:
         remove_profile_from_desks(doc.to_dict())
 
     async def on_update(self, updates: dict[str, Any], original: ContentTypes) -> None:
         await self._validate_disable(updates, original)
-        updates["updated_by"] = await get_user_id()
+        updates["updated_by"] = get_user_id()
         await prepare_for_save_content_type(original, updates)
         await self._update_template_fields(updates, original)
 
     async def on_delete_res_vocabularies(self, doc: dict[str, Any]) -> None:
-        projection: dict[str, Literal[1]] = {"label": 1}
-        cursor = await self.find({"schema." + doc[ID_FIELD]: {"$type": 3}}, projection=projection)
-        if cursor.count():
+        cursor = await self.find({"schema." + doc[ID_FIELD]: {"$type": 3}}, projection=["label"])
+        if count := await cursor.count():
             message = _("Vocabulary {vocabulary} is used in {count} content type(s)").format(
-                vocabulary=doc.get("display_name"), count=cursor.count()
+                vocabulary=doc.get("display_name"), count=count
             )
             raise SuperdeskApiError.badRequestError(message)
 
@@ -101,7 +100,7 @@ class ContentTypesService(AsyncCacheableService[ContentTypes]):
         content profile if the profile is being disabled
         """
         if (enabled := updates.get("enabled")) is not None and not enabled and original.enabled:
-            # FIXME: "content_templates" is not async yet
+            # TODO-ASYNC: "content_templates" is not async yet
             content_templates_service = superdesk.get_resource_service("content_templates")
             assert content_templates_service is not None
             content_templates_service = cast(ContentTemplatesService, content_templates_service)
@@ -115,8 +114,7 @@ class ContentTypesService(AsyncCacheableService[ContentTypes]):
                     ).format(templates=template_names)
                 )
 
-            desks_service = DesksAsyncService()
-            all_desks = await (await desks_service.find({})).to_list()
+            all_desks = [desk async for desk in DesksResourceModel.get_service().get_all()]
             profile_desks = [desk for desk in all_desks if desk.default_content_profile == str(original.id)]
 
             if len(profile_desks) > 0:
@@ -135,7 +133,7 @@ class ContentTypesService(AsyncCacheableService[ContentTypes]):
         # these are the only fields of templates that don't depend on the schema.
         template_metadata_fields = ["usageterms"]
 
-        # FIXME: "content_templates" is not async yet
+        # TODO-ASYNC: "content_templates" is not async yet
         content_templates_service = superdesk.get_resource_service("content_templates")
         assert content_templates_service is not None
         content_templates_service = cast(ContentTemplatesService, content_templates_service)
@@ -569,7 +567,7 @@ async def remove_profile_from_templates(item: ContentTypes) -> None:
 
     :param item: deleted content profile
     """
-    # FIXME: "content_templates" is not async yet
+    # TODO-ASYNC: "content_templates" is not async yet
     templates = list(await superdesk.get_resource_service("content_templates").get_templates_by_profile_id(item.id))
     for template in templates:
         template.data.pop("profile", None)
