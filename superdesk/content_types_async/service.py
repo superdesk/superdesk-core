@@ -234,7 +234,7 @@ async def init_extra_fields(editor: dict[str, Any], schema: dict[str, Any]) -> N
     vocabularies_service = VocabulariesService()
     fields = await vocabularies_service.get_extra_fields()
     for field in fields:
-        field_type = field.field_type_
+        field_type = field.field_type
         if schema.get(str(field.id)) is None:
             schema[str(field.id)] = {"type": field_type, "required": False}
         if editor.get(str(field.id)):
