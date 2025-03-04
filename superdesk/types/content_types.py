@@ -20,11 +20,11 @@ from superdesk.core.resources import ResourceModel
 from superdesk.core.resources.model import ResourceModel
 from superdesk.core.resources.validators import validate_data_relation_async, validate_iunique_value_async
 
-logger = logging.getLogger(__name__)
-
 from pydantic_core import PydanticCustomError
 
 from superdesk.core.resources.validators import AsyncValidator
+
+logger = logging.getLogger(__name__)
 
 
 async def _validate_content_type(item: ResourceModel, _) -> None:
