@@ -356,13 +356,16 @@ def set_required_for_custom(
             except KeyError:
                 continue
     # new notation where `value` is dict
-    for field, value in tuple((k, v) for k, v in mandatory.items() if isinstance(v, dict)):
-        if (field is not None and value.get("required", False)) or field == "subject":
-            try:
-                editor[fields_map.get(field, field)]["required"] = value.get("required", False)
-                schema[fields_map.get(field, field)]["required"] = value.get("required", False)
-            except KeyError:
-                continue
+    for field, value in mandatory.items():
+        if isinstance(value, dict):
+            if (field is not None and value.get("required", False)) or field == "subject":
+                try:
+                    key = fields_map.get(field, field)
+                    required_flag = value.get("required", False)
+                    editor[key]["required"] = required_flag
+                    schema[key]["required"] = required_flag
+                except KeyError:
+                    continue
 
 
 def set_readonly_for_custom(
@@ -376,13 +379,16 @@ def set_readonly_for_custom(
         except KeyError:
             continue
     # new notation where `value` is dict
-    for field, value in tuple((k, v) for k, v in mandatory.items() if isinstance(v, dict)):
-        if (field is not None and value.get("readonly", False)) or field == "subject":
-            try:
-                editor[fields_map.get(field, field)]["readonly"] = value.get("readonly", False)
-                schema[fields_map.get(field, field)]["readonly"] = value.get("readonly", False)
-            except KeyError:
-                continue
+    for field, value in mandatory.items():
+        if isinstance(value, dict):
+            if (field is not None and value.get("readonly", False)) or field == "subject":
+                try:
+                    key = fields_map.get(field, field)
+                    readonly_flag = value.get("readonly", False)
+                    editor[key]["readonly"] = readonly_flag
+                    schema[key]["readonly"] = readonly_flag
+                except KeyError:
+                    continue
 
 
 def set_default_for_custom(
@@ -455,7 +461,7 @@ def clean_editor(editor: dict[str, Any]) -> None:
 
 
 def compose_subject_schema(schema: dict[str, Any], fields_map: dict[str, str]) -> None:
-    mandatory = {}
+    mandatory: dict[str, Any] = {}
     allowed = []
     default = []
     for old_field, field in fields_map.items():
@@ -556,8 +562,10 @@ async def apply_schema(item: dict[str, Any]) -> dict[str, Any]:
     schema = DEFAULT_SCHEMA
     if item.get("profile"):
         profile = await get_profile(item["profile"])
-        if profile and profile.schema:
-            schema = profile.schema
+        if profile:
+            assert isinstance(profile, ContentTypes)
+            if profile.schema:
+                schema = profile.schema
 
     return {key: val for key, val in item.items() if is_enabled(key, schema) or key in allowed_keys}
 

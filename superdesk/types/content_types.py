@@ -10,7 +10,8 @@
 
 
 import logging
-from typing import Annotated, Any
+from typing import Annotated, Any, cast
+from typing_extensions import LiteralString
 
 from pydantic import Field
 from quart_babel import gettext as _
@@ -21,6 +22,22 @@ from superdesk.core.resources.validators import validate_data_relation_async, va
 
 logger = logging.getLogger(__name__)
 
+from pydantic_core import PydanticCustomError
+
+from superdesk.core.resources.validators import AsyncValidator
+
+
+async def _validate_content_type(item: ResourceModel, _) -> None:
+    item = cast(ContentTypes, item)
+    if not item.content_type or item.content_type.lower() == "text":
+        return
+    if await ContentTypes.get_service().count({"type": item.content_type}) > 0:
+        msg: LiteralString = _("Only 1 instance is allowed.")
+        raise PydanticCustomError("unique", msg)
+
+
+validate_content_type = AsyncValidator(_validate_content_type)
+
 
 class WidgetConfig(ResourceModel):
     widget_id: str
@@ -28,7 +45,7 @@ class WidgetConfig(ResourceModel):
 
 
 class ContentTypes(ResourceModel):
-    type_: Annotated[str | None, Field(alias="type")]
+    content_type: Annotated[str | None, validate_content_type, Field(alias="type")]
     label: Annotated[str, validate_iunique_value_async("content_types", "label")]
     icon: str | None = None
     description: str
