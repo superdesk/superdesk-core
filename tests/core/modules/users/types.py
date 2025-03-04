@@ -31,6 +31,7 @@ class MyCustomString(str, fields.CustomStringField):
 
 
 class User(ResourceModel):
+    model_resource_name = "users_async"
     model_config = {
         **default_model_config,
         "extra": "forbid",
@@ -77,3 +78,4 @@ class User(ResourceModel):
         Optional[str],
         validators.validate_data_relation_async(resource_name="users_async", external_field="_id"),
     ] = None
+    token: str | None = None

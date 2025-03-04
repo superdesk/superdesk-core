@@ -11,7 +11,9 @@
 from superdesk.core.resources import ResourceConfig, MongoResourceConfig, MongoIndexOptions
 from superdesk.core.resources.resource_rest_endpoints import RestEndpointConfig
 from superdesk.types import VocabulariesResourceModel
+
 from .service import VocabulariesService
+from .rest_api import VocabulariesRestEndpoints
 
 
 vocabularies_resource_config = ResourceConfig(
@@ -27,8 +29,8 @@ vocabularies_resource_config = ResourceConfig(
         ],
     ),
     rest_endpoints=RestEndpointConfig(
+        endpoints_class=VocabulariesRestEndpoints,
         item_methods=["GET", "PATCH", "DELETE"],
         resource_methods=["GET", "POST"],
-        enable_cors=True,
     ),
 )

@@ -97,7 +97,7 @@ Feature: Content Filter
     """
     Then we get error 400
     """
-    {"_status": "ERR", "_issues": {"name": {"unique": 1}}}
+    {"_status": "ERR", "_issues": {"name": {"unique": "Value must be unique"}}}
     """
 
   @auth
@@ -305,5 +305,5 @@ Feature: Content Filter
     """
     Then we get error 400
     """
-    {"_issues": {"field": "unallowed value my_custom_field"}, "_status": "ERR"}
+    {"_issues": {"field": {"allowed": "unallowed value my_custom_field"}}, "_status": "ERR"}
     """

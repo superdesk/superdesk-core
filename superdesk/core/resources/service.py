@@ -44,7 +44,7 @@ from superdesk.resource_fields import ID_FIELD, VERSION_ID_FIELD, CURRENT_VERSIO
 
 from ..app import SuperdeskAsyncApp, get_current_async_app
 from .cursor import ElasticsearchResourceCursorAsync, MongoResourceCursorAsync, ResourceCursorAsync
-from .utils import get_projection_from_request
+from .utils import get_projection_from_request, combine_projection_args
 from .types import ResourceModelType
 
 logger = logging.getLogger(__name__)
@@ -158,7 +158,7 @@ class AsyncResourceService(Generic[ResourceModelType]):
             )
         )
 
-        if not search_request.projection and self.config.projection:
+        if search_request.projection is None and self.config.projection:
             search_request.projection = self.config.projection
 
         item = None
@@ -174,11 +174,9 @@ class AsyncResourceService(Generic[ResourceModelType]):
                 if isinstance(search_request.where, str)
                 else search_request.where or {}
             )
-            projection_include, projection_fields = get_projection_from_request(search_request)
-            if projection_fields:
-                kwargs["projection"] = (
-                    projection_fields if projection_include else {field: False for field in projection_fields}
-                )
+            projection_arg = self._get_mongo_projection_argument(search_request)
+            if projection_arg:
+                kwargs["projection"] = projection_arg
             mongo = self.mongo_async if not search_request.version else self.mongo_versioned_async
             item = await mongo.find_one(**kwargs)
 
@@ -219,45 +217,75 @@ class AsyncResourceService(Generic[ResourceModelType]):
         return None if not item else self.get_model_instance_from_dict(item)
 
     async def find_by_id(
-        self, item_id: Union[str, ObjectId], version: int | None = None
+        self,
+        item_id: Union[str, ObjectId],
+        version: int | None = None,
+        projection: ProjectedFieldArg | None = None,
     ) -> Optional[ResourceModelType]:
         """Find a resource by ID
 
         :param item_id: ID of item to find
         :param version: Optional version to get
+        :param projection: The field projections to be applied
         :return: ``None`` if resource not found, otherwise an instance of ``ResourceModel`` for this resource
         """
 
-        item = await self.find_by_id_raw(item_id, version)
+        item = await self.find_by_id_raw(item_id, version, projection)
         return None if item is None else self.get_model_instance_from_dict(item)
 
     async def find_by_id_raw(
-        self, item_id: Union[str, ObjectId], version: int | None = None
+        self,
+        item_id: Union[str, ObjectId],
+        version: int | None = None,
+        projection: ProjectedFieldArg | None = None,
     ) -> Optional[Dict[str, Any]]:
         """Find a resource by ID
 
         :param item_id: ID of item to find
         :param version: Optional version to get
+        :param projection: The field projections to be applied
         :return: ``None`` if resource not found, otherwise a dictionary of the item
         """
 
         item_id = ObjectId(item_id) if self.id_uses_objectid() else item_id
         try:
-            item = await self.elastic.find_by_id(item_id)
+            item = await self.elastic.find_by_id(item_id, projection=projection)
         except ElasticNotConfiguredForResource:
-            item = await self.mongo_async.find_one({"_id": item_id})
+            projection_arg = self._get_mongo_projection_argument(SearchRequest(projection=projection))
+            kwargs = {} if not projection_arg else {"projection": projection_arg}
+            item = await self.mongo_async.find_one({"_id": item_id}, **kwargs)
 
         if item is None:
             return None
 
         return item if version is None else await self.get_item_version(item, version)
 
-    async def find_by_ids(self, ids: list[str | ObjectId]) -> list[ResourceModelType]:
-        cursor = await self.search({ID_FIELD: {"$in": ids}}, use_mongo=True)
+    async def find_by_ids(
+        self,
+        ids: list[str | ObjectId],
+        projection: ProjectedFieldArg | None = None,
+    ) -> list[ResourceModelType]:
+        """Find resources by IDs
+
+        :param ids: IDs of items to find
+        :param projection: The field projections to be applied
+        :return: List of ResourceModel instances found
+        """
+
+        cursor = await self.find({ID_FIELD: {"$in": ids}}, use_mongo=True, projection=projection)
         return await cursor.to_list()
 
-    async def find_by_ids_raw(self, ids: list[str | ObjectId]) -> list[dict[str, Any]]:
-        cursor = await self.search({ID_FIELD: {"$in": ids}}, use_mongo=True)
+    async def find_by_ids_raw(
+        self, ids: list[str | ObjectId], projection: ProjectedFieldArg | None = None
+    ) -> list[dict[str, Any]]:
+        """Find resources by IDs
+
+        :param ids: IDs of items to find
+        :param projection: The field projections to be applied
+        :return: List of dictionaries for the resources found
+        """
+
+        cursor = await self.find({ID_FIELD: {"$in": ids}}, use_mongo=True, projection=projection)
         return await cursor.to_list_raw()
 
     async def search(self, lookup: Dict[str, Any], use_mongo=False) -> ResourceCursorAsync[ResourceModelType]:
@@ -307,6 +335,12 @@ class AsyncResourceService(Generic[ResourceModelType]):
 
         await doc.validate_async()
 
+    def get_storage_serialise_context(self) -> dict:
+        return {
+            "expose_secret_strings": True,  # We want secret strings to be stored, so we expose them here
+            "use_objectid": not self.config.query_objectid_as_string,
+        }
+
     async def validate_update(
         self, updates: Dict[str, Any], original: ResourceModelType, etag: str | None
     ) -> Dict[str, Any]:
@@ -336,11 +370,9 @@ class AsyncResourceService(Generic[ResourceModelType]):
 
         # Re-dump the model for use with sending to MongoDB
         # This will make sure values are of correct type for MongoDB (such as ObjectId)
-        return model_instance.to_dict(
-            context={"use_objectid": True} if not self.config.query_objectid_as_string else {},
-        )
+        return model_instance.to_dict(context=self.get_storage_serialise_context())
 
-    async def create(self, _docs: Sequence[ResourceModelType | dict[str, Any]]) -> List[str]:
+    async def create(self, docs: Sequence[ResourceModelType | dict[str, Any]]) -> List[ResourceModelType]:
         """Creates a new resource
 
         Will automatically create the resource(s) in both Elasticsearch (if configured for this resource)
@@ -351,18 +383,18 @@ class AsyncResourceService(Generic[ResourceModelType]):
         :raises Pydantic.ValidationError: If any of the docs provided are not valid
         """
 
-        docs = await self._convert_dicts_to_model(_docs)
-        await self.on_create(docs)
+        instances = await self._convert_dicts_to_model(docs)
+        await self.on_create(instances)
 
         ids: List[str] = []
 
-        for index, doc in enumerate(docs):
+        for index, doc in enumerate(instances):
             await self.validate_create(doc)
             versioned_model = get_versioned_model(doc)
             if versioned_model is not None:
                 versioned_model.current_version = 1
             doc_dict = doc.to_dict(
-                context={"use_objectid": True} if not self.config.query_objectid_as_string else {},
+                context=self.get_storage_serialise_context(),
                 # Include default values, but exclude ``None`` on creation
                 exclude_none=True,
                 exclude_unset=False,
@@ -374,7 +406,7 @@ class AsyncResourceService(Generic[ResourceModelType]):
 
             # Update the provided docs, so the `_id` and `_etag` get applied to the supplied dicts
             doc.id = response.inserted_id
-            docs_entry = _docs[index]
+            docs_entry = docs[index]
             if isinstance(docs_entry, dict):
                 docs_entry.update(
                     dict(
@@ -390,8 +422,8 @@ class AsyncResourceService(Generic[ResourceModelType]):
             if self.config.versioning:
                 await self.insert_versioned_document(doc_dict)
 
-        await self.on_created(docs)
-        return ids
+        await self.on_created(instances)
+        return instances
 
     async def insert_versioned_document(self, doc_dict: dict[str, Any]):
         await self.mongo_versioned_async.insert_one(self._get_versioned_document(doc_dict))
@@ -435,7 +467,7 @@ class AsyncResourceService(Generic[ResourceModelType]):
         updates: Dict[str, Any],
         etag: str | None = None,
         original: ResourceModelType | None = None,
-    ) -> None:
+    ) -> ResourceModelType:
         """Updates an existing resource
 
         Will automatically update the resource in both Elasticsearch (if configured for this resource)
@@ -476,6 +508,8 @@ class AsyncResourceService(Generic[ResourceModelType]):
             await self.mongo_versioned_async.insert_one(self._get_versioned_document(validated_updates))
 
         await self.on_updated(updates, original)
+
+        return original.clone_with(updates_dict)
 
     async def on_updated(self, updates: Dict[str, Any], original: ResourceModelType) -> None:
         """Hook to run after a resource has been updated
@@ -545,18 +579,72 @@ class AsyncResourceService(Generic[ResourceModelType]):
 
         await self.signals.data.on_deleted.send(doc)
 
-    async def get_all(self) -> AsyncIterable[ResourceModelType]:
+    async def get_all(self, lookup: dict | None = None) -> AsyncIterable[ResourceModelType]:
         """Helper function to get all items from this resource
 
         :return: An async iterable with ``ResourceModel`` instances
         """
 
-        async for data in self.get_all_raw():
+        async for data in self.get_all_raw(lookup):
             doc = self.get_model_instance_from_dict(dict(data))
             yield doc
 
-    def get_all_raw(self) -> AsyncIOMotorCursor:
-        return self.mongo_async.find({}).sort("_id")
+    def get_all_raw(self, lookup: dict | None = None) -> AsyncIOMotorCursor:
+        """Helper function to get all items for this resource, as a MongoDB cursor
+
+        :param lookup: Optional MongoDB filter to be applied
+        :return: A MongoDB cursor with the results, sorted by ID
+        """
+
+        return self.mongo_async.find(lookup or {}).sort("_id")
+
+    async def get_all_list(self, lookup: dict | None = None) -> list[ResourceModelType]:
+        """Helper function to get all items from this resource, as a list
+
+        Note: This is only to be used with small collection, **DO NOT** use on large collections,
+        as the performance and resource use will be too high. Use ``get_all`` or ``get_all_batch`` instead.
+
+        :param lookup: Optional MongoDB filter to be applied
+        :return: A list of ``ResourceModel`` instances
+        """
+
+        return [item async for item in self.get_all(lookup)]
+
+    async def get_all_list_raw(self, lookup: dict | None = None) -> list[dict]:
+        """Helper function to get all items from this resource, as a list
+
+        Note: This is only to be used with small collection, **DO NOT** use on large collections,
+        as the performance and resource use will be too high. Use ``get_all`` or ``get_all_batch`` instead.
+
+        :param lookup: Optional MongoDB filter to be applied
+        :return: A list of dictionaries
+        """
+
+        return cast(list[dict], [item async for item in self.get_all_raw(lookup)])
+
+    async def get_all_map(self, lookup: dict | None = None) -> dict[str | ObjectId, ResourceModelType]:
+        """Helper function to get all items from this resource, as a dictionary where key is the item ID.
+
+        Note: This is only to be used with small collection, **DO NOT** use on large collections,
+        as the performance and resource use will be too high. Use ``get_all`` or ``get_all_batch`` instead.
+
+        :param lookup: Optional MongoDB filter to be applied
+        :return: A dictionary of ``ResourceModel`` instances, where the key is the ID of an item
+        """
+
+        return {item.id: item async for item in self.get_all(lookup)}
+
+    async def get_all_map_raw(self, lookup: dict | None = None) -> dict[str | ObjectId, dict]:
+        """Helper function to get all items from this resource, as a dictionary where key is the item ID.
+
+        Note: This is only to be used with small collection, **DO NOT** use on large collections,
+        as the performance and resource use will be too high. Use ``get_all`` or ``get_all_batch`` instead.
+
+        :param lookup: Optional MongoDB filter to be applied
+        :return: A dictionary of resource dictionary, where the key is the ID of an item
+        """
+
+        return cast(dict[str | ObjectId, dict], {item[ID_FIELD]: item async for item in self.get_all_raw(lookup)})
 
     async def get_all_batch(self, size=500, max_iterations=10000, lookup=None) -> AsyncIterable[ResourceModelType]:
         """Helper function to get all items from this resource, in batches
@@ -613,7 +701,6 @@ class AsyncResourceService(Generic[ResourceModelType]):
         sort: SortParam | None = None,
         projection: ProjectedFieldArg | None = None,
         use_mongo: bool = False,
-        # ) -> ResourceCursorAsync[ResourceModelType]:
     ) -> ElasticsearchResourceCursorAsync[ResourceModelType] | MongoResourceCursorAsync[ResourceModelType]:
         """Find items from the resource using Elasticsearch
 
@@ -675,6 +762,13 @@ class AsyncResourceService(Generic[ResourceModelType]):
 
         return await self.mongo_async.count_documents(lookup or {})
 
+    def _get_mongo_projection_argument(self, req: SearchRequest) -> list[str] | dict[str, bool] | None:
+        projection_include, projection_fields = get_projection_from_request(req)
+        if projection_fields:
+            return projection_fields if projection_include else {field: False for field in projection_fields}
+
+        return None
+
     async def _mongo_find(
         self, req: SearchRequest, versioned: bool = False
     ) -> MongoResourceCursorAsync[ResourceModelType]:
@@ -695,12 +789,11 @@ class AsyncResourceService(Generic[ResourceModelType]):
 
         kwargs["filter"] = where
 
-        projection_include, projection_fields = get_projection_from_request(req)
-        if projection_fields:
-            kwargs["projection"] = (
-                projection_fields if projection_include else {field: False for field in projection_fields}
-            )
+        projection_arg = self._get_mongo_projection_argument(req)
+        if projection_arg:
+            kwargs["projection"] = projection_arg
 
+        self.mongo.find
         cursor = self.mongo_async.find(**kwargs) if not versioned else self.mongo_versioned_async.find(**kwargs)
 
         return MongoResourceCursorAsync(
@@ -797,19 +890,36 @@ class AsyncResourceService(Generic[ResourceModelType]):
         return h.hexdigest()
 
     async def get_all_item_versions(
-        self, item_id: str, max_results: int = 200, page: int = 1
+        self,
+        item_id: str,
+        max_results: int = 200,
+        page: int = 1,
+        projection: ProjectedFieldArg | None = None,
     ) -> tuple[list[dict], int]:
+        """Get all versions of an item, with pagination and projection supported.
+
+        :param item_id: The ID of the item to get all versions for
+        :param max_results: The maximum number of results to retrieve per page (defaults to 200)
+        :param projection: The field projections to be applied
+        :return: A tuple - list of dictionary items and the count of total items
+        :raises SuperdeskApiError.badRequestError: If versioning is not enabled on the resource
+        """
+
         if not self.config.versioning:
             raise SuperdeskApiError.badRequestError("Resource does not support versioning")
 
-        item: dict | None = await self.mongo_async.find_one({ID_FIELD: item_id})
+        item: dict | None = await self.mongo_async.find_one({ID_FIELD: item_id}, projection=projection)
         if not item:
             raise SuperdeskApiError.notFoundError()
 
         items: list[dict] = []
 
         req = SearchRequest(
-            where={VERSION_ID_FIELD: item[ID_FIELD]}, max_results=max_results, page=page, sort=[(CURRENT_VERSION, 1)]
+            where={VERSION_ID_FIELD: item[ID_FIELD]},
+            max_results=max_results,
+            page=page,
+            sort=[(CURRENT_VERSION, 1)],
+            projection=projection,
         )
 
         cursor = await self._mongo_find(req, versioned=True)
@@ -822,6 +932,14 @@ class AsyncResourceService(Generic[ResourceModelType]):
         return items, await cursor.count()
 
     async def get_item_version(self, item: dict, version: int) -> dict:
+        """Get a specific version of an item
+
+        :param item: The item dictionary to get a version for
+        :param version: The version to get
+        :return: A dictionary for the specific version of the item
+        :raises SuperdeskApiError.badRequestError: If versioning is not enabled on the resource
+        """
+
         if not self.config.versioning:
             raise SuperdeskApiError.badRequestError("Resource does not support versioning")
 
@@ -848,6 +966,12 @@ class AsyncResourceService(Generic[ResourceModelType]):
             versioned_item.update({key: item[key] for key in self.config.ignore_fields_in_versions if item.get(key)})
 
     async def system_update(self, item_id: ObjectId | str, updates: dict[str, Any]) -> None:
+        """Update an item with the supplied updates, and do not update the etag or call any signals
+
+        :param item_id: The ID of the item to update
+        :param updates: A dictionary of values to update
+        """
+
         await self.mongo_async.update_one({"_id": item_id}, {"$set": updates})
         try:
             await self.elastic.update(item_id, updates)

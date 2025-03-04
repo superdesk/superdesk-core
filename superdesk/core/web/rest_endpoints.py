@@ -11,6 +11,7 @@
 from typing import Any
 
 from pydantic import BaseModel
+from bson import ObjectId
 
 from superdesk.core.types import SearchRequest, AuthConfig, HTTP_METHOD, Request, Response
 from .endpoints import Endpoint, EndpointGroup
@@ -126,7 +127,7 @@ class RestEndpoints(EndpointGroup):
 
         return f"{self.get_resource_url()}/<{self.id_param_type}:{arg_name}>"
 
-    def gen_url_for_item(self, request: Request, item_id: str, force_append_id: bool = False) -> str:
+    def gen_url_for_item(self, request: Request, item_id: str | ObjectId, force_append_id: bool = False) -> str:
         """Get the URL of an item of this resource, for HATEOAS self link
 
         :param request: The request instance currently being processed
@@ -150,7 +151,7 @@ class RestEndpoints(EndpointGroup):
         if url_prefix and path.startswith(url_prefix):
             path = path[len(url_prefix) :]
 
-        if (request.method == "POST" or force_append_id) and not path.endswith(item_id):
+        if (request.method == "POST" or force_append_id) and not path.endswith(str(item_id)):
             return f"{path}/{item_id}"
 
         return path

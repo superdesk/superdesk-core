@@ -8,7 +8,7 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
-from typing import Callable, Any, Awaitable, Dict
+from typing import Callable, Any, Awaitable, Dict, cast
 import re
 import logging
 
@@ -18,24 +18,30 @@ from pydantic_core import PydanticCustomError
 from bson import ObjectId
 
 
+from superdesk.core.app import get_app_config
+
 logger = logging.getLogger(__name__)
 
 
 EmailValueType = str | list[str] | None
 
 
-def validate_email(error_string: str | None = None) -> AfterValidator:
+def validate_email(error_string: str | None = None, multi: bool = False) -> AfterValidator:
     """Validates that the value is a valid email address
 
     :param error_string: An optional custom error string if validation fails
+    :param multi: If True will convert the string to a list (comma separated)
     """
 
-    def _validate_email(value: EmailValueType) -> EmailValueType:
+    def _validate_email(value: EmailValueType, check_multi: bool | None = None) -> EmailValueType:
+        if check_multi is None:
+            check_multi = multi
+
         if value is None:
             return None
-        elif isinstance(value, list):
-            for email in value:
-                _validate_email(email)
+        elif check_multi or isinstance(value, list):
+            for email in value.split(",") if isinstance(value, str) else value:
+                _validate_email(email, False)
         elif not re.match(".+@.+", value, re.IGNORECASE):
             # it's tricky to write proper regex for email validation, so we
             # should use simple one, or use libraries like
@@ -101,6 +107,23 @@ def validate_maxlength(
         return value
 
     return AfterValidator(_validate_maxlength)
+
+
+def validate_not_empty(error_string: str | None = None) -> AfterValidator:
+    """Validates that a string, list or dict is not empty
+
+    :param error_string: An optional custom error string if validation fails
+    """
+
+    def _validate_not_empty(value: str | list | dict | None) -> str | list | dict | None:
+        if value is not None and len(value) == 0:
+            raise PydanticCustomError(
+                "empty", str(error_string) if error_string else gettext("empty values not allowed")
+            )
+
+        return value
+
+    return AfterValidator(_validate_not_empty)
 
 
 class AsyncValidator:
@@ -248,16 +271,31 @@ def convert_pydantic_validation_error_for_response(validation_error: ValidationE
 
 
 def get_field_errors_from_pydantic_validation_error(validation_error: ValidationError) -> Dict[str, Dict[str, str]]:
-    issues: Dict[str, Dict[str, str]] = {}
+    use_nested_fields = cast(bool, get_app_config("ASYNC_RESPOND_NESTED_VALIDATION_ERRORS"))
+    issues: Dict[str, Dict[str, Any]] = {}
     for error in validation_error.errors():
         try:
-            field = ".".join([str(loc) for loc in error["loc"]])
-            issues.setdefault(field, {})
+            fields = [str(loc) for loc in error["loc"]]
+            error_destination = issues
+
+            if use_nested_fields and len(fields) > 1:
+                num_fields = len(fields)
+                for index, field in enumerate(fields):
+                    error_destination.setdefault(field, {})
+                    if index < num_fields - 1:
+                        error_destination = error_destination[field]
+                field = fields[-1]
+            else:
+                field = ".".join(fields)
+                error_destination.setdefault(field, {})
+
             if error["type"] == "missing":
                 # Validations provided by Pydantic
-                issues[field]["required"] = gettext("Field is required")
+                error_destination[field]["required"] = gettext("Field is required")
+            elif error["type"] == "empty":
+                error_destination[field] = gettext("empty values not allowed")
             else:
-                issues[field][error["type"]] = error["msg"]
+                error_destination[field][error["type"]] = error["msg"]
         except (KeyError, TypeError, ValueError) as error:
             logger.warning(error)
 

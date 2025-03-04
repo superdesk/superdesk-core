@@ -19,6 +19,17 @@ from .fixtures.users import john_doe
 NOW = utcnow()
 
 
+def get_test_cors_headers(methods: list[str] | None = None) -> list[tuple[str, str]]:
+    if methods is None:
+        methods = ["GET", "POST", "OPTIONS", "HEAD"]
+    return [
+        ("Access-Control-Allow-Origin", "http://localhost:9000"),
+        ("Access-Control-Allow-Headers", "Content-Type,Authorization,If-Match"),
+        ("Access-Control-Allow-Credentials", "true"),
+        ("Access-Control-Allow-Methods", ", ".join(methods)),
+    ]
+
+
 class AsyncSignalsTestCase(IsolatedAsyncioTestCase):
     async def test_signals(self):
         signal = AsyncSignal[str, bool]("on_some_event")
@@ -204,8 +215,6 @@ class ResourceWebSignalsTestCase(AsyncFlaskTestCase):
     async def asyncTearDown(self):
         await super().asyncTearDown()
         clear_all_resource_signal_listeners()
-        # global_signals.clear_listeners()
-        # User.get_signals().clear_listeners()
 
     @mock.patch("superdesk.core.resources.service.utcnow", return_value=NOW)
     async def test_web_signals(self, mock_utcnow):
@@ -255,21 +264,23 @@ class ResourceWebSignalsTestCase(AsyncFlaskTestCase):
         response = await self.test_client.post("/api/users_async", json=test_user)
         self.assertEqual(response.status_code, 201)
         response_data = await response.get_json()
+        expected_web_create_dict = test_user.to_dict()
         test_user.etag = response_data["_etag"]
         test_user.created = NOW
         test_user.updated = NOW
         assert_mocks_called(
             "create",
-            [ANY, [test_user]],
+            [ANY, [expected_web_create_dict]],
             [
                 ANY,
                 Response(
                     {
                         **test_user.to_dict(),
+                        "_status": "OK",
                         "_links": {"self": {"title": "User", "href": "users_async/user_1"}},
                     },
                     201,
-                    [],
+                    get_test_cors_headers(),
                 ),
             ],
         )
@@ -288,9 +299,10 @@ class ResourceWebSignalsTestCase(AsyncFlaskTestCase):
                         **test_user.to_dict(),
                         "_created": format_time(NOW) + "+00:00",
                         "_updated": format_time(NOW) + "+00:00",
+                        "_links": {"self": {"title": "User", "href": "users_async/user_1"}},
                     },
                     200,
-                    [],
+                    get_test_cors_headers(["GET", "PATCH", "DELETE", "OPTIONS", "HEAD"]),
                 ),
             ],
         )
@@ -298,10 +310,6 @@ class ResourceWebSignalsTestCase(AsyncFlaskTestCase):
         # Test search signals
         response = await self.test_client.get("""/api/users_async?source={"query":{"match":{"first_name":"John"}}}""")
         self.assertEqual(response.status_code, 200)
-        response_data = await response.get_json()
-        from pprint import pprint
-
-        pprint(response_data)
         assert_mocks_called(
             "search",
             [
@@ -309,6 +317,7 @@ class ResourceWebSignalsTestCase(AsyncFlaskTestCase):
                 SearchRequest(
                     args={"source": '{"query":{"match":{"first_name":"John"}}}'},
                     source='{"query":{"match":{"first_name":"John"}}}',
+                    projection={"token": False},
                 ),
             ],
             [
@@ -320,6 +329,7 @@ class ResourceWebSignalsTestCase(AsyncFlaskTestCase):
                                 **test_user.to_dict(),
                                 "_created": format_time(NOW) + "+00:00",
                                 "_updated": format_time(NOW) + "+00:00",
+                                "_links": {"self": {"title": "User", "href": "users_async/user_1"}},
                             }
                         ],
                         "_meta": {
@@ -330,7 +340,7 @@ class ResourceWebSignalsTestCase(AsyncFlaskTestCase):
                         "_links": ANY,
                     },
                     200,
-                    [("X-Total-Count", 1)],
+                    [("X-Total-Count", 1)] + get_test_cors_headers(["GET", "POST", "OPTIONS", "HEAD"]),
                 ),
             ],
         )
@@ -354,7 +364,7 @@ class ResourceWebSignalsTestCase(AsyncFlaskTestCase):
                 ANY,
                 Response(
                     {
-                        "_id": test_user.id,
+                        **test_user.to_dict(),
                         "_updated": NOW,
                         "_etag": response_data["_etag"],
                         "first_name": "Foo",
@@ -363,7 +373,7 @@ class ResourceWebSignalsTestCase(AsyncFlaskTestCase):
                         "_links": {"self": {"title": "User", "href": "users_async/user_1"}},
                     },
                     200,
-                    [],
+                    get_test_cors_headers(["GET", "PATCH", "DELETE", "OPTIONS", "HEAD"]),
                 ),
             ],
         )
@@ -374,14 +384,18 @@ class ResourceWebSignalsTestCase(AsyncFlaskTestCase):
             f"/api/users_async/{test_user.id}", headers={"If-Match": test_user.etag}
         )
         self.assertEqual(response.status_code, 204)
-        assert_mocks_called("delete", [ANY, test_user], [ANY, Response({}, 204, [])])
+        assert_mocks_called(
+            "delete",
+            [ANY, test_user],
+            [ANY, Response({}, 204, get_test_cors_headers(["GET", "PATCH", "DELETE", "OPTIONS", "HEAD"]))],
+        )
 
     async def test_modifying_data_from_web_signal(self):
         test_user = john_doe()
 
-        def modify_on_create(request: Request, users: list[User]) -> None:
+        def modify_on_create(request: Request, users: list[dict]) -> None:
             # Test modifying the item before it's inserted into the DB
-            users[0].code = "test_created"
+            users[0]["code"] = "test_created"
 
         def modify_on_update(request: Request, original: User, updates: dict[str, Any]) -> None:
             # Test modifying the item before it's updated in the DB

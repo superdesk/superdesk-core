@@ -106,6 +106,8 @@ class SubscribersResource(Resource):
         "name_1": ([("name", 1)], {"unique": True}),
     }
 
+    internal_resource = True
+
 
 class SubscribersService(CacheableService):
     cache_lookup = {"is_active": True}

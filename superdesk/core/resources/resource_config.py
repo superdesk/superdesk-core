@@ -50,7 +50,7 @@ class ResourceConfig:
     #: Optionally override the name used for the MongoDB/Elastic sources
     datasource_name: str | None = None
 
-    #: Optional projection to be used to include/exclude fields
+    #: Optional default projection to be used to include/exclude fields
     projection: ProjectedFieldArg | None = None
 
 

@@ -11,12 +11,20 @@
 
 import requests_mock
 from behave import when, then  # @UnresolvedImport
+from behave.api.async_step import async_run_until_complete
 from superdesk.core import json
 from apps.publish.enqueue import enqueue_published
-from superdesk.tests.steps import assert_200, apply_placeholders, json_match, get_json_data, test_json, format_items
-from wooper.general import fail_and_print_body
+from superdesk.tests.steps import (
+    assert_200,
+    apply_placeholders,
+    json_match,
+    get_json_data,
+    test_json,
+    format_items,
+    fail_and_print_body_async,
+)
 from wooper.assertions import assert_equal
-from superdesk.publish import transmit
+from superdesk.publish_async.commands import transmit
 
 
 @when("we enqueue published")
@@ -25,13 +33,14 @@ def step_impl_when_auth(context):
 
 
 @then("we get formatted item")
-def then_we_get_formatted_item(context):
-    assert_200(context.response)
+@async_run_until_complete
+async def then_we_get_formatted_item(context):
+    await assert_200(context.response)
     try:
-        response_data = json.loads(context.response.get_data())
+        response_data = json.loads(await context.response.get_data())
         formatted_item = json.loads(response_data.get("formatted_item", ""))
     except Exception:
-        fail_and_print_body(context.response, "response does not contain a valid formatted_item field")
+        await fail_and_print_body_async(context.response, "response does not contain a valid formatted_item field")
     context_data = json.loads(apply_placeholders(context, context.text))
     assert_equal(
         json_match(context_data, formatted_item), True, msg=str(context_data) + "\n != \n" + str(formatted_item)
@@ -39,9 +48,10 @@ def then_we_get_formatted_item(context):
 
 
 @then("we get {total_count} queued items")
-def then_we_get_formatted_items(context, total_count):
-    assert_200(context.response)
-    data = get_json_data(context.response)
+@async_run_until_complete
+async def then_we_get_formatted_items(context, total_count):
+    await assert_200(context.response)
+    data = await get_json_data(context.response)
     int_count = int(total_count.replace("+", "").replace("<", ""))
 
     if "+" in total_count:
@@ -54,7 +64,7 @@ def then_we_get_formatted_items(context, total_count):
             format_items(data["_items"]),
         )
     if context.text:
-        test_json(context, ["formatted_item"])
+        await test_json(context, ["formatted_item"])
 
 
 @then("we pushed 1 item")
@@ -73,10 +83,11 @@ def then_we_pushed_x_items(context, count):
 
 
 @when("we transmit published")
-def when_we_transmit_published(context):
+@async_run_until_complete
+async def when_we_transmit_published(context):
     with requests_mock.Mocker() as m:
         context.http_mock = m
         m.post("mock://publish", text=json.dumps({}))
         m.post("mock://assets", text=json.dumps({}))
-        transmit.apply_async()
-        transmit.apply_async()
+        await transmit.apply_async()
+        await transmit.apply_async()

@@ -156,7 +156,7 @@ Superdesk commands
 ``publish:transmit``
 ^^^^^^^^^^^^^^^^^^^^
 
-.. autoclass:: superdesk.publish.publish_content.PublishContent()
+.. autofunction:: superdesk.publish_async.commands.publish_pending_items()
 
 ``session:gc``
 ^^^^^^^^^^^^^^

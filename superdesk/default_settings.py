@@ -13,6 +13,7 @@
 
 Environment variables names match config name, with some expections documented below.
 """
+from typing import Any
 import json
 import os
 import pytz
@@ -28,9 +29,9 @@ from distutils.util import strtobool as _strtobool
 logger = logging.getLogger()
 
 
-def strtobool(value):
+def strtobool(value: Any) -> bool:
     try:
-        return bool(_strtobool(value))
+        return bool(_strtobool(value)) if isinstance(value, str) else bool(value)
     except ValueError:
         return False
 
@@ -358,7 +359,7 @@ CELERY_BEAT_SCHEDULE = {
         "task": "content_api.commands.item_expiry",
         "schedule": crontab(minute="0", hour=local_to_utc_hour(2)),
     },
-    "publish:transmit": {"task": "superdesk.publish.transmit", "schedule": timedelta(seconds=10)},
+    "publish:transmit": {"task": "superdesk.publish_async.commands.transmit", "schedule": timedelta(seconds=10)},
     "content:schedule": {
         "task": "apps.templates.content_templates.create_scheduled_content",
         "schedule": crontab(minute="*/5"),
@@ -424,9 +425,21 @@ MODULES = [
     "superdesk.vocabularies_async",
     "superdesk.content_types_async",
     "superdesk.publish.subscriber_token",
+    "superdesk.publish_async.module",
 ]
 
 ASYNC_AUTH_CLASS = "superdesk.core.auth.token_auth:TokenAuthorization"
+
+ASYNC_ENABLE_CORS = True
+
+ASYNC_POPULATE_HATEOAS = True
+
+ASYNC_RESPOND_NESTED_VALIDATION_ERRORS = True
+
+PUBLISH_EXCHANGE_FACTORY = "superdesk.publish_async.controller.exchanges:ExchangeFactory"
+
+PUBLISH_DEFAULT_CELERY_QUEUE = celery_queue("publish")
+PUBLISH_EXCHANGE_CELERY_QUEUE = CELERY_TASK_DEFAULT_QUEUE
 
 #: LDAP Server (eg: ldap://sourcefabric.org)
 LDAP_SERVER = env("LDAP_SERVER", "")

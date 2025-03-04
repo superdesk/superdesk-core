@@ -14,8 +14,8 @@ from unittest.mock import MagicMock
 
 from celery.exceptions import SoftTimeLimitExceeded
 
-import superdesk
 from superdesk.tests import TestCase, markers
+from superdesk.publish_async.controller.consumers.celery_consumer import transmit_subscriber_items
 
 
 class SoftTimeLimitTestCase(TestCase):
@@ -69,7 +69,7 @@ class SoftTimeLimitTestCase(TestCase):
         fake_transmitters_list.__getitem__.return_value = fake_transmitter
 
         with self.assertRaises(SoftTimeLimitExceeded):
-            superdesk.publish.publish_content.transmit_subscriber_items(subscriber.get("_id"), False)
+            await transmit_subscriber_items(subscriber.get("_id"), [items[0]["_id"], items[1]["_id"]])
         failed_item = self.app.data.find_one("publish_queue", req=None, _id=items[0].get("_id"))
         self.assertEqual(failed_item["state"], "retrying")
         pending_item = self.app.data.find_one("publish_queue", req=None, _id=items[1].get("_id"))

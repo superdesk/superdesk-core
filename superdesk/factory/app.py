@@ -18,6 +18,7 @@ import superdesk
 import logging
 import sentry_sdk
 
+from pydantic import ValidationError
 from celery import Celery
 from flask_mail import Mail
 from quart_babel import Babel
@@ -65,6 +66,7 @@ from superdesk.core.types import (
 )
 from superdesk.core.app import SuperdeskAsyncApp
 from superdesk.core.resources import ResourceRestEndpoints
+from superdesk.core.resources.validators import convert_pydantic_validation_error_for_response
 from superdesk.core.web import NullEndpoint
 
 SUPERDESK_PATH = os.path.abspath(os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
@@ -186,6 +188,16 @@ def set_error_handlers(app):
 
     :param app: an instance of `Eve <http://python-eve.org/>`_ application
     """
+
+    @app.errorhandler(ValidationError)
+    def handle_pydantic_validation_error(error: ValidationError):
+        """
+        Gets the ValidationException error raised from Core framework's models/services, parses and returns it
+        to the client in a valid json format.
+        """
+        logger.error(f"HTTP Exception 400 has been raised: {error}")
+        error_dict = convert_pydantic_validation_error_for_response(error)
+        return send_response(None, (error_dict, None, None, 400))
 
     @app.errorhandler(SuperdeskError)
     def client_error_handler(error):
@@ -421,20 +433,38 @@ class SuperdeskEve(eve.Eve):
     def extend_eve_home_endpoint(self, links: list[dict]) -> None:
         """Adds async resources to Eve's api root endpoint"""
 
-        for resource_config in self.async_app.resources.get_all_configs():
-            if resource_config.rest_endpoints is None:
-                continue
+        for module in self.async_app.get_module_list():
+            for resource_config in module.resources or []:
+                if resource_config.rest_endpoints is None:
+                    continue
 
-            # Construct an instance of the class so we can get it's URL
-            endpoint_class = resource_config.rest_endpoints.endpoints_class or ResourceRestEndpoints
-            endpoint = endpoint_class(resource_config, resource_config.rest_endpoints)
+                # Construct an instance of the class so we can get it's URL
+                endpoint_class = resource_config.rest_endpoints.endpoints_class or ResourceRestEndpoints
+                endpoint_instance = endpoint_class(resource_config, resource_config.rest_endpoints)
 
-            links.append(
-                {
-                    "href": endpoint.get_resource_url(),
-                    "title": resource_config.title or resource_config.name,
-                },
-            )
+                links.append(
+                    {
+                        "href": endpoint_instance.get_resource_url(),
+                        "title": resource_config.title or resource_config.name,
+                    },
+                )
+
+            for endpoint in module.endpoints or []:
+                if isinstance(endpoint, EndpointGroup):
+                    for sub_endpoint in endpoint.endpoints:
+                        links.append(
+                            {
+                                "href": sub_endpoint.url,
+                                "title": sub_endpoint.name or sub_endpoint.url.replace("/", "_"),
+                            }
+                        )
+                else:
+                    links.append(
+                        {
+                            "href": endpoint.url,
+                            "title": endpoint.name or endpoint.url.replace("/", "_"),
+                        }
+                    )
 
 
 def get_media_storage_class(app_config: Dict[str, Any], use_provider_config: bool = True) -> Type[MediaStorage]:

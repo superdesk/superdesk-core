@@ -1,5 +1,6 @@
 from superdesk import get_resource_service
 from superdesk.resource_fields import ID_FIELD, GUID_FIELD
+from superdesk.errors import SuperdeskApiError
 
 from content_api.items.model import ContentAPIItem, PubStatusType
 from content_api.items.async_service import ContentAPIItemService
@@ -29,7 +30,12 @@ async def publish_doc_to_content_api(item_dict: dict) -> str:
         await service.update(original.id, item.to_dict(context={"use_objectid": True}))
         return original.id
     else:
-        return (await service.create([item]))[0]
+        create_response = await service.create([item])
+        if len(create_response):
+            return create_response[0].id
+
+        # This should never happen, as exceptions would be raised by ``service.create``
+        raise SuperdeskApiError.badRequestError("Failed to create item in Content API")
 
 
 def process_associations(updates: ContentAPIItem, original: ContentAPIItem | None) -> None:

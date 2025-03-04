@@ -15,7 +15,7 @@ from superdesk.types.enums import DeskTypeEnum
 class DesksAsyncService(AsyncResourceService[DesksResourceModel]):
     notification_key = "desk"
 
-    async def create(self, docs: Sequence[DesksResourceModel | dict[str, Any]]) -> list[str]:
+    async def create(self, docs: Sequence[DesksResourceModel | dict[str, Any]]) -> list[DesksResourceModel]:
         """Creates new desk.
 
         Overriding to check if the desk being created has Working and Incoming Stages. If not then Working and Incoming
@@ -56,7 +56,7 @@ class DesksAsyncService(AsyncResourceService[DesksResourceModel]):
                 template.setdefault("template_desks", []).append(desk.id)
                 content_templates.patch(desk.default_content_template, template)
 
-        return [str(doc.id) for doc in docs]
+        return docs
 
     async def on_created(self, docs: list[DesksResourceModel]) -> None:
         users_service = get_resource_service("users")

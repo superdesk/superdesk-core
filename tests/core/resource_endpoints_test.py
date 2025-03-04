@@ -66,7 +66,12 @@ class ResourceEndpointsTestCase(AsyncFlaskTestCase):
         json_data = await response.get_json()
         test_user_dict = self.test_client.model_instance_to_json(test_user)
         test_user_dict.update(
-            dict(_created=format_time(NOW) + "+00:00", _updated=format_time(NOW) + "+00:00", _etag=json_data["_etag"])
+            dict(
+                _created=format_time(NOW) + "+00:00",
+                _updated=format_time(NOW) + "+00:00",
+                _etag=json_data["_etag"],
+                _links={"self": {"title": "User", "href": "users_async/user_1"}},
+            )
         )
         self.assertEqual(json_data, test_user_dict)
 
@@ -98,6 +103,7 @@ class ResourceEndpointsTestCase(AsyncFlaskTestCase):
                 _etag=json_data["_etag"],
                 first_name="Foo",
                 last_name="Bar",
+                _links={"self": {"title": "User", "href": "users_async/user_1"}},
             )
         )
         self.assertEqual(json_data, test_user_dict)
@@ -171,6 +177,7 @@ class ResourceEndpointsTestCase(AsyncFlaskTestCase):
         response = await self.test_client.get("""/api/users_async?source={"query":{"match":{"first_name":"John"}}}""")
         json_data = await response.get_json()
         test_user_dict["_etag"] = json_data["_items"][0]["_etag"]
+        test_user_dict["_links"] = {"self": {"title": "User", "href": "users_async/user_1"}}
         self.assertEqual(json_data["_meta"]["total"], 1)
         self.assertEqual(json_data["_items"], [test_user_dict])
 
@@ -308,10 +315,10 @@ class ResourceEndpointsTestCase(AsyncFlaskTestCase):
     async def test_post_validation(self):
         # Empty body
         response = await self.test_client.post("/api/users_async", json={})
-        assert response.status_code == 403
+        assert response.status_code == 400
         assert (await response.get_json()) == {
             "_status": "ERR",
-            "_error": {"code": 403, "message": "Insertion failure: 1 document(s) contain(s) error(s)"},
+            "_error": {"code": 400, "message": "Insertion failure: 1 document(s) contain(s) error(s)"},
             "_issues": {
                 "first_name": {"required": "Field is required"},
                 "last_name": {"required": "Field is required"},
@@ -327,10 +334,10 @@ class ResourceEndpointsTestCase(AsyncFlaskTestCase):
                 "email": "incorrect email",
             },
         )
-        assert response.status_code == 403
+        assert response.status_code == 400
         assert (await response.get_json()) == {
             "_status": "ERR",
-            "_error": {"code": 403, "message": "Insertion failure: 1 document(s) contain(s) error(s)"},
+            "_error": {"code": 400, "message": "Insertion failure: 1 document(s) contain(s) error(s)"},
             "_issues": {
                 "email": {"email": "Invalid email address"},
             },
@@ -348,7 +355,9 @@ class ResourceEndpointsTestCase(AsyncFlaskTestCase):
 
     async def test_patch_validation(self):
         # Test item not found
-        response = await self.test_client.patch("/api/users_async/abcd123", json={}, headers={"If-Match": "something"})
+        response = await self.test_client.patch(
+            "/api/users_async/abcd123", json={"email": "test"}, headers={"If-Match": "something"}
+        )
         assert response.status_code == 404
 
         test_user = john_doe()
@@ -368,17 +377,17 @@ class ResourceEndpointsTestCase(AsyncFlaskTestCase):
             json={"email": "incorrect email"},
             headers={"If-Match": "my_etag_123"},
         )
-        assert response.status_code == 412
+        assert response.status_code == 412, await response.get_data(as_text=True)
 
         response = await self.test_client.patch(
             f"/api/users_async/{test_user.id}",
             json={"email": "incorrect email"},
             headers={"If-Match": await self.get_resource_etag("users_async", test_user.id)},
         )
-        assert response.status_code == 403
+        assert response.status_code == 400
         assert (await response.get_json()) == {
             "_status": "ERR",
-            "_error": {"code": 403, "message": "Insertion failure: 1 document(s) contain(s) error(s)"},
+            "_error": {"code": 400, "message": "Update failure: document contains error(s)"},
             "_issues": {
                 "email": {"email": "Invalid email address"},
             },

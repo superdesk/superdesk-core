@@ -4,6 +4,7 @@ from enum import Enum, unique
 
 from pydantic import BaseModel, ConfigDict, NonNegativeInt, field_validator, Field
 from pydantic.dataclasses import dataclass
+from pydantic_core import PydanticCustomError
 
 
 #: The data type for projections, either a list of field names, or a dictionary containing
@@ -54,6 +55,7 @@ class SearchArgs(TypedDict, total=False):
     filters: list[dict[str, Any]]
 
     #: A JSON string containing the field projections to filter out the returned fields
+    # Kept for compatibility with python-eve. Use `SearchRequest.projection` preferably.
     projections: str
 
     version: VersionParam | None
@@ -172,4 +174,11 @@ class SearchRequest(BaseModel):
     def parse_projection(cls, value: ProjectedFieldArg | str | None) -> ProjectedFieldArg | None:
         from superdesk.core import json
 
-        return json.loads(value) if isinstance(value, str) else value
+        try:
+            if isinstance(value, str):
+                return None if not value else json.loads(value)
+            else:
+                return value
+        except Exception as error:
+            # raise error
+            raise PydanticCustomError("json", f"Invalid JSON: {error}")
