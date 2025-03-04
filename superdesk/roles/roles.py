@@ -13,7 +13,7 @@ import superdesk
 
 from superdesk.core import get_current_app
 from superdesk.activity import add_activity, ACTIVITY_UPDATE
-from superdesk.services import BaseService
+from superdesk.async_resource.async_service import AsyncBaseService
 from superdesk import get_resource_service
 from superdesk.errors import SuperdeskApiError
 from superdesk.notification import push_notification
@@ -55,21 +55,21 @@ class RolesResource(Resource):
     }
 
 
-class RolesService(BaseService):
-    def on_update(self, updates, original):
+class RolesService(AsyncBaseService):
+    async def on_update_async(self, updates, original):
         if updates.get("is_default"):
             # if we are updating the role that is already default that is OK
             if original.get("is_default"):
                 return
-            self.remove_old_default()
+            await self.remove_old_default()
 
-    def on_create(self, docs):
+    async def on_create_async(self, docs):
         for doc in docs:
             # if this new one is default need to remove the old default
             if doc.get("is_default"):
-                self.remove_old_default()
+                await self.remove_old_default()
 
-    def on_delete(self, docs):
+    async def on_delete_async(self, docs):
         if docs.get("is_default"):
             raise SuperdeskApiError.forbiddenError("Cannot delete the default role")
         # check if there are any users in the role
@@ -77,19 +77,23 @@ class RolesService(BaseService):
         if user:
             raise SuperdeskApiError.forbiddenError("Cannot delete the role, it still has users in it!")
 
-    def remove_old_default(self):
+    async def remove_old_default(self):
         # see if there is already a default role and set it to no longer default
-        role_id = self.get_default_role_id()
+        role_id = await self.get_default_role_id_async()
         # make it no longer default
         if role_id:
-            role = self.find_one(req=None, is_default=True)
+            role = await self.find_one_async(req=None, is_default=True)
             get_resource_service("roles").update(role_id, {"is_default": False}, role)
 
     def get_default_role_id(self):
         role = self.find_one(req=None, is_default=True)
         return role.get("_id") if role is not None else None
 
-    def on_updated(self, updates, role):
+    async def get_default_role_id_async(self):
+        role = await self.find_one_async(req=None, is_default=True)
+        return role.get("_id") if role is not None else None
+
+    async def on_updated_async(self, updates, role):
         self.__send_notification(updates, role)
 
     def __send_notification(self, updates, role):
