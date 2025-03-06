@@ -32,6 +32,7 @@ class BaseService:
     """
 
     datasource: Union[str, None]
+    is_async = False
 
     def __init__(self, datasource: Optional[str] = None, backend=None):
         self.backend = backend

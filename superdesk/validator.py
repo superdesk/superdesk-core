@@ -171,7 +171,8 @@ class SuperdeskValidator(Validator):
             pattern = "^{}$".format(re.escape(value.strip()))
             query = {field: re.compile(pattern, re.IGNORECASE)}
             self._set_id_query(query)
-            cursor = superdesk.get_resource_service(self.resource).get_from_mongo(req=None, lookup=query)
+            service = superdesk.get_resource_service(self.resource)
+            cursor = service.backend.get_from_mongo(service.datasource, req=None, lookup=query)
             if cursor.count():
                 self._error(field, ERROR_UNIQUE)
 
@@ -189,7 +190,8 @@ class SuperdeskValidator(Validator):
             query = {field: re.compile(pattern, re.IGNORECASE), parent_field: parent_field_value}
             self._set_id_query(query)
 
-            cursor = superdesk.get_resource_service(self.resource).get_from_mongo(req=None, lookup=query)
+            service = superdesk.get_resource_service(self.resource)
+            cursor = service.backend.get_from_mongo(service.datasource, req=None, lookup=query)
             if cursor.count():
                 self._error(field, ERROR_UNIQUE)
 
