@@ -86,8 +86,8 @@ class DPANewsMLTestCase(TestCase):
         with self.app.app_context():
             self.assertIsInstance(self.item.get("body_html"), str)
             expected_output = (
-                '<p><span class="dateline">London <span class="credit">(dpa)'
-                "</span> - </span>2019 gab es bittere Tränen in der Kurve"
+                "<p>London (dpa)"
+                " - 2019 gab es bittere Tränen in der Kurve"
                 ", 2022 erst mächtig Wut auf englische Fans und eine Woche später ausgelassenen Jubel:"
                 " Für Eintracht Frankfurt ist London in den vergangenen Jahren zu einem Standard-Reiseziel"
                 " im europäischen Fußball-Wettbewerb geworden. Bevor es am Mittwochabend (21.00 Uhr/DAZN) "
@@ -113,7 +113,7 @@ class DPANewsMLTestCase(TestCase):
         with self.app.app_context():
             self.assertIsInstance(self.item.get("body_html"), str)
             expected_output = (
-                '<p><span class="dateline">BUENOS AIRES, Argentina <span class="credit">(AP)</span></span>'
+                "<p>BUENOS AIRES, Argentina (AP)"
                 "Argentine President Javier Milei is facing a corruption probe into his promotion of a meme coin,unched tokens of their own. </p>"
                 "<p>The budding scandal in Argentina has been dubbed locally as “cryptogate” and has links to a diverse cast of characters month. </p>"
                 "<p>Here’s an explainer on what happened and where things stand:</p>"
@@ -121,6 +121,7 @@ class DPANewsMLTestCase(TestCase):
                 "<p>Suderman reported from Richmond, Virginia</p>"
             )
 
+            print()
             self.assertEqual(self.item.get("body_html").strip(), expected_output.strip())
 
     def test_priority(self):

@@ -68,7 +68,7 @@ class DPAFeedParser(NewsMLTwoFeedParser):
             parser = etree.HTMLParser()
             tree = etree.fromstring(body_html, parser)
 
-            etree.strip_tags(tree, "section", "body")
+            etree.strip_tags(tree, "section", "body", "span")
 
             item["body_html"] = "".join(etree.tostring(child, encoding="unicode", method="html") for child in tree)
 
