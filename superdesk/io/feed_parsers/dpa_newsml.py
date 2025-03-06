@@ -66,9 +66,7 @@ class DPAFeedParser(NewsMLTwoFeedParser):
                 continue
 
             body_html = etree.tostring(section, encoding="unicode", method="html")
-            body_html = re.sub(
-                r'<section[^>]*class="[^"]*{}[^"]*"[^>]*>'.format(re.escape(section_class)), "", body_html
-            )
+            body_html = re.sub(r"</?section[^>]*>", "", body_html)
             body_html = body_html.replace("</section>", "")
 
             item["body_html"] = body_html

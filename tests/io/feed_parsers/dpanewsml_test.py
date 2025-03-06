@@ -106,6 +106,23 @@ class DPANewsMLTestCase(TestCase):
 
             self.assertEqual(self.item.get("body_html").strip(), expected_output.strip())
 
+    def test_body_html_section_tags(self):
+        self.filename = "dpa_2.xml"
+        self.setUp()
+        self.maxDiff = None
+        with self.app.app_context():
+            self.assertIsInstance(self.item.get("body_html"), str)
+            expected_output = (
+                '<p><span class="dateline">BUENOS AIRES, Argentina <span class="credit">(AP)</span></span>'
+                "Argentine President Javier Milei is facing a corruption probe into his promotion of a meme coin,unched tokens of their own. </p>"
+                "<p>The budding scandal in Argentina has been dubbed locally as “cryptogate” and has links to a diverse cast of characters month. </p>"
+                "<p>Here’s an explainer on what happened and where things stand:</p>"
+                "<p>Meme coins don’t appear to be going away anytime soon, but their track record should serve as a cautionary tale for investors </p>"
+                "<p>Suderman reported from Richmond, Virginia</p>"
+            )
+
+            self.assertEqual(self.item.get("body_html").strip(), expected_output.strip())
+
     def test_priority(self):
         with self.app.app_context():
             self.assertEqual(self.item.get("priority"), 5)
