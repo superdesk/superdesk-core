@@ -6,7 +6,7 @@ from eve.io.base import ConnectionException
 from eve.utils import config, debug_error_message, validate_filters
 
 from eve.io.mongo.mongo import Mongo
-from .flask_mongo_async import FlaskMongoAsync
+from .flask_mongo import FlaskMongoAsync
 
 
 class MongoAsync(Mongo):

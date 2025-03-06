@@ -13,7 +13,7 @@ import superdesk
 
 from superdesk.core import get_current_app
 from superdesk.activity import add_activity, ACTIVITY_UPDATE
-from superdesk.async_resource.async_service import AsyncBaseService
+from superdesk.eve_async.service import AsyncBaseService
 from superdesk import get_resource_service
 from superdesk.errors import SuperdeskApiError
 from superdesk.notification import push_notification

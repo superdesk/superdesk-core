@@ -20,7 +20,7 @@ from superdesk.core import get_current_async_app, get_config
 from superdesk.lock import lock, unlock
 from superdesk.json_utils import SuperdeskJSONEncoder
 
-from .async_resource import MongoAsync
+from .eve_async import MongoAsync
 
 
 class SuperdeskDataLayer(DataLayer):
