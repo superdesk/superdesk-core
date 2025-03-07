@@ -794,7 +794,9 @@ class NinjsFormatterTest(TestCase):
                 {
                     "name": "Asia ex Japan",
                     "qcode": "region_custom:Asia ex Japan",
-                    "translations": {"name": {"de": "Asien exkl. Japan", "it": "Asia escl. Giappone", "ja": "日本除くアジア"}},
+                    "translations": {
+                        "name": {"de": "Asien exkl. Japan", "it": "Asia escl. Giappone", "ja": "日本除くアジア"}
+                    },
                     "scheme": "region_custom",
                 },
                 {"name": "no translations", "qcode": "test", "translations": None, "scheme": "test"},

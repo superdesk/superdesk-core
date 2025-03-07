@@ -113,6 +113,8 @@ class PAParser(NITFFeedParser):
             self.parse_usageterms(resource, item)
             self.parse_word_count(resource, item)
             self.parse_keywords(resource, item)
+            self.parse_embargo(resource, item)
+            self.parse_priority(resource, item)
 
     def parse_versioncreated(self, resource, item):
         """
@@ -150,6 +152,20 @@ class PAParser(NITFFeedParser):
         if copyright is not None and copyright.text:
             item["usageterms"] = copyright.text
 
+    def parse_embargo(self, resource, item):
+        """
+        Parse the embargo timestamp from the Resource section.
+        """
+        for vendor_data in resource.findall("{http://www.xmlnews.org/namespaces/meta#}vendorData"):
+            if vendor_data.text and "PRESSUK_:Expiration Date=" in vendor_data.text:
+                embargo = vendor_data.text.split("PRESSUK_:Expiration Date=")[-1].strip()
+                if embargo:
+                    try:
+                        embargo_dt = datetime.strptime(embargo, "%Y-%m-%dT%H:%M:%S%z")
+                        item["embargo"] = embargo_dt.isoformat()
+                    except ValueError:
+                        pass
+
     def parse_word_count(self, resource, item):
         for vendor_data in resource.findall("{http://www.xmlnews.org/namespaces/meta#}vendorData"):
             if vendor_data.text and "PRESSUK_:Word Count=" in vendor_data.text:
@@ -157,6 +173,16 @@ class PAParser(NITFFeedParser):
                 if word_count:
                     try:
                         item["word_count"] = int(word_count)
+                    except ValueError:
+                        pass
+
+    def parse_priority(self, resource, item):
+        for vendor_data in resource.findall("{http://www.xmlnews.org/namespaces/meta#}vendorData"):
+            if vendor_data.text and "PRESSUK_:PA Priority=" in vendor_data.text:
+                priority = vendor_data.text.split("PRESSUK_:PA Priority=")[-1].strip()
+                if priority:
+                    try:
+                        item["priority"] = int(priority)
                     except ValueError:
                         pass
 
