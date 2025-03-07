@@ -1,0 +1,181 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<newsMessage xmlns="http://iptc.org/std/nar/2006-10-01/">
+    <header>
+        <sent>2025-02-22T01:57:08+01:00</sent>
+        
+    </header>
+    <itemSet>
+        <newsItem conformance="power" guid="urn:newsml:ap.org:20230101:e83b5ffd61b1dbc9e7c1272096d39aaa" standard="NewsML-G2" standardversion="2.30" version="3" xml:lang="en">
+            <catalogRef href="http://www.iptc.org/std/catalog/catalog.IPTC-G2-Standards_32.xml"/>
+            <rightsInfo>
+                <copyrightNotice>Copyright 2025 The Associated Press. All rights reserved. This material may not be published, broadcast, rewritten or redistributed without permission.</copyrightNotice>
+                <usageTerms>This content is intended for editorial use only. For other uses, additional clearances may be required.</usageTerms>
+            </rightsInfo>
+            <itemMeta>
+                <itemClass qcode="ninat:text"/>
+                <provider qcode="nprov:AP">
+                    <name>The Associated Press</name>
+                </provider>
+                <versionCreated>2025-02-22T01:55:54+01:00</versionCreated>
+                <firstCreated>2025-02-21T17:56:08+01:00</firstCreated>
+                
+                <pubStatus qcode="stat:usable"/>
+                
+                <generator versioninfo="0.9.1" role="dnlgenerator:ap.g2mecom">dnl-ap-mecom</generator>
+                <service qcode="dpasrv:apwire"/>
+                <service><name>AP National News Report (A Wire)</name><name role="dnlrole:ap.productid">30598</name></service>
+                <service><name>Asian Wire</name><name role="dnlrole:ap.productid">31244</name></service>
+                <service><name>AP Online General Financial/Business News</name><name role="dnlrole:ap.productid">31995</name></service>
+                <service><name>African News Service</name><name role="dnlrole:ap.productid">32606</name></service>
+                <service><name>European News Service</name><name role="dnlrole:ap.productid">32607</name></service>
+                <service><name>Mideast News Service</name><name role="dnlrole:ap.productid">32609</name></service>
+                <service><name>AP Financial News - US News</name><name role="dnlrole:ap.productid">32688</name></service>
+                <service><name>AP Extended Global Headlines</name><name role="dnlrole:ap.productid">35525</name></service>
+                <service><name>AP Extended Global Headlines - Summaries</name><name role="dnlrole:ap.productid">35527</name></service>
+                <service><name>AP Topics - Media</name><name role="dnlrole:ap.productid">36408</name></service>
+                <service><name>AP Topics - Business</name><name role="dnlrole:ap.productid">36864</name></service>
+                <service><name>AP Financial News</name><name role="dnlrole:ap.productid">100028</name></service>
+                <service><name>All Topics</name><name role="dnlrole:ap.productid">100523</name></service>
+                <service><name>AP U.S. National News (Datastream A)</name><name role="dnlrole:ap.productid">101264</name></service>
+                <service><name>Global Headline and Summary Streams</name><name role="dnlrole:ap.productid">101265</name></service>
+
+                <title>LT--Argentina-Milei-Crypto-Explainer</title>
+
+                <edNote role="dnlrole:ap.ednote">Eds: UPDATES: Adds prosecutor opening investigation and trims older material, makes other minor edits.</edNote>
+                <signal qcode="apsig:newscontent"/>
+
+                <link rel="aprel:canonical" href="https://apnews.com/article/argentina-milei-meme-coins-crypto-melania-e83b5ffd61b1dbc9e7c1272096d39aaa"/>
+                <link rel="irel:associatedWith" rank="1" residref="urn:newsml:ap.org:20230101:d3b9454171894378ac8ec5b3b6ba2028" version="1"><itemClass qcode="ninat:picture"/><title>Argentina Milei Crypto</title></link>
+                <link rel="irel:associatedWith" rank="2" residref="urn:newsml:ap.org:20230101:5641b43ab1764ff4a7952a16f80d5d90" version="1"><itemClass qcode="ninat:picture"/><title>CPAC 2025</title></link>
+                <link rel="irel:associatedWith" rank="3" residref="urn:newsml:ap.org:20230101:611a50f9028b4135b7c8ff911d51e526" version="1"><itemClass qcode="ninat:picture"/><title>Argentina Milei Crypto</title></link>
+                <link rel="irel:associatedWith" rank="4" residref="urn:newsml:ap.org:20230101:3cb87e2907404704bcb103fb0c34d882" version="1"><itemClass qcode="ninat:picture"/><title>Argentina Milei Crypto</title></link>
+            </itemMeta>
+            <contentMeta>
+                <urgency>4</urgency>
+                <contentCreated>2025-02-21T17:56:08+01:00</contentCreated>
+                <contentModified>2025-02-22T01:55:54+01:00</contentModified>
+
+                <located type="cptype:city"><name>Buenos Aires</name><broader type="cptype:country" qcode="apgeography:ARG"><name>Argentina</name></broader><geoAreaDetails><position latitude="-34.61315" longitude="-58.37723"/></geoAreaDetails></located>
+
+                <infoSource role="crole:source" type="apsourcetype:AP"><name>AP</name></infoSource>
+
+                <creator><name>By ALAN SUDERMAN and ISABEL DEBRE</name><related><name role="aprol:BylineTitle">Associated Press</name></related></creator>
+
+                <audience qcode="apaudience:82c6a4c46fa0446090a7acaf93159e4c" type="apaudtype:audplatform"><name>Print</name></audience>
+                <audience qcode="apaudience:9add4649b53b4702ba7d9de5d4fa607a" type="apaudtype:audplatform"><name>Online</name></audience>
+                <audience qcode="apaudience:f43adc08760d10048040e6e7a0f4673e" type="apaudtype:audscope"><name>National</name></audience>
+                <audience qcode="apaudience:f4ecf9b0760d10048044e6e7a0f4673e" type="apaudtype:audscope"><name>International</name></audience>
+                <audience qcode="apaudience:661850e07d5b100481f5c076b8e3055c" type="apaudtype:audgeography"><name>Latin America and Caribbean</name></audience>
+                <audience qcode="apaudience:661e48387d5b10048291c076b8e3055c" type="apaudtype:audgeography"><name>United States</name></audience>
+
+                <altId type="ap:itemid">e83b5ffd61b1dbc9e7c1272096d39aaa</altId>
+                <altId type="ap:etag">e83b5ffd61b1dbc9e7c1272096d39aaa_2a1aza0c0</altId>
+                <altId type="ap:friendlykey">974182696017</altId>
+                <altId type="ap:referenceid">LT--Argentina-Milei-Crypto-Explainer</altId>
+                <altId type="dpa:legacyid" version="1002">urn:newsml:dpa.com:20090101:ap:e83b5ffd61b1dbc9e7c1272096d39aaa</altId>
+
+                <altId environment="dpasrv:apwire" type="dpa7901rendition:iptc7901Id">eap:0084:4:fi:1108:AP:0084:::</altId>
+
+                <language tag="en" role="aprol:contentLang"/>
+
+                <keyword>Argentina Milei meme coins crypto Melania</keyword>
+
+                <genre type="dnltype:ap.editorialrole" qcode="dnlgenre:ap.editorialrole.fullstory"><name>FullStory</name></genre>
+
+                <subject type="dpatype:category" qcode="dpacat:wi" how="howextr:tool" why="why:inferred">
+<name>economics</name>                    
+                </subject>
+
+                <subject qcode="apcategorycode:f" type="cpnat:abstract" creator="apsubcreator:Editorial">
+                    <name>f</name>
+                </subject>
+                <subject qcode="apcategorycode:i" type="cpnat:abstract" creator="apsubcreator:Editorial">
+                    <name>i</name>
+                </subject>
+                <subject qcode="apsubject:bb2d2c5f441a452cb24bb511a2ab5eea" type="cpnat:abstract" creator="apsubcreator:Editorial">
+                    <name>World news</name>
+                </subject>
+                <subject qcode="apsubject:f25af2d07e4e100484f5df092526b43e" type="cpnat:abstract" creator="apsubcreator:Editorial">
+                    <name>General news</name>
+                </subject>
+                <subject qcode="apsubject:a4677d70863b4012b846a1b00f5079f5" type="cpnat:abstract" creator="apsubcreator:Editorial">
+                    <name>U.S. news</name>
+                </subject>
+                <subject qcode="apsubject:c8e409f8858510048872ff2260dd383e" type="cpnat:abstract" creator="apsubcreator:Editorial">
+                    <name>Business</name>
+                </subject>
+                <subject qcode="apsubject:c8e409f8858510048872ff2260dd383e" type="cpnat:abstract" creator="apsubcreator:Machine">
+                    <name>Business</name>
+                </subject>
+                <subject qcode="apsubject:ee483cc088711004894aeb2e0e616f0b" type="cpnat:abstract" creator="apsubcreator:Machine">
+                    <name>Social media</name>
+                </subject>
+                <subject qcode="apsubject:20fc1dc6484e43509adb63c92ba11380" type="cpnat:abstract" creator="apsubcreator:Machine">
+                    <name>Entrepreneurship</name>
+                </subject>
+                <subject qcode="apsubject:40d5f3f57edb448090a2bcf8c144946c" type="cpnat:abstract" creator="apsubcreator:Machine">
+                    <name>Cryptocurrency</name>
+                </subject>
+                <subject qcode="apsubject:b2b324effffa4ecb98702e8b40670989" type="cpnat:abstract" creator="apsubcreator:Machine">
+                    <name>Scandals</name>
+                </subject>
+                <subject qcode="apgeo:83f4b9a07f4f10048f83df092526b43e" type="cpnat:geoArea" creator="apsubcreator:Machine">
+                    <name>Buenos Aires</name>
+                </subject>
+                <subject qcode="apgeo:661ec1507d5b1004829bc076b8e3055c" type="cpnat:geoArea" creator="apsubcreator:Machine">
+                    <name>Argentina</name>
+                </subject>
+                <subject qcode="apperson:ec7118ccefd1494bb27b56928ed227cd" type="cpnat:person" creator="apsubcreator:Machine">
+                    <name>Caitlyn Jenner</name>
+                </subject>
+                <subject qcode="apperson:ee17704fdd2642e0a1e53fd801d88008" type="cpnat:person" creator="apsubcreator:Machine">
+                    <name>Elon Musk</name>
+                </subject>
+                <subject qcode="apperson:a6331b54c46e4ca8b79fa40fada95db5" type="cpnat:person" creator="apsubcreator:Machine">
+                    <name>Donald Trump</name>
+                </subject>
+                <subject qcode="apperson:ac9bbe3f7d124ccd9298c252a82a4eb7" type="cpnat:person" creator="apsubcreator:Machine">
+                    <name>Brian Armstrong</name>
+                </subject>
+                <subject qcode="apperson:eaa71c2464fb48c3bbdffd52c028543f" type="cpnat:person" creator="apsubcreator:Machine">
+                    <name>Melania Trump</name>
+                </subject>
+                <subject qcode="aporganisation:ab68ee212db2436ba4267a71a7d1d986" type="cpnat:organisation" creator="apsubcreator:Machine">
+                    <name>Argentina government</name>
+                </subject>
+                <subject qcode="aporganisation:0b1cb5748028423f93c39c1b6028dc6a" type="cpnat:organisation" creator="apsubcreator:Machine">
+                    <name>Tesla, Inc.</name>
+                </subject>
+
+                
+
+                <slugline>AP-LT-Argentina-Milei-Crypto-Explainer, 2nd Ld-Writethru</slugline>                
+
+                <headline>Argentina's crypto scandal dings Milei, involves strange mix of characters</headline>
+                
+                <creditline>ASSOCIATED PRESS</creditline>
+
+                <by>By ALAN SUDERMAN and ISABEL DEBRE</by>
+            </contentMeta>
+            <contentSet>
+                <inlineXML contenttype="application/xhtml+xml" wordcount="1108">
+                    <html xmlns="http://www.w3.org/1999/xhtml"><head><meta charset="utf-8"/><title>LT--Argentina-Milei-Crypto-Explainer</title></head><body><header>
+                    <ul class="slugline">
+                    <li class="subject" data-qcode="apsubject:c8e409f8858510048872ff2260dd383e">Business</li>
+                    <li class="subject" data-qcode="apsubject:ee483cc088711004894aeb2e0e616f0b">Social media</li>
+                    <li class="keyword">Argentina Milei meme coins crypto Melania</li>
+                    </ul>
+                    <time class="publicationDate" data-datetime="2025-02-22T01:57:08+01:00">22.02.2025 01:57</time>
+                    <h1>Argentina's crypto scandal dings Milei, involves strange mix of characters</h1>
+                    <p class="byline">By ALAN SUDERMAN and ISABEL DEBRE</p>
+                    </header>
+                    <section class="main"><p><span class="dateline">BUENOS AIRES, Argentina <span class="credit">(AP)</span></span>Argentine President Javier Milei is facing a corruption probe into his promotion of a meme coin,unched tokens of their own. </p><p>The budding scandal in Argentina has been dubbed locally as “cryptogate” and has links to a diverse cast of characters month. </p><p>Here’s an explainer on what happened and where things stand:</p><p>Meme coins don’t appear to be going away anytime soon, but their track record should serve as a cautionary tale for investors </p><p>Suderman reported from Richmond, Virginia</p>
+                    </section>
+                    </body>
+                    </html>
+                </inlineXML>
+                
+            </contentSet>
+        </newsItem>
+    </itemSet>
+</newsMessage>
