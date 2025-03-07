@@ -99,15 +99,20 @@ class PAParser(NITFFeedParser):
         """
         resource = xml.find(".//xn:Resource", namespaces={"xn": "http://www.xmlnews.org/namespaces/meta#"})
         if resource is not None:
+            for vendor_data in resource.findall(
+                ".//xn:vendorData", namespaces={"xn": "http://www.xmlnews.org/namespaces/meta#"}
+            ):
+                if vendor_data.text and "PRESSUK_:Document ID=" in vendor_data.text:
+                    document_id = vendor_data.text.split("PRESSUK_:Document ID=")[-1].strip()
+                    if document_id:
+                        item["guid"] = document_id
+                        break
             self.parse_versioncreated(resource, item)
             self.parse_firstcreated(resource, item)
             self.parse_abstract(resource, item)
             self.parse_usageterms(resource, item)
-            self.parse_embargo(resource, item)
             self.parse_word_count(resource, item)
-            self.parse_priority(resource, item)
             self.parse_keywords(resource, item)
-            self.parse_subject(resource, item)
 
     def parse_versioncreated(self, resource, item):
         """
@@ -145,20 +150,6 @@ class PAParser(NITFFeedParser):
         if copyright is not None and copyright.text:
             item["usageterms"] = copyright.text
 
-    def parse_embargo(self, resource, item):
-        """
-        Parse the embargo timestamp from the Resource section.
-        """
-        for vendor_data in resource.findall("{http://www.xmlnews.org/namespaces/meta#}vendorData"):
-            if vendor_data.text and "PRESSUK_:Expiration Date=" in vendor_data.text:
-                embargo = vendor_data.text.split("PRESSUK_:Expiration Date=")[-1].strip()
-                if embargo:
-                    try:
-                        embargo_dt = datetime.strptime(embargo, "%Y-%m-%dT%H:%M:%S%z")
-                        item["embargo"] = embargo_dt.isoformat()
-                    except ValueError:
-                        pass
-
     def parse_word_count(self, resource, item):
         for vendor_data in resource.findall("{http://www.xmlnews.org/namespaces/meta#}vendorData"):
             if vendor_data.text and "PRESSUK_:Word Count=" in vendor_data.text:
@@ -166,16 +157,6 @@ class PAParser(NITFFeedParser):
                 if word_count:
                     try:
                         item["word_count"] = int(word_count)
-                    except ValueError:
-                        pass
-
-    def parse_priority(self, resource, item):
-        for vendor_data in resource.findall("{http://www.xmlnews.org/namespaces/meta#}vendorData"):
-            if vendor_data.text and "PRESSUK_:PA Priority=" in vendor_data.text:
-                priority = vendor_data.text.split("PRESSUK_:PA Priority=")[-1].strip()
-                if priority:
-                    try:
-                        item["priority"] = int(priority)
                     except ValueError:
                         pass
 
@@ -188,16 +169,6 @@ class PAParser(NITFFeedParser):
                     keywords.append(keyword)
         if keywords:
             item["keywords"] = keywords
-
-    def parse_subject(self, resource, item):
-        """
-        Parse the subject codes from the Resource section.
-        """
-        subject_codes = resource.findall(
-            ".//xn:subjectCode", namespaces={"xn": "http://www.xmlnews.org/namespaces/meta#"}
-        )
-        if subject_codes:
-            item["subject"] = [{"qcode": code.text, "name": code.text} for code in subject_codes]
 
 
 register_feed_parser(PAParser.NAME, PAParser())

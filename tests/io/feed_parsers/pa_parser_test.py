@@ -80,26 +80,11 @@ class PAParserTestCase(TestCase):
         """
         self.assertIn("EDUCATION", self.item.get("keywords"))
 
-    def test_subject(self):
-        """
-        Test if the subject codes are correctly parsed.
-        """
-        subjects = self.item.get("subject")
-        self.assertEqual(len(subjects), 2)
-        self.assertIn({"qcode": "XC/any.company", "name": "XC/any.company"}, subjects)
-        self.assertIn({"qcode": "XC/any.private", "name": "XC/any.private"}, subjects)
-
     def test_word_count(self):
         """
         Test if the word count is correctly parsed.
         """
         self.assertEqual(self.item.get("word_count"), 749)
-
-    def test_priority(self):
-        """
-        Test if the priority is correctly parsed.
-        """
-        self.assertEqual(self.item.get("priority"), 4)
 
     def test_body_html(self):
         """
@@ -117,13 +102,4 @@ class PAParserTestCase(TestCase):
         self.assertEqual(
             self.item.get("usageterms"),
             "Press Association 2025",
-        )
-
-    def test_embargo(self):
-        """
-        Test if the embargo is correctly parsed.
-        """
-        self.assertEqual(
-            self.item.get("embargo"),
-            "2025-03-04T00:01:00+00:00",
         )
