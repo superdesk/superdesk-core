@@ -15,6 +15,11 @@ class AvailabilityResource(Resource):
             "required": True,
             "allowed": ["available", "unavailable", "partial"],
         },
+        "language": {
+            "type": "string",
+            "required": False,
+            "nullable": True,
+        },
         "start_time": {
             "type": "string",
             "required": False,
