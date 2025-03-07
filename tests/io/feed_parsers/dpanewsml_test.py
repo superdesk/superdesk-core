@@ -121,7 +121,6 @@ class DPANewsMLTestCase(TestCase):
                 "<p>Suderman reported from Richmond, Virginia</p>"
             )
 
-            print()
             self.assertEqual(self.item.get("body_html").strip(), expected_output.strip())
 
     def test_priority(self):
