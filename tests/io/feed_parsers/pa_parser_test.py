@@ -1,18 +1,17 @@
-#!/usr/bin/env python
 # -*- coding: utf-8; -*-
 #
 # This file is part of Superdesk.
 #
-# Copyright 2024, Sourcefabric z.u. and contributors.
+# Copyright 2025 Sourcefabric z.u. and contributors.
 #
 # For the full copyright and license information, please see the
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
 import os
+from superdesk.etree import etree
 from superdesk.tests import TestCase
 from superdesk.io.feed_parsers.pa_parser import PAParser
-from superdesk.etree import etree
 
 
 class PAParserTestCase(TestCase):
