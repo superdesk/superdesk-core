@@ -10,7 +10,7 @@
 
 from operator import itemgetter
 from copy import deepcopy
-from flask import current_app as app
+from flask import current_app as app, request
 from eve.utils import config, ParsedRequest
 import logging
 
@@ -178,7 +178,7 @@ class ArchivedService(BaseService):
         doc[config.ID_FIELD] = id_field
 
     def on_delete(self, doc):
-        self.validate_delete_action(doc)
+        self.validate_delete_action(doc, allow_all_types=not request)
 
     def delete(self, lookup):
         if app.testing and len(lookup) == 0:
