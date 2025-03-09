@@ -12,6 +12,7 @@
 import os
 import io
 import time
+from typing import Any
 import arrow
 import celery
 import shutil
@@ -494,12 +495,25 @@ def format_items(items):
     return ",\n".join(output)
 
 
+async def delete_entries_for(context, resource: str) -> None:
+    """
+    Attempts to remove all items from the resources MongoDB and/or Elastic.
+    First tries with async, otherwise it falls back to sync resources.
+    """
+
+    async_app = context.app.async_app
+
+    try:
+        await async_app.resources.get_resource_service(resource).delete_many({})
+    except KeyError:
+        get_resource_service(resource).delete_action()
+
+
 @given('empty "{resource}"')
 @async_run_until_complete
 async def step_impl_given_empty(context, resource):
     if not is_user_resource(resource):
-        async with context.app.test_request_context(context.app.config["URL_PREFIX"]):
-            get_resource_service(resource).delete_action()
+        await delete_entries_for(context, resource)
 
 
 @given('"{resource}"')
