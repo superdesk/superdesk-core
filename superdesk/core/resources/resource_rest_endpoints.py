@@ -9,6 +9,9 @@
 # at https://www.sourcefabric.org/superdesk/license
 
 import math
+import logging
+import traceback
+
 from typing import Optional, cast, Any, Literal
 from copy import deepcopy
 
@@ -42,6 +45,9 @@ from .model import ResourceModel
 from .resource_config import ResourceConfig
 from .validators import get_field_errors_from_pydantic_validation_error
 from .utils import combine_projection_args
+
+
+logger = logging.getLogger("superdesk")
 
 
 @dataclass
@@ -368,7 +374,7 @@ class ResourceRestEndpoints(RestEndpoints):
         issues = []
         return_code = 201
         for value in deepcopy(payload):
-            # Validate the provided item,
+            # Validate the provided item
             try:
                 for parent_link in self.endpoint_config.parent_links or []:
                     parent_item = parent_items.get(parent_link.resource_name)
@@ -385,6 +391,8 @@ class ResourceRestEndpoints(RestEndpoints):
                         ISSUES: get_field_errors_from_pydantic_validation_error(validation_error),
                     }
                 )
+                self._log_traceback(validation_error, "Validation error while creating item")
+
             except SuperdeskError as superdesk_error:
                 return_code = superdesk_error.status_code
                 # Let the Superdesk exception populate the issue dictionary
@@ -402,6 +410,7 @@ class ResourceRestEndpoints(RestEndpoints):
                         ISSUES: {"exception": str(exception)},
                     }
                 )
+                self._log_traceback(exception, "Unexpected exception while creating item")
 
         if self.endpoint_config.exclude_fields_in_response:
             # If projection is enabled, we fetch all newly created items with projection applied
@@ -413,7 +422,14 @@ class ResourceRestEndpoints(RestEndpoints):
         results: list[dict]
         results = [
             {
-                **self._populate_item_hateoas(request, model_instance.to_dict()),
+                **self._populate_item_hateoas(
+                    request,
+                    # make sure to include unset and default values
+                    model_instance.to_dict(
+                        exclude_unset=False,
+                        exclude_defaults=False,
+                    ),
+                ),
                 STATUS: STATUS_OK,
             }
             for model_instance in model_instances
@@ -499,6 +515,8 @@ class ResourceRestEndpoints(RestEndpoints):
         except ValidationError as validation_error:
             return_code = 400
             issues = get_field_errors_from_pydantic_validation_error(validation_error)
+            self._log_traceback(validation_error, "Validation error while updating item")
+
         except SuperdeskError as superdesk_error:
             return_code = superdesk_error.status_code
             # Let the Superdesk exception populate the issue dictionary
@@ -730,3 +748,8 @@ class ResourceRestEndpoints(RestEndpoints):
 
     async def on_fetched(self, request: Request, doc: RestGetResponse) -> None:
         pass
+
+    def _log_traceback(self, exception: Exception, message: str = "Exception occurred") -> None:
+        """Logs the exception message and the full traceback."""
+        logger.warn(f"{message}: {exception}")
+        logger.warn(traceback.format_exc())

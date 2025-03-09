@@ -28,8 +28,9 @@ from superdesk.publish_async.commands import transmit
 
 
 @when("we enqueue published")
-def step_impl_when_auth(context):
-    enqueue_published.apply_async()
+@async_run_until_complete
+async def step_impl_when_auth(context):
+    await enqueue_published.apply_async()
 
 
 @then("we get formatted item")
