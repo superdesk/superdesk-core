@@ -501,12 +501,12 @@ async def delete_entries_for(context, resource: str) -> None:
     First tries with async, otherwise it falls back to sync resources.
     """
 
-    async_app = context.app.async_app
-
-    try:
-        await async_app.resources.get_resource_service(resource).delete_many({})
-    except KeyError:
-        get_resource_service(resource).delete_action()
+    async with context.app.test_request_context(context.app.config["URL_PREFIX"]):
+        try:
+            async_app = context.app.async_app
+            await async_app.resources.get_resource_service(resource).delete_many({})
+        except KeyError:
+            get_resource_service(resource).delete_action()
 
 
 @given('empty "{resource}"')
