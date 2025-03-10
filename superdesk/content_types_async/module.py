@@ -6,9 +6,12 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
+from apps.content_types.content_types import CONTENT_TYPE_PRIVILEGE
 from superdesk.core.resources import ResourceConfig, MongoResourceConfig, MongoIndexOptions
+from superdesk.core.resources.resource_rest_endpoints import RestEndpointConfig
 from superdesk.types.content_types import ContentTypes
 from .service import ContentTypesService
+from superdesk.core.auth.privilege_rules import http_method_privilege_based_rules
 
 
 content_types_resource_config = ResourceConfig(
@@ -19,5 +22,16 @@ content_types_resource_config = ResourceConfig(
         indexes=[
             MongoIndexOptions(name="label_1", keys=[("label", 1)], unique=True),
         ],
+    ),
+    default_sort=[("priority", -1)],
+    rest_endpoints=RestEndpointConfig(
+        id_param_type=r'regex("[\w,.:-]+")',
+        auth=http_method_privilege_based_rules(
+            {
+                "POST": CONTENT_TYPE_PRIVILEGE,
+                "PATCH": CONTENT_TYPE_PRIVILEGE,
+                "DELETE": CONTENT_TYPE_PRIVILEGE,
+            }
+        ),
     ),
 )
