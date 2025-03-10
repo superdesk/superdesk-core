@@ -137,17 +137,6 @@ class PublishedItemService(BaseService, HighlightsSearchMixin):
 
     SEQ_KEY_NAME = "published_item_sequence_no"
 
-    def patch(self, id, updates):
-        """
-        FIXME: Temporary workaround until we find out why _id and guid are not in sync
-        when running tests from `superdesk-planning`. Without this, many tests fill fail.
-        """
-        item = self.find_one(req=None, guid=id)
-        if item:
-            id = item[ID_FIELD]
-
-        return super().patch(id, updates)
-
     def on_fetched(self, docs):
         """
         Overriding this to enhance the published article with the one in archive collection
