@@ -42,9 +42,10 @@ archive_resource_config = ResourceConfig(
             ),
         ],
     ),
-    rest_endpoints=RestEndpointConfig(
-        item_methods=["GET", "PATCH", "PUT"],
-        resource_methods=["GET", "POST"],
-        enable_cors=True,
-    ),
+    # FIXME: To be activated at a later point.
+    # rest_endpoints=RestEndpointConfig(
+    #     item_methods=["GET", "PATCH", "PUT"],
+    #     resource_methods=["GET", "POST"],
+    #     enable_cors=True,
+    # ),
 )

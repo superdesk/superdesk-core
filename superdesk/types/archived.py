@@ -40,4 +40,4 @@ class ArchivedResourceModel(ArchiveResourceModel):
     published_in_package: str
     # must be set explicitly, there is no versioning
     _current_version: int
-    archived_id: str
+    archived_id: str | None = None

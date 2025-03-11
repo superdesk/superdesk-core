@@ -18,15 +18,35 @@ import superdesk
 import superdesk.signals as signals
 from apps.archive.archive_media import ArchiveMediaService
 from apps.archive.common import (
-    remove_unwanted, update_state, set_item_expiry, remove_media_files,
-    on_create_item, on_duplicate_item, get_user, update_version,
-    set_sign_off, handle_existing_data, validate_schedule,
-    is_item_in_package, update_schedule_settings, ITEM_OPERATION,
-    ITEM_RESTORE, ITEM_CREATE, ITEM_UPDATE, ITEM_DUPLICATE,
-    ITEM_DUPLICATED_FROM, ITEM_DESCHEDULE, ARCHIVE as SOURCE,
-    LAST_PRODUCTION_DESK, LAST_AUTHORING_DESK, ITEM_FETCH,
-    convert_task_attributes_to_objectId, BROADCAST_GENRE,
-    set_dateline, get_subject, transtype_metadata
+    remove_unwanted,
+    update_state,
+    set_item_expiry,
+    remove_media_files,
+    on_create_item,
+    on_duplicate_item,
+    get_user,
+    update_version,
+    set_sign_off,
+    handle_existing_data,
+    validate_schedule,
+    is_item_in_package,
+    update_schedule_settings,
+    ITEM_OPERATION,
+    ITEM_RESTORE,
+    ITEM_CREATE,
+    ITEM_UPDATE,
+    ITEM_DUPLICATE,
+    ITEM_DUPLICATED_FROM,
+    ITEM_DESCHEDULE,
+    ARCHIVE as SOURCE,
+    LAST_PRODUCTION_DESK,
+    LAST_AUTHORING_DESK,
+    ITEM_FETCH,
+    convert_task_attributes_to_objectId,
+    BROADCAST_GENRE,
+    set_dateline,
+    get_subject,
+    transtype_metadata,
 )
 from apps.archive.highlights_search_mixin import HighlightsSearchMixin
 from apps.common.components.utils import get_component
@@ -44,14 +64,27 @@ from superdesk.errors import SuperdeskApiError
 from superdesk.flask import request, abort
 from superdesk.media.crop import CropService
 from superdesk.metadata.item import (
-    ITEM_STATE, CONTENT_STATE, CONTENT_TYPE, ITEM_TYPE, EMBARGO,
-    PUBLISH_SCHEDULE, SCHEDULE_SETTINGS, SIGN_OFF, ASSOCIATIONS, MEDIA_TYPES,
-    INGEST_ID, PROCESSED_FROM, PUBLISH_STATES, get_schema
+    ITEM_STATE,
+    CONTENT_STATE,
+    CONTENT_TYPE,
+    ITEM_TYPE,
+    EMBARGO,
+    PUBLISH_SCHEDULE,
+    SCHEDULE_SETTINGS,
+    SIGN_OFF,
+    ASSOCIATIONS,
+    MEDIA_TYPES,
+    INGEST_ID,
+    PROCESSED_FROM,
+    PUBLISH_STATES,
+    get_schema,
 )
 from superdesk.metadata.packages import LINKED_IN_PACKAGES, RESIDREF
 from superdesk.metadata.utils import (
-    is_normal_package, is_normal_package_async, aggregations,
-    get_elastic_highlight_query
+    is_normal_package,
+    is_normal_package_async,
+    aggregations,
+    get_elastic_highlight_query,
 )
 from superdesk.privilege import GLOBAL_SEARCH_PRIVILEGE
 from superdesk.resource_fields import ITEMS, ID_FIELD, VERSION, LAST_UPDATED, DATE_CREATED, ETAG
@@ -163,18 +196,11 @@ class AsyncArchiveService(AsyncResourceService[ArchiveResourceModel], Highlights
 
     Handles operations related to archive items.
     """
+
     resource_name = "archive"
     packageService = PackageService()
     mediaService = ArchiveMediaService()
     cropService = CropService()
-
-    async def on_fetched(self, docs) -> None:
-        """Overriding this to handle existing data in Mongo & Elastic."""
-        self.enhance_items(docs[ITEMS])
-
-    async def on_fetched_item(self, doc) -> None:
-        """Enhance a single fetched item."""
-        self.enhance_items([doc])
 
     def enhance_items(self, items) -> None:
         """Enhance items with additional data.
@@ -517,9 +543,9 @@ class AsyncArchiveService(AsyncResourceService[ArchiveResourceModel], Highlights
         """
         item = await super().find_one(req, **lookup)
 
-        if item and str(item.task.stage) in get_resource_service(
-            "users"
-        ).get_invisible_stages_ids(get_user().get("_id")):
+        if item and str(item.task.stage) in get_resource_service("users").get_invisible_stages_ids(
+            get_user().get("_id")
+        ):
             raise SuperdeskApiError.forbiddenError(_("User does not have permissions to read the item."))
 
         handle_existing_data(item)
@@ -926,6 +952,7 @@ class AsyncArchiveService(AsyncResourceService[ArchiveResourceModel], Highlights
         :param item: Item being edited/created
         :param updates: Item updates
         """
+
         def abort_if_readonly_stage(stage_id):
             stage = superdesk.get_resource_service("stages").find_one(req=None, _id=stage_id)
             if stage.get("local_readonly"):
@@ -1218,6 +1245,7 @@ class AsyncArchiveService(AsyncResourceService[ArchiveResourceModel], Highlights
         :param item: Item can be an "initial", "rewrite", or "translation"
         :return: Chain of items
         """
+
         async def get_item_translated_from(item):
             _item = item
             for _i in range(50):

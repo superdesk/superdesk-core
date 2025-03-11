@@ -23,12 +23,14 @@ archived_resource_config = ResourceConfig(
             MongoIndexOptions(
                 name="item_id_1",
                 keys=[("item_id", 1), ("background", 1)],
+                unique=False,
             ),
         ],
     ),
-    rest_endpoints=RestEndpointConfig(
-        item_methods=["GET", "PATCH", "DELETE"],
-        resource_methods=["GET"],
-        enable_cors=True,
-    ),
+    # FIXME: To be activated at a later point.
+    # rest_endpoints=RestEndpointConfig(
+    #     item_methods=["GET", "PATCH", "DELETE"],
+    #     resource_methods=["GET"],
+    #     enable_cors=True,
+    # ),
 )
