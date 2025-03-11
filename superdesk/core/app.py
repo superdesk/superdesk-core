@@ -8,16 +8,39 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
-from typing import Dict, List, Optional, Any, cast
 import importlib
+from typing import Dict, List, Optional, Any, cast
+from typing_extensions import TypeVar
 
 from superdesk.core.types import WSGIApp
 
+from .types import DefaultNoValue
 from .auth.user_auth import UserAuthProtocol
 from .privileges import PrivilegesRegistry
 
 
-def get_app_config(key: str, default: Optional[Any] = None) -> Optional[Any]:
+CONFIG_DATA_TYPE = TypeVar("CONFIG_DATA_TYPE")
+
+
+def get_app_config(key: str, default: Any | None = None) -> Any | None:
+    """
+    Retrieves the value of a configuration key from the application configuration. If the key is
+    not present, it will return the provided default value. The function first checks if there is
+    a global application instance, and it retrieves the configuration from it. If no global
+    application is available, it attempts to retrieve the configuration using the Quart current
+    application context. If both approaches fail, the function raises an exception.
+
+    Args:
+        key (str): The configuration key to retrieve.
+        default (Any | None, optional): The default value to return if the key is not found. Defaults to None.
+
+    Returns:
+        Any | None: The value of the requested configuration key, or the default value if the key is not found.
+
+    Raises:
+        RuntimeError: If no application context or global application is running.
+    """
+
     if _global_app is not None:
         return _global_app.wsgi.config.get(key, default)
 
@@ -29,6 +52,36 @@ def get_app_config(key: str, default: Optional[Any] = None) -> Optional[Any]:
         pass
 
     raise RuntimeError("Superdesk app is not running")
+
+
+def get_config(
+    data_type: type[CONFIG_DATA_TYPE], key: str, default: CONFIG_DATA_TYPE | object = DefaultNoValue
+) -> CONFIG_DATA_TYPE:
+    """
+    Fetches and casts a configuration value from the application configuration based on
+    the specified key. If the key is not present in the configuration, a default value
+    is used if provided. Otherwise, raises an error if the key is missing.
+
+    Parameters:
+        data_type (type[CONFIG_DATA_TYPE]): The expected type of the configuration value.
+        key (str): The configuration key to fetch the value for.
+        default (CONFIG_DATA_TYPE | object): Optional; The value to return if the
+            configuration key is not found. Defaults to `DefaultNoValue`, in which case
+            a `KeyError` is raised if the key is not found.
+
+    Returns:
+        CONFIG_DATA_TYPE: The configuration value, cast to the specified type.
+
+    Raises:
+        KeyError: Raised if the key is missing from the configuration and a default
+            value is not provided.
+    """
+
+    value = get_app_config(key, default)
+    if value is DefaultNoValue:
+        raise KeyError(f"Missing config '{key}'")
+
+    return cast(CONFIG_DATA_TYPE, value)
 
 
 class SuperdeskAsyncApp:

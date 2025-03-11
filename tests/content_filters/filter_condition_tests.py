@@ -13,22 +13,43 @@ import re
 import os
 from datetime import timedelta
 
+from bson import ObjectId
 from eve.utils import ParsedRequest
+
+from superdesk.types import (
+    ContentFiltersResource,
+    SubscribersResource,
+    FilterConditionsResource,
+    FilterConditionOperator,
+    ProductsResource,
+)
+
 from apps.content_filters.filter_condition.filter_condition_field import FilterConditionDeskField
 
 from superdesk.utc import utcnow
 from superdesk import get_resource_service
 from superdesk.tests import TestCase
-from apps.content_filters.filter_condition.filter_condition_service import FilterConditionService
 from apps.content_filters.filter_condition.filter_condition import FilterCondition
-from apps.content_filters.filter_condition.filter_condition_operator import FilterConditionOperator
+from apps.content_filters.filter_condition.filter_condition_operator import FilterConditionOperator as OperatorFactory
 from apps.content_filters.filter_condition.filter_condition_value import FilterConditionValue
 from apps.prepopulate.app_populate import AppPopulateCommand
+
+from superdesk.publish_async.filter_conditions.utils import check_similar_filter_conditions
+
+
+FILTER_CONDITION_IDS = [ObjectId(), ObjectId(), ObjectId(), ObjectId(), ObjectId()]
+CONTENT_FILTER_ID = ObjectId()
 
 
 class FilterConditionTests(TestCase):
     async def asyncSetUp(self):
         await super().asyncSetUp()
+
+        self.filter_conditions_service = FilterConditionsResource.get_service()
+        self.content_filters_service = ContentFiltersResource.get_service()
+        self.products_service = ProductsResource.get_service()
+        self.subscribers_service = SubscribersResource.get_service()
+
         self.req = ParsedRequest()
         async with self.app.test_request_context(self.app.config.get("URL_PREFIX")):
             self.articles = [
@@ -90,27 +111,54 @@ class FilterConditionTests(TestCase):
 
             self.app.data.insert("archive", self.articles)
 
-            self.app.data.insert(
-                "filter_conditions",
-                [{"_id": 1, "field": "headline", "operator": "like", "value": "tor", "name": "test-1"}],
+            await self.filter_conditions_service.create(
+                [
+                    {
+                        "_id": FILTER_CONDITION_IDS[0],
+                        "field": "headline",
+                        "operator": "like",
+                        "value": "tor",
+                        "name": "test-1",
+                    },
+                    {
+                        "_id": FILTER_CONDITION_IDS[1],
+                        "field": "urgency",
+                        "operator": "in",
+                        "value": "2",
+                        "name": "test-2",
+                    },
+                    {
+                        "_id": FILTER_CONDITION_IDS[2],
+                        "field": "urgency",
+                        "operator": "in",
+                        "value": "3,4,5",
+                        "name": "test-3",
+                    },
+                    {
+                        "_id": FILTER_CONDITION_IDS[3],
+                        "field": "urgency",
+                        "operator": "nin",
+                        "value": "1,2,3",
+                        "name": "test-4",
+                    },
+                    {
+                        "_id": FILTER_CONDITION_IDS[4],
+                        "field": "urgency",
+                        "operator": "in",
+                        "value": "2,5",
+                        "name": "test-5",
+                    },
+                ]
             )
-            self.app.data.insert(
-                "filter_conditions", [{"_id": 2, "field": "urgency", "operator": "in", "value": "2", "name": "test-2"}]
-            )
-            self.app.data.insert(
-                "filter_conditions",
-                [{"_id": 3, "field": "urgency", "operator": "in", "value": "3,4,5", "name": "test-2"}],
-            )
-            self.app.data.insert(
-                "filter_conditions",
-                [{"_id": 4, "field": "urgency", "operator": "nin", "value": "1,2,3", "name": "test-2"}],
-            )
-            self.app.data.insert(
-                "filter_conditions",
-                [{"_id": 5, "field": "urgency", "operator": "in", "value": "2,5", "name": "test-2"}],
-            )
-            self.app.data.insert(
-                "content_filters", [{"_id": 1, "content_filter": [{"expression": {"fc": [1]}}], "name": "soccer-only"}]
+
+            await self.content_filters_service.create(
+                [
+                    {
+                        "_id": CONTENT_FILTER_ID,
+                        "content_filter": [{"expression": {"fc": [FILTER_CONDITION_IDS[0]]}}],
+                        "name": "soccer-only",
+                    }
+                ]
             )
 
     def _setup_elastic_args(self, elastic_translation, search_type="filter"):
@@ -410,12 +458,12 @@ class FilterConditionTests(TestCase):
         self.assertEqual("2", docs[0]["_id"])
 
     async def test_get_mongo_operator(self):
-        self.assertEqual(FilterConditionOperator.factory("in").mongo_operator, "$in")
-        self.assertEqual(FilterConditionOperator.factory("nin").mongo_operator, "$nin")
-        self.assertEqual(FilterConditionOperator.factory("like").mongo_operator, "$regex")
-        self.assertEqual(FilterConditionOperator.factory("notlike").mongo_operator, "$not")
-        self.assertEqual(FilterConditionOperator.factory("startswith").mongo_operator, "$regex")
-        self.assertEqual(FilterConditionOperator.factory("endswith").mongo_operator, "$regex")
+        self.assertEqual(OperatorFactory.factory("in").mongo_operator, "$in")
+        self.assertEqual(OperatorFactory.factory("nin").mongo_operator, "$nin")
+        self.assertEqual(OperatorFactory.factory("like").mongo_operator, "$regex")
+        self.assertEqual(OperatorFactory.factory("notlike").mongo_operator, "$not")
+        self.assertEqual(OperatorFactory.factory("startswith").mongo_operator, "$regex")
+        self.assertEqual(OperatorFactory.factory("endswith").mongo_operator, "$regex")
 
     async def test_get_mongo_value(self):
         f = FilterCondition("urgency", "in", "1,2")
@@ -673,36 +721,82 @@ class FilterConditionTests(TestCase):
         self.assertTrue(f.does_match(self.articles[5]))
 
     async def test_are_equal1(self):
-        f = FilterConditionService()
-        new_doc = {"name": "A", "field": "urgency", "operator": "nin", "value": "2,3,4"}
-        doc = {"_id": 1, "name": "B", "field": "urgency", "operator": "nin", "value": "2,3,4"}
-        self.assertTrue(f._are_equal(new_doc, doc))
+        new_doc = FilterConditionsResource(
+            id=ObjectId(),
+            name="A",
+            field="urgency",
+            operator=FilterConditionOperator.NOT_IN,
+            value="2,3,4",
+        )
+        doc = FilterConditionsResource(
+            id=ObjectId(),
+            name="B",
+            field="urgency",
+            operator=FilterConditionOperator.NOT_IN,
+            value="2,3,4",
+        )
+        self.assertTrue(self.filter_conditions_service._are_equal(new_doc, doc))
 
     async def test_are_equal2(self):
-        f = FilterConditionService()
-        new_doc = {"name": "A", "field": "urgency", "operator": "nin", "value": "4,2,3"}
-        doc = {"_id": 1, "name": "B", "field": "urgency", "operator": "nin", "value": "2,3,4"}
-        self.assertTrue(f._are_equal(new_doc, doc))
+        new_doc = FilterConditionsResource(
+            id=ObjectId(),
+            name="A",
+            field="urgency",
+            operator=FilterConditionOperator.NOT_IN,
+            value="4,2,3",
+        )
+        doc = FilterConditionsResource(
+            id=ObjectId(),
+            name="B",
+            field="urgency",
+            operator=FilterConditionOperator.NOT_IN,
+            value="2,3,4",
+        )
+        self.assertTrue(self.filter_conditions_service._are_equal(new_doc, doc))
 
     async def test_are_equal3(self):
-        f = FilterConditionService()
-        new_doc = {"name": "A", "field": "urgency", "operator": "nin", "value": "jump,track"}
-        doc = {"_id": 1, "name": "B", "field": "urgency", "operator": "nin", "value": "tump,jrack"}
-        self.assertTrue(f._are_equal(new_doc, doc))
+        new_doc = FilterConditionsResource(
+            id=ObjectId(),
+            name="A",
+            field="urgency",
+            operator=FilterConditionOperator.NOT_IN,
+            value="jump,track",
+        )
+        doc = FilterConditionsResource(
+            id=ObjectId(),
+            name="B",
+            field="urgency",
+            operator=FilterConditionOperator.NOT_IN,
+            value="tump,jrack",
+        )
+        self.assertTrue(self.filter_conditions_service._are_equal(new_doc, doc))
 
     async def test_are_equal4(self):
-        f = FilterConditionService()
-        new_doc = {"name": "A", "field": "urgency", "operator": "nin", "value": "4,2,3"}
-        doc = {"_id": 1, "name": "B", "field": "urgency", "operator": "nin", "value": "2,3"}
-        self.assertFalse(f._are_equal(new_doc, doc))
+        new_doc = FilterConditionsResource(
+            id=ObjectId(),
+            name="A",
+            field="urgency",
+            operator=FilterConditionOperator.NOT_IN,
+            value="4,2,3",
+        )
+        doc = FilterConditionsResource(
+            id=ObjectId(),
+            name="B",
+            field="urgency",
+            operator=FilterConditionOperator.NOT_IN,
+            value="2,3",
+        )
+        self.assertFalse(self.filter_conditions_service._are_equal(new_doc, doc))
 
     async def test_if_fc_is_used(self):
-        f = FilterConditionService()
-        self.assertTrue(f._get_referenced_filter_conditions(1).count() == 1)
-        self.assertTrue(f._get_referenced_filter_conditions(2).count() == 0)
+        self.assertEqual(
+            len(await self.filter_conditions_service._get_referenced_filter_conditions(FILTER_CONDITION_IDS[0])), 1
+        )
+        self.assertEqual(
+            len(await self.filter_conditions_service._get_referenced_filter_conditions(FILTER_CONDITION_IDS[1])), 0
+        )
 
     async def test_check_similar(self):
-        f = get_resource_service("filter_conditions")
         filter_condition1 = {"field": "urgency", "operator": "in", "value": "2"}
         filter_condition2 = {"field": "urgency", "operator": "in", "value": "3"}
         filter_condition3 = {"field": "urgency", "operator": "in", "value": "1"}
@@ -715,12 +809,13 @@ class FilterConditionTests(TestCase):
             os.path.abspath(os.path.dirname("apps/prepopulate/data_init/vocabularies.json")), "vocabularies.json"
         )
         cmd.run(filename)
-        self.assertTrue(len(f.check_similar(filter_condition1)) == 2)
-        self.assertTrue(len(f.check_similar(filter_condition2)) == 1)
-        self.assertTrue(len(f.check_similar(filter_condition3)) == 0)
-        self.assertTrue(len(f.check_similar(filter_condition4)) == 3)
-        self.assertTrue(len(f.check_similar(filter_condition5)) == 1)
-        self.assertTrue(len(f.check_similar(filter_condition6)) == 1)
+
+        self.assertEqual(len(await check_similar_filter_conditions(filter_condition1)), 2)
+        self.assertEqual(len(await check_similar_filter_conditions(filter_condition2)), 1)
+        self.assertEqual(len(await check_similar_filter_conditions(filter_condition3)), 0)
+        self.assertEqual(len(await check_similar_filter_conditions(filter_condition4)), 3)
+        self.assertEqual(len(await check_similar_filter_conditions(filter_condition5)), 1)
+        self.assertEqual(len(await check_similar_filter_conditions(filter_condition6)), 1)
 
     async def test_mongo_using_place_filter_complete_string(self):
         f = FilterCondition("place", "in", "NSW")
@@ -773,5 +868,5 @@ class FilterConditionTests(TestCase):
     async def test_filter_condition_value_deserialized(self):
         desk_id = bson.ObjectId()
         field = FilterConditionDeskField("")
-        value = FilterConditionValue(FilterConditionOperator.factory("in"), desk_id)
+        value = FilterConditionValue(OperatorFactory.factory("in"), desk_id)
         self.assertEqual([str(desk_id)], value._get_value(field))

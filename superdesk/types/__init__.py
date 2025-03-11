@@ -4,7 +4,36 @@ from .desks import DesksResourceModel
 from .users import UsersResourceModel
 from .vocabularies import VocabulariesResourceModel
 
-__all__ = ["UsersResourceModel", "DesksResourceModel", "VocabulariesResourceModel"]
+from .products import ProductsResource, ProductTypes, ProductFilterType
+from .subscribers import SubscribersResource, SubscriberDestination, SubscriberSequenceSettings, SubscriberType
+from .sequences import SequencesResource
+from .content_filters import ContentFilterExpression, ContentFilter, ContentFiltersResource
+from .filter_conditions import FilterConditionOperator, FilterConditionFieldParam, FilterConditionsResource
+from .publish_queue import PublishQueueState, PublishQueueResource
+from .publish import PublishConsumer
+
+__all__ = [
+    "UsersResourceModel",
+    "DesksResourceModel",
+    "VocabulariesResourceModel",
+    "ProductsResource",
+    "ProductTypes",
+    "ProductFilterType",
+    "SubscribersResource",
+    "SubscriberDestination",
+    "SubscriberSequenceSettings",
+    "SubscriberType",
+    "SequencesResource",
+    "ContentFilterExpression",
+    "ContentFilter",
+    "ContentFiltersResource",
+    "FilterConditionOperator",
+    "FilterConditionFieldParam",
+    "FilterConditionsResource",
+    "PublishQueueState",
+    "PublishQueueResource",
+    "PublishConsumer",
+]
 
 
 class WebsocketMessageFilterConditions(TypedDict, total=False):

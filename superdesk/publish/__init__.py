@@ -19,8 +19,6 @@ from typing import Any, NamedTuple, Dict, List, Callable, Union, TypedDict
 
 from bson import ObjectId
 
-from superdesk.celery_app import celery
-from superdesk.publish.publish_content import PublishContent
 from superdesk import get_backend
 
 logger = logging.getLogger(__name__)
@@ -75,16 +73,9 @@ def register_transmitter_file_provider(provider: TransmitterFileProvider):
     registered_transmitter_file_providers.append(provider)
 
 
-@celery.task(soft_time_limit=1800, expires=10)
-def transmit():
-    """Transmit items from ``publish_queue`` collection."""
-    PublishContent().run()
-
-
 # must be imported for registration
 from superdesk.publish.subscribers import SubscribersResource, SubscribersService  # NOQA
 from superdesk.publish.publish_queue import PublishQueueResource, PublishQueueService  # NOQA
-from superdesk.publish.subscriber_token import SubscriberTokenResource, SubscriberTokenService  # NOQA
 
 
 def init_app(app) -> None:
@@ -102,8 +93,6 @@ def init_app(app) -> None:
     endpoint_name = "publish_queue"
     service = PublishQueueService(endpoint_name, backend=get_backend())
     PublishQueueResource(endpoint_name, app=app, service=service)
-
-    superdesk.register_resource("subscriber_token", SubscriberTokenResource, SubscriberTokenService)
 
     app.client_config.update(
         {

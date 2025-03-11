@@ -37,6 +37,7 @@ from wooper.assertions import assert_in, assert_equal, assertions, assert_not_eq
 from wooper.general import fail, apply_path, WooperAssertionError, parse_json_input
 from wooper.expect import expect_headers_contain
 
+from superdesk.core import get_current_async_app
 from superdesk.resource_fields import ID_FIELD, LAST_UPDATED, DATE_CREATED, VERSION, ETAG
 import superdesk
 from superdesk.core import json
@@ -111,7 +112,7 @@ async def fail_and_print_body_async(response, message):
 
 async def expect_json_async(response, expected_json, path=None):
     """
-    checks if json response equals some json,
+    Checks if json response equals some json,
 
     Note: Copied from wooper.expect.expect_json to support Quart ``await response.get_data()``
 
@@ -135,7 +136,7 @@ async def assert_and_print_body_async(response, assert_function, first, second, 
 
 async def expect_json_contains_async(response, expected_json, path=None, reverse_expectation=False):
     """
-    checks if json response contains some json subset,
+    Checks if json response contains some json subset,
 
     Note: Copied from wooper.expect.expect_json_contains_async to support Quart ``await response.get_data()``
 
@@ -173,7 +174,7 @@ async def expect_json_contains_async(response, expected_json, path=None, reverse
 
 async def expect_json_not_contains_async(response, expected_json, path=None):
     """
-    checks if json response not contains some json subset,
+    Checks if json response not contains some json subset,
 
     Note: Copied from wooper.expect.expect_json_not_contains to support Quart ``await response.get_data()``
 
@@ -375,7 +376,8 @@ async def assert_ok(response):
     """Assert we get ok status within api response."""
     await expect_status_in(response, (200, 201))
     data = await get_json_data(response)
-    assert data.get("_status") == "OK"
+    status = data.get("_status")
+    assert status == "OK", f"Expected _status=='OK', got '{status}'"
 
 
 async def get_json_data(response):
@@ -2771,9 +2773,9 @@ async def run_overdue_schedule_jobs(context):
 @async_run_until_complete
 async def transmit_items(context):
     async with context.app.test_request_context(context.app.config["URL_PREFIX"]):
-        from superdesk.publish.publish_content import PublishContent
+        from superdesk.publish_async.controller.exchanges import get_exchange_factory
 
-        PublishContent().run()
+        await get_exchange_factory().process_pending_tasks()
 
 
 @when('we remove item "{_id}" from mongo')
@@ -3105,3 +3107,19 @@ async def then_we_get_picture_metadta(context, media):
         metadata = read_metadata(binary.read())
     context_data = json.loads(apply_placeholders(context, context.text))
     assert json_match(context_data, metadata), str(context_data) + "\n != \n" + str(metadata)
+
+
+@then('we check "{resource}" db item "{item_id}"')
+@async_run_until_complete
+async def check_resource_db_item(context, resource: str, item_id: str):
+    async with context.app.test_request_context(context.app.config["URL_PREFIX"]):
+        async_app = get_current_async_app()
+        service = async_app.resources.get_resource_service(resource)
+
+    item_id = apply_placeholders(context, item_id)
+    item = await service.find_by_id(item_id)
+    assert item is not None, "Item not found"
+
+    item_dict = item.to_dict()
+    context_data = json.loads(apply_placeholders(context, context.text))
+    assert json_match(context_data, item_dict, None), str(context_data) + "\n != \n" + str(item_dict)

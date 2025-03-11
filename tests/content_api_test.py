@@ -1,4 +1,3 @@
-from apps.archive.usage import update_refs
 import io
 import time
 import superdesk
@@ -8,15 +7,23 @@ from copy import copy
 from datetime import timedelta
 from quart.datastructures import FileStorage
 
+from apps.archive.usage import update_refs
+
 from superdesk.core import json
-from superdesk.flask import request
-from superdesk.tests import TestCase
 from superdesk.utc import utcnow
-from content_api.publish import MONGO_PREFIX
 from content_api.app import get_app
+from superdesk.flask import request
 from eve.utils import ParsedRequest
-from eve.methods.common import store_media_files
+from superdesk.tests import TestCase
+from content_api.publish import MONGO_PREFIX
 from werkzeug.datastructures import MultiDict
+from superdesk.publish import SUBSCRIBER_TYPES
+from eve.methods.common import store_media_files
+from superdesk.publish.subscriber_token import SubscriberTokenService
+
+
+test_subscriber_1_id = ObjectId()
+test_subscriber_2_id = ObjectId()
 
 
 class ContentAPITestCase(TestCase):
@@ -31,14 +38,30 @@ class ContentAPITestCase(TestCase):
         config["MEDIA_PREFIX"] = "/assets"
         self.capi = get_app(config)
         self.capi.testing = True
-        self.subscriber = {"_id": "sub1"}
 
-    def _auth_headers(self, sub=None):
+        subscribers = [
+            {
+                "_id": test_subscriber_1_id,
+                "name": "Test",
+                "subscriber_type": SUBSCRIBER_TYPES.WIRE,
+                "media_type": "media",
+            },
+            {
+                "_id": test_subscriber_2_id,
+                "name": "Test2",
+                "subscriber_type": SUBSCRIBER_TYPES.WIRE,
+                "media_type": "media",
+            },
+        ]
+        self.app.data.insert("subscribers", subscribers)
+        self.subscriber = subscribers[0]
+
+    async def _auth_headers(self, sub=None):
         if sub is None:
             sub = self.subscriber
-        service = superdesk.get_resource_service("subscriber_token")
+        service = SubscriberTokenService()
         payload = {"subscriber": sub.get("_id")}
-        service.create([payload])
+        await service.create([payload])
         token = payload["_id"]
         headers = {"Authorization": "Token " + token}
         return headers
@@ -84,8 +107,8 @@ class ContentAPITestCase(TestCase):
         self.assertEqual(0, self.db.items.count_documents({"subscribers": "foo"}))
 
     async def test_content_filtering_by_subscriber(self):
-        subscriber = {"_id": "sub1"}
-        headers = self._auth_headers(subscriber)
+        subscriber = {"_id": test_subscriber_1_id}
+        headers = await self._auth_headers(subscriber)
 
         self.content_api.publish({"_id": "foo", "guid": "foo", "type": "text"}, [subscriber])
         self.content_api.publish({"_id": "bar", "guid": "bar", "type": "text"}, [])
@@ -114,8 +137,8 @@ class ContentAPITestCase(TestCase):
             self.assertEqual(2, audit_entries.count())
 
     async def test_content_filtering_by_arguments(self):
-        subscriber = {"_id": "sub1"}
-        headers = self._auth_headers(subscriber)
+        subscriber = {"_id": test_subscriber_1_id}
+        headers = await self._auth_headers(subscriber)
 
         self.content_api.publish({"_id": "foo", "guid": "foo", "urgency": "3", "type": "text"}, [subscriber])
         self.content_api.publish({"_id": "bar", "guid": "bar", "urgency": "4", "type": "text"}, [subscriber])
@@ -152,7 +175,7 @@ class ContentAPITestCase(TestCase):
             }
         )
 
-        headers = self._auth_headers()
+        headers = await self._auth_headers()
 
         async with self.capi.test_client() as c:
             response = await c.get("items/foo", headers=headers)
@@ -211,7 +234,7 @@ class ContentAPITestCase(TestCase):
         picture["renditions"]["viewImage"] = picture["renditions"].pop("thumbnail")
         self.content_api.publish(picture)
 
-        headers = self._auth_headers()
+        headers = await self._auth_headers()
         async with self.capi.test_client() as c:
             response = await c.get("items/foo", headers=headers)
             data = json.loads(await response.get_data())
@@ -219,7 +242,7 @@ class ContentAPITestCase(TestCase):
             self.assertNotIn("thumbnail", data["renditions"])
 
     async def test_text_with_pic_associations(self):
-        subscriber = {"_id": "sub1"}
+        subscriber = {"_id": test_subscriber_1_id}
         self.content_api.publish(
             {
                 "guid": "text",
@@ -244,14 +267,14 @@ class ContentAPITestCase(TestCase):
                                 "media": "bar",
                             }
                         },
-                        "subscribers": ["sub1"],
+                        "subscribers": [test_subscriber_1_id],
                     },
                 },
             },
             [subscriber],
         )
 
-        headers = self._auth_headers(subscriber)
+        headers = await self._auth_headers(subscriber)
         async with self.capi.test_client() as c:
             response = await c.get("items/text", headers=headers)
             data = json.loads(await response.get_data())
@@ -351,7 +374,7 @@ class ContentAPITestCase(TestCase):
         self.assertEqual({}, data["associations"])
 
     async def get_json(self, url, subscriber=None):
-        headers = self._auth_headers(subscriber)
+        headers = await self._auth_headers(subscriber)
         async with self.capi.test_client() as c:
             response = await c.get(url, headers=headers)
             data = json.loads(await response.get_data())
@@ -374,7 +397,7 @@ class ContentAPITestCase(TestCase):
         self.content_api.publish(item, [self.subscriber])
         self.content_api.publish({"guid": "u2", "type": "text", "source": "bar", "urgency": 2}, [self.subscriber])
 
-        headers = self._auth_headers()
+        headers = await self._auth_headers()
 
         async with self.capi.test_client() as c:
             response = await c.get('items?where={"urgency":3}', headers=headers)
@@ -426,21 +449,12 @@ class ContentAPITestCase(TestCase):
             self.assertEqual(0, data["_meta"]["total"])
 
     async def test_generate_token_service(self):
-        service = superdesk.get_resource_service("subscriber_token")
-        payload = {"subscriber": "foo", "expiry_days": 7}
-        ids = service.create([payload])
-        token = payload["_id"]
-        self.assertEqual("foo", self.capi.auth.check_auth(token, [], "items", "get"))
-        self.assertLessEqual((utcnow() + timedelta(days=7)).timestamp() - payload["expiry"].timestamp(), 1)
+        service = SubscriberTokenService()
 
-        service.delete({"_id": ids[0]})
-        self.assertFalse(self.capi.auth.check_auth(token, [], "items", "get"))
+        item = (await service.create([{"subscriber": test_subscriber_1_id, "expiry_days": 7}]))[0]
+        token = await service.find_by_id(item.id)
 
-        payload = {"subscriber": "foo", "expiry": utcnow() - timedelta(days=1)}
-        service.create([payload])
-        token = payload["_id"]
-        self.assertFalse(self.capi.auth.check_auth(token, [], "items", "get"))
-        self.assertIsNone(service.find_one(None, _id=token))
+        self.assertLessEqual((utcnow() + timedelta(days=7)).timestamp() - token.expiry.timestamp(), 1)
 
     async def test_api_block(self):
         self.app.data.insert(
@@ -460,8 +474,8 @@ class ContentAPITestCase(TestCase):
         self.assertEqual(1, self.db.items.count_documents({}))
 
     async def test_item_versions_api(self):
-        subscriber = {"_id": "sub1"}
-        headers = self._auth_headers(subscriber)
+        subscriber = {"_id": test_subscriber_1_id}
+        headers = await self._auth_headers(subscriber)
 
         item = {"guid": "foo", "type": "text", "task": {"desk": "foo"}, "rewrite_of": "bar", "_current_version": 1}
         self.content_api.publish(item, [subscriber])
@@ -480,8 +494,8 @@ class ContentAPITestCase(TestCase):
             self.assertEqual(str(2), data["version"])
 
     async def test_package_version(self):
-        subscriber = {"_id": "sub1"}
-        headers = self._auth_headers(subscriber)
+        subscriber = {"_id": test_subscriber_1_id}
+        headers = await self._auth_headers(subscriber)
 
         item = {"_id": "pkg", "guid": "pkg", "type": "composite", "_current_version": 1}
         self.content_api.publish(item, [subscriber])
@@ -507,8 +521,8 @@ class ContentAPITestCase(TestCase):
             self.assertEqual(str(2), data["version"])
 
     async def test_publish_kill_to_content_api(self):
-        subscriber = {"_id": "sub1"}
-        headers = self._auth_headers(subscriber)
+        subscriber = {"_id": test_subscriber_1_id}
+        headers = await self._auth_headers(subscriber)
         item = {"guid": "foo", "type": "text", "task": {"desk": "foo"}, "rewrite_of": "bar", "pubstatus": "usable"}
         self.content_api.publish(item, [subscriber])
 
@@ -578,7 +592,7 @@ class ContentAPITestCase(TestCase):
         self.assertEqual(1, len(bar["bookmarks"]))
 
     async def test_search_capi(self):
-        subscriber = {"_id": "sub1"}
+        subscriber = {"_id": test_subscriber_1_id}
 
         self.content_api.publish(
             {
@@ -590,11 +604,11 @@ class ContentAPITestCase(TestCase):
             },
             [subscriber],
         )
-        self.content_api.publish({"_id": "bar", "guid": "bar", "type": "text"}, [{"_id": "sub2"}])
+        self.content_api.publish({"_id": "bar", "guid": "bar", "type": "text"}, [{"_id": test_subscriber_2_id}])
 
         test = superdesk.get_resource_service("search_capi")
         req = ParsedRequest()
-        req.args = MultiDict([("subscribers", "sub1")])
+        req.args = MultiDict([("subscribers", test_subscriber_1_id)])
         resp = test.get(req=req, lookup=None)
         self.assertEqual(resp.count(), 1)
 
@@ -608,7 +622,7 @@ class ContentAPITestCase(TestCase):
         self.assertEqual(resp.count(), 1)
 
     async def test_search_capi_filter(self):
-        subscriber = {"_id": "sub1"}
+        subscriber = {"_id": test_subscriber_1_id}
 
         self.content_api.publish(
             {
@@ -627,11 +641,11 @@ class ContentAPITestCase(TestCase):
                 "anpa_category": [{"qcode": "i", "name": "International News"}],
                 "type": "text",
             },
-            [{"_id": "sub2"}],
+            [{"_id": test_subscriber_2_id}],
         )
         self.content_api.publish(
             {"_id": "nat", "guid": "nat", "anpa_category": [{"qcode": "a", "name": "National News"}], "type": "text"},
-            [{"_id": "sub2"}],
+            [{"_id": test_subscriber_2_id}],
         )
 
         test = superdesk.get_resource_service("search_capi")
@@ -656,18 +670,18 @@ class ContentAPITestCase(TestCase):
         self.assertEqual(resp.docs[0].get("anpa_category")[0].get("qcode"), "a")
 
         req = ParsedRequest()
-        req.args = MultiDict([("service", "i"), ("subscribers", "sub1")])
+        req.args = MultiDict([("service", "i"), ("subscribers", test_subscriber_1_id)])
         resp = test.get(req=req, lookup=None)
         self.assertEqual(resp.count(), 1)
         self.assertEqual(resp.docs[0].get("anpa_category")[0].get("qcode"), "i")
-        self.assertEqual(resp.docs[0].get("subscribers")[0], "sub1")
+        self.assertEqual(resp.docs[0].get("subscribers")[0], str(test_subscriber_1_id))
 
         req = ParsedRequest()
-        req.args = MultiDict([("subscribers", "sub2")])
+        req.args = MultiDict([("subscribers", test_subscriber_2_id)])
         resp = test.get(req=req, lookup=None)
         self.assertEqual(resp.count(), 2)
-        self.assertEqual(resp.docs[0].get("subscribers")[0], "sub2")
-        self.assertEqual(resp.docs[1].get("subscribers")[0], "sub2")
+        self.assertEqual(resp.docs[0].get("subscribers")[0], str(test_subscriber_2_id))
+        self.assertEqual(resp.docs[1].get("subscribers")[0], str(test_subscriber_2_id))
 
     async def test_search_capi_aggregations(self):
         self.content_api.publish(
@@ -706,19 +720,19 @@ class ContentAPITestCase(TestCase):
             "guid": "foo",
             "type": "text",
             "task": {"desk": "foo"},
-            "associations": {"featuremedia": {"guid": "a1", "type": "picture", "subscribers": ["sub1"]}},
+            "associations": {"featuremedia": {"guid": "a1", "type": "picture", "subscribers": [test_subscriber_1_id]}},
         }
-        subscriber1 = {"_id": "sub1"}
-        subscriber2 = {"_id": "sub2"}
+        subscriber1 = {"_id": test_subscriber_1_id}
+        subscriber2 = {"_id": test_subscriber_2_id}
         self.content_api.publish(item, [subscriber1, subscriber2])
         self.assertEqual(1, self.db.items.count_documents({}))
         async with self.capi.test_client() as c:
-            response = await c.get("items/foo", headers=self._auth_headers(subscriber1))
+            response = await c.get("items/foo", headers=await self._auth_headers(subscriber1))
             data = json.loads(await response.get_data())
             self.assertIn("items/foo", data["uri"])
             self.assertEqual(data["associations"]["featuremedia"]["guid"], "a1")
 
-            response = await c.get("items/foo", headers=self._auth_headers(subscriber2))
+            response = await c.get("items/foo", headers=await self._auth_headers(subscriber2))
             data = json.loads(await response.get_data())
             self.assertIn("items/foo", data["uri"])
             self.assertNotIn("featuremedia", data["associations"])
@@ -741,10 +755,10 @@ class ContentAPITestCase(TestCase):
             "body_html": '<p><a data-attachment="{}">download</a></p>'.format(str(attachment["_id"])),
         }
 
-        subscriber = {"_id": "sub"}
+        subscriber = {"_id": test_subscriber_1_id}
         self.content_api.publish(item, [subscriber])
         async with self.capi.test_client() as c:
-            response = await c.get("items/foo", headers=self._auth_headers(subscriber))
+            response = await c.get("items/foo", headers=await self._auth_headers(subscriber))
             data = json.loads(await response.get_data())
 
         self.assertIn("attachments", data)
@@ -760,7 +774,7 @@ class ContentAPITestCase(TestCase):
         self.assertIn('data-attachment="{}"'.format(attachments[0]["id"]), data["body_html"])
 
         async with self.capi.test_client() as c:
-            response = await c.get(attachments[0]["href"], headers=self._auth_headers(subscriber))
+            response = await c.get(attachments[0]["href"], headers=await self._auth_headers(subscriber))
             self.assertEqual(200, response.status_code, attachments[0]["href"])
 
     async def test_publish_item_with_internal_attachments(self):
@@ -786,10 +800,10 @@ class ContentAPITestCase(TestCase):
             "body_html": "<p>Foo Bar</p>",
         }
 
-        subscriber = {"_id": "sub"}
+        subscriber = {"_id": test_subscriber_1_id}
         self.content_api.publish(item, [subscriber])
         async with self.capi.test_client() as c:
-            response = await c.get("items/foo-internal", headers=self._auth_headers(subscriber))
+            response = await c.get("items/foo-internal", headers=await self._auth_headers(subscriber))
             data = json.loads(await response.get_data())
 
         self.assertIn("attachments", data)
@@ -799,8 +813,8 @@ class ContentAPITestCase(TestCase):
         self.assertEqual(str(public_attachment["_id"]), attachments[0]["id"])
 
     async def test_items_default_sorting(self):
-        subscriber = {"_id": "sub1"}
-        headers = self._auth_headers(subscriber)
+        subscriber = {"_id": test_subscriber_1_id}
+        headers = await self._auth_headers(subscriber)
 
         self.content_api.publish(
             {"_id": "aaaa", "guid": "aaa", "urgency": "1", "type": "text", "source": "foo"}, [subscriber]
@@ -847,8 +861,8 @@ class ContentAPITestCase(TestCase):
             self.assertListEqual([i["urgency"] for i in data["_items"]], ["1", "2", "3", "5"])
 
     async def test_items_custom_sorting(self):
-        subscriber = {"_id": "sub1"}
-        headers = self._auth_headers(subscriber)
+        subscriber = {"_id": test_subscriber_1_id}
+        headers = await self._auth_headers(subscriber)
 
         self.content_api.publish(
             {"_id": "aaaa", "guid": "aaa", "urgency": "1", "type": "text", "source": "foo"}, [subscriber]

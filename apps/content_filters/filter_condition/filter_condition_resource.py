@@ -86,6 +86,8 @@ class FilterConditionResource(Resource):
         "name_1": ([("name", 1)], {"unique": True}),
     }
 
+    internal_resource = True
+
     def pre_request_post(self, request):
         self._init_allowed_filters()
 

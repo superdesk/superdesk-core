@@ -121,6 +121,9 @@ class BaseModel(PydanticModel):
         default_params.update(kwargs)
         return self.model_dump_json(**default_params)
 
+    def clone(self) -> Self:
+        return self.model_copy(deep=True)
+
     def clone_with(self, updates: dict[str, Any]) -> Self:
         """
         Deeply clones the instance and applies updates with proper validation.
