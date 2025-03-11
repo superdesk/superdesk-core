@@ -3,8 +3,8 @@ from enum import Enum, unique
 
 from pydantic import Field, field_validator
 
-from superdesk.core.resources import ResourceModel, fields, ModelWithVersions
-from superdesk.types.base import CVItemWithCode, ContentType, Place
+from superdesk.core.resources import fields, ModelWithVersions
+from superdesk.types.base import BaseContentItem, CVItemWithCode, ContentType, Place
 
 
 
@@ -17,7 +17,7 @@ class PubStatusType(str, Enum):
 
 
 
-class ContentAPIItem(ResourceModel, ModelWithVersions):
+class ContentAPIItem(BaseContentItem, ModelWithVersions):
     description_html: str | None = None
     located: str | None = None
     mimetype: fields.Keyword | None = None
