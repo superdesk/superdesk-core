@@ -29,9 +29,11 @@ class DesksResourceModel(ResourceModel):
     content_profiles: dict[str, Any] = Field(default_factory=dict)
     desk_language: str
     monitoring_default_view: MonitoringViewEnum | None = None
-    default_content_profile: Annotated[ObjectId, validate_data_relation_async("content_types")] | None = None
+    default_content_profile: Annotated[str | ObjectId, validate_data_relation_async("content_types")] | None = None
     default_content_template: Annotated[ObjectId, validate_data_relation_async("content_templates")] | None = None
-    slack_channel_name: str = Field(description="Name of a Slack channel that may be associated with the desk")
+    slack_channel_name: str = Field(
+        description="Name of a Slack channel that may be associated with the desk", default=""
+    )
     preferred_cv_items: dict[str, Any] = Field(default_factory=dict, description="Desk prefered vocabulary items")
     preserve_published_content: bool = Field(
         default=False,
@@ -41,3 +43,8 @@ class DesksResourceModel(ResourceModel):
         default_factory=dict, description="Store SAMS's Desk settings on the Desk items"
     )
     email: str | None = None
+
+    @classmethod
+    async def get_desk_name(cls, desk_id: ObjectId | str) -> str:
+        desk = await cls.get_service().find_by_id(ObjectId(desk_id))
+        return desk.name or "" if desk else ""

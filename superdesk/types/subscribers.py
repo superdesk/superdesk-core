@@ -2,6 +2,7 @@ from typing import Annotated
 from typing_extensions import Self
 from datetime import datetime
 from enum import Enum, unique
+from itertools import chain
 
 from pydantic import Field
 
@@ -76,6 +77,12 @@ class SubscribersResource(ResourceModelWithObjectId):
         return [subscriber for subscriber in subscribers if not subscriber.is_digital()]
 
     @classmethod
-    async def get_names(cls, lookup: dict) -> list[str]:
-        cursor = await cls.get_service().search(lookup)
+    async def get_names(cls, lookup: dict | None = None) -> list[str]:
+        cursor = await cls.get_service().search(lookup or {})
         return [subscriber.name async for subscriber in cursor]
+
+    @classmethod
+    async def get_emails(cls, lookup: dict | None = None) -> list[str]:
+        cursor = await cls.get_service().search(lookup or {})
+        emails = [subscriber.email.split(",") async for subscriber in cursor if subscriber.email]
+        return list(set(chain(*emails)))

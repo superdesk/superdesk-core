@@ -4,12 +4,13 @@ from datetime import datetime
 
 from superdesk.core.resources import ResourceModelWithObjectId, fields
 from superdesk.core.resources.validators import validate_data_relation_async
-
+from superdesk.default_settings import ExchangeConfig
 from .subscribers import SubscriberDestination
 
 
 @unique
 class PublishQueueState(str, Enum):
+    ROUTING = "routing"
     PENDING = "pending"
     IN_PROGRESS = "in-progress"
     RETRYING = "retrying"
@@ -54,5 +55,10 @@ class PublishQueueResource(ResourceModelWithObjectId):
     retry_attempt: int = 0
     next_retry_attempt_at: datetime | None = None
     ingest_provider: Annotated[fields.ObjectId | None, validate_data_relation_async("ingest_providers")] = None
-    associated_items: list[dict] | None = None
+    associated_items: list[str] | None = None
     priority: bool | None = None
+
+    # Exchange config used for processing this task
+    exchange: ExchangeConfig | None = None
+    is_content_api: bool | None = None
+    item: dict | None = None  # only populated for Tasks designated for the ContentAPI

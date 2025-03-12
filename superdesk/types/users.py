@@ -18,7 +18,8 @@ from pydantic import Field
 from superdesk.core.resources import ResourceModel, fields
 from superdesk.core.resources.fields import ObjectId
 from superdesk.core.resources.validators import validate_unique_value_async, validate_data_relation_async
-from superdesk.types.enums import UserTypeEnum
+
+from .enums import UserTypeEnum
 
 
 class UsersResourceModel(ResourceModel):

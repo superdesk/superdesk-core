@@ -8,8 +8,7 @@ from superdesk.core.resources import AsyncResourceService
 from superdesk.errors import SuperdeskApiError
 from superdesk.notification import push_notification
 from superdesk.resource_fields import ID_FIELD
-from superdesk.types import DesksResourceModel
-from superdesk.types.enums import DeskTypeEnum
+from superdesk.types import DesksResourceModel, DeskTypeEnum
 
 
 class DesksAsyncService(AsyncResourceService[DesksResourceModel]):
