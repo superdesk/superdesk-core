@@ -125,3 +125,6 @@ class HybridAppContextWorkerTask(HybridAppContextTask):
             return await async_result.get()
 
         return super().apply_async(args=args, kwargs=kwargs, **other_kwargs)
+
+    async def delay(self, *args, **kwargs) -> Any:
+        return await self.apply_async(args, kwargs)
