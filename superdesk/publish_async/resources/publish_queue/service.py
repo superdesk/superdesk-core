@@ -7,7 +7,7 @@ from superdesk.core.resources import AsyncResourceService
 from superdesk.errors import SuperdeskApiError
 
 from superdesk.types import PublishQueueResource, SubscribersResource, PublishQueueState
-from superdesk.publish_async.subscribers.utils import generate_sequence_number
+from superdesk.publish_async.resources.subscribers.utils import generate_sequence_number
 from superdesk.notification import push_notification
 
 

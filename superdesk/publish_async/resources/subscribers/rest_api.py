@@ -2,11 +2,9 @@ from typing import cast
 
 from superdesk.core import json
 from superdesk.core.types import Request, Response, SearchRequest, RestGetResponse, RestResponseMeta
-from superdesk.core.resources import ResourceRestEndpoints, ItemRequestUrlArgs
-from superdesk.core.web import ItemRequestViewArgs
+from superdesk.core.resources import ResourceRestEndpoints
 
-from superdesk.types import SubscribersResource
-from .utils import _get_subscribers_by_filter_condition, get_subscriber_destination_id
+from .utils import _get_subscribers_by_filter_condition
 
 
 class SubscriberRestEndpoints(ResourceRestEndpoints):

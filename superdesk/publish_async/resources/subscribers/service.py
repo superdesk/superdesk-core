@@ -1,6 +1,6 @@
 from typing import Any
 
-from superdesk.core import get_app_config
+from superdesk.core import get_config
 from superdesk.core.resources import AsyncResourceService
 
 from superdesk.types import (
@@ -78,7 +78,7 @@ class SubscribersService(AsyncResourceService[SubscribersResource]):
 
         min = 1 if subscriber.sequence_num_settings.min is None else subscriber.sequence_num_settings.min
         max = (
-            get_app_config("MAX_VALUE_OF_PUBLISH_SEQUENCE")
+            get_config(int, "MAX_VALUE_OF_PUBLISH_SEQUENCE")
             if subscriber.sequence_num_settings.max is None
             else subscriber.sequence_num_settings.max
         )

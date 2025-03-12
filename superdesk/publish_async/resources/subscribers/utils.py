@@ -8,12 +8,12 @@ from superdesk.types import (
     SubscriberDestination,
     ProductsResource,
 )
-from superdesk.core import get_app_config
+from superdesk.core import get_config
 from superdesk.resource import build_custom_hateoas
 from superdesk.utils import get_dict_hash
 
-from superdesk.publish_async.filter_conditions.utils import check_similar_filter_conditions
-from superdesk.publish_async.content_filters.utils import get_content_filters_by_filter_condition
+from superdesk.publish_async.resources.filter_conditions.utils import check_similar_filter_conditions
+from superdesk.publish_async.resources.content_filters.utils import get_content_filters_by_filter_condition
 
 
 logger = logging.getLogger(__name__)
@@ -41,7 +41,7 @@ async def generate_sequence_number(subscriber: SubscribersResource) -> int:
 
     assert subscriber is not None, "Subscriber can't be null"
     min_seq_number = 1
-    max_seq_number = get_app_config("MAX_VALUE_OF_PUBLISH_SEQUENCE")
+    max_seq_number = get_config(int, "MAX_VALUE_OF_PUBLISH_SEQUENCE")
     if subscriber.sequence_num_settings:
         min_seq_number = subscriber.sequence_num_settings.min
         max_seq_number = subscriber.sequence_num_settings.max

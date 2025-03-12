@@ -1,5 +1,3 @@
-from typing import Any
-
 from quart_babel import gettext
 from bson import ObjectId
 

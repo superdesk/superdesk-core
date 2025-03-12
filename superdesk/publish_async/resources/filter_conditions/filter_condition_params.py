@@ -4,7 +4,7 @@ from copy import copy
 
 from quart_babel import gettext
 
-from superdesk.core import get_app_config
+from superdesk.core import get_config
 from superdesk.types import (
     FilterConditionFieldParam,
     FilterConditionOperator,
@@ -251,7 +251,7 @@ async def get_available_filter_params() -> list[FilterConditionFieldParam]:
 
 
 async def _get_vocabulary_fields(values: dict[str, list[str] | list[dict]]) -> list[FilterConditionFieldParam]:
-    excluded_vocabularies = cast(list[str], copy(get_app_config("EXCLUDED_VOCABULARY_FIELDS", [])))
+    excluded_vocabularies = copy(get_config(list[str], "EXCLUDED_VOCABULARY_FIELDS"))
     excluded_vocabularies.extend(values.keys())
     lookup = {"_id": {"$nin": excluded_vocabularies}, "type": "manageable"}
     fields: list[FilterConditionFieldParam] = []
