@@ -403,7 +403,9 @@ async def setup(context=None, config=None, app_factory=get_app, reset=False, aut
 
     if context:
         context.app = app
+        app.test_client_class = TestClient
         context.client = app.test_client()
+
         if not hasattr(context, "BEHAVE") and not hasattr(context, "test_context"):
             context.test_context = app.test_request_context("/")
             await context.test_context.push()
@@ -434,6 +436,10 @@ def add_user_info_to_context(context: Any, token: str, user: User, auth_id=None)
     will be converted back to string (internal) by quart/werkzeug Request.
     """
     basic_token_header = token_to_basic_auth_header(token)
+
+    # remove any existing authorization header. Updates the list (in-place)
+    # to preserve any references to context.headers elsewhere
+    context.headers[:] = [h for h in context.headers if h[0] != "Authorization"]
     context.headers.append(basic_token_header)
 
     if getattr(context, "user", None):
@@ -607,6 +613,15 @@ class AsyncTestCase(IsolatedAsyncioTestCase):
 
 
 class TestClient(QuartClient):
+    async def open(self, *args, **kwargs) -> Response:
+        """
+        Appends the request path to the response object for later debugging
+        """
+
+        response = await super().open(*args, **kwargs)
+        response.request_path = kwargs.get("path", args[0] if args else "/")  # type: ignore[attr-defined]
+        return response
+
     def model_instance_to_json(self, model_instance: ResourceModel):
         return model_instance.to_dict(mode="json")
 

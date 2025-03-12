@@ -10,7 +10,9 @@
 
 
 import os
+import io
 import time
+from typing import Any
 import arrow
 import celery
 import shutil
@@ -20,8 +22,9 @@ import operator
 from unittest import mock
 from copy import deepcopy
 from base64 import b64encode
-from datetime import datetime, timedelta, date
 from os.path import basename
+from datetime import datetime, timedelta, date
+from quart.datastructures import FileStorage
 from re import findall
 from inspect import isawaitable
 from urllib.parse import urlparse
@@ -82,10 +85,11 @@ async def expect_status_in(response, codes):
 
     assert response.status_code in [
         int(code) for code in codes
-    ], "expected on of {expected}, got {code}, reason={reason}".format(
+    ], "expected one of {expected}, got {code}, reason={reason}, url='{requested_path}'".format(
         code=response.status_code,
         expected=codes,
         reason=(await response.get_data()).decode("utf-8"),
+        requested_path=response.request_path,
     )
 
 
@@ -491,12 +495,25 @@ def format_items(items):
     return ",\n".join(output)
 
 
+async def delete_entries_for(context, resource: str) -> None:
+    """
+    Attempts to remove all items from the resources MongoDB and/or Elastic.
+    First tries with async, otherwise it falls back to sync resources.
+    """
+
+    async with context.app.test_request_context(context.app.config["URL_PREFIX"]):
+        try:
+            async_app = context.app.async_app
+            await async_app.resources.get_resource_service(resource).delete_many({})
+        except KeyError:
+            get_resource_service(resource).delete_action()
+
+
 @given('empty "{resource}"')
 @async_run_until_complete
 async def step_impl_given_empty(context, resource):
     if not is_user_resource(resource):
-        async with context.app.test_request_context(context.app.config["URL_PREFIX"]):
-            get_resource_service(resource).delete_action()
+        await delete_entries_for(context, resource)
 
 
 @given('"{resource}"')
@@ -1230,15 +1247,28 @@ async def when_upload_patch_dictionary(context):
 async def upload_file(context, dest, filename, file_field, extra_data=None, method="post", user_headers=None):
     if user_headers is None:
         user_headers = []
+
     with open(get_fixture_path(context, filename), "rb") as f:
-        data = {file_field: f}
-        if extra_data:
-            data.update(extra_data)
+        file_content = f.read()
+        files = {
+            file_field: FileStorage(
+                io.BytesIO(file_content),
+                filename=os.path.basename(filename),
+                name=file_field,
+            )
+        }
+
         headers = [("Content-Type", "multipart/form-data")]
         headers.extend(user_headers)
         headers = unique_headers(headers, context.headers)
         url = get_prefixed_url(context.app, dest)
-        context.response = await getattr(context.client, method)(url, data=data, headers=headers)
+
+        context.response = await getattr(context.client, method)(
+            url,
+            files=files,
+            form=extra_data,
+            headers=headers,
+        )
         await assert_ok(context.response)
         await store_placeholder(context, url)
 
@@ -1298,7 +1328,6 @@ async def _step_impl_then_get_error(context, code):
 async def step_impl_then_get_error(context, code):
     await expect_status(context.response, int(code))
     if context.text:
-        print("got", (await context.response.get_data()).decode("utf-8"))
         await test_json(context)
 
 
@@ -1469,7 +1498,6 @@ async def step_impl_then_get_existing_resource(context):
 
 async def step_impl_then_get_existing(context):
     await assert_200(context.response)
-    print("got", get_response_readable(await context.response.get_data()))
     await test_json(context)
 
 
