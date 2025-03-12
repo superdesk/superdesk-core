@@ -58,6 +58,8 @@ MODULES = [
     "superdesk.publish.subscriber_token",
 ]
 
+PUBLISH_MODULES = []
+
 ASYNC_AUTH_CLASS = "content_api.tokens.auth:SubscriberTokenAuth"
 
 CONTENTAPI_DOMAIN = {}
