@@ -619,7 +619,7 @@ class TestClient(QuartClient):
         """
 
         response = await super().open(*args, **kwargs)
-        response.request_path = kwargs.get("path", args[0] if args else "/")
+        response.request_path = kwargs.get("path", args[0] if args else "/")  # type: ignore[attr-defined]
         return response
 
     def model_instance_to_json(self, model_instance: ResourceModel):

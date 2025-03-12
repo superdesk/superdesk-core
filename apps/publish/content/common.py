@@ -243,7 +243,6 @@ class BasePublishService(BaseService):
                 published_service = get_resource_service(PUBLISHED)
                 assert published_service is not None
 
-                # TODO-ASYNC: superdesk-planning tests break because of difference between `_id` and `guid`
                 published_service.patch(id, {QUEUE_STATE: PUBLISH_STATE.PUSHED})
                 from apps.publish.enqueue import push_publish
 
