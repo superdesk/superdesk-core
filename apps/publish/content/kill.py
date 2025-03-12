@@ -15,9 +15,19 @@ from eve.versioning import resolve_document_version
 from apps.templates.content_templates import render_content_template_by_name
 from .common import BasePublishService, BasePublishResource, ITEM_KILL
 
+from superdesk.types import SubscribersResource, DesksResourceModel
 from superdesk.resource_fields import ID_FIELD, LAST_UPDATED
 from superdesk.flask import render_template
-from superdesk.metadata.item import CONTENT_STATE, ITEM_STATE, PUB_STATUS, EMBARGO, SCHEDULE_SETTINGS, PUBLISH_SCHEDULE
+from superdesk.metadata.item import (
+    CONTENT_STATE,
+    ITEM_STATE,
+    PUB_STATUS,
+    EMBARGO,
+    SCHEDULE_SETTINGS,
+    PUBLISH_SCHEDULE,
+    PUBLISH_STATES,
+)
+from superdesk.metadata.packages import GROUPS
 from superdesk import get_resource_service
 from superdesk.utc import utcnow
 import logging
@@ -25,12 +35,12 @@ from copy import deepcopy
 from superdesk.emails import send_article_killed_email
 from superdesk.errors import SuperdeskApiError
 from apps.archive.common import ITEM_OPERATION, ARCHIVE, insert_into_versions, get_dateline_city
-from itertools import chain
-from apps.publish.published_item import PUBLISHED, LAST_PUBLISHED_VERSION
+from apps.publish.published_item import PUBLISHED
 from quart_babel import gettext as _
 from enum import Enum
 from bson.objectid import ObjectId
 from apps.content import push_content_notification
+
 
 logger = logging.getLogger(__name__)
 # what to do when the item is in a package
@@ -51,6 +61,20 @@ class KillPublishResource(BasePublishResource):
 
 
 class KillPublishService(BasePublishService):
+    """
+    Handles the ``Kill`` publish action of item(s).
+
+    Set's the ``_state`` field to ``killed``.
+
+    :raises:
+        - :class:`superdesk.errors.SuperdeskApiError.badRequestError`
+            If an embargo is set
+        - :class:`superdesk.errors.SuperdeskApiError.badRequestError`
+            If the ``Dateline`` field was modified
+        - :class:`superdesk.validation.ValidationError`
+            If the item is a package and updated package has no items.
+    """
+
     publish_type = "kill"
     published_state = "killed"
     item_operation = ITEM_KILL
@@ -60,7 +84,7 @@ class KillPublishService(BasePublishService):
     def __init__(self, datasource=None, backend=None):
         super().__init__(datasource=datasource, backend=backend)
 
-    def on_update(self, updates, original):
+    async def on_update(self, updates, original):
         # check if we are trying to kill an item that is contained in package
         # and the package itself is not killed.
 
@@ -80,12 +104,12 @@ class KillPublishService(BasePublishService):
         updates["pubstatus"] = PUB_STATUS.CANCELED
         updates["versioncreated"] = utcnow()
 
-        super().on_update(updates, original)
+        await super().on_update(updates, original)
         updates[ITEM_OPERATION] = self.item_operation
         self._remove_marked_user(original)
         get_resource_service("archive_broadcast").spike_item(original)
 
-    def update(self, id, updates, original):
+    async def update(self, id, updates, original):
         """Kill will broadcast kill email notice to all subscriber in the system and then kill the item.
 
         Kill for multiple items is triggered
@@ -102,14 +126,12 @@ class KillPublishService(BasePublishService):
         updates[SCHEDULE_SETTINGS] = {}
         updates_copy = deepcopy(updates)
         original_copy = deepcopy(original)
-        # TODO-ASYNC: Support async (see superdesk.tests.markers.requires_eve_resource_async_event)
-        self.apply_kill_override(original_copy, updates)
-        # TODO-ASYNC: Support async (see superdesk.tests.markers.requires_eve_resource_async_event)
-        self.broadcast_kill_email(original, updates)
-        super().update(id, updates, original)
+        await self.apply_kill_override(original_copy, updates)
+        await self.broadcast_kill_email(original, updates)
+        await super().update(id, updates, original)
         updated = deepcopy(original)
         updated.update(updates)
-        get_resource_service("archive_broadcast").kill_broadcast(updates_copy, original_copy, self.item_operation)
+        await self.kill_broadcast(updates_copy, original_copy, self.item_operation)
 
     async def broadcast_kill_email(self, original, updates):
         """Sends the broadcast email to all subscribers (including in-active subscribers)
@@ -118,22 +140,18 @@ class KillPublishService(BasePublishService):
         :param dict updates: kill updates
         """
         # Get all subscribers
-        subscribers = list(get_resource_service("subscribers").get(req=None, lookup=None))
 
-        recipients = [s.get("email").split(",") for s in subscribers if s.get("email")]
-        recipients = list(set(chain(*recipients)))
+        recipients = await SubscribersResource.get_emails()
         # send kill email.
         kill_article = deepcopy(original)
         kill_article["body_html"] = updates.get("body_html")
         kill_article["headline"] = updates.get("headline")
-        kill_article["desk_name"] = get_resource_service("desks").get_desk_name(
-            kill_article.get("task", {}).get("desk")
-        )
+        kill_article["desk_name"] = await DesksResourceModel.get_desk_name(kill_article.get("task", {}).get("desk"))
         kill_article["city"] = get_dateline_city(kill_article.get("dateline"))
         kill_article["action"] = self.item_operation
         await send_article_killed_email(kill_article, recipients, utcnow())
 
-    def kill_item(self, updates, original):
+    async def kill_item(self, updates, original):
         """Kill the item after applying the template.
 
         :param dict updates:
@@ -142,19 +160,19 @@ class KillPublishService(BasePublishService):
         # apply the kill template
         original_copy = deepcopy(original)
 
-        updates_data = self.apply_kill_template(original_copy)
+        updates_data = await self.apply_kill_template(original_copy)
         updates_data["body_html"] = updates.get("body_html", "")
 
         # resolve the document version
         resolve_document_version(document=updates_data, resource=ARCHIVE, method="PATCH", latest_doc=original)
         # kill the item
-        self.patch(original.get(ID_FIELD), updates_data)
+        await self.patch(original.get(ID_FIELD), updates_data)
         # insert into versions
         insert_into_versions(id_=original[ID_FIELD])
 
-    def apply_kill_template(self, item):
+    async def apply_kill_template(self, item):
         # apply the kill template
-        updates = render_content_template_by_name(item, self.item_operation)
+        updates = await render_content_template_by_name(item, self.item_operation)
         return updates
 
     async def apply_kill_override(self, item, updates):
@@ -178,7 +196,7 @@ class KillPublishService(BasePublishService):
                 )
             else:
                 versioncreated = item.get("versioncreated", item.get(LAST_UPDATED))
-            desk_name = get_resource_service("desks").get_desk_name(item.get("task", {}).get("desk"))
+            desk_name = await DesksResourceModel.get_desk_name(item.get("task", {}).get("desk"))
             city = get_dateline_city(item.get("dateline"))
             kill_header = json.loads(
                 await render_template(
@@ -224,3 +242,50 @@ class KillPublishService(BasePublishService):
                 # send notifications so that list can be updated in the client
                 get_resource_service("archive").handle_mark_user_notifications(updates, item, False)
                 push_content_notification([updated, item])
+
+    async def kill_broadcast(self, updates: dict, original: dict, operation: str) -> None:
+        """Kill the broadcast items
+
+        :param dict updates: Updates to the item
+        :param dict original: original item
+        :param str operation: Kill or Takedown operation
+        :return:
+        """
+        broadcast_items = [
+            item
+            for item in get_resource_service("archive_broadcast").get_broadcast_items_from_master_story(original)
+            if item.get(ITEM_STATE) in PUBLISH_STATES
+        ]
+        correct_service = get_resource_service("archive_correct")
+
+        for item in broadcast_items:
+            item_id = item.get(ID_FIELD)
+            packages = self.package_service.get_packages(item_id)
+
+            processed_packages = set()
+            for package in packages:
+                if str(package[ID_FIELD]) in processed_packages or package.get(ITEM_STATE) == CONTENT_STATE.RECALLED:
+                    continue
+                try:
+                    if package.get(ITEM_STATE) in {CONTENT_STATE.PUBLISHED, CONTENT_STATE.CORRECTED}:
+                        package_updates = {
+                            LAST_UPDATED: utcnow(),
+                            GROUPS: self.package_service.remove_group_ref(package, item_id),
+                        }
+
+                        refs = self.package_service.get_residrefs(package_updates)
+                        if refs:
+                            await correct_service.patch(package[ID_FIELD], package_updates)
+                        else:
+                            package_updates["body_html"] = updates.get("body_html", "")
+                            await self.patch(package[ID_FIELD], package_updates)
+
+                        processed_packages.add(package.get(ID_FIELD))
+                    else:
+                        package_list = self.package_service.remove_refs_in_package(package, item_id, processed_packages)
+                        processed_packages = processed_packages.union(set(package_list))
+                except Exception:
+                    package_id = package.get(ID_FIELD)
+                    logger.exception(f"Failed to remove the broadcast item {item_id} from package {package_id}")
+
+            await self.kill_item(updates, item)

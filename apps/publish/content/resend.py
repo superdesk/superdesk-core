@@ -10,8 +10,10 @@
 
 import logging
 
+from bson import ObjectId
+
+from superdesk.types import PublishRequest, PublishSenderType, SubscribersResource
 from apps.archive.archive import ArchiveResource, SOURCE as ARCHIVE, remove_is_queued
-from apps.publish.content.utils import filter_digital
 from superdesk.metadata.utils import item_url
 
 from superdesk.core import get_current_app, get_app_config
@@ -20,9 +22,8 @@ from superdesk.flask import request
 from superdesk import get_resource_service, Service, signals
 from superdesk.errors import SuperdeskApiError
 from superdesk.metadata.item import CONTENT_TYPE, ITEM_TYPE, ITEM_STATE, CONTENT_STATE
-from superdesk.publish import SUBSCRIBER_TYPES
 from apps.archive.common import is_genre, BROADCAST_GENRE, ITEM_RESEND
-from apps.publish.enqueue import get_enqueue_service
+from superdesk.publish_async.commands import publish_item
 from apps.archive.common import ITEM_OPERATION
 from quart_babel import gettext as _
 
@@ -43,33 +44,73 @@ class ResendResource(ArchiveResource):
 
 
 class ResendService(Service):
-    def create(self, docs, **kwargs):
+    """
+    Handles the ``Resend`` publish action of item(s).
+
+    :note: This PublishProducer **does not** inherit from :class:`apps.publish.content.common.BasePublishService`.
+
+    :raises:
+        - :class:`superdesk.errors.SuperdeskApiError.badRequestError`
+            If the ``PublishExchange`` failed to route the item
+        - :class:`superdesk.errors.SuperdeskApiError.badRequestError`
+            If no ``Subscribers`` were selected, or no active ``Subscribers`` were selected
+        - :class:`superdesk.errors.SuperdeskApiError.badRequestError`
+            If the item has ``Broadcast Script`` genre and none of the selected ``Subscribers`` are wire subscribers
+        - :class:`superdesk.errors.SuperdeskApiError.badRequestError`
+            If the item's ``type`` field is not ``text`` or ``preformatted``
+        - :class:`superdesk.errors.SuperdeskApiError.badRequestError`
+            If the item's `_state` field is none of ``published``, ``corrected``, ``being_corrected`` or ``killed``
+        - :class:`superdesk.errors.SuperdeskApiError.badRequestError`
+            If the item has a newer version than the one specified in the request
+        - :class:`superdesk.errors.SuperdeskApiError.badRequestError`
+            If the item has been updated
+    """
+
+    async def create(self, docs, **kwargs):
         doc = docs[0] if len(docs) > 0 else {}
         article_id = request.view_args["original_id"]
         article_version = doc.get("version")
         article = self._validate_article(article_id, article_version)
-        subscribers = self._validate_subscribers(doc.get("subscribers"), article)
+        subscribers = await self._validate_subscribers(doc.get("subscribers"), article)
         remove_is_queued(article)
         signals.item_resend.send(self, item=article)
-        get_enqueue_service(article.get(ITEM_OPERATION)).resend(article, subscribers)
+
+        publish_response = await publish_item(
+            PublishRequest(
+                item=article,
+                item_id=article[ID_FIELD],
+                item_type=article[ITEM_TYPE],
+                operation=article.get(ITEM_OPERATION),
+                published_state=article[ITEM_STATE],
+                sender_type=PublishSenderType.API,
+                publish_to_content_api=True,
+                subscribers=subscribers,
+            )
+        )
+
+        if not publish_response.routed:
+            raise SuperdeskApiError.badRequestError(message=_("Failed to route item to publish queue!"))
 
         app = get_current_app().as_any()
         app.on_archive_item_updated({"subscribers": doc.get("subscribers")}, article, ITEM_RESEND)
         signals.item_resent.send(self, item=article)
         return [article_id]
 
-    def _validate_subscribers(self, subscriber_ids, article):
+    async def _validate_subscribers(self, subscriber_ids: list[ObjectId], article: dict) -> list[SubscribersResource]:
         if not subscriber_ids:
             raise SuperdeskApiError.badRequestError(message=_("No subscribers selected!"))
 
-        query = {"$and": [{ID_FIELD: {"$in": list(subscriber_ids)}}, {"is_active": True}]}
-        subscribers = list(get_resource_service("subscribers").get(req=None, lookup=query))
+        subscriber_object_ids = [ObjectId(subscriber_id) for subscriber_id in subscriber_ids]
+        query = {"$and": [{ID_FIELD: {"$in": subscriber_object_ids}}, {"is_active": True}]}
 
-        if len(subscribers) == 0:
+        cursor = await SubscribersResource.get_service().search(query)
+        if not await cursor.count():
             raise SuperdeskApiError.badRequestError(message=_("No active subscribers found!"))
 
+        subscribers = await cursor.to_list()
+
         if is_genre(article, BROADCAST_GENRE):
-            digital_subscribers = filter_digital(subscribers)
+            digital_subscribers = SubscribersResource.filter_digital(subscribers)
             if len(digital_subscribers) > 0:
                 raise SuperdeskApiError.badRequestError(_("Only wire subscribers can receive broadcast stories!"))
 

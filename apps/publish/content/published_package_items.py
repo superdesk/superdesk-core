@@ -22,6 +22,7 @@ from superdesk.metadata.packages import GROUPS, GROUP_ID, REFS, RESIDREF, ROOT_G
 from quart_babel import gettext as _
 
 
+# TODO-ASYNC: Do we need this, I can't find reference to this resource (both back-end and front-end)
 class PublishedPackageItemsResource(Resource):
     schema = {
         "package_id": {"type": "string", "required": True},

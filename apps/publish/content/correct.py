@@ -16,8 +16,6 @@ from superdesk.utc import utcnow
 from superdesk.text_utils import update_word_count
 from apps.archive.common import set_sign_off, ITEM_OPERATION, get_user
 from apps.archive.archive import flush_renditions, remove_is_queued
-from apps.tasks import send_to
-from apps.auth import get_user_id
 from .common import BasePublishService, BasePublishResource, ITEM_CORRECT
 from superdesk.emails import send_translation_changed
 from superdesk.activity import add_activity
@@ -61,6 +59,18 @@ class CorrectPublishResource(BasePublishResource):
 
 
 class CorrectPublishService(BasePublishService):
+    """
+    Handles the correction and publication process for content.
+
+    Set's the ``_state`` field to ``corrected``.
+
+    :raises:
+        - :class:`superdesk.errors.SuperdeskApiError.badRequestError`
+            If an embargo is set
+        - :class:`superdesk.validation.ValidationError`
+            If the item is a package and updated package has no items.
+    """
+
     publish_type = "correct"
     published_state = "corrected"
     item_operation = ITEM_CORRECT
@@ -92,9 +102,9 @@ class CorrectPublishService(BasePublishService):
             else:
                 publish_service.patch(being_corrected_article["_id"], updates={"state": "published"})
 
-    def on_update(self, updates, original):
+    async def on_update(self, updates, original):
         CropService().validate_multiple_crops(updates, original)
-        super().on_update(updates, original)
+        await super().on_update(updates, original)
         remove_is_queued(updates)
         updates[ITEM_OPERATION] = self.item_operation
         updates["versioncreated"] = utcnow()
@@ -104,12 +114,11 @@ class CorrectPublishService(BasePublishService):
         flush_renditions(updates, original)
         self.change_being_corrected_to_published(updates, original)
 
-    def update(self, id, updates, original):
+    async def update(self, id, updates, original):
         editor_utils.generate_fields(updates, original=original)
         get_resource_service("archive")._handle_media_updates(updates, original, get_user())
-        super().update(id, updates, original)
+        await super().update(id, updates, original)
 
-    def on_updated(self, updates, original):
-        super().on_updated(updates, original)
-        # TODO-ASYNC: Support async (see superdesk.tests.markers.requires_eve_resource_async_event)
-        send_translation_notifications(original)
+    async def on_updated(self, updates, original):
+        await super().on_updated(updates, original)
+        await send_translation_notifications(original)

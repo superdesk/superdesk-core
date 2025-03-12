@@ -39,21 +39,31 @@ class ArchivePublishResource(BasePublishResource):
 
 
 class ArchivePublishService(BasePublishService):
+    """
+    Handles publishing and scheduling operations for archive items.
+
+    Set's the ``_state`` field to ``published``.
+
+    :raises:
+        - :class:`superdesk.errors.SuperdeskApiError.badRequestError`
+            If the item is package and contains no items.
+    """
+
     publish_type = "publish"
     published_state = "published"
     item_operation = ITEM_PUBLISH
 
-    def _validate(self, original, updates):
-        super()._validate(original, updates)
+    async def _validate(self, original, updates):
+        await super()._validate(original, updates)
         if original[ITEM_TYPE] == CONTENT_TYPE.COMPOSITE:
             items = self.package_service.get_residrefs(original)
 
             if len(items) == 0 and self.publish_type == ITEM_PUBLISH:
                 raise SuperdeskApiError.badRequestError(_("Empty package cannot be published!"))
 
-    def on_update(self, updates, original):
+    async def on_update(self, updates, original):
         updates[ITEM_OPERATION] = self.item_operation
-        super().on_update(updates, original)
+        await super().on_update(updates, original)
 
         if not original.get("firstpublished"):
             if updates.get(SCHEDULE_SETTINGS) and updates[SCHEDULE_SETTINGS].get("utc_publish_schedule"):
