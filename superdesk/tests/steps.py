@@ -2773,7 +2773,7 @@ async def run_overdue_schedule_jobs(context):
 @async_run_until_complete
 async def transmit_items(context):
     async with context.app.test_request_context(context.app.config["URL_PREFIX"]):
-        from superdesk.publish_async.controller.exchanges import get_exchange_factory
+        from superdesk.publish_async import get_exchange_factory
 
         await get_exchange_factory().process_pending_tasks()
 
