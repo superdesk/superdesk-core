@@ -8,6 +8,10 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
+"""Macro to auto publish the item using internal destination
+
+"""
+
 import json
 from copy import deepcopy
 from eve.utils import ParsedRequest
@@ -34,8 +38,9 @@ def internal_destination_auto_publish(item, **kwargs):
 
     :param dict item: item to be published
     :param kwargs:
-    :raises StopDuplication: to indicate the superdesk.internal_destination.handle_item_published
-    to stop duplication as duplication is handle by this method.
+    :raises StopDuplication:
+            to indicate the superdesk.internal_destination.handle_item_published
+            to stop duplication as duplication is handle by this method.
     """
     if item.get(ITEM_STATE) not in PUBLISH_STATES:
         raise InvalidStateTransitionError(

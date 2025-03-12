@@ -131,11 +131,8 @@ class BaseModel(PydanticModel):
         Addresses limitations of Pydantic's `model_copy`, which doesn't handle
         nested data classes or validate updates the given updates.
 
-        Args:
-            updates (dict[str, Any]): Attributes to update in the cloned instance.
-
-        Returns:
-            Self: A new instance with the applied updates.
+        :param updates: Attributes to update in the cloned instance.
+        :return: A new instance with the applied updates.
         """
 
         cloned_data = deepcopy(self.to_dict())

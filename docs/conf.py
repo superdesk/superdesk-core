@@ -36,7 +36,21 @@ sys.path.insert(0, os.path.abspath("../"))
 extensions = [
     "sphinx.ext.autodoc",
     # 'sphinx.ext.viewcode',
+    "sphinx.ext.linkcode",
 ]
+
+
+def linkcode_resolve(domain: str, info: dict) -> str | None:
+    if domain != "py":
+        return None
+    if not info["module"]:
+        return None
+    elif len((info.get("fullname") or "").split(".")) > 1:
+        # Exclude adding ``[source]`` to class members
+        return None
+    filename = info["module"].replace(".", "/")
+    return f"https://github.com/superdesk/superdesk-core/tree/async/{filename}.py"
+
 
 try:
     import sphinxcontrib.plantuml
@@ -80,7 +94,7 @@ release = "1.0b1"
 #
 # This is also used if you do content translation via gettext catalogs.
 # Usually you set "language" from the command line for these cases.
-language = None
+language = "en"
 
 # There are two options for replacing |today|: either, you set today to some
 # non-false value, then it is used:

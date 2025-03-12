@@ -151,7 +151,7 @@ Superdesk commands
 ``publish:enqueue``
 ^^^^^^^^^^^^^^^^^^^
 
-.. autoclass:: apps.publish.enqueue.EnqueueContent()
+.. autofunction:: superdesk.publish_async.commands.publish_scheduled_items()
 
 ``publish:transmit``
 ^^^^^^^^^^^^^^^^^^^^
