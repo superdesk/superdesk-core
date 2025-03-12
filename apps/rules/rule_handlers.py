@@ -96,6 +96,8 @@ class IngestRuleHandlersService(Service):
 
 
 class DeskFetchPublishRoutingRuleHandler(RoutingRuleHandler):
+    """Ingest routing rule for fetching an item to a desk and optionally publishing it."""
+
     ID = "desk_fetch_publish"
     NAME = lazy_gettext("Desk Fetch/Publish")
     supported_actions = {
@@ -140,7 +142,7 @@ class DeskFetchPublishRoutingRuleHandler(RoutingRuleHandler):
             fetch_actions = rule.get("actions", {}).get("fetch", [])
 
         self.__fetch(ingest_item, fetch_actions, rule)
-        self.__publish(ingest_item, rule.get("actions", {}).get("publish", []), rule)
+        await self.__publish(ingest_item, rule.get("actions", {}).get("publish", []), rule)
 
     def __fetch(self, ingest_item, destinations, rule):
         """Fetch to item to the destinations
@@ -175,7 +177,7 @@ class DeskFetchPublishRoutingRuleHandler(RoutingRuleHandler):
 
         return archive_items
 
-    def __publish(self, ingest_item, destinations, rule):
+    async def __publish(self, ingest_item, destinations, rule):
         """Fetches the item to the desk and then publishes the item.
 
         :param item: item to be published
@@ -191,7 +193,7 @@ class DeskFetchPublishRoutingRuleHandler(RoutingRuleHandler):
                     continue
                 logger.info("Publishing item %s", guid)
                 self._set_default_values(archive_item)
-                get_resource_service("archive_publish").patch(item, {"auto_publish": True})
+                await get_resource_service("archive_publish").patch(item, {"auto_publish": True})
                 logger.info("Published item %s", guid)
             except Exception:
                 logger.exception("Failed to publish item %s.", guid)
