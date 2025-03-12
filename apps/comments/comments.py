@@ -101,7 +101,6 @@ class CommentsService(BaseService):
             decode_keys(doc, "mentioned_desks")
 
         if self.notifications:
-            # TODO-ASYNC: Support async (see superdesk.tests.markers.requires_eve_resource_async_event)
             await notify_mentioned_users(docs, get_app_config("CLIENT_URL", "").rstrip("/"))
             notify_mentioned_desks(docs)
 

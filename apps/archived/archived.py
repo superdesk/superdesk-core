@@ -51,7 +51,9 @@ import superdesk
 from superdesk.services import BaseService
 from superdesk.resource import Resource
 from superdesk.utc import utcnow
-from apps.publish.content import KillPublishService, TakeDownPublishService
+
+# TODO-ASYNC: These 2 services require async
+# from apps.publish.content import KillPublishService, TakeDownPublishService
 from quart_babel import gettext as _, lazy_gettext
 
 logger = logging.getLogger(__name__)
@@ -230,21 +232,24 @@ class ArchivedService(BaseService):
         articles_to_kill = self.find_articles_to_kill({"_id": id})
         logger.info("Fetched articles to kill for id: {}".format(id))
         articles_to_kill.sort(key=itemgetter(ITEM_TYPE), reverse=True)  # Needed because package has to be inserted last
-        kill_service = KillPublishService() if updates.get(ITEM_OPERATION) == ITEM_KILL else TakeDownPublishService()
+
+        # TODO-ASYNC: These 2 services require async
+        # kill_service = KillPublishService() if updates.get(ITEM_OPERATION) == ITEM_KILL else TakeDownPublishService()
 
         updated = original.copy()
 
         for article in articles_to_kill:
             updates_copy = deepcopy(updates)
-            # TODO-ASYNC: Support async (see superdesk.tests.markers.requires_eve_resource_async_event)
-            kill_service.apply_kill_override(article, updates_copy)
+            # TODO-ASYNC: Required async
+            # kill_service.apply_kill_override(article, updates_copy)
             updated.update(updates_copy)
             # Step 2, If it is flagged as archived only it has no related items in the system so can be deleted.
             # An email is sent to all subscribers
             if original.get("flags", {}).get("marked_archived_only", False):
                 super().delete({"item_id": article["item_id"]})
                 logger.info("Delete for article: {}".format(article[ID_FIELD]))
-                kill_service.broadcast_kill_email(article, updates_copy)
+                # TODO-ASYNC: Required async
+                # kill_service.broadcast_kill_email(article, updates_copy)
                 logger.info("Broadcast kill email for article: {}".format(article[ID_FIELD]))
                 continue
 
@@ -258,6 +263,7 @@ class ArchivedService(BaseService):
             )
 
             if transmission_details:
+                # TODO-ASYNC: Use new publishing system
                 get_enqueue_service(updates.get(ITEM_OPERATION, ITEM_KILL)).enqueue_archived_kill_item(
                     article, transmission_details
                 )
@@ -282,7 +288,8 @@ class ArchivedService(BaseService):
             logger.info("Legal Archive import for article: {}".format(article[ID_FIELD]))
 
             # Step 3(v)
-            kill_service.broadcast_kill_email(article, updates_copy)
+            # TODO-ASYNC: Required async
+            # kill_service.broadcast_kill_email(article, updates_copy)
             logger.info("Broadcast kill email for article: {}".format(article[ID_FIELD]))
 
     def on_updated(self, updates, original):
