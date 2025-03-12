@@ -24,24 +24,14 @@ class AsyncioPublishConsumer(PublishConsumer):
     with the tasks and ensures robust error handling and retries for failed transmissions.
     """
 
+    name: str = "asyncio"
+
     async def process_tasks(self, subscriber: SubscribersResource, tasks: list[PublishQueueResource]) -> None:
         """
         Processes a list of publishing tasks by attempting to transmit each item asynchronously and logs any errors that occur.
 
-        Parameters:
-        subscriber: SubscribersResource
-            Represents the subscriber resource.
-        tasks: list[PublishQueueResource]
-            A list of publishing queue resources to be processed.
-
-        Returns:
-        None
-            This function does not return any value as it performs the operations directly.
-
-        Raises:
-        Exception
-            Raised when an unexpected error occurs during task processing or transmission.
-
+        :param subscriber: Represents the subscriber resource.
+        :param tasks: A list of publishing queue resources to be processed.
         """
         task_results: list[Awaitable[bool]] = [self.transmit_item(task) for task in tasks]
         for index, result in enumerate(await gather(*task_results, return_exceptions=True)):
@@ -64,23 +54,18 @@ class AsyncioPublishConsumer(PublishConsumer):
         are logged, and the task state is updated appropriately. The method ensures that
         unrecoverable errors halt further processing to avoid prolonged blocking of resources.
 
-        Args:
-            task (PublishQueueResource): The publish queue resource to be transmitted. Contains
-            information such as state, destination, item details, retry attempts, and more.
-
-        Returns:
-            bool: A boolean indicating whether the transmission was successful.
-
-        Raises:
-            Exception: If unrecoverable errors occur during the transmission process or while
+        :param task: The publish queue resource to be transmitted. Contains information
+            such as state, destination, item details, retry attempts, and more.
+        :return: A boolean indicating whether the transmission was successful.
+        :raises Exception: If unrecoverable errors occur during the transmission process or while
             updating the task state. Such errors are raised to halt further processing.
         """
         log_msg = (
             f"_id: {task.id} item_id: {task.item_id} state: {task.state} "
             f"item_version: {task.item_version} headline: {task.headline}"
         )
-        if task.state not in [PublishQueueState.PENDING, PublishQueueState.RETRYING]:
-            logger.info(f"Transmit State is not pending/retrying for queue item {task.id}. Is in in {task.state}")
+        if task.state not in [PublishQueueState.ROUTING, PublishQueueState.PENDING, PublishQueueState.RETRYING]:
+            logger.info(f"Transmit State is not pending/retrying for queue item {task.id}. Is in {task.state}")
             return False
         elif task.destination is None:
             logger.error(f"Destination not defined in queue item {log_msg}")

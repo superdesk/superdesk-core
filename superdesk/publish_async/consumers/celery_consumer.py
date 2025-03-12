@@ -28,6 +28,8 @@ class CeleryPublishConsumer(AsyncioPublishConsumer):
         Inherits all attributes from AsyncioPublishConsumer.
     """
 
+    name: str = "celery"
+
     async def process_tasks(self, subscriber: SubscribersResource, tasks: list[PublishQueueResource]) -> None:
         """
         An asynchronous method to process and transmit tasks for a given subscriber.
@@ -37,17 +39,11 @@ class CeleryPublishConsumer(AsyncioPublishConsumer):
         schedules its execution in a high-priority Celery queue based on the task's
         priority. After processing, the lock is released.
 
-        Parameters:
-            subscriber (SubscribersResource): The subscriber resource for which
-                the tasks are being processed.
-            tasks (list[PublishQueueResource]): A list of tasks to be processed
-                and transmitted.
-
-        Raises:
-            Does not explicitly raise exceptions, but any issues with locking,
-            scheduling tasks, or queue operations may propagate exceptions.
+        :param subscriber: The subscriber resource for which the tasks are being processed.
+        :param tasks: A list of tasks to be processed and transmitted.
         """
 
+        # We assume all tasks come from the same subscriber
         lock_name = get_lock_id("Subscriber", "Transmit", str(subscriber.id))
         if not lock(lock_name, expire=610):
             logger.info("Task: {} is already running.".format(lock_name))
@@ -70,15 +66,8 @@ async def transmit_subscriber_items(subscriber_id: ObjectId, task_ids: list[Obje
     checked for validity, and enqueued for further transmission via a high-priority
     Celery queue.
 
-    Parameters:
-        subscriber_id (ObjectId): The unique identifier of the subscriber for whom
-        tasks are being transmitted.
-
-        task_ids (list[ObjectId]): A list of unique task identifiers to be processed
-        and transmitted.
-
-    Returns:
-        None
+    :param subscriber_id: The unique identifier of the subscriber for whom tasks are being transmitted.
+    :param task_ids: A list of unique task identifiers to be processed and transmitted.
     """
 
     lock_name = get_lock_id("Subscriber", "Transmit", str(subscriber_id))
@@ -107,14 +96,10 @@ async def transmit_item(task_id: ObjectId) -> None:
     using a locking mechanism to prevent simultaneous execution of tasks with
     the same identifier.
 
-    Parameters:
-        task_id (ObjectId): The unique identifier of the task to be transmitted.
+    :param task_id: The unique identifier of the task to be transmitted.
+    :raises celery.exceptions.SoftTimeLimitExceeded: If the task does not complete within its soft time limit.
 
-    Raises:
-        celery.exceptions.SoftTimeLimitExceeded: If the task does not complete
-        within its soft time limit.
-
-    Notes:
+    .. note::
         This function uses a locking mechanism to ensure that only one instance
         of a task is running at any given time. If the lock cannot be acquired,
         the function will log a message and return early.
