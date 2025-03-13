@@ -506,7 +506,7 @@ PUBLISH_CHANNELS: list[PublishChannelConfig] = [
         "operations": ["kill", "takedown"],
         "config": ExchangeConfig(
             exchange="content",
-            filter="content:content:killed",
+            filter="content:killed",
         ),
     },
     {
