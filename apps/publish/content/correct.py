@@ -102,9 +102,9 @@ class CorrectPublishService(BasePublishService):
             else:
                 publish_service.patch(being_corrected_article["_id"], updates={"state": "published"})
 
-    async def on_update(self, updates, original):
+    async def on_update_async(self, updates, original):
         CropService().validate_multiple_crops(updates, original)
-        await super().on_update(updates, original)
+        await super().on_update_async(updates, original)
         remove_is_queued(updates)
         updates[ITEM_OPERATION] = self.item_operation
         updates["versioncreated"] = utcnow()
@@ -114,11 +114,11 @@ class CorrectPublishService(BasePublishService):
         flush_renditions(updates, original)
         self.change_being_corrected_to_published(updates, original)
 
-    async def update(self, id, updates, original):
+    async def update_async(self, id, updates, original):
         editor_utils.generate_fields(updates, original=original)
         get_resource_service("archive")._handle_media_updates(updates, original, get_user())
-        await super().update(id, updates, original)
+        await super().update_async(id, updates, original)
 
-    async def on_updated(self, updates, original):
-        await super().on_updated(updates, original)
+    async def on_updated_async(self, updates, original):
+        await super().on_updated_async(updates, original)
         await send_translation_notifications(original)

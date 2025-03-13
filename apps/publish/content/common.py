@@ -76,7 +76,7 @@ from superdesk.metadata.packages import LINKED_IN_PACKAGES, PACKAGE, PACKAGE_TYP
 from superdesk.metadata.utils import item_url
 from superdesk.notification import push_notification
 from superdesk.resource_fields import ID_FIELD, LAST_UPDATED, VERSION, ITEM_TYPE, ETAG
-from superdesk.services import BaseService
+from superdesk.eve_async.service import AsyncBaseService
 import superdesk.signals as signals
 from superdesk.utc import utcnow
 from superdesk.validation import ValidationError
@@ -138,7 +138,7 @@ class BasePublishResource(ArchiveResource):
         super().__init__(endpoint_name, app=app, service=service)
 
 
-class BasePublishService(BaseService):
+class BasePublishService(AsyncBaseService):
     """Base PublishProducer used by all content publish producers, for their respective "publish" endpoint.
 
     :raises:
@@ -187,19 +187,19 @@ class BasePublishService(BaseService):
     item_operation = ITEM_PUBLISH
     package_service = PackageService()
 
-    async def patch(self, id, updates):
+    async def patch_async(self, id, updates):
         original = self.find_one(req=None, _id=id)
         updated = original.copy()
-        await self.on_update(updates, original)
+        await self.on_update_async(updates, original)
         updated.update(updates)
         if get_config(bool, "IF_MATCH"):
             resolve_document_etag(updated, self.datasource)
             updates[ETAG] = updated[ETAG]
-        res = await self.update(id, updates, original)
-        await self.on_updated(updates, original)
+        res = await self.update_async(id, updates, original)
+        await self.on_updated_async(updates, original)
         return res
 
-    async def on_update(self, updates, original):
+    async def on_update_async(self, updates, original):
         await self._refresh_associated_items(original)
         self._set_updates_for_media_items(original, updates)
         await self._validate(original, updates)
@@ -215,7 +215,7 @@ class BasePublishService(BaseService):
         await self._mark_media_item_as_used(updates, original)
         update_refs(updates, original)
 
-    async def on_updated(self, updates, original):
+    async def on_updated_async(self, updates, original):
         original = super().find_one(req=None, _id=original[ID_FIELD])
         updates.update(original)
 
@@ -230,6 +230,7 @@ class BasePublishService(BaseService):
         await self._import_into_legal_archive(updates)
         CropService().update_media_references(updates, original, True)
         signals.item_published.send(self, item=original, after_scheduled=False)
+        await signals.item_published_async.send(original, False)
 
         packages = self.package_service.get_packages(original[ID_FIELD])
         if packages and packages.count() > 0:
@@ -254,11 +255,11 @@ class BasePublishService(BaseService):
                             original_updates, original[ID_FIELD], "slugline", updates.get("slugline")
                         )
 
-                    await archive_correct.patch(id=package[ID_FIELD], updates=original_updates)
+                    await archive_correct.patch_async(id=package[ID_FIELD], updates=original_updates)
                     insert_into_versions(id_=package[ID_FIELD])
                     processed_packages.append(package[ID_FIELD])
 
-    async def update(self, id, updates, original):
+    async def update_async(self, id, updates, original):
         """
         Handles workflow of each Publish, Corrected, Killed and TakeDown.
         """
@@ -566,7 +567,7 @@ class BasePublishService(BaseService):
                     else:
                         # publish the item
                         package_item[PUBLISHED_IN_PACKAGE] = package[ID_FIELD]
-                        await archive_publish.patch(package_item.pop(ID_FIELD), updates=package_item)
+                        await archive_publish.patch_async(package_item.pop(ID_FIELD), updates=package_item)
 
                     insert_into_versions(id_=guid)
 
@@ -902,7 +903,7 @@ class BasePublishService(BaseService):
                     # if main item is scheduled we must also schedule associations
                     self._inherit_publish_schedule(original, updates, orig_associated_item)
 
-                    await get_resource_service("archive_publish").patch(
+                    await get_resource_service("archive_publish").patch_async(
                         id=orig_associated_item.pop(ID_FIELD), updates=orig_associated_item
                     )
                     continue
@@ -942,7 +943,7 @@ class BasePublishService(BaseService):
                     self._inherit_publish_schedule(original, updates, associated_item)
 
                     associated_item_updates = associated_item.copy()
-                    await get_resource_service("archive_publish").patch(
+                    await get_resource_service("archive_publish").patch_async(
                         id=associated_item[ID_FIELD], updates=associated_item_updates
                     )
                     sync_associated_item_changes(associated_item, associated_item_updates)
@@ -964,14 +965,14 @@ class BasePublishService(BaseService):
                         associated_item.get("task", {}).pop("stage", None)
                         remove_unwanted(associated_item)
                         associated_item_updates = associated_item.copy()
-                        await publish_service.patch(id=associated_item[ID_FIELD], updates=associated_item_updates)
+                        await publish_service.patch_async(id=associated_item[ID_FIELD], updates=associated_item_updates)
                         sync_associated_item_changes(associated_item, associated_item_updates)
                         continue
 
                     if association_updates.get("state") not in PUBLISH_STATES:
                         # There's an update to the published associated item
                         remove_unwanted(association_updates)
-                        await publish_service.patch(id=associated_item[ID_FIELD], updates=association_updates)
+                        await publish_service.patch_async(id=associated_item[ID_FIELD], updates=association_updates)
 
             # When there is an associated item which is published, Inserts the latest version of that associated item into archive_versions.
             insert_into_versions(doc=associated_item)

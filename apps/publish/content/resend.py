@@ -19,7 +19,8 @@ from superdesk.metadata.utils import item_url
 from superdesk.core import get_current_app, get_app_config
 from superdesk.resource_fields import ID_FIELD, VERSION
 from superdesk.flask import request
-from superdesk import get_resource_service, Service, signals
+from superdesk import get_resource_service, signals
+from superdesk.eve_async.service import AsyncBaseService
 from superdesk.errors import SuperdeskApiError
 from superdesk.metadata.item import CONTENT_TYPE, ITEM_TYPE, ITEM_STATE, CONTENT_STATE
 from apps.archive.common import is_genre, BROADCAST_GENRE, ITEM_RESEND
@@ -43,7 +44,7 @@ class ResendResource(ArchiveResource):
     versioning = False
 
 
-class ResendService(Service):
+class ResendService(AsyncBaseService):
     """
     Handles the ``Resend`` publish action of item(s).
 
@@ -66,7 +67,7 @@ class ResendService(Service):
             If the item has been updated
     """
 
-    async def create(self, docs, **kwargs):
+    async def create_async(self, docs, **kwargs):
         doc = docs[0] if len(docs) > 0 else {}
         article_id = request.view_args["original_id"]
         article_version = doc.get("version")

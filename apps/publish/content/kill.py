@@ -84,7 +84,7 @@ class KillPublishService(BasePublishService):
     def __init__(self, datasource=None, backend=None):
         super().__init__(datasource=datasource, backend=backend)
 
-    async def on_update(self, updates, original):
+    async def on_update_async(self, updates, original):
         # check if we are trying to kill an item that is contained in package
         # and the package itself is not killed.
 
@@ -104,12 +104,12 @@ class KillPublishService(BasePublishService):
         updates["pubstatus"] = PUB_STATUS.CANCELED
         updates["versioncreated"] = utcnow()
 
-        await super().on_update(updates, original)
+        await super().on_update_async(updates, original)
         updates[ITEM_OPERATION] = self.item_operation
         self._remove_marked_user(original)
         get_resource_service("archive_broadcast").spike_item(original)
 
-    async def update(self, id, updates, original):
+    async def update_async(self, id, updates, original):
         """Kill will broadcast kill email notice to all subscriber in the system and then kill the item.
 
         Kill for multiple items is triggered
@@ -128,7 +128,7 @@ class KillPublishService(BasePublishService):
         original_copy = deepcopy(original)
         await self.apply_kill_override(original_copy, updates)
         await self.broadcast_kill_email(original, updates)
-        await super().update(id, updates, original)
+        await super().update_async(id, updates, original)
         updated = deepcopy(original)
         updated.update(updates)
         await self.kill_broadcast(updates_copy, original_copy, self.item_operation)
@@ -166,7 +166,7 @@ class KillPublishService(BasePublishService):
         # resolve the document version
         resolve_document_version(document=updates_data, resource=ARCHIVE, method="PATCH", latest_doc=original)
         # kill the item
-        await self.patch(original.get(ID_FIELD), updates_data)
+        await self.patch_async(original.get(ID_FIELD), updates_data)
         # insert into versions
         insert_into_versions(id_=original[ID_FIELD])
 
@@ -275,10 +275,10 @@ class KillPublishService(BasePublishService):
 
                         refs = self.package_service.get_residrefs(package_updates)
                         if refs:
-                            await correct_service.patch(package[ID_FIELD], package_updates)
+                            await correct_service.patch_async(package[ID_FIELD], package_updates)
                         else:
                             package_updates["body_html"] = updates.get("body_html", "")
-                            await self.patch(package[ID_FIELD], package_updates)
+                            await self.patch_async(package[ID_FIELD], package_updates)
 
                         processed_packages.add(package.get(ID_FIELD))
                     else:

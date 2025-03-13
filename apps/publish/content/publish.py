@@ -61,9 +61,9 @@ class ArchivePublishService(BasePublishService):
             if len(items) == 0 and self.publish_type == ITEM_PUBLISH:
                 raise SuperdeskApiError.badRequestError(_("Empty package cannot be published!"))
 
-    async def on_update(self, updates, original):
+    async def on_update_async(self, updates, original):
         updates[ITEM_OPERATION] = self.item_operation
-        await super().on_update(updates, original)
+        await super().on_update_async(updates, original)
 
         if not original.get("firstpublished"):
             if updates.get(SCHEDULE_SETTINGS) and updates[SCHEDULE_SETTINGS].get("utc_publish_schedule"):
