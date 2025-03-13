@@ -146,11 +146,11 @@ class AsyncBaseService(BaseService):
     async def post_async(self, docs, **kwargs):
         for doc in docs:
             self._resolve_defaults(doc)
-        self.on_create(docs)
         await self.on_create_async(docs)
-        ids = await self.create(docs, **kwargs)
-        self.on_created(docs)
+        self.on_create(docs)
+        ids = await self.create_async(docs, **kwargs)
         await self.on_created_async(docs)
+        self.on_created(docs)
         return ids
 
     async def patch_async(self, id, updates):
@@ -158,26 +158,26 @@ class AsyncBaseService(BaseService):
 
         original = await self.find_one_async(req=None, _id=id)
         updated = original.copy()
-        self.on_update(updates, original)
         await self.on_update_async(updates, original)
+        self.on_update(updates, original)
         updated.update(updates)
         if get_app_config("IF_MATCH"):
             resolve_document_etag(updated, self.datasource)
             updates[ETAG] = updated[ETAG]
         res = await self.update_async(id, updates, original)
-        self.on_updated(updates, original)
         await self.on_updated_async(updates, original)
+        self.on_updated(updates, original)
         return res
 
     async def put_async(self, id, document):
         self._resolve_defaults(document)
         original = await self.find_one_async(req=None, _id=id)
-        self.on_replace(document, original)
         await self.on_replace_async(document, original)
+        self.on_replace(document, original)
         resolve_document_etag(document, self.datasource)
         res = await self.replace_async(id, document, original)
-        self.on_replaced(document, original)
         await self.on_replaced_async(document, original)
+        self.on_replaced(document, original)
         return res
 
     async def delete_action_async(self, lookup=None):
