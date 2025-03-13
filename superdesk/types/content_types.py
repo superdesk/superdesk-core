@@ -16,7 +16,7 @@ from typing_extensions import LiteralString
 from pydantic import Field
 from quart_babel import gettext as _
 
-from superdesk.core.resources import ResourceModel
+from superdesk.core.resources import ResourceModel, fields
 from superdesk.core.resources.model import ResourceModel
 from superdesk.core.resources.validators import validate_data_relation_async, validate_iunique_value_async
 
@@ -45,10 +45,11 @@ class WidgetConfig(ResourceModel):
 
 
 class ContentTypes(ResourceModel):
-    content_type: Annotated[str | None, validate_content_type, Field(alias="type")]
+    content_type: Annotated[str | None, validate_content_type, Field(alias="type")] = None
     label: Annotated[str, validate_iunique_value_async("content_types", "label")]
     icon: str | None = None
-    description: str
+    description: str | None = None
+    # TODO-ASYNC: Field name "schema" in "ContentTypes" shadows an attribute in parent "ResourceModel"
     schema: dict[str, Any] = Field(default_factory=dict)  # type: ignore[assignment]
     editor: dict[str, Any] = Field(default_factory=dict)
     widgets_config: list[WidgetConfig] = Field(default_factory=list)
@@ -56,7 +57,7 @@ class ContentTypes(ResourceModel):
     enabled: bool = False
     is_used: bool = False
     embeddable: bool = False
-    created_by: Annotated[str | None, validate_data_relation_async("users")] = None
-    updated_by: Annotated[str | None, validate_data_relation_async("users")] = None
+    created_by: Annotated[fields.ObjectId | None, validate_data_relation_async("users")] = None
+    updated_by: Annotated[fields.ObjectId | None, validate_data_relation_async("users")] = None
     init_version: int | None = None
     output_name: str | None = None
