@@ -97,7 +97,8 @@ class EveBackend:
         """
         backend = self._backend(endpoint_name, use_async=True)
         item = await backend.find_one(endpoint_name, req=req, **lookup)
-        search_backend = self._lookup_backend(endpoint_name, fallback=True, use_async=True)
+        # TODO-ASYNC: Change `use_async=True` once Elastic supports async
+        search_backend = self._lookup_backend(endpoint_name, fallback=True, use_async=False)
         if search_backend and get_app_config("BACKEND_FIND_ONE_SEARCH_TEST", False):
             # set the parent for the parent child in elastic search
             self._set_parent(endpoint_name, item, lookup)
@@ -130,6 +131,22 @@ class EveBackend:
         if sort is not None:
             req.sort = sort
         return self.get_from_mongo(endpoint_name, req, None)
+
+    async def find_async(self, endpoint_name, where, max_results=0, sort=None):
+        """Find items for given endpoint using mongo query in python dict object.
+
+        It handles request creation here so no need to do this in service.
+
+        :param string endpoint_name
+        :param dict where
+        :param int max_results
+        """
+        req = ParsedRequest()
+        req.where = MongoJSONEncoder().encode(where)
+        req.max_results = max_results
+        if sort is not None:
+            req.sort = sort
+        return await self.get_from_mongo_async(endpoint_name, req, None)
 
     def search(self, endpoint_name, source):
         """Search for items using search backend
