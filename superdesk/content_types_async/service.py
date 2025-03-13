@@ -65,13 +65,9 @@ HARDCODED_CVS = ("languages",)
 class ContentTypesService(AsyncCacheableService[ContentTypes]):
     resource_name = "content_types"
 
-    async def _set_created_by(self, doc: ContentTypes) -> None:
-        doc.created_by = get_user_id()
-
     async def on_create(self, docs: list[ContentTypes]) -> None:
         for doc in docs:
-            doc.updated_by = get_user_id()
-            await self._set_created_by(doc)
+            doc.created_by = doc.updated_by = get_user_id()
 
     async def on_delete(self, doc: ContentTypes) -> None:
         if doc.is_used:
