@@ -24,18 +24,10 @@ class MacrosTestCase(TestCase):
 
     async def test_run_async_macros(self):
         def sync_macro(item: dict):
-            return {
-                **item,
-                "status": "OK",
-                "type": "sync"
-            }
+            return {**item, "status": "OK", "type": "sync"}
 
         async def async_macro(item: dict):
-            return {
-                **item,
-                "status": "OK",
-                "type": "async"
-            }
+            return {**item, "status": "OK", "type": "async"}
 
         macros.register(name="sync_macro", callback=sync_macro)
         macros.register(name="async_macro", callback=async_macro)
