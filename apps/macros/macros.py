@@ -8,19 +8,25 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
+from inspect import isawaitable
+import logging
 
-import superdesk
-
+from superdesk import Resource, get_resource_service
+from superdesk.eve_async.service import AsyncBaseService
+from superdesk.types import MacroModule
 from superdesk.errors import SuperdeskApiError
 from superdesk.utils import ListCursor
 from .macro_register import macros
+
+
+logger = logging.getLogger(__name__)
 
 
 def get_public_props(item):
     return {k: v for k, v in item.items() if k != "callback"}
 
 
-class MacrosService(superdesk.Service):
+class MacrosService(AsyncBaseService):
     def get(self, req, lookup):
         """Return all registered macros."""
         desk = getattr(req, "args", {}).get("desk")
@@ -38,32 +44,36 @@ class MacrosService(superdesk.Service):
         else:
             return ListCursor([get_public_props(macro) for macro in all_macros])
 
-    def create(self, docs, **kwargs):
+    async def create_async(self, docs, **kwargs):
         try:
             ids = []
             for doc in docs:
-                res = self.execute_macro(doc["item"], doc["macro"])
+                res = await self.execute_macro(doc["item"], doc["macro"])
                 if isinstance(res, tuple):
                     doc["item"] = res[0]
                     doc["diff"] = res[1]
                 else:
                     doc["item"] = res
                 if doc.get("commit"):
-                    item = superdesk.get_resource_service("archive").find_one(req=None, _id=doc["item"]["_id"])
+                    item = get_resource_service("archive").find_one(req=None, _id=doc["item"]["_id"])
                     updates = doc["item"].copy()
                     updates.pop("_id")
-                    superdesk.get_resource_service("archive").update(item["_id"], updates, item)
+                    get_resource_service("archive").update(item["_id"], updates, item)
                 ids.append(doc["macro"])
             return ids
         except Exception as ex:
             raise SuperdeskApiError.internalError(str(ex), exception=ex)
 
-    def get_macro_by_name(self, macro_name):
+    def get_macro_by_name(self, macro_name: str) -> MacroModule | None:
         return macros.find(macro_name)
 
-    def execute_macro(self, doc, macro_name, **kwargs):
+    async def execute_macro(self, doc: dict, macro_name: str, **kwargs) -> dict | tuple[dict, dict] | None:
         macro = self.get_macro_by_name(macro_name)
-        return macro["callback"](doc, **kwargs)
+        if not macro:
+            logger.warning(f"Macro {macro_name} not found")
+            return None
+
+        return await macro["callback"](doc, **kwargs)
 
     def get_macros(self, include_backend):
         if include_backend:
@@ -71,7 +81,7 @@ class MacrosService(superdesk.Service):
         else:
             return [m for m in macros if m.get("access_type") == "frontend"]
 
-    def execute_translation_macro(self, doc, from_language, to_language):
+    async def execute_translation_macro(self, doc, from_language, to_language):
         """
         Apply to doc all macros that are related to current translation defined by from_language and to_language
         Macros can have optionally defined translation related settings: from_languages, to_languages.
@@ -80,10 +90,10 @@ class MacrosService(superdesk.Service):
             if (not m.get("from_languages", None) or from_language in m["from_languages"]) and to_language in m.get(
                 "to_languages", []
             ):
-                m["callback"](doc, from_language=from_language, to_language=to_language)
+                await m["callback"](doc, from_language=from_language, to_language=to_language)
 
 
-class MacrosResource(superdesk.Resource):
+class MacrosResource(Resource):
     resource_methods = ["GET", "POST"]
     item_methods = []
     privileges = {"POST": "archive"}

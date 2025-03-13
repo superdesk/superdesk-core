@@ -5,7 +5,7 @@ from unittest.mock import patch
 
 from superdesk.core import json
 from apps.prepopulate.app_initialize import app_initialize_data_handler
-from apps.prepopulate.app_scaffold_data import AppScaffoldDataCommand
+from apps.prepopulate.app_scaffold_data import scaffold_data
 from apps.prepopulate.app_initialize import fillEnvironmentVariables
 from superdesk import get_resource_service
 from superdesk.tests import TestCase
@@ -45,8 +45,7 @@ class AppInitializeWithDataCommandTestCase(TestCase):
 
         stories_per_desk = 2
         existing_desks = 18
-        command = AppScaffoldDataCommand()
-        result = command.run(stories_per_desk)
+        result = await scaffold_data(stories_per_desk)
         self.assertEqual(result, 0)
 
         cursor = get_resource_service("desks").get_from_mongo(None, {})

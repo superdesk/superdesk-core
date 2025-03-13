@@ -8,12 +8,14 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
+from typing import Awaitable
 import inspect
 import importlib
 import sys
 import os
 
 from superdesk.core import get_current_app
+from superdesk.types import MacroModule
 
 
 def load_macros(app=None):
@@ -65,7 +67,8 @@ def register_macros():
              'keep-style-replace': will detect changes from backend and will perform a replace that
                  will not preserve any set style
         """
-        kwargs = {
+
+        kwargs: MacroModule = {
             "name": macro_module.name,
             "callback": macro_module.callback,
             "access_type": macro_module.access_type,
@@ -73,10 +76,11 @@ def register_macros():
             "replace_type": replace_type,
         }
 
-        options = ["label", "order", "shortcut", "from_languages", "to_languages", "group"]
+        options = ("label", "order", "shortcut", "from_languages", "to_languages", "group")
         for field in options:
             if hasattr(macro_module, field):
-                kwargs[field] = getattr(macro_module, field)
+                # Ignoring type checking here, as mypy complains with 'TypedDict key must be a string literal'
+                kwargs[field] = getattr(macro_module, field)  # type: ignore
 
         register(**kwargs)
 
@@ -112,7 +116,7 @@ class MacroRegister:
         load_macros()
         return self.find(name) is not None
 
-    def find(self, name):
+    def find(self, name: str) -> MacroModule | None:
         """Find a macro by given macro name.
 
         :param name: macro name
@@ -121,6 +125,8 @@ class MacroRegister:
         for macro in self.macros:
             if macro.get("name") == name:
                 return macro
+
+        return None
 
     def register(self, **kwargs):
         """Register a new macro.
@@ -132,6 +138,19 @@ class MacroRegister:
         :param description: macro description, using callback doctext as default
         """
         kwargs.setdefault("description", inspect.getdoc(kwargs.get("callback")))
+
+        if not inspect.iscoroutinefunction(kwargs["callback"]):
+            # This macro is not async, wrap it in an async function
+            # so we can use `await` when executing all macros, without checking if the
+            # result is awaitable or not
+
+            callback = kwargs["callback"]
+
+            async def execute_macro(item: dict, **cb_kwargs) -> Awaitable[dict | tuple[dict, dict]]:
+                return callback(item, **cb_kwargs)
+
+            kwargs["callback"] = execute_macro
+
         self.macros = [macro for macro in self.macros if macro["name"] != kwargs.get("name")]
         self.macros.append(kwargs)
 

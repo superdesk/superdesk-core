@@ -12,6 +12,7 @@ import json
 from eve.utils import ParsedRequest
 
 from superdesk.core import get_app_config
+from superdesk.eve_async.service import AsyncBaseService
 from superdesk.resource_fields import ID_FIELD
 from superdesk.flask import request
 import superdesk
@@ -24,7 +25,6 @@ from superdesk.errors import SuperdeskApiError, InvalidStateTransitionError
 from superdesk.metadata.item import CONTENT_STATE, ITEM_STATE
 from superdesk.metadata.utils import item_url
 from superdesk.resource import Resource
-from superdesk.services import BaseService
 from superdesk.workflow import is_workflow_state_transition_valid
 from superdesk.utc import utcnow
 from quart_babel import gettext as _
@@ -49,13 +49,13 @@ class DuplicateResource(Resource):
     privileges = {"POST": "duplicate"}
 
 
-class DuplicateService(BaseService):
-    def on_create(self, docs):
+class DuplicateService(AsyncBaseService):
+    async def on_create_async(self, docs):
         for doc in docs:
             if not doc.get("desk") and not get_app_config("WORKFLOW_ALLOW_COPY_TO_PERSONAL"):
                 raise SuperdeskApiError.forbiddenError(message=_("Duplicate to Personal space is not allowed."))
 
-    def create(self, docs, **kwargs):
+    async def create_async(self, docs, **kwargs):
         guid_of_item_to_be_duplicated = request.view_args["guid"]
 
         guid_of_duplicated_items = []
@@ -88,7 +88,7 @@ class DuplicateService(BaseService):
 
             remove_is_queued(archived_doc)
 
-            send_to(
+            await send_to(
                 doc=archived_doc,
                 desk_id=doc.get("desk"),
                 stage_id=doc.get("stage"),

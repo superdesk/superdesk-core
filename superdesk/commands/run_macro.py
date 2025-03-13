@@ -7,12 +7,20 @@
 # For the full copyright and license information, please see the
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
-import superdesk
-import json
+
+import click
+
+from superdesk.core import json
+from superdesk import get_resource_service
+
+from .async_cli import cli
 
 
-class RunMacro(superdesk.Command):
-    r"""Executes a macro by given name and optional keyword arguments.
+@cli.command("app:run_macro")
+@click.option("--name", "-n", "macro_name", required=True, type=str, help="Name of the macro to run.")
+@click.option("--kwargs", "-k", "kwargs", type=str, help="Keyword arguments to pass to the macro.")
+async def run_macro(macro_name, kwargs):
+    """Executes a macro by given name and optional keyword arguments.
 
     Example:
     ::
@@ -20,21 +28,11 @@ class RunMacro(superdesk.Command):
         $ app:run_macro --name clean_keywords --kwargs {"repo":"archived"}
 
     """
+    kwargs = json.loads(kwargs)
+    macro = get_resource_service("macros").get_macro_by_name(macro_name)
 
-    option_list = [
-        # superdesk.Option("--name", "-n", dest="macro_name", required=True),
-        # superdesk.Option("--kwargs", "-k", dest="kwargs", required=False),
-    ]
+    if not macro:
+        print("Failed to locate macro {}.".format(macro_name))
+        return
 
-    def run(self, macro_name, kwargs):
-        kwargs = json.loads(kwargs)
-        macro = superdesk.get_resource_service("macros").get_macro_by_name(macro_name)
-
-        if not macro:
-            print("Failed to locate macro {}.".format(macro_name))
-            return
-
-        macro["callback"](**kwargs)
-
-
-superdesk.command("app:run_macro", RunMacro())
+    await macro["callback"](**kwargs)

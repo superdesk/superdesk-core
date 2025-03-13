@@ -81,7 +81,7 @@ Superdesk commands
 ``app:run_macro``
 ^^^^^^^^^^^^^^^^^
 
-.. autoclass:: superdesk.commands.run_macro.RunMacro()
+.. autoclass:: superdesk.commands.run_macro.run_macro()
 
 ``app:scaffold_data``
 ^^^^^^^^^^^^^^^^^^^^^

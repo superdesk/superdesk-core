@@ -390,8 +390,9 @@ class ArchiveService(BaseService, HighlightsSearchMixin):
             convert_task_attributes_to_objectId(doc)
             transtype_metadata(doc)
 
-            if doc.get("macro"):  # if there is a macro, execute it
-                get_resource_service("macros").execute_macro(doc, doc["macro"])
+            # TODO-ASYNC: Enable ``execute_macro`` after this service is upgraded to async
+            # if doc.get("macro"):  # if there is a macro, execute it
+            #     await get_resource_service("macros").execute_macro(doc, doc["macro"])
 
             # send signal
             superdesk.item_create.send(self, item=doc)

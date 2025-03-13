@@ -651,7 +651,7 @@ def apply_null_override_for_kill(item):
 
 
 @celery.task(soft_time_limit=120)
-def create_scheduled_content(now=None):
+async def create_scheduled_content(now=None):
     lock_name = get_lock_id("Template", "Schedule")
     if not lock(lock_name, expire=130):
         logger.info("Task: {} is already running.".format(lock_name))
@@ -670,7 +670,7 @@ def create_scheduled_content(now=None):
             production.post([item])
             insert_into_versions(doc=item)
             try:
-                apply_onstage_rule(item, item.get(ID_FIELD))
+                await apply_onstage_rule(item, item.get(ID_FIELD))
             except Exception as ex:  # noqa
                 logger.exception("Failed to apply on stage rule while scheduling template.")
             items.append(item)

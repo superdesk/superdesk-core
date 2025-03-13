@@ -13,6 +13,7 @@ import superdesk
 from copy import deepcopy
 from quart_babel import gettext as _
 
+from superdesk.eve_async.service import AsyncBaseService
 from superdesk.resource_fields import ID_FIELD
 from superdesk.flask import request
 from apps.archive.usage import update_refs
@@ -23,7 +24,6 @@ from apps.archive.common import insert_into_versions, fetch_item
 from superdesk.metadata.item import INGEST_ID, INGEST_VERSION, FAMILY_ID, ITEM_STATE, CONTENT_STATE, GUID_FIELD
 from superdesk.errors import SuperdeskApiError, InvalidStateTransitionError
 from superdesk.resource import Resource, build_custom_hateoas
-from superdesk.services import BaseService
 from superdesk.workflow import is_workflow_state_transition_valid
 from superdesk import get_resource_service
 from superdesk.metadata.packages import RESIDREF, REFS, GROUPS
@@ -54,11 +54,11 @@ class FetchResource(Resource):
     privileges = {"POST": "fetch"}
 
 
-class FetchService(BaseService):
-    def create(self, docs, **kwargs):
-        return self.fetch(docs, id=request.view_args.get("id"), **kwargs)
+class FetchService(AsyncBaseService):
+    async def create_async(self, docs, **kwargs):
+        return await self.fetch(docs, id=request.view_args.get("id"), **kwargs)
 
-    def fetch(self, docs, id=None, **kwargs):
+    async def fetch(self, docs, id=None, **kwargs):
         id_of_fetched_items = []
 
         for doc in docs:
@@ -80,7 +80,7 @@ class FetchService(BaseService):
 
             if doc.get("macro"):  # there is a macro so transform it
                 macro_kwargs = kwargs.get("macro_kwargs") or {}
-                ingest_doc = get_resource_service("macros").execute_macro(
+                ingest_doc = await get_resource_service("macros").execute_macro(
                     ingest_doc,
                     doc.get("macro"),
                     dest_desk_id=desk_id,
@@ -88,7 +88,7 @@ class FetchService(BaseService):
                     **macro_kwargs,
                 )
 
-            dest_doc = fetch_item(
+            dest_doc = await fetch_item(
                 ingest_doc,
                 desk_id,
                 stage_id,
@@ -106,9 +106,9 @@ class FetchService(BaseService):
             dest_doc[INGEST_ID] = self.__strip_version_from_guid(ingest_doc[GUID_FIELD], ingest_doc.get("version"))
             dest_doc[INGEST_VERSION] = ingest_doc.get("version")
 
-            self.__fetch_items_in_package(dest_doc, desk_id, stage_id, doc.get(ITEM_STATE, CONTENT_STATE.FETCHED))
+            await self.__fetch_items_in_package(dest_doc, desk_id, stage_id, doc.get(ITEM_STATE, CONTENT_STATE.FETCHED))
 
-            self.__fetch_associated_items(dest_doc, desk_id, stage_id, doc.get(ITEM_STATE, CONTENT_STATE.FETCHED))
+            await self.__fetch_associated_items(dest_doc, desk_id, stage_id, doc.get(ITEM_STATE, CONTENT_STATE.FETCHED))
 
             desk = get_resource_service("desks").find_one(req=None, _id=desk_id)
             if desk and desk.get("default_content_profile") and dest_doc.get("type") not in MEDIA_TYPES:
@@ -140,7 +140,7 @@ class FetchService(BaseService):
         except Exception:
             return guid
 
-    def __fetch_associated_items(self, doc, desk, stage, state):
+    async def __fetch_associated_items(self, doc, desk, stage, state):
         """
         Fetches the associated items of a given document
         """
@@ -150,10 +150,10 @@ class FetchService(BaseService):
                 new_item["desk"] = desk
                 new_item["stage"] = stage
                 new_item["state"] = state
-                new_ids = self.fetch([new_item], id=None, notify=False)
+                new_ids = await self.fetch([new_item], id=None, notify=False)
                 item.update(new_item)
 
-    def __fetch_items_in_package(self, dest_doc, desk, stage, state):
+    async def __fetch_items_in_package(self, dest_doc, desk, stage, state):
         # Note: macro and target information is not user for package publishing.
         # Needs to looked later when package ingest requirements is clear.
         for ref in [ref for group in dest_doc.get(GROUPS, []) for ref in group.get(REFS, []) if ref.get(RESIDREF)]:
@@ -167,7 +167,7 @@ class FetchService(BaseService):
         ]
 
         if refs:
-            new_ref_guids = self.fetch(refs, id=None, notify=False)
+            new_ref_guids = await self.fetch(refs, id=None, notify=False)
             count = 0
             for ref in [ref for group in dest_doc.get(GROUPS, []) for ref in group.get(REFS, []) if ref.get(RESIDREF)]:
                 ref[RESIDREF] = ref[GUID_FIELD] = new_ref_guids[count]
