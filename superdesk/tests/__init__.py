@@ -403,7 +403,9 @@ async def setup(context=None, config=None, app_factory=get_app, reset=False, aut
 
     if context:
         context.app = app
+        app.test_client_class = TestClient
         context.client = app.test_client()
+
         if not hasattr(context, "BEHAVE") and not hasattr(context, "test_context"):
             context.test_context = app.test_request_context("/")
             await context.test_context.push()
@@ -611,6 +613,15 @@ class AsyncTestCase(IsolatedAsyncioTestCase):
 
 
 class TestClient(QuartClient):
+    async def open(self, *args, **kwargs) -> Response:
+        """
+        Appends the request path to the response object for later debugging
+        """
+
+        response = await super().open(*args, **kwargs)
+        response.request_path = kwargs.get("path", args[0] if args else "/")  # type: ignore[attr-defined]
+        return response
+
     def model_instance_to_json(self, model_instance: ResourceModel):
         return model_instance.to_dict(mode="json")
 
