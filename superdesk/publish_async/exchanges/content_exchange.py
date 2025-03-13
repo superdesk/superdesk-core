@@ -21,6 +21,8 @@ from apps.publish.content.common import get_utc_publish_schedule, ITEM_PUBLISH
 from apps.publish.published_item import QUEUE_STATE, PUBLISHED, ERROR_MESSAGE
 from apps.legal_archive.commands import import_into_legal_archive
 
+import content_api
+
 from .base_exchange import BasicPublishExchange
 
 logger = logging.getLogger(__name__)
@@ -99,6 +101,15 @@ class ContentPublishExchange(BasicPublishExchange):
                 await self.update_published_item(published_item_id)
 
             response = await super().send(request)
+
+            if not response.content_api_subscribers and request.publish_to_content_api and content_api.is_enabled():
+                try:
+                    # If there were no ContentAPI Subscribers, we push it there manually now
+                    get_resource_service("content_api").publish(request.item, [])
+                except Exception:
+                    logger.exception(
+                        f"Failed to queue item to API for item: {request.item_id} for action {request.operation}"
+                    )
 
             # if the item was routed then set the state to "queued"
             # else set the queue state to "queued_not_transmitted"
@@ -211,12 +222,11 @@ class ContentPublishExchange(BasicPublishExchange):
         # send a notification to the clients
         push_content_notification([{"_id": str(published_item["item_id"]), "task": published_item.get("task", None)}])
         #  apply internal destinations
+        original = archive_service.find_one(req=None, _id=published_item["item_id"])
         signals.item_published.send(
             self,
-            item=archive_service.find_one(
-                req=None,
-                _id=published_item["item_id"],
-            ),
+            item=original,
             after_scheduled=True,
         )
+        await signals.item_published_async.send(original, True)
         get_resource_service(PUBLISHED).patch(published_item_id, published_update)

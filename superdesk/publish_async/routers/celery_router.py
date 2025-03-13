@@ -6,6 +6,7 @@ from superdesk.errors import SuperdeskApiError
 from superdesk.publish_async import get_exchange_factory
 
 from .asyncio_router import AsyncioPublishRouter
+from ..utils import ContentApiSubscriber
 
 
 class CeleryPublishRouter(AsyncioPublishRouter):
@@ -56,8 +57,12 @@ async def send_task_to_consumer(consumer_name: str, subscriber_id: ObjectId, tas
     """
 
     consumer = get_exchange_factory().get_consumer(consumer_name)
+    subscriber = (
+        ContentApiSubscriber
+        if subscriber_id == ContentApiSubscriber.id
+        else await SubscribersResource.get_service().find_by_id(subscriber_id)
+    )
 
-    subscriber = await SubscribersResource.get_service().find_by_id(subscriber_id)
     if subscriber is None:
         raise SuperdeskApiError.badRequestError(gettext(f"Subscriber {subscriber_id} not found."))
 

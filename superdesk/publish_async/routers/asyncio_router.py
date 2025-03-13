@@ -65,6 +65,7 @@ class AsyncioPublishRouter(PublishExchangeRouter):
                 try:
                     await task
                 except Exception:
+                    logger.exception("Failed to process task")
                     failed += 1
 
             if not failed:
@@ -91,26 +92,25 @@ class AsyncioPublishRouter(PublishExchangeRouter):
 
         cache = PublishCache.get()
         subscriber_tasks: dict[ObjectId, tuple[SubscribersResource, list[PublishQueueResource]]] = {}
-        content_api_task: PublishQueueResource | None = None
 
         # Group Tasks with their associated Subscriber and Consumer
         for task in tasks:
-            subscriber = cache.subscribers.get(task.subscriber_id)
+            subscriber: SubscribersResource | None
+
+            if task.is_content_api:
+                # If this task is for the ContentAPI, then we use the ContentApiSubscriber
+                # instead of the actual Subscriber, so this task is sent to the ContentAPI in one step
+                subscriber = ContentApiSubscriber
+                task.item = request.item
+                task.subscriber_id = ContentApiSubscriber.id
+            else:
+                subscriber = cache.subscribers.get(task.subscriber_id)
+
             if not subscriber:
                 logger.warning(f"Subscriber {task.subscriber_id} not found.")
                 continue
 
-            if task.is_content_api:
-                # We skip this one, as we'll publish to the Content API for all Subscribers in one step
-                if content_api_task is None:
-                    content_api_task = task
-                continue
-
             subscriber_tasks.setdefault(subscriber.id, (subscriber, []))[1].append(task)
-
-        if content_api_task:
-            content_api_task.item = request.item
-            subscriber_tasks[ContentApiSubscriber.id] = (ContentApiSubscriber, [content_api_task])
 
         return list(subscriber_tasks.values())
 

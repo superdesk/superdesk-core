@@ -41,7 +41,7 @@ from apps.archive.common import ITEM_OPERATION
 from apps.publish.published_item import QUEUE_STATE, PUBLISHED
 
 from ..utils import get_high_priority_celery_queue, get_publish_channel_config, ContentApiSubscriber
-from ..consumers import AsyncioPublishConsumer, CeleryPublishConsumer
+from ..consumers import AsyncioPublishConsumer, CeleryPublishConsumer, ContentApiPublishConsumer
 
 
 logger = logging.getLogger(__name__)
@@ -78,7 +78,8 @@ class DefaultPublishExchangeFactory(PublishExchangeFactory, SingletonInstance):
 
         if filter_class.name in self._filter_classes:
             existing_class = self._filter_classes[filter_class.name]
-            raise RuntimeError(f"PublishFilter '{filter_class.name}' already registered with '{existing_class}'")
+            logger.warning(f"PublishFilter '{filter_class.name}' already registered with '{existing_class}'")
+            return
 
         self._filter_classes[filter_class.name] = filter_class
 
@@ -92,7 +93,8 @@ class DefaultPublishExchangeFactory(PublishExchangeFactory, SingletonInstance):
 
         if formatter_class.name in self._formatter_classes:
             existing_class = self._formatter_classes[formatter_class.name]
-            raise RuntimeError(f"PublishFormatter '{formatter_class.name}' already registered with '{existing_class}'")
+            logger.warning(f"PublishFormatter '{formatter_class.name}' already registered with '{existing_class}'")
+            return
 
         self._formatter_classes[formatter_class.name] = formatter_class
 
@@ -106,7 +108,8 @@ class DefaultPublishExchangeFactory(PublishExchangeFactory, SingletonInstance):
 
         if router_class.name in self._router_classes:
             existing_class = self._router_classes[router_class.name]
-            raise RuntimeError(f"PublishRouter '{router_class.name}' already registered with '{existing_class}'")
+            logger.warning(f"PublishRouter '{router_class.name}' already registered with '{existing_class}'")
+            return
 
         self._router_classes[router_class.name] = router_class
 
@@ -120,7 +123,8 @@ class DefaultPublishExchangeFactory(PublishExchangeFactory, SingletonInstance):
 
         if exchange_class.name in self._exchange_classes:
             existing_class = self._exchange_classes[exchange_class.name]
-            raise RuntimeError(f"PublishExchange '{exchange_class.name}' already registered with '{existing_class}'")
+            logger.warning(f"PublishExchange '{exchange_class.name}' already registered with '{existing_class}'")
+            return
 
         self._exchange_classes[exchange_class.name] = exchange_class
 
@@ -134,7 +138,8 @@ class DefaultPublishExchangeFactory(PublishExchangeFactory, SingletonInstance):
 
         if consumer_class.name in self._consumer_classes:
             existing_class = self._consumer_classes[consumer_class.name]
-            raise RuntimeError(f"PublishConsumer '{consumer_class.name}' already registered with '{existing_class}'")
+            logger.warning(f"PublishConsumer '{consumer_class.name}' already registered with '{existing_class}'")
+            return
 
         self._consumer_classes[consumer_class.name] = consumer_class
 
@@ -248,6 +253,7 @@ class DefaultPublishExchangeFactory(PublishExchangeFactory, SingletonInstance):
             logger.info(f"Sending request for {request.item_id} to {exchange}")
             return await exchange.send(request)
         except KeyError as e:
+            logger.exception(f"Missing key in request: {e}")
             raise SuperdeskApiError.badRequestError(
                 message=gettext(f"Key is missing on article to be published: {e}"),
             ) from e
@@ -272,7 +278,7 @@ class DefaultPublishExchangeFactory(PublishExchangeFactory, SingletonInstance):
 
         consumer_name: str
         if subscriber.id == ContentApiSubscriber.id:
-            consumer_name = ContentApiSubscriber.name
+            consumer_name = ContentApiPublishConsumer.name
         elif subscriber.is_async:
             consumer_name = AsyncioPublishConsumer.name
         else:

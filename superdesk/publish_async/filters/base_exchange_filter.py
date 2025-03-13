@@ -108,7 +108,7 @@ class BasePublishExchangeFilter(PublishExchangeFilter):
         )
         api_product_ids: set[ObjectId] = (
             set()
-            if request.publish_to_content_api and content_api.is_enabled()
+            if not request.publish_to_content_api or not content_api.is_enabled()
             else set(chain(*[subscriber.api_products for subscriber in subscribers if subscriber.api_products]))
         )
 

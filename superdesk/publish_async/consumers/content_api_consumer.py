@@ -36,13 +36,14 @@ class ContentApiPublishConsumer(PublishConsumer):
         :param subscriber: Represents the subscriber resource.
         :param tasks: A list of publishing queue resources to be processed.
         """
+
         item = tasks[0].item if len(tasks) else None
         if not item:
             logger.warning("ContentAPI item not found in provided tasks")
             return
 
         subscriber_ids = [task.subscriber_id for task in tasks]
-        cache = PublishCache.get()
+        cache = await PublishCache.init()
         subscribers = [
             cache.subscribers[subscriber_id].to_dict()
             for subscriber_id in subscriber_ids

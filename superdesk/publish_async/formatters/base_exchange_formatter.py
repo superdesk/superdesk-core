@@ -265,6 +265,7 @@ class BasePublishExchangeFormatter(PublishExchangeFormatter):
                     priority=subscriber.priority,
                     codes=list(response.subscriber_codes.get(subscriber.id) or set()),
                     destination=destination,
+                    item=item if destination.delivery_type == "content_api" else None,
                 )
 
                 if encoded_item:

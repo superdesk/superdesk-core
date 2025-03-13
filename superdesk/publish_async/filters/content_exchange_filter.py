@@ -191,7 +191,8 @@ class ContentPublishExchangeFilter(BasePublishExchangeFilter):
         ]
 
         for subscriber in subscribers:
-            response.content_api_subscribers.add(subscriber.id)
+            if subscriber_ids.get(subscriber.id):
+                response.content_api_subscribers.add(subscriber.id)
 
         return subscribers, subscriber_codes, associations
 
