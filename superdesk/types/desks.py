@@ -16,18 +16,18 @@ class MonitoringSetting:
 
 class DesksResourceModel(ResourceModel):
     name: Annotated[fields.Keyword, validate_unique_value_async("desks", "name")]
-    description: str
+    description: str | None = None
     members: list[dict[str, Annotated[ObjectId, validate_data_relation_async("users")]]] = Field(default_factory=list)
     incoming_stage: Annotated[ObjectId, validate_data_relation_async("stages")] | None = None
     working_stage: Annotated[ObjectId, validate_data_relation_async("stages")] | None = None
-    content_expiry: int
-    source: str
+    content_expiry: int | None = None
+    source: str | None = None
     send_to_desk_not_allowed: bool = Field(default=False)
     monitoring_settings: list[MonitoringSetting] = Field(default_factory=list)
     desk_type: DeskTypeEnum = Field(default=DeskTypeEnum.AUTHORING)
     desk_metadata: dict[str, Any] = Field(default_factory=dict)
     content_profiles: dict[str, Any] = Field(default_factory=dict)
-    desk_language: str
+    desk_language: str | None = None
     monitoring_default_view: MonitoringViewEnum | None = None
     default_content_profile: Annotated[str | ObjectId, validate_data_relation_async("content_types")] | None = None
     default_content_template: Annotated[ObjectId, validate_data_relation_async("content_templates")] | None = None
