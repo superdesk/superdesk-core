@@ -434,6 +434,10 @@ def add_user_info_to_context(context: Any, token: str, user: User, auth_id=None)
     will be converted back to string (internal) by quart/werkzeug Request.
     """
     basic_token_header = token_to_basic_auth_header(token)
+
+    # remove any existing authorization header. Updates the list (in-place)
+    # to preserve any references to context.headers elsewhere
+    context.headers[:] = [h for h in context.headers if h[0] != "Authorization"]
     context.headers.append(basic_token_header)
 
     if getattr(context, "user", None):
