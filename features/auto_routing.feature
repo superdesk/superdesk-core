@@ -925,7 +925,7 @@ Feature: Auto Routing
         Given "subscribers"
         """
         [{
-          "_id": "sub-1",
+          "_id": "2234567890abcd1234567891",
           "name":"Channel 1",
           "is_active": true,
           "media_type": "media",
@@ -935,7 +935,7 @@ Feature: Auto Routing
           "destinations":[{"name":"Test","format": "nitf", "delivery_type":"email","config":{"recipients":"test@test.com"}}]
         },
         {
-          "_id": "sub-2",
+          "_id": "2234567890abcd1234567892",
           "name":"Wire channel with geo restriction Victoria",
           "is_active": true,
           "media_type":"media",
@@ -944,7 +944,7 @@ Feature: Auto Routing
           "destinations":[{"name":"Test","format": "nitf", "delivery_type":"email","config":{"recipients":"test@test.com"}}]
         },
         {
-          "_id": "sub-3",
+          "_id": "2234567890abcd1234567893",
           "name":"Wire channel without geo restriction",
           "is_active": true,
           "media_type":"media",
@@ -972,7 +972,7 @@ Feature: Auto Routing
                 "filter": "1234567890abcd1234567890",
                 "actions": {
                   "fetch": [],
-                  "publish": [{"desk": "#desks._id#", "stage": "#desks.incoming_stage#", "target_subscribers": [{"_id":"sub-2"}]}],
+                  "publish": [{"desk": "#desks._id#", "stage": "#desks.incoming_stage#", "target_subscribers": [{"_id":"2234567890abcd1234567892"}]}],
                   "exit": true
                 }
               }
@@ -1002,7 +1002,7 @@ Feature: Auto Routing
         {
           "_items":
             [
-              {"subscriber_id": "sub-2"}
+              {"subscriber_id": "2234567890abcd1234567892"}
             ]
         }
         """
@@ -1046,6 +1046,7 @@ Feature: Auto Routing
         """
         [{
             "_id": "foo",
+            "label": "Bar",
             "schema" : {
                 "body_html" : {
                     "required" : true,
@@ -1217,7 +1218,7 @@ Feature: Auto Routing
         Given "filter_conditions"
         """
         [{
-            "_id": "123",
+            "_id": "3234567890abcd1234567891",
             "name": "Headline Test",
             "field": "headline",
             "operator": "like",
@@ -1232,7 +1233,7 @@ Feature: Auto Routing
             "content_filter": [
                 {
                     "expression": {
-                        "fc": ["123"]
+                        "fc": ["3234567890abcd1234567891"]
                     }
                 }
             ]
@@ -1241,7 +1242,7 @@ Feature: Auto Routing
         Given "subscribers"
         """
         [{
-          "_id": "sub-1",
+          "_id": "2234567890abcd1234567891",
           "name":"Channel 1",
           "is_active": true,
           "media_type": "media",
@@ -1270,7 +1271,7 @@ Feature: Auto Routing
                 "filter": "1234567890abcd1234567890",
                 "actions": {
                   "fetch": [],
-                  "publish": [{"desk": "#desks._id#", "stage": "#desks.incoming_stage#", "target_subscribers": [{"_id":"sub-1"}]}],
+                  "publish": [{"desk": "#desks._id#", "stage": "#desks.incoming_stage#", "target_subscribers": [{"_id":"2234567890abcd1234567891"}]}],
                   "exit": true
                 }
               }
@@ -1303,7 +1304,7 @@ Feature: Auto Routing
         {
           "_items":
             [
-              {"subscriber_id": "sub-1"}
+              {"subscriber_id": "2234567890abcd1234567891"}
             ]
         }
         """

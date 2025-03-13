@@ -889,9 +889,9 @@ Feature: Rewrite content
         """
         {
             "_items": [
-              {"state": "pending", "content_type": "text",
+              {"state": "success", "content_type": "text",
               "subscriber_id": "#digital#", "item_id": "123", "item_version": 2},
-              {"state": "pending", "content_type": "text",
+              {"state": "success", "content_type": "text",
               "subscriber_id": "#wire#", "item_id": "123", "item_version": 2}
             ]
         }
@@ -904,9 +904,9 @@ Feature: Rewrite content
         """
         {
             "_items": [
-              {"state": "pending", "content_type": "text",
+              {"state": "success", "content_type": "text",
               "subscriber_id": "#wire#", "item_id": "123", "item_version": 2},
-              {"state": "pending", "content_type": "text",
+              {"state": "success", "content_type": "text",
               "subscriber_id": "#wire#", "item_id": "#REWRITE_ID#", "item_version": 3}
             ]
         }
@@ -999,9 +999,9 @@ Feature: Rewrite content
         """
         {
             "_items": [
-              {"state": "pending", "content_type": "text",
+              {"state": "success", "content_type": "text",
               "subscriber_id": "#digital#", "item_id": "123", "item_version": 2},
-              {"state": "pending", "content_type": "text",
+              {"state": "success", "content_type": "text",
               "subscriber_id": "#wire#", "item_id": "123", "item_version": 2}
             ]
         }
@@ -1025,9 +1025,9 @@ Feature: Rewrite content
         """
         {
             "_items": [
-              {"state": "pending", "content_type": "text",
+              {"state": "success", "content_type": "text",
               "subscriber_id": "#wire#", "item_id": "123", "item_version": 2},
-              {"state": "pending", "content_type": "text",
+              {"state": "success", "content_type": "text",
               "subscriber_id": "#wire#", "item_id": "#REWRITE_ID#", "item_version": 3}
             ]
         }
@@ -1141,7 +1141,7 @@ Feature: Rewrite content
         """
         {
             "_items": [
-              {"state": "pending", "content_type": "text",
+              {"state": "success", "content_type": "text",
               "subscriber_id": "#digital#", "item_id": "123", "item_version": 2}
             ]
         }
@@ -1165,9 +1165,9 @@ Feature: Rewrite content
         """
         {
             "_items": [
-              {"state": "pending", "content_type": "text",
+              {"state": "success", "content_type": "text",
               "subscriber_id": "#digital#", "item_id": "123", "item_version": 2},
-              {"state": "pending", "content_type": "text",
+              {"state": "success", "content_type": "text",
               "subscriber_id": "#wire#", "item_id": "#REWRITE_ID#", "item_version": 3}
             ]
         }
@@ -1281,7 +1281,7 @@ Feature: Rewrite content
         """
         {
             "_items": [
-              {"state": "pending", "content_type": "text",
+              {"state": "success", "content_type": "text",
               "subscriber_id": "#wire#", "item_id": "123", "item_version": 2}
             ]
         }
@@ -1305,11 +1305,11 @@ Feature: Rewrite content
         """
         {
             "_items": [
-              {"state": "pending", "content_type": "text",
+              {"state": "success", "content_type": "text",
               "subscriber_id": "#wire#", "item_id": "123", "item_version": 2},
-              {"state": "pending", "content_type": "text", "item_id": "#REWRITE_ID#",
+              {"state": "success", "content_type": "text", "item_id": "#REWRITE_ID#",
               "subscriber_id": "#digital#", "item_version": 3},
-              {"state": "pending", "content_type": "text",
+              {"state": "success", "content_type": "text",
               "subscriber_id": "#wire#", "item_id": "#REWRITE_ID#", "item_version": 3}
             ]
         }
@@ -1423,7 +1423,7 @@ Feature: Rewrite content
         """
         {
             "_items": [
-              {"state": "pending", "content_type": "text",
+              {"state": "success", "content_type": "text",
               "subscriber_id": "#wire#", "item_id": "123", "item_version": 2}
             ]
         }
@@ -1448,11 +1448,11 @@ Feature: Rewrite content
         """
         {
             "_items": [
-              {"state": "pending", "content_type": "text",
+              {"state": "success", "content_type": "text",
               "subscriber_id": "#wire#", "item_id": "123", "item_version": 2},
-              {"state": "pending", "content_type": "text", "item_id": "#rewrite1#",
+              {"state": "success", "content_type": "text", "item_id": "#rewrite1#",
               "subscriber_id": "#digital#", "item_version": 3},
-              {"state": "pending", "content_type": "text",
+              {"state": "success", "content_type": "text",
               "subscriber_id": "#wire#", "item_id": "#rewrite1#", "item_version": 3}
             ]
         }
@@ -1477,15 +1477,15 @@ Feature: Rewrite content
         """
         {
             "_items": [
-              {"state": "pending", "content_type": "text",
+              {"state": "success", "content_type": "text",
               "subscriber_id": "#wire#", "item_id": "123", "item_version": 2},
-              {"state": "pending", "content_type": "text",
+              {"state": "success", "content_type": "text",
               "item_id": "#rewrite1#", "subscriber_id": "#digital#", "item_version": 3},
-              {"state": "pending", "content_type": "text", "subscriber_id": "#wire#",
+              {"state": "success", "content_type": "text", "subscriber_id": "#wire#",
               "item_id": "#rewrite1#", "item_version": 3},
-              {"state": "pending", "content_type": "text", "item_id": "#rewrite2#",
+              {"state": "success", "content_type": "text", "item_id": "#rewrite2#",
               "subscriber_id": "#digital#", "item_version": 3},
-              {"state": "pending", "content_type": "text",
+              {"state": "success", "content_type": "text",
               "subscriber_id": "#wire#", "item_id": "#rewrite2#", "item_version": 3}
             ]
         }

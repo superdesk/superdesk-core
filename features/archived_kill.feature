@@ -21,12 +21,12 @@ Feature: Kill a content item in the (dusty) archive
     """
     [{
       "name":"Channel 1", "media_type":"media", "subscriber_type": "digital", "sequence_num_settings":{"min" : 1, "max" : 10}, "email": "test@test.com",
-      "products": ["#products._id#"], "_id": "s-d", "is_active": true,
+      "products": ["#products._id#"], "_id": "1234567890abcd1234567890", "is_active": true,
       "destinations":[{"name":"Test","format": "nitf", "delivery_type":"email","config":{"recipients":"test@test.com"}}]
     },
     {
       "name":"Channel 2", "media_type":"media", "subscriber_type": "wire", "sequence_num_settings":{"min" : 1, "max" : 10}, "email": "test@test.com",
-      "products": ["#products._id#"], "_id": "s-w", "is_active": true,
+      "products": ["#products._id#"], "_id": "1234567890abcd1234567891", "is_active": true,
       "destinations":[{"name":"Test","format": "nitf", "delivery_type":"email","config":{"recipients":"test@test.com"}}]
     }]
     """
@@ -234,9 +234,9 @@ Feature: Kill a content item in the (dusty) archive
     """
     [
         {"item_id": "123", "subscriber_id":"Channel 2", "content_type": "text",
-        "item_version": 2, "publishing_action": "published", "_subscriber_id": "s-w"},
+        "item_version": 2, "publishing_action": "published", "_subscriber_id": "1234567890abcd1234567891"},
         {"item_id": "234", "subscriber_id":"Channel 1", "content_type": "text",
-        "item_version": 2, "publishing_action": "published", "_subscriber_id": "s-d"}
+        "item_version": 2, "publishing_action": "published", "_subscriber_id": "1234567890abcd1234567890"}
      ]
     """
     And "legal_archive_versions" with objectid
@@ -685,56 +685,56 @@ Feature: Kill a content item in the (dusty) archive
     [
       {
           "subscriber_id" : "Channel 1",
-          "_subscriber_id" : "s-d",
+          "_subscriber_id" : "1234567890abcd1234567890",
           "content_type" : "composite",
           "publishing_action" : "published",
           "item_id" : "234",
           "item_version" : 3
       },{
           "subscriber_id" : "Channel 2",
-          "_subscriber_id" : "s-w",
+          "_subscriber_id" : "1234567890abcd1234567891",
           "content_type" : "text",
           "publishing_action" : "published",
           "item_id" : "123",
           "item_version" : 2
       },{
           "subscriber_id" : "Channel 1",
-          "_subscriber_id" : "s-d",
+          "_subscriber_id" : "1234567890abcd1234567890",
           "content_type" : "composite",
           "publishing_action" : "corrected",
           "item_id" : "234",
           "item_version" : 4
       },{
           "subscriber_id" : "Channel 2",
-          "_subscriber_id" : "s-w",
+          "_subscriber_id" : "1234567890abcd1234567891",
           "content_type" : "text",
           "publishing_action" : "corrected",
           "item_id" : "123",
           "item_version" : 3
       },{
           "subscriber_id" : "Channel 1",
-          "_subscriber_id" : "s-d",
+          "_subscriber_id" : "1234567890abcd1234567890",
           "content_type" : "composite",
           "publishing_action" : "published",
           "item_id" : "234",
           "item_version" : 5
       },{
           "subscriber_id" : "Channel 2",
-          "_subscriber_id" : "s-w",
+          "_subscriber_id" : "1234567890abcd1234567891",
           "content_type" : "text",
           "publishing_action" : "published",
           "item_id" : "456",
           "item_version" : 3
       },{
           "subscriber_id" : "Channel 1",
-          "_subscriber_id" : "s-d",
+          "_subscriber_id" : "1234567890abcd1234567890",
           "content_type" : "composite",
           "publishing_action" : "published",
           "item_id" : "234",
           "item_version" : 6
       },{
           "subscriber_id" : "Channel 2",
-          "_subscriber_id" : "s-w",
+          "_subscriber_id" : "1234567890abcd1234567891",
           "content_type" : "text",
           "publishing_action" : "published",
           "item_id" : "789",

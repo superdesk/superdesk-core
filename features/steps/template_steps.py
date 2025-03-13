@@ -1,5 +1,6 @@
 import pytz
 from behave import when, then  # type: ignore
+from behave.api.async_step import async_run_until_complete
 from datetime import datetime, timedelta
 from superdesk.tests import set_placeholder
 from superdesk.tests.steps import get_json_data, parse_date
@@ -7,12 +8,13 @@ from superdesk.utc import utcnow, local_to_utc
 
 
 @when("we run create content task")
-def when_we_run_create_content_task(context):
+@async_run_until_complete
+async def when_we_run_create_content_task(context):
     from apps.templates import create_scheduled_content
 
     now = utcnow() + timedelta(days=8)
     with context.app.app_context():
-        items = create_scheduled_content(now)
+        items = await create_scheduled_content(now)
         for item in items:
             set_placeholder(context, "ITEM_ID", str(item["_id"]))
 
