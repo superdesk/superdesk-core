@@ -46,6 +46,7 @@ class BasePublishFilterTestCase(TestCase):
             operation="publish",
             published_state="published",
             item_type=ContentType.TEXT,
+            publish_to_content_api=True,
         )
         response = PublishRequestResponse()
         await self.filter.filter_subscribers(request, response)

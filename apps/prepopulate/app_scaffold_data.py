@@ -25,7 +25,11 @@ logger = logging.getLogger(__name__)
 
 @cli.command("app:scaffold_data")
 @click.option("--no-of-stories", "-n", "no_of_stories", default=200, type=int)
-async def scaffold_data(no_of_stories):
+async def scaffold_data_command(no_of_stories) -> int:
+    return await scaffold_data(no_of_stories)
+
+
+async def scaffold_data(no_of_stories: int) -> int:
     logger.info("Starting scaffolding")
     no_of_stories = int(no_of_stories)
 

@@ -44,6 +44,10 @@ class MacrosService(AsyncBaseService):
         else:
             return ListCursor([get_public_props(macro) for macro in all_macros])
 
+    async def get_async(self, req, lookup):
+        """Provide async version, for front-end use"""
+        return self.get(req, lookup)
+
     async def create_async(self, docs, **kwargs):
         try:
             ids = []
