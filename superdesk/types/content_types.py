@@ -14,10 +14,9 @@ from typing import Annotated, Any, cast
 from typing_extensions import LiteralString
 
 from pydantic import Field
-from quart_babel import gettext as _
+from quart_babel import gettext
 
 from superdesk.core.resources import ResourceModel, fields
-from superdesk.core.resources.model import ResourceModel
 from superdesk.core.resources.validators import validate_data_relation_async, validate_iunique_value_async
 
 from pydantic_core import PydanticCustomError
@@ -31,8 +30,8 @@ async def _validate_content_type(item: ResourceModel, _) -> None:
     item = cast(ContentTypes, item)
     if not item.content_type or item.content_type.lower() == "text":
         return
-    if await ContentTypes.get_service().count({"type": item.content_type}) > 0:
-        msg: LiteralString = _("Only 1 instance is allowed.")
+    if await ContentTypes.get_service().count({"type": item.content_type, "_id": {"$ne": item.id}}) > 0:
+        msg: LiteralString = gettext("Only 1 instance is allowed.")
         raise PydanticCustomError("unique", msg)
 
 
@@ -50,7 +49,7 @@ class ContentTypes(ResourceModel):
     icon: str | None = None
     description: str | None = None
     # TODO-ASYNC: Field name "schema" in "ContentTypes" shadows an attribute in parent "ResourceModel"
-    schema: dict[str, Any] = Field(default_factory=dict)  # type: ignore[assignment]
+    content_schema: dict[str, Any] = Field(default_factory=dict, alias="schema")
     editor: dict[str, Any] = Field(default_factory=dict)
     widgets_config: list[WidgetConfig] = Field(default_factory=list)
     priority: int = 0
