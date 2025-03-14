@@ -48,7 +48,6 @@ class ContentTypes(ResourceModel):
     label: Annotated[str, validate_iunique_value_async("content_types", "label")]
     icon: str | None = None
     description: str | None = None
-    # TODO-ASYNC: Field name "schema" in "ContentTypes" shadows an attribute in parent "ResourceModel"
     content_schema: dict[str, Any] = Field(default_factory=dict, alias="schema")
     editor: dict[str, Any] = Field(default_factory=dict)
     widgets_config: list[WidgetConfig] = Field(default_factory=list)
