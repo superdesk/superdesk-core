@@ -10,8 +10,9 @@ from apps.content_types.content_types import CONTENT_TYPE_PRIVILEGE
 from superdesk.core.resources import ResourceConfig, MongoResourceConfig, MongoIndexOptions
 from superdesk.core.resources.resource_rest_endpoints import RestEndpointConfig
 from superdesk.types.content_types import ContentTypes
-from .service import ContentTypesService
 from superdesk.core.auth.privilege_rules import http_method_privilege_based_rules
+
+from .service import ContentTypesService
 
 
 content_types_resource_config = ResourceConfig(

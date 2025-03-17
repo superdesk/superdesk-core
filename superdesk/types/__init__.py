@@ -4,6 +4,7 @@ from .desks import DesksResourceModel
 from .users import UsersResourceModel
 from .vocabularies import VocabulariesResourceModel
 
+from .content_types import ContentTypes
 from .products import ProductsResource, ProductTypes, ProductFilterType
 from .subscribers import SubscribersResource, SubscriberDestination, SubscriberSequenceSettings, SubscriberType
 from .sequences import SequencesResource
@@ -16,6 +17,7 @@ __all__ = [
     "UsersResourceModel",
     "DesksResourceModel",
     "VocabulariesResourceModel",
+    "ContentTypes",
     "ProductsResource",
     "ProductTypes",
     "ProductFilterType",
