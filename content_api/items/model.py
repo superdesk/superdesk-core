@@ -18,6 +18,7 @@ class PubStatusType(str, Enum):
 
 
 class ContentAPIItem(BaseContentItem, ModelWithVersions):
+    slugline: str | None = None
     description_html: str | None = None
     located: str | None = None
     mimetype: fields.Keyword | None = None
@@ -27,6 +28,7 @@ class ContentAPIItem(BaseContentItem, ModelWithVersions):
     profile: str | None = None
     renditions: dict | None = None
     service: list[CVItemWithCode] = Field(default_factory=list)
+    subject: list[CVItemWithCode] = Field(default_factory=list)
     source: fields.Keyword | None = None
     keywords: list[fields.HTML] = Field(default_factory=list)
     anpa_take_key: str | None = None

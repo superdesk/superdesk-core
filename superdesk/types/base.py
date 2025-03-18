@@ -18,7 +18,11 @@ from superdesk.core.resources import (
     fields,
     validators,
 )
-from superdesk.core.resources.validators import validate_data_relation_async
+from superdesk.core.resources.validators import (
+    validate_data_relation_async,
+    validate_minlength,
+    validate_unique_value_async,
+)
 from superdesk.metadata.item import FORMATS
 from superdesk.utc import utcnow
 
@@ -154,7 +158,7 @@ class ContentTypes(str, Enum):
     PLANNING = "planning"
 
 
-class ContentStates(Enum):
+class ContentStates(fields.Keyword, Enum):
     DRAFT = "draft"
     INGESTED = "ingested"
     ROUTED = "routed"
@@ -198,21 +202,16 @@ class GroupRef:
 
 
 @dataclass
-class EntityMetadataItem:
-    name: str
+class EntityMetadata:
+    name: fields.TextWithKeyword
     qcode: fields.Keyword
     scheme: fields.Keyword
     source: fields.Keyword
 
 
 @dataclass
-class EntityMetadata:
-    metadata: list[EntityMetadataItem] | None = None
-
-
-@dataclass
 class LinkedInPackage:
-    package: Annotated[str, validate_data_relation_async("archive")]
+    package: Annotated[fields.ObjectId, validate_data_relation_async("archive")]
     package_type: str | None = Field(None, deprecated=True)
 
 
@@ -248,19 +247,12 @@ class POI:
 
 
 @dataclass
-class FeatureMedia:
-    _id: str
-    guid: str
-    unique_id: int
-
-
-@dataclass
 class MarkedDesk:
-    desk_id: Annotated[str | None, validate_data_relation_async("desks")] = None
+    desk_id: Annotated[fields.ObjectId | None, validate_data_relation_async("desks")] = None
     date_marked: datetime | None = None
-    user_marked: Annotated[str | None, validate_data_relation_async("users")] = None
+    user_marked: Annotated[fields.ObjectId | None, validate_data_relation_async("users")] = None
     date_acknowledged: datetime | None = None
-    user_acknowledged: Annotated[str | None, validate_data_relation_async("users")] = None
+    user_acknowledged: Annotated[fields.ObjectId | None, validate_data_relation_async("users")] = None
 
 
 @dataclass
@@ -273,7 +265,7 @@ class Flag:
 
 @dataclass
 class Attachment:
-    pass
+    attachment: fields.ObjectId | None = None
 
 
 @dataclass
@@ -353,15 +345,14 @@ class ItemSchema(ResourceModel):
 
 
 class BaseContentItem(ResourceModel):
-    id: Annotated[str, Field(alias="_id")]
-    guid: str | None = None
+    id: Annotated[str, Field(alias="_id"), validate_unique_value_async(field_name="_id")]
+    guid: Annotated[str | None, validate_unique_value_async(field_name="guid")] = None
     uri: Annotated[fields.Keyword | None, validators.validate_iunique_value_async("items", "uri")] = None
     versioncreated: datetime = Field(default_factory=utcnow)
     firstcreated: datetime = Field(default_factory=utcnow)
     firstpublished: datetime = Field(default_factory=utcnow)
     pubstatus: Annotated[PubStatusType | None, fields.keyword_mapping()] = None
     anpa_category: list[CVItem] = Field(default_factory=list)
-    subject: list[CVItemWithCode] = Field(default_factory=list)
     # FIXME! incompatibilities between MetadataResource and ContentAPIItem
     # version: str | None = None
     # genre: list[CVItemWithCode] = Field(default_factory=list)
@@ -370,11 +361,10 @@ class BaseContentItem(ResourceModel):
     annotations: list[Annotation] = Field(default_factory=list)
     authors: list[ContentAuthor] = Field(default_factory=list)
     body_html: fields.HTML | None = None
-    body_text: str | None = None
+    body_text: fields.HTML | None = None
     headline: fields.HTML | None = None
-    slugline: str | None = None
-    byline: str | None = None
-    description_text: str | None = None
+    byline: fields.HTML | None = None
+    description_text: fields.HTML | None = None
     usageterms: str | None = None
     copyrightnotice: Annotated[str | None, fields.not_indexed()] = None
     copyrightholder: str | None = None
@@ -389,24 +379,45 @@ class BaseContentItem(ResourceModel):
 
 
 class MetadataResource(BaseContentItem):
-    unique_id: int
-    unique_name: fields.Keyword
+    unique_id: Annotated[int, validate_unique_value_async(field_name="unique_id")]
+    unique_name: Annotated[fields.Keyword, validate_unique_value_async(field_name="unique_name")]
     version: int
     ingest_id: fields.Keyword | None = None
     ingest_version: fields.Keyword | None = None
     family_id: fields.Keyword | None = None
     related_to: fields.Keyword | None = None
-    original_creator: Annotated[fields.Keyword | None, validate_data_relation_async("users")] = None
-    version_creator: Annotated[fields.Keyword | None, validate_data_relation_async("users")] = None
-    ingest_provider: Annotated[fields.Keyword | None, validate_data_relation_async("ingest_providers")] = None
+    original_creator: Annotated[fields.ObjectId | None, validate_data_relation_async("users")] = None
+    version_creator: Annotated[fields.ObjectId | None, validate_data_relation_async("users")] = None
+    ingest_provider: Annotated[fields.ObjectId | None, validate_data_relation_async("ingest_providers")] = None
     source: fields.Keyword
     original_source: fields.Keyword
     ingest_provider_sequence: fields.Keyword
+    subject: Annotated[list[Subject] | None, fields.nested_list(include_in_parent=True)] = None
     genre: list[Genre] | None = None
     company_codes: list[CompanyCodes] | None = None
-    item_type: ContentTypes = Field(ContentTypes.TEXT, alias="type")
+    item_type: Annotated[ContentTypes, fields.keyword_mapping] = Field(ContentTypes.TEXT, alias="type")
     package_type: str | None = Field(None, deprecated=True)
-    abstract: str | None = None
+    abstract: fields.HTML | None = None
+    slugline: Annotated[
+        str,
+        fields.elastic_mapping(
+            {
+                "type": "string",
+                "fielddata": True,
+                "fields": {
+                    "phrase": {
+                        "type": "string",
+                        "analyzer": "phrase_prefix_analyzer",
+                        "fielddata": True,
+                    },
+                    "keyword": {
+                        "type": "keyword",
+                    },
+                    "text": {"type": "string", "analyzer": "html_field_analyzer"},
+                },
+            }
+        ),
+    ]
     anpa_take_key: str | None = None
     correction_sequence: int | None = None
     rewrite_sequence: int | None = None
@@ -416,53 +427,55 @@ class MetadataResource(BaseContentItem):
     rewritten_by: fields.Keyword | None = None
     # FIXME: duplicate of ItemSchema
     sequence: int | None = None
-    keywords: list[str]
+    keywords: Annotated[
+        list[fields.Keyword], fields.elastic_mapping({"type": "list", "mapping": "html_field_analyzer"})
+    ]
     word_count: int
     profile: fields.Keyword | None = None
     state: ContentStates
     revert_state: ContentStates | None = None
-    signal: list[Subject]
-    ednote: str | None = None
+    signal: list[Subject] = Field(default_factory=list)
+    ednote: fields.HTML | None = None
     archive_description: str | None = None
-    groups: list[GroupRef] | None = None
-    deleted_groups: list[str] | None = None
+    groups: Annotated[list[GroupRef] | None, validate_minlength(1)] = None
+    deleted_groups: Annotated[list[str] | None, validate_minlength(1)] = None
     dateline: Dateline | None = None
-    # FIXME: type file
-    media: str | None = None
-    mimetype: fields.Keyword
-    poi: POI
-    renditions: dict[str, dict]
-    filemeta: dict[str, dict]
-    filemeta_json: str
+    # TODO-ASYNC: Add support for fileandmedia`
+    media: fields.Keyword | None = None
+    mimetype: fields.Keyword | None = None
+    poi: POI | None = None
+    renditions: dict[str, dict] = Field(default_factory=dict)
+    filemeta: dict[str, dict] = Field(default_factory=dict)
+    filemeta_json: Annotated[str | None, fields.not_indexed()] = None
     media_file: str
     contents: list
     alt_text: str | None = None
     # FIXME: Place is slightly different ("location" is not a list here)
     place: list[Place] | None = None
-    event: EntityMetadata | None = None
-    person: EntityMetadata | None = None
-    object: EntityMetadata | None = None
-    organisation: EntityMetadata | None = None
+    event: list[EntityMetadata] = Field(default_factory=list)
+    person: list[EntityMetadata] = Field(default_factory=list)
+    object: list[EntityMetadata] = Field(default_factory=list)
+    organisation: list[EntityMetadata] = Field(default_factory=list)
     creditline: str
     linked_in_packages: list[LinkedInPackage] | None = None
-    highlight: Annotated[fields.Keyword | None, validate_data_relation_async("highlights")] = None
-    highlights: Annotated[list[fields.Keyword] | None, validate_data_relation_async("highlights")] = None
+    highlight: Annotated[fields.ObjectId | None, validate_data_relation_async("highlights")] = None
+    highlights: Annotated[list[fields.ObjectId] | None, validate_data_relation_async("highlights")] = None
     marked_desks: list[MarkedDesk] | None = None
     more_coming: bool = Field(False, deprecated=True)
-    sign_off: str | None = None
+    sign_off: fields.HTML | None = None
     # FIXME: duplicate of ItemSchema
     task: Task
     task_id: fields.Keyword | None = None
-    lock_user: Annotated[fields.Keyword | None, validate_data_relation_async("users")] = None
+    lock_user: Annotated[fields.ObjectId | None, validate_data_relation_async("users")] = None
     lock_time: datetime | None = None
-    lock_session: Annotated[fields.Keyword | None, validate_data_relation_async("auth")] = None
+    lock_session: Annotated[fields.ObjectId | None, validate_data_relation_async("auth")] = None
     lock_action: fields.Keyword | None = None
-    template: Annotated[fields.Keyword | None, validate_data_relation_async("content_templates")] = None
-    body_footer: str | None = None
+    template: Annotated[fields.ObjectId | None, validate_data_relation_async("content_templates")] = None
+    body_footer: Annotated[str | None, fields.not_indexed()] = None
     flags: Flag | None = None
     sms_message: str | None = None
     format: fields.Keyword = FORMATS.HTML
-    auto_publish: bool
+    auto_publish: bool = False
     fields_meta: dict[str, dict] | None = None
     attachments: Annotated[list[Attachment] | None, validate_data_relation_async("attachments")] = None
     assignment_id: fields.Keyword
@@ -470,8 +483,8 @@ class MetadataResource(BaseContentItem):
     translation_id: fields.Keyword
     translations: list
     processed_from: fields.Keyword
-    embargoed_text: str
-    marked_for_user: Annotated[str | None, validate_data_relation_async("users")] = None
+    embargoed_text: Annotated[str, fields.not_indexed()]
+    marked_for_user: Annotated[fields.ObjectId | None, validate_data_relation_async("users")] = None
     marked_for_sign_off: str | None = None
     # FIXME: duplicate of ItemSchema
     broadcast: Broadcast | None = None
@@ -482,11 +495,10 @@ class MetadataResource(BaseContentItem):
     publish_schedule: datetime | None = None
     # FIXME: duplicate of ItemSchema
     schedule_settings: ScheduleSettings | None = None
-    used: bool
-    used_count: int
+    used: bool = False
+    used_count: int = 0
     used_updated: datetime
     metrics: dict[str, Any]
-    _type: fields.Keyword
     # FIXME: conflict here with ItemSchema
     # operation: str | None = None
     es_highlight: dict[str, Any] | None = None

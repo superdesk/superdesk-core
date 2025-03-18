@@ -11,6 +11,7 @@ from enum import Enum
 
 from pydantic import Field
 
+from superdesk.core.resources import fields
 from superdesk.types.archive import ArchiveResourceModel
 
 
@@ -24,10 +25,10 @@ class QueueState(Enum):
 
 
 class ArchivedResourceModel(ArchiveResourceModel):
-    item_id: str
+    item_id: fields.Keyword
     last_published_version: bool = True
     queue_state: QueueState = QueueState.PENDING
-    error_message: str
+    error_message: str = ""
     is_take_item: bool = Field(False, deprecated=True)
     digital_item_id: str = Field("", deprecated=True)
     # FIXME: readonly

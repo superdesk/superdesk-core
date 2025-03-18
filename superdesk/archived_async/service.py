@@ -235,10 +235,6 @@ class ArchivedService(AsyncResourceService[ArchivedResourceModel]):
         user = get_user()
         push_notification("item:deleted:archived", item=str(original.id), user=str(user.id))
 
-    def on_fetched_item(self, doc: ArchivedResourceModel) -> None:
-        # FIXME
-        doc.type = "archived"
-
     def _get_archived_id(self, item_id: str, version: int) -> str:
         return f"{item_id}:{version}"
 
