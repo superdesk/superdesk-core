@@ -401,6 +401,7 @@ class EMailRFC822FeedParser(EmailFeedParser):
 
                             # attempt to match the given desk name against the defined desks
                             query = {"name": re.compile("^{}$".format(mail_item.get("Desk", "")), re.IGNORECASE)}
+                            # TODO-ASYNC: Convert this to use ``find_one_async`` when upgrading this module
                             desk = superdesk.get_resource_service("desks").find_one(req=None, **query)
                             if desk:
                                 item["task"] = {"desk": desk.get("_id"), "stage": desk.get("incoming_stage")}

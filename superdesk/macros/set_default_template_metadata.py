@@ -22,6 +22,7 @@ def get_default_content_template(item, **kwargs):
         return
 
     if desk is None:
+        # TODO-ASYNC: Convert this to use ``find_one_async`` when upgrading this module
         desk = get_resource_service("desks").find_one(req=None, _id=desk_id)
     if not desk:
         logger.warning('Can\'t find desk with id "{desk_id}"'.format(desk_id=desk_id))

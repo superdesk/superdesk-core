@@ -161,6 +161,7 @@ def private_content_filter(req=None):
         # if user has no global search access, only show him content on his desks
         # and not on any desk
         else:
+            # TODO-ASYNC: Convert ``get_by_user`` to async when upgrading this module
             desks = get_resource_service("user_desks").get_by_user(user["_id"]) or []
             private_filter["should"].append(
                 {"terms": {"task.desk": [str(d["_id"]) for d in desks]}},
@@ -937,6 +938,7 @@ class ArchiveService(BaseService, HighlightsSearchMixin):
 
         if item_location:
             if item_location.get("desk"):
+                # TODO-ASYNC: Convert ``is_member`` to async when upgrading this module
                 if not superdesk.get_resource_service("user_desks").is_member(user_id, item_location.get("desk")):
                     return False, "User is not a member of the desk."
             elif item_location.get("user"):

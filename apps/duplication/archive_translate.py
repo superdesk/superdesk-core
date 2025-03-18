@@ -116,6 +116,7 @@ class TranslateService(BaseService):
         for doc in docs:
             task = None
             if doc.get("desk"):
+                # TODO-ASYNC: Convert this to use ``find_one_async`` when updating this module
                 desk = get_resource_service("desks").find_one(req=None, _id=doc["desk"]) or {}
                 task = dict(desk=desk.get("_id"), stage=desk.get("working_stage"), user=get_user_id())
             ids.append(self._translate_item(doc["guid"], doc["language"], task, **kwargs))

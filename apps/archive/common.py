@@ -213,6 +213,7 @@ def on_create_item(docs, repo_type=ARCHIVE, media_service=None):
             doc["language"] = get_app_config("DEFAULT_LANGUAGE", "en")
 
             if doc.get("task", None) and doc["task"].get("desk", None):
+                # TODO-ASYNC: Convert this to use ``find_one_async`` when updating archive module
                 desk = superdesk.get_resource_service("desks").find_one(req=None, _id=doc["task"]["desk"])
                 if desk and desk.get("desk_language", None):
                     doc["language"] = desk["desk_language"]
@@ -292,6 +293,7 @@ def set_default_source(doc):
 
     if desk_id:
         # if desk level source is specified then use that instead of the default source
+        # TODO-ASYNC: Convert this to use ``find_one_async`` when updating archive module
         desk = get_resource_service("desks").find_one(req=None, _id=desk_id)
         source = desk.get("source") or source
 
@@ -595,6 +597,7 @@ def get_expiry(desk_id, stage_id, offset=None):
     desk = None
 
     if desk_id:
+        # TODO-ASYNC: Convert this to use ``find_one_async`` when updating archive module
         desk = superdesk.get_resource_service("desks").find_one(req=None, _id=desk_id)
 
         if not desk:

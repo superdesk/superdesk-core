@@ -54,10 +54,10 @@ def get_users(user_names):
     return users
 
 
-def get_desks(desk_names):
+async def get_desks(desk_names):
     req = ParsedRequest()
-    desks = superdesk.get_resource_service("desks").get(req=req, lookup={"name": {"$in": desk_names}})
-    desks = {desk.get("name"): desk.get("_id") for desk in desks}
+    cursor = await superdesk.get_resource_service("desks").get_async(req=req, lookup={"name": {"$in": desk_names}})
+    desks = {desk.get("name"): desk.get("_id") async for desk in cursor}
     return desks
 
 

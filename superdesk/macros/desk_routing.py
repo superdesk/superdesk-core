@@ -11,6 +11,8 @@ def get_destination_desk(desk, limit=10):
         return desk
     if not desk.get("closed_destination"):
         return desk
+
+    # TODO-ASYNC: Convert this to use ``find_one_async`` when upgrading this module
     return get_destination_desk(
         get_resource_service("desks").find_one(req=None, _id=desk["closed_destination"]), limit - 1
     )
@@ -20,6 +22,7 @@ def routing(item, desk=None, **kwargs):
     if desk is None:
         desk_id = item.get("task", {}).get("desk")
         if desk_id:
+            # TODO-ASYNC: Convert this to use ``find_one_async`` when upgrading this module
             desk = get_resource_service("desks").find_one(req=None, _id=desk_id)
     dest = get_destination_desk(desk)
     if dest and str(desk["_id"]) != str(dest["_id"]):

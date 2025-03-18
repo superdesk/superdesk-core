@@ -44,7 +44,7 @@ class ArchiveCorrectionResource(Resource):
 
 
 class ArchiveCorrectionService(Service):
-    def on_update(self, updates, original):
+    async def on_update(self, updates, original):
         remove_correction = request.args.get("remove_correction") == "true"
         self._validate_correction(original)
         archive_service = get_resource_service(ARCHIVE)
@@ -92,7 +92,7 @@ class ArchiveCorrectionService(Service):
         # set working stage when we create correction
         if archive_item.get("task", {}).get("desk"):
             archive_item_updates.update({"task": archive_item.get("task")})
-            desk = get_resource_service("desks").find_one(req=None, _id=archive_item["task"]["desk"]) or {}
+            desk = await get_resource_service("desks").find_one_async(req=None, _id=archive_item["task"]["desk"]) or {}
             if desk:
                 archive_item_updates["task"].update({"stage": desk.get("working_stage")})
 

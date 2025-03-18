@@ -136,7 +136,7 @@ async def process_subscribers(subscribers, search, now, isDesk=False):
             do_update = True
         elif next_report <= now:
             if isDesk:
-                desk = get_resource_service("desks").find_one(req=None, _id=subscriber_data["desk"])
+                desk = await get_resource_service("desks").find_one_async(req=None, _id=subscriber_data["desk"])
                 for member in (desk or {}).get("members", []):
                     await publish_report(member.get("user"), search)
             else:

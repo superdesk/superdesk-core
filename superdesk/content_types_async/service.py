@@ -15,7 +15,7 @@ from bson import ObjectId
 from quart_babel import gettext as _
 
 from apps.auth import get_user_id
-from apps.desks import remove_profile_from_desks
+from apps.desks import remove_profile_from_desks_async
 from apps.templates.content_templates import ContentTemplatesService
 import superdesk
 from superdesk.core.resources.service import AsyncCacheableService
@@ -74,8 +74,7 @@ class ContentTypesService(AsyncCacheableService[ContentTypes]):
         if doc.is_used:
             raise SuperdeskApiError(status_code=202, payload={"is_used": True})
         await remove_profile_from_templates(doc)
-        # TODO-ASYNC:
-        remove_profile_from_desks(doc.to_dict())
+        await remove_profile_from_desks_async(doc.to_dict())
 
     async def on_update(self, updates: dict[str, Any], original: ContentTypes) -> None:
         await self._validate_disable(updates, original)

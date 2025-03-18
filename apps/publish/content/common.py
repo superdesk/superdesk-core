@@ -430,6 +430,7 @@ class BasePublishService(BaseService):
         """Common updates for published items."""
         desk = None
         if original.get("task", {}).get("desk"):
+            # TODO-ASYNC: Convert this to use ``find_one_async`` after publish code is merged
             desk = get_resource_service("desks").find_one(req=None, _id=original["task"]["desk"])
         if not original.get("ingest_provider"):
             updates["source"] = (

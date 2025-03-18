@@ -297,6 +297,7 @@ class NITFFeedParser(XMLFeedParser):
     def get_task(self, tree):
         desk_name = tree.find('head/meta[@name="aap-desk"]')
         if desk_name is not None:
+            # TODO-ASYNC: Convert this to use ``find_one_async`` when upgrading this module
             desk = superdesk.get_resource_service("desks").find_one(req=None, name=desk_name.get("content"))
             if desk:
                 task = {"desk": desk.get("_id")}

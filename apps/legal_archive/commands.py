@@ -217,6 +217,7 @@ class LegalArchiveImport:
         history_update = history_item.get("update")
         if history_update:
             if history_update.get("task") and history_update.get("task").get("desk"):
+                # TODO-ASYNC: Convert this to use ``find_one_async`` when updating this module
                 desk = get_resource_service("desks").find_one(req=None, _id=str(history_update["task"]["desk"]))
                 if desk:
                     history_update["task"]["desk"] = desk.get("name")
@@ -251,6 +252,7 @@ class LegalArchiveImport:
         # De-normalizing Desk and Stage details
         if legal_archive_doc.get("task"):
             if legal_archive_doc["task"].get("desk"):
+                # TODO-ASYNC: Convert this to use ``find_one_async`` when updating this module
                 desk = get_resource_service("desks").find_one(req=None, _id=str(legal_archive_doc["task"]["desk"]))
                 if desk:
                     legal_archive_doc["task"]["desk"] = desk.get("name")

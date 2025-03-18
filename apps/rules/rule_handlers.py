@@ -127,7 +127,7 @@ class DeskFetchPublishRoutingRuleHandler(RoutingRuleHandler):
 
     async def apply_rule(self, rule, ingest_item, routing_scheme):
         if rule.get("actions", {}).get("preserve_desk", False) and ingest_item.get("task", {}).get("desk"):
-            desk = get_resource_service("desks").find_one(req=None, _id=ingest_item["task"]["desk"])
+            desk = await get_resource_service("desks").find_one_async(req=None, _id=ingest_item["task"]["desk"])
             if ingest_item.get("task", {}).get("stage"):
                 stage_id = ingest_item["task"]["stage"]
             else:

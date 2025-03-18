@@ -94,7 +94,7 @@ class StagesService(BaseService):
             if doc.get("default_incoming", False):
                 self.remove_old_default(desk, "default_incoming")
 
-    def on_created(self, docs):
+    async def on_created(self, docs):
         for doc in docs:
             if "desk" in doc:
                 push_notification(
@@ -106,15 +106,15 @@ class StagesService(BaseService):
                 )
 
             if doc.get("working_stage", False):
-                self.set_desk_ref(doc, "working_stage")
+                await self.set_desk_ref(doc, "working_stage")
 
             if doc.get("default_incoming", False):
-                self.set_desk_ref(doc, "incoming_stage")
+                await self.set_desk_ref(doc, "incoming_stage")
 
             if not doc.get("is_visible", True):
                 get_resource_service("users").update_stage_visibility_for_users()
 
-    def on_delete(self, doc):
+    async def on_delete(self, doc):
         """
         Checks if deleting the stage would not violate data integrity, raises an exception if it does.
 
@@ -125,14 +125,15 @@ class StagesService(BaseService):
         :param doc:
         """
 
+        desk_service = superdesk.get_resource_service("desks")
         if doc["working_stage"] is True:
             desk_id = doc.get("desk", None)
-            if desk_id and superdesk.get_resource_service("desks").find_one(req=None, _id=desk_id):
+            if desk_id and await desk_service.find_one_async(req=None, _id=desk_id):
                 raise SuperdeskApiError.preconditionFailedError(message=_("Cannot delete a Working Stage."))
 
         if doc["default_incoming"] is True:
             desk_id = doc.get("desk", None)
-            if desk_id and superdesk.get_resource_service("desks").find_one(req=None, _id=desk_id):
+            if desk_id and await desk_service.find_one_async(req=None, _id=desk_id):
                 raise SuperdeskApiError.preconditionFailedError(message=_("Cannot delete a Incoming Stage."))
 
         archive_versions_query = {"task.stage": str(doc[ID_FIELD])}
@@ -155,7 +156,7 @@ class StagesService(BaseService):
             self.notification_key, deleted=1, stage_id=str(doc.get(ID_FIELD)), desk_id=str(doc.get("desk"))
         )
 
-    def on_update(self, updates, original):
+    async def on_update(self, updates, original):
         if updates.get("content_expiry") == 0:
             updates["content_expiry"] = None
 
@@ -164,7 +165,7 @@ class StagesService(BaseService):
         if updates.get("working_stage", False):
             if not original.get("working_stage"):
                 self.remove_old_default(original.get("desk"), "working_stage")
-                self.set_desk_ref(original, "working_stage")
+                await self.set_desk_ref(original, "working_stage")
         else:
             if original.get("working_stage") and "working_stage" in updates:
                 raise SuperdeskApiError.forbiddenError(message=_("Must have one working stage in a desk"))
@@ -172,7 +173,7 @@ class StagesService(BaseService):
         if updates.get("default_incoming", False):
             if not original.get("default_incoming"):
                 self.remove_old_default(original.get("desk"), "default_incoming")
-                self.set_desk_ref(original, "incoming_stage")
+                await self.set_desk_ref(original, "incoming_stage")
         else:
             if original.get("default_incoming") and "default_incoming" in updates:
                 raise SuperdeskApiError.forbiddenError(message=_("Must have one incoming stage in a desk"))
@@ -245,15 +246,17 @@ class StagesService(BaseService):
 
         return list(self.get(req=None, lookup=lookup))
 
-    def set_desk_ref(self, doc, field):
-        desk = get_resource_service("desks").find_one(_id=doc.get("desk"), req=None)
+    async def set_desk_ref(self, doc, field):
+        service = get_resource_service("desks")
+        desk = await service.find_one_async(_id=doc.get("desk"), req=None)
         if desk:
-            get_resource_service("desks").update(doc.get("desk"), {field: doc.get("_id")}, desk)
+            await service.update_async(doc.get("desk"), {field: doc.get("_id")}, desk)
 
-    def clear_desk_ref(self, doc, field):
-        desk = get_resource_service("desks").find_one(_id=doc.get("desk"), req=None)
+    async def clear_desk_ref(self, doc, field):
+        service = get_resource_service("desks")
+        desk = await service.find_one_async(_id=doc.get("desk"), req=None)
         if desk:
-            get_resource_service("desks").update(doc.get("desk"), {field: None}, desk)
+            await service.update_async(doc.get("desk"), {field: None}, desk)
 
     def remove_old_default(self, desk, field):
         lookup = {"$and": [{field: True}, {"desk": str(desk)}]}
@@ -297,6 +300,7 @@ class StagesOrderService(BaseService):
         desks_service = superdesk.get_resource_service("desks")
         stages_service = superdesk.get_resource_service("stages")
         for doc in docs:
+            # TODO-ASYNC: Convert this to use ``find_one_async``
             desk = desks_service.find_one(req=None, _id=doc["desk"])
             assert desk, {"desk": 1}
             for index, stage_id in enumerate(doc["stages"]):
