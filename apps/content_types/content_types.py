@@ -261,6 +261,8 @@ class ContentTypesService(CacheableService):
 def clean_doc(doc):
     schema = doc.get("schema", {})
     editor = doc.get("editor", {})
+
+    # TODO-ASYNC[vocabularies]: Use VocabulariesService async service where when upgrading this module
     vocabularies = list(get_resource_service("vocabularies").get_forbiden_custom_vocabularies())
 
     for cv in HARDCODED_CVS:
@@ -299,6 +301,7 @@ def prepare_for_edit_content_type(doc):
 
 
 def init_extra_fields(editor, schema):
+    # TODO-ASYNC[vocabularies]: Use VocabulariesService async service where when upgrading this module
     fields = get_resource_service("vocabularies").get_extra_fields()
     for field in fields:
         field_type = field.get("field_type")
@@ -323,6 +326,7 @@ def get_mandatory_list(schema):
 
 
 def get_fields_map_and_names():
+    # TODO-ASYNC[vocabularies]: Use VocabulariesService async service where when upgrading this module
     vocabularies = get_resource_service("vocabularies").get_custom_vocabularies()
     fields_map = {}
     field_names = {}

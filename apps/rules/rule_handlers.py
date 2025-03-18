@@ -240,6 +240,7 @@ class DeskFetchPublishRoutingRuleHandler(RoutingRuleHandler):
 
         qcode_list = qcodes.split(",")
         selected_categories = None
+        # TODO-ASYNC[vocabularies]: Use VocabulariesService async service where when upgrading this module
         categories = get_resource_service("vocabularies").find_one(req=None, _id="categories")
 
         if categories and len(qcode_list) > 0:

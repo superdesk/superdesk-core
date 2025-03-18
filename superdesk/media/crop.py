@@ -153,6 +153,7 @@ class CropService:
         :return: Matching crop or None
         """
         if not self.crop_sizes:
+            # TODO-ASYNC[vocabularies]: Use VocabulariesService async service where when upgrading this module
             self.crop_sizes = get_resource_service("vocabularies").find_one(req=None, _id="crop_sizes").get("items")
 
         if not self.crop_sizes:

@@ -187,6 +187,7 @@ class FilterConditionParametersService(BaseService):
         excluded_vocabularies = copy.copy(get_app_config("EXCLUDED_VOCABULARY_FIELDS", []))
         excluded_vocabularies.extend(values)
         lookup = {"_id": {"$nin": excluded_vocabularies}, "type": "manageable"}
+        # TODO-ASYNC[vocabularies]: Use VocabulariesService async service where when upgrading this module
         for vocabulary in get_resource_service("vocabularies").get_from_mongo(req=None, lookup=lookup):
             field = {"field": vocabulary[ID_FIELD], "label": vocabulary["display_name"]}
 
@@ -203,6 +204,7 @@ class FilterConditionParametersService(BaseService):
 
     def _get_field_values(self):
         values = {}
+        # TODO-ASYNC[vocabularies]: Use VocabulariesService async service where when upgrading this module
         vocabularies_resource = get_resource_service("vocabularies")
         categories_cv = vocabularies_resource.find_one(req=None, _id="categories")
         values["anpa_category"] = categories_cv.get("items") if categories_cv else []

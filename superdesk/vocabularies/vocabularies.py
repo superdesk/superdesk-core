@@ -22,7 +22,7 @@ from superdesk.cache import cache
 from superdesk import privilege, get_resource_service
 from superdesk.notification import push_notification
 from superdesk.resource import Resource
-from superdesk.services import BaseService
+from superdesk.eve_async.service import AsyncBaseService
 from superdesk.users import get_user_from_request
 from superdesk.utc import utcnow
 from superdesk.errors import SuperdeskApiError
@@ -174,10 +174,10 @@ class VocabulariesResource(Resource):
     mongo_indexes = {"field_type": [("field_type", 1)]}
 
 
-class VocabulariesService(BaseService):
+class VocabulariesService(AsyncBaseService):
     system_keys = set(DEFAULT_SCHEMA.keys()).union(set(DEFAULT_EDITOR.keys()))
 
-    def _validate_items(self, update):
+    async def _validate_items_async(self, update):
         # if we have qcode and not unique_field set, we want it to be qcode
         try:
             update["schema"]["qcode"]
@@ -210,14 +210,14 @@ class VocabulariesService(BaseService):
                             payload = {"error": {"required_field": 1, "params": {"field": field, "item": index}}}
                             raise SuperdeskApiError.badRequestError(message=msg, payload=payload)
 
-    def on_create(self, docs):
+    async def on_create_async(self, docs):
         for doc in docs:
-            self._validate_items(doc)
+            await self._validate_items_async(doc)
 
             if doc.get("field_type") and doc["_id"] in self.system_keys:
                 raise SuperdeskApiError(message="{} is in use".format(doc["_id"]), payload={"_id": {"conflict": 1}})
 
-            if self.find_one(req=None, **{"_id": doc["_id"], "_deleted": True}):
+            if await self.find_one_async(req=None, **{"_id": doc["_id"], "_deleted": True}):
                 raise SuperdeskApiError(
                     message="{} is used by deleted vocabulary".format(doc["_id"]), payload={"_id": {"deleted": 1}}
                 )
@@ -226,8 +226,8 @@ class VocabulariesService(BaseService):
         for doc in docs:
             self._send_notification(doc, event="vocabularies:created")
 
-    def on_replace(self, document, original):
-        self._validate_items(document)
+    async def on_replace_async(self, document, original):
+        await self._validate_items_async(document)
         document[LAST_UPDATED] = utcnow()
         document[DATE_CREATED] = original.get(DATE_CREATED, utcnow()) if original else utcnow()
         logger.info("updating vocabulary item: %s", document["_id"])
@@ -254,12 +254,12 @@ class VocabulariesService(BaseService):
         self._filter_inactive_vocabularies(doc)
         self._cast_items(doc)
 
-    def on_update(self, updates, original):
+    async def on_update_async(self, updates, original):
         """Checks the duplicates if a unique field is defined"""
         if "items" in updates:
             updated = deepcopy(original)
             updated.update(updates)
-            self._validate_items(updated)
+            await self._validate_items_async(updated)
         unique_field = original.get("unique_field")
         if unique_field:
             self._check_uniqueness(updates.get("items", []), unique_field)
@@ -340,6 +340,8 @@ class VocabulariesService(BaseService):
         )
 
     def get_rightsinfo(self, item):
+        # This function won't be needed once we use the VocabulariesService async service in it's place
+
         rights_key = item.get("source", item.get("original_source", "default"))
         all_rights = self.find_one(req=None, _id="rightsinfo")
         if not all_rights or not all_rights.get("items"):
@@ -363,9 +365,13 @@ class VocabulariesService(BaseService):
             return {}
 
     def get_extra_fields(self):
+        # This function won't be needed once we use the VocabulariesService async service in it's place
+
         return list(self.get_from_mongo(req=None, lookup={"field_type": {"$exists": True, "$ne": None}}))
 
     def get_custom_vocabularies(self):
+        # This function won't be needed once we use the VocabulariesService async service in it's place
+
         return list(
             self.get_from_mongo(
                 req=None,
@@ -377,6 +383,8 @@ class VocabulariesService(BaseService):
         )
 
     def get_forbiden_custom_vocabularies(self):
+        # This function won't be needed once we use the VocabulariesService async service in it's place
+
         return list(
             self.get_from_mongo(
                 req=None,
@@ -403,10 +411,13 @@ class VocabulariesService(BaseService):
                     new_item[field] = values[language]
         return locale_vocabulary
 
-    def add_missing_keywords(self, keywords, language=None):
+    async def add_missing_keywords_async(self, keywords, language=None):
+        # This function won't be needed once we use the VocabulariesService async service in it's place
+        # Converted to async due to use of lifecycle methods (aka on_update_async)
+
         if not keywords:
             return
-        cv = self.find_one(req=None, _id=KEYWORDS_CV)
+        cv = await self.find_one_async(req=None, _id=KEYWORDS_CV)
         if cv:
             existing = {item["name"].lower() for item in cv.get("items", [])}
             missing = [keyword for keyword in keywords if keyword.lower() not in existing]
@@ -420,8 +431,8 @@ class VocabulariesService(BaseService):
                             "is_active": True,
                         }
                     )
-                self.on_update(updates, cv)
-                self.system_update(cv["_id"], updates, cv)
+                await self.on_update_async(updates, cv)
+                await self.system_update_async(cv["_id"], updates, cv)
                 self.on_updated(updates, cv)
         else:
             items = [
@@ -443,7 +454,7 @@ class VocabulariesService(BaseService):
                     "qcode": {},
                 },
             }
-            self.post([cv])
+            await self.post_async([cv])
 
     def get_article_cv_item(self, item, scheme):
         article_item = {k: v for k, v in item.items() if k not in ("is_active",)}
@@ -470,6 +481,8 @@ class VocabulariesService(BaseService):
         :param lang: items.lang filter
         :return: items list
         """
+
+        # This function won't be needed once we use the VocabulariesService async service in it's place
 
         projection: Dict[str, Any] = {}
         lookup = {"_id": _id}
@@ -519,13 +532,17 @@ class VocabulariesService(BaseService):
         return items
 
     def get_languages(self):
+        # This function won't be needed once we use the VocabulariesService async service in it's place
         return self.get_items(_id="languages")
 
     def get_field_options(self, field) -> Dict:
+        # This function won't be needed once we use the VocabulariesService async service in it's place
+
         cv = self.find_one(req=None, _id=field)
         return cv and cv.get("field_options") or {}
 
 
+# TODO-ASYNC: Convert these next 2 to async when upgrading archive module
 @cache(ttl=3600, tags=("vocabularies",))
 def get_related_field_ids():
     return list(

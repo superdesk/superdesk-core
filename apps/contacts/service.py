@@ -14,6 +14,7 @@ from superdesk.resource_fields import ID_FIELD
 from superdesk.services import Service
 from superdesk.notification import push_notification
 from superdesk.errors import SuperdeskApiError
+from superdesk.types import VocabulariesResourceModel
 from eve.utils import ParsedRequest
 from quart_babel import gettext as _
 from copy import deepcopy
@@ -27,9 +28,9 @@ class ContactsService(Service):
 
         return super().get(req, lookup)
 
-    def on_create(self, docs):
+    async def on_create(self, docs):
         for doc in docs:
-            self._validate_assignable(doc)
+            await self._validate_assignable(doc)
 
     def on_created(self, docs):
         """
@@ -39,10 +40,10 @@ class ContactsService(Service):
         """
         push_notification("contacts:create", _id=[doc.get(ID_FIELD) for doc in docs])
 
-    def on_update(self, updates, original):
+    async def on_update(self, updates, original):
         item = deepcopy(original)
         item.update(updates)
-        self._validate_assignable(item)
+        await self._validate_assignable(item)
 
     def on_updated(self, updates, original):
         """
@@ -61,13 +62,13 @@ class ContactsService(Service):
         """
         push_notification("contacts:deleted", _id=[doc.get(ID_FIELD)])
 
-    def _validate_assignable(self, contact):
+    async def _validate_assignable(self, contact):
         """Validates a required email address if the contact_type has assignable flag turned on"""
 
         if not contact or not contact.get("contact_type"):
             return
 
-        types = get_resource_service("vocabularies").find_one(req=None, _id="contact_type")
+        types = await VocabulariesResourceModel.get_service().find_by_id_raw("contact_type")
 
         if not types:
             return

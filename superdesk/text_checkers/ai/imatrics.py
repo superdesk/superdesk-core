@@ -140,6 +140,7 @@ class IMatrics(AIServiceBase):
         return tag_data, tag_type
 
     def find_subject(self, topic_id):
+        # TODO-ASYNC[vocabularies]: Use VocabulariesService async service where when upgrading this module
         SCHEME_ID = get_app_config("IMATRICS_SUBJECT_SCHEME")
         if not SCHEME_ID:
             return
@@ -153,6 +154,7 @@ class IMatrics(AIServiceBase):
 
     def sync_place(self, place_data):
         if self._places is None:
+            # TODO-ASYNC[vocabularies]: Use VocabulariesService async service where when upgrading this module
             places = superdesk.get_resource_service("vocabularies").get_items(SCHEME_MAPPING["place"])
             self._places = {p["qcode"]: p for p in places}
         place = self._places.get(place_data["qcode"])

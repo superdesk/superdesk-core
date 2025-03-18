@@ -249,7 +249,7 @@ Storage Dumps and Records
 ``vocabularies:update_archive``
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-.. autoclass:: superdesk.vocabularies.commands.UpdateVocabulariesInItemsCommand()
+.. autoclass:: superdesk.vocabularies.commands.update_vocabularies_in_items_command()
 
 ``xml:import``
 ^^^^^^^^^^^^^^

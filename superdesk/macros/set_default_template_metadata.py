@@ -56,6 +56,7 @@ def set_default_template_metadata(item, **kwargs):
 
     data = content_template["data"]
 
+    # TODO-ASYNC[vocabularies]: Use VocabulariesService async service where when upgrading this module
     vocabularies = get_resource_service("vocabularies").get(req=None, lookup={"field_type": {"$exists": True}})
     for vocabulary in vocabularies:
         fields_to_exclude.append(vocabulary["_id"])

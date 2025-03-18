@@ -101,6 +101,7 @@ class ConceptItemsService(BaseService):
 
     def _validate_language(self, doc):
         try:
+            # TODO-ASYNC[vocabularies]: Use VocabulariesService async service where when upgrading this module
             languages = superdesk.get_resource_service("vocabularies").get_languages()
             assert languages
         except AssertionError:
