@@ -41,6 +41,7 @@ class AppScaffoldDataCommand(superdesk.Command):
         logger.info("Starting scaffolding")
         no_of_stories = int(no_of_stories)
 
+        # TODO-ASYNC[desks]: Use DesksResourceModel async service where when upgrading this module
         desks = get_resource_service("desks").get(None, {})
 
         for i, desk in enumerate(desks):

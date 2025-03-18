@@ -15,6 +15,7 @@ from superdesk.emails import send_user_mentioned_email
 import re
 import superdesk
 from superdesk.notification import push_notification
+from superdesk.types import DesksResourceModel
 
 
 def get_mentions(text):
@@ -55,10 +56,8 @@ def get_users(user_names):
 
 
 async def get_desks(desk_names):
-    req = ParsedRequest()
-    cursor = await superdesk.get_resource_service("desks").get_async(req=req, lookup={"name": {"$in": desk_names}})
-    desks = {desk.get("name"): desk.get("_id") async for desk in cursor}
-    return desks
+    cursor = await DesksResourceModel.get_service().search({"name": {"$in": desk_names}})
+    return {desk.name: desk.id async for desk in cursor}
 
 
 async def notify_mentioned_users(docs, origin, item=None):

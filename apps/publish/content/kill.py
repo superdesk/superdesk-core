@@ -20,6 +20,7 @@ from superdesk.flask import render_template
 from superdesk.metadata.item import CONTENT_STATE, ITEM_STATE, PUB_STATUS, EMBARGO, SCHEDULE_SETTINGS, PUBLISH_SCHEDULE
 from superdesk import get_resource_service
 from superdesk.utc import utcnow
+from apps.desks_async import get_desk_name_by_id
 import logging
 from copy import deepcopy
 from superdesk.emails import send_article_killed_email
@@ -126,9 +127,7 @@ class KillPublishService(BasePublishService):
         kill_article = deepcopy(original)
         kill_article["body_html"] = updates.get("body_html")
         kill_article["headline"] = updates.get("headline")
-        kill_article["desk_name"] = await get_resource_service("desks").get_desk_name_async(
-            kill_article.get("task", {}).get("desk")
-        )
+        kill_article["desk_name"] = await get_desk_name_by_id(kill_article.get("task", {}).get("desk"))
         kill_article["city"] = get_dateline_city(kill_article.get("dateline"))
         kill_article["action"] = self.item_operation
         await send_article_killed_email(kill_article, recipients, utcnow())
@@ -178,7 +177,7 @@ class KillPublishService(BasePublishService):
                 )
             else:
                 versioncreated = item.get("versioncreated", item.get(LAST_UPDATED))
-            desk_name = await get_resource_service("desks").get_desk_name_async(item.get("task", {}).get("desk"))
+            desk_name = await get_desk_name_by_id(item.get("task", {}).get("desk"))
             city = get_dateline_city(item.get("dateline"))
             kill_header = json.loads(
                 await render_template(

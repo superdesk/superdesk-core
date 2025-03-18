@@ -314,7 +314,7 @@ class DesksService(AsyncBaseService):
         :return dict: desk document
         """
         desk_name = ""
-        desk = get_resource_service("desks").find_one(req=None, _id=desk_id)
+        desk = self.find_one(req=None, _id=desk_id)
         if desk:
             desk_name = desk.get("name") or ""
 
@@ -327,7 +327,7 @@ class DesksService(AsyncBaseService):
         :return dict: desk document
         """
         desk_name = ""
-        desk = await get_resource_service("desks").find_one_async(req=None, _id=desk_id)
+        desk = await self.find_one_async(req=None, _id=desk_id)
         if desk:
             desk_name = desk.get("name") or ""
 

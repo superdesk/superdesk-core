@@ -22,6 +22,7 @@ from superdesk.metadata.utils import item_url
 from superdesk.workflow import is_workflow_state_transition_valid
 from superdesk.errors import SuperdeskApiError, InvalidStateTransitionError
 from superdesk.notification import push_notification
+from superdesk.types import DesksResourceModel
 from quart_babel import gettext as _
 
 logger = logging.getLogger(__name__)
@@ -92,7 +93,7 @@ class ArchiveCorrectionService(Service):
         # set working stage when we create correction
         if archive_item.get("task", {}).get("desk"):
             archive_item_updates.update({"task": archive_item.get("task")})
-            desk = await get_resource_service("desks").find_one_async(req=None, _id=archive_item["task"]["desk"]) or {}
+            desk = await DesksResourceModel.get_service().find_by_id_raw(archive_item["task"]["desk"])
             if desk:
                 archive_item_updates["task"].update({"stage": desk.get("working_stage")})
 

@@ -208,7 +208,7 @@ class MoveService(BaseService):
         old_desk_id = str(original.get("task", {}).get("desk", ""))
         new_desk_id = str(updated.get("task", {}).get("desk", ""))
         if old_desk_id and old_desk_id != new_desk_id:
-            # TODO-ASYNC: Convert these next two to use ``find_one_async`` when updating this module
+            # TODO-ASYNC[desks]: Use DesksResourceModel async service where when upgrading this module
             old_desk = get_resource_service("desks").find_one(req=None, _id=old_desk_id)
             new_desk = get_resource_service("desks").find_one(req=None, _id=new_desk_id)
             if old_desk and new_desk and old_desk.get("desk_type", "") != new_desk.get("desk_type", ""):

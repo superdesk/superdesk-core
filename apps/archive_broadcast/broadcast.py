@@ -72,7 +72,7 @@ class ArchiveBroadcastService(BaseService):
         desk = None
 
         if desk_id:
-            # TODO-ASYNC: Convert this to use ``find_one_async`` when updating broadcast module
+            # TODO-ASYNC[desks]: Use DesksResourceModel async service where when upgrading this module
             desk = get_resource_service("desks").find_one(req=None, _id=desk_id)
 
         doc.pop("desk", None)

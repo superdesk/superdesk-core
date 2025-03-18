@@ -69,7 +69,7 @@ def init_highlight_package(doc):
 def init_default_content_profile(doc):
     if not doc.get("profile"):
         desk_id = doc.get("task", {}).get("desk")
-        # TODO-ASYNC: Convert this to use ``find_one_async`` when updating this module
+        # TODO-ASYNC[desks]: Use DesksResourceModel async service where when upgrading this module
         desk = get_resource_service("desks").find_one(req=None, _id=desk_id)
         doc["profile"] = desk.get("default_content_profile")
 

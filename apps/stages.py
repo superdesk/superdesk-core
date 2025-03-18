@@ -15,6 +15,7 @@ from superdesk.resource import Resource
 from superdesk.services import BaseService
 from superdesk.errors import SuperdeskApiError
 from superdesk import get_resource_service
+from superdesk.types import DesksResourceModel
 from eve.utils import ParsedRequest
 from apps.tasks import task_statuses
 from superdesk.metadata.item import CONTENT_STATE, ITEM_STATE
@@ -125,15 +126,15 @@ class StagesService(BaseService):
         :param doc:
         """
 
-        desk_service = superdesk.get_resource_service("desks")
+        desk_service = DesksResourceModel.get_service()
         if doc["working_stage"] is True:
             desk_id = doc.get("desk", None)
-            if desk_id and await desk_service.find_one_async(req=None, _id=desk_id):
+            if desk_id and await desk_service.find_by_id_raw(desk_id):
                 raise SuperdeskApiError.preconditionFailedError(message=_("Cannot delete a Working Stage."))
 
         if doc["default_incoming"] is True:
             desk_id = doc.get("desk", None)
-            if desk_id and await desk_service.find_one_async(req=None, _id=desk_id):
+            if desk_id and await desk_service.find_by_id_raw(desk_id):
                 raise SuperdeskApiError.preconditionFailedError(message=_("Cannot delete a Incoming Stage."))
 
         archive_versions_query = {"task.stage": str(doc[ID_FIELD])}
@@ -247,16 +248,16 @@ class StagesService(BaseService):
         return list(self.get(req=None, lookup=lookup))
 
     async def set_desk_ref(self, doc, field):
-        service = get_resource_service("desks")
-        desk = await service.find_one_async(_id=doc.get("desk"), req=None)
+        service = DesksResourceModel.get_service()
+        desk = await service.find_by_id_raw(doc.get("desk"))
         if desk:
-            await service.update_async(doc.get("desk"), {field: doc.get("_id")}, desk)
+            await service.update(doc.get("desk"), {field: doc.get("_id")})
 
     async def clear_desk_ref(self, doc, field):
-        service = get_resource_service("desks")
-        desk = await service.find_one_async(_id=doc.get("desk"), req=None)
+        service = DesksResourceModel.get_service()
+        desk = await service.find_by_id_raw(doc.get("desk"))
         if desk:
-            await service.update_async(doc.get("desk"), {field: None}, desk)
+            await service.update(doc.get("desk"), {field: None})
 
     def remove_old_default(self, desk, field):
         lookup = {"$and": [{field: True}, {"desk": str(desk)}]}
@@ -297,10 +298,10 @@ class StagesOrderResource(Resource):
 
 class StagesOrderService(BaseService):
     def create(self, docs):
+        # TODO-ASYNC[desks]: Use DesksResourceModel async service where when upgrading this module
         desks_service = superdesk.get_resource_service("desks")
         stages_service = superdesk.get_resource_service("stages")
         for doc in docs:
-            # TODO-ASYNC: Convert this to use ``find_one_async``
             desk = desks_service.find_one(req=None, _id=doc["desk"])
             assert desk, {"desk": 1}
             for index, stage_id in enumerate(doc["stages"]):

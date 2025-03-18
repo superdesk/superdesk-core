@@ -559,7 +559,7 @@ class DBUsersService(UsersService):
                 data["role"] = role["_id"]
         if not update and (data.get("desk") or get_app_config("USER_EXTERNAL_DESK")):
             desk_name = data.pop("desk", None) or get_app_config("USER_EXTERNAL_DESK")
-            # TODO-ASYNC: Convert this to use ``find_one_async`` when upgrading this module
+            # TODO-ASYNC[desks]: Use DesksResourceModel async service where when upgrading this module
             desk = get_resource_service("desks").find_one(req=None, name=ignorecase_query(desk_name))
             if desk:
                 data["desk"] = desk["_id"]
@@ -583,7 +583,7 @@ class DBUsersService(UsersService):
         self.create(docs)
         for user in docs:
             if user.get("desk"):
-                # TODO-ASYNC: Convert this to use ``add_member_async`` when upgrading this module
+                # TODO-ASYNC[desks]: Use DesksResourceModel async service where when upgrading this module
                 #             Will cause a runtime exception here, ``add_member`` no longer exists on the service
                 get_resource_service("desks").add_member(user["desk"], user["_id"])
         return docs[0]

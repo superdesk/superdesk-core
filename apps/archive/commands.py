@@ -126,6 +126,7 @@ class RemoveExpiredContent(superdesk.Command):
         config_service = get_resource_service("config")
         archive_service = get_resource_service(ARCHIVE)
         published_service = get_resource_service("published")
+        # TODO-ASYNC[desks]: Use DesksResourceModel async service where when upgrading this module
         preserve_published_desks = set(
             [
                 str(desk.get(ID_FIELD))

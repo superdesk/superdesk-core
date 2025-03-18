@@ -16,6 +16,7 @@ from quart_babel import gettext as _
 from superdesk.utc import utcnow
 from superdesk.services import CacheableService
 from superdesk.utils import format_content_type_name
+from superdesk.types import DesksResourceModel
 
 
 CONTENT_TYPE_PRIVILEGE = "content_type"
@@ -184,10 +185,7 @@ class ContentTypesService(CacheableService):
                     ).format(templates=template_names)
                 )
 
-            req = ParsedRequest()
-            all_desks = list(
-                desk async for desk in await superdesk.get_resource_service("desks").get_async(req=req, lookup={})
-            )
+            all_desks = [desk async for desk in DesksResourceModel.get_service().get_all_raw()]
             profile_desks = [
                 desk for desk in all_desks if desk.get("default_content_profile") == str(original.get("_id"))
             ]

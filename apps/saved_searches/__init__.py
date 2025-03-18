@@ -33,6 +33,7 @@ from superdesk.core import get_app_config, get_current_app
 from superdesk.flask import render_template
 from superdesk import emails
 import json
+from superdesk.types import DesksResourceModel
 
 logger = logging.getLogger(__name__)
 REPORT_SOFT_LIMIT = 60 * 5
@@ -136,7 +137,7 @@ async def process_subscribers(subscribers, search, now, isDesk=False):
             do_update = True
         elif next_report <= now:
             if isDesk:
-                desk = await get_resource_service("desks").find_one_async(req=None, _id=subscriber_data["desk"])
+                desk = await DesksResourceModel.get_service().find_by_id_raw(subscriber_data["desk"])
                 for member in (desk or {}).get("members", []):
                     await publish_report(member.get("user"), search)
             else:

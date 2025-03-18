@@ -206,7 +206,7 @@ class PackageService:
                     logger.error(message)
                     raise SuperdeskApiError.forbiddenError(message=message)
                 if not doc["task"].get("stage"):
-                    # TODO-ASYNC: Convert this to use ``find_one_async`` when updating this module
+                    # TODO-ASYNC[desks]: Use DesksResourceModel async service where when upgrading this module
                     desk = get_resource_service("desks").find_one(req=None, _id=doc["task"]["desk"])
                     doc["task"]["stage"] = desk["working_stage"]
 

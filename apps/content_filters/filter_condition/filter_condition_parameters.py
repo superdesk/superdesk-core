@@ -224,7 +224,7 @@ class FilterConditionParametersService(BaseService):
         else:
             values["subject"] = get_subjectcodeitems()
 
-        # TODO-ASYNC: Convert this to use ``get_async`` when updating this module
+        # TODO-ASYNC[desks]: Use DesksResourceModel async service where when upgrading this module
         values["desk"] = list(get_resource_service("desks").get(None, {}))
         values["stage"] = self._get_stage_field_values(values["desk"])
         values["sms"] = [{"qcode": 0, "name": "False"}, {"qcode": 1, "name": "True"}]
