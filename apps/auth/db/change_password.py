@@ -40,6 +40,7 @@ class ChangePasswordService(BaseService):
             except Exception as e:
                 raise CredentialsAuthError(credentials=credentials, error=e)
 
+            # TODO-ASYNC[users]: Upgrade to async when updating this module
             user = superdesk.get_resource_service("users").find_one(req=None, username=username)
             superdesk.get_resource_service("users").update_password(user["_id"], doc["new_password"])
             del doc["old_password"]

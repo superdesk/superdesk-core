@@ -281,6 +281,7 @@ class LegalArchiveImport:
         if not user_id:
             return ""
 
+        # TODO-ASYNC[users]: Upgrade to async when updating this module
         user = get_resource_service("users").find_one(req=None, _id=user_id)
 
         if not user:

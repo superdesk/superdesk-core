@@ -152,6 +152,7 @@ class SuperdeskTokenAuth(TokenAuth):
             if session.get("session_token") != token:
                 session["session_token"] = token
             user_id = str(auth_token["user"])
+            # TODO-ASYNC[users]: Upgrade to async when updating this module
             g.user = user_service.find_one(req=None, _id=user_id)
             g.role = user_service.get_role(g.user)
             g.auth = auth_token

@@ -91,6 +91,7 @@ class EMailRFC822FeedParser(EmailFeedParser):
                     try:
                         if email_regex.findall(field_from):
                             email_address = email_regex.findall(field_from)[0]
+                            # TODO-ASYNC[users]: Upgrade this to async when updating this module
                             user = get_resource_service("users").get_user_by_email(email_address)
                             item["original_creator"] = user[ID_FIELD]
                     except UserNotRegisteredException:
@@ -388,6 +389,7 @@ class EMailRFC822FeedParser(EmailFeedParser):
                                     re.IGNORECASE,
                                 )
                             }
+                            # TODO-ASYNC[users]: Upgrade this to async when updating this module
                             user = superdesk.get_resource_service("users").find_one(req=None, **query)
                             if not user:
                                 logger.error(

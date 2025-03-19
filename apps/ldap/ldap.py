@@ -19,6 +19,7 @@ from superdesk.users.services import UsersService
 from superdesk import get_resource_service
 from superdesk.errors import SuperdeskApiError
 from superdesk.resource import Resource
+from superdesk.types import UsersResourceModel
 import superdesk
 from apps.auth.errors import CredentialsAuthError
 from apps.auth import get_user
@@ -126,13 +127,13 @@ class ADAuth:
 
 
 class ADAuthService(AuthService):
-    def on_create(self, docs):
-        user_service = get_resource_service("users")
+    async def on_create(self, docs):
+        user_service = UsersResourceModel.get_service()
         for doc in docs:
             user = self.authenticate(doc)
 
             if not user.get("_id"):
-                user_service.post([user])
+                await user_service.create([user])
 
             self.set_auth_default(doc, user["_id"])
 
@@ -168,6 +169,7 @@ class ADAuthService(AuthService):
 
         query = get_user_query(profile_to_import)
 
+        # TODO-ASYNC[users]: Upgrade to async when updating this module
         user = superdesk.get_resource_service("users").find_one(req=None, **query)
 
         if (
@@ -185,6 +187,7 @@ class ADAuthService(AuthService):
             )
             user = user_data
         else:
+            # TODO-ASYNC[users]: Upgrade to async when updating this module
             superdesk.get_resource_service("users").patch(user.get("_id"), user_data)
             user = superdesk.get_resource_service("users").find_one(req=None, **query)
 

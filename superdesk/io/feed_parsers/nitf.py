@@ -282,6 +282,7 @@ class NITFFeedParser(XMLFeedParser):
         elem = tree.find("head/meta[@name='aap-original-creator']")
         if elem is not None:
             query = {"username": re.compile("^{}$".format(elem.get("content")), re.IGNORECASE)}
+            # TODO-ASYNC[users]: Upgrade this to async when updating this module
             user = superdesk.get_resource_service("users").find_one(req=None, **query)
             if user is not None:
                 return user.get("_id")
@@ -291,6 +292,7 @@ class NITFFeedParser(XMLFeedParser):
         elem = tree.find("head/meta[@name='aap-version-creator']")
         if elem is not None:
             query = {"username": re.compile("^{}$".format(elem.get("content")), re.IGNORECASE)}
+            # TODO-ASYNC[users]: Upgrade this to async when updating this module
             user = superdesk.get_resource_service("users").find_one(req=None, **query)
             if user:
                 return user.get("_id")

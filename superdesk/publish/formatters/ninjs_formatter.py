@@ -573,6 +573,7 @@ class NINJSFormatter(Formatter):
         return output
 
     def _format_authors(self, article: Item) -> List[NinjsAuthor]:
+        # TODO-ASYNC[users]: Upgrade this to async when updating this module
         users_service = superdesk.get_resource_service("users")
         vocabularies_service = superdesk.get_resource_service("vocabularies")
         # TODO-ASYNC[vocabularies]: Use VocabulariesService async service where when upgrading this module

@@ -123,6 +123,7 @@ class ArchiveHistoryService(BaseService):
             and item.get("original_creator")
             and not item.get("original_id")
         ):
+            # TODO-ASYNC[users]: Upgrade to async when updating this module
             user = get_resource_service("users").find_one(req=None, _id=item.get("original_creator"))
             firstcreated = item.get("firstcreated", utcnow())
 
