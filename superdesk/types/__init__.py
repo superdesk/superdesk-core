@@ -1,7 +1,7 @@
 from typing import Any, Dict, List, TypedDict
 
 from .desks import DesksResourceModel
-from .users import UsersResourceModel
+from .users import UsersResourceModel, UserTypeEnum
 from .vocabularies import VocabulariesResourceModel
 
 from .content_types import ContentTypes
@@ -15,6 +15,7 @@ from .publish import PublishConsumer
 
 __all__ = [
     "UsersResourceModel",
+    "UserTypeEnum",
     "DesksResourceModel",
     "VocabulariesResourceModel",
     "ContentTypes",
