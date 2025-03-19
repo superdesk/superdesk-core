@@ -56,6 +56,16 @@ existing code to the new framework.
 
 .. _reference:
 
+Development Tutorials
+---------------------
+
+You can find guides we make here that will help you to develop with Superdesk.
+
+.. toctree::
+    :maxdepth: 2
+
+    tutorials/upgrade_eve_resource_to_async_service
+
 Reference
 ---------
 
