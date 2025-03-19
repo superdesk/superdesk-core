@@ -20,6 +20,7 @@ from base64 import b64encode
 from superdesk.core import get_app_config, get_current_app
 
 from superdesk.flask import Flask
+from superdesk.types import UsersResourceModel
 from superdesk.commands import cli
 from superdesk.utils import get_hash, is_hashed
 
@@ -66,13 +67,13 @@ async def create_user_command_handler(username: str, password: str, email: str, 
         if userdata.get("password", None) and not is_hashed(userdata.get("password")):
             userdata["password"] = get_hash(userdata.get("password"), get_app_config("BCRYPT_GENSALT_WORK_FACTOR", 12))
 
-        user = superdesk.get_resource_service("users").find_one(username=userdata.get("username"), req=None)
+        users_service = UsersResourceModel.get_service()
 
-        if user:
+        if await users_service.count({"username": userdata.get("username")}):
             logger.info("user already exists %s" % (userdata))
         else:
             logger.info("creating user %s" % (userdata))
-            superdesk.get_resource_service("users").post([userdata])
+            await users_service.create([userdata])
             logger.info("user saved %s" % (userdata))
 
         return userdata
@@ -212,6 +213,7 @@ class ImportUsersCommand(superdesk.Command):
                         value = role_data["_id"]
                     clean_data[field_name] = value
 
+                # TODO-ASYNC[users]: Upgrade to async when updating this module
                 user_id = users_service.post([clean_data])[0]
             except Exception as e:
                 logger.exception(
@@ -249,6 +251,7 @@ class HashUserPasswordsCommand(superdesk.Command):
                 hashed = get_hash(user["password"], get_app_config("BCRYPT_GENSALT_WORK_FACTOR", 12))
                 user_id = user.get("_id")
                 updates["password"] = hashed
+                # TODO-ASYNC[users]: Upgrade to async when updating this module
                 superdesk.get_resource_service("users").patch(user_id, updates=updates)
 
 

@@ -15,7 +15,7 @@ from superdesk.emails import send_user_mentioned_email
 import re
 import superdesk
 from superdesk.notification import push_notification
-from superdesk.types import DesksResourceModel
+from superdesk.types import DesksResourceModel, UsersResourceModel
 
 
 def get_mentions(text):
@@ -36,11 +36,12 @@ def get_mentions(text):
 async def send_email_to_mentioned_users(doc, mentioned_users, origin):
     prefs_service = superdesk.get_resource_service("preferences")
     recipients = []
+    users_service = UsersResourceModel.get_service()
     for user in mentioned_users:
-        send_email = prefs_service.email_notification_is_enabled(user_id=user)
+        send_email = await prefs_service.email_notification_is_enabled_async(user_id=user)
         if send_email:
-            user_doc = superdesk.get_resource_service("users").find_one(req=None, _id=user)
-            recipients.append(user_doc["email"])
+            user_doc = await users_service.find_by_id(user)
+            recipients.append(user_doc.email)
     if recipients:
         user = get_current_app().get_current_user_dict() or {}
         username = user.get("display_name") or user.get("username")
@@ -50,6 +51,7 @@ async def send_email_to_mentioned_users(doc, mentioned_users, origin):
 
 def get_users(user_names):
     req = ParsedRequest()
+    # TODO-ASYNC[users]: Upgrade to async when updating this module
     users = superdesk.get_resource_service("users").get(req=req, lookup={"username": {"$in": user_names}})
     users = {user.get("username"): user.get("_id") for user in users}
     return users

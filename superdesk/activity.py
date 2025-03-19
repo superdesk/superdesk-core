@@ -24,7 +24,7 @@ from superdesk.notification import push_notification
 from superdesk.preferences import get_user_notification_preferences
 from superdesk.resource import Resource
 from superdesk.services import BaseService
-from superdesk.types import User
+from superdesk.types import User, UsersResourceModel, UserTypeEnum
 from superdesk.utc import utcnow
 from eve.utils import ParsedRequest
 from superdesk.metadata.item import PUBLISH_STATES
@@ -268,7 +268,7 @@ async def notify_and_add_activity(
 
     if activity_name == ACTIVITY_ERROR or user_list:
         if not user_list:
-            user_list = get_resource_service("users").get_users_by_user_type("administrator")
+            user_list = await UsersResourceModel.get_by_user_type(UserTypeEnum.ADMINISTRATOR)
 
         recipients = get_recipients(user_list, notification_name)
 

@@ -66,7 +66,7 @@ async def auth_user(email, userdata=None):
         data[0]["_id"] = str(data[0]["_id"])
         data[0]["user"] = str(data[0]["user"])
         if userdata:
-            superdesk.get_resource_service("users").update_external_user(data[0]["user"], userdata)
+            await superdesk.get_resource_service("users").update_external_user_async(data[0]["user"], userdata)
         return await render_template(AUTHORIZED_TEMPLATE, data=data[0])
     except ValueError:
         if not get_app_config("USER_EXTERNAL_CREATE") or not userdata:
@@ -75,7 +75,7 @@ async def auth_user(email, userdata=None):
     # create new user using userdata
     # and re-run auth
     try:
-        user = superdesk.get_resource_service("users").create_external_user(userdata)
+        user = await superdesk.get_resource_service("users").create_external_user_async(userdata)
         return await auth_user(user["email"])
     except ValidationError as err:  # can't create user, so let it fail on next iteration
         logger.error(

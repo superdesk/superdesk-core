@@ -21,6 +21,7 @@ from apps.auth import get_user_id
 from .common import BasePublishService, BasePublishResource, ITEM_CORRECT
 from superdesk.emails import send_translation_changed
 from superdesk.activity import add_activity
+from superdesk.types import UsersResourceModel
 
 
 async def send_translation_notifications(original):
@@ -42,10 +43,11 @@ async def send_translation_notifications(original):
     add_activity("translated:changed", "", resource=None, item=changed_article, notify=user_ids)
 
     recipients = []
+    users_service = UsersResourceModel.get_service()
     for user_id in user_ids:
-        user = get_resource_service("users").find_one(req=None, _id=user_id)
-        if user is not None and user.get("email", None) is not None:
-            recipients.append(user.get("email"))
+        user = await users_service.find_by_id(user_id)
+        if user is not None and user.email:
+            recipients.append(user.email)
 
     if len(recipients) == 0:
         return

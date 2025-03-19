@@ -15,7 +15,7 @@ from superdesk.resource import Resource
 from superdesk.services import BaseService
 from superdesk.errors import SuperdeskApiError
 from superdesk import get_resource_service
-from superdesk.types import DesksResourceModel
+from superdesk.types import DesksResourceModel, UsersResourceModel
 from eve.utils import ParsedRequest
 from apps.tasks import task_statuses
 from superdesk.metadata.item import CONTENT_STATE, ITEM_STATE
@@ -96,6 +96,7 @@ class StagesService(BaseService):
                 self.remove_old_default(desk, "default_incoming")
 
     async def on_created(self, docs):
+        users_service = UsersResourceModel.get_service()
         for doc in docs:
             if "desk" in doc:
                 push_notification(
@@ -113,7 +114,7 @@ class StagesService(BaseService):
                 await self.set_desk_ref(doc, "incoming_stage")
 
             if not doc.get("is_visible", True):
-                get_resource_service("users").update_stage_visibility_for_users()
+                await users_service.update_stage_visibility_for_users()
 
     async def on_delete(self, doc):
         """
@@ -179,7 +180,7 @@ class StagesService(BaseService):
             if original.get("default_incoming") and "default_incoming" in updates:
                 raise SuperdeskApiError.forbiddenError(message=_("Must have one incoming stage in a desk"))
 
-    def on_updated(self, updates, original):
+    async def on_updated(self, updates, original):
         if "is_visible" in updates and updates["is_visible"] != original.get("is_visible", True):
             push_notification(
                 "stage_visibility_updated",
@@ -188,7 +189,7 @@ class StagesService(BaseService):
                 desk_id=str(original["desk"]),
                 is_visible=updates.get("is_visible", original.get("is_visible", True)),
             )
-            get_resource_service("users").update_stage_visibility_for_users()
+            await UsersResourceModel.get_service().update_stage_visibility_for_users()
         else:
             push_notification(
                 self.notification_key,

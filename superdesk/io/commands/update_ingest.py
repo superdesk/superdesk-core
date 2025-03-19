@@ -20,7 +20,7 @@ from werkzeug.exceptions import HTTPException
 from superdesk.celery_app import CELERY_SERIALIZER_NAME
 from superdesk.core import get_app_config, get_current_app
 from superdesk.resource_fields import ID_FIELD
-from superdesk.types import VocabulariesResourceModel
+from superdesk.types import VocabulariesResourceModel, UsersResourceModel, UserTypeEnum
 
 from superdesk.activity import ACTIVITY_EVENT, notify_and_add_activity
 from superdesk.celery_app import celery
@@ -337,7 +337,7 @@ async def update_provider(provider, rule_set=None, routing_scheme=None, sync=Fal
         ingest_provider_service.system_update(provider[ID_FIELD], update, provider)
 
         if LAST_ITEM_UPDATE not in update and get_is_idle(provider):
-            admins = superdesk.get_resource_service("users").get_users_by_user_type("administrator")
+            admins = await UsersResourceModel.get_by_user_type(UserTypeEnum.ADMINISTRATOR)
             await notify_and_add_activity(
                 ACTIVITY_EVENT,
                 "Provider {{name}} has gone strangely quiet. Last activity was on {{last}}",
