@@ -651,14 +651,20 @@ PUBLISHED_CONTENT_EXPIRY_MINUTES = int(env("PUBLISHED_CONTENT_EXPIRY_MINUTES", 0
 AUDIT_EXPIRY_MINUTES = int(env("AUDIT_EXPIRY_MINUTES", 60 * 24 * 14))
 
 #: The number records to be fetched for expiry.
-MAX_EXPIRY_QUERY_LIMIT = int(env("MAX_EXPIRY_QUERY_LIMIT", 100))
+#:
+#: .. versionchanged:: 2.9.0
+#:    Changed default to 1000 from 100.
+MAX_EXPIRY_QUERY_LIMIT = int(env("MAX_EXPIRY_QUERY_LIMIT", 1000))
 
 #: Number of loops to do on each run
 #:
 #: .. versionchanged:: 2.7.0
 #:    Changed default to 100 from 50.
 #:
-MAX_EXPIRY_LOOPS = 100
+#: .. versionchanged:: 2.9.0
+#:    Changed default to 10 from 100.
+#:
+MAX_EXPIRY_LOOPS = 10
 
 #: The number of minutes before Publish Queue is purged
 #:
