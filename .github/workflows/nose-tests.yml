@@ -4,7 +4,8 @@ on: [push, pull_request]
 
 jobs:
   pytest:
-    runs-on: ubuntu-latest
+
+    runs-on: ubuntu-22.04
 
     strategy:
       matrix:
@@ -23,7 +24,8 @@ jobs:
     - run: pytest --log-level=ERROR --disable-warnings
 
   pip-compile:
-    runs-on: ubuntu-latest
+
+    runs-on: ubuntu-22.04
 
     strategy:
       matrix:
@@ -39,7 +41,8 @@ jobs:
     - run: pip-compile -U --resolver=backtracking setup.py
 
   behave:
-    runs-on: ubuntu-latest
+
+    runs-on: ubuntu-22.04
 
     strategy:
       matrix:
@@ -60,7 +63,7 @@ jobs:
 
   behave-sams:
 
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
 
     strategy:
       matrix:
@@ -83,7 +86,7 @@ jobs:
 
   prodapi:
 
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
 
     strategy:
       matrix:
