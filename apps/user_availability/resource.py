@@ -20,23 +20,29 @@ class AvailabilityResource(Resource):
             "required": False,
             "nullable": True,
         },
-        "start_time": {
-            "type": "string",
-            "required": False,
-            "nullable": True,
-        },
-        "end_time": {
-            "type": "string",
-            "required": False,
-            "nullable": True,
-        },
-        "tags": {
+        "working_hours": {
             "type": "list",
             "schema": {
                 "type": "dict",
                 "schema": {
-                    "name": {"type": "string"},
-                    "code": {"type": "string"},
+                    "start_time": {
+                        "type": "string",
+                        "required": True,
+                    },
+                    "end_time": {
+                        "type": "string",
+                        "required": True,
+                    },
+                    "tags": {
+                        "type": "list",
+                        "schema": {
+                            "type": "dict",
+                            "schema": {
+                                "name": {"type": "string"},
+                                "code": {"type": "string"},
+                            },
+                        },
+                    },
                 },
             },
         },

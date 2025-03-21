@@ -1,3 +1,4 @@
+black==23.12.1
 flake8==7.1.2
 flake8-bugbear==24.12.12
 flake8-docstrings==1.7.0

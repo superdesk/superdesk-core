@@ -13,10 +13,14 @@ Feature: User Availability
             "date": "2023-05-15",
             "status": "available",
             "language": "en",
-            "start_time": "09:00:00",
-            "end_time": "17:00:00",
-            "tags": [
-                {"name": "Regular Shift", "code": "regular"}
+            "working_hours": [
+                {
+                    "start_time": "09:00:00",
+                    "end_time": "17:00:00",
+                    "tags": [
+                        {"name": "Regular Shift", "code": "regular"}
+                    ]
+                }
             ]
         }
         """
@@ -28,8 +32,12 @@ Feature: User Availability
             "date": "2023-05-15",
             "status": "available",
             "language": "en",
-            "start_time": "09:00:00",
-            "end_time": "17:00:00"
+            "working_hours": [
+                {
+                    "start_time": "09:00:00",
+                    "end_time": "17:00:00"
+                }
+            ]
         }
         """
         
@@ -43,8 +51,12 @@ Feature: User Availability
             "date": "2023-05-15",
             "status": "available",
             "language": "en",
-            "start_time": "09:00:00",
-            "end_time": "17:00:00"
+            "working_hours": [
+                {
+                    "start_time": "09:00:00",
+                    "end_time": "17:00:00"
+                }
+            ]
         }
         """
         
@@ -54,8 +66,15 @@ Feature: User Availability
         {
             "status": "partial",
             "language": "fr",
-            "start_time": "12:00:00",
-            "end_time": "16:00:00"
+            "working_hours": [
+                {
+                    "start_time": "12:00:00",
+                    "end_time": "16:00:00",
+                    "tags": [
+                        {"name": "Half Day", "code": "half-day"}
+                    ]
+                }
+            ]
         }
         """
         Then we get OK response
@@ -66,8 +85,12 @@ Feature: User Availability
             "date": "2023-05-15", 
             "status": "partial",
             "language": "fr",
-            "start_time": "12:00:00",
-            "end_time": "16:00:00"
+            "working_hours": [
+                {
+                    "start_time": "12:00:00",
+                    "end_time": "16:00:00"
+                }
+            ]
         }
         """
         
