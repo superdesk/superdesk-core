@@ -246,6 +246,19 @@ class DesksService(AsyncBaseService):
                 message=_("Cannot delete desk as it has article(s) or referenced by versions of the article(s).")
             )
 
+<<<<<<< HEAD
+=======
+    async def add_member_async(self, desk_id, user_id):
+        desk = self.find_one(req=None, _id=desk_id)
+        if not desk:
+            raise ValueError('desk "{}" not found'.format(desk_id))
+        members = desk.get("members", [])
+        members.append({"user": user_id})
+        updates = {"members": members}
+        await self.on_update_async(updates, desk)
+        await self.system_update_async(desk["_id"], updates, desk)
+
+>>>>>>> async
     async def delete_async(self, lookup):
         """
         Overriding to delete stages before deleting a desk
