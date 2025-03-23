@@ -68,12 +68,15 @@ class ImportUserProfileFromADCommand(superdesk.Command):
             raise SuperdeskApiError.notFoundError("Username not found")
 
         # Check if User Profile already exists in Mongo
+        # TODO-ASYNC[users]: Upgrade to async when updating this module
         user = superdesk.get_resource_service("users").find_one(req=None, **get_user_query(username))
 
         if user:
+            # TODO-ASYNC[users]: Upgrade to async when updating this module
             superdesk.get_resource_service("users").patch(user.get("_id"), user_data)
         else:
             add_default_values(user_data, username, user_type=user_type)
+            # TODO-ASYNC[users]: Upgrade to async when updating this module
             superdesk.get_resource_service("users").post([user_data])
 
         print(user_data)

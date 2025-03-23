@@ -403,6 +403,7 @@ class NewsMLTwoFeedParser(XMLFeedParser):
         :raise ValueError: value is rejected
         """
         vocabularies_service = get_resource_service("vocabularies")
+        # TODO-ASYNC[vocabularies]: Use VocabulariesService async service where when upgrading this module
         voc = vocabularies_service.find_one(req=None, _id=voc_id)
         create = False
         if voc is None:
@@ -440,8 +441,10 @@ class NewsMLTwoFeedParser(XMLFeedParser):
 
         items.append({"is_active": True, "name": name, "qcode": qcode})
         if create:
+            # TODO-ASYNC: Convert to use ``post_async``, when upgrading this module
             vocabularies_service.post([voc])
         else:
+            # TODO-ASYNC: Convert to use ``put_async``, when upgrading this module
             vocabularies_service.put(voc_id, voc)
         return name
 

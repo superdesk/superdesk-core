@@ -91,6 +91,7 @@ class EMailRFC822FeedParser(EmailFeedParser):
                     try:
                         if email_regex.findall(field_from):
                             email_address = email_regex.findall(field_from)[0]
+                            # TODO-ASYNC[users]: Upgrade this to async when updating this module
                             user = get_resource_service("users").get_user_by_email(email_address)
                             item["original_creator"] = user[ID_FIELD]
                     except UserNotRegisteredException:
@@ -275,6 +276,7 @@ class EMailRFC822FeedParser(EmailFeedParser):
         :param mail_item:
         :return: An item populated with category codes
         """
+        # TODO-ASYNC[vocabularies]: Use VocabulariesService async service where when upgrading this module
         anpa_categories = superdesk.get_resource_service("vocabularies").find_one(req=None, _id="categories")
         if anpa_categories:
             for mail_category in mail_item.get("Category").split(","):
@@ -364,6 +366,7 @@ class EMailRFC822FeedParser(EmailFeedParser):
                                 if mail_item.get("Priority", "3").isdigit():
                                     item["priority"] = int(mail_item.get("Priority", "3"))
                                 else:
+                                    # TODO-ASYNC[vocabularies]: Use VocabulariesService async service where when upgrading this module
                                     priority_map = superdesk.get_resource_service("vocabularies").find_one(
                                         req=None, _id="priority"
                                     )
@@ -386,6 +389,7 @@ class EMailRFC822FeedParser(EmailFeedParser):
                                     re.IGNORECASE,
                                 )
                             }
+                            # TODO-ASYNC[users]: Upgrade this to async when updating this module
                             user = superdesk.get_resource_service("users").find_one(req=None, **query)
                             if not user:
                                 logger.error(
@@ -401,11 +405,13 @@ class EMailRFC822FeedParser(EmailFeedParser):
 
                             # attempt to match the given desk name against the defined desks
                             query = {"name": re.compile("^{}$".format(mail_item.get("Desk", "")), re.IGNORECASE)}
+                            # TODO-ASYNC[desks]: Use DesksResourceModel async service where when upgrading this module
                             desk = superdesk.get_resource_service("desks").find_one(req=None, **query)
                             if desk:
                                 item["task"] = {"desk": desk.get("_id"), "stage": desk.get("incoming_stage")}
 
                             if "Place" in mail_item:
+                                # TODO-ASYNC[vocabularies]: Use VocabulariesService async service where when upgrading this module
                                 locator_map = superdesk.get_resource_service("vocabularies").find_one(
                                     req=None, _id="locators"
                                 )

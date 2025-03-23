@@ -1,4 +1,5 @@
 from behave import given, when, then  # @UnresolvedImport
+from behave.api.async_step import async_run_until_complete
 from superdesk.core import json
 from superdesk import get_resource_service
 from superdesk.tests import get_prefixed_url
@@ -8,10 +9,11 @@ from features.steps.steps import apply_placeholders
 
 
 @given("highlights")
-def given_highlights(context):
+@async_run_until_complete
+async def given_highlights(context):
     with context.app.app_context():
         context.desks = {"name": "test"}
-        get_resource_service("desks").post([context.desks])
+        await get_resource_service("desks").post_async([context.desks])
         context.highlights = {"name": "highlight", "desks": [context.desks["_id"]], "auto_insert": "now-12h"}
         get_resource_service("highlights").post([context.highlights])
         task = {"desk": context.desks["_id"]}

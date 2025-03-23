@@ -9,13 +9,14 @@ from superdesk import get_resource_service
 from superdesk.errors import SuperdeskApiError
 from superdesk.default_schema import DEFAULT_SCHEMA, DEFAULT_EDITOR, DEFAULT_SCHEMA_MAP
 from apps.auth import get_user_id
-from apps.desks import remove_profile_from_desks
+from apps.desks import remove_profile_from_desks_async
 from eve.utils import ParsedRequest
 from superdesk.resource import build_custom_hateoas
 from quart_babel import gettext as _
 from superdesk.utc import utcnow
 from superdesk.services import CacheableService
 from superdesk.utils import format_content_type_name
+from superdesk.types import DesksResourceModel
 
 
 CONTENT_TYPE_PRIVILEGE = "content_type"
@@ -139,14 +140,14 @@ class ContentTypesService(CacheableService):
             self._set_updated_by(doc)
             self._set_created_by(doc)
 
-    def on_delete(self, doc):
+    async def on_delete(self, doc):
         if doc.get("is_used"):
             raise SuperdeskApiError(status_code=202, payload={"is_used": True})
         remove_profile_from_templates(doc)
-        remove_profile_from_desks(doc)
+        await remove_profile_from_desks_async(doc)
 
-    def on_update(self, updates, original):
-        self._validate_disable(updates, original)
+    async def on_update(self, updates, original):
+        await self._validate_disable(updates, original)
         self._set_updated_by(updates)
         prepare_for_save_content_type(original, updates)
         self._update_template_fields(updates, original)
@@ -166,7 +167,7 @@ class ContentTypesService(CacheableService):
         build_custom_hateoas({"self": {"title": "Content Profile", "href": "/content_types/{_id}"}}, doc)
         return doc
 
-    def _validate_disable(self, updates, original):
+    async def _validate_disable(self, updates, original):
         """
         Checks the templates and desks that are referencing the given
         content profile if the profile is being disabled
@@ -184,8 +185,7 @@ class ContentTypesService(CacheableService):
                     ).format(templates=template_names)
                 )
 
-            req = ParsedRequest()
-            all_desks = list(superdesk.get_resource_service("desks").get(req=req, lookup={}))
+            all_desks = [desk async for desk in DesksResourceModel.get_service().get_all_raw()]
             profile_desks = [
                 desk for desk in all_desks if desk.get("default_content_profile") == str(original.get("_id"))
             ]
@@ -259,6 +259,8 @@ class ContentTypesService(CacheableService):
 def clean_doc(doc):
     schema = doc.get("schema", {})
     editor = doc.get("editor", {})
+
+    # TODO-ASYNC[vocabularies]: Use VocabulariesService async service where when upgrading this module
     vocabularies = list(get_resource_service("vocabularies").get_forbiden_custom_vocabularies())
 
     for cv in HARDCODED_CVS:
@@ -297,6 +299,7 @@ def prepare_for_edit_content_type(doc):
 
 
 def init_extra_fields(editor, schema):
+    # TODO-ASYNC[vocabularies]: Use VocabulariesService async service where when upgrading this module
     fields = get_resource_service("vocabularies").get_extra_fields()
     for field in fields:
         field_type = field.get("field_type")
@@ -321,6 +324,7 @@ def get_mandatory_list(schema):
 
 
 def get_fields_map_and_names():
+    # TODO-ASYNC[vocabularies]: Use VocabulariesService async service where when upgrading this module
     vocabularies = get_resource_service("vocabularies").get_custom_vocabularies()
     fields_map = {}
     field_names = {}

@@ -48,12 +48,14 @@ class AuthService(BaseService):
 
     def on_created(self, docs):
         for doc in docs:
+            # TODO-ASYNC[users]: Upgrade to async when updating this module
             get_resource_service("preferences").set_session_based_prefs(doc["_id"], doc["user"])
             self.set_user_last_activity(doc["user"])
 
     def set_user_last_activity(self, user_id, done=False):
         now = utcnow()
         user_service = get_resource_service("users")
+        # TODO-ASYNC[users]: Upgrade to async when updating this module
         user = user_service.find_one(req=None, _id=user_id)
         user_service.system_update(
             user["_id"],

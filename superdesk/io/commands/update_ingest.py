@@ -20,6 +20,7 @@ from werkzeug.exceptions import HTTPException
 from superdesk.celery_app import CELERY_SERIALIZER_NAME
 from superdesk.core import get_app_config, get_current_app
 from superdesk.resource_fields import ID_FIELD
+from superdesk.types import VocabulariesResourceModel, UsersResourceModel, UserTypeEnum
 
 from superdesk.activity import ACTIVITY_EVENT, notify_and_add_activity
 from superdesk.celery_app import celery
@@ -336,7 +337,7 @@ async def update_provider(provider, rule_set=None, routing_scheme=None, sync=Fal
         ingest_provider_service.system_update(provider[ID_FIELD], update, provider)
 
         if LAST_ITEM_UPDATE not in update and get_is_idle(provider):
-            admins = superdesk.get_resource_service("users").get_users_by_user_type("administrator")
+            admins = await UsersResourceModel.get_by_user_type(UserTypeEnum.ADMINISTRATOR)
             await notify_and_add_activity(
                 ACTIVITY_EVENT,
                 "Provider {{name}} has gone strangely quiet. Last activity was on {{last}}",
@@ -357,9 +358,9 @@ async def update_provider(provider, rule_set=None, routing_scheme=None, sync=Fal
         unlock(lock_name)
 
 
-def process_anpa_category(item, provider):
+async def _process_anpa_category(item, provider):
     try:
-        anpa_categories = superdesk.get_resource_service("vocabularies").find_one(req=None, _id="categories")
+        anpa_categories = await VocabulariesResourceModel.get_service().find_by_id_raw("categories")
         if anpa_categories:
             for item_category in item["anpa_category"]:
                 mapped_category = [
@@ -384,7 +385,7 @@ def process_anpa_category(item, provider):
         raise ProviderError.anpaError(ex, provider)
 
 
-def derive_category(item, provider):
+async def _derive_category(item, provider):
     """Assuming that the item has at least one itpc subject use the vocabulary map to derive an anpa category.
 
     :param item:
@@ -392,7 +393,7 @@ def derive_category(item, provider):
     """
     try:
         categories = []
-        subject_map = superdesk.get_resource_service("vocabularies").find_one(req=None, _id="iptc_category_map")
+        subject_map = await VocabulariesResourceModel.get_service().find_by_id_raw("iptc_category_map")
         if subject_map:
             for entry in (map_entry for map_entry in subject_map["items"] if map_entry["is_active"]):
                 for subject in item.get("subject", []):
@@ -401,7 +402,7 @@ def derive_category(item, provider):
                             categories.append({"qcode": entry["category"]})
             if len(categories):
                 item["anpa_category"] = categories
-                process_anpa_category(item, provider)
+                await _process_anpa_category(item, provider)
     except Exception as ex:
         logger.exception(ex)
 
@@ -444,14 +445,14 @@ def process_iptc_codes(item, provider):
         raise ProviderError.iptcError(ex, provider)
 
 
-def derive_subject(item):
+async def _derive_subject(item):
     """Try to derive a subject using the anpa category vocabulary.
 
     :param item:
     :return:
     """
     try:
-        category_map = superdesk.get_resource_service("vocabularies").find_one(req=None, _id="categories")
+        category_map = await VocabulariesResourceModel.get_service().find_by_id_raw("categories")
         if category_map:
             for cat in item["anpa_category"]:
                 map_entry = next(
@@ -619,16 +620,16 @@ async def ingest_item(item, provider, feeding_service, rule_set=None, routing_sc
         set_expiry(item, provider, parent_expiry=expiry)
 
         if "anpa_category" in item:
-            process_anpa_category(item, provider)
+            await _process_anpa_category(item, provider)
 
         if "subject" in item:
             if not get_app_config("INGEST_SKIP_IPTC_CODES", False):
                 # FIXME: temporary fix for SDNTB-344, need to be removed once SDESK-439 is implemented
                 process_iptc_codes(item, provider)
             if "anpa_category" not in item:
-                derive_category(item, provider)
+                await _derive_category(item, provider)
         elif "anpa_category" in item:
-            derive_subject(item)
+            await _derive_subject(item)
 
         apply_rule_set(item, provider, rule_set)
 

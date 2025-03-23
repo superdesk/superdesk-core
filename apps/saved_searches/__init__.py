@@ -33,6 +33,7 @@ from superdesk.core import get_app_config, get_current_app
 from superdesk.flask import render_template
 from superdesk import emails
 import json
+from superdesk.types import DesksResourceModel, UsersResourceModel
 
 logger = logging.getLogger(__name__)
 REPORT_SOFT_LIMIT = 60 * 5
@@ -98,8 +99,8 @@ async def send_report_email(user_id, search, docs):
     :param dict search: saved search data
     :param list found_items: items matching the search request
     """
-    users_service = get_resource_service("users")
-    user_data = next(users_service.find({"_id": user_id}))
+    users_service = UsersResourceModel.get_service()
+    user_data = await users_service.find_by_id_raw(user_id)
     recipients = [user_data["email"]]
     admins = get_app_config("ADMINS")
     subject = "Saved searches report"
@@ -136,7 +137,7 @@ async def process_subscribers(subscribers, search, now, isDesk=False):
             do_update = True
         elif next_report <= now:
             if isDesk:
-                desk = get_resource_service("desks").find_one(req=None, _id=subscriber_data["desk"])
+                desk = await DesksResourceModel.get_service().find_by_id_raw(subscriber_data["desk"])
                 for member in (desk or {}).get("members", []):
                     await publish_report(member.get("user"), search)
             else:

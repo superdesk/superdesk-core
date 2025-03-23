@@ -30,6 +30,7 @@ from superdesk.metadata.item import (
 from superdesk.metadata.packages import GROUPS
 from superdesk import get_resource_service
 from superdesk.utc import utcnow
+from apps.desks_async import get_desk_name_by_id
 import logging
 from copy import deepcopy
 from superdesk.emails import send_article_killed_email

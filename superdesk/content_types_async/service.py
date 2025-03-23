@@ -8,14 +8,14 @@
 
 
 from copy import deepcopy
-from typing import Any, Literal, cast
+from typing import Any, cast
 
 import bson
 from bson import ObjectId
 from quart_babel import gettext as _
 
 from apps.auth import get_user_id
-from apps.desks import remove_profile_from_desks
+from apps.desks import remove_profile_from_desks_async
 from apps.templates.content_templates import ContentTemplatesService
 import superdesk
 from superdesk.core.resources.service import AsyncCacheableService
@@ -28,6 +28,7 @@ from superdesk.types.desks import DesksResourceModel
 from superdesk.utc import utcnow
 from superdesk.utils import format_content_type_name
 from superdesk.vocabularies_async.service import VocabulariesService
+from superdesk.flask import request
 
 
 CONTENT_TYPE_PRIVILEGE = "content_type"
@@ -73,8 +74,7 @@ class ContentTypesService(AsyncCacheableService[ContentTypes]):
         if doc.is_used:
             raise SuperdeskApiError(status_code=202, payload={"is_used": True})
         await remove_profile_from_templates(doc)
-        # TODO-ASYNC:
-        remove_profile_from_desks(doc.to_dict())
+        await remove_profile_from_desks_async(doc.to_dict())
 
     async def on_update(self, updates: dict[str, Any], original: ContentTypes) -> None:
         await self._validate_disable(updates, original)
@@ -146,21 +146,22 @@ class ContentTypesService(AsyncCacheableService[ContentTypes]):
             if processed:
                 superdesk.get_resource_service("content_templates").patch(template.get("_id"), {"data": data})
 
-    async def find_one(
+    async def find_by_id_raw(
         self,
-        req: SearchRequest | None = None,
-        projection: ProjectedFieldArg | None = None,
-        use_mongo: bool = False,
+        item_id: str | ObjectId,
         version: int | None = None,
-        **lookup,
-    ) -> ContentTypes | None:
-        is_edit = req and "edit" in lookup
-        doc = await super().find_one(req, **lookup)
-        if doc and is_edit:
+        projection: ProjectedFieldArg | None = None,
+    ) -> dict | None:
+        doc_dict = await super().find_by_id_raw(item_id, version, projection)
+        if not doc_dict:
+            return None
+
+        doc = ContentTypes.from_dict(doc_dict)
+        if request and request.args.get("edit"):
             await prepare_for_edit_content_type(doc)
-        if doc:
+        else:
             await clean_doc(doc)
-        return doc
+        return doc.to_dict()
 
     async def set_used(self, profile_ids: list[str]) -> None:
         query = {"_id": {"$in": list(profile_ids)}, "is_used": {"$ne": True}}
@@ -181,12 +182,12 @@ class ContentTypesService(AsyncCacheableService[ContentTypes]):
             raise ValueError("No profile_id found.")
         profile = await self.find_by_id(profile_id)
         if profile:
-            return profile.schema
+            return profile.content_schema
         return DEFAULT_SCHEMA_MAP.get(profile_id)
 
 
 async def clean_doc(doc: ContentTypes) -> None:
-    schema = doc.schema
+    schema = doc.content_schema
     editor = doc.editor
 
     vocabularies_service = VocabulariesService()
@@ -205,7 +206,7 @@ async def clean_doc(doc: ContentTypes) -> None:
 
 
 def clean_null(doc: ContentTypes) -> None:
-    for field in ("editor", "schema"):
+    for field in ("editor", "content_schema"):
         data = getattr(doc, field)
         to_delete = [key for key, val in data.items() if val is None]
         for key in to_delete:
@@ -216,7 +217,7 @@ async def prepare_for_edit_content_type(doc: ContentTypes) -> None:
     await clean_doc(doc)
     init_default(doc)
     editor = doc.editor
-    schema = doc.schema
+    schema = doc.content_schema
     fields_map, field_names = await get_fields_map_and_names()
     init_custom(editor, schema, fields_map)
     expand_subject(editor, schema, fields_map)
@@ -272,7 +273,7 @@ async def get_fields_map_and_names() -> tuple[dict[str, str], dict[str, str]]:
 
 def init_default(doc: ContentTypes) -> None:
     editor = doc.editor
-    schema = doc.schema
+    schema = doc.content_schema
     if editor and schema:
         for field in DEFAULT_EDITOR:
             # add missing fields in editor with enabled = false
@@ -285,7 +286,7 @@ def init_default(doc: ContentTypes) -> None:
                 schema[field] = deepcopy(DEFAULT_SCHEMA[field])
     else:
         doc.editor = deepcopy(DEFAULT_EDITOR)
-        doc.schema = deepcopy(DEFAULT_SCHEMA)
+        doc.content_schema = deepcopy(DEFAULT_SCHEMA)
 
 
 def init_custom(editor: dict[str, Any], schema: dict[str, Any], fields_map: dict[str, str]) -> None:
@@ -417,7 +418,7 @@ async def prepare_for_save_content_type(original: ContentTypes, updates: dict[st
     original = deepcopy(original)
     await prepare_for_edit_content_type(original)
     concatenate_dictionary(original.editor, editor)
-    concatenate_dictionary(original.schema, schema)
+    concatenate_dictionary(original.content_schema, schema)
     delete_disabled_fields(editor, schema)
     fields_map, _ = await get_fields_map_and_names()
     clean_editor(editor)
@@ -560,8 +561,8 @@ async def apply_schema(item: dict[str, Any]) -> dict[str, Any]:
         profile = await get_profile(item["profile"])
         if profile:
             assert isinstance(profile, ContentTypes)
-            if profile.schema:
-                schema = profile.schema
+            if profile.content_schema:
+                schema = profile.content_schema
 
     return {key: val for key, val in item.items() if is_enabled(key, schema) or key in allowed_keys}
 
@@ -572,10 +573,10 @@ async def remove_profile_from_templates(item: ContentTypes) -> None:
     :param item: deleted content profile
     """
     # TODO-ASYNC: "content_templates" is not async yet
-    templates = list(await superdesk.get_resource_service("content_templates").get_templates_by_profile_id(item.id))
+    templates = list(superdesk.get_resource_service("content_templates").get_templates_by_profile_id(item.id))
     for template in templates:
         template.data.pop("profile", None)
-        await superdesk.get_resource_service("content_templates").patch(template.id, template)
+        superdesk.get_resource_service("content_templates").patch(template.id, template)
 
 
 async def get_profile(_id: str) -> dict[str, Any] | ContentTypes | None:

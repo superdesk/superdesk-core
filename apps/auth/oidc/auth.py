@@ -49,6 +49,7 @@ class OIDCAuthService(AuthService):
         if not is_valid:
             raise CredentialsAuthError(credentials)
 
+        # TODO-ASYNC[users]: Upgrade to async when updating this module
         users_service = get_resource_service("users")
         username = g.oidc_token_info["username"]
         user = users_service.find_one(req=None, username=username) or {}

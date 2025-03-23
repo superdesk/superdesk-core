@@ -71,3 +71,11 @@ class UsersResourceModel(ResourceModel):
     session_preferences: dict[str, Any] = Field(default_factory=dict)
     user_preferences: dict[str, Any] = Field(default_factory=dict)
     last_activity_at: datetime | None = None
+
+    @classmethod
+    async def get_by_user_type(cls, user_type: UserTypeEnum = UserTypeEnum.USER) -> list["UsersResourceModel"]:
+        return await (await cls.get_service().find({"user_type": user_type})).to_list()
+
+    @classmethod
+    async def get_by_user_role(cls, user_role: str | ObjectId) -> list["UsersResourceModel"]:
+        return await (await cls.get_service().find({"role": ObjectId(user_role)})).to_list()

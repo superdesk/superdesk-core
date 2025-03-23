@@ -25,6 +25,7 @@ class DbAuthService(AuthService):
         if not user:
             raise CredentialsAuthError(credentials)
 
+        # TODO-ASYNC[users]: Upgrade to async when updating this module
         _user = get_resource_service("users").find_one(req=None, username=credentials.get("username"))
         if _user.get("user_type") == "external":
             raise ExternalUserError(

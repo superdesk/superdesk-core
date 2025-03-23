@@ -36,5 +36,6 @@ class LanguagesService(BaseService):
         """
         Return the list of languages defined on config file.
         """
+        # TODO-ASYNC[vocabularies]: Use VocabulariesService async service where when upgrading this module
         languages = superdesk.get_resource_service("vocabularies").get_languages()
         return ListCursor([view_language(lang) for lang in languages])

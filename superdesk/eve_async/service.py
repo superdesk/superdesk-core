@@ -113,7 +113,7 @@ class AsyncBaseService(BaseService):
         return await self.backend.get_from_mongo_async(self.datasource, req=req, lookup=lookup)
 
     async def get_all_async(self):
-        return await self.get_from_mongo(None, {}).sort("_id")
+        return (await self.get_from_mongo_async(None, {})).sort("_id")
 
     async def find_and_modify_async(self, query, update, **kwargs):
         return await self.backend.find_and_modify_async(self.datasource, filter=query, update=update, **kwargs)

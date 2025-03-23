@@ -2,7 +2,7 @@ from typing import Annotated, Any
 from pydantic import Field
 
 from .enums import MonitoringTypeEnum, MonitoringViewEnum, DeskTypeEnum
-from superdesk.core.resources import ResourceModel, fields, dataclass
+from superdesk.core.resources import ResourceModel, fields, dataclass, Dataclass
 from superdesk.core.resources.fields import ObjectId
 from superdesk.core.resources.validators import validate_unique_value_async, validate_data_relation_async
 
@@ -14,10 +14,14 @@ class MonitoringSetting:
     max_items: int
 
 
+class DeskMember(Dataclass):
+    user: Annotated[ObjectId, validate_data_relation_async("users")]
+
+
 class DesksResourceModel(ResourceModel):
     name: Annotated[fields.Keyword, validate_unique_value_async("desks", "name")]
     description: str | None = None
-    members: list[dict[str, Annotated[ObjectId, validate_data_relation_async("users")]]] = Field(default_factory=list)
+    members: list[DeskMember] = Field(default_factory=list)
     incoming_stage: Annotated[ObjectId, validate_data_relation_async("stages")] | None = None
     working_stage: Annotated[ObjectId, validate_data_relation_async("stages")] | None = None
     content_expiry: int | None = None

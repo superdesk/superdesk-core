@@ -18,6 +18,7 @@ def format_duration(duration) -> str:
 
 
 def get_subitems() -> List[types.ISubject]:
+    # TODO-ASYNC[vocabularies]: Use VocabulariesService async service where when upgrading this module
     return get_resource_service("vocabularies").get_items("rundown_subitem_types")
 
 

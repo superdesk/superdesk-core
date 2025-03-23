@@ -1,10 +1,10 @@
 from copy import deepcopy
 from quart_babel import gettext as _
 from apps.comments import CommentsResource, CommentsService
-from superdesk import get_resource_service
 from superdesk.resource import Resource
 from superdesk.activity import notify_and_add_activity
 from superdesk.users.services import get_display_name
+from superdesk.types import UsersResourceModel
 
 from . import privileges, rundown_items, rundowns
 
@@ -19,19 +19,19 @@ class RundownCommentsResource(CommentsResource):
 class RundownCommentsService(CommentsService):
     notifications = False
 
-    def on_created(self, docs):
-        super().on_created(docs)
+    async def on_created(self, docs):
+        await super().on_created(docs)
+        users_service = UsersResourceModel.get_service()
         for doc in docs:
             if not doc.get("mentioned_users"):
                 continue
             user_ids = list(set(doc["mentioned_users"].values()))
-            users = list(get_resource_service("users").find({"_id": {"$in": user_ids}}))
+            users = list(await users_service.find_by_ids_raw(user_ids))
             item = rundown_items.items_service.find_one(req=None, _id=doc["item"])
-            user = get_resource_service("users").find_one(req=None, _id=doc["user"])
+            user = await users_service.find_by_id_raw(doc["user"])
             rundown = rundowns.rundowns_service.find_one(req=None, _id=item["rundown"])
             assert item is not None
-            # TODO-ASYNC: Support async (see superdesk.tests.markers.requires_eve_resource_async_event)
-            notify_and_add_activity(
+            await notify_and_add_activity(
                 "rundown-item-comment",
                 _(
                     'You were mentioned in "%(item_name)s" ("%(rundown_name)s") comment by %(user)s.',

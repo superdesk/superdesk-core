@@ -35,7 +35,7 @@ from superdesk.core import app as core_app
 from superdesk.core.resources import ResourceModel
 from superdesk.storage.amazon_media_storage import AmazonMediaStorage
 from superdesk.storage.proxy import ProxyMediaStorage
-from superdesk.types import User
+from superdesk.types import User, UsersResourceModel
 
 
 logger = logging.getLogger(__name__)
@@ -480,8 +480,9 @@ async def setup_db_user(context, user):
 
         user.setdefault("user_type", "administrator")
 
-        if not get_resource_service("users").find_one(username=user["username"], req=None):
-            get_resource_service("users").post([user])
+        users_service = UsersResourceModel.get_service()
+        if not await users_service.count({"username": user["username"]}):
+            await users_service.create([user])
 
         user["password"] = original_password
         auth_data = json.dumps({"username": user["username"], "password": user["password"]})

@@ -176,6 +176,7 @@ class SchemaValidator(Validator):
         subject_schemas = {}
 
         if field == "subject":
+            # TODO-ASYNC[vocabularies]: Use VocabulariesService async service where when upgrading this module
             cvs = get_resource_service("vocabularies").get_from_mongo(req=None, lookup={"schema_field": field})
             for cv in cvs:
                 subject_schemas.update({field: cv["_id"]})
@@ -215,6 +216,7 @@ class SchemaValidator(Validator):
             subject_schemas = {None, "", "subject_custom"}
 
             # plus any cv with schema_field subject
+            # TODO-ASYNC[vocabularies]: Use VocabulariesService async service where when upgrading this module
             cvs = get_resource_service("vocabularies").get_from_mongo(
                 req=None, lookup={"schema_field": field}, projection={"_id": 1}
             )
@@ -346,6 +348,7 @@ class ValidateService(superdesk.Service):
     def _get_profile_schema(self, schema, doc):
         doc["validate"].setdefault("extra", {})  # make sure extra is there so it will validate its fields
         extra_field_types = {"text": "string", "embed": "dict", "date": "date", "urls": "list", "custom": "any"}
+        # TODO-ASYNC[vocabularies]: Use VocabulariesService async service where when upgrading this module
         extra_fields = superdesk.get_resource_service("vocabularies").get_extra_fields()
         schema["extra"] = {"type": "dict", "schema": {}}
         for extra_field in extra_fields:
@@ -510,6 +513,7 @@ class ValidateService(superdesk.Service):
         return {field: get_validator_schema(schema) for field, schema in validator["schema"].items() if schema}
 
     def _get_vocabulary_display_name(self, vocabulary_id):
+        # TODO-ASYNC[vocabularies]: Use VocabulariesService async service where when upgrading this module
         if vocabulary_id == "anpa_category":
             vocabulary = get_resource_service("vocabularies").find_one(req=None, _id="categories")
         elif vocabulary_id == "subject":

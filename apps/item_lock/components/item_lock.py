@@ -153,6 +153,7 @@ class ItemLock(BaseComponent):
                 autosave = superdesk.get_resource_service("archive_autosave").find_one(req=None, _id=item["_id"])
                 if autosave and item[ITEM_STATE] not in PUBLISH_STATES:
                     if not hasattr(g, "user"):  # user is not set when session expires
+                        # TODO-ASYNC[users]: Upgrade to async when updating this module
                         g.user = superdesk.get_resource_service("users").find_one(req=None, _id=user_id)
                     autosave.update(updates)
                     resolve_document_version(autosave, "archive", "PATCH", item)

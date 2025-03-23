@@ -10,6 +10,7 @@ class PrivilegedResourceEndpointsTestCase(AsyncFlaskTestCase):
         "MODULES": [
             "tests.core.modules.users",
             "tests.core.modules.module_with_privileges",
+            "superdesk.users",
         ]
     }
 

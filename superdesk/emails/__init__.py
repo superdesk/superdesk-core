@@ -21,6 +21,7 @@ from superdesk.celery_app import celery
 from superdesk.core import get_current_app, get_app_config
 from superdesk.flask import render_template, render_template_string
 from superdesk import get_resource_service
+from superdesk.types import UsersResourceModel
 
 logger = logging.getLogger(__name__)
 
@@ -76,7 +77,7 @@ def send_email(self, subject, sender, recipients, text_body, html_body, cc=None,
 
 
 async def send_activate_account_email(doc, activate_ttl):
-    user = get_resource_service("users").find_one(req=None, _id=doc["user"])
+    user = await UsersResourceModel.get_service().find_by_id_raw(doc["user"])
     first_name = user.get("first_name")
     app_name = get_app_config("APPLICATION_NAME")
     admins = get_app_config("ADMINS")

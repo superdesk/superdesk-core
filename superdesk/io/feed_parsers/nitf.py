@@ -222,6 +222,7 @@ class NITFFeedParser(XMLFeedParser):
         elem = tree.find("head/meta[@name='aap-place']")
         if elem is None:
             return self.get_places(tree.find("head/docdata"))
+        # TODO-ASYNC[vocabularies]: Use VocabulariesService async service where when upgrading this module
         locator_map = superdesk.get_resource_service("vocabularies").find_one(req=None, _id="locators")
         return [x for x in locator_map.get("items", []) if x["qcode"] == elem.get("content")]
 
@@ -246,6 +247,7 @@ class NITFFeedParser(XMLFeedParser):
         if elem is None:
             raise SkipValue()
         genre = elem.get("tobject.property.type")
+        # TODO-ASYNC[vocabularies]: Use VocabulariesService async service where when upgrading this module
         genre_map = superdesk.get_resource_service("vocabularies").find_one(req=None, _id="genre")
         if genre_map is not None:
             return [x for x in genre_map.get("items", []) if x["name"] == genre]
@@ -280,6 +282,7 @@ class NITFFeedParser(XMLFeedParser):
         elem = tree.find("head/meta[@name='aap-original-creator']")
         if elem is not None:
             query = {"username": re.compile("^{}$".format(elem.get("content")), re.IGNORECASE)}
+            # TODO-ASYNC[users]: Upgrade this to async when updating this module
             user = superdesk.get_resource_service("users").find_one(req=None, **query)
             if user is not None:
                 return user.get("_id")
@@ -289,6 +292,7 @@ class NITFFeedParser(XMLFeedParser):
         elem = tree.find("head/meta[@name='aap-version-creator']")
         if elem is not None:
             query = {"username": re.compile("^{}$".format(elem.get("content")), re.IGNORECASE)}
+            # TODO-ASYNC[users]: Upgrade this to async when updating this module
             user = superdesk.get_resource_service("users").find_one(req=None, **query)
             if user:
                 return user.get("_id")
@@ -297,6 +301,7 @@ class NITFFeedParser(XMLFeedParser):
     def get_task(self, tree):
         desk_name = tree.find('head/meta[@name="aap-desk"]')
         if desk_name is not None:
+            # TODO-ASYNC[desks]: Use DesksResourceModel async service where when upgrading this module
             desk = superdesk.get_resource_service("desks").find_one(req=None, name=desk_name.get("content"))
             if desk:
                 task = {"desk": desk.get("_id")}

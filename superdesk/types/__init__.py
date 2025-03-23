@@ -16,9 +16,10 @@ from .enums import (
     AUTHORING_TYPES,
 )
 from .desks import DesksResourceModel
-from .users import UsersResourceModel
+from .users import UsersResourceModel, UserTypeEnum
 from .vocabularies import VocabulariesResourceModel
 
+from .content_types import ContentTypes
 from .products import ProductsResource, ProductTypes, ProductFilterType, ProductContentFilter
 from .subscribers import SubscribersResource, SubscriberDestination, SubscriberSequenceSettings, SubscriberType
 from .sequences import SequencesResource
@@ -50,8 +51,10 @@ __all__ = [
     "MEDIA_TYPES",
     "AUTHORING_TYPES",
     "UsersResourceModel",
+    "UserTypeEnum",
     "DesksResourceModel",
     "VocabulariesResourceModel",
+    "ContentTypes",
     "ProductsResource",
     "ProductTypes",
     "ProductFilterType",

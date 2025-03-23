@@ -83,6 +83,7 @@ class ScoopNewsMLTwoFeedParser(NewsMLTwoFeedParser):
                                 if par.text == "(BusinessDesk)" and pars.index(par) + 1 == len(pars):
                                     par.getparent().remove(par)
                             item["body_html"] = to_string(parsed, remove_root_div=True)
+                        # TODO-ASYNC[vocabularies]: Use VocabulariesService async service where when upgrading this module
                         locator_map = superdesk.get_resource_service("vocabularies").find_one(req=None, _id="locators")
                         if locator_map:
                             item["place"] = [x for x in locator_map.get("items", []) if x["qcode"].upper() == "NZ"]

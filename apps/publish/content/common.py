@@ -440,6 +440,7 @@ class BasePublishService(AsyncBaseService):
 
         if not publishing_warnings_confirmed:
             for key, associated_item in original.get(ASSOCIATIONS).items():
+                # TODO-ASYNC: Convert this to use async resource when upgrading this module
                 if associated_item and is_related_content(key):
                     item = archive_service.find_one(req=None, _id=associated_item.get("_id"))
                     item = item if item else associated_item
@@ -841,6 +842,7 @@ class BasePublishService(AsyncBaseService):
 
     def _fix_related_references(self, updated, updates):
         for key, item in updated[ASSOCIATIONS].items():
+            # TODO-ASYNC: Convert this to use async resource when upgrading this module
             if item and item.get("_fetchable", True) and is_related_content(key):
                 updated[ASSOCIATIONS][key] = {
                     "_id": item["_id"],

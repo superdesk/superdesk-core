@@ -199,6 +199,7 @@ class ArchivedService(BaseService):
             user
             and item
             and str(item.get("task", {}).get("stage", ""))
+            # TODO-ASYNC[users]: Upgrade to async when updating this module
             in get_resource_service("users").get_invisible_stages_ids(user.get("_id"))
         ):
             raise SuperdeskApiError.forbiddenError(_("User does not have permissions to read the item."))
