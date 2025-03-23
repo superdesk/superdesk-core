@@ -48,6 +48,7 @@ class FilterConditionFieldsEnum(Enum):
 @cache(ttl=3600, tags=("vocabularies",))
 def _get_field_type_map() -> Dict[str, str]:
     field_type_map = {}
+    # TODO-ASYNC[vocabularies]: Use VocabulariesService async service where when upgrading this module
     cvs = get_resource_service("vocabularies").get_from_mongo(req=None, lookup=None, projection={"field_type": 1})
     for cv in cvs:
         field_type_map[cv["_id"]] = cv.get("field_type", "")

@@ -71,6 +71,7 @@ class RitzauFeedParser(XMLFeedParser):
     @property
     def subjects_map(self):
         if self._subjects_map is None:
+            # TODO-ASYNC[vocabularies]: Use VocabulariesService async service where when upgrading this module
             voc_subjects = superdesk.get_resource_service("vocabularies").find_one(req=None, _id="subject_custom")
             if voc_subjects is not None:
                 self._subjects_map = {i["qcode"]: i for i in voc_subjects["items"]}

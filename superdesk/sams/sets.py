@@ -102,6 +102,7 @@ def remove_set_restriction_from_desks(set_id_to_remove: str):
     Removes the provided Set from "sams_settings.sets" from all Desks
     """
 
+    # TODO-ASYNC[desks]: Use DesksResourceModel async service where when upgrading this module
     desk_service = superdesk.get_resource_service("desks")
     desks_db = get_current_app().data.mongo.pymongo("desks").db["desks"]
 

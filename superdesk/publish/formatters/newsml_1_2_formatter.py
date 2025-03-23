@@ -227,6 +227,7 @@ class NewsML12Formatter(Formatter):
         :param dict article:
         :param Element main_news_component:
         """
+        # TODO-ASYNC[vocabularies]: Use VocabulariesService async service where when upgrading this module
         rights = superdesk.get_resource_service("vocabularies").get_rightsinfo(article)
 
         rights_metadata = SubElement(main_news_component, "RightsMetadata")

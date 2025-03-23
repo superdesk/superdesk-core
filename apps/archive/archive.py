@@ -161,6 +161,7 @@ def private_content_filter(req=None):
         # if user has no global search access, only show him content on his desks
         # and not on any desk
         else:
+            # TODO-ASYNC[vocabularies]: Convert ``get_by_user`` to async when upgrading this module
             desks = get_resource_service("user_desks").get_by_user(user["_id"]) or []
             private_filter["should"].append(
                 {"terms": {"task.desk": [str(d["_id"]) for d in desks]}},
@@ -376,6 +377,7 @@ class ArchiveService(BaseService, HighlightsSearchMixin):
             update_associations(doc)
             for key, assoc in doc.get(ASSOCIATIONS, {}).items():
                 # don't set time stamp for related items
+                # TODO-ASYNC[vocabularies]: Use VocabulariesService async service where when upgrading this module
                 if not is_related_content(key):
                     self._set_association_timestamps(assoc, doc)
                     remove_unwanted(assoc)
@@ -498,6 +500,7 @@ class ArchiveService(BaseService, HighlightsSearchMixin):
 
             track_usage(media_item, stored_item, item_obj, item_name, original)
 
+            # TODO-ASYNC[vocabularies]: Use VocabulariesService async service where when upgrading this module
             if is_related_content(item_name):
                 continue
 
@@ -859,6 +862,7 @@ class ArchiveService(BaseService, HighlightsSearchMixin):
                 if association is None:
                     continue
                 # don't set time stamp for related items
+                # TODO-ASYNC[vocabularies]: Use VocabulariesService async service where when upgrading this module
                 if not is_related_content(key):
                     self._set_association_timestamps(association, updates, new=False)
                     remove_unwanted(association)
@@ -937,6 +941,7 @@ class ArchiveService(BaseService, HighlightsSearchMixin):
 
         if item_location:
             if item_location.get("desk"):
+                # TODO-ASYNC: Convert ``is_member`` to async when upgrading this module
                 if not superdesk.get_resource_service("user_desks").is_member(user_id, item_location.get("desk")):
                     return False, "User is not a member of the desk."
             elif item_location.get("user"):

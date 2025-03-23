@@ -98,6 +98,7 @@ def item_title_fallback(item: types.IRundownItem) -> str:
 
 
 def item_type_name(item_type_qcode):
+    # TODO-ASYNC[vocabularies]: Use VocabulariesService async service where when upgrading this module
     items = get_resource_service("vocabularies").get_items("rundown_item_types")
     for item in items:
         if item.get("qcode") == item_type_qcode:

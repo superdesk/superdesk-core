@@ -8,10 +8,11 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
-import superdesk
 import logging
 
 from superdesk import get_resource_service
+from superdesk.commands import cli
+from superdesk.types import VocabulariesResourceModel
 
 
 logger = logging.getLogger(__name__)
@@ -31,8 +32,8 @@ def update_items(vocabularies, fields, service):
     print(service, " updated: ", count, "/", len(ids))
 
 
-def get_vocabularies(vocabularies_list):
-    vocabularies = {vocabulary["_id"]: vocabulary for vocabulary in vocabularies_list}
+async def get_vocabularies(vocabularies_list):
+    vocabularies = {vocabulary["_id"]: vocabulary async for vocabulary in vocabularies_list}
     for vocabulary in vocabularies.values():
         for item in vocabulary.get("items", []):
             if "is_active" in item:
@@ -91,7 +92,8 @@ def update_item(item, vocabularies, fields):
     return updates
 
 
-class UpdateVocabulariesInItemsCommand(superdesk.Command):
+@cli.command("vocabularies:update_archive")
+async def update_vocabularies_in_items_command():
     """
     Update documents in `archive` and `published` collections which contain CV related fields:
     `subject`, `genre`, `place`, `anpa_category` with corresponding data from vocabularies.
@@ -103,16 +105,10 @@ class UpdateVocabulariesInItemsCommand(superdesk.Command):
 
     """
 
-    option_list = []
+    fields = ["subject", "genre", "place", "anpa_category"]
+    lookup = {"type": "manageable", "service": {"$exists": True}}
+    vocabularies_list = await VocabulariesResourceModel.get_service().get_all_list_raw(lookup)
+    vocabularies = await get_vocabularies(vocabularies_list)
 
-    def run(self):
-        fields = ["subject", "genre", "place", "anpa_category"]
-        lookup = {"type": "manageable", "service": {"$exists": True}}
-        vocabularies_list = get_resource_service("vocabularies").get(req=None, lookup=lookup)
-        vocabularies = get_vocabularies(vocabularies_list)
-
-        update_items(vocabularies, fields, get_resource_service("archive"))
-        update_items(vocabularies, fields, get_resource_service("published"))
-
-
-superdesk.command("vocabularies:update_archive", UpdateVocabulariesInItemsCommand())
+    update_items(vocabularies, fields, get_resource_service("archive"))
+    update_items(vocabularies, fields, get_resource_service("published"))

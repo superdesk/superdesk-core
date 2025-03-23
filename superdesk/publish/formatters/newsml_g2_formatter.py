@@ -220,6 +220,7 @@ class NewsMLG2Formatter(Formatter):
         :param Element newsItem:
         :param dict article:
         """
+        # TODO-ASYNC[vocabularies]: Use VocabulariesService async service where when upgrading this module
         rights = superdesk.get_resource_service("vocabularies").get_rightsinfo(article)
         rightsinfo = SubElement(newsItem, "rightsInfo")
         holder = SubElement(rightsinfo, "copyrightHolder")

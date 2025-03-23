@@ -110,6 +110,7 @@ class FetchService(BaseService):
 
             self.__fetch_associated_items(dest_doc, desk_id, stage_id, doc.get(ITEM_STATE, CONTENT_STATE.FETCHED))
 
+            # TODO-ASYNC[desks]: Use DesksResourceModel async service where when upgrading this module
             desk = get_resource_service("desks").find_one(req=None, _id=desk_id)
             if desk and desk.get("default_content_profile") and dest_doc.get("type") not in MEDIA_TYPES:
                 dest_doc["profile"] = desk["default_content_profile"]

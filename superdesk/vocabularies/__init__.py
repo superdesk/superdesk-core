@@ -12,7 +12,7 @@ import superdesk
 
 from superdesk.signals import item_published
 from .vocabularies import VocabulariesResource, VocabulariesService, is_related_content
-from .commands import UpdateVocabulariesInItemsCommand  # noqa
+from .commands import update_vocabularies_in_items_command  # noqa
 from .keywords import add_missing_keywords
 from quart_babel import lazy_gettext
 
@@ -31,4 +31,5 @@ def init_app(app) -> None:
         category=lazy_gettext("cvs"),
     )
 
-    item_published.connect(add_missing_keywords)
+    # TODO-ASYNC: Connect to async signal when publish code is merged
+    # item_published.connect(add_missing_keywords)

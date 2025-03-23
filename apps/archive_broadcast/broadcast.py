@@ -72,6 +72,7 @@ class ArchiveBroadcastService(BaseService):
         desk = None
 
         if desk_id:
+            # TODO-ASYNC[desks]: Use DesksResourceModel async service where when upgrading this module
             desk = get_resource_service("desks").find_one(req=None, _id=desk_id)
 
         doc.pop("desk", None)
@@ -81,6 +82,7 @@ class ArchiveBroadcastService(BaseService):
             doc["task"]["stage"] = desk.get("working_stage")
 
         doc["task"]["user"] = get_user().get("_id")
+        # TODO-ASYNC[vocabularies]: Use VocabulariesService async service where when upgrading this module
         genre_list = get_resource_service("vocabularies").find_one(req=None, _id="genre") or {}
         broadcast_genre = [
             {"qcode": genre.get("qcode"), "name": genre.get("name")}

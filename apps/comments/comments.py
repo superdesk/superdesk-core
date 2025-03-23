@@ -73,7 +73,7 @@ class CommentsService(BaseService):
     notification_key = "comments"
     notifications = True
 
-    def on_create(self, docs):
+    async def on_create(self, docs):
         app = get_current_app()
         for doc in docs:
             sent_user = doc.get("user", None)
@@ -84,7 +84,7 @@ class CommentsService(BaseService):
             doc["user"] = user["_id"]
             user_names, desk_names = get_mentions(doc.get("text"))
             doc["mentioned_users"] = get_users(user_names)
-            doc["mentioned_desks"] = get_desks(desk_names)
+            doc["mentioned_desks"] = await get_desks(desk_names)
             encode_keys(doc, "mentioned_users")
             encode_keys(doc, "mentioned_desks")
 

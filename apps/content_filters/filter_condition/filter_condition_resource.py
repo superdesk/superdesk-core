@@ -98,5 +98,6 @@ class FilterConditionResource(Resource):
         self.schema["field"]["allowed"] = copy.copy(default_allowed_filters)
         self.schema["field"]["allowed"].extend(get_app_config("EXCLUDED_VOCABULARY_FIELDS", []))
         lookup = {"_id": {"$nin": self.schema["field"]["allowed"]}, "type": "manageable"}
+        # TODO-ASYNC[vocabularies]: Use VocabulariesService async service where when upgrading this module
         for vocabulary in get_resource_service("vocabularies").get_from_mongo(req=None, lookup=lookup):
             self.schema["field"]["allowed"].append(vocabulary[ID_FIELD])
