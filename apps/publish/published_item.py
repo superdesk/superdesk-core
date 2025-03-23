@@ -97,6 +97,7 @@ def get_content_filter(req=None):
         if "invisible_stages" in user:
             stages = user.get("invisible_stages")
         else:
+            # TODO-ASYNC[users]: Upgrade to async when updating this module
             stages = get_resource_service("users").get_invisible_stages_ids(user.get("_id"))
 
         if stages:
@@ -109,6 +110,7 @@ class PublishedItemResource(Resource):
         "aggregations": aggregations,
         "es_highlight": get_elastic_highlight_query,
         "default_sort": [("_updated", -1)],
+        # TODO-ASYNC[elastic]: Support async ``elastic_filter_callback``
         "elastic_filter_callback": get_content_filter,
         "projection": {
             "old_version": 0,

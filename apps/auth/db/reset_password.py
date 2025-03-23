@@ -15,6 +15,7 @@ from datetime import timedelta
 from superdesk.core import get_app_config
 from superdesk.resource_fields import DATE_CREATED, LAST_UPDATED
 from superdesk.resource import Resource
+from superdesk.types import UsersResourceModel
 from superdesk.services import BaseService
 from superdesk.utc import utcnow
 from superdesk.utils import get_random_string
@@ -92,20 +93,20 @@ class ResetPasswordService(BaseService):
     async def initialize_reset_password(self, doc, email):
         token_ttl = get_app_config("RESET_PASSWORD_TOKEN_TIME_TO_LIVE")
 
-        user = superdesk.get_resource_service("users").find_one(req=None, email=email)
+        user = await UsersResourceModel.get_service().find_one(email=email)
         if not user:
             logger.warning("User password reset triggered with invalid email: %s" % email)
             raise SuperdeskApiError.badRequestError(_("Invalid email"))
 
-        if not user.get("is_enabled", False):
+        if not user.is_enabled:
             logger.warning("User password reset triggered for an disabled user")
             raise SuperdeskApiError.forbiddenError(_("User not enabled"))
 
-        if not user.get("is_active", False):
+        if not user.is_active:
             logger.warning("User password reset triggered for an inactive user")
             raise SuperdeskApiError.forbiddenError(_("User not active"))
 
-        ids = self.store_reset_password_token(doc, email, token_ttl, user["_id"])
+        ids = self.store_reset_password_token(doc, email, token_ttl, user.id)
         await send_reset_password_email(doc, token_ttl)
         self.remove_private_data(doc)
         return ids
@@ -117,11 +118,13 @@ class ResetPasswordService(BaseService):
         reset_request = self.check_if_valid_token(key)
 
         user_id = reset_request["user"]
+        # TODO-ASYNC[users]: Upgrade to async when updating this module
         user = superdesk.get_resource_service("users").find_one(req=None, _id=user_id)
         if not user.get("is_active"):
             logger.warning("Try to set password for an inactive user")
             raise SuperdeskApiError.forbiddenError(_("User not active"))
 
+        # TODO-ASYNC[users]: Upgrade to async when updating this module
         superdesk.get_resource_service("users").update_password(user_id, password)
         self.remove_all_tokens_for_email(reset_request["email"])
         self.remove_private_data(doc)

@@ -10,6 +10,7 @@
 
 
 from typing import Dict, Any, Literal
+from inspect import isawaitable
 import eve.io.base
 import json as std_json
 
@@ -103,6 +104,9 @@ class EveBackend:
             self._set_parent(endpoint_name, item, lookup)
             # TODO-ASYNC: Use elastic async
             item_search = search_backend.find_one(endpoint_name, req=req, **lookup)
+            if isawaitable(item_search):
+                item_search = await item_search
+
             if item is None and item_search:
                 item = item_search
                 logger.warn(item_msg("item is only in elastic", item))
@@ -110,7 +114,9 @@ class EveBackend:
                 logger.warn(item_msg("item is only in mongo", item))
                 try:
                     logger.info(item_msg("trying to add item to elastic", item))
-                    search_backend.insert(endpoint_name, [item])
+                    response = search_backend.insert(endpoint_name, [item])
+                    if isawaitable(response):
+                        await response
                 except RequestError as e:
                     logger.error(item_msg("failed to add item into elastic error={}".format(str(e)), item))
         return item

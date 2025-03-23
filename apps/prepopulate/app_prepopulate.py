@@ -50,6 +50,7 @@ def set_logged_user(username, password):
         user = {"username": username, "password": password}
         get_resource_service("auth_db").post([user])
         auth_token = get_resource_service("auth").find_one(username=username, req=None)
+    # TODO-ASYNC[users]: Upgrade to async when updating this module
     g.user = get_resource_service("users").find_one(req=None, username=username)
     g.auth = auth_token
 
@@ -181,6 +182,7 @@ class PrepopulateService(BaseService):
 
             get_resource_service("users").stop_updating_stage_visibility()
 
+            # TODO-ASYNC[users]: Upgrade to async when updating this module
             user = get_resource_service("users").find_one(username=get_default_user()["username"], req=None)
             if not user:
                 get_resource_service("users").post([get_default_user()])
@@ -188,6 +190,7 @@ class PrepopulateService(BaseService):
             prepopulate_data(doc.get("profile") + ".json", get_default_user())
 
             get_resource_service("users").start_updating_stage_visibility()
+            # TODO-ASYNC[users]: Upgrade this to async when updating this module
             get_resource_service("users").update_stage_visibility_for_users()
 
     def create(self, docs, **kwargs):
@@ -220,6 +223,7 @@ class AppPrepopulateCommand(superdesk.Command):
     ]
 
     def run(self, prepopulate_file, directory=None):
+        # TODO-ASYNC[users]: Upgrade to async when updating this module
         user = get_resource_service("users").find_one(username=get_default_user()["username"], req=None)
         if not user:
             get_resource_service("users").post([get_default_user()])

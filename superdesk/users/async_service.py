@@ -29,6 +29,8 @@ from superdesk.users.errors import UserInactiveError, UserNotRegisteredException
 from superdesk.notification import push_notification
 from superdesk.types import UsersResourceModel
 
+from .services import get_invisible_stages_async
+
 logger = logging.getLogger(__name__)
 
 
@@ -93,12 +95,6 @@ def is_sensitive_update(updates):
     return "role" in updates or "privileges" in updates or "user_type" in updates
 
 
-def get_invisible_stages(user_id):
-    user_desks = list(get_resource_service("user_desks").get(req=None, lookup={"user_id": user_id}))
-    user_desk_ids = [d["_id"] for d in user_desks]
-    return get_resource_service("stages").get_stages_by_visibility(False, user_desk_ids)
-
-
 def set_sign_off(user):
     """
     Set sign_off property on user if it's not set already.
@@ -151,7 +147,7 @@ class UsersAsyncService(AsyncResourceService[UsersResourceModel]):
             updates["session_preferences"] = {}
 
             # send email notification
-            can_send_mail = get_resource_service("preferences").email_notification_is_enabled(
+            can_send_mail = await get_resource_service("preferences").email_notification_is_enabled_async(
                 user_id=user.to_dict().get("_id")
             )
 
@@ -209,7 +205,7 @@ class UsersAsyncService(AsyncResourceService[UsersResourceModel]):
         user_type = updates.get("user_type", None)
 
         if user_type is not None and user_type == "external":
-            can_send_mail = get_resource_service("preferences").email_notification_is_enabled(
+            can_send_mail = await get_resource_service("preferences").email_notification_is_enabled_async(
                 user_id=user.to_dict().get("_id")
             )
             if can_send_mail:
@@ -221,7 +217,7 @@ class UsersAsyncService(AsyncResourceService[UsersResourceModel]):
             user_dict.setdefault("password_changed_on", utcnow())
             user_dict.setdefault("display_name", get_display_name(user_doc))
             user_dict.setdefault(SIGN_OFF, set_sign_off(user_doc))
-            user_dict.setdefault("role", get_resource_service("roles").get_default_role_id())
+            user_dict.setdefault("role", await get_resource_service("roles").get_default_role_id_async())
             if user_dict.get("avatar"):
                 user_dict.setdefault("avatar_renditions", self.get_avatar_renditions(user_dict.get("avatar")))
 
@@ -258,7 +254,7 @@ class UsersAsyncService(AsyncResourceService[UsersResourceModel]):
 
     async def on_updated(self, updates: dict[str, Any], original: UsersResourceModel) -> None:
         if "role" in updates or "privileges" in updates:
-            get_resource_service("preferences").on_update(updates, original)
+            await get_resource_service("preferences").on_update_async(updates, original)
         await self.__handle_status_changed(updates, original)
         await self.handle_user_type_changed(updates, original)
         await self.__send_notification(updates, original)
@@ -357,11 +353,11 @@ class UsersAsyncService(AsyncResourceService[UsersResourceModel]):
         user_dict["active_privileges"] = get_privileges(user, role)
         user = UsersResourceModel(**user_dict)
 
-    def get_invisible_stages(self, user_id) -> list:
-        return get_invisible_stages(user_id) if user_id else []
+    async def get_invisible_stages_async(self, user_id) -> list:
+        return await get_invisible_stages_async(user_id) if user_id else []
 
-    def get_invisible_stages_ids(self, user_id) -> list:
-        return [str(stage["_id"]) for stage in self.get_invisible_stages(user_id)]
+    async def get_invisible_stages_ids(self, user_id) -> list:
+        return [str(stage["_id"]) for stage in await self.get_invisible_stages_async(user_id)]
 
     async def get_user_by_email(self, email_address: str) -> UsersResourceModel | None:
         """Finds a user by the given email_address.
@@ -385,9 +381,7 @@ class UsersAsyncService(AsyncResourceService[UsersResourceModel]):
         if not self._updating_stage_visibility:
             return
         logger.info("Updating Stage Visibility Started")
-        cursor = await self.find({})
-        users = await cursor.to_list()
-        for user in users:
+        async for user in self.get_all():
             await self.update_stage_visibility_for_user(user)
 
         logger.info("Updating Stage Visibility Completed")
@@ -398,7 +392,7 @@ class UsersAsyncService(AsyncResourceService[UsersResourceModel]):
         user_id = user.to_dict().get("_id", "")
         try:
             logger.info("Updating Stage Visibility for user {}.".format(user_id))
-            stages = self.get_invisible_stages_ids(user_id)
+            stages = await self.get_invisible_stages_ids(user_id)
             await self.system_update(user_id, {"invisible_stages": stages})
             user.invisible_stages = stages
             logger.info("Updated Stage Visibility for user {}.".format(user_id))

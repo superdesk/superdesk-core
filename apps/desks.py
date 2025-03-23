@@ -16,6 +16,7 @@ import superdesk
 
 from superdesk.core import get_app_config, get_current_app
 from superdesk.resource_fields import ID_FIELD
+from superdesk.types import UsersResourceModel
 from superdesk.flask import request
 from superdesk import get_resource_service
 from superdesk.errors import SuperdeskApiError
@@ -171,9 +172,10 @@ class DesksService(AsyncBaseService):
         return [doc[ID_FIELD] for doc in docs]
 
     async def on_created_async(self, docs):
+        user_service = UsersResourceModel.get_service()
         for doc in docs:
             push_notification(self.notification_key, created=1, desk_id=str(doc.get(ID_FIELD)))
-            get_resource_service("users").update_stage_visibility_for_users()
+            await user_service.update_stage_visibility_for_users()
 
     async def on_update_async(self, updates, original):
         if updates.get("content_expiry") == 0:
@@ -202,7 +204,7 @@ class DesksService(AsyncBaseService):
             doc["members"] = [{"user": user} for user in {member.get("user") for member in doc.get("members")}]
 
     async def on_updated_async(self, updates, original):
-        self.__send_notification(updates, original)
+        await self.__send_notification(updates, original)
 
     async def on_delete_async(self, desk):
         """Runs on desk delete.
@@ -213,8 +215,7 @@ class DesksService(AsyncBaseService):
             3. The desk is associated with routing rule(s)
         """
 
-        as_default_desk = superdesk.get_resource_service("users").get(req=None, lookup={"desk": desk[ID_FIELD]})
-        if as_default_desk and as_default_desk.count():
+        if await UsersResourceModel.get_service().count({"desk": desk[ID_FIELD]}):
             raise SuperdeskApiError.preconditionFailedError(
                 message=_("Cannot delete desk as it is assigned as default desk to user(s).")
             )
@@ -245,16 +246,6 @@ class DesksService(AsyncBaseService):
                 message=_("Cannot delete desk as it has article(s) or referenced by versions of the article(s).")
             )
 
-    async def add_member_async(self, desk_id, user_id):
-        desk = self.find_one(req=None, _id=desk_id)
-        if not desk:
-            raise ValueError('desk "{}" not found'.format(desk_id))
-        members = desk.get("members", [])
-        members.append({"user": user_id})
-        updates = {"members": members}
-        await self.on_update_async(updates, desk)
-        await self.system_update_async(desk["_id"], updates, desk)
-
     async def delete_async(self, lookup):
         """
         Overriding to delete stages before deleting a desk
@@ -274,9 +265,9 @@ class DesksService(AsyncBaseService):
         removed = original_members - updates_members
         return added, removed
 
-    def __send_notification(self, updates, desk):
+    async def __send_notification(self, updates, desk):
         desk_id = desk[ID_FIELD]
-        users_service = superdesk.get_resource_service("users")
+        users_service = UsersResourceModel.get_service()
 
         if "members" in updates:
             added, removed = self.__compare_members(desk.get("members", {}), updates["members"])
@@ -286,22 +277,22 @@ class DesksService(AsyncBaseService):
                 )
 
             for added_user in added:
-                user = users_service.find_one(req=None, _id=added_user)
+                user = await users_service.find_by_id(added_user)
                 activity = add_activity(
                     ACTIVITY_UPDATE,
                     "user {{user}} has been added to desk {{desk}}: Please re-login.",
                     self.datasource,
                     notify=added,
                     can_push_notification=False,
-                    user=user.get("username"),
+                    user=user.username,
                     desk=desk.get("name"),
                 )
                 push_notification("activity", _dest=activity["recipients"])
-                users_service.update_stage_visibility_for_user(user)
+                await users_service.update_stage_visibility_for_user(user)
 
             for removed_user in removed:
-                user = users_service.find_one(req=None, _id=removed_user)
-                users_service.update_stage_visibility_for_user(user)
+                user = await users_service.find_by_id(removed_user)
+                await users_service.update_stage_visibility_for_user(user)
 
         else:
             push_notification(self.notification_key, updated=1, desk_id=str(desk.get(ID_FIELD)))

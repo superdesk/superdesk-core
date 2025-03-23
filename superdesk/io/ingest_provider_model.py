@@ -30,6 +30,7 @@ from superdesk.resource import Resource
 from superdesk.services import BaseService
 from superdesk.utc import utcnow
 from superdesk.utils import required_string
+from superdesk.types import UsersResourceModel, UserTypeEnum
 
 logger = logging.getLogger(__name__)
 
@@ -175,10 +176,6 @@ class IngestProviderService(BaseService):
             doc["last_opened"]["opened_at"] = utcnow()
             doc["last_opened"]["opened_by"] = user["_id"] if user else None
 
-    @property
-    def user_service(self):
-        return get_resource_service("users")
-
     def on_create(self, docs):
         for doc in docs:
             content_expiry = doc.get("content_expiry", 0)
@@ -189,15 +186,14 @@ class IngestProviderService(BaseService):
                 doc["content_expiry"] = None
             self._test_config(doc)
 
-    def on_created(self, docs):
+    async def on_created(self, docs):
         for doc in docs:
-            # TODO-ASYNC: Support async (see superdesk.tests.markers.requires_eve_resource_async_event)
-            notify_and_add_activity(
+            await notify_and_add_activity(
                 ACTIVITY_CREATE,
                 "Created Ingest Channel {{name}}",
                 self.datasource,
                 item=None,
-                user_list=self.user_service.get_users_by_user_type("administrator"),
+                user_list=await UsersResourceModel.get_by_user_type(UserTypeEnum.ADMINISTRATOR),
                 name=doc.get("name"),
                 provider_id=doc.get("_id"),
             )
@@ -220,17 +216,18 @@ class IngestProviderService(BaseService):
         if "config" in updates:
             self._test_config(updates, original)
 
-    def on_updated(self, updates, original):
+    async def on_updated(self, updates, original):
         do_notification = updates.get("notifications", {}).get(
             "on_update", original.get("notifications", {}).get("on_update", True)
         )
-        # TODO-ASYNC: Support async (see superdesk.tests.markers.requires_eve_resource_async_event)
-        notify_and_add_activity(
+        await notify_and_add_activity(
             ACTIVITY_UPDATE,
             "updated Ingest Channel {{name}}",
             self.datasource,
             item=None,
-            user_list=self.user_service.get_users_by_user_type("administrator") if do_notification else None,
+            user_list=await UsersResourceModel.get_by_user_type(UserTypeEnum.ADMINISTRATOR)
+            if do_notification
+            else None,
             name=updates.get("name", original.get("name")),
             provider_id=original.get("_id"),
         )
@@ -250,13 +247,14 @@ class IngestProviderService(BaseService):
                     "on_open", original.get("notifications", {}).get("on_open", True)
                 )
 
-            # TODO-ASYNC: Support async (see superdesk.tests.markers.requires_eve_resource_async_event)
-            notify_and_add_activity(
+            await notify_and_add_activity(
                 ACTIVITY_EVENT,
                 "{{status}} Ingest Channel {{name}}",
                 self.datasource,
                 item=None,
-                user_list=self.user_service.get_users_by_user_type("administrator") if do_notification else None,
+                user_list=await UsersResourceModel.get_by_user_type(UserTypeEnum.ADMINISTRATOR)
+                if do_notification
+                else None,
                 name=updates.get("name", original.get("name")),
                 status=status,
                 provider_id=original.get("_id"),
@@ -273,17 +271,16 @@ class IngestProviderService(BaseService):
         if doc.get("last_item_update"):
             raise SuperdeskApiError.forbiddenError("Deleting an Ingest Source after receiving items is prohibited.")
 
-    def on_deleted(self, doc):
+    async def on_deleted(self, doc):
         """
         Overriding to send notification and record activity about channel deletion.
         """
-        # TODO-ASYNC: Support async (see superdesk.tests.markers.requires_eve_resource_async_event)
-        notify_and_add_activity(
+        await notify_and_add_activity(
             ACTIVITY_DELETE,
             "Deleted Ingest Channel {{name}}",
             self.datasource,
             item=None,
-            user_list=self.user_service.get_users_by_user_type("administrator"),
+            user_list=await UsersResourceModel.get_by_user_type(UserTypeEnum.ADMINISTRATOR),
             name=doc.get("name"),
             provider_id=doc.get(ID_FIELD),
         )

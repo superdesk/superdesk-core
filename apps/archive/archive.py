@@ -19,6 +19,7 @@ from superdesk.core import json, get_current_app, get_app_config
 from superdesk.resource_fields import ID_FIELD, ITEMS, VERSION, LAST_UPDATED, DATE_CREATED, ETAG
 from superdesk.flask import request, abort
 from superdesk.resource import Resource
+from superdesk.types import UsersResourceModel
 from superdesk.metadata.utils import (
     extra_response_fields,
     item_url,
@@ -141,6 +142,7 @@ def private_content_filter(req=None):
         if "invisible_stages" in user:
             stages = user.get("invisible_stages")
         else:
+            # TODO-ASYNC[users]: Upgrade to async when updating this module
             stages = get_resource_service("users").get_invisible_stages_ids(user.get("_id"))
 
         if stages:
@@ -429,15 +431,15 @@ class ArchiveService(BaseService, HighlightsSearchMixin):
 
         push_content_notification(docs)
 
-    def set_marked_for_sign_off(self, updates):
+    async def set_marked_for_sign_off(self, updates):
         if "marked_for_user" in updates:
             sign_off = None
             if updates["marked_for_user"]:
-                user_doc = get_resource_service("users").find_one(req=None, _id=updates["marked_for_user"])
+                user_doc = await UsersResourceModel.get_service().find_by_id_raw(updates["marked_for_user"])
                 sign_off = user_doc.get("sign_off")
             updates["marked_for_sign_off"] = sign_off
 
-    def on_update(self, updates, original):
+    async def on_update(self, updates, original):
         """Runs on archive update.
 
         Overridden to validate the updates to the article and takes necessary actions depending on the updates.
@@ -453,7 +455,7 @@ class ArchiveService(BaseService, HighlightsSearchMixin):
             del updates[ITEM_TYPE]
 
         # set marked for sign off key if mark for user is exists in updates
-        self.set_marked_for_sign_off(updates)
+        await self.set_marked_for_sign_off(updates)
 
         self._validate_updates(original, updates, user)
 
@@ -629,6 +631,7 @@ class ArchiveService(BaseService, HighlightsSearchMixin):
     def find_one(self, req, **lookup):
         item = super().find_one(req, **lookup)
 
+        # TODO-ASYNC[users]: Upgrade to async when updating this module
         if item and str(item.get("task", {}).get("stage", "")) in get_resource_service(
             "users"
         ).get_invisible_stages_ids(get_user().get("_id")):
@@ -1249,15 +1252,15 @@ class ArchiveService(BaseService, HighlightsSearchMixin):
         orig_marked_user = original.get("marked_for_user", None)
         new_marked_user = updates.get("marked_for_user", None)
         by_user = get_user().get("display_name", get_user().get("username"))
-        user_service = get_resource_service("users")
+        users_service = UsersResourceModel.get_service()
 
         if new_marked_user:
-            marked_user = user_service.find_one(req=None, _id=new_marked_user)
+            marked_user = await users_service.find_by_id_raw(new_marked_user)
             marked_for_user = marked_user.get("display_name", marked_user.get("username"))
 
         if orig_marked_user and not new_marked_user:
             # sent when unmarking user from item
-            user_list = [user_service.find_one(req=None, _id=orig_marked_user)]
+            user_list = [await users_service.find_by_id_raw(orig_marked_user)]
             message = 'Item "{headline}" has been unmarked by {by_user}.'.format(
                 headline=original.get("headline", original.get("slugline", "item")), by_user=by_user
             )
@@ -1274,7 +1277,7 @@ class ArchiveService(BaseService, HighlightsSearchMixin):
             # sent when mark item for user or mark to another user
             user_list = [marked_user]
             if new_marked_user and orig_marked_user and new_marked_user != orig_marked_user:
-                user_list.append(user_service.find_one(req=None, _id=orig_marked_user))
+                user_list.append(await users_service.find_by_id_raw(orig_marked_user))
 
             message = 'Item "{headline}" has been marked for {for_user} by {by_user}.'.format(
                 headline=original.get("headline", original.get("slugline", "item")),

@@ -52,6 +52,7 @@ class RemoveExpiredSessions(superdesk.Command):
             session_preferences = user.get("session_preferences", {})
             active = {_id: data for _id, data in session_preferences.items() if active_sessions_ids.get(_id)}
             if len(active) != len(session_preferences):
+                # TODO-ASYNC[users]: Upgrade to async when updating this module
                 get_resource_service("users").system_update(user["_id"], {"session_preferences": active}, user)
 
     def _get_active_session_ids(self):
@@ -59,6 +60,7 @@ class RemoveExpiredSessions(superdesk.Command):
         return {str(sess["_id"]): True for sess in active_sessions}
 
     def _get_online_users(self):
+        # TODO-ASYNC[users]: Upgrade to async when updating this module
         return get_resource_service("users").get_from_mongo(
             None, {"session_preferences": {"$exists": True, "$nin": [None, {}]}}
         )
