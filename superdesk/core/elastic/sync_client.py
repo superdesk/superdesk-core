@@ -100,15 +100,21 @@ class ElasticResourceClient(BaseElasticResourceClient):
 
         return self.count() == 0
 
-    def search(self, query: Dict[str, Any], indexes: Optional[List[str]] = None) -> Any:
+    async def search(
+        self,
+        query: Dict[str, Any],
+        indexes: Optional[List[str]] = None,
+        projection: ProjectedFieldSources | ProjectedFieldArg | None = None,
+    ) -> Any:
         """Perform a raw search against the Elasticsearch index
 
         :param query: The search query to filter items by
         :param indexes: An optional list of indexes to search in
+        :param projection: The field projections to be applied
         :return: The response from Elasticsearch
         """
 
-        return self.elastic.search(**self._get_search_args(query, indexes))
+        return self.elastic.search(**self._get_search_args(query, indexes, projection))
 
     def find_by_id(
         self, item_id: str, projection: ProjectedFieldSources | ProjectedFieldArg | None = None
