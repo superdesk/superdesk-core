@@ -18,7 +18,7 @@ Feature: User Availability
                     "start_time": "09:00:00",
                     "end_time": "17:00:00",
                     "tags": [
-                        {"name": "Regular Shift", "code": "regular"}
+                        {"code": "regular"}
                     ]
                 }
             ]
@@ -71,7 +71,7 @@ Feature: User Availability
                     "start_time": "12:00:00",
                     "end_time": "16:00:00",
                     "tags": [
-                        {"name": "Half Day", "code": "half-day"}
+                        {"code": "half-day"}
                     ]
                 }
             ]

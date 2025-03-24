@@ -38,7 +38,6 @@ class AvailabilityResource(Resource):
                         "schema": {
                             "type": "dict",
                             "schema": {
-                                "name": {"type": "string"},
                                 "code": {"type": "string"},
                             },
                         },
