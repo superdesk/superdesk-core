@@ -58,8 +58,8 @@ from apps.packages import PackageService
 from quart_babel import gettext as _
 from superdesk import editor_utils, get_resource_service
 from superdesk.activity import add_activity, notify_and_add_activity, ACTIVITY_CREATE, ACTIVITY_UPDATE, ACTIVITY_DELETE
-from superdesk.core.resources.search import SearchRequest
-from superdesk.core.resources.service import AsyncResourceService
+from superdesk.core.types import SearchRequest
+from superdesk.core.resources import AsyncResourceService
 from superdesk.errors import SuperdeskApiError
 from superdesk.flask import request, abort
 from superdesk.media.crop import CropService
