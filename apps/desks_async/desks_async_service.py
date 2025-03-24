@@ -66,7 +66,7 @@ class DesksAsyncService(AsyncResourceService[DesksResourceModel]):
         users_service = UsersResourceModel.get_service()
         for doc in docs:
             push_notification(self.notification_key, created=1, desk_id=str(doc.id))
-            await users_service.update_stage_visibility_for_users()
+            await users_service.update_stage_visibility_for_users()  # type: ignore[attr-defined]
 
     async def on_update(self, updates: dict[str, Any], original: DesksResourceModel) -> None:
         if updates.get("content_expiry") == 0:
@@ -169,14 +169,14 @@ class DesksAsyncService(AsyncResourceService[DesksResourceModel]):
                     desk=desk.name,
                 )
                 push_notification("activity", _dest=activity["recipients"])
-                await users_service.update_stage_visibility_for_user(user)
+                await users_service.update_stage_visibility_for_user(user)  # type: ignore[attr-defined]
 
             for removed_user in removed:
                 user = await users_service.find_by_id(removed_user)
                 if user is None:
                     logger.warning(f"Failed sending notification to user '{added_user}: user not found")
                     continue
-                await users_service.update_stage_visibility_for_user(user)
+                await users_service.update_stage_visibility_for_user(user)  # type: ignore[attr-defined]
 
         else:
             push_notification(self.notification_key, updated=1, desk_id=str(desk_id))
