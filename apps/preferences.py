@@ -277,11 +277,11 @@ class PreferencesService(AsyncBaseService):
         service.system_update(user_id, {_session_preferences_key: session_prefs}, user_doc)
 
     def set_user_initial_prefs(self, user_doc):
-        if _user_preferences_key not in user_doc:
-            orig_user_prefs = user_doc.get(_preferences_key, {})
+        if not hasattr(user_doc, _user_preferences_key):
+            orig_user_prefs = getattr(user_doc, _preferences_key, {})
             available = available_user_preferences()
             available.update(orig_user_prefs)
-            user_doc[_user_preferences_key] = available
+            setattr(user_doc, _user_preferences_key, available)
 
     async def find_one_async(self, req, **lookup):
         # TODO-ASYNC[auth]: Use async ``sessions`` when available

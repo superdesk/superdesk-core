@@ -15,20 +15,20 @@ from datetime import datetime
 from typing import Annotated, Any
 
 from pydantic import Field
-from superdesk.core.resources import ResourceModel, fields
+from superdesk.core.resources import ResourceModelWithObjectId, fields
 from superdesk.core.resources.fields import ObjectId
 from superdesk.core.resources.validators import validate_unique_value_async, validate_data_relation_async
 
 from .enums import UserTypeEnum
 
 
-class UsersResourceModel(ResourceModel):
+class UsersResourceModel(ResourceModelWithObjectId):
     username: Annotated[fields.Keyword, validate_unique_value_async("users", "username")]
-    password: str = Field(min_length=5)
+    password: Annotated[str | None, Field(min_length=5)] = None
     password_changed_on: datetime | None = None
-    first_name: str
-    last_name: str
-    display_name: str
+    first_name: str | None = None
+    last_name: str | None = None
+    display_name: str | None = None
     email: Annotated[fields.Keyword, validate_unique_value_async("users", "email")]
     phone: str | None = None
     job_title: str | None = None
@@ -42,7 +42,7 @@ class UsersResourceModel(ResourceModel):
     picture_url: str | None = None
     avatar: Annotated[ObjectId, validate_data_relation_async("upload")] | None = None
     avatar_renditions: dict[str, Any] | None = Field(default=None)
-    role: Annotated[ObjectId, validate_data_relation_async("roles")]
+    role: Annotated[ObjectId | None, validate_data_relation_async("roles")] = None
     privileges: dict[str, Any] = Field(default_factory=dict)
     workspace: dict[str, Any] = Field(default_factory=dict)
     user_type: UserTypeEnum = Field(default=UserTypeEnum.USER)

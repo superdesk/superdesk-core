@@ -34,7 +34,9 @@ from .services import get_invisible_stages_async
 logger = logging.getLogger(__name__)
 
 
-def get_display_name(user):
+def get_display_name(user: dict | UsersResourceModel):
+    if isinstance(user, UsersResourceModel):
+        user = user.to_dict()
     if user.get("first_name") or user.get("last_name"):
         display_name = "%s %s" % (user.get("first_name", ""), user.get("last_name", ""))
         return display_name.strip()
@@ -95,21 +97,30 @@ def is_sensitive_update(updates):
     return "role" in updates or "privileges" in updates or "user_type" in updates
 
 
-def set_sign_off(user):
+def set_sign_off(user: dict | UsersResourceModel):
     """
     Set sign_off property on user if it's not set already.
     """
 
-    if SIGN_OFF not in user or user[SIGN_OFF] is None:
+    current_sign_off = getattr(user, SIGN_OFF, None)
+    if current_sign_off is None:
         sign_off_mapping = get_app_config("SIGN_OFF_MAPPING", None)
-        if sign_off_mapping and sign_off_mapping in user:
-            user[SIGN_OFF] = user[sign_off_mapping]
-        elif SIGN_OFF in user and user[SIGN_OFF] is None:
-            user[SIGN_OFF] = ""
-        elif "first_name" not in user or "last_name" not in user:
-            user[SIGN_OFF] = user["username"][:3].upper()
+        if sign_off_mapping and hasattr(user, sign_off_mapping):
+            setattr(user, SIGN_OFF, getattr(user, sign_off_mapping))
+        elif hasattr(user, SIGN_OFF):
+            setattr(user, SIGN_OFF, "")
+        elif not hasattr(user, "first_name") or not hasattr(user, "last_name"):
+            setattr(user, SIGN_OFF, getattr(user, "username", "")[:3].upper())
         else:
-            user[SIGN_OFF] = "{first_name[0]}{last_name[0]}".format(**user)
+            first_name = getattr(user, "first_name", "")
+            sign_off_value = ""
+            if first_name:
+                sign_off_value = first_name[0]
+
+            last_name = getattr(user, "last_name", "")
+            if last_name:
+                sign_off_value += last_name[0]
+            setattr(user, SIGN_OFF, sign_off_value)
 
 
 def update_sign_off(updates):
