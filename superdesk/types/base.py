@@ -186,6 +186,7 @@ class Subject:
 @dataclass
 class GroupRefRefs:
     idRef: fields.Keyword
+    residRef: fields.Keyword
     _id: fields.Keyword
     uri: fields.Keyword
     guid: fields.Keyword
@@ -193,12 +194,13 @@ class GroupRefRefs:
     location: fields.Keyword
     headline: str
     slugline: str
+    _current_version: int | None = None
 
 
 @dataclass
 class GroupRef:
     id: str
-    refs: GroupRefRefs
+    refs: list[GroupRefRefs]
 
 
 @dataclass
@@ -211,7 +213,7 @@ class EntityMetadata:
 
 @dataclass
 class LinkedInPackage:
-    package: Annotated[fields.ObjectId, validate_data_relation_async("archive")]
+    package: Annotated[str, validate_data_relation_async("archive")]
     package_type: str | None = Field(None, deprecated=True)
 
 
@@ -478,12 +480,12 @@ class MetadataResource(BaseContentItem):
     auto_publish: bool = False
     fields_meta: dict[str, dict] | None = None
     attachments: Annotated[list[Attachment] | None, validate_data_relation_async("attachments")] = None
-    assignment_id: fields.Keyword
-    translated_from: fields.Keyword
-    translation_id: fields.Keyword
-    translations: list
-    processed_from: fields.Keyword
-    embargoed_text: Annotated[str, fields.not_indexed()]
+    assignment_id: fields.Keyword | None = None
+    translated_from: fields.Keyword | None = None
+    translation_id: fields.Keyword | None = None
+    translations: list[str] | None = None
+    processed_from: fields.Keyword | None = None
+    embargoed_text: Annotated[str | None, fields.not_indexed()] = None
     marked_for_user: Annotated[fields.ObjectId | None, validate_data_relation_async("users")] = None
     marked_for_sign_off: str | None = None
     # FIXME: duplicate of ItemSchema

@@ -4,7 +4,7 @@ from .desks import DesksResourceModel
 from .users import UsersResourceModel, UserTypeEnum
 from .vocabularies import VocabulariesResourceModel
 
-from .content_types import ContentTypes
+from .content_types import ContentTypesResourceModel
 from .products import ProductsResource, ProductTypes, ProductFilterType
 from .subscribers import SubscribersResource, SubscriberDestination, SubscriberSequenceSettings, SubscriberType
 from .sequences import SequencesResource
@@ -12,13 +12,15 @@ from .content_filters import ContentFilterExpression, ContentFilter, ContentFilt
 from .filter_conditions import FilterConditionOperator, FilterConditionFieldParam, FilterConditionsResource
 from .publish_queue import PublishQueueState, PublishQueueResource
 from .publish import PublishConsumer
+from .archive import ArchiveResourceModel
+from .base import ItemOperation, ContentTypes
 
 __all__ = [
     "UsersResourceModel",
     "UserTypeEnum",
     "DesksResourceModel",
     "VocabulariesResourceModel",
-    "ContentTypes",
+    "ContentTypesResourceModel",
     "ProductsResource",
     "ProductTypes",
     "ProductFilterType",
@@ -36,6 +38,9 @@ __all__ = [
     "PublishQueueState",
     "PublishQueueResource",
     "PublishConsumer",
+    "ArchiveResourceModel",
+    "ItemOperation",
+    "ContentTypes",
 ]
 
 

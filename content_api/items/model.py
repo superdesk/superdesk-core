@@ -7,14 +7,11 @@ from superdesk.core.resources import fields, ModelWithVersions
 from superdesk.types.base import BaseContentItem, CVItemWithCode, ContentType, Place
 
 
-
-
 @unique
 class PubStatusType(str, Enum):
     USABLE = "usable"
     WITHHELD = "withheld"
     CANCELLED = "canceled"
-
 
 
 class ContentAPIItem(BaseContentItem, ModelWithVersions):
@@ -58,10 +55,6 @@ class ContentAPIItem(BaseContentItem, ModelWithVersions):
     agenda_id: fields.Keyword | None = None
     agenda_href: fields.Keyword | None = None
 
-
     @field_validator("version", mode="before")
     def parse_version(cls, value: int | str | None) -> str | None:
         return str(value) if value is not None else None
-
-
-
