@@ -52,7 +52,10 @@ class ContentApiPublishConsumer(PublishConsumer):
         try:
             get_resource_service("content_api").publish(item, subscribers)
         except Exception:
-            logger.exception("Failed to queue item to API", extra=dict(
-                item_id=item[ID_FIELD],
-                operation=tasks[0].publishing_action,
-            ))
+            logger.exception(
+                "Failed to queue item to API",
+                extra=dict(
+                    item_id=item[ID_FIELD],
+                    operation=tasks[0].publishing_action,
+                ),
+            )

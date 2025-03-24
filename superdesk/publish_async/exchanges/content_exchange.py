@@ -71,15 +71,14 @@ class ContentPublishExchange(BasicPublishExchange):
         if not published_item:
             # If we failed to get the item by ``_current_version``, then try ``last_published_version`` instead
             logger.warning(
-                "Unable to publish item, not found in published collection.",
-                extra=dict(item_id=request.item_id)
+                "Unable to publish item, not found in published collection.", extra=dict(item_id=request.item_id)
             )
 
             published_item = published_service.find_one(req=None, item_id=request.item_id, last_published_version=True)
             if not published_item:
                 logger.warning(
                     "Published item not found in either ``last_published_version`` or ``_current_version``.",
-                    extra=dict(item_id=request.item_id)
+                    extra=dict(item_id=request.item_id),
                 )
             return PublishRequestResponse(routed=False)
 
@@ -114,7 +113,7 @@ class ContentPublishExchange(BasicPublishExchange):
                         extra=dict(
                             item_id=request.item_id,
                             operation=request.operation,
-                        )
+                        ),
                     )
 
             # if the item was routed then set the state to "queued"
