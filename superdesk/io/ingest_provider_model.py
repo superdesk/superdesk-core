@@ -285,7 +285,9 @@ class IngestProviderService(BaseService):
             provider_id=doc.get(ID_FIELD),
         )
         push_notification("ingest_provider:delete", provider_id=str(doc.get(ID_FIELD)))
-        get_resource_service("sequences").delete(lookup={"key": "ingest_providers_{_id}".format(_id=doc[ID_FIELD])})
+        await get_resource_service("sequences").delete_async(
+            lookup={"key": "ingest_providers_{_id}".format(_id=doc[ID_FIELD])}
+        )
         logger.info("Deleted Ingest Channel. Data:{}".format(doc))
 
     def _test_config(self, updates, original=None):
