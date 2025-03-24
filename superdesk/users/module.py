@@ -4,13 +4,13 @@ from superdesk.core.resources import (
     MongoResourceConfig,
 )
 from superdesk.types import UsersResourceModel
-from .async_service import UsersAsyncService
+from .async_service import UsersAsyncService, DBUsersAsyncService
 
 
 users_resource_config = ResourceConfig(
     name="users",
     data_class=UsersResourceModel,
-    service=UsersAsyncService,
+    service=DBUsersAsyncService,
     mongo=MongoResourceConfig(
         indexes=[
             MongoIndexOptions(
