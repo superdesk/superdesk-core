@@ -70,18 +70,20 @@ class ContentPublishExchange(BasicPublishExchange):
         )
         if not published_item:
             # If we failed to get the item by ``_current_version``, then try ``last_published_version`` instead
-            logger.warning(f"Published item {request.item_id} not found.")
+            logger.warning(
+                "Unable to publish item, not found in published collection.",
+                extra=dict(item_id=request.item_id)
+            )
 
             published_item = published_service.find_one(req=None, item_id=request.item_id, last_published_version=True)
             if not published_item:
                 logger.warning(
-                    f"Published item {request.item_id} not found in either ``last_published_version`` or ``_current_version``."
+                    "Published item not found in either ``last_published_version`` or ``_current_version``.",
+                    extra=dict(item_id=request.item_id)
                 )
             return PublishRequestResponse(routed=False)
 
         published_item_id = published_item[ID_FIELD]
-
-        logger.info(f"Published item QUEUE_STATE == {published_item.get(QUEUE_STATE)}")
 
         if self.polling and published_item.get(QUEUE_STATE) == PublishState.PUSHED:
             # This request will be processed by ``PublishExchangeFactory.send_scheduled_or_pending_content``
@@ -108,7 +110,11 @@ class ContentPublishExchange(BasicPublishExchange):
                     get_resource_service("content_api").publish(request.item, [])
                 except Exception:
                     logger.exception(
-                        f"Failed to queue item to API for item: {request.item_id} for action {request.operation}"
+                        "Failed to queue item to API",
+                        extra=dict(
+                            item_id=request.item_id,
+                            operation=request.operation,
+                        )
                     )
 
             # if the item was routed then set the state to "queued"

@@ -64,11 +64,18 @@ class AsyncioPublishConsumer(PublishConsumer):
             f"_id: {task.id} item_id: {task.item_id} state: {task.state} "
             f"item_version: {task.item_version} headline: {task.headline}"
         )
+        log_extra = dict(
+            task_id=task.id,
+            task_state=task.state,
+            item_id=task.item_id,
+            item_version=task.item_version,
+            item_headline=task.headline,
+        )
         if task.state not in [PublishQueueState.ROUTING, PublishQueueState.PENDING, PublishQueueState.RETRYING]:
-            logger.info(f"Transmit State is not pending/retrying for queue item {task.id}. Is in {task.state}")
+            logger.warning("Transmit State is not pending/retrying for queue item", extra=log_extra)
             return False
         elif task.destination is None:
-            logger.error(f"Destination not defined in queue item {log_msg}")
+            logger.error("Destination not defined in queue item", extra=log_extra)
             return False
 
         try:
@@ -92,7 +99,7 @@ class AsyncioPublishConsumer(PublishConsumer):
             logger.info(f"Transmit completed for queue item {log_msg}")
             return True
         except Exception as e:
-            logger.exception(f"Failed to transmit queue item {log_msg}")
+            logger.exception("Failed to transmit queue item", extra=log_extra)
 
             max_retry_attempt = get_config(int, "MAX_TRANSMIT_RETRY_ATTEMPT")
             retry_attempt_delay = get_config(int, "TRANSMIT_RETRY_ATTEMPT_DELAY_MINUTES")
@@ -114,7 +121,7 @@ class AsyncioPublishConsumer(PublishConsumer):
                 await PublishQueueResource.get_service().update(task.id, updates, task.etag, task)
                 return False
             except Exception:
-                logger.error(f"Failed to set the state for failed publish queue item {task.id}.")
+                logger.error("Failed to set the state for failed publish queue item.", extra=log_extra)
 
             # raise to stop transmitting items and free worker, in case there is some error
             # it's probably network related so trying more items now will probably only block

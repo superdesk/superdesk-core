@@ -83,9 +83,12 @@ class BasePublishExchangeFormatter(PublishExchangeFormatter):
                 no_formatters.extend(subscriber_no_formatters)
             except Exception:
                 logger.exception(
-                    "Failed to queue item for id {} with headline {} for subscriber {}.".format(
-                        request.item_id, item.get("headline"), subscriber.name
-                    )
+                    "Failed to queue item for subscriber",
+                    extra=dict(
+                        item_id=request.item_id,
+                        item_headline=item.get("headline"),
+                        subscriber_name=subscriber.name,
+                    ),
                 )
 
         return tasks, no_formatters

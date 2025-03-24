@@ -124,8 +124,8 @@ def get_publish_channel_config(item: dict, item_type: str, operation: str, sende
                 continue
             elif channel.get("filter") and not channel["filter"](item):
                 continue
-        except Exception as error:
-            logger.exception(f"Failed to check publish channel config: {error}")
+        except Exception:
+            logger.exception("Failed to check publish channel config")
             continue
 
         config = channel["config"].copy()

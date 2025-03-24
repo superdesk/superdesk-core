@@ -107,7 +107,7 @@ class AsyncioPublishRouter(PublishExchangeRouter):
                 subscriber = cache.subscribers.get(task.subscriber_id)
 
             if not subscriber:
-                logger.warning(f"Subscriber {task.subscriber_id} not found.")
+                logger.warning("Task Subscriber not found.", extra=dict(subscriber_id=task.subscriber_id))
                 continue
 
             subscriber_tasks.setdefault(subscriber.id, (subscriber, []))[1].append(task)
@@ -129,4 +129,4 @@ class AsyncioPublishRouter(PublishExchangeRouter):
             consumer = get_exchange_factory().get_subscriber_consumer(subscriber)
             await consumer.process_tasks(subscriber, tasks)
         except Exception:
-            logger.exception(f"Failed to process tasks for subscriber {subscriber.id}")
+            logger.exception("Failed to process tasks for subscriber", extra=dict(subscriber_id=subscriber.id))

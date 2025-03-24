@@ -334,7 +334,7 @@ async def _get_stage_field_values(desks: list[dict]) -> list[dict]:
             desk = next(filter(lambda d: d["_id"] == stage["desk"], desks))
         except (StopIteration, KeyError):
             # if stage has no desk, remove that stage from a list
-            logger.warning('Desk not found for stage with id "{}".'.format(stage["_id"]))
+            logger.warning("Desk not found for stage", extra=dict(stage_id=stage.get("_id")))
             stages[i] = None
             continue
         stages[i]["name"] = "{}: {}".format(desk["name"], stage["name"])

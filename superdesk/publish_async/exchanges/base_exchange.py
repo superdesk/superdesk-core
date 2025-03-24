@@ -55,7 +55,12 @@ class BasicPublishExchange(PublishExchange):
                 level = logging.ERROR
 
             logger.log(
-                level, f"Nothing is saved to publish queue for story: {request.item_id} for action: {request.operation}"
+                level,
+                "Nothing is saved to publish queue for story",
+                extra=dict(
+                    item_id=request.item_id,
+                    operation=request.operation,
+                ),
             )
 
         return response

@@ -46,7 +46,7 @@ class CeleryPublishConsumer(AsyncioPublishConsumer):
         # We assume all tasks come from the same subscriber
         lock_name = get_lock_id("Subscriber", "Transmit", str(subscriber.id))
         if not lock(lock_name, expire=610):
-            logger.info("Task: {} is already running.".format(lock_name))
+            logger.info(f"Task: {lock_name} is already running.")
             return
 
         try:
@@ -81,7 +81,7 @@ async def transmit_subscriber_items(subscriber_id: ObjectId, task_ids: list[Obje
         for task_id in task_ids:
             task = await task_service.find_by_id(task_id)
             if task is None:
-                logger.exception(f"Task {task_id} not found.")
+                logger.exception("Task not found.", extra=dict(task_id=task_id))
                 continue
             await transmit_item.apply_async(args=[task.id], queue=get_high_priority_celery_queue(task.priority))
     finally:
@@ -114,7 +114,7 @@ async def transmit_item(task_id: ObjectId) -> None:
     try:
         task = await PublishQueueResource.get_service().find_by_id(task_id)
         if task is None:
-            logger.exception(f"Task {task_id} not found.")
+            logger.exception("Task not found.", extra=dict(task_id=task_id))
             return
         await consumer.transmit_item(task)
     finally:

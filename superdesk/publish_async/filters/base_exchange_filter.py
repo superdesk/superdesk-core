@@ -61,7 +61,7 @@ class BasePublishExchangeFilter(PublishExchangeFilter):
             self.process_subscriber(request, response, subscriber)
 
         if not response.subscribers:
-            logger.warning(f"No subscribers found for {request.item.get('id')}")
+            logger.warning("No subscribers found for publish_request", extra=dict(item_id=request.item_id))
             return
 
     async def get_subscribers(self, request: PublishRequest) -> list[SubscribersResource]:
@@ -418,7 +418,11 @@ class BasePublishExchangeFilter(PublishExchangeFilter):
                 filter_condition_item = cache.filter_conditions.get(filter_condition_id)
                 if not filter_condition_item:
                     logger.error(
-                        f"Missing filter condition {filter_condition_id} in content filter {content_filter.name}"
+                        "Missing filter condition in content filter",
+                        extra=dict(
+                            filter_condition_id=filter_condition_id,
+                            content_filter_name=content_filter.name,
+                        ),
                     )
                     return False
 

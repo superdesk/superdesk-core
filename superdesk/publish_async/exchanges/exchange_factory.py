@@ -253,12 +253,12 @@ class DefaultPublishExchangeFactory(PublishExchangeFactory, SingletonInstance):
             logger.info(f"Sending request for {request.item_id} to {exchange}")
             return await exchange.send(request)
         except KeyError as e:
-            logger.exception(f"Missing key in request: {e}")
+            logger.exception("Missing key in request")
             raise SuperdeskApiError.badRequestError(
                 message=gettext(f"Key is missing on article to be published: {e}"),
             ) from e
         except Exception as e:
-            logger.exception(f"Something bad happened while publishing {request.item_id}")
+            logger.exception("Something bad happened while publishing item", extra=dict(item_id=request.item_id))
             raise SuperdeskApiError.internalError(
                 message=gettext(f"Failed to publish the item: {e}"),
                 exception=e,
@@ -299,7 +299,7 @@ class DefaultPublishExchangeFactory(PublishExchangeFactory, SingletonInstance):
         with ProfileManager("publish:transmit"):
             lock_name = get_lock_id("Transmit", "Articles")
             if not lock(lock_name, expire=1810):
-                logger.info("Task: %s is already running.", lock_name)
+                logger.info(f"Task: {lock_name} is already running.")
                 return
 
             try:
@@ -309,7 +309,7 @@ class DefaultPublishExchangeFactory(PublishExchangeFactory, SingletonInstance):
                         for subscriber_id in subscriber_ids:
                             sub_lock_name = get_lock_id("Subscriber", "Transmit", str(subscriber_id))
                             if is_locked(sub_lock_name):
-                                logger.info("Task: %s is already running.", sub_lock_name)
+                                logger.info(f"Task: {sub_lock_name} is already running.")
                                 continue
 
                             await transmit_subscriber_items.apply_async(
@@ -336,7 +336,7 @@ class DefaultPublishExchangeFactory(PublishExchangeFactory, SingletonInstance):
 
         lock_name = get_lock_id("publish", "enqueue_published")
         if not lock(lock_name, expire=310):
-            logger.info("Enqueue Task: {} is already running.".format(lock_name))
+            logger.info(f"Enqueue Task: {lock_name} is already running.")
             return
 
         try:
@@ -380,7 +380,7 @@ class DefaultPublishExchangeFactory(PublishExchangeFactory, SingletonInstance):
                 failed_items[str(queue_item.get("_id"))] = queue_item
 
         if len(failed_items) > 0:
-            logger.error("Failed to publish the following items: {}".format(failed_items.keys()))
+            logger.error("Failed to publish items", extra=dict(failed_items=failed_items.keys()))
 
     async def get_pending_or_scheduled_content_for_publishing(self) -> list[dict]:
         """
@@ -503,7 +503,7 @@ async def transmit_subscriber_items(
 
     subscriber = await SubscribersResource.get_service().find_by_id(subscriber_id)
     if subscriber is None:
-        logger.exception(f"Subscriber {subscriber_id} not found.")
+        logger.exception("Subscriber to transmit to not found.", extra=dict(subscriber_id=subscriber_id))
         return
 
     exchange_factory = get_exchange_factory()
