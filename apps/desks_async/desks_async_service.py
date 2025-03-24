@@ -9,10 +9,8 @@ from superdesk.core.resources import AsyncResourceService
 from superdesk.errors import SuperdeskApiError
 from superdesk.notification import push_notification
 from superdesk.resource_fields import ID_FIELD
-from superdesk.types import DesksResourceModel
+from superdesk.types import DesksResourceModel, UsersResourceModel
 from superdesk.types.enums import DeskTypeEnum
-
-from superdesk.users import UsersAsyncService
 
 
 logger = logging.getLogger(__name__)
@@ -65,7 +63,7 @@ class DesksAsyncService(AsyncResourceService[DesksResourceModel]):
         return docs
 
     async def on_created(self, docs: list[DesksResourceModel]) -> None:
-        users_service = UsersAsyncService()
+        users_service = UsersResourceModel.get_service()
         for doc in docs:
             push_notification(self.notification_key, created=1, desk_id=str(doc.id))
             await users_service.update_stage_visibility_for_users()
@@ -102,7 +100,7 @@ class DesksAsyncService(AsyncResourceService[DesksResourceModel]):
             3. The desk is associated with routing rule(s)
         """
 
-        if await UsersAsyncService().count({"desk": doc.id}):
+        if await UsersResourceModel.get_service().count({"desk": doc.id}):
             raise SuperdeskApiError.preconditionFailedError(
                 message=_("Cannot delete desk as it is assigned as default desk to user(s).")
             )
@@ -147,7 +145,7 @@ class DesksAsyncService(AsyncResourceService[DesksResourceModel]):
 
     async def __send_notification(self, updates: dict[str, Any], desk: DesksResourceModel):
         desk_id = desk.id
-        users_service = UsersAsyncService()
+        users_service = UsersResourceModel.get_service()
 
         if "members" in updates:
             added, removed = self.__compare_members(desk.members, updates["members"])
