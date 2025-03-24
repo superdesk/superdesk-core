@@ -100,7 +100,7 @@ class ElasticResourceClient(BaseElasticResourceClient):
 
         return self.count() == 0
 
-    async def search(
+    def search(
         self,
         query: Dict[str, Any],
         indexes: Optional[List[str]] = None,

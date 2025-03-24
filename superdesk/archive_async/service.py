@@ -50,6 +50,8 @@ from apps.archive.common import (
 )
 from apps.archive.highlights_search_mixin import HighlightsSearchMixin
 from apps.common.components.utils import get_component
+from apps.archive.usage import update_refs, track_usage
+from apps.common.models.utils import get_model
 from apps.common.models.base_model import InvalidEtag
 from apps.content import push_content_notification, push_expired_notification, push_notification
 from apps.item_autosave.components.item_autosave import ItemAutosave
@@ -58,6 +60,7 @@ from apps.packages import PackageService
 from quart_babel import gettext as _
 from superdesk import editor_utils, get_resource_service
 from superdesk.activity import add_activity, notify_and_add_activity, ACTIVITY_CREATE, ACTIVITY_UPDATE, ACTIVITY_DELETE
+from superdesk.core import get_current_app
 from superdesk.core.types import SearchRequest
 from superdesk.core.resources import AsyncResourceService
 from superdesk.errors import SuperdeskApiError
@@ -89,7 +92,7 @@ from superdesk.metadata.utils import (
 from superdesk.privilege import GLOBAL_SEARCH_PRIVILEGE
 from superdesk.resource_fields import ITEMS, ID_FIELD, VERSION, LAST_UPDATED, DATE_CREATED, ETAG
 from superdesk.text_utils import update_word_count
-from superdesk.types.archive import ArchiveResourceModel, ContentTypes, ItemOperation
+from superdesk.types import ArchiveResourceModel, ContentTypes, ItemOperation
 from superdesk.users.services import current_user_has_privilege, is_admin
 from superdesk.utc import utcnow
 from superdesk.vocabularies import is_related_content
@@ -218,7 +221,7 @@ class AsyncArchiveService(AsyncResourceService[ArchiveResourceModel], Highlights
         await on_create_item(docs, media_service=self.mediaService)
 
         for doc in docs:
-            if doc.body_footer and await is_normal_package_async(doc):
+            if doc.body_footer and is_normal_package_async(doc):
                 raise SuperdeskApiError.badRequestError(_("Package doesn't support Public Service Announcements"))
 
             editor_utils.generate_fields(doc)
@@ -237,7 +240,7 @@ class AsyncArchiveService(AsyncResourceService[ArchiveResourceModel], Highlights
             await self.validate_embargo(doc)
 
             update_associations(doc)
-            for key, assoc in doc.associations or {}.items():
+            for key, assoc in (doc.associations or {}).items():
                 # don't set time stamp for related items
                 if not is_related_content(key):
                     self._set_association_timestamps(assoc, doc)
@@ -268,7 +271,7 @@ class AsyncArchiveService(AsyncResourceService[ArchiveResourceModel], Highlights
         if packages:
             await self.packageService.on_created(packages)
 
-        app = superdesk.get_current_app().as_any()
+        app = get_current_app().as_any()
         profiles = set()
         for doc in docs:
             subject = get_subject(doc)
@@ -286,9 +289,6 @@ class AsyncArchiveService(AsyncResourceService[ArchiveResourceModel], Highlights
                 await app.on_archive_item_updated({"task": doc.task}, doc, ItemOperation.FETCH)
             else:
                 await app.on_archive_item_updated({"task": doc.task}, doc, ItemOperation.CREATE)
-
-            # used by client to detect item type
-            doc._type = "archive"
 
         await get_resource_service("content_types").set_used(profiles)
 
@@ -334,7 +334,7 @@ class AsyncArchiveService(AsyncResourceService[ArchiveResourceModel], Highlights
         await self._handle_media_updates(updates, original, user)
         await self._handle_attachment_updates(updates, original)
         flush_renditions(updates, original)
-        await update_refs(updates, original)
+        update_refs(updates, original.to_dict())
 
     async def _handle_media_updates(self, updates: Dict[str, Any], original: ArchiveResourceModel, user):
         """Handle media updates in the item.
@@ -351,16 +351,16 @@ class AsyncArchiveService(AsyncResourceService[ArchiveResourceModel], Highlights
         if not updates.get(ASSOCIATIONS):
             return
 
-        body = updates.get("body_html", original.get("body_html", None))
+        body = updates.get("body_html", original.body_html)
 
         # iterate over associations. Validate and process them if they are stored in database
-        for item_name, item_obj in updates.get(ASSOCIATIONS).items():
+        for item_name, item_obj in (updates.get(ASSOCIATIONS) or {}).items():
             if not (item_obj and ID_FIELD in item_obj):
                 continue
 
             item_id = item_obj[ID_FIELD]
             media_item = await self.find_one(req=None, _id=item_id)
-            parent = (original.get(ASSOCIATIONS) or {}).get(item_name) or item_obj
+            parent = (original.associations or {}).get(item_name) or item_obj
             if (
                 superdesk.get_app_config("COPY_METADATA_FROM_PARENT")
                 and item_obj.get(ITEM_TYPE) in MEDIA_TYPES
@@ -372,7 +372,13 @@ class AsyncArchiveService(AsyncResourceService[ArchiveResourceModel], Highlights
                 if not stored_item:
                     continue
 
-            await track_usage(media_item, stored_item, item_obj, item_name, original)
+            track_usage(
+                media_item.to_dict() if media_item else None,
+                stored_item,
+                item_obj,
+                item_name,
+                original.to_dict(),
+            )
 
             if is_related_content(item_name):
                 continue
@@ -400,7 +406,7 @@ class AsyncArchiveService(AsyncResourceService[ArchiveResourceModel], Highlights
         :param updates: Updates to be applied
         :param original: Original item
         """
-        if "attachments" not in updates or not len(original.get("attachments") or []):
+        if "attachments" not in updates or not len(original.attachments or []):
             # No need to proceed if:
             #   - ``attachments`` is not supplied in updates, or
             #   - original has no ``attachments``
@@ -408,9 +414,9 @@ class AsyncArchiveService(AsyncResourceService[ArchiveResourceModel], Highlights
 
         updated_attachment_ids = [attachment["attachment"] for attachment in updates["attachments"] or []]
         attachment_ids_to_remove = [
-            attachment["attachment"]
-            for attachment in original["attachments"]
-            if attachment["attachment"] not in updated_attachment_ids
+            attachment.attachment
+            for attachment in (original.attachments or [])
+            if attachment.attachment not in updated_attachment_ids
         ]
 
         for attachment_id in attachment_ids_to_remove:
@@ -511,7 +517,7 @@ class AsyncArchiveService(AsyncResourceService[ArchiveResourceModel], Highlights
         )
         push_expired_notification([doc.get(ID_FIELD)])
 
-        app = superdesk.get_current_app().as_any()
+        app = get_current_app().as_any()
         await app.on_archive_item_deleted(doc)
 
     async def replace(self, id, document, original):
@@ -645,11 +651,11 @@ class AsyncArchiveService(AsyncResourceService[ArchiveResourceModel], Highlights
         convert_task_attributes_to_objectId(new_doc)
         transtype_metadata(new_doc)
         signals.item_duplicate.send(self, item=new_doc, original=original_doc, operation=operation)
-        await get_model(ItemModel).create([new_doc])
+        get_model(ItemModel).create([new_doc])
         await self._duplicate_versions(original_doc["_id"], new_doc)
         await self._duplicate_history(original_doc["_id"], new_doc)
 
-        app = superdesk.get_current_app().as_any()
+        app = get_current_app().as_any()
         await app.on_archive_item_updated({"duplicate_id": new_doc["guid"]}, original_doc, operation or ITEM_DUPLICATE)
 
         if original_doc.get("task"):
@@ -1301,33 +1307,35 @@ class AsyncArchiveService(AsyncResourceService[ArchiveResourceModel], Highlights
             logger.error("Failed to retrieve the whole items chain for item {}".format(item.get("_id")))
         return items_chain
 
-    async def get_item_translations(self, item) -> list:
+    async def get_item_translations(self, item: ArchiveResourceModel | None) -> list[ArchiveResourceModel]:
         """Get list of item's translations.
 
         :param item: Item to get translations for
         :return: List of translation items
         """
-        translation_items = []
-        if not item or not item.get("translations"):
+        translation_items: list[ArchiveResourceModel] = []
+        if not item or not item.translations:
             return translation_items
 
-        for translation_item_id in item.get("translations", []):
-            translation_item = await self.find_one(req={}, _id=translation_item_id)
+        for translation_item_id in item.translations:
+            translation_item = await self.find_by_id(translation_item_id)
+            if not translation_item:
+                continue
             translation_items.append(translation_item)
             # get a translation of a translation and so on
             translation_items += await self.get_item_translations(translation_item)
 
         return translation_items
 
-    async def _remove_from_translations(self, item):
+    async def _remove_from_translations(self, item: ArchiveResourceModel) -> None:
         """Remove item from translations list of its parent.
 
         :param item: Item to remove from translations
         """
-        if item.get("translated_from"):
-            translated_from = await self.find_one(req=None, _id=item["translated_from"])
+        if item.translated_from:
+            translated_from = await self.find_by_id(item.translated_from)
             if translated_from is None:
                 return
-            translations = translated_from.get("translations") or []
-            updates = {"translations": [_id for _id in translations if _id != item["_id"]]}
-            await self.system_update(translated_from["_id"], updates)
+            translations = translated_from.translations or []
+            updates = {"translations": [_id for _id in translations if _id != item.id]}
+            await self.system_update(translated_from.id, updates)

@@ -11,13 +11,13 @@
 from superdesk.core.resources import ResourceConfig, MongoResourceConfig, MongoIndexOptions
 from superdesk.core.resources.resource_rest_endpoints import RestEndpointConfig
 from superdesk.types.archive import ArchiveResourceModel
-from .service import ArchiveService
+from .service import AsyncArchiveService
 
 
 archive_resource_config = ResourceConfig(
     name="archive",
     data_class=ArchiveResourceModel,
-    service=ArchiveService,
+    service=AsyncArchiveService,
     mongo=MongoResourceConfig(
         indexes=[
             MongoIndexOptions(

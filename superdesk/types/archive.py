@@ -7,8 +7,9 @@
 # at https://www.sourcefabric.org/superdesk/license
 
 
+from superdesk.core.resources import ModelWithVersions
 from superdesk.types.base import ItemSchema, MetadataResource
 
 
-class ArchiveResourceModel(ItemSchema, MetadataResource):
-    pass
+class ArchiveResourceModel(ItemSchema, MetadataResource, ModelWithVersions):
+    macro: str | None = None
