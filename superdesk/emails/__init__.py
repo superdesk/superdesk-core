@@ -103,7 +103,7 @@ async def send_activate_account_email(doc, activate_ttl):
         expires=hours,
         url=url,
     )
-    send_email.delay(
+    await send_email.delay(
         subject=subject, sender=admins[0], recipients=[doc["email"]], text_body=text_body, html_body=html_body
     )
 
@@ -114,7 +114,7 @@ async def send_user_status_changed_email(recipients, status):
     subject = await render_template("account_status_changed_subject.txt", app_name=app_name, status=status)
     text_body = await render_template("account_status_changed.txt", app_name=app_name, status=status)
     html_body = await render_template("account_status_changed.html", app_name=app_name, status=status)
-    send_email.delay(subject=subject, sender=admins[0], recipients=recipients, text_body=text_body, html_body=html_body)
+    await send_email.delay(subject=subject, sender=admins[0], recipients=recipients, text_body=text_body, html_body=html_body)
 
 
 async def send_user_type_changed_email(recipients):
@@ -123,7 +123,7 @@ async def send_user_type_changed_email(recipients):
     subject = await render_template("account_type_changed_subject.txt", app_name=app_name)
     text_body = await render_template("account_type_changed.txt", app_name=app_name)
     html_body = await render_template("account_type_changed.html", app_name=app_name)
-    send_email.delay(subject=subject, sender=admins[0], recipients=recipients, text_body=text_body, html_body=html_body)
+    await send_email.delay(subject=subject, sender=admins[0], recipients=recipients, text_body=text_body, html_body=html_body)
 
 
 async def send_reset_password_email(doc, token_ttl):
@@ -139,7 +139,7 @@ async def send_reset_password_email(doc, token_ttl):
     html_body = await render_template(
         "reset_password.html", email=doc["email"], expires=hours, url=url, app_name=app_name
     )
-    send_email.delay(
+    await send_email.delay(
         subject=subject, sender=admins[0], recipients=[doc["email"]], text_body=text_body, html_body=html_body
     )
 
@@ -155,7 +155,7 @@ async def send_user_mentioned_email(recipients, user_name, doc, url):
     html_body = await render_template(
         "user_mention.html", text=doc["text"], username=user_name, link=url, app_name=app_name
     )
-    send_email.delay(subject=subject, sender=admins[0], recipients=recipients, text_body=text_body, html_body=html_body)
+    await send_email.delay(subject=subject, sender=admins[0], recipients=recipients, text_body=text_body, html_body=html_body)
 
 
 def get_activity_digest(value):
@@ -186,7 +186,7 @@ async def send_activity_emails(activity, recipients):
     html_body = await render_template("notification.html", notification=notification, app_name=app_name, link=link)
     subject = await render_template("notification_subject.txt", notification=notification)
 
-    send_email.delay(subject=subject, sender=admins[0], recipients=recipients, text_body=text_body, html_body=html_body)
+    await send_email.delay(subject=subject, sender=admins[0], recipients=recipients, text_body=text_body, html_body=html_body)
     email_timestamps.update_one({"_id": message_id}, {"$set": {"_id": message_id, "_created": now}}, upsert=True)
 
 
@@ -208,7 +208,7 @@ async def send_article_killed_email(article, recipients, transmitted_at):
         "article_killed.html", app_name=app_name, place=place, body=body, operation=operation
     )
 
-    send_email.delay(subject=subject, sender=admins[0], recipients=recipients, text_body=text_body, html_body=html_body)
+    await send_email.delay(subject=subject, sender=admins[0], recipients=recipients, text_body=text_body, html_body=html_body)
 
 
 async def send_translation_changed(username, article, recipients):
@@ -227,4 +227,4 @@ async def send_translation_changed(username, article, recipients):
         "translation_changed.html", app_name=app_name, username=username, link=link, headline=headline
     )
 
-    send_email.delay(subject=subject, sender=admins[0], recipients=recipients, text_body=text_body, html_body=html_body)
+    await send_email.delay(subject=subject, sender=admins[0], recipients=recipients, text_body=text_body, html_body=html_body)
