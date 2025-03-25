@@ -52,6 +52,7 @@ def get_highlighted_items(highlights_id):
     }
     request = ParsedRequest()
     request.args = {"source": json.dumps(query), "repo": "archive,published"}
+    # TODO-ASYNC[search]: Use `get_async` when upgrading this module
     return list(get_resource_service("search").get(req=request, lookup=None))
 
 

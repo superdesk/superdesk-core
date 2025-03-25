@@ -429,10 +429,8 @@ class MetadataResource(BaseContentItem):
     rewritten_by: fields.Keyword | None = None
     # FIXME: duplicate of ItemSchema
     sequence: int | None = None
-    keywords: Annotated[
-        list[fields.Keyword], fields.elastic_mapping({"type": "list", "mapping": "html_field_analyzer"})
-    ]
-    word_count: int
+    keywords: list[fields.HTML] | None = None
+    word_count: int | None = None
     profile: fields.Keyword | None = None
     state: ContentStates
     revert_state: ContentStates | None = None

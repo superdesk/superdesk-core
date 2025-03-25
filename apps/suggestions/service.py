@@ -48,6 +48,7 @@ class SuggestionsService(BaseService):
         req = ParsedRequest()
         req.args = {"source": json.dumps(query), "repo": "archive,published,archived"}
 
+        # TODO-ASYNC[search]: Use `get_async` when upgrading this module
         return get_resource_service("search").get(req=req, lookup=None)
 
     def _transform(self, item):
