@@ -93,7 +93,7 @@ class PublishQueueResource(Resource):
 
 
 class PublishQueueService(BaseService):
-    def on_create(self, docs):
+    async def on_create(self, docs):
         subscriber_service = get_resource_service("subscribers")
 
         for doc in docs:
@@ -101,8 +101,8 @@ class PublishQueueService(BaseService):
             doc["moved_to_legal"] = False
 
             if "published_seq_num" not in doc:
-                subscriber = subscriber_service.find_one(req=None, _id=doc["subscriber_id"])
-                doc["published_seq_num"] = subscriber_service.generate_sequence_number(subscriber)
+                subscriber = await subscriber_service.find_one_async(req=None, _id=doc["subscriber_id"])
+                doc["published_seq_num"] = await subscriber_service.generate_sequence_number_async(subscriber)
 
     def on_updated(self, updates, original):
         if updates.get("state", "") != original.get("state", ""):

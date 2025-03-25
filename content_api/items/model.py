@@ -4,7 +4,8 @@ from enum import Enum, unique
 from pydantic import Field, field_validator
 
 from superdesk.core.resources import fields, ModelWithVersions
-from superdesk.types.base import BaseContentItem, CVItemWithCode, ContentType, Place, CVItem
+from superdesk.types.base import BaseContentItem, CVItemWithCode, ContentType, Place
+from superdesk.types.base import CVItem  # noqa - Imported from here by Planning and Newshub
 
 
 @unique

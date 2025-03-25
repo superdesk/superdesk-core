@@ -4,7 +4,7 @@ from superdesk.publish.subscribers import SubscribersService
 
 
 subscriber_service = create_autospec(SubscribersService)
-subscriber_service.generate_sequence_number.return_value = 100
+subscriber_service.generate_sequence_number_async.return_value = 100
 
 
 class Resource:

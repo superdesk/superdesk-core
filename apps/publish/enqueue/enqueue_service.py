@@ -521,7 +521,8 @@ class EnqueueService:
                                 subscriber_codes.get(subscriber[ID_FIELD]),
                             )
 
-                            for publish_data in format_ret:
+                            # Ignoring type here, as async not supported yet (is in the publish PR)
+                            for publish_data in format_ret:  # type: ignore[union-attr]
                                 if not isinstance(publish_data, dict):
                                     pub_seq_num, formatted_doc = publish_data
                                     formatted_docs.append(

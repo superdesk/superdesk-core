@@ -20,6 +20,7 @@ from superdesk.core import get_app_config, get_current_app
 from apps.auth import get_user
 from superdesk.notification import push_notification
 from superdesk.privilege import GLOBAL_SEARCH_PRIVILEGE
+from superdesk.publish_async.subscribers.utils import get_next_sequence_number
 
 SOURCE = "ingest"
 
@@ -54,13 +55,13 @@ class IngestService(BaseService):
         res = self.backend.update_in_mongo(self.datasource, id, document, original)
         return res
 
-    def set_ingest_provider_sequence(self, item, provider):
+    async def set_ingest_provider_sequence_async(self, item, provider):
         """Sets the value of ingest_provider_sequence in item.
 
         :param item: object to which ingest_provider_sequence to be set
         :param provider: ingest_provider object, used to build the key name of sequence
         """
-        sequence_number = get_resource_service("sequences").get_next_sequence_number(
+        sequence_number = await get_next_sequence_number(
             key_name="ingest_providers_{_id}".format(_id=provider[ID_FIELD]),
             max_seq_number=get_app_config("MAX_VALUE_OF_INGEST_SEQUENCE"),
         )

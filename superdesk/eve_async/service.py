@@ -4,7 +4,7 @@ import pymongo
 from eve.utils import ParsedRequest
 from eve.methods.common import resolve_document_etag
 
-from superdesk.services import BaseService
+from superdesk.services import BaseService, CacheableService
 from superdesk.resource_fields import ETAG
 from superdesk.utc import utcnow
 from superdesk.errors import SuperdeskApiError
@@ -237,3 +237,7 @@ class AsyncBaseService(BaseService):
             "_error": {"code": 400, "_message": "Unable to update {}.".format(self.datasource)},
             "items": items,
         }
+
+
+class CachableAsyncBaseService(AsyncBaseService, CacheableService):
+    pass

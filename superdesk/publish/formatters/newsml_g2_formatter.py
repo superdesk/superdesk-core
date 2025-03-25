@@ -71,7 +71,7 @@ class NewsMLG2Formatter(Formatter):
     def _format_date(self, date):
         return date.strftime("%Y-%m-%dT%H:%M:%S+00:00")
 
-    def format(self, article: dict, subscriber: dict, codes: list | None = None) -> list[tuple[int, str] | dict]:
+    async def format(self, article: dict, subscriber: dict, codes: list | None = None) -> list[tuple[int, str] | dict]:
         """Create article in NewsML G2 format
 
         :param dict article:
@@ -83,7 +83,7 @@ class NewsMLG2Formatter(Formatter):
         """
         try:
             self.subscriber = subscriber
-            pub_seq_num = superdesk.get_resource_service("subscribers").generate_sequence_number(subscriber)
+            pub_seq_num = await superdesk.get_resource_service("subscribers").generate_sequence_number_async(subscriber)
             is_package = self._is_package(article)
             news_message = etree.Element("newsMessage", attrib=self._debug_message_extra, nsmap=self._message_nsmap)
             self._format_header(article, news_message, pub_seq_num)

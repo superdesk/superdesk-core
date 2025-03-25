@@ -562,12 +562,15 @@ def get_app(config=None, media_storage=None, config_object=None, init_elastic=No
     set_error_handlers(app)
 
     @app.after_request
-    def after_request(response):
+    async def after_request(response):
         # fixing previous media prefixes if defined
         if app.config["MEDIA_PREFIXES_TO_FIX"] and app.config["MEDIA_PREFIX"]:
             current_prefix = app.config["MEDIA_PREFIX"].rstrip("/").encode()
+            data = await response.get_data()
             for prefix in app.config["MEDIA_PREFIXES_TO_FIX"]:
-                response.data = response.data.replace(prefix.rstrip("/").encode(), current_prefix)
+                data = data.replace(prefix.rstrip("/").encode(), current_prefix)
+
+            response.set_data(data)
         return response
 
     init_celery(app)

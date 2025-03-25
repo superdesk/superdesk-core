@@ -8,6 +8,7 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
+from typing import Awaitable
 import logging
 
 from lxml import etree
@@ -19,6 +20,8 @@ from superdesk.text_utils import get_text
 formatters = []  # type: List[Type[Formatter]]
 
 logger = logging.getLogger(__name__)
+
+FormatReturnType = list[tuple[int, str] | dict]
 
 
 class Formatter:
@@ -43,7 +46,9 @@ class Formatter:
         super().__init_subclass__(**kwargs)
         formatters.append(cls)
 
-    def format(self, article: dict, subscriber: dict, codes: list | None = None) -> list[tuple[int, str] | dict]:
+    def format(
+        self, article: dict, subscriber: dict, codes: list | None = None
+    ) -> FormatReturnType | Awaitable[FormatReturnType]:
         """Formats the article.
 
         :param article: Article to format.

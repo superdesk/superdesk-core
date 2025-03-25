@@ -284,7 +284,7 @@ class UpdateIngestTest(TestCase):
         provider, provider_service = self.setup_reuters_provider()
         guid = "tag_reuters.com_2014_newsml_KBN0FL0NM:10"
         item = provider_service.fetch_ingest(guid)[0]
-        get_resource_service("ingest").set_ingest_provider_sequence(item, provider)
+        await get_resource_service("ingest").set_ingest_provider_sequence_async(item, provider)
         self.assertIsNotNone(item["ingest_provider_sequence"])
 
     async def test_get_task_ttl(self):

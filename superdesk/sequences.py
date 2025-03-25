@@ -2,7 +2,7 @@ import superdesk
 import traceback
 from superdesk import get_resource_service
 from .resource import Resource
-from .services import BaseService
+from superdesk.eve_async.service import AsyncBaseService
 import logging
 
 
@@ -30,7 +30,8 @@ class SequencesResource(Resource):
     }
 
 
-class SequencesService(BaseService):
+class SequencesService(AsyncBaseService):
+    # TODO-ASYNC[sequences]: Replace with new async resource once publish code is merged
     def get_next_sequence_number(self, key_name, max_seq_number=None, min_seq_number=1):
         """
         Generates Sequence Number
@@ -44,16 +45,13 @@ class SequencesService(BaseService):
             logger.error("Empty sequence key is used: {}".format("\n".join(traceback.format_stack())))
             raise KeyError("Sequence key cannot be empty")
 
-        target_resource = get_resource_service("sequences")
-        sequence_number = target_resource.find_and_modify(
+        sequence_number = self.find_and_modify(
             query={"key": key_name}, update={"$inc": {"sequence_number": 1}}, upsert=True, new=True
         ).get("sequence_number")
 
         if max_seq_number:
             if sequence_number > max_seq_number:
-                target_resource.find_and_modify(
-                    query={"key": key_name}, update={"$set": {"sequence_number": min_seq_number}}
-                )
+                self.find_and_modify(query={"key": key_name}, update={"$set": {"sequence_number": min_seq_number}})
 
                 sequence_number = min_seq_number
 

@@ -8,21 +8,23 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
+from quart_babel import gettext as _
+
 from superdesk.resource_fields import ID_FIELD
+from superdesk.types import SubscribersResource
 from superdesk import get_resource_service
 from superdesk.services import CacheableService
 from superdesk.errors import SuperdeskApiError
 from superdesk.metadata.utils import ProductTypes
-from quart_babel import gettext as _
 
 
 class ProductsService(CacheableService):
-    def on_update(self, updates, original):
-        self._validate_product_type(updates, original)
+    async def on_update(self, updates, original):
+        await self._validate_product_type_async(updates, original)
 
-    def on_delete(self, doc):
+    async def on_delete(self, doc):
         # Check if any subscriber is using the product
-        names = get_resource_service("subscribers").get_subscriber_names(
+        names = await SubscribersResource.get_names(
             {"$or": [{"products": {"$in": [doc["_id"]]}}, {"api_products": {"$in": [doc["_id"]]}}]}
         )
         if names:
@@ -30,7 +32,7 @@ class ProductsService(CacheableService):
                 message=_("Product is used by the subscriber(s): {names}").format(names=", ".join(names))
             )
 
-    def _validate_product_type(self, updates, original):
+    async def _validate_product_type_async(self, updates, original):
         """Validates product type field. Raises Bad Request error for following conditions:
         1. new product type is direct and product is assigned as api product.
         2. new product type is api and product is assigned as direct product.
@@ -40,9 +42,7 @@ class ProductsService(CacheableService):
         """
         if updates.get("product_type", "both") != original.get("product_type", "both"):
             if updates.get("product_type") == ProductTypes.DIRECT.value:
-                names = get_resource_service("subscribers").get_subscriber_names(
-                    {"api_products": original.get(ID_FIELD)}
-                )
+                names = await SubscribersResource.get_names({"api_products": original.get(ID_FIELD)})
                 if names:
                     raise SuperdeskApiError.badRequestError(
                         message=_("Product is used for API publishing for the subscriber(s): {subscribers}").format(
@@ -50,7 +50,7 @@ class ProductsService(CacheableService):
                         )
                     )
             elif updates.get("product_type") == ProductTypes.API.value:
-                names = get_resource_service("subscribers").get_subscriber_names({"products": original.get(ID_FIELD)})
+                names = await SubscribersResource.get_names({"products": original.get(ID_FIELD)})
                 if names:
                     raise SuperdeskApiError.badRequestError(
                         message=_("Product is used for direct publishing for the subscriber(s): {subscribers}").format(
