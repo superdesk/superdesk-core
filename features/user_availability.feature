@@ -12,7 +12,7 @@ Feature: User Availability
         {
             "date": "2023-05-15",
             "status": "available",
-            "language": "en",
+            "language": ["en"],
             "working_hours": [
                 {
                     "start_time": "09:00:00",
@@ -31,7 +31,7 @@ Feature: User Availability
             "user": "#CONTEXT_USER_ID#",
             "date": "2023-05-15",
             "status": "available",
-            "language": "en",
+            "language": ["en"],
             "working_hours": [
                 {
                     "start_time": "09:00:00",
@@ -50,7 +50,7 @@ Feature: User Availability
             "user": "#CONTEXT_USER_ID#",
             "date": "2023-05-15",
             "status": "available",
-            "language": "en",
+            "language": ["en"],
             "working_hours": [
                 {
                     "start_time": "09:00:00",
@@ -65,7 +65,7 @@ Feature: User Availability
         """
         {
             "status": "partial",
-            "language": "fr",
+            "language": ["fr", "es"],
             "working_hours": [
                 {
                     "start_time": "12:00:00",
@@ -84,7 +84,7 @@ Feature: User Availability
             "user": "#CONTEXT_USER_ID#",
             "date": "2023-05-15", 
             "status": "partial",
-            "language": "fr",
+            "language": ["fr", "es"],
             "working_hours": [
                 {
                     "start_time": "12:00:00",
@@ -98,7 +98,7 @@ Feature: User Availability
         When we get "/user_availability?where={"date":"2023-05-15"}"
         Then we get list with 1 items
         """
-        {"_items": [{"date": "2023-05-15", "status": "partial", "language": "fr"}]}
+        {"_items": [{"date": "2023-05-15", "status": "partial", "language": ["fr", "es"]}]}
         """
         
         # Delete the availability record

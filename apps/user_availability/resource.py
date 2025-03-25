@@ -16,9 +16,9 @@ class AvailabilityResource(Resource):
             "allowed": ["available", "unavailable", "partial"],
         },
         "language": {
-            "type": "string",
+            "type": "list",
+            "schema": {"type": "string"},
             "required": False,
-            "nullable": True,
         },
         "working_hours": {
             "type": "list",
@@ -27,11 +27,11 @@ class AvailabilityResource(Resource):
                 "schema": {
                     "start_time": {
                         "type": "string",
-                        "required": True,
+                        "nullable": True,
                     },
                     "end_time": {
                         "type": "string",
-                        "required": True,
+                        "nullable": True,
                     },
                     "tags": {
                         "type": "list",
