@@ -244,7 +244,7 @@ class SearchService(AsyncBaseService):
         indexes = [async_app.elastic.get_elastic_index_name(resource) for resource in types]
 
         elastic = ArchiveResourceModel.get_service().elastic
-        hits = await elastic.search(fix_query(query), indexes)
+        hits = await elastic.search(fix_query(query), indexes, projection)
         cursor = self.elastic._parse_hits(hits, types[0])
 
         for resource in types:
