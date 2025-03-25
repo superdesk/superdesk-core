@@ -105,6 +105,13 @@ class ElasticResources:
             source_name, client_config, resource_config
         )
 
+    def get_elastic_index_name(self, resource_name: str) -> str:
+        try:
+            return self._resource_clients[resource_name].config.index
+        except (KeyError, TypeError):
+            # Fallback to trying eve-elastic
+            return self.app.wsgi.data.elastic._resource_index(resource_name)
+
     def get_client(self, resource_name) -> ElasticResourceClient:
         """Get a synchronous ElasticResourceClient for a registered resource
 
