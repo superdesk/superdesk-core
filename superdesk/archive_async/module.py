@@ -8,7 +8,7 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
-from superdesk.core.resources import ResourceConfig, MongoResourceConfig, MongoIndexOptions
+from superdesk.core.resources import ResourceConfig, MongoResourceConfig, MongoIndexOptions, ElasticResourceConfig
 from superdesk.core.resources.resource_rest_endpoints import RestEndpointConfig
 from superdesk.types.archive import ArchiveResourceModel
 from .service import AsyncArchiveService
@@ -42,6 +42,7 @@ archive_resource_config = ResourceConfig(
             ),
         ],
     ),
+    elastic=ElasticResourceConfig(),
     # FIXME: To be activated at a later point.
     # rest_endpoints=RestEndpointConfig(
     #     item_methods=["GET", "PATCH", "PUT"],
