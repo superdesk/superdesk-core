@@ -138,9 +138,9 @@ class NITFFormatter(Formatter):
             "style": {"nitf": EraseElement},  # <style> may be there in case of bad paste
         }
 
-    def format(self, article: dict, subscriber: dict, codes: list | None = None) -> list[tuple[int, str] | dict]:
+    async def format(self, article: dict, subscriber: dict, codes: list | None = None) -> list[tuple[int, str] | dict]:
         try:
-            pub_seq_num = superdesk.get_resource_service("subscribers").generate_sequence_number(subscriber)
+            pub_seq_num = await superdesk.get_resource_service("subscribers").generate_sequence_number_async(subscriber)
 
             nitf = self.get_nitf(article, subscriber, pub_seq_num)
             return [

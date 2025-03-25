@@ -68,8 +68,9 @@ class UsersResourceModel(ResourceModelWithObjectId):
     slack_username: str | None = None
     # The Slack user id is stored here to avoid repeat look ups
     slack_user_id: str | None = None
-    session_preferences: dict[str, Any] = Field(default_factory=dict)
-    user_preferences: dict[str, Any] = Field(default_factory=dict)
+    preferences: dict[str, Any] | None = None
+    session_preferences: dict[str, Any] | None = None
+    user_preferences: dict[str, Any] | None = None
     last_activity_at: datetime | None = None
     dateline_source: str | None = None
 

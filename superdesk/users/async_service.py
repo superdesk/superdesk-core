@@ -340,8 +340,8 @@ class UsersAsyncService(AsyncResourceService[UsersResourceModel]):
             set_sign_off(doc)
         doc.dateline_source = get_app_config("ORGANIZATION_NAME_ABBREVIATION")
 
-    async def user_is_waiting_activation(self, doc: UsersResourceModel):
-        return doc.to_dict().get("needs_activation", False)
+    def user_is_waiting_activation(self, doc: UsersResourceModel) -> bool:
+        return doc.needs_activation is True
 
     async def is_user_active(self, doc: UsersResourceModel):
         return doc.to_dict().get("is_active", False)

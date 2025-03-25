@@ -77,7 +77,10 @@ class ContentFilterService(CacheableService):
         :return: DB cursor over the results
         :rtype: :py:class:`pymongo.cursor.Cursor`
         """
+        # TODO-ASYNC[subscribers]: Use async resource when upgrading this module
         subscribers_service = get_resource_service("subscribers")
+
+        # TODO-ASYNC[products]: Use async resource when upgrading this module
         products_service = get_resource_service("products")
         subscribers = []
 

@@ -324,7 +324,9 @@ class LegalArchiveImport:
         logger.info("Get subscribers info for de-normalising queue items.")
         subscriber_ids = list({str(queue_item["subscriber_id"]) for queue_item in queue_items})
         query = {"$and": [{ID_FIELD: {"$in": subscriber_ids}}]}
+        # TODO-ASYNC[subscribers]: Use async resource when upgrading this module
         subscribers = list(get_resource_service("subscribers").get(req=None, lookup=query))
+
         subscribers = {str(subscriber[ID_FIELD]): subscriber for subscriber in subscribers}
 
         for queue_item in queue_items:

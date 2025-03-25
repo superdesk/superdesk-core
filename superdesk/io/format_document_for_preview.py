@@ -5,6 +5,7 @@ from superdesk import get_resource_service
 from superdesk.publish.formatters import get_formatter
 from superdesk.auth.decorator import blueprint_auth
 from apps.content_types import apply_schema
+from superdesk.types import SubscribersResource
 
 
 bp = Blueprint("format_document", __name__)
@@ -19,12 +20,13 @@ def get_mime_type(formatter_qcode):
 
 @bp.route("/format-document-for-preview/", methods=["GET", "OPTIONS"])
 @blueprint_auth()
-def format_document():
+async def format_document():
     document_id = request.args.get("document_id")
     subscriber_id = request.args.get("subscriber_id")
     formatter_qcode = request.args.get("formatter")
 
-    subscriber = get_resource_service("subscribers").find_one(req=None, _id=subscriber_id)
+    subscriber = await SubscribersResource.get_service().find_by_id_raw(subscriber_id)
+    # TODO-ASYNC[archive]: Use async resource when upgrading ``archive`` module
     doc = get_resource_service("archive").find_one(req=None, _id=document_id)
 
     formatter = get_formatter(formatter_qcode, doc)

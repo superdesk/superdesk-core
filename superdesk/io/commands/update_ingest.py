@@ -707,7 +707,10 @@ async def ingest_item(item, provider, feeding_service, rule_set=None, routing_sc
                 item.update(old_item)
         else:
             if item.get("ingest_provider_sequence") is None:
-                ingest_service.set_ingest_provider_sequence(item, provider)
+                if hasattr(ingest_service, "set_ingest_provider_sequence_async"):
+                    await ingest_service.set_ingest_provider_sequence_async(item, provider)
+                else:
+                    ingest_service.set_ingest_provider_sequence(item, provider)
             try:
                 items_ids.extend(ingest_service.post_in_mongo([item]))
             except HTTPException as e:
