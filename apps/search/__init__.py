@@ -11,9 +11,10 @@
 import superdesk
 
 from copy import deepcopy
-from eve_elastic.elastic import set_filters
+from eve_elastic.elastic import set_filters, fix_query
 
 from superdesk.core import json, get_current_app, get_app_config, get_current_async_app
+from superdesk.core.resources.cursor import ElasticsearchResourceCursorAsync
 from superdesk.resource_fields import ITEMS
 from superdesk.types import ArchiveResourceModel
 from superdesk.eve_async.service import AsyncBaseService
@@ -24,6 +25,7 @@ from apps.archive.archive import SOURCE as ARCHIVE, ArchiveResource, private_con
 from superdesk.resource import build_custom_hateoas
 from apps.publish.published_item import published_item_fields
 from superdesk import es_utils
+from superdesk.utils import ListCursor
 
 
 class SearchService(AsyncBaseService):
@@ -242,17 +244,17 @@ class SearchService(AsyncBaseService):
         indexes = [async_app.elastic.get_elastic_index_name(resource) for resource in types]
 
         elastic = ArchiveResourceModel.get_service().elastic
-        docs = await elastic.search(query, indexes, projection)
+        hits = await elastic.search(fix_query(query), indexes)
+        cursor = self.elastic._parse_hits(hits, types[0])
 
         for resource in types:
-            response = {ITEMS: [doc for doc in docs if doc["_type"] == resource]}
+            response = {ITEMS: [doc for doc in cursor if doc["_type"] == resource]}
             app = get_current_app().as_any()
-            await getattr(app, "on_fetched_resource_async")(resource, response)
             getattr(app, "on_fetched_resource")(resource, response)
-            await getattr(app, "on_fetched_resource_%s_async" % resource)(response)
+            await getattr(app, "on_fetched_resource_%s_async" % resource).call_async(response)
             getattr(app, "on_fetched_resource_%s" % resource)(response)
 
-        return docs
+        return cursor
 
     def _get_docs(self, hits):
         """Parse hits from elastic and return only docs.
