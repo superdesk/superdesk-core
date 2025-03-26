@@ -244,7 +244,7 @@ class ElasticResources:
         """
 
         for config in self.app.resources.get_all_configs():
-            if config.elastic is None:
+            if config.elastic is None or not config.elastic.auto_create_index:
                 # Elasticsearch is not configured for this resource
                 continue
 

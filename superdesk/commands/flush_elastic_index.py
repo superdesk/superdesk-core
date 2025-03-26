@@ -82,6 +82,7 @@ class FlushElasticIndex:
         app = get_current_app()
         await app.data.init_elastic(app)
         resources = app.data.get_elastic_resources()
+        resources_processed: list[str] = []
 
         for resource in resources:
             # get es prefix per resource
@@ -94,21 +95,27 @@ class FlushElasticIndex:
 
             print(f'Indexing mongo collections into "{index_prefix}" elastic index.')
             IndexFromMongo.copy_resource(resource, IndexFromMongo.default_page_size)
+            resources_processed.append(resource)
 
         # let's now index async resources
-        self._index_from_mongo_async_resources(index_prefix)
+        self._index_from_mongo_async_resources(index_prefix, resources_processed)
 
-    def _index_from_mongo_async_resources(self, index_prefix: str | None = None):
+    def _index_from_mongo_async_resources(self, index_prefix: str, resources_processed: list[str]):
         """
         Index into elastic search from mongo async resources. If `index_prefix` is provided,
         only the resources that belong to that index prefix will be indexed.
         """
         async_app = get_current_async_app()
         for config in async_app.resources.get_all_configs():
-            if config.elastic is None:
+            if config.elastic is None or not config.elastic.auto_create_index:
                 continue
 
             resource_name = config.name
+            if resource_name in resources_processed:
+                # This resource has already been processed by the eve resource
+                # No need to reindex this one
+                continue
+
             if index_prefix:
                 resource_elastic_config = async_app.elastic.get_client_async(resource_name).config
                 if resource_elastic_config.index != f"{index_prefix}_{resource_name}":

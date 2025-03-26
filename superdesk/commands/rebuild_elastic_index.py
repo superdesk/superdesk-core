@@ -48,7 +48,7 @@ class RebuildElasticIndex(superdesk.Command):
 
         resources_processed = []
         for config in async_resource_configs:
-            if config.elastic is None:
+            if config.elastic is None or not config.elastic.auto_create_index:
                 continue
             async_app.elastic.reindex(config.name, requests_per_second=requests_per_second)
             resources_processed.append(config.name)
