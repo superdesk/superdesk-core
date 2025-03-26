@@ -231,7 +231,7 @@ class ElasticResources:
 
         resources_indexed: List[str] = []
         for config in self.app.resources.get_all_configs():
-            if config.elastic is None:
+            if config.elastic is None or not config.elastic.auto_create_index:
                 continue
             self.init_index(config.name, raise_on_mapping_error)
             resources_indexed.append(config.name)
@@ -244,7 +244,7 @@ class ElasticResources:
         """
 
         for config in self.app.resources.get_all_configs():
-            if config.elastic is None:
+            if config.elastic is None or not config.elastic.auto_create_index:
                 # Elasticsearch is not configured for this resource
                 continue
 

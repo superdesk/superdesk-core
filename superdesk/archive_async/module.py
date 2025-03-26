@@ -42,7 +42,7 @@ archive_resource_config = ResourceConfig(
             ),
         ],
     ),
-    elastic=ElasticResourceConfig(),
+    elastic=ElasticResourceConfig(auto_create_index=False),
     # FIXME: To be activated at a later point.
     # rest_endpoints=RestEndpointConfig(
     #     item_methods=["GET", "PATCH", "PUT"],
