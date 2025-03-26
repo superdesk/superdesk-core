@@ -12,6 +12,7 @@ import logging
 
 from quart_babel import gettext as _
 
+from superdesk.eve_async.service import AsyncBaseService
 from superdesk.resource_fields import ID_FIELD
 from apps.search_providers import allowed_search_providers
 from superdesk.errors import SuperdeskApiError
@@ -70,6 +71,63 @@ class SearchProviderService(BaseService):
             )
 
     def on_delete(self, doc):
+        """
+        Overriding to check if the search provider being requested to delete has been used to fetch items.
+        """
+
+        if doc.get("last_item_update"):
+            raise SuperdeskApiError.forbiddenError(_("Deleting a Search Provider after receiving items is prohibited."))
+
+
+#TODO-ASYNC: replace SearchProviderService with this one once search providers are converted
+class SearchProviderServiceAsync(AsyncBaseService):
+    async def get_async(self, req, lookup):
+        """
+        Overriding to filter out the providers if they haven't been registered with the application.
+        """
+
+        providers = list(super().get(req, lookup))
+        filtered_providers = []
+
+        for provider in providers:
+            if provider["search_provider"] not in allowed_search_providers:
+                continue
+            if (
+                req
+                and req.args.get("manage") not in ("1", "true")
+                and not current_user_has_item_privilege(self.datasource, provider)
+            ):
+                continue
+            filtered_providers.append(provider)
+
+        return ListCursor(filtered_providers)
+
+    async def find_one_async(self, req, **lookup):
+        """
+        Overriding to filter out the providers if they haven't been registered with the application.
+        """
+
+        provider = await super().find_one_async(req, **lookup)
+        return provider if provider and provider["search_provider"] in allowed_search_providers else None
+
+    async def on_created_async(self, docs):
+        for doc in docs:
+            if doc.get("is_default"):
+                await self.find_and_modify_async(
+                    query={"$and": [{"_id": {"$ne": doc[ID_FIELD]}}, {"is_default": True}]},
+                    update={"$set": {"is_default": False}},
+                    upsert=False,
+                )
+
+    async def on_updated_async(self, updates, original):
+        if updates.get("is_default"):
+            await self.find_and_modify_async(
+                query={"$and": [{"_id": {"$ne": original[ID_FIELD]}}, {"is_default": True}]},
+                update={"$set": {"is_default": False}},
+                upsert=False,
+            )
+
+    async def on_delete_async(self, doc):
         """
         Overriding to check if the search provider being requested to delete has been used to fetch items.
         """
