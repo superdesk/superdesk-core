@@ -104,15 +104,21 @@ class ElasticResourceAsyncClient(BaseElasticResourceClient):
 
         return (await self.count()) == 0
 
-    async def search(self, query: Dict[str, Any], indexes: Optional[List[str]] = None) -> Any:
+    async def search(
+        self,
+        query: Dict[str, Any],
+        indexes: Optional[List[str]] = None,
+        projection: ProjectedFieldSources | ProjectedFieldArg | None = None,
+    ) -> Any:
         """Perform a raw search against the Elasticsearch index
 
         :param query: The search query to filter items by.
         :param indexes: An optional list of indexes to search in.
+        :param projection: The field projections to be applied
         :return: The response from Elasticsearch.
         """
 
-        return await self.elastic.search(**self._get_search_args(query, indexes))
+        return await self.elastic.search(**self._get_search_args(query, indexes, projection))
 
     async def find_by_id(
         self, item_id: str, projection: ProjectedFieldSources | ProjectedFieldArg | None = None
@@ -125,17 +131,9 @@ class ElasticResourceAsyncClient(BaseElasticResourceClient):
         """
 
         try:
-            # Check if ``_source`` or ``_source_excludes`` keys are in the projection param
-            # These are specific to the ``ProjectedFieldSources`` type and Elasticsearch itself
-            # So if these keys aren't there, then have received an instance of ``ProjectedFieldArg`` type
-            # and need to convert it to a ``ProjectedFieldSources`` instance.
-            if (
-                projection
-                and isinstance(projection, dict)
-                and not set(projection.keys()).intersection({"_source", "_source_excludes"})
-            ):
-                projection = self._get_projected_fields(SearchRequest(projection=cast(ProjectedFieldArg, projection)))
-            response = await self.elastic.get(index=self.config.index, id=item_id, **(projection or {}))
+            response = await self.elastic.get(
+                index=self.config.index, id=item_id, **(self._get_projected_fields_from_param(projection) or {})
+            )
 
             if "exists" in response:
                 response["found"] = response["exists"]
@@ -155,6 +153,7 @@ class ElasticResourceAsyncClient(BaseElasticResourceClient):
                         index=self.config.index,
                         body={"query": {"bool": {"must": [{"term": {"_id": item_id}}]}}},
                         size=1,
+                        **(self._get_projected_fields_from_param(projection) or {}),
                     )
                     docs = self._parse_hits(response)
                     return docs.first()
@@ -180,7 +179,9 @@ class ElasticResourceAsyncClient(BaseElasticResourceClient):
         search_request = req if isinstance(req, SearchRequest) else SearchRequest(where=req)
 
         if isinstance(search_request.where, dict) and set(search_request.where.keys()) == {"_id"}:
-            return await self.find_by_id(search_request.where["_id"], self._get_projected_fields(search_request) or {})
+            return await self.find_by_id(
+                search_request.where["_id"], self._get_projected_fields_from_request(search_request) or {}
+            )
 
         try:
             response = await self.elastic.search(**self._get_find_one_args(search_request))

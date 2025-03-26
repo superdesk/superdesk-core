@@ -150,6 +150,7 @@ class ArchiveBroadcastService(BaseService):
             repos = "archive,published,archived"
 
         req.args = {"source": json.dumps(query), "repo": repos}
+        # TODO-ASYNC[search]: Use `get_async` when upgrading this module
         return get_resource_service("search").get(req=req, lookup=None)
 
     def get_broadcast_items_from_master_story(self, item, include_archived_repo=False):

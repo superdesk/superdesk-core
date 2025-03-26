@@ -21,6 +21,7 @@ from superdesk.utc import utcnow
 from apps.archive.common import ITEM_MARK, ITEM_UNMARK
 
 
+# TODO-ASYNC[search]: Is this used anywhere?
 def get_marked_items(desk_id):
     """Get items marked for given desk"""
     query = {
@@ -30,6 +31,7 @@ def get_marked_items(desk_id):
     }
     request = ParsedRequest()
     request.args = {"source": json.dumps(query), "repo": "archive,published"}
+    # TODO-ASYNC[search]: Use `get_async` when upgrading this module
     return list(get_resource_service("search").get(req=request, lookup=None))
 
 

@@ -27,10 +27,10 @@ logger = logging.getLogger(__name__)
 
 
 async def _validate_content_type(item: ResourceModel, _) -> None:
-    item = cast(ContentTypes, item)
+    item = cast(ContentTypesResourceModel, item)
     if not item.content_type or item.content_type.lower() == "text":
         return
-    if await ContentTypes.get_service().count({"type": item.content_type, "_id": {"$ne": item.id}}) > 0:
+    if await ContentTypesResourceModel.get_service().count({"type": item.content_type, "_id": {"$ne": item.id}}) > 0:
         msg: LiteralString = gettext("Only 1 instance is allowed.")
         raise PydanticCustomError("unique", msg)
 
@@ -43,7 +43,7 @@ class WidgetConfig(ResourceModel):
     is_displayed: bool
 
 
-class ContentTypes(ResourceModel):
+class ContentTypesResourceModel(ResourceModel):
     content_type: Annotated[str | None, validate_content_type, Field(alias="type")] = None
     label: Annotated[str, validate_iunique_value_async("content_types", "label")]
     icon: str | None = None

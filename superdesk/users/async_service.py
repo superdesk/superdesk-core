@@ -138,10 +138,10 @@ def get_sign_off(user):
     Gets sign_off property on user if it's not set already.
     """
 
-    if SIGN_OFF not in user or user[SIGN_OFF] is None:
+    if not getattr(user, SIGN_OFF, None):
         set_sign_off(user)
 
-    return user[SIGN_OFF]
+    return getattr(user, SIGN_OFF, None)
 
 
 class UsersAsyncService(AsyncResourceService[UsersResourceModel]):
@@ -223,28 +223,30 @@ class UsersAsyncService(AsyncResourceService[UsersResourceModel]):
                 await send_user_type_changed_email([user.to_dict().get("email")])
 
     async def on_create(self, docs: list[UsersResourceModel]) -> None:
-        for user_doc in docs:
-            user_dict = user_doc.to_dict()
-            user_dict.setdefault("password_changed_on", utcnow())
-            user_dict.setdefault("display_name", get_display_name(user_doc))
-            user_dict.setdefault(SIGN_OFF, set_sign_off(user_doc))
-            user_dict.setdefault("role", await get_resource_service("roles").get_default_role_id_async())
-            if user_dict.get("avatar"):
-                user_dict.setdefault("avatar_renditions", self.get_avatar_renditions(user_dict.get("avatar")))
+        for doc in docs:
+            if not doc.password_changed_on:
+                doc.password_changed_on = utcnow()
+            if not doc.display_name:
+                doc.display_name = get_display_name(doc)
+            if not doc.sign_off:
+                set_sign_off(doc)
+            if not doc.role:
+                doc.role = await get_resource_service("roles").get_default_role_id_async()
+            if doc.avatar:
+                doc.avatar_renditions = self.get_avatar_renditions(doc.avatar)
 
-            get_resource_service("preferences").set_user_initial_prefs(user_doc)
-            user_doc = UsersResourceModel(**user_dict)
+            get_resource_service("preferences").set_user_initial_prefs(doc)
 
     async def on_created(self, docs: list[UsersResourceModel]) -> None:
-        for user_doc in docs:
-            await self.__update_user_defaults(user_doc)
+        for doc in docs:
+            await self.__update_user_defaults(doc)
             add_activity(
                 ACTIVITY_CREATE,
                 "created user {{user}}",
                 self.resource_name,
-                user=user_doc.to_dict().get("display_name", user_doc.to_dict().get("username")),
+                user=doc.display_name or doc.username or doc.email,
             )
-            await self.update_stage_visibility_for_user(user_doc)
+            await self.update_stage_visibility_for_user(doc)
 
     async def on_update(self, updates: dict[str, Any], original: UsersResourceModel) -> None:
         """Overriding the method to:
@@ -329,25 +331,17 @@ class UsersAsyncService(AsyncResourceService[UsersResourceModel]):
         await self.__clear_locked_items(str(doc.to_dict().get("_id")))
         await self.__handle_status_changed(updates={"is_enabled": False, "is_active": False}, user=doc)
 
-    async def on_fetched(self, document):
-        for doc in document["_items"]:
-            await self.__update_user_defaults(doc)
-
-    async def on_fetched_item(self, doc: UsersResourceModel):
-        await self.__update_user_defaults(doc)
-
     async def __update_user_defaults(self, doc: UsersResourceModel):
         """Set default fields for users"""
-        user_dict = doc.to_dict()
-        user_dict.pop("password", None)
-        user_dict.setdefault("display_name", get_display_name(doc))
-        user_dict.setdefault("is_enabled", user_dict.get("is_active"))
-        user_dict.setdefault(SIGN_OFF, set_sign_off(doc))
-        user_dict["dateline_source"] = get_app_config("ORGANIZATION_NAME_ABBREVIATION")
-        doc = UsersResourceModel(**user_dict)
+        doc.password = None
+        doc.display_name = get_display_name(doc)
+        doc.is_enabled = doc.is_active
+        if not doc.sign_off:
+            set_sign_off(doc)
+        doc.dateline_source = get_app_config("ORGANIZATION_NAME_ABBREVIATION")
 
-    async def user_is_waiting_activation(self, doc: UsersResourceModel):
-        return doc.to_dict().get("needs_activation", False)
+    def user_is_waiting_activation(self, doc: UsersResourceModel) -> bool:
+        return doc.needs_activation is True
 
     async def is_user_active(self, doc: UsersResourceModel):
         return doc.to_dict().get("is_active", False)
@@ -360,9 +354,7 @@ class UsersAsyncService(AsyncResourceService[UsersResourceModel]):
         return None
 
     async def set_privileges(self, user: UsersResourceModel, role):
-        user_dict = user.to_dict()
-        user_dict["active_privileges"] = get_privileges(user, role)
-        user = UsersResourceModel(**user_dict)
+        user.active_privileges = get_privileges(user, role)
 
     async def get_invisible_stages_async(self, user_id) -> list:
         return await get_invisible_stages_async(user_id) if user_id else []
@@ -400,7 +392,7 @@ class UsersAsyncService(AsyncResourceService[UsersResourceModel]):
     async def update_stage_visibility_for_user(self, user: UsersResourceModel):
         if not self._updating_stage_visibility:
             return
-        user_id = user.to_dict().get("_id", "")
+        user_id = user.id
         try:
             logger.info("Updating Stage Visibility for user {}.".format(user_id))
             stages = await self.get_invisible_stages_ids(user_id)
@@ -427,12 +419,8 @@ class DBUsersAsyncService(UsersAsyncService):
     async def on_create(self, docs: list[UsersResourceModel]) -> None:
         await super().on_create(docs)
         for doc in docs:
-            user_dict = doc.to_dict()
-            if user_dict.get("password", None) and not is_hashed(user_dict.get("password")):
-                user_dict["password"] = get_hash(
-                    user_dict.get("password"), get_app_config("BCRYPT_GENSALT_WORK_FACTOR", 12)
-                )
-                doc = UsersResourceModel(**user_dict)
+            if doc.password and not is_hashed(doc.password):
+                doc.password = get_hash(doc.password, get_app_config("BCRYPT_GENSALT_WORK_FACTOR", 12))
 
     async def on_created(self, docs: list[UsersResourceModel]) -> None:
         """Send email to user with reset password token."""

@@ -13,6 +13,7 @@ class TestSearchProvider(SearchProvider):
     def find(self, query):
         request = ParsedRequest()
         request.args = {"source": json.dumps(query), "repo": "archive,published"}
+        # TODO-ASYNC[search]: Use `get_async` when upgrading this module
         return get_resource_service("search").get(req=request, lookup=None)
 
     def fetch(self, guid):

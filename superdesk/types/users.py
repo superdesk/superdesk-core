@@ -44,6 +44,7 @@ class UsersResourceModel(ResourceModelWithObjectId):
     avatar_renditions: dict[str, Any] | None = Field(default=None)
     role: Annotated[ObjectId | None, validate_data_relation_async("roles")] = None
     privileges: dict[str, Any] = Field(default_factory=dict)
+    active_privileges: dict[str, Any] = Field(default_factory=dict)
     workspace: dict[str, Any] = Field(default_factory=dict)
     user_type: UserTypeEnum = Field(default=UserTypeEnum.USER)
     is_support: bool = Field(default=False)
@@ -68,9 +69,11 @@ class UsersResourceModel(ResourceModelWithObjectId):
     slack_username: str | None = None
     # The Slack user id is stored here to avoid repeat look ups
     slack_user_id: str | None = None
-    session_preferences: dict[str, Any] = Field(default_factory=dict)
-    user_preferences: dict[str, Any] = Field(default_factory=dict)
+    preferences: dict[str, Any] | None = None
+    session_preferences: dict[str, Any] | None = None
+    user_preferences: dict[str, Any] | None = None
     last_activity_at: datetime | None = None
+    dateline_source: str | None = None
 
     @classmethod
     async def get_by_user_type(cls, user_type: UserTypeEnum = UserTypeEnum.USER) -> list["UsersResourceModel"]:

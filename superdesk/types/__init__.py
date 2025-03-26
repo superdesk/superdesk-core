@@ -19,7 +19,7 @@ from .desks import DesksResourceModel
 from .users import UsersResourceModel, UserTypeEnum
 from .vocabularies import VocabulariesResourceModel
 
-from .content_types import ContentTypes
+from .content_types import ContentTypesResourceModel
 from .products import ProductsResource, ProductTypes, ProductFilterType, ProductContentFilter
 from .subscribers import SubscribersResource, SubscriberDestination, SubscriberSequenceSettings, SubscriberType
 from .sequences import SequencesResource
@@ -38,6 +38,8 @@ from .publish import (
     PublishExchangeRouter,
     PublishComponentType,
 )
+from .archive import ArchiveResourceModel
+from .base import ItemOperation, ContentTypes
 
 __all__ = [
     "DeskTypeEnum",
@@ -54,7 +56,7 @@ __all__ = [
     "UserTypeEnum",
     "DesksResourceModel",
     "VocabulariesResourceModel",
-    "ContentTypes",
+    "ContentTypesResourceModel",
     "ProductsResource",
     "ProductTypes",
     "ProductFilterType",
@@ -86,6 +88,9 @@ __all__ = [
     "MacroActionType",
     "MacroReplaceType",
     "MacroModule",
+    "ArchiveResourceModel",
+    "ItemOperation",
+    "ContentTypes",
 ]
 
 

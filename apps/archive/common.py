@@ -415,6 +415,7 @@ def generate_unique_id_and_name(item, repo_type=ARCHIVE):
     """
 
     try:
+        # TODO-ASYNC[sequences]: Use async version when upgrading this module to async
         unique_id = get_resource_service("sequences").get_next_sequence_number(
             key_name="{}_SEQ".format(repo_type.upper())
         )

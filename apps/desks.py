@@ -331,12 +331,9 @@ class DesksService(AsyncBaseService):
         # find display_name from the users document for each member in desks document
         for desk in res["_items"]:
             if "members" in desk:
-                users = tuple(
-                    user
-                    async for user in db_users.find(
-                        {"_id": {"$in": [member["user"] for member in desk.get("members", [])]}}, {"display_name": 1}
-                    )
-                )
+                users = await db_users.find(
+                    {"_id": {"$in": [member["user"] for member in desk.get("members", [])]}}, {"display_name": 1}
+                ).to_list()
                 members_set |= {(m["_id"], m["display_name"]) for m in users}
 
         if members_set:
