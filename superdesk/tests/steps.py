@@ -2394,7 +2394,7 @@ async def when_we_get_visible_stages(context, no_of_stages):
 async def when_we_get_invisible_stages_for_user(context, no_of_stages):
     data = json.loads(apply_placeholders(context, context.text))
     async with context.app.test_request_context(context.app.config["URL_PREFIX"]):
-        stages = get_resource_service("users").get_invisible_stages(data["user"])
+        stages = await get_resource_service("users").get_invisible_stages_async(data["user"])
         assert len(stages) == int(no_of_stages)
 
 

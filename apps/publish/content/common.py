@@ -378,6 +378,7 @@ class BasePublishService(BaseService):
 
         if not publishing_warnings_confirmed:
             for key, associated_item in original.get(ASSOCIATIONS).items():
+                # TODO-ASYNC: Convert this to use async resource when upgrading this module
                 if associated_item and is_related_content(key):
                     item = archive_service.find_one(req=None, _id=associated_item.get("_id"))
                     item = item if item else associated_item
@@ -430,6 +431,7 @@ class BasePublishService(BaseService):
         """Common updates for published items."""
         desk = None
         if original.get("task", {}).get("desk"):
+            # TODO-ASYNC[desks]: Use DesksResourceModel async service where when upgrading this module
             desk = get_resource_service("desks").find_one(req=None, _id=original["task"]["desk"])
         if not original.get("ingest_provider"):
             updates["source"] = (
@@ -779,6 +781,7 @@ class BasePublishService(BaseService):
 
     def _fix_related_references(self, updated, updates):
         for key, item in updated[ASSOCIATIONS].items():
+            # TODO-ASYNC: Convert this to use async resource when upgrading this module
             if item and item.get("_fetchable", True) and is_related_content(key):
                 updated[ASSOCIATIONS][key] = {
                     "_id": item["_id"],

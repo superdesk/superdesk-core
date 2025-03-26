@@ -4,7 +4,7 @@ import pymongo
 from eve.utils import ParsedRequest
 from eve.methods.common import resolve_document_etag
 
-from superdesk.services import BaseService
+from superdesk.services import BaseService, CacheableService
 from superdesk.resource_fields import ETAG
 from superdesk.utc import utcnow
 from superdesk.errors import SuperdeskApiError
@@ -113,7 +113,7 @@ class AsyncBaseService(BaseService):
         return await self.backend.get_from_mongo_async(self.datasource, req=req, lookup=lookup)
 
     async def get_all_async(self):
-        return await self.get_from_mongo(None, {}).sort("_id")
+        return (await self.get_from_mongo_async(None, {})).sort("_id")
 
     async def find_and_modify_async(self, query, update, **kwargs):
         return await self.backend.find_and_modify_async(self.datasource, filter=query, update=update, **kwargs)
@@ -148,7 +148,7 @@ class AsyncBaseService(BaseService):
             self._resolve_defaults(doc)
         self.on_create(docs)
         await self.on_create_async(docs)
-        ids = await self.create(docs, **kwargs)
+        ids = await self.create_async(docs, **kwargs)
         self.on_created(docs)
         await self.on_created_async(docs)
         return ids
@@ -237,3 +237,7 @@ class AsyncBaseService(BaseService):
             "_error": {"code": 400, "_message": "Unable to update {}.".format(self.datasource)},
             "items": items,
         }
+
+
+class CachableAsyncBaseService(AsyncBaseService, CacheableService):
+    pass

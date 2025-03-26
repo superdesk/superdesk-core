@@ -186,6 +186,7 @@ class NINJSFeedParser(FeedParser):
 
     def _format_qcodes(self, items: List[Dict[str, Any]], cv_name: Optional[str] = None) -> List[Dict[str, Any]]:
         subjects = []
+        # TODO-ASYNC[vocabularies]: Use VocabulariesService async service where when upgrading this module
         cv = get_resource_service("vocabularies").find_one(req=None, _id=cv_name) or {}
         cv_items = {item["qcode"]: item for item in cv.get("items") or []}
 

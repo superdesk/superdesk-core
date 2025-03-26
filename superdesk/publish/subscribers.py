@@ -19,7 +19,7 @@ from superdesk import get_resource_service
 from eve.utils import ParsedRequest
 from superdesk.utils import ListCursor, get_dict_hash
 from superdesk.resource import Resource, build_custom_hateoas
-from superdesk.services import CacheableService
+from superdesk.eve_async.service import CachableAsyncBaseService
 from superdesk.errors import SuperdeskApiError
 from superdesk.publish import SUBSCRIBER_TYPES  # NOQA
 from superdesk.metadata.utils import ProductTypes
@@ -109,28 +109,31 @@ class SubscribersResource(Resource):
     internal_resource = True
 
 
-class SubscribersService(CacheableService):
+class SubscribersService(CachableAsyncBaseService):
     cache_lookup = {"is_active": True}
     hide_fields = ("secret_token", "password", "apiKey", "access_key_id", "secret_access_key")
 
-    def get(self, req, lookup):
+    async def get_async(self, req, lookup):
         if req is None:
             req = ParsedRequest()
         if req.args and req.args.get("filter_condition"):
             filter_condition = json.loads(req.args.get("filter_condition"))
-            return self.hideConfigField(self._get_subscribers_by_filter_condition(filter_condition), self.hide_fields)
+            return self.hideConfigField(
+                await self._get_subscribers_by_filter_condition_async(filter_condition), self.hide_fields
+            )
 
-        return self.hideConfigField(list(super().get_from_mongo(req=req, lookup=lookup)), self.hide_fields)
+        cursor = await super().get_from_mongo_async(req=req, lookup=lookup)
+        return self.hideConfigField(list(cursor), self.hide_fields)
 
-    def on_create(self, docs):
+    async def on_create_async(self, docs):
         for doc in docs:
             self._validate_seq_num_settings(doc)
             self._validate_products_destinations(doc)
 
-    def on_created(self, docs):
+    async def on_created_async(self, docs):
         push_notification("subscriber:create", _id=[doc.get(ID_FIELD) for doc in docs])
 
-    def on_update(self, updates, original):
+    async def on_update_async(self, updates, original):
         self._validate_seq_num_settings(updates)
         subscriber = deepcopy(original)
         subscriber.update(updates)
@@ -150,17 +153,15 @@ class SubscribersService(CacheableService):
                     for field, value in destination["config"].items():
                         update_destination["config"].setdefault(field, value)
 
-    def on_updated(self, updates, original):
+    async def on_updated_async(self, updates, original):
         push_notification("subscriber:update", _id=[original.get(ID_FIELD)])
 
-    def on_deleted(self, doc):
-        get_resource_service("sequences").delete(lookup={"key": "ingest_providers_{_id}".format(_id=doc[ID_FIELD])})
+    async def on_deleted_async(self, doc):
+        await get_resource_service("sequences").delete_async(
+            lookup={"key": "ingest_providers_{_id}".format(_id=doc[ID_FIELD])}
+        )
 
-    def is_async(self, subscriber_id):
-        subscriber = self.find_one(req=None, _id=subscriber_id)
-        return subscriber and bool(subscriber.get("async", False))
-
-    def _get_subscribers_by_filter_condition(self, filter_condition):
+    async def _get_subscribers_by_filter_condition_async(self, filter_condition):
         """
         Searches all subscribers that has a content filter with the given filter condition
 
@@ -169,7 +170,7 @@ class SubscribersService(CacheableService):
         :param filter_condition: Filter condition to test
         :return: List of subscribers
         """
-        all_subscribers = list(super().get_from_mongo(req=None, lookup=None))
+        all_subscribers = list(await super().get_from_mongo_async(req=None, lookup=None))
         selected_products = {}
         selected_subscribers = {}
         selected_content_filters = {}
@@ -178,9 +179,14 @@ class SubscribersService(CacheableService):
         content_filter_service = get_resource_service("content_filters")
         product_service = get_resource_service("products")
 
+        # TODO-ASYNC[products]: Use async resource when upgrading this module
         existing_products = list(product_service.get_from_mongo(req=None, lookup=None))
+
+        # TODO-ASYNC[filter_conditions]: Use async resource when upgrading this module
         existing_filter_conditions = filter_condition_service.check_similar(filter_condition)
+
         for fc in existing_filter_conditions:
+            # TODO-ASYNC[content_filters]: Use async resource when upgrading this module
             existing_content_filters = content_filter_service.get_content_filters_by_filter_condition(fc["_id"])
             for pf in existing_content_filters:
                 selected_content_filters[pf["_id"]] = pf
@@ -237,6 +243,7 @@ class SubscribersService(CacheableService):
             )
 
         if subscriber.get("products"):
+            # TODO-ASYNC[products]: Use async resource when upgrading this module
             lookup = {ID_FIELD: {"$in": subscriber.get("products")}, "product_type": ProductTypes.API.value}
             products = get_resource_service("products").get_product_names(lookup)
             if products:
@@ -244,6 +251,7 @@ class SubscribersService(CacheableService):
                     payload={"products": 1}, message="Invalid Product Type. " "Products {}.".format(", ".join(products))
                 )
         if subscriber.get("api_products"):
+            # TODO-ASYNC[products]: Use async resource when upgrading this module
             lookup = {
                 ID_FIELD: {"$in": subscriber.get("api_products")},
                 "product_type": ProductTypes.DIRECT.value,
@@ -254,14 +262,6 @@ class SubscribersService(CacheableService):
                     payload={"products": 1},
                     message="Invalid Product Type. " "API Products {}.".format(", ".join(products)),
                 )
-
-    def get_subscriber_names(self, lookup):
-        """Get the subscriber names based on the lookup.
-        :param dict lookup: search criteria
-        :return list: list of subscriber name
-        """
-        subscribers = list(self.get_from_mongo(req=None, lookup=lookup))
-        return [subscriber["name"] for subscriber in subscribers]
 
     def _validate_seq_num_settings(self, subscriber):
         """
@@ -295,7 +295,7 @@ class SubscribersService(CacheableService):
 
         return True
 
-    def generate_sequence_number(self, subscriber):
+    async def generate_sequence_number_async(self, subscriber):
         """
         Generates Published Sequence Number for the passed subscriber
         """
@@ -307,6 +307,7 @@ class SubscribersService(CacheableService):
             min_seq_number = subscriber["sequence_num_settings"]["min"]
             max_seq_number = subscriber["sequence_num_settings"]["max"]
 
+        # TODO-ASYNC[sequences]: Use async resource once publish code is merged
         return get_resource_service("sequences").get_next_sequence_number(
             key_name="subscribers_{_id})".format(_id=subscriber[ID_FIELD]),
             max_seq_number=max_seq_number,

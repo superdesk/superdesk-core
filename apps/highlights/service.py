@@ -52,6 +52,7 @@ def get_highlighted_items(highlights_id):
     }
     request = ParsedRequest()
     request.args = {"source": json.dumps(query), "repo": "archive,published"}
+    # TODO-ASYNC[search]: Use `get_async` when upgrading this module
     return list(get_resource_service("search").get(req=request, lookup=None))
 
 
@@ -69,6 +70,7 @@ def init_highlight_package(doc):
 def init_default_content_profile(doc):
     if not doc.get("profile"):
         desk_id = doc.get("task", {}).get("desk")
+        # TODO-ASYNC[desks]: Use DesksResourceModel async service where when upgrading this module
         desk = get_resource_service("desks").find_one(req=None, _id=desk_id)
         doc["profile"] = desk.get("default_content_profile")
 

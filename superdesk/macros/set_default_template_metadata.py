@@ -22,6 +22,7 @@ def get_default_content_template(item, **kwargs):
         return
 
     if desk is None:
+        # TODO-ASYNC[desks]: Use DesksResourceModel async service where when upgrading this module
         desk = get_resource_service("desks").find_one(req=None, _id=desk_id)
     if not desk:
         logger.warning('Can\'t find desk with id "{desk_id}"'.format(desk_id=desk_id))
@@ -55,6 +56,7 @@ def set_default_template_metadata(item, **kwargs):
 
     data = content_template["data"]
 
+    # TODO-ASYNC[vocabularies]: Use VocabulariesService async service where when upgrading this module
     vocabularies = get_resource_service("vocabularies").get(req=None, lookup={"field_type": {"$exists": True}})
     for vocabulary in vocabularies:
         fields_to_exclude.append(vocabulary["_id"])

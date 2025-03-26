@@ -97,6 +97,7 @@ def get_content_filter(req=None):
         if "invisible_stages" in user:
             stages = user.get("invisible_stages")
         else:
+            # TODO-ASYNC[users]: Upgrade to async when updating this module
             stages = get_resource_service("users").get_invisible_stages_ids(user.get("_id"))
 
         if stages:
@@ -109,6 +110,7 @@ class PublishedItemResource(Resource):
         "aggregations": aggregations,
         "es_highlight": get_elastic_highlight_query,
         "default_sort": [("_updated", -1)],
+        # TODO-ASYNC[elastic]: Support async ``elastic_filter_callback``
         "elastic_filter_callback": get_content_filter,
         "projection": {
             "old_version": 0,
@@ -187,6 +189,7 @@ class PublishedItemService(BaseService, HighlightsSearchMixin):
     def set_defaults(self, doc):
         doc["item_id"] = doc[ID_FIELD]
         doc["versioncreated"] = utcnow()
+        # TODO-ASYNC[sequences]: Use async version when upgrading this module to async
         doc["publish_sequence_no"] = get_resource_service("sequences").get_next_sequence_number(self.SEQ_KEY_NAME)
         doc.pop(ID_FIELD, None)
         doc.pop("lock_user", None)
@@ -323,6 +326,7 @@ class PublishedItemService(BaseService, HighlightsSearchMixin):
 
             request = ParsedRequest()
             request.args = {"source": json.dumps(query), "repo": "archive,published"}
+            # TODO-ASYNC[search]: Use `get_async` when upgrading this module
             return list(get_resource_service("search").get(req=request, lookup=None))
         except Exception:
             return []

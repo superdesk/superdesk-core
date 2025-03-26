@@ -172,9 +172,9 @@ class NINJSFormatter(Formatter):
         self.can_export = True
         self.internal_renditions = get_app_config("NINJS_COMMON_RENDITIONS", []) + ["original"]
 
-    def format(self, article: dict, subscriber: dict, codes: list | None = None) -> list[tuple[int, str] | dict]:
+    async def format(self, article: dict, subscriber: dict, codes: list | None = None) -> list[tuple[int, str] | dict]:
         try:
-            pub_seq_num = superdesk.get_resource_service("subscribers").generate_sequence_number(subscriber)
+            pub_seq_num = await superdesk.get_resource_service("subscribers").generate_sequence_number_async(subscriber)
 
             ninjs = self._transform_to_ninjs(article, subscriber)
             return [(pub_seq_num, json.dumps(ninjs, default=json_serialize_datetime_objectId))]
@@ -281,6 +281,7 @@ class NINJSFormatter(Formatter):
             ninjs["evolvedfrom"] = article["rewrite_of"]
 
         if not ninjs.get("copyrightholder") and not ninjs.get("copyrightnotice") and not ninjs.get("usageterms"):
+            # TODO-ASYNC[vocabularies]: Use VocabulariesService async service where when upgrading this module
             ninjs.update(superdesk.get_resource_service("vocabularies").get_rightsinfo(article))
 
         if article.get("genre"):
@@ -384,6 +385,7 @@ class NINJSFormatter(Formatter):
 
         for key, item in article_associations.items():
             if item:
+                # TODO-ASYNC: Convert this to use async resource when upgrading this module
                 if is_related_content(key) and "_type" not in item:
                     orig_item = archive_service.find_one(req=None, _id=item["_id"])
                     orig_item["order"] = item.get("order", 1)
@@ -481,6 +483,7 @@ class NINJSFormatter(Formatter):
 
     def _format_place(self, article):
         vocabularies_service = superdesk.get_resource_service("vocabularies")
+        # TODO-ASYNC[vocabularies]: Use VocabulariesService async service where when upgrading this module
         locator_map = vocabularies_service.find_one(req=None, _id="locators")
         if locator_map and "items" in locator_map:
             locator_map["items"] = vocabularies_service.get_locale_vocabulary(
@@ -570,8 +573,10 @@ class NINJSFormatter(Formatter):
         return output
 
     def _format_authors(self, article: Item) -> List[NinjsAuthor]:
+        # TODO-ASYNC[users]: Upgrade this to async when updating this module
         users_service = superdesk.get_resource_service("users")
         vocabularies_service = superdesk.get_resource_service("vocabularies")
+        # TODO-ASYNC[vocabularies]: Use VocabulariesService async service where when upgrading this module
         job_titles_voc = vocabularies_service.find_one(None, _id="job_titles")
         if job_titles_voc and "items" in job_titles_voc:
             job_titles_voc["items"] = vocabularies_service.get_locale_vocabulary(

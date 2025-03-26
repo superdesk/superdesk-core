@@ -201,13 +201,17 @@ def validate_data_relation_async(
 UniqueValueType = str | list[str] | None
 
 
-def validate_unique_value_async(resource_name: str, field_name: str, error_string: str | None = None) -> AsyncValidator:
+def validate_unique_value_async(
+    resource_name: str | None = None, field_name: str | None = None, error_string: str | None = None
+) -> AsyncValidator:
     """Validate that the field is unique in the resource (case-sensitive)
 
     :param resource_name: The name of the resource where the field must be unique
     :param field_name: The name of the field where the field must be unique
     :param error_string: An optional custom error string if validation fails
     """
+    # "field_name" must have a default value because "resource_name" has one, but its value must be set.
+    assert field_name is not None, '"field_name" must be set'
 
     async def validate_unique_value_in_resource(item: ResourceModel, name: UniqueValueType) -> None:
         if name is None:
@@ -216,7 +220,7 @@ def validate_unique_value_async(resource_name: str, field_name: str, error_strin
         from superdesk.core import get_current_async_app
 
         app = get_current_async_app()
-        resource_config = app.resources.get_config(resource_name)
+        resource_config = app.resources.get_config(resource_name if resource_name else item.model_resource_name)
         collection = app.mongo.get_collection_async(resource_config.name)
 
         query = {"_id": {"$ne": item.id}, field_name: {"$in": name} if isinstance(name, list) else name}

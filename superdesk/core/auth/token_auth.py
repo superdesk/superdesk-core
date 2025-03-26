@@ -8,6 +8,7 @@ from superdesk.utc import utcnow
 from superdesk.core import json, get_app_config
 from superdesk.core.types import Request
 from superdesk import get_resource_service
+from superdesk.types import UsersResourceModel
 from superdesk.errors import SuperdeskApiError
 from superdesk.resource_fields import LAST_UPDATED, ID_FIELD
 
@@ -54,9 +55,7 @@ class TokenAuthorization(UserAuthProtocol):
             await self.stop_session(request)
             raise SuperdeskApiError.unauthorizedError()
 
-        user_service = get_resource_service("users")
-        user_id = str(auth_token["user"])
-        user = user_service.find_one(req=None, _id=user_id)
+        user = await UsersResourceModel.get_service().find_by_id_raw(auth_token["user"])
 
         if not user:
             await self.stop_session(request)
@@ -88,7 +87,7 @@ class TokenAuthorization(UserAuthProtocol):
 
         user_service = get_resource_service("users")
         request.storage.request.set("user", user)
-        request.storage.request.set("role", user_service.get_role(user))
+        request.storage.request.set("role", await user_service.get_role_async(user))
         request.storage.request.set("auth", auth_token)
         request.storage.request.set("auth_value", auth_token["user"])
 

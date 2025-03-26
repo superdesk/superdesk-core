@@ -29,10 +29,14 @@ from superdesk.users.errors import UserInactiveError, UserNotRegisteredException
 from superdesk.notification import push_notification
 from superdesk.types import UsersResourceModel
 
+from .services import get_invisible_stages_async
+
 logger = logging.getLogger(__name__)
 
 
-def get_display_name(user):
+def get_display_name(user: dict | UsersResourceModel):
+    if isinstance(user, UsersResourceModel):
+        user = user.to_dict()
     if user.get("first_name") or user.get("last_name"):
         display_name = "%s %s" % (user.get("first_name", ""), user.get("last_name", ""))
         return display_name.strip()
@@ -93,27 +97,30 @@ def is_sensitive_update(updates):
     return "role" in updates or "privileges" in updates or "user_type" in updates
 
 
-def get_invisible_stages(user_id):
-    user_desks = list(get_resource_service("user_desks").get(req=None, lookup={"user_id": user_id}))
-    user_desk_ids = [d["_id"] for d in user_desks]
-    return get_resource_service("stages").get_stages_by_visibility(False, user_desk_ids)
-
-
-def set_sign_off(user):
+def set_sign_off(user: dict | UsersResourceModel):
     """
     Set sign_off property on user if it's not set already.
     """
 
-    if SIGN_OFF not in user or user[SIGN_OFF] is None:
+    current_sign_off = getattr(user, SIGN_OFF, None)
+    if current_sign_off is None:
         sign_off_mapping = get_app_config("SIGN_OFF_MAPPING", None)
-        if sign_off_mapping and sign_off_mapping in user:
-            user[SIGN_OFF] = user[sign_off_mapping]
-        elif SIGN_OFF in user and user[SIGN_OFF] is None:
-            user[SIGN_OFF] = ""
-        elif "first_name" not in user or "last_name" not in user:
-            user[SIGN_OFF] = user["username"][:3].upper()
+        if sign_off_mapping and hasattr(user, sign_off_mapping):
+            setattr(user, SIGN_OFF, getattr(user, sign_off_mapping))
+        elif hasattr(user, SIGN_OFF):
+            setattr(user, SIGN_OFF, "")
+        elif not hasattr(user, "first_name") or not hasattr(user, "last_name"):
+            setattr(user, SIGN_OFF, getattr(user, "username", "")[:3].upper())
         else:
-            user[SIGN_OFF] = "{first_name[0]}{last_name[0]}".format(**user)
+            first_name = getattr(user, "first_name", "")
+            sign_off_value = ""
+            if first_name:
+                sign_off_value = first_name[0]
+
+            last_name = getattr(user, "last_name", "")
+            if last_name:
+                sign_off_value += last_name[0]
+            setattr(user, SIGN_OFF, sign_off_value)
 
 
 def update_sign_off(updates):
@@ -131,10 +138,10 @@ def get_sign_off(user):
     Gets sign_off property on user if it's not set already.
     """
 
-    if SIGN_OFF not in user or user[SIGN_OFF] is None:
+    if not getattr(user, SIGN_OFF, None):
         set_sign_off(user)
 
-    return user[SIGN_OFF]
+    return getattr(user, SIGN_OFF, None)
 
 
 class UsersAsyncService(AsyncResourceService[UsersResourceModel]):
@@ -151,7 +158,7 @@ class UsersAsyncService(AsyncResourceService[UsersResourceModel]):
             updates["session_preferences"] = {}
 
             # send email notification
-            can_send_mail = get_resource_service("preferences").email_notification_is_enabled(
+            can_send_mail = await get_resource_service("preferences").email_notification_is_enabled_async(
                 user_id=user.to_dict().get("_id")
             )
 
@@ -209,35 +216,37 @@ class UsersAsyncService(AsyncResourceService[UsersResourceModel]):
         user_type = updates.get("user_type", None)
 
         if user_type is not None and user_type == "external":
-            can_send_mail = get_resource_service("preferences").email_notification_is_enabled(
+            can_send_mail = await get_resource_service("preferences").email_notification_is_enabled_async(
                 user_id=user.to_dict().get("_id")
             )
             if can_send_mail:
                 await send_user_type_changed_email([user.to_dict().get("email")])
 
     async def on_create(self, docs: list[UsersResourceModel]) -> None:
-        for user_doc in docs:
-            user_dict = user_doc.to_dict()
-            user_dict.setdefault("password_changed_on", utcnow())
-            user_dict.setdefault("display_name", get_display_name(user_doc))
-            user_dict.setdefault(SIGN_OFF, set_sign_off(user_doc))
-            user_dict.setdefault("role", get_resource_service("roles").get_default_role_id())
-            if user_dict.get("avatar"):
-                user_dict.setdefault("avatar_renditions", self.get_avatar_renditions(user_dict.get("avatar")))
+        for doc in docs:
+            if not doc.password_changed_on:
+                doc.password_changed_on = utcnow()
+            if not doc.display_name:
+                doc.display_name = get_display_name(doc)
+            if not doc.sign_off:
+                set_sign_off(doc)
+            if not doc.role:
+                doc.role = await get_resource_service("roles").get_default_role_id_async()
+            if doc.avatar:
+                doc.avatar_renditions = self.get_avatar_renditions(doc.avatar)
 
-            get_resource_service("preferences").set_user_initial_prefs(user_doc)
-            user_doc = UsersResourceModel(**user_dict)
+            get_resource_service("preferences").set_user_initial_prefs(doc)
 
     async def on_created(self, docs: list[UsersResourceModel]) -> None:
-        for user_doc in docs:
-            await self.__update_user_defaults(user_doc)
+        for doc in docs:
+            await self.__update_user_defaults(doc)
             add_activity(
                 ACTIVITY_CREATE,
                 "created user {{user}}",
                 self.resource_name,
-                user=user_doc.to_dict().get("display_name", user_doc.to_dict().get("username")),
+                user=doc.display_name or doc.username or doc.email,
             )
-            await self.update_stage_visibility_for_user(user_doc)
+            await self.update_stage_visibility_for_user(doc)
 
     async def on_update(self, updates: dict[str, Any], original: UsersResourceModel) -> None:
         """Overriding the method to:
@@ -258,7 +267,7 @@ class UsersAsyncService(AsyncResourceService[UsersResourceModel]):
 
     async def on_updated(self, updates: dict[str, Any], original: UsersResourceModel) -> None:
         if "role" in updates or "privileges" in updates:
-            get_resource_service("preferences").on_update(updates, original)
+            await get_resource_service("preferences").on_update_async(updates, original)
         await self.__handle_status_changed(updates, original)
         await self.handle_user_type_changed(updates, original)
         await self.__send_notification(updates, original)
@@ -322,25 +331,17 @@ class UsersAsyncService(AsyncResourceService[UsersResourceModel]):
         await self.__clear_locked_items(str(doc.to_dict().get("_id")))
         await self.__handle_status_changed(updates={"is_enabled": False, "is_active": False}, user=doc)
 
-    async def on_fetched(self, document):
-        for doc in document["_items"]:
-            await self.__update_user_defaults(doc)
-
-    async def on_fetched_item(self, doc: UsersResourceModel):
-        await self.__update_user_defaults(doc)
-
     async def __update_user_defaults(self, doc: UsersResourceModel):
         """Set default fields for users"""
-        user_dict = doc.to_dict()
-        user_dict.pop("password", None)
-        user_dict.setdefault("display_name", get_display_name(doc))
-        user_dict.setdefault("is_enabled", user_dict.get("is_active"))
-        user_dict.setdefault(SIGN_OFF, set_sign_off(doc))
-        user_dict["dateline_source"] = get_app_config("ORGANIZATION_NAME_ABBREVIATION")
-        doc = UsersResourceModel(**user_dict)
+        doc.password = None
+        doc.display_name = get_display_name(doc)
+        doc.is_enabled = doc.is_active
+        if not doc.sign_off:
+            set_sign_off(doc)
+        doc.dateline_source = get_app_config("ORGANIZATION_NAME_ABBREVIATION")
 
-    async def user_is_waiting_activation(self, doc: UsersResourceModel):
-        return doc.to_dict().get("needs_activation", False)
+    def user_is_waiting_activation(self, doc: UsersResourceModel) -> bool:
+        return doc.needs_activation is True
 
     async def is_user_active(self, doc: UsersResourceModel):
         return doc.to_dict().get("is_active", False)
@@ -353,15 +354,13 @@ class UsersAsyncService(AsyncResourceService[UsersResourceModel]):
         return None
 
     async def set_privileges(self, user: UsersResourceModel, role):
-        user_dict = user.to_dict()
-        user_dict["active_privileges"] = get_privileges(user, role)
-        user = UsersResourceModel(**user_dict)
+        user.active_privileges = get_privileges(user, role)
 
-    def get_invisible_stages(self, user_id) -> list:
-        return get_invisible_stages(user_id) if user_id else []
+    async def get_invisible_stages_async(self, user_id) -> list:
+        return await get_invisible_stages_async(user_id) if user_id else []
 
-    def get_invisible_stages_ids(self, user_id) -> list:
-        return [str(stage["_id"]) for stage in self.get_invisible_stages(user_id)]
+    async def get_invisible_stages_ids(self, user_id) -> list:
+        return [str(stage["_id"]) for stage in await self.get_invisible_stages_async(user_id)]
 
     async def get_user_by_email(self, email_address: str) -> UsersResourceModel | None:
         """Finds a user by the given email_address.
@@ -385,9 +384,7 @@ class UsersAsyncService(AsyncResourceService[UsersResourceModel]):
         if not self._updating_stage_visibility:
             return
         logger.info("Updating Stage Visibility Started")
-        cursor = await self.find({})
-        users = await cursor.to_list()
-        for user in users:
+        async for user in self.get_all():
             await self.update_stage_visibility_for_user(user)
 
         logger.info("Updating Stage Visibility Completed")
@@ -395,10 +392,10 @@ class UsersAsyncService(AsyncResourceService[UsersResourceModel]):
     async def update_stage_visibility_for_user(self, user: UsersResourceModel):
         if not self._updating_stage_visibility:
             return
-        user_id = user.to_dict().get("_id", "")
+        user_id = user.id
         try:
             logger.info("Updating Stage Visibility for user {}.".format(user_id))
-            stages = self.get_invisible_stages_ids(user_id)
+            stages = await self.get_invisible_stages_ids(user_id)
             await self.system_update(user_id, {"invisible_stages": stages})
             user.invisible_stages = stages
             logger.info("Updated Stage Visibility for user {}.".format(user_id))
@@ -422,12 +419,8 @@ class DBUsersAsyncService(UsersAsyncService):
     async def on_create(self, docs: list[UsersResourceModel]) -> None:
         await super().on_create(docs)
         for doc in docs:
-            user_dict = doc.to_dict()
-            if user_dict.get("password", None) and not is_hashed(user_dict.get("password")):
-                user_dict["password"] = get_hash(
-                    user_dict.get("password"), get_app_config("BCRYPT_GENSALT_WORK_FACTOR", 12)
-                )
-                doc = UsersResourceModel(**user_dict)
+            if doc.password and not is_hashed(doc.password):
+                doc.password = get_hash(doc.password, get_app_config("BCRYPT_GENSALT_WORK_FACTOR", 12))
 
     async def on_created(self, docs: list[UsersResourceModel]) -> None:
         """Send email to user with reset password token."""

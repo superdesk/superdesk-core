@@ -1,4 +1,5 @@
 from typing import Any, Sequence
+import logging
 from quart_babel import gettext as _
 
 from superdesk import get_resource_service
@@ -8,8 +9,11 @@ from superdesk.core.resources import AsyncResourceService
 from superdesk.errors import SuperdeskApiError
 from superdesk.notification import push_notification
 from superdesk.resource_fields import ID_FIELD
-from superdesk.types import DesksResourceModel
+from superdesk.types import DesksResourceModel, UsersResourceModel
 from superdesk.types.enums import DeskTypeEnum
+
+
+logger = logging.getLogger(__name__)
 
 
 class DesksAsyncService(AsyncResourceService[DesksResourceModel]):
@@ -59,10 +63,10 @@ class DesksAsyncService(AsyncResourceService[DesksResourceModel]):
         return docs
 
     async def on_created(self, docs: list[DesksResourceModel]) -> None:
-        users_service = get_resource_service("users")
+        users_service = UsersResourceModel.get_service()
         for doc in docs:
             push_notification(self.notification_key, created=1, desk_id=str(doc.id))
-            users_service.update_stage_visibility_for_users()
+            await users_service.update_stage_visibility_for_users()  # type: ignore[attr-defined]
 
     async def on_update(self, updates: dict[str, Any], original: DesksResourceModel) -> None:
         if updates.get("content_expiry") == 0:
@@ -96,8 +100,7 @@ class DesksAsyncService(AsyncResourceService[DesksResourceModel]):
             3. The desk is associated with routing rule(s)
         """
 
-        as_default_desk = get_resource_service("users").get(req=None, lookup={"desk": doc.id})
-        if as_default_desk and as_default_desk.count():
+        if await UsersResourceModel.get_service().count({"desk": doc.id}):
             raise SuperdeskApiError.preconditionFailedError(
                 message=_("Cannot delete desk as it is assigned as default desk to user(s).")
             )
@@ -137,12 +140,12 @@ class DesksAsyncService(AsyncResourceService[DesksResourceModel]):
         return await super().delete_many(lookup)
 
     async def on_deleted(self, doc: DesksResourceModel):
-        desk_user_ids = [str(member["user"]) for member in doc.members]
+        desk_user_ids = [str(member.user) for member in doc.members]
         push_notification(self.notification_key, deleted=1, user_ids=desk_user_ids, desk_id=str(doc.id))
 
     async def __send_notification(self, updates: dict[str, Any], desk: DesksResourceModel):
         desk_id = desk.id
-        users_service = get_resource_service("users")
+        users_service = UsersResourceModel.get_service()
 
         if "members" in updates:
             added, removed = self.__compare_members(desk.members, updates["members"])
@@ -152,22 +155,28 @@ class DesksAsyncService(AsyncResourceService[DesksResourceModel]):
                 )
 
             for added_user in added:
-                user = users_service.find_one(req=None, _id=added_user)
+                user = await users_service.find_by_id(added_user)
+                if user is None:
+                    logger.warning(f"Failed sending notification to user '{added_user}: user not found")
+                    continue
                 activity = add_activity(
                     ACTIVITY_UPDATE,
                     "user {{user}} has been added to desk {{desk}}: Please re-login.",
                     self.resource_name,
                     notify=added,
                     can_push_notification=False,
-                    user=user.get("username"),
+                    user=user.username,
                     desk=desk.name,
                 )
                 push_notification("activity", _dest=activity["recipients"])
-                users_service.update_stage_visibility_for_user(user)
+                await users_service.update_stage_visibility_for_user(user)  # type: ignore[attr-defined]
 
             for removed_user in removed:
-                user = users_service.find_one(req=None, _id=removed_user)
-                users_service.update_stage_visibility_for_user(user)
+                user = await users_service.find_by_id(removed_user)
+                if user is None:
+                    logger.warning(f"Failed sending notification to user '{added_user}: user not found")
+                    continue
+                await users_service.update_stage_visibility_for_user(user)  # type: ignore[attr-defined]
 
         else:
             push_notification(self.notification_key, updated=1, desk_id=str(desk_id))

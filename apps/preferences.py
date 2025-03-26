@@ -8,6 +8,7 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
+from typing import cast
 import logging
 import superdesk
 
@@ -15,8 +16,9 @@ from superdesk.flask import request
 from superdesk.resource_fields import ID_FIELD
 from superdesk.preferences import get_user_notification_preferences
 from superdesk.resource import Resource
-from superdesk.services import BaseService
+from superdesk.eve_async.service import AsyncBaseService
 from superdesk import get_backend, get_resource_service
+from superdesk.types import UsersResourceModel, User
 from superdesk.workflow import get_privileged_actions
 from superdesk.validation import ValidationError
 from quart_babel import gettext as _, lazy_gettext
@@ -34,10 +36,10 @@ def init_app(app) -> None:
     endpoint_name = "preferences"
     service = PreferencesService(endpoint_name, backend=get_backend())
     PreferencesResource(endpoint_name, app=app, service=service)
-    app.on_session_end -= service.on_session_end
-    app.on_session_end += service.on_session_end
-    app.on_role_privileges_updated -= service.on_role_privileges_updated
-    app.on_role_privileges_updated += service.on_role_privileges_updated
+    app.on_session_end -= service.on_session_end_async
+    app.on_session_end += service.on_session_end_async
+    app.on_role_privileges_updated -= service.on_role_privileges_updated_async
+    app.on_role_privileges_updated += service.on_role_privileges_updated_async
     superdesk.intrinsic_privilege(resource_name=endpoint_name, method=["PATCH"])
 
 
@@ -245,22 +247,22 @@ class PreferencesResource(Resource):
     superdesk.register_default_user_preference("assignment:notification", {})
 
 
-class PreferencesService(BaseService):
-    def on_session_end(self, user_id, session_id, is_last_session):
-        service = get_resource_service("users")
-        user_doc = service.find_one(req=None, _id=user_id)
+class PreferencesService(AsyncBaseService):
+    async def on_session_end_async(self, user_id, session_id, is_last_session):
+        users_service = UsersResourceModel.get_service()
 
         if is_last_session:
-            service.system_update(user_id, {_session_preferences_key: {}}, user_doc)
+            await users_service.system_update(user_id, {_session_preferences_key: {}})
+        else:
+            user_doc = await users_service.find_by_id_raw(user_id)
+            session_prefs = user_doc.get(_session_preferences_key, {}).copy()
 
-        session_prefs = user_doc.get(_session_preferences_key, {}).copy()
+            if not isinstance(session_id, str):
+                session_id = str(session_id)
 
-        if not isinstance(session_id, str):
-            session_id = str(session_id)
-
-        if session_id in session_prefs:
-            del session_prefs[session_id]
-            service.system_update(user_id, {_session_preferences_key: session_prefs}, user_doc)
+            if session_id in session_prefs:
+                del session_prefs[session_id]
+                await users_service.system_update(user_id, {_session_preferences_key: session_prefs})
 
     def set_session_based_prefs(self, session_id, user_id):
         service = get_resource_service("users")
@@ -275,29 +277,38 @@ class PreferencesService(BaseService):
         service.system_update(user_id, {_session_preferences_key: session_prefs}, user_doc)
 
     def set_user_initial_prefs(self, user_doc):
-        if _user_preferences_key not in user_doc:
-            orig_user_prefs = user_doc.get(_preferences_key, {})
-            available = available_user_preferences()
-            available.update(orig_user_prefs)
-            user_doc[_user_preferences_key] = available
+        if isinstance(user_doc, UsersResourceModel):
+            if not user_doc.user_preferences:
+                orig_user_prefs = user_doc.preferences or {}
+                available = available_user_preferences()
+                available.update(orig_user_prefs)
+                user_doc.user_preferences = available
+        else:
+            if _user_preferences_key not in user_doc:
+                orig_user_prefs = user_doc.get(_preferences_key, {})
+                available = available_user_preferences()
+                available.update(orig_user_prefs)
+                user_doc[_user_preferences_key] = available
 
-    def find_one(self, req, **lookup):
+    async def find_one_async(self, req, **lookup):
+        # TODO-ASYNC[auth]: Use async ``sessions`` when available
         session = get_resource_service("sessions").find_one(req=None, _id=lookup["_id"])
-        _id = session["user"] if session else lookup["_id"]
-        doc = get_resource_service("users").find_one(req, _id=_id)
+        user_id = session["user"] if session else lookup["_id"]
+
+        doc = await UsersResourceModel.get_service().find_by_id_raw(user_id)
         if doc:
-            doc["_id"] = session["_id"] if session else _id
+            doc["_id"] = session["_id"] if session else user_id
         return doc
 
-    def on_fetched_item(self, doc):
+    async def on_fetched_item_async(self, doc):
         session_id = request.view_args["_id"]
         session_prefs = doc.get(_session_preferences_key, {}).get(session_id, {})
         doc[_session_preferences_key] = session_prefs
-        self.enhance_document_with_user_privileges(doc)
+        await self.enhance_document_with_user_privileges_async(doc)
         enhance_document_with_default_prefs(doc)
         self._filter_preferences_by_privileges(doc)
 
-    def on_update(self, updates, original):
+    async def on_update_async(self, updates, original):
         existing_user_preferences = original.get(_user_preferences_key, {}).copy()
         existing_session_preferences = original.get(_session_preferences_key, {}).copy()
 
@@ -326,45 +337,46 @@ class PreferencesService(BaseService):
             existing_user_preferences.update(user_prefs)
             updates[_user_preferences_key] = existing_user_preferences
 
-    def update(self, id, updates, original):
+    async def update_async(self, id, updates, original):
         session = get_resource_service("sessions").find_one(req=None, _id=original["_id"])
         original_unpatched = self.backend.find_one(self.datasource, req=None, _id=session["user"])
         updated = original_unpatched.copy()
         updated.update(updates)
         del updated["_id"]
-        res = self.backend.update(self.datasource, original_unpatched["_id"], updated, original_unpatched)
+        res = await super().update_async(original_unpatched["_id"], updated, original_unpatched)
         updates.update(updated)
         # Return only the patched session prefs
         session_prefs = updates.get(_session_preferences_key, {}).get(str(original["_id"]), {})
         updates[_session_preferences_key] = session_prefs
-        self.enhance_document_with_user_privileges(updates)
+        await self.enhance_document_with_user_privileges_async(updates)
         enhance_document_with_default_prefs(updates)
         return res
 
-    def enhance_document_with_user_privileges(self, user_doc):
-        role_doc = get_resource_service("users").get_role(user_doc)
-        get_resource_service("users").set_privileges(user_doc, role_doc)
+    async def enhance_document_with_user_privileges_async(self, user_doc):
+        users_service = get_resource_service("users")
+        role_doc = await users_service.get_role_async(user_doc)
+        users_service.set_privileges(user_doc, role_doc)
         user_doc[_action_key] = get_privileged_actions(user_doc[_privileges_key])
 
-    def get_user_preference(self, user_id):
+    async def get_user_preference_async(self, user_id):
         """
         This function returns preferences for the user.
         """
-        doc = get_resource_service("users").find_one(req=None, _id=user_id)
+        doc = await UsersResourceModel.get_service().find_by_id_raw(user_id)
         if doc is None:
             return {}
         prefs = doc.get(_user_preferences_key, {})
         return prefs
 
-    def email_notification_is_enabled(self, user_id=None) -> bool:
+    async def email_notification_is_enabled_async(self, user_id=None) -> bool:
         """
         This function checks if email notification is enabled or not based on the preferences.
         """
         if user_id:
-            user = get_resource_service("users").find_one(req=None, _id=user_id)
+            user = await UsersResourceModel.get_service().find_by_id_raw(user_id)
             if not user:
                 return False
-            return get_user_notification_preferences(user)["email"]
+            return get_user_notification_preferences(cast(User, user))["email"]
         return False
 
     def is_authorized(self, **kwargs):
@@ -377,13 +389,14 @@ class PreferencesService(BaseService):
         if not kwargs.get("_id") or not kwargs.get("user_id"):
             return False
 
+        # TODO-ASYNC[auth]: Use async ``sessions`` when available
         session = get_resource_service("sessions").find_one(req=None, _id=kwargs.get("_id"))
         if not session:
             return False
 
         return str(kwargs.get("user_id")) == str(session.get("user"))
 
-    def on_role_privileges_updated(self, role, role_users):
+    async def on_role_privileges_updated_async(self, role, role_users):
         """Runs when user privilage has been updated.
 
         Update the session for active user so that preferences can be reloaded.
@@ -397,9 +410,9 @@ class PreferencesService(BaseService):
         logger.info("On_Role_Privileges_Updated: Updating Users for Role:{}.".format(role.get(ID_FIELD)))
         for user in role_users:
             try:
-                super().update(user[ID_FIELD], {}, user)
+                await super().update_async(user[ID_FIELD], {}, user)
             except Exception:
-                logger.warn(
+                logger.warning(
                     "On_Role_Privileges_Updated:Failed to update user:{} with role:{}.".format(
                         user.get(ID_FIELD), role.get(ID_FIELD)
                     ),

@@ -15,6 +15,7 @@ from contextlib import contextmanager
 
 # Moved `generate_guid` from here to superdesk.core.utils
 # Keeping import here so other code still works
+from superdesk.core.resources.model import ResourceModel
 from superdesk.core.utils import generate_guid, GUID_TAG, GUID_NEWSML  # noqa
 from superdesk.core import get_app_config
 from superdesk.utils import SuperdeskBaseEnum
@@ -133,12 +134,23 @@ def generate_tag_from_url(url, prefix="tag"):
 
 def is_normal_package(doc):
     """
-    Returns True if the passed doc is a package. Otherwise, returns False.
+    returns true if the passed doc is a package. otherwise, returns false.
 
-    :return: True if it's a Package, False otherwise.
+    :return: true if it's a package, false otherwise.
     """
 
     return doc[ITEM_TYPE] == CONTENT_TYPE.COMPOSITE
+
+
+def is_normal_package_async(doc: ResourceModel) -> bool:
+    """
+    returns true if the passed doc is a package. otherwise, returns false.
+
+    This method is to be used with ResourceModel, in async context.
+
+    :return: true if it's a package, false otherwise.
+    """
+    return doc.type == CONTENT_TYPE.COMPOSITE
 
 
 class ProductTypes(SuperdeskBaseEnum):

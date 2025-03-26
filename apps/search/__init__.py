@@ -11,10 +11,13 @@
 import superdesk
 
 from copy import deepcopy
-from eve_elastic.elastic import set_filters
+from eve_elastic.elastic import set_filters, fix_query
 
-from superdesk.core import json, get_current_app, get_app_config
+from superdesk.core import json, get_current_app, get_app_config, get_current_async_app
+from superdesk.core.resources.cursor import ElasticsearchResourceCursorAsync
 from superdesk.resource_fields import ITEMS
+from superdesk.types import ArchiveResourceModel
+from superdesk.eve_async.service import AsyncBaseService
 from superdesk import get_resource_service
 from superdesk.metadata.item import CONTENT_STATE, ITEM_STATE, get_schema
 from superdesk.metadata.utils import aggregations as common_aggregations, item_url, _set_highlight_query
@@ -22,9 +25,10 @@ from apps.archive.archive import SOURCE as ARCHIVE, ArchiveResource, private_con
 from superdesk.resource import build_custom_hateoas
 from apps.publish.published_item import published_item_fields
 from superdesk import es_utils
+from superdesk.utils import ListCursor
 
 
-class SearchService(superdesk.Service):
+class SearchService(AsyncBaseService):
     """Federated search service.
 
     It can search against different collections like Ingest, Production, Archived etc.. at the same time.
@@ -156,9 +160,35 @@ class SearchService(superdesk.Service):
         if "invisible_stages" in user:
             stages = user.get("invisible_stages")
         else:
+            # TODO-ASYNC[users]: Upgrade to async when updating this module
             stages = get_resource_service("users").get_invisible_stages_ids(user.get("_id"))
 
         return stages
+
+    async def get_stages_to_exclude_async(self):
+        """
+        Returns the list of the current users invisible stages
+        """
+        user = get_current_app().get_current_user_dict() or {}
+        if "invisible_stages" in user:
+            stages = user.get("invisible_stages")
+        else:
+            stages = await get_resource_service("users").get_invisible_stages_ids_async(user.get("_id"))
+
+        return stages
+
+    def _get_es_index(self, resource_name: str) -> str:
+        return get_current_app().data.elastic._resource_index(resource_name)
+
+    def _get_projection(self, req) -> list[str]:
+        fields = self._get_projected_fields(req)
+        projection = (fields or "").split(",")
+
+        if projection and "type" not in projection:
+            # Make sure `type` is always included in the projection
+            projection.append("type")
+
+        return projection
 
     def get(self, req, lookup):
         """
@@ -192,6 +222,40 @@ class SearchService(superdesk.Service):
 
         return docs
 
+    async def get_async(self, req, lookup):
+        """
+        Runs elastic search on multiple doc types.
+        """
+
+        query = self._get_query(req)
+        projection = self._get_projection(req)
+        types = self._get_types(req)
+        excluded_stages = await self.get_stages_to_exclude_async()
+        filters = self._get_filters(types, excluded_stages)
+
+        # if the system has a setting value for the maximum search depth then apply the filter
+        if not get_app_config("MAX_SEARCH_DEPTH") == -1:
+            query["terminate_after"] = get_app_config("MAX_SEARCH_DEPTH")
+
+        if filters:
+            set_filters(query, filters)
+
+        async_app = get_current_async_app()
+        indexes = [async_app.elastic.get_elastic_index_name(resource) for resource in types]
+
+        elastic = ArchiveResourceModel.get_service().elastic
+        hits = await elastic.search(fix_query(query), indexes, projection)
+        cursor = self.elastic._parse_hits(hits, types[0])
+
+        for resource in types:
+            response = {ITEMS: [doc for doc in cursor if doc["_type"] == resource]}
+            app = get_current_app().as_any()
+            getattr(app, "on_fetched_resource")(resource, response)
+            await getattr(app, "on_fetched_resource_%s_async" % resource).call_async(response)
+            getattr(app, "on_fetched_resource_%s" % resource)(response)
+
+        return cursor
+
     def _get_docs(self, hits):
         """Parse hits from elastic and return only docs.
 
@@ -201,17 +265,21 @@ class SearchService(superdesk.Service):
         """
         return self.elastic._parse_hits(hits, "ingest")  # any resource with item schema will do
 
-    def find_one(self, req, **lookup):
+    async def find_one_async(self, req, **lookup):
         """Find item by id in all collections."""
         _id = lookup["_id"]
         for resource in self._get_types(req):
             id_field = "item_id" if resource == "published" else "_id"
             resource_lookup = {id_field: _id}
-            item = get_resource_service(resource).find_one(req=req, **resource_lookup)
+            service = get_resource_service(resource)
+            if hasattr(service, "find_one_async"):
+                item = await service.find_one_async(req=req, **resource_lookup)
+            else:
+                item = service.find_one(req=req, **resource_lookup)
             if item:
                 return item
 
-    def on_fetched(self, doc):
+    async def on_fetched_async(self, doc):
         """
         Overriding to add HATEOS for each individual item in the response.
 

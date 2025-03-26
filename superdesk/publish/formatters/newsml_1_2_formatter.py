@@ -51,7 +51,7 @@ class NewsML12Formatter(Formatter):
     name = "NewsML 1.2"
     type = "newsml12"
 
-    def format(self, article: dict, subscriber: dict, codes: list | None = None) -> list[tuple[int, str] | dict]:
+    async def format(self, article: dict, subscriber: dict, codes: list | None = None) -> list[tuple[int, str] | dict]:
         """
         Create article in NewsML1.2 format
 
@@ -63,7 +63,7 @@ class NewsML12Formatter(Formatter):
         :raises FormatterError: if the formatter fails to format an article
         """
         try:
-            pub_seq_num = superdesk.get_resource_service("subscribers").generate_sequence_number(subscriber)
+            pub_seq_num = await superdesk.get_resource_service("subscribers").generate_sequence_number_async(subscriber)
             self.now = utcnow()
             self.string_now = self.now.strftime("%Y%m%dT%H%M%S+0000")
 
@@ -227,6 +227,7 @@ class NewsML12Formatter(Formatter):
         :param dict article:
         :param Element main_news_component:
         """
+        # TODO-ASYNC[vocabularies]: Use VocabulariesService async service where when upgrading this module
         rights = superdesk.get_resource_service("vocabularies").get_rightsinfo(article)
 
         rights_metadata = SubElement(main_news_component, "RightsMetadata")

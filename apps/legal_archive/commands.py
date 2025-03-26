@@ -217,6 +217,7 @@ class LegalArchiveImport:
         history_update = history_item.get("update")
         if history_update:
             if history_update.get("task") and history_update.get("task").get("desk"):
+                # TODO-ASYNC[desks]: Use DesksResourceModel async service where when upgrading this module
                 desk = get_resource_service("desks").find_one(req=None, _id=str(history_update["task"]["desk"]))
                 if desk:
                     history_update["task"]["desk"] = desk.get("name")
@@ -251,6 +252,7 @@ class LegalArchiveImport:
         # De-normalizing Desk and Stage details
         if legal_archive_doc.get("task"):
             if legal_archive_doc["task"].get("desk"):
+                # TODO-ASYNC[desks]: Use DesksResourceModel async service where when upgrading this module
                 desk = get_resource_service("desks").find_one(req=None, _id=str(legal_archive_doc["task"]["desk"]))
                 if desk:
                     legal_archive_doc["task"]["desk"] = desk.get("name")
@@ -279,6 +281,7 @@ class LegalArchiveImport:
         if not user_id:
             return ""
 
+        # TODO-ASYNC[users]: Upgrade to async when updating this module
         user = get_resource_service("users").find_one(req=None, _id=user_id)
 
         if not user:
@@ -321,7 +324,9 @@ class LegalArchiveImport:
         logger.info("Get subscribers info for de-normalising queue items.")
         subscriber_ids = list({str(queue_item["subscriber_id"]) for queue_item in queue_items})
         query = {"$and": [{ID_FIELD: {"$in": subscriber_ids}}]}
+        # TODO-ASYNC[subscribers]: Use async resource when upgrading this module
         subscribers = list(get_resource_service("subscribers").get(req=None, lookup=query))
+
         subscribers = {str(subscriber[ID_FIELD]): subscriber for subscriber in subscribers}
 
         for queue_item in queue_items:

@@ -10,6 +10,7 @@ class PrivilegedResourceEndpointsTestCase(AsyncFlaskTestCase):
         "MODULES": [
             "tests.core.modules.users",
             "tests.core.modules.module_with_privileges",
+            "superdesk.users",
         ]
     }
 
@@ -37,13 +38,13 @@ class PrivilegedResourceEndpointsTestCase(AsyncFlaskTestCase):
 
     async def test_unauthorized_user_cannot_access_privileged_endpoint(self):
         regular_user = deepcopy(test_user)
-        regular_user["user_type"] = "unauthorized"
+        regular_user["user_type"] = "user"
 
         headers = [await self._get_auth_header(regular_user)]
         response = await self.test_client.get("/api/privileged_resource", headers=headers)
 
         response_data = await response.get_json()
-        self.assertEqual(response.status_code, 403)
+        self.assertEqual(response.status_code, 403, response_data)
         self.assertTrue("Insufficient privileges" in response_data["_message"])
 
     async def test_user_with_role_can_access_privileged_endpoint(self):
@@ -54,7 +55,7 @@ class PrivilegedResourceEndpointsTestCase(AsyncFlaskTestCase):
         self.app.data.insert("roles", roles)
 
         regular_user = deepcopy(test_user)
-        regular_user["user_type"] = "test_type"
+        regular_user["user_type"] = "user"
         regular_user["role"] = roles[0]["_id"]
 
         headers = [await self._get_auth_header(regular_user)]
@@ -70,7 +71,7 @@ class PrivilegedResourceEndpointsTestCase(AsyncFlaskTestCase):
         self.app.data.insert("roles", [can_create_only_role])
 
         regular_user = deepcopy(test_user)
-        regular_user["user_type"] = "test_type"
+        regular_user["user_type"] = "user"
         regular_user["role"] = can_create_only_role["_id"]
 
         # user should not be able to "GET" as the role only has "POST" privilege

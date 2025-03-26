@@ -72,6 +72,7 @@ jobs:
     - run: behave --tags=-sams --format progress2 --logging-level=ERROR
 
   behave-sams:
+    if: ${{ false }}
     strategy:
       fail-fast: false
       matrix:

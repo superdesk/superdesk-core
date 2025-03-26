@@ -14,11 +14,11 @@ import superdesk
 from superdesk.core import get_current_app
 from superdesk.activity import add_activity, ACTIVITY_UPDATE
 from superdesk.eve_async.service import AsyncBaseService
-from superdesk import get_resource_service
 from superdesk.errors import SuperdeskApiError
 from superdesk.notification import push_notification
 from superdesk.utils import compare_preferences
 from superdesk.resource import Resource
+from superdesk.types import UsersResourceModel
 
 
 logger = logging.getLogger(__name__)
@@ -73,7 +73,7 @@ class RolesService(AsyncBaseService):
         if docs.get("is_default"):
             raise SuperdeskApiError.forbiddenError("Cannot delete the default role")
         # check if there are any users in the role
-        user = get_resource_service("users").find_one(req=None, role=docs.get("_id"))
+        user = await UsersResourceModel.get_service().find_one(role=docs.get("_id"))
         if user:
             raise SuperdeskApiError.forbiddenError("Cannot delete the role, it still has users in it!")
 
@@ -83,23 +83,19 @@ class RolesService(AsyncBaseService):
         # make it no longer default
         if role_id:
             role = await self.find_one_async(req=None, is_default=True)
-            get_resource_service("roles").update(role_id, {"is_default": False}, role)
-
-    def get_default_role_id(self):
-        role = self.find_one(req=None, is_default=True)
-        return role.get("_id") if role is not None else None
+            await self.update_async(role_id, {"is_default": False}, role)
 
     async def get_default_role_id_async(self):
         role = await self.find_one_async(req=None, is_default=True)
         return role.get("_id") if role is not None else None
 
     async def on_updated_async(self, updates, role):
-        self.__send_notification(updates, role)
+        await self.__send_notification(updates, role)
 
-    def __send_notification(self, updates, role):
+    async def __send_notification(self, updates, role):
         role_id = role["_id"]
 
-        role_users = superdesk.get_resource_service("users").get_users_by_role(role_id)
+        role_users = await UsersResourceModel.get_by_user_role(role_id)
         notified_users = [user["_id"] for user in role_users]
 
         if "privileges" in updates:

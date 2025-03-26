@@ -339,6 +339,7 @@ def get_renditions_spec(without_internal_renditions=False, no_custom_crops=False
 
     if not no_custom_crops:
         # load custom renditions sizes
+        # TODO-ASYNC[vocabularies]: Use VocabulariesService async service where when upgrading this module
         custom_crops = get_resource_service("vocabularies").find_one(req=None, _id="crop_sizes")
         if custom_crops:
             for crop in custom_crops.get("items"):

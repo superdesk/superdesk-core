@@ -844,6 +844,7 @@ def generate_fields(item, fields=None, force=False, reload=False, original=None)
 def is_html(field) -> bool:
     field_id = get_field_id(field)
     if field_id != field:
+        # TODO-ASYNC[vocabularies]: Use VocabulariesService async service where when upgrading this module
         field_options = superdesk.get_resource_service("vocabularies").get_field_options(field_id)
         return field_options.get("single") is not True
     return field not in TEXT_FIELDS

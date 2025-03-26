@@ -88,6 +88,7 @@ class AP_ANPAFeedParser(ANPAFeedParser):
         :param item:
         :return:
         """
+        # TODO-ASYNC[vocabularies]: Use VocabulariesService async service where when upgrading this module
         category_code_map = get_resource_service("vocabularies").find_one(req=None, _id="ap_category_map")
         if category_code_map:
             map = {c["ap_code"]: c["category_code"] for c in category_code_map["items"] if c["is_active"]}

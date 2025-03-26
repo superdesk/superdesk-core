@@ -8,14 +8,14 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
-from typing import Dict, Any, Optional, Iterator, List, Tuple, Union, TypedDict
+from typing import Dict, Any, Optional, Iterator, List, Tuple, Union, TypedDict, cast
 import ast
 
 import simplejson as json
 from eve.io.mongo.parser import parse
 
 from superdesk.errors import SuperdeskApiError
-from superdesk.core.types import SearchRequest, SortParam, ElasticResourceConfig, ElasticClientConfig
+from superdesk.core.types import SearchRequest, SortParam, ElasticResourceConfig, ElasticClientConfig, ProjectedFieldArg
 from superdesk.core.resources import get_projection_from_request
 
 
@@ -138,11 +138,17 @@ class BaseElasticResourceClient:
     def _get_count_args(self, query: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
         return dict(index=self.config.index, body=query or {"query": {"match_all": {}}})
 
-    def _get_search_args(self, query: Dict[str, Any], indexes: Optional[List[str]] = None) -> Dict[str, Any]:
+    def _get_search_args(
+        self,
+        query: Dict[str, Any],
+        indexes: Optional[List[str]] = None,
+        projection: ProjectedFieldSources | ProjectedFieldArg | None = None,
+    ) -> Dict[str, Any]:
         return dict(
             index=indexes if indexes is not None else self.config.index,
             body=query,
             track_total_hits=self.config.track_total_hits,
+            **(self._get_projected_fields_from_param(projection) or {}),
         )
 
     def _get_find_args(
@@ -235,7 +241,7 @@ class BaseElasticResourceClient:
         return dict(
             index=self.config.index,
             track_total_hits=self.config.track_total_hits,
-            **(self._get_projected_fields(req) or {}),
+            **(self._get_projected_fields_from_request(req) or {}),
             body=query,
         )
 
@@ -249,11 +255,29 @@ class BaseElasticResourceClient:
         return dict(
             index=self.config.index,
             track_total_hits=self.config.track_total_hits,
-            **(self._get_projected_fields(req) or {}),
+            **(self._get_projected_fields_from_request(req) or {}),
             body=query,
         )
 
-    def _get_projected_fields(self, req: SearchRequest) -> ProjectedFieldSources | None:
+    def _get_projected_fields_from_param(
+        self, projection: ProjectedFieldSources | ProjectedFieldArg | None = None
+    ) -> ProjectedFieldSources | None:
+        # Check if ``_source`` or ``_source_excludes`` keys are in the projection param
+        # These are specific to the ``ProjectedFieldSources`` type and Elasticsearch itself
+        # So if these keys aren't there, then have received an instance of ``ProjectedFieldArg`` type
+        # and need to convert it to a ``ProjectedFieldSources`` instance.
+        if (
+            projection
+            and isinstance(projection, dict)
+            and not set(projection.keys()).intersection({"_source", "_source_excludes"})
+        ):
+            return self._get_projected_fields_from_request(
+                SearchRequest(projection=cast(ProjectedFieldArg, projection))
+            )
+
+        return None
+
+    def _get_projected_fields_from_request(self, req: SearchRequest) -> ProjectedFieldSources | None:
         projection_include, projection_fields = get_projection_from_request(req)
 
         if not projection_fields:

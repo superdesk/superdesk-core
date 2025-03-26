@@ -59,7 +59,7 @@ class EmailFormatter(Formatter):
     async def format(self, article: dict, subscriber: dict, codes: list | None = None) -> list[tuple[int, str] | dict]:  # type: ignore
         formatted_article = deepcopy(article)
         remove_all_embeds(formatted_article)
-        pub_seq_num = superdesk.get_resource_service("subscribers").generate_sequence_number(subscriber)
+        pub_seq_num = await superdesk.get_resource_service("subscribers").generate_sequence_number_async(subscriber)
         doc: dict[str, Any] = {}
         try:
             if formatted_article.get(FORMAT) == FORMATS.HTML:

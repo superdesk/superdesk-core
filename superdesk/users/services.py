@@ -13,10 +13,11 @@ from bson import ObjectId
 
 from superdesk.resource_fields import ID_FIELD, VERSION, LAST_UPDATED
 from superdesk.core import get_app_config
+from superdesk.types import DesksResourceModel
 from superdesk.flask import g
 from superdesk.activity import add_activity, ACTIVITY_CREATE, ACTIVITY_UPDATE
 from superdesk.metadata.item import SIGN_OFF
-from superdesk.services import BaseService
+from superdesk.eve_async.service import AsyncBaseService
 from superdesk.utils import is_hashed, get_hash, compare_preferences
 from superdesk import get_resource_service
 from superdesk.emails import send_user_status_changed_email, send_activate_account_email, send_user_type_changed_email
@@ -27,6 +28,7 @@ from superdesk.users.errors import UserInactiveError, UserNotRegisteredException
 from superdesk.notification import push_notification
 from superdesk.validation import ValidationError
 from superdesk.utils import ignorecase_query
+from apps.desks_async import add_member_to_desk
 
 logger = logging.getLogger(__name__)
 
@@ -93,8 +95,17 @@ def is_sensitive_update(updates):
 
 
 def get_invisible_stages(user_id):
+    # TODO-ASYNC[users]: Remove this once it's no longer needed
     user_desks = list(get_resource_service("user_desks").get(req=None, lookup={"user_id": user_id}))
     user_desk_ids = [d["_id"] for d in user_desks]
+    return get_resource_service("stages").get_stages_by_visibility(False, user_desk_ids)
+
+
+async def get_invisible_stages_async(user_id):
+    user_desk_ids = await DesksResourceModel.get_service().mongo_async.distinct(
+        "_id", {"members.user": [ObjectId(user_id)]}
+    )
+    # TODO-ASYNC[stages]: Upgrade to async when updating the ``stages`` module
     return get_resource_service("stages").get_stages_by_visibility(False, user_desk_ids)
 
 
@@ -136,7 +147,7 @@ def get_sign_off(user):
     return user[SIGN_OFF]
 
 
-class UsersService(BaseService):
+class UsersService(AsyncBaseService):
     _updating_stage_visibility = True
 
     def __is_invalid_operation(self, user, updates, method):
@@ -169,16 +180,19 @@ class UsersService(BaseService):
         if method == "PATCH" and is_sensitive_update(updates) and not current_user_has_privilege("users"):
             return "Insufficient privileges to update role/user_type/privileges"
 
-    def __handle_status_changed(self, updates, user):
+    async def __handle_status_changed_async(self, updates, user):
         enabled = updates.get("is_enabled", None)
         active = updates.get("is_active", None)
 
         if enabled is not None or active is not None:
+            # TODO-ASYNC[auth]: Upgrade to async when updating the ``auth`` module
             get_resource_service("auth").delete_action({"username": user.get("username")})  # remove active tokens
             updates["session_preferences"] = {}
 
             # send email notification
-            can_send_mail = get_resource_service("preferences").email_notification_is_enabled(user_id=user["_id"])
+            can_send_mail = await get_resource_service("preferences").email_notification_is_enabled_async(
+                user_id=user["_id"]
+            )
 
             status = ""
 
@@ -189,8 +203,7 @@ class UsersService(BaseService):
                 status = "enabled and active" if active else "enabled but inactive"
 
             if can_send_mail:
-                # TODO-ASYNC: Support async (see superdesk.tests.markers.requires_eve_resource_async_event)
-                send_user_status_changed_email([user.get("email")], status)
+                await send_user_status_changed_email([user.get("email")], status)
 
     def __send_notification(self, updates, user):
         user_id = user["_id"]
@@ -228,30 +241,32 @@ class UsersService(BaseService):
             push_notification("user", updated=1, user_id=str(user_id))
 
     def get_avatar_renditions(self, doc):
+        # TODO-ASYNC[upload]: Upgrade to async when updating the ``upload`` module
         renditions = get_resource_service("upload").find_one(req=None, _id=doc)
         return renditions.get("renditions") if renditions is not None else None
 
-    def handle_user_type_changed(self, updates, user):
+    async def handle_user_type_changed_async(self, updates, user):
         user_type = updates.get("user_type", None)
 
         if user_type is not None and user_type == "external":
-            can_send_mail = get_resource_service("preferences").email_notification_is_enabled(user_id=user["_id"])
+            can_send_mail = await get_resource_service("preferences").email_notification_is_enabled_async(
+                user_id=user["_id"]
+            )
             if can_send_mail:
-                # TODO-ASYNC: Support async (see superdesk.tests.markers.requires_eve_resource_async_event)
-                send_user_type_changed_email([user.get("email")])
+                await send_user_type_changed_email([user.get("email")])
 
-    def on_create(self, docs):
+    async def on_create_async(self, docs):
         for user_doc in docs:
             user_doc.setdefault("password_changed_on", utcnow())
             user_doc.setdefault("display_name", get_display_name(user_doc))
             user_doc.setdefault(SIGN_OFF, set_sign_off(user_doc))
-            user_doc.setdefault("role", get_resource_service("roles").get_default_role_id())
+            user_doc.setdefault("role", await get_resource_service("roles").get_default_role_id_async())
             if user_doc.get("avatar"):
                 user_doc.setdefault("avatar_renditions", self.get_avatar_renditions(user_doc["avatar"]))
 
             get_resource_service("preferences").set_user_initial_prefs(user_doc)
 
-    def on_created(self, docs):
+    async def on_created_async(self, docs):
         for user_doc in docs:
             self.__update_user_defaults(user_doc)
             add_activity(
@@ -260,9 +275,9 @@ class UsersService(BaseService):
                 self.datasource,
                 user=user_doc.get("display_name", user_doc.get("username")),
             )
-            self.update_stage_visibility_for_user(user_doc)
+            await self.update_stage_visibility_for_user_async(user_doc)
 
-    def on_update(self, updates, original):
+    async def on_update_async(self, updates, original):
         """Overriding the method to:
 
         1. Prevent user from the below:
@@ -283,14 +298,14 @@ class UsersService(BaseService):
         if updates.get("avatar"):
             updates["avatar_renditions"] = self.get_avatar_renditions(updates["avatar"])
 
-    def on_updated(self, updates, user):
+    async def on_updated_async(self, updates, user):
         if "role" in updates or "privileges" in updates:
-            get_resource_service("preferences").on_update(updates, user)
-        self.__handle_status_changed(updates, user)
-        self.handle_user_type_changed(updates, user)
+            await get_resource_service("preferences").on_update_async(updates, user)
+        await self.__handle_status_changed_async(updates, user)
+        await self.handle_user_type_changed_async(updates, user)
         self.__send_notification(updates, user)
 
-    def on_delete(self, user):
+    async def on_delete_async(self, user):
         """Overriding the method to prevent user from the below:
 
         1. Check if the user is updating his/her own status.
@@ -302,7 +317,7 @@ class UsersService(BaseService):
         if error_message:
             raise SuperdeskApiError.forbiddenError(message=error_message)
 
-    def delete(self, lookup):
+    async def delete_async(self, lookup):
         """
         Overriding the method to prevent from hard delete
         """
@@ -312,6 +327,7 @@ class UsersService(BaseService):
         )
 
     def __clear_locked_items(self, user_id):
+        # TODO-ASYNC[archive]: Upgrade to async when updating the ``archive`` module
         archive_service = get_resource_service("archive")
         archive_autosave_service = get_resource_service("archive_autosave")
 
@@ -331,12 +347,12 @@ class UsersService(BaseService):
             for item in items_locked_by_user:
                 # delete the item if nothing is saved so far
                 if item[VERSION] == 0 and item["state"] == "draft":
-                    get_resource_service("archive").delete(lookup={"_id": item["_id"]})
+                    archive_service.delete(lookup={"_id": item["_id"]})
                 else:
                     archive_service.update(item["_id"], doc_to_unlock, item)
                     archive_autosave_service.delete(lookup={"_id": item["_id"]})
 
-    def on_deleted(self, doc):
+    async def on_deleted_async(self, doc):
         """Overriding to add to activity stream and handle user clean up.
 
         1. Authenticated Sessions
@@ -351,13 +367,13 @@ class UsersService(BaseService):
             user=doc.get("display_name", doc.get("username")),
         )
         self.__clear_locked_items(str(doc["_id"]))
-        self.__handle_status_changed(updates={"is_enabled": False, "is_active": False}, user=doc)
+        await self.__handle_status_changed_async(updates={"is_enabled": False, "is_active": False}, user=doc)
 
-    def on_fetched(self, document):
+    async def on_fetched_async(self, document):
         for doc in document["_items"]:
             self.__update_user_defaults(doc)
 
-    def on_fetched_item(self, doc):
+    async def on_fetched_item_async(self, doc):
         self.__update_user_defaults(doc)
 
     def __update_user_defaults(self, doc):
@@ -375,6 +391,7 @@ class UsersService(BaseService):
     def is_user_active(self, doc):
         return doc.get("is_active", False)
 
+    # TODO-ASYNC[users]: Convert this to async when other modules can use it
     def get_role(self, user):
         if user:
             role_id = user.get("role", None)
@@ -382,10 +399,17 @@ class UsersService(BaseService):
                 return get_resource_service("roles").find_one(_id=role_id, req=None)
         return None
 
+    async def get_role_async(self, user):
+        if user:
+            role_id = user.get("role", None)
+            if role_id:
+                return await get_resource_service("roles").find_one_async(_id=role_id, req=None)
+        return None
+
     def set_privileges(self, user, role):
         user["active_privileges"] = get_privileges(user, role)
 
-    def get(self, req, lookup):
+    async def get_async(self, req, lookup):
         try:
             is_author = req.args["is_author"]
         except (AttributeError, TypeError, KeyError):
@@ -394,7 +418,7 @@ class UsersService(BaseService):
             if is_author in ("0", "1"):
                 lookup["is_author"] = bool(int(is_author))
             else:
-                logger.warn("bad value of is_author argument ({value})".format(value=is_author))
+                logger.warning("bad value of is_author argument ({value})".format(value=is_author))
 
         """filtering out inactive users and disabled users"""
 
@@ -414,20 +438,23 @@ class UsersService(BaseService):
             else:
                 lookup = {"is_enabled": True}
 
-        return super().get(req, lookup)
+        return await super().get_async(req, lookup)
 
-    def get_users_by_user_type(self, user_type="user"):
-        return list(self.get(req=None, lookup={"user_type": user_type}))
-
-    def get_users_by_role(self, role_id):
-        return list(self.get(req=None, lookup={"role": role_id}))
-
+    # TODO-ASYNC[users]: Remove this once it's no longer needed
     def get_invisible_stages(self, user_id):
         return get_invisible_stages(user_id) if user_id else []
 
+    async def get_invisible_stages_async(self, user_id):
+        return await get_invisible_stages_async(user_id) if user_id else []
+
+    # TODO-ASYNC[users]: Remove this once it's no longer needed
     def get_invisible_stages_ids(self, user_id):
         return [str(stage["_id"]) for stage in self.get_invisible_stages(user_id)]
 
+    async def get_invisible_stages_ids_async(self, user_id):
+        return [str(stage["_id"]) for stage in await self.get_invisible_stages_async(user_id)]
+
+    # TODO-ASYNC[users]: Upgrade this to async when updating the ``EMailRFC822FeedParser`` module
     def get_user_by_email(self, email_address):
         """Finds a user by the given email_address.
 
@@ -445,22 +472,46 @@ class UsersService(BaseService):
 
         return user
 
+    # TODO-ASYNC[users]: Remove this once it's no longer needed
     def update_stage_visibility_for_users(self):
         if not self._updating_stage_visibility:
             return
         logger.info("Updating Stage Visibility Started")
-        users = list(get_resource_service("users").get(req=None, lookup=None))
+        users = list(self.get(req=None, lookup=None))
         for user in users:
             self.update_stage_visibility_for_user(user)
 
         logger.info("Updating Stage Visibility Completed")
 
+    async def update_stage_visibility_for_users_async(self):
+        if not self._updating_stage_visibility:
+            return
+        logger.info("Updating Stage Visibility Started")
+        users = list(await self.get_async(req=None, lookup=None))
+        for user in users:
+            await self.update_stage_visibility_for_user_async(user)
+
+        logger.info("Updating Stage Visibility Completed")
+
+    # TODO-ASYNC[users]: Remove this once it's no longer needed
     def update_stage_visibility_for_user(self, user):
         if not self._updating_stage_visibility:
             return
         try:
             logger.info("Updating Stage Visibility for user {}.".format(user.get(ID_FIELD)))
             stages = self.get_invisible_stages_ids(user.get(ID_FIELD))
+            self.system_update(user.get(ID_FIELD), {"invisible_stages": stages}, user)
+            user["invisible_stages"] = stages
+            logger.info("Updated Stage Visibility for user {}.".format(user.get(ID_FIELD)))
+        except Exception:
+            logger.exception("Failed to update the stage visibility " "for user: {}".format(user.get(ID_FIELD)))
+
+    async def update_stage_visibility_for_user_async(self, user):
+        if not self._updating_stage_visibility:
+            return
+        try:
+            logger.info("Updating Stage Visibility for user {}.".format(user.get(ID_FIELD)))
+            stages = await self.get_invisible_stages_ids_async(user.get(ID_FIELD))
             self.system_update(user.get(ID_FIELD), {"invisible_stages": stages}, user)
             user["invisible_stages"] = stages
             logger.info("Updated Stage Visibility for user {}.".format(user.get(ID_FIELD)))
@@ -481,15 +532,16 @@ class DBUsersService(UsersService):
     Service class for UsersResource and should be used when AD is inactive.
     """
 
-    def on_create(self, docs):
-        super().on_create(docs)
+    async def on_create_async(self, docs):
+        await super().on_create_async(docs)
         for doc in docs:
             if doc.get("password", None) and not is_hashed(doc.get("password")):
                 doc["password"] = get_hash(doc.get("password"), get_app_config("BCRYPT_GENSALT_WORK_FACTOR", 12))
 
-    def on_created(self, docs):
+    async def on_created_async(self, docs):
         """Send email to user with reset password token."""
-        super().on_created(docs)
+        await super().on_created_async(docs)
+        # TODO-ASYNC[auth]: Upgrade to async when updating the ``auth`` module
         resetService = get_resource_service("reset_user_password")
         activate_ttl = get_app_config("ACTIVATE_ACCOUNT_TOKEN_TIME_TO_LIVE")
         for doc in docs:
@@ -500,11 +552,10 @@ class DBUsersService(UsersService):
                     raise SuperdeskApiError.internalError("Failed to send account activation email.")
                 tokenDoc.update({"username": doc["username"]})
 
-                # TODO-ASYNC: Support async (see superdesk.tests.markers.requires_eve_resource_async_event)
-                send_activate_account_email(tokenDoc, activate_ttl)
+                await send_activate_account_email(tokenDoc, activate_ttl)
 
-    def on_update(self, updates, user):
-        super().on_update(updates, user)
+    async def on_update_async(self, updates, user):
+        await super().on_update_async(updates, user)
         if updates.get("first_name") or updates.get("last_name"):
             updated_user = {
                 "first_name": user.get("first_name", ""),
@@ -517,6 +568,7 @@ class DBUsersService(UsersService):
                 updated_user["last_name"] = updates.get("last_name")
             updates["display_name"] = get_display_name(updated_user)
 
+    # TODO-ASYNC[users]: Upgrade this to async when updating the ``auth`` module
     def update_password(self, user_id, password):
         """Update the user password.
 
@@ -541,24 +593,25 @@ class DBUsersService(UsersService):
 
         self.patch(user_id, updates=updates)
 
-    def on_deleted(self, doc):
+    async def on_deleted_async(self, doc):
         """
         Overriding clean up reset password tokens:
         """
 
-        super().on_deleted(doc)
+        await super().on_deleted_async(doc)
+        # TODO-ASYNC[auth]: Upgrade to async when updating the ``auth`` module
         get_resource_service("reset_user_password").remove_all_tokens_for_email(doc.get("email"))
 
-    def _process_external_data(self, _data, update=False):
+    async def _process_external_data_async(self, _data, update=False):
         data = _data.copy()
         if data.get("role"):
             role_name = data.pop("role")
-            role = get_resource_service("roles").find_one(req=None, name=ignorecase_query(role_name))
+            role = await get_resource_service("roles").find_one_async(req=None, name=ignorecase_query(role_name))
             if role:
                 data["role"] = role["_id"]
         if not update and (data.get("desk") or get_app_config("USER_EXTERNAL_DESK")):
             desk_name = data.pop("desk", None) or get_app_config("USER_EXTERNAL_DESK")
-            desk = get_resource_service("desks").find_one(req=None, name=ignorecase_query(desk_name))
+            desk = await DesksResourceModel.get_service().find_one_raw(name=ignorecase_query(desk_name))
             if desk:
                 data["desk"] = desk["_id"]
         data["needs_activation"] = False
@@ -575,16 +628,16 @@ class DBUsersService(UsersService):
             raise ValidationError(validator.errors)
         return validator.normalized(data) if not update else data
 
-    def create_external_user(self, data):
-        docs = [self._process_external_data(data)]
-        self.on_create(docs)
-        self.create(docs)
+    async def create_external_user_async(self, data):
+        docs = [await self._process_external_data_async(data)]
+        await self.on_create_async(docs)
+        await self.create_async(docs)
         for user in docs:
             if user.get("desk"):
-                get_resource_service("desks").add_member(user["desk"], user["_id"])
+                await add_member_to_desk(user["desk"], user["_id"])
         return docs[0]
 
-    def update_external_user(self, _id, data):
-        orig = self.find_one(req=None, _id=ObjectId(_id))
-        updates = self._process_external_data(data, update=True)
-        self.system_update(ObjectId(_id), updates, orig)
+    async def update_external_user_async(self, _id, data):
+        orig = await self.find_one_async(req=None, _id=ObjectId(_id))
+        updates = await self._process_external_data_async(data, update=True)
+        await self.system_update_async(ObjectId(_id), updates, orig)

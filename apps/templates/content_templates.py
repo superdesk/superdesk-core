@@ -19,7 +19,7 @@ from superdesk.core import get_current_app, get_app_config
 from superdesk.resource_fields import ID_FIELD, DATE_CREATED, LAST_UPDATED, ETAG, VERSION, ITEMS
 from superdesk.flask import render_template_string
 from superdesk.services import BaseService
-from superdesk.types import ContentTypes
+from superdesk.types import ContentTypesResourceModel
 from superdesk import Resource, Service, get_resource_service
 from superdesk.utils import SuperdeskBaseEnum, plaintext_filter
 from superdesk.resource import build_custom_hateoas
@@ -469,6 +469,7 @@ class ContentTemplatesApplyService(Service):
         doc = docs[0] if len(docs) > 0 else {}
         template_name = doc.get("template_name")
         item = doc.get("item") or {}
+        # TODO-ASYNC[desks]: Use DesksResourceModel async service where when upgrading this module
         item["desk_name"] = get_resource_service("desks").get_desk_name(item.get("task", {}).get("desk"))
 
         if not template_name:
@@ -697,7 +698,7 @@ def create_template_for_profile(items):
         superdesk.get_resource_service(CONTENT_TEMPLATE_RESOURCE).post(templates)
 
 
-def create_template_for_content_type(item: ContentTypes) -> None:
+def create_template_for_content_type(item: ContentTypesResourceModel) -> None:
     create_template_for_profile([item.to_dict()])
 
 
