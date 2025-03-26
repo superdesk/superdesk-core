@@ -1,6 +1,7 @@
 import logging
 
 import pymongo
+from motor.motor_asyncio import AsyncIOMotorCursor
 from eve.utils import ParsedRequest
 from eve.methods.common import resolve_document_etag
 
@@ -103,7 +104,7 @@ class AsyncBaseService(BaseService):
             req = ParsedRequest()
         return await self.backend.get_async(self.datasource, req=req, lookup=lookup)
 
-    async def get_from_mongo_async(self, req, lookup, projection=None):
+    async def get_from_mongo_async(self, req, lookup, projection=None) -> AsyncIOMotorCursor:
         if req is None:
             req = ParsedRequest()
         if not req.projection and projection:
@@ -133,8 +134,8 @@ class AsyncBaseService(BaseService):
             if last_id is not None:
                 _lookup = {"_id": {"$gt": last_id}}
 
-            # TODO-ASYNC: Fix this - use async for cursor iteration
-            items = list(await self.get_from_mongo_async(req=None, lookup=_lookup).sort("_id").limit(size))
+            cursor = (await self.get_from_mongo_async(req=None, lookup=_lookup)).sort("_id").limit(size)
+            items = [item async for item in cursor]
             if not len(items):
                 break
             for item in items:
@@ -185,8 +186,8 @@ class AsyncBaseService(BaseService):
             lookup = {}
             docs = []
         else:
-            # TODO-ASYNC: Fix this
-            docs = list(doc for doc in self.get_from_mongo_async(None, lookup).sort("_id", pymongo.ASCENDING))
+            cursor = (await self.get_from_mongo_async(None, lookup)).sort("_id", pymongo.ASCENDING)
+            docs = [doc async for doc in cursor]
         if not docs:
             return self.delete_async(lookup)
         return self.delete_docs_async(docs)
