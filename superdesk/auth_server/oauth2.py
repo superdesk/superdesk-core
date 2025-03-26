@@ -6,61 +6,37 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
-import time
 import logging
-from authlib.integrations.flask_oauth2 import AuthorizationServer
-from authlib.oauth2.rfc6749 import grants
-from authlib.jose import jwt
-from superdesk.flask import Blueprint
-from .models import query_client, save_token
+
+from bson import ObjectId
+from bson.errors import InvalidId
+
+from superdesk import get_resource_service
+from superdesk.core.module import Module
+
+from .quart_oauth2 import OAuth2Server, OAuth2Client
+from .scopes import allowed_scopes
 
 
 logger = logging.getLogger(__name__)
 
-authorization = AuthorizationServer(
-    query_client=query_client,
-    save_token=save_token,
-)
 
+class SuperdeskOAuth2Server(OAuth2Server):
+    def query_client(self, client_id: str) -> OAuth2Client | None:
+        clients_service = get_resource_service("auth_server_clients")
+        try:
+            client_data = clients_service.find_one(req=None, _id=ObjectId(client_id))
+        except InvalidId as e:
+            logger.error("Invalid 'client_id' was provided. Exception: {}".format(e))
+            return None
 
-bp = Blueprint("auth_server", __name__)
+        if client_data is None:
+            return None
+
+        return OAuth2Client(client_data, auth_methods=["client_secret_basic"], allowed_scopes=allowed_scopes)
+
 
 TOKEN_ENDPOINT = "/auth_server/token"
-shared_secret = None
-expiration_delay = 0
+authorization = SuperdeskOAuth2Server(TOKEN_ENDPOINT)
 
-
-@bp.route(TOKEN_ENDPOINT, methods=["POST"])
-def issue_token():
-    return authorization.create_token_response()
-
-
-def generate_jwt_token(client, grant_type, user, scope):
-    header = {"alg": "HS256"}
-    payload = {
-        "iss": "Superdesk Auth Server",
-        "iat": int(time.time()),
-        "exp": int(time.time() + expiration_delay),
-        "client_id": client.client_id,
-        "scope": client.scope,
-    }
-    return jwt.encode(header, payload, shared_secret)
-
-
-def config_oauth(app):
-    global expiration_delay
-    expiration_delay = app.config["AUTH_SERVER_EXPIRATION_DELAY"]
-
-    global shared_secret
-    shared_secret = app.config["AUTH_SERVER_SHARED_SECRET"]
-    if not shared_secret.strip():
-        logger.warning(
-            "No shared secret set, please set it using AUTH_SERVER_SHARED_SECRET "
-            "environment variable or setting. Authorisation server can't be used"
-        )
-        return
-
-    app.config["OAUTH2_ACCESS_TOKEN_GENERATOR"] = generate_jwt_token
-    app.config["OAUTH2_TOKEN_EXPIRES_IN"] = {"client_credentials": expiration_delay}
-    authorization.init_app(app)
-    authorization.register_grant(grants.ClientCredentialsGrant)
+module = Module(name="superdesk.auth_server.oauth2", init=authorization.init_app)
