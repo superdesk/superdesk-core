@@ -16,10 +16,10 @@ from datetime import timedelta
 from superdesk.tests import TestCase, markers
 from superdesk.utc import utcnow
 from superdesk.errors import PublishHTTPPushServerError, PublishHTTPPushClientError
-from superdesk.publish_async.controller.consumers.celery_consumer import transmit_item
+from superdesk.publish_async.consumers.celery_consumer import transmit_item
 
 
-# TODO-ASYNC: Convert this to test the CeleryPublishConsumer
+# TODO-ASYNC-PUBLISH: Convert this to test the CeleryPublishConsumer
 
 
 @markers.requires_async_celery

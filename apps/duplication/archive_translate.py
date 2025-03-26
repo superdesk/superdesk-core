@@ -11,6 +11,7 @@
 
 import superdesk
 from superdesk.core import get_app_config
+from superdesk.eve_async.service import AsyncBaseService
 from apps.archive.archive import SOURCE as ARCHIVE, remove_is_queued
 from apps.content import push_content_notification
 from apps.auth import get_user_id
@@ -19,7 +20,6 @@ from superdesk.errors import SuperdeskApiError, InvalidStateTransitionError
 from superdesk.metadata.item import CONTENT_STATE, ITEM_STATE
 from superdesk.metadata.packages import RESIDREF
 from superdesk.resource import Resource
-from superdesk.services import BaseService
 from superdesk.workflow import is_workflow_state_transition_valid
 from superdesk.utc import utcnow
 from apps.packages import PackageService
@@ -47,8 +47,8 @@ class TranslateResource(Resource):
     privileges = {"POST": "translate"}
 
 
-class TranslateService(BaseService):
-    def _translate_item(self, guid, language, task=None, service=None, state=None, **kwargs):
+class TranslateService(AsyncBaseService):
+    async def _translate_item(self, guid, language, task=None, service=None, state=None, **kwargs):
         if not service:
             service = ARCHIVE
         archive_service = get_resource_service(service)
@@ -68,12 +68,14 @@ class TranslateService(BaseService):
         if package_service.is_package(item):
             refs = package_service.get_item_refs(item)
             for ref in refs:
-                ref[RESIDREF] = self._translate_item(ref[RESIDREF], language, service=ref.get("location"), task=task)
+                ref[RESIDREF] = await self._translate_item(
+                    ref[RESIDREF], language, service=ref.get("location"), task=task
+                )
 
         if not item.get("translation_id"):
             item["translation_id"] = item["guid"]
 
-        macros_service.execute_translation_macro(item, item.get("language", None), language)
+        await macros_service.execute_translation_macro(item, item.get("language", None), language)
 
         item["language"] = language
         item["translated_from"] = guid
@@ -89,7 +91,7 @@ class TranslateService(BaseService):
         UPDATE_TRANSLATION_METADATA_MACRO = get_app_config("UPDATE_TRANSLATION_METADATA_MACRO")
 
         if UPDATE_TRANSLATION_METADATA_MACRO and macros_service.get_macro_by_name(UPDATE_TRANSLATION_METADATA_MACRO):
-            macros_service.execute_macro(item, UPDATE_TRANSLATION_METADATA_MACRO)
+            await macros_service.execute_macro(item, UPDATE_TRANSLATION_METADATA_MACRO)
 
         translation_guid = archive_service.duplicate_item(
             item, extra_fields=extra_fields, state=state, operation="translate"
@@ -111,7 +113,7 @@ class TranslateService(BaseService):
 
         return translation_guid
 
-    def create(self, docs, **kwargs):
+    async def create_async(self, docs, **kwargs):
         ids = []
         for doc in docs:
             task = None
@@ -119,7 +121,7 @@ class TranslateService(BaseService):
                 # TODO-ASYNC[desks]: Use DesksResourceModel async service where when upgrading this module
                 desk = get_resource_service("desks").find_one(req=None, _id=doc["desk"]) or {}
                 task = dict(desk=desk.get("_id"), stage=desk.get("working_stage"), user=get_user_id())
-            ids.append(self._translate_item(doc["guid"], doc["language"], task, **kwargs))
+            ids.append(await self._translate_item(doc["guid"], doc["language"], task, **kwargs))
         return ids
 
 

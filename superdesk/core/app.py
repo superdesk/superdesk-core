@@ -17,6 +17,7 @@ from superdesk.core.types import WSGIApp
 from .types import DefaultNoValue
 from .auth.user_auth import UserAuthProtocol
 from .privileges import PrivilegesRegistry
+from .signals import SignalGroup, Signal
 
 
 CONFIG_DATA_TYPE = TypeVar("CONFIG_DATA_TYPE")
@@ -30,15 +31,10 @@ def get_app_config(key: str, default: Any | None = None) -> Any | None:
     application is available, it attempts to retrieve the configuration using the Quart current
     application context. If both approaches fail, the function raises an exception.
 
-    Args:
-        key (str): The configuration key to retrieve.
-        default (Any | None, optional): The default value to return if the key is not found. Defaults to None.
-
-    Returns:
-        Any | None: The value of the requested configuration key, or the default value if the key is not found.
-
-    Raises:
-        RuntimeError: If no application context or global application is running.
+    :param key: The configuration key to retrieve.
+    :param default: The default value to return if the key is not found. Defaults to None.
+    :return: The value of the requested configuration key, or the default value if the key is not found.
+    :raises RuntimeError: If no application context or global application is running.
     """
 
     if _global_app is not None:
@@ -62,19 +58,12 @@ def get_config(
     the specified key. If the key is not present in the configuration, a default value
     is used if provided. Otherwise, raises an error if the key is missing.
 
-    Parameters:
-        data_type (type[CONFIG_DATA_TYPE]): The expected type of the configuration value.
-        key (str): The configuration key to fetch the value for.
-        default (CONFIG_DATA_TYPE | object): Optional; The value to return if the
-            configuration key is not found. Defaults to `DefaultNoValue`, in which case
-            a `KeyError` is raised if the key is not found.
-
-    Returns:
-        CONFIG_DATA_TYPE: The configuration value, cast to the specified type.
-
-    Raises:
-        KeyError: Raised if the key is missing from the configuration and a default
-            value is not provided.
+    :param data_type: The expected type of the configuration value.
+    :param key: The configuration key to fetch the value for.
+    :param default: The value to return if the configuration key is not found.
+        Defaults to `DefaultNoValue`, in which case a `KeyError` is raised if the key is not found.
+    :return: The configuration value, cast to the specified type.
+    :raises KeyError: Raised if the key is missing from the configuration and a default value is not provided.
     """
 
     value = get_app_config(key, default)
@@ -84,7 +73,7 @@ def get_config(
     return cast(CONFIG_DATA_TYPE, value)
 
 
-class SuperdeskAsyncApp:
+class SuperdeskAsyncApp(SignalGroup):
     _running: bool
     _imported_modules: Dict[str, "Module"]
     _module_configs: dict[str, dict]
@@ -104,7 +93,10 @@ class SuperdeskAsyncApp:
 
     privileges: PrivilegesRegistry
 
+    on_app_shutdown: Signal["SuperdeskAsyncApp"]
+
     def __init__(self, wsgi: WSGIApp):
+        super().__init__()
         self._running = False
         self._imported_modules = {}
         self._module_configs = {}
@@ -235,6 +227,7 @@ class SuperdeskAsyncApp:
         and sets :attr:`running <superdesk.core.app.SuperdeskAsyncApp.running>` to False
         """
 
+        self.on_app_shutdown.send(self)
         self.mongo.stop()
         self._imported_modules.clear()
         self._remove_app()

@@ -36,6 +36,7 @@ class ContentAPITestCase(TestCase):
         config["AMAZON_CONTAINER_NAME"] = None  # force gridfs
         config["URL_PREFIX"] = ""
         config["MEDIA_PREFIX"] = "/assets"
+        config["PUBLISH_MODULES"] = []
         self.capi = get_app(config)
         self.capi.testing = True
 

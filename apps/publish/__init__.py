@@ -29,7 +29,7 @@ from apps.publish.content import (
     UnpublishResource,
     UnpublishService,
 )
-from apps.publish.enqueue import EnqueueContent
+
 from apps.publish.published_item import PublishedItemResource, PublishedItemService
 from apps.publish.content.published_package_items import PublishedPackageItemsService, PublishedPackageItemsResource
 
@@ -97,7 +97,3 @@ def init_app(app) -> None:
     superdesk.privilege(
         name="unpublish", label=lazy_gettext("Unpublish"), description=lazy_gettext("Unpublish a published content")
     )
-
-
-def enqueue_content():
-    EnqueueContent().run()

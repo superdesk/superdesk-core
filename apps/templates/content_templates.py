@@ -16,6 +16,7 @@ import jinja2.exceptions
 from copy import deepcopy
 
 from superdesk.core import get_current_app, get_app_config
+from superdesk.types import DesksResourceModel
 from superdesk.resource_fields import ID_FIELD, DATE_CREATED, LAST_UPDATED, ETAG, VERSION, ITEMS
 from superdesk.flask import render_template_string
 from superdesk.services import BaseService
@@ -196,6 +197,7 @@ class ContentTemplatesResource(Resource):
     }
 
 
+# TODO-ASYNC: Convert this to an async service
 class ContentTemplatesService(BaseService):
     def get(self, req, lookup):
         active_user = get_current_app().get_current_user_dict() or {}
@@ -465,12 +467,12 @@ class ContentTemplatesApplyResource(Resource):
 
 
 class ContentTemplatesApplyService(Service):
-    def create(self, docs, **kwargs):
+    async def on_create(self, docs):
+        # Populate the item from template in ``on_create`` as we need async code
         doc = docs[0] if len(docs) > 0 else {}
         template_name = doc.get("template_name")
         item = doc.get("item") or {}
-        # TODO-ASYNC[desks]: Use DesksResourceModel async service where when upgrading this module
-        item["desk_name"] = get_resource_service("desks").get_desk_name(item.get("task", {}).get("desk"))
+        item["desk_name"] = await DesksResourceModel.get_desk_name(item.get("task", {}).get("desk"))
 
         if not template_name:
             SuperdeskApiError.badRequestError(message="Invalid Template Name")
@@ -482,7 +484,7 @@ class ContentTemplatesApplyService(Service):
         if not template:
             SuperdeskApiError.badRequestError(message="Invalid Template")
 
-        updates = render_content_template(item, template)
+        updates = await render_content_template(item, template)
         item.update(updates)
 
         editor_utils.generate_fields(item, reload=True)
@@ -490,12 +492,15 @@ class ContentTemplatesApplyService(Service):
         if template_name == "kill":
             apply_null_override_for_kill(item)
 
+    def create(self, docs, **kwargs):
+        doc = docs[0] if len(docs) > 0 else {}
+        item = doc.get("item") or {}
         docs[0] = item
         build_custom_hateoas(CUSTOM_HATEOAS, docs[0])
         return [docs[0].get(ID_FIELD)]
 
 
-def render_content_template_by_name(item, template_name):
+async def render_content_template_by_name(item, template_name):
     """Apply template by name.
 
     :param dict item: item on which template is applied
@@ -508,7 +513,7 @@ def render_content_template_by_name(item, template_name):
         SuperdeskApiError.badRequestError(message="{} Template missing.".format(template_name))
 
     # apply the kill template
-    return render_content_template(item, template)
+    return await render_content_template(item, template)
 
 
 def render_content_template_by_id(item, template_id, update=False):
@@ -647,7 +652,7 @@ def apply_null_override_for_kill(item):
 
 
 @celery.task(soft_time_limit=120)
-def create_scheduled_content(now=None):
+async def create_scheduled_content(now=None):
     lock_name = get_lock_id("Template", "Schedule")
     if not lock(lock_name, expire=130):
         logger.info("Task: {} is already running.".format(lock_name))
@@ -666,7 +671,7 @@ def create_scheduled_content(now=None):
             production.post([item])
             insert_into_versions(doc=item)
             try:
-                apply_onstage_rule(item, item.get(ID_FIELD))
+                await apply_onstage_rule(item, item.get(ID_FIELD))
             except Exception as ex:  # noqa
                 logger.exception("Failed to apply on stage rule while scheduling template.")
             items.append(item)

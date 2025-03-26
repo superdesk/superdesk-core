@@ -1,6 +1,7 @@
 import logging
 
 import pymongo
+from motor.motor_asyncio import AsyncIOMotorCursor
 from eve.utils import ParsedRequest
 from eve.methods.common import resolve_document_etag
 
@@ -103,7 +104,7 @@ class AsyncBaseService(BaseService):
             req = ParsedRequest()
         return await self.backend.get_async(self.datasource, req=req, lookup=lookup)
 
-    async def get_from_mongo_async(self, req, lookup, projection=None):
+    async def get_from_mongo_async(self, req, lookup, projection=None) -> AsyncIOMotorCursor:
         if req is None:
             req = ParsedRequest()
         if not req.projection and projection:
@@ -133,8 +134,8 @@ class AsyncBaseService(BaseService):
             if last_id is not None:
                 _lookup = {"_id": {"$gt": last_id}}
 
-            # TODO-ASYNC: Fix this - use async for cursor iteration
-            items = list(await self.get_from_mongo_async(req=None, lookup=_lookup).sort("_id").limit(size))
+            cursor = (await self.get_from_mongo_async(req=None, lookup=_lookup)).sort("_id").limit(size)
+            items = [item async for item in cursor]
             if not len(items):
                 break
             for item in items:
@@ -146,11 +147,11 @@ class AsyncBaseService(BaseService):
     async def post_async(self, docs, **kwargs):
         for doc in docs:
             self._resolve_defaults(doc)
-        self.on_create(docs)
         await self.on_create_async(docs)
+        self.on_create(docs)
         ids = await self.create_async(docs, **kwargs)
-        self.on_created(docs)
         await self.on_created_async(docs)
+        self.on_created(docs)
         return ids
 
     async def patch_async(self, id, updates):
@@ -158,26 +159,26 @@ class AsyncBaseService(BaseService):
 
         original = await self.find_one_async(req=None, _id=id)
         updated = original.copy()
-        self.on_update(updates, original)
         await self.on_update_async(updates, original)
+        self.on_update(updates, original)
         updated.update(updates)
         if get_app_config("IF_MATCH"):
             resolve_document_etag(updated, self.datasource)
             updates[ETAG] = updated[ETAG]
         res = await self.update_async(id, updates, original)
-        self.on_updated(updates, original)
         await self.on_updated_async(updates, original)
+        self.on_updated(updates, original)
         return res
 
     async def put_async(self, id, document):
         self._resolve_defaults(document)
         original = await self.find_one_async(req=None, _id=id)
-        self.on_replace(document, original)
         await self.on_replace_async(document, original)
+        self.on_replace(document, original)
         resolve_document_etag(document, self.datasource)
         res = await self.replace_async(id, document, original)
-        self.on_replaced(document, original)
         await self.on_replaced_async(document, original)
+        self.on_replaced(document, original)
         return res
 
     async def delete_action_async(self, lookup=None):
@@ -185,8 +186,8 @@ class AsyncBaseService(BaseService):
             lookup = {}
             docs = []
         else:
-            # TODO-ASYNC: Fix this
-            docs = list(doc for doc in self.get_from_mongo_async(None, lookup).sort("_id", pymongo.ASCENDING))
+            cursor = (await self.get_from_mongo_async(None, lookup)).sort("_id", pymongo.ASCENDING)
+            docs = [doc async for doc in cursor]
         if not docs:
             return self.delete_async(lookup)
         return self.delete_docs_async(docs)

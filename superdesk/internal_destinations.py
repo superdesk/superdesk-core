@@ -18,7 +18,7 @@ from superdesk import register_resource, get_resource_service, privilege
 from superdesk.services import Service
 from superdesk.resource import Resource
 from superdesk.errors import StopDuplication
-from superdesk.signals import item_published, item_routed
+from superdesk.signals import item_published_async, item_routed
 from superdesk.metadata.item import PUBLISH_SCHEDULE, SCHEDULE_SETTINGS
 
 
@@ -45,7 +45,7 @@ class InternalDestinationsService(Service):
     pass
 
 
-def handle_item_published(sender, item, desk=None, **extra):
+async def handle_item_published(sender, item, desk=None, **extra):
     macros_service = get_resource_service("macros")
     archive_service = get_resource_service("archive")
     filters_service = get_resource_service("content_filters")
@@ -79,7 +79,7 @@ def handle_item_published(sender, item, desk=None, **extra):
         new_item = deepcopy(item)
 
         try:
-            send_to(new_item, desk_id=dest["desk"], stage_id=dest.get("stage"))
+            await send_to(new_item, desk_id=dest["desk"], stage_id=dest.get("stage"))
         except StopDuplication:
             continue
 
@@ -89,7 +89,7 @@ def handle_item_published(sender, item, desk=None, **extra):
                 logger.warning("macro %s not found for internal destination %s", dest["macro"], dest["name"])
             else:
                 try:
-                    macro["callback"](
+                    await macro["callback"](
                         new_item,
                         dest_desk_id=dest.get("desk"),
                         dest_stage_id=dest.get("stage"),
@@ -113,4 +113,4 @@ def init_app(app) -> None:
         description=lazy_gettext("User can manage internal destinations."),
     )
 
-    item_published.connect(handle_item_published)
+    item_published_async.connect(handle_item_published)

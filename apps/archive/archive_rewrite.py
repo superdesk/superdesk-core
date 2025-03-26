@@ -13,6 +13,7 @@ from apps.auth import get_user, get_user_id
 from eve.versioning import resolve_document_version
 
 from superdesk.core import get_current_app, get_app_config
+from superdesk.eve_async.service import AsyncBaseService
 from superdesk.resource_fields import ID_FIELD
 from superdesk.flask import request
 from apps.archive import ArchiveSpikeService
@@ -77,13 +78,13 @@ class ArchiveRewriteResource(Resource):
     privileges = {"POST": "rewrite", "DELETE": "rewrite"}
 
 
-class ArchiveRewriteService(Service):
-    def get(self, req, lookup):
+class ArchiveRewriteService(AsyncBaseService):
+    async def get_async(self, req, lookup):
         if lookup.get("original_id"):
-            return super().get(req, {"_id": lookup["original_id"]})
-        return super().get(req, lookup)
+            return await super().get_async(req, {"_id": lookup["original_id"]})
+        return await super().get_async(req, lookup)
 
-    def create(self, docs, **kwargs):
+    async def create_async(self, docs, **kwargs):
         doc = docs[0] if len(docs) > 0 else {}
         original_id = request.view_args["original_id"]
         update_document = doc.get("update")
@@ -92,7 +93,9 @@ class ArchiveRewriteService(Service):
         original = archive_service.find_one(req=None, _id=original_id)
         self._validate_rewrite(original, update_document)
 
-        rewrite = self._create_rewrite_article(original, existing_item=update_document, desk_id=doc.get("desk_id"))
+        rewrite = await self._create_rewrite_article(
+            original, existing_item=update_document, desk_id=doc.get("desk_id")
+        )
 
         # sync editor state
         copy_fields(original, rewrite, ignore_empty=True)
@@ -196,7 +199,7 @@ class ArchiveRewriteService(Service):
                     _("Rewrite item content profile does " "not match with Original item.")
                 )
 
-    def _create_rewrite_article(self, original, existing_item=None, desk_id=None):
+    async def _create_rewrite_article(self, original, existing_item=None, desk_id=None):
         """Creates a new story and sets the metadata from original.
 
         :param dict original: original story
@@ -291,7 +294,7 @@ class ArchiveRewriteService(Service):
             from apps.tasks import send_to
 
             # send the document to the desk only if a new rewrite is created
-            send_to(
+            await send_to(
                 doc=rewrite,
                 desk_id=(desk_id or original["task"]["desk"]),
                 default_stage="working_stage",

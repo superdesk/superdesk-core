@@ -10,9 +10,10 @@
 
 import json
 import logging
+from inspect import isawaitable
 
 from superdesk import get_resource_service
-from superdesk.services import BaseService
+from superdesk.eve_async.service import AsyncBaseService
 from superdesk.errors import SuperdeskApiError
 from superdesk.publish.formatters import get_all_formatters
 from superdesk.utils import ListCursor
@@ -24,8 +25,8 @@ from quart_babel import gettext as _
 logger = logging.getLogger(__name__)
 
 
-class FormattersService(BaseService):
-    def get(self, req, lookup):
+class FormattersService(AsyncBaseService):
+    async def get_async(self, req, lookup):
         formatters = get_all_formatters()
 
         if req.args.get("criteria"):
@@ -44,7 +45,7 @@ class FormattersService(BaseService):
         if validation_errors:
             raise ValidationError(validation_errors)
 
-    def create(self, docs, **kwargs):
+    async def create_async(self, docs, **kwargs):
         service = get_resource_service("archive")
         doc = docs[0]
         formatter_name = doc.get("formatter_name")
@@ -66,7 +67,12 @@ class FormattersService(BaseService):
 
             try:
                 self._validate(article)
-                sequence, formatted_doc = formatter.format(apply_schema(article), {"_id": "0"}, None)[0]
+                response = formatter.format(apply_schema(article), {"_id": "0"}, None)[0]
+                if isawaitable(response):
+                    sequence, formatted_doc = await response
+                else:
+                    sequence, formatted_doc = response
+
                 formatted_doc = formatted_doc.replace("''", "'")
 
                 # respond only with the formatted output if output_field is configured

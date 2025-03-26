@@ -464,7 +464,7 @@ def remove_unwanted(doc):
                 del doc[attr]
 
 
-def fetch_item(doc, desk_id, stage_id, state=None, target=None):
+async def fetch_item(doc, desk_id, stage_id, state=None, target=None):
     dest_doc = dict(doc)
 
     if target:
@@ -484,7 +484,7 @@ def fetch_item(doc, desk_id, stage_id, state=None, target=None):
 
     dest_doc[VERSION] = 1
     dest_doc["versioncreated"] = utcnow()
-    send_to(doc=dest_doc, desk_id=desk_id, stage_id=stage_id)
+    await send_to(doc=dest_doc, desk_id=desk_id, stage_id=stage_id)
     dest_doc[ITEM_STATE] = state or CONTENT_STATE.FETCHED
 
     dest_doc[FAMILY_ID] = doc[ID_FIELD]

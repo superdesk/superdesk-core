@@ -10,7 +10,6 @@
 
 
 import logging
-import superdesk
 
 from quart_babel import gettext as _
 
@@ -20,6 +19,7 @@ from superdesk import get_resource_service
 from superdesk.utc import utcnow
 from superdesk.errors import SuperdeskApiError, ProviderError
 from superdesk.resource import Resource
+from superdesk.eve_async.service import AsyncBaseService
 from apps.archive.common import ARCHIVE, insert_into_versions, fetch_item
 
 logger = logging.getLogger(__name__)
@@ -29,7 +29,7 @@ class ProviderNotFoundError(SuperdeskApiError):
     pass
 
 
-class SearchIngestResource(superdesk.Resource):
+class SearchIngestResource(Resource):
     resource_methods = ["GET", "POST"]
     schema = {
         "guid": {"type": "string", "required": True},
@@ -38,7 +38,7 @@ class SearchIngestResource(superdesk.Resource):
     }
 
 
-class SearchIngestService(superdesk.Service):
+class SearchIngestService(AsyncBaseService):
     def __init__(self, datasource=None, backend=None, source=None):
         super().__init__(datasource, backend)
         self.source = source
@@ -52,7 +52,7 @@ class SearchIngestService(superdesk.Service):
     def fetch(self, guid):
         return self.backend.find_one_raw(guid, guid)
 
-    def create(self, docs, **kwargs):
+    async def create_async(self, docs, **kwargs):
         new_guids = []
         provider = self.get_provider()
         for doc in docs:
@@ -64,13 +64,13 @@ class SearchIngestService(superdesk.Service):
             except FileNotFoundError as ex:
                 raise ProviderError.externalProviderError(ex, provider)
 
-            dest_doc = fetch_item(archived_doc, doc.get("desk"), doc.get("stage"), state=doc.get("state"))
+            dest_doc = await fetch_item(archived_doc, doc.get("desk"), doc.get("stage"), state=doc.get("state"))
             new_guids.append(dest_doc["guid"])
 
             if provider:
                 dest_doc["ingest_provider"] = str(provider[ID_FIELD])
 
-            superdesk.get_resource_service(ARCHIVE).post([dest_doc])
+            get_resource_service(ARCHIVE).post([dest_doc])
             insert_into_versions(dest_doc.get(ID_FIELD))
 
         if new_guids:

@@ -64,6 +64,8 @@ from apps.prepopulate.app_initialize import app_initialize_data_handler
 from authlib.jose import jwt
 from authlib.jose.errors import BadSignatureError
 
+from .utils import find_one, post_items, patch_item, system_update, delete_items
+
 external_url = "http://thumbs.dreamstime.com/z/digital-nature-10485007.jpg"
 DATETIME_FORMAT = "%Y-%m-%dT%H:%M:%S%z"
 ANALYTICS_DATETIME_FORMAT = "%Y-%m-%d %H:00:00"
@@ -495,25 +497,12 @@ def format_items(items):
     return ",\n".join(output)
 
 
-async def delete_entries_for(context, resource: str) -> None:
-    """
-    Attempts to remove all items from the resources MongoDB and/or Elastic.
-    First tries with async, otherwise it falls back to sync resources.
-    """
-
-    async with context.app.test_request_context(context.app.config["URL_PREFIX"]):
-        try:
-            async_app = context.app.async_app
-            await async_app.resources.get_resource_service(resource).delete_many({})
-        except KeyError:
-            get_resource_service(resource).delete_action()
-
-
 @given('empty "{resource}"')
 @async_run_until_complete
 async def step_impl_given_empty(context, resource):
     if not is_user_resource(resource):
-        await delete_entries_for(context, resource)
+        async with context.app.test_request_context(context.app.config["URL_PREFIX"]):
+            await delete_items(resource)
 
 
 @given('"{resource}"')
@@ -522,14 +511,14 @@ async def step_impl_given_(context, resource):
     data = apply_placeholders(context, context.text)
     async with context.app.test_request_context(context.app.config["URL_PREFIX"]):
         if not is_user_resource(resource):
-            get_resource_service(resource).delete_action()
+            await delete_items(resource)
 
         items = [parse(item, resource) for item in json.loads(data)]
         if is_user_resource(resource):
             for item in items:
                 item.setdefault("needs_activation", False)
 
-        get_resource_service(resource).post(items)
+        await post_items(resource, items)
         context.data = items
         context.resource = resource
         try:
@@ -548,7 +537,7 @@ async def step_impl_given_with_objectid(context, resource):
             if "_id" in item:
                 item["_id"] = ObjectId(item["_id"])
 
-        get_resource_service(resource).post(items)
+        await post_items(resource, items)
         context.data = items
         context.resource = resource
         setattr(context, resource, items[-1])
@@ -559,11 +548,11 @@ async def step_impl_given_with_objectid(context, resource):
 async def step_impl_given_the(context, resource):
     async with context.app.test_request_context(context.app.config["URL_PREFIX"]):
         if not is_user_resource(resource):
-            get_resource_service(resource).delete_action()
+            await delete_items(resource)
 
         orig_items = {}
         items = [parse(item, resource) for item in json.loads(context.text)]
-        get_resource_service(resource).post(items)
+        await post_items(resource, items)
         context.data = orig_items or items
         context.resource = resource
 
@@ -573,13 +562,13 @@ async def step_impl_given_the(context, resource):
 async def step_impl_given_resource_with_provider(context, provider):
     resource = "ingest"
     async with context.app.test_request_context(context.app.config["URL_PREFIX"]):
-        get_resource_service(resource).delete_action()
+        await delete_items(resource)
         items = [parse(item, resource) for item in json.loads(context.text)]
-        ingest_provider = get_resource_service("ingest_providers").find_one(req=None, _id=context.providers[provider])
+        ingest_provider = await find_one("ingest_providers", _id=context.providers[provider])
         for item in items:
             item["ingest_provider"] = context.providers[provider]
             item["source"] = ingest_provider.get("source")
-        get_resource_service(resource).post(items)
+        await post_items(resource, items)
         context.data = items
         context.resource = resource
 
@@ -600,7 +589,7 @@ async def step_impl_given_config(context):
 @async_run_until_complete
 async def step_impl_given_role(context, role_name):
     async with context.app.test_request_context(context.app.config["URL_PREFIX"]):
-        role = get_resource_service("roles").find_one(name=role_name, req=None)
+        role = await find_one("roles", name=role_name)
         data = MongoJSONEncoder().encode({"role": role.get("_id")})
     response = await patch_current_user(context, data)
     await assert_ok(response)
@@ -653,8 +642,7 @@ async def step_impl_fetch_from_provider_ingest(context, provider_name, guid):
 @async_run_until_complete
 async def step_impl_fetch_from_provider_ingest_with_mocking(context, provider_name, guid, mock_file):
     async with context.app.test_request_context(context.app.config["URL_PREFIX"]):
-        ingest_provider_service = get_resource_service("ingest_providers")
-        provider = ingest_provider_service.find_one(name=provider_name, req=None)
+        provider = await find_one("ingest_providers", name=provider_name)
 
         with responses.RequestsMock() as rsps:
             apply_mock_file(rsps, mock_file, fixture_path=get_provider_file_path(provider))
@@ -665,12 +653,10 @@ async def step_impl_fetch_from_provider_ingest_with_mocking(context, provider_na
 @async_run_until_complete
 async def step_impl_run_update_ingest_command(context, provider_name):
     async with context.app.test_request_context(context.app.config["URL_PREFIX"]):
-        ingest_provider_service = get_resource_service("ingest_providers")
-
         # close other providers except `provider_name`
         for provider in [p for p in context.providers if p != provider_name]:
-            ingest_provider_service.patch(context.providers[provider], {"is_closed": True})
-        provider = ingest_provider_service.find_one(name=provider_name, req=None)
+            await patch_item("ingest_providers", context.providers[provider], {"is_closed": True})
+        provider = await find_one("ingest_providers", name=provider_name)
 
         if provider["feeding_service"] == "ftp":
             run_update_ingest_ftp()
@@ -744,17 +730,15 @@ def run_update_ingest_ftp(*args):
             update_ingest.UpdateIngest().run()
 
 
-def embed_routing_scheme_rules(scheme):
+async def embed_routing_scheme_rules(scheme):
     """Fetch all content filters referenced by the given routing scheme and embed those into scheme.
 
     :param dict scheme: routing scheme configuration
     """
-    filters_service = superdesk.get_resource_service("content_filters")
-
     rules_filters = ((rule, str(rule["filter"])) for rule in scheme["rules"] if rule.get("filter"))
 
     for rule, filter_id in rules_filters:
-        content_filter = filters_service.find_one(_id=filter_id, req=None)
+        content_filter = await find_one("content_filters", _id=filter_id)
         rule["filter"] = content_filter
 
 
@@ -763,8 +747,8 @@ def embed_routing_scheme_rules(scheme):
 async def step_impl_fetch_from_provider_ingest_using_routing(context, provider_name, guid):
     async with context.app.test_request_context(context.app.config["URL_PREFIX"]):
         _id = apply_placeholders(context, context.text)
-        routing_scheme = get_resource_service("routing_schemes").find_one(_id=_id, req=None)
-        embed_routing_scheme_rules(routing_scheme)
+        routing_scheme = await find_one("routing_schemes", _id=_id)
+        await embed_routing_scheme_rules(routing_scheme)
         await fetch_from_provider(context, provider_name, guid, routing_scheme)
 
 
@@ -775,8 +759,8 @@ async def step_impl_fetch_from_provider_ingest_using_routing_with_desk(context, 
         _id = apply_placeholders(context, context.text)
         desk_id = apply_placeholders(context, desk)
         stage_id = apply_placeholders(context, stage)
-        routing_scheme = get_resource_service("routing_schemes").find_one(_id=_id, req=None)
-        embed_routing_scheme_rules(routing_scheme)
+        routing_scheme = await find_one("routing_schemes", _id=_id)
+        await embed_routing_scheme_rules(routing_scheme)
         await fetch_from_provider(context, provider_name, guid, routing_scheme, desk_id, stage_id)
 
 
@@ -785,8 +769,8 @@ async def step_impl_fetch_from_provider_ingest_using_routing_with_desk(context, 
 async def step_impl_ingest_with_routing_scheme(context, provider_name, guid):
     async with context.app.test_request_context(context.app.config["URL_PREFIX"]):
         _id = apply_placeholders(context, context.text)
-        routing_scheme = get_resource_service("routing_schemes").find_one(_id=_id, req=None)
-        embed_routing_scheme_rules(routing_scheme)
+        routing_scheme = await find_one("routing_schemes", _id=_id)
+        await embed_routing_scheme_rules(routing_scheme)
         await fetch_from_provider(context, provider_name, guid, routing_scheme)
 
 
@@ -798,11 +782,10 @@ def get_provider_file_path(provider, filename=""):
 
 
 async def fetch_from_provider(context, provider_name, guid, routing_scheme=None, desk_id=None, stage_id=None):
-    ingest_provider_service = get_resource_service("ingest_providers")
-    provider = ingest_provider_service.find_one(name=provider_name, req=None)
+    provider = await find_one("ingest_providers", name=provider_name)
     provider["routing_scheme"] = routing_scheme
     if "rule_set" in provider:
-        rule_set = get_resource_service("rule_sets").find_one(_id=provider["rule_set"], req=None)
+        rule_set = await find_one("rule_sets", _id=provider["rule_set"])
     else:
         rule_set = None
 
@@ -848,8 +831,8 @@ async def fetch_from_provider(context, provider_name, guid, routing_scheme=None,
     )
     assert len(failed) == 0, failed
 
-    provider = ingest_provider_service.find_one(name=provider_name, req=None)
-    ingest_provider_service.system_update(provider["_id"], {LAST_ITEM_UPDATE: utcnow()}, provider)
+    provider = await find_one("ingest_providers", name=provider_name)
+    await system_update("ingest_providers", provider["_id"], {LAST_ITEM_UPDATE: utcnow()}, provider)
 
     for item in items:
         set_placeholder(context, "{}.{}".format(provider_name, item["guid"]), item["_id"])
@@ -1938,10 +1921,10 @@ async def we_can_check_token_is_valid(context):
 async def we_update_token_to_expired(context):
     async with context.app.test_request_context(context.app.config["URL_PREFIX"]):
         expiry = utc.utcnow() - timedelta(days=2)
-        reset_request = get_resource_service("reset_user_password").find_one(req=None, token=context.token)
+        reset_request = await find_one("reset_user_password", token=context.token)
         reset_request["expire_time"] = expiry
         id = reset_request.pop("_id")
-        get_resource_service("reset_user_password").patch(id, reset_request)
+        await patch_item("reset_user_password", id, reset_request)
 
 
 @then("token is invalid")
@@ -2008,6 +1991,7 @@ async def when_we_switch_user(context):
         "username": "test-user-2",
         "password": "pwd",
         "is_active": True,
+        "is_enabled": True,
         "needs_activation": False,
         "sign_off": "foo",
     }
@@ -2306,7 +2290,7 @@ def step_we_get_email(context):
 
 @then("we get {count} emails")
 def step_we_get_no_email(context, count):
-    assert len(context.outbox) == int(count)
+    assert len(context.outbox) == int(count), f"Failed, expected {count} emails, got {len(context.outbox)}"
     if context.text:
         step_we_get_email(context)
 
@@ -2431,9 +2415,9 @@ async def then_field_is_not_populated_in_results(context, field_name):
 @async_run_until_complete
 async def step_delete_content_filter(context, name):
     async with context.app.test_request_context(context.app.config["URL_PREFIX"]):
-        filter = get_resource_service("content_filters").find_one(req=None, name=name)
-        url = "/content_filters/{}".format(filter["_id"])
-        headers = if_match(context, filter.get("_etag"))
+        content_filter = await find_one("content_filters", name=name)
+        url = "/content_filters/{}".format(content_filter["_id"])
+        headers = if_match(context, content_filter.get("_etag"))
         context.response = await context.client.delete(get_prefixed_url(context.app, url), headers=headers)
 
 
@@ -2499,24 +2483,24 @@ async def step_impl_when_publish_url(context, item_id, pub_type, state):
 @async_run_until_complete
 async def then_ingest_item_is_routed_based_on_routing_scheme(context, rule_name):
     async with context.app.test_request_context(context.app.config["URL_PREFIX"]):
-        validate_routed_item(context, rule_name, True)
+        await validate_routed_item(context, rule_name, True)
 
 
 @then('the ingest item is routed and transformed based on routing scheme and rule "{rule_name}"')
 @async_run_until_complete
 async def then_ingest_item_is_routed_transformed_based_on_routing_scheme(context, rule_name):
     async with context.app.test_request_context(context.app.config["URL_PREFIX"]):
-        validate_routed_item(context, rule_name, True, True)
+        await validate_routed_item(context, rule_name, True, True)
 
 
 @then('the ingest item is not routed based on routing scheme and rule "{rule_name}"')
 @async_run_until_complete
 async def then_ingest_item_is_not_routed_based_on_routing_scheme(context, rule_name):
     async with context.app.test_request_context(context.app.config["URL_PREFIX"]):
-        validate_routed_item(context, rule_name, False)
+        await validate_routed_item(context, rule_name, False)
 
 
-def validate_routed_item(context, rule_name, is_routed, is_transformed=False):
+async def validate_routed_item(context, rule_name, is_routed, is_transformed=False):
     data = json.loads(apply_placeholders(context, context.text))
 
     def validate_rule(action, state):
@@ -2545,7 +2529,7 @@ def validate_routed_item(context, rule_name, is_routed, is_transformed=False):
             else:
                 assert len(item) == 0
 
-    scheme = get_resource_service("routing_schemes").find_one(_id=data["routing_scheme"], req=None)
+    scheme = await find_one("routing_schemes", _id=data["routing_scheme"])
     rule = next((rule for rule in scheme["rules"] if rule["name"].lower() == rule_name.lower()), {})
     validate_rule("fetch", "routed")
     validate_rule("publish", "published")
@@ -2637,14 +2621,14 @@ async def there_is_no_key_in_response(context, key):
 @then('there is no "{key}" in task')
 @async_run_until_complete
 async def there_is_no_key_in_preferences(context, key):
-    data = await get_json_data(context.response)["task"]
+    data = (await get_json_data(context.response))["task"]
     assert key not in data, 'key "%s" is in task' % key
 
 
 @then('there is no "{key}" in data')
 @async_run_until_complete
 async def there_is_no_profile_in_data(context, key):
-    data = await get_json_data(context.response)["_items"][0]["data"]
+    data = (await get_json_data(context.response))["_items"][0]["data"]
     assert key not in data, 'key "%s" is in data' % key
 
 
@@ -2706,7 +2690,7 @@ async def embargo_lapses(context, item_id):
     }
 
     async with context.app.test_request_context(context.app.config["URL_PREFIX"]):
-        get_resource_service("archive").system_update(id=item["_id"], original=item, updates=updates)
+        await system_update("archive", item["_id"], updates, item)
 
 
 @then("we validate the published item expiry to be after publish expiry set in desk settings {publish_expiry_in_desk}")
@@ -2768,8 +2752,8 @@ async def expire_content(context):
         ids = json.loads(apply_placeholders(context, context.text))
         expiry = utcnow() - timedelta(minutes=5)
         for item_id in ids:
-            original = get_resource_service("archive").find_one(req=None, _id=item_id)
-            get_resource_service("archive").system_update(item_id, {"expiry": expiry}, original)
+            original = await find_one("archive", _id=item_id)
+            await system_update("archive", item_id, {"expiry": expiry}, original)
             get_resource_service("published").update_published_items(item_id, "expiry", expiry)
 
         from apps.archive.commands import RemoveExpiredContent
@@ -2789,8 +2773,8 @@ async def run_overdue_schedule_jobs(context):
         }
 
         for item_id in ids:
-            original = get_resource_service("archive").find_one(req=None, _id=item_id)
-            get_resource_service("archive").system_update(item_id, updates, original)
+            original = await find_one("archive", _id=item_id)
+            await system_update("archive", item_id, updates, original)
             get_resource_service("published").update_published_items(item_id, "publish_schedule", lapse_time)
             get_resource_service("published").update_published_items(
                 item_id, "schedule_settings.utc_publish_schedule", lapse_time
@@ -2801,7 +2785,7 @@ async def run_overdue_schedule_jobs(context):
 @async_run_until_complete
 async def transmit_items(context):
     async with context.app.test_request_context(context.app.config["URL_PREFIX"]):
-        from superdesk.publish_async.controller.exchanges import get_exchange_factory
+        from superdesk.publish_async import get_exchange_factory
 
         await get_exchange_factory().process_pending_tasks()
 
@@ -3027,7 +3011,7 @@ def test_items_contain_items(items, context_items):
 @then("we get desk members count as {count}")
 @async_run_until_complete
 async def step_impl_we_get_desk_members_count(context, count):
-    desk = await get_json_data(context.response) or {}
+    desk = (await get_json_data(context.response)) or {}
     assert len(desk.get("members") or []) == int(count), "Invalid desk members"
 
 
@@ -3140,14 +3124,8 @@ async def then_we_get_picture_metadta(context, media):
 @then('we check "{resource}" db item "{item_id}"')
 @async_run_until_complete
 async def check_resource_db_item(context, resource: str, item_id: str):
-    async with context.app.test_request_context(context.app.config["URL_PREFIX"]):
-        async_app = get_current_async_app()
-        service = async_app.resources.get_resource_service(resource)
-
-    item_id = apply_placeholders(context, item_id)
-    item = await service.find_by_id(item_id)
+    item = await find_one(resource, _id=item_id)
     assert item is not None, "Item not found"
 
-    item_dict = item.to_dict()
     context_data = json.loads(apply_placeholders(context, context.text))
-    assert json_match(context_data, item_dict, None), str(context_data) + "\n != \n" + str(item_dict)
+    assert json_match(context_data, item, None), str(context_data) + "\n != \n" + str(item)

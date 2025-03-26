@@ -86,7 +86,10 @@ class SuperdeskDataLayer(DataLayer):
             cursor = service.get(req=req, lookup=lookup)
 
         if perform_count:
-            return cursor, cursor.count()
+            count = cursor.count()
+            if isawaitable(count):
+                count = await count
+            return cursor, count
         return cursor, None
 
     def find_all(self, resource, max_results=1000):

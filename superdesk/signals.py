@@ -10,6 +10,8 @@
 
 import blinker
 
+from .core.signals import AsyncSignal
+
 # TODO-ASYNC: Support async signals
 
 __all__ = [
@@ -53,7 +55,9 @@ item_publish = signals.signal("item:publish")
 #:
 #: :param sender: PublishService
 #: :param item: published item
+#: :param after_scheduled: ``True`` if signal raised after publish scheduled, ``False`` otherwise
 item_published = signals.signal("item:published")
+item_published_async = AsyncSignal[dict, bool]("item:published")
 
 #: Sent before new version is saved.
 #:

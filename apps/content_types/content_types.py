@@ -600,10 +600,11 @@ def is_enabled(field, schema):
     return schema.get(field) or schema.get(field) == {} or field not in DEFAULT_SCHEMA or field in REQUIRED_FIELDS
 
 
-def apply_schema(item):
+def apply_schema(item: dict, profile: dict | None = None) -> dict:
     """Return item without fields that should not be there given it's profile.
 
     :param item: item to apply schema to
+    :param profile: ContentProfile to use for this item
     """
     # fields that can be added to article without being added to CP eg: using widgets
     allowed_keys = ["attachments", "refs", "place", "organisation", "person", "authors"]
@@ -613,7 +614,8 @@ def apply_schema(item):
 
     schema = DEFAULT_SCHEMA
     if item.get("profile"):
-        profile = get_profile(item["profile"])
+        if profile is None:
+            profile = get_profile(item["profile"])
         if profile and profile.get("schema"):
             schema = profile["schema"]
 

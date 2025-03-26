@@ -22,7 +22,7 @@ from typing import (
 from copy import deepcopy
 from datetime import datetime
 from dataclasses import field as dataclass_field
-from typing_extensions import dataclass_transform, Self
+from typing_extensions import dataclass_transform, Self, overload
 
 from pydantic import (
     ConfigDict,
@@ -343,7 +343,7 @@ class ResourceModelWithObjectId(ResourceModel):
     """Base ResourceModel class to be used, if the resource uses an ObjectId for it's ID"""
 
     #: ID of the document
-    id: ObjectId = Field(alias="_id", default_factory=ObjectId)
+    id: Annotated[ObjectId, Field(alias="_id", default_factory=ObjectId)]
 
 
 @dataclass

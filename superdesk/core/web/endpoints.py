@@ -165,14 +165,13 @@ def endpoint(url: str, name: str | None = None, methods: list[HTTP_METHOD] | Non
     """Decorator function to convert a pure function to an Endpoint instance
     which is later used to register with a Module or the app.
 
-    Args:
-        url: The URL of the endpoint. If it starts with "/", it will be used exactly as provided.
-            Otherwise, the API prefix and version will be automatically prepended.
-            For example:
-            - "items" becomes "{api_prefix}{api_version}/items"
-            - "/custom/path" stays as "/custom/path"
-        name: The optional name of the endpoint
-        methods: The optional list of HTTP methods allowed
+    :param url: The URL of the endpoint. If it starts with "/", it will be used exactly as provided.
+        Otherwise, the API prefix and version will be automatically prepended.
+        For example:
+        - "items" becomes "{api_prefix}{api_version}/items"
+        - "/custom/path" stays as "/custom/path"
+    :param name: The optional name of the endpoint
+    :param methods: The optional list of HTTP methods allowed
     """
 
     def convert_to_endpoint(func: EndpointFunction):

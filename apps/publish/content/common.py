@@ -9,10 +9,16 @@
 # at https://www.sourcefabric.org/superdesk/license
 
 from copy import copy, deepcopy
+from datetime import datetime
 import logging
 
 from eve.versioning import resolve_document_version
+from eve.methods.common import resolve_document_etag
 from quart_babel import gettext as _
+
+from superdesk.core import get_config
+from superdesk.types import PublishRequest, PublishSenderType, SubscriberType, DesksResourceModel
+from superdesk.publish_async.commands import publish_item
 
 from apps.archive.archive import ArchiveResource, SOURCE as ARCHIVE
 from apps.archive.common import (
@@ -38,25 +44,19 @@ from apps.content import push_content_notification
 from apps.content_types.content_types import DEFAULT_SCHEMA
 from apps.item_autosave.components.item_autosave import ItemAutosave
 from apps.item_lock.components.item_lock import set_unlock_updates
-from apps.legal_archive.commands import import_into_legal_archive
+from apps.legal_archive.commands import import_into_legal_archive, is_legal_archive_enabled
 from apps.packages.package_service import PackageService
-from apps.publish.published_item import (
-    LAST_PUBLISHED_VERSION,
-    PUBLISH_STATE,
-    PUBLISHED,
-    PUBLISHED_IN_PACKAGE,
-    QUEUE_STATE,
-)
+from apps.publish.published_item import LAST_PUBLISHED_VERSION, PUBLISHED, PUBLISHED_IN_PACKAGE
 import superdesk
 from superdesk import get_resource_service
-from superdesk.core import get_app_config, get_current_app, json
+from superdesk.core import get_config, get_current_app, json
 from superdesk.default_settings import strtobool
 from superdesk.errors import (
     InvalidStateTransitionError,
     SuperdeskApiError,
     SuperdeskValidationError,
 )
-from superdesk.flask import request
+from superdesk.flask import request as flask_request
 from superdesk.media.crop import CropService
 from superdesk.media.image import get_metadata_from_item, write_metadata
 from superdesk.metadata.item import (
@@ -75,8 +75,8 @@ from superdesk.metadata.item import (
 from superdesk.metadata.packages import LINKED_IN_PACKAGES, PACKAGE, PACKAGE_TYPE
 from superdesk.metadata.utils import item_url
 from superdesk.notification import push_notification
-from superdesk.resource_fields import ID_FIELD, LAST_UPDATED, VERSION
-from superdesk.services import BaseService
+from superdesk.resource_fields import ID_FIELD, LAST_UPDATED, VERSION, ITEM_TYPE, ETAG
+from superdesk.eve_async.service import AsyncBaseService
 import superdesk.signals as signals
 from superdesk.utc import utcnow
 from superdesk.validation import ValidationError
@@ -138,18 +138,71 @@ class BasePublishResource(ArchiveResource):
         super().__init__(endpoint_name, app=app, service=service)
 
 
-class BasePublishService(BaseService):
-    """Base service for different "publish" services."""
+class BasePublishService(AsyncBaseService):
+    """Base PublishProducer used by all content publish producers, for their respective "publish" endpoint.
+
+    :raises:
+        - :class:`superdesk.errors.SuperdeskApiError.badRequestError`
+            If the ``PublishExchange`` failed to route the item
+        - :class:`superdesk.errors.InvalidStateTransitionError`
+            If the current state of the item does not support this publish action
+        - :class:`superdesk.validation.ValidationError`
+            If the item has related items which are not published yet
+        - :class:`superdesk.errors.SuperdeskApiError.badRequestError`
+            If ``marked_for_not_publication`` is set to ``False``
+        - :class:`superdesk.errors.SuperdeskApiError.badRequestError`
+            If the publish schedule value is not recognized, or it's schedule is in the past.
+        - :class:`superdesk.errors.SuperdeskApiError.badRequestError`
+            If a publish schedule and embargo are both set.
+        - :class:`superdesk.errors.SuperdeskApiError.badRequestError`
+            If the item is an update from a previous version??? WHAT!
+        - :class:`superdesk.errors.SuperdeskApiError.badRequestError`
+            If the embargo value is invalid, or the embargo is in the past.
+        - :class:`superdesk.errors.SuperdeskApiError.badRequestError`
+            If an embargo is set and the item is a package.
+        - :class:`superdesk.errors.SuperdeskApiError.badRequestError`
+            If the item has a newer version that has been published
+        - :class:`superdesk.errors.SuperdeskApiError.badRequestError`
+            If the item has an older version that has not been published yet
+        - :class:`superdesk.errors.SuperdeskValidationError`
+            If the item fails validation based on the ContentProfile
+        - :class:`superdesk.validation.ValidationError`
+            If any associated item:
+
+            - is ``Killed``, ``Recalled`` or ``Spiked``
+            - is scheduled later than now
+            - has an embargo
+            - fails validation based on it's ContentProfile
+            - is currently locked
+        - :class:`superdesk.validation.ValidationError`
+            If the item is a package and:
+
+            - the package is scheduled or spiked
+            - has an embargo set
+
+    """
 
     publish_type = "publish"
     published_state = "published"
     item_operation = ITEM_PUBLISH
     package_service = PackageService()
 
-    def on_update(self, updates, original):
-        self._refresh_associated_items(original)
+    async def patch_async(self, id, updates):
+        original = self.find_one(req=None, _id=id)
+        updated = original.copy()
+        await self.on_update_async(updates, original)
+        updated.update(updates)
+        if get_config(bool, "IF_MATCH"):
+            resolve_document_etag(updated, self.datasource)
+            updates[ETAG] = updated[ETAG]
+        res = await self.update_async(id, updates, original)
+        await self.on_updated_async(updates, original)
+        return res
+
+    async def on_update_async(self, updates, original):
+        await self._refresh_associated_items(original)
         self._set_updates_for_media_items(original, updates)
-        self._validate(original, updates)
+        await self._validate(original, updates)
         self._set_updates(
             original,
             updates,
@@ -158,11 +211,11 @@ class BasePublishService(BaseService):
         )
         convert_task_attributes_to_objectId(updates)  # ???
         transtype_metadata(updates, original)
-        self._process_publish_updates(original, updates)
-        self._mark_media_item_as_used(updates, original)
+        await self._process_publish_updates(original, updates)
+        await self._mark_media_item_as_used(updates, original)
         update_refs(updates, original)
 
-    def on_updated(self, updates, original):
+    async def on_updated_async(self, updates, original):
         original = super().find_one(req=None, _id=original[ID_FIELD])
         updates.update(original)
 
@@ -174,9 +227,10 @@ class BasePublishService(BaseService):
 
         get_resource_service("archive_broadcast").reset_broadcast_status(updates, original)
         push_content_notification([updates])
-        self._import_into_legal_archive(updates)
+        await self._import_into_legal_archive(updates)
         CropService().update_media_references(updates, original, True)
         signals.item_published.send(self, item=original, after_scheduled=False)
+        await signals.item_published_async.send(original, False)
 
         packages = self.package_service.get_packages(original[ID_FIELD])
         if packages and packages.count() > 0:
@@ -201,11 +255,11 @@ class BasePublishService(BaseService):
                             original_updates, original[ID_FIELD], "slugline", updates.get("slugline")
                         )
 
-                    archive_correct.patch(id=package[ID_FIELD], updates=original_updates)
+                    await archive_correct.patch_async(id=package[ID_FIELD], updates=original_updates)
                     insert_into_versions(id_=package[ID_FIELD])
                     processed_packages.append(package[ID_FIELD])
 
-    def update(self, id, updates, original):
+    async def update_async(self, id, updates, original):
         """
         Handles workflow of each Publish, Corrected, Killed and TakeDown.
         """
@@ -216,16 +270,17 @@ class BasePublishService(BaseService):
             # unlock the item
             set_unlock_updates(updates)
 
+            updated = deepcopy(original)
+            updated.update(deepcopy(updates))
+
             if original[ITEM_TYPE] == CONTENT_TYPE.COMPOSITE:
-                self._publish_package_items(original, updates)
-                self._update_archive(original, updates, should_insert_into_versions=auto_publish)
+                await self._publish_package_items(original, updates)
+                await self._update_archive(original, updates, should_insert_into_versions=auto_publish)
             else:
-                self._publish_associated_items(original, updates)
-                updated = deepcopy(original)
-                updated.update(deepcopy(updates))
+                await self._publish_associated_items(original, updates)
 
                 if updates.get(ASSOCIATIONS):
-                    self._refresh_associated_items(updated, skip_related=True)  # updates got lost with update
+                    await self._refresh_associated_items(updated, skip_related=True)  # updates got lost with update
 
                 if updated.get(ASSOCIATIONS):
                     self._fix_related_references(updated, updates)
@@ -234,20 +289,27 @@ class BasePublishService(BaseService):
                     self._update_picture_metadata(updates, original, updated)
 
                 signals.item_publish.send(self, item=updated, updates=updates)
-                self._update_archive(original, updates, should_insert_into_versions=auto_publish)
-                self.update_published_collection(published_item_id=original[ID_FIELD], updated=updated)
+                await self._update_archive(original, updates, should_insert_into_versions=auto_publish)
 
-            if original.get(ITEM_STATE) != CONTENT_STATE.SCHEDULED:
-                # We change the state to "PUSHED", so the item is ignored by `EnqueueContent.enqueue_item`, avoiding
-                # race condition.
-                published_service = get_resource_service(PUBLISHED)
-                assert published_service is not None
+                await self.update_published_collection(published_item_id=original[ID_FIELD], updated=updated)
 
-                published_service.patch(id, {QUEUE_STATE: PUBLISH_STATE.PUSHED})
-                from apps.publish.enqueue import push_publish
+            response = await publish_item(
+                PublishRequest(
+                    item=updated,
+                    item_id=updated[ID_FIELD],
+                    item_type=updated[ITEM_TYPE],
+                    operation=self.item_operation,
+                    published_state=self.published_state,
+                    sender_type=PublishSenderType.API,
+                    target_media_type=SubscriberType.DIGITAL
+                    if updated[ITEM_TYPE] in [CONTENT_TYPE.TEXT, CONTENT_TYPE.PREFORMATTED]
+                    else None,
+                    publish_to_content_api=True,
+                )
+            )
 
-                # TODO-ASYNC: update this service so task below completes eagearly and tests pass
-                push_publish.apply_async(str(id))
+            if not response.routed:
+                raise SuperdeskApiError.badRequestError(message=_("Failed to route item"))
 
             push_notification(
                 "item:publish",
@@ -296,9 +358,9 @@ class BasePublishService(BaseService):
                 > 0
             )
 
-    def _validate(self, original, updates):
+    async def _validate(self, original, updates):
         self.raise_if_invalid_state_transition(original)
-        self._raise_if_unpublished_related_items(original)
+        await self._raise_if_unpublished_related_items(original)
 
         updated = deepcopy(original)
         updated.update(deepcopy(updates))
@@ -354,7 +416,7 @@ class BasePublishService(BaseService):
                 raise SuperdeskValidationError(errors, fields)
 
         validation_errors = []
-        self._validate_associated_items(original, deepcopy(updates), validation_errors)
+        await self._validate_associated_items(original, deepcopy(updates), validation_errors)
 
         if original[ITEM_TYPE] == CONTENT_TYPE.COMPOSITE:
             self._validate_package(original, updates, validation_errors)
@@ -362,19 +424,19 @@ class BasePublishService(BaseService):
         if len(validation_errors) > 0:
             raise ValidationError(validation_errors)
 
-    def _raise_if_unpublished_related_items(self, original):
-        if not request:
+    async def _raise_if_unpublished_related_items(self, original):
+        if not flask_request:
             return
 
         if (
-            get_app_config("PUBLISH_ASSOCIATED_ITEMS")
+            get_config(bool, "PUBLISH_ASSOCIATED_ITEMS")
             or not original.get(ASSOCIATIONS)
             or self.publish_type not in [ITEM_PUBLISH, ITEM_CORRECT]
         ):
             return
 
         archive_service = get_resource_service("archive")
-        publishing_warnings_confirmed = strtobool(request.args.get("publishing_warnings_confirmed") or "False")
+        publishing_warnings_confirmed = strtobool(flask_request.args.get("publishing_warnings_confirmed") or "False")
 
         if not publishing_warnings_confirmed:
             for key, associated_item in original.get(ASSOCIATIONS).items():
@@ -427,17 +489,16 @@ class BasePublishService(BaseService):
                 error_message.format(operation=self.publish_type, state=original[ITEM_STATE])
             )
 
-    def _process_publish_updates(self, original, updates):
+    async def _process_publish_updates(self, original, updates):
         """Common updates for published items."""
         desk = None
         if original.get("task", {}).get("desk"):
-            # TODO-ASYNC[desks]: Use DesksResourceModel async service where when upgrading this module
-            desk = get_resource_service("desks").find_one(req=None, _id=original["task"]["desk"])
+            desk = await DesksResourceModel.get_service().find_by_id_raw(original["task"]["desk"])
         if not original.get("ingest_provider"):
             updates["source"] = (
                 desk["source"]
                 if desk and desk.get("source", "")
-                else get_app_config("DEFAULT_SOURCE_VALUE_FOR_MANUAL_ARTICLES")
+                else get_config(str, "DEFAULT_SOURCE_VALUE_FOR_MANUAL_ARTICLES")
             )
         updates["pubstatus"] = PUB_STATUS.CANCELED if self.publish_type == ITEM_KILL else PUB_STATUS.USABLE
         self._set_item_expiry(updates, original)
@@ -457,12 +518,12 @@ class BasePublishService(BaseService):
         elif EMBARGO in original or PUBLISH_SCHEDULE in original:
             offset = get_utc_schedule(original, PUBLISH_SCHEDULE) or get_utc_schedule(original, EMBARGO)
 
-        if get_app_config("PUBLISHED_CONTENT_EXPIRY_MINUTES"):
-            updates["expiry"] = get_expiry_date(get_app_config("PUBLISHED_CONTENT_EXPIRY_MINUTES"), offset=offset)
+        if get_config(int, "PUBLISHED_CONTENT_EXPIRY_MINUTES"):
+            updates["expiry"] = get_expiry_date(get_config(int, "PUBLISHED_CONTENT_EXPIRY_MINUTES"), offset=offset)
         else:
             updates["expiry"] = get_expiry(desk_id, stage_id, offset=offset)
 
-    def _publish_package_items(self, package, updates):
+    async def _publish_package_items(self, package, updates):
         """Publishes all items of a package recursively then publishes the package itself.
 
         :param package: package to publish
@@ -500,14 +561,14 @@ class BasePublishService(BaseService):
                         # if the item is a package do recursion to publish
                         sub_updates = {i: updates[i] for i in ["state", "operation"] if i in updates}
                         sub_updates["groups"] = list(package_item["groups"])
-                        self._publish_package_items(package_item, sub_updates)
-                        self._update_archive(
+                        await self._publish_package_items(package_item, sub_updates)
+                        await self._update_archive(
                             original=package_item, updates=sub_updates, should_insert_into_versions=False
                         )
                     else:
                         # publish the item
                         package_item[PUBLISHED_IN_PACKAGE] = package[ID_FIELD]
-                        archive_publish.patch(id=package_item.pop(ID_FIELD), updates=package_item)
+                        await archive_publish.patch_async(package_item.pop(ID_FIELD), updates=package_item)
 
                     insert_into_versions(id_=guid)
 
@@ -543,9 +604,9 @@ class BasePublishService(BaseService):
 
         updated = deepcopy(package)
         updated.update(updates)
-        self.update_published_collection(published_item_id=package[ID_FIELD], updated=updated)
+        await self.update_published_collection(published_item_id=package[ID_FIELD], updated=updated)
 
-    def update_published_collection(self, published_item_id, updated=None):
+    async def update_published_collection(self, published_item_id, updated=None):
         """Updates the published collection with the published item.
 
         Set the last_published_version to false for previous versions of the published items.
@@ -589,7 +650,7 @@ class BasePublishService(BaseService):
         if user and user.get(ID_FIELD):
             updates["version_creator"] = user[ID_FIELD]
 
-    def _update_archive(self, original, updates, versioned_doc=None, should_insert_into_versions=True):
+    async def _update_archive(self, original, updates, versioned_doc=None, should_insert_into_versions=True):
         """Updates the articles into archive collection and inserts the latest into archive_versions.
 
         Also clears autosaved versions if any.
@@ -625,7 +686,7 @@ class BasePublishService(BaseService):
         else:
             return [], []
 
-    def _validate_associated_items(self, original_item, updates=None, validation_errors=None):
+    async def _validate_associated_items(self, original_item, updates=None, validation_errors=None):
         """Validates associated items.
 
         This function will ensure that the unpublished content validates and none of
@@ -675,7 +736,7 @@ class BasePublishService(BaseService):
                 orig = doc.copy()
 
             if original_item[ITEM_TYPE] == CONTENT_TYPE.COMPOSITE:
-                self._validate_associated_items(doc, validation_errors=validation_errors)
+                await self._validate_associated_items(doc, validation_errors=validation_errors)
 
             # make sure no items are killed or recalled or spiked
             # using the latest version of the item from archive
@@ -707,7 +768,7 @@ class BasePublishService(BaseService):
                     ]
                     validation_errors.extend(pre_errors)
 
-            if get_app_config("PUBLISH_ASSOCIATED_ITEMS"):
+            if get_config(bool, "PUBLISH_ASSOCIATED_ITEMS"):
                 # check the locks on the items
                 if doc.get("lock_user"):
                     if original_item["lock_user"] != doc["lock_user"]:
@@ -728,16 +789,16 @@ class BasePublishService(BaseService):
                             ]
                         )
 
-    def _import_into_legal_archive(self, doc):
+    async def _import_into_legal_archive(self, doc):
         """Import into legal archive async
 
         :param {dict} doc: document to be imported
         """
 
-        if doc.get(ITEM_STATE) != CONTENT_STATE.SCHEDULED:
+        if is_legal_archive_enabled() and doc.get(ITEM_STATE) != CONTENT_STATE.SCHEDULED:
             kwargs = {"item_id": doc.get(ID_FIELD)}
             # countdown=3 is for elasticsearch to be refreshed with archive and published changes
-            import_into_legal_archive.apply_async(countdown=3, kwargs=kwargs)  # @UndefinedVariable
+            await import_into_legal_archive.apply_async(countdown=3, kwargs=kwargs)  # @UndefinedVariable
 
     def _set_updates_for_media_items(self, doc, updates):
         if doc.get("type") not in MEDIA_TYPES or updates.get("operation") != "publish":
@@ -754,7 +815,7 @@ class BasePublishService(BaseService):
                 else:  # media item could be updated outside, so update all fields
                     updates[key] = doc[key]
 
-    def _refresh_associated_items(self, original, skip_related=False):
+    async def _refresh_associated_items(self, original, skip_related=False):
         """Refreshes associated items with the latest version. Any further updates made to basic metadata done after
         item was associated will be carried on and used when validating those items.
         """
@@ -763,7 +824,7 @@ class BasePublishService(BaseService):
             if isinstance(item, dict) and item.get(ID_FIELD) and (not skip_related or len(item.keys()) > 2):
                 keys = [key for key in DEFAULT_SCHEMA.keys() if key not in PRESERVED_FIELDS]
 
-                if get_app_config("COPY_METADATA_FROM_PARENT") and item.get(ITEM_TYPE) in MEDIA_TYPES:
+                if get_config(bool, "COPY_METADATA_FROM_PARENT") and item.get(ITEM_TYPE) in MEDIA_TYPES:
                     updates = original
                     keys = FIELDS_TO_COPY_FOR_ASSOCIATED_ITEM
                 else:
@@ -776,7 +837,7 @@ class BasePublishService(BaseService):
                 else:
                     # if copying from parent the don't keep the existing
                     # otherwise check the value is_db_item_bigger_ver
-                    keep_existing = not get_app_config("COPY_METADATA_FROM_PARENT") and not is_db_item_bigger_ver
+                    keep_existing = not get_config(bool, "COPY_METADATA_FROM_PARENT") and not is_db_item_bigger_ver
                     update_item_data(item, updates, keys, keep_existing=keep_existing)
 
     def _fix_related_references(self, updated, updates):
@@ -790,7 +851,7 @@ class BasePublishService(BaseService):
                 }
                 updates.setdefault("associations", {})[key] = updated[ASSOCIATIONS][key]
 
-    def _publish_associated_items(self, original, updates=None):
+    async def _publish_associated_items(self, original, updates=None):
         """If there any updates to associated item and if setting:PUBLISH_ASSOCIATED_ITEMS is true
         then publish the associated item
         """
@@ -819,7 +880,7 @@ class BasePublishService(BaseService):
             if associated_item is None:
                 continue
             if isinstance(associated_item, dict) and associated_item.get(ID_FIELD):
-                if not get_app_config("PUBLISH_ASSOCIATED_ITEMS") or not publish_service:
+                if not get_config(bool, "PUBLISH_ASSOCIATED_ITEMS") or not publish_service:
                     if original.get(ASSOCIATIONS, {}).get(associations_key):
                         # Not allowed to publish
                         original[ASSOCIATIONS][associations_key]["state"] = self.published_state
@@ -844,7 +905,7 @@ class BasePublishService(BaseService):
                     # if main item is scheduled we must also schedule associations
                     self._inherit_publish_schedule(original, updates, orig_associated_item)
 
-                    get_resource_service("archive_publish").patch(
+                    await get_resource_service("archive_publish").patch_async(
                         id=orig_associated_item.pop(ID_FIELD), updates=orig_associated_item
                     )
                     continue
@@ -884,7 +945,7 @@ class BasePublishService(BaseService):
                     self._inherit_publish_schedule(original, updates, associated_item)
 
                     associated_item_updates = associated_item.copy()
-                    get_resource_service("archive_publish").patch(
+                    await get_resource_service("archive_publish").patch_async(
                         id=associated_item[ID_FIELD], updates=associated_item_updates
                     )
                     sync_associated_item_changes(associated_item, associated_item_updates)
@@ -906,20 +967,20 @@ class BasePublishService(BaseService):
                         associated_item.get("task", {}).pop("stage", None)
                         remove_unwanted(associated_item)
                         associated_item_updates = associated_item.copy()
-                        publish_service.patch(id=associated_item[ID_FIELD], updates=associated_item_updates)
+                        await publish_service.patch_async(id=associated_item[ID_FIELD], updates=associated_item_updates)
                         sync_associated_item_changes(associated_item, associated_item_updates)
                         continue
 
                     if association_updates.get("state") not in PUBLISH_STATES:
                         # There's an update to the published associated item
                         remove_unwanted(association_updates)
-                        publish_service.patch(id=associated_item[ID_FIELD], updates=association_updates)
+                        await publish_service.patch_async(id=associated_item[ID_FIELD], updates=association_updates)
 
             # When there is an associated item which is published, Inserts the latest version of that associated item into archive_versions.
             insert_into_versions(doc=associated_item)
-        self._refresh_associated_items(original)
+        await self._refresh_associated_items(original)
 
-    def _mark_media_item_as_used(self, updates, original):
+    async def _mark_media_item_as_used(self, updates, original):
         if ASSOCIATIONS not in updates or not updates.get(ASSOCIATIONS):
             return
 
@@ -928,7 +989,7 @@ class BasePublishService(BaseService):
                 continue
             item_id = item_obj[ID_FIELD]
             media_item = self.find_one(req=None, _id=item_id)
-            if get_app_config("COPY_METADATA_FROM_PARENT") and item_obj.get(ITEM_TYPE) in MEDIA_TYPES:
+            if get_config(bool, "COPY_METADATA_FROM_PARENT") and item_obj.get(ITEM_TYPE) in MEDIA_TYPES:
                 stored_item = (original.get(ASSOCIATIONS) or {}).get(item_name) or item_obj
             else:
                 stored_item = media_item
@@ -946,7 +1007,7 @@ class BasePublishService(BaseService):
 
     def _update_picture_metadata(self, updates, original, updated):
         renditions = updated.get("renditions") or {}
-        mapping = get_app_config("PICTURE_METADATA_MAPPING")
+        mapping = get_config(dict, "PICTURE_METADATA_MAPPING")
         if not mapping or not renditions:
             return
         try:

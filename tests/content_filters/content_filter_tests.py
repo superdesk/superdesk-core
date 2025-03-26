@@ -32,16 +32,15 @@ from superdesk.errors import SuperdeskApiError
 from superdesk.publish_async.publish_cache import PublishCache
 
 
-from superdesk.publish_async.content_filters.utils import (
-    item_matches_content_filter,
-    content_filter_to_mongo_query,
-    content_filter_to_elastic_query,
+from superdesk.publish_async.resources.content_filters.utils import (
     get_content_filters_by_filter_condition,
     _get_content_filters_by_content_filter,
 )
-from superdesk.publish_async.subscribers.utils import _get_subscribers_by_filter_condition
+from superdesk.publish_async.resources.subscribers.utils import _get_subscribers_by_filter_condition
 
 from superdesk.tests import TestCase
+
+from .utils import content_filter_to_mongo_query, content_filter_to_elastic_query, item_matches_content_filter
 
 
 FILTER_CONDITION_IDS = [ObjectId(), ObjectId(), ObjectId(), ObjectId(), ObjectId(), ObjectId(), ObjectId()]
@@ -757,11 +756,12 @@ class FilteringDataTests(ContentFilterTests):
             },
         ]
 
-        # Default cache is True
+        # Test with cached data
         self.assertTrue(item_matches_content_filter(item, content_filter))
 
-        # with cache = False
-        self.assertFalse(item_matches_content_filter(item, content_filter, cache=False))
+        # Reset cache and try again
+        await PublishCache.init(force=True)
+        self.assertFalse(item_matches_content_filter(item, content_filter))
 
 
 class DeleteMethodTestCase(ContentFilterTests):

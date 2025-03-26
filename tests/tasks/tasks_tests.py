@@ -47,14 +47,14 @@ class TasksTestCase(TestCase):
         doc = {"id": "1", "body_html": "Test-1"}
         update = {"anpa_take_key": "x"}
         stage = {"incoming_macro": "populate_abstract"}
-        apply_stage_rule(doc, update, stage, MACRO_INCOMING)
+        await apply_stage_rule(doc, update, stage, MACRO_INCOMING)
         self.assertEqual(update["abstract"], "Test-1")
 
     async def test_apply_outgoing_stage_rule(self):
         doc = {"id": "1", "body_html": "Test-1"}
         update = {"anpa_take_key": "x"}
         stage = {"outgoing_macro": "populate_abstract"}
-        apply_stage_rule(doc, update, stage, MACRO_OUTGOING)
+        await apply_stage_rule(doc, update, stage, MACRO_OUTGOING)
         self.assertEqual(update["abstract"], "Test-1")
 
     async def test_apply_stage_incoming_validation_rule(self):
@@ -62,39 +62,39 @@ class TasksTestCase(TestCase):
         update = {"headline": "x"}
         stage = {"incoming_macro": "take_key_validator"}
         with self.assertRaises(SuperdeskApiError):
-            apply_stage_rule(doc, update, stage, MACRO_INCOMING)
+            await apply_stage_rule(doc, update, stage, MACRO_INCOMING)
 
     async def test_apply_stage_incoming_validation_rule_passes(self):
         doc = {"id": "1", "body_html": "Test-1", "anpa_take_key": "a"}
         update = {"headline": "x"}
         stage = {"incoming_macro": "take_key_validator"}
-        apply_stage_rule(doc, update, stage, MACRO_INCOMING)
+        await apply_stage_rule(doc, update, stage, MACRO_INCOMING)
 
     async def test_apply_stage_incoming_validation_rule_ignored(self):
         doc = {"id": "1", "body_html": "Test-1"}
         update = {"headline": "x"}
         stage = {"outgoing_macro": "take_key_validator"}
-        apply_stage_rule(doc, update, stage, MACRO_INCOMING)
+        await apply_stage_rule(doc, update, stage, MACRO_INCOMING)
 
     async def test_apply_stage_outgoing_validation_rule_ignored(self):
         doc = {"id": "1", "body_html": "Test-1"}
         update = {"headline": "x"}
         stage = {"incoming_macro": "take_key_validator"}
-        apply_stage_rule(doc, update, stage, MACRO_OUTGOING)
+        await apply_stage_rule(doc, update, stage, MACRO_OUTGOING)
 
     async def test_apply_stage_outgoing_validation_rule(self):
         doc = {"id": "1", "body_html": "Test-1"}
         update = {"headline": "x"}
         stage = {"outgoing_macro": "take_key_validator"}
         with self.assertRaises(SuperdeskApiError):
-            apply_stage_rule(doc, update, stage, MACRO_OUTGOING)
+            await apply_stage_rule(doc, update, stage, MACRO_OUTGOING)
 
     async def test_apply_on_stage_validation_rule(self):
         doc = {"id": "1", "body_html": "Test-1"}
         update = {"headline": "x"}
         stage = {"onstage_macro": "take_key_validator"}
         with self.assertRaises(SuperdeskApiError):
-            apply_stage_rule(doc, update, stage, MACRO_ONSTAGE)
+            await apply_stage_rule(doc, update, stage, MACRO_ONSTAGE)
 
     async def test_apply_onstage_rule(self):
         doc = {"id": "1", "body_html": "Test-1", "task": {"stage": 1}}
@@ -102,14 +102,14 @@ class TasksTestCase(TestCase):
         self.app.data.insert("stages", stages)
 
         with self.assertRaises(SuperdeskApiError):
-            apply_onstage_rule(doc, 1)
+            await apply_onstage_rule(doc, 1)
 
     async def test_apply_onstage_rule_applies(self):
         doc = {"id": "1", "body_html": "Test-1", "task": {"stage": 1}}
         stages = [{"_id": 1, "onstage_macro": "populate_abstract"}]
         self.app.data.insert("stages", stages)
 
-        apply_onstage_rule(doc, 1)
+        await apply_onstage_rule(doc, 1)
         self.assertEqual(doc["abstract"], "Test-1")
 
     def test_compare_dictionaries(self):

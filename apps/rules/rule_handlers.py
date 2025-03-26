@@ -97,6 +97,8 @@ class IngestRuleHandlersService(Service):
 
 
 class DeskFetchPublishRoutingRuleHandler(RoutingRuleHandler):
+    """Ingest routing rule for fetching an item to a desk and optionally publishing it."""
+
     ID = "desk_fetch_publish"
     NAME = lazy_gettext("Desk Fetch/Publish")
     supported_actions = {
@@ -133,17 +135,17 @@ class DeskFetchPublishRoutingRuleHandler(RoutingRuleHandler):
                 stage_id = ingest_item["task"]["stage"]
             else:
                 stage_id = desk["incoming_stage"]
-            self.__fetch(ingest_item, [{"desk": desk[ID_FIELD], "stage": stage_id}], rule)
+            await self.__fetch(ingest_item, [{"desk": desk[ID_FIELD], "stage": stage_id}], rule)
             fetch_actions = [
                 f for f in rule.get("actions", {}).get("fetch", []) if f.get("desk") != ingest_item["task"]["desk"]
             ]
         else:
             fetch_actions = rule.get("actions", {}).get("fetch", [])
 
-        self.__fetch(ingest_item, fetch_actions, rule)
-        self.__publish(ingest_item, rule.get("actions", {}).get("publish", []), rule)
+        await self.__fetch(ingest_item, fetch_actions, rule)
+        await self.__publish(ingest_item, rule.get("actions", {}).get("publish", []), rule)
 
-    def __fetch(self, ingest_item, destinations, rule):
+    async def __fetch(self, ingest_item, destinations, rule):
         """Fetch to item to the destinations
 
         :param item: item to be fetched
@@ -154,20 +156,22 @@ class DeskFetchPublishRoutingRuleHandler(RoutingRuleHandler):
             try:
                 logger.info("Fetching item %s to desk %s" % (ingest_item.get("guid"), destination))
                 target = self.__get_target(destination)
-                item_id = get_resource_service("fetch").fetch(
-                    [
-                        {
-                            ID_FIELD: ingest_item[ID_FIELD],
-                            "desk": str(destination.get("desk")),
-                            "stage": str(destination.get("stage")),
-                            "state": CONTENT_STATE.ROUTED,
-                            "macro": destination.get("macro", None),
-                            "target": target,
+                item_id = (
+                    await get_resource_service("fetch").fetch(
+                        [
+                            {
+                                ID_FIELD: ingest_item[ID_FIELD],
+                                "desk": str(destination.get("desk")),
+                                "stage": str(destination.get("stage")),
+                                "state": CONTENT_STATE.ROUTED,
+                                "macro": destination.get("macro", None),
+                                "target": target,
+                            },
+                        ],
+                        macro_kwargs={
+                            "rule": rule,
                         },
-                    ],
-                    macro_kwargs={
-                        "rule": rule,
-                    },
+                    )
                 )[0]
                 archive_items.append(item_id)
                 logger.info("Fetched item %s to desk %s" % (ingest_item.get("guid"), destination))
@@ -176,14 +180,14 @@ class DeskFetchPublishRoutingRuleHandler(RoutingRuleHandler):
 
         return archive_items
 
-    def __publish(self, ingest_item, destinations, rule):
+    async def __publish(self, ingest_item, destinations, rule):
         """Fetches the item to the desk and then publishes the item.
 
         :param item: item to be published
         :param destinations: list of desk and stage
         """
         guid = ingest_item.get("guid")
-        items_to_publish = self.__fetch(ingest_item, destinations, rule)
+        items_to_publish = await self.__fetch(ingest_item, destinations, rule)
         for item in items_to_publish:
             try:
                 archive_item = get_resource_service("archive").find_one(req=None, _id=item)
@@ -192,7 +196,7 @@ class DeskFetchPublishRoutingRuleHandler(RoutingRuleHandler):
                     continue
                 logger.info("Publishing item %s", guid)
                 self._set_default_values(archive_item)
-                get_resource_service("archive_publish").patch(item, {"auto_publish": True})
+                await get_resource_service("archive_publish").patch_async(item, {"auto_publish": True})
                 logger.info("Published item %s", guid)
             except Exception:
                 logger.exception("Failed to publish item %s.", guid)

@@ -6,6 +6,7 @@ from bson import ObjectId
 from superdesk.flask import g
 
 from superdesk.types import SubscribersResource, ContentFiltersResource, FilterConditionsResource, ProductsResource
+from superdesk import get_resource_service
 
 
 class PublishCache:
@@ -31,6 +32,15 @@ class PublishCache:
     #: Cache used to store the result of content filtering
     filter_result_cache: dict[str, bool]
 
+    #: List of ContentFilters that have ``is_global == True``
+    global_content_filters: list[ContentFiltersResource]
+
+    #: Dictionary of global ContentFilter ID and if it matches the item or not
+    global_filter_matches: dict[ObjectId, bool]
+
+    #: Dictionary of ContentProfile ID to ContentProfile (aka ContentType)
+    content_types: dict[str, dict] = {}
+
     async def _init(self) -> None:
         gather_response = await gather(
             SubscribersResource.get_service().get_all_map({"is_active": True}),
@@ -42,7 +52,18 @@ class PublishCache:
         self.filter_conditions = cast(dict[ObjectId, FilterConditionsResource], gather_response[1])
         self.content_filters = cast(dict[ObjectId, ContentFiltersResource], gather_response[2])
         self.products = cast(dict[ObjectId, ProductsResource], gather_response[3])
+
+        # TODO-ASYNC-PUBLISH: Convert this to the async service when available (after rebasing from async branch)
+        self.content_types = {
+            str(content_type["_id"]): content_type for content_type in get_resource_service("content_types").get_all()
+        }
+
+        self.global_content_filters = [
+            global_filter for global_filter in self.content_filters.values() if global_filter.is_global
+        ]
+
         self.filter_result_cache = {}
+        self.global_filter_matches = {}
 
     @classmethod
     async def init(cls, force: bool = False) -> Self:
@@ -54,15 +75,9 @@ class PublishCache:
         creates and initializes a new instance, then associates it with the
         global context.
 
-        Parameters:
-        force: bool
-            Indicates whether to force initialization of the PublishCache even
+        :param force: Indicates whether to force initialization of the PublishCache even
             if it already exists in the global context.
-
-        Returns:
-        Self
-            The PublishCache instance retrieved or initialized as part of the
-            operation.
+        :return: The PublishCache instance retrieved or initialized as part of the operation.
         """
         if "publish_cache" not in g or force:
             instance = PublishCache()
@@ -80,19 +95,16 @@ class PublishCache:
         context-local storage. If the PublishCache has not been initialized in
         the current context, a RuntimeError will be raised.
 
-        Raises:
-            RuntimeError: If PublishCache has not been initialized for the current
-            context.
-
-        Returns:
-            Self: The cached PublishCache instance from the current context.
+        :return: The cached PublishCache instance from the current context.
+        :raises RuntimeError: If PublishCache has not been initialized for the current context.
         """
         try:
             return cast(Self, getattr(g, "publish_cache"))
         except AttributeError:
             raise RuntimeError("PublishCache must be initted first, `await PublishCache.init()`")
 
-    def generate_cache_id(self, prefix: str, context_id: str, item: dict) -> str:
+    @classmethod
+    def generate_cache_id(cls, prefix: str, context_id: str, item_id: str) -> str:
         """
         Generates a unique cache identifier based on provided inputs.
 
@@ -101,19 +113,10 @@ class PublishCache:
         "_id" or "guid" key in the item dictionary and is converted to a string. This
         cache ID can then be used as a unique identifier for caching purposes.
 
-        Parameters:
-            prefix: str
-                A string that will serve as the prefix of the cache identifier.
-            context_id: str
-                A string representing the context identifier to be included in the
-                cache ID.
-            item: dict
-                A dictionary containing item details. The "_id" key or "guid" key
-                within the dictionary will be used to generate the unique identifier.
-
-        Returns:
-            str:
-                A concatenated string serving as the unique cache identifier, consisting
-                of the prefix, context ID, and item identifier.
+        :param prefix: A string that will serve as the prefix of the cache identifier.
+        :param context_id: A string representing the context identifier to be included in the cache ID.
+        :param item_id: The ID of the item to serve as the suffix of the cache identifier.
+        :return: A concatenated string serving as the unique cache identifier, consisting
+            of the prefix, context ID, and item identifier.
         """
-        return "-".join([prefix, str(context_id), str(item.get("_id") or item.get("guid"))])
+        return "-".join([prefix, str(context_id), item_id])

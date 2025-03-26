@@ -14,11 +14,10 @@ import json
 from eve.utils import ParsedRequest
 from eve.versioning import resolve_document_version
 
-from superdesk.resource_fields import ID_FIELD, LAST_UPDATED
+from superdesk.resource_fields import ID_FIELD
 from superdesk.flask import request
 from apps.archive.common import CUSTOM_HATEOAS, insert_into_versions, get_user, ITEM_CREATE, BROADCAST_GENRE, is_genre
 from apps.packages import PackageService
-from superdesk.metadata.packages import GROUPS
 from superdesk.resource import Resource, build_custom_hateoas
 from superdesk.services import BaseService
 from superdesk.metadata.utils import item_url
@@ -27,7 +26,6 @@ from superdesk import get_resource_service
 from superdesk.errors import SuperdeskApiError
 from apps.archive.archive import SOURCE
 from apps.publish.content.common import ITEM_CORRECT, ITEM_PUBLISH
-from superdesk.utc import utcnow
 from quart_babel import gettext as _
 
 
@@ -317,54 +315,3 @@ class ArchiveBroadcastService(BaseService):
 
         if original.get("rewrite_of") and original.get(ITEM_STATE) not in PUBLISH_STATES:
             self.remove_rewrite_refs(original)
-
-    def kill_broadcast(self, updates, original, operation):
-        """Kill the broadcast items
-
-        :param dict updates: Updates to the item
-        :param dict original: original item
-        :param str operation: Kill or Takedown operation
-        :return:
-        """
-        broadcast_items = [
-            item
-            for item in self.get_broadcast_items_from_master_story(original)
-            if item.get(ITEM_STATE) in PUBLISH_STATES
-        ]
-
-        correct_service = get_resource_service("archive_correct")
-        kill_service = get_resource_service("archive_{}".format(operation))
-
-        for item in broadcast_items:
-            item_id = item.get(ID_FIELD)
-            packages = self.packageService.get_packages(item_id)
-
-            processed_packages = set()
-            for package in packages:
-                if str(package[ID_FIELD]) in processed_packages or package.get(ITEM_STATE) == CONTENT_STATE.RECALLED:
-                    continue
-                try:
-                    if package.get(ITEM_STATE) in {CONTENT_STATE.PUBLISHED, CONTENT_STATE.CORRECTED}:
-                        package_updates = {
-                            LAST_UPDATED: utcnow(),
-                            GROUPS: self.packageService.remove_group_ref(package, item_id),
-                        }
-
-                        refs = self.packageService.get_residrefs(package_updates)
-                        if refs:
-                            correct_service.patch(package.get(ID_FIELD), package_updates)
-                        else:
-                            package_updates["body_html"] = updates.get("body_html", "")
-                            kill_service.patch(package.get(ID_FIELD), package_updates)
-
-                        processed_packages.add(package.get(ID_FIELD))
-                    else:
-                        package_list = self.packageService.remove_refs_in_package(package, item_id, processed_packages)
-
-                        processed_packages = processed_packages.union(set(package_list))
-                except Exception:
-                    logger.exception(
-                        "Failed to remove the broadcast item {} from package {}".format(item_id, package.get(ID_FIELD))
-                    )
-
-            kill_service.kill_item(updates, item)

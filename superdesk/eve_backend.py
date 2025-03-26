@@ -98,7 +98,8 @@ class EveBackend:
         """
         backend = self._backend(endpoint_name, use_async=True)
         item = await backend.find_one(endpoint_name, req=req, **lookup)
-        search_backend = self._lookup_backend(endpoint_name, fallback=True, use_async=True)
+        # TODO-ASYNC: Change `use_async=True` once Elastic supports async
+        search_backend = self._lookup_backend(endpoint_name, fallback=True, use_async=False)
         if search_backend and get_app_config("BACKEND_FIND_ONE_SEARCH_TEST", False):
             # set the parent for the parent child in elastic search
             self._set_parent(endpoint_name, item, lookup)
@@ -136,6 +137,22 @@ class EveBackend:
         if sort is not None:
             req.sort = sort
         return self.get_from_mongo(endpoint_name, req, None)
+
+    async def find_async(self, endpoint_name, where, max_results=0, sort=None):
+        """Find items for given endpoint using mongo query in python dict object.
+
+        It handles request creation here so no need to do this in service.
+
+        :param string endpoint_name
+        :param dict where
+        :param int max_results
+        """
+        req = ParsedRequest()
+        req.where = MongoJSONEncoder().encode(where)
+        req.max_results = max_results
+        if sort is not None:
+            req.sort = sort
+        return await self.get_from_mongo_async(endpoint_name, req, None)
 
     def search(self, endpoint_name, source):
         """Search for items using search backend
@@ -210,7 +227,7 @@ class EveBackend:
         if is_mongo and source_config.get("collation"):
             cursor.collation(Collation(locale=get_app_config("MONGO_LOCALE", "en_US")))
 
-        self._cursor_hook(cursor=cursor, endpoint_name=endpoint_name, req=req, lookup=lookup)
+        self._cursor_hook(cursor=cursor, endpoint_name=endpoint_name, req=req, lookup=lookup, use_async=True)
         return cursor
 
     def get_from_mongo(self, endpoint_name, req, lookup, perform_count=False):
@@ -244,8 +261,7 @@ class EveBackend:
         req.if_modified_since = None
         backend = self._backend(endpoint_name, use_async=True)
         cursor, _ = await backend.find(endpoint_name, req, lookup, perform_count=False)
-        # TODO-ASYNC: Fix cursor usage
-        self._cursor_hook(cursor=cursor, endpoint_name=endpoint_name, req=req, lookup=lookup)
+        self._cursor_hook(cursor=cursor, endpoint_name=endpoint_name, req=req, lookup=lookup, use_async=True)
         return cursor
 
     def find_and_modify(self, endpoint_name, **kwargs):
@@ -856,8 +872,8 @@ class EveBackend:
             if parent:
                 lookup["parent"] = parent
 
-    def construct_count_function(self, resource, req, lookup):
-        backend = self._backend(resource)
+    def construct_count_function(self, resource, req, lookup, use_async: bool = False):
+        backend = self._backend(resource, use_async=use_async)
 
         client_sort = backend._convert_sort_request_to_dict(req)
         spec = backend._convert_where_request_to_dict(resource, req)
@@ -876,11 +892,11 @@ class EveBackend:
 
         return count_function
 
-    def _cursor_hook(self, cursor, endpoint_name, req, lookup):
+    def _cursor_hook(self, cursor, endpoint_name, req, lookup, use_async: bool = False):
         """Apply additional methods for cursor"""
 
         if not hasattr(cursor, "count"):
-            setattr(cursor, "count", self.construct_count_function(endpoint_name, req, lookup))
+            setattr(cursor, "count", self.construct_count_function(endpoint_name, req, lookup, use_async))
 
         if not req or not req.args:
             return
