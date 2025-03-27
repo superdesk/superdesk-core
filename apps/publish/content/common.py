@@ -928,11 +928,18 @@ class BasePublishService(BaseService):
     def _update_picture_metadata(self, updates, original, updated):
         renditions = updated.get("renditions") or {}
         mapping = app.config.get("PICTURE_METADATA_MAPPING")
-        # Skip if no metadata mapping or no renditions
+
         if not mapping or not renditions:
             return
+
         try:
+            updated_renditions = deepcopy(renditions)
+            updates["renditions"] = updated_renditions
+
             for rendition_key, rendition_data in renditions.items():
+                if not rendition_data or not isinstance(rendition_data, dict):
+                    continue
+
                 media_id = rendition_data.get("media")
                 if not media_id:
                     continue
@@ -946,14 +953,14 @@ class BasePublishService(BaseService):
                     updated_media_id = app.media.put(
                         updated_binary, content_type=picture.content_type, filename=picture.filename
                     )
-                    updates.setdefault("renditions", deepcopy(renditions))[rendition_key].update(
+                    updated_renditions[rendition_key].update(
                         {
                             "media": updated_media_id,
                             "href": app.media.url_for_media(updated_media_id, picture.content_type),
                         }
                     )
 
-            updated["renditions"] = updates["renditions"]
+            updated["renditions"] = updated_renditions
 
         except (KeyError, TypeError):
             return

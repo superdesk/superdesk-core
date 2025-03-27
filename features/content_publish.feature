@@ -4876,10 +4876,26 @@ Feature: Content Publishing
       """
       {"JobId": "1234", "Title": "test publish"}
       """
+      And we get picture metadata "{{ archive_publish.renditions.viewImage.media }}"
+      """
+      {"JobId": "1234", "Title": "test publish"}
+      """
+      And we get picture metadata "{{ archive_publish.renditions.thumbnail.media }}"
+      """
+      {"JobId": "1234", "Title": "test publish"}
+      """
 
       When we get "/published"
       Then we get list with 1 items
       And we get picture metadata "{{ items.0.renditions.original.media }}"
+      """
+      {"JobId": "1234", "Title": "test publish"}
+      """
+      And we get picture metadata "{{ items.0.renditions.viewImage.media }}"
+      """
+      {"JobId": "1234", "Title": "test publish"}
+      """
+      And we get picture metadata "{{ items.0.renditions.thumbnail.media }}"
       """
       {"JobId": "1234", "Title": "test publish"}
       """
