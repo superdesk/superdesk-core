@@ -240,6 +240,9 @@ class Endpoint:
 
     auth: AuthConfig
 
+    #: If ``True``, CORS will be enabled for this endpoint (default is in ``ASYNC_ENABLE_CORS`` config setting).
+    cors: bool | None
+
     def __init__(
         self,
         url: str,
@@ -248,6 +251,7 @@ class Endpoint:
         name: str | None = None,
         auth: AuthConfig = None,
         parent: Union["EndpointGroup", None] = None,
+        cors: bool | None = None
     ):
         self.url = url
         self.func = func
@@ -255,6 +259,7 @@ class Endpoint:
         self.name = name or func.__name__
         self.auth = auth
         self.parent = parent
+        self.cors = cors
 
     async def __call__(self, args: dict[str, Any], params: dict[str, Any], request: Request):
         ...
@@ -263,6 +268,10 @@ class Endpoint:
         if self.auth is None:
             return self.parent.get_auth_rules() if self.parent is not None else None
         return self.auth
+
+    @property
+    def add_cors_headers(self) -> bool:
+        return self.cors is True
 
 
 class EndpointGroup(Endpoint):

@@ -13,6 +13,7 @@ from inspect import signature, isawaitable
 import logging
 
 from pydantic import BaseModel, ValidationError
+from werkzeug.datastructures import Headers
 
 from superdesk.core.types import (
     Request,
@@ -31,6 +32,12 @@ logger = logging.getLogger(__name__)
 class Endpoint(EndpointProtocol):
     """Base class used for registering and processing endpoints"""
 
+    @property
+    def add_cors_headers(self) -> bool:
+        from superdesk.core import get_config
+
+        return self.cors if self.cors is not None else get_config(bool, "ASYNC_ENABLE_CORS")
+
     async def __call__(self, args: dict[str, Any], params: dict[str, Any], request: Request):
         from superdesk.core.resources import ResourceModel
         from superdesk.core import get_current_async_app
@@ -47,6 +54,13 @@ class Endpoint(EndpointProtocol):
                 logger.warning("Authorize returned a non-None value")
                 return response
 
+        cors_headers = []
+        if self.add_cors_headers:
+            from superdesk.utils import get_cors_headers
+            cors_headers = get_cors_headers(", ".join(self.methods))
+            if request.method == "OPTIONS":
+                return Response("", headers=cors_headers)
+
         response = self._run_endpoint_func(args, params, request)
         if isawaitable(response):
             response = await response
@@ -59,6 +73,18 @@ class Endpoint(EndpointProtocol):
             return response
         elif isinstance(response.body, ResourceModel):
             response.body = response.body.to_dict()
+
+        if cors_headers:
+            # Use Werkzeug to add the cors headers to our response
+            # as it supports different types of header formats for us already
+            headers = Headers(response.headers) if response.headers else Headers()
+            headers.extend([
+                header
+                for header in cors_headers
+                # Make sure we are not doubling up on cors headers
+                if header[0] not in headers
+            ])
+            response.headers = headers
 
         return response
 
@@ -161,7 +187,13 @@ class EndpointGroup(EndpointGroupProtocol):
         return return_404()
 
 
-def endpoint(url: str, name: str | None = None, methods: list[HTTP_METHOD] | None = None, auth: AuthConfig = None):
+def endpoint(
+    url: str,
+    name: str | None = None,
+    methods: list[HTTP_METHOD] | None = None,
+    auth: AuthConfig = None,
+    cors: bool | None = None
+):
     """Decorator function to convert a pure function to an Endpoint instance
     which is later used to register with a Module or the app.
 
@@ -172,6 +204,9 @@ def endpoint(url: str, name: str | None = None, methods: list[HTTP_METHOD] | Non
         - "/custom/path" stays as "/custom/path"
     :param name: The optional name of the endpoint
     :param methods: The optional list of HTTP methods allowed
+    :param auth: The auth configuration for this endpoint
+    :param cors: If True, CORS will be enabled for this endpoint.
+        If None, the value will be taken from the ``ASYNC_ENABLE_CORS`` config setting.
     """
 
     def convert_to_endpoint(func: EndpointFunction):
@@ -181,6 +216,7 @@ def endpoint(url: str, name: str | None = None, methods: list[HTTP_METHOD] | Non
             methods=methods,
             func=func,
             auth=auth,
+            cors=cors,
         )
 
     return convert_to_endpoint
