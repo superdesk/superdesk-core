@@ -57,6 +57,7 @@ class Endpoint(EndpointProtocol):
         cors_headers = []
         if self.add_cors_headers:
             from superdesk.utils import get_cors_headers
+
             cors_headers = get_cors_headers(", ".join(self.methods))
             if request.method == "OPTIONS":
                 return Response("", headers=cors_headers)
@@ -78,13 +79,15 @@ class Endpoint(EndpointProtocol):
             # Use Werkzeug to add the cors headers to our response
             # as it supports different types of header formats for us already
             headers = Headers(response.headers) if response.headers else Headers()
-            headers.extend([
-                header
-                for header in cors_headers
-                # Make sure we are not doubling up on cors headers
-                if header[0] not in headers
-            ])
-            response.headers = headers
+            headers.extend(
+                [
+                    header
+                    for header in cors_headers
+                    # Make sure we are not doubling up on cors headers
+                    if header[0] not in headers
+                ]
+            )
+            response.headers = list(headers)
 
         return response
 
@@ -192,7 +195,7 @@ def endpoint(
     name: str | None = None,
     methods: list[HTTP_METHOD] | None = None,
     auth: AuthConfig = None,
-    cors: bool | None = None
+    cors: bool | None = None,
 ):
     """Decorator function to convert a pure function to an Endpoint instance
     which is later used to register with a Module or the app.

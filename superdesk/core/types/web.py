@@ -251,7 +251,7 @@ class Endpoint:
         name: str | None = None,
         auth: AuthConfig = None,
         parent: Union["EndpointGroup", None] = None,
-        cors: bool | None = None
+        cors: bool | None = None,
     ):
         self.url = url
         self.func = func
