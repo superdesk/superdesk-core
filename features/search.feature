@@ -133,7 +133,7 @@ Feature: Search Feature
         Then we get list with 1 items
         When we get "/archived/123:2"
         Then we get response code 200
-        When we login as user "foo" with password "bar" and user type "user"
+        When we login as user "foo" with password "barword" and user type "user"
         When we get "/search"
         Then we get list with 0 items
         When we get "/archive/#archive._id#"
@@ -206,7 +206,7 @@ Feature: Search Feature
         Then we get list with 1 items
         When we get "/archive/#archive._id#"
         Then we get response code 200
-        When we login as user "foo" with password "bar" and user type "user"
+        When we login as user "foo" with password "barword" and user type "user"
         When we get "/search"
         Then we get list with 0 items
         When we get "/archive/#archive._id#"
@@ -218,7 +218,7 @@ Feature: Search Feature
         Then we get list with 1 items
         When we get "/archive/#archive._id#"
         Then we get response code 200
-        When we login as user "foo" with password "bar" and user type "user"
+        When we login as user "foo" with password "barword" and user type "user"
         When we get "/search"
         Then we get list with 0 items
         When we get "/published"

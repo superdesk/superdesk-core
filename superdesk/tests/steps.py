@@ -1989,7 +1989,8 @@ async def we_reset_password_for_user(context):
 async def when_we_switch_user(context):
     user = {
         "username": "test-user-2",
-        "password": "pwd",
+        "password": "password123",
+        "email": "behave_test2@sourcefabric.org",
         "is_active": True,
         "is_enabled": True,
         "needs_activation": False,
@@ -2332,6 +2333,7 @@ async def login_as(context, username, password, user_type):
         "is_active": True,
         "is_enabled": True,
         "needs_activation": False,
+        "email": "behave_test_user@sourcefabric.org",
         user_type: user_type,
     }
 

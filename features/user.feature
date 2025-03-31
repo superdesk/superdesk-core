@@ -306,7 +306,7 @@ Feature: User Resource
 
     @auth
     Scenario: A logged-in user can't delete themselves from the system
-        Given we login as user "foo" with password "bar" and user type "user"
+        Given we login as user "foo" with password "barword" and user type "user"
         When we delete "/users/#user._id#"
         Then we get error 403
 
@@ -316,7 +316,7 @@ Feature: User Resource
         """
         [{"name": "A", "is_default": true}, {"name": "B"}]
         """
-        And we login as user "foo" with password "bar" and user type "user"
+        And we login as user "foo" with password "barword" and user type "user"
         """
         {"user_type": "user", "email": "foo.bar@foobar.org"}
         """
@@ -473,7 +473,7 @@ Feature: User Resource
     @auth
     @notification
     Scenario: Delete a user removes content in draft state and releases user lock
-        Given we login as user "foo" with password "bar" and user type "admin"
+        Given we login as user "foo" with password "barword" and user type "admin"
         And "archive"
         """
         [{"_id": "item2", "headline": "test", "slugline": "test", "state": "draft",

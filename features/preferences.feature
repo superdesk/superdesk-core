@@ -257,7 +257,7 @@ Feature: User preferences
     @auth
     Scenario: Session Preferences are deleted when user logsout of Superdesk
       Given I logout
-      When we login as user "foo" with password "bar" and user type "user"
+      When we login as user "foo" with password "barword" and user type "user"
       Then we get "/users/test_user" and match
       """
       {"username": "test_user"}

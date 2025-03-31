@@ -583,7 +583,7 @@ Feature: Fetch Items from Ingest
       """
       [{"guid": "tag_reuters.com_2014_newsml_LOVEA6M0L7U2E"}]
       """
-      When we login as user "foo" with password "bar" and user type "user"
+      When we login as user "foo" with password "barword" and user type "user"
       """
       {"user_type": "user", "email": "foo.bar@foobar.org"}
       """
