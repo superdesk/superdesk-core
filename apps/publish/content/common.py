@@ -797,8 +797,9 @@ class BasePublishService(AsyncBaseService):
 
         if is_legal_archive_enabled() and doc.get(ITEM_STATE) != CONTENT_STATE.SCHEDULED:
             kwargs = {"item_id": doc.get(ID_FIELD)}
+            # TODO-ASYNC: Disabled for now until this module is upgraded to async
             # countdown=3 is for elasticsearch to be refreshed with archive and published changes
-            await import_into_legal_archive.apply_async(countdown=3, kwargs=kwargs)  # @UndefinedVariable
+            # await import_into_legal_archive.apply_async(countdown=3, kwargs=kwargs)  # @UndefinedVariable
 
     def _set_updates_for_media_items(self, doc, updates):
         if doc.get("type") not in MEDIA_TYPES or updates.get("operation") != "publish":
