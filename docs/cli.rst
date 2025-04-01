@@ -16,24 +16,28 @@ To run specific command you use its name and any params needed::
 Creating new command
 --------------------
 
-You can create new commands extending :class:`superdesk.Command` and registering it using
-:meth:`superdesk.command` call::
+You can create new commands using the :attr:`superdesk.commands.cli` attribute
+(which is an instance of :class:`superdesk.core.cli.AsyncAppGroup`).::
 
-    import superdesk
+    import click
+    from superdesk.commands import cli
 
-    class HelloWorldCommand(superdesk.Command):
+    @cli.command("hello:world")
+    @click.option("-n", "--name", default="world", help="Name of the person to say hello to")
+    def cli_hello_world(name: str) -> None:
+        print(f"Hello, {name}!")
 
-        option_list = [
-            superdesk.Option('--name', '-n', required=True),
-        ]
+To have the new command registered, make sure the command function is imported from one of the following settings:
 
-        def run(self, name):
-            print('hello {}'.format(name))
+* CORE_APPS
+* INSTALLED_APPS
+* MODULES
 
+Simply importing of the file on app startup will include the command with the application.
 
-    superdesk.command('hello:word', MyCommand())
+These commands support both sync and async functions, no special changes are required.
 
-We use `Flask-Script <https://flask-script.readthedocs.io/>`_ under the hood so you can get more info there.
+We use `Click <https://click.palletsprojects.com/>`_ under the hood so you can get more info there.
 
 Superdesk commands
 ------------------
