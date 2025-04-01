@@ -828,10 +828,16 @@ def step_impl_when_post_url_with_success(context, url):
 def step_impl_when_put_url(context, url):
     with context.app.mail.record_messages() as outbox:
         url = apply_placeholders(context, url)
-        res = get_res(url, context)
-        headers = if_match(context, res.get("_etag"))
+        try:
+            res = get_res(url, context)
+            headers = if_match(context, res.get("_etag"))
+        except AssertionError:
+            headers = {"content-type": "application/json"}
         data = apply_placeholders(context, context.text)
         href = get_prefixed_url(context.app, url)
+
+        print("PUT", href)
+
         context.response = context.client.put(href, data=data, headers=headers)
         context.outbox = outbox
 

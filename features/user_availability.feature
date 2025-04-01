@@ -1,4 +1,3 @@
-@wip
 Feature: User Availability
     As an administrator
     I want to manage user availability records
@@ -108,3 +107,263 @@ Feature: User Availability
         # Verify deletion
         When we get "/user_availability/#user_availability._id#"
         Then we get error 404
+
+    @wip
+    @auth
+    Scenario: Default user availability
+        # Create default availability settings using PUT
+        When we put to "/default_user_availability/#CONTEXT_USER_ID#"
+        """
+        {
+            "working_days": {
+                "monday": {
+                    "status": "available",
+                    "working_hours": [
+                        {
+                            "start_time": "09:00:00",
+                            "end_time": "17:00:00",
+                            "tags": [
+                                {"code": "regular"}
+                            ]
+                        }
+                    ]
+                },
+                "tuesday": {
+                    "status": "available",
+                    "working_hours": [
+                        {
+                            "start_time": "09:00:00",
+                            "end_time": "17:00:00",
+                            "tags": [
+                                {"code": "regular"}
+                            ]
+                        }
+                    ]
+                },
+                "wednesday": {
+                    "status": "partial",
+                    "working_hours": [
+                        {
+                            "start_time": "09:00:00",
+                            "end_time": "13:00:00",
+                            "tags": [
+                                {"code": "morning"}
+                            ]
+                        }
+                    ]
+                },
+                "thursday": {
+                    "status": "available",
+                    "working_hours": [
+                        {
+                            "start_time": "09:00:00",
+                            "end_time": "17:00:00",
+                            "tags": [
+                                {"code": "regular"}
+                            ]
+                        }
+                    ]
+                },
+                "friday": {
+                    "status": "available",
+                    "working_hours": [
+                        {
+                            "start_time": "09:00:00",
+                            "end_time": "16:00:00",
+                            "tags": [
+                                {"code": "regular"}
+                            ]
+                        }
+                    ]
+                },
+                "saturday": {
+                    "status": "unavailable"
+                },
+                "sunday": {
+                    "status": "unavailable"
+                }
+            },
+            "language": ["en", "fr"]
+        }
+        """
+        Then we get OK response
+        And we get existing resource
+        """
+        {
+            "_id": "#CONTEXT_USER_ID#",
+            "working_days": {
+                "monday": {
+                    "status": "available"
+                },
+                "tuesday": {
+                    "status": "available"
+                },
+                "wednesday": {
+                    "status": "partial"
+                },
+                "thursday": {
+                    "status": "available"
+                },
+                "friday": {
+                    "status": "available"
+                },
+                "saturday": {
+                    "status": "unavailable"
+                },
+                "sunday": {
+                    "status": "unavailable"
+                }
+            },
+            "language": ["en", "fr"]
+        }
+        """
+        
+        # Get the default availability settings
+        When we get "/default_user_availability/#CONTEXT_USER_ID#"
+        Then we get OK response
+        And we get existing resource
+        """
+        {
+            "working_days": {
+                "monday": {
+                    "status": "available"
+                },
+                "wednesday": {
+                    "status": "partial"
+                },
+                "saturday": {
+                    "status": "unavailable"
+                }
+            },
+            "language": ["en", "fr"]
+        }
+        """
+        
+        # Update the default availability settings
+        When we put to "/default_user_availability/#CONTEXT_USER_ID#"
+        """
+        {
+            "working_days": {
+                "monday": {
+                    "status": "partial",
+                    "working_hours": [
+                        {
+                            "start_time": "09:00:00",
+                            "end_time": "13:00:00",
+                            "tags": [
+                                {"code": "morning"}
+                            ]
+                        }
+                    ]
+                },
+                "tuesday": {
+                    "status": "partial",
+                    "working_hours": [
+                        {
+                            "start_time": "13:00:00",
+                            "end_time": "17:00:00",
+                            "tags": [
+                                {"code": "afternoon"}
+                            ]
+                        }
+                    ]
+                },
+                "wednesday": {
+                    "status": "unavailable"
+                },
+                "thursday": {
+                    "status": "available",
+                    "working_hours": [
+                        {
+                            "start_time": "09:00:00",
+                            "end_time": "17:00:00",
+                            "tags": [
+                                {"code": "regular"}
+                            ]
+                        }
+                    ]
+                },
+                "friday": {
+                    "status": "available",
+                    "working_hours": [
+                        {
+                            "start_time": "09:00:00",
+                            "end_time": "16:00:00",
+                            "tags": [
+                                {"code": "regular"}
+                            ]
+                        }
+                    ]
+                },
+                "saturday": {
+                    "status": "unavailable"
+                },
+                "sunday": {
+                    "status": "unavailable"
+                }
+            },
+            "language": ["en"]
+        }
+        """
+        Then we get OK response
+        And we get existing resource
+        """
+        {
+            "working_days": {
+                "monday": {
+                    "status": "partial"
+                },
+                "tuesday": {
+                    "status": "partial"
+                },
+                "wednesday": {
+                    "status": "unavailable"
+                },
+                "thursday": {
+                    "status": "available"
+                }
+            },
+            "language": ["en"]
+        }
+        """
+        
+        # Verify that PATCH is not allowed
+        When we patch "/default_user_availability/#CONTEXT_USER_ID#"
+        """
+        {
+            "language": ["en", "es"]
+        }
+        """
+        Then we get error 405
+        
+        # Verify that DELETE is not allowed
+        When we delete "/default_user_availability/#CONTEXT_USER_ID#"
+        Then we get error 405
+        
+        # Try to update someone else's default availability
+        Given "users"
+        """
+        [
+            {"username": "user2", "password": "test_password", "email": "test@example.com"}
+        ]
+        """
+        When we put to "/default_user_availability/#users._id#"
+        """
+        {
+            "working_days": {
+                "monday": {"status": "unavailable"}
+            }
+        }
+        """
+        Then we get error 403
+
+        # Verify that POST is not allowed
+        When we post to "default_user_availability"
+        """
+        {
+            "working_days": {
+                "monday": {"status": "available"}
+            }
+        }
+        """
+        Then we get error 405
