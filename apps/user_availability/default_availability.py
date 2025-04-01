@@ -121,6 +121,7 @@ class DefaultAvailabilityService(superdesk.Service):
                     "_generated": True,
                 }
                 for d in dates
+                if availability_service.find_one(req=None, user=current_user_id, date=d.date().isoformat()) is None
             ]
 
         if items:
