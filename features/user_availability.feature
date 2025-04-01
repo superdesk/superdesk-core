@@ -217,6 +217,14 @@ Feature: User Availability
             "language": ["en", "fr"]
         }
         """
+
+        When we get "/user_availability"
+        Then we get list with 20+ items
+        """
+        {"_items": [
+            {"_generated": true, "status": "partial", "user": "#CONTEXT_USER_ID#"}
+        ]}
+        """
         
         # Get the default availability settings
         When we get "/default_user_availability/#CONTEXT_USER_ID#"

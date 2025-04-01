@@ -1,6 +1,8 @@
 import superdesk
+
+from datetime import datetime
+from dateutil.rrule import rrule, WEEKLY
 from superdesk.resource import Resource
-from superdesk.notification import push_notification
 from superdesk.errors import SuperdeskApiError
 from apps.auth import get_user_id
 
@@ -89,12 +91,48 @@ class DefaultAvailabilityService(superdesk.Service):
     def on_created(self, docs):
         """Event handler for created event."""
         for doc in docs:
-            push_notification("default_user_availability:created", item=str(doc.get("_id")))
+            self.regenerate_user_availability(doc)
 
-    def on_updated(self, updates, original):
-        """Event handler for updated event."""
-        push_notification("default_user_availability:updated", item=str(original.get("_id")))
+    def on_replaced(self, doc, original):
+        """Event handler for replaced event."""
+        self.regenerate_user_availability(doc)
 
-    def on_deleted(self, doc):
-        """Event handler for deleted event."""
-        push_notification("default_user_availability:deleted", item=str(doc.get("_id")))
+    def regenerate_user_availability(self, doc):
+        today = datetime.now().date()
+        current_user_id = get_user_id()
+        availability_service = superdesk.get_resource_service("user_availability")
+        availability_service.delete_action(
+            {"user": current_user_id, "date": {"$gte": today.isoformat()}, "_generated": True}
+        )
+        generate_weeks = 4 * 3
+
+        items = []
+        for day in doc["working_days"]:
+            weekday = WEEKDAY_RRULE_MAPPING[day]
+            dates = rrule(freq=WEEKLY, dtstart=today, count=generate_weeks, byweekday=weekday)
+            items += [
+                {
+                    "user": current_user_id,
+                    "date": d.date().isoformat(),
+                    "status": doc["working_days"][day]["status"],
+                    "working_hours": doc["working_days"][day]["working_hours"]
+                    if doc["working_days"][day].get("working_hours")
+                    else [],
+                    "_generated": True,
+                }
+                for d in dates
+            ]
+
+        if items:
+            availability_service.create(items)
+
+
+WEEKDAY_RRULE_MAPPING = {
+    "monday": 0,
+    "tuesday": 1,
+    "wednesday": 2,
+    "thursday": 3,
+    "friday": 4,
+    "saturday": 5,
+    "sunday": 6,
+}
