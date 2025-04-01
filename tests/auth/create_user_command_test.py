@@ -48,7 +48,7 @@ class CreateUserCommandTestCase(TestCase):
         cmd = ImportUsersCommand()
         fixtures_path = join(dirname(__file__), "fixtures")
         import_file = join(fixtures_path, "import_users_test.json")
-        cmd.run(None, import_file)
+        await cmd.run(None, import_file)
         users_service = get_resource_service("users")
         roles_services = get_resource_service("roles")
 
@@ -81,7 +81,7 @@ class CreateUserCommandTestCase(TestCase):
         cmd = ImportUsersCommand()
         fixtures_path = join(dirname(__file__), "fixtures")
         import_file = join(fixtures_path, "import_users_test.csv")
-        cmd.run(["username", "first_name", "last_name", "sign_off", "email", "role"], import_file)
+        await cmd.run(["username", "first_name", "last_name", "sign_off", "email", "role"], import_file)
         users_service = get_resource_service("users")
         roles_services = get_resource_service("roles")
 
@@ -110,7 +110,7 @@ class CreateUserCommandTestCase(TestCase):
 
         with self.app.mail.record_messages() as outbox:
             assert len(outbox) == 0
-            cmd.run(None, import_file)
+            await cmd.run(None, import_file)
             assert len(outbox) == 0
 
     @markers.requires_eve_resource_async_event
@@ -129,5 +129,5 @@ class CreateUserCommandTestCase(TestCase):
 
         with self.app.mail.record_messages() as outbox:
             assert len(outbox) == 0
-            cmd.run(None, import_file, activation_email=True)
+            await cmd.run(None, import_file, activation_email=True)
             assert len(outbox) == 2

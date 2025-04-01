@@ -41,17 +41,17 @@ Superdesk commands
 ``app:clean_images``
 ^^^^^^^^^^^^^^^^^^^^
 
-.. autoclass:: superdesk.commands.clean_images.CleanImages()
+.. autofunction:: superdesk.commands.clean_images.cli_clean_images()
 
 ``app:deleteArchivedDocument``
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-.. autoclass:: superdesk.commands.delete_archived_document.DeleteArchivedDocumentCommand()
+.. autofunction:: superdesk.commands.delete_archived_document.cli_delete_archived_document()
 
 ``app:index_from_mongo``
 ^^^^^^^^^^^^^^^^^^^^^^^^
 
-.. autoclass:: superdesk.commands.index_from_mongo.IndexFromMongo()
+.. autofunction:: superdesk.commands.index_from_mongo.cli_index_from_mongo()
 
 ``app:initialize_data``
 ^^^^^^^^^^^^^^^^^^^^^^^
@@ -61,57 +61,57 @@ Superdesk commands
 ``app:flush_elastic_index``
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-.. autoclass:: superdesk.commands.flush_elastic_index.FlushElasticIndex()
+.. autofunction:: superdesk.commands.flush_elastic_index.flush_elastic_index_command()
 
 ``app:prepopulate``
 ^^^^^^^^^^^^^^^^^^^
 
-.. autoclass:: apps.prepopulate.app_prepopulate.AppPrepopulateCommand()
+.. autofunction:: apps.prepopulate.app_prepopulate.cli_app_prepopulate()
 
 ``app:populate``
 ^^^^^^^^^^^^^^^^^^^^^^^^^
 
-.. autoclass:: apps.prepopulate.app_populate.AppPopulateCommand()
+.. autofunction:: apps.prepopulate.app_populate.cli_app_populate()
 
 ``app:rebuild_elastic_index``
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-.. autoclass:: superdesk.commands.rebuild_elastic_index.RebuildElasticIndex()
+.. autofunction:: superdesk.commands.rebuild_elastic_index.cli_rebuild_elastic_index()
 
 ``app:run_macro``
 ^^^^^^^^^^^^^^^^^
 
-.. autoclass:: superdesk.commands.run_macro.run_macro()
+.. autofunction:: superdesk.commands.run_macro.run_macro()
 
 ``app:scaffold_data``
 ^^^^^^^^^^^^^^^^^^^^^
 
-.. autoclass:: apps.prepopulate.app_scaffold_data.AppScaffoldDataCommand()
+.. autofunction:: apps.prepopulate.app_scaffold_data.scaffold_data_command()
 
 ``app:updateArchivedDocument``
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-.. autoclass:: superdesk.commands.update_archived_document.UpdateArchivedDocumentCommand()
+.. autofunction:: superdesk.commands.update_archived_document.cli_update_archived_document()
 
 ``archive:remove_expired``
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-.. autoclass:: apps.archive.commands.RemoveExpiredContent()
+.. autofunction:: apps.archive.commands.cli_archive_remove_expired()
 
 ``audit:purge``
 ^^^^^^^^^^^^^^^
 
-.. autoclass:: superdesk.audit.commands.PurgeAudit()
+.. autofunction:: superdesk.audit.commands.cli_audit_purge()
 
 ``content_api:remove_expired``
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-.. autoclass:: content_api.commands.remove_expired_items.RemoveExpiredItems()
+.. autofunction:: content_api.commands.remove_expired_items.cli_content_api_remove_expired()
 
 ``data:generate_update``
 ^^^^^^^^^^^^^^^^^^^^^^^^
 
-.. autoclass:: superdesk.commands.data_updates.GenerateUpdate()
+.. autofunction:: superdesk.commands.data_updates.cli_data_generate_update()
 
 ``data:upgrade``
 ^^^^^^^^^^^^^^^^
@@ -126,27 +126,27 @@ Superdesk commands
 ``ingest:clean_expired``
 ^^^^^^^^^^^^^^^^^^^^^^^^
 
-.. autoclass:: superdesk.io.commands.remove_expired_content.RemoveExpiredContent()
+.. autofunction:: superdesk.io.commands.remove_expired_content.cli_ingest_clean_expired()
 
 ``ingest:provider``
 ^^^^^^^^^^^^^^^^^^^
 
-.. autoclass:: superdesk.io.commands.add_provider.AddProvider()
+.. autofunction:: superdesk.io.commands.add_provider.cli_add_provider()
 
 ``ingest:update``
 ^^^^^^^^^^^^^^^^^
 
-.. autoclass:: superdesk.io.commands.update_ingest.UpdateIngest()
+.. autofunction:: superdesk.io.commands.update_ingest.cli_update_ingest()
 
 ``legal_archive:import``
 ^^^^^^^^^^^^^^^^^^^^^^^^
 
-.. autoclass:: apps.legal_archive.commands.ImportLegalArchiveCommand()
+.. autofunction:: apps.legal_archive.commands.cli_legal_archive_import()
 
 ``legal_publish_queue:import``
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-.. autoclass:: apps.legal_archive.commands.ImportLegalPublishQueueCommand()
+.. autofunction:: apps.legal_archive.commands.cli_legal_publish_queue_import()
 
 ``publish:enqueue``
 ^^^^^^^^^^^^^^^^^^^
@@ -161,7 +161,7 @@ Superdesk commands
 ``session:gc``
 ^^^^^^^^^^^^^^
 
-.. autoclass:: apps.auth.session_purge.RemoveExpiredSessions()
+.. autofunction:: apps.auth.session_purge.cli_session_gc()
 
 ``schema:migrate``
 ^^^^^^^^^^^^^^^^^^
@@ -181,39 +181,39 @@ Storage Dumps and Records
 ``storage:dump``
 ^^^^^^^^^^^^^^^^
 
-.. autoclass:: superdesk.commands.data_manipulation.StorageDump
+.. autofunction:: superdesk.commands.data_manipulation.cli_data_storage_dump
 
 .. _cli-storage-restore:
 
 ``storage:restore``
 ^^^^^^^^^^^^^^^^^^^
 
-.. autoclass:: superdesk.commands.data_manipulation.StorageRestore
+.. autofunction:: superdesk.commands.data_manipulation.cli_data_storage_restore
 
 ``storage:record``
 ^^^^^^^^^^^^^^^^^^
 
-.. autoclass:: superdesk.commands.data_manipulation.StorageStartRecording
+.. autofunction:: superdesk.commands.data_manipulation.cli_data_storage_record
 
 ``storage:restore-record``
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-.. autoclass:: superdesk.commands.data_manipulation.StorageRestoreRecord
+.. autofunction:: superdesk.commands.data_manipulation.cli_data_storage_restore_record
 
 ``storage:list``
 ^^^^^^^^^^^^^^^^
 
-.. autoclass:: superdesk.commands.data_manipulation.StorageList
+.. autofunction:: superdesk.commands.data_manipulation.cli_data_storage_list
 
 ``storage:upgrade-dumps``
 ^^^^^^^^^^^^^^^^^^^^^^^^^
 
-.. autoclass:: superdesk.commands.data_manipulation.StorageMigrateDumps
+.. autofunction:: superdesk.commands.data_manipulation.cli_data_storage_upgrade_dumps
 
 ``storage:remove_exported``
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-.. autoclass:: superdesk.commands.remove_exported_files.RemoveExportedFiles()
+.. autofunction:: superdesk.commands.remove_exported_files.cli_storage_remove_exported()
 
 ``users:create``
 ^^^^^^^^^^^^^^^^
@@ -223,60 +223,60 @@ Storage Dumps and Records
 ``users:import``
 ^^^^^^^^^^^^^^^^
 
-.. autoclass:: apps.auth.db.commands.ImportUsersCommand()
+.. autofunction:: apps.auth.db.commands.cli_users_import()
 
 ``users:copyfromad``
 ^^^^^^^^^^^^^^^^^^^^
 
-.. autoclass:: apps.ldap.commands.ImportUserProfileFromADCommand()
+.. autofunction:: apps.ldap.commands.cli_users_copyfromad()
 
 ``users:get_auth_token``
 ^^^^^^^^^^^^^^^^^^^^^^^^
 
-.. autoclass:: apps.auth.db.commands.GetAuthTokenCommand()
+.. autofunction:: apps.auth.db.commands.cli_users_get_auth_token()
 
 ``users:hash_passwords``
 ^^^^^^^^^^^^^^^^^^^^^^^^
 
-.. autoclass:: apps.auth.db.commands.HashUserPasswordsCommand()
+.. autofunction:: apps.auth.db.commands.cli_users_hash_passwords()
 
 ``vocabularies:generate``
 ^^^^^^^^^^^^^^^^^^^^^^^^^
 
-.. autoclass:: superdesk.commands.generate_vocabularies.GenerateVocabularies()
+.. autofunction:: superdesk.commands.generate_vocabularies.cli_generate_vocabularies()
 
 
 ``vocabularies:update_archive``
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-.. autoclass:: superdesk.vocabularies.commands.update_vocabularies_in_items_command()
+.. autofunction:: superdesk.vocabularies.commands.update_vocabularies_in_items_command()
 
 ``xml:import``
 ^^^^^^^^^^^^^^
 
-.. autoclass:: superdesk.io.importers.ImportCommand()
+.. autofunction:: superdesk.io.importers.cli_xml_import()
 
 ``auth_server:register_client``
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-.. autoclass:: superdesk.auth_server.clients.RegisterClient()
+.. autofunction:: superdesk.auth_server.clients.cli_auth_server_register_client()
 
 ``auth_server:update_client``
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-.. autoclass:: superdesk.auth_server.clients.UpdateClient()
+.. autofunction:: superdesk.auth_server.clients.cli_auth_server_update_client()
 
 ``auth_server:unregister_client``
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-.. autoclass:: superdesk.auth_server.clients.UnregisterClient()
+.. autofunction:: superdesk.auth_server.clients.cli_auth_server_unregister_client()
 
 ``auth_server:list_clients``
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-.. autoclass:: superdesk.auth_server.clients.ListClients()
+.. autofunction:: superdesk.auth_server.clients.cli_auth_server_list_clients()
 
 ``media:fix_links``
 ^^^^^^^^^^^^^^^^^^^
 
-.. autoclass:: superdesk.storage.fix_links.MediaFixLinksCommand()
+.. autofunction:: superdesk.storage.fix_links.cli_media_fix_links()

@@ -46,15 +46,15 @@ if os.environ.get("LDAP_SERVER", ""):
     class ImportUsersTestCase(TestCase):
         """for testing import user using ldap."""
 
-        def test_import_user_using_command(self, mock_ldap_connection):
+        async def test_import_user_using_command(self, mock_ldap_connection):
             user = {"username": "user", "password": "pwd", "user_to_import": "barf"}
             cmd = ImportUserProfileFromADCommand()
 
-            cmd.run(user["username"], user["password"], user["user_to_import"])
+            await cmd.run(user["username"], user["password"], user["user_to_import"])
             auth_user = get_resource_service("auth_db").authenticate({"username": "barf", "password": "dummy"})
             self.assertEqual(auth_user["username"], user["user_to_import"])
 
-            cmd.run(user["username"], user["password"], "BARF")
+            await cmd.run(user["username"], user["password"], "BARF")
             auth_user2 = get_resource_service("auth_db").authenticate({"username": "barf", "password": "dummy"})
             self.assertEqual(auth_user2["username"], user["user_to_import"])
 

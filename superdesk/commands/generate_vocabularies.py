@@ -8,13 +8,20 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
-import superdesk
 from os.path import expanduser, abspath, exists
 
 import json
+import click
+
+from .async_cli import cli
 
 
-class GenerateVocabularies(superdesk.Command):
+@cli.command("vocabularies:generate")
+@click.argument("source_file")
+@click.option("-k", "--keys-map", help="key mapping json file")
+@click.option("-b", "--base", help="json array to use as base vocabularies")
+@click.option("-f", "--force", is_flag=True, help='overwritte "vocabularies.json" if it already exists')
+def cli_generate_vocabularies(source_file, keys_map, base, force):
     """Generate vocabularies.json from flat file
 
     This command generate the vocabularies.json file from a flat text file having the following structure:
@@ -68,15 +75,10 @@ class GenerateVocabularies(superdesk.Command):
     The generated json will be written to ``vocabularies.json`` in the current directory.
     """
 
-    option_list = [
-        # superdesk.Option("-k", "--keys-map", help="key mapping json file"),
-        # superdesk.Option("-b", "--base", help="json array to use as base vocabularies"),
-        # superdesk.Option(
-        #     "-f", "--force", action="store_true", help='overwritte "vocabularies.json" if it already exists'
-        # ),
-        # superdesk.Option("source_file", help="plain text file with the vocabularies to create"),
-    ]
+    GenerateVocabularies().run(source_file, keys_map, base, force)
 
+
+class GenerateVocabularies:
     def get_path(self, path):
         return abspath(expanduser(path))
 
@@ -149,6 +151,3 @@ class GenerateVocabularies(superdesk.Command):
 
         json.dump(voc, open("vocabularies.json", "w"), indent=4)
         print('Data generated in "vocabularies.json"')
-
-
-superdesk.command("vocabularies:generate", GenerateVocabularies())

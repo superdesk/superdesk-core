@@ -1,13 +1,13 @@
-from .clean_images import CleanImages  # noqa
-from .rebuild_elastic_index import RebuildElasticIndex  # noqa
-from .index_from_mongo import IndexFromMongo  # noqa
+from .clean_images import cli_clean_images  # noqa
+from .rebuild_elastic_index import cli_rebuild_elastic_index  # noqa
+from .index_from_mongo import cli_index_from_mongo  # noqa
 from .run_macro import run_macro  # noqa
 from .data_updates import *  # noqa
 from .delete_archived_document import *  # noqa
 from .update_archived_document import *  # noqa
-from .remove_exported_files import RemoveExportedFiles  # noqa
+from .remove_exported_files import RemoveExportedFiles, cli_storage_remove_exported  # noqa
 from .flush_elastic_index import FlushElasticIndex  # noqa
-from .generate_vocabularies import GenerateVocabularies  # noqa
+from .generate_vocabularies import cli_generate_vocabularies  # noqa
 from . import data_manipulation  # noqa
 from . import schema  # noqa
 from .async_cli import cli, commands_blueprint  # noqa
@@ -19,7 +19,7 @@ from superdesk.celery_app import celery
 
 @celery.task()
 def temp_file_expiry():
-    RemoveExportedFiles()
+    RemoveExportedFiles().run()
 
 
 def init_app(app) -> None:

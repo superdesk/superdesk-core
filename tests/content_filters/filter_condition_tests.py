@@ -808,7 +808,7 @@ class FilterConditionTests(TestCase):
         filename = os.path.join(
             os.path.abspath(os.path.dirname("apps/prepopulate/data_init/vocabularies.json")), "vocabularies.json"
         )
-        cmd.run(filename)
+        await cmd.run(filename)
 
         self.assertEqual(len(await check_similar_filter_conditions(filter_condition1)), 2)
         self.assertEqual(len(await check_similar_filter_conditions(filter_condition2)), 1)

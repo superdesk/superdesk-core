@@ -8,15 +8,23 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
+import sys
+
+import click
+from lxml import etree
+
 import superdesk
+from superdesk.commands import cli
 from superdesk import get_resource_service
 from superdesk.io import registry
-from lxml import etree
-import sys
 from superdesk.metadata.item import ITEM_STATE
 
 
-class ImportCommand(superdesk.Command):
+@cli.command("xml:import")
+@click.argument("parser")
+@click.argument("path")
+@click.option("--profile", "-p", help="name of the profile to use (case sensitive")
+def cli_xml_import(parser, path, profile):
     """Import articles into archives.
 
     Example:
@@ -26,10 +34,14 @@ class ImportCommand(superdesk.Command):
 
     """
 
+    ImportCommand().run(parser, path, profile)
+
+
+class ImportCommand:
     option_list = [
-        # superdesk.Option("parser", help="name of the feed parser"),
-        # superdesk.Option("path", help="path to the archive file to parse"),
-        # superdesk.Option("--profile", "-p", help="name of the profile to use (case sensitive"),
+        superdesk.Option("parser", help="name of the feed parser"),
+        superdesk.Option("path", help="path to the archive file to parse"),
+        superdesk.Option("--profile", "-p", help="name of the profile to use (case sensitive"),
     ]
 
     def run(self, parser, path, profile):
@@ -62,7 +74,6 @@ class ImportCommand(superdesk.Command):
             article.update(updates)
             article.setdefault("source", parser)
         archived_service = get_resource_service("archived")
+
+        # TODO-ASYNC[archived]: Use async service when upgrading the ``archived`` module
         archived_service.post(articles)
-
-
-superdesk.command("xml:import", ImportCommand())

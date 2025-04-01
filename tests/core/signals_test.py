@@ -340,7 +340,7 @@ class ResourceWebSignalsTestCase(AsyncFlaskTestCase):
                         "_links": ANY,
                     },
                     200,
-                    [("X-Total-Count", 1)] + get_test_cors_headers(["GET", "POST", "OPTIONS", "HEAD"]),
+                    [("X-Total-Count", "1")] + get_test_cors_headers(["GET", "POST", "OPTIONS", "HEAD"]),
                 ),
             ],
         )

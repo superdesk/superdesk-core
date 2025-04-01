@@ -8,6 +8,8 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
+import click
+
 import logging
 import datetime
 from eve.utils import ParsedRequest
@@ -17,12 +19,15 @@ from time import time
 
 import superdesk
 from superdesk.core import get_app_config
+from superdesk.commands import cli
 from superdesk.utc import utcnow
 
 logger = logging.getLogger(__name__)
 
 
-class PurgeAudit(superdesk.Command):
+@cli.command("audit:purge")
+@click.option("--expiry_minutes", "-e", required=False, type=int)
+def cli_audit_purge(expiry_minutes: int | None = None):
     """Purge audit collection.
 
     Entries are purged if the related item is no longer in 'Production'.
@@ -36,6 +41,10 @@ class PurgeAudit(superdesk.Command):
 
     """
 
+    PurgeAudit().run(expiry_minutes)
+
+
+class PurgeAudit:
     # The list of resource entries that we will preseved in audit if an associated item still exists in production
     item_resources = [
         "archive_lock",
@@ -63,8 +72,6 @@ class PurgeAudit(superdesk.Command):
     }
 
     not_item_entry_query = {"$or": [{"resource": {"$nin": item_resources}}, {"audit_id": {"$in": [None, ""]}}]}
-
-    option_list = [superdesk.Option("--expiry_minutes", "-e", dest="expiry", required=False)]
 
     def run(self, expiry=None):
         if expiry is not None:
@@ -136,6 +143,3 @@ class PurgeAudit(superdesk.Command):
         service.delete_from_mongo({"_id": {"$lt": ObjectId.from_datetime(self.expiry)}})
         time_diff = time() - time_start
         logger.info(f"Finished purging audit logs. Took {time_diff:.4f} seconds")
-
-
-superdesk.command("audit:purge", PurgeAudit())

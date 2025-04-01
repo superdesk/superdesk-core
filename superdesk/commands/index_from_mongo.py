@@ -9,17 +9,25 @@
 # at https://www.sourcefabric.org/superdesk/license
 
 import time
+
+import click
 import pymongo
-import superdesk
+from bson.objectid import ObjectId
 
 from superdesk.resource_fields import ID_FIELD
 from superdesk.errors import BulkIndexError
-from bson.objectid import ObjectId
-
 from superdesk.core import get_current_async_app
 
+from .async_cli import cli
 
-class IndexFromMongo(superdesk.Command):
+
+@cli.command("app:index_from_mongo")
+@click.option("--from", "-f", "collection_name")
+@click.option("--all", "all_collections", is_flag=True)
+@click.option("--page-size", "-p")
+@click.option("--last-id")
+@click.option("--string-id", is_flag=True, help="Treat the id's as strings")
+async def cli_index_from_mongo(collection_name, all_collections, page_size, last_id, string_id):
     """Index the specified mongo collection in the specified elastic collection/type.
 
     This will use the default APP mongo DB to read the data and the default Elastic APP index.
@@ -34,13 +42,10 @@ class IndexFromMongo(superdesk.Command):
 
     """
 
-    option_list = [
-        # superdesk.Option("--from", "-f", dest="collection_name"),
-        # superdesk.Option("--all", action="store_true", dest="all_collections"),
-        # superdesk.Option("--page-size", "-p"),
-        # superdesk.Option("--last-id"),
-        # superdesk.Option("--string-id", dest="string_id", action="store_true", help="Treat the id's as strings"),
-    ]
+    await IndexFromMongo().run(collection_name, all_collections, page_size, last_id, string_id)
+
+
+class IndexFromMongo:
     default_page_size = 500
 
     async def run(self, collection_name, all_collections, page_size, last_id, string_id):
@@ -133,6 +138,3 @@ class IndexFromMongo(superdesk.Command):
                 break
             last_id = items[-1][ID_FIELD]
             yield items
-
-
-superdesk.command("app:index_from_mongo", IndexFromMongo())

@@ -8,18 +8,24 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
+import click
+
 import superdesk
 from superdesk.core import get_current_app
+from superdesk.commands import cli
 from superdesk.logging import logger
 from superdesk.utc import utcnow
 from superdesk.notification import push_notification
-from apps.content import push_expired_notification
 from superdesk.errors import ProviderError
 from superdesk.lock import lock, unlock
 from superdesk.io import get_feeding_service
 
+from apps.content import push_expired_notification
 
-class RemoveExpiredContent(superdesk.Command):
+
+@cli.command("ingest:clean_expired")
+@click.option("--provider", "-p", "provider_name", required=False)
+def cli_ingest_clean_expired(provider_name):
     """Remove stale data from ingest based on the provider settings.
 
     Example:
@@ -30,8 +36,10 @@ class RemoveExpiredContent(superdesk.Command):
 
     """
 
-    # option_list = (superdesk.Option("--provider", "-p", dest="provider_name"),)
+    RemoveExpiredContent().run(provider_name)
 
+
+class RemoveExpiredContent:
     def run(self, provider_name=None):
         providers = list(superdesk.get_resource_service("ingest_providers").get(req=None, lookup={}))
         self.remove_expired({"exclude": [str(p.get("_id")) for p in providers]})
@@ -53,9 +61,6 @@ class RemoveExpiredContent(superdesk.Command):
             raise ProviderError.expiredContentError(err, provider)
         finally:
             unlock(lock_name)
-
-
-superdesk.command("ingest:clean_expired", RemoveExpiredContent())
 
 
 def remove_expired_data(provider):
