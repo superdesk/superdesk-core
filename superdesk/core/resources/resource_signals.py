@@ -163,14 +163,12 @@ class ResourceSignals(SignalGroup, Generic[ResourceModelType]):
         self.web = ResourceWebSignals()
 
         if self.connect_to_global:
-            global global_signals
             self.data.connect_group(global_signals.data)
             self.web.connect_group(global_signals.web)
 
     def clear_listeners(self) -> None:
         super().clear_listeners()
         if self.connect_to_global:
-            global global_signals
             self.data.connect_group(global_signals.data)
             self.web.connect_group(global_signals.web)
 
