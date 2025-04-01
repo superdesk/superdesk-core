@@ -65,6 +65,15 @@ class DefaultAvailabilityResource(Resource):
             "schema": {"type": "string"},
             "required": False,
         },
+        "tags": {
+            "type": "list",
+            "schema": {
+                "type": "dict",
+                "schema": {
+                    "code": {"type": "string"},
+                },
+            },
+        },
     }
 
     item_methods = ["GET", "PUT"]
