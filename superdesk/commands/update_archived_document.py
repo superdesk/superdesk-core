@@ -8,14 +8,23 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
-import superdesk
-import json
-import bson
-from .delete_archived_document import DeleteArchivedDocumentCommand
 import ast
 
+import json
+import click
+import bson
 
-class UpdateArchivedDocumentCommand(superdesk.Command):
+from superdesk import get_resource_service
+from .async_cli import cli
+from .delete_archived_document import DeleteArchivedDocumentCommand
+
+
+@cli.command("app:updateArchivedDocument")
+@click.option("--ids", "-i", required=True)
+@click.option("--field", "-f", required=True)
+@click.option("--value", "-v", required=True)
+@click.option("--parseNeeded", "-p", "parse_needed", is_flag=True, default=False)
+def cli_update_archived_document(ids, field, value, parse_needed):
     """
     Update metadata for a document in both Mongodb and ElasticSearch by supplying ids
     field to update and the value for the update
@@ -34,13 +43,10 @@ class UpdateArchivedDocumentCommand(superdesk.Command):
 
     """
 
-    option_list = [
-        # superdesk.Option("--ids", "-i", dest="ids", required=True),
-        # superdesk.Option("--field", "-f", dest="field", required=True),
-        # superdesk.Option("--value", "-v", dest="value", required=True),
-        # superdesk.Option("--parseNeeded", "-p", dest="parseNeeded", default=False),
-    ]
+    UpdateArchivedDocumentCommand().run(ids, field, value, parse_needed)
 
+
+class UpdateArchivedDocumentCommand:
     def run(self, ids, field, value, parseNeeded=False):
         ids = ast.literal_eval(ids)
 
@@ -56,11 +62,6 @@ class UpdateArchivedDocumentCommand(superdesk.Command):
             items = DeleteArchivedDocumentCommand().get_archived_items(ids)
 
             for item in items:
-                superdesk.get_resource_service("archived").system_update(
-                    bson.ObjectId(item["_id"]), {field: value}, item
-                )
+                get_resource_service("archived").system_update(bson.ObjectId(item["_id"]), {field: value}, item)
                 print("Archived item {} has been updated.".format(item["_id"]))
                 print("-" * 45)
-
-
-superdesk.command("app:updateArchivedDocument", UpdateArchivedDocumentCommand())

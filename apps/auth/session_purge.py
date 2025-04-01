@@ -8,18 +8,22 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
-import superdesk
+import logging
 from datetime import timedelta
-from superdesk.utc import utcnow
+
 from eve.utils import date_to_str
+
+from superdesk.commands import cli
+from superdesk.utc import utcnow
 from superdesk import get_resource_service
 from superdesk.core import get_app_config
-import logging
+
 
 logger = logging.getLogger(__name__)
 
 
-class RemoveExpiredSessions(superdesk.Command):
+@cli.command("session:gc")
+def cli_session_gc():
     """Remove expired sessions from db.
 
     Using ``SESSION_EXPIRY_MINUTES`` config.
@@ -31,6 +35,10 @@ class RemoveExpiredSessions(superdesk.Command):
 
     """
 
+    RemoveExpiredSessions().run()
+
+
+class RemoveExpiredSessions:
     def run(self):
         self.remove_expired_sessions()
 

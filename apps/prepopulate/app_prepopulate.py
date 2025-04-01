@@ -18,15 +18,17 @@ import werkzeug.exceptions
 from eve.utils import date_to_str
 from eve.versioning import insert_versioning_documents
 from bson.objectid import ObjectId
+import click
 
 from superdesk.core import get_current_app, get_app_config
+from superdesk.commands import cli
 from superdesk.resource_fields import VERSION
 from superdesk.flask import g
 from apps.archive.common import ITEM_OPERATION
 from superdesk import get_resource_service
 from superdesk.metadata.item import ITEM_STATE, CONTENT_STATE
 from superdesk.resource import Resource
-from superdesk.services import BaseService
+from superdesk.eve_async.service import AsyncBaseService
 from superdesk.tests import clean_dbs
 from superdesk.utc import utcnow
 from superdesk.timer import timer
@@ -34,6 +36,25 @@ from apps.search_providers import allowed_search_providers, register_search_prov
 
 
 logger = logging.getLogger(__name__)
+
+
+@cli.command("app:prepopulate")
+@click.option("--file", "-f", "prepopulate_file", default="app_prepopulate_data.json")
+@click.option("--dir", "-d", "directory", default=None)
+async def cli_app_prepopulate(prepopulate_file, directory):
+    """Prepopulate Superdesk using sample data.
+
+    Useful for demo/development environment, but don't run in production,
+    it's hard to get rid of such data later.
+
+    Example:
+    ::
+
+        $ python manage.py app:prepopulate
+
+    """
+
+    await AppPrepopulateCommand().run(prepopulate_file, directory)
 
 
 def apply_placeholders(placeholders, text):
@@ -69,7 +90,7 @@ def get_default_user():
     return user
 
 
-def prepopulate_data(file_name, default_user=None, directory=None):
+async def prepopulate_data(file_name, default_user=None, directory=None):
     if default_user is None:
         default_user = get_default_user()
 
@@ -101,12 +122,18 @@ def prepopulate_data(file_name, default_user=None, directory=None):
                 users.update({data["username"]: data["password"]})
             if id_update:
                 id_update = apply_placeholders(placeholders, id_update)
-                res = service.patch(ObjectId(id_update), data)
+                if hasattr(service, "patch_async"):
+                    res = await service.patch_async(ObjectId(id_update), data)
+                else:
+                    res = service.patch(ObjectId(id_update), data)
                 if not res:
                     raise Exception()
             else:
                 try:
-                    ids = service.post([data])
+                    if hasattr(service, "post_async"):
+                        ids = await service.post_async([data])
+                    else:
+                        ids = service.post([data])
                 except werkzeug.exceptions.Conflict:
                     # instance was already prepopulated
                     break
@@ -169,34 +196,32 @@ class PrepopulateResource(Resource):
     public_methods = ["POST"]
 
 
-class PrepopulateService(BaseService):
-    def _create(self, docs):
+class PrepopulateService(AsyncBaseService):
+    async def _create_async(self, docs):
         app = get_current_app()
         for doc in docs:
             if doc.get("remove_first"):
-                clean_dbs(app, force=True)
+                await clean_dbs(app, force=True)
 
             app.init_indexes()
-            # TODO-ASYNC: Support async (see superdesk.tests.markers.requires_eve_resource_async_event)
-            app.data.init_elastic(app)
+            await app.data.init_elastic(app)
 
             get_resource_service("users").stop_updating_stage_visibility()
 
-            # TODO-ASYNC[users]: Upgrade to async when updating this module
-            user = get_resource_service("users").find_one(username=get_default_user()["username"], req=None)
+            users_service = get_resource_service("users")
+            user = await users_service.find_one_async(username=get_default_user()["username"], req=None)
             if not user:
-                get_resource_service("users").post([get_default_user()])
+                await users_service.post_async([get_default_user()])
 
-            prepopulate_data(doc.get("profile") + ".json", get_default_user())
+            await prepopulate_data(doc.get("profile") + ".json", get_default_user())
 
-            get_resource_service("users").start_updating_stage_visibility()
-            # TODO-ASYNC[users]: Upgrade this to async when updating this module
-            get_resource_service("users").update_stage_visibility_for_users()
+            users_service.start_updating_stage_visibility()
+            await users_service.update_stage_visibility_for_users_async()
 
-    def create(self, docs, **kwargs):
+    async def create_async(self, docs, **kwargs):
         with multiprocessing.Lock() as lock:
             with timer("prepopulate"):
-                self._create(docs)
+                await self._create_async(docs)
             if get_app_config("SUPERDESK_TESTING"):
                 for provider in ["paimg", "aapmm"]:
                     if provider not in allowed_search_providers:
@@ -204,30 +229,10 @@ class PrepopulateService(BaseService):
             return ["OK"]
 
 
-class AppPrepopulateCommand(superdesk.Command):
-    """Prepopulate Superdesk using sample data.
-
-    Useful for demo/development environment, but don't run in production,
-    it's hard to get rid of such data later.
-
-    Example:
-    ::
-
-        $ python manage.py app:prepopulate
-
-    """
-
-    option_list = [
-        # superdesk.Option("--file", "-f", dest="prepopulate_file", default="app_prepopulate_data.json"),
-        # superdesk.Option("--dir", "-d", dest="directory", default=None),
-    ]
-
-    def run(self, prepopulate_file, directory=None):
-        # TODO-ASYNC[users]: Upgrade to async when updating this module
-        user = get_resource_service("users").find_one(username=get_default_user()["username"], req=None)
+class AppPrepopulateCommand:
+    async def run(self, prepopulate_file, directory=None):
+        users_service = get_resource_service("users")
+        user = await users_service.find_one_async(username=get_default_user()["username"], req=None)
         if not user:
-            get_resource_service("users").post([get_default_user()])
-        prepopulate_data(prepopulate_file, get_default_user(), directory)
-
-
-superdesk.command("app:prepopulate", AppPrepopulateCommand())
+            await users_service.post_async([get_default_user()])
+        await prepopulate_data(prepopulate_file, get_default_user(), directory)

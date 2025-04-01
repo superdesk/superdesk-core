@@ -29,7 +29,7 @@ class AppPopulateValidatorsTest(TestCase):
     async def test_populate_validators(self):
         cmd = AppPopulateCommand()
         async with self.app.test_request_context(self.app.config.get("URL_PREFIX")):
-            cmd.run(self.filename)
+            await cmd.run(self.filename)
             service = get_resource_service("validators")
 
             for item in self.json_data:

@@ -71,13 +71,13 @@ async def setup_before_scenario(context, scenario, config, app_factory):
         async with context.app.app_context():
             cmd = AppPopulateCommand()
             filename = os.path.join(os.path.abspath(os.path.dirname("features/steps/fixtures/")), "vocabularies.json")
-            cmd.run(filename)
+            await cmd.run(filename)
 
     if scenario.status != "skipped" and "content_type" in scenario.tags:
         async with context.app.app_context():
             cmd = AppPopulateCommand()
             filename = os.path.join(os.path.abspath(os.path.dirname("features/steps/fixtures/")), "content_types.json")
-            cmd.run(filename)
+            await cmd.run(filename)
 
     if scenario.status != "skipped" and "notification" in scenario.tags:
         tests.setup_notification(context)

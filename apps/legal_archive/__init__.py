@@ -32,7 +32,12 @@ from .service import (
     LegalPublishQueueService,
     LegalArchiveHistoryService,
 )
-from .commands import ImportLegalPublishQueueCommand, ImportLegalArchiveCommand  # noqa
+from .commands import (
+    ImportLegalPublishQueueCommand,
+    ImportLegalArchiveCommand,
+    cli_legal_publish_queue_import,
+    cli_legal_archive_import,
+)  # noqa
 
 logger = logging.getLogger(__name__)
 
@@ -62,9 +67,6 @@ def init_app(app) -> None:
         label=lazy_gettext("Legal Archive"),
         description=lazy_gettext("Read from legal archive"),
     )
-
-    superdesk.command("legal_publish_queue:import", ImportLegalPublishQueueCommand())
-    superdesk.command("legal_archive:import", ImportLegalArchiveCommand())
 
 
 @celery.task(soft_time_limit=300)

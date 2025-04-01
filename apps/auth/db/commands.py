@@ -19,7 +19,6 @@ from pathlib import Path
 from base64 import b64encode
 from superdesk.core import get_app_config, get_current_app
 
-from superdesk.flask import Flask
 from superdesk.types import UsersResourceModel
 from superdesk.commands import cli
 from superdesk.utils import get_hash, is_hashed
@@ -49,37 +48,11 @@ async def create_user_command(*args, **kwargs):
     return await create_user_command_handler(*args, **kwargs)
 
 
-async def create_user_command_handler(username: str, password: str, email: str, admin=False, support=False):
-    user_type = "administrator" if admin else "user"
-    userdata = {
-        "username": username,
-        "password": password,
-        "email": email,
-        "user_type": user_type,
-        "is_active": admin,
-        "is_support": support,
-        "needs_activation": not admin,
-    }
-
-    app = get_current_app().as_any()
-
-    async with app.test_request_context("/users", method="POST"):
-        if userdata.get("password", None) and not is_hashed(userdata.get("password")):
-            userdata["password"] = get_hash(userdata.get("password"), get_app_config("BCRYPT_GENSALT_WORK_FACTOR", 12))
-
-        users_service = UsersResourceModel.get_service()
-
-        if await users_service.count({"username": userdata.get("username")}):
-            logger.info("user already exists %s" % (userdata))
-        else:
-            logger.info("creating user %s" % (userdata))
-            await users_service.create([userdata])
-            logger.info("user saved %s" % (userdata))
-
-        return userdata
-
-
-class ImportUsersCommand(superdesk.Command):
+@cli.command("users:import")
+@click.argument("import_file")
+@click.option("--field", "-f", "fields", multiple=True, help="Field name to import.")
+@click.option("--activation-email", "-a", is_flag=True, help="Send activation email.")
+async def cli_users_import(fields, import_file, activation_email=False):
     """Imports users from JSON or CSV file.
 
     The file is a list of users, where the fields can be:
@@ -117,13 +90,74 @@ class ImportUsersCommand(superdesk.Command):
 
     """
 
-    option_list = [
-        superdesk.Option("--field", "-f", dest="fields", action="append"),
-        superdesk.Option("--activation-email", "-a", dest="activation_email", required=False, action="store_true"),
-        superdesk.Option("import_file"),
-    ]
+    await ImportUsersCommand().run(import_file, fields, activation_email)
 
-    def run(self, fields, import_file, activation_email=False):
+
+@cli.command("users:hash_passwords")
+async def cli_users_hash_passwords():
+    """Hash all the user passwords which are not hashed yet.
+
+    Example:
+    ::
+
+        $ python manage.py users:hash_passwords
+
+    """
+
+    await HashUserPasswordsCommand().run()
+
+
+@cli.command("users:get_auth_token")
+@click.option("--username", "-u", required=True)
+@click.option("--password", "-p", required=True)
+def cli_users_get_auth_token(username, password):
+    """Gets auth token.
+
+    Generate an authorization token to be able to authenticate against the REST api without
+    starting the client the copy the authorization header.
+
+    Example:
+    ::
+
+        $ python manage.py users:get_auth_token --username=admin --password=123123
+
+    """
+
+    GetAuthTokenCommand().run(username, password)
+
+
+async def create_user_command_handler(username: str, password: str, email: str, admin=False, support=False):
+    user_type = "administrator" if admin else "user"
+    userdata = {
+        "username": username,
+        "password": password,
+        "email": email,
+        "user_type": user_type,
+        "is_active": admin,
+        "is_support": support,
+        "needs_activation": not admin,
+    }
+
+    app = get_current_app().as_any()
+
+    async with app.test_request_context("/users", method="POST"):
+        if userdata.get("password", None) and not is_hashed(userdata.get("password")):
+            userdata["password"] = get_hash(userdata.get("password"), get_app_config("BCRYPT_GENSALT_WORK_FACTOR", 12))
+
+        users_service = UsersResourceModel.get_service()
+
+        if await users_service.count({"username": userdata.get("username")}):
+            logger.info("user already exists %s" % (userdata))
+        else:
+            logger.info("creating user %s" % (userdata))
+            await users_service.create([userdata])
+            logger.info("user saved %s" % (userdata))
+
+        return userdata
+
+
+class ImportUsersCommand:
+    async def run(self, fields, import_file, activation_email=False):
         import_path = Path(import_file)
         if import_path.suffix == ".csv":
             try:
@@ -131,7 +165,7 @@ class ImportUsersCommand(superdesk.Command):
                     reader = csv.DictReader(f, fieldnames=fields)
                     data = list(reader)
             except Exception as e:
-                self.parser.error(
+                raise click.BadParameter(
                     "Can't decode file at {path!r}, are you sure it's valid CSV? Error: {exc_msg}".format(
                         path=import_file, exc_msg=e
                     )
@@ -140,19 +174,19 @@ class ImportUsersCommand(superdesk.Command):
             # we default to JSON even if the suffix is not ".json", as the parser will fail anyway if it's an other
             # format
             if fields is not None:
-                self.parser.error("--field argument can only be used with CSV files")
+                raise click.BadParameter("--field argument can only be used with CSV files")
             try:
                 with open(import_file) as f:
                     data = json.load(f)
             except json.JSONDecodeError as e:
-                self.parser.error(
+                raise click.BadParameter(
                     "Can't decode file at {path!r}, are you sure it's valid JSON? Error: {exc_msg}".format(
                         path=import_file, exc_msg=e
                     )
                 )
 
         if not isinstance(data, list):
-            self.parser.error(
+            raise click.BadParameter(
                 "Invalid data file at {path!r}: import data must be a list of objects".format(path=import_file)
             )
 
@@ -166,7 +200,7 @@ class ImportUsersCommand(superdesk.Command):
             print("Processing user")
             print(user_data)
             if not isinstance(user_data, dict):
-                self.parser.error(
+                raise click.BadParameter(
                     "Invalid user data when importing {path!r}: user data must be an object, not {data_type}:\ndata: "
                     "{data!r}".format(path=import_file, data_type=type(user_data), data=user_data)
                 )
@@ -213,8 +247,7 @@ class ImportUsersCommand(superdesk.Command):
                         value = role_data["_id"]
                     clean_data[field_name] = value
 
-                # TODO-ASYNC[users]: Upgrade to async when updating this module
-                user_id = users_service.post([clean_data])[0]
+                user_id = (await users_service.post_async([clean_data]))[0]
             except Exception as e:
                 logger.exception(
                     "Can't create user {username!r}: {reason}\n{data!r}".format(username=username, reason=e, data=data)
@@ -232,17 +265,8 @@ class ImportUsersCommand(superdesk.Command):
         )
 
 
-class HashUserPasswordsCommand(superdesk.Command):
-    """Hash all the user passwords which are not hashed yet.
-
-    Example:
-    ::
-
-        $ python manage.py users:hash_passwords
-
-    """
-
-    def run(self):
+class HashUserPasswordsCommand:
+    async def run(self):
         users = superdesk.get_resource_service("auth_users").get(req=None, lookup={})
         for user in users:
             pwd = user.get("password")
@@ -251,28 +275,10 @@ class HashUserPasswordsCommand(superdesk.Command):
                 hashed = get_hash(user["password"], get_app_config("BCRYPT_GENSALT_WORK_FACTOR", 12))
                 user_id = user.get("_id")
                 updates["password"] = hashed
-                # TODO-ASYNC[users]: Upgrade to async when updating this module
-                superdesk.get_resource_service("users").patch(user_id, updates=updates)
+                await superdesk.get_resource_service("users").patch_async(user_id, updates=updates)
 
 
-class GetAuthTokenCommand(superdesk.Command):
-    """Gets auth token.
-
-    Generate an authorization token to be able to authenticate against the REST api without
-    starting the client the copy the authorization header.
-
-    Example:
-    ::
-
-        $ python manage.py users:get_auth_token --username=admin --password=123123
-
-    """
-
-    option_list = [
-        superdesk.Option("--username", "-u", dest="username", required=True),
-        superdesk.Option("--password", "-p", dest="password", required=True),
-    ]
-
+class GetAuthTokenCommand:
     def run(self, username, password):
         credentials = {"username": username, "password": password}
         service = superdesk.get_resource_service("auth_db")
@@ -283,8 +289,3 @@ class GetAuthTokenCommand(superdesk.Command):
         encoded_token = b"basic " + b64encode(token + b":")
         print("Generated token: ", encoded_token)
         return encoded_token
-
-
-superdesk.command("users:import", ImportUsersCommand())
-superdesk.command("users:hash_passwords", HashUserPasswordsCommand())
-superdesk.command("users:get_auth_token", GetAuthTokenCommand())

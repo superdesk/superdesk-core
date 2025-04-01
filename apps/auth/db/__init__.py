@@ -13,7 +13,7 @@ from apps.auth import AuthResource
 from .reset_password import ResetPasswordService, ResetPasswordResource, ActiveTokensResource
 import superdesk
 from .db import DbAuthService
-from .commands import create_user_command, HashUserPasswordsCommand  # noqa
+from .commands import create_user_command, cli_users_hash_passwords  # noqa
 from superdesk.services import BaseService
 from apps.auth.db.change_password import ChangePasswordService, ChangePasswordResource
 

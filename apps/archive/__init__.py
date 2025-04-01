@@ -28,7 +28,7 @@ from .archive import (
     ArchiveSaveService,
     archive_internal_service,
 )
-from .commands import RemoveExpiredContent, LOCK_EXPIRY
+from .commands import RemoveExpiredContent, LOCK_EXPIRY, cli_archive_remove_expired  # noqa
 from .ingest import IngestResource, AppIngestService
 from .user_content import UserContentResource, UserContentService
 from .archive_lock import ArchiveLockResource, ArchiveUnlockResource, ArchiveLockService, ArchiveUnlockService

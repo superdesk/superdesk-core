@@ -16,9 +16,11 @@ import superdesk
 
 from datetime import timedelta, timezone, datetime
 from werkzeug.exceptions import HTTPException
+import click
 
 from superdesk.celery_app import CELERY_SERIALIZER_NAME
 from superdesk.core import get_app_config, get_current_app
+from superdesk.commands import cli
 from superdesk.resource_fields import ID_FIELD
 from superdesk.types import VocabulariesResourceModel, UsersResourceModel, UserTypeEnum
 
@@ -58,6 +60,23 @@ IDLE_TIME_DEFAULT = {"hours": 0, "minutes": 0}
 UPDATE_TTL = 1800
 
 logger = logging.getLogger(__name__)
+
+
+@cli.command("ingest:update")
+@click.option("--provider", "-p", "provider_name")
+@click.option("--sync", "-s", is_flag=True)
+async def cli_update_ingest(provider_name: str | None = None, sync=False):
+    """Runs update for ingest providers.
+
+    Example:
+    ::
+
+        $ python manage.py ingest:update
+        $ python manage.py ingest:update --provider=aap-demo
+
+    """
+
+    await UpdateIngest().run(provider_name, sync)
 
 
 def is_service_and_parser_registered(provider):
@@ -240,23 +259,8 @@ def update_assoc_renditions(assoc, ingested):
             assoc["renditions"][key] = val
 
 
-class UpdateIngest(superdesk.Command):
-    """Runs update for ingest providers.
-
-    Example:
-    ::
-
-        $ python manage.py ingest:update
-        $ python manage.py ingest:update --provider=aap-demo
-
-    """
-
-    option_list = [
-        # superdesk.Option("--provider", "-p", dest="provider_name"),
-        # superdesk.Option("--sync", "-s", dest="sync", action="store_true"),
-    ]
-
-    def run(self, provider_name=None, sync=False):
+class UpdateIngest:
+    async def run(self, provider_name=None, sync=False):
         lookup = {} if not provider_name else {"name": provider_name}
         for provider in superdesk.get_resource_service("ingest_providers").get(req=None, lookup=lookup):
             if (
@@ -272,9 +276,9 @@ class UpdateIngest(superdesk.Command):
                 }
 
                 if sync:
-                    update_provider.apply(kwargs=kwargs)
+                    await update_provider.apply(kwargs=kwargs)
                 else:
-                    update_provider.apply_async(
+                    await update_provider.apply_async(
                         expires=get_task_ttl(provider), kwargs=kwargs, serializer=CELERY_SERIALIZER_NAME
                     )
 
@@ -798,6 +802,3 @@ def set_subject_name_translation(subject, language) -> None:
         subject["name"] = subject["translations"]["name"][language]
     except (KeyError, TypeError):
         pass
-
-
-superdesk.command("ingest:update", UpdateIngest())

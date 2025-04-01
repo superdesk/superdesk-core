@@ -14,6 +14,8 @@ import superdesk
 from superdesk.core import get_app_config
 from superdesk.resource_fields import ID_FIELD, VERSION
 import superdesk.signals as signals
+from superdesk.commands import cli
+from superdesk.types import PublishQueueResource
 
 from eve.utils import ParsedRequest
 from copy import deepcopy
@@ -46,6 +48,21 @@ LOCK_EXPIRY = 3600 * 2
 LAST_ID_CONFIG = "archive_expiry_last_id"
 
 
+@cli.command("archive:remove_expired")
+def cli_archive_remove_expired():
+    """Remove expired content from Superdesk.
+
+    It removes expired items from production, published and archived colections.
+
+    Example:
+    ::
+
+        $ python manage.py archive:remove_expired
+
+    """
+    RemoveExpiredContent().run()
+
+
 def log_exeption(fn):
     @ft.wraps(fn)
     def inner(*a, **kw):
@@ -65,18 +82,7 @@ def _get_expired_mongo_ids_query(minutes, now):
     return {"_id": {"$lt": ObjectId.from_datetime(_datetime)}}
 
 
-class RemoveExpiredContent(superdesk.Command):
-    """Remove expired content from Superdesk.
-
-    It removes expired items from production, published and archived colections.
-
-    Example:
-    ::
-
-        $ python manage.py archive:remove_expired
-
-    """
-
+class RemoveExpiredContent:
     log_msg = None
     lock_name = None
 
@@ -524,6 +530,3 @@ class RemoveExpiredContent(superdesk.Command):
             )
 
         return items_not_moved
-
-
-superdesk.command("archive:remove_expired", RemoveExpiredContent())

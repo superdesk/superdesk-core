@@ -10,7 +10,10 @@
 
 import logging
 
+import click
+
 from superdesk.core import get_app_config
+from superdesk.commands import cli
 from superdesk.errors import SuperdeskApiError
 import superdesk
 from .ldap import ADAuth, add_default_values, get_user_query
@@ -18,7 +21,12 @@ from .ldap import ADAuth, add_default_values, get_user_query
 logger = logging.getLogger(__name__)
 
 
-class ImportUserProfileFromADCommand(superdesk.Command):
+@cli.command("users:copyfromad")
+@click.option("--ad_username", "-adu", required=True)
+@click.option("--ad_password", "-adp", required=True)
+@click.option("--username_to_import", "-u", "username", required=True)
+@click.option("--admin", "-a", required=False)
+async def cli_users_copyfromad(ad_username, ad_password, username, admin):
     """Responsible for importing a user profile from Active Directory (AD) to Mongo.
 
     This command runs on assumption that the user executing this command and
@@ -32,14 +40,11 @@ class ImportUserProfileFromADCommand(superdesk.Command):
 
     """
 
-    option_list = [
-        # superdesk.Option("--ad_username", "-adu", dest="ad_username", required=True),
-        # superdesk.Option("--ad_password", "-adp", dest="ad_password", required=True),
-        # superdesk.Option("--username_to_import", "-u", dest="username", required=True),
-        # superdesk.Option("--admin", "-a", dest="admin", required=False),
-    ]
+    await ImportUserProfileFromADCommand().run(ad_username, ad_password, username, admin)
 
-    def run(self, ad_username, ad_password, username, admin="false"):
+
+class ImportUserProfileFromADCommand:
+    async def run(self, ad_username, ad_password, username, admin="false"):
         """Imports or Updates a User Profile from AD to Mongo.
 
         :param ad_username: Active Directory Username
@@ -68,19 +73,14 @@ class ImportUserProfileFromADCommand(superdesk.Command):
             raise SuperdeskApiError.notFoundError("Username not found")
 
         # Check if User Profile already exists in Mongo
-        # TODO-ASYNC[users]: Upgrade to async when updating this module
-        user = superdesk.get_resource_service("users").find_one(req=None, **get_user_query(username))
+        users_service = superdesk.get_resource_service("users")
+        user = await users_service.find_one_async(req=None, **get_user_query(username))
 
         if user:
-            # TODO-ASYNC[users]: Upgrade to async when updating this module
-            superdesk.get_resource_service("users").patch(user.get("_id"), user_data)
+            await users_service.patch_async(user.get("_id"), user_data)
         else:
             add_default_values(user_data, username, user_type=user_type)
-            # TODO-ASYNC[users]: Upgrade to async when updating this module
-            superdesk.get_resource_service("users").post([user_data])
+            await users_service.post_async([user_data])
 
         print(user_data)
         return user_data
-
-
-superdesk.command("users:copyfromad", ImportUserProfileFromADCommand())

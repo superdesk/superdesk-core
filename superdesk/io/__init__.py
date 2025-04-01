@@ -24,9 +24,9 @@ from superdesk.io.registry import FeedParserAllowedResource, FeedParserAllowedSe
 from superdesk.io.registry import FeedingServiceAllowedResource, FeedingServiceAllowedService
 from superdesk.io.registry import get_feeding_service  # noqa
 
-from superdesk.io.commands.add_provider import AddProvider  # noqa
+from superdesk.io.commands.add_provider import cli_add_provider  # noqa
 from superdesk.io import importers  # noqa
-from superdesk.io.commands.update_ingest import UpdateIngest, update_provider  # noqa
+from superdesk.io.commands.update_ingest import UpdateIngest, update_provider, cli_update_ingest  # noqa
 from superdesk.io.commands.remove_expired_content import RemoveExpiredContent
 from superdesk.io.ingest_provider_model import IngestProviderResource, IngestProviderService
 
@@ -77,9 +77,9 @@ superdesk.privilege(
 
 
 @celery.task(soft_time_limit=15)
-def update_ingest():
+async def update_ingest():
     """Check ingest providers and trigger an update when appropriate."""
-    UpdateIngest().run()
+    await UpdateIngest().run()
 
 
 @celery.task(soft_time_limit=600)

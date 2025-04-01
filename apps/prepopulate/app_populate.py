@@ -8,47 +8,21 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
-import json
 import os
-import superdesk
 import logging
+import json
+import click
 
 from superdesk import get_resource_service
+from superdesk.commands import cli
 
 
 logger = logging.getLogger(__name__)
 
 
-def populate_table_json(service_name, json_data):
-    service = get_resource_service(service_name)
-    for item in json_data:
-        id_name = item.get("_id")
-
-        if id_name and service.find_one(_id=id_name, req=None):
-            service.put(id_name, item)
-        else:
-            service.post([item])
-
-
-def process_file(filepath):
-    """Insert or update the data from file.
-
-    Filename is used to determine a collection.
-    The format of the file used is JSON.
-    :param filepath: absolute filepath
-    :return: nothing
-    """
-    if not os.path.exists(filepath):
-        raise FileNotFoundError
-
-    [table_name, ext] = os.path.basename(filepath).split(".")
-
-    with open(filepath, "rt") as vocabularies:
-        json_data = json.loads(vocabularies.read())
-        populate_table_json(table_name, json_data)
-
-
-class AppPopulateCommand(superdesk.Command):
+@cli.command("app:populate")
+@click.option("--filepath", "-f", required=True)
+async def cli_app_populate(filepath):
     """
     Insert or update data in collection using sample file.
 
@@ -65,10 +39,45 @@ class AppPopulateCommand(superdesk.Command):
 
     """
 
-    # option_list = (superdesk.Option("--filepath", "-f", dest="filepath", required=True),)
-
-    def run(self, filepath):
-        process_file(filepath)
+    await AppPopulateCommand().run(filepath)
 
 
-superdesk.command("app:populate", AppPopulateCommand())
+async def populate_table_json(service_name, json_data):
+    service = get_resource_service(service_name)
+    for item in json_data:
+        id_name = item.get("_id")
+
+        if hasattr(service, "find_one_async"):
+            # This is an async resource service, use async methods
+            if id_name and await service.find_one_async(_id=id_name, req=None):
+                await service.put_async(id_name, item)
+            else:
+                await service.post_async([item])
+        else:
+            if id_name and service.find_one(_id=id_name, req=None):
+                service.put(id_name, item)
+            else:
+                service.post([item])
+
+
+async def process_file(filepath):
+    """Insert or update the data from file.
+
+    Filename is used to determine a collection.
+    The format of the file used is JSON.
+    :param filepath: absolute filepath
+    :return: nothing
+    """
+    if not os.path.exists(filepath):
+        raise FileNotFoundError
+
+    [table_name, ext] = os.path.basename(filepath).split(".")
+
+    with open(filepath, "rt") as vocabularies:
+        json_data = json.loads(vocabularies.read())
+        await populate_table_json(table_name, json_data)
+
+
+class AppPopulateCommand:
+    async def run(self, filepath):
+        await process_file(filepath)

@@ -659,16 +659,17 @@ async def step_impl_run_update_ingest_command(context, provider_name):
         provider = await find_one("ingest_providers", name=provider_name)
 
         if provider["feeding_service"] == "ftp":
-            run_update_ingest_ftp()
+            await run_update_ingest_ftp()
         else:
             # TODO for FTP feeding service all needed objects were patched/mocked
             # for other feeding services it must be implemented
-            update_ingest.UpdateIngest().run()
+            await update_ingest.UpdateIngest().run()
 
 
 @mock.patch.object(ftp, "ftp_connect", return_value=mock.MagicMock())
 @mock.patch.object(update_ingest, "is_scheduled", return_value=True)
-def run_update_ingest_ftp(*args):
+@async_run_until_complete
+async def run_update_ingest_ftp(*args):
     def retrieve_and_parse_side_effect(ftp, config, filename, provider, registered_parser):
         created = datetime.now() + timedelta(days=365)
         item1 = {
@@ -727,7 +728,7 @@ def run_update_ingest_ftp(*args):
             retrieve_and_parse_mock.side_effect = retrieve_and_parse_side_effect
             empty_file_mock.return_value = False
             # run command
-            update_ingest.UpdateIngest().run()
+            await update_ingest.UpdateIngest().run()
 
 
 async def embed_routing_scheme_rules(scheme):

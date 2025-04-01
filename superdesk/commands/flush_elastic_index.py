@@ -14,9 +14,9 @@ import click
 from eve_elastic import get_es
 from elasticsearch import exceptions as es_exceptions
 
-from superdesk.commands import cli
 from superdesk.core import get_app_config, get_current_app, get_current_async_app
 
+from .async_cli import cli
 from .index_from_mongo import IndexFromMongo
 
 

@@ -14,8 +14,11 @@ import superdesk
 from superdesk.core import get_app_config, get_current_app
 from superdesk.metadata.item import ASSOCIATIONS
 
+from .async_cli import cli
 
-class CleanImages(superdesk.Command):
+
+@cli.command("app:clean_images")
+def cli_clean_images():
     """This command will remove all the images from the system which are not referenced by content.
 
     It checks the media type and calls the correspoinding function as s3 and mongo
@@ -28,7 +31,10 @@ class CleanImages(superdesk.Command):
         $ python manage.py app:clean_images
 
     """
+    CleanImages().run()
 
+
+class CleanImages:
     def run(self):
         print("Starting image cleaning.")
         used_images = set()
@@ -77,6 +83,3 @@ class CleanImages(superdesk.Command):
 
             for renditions in associations:
                 used_images.update([str(rend.get("media")) for rend in renditions.values() if rend.get("media")])
-
-
-superdesk.command("app:clean_images", CleanImages())

@@ -20,22 +20,23 @@ import bz2
 import pymongo.database
 import multiprocessing.synchronize
 
-from asgiref.sync import async_to_sync
 from multiprocessing import Process, Lock
 from contextlib import contextmanager
 from datetime import datetime
 from enum import IntEnum
 from pathlib import Path
 from typing import Optional, Union, List, Iterator
+import click
 
 from bson.json_util import dumps, loads
 from pymongo.errors import OperationFailure
-import superdesk
 from superdesk.core import get_current_app
 from superdesk.timer import timer
 from superdesk.resource import Resource
 from superdesk.services import BaseService
 from superdesk.cache import cache
+
+from .async_cli import cli
 from . import data_updates, flush_elastic_index
 
 
@@ -68,6 +69,165 @@ else:
     STYLE_DESC = ""
     STYLE_ERR = ""
     INFO = "[i] "
+
+
+@cli.command("storage:dump")
+@click.option("-n", "--name", help=f'destination file or directory (default: "{DUMP_NAME}_<datetime>")')
+@click.option(
+    "--dest-dir", default=DUMP_DIR, help='destination directory (default: "dump", will be created if necessary)'
+)
+@click.option("-D", "--description", help="description of the archive")
+@click.option("-s", "--single", is_flag=True, help="dump data in a single JSON file")
+@click.option(
+    "-c",
+    "--collection",
+    "collections",
+    multiple=True,
+    help="collection to dump (DEFAULT: dump all collections)",
+)
+def cli_data_storage_dump(name, dest_dir, description, single, collections):
+    """Dump collections from MongoDB
+
+    Note: this command should only be used for development purpose. Use MongoDB official commands to dump or restore
+    databases in production.
+
+    Dump whole collection into either separate JSON files (one per collection) or a single one (with a single root
+    object).
+
+    Single file are easier to copy, while separate JSON files are easier to check.
+
+    A dump is full Superdesk save, as opposed to a record which only store change made in a database (more like a diff).
+
+    Example:
+    Do a full database dump with a name and description to a single file::
+
+        $ python manage.py storage:dump -n "demo-instance" -D "this dump includes some test data (desks, users) to run a
+        basic demo of Superdesk" --single
+    """
+
+    StorageDump().run(name, dest_dir, description, single, collections)
+
+
+@cli.command("storage:restore")
+@click.argument("dump_path")
+@click.option("--keep-existing", is_flag=True, help="don't clear collections before inserting items")
+@click.option("--no-flush", is_flag=True, help="don't flush ElasticSearch indexes")
+def cli_data_storage_restore(dump_path, keep_existing, no_flush):
+    """Restore MongoDB collections dumped with ``storage:dump``
+
+    Example::
+
+        $ storage:restore foobar_superdesk_dump
+    """
+
+    StorageRestore().run(dump_path, keep_existing, no_flush)
+
+
+@cli.command("storage:record")
+@click.option("-n", "--name", help='destination file (default: "{RECORD_NAME}_<datetime>)')
+@click.option(
+    "--dest-dir",
+    default=RECORD_DIR,
+    help='destination directory (default: "dump", will be created if necessary)',
+)
+@click.option("-D", "--description", help="description of the record")
+@click.option("-b", "--base-dump", help="base full dump from which the record must be started")
+@click.option(
+    "--force-db-reset",
+    is_flag=True,
+    help="reset database before starting record without confirmation (⚠️ you'll loose all data)",
+)
+@click.option(
+    "-F",
+    "--full-document",
+    is_flag=True,
+    help="for update operation, store full document in addition to delta)",
+)
+@click.option(
+    "-c",
+    "--collection",
+    "collections",
+    multiple=True,
+    help="collections to record (DEFAULT: record all collections)",
+)
+def cli_data_storage_record(name, dest_dir, description, base_dump, force_db_reset, full_document, collections):
+    """Record changes made in database until the command is stopped
+
+    This command is intended for developers to help producing specific state (e.g. for tests), or to create a specific
+    Superdesk instance e.g. for a demo.
+
+    If you specify a base dump (with ``--base-dump``), the database will be restored to this dump before starting the
+    record, and it will be associated with the record.
+
+    If no base dump is specified, the database should be in the same state as when the record has been done when you
+    restore it.
+
+    If you use the ``--full-document`` option, the whole document will be stored in the record in case of update
+    (instead of just diff), this will result in a bigger dump file, but may be applied to a database even if it was not
+    exactly in the same state as when the record has been done.
+
+    You may want to use ``--collection`` to record change only on the collections you're interested in, and avoir side
+    effects.
+
+    Example:
+    Record change in vocabularies only, with a name and description, and base on "base_test_e2e_dump" dump::
+
+        $ python manage.py storage:record -b "base_test_e2e_dump" -c vocabularies -n "test_categories"-D "prepare
+          instance for categories end-to-end tests"
+    """
+
+    StorageStartRecording().run(name, dest_dir, description, base_dump, force_db_reset, full_document, collections)
+
+
+@cli.command("storage:restore-record")
+@click.argument("record_file")
+@click.option(
+    "--force-db-reset",
+    is_flag=True,
+    help="reset database before applying record without confirmation (⚠️ you'll loose all data)",
+)
+@click.option("--skip-base-dump", is_flag=True, help="do not restore base dump if any is specified")
+def cli_data_storage_restore_record(record_file, force_db_reset, skip_base_dump):
+    """Restore Superdesk record
+
+    This command is to be used with a record dump, not a full database archive.
+
+    Example::
+
+        $ storage:restore-record record-for-some-e2e-test
+    """
+
+    StorageRestoreRecord().run(record_file, force_db_reset, skip_base_dump)
+
+
+@cli.command("storage:list")
+def cli_data_storage_list():
+    """List Superdesk Dumps and Records"""
+
+    StorageList().run()
+
+
+@cli.command("storage:upgrade-dumps")
+async def cli_data_storage_upgrade_dumps():
+    """Apply migration scripts on all dumps and records
+
+    Note: the backend MUST NOT be running while this command is used.
+
+    Migration scripts are first applied on each records: changes on collections used in the record are merged to the
+    record.
+
+    Then for full dump, migration are normally applied and dumps are updated.
+
+    The whole process may be long.
+
+    Be sure to validate and if necessary correct results before committing anything (specially for records).
+
+    Example::
+
+        $ python manage.py storage:upgrade-dumps
+    """
+
+    await StorageMigrateDumps().run()
 
 
 def get_dest_path(dest: Union[Path, str], dump: bool = True) -> Path:
@@ -347,44 +507,7 @@ def get_dump_metadata(dump: Path) -> dict:
         return parse_dump_file(dump, metadata_only=True)
 
 
-class StorageDump(superdesk.Command):
-    """Dump collections from MongoDB
-
-    Note: this command should only be used for development purpose. Use MongoDB official commands to dump or restore
-    databases in production.
-
-    Dump whole collection into either separate JSON files (one per collection) or a single one (with a single root
-    object).
-
-    Single file are easier to copy, while separate JSON files are easier to check.
-
-    A dump is full Superdesk save, as opposed to a record which only store change made in a database (more like a diff).
-
-    Example:
-    Do a full database dump with a name and description to a single file::
-
-        $ python manage.py storage:dump -n "demo-instance" -D "this dump includes some test data (desks, users) to run a
-        basic demo of Superdesk" --single
-    """
-
-    option_list = [
-        # superdesk.Option("-n", "--name", help=f'destination file or directory (default: "{DUMP_NAME}_<datetime>")'),
-        # superdesk.Option(
-        #     "--dest-dir",
-        #     default=DUMP_DIR,
-        #     help='destination directory (default: "dump", will be created if necessary)',
-        # ),
-        # superdesk.Option("-D", "--description", help="description of the archive"),
-        # superdesk.Option("-s", "--single", action="store_true", help="dump data in a single JSON file"),
-        # superdesk.Option(
-        #     "-c",
-        #     "--collection",
-        #     dest="collections",
-        #     action="append",
-        #     help="collection to dump (DEFAULT: dump all collections)",
-        # ),
-    ]
-
+class StorageDump:
     def run(
         self,
         name: Optional[str],
@@ -454,20 +577,7 @@ class StorageDump(superdesk.Command):
             print(f"database {db.name} dumped at {dest_path}")
 
 
-class StorageRestore(superdesk.Command):
-    """Restore MongoDB collections dumped with ``storage:dump``
-
-    Example::
-
-        $ storage:restore foobar_superdesk_dump
-    """
-
-    option_list = [
-        # superdesk.Option("--keep-existing", action="store_true", help="don't clear collections before inserting items"),
-        # superdesk.Option("--no-flush", action="store_true", help="don't flush ElasticSearch indexes"),
-        # superdesk.Option("dump_path", help="file or directory containing the database dump"),
-    ]
-
+class StorageRestore:
     def run(self, dump_path: Union[Path, str], keep_existing: bool = False, no_flush: bool = False) -> None:
         archive_path = get_dest_path(dump_path)
         print("💾 restoring archive")
@@ -506,61 +616,7 @@ class StorageRestore(superdesk.Command):
         print("👷 restore finished")
 
 
-class StorageStartRecording(superdesk.Command):
-    """Record changes made in database until the command is stopped
-
-    This command is intended for developers to help producing specific state (e.g. for tests), or to create a specific
-    Superdesk instance e.g. for a demo.
-
-    If you specify a base dump (with ``--base-dump``), the database will be restored to this dump before starting the
-    record, and it will be associated with the record.
-
-    If no base dump is specified, the database should be in the same state as when the record has been done when you
-    restore it.
-
-    If you use the ``--full-document`` option, the whole document will be stored in the record in case of update
-    (instead of just diff), this will result in a bigger dump file, but may be applied to a database even if it was not
-    exactly in the same state as when the record has been done.
-
-    You may want to use ``--collection`` to record change only on the collections you're interested in, and avoir side
-    effects.
-
-    Example:
-    Record change in vocabularies only, with a name and description, and base on "base_test_e2e_dump" dump::
-
-        $ python manage.py storage:record -b "base_test_e2e_dump" -c vocabularies -n "test_categories"-D "prepare
-          instance for categories end-to-end tests"
-    """
-
-    option_list = [
-        # superdesk.Option("-n", "--name", help='destination file (default: "{RECORD_NAME}_<datetime>)'),
-        # superdesk.Option(
-        #     "--dest-dir",
-        #     default=RECORD_DIR,
-        #     help='destination directory (default: "dump", will be created if necessary)',
-        # ),
-        # superdesk.Option("-D", "--description", help="description of the record"),
-        # superdesk.Option("-b", "--base-dump", help="base full dump from which the record must be started"),
-        # superdesk.Option(
-        #     "--force-db-reset",
-        #     action="store_true",
-        #     help="reset database before starting record without confirmation (⚠️ you'll loose all data)",
-        # ),
-        # superdesk.Option(
-        #     "-F",
-        #     "--full-document",
-        #     action="store_true",
-        #     help="for update operation, store full document in addition to delta)",
-        # ),
-        # superdesk.Option(
-        #     "-c",
-        #     "--collection",
-        #     dest="collections",
-        #     action="append",
-        #     help="collections to record (DEFAULT: record all collections)",
-        # ),
-    ]
-
+class StorageStartRecording:
     def run(
         self,
         name: Optional[str] = None,
@@ -638,26 +694,7 @@ class StorageStartRecording(superdesk.Command):
                 raise e
 
 
-class StorageRestoreRecord(superdesk.Command):
-    """Restore Superdesk record
-
-    This command is to be used with a record dump, not a full database archive.
-
-    Example::
-
-        $ storage:restore-record record-for-some-e2e-test
-    """
-
-    option_list = [
-        # superdesk.Option(
-        #     "--force-db-reset",
-        #     action="store_true",
-        #     help="reset database before applying record without confirmation (⚠️ you'll loose all data)",
-        # ),
-        # superdesk.Option("--skip-base-dump", action="store_true", help="do not restore base dump if any is specified"),
-        # superdesk.Option("record_file", help="file containing the record"),
-    ]
-
+class StorageRestoreRecord:
     def run(self, record_file: Union[Path, str], force_db_reset: bool = False, skip_base_dump: bool = False) -> None:
         file_path = get_dest_path(record_file, dump=False)
         db = get_current_app().data.pymongo().db
@@ -735,7 +772,7 @@ class StorageRestoreRecord(superdesk.Command):
             print("🏁 All done")
 
 
-class StorageList(superdesk.Command):
+class StorageList:
     """List Superdesk Dumps and Records"""
 
     def run(self) -> None:
@@ -776,26 +813,8 @@ class StorageList(superdesk.Command):
                     print(f"{STYLE_ERR}Error while reading record file at {p}: {e}{STYLE_RESET}", file=sys.stderr)
 
 
-class StorageMigrateDumps(superdesk.Command):
-    """Apply migration scripts on all dumps and records
-
-    Note: the backend MUST NOT be running while this command is used.
-
-    Migration scripts are first applied on each records: changes on collections used in the record are merged to the
-    record.
-
-    Then for full dump, migration are normally applied and dumps are updated.
-
-    The whole process may be long.
-
-    Be sure to validate and if necessary correct results before committing anything (specially for records).
-
-    Example::
-
-        $ python manage.py storage:upgrade-dumps
-    """
-
-    def do_migration(self, ori_dump: str):
+class StorageMigrateDumps:
+    async def do_migration(self, ori_dump: str):
         """Do records and full dumps migration
 
         :param ori_dump: name of the dump file with original state of database
@@ -846,8 +865,7 @@ class StorageMigrateDumps(superdesk.Command):
                     lock.acquire()
 
                     # recording is started, we can launch the migration scripts
-                    # TODO-ASYNC: remove usage of async_to_sync once this command is migrated to async
-                    async_to_sync(data_updates.upgrade_command_handler)()
+                    await data_updates.upgrade_command_handler()
 
                     # migration is done, we stop the recording
                     if record_process.pid is None:
@@ -898,8 +916,7 @@ class StorageMigrateDumps(superdesk.Command):
                 StorageRestore().run(keep_existing=False, dump_path=p)
                 print(f"{INFO}Applying data migration scripts")
 
-                # TODO-ASYNC: remove usage of async_to_sync once this command is migrated to async
-                async_to_sync(data_updates.upgrade_command_handler)()
+                await data_updates.upgrade_command_handler()
 
                 print(f"{INFO}Updating dump")
                 if p.is_dir():
@@ -915,7 +932,7 @@ class StorageMigrateDumps(superdesk.Command):
                 )
                 print(f"{INFO}Done for {p}\n")
 
-    def run(self) -> None:
+    async def run(self) -> None:
         confirm = input(
             "You're about to apply data migration scripts to all dumps and record, this may take some time and may "
             "result in data issues, be sure to have a copy of all important dumps and records first, and do not let "
@@ -936,7 +953,7 @@ class StorageMigrateDumps(superdesk.Command):
             collections=None,
         )
         try:
-            self.do_migration(ori_dump=tmp_db)
+            await self.do_migration(ori_dump=tmp_db)
         except Exception:
             logger.exception("🔥 Oh no, something bad happened")
             sys.exit(1)
@@ -973,14 +990,6 @@ class RestoreRecordService(BaseService):
             with timer("restore_record"):
                 self._create(docs)
             return ["OK"]
-
-
-superdesk.command("storage:dump", StorageDump())
-superdesk.command("storage:restore", StorageRestore())
-superdesk.command("storage:record", StorageStartRecording())
-superdesk.command("storage:restore-record", StorageRestoreRecord())
-superdesk.command("storage:list", StorageList())
-superdesk.command("storage:upgrade-dumps", StorageMigrateDumps())
 
 
 def get_dbs():

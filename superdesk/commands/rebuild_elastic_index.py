@@ -8,13 +8,17 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
-
-import superdesk
+import click
 
 from superdesk.core import get_current_async_app
 
+from .async_cli import cli
 
-class RebuildElasticIndex(superdesk.Command):
+
+@cli.command("app:rebuild_elastic_index")
+@click.option("--resource", "-r", "resource_name")
+@click.option("--requests-per-second", "requests_per_second", type=int, default=1000)
+def cli_rebuild_elastic_index(resource_name, requests_per_second):
     """Rebuild the elastic indexes from existing data.
 
     It creates new index with same alias as the configured index,
@@ -29,11 +33,10 @@ class RebuildElasticIndex(superdesk.Command):
 
     """
 
-    option_list = [
-        # superdesk.Option('--resource', '-r', dest='resource_name'),
-        # superdesk.Option('--requests-per-second', dest='requests_per_second'),
-    ]
+    RebuildElasticIndex().run(resource_name, requests_per_second)
 
+
+class RebuildElasticIndex:
     def run(self, resource_name=None, requests_per_second=1000):
         # if no index name is passed then use the configured one
         async_app = get_current_async_app()
@@ -61,6 +64,3 @@ class RebuildElasticIndex(superdesk.Command):
                 continue
             app.data.elastic.reindex(resource, requests_per_second=requests_per_second)
             print('Index {} rebuilt successfully.'.format(resource))
-
-
-superdesk.command('app:rebuild_elastic_index', RebuildElasticIndex())

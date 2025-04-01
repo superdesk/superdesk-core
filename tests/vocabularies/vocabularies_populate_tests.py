@@ -51,7 +51,7 @@ class VocabulariesPopulateTest(TestCase):
 
     async def test_populate_vocabularies(self):
         cmd = AppPopulateCommand()
-        cmd.run(self.filename)
+        await cmd.run(self.filename)
         service = get_resource_service("vocabularies")
 
         for item in self.json_data:
