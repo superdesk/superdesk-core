@@ -375,6 +375,8 @@ def setup(context=None, config=None, app_factory=get_app, reset=False):
         app.init_indexes()
         cache.clean()
 
+    return app
+
 
 def setup_auth_user(context, user=None):
     setup_db_user(context, user)

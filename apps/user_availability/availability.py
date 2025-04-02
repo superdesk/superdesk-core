@@ -2,6 +2,8 @@ import superdesk
 from superdesk.resource import Resource
 from apps.auth import get_user_id
 
+from . import endpoint_name
+
 
 class AvailabilityResource(Resource):
     """Resource for tracking user availability."""
@@ -62,3 +64,6 @@ class AvailabilityService(superdesk.Service):
     def on_create(self, docs):
         for doc in docs:
             doc["user"] = get_user_id()
+
+
+availability_service = AvailabilityService(endpoint_name, backend=superdesk.get_backend())

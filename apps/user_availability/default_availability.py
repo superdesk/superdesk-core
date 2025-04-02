@@ -1,10 +1,13 @@
 import superdesk
 
-from datetime import datetime
 from dateutil.rrule import rrule, WEEKLY
+from superdesk.dates import get_local_today
 from superdesk.resource import Resource
 from superdesk.errors import SuperdeskApiError
 from apps.auth import get_user_id
+
+from . import default_endpoint_name
+from .availability import availability_service
 
 
 class DefaultAvailabilityResource(Resource):
@@ -100,16 +103,24 @@ class DefaultAvailabilityService(superdesk.Service):
     def on_created(self, docs):
         """Event handler for created event."""
         for doc in docs:
-            self.regenerate_user_availability(doc)
+            self.generate_user_availability(doc)
 
     def on_replaced(self, doc, original):
         """Event handler for replaced event."""
-        self.regenerate_user_availability(doc)
+        self.generate_user_availability(doc)
 
-    def regenerate_user_availability(self, doc):
-        today = datetime.now().date()
-        current_user_id = get_user_id()
-        availability_service = superdesk.get_resource_service("user_availability")
+    def generate_all_users_availability(self):
+        default_configs = self.get_all()
+        users_service = superdesk.get_resource_service("users")
+        for config in default_configs:
+            user = users_service.find_one(req=None, _id=config["_id"])
+            if not user or not user.get("is_active"):
+                continue
+            self.generate_user_availability(config)
+
+    def generate_user_availability(self, doc):
+        today = get_local_today().date()
+        current_user_id = doc["_id"]
         availability_service.delete_action(
             {"user": current_user_id, "date": {"$gte": today.isoformat()}, "_generated": True}
         )
@@ -135,6 +146,9 @@ class DefaultAvailabilityService(superdesk.Service):
 
         if items:
             availability_service.create(items)
+
+
+default_service = DefaultAvailabilityService(default_endpoint_name, backend=superdesk.get_backend())
 
 
 WEEKDAY_RRULE_MAPPING = {
