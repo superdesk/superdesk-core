@@ -108,7 +108,6 @@ Feature: User Availability
         When we get "/user_availability/#user_availability._id#"
         Then we get error 404
 
-    @wip
     @auth
     Scenario: Default user availability
         # Create default availability settings using PUT
