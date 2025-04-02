@@ -128,11 +128,6 @@ class UsersResource(Resource):
                 "allow_unknown": True,
             },
             "last_activity_at": {"type": "datetime", "nullable": True, "readonly": True},
-            "availability": {
-                "type": "dict",
-                "schema": {},
-                "allow_unknown": True,
-            },
         }
 
         self.extra_response_fields = [

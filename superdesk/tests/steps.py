@@ -836,8 +836,6 @@ def step_impl_when_put_url(context, url):
         data = apply_placeholders(context, context.text)
         href = get_prefixed_url(context.app, url)
 
-        print("PUT", href)
-
         context.response = context.client.put(href, data=data, headers=headers)
         context.outbox = outbox
 
