@@ -360,7 +360,6 @@ class StorageDump(superdesk.Command):
     A dump is full Superdesk save, as opposed to a record which only store change made in a database (more like a diff).
 
     Example:
-
     Do a full database dump with a name and description to a single file::
 
         $ python manage.py storage:dump -n "demo-instance" -D "this dump includes some test data (desks, users) to run a
@@ -525,7 +524,6 @@ class StorageStartRecording(superdesk.Command):
     effects.
 
     Example:
-
     Record change in vocabularies only, with a name and description, and base on "base_test_e2e_dump" dump::
 
         $ python manage.py storage:record -b "base_test_e2e_dump" -c vocabularies -n "test_categories"-D "prepare
