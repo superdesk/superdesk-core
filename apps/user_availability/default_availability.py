@@ -6,8 +6,9 @@ from superdesk.resource import Resource
 from superdesk.errors import SuperdeskApiError
 from apps.auth import get_user_id
 
-from . import default_endpoint_name
 from .availability import availability_service
+
+endpoint_name = "default_user_availability"
 
 
 class DefaultAvailabilityResource(Resource):
@@ -148,7 +149,7 @@ class DefaultAvailabilityService(superdesk.Service):
             availability_service.create(items)
 
 
-default_service = DefaultAvailabilityService(default_endpoint_name, backend=superdesk.get_backend())
+default_service = DefaultAvailabilityService(endpoint_name, backend=superdesk.get_backend())
 
 
 WEEKDAY_RRULE_MAPPING = {

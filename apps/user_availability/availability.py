@@ -2,7 +2,7 @@ import superdesk
 from superdesk.resource import Resource
 from apps.auth import get_user_id
 
-from . import endpoint_name
+endpoint_name = "user_availability"
 
 
 class AvailabilityResource(Resource):

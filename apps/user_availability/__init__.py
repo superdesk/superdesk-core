@@ -1,16 +1,14 @@
 from celery.schedules import crontab
 from superdesk.celery_app import celery
 
-endpoint_name = "user_availability"
-default_endpoint_name = "default_user_availability"
 
 from .availability import AvailabilityResource, availability_service
 from .default_availability import DefaultAvailabilityResource, default_service
 
 
 def init_app(app):
-    AvailabilityResource(endpoint_name, app=app, service=availability_service)
-    DefaultAvailabilityResource(default_endpoint_name, app=app, service=default_service)
+    AvailabilityResource(availability_service.datasource, app=app, service=availability_service)
+    DefaultAvailabilityResource(default_service.datasource, app=app, service=default_service)
 
     # generate availability for all users once a day
     app.config["CELERY_BEAT_SCHEDULE"]["user_availability:generate-scheduled-rundowns"] = {
