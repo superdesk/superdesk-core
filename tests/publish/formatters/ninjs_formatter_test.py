@@ -175,7 +175,6 @@ class NinjsFormatterTest(TestCase):
             "pubstatus": "usable",
             "source": "AAP",
             "description": "The most amazing picture you will ever see",
-            "guid": "20150723001158606583",
             "body_footer": "<p>call helpline 999 if you are planning to quit smoking</p>",
             "embargoed": embargoed,
         }
@@ -296,7 +295,6 @@ class NinjsFormatterTest(TestCase):
             "pubstatus": "usable",
             "version_creator": "558379451d41c83ff598a3af",
             "language": "en",
-            "guid": "urn:newsml:localhost:2015-07-24T15:05:00.116047:435c93c2-492c-4668-ab47-ae6e2b9b1c2c",
             "unique_name": "#145",
             "headline": "WA:Navy steps in with WA asylum-seeker boat",
             "original_creator": "558379451d41c83ff598a3af",

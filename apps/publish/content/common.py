@@ -928,30 +928,42 @@ class BasePublishService(BaseService):
     def _update_picture_metadata(self, updates, original, updated):
         renditions = updated.get("renditions") or {}
         mapping = app.config.get("PICTURE_METADATA_MAPPING")
+
         if not mapping or not renditions:
             return
+
         try:
-            media_id = renditions["original"]["media"]
+            updated_renditions = deepcopy(renditions)
+            updates["renditions"] = updated_renditions
+
+            for rendition_key, rendition_data in renditions.items():
+                if not rendition_data or not isinstance(rendition_data, dict):
+                    continue
+
+                media_id = rendition_data.get("media")
+                if not media_id:
+                    continue
+
+                picture = app.media.get(media_id)
+                binary = picture.read()
+                metadata = get_metadata_from_item(updated, mapping)
+
+                updated_binary = write_metadata(binary, metadata)
+                if updated_binary != binary:
+                    updated_media_id = app.media.put(
+                        updated_binary, content_type=picture.content_type, filename=picture.filename
+                    )
+                    updated_renditions[rendition_key].update(
+                        {
+                            "media": updated_media_id,
+                            "href": app.media.url_for_media(updated_media_id, picture.content_type),
+                        }
+                    )
+
+            updated["renditions"] = updated_renditions
+
         except (KeyError, TypeError):
             return
-        if not media_id:
-            return
-
-        picture = app.media.get(media_id)
-        binary = picture.read()
-        metadata = get_metadata_from_item(updated, mapping)
-        updated_binary = write_metadata(binary, metadata)
-        if updated_binary != binary:
-            updated_media_id = app.media.put(
-                updated_binary, content_type=picture.content_type, filename=picture.filename
-            )
-            updates.setdefault("renditions", deepcopy(renditions))["original"].update(
-                {
-                    "media": updated_media_id,
-                    "href": app.media.url_for_media(updated_media_id, picture.content_type),
-                }
-            )
-            updated["renditions"] = updates["renditions"]
 
 
 def get_crop(rendition):
