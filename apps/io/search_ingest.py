@@ -146,8 +146,7 @@ class SearchIngestServiceAsync(AsyncBaseService):
             except FileNotFoundError as ex:
                 raise ProviderError.externalProviderError(ex, provider)
 
-            # TODO-ASYNC: fetch_item is not async
-            dest_doc = fetch_item(archived_doc, doc.get("desk"), doc.get("stage"), state=doc.get("state"))
+            dest_doc = await fetch_item(archived_doc, doc.get("desk"), doc.get("stage"), state=doc.get("state"))
             new_guids.append(dest_doc["guid"])
 
             if provider:
