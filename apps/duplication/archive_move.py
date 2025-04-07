@@ -15,6 +15,7 @@ from eve.versioning import resolve_document_version
 from copy import deepcopy
 
 from superdesk.core import get_current_app
+from superdesk.eve_async.service import AsyncBaseService
 from superdesk.resource_fields import ID_FIELD, ETAG
 from superdesk.flask import request
 from apps.tasks import send_to, apply_onstage_rule
@@ -77,8 +78,8 @@ class MoveResource(Resource):
     privileges = {"POST": "archive"}
 
 
-class MoveService(BaseService):
-    def create(self, docs, **kwargs):
+class MoveService(AsyncBaseService):
+    async def create_async(self, docs, **kwargs):
         guid_of_item_to_be_moved = request.view_args["guid"]
         guid_of_moved_items = []
 
@@ -91,12 +92,13 @@ class MoveService(BaseService):
         try:
             # doc represents the target desk and stage
             doc = docs[0]
-            moved_item = self.move_content(guid_of_item_to_be_moved, doc)
+            moved_item = await self.move_content(guid_of_item_to_be_moved, doc)
             guid_of_moved_items.append(moved_item.get(ID_FIELD))
 
             if moved_item.get("type", None) == "composite" and doc.get("allPackageItems", False):
+                item_lock_id = None
+
                 try:
-                    item_lock_id = None
                     for item_id in (
                         ref[RESIDREF]
                         for group in moved_item.get(GROUPS, [])
@@ -105,7 +107,7 @@ class MoveService(BaseService):
                     ):
                         item_lock_id = "item_move {}".format(item_id)
                         if lock(item_lock_id, expire=5):
-                            item = self.move_content(item_id, doc)
+                            item = await self.move_content(item_id, doc)
                             guid_of_moved_items.append(item.get(ID_FIELD))
                             unlock(item_lock_id, remove=True)
                             item_lock_id = None
@@ -119,7 +121,7 @@ class MoveService(BaseService):
         finally:
             unlock(lock_id, remove=True)
 
-    def move_content(self, id, doc):
+    async def move_content(self, id, doc):
         archive_service = get_resource_service(ARCHIVE)
         archived_doc = archive_service.find_one(req=None, _id=id)
 
@@ -127,23 +129,23 @@ class MoveService(BaseService):
             raise SuperdeskApiError.notFoundError(_("Failed to find item with guid: {guid}").format(guid=id))
 
         self._validate(archived_doc, doc)
-        self._move(archived_doc, doc)
+        await self._move(archived_doc, doc)
 
         # get the recent updates again
         archived_doc = archive_service.find_one(req=None, _id=id)
         # finally apply any on stage rules/macros
-        apply_onstage_rule(archived_doc, id)
+        await apply_onstage_rule(archived_doc, id)
 
         # return etag of modified item
         doc["_etag"] = archived_doc["_etag"]
 
         return archived_doc
 
-    def _move(self, archived_doc, doc):
+    async def _move(self, archived_doc, doc):
         archive_service = get_resource_service(ARCHIVE)
         original = deepcopy(archived_doc)
         user = get_user()
-        send_to(
+        await send_to(
             doc=archived_doc,
             desk_id=doc.get("task", {}).get("desk"),
             stage_id=doc.get("task", {}).get("stage"),

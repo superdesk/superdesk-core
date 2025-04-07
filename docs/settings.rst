@@ -755,3 +755,137 @@ Video server API url.
 Default: ``False``
 
 Enable video server.
+
+
+.. _settings.publishing:
+
+Publish System Config
+---------------------
+
+``PUBLISH_EXCHANGE_FACTORY``
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Default: ``"superdesk.publish_async.exchanges:DefaultPublishExchangeFactory"``
+
+Module path to use for the PublishExchangeFactory.
+
+``PUBLISH_MODULES``
+^^^^^^^^^^^^^^^^^^^
+
+List of modules to load into the publishing system. In each module it looks for a ``publish_components`` variable,
+which provides a list of classes, which are then registered with the PublishExchangeFactory.
+
+Default::
+
+    [
+        "superdesk.publish_async.exchanges",
+        "superdesk.publish_async.filters",
+        "superdesk.publish_async.formatters",
+        "superdesk.publish_async.routers",
+        "superdesk.publish_async.consumers",
+    ]
+
+``PUBLISH_CHANNELS``
+^^^^^^^^^^^^^^^^^^^^
+
+When an item is sent to the PublishExchangeFactory for publishing, the factory determines which
+PublishExchange to use, and which associated PublishExchangeFilter, PublishExchangeFormatter and PublishExchangeRouter
+to use.
+
+The factory will iterate over the entries in the ``PUBLISH_CHANNELS`` config, matching the PublishRequest to the
+channel config, and use that to construct an instance of PublishExchange.
+
+.. autoclass:: superdesk.default_settings.PublishChannelConfig
+    :members:
+
+.. autoclass:: superdesk.default_settings.ExchangeConfig
+    :members:
+
+Default Channel::
+
+    ExchangeConfig(
+        exchange="default",
+        filter="default",
+        formatter="default",
+        router="celery",
+        polling=True,
+    )
+
+DefaultClasses:
+
+* exchange: :class:`superdesk.publish_async.exchanges.BasicPublishExchange`
+* filter: :class:`superdesk.publish_async.filters.BasePublishExchangeFilter`
+* formatter: :class:`superdesk.publish_async.formatters.BasePublishExchangeFormatter`
+* router: :class:`superdesk.publish_async.routers.CeleryPublishRouter`
+
+
+Default::
+
+    [{
+        "operations": ["resend"],
+        "config": ExchangeConfig(
+            filter="resend",
+        ),
+    },
+    {
+        "operations": ["correct"],
+        "config": ExchangeConfig(
+            exchange="content",
+            filter="content:corrected",
+        ),
+    },
+    {
+        "operations": ["kill", "takedown"],
+        "config": ExchangeConfig(
+            exchange="content",
+            filter="content:content:killed",
+        ),
+    },
+    {
+        # If the request is coming from the Web API and has no associations
+        # then we can handle this publish request via asyncio (aka instant publishing)
+        "item_types": ["text", "preformatted"],
+        "sender_types": ["api"],
+        "filter": lambda item: not len(item.get("associations") or {}),
+        "config": ExchangeConfig(
+            exchange="content",
+            filter="content",
+            router="asyncio",
+        ),
+    },
+    {
+        # If the request is coming from the Web API and has no associations
+        # then we can handle this publish request via asyncio (aka instant publishing)
+        "item_types": ["text", "preformatted"],
+        "config": ExchangeConfig(
+            exchange="content",
+            filter="content",
+        ),
+    },
+    {
+        "item_types": ["composite"],
+        "config": ExchangeConfig(
+            exchange="content",
+        ),
+    },
+    {
+        "item_types": ["audio", "video", "picture", "graphic"],
+        "config": ExchangeConfig(
+            exchange="content",
+            router="celery",
+            polling=True,
+        ),
+    },
+    {
+        "sender_types": ["api"],
+        "config": ExchangeConfig(
+            router="asyncio",
+        ),
+    },
+    {
+        "sender_types": ["ingest_rule"],
+        "config": ExchangeConfig(
+            router="celery",
+            polling=True,
+        ),
+    }]

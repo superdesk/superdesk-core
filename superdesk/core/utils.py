@@ -61,11 +61,14 @@ def generate_guid(**hints) -> str:
     }
 
 
-def str_to_date(value: str | None) -> datetime | None:
+def str_to_date(value: str | datetime | None) -> datetime | None:
     """Convert a string to a datetime instance"""
 
-    date_format: str = get_app_config("DATE_FORMAT") or "%Y-%m-%dT%H:%M:%S+0000"
-    return datetime.strptime(value, date_format) if value else None
+    if isinstance(value, str):
+        date_format: str = get_app_config("DATE_FORMAT") or "%Y-%m-%dT%H:%M:%S+0000"
+        return datetime.strptime(value, date_format)
+
+    return value
 
 
 def date_to_str(value: datetime | None) -> str | None:
@@ -89,21 +92,11 @@ def load_class_from_config(class_type: type[MODULE_CLASS_TYPE], config_key: str)
     Raises an exception if the configuration value is invalid, the module or
     attribute cannot be found, or if the class does not match the expected type.
 
-    Parameters:
-        class_type: type[MODULE_CLASS_TYPE]
-            The expected base class type that the loaded class must inherit from.
-        config_key: str
-            The key used to retrieve the configuration value that defines the module
-            and class.
-
-    Returns:
-        type[MODULE_CLASS_TYPE]
-            The dynamically imported class that matches the expected type.
-
-    Raises:
-        RuntimeError
-            If the configuration value is invalid, the module or attribute cannot
-            be retrieved, or the loaded class does not match the required base type.
+    :param class_type: The expected base class type that the loaded class must inherit from.
+    :param config_key: The key used to retrieve the configuration value that defines the module and class.
+    :return: The dynamically imported class that matches the expected type.
+    :raises RuntimeError: If the configuration value is invalid, the module or attribute cannot
+        be retrieved, or the loaded class does not match the required base type.
     """
 
     config_str = cast(str, get_app_config(config_key))
@@ -115,7 +108,7 @@ def load_class_from_config(class_type: type[MODULE_CLASS_TYPE], config_key: str)
     imported_module = import_module(module_path)
     module_class = getattr(imported_module, module_attribute)
 
-    if not issubclass(class_type, module_class):
+    if not issubclass(module_class, class_type):
         raise RuntimeError(f"Invalid config {config_key}={config_str}, invalid class type {module_class}")
 
     return cast(type[MODULE_CLASS_TYPE], module_class)

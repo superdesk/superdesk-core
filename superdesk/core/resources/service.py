@@ -262,7 +262,7 @@ class AsyncResourceService(Generic[ResourceModelType]):
 
     async def find_by_ids(
         self,
-        ids: list[str | ObjectId],
+        ids: Sequence[str | ObjectId],
         projection: ProjectedFieldArg | None = None,
     ) -> list[ResourceModelType]:
         """Find resources by IDs

@@ -106,13 +106,13 @@ Feature: Content Publishing
       """
       {
         "_items": [
-          {"state": "pending", "content_type": "text",
+          {"state": "success", "content_type": "text",
           "subscriber_id": "#digital#", "item_id": "123",
           "item_version": 2, "ingest_provider": "__none__",
           "destination": {
             "delivery_type": "email"
           }},
-          {"state": "pending", "content_type": "text",
+          {"state": "success", "content_type": "text",
           "subscriber_id": "#wire#", "item_id": "123", "item_version": 2,
           "ingest_provider": "__none__",
           "destination": {
@@ -237,10 +237,10 @@ Feature: Content Publishing
       """
       {
         "_items": [
-          {"state": "pending", "content_type": "text", "destination": {"delivery_type": "email"},
+          {"state": "success", "content_type": "text", "destination": {"delivery_type": "email"},
           "subscriber_id": "#wire#", "item_id": "#_id#", "item_version": 2,
           "ingest_provider": "#providers.aap#"},
-          {"state": "pending", "content_type": "text", "destination": {"delivery_type": "email"},
+          {"state": "success", "content_type": "text", "destination": {"delivery_type": "email"},
           "subscriber_id": "#digital#", "item_version": 2, "item_id": "#_id#",
           "ingest_provider": "#providers.aap#"}
         ]
@@ -410,7 +410,7 @@ Feature: Content Publishing
       {"_items" : [
         {"item_id": "123", "headline": "publish via direct",
         "destination": {"format": "nitf", "delivery_type":"email"},
-        "item_version": 2, "content_type": "text", "state": "pending", "publishing_action": "published"}
+        "item_version": 2, "content_type": "text", "state": "success", "publishing_action": "published"}
       ]}
       """
       When we get "/items/123"
@@ -435,7 +435,7 @@ Feature: Content Publishing
       {"_items" : [
         {"item_id": "123", "headline": "publish via direct", "subscriber_id": "#sub_direct#",
         "destination": {"format": "nitf", "delivery_type":"email"},
-        "item_version": 2, "content_type": "text", "state": "pending", "publishing_action": "published"},
+        "item_version": 2, "content_type": "text", "state": "success", "publishing_action": "published"},
         {"item_id": "456", "headline": "publish via api", "subscriber_id": "#sub_api#",
         "destination": {"format": "ninjs", "delivery_type":"content_api"},
         "item_version": 2, "content_type": "text", "state": "success", "publishing_action": "published"}
@@ -1577,7 +1577,7 @@ Feature: Content Publishing
       """
       [{"headline": "test", "_current_version": 1, "state": "fetched"}]
       """
-      And we login as user "foo" with password "bar" and user type "user"
+      And we login as user "foo" with password "barword" and user type "user"
       """
       {"user_type": "user", "email": "foo.bar@foobar.org"}
       """

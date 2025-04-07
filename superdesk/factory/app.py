@@ -309,6 +309,8 @@ class SuperdeskEve(eve.Eve):
         if isinstance(endpoint, EndpointGroup):
             blueprint = Blueprint(endpoint.name, endpoint.import_name)
             for sub_endpoint in endpoint.endpoints:
+                if sub_endpoint.add_cors_headers and "OPTIONS" not in sub_endpoint.methods:
+                    sub_endpoint.methods.append("OPTIONS")
                 blueprint.add_url_rule(
                     (
                         f"{self.api_prefix}/{sub_endpoint.url}"
@@ -323,6 +325,9 @@ class SuperdeskEve(eve.Eve):
             self.register_blueprint(blueprint)
             self._endpoint_groups.append(endpoint)
         else:
+            if endpoint.add_cors_headers and "OPTIONS" not in endpoint.methods:
+                endpoint.methods.append("OPTIONS")
+
             url = f"{self.api_prefix}/{endpoint.url}" if not endpoint.url.startswith("/") else endpoint.url
 
             self.add_url_rule(

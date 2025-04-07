@@ -17,11 +17,12 @@ from superdesk.resource import Resource
 from apps.packages.package_service import PackageService, create_root_group, get_item_ref
 from superdesk.validation import ValidationError
 from superdesk.errors import SuperdeskApiError
-from superdesk.services import BaseService
+from superdesk.eve_async.service import AsyncBaseService
 from superdesk.metadata.packages import GROUPS, GROUP_ID, REFS, RESIDREF, ROOT_GROUP, ID_REF, PACKAGE_TYPE
 from quart_babel import gettext as _
 
 
+# TODO-ASYNC: Do we need this, I can't find reference to this resource (both back-end and front-end)
 class PublishedPackageItemsResource(Resource):
     schema = {
         "package_id": {"type": "string", "required": True},
@@ -36,10 +37,10 @@ class PublishedPackageItemsResource(Resource):
     privileges = {"POST": ARCHIVE}
 
 
-class PublishedPackageItemsService(BaseService):
+class PublishedPackageItemsService(AsyncBaseService):
     package_service = PackageService()
 
-    def create(self, docs, **kwargs):
+    async def create_async(self, docs, **kwargs):
         ids = []
         for doc in docs:
             original = get_resource_service(ARCHIVE).find_one(req=None, _id=doc["package_id"])
@@ -74,7 +75,7 @@ class PublishedPackageItemsService(BaseService):
 
             items_published = [new_item[ITEM_STATE] in PUBLISH_STATES for new_item in items.values()]
             if any(items_published):
-                get_resource_service("archive_correct").patch(id=doc["package_id"], updates=updates)
+                await get_resource_service("archive_correct").patch_async(id=doc["package_id"], updates=updates)
 
             ids.append(original[ID_FIELD])
         return ids

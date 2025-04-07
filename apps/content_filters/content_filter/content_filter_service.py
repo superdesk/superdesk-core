@@ -179,7 +179,7 @@ class ContentFilterService(CacheableService):
         filter_condition_service = get_resource_service("filter_conditions")
         for expression in doc.get("content_filter", []):
             filter_conditions = {"must": [], "must_not": [{"term": {"state": "spiked"}}]}
-            if "fc" in expression.get("expression", {}):
+            if expression.get("expression", {}).get("fc"):
                 for f in expression["expression"]["fc"]:
                     current_filter = FilterCondition.parse(filter_condition_service.find_one(req=None, _id=f))
                     elastic_query = current_filter.get_elastic_query()
@@ -187,7 +187,7 @@ class ContentFilterService(CacheableService):
                         filter_conditions["must_not"].append(elastic_query)
                     else:
                         filter_conditions["must"].append(elastic_query)
-            if "pf" in expression.get("expression", {}):
+            if expression.get("expression", {}).get("pf"):
                 for f in expression["expression"]["pf"]:
                     current_filter = super().find_one(req=None, _id=f)
                     elastic_query = self._get_elastic_query(current_filter)
@@ -212,10 +212,10 @@ class ContentFilterService(CacheableService):
                 raise SuperdeskApiError.badRequestError(
                     _("Filter statement {index} does not have a filter condition").format(index=index + 1)
                 )
-            if "fc" in expression.get("expression", {}):
+            if expression.get("expression", {}).get("fc"):
                 if not self._does_filter_condition_match(content_filter, article, filters, expression, cache):
                     continue
-            if "pf" in expression.get("expression", {}):
+            if expression.get("expression", {}).get("pf"):
                 if not self._does_content_filter_match(content_filter, article, filters, expression, cache):
                     continue
             return True

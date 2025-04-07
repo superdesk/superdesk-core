@@ -33,6 +33,9 @@ class ElasticResourceConfig:
     #: An optional list of facets to be applied (Will this be required in new version?)
     facets: dict[str, Any] | None = None
 
+    #: If ``False`` will skip auto-creating the index for this resource (eve resource will be used instead)
+    auto_create_index: bool = True
+
 
 class ElasticClientConfig(ConfigModel):
     """Dataclass for storing an Elastic config for a specific resource"""

@@ -231,7 +231,7 @@ Feature: Duplication of Content
 
     @auth
     Scenario: User can't duplicate content without a privilege
-      When we login as user "foo" with password "bar" and user type "user"
+      When we login as user "foo" with password "barword" and user type "user"
       """
       {"user_type": "user", "email": "foo.bar@foobar.org"}
       """

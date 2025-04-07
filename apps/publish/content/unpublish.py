@@ -12,6 +12,12 @@ class UnpublishResource(BasePublishResource):
 
 
 class UnpublishService(KillPublishService):
+    """
+    Handles the ``Unpublish`` publish action if item(s).
+
+    Set's the ``_state`` field to ``unpublished``.
+    """
+
     publish_type = ITEM_KILL
     item_operation = ITEM_UNPUBLISH
     published_state = CONTENT_STATE.UNPUBLISHED
@@ -24,12 +30,12 @@ class UnpublishService(KillPublishService):
     async def apply_kill_override(self, item, updates):
         pass
 
-    def apply_kill_template(self, item):
+    async def apply_kill_template(self, item):
         pass
 
-    def broadcast_kill_email(self, original, updates):
+    async def broadcast_kill_email(self, original, updates):
         pass
 
-    def _publish_associated_items(self, original, updates=None):
+    async def _publish_associated_items(self, original, updates=None):
         # associated items remain untouched during unpublish
         pass

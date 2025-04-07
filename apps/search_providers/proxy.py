@@ -84,13 +84,13 @@ class SearchProviderProxyService(SearchIngestService):
             self._set_item_defaults(item, provider)
         return items
 
-    def create(self, docs, **kwargs):
+    async def create_async(self, docs, **kwargs):
         """Archive items from provider."""
         provider = self.get_provider()
         service = self._get_service(provider)
         if isinstance(service, str):
             return superdesk.get_resource_service(service).create(docs, **kwargs)
-        return super().create(docs, **kwargs)
+        return await super().create_async(docs, **kwargs)
 
     def fetch(self, guid, provider_id=None):
         """Fetch single item from provider to archive it."""

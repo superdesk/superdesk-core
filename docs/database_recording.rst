@@ -13,7 +13,7 @@ generate data quickly by using a browser to interact with the app while
 recording is in progress.
 
 Terminology
-===========
+-----------
 
 There 2 main terms here - full dumps and records.
 
@@ -26,7 +26,7 @@ produce a record and that record only works with that dump that was used when
 producing a record.
 
 Creating a dump
-===============
+---------------
 
 Run ``python manage.py storage:dump`` command. See :ref:`cli` for extra
 parameters. The dump will be based on the main superdesk database used by a
@@ -37,7 +37,7 @@ can be used to create a backup of your current development database to be
 restored later.
 
 Recording changes
-=================
+-----------------
 
 Recording only works with mongo 4 or greater. `Replica
 mode <https://docs.mongodb.com/manual/tutorial/convert-standalone-to-replica-set/>`__
@@ -70,16 +70,16 @@ test and stop the recording(ctrl-c in terminal where recording was
 started).
 
 Restoring records
-=================
+-----------------
 
 Use :ref:`storage:restore-record <cli-storage-restore>` command.
 
 Other commands
-==============
+--------------
 
 See :ref:`storage_dumps_records`
 
 Using recordings in e2e tests
-=============================
+-----------------------------
 
 Not implemented yet

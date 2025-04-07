@@ -19,10 +19,11 @@ from typing import (
     get_origin,
     get_args,
 )
+from inspect import get_annotations
 from copy import deepcopy
 from datetime import datetime
 from dataclasses import field as dataclass_field
-from typing_extensions import dataclass_transform, Self
+from typing_extensions import dataclass_transform, Self, overload
 
 from pydantic import (
     ConfigDict,
@@ -72,12 +73,20 @@ class DataclassBase:
         """
         Serialize the model, including extra fields not part of the schema.
         """
+        fields = get_annotations(self.__class__).keys()
         aliased_fields = get_model_aliased_fields(self.__class__)
         result = nxt(self)
 
         # Include extra fields that were not part of the schema for this class
         for key, value in self.__dict__.items():
-            if key not in result and key not in aliased_fields:
+            if key in result:
+                # This field is already in the result, no further processing required
+                continue
+            elif key in fields:
+                # This field was excluded by Pydantic, based on params provided
+                # So we leave this one out
+                continue
+            elif key not in aliased_fields:
                 # If this key is not already in the result dictionary, and is not an aliased field
                 # then add it to the key, as an unknown field
                 result[key] = value
@@ -343,7 +352,7 @@ class ResourceModelWithObjectId(ResourceModel):
     """Base ResourceModel class to be used, if the resource uses an ObjectId for it's ID"""
 
     #: ID of the document
-    id: ObjectId = Field(alias="_id", default_factory=ObjectId)
+    id: Annotated[ObjectId, Field(alias="_id", default_factory=ObjectId)]
 
 
 @dataclass

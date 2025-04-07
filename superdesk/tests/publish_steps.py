@@ -13,7 +13,7 @@ import requests_mock
 from behave import when, then  # @UnresolvedImport
 from behave.api.async_step import async_run_until_complete
 from superdesk.core import json
-from apps.publish.enqueue import enqueue_published
+from superdesk.publish_async import get_exchange_factory
 from superdesk.tests.steps import (
     assert_200,
     apply_placeholders,
@@ -30,7 +30,8 @@ from superdesk.publish_async.commands import transmit
 @when("we enqueue published")
 @async_run_until_complete
 async def step_impl_when_auth(context):
-    await enqueue_published.apply_async()
+    async with context.app.test_request_context(context.app.config["URL_PREFIX"]):
+        await get_exchange_factory().send_scheduled_or_pending_content()
 
 
 @then("we get formatted item")

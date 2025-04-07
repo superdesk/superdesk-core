@@ -61,7 +61,7 @@ Feature: Saved Searches
         """
         {"username": "save_search", "password": "bar", "display_name": "Joe Black", "email": "joe@black.com", "is_active": true, "sign_off": "abc"}
         """
-        When we login as user "save_search" with password "bar" and user type "admin"
+        When we login as user "save_search" with password "barword" and user type "admin"
         When we post to "/saved_searches"
         """
         {
@@ -79,7 +79,7 @@ Feature: Saved Searches
         """
         When we get "/saved_searches"
         Then we get list with 1 items
-        When we login as user "save_search" with password "bar" and user type "admin"
+        When we login as user "save_search" with password "barword" and user type "admin"
         When we get "/saved_searches"
         Then we get list with 1 items
 
@@ -93,7 +93,7 @@ Feature: Saved Searches
         """
         {"username": "save_search", "password": "bar", "display_name": "Joe Black", "email": "joe@black.com", "is_active": true, "sign_off": "abc"}
         """
-        When we login as user "save_search" with password "bar" and user type "admin"
+        When we login as user "save_search" with password "barword" and user type "admin"
         And we post to "/saved_searches"
         """
         {
@@ -113,7 +113,7 @@ Feature: Saved Searches
         """
         When we get "/saved_searches"
         Then we get list with 2 items
-        When we login as user "save_search" with password "bar" and user type "admin"
+        When we login as user "save_search" with password "barword" and user type "admin"
         When we get "/saved_searches"
         Then we get list with 1 items
         When we get "/all_saved_searches"
@@ -250,7 +250,7 @@ Feature: Saved Searches
         """
         {"username": "save_search", "password": "bar", "display_name": "Joe Black", "email": "joe@black.com", "is_active": true, "sign_off": "abc"}
         """
-        When we login as user "save_search" with password "bar" and user type "admin"
+        When we login as user "save_search" with password "barword" and user type "admin"
         And we post to "/saved_searches"
         """
         {
@@ -277,7 +277,7 @@ Feature: Saved Searches
         """
         {"username": "save_search", "password": "bar", "display_name": "Joe Black", "email": "joe@black.com", "is_active": true, "sign_off": "abc"}
         """
-        When we login as user "save_search" with password "bar" and user type "admin"
+        When we login as user "save_search" with password "barword" and user type "admin"
         And we post to "/saved_searches"
         """
         {
@@ -316,7 +316,7 @@ Feature: Saved Searches
         """
         {"username": "save_search", "password": "bar", "display_name": "Joe Black", "email": "joe@black.com", "is_active": true, "sign_off": "abc"}
         """
-        When we login as user "save_search" with password "bar" and user type "admin"
+        When we login as user "save_search" with password "barword" and user type "admin"
         And we post to "/saved_searches"
         """
         {
@@ -354,7 +354,7 @@ Feature: Saved Searches
         """
         {"username": "save_search", "password": "bar", "display_name": "Joe Black", "email": "joe@black.com", "is_active": true, "sign_off": "abc"}
         """
-        When we login as user "save_search" with password "bar" and user type "admin"
+        When we login as user "save_search" with password "barword" and user type "admin"
         And we post to "/saved_searches"
         """
         {
@@ -378,7 +378,7 @@ Feature: Saved Searches
         """
         {"username": "save_search", "password": "bar", "display_name": "Joe Black", "email": "joe@black.com", "is_active": true, "sign_off": "abc"}
         """
-        When we login as user "save_search" with password "bar" and user type "admin"
+        When we login as user "save_search" with password "barword" and user type "admin"
         And we post to "/saved_searches"
         """
         {

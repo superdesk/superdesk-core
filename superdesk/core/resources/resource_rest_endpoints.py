@@ -425,7 +425,7 @@ class ResourceRestEndpoints(RestEndpoints):
                 **self._populate_item_hateoas(
                     request,
                     # make sure to include unset and default values
-                    model_instance.to_dict(exclude_defaults=False),
+                    model_instance.to_dict(exclude_defaults=False, exclude_none=True, exclude_unset=False),
                 ),
                 STATUS: STATUS_OK,
             }

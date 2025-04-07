@@ -22,6 +22,20 @@ class TakeDownPublishResource(BasePublishResource):
 
 
 class TakeDownPublishService(KillPublishService):
+    """
+    Handles the ``Takedown`` publish action if item(s).
+
+    Set's the ``_state`` field to ``recalled``.
+
+    :raises:
+        - :class:`superdesk.errors.SuperdeskApiError.badRequestError`
+            If an embargo is set
+        - :class:`superdesk.errors.SuperdeskApiError.badRequestError`
+            If the ``Dateline`` field was modified
+        - :class:`superdesk.validation.ValidationError`
+            If the item is a package and updated package has no items.
+    """
+
     publish_type = ITEM_KILL
     published_state = CONTENT_STATE.RECALLED
     item_operation = ITEM_TAKEDOWN

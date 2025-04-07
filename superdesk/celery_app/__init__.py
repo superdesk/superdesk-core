@@ -33,7 +33,17 @@ IS_BEAT_PROCESS = "celery" in argv[0] and "beat" in argv
 # Define BaseTaskClass as a proper type alias
 BaseTaskClass: type[HybridAppContextTask] = HybridAppContextTask if IS_BEAT_PROCESS else HybridAppContextWorkerTask
 
-celery: Celery = Celery(__name__)
+
+class SuperdeskCelery(Celery):
+    def task(self, *args, **opts):
+        # TODO-ASYNC: ``soft_time_limit`` is not working,
+        # for some reason it's converting the int to datetime instance
+        # such as: datetime.datetime(1970, 1, 1, 0, 10, tzinfo=tzutc())
+        opts.pop("soft_time_limit", None)
+        return super().task(*args, **opts)
+
+
+celery: SuperdeskCelery = SuperdeskCelery(__name__)
 
 
 def init_celery(app: "SuperdeskEve") -> None:

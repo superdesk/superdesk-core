@@ -81,7 +81,7 @@ Superdesk commands
 ``app:run_macro``
 ^^^^^^^^^^^^^^^^^
 
-.. autoclass:: superdesk.commands.run_macro.RunMacro()
+.. autoclass:: superdesk.commands.run_macro.run_macro()
 
 ``app:scaffold_data``
 ^^^^^^^^^^^^^^^^^^^^^
@@ -151,7 +151,7 @@ Superdesk commands
 ``publish:enqueue``
 ^^^^^^^^^^^^^^^^^^^
 
-.. autoclass:: apps.publish.enqueue.EnqueueContent()
+.. autofunction:: superdesk.publish_async.commands.publish_scheduled_items()
 
 ``publish:transmit``
 ^^^^^^^^^^^^^^^^^^^^

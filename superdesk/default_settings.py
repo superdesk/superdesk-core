@@ -13,7 +13,8 @@
 
 Environment variables names match config name, with some expections documented below.
 """
-from typing import Any
+from typing import Any, Callable
+from typing_extensions import TypedDict
 import json
 import os
 import pytz
@@ -331,7 +332,12 @@ CELERY_TASK_ROUTES = {
     "content_api.commands.item_expiry": {"queue": celery_queue("expiry"), "routing_key": "expiry.content_api"},
     "apps.legal_archive.*": {"queue": celery_queue("legal"), "routing_key": "legal.publish_queue"},
     "superdesk.publish.*": {"queue": celery_queue("publish"), "routing_key": "publish.transmit"},
-    "apps.publish.enqueue.enqueue_published": {"queue": celery_queue("publish"), "routing_key": "publish.enqueue"},
+    "superdesk.publish_async.*": {"queue": celery_queue("publish"), "routing_key": "publish.transmit"},
+    "superdesk.publish_async.exchanges.exchange_factory.*": {
+        "queue": celery_queue("publish"),
+        "routing_key": "publish.transmit",
+    },
+    # "apps.publish.enqueue.enqueue_published": {"queue": celery_queue("publish"), "routing_key": "publish.enqueue"},
 }
 
 #: celery beat config
@@ -368,7 +374,11 @@ CELERY_BEAT_SCHEDULE = {
         "task": "apps.legal_archive.import_legal_publish_queue",
         "schedule": timedelta(minutes=5),
     },
-    "publish:enqueue": {"task": "apps.publish.enqueue.enqueue_published", "schedule": timedelta(seconds=10)},
+    # "publish:enqueue": {"task": "apps.publish.enqueue.enqueue_published", "schedule": timedelta(seconds=10)},
+    "publish:enqueue": {
+        "task": "superdesk.publish_async.commands.enqueue_published",
+        "schedule": timedelta(seconds=10),
+    },
     "legal:import_legal_archive": {
         "task": "apps.legal_archive.import_legal_archive",
         "schedule": crontab(minute=30, hour=local_to_utc_hour(0)),
@@ -429,6 +439,7 @@ MODULES = [
     "superdesk.publish.subscriber_token",
     "superdesk.publish_async.module",
     "superdesk.archive_async",
+    "superdesk.auth_server.oauth2",
 ]
 
 ASYNC_AUTH_CLASS = "superdesk.core.auth.token_auth:TokenAuthorization"
@@ -439,7 +450,135 @@ ASYNC_POPULATE_HATEOAS = True
 
 ASYNC_RESPOND_NESTED_VALIDATION_ERRORS = True
 
-PUBLISH_EXCHANGE_FACTORY = "superdesk.publish_async.controller.exchanges:ExchangeFactory"
+
+class ExchangeConfig(TypedDict, total=False):
+    """A dict to define a PublishExchange config"""
+
+    #: Name of a registered PublishExchange to use
+    exchange: str
+
+    #: Name of a registered PublishExchangeFilter to use
+    filter: str
+
+    #: Name of a registered PublishExchangeFormatter to use
+    formatter: str
+
+    #: Name of a registered PublishExchangeRouter to use
+    router: str
+
+    #: If ``True`` will set the published item ``queue_state`` to ``pending``, for the celery beat schedule to
+    #: pick it up (used in content based exchanges only)
+    polling: bool
+
+
+class PublishChannelConfig(TypedDict, total=False):
+    """A dict to define list of filters and PublishExchange config to use"""
+
+    #: List of item types to match
+    item_types: list[str]
+
+    #: List of PublishProducer actions to match
+    operations: list[str]
+
+    #: List of PublishSenderType's to match
+    #: One of ``api``, ``ingest_rule``, ``macro`` or ``internal``
+    sender_types: list[str]
+
+    #: Function used for custom filtering based on the item to be published
+    filter: Callable[[dict], bool]
+
+    #: Config for the PublishExchange that matches this channel
+    config: ExchangeConfig
+
+
+PUBLISH_CHANNELS: list[PublishChannelConfig] = [
+    {
+        "operations": ["resend"],
+        "config": ExchangeConfig(
+            exchange="content",
+            filter="resend",
+        ),
+    },
+    {
+        "operations": ["correct"],
+        "config": ExchangeConfig(
+            exchange="content",
+            filter="content:corrected",
+        ),
+    },
+    {
+        "operations": ["kill", "takedown"],
+        "config": ExchangeConfig(
+            exchange="content",
+            filter="content:killed",
+        ),
+    },
+    {
+        # If the request is coming from the Web API and has no associations
+        # then we can handle this publish request via asyncio (aka instant publishing)
+        "item_types": ["text", "preformatted"],
+        "sender_types": ["api"],
+        "filter": lambda item: not len(item.get("associations") or {}),
+        "config": ExchangeConfig(
+            exchange="content",
+            filter="content",
+            router="asyncio",
+        ),
+    },
+    {
+        # If the request is coming from the Web API and has no associations
+        # then we can handle this publish request via asyncio (aka instant publishing)
+        "item_types": ["text", "preformatted"],
+        "config": ExchangeConfig(
+            exchange="content",
+            filter="content",
+        ),
+    },
+    {
+        "item_types": ["composite"],
+        "config": ExchangeConfig(
+            exchange="content",
+        ),
+    },
+    {
+        "item_types": ["audio", "video", "picture", "graphic"],
+        "config": ExchangeConfig(
+            exchange="content",
+            router="celery",
+            polling=True,
+        ),
+    },
+    {
+        "sender_types": ["api"],
+        "config": ExchangeConfig(
+            router="asyncio",
+        ),
+    },
+    {
+        "sender_types": ["ingest_rule"],
+        "config": ExchangeConfig(
+            router="celery",
+            polling=True,
+        ),
+    },
+]
+
+PUBLISH_EXCHANGE_FACTORY = "superdesk.publish_async.exchanges:DefaultPublishExchangeFactory"
+DEFAULT_PUBLISH_CHANNEL = ExchangeConfig(
+    exchange="default",
+    filter="default",
+    formatter="default",
+    router="celery",
+    polling=True,
+)
+
+PUBLISH_MODULES = [
+    "superdesk.publish_async.exchanges",
+    "superdesk.publish_async.filters",
+    "superdesk.publish_async.formatters",
+    "superdesk.publish_async.routers",
+    "superdesk.publish_async.consumers",
+]
 
 PUBLISH_DEFAULT_CELERY_QUEUE = celery_queue("publish")
 PUBLISH_EXCHANGE_CELERY_QUEUE = CELERY_TASK_DEFAULT_QUEUE
@@ -1176,3 +1315,5 @@ PICTURE_METADATA_MAPPING = {}
 #: .. versionadded:: 2.8
 #:
 BROADCAST_ENABLED = strtobool(env("BROADCAST_ENABLED", "true"))
+
+CORRECTIONS_WORKFLOW = False

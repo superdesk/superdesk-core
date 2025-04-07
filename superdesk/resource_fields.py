@@ -27,3 +27,5 @@ ETAG = "_etag"
 VERSION = CURRENT_VERSION = "_current_version"
 LATEST_VERSION = "_latest_version"
 META = "_meta"
+
+ASSOCIATIONS = "associations"

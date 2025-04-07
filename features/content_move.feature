@@ -481,7 +481,7 @@ Feature: Move or Send Content to another desk
         """
         [{"name": "Finance", "members": [{"user": "#users._id#"}]}]
         """
-        And we login as user "foo" with password "bar" and user type "user"
+        And we login as user "foo" with password "barword" and user type "user"
         """
         {"user_type": "user", "email": "foo.bar@foobar.org"}
         """
@@ -515,7 +515,7 @@ Feature: Move or Send Content to another desk
         """
         [{"name": "Finance"}]
         """
-        And we login as user "foo" with password "bar" and user type "user"
+        And we login as user "foo" with password "barword" and user type "user"
         """
         {"user_type": "user", "email": "foo.bar@foobar.org"}
         """

@@ -17,7 +17,7 @@ from superdesk.resource_fields import ID_FIELD, ITEMS, DATE_CREATED, LAST_UPDATE
 from superdesk.flask import request
 from superdesk import get_resource_service
 from superdesk.errors import SuperdeskApiError
-from superdesk.metadata.item import not_analyzed, ITEM_STATE, PUBLISH_STATES
+from superdesk.metadata.item import not_analyzed, ITEM_STATE, PUBLISH_STATES, CONTENT_STATE
 from superdesk.metadata.utils import aggregations, get_elastic_highlight_query
 from superdesk.resource import Resource
 from superdesk.services import BaseService
@@ -62,7 +62,7 @@ published_item_fields = {
     LAST_PUBLISHED_VERSION: {"type": "boolean", "default": True},
     QUEUE_STATE: {
         "type": "string",
-        "default": "pending",
+        "default": "pushed",
         "allowed": QUEUE_STATES,
     },
     ERROR_MESSAGE: {"type": "string"},

@@ -9,7 +9,7 @@
 # at https://www.sourcefabric.org/superdesk/license
 
 
-from superdesk.publish_async.subscribers.utils import get_next_sequence_number
+from superdesk.publish_async.resources.subscribers.utils import get_next_sequence_number
 from superdesk.tests import TestCase
 
 

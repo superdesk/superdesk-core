@@ -15,7 +15,7 @@ from unittest.mock import MagicMock
 from celery.exceptions import SoftTimeLimitExceeded
 
 from superdesk.tests import TestCase, markers
-from superdesk.publish_async.controller.consumers.celery_consumer import transmit_subscriber_items
+from superdesk.publish_async.consumers.celery_consumer import transmit_subscriber_items
 
 
 class SoftTimeLimitTestCase(TestCase):

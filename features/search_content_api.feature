@@ -62,7 +62,7 @@ Feature: Content API Search features
         Then we get list with 2 items
         When we get "/search_capi/1"
         Then we get OK response
-        When we login as user "foo" with password "bar" and user type "user"
+        When we login as user "foo" with password "barword" and user type "user"
         """
         {"user_type": "user", "email": "foo.bar@foobar.org"}
         """

@@ -20,7 +20,7 @@ from superdesk.core import get_app_config, get_current_app
 from apps.auth import get_user
 from superdesk.notification import push_notification
 from superdesk.privilege import GLOBAL_SEARCH_PRIVILEGE
-from superdesk.publish_async.subscribers.utils import get_next_sequence_number
+from superdesk.publish_async.resources.subscribers.utils import get_next_sequence_number
 
 SOURCE = "ingest"
 

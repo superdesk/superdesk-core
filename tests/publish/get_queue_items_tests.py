@@ -21,7 +21,7 @@ from apps.publish.enqueue import enqueue_service
 from superdesk.publish.publish_queue import PUBLISHED_IN_PACKAGE
 from superdesk.publish import publish_queue
 
-from superdesk.publish_async.publish_queue.utils import get_queue_items
+from superdesk.publish_async.resources.publish_queue.utils import get_queue_items
 from superdesk.metadata.item import CONTENT_TYPE, ITEM_TYPE
 
 
@@ -140,7 +140,7 @@ class QueueItemsTestCase(TestCase):
         self.assertEqual(await cursor.count(), 2)
         self.assertListEqual([item_l.item_id async for item_l in cursor], ["item_2", "item_6"])
 
-    # TODO-ASYNC: Update this once the enqueue services are updated to async
+    # TODO-ASYNC-PUBLISH: Update this once the enqueue services are updated to async
     @mock.patch.object(enqueue_service, "ObjectId")
     @mock.patch.object(enqueue_service, "get_utc_schedule")
     @mock.patch.object(enqueue_service, "get_resource_service")
@@ -193,7 +193,7 @@ class QueueItemsTestCase(TestCase):
         # because the tuple should be in (published_seq_num, formatted_item) format
         self.assertFalse(fake_post.called)
 
-    @mock.patch("superdesk.publish_async.publish_queue.service.get_current_app", return_value=MagicMock())
+    @mock.patch("superdesk.publish_async.resources.publish_queue.service.get_current_app", return_value=MagicMock())
     async def test_delete_encoded_item(self, get_fake_app):
         fake_app = get_fake_app()
         fake_storage = fake_app.storage
