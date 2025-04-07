@@ -79,7 +79,7 @@ class SearchProviderService(BaseService):
             raise SuperdeskApiError.forbiddenError(_("Deleting a Search Provider after receiving items is prohibited."))
 
 
-#TODO-ASYNC: replace SearchProviderService with this one once search providers are converted
+# TODO-ASYNC: replace SearchProviderService with this one once search providers are converted
 class SearchProviderServiceAsync(AsyncBaseService):
     async def get_async(self, req, lookup):
         """

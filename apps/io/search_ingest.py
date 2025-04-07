@@ -127,7 +127,9 @@ class SearchIngestServiceAsync(AsyncBaseService):
         if provider and "config" in provider and "username" in provider["config"]:
             assert self.backend is not None
             # TODO-ASYNC[search_ingest]: check this method
-            await self.backend.set_credentials_async(provider["config"]["username"], provider["config"].get("password", ""))
+            await self.backend.set_credentials_async(
+                provider["config"]["username"], provider["config"].get("password", "")
+            )
         return provider
 
     async def fetch_async(self, guid):
@@ -152,7 +154,7 @@ class SearchIngestServiceAsync(AsyncBaseService):
             if provider:
                 dest_doc["ingest_provider"] = str(provider[ID_FIELD])
 
-            # TODO-ASYNC[archvie]: to be replaced by async service once merged
+            # TODO-ASYNC[archvie]: to be replaced by async service once merged
             superdesk.get_resource_service(ARCHIVE).post([dest_doc])
             insert_into_versions(dest_doc.get(ID_FIELD))
 
@@ -162,9 +164,7 @@ class SearchIngestServiceAsync(AsyncBaseService):
             resource_service = cast(SearchProviderServiceAsync, resource_service)
             assert resource_service.is_async
             assert provider is not None
-            await resource_service.system_update_async(
-                provider.get(ID_FIELD), {"last_item_update": utcnow()}, provider
-            )
+            await resource_service.system_update_async(provider.get(ID_FIELD), {"last_item_update": utcnow()}, provider)
 
         return new_guids
 
