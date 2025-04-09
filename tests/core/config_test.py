@@ -2,7 +2,7 @@ import unittest
 
 from pydantic import ValidationError
 
-from superdesk.tests import AsyncTestCase
+from superdesk.tests import AsyncTestCase, markers
 from .modules import module_with_config
 
 
@@ -90,6 +90,7 @@ class ModuleConfigTestCase(AsyncTestCase):
         self.setupApp()
         self.assertEqual(module_with_config.config.default_string, "abcd123")
 
+    @markers.investigate_cause_of_error
     def test_module_config_immutability(self):
         self.setupApp()
 

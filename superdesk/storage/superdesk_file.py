@@ -9,41 +9,42 @@
 # at https://www.sourcefabric.org/superdesk/license
 
 from typing import Optional
-from io import BytesIO
 from datetime import datetime, timezone, timedelta
 
-from werkzeug.wsgi import wrap_file, FileWrapper
+from werkzeug.datastructures import Range
 
 from superdesk.core import get_current_app
+from superdesk.core.types import SuperdeskFile, SuperdeskAsyncFile  # noqa
 from superdesk.flask import request
 from superdesk.default_settings import strtobool
 
 
-class SuperdeskFile(BytesIO):
-    _name: str
-    filename: str
-    content_type: str
-    length: int
-    upload_date: datetime
-    md5: str
+def get_file_request_range(request_range: Range | None) -> tuple[int, int | None]:
+    if request_range is None or not len(request_range.ranges):
+        return 0, None
 
-    @property
-    def name(self):
-        return self._name
+    return request_range.ranges[0]
 
 
 async def generate_response_for_file(
-    file: SuperdeskFile,
+    file: SuperdeskFile | SuperdeskAsyncFile,
     cache_for: int = 3600 * 24 * 30,  # 30d cache
     buffer_size: int = 1024 * 256,
     content_disposition: Optional[str] = None,
 ):
     app = get_current_app()
-    file_body = app.as_any().response_class.io_body_class(file, buffer_size=buffer_size)
+
+    if isinstance(file, SuperdeskAsyncFile):
+        file_body = file
+        file_body.buffer_size = buffer_size
+    else:
+        file_body = app.as_any().response_class.io_body_class(file, buffer_size=buffer_size)
+
     response = app.response_class(file_body, mimetype=file.content_type)
     response.content_length = file.length
     response.last_modified = file.upload_date
-    response.set_etag(file.md5)
+    if file.md5:
+        response.set_etag(file.md5)
     response.cache_control.max_age = cache_for
     response.cache_control.s_max_age = cache_for
     response.cache_control.public = True

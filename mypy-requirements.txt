@@ -1,6 +1,7 @@
 mypy
 mypy-extensions
 toml
+types-aioboto3
 types-chardet
 types-click
 types-croniter
@@ -21,3 +22,4 @@ motor-types
 pydantic
 flask[async]
 quart>=0.19.6,<0.20.0
+aiohttp

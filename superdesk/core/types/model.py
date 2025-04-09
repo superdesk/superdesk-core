@@ -35,7 +35,7 @@ class BaseModel(PydanticModel):
 
     @override
     @classmethod
-    def model_validate(
+    def model_validate(  # type: ignore[override]
         cls,
         obj: dict[str, Any],
         *,

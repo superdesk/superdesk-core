@@ -26,7 +26,7 @@ from superdesk.media.media_operations import (
     decode_metadata,
 )
 from superdesk.filemeta import set_filemeta
-from superdesk.storage.superdesk_file import generate_response_for_file
+from superdesk.storage.superdesk_file import generate_response_for_file, get_file_request_range
 from superdesk.users.services import current_user_has_privilege
 from superdesk.auth.decorator import blueprint_auth
 from superdesk import get_resource_privileges
@@ -56,17 +56,23 @@ def get_upload_as_data_uri_bc(media_id):
     return redirect(upload_url(media_id))
 
 
-@bp.route("/upload-raw/<path:media_id>", methods=["GET", "OPTIONS"])
+@bp.route("/upload-raw/<path:media_id>", methods=["GET", "OPTIONS", "HEAD"])
 @blueprint_auth()
 async def get_upload_as_data_uri(media_id):
     app = get_current_app()
 
     if request.method == "OPTIONS":
-        return handle_cors()
+        response = make_response()
+        response.headers.add("Access-Control-Allow-Origin", "*")
+        response.headers.add("Access-Control-Allow-Headers", "*")
+        response.headers.add("Access-Control-Allow-Methods", "GET, HEAD, OPTIONS")
+        return response
+
+    begin, end = get_file_request_range(request.range)
     if not request.args.get("resource"):
-        media_file = app.media.get_by_filename(media_id)
+        media_file = await app.media.get_by_filename_async(media_id, begin=begin, end=end)
     else:
-        media_file = app.media.get(media_id, request.args["resource"])
+        media_file = await app.media.get_async(media_id, request.args["resource"], begin=begin, end=end)
     if media_file:
         return await generate_response_for_file(media_file)
 

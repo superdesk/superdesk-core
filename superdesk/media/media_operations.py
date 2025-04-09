@@ -16,9 +16,14 @@ import hashlib
 import logging
 import requests
 import requests.exceptions
+from requests.models import CaseInsensitiveDict as RequestsHeaders
+from multidict import CIMultiDictProxy as AIOHttpHeaders
 import os
 
 from urllib.parse import urljoin
+from urllib3.util import parse_url
+import aiohttp
+
 from bson import ObjectId
 from io import BytesIO
 from PIL import Image, ImageEnhance
@@ -57,6 +62,33 @@ def fix_content_type(content_type, content):
     return str(content_type)
 
 
+def _get_url_for_request(url: str) -> str:
+    if not parse_url(url).scheme:
+        # http/https not provided in url, so we assume it's a relative URL
+        # So we prefix it with the current host
+        return urljoin(url_for("static", filename="x", _external=True), url)
+    return url
+
+
+def _set_default_request_headers(request_kwargs: dict[str, Any] | None) -> dict[str, Any]:
+    if not request_kwargs:
+        request_kwargs = {}
+
+    request_kwargs.setdefault("timeout", (5, 25))
+    request_kwargs.setdefault("headers", {})
+    request_kwargs["headers"]["User-Agent"] = f"Superdesk-{superdesk_version}"
+    return request_kwargs
+
+
+def _get_name_and_content_type_from_response(
+    content: BytesIO, headers: RequestsHeaders | AIOHttpHeaders
+) -> tuple[str, str]:
+    content_type = headers.get("content-type", "image/jpeg").split(";")[0]
+    content_type = fix_content_type(content_type, content)
+    ext = str(content_type).split("/")[1]
+    return str(ObjectId()) + ext, content_type
+
+
 def download_file_from_url(
     url: str, request_kwargs: Optional[Dict[str, Any]] = None, session: Optional[requests.Session] = None
 ) -> Tuple[BytesIO, str, str]:
@@ -69,28 +101,49 @@ def download_file_from_url(
     :param session: requests.Session instance (one will be created if not supplied)
     """
 
-    if not request_kwargs:
-        request_kwargs = {}
-
-    request_kwargs.setdefault("timeout", (5, 25))
-    request_kwargs.setdefault("headers", {})
-    request_kwargs["headers"]["User-Agent"] = f"Superdesk-{superdesk_version}"
+    request_kwargs = _set_default_request_headers(request_kwargs)
 
     if session is None:
         session = requests.Session()
 
-    try:
-        rv = session.get(url, **request_kwargs)
-    except requests.exceptions.MissingSchema:  # any route will do here, we only need host
-        rv = session.get(urljoin(url_for("static", filename="x", _external=True), url), **request_kwargs)
+    rv = session.get(_get_url_for_request(url), **request_kwargs)
     if rv.status_code not in (200, 201):
         raise SuperdeskApiError.internalError("Failed to retrieve file from URL: %s" % url)
     content = BytesIO(rv.content)
-    content_type = rv.headers.get("content-type", "image/jpeg").split(";")[0]
-    content_type = fix_content_type(content_type, content)
-    ext = str(content_type).split("/")[1]
-    name = str(ObjectId()) + ext
+    name, content_type = _get_name_and_content_type_from_response(content, rv.headers)
     return content, name, content_type
+
+
+async def download_file_from_url_async(
+    url: str, request_kwargs: Optional[Dict[str, Any]] = None, session: aiohttp.ClientSession | None = None
+) -> tuple[BytesIO, str, str]:
+    """Download file from given url asynchronously.
+
+    In case url is relative it will prefix it with current host.
+
+    :param url: file url
+    :param request_kwargs: Additional keyword arguments to pass to requests.Session.request
+    :param session: requests.Session instance (one will be created if not supplied)
+    """
+
+    request_kwargs = _set_default_request_headers(request_kwargs)
+
+    close_session = False
+    if session is None:
+        session = aiohttp.ClientSession()
+        close_session = True
+
+    try:
+        async with session.get(_get_url_for_request(url), **request_kwargs) as response:
+            if response.status not in (200, 201):
+                raise SuperdeskApiError.internalError("Failed to retrieve file from URL: %s" % url)
+
+            content = BytesIO(await response.read())
+            name, content_type = _get_name_and_content_type_from_response(content, response.headers)
+            return content, name, content_type
+    finally:
+        if close_session:
+            await session.close()
 
 
 def download_file_from_encoded_str(encoded_str):
@@ -128,7 +181,11 @@ def decode_metadata(metadata):
 
 def decode_val(string_val):
     """Format dates that elastic will try to convert automatically."""
-    val = json.loads(string_val)
+    try:
+        val = json.loads(string_val)
+    except ValueError:
+        return string_val
+
     try:
         arrow.get(val, "YYYY-MM-DD")  # test if it will get matched by elastic
         return str(arrow.get(val))
