@@ -276,8 +276,6 @@ def get_current_app() -> WSGIApp:
 def get_current_async_app() -> SuperdeskAsyncApp:
     """Retrieve the current app instance"""
 
-    global _global_app
-
     if _global_app is not None:
         return _global_app
 
