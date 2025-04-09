@@ -344,7 +344,7 @@ class AmazonMediaStorage(SuperdeskMediaStorage):
     ):
         """Save a new file using the storage system, preferably with the name specified.
 
-        If there already exists a file with this name name, the
+        If there already exists a file with this name, the
         storage system may modify the filename as necessary to get a unique
         name. Depending on the storage system, a unique id or the actual name
         of the stored file will be returned. The content type argument is used
@@ -391,7 +391,7 @@ class AmazonMediaStorage(SuperdeskMediaStorage):
     ):
         """Save a new file using the storage system, preferably with the name specified.
 
-        If there already exists a file with this name name, the
+        If there already exists a file with this name, the
         storage system may modify the filename as necessary to get a unique
         name. Depending on the storage system, a unique id or the actual name
         of the stored file will be returned. The content type argument is used
