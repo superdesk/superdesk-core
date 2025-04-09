@@ -36,8 +36,8 @@ class MimetypeMixin:
             stream_type = type(stream)
             try:
                 # we expect types with `io.BufferedIOBase` interface
-                # recommend using at least the first 2048 bytes, as less can produce incorrect identification
-                bytes_buffer = stream.read(2048)
+                # recommend using at least the first 16 KB, as less can produce incorrect identification
+                bytes_buffer = stream.read(16384)
                 stream.seek(0)
             except AttributeError:
                 msg = "Not expected format for incoming binary stream: {}".format(stream_type)

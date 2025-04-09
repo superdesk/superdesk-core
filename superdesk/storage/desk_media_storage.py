@@ -41,8 +41,13 @@ def format_id(media_id) -> ObjectId | str:
 class GridFSObjectWrapper(SuperdeskFile):
     def __init__(self, media_file: gridfs.GridOut):
         super().__init__()
+        # Get the data we know is on the files, even though the types indicate they may be ``None``
+        metadata = dict(media_file.metadata or {})
+        content_type: str = cast(str, getattr(media_file, "content_type", None) or metadata.get("content_type"))
+        md5: str = cast(str, getattr(media_file, "md5", None) or metadata.get("md5"))
+        name: str = cast(str, media_file.name)
+        filename: str = cast(str, media_file.filename)
 
-        self._file = media_file
         blocksize = 65636
         buf = media_file.read(blocksize)
         while len(buf) > 0:
@@ -50,13 +55,13 @@ class GridFSObjectWrapper(SuperdeskFile):
             buf = media_file.read(blocksize)
 
         self.seek(0)
-        self.content_type = media_file.content_type  # type: ignore
+        self.content_type = content_type
         self.length = media_file.length
-        self._name = media_file.name
-        self.filename = media_file.filename
+        self._name = name
+        self.filename = filename
         self.metadata = media_file.metadata
         self.upload_date = media_file.upload_date
-        self.md5 = media_file.md5  # type: ignore
+        self.md5 = md5
         self._id = media_file._id
 
 
@@ -185,7 +190,10 @@ class SuperdeskGridFSMediaStorage(SuperdeskMediaStorage, GridFSMediaStorage):
             # so we're not loading the entire file into memory
             hash_data = hashlib.md5()
             while chunk := content.read(8192):
-                hash_data.update(chunk)
+                if hasattr(chunk, "encode"):
+                    hash_data.update(chunk.encode("utf-8"))
+                else:
+                    hash_data.update(chunk)
 
             if hasattr(content, "seek"):
                 content.seek(0)
