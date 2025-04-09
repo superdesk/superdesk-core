@@ -31,19 +31,20 @@ class MimetypeMixin:
 
         try:
             stream = content
-            if type(content) is datastructures.FileStorage:
+            if isinstance(content, datastructures.FileStorage):
                 stream = content.stream
             stream_type = type(stream)
             try:
                 # we expect types with `io.BufferedIOBase` interface
-                bytes_buffer = stream.read()
+                # recommend using at least the first 2048 bytes, as less can produce incorrect identification
+                bytes_buffer = stream.read(2048)
                 stream.seek(0)
             except AttributeError:
                 msg = "Not expected format for incoming binary stream: {}".format(stream_type)
                 logger.warning(msg)
                 raise Exception(msg)
             # detect mimetype using wrapper around libmagic
-            determined_content_type = magic.Magic(mime=True).from_buffer(bytes_buffer)
+            determined_content_type = magic.from_buffer(bytes_buffer, mime=True)
 
             # if 'application/octet-stream' is returned it means that libmagic was not able to
             # detect mimetype precisely and as a fallback 'application/octet-stream' was returned.

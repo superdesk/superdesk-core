@@ -56,9 +56,23 @@ class ProxyMediaStorage(SuperdeskMediaStorage):
         except MissingMediaError:
             return
 
+    async def get_async(self, id_or_filename, resource=None, begin: int = 0, end: int | None = None):
+        try:
+            return await self.storage(id_or_filename, resource).get_async(
+                id_or_filename, resource=resource, begin=begin, end=end
+            )
+        except MissingMediaError:
+            return
+
     def delete(self, id_or_filename, resource=None):
         try:
             return self.storage(id_or_filename, resource).delete(id_or_filename, resource=resource)
+        except MissingMediaError:
+            return True
+
+    async def delete_async(self, id_or_filename, resource=None):
+        try:
+            return await self.storage(id_or_filename, resource).delete_async(id_or_filename, resource=resource)
         except MissingMediaError:
             return True
 
@@ -68,8 +82,19 @@ class ProxyMediaStorage(SuperdeskMediaStorage):
         except MissingMediaError:
             return False
 
+    async def exists_async(self, id_or_filename, resource=None):
+        try:
+            return await self.storage(id_or_filename, resource).exists_async(id_or_filename, resource=resource)
+        except MissingMediaError:
+            return False
+
     def put(self, content, filename=None, content_type=None, metadata=None, resource=None, **kwargs):
         return self.storage(None, resource).put(
+            content, filename=filename, content_type=content_type, metadata=metadata, resource=resource, **kwargs
+        )
+
+    async def put_async(self, content, filename=None, content_type=None, metadata=None, resource=None, **kwargs):
+        return await self.storage(None, resource).put_async(
             content, filename=filename, content_type=content_type, metadata=metadata, resource=resource, **kwargs
         )
 
@@ -82,7 +107,7 @@ class ProxyMediaStorage(SuperdeskMediaStorage):
     def url_for_external(self, media_id: str, resource: Optional[str] = None) -> str:
         return self.storage(media_id, resource=resource, fallback=True).url_for_external(media_id, resource)
 
-    def fetch_rendition(self, rendition):
+    def fetch_rendition(self, rendition, resource=None):
         if rendition.get("media"):
             return self.get(rendition["media"])
 
@@ -91,8 +116,43 @@ class ProxyMediaStorage(SuperdeskMediaStorage):
             if media:
                 return media
 
+    async def fetch_rendition_async(self, rendition, resource=None):
+        if rendition.get("media"):
+            return await self.get_async(rendition["media"])
+
+        for storage in self._storage:
+            media = await storage.fetch_rendition_async(rendition)
+            if media:
+                return media
+
     def get_by_filename(self, filename):
         for storage in self._storage:
             media = storage.get_by_filename(filename)
             if media:
                 return media
+
+    async def get_by_filename_async(self, filename, begin: int = 0, end: int | None = None):
+        for storage in self._storage:
+            media = await storage.get_by_filename_async(filename, begin=begin, end=end)
+            if media:
+                return media
+
+    def remove_unreferenced_files(self, existing_files, resource=None):
+        for storage in self._storage:
+            storage.remove_unreferenced_files(existing_files, resource=resource)
+
+    async def remove_unreferenced_files_async(self, existing_files, resource=None):
+        for storage in self._storage:
+            await storage.remove_unreferenced_files_async(existing_files, resource=resource)
+
+    def find(self, folder=None, upload_date=None, resource=None):
+        files = []
+        for storage in self._storage:
+            files.extend(storage.find(folder, upload_date, resource=resource))
+        return files
+
+    async def find_async(self, folder=None, upload_date=None, resource=None):
+        files = []
+        for storage in self._storage:
+            files.extend(await storage.find_async(folder, upload_date, resource=resource))
+        return files

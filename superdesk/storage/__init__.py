@@ -38,11 +38,39 @@ class SuperdeskMediaStorage(MediaStorage, MimetypeMixin):
         raise NotImplementedError
 
     @abc.abstractmethod
+    async def get_by_filename_async(self, filename, begin: int = 0, end: int | None = None):
+        raise NotImplementedError
+
+    @abc.abstractmethod
     def remove_unreferenced_files(self, existing_files, resource=None):
         raise NotImplementedError
 
     @abc.abstractmethod
+    async def remove_unreferenced_files_async(self, existing_files, resource=None):
+        raise NotImplementedError
+
+    @abc.abstractmethod
     def fetch_rendition(self, rendition, resource=None):
+        raise NotImplementedError
+
+    @abc.abstractmethod
+    async def fetch_rendition_async(self, rendition, resource=None):
+        raise NotImplementedError
+
+    @abc.abstractmethod
+    async def get_async(self, id_or_filename, resource=None, begin: int = 0, end: int | None = None):
+        raise NotImplementedError
+
+    @abc.abstractmethod
+    async def put_async(self, content, filename=None, content_type=None, resource=None):
+        raise NotImplementedError
+
+    @abc.abstractmethod
+    async def delete_async(self, id_or_filename, resource=None):
+        raise NotImplementedError
+
+    @abc.abstractmethod
+    async def exists_async(self, id_or_filename, resource=None):
         raise NotImplementedError
 
 

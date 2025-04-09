@@ -13,17 +13,20 @@
 from typing import Optional
 import re
 import boto3
+import aioboto3
 import json
 import logging
 import time
 import unidecode
+from io import BytesIO
 
 from os.path import splitext
 from urllib.parse import urlparse
 from botocore.client import Config
+from werkzeug.datastructures import Range, FileStorage
 
-from superdesk.media.media_operations import download_file_from_url, guess_media_extension
-from .superdesk_file import SuperdeskFile
+from superdesk.core.types import SuperdeskFile, SuperdeskAsyncFile
+from superdesk.media.media_operations import download_file_from_url, download_file_from_url_async, guess_media_extension
 from superdesk.utc import query_datetime
 from . import SuperdeskMediaStorage
 
@@ -56,17 +59,43 @@ class AmazonObjectWrapper(SuperdeskFile):
         self._id = name
 
 
+class AmazonObjectAsyncWrapper(SuperdeskAsyncFile):
+    def __init__(self, s3_object, name, metadata, begin: int = 0, end: int | None = None):
+        if s3_object.get("ContentRange"):
+            # We're using a range to get partial data
+            # Get the total size of the file from the range header
+            length = int(s3_object["ContentRange"].rsplit("/", 1)[-1])
+        else:
+            length = int(s3_object["ContentLength"])
+
+        super().__init__(
+            buffer=s3_object["Body"],
+            content_type=s3_object["ContentType"],
+            length=length,
+            name=name,
+            filename=name,
+            metadata=metadata,
+            upload_date=s3_object["LastModified"],
+            md5=s3_object["ETag"][1:-1],
+            media_id=name,
+            begin=begin,
+            end=end,
+        )
+
+
 class AmazonMediaStorage(SuperdeskMediaStorage):
     def __init__(self, app=None):
         super().__init__(app)
-        self.client = boto3.client(
-            "s3",
+        self.connection_kwargs = dict(
             aws_access_key_id=self.app.config["AMAZON_ACCESS_KEY_ID"],
             aws_secret_access_key=self.app.config["AMAZON_SECRET_ACCESS_KEY"],
             region_name=self.app.config.get("AMAZON_REGION"),
             config=Config(signature_version="s3v4"),
             endpoint_url=self.app.config["AMAZON_ENDPOINT_URL"] or None,
         )
+        self.client = boto3.client("s3", **self.connection_kwargs)
+        self.session_async = aioboto3.Session()
+        self.client_async = None
         self.user_metadata_header = "x-amz-meta-"
 
     def url_for_media(self, media_id, content_type=None):
@@ -146,8 +175,12 @@ class AmazonMediaStorage(SuperdeskMediaStorage):
 
         return "%s%s%s" % (version, self._make_s3_safe(filename), extension)
 
-    def fetch_rendition(self, rendition):
+    def fetch_rendition(self, rendition, resource=None):
         stream, name, mime = download_file_from_url(rendition.get("href"))
+        return stream
+
+    async def fetch_rendition_async(self, rendition, resource=None):
+        stream, name, mime = await download_file_from_url_async(rendition.get("href"))
         return stream
 
     def call(self, method, **kw):
@@ -155,6 +188,16 @@ class AmazonMediaStorage(SuperdeskMediaStorage):
         if "Key" in kw:
             kw["Key"] = self.get_key(kw["Key"])
         return getattr(self.client, method)(**kw)
+
+    async def call_async(self, method, **kw):
+        kw.setdefault("Bucket", self.app.config["AMAZON_CONTAINER_NAME"])
+        if "Key" in kw:
+            kw["Key"] = self.get_key(kw["Key"])
+
+        if not self.client_async:
+            self.client_async = await self.session_async.client("s3", **self.connection_kwargs).__aenter__()
+
+        return await getattr(self.client_async, method)(**kw)
 
     def get_key(self, key):
         subfolder = self.app.config.get("AMAZON_S3_SUBFOLDER", "false")
@@ -178,11 +221,40 @@ class AmazonMediaStorage(SuperdeskMediaStorage):
             return None
         return None
 
+    async def get_async(self, id_or_filename, resource=None, begin: int = 0, end: int | None = None):
+        """Open the file given by name or unique id.
+
+        Note that although the returned file is guaranteed to be a File object,
+        it might actually be some subclass. Returns None if no file was found.
+        """
+        id_or_filename = self._make_s3_safe(id_or_filename)
+        try:
+            obj = await self.call_async(
+                "get_object", Key=id_or_filename, Range=Range("bytes", [(begin, end)]).to_header()
+            )
+            if obj:
+                metadata = self.extract_metadata_from_headers(obj["Metadata"])
+                return AmazonObjectAsyncWrapper(obj, id_or_filename, metadata, begin=begin, end=end)
+        except Exception:
+            logger.exception("Exception while getting object from S3")
+            return None
+        return None
+
     def get_all_keys(self):
         """Return the list of all keys from the bucket."""
         all_keys = []
         try:
             for objects in self._get_all_keys_in_batches():
+                all_keys.extend(objects)
+        except Exception as ex:
+            logger.exception(ex)
+        return all_keys
+
+    async def get_all_keys_async(self):
+        """Return the list of all keys from the bucket."""
+        all_keys = []
+        try:
+            async for objects in self._get_all_keys_in_batches_async():
                 all_keys.extend(objects)
         except Exception as ex:
             logger.exception(ex)
@@ -202,6 +274,20 @@ class AmazonMediaStorage(SuperdeskMediaStorage):
             NextMarker = keys[-1]
             yield keys
 
+    async def _get_all_keys_in_batches_async(self):
+        """Return the list of all keys from the bucket in batches."""
+        NextMarker = ""
+        subfolder = self.app.config.get("AMAZON_S3_SUBFOLDER") or ""
+        while True:
+            objects = await self.call_async("list_objects", Marker=NextMarker, MaxKeys=MAX_KEYS, Prefix=subfolder)
+
+            if not objects or len(objects.get("Contents", [])) == 0:
+                return
+
+            keys = [obj["Key"] for obj in objects.get("Contents", [])]
+            NextMarker = keys[-1]
+            yield keys
+
     def extract_metadata_from_headers(self, request_headers):
         headers = {}
         for key, value in request_headers.items():
@@ -213,6 +299,36 @@ class AmazonMediaStorage(SuperdeskMediaStorage):
                     except Exception as ex:
                         logger.exception(ex)
         return headers
+
+    def _get_put_id(self, filename=None, content_type=None, _id=None, version=True, folder=None):
+        if not _id:
+            _id = self.media_id(filename, content_type=content_type, version=version)
+
+        if folder:
+            _id = "%s/%s" % (folder.rstrip("/"), _id)
+
+        return _id
+
+    def _get_put_kwargs(
+        self,
+        content,
+        filename=None,
+        content_type=None,
+        media_id=None,
+        **kwargs,
+    ) -> dict:
+        # try to determine mimetype on the server
+        content_type = self._get_mimetype(content, filename, content_type)
+
+        acl = self.app.config["AMAZON_OBJECT_ACL"]
+        if acl:
+            # not sure it's really needed here,
+            # probably better to turn on/off public-read on the bucket instead
+            kwargs["ACL"] = acl
+
+        body = content.stream if isinstance(content, FileStorage) else content
+
+        return dict(Key=media_id, Body=body, ContentType=content_type, **kwargs)
 
     def put(
         self,
@@ -248,28 +364,68 @@ class AmazonMediaStorage(SuperdeskMediaStorage):
         #      and they are anyway stored in MongoDB (and still part of the file). See issue SD-4231
         logger.debug("Going to save file file=%s media=%s " % (filename, _id))
 
-        # try to determine mimetype on the server
-        content_type = self._get_mimetype(content, filename, content_type)
-
-        if not _id:
-            _id = self.media_id(filename, content_type=content_type, version=version)
-
-        if folder:
-            _id = "%s/%s" % (folder.rstrip("/"), _id)
-
-        found = self._check_exists(_id)
+        media_id = self._get_put_id(filename, content_type, _id, version, folder)
+        found = self._check_exists(media_id)
         if found:
-            return _id
-
-        acl = self.app.config["AMAZON_OBJECT_ACL"]
-        if acl:
-            # not sure it's really needed here,
-            # probably better to turn on/off public-read on the bucket instead
-            kwargs["ACL"] = acl
+            return media_id
 
         try:
-            self.call("put_object", Key=_id, Body=content, ContentType=content_type, **kwargs)
-            return _id
+            call_kwargs = self._get_put_kwargs(content, filename, content_type, media_id, **kwargs)
+            self.call("put_object", **call_kwargs)
+            return media_id
+        except Exception as ex:
+            logger.exception(ex)
+            raise
+
+    async def put_async(
+        self,
+        content,
+        filename=None,
+        content_type=None,
+        metadata=None,
+        resource=None,
+        _id=None,
+        version=True,
+        folder=None,
+        **kwargs,
+    ):
+        """Save a new file using the storage system, preferably with the name specified.
+
+        If there already exists a file with this name name, the
+        storage system may modify the filename as necessary to get a unique
+        name. Depending on the storage system, a unique id or the actual name
+        of the stored file will be returned. The content type argument is used
+        to appropriately identify the file when it is retrieved.
+
+        :param ByteIO content: Data to store in the file object
+        :param str filename: Filename used to store the object
+        :param str content_type: Content type of the data to be stored
+        :param resource: Superdesk resource, i.e. 'upload' or 'download'
+        :param metadata: Not currently used with Amazon S3 storage
+        :param str _id: ID to be used as the key in the bucket
+        :param version: If True the timestamp will be prepended to the key else a string can be used to prepend the key
+        :param str folder: The folder to store the object in
+        :return str: The ID that was generated for this object
+        """
+        # XXX: we don't use metadata here as Amazon S3 as a limit of 2048 bytes (keys + values)
+        #      and they are anyway stored in MongoDB (and still part of the file). See issue SD-4231
+        logger.debug("Going to save file file=%s media=%s " % (filename, _id))
+
+        media_id = self._get_put_id(filename, content_type, _id, version, folder)
+        found = await self._check_exists_async(media_id)
+        if found:
+            return media_id
+
+        try:
+            call_kwargs = self._get_put_kwargs(content, filename, content_type, media_id, **kwargs)
+            call_kwargs = dict(
+                Fileobj=call_kwargs.pop("Body"),
+                Key=call_kwargs.pop("Key"),
+                ExtraArgs=call_kwargs,
+            )
+            await self.call_async("upload_fileobj", **call_kwargs)
+            # await self.call_async("put_object", **call_kwargs)
+            return media_id
         except Exception as ex:
             logger.exception(ex)
             raise
@@ -277,6 +433,11 @@ class AmazonMediaStorage(SuperdeskMediaStorage):
     def delete(self, id_or_filename, resource=None):
         id_or_filename = str(id_or_filename)
         del_res = self.call("delete_object", Key=id_or_filename)
+        logger.debug("Amazon S3 file deleted %s with status" % id_or_filename, del_res)
+
+    async def delete_async(self, id_or_filename, resource=None):
+        id_or_filename = str(id_or_filename)
+        del_res = await self.call_async("delete_object", Key=id_or_filename)
         logger.debug("Amazon S3 file deleted %s with status" % id_or_filename, del_res)
 
     def delete_objects(self, ids):
@@ -293,11 +454,29 @@ class AmazonMediaStorage(SuperdeskMediaStorage):
             logger.exception(ex)
             raise
 
+    async def delete_objects_async(self, ids):
+        """Delete the objects with given list of ids."""
+        try:
+            delete_parameters = {"Objects": [{"Key": id} for id in ids], "Quiet": True}
+            response = await self.call_async("delete_objects", Delete=delete_parameters)
+            if len(response.get("Errors", [])):
+                errors = ",".join(["{}:{}".format(error["Key"], error["Message"]) for error in response["Errors"]])
+                logger.error("Files couldn't be deleted: {}".format(errors))
+                return False, errors
+            return True, None
+        except Exception as ex:
+            logger.exception(ex)
+            raise
+
     def exists(self, id_or_filename, resource=None):
         """Test if given name or unique id already exists in storage system."""
         id_or_filename = str(id_or_filename)
-        found = self._check_exists(id_or_filename)
-        return found
+        return self._check_exists(id_or_filename)
+
+    async def exists_async(self, id_or_filename, resource=None):
+        """Test if given name or unique id already exists in storage system."""
+        id_or_filename = str(id_or_filename)
+        return await self._check_exists_async(id_or_filename)
 
     def _check_exists(self, id_or_filename):
         try:
@@ -307,7 +486,15 @@ class AmazonMediaStorage(SuperdeskMediaStorage):
             # File not found
             return False
 
-    def remove_unreferenced_files(self, existing_files):
+    async def _check_exists_async(self, id_or_filename):
+        try:
+            await self.call_asnc("head_object", Key=id_or_filename)
+            return True
+        except Exception:
+            # File not found
+            return False
+
+    def remove_unreferenced_files(self, existing_files, resource=None):
         """Get the files from S3 and compare against existing and delete the orphans."""
         # TODO: Add AMAZON_S3_SUBFOLDER support ref: SDESK-1119
         bucket_files = self.get_all_keys()
@@ -317,6 +504,23 @@ class AmazonMediaStorage(SuperdeskMediaStorage):
             batch = orphan_files[i : i + MAX_KEYS]
             print("Cleaning %d orphan files..." % len(batch), end="")
             deleted, errors = self.delete_objects(batch)
+            if deleted:
+                print("done.")
+            else:
+                print("failed to clean orphans: {}".format(errors))
+        else:
+            print("There's nothing to clean.")
+
+    async def remove_unreferenced_files_async(self, existing_files, resource=None):
+        """Get the files from S3 and compare against existing and delete the orphans."""
+        # TODO: Add AMAZON_S3_SUBFOLDER support ref: SDESK-1119
+        bucket_files = await self.get_all_keys_async()
+        orphan_files = list(set(bucket_files) - existing_files)
+        print("There are {} orphan files...".format(len(orphan_files)))
+        for i in range(0, len(orphan_files), MAX_KEYS):
+            batch = orphan_files[i : i + MAX_KEYS]
+            print("Cleaning %d orphan files..." % len(batch), end="")
+            deleted, errors = await self.delete_objects_async(batch)
             if deleted:
                 print("done.")
             else:
@@ -364,8 +568,53 @@ class AmazonMediaStorage(SuperdeskMediaStorage):
 
         return files
 
+    async def find_async(self, folder=None, upload_date=None, resource=None):
+        """Search for files in the S3 bucket
+
+        Searches for files in the S3 bucket using a combination of folder name and/or upload date
+        comparisons. Also uses the `superdesk.utc.query_datetime` method to compare the upload_date provided
+        and the upload_date of the file.
+
+        :param str folder: Folder name
+        :param dict upload_date: Upload date with comparison operator (i.e. $lt, $lte, $gt or $gte)
+        :param resource: The resource type to use
+        :return list: List of files that matched the provided parameters
+        """
+        files = []
+        next_marker = ""
+        folder = "{}/".format(folder) if folder else None
+        while True:
+            result = await self.call_async("list_objects", Marker=next_marker, MaxKeys=MAX_KEYS, Prefix=folder)
+
+            if not result or len(result.get("Contents", [])) <= 0:
+                break
+
+            objects = result.get("Contents", [])
+            for file in objects:
+                if upload_date is not None and not query_datetime(file.get("LastModified"), upload_date):
+                    continue
+                files.append(
+                    {
+                        "_id": file.get("Key"),
+                        "filename": file.get("Key"),
+                        "upload_date": file.get("LastModified"),
+                        "size": file.get("Size"),
+                        "_etag": file.get("ETag"),
+                    }
+                )
+
+            next_marker = objects[-1]["Key"]
+
+        return files
+
     def get_by_filename(self, filename):
         match = MONGOID_REGEX.match(filename)
         if match:
             return self.get(match.group(1))
         return self.get(filename)
+
+    async def get_by_filename_async(self, filename, begin: int = 0, end: int | None = None):
+        match = MONGOID_REGEX.match(filename)
+        if match:
+            return await self.get_async(match.group(1), begin=begin, end=end)
+        return await self.get_async(filename, begin=begin, end=end)
