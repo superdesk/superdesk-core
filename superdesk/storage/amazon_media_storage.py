@@ -488,7 +488,7 @@ class AmazonMediaStorage(SuperdeskMediaStorage):
 
     async def _check_exists_async(self, id_or_filename):
         try:
-            await self.call_asnc("head_object", Key=id_or_filename)
+            await self.call_async("head_object", Key=id_or_filename)
             return True
         except Exception:
             # File not found
