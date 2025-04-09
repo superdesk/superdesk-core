@@ -575,8 +575,8 @@ async def remove_profile_from_templates(item: ContentTypesResourceModel) -> None
     # TODO-ASYNC: "content_templates" is not async yet
     templates = list(superdesk.get_resource_service("content_templates").get_templates_by_profile_id(item.id))
     for template in templates:
-        template.data.pop("profile", None)
-        superdesk.get_resource_service("content_templates").patch(template.id, template)
+        template.get("data", {}).pop("profile", None)
+        superdesk.get_resource_service("content_templates").patch(template[ID_FIELD], template)
 
 
 async def get_profile(_id: str) -> dict[str, Any] | ContentTypesResourceModel | None:
