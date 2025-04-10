@@ -90,7 +90,7 @@ class AsyncioPublishConsumer(PublishConsumer):
                 print(task.destination.delivery_type not in registered_transmitters)
                 raise
 
-            response = transmitter.transmit(task.to_dict())
+            response = transmitter.transmit(task.to_dict(context={"use_objectid": True}))
             if isawaitable(response):
                 # TODO-ASYNC: Convert transmitters to use asyncio network calls
                 # otherwise it will halt the processing of other transmission requests
