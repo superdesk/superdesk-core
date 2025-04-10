@@ -20,7 +20,7 @@ def push_content_notification(items, event="content:update"):
     stages = {}
     for item in items:
         ids[str(item.get("_id", ""))] = 1
-        task = item.get("task", {})
+        task = item.get("task") or {}
         if task.get("desk"):
             desks[str(task.get("desk", ""))] = 1
         if task.get("stage"):
@@ -36,8 +36,8 @@ def push_item_move_notification(original, doc, event="item:move"):
     :param doc: doc after updates
     :param event: event name
     """
-    from_task = original.get("task", {})
-    to_task = doc.get("task", {})
+    from_task = original.get("task") or {}
+    to_task = doc.get("task") or {}
     user = get_user()
     push_notification(
         event,
