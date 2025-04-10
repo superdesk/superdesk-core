@@ -64,6 +64,7 @@ install_requires = [
     "quart @ git+https://github.com/MarkLark86/quart@fix-test-client-with-utf8-url",
     "quart_babel>=1.0.7,<1.1",
     "asgiref>=3.8.1",
+    "aioboto3>=14.1.0,<15",
     # Patch Quart, Asyncio to work with Flask extensions
     # TODO-ASYNC: Remove this with our own flask patch (as quart-flask-patch also patches asyncio)
     "quart-flask-patch>=0.3.0,<0.4",

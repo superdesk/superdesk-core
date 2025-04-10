@@ -51,7 +51,10 @@ class GridFSMediaStorageTestCase(unittest.IsolatedAsyncioTestCase):
         kwargs = {
             "content_type": "text/plain",
             "filename": filename,
-            "metadata": None,
+            "metadata": {
+                "md5": ANY,
+                "content_type": '"text/plain"',
+            },
             "_id": _id,
             "md5": ANY,
         }
@@ -70,7 +73,10 @@ class GridFSMediaStorageTestCase(unittest.IsolatedAsyncioTestCase):
         kwargs = {
             "content_type": "text/plain",
             "filename": "{}/{}".format(folder, filename),
-            "metadata": None,
+            "metadata": {
+                "md5": ANY,
+                "content_type": '"text/plain"',
+            },
             "md5": ANY,
         }
 
@@ -119,7 +125,10 @@ class GridFSMediaStorageTestCase(unittest.IsolatedAsyncioTestCase):
         kwargs = {
             "content_type": content_type,
             "filename": filename,
-            "metadata": None,
+            "metadata": {
+                "md5": ANY,
+                "content_type": f'"{content_type}"',
+            },
             "_id": _id,
             "md5": ANY,
         }
@@ -135,7 +144,10 @@ class GridFSMediaStorageTestCase(unittest.IsolatedAsyncioTestCase):
         kwargs = {
             "content_type": "text/css",
             "filename": filename,
-            "metadata": None,
+            "metadata": {
+                "md5": ANY,
+                "content_type": '"text/css"',
+            },
             "_id": _id,
             "md5": ANY,
         }
@@ -150,7 +162,10 @@ class GridFSMediaStorageTestCase(unittest.IsolatedAsyncioTestCase):
         kwargs = {
             "content_type": "image/jpeg",
             "filename": filename,
-            "metadata": None,
+            "metadata": {
+                "md5": ANY,
+                "content_type": '"image/jpeg"',
+            },
             "_id": _id,
             "md5": ANY,
         }
@@ -167,7 +182,10 @@ class GridFSMediaStorageTestCase(unittest.IsolatedAsyncioTestCase):
             kwargs = {
                 "content_type": "image/jpeg",
                 "filename": filename,
-                "metadata": None,
+                "metadata": {
+                    "md5": ANY,
+                    "content_type": '"image/jpeg"',
+                },
                 "_id": _id,
                 "md5": ANY,
             }
@@ -182,7 +200,10 @@ class GridFSMediaStorageTestCase(unittest.IsolatedAsyncioTestCase):
             kwargs = {
                 "content_type": "application/vnd.ms-excel",
                 "filename": filename,
-                "metadata": None,
+                "metadata": {
+                    "md5": ANY,
+                    "content_type": '"application/vnd.ms-excel"',
+                },
                 "_id": _id,
                 "md5": ANY,
             }
@@ -197,7 +218,10 @@ class GridFSMediaStorageTestCase(unittest.IsolatedAsyncioTestCase):
             kwargs = {
                 "content_type": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
                 "filename": filename,
-                "metadata": None,
+                "metadata": {
+                    "md5": ANY,
+                    "content_type": '"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"',
+                },
                 "_id": _id,
                 "md5": ANY,
             }
@@ -212,7 +236,10 @@ class GridFSMediaStorageTestCase(unittest.IsolatedAsyncioTestCase):
             kwargs = {
                 "content_type": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
                 "filename": filename,
-                "metadata": None,
+                "metadata": {
+                    "md5": ANY,
+                    "content_type": '"application/vnd.openxmlformats-officedocument.wordprocessingml.document"',
+                },
                 "_id": _id,
                 "md5": ANY,
             }

@@ -267,6 +267,11 @@ class MongoResources:
 
         return self.get_client_async(resource_name, versioning)[1]
 
+    def get_db_async_from_prefix(self, prefix: str):
+        client_config, dbname = get_mongo_client_config(self.app.wsgi.config, prefix)
+        client: AsyncIOMotorClient = AsyncIOMotorClient(**client_config)
+        return client.get_database(dbname)
+
     def get_collection_async(self, resource_name: str, versioning: bool = False) -> AsyncIOMotorCollection:
         """Get an asynchronous collection connection from a registered resource
 

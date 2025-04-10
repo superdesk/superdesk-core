@@ -28,6 +28,7 @@ from .web import (
 )
 from .mongo import MongoIndexCollation, MongoIndexOptions, MongoResourceConfig, MongoClientConfig
 from .elastic import ElasticResourceConfig, ElasticClientConfig
+from .storage import SuperdeskFile, AsyncBuffer, SuperdeskAsyncFile
 
 
 __all__ = [
@@ -69,4 +70,8 @@ __all__ = [
     # ElasticSearch:
     "ElasticResourceConfig",
     "ElasticClientConfig",
+    # Storage
+    "SuperdeskFile",
+    "AsyncBuffer",
+    "SuperdeskAsyncFile",
 ]

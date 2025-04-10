@@ -125,7 +125,7 @@ def register_command(command):
     COMMANDS_V2.append(command)
 
 
-def get_headers(self, environ=None):
+def get_headers(self, environ=None, scope=None):
     """Fix CORS for abort responses.
 
     todo(petr): put in in custom flask error handler instead
