@@ -129,6 +129,10 @@ class BasePublishResource(ArchiveResource):
 
         self.privileges = {"PATCH": publish_type}
 
+        # ignore fields_meta when posting to avoid recursion error
+        # https://sentry.sourcefabric.org/share/issue/03b8d78f8eaf40219f65df015ddb17d6/
+        self.etag_ignore_fields = ["broadcast", "fields_meta"]
+
         super().__init__(endpoint_name, app=app, service=service)
 
 
