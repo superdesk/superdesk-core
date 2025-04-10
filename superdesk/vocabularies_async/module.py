@@ -25,6 +25,7 @@ vocabularies_resource_config = ResourceConfig(
             MongoIndexOptions(
                 name="field_type",
                 keys=[("field_type", 1)],
+                unique=False,
             ),
         ],
     ),
