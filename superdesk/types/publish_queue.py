@@ -29,7 +29,7 @@ class PublishQueueResource(ResourceModelWithObjectId):
 
     state: PublishQueueState | None = None  # If None, will allow the resource service to choose the state
     item_encoding: str | None = None
-    encoded_item_id: str | None = None
+    encoded_item_id: str | fields.ObjectId | None = None
 
     subscriber_id: Annotated[fields.ObjectId, validate_data_relation_async("subscribers")]
 
