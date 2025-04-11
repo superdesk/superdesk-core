@@ -8,6 +8,7 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
+from typing import overload, Literal
 from inspect import isawaitable
 
 import superdesk
@@ -20,7 +21,7 @@ from superdesk.core import get_current_async_app, get_config
 from superdesk.lock import lock, unlock
 from superdesk.json_utils import SuperdeskJSONEncoder
 
-from .eve_async import MongoAsync
+from .eve_async import MongoAsync, ElasticAsync
 
 
 class SuperdeskDataLayer(DataLayer):
@@ -45,6 +46,9 @@ class SuperdeskDataLayer(DataLayer):
         self.driver = self.mongo.driver
         self.storage = self.driver
         self.elastic = Elastic(
+            app, serializer=SuperdeskJSONEncoder(), skip_index_init=True, retry_on_timeout=True, max_retries=3
+        )
+        self.elastic_async = ElasticAsync(
             app, serializer=SuperdeskJSONEncoder(), skip_index_init=True, retry_on_timeout=True, max_retries=3
         )
 
@@ -192,19 +196,44 @@ class SuperdeskDataLayer(DataLayer):
     async def is_empty_async(self, resource):
         return self._backend(resource, use_async=True).is_empty(resource)
 
-    def _search_backend(self, resource):
+    @overload
+    def _search_backend(self, resource) -> Elastic | None:
+        ...
+
+    @overload
+    def _search_backend(self, resource, use_async: Literal[False] = False) -> Elastic | None:
+        ...
+
+    @overload
+    def _search_backend(self, resource, use_async: Literal[True]) -> ElasticAsync | None:
+        ...
+
+    def _search_backend(self, resource, use_async: bool = False) -> Elastic | ElasticAsync | None:
         if resource.endswith(get_config(str, "VERSIONS")):
-            return
+            return None
         datasource = self.datasource(resource)
         try:
             backend = get_config(dict, "SOURCES", {})[datasource[0]]["search_backend"]
         except (KeyError, TypeError, AttributeError):
             backend = None
 
-        # TODO-ASYNC: Add self.elastic_async datalayer
+        if backend and use_async:
+            backend += "_async"
         return getattr(self, backend) if backend is not None else None
 
-    def _backend(self, resource: str, use_async: bool = False):
+    @overload
+    def _backend(self, resource: str) -> Mongo | None:
+        ...
+
+    @overload
+    def _backend(self, resource: str, use_async: Literal[False]) -> Mongo | None:
+        ...
+
+    @overload
+    def _backend(self, resource: str, use_async: Literal[True]) -> MongoAsync | None:
+        ...
+
+    def _backend(self, resource: str, use_async: bool = False) -> Mongo | MongoAsync | None:
         datasource = self.datasource(resource)
         try:
             backend = get_config(dict, "SOURCES", {})[datasource[0]]["backend"]
