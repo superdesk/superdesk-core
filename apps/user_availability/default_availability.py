@@ -108,7 +108,7 @@ class DefaultAvailabilityService(superdesk.Service):
 
     def on_replaced(self, doc, original):
         """Event handler for replaced event."""
-        if original.get("working_days") and doc.get("working_days") != original.get("working_days"):
+        if doc.get("working_days") != original.get("working_days"):
             self.generate_user_availability(doc)
 
     def generate_all_users_availability(self):

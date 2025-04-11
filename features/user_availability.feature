@@ -374,3 +374,18 @@ Feature: User Availability
         }
         """
         Then we get error 405
+
+        When we put to "/default_user_availability/#CONTEXT_USER_ID#"
+        """
+        {"working_days": {}}
+        """
+        And we get "user_availability"
+        Then we get list with 0 items
+
+        When we put to "/default_user_availability/#CONTEXT_USER_ID#"
+        """
+        {"working_days": {"monday": {"status": "available"}}}
+        """
+
+        And we get "user_availability"
+        Then we get list with 10+ items
