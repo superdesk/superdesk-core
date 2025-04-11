@@ -137,6 +137,7 @@ class DefaultAvailabilityService(superdesk.Service):
                     "user": current_user_id,
                     "date": d.date().isoformat(),
                     "status": doc["working_days"][day]["status"],
+                    "language": doc.get("language") or [],
                     "working_hours": doc["working_days"][day]["working_hours"]
                     if doc["working_days"][day].get("working_hours")
                     else [],

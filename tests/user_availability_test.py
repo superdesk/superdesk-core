@@ -19,8 +19,15 @@ def test_user_availability_generator(app):
         [
             {
                 "_id": active_user_id,
+                "language": ["en"],
+                "tags": [
+                    {"code": "tag1"},
+                ],
                 "working_days": {
-                    "friday": {"status": "available"},
+                    "monday": {
+                        "status": "available",
+                        "working_hours": [],
+                    },
                 },
             },
             {
@@ -38,8 +45,9 @@ def test_user_availability_generator(app):
     assert len(generated) == 12
     assert generated[0]["user"] == active_user_id
     assert generated[0]["status"] == "available"
+    assert generated[0]["language"] == ["en"]
 
-    assert datetime.fromisoformat(generated[0]["date"]).isoweekday() == 5
+    assert datetime.fromisoformat(generated[0]["date"]).isoweekday() == 1
 
     generate_user_availability.apply()
 
