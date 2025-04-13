@@ -585,6 +585,9 @@ class MockWSGI:
     def register_endpoint(self, endpoint):
         pass
 
+    def as_any(self):
+        return self
+
 
 class AsyncTestCase(IsolatedAsyncioTestCase):
     app: SuperdeskAsyncApp
