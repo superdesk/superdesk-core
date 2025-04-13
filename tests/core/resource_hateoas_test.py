@@ -3,7 +3,7 @@ from tests.core.modules.module_related_resources import RingBearerService, RingO
 
 
 class ResourceHateoasTestCase(AsyncFlaskTestCase):
-    use_default_apps = True
+    use_default_apps = False
     app_config = {
         "MODULES": [
             "tests.core.modules.module_related_resources",

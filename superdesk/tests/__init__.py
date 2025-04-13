@@ -182,6 +182,7 @@ def setup_config(config, auto_add_apps: bool = True):
     app_abspath = os.path.abspath(os.path.dirname(os.path.dirname(__file__)))
     app_config = Config(app_abspath)
     app_config.from_object("superdesk.default_settings")
+    app_config = deepcopy(app_config)
     cwd = Path.cwd()
     for p in [cwd] + list(cwd.parents):
         settings = p / "settings.py"

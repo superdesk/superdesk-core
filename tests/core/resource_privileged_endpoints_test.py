@@ -5,13 +5,22 @@ from superdesk.tests import AsyncFlaskTestCase, setup_auth_user, test_user
 
 
 class PrivilegedResourceEndpointsTestCase(AsyncFlaskTestCase):
-    use_default_apps = True
+    use_default_apps = False
     app_config = {
         "MODULES": [
             "tests.core.modules.users",
             "tests.core.modules.module_with_privileges",
             "superdesk.users",
-        ]
+        ],
+        "CORE_APPS": [
+            "superdesk.activity",
+            "apps.auth",
+            "superdesk.users",
+            "apps.auth.db",
+            "superdesk.roles",
+            "apps.preferences",
+            "apps.stages",
+        ],
     }
 
     async def _get_auth_token(self, user: dict[str, Any] | None = None):
