@@ -103,6 +103,7 @@ def update_config(conf, auto_add_apps: bool = True):
     conf["LEGAL_ARCHIVE"] = True
     if auto_add_apps:
         conf["INSTALLED_APPS"].extend(["planning", "superdesk.macros.imperial", "apps.rundowns"])
+        conf["MODULES"].extend(["planning"])
 
     # limit mongodb connections
     conf["MONGO_CONNECT"] = False
