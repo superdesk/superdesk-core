@@ -1,12 +1,12 @@
 from typing import AsyncIterator, cast
 import logging
 
-from bson import ObjectId
 import pymongo
 from eve.utils import ParsedRequest
 from eve.methods.common import resolve_document_etag
 from quart_babel import gettext
 
+from superdesk.core.types import ItemId
 from superdesk.services import BaseService, CacheableService
 from superdesk.resource_fields import ETAG
 from superdesk.utc import utcnow
@@ -51,23 +51,23 @@ class AsyncBaseService(BaseService):
     async def on_fetched_item_async(self, doc: dict) -> None:
         pass
 
-    async def create_async(self, docs: list[dict], **kwargs) -> list[ObjectId | str]:
+    async def create_async(self, docs: list[dict], **kwargs) -> list[ItemId]:
         ids = await self.backend.create_async(self.datasource, docs, **kwargs)
         return ids
 
-    async def update_async(self, id: ObjectId | str, updates: dict, original: dict) -> dict:
+    async def update_async(self, id: ItemId, updates: dict, original: dict) -> dict:
         return await self.backend.update_async(self.datasource, id, updates, original)
 
-    async def system_update_async(self, id: ObjectId | str, updates: dict, original: dict, **kwargs) -> dict:
+    async def system_update_async(self, id: ItemId, updates: dict, original: dict, **kwargs) -> dict:
         return await self.backend.system_update_async(self.datasource, id, updates, original, **kwargs)
 
-    async def replace_async(self, id: ObjectId | str, document: dict, original: dict) -> None:
+    async def replace_async(self, id: ItemId, document: dict, original: dict) -> None:
         return await self.backend.replace_async(self.datasource, id, document, original)
 
-    async def delete_async(self, lookup: dict) -> list[ObjectId | str]:
+    async def delete_async(self, lookup: dict) -> list[ItemId]:
         return await self.backend.delete_async(self.datasource, lookup)
 
-    async def delete_ids_from_mongo_async(self, ids: list[ObjectId | str]) -> list[ObjectId | str]:
+    async def delete_ids_from_mongo_async(self, ids: list[ItemId]) -> list[ItemId]:
         return await self.backend.delete_ids_from_mongo_async(self.datasource, ids)
 
     async def delete_from_mongo_async(self, lookup: dict) -> None:
@@ -83,7 +83,7 @@ class AsyncBaseService(BaseService):
 
         await self.backend.delete_from_mongo_async(self.datasource, lookup)
 
-    async def delete_docs_async(self, docs: list[dict]) -> list[ObjectId | str]:
+    async def delete_docs_async(self, docs: list[dict]) -> list[ItemId]:
         for doc in docs:
             self.on_delete(doc)
             await self.on_delete_async(doc)
@@ -155,7 +155,7 @@ class AsyncBaseService(BaseService):
         else:
             logger.warning("Not enough iterations for resource %s", self.datasource)
 
-    async def post_async(self, docs: list[dict], **kwargs) -> list[ObjectId | str]:
+    async def post_async(self, docs: list[dict], **kwargs) -> list[ItemId]:
         for doc in docs:
             self._resolve_defaults(doc)
         await self.on_create_async(docs)
@@ -165,7 +165,7 @@ class AsyncBaseService(BaseService):
         self.on_created(docs)
         return ids
 
-    async def patch_async(self, id: ObjectId | str, updates: dict) -> dict:
+    async def patch_async(self, id: ItemId, updates: dict) -> dict:
         from superdesk.core import get_app_config
 
         original = await self.find_one_async(req=None, _id=id)
@@ -184,7 +184,7 @@ class AsyncBaseService(BaseService):
         self.on_updated(updates, original)
         return res
 
-    async def put_async(self, id: ObjectId | str, document: dict) -> None:
+    async def put_async(self, id: ItemId, document: dict) -> None:
         self._resolve_defaults(document)
         original = await self.find_one_async(req=None, _id=id)
         if original is None:
@@ -197,7 +197,7 @@ class AsyncBaseService(BaseService):
         await self.on_replaced_async(document, original)
         self.on_replaced(document, original)
 
-    async def delete_action_async(self, lookup: dict | None = None) -> list[ObjectId | str]:
+    async def delete_action_async(self, lookup: dict | None = None) -> list[ItemId]:
         if lookup is None:
             lookup = {}
             docs = []
