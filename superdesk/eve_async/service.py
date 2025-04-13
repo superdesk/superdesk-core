@@ -33,10 +33,10 @@ class AsyncBaseService(BaseService):
     async def on_updated_async(self, updates: dict, original: dict) -> None:
         pass
 
-    async def on_replace_async(self, document: dict, original: dict) -> None:
+    async def on_replace_async(self, document: dict, original: dict | None) -> None:
         pass
 
-    async def on_replaced_async(self, document: dict, original: dict) -> None:
+    async def on_replaced_async(self, document: dict, original: dict | None) -> None:
         pass
 
     async def on_delete_async(self, doc: dict) -> None:
@@ -61,7 +61,7 @@ class AsyncBaseService(BaseService):
     async def system_update_async(self, id: ItemId, updates: dict, original: dict, **kwargs) -> dict:
         return await self.backend.system_update_async(self.datasource, id, updates, original, **kwargs)
 
-    async def replace_async(self, id: ItemId, document: dict, original: dict) -> None:
+    async def replace_async(self, id: ItemId, document: dict, original: dict | None) -> None:
         return await self.backend.replace_async(self.datasource, id, document, original)
 
     async def delete_async(self, lookup: dict) -> list[ItemId]:
@@ -187,9 +187,6 @@ class AsyncBaseService(BaseService):
     async def put_async(self, id: ItemId, document: dict) -> None:
         self._resolve_defaults(document)
         original = await self.find_one_async(req=None, _id=id)
-        if original is None:
-            raise SuperdeskApiError.notFoundError(gettext(f"Item with id {id} not found"))
-
         await self.on_replace_async(document, original)
         self.on_replace(document, original)
         resolve_document_etag(document, self.datasource)

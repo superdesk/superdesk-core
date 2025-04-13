@@ -116,7 +116,7 @@ class ElasticAsync(Elastic):
         await self._refresh_resource_index_async(resource)
         return res
 
-    async def update(self, resource, id_, updates, original = None):
+    async def update(self, resource, id_, updates, original=None):
         """Update document in index."""
         args = self._es_args(resource, refresh=True)
         if self._get_retry_on_conflict():
@@ -124,7 +124,7 @@ class ElasticAsync(Elastic):
         doc = self._prepare_for_storage(resource, updates, args)
         return await self.elastic_async(resource).update(id=id_, body={"doc": doc}, **args)
 
-    async def replace(self, resource, id_, document, original = None):
+    async def replace(self, resource, id_, document, original=None):
         """Replace document in index."""
         args = self._es_args(resource, refresh=True)
         doc = self._prepare_for_storage(resource, document, args)
