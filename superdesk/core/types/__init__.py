@@ -1,4 +1,4 @@
-from .common import DefaultNoValue
+from .common import DefaultNoValue, ItemId
 from .model import BaseModel
 from .search import (
     ProjectedFieldArg,
@@ -34,6 +34,7 @@ from .storage import SuperdeskFile, AsyncBuffer, SuperdeskAsyncFile
 __all__ = [
     # common
     "DefaultNoValue",
+    "ItemId",
     # web
     "HTTP_METHOD",
     "Response",

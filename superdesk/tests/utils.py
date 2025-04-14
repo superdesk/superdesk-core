@@ -28,7 +28,7 @@ async def post_items(resource: str, items: list[dict]) -> None:
     # except KeyError:
     service = get_resource_service(resource)
     if hasattr(service, "post_async"):
-        return await service.post_async(items)
+        await service.post_async(items)
     else:
         return service.post(items)
 
@@ -41,7 +41,7 @@ async def patch_item(resource: str, item_id: str | ObjectId, updates: dict) -> N
     # except KeyError:
     service = get_resource_service(resource)
     if hasattr(service, "patch_async"):
-        return await service.patch_async(item_id, updates)
+        await service.patch_async(item_id, updates)
     else:
         return service.patch(item_id, updates)
 
@@ -54,7 +54,7 @@ async def system_update(resource: str, item_id: str | ObjectId, updates: dict, o
     # except KeyError:
     service = get_resource_service(resource)
     if hasattr(service, "system_update_async"):
-        return await service.system_update_async(item_id, updates, original)
+        await service.system_update_async(item_id, updates, original)
     else:
         return service.system_update(item_id, updates, original)
 
@@ -69,6 +69,6 @@ async def delete_items(resource: str, lookup: dict | None = None) -> None:
     # except KeyError:
     service = get_resource_service(resource)
     if hasattr(service, "delete_action_async"):
-        return await service.delete_action_async(lookup)
+        await service.delete_action_async(lookup)
     else:
         return service.delete_action(lookup)

@@ -476,7 +476,7 @@ class SluglineDeskService(AsyncBaseService):
         docs = []
         # rest of the world docs
         row_docs = []
-        for item in desk_items:
+        async for item in desk_items:
             slugline = self._get_slugline_with_legal(item)
             headline = item.get(self.HEADLINE)
             versioncreated = item.get(self.VERSION_CREATED)
@@ -711,7 +711,7 @@ class OverviewService(AsyncBaseService):
         req.projection = json.dumps({"members": 1})
         found = await desks_service.get_async(req, desk_filter)
         members = set()
-        for d in found:
+        async for d in found:
             members.update({m["user"] for m in d.get("members", [])})
 
         app = get_current_app()

@@ -98,15 +98,11 @@ class EveBackend:
         """
         backend = self._backend(endpoint_name, use_async=True)
         item = await backend.find_one(endpoint_name, req=req, **lookup)
-        # TODO-ASYNC: Change `use_async=True` once Elastic supports async
-        search_backend = self._lookup_backend(endpoint_name, fallback=True, use_async=False)
+        search_backend = self._lookup_backend(endpoint_name, fallback=True, use_async=True)
         if search_backend and get_app_config("BACKEND_FIND_ONE_SEARCH_TEST", False):
             # set the parent for the parent child in elastic search
             self._set_parent(endpoint_name, item, lookup)
-            # TODO-ASYNC: Use elastic async
-            item_search = search_backend.find_one(endpoint_name, req=req, **lookup)
-            if isawaitable(item_search):
-                item_search = await item_search
+            item_search = await search_backend.find_one(endpoint_name, req=req, **lookup)
 
             if item is None and item_search:
                 item = item_search
@@ -115,9 +111,7 @@ class EveBackend:
                 logger.warn(item_msg("item is only in mongo", item))
                 try:
                     logger.info(item_msg("trying to add item to elastic", item))
-                    response = search_backend.insert(endpoint_name, [item])
-                    if isawaitable(response):
-                        await response
+                    await search_backend.insert(endpoint_name, [item])
                 except RequestError as e:
                     logger.error(item_msg("failed to add item into elastic error={}".format(str(e)), item))
         return item
@@ -166,6 +160,22 @@ class EveBackend:
         if search_backend:
             return search_backend.find(endpoint_name, req, {})[0]
         else:
+            # Should we raise an exception here?
+            logger.warn("there is no search backend for %s" % endpoint_name)
+
+    async def search_async(self, endpoint_name, source):
+        """Search for items using search backend
+
+        :param string endpoint_name
+        :param dict source
+        """
+        req = ParsedRequest()
+        req.args = {"source": json.dumps(source)}
+        search_backend = self._lookup_backend(endpoint_name, use_async=True)
+        if search_backend:
+            return (await search_backend.find(endpoint_name, req, {}))[0]
+        else:
+            # Should we raise an exception here?
             logger.warn("there is no search backend for %s" % endpoint_name)
 
     def get(self, endpoint_name, req, lookup, **kwargs):
@@ -178,14 +188,9 @@ class EveBackend:
         backend = self._lookup_backend(endpoint_name, fallback=True)
         is_mongo = self._backend(endpoint_name) == backend
 
-        cursor, _ = backend.find(endpoint_name, req, lookup, perform_count=False)
+        cursor, count = backend.find(endpoint_name, req, lookup, perform_count=req.if_modified_since)
 
-        try:
-            has_items = cursor[0] is not None
-        except IndexError:
-            has_items = False
-
-        if req.if_modified_since and has_items:
+        if req.if_modified_since and count:
             # fetch all items, not just updated
             req.if_modified_since = None
             cursor, count = backend.find(endpoint_name, req, lookup, perform_count=False)
@@ -207,20 +212,11 @@ class EveBackend:
         backend = self._lookup_backend(endpoint_name, fallback=True, use_async=True)
         is_mongo = self._backend(endpoint_name, use_async=True) == backend
 
-        # TODO-ASYNC: This will cause an issue until Elastic is upgraded to async
-        cursor, _ = await backend.find(endpoint_name, req, lookup, perform_count=False)
+        cursor, count = await backend.find(endpoint_name, req, lookup, perform_count=req.if_modified_since)
 
-        try:
-            has_items = (await cursor.next()) is not None
-        except (IndexError, StopAsyncIteration):
-            has_items = False
-
-        cursor.rewind()
-
-        if req.if_modified_since and has_items:
+        if req.if_modified_since and count:
             # fetch all items, not just updated
             req.if_modified_since = None
-            # TODO-ASYNC: This will cause an issue until Elastic is upgraded to async
             cursor, count = await backend.find(endpoint_name, req, lookup, perform_count=False)
 
         source_config = get_app_config("DOMAIN")[endpoint_name]
@@ -375,10 +371,9 @@ class EveBackend:
         :param docs: list of docs
         """
 
-        # TODO-ASYNC: Use async elastic
         search_backend = self._lookup_backend(endpoint_name, use_async=True)
         if search_backend:
-            search_backend.insert(endpoint_name, docs, **kwargs)
+            await search_backend.insert(endpoint_name, docs, **kwargs)
 
     def update(self, endpoint_name, id, updates, original):
         """Update document with given id.
@@ -528,8 +523,7 @@ class EveBackend:
             if not await backend.find_one(endpoint_name, req=None, _id=id) and search_backend:
                 # item is in elastic, not in mongo - not good
                 logger.warn("Item is missing in mongo resource={} id={}".format(endpoint_name, id))
-                # TODO-ASYNC: use async elastic
-                item = search_backend.find_one(endpoint_name, req=None, _id=id)
+                item = await search_backend.find_one(endpoint_name, req=None, _id=id)
                 if item:
                     await self.remove_from_search_async(endpoint_name, item)
                 raise SuperdeskApiError.notFoundError()
@@ -550,18 +544,15 @@ class EveBackend:
             doc = await backend.find_one(endpoint_name, req=None, _id=id)
             if not doc:  # there is no doc in mongo, remove it from elastic
                 logger.warn("Item is missing in mongo resource={} id={}".format(endpoint_name, id))
-                # TODO-ASYNC: Use elastic async
-                item = search_backend.find_one(endpoint_name, req=None, _id=id)
+                item = await search_backend.find_one(endpoint_name, req=None, _id=id)
                 if item:
                     await self.remove_from_search_async(endpoint_name, item)
                 raise SuperdeskApiError.notFoundError()
             try:
-                # TODO-ASYNC: Use elastic async
-                search_backend.update(endpoint_name, id, doc)
+                await search_backend.update(endpoint_name, id, doc)
             except NotFoundError:
                 logger.warning("Item is missing in elastic resource=%s id=%s", endpoint_name, id)
-                # TODO-ASYNC: Use elastic async
-                search_backend.insert(endpoint_name, [doc])
+                await search_backend.insert(endpoint_name, [doc])
 
         cache.clean([endpoint_name])
         return updates
@@ -612,6 +603,26 @@ class EveBackend:
         res = backend.update(endpoint_name, id, updates, original)
         return res if res is not None else updates
 
+    async def update_in_mongo_async(self, endpoint_name, id, updates, original):
+        """Update item in mongo.
+
+        Modifies ``_updated`` timestamp and ``_etag``.
+
+        :param endpoint_name: resource name
+        :param id: item id
+        :param updates: updates to item to be saved
+        :param original: current version of the item
+        """
+        updates.setdefault(LAST_UPDATED, utcnow())
+        if ETAG not in updates:
+            updated = original.copy()
+            updated.update(updates)
+            resolve_document_etag(updated, endpoint_name)
+            updates[ETAG] = updated[ETAG]
+        backend = self._backend(endpoint_name, use_async=True)
+        res = await backend.update(endpoint_name, id, updates, original)
+        return res if res is not None else updates
+
     def replace_in_mongo(self, endpoint_name, id, document, original):
         """Replace item in mongo.
 
@@ -655,10 +666,9 @@ class EveBackend:
         :param document: next version of item
         :param original: current version of item
         """
-        # TODO-ASYNC: Use elastic async
         search_backend = self._lookup_backend(endpoint_name, use_async=True)
         if search_backend is not None:
-            search_backend.replace(endpoint_name, id, document)
+            await search_backend.replace(endpoint_name, id, document)
 
     def delete(self, endpoint_name, lookup):
         """Delete method to delete by using mongo query syntax.
@@ -702,8 +712,7 @@ class EveBackend:
         elif "_id" in lookup and search_backend:
             logger.warning("Item missing in mongo, deleting from elastic resource=%s lookup=%s", endpoint_name, lookup)
             try:
-                # TODO-ASYNC: Use elastic async
-                search_backend.remove(endpoint_name, lookup)
+                await search_backend.remove(endpoint_name, lookup)
                 removed_ids = [lookup["_id"]]
             except NotFoundError:
                 pass  # not found in elastic and not in mongo
@@ -839,9 +848,8 @@ class EveBackend:
         :param dict doc: Document to delete
         """
 
-        # TODO-ASYNC: Use elastic async
-        search_backend = get_current_app().data._search_backend(endpoint_name)
-        search_backend.remove(
+        search_backend = get_current_app().data._search_backend(endpoint_name, use_async=True)
+        await search_backend.remove(
             endpoint_name, {"_id": doc.get(ID_FIELD)}, search_backend.get_parent_id(endpoint_name, doc)
         )
 
@@ -853,7 +861,7 @@ class EveBackend:
 
     def _lookup_backend(self, endpoint_name, fallback=False, use_async: bool = False):
         app = get_current_app()
-        backend = app.data._search_backend(endpoint_name)
+        backend = app.data._search_backend(endpoint_name, use_async=use_async)
         if backend is None and fallback:
             backend = app.data._backend(endpoint_name, use_async)
         return backend

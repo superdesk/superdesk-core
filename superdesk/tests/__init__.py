@@ -22,6 +22,7 @@ from unittest import IsolatedAsyncioTestCase
 from quart import Response
 from quart.testing import QuartClient
 from werkzeug.datastructures import Authorization
+from eve.events import Events
 
 from superdesk.core import json
 from superdesk.flask import Config
@@ -103,6 +104,7 @@ def update_config(conf, auto_add_apps: bool = True):
     conf["LEGAL_ARCHIVE"] = True
     if auto_add_apps:
         conf["INSTALLED_APPS"].extend(["planning", "superdesk.macros.imperial", "apps.rundowns"])
+        conf["MODULES"].extend(["planning"])
 
     # limit mongodb connections
     conf["MONGO_CONNECT"] = False
@@ -182,6 +184,7 @@ def setup_config(config, auto_add_apps: bool = True):
     app_abspath = os.path.abspath(os.path.dirname(os.path.dirname(__file__)))
     app_config = Config(app_abspath)
     app_config.from_object("superdesk.default_settings")
+    app_config = deepcopy(app_config)
     cwd = Path.cwd()
     for p in [cwd] + list(cwd.parents):
         settings = p / "settings.py"
@@ -574,7 +577,7 @@ def teardown_notification(context):
 
 
 @dataclass
-class MockWSGI:
+class MockWSGI(Events):
     config: Dict[str, Any]
 
     def add_url_rule(self, *args, **kwargs):
@@ -582,6 +585,9 @@ class MockWSGI:
 
     def register_endpoint(self, endpoint):
         pass
+
+    def as_any(self):
+        return self
 
 
 class AsyncTestCase(IsolatedAsyncioTestCase):

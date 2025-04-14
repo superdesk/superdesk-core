@@ -275,7 +275,7 @@ class ResourceWebSignalsTestCase(AsyncFlaskTestCase):
                 ANY,
                 Response(
                     {
-                        **test_user.to_dict(exclude_unset=False, exclude_defaults=False),
+                        **test_user.to_dict(),
                         "_status": "OK",
                         "_links": {"self": {"title": "User", "href": "users_async/user_1"}},
                     },

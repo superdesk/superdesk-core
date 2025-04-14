@@ -185,7 +185,7 @@ class MongoAsync(Mongo):
     async def _change_request(self, resource, id_, changes, original, replace=False):
         id_field = config.DOMAIN[resource]["id_field"]
         query = {id_field: id_}
-        if config.ETAG in original:
+        if original and config.ETAG in original:
             query[config.ETAG] = original[config.ETAG]
 
         datasource, filter_, _, _ = self._datasource_ex(resource, query)
@@ -193,7 +193,7 @@ class MongoAsync(Mongo):
         coll = self.get_collection_with_write_concern(datasource, resource)
         try:
             result = await (coll.replace_one(filter_, changes) if replace else coll.update_one(filter_, changes))
-            if config.ETAG in original and result and result.acknowledged and result.modified_count == 0:
+            if original and config.ETAG in original and result and result.acknowledged and result.modified_count == 0:
                 raise self.OriginalChangedError()
         except pymongo.errors.DuplicateKeyError as e:
             abort(
