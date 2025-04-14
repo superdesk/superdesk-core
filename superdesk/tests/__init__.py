@@ -22,6 +22,7 @@ from unittest import IsolatedAsyncioTestCase
 from quart import Response
 from quart.testing import QuartClient
 from werkzeug.datastructures import Authorization
+from eve.events import Events
 
 from superdesk.core import json
 from superdesk.flask import Config
@@ -576,7 +577,7 @@ def teardown_notification(context):
 
 
 @dataclass
-class MockWSGI:
+class MockWSGI(Events):
     config: Dict[str, Any]
 
     def add_url_rule(self, *args, **kwargs):
