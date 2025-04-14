@@ -190,39 +190,43 @@ def set_error_handlers(app):
     """
 
     @app.errorhandler(ValidationError)
-    def handle_pydantic_validation_error(error: ValidationError):
+    async def handle_pydantic_validation_error(error: ValidationError):
         """
         Gets the ValidationException error raised from Core framework's models/services, parses and returns it
         to the client in a valid json format.
         """
         logger.error(f"HTTP Exception 400 has been raised: {error}")
         error_dict = convert_pydantic_validation_error_for_response(error)
-        return send_response(None, (error_dict, None, None, 400))
+        return await send_response(None, (error_dict, None, None, 400))
 
     @app.errorhandler(SuperdeskError)
-    def client_error_handler(error):
+    async def client_error_handler(error):
         error_dict = error.to_dict()
         error_dict.update(internal_error=error.status_code)
         status_code = error.status_code or 422
-        return send_response(None, (error_dict, None, None, status_code))
+        return await send_response(None, (error_dict, None, None, status_code))
 
     @app.errorhandler(403)
-    def server_forbidden_handler(error):
-        return send_response(None, ({"code": 403, "error": error.response}, None, None, 403))
+    async def server_forbidden_handler(error):
+        return await send_response(None, ({"code": 403, "error": error.response}, None, None, 403))
 
     @app.errorhandler(AssertionError)
-    def assert_error_handler(error):
-        return send_response(None, ({"code": 400, "error": str(error) if str(error) else "assert"}, None, None, 400))
+    async def assert_error_handler(error):
+        return await send_response(
+            None, ({"code": 400, "error": str(error) if str(error) else "assert"}, None, None, 400)
+        )
 
     @app.errorhandler(DocumentError)
-    def document_error_handler(error):
-        return send_response(None, ({"code": 400, "error": str(error) if str(error) else "assert"}, None, None, 400))
+    async def document_error_handler(error):
+        return await send_response(
+            None, ({"code": 400, "error": str(error) if str(error) else "assert"}, None, None, 400)
+        )
 
     @app.errorhandler(500)
-    def server_error_handler(error):
+    async def server_error_handler(error):
         """Log server errors."""
         return_error = SuperdeskApiError.internalError(error)
-        return client_error_handler(return_error)
+        return await client_error_handler(return_error)
 
 
 class SuperdeskEve(eve.Eve):

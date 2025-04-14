@@ -74,10 +74,10 @@ def get_parent_subjectcode(code):
 
 @bp.route("/subjectcodes/", methods=["GET", "OPTIONS"])
 @blueprint_auth()
-def render_subjectcodes():
+async def render_subjectcodes():
     items = get_subjectcodeitems()
     response_data = {"_items": items, "_meta": {"total": len(items)}}
-    return send_response(None, (response_data, get_current_app().subjects.last_modified, None, 200))
+    return await send_response(None, (response_data, get_current_app().subjects.last_modified, None, 200))
 
 
 def get_subjectcodeitems():

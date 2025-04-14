@@ -11,7 +11,6 @@
 import logging
 
 from cerberus import DocumentError
-from eve.endpoints import send_response
 from werkzeug.exceptions import HTTPException
 from elasticsearch.exceptions import ConnectionTimeout  # noqa
 
@@ -772,20 +771,27 @@ class SuperdeskValidationError(HTTPException):
         self.fields = fields
 
         try:
-            self.response = send_response(
-                None,
-                (
+            # Importing here due to circular import issues
+            from superdesk.core import get_current_app, get_config, json
+
+            self.response = get_current_app().response_class(
+                json.dumps(
                     {
                         STATUS: STATUS_ERR,
                         ISSUES: {
                             "validator exception": str([self.errors]),  # BC
                             "fields": self.fields,
                         },
-                    },
-                    None,
-                    None,
-                    400,
+                    }
                 ),
+                400,
+                {
+                    "Access-Control-Allow-Origin": get_config(str, "CLIENT_URL"),
+                    "Access-Control-Allow-Headers": ",".join(get_config(list, "X_HEADERS")),
+                    "Access-Control-Allow-Credentials": "true",
+                    "Access-Control-Allow-Methods": "*",
+                    "Content-Type": "application/json",
+                },
             )
         except RuntimeError as e:
             # the exception is run outside of request context
