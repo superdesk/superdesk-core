@@ -54,10 +54,10 @@ class DesksAsyncService(AsyncResourceService[DesksResourceModel]):
 
             # make the desk available in default content template
             content_templates = get_resource_service("content_templates")
-            template = content_templates.find_one(req=None, _id=desk.default_content_template)
+            template = await content_templates.find_one_async(req=None, _id=desk.default_content_template)
             if template:
                 template.setdefault("template_desks", []).append(desk.id)
-                content_templates.patch(desk.default_content_template, template)
+                await content_templates.patch_async(desk.default_content_template, template)
 
         return docs
 

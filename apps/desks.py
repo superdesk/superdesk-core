@@ -164,10 +164,10 @@ class DesksService(AsyncBaseService):
 
             # make the desk available in default content template
             content_templates = get_resource_service("content_templates")
-            template = content_templates.find_one(req=None, _id=desk.get("default_content_template"))
+            template = await content_templates.find_one_async(req=None, _id=desk.get("default_content_template"))
             if template:
                 template.setdefault("template_desks", []).append(desk.get(ID_FIELD))
-                content_templates.patch(desk.get("default_content_template"), template)
+                await content_templates.patch_async(desk.get("default_content_template"), template)
 
         return [doc[ID_FIELD] for doc in docs]
 
@@ -530,9 +530,11 @@ class SluglineDeskService(AsyncBaseService):
         places.append(
             {
                 self.NAME: placename,
-                self.SLUGLINE: slugline
-                if not any(self._get_slugline_with_legal(p).lower() == slugline.lower() for p in places)
-                else "-",
+                self.SLUGLINE: (
+                    slugline
+                    if not any(self._get_slugline_with_legal(p).lower() == slugline.lower() for p in places)
+                    else "-"
+                ),
                 self.HEADLINE: headline,
                 self.OLD_SLUGLINES: old_sluglines,
                 self.VERSION_CREATED: versioncreated,

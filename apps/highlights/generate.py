@@ -54,6 +54,7 @@ def get_template(highlightId):
     if not highlight or not highlight.get("template"):
         return None
 
+    # TODO-ASYNC[ContentTemplatesService]: Use find_one_async where when upgrading this module
     templateService = superdesk.get_resource_service("content_templates")
     template = templateService.find_one(req=None, _id=highlight.get("template"))
     return template
