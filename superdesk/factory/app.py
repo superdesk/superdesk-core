@@ -17,6 +17,7 @@ import importlib
 import superdesk
 import logging
 import sentry_sdk
+import asyncio
 
 from pydantic import ValidationError
 from celery import Celery
@@ -238,8 +239,10 @@ class SuperdeskEve(eve.Eve):
     media: Any
     data: Any
     celery: Celery
+    shutdown_event: asyncio.Event | None
 
     def __init__(self, **kwargs):
+        self.shutdown_event = None
         self.json_provider_class = SuperdeskFlaskJSONProvider
         self._endpoints = []
         self._endpoint_groups = []
@@ -474,6 +477,46 @@ class SuperdeskEve(eve.Eve):
                             "title": endpoint.name or endpoint.url.replace("/", "_"),
                         }
                     )
+
+    async def shutdown(self) -> None:
+        if not self.shutdown_event:
+            # Flask/Quart uses ``shutdown_event``, but it's not always set
+            # so make sure it is set here before we shut down
+            self.shutdown_event = asyncio.Event()
+
+        # Call Flask/Quart shutdown, so any background tasks etc are run before we close our DB connections
+        await super().shutdown()
+
+        await self.async_app.elastic.stop()
+        self.async_app.stop()
+
+        # Close all the eve-mongo datalayer clients
+        for extension_name in {"pymongo", "pymongo_async"}:
+            for key, val in self.extensions.get(extension_name, {}).items():
+                val[0].close()
+            self.extensions[extension_name] = {}
+
+        # Close all the eve-elastic datalayer clients
+        self.data.elastic.es.close()
+        for client in self.data.elastic.elastics.values():
+            client.close()
+        self.data.elastic.elastics = {}
+
+        # Close all the eve-elastic async datalayer clients
+        self.data.elastic_async.es.close()
+        await self.data.elastic_async.es_async.close()
+        for client in self.data.elastic_async.elastics.values():
+            await client.close()
+        self.data.elastic_async.elastics = {}
+
+        # Close all redis and cache clients
+        if hasattr(self.redis, "close"):
+            self.redis.close()
+
+        if hasattr(self.extensions.get("superdesk_cache"), "client") and hasattr(
+            self.extensions["superdesk_cache"].client, "close"
+        ):
+            self.extensions["superdesk_cache"].client.close()
 
 
 def get_media_storage_class(app_config: Dict[str, Any], use_provider_config: bool = True) -> Type[MediaStorage]:

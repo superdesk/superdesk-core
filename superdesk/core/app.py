@@ -229,6 +229,7 @@ class SuperdeskAsyncApp(SignalGroup):
 
         self.on_app_shutdown.send(self)
         self.mongo.stop()
+        self.resources.stop()
         self._imported_modules.clear()
         self._remove_app()
         self._running = False

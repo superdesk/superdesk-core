@@ -373,34 +373,26 @@ async def stop_previous_app():
         async_app: SuperdeskAsyncApp | None = getattr(setup, "async_app", None)
 
         for resource_name, resource_config in async_app.mongo.get_all_resource_configs().items():
-            client, db = async_app.mongo.get_client_async(resource_name)
-            await client.drop_database(db)
+            client, db = async_app.mongo.get_client(resource_name)
+            client.drop_database(db)
 
         async_app.elastic.drop_indexes()
-        await async_app.elastic.stop()
-
-        for service in async_app.resources._resource_services:
-            if hasattr(service, "_instance"):
-                del service._instance
-
-        async_app.stop()
         del setup.async_app
 
     if hasattr(setup, "app"):
         app: SuperdeskApp | None = getattr(setup, "app", None)
-
-        # Close all PyMongo Connections (new ones will be created with ``app_factory`` call)
-        for key, val in app.extensions["pymongo"].items():
-            val[0].close()
-
-        app.extensions["pymongo"] = {}
+        await app.shutdown()
         del setup.app
 
 
 async def setup(context=None, config=None, app_factory=get_app, reset=False, auto_add_apps: bool = True):
     if not hasattr(setup, "app") or hasattr(setup, "reset") or config:  # type: ignore[attr-defined]
+        # As we're constructing a new App instance, we need to stop the previous instance
+        await stop_previous_app()
+
         cfg = setup_config(config, auto_add_apps)
         setup.app = app_factory(cfg)  # type: ignore[attr-defined]
+        setup.async_app = setup.app.async_app  # type: ignore[attr-defined]
         setup.reset = reset  # type: ignore[attr-defined]
     app = setup.app  # type: ignore[attr-defined]
 
