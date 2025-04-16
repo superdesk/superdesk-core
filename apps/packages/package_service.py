@@ -9,6 +9,7 @@
 # at https://www.sourcefabric.org/superdesk/license
 
 import logging
+from typing import cast
 from eve.versioning import resolve_document_version
 
 from superdesk.core import get_current_app, get_app_config
@@ -34,7 +35,7 @@ from superdesk.metadata.packages import (
     GROUP_ID,
 )
 from apps.archive.common import insert_into_versions, ITEM_UNLINK
-from apps.archive.archive import SOURCE as ARCHIVE
+from apps.archive.archive import SOURCE as ARCHIVE, ArchiveService
 from superdesk.utc import utcnow
 from superdesk.default_settings import VERSION
 from quart_babel import gettext as _
@@ -440,7 +441,7 @@ class PackageService:
             ref.get(RESIDREF) for group in package.get(GROUPS, []) for ref in group.get(REFS, []) if RESIDREF in ref
         ]
 
-    def check_if_any_item_in_package_has_embargo(self, package):
+    async def check_if_any_item_in_package_has_embargo(self, package):
         """Recursively checks if any item in the package has embargo.
 
         :raises: SuperdeskApiError.badRequestError() if any item in the package has embargo.
@@ -449,7 +450,10 @@ class PackageService:
         item_refs_in_package = self.get_residrefs(package)
 
         for item_ref in item_refs_in_package:
-            doc = get_resource_service(ARCHIVE).find_one(req=None, _id=item_ref)
+            archive_service = get_resource_service(ARCHIVE)
+            assert archive_service is not None
+            archive_service = cast(ArchiveService, archive_service)
+            doc = await archive_service.find_one_async(req=None, _id=item_ref)
 
             if doc.get(EMBARGO):
                 raise SuperdeskApiError.badRequestError(
@@ -460,7 +464,7 @@ class PackageService:
                 )
 
             if doc[ITEM_TYPE] == CONTENT_TYPE.COMPOSITE:
-                self.check_if_any_item_in_package_has_embargo(doc)
+                await self.check_if_any_item_in_package_has_embargo(doc)
 
     def get_item_refs(self, package):
         """Returns all item references in the package.

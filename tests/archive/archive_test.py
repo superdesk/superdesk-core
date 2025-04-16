@@ -152,7 +152,7 @@ class ArchiveTestCase(TestCase):
             "extra": {"test_date_field": "2019-11-06T00:00:00+0000"},
         }
 
-        transtype_metadata(doc)
+        await transtype_metadata(doc)
         self.assertIsInstance(doc["extra"]["test_date_field"], datetime)
 
     async def test_if_no_source_defined_on_desk(self):

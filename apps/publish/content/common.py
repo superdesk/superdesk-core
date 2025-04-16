@@ -210,10 +210,10 @@ class BasePublishService(AsyncBaseService):
             preserve_state=original.get("state") in (CONTENT_STATE.SCHEDULED,) and "pubstatus" not in updates,
         )
         convert_task_attributes_to_objectId(updates)  # ???
-        transtype_metadata(updates, original)
+        await transtype_metadata(updates, original)
         await self._process_publish_updates(original, updates)
         await self._mark_media_item_as_used(updates, original)
-        update_refs(updates, original)
+        await update_refs(updates, original)
 
     async def on_updated_async(self, updates, original):
         original = super().find_one(req=None, _id=original[ID_FIELD])

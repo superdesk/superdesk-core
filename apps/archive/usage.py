@@ -1,7 +1,9 @@
+from typing import cast
 import bson
 import logging
 import superdesk
 
+from superdesk.archive_async.service import AsyncArchiveService
 from superdesk.utc import utcnow
 from superdesk.metadata.item import ITEM_STATE, PUBLISH_STATES
 
@@ -9,7 +11,7 @@ from superdesk.metadata.item import ITEM_STATE, PUBLISH_STATES
 logger = logging.getLogger(__name__)
 
 
-def track_usage(media_item, stored_item, item_obj, item_name, original):
+async def track_usage(media_item, stored_item, item_obj, item_name, original):
     if not media_item:
         return
 
@@ -19,33 +21,37 @@ def track_usage(media_item, stored_item, item_obj, item_name, original):
         orig_id = None
 
     if item_obj["_id"] != orig_id:
-        _update_usage(media_item)
+        await _update_usage(media_item)
         stored_item["used"] = True
 
 
-def _update_usage(item):
+async def _update_usage(item):
     updates = {
         "used": True,
         "used_count": item.get("used_count", 0) + 1,
         "used_updated": utcnow(),
     }
 
-    superdesk.get_resource_service("archive").system_update(item["_id"], updates, item)
+    archive_service = superdesk.get_resource_service("archive")
+    assert archive_service is not None
+    archive_service = AsyncArchiveService()
+    # FIXME: AsyncResourceService.system_update is missing an argument compared to BaseService.system_update
+    archive_service.system_update(item["_id"], updates, item)
 
     # update published item state as well
     if item.get(ITEM_STATE) in PUBLISH_STATES:
-        published = superdesk.get_resource_service("published").get_last_published_version(item["_id"])
+        published_service = superdesk.get_resource_service("published")
+        assert published_service is not None
+        published = published_service.get_last_published_version_async(item["_id"])
         if published:
-            superdesk.get_resource_service("published").system_update(
-                bson.ObjectId(published["_id"]), updates, published
-            )
+            published_service.system_update_async(bson.ObjectId(published["_id"]), updates, published)
         else:
             logger.warning("published item not found for item %s", item["_id"])
 
     item.update(updates)
 
 
-def update_refs(updates, original):
+async def update_refs(updates, original):
     """Update refs stored on item based on its associations.
 
     We can't use associations for queries due to unknown keys in dict,
@@ -61,7 +67,8 @@ def update_refs(updates, original):
             continue
         if val.get("_id") and not val.get("guid"):
             # for related items we only store the _id, fetch other metadata
-            item = superdesk.get_resource_service("archive").find_one(req=None, _id=val["_id"]) or {}
+            archive_service = AsyncArchiveService()
+            item = (await archive_service.find_by_id_raw(val["_id"])) or {}
         else:
             item = {}
         refs.append(

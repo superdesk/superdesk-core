@@ -370,11 +370,11 @@ async def get_related_field_ids():
     return await cursor.to_list()
 
 
-def is_related_content(item_name, related_content=None):
+async def is_related_content(item_name, related_content=None):
     if related_content is None:
-        related_content = get_related_field_ids()
+        related_content = await get_related_field_ids()
 
-    if related_content and item_name.split("--")[0] in [content["_id"] for content in related_content]:
+    if related_content and item_name.split("--")[0] in [content.id for content in related_content]:
         return True
 
     return False

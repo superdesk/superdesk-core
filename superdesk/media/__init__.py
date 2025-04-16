@@ -8,6 +8,7 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
+from superdesk.eve_async.service import AsyncBaseService
 from .media_references import MediaReferencesResource
 from .media_editor import MediaEditorService, MediaEditorResource
 from superdesk.services import BaseService
@@ -16,7 +17,7 @@ import superdesk
 
 def init_app(app) -> None:
     endpoint_name = "media_references"
-    service = BaseService(endpoint_name, backend=superdesk.get_backend())
+    service = AsyncBaseService(endpoint_name, backend=superdesk.get_backend())
     MediaReferencesResource(endpoint_name, app=app, service=service)
 
     endpoint_name = "media_editor"

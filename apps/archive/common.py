@@ -8,21 +8,25 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
-from typing import Optional
+from typing import Optional, cast
 from bson import ObjectId
 
 import logging
 from datetime import datetime
 from dateutil.parser import parse as date_parse
+from apps.desks_async.desks_async_service import DesksAsyncService
 from eve.versioning import insert_versioning_documents
 from pytz import timezone
 from copy import deepcopy
 from dateutil.parser import parse
 
+from superdesk.attachments import AttachmentsService
+from superdesk.content_types_async.service import ContentTypesService
 from superdesk.core import get_app_config, get_current_app
 from superdesk.resource_fields import ID_FIELD, VERSION
 import superdesk
 from superdesk import editor_utils
+from superdesk.types.desks import DesksResourceModel
 from superdesk.users.services import get_sign_off
 from superdesk.utc import utcnow, get_expiry_date, local_to_utc, get_date
 from superdesk import get_resource_service
@@ -496,7 +500,7 @@ async def fetch_item(doc, desk_id, stage_id, state=None, target=None):
     return dest_doc
 
 
-def remove_media_files(doc, published=False):
+async def remove_media_files(doc, published=False):
     """Removes the media files of the given doc.
 
     If media files are not references by any other
@@ -520,7 +524,7 @@ def remove_media_files(doc, published=False):
         logger.info("Removing media files for %s", doc.get("guid"))
 
     if doc.get("guid"):
-        remove_media_references(doc["guid"], published)
+        await remove_media_references(doc["guid"], published)
 
     app = get_current_app()
     for renditions in references:
@@ -529,6 +533,7 @@ def remove_media_files(doc, published=False):
                 continue
             media = rendition.get("media") if isinstance(rendition.get("media"), str) else str(rendition.get("media"))
             try:
+                # TODO-ASYNC[media_references]: Convert MediaReferences to async
                 references = get_resource_service("media_references").get(
                     req=None, lookup={"media_id": media, "published": True}
                 )
@@ -543,10 +548,14 @@ def remove_media_files(doc, published=False):
 
     for attachment in doc.get("attachments", []):
         lookup = {"_id": attachment["attachment"]}
-        get_resource_service("attachments").delete_action(lookup)
+        attachments_service = get_resource_service("attachments")
+        assert attachments_service is not None
+        attachments_service = cast(AttachmentsService, attachments_service)
+        await attachments_service.delete_action_async(lookup)
 
 
-def remove_media_references(item_id, published):
+async def remove_media_references(item_id, published):
+    # TODO-ASYNC[media_references]: Convert MediaReferences to async
     get_resource_service("media_references").delete_action({"item_id": item_id, "published": published})
     get_resource_service("media_references").delete_action({"associated_id": item_id, "published": published})
 
@@ -583,7 +592,7 @@ def get_item_expiry(desk, stage, offset=None):
     return get_expiry_date(expiry_minutes, offset=offset)
 
 
-def get_expiry(desk_id, stage_id, offset=None):
+async def get_expiry(desk_id, stage_id, offset=None):
     """Calculates the expiry for an item.
 
     Fetches the expiry duration from one of the below
@@ -599,12 +608,14 @@ def get_expiry(desk_id, stage_id, offset=None):
 
     if desk_id:
         # TODO-ASYNC[desks]: Use DesksResourceModel async service where when upgrading this module
-        desk = superdesk.get_resource_service("desks").find_one(req=None, _id=desk_id)
+        desks_service = DesksAsyncService()
+        desk = await desks_service.find_by_id_raw(desk_id)
 
         if not desk:
             raise SuperdeskApiError.notFoundError(_("Invalid desk identifier {desk_id}").format(desk_id=desk_id))
 
     if stage_id:
+        # TODO-ASYNC[stages]: update this code when StagesService is async
         stage = get_resource_service("stages").find_one(req=None, _id=stage_id)
 
         if not stage:
@@ -613,7 +624,7 @@ def get_expiry(desk_id, stage_id, offset=None):
     return get_item_expiry(desk, stage, offset)
 
 
-def set_item_expiry(update, original):
+async def set_item_expiry(update, original):
     task = update.get("task", original.get("task", {}))
     desk_id = task.get("desk", None)
     stage_id = task.get("stage", None)
@@ -622,9 +633,9 @@ def set_item_expiry(update, original):
         return
 
     if update == {}:
-        original["expiry"] = get_expiry(desk_id, stage_id)
+        original["expiry"] = await get_expiry(desk_id, stage_id)
     else:
-        update["expiry"] = get_expiry(desk_id, stage_id)
+        update["expiry"] = await get_expiry(desk_id, stage_id)
 
 
 def update_state(original, updates, publish_from_personal=None):
@@ -793,7 +804,7 @@ def convert_task_attributes_to_objectId(doc):
         task[LAST_AUTHORING_DESK] = ObjectId(task.get(LAST_AUTHORING_DESK))
 
 
-def transtype_metadata(doc, original=None):
+async def transtype_metadata(doc, original=None):
     """Change the type of metadata coming from client to match expected type in database
 
     Some metadata (e.g. custom fields) are sent as plain text while an other type is expected in
@@ -816,8 +827,8 @@ def transtype_metadata(doc, original=None):
         # profile may be missing with some items in tests
         logger.warning("`profile` is not available in doc")
         return
-    ctypes_service = get_resource_service("content_types")
-    profile = ctypes_service.find_one(None, _id=profile_id)
+    ctypes_service = ContentTypesService()
+    profile = await ctypes_service.find_by_id_raw(profile_id)
     if profile is None:
         return
 

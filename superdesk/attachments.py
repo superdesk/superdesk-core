@@ -1,6 +1,7 @@
 import os
 from typing import Optional, Dict, Any
 import superdesk
+from superdesk.eve_async.service import AsyncBaseService
 from superdesk.logging import logger
 
 from werkzeug.utils import secure_filename
@@ -37,8 +38,8 @@ class AttachmentsResource(superdesk.Resource):
     privileges = {"POST": "archive", "PATCH": "archive"}
 
 
-class AttachmentsService(superdesk.Service):
-    def on_create(self, docs):
+class AttachmentsService(AsyncBaseService):
+    async def on_create_async(self, docs):
         current_app = get_current_app()
         for doc in docs:
             doc["user"] = get_user_id()
@@ -54,7 +55,7 @@ class AttachmentsService(superdesk.Service):
                 doc.setdefault("mimetype", getattr(media, "content_type"))
                 doc.setdefault("length", getattr(media, "length"))
 
-    def on_deleted(self, doc):
+    async def on_deleted_async(self, doc):
         get_current_app().media.delete(doc["media"], RESOURCE)
 
 
