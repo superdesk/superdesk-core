@@ -26,7 +26,7 @@ jobs:
     - run: pip install -U pip wheel setuptools
     - run: pip install -Ur dev-requirements.txt
     - run: pytest -p no:asyncio --log-level=ERROR --disable-warnings tests/core
-    - run: ulimit -n 2048 && pytest -p no:asyncio --log-level=ERROR --disable-warnings --ignore=tests/core
+    - run: pytest -p no:asyncio --log-level=ERROR --disable-warnings --ignore=tests/core
 
   pip-compile:
     runs-on: ubuntu-22.04

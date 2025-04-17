@@ -201,10 +201,7 @@ class PrepopulateService(AsyncBaseService):
         app = get_current_app()
         for doc in docs:
             if doc.get("remove_first"):
-                await clean_dbs(app, force=True)
-
-            app.init_indexes()
-            await app.data.init_elastic(app)
+                await clean_dbs(app, force=True, init_indexes=True)
 
             get_resource_service("users").stop_updating_stage_visibility()
 
