@@ -9,30 +9,29 @@
 # at https://www.sourcefabric.org/superdesk/license
 
 
-from superdesk import get_resource_service
 from superdesk.resource_fields import ID_FIELD
-from superdesk.services import Service
 from superdesk.notification import push_notification
 from superdesk.errors import SuperdeskApiError
 from superdesk.types import VocabulariesResourceModel
+from superdesk.eve_async import AsyncBaseService
 from eve.utils import ParsedRequest
 from quart_babel import gettext as _
 from copy import deepcopy
 
 
-class ContactsService(Service):
-    def get(self, req, lookup):
+class ContactsService(AsyncBaseService):
+    async def get_async(self, req, lookup):
         # by default the response will have the inactive entries filtered out
         if "all" not in req.args:
             lookup["is_active"] = True
 
-        return super().get(req, lookup)
+        return await super().get_async(req, lookup)
 
-    async def on_create(self, docs):
+    async def on_create_async(self, docs):
         for doc in docs:
             await self._validate_assignable(doc)
 
-    def on_created(self, docs):
+    async def on_created_async(self, docs):
         """
         Send notification to clients that new contact(s) have been created
         :param docs:
@@ -40,12 +39,12 @@ class ContactsService(Service):
         """
         push_notification("contacts:create", _id=[doc.get(ID_FIELD) for doc in docs])
 
-    async def on_update(self, updates, original):
+    async def on_update_async(self, updates, original):
         item = deepcopy(original)
         item.update(updates)
         await self._validate_assignable(item)
 
-    def on_updated(self, updates, original):
+    async def on_updated_async(self, updates, original):
         """
         Send notifification to clients that a contact has been updated
         :param updates:
@@ -54,7 +53,7 @@ class ContactsService(Service):
         """
         push_notification("contacts:update", _id=[original.get(ID_FIELD)])
 
-    def on_deleted(self, doc):
+    async def on_deleted_async(self, doc):
         """
         Send a notification to clients that a contact has been deleted
         :param doc:
@@ -88,8 +87,8 @@ class ContactsService(Service):
             )
 
 
-class OrganisationService(Service):
-    def get(self, req, lookup):
+class OrganisationService(AsyncBaseService):
+    async def get_async(self, req, lookup):
         """
         Search for organisation matching the passed q parameter
         :param req:
@@ -100,7 +99,7 @@ class OrganisationService(Service):
 
         q_str = "organisation:" + "* organisation:".join(req.args.get("q", "").split()) + "*"
         new_req.args = {"q": q_str, "default_operator": "AND", "projections": '{"organisation": 1}'}
-        ret = super().get(new_req, lookup)
+        ret = await super().get_async(new_req, lookup)
 
         # Remove any duplicate entries from the response
         orgs = []

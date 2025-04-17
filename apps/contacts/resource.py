@@ -8,7 +8,7 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
-from superdesk.resource import Resource, text_with_keyword, not_analyzed
+from superdesk.resource import Resource, text_with_keyword
 
 CONTACTS_PRIVILEDGE = "contacts"
 VIEW_CONTACTS = "view_contacts"
