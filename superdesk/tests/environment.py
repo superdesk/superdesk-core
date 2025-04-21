@@ -39,11 +39,13 @@ def setup_before_all(context, config, app_factory):
     setup_before_all.app_factory = app_factory
 
 
-async def setup_before_scenario(context, scenario, config, app_factory):
+async def before_scenario_async(context, scenario):
+    current_app = context.app
     if scenario.status != "skipped" and "notesting" in scenario.tags:
-        config["SUPERDESK_TESTING"] = False
+        current_app.config["SUPERDESK_TESTING"] = False
 
-    await tests.setup(context, config, app_factory, bool(config))
+    async with current_app.app_context():
+        await tests.clean_dbs(current_app, init_indexes=False)
 
     context.headers = [("Content-Type", "application/json"), ("Origin", "localhost")]
 
@@ -95,7 +97,7 @@ def before_all(context):
 def before_feature(context, feature):
     try:
         loop = asyncio.get_event_loop()
-        loop.run_until_complete(before_scenario_async(context, feature))
+        loop.run_until_complete(before_feature_async(context, feature))
     except Exception as e:
         # Make sure exceptions raised are printed to the console
         logger.exception(e)
@@ -108,8 +110,8 @@ async def before_feature_async(context, feature):
         app_factory = setup_before_all.app_factory
     else:
         # superdesk-aap don't use "setup_before_all" already
-        config = getattr(setup_before_scenario, "config", None)
-        app_factory = getattr(setup_before_scenario, "app_factory", None)
+        config = getattr(before_scenario_async, "config", None)
+        app_factory = getattr(before_scenario_async, "app_factory", None)
     config = deepcopy(config or {})
     app_factory = app_factory or get_app
 
@@ -136,11 +138,6 @@ def before_scenario(context, scenario):
         # Make sure exceptions raised are printed to the console
         logger.exception(e)
         raise e
-
-
-async def before_scenario_async(context, scenario):
-    config = {}
-    await setup_before_scenario(context, scenario, config, app_factory=get_app)
 
 
 def after_scenario(context, scenario):

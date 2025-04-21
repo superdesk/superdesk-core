@@ -114,7 +114,7 @@ class LocatorIndex:
 @bp.route("/country/<country_code>", methods=["GET", "OPTIONS"])
 @bp.route("/country/<country_code>/state/<state_code>", methods=["GET", "OPTIONS"])
 @blueprint_auth()
-def get_cities(country_code=None, state_code=None):
+async def get_cities(country_code=None, state_code=None):
     """
     Fetches cities and sends the list as response body.
 
@@ -129,6 +129,6 @@ def get_cities(country_code=None, state_code=None):
 
     if cities and len(cities):
         response_data = {"_items": cities, "_meta": {"total": len(cities)}}
-        return send_response(None, (response_data, utcnow(), None, 200))
+        return await send_response(None, (response_data, utcnow(), None, 200))
     else:
-        return send_response(None, ({}, utcnow(), None, 404))
+        return await send_response(None, ({}, utcnow(), None, 404))

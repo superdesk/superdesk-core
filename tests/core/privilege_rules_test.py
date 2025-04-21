@@ -1,7 +1,7 @@
-from unittest import IsolatedAsyncioTestCase
 from unittest.mock import patch, MagicMock
 from superdesk.errors import SuperdeskApiError
 from superdesk.core.auth.privilege_rules import http_method_privilege_based_rules, required_privilege_rule
+from superdesk.tests import IsolatedAsyncioTestCase
 
 
 class TestPrivilegeRules(IsolatedAsyncioTestCase):
