@@ -667,7 +667,7 @@ async def create_scheduled_content(now=None):
         templates = await get_scheduled_templates(now)
         production = superdesk.get_resource_service(ARCHIVE)
         items = []
-        for template in templates:
+        async for template in templates:
             await set_template_timestamps(template, now)
             item = get_item_from_template(template)
             item[VERSION] = 1
