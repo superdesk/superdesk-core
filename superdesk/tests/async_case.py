@@ -36,13 +36,11 @@ class IsolatedAsyncioTestCase(AsyncTestCase):
     async def asyncSetUpClass(cls):
         "Hook method for setting up class fixture before running tests in the class."
         pass
-        # print("\t*** asyncSetUpClass")
 
     @classmethod
     async def asyncTearDownClass(cls):
         "Hook method for setting up class fixture before running tests in the class."
         pass
-        # print("\t--- asyncTearDownClass")
 
     def _setupAsyncioLoop(self):
         loop = get_loop()
@@ -81,3 +79,12 @@ class IsolatedAsyncioTestCase(AsyncTestCase):
                 )
         # shutdown asyncgens
         loop.run_until_complete(loop.shutdown_asyncgens())
+
+    # Python v3.12 changes
+    def _tearDownAsyncioRunner(self):
+        pass
+
+    def _setupAsyncioRunner(self):
+        assert self._asyncioRunner is None, "asyncio runner is already initialized"
+        runner = asyncio.Runner(debug=True, loop_factory=get_loop)
+        self._asyncioRunner = runner
