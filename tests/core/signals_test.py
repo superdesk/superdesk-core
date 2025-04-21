@@ -1,5 +1,5 @@
 from typing import Any
-from unittest import IsolatedAsyncioTestCase, mock
+from unittest import mock
 from unittest.mock import Mock, AsyncMock, ANY
 
 from superdesk.core import AsyncSignal
@@ -11,7 +11,7 @@ from superdesk.utils import format_time
 from superdesk.factory.app import HttpFlaskRequest
 from superdesk.errors import SuperdeskApiError
 
-from superdesk.tests import AsyncTestCase, AsyncFlaskTestCase
+from superdesk.tests import AsyncTestCase, AsyncFlaskTestCase, IsolatedAsyncioTestCase
 
 from .modules.users import User
 from .fixtures.users import john_doe

@@ -25,7 +25,7 @@ jobs:
     - run: ./scripts/tests_setup
     - run: pip install -U pip wheel setuptools
     - run: pip install -Ur dev-requirements.txt
-#    - run: pytest -p no:asyncio --log-level=ERROR --disable-warnings tests/core
+    - run: pytest -p no:asyncio --log-level=ERROR --disable-warnings tests/core
     - run: pytest -p no:asyncio --log-level=ERROR --disable-warnings --ignore=tests/core
 
   pip-compile:
