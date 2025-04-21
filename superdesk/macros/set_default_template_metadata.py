@@ -32,6 +32,7 @@ def get_default_content_template(item, **kwargs):
     if not content_template_id:
         logger.warning("No default content template set for {desk_name}".format(desk_name=desk.get("name", desk_id)))
         return
+    # TODO-ASYNC[ContentTemplatesService]: Use find_one_async where when upgrading this module
     content_template = get_resource_service("content_templates").find_one(req=None, _id=content_template_id)
     if not content_template:
         logger.warning(

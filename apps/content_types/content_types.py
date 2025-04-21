@@ -143,14 +143,14 @@ class ContentTypesService(CacheableService):
     async def on_delete(self, doc):
         if doc.get("is_used"):
             raise SuperdeskApiError(status_code=202, payload={"is_used": True})
-        remove_profile_from_templates(doc)
+        await remove_profile_from_templates(doc)
         await remove_profile_from_desks_async(doc)
 
     async def on_update(self, updates, original):
         await self._validate_disable(updates, original)
         self._set_updated_by(updates)
         prepare_for_save_content_type(original, updates)
-        self._update_template_fields(updates, original)
+        await self._update_template_fields(updates, original)
 
     def on_delete_res_vocabularies(self, doc):
         req = ParsedRequest()
@@ -173,8 +173,8 @@ class ContentTypesService(CacheableService):
         content profile if the profile is being disabled
         """
         if "enabled" in updates and updates.get("enabled") is False and original.get("enabled") is True:
-            templates = list(
-                superdesk.get_resource_service("content_templates").get_templates_by_profile_id(original.get("_id"))
+            templates = await superdesk.get_resource_service("content_templates").get_templates_by_profile_id(
+                original.get("_id")
             )
 
             if len(templates) > 0:
@@ -198,7 +198,7 @@ class ContentTypesService(CacheableService):
                     )
                 )
 
-    def _update_template_fields(self, updates, original):
+    async def _update_template_fields(self, updates, original):
         """
         Finds the templates that are referencing the given
         content profile an clears the disabled fields
@@ -207,8 +207,8 @@ class ContentTypesService(CacheableService):
         # these are the only fields of templates that don't depend on the schema.
         template_metadata_fields = ["usageterms"]
 
-        templates = list(
-            superdesk.get_resource_service("content_templates").get_templates_by_profile_id(original.get("_id"))
+        templates = await superdesk.get_resource_service("content_templates").get_templates_by_profile_id(
+            original.get("_id")
         )
 
         for template in templates:
@@ -220,7 +220,9 @@ class ContentTypesService(CacheableService):
                     data.pop(field, None)
                     processed = True
             if processed:
-                superdesk.get_resource_service("content_templates").patch(template.get("_id"), {"data": data})
+                await superdesk.get_resource_service("content_templates").patch_async(
+                    template.get("_id"), {"data": data}
+                )
 
     def find_one(self, req, **lookup):
         is_edit = req and "edit" in req.args
@@ -622,17 +624,18 @@ def apply_schema(item: dict, profile: dict | None = None) -> dict:
     return {key: val for key, val in item.items() if is_enabled(key, schema) or key in allowed_keys}
 
 
-def remove_profile_from_templates(item):
+async def remove_profile_from_templates(item):
     """Removes the profile data from templates that are using the profile
 
     :param item: deleted content profile
     """
-    templates = list(
-        superdesk.get_resource_service("content_templates").get_templates_by_profile_id(item.get(ID_FIELD))
+    templates = await superdesk.get_resource_service("content_templates").get_templates_by_profile_id(
+        item.get(ID_FIELD)
     )
+
     for template in templates:
         template.get("data", {}).pop("profile", None)
-        superdesk.get_resource_service("content_templates").patch(template[ID_FIELD], template)
+        await superdesk.get_resource_service("content_templates").patch_async(template[ID_FIELD], template)
 
 
 def get_profile(_id):
