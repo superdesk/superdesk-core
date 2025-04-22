@@ -516,7 +516,7 @@ async def render_content_template_by_name(item, template_name):
     return await render_content_template(item, template)
 
 
-def render_content_template_by_id(item, template_id, update=False):
+async def render_content_template_by_id(item, template_id, update=False):
     """Apply template by name.
 
     :param dict item: item on which template is applied
@@ -525,11 +525,12 @@ def render_content_template_by_id(item, template_id, update=False):
     :return dict: updates to the item
     """
     # get the kill template
+    # TODO-ASYNC[content_templates]: Use async method once ContentTemplatesService is async.
     template = superdesk.get_resource_service("content_templates").find_one(req=None, _id=template_id)
     if not template:
         SuperdeskApiError.badRequestError(message="{} Template missing.".format(template_id))
 
-    return render_content_template(item, template, update)
+    return await render_content_template(item, template, update)
 
 
 async def render_content_template(item, template, update=False):

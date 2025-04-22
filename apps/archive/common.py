@@ -15,6 +15,7 @@ import logging
 from datetime import datetime
 from dateutil.parser import parse as date_parse
 from apps.archive.archive import ArchiveService
+from apps.desks import DesksService
 from apps.desks_async.desks_async_service import DesksAsyncService
 from eve.versioning import insert_versioning_documents
 from pytz import timezone
@@ -171,11 +172,12 @@ def update_version(updates, original):
         updates.setdefault("version", updates[VERSION])
 
 
-def on_create_item(docs, repo_type=ARCHIVE, media_service=None):
+async def on_create_item(docs, repo_type=ARCHIVE, media_service=None):
     """Make sure item has basic fields populated."""
 
     for doc in docs:
         if doc.get("media") and media_service:
+            # TODO-ASYNC[archive_media_service]: Use async method once available.
             media_service.on_create([doc])
 
         editor_utils.generate_fields(doc)
@@ -218,8 +220,10 @@ def on_create_item(docs, repo_type=ARCHIVE, media_service=None):
             doc["language"] = get_app_config("DEFAULT_LANGUAGE", "en")
 
             if doc.get("task", None) and doc["task"].get("desk", None):
-                # TODO-ASYNC[desks]: Use DesksResourceModel async service where when upgrading this module
-                desk = superdesk.get_resource_service("desks").find_one(req=None, _id=doc["task"]["desk"])
+                desks_service = get_resource_service("desks")
+                assert desks_service is not None
+                desks_service = cast(DesksService, desks_service)
+                desk = await desks_service.find_one_async(req=None, _id=doc["task"]["desk"])
                 if desk and desk.get("desk_language", None):
                     doc["language"] = desk["desk_language"]
 
@@ -230,7 +234,7 @@ def on_create_item(docs, repo_type=ARCHIVE, media_service=None):
             from apps.templates.content_templates import render_content_template_by_id  # avoid circular import
 
             doc.pop("fields_meta", None)
-            render_content_template_by_id(doc, doc["template"], update=True)
+            await render_content_template_by_id(doc, doc["template"], update=True)
             editor_utils.generate_fields(doc)
 
 

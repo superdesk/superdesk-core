@@ -369,7 +369,7 @@ class ArchiveService(AsyncBaseService, HighlightsSearchMixin):
             handle_existing_data(item)
 
     async def on_create_async(self, docs):
-        on_create_item(docs, media_service=self.mediaService)
+        await on_create_item(docs, media_service=self.mediaService)
 
         for doc in docs:
             if doc.get("body_footer") and is_normal_package(doc):
@@ -1558,7 +1558,7 @@ class ArchiveInternalResource(Resource):
     internal_resource = True
 
 
-class ArchiveInternalService(BaseService):
+class ArchiveInternalService(AsyncBaseService):
     pass
 
 

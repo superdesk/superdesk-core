@@ -1,6 +1,6 @@
+from superdesk.eve_async.service import AsyncBaseService
 from superdesk.flask import abort, request
 from superdesk.resource import Resource
-from superdesk.services import Service
 from superdesk.metadata.utils import item_url
 from superdesk.metadata.item import CONTENT_STATE
 from .archive import ArchiveResource
@@ -58,9 +58,9 @@ class ArchiveRelatedResource(Resource):
     resource_title = endpoint_name
 
 
-class ArchiveRelatedService(Service):
-    def get(self, req, lookup):
-        item = self.find_one(req=req, _id=lookup["item_id"])
+class ArchiveRelatedService(AsyncBaseService):
+    async def get_async(self, req, lookup):
+        item = await self.find_one_async(req=req, _id=lookup["item_id"])
         if not item or not item.get("family_id"):
             abort(404)
-        return super().get(req, {"family_id": item["family_id"]})
+        return await super().get_async(req, {"family_id": item["family_id"]})
