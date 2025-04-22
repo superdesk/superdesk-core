@@ -384,8 +384,7 @@ class ArchiveService(AsyncBaseService, HighlightsSearchMixin):
             await set_item_expiry({}, doc)
 
             if doc[ITEM_TYPE] == CONTENT_TYPE.COMPOSITE:
-                # TODO-ASYNC: Convert packageService async
-                self.packageService.on_create([doc])
+                await self.packageService.on_create_async([doc])
 
             # Do the validation after Circular Reference check passes in Package Service
             update_schedule_settings(doc, EMBARGO, doc.get(EMBARGO))
@@ -422,8 +421,7 @@ class ArchiveService(AsyncBaseService, HighlightsSearchMixin):
     async def on_created_async(self, docs):
         packages = [doc for doc in docs if doc[ITEM_TYPE] == CONTENT_TYPE.COMPOSITE]
         if packages:
-            # TODO-ASYNC[package_service]: Convert PackageService to async
-            self.packageService.on_created(packages)
+            await self.packageService.on_created_async(packages)
 
         app = get_current_app().as_any()
         profiles = set()
@@ -579,8 +577,7 @@ class ArchiveService(AsyncBaseService, HighlightsSearchMixin):
         get_component(ItemAutosave).clear(original["_id"])
 
         if original[ITEM_TYPE] == CONTENT_TYPE.COMPOSITE:
-            # TODO-ASYNC[package_service]: Convert packageService to async
-            self.packageService.on_updated(updates, original)
+            await self.packageService.on_updated_async(updates, original)
 
         updated = copy(original)
         updated.update(updates)
@@ -642,8 +639,7 @@ class ArchiveService(AsyncBaseService, HighlightsSearchMixin):
         # TODO-ASYNC[item_autosave]: Convert ItemAutosave to async
         get_component(ItemAutosave).clear(doc["_id"])
         if doc[ITEM_TYPE] == CONTENT_TYPE.COMPOSITE:
-            # TODO-ASYNC[package_service]: Convert packageService to async
-            self.packageService.on_deleted(doc)
+            await self.packageService.on_deleted_async(doc)
 
         await remove_media_files(doc, published=False)
         await self._remove_from_translations(doc)
@@ -744,11 +740,10 @@ class ArchiveService(AsyncBaseService, HighlightsSearchMixin):
                     associations = groups.get("refs", [])
                     for assoc in associations:
                         if assoc.get(RESIDREF):
-                            # TODO-ASYNC[package_service]: update this line when PackageService is async
-                            item, _item_id, _endpoint = self.packageService.get_associated_item(assoc)
-                            assoc[RESIDREF] = assoc["guid"] = self.duplicate_content(item)
+                            item, _item_id, _endpoint = await self.packageService.get_associated_item_async(assoc)
+                            assoc[RESIDREF] = assoc["guid"] = await self.duplicate_content(item)
 
-        return self.duplicate_item(original_doc, state, extra_fields)
+        return await self.duplicate_item(original_doc, state, extra_fields)
 
     async def duplicate_item(self, original_doc, state=None, extra_fields=None, operation=None):
         """Duplicates an item.

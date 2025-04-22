@@ -261,7 +261,7 @@ class KillPublishService(BasePublishService):
 
         for item in broadcast_items:
             item_id = item.get(ID_FIELD)
-            packages = self.package_service.get_packages(item_id)
+            packages = await self.package_service.get_packages_async(item_id)
 
             processed_packages = set()
             for package in packages:
@@ -283,7 +283,9 @@ class KillPublishService(BasePublishService):
 
                         processed_packages.add(package.get(ID_FIELD))
                     else:
-                        package_list = self.package_service.remove_refs_in_package(package, item_id, processed_packages)
+                        package_list = await self.package_service.remove_refs_in_package_async(
+                            package, item_id, processed_packages
+                        )
                         processed_packages = processed_packages.union(set(package_list))
                 except Exception:
                     package_id = package.get(ID_FIELD)

@@ -10,6 +10,8 @@
 
 import logging
 from typing import cast
+from apps.desks import DesksService
+from apps.highlights.service import HighlightsService
 from eve.versioning import resolve_document_version
 
 from superdesk.core import get_current_app, get_app_config
@@ -34,13 +36,15 @@ from superdesk.metadata.packages import (
     MAIN_ROLE,
     GROUP_ID,
 )
-from apps.archive.common import insert_into_versions, ITEM_UNLINK
+from apps.archive.common import ITEM_UNLINK, insert_into_versions_async
 from apps.archive.archive import SOURCE as ARCHIVE, ArchiveService
 from superdesk.utc import utcnow
 from superdesk.default_settings import VERSION
 from quart_babel import gettext as _
 from superdesk.signals import signals
 from superdesk.validation import ValidationError
+from superdesk.eve_async.service import AsyncBaseService
+from apps.templates.content_templates import render_content_template_by_id
 
 logger = logging.getLogger(__name__)
 package_create_signal = signals.signal("package.create")  # @UndefinedVariable
@@ -75,7 +79,7 @@ def get_item_ref(item):
     }
 
 
-def copy_metadata_from_highlight_template(doc):
+async def copy_metadata_from_highlight_template(doc):
     """
     Copy the values set on highlight template
 
@@ -83,48 +87,50 @@ def copy_metadata_from_highlight_template(doc):
     """
     highlight_id = doc.get("highlight", None)
     if highlight_id:
-        highlight = superdesk.get_resource_service("highlights").find_one(req=None, _id=highlight_id)
+        highlights_service = get_resource_service("highlights")
+        assert highlights_service is not None
+        highlights_service = cast(HighlightsService, highlights_service)
+        # TODO-ASYNC[highlights]: Use async method once HighlightsService is async.
+        highlight = highlights_service.find_one(req=None, _id=highlight_id)
         if highlight and "template" in highlight:
-            from apps.templates.content_templates import render_content_template_by_id
-
-            updates = render_content_template_by_id(doc, highlight.get("template", None))
+            updates = await render_content_template_by_id(doc, highlight.get("template", None))
             if ITEM_TYPE in updates:
                 del updates[ITEM_TYPE]
             doc.update(updates)
 
 
 class PackageService:
-    def on_create(self, docs):
+    async def on_create_async(self, docs):
         create_root_group(docs)
         self.check_root_group(docs)
-        self.check_package_associations(docs)
-        self.check_not_in_personal_space(docs)
+        await self.check_package_associations_async(docs)
+        await self.check_not_in_personal_space_async(docs)
 
         for doc in docs:
             if not doc.get("ingest_provider"):
                 doc["source"] = get_app_config("DEFAULT_SOURCE_VALUE_FOR_MANUAL_ARTICLES")
 
             if "highlight" in doc:
-                copy_metadata_from_highlight_template(doc)
+                await copy_metadata_from_highlight_template(doc)
 
         package_create_signal.send(self, docs=docs)
 
-    def on_created(self, docs):
+    async def on_created_async(self, docs):
         for doc, assoc in [(doc, assoc) for doc in docs for assoc in self._get_associations(doc)]:
-            self.update_link(doc, assoc)
+            await self.update_link_async(doc, assoc)
 
-    def on_update(self, updates, original):
+    async def on_update_async(self, updates, original):
         self.check_root_group([updates])
         associations = self._get_associations(updates)
-        self.check_for_duplicates(original, associations)
+        await self.check_for_duplicates_async(original, associations)
         for assoc in associations:
-            self.extract_default_association_data(original, assoc)
+            await self.extract_default_association_data_async(original, assoc)
 
-    def on_updated(self, updates, original):
+    async def on_updated_async(self, updates, original):
         if updates.get(GROUPS):
-            self.update_groups(updates, original)
+            await self.update_groups_async(updates, original)
 
-    def update_groups(self, updates, original):
+    async def update_groups_async(self, updates, original):
         to_add = {
             assoc.get(RESIDREF): assoc
             for assoc in self._get_associations(updates)
@@ -132,13 +138,13 @@ class PackageService:
         }
         to_remove = (assoc for assoc in self._get_associations(original) if assoc.get(RESIDREF) not in to_add)
         for assoc in to_remove:
-            self.update_link(original, assoc, delete=True)
-        for assoc in to_add.keys():
-            self.update_link(original, to_add[assoc])
+            await self.update_link_async(original, assoc, delete=True)
+        for assoc_id in to_add.keys():
+            await self.update_link_async(original, to_add[assoc_id])
 
-    def on_deleted(self, doc):
+    async def on_deleted_async(self, doc):
         for assoc in self._get_associations(doc):
-            self.update_link(doc, assoc, delete=True)
+            await self.update_link_async(doc, assoc, delete=True)
 
     def check_root_group(self, docs):
         for groups in [doc.get(GROUPS) for doc in docs if doc.get(GROUPS)]:
@@ -183,14 +189,14 @@ class PackageService:
             logger.error(message)
             raise SuperdeskApiError.forbiddenError(message=message)
 
-    def check_package_associations(self, docs):
+    async def check_package_associations_async(self, docs):
         for doc, group in ((doc, group) for doc in docs for group in doc.get(GROUPS, [])):
             associations = group.get(REFS, [])
-            self.check_for_duplicates(doc, associations)
+            await self.check_for_duplicates_async(doc, associations)
             for assoc in associations:
-                self.extract_default_association_data(group, assoc)
+                await self.extract_default_association_data_async(group, assoc)
 
-    def check_not_in_personal_space(self, docs):
+    async def check_not_in_personal_space_async(self, docs):
         """Verify that the package is not in the user personal space.
 
         Retrieving details for the list of packages an item was linked in does not
@@ -207,41 +213,46 @@ class PackageService:
                     logger.error(message)
                     raise SuperdeskApiError.forbiddenError(message=message)
                 if not doc["task"].get("stage"):
-                    # TODO-ASYNC[desks]: Use DesksResourceModel async service where when upgrading this module
-                    desk = get_resource_service("desks").find_one(req=None, _id=doc["task"]["desk"])
+                    desks_service = get_resource_service("desks")
+                    assert desks_service is not None
+                    desks_service = cast(DesksService, desks_service)
+                    desk = await desks_service.find_one_async(req=None, _id=doc["task"]["desk"])
                     doc["task"]["stage"] = desk["working_stage"]
 
-    def extract_default_association_data(self, package, assoc):
+    async def extract_default_association_data_async(self, package, assoc):
         if assoc.get(ID_REF):
             return
 
-        item, item_id, endpoint = self.get_associated_item(assoc)
-        self.check_for_circular_reference(package, item_id)
+        item, item_id, endpoint = await self.get_associated_item_async(assoc)
+        await self.check_for_circular_reference_async(package, item_id)
         assoc["guid"] = item.get("guid", item_id)
         assoc["type"] = item.get("type")
 
-    def get_associated_item(self, assoc, throw_if_not_found=True):
+    async def get_associated_item_async(self, assoc, throw_if_not_found=True):
         endpoint = assoc.get("location", "archive")
-        item_id = assoc[RESIDREF]
+        item_id = assoc.get(RESIDREF)
 
         if not item_id:
             raise SuperdeskApiError.badRequestError(_("Package contains empty ResidRef!"))
 
-        item = get_resource_service(endpoint).find_one(req=None, _id=item_id)
+        service = get_resource_service(endpoint)
+        assert service is not None
+        service = cast(AsyncBaseService, service)
+        item = await service.find_one_async(req=None, _id=item_id)
 
         if not item and throw_if_not_found:
-            message = _("Invalid item reference: {reference}").format(reference=assoc[RESIDREF])
+            message = _("Invalid item reference: {reference}").format(reference=assoc.get(RESIDREF))
             logger.error(message)
             raise SuperdeskApiError.notFoundError(message=message)
         return item, item_id, endpoint
 
-    def update_link(self, package, assoc, delete=False):
+    async def update_link_async(self, package, assoc, delete=False):
         # skip root node
         if assoc.get(ID_REF):
             return
         package_id = package[ID_FIELD]
 
-        item, item_id, endpoint = self.get_associated_item(assoc, not delete)
+        item, item_id, endpoint = await self.get_associated_item_async(assoc, not delete)
         if not item and delete:
             # just exit, no point on complaining
             return
@@ -253,9 +264,12 @@ class PackageService:
             two_way_links.append(data)
 
         updates = {LINKED_IN_PACKAGES: two_way_links}
-        get_resource_service(endpoint).system_update(item_id, updates, item)
+        service = get_resource_service(endpoint)
+        assert service is not None
+        service = cast(AsyncBaseService, service)
+        await service.system_update_async(item_id, updates, item)
 
-    def check_for_duplicates(self, package, associations):
+    async def check_for_duplicates_async(self, package, associations):
         counter = Counter()
         package_id = package[ID_FIELD]
         for itemRef in [assoc[RESIDREF] for assoc in associations if assoc.get(RESIDREF)]:
@@ -270,19 +284,22 @@ class PackageService:
             logger.error(message)
             raise SuperdeskApiError.forbiddenError(message=message)
 
-    def check_for_circular_reference(self, package, item_id):
+    async def check_for_circular_reference_async(self, package, item_id):
         if any(d for d in package.get(LINKED_IN_PACKAGES, []) if d["package"] == item_id):
             message = _("Trying to create a circular reference to: {item_id}").format(item_id=item_id)
             logger.error(message)
             raise ValidationError(message)
         else:
             # keep checking in the hierarchy
+            archive_service = get_resource_service(ARCHIVE)
+            assert archive_service is not None
+            archive_service = cast(ArchiveService, archive_service)
             for d in (d for d in package.get(LINKED_IN_PACKAGES, []) if "package" in d):
-                linked_package = get_resource_service(ARCHIVE).find_one(req=None, _id=d["package"])
+                linked_package = await archive_service.find_one_async(req=None, _id=d["package"])
                 if linked_package:
-                    self.check_for_circular_reference(linked_package, item_id)
+                    await self.check_for_circular_reference_async(linked_package, item_id)
 
-    def get_packages(self, doc_id, not_package_id=None):
+    async def get_packages_async(self, doc_id, not_package_id=None):
         """
         Retrieves package(s) if an article identified by doc_id is referenced in a package.
 
@@ -299,7 +316,10 @@ class PackageService:
         request = ParsedRequest()
         request.max_results = 100
 
-        return get_resource_service(ARCHIVE).get_from_mongo(req=request, lookup=query)
+        archive_service = get_resource_service(ARCHIVE)
+        assert archive_service is not None
+        archive_service = cast(ArchiveService, archive_service)
+        return await archive_service.get_from_mongo_async(req=request, lookup=query)
 
     def remove_ref_from_inmem_package(self, package, ref_id):
         """Removes the reference with ref_id from non-root groups.
@@ -335,17 +355,21 @@ class PackageService:
         # still has items in the package
         return True
 
-    def replace_ref_in_package(self, package, old_ref_id, new_ref_id):
+    async def replace_ref_in_package_async(self, package, old_ref_id, new_ref_id):
         """Locates the reference with the old_ref_id and replaces with the new_ref_id
 
         :param package: Package
         :param old_ref_id: Old reference id
         :param new_ref_id: New reference id
         """
+        archive_service = get_resource_service("archive")
+        assert archive_service is not None
+        archive_service = cast(ArchiveService, archive_service)
+        new_item = await archive_service.find_one_async(req=None, _id=new_ref_id)
+
         non_root_groups = (group for group in package.get(GROUPS, []) if group.get(GROUP_ID) != ROOT_GROUP)
         for g in (ref for group in non_root_groups for ref in group.get(REFS, [])):
             if g.get(RESIDREF, "") == old_ref_id:
-                new_item = get_resource_service("archive").find_one(req=None, _id=new_ref_id)
                 g[RESIDREF] = new_ref_id
                 g["guid"] = new_ref_id
                 g[VERSION] = new_item[VERSION]
@@ -382,7 +406,7 @@ class PackageService:
 
         return new_groups
 
-    def remove_refs_in_package(self, package, ref_id_to_remove, processed_packages=None):
+    async def remove_refs_in_package_async(self, package, ref_id_to_remove, processed_packages=None):
         """Removes residRef referenced by ref_id_to_remove from the package associations and returns the package id.
 
         Before removing checks if the package has been processed. If processed the package is skipped.
@@ -399,18 +423,21 @@ class PackageService:
         ]
         for sub_package_id in sub_package_ids:
             if sub_package_id not in processed_packages:
-                sub_package = self.find_one(req=None, _id=sub_package_id)
-                return self.remove_refs_in_package(sub_package, ref_id_to_remove)
+                sub_package = await self.find_one_async(req=None, _id=sub_package_id)
+                await self.remove_refs_in_package_async(sub_package, ref_id_to_remove, processed_packages)
 
         new_groups = self.remove_group_ref(package, ref_id_to_remove)
         updates = {LAST_UPDATED: utcnow(), GROUPS: new_groups}
 
         resolve_document_version(updates, ARCHIVE, "PATCH", package)
-        get_resource_service(ARCHIVE).patch(package[ID_FIELD], updates)
+        archive_service = get_resource_service("archive")
+        assert archive_service is not None
+        archive_service = cast(ArchiveService, archive_service)
+        await archive_service.patch_async(package[ID_FIELD], updates)
 
         app = get_current_app().as_any()
         app.on_archive_item_updated(updates, package, ITEM_UNLINK)
-        insert_into_versions(id_=package[ID_FIELD])
+        await insert_into_versions_async(id_=package[ID_FIELD])
 
         sub_package_ids.append(package[ID_FIELD])
         return sub_package_ids
@@ -418,9 +445,10 @@ class PackageService:
     def _get_associations(self, doc):
         return [assoc for group in doc.get(GROUPS, []) for assoc in group.get(REFS, [])]
 
-    def remove_spiked_refs_from_package(self, doc_id, not_package_id=None):
-        packages = self.get_packages(doc_id, not_package_id)
-        if packages.count() == 0:
+    async def remove_spiked_refs_from_package_async(self, doc_id, not_package_id=None):
+        packages_cursor = await self.get_packages_async(doc_id, not_package_id)
+        packages = await packages_cursor.to_list(None)
+        if not packages:
             return
 
         processed_packages = []
@@ -428,7 +456,7 @@ class PackageService:
             if str(package[ID_FIELD]) in processed_packages:
                 continue
 
-            processed_packages.extend(self.remove_refs_in_package(package, doc_id, processed_packages))
+            processed_packages.extend(await self.remove_refs_in_package_async(package, doc_id, processed_packages))
 
     def get_residrefs(self, package):
         """
@@ -449,13 +477,14 @@ class PackageService:
 
         item_refs_in_package = self.get_residrefs(package)
 
+        archive_service = get_resource_service("archive")
+        assert archive_service is not None
+        archive_service = cast(ArchiveService, archive_service)
+
         for item_ref in item_refs_in_package:
-            archive_service = get_resource_service(ARCHIVE)
-            assert archive_service is not None
-            archive_service = cast(ArchiveService, archive_service)
             doc = await archive_service.find_one_async(req=None, _id=item_ref)
 
-            if doc.get(EMBARGO):
+            if doc and doc.get(EMBARGO):
                 raise SuperdeskApiError.badRequestError(
                     _("Package can't have item which has embargo. ")
                     + _("Slugline/Unique Name of the item having embargo: {slugline}/{unique}").format(
@@ -463,7 +492,7 @@ class PackageService:
                     )
                 )
 
-            if doc[ITEM_TYPE] == CONTENT_TYPE.COMPOSITE:
+            if doc and doc[ITEM_TYPE] == CONTENT_TYPE.COMPOSITE:
                 await self.check_if_any_item_in_package_has_embargo(doc)
 
     def get_item_refs(self, package):

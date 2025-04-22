@@ -14,6 +14,7 @@ from bson import ObjectId
 import logging
 from datetime import datetime
 from dateutil.parser import parse as date_parse
+from apps.archive.archive import ArchiveService
 from apps.desks_async.desks_async_service import DesksAsyncService
 from eve.versioning import insert_versioning_documents
 from pytz import timezone
@@ -444,6 +445,35 @@ def insert_into_versions(id_=None, doc=None):
 
     if id_:
         doc_in_archive_collection = get_resource_service(ARCHIVE).find_one(req=None, _id=id_)
+    else:
+        doc_in_archive_collection = doc
+
+    if not doc_in_archive_collection:
+        raise SuperdeskApiError.badRequestError(message=_("Document not found in archive collection"))
+
+    remove_unwanted(doc_in_archive_collection)
+    if VERSION in doc_in_archive_collection:
+        insert_versioning_documents(ARCHIVE, doc_in_archive_collection)
+
+
+async def insert_into_versions_async(id_=None, doc=None):
+    """Insert version document.
+
+    There are some scenarios where the requests are not handled by eve. In those scenarios superdesk should be able to
+    manually manage versions. Below are some scenarios:
+
+    1.  When a user fetches content from ingest collection the request is handled by fetch API which doesn't
+        extend from ArchiveResource.
+    2.  When a user submits content to a desk the request is handled by /tasks API.
+    3.  When a user publishes a package the items of the package also needs to be published. The publishing of items
+        in the package is not handled by eve.
+    """
+
+    if id_:
+        archive_service = get_resource_service(ARCHIVE)
+        assert archive_service is not None
+        archive_service = cast(ArchiveService, archive_service)
+        doc_in_archive_collection = await archive_service.find_one_async(req=None, _id=id_)
     else:
         doc_in_archive_collection = doc
 

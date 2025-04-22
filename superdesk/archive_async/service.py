@@ -233,7 +233,7 @@ class AsyncArchiveService(AsyncResourceService[ArchiveResourceModel], Highlights
             set_item_expiry({}, doc)
 
             if doc.item_type == ContentTypes.COMPOSITE:
-                await self.packageService.on_create([doc])
+                await self.packageService.on_create_async([doc])
 
             # Do the validation after Circular Reference check passes in Package Service
             update_schedule_settings(doc, EMBARGO, doc.embargo)
@@ -269,7 +269,7 @@ class AsyncArchiveService(AsyncResourceService[ArchiveResourceModel], Highlights
         """
         packages = [doc for doc in docs if doc.item_type == ContentTypes.COMPOSITE]
         if packages:
-            await self.packageService.on_created(packages)
+            await self.packageService.on_created_async(packages)
 
         app = get_current_app().as_any()
         profiles = set()
@@ -432,7 +432,7 @@ class AsyncArchiveService(AsyncResourceService[ArchiveResourceModel], Highlights
         get_component(ItemAutosave).clear(original.id)
 
         if original.item_type == ContentTypes.COMPOSITE:
-            await self.packageService.on_updated(updates, original)
+            await self.packageService.on_updated_async(updates, original)
 
         updated = copy(original)
         for k, v in updates.items():
