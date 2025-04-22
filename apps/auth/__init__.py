@@ -20,7 +20,7 @@ from superdesk.celery_app import celery
 from apps.auth.auth import SuperdeskTokenAuth
 from .auth import AuthUsersResource, AuthResource  # noqa
 from .sessions import SessionsResource, UserSessionClearResource
-from .session_purge import RemoveExpiredSessions
+from .session_purge import RemoveExpiredSessions, cli_session_gc  # noqa
 from .service import UserSessionClearService, AuthService
 
 logger = logging.getLogger(__name__)
@@ -87,6 +87,3 @@ def is_current_user_admin(required=False):
     """
     user = get_user(required) or {}
     return user.get("user_type", "") == "administrator"
-
-
-superdesk.command("session:gc", RemoveExpiredSessions())

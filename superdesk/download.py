@@ -13,11 +13,11 @@ import logging
 import superdesk
 from superdesk.errors import SuperdeskApiError
 from superdesk.auth.decorator import blueprint_auth
-from werkzeug.wsgi import wrap_file
 from .resource import Resource
 from .services import BaseService
-from superdesk.core import get_current_app
-from superdesk.flask import request, Blueprint
+from superdesk.core import get_current_app, get_config
+from superdesk.flask import request, Blueprint, url_for
+from superdesk.storage.superdesk_file import generate_response_for_file, get_file_request_range
 
 bp = Blueprint("download_raw", __name__)
 logger = logging.getLogger(__name__)
@@ -26,29 +26,25 @@ logger = logging.getLogger(__name__)
 @bp.route("/download/<id>", methods=["GET"], defaults={"folder": None})
 @bp.route("/download/<path:folder>/<id>", methods=["GET"])
 @blueprint_auth()
-def download_file(id, folder=None):
+async def download_file(id, folder=None):
     filename = "{}/{}".format(folder, id) if folder else id
     app = get_current_app()
 
-    file = app.media.get(filename, "download")
+    begin, end = get_file_request_range(request.range)
+    file = await app.media.get_async(filename, "download", begin=begin, end=end)
     if file:
-        data = wrap_file(request.environ, file, buffer_size=1024 * 256)
-        response = app.response_class(data, mimetype=file.content_type, direct_passthrough=True)
-        response.content_length = file.length
-        response.last_modified = file.upload_date
-        response.headers["Content-Disposition"] = 'attachment; filename="export.zip"'
-        return response
+        return await generate_response_for_file(file, content_disposition='attachment; filename="export.zip"')
     raise SuperdeskApiError.notFoundError("File not found on media storage.")
 
 
-# def download_url(media_id):
-#     prefered_url_scheme = app.config.get("PREFERRED_URL_SCHEME", "http")
-#     return url_for("download_raw.download_file", id=media_id, _external=True, _scheme=prefered_url_scheme)
+def download_url(media_id):
+    prefered_url_scheme = get_config(str, "PREFERRED_URL_SCHEME", "http")
+    return url_for("download_raw.download_file", id=media_id, _external=True, _scheme=prefered_url_scheme)
 
 
 def init_app(app) -> None:
     endpoint_name = "download"
-    # app.download_url = download_url
+    app.download_url = download_url
     superdesk.blueprint(bp, app)
     service = BaseService(endpoint_name, backend=superdesk.get_backend())
     DownloadResource(endpoint_name, app=app, service=service)

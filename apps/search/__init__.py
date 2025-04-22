@@ -250,9 +250,9 @@ class SearchService(AsyncBaseService):
         for resource in types:
             response = {ITEMS: [doc for doc in cursor if doc["_type"] == resource]}
             app = get_current_app().as_any()
-            getattr(app, "on_fetched_resource")(resource, response)
+            await getattr(app, "on_fetched_resource").call_async(resource, response)
             await getattr(app, "on_fetched_resource_%s_async" % resource).call_async(response)
-            getattr(app, "on_fetched_resource_%s" % resource)(response)
+            await getattr(app, "on_fetched_resource_%s" % resource).call_async(response)
 
         return cursor
 

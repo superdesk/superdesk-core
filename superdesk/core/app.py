@@ -229,6 +229,7 @@ class SuperdeskAsyncApp(SignalGroup):
 
         self.on_app_shutdown.send(self)
         self.mongo.stop()
+        self.resources.stop()
         self._imported_modules.clear()
         self._remove_app()
         self._running = False
@@ -268,8 +269,6 @@ def get_current_app() -> WSGIApp:
 
 def get_current_async_app() -> SuperdeskAsyncApp:
     """Retrieve the current app instance"""
-
-    global _global_app
 
     if _global_app is not None:
         return _global_app

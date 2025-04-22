@@ -1,0 +1,88 @@
+from typing import TYPE_CHECKING
+
+from pymongo.cursor_shared import _Hint as MongoCursorHint
+from motor.motor_asyncio import AsyncIOMotorCursor
+
+
+if TYPE_CHECKING:
+
+    class MongoAsyncEveCursor(AsyncIOMotorCursor):
+        # Adding the ``count`` method to the cursor, as our ``EveBackend`` adds it
+        async def count(self) -> int:
+            ...  # type: ignore[empty-body]
+
+        # Make sure ``sort`` function returns our cursor class
+        def sort(self, key_or_list: MongoCursorHint, direction: int | str | None = None) -> "MongoAsyncEveCursor":
+            ...  # type: ignore[empty-body]
+
+        # Seems like ``motor-types`` incorrectly assumes length is not optional
+        # compared to the ``motor`` library where it's optional
+        async def to_list(self, length: int | None = None) -> list[dict]:  # type: ignore[override]
+            ...  # type: ignore[empty-body]
+
+else:
+    MongoAsyncEveCursor = AsyncIOMotorCursor
+
+
+class ElasticAsyncEveCursor:
+    """Search results cursor.
+
+    Note: Adds methods to provide similar interface to MongoDB's AsyncIOMotorCursor
+    """
+
+    _index: int
+    hits: dict
+    no_hits = {"hits": {"total": 0, "hits": []}}
+    docs: list[dict]
+
+    def __init__(self, hits: dict | None = None, docs: list[dict] | None = None):
+        """Parse hits into docs."""
+        self._index = 0
+        self.hits = hits if hits else self.no_hits
+        self.docs = docs if docs else []
+
+    def __aiter__(self):
+        return self
+
+    async def __anext__(self) -> dict:
+        item = await self.next()
+        if item is not None:
+            return item
+        raise StopAsyncIteration
+
+    async def next(self) -> dict | None:
+        try:
+            doc = self.docs[self._index]
+            self._index += 1
+            return doc
+        except (IndexError, KeyError, TypeError):
+            self._index = 0
+            return None
+
+    async def to_list(self, length: int | None = None) -> list[dict]:
+        return self.docs if length is None else self.docs[:length]
+
+    def rewind(self) -> None:
+        """Rewind cursor to the beginning."""
+        self._index = 0
+
+    async def count(self, **kwargs) -> int:
+        """Get hits count."""
+        hits = self.hits.get("hits")
+        if hits:
+            total = hits.get("total")
+            if isinstance(total, int):
+                return total
+            elif isinstance(total, dict) and total.get("value"):
+                return int(total["value"])
+        return 0
+
+    def extra(self, response) -> None:
+        """Add extra info to response"""
+        if "facets" in self.hits:
+            response["_facets"] = self.hits["facets"]
+        if "aggregations" in self.hits:
+            response["_aggregations"] = self.hits["aggregations"]
+
+
+AsyncEveCursor = MongoAsyncEveCursor | ElasticAsyncEveCursor

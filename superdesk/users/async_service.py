@@ -267,7 +267,7 @@ class UsersAsyncService(AsyncResourceService[UsersResourceModel]):
 
     async def on_updated(self, updates: dict[str, Any], original: UsersResourceModel) -> None:
         if "role" in updates or "privileges" in updates:
-            await get_resource_service("preferences").on_update_async(updates, original)
+            await get_resource_service("preferences").on_update_async(updates, original.to_dict())
         await self.__handle_status_changed(updates, original)
         await self.handle_user_type_changed(updates, original)
         await self.__send_notification(updates, original)

@@ -9,13 +9,18 @@
 # at https://www.sourcefabric.org/superdesk/license
 
 import json
+import click
 from eve.utils import ParsedRequest
 
 import superdesk
 from superdesk.resource_fields import ID_FIELD
 
+from .async_cli import cli
 
-class DeleteArchivedDocumentCommand(superdesk.Command):
+
+@cli.command("app:deleteArchivedDocument")
+@click.argument("ids", nargs=-1, required=True)
+def cli_delete_archived_document(ids):
     """
     Deletes a Text Archive document(s) from both Mongodb and ElasticSearch.
 
@@ -29,8 +34,10 @@ class DeleteArchivedDocumentCommand(superdesk.Command):
 
     """
 
-    capture_all_args = True
+    DeleteArchivedDocumentCommand().run(list(ids))
 
+
+class DeleteArchivedDocumentCommand:
     def can_delete_items(self, items):
         """Checks if the given items are deletable"""
 
@@ -40,6 +47,7 @@ class DeleteArchivedDocumentCommand(superdesk.Command):
 
         for item in items:
             try:
+                # TODO-ASYNC[archived]: Use async service when upgrading the ``archived`` resource
                 archived_service.validate_delete_action(item, True)
             except Exception as ex:
                 can_delete = False
@@ -65,12 +73,14 @@ class DeleteArchivedDocumentCommand(superdesk.Command):
 
         archived_service = superdesk.get_resource_service("archived")
         for item in items:
+            # TODO-ASYNC[archived]: Use async service when upgrading the ``archived`` resource
             articles_to_kill = archived_service.find_articles_to_kill({"_id": item[ID_FIELD]}, False)
 
             if not articles_to_kill:
                 continue
 
             for article in articles_to_kill:
+                # TODO-ASYNC[archived]: Use async service when upgrading the ``archived`` resource
                 archived_service.command_delete({"_id": article[ID_FIELD]})
                 print("Deleted item {} ".format(article[ID_FIELD]))
 
@@ -89,6 +99,3 @@ class DeleteArchivedDocumentCommand(superdesk.Command):
         else:
             print("Please provide at least one id!")
             return
-
-
-superdesk.command("app:deleteArchivedDocument", DeleteArchivedDocumentCommand())

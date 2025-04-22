@@ -19,7 +19,7 @@ import superdesk
 from string import Template
 from types import ModuleType
 from typing import Literal, Optional, Tuple
-from inspect import iscoroutinefunction
+from inspect import isawaitable
 
 from pymongo.database import Database, Collection
 from motor.motor_asyncio import AsyncIOMotorDatabase, AsyncIOMotorCollection
@@ -28,7 +28,7 @@ from eve.utils import ParsedRequest
 
 from superdesk.core.app import get_current_async_app
 from superdesk.services import BaseService
-from superdesk.core import get_app_config, get_current_app
+from superdesk.core import get_app_config
 
 from .async_cli import cli
 
@@ -54,6 +54,7 @@ from superdesk.commands.data_updates import BaseDataUpdate
 class DataUpdate(BaseDataUpdate):
 
     resource = '$resource'
+    use_async_resources: bool = False
 
     def forwards(self, mongodb_collection, mongodb_database):
         $default_fw_implementation
@@ -202,7 +203,7 @@ async def upgrade_command_handler(data_update_id=None, fake=False, dry=False):
         print(f"data update {data_update_name} running forward...")
         module_scope = compile_update_in_module(data_update_name)
         if not fake:
-            module_scope.DataUpdate().apply("forwards")
+            await module_scope.DataUpdate().apply("forwards")
         if not dry:
             data_updates_service.create([{"name": data_update_name}])
 
@@ -262,7 +263,7 @@ async def downgrade_command_handler(data_update_id=None, fake=False, dry=False):
         module_scope = compile_update_in_module(data_update_name)
         # run the data update backward
         if not fake:
-            module_scope.DataUpdate().apply("backwards")
+            await module_scope.DataUpdate().apply("backwards")
         if not dry:
             # remove the applied data update from the database
             data_updates_service.delete({"name": data_update_name})
@@ -270,7 +271,17 @@ async def downgrade_command_handler(data_update_id=None, fake=False, dry=False):
         print("No data update to apply.")
 
 
-class GenerateUpdate(superdesk.Command):
+@cli.command("data:generate_update")
+@click.option("--resource", "-r", "resource_name", required=True, help="Resource to update")
+@click.option(
+    "--global",
+    "-g",
+    "global_update",
+    is_flag=True,
+    required=False,
+    help="This data update belongs to superdesk core",
+)
+def cli_data_generate_update(resource_name: str, global_update: bool = False):
     """Generate a file where to define a new data update.
 
     Example:
@@ -280,18 +291,10 @@ class GenerateUpdate(superdesk.Command):
 
     """
 
-    option_list = [
-        # superdesk.Option("--resource", "-r", dest="resource_name", required=True, help="Resource to update"),
-        # superdesk.Option(
-        #     "--global",
-        #     "-g",
-        #     dest="global_update",
-        #     required=False,
-        #     action="store_true",
-        #     help="This data update belongs to superdesk core",
-        # ),
-    ]
+    GenerateUpdate().run(resource_name, global_update)
 
+
+class GenerateUpdate:
     def run(self, resource_name, global_update=False):
         timestamp = time.strftime("%Y%m%d-%H%M%S")
         # create a data update file
@@ -319,9 +322,6 @@ class GenerateUpdate(superdesk.Command):
             }
             f.write(Template(DATA_UPDATE_TEMPLATE).substitute(template_context))
             print("Data update file created %s" % (data_update_filename))
-
-
-superdesk.command("data:generate_update", GenerateUpdate())
 
 
 def get_db_and_collection(
@@ -353,6 +353,7 @@ def get_db_and_collection(
 
 class BaseDataUpdate:
     resource: str
+    use_async_resources: bool = False
 
     async def apply(self, direction: Literal["forwards", "backwards"]):
         """
@@ -368,13 +369,11 @@ class BaseDataUpdate:
         assert direction in ["forwards", "backwards"]
         direction_func = getattr(self, direction)
 
-        is_async = iscoroutinefunction(direction_func)
-        collection, db = get_db_and_collection(self.resource, is_async)
+        collection, db = get_db_and_collection(self.resource, self.use_async_resources)
 
-        if is_async:
-            await direction_func(collection, db)
-        else:
-            direction_func(collection, db)
+        result = direction_func(collection, db)
+        if isawaitable(result):
+            await result
 
 
 DataUpdate = BaseDataUpdate

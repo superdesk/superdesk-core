@@ -1,8 +1,11 @@
 import copy
 import logging
-import superdesk
 
+import click
+
+import superdesk
 from superdesk.core import get_current_app
+from superdesk.commands import cli
 from superdesk.editor_utils import get_field_content_state, get_field_value, set_field_value
 from superdesk.errors import SuperdeskApiError
 
@@ -10,7 +13,11 @@ from superdesk.errors import SuperdeskApiError
 logger = logging.getLogger(__name__)
 
 
-class MediaFixLinksCommand(superdesk.Command):
+@cli.command("media:fix_links")
+@click.option("--prefix", "-p", required=True)
+@click.option("--resource", "-r")
+@click.option("--dry-run", "-d", is_flag=True)
+def cli_media_fix_links(prefix, resource, dry_run):
     """Fix media links in content.
 
     When moving an instance to different domain the links to media items
@@ -32,12 +39,10 @@ class MediaFixLinksCommand(superdesk.Command):
 
     """
 
-    # option_list = [
-    #     superdesk.Option("--prefix", "-p", dest="prefix", required=True),
-    #     superdesk.Option("--resource", "-r", dest="resource", default=None),
-    #     superdesk.Option("--dry-run", "-d", dest="dry_run", default=False, action="store_true"),
-    # ]
+    MediaFixLinksCommand().run(prefix, resource, dry_run)
 
+
+class MediaFixLinksCommand:
     resources = [
         "archive",
         "published",
@@ -131,6 +136,3 @@ class MediaFixLinksCommand(superdesk.Command):
                 updates["body_html"] = item["body_html"]
 
         return updates
-
-
-superdesk.command("media:fix_links", MediaFixLinksCommand())

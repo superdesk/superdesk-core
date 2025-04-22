@@ -96,11 +96,10 @@ class ContentTypesService(AsyncCacheableService[ContentTypesResourceModel]):
         content profile if the profile is being disabled
         """
         if (enabled := updates.get("enabled")) is not None and not enabled and original.enabled:
-            # TODO-ASYNC: "content_templates" is not async yet
             content_templates_service = superdesk.get_resource_service("content_templates")
             assert content_templates_service is not None
             content_templates_service = cast(ContentTemplatesService, content_templates_service)
-            templates = list(content_templates_service.get_templates_by_profile_id(original.id))
+            templates = await content_templates_service.get_templates_by_profile_id(original.id)
 
             if len(templates) > 0:
                 template_names = ", ".join([t.get("template_name") for t in templates])
@@ -129,11 +128,10 @@ class ContentTypesService(AsyncCacheableService[ContentTypesResourceModel]):
         # these are the only fields of templates that don't depend on the schema.
         template_metadata_fields = ["usageterms"]
 
-        # TODO-ASYNC: "content_templates" is not async yet
         content_templates_service = superdesk.get_resource_service("content_templates")
         assert content_templates_service is not None
         content_templates_service = cast(ContentTemplatesService, content_templates_service)
-        templates = list(content_templates_service.get_templates_by_profile_id(original.id))
+        templates = await content_templates_service.get_templates_by_profile_id(original.id)
 
         for template in templates:
             data = deepcopy(template.get("data", {}))
@@ -144,7 +142,9 @@ class ContentTypesService(AsyncCacheableService[ContentTypesResourceModel]):
                     data.pop(field, None)
                     processed = True
             if processed:
-                superdesk.get_resource_service("content_templates").patch(template.get("_id"), {"data": data})
+                await superdesk.get_resource_service("content_templates").patch_async(
+                    template.get("_id"), {"data": data}
+                )
 
     async def find_by_id_raw(
         self,
@@ -572,11 +572,10 @@ async def remove_profile_from_templates(item: ContentTypesResourceModel) -> None
 
     :param item: deleted content profile
     """
-    # TODO-ASYNC: "content_templates" is not async yet
-    templates = list(superdesk.get_resource_service("content_templates").get_templates_by_profile_id(item.id))
+    templates = await superdesk.get_resource_service("content_templates").get_templates_by_profile_id(item.id)
     for template in templates:
-        template.data.pop("profile", None)
-        superdesk.get_resource_service("content_templates").patch(template.id, template)
+        template.get("data", {}).pop("profile", None)
+        await superdesk.get_resource_service("content_templates").patch_async(template[ID_FIELD], template)
 
 
 async def get_profile(_id: str) -> dict[str, Any] | ContentTypesResourceModel | None:

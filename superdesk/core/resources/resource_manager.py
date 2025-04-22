@@ -82,3 +82,9 @@ class Resources(SignalGroup):
 
     def get_resource_service(self, resource_name: str) -> AsyncResourceService:
         return self._resource_services[resource_name]
+
+    def stop(self):
+        # Remove any singleton instances from services
+        for service in self._resource_services:
+            if hasattr(service, "_instance"):
+                del service._instance

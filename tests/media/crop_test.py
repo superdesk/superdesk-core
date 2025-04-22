@@ -34,7 +34,7 @@ class CropTestCase(TestCase):
     async def asyncSetUp(self):
         await super().asyncSetUp()
         self.service = CropService()
-        populate_table_json("vocabularies", [self.crop_sizes])
+        await populate_table_json("vocabularies", [self.crop_sizes])
 
     def test_validate_aspect_ratio_fails(self):
         doc = {"CropLeft": 0, "CropRight": 80, "CropTop": 0, "CropBottom": 60}

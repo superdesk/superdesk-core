@@ -696,7 +696,7 @@ class FilteringDataTests(ContentFilterTests):
         filename = os.path.join(
             os.path.abspath(os.path.dirname("apps/prepopulate/data_init/vocabularies.json")), "vocabularies.json"
         )
-        cmd.run(filename)
+        await cmd.run(filename)
         r1 = await _get_subscribers_by_filter_condition(filter_condition1)
         r2 = await _get_subscribers_by_filter_condition(filter_condition2)
         r3 = await _get_subscribers_by_filter_condition(filter_condition3)

@@ -164,10 +164,10 @@ class DesksService(AsyncBaseService):
 
             # make the desk available in default content template
             content_templates = get_resource_service("content_templates")
-            template = content_templates.find_one(req=None, _id=desk.get("default_content_template"))
+            template = await content_templates.find_one_async(req=None, _id=desk.get("default_content_template"))
             if template:
                 template.setdefault("template_desks", []).append(desk.get(ID_FIELD))
-                content_templates.patch(desk.get("default_content_template"), template)
+                await content_templates.patch_async(desk.get("default_content_template"), template)
 
         return [doc[ID_FIELD] for doc in docs]
 
@@ -480,7 +480,7 @@ class SluglineDeskService(AsyncBaseService):
         docs = []
         # rest of the world docs
         row_docs = []
-        for item in desk_items:
+        async for item in desk_items:
             slugline = self._get_slugline_with_legal(item)
             headline = item.get(self.HEADLINE)
             versioncreated = item.get(self.VERSION_CREATED)
@@ -534,9 +534,11 @@ class SluglineDeskService(AsyncBaseService):
         places.append(
             {
                 self.NAME: placename,
-                self.SLUGLINE: slugline
-                if not any(self._get_slugline_with_legal(p).lower() == slugline.lower() for p in places)
-                else "-",
+                self.SLUGLINE: (
+                    slugline
+                    if not any(self._get_slugline_with_legal(p).lower() == slugline.lower() for p in places)
+                    else "-"
+                ),
                 self.HEADLINE: headline,
                 self.OLD_SLUGLINES: old_sluglines,
                 self.VERSION_CREATED: versioncreated,
@@ -715,7 +717,7 @@ class OverviewService(AsyncBaseService):
         req.projection = json.dumps({"members": 1})
         found = await desks_service.get_async(req, desk_filter)
         members = set()
-        for d in found:
+        async for d in found:
             members.update({m["user"] for m in d.get("members", [])})
 
         app = get_current_app()

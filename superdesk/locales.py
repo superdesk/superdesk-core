@@ -26,11 +26,11 @@ def get_timezones():
 
 @bp.route("/locales/timezones", methods=["GET", "OPTIONS"])
 @blueprint_auth("locales")
-def locales_view():
+async def locales_view():
     resp = None
     if request.method == "GET":
         resp = {"timezones": get_timezones()}
-    return send_response(None, (resp, None, None, 200))
+    return await send_response(None, (resp, None, None, 200))
 
 
 def init_app(app) -> None:

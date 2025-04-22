@@ -329,7 +329,7 @@ class ArchivePublishTestCase(TestCase):
                 json.dump(json_data, file)
 
             init_app(self.app)
-            AppPopulateCommand().run(filename)
+            await AppPopulateCommand().run(filename)
 
         self.app.media.url_for_media = MagicMock(return_value="url_for_media")
         self._put = self.app.media.put

@@ -12,13 +12,14 @@ import logging
 import json
 
 from bson.objectid import ObjectId
+import click
 
-import superdesk
 from copy import deepcopy
 from eve.utils import ParsedRequest
 from eve.versioning import versioned_id_field
 
 from superdesk.core import get_app_config
+from superdesk.commands import cli
 from superdesk.resource_fields import ID_FIELD, VERSION, ETAG
 from superdesk.celery_app import celery
 from superdesk import get_resource_service
@@ -39,6 +40,43 @@ from superdesk.activity import ACTIVITY_ERROR
 from superdesk.utc import utcnow
 
 logger = logging.getLogger(__name__)
+
+
+@cli.command("legal_publish_queue:import")
+@click.option("--page-size", "-p", required=False)
+def cli_legal_publish_queue_import(page_size):
+    """
+    This command import publish queue records into legal publish queue.
+
+    Example:
+    ::
+
+        $ python manage.py legal_publish_queue:import
+        $ python manage.py legal_publish_queue:import --page-size=100
+
+    """
+
+    ImportLegalPublishQueueCommand().run(page_size)
+
+
+@cli.command("legal_archive:import")
+@click.option("--page-size", "-p", required=False)
+def cli_legal_archive_import(page_size):
+    """This command import archive into legal archive.
+
+    As per the publishing logic the import to legal archive is done asynchronously. If this fails
+    then you are missing records in legal archive. Use this command to manually import archive
+    items into legal archive.
+
+    Example:
+    ::
+
+        $ python manage.py legal_archive:import
+        $ python manage.py legal_archive:import --page-size=100
+
+    """
+
+    ImportLegalArchiveCommand().run(page_size)
 
 
 def is_legal_archive_enabled():
@@ -451,21 +489,8 @@ def import_into_legal_archive(self, item_id):
         raise self.retry()
 
 
-class ImportLegalPublishQueueCommand(superdesk.Command):
-    """
-    This command import publish queue records into legal publish queue.
-
-    Example:
-    ::
-
-        $ python manage.py legal_publish_queue:import
-        $ python manage.py legal_publish_queue:import --page-size=100
-
-    """
-
+class ImportLegalPublishQueueCommand:
     default_page_size = 500
-
-    # option_list = [superdesk.Option("--page-size", "-p", dest="page_size", required=False)]
 
     def run(self, page_size=None):
         if not is_legal_archive_enabled():
@@ -481,24 +506,8 @@ class ImportLegalPublishQueueCommand(superdesk.Command):
             unlock(lock_name)
 
 
-class ImportLegalArchiveCommand(superdesk.Command):
-    """This command import archive into legal archive.
-
-    As per the publishing logic the import to legal archive is done asynchronously. If this fails
-    then you are missing records in legal archive. Use this command to manually import archive
-    items into legal archive.
-
-    Example:
-    ::
-
-        $ python manage.py legal_archive:import
-        $ python manage.py legal_archive:import --page-size=100
-
-    """
-
+class ImportLegalArchiveCommand:
     default_page_size = 500
-
-    # option_list = [superdesk.Option("--page-size", "-p", dest="page_size", required=False)]
 
     def run(self, page_size=None):
         if not is_legal_archive_enabled():

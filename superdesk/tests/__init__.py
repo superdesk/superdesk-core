@@ -18,10 +18,12 @@ from dataclasses import dataclass
 
 from copy import deepcopy
 from unittest.mock import patch
-from unittest import IsolatedAsyncioTestCase
+from .async_case import IsolatedAsyncioTestCase
 from quart import Response
 from quart.testing import QuartClient
 from werkzeug.datastructures import Authorization
+from eve.events import Events
+import elasticsearch
 
 from superdesk.core import json
 from superdesk.flask import Config
@@ -103,6 +105,7 @@ def update_config(conf, auto_add_apps: bool = True):
     conf["LEGAL_ARCHIVE"] = True
     if auto_add_apps:
         conf["INSTALLED_APPS"].extend(["planning", "superdesk.macros.imperial", "apps.rundowns"])
+        conf["MODULES"].extend(["planning"])
 
     # limit mongodb connections
     conf["MONGO_CONNECT"] = False
@@ -182,6 +185,7 @@ def setup_config(config, auto_add_apps: bool = True):
     app_abspath = os.path.abspath(os.path.dirname(os.path.dirname(__file__)))
     app_config = Config(app_abspath)
     app_config.from_object("superdesk.default_settings")
+    app_config = deepcopy(app_config)
     cwd = Path.cwd()
     for p in [cwd] + list(cwd.parents):
         settings = p / "settings.py"
@@ -238,9 +242,84 @@ def update_config_from_step(context, config):
             m.start()
 
 
-async def clean_dbs(app, force=False):
-    await _clean_es(app)
-    await drop_mongo(app)
+async def clean_dbs(app=None, async_app: SuperdeskAsyncApp | None = None, force=False, init_indexes: bool = False):
+    if async_app is None:
+        if app is None:
+            raise RuntimeError("Async app not provided nor found")
+        async_app = app.async_app
+
+    if init_indexes:
+        if app:
+            await _clean_es(app)
+            await drop_mongo(app)
+
+        if async_app:
+            for resource_name, resource_config in async_app.mongo.get_all_resource_configs().items():
+                client, db = async_app.mongo.get_client(resource_name)
+                client.drop_database(db)
+            async_app.elastic.drop_indexes()
+
+        if app:
+            app.init_indexes()
+            await app.data.init_elastic(app)
+        elif async_app:
+            async_app.mongo.create_indexes_for_all_resources()
+            async_app.elastic.init_all_indexes()
+
+    else:
+        resources_processed: set[str] = set()
+
+        if app:
+            es = app.data.elastic
+            for resource in es._get_elastic_resources():
+                alias = es._resource_index(resource)
+                try:
+                    alias_info = es.elastic(resource).indices.get_alias(name=alias)
+                    for index in alias_info:
+                        es.elastic(resource).indices.refresh(index=index)
+                        es.elastic(resource).delete_by_query(
+                            index=index,
+                            body={"query": {"match_all": {}}},
+                        )
+                except elasticsearch.exceptions.NotFoundError:
+                    try:
+                        es.elastic(resource).indices.refresh(index=alias)
+                        es.elastic(resource).delete_by_query(
+                            index=alias,
+                            body={"query": {"match_all": {}}},
+                            refresh="wait_for",
+                        )
+                    except elasticsearch.exceptions.NotFoundError:
+                        pass
+
+                resources_processed.add(resource)
+
+            await drop_mongo(app)
+
+        if async_app:
+            for resource_config in async_app.resources.get_all_configs():
+                if resource_config.name in resources_processed:
+                    continue
+
+                mongo_client, mongo_db = async_app.mongo.get_client(resource_config.name)
+                mongo_client.drop_database(mongo_db)
+
+                if not resource_config.elastic:
+                    continue
+
+                try:
+                    es_client = async_app.elastic.get_client(resource_config.name)
+                    es_client.elastic.indices.refresh(index=es_client.config.index)
+                    es_client.elastic.delete_by_query(
+                        index=es_client.config.index,
+                        body={"query": {"match_all": {}}},
+                    )
+                except elasticsearch.exceptions.NotFoundError:
+                    print(f"ES Index not found for {resource_config.name}")
+                    pass
+
+        if app:
+            cache.clean()
 
 
 def retry(exc, count=1):
@@ -362,42 +441,47 @@ def use_snapshot(app, name, funcs=(snapshot_es, snapshot_mongo), force=False):
 use_snapshot.cache = {}  # type: ignore
 
 
-async def stop_previous_app():
-    if not hasattr(setup, "async_app") and not hasattr(setup, "app"):
+def copy_db_connections(current_app):
+    previous_app = getattr(setup, "app", None)
+    if not previous_app:
         return
 
-    if hasattr(setup, "async_app"):
-        async_app: SuperdeskAsyncApp | None = getattr(setup, "async_app", None)
+    # Copy the database connections from the previous app
+    # so we re-use them
+    current_app.extensions = previous_app.extensions
 
-        for resource_name, resource_config in async_app.mongo.get_all_resource_configs().items():
-            client, db = async_app.mongo.get_client_async(resource_name)
-            await client.drop_database(db)
+    current_app.data.mongo.driver = previous_app.data.mongo.driver
+    current_app.data.mongo_async.driver = previous_app.data.mongo_async.driver
+    current_app.data.elastic.es = previous_app.data.elastic.es
+    current_app.data.elastic.elastics = previous_app.data.elastic.elastics
 
-        async_app.elastic.drop_indexes()
-        await async_app.elastic.stop()
+    current_app.data.elastic_async.es_async = previous_app.data.elastic_async.es_async
+    current_app.data.elastic_async.elastics = previous_app.data.elastic_async.elastics
 
-        for service in async_app.resources._resource_services:
-            if hasattr(service, "_instance"):
-                del service._instance
 
-        async_app.stop()
-        del setup.async_app
+def copy_async_db_connections(current_app):
+    previous_app = getattr(setup, "app", None)
+    if not previous_app:
+        return
 
-    if hasattr(setup, "app"):
-        app: SuperdeskApp | None = getattr(setup, "app", None)
-
-        # Close all PyMongo Connections (new ones will be created with ``app_factory`` call)
-        for key, val in app.extensions["pymongo"].items():
-            val[0].close()
-
-        app.extensions["pymongo"] = {}
-        del setup.app
+    current_app.mongo._mongo_clients = previous_app.async_app.mongo._mongo_clients
+    current_app.mongo._mongo_clients_async = previous_app.async_app.mongo._mongo_clients_async
+    current_app.elastic._elastic_connections = previous_app.async_app.elastic._elastic_connections
+    current_app.elastic._elastic_async_connections = previous_app.async_app.elastic._elastic_async_connections
 
 
 async def setup(context=None, config=None, app_factory=get_app, reset=False, auto_add_apps: bool = True):
-    if not hasattr(setup, "app") or hasattr(setup, "reset") or config:  # type: ignore[attr-defined]
+    previous_app = getattr(setup, "app", None)
+
+    if not previous_app or hasattr(setup, "reset") or config:  # type: ignore[attr-defined]
         cfg = setup_config(config, auto_add_apps)
-        setup.app = app_factory(cfg)  # type: ignore[attr-defined]
+        app = app_factory(cfg)  # type: ignore[attr-defined]
+
+        copy_db_connections(app)
+        copy_async_db_connections(app.async_app)
+
+        setup.app = app  # type: ignore[attr-defined]
+        setup.async_app = setup.app.async_app  # type: ignore[attr-defined]
         setup.reset = reset  # type: ignore[attr-defined]
     app = setup.app  # type: ignore[attr-defined]
 
@@ -411,9 +495,7 @@ async def setup(context=None, config=None, app_factory=get_app, reset=False, aut
             await context.test_context.push()
 
     async with app.app_context():
-        await clean_dbs(app, force=bool(config))
-        app.data.elastic.init_index()
-        cache.clean()
+        await clean_dbs(app, init_indexes=True)
 
 
 async def setup_auth_user(context, user=None):
@@ -574,7 +656,7 @@ def teardown_notification(context):
 
 
 @dataclass
-class MockWSGI:
+class MockWSGI(Events):
     config: Dict[str, Any]
 
     def add_url_rule(self, *args, **kwargs):
@@ -583,17 +665,27 @@ class MockWSGI:
     def register_endpoint(self, endpoint):
         pass
 
+    def as_any(self):
+        return self
+
 
 class AsyncTestCase(IsolatedAsyncioTestCase):
     app: SuperdeskAsyncApp
     app_config: Dict[str, Any] = {}
     autorun: bool = True
 
-    def setupApp(self):
-        self.app_config = setup_config(deepcopy(self.app_config))
-        self.app = SuperdeskAsyncApp(MockWSGI(config=self.app_config))
-        setattr(setup, "async_app", self.app)
-        self.startApp()
+    @classmethod
+    async def asyncSetUpClass(cls):
+        app_config = setup_config(deepcopy(cls.app_config))
+        cls.app = SuperdeskAsyncApp(MockWSGI(config=app_config))
+        copy_async_db_connections(cls.app)
+        setattr(setup, "async_app", cls.app)
+        await cls.resetDatabase(True)
+        cls.app.start()
+
+    @classmethod
+    async def resetDatabase(cls, init_indexes: bool = False):
+        await clean_dbs(app=None, async_app=cls.app, init_indexes=init_indexes)
 
     def startApp(self):
         self.app.start()
@@ -602,8 +694,7 @@ class AsyncTestCase(IsolatedAsyncioTestCase):
         if not self.autorun:
             return
 
-        self.setupApp()
-        self.addAsyncCleanup(stop_previous_app)
+        await self.resetDatabase()
 
     def get_fixture_path(self, filename):
         rootpath = os.path.abspath(os.path.dirname(os.path.dirname(__file__)))
@@ -648,22 +739,28 @@ class AsyncFlaskTestCase(AsyncTestCase):
     async_app: SuperdeskAsyncApp
     app: SuperdeskApp
     use_default_apps: bool = False
+    test_client: TestClient
+    clean_reset_db: bool = True
 
-    async def asyncSetUp(self):
-        config = deepcopy(self.app_config)
+    @classmethod
+    async def asyncSetUpClass(cls):
+        "Hook method for setting up class fixture before running tests in the class."
+        config = deepcopy(cls.app_config)
 
-        if self.use_default_apps:
-            await setup(self, config=config, reset=True, auto_add_apps=True)
+        if cls.use_default_apps:
+            await setup(cls, config=config, reset=True, auto_add_apps=True)
         else:
             config.setdefault("CORE_APPS", [])
             config.setdefault("INSTALLED_APPS", [])
-            await setup(self, config=config, reset=True, auto_add_apps=False)
-        self.async_app = self.app.async_app
-        setattr(setup, "async_app", self.async_app)
-        self.app.test_client_class = TestClient
-        self.test_client = self.app.test_client()
+            await setup(cls, config=config, reset=True, auto_add_apps=False)
+        cls.async_app = cls.app.async_app
+        cls.app.test_client_class = TestClient
+        cls.test_client = cls.app.test_client()
+
+    async def asyncSetUp(self):
         self.ctx = self.app.app_context()
         await self.ctx.push()
+        await clean_dbs(self.app, init_indexes=self.clean_reset_db)
 
         async def clean_ctx():
             if self.ctx:
@@ -673,17 +770,15 @@ class AsyncFlaskTestCase(AsyncTestCase):
                     pass
 
         self.addAsyncCleanup(clean_ctx)
-        self.addAsyncCleanup(stop_previous_app)
-        self.async_app.elastic.init_all_indexes()
 
     async def get_resource_etag(self, resource: str, item_id: str):
         return (await (await self.test_client.get(f"/api/{resource}/{item_id}")).get_json())["_etag"]
 
-    async def resetDatabase(self):
-        await clean_dbs(self.app)
-        self.app.data.elastic.init_index()
-        cache.clean()
+    @classmethod
+    async def resetDatabase(cls, init_indexes: bool = False):
+        await clean_dbs(cls.app, init_indexes=False)
 
 
 class TestCase(AsyncFlaskTestCase):
     use_default_apps: bool = True
+    clean_reset_db: bool = False

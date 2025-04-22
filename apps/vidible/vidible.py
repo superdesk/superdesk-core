@@ -55,9 +55,9 @@ def get_vidible_metadata(bcid, pid):
 
 
 @bp.route("/vidible/bcid/<bcid>/pid/<pid>", methods=["GET", "OPTIONS"])
-def vidible(**kwargs):
+async def vidible(**kwargs):
     meta = get_vidible_metadata(**kwargs)
     if meta:
-        return send_response(None, (meta, utcnow(), None, 200))
+        return await send_response(None, (meta, utcnow(), None, 200))
     else:
-        return send_response(None, ({"error": "not found"}, utcnow(), None, 404))
+        return await send_response(None, ({"error": "not found"}, utcnow(), None, 404))

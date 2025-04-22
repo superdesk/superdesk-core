@@ -744,7 +744,7 @@ class ContentAPITestCase(TestCase):
         attachment = {"title": "Test", "description": "test"}
         async with self.app.test_request_context("attachments", method="POST", files=files):
             attachment["media"] = (await request.files)["media"]
-            store_media_files(attachment, "attachments")  # this would happen automatically otherwise
+            await store_media_files(attachment, "attachments")  # this would happen automatically otherwise
             superdesk.get_resource_service("attachments").post([attachment])
         self.assertIn("_id", attachment)
         self.assertIsInstance(attachment["media"], ObjectId)
@@ -786,8 +786,8 @@ class ContentAPITestCase(TestCase):
         async with self.app.test_request_context("attachments", method="POST", files=files):
             internal_attachment["media"] = (await request.files)["media"]
             public_attachment["media"] = (await request.files)["media"]
-            store_media_files(internal_attachment, "attachments")
-            store_media_files(public_attachment, "attachments")
+            await store_media_files(internal_attachment, "attachments")
+            await store_media_files(public_attachment, "attachments")
             superdesk.get_resource_service("attachments").post([internal_attachment, public_attachment])
         self.assertIn("_id", internal_attachment)
         self.assertIn("_id", public_attachment)
