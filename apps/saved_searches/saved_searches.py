@@ -308,6 +308,9 @@ class SavedSearchItemsResource(Resource):
 
 class SavedSearchItemsService(SavedSearchesService):
     async def get_async(self, req: ParsedRequest | None, lookup: dict | None) -> AsyncEveCursor:
+        if not lookup:
+            raise SuperdeskApiError.badRequestError(_("Saved Search Item Lookup not provided"))
+
         saved_search_id = lookup["lookup"]["saved_search_id"]
         saved_search = await get_resource_service("saved_searches").find_one_async(req=None, _id=saved_search_id)
 
