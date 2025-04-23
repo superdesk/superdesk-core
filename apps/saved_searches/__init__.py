@@ -156,7 +156,7 @@ async def report():
         return
     try:
         saved_searches = get_resource_service("saved_searches")
-        subscribed_searches = saved_searches.find({"subscribers": {"$exists": 1}})
+        subscribed_searches = await saved_searches.find_async({"subscribers": {"$exists": 1}})
         tz = pytz.timezone(get_app_config("DEFAULT_TIMEZONE"))
         now = datetime.now(tz=tz)
         for search in subscribed_searches:
@@ -180,7 +180,7 @@ async def report():
 
             if do_update:
                 updates = {"subscribers": search["subscribers"]}
-                saved_searches.system_update(search["_id"], updates, search)
+                await saved_searches.system_update_async(search["_id"], updates, search)
     except Exception as e:
         logger.error("Can't report saved searches: {reason}".format(reason=e))
     finally:
