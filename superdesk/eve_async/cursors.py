@@ -24,22 +24,15 @@ else:
     MongoAsyncEveCursor = AsyncIOMotorCursor
 
 
-class ElasticAsyncEveCursor:
-    """Search results cursor.
-
-    Note: Adds methods to provide similar interface to MongoDB's AsyncIOMotorCursor
-    """
+class AsyncListCursor:
+    """Wrapper for a python list as a cursor."""
 
     _index: int
-    hits: dict
-    no_hits = {"hits": {"total": 0, "hits": []}}
     docs: list[dict]
 
-    def __init__(self, hits: dict | None = None, docs: list[dict] | None = None):
-        """Parse hits into docs."""
+    def __init__(self, docs: list[dict] | None = None):
         self._index = 0
-        self.hits = hits if hits else self.no_hits
-        self.docs = docs if docs else []
+        self.docs = docs or []
 
     def __aiter__(self):
         return self
@@ -68,6 +61,28 @@ class ElasticAsyncEveCursor:
 
     async def count(self, **kwargs) -> int:
         """Get hits count."""
+        return len(self.docs)
+
+    def extra(self, response) -> None:
+        pass
+
+
+class ElasticAsyncEveCursor(AsyncListCursor):
+    """Search results cursor.
+
+    Note: Adds methods to provide similar interface to MongoDB's AsyncIOMotorCursor
+    """
+
+    hits: dict
+    no_hits = {"hits": {"total": 0, "hits": []}}
+
+    def __init__(self, hits: dict | None = None, docs: list[dict] | None = None):
+        """Parse hits into docs."""
+        super().__init__(docs)
+        self.hits = hits if hits else self.no_hits
+
+    async def count(self, **kwargs) -> int:
+        """Get hits count."""
         hits = self.hits.get("hits")
         if hits:
             total = hits.get("total")
@@ -85,4 +100,4 @@ class ElasticAsyncEveCursor:
             response["_aggregations"] = self.hits["aggregations"]
 
 
-AsyncEveCursor = MongoAsyncEveCursor | ElasticAsyncEveCursor
+AsyncEveCursor = AsyncListCursor | MongoAsyncEveCursor | ElasticAsyncEveCursor
