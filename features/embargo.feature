@@ -490,23 +490,16 @@ Feature: Embargo Date and Time on an Article (User Story: https://dev.sourcefabr
     """
 
   @auth
-  Scenario: An article can't have both Publish Schedule and Embargo
-    When we post to "/archive"
+  Scenario: An article can have both Publish Schedule and Embargo
+    When we post to "/archive" with success
     """
     [{"guid": "text-article-with-embargo", "type": "text", "publish_schedule": "#DATE+1#", "embargo": "#DATE+1#"}]
-    """
-    Then we get error 400
-    """
-    {"_message": "An item can't have both Publish Schedule and Embargo"}
     """
     When we patch "/archive/123"
     """
     {"publish_schedule": "#DATE+1#", "embargo": "#DATE+1#"}
     """
-    Then we get error 400
-    """
-    {"_issues": {"validator exception": "400: An item can't have both Publish Schedule and Embargo"}}
-    """
+    Then we get response code 200
 
   @auth
   Scenario: Can't set an Embargo after publishing
