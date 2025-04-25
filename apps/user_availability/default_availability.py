@@ -1,5 +1,6 @@
 import superdesk
 
+from flask import current_app as app
 from dateutil.rrule import rrule, WEEKLY
 from superdesk.dates import get_local_today
 from superdesk.resource import Resource
@@ -126,7 +127,7 @@ class DefaultAvailabilityService(superdesk.Service):
         availability_service.delete_action(
             {"user": current_user_id, "date": {"$gte": today.isoformat()}, "_generated": True}
         )
-        generate_weeks = 4 * 3
+        generate_weeks = app.config.get("AVAILABILITY_GENERATE_WEEKS", 4 * 3)
 
         items = []
         for day in doc["working_days"]:
