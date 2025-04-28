@@ -23,7 +23,7 @@ def track_usage(media_item, stored_item, item_obj, item_name, original):
         stored_item["used"] = True
 
 
-def _update_usage(item):
+async def _update_usage(item):
     updates = {
         "used": True,
         "used_count": item.get("used_count", 0) + 1,
@@ -34,11 +34,10 @@ def _update_usage(item):
 
     # update published item state as well
     if item.get(ITEM_STATE) in PUBLISH_STATES:
-        published = superdesk.get_resource_service("published").get_last_published_version(item["_id"])
+        published_service = superdesk.get_resource_service("published")
+        published = await published_service.get_last_published_version(item["_id"])
         if published:
-            superdesk.get_resource_service("published").system_update(
-                bson.ObjectId(published["_id"]), updates, published
-            )
+            await published_service.system_update_async(bson.ObjectId(published["_id"]), updates, published)
         else:
             logger.warning("published item not found for item %s", item["_id"])
 

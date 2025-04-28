@@ -105,8 +105,8 @@ class TranslateService(AsyncBaseService):
         }
 
         archive_service.system_update(item["_id"], updates, item)
-        published_service.update_published_items(item["_id"], "translation_id", item["_id"])
-        published_service.update_published_items(item["_id"], "translations", item["translations"])
+        await published_service.update_published_items(item["_id"], "translation_id", item["_id"])
+        await published_service.update_published_items(item["_id"], "translations", item["translations"])
 
         if kwargs.get("notify", True):
             push_content_notification([item])
