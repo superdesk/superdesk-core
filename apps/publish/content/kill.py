@@ -107,8 +107,8 @@ class KillPublishService(BasePublishService):
 
         await super().on_update_async(updates, original)
         updates[ITEM_OPERATION] = self.item_operation
-        self._remove_marked_user(original)
-        get_resource_service("archive_broadcast").spike_item(original)
+        await self._remove_marked_user(original)
+        await get_resource_service("archive_broadcast").spike_item(original)
 
     async def update_async(self, id, updates, original):
         """Kill will broadcast kill email notice to all subscriber in the system and then kill the item.
@@ -189,7 +189,7 @@ class KillPublishService(BasePublishService):
         try:
             if item.get("_type") == "archive":
                 # attempt to find the published item as this will have an accurate time of publication
-                published_item = get_resource_service(PUBLISHED).get_last_published_version(item.get(ID_FIELD))
+                published_item = await get_resource_service(PUBLISHED).get_last_published_version(item.get(ID_FIELD))
                 versioncreated = (
                     published_item.get("versioncreated")
                     if published_item
@@ -221,7 +221,7 @@ class KillPublishService(BasePublishService):
         except Exception:
             logger.exception("Failed to apply kill header template to item {}.".format(item))
 
-    def _remove_marked_user(self, item):
+    async def _remove_marked_user(self, item):
         """Remove the marked_for_user from all the published items having same 'item_id' as item being killed."""
         item_id = item.get("_id")
         if not item_id:
@@ -230,7 +230,9 @@ class KillPublishService(BasePublishService):
         updates = {"marked_for_user": None, "marked_for_sign_off": None}
         published_service = get_resource_service(PUBLISHED)
 
-        published_items = list(published_service.get_from_mongo(req=None, lookup={"item_id": item_id}))
+        published_items = await (
+            await published_service.get_from_mongo_async(req=None, lookup={"item_id": item_id})
+        ).to_list()
         if not published_items:
             return
 
@@ -239,7 +241,7 @@ class KillPublishService(BasePublishService):
                 updated = item.copy()
                 updated.update(updates)
 
-                published_service.system_update(ObjectId(item.get("_id")), updates, item)
+                await published_service.system_update_async(ObjectId(item.get("_id")), updates, item)
                 # send notifications so that list can be updated in the client
                 get_resource_service("archive").handle_mark_user_notifications(updates, item, False)
                 push_content_notification([updated, item])
