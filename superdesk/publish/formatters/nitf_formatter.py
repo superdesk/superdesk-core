@@ -8,7 +8,6 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
-import superdesk
 from lxml import etree as etree
 from lxml.etree import SubElement
 from superdesk.core import get_app_config
@@ -17,6 +16,7 @@ from superdesk.errors import FormatterError
 from superdesk.metadata.item import ITEM_TYPE, CONTENT_TYPE, EMBARGO, FORMAT, FORMATS
 from apps.archive.common import get_utc_schedule
 from superdesk.text_utils import get_text
+from superdesk.publish_async.utils import generate_sequence_number
 
 
 class EraseElement(Exception):
@@ -140,7 +140,7 @@ class NITFFormatter(Formatter):
 
     async def format(self, article: dict, subscriber: dict, codes: list | None = None) -> list[tuple[int, str] | dict]:
         try:
-            pub_seq_num = await superdesk.get_resource_service("subscribers").generate_sequence_number_async(subscriber)
+            pub_seq_num = await generate_sequence_number(subscriber)
 
             nitf = self.get_nitf(article, subscriber, pub_seq_num)
             return [
