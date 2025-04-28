@@ -337,7 +337,6 @@ CELERY_TASK_ROUTES = {
         "queue": celery_queue("publish"),
         "routing_key": "publish.transmit",
     },
-    # "apps.publish.enqueue.enqueue_published": {"queue": celery_queue("publish"), "routing_key": "publish.enqueue"},
 }
 
 #: celery beat config
@@ -374,7 +373,6 @@ CELERY_BEAT_SCHEDULE = {
         "task": "apps.legal_archive.import_legal_publish_queue",
         "schedule": timedelta(minutes=5),
     },
-    # "publish:enqueue": {"task": "apps.publish.enqueue.enqueue_published", "schedule": timedelta(seconds=10)},
     "publish:enqueue": {
         "task": "superdesk.publish_async.commands.enqueue_published",
         "schedule": timedelta(seconds=10),
@@ -420,6 +418,7 @@ CORE_APPS = [
     "apps.usage_metrics",
     "superdesk.system.health",
     "apps.languages",
+    "superdesk.publish_async",
 ]
 
 #: Specify what modules should be enabled
@@ -433,12 +432,11 @@ MODULES = [
     "superdesk.users",
     "apps.desks_async",
     "superdesk.vocabularies_async",
-    "superdesk.archive_async",
-    "superdesk.archived_async",
+    # TODO-ASYNC: Disable these 2 for now
+    # "superdesk.archive_async",
+    # "superdesk.archived_async",
     "superdesk.content_types_async",
-    "superdesk.publish.subscriber_token",
     "superdesk.publish_async.module",
-    "superdesk.archive_async",
     "superdesk.auth_server.oauth2",
 ]
 
@@ -569,7 +567,7 @@ DEFAULT_PUBLISH_CHANNEL = ExchangeConfig(
     filter="default",
     formatter="default",
     router="celery",
-    polling=True,
+    polling=False,
 )
 
 PUBLISH_MODULES = [
@@ -671,11 +669,9 @@ CORE_APPS.extend(
         "apps.rules",
         "apps.highlights",
         "apps.marked_desks",
-        "apps.products",
         "apps.publish",
         "apps.export",
         "apps.publish.formatters",
-        "apps.content_filters",
         "apps.content_types",
         "apps.dictionaries",
         "apps.duplication",
