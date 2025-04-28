@@ -895,8 +895,24 @@ class BasePublishService(BaseService):
                         sync_associated_item_changes(associated_item, associated_item_updates)
                         continue
 
-                    if association_updates.get("state") not in PUBLISH_STATES:
-                        # There's an update to the published associated item
+                    if updates.get("state"):
+                        remove_unwanted(association_updates)
+                        publish_service.patch(id=associated_item[config.ID_FIELD], updates=association_updates)
+
+                        if original.get(ASSOCIATIONS):
+                            new_state = updates["state"]
+                            updates[ASSOCIATIONS] = {}
+
+                            for key, assoc in original[ASSOCIATIONS].items():
+                                if assoc and isinstance(assoc, dict):
+                                    updated_assoc = deepcopy(assoc)
+                                    updated_assoc["state"] = new_state
+                                    updates[ASSOCIATIONS][key] = updated_assoc
+
+                    if (
+                        app.config.get("ENABLE_ASSOCIATED_ITEMS_UPDATE")
+                        or association_updates.get("state") not in PUBLISH_STATES
+                    ):
                         remove_unwanted(association_updates)
                         publish_service.patch(id=associated_item[config.ID_FIELD], updates=association_updates)
 
