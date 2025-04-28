@@ -156,6 +156,7 @@ class BaseElasticResourceClient:
     ) -> Dict[str, Any]:
         args = req.args or {}
 
+        where_param_processed = False
         if args.get("source"):
             query: dict[str, Any] = json.loads(args["source"]) if isinstance(args["source"], str) else args["source"]
             query.setdefault("query", {})
@@ -165,6 +166,10 @@ class BaseElasticResourceClient:
                     must.append({key: val})
             if must:
                 query["query"] = {"bool": {"must": must}}
+        elif isinstance(req.where, dict) and req.where.get("query"):
+            # This is a direct es query, so use that and remove the where clause
+            query = req.where["query"]
+            where_param_processed = True
         else:
             query = {"query": {"bool": {}}}
 
@@ -209,7 +214,7 @@ class BaseElasticResourceClient:
         if "filters" in args:
             filters.extend(args["filters"])
 
-        if req.where:
+        if not where_param_processed and req.where:
             try:
                 term = json.loads(req.where) if isinstance(req.where, str) else req.where
                 filters.append({"term": term})
