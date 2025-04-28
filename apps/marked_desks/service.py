@@ -71,10 +71,12 @@ class MarkedForDesksService(BaseService):
             updates = {"marked_desks": marked_desks}
             service.system_update(item["_id"], updates, item)
 
+            # TODO-ASYNC[published] Use ``await service.find_async`` when updating this module
             publishedItems = published_service.find({"item_id": item["_id"]})
             for publishedItem in publishedItems:
                 if publishedItem["_current_version"] == item["_current_version"] or not marked_desks_on:
                     updates = {"marked_desks": marked_desks}
+                    # TODO-ASYNC[published] Use ``await service.system_update_async`` when updating this module
                     published_service.system_update(publishedItem["_id"], updates, publishedItem)
 
             push_notification(

@@ -141,6 +141,7 @@ class MarkedForHighlightsService(BaseService):
             updates = {"highlights": highlights, "_etag": item["_etag"]}
             service.update(item["_id"], updates, item)
 
+            # TODO-ASYNC[published]: Use ``await service.find_async`` when updating this module
             publishedItems = publishedService.find({"item_id": item["_id"]})
             for publishedItem in publishedItems:
                 if publishedItem["_current_version"] == item["_current_version"]:
@@ -149,6 +150,7 @@ class MarkedForHighlightsService(BaseService):
                         "_updated": publishedItem["_updated"],
                         "_etag": publishedItem["_etag"],
                     }
+                    # TODO-ASYNC[published]: Use ``await service.update`` when updating this module
                     publishedService.update(publishedItem["_id"], updates, publishedItem)
 
             for highlight in doc_highlights:
