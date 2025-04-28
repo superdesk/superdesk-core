@@ -12,8 +12,8 @@ from superdesk.core import get_config
 from superdesk.resource import build_custom_hateoas
 from superdesk.utils import get_dict_hash
 
-from superdesk.publish_async.resources.filter_conditions.utils import check_similar_filter_conditions
-from superdesk.publish_async.resources.content_filters.utils import get_content_filters_by_filter_condition
+from .filter_conditions import check_similar_filter_conditions
+from .content_filters import get_content_filters_by_filter_condition
 
 
 logger = logging.getLogger(__name__)
@@ -34,10 +34,14 @@ class GetFilterConditionResponse(TypedDict):
     selected_subscribers: list[dict]
 
 
-async def generate_sequence_number(subscriber: SubscribersResource) -> int:
+async def generate_sequence_number(subscriber: SubscribersResource | dict) -> int:
     """
     Generates Published Sequence Number for the passed subscriber
     """
+
+    if isinstance(subscriber, dict):
+        # Support code that isn't updated to use ``SubscribersResource`` yet
+        subscriber = SubscribersResource.from_dict(subscriber)
 
     assert subscriber is not None, "Subscriber can't be null"
     min_seq_number = 1
@@ -53,6 +57,7 @@ async def generate_sequence_number(subscriber: SubscribersResource) -> int:
     )
 
 
+# TODO-ASYNC: Replace ``get_resource_service("sequences").get_next_sequence_number`` with this
 async def get_next_sequence_number(
     key_name: str | None, max_seq_number: int | None = None, min_seq_number: int = 1
 ) -> int:

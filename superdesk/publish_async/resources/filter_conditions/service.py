@@ -6,7 +6,7 @@ from superdesk.core.resources import AsyncResourceService
 from superdesk.types import FilterConditionsResource, ContentFiltersResource
 from superdesk.errors import SuperdeskApiError
 
-from .filter_condition_params import get_available_filter_params
+from superdesk.publish_async.utils import get_available_filter_params
 
 
 class FilterConditionsService(AsyncResourceService[FilterConditionsResource]):
