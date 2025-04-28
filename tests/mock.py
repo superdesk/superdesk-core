@@ -1,10 +1,11 @@
 from unittest.mock import create_autospec
 
-from superdesk.publish.subscribers import SubscribersService
+# TODO-ASYNC-PR: Find out what to do here
+# from superdesk.publish.subscribers import SubscribersService
 
 
-subscriber_service = create_autospec(SubscribersService)
-subscriber_service.generate_sequence_number_async.return_value = 100
+# subscriber_service = create_autospec(SubscribersService)
+# subscriber_service.generate_sequence_number_async.return_value = 100
 
 
 class Resource:
@@ -13,5 +14,5 @@ class Resource:
 
 
 resources = {
-    "subscribers": Resource(subscriber_service),
+    # "subscribers": Resource(subscriber_service),
 }

@@ -10,8 +10,10 @@
 
 from bson import ObjectId
 
+from superdesk.core.resources import AsyncResourceService
 from apps.publish import init_app
 from superdesk.errors import PublishQueueError
+from superdesk.types import SubscribersResource, PublishQueueResource
 from superdesk.publish import SUBSCRIBER_TYPES
 from superdesk.publish.publish_service import PublishService
 from superdesk.tests import TestCase
@@ -21,115 +23,135 @@ from eve.utils import ParsedRequest
 import superdesk
 
 
+SUBSCRIBER_IDS = [ObjectId(), ObjectId(), ObjectId()]
+
+
 class PublishServiceTests(TestCase):
-    queue_items = [
-        {
-            "_id": "571075791d41c81e204c5c8c",
-            "destination": {"name": "NITF", "delivery_type": "ftp", "format": "nitf", "config": {}},
-            "subscriber_id": "1",
-            "state": "in-progress",
-            "item_id": 1,
-            "formatted_item": "",
-        }
+    subscriber_service: AsyncResourceService[SubscribersResource]
+    queue_service: AsyncResourceService[PublishQueueResource]
+
+    queue_items: list[PublishQueueResource] = [
+        PublishQueueResource.from_dict(
+            {
+                "_id": ObjectId("571075791d41c81e204c5c8c"),
+                "destination": {"name": "NITF", "delivery_type": "ftp", "format": "nitf", "config": {}},
+                "subscriber_id": SUBSCRIBER_IDS[0],
+                "state": "in-progress",
+                "item_id": "1",
+                "item_version": 1,
+                "formatted_item": "",
+                "publishing_action": "publish",
+            }
+        )
     ]
 
-    subscribers = [
-        {
-            "_id": "1",
-            "name": "Test",
-            "subscriber_type": SUBSCRIBER_TYPES.WIRE,
-            "media_type": "media",
-            "is_active": True,
-            "sequence_num_settings": {"max": 10, "min": 1},
-            "critical_errors": {"9004": True},
-            "destinations": [{"name": "NITF", "delivery_type": "ftp", "format": "nitf", "config": {}}],
-        },
-        {
-            "_id": "2",
-            "name": "Test2",
-            "subscriber_type": SUBSCRIBER_TYPES.WIRE,
-            "media_type": "media",
-            "is_active": True,
-            "sequence_num_settings": {"max": 10, "min": 1},
-            "critical_errors": {"9004": True},
-            "destinations": [
-                {
-                    "name": "HTTP PUSH",
-                    "delivery_type": "http_push",
-                    "format": "nitf",
-                    "config": {
-                        "resource_url": "http://localhost:5050/push",
-                        "assets_url": "http://localhost:5050/push_binary",
-                        "packaged": "true",
-                        "secret_token": "newsroom",
-                    },
-                }
-            ],
-        },
-        {
-            "_id": "3",
-            "name": "Test3",
-            "subscriber_type": SUBSCRIBER_TYPES.WIRE,
-            "media_type": "media",
-            "is_active": True,
-            "sequence_num_settings": {"max": 10, "min": 1},
-            "critical_errors": {"9004": True},
-            "destinations": [
-                {
-                    "name": "AMAZON SQS",
-                    "delivery_type": "amazon_sqs_fifo",
-                    "format": "nitf",
-                    "config": {
-                        "access_key_id": "demokeyaccess",
-                        "attach_media": False,
-                        "message_group_id": "messageGroupId",
-                        "queue_name": "demo test",
-                        "secret_access_key": "accesskey",
-                    },
-                }
-            ],
-        },
+    subscribers: list[SubscribersResource] = [
+        SubscribersResource.from_dict(
+            {
+                "_id": SUBSCRIBER_IDS[0],
+                "name": "Test",
+                "email": "foo@bar.org",
+                "subscriber_type": SUBSCRIBER_TYPES.WIRE,
+                "media_type": "media",
+                "is_active": True,
+                "sequence_num_settings": {"max": 10, "min": 1},
+                "critical_errors": {"9004": True},
+                "destinations": [{"name": "NITF", "delivery_type": "ftp", "format": "nitf", "config": {}}],
+            }
+        ),
+        SubscribersResource.from_dict(
+            {
+                "_id": SUBSCRIBER_IDS[1],
+                "name": "Test2",
+                "email": "bar@foo.org",
+                "subscriber_type": SUBSCRIBER_TYPES.WIRE,
+                "media_type": "media",
+                "is_active": True,
+                "sequence_num_settings": {"max": 10, "min": 1},
+                "critical_errors": {"9004": True},
+                "destinations": [
+                    {
+                        "name": "HTTP PUSH",
+                        "delivery_type": "http_push",
+                        "format": "nitf",
+                        "config": {
+                            "resource_url": "http://localhost:5050/push",
+                            "assets_url": "http://localhost:5050/push_binary",
+                            "packaged": "true",
+                            "secret_token": "newsroom",
+                        },
+                    }
+                ],
+            }
+        ),
+        SubscribersResource.from_dict(
+            {
+                "_id": SUBSCRIBER_IDS[2],
+                "name": "Test3",
+                "email": "foobar@orgs.org",
+                "subscriber_type": SUBSCRIBER_TYPES.WIRE,
+                "media_type": "media",
+                "is_active": True,
+                "sequence_num_settings": {"max": 10, "min": 1},
+                "critical_errors": {"9004": True},
+                "destinations": [
+                    {
+                        "name": "AMAZON SQS",
+                        "delivery_type": "amazon_sqs_fifo",
+                        "format": "nitf",
+                        "config": {
+                            "access_key_id": "demokeyaccess",
+                            "attach_media": False,
+                            "message_group_id": "messageGroupId",
+                            "queue_name": "demo test",
+                            "secret_access_key": "accesskey",
+                        },
+                    }
+                ],
+            }
+        ),
     ]
 
     async def asyncSetUp(self):
         await super().asyncSetUp()
-        self.app.data.insert("subscribers", self.subscribers)
-        self.queue_items[0]["_id"] = ObjectId(self.queue_items[0]["_id"])
-        self.app.data.insert("publish_queue", self.queue_items)
+        self.subscriber_service = SubscribersResource.get_service()
+        self.queue_service = PublishQueueResource.get_service()
 
-        init_app(self.app)
+        await self.subscriber_service.create(self.subscribers)
+        await self.queue_service.create(self.queue_items)
+
+        # TODO-ASYNC-PR: Is this ``init_app`` needed?
+        # init_app(self.app)
 
     async def test_close_subscriber_doesnt_close(self):
-        subscriber = self.app.data.find_one("subscribers", None)
-        self.assertTrue(subscriber.get("is_active"))
+        subscriber = await self.subscriber_service.find_by_id(SUBSCRIBER_IDS[0])
+        self.assertTrue(subscriber.is_active)
 
-        PublishService().close_transmitter(subscriber, PublishQueueError.unknown_format_error())
-        subscriber = self.app.data.find_one("subscribers", None)
-        self.assertTrue(subscriber.get("is_active"))
+        await PublishService().close_transmitter(subscriber, PublishQueueError.unknown_format_error())
+        subscriber = await self.subscriber_service.find_by_id(SUBSCRIBER_IDS[0])
+        self.assertTrue(subscriber.is_active)
 
     async def test_close_subscriber_does_close(self):
-        subscriber = self.app.data.find_one("subscribers", None)
-        self.assertTrue(subscriber.get("is_active"))
+        subscriber = await self.subscriber_service.find_by_id(SUBSCRIBER_IDS[0])
+        self.assertTrue(subscriber.is_active)
 
-        PublishService().close_transmitter(subscriber, PublishQueueError.bad_schedule_error())
-        subscriber = self.app.data.find_one("subscribers", None)
-        self.assertFalse(subscriber.get("is_active"))
+        await PublishService().close_transmitter(subscriber, PublishQueueError.bad_schedule_error())
+        subscriber = await self.subscriber_service.find_by_id(SUBSCRIBER_IDS[0])
+        self.assertFalse(subscriber.is_active)
 
     async def test_transmit_closes_subscriber(self):
         def mock_transmit(*args):
             raise PublishQueueError.bad_schedule_error()
 
-        subscriber = self.app.data.find_one("subscribers", None)
-
         publish_service = PublishService()
         publish_service._transmit = mock_transmit
 
         with self.assertRaises(PublishQueueError):
-            publish_service.transmit(self.queue_items[0])
+            await publish_service.transmit(self.queue_items[0].to_dict())
 
-        subscriber = self.app.data.find_one("subscribers", None)
-        self.assertFalse(subscriber.get("is_active"))
-        self.assertIsNotNone(subscriber.get("last_closed"))
+        subscriber = await self.subscriber_service.find_by_id(SUBSCRIBER_IDS[0])
+        self.assertFalse(subscriber.is_active)
+        self.assertIsNotNone(subscriber.last_closed)
 
     def test_highlight_query(self):
         source_query = {
@@ -157,13 +179,12 @@ class PublishServiceTests(TestCase):
         )
 
     async def test_subscribers_secret_keys(self):
-        subscriber_service = superdesk.get_resource_service("subscribers")
-        data = list(subscriber_service.get(req=None, lookup={}))
-        item = data[1]
-        self.assertEqual("Test2", item["name"])
-        self.assertNotIn("secret_token", item["destinations"][0]["config"])
+        subscribers = await self.subscriber_service.get_all_list()
+        item = subscribers[1]
+        self.assertEqual("Test2", item.name)
+        self.assertNotIn("secret_token", item.destinations[0].config)
 
-        item = data[2]
-        self.assertEqual("Test3", item["name"])
-        self.assertNotIn("access_key_id", item["destinations"][0]["config"])
-        self.assertNotIn("secret_access_key", item["destinations"][0]["config"])
+        item = subscribers[2]
+        self.assertEqual("Test3", item.name)
+        self.assertNotIn("access_key_id", item.destinations[0].config)
+        self.assertNotIn("secret_access_key", item.destinations[0].config)
