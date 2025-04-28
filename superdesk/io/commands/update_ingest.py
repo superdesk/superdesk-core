@@ -22,7 +22,7 @@ from superdesk.celery_app import CELERY_SERIALIZER_NAME
 from superdesk.core import get_app_config, get_current_app
 from superdesk.commands import cli
 from superdesk.resource_fields import ID_FIELD
-from superdesk.types import VocabulariesResourceModel, UsersResourceModel, UserTypeEnum
+from superdesk.types import VocabulariesResourceModel, UsersResourceModel, UserTypeEnum, ContentFiltersResource
 
 from superdesk.activity import ACTIVITY_EVENT, notify_and_add_activity
 from superdesk.celery_app import celery
@@ -178,7 +178,7 @@ def get_provider_rule_set(provider):
         return superdesk.get_resource_service("rule_sets").find_one(_id=provider["rule_set"], req=None)
 
 
-def get_provider_routing_scheme(provider):
+async def get_provider_routing_scheme(provider):
     """Returns the ingests provider's routing scheme configuration.
 
     If provider has a routing scheme defined (i.e. scheme ID is not None), the
@@ -197,7 +197,7 @@ def get_provider_routing_scheme(provider):
         return None
 
     schemes_service = superdesk.get_resource_service("routing_schemes")
-    filters_service = superdesk.get_resource_service("content_filters")
+    filters_service = ContentFiltersResource.get_service()
 
     scheme = schemes_service.find_one(_id=provider["routing_scheme"], req=None)
     if not scheme:
@@ -208,7 +208,7 @@ def get_provider_routing_scheme(provider):
     rules_filters = ((rule, str(rule["filter"])) for rule in scheme["rules"] if rule.get("filter"))
 
     for rule, filter_id in rules_filters:
-        content_filter = filters_service.find_one(_id=filter_id, req=None)
+        content_filter = await filters_service.find_by_id(filter_id)
         rule["filter"] = content_filter
 
     return scheme
@@ -271,7 +271,7 @@ class UpdateIngest:
                 kwargs = {
                     "provider": provider,
                     "rule_set": get_provider_rule_set(provider),
-                    "routing_scheme": get_provider_routing_scheme(provider),
+                    "routing_scheme": await get_provider_routing_scheme(provider),
                     "sync": sync,
                 }
 
