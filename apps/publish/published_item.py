@@ -8,11 +8,13 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
+from typing import Any
 from collections import namedtuple
 import json
 import logging
 
 from superdesk.core import get_current_app
+from superdesk.types import PublishQueueResource
 from superdesk.resource_fields import ID_FIELD, ITEMS, DATE_CREATED, LAST_UPDATED, VERSION
 from superdesk.flask import request
 from superdesk import get_resource_service
@@ -20,7 +22,7 @@ from superdesk.errors import SuperdeskApiError
 from superdesk.metadata.item import not_analyzed, ITEM_STATE, PUBLISH_STATES, CONTENT_STATE
 from superdesk.metadata.utils import aggregations, get_elastic_highlight_query
 from superdesk.resource import Resource
-from superdesk.services import BaseService
+from superdesk.eve_async import AsyncBaseService
 from superdesk.utc import utcnow
 
 from bson.objectid import ObjectId
@@ -28,7 +30,8 @@ from eve.utils import ParsedRequest
 
 from apps.archive.archive import SOURCE as ARCHIVE
 from apps.archive.common import handle_existing_data, item_schema
-from superdesk.publish.publish_queue import PUBLISHED_IN_PACKAGE
+from superdesk.publish import PUBLISHED_IN_PACKAGE
+from superdesk.publish_async.utils import get_next_sequence_number
 from apps.content import push_content_notification
 from quart_babel import gettext as _
 from apps.archive.highlights_search_mixin import HighlightsSearchMixin
@@ -132,28 +135,29 @@ class PublishedItemResource(Resource):
     }
 
 
-class PublishedItemService(BaseService, HighlightsSearchMixin):
+# TODO-ASYNC-PR: Upgrade this to async
+class PublishedItemService(AsyncBaseService, HighlightsSearchMixin):
     """
     PublishedItemService class is the base class for ArchivedService.
     """
 
     SEQ_KEY_NAME = "published_item_sequence_no"
 
-    def on_fetched(self, docs):
+    async def on_fetched_async(self, docs):
         """
         Overriding this to enhance the published article with the one in archive collection
         """
 
         self.enhance_with_archive_items(docs[ITEMS])
 
-    def on_fetched_item(self, doc):
+    async def on_fetched_item_async(self, doc):
         """
         Overriding this to enhance the published article with the one in archive collection
         """
 
         self.enhance_with_archive_items([doc])
 
-    def on_create(self, docs):
+    async def on_create_async(self, docs):
         """Runs on create.
 
         An article can be published multiple times in its lifetime. So, it's necessary to preserve the _id which comes
@@ -163,13 +167,13 @@ class PublishedItemService(BaseService, HighlightsSearchMixin):
         for doc in docs:
             self.raise_if_not_marked_for_publication(doc)
             doc[LAST_UPDATED] = doc[DATE_CREATED] = utcnow()
-            self.set_defaults(doc)
+            await self.set_defaults(doc)
 
-    def on_update(self, updates, original):
+    async def on_update_async(self, updates, original):
         if ITEM_STATE in updates:
             self.raise_if_not_marked_for_publication(updates)
 
-    def on_updated(self, updates, original):
+    async def on_updated_async(self, updates, original):
         if "marked_for_user" in updates:
             updated = original.copy()
             updated.update(updates)
@@ -186,11 +190,10 @@ class PublishedItemService(BaseService, HighlightsSearchMixin):
                 _("Invalid state ({state}) for the Published item.").format(state=doc.get(ITEM_STATE))
             )
 
-    def set_defaults(self, doc):
+    async def set_defaults(self, doc):
         doc["item_id"] = doc[ID_FIELD]
         doc["versioncreated"] = utcnow()
-        # TODO-ASYNC[sequences]: Use async version when upgrading this module to async
-        doc["publish_sequence_no"] = get_resource_service("sequences").get_next_sequence_number(self.SEQ_KEY_NAME)
+        doc["publish_sequence_no"] = await get_next_sequence_number(self.SEQ_KEY_NAME)
         doc.pop(ID_FIELD, None)
         doc.pop("lock_user", None)
         doc.pop("lock_time", None)
@@ -233,55 +236,52 @@ class PublishedItemService(BaseService, HighlightsSearchMixin):
                 item.update(updates)
                 handle_existing_data(item)
 
-    def on_delete(self, doc):
+    async def on_delete_async(self, doc):
         """Deleting a published item has a workflow which is implemented in remove_expired().
 
         Overriding to avoid other services from invoking this method accidentally.
         """
 
         if get_current_app().testing:
-            super().on_delete(doc)
+            await super().on_delete_async(doc)
         else:
             raise NotImplementedError(
                 _("Deleting a published item has a workflow which is implemented in remove_expired().")
             )
 
-    def delete_action(self, lookup=None):
+    async def delete_action_async(self, lookup=None):
         """Deleting a published item has a workflow which is implemented in remove_expired().
 
         Overriding to avoid other services from invoking this method accidentally.
         """
 
         if get_current_app().testing:
-            super().delete_action(lookup)
+            await super().delete_action_async(lookup)
         else:
             raise NotImplementedError(
                 _("Deleting a published item has a workflow which is implemented in remove_expired().")
             )
 
-    def on_deleted(self, doc):
+    async def on_deleted_async(self, doc):
         """Deleting a published item has a workflow which is implemented in remove_expired().
 
         Overriding to avoid other services from invoking this method accidentally.
         """
 
         if get_current_app().testing:
-            super().on_deleted(doc)
+            await super().on_deleted_async(doc)
         else:
             raise NotImplementedError(
                 _("Deleting a published item has a workflow which is implemented in remove_expired().")
             )
 
-    def get_other_published_items(self, _id):
+    async def get_other_published_items(self, item_id):
         try:
-            query = {"query": {"filtered": {"filter": {"term": {"item_id": _id}}}}}
-            request = ParsedRequest()
-            request.args = {"source": json.dumps(query)}
-            return super().get(req=request, lookup=None)
+            return await super().get_from_mongo_async(req=None, lookup={"item_id": item_id})
         except Exception:
             return []
 
-    def get_last_published_version(self, _id):
+    async def get_last_published_version(self, _id):
         """Returns the last published entry for the passed item id
 
         :param _id:
@@ -300,13 +300,13 @@ class PublishedItemService(BaseService, HighlightsSearchMixin):
 
             request = ParsedRequest()
             request.args = {"source": json.dumps(query), "repo": "published"}
-            items = list(self.get(req=request, lookup=None))
-            if items:
-                return items[0]
+            cursor = await self.get_async(req=request, lookup=None)
+            item = await cursor.next()
+            return item
         except Exception:
             return None
 
-    def get_rewritten_items_by_event_story(self, event_id, rewrite_id, rewrite_field):
+    async def get_rewritten_items_by_event_story(self, event_id, rewrite_id, rewrite_field):
         """Returns all the rewritten stories from published and archive for a given event and rewrite_id.
 
         :param str event_id: event id of the document
@@ -326,30 +326,32 @@ class PublishedItemService(BaseService, HighlightsSearchMixin):
 
             request = ParsedRequest()
             request.args = {"source": json.dumps(query), "repo": "archive,published"}
-            # TODO-ASYNC[search]: Use `get_async` when upgrading this module
-            return list(get_resource_service("search").get(req=request, lookup=None))
+            return await (await get_resource_service("search").get_async(req=request, lookup=None)).to_list()
         except Exception:
             return []
 
-    def is_rewritten_before(self, item_id):
+    async def is_rewritten_before(self, item_id):
         """Checks if the published item is rewritten before.
 
         :param _id: item_id of the published item
         :return: True is it is rewritten before
         """
-        doc = self.find_one(req=None, item_id=item_id)
+        doc = await self.find_one_async(req=None, item_id=item_id)
         return doc and "rewritten_by" in doc and doc["rewritten_by"]
 
-    def update_published_items(self, _id, field, state):
-        items = self.get_other_published_items(_id)
-        for item in items:
+    async def update_published_items(self, item_id: str, field: str | dict, state: Any | None = None):
+        print(f"Updating publish items for {item_id}")
+        items = await self.get_other_published_items(item_id)
+        updates = field if isinstance(field, dict) else {field: state}
+        async for item in items:
+            print("Updating published item")
             try:
-                super().system_update(ObjectId(item[ID_FIELD]), {field: state}, item)
+                await super().system_update_async(ObjectId(item[ID_FIELD]), updates, item)
             except Exception:
                 # This part is used in unit testing
-                super().system_update(item[ID_FIELD], {field: state}, item)
+                await super().system_update_async(item[ID_FIELD], updates, item)
 
-    def delete_by_article_id(self, _id):
+    async def delete_by_article_id(self, _id):
         """Removes the article from the published collection.
 
         Removes published queue entries.
@@ -357,41 +359,41 @@ class PublishedItemService(BaseService, HighlightsSearchMixin):
         :param str _id: id of the document to be deleted. In mongo, it is the item_id
         """
         lookup = {"item_id": _id}
-        self.delete(lookup=lookup)
-        get_resource_service("publish_queue").delete_by_article_id(_id)
+        await self.delete_async(lookup=lookup)
+        await PublishQueueResource.get_service().delete_many({"item_id": _id})
 
-    def find_one(self, req, **lookup):
-        item = super().find_one(req, **lookup)
+    async def find_one_async(self, req, **lookup):
+        item = await super().find_one_async(req, **lookup)
         handle_existing_data(item)
 
         return item
 
-    def move_to_archived(self, _id):
-        published_items = list(self.get_from_mongo(req=None, lookup={"item_id": _id}))
+    async def move_to_archived(self, _id):
+        published_items = await (await self.get_from_mongo_async(req=None, lookup={"item_id": _id})).to_list()
         if not published_items:
             return
         get_resource_service("archived").post(published_items)
-        self.delete_by_article_id(_id)
+        await self.delete_by_article_id(_id)
 
-    def set_moved_to_legal(self, item_id, version, status):
+    async def set_moved_to_legal(self, item_id, version, status):
         """Update the legal flag.
 
         :param str item_id: id of the document
         :param int version: version of the document
         :param boolean status: True if the item is moved to legal else false
         """
-        items = self.get_other_published_items(item_id)
+        items = await self.get_other_published_items(item_id)
 
-        for item in items:
+        async for item in items:
             try:
                 if item.get(VERSION) <= version and not item.get("moved_to_legal", False):
-                    super().system_update(ObjectId(item.get(ID_FIELD)), {"moved_to_legal": status}, item)
+                    await super().system_update_async(ObjectId(item.get(ID_FIELD)), {"moved_to_legal": status}, item)
             except Exception:
                 logger.exception(
                     "Failed to set the moved_to_legal flag " "for item {} and version {}".format(item_id, version)
                 )
 
-    def get_published_items_by_moved_to_legal(self, item_ids, move_to_legal):
+    async def get_published_items_by_moved_to_legal(self, item_ids, move_to_legal):
         """Get the pulished items where flag is moved.
 
         :param list item_ids: List of item
@@ -412,7 +414,7 @@ class PublishedItemService(BaseService, HighlightsSearchMixin):
 
                 request = ParsedRequest()
                 request.args = {"source": json.dumps(query)}
-                return list(super().get(req=request, lookup=None))
+                return await (await super().get_async(req=request, lookup=None)).to_list()
             except Exception:
                 logger.exception(
                     "Failed to get published items " "by moved to legal: {} -- ids: {}.".format(move_to_legal, item_ids)
@@ -420,6 +422,6 @@ class PublishedItemService(BaseService, HighlightsSearchMixin):
 
         return []
 
-    def get(self, req, lookup):
+    async def get_async(self, req, lookup):
         req, lookup = self._get_highlight(req, lookup)
-        return super().get(req, lookup)
+        return await super().get_async(req, lookup)

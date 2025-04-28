@@ -36,11 +36,15 @@ from superdesk.publish_async import get_exchange_factory
 from superdesk.resource_fields import ITEM_TYPE, ITEM_STATE
 
 from superdesk.metadata.item import PUBLISH_SCHEDULE, SCHEDULE_SETTINGS
+from superdesk.resource_fields import ID_FIELD, ITEM_OPERATION
 
-from apps.archive.common import ITEM_OPERATION
-from apps.publish.published_item import QUEUE_STATE, PUBLISHED
-
-from ..utils import get_high_priority_celery_queue, get_publish_channel_config, ContentApiSubscriber
+from ..utils import (
+    get_high_priority_celery_queue,
+    get_publish_channel_config,
+    ContentApiSubscriber,
+    QUEUE_STATE,
+    PUBLISHED,
+)
 from ..consumers import AsyncioPublishConsumer, CeleryPublishConsumer, ContentApiPublishConsumer
 
 
@@ -393,19 +397,19 @@ class DefaultPublishExchangeFactory(PublishExchangeFactory, SingletonInstance):
         """
 
         query = {
-            QUEUE_STATE: PublishState.PENDING,
+            QUEUE_STATE: PublishState.PENDING.value,
             "$or": [
                 {ITEM_STATE: {"$ne": ContentState.SCHEDULED.value}},
                 {
                     ITEM_STATE: ContentState.SCHEDULED.value,
-                    f"{SCHEDULE_SETTINGS}.utc_{PUBLISH_SCHEDULE}": {"$lte": date_to_str(utcnow())},
+                    f"{SCHEDULE_SETTINGS}.utc_{PUBLISH_SCHEDULE}": {"$lte": utcnow()},
                 },
             ],
         }
         request = ParsedRequest()
         request.sort = "publish_sequence_no"
         request.max_results = 200
-        return list(get_resource_service(PUBLISHED).get_from_mongo(req=request, lookup=query))
+        return await (await get_resource_service(PUBLISHED).get_from_mongo_async(req=request, lookup=query)).to_list()
 
     def _get_queue_lookup(self, retries: bool = False, priority: bool | None = None) -> dict:
         """

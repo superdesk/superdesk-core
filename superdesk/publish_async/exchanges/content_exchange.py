@@ -17,8 +17,7 @@ from superdesk.utc import utcnow
 
 from apps.archive.common import ARCHIVE, insert_into_versions
 from apps.content import push_content_notification
-from apps.publish.content.common import get_utc_publish_schedule, ITEM_PUBLISH
-from apps.publish.published_item import QUEUE_STATE, PUBLISHED, ERROR_MESSAGE
+from superdesk.publish_async.utils import get_utc_publish_schedule, ITEM_PUBLISH, QUEUE_STATE, PUBLISHED, ERROR_MESSAGE
 from apps.legal_archive.commands import import_into_legal_archive
 
 import content_api
@@ -65,7 +64,7 @@ class ContentPublishExchange(BasicPublishExchange):
         # Update the ``published`` collection, to update it's state
         published_service = get_resource_service(PUBLISHED)
 
-        published_item = published_service.find_one(
+        published_item = await published_service.find_one_async(
             req=None, item_id=request.item_id, _current_version=request.item[VERSION]
         )
         if not published_item:
@@ -74,7 +73,9 @@ class ContentPublishExchange(BasicPublishExchange):
                 "Unable to publish item, not found in published collection.", extra=dict(item_id=request.item_id)
             )
 
-            published_item = published_service.find_one(req=None, item_id=request.item_id, last_published_version=True)
+            published_item = await published_service.find_one_async(
+                req=None, item_id=request.item_id, last_published_version=True
+            )
             if not published_item:
                 logger.warning(
                     "Published item not found in either ``last_published_version`` or ``_current_version``.",
@@ -82,7 +83,7 @@ class ContentPublishExchange(BasicPublishExchange):
                 )
             return PublishRequestResponse(routed=False)
 
-        published_item_id = published_item[ID_FIELD]
+        published_item_id = ObjectId(published_item[ID_FIELD])
 
         if self.polling and published_item.get(QUEUE_STATE) == PublishState.PUSHED:
             # This request will be processed by ``PublishExchangeFactory.send_scheduled_or_pending_content``
@@ -92,9 +93,12 @@ class ContentPublishExchange(BasicPublishExchange):
 
         try:
             if request.item.get(ITEM_STATE) == CONTENT_STATE.SCHEDULED:
-                if (utc_schedule := get_utc_publish_schedule(published_item)) and utc_schedule < utcnow():
+                if (utc_schedule := get_utc_publish_schedule(published_item)) and utc_schedule > utcnow():
                     # This item will be picked up by the ``ExchangeFactory.send_scheduled_or_pending_content`` task
                     # So we respond that the item was routed, i.e. success (for now)
+                    if published_item.get(QUEUE_STATE) != PublishState.PENDING:
+                        # Make sure to set the ``published`` item queue state to pending, so it is picked up later
+                        await self.set_published_item_pending(published_item_id)
                     return PublishRequestResponse(routed=True)
 
                 await self.updated_scheduled_item(published_item)
@@ -106,7 +110,7 @@ class ContentPublishExchange(BasicPublishExchange):
             if not response.content_api_subscribers and request.publish_to_content_api and content_api.is_enabled():
                 try:
                     # If there were no ContentAPI Subscribers, we push it there manually now
-                    get_resource_service("content_api").publish(request.item, [])
+                    await get_resource_service("content_api").publish_async(request.item, [])
                 except Exception:
                     logger.exception(
                         "Failed to queue item to API",
@@ -119,22 +123,22 @@ class ContentPublishExchange(BasicPublishExchange):
             # if the item was routed then set the state to "queued"
             # else set the queue state to "queued_not_transmitted"
             queue_state = PublishState.QUEUED if response.routed else PublishState.QUEUED_NOT_TRANSMITTED
-            published_service.patch(published_item_id, {QUEUE_STATE: queue_state})
+            await published_service.patch_async(published_item_id, {QUEUE_STATE: queue_state})
 
             return response
 
         except ConnectionTimeout as error:  # recoverable, set state to pending and retry next time
             error_updates = {QUEUE_STATE: PublishState.PENDING, ERROR_MESSAGE: str(error)}
-            published_service.patch(published_item_id, error_updates)
+            await published_service.patch_async(published_item_id, error_updates)
             raise
         except SoftTimeLimitExceeded as error:
             # A celery timeout error occurred
             error_updates = {QUEUE_STATE: PublishState.PENDING, ERROR_MESSAGE: str(error)}
-            published_service.patch(published_item_id, error_updates)
+            await published_service.patch_async(published_item_id, error_updates)
             raise
         except Exception as error:
             error_updates = {QUEUE_STATE: PublishState.ERROR, ERROR_MESSAGE: str(error)}
-            published_service.patch(published_item_id, error_updates)
+            await published_service.patch_async(published_item_id, error_updates)
             raise
 
     async def set_published_item_pending(self, item_id: ObjectId) -> None:
@@ -146,7 +150,7 @@ class ContentPublishExchange(BasicPublishExchange):
         """
 
         published_update = {QUEUE_STATE: PublishState.PENDING, "last_queue_event": utcnow()}
-        get_resource_service(PUBLISHED).patch(item_id, published_update)
+        await get_resource_service(PUBLISHED).patch_async(item_id, published_update)
 
     async def update_published_item(self, item_id: ObjectId):
         """
@@ -161,7 +165,7 @@ class ContentPublishExchange(BasicPublishExchange):
         """
 
         published_update = {QUEUE_STATE: PublishState.IN_PROGRESS, "last_queue_event": utcnow()}
-        get_resource_service(PUBLISHED).patch(item_id, published_update)
+        await get_resource_service(PUBLISHED).patch_async(item_id, published_update)
 
     async def updated_scheduled_item(self, published_item: dict):
         """
@@ -234,4 +238,4 @@ class ContentPublishExchange(BasicPublishExchange):
             after_scheduled=True,
         )
         await signals.item_published_async.send(original, True)
-        get_resource_service(PUBLISHED).patch(published_item_id, published_update)
+        await get_resource_service(PUBLISHED).patch_async(published_item_id, published_update)
