@@ -64,7 +64,7 @@ from apps.prepopulate.app_initialize import app_initialize_data_handler
 from authlib.jose import jwt
 from authlib.jose.errors import BadSignatureError
 
-from .utils import find_one, post_items, patch_item, system_update, delete_items
+from .utils import find_one, post_items, patch_item, system_update, delete_items, find_many
 
 external_url = "http://thumbs.dreamstime.com/z/digital-nature-10485007.jpg"
 DATETIME_FORMAT = "%Y-%m-%dT%H:%M:%S%z"
@@ -518,7 +518,7 @@ async def step_impl_given_(context, resource):
             for item in items:
                 item.setdefault("needs_activation", False)
 
-        await post_items(resource, items)
+        await post_items(resource, items, use_eve=True)
         context.data = items
         context.resource = resource
         try:
@@ -2506,7 +2506,7 @@ async def then_ingest_item_is_not_routed_based_on_routing_scheme(context, rule_n
 async def validate_routed_item(context, rule_name, is_routed, is_transformed=False):
     data = json.loads(apply_placeholders(context, context.text))
 
-    def validate_rule(action, state):
+    async def validate_rule(action, state):
         for destination in rule.get("actions", {}).get(action, []):
             query = {
                 "and": [
@@ -2516,7 +2516,7 @@ async def validate_routed_item(context, rule_name, is_routed, is_transformed=Fal
                     {"term": {"state": state}},
                 ]
             }
-            item = get_archive_items(query) + get_published_items(query)
+            item = get_archive_items(query) + await get_published_items(query)
 
             if is_routed:
                 assert len(item) > 0, "No routed items found for criteria: " + str(query)
@@ -2534,8 +2534,8 @@ async def validate_routed_item(context, rule_name, is_routed, is_transformed=Fal
 
     scheme = await find_one("routing_schemes", _id=data["routing_scheme"])
     rule = next((rule for rule in scheme["rules"] if rule["name"].lower() == rule_name.lower()), {})
-    validate_rule("fetch", "routed")
-    validate_rule("publish", "published")
+    await validate_rule("fetch", "routed")
+    await validate_rule("publish", "published")
 
 
 @when('we schedule the routing scheme "{scheme_id}"')
@@ -2574,11 +2574,11 @@ def get_archive_items(query):
     return list(get_resource_service("archive").get(lookup=None, req=req))
 
 
-def get_published_items(query):
+async def get_published_items(query):
     req = ParsedRequest()
     req.max_results = 100
     req.args = {"filter": json.dumps(query)}
-    return list(get_resource_service("published").get(lookup=None, req=req))
+    return await get_resource_service("published").get_async(lookup=None, req=req).to_list()
 
 
 def assert_items_in_package(item, state, desk, stage):
@@ -2745,7 +2745,7 @@ async def run_import_legal_publish_queue(context):
     async with context.app.test_request_context(context.app.config["URL_PREFIX"]):
         from apps.legal_archive import ImportLegalPublishQueueCommand
 
-        ImportLegalPublishQueueCommand().run()
+        await ImportLegalPublishQueueCommand().run()
 
 
 @when("we expire items")
@@ -2757,11 +2757,11 @@ async def expire_content(context):
         for item_id in ids:
             original = await find_one("archive", _id=item_id)
             await system_update("archive", item_id, {"expiry": expiry}, original)
-            get_resource_service("published").update_published_items(item_id, "expiry", expiry)
+            await get_resource_service("published").update_published_items(item_id, "expiry", expiry)
 
         from apps.archive.commands import RemoveExpiredContent
 
-        RemoveExpiredContent().run()
+        await RemoveExpiredContent().run()
 
 
 @when("the publish schedule lapses")
@@ -2775,11 +2775,12 @@ async def run_overdue_schedule_jobs(context):
             "schedule_settings": {"utc_publish_schedule": lapse_time, "time_zone": None},
         }
 
+        published_service = get_resource_service("published")
         for item_id in ids:
             original = await find_one("archive", _id=item_id)
             await system_update("archive", item_id, updates, original)
-            get_resource_service("published").update_published_items(item_id, "publish_schedule", lapse_time)
-            get_resource_service("published").update_published_items(
+            await published_service.update_published_items(item_id, "publish_schedule", lapse_time)
+            await published_service.update_published_items(
                 item_id, "schedule_settings.utc_publish_schedule", lapse_time
             )
 
@@ -2822,8 +2823,9 @@ def we_get_reset_default_priority_for_updated_articles(context):
 async def we_mark_the_items_not_moved_to_legal(context):
     async with context.app.test_request_context(context.app.config["URL_PREFIX"]):
         ids = json.loads(apply_placeholders(context, context.text))
+        published_service = get_resource_service("published")
         for item_id in ids:
-            get_resource_service("published").update_published_items(item_id, "moved_to_legal", False)
+            await published_service.update_published_items(item_id, "moved_to_legal", False)
 
 
 @when("we run import legal archive command")
@@ -2832,7 +2834,7 @@ async def we_run_import_legal_archive_command(context):
     async with context.app.test_request_context(context.app.config["URL_PREFIX"]):
         from apps.legal_archive.commands import ImportLegalArchiveCommand
 
-        ImportLegalArchiveCommand().run()
+        await ImportLegalArchiveCommand().run()
 
 
 @then('we find no reference of package "{reference}" in item')
