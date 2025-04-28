@@ -13,8 +13,8 @@ from apps.desks import remove_profile_from_desks_async
 from eve.utils import ParsedRequest
 from superdesk.resource import build_custom_hateoas
 from quart_babel import gettext as _
+from superdesk.eve_async.service import CachableAsyncBaseService
 from superdesk.utc import utcnow
-from superdesk.services import CacheableService
 from superdesk.utils import format_content_type_name
 from superdesk.types import DesksResourceModel
 
@@ -128,31 +128,31 @@ class ContentTypesResource(superdesk.Resource):
     }
 
 
-class ContentTypesService(CacheableService):
+class ContentTypesService(CachableAsyncBaseService):
     def _set_updated_by(self, doc):
         doc["updated_by"] = get_user_id()
 
     def _set_created_by(self, doc):
         doc["created_by"] = get_user_id()
 
-    def on_create(self, docs):
+    async def on_create_async(self, docs: list[dict]) -> None:
         for doc in docs:
             self._set_updated_by(doc)
             self._set_created_by(doc)
 
-    async def on_delete(self, doc):
+    async def on_delete_async(self, doc: dict) -> None:
         if doc.get("is_used"):
             raise SuperdeskApiError(status_code=202, payload={"is_used": True})
         await remove_profile_from_templates(doc)
         await remove_profile_from_desks_async(doc)
 
-    async def on_update(self, updates, original):
+    async def on_update_async(self, updates: dict, original: dict) -> None:
         await self._validate_disable(updates, original)
         self._set_updated_by(updates)
         prepare_for_save_content_type(original, updates)
         await self._update_template_fields(updates, original)
 
-    def on_delete_res_vocabularies(self, doc):
+    async def on_delete_res_vocabularies(self, doc):
         req = ParsedRequest()
         req.projection = '{"label": 1}'
         res = self.get(req=req, lookup={"schema." + doc[ID_FIELD]: {"$type": 3}})
@@ -224,9 +224,9 @@ class ContentTypesService(CacheableService):
                     template.get("_id"), {"data": data}
                 )
 
-    def find_one(self, req, **lookup):
+    async def find_one_async(self, req: ParsedRequest | None, **lookup) -> dict | None:
         is_edit = req and "edit" in req.args
-        doc = super().find_one(req, **lookup)
+        doc = await super().find_one_async(req, **lookup)
         if doc and is_edit:
             prepare_for_edit_content_type(doc)
         if doc:

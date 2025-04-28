@@ -55,7 +55,8 @@ class PublishCache:
 
         # TODO-ASYNC-PUBLISH: Convert this to the async service when available (after rebasing from async branch)
         self.content_types = {
-            str(content_type["_id"]): content_type for content_type in get_resource_service("content_types").get_all()
+            str(content_type["_id"]): content_type
+            async for content_type in get_resource_service("content_types").get_all_async()
         }
 
         self.global_content_filters = [

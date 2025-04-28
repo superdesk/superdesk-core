@@ -290,7 +290,7 @@ class AsyncArchiveService(AsyncResourceService[ArchiveResourceModel], Highlights
             else:
                 await app.on_archive_item_updated({"task": doc.task}, doc, ItemOperation.CREATE)
 
-        await get_resource_service("content_types").set_used(profiles)
+        get_resource_service("content_types").set_used(profiles)
 
         push_content_notification(docs)
 
@@ -453,7 +453,7 @@ class AsyncArchiveService(AsyncResourceService[ArchiveResourceModel], Highlights
         await get_resource_service("archive_broadcast").reset_broadcast_status(updates, original)
 
         if updates.get("profile"):
-            await get_resource_service("content_types").set_used([updates.get("profile")])
+            get_resource_service("content_types").set_used([updates.get("profile")])
 
         await self.cropService.update_media_references(updates, original)
 
