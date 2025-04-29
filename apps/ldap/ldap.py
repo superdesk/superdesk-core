@@ -127,17 +127,17 @@ class ADAuth:
 
 
 class ADAuthService(AuthService):
-    async def on_create(self, docs):
+    async def on_create_async(self, docs):
         user_service = UsersResourceModel.get_service()
         for doc in docs:
-            user = self.authenticate(doc)
+            user = await self.authenticate(doc)
 
             if not user.get("_id"):
                 await user_service.create([user])
 
             self.set_auth_default(doc, user["_id"])
 
-    def authenticate(self, credentials):
+    async def authenticate(self, credentials):
         """Authenticates the user against Active Directory
 
         :param credentials: an object having "username" and "password" attributes
@@ -169,8 +169,8 @@ class ADAuthService(AuthService):
 
         query = get_user_query(profile_to_import)
 
-        # TODO-ASYNC[users]: Upgrade to async when updating this module
-        user = superdesk.get_resource_service("users").find_one(req=None, **query)
+        users_service = superdesk.get_resource_service("users")
+        user = await users_service.find_one_async(req=None, **query)
 
         if (
             get_app_config("LDAP_SET_DISPLAY_NAME", False)
@@ -187,9 +187,8 @@ class ADAuthService(AuthService):
             )
             user = user_data
         else:
-            # TODO-ASYNC[users]: Upgrade to async when updating this module
-            superdesk.get_resource_service("users").patch(user.get("_id"), user_data)
-            user = superdesk.get_resource_service("users").find_one(req=None, **query)
+            await users_service.patch_async(user.get("_id"), user_data)
+            user = await users_service.find_one_async(req=None, **query)
 
         return user
 
@@ -197,7 +196,7 @@ class ADAuthService(AuthService):
 class ImportUserProfileService(UsersService):
     """Service Class for endpoint /import_profile"""
 
-    def on_create(self, docs):
+    async def on_create_async(self, docs):
         logged_in_user = get_user().get("username")
         for index, doc in enumerate(docs):
             # ensuring the that logged in user is importing the profile.
@@ -207,7 +206,7 @@ class ImportUserProfileService(UsersService):
             try:
                 # authenticate on error sends 401 and the client is redirected to login.
                 # but in case import user profile from Active Directory 403 should be fine.
-                user = get_resource_service("auth_db").authenticate(doc)
+                user = await get_resource_service("auth_db").authenticate(doc)
             except CredentialsAuthError:
                 raise SuperdeskApiError.forbiddenError(message=_("Invalid Credentials."), payload={"credentials": 1})
 
@@ -218,7 +217,7 @@ class ImportUserProfileService(UsersService):
 
             docs[index] = user
 
-        super().on_create(docs)
+        await super().on_create_async(docs)
 
 
 def add_default_values(doc, user_name, user_type, **kwargs):

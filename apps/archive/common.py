@@ -543,6 +543,7 @@ def remove_media_files(doc, published=False):
 
     for attachment in doc.get("attachments", []):
         lookup = {"_id": attachment["attachment"]}
+        # TODO-ASYNC[attachments]: Use ``delete_action_async``
         get_resource_service("attachments").delete_action(lookup)
 
 

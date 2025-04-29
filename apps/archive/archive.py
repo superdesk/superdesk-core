@@ -401,7 +401,7 @@ class ArchiveService(BaseService, HighlightsSearchMixin):
             # send signal
             superdesk.item_create.send(self, item=doc)
 
-    def on_created(self, docs):
+    async def on_created(self, docs):
         packages = [doc for doc in docs if doc[ITEM_TYPE] == CONTENT_TYPE.COMPOSITE]
         if packages:
             self.packageService.on_created(packages)
@@ -428,7 +428,7 @@ class ArchiveService(BaseService, HighlightsSearchMixin):
             # used by client to detect item type
             doc.setdefault("_type", "archive")
 
-        get_resource_service("content_types").set_used(profiles)
+        await get_resource_service("content_types").set_used(profiles)
 
         push_content_notification(docs)
 
@@ -543,9 +543,10 @@ class ArchiveService(BaseService, HighlightsSearchMixin):
 
         for attachment_id in attachment_ids_to_remove:
             lookup = {"_id": attachment_id}
+            # TODO-ASYNC[attachments]: Use ``delete_action_async``
             get_resource_service("attachments").delete_action(lookup)
 
-    def on_updated(self, updates, original):
+    async def on_updated(self, updates, original):
         get_component(ItemAutosave).clear(original["_id"])
 
         if original[ITEM_TYPE] == CONTENT_TYPE.COMPOSITE:
@@ -569,7 +570,7 @@ class ArchiveService(BaseService, HighlightsSearchMixin):
         get_resource_service("archive_broadcast").reset_broadcast_status(updates, original)
 
         if updates.get("profile"):
-            get_resource_service("content_types").set_used([updates.get("profile")])
+            await get_resource_service("content_types").set_used([updates.get("profile")])
 
         self.cropService.update_media_references(updates, original)
 

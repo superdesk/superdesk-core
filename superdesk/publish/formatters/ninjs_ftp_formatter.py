@@ -56,7 +56,7 @@ class FTPNinjsFormatter(NINJSFormatter):
         if article.get("type") == "text" and recursive:
             await self.apply_product_filtering_to_associations(formatted_article, subscriber)
 
-        ninjs = super()._transform_to_ninjs(formatted_article, subscriber, recursive)
+        ninjs = await super()._transform_to_ninjs(formatted_article, subscriber, recursive)
 
         renditions = ninjs.get("renditions")
         if renditions:

@@ -110,7 +110,7 @@ async def cli_users_hash_passwords():
 @cli.command("users:get_auth_token")
 @click.option("--username", "-u", required=True)
 @click.option("--password", "-p", required=True)
-def cli_users_get_auth_token(username, password):
+async def cli_users_get_auth_token(username, password):
     """Gets auth token.
 
     Generate an authorization token to be able to authenticate against the REST api without
@@ -123,7 +123,7 @@ def cli_users_get_auth_token(username, password):
 
     """
 
-    GetAuthTokenCommand().run(username, password)
+    await GetAuthTokenCommand().run(username, password)
 
 
 async def create_user_command_handler(username: str, password: str, email: str, admin=False, support=False):
@@ -267,8 +267,8 @@ class ImportUsersCommand:
 
 class HashUserPasswordsCommand:
     async def run(self):
-        users = superdesk.get_resource_service("auth_users").get(req=None, lookup={})
-        for user in users:
+        users = await superdesk.get_resource_service("auth_users").get_async(req=None, lookup={})
+        async for user in users:
             pwd = user.get("password")
             if not is_hashed(pwd):
                 updates = {}
@@ -279,12 +279,12 @@ class HashUserPasswordsCommand:
 
 
 class GetAuthTokenCommand:
-    def run(self, username, password):
+    async def run(self, username, password):
         credentials = {"username": username, "password": password}
         service = superdesk.get_resource_service("auth_db")
-        id = str(service.post([credentials])[0])
-        print("Session ID:", id)
-        creds = service.find_one(req=None, _id=id)
+        auth_id = (await service.post_async([credentials]))[0]
+        print("Session ID:", auth_id)
+        creds = await service.find_one_async(req=None, _id=auth_id)
         token = creds.get("token").encode("ascii")
         encoded_token = b"basic " + b64encode(token + b":")
         print("Generated token: ", encoded_token)

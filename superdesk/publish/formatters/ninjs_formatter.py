@@ -295,7 +295,7 @@ class NINJSFormatter(Formatter):
             ninjs.setdefault("signal", []).extend([self._format_signal(signal) for signal in article["signal"]])
 
         if article.get("attachments"):
-            ninjs["attachments"] = self._format_attachments(article)
+            ninjs["attachments"] = await self._format_attachments(article)
 
         if ninjs["type"] == CONTENT_TYPE.TEXT and ("body_html" in ninjs or "body_text" in ninjs):
             if "body_html" in ninjs:
@@ -551,12 +551,12 @@ class NINJSFormatter(Formatter):
     def _format_signal_cwarn(self):
         return [{"name": "Content Warning", "code": "cwarn", "scheme": SCHEME_MAP["sig"]}]
 
-    def _format_attachments(self, article):
+    async def _format_attachments(self, article):
         output = []
         attachments_service = superdesk.get_resource_service("attachments")
         for attachment_ref in article["attachments"]:
-            attachment = attachments_service.find_one(req=None, _id=attachment_ref["attachment"])
-            href = get_attachment_public_url(attachment)
+            attachment = attachments_service.find_one_async(req=None, _id=attachment_ref["attachment"])
+            href = await get_attachment_public_url(attachment)
             if href:
                 # If we get a href, the attachment is available for subscriber consumption
                 output.append(
@@ -646,9 +646,9 @@ class NINJSFormatter(Formatter):
             scheme=SCHEME_MAP.get(scheme) or scheme,
         )
 
-    def export(self, item):
+    async def export(self, item):
         if self.can_format(self.type, item):
-            sequence, formatted_doc = self.format(item, {"_id": "0"}, None)[0]
+            sequence, formatted_doc = await self.format(item, {"_id": "0"}, None)[0]
             return formatted_doc.replace("''", "'")
         else:
             raise Exception()

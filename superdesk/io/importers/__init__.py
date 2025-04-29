@@ -24,7 +24,7 @@ from superdesk.metadata.item import ITEM_STATE
 @click.argument("parser")
 @click.argument("path")
 @click.option("--profile", "-p", help="name of the profile to use (case sensitive")
-def cli_xml_import(parser, path, profile):
+async def cli_xml_import(parser, path, profile):
     """Import articles into archives.
 
     Example:
@@ -34,7 +34,7 @@ def cli_xml_import(parser, path, profile):
 
     """
 
-    ImportCommand().run(parser, path, profile)
+    await ImportCommand().run(parser, path, profile)
 
 
 class ImportCommand:
@@ -44,7 +44,7 @@ class ImportCommand:
         superdesk.Option("--profile", "-p", help="name of the profile to use (case sensitive"),
     ]
 
-    def run(self, parser, path, profile):
+    async def run(self, parser, path, profile):
         try:
             feed_parser = registry.registered_feed_parsers[parser]
         except KeyError:
@@ -54,7 +54,7 @@ class ImportCommand:
         if profile is not None:
             content_types_service = get_resource_service("content_types")
             try:
-                content_profile = content_types_service.find({"label": profile}).next()
+                content_profile = await content_types_service.find_async({"label": profile}).next()
             except StopIteration:
                 print("Can't find content profile with this label")
                 sys.exit(1)

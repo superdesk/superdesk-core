@@ -250,6 +250,9 @@ class AsyncBaseService(BaseService):
             "items": items,
         }
 
+    async def count_async(self, lookup: dict | None = None) -> int:
+        return await self.backend.count_async(self.datasource, lookup)
+
 
 class CachableAsyncBaseService(AsyncBaseService, CacheableService):
     pass

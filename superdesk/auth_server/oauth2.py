@@ -25,6 +25,7 @@ class SuperdeskOAuth2Server(OAuth2Server):
     def query_client(self, client_id: str) -> OAuth2Client | None:
         clients_service = get_resource_service("auth_server_clients")
         try:
+            # TODO-ASYNC[auth]: Use ``find_one_async`` when upgrading this module
             client_data = clients_service.find_one(req=None, _id=ObjectId(client_id))
         except InvalidId as e:
             logger.error("Invalid 'client_id' was provided. Exception: {}".format(e))

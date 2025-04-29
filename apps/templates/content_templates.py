@@ -265,7 +265,7 @@ class ContentTemplatesService(AsyncBaseService):
             # if profile is changed remove unnecessary fields from template
             original_template = deepcopy(original)
             original_template.update(updates)
-            profile = get_resource_service("content_types").find_one(req=None, _id=profile_id)
+            profile = await get_resource_service("content_types").find_one_async(req=None, _id=profile_id)
             data, _ = self._reset_fields(original_template, profile)
             updates["data"] = data
 

@@ -1,9 +1,12 @@
 import os
 from typing import Optional, Dict, Any
-import superdesk
+from werkzeug.utils import secure_filename
+
+from superdesk import get_resource_service, register_resource
+from superdesk.resource import Resource
+from superdesk.eve_async import AsyncBaseService
 from superdesk.logging import logger
 
-from werkzeug.utils import secure_filename
 from superdesk.core import get_current_app
 from superdesk.flask import request
 from apps.auth import get_user_id
@@ -12,7 +15,7 @@ from apps.auth import get_user_id
 RESOURCE = "attachments"
 
 
-class AttachmentsResource(superdesk.Resource):
+class AttachmentsResource(Resource):
     schema = {
         "media": {"type": "media"},
         "mimetype": {"type": "string"},
@@ -24,7 +27,7 @@ class AttachmentsResource(superdesk.Resource):
             "sams": {"field": "name"},
         },
         "description": {"type": "string"},
-        "user": superdesk.Resource.rel("users"),
+        "user": Resource.rel("users"),
         "internal": {
             "type": "boolean",
             "default": False,
@@ -37,8 +40,8 @@ class AttachmentsResource(superdesk.Resource):
     privileges = {"POST": "archive", "PATCH": "archive"}
 
 
-class AttachmentsService(superdesk.Service):
-    def on_create(self, docs):
+class AttachmentsService(AsyncBaseService):
+    async def on_create_async(self, docs):
         current_app = get_current_app()
         for doc in docs:
             doc["user"] = get_user_id()
@@ -54,10 +57,11 @@ class AttachmentsService(superdesk.Service):
                 doc.setdefault("mimetype", getattr(media, "content_type"))
                 doc.setdefault("length", getattr(media, "length"))
 
-    def on_deleted(self, doc):
+    async def on_deleted_async(self, doc):
         get_current_app().media.delete(doc["media"], RESOURCE)
 
 
+# TODO-ASYNC[attachments]: Convert this to async when possible (used by ContentAPI publish function)
 def is_attachment_public(attachment):
     """Retuns true if attachment is public. False if it's internal.
 
@@ -65,12 +69,12 @@ def is_attachment_public(attachment):
     :return: boolean
     """
     if attachment.get("attachment"):  # retrieve object reference
-        attachment = superdesk.get_resource_service("attachments").find_one(req=None, _id=attachment["attachment"])
+        attachment = get_resource_service("attachments").find_one(req=None, _id=attachment["attachment"])
 
     return not attachment.get("internal")
 
 
-def get_attachment_public_url(attachment: Dict[str, Any]) -> Optional[str]:
+async def get_attachment_public_url(attachment: Dict[str, Any]) -> Optional[str]:
     """Returns the file url for the attachment provided
 
     :param dict attachment: The attachment to get the file URL
@@ -79,7 +83,7 @@ def get_attachment_public_url(attachment: Dict[str, Any]) -> Optional[str]:
     """
 
     if attachment.get("attachment"):  # retrieve object reference
-        attachment = superdesk.get_resource_service("attachments").find_one(req=None, _id=attachment["attachment"])
+        attachment = get_resource_service("attachments").find_one_async(req=None, _id=attachment["attachment"])
 
     if attachment.get("internal"):
         return None
@@ -96,6 +100,6 @@ def get_attachment_public_url(attachment: Dict[str, Any]) -> Optional[str]:
 
 
 def init_app(app) -> None:
-    superdesk.register_resource(RESOURCE, AttachmentsResource, AttachmentsService)
+    register_resource(RESOURCE, AttachmentsResource, AttachmentsService)
     app.client_config["attachments_max_files"] = app.config.get("ATTACHMENTS_MAX_FILES", 10)
     app.client_config["attachments_max_size"] = app.config.get("ATTACHMENTS_MAX_SIZE", 2**20 * 8)  # 8MB
