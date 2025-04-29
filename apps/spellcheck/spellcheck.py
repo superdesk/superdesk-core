@@ -1,4 +1,5 @@
 import superdesk
+from superdesk.eve_async.service import AsyncBaseService
 
 
 def norvig_suggest(word, model):
@@ -56,8 +57,8 @@ class SpellcheckResource(superdesk.Resource):
     privileges = {"POST": "archive"}
 
 
-class SpellcheckService(superdesk.Service):
-    def suggest(self, word, lang):
+class SpellcheckService(AsyncBaseService):
+    async def suggest(self, word, lang):
         """Suggest corrections for given word and language.
 
         :param word: word that is probably wrong
@@ -66,7 +67,7 @@ class SpellcheckService(superdesk.Service):
         model = await superdesk.get_resource_service("dictionaries").get_model_for_lang(lang)
         return norvig_suggest(word, model)
 
-    def create(self, docs, **kwargs):
+    async def create_async(self, docs: list[dict], **kwargs) -> list:
         for doc in docs:
-            doc["corrections"] = self.suggest(doc["word"], doc["language_id"])
+            doc["corrections"] = await self.suggest(doc["word"], doc["language_id"])
         return [doc["word"] for doc in docs]
