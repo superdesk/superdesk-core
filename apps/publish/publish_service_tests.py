@@ -120,9 +120,6 @@ class PublishServiceTests(TestCase):
         await self.subscriber_service.create(self.subscribers)
         await self.queue_service.create(self.queue_items)
 
-        # TODO-ASYNC-PR: Is this ``init_app`` needed?
-        # init_app(self.app)
-
     async def test_close_subscriber_doesnt_close(self):
         subscriber = await self.subscriber_service.find_by_id(SUBSCRIBER_IDS[0])
         self.assertTrue(subscriber.is_active)

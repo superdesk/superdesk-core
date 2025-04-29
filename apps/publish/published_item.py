@@ -135,7 +135,6 @@ class PublishedItemResource(Resource):
     }
 
 
-# TODO-ASYNC-PR: Upgrade this to async
 class PublishedItemService(AsyncBaseService, HighlightsSearchMixin):
     """
     PublishedItemService class is the base class for ArchivedService.
