@@ -1,4 +1,5 @@
 import superdesk
+from superdesk.eve_async.service import AsyncBaseService
 from superdesk.core import json, get_current_app
 from superdesk.utils import get_random_string
 from superdesk.media.media_operations import crop_image, process_image, encode_metadata
@@ -52,13 +53,13 @@ def get_crop_size(crop, width=800, height=600):
     return size
 
 
-class PictureCropService(superdesk.Service):
+class PictureCropService(AsyncBaseService):
     """Crop original image of picture item and return its url.
 
     It is used for embedded images within text item body.
     """
 
-    def create(self, docs, **kwargs):
+    async def create_async(self, docs: list[dict], **kwargs) -> list:
         ids = []
         app = get_current_app()
         for doc in docs:
