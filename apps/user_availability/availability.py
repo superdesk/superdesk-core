@@ -1,8 +1,15 @@
+from typing import TYPE_CHECKING
+
 import superdesk
+
+from apps.user_availability.default_availability import DefaultAvailabilityService
 from superdesk.resource import Resource
 from apps.auth import get_user_id
 
 endpoint_name = "user_availability"
+
+if TYPE_CHECKING:
+    from .default_availability import DefaultAvailabilityService
 
 
 class AvailabilityResource(Resource):
@@ -61,9 +68,14 @@ class AvailabilityResource(Resource):
 
 
 class AvailabilityService(superdesk.Service):
+    default_service: "DefaultAvailabilityService"
+
     def on_create(self, docs):
         for doc in docs:
             doc["user"] = get_user_id()
+            default_availability = self.default_service.find_one(req=None, _id=doc["user"])
+            if default_availability and default_availability.get("language"):
+                doc.setdefault("language", default_availability["language"])
 
 
 availability_service = AvailabilityService(endpoint_name, backend=superdesk.get_backend())

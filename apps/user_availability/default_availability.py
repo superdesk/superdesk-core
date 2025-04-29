@@ -1,5 +1,6 @@
 import superdesk
 
+from typing import TYPE_CHECKING
 from flask import current_app as app
 from dateutil.rrule import rrule, WEEKLY
 from superdesk.dates import get_local_today
@@ -7,7 +8,8 @@ from superdesk.resource import Resource
 from superdesk.errors import SuperdeskApiError
 from apps.auth import get_user_id
 
-from .availability import availability_service
+if TYPE_CHECKING:
+    from .availability import AvailabilityService
 
 endpoint_name = "default_user_availability"
 
@@ -89,6 +91,8 @@ class DefaultAvailabilityResource(Resource):
 class DefaultAvailabilityService(superdesk.Service):
     """Service class for the default user availability resource."""
 
+    availability_service: "AvailabilityService"
+
     def on_replace(self, document, original):
         """Check that the user can only modify their own availability settings."""
         self.validate_user_id(document)
@@ -124,7 +128,7 @@ class DefaultAvailabilityService(superdesk.Service):
     def generate_user_availability(self, doc):
         today = get_local_today().date()
         current_user_id = doc["_id"]
-        availability_service.delete_action(
+        self.availability_service.delete_action(
             {"user": current_user_id, "date": {"$gte": today.isoformat()}, "_generated": True}
         )
         generate_weeks = app.config.get("AVAILABILITY_GENERATE_WEEKS", 4 * 3)
@@ -145,11 +149,11 @@ class DefaultAvailabilityService(superdesk.Service):
                     "_generated": True,
                 }
                 for d in dates
-                if availability_service.find_one(req=None, user=current_user_id, date=d.date().isoformat()) is None
+                if self.availability_service.find_one(req=None, user=current_user_id, date=d.date().isoformat()) is None
             ]
 
         if items:
-            availability_service.create(items)
+            self.availability_service.create(items)
 
 
 default_service = DefaultAvailabilityService(endpoint_name, backend=superdesk.get_backend())

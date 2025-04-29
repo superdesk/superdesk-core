@@ -10,6 +10,9 @@ def init_app(app):
     AvailabilityResource(availability_service.datasource, app=app, service=availability_service)
     DefaultAvailabilityResource(default_service.datasource, app=app, service=default_service)
 
+    availability_service.default_service = default_service
+    default_service.availability_service = availability_service
+
     # generate availability for all users once a day
     app.config["CELERY_BEAT_SCHEDULE"]["user_availability:generate-scheduled-rundowns"] = {
         "task": "apps.user_availability.generate_user_availability",

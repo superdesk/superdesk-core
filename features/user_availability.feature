@@ -182,7 +182,11 @@ Feature: User Availability
                     "status": "unavailable"
                 }
             },
-            "language": ["en", "fr"]
+            "language": ["en", "fr"],
+            "tags": [
+                {"code": "foo"},
+                {"code": "bar"}
+            ]
         }
         """
         Then we get OK response
@@ -221,7 +225,7 @@ Feature: User Availability
         Then we get list with 20+ items
         """
         {"_items": [
-            {"_generated": true, "status": "partial", "user": "#CONTEXT_USER_ID#"}
+            {"_generated": true, "status": "partial", "user": "#CONTEXT_USER_ID#", "language": ["en", "fr"]}
         ]}
         """
         
@@ -389,3 +393,23 @@ Feature: User Availability
 
         And we get "user_availability"
         Then we get list with 10+ items
+
+        When we put to "/default_user_availability/#CONTEXT_USER_ID#"
+        """
+        {"language": ["de"]}
+        """
+        And we post to "/user_availability"
+        """
+        {
+            "date": "2023-05-15",
+            "status": "available"
+        }
+        """
+        Then we get OK response
+        And we get existing resource
+        """
+        {
+            "date": "2023-05-15",
+            "language": ["de"]
+        }
+        """
