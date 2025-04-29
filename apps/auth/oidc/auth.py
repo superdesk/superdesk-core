@@ -40,7 +40,7 @@ class OIDCAuthService(AuthService):
         # TODO: Fix this after Flask3 upgrade
         # self.oidc = OpenIDConnect(app)
 
-    def authenticate(self, credentials):
+    async def authenticate(self, credentials):
         auth_header = request.headers.get("Authorization", "").split(" ", 1)
         if auth_header[0] != "Bearer" and len(auth_header) != 2:
             raise CredentialsAuthError(credentials)
@@ -49,10 +49,9 @@ class OIDCAuthService(AuthService):
         if not is_valid:
             raise CredentialsAuthError(credentials)
 
-        # TODO-ASYNC[users]: Upgrade to async when updating this module
         users_service = get_resource_service("users")
         username = g.oidc_token_info["username"]
-        user = users_service.find_one(req=None, username=username) or {}
+        user = await users_service.find_one_async(req=None, username=username) or {}
 
         sync_data = {
             "username": username,
@@ -74,7 +73,7 @@ class OIDCAuthService(AuthService):
             client_id = g.oidc_token_info.get("client_id", "")
             keycloak_roles = g.oidc_token_info.get("resource_access", {}).get(client_id, {}).get("roles", [])
             for role_name in keycloak_roles:
-                role = get_resource_service("roles").find_one(req=None, name=ignorecase_query(role_name))
+                role = await get_resource_service("roles").find_one_async(req=None, name=ignorecase_query(role_name))
                 if role:
                     user_role = role.get("_id")
                     break
@@ -86,9 +85,9 @@ class OIDCAuthService(AuthService):
                     "needs_activation": False,
                 }
             )
-            users_service.post([sync_data])
+            await users_service.post_async([sync_data])
         else:
-            users_service.patch(user[ID_FIELD], sync_data)
+            await users_service.patch_async(user[ID_FIELD], sync_data)
 
         user.update(sync_data)
         return user

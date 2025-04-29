@@ -14,7 +14,7 @@ from superdesk.core import get_current_app
 from superdesk.resource_fields import ID_FIELD
 from superdesk.flask import request, session as flask_session, g
 from superdesk import utils as utils, get_resource_service, get_resource_privileges
-from superdesk.services import BaseService
+from superdesk.eve_async import AsyncBaseService
 from superdesk.errors import SuperdeskApiError
 from superdesk.users.errors import UserInactiveError
 from superdesk.utc import utcnow
@@ -22,8 +22,8 @@ from apps import auth
 from apps.auth.errors import UserDisabledError
 
 
-class AuthService(BaseService):
-    def authenticate(self, document):
+class AuthService(AsyncBaseService):
+    async def authenticate(self, document):
         """Authenticate user according to credentials
 
         :param documents: credentials for this authentication mechanism
@@ -32,12 +32,12 @@ class AuthService(BaseService):
         """
         raise NotImplementedError()
 
-    def on_create(self, docs):
+    async def on_create_async(self, docs):
         # Clear the session data when creating a new session
         if flask_session:
             flask_session.pop("session_token", None)
         for doc in docs:
-            user = self.authenticate(doc)
+            user = await self.authenticate(doc)
             if not user:
                 raise ValueError()
             if "is_enabled" in user and not user.get("is_enabled", False):
@@ -46,18 +46,16 @@ class AuthService(BaseService):
                 raise UserInactiveError()
             self.set_auth_default(doc, user["_id"])
 
-    def on_created(self, docs):
+    async def on_created_asnc(self, docs):
         for doc in docs:
-            # TODO-ASYNC[users]: Upgrade to async when updating this module
-            get_resource_service("preferences").set_session_based_prefs(doc["_id"], doc["user"])
-            self.set_user_last_activity(doc["user"])
+            await get_resource_service("preferences").set_session_based_prefs(doc["_id"], doc["user"])
+            await self.set_user_last_activity(doc["user"])
 
-    def set_user_last_activity(self, user_id, done=False):
+    async def set_user_last_activity(self, user_id, done=False):
         now = utcnow()
         user_service = get_resource_service("users")
-        # TODO-ASYNC[users]: Upgrade to async when updating this module
-        user = user_service.find_one(req=None, _id=user_id)
-        user_service.system_update(
+        user = await user_service.find_one_async(req=None, _id=user_id)
+        await user_service.system_update_async(
             user["_id"],
             {"last_activity_at": now if not done else None, "_updated": now},
             user,
@@ -68,20 +66,20 @@ class AuthService(BaseService):
         doc["token"] = utils.get_random_string(40)
         doc.pop("password", None)
 
-    def update_session(self, updates=None):
+    async def update_session(self, updates=None):
         """Update current session with given data.
 
         :param updates: updates to be made
         """
         if not updates:
             updates = {}
-        self.system_update(g.auth["_id"], updates, g.auth)
+        await self.system_update_async(g.auth["_id"], updates, g.auth)
 
-    def on_fetched_item(self, doc: dict) -> None:
+    async def on_fetched_item_async(self, doc: dict) -> None:
         if str(doc["user"]) != str(auth.get_user_id()):
             raise SuperdeskApiError.notFoundError(_("Not found."))
 
-    def on_deleted(self, doc):
+    async def on_deleted_async(self, doc):
         """Runs on delete of a session
 
         :param doc: A deleted auth doc AKA a session
@@ -92,16 +90,15 @@ class AuthService(BaseService):
         if request:
             # Clear the session data when session has ended
             flask_session.pop("session_token", None)
-            sessions = self.get(req=None, lookup={"user": doc["user"]})
-            is_last_session = not sessions.count()
+            is_last_session = (await self.count_async({"user": doc["user"]})) == 0
 
         # notify that the session has ended
         app = get_current_app().as_any()
-        app.on_session_end(doc["user"], doc["_id"], is_last_session=is_last_session)
+        await app.on_session_end.call_async(doc["user"], doc["_id"], is_last_session=is_last_session)
         if is_last_session:
-            self.set_user_last_activity(doc["user"], done=True)
+            await self.set_user_last_activity(doc["user"], done=True)
 
-    def is_authorized(self, **kwargs) -> bool:
+    async def is_authorized(self, **kwargs) -> bool:
         """
         Check auth for intrinsic methods.
         """
@@ -112,7 +109,7 @@ class AuthService(BaseService):
         # user with `users` privelege can delete sessions of any user
         # user without `users` privelege can delete only it's own session (logout)
         if method == "DELETE":
-            _auth = self.find_one(req=None, _id=kwargs.get("_id"))
+            _auth = await self.find_one_async(req=None, _id=kwargs.get("_id"))
             if _auth and _auth.get("user") == user.get("_id"):
                 return True
 
@@ -123,8 +120,8 @@ class AuthService(BaseService):
         return True
 
 
-class UserSessionClearService(BaseService):
-    def delete(self, lookup):
+class UserSessionClearService(AsyncBaseService):
+    async def delete_async(self, lookup):
         """Delete user session.
 
         Deletes all the records from auth and corresponding
@@ -133,8 +130,8 @@ class UserSessionClearService(BaseService):
         """
         users_service = get_resource_service("users")
         user_id = request.view_args["user"]
-        user = users_service.find_one(req=None, _id=user_id)
-        sessions = get_resource_service("auth").get(req=None, lookup={"user": user_id})
+        user = await users_service.find_one_async(req=None, _id=user_id)
+        sessions = await get_resource_service("auth").get_async(req=None, lookup={"user": user_id})
 
         error_message = self.__can_clear_sessions(user)
         if error_message:
@@ -142,14 +139,14 @@ class UserSessionClearService(BaseService):
 
         # Delete all the sessions except current session
         current_session_id = auth.get_auth().get("_id")
-        for session in sessions:
+        async for session in sessions:
             if str(session[ID_FIELD]) != str(current_session_id):
-                get_resource_service("auth").delete_action({ID_FIELD: str(session[ID_FIELD])})
+                await get_resource_service("auth").delete_action_async({ID_FIELD: str(session[ID_FIELD])})
 
         # Check if any orphan session_preferences exist for the user
         if user.get("session_preferences"):
             # Delete the orphan sessions
-            users_service.patch(user[ID_FIELD], {"session_preferences": {}})
+            await users_service.patch_async(user[ID_FIELD], {"session_preferences": {}})
 
         return [{"complete": True}]
 
