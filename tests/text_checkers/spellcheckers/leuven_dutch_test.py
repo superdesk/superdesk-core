@@ -14,7 +14,7 @@ from .utils import mock_dictionaries
 import responses
 
 from superdesk.flask import Flask
-from superdesk.tests import TestCase
+from superdesk.tests import AsyncTestCase
 from superdesk.text_checkers import tools
 from superdesk.text_checkers.spellcheckers.base import registered_spellcheckers, SpellcheckerBase
 from superdesk.text_checkers import spellcheckers
@@ -34,17 +34,17 @@ def load_spellcheckers():
     tools.import_services(app, spellcheckers.__name__, SpellcheckerBase)
 
 
-class LeuvenDutchTestCase(TestCase):
-    @classmethod
-    def setUpClass(cls):
-        super().setUpClass()
+class LeuvenDutchTestCase(AsyncTestCase):
+
+    async def asyncSetUp(self):
+        await super().asyncSetUp()
         load_spellcheckers()
 
-    def test_list(self):
+    async def test_list(self):
         """Check that Leuven Dutch spellchecker is listed by spellcheckers_list service"""
         doc = {}
         spellcheckers_list = get_resource_service("spellcheckers_list")
-        spellcheckers_list.on_fetched(doc)
+        await spellcheckers_list.on_fetched_async(doc)
         for checker in doc["spellcheckers"]:
             if (
                 checker["name"] == LeuvenDutch.name
@@ -56,7 +56,7 @@ class LeuvenDutchTestCase(TestCase):
         self.fail("Leuven University Dutch spellchecker not found")
 
     @responses.activate
-    def test_checker(self, expected=None, use_internal_dict=False):
+    async def test_checker(self, expected=None, use_internal_dict=False):
         """Check that spellchecking is working
 
         :param expected: "errors" expected
@@ -89,7 +89,7 @@ class LeuvenDutchTestCase(TestCase):
                 "debug": {"timeneeded": 0.1197},
             },
         )
-        spellchecker.create([doc])
+        await spellchecker.create_async([doc])
 
         if expected is None:
             expected = [{"startOffset": 0, "text": "Outo", "type": "spelling"}]
@@ -97,17 +97,17 @@ class LeuvenDutchTestCase(TestCase):
         self.assertEqual(doc["errors"], expected)
 
     @patch("superdesk.get_resource_service", MagicMock(side_effect=partial(mock_dictionaries, model=MODEL)))
-    def test_checker_with_internal_dict(self):
+    async def test_checker_with_internal_dict(self):
         """Check that words in personal dictionary are discarded correctly
 
         This test re-uses test_checker but activate "use_internal_dict" option and mock dictionary to have "outo" inside
         """
         # outo is in personal dictionary, so no spelling error should be returned
         expected = []
-        self.test_checker(expected=expected, use_internal_dict=True)
+        await self.test_checker(expected=expected, use_internal_dict=True)
 
     @responses.activate
-    def test_suggest(self):
+    async def test_suggest(self):
         """Check that spelling suggestions are working"""
 
         doc = {"spellchecker": "leuven_dutch", "text": "Outo", "suggestions": True}
@@ -127,7 +127,7 @@ class LeuvenDutchTestCase(TestCase):
                 "debug": {"timeneeded": 0.0861},
             },
         )
-        spellchecker.create([doc])
+        await spellchecker.create_async([doc])
 
         self.assertEqual(
             doc,
