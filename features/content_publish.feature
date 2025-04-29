@@ -3641,7 +3641,21 @@ Feature: Content Publishing
                             "media": "600x800_new",
                             "mimetype": "image/jpeg"
                         },
-                        "1280x720": "__none__"
+                        "1280x720": {
+                            "poi": {
+                                "x": 3024,
+                                "y": 756
+                            },
+                            "CropLeft": 0,
+                            "CropRight": 4032,
+                            "CropTop": 0,
+                            "CropBottom": 2277,
+                            "width": 1280,
+                            "height": 720,
+                            "href": "http://localhost:5000/api/upload-raw/1280x720.jpg",
+                            "media": "1280x720",
+                            "mimetype": "image/jpeg"
+                        }
                     }
                 }
             }
@@ -4971,8 +4985,7 @@ Feature: Content Publishing
       Given config update
       """
       { 
-        "PUBLISH_ASSOCIATED_ITEMS": true,
-        "ENABLE_ASSOCIATED_ITEMS_UPDATE": true
+        "PUBLISH_ASSOCIATED_ITEMS": true
       }
       """
       And "validators"

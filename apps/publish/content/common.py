@@ -895,10 +895,7 @@ class BasePublishService(BaseService):
                         sync_associated_item_changes(associated_item, associated_item_updates)
                         continue
 
-                    if (
-                        app.config.get("ENABLE_ASSOCIATED_ITEMS_UPDATE")
-                        or association_updates.get("state") not in PUBLISH_STATES
-                    ):
+                    if association_updates.get("state") not in PUBLISH_STATES or updates.get("state"):
                         remove_unwanted(association_updates)
                         publish_service.patch(id=associated_item[config.ID_FIELD], updates=association_updates)
 
