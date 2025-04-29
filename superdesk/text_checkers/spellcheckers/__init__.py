@@ -97,7 +97,7 @@ class SpellcheckerService(AsyncBaseService):
 
     """
 
-    def remove_errors_in_dict(self, spellchecker, language, check_data):
+    async def remove_errors_in_dict(self, spellchecker, language, check_data):
         """Remove spelling error which are in the internal dictionary
 
         :param SpellcheckerBase: spellchecker used
@@ -112,7 +112,7 @@ class SpellcheckerService(AsyncBaseService):
             return
         lang = spellchecker.get_language(language)
         dictionaries_service = superdesk.get_resource_service("dictionaries")
-        model = dictionaries_service.get_model_for_lang(lang)
+        model = await dictionaries_service.get_model_for_lang(lang)
         to_remove = []
         for error in errors:
             if error.get("type", "spelling") != "spelling":
@@ -151,7 +151,7 @@ class SpellcheckerService(AsyncBaseService):
             check_data = spellchecker.check(doc["text"], language)
             assert "errors" in check_data
             if doc["use_internal_dict"]:
-                self.remove_errors_in_dict(spellchecker, language, check_data)
+                await self.remove_errors_in_dict(spellchecker, language, check_data)
             ignore = doc.get("ignore")
             if ignore:
                 self.remove_ignored(check_data, ignore)

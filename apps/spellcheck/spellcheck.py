@@ -63,7 +63,7 @@ class SpellcheckService(superdesk.Service):
         :param word: word that is probably wrong
         :param lang: language code
         """
-        model = superdesk.get_resource_service("dictionaries").get_model_for_lang(lang)
+        model = await superdesk.get_resource_service("dictionaries").get_model_for_lang(lang)
         return norvig_suggest(word, model)
 
     def create(self, docs, **kwargs):

@@ -13,13 +13,14 @@ import re
 import logging
 import collections
 
+from eve.utils import ParsedRequest
 from simplejson.errors import JSONDecodeError
 
+from superdesk.eve_async.service import AsyncBaseService
 from superdesk.core import json, get_current_app
 from superdesk.resource_fields import ITEMS
 from superdesk.flask import request
 from superdesk.errors import SuperdeskApiError
-from superdesk.services import BaseService
 from superdesk.notification import push_notification
 from apps.dictionaries.resource import DICTIONARY_FILE, DictionaryType
 from quart_babel import gettext as _
@@ -142,11 +143,12 @@ def read_from_file(doc):
     content = doc.pop(DICTIONARY_FILE)
     if "text/" not in content.mimetype:
         raise SuperdeskApiError.badRequestError(_("A text dictionary file is required"))
+        raise SuperdeskApiError.badRequestError(_("A text dictionary file is required"))
     return train(words(read(content)))
 
 
-class DictionaryService(BaseService):
-    def on_create(self, docs):
+class DictionaryService(AsyncBaseService):
+    async def on_create_async(self, docs: list[dict]) -> None:
         if len(docs) == 1 and "content" in docs[0]:
             # works around Eve behaviour which creates sub-dict on each "." it finds in keys
             # cf. SDESK-3083
@@ -158,7 +160,7 @@ class DictionaryService(BaseService):
                 pass
 
         for doc in docs:
-            if self.is_duplicate_dictionary(doc):
+            if await self.is_duplicate_dictionary(doc):
                 raise SuperdeskApiError.badRequestError(
                     message=_("The dictionary already exists"), payload={"name": "duplicate"}
                 )
@@ -172,12 +174,12 @@ class DictionaryService(BaseService):
 
             store_dict(doc, {})
 
-    def on_created(self, docs):
+    async def on_created_async(self, docs: list[dict]) -> None:
         for doc in docs:
             push_notification("dictionary:created", language=doc.get("language_id"))
 
-    def find_one(self, req, **lookup):
-        doc = super().find_one(req, **lookup)
+    async def find_one_async(self, req: ParsedRequest | None, **lookup) -> dict | None:
+        doc = await super().find_one_async(req, **lookup)
         if doc:
             doc["content"] = fetch_dict(doc)
         return doc
@@ -198,15 +200,15 @@ class DictionaryService(BaseService):
         if lang and lang.find("-") > 0:
             return lang.split("-")[0]
 
-    def is_duplicate_dictionary(self, doc):
-        return self.find_one(
+    async def is_duplicate_dictionary(self, doc):
+        return await self.find_one_async(
             req=None,
             name=doc["name"],
             language_id=doc["language_id"],
             type=doc.get("type", DictionaryType.DICTIONARY.value),
         )
 
-    def get_dictionaries(self, lang):
+    async def get_dictionaries(self, lang):
         """Returns all the active dictionaries.
 
         If both the language (en-AU)
@@ -227,7 +229,7 @@ class DictionaryService(BaseService):
                 {"$or": [{"type": {"$exists": 0}}, {"type": DictionaryType.DICTIONARY.value}]},
             ]
         }
-        dicts = list(self.get(req=None, lookup=lookup))
+        dicts = await (await self.get_async(req=None, lookup=lookup)).to_list()
         langs = [d["language_id"] for d in dicts]
 
         if base_language and base_language in langs and lang in langs:
@@ -235,15 +237,14 @@ class DictionaryService(BaseService):
 
         return dicts
 
-    def get_model_for_lang(self, lang):
+    async def get_model_for_lang(self, lang):
         """Get model for given language.
 
         It will use all active dictionaries for given language combined.
-
         :param lang: language code
         """
         model = {}
-        dicts = self.get_dictionaries(lang)
+        dicts = await self.get_dictionaries(lang)
 
         for _dict in dicts:
             content = fetch_dict(_dict)
@@ -251,7 +252,7 @@ class DictionaryService(BaseService):
                 add_word(model, word, count)
         return model
 
-    def on_update(self, updates, original):
+    async def on_update_async(self, updates: dict, original: dict) -> None:
         if "content" in updates:
             # works around Eve behaviour which creates sub-dict on each "." it finds in keys
             # cf. SDESK-3083
@@ -277,7 +278,7 @@ class DictionaryService(BaseService):
             user
             and language_id
             and language_id != original.get("language_id")
-            and self.is_duplicate_dictionary(personal_dictionary)
+            and await self.is_duplicate_dictionary(personal_dictionary)
         ):
             raise SuperdeskApiError.badRequestError(
                 message=_("The dictionary already exists"), payload={"name": "duplicate"}
@@ -314,17 +315,17 @@ class DictionaryService(BaseService):
 
         store_dict(updates, original)
 
-    def on_updated(self, updates, original):
+    async def on_updated_async(self, updates: dict, original: dict) -> None:
         push_notification("dictionary:updated", language=updates.get("language_id", original.get("language_id")))
 
     def __set_default(self, doc):
         if "type" not in doc:
             doc["type"] = DictionaryType.DICTIONARY.value
 
-    def on_fetched_item(self, doc):
+    async def on_fetched_item_async(self, doc: dict) -> None:
         self.__enhance_items([doc])
 
-    def on_fetched(self, docs):
+    async def on_fetched_async(self, docs: dict) -> None:
         self.__enhance_items(docs[ITEMS])
 
     def __enhance_items(self, docs):
