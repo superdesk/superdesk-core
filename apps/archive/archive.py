@@ -112,6 +112,7 @@ from superdesk.utc import utcnow
 from superdesk.vocabularies_async.service import is_related_content
 from quart_babel import gettext as _
 from apps.archive.highlights_search_mixin import HighlightsSearchMixin
+
 if TYPE_CHECKING:
     from apps.macros.macros import MacrosService
 

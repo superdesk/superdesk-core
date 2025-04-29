@@ -55,6 +55,7 @@ from superdesk.errors import SuperdeskApiError, IdentifierGenerationError
 from superdesk.logging import logger
 from apps.auth import get_user, get_auth  # noqa
 from quart_babel import gettext as _
+
 if TYPE_CHECKING:
     from apps.archive.archive import ArchiveService
 

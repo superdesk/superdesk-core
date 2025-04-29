@@ -35,6 +35,7 @@ async def _update_usage(item):
     assert archive_service is not None
     # We need to use late import to avoid circular import.
     from superdesk.archive_async.service import AsyncArchiveService
+
     archive_service = AsyncArchiveService()
     # FIXME: AsyncResourceService.system_update is missing an argument compared to BaseService.system_update
     archive_service.system_update(item["_id"], updates, item)
@@ -65,6 +66,7 @@ async def update_refs(updates, original):
     assoc.update(updates["associations"] or {})
     # We need to use late import to avoid circular import.
     from superdesk.archive_async.service import AsyncArchiveService
+
     for key, val in assoc.items():
         if not val:
             continue

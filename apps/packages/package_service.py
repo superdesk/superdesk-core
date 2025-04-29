@@ -43,6 +43,7 @@ from superdesk.signals import signals
 from superdesk.validation import ValidationError
 from superdesk.eve_async.service import AsyncBaseService
 from apps.templates.content_templates import render_content_template_by_id
+
 if TYPE_CHECKING:
     from apps.highlights.service import HighlightsService
     from apps.archive.archive import ArchiveService
