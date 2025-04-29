@@ -1,8 +1,9 @@
 import logging
 import re
+from inspect import isawaitable
 
 from superdesk.core import get_current_app, json
-from superdesk.services import BaseService
+from superdesk.eve_async import AsyncBaseService
 from superdesk import get_resource_service
 from superdesk.errors import FormatterError, SuperdeskApiError
 from superdesk.publish.formatters import get_all_formatters
@@ -15,8 +16,8 @@ from quart_babel import gettext as _
 logger = logging.getLogger(__name__)
 
 
-class ExportService(BaseService):
-    def create(self, docs, **kwargs):
+class ExportService(AsyncBaseService):
+    async def create_async(self, docs, **kwargs):
         doc = docs[0]
         formatter = self._validate_and_get_formatter(doc)
 
@@ -27,6 +28,7 @@ class ExportService(BaseService):
         unsuccessful_exports = 0
 
         for item_id in doc.get("item_ids"):
+            # TODO-ASYNC[archive]: Use ``find_one_async`` when available
             item = archive_service.find_one(req=None, _id=item_id)
             if item:
                 if validate:
@@ -38,6 +40,8 @@ class ExportService(BaseService):
 
                 try:
                     contents = formatter.export(item)
+                    if isawaitable(contents):
+                        contents = await contents
                 except FormatterError as e:
                     logger.exception(e)
                     unsuccessful_exports += 1
@@ -69,7 +73,7 @@ class ExportService(BaseService):
                     zip.writestr(filename, contents.encode("UTF-8"))
 
             app = get_current_app()
-            zip_id = app.media.put(
+            zip_id = await app.media.put_async(
                 in_memory_zip.getvalue(),
                 filename="export_{}.zip".format(get_random_string()),
                 content_type="application/zip",

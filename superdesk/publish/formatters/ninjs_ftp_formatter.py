@@ -32,7 +32,7 @@ class FTPNinjsFormatter(NINJSFormatter):
         self.internal_renditions = []
         self.path = None
 
-    def _transform_to_ninjs(self, article, subscriber, recursive=True):
+    async def _transform_to_ninjs(self, article, subscriber, recursive=True):
         """
         Re-wire that href's in the document to be relative to the destination FTP server root, it expects the
         destination to be an FTP server
@@ -52,7 +52,7 @@ class FTPNinjsFormatter(NINJSFormatter):
         if article.get("type") == "text" and recursive:
             self.apply_product_filtering_to_associations(formatted_article, subscriber)
 
-        ninjs = super()._transform_to_ninjs(formatted_article, subscriber, recursive)
+        ninjs = await super()._transform_to_ninjs(formatted_article, subscriber, recursive)
 
         renditions = ninjs.get("renditions")
         if renditions:

@@ -543,6 +543,7 @@ class ArchiveService(BaseService, HighlightsSearchMixin):
 
         for attachment_id in attachment_ids_to_remove:
             lookup = {"_id": attachment_id}
+            # TODO-ASYNC[attachments]: Use ``delete_action_async``
             get_resource_service("attachments").delete_action(lookup)
 
     def on_updated(self, updates, original):

@@ -209,7 +209,7 @@ class UsersAsyncService(AsyncResourceService[UsersResourceModel]):
             push_notification("user", updated=1, user_id=str(user_id))
 
     async def get_avatar_renditions(self, doc):
-        renditions = get_resource_service("upload").find_one(req=None, _id=doc)
+        renditions = await get_resource_service("upload").find_one_async(req=None, _id=doc)
         return renditions.get("renditions") if renditions is not None else None
 
     async def handle_user_type_changed(self, updates: dict[str, Any], user: UsersResourceModel):
@@ -233,7 +233,7 @@ class UsersAsyncService(AsyncResourceService[UsersResourceModel]):
             if not doc.role:
                 doc.role = await get_resource_service("roles").get_default_role_id_async()
             if doc.avatar:
-                doc.avatar_renditions = self.get_avatar_renditions(doc.avatar)
+                doc.avatar_renditions = await self.get_avatar_renditions(doc.avatar)
 
             get_resource_service("preferences").set_user_initial_prefs(doc)
 
