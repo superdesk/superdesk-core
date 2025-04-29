@@ -68,7 +68,7 @@ class VideoEditTestCase(TestCase):
     async def test_get_video(self):
         with requests_mock.mock() as mock:
             mock.get("http://localhost/projects/video_id", json=video_info)
-            res = self.video_edit.find_one(Req(), _id=self.item["_id"])
+            res = await self.video_edit.find_one_async(Req(), _id=self.item["_id"])
             self.assertEqual(res["project"]["_id"], video_info["_id"])
 
     def test_upload_video(self):
@@ -77,16 +77,16 @@ class VideoEditTestCase(TestCase):
             {"original": {"href": "video_url", "mimetype": "video/mp4", "version": 1, "video_editor_id": "video_id"}},
         )
 
-    def test_missing_video_id(self):
+    async def test_missing_video_id(self):
         doc = {"item": {ID_FIELD: "123", "renditions": {"original": {}}}}
         with self.assertRaises(SuperdeskApiError) as ex:
-            self.video_edit.create([doc])
+            await self.video_edit.create_async([doc])
         self.assertEqual(ex.exception.message, '"video_editor_id" is required')
 
-    def test_missing_action(self):
+    async def test_missing_action(self):
         doc = {"item": {ID_FIELD: "123", "renditions": {"original": {"video_editor_id": "video_id"}}}}
         with self.assertRaises(SuperdeskApiError) as ex:
-            self.video_edit.create([doc])
+            await self.video_edit.create_async([doc])
         self.assertEqual(ex.exception.message, '"capture" or "edit" is required')
 
     async def test_edit_video(self):
@@ -103,7 +103,8 @@ class VideoEditTestCase(TestCase):
             mock.get("http://localhost/projects/video_id", json=project_data)
             mock.post("http://localhost/projects/video_id/duplicate", json=project_data)
             mock.put("http://localhost/projects/video_id", json={"processing": True})
-            item = self.video_edit.find_one(req=None, _id=self.video_edit.create([doc])[0])
+            created_item = await self.video_edit.create_async([doc])[0]
+            item = await self.video_edit.find_one_async(req=None, _id=created_item)
             self.assertEqual(
                 item["renditions"],
                 {
@@ -136,7 +137,8 @@ class VideoEditTestCase(TestCase):
                 "http://localhost/projects/video_id/thumbnails?type=preview&crop=0,0,200,500&rotate=-90",
                 json=project_data,
             )
-            item = self.video_edit.find_one(req=None, _id=self.video_edit.create([doc])[0])
+            created_item = await self.video_edit.create_async([doc])[0]
+            item = await self.video_edit.find_one_async(req=None, _id=created_item)
             self.assertEqual(
                 item["renditions"],
                 {
@@ -153,12 +155,12 @@ class VideoEditTestCase(TestCase):
                 },
             )
 
-    def test_upload_thumbnail(self):
+    async def test_upload_thumbnail(self):
         thumbnail = {"mimetype": "image/jpeg", "url": "http://localhost/projects/video_id/raw/thumbnails/preview"}
         with requests_mock.mock() as mock:
             mock.post("http://localhost/projects/video_id/thumbnails", json=thumbnail)
             req = {"file": FileStorage(BytesIO(b"abcdef"), "image.jpeg")}
-            res = self.video_edit.on_replace(req, {"project": {"_id": "video_id"}})
+            res = await self.video_edit.on_replace_async(req, {"project": {"_id": "video_id"}})
             self.assertEqual(
                 res["renditions"]["viewImage"]["href"], "http://localhost/projects/video_id/raw/thumbnails/preview"
             )
@@ -173,6 +175,6 @@ class VideoEditTestCase(TestCase):
             )
             req = Req()
             setattr(req, "args", {"action": "timeline"})
-            res = self.video_edit.find_one(req, _id=self.item["_id"])
+            res = await self.video_edit.find_one_async(req, _id=self.item["_id"])
             self.assertEqual(res[ID_FIELD], video_info["_id"])
             self.assertTrue(res["processing"])

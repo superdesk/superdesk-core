@@ -1,6 +1,8 @@
+from eve.utils import ParsedRequest
 from quart_babel import gettext as _
 
 import superdesk
+from superdesk.eve_async.service import AsyncBaseService
 from superdesk.resource_fields import ID_FIELD
 from apps.archive.common import ARCHIVE
 from superdesk.errors import SuperdeskApiError
@@ -11,14 +13,14 @@ from superdesk.metadata.utils import item_url
 TIMELINE_THUMBNAILS_AMOUNT = 60
 
 
-class VideoEditService(superdesk.Service):
+class VideoEditService(AsyncBaseService):
     """
     Use video server for editing video.
     """
 
     video_editor = VideoEditorWrapper()
 
-    def create(self, docs, **kwargs):
+    async def create_async(self, docs: list[dict], **kwargs) -> list:
         ids = []
         for doc in docs:
             item = doc.get("item")
@@ -59,14 +61,17 @@ class VideoEditService(superdesk.Service):
                     }
                 )
 
-            original_item = super().find_one(req=None, _id=item_id)
-            updates = self.system_update(id=item_id, updates={"renditions": renditions}, original=original_item)
+            original_item = await super().find_one_async(req=None, _id=item_id)
+            assert original_item is not None, "Expected original_item to be dict, got None"
+            updates = await self.system_update_async(
+                id=item_id, updates={"renditions": renditions}, original=original_item
+            )
             item.update(updates)
             ids.append(item_id)
         return ids
 
-    def find_one(self, req, **lookup):
-        res = super().find_one(req, **lookup)
+    async def find_one_async(self, req: ParsedRequest | None, **lookup) -> dict | None:
+        res = await super().find_one_async(req, **lookup)
         if req is None:
             return res
 
@@ -79,11 +84,13 @@ class VideoEditService(superdesk.Service):
         res["project"] = self.video_editor.find_one(video_id)
         return res
 
-    def on_replace(self, document, original):
+    async def on_replace_async(self, document: dict, original: dict | None):
         """
         Override to upload thumbnails
         """
         if not document.get("file"):
+            return
+        if not original:
             return
         # avoid dump file storage
         file = document.pop("file")
