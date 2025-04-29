@@ -45,7 +45,6 @@ from superdesk.eve_async.service import AsyncBaseService
 from apps.templates.content_templates import render_content_template_by_id
 
 if TYPE_CHECKING:
-    from apps.highlights.service import HighlightsService
     from apps.archive.archive import ArchiveService
 
 logger = logging.getLogger(__name__)
@@ -90,6 +89,8 @@ async def copy_metadata_from_highlight_template(doc):
     """
     highlight_id = doc.get("highlight", None)
     if highlight_id:
+        # We do late import to avoid circular import.
+        from apps.highlights.service import HighlightsService
         highlights_service = get_resource_service("highlights")
         assert highlights_service is not None
         highlights_service = cast(HighlightsService, highlights_service)
@@ -103,6 +104,7 @@ async def copy_metadata_from_highlight_template(doc):
 
 
 class PackageService:
+
     async def on_create_async(self, docs):
         create_root_group(docs)
         self.check_root_group(docs)
@@ -296,7 +298,8 @@ class PackageService:
             # keep checking in the hierarchy
             archive_service = get_resource_service(ARCHIVE)
             assert archive_service is not None
-            archive_service = cast(ArchiveService, archive_service)
+            if TYPE_CHECKING:
+                archive_service = cast(ArchiveService, archive_service)
             for d in (d for d in package.get(LINKED_IN_PACKAGES, []) if "package" in d):
                 linked_package = await archive_service.find_one_async(req=None, _id=d["package"])
                 if linked_package:
@@ -321,7 +324,8 @@ class PackageService:
 
         archive_service = get_resource_service(ARCHIVE)
         assert archive_service is not None
-        archive_service = cast(ArchiveService, archive_service)
+        if TYPE_CHECKING:
+            archive_service = cast(ArchiveService, archive_service)
         return await archive_service.get_from_mongo_async(req=request, lookup=query)
 
     def remove_ref_from_inmem_package(self, package, ref_id):
@@ -367,7 +371,8 @@ class PackageService:
         """
         archive_service = get_resource_service("archive")
         assert archive_service is not None
-        archive_service = cast(ArchiveService, archive_service)
+        if TYPE_CHECKING:
+            archive_service = cast(ArchiveService, archive_service)
         new_item = await archive_service.find_one_async(req=None, _id=new_ref_id)
 
         non_root_groups = (group for group in package.get(GROUPS, []) if group.get(GROUP_ID) != ROOT_GROUP)
@@ -435,7 +440,8 @@ class PackageService:
         resolve_document_version(updates, ARCHIVE, "PATCH", package)
         archive_service = get_resource_service("archive")
         assert archive_service is not None
-        archive_service = cast(ArchiveService, archive_service)
+        if TYPE_CHECKING:
+            archive_service = cast(ArchiveService, archive_service)
         await archive_service.patch_async(package[ID_FIELD], updates)
 
         app = get_current_app().as_any()
@@ -482,7 +488,8 @@ class PackageService:
 
         archive_service = get_resource_service("archive")
         assert archive_service is not None
-        archive_service = cast(ArchiveService, archive_service)
+        if TYPE_CHECKING:
+            archive_service = cast(ArchiveService, archive_service)
 
         for item_ref in item_refs_in_package:
             doc = await archive_service.find_one_async(req=None, _id=item_ref)
