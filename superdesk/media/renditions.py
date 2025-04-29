@@ -177,6 +177,13 @@ def delete_file_on_error(doc, file_id):
     get_current_app().media.delete(file_id)
 
 
+async def delete_file_on_error_async(doc, file_id):
+    # Don't delete the file if we are on the import from storage flow
+    if doc.get("_import", None):
+        return
+    await get_current_app().media.delete_async(file_id)
+
+
 def _crop_image(content, format, ratio):
     """Crop the image given as a binary stream
 

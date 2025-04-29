@@ -240,9 +240,9 @@ class UsersService(AsyncBaseService):
         else:
             push_notification("user", updated=1, user_id=str(user_id))
 
-    def get_avatar_renditions(self, doc):
+    async def get_avatar_renditions(self, doc):
         # TODO-ASYNC[upload]: Upgrade to async when updating the ``upload`` module
-        renditions = get_resource_service("upload").find_one(req=None, _id=doc)
+        renditions = await get_resource_service("upload").find_one_async(req=None, _id=doc)
         return renditions.get("renditions") if renditions is not None else None
 
     async def handle_user_type_changed_async(self, updates, user):
@@ -262,7 +262,7 @@ class UsersService(AsyncBaseService):
             user_doc.setdefault(SIGN_OFF, set_sign_off(user_doc))
             user_doc.setdefault("role", await get_resource_service("roles").get_default_role_id_async())
             if user_doc.get("avatar"):
-                user_doc.setdefault("avatar_renditions", self.get_avatar_renditions(user_doc["avatar"]))
+                user_doc.setdefault("avatar_renditions", await self.get_avatar_renditions(user_doc["avatar"]))
 
             get_resource_service("preferences").set_user_initial_prefs(user_doc)
 
@@ -296,7 +296,7 @@ class UsersService(AsyncBaseService):
         update_sign_off(updates)
 
         if updates.get("avatar"):
-            updates["avatar_renditions"] = self.get_avatar_renditions(updates["avatar"])
+            updates["avatar_renditions"] = await self.get_avatar_renditions(updates["avatar"])
 
     async def on_updated_async(self, updates, user):
         if "role" in updates or "privileges" in updates:

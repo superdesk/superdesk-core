@@ -17,9 +17,9 @@ from superdesk.flask import request, redirect, make_response, jsonify, Blueprint
 import json
 import os
 from superdesk.errors import SuperdeskApiError
-from superdesk.media.renditions import generate_renditions, delete_file_on_error
+from superdesk.media.renditions import generate_renditions, delete_file_on_error_async
 from superdesk.media.media_operations import (
-    download_file_from_url,
+    download_file_from_url_async,
     download_file_from_encoded_str,
     process_file_from_stream,
     crop_image,
@@ -31,16 +31,16 @@ from superdesk.users.services import current_user_has_privilege
 from superdesk.auth.decorator import blueprint_auth
 from superdesk import get_resource_privileges
 from .resource import Resource
-from .services import BaseService
+from superdesk.eve_async import AsyncBaseService
 
 
 bp = Blueprint("upload_raw", __name__)
 logger = logging.getLogger(__name__)
 
 
-def handle_cors():
+async def _handle_cors():
     """Return headers to avoid CORS problems."""
-    response = make_response()
+    response = await make_response()
     response.headers.add("Access-Control-Allow-Origin", "*")
     response.headers.add("Access-Control-Allow-Headers", "*")
     response.headers.add("Access-Control-Allow-Methods", "POST")
@@ -49,9 +49,9 @@ def handle_cors():
 
 @bp.route("/upload/<path:media_id>/raw", methods=["GET", "OPTIONS"])
 @blueprint_auth()
-def get_upload_as_data_uri_bc(media_id):
+async def get_upload_as_data_uri_bc(media_id):
     if request.method == "OPTIONS":
-        return handle_cors()
+        return await _handle_cors()
     """Keep previous url for backward compatibility"""
     return redirect(upload_url(media_id))
 
@@ -62,7 +62,7 @@ async def get_upload_as_data_uri(media_id):
     app = get_current_app()
 
     if request.method == "OPTIONS":
-        response = make_response()
+        response = await make_response()
         response.headers.add("Access-Control-Allow-Origin", "*")
         response.headers.add("Access-Control-Allow-Headers", "*")
         response.headers.add("Access-Control-Allow-Methods", "GET, HEAD, OPTIONS")
@@ -83,7 +83,7 @@ async def get_upload_as_data_uri(media_id):
 @blueprint_auth()
 async def upload_config_file():
     if request.method == "OPTIONS":
-        return handle_cors()
+        return await _handle_cors()
 
     _resource = request.args.get("resource")
     if not _resource:
@@ -116,8 +116,13 @@ async def upload_config_file():
             file_data = [file_data]
         _items += file_data
 
-    res = superdesk.get_resource_service(_resource).update_data_from_json(_items)
-    response = make_response(jsonify(res))
+    service = superdesk.get_resource_service(_resource)
+    if hasattr(service, "update_data_from_json_async"):
+        res = await service.update_data_from_json_async(_items)
+    else:
+        res = service.update_data_from_json(_items)
+
+    response = await make_response(jsonify(res))
     response.headers.add("Access-Control-Allow-Origin", "*")
     response.headers.add("Access-Control-Expose-Headers", "*")
     return response
@@ -174,8 +179,8 @@ class UploadResource(Resource):
     privileges = {"DELETE": "archive"}
 
 
-class UploadService(BaseService):
-    def on_create(self, docs):
+class UploadService(AsyncBaseService):
+    async def on_create_async(self, docs):
         for doc in docs:
             if doc.get("URL") and doc.get("media"):
                 message = "Uploading file by URL and file stream in the same time is not supported."
@@ -189,11 +194,13 @@ class UploadService(BaseService):
                 filename = content.filename
                 content_type = content.mimetype
             elif doc.get("URL"):
-                content, filename, content_type = self.download_file(doc)
+                content, filename, content_type = await self.download_file(doc)
 
-            self.crop_and_store_file(doc, content, filename, content_type)
+            await self.crop_and_store_file(doc, content, filename, content_type)
 
-    def crop_and_store_file(self, doc, content, filename, content_type):
+    async def crop_and_store_file(self, doc, content, filename, content_type):
+        inserted = []
+
         # retrieve file name and metadata from file
         file_name, content_type, metadata = process_file_from_stream(content, content_type=content_type)
         # crop the file if needed, can change the image size
@@ -206,7 +213,7 @@ class UploadService(BaseService):
         try:
             logger.debug("Going to save media file with %s " % file_name)
             out.seek(0)
-            file_id = get_current_app().media.put(
+            file_id = await get_current_app().media.put_async(
                 out, filename=file_name, content_type=content_type, resource=self.datasource, metadata=metadata
             )
             doc["media"] = file_id
@@ -221,14 +228,14 @@ class UploadService(BaseService):
             doc["renditions"] = renditions
         except Exception as io:
             for file_id in inserted:
-                delete_file_on_error(doc, file_id)
+                await delete_file_on_error_async(doc, file_id)
             raise SuperdeskApiError.internalError("Generating renditions failed", exception=io)
 
-    def download_file(self, doc):
+    async def download_file(self, doc):
         url = doc.get("URL")
         if not url:
             return
         if url.startswith("data"):
             return download_file_from_encoded_str(url)
         else:
-            return download_file_from_url(url)
+            return await download_file_from_url_async(url)

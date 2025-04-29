@@ -44,8 +44,8 @@ class NewsroomNinjsFormatter(NINJSFormatter):
         return getattr(g, cache_id)
 
     @elasticapm.capture_span()
-    def _transform_to_ninjs(self, article, subscriber, recursive=True):
-        ninjs = super()._transform_to_ninjs(article, subscriber, recursive)
+    async def _transform_to_ninjs(self, article, subscriber, recursive=True):
+        ninjs = await super()._transform_to_ninjs(article, subscriber, recursive)
 
         if article.get("ingest_id") and (
             article.get("auto_publish") or (article.get("extra") or {}).get("publish_ingest_id_as_guid")
