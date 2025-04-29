@@ -27,6 +27,10 @@ class LegacyTokenAuth(TokenAuth):
         g.user = str(data.get("subscriber"))
         return g.user
 
+    # Overriding base method as ``authorized`` is now async in superdesk
+    async def authorized(self, allowed_roles, resource, method):
+        return super().authorized(allowed_roles, resource, method)
+
 
 class SubscriberTokenAuth(UserAuthProtocol):
     def get_default_auth_rules(self) -> list[AuthRule]:

@@ -58,7 +58,7 @@ class PublishCache:
 
         self.content_types = {
             str(content_type["_id"]): content_type
-            async for content_type in get_resource_service("content_types").get_all_async()
+            async for content_type in await get_resource_service("content_types").get_all_async()
         }
 
         self.global_content_filters = [

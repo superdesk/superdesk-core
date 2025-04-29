@@ -269,6 +269,7 @@ class ContentAPITestCase(TestCase):
             """,
                 "associations": {
                     "foo": {
+                        "guid": "foo",
                         "type": "picture",
                         "renditions": {
                             "original": {

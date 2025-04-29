@@ -555,7 +555,7 @@ class NINJSFormatter(Formatter):
         output = []
         attachments_service = superdesk.get_resource_service("attachments")
         for attachment_ref in article["attachments"]:
-            attachment = attachments_service.find_one_async(req=None, _id=attachment_ref["attachment"])
+            attachment = await attachments_service.find_one_async(req=None, _id=attachment_ref["attachment"])
             href = await get_attachment_public_url(attachment)
             if href:
                 # If we get a href, the attachment is available for subscriber consumption
