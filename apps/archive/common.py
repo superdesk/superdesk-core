@@ -8,13 +8,12 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
-from typing import Optional, cast
+from typing import TYPE_CHECKING, Optional, cast
 from bson import ObjectId
 
 import logging
 from datetime import datetime
 from dateutil.parser import parse as date_parse
-from apps.archive.archive import ArchiveService
 from apps.desks import DesksService
 from apps.desks_async.desks_async_service import DesksAsyncService
 from eve.versioning import insert_versioning_documents
@@ -56,6 +55,8 @@ from superdesk.errors import SuperdeskApiError, IdentifierGenerationError
 from superdesk.logging import logger
 from apps.auth import get_user, get_auth  # noqa
 from quart_babel import gettext as _
+if TYPE_CHECKING:
+    from apps.archive.archive import ArchiveService
 
 
 logger = logging.getLogger(__name__)

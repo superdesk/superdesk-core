@@ -9,7 +9,6 @@
 # at https://www.sourcefabric.org/superdesk/license
 
 from copy import copy, deepcopy
-from datetime import datetime
 import logging
 
 from eve.versioning import resolve_document_version
@@ -20,8 +19,9 @@ from superdesk.core import get_config
 from superdesk.types import PublishRequest, PublishSenderType, SubscriberType, DesksResourceModel
 from superdesk.publish_async.commands import publish_item
 
-from apps.archive.archive import ArchiveResource, SOURCE as ARCHIVE
+from apps.archive.resource import ArchiveResource
 from apps.archive.common import (
+    ARCHIVE,
     FIELDS_TO_COPY_FOR_ASSOCIATED_ITEM,
     get_user,
     insert_into_versions,
@@ -44,7 +44,7 @@ from apps.content import push_content_notification
 from apps.content_types.content_types import DEFAULT_SCHEMA
 from apps.item_autosave.components.item_autosave import ItemAutosave
 from apps.item_lock.components.item_lock import set_unlock_updates
-from apps.legal_archive.commands import import_into_legal_archive, is_legal_archive_enabled
+from apps.legal_archive.commands import is_legal_archive_enabled
 from apps.packages.package_service import PackageService
 from apps.publish.published_item import LAST_PUBLISHED_VERSION, PUBLISHED, PUBLISHED_IN_PACKAGE
 import superdesk

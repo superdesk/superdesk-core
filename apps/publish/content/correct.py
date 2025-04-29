@@ -15,7 +15,7 @@ from superdesk.metadata.item import ITEM_STATE, EMBARGO, SCHEDULE_SETTINGS
 from superdesk.utc import utcnow
 from superdesk.text_utils import update_word_count
 from apps.archive.common import set_sign_off, ITEM_OPERATION, get_user
-from apps.archive.archive import flush_renditions, remove_is_queued
+from apps.archive.utils import flush_renditions, remove_is_queued
 from .common import BasePublishService, BasePublishResource, ITEM_CORRECT
 from superdesk.emails import send_translation_changed
 from superdesk.activity import add_activity

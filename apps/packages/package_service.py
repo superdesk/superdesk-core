@@ -9,9 +9,8 @@
 # at https://www.sourcefabric.org/superdesk/license
 
 import logging
-from typing import cast
+from typing import TYPE_CHECKING, Literal, cast
 from apps.desks import DesksService
-from apps.highlights.service import HighlightsService
 from eve.versioning import resolve_document_version
 
 from superdesk.core import get_current_app, get_app_config
@@ -37,7 +36,6 @@ from superdesk.metadata.packages import (
     GROUP_ID,
 )
 from apps.archive.common import ITEM_UNLINK, insert_into_versions_async
-from apps.archive.archive import SOURCE as ARCHIVE, ArchiveService
 from superdesk.utc import utcnow
 from superdesk.default_settings import VERSION
 from quart_babel import gettext as _
@@ -45,9 +43,13 @@ from superdesk.signals import signals
 from superdesk.validation import ValidationError
 from superdesk.eve_async.service import AsyncBaseService
 from apps.templates.content_templates import render_content_template_by_id
+if TYPE_CHECKING:
+    from apps.highlights.service import HighlightsService
+    from apps.archive.archive import ArchiveService
 
 logger = logging.getLogger(__name__)
 package_create_signal = signals.signal("package.create")  # @UndefinedVariable
+ARCHIVE = "archive"
 
 
 def create_root_group(docs):

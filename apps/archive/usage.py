@@ -3,7 +3,6 @@ import bson
 import logging
 import superdesk
 
-from superdesk.archive_async.service import AsyncArchiveService
 from superdesk.utc import utcnow
 from superdesk.metadata.item import ITEM_STATE, PUBLISH_STATES
 
@@ -34,6 +33,8 @@ async def _update_usage(item):
 
     archive_service = superdesk.get_resource_service("archive")
     assert archive_service is not None
+    # We need to use late import to avoid circular import.
+    from superdesk.archive_async.service import AsyncArchiveService
     archive_service = AsyncArchiveService()
     # FIXME: AsyncResourceService.system_update is missing an argument compared to BaseService.system_update
     archive_service.system_update(item["_id"], updates, item)
@@ -62,6 +63,8 @@ async def update_refs(updates, original):
     refs = []
     assoc = original["associations"].copy() if original.get("associations") else {}
     assoc.update(updates["associations"] or {})
+    # We need to use late import to avoid circular import.
+    from superdesk.archive_async.service import AsyncArchiveService
     for key, val in assoc.items():
         if not val:
             continue

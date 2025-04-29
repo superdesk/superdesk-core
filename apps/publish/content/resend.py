@@ -12,8 +12,10 @@ import logging
 
 from bson import ObjectId
 
+from apps.archive.resource import ArchiveResource
 from superdesk.types import PublishRequest, PublishSenderType, SubscribersResource
-from apps.archive.archive import ArchiveResource, SOURCE as ARCHIVE, remove_is_queued
+from apps.archive.common import ARCHIVE
+from apps.archive.utils import remove_is_queued
 from superdesk.metadata.utils import item_url
 
 from superdesk.core import get_current_app, get_app_config

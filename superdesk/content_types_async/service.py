@@ -8,7 +8,7 @@
 
 
 from copy import deepcopy
-from typing import Any, Iterable, cast
+from typing import TYPE_CHECKING, Any, Iterable, cast
 
 import bson
 from bson import ObjectId
@@ -16,7 +16,6 @@ from quart_babel import gettext as _
 
 from apps.auth import get_user_id
 from apps.desks import remove_profile_from_desks_async
-from apps.templates.content_templates import ContentTemplatesService
 import superdesk
 from superdesk.core.resources.service import AsyncCacheableService
 from superdesk.core.types.search import ProjectedFieldArg, SearchRequest
@@ -29,6 +28,9 @@ from superdesk.utc import utcnow
 from superdesk.utils import format_content_type_name
 from superdesk.vocabularies_async.service import VocabulariesService
 from superdesk.flask import request
+
+if TYPE_CHECKING:
+    from apps.templates.content_templates import ContentTemplatesService
 
 
 CONTENT_TYPE_PRIVILEGE = "content_type"
