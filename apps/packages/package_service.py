@@ -91,6 +91,7 @@ async def copy_metadata_from_highlight_template(doc):
     if highlight_id:
         # We do late import to avoid circular import.
         from apps.highlights.service import HighlightsService
+
         highlights_service = get_resource_service("highlights")
         assert highlights_service is not None
         highlights_service = cast(HighlightsService, highlights_service)
@@ -104,7 +105,6 @@ async def copy_metadata_from_highlight_template(doc):
 
 
 class PackageService:
-
     async def on_create_async(self, docs):
         create_root_group(docs)
         self.check_root_group(docs)
