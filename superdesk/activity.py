@@ -299,8 +299,9 @@ async def add_activity_async(
 
     async_service = get_resource_service(ActivityResource.endpoint_name)
     assert async_service is not None
-    async_service = cast(AsyncBaseService, async_service)
-    await async_service.post_async([activity])
+    # TODO-ASYNC[ActivityService]: Use async method once ActivityService is async.
+    async_service = cast(BaseService, async_service)
+    async_service.post([activity])
 
     if can_push_notification:
         push_notification(ActivityResource.endpoint_name, _dest=activity["recipients"], activity=activity)
