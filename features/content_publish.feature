@@ -4965,3 +4965,119 @@ Feature: Content Publishing
         ]
       }
       """
+
+    @auth
+    Scenario: Correcting an item and its association
+      Given config update
+      """
+      { 
+        "PUBLISH_ASSOCIATED_ITEMS": true,
+        "ENABLE_ASSOCIATED_ITEMS_UPDATE": true
+      }
+      """
+      And "validators"
+        """
+        [
+            {"_id": "publish_text", "act": "publish", "type": "text", "schema":{}}
+        ]
+        """
+      And "desks"
+        """
+        [{"name": "Sports", "members":[{"user":"#CONTEXT_USER_ID#"}]}]
+        """
+      And "archive"
+        """
+        [
+            {
+                "_id": "1234",
+                "guid": "1234",
+                "slugline": "picture",
+                "headline": "picture",
+                "alt_text": "alt_text",
+                "description_text": "description_text",
+                "type": "text",
+                "state": "in_progress",
+                "operation": "update",
+                "_current_version": 1,
+                "task": {
+                    "desk": "#desks._id#",
+                    "stage": "#desks.incoming_stage#",
+                    "user": "#CONTEXT_USER_ID#"
+                }
+            },
+            {
+              "_id": "5678",
+              "guid": "5678",
+              "slugline": "story",
+              "headline": "story headline",
+              "type": "text",
+              "state": "in_progress",
+              "_current_version": 1,
+              "associations": {
+                "picture": {
+                  "_id": "1234",
+                  "guid": "1234",
+                  "slugline": "picture",
+                  "state": "in_progress",
+                  "_current_version": 1
+                }
+              }
+            }
+        ]
+      """
+      When we publish "5678" with "publish" type and "published" state
+      Then we get OK response
+      And we get existing resource
+      """
+        {
+            "_id": "5678",
+            "guid": "5678",
+            "_current_version": 2,
+            "slugline": "story",
+            "headline": "story headline",
+            "state": "published",
+            "operation": "publish",
+            "associations": {
+                "picture": {
+                "_id": "1234",
+                "slugline": "picture",
+                "state": "published",
+                "_current_version": 2 
+                }
+            }
+        }
+      """
+      When we publish "5678" with "correct" type and "corrected" state
+      """
+      {
+          "headline": "corrected story headline",
+          "correction_sequence": "2",
+          "associations": {
+            "picture": {
+              "_id": "1234",
+              "slugline": "corrected picture",
+              "state": "corrected",
+              "_current_version": 2
+            }
+          }
+      }
+      """
+      Then we get OK response
+      And we get existing resource
+      """
+      {
+          "_id": "5678",
+          "guid": "5678",
+          "slugline": "story",
+          "headline": "corrected story headline",
+          "state": "corrected",
+          "associations": {
+            "picture": {
+              "_id": "1234",
+              "slugline": "corrected picture",
+              "state": "corrected",
+              "_current_version": 2 
+            }
+          }
+      }
+      """
