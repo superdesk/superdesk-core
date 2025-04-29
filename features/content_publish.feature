@@ -5069,7 +5069,6 @@ Feature: Content Publishing
             "picture": {
               "_id": "1234",
               "slugline": "corrected picture",
-              "state": "corrected",
               "_current_version": 2
             }
           }
@@ -5089,7 +5088,40 @@ Feature: Content Publishing
               "_id": "1234",
               "slugline": "corrected picture",
               "state": "corrected",
-              "_current_version": 2 
+              "_current_version": 3
+            }
+          }
+      }
+      """
+      When we publish "5678" with "correct" type and "corrected" state
+      """
+      {
+          "headline": "re corrected story headline",
+          "correction_sequence": "3",
+          "associations": {
+            "picture": {
+              "_id": "1234",
+              "slugline": "re corrected picture",
+              "_current_version": 4
+            }
+          }
+      }
+      """
+      Then we get OK response
+      And we get existing resource
+      """
+      {
+          "_id": "5678",
+          "guid": "5678",
+          "slugline": "story",
+          "headline": "re corrected story headline",
+          "state": "corrected",
+          "associations": {
+            "picture": {
+              "_id": "1234",
+              "slugline": "re corrected picture",
+              "state": "corrected",
+              "_current_version": 4
             }
           }
       }
