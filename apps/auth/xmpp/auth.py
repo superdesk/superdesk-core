@@ -8,7 +8,7 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
-from superdesk.core import get_app_config
+from superdesk.core import get_config
 from apps.auth.service import AuthService
 from superdesk import get_resource_service
 from superdesk.resource import Resource
@@ -35,21 +35,22 @@ superdesk.intrinsic_privilege("auth_xmpp", method=["DELETE"])
 
 
 class XMPPAuthService(AuthService):
-    def authenticate(self, credentials):
-        auth_url = get_app_config("XMPP_AUTH_URL")
+    async def authenticate(self, credentials):
+        auth_url = get_config(str, "XMPP_AUTH_URL")
         if not auth_url:
             raise SuperdeskApiError.notConfiguredError()
-        domain = get_app_config("XMPP_AUTH_DOMAIN")
+        domain = get_config(str, "XMPP_AUTH_DOMAIN")
         jid = credentials.get("jid")
         if not jid:
             raise CredentialsAuthError(credentials)
-        user = get_resource_service("auth_users").find_one(req=None, jid=jid)
+        user = await get_resource_service("auth_users").find_one_async(req=None, jid=jid)
         if not user:
             raise CredentialsAuthError(credentials)
 
         try:
+            # TODO-ASYNC: Upgrade to use ``aiohttp`` instead of ``requests``
             r = requests.post(
-                get_app_config("XMPP_AUTH_URL"),
+                auth_url,
                 data={"jid": jid, "domain": domain, "transaction_id": credentials.get("transactionId")},
             )
         except Exception:

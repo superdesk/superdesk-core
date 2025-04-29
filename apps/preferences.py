@@ -264,9 +264,9 @@ class PreferencesService(AsyncBaseService):
                 del session_prefs[session_id]
                 await users_service.system_update(user_id, {_session_preferences_key: session_prefs})
 
-    def set_session_based_prefs(self, session_id, user_id):
+    async def set_session_based_prefs(self, session_id, user_id):
         service = get_resource_service("users")
-        user_doc = service.find_one(req=None, _id=user_id)
+        user_doc = await service.find_one_async(req=None, _id=user_id)
 
         session_prefs = user_doc.get(_session_preferences_key, {})
         available = dict(superdesk.default_session_preferences)
@@ -274,7 +274,7 @@ class PreferencesService(AsyncBaseService):
             available["desk:last_worked"] = user_doc.get("desk")
 
         session_prefs.setdefault(str(session_id), available)
-        service.system_update(user_id, {_session_preferences_key: session_prefs}, user_doc)
+        await service.system_update_async(user_id, {_session_preferences_key: session_prefs}, user_doc)
 
     def set_user_initial_prefs(self, user_doc):
         if isinstance(user_doc, UsersResourceModel):
@@ -291,8 +291,7 @@ class PreferencesService(AsyncBaseService):
                 user_doc[_user_preferences_key] = available
 
     async def find_one_async(self, req, **lookup):
-        # TODO-ASYNC[auth]: Use async ``sessions`` when available
-        session = get_resource_service("sessions").find_one(req=None, _id=lookup["_id"])
+        session = await get_resource_service("sessions").find_one_async(req=None, _id=lookup["_id"])
         user_id = session["user"] if session else lookup["_id"]
 
         doc = await UsersResourceModel.get_service().find_by_id_raw(user_id)
@@ -338,7 +337,7 @@ class PreferencesService(AsyncBaseService):
             updates[_user_preferences_key] = existing_user_preferences
 
     async def update_async(self, id, updates, original):
-        session = get_resource_service("sessions").find_one(req=None, _id=original["_id"])
+        session = await get_resource_service("sessions").find_one_async(req=None, _id=original["_id"])
         original_unpatched = self.backend.find_one(self.datasource, req=None, _id=session["user"])
         updated = original_unpatched.copy()
         updated.update(updates)
@@ -354,7 +353,7 @@ class PreferencesService(AsyncBaseService):
 
     async def enhance_document_with_user_privileges_async(self, user_doc):
         users_service = get_resource_service("users")
-        role_doc = await users_service.get_role_async(user_doc)
+        role_doc = await users_service.get_role(user_doc)
         users_service.set_privileges(user_doc, role_doc)
         user_doc[_action_key] = get_privileged_actions(user_doc[_privileges_key])
 
@@ -379,7 +378,7 @@ class PreferencesService(AsyncBaseService):
             return get_user_notification_preferences(cast(User, user))["email"]
         return False
 
-    def is_authorized(self, **kwargs):
+    async def is_authorized(self, **kwargs):
         """
         Returns False if logged-in user is trying to update other user's or session's privileges.
 
@@ -389,8 +388,7 @@ class PreferencesService(AsyncBaseService):
         if not kwargs.get("_id") or not kwargs.get("user_id"):
             return False
 
-        # TODO-ASYNC[auth]: Use async ``sessions`` when available
-        session = get_resource_service("sessions").find_one(req=None, _id=kwargs.get("_id"))
+        session = await get_resource_service("sessions").find_one_async(req=None, _id=kwargs.get("_id"))
         if not session:
             return False
 

@@ -65,14 +65,15 @@ def apply_placeholders(placeholders, text):
     return text
 
 
-def set_logged_user(username, password):
-    auth_token = get_resource_service("auth").find_one(username=username, req=None)
+async def set_logged_user(username, password):
+    auth_service = get_resource_service("auth")
+    auth_token = await auth_service.find_one_async(username=username, req=None)
     if not auth_token:
         user = {"username": username, "password": password}
-        get_resource_service("auth_db").post([user])
-        auth_token = get_resource_service("auth").find_one(username=username, req=None)
-    # TODO-ASYNC[users]: Upgrade to async when updating this module
-    g.user = get_resource_service("users").find_one(req=None, username=username)
+        await get_resource_service("auth_db").post_async([user])
+        auth_token = await auth_service.find_one_async(username=username, req=None)
+
+    g.user = await get_resource_service("users").find_one_async(req=None, username=username)
     g.auth = auth_token
 
 
@@ -110,7 +111,7 @@ async def prepopulate_data(file_name, default_user=None, directory=None):
             except KeyError:
                 continue  # resource which is not configured - ignore
             username = item.get("username", None) or default_username
-            set_logged_user(username, users[username])
+            await set_logged_user(username, users[username])
             id_name = item.get("id_name", None)
             id_update = item.get("id_update", None)
             text = json.dumps(item.get("data", None))

@@ -45,7 +45,7 @@ class AuthTestCase(TestCase):
             ],
         )
 
-        RemoveExpiredSessions().run()
+        await RemoveExpiredSessions().run()
 
         # don't expose user preferences
         users = self.app.data.find_list_of_ids("users", user_ids)

@@ -152,7 +152,7 @@ class UsersAsyncService(AsyncResourceService[UsersResourceModel]):
         active = updates.get("is_active", None)
 
         if enabled is not None or active is not None:
-            get_resource_service("auth").delete_action(
+            await get_resource_service("auth").delete_action_async(
                 {"username": user.to_dict().get("username")}
             )  # remove active tokens
             updates["session_preferences"] = {}
@@ -425,7 +425,7 @@ class DBUsersAsyncService(UsersAsyncService):
     async def on_created(self, docs: list[UsersResourceModel]) -> None:
         """Send email to user with reset password token."""
         await super().on_created(docs)
-        resetService = get_resource_service("reset_user_password")
+        reset_service = get_resource_service("reset_user_password")
         activate_ttl = get_app_config("ACTIVATE_ACCOUNT_TOKEN_TIME_TO_LIVE")
         for doc in docs:
             user_dict = doc.to_dict()
@@ -434,7 +434,7 @@ class DBUsersAsyncService(UsersAsyncService):
                 email = user_dict.get("email")
                 username = user_dict.get("username")
                 tokenDoc = {"user": user_id, "email": email}
-                token_id = resetService.store_reset_password_token(tokenDoc, email, activate_ttl, user_id)
+                token_id = await reset_service.store_reset_password_token(tokenDoc, email, activate_ttl, user_id)
                 if not token_id:
                     raise SuperdeskApiError.internalError("Failed to send account activation email.")
                 tokenDoc.update({"username": username})
@@ -486,4 +486,4 @@ class DBUsersAsyncService(UsersAsyncService):
         """
 
         await super().on_deleted(doc)
-        get_resource_service("reset_user_password").remove_all_tokens_for_email(doc.to_dict().get("email"))
+        await get_resource_service("reset_user_password").remove_all_tokens_for_email(doc.to_dict().get("email"))

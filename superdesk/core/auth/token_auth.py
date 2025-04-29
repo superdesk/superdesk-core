@@ -49,7 +49,7 @@ class TokenAuthorization(UserAuthProtocol):
         # tokens are no longer decoded internally by flask/quart
         # so we need to do it ourselves
         token = self._decode_token(token)
-        auth_token = auth_service.find_one(token=token, req=None)
+        auth_token = await auth_service.find_one_async(token=token, req=None)
 
         if not auth_token:
             await self.stop_session(request)
@@ -87,7 +87,7 @@ class TokenAuthorization(UserAuthProtocol):
 
         user_service = get_resource_service("users")
         request.storage.request.set("user", user)
-        request.storage.request.set("role", await user_service.get_role_async(user))
+        request.storage.request.set("role", await user_service.get_role(user))
         request.storage.request.set("auth", auth_token)
         request.storage.request.set("auth_value", auth_token["user"])
 
@@ -99,7 +99,7 @@ class TokenAuthorization(UserAuthProtocol):
 
             if auth_last_updated + timedelta(seconds=session_update_seconds) < now:
                 auth_service = get_resource_service("auth")
-                auth_service.update_session({LAST_UPDATED: now})
+                await auth_service.update_session({LAST_UPDATED: now})
                 auth_updated = True
             if auth_updated or not request.storage.request.get("last_activity_at"):
                 user_service.system_update(user[ID_FIELD], {"last_activity_at": now, "_updated": now}, user)
