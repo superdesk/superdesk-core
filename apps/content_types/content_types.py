@@ -233,14 +233,14 @@ class ContentTypesService(CachableAsyncBaseService):
             clean_doc(doc)
         return doc
 
-    def set_used(self, profile_ids):
+    async def set_used(self, profile_ids):
         """Set `is_used` flag for content profiles.
 
         :param profile_ids
         """
         query = {"_id": {"$in": list(profile_ids)}, "is_used": {"$ne": True}}
         update = {"$set": {"is_used": True}}
-        self.find_and_modify(query=query, update=update)
+        await self.find_and_modify_async(query=query, update=update)
 
     def get_output_name(self, profile):
         try:
