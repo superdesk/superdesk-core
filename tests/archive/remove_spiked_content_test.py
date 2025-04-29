@@ -189,14 +189,14 @@ class RemoveSpikedContentTestCase(TestCase):
 
         original = item.copy()
         with patch.object(self.app.media, "delete") as media_delete:
-            CropService().update_media_references(item, original)
+            await CropService().update_media_references(item, original)
             references_service = get_resource_service("media_references")
-            refs = references_service.get(req=None, lookup={"item_id": "testimage"})
+            refs = await references_service.get_async(req=None, lookup={"item_id": "testimage"})
             self.assertEqual(refs.count(), 4)
             for ref in refs:
                 self.assertEqual(ref.get("published"), False)
-            CropService().update_media_references(item, original, True)
-            refs = references_service.get(req=None, lookup={"item_id": "testimage"})
+            await CropService().update_media_references(item, original, True)
+            refs = await references_service.get_async(req=None, lookup={"item_id": "testimage"})
             for ref in refs:
                 self.assertEqual(ref.get("published"), True)
 
@@ -206,9 +206,9 @@ class RemoveSpikedContentTestCase(TestCase):
             item = {"_id": "testimage2", "type": "picture", "renditions": self.media}
 
             original = item.copy()
-            CropService().update_media_references(item, original)
+            await CropService().update_media_references(item, original)
             references_service = get_resource_service("media_references")
-            refs = references_service.get(req=None, lookup={"item_id": "testimage2"})
+            refs = await references_service.get_async(req=None, lookup={"item_id": "testimage2"})
             self.assertEqual(refs.count(), 4)
             for ref in refs:
                 self.assertEqual(ref.get("published"), False)
@@ -238,9 +238,9 @@ class RemoveSpikedContentTestCase(TestCase):
             }
 
             original = item.copy()
-            CropService().update_media_references(item, original)
+            await CropService().update_media_references(item, original)
             references_service = get_resource_service("media_references")
-            refs = references_service.get(req=None, lookup={"item_id": "testimage3"})
+            refs = await references_service.get_async(req=None, lookup={"item_id": "testimage3"})
             self.assertEqual(refs.count(), 2)
             for ref in refs:
                 self.assertEqual(ref.get("published"), False)
@@ -280,13 +280,13 @@ class RemoveSpikedContentTestCase(TestCase):
 
         original = item.copy()
         with patch.object(self.app.media, "delete") as media_delete:
-            CropService().update_media_references(item, original)
+            await CropService().update_media_references(item, original)
             references_service = get_resource_service("media_references")
-            refs = references_service.get(req=None, lookup={"item_id": "testimage"})
+            refs = await references_service.get_async(req=None, lookup={"item_id": "testimage"})
             self.assertEqual(refs.count(), 6)
             for ref in refs:
                 self.assertEqual(ref.get("published"), False)
-            CropService().update_media_references(item, original, True)
+            await CropService().update_media_references(item, original, True)
             refs = references_service.get(req=None, lookup={"item_id": "testimage"})
             for ref in refs:
                 self.assertEqual(ref.get("published"), True)

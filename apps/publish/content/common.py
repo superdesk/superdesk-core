@@ -228,7 +228,7 @@ class BasePublishService(AsyncBaseService):
         get_resource_service("archive_broadcast").reset_broadcast_status(updates, original)
         push_content_notification([updates])
         await self._import_into_legal_archive(updates)
-        CropService().update_media_references(updates, original, True)
+        await CropService().update_media_references(updates, original, True)
         signals.item_published.send(self, item=original, after_scheduled=False)
         await signals.item_published_async.send(original, False)
 
@@ -301,9 +301,11 @@ class BasePublishService(AsyncBaseService):
                     operation=self.item_operation,
                     published_state=self.published_state,
                     sender_type=PublishSenderType.API,
-                    target_media_type=SubscriberType.DIGITAL
-                    if updated[ITEM_TYPE] in [CONTENT_TYPE.TEXT, CONTENT_TYPE.PREFORMATTED]
-                    else None,
+                    target_media_type=(
+                        SubscriberType.DIGITAL
+                        if updated[ITEM_TYPE] in [CONTENT_TYPE.TEXT, CONTENT_TYPE.PREFORMATTED]
+                        else None
+                    ),
                     publish_to_content_api=True,
                 )
             )

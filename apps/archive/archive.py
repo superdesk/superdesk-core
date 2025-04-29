@@ -419,7 +419,7 @@ class ArchiveService(BaseService, HighlightsSearchMixin):
             if doc.get("profile"):
                 profiles.add(doc["profile"])
 
-            self.cropService.update_media_references(doc, {})
+            await self.cropService.update_media_references(doc, {})
             if doc[ITEM_OPERATION] == ITEM_FETCH:
                 app.on_archive_item_updated({"task": doc.get("task")}, doc, ITEM_FETCH)
             else:
@@ -571,7 +571,7 @@ class ArchiveService(BaseService, HighlightsSearchMixin):
         if updates.get("profile"):
             await get_resource_service("content_types").set_used([updates.get("profile")])
 
-        self.cropService.update_media_references(updates, original)
+        await self.cropService.update_media_references(updates, original)
 
     def on_replace(self, document, original):
         document[ITEM_OPERATION] = ITEM_UPDATE
@@ -599,7 +599,7 @@ class ArchiveService(BaseService, HighlightsSearchMixin):
             subject=get_subject(original),
         )
         push_content_notification([document, original])
-        self.cropService.update_media_references(document, original)
+        await self.cropService.update_media_references(document, original)
 
     def on_deleted(self, doc):
         get_component(ItemAutosave).clear(doc["_id"])

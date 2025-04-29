@@ -9,9 +9,9 @@
 # at https://www.sourcefabric.org/superdesk/license
 
 
+from superdesk.eve_async.service import AsyncBaseService
 from superdesk.resource_fields import ID_FIELD
-from superdesk.resource import Resource, not_analyzed
-from superdesk.services import BaseService
+from superdesk.resource import Resource
 from superdesk.media.renditions import generate_renditions, get_renditions_spec
 from superdesk import get_resource_service
 from superdesk import errors
@@ -48,7 +48,7 @@ class MediaEditorResource(Resource):
     privileges = {"POST": "archive"}
 
 
-class MediaEditorService(BaseService):
+class MediaEditorService(AsyncBaseService):
     """Service givin metadata on backend itself"""
 
     def transform(self, im, operation):
@@ -88,7 +88,7 @@ class MediaEditorService(BaseService):
 
         return im
 
-    def create(self, docs):
+    async def create_async(self, docs: list[dict], **kwargs) -> list:
         """Apply transformation requested in 'edit'"""
         app = get_current_app()
         ids = []
