@@ -1,17 +1,18 @@
 import superdesk
+from superdesk.eve_async.service import AsyncBaseService
 from superdesk.core import get_current_app
 from superdesk.media.renditions import generate_renditions, get_renditions_spec
 from apps.picture_crop import get_file
 
 
-class PictureRenditionsService(superdesk.Service):
+class PictureRenditionsService(AsyncBaseService):
     """
 
     Create the renditions for the given `original` picture.
 
     """
 
-    def create(self, docs, **kwargs):
+    async def create_async(self, docs: list[dict], **kwargs) -> list:
         app = get_current_app()
         ids = []
         for doc in docs:
