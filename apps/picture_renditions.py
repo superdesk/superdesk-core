@@ -21,7 +21,7 @@ class PictureRenditionsService(AsyncBaseService):
             orig_file = get_file(orig, item)
             no_custom_crops = doc.get("no_custom_crops", False)
             rendition_spec = get_renditions_spec(no_custom_crops=no_custom_crops)
-            inserted = []
+            inserted: list = []
             mimetype = item.get("mimetype", orig.get("mimetype", "/"))
             media_type, content_type = mimetype.split("/")
             renditions = generate_renditions(

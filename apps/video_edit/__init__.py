@@ -23,7 +23,7 @@ class VideoEditService(AsyncBaseService):
     async def create_async(self, docs: list[dict], **kwargs) -> list:
         ids = []
         for doc in docs:
-            item = doc.get("item")
+            item = doc.get("item", {})
             item_id = item[ID_FIELD]
             renditions = item["renditions"]
             video_id = renditions["original"].get("video_editor_id")
@@ -75,6 +75,7 @@ class VideoEditService(AsyncBaseService):
         if req is None:
             return res
 
+        assert res is not None, "Expected res to be a dict, got None"
         video_id = res["renditions"]["original"]["video_editor_id"]
         if req.args.get("action") == "timeline":
             response = self.video_editor.create_timeline_thumbnails(
