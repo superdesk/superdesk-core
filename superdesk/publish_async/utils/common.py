@@ -83,7 +83,6 @@ def get_publish_channel_config(item: dict, item_type: str, operation: str, sende
 
     i = 0
     for channel in channels:
-        print(f"Testing config {i}")
         i += 1
         try:
             if channel.get("item_types") and item_type not in channel["item_types"]:
@@ -102,10 +101,8 @@ def get_publish_channel_config(item: dict, item_type: str, operation: str, sende
         break
 
     if config is None:
-        print("No config found")
         config = default_config
     else:
-        print("Config found")
         config["exchange"] = config.get("exchange", default_config["exchange"])
         config["filter"] = config.get("filter", default_config["filter"])
         config["formatter"] = config.get("formatter", default_config["formatter"])
