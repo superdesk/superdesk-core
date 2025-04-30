@@ -44,7 +44,6 @@ def load_spellcheckers():
 
 
 class DefaultSpellcheckerTestCase(AsyncTestCase):
-
     async def asyncSetUp(self):
         await super().asyncSetUp()
         load_spellcheckers()

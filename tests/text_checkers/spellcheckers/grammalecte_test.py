@@ -43,7 +43,6 @@ def load_spellcheckers():
 
 
 class GrammalecteTestCase(AsyncTestCase):
-
     async def asyncSetUp(self):
         await super().asyncSetUp()
         load_spellcheckers()

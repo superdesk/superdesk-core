@@ -36,7 +36,6 @@ def load_spellcheckers():
 
 
 class LanguagetoolTestCase(AsyncTestCase):
-
     async def asyncSetUp(self):
         await super().asyncSetUp()
         load_spellcheckers()
