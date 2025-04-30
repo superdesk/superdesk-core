@@ -14,6 +14,7 @@ import superdesk
 
 from bson import ObjectId
 from bson.errors import InvalidId
+from bson.dbref import DBRef
 from cerberus import errors
 from eve.io.mongo import Validator
 from eve.auth import auth_field_and_value
@@ -21,7 +22,7 @@ from quart_babel import gettext as _
 from eve.validation import SingleErrorAsStringErrorHandler
 from werkzeug.datastructures import FileStorage
 
-from superdesk.core import get_app_config, get_current_app
+from superdesk.core import get_app_config, get_current_app, get_current_async_app
 from superdesk.resource_fields import ID_FIELD
 
 
@@ -73,6 +74,36 @@ class SuperdeskValidator(Validator):
         kwargs["error_handler"] = SuperdeskErrorHandler
         super(SuperdeskValidator, self).__init__(*args, **kwargs)
         self.types_mapping.pop("date", None)
+
+    def _validate_data_relation(self, data_relation, field, value):
+        """{'type': 'dict',
+        'schema': {
+           'resource': {'type': 'string', 'required': True},
+           'field': {'type': 'string', 'required': True},
+           'embeddable': {'type': 'boolean', 'default': False},
+           'version': {'type': 'boolean', 'default': False}
+        }}"""
+
+        if not value and self.schema[field].get("nullable"):
+            return
+
+        # First try using the Pydantic async resources
+        try:
+            data_resource = data_relation.get("resource")
+            data_field = data_relation.get("field")
+            async_app = get_current_async_app()
+            service = async_app.resources.get_resource_service(data_resource)
+
+            for item in value if isinstance(value, list) else [value]:
+                item_id = item.id if isinstance(item, DBRef) else item
+                if not service.mongo.find_one({data_field: item_id}):
+                    self._error(
+                        field,
+                        f"value '{item_id}' must exist in resource '{data_resource}', field '{data_field}'",
+                    )
+        except KeyError:
+            # Fallback to using Eve based resources
+            return super()._validate_data_relation(data_relation, field, value)
 
     def _validate_mapping(self, mapping, field, value):
         """

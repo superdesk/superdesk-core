@@ -9,7 +9,7 @@
 # at https://www.sourcefabric.org/superdesk/license
 
 from superdesk.resource import Resource
-from superdesk.services import BaseService
+from superdesk.eve_async import AsyncBaseService
 from superdesk.io.commands import update_ingest
 import os
 import superdesk
@@ -48,26 +48,26 @@ class FeedingServiceWebhookResource(Resource):
     allow_unknown = True
 
 
-class FeedingServiceWebhookService(BaseService):
+class FeedingServiceWebhookService(AsyncBaseService):
     """Service giving metadata on backend itself"""
 
-    def create(self, docs, **kwargs):
+    async def create_async(self, docs, **kwargs):
         # we don't want to create anything
         # we just use this service to trigger the provider
         # and return a fake id
-        self.trigger_provider()
+        await self.trigger_provider()
         return [0]
 
-    def trigger_provider(self):
+    async def trigger_provider(self):
         provider_name = request.args["provider_name"]
         lookup = {"name": provider_name}
         for provider in superdesk.get_resource_service("ingest_providers").get(req=None, lookup=lookup):
             kwargs = {
                 "provider": provider,
                 "rule_set": update_ingest.get_provider_rule_set(provider),
-                "routing_scheme": update_ingest.get_provider_routing_scheme(provider),
+                "routing_scheme": await update_ingest.get_provider_routing_scheme(provider),
             }
-            update_ingest.update_provider.apply_async(expires=update_ingest.get_task_ttl(provider), kwargs=kwargs)
+            await update_ingest.update_provider.apply_async(expires=update_ingest.get_task_ttl(provider), kwargs=kwargs)
 
 
 def init_app(app) -> None:

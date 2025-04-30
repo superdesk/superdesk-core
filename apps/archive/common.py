@@ -294,7 +294,7 @@ def set_default_source(doc):
     if desk_id:
         # if desk level source is specified then use that instead of the default source
         # TODO-ASYNC[desks]: Use DesksResourceModel async service where when upgrading this module
-        desk = get_resource_service("desks").find_one(req=None, _id=desk_id)
+        desk = get_resource_service("desks").find_one(req=None, _id=desk_id) or {}
         source = desk.get("source") or source
 
     doc["source"] = source
@@ -338,7 +338,7 @@ def set_dateline(updates, original):
     )
 
 
-def clear_rewritten_flag(event_id, rewrite_id, rewrite_field):
+async def clear_rewritten_flag(event_id, rewrite_id, rewrite_field):
     """Clears rewritten_by or rewrite_of field from the existing published and archive items.
 
     :param str event_id: event id of the document
@@ -348,14 +348,14 @@ def clear_rewritten_flag(event_id, rewrite_id, rewrite_field):
     publish_service = get_resource_service("published")
     archive_service = get_resource_service(ARCHIVE)
 
-    published_rewritten_stories = publish_service.get_rewritten_items_by_event_story(
+    published_rewritten_stories = await publish_service.get_rewritten_items_by_event_story(
         event_id, rewrite_id, rewrite_field
     )
     processed_items = set()
     app = get_current_app().as_any()
     for doc in published_rewritten_stories:
         doc_id = doc.get(ID_FIELD)
-        publish_service.update_published_items(doc_id, rewrite_field, None)
+        await publish_service.update_published_items(doc_id, rewrite_field, None)
         if doc_id not in processed_items:
             # clear the flag from the archive as well.
             archive_item = archive_service.find_one(req=None, _id=doc_id)
@@ -543,6 +543,7 @@ def remove_media_files(doc, published=False):
 
     for attachment in doc.get("attachments", []):
         lookup = {"_id": attachment["attachment"]}
+        # TODO-ASYNC[attachments]: Use ``delete_action_async``
         get_resource_service("attachments").delete_action(lookup)
 
 

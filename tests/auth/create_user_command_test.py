@@ -20,11 +20,11 @@ class CreateUserCommandTestCase(TestCase):
         if not self.app.config.get("LDAP_SERVER"):
             user = {"username": "foo", "password": "bar", "email": "baz", "password_changed_on": utcnow()}
             await create_user_command_handler(user["username"], user["password"], user["email"], admin=True)
-            auth_user = get_resource_service("auth_db").authenticate(user)
+            auth_user = await get_resource_service("auth_db").authenticate(user)
             self.assertEqual(auth_user["username"], user["username"])
 
             await create_user_command_handler(user["username"], user["password"], user["email"], admin=True)
-            auth_user2 = get_resource_service("auth_db").authenticate(user)
+            auth_user2 = await get_resource_service("auth_db").authenticate(user)
             self.assertEqual(auth_user2["username"], user["username"])
             self.assertEqual(auth_user2["_id"], auth_user["_id"])
 
@@ -34,7 +34,7 @@ class CreateUserCommandTestCase(TestCase):
             cmd = create_user_command_handler
             await cmd(user["username"], user["password"], user["email"], admin=True)
             await cmd(user["username"], "new_password", user["email"], admin=True)
-            get_resource_service("auth_db").authenticate(user)
+            await get_resource_service("auth_db").authenticate(user)
 
     async def test_import_users(self):
         """users:import is working with JSON files"""
@@ -68,7 +68,6 @@ class CreateUserCommandTestCase(TestCase):
         found_user = users_service.find_one(req=None, username="invalid_unknown_role")
         self.assertIsNone(found_user)
 
-    @markers.requires_async_celery
     async def test_import_users_csv(self):
         """users:import is working with CSV files"""
         roles = [
@@ -113,7 +112,6 @@ class CreateUserCommandTestCase(TestCase):
             await cmd.run(None, import_file)
             assert len(outbox) == 0
 
-    @markers.requires_eve_resource_async_event
     async def test_import_users_activation_email(self):
         """users:import sends activation link"""
         roles = [

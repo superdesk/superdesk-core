@@ -41,10 +41,12 @@ class OAuthResource(AuthResource):
 
 
 class OAuthService(AuthService):
-    def authenticate(self, document):
+    async def authenticate(self, document):
         if not document.get("email"):
             return
-        return superdesk.get_resource_service("auth_users").find_one(req=None, email=document["email"].lower())
+        return await superdesk.get_resource_service("auth_users").find_one_async(
+            req=None, email=document["email"].lower()
+        )
 
 
 async def auth_user(email, userdata=None):
@@ -62,7 +64,7 @@ async def auth_user(email, userdata=None):
     if not email:
         return await render_template(AUTHORIZED_TEMPLATE, data={"error": 404})
     try:
-        superdesk.get_resource_service(RESOURCE).post(data)
+        await superdesk.get_resource_service(RESOURCE).post_async(data)
         data[0]["_id"] = str(data[0]["_id"])
         data[0]["user"] = str(data[0]["user"])
         if userdata:

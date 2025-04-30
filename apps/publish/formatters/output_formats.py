@@ -13,6 +13,7 @@ class OutputFormatsResource(superdesk.Resource):
     }
 
 
+# Not upgrading to async, as there's no I/O to wait on
 class OutputFormatsService(superdesk.Service):
     def get(self, req, lookup):
         """Return list of available output formats."""

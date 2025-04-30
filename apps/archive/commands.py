@@ -15,9 +15,8 @@ from superdesk.core import get_app_config
 from superdesk.resource_fields import ID_FIELD, VERSION
 import superdesk.signals as signals
 from superdesk.commands import cli
-from superdesk.types import PublishQueueResource
+from superdesk.types import PublishQueueResource, ContentFiltersResource
 
-from eve.utils import ParsedRequest
 from copy import deepcopy
 from apps.packages import PackageService
 from superdesk.celery_task_utils import get_lock_id
@@ -40,6 +39,7 @@ from datetime import timedelta
 from werkzeug.exceptions import Conflict
 from .common import remove_media_files
 from celery.exceptions import SoftTimeLimitExceeded
+from superdesk.publish_async.utils import item_matches_content_filter
 
 logger = logging.getLogger(__name__)
 
@@ -49,7 +49,7 @@ LAST_ID_CONFIG = "archive_expiry_last_id"
 
 
 @cli.command("archive:remove_expired")
-def cli_archive_remove_expired():
+async def cli_archive_remove_expired():
     """Remove expired content from Superdesk.
 
     It removes expired items from production, published and archived colections.
@@ -60,7 +60,7 @@ def cli_archive_remove_expired():
         $ python manage.py archive:remove_expired
 
     """
-    RemoveExpiredContent().run()
+    await RemoveExpiredContent().run()
 
 
 def log_exeption(fn):
@@ -86,7 +86,7 @@ class RemoveExpiredContent:
     log_msg = None
     lock_name = None
 
-    def run(self):
+    async def run(self):
         now = utcnow()
         self.log_msg = "Expiry Time: {}.".format(now)
         self.lock_name = get_lock_id("archive", "remove_expired")
@@ -101,8 +101,8 @@ class RemoveExpiredContent:
             logger.info("{} Removing expired content for expiry.".format(self.log_msg))
             # all functions should be called, even the first one throw exception,
             # so they are wrapped with log_exeption
-            self._remove_expired_publish_queue_items(now)
-            self._remove_expired_items(now)
+            await self._remove_expired_publish_queue_items(now)
+            await self._remove_expired_items(now)
             self._remove_expired_archived_items(now)
 
             push_notification("content:expired")
@@ -113,15 +113,15 @@ class RemoveExpiredContent:
             unlock(self.lock_name)
 
     @log_exeption
-    def _remove_expired_publish_queue_items(self, now):
+    async def _remove_expired_publish_queue_items(self, now):
         expire_interval = get_app_config("PUBLISH_QUEUE_EXPIRY_MINUTES", 0)
         if expire_interval:
             expire_time = now - timedelta(minutes=expire_interval)
             logger.info("{} Removing publish queue items created before {}".format(self.log_msg, str(expire_time)))
-            get_resource_service("publish_queue").delete(_get_expired_mongo_ids_query(expire_interval, now))
+            await PublishQueueResource.get_service().delete_many(_get_expired_mongo_ids_query(expire_interval, now))
 
     @log_exeption
-    def _remove_expired_items(self, expiry_datetime):
+    async def _remove_expired_items(self, expiry_datetime):
         """Remove the expired items.
 
         :param datetime expiry_datetime: expiry datetime
@@ -169,7 +169,7 @@ class RemoveExpiredContent:
             }
 
             # check if killed items imported to legal
-            items_having_issues.update(self.check_if_items_imported_to_legal_archive(killed_items))
+            items_having_issues.update(await self.check_if_items_imported_to_legal_archive(killed_items))
 
             # filter out the killed items not imported to legal.
             killed_items = {
@@ -205,7 +205,7 @@ class RemoveExpiredContent:
                     # item can be archived and removed from the database
                     logger.info("{} Removing item. {}".format(self.log_msg, expiry_msg))
                     logger.info("{} Items to be removed. {}".format(self.log_msg, processed_items))
-                    issues = self.check_if_items_imported_to_legal_archive(processed_items)
+                    issues = await self.check_if_items_imported_to_legal_archive(processed_items)
                     if issues:
                         items_having_issues.update(processed_items)
                     else:
@@ -215,7 +215,7 @@ class RemoveExpiredContent:
             items_to_expire = deepcopy(items_to_be_archived)
 
             # check once again in items imported to legal
-            items_having_issues.update(self.check_if_items_imported_to_legal_archive(items_to_expire))
+            items_having_issues.update(await self.check_if_items_imported_to_legal_archive(items_to_expire))
             if items_having_issues:
                 # remove items not imported to legal
                 items_to_expire = {
@@ -246,21 +246,20 @@ class RemoveExpiredContent:
 
             # get the filter conditions
             logger.info("{} Loading filter conditions.".format(self.log_msg))
-            req = ParsedRequest()
-            filter_conditions = list(
-                get_resource_service("content_filters").get(req=req, lookup={"is_archived_filter": True})
-            )
+            filter_conditions = await (
+                await ContentFiltersResource.get_service().search({"is_archived_filter": True})
+            ).to_list()
 
             # move to archived collection
             logger.info("{} Archiving items.".format(self.log_msg))
             for _item_id, item in items_to_be_archived.items():
-                self._move_to_archived(item, filter_conditions)
+                await self._move_to_archived(item, filter_conditions)
 
             for item_id, item in killed_items.items():
                 # delete from the published collection and queue
                 msg = log_msg_format.format(**item)
                 try:
-                    published_service.delete_by_article_id(item_id)
+                    await published_service.delete_by_article_id(item_id)
                     logger.info("{} Deleting killed item from published. {}".format(self.log_msg, msg))
                     items_to_remove.add(item_id)
                 except Exception:
@@ -292,11 +291,14 @@ class RemoveExpiredContent:
             logger.info("%s No items found to expire in archived.", self.log_msg)
         else:
             logger.info("%s Removing %d expired items from archived.", self.log_msg, len(expired))
+
+        # TODO-ASYNC: Use async version
         removed = archived_service.delete_docs(expired)
         for item in expired:
             if item["_id"] not in removed:
                 logger.error("%s Item was not removed from archived item=%s", self.log_msg, item["item_id"])
                 continue
+            # TODO-ASYNC: Use async version
             signals.archived_item_removed.send(archived_service, item=item)
             if not get_app_config("LEGAL_ARCHIVE") and not archived_service.find_one(req=None, item_id=item["item_id"]):
                 remove_media_files(item, published=True)
@@ -416,7 +418,7 @@ class RemoveExpiredContent:
         archive_docs = list(get_resource_service(ARCHIVE).get_from_mongo(req=None, lookup={"_id": {"$in": list(ids)}}))
         return [doc.get(ID_FIELD) for doc in archive_docs]
 
-    def _move_to_archived(self, item, filter_conditions):
+    async def _move_to_archived(self, item, filter_conditions):
         """Moves all the published version of an article to archived.
 
         Deletes all published version of an article in the published collection
@@ -429,7 +431,7 @@ class RemoveExpiredContent:
         archive_service = get_resource_service("archive")
         item_id = item.get(ID_FIELD)
         moved_to_archived = self._conforms_to_archived_filter(item, filter_conditions)
-        published_items = list(published_service.get_from_mongo(req=None, lookup={"item_id": item_id}))
+        published_items = await published_service.get_from_mongo_async(req=None, lookup={"item_id": item_id}).to_list()
 
         try:
             if published_items:
@@ -447,7 +449,7 @@ class RemoveExpiredContent:
                     logger.info("{} Not Moving item to text archive for item {}.".format(self.log_msg, item_id))
 
                 logger.info("{} Archived published item: {}".format(self.log_msg, item_id))
-                published_service.delete_by_article_id(item_id)
+                await published_service.delete_by_article_id(item_id)
                 logger.info("{} Deleted published item. {}".format(self.log_msg, item_id))
             archive_service.delete_by_article_ids([item_id])
             logger.info("{} Deleted archive item. {}".format(self.log_msg, item_id))
@@ -468,9 +470,8 @@ class RemoveExpiredContent:
             )
             return True
 
-        filter_service = get_resource_service("content_filters")
         for fc in filter_conditions:
-            if filter_service.does_match(fc, item):
+            if item_matches_content_filter(item, fc):
                 logger.info("{} Filter conditions {} matched for item {}.".format(self.log_msg, fc, item.get(ID_FIELD)))
                 return False
 
@@ -496,7 +497,7 @@ class RemoveExpiredContent:
         except Exception:
             logger.exception("{} Failed to delete spiked items.".format(self.log_msg))
 
-    def check_if_items_imported_to_legal_archive(self, items_to_expire):
+    async def check_if_items_imported_to_legal_archive(self, items_to_expire):
         """Checks if all items are moved to legal or not.
 
         :param dict items_to_expire:
@@ -507,7 +508,7 @@ class RemoveExpiredContent:
 
         logger.info("{} checking for items in legal archive. Items: {}".format(self.log_msg, items_to_expire.keys()))
 
-        items_not_moved_to_legal = get_resource_service("published").get_published_items_by_moved_to_legal(
+        items_not_moved_to_legal = await get_resource_service("published").get_published_items_by_moved_to_legal(
             list(items_to_expire.keys()), False
         )
 
@@ -520,10 +521,10 @@ class RemoveExpiredContent:
         # get all the
         lookup = {"$and": [{"item_id": {"$in": list(items_to_expire.keys())}}, {"moved_to_legal": False}]}
 
-        items_not_moved_to_legal = list(get_resource_service("publish_queue").get(req=None, lookup=lookup))
+        items_not_moved_to_legal = await PublishQueueResource.get_service().search(lookup)
 
-        if len(items_not_moved_to_legal) > 0:
-            publish_queue_items = set([item.get("item_id") for item in items_not_moved_to_legal])
+        if await items_not_moved_to_legal.count():
+            publish_queue_items = set([item.item_id async for item in items_not_moved_to_legal])
             items_not_moved.update({item_id: items_to_expire[item_id] for item_id in publish_queue_items})
             logger.warning(
                 "{} Items are not moved to legal publish queue {}.".format(self.log_msg, publish_queue_items)

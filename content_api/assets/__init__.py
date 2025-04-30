@@ -25,7 +25,7 @@ bp = Blueprint("assets", __name__)
 @bp.route("/assets/<path:media_id>", methods=["GET"])
 async def get_media_streamed(media_id):
     app = get_current_app()
-    if not app.auth.authorized([], "assets", "GET"):
+    if not await app.auth.authorized([], "assets", "GET"):
         return app.auth.authenticate()
     try:
         media_file = await app.media.get_async(media_id, "upload")

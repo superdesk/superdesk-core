@@ -1,6 +1,5 @@
 from unittest.mock import patch
 from superdesk.tests import TestCase
-from apps.publish.enqueue.enqueue_service import EnqueueService
 
 
 class NoTakesEnqueueTestCase(TestCase):
@@ -28,7 +27,7 @@ class NoTakesEnqueueTestCase(TestCase):
             ],
         )
 
-        self.service = EnqueueService()
+        # self.service = EnqueueService()
 
     async def test_resend_no_takes(self):
         doc = {"_id": "test"}

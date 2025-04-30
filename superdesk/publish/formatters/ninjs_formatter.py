@@ -51,6 +51,7 @@ from apps.archive.common import get_utc_schedule
 from superdesk import text_utils
 from superdesk.attachments import get_attachment_public_url
 from collections import OrderedDict
+from superdesk.publish_async.utils import generate_sequence_number
 
 logger = logging.getLogger(__name__)
 # this regex match the way custom media fields are put in associations (i.e. how the key
@@ -174,14 +175,14 @@ class NINJSFormatter(Formatter):
 
     async def format(self, article: dict, subscriber: dict, codes: list | None = None) -> list[tuple[int, str] | dict]:
         try:
-            pub_seq_num = await superdesk.get_resource_service("subscribers").generate_sequence_number_async(subscriber)
+            pub_seq_num = await generate_sequence_number(subscriber)
 
-            ninjs = self._transform_to_ninjs(article, subscriber)
+            ninjs = await self._transform_to_ninjs(article, subscriber)
             return [(pub_seq_num, json.dumps(ninjs, default=json_serialize_datetime_objectId))]
         except Exception as ex:
             raise FormatterError.ninjsFormatterError(ex, subscriber)
 
-    def _transform_to_ninjs(self, article, subscriber, recursive=True):
+    async def _transform_to_ninjs(self, article, subscriber, recursive=True):
         ninjs = {
             "guid": article.get(GUID_FIELD, article.get("uri")),
             "version": str(article.get(VERSION, 1)),
@@ -220,12 +221,12 @@ class NINJSFormatter(Formatter):
         extra_items = None
         if recursive:
             if article[ITEM_TYPE] == CONTENT_TYPE.COMPOSITE:
-                ninjs[ASSOCIATIONS] = self._get_groups(article, subscriber)
+                ninjs[ASSOCIATIONS] = await self._get_groups(article, subscriber)
             if article.get(ASSOCIATIONS):
-                associations, extra_items = self._format_related(article, subscriber)
+                associations, extra_items = await self._format_related(article, subscriber)
                 ninjs.setdefault(ASSOCIATIONS, {}).update(associations)
         elif article.get(ASSOCIATIONS) and recursive:
-            ninjs[ASSOCIATIONS], extra_items = self._format_related(article, subscriber)
+            ninjs[ASSOCIATIONS], extra_items = await self._format_related(article, subscriber)
         if extra_items:
             ninjs.setdefault(EXTRA_ITEMS, {}).update(extra_items)
 
@@ -294,7 +295,7 @@ class NINJSFormatter(Formatter):
             ninjs.setdefault("signal", []).extend([self._format_signal(signal) for signal in article["signal"]])
 
         if article.get("attachments"):
-            ninjs["attachments"] = self._format_attachments(article)
+            ninjs["attachments"] = await self._format_attachments(article)
 
         if ninjs["type"] == CONTENT_TYPE.TEXT and ("body_html" in ninjs or "body_text" in ninjs):
             if "body_html" in ninjs:
@@ -346,7 +347,7 @@ class NINJSFormatter(Formatter):
             return CONTENT_TYPE.TEXT
         return article[ITEM_TYPE]
 
-    def _get_groups(self, article, subscriber):
+    async def _get_groups(self, article, subscriber):
         """Create associations dict for package groups."""
         associations = dict()
         for group in article.get(GROUPS, []):
@@ -362,7 +363,7 @@ class NINJSFormatter(Formatter):
                     if "label" in ref:
                         item["label"] = ref.get("label")
                     if ref.get("package_item"):
-                        item.update(self._transform_to_ninjs(ref["package_item"], subscriber, recursive=False))
+                        item.update(await self._transform_to_ninjs(ref["package_item"], subscriber, recursive=False))
                     group_items.append(item)
             if len(group_items) == 1:
                 associations[group[GROUP_ID]] = group_items[0]
@@ -371,7 +372,7 @@ class NINJSFormatter(Formatter):
                     associations[group[GROUP_ID] + "-" + str(index)] = group_items[index]
         return associations
 
-    def _format_related(self, article, subscriber):
+    async def _format_related(self, article, subscriber):
         """Format all associated items for simple items (not packages)."""
         associations = OrderedDict()
         extra_items = {}
@@ -391,7 +392,7 @@ class NINJSFormatter(Formatter):
                     orig_item["order"] = item.get("order", 1)
                     item = orig_item.copy()
 
-                item = self._transform_to_ninjs(item, subscriber, recursive=False)
+                item = await self._transform_to_ninjs(item, subscriber, recursive=False)
 
                 # Keep original POI and get rid of all other POI.
                 renditions = item.get("renditions")
@@ -550,12 +551,12 @@ class NINJSFormatter(Formatter):
     def _format_signal_cwarn(self):
         return [{"name": "Content Warning", "code": "cwarn", "scheme": SCHEME_MAP["sig"]}]
 
-    def _format_attachments(self, article):
+    async def _format_attachments(self, article):
         output = []
         attachments_service = superdesk.get_resource_service("attachments")
         for attachment_ref in article["attachments"]:
-            attachment = attachments_service.find_one(req=None, _id=attachment_ref["attachment"])
-            href = get_attachment_public_url(attachment)
+            attachment = await attachments_service.find_one_async(req=None, _id=attachment_ref["attachment"])
+            href = await get_attachment_public_url(attachment)
             if href:
                 # If we get a href, the attachment is available for subscriber consumption
                 output.append(
@@ -645,9 +646,9 @@ class NINJSFormatter(Formatter):
             scheme=SCHEME_MAP.get(scheme) or scheme,
         )
 
-    def export(self, item):
+    async def export(self, item):
         if self.can_format(self.type, item):
-            sequence, formatted_doc = self.format(item, {"_id": "0"}, None)[0]
+            sequence, formatted_doc = await self.format(item, {"_id": "0"}, None)[0]
             return formatted_doc.replace("''", "'")
         else:
             raise Exception()
@@ -676,7 +677,7 @@ class NINJS2Formatter(NINJSFormatter):
         "rewrite_of",
     )
 
-    def _transform_to_ninjs(self, article, subscriber, recursive=True):
-        ninjs = super()._transform_to_ninjs(article, subscriber, recursive)
+    async def _transform_to_ninjs(self, article, subscriber, recursive=True):
+        ninjs = await super()._transform_to_ninjs(article, subscriber, recursive)
         ninjs["version"] = str(article.get("correction_sequence", 1))
         return ninjs

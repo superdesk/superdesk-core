@@ -4,6 +4,9 @@ from bson import ObjectId
 
 from superdesk.types import ContentFiltersResource
 
+from ..filters import BasePublishExchangeFilter
+from .common import get_publish_request_from_item
+
 
 logger = logging.getLogger(__name__)
 
@@ -31,3 +34,12 @@ async def _get_referenced_content_filters(
         if references and len(references) > 0:
             return await _get_referenced_content_filters(references, pf_list)
     return pf_list
+
+
+def item_matches_content_filter(item: dict, content_filter: ContentFiltersResource | None) -> bool:
+    """Returns boolean if the supplied item matches the content_filter
+
+    Note: Make sure to initialise the PublishCache before running this function
+    """
+
+    return BasePublishExchangeFilter().content_filter_matches_item(get_publish_request_from_item(item), content_filter)

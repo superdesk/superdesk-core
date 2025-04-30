@@ -53,19 +53,19 @@ class ArchiveCorrectionService(Service):
         archive_item = archive_service.find_one(req=None, _id=original.get(ID_FIELD))
 
         if remove_correction:
-            published_article = published_service.find_one(
+            published_article = await published_service.find_one_async(
                 req=None, guid=original.get("guid"), state=CONTENT_STATE.BEING_CORRECTED
             )
 
         elif original.get("state") == CONTENT_STATE.CORRECTED:
-            published_article = published_service.find_one(
+            published_article = await published_service.find_one_async(
                 req=None,
                 guid=original.get("guid"),
                 correction_sequence=original.get("correction_sequence"),
                 state=CONTENT_STATE.CORRECTED,
             )
         else:
-            published_article = published_service.find_one(req=None, guid=original.get("guid"))
+            published_article = await published_service.find_one_async(req=None, guid=original.get("guid"))
 
         # updates for item in archive.
         if not remove_correction:
@@ -99,7 +99,7 @@ class ArchiveCorrectionService(Service):
 
         try:
             # modify item in published.
-            _published_item = published_service.system_update(
+            _published_item = await published_service.system_update_async(
                 published_article.get(ID_FIELD), published_item_updates, published_article
             )
             assert (

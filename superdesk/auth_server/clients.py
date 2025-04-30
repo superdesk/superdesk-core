@@ -15,6 +15,7 @@ from bson import ObjectId
 from bson.errors import InvalidId
 
 import superdesk
+from superdesk.eve_async import AsyncBaseService
 from superdesk.commands import cli
 from superdesk.utils import gen_password
 from superdesk.auth_server.scopes import allowed_scopes
@@ -35,7 +36,7 @@ logger = logging.getLogger(__name__)
     type=click.Choice(allowed_scopes),
     help="scopes allowed (one or more of {allowed_scopes})".format(allowed_scopes=", ".join(allowed_scopes)),
 )
-def cli_auth_server_register_client(name, client_id, password, scope):
+async def cli_auth_server_register_client(name, client_id, password, scope):
     """Register a client to authentication server
 
     A client name is needed, and an id and password will be generated and displayed once
@@ -51,7 +52,7 @@ def cli_auth_server_register_client(name, client_id, password, scope):
 
     """
 
-    RegisterClient().run(client_id, password, scope, name)
+    await RegisterClient().run(client_id, password, scope, name)
 
 
 @cli.command("auth_server:update_client")
@@ -66,7 +67,7 @@ def cli_auth_server_register_client(name, client_id, password, scope):
     help="scopes allowed (one or more of {allowed_scopes})".format(allowed_scopes=", ".join(allowed_scopes)),
 )
 @click.option("--client-id", "-i", help="ObjectId compatible client id")
-def cli_auth_server_update_client(client_id, password, scope, name):
+async def cli_auth_server_update_client(client_id, password, scope, name):
     """Update an existing client
 
     You need to specify the client ID to update. Specify the parameters that you want to
@@ -87,12 +88,12 @@ def cli_auth_server_update_client(client_id, password, scope, name):
         $ python manage.py auth_server:update_client 5dad7f064269dd1d5a78e6a2 -s ARCHIVE_READ
 
     """
-    UpdateClient().run(client_id, password, scope, name)
+    await UpdateClient().run(client_id, password, scope, name)
 
 
 @cli.command("auth_server:unregister_client")
 @click.option("--client-id", "-i", help="ObjectId compatible client id")
-def cli_auth_server_unregister_client(client_id):
+async def cli_auth_server_unregister_client(client_id):
     """Remove a previously registered client
     Example:
 
@@ -101,11 +102,11 @@ def cli_auth_server_unregister_client(client_id):
         $ python manage.py auth_server:unregister_client 0102030405060708090a0b0c
 
     """
-    UnregisterClient().run(client_id)
+    await UnregisterClient().run(client_id)
 
 
 @cli.command("auth_server:list_clients")
-def cli_auth_server_list_clients():
+async def cli_auth_server_list_clients():
     """List clients registered with auth server
 
     The client will be listed with their scopes.
@@ -115,7 +116,7 @@ def cli_auth_server_list_clients():
         $ python manage.py auth_server:list_clients
 
     """
-    ListClients().run()
+    await ListClients().run()
 
 
 class AuthServerClientsResource(superdesk.Resource):
@@ -130,7 +131,7 @@ class AuthServerClientsResource(superdesk.Resource):
     }
 
 
-class AuthServerClientsService(superdesk.Service):
+class AuthServerClientsService(AsyncBaseService):
     """Service to handle authorization server clients"""
 
 
@@ -150,14 +151,14 @@ class CommonClient:
 
 
 class RegisterClient(CommonClient):
-    def run(self, client_id, password, scope, name):
-        self.validate_name(name)
+    async def run(self, client_id, password, scope, name):
+        await self.validate_name(name)
         scope = self.validate_scope(scope)
 
         if client_id is None:
             client_id = ObjectId()
         else:
-            client_id = self.validate_client_id(client_id)
+            client_id = await self.validate_client_id(client_id)
 
         if not password or not password.strip():
             password = gen_password()
@@ -169,15 +170,14 @@ class RegisterClient(CommonClient):
             "scope": list(scope),
         }
 
-        # TODO-ASYNC[auth_server]: Use async resource when upgrading ``auth_server`` module
-        superdesk.get_resource_service("auth_server_clients").post([client_data])
+        await superdesk.get_resource_service("auth_server_clients").post_async([client_data])
         print(
             "Client {name!r} has been registered with id '{client_id}' and password {password!r}".format(
                 name=name, client_id=client_id, password=password
             )
         )
 
-    def validate_client_id(self, client_id):
+    async def validate_client_id(self, client_id):
         """
         Validate client id string and return client id ObjectId
         :param client_id: client id
@@ -191,16 +191,12 @@ class RegisterClient(CommonClient):
         except InvalidId as e:
             raise click.BadParameter("the given client id is not valid: {msg}".format(msg=e))
 
-        try:
-            next(superdesk.get_resource_service("auth_server_clients").find({"_id": client_id}))
-        except StopIteration:
-            pass
-        else:
+        if await superdesk.get_resource_service("auth_server_clients").count_async({"_id": client_id}):
             raise click.BadParameter("a client with this id already exists!")
 
         return client_id
 
-    def validate_name(self, name):
+    async def validate_name(self, name):
         """
         Validate name
         :param name: client name
@@ -210,25 +206,21 @@ class RegisterClient(CommonClient):
         if not name.strip():
             raise click.BadParameter("please enter a valid name")
 
-        try:
-            next(superdesk.get_resource_service("auth_server_clients").find({"name": name}))
-        except StopIteration:
-            pass
-        else:
+        if await superdesk.get_resource_service("auth_server_clients").count_async({"name": name}):
             raise click.BadParameter("a client with this name already exists!")
 
 
 class UpdateClient(CommonClient):
-    def run(self, client_id, password, scope, name):
+    async def run(self, client_id, password, scope, name):
         clients_service = superdesk.get_resource_service("auth_server_clients")
         try:
             client_id = ObjectId(client_id)
         except InvalidId as e:
             raise click.BadParameter("the given client id is not valid: {msg}".format(msg=e))
 
-        try:
-            original_client = next(clients_service.find({"_id": client_id}))
-        except StopIteration:
+        cursor = await clients_service.find_async({"_id": client_id})
+        original_client = await cursor.next()
+        if not original_client:
             raise click.BadParameter("Can't find any client with id '{client_id}'".format(client_id=client_id))
 
         client_updates = {}
@@ -244,8 +236,7 @@ class UpdateClient(CommonClient):
         if scope:
             client_updates["scope"] = self.validate_scope(scope)
 
-        # TODO-ASYNC[auth_server]: Use async resource when upgrading ``auth_server`` module
-        clients_service.update(original_client["_id"], client_updates.copy(), original_client)
+        await clients_service.update_async(original_client["_id"], client_updates.copy(), original_client)
 
         print("Client successfuly updated with:")
         for key, value in client_updates.items():
@@ -259,27 +250,26 @@ class UpdateClient(CommonClient):
 
 
 class UnregisterClient:
-    def run(self, client_id):
+    async def run(self, client_id):
         try:
             client_id = ObjectId(client_id)
         except InvalidId as e:
             raise click.BadParameter("the given client id is not valid: {msg}".format(msg=e))
         clients_service = superdesk.get_resource_service("auth_server_clients")
-        client = clients_service.find_one(req=None, _id=client_id)
+        client = await clients_service.find_one_async(req=None, _id=client_id)
         if client is None:
             print("No client with id '{client_id}' found".format(client_id=client_id))
             sys.exit(2)
 
-        # TODO-ASYNC[auth_server]: Use async resource when upgrading ``auth_server`` module
-        clients_service.delete({"_id": client_id})
+        await clients_service.delete_async({"_id": client_id})
         print("Client with id '{client_id}' has been successfuly unregistered".format(client_id=client_id))
 
 
 class ListClients:
-    def run(self):
+    async def run(self):
         clients_service = superdesk.get_resource_service("auth_server_clients")
         clients_desc = []
-        for client in clients_service.find({}):
+        async for client in await clients_service.get_all_async():
             clients_desc.append(
                 "- client {name!r}: id '{client_id}' with scope(s) {scopes}".format(
                     name=client["name"],

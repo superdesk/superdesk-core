@@ -12,7 +12,8 @@ from apps.archive.archive import ArchiveResource, ArchiveVersionsResource
 from apps.archive_history import ArchiveHistoryResource
 
 from typing import Any
-from superdesk.publish.publish_queue import PublishQueueResource
+
+# from superdesk.publish.publish_queue import PublishQueueResource
 from superdesk.resource import Resource
 from superdesk.metadata.item import get_schema
 from superdesk.mongo import TEXT_INDEX_OPTIONS
@@ -73,12 +74,13 @@ class LegalArchiveHistoryResource(LegalResource, ArchiveHistoryResource):
     mongo_indexes = {"item_id": ([("item_id", 1)], {"background": True})}
 
 
-class LegalPublishQueueResource(LegalResource, PublishQueueResource):
+# TODO-ASYNC[publish]: Create Pydantic resource for this one, and use Pydantic model & service instead
+class LegalPublishQueueResource(LegalResource):  # , PublishQueueResource):
     endpoint_name = LEGAL_PUBLISH_QUEUE_NAME
     resource_title = endpoint_name
 
     item_schema = {"_subscriber_id": Resource.rel("subscribers")}
-    item_schema.update(PublishQueueResource.schema)
+    # item_schema.update(PublishQueueResource.schema)
     schema = item_schema
 
     datasource = {"source": LEGAL_PUBLISH_QUEUE_NAME}

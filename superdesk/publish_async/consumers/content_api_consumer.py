@@ -50,7 +50,7 @@ class ContentApiPublishConsumer(PublishConsumer):
             if cache.subscribers.get(subscriber_id)
         ]
         try:
-            get_resource_service("content_api").publish(item, subscribers)
+            await get_resource_service("content_api").publish_async(item, subscribers)
         except Exception:
             logger.exception(
                 "Failed to queue item to API",

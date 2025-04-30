@@ -17,6 +17,7 @@ from superdesk.utils import ListCursor
 from superdesk.privilege import get_privilege_list
 
 
+# Not upgrading to async, as there is not I/O to wait on
 class PrivilegeService(superdesk.Service):
     def get(self, req, lookup):
         """

@@ -1,11 +1,20 @@
+from typing import overload
 from pprint import pprint
 from superdesk.core import get_config
 
-from superdesk.types import PublishRequest, PublishRequestResponse, ContentType
+from superdesk.types import (
+    PublishRequest,
+    PublishRequestResponse,
+    ContentType,
+    SubscriberType,
+    PublishSenderType,
+    SubscribersResource,
+)
 from superdesk.commands import cli
 from superdesk.celery_app import celery
 from superdesk.default_settings import PublishChannelConfig
 from superdesk.profiling import ProfileManager
+from superdesk.resource_fields import ID_FIELD, ITEM_TYPE, ITEM_OPERATION
 
 from . import get_exchange_factory
 
@@ -108,7 +117,51 @@ async def transmit():
     await get_exchange_factory().process_pending_tasks()
 
 
+@overload
 async def publish_item(request: PublishRequest) -> PublishRequestResponse:
+    ...
+
+
+@overload
+async def publish_item(
+    request: dict,
+    item_id: str | None = None,
+    item_type: str | None = None,
+    operation: str | None = None,
+    published_state: str | None = None,
+    target_media_type: SubscriberType | None = None,
+    sender_type: PublishSenderType = PublishSenderType.INTERNAL,
+    publish_to_content_api: bool = False,
+    subscribers: list[SubscribersResource] | None = None,
+) -> PublishRequestResponse:
+    ...
+
+
+async def publish_item(
+    request: PublishRequest | dict,
+    item_id: str | None = None,
+    item_type: str | None = None,
+    operation: str | None = None,
+    published_state: str | None = None,
+    target_media_type: SubscriberType | None = None,
+    sender_type: PublishSenderType = PublishSenderType.INTERNAL,
+    publish_to_content_api: bool = False,
+    subscribers: list[SubscribersResource] | None = None,
+) -> PublishRequestResponse:
+    if not isinstance(request, PublishRequest):
+        item = request
+        request = PublishRequest(
+            item=item,
+            item_id=item_id or item.get("item_id") or item[ID_FIELD],
+            item_type=item_type or item[ITEM_TYPE],
+            operation=operation or item.get(ITEM_OPERATION) or "publish",
+            published_state=published_state or "published",
+            target_media_type=target_media_type,
+            sender_type=sender_type,
+            publish_to_content_api=publish_to_content_api,
+            subscribers=subscribers,
+        )
+
     return await get_exchange_factory().send(request)
 
 

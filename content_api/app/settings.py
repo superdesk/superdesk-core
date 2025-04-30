@@ -59,7 +59,7 @@ CONTENTAPI_INSTALLED_APPS = [
 
 MODULES = [
     "content_api.items.module",
-    "superdesk.publish.subscriber_token",
+    "superdesk.publish_async.resources.subscriber_token",
 ]
 
 PUBLISH_MODULES = []

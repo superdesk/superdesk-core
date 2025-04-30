@@ -42,18 +42,18 @@ class GetProviderRoutingSchemeTestCase(TestCase):
             "content_filters": MagicMock(name="content_filters"),
         }
 
-    def test_returns_none_if_no_provider_scheme_defined(self):
+    async def test_returns_none_if_no_provider_scheme_defined(self):
         fake_provider = {"routing_scheme": None}
-        result = self.funcToTest(fake_provider)
+        result = await self.funcToTest(fake_provider)
         self.assertIsNone(result)
 
-    def test_returns_scheme_config_from_db_if_scheme_defined(self):
+    async def test_returns_scheme_config_from_db_if_scheme_defined(self):
         fake_scheme = {"_id": "abc123", "rules": []}
         schemes_service = fake_superdesk.services["routing_schemes"]
         schemes_service.find_one.return_value = fake_scheme
 
         fake_provider = {"routing_scheme": "abc123"}
-        result = self.funcToTest(fake_provider)
+        result = await self.funcToTest(fake_provider)
 
         # check that correct scheme has been fetched and returned
         self.assertTrue(schemes_service.find_one.called)
@@ -61,7 +61,7 @@ class GetProviderRoutingSchemeTestCase(TestCase):
         self.assertEqual(kwargs.get("_id"), "abc123")
         self.assertEqual(result, fake_scheme)
 
-    def test_includes_content_filters_in_returned_scheme(self):
+    async def test_includes_content_filters_in_returned_scheme(self):
         fake_scheme = {
             "_id": "abc123",
             "rules": [
@@ -79,7 +79,7 @@ class GetProviderRoutingSchemeTestCase(TestCase):
         ]
 
         fake_provider = {"routing_scheme": "abc123"}
-        result = self.funcToTest(fake_provider)
+        result = await self.funcToTest(fake_provider)
 
         scheme_rules = result.get("rules", [])
         self.assertEqual(len(scheme_rules), 2)

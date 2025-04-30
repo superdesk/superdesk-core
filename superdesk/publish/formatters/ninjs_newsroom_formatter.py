@@ -8,10 +8,11 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
+import elasticapm
 
 import superdesk
-from superdesk.flask import g
-import elasticapm
+from superdesk.publish_async.publish_cache import PublishCache
+from superdesk.publish_async.utils import test_products_against_item
 
 from .ninjs_formatter import NINJSFormatter
 
@@ -26,26 +27,21 @@ class NewsroomNinjsFormatter(NINJSFormatter):
         self.internal_renditions = ["original", "viewImage", "baseImage"]
 
     @elasticapm.capture_span()
-    def _format_products(self, article):
+    async def _format_products(self, article):
         """
         Return a list of API product id's that the article matches.
 
         :param article:
         :return:
         """
-        cache_id = "article-products-{_id}".format(_id=article.get("_id") or article.get("guid"))
-        if not hasattr(g, cache_id):
-            matches = superdesk.get_resource_service("product_tests").test_products(article)
-            setattr(
-                g,
-                cache_id,
-                [{"code": p["product_id"], "name": p.get("name")} for p in matches if p.get("matched", False)],
-            )
-        return getattr(g, cache_id)
+        await PublishCache.init()
+        matches = test_products_against_item(article)
+
+        return [{"code": p["product_id"], "name": p["name"]} for p in matches if p["matched"]]
 
     @elasticapm.capture_span()
-    def _transform_to_ninjs(self, article, subscriber, recursive=True):
-        ninjs = super()._transform_to_ninjs(article, subscriber, recursive)
+    async def _transform_to_ninjs(self, article, subscriber, recursive=True):
+        ninjs = await super()._transform_to_ninjs(article, subscriber, recursive)
 
         if article.get("ingest_id") and (
             article.get("auto_publish") or (article.get("extra") or {}).get("publish_ingest_id_as_guid")
@@ -54,7 +50,7 @@ class NewsroomNinjsFormatter(NINJSFormatter):
             if article.get("ingest_version"):
                 ninjs["version"] = article["ingest_version"]
 
-        ninjs["products"] = self._format_products(article)
+        ninjs["products"] = await self._format_products(article)
 
         if article.get("assignment_id"):
             assignment = superdesk.get_resource_service("assignments").find_one(req=None, _id=article["assignment_id"])

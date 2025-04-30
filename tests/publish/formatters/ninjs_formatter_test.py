@@ -14,18 +14,18 @@ from unittest import mock
 from datetime import timedelta
 
 from superdesk.utc import utcnow
-from superdesk.tests import TestCase
+from superdesk.tests import TestCase, fixtures
 from superdesk.publish.formatters.ninjs_formatter import NINJSFormatter, NINJS2Formatter
 from superdesk.publish import init_app
 
 
-@mock.patch("superdesk.publish.subscribers.SubscribersService.generate_sequence_number", lambda self, subscriber: 1)
 class NinjsFormatterTest(TestCase):
     async def asyncSetUp(self):
         await super().asyncSetUp()
         self.formatter = NINJSFormatter()
         init_app(self.app)
         self.maxDiff = None
+        self.subscriber = fixtures.subscribers.sub1_subscriber().to_dict()
 
     async def test_text_formatter(self):
         self.app.data.insert(
@@ -90,7 +90,7 @@ class NinjsFormatterTest(TestCase):
                 {"name": "Update", "qcode": "sig:update"},
             ],
         }
-        seq, doc = self.formatter.format(article, {"name": "Test Subscriber"})[0]
+        seq, doc = (await self.formatter.format(article, self.subscriber))[0]
         expected = {
             "guid": "tag:aap.com.au:20150613:12345",
             "version": "1",
@@ -180,7 +180,7 @@ class NinjsFormatterTest(TestCase):
             "body_footer": "<p>call helpline 999 if you are planning to quit smoking</p>",
             "embargoed": embargoed,
         }
-        seq, doc = self.formatter.format(article, {"name": "Test Subscriber"})[0]
+        seq, doc = (await self.formatter.format(article, self.subscriber))[0]
         expected = {
             "byline": "MICKEY MOUSE",
             "renditions": {
@@ -314,7 +314,7 @@ class NinjsFormatterTest(TestCase):
             "version": 2,
         }
 
-        seq, doc = self.formatter.format(article, {"name": "Test Subscriber"})[0]
+        seq, doc = (await self.formatter.format(article, self.subscriber))[0]
         expected = {
             "headline": "WA:Navy steps in with WA asylum-seeker boat",
             "version": "2",
@@ -367,7 +367,7 @@ class NinjsFormatterTest(TestCase):
             },
         }
 
-        seq, doc = self.formatter.format(article, {"name": "Test Subscriber"})[0]
+        seq, doc = (await self.formatter.format(article, self.subscriber))[0]
         formatted = json.loads(doc)
         self.assertIn("associations", formatted)
         self.assertIn("image", formatted["associations"])
@@ -393,7 +393,7 @@ class NinjsFormatterTest(TestCase):
             "associations": {"image": None},
         }
 
-        _, doc = self.formatter.format(article, {"name": "Test Subscriber"})[0]
+        _, doc = (await self.formatter.format(article, self.subscriber))[0]
         formatted = json.loads(doc)
         self.assertIn("associations", formatted)
         self.assertNotIn("image", formatted["associations"])
@@ -429,7 +429,7 @@ class NinjsFormatterTest(TestCase):
                 }
             },
         }
-        seq, doc = self.formatter.format(article, {"name": "Test Subscriber"})[0]
+        seq, doc = (await self.formatter.format(article, self.subscriber))[0]
         expected = {
             "guid": "tag:aap.com.au:20150613:12345",
             "version": "1",
@@ -492,7 +492,7 @@ class NinjsFormatterTest(TestCase):
 
         article = {"_id": "urn:bar", "_current_version": 1, "guid": "urn:bar", "type": "text"}
 
-        seq, doc = self.formatter.format(article, {"name": "Test Subscriber"})[0]
+        seq, doc = (await self.formatter.format(article, self.subscriber))[0]
         data = json.loads(doc)
 
         self.assertEqual("copyright holder", data["copyrightholder"])
@@ -508,7 +508,7 @@ class NinjsFormatterTest(TestCase):
             "body_html": (250 * 6 - 40) * "word ",
         }
 
-        seq, doc = self.formatter.format(article, {"name": "Test Subscriber"})[0]
+        seq, doc = (await self.formatter.format(article, self.subscriber))[0]
         data = json.loads(doc)
 
         self.assertEqual(data["charcount"], 7300)
@@ -524,7 +524,7 @@ class NinjsFormatterTest(TestCase):
             "body_text": (250 * 7 - 40) * "word ",
         }
 
-        data = self._format(article)
+        data = await self._format(article)
 
         self.assertEqual(data["charcount"], 8550)
         self.assertEqual(data["wordcount"], 1710)
@@ -533,21 +533,21 @@ class NinjsFormatterTest(TestCase):
         # check japanese
         article["language"] = "ja"
         article["body_text"] = 5000 * "x"
-        data = self._format(article)
+        data = await self._format(article)
         self.assertEqual(data["readtime"], 8)
 
         article["body_text"] = 5000 * " "
-        data = self._format(article)
+        data = await self._format(article)
         self.assertEqual(data["readtime"], 0)
 
-    def _format(self, article):
-        seq, doc = self.formatter.format(article, {"name": "Test Subscriber"})[0]
+    async def _format(self, article):
+        seq, doc = (await self.formatter.format(article, self.subscriber))[0]
         return json.loads(doc)
 
     async def test_empty_abstract(self):
         article = {"_id": "urn:bar", "_current_version": 1, "guid": "urn:bar", "type": "text", "abstract": ""}
 
-        seq, doc = self.formatter.format(article, {"name": "Test Subscriber"})[0]
+        seq, doc = (await self.formatter.format(article, self.subscriber))[0]
         data = json.loads(doc)
 
         self.assertEqual(data["description_html"], "")
@@ -620,7 +620,7 @@ class NinjsFormatterTest(TestCase):
             ],
         }
 
-        seq, doc = self.formatter.format(article, {"name": "Test Subscriber"})[0]
+        seq, doc = (await self.formatter.format(article, self.subscriber))[0]
         data = json.loads(doc)
 
         expected = [
@@ -665,7 +665,7 @@ class NinjsFormatterTest(TestCase):
             ],
         }
 
-        seq, doc = self.formatter.format(article, {"name": "Test Subscriber"})[0]
+        seq, doc = (await self.formatter.format(article, self.subscriber))[0]
         data = json.loads(doc)
 
         expected = {
@@ -722,7 +722,7 @@ class NinjsFormatterTest(TestCase):
             "place": [{"name": "JPN", "qcode": "JPN"}],
         }
 
-        seq, doc = self.formatter.format(article, {"name": "Test Subscriber"})[0]
+        seq, doc = (await self.formatter.format(article, self.subscriber))[0]
         data = json.loads(doc)
 
         self.assertEqual(data["place"], [{"code": "JPN", "name": "Japan"}])
@@ -735,7 +735,7 @@ class NinjsFormatterTest(TestCase):
             "place": [{"name": "SAM", "qcode": "SAM"}],
         }
 
-        seq, doc = self.formatter.format(article, {"name": "Test Subscriber"})[0]
+        seq, doc = (await self.formatter.format(article, self.subscriber))[0]
         data = json.loads(doc)
 
         self.assertEqual(data["place"], [{"code": "SAM", "name": "Rest Of World"}])
@@ -748,7 +748,7 @@ class NinjsFormatterTest(TestCase):
             "place": [{"name": "UK", "qcode": "UK"}],
         }
 
-        seq, doc = self.formatter.format(article, {"name": "Test Subscriber"})[0]
+        seq, doc = (await self.formatter.format(article, self.subscriber))[0]
         data = json.loads(doc)
 
         self.assertEqual(data["place"], [{"code": "UK", "name": "Europe"}])
@@ -801,7 +801,7 @@ class NinjsFormatterTest(TestCase):
                 {"name": "no translations", "qcode": "test", "translations": None, "scheme": "test"},
             ],
         }
-        seq, doc = self.formatter.format(article, {"name": "Test Subscriber"})[0]
+        seq, doc = (await self.formatter.format(article, self.subscriber))[0]
         ninjs = json.loads(doc)
         expected_genre = [{"code": "genre_custom:Education", "name": "トレーニング用教材", "scheme": "genre_custom"}]
         self.assertEqual(ninjs["genre"], expected_genre)
@@ -833,13 +833,13 @@ class NinjsFormatterTest(TestCase):
             ],
         }
 
-        seq, doc = self.formatter.format(article, {"name": "Test Subscriber"})[0]
+        seq, doc = (await self.formatter.format(article, self.subscriber))[0]
         ninjs = json.loads(doc)
 
         self.assertEqual({"name": "Kobeřice", "code": "3073493", "scheme": "geonames"}, ninjs["place"][0])
 
         with mock.patch.dict(self.app.config, {"NINJS_PLACE_EXTENDED": True}):
-            seq, doc = self.formatter.format(article, {"name": "Test Subscriber"})[0]
+            seq, doc = (await self.formatter.format(article, self.subscriber))[0]
         ninjs = json.loads(doc)
 
         self.assertEqual(
@@ -1006,7 +1006,7 @@ class NinjsFormatterTest(TestCase):
             "version": "1",
         }
 
-        seq, doc = self.formatter.format(article, {"name": "Test Subscriber"})[0]
+        seq, doc = (await self.formatter.format(article, self.subscriber))[0]
         ninjs = json.loads(doc)
         self.assertEqual(ninjs, expected)
 
@@ -1128,7 +1128,7 @@ class NinjsFormatterTest(TestCase):
             "version": "1",
         }
 
-        seq, doc = self.formatter.format(article, {"name": "Test Subscriber"})[0]
+        seq, doc = (await self.formatter.format(article, self.subscriber))[0]
         ninjs = json.loads(doc)
         self.assertEqual(ninjs, expected)
 
@@ -1263,7 +1263,7 @@ class NinjsFormatterTest(TestCase):
             "version": "1",
         }
 
-        seq, doc = self.formatter.format(article, {"name": "Test Subscriber"})[0]
+        seq, doc = (await self.formatter.format(article, self.subscriber))[0]
         ninjs = json.loads(doc)
         self.assertEqual(ninjs, expected)
 
@@ -1467,7 +1467,7 @@ class NinjsFormatterTest(TestCase):
             "version": "1",
         }
 
-        seq, doc = self.formatter.format(article, {"name": "Test Subscriber"})[0]
+        seq, doc = (await self.formatter.format(article, self.subscriber))[0]
         ninjs = json.loads(doc)
         self.assertEqual(ninjs, expected)
 
@@ -1722,18 +1722,20 @@ class NinjsFormatterTest(TestCase):
             "version": "1",
         }
 
-        seq, doc = self.formatter.format(article, {"name": "Test Subscriber"})[0]
+        seq, doc = (await self.formatter.format(article, self.subscriber))[0]
         ninjs = json.loads(doc)
         self.assertEqual(ninjs, expected)
 
     async def test_empty_genre(self):
-        seq, doc = self.formatter.format(
-            {
-                "type": "text",
-                "guid": "foo",
-                "genre": None,
-            },
-            {"name": "Test Subscriber"},
+        seq, doc = (
+            await self.formatter.format(
+                {
+                    "type": "text",
+                    "guid": "foo",
+                    "genre": None,
+                },
+                self.subscriber,
+            )
         )[0]
         ninjs = json.loads(doc)
         self.assertIsNotNone(ninjs)
@@ -1757,15 +1759,17 @@ class NinjsFormatterTest(TestCase):
             ],
         )
 
-        seq, doc = self.formatter.format(
-            {
-                "_id": "urn:bar",
-                "_current_version": 1,
-                "guid": "urn:bar",
-                "type": "text",
-                "attachments": [{"attachment": attachment_id}],
-            },
-            {"name": "Test Subscriber"},
+        seq, doc = (
+            await self.formatter.format(
+                {
+                    "_id": "urn:bar",
+                    "_current_version": 1,
+                    "guid": "urn:bar",
+                    "type": "text",
+                    "attachments": [{"attachment": attachment_id}],
+                },
+                self.subscriber,
+            )
         )[0]
         data = json.loads(doc)
 
@@ -1786,11 +1790,11 @@ class NinjsFormatterTest(TestCase):
         )
 
 
-@mock.patch("superdesk.publish.subscribers.SubscribersService.generate_sequence_number", lambda self, subscriber: 1)
 class Ninjs2FormatterTest(TestCase):
     async def asyncSetUp(self):
         await super().asyncSetUp()
         self.formatter = NINJS2Formatter()
+        self.subscriber = fixtures.subscribers.sub1_subscriber().to_dict()
 
     async def test_can_format(self):
         self.assertTrue(self.formatter.can_format("ninjs2", {}))
@@ -1805,7 +1809,7 @@ class Ninjs2FormatterTest(TestCase):
             "version": 5,
         }
 
-        seq, doc = self.formatter.format(article, {"name": "Test Subscriber"})[0]
+        seq, doc = (await self.formatter.format(article, self.subscriber))[0]
         ninjs = json.loads(doc)
 
         self.assertEqual("2", ninjs.get("version"))

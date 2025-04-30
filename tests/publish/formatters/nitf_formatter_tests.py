@@ -11,19 +11,20 @@ from lxml import etree
 from unittest import mock
 from textwrap import dedent
 
-from superdesk.tests import TestCase
+from superdesk.tests import TestCase, fixtures
 from superdesk.publish.formatters.nitf_formatter import NITFFormatter
 from superdesk.publish.formatters import Formatter
 from superdesk.publish import init_app
 
 
-@mock.patch("superdesk.publish.subscribers.SubscribersService.generate_sequence_number", lambda self, subscriber: 1)
+# @mock.patch("superdesk.publish.subscribers.SubscribersService.generate_sequence_number", lambda self, subscriber: 1)
 class NitfFormatterTest(TestCase):
     async def asyncSetUp(self):
         await super().asyncSetUp()
         self.formatter = NITFFormatter()
         self.base_formatter = Formatter()
         init_app(self.app)
+        self.subscriber = fixtures.subscribers.sub1_subscriber().to_dict()
 
     def test_append_legal(self):
         article = {"slugline": "Obama Republican Healthc", "flags": {"marked_for_legal": True}}
@@ -39,7 +40,7 @@ class NitfFormatterTest(TestCase):
         slugline = self.base_formatter.append_legal(article)
         self.assertEqual(slugline, "Obama Republican Healthc")
 
-    def test_formatter(self):
+    async def test_formatter(self):
         article = {
             "headline": "test headline",
             "body_html": "<p>test body</p><p>привет</p>",
@@ -49,7 +50,7 @@ class NitfFormatterTest(TestCase):
             "urgency": 2,
         }
 
-        seq, doc = self.formatter.format(article, {"name": "Test Subscriber"})[0]
+        seq, doc = (await self.formatter.format(article, self.subscriber))[0]
         nitf_xml = etree.fromstring(doc)
         self.assertEqual(nitf_xml.find("head/title").text, article["headline"])
         self.assertEqual(nitf_xml.findall("body/body.content/p")[0].text, "test body")
@@ -141,7 +142,7 @@ class NitfFormatterTest(TestCase):
         )
         self.assertEqual(etree.tostring(nitf, encoding="unicode"), expected)
 
-    def test_body_content_br(self):
+    async def test_body_content_br(self):
         article = {
             "_id": "urn:newsml:localhost:2017-05-24T16:56:29.742769:3d1faf62-6f70-4b28-9222-93ec603b7af0",
             "guid": "urn:newsml:localhost:2017-05-24T16:56:29.742769:3d1faf62-6f70-4b28-9222-93ec603b7af0",
@@ -265,7 +266,7 @@ class NitfFormatterTest(TestCase):
             "version": 2,
         }
 
-        response = self.formatter.format(article, {})
+        response = await self.formatter.format(article, self.subscriber)
         nitf_xml = etree.fromstring(response[0][1])
         self.assertEqual(
             etree.tostring(nitf_xml.find("body/body.content/p"), encoding="unicode"),
@@ -400,7 +401,7 @@ class NitfFormatterTest(TestCase):
         nitf = self.formatter.html2nitf(html)
         self.assertEqual(etree.tostring(nitf, encoding="unicode"), html_raw)
 
-    def test_company_codes(self):
+    async def test_company_codes(self):
         article = {
             "guid": "tag:aap.com.au:20150613:12345",
             "_current_version": 1,
@@ -453,14 +454,14 @@ class NitfFormatterTest(TestCase):
             "company_codes": [{"name": "YANCOAL AUSTRALIA LIMITED", "qcode": "YAL", "security_exchange": "ASX"}],
         }
 
-        seq, doc = self.formatter.format(article, {"name": "Test Subscriber"})[0]
+        seq, doc = (await self.formatter.format(article, self.subscriber))[0]
         nitf_xml = etree.fromstring(doc)
         company = nitf_xml.find("body/body.head/org")
         self.assertEqual(company.text, "YANCOAL AUSTRALIA LIMITED")
         self.assertEqual(company.attrib.get("idsrc", ""), "ASX")
         self.assertEqual(company.attrib.get("value", ""), "YAL")
 
-    def testNoneAsciNamesContent(self):
+    async def test_none_asci_names_content(self):
         article = {
             "_id": "3",
             "source": "AAP",
@@ -477,11 +478,11 @@ class NitfFormatterTest(TestCase):
             "priority": 1,
             "linked_in_packages": [{"package": "package", "package_type": "takes"}],
         }
-        seq, doc = self.formatter.format(article, {"name": "Test Subscriber"})[0]
+        seq, doc = (await self.formatter.format(article, self.subscriber))[0]
         nitf_xml = etree.fromstring(doc)
         self.assertEqual(nitf_xml.find("body/body.content/p").text, "Томми Mäkinen crashes a Škoda in Äppelbo")
 
-    def test_null_genre(self):
+    async def test_null_genre(self):
         article = {
             "_id": "3",
             "source": "AAP",
@@ -499,5 +500,5 @@ class NitfFormatterTest(TestCase):
             "priority": 1,
             "linked_in_packages": [{"package": "package", "package_type": "takes"}],
         }
-        seq, doc = self.formatter.format(article, {"name": "Test Subscriber"})[0]
+        seq, doc = (await self.formatter.format(article, self.subscriber))[0]
         self.assertIsNotNone(doc)

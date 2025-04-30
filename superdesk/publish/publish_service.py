@@ -9,16 +9,14 @@
 # at https://www.sourcefabric.org/superdesk/license
 
 import logging
-import superdesk
-
-from bson import ObjectId
 from typing import Any, Dict, Optional
+from inspect import isawaitable
+from bson import ObjectId
 
-from superdesk.resource_fields import ID_FIELD
 from superdesk.core import get_current_app
-from superdesk import get_resource_service
 from superdesk.utc import utcnow
 from superdesk.errors import SubscriberError, SuperdeskPublishError, PublishQueueError
+from superdesk.types import PublishQueueResource, SubscribersResource
 
 logger = logging.getLogger(__name__)
 extensions = {"NITF": "ntf", "XML": "xml", "NINJS": "json"}
@@ -45,10 +43,10 @@ class PublishServiceBase:
         """Transmit media file. Implement in subclass"""
         raise NotImplementedError()
 
-    def transmit(self, queue_item):
-        subscriber = get_resource_service("subscribers").find_one(req=None, _id=queue_item["subscriber_id"])
+    async def transmit(self, queue_item):
+        subscriber = await SubscribersResource.get_service().find_by_id(queue_item["subscriber_id"])
 
-        if not subscriber.get("is_active"):
+        if not subscriber.is_active:
             raise SubscriberError.subscriber_inactive_error(Exception("Subscriber inactive"), subscriber)
         else:
             try:
@@ -58,40 +56,56 @@ class PublishServiceBase:
                 # we fill encoded_item using "formatted_item" and "item_encoding"
                 if "encoded_item_id" in queue_item:
                     encoded_item_id = queue_item["encoded_item_id"]
-                    queue_item["encoded_item"] = get_current_app().storage.get(encoded_item_id).read()
+                    async_file = await get_current_app().storage.get_async(encoded_item_id)
+                    queue_item["encoded_item"] = await async_file.to_bytes()
                 else:
                     encoding = queue_item.get("item_encoding", "utf-8")
                     queue_item["encoded_item"] = queue_item["formatted_item"].encode(encoding, errors="replace")
-                self._transmit(queue_item, subscriber) or []
-                self.update_item_status(queue_item, "success")
+
+                transmit_response = self._transmit(queue_item, subscriber) or []
+                if isawaitable(transmit_response):
+                    await transmit_response
+                await self.update_item_status(queue_item["_id"], "success")
             except SuperdeskPublishError as error:
-                self.update_item_status(queue_item, "error", error)
-                self.close_transmitter(subscriber, error)
+                await self.update_item_status(queue_item["_id"], "error", error)
+                await self.close_transmitter(subscriber, error)
                 raise error
 
-    def transmit_media(self, media, subscriber=None, destination=None):
+    async def transmit_media(self, media, subscriber=None, destination=None):
         if subscriber and destination and subscriber.get("is_active"):
-            return self._transmit_media(media, destination)
+            transmit_response = self._transmit_media(media, destination)
+            if isawaitable(transmit_response):
+                transmit_response = await transmit_response
 
-    def close_transmitter(self, subscriber, error):
+            return transmit_response
+
+    async def close_transmitter(self, subscriber: SubscribersResource, error: SuperdeskPublishError) -> None:
         """
         Checks if the transmitter has the error code set in the list of critical errors then closes the transmitter.
 
+        :param subscriber: The subscriber that should be closed
         :param error: The error thrown during transmission
         """
 
-        if subscriber.get("critical_errors", {}).get(str(error.code)):
-            update = {
-                "is_active": False,
-                "last_closed": {
-                    "closed_at": utcnow(),
-                    "message": "Subscriber made inactive due to critical error: {}".format(error),
-                },
-            }
+        if not subscriber.critical_errors or not subscriber.critical_errors.get(str(error.code)):
+            return
 
-            get_resource_service("subscribers").system_update(subscriber[ID_FIELD], update, subscriber)
+        updates = {
+            "is_active": False,
+            "last_closed": {
+                "closed_at": utcnow(),
+                "message": "Subscriber made inactive due to critical error: {}".format(error),
+            },
+        }
 
-    def update_item_status(self, queue_item, status, error=None):
+        await SubscribersResource.get_service().system_update(subscriber.id, updates)
+
+    async def update_item_status(
+        self,
+        queue_item_id: ObjectId,
+        status: str,
+        error: SuperdeskPublishError | None = None,
+    ) -> None:
         try:
             item_update = {"state": status}
             if status == "in-progress":
@@ -101,11 +115,7 @@ class PublishServiceBase:
             elif status == "error" and error:
                 item_update["error_message"] = "{}:{}".format(error, str(error.system_exception))
 
-            publish_queue_service = superdesk.get_resource_service("publish_queue")
-            queue_id = (
-                ObjectId(queue_item.get("_id")) if isinstance(queue_item.get("_id"), str) else queue_item.get("_id")
-            )
-            publish_queue_service.patch(queue_id, item_update)
+            await PublishQueueResource.get_service().update(queue_item_id, item_update)
         except Exception as ex:
             raise PublishQueueError.item_update_error(ex)
 
