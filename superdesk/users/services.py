@@ -185,8 +185,8 @@ class UsersService(AsyncBaseService):
         active = updates.get("is_active", None)
 
         if enabled is not None or active is not None:
-            # TODO-ASYNC[auth]: Upgrade to async when updating the ``auth`` module
-            get_resource_service("auth").delete_action({"username": user.get("username")})  # remove active tokens
+            # remove active tokens
+            await get_resource_service("auth").delete_action_async({"username": user.get("username")})
             updates["session_preferences"] = {}
 
             # send email notification
@@ -240,9 +240,9 @@ class UsersService(AsyncBaseService):
         else:
             push_notification("user", updated=1, user_id=str(user_id))
 
-    def get_avatar_renditions(self, doc):
+    async def get_avatar_renditions(self, doc):
         # TODO-ASYNC[upload]: Upgrade to async when updating the ``upload`` module
-        renditions = get_resource_service("upload").find_one(req=None, _id=doc)
+        renditions = await get_resource_service("upload").find_one_async(req=None, _id=doc)
         return renditions.get("renditions") if renditions is not None else None
 
     async def handle_user_type_changed_async(self, updates, user):
@@ -262,7 +262,7 @@ class UsersService(AsyncBaseService):
             user_doc.setdefault(SIGN_OFF, set_sign_off(user_doc))
             user_doc.setdefault("role", await get_resource_service("roles").get_default_role_id_async())
             if user_doc.get("avatar"):
-                user_doc.setdefault("avatar_renditions", self.get_avatar_renditions(user_doc["avatar"]))
+                user_doc.setdefault("avatar_renditions", await self.get_avatar_renditions(user_doc["avatar"]))
 
             get_resource_service("preferences").set_user_initial_prefs(user_doc)
 
@@ -296,7 +296,7 @@ class UsersService(AsyncBaseService):
         update_sign_off(updates)
 
         if updates.get("avatar"):
-            updates["avatar_renditions"] = self.get_avatar_renditions(updates["avatar"])
+            updates["avatar_renditions"] = await self.get_avatar_renditions(updates["avatar"])
 
     async def on_updated_async(self, updates, user):
         if "role" in updates or "privileges" in updates:
@@ -391,15 +391,7 @@ class UsersService(AsyncBaseService):
     def is_user_active(self, doc):
         return doc.get("is_active", False)
 
-    # TODO-ASYNC[users]: Convert this to async when other modules can use it
-    def get_role(self, user):
-        if user:
-            role_id = user.get("role", None)
-            if role_id:
-                return get_resource_service("roles").find_one(_id=role_id, req=None)
-        return None
-
-    async def get_role_async(self, user):
+    async def get_role(self, user):
         if user:
             role_id = user.get("role", None)
             if role_id:
@@ -541,13 +533,12 @@ class DBUsersService(UsersService):
     async def on_created_async(self, docs):
         """Send email to user with reset password token."""
         await super().on_created_async(docs)
-        # TODO-ASYNC[auth]: Upgrade to async when updating the ``auth`` module
-        resetService = get_resource_service("reset_user_password")
+        reset_service = get_resource_service("reset_user_password")
         activate_ttl = get_app_config("ACTIVATE_ACCOUNT_TOKEN_TIME_TO_LIVE")
         for doc in docs:
             if self.user_is_waiting_activation(doc) and doc["user_type"] != "external":
                 tokenDoc = {"user": doc["_id"], "email": doc["email"]}
-                id = resetService.store_reset_password_token(tokenDoc, doc["email"], activate_ttl, doc["_id"])
+                id = await reset_service.store_reset_password_token(tokenDoc, doc["email"], activate_ttl, doc["_id"])
                 if not id:
                     raise SuperdeskApiError.internalError("Failed to send account activation email.")
                 tokenDoc.update({"username": doc["username"]})
@@ -568,13 +559,12 @@ class DBUsersService(UsersService):
                 updated_user["last_name"] = updates.get("last_name")
             updates["display_name"] = get_display_name(updated_user)
 
-    # TODO-ASYNC[users]: Upgrade this to async when updating the ``auth`` module
-    def update_password(self, user_id, password):
+    async def update_password(self, user_id, password):
         """Update the user password.
 
         Returns true if successful.
         """
-        user = self.find_one(req=None, _id=user_id)
+        user = await self.find_one_async(req=None, _id=user_id)
 
         if not user:
             raise SuperdeskApiError.unauthorizedError("User not found")
@@ -591,7 +581,7 @@ class DBUsersService(UsersService):
         if self.user_is_waiting_activation(user):
             updates["needs_activation"] = False
 
-        self.patch(user_id, updates=updates)
+        await self.patch_async(user_id, updates=updates)
 
     async def on_deleted_async(self, doc):
         """
@@ -599,8 +589,7 @@ class DBUsersService(UsersService):
         """
 
         await super().on_deleted_async(doc)
-        # TODO-ASYNC[auth]: Upgrade to async when updating the ``auth`` module
-        get_resource_service("reset_user_password").remove_all_tokens_for_email(doc.get("email"))
+        await get_resource_service("reset_user_password").remove_all_tokens_for_email(doc.get("email"))
 
     async def _process_external_data_async(self, _data, update=False):
         data = _data.copy()

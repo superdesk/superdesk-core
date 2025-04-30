@@ -15,6 +15,7 @@ from typing import Any
 from bson import ObjectId
 from quart_babel import lazy_gettext as _
 
+from superdesk import get_resource_service
 from apps.archive.common import BROADCAST_GENRE, ITEM_OPERATION, is_item_in_package, is_genre
 from apps.archived.archived import TAKES_PACKAGE
 from apps.auth import get_user
@@ -219,7 +220,7 @@ class ArchivedService(AsyncResourceService[ArchivedResourceModel]):
             published_doc = deepcopy(article)
             published_doc.queue_state = QueueState.QUEUED
             # FIXME not async yet
-            # await get_resource_service("published").create([published_doc])
+            await get_resource_service("published").create_async([published_doc])
             logger.info("Insert into archive and published for article: %s", article.id)
 
             await import_into_legal_archive.apply_async(countdown=3, kwargs={"item_id": article.id})

@@ -34,7 +34,7 @@ from apps.content_filters.filter_condition.filter_condition_operator import Filt
 from apps.content_filters.filter_condition.filter_condition_value import FilterConditionValue
 from apps.prepopulate.app_populate import AppPopulateCommand
 
-from superdesk.publish_async.resources.filter_conditions.utils import check_similar_filter_conditions
+from superdesk.publish_async.utils import check_similar_filter_conditions
 
 
 FILTER_CONDITION_IDS = [ObjectId(), ObjectId(), ObjectId(), ObjectId(), ObjectId()]

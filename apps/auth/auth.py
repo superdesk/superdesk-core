@@ -9,6 +9,8 @@
 # at https://www.sourcefabric.org/superdesk/license
 
 import logging
+from inspect import isawaitable
+
 import superdesk
 
 from datetime import timedelta
@@ -76,7 +78,7 @@ superdesk.intrinsic_privilege("auth", method=["DELETE"])
 class SuperdeskTokenAuth(TokenAuth):
     """Superdesk Token Auth"""
 
-    def check_permissions(self, resource, method, user):
+    async def check_permissions(self, resource, method, user):
         """Checks user permissions.
 
         1. If there's no user associated with the request or HTTP Method is GET or the Resource is a Flask Blueprint
@@ -118,7 +120,7 @@ class SuperdeskTokenAuth(TokenAuth):
         intrinsic_privileges = get_intrinsic_privileges()
         if intrinsic_privileges.get(resource) and method in intrinsic_privileges[resource]:
             service = get_resource_service(resource)
-            authorized = service.is_authorized(
+            authorized = await service.is_authorized(
                 user_id=str(user.get("_id")), _id=request.view_args.get("_id"), method=method
             )
 
@@ -139,50 +141,53 @@ class SuperdeskTokenAuth(TokenAuth):
         # Step 5:
         raise SuperdeskApiError.forbiddenError(message=message)
 
-    def check_auth(self, token, allowed_roles, resource, method):
+    async def check_auth(self, token, allowed_roles, resource, method):
         """Check if given token is valid.
 
         If token is valid it updates session and checks permissions.
         """
         auth_service = get_resource_service("auth")
         user_service = get_resource_service("users")
-        auth_token = auth_service.find_one(token=token, req=None)
-        # TODO-ASYNC: Fix auth token passing in headers (see superdesk.tests.markers.requires_auth_headers_fix)
+        auth_token = await auth_service.find_one_async(token=token, req=None)
         if auth_token:
             if session.get("session_token") != token:
                 session["session_token"] = token
             user_id = str(auth_token["user"])
-            # TODO-ASYNC[users]: Upgrade to async when updating this module
-            g.user = user_service.find_one(req=None, _id=user_id)
-            g.role = user_service.get_role(g.user)
+            g.user = await user_service.find_one_async(req=None, _id=user_id)
+            g.role = await user_service.get_role(g.user)
             g.auth = auth_token
             g.auth_value = auth_token["user"]
             if method in ("POST", "PUT", "PATCH") or method == "GET" and not request.args.get("auto"):
                 now = utcnow()
                 auth_updated = False
                 if auth_token[LAST_UPDATED] + timedelta(seconds=get_app_config("SESSION_UPDATE_SECONDS")) < now:
-                    auth_service.update_session({LAST_UPDATED: now})
+                    await auth_service.update_session({LAST_UPDATED: now})
                     auth_updated = True
                 if not g.user.get("last_activity_at") or auth_updated:
-                    user_service.system_update(g.user["_id"], {"last_activity_at": now, "_updated": now}, g.user)
+                    await user_service.system_update_async(
+                        g.user["_id"], {"last_activity_at": now, "_updated": now}, g.user
+                    )
 
-            return self.check_permissions(resource, method, g.user)
+            return await self.check_permissions(resource, method, g.user)
 
         # pop invalid session
         session.pop("session_token", None)
         return False
 
-    def authorized(self, allowed_roles, resource, method):
+    async def authorized(self, allowed_roles, resource, method):
         """Ignores auth on home endpoint."""
         if not resource:
             return True
 
         # authenticate using session token only if there is no authorization header
         if session.get("session_token") and not request.headers.get("Authorization"):
-            return self.check_auth(session["session_token"], allowed_roles, resource, method)
+            return await self.check_auth(session["session_token"], allowed_roles, resource, method)
 
         # use authorization token
-        return super(SuperdeskTokenAuth, self).authorized(allowed_roles, resource, method)
+        response = super(SuperdeskTokenAuth, self).authorized(allowed_roles, resource, method)
+        if isawaitable(response):
+            response = await response
+        return response
 
     def authenticate(self):
         """Returns 401 response with CORS headers."""

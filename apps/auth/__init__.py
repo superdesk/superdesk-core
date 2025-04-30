@@ -15,7 +15,7 @@ from superdesk.resource_fields import ID_FIELD
 from superdesk.flask import g
 import superdesk
 from superdesk.errors import SuperdeskApiError
-from superdesk.services import BaseService
+from superdesk.eve_async import AsyncBaseService
 from superdesk.celery_app import celery
 from apps.auth.auth import SuperdeskTokenAuth
 from .auth import AuthUsersResource, AuthResource  # noqa
@@ -30,11 +30,11 @@ def init_app(app) -> None:
     app.auth = SuperdeskTokenAuth()  # Overwrite the app default auth
 
     endpoint_name = "auth_users"
-    service = BaseService(endpoint_name, backend=superdesk.get_backend())
+    service = AsyncBaseService(endpoint_name, backend=superdesk.get_backend())
     AuthUsersResource(endpoint_name, app=app, service=service)
 
     endpoint_name = "sessions"
-    service = BaseService(endpoint_name, backend=superdesk.get_backend())
+    service = AsyncBaseService(endpoint_name, backend=superdesk.get_backend())
     SessionsResource(endpoint_name, app=app, service=service)
 
     endpoint_name = "clear_sessions"
@@ -47,9 +47,9 @@ def init_app(app) -> None:
 
 
 @celery.task
-def session_purge():
+async def session_purge():
     try:
-        RemoveExpiredSessions().run()
+        await RemoveExpiredSessions().run()
     except Exception as ex:
         logger.error(ex)
 

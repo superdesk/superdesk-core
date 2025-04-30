@@ -490,7 +490,7 @@ class SluglineDeskService(AsyncBaseService):
             else:
                 row = False
             # Find if there are other sluglines in this items family
-            newer, older_slugline = self._find_other_sluglines(
+            newer, older_slugline = await self._find_other_sluglines(
                 item.get(FAMILY_ID), slugline, item.get(self.VERSION_CREATED), lookup["task.desk"]
             )
             # there are no newer sluglines than the current one
@@ -541,7 +541,7 @@ class SluglineDeskService(AsyncBaseService):
             }
         )
 
-    def _find_other_sluglines(self, family_id, slugline, versioncreated, desk_id):
+    async def _find_other_sluglines(self, family_id, slugline, versioncreated, desk_id):
         """Find other sluglines.
 
         This function given a family_id will return a tuple with the first value true if there is
@@ -569,8 +569,8 @@ class SluglineDeskService(AsyncBaseService):
             }
         }
         req.args = {"source": json.dumps(query), "aggregations": 0}
-        family = superdesk.get_resource_service("published").get(req=req, lookup=None)
-        for member in family:
+        family = await superdesk.get_resource_service("published").get_async(req=req, lookup=None)
+        async for member in family:
             member_slugline = self._get_slugline_with_legal(member)
             if member_slugline.lower() != slugline.lower():
                 if member.get("versioncreated") < versioncreated:

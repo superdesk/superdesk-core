@@ -1,7 +1,8 @@
+from quart_babel import lazy_gettext
+
+import superdesk
 from superdesk.core.utils import load_class_from_config
 from superdesk.types import PublishExchangeFactory
-
-from . import consumers
 
 
 __all__ = ["get_exchange_factory"]
@@ -39,3 +40,16 @@ def get_exchange_factory() -> PublishExchangeFactory:
 
     factory_class = load_class_from_config(PublishExchangeFactory, "PUBLISH_EXCHANGE_FACTORY")
     return factory_class()
+
+
+def init_app(app) -> None:
+    superdesk.privilege(
+        name="content_filters",
+        label=lazy_gettext("Content Filters"),
+        description=lazy_gettext("User can manage content filters"),
+    )
+    superdesk.privilege(
+        name="products",
+        label=lazy_gettext("Products Management"),
+        description=lazy_gettext("User can manage product lists."),
+    )

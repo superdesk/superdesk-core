@@ -23,6 +23,7 @@ from superdesk.resource import (
 )
 from .packages import LINKED_IN_PACKAGES, PACKAGE
 from superdesk.utils import SuperdeskBaseEnum
+from superdesk.resource_fields import PUBLISH_SCHEDULE, SCHEDULE_SETTINGS  # noqa
 
 GUID_TAG = "tag"
 GUID_FIELD = "guid"
@@ -125,8 +126,6 @@ FORMATS: Formats = Formats("HTML", "preserved")
 BYLINE = "byline"
 SIGN_OFF = "sign_off"
 EMBARGO = "embargo"
-PUBLISH_SCHEDULE = "publish_schedule"
-SCHEDULE_SETTINGS = "schedule_settings"
 PROCESSED_FROM = "processed_from"
 
 # part the task dict

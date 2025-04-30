@@ -28,6 +28,7 @@ from superdesk.filemeta import get_filemeta
 from superdesk import etree as sd_etree
 from superdesk.geonames import get_geonames_country_qcode, get_geonames_state_qcode, get_geonames_qcode
 from apps.archive.common import ARCHIVE, get_utc_schedule
+from superdesk.publish_async.utils import generate_sequence_number
 
 XML_LANG = "{http://www.w3.org/XML/1998/namespace}lang"
 
@@ -83,7 +84,7 @@ class NewsMLG2Formatter(Formatter):
         """
         try:
             self.subscriber = subscriber
-            pub_seq_num = await superdesk.get_resource_service("subscribers").generate_sequence_number_async(subscriber)
+            pub_seq_num = await generate_sequence_number(subscriber)
             is_package = self._is_package(article)
             news_message = etree.Element("newsMessage", attrib=self._debug_message_extra, nsmap=self._message_nsmap)
             self._format_header(article, news_message, pub_seq_num)

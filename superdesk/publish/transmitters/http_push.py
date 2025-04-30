@@ -17,7 +17,7 @@ from superdesk.core import get_current_app, get_app_config
 from superdesk.publish import register_transmitter, registered_transmitter_file_providers
 
 from superdesk.errors import PublishHTTPPushError, PublishHTTPPushServerError, PublishHTTPPushClientError
-from superdesk.publish.publish_queue import PUBLISHED_IN_PACKAGE
+from superdesk.publish import PUBLISHED_IN_PACKAGE
 from superdesk.publish.publish_service import PublishService
 
 errors = [PublishHTTPPushError.httpPushError().get_error_description()]

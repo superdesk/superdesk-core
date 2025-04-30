@@ -543,6 +543,7 @@ class ArchiveService(BaseService, HighlightsSearchMixin):
 
         for attachment_id in attachment_ids_to_remove:
             lookup = {"_id": attachment_id}
+            # TODO-ASYNC[attachments]: Use ``delete_action_async``
             get_resource_service("attachments").delete_action(lookup)
 
     async def on_updated(self, updates, original):
@@ -912,6 +913,7 @@ class ArchiveService(BaseService, HighlightsSearchMixin):
         updates[ITEM_OPERATION] = ITEM_DESCHEDULE
         updates["firstpublished"] = None
         # delete entry from published repo
+        # TODO-ASYNC[published]: Add `await` prefix when updating this module
         get_resource_service("published").delete_by_article_id(original["_id"])
 
         # deschedule scheduled associations

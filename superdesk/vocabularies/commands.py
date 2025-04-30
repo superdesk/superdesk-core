@@ -18,16 +18,22 @@ from superdesk.types import VocabulariesResourceModel
 logger = logging.getLogger(__name__)
 
 
-def update_items(vocabularies, fields, service):
-    ids = list(item.get("_id") for item in service.get_from_mongo(req=None, lookup=None))
+async def update_items(vocabularies, fields, service):
+    ids = list(item.get("_id") async for item in await service.get_from_mongo_async(req=None, lookup=None))
     count = 0
     print(service, " items to be checked: ", len(ids))
     for _id in ids:
-        item = service.find_one(_id=_id, req=None)
+        if hasattr(service, "find_one_async"):
+            item = await service.find_one_async(_id, req=None)
+        else:
+            item = service.find_one(_id=_id, req=None)
         updates = update_item(item, vocabularies, fields)
         if updates:
             print(service, " update: ", updates, " for item with id:", _id)
-            service.system_update(item["_id"], updates, item)
+            if hasattr(service, "system_update_async"):
+                await service.system_update_async(item["_id"], updates, item)
+            else:
+                service.system_update(item["_id"], updates, item)
             count = count + 1
     print(service, " updated: ", count, "/", len(ids))
 
@@ -110,5 +116,5 @@ async def update_vocabularies_in_items_command():
     vocabularies_list = await VocabulariesResourceModel.get_service().get_all_list_raw(lookup)
     vocabularies = await get_vocabularies(vocabularies_list)
 
-    update_items(vocabularies, fields, get_resource_service("archive"))
-    update_items(vocabularies, fields, get_resource_service("published"))
+    await update_items(vocabularies, fields, get_resource_service("archive"))
+    await update_items(vocabularies, fields, get_resource_service("published"))

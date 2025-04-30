@@ -22,6 +22,7 @@ from .vocabularies import VocabulariesResourceModel
 from .content_types import ContentTypesResourceModel
 from .products import ProductsResource, ProductTypes, ProductFilterType, ProductContentFilter
 from .subscribers import SubscribersResource, SubscriberDestination, SubscriberSequenceSettings, SubscriberType
+from .subscriber_token import SubscriberToken
 from .sequences import SequencesResource
 from .content_filters import ContentFilterExpression, ContentFilter, ContentFiltersResource
 from .filter_conditions import FilterConditionOperator, FilterConditionFieldParam, FilterConditionsResource
@@ -37,9 +38,10 @@ from .publish import (
     PublishExchangeFormatter,
     PublishExchangeRouter,
     PublishComponentType,
+    ProductItemTestResult,
 )
 from .archive import ArchiveResourceModel
-from .base import ItemOperation, ContentTypes
+from .base import ItemOperation, ContentTypes, FORMATS
 
 __all__ = [
     "DeskTypeEnum",
@@ -65,6 +67,7 @@ __all__ = [
     "SubscriberDestination",
     "SubscriberSequenceSettings",
     "SubscriberType",
+    "SubscriberToken",
     "SequencesResource",
     "ContentFilterExpression",
     "ContentFilter",
@@ -84,6 +87,7 @@ __all__ = [
     "PublishExchangeFormatter",
     "PublishExchangeRouter",
     "PublishComponentType",
+    "ProductItemTestResult",
     "MacroAccessType",
     "MacroActionType",
     "MacroReplaceType",
@@ -91,6 +95,7 @@ __all__ = [
     "ArchiveResourceModel",
     "ItemOperation",
     "ContentTypes",
+    "FORMATS",
 ]
 
 

@@ -925,3 +925,9 @@ class EveBackend:
         resource = self._datasource(endpoint_name)
         if self.notify_on_change(resource):
             _push_notification(f"resource:{action}", resource=resource, **kwargs)
+
+    def count(self, resource: str, lookup: dict | None = None) -> int:
+        return self.construct_count_function(resource, None, lookup, False)()
+
+    async def count_async(self, resource: str, lookup: dict | None = None) -> int:
+        return await self.construct_count_function(resource, None, lookup, True)()

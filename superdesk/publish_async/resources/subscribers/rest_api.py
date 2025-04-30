@@ -3,8 +3,7 @@ from typing import cast
 from superdesk.core import json
 from superdesk.core.types import Request, Response, SearchRequest, RestGetResponse, RestResponseMeta
 from superdesk.core.resources import ResourceRestEndpoints
-
-from .utils import _get_subscribers_by_filter_condition
+from superdesk.publish_async.utils.subscribers import _get_subscribers_by_filter_condition
 
 
 class SubscriberRestEndpoints(ResourceRestEndpoints):

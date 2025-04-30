@@ -5,7 +5,8 @@ from superdesk.errors import SuperdeskApiError
 from superdesk.core.types.web import AuthRule, Request
 from superdesk.core.auth.user_auth import UserAuthProtocol
 from superdesk.core.auth.rules import endpoint_intrinsic_auth_rule
-from superdesk.publish.subscriber_token import SubscriberTokenService, SubscriberToken
+from superdesk.types import SubscriberToken
+from superdesk.publish_async.resources.subscriber_token import SubscriberTokenService
 
 
 # TODO-ASYNC: Needed to avoid the content_api items endpoint from crashing
@@ -25,6 +26,10 @@ class LegacyTokenAuth(TokenAuth):
             return False
         g.user = str(data.get("subscriber"))
         return g.user
+
+    # Overriding base method as ``authorized`` is now async in superdesk
+    async def authorized(self, allowed_roles, resource, method):
+        return super().authorized(allowed_roles, resource, method)
 
 
 class SubscriberTokenAuth(UserAuthProtocol):

@@ -53,17 +53,17 @@ class FTPPublishService(PublishService):
             "path": url_parts.path.lstrip("/"),
         }
 
-    def _get_published_item(self, queue_item):
+    async def _get_published_item(self, queue_item):
         try:
             return json.loads(queue_item["formatted_item"])
         except json.JSONDecodeError as ex:
-            return superdesk.get_resource_service("published").find_one(
+            return await superdesk.get_resource_service("published").find_one_async(
                 req=None,
                 item_id=queue_item["item_id"],
                 _current_version=queue_item["item_version"],
             )
 
-    def _transmit(self, queue_item, subscriber):
+    async def _transmit(self, queue_item, subscriber):
         config = queue_item.get("destination", {}).get("config", {})
 
         try:
@@ -73,7 +73,7 @@ class FTPPublishService(PublishService):
                     if "associated_path" in config and config.get("associated_path"):
                         ftp.cwd("/" + config.get("associated_path", "").lstrip("/"))
 
-                    item = self._get_published_item(queue_item)
+                    item = await self._get_published_item(queue_item)
                     if item:
                         self._copy_published_media_files(item, ftp)
 

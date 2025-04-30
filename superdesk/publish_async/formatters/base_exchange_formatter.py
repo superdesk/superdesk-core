@@ -21,14 +21,13 @@ from superdesk import get_resource_service
 from superdesk.resource_fields import ID_FIELD, ITEM_TYPE, ASSOCIATIONS, VERSION
 from superdesk.metadata.item import PUBLISH_SCHEDULE
 from superdesk.metadata.packages import GROUPS, GROUP_ID, REFS, RESIDREF, ROOT_GROUP
-from superdesk.publish.publish_queue import PUBLISHED_IN_PACKAGE
+from superdesk.publish import PUBLISHED_IN_PACKAGE
 from superdesk.errors import SuperdeskPublishError
 from superdesk.publish_async.publish_cache import PublishCache
-from superdesk.publish_async.resources.subscribers.utils import generate_sequence_number
+from superdesk.publish_async.utils import generate_sequence_number, get_utc_schedule
 from superdesk.publish.formatters import Formatter, get_formatter
 
 from apps.content_types import apply_schema
-from apps.archive.common import get_utc_schedule
 
 from ..utils import ContentApiSubscriber
 
@@ -130,7 +129,7 @@ class BasePublishExchangeFormatter(PublishExchangeFormatter):
             destination_config = destination.config or {}
             embed_package_items = item[ITEM_TYPE] == ContentType.COMPOSITE and destination_config.get("packaged", False)
             if embed_package_items:
-                self._embed_package_items(item)
+                await self._embed_package_items(item)
 
             if item.get(PUBLISHED_IN_PACKAGE) and destination_config.get("packaged", False):
                 continue
@@ -343,7 +342,7 @@ class BasePublishExchangeFormatter(PublishExchangeFormatter):
 
         return destinations
 
-    def _embed_package_items(self, package: dict) -> None:
+    async def _embed_package_items(self, package: dict) -> None:
         """
         Embeds package items into a given package dictionary.
 
@@ -366,8 +365,7 @@ class BasePublishExchangeFormatter(PublishExchangeFormatter):
                 if RESIDREF not in ref:
                     continue
 
-                # TODO-ASYNC: Convert this to use async resource when available
-                package_item = get_resource_service("published").find_one(
+                package_item = await get_resource_service("published").find_one_async(
                     req=None, item_id=ref[RESIDREF], _current_version=ref[VERSION]
                 )
                 if not package_item:

@@ -24,6 +24,7 @@ from superdesk.utc import utcnow
 from superdesk.core import get_app_config
 from apps.archive.common import get_utc_schedule
 from superdesk.filemeta import get_filemeta
+from superdesk.publish_async.utils import generate_sequence_number
 
 logger = logging.getLogger(__name__)
 
@@ -63,7 +64,7 @@ class NewsML12Formatter(Formatter):
         :raises FormatterError: if the formatter fails to format an article
         """
         try:
-            pub_seq_num = await superdesk.get_resource_service("subscribers").generate_sequence_number_async(subscriber)
+            pub_seq_num = await generate_sequence_number(subscriber)
             self.now = utcnow()
             self.string_now = self.now.strftime("%Y%m%dT%H%M%S+0000")
 

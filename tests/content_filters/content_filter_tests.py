@@ -31,16 +31,17 @@ from superdesk import get_resource_service
 from superdesk.errors import SuperdeskApiError
 from superdesk.publish_async.publish_cache import PublishCache
 
-
-from superdesk.publish_async.resources.content_filters.utils import (
+from superdesk.publish_async.utils import (
+    content_filter_to_elastic_query,
+    item_matches_content_filter,
     get_content_filters_by_filter_condition,
-    _get_content_filters_by_content_filter,
 )
-from superdesk.publish_async.resources.subscribers.utils import _get_subscribers_by_filter_condition
+from superdesk.publish_async.utils.content_filters import _get_content_filters_by_content_filter
+from superdesk.publish_async.utils.subscribers import _get_subscribers_by_filter_condition
 
 from superdesk.tests import TestCase
 
-from .utils import content_filter_to_mongo_query, content_filter_to_elastic_query, item_matches_content_filter
+from .utils import content_filter_to_mongo_query
 
 
 FILTER_CONDITION_IDS = [ObjectId(), ObjectId(), ObjectId(), ObjectId(), ObjectId(), ObjectId(), ObjectId()]

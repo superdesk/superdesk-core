@@ -1,3 +1,4 @@
+from typing import TypedDict
 from dataclasses import field
 from enum import Enum, unique
 
@@ -271,3 +272,10 @@ class PublishExchangeFactory:
 
     async def get_task_subscriber_ids(self, retries: bool = False, priority: bool | None = None) -> list[ObjectId]:
         raise NotImplementedError()
+
+
+class ProductItemTestResult(TypedDict):
+    product_id: ObjectId
+    matched: bool
+    name: str
+    reason: str

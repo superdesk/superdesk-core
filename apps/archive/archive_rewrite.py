@@ -128,8 +128,8 @@ class ArchiveRewriteService(AsyncBaseService):
 
             app.on_archive_item_updated({"rewrite_of": rewrite.get("rewrite_of")}, rewrite, ITEM_LINK)
 
-        self._add_rewritten_flag(original, rewrite)
-        get_resource_service("archive_broadcast").on_broadcast_master_updated(
+        await self._add_rewritten_flag(original, rewrite)
+        await get_resource_service("archive_broadcast").on_broadcast_master_updated(
             ITEM_CREATE, item=original, rewrite_id=ids[0]
         )
 
@@ -309,13 +309,15 @@ class ArchiveRewriteService(AsyncBaseService):
         self._set_take_key(rewrite)
         return rewrite
 
-    def _add_rewritten_flag(self, original, rewrite):
+    async def _add_rewritten_flag(self, original, rewrite):
         """Adds rewritten_by field to the existing published items.
 
         :param dict original: item on which rewrite is triggered
         :param dict rewrite: rewritten document
         """
-        get_resource_service("published").update_published_items(original[ID_FIELD], "rewritten_by", rewrite[ID_FIELD])
+        await get_resource_service("published").update_published_items(
+            original[ID_FIELD], "rewritten_by", rewrite[ID_FIELD]
+        )
 
         # modify the original item as well.
         get_resource_service(ARCHIVE).system_update(original[ID_FIELD], {"rewritten_by": rewrite[ID_FIELD]}, original)
