@@ -205,7 +205,7 @@ class UsersService(AsyncBaseService):
             if can_send_mail:
                 await send_user_status_changed_email([user.get("email")], status)
 
-    def __send_notification(self, updates, user):
+    async def __send_notification(self, updates, user):
         user_id = user["_id"]
 
         if "is_enabled" in updates and not updates["is_enabled"]:
@@ -219,7 +219,7 @@ class UsersService(AsyncBaseService):
             if len(removed) > 0 or (1, 0) in modified.values():
                 push_notification("user_privileges_revoked", updated=1, user_id=str(user_id))
             if len(added) > 0:
-                add_activity(
+                await add_activity(
                     ACTIVITY_UPDATE,
                     "user {{user}} has been granted new privileges: Please re-login.",
                     self.datasource,
@@ -230,7 +230,7 @@ class UsersService(AsyncBaseService):
             if not is_admin(updates):
                 push_notification("user_type_changed", updated=1, user_id=str(user_id))
             else:
-                add_activity(
+                await add_activity(
                     ACTIVITY_UPDATE,
                     "user {{user}} is updated to administrator: Please re-login.",
                     self.datasource,
@@ -269,7 +269,7 @@ class UsersService(AsyncBaseService):
     async def on_created_async(self, docs):
         for user_doc in docs:
             self.__update_user_defaults(user_doc)
-            add_activity(
+            await add_activity(
                 ACTIVITY_CREATE,
                 "created user {{user}}",
                 self.datasource,
@@ -303,7 +303,7 @@ class UsersService(AsyncBaseService):
             await get_resource_service("preferences").on_update_async(updates, user)
         await self.__handle_status_changed_async(updates, user)
         await self.handle_user_type_changed_async(updates, user)
-        self.__send_notification(updates, user)
+        await self.__send_notification(updates, user)
 
     async def on_delete_async(self, user):
         """Overriding the method to prevent user from the below:
@@ -360,7 +360,7 @@ class UsersService(AsyncBaseService):
         3. Reset Password Tokens
         """
 
-        add_activity(
+        await add_activity(
             ACTIVITY_UPDATE,
             "disabled user {{user}}",
             self.datasource,

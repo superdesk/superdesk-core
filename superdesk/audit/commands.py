@@ -27,7 +27,7 @@ logger = logging.getLogger(__name__)
 
 @cli.command("audit:purge")
 @click.option("--expiry_minutes", "-e", required=False, type=int)
-def cli_audit_purge(expiry_minutes: int | None = None):
+async def cli_audit_purge(expiry_minutes: int | None = None):
     """Purge audit collection.
 
     Entries are purged if the related item is no longer in 'Production'.
@@ -41,7 +41,7 @@ def cli_audit_purge(expiry_minutes: int | None = None):
 
     """
 
-    PurgeAudit().run(expiry_minutes)
+    await PurgeAudit().run(expiry_minutes)
 
 
 class PurgeAudit:
@@ -73,7 +73,7 @@ class PurgeAudit:
 
     not_item_entry_query = {"$or": [{"resource": {"$nin": item_resources}}, {"audit_id": {"$in": [None, ""]}}]}
 
-    def run(self, expiry=None):
+    async def run(self, expiry=None):
         if expiry is not None:
             self.expiry = utcnow() - datetime.timedelta(minutes=int(expiry))
         else:
@@ -82,11 +82,11 @@ class PurgeAudit:
                 return
             self.expiry = utcnow() - datetime.timedelta(minutes=get_app_config("AUDIT_EXPIRY_MINUTES"))
         logger.info("Starting audit purge for items older than {}".format(self.expiry))
-        # self.purge_orphaned_item_audits()
-        self.purge_old_entries()
+        # await self.purge_orphaned_item_audits()
+        await self.purge_old_entries()
         logger.info("Completed audit purge")
 
-    def _get_archive_ids(self, ids):
+    async def _get_archive_ids(self, ids):
         """
         Given a set of ids return those that have an entry in the archive collection
         :param ids:
@@ -96,11 +96,12 @@ class PurgeAudit:
         query = {"_id": {"$in": list(ids)}}
         req = ParsedRequest()
         req.projection = '{"_id": 1}'
+        # TODO-ASYNC[archive]: Use `get_from_mongo_async` when available
         archive_ids = service.get_from_mongo(req=req, lookup=query)
         existing = list([item["_id"] for item in archive_ids])
         return set(existing)
 
-    def purge_orphaned_item_audits(self):
+    async def purge_orphaned_item_audits(self):
         """
         Purge the audit items that do not have associated entries existing in archive
         :return:
@@ -119,8 +120,8 @@ class PurgeAudit:
             req.sort = '[("_id", 1)]'
             req.projection = '{"_id": 1, "audit_id":1}'
             req.max_results = 1000
-            audits = service.get_from_mongo(req=req, lookup=query)
-            items = list([(item["_id"], item["audit_id"]) for item in audits])
+            audits = await service.get_from_mongo_async(req=req, lookup=query)
+            items = [(item["_id"], item["audit_id"]) async for item in audits]
             if len(items) == 0:
                 logger.info("Finished purging audit logs of content items not in archive at {}".format(utcnow()))
                 return
@@ -128,18 +129,18 @@ class PurgeAudit:
             current_id = items[len(items) - 1][0]
 
             batch_ids = set([i[1] for i in items])
-            archive_ids = self._get_archive_ids(batch_ids)
+            archive_ids = await self._get_archive_ids(batch_ids)
             ids = batch_ids - archive_ids
             audit_ids = [i[0] for i in items if i[1] in ids]
             logger.info("Deleting {} orphaned audit items at {}".format(len(audit_ids), utcnow()))
-            service.delete_ids_from_mongo(audit_ids)
+            await service.delete_ids_from_mongo_async(audit_ids)
 
-    def purge_old_entries(self):
+    async def purge_old_entries(self):
         """Purge entries older than the expiry"""
 
         logger.info("Starting to purge audit logs at {}".format(utcnow()))
         service = superdesk.get_resource_service("audit")
         time_start = time()
-        service.delete_from_mongo({"_id": {"$lt": ObjectId.from_datetime(self.expiry)}})
+        await service.delete_from_mongo_async({"_id": {"$lt": ObjectId.from_datetime(self.expiry)}})
         time_diff = time() - time_start
         logger.info(f"Finished purging audit logs. Took {time_diff:.4f} seconds")

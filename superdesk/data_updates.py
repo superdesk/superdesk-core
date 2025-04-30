@@ -21,6 +21,7 @@ class DataUpdatesResource(Resource):
     item_url = superdesk.metadata.utils.item_url
 
 
+# Not updating to async, as this is only used by backend commands
 class DataUpdatesService(BaseService):
     def on_create(self, docs):
         for doc in docs:

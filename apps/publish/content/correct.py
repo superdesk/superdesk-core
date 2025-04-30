@@ -38,7 +38,7 @@ async def send_translation_notifications(original):
     if len(user_ids) == 0 or changed_article is None:
         return
 
-    add_activity("translated:changed", "", resource=None, item=changed_article, notify=user_ids)
+    await add_activity("translated:changed", "", resource=None, item=changed_article, notify=user_ids)
 
     recipients = []
     users_service = UsersResourceModel.get_service()

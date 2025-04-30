@@ -187,7 +187,7 @@ class UsersAsyncService(AsyncResourceService[UsersResourceModel]):
             if len(removed) > 0 or (1, 0) in modified.values():
                 push_notification("user_privileges_revoked", updated=1, user_id=str(user_id))
             if len(added) > 0:
-                add_activity(
+                await add_activity(
                     ACTIVITY_UPDATE,
                     "user {{user}} has been granted new privileges: Please re-login.",
                     self.resource_name,
@@ -198,7 +198,7 @@ class UsersAsyncService(AsyncResourceService[UsersResourceModel]):
             if not is_admin(updates):
                 push_notification("user_type_changed", updated=1, user_id=str(user_id))
             else:
-                add_activity(
+                await add_activity(
                     ACTIVITY_UPDATE,
                     "user {{user}} is updated to administrator: Please re-login.",
                     self.resource_name,
@@ -240,7 +240,7 @@ class UsersAsyncService(AsyncResourceService[UsersResourceModel]):
     async def on_created(self, docs: list[UsersResourceModel]) -> None:
         for doc in docs:
             await self.__update_user_defaults(doc)
-            add_activity(
+            await add_activity(
                 ACTIVITY_CREATE,
                 "created user {{user}}",
                 self.resource_name,
@@ -322,7 +322,7 @@ class UsersAsyncService(AsyncResourceService[UsersResourceModel]):
         3. Reset Password Tokens
         """
 
-        add_activity(
+        await add_activity(
             ACTIVITY_UPDATE,
             "disabled user {{user}}",
             self.resource_name,

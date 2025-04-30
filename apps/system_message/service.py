@@ -10,17 +10,17 @@
 
 
 from superdesk.resource_fields import ID_FIELD
-from superdesk.services import Service
+from superdesk.eve_async import AsyncBaseService
 from superdesk.notification import push_notification
 from apps.auth import get_user_id
 
 
-class SystemMessagesService(Service):
-    def on_create(self, docs):
+class SystemMessagesService(AsyncBaseService):
+    async def on_create_async(self, docs):
         for doc in docs:
             doc["user_id"] = get_user_id()
 
-    def on_created(self, docs):
+    async def on_created_async(self, docs):
         """
         Send notification
         :param docs:
@@ -28,10 +28,10 @@ class SystemMessagesService(Service):
         """
         push_notification("system_message:created", _id=[doc.get(ID_FIELD) for doc in docs])
 
-    def on_update(self, updates, original):
+    async def on_update_async(self, updates, original):
         updates["user_id"] = get_user_id()
 
-    def on_updated(self, updates, original):
+    async def on_updated_async(self, updates, original):
         """
         Send notifification
         :param updates:
@@ -40,7 +40,7 @@ class SystemMessagesService(Service):
         """
         push_notification("system_message:updated", _id=[original.get(ID_FIELD)])
 
-    def on_deleted(self, doc):
+    async def on_deleted_async(self, doc):
         """
         Send a notification
         :param doc:

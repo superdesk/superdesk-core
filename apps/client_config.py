@@ -11,6 +11,7 @@ class ClientConfigResource(superdesk.Resource):
     resource_methods = ["GET"]
 
 
+# Not upgrading to async, as there is no I/O to wait for
 class ClientConfigService(superdesk.Service):
     def get(self, req, lookup):
         return ListCursor()
