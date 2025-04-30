@@ -965,12 +965,25 @@ class AsyncResourceService(Generic[ResourceModelType]):
         if self.config.ignore_fields_in_versions:
             versioned_item.update({key: item[key] for key in self.config.ignore_fields_in_versions if item.get(key)})
 
-    async def system_update(self, item_id: ObjectId | str, updates: dict[str, Any]) -> None:
+    async def system_update(self, item_id: ObjectId | str, updates: dict[str, Any], update_etag: bool = False) -> None:
         """Update an item with the supplied updates, and do not update the etag or call any signals
 
         :param item_id: The ID of the item to update
         :param updates: A dictionary of values to update
+        :param update_etag: If ``True`` will update the item's ``_etag``
         """
+
+        item_id = ObjectId(item_id) if self.id_uses_objectid() else item_id
+        if update_etag:
+            original = await self.find_by_id(item_id)
+            if not original:
+                raise SuperdeskApiError.notFoundError()
+
+            updated = {
+                **original.to_dict(),
+                **updates,
+            }
+            updates["_etag"] = self.generate_etag(updated, self.config.etag_ignore_fields)
 
         await self.mongo_async.update_one({"_id": item_id}, {"$set": updates})
         try:

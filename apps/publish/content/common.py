@@ -18,6 +18,7 @@ from quart_babel import gettext as _
 from superdesk.core import get_config
 from superdesk.types import PublishRequest, PublishSenderType, SubscriberType, DesksResourceModel
 from superdesk.publish_async.commands import publish_item
+from superdesk.publish_async.utils import get_utc_publish_schedule, SCHEDULE_SETTINGS, PUBLISH_SCHEDULE
 
 from apps.archive.resource import ArchiveResource
 from apps.archive.common import (
@@ -67,10 +68,8 @@ from superdesk.metadata.item import (
     ITEM_STATE,
     ITEM_TYPE,
     MEDIA_TYPES,
-    PUBLISH_SCHEDULE,
     PUBLISH_STATES,
     PUB_STATUS,
-    SCHEDULE_SETTINGS,
 )
 from superdesk.metadata.packages import LINKED_IN_PACKAGES, PACKAGE, PACKAGE_TYPE
 from superdesk.metadata.utils import item_url
@@ -109,10 +108,6 @@ PRESERVED_FIELDS = [
     "copyrightholder",
     "copyrightnotice",
 ]
-
-
-def get_utc_publish_schedule(item):
-    return item.get(SCHEDULE_SETTINGS, {}).get("utc_{}".format(PUBLISH_SCHEDULE))
 
 
 class BasePublishResource(ArchiveResource):
@@ -223,9 +218,11 @@ class BasePublishService(AsyncBaseService):
             CONTENT_TYPE.TEXT,
             CONTENT_TYPE.PREFORMATTED,
         ]:
-            get_resource_service("archive_broadcast").on_broadcast_master_updated(updates[ITEM_OPERATION], original)
+            await get_resource_service("archive_broadcast").on_broadcast_master_updated(
+                updates[ITEM_OPERATION], original
+            )
 
-        get_resource_service("archive_broadcast").reset_broadcast_status(updates, original)
+        await get_resource_service("archive_broadcast").reset_broadcast_status(updates, original)
         push_content_notification([updates])
         await self._import_into_legal_archive(updates)
         CropService().update_media_references(updates, original, True)
@@ -266,6 +263,7 @@ class BasePublishService(AsyncBaseService):
         try:
             user = get_user()
             auto_publish = updates.get("auto_publish", False)
+            target_media_type = updates.get("target_media_type")
 
             # unlock the item
             set_unlock_updates(updates)
@@ -301,9 +299,12 @@ class BasePublishService(AsyncBaseService):
                     operation=self.item_operation,
                     published_state=self.published_state,
                     sender_type=PublishSenderType.API,
-                    target_media_type=SubscriberType.DIGITAL
-                    if updated[ITEM_TYPE] in [CONTENT_TYPE.TEXT, CONTENT_TYPE.PREFORMATTED]
-                    else None,
+                    target_media_type=target_media_type
+                    or (
+                        SubscriberType.DIGITAL
+                        if updated[ITEM_TYPE] in [CONTENT_TYPE.TEXT, CONTENT_TYPE.PREFORMATTED]
+                        else None
+                    ),
                     publish_to_content_api=True,
                 )
             )
@@ -617,8 +618,8 @@ class BasePublishService(AsyncBaseService):
         published_item = copy(published_item)
         if updated:
             published_item.update(updated)
-        get_resource_service(PUBLISHED).update_published_items(published_item_id, LAST_PUBLISHED_VERSION, False)
-        return get_resource_service(PUBLISHED).post([published_item])
+        await get_resource_service(PUBLISHED).update_published_items(published_item_id, LAST_PUBLISHED_VERSION, False)
+        return await get_resource_service(PUBLISHED).post_async([published_item])
 
     def set_state(self, original, updates):
         """Set the state of the document based on the action (publish, correction, kill, recalled)

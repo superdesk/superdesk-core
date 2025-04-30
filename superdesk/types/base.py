@@ -7,7 +7,7 @@
 # at https://www.sourcefabric.org/superdesk/license
 from datetime import datetime
 from enum import Enum, unique
-from typing import Annotated, Any
+from typing import Annotated, Any, NamedTuple
 
 from pydantic import Field
 
@@ -23,8 +23,16 @@ from superdesk.core.resources.validators import (
     validate_minlength,
     validate_unique_value_async,
 )
-from superdesk.metadata.item import FORMATS
 from superdesk.utc import utcnow
+
+
+class Formats(NamedTuple):
+    HTML: str
+    PRESERVED: str
+
+
+FORMATS: Formats = Formats("HTML", "preserved")
+
 
 ContentAssociation = Annotated[
     dict[str, Any],

@@ -14,7 +14,7 @@ from superdesk.errors import SuperdeskApiError
 from superdesk.resource_fields import ID_FIELD
 from superdesk.notification import push_notification
 
-from .utils import get_subscriber_destination_id
+from superdesk.publish_async.utils import get_subscriber_destination_id
 
 
 class SubscribersService(AsyncResourceService[SubscribersResource]):

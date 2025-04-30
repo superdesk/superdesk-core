@@ -34,6 +34,9 @@ class ResourceCursorAsync(Generic[ResourceModelType]):
     async def next_raw(self) -> dict[str, Any] | None:
         raise NotImplementedError()
 
+    def rewind(self):
+        raise NotImplementedError()
+
     async def to_list(self) -> list[ResourceModelType]:
         items: list[ResourceModelType] = []
         item = await self.next_raw()
@@ -102,6 +105,9 @@ class ElasticsearchResourceCursorAsync(ResourceCursorAsync[ResourceModelType], G
             self._index = 0
             return None
 
+    def rewind(self):
+        self._index = 0
+
     async def count(self):
         hits = self.hits.get("hits")
         if hits:
@@ -152,6 +158,9 @@ class MongoResourceCursorAsync(ResourceCursorAsync[ResourceModelType], Generic[R
         except StopAsyncIteration:
             self.cursor.rewind()
             return None
+
+    def rewind(self):
+        self.cursor.rewind()
 
     async def count(self):
         return await self.collection.count_documents(self.lookup)

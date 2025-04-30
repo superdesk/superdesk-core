@@ -31,22 +31,14 @@ async def _update_usage(item):
         "used_updated": utcnow(),
     }
 
-    archive_service = superdesk.get_resource_service("archive")
-    assert archive_service is not None
-    # We need to use late import to avoid circular import.
-    from superdesk.archive_async.service import AsyncArchiveService
-
-    archive_service = AsyncArchiveService()
-    # FIXME: AsyncResourceService.system_update is missing an argument compared to BaseService.system_update
-    archive_service.system_update(item["_id"], updates, item)
+    await superdesk.get_resource_service("archive").system_update_async(item["_id"], updates, item)
 
     # update published item state as well
     if item.get(ITEM_STATE) in PUBLISH_STATES:
         published_service = superdesk.get_resource_service("published")
-        assert published_service is not None
-        published = published_service.get_last_published_version_async(item["_id"])
+        published = await published_service.get_last_published_version(item["_id"])
         if published:
-            published_service.system_update_async(bson.ObjectId(published["_id"]), updates, published)
+            await published_service.system_update_async(bson.ObjectId(published["_id"]), updates, published)
         else:
             logger.warning("published item not found for item %s", item["_id"])
 

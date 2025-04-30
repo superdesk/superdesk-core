@@ -21,12 +21,12 @@ class UserTokenTestCase(TestCase):
         self.service = ResetPasswordService("tokens", backend=get_backend())
 
     @patch("apps.auth.db.reset_password.get_random_string", return_value="random")
-    def test_store_token(self, get_random_string):
+    async def test_store_token(self, get_random_string):
         now = utcnow()
         doc = {"user": "foo", "email": "foo@example.com", "_id": "foo"}
         with patch.object(self.service.backend, "create") as create:
             with patch("apps.auth.db.reset_password.utcnow", return_value=now):
-                self.service.store_reset_password_token(doc, doc["email"], 10, doc["_id"])
+                await self.service.store_reset_password_token(doc, doc["email"], 10, doc["_id"])
             create.assert_called_with(
                 "tokens",
                 [

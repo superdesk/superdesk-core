@@ -14,7 +14,6 @@ from typing import TYPE_CHECKING, cast
 from apps.desks import UserDesksService
 import superdesk
 from superdesk import editor_utils
-from superdesk.attachments import AttachmentsService
 from superdesk.content_types_async.service import ContentTypesService
 import superdesk.signals as signals
 from superdesk.core import json, get_current_app, get_app_config
@@ -102,7 +101,6 @@ from apps.content import push_content_notification, push_expired_notification, p
 from apps.common.models.utils import get_model
 from apps.item_lock.models.item import ItemModel
 from apps.packages import PackageService
-from apps.publish.published_item import PublishedItemService
 from superdesk.privilege import GLOBAL_SEARCH_PRIVILEGE
 from .archive_media import ArchiveMediaService
 from .usage import track_usage, update_refs
@@ -382,10 +380,7 @@ class ArchiveService(AsyncBaseService, HighlightsSearchMixin):
 
         for attachment_id in attachment_ids_to_remove:
             lookup = {"_id": attachment_id}
-            attachments_service = get_resource_service("attachments")
-            assert attachments_service is not None
-            attachments_service = cast(AttachmentsService, attachments_service)
-            await attachments_service.delete_action_async(lookup)
+            await get_resource_service("attachments").delete_action_async(lookup)
 
     async def on_updated_async(self, updates, original):
         # TODO-ASYNC[item_autosave]: Convert ItemAutosave to async
@@ -780,11 +775,7 @@ class ArchiveService(AsyncBaseService, HighlightsSearchMixin):
         updates[ITEM_OPERATION] = ITEM_DESCHEDULE
         updates["firstpublished"] = None
         # delete entry from published repo
-        # TODO-ASYNC[published]: use async methods when PublishedItemService is async.
-        published_service = get_resource_service("published")
-        assert published_service is not None
-        published_service = cast(PublishedItemService, published_service)
-        published_service.delete_by_article_id(original["_id"])
+        await get_resource_service("published").delete_by_article_id(original["_id"])
 
         # deschedule scheduled associations
         if get_app_config("PUBLISH_ASSOCIATED_ITEMS"):

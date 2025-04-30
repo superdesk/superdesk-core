@@ -108,6 +108,7 @@ class ArchiveSpikeService(BaseService):
     def update_rewrite(self, original):
         """Removes the reference from the rewritten story in published collection."""
         if original.get("rewrite_of") and original.get(ITEM_EVENT_ID):
+            # TODO-ASYNC[published]: Add `await` prefix when updating this module
             clear_rewritten_flag(original.get(ITEM_EVENT_ID), original[ID_FIELD], "rewritten_by")
 
         # write the rewritten_by to the story before spiked
@@ -150,6 +151,7 @@ class ArchiveSpikeService(BaseService):
             raise InvalidStateTransitionError()
 
         archive_service = get_resource_service(ARCHIVE)
+        # TODO-ASYNC[published]: Use async methods from ``published_service`` when updating this module
         published_service = get_resource_service("published")
 
         user = get_user(required=True)

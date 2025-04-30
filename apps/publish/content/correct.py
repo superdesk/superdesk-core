@@ -23,12 +23,12 @@ from superdesk.types import UsersResourceModel
 
 
 async def send_translation_notifications(original):
-    translated_items = get_resource_service("published").find(
+    translated_items = await get_resource_service("published").find_async(
         {"translation_id": original.get("guid"), "last_published_version": True}
     )
 
     user_ids = set()
-    for translated_item in translated_items:
+    async for translated_item in translated_items:
         if translated_item.get("item_id") == original.get("_id"):
             changed_article = translated_item
             continue
@@ -92,7 +92,7 @@ class CorrectPublishService(BasePublishService):
         else:
             super().set_state(original, updates)
 
-    def change_being_corrected_to_published(self, updates, original):
+    async def change_being_corrected_to_published(self, updates, original):
         if get_app_config("CORRECTIONS_WORKFLOW") and original.get("state") == "correction":
             publish_service = get_resource_service("published")
             being_corrected_article = publish_service.find_one(
@@ -100,9 +100,9 @@ class CorrectPublishService(BasePublishService):
             )
 
             if being_corrected_article.get("correction_sequence", 0) > 0:
-                publish_service.patch(being_corrected_article["_id"], updates={"state": "corrected"})
+                await publish_service.patch_async(being_corrected_article["_id"], updates={"state": "corrected"})
             else:
-                publish_service.patch(being_corrected_article["_id"], updates={"state": "published"})
+                await publish_service.patch_async(being_corrected_article["_id"], updates={"state": "published"})
 
     async def on_update_async(self, updates, original):
         CropService().validate_multiple_crops(updates, original)
@@ -114,7 +114,7 @@ class CorrectPublishService(BasePublishService):
         set_sign_off(updates, original)
         update_word_count(updates, original)
         flush_renditions(updates, original)
-        self.change_being_corrected_to_published(updates, original)
+        await self.change_being_corrected_to_published(updates, original)
 
     async def update_async(self, id, updates, original):
         editor_utils.generate_fields(updates, original=original)

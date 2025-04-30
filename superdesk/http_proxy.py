@@ -88,7 +88,7 @@ class HTTPProxy:
     async def process_request(self, path: str) -> ResponseTypes:
         """The main function used for processing requests from the client"""
 
-        self.authenticate()
+        await self.authenticate()
         response = await (make_response() if request.method == "OPTIONS" else self.send_proxy_request())
         if self.use_cors:
             # Ignore following type check, as ``typing--Werkzeug=1.0.9`` is missing stub for ``update`` method
@@ -97,13 +97,13 @@ class HTTPProxy:
             response.headers.update(get_cors_headers(",".join(self.http_methods)))  # type: ignore
         return response
 
-    def authenticate(self):
+    async def authenticate(self):
         """If auth is enabled, make sure the current session is authenticated"""
 
         # Use ``_blueprint`` for resource name for auth purposes (copied from the ``blueprint_auth`` decorator)
         current_app = get_current_app()
 
-        if self.auth and not current_app.auth.authorized([], "_blueprint", request.method):
+        if self.auth and not await current_app.auth.authorized([], "_blueprint", request.method):
             # Calling ``auth.authenticate`` raises a ``SuperdeskApiError.unauthorizedError()`` exception
             current_app.auth.authenticate()
 

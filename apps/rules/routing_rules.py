@@ -23,6 +23,7 @@ from superdesk.services import BaseService
 from superdesk.errors import SuperdeskApiError
 from superdesk.utc import set_time
 from quart_babel import gettext as _
+from superdesk.publish_async.utils import item_matches_content_filter
 
 from .rule_handlers import get_routing_rule_handler
 
@@ -201,8 +202,6 @@ class RoutingRuleSchemeService(BaseService):
                 % (provider.get("name"), routing_scheme.get("name"))
             )
 
-        filters_service = superdesk.get_resource_service("content_filters")
-
         now = datetime.utcnow()
         item_id = ingest_item.get("guid") or ingest_item.get("_id")
 
@@ -219,7 +218,7 @@ class RoutingRuleSchemeService(BaseService):
                     "Routing rule %s of Routing Scheme %s for Provider %s does not support item %s"
                     % (rule.get("name"), routing_scheme.get("name"), provider.get("name"), item_id)
                 )
-            elif filters_service.does_match(content_filter, ingest_item):
+            elif item_matches_content_filter(ingest_item, content_filter):
                 logger.info(
                     "Filter matched. Item: %s. Routing Scheme: %s. Rule Name %s."
                     % (item_id, routing_scheme.get("name"), rule.get("name"))

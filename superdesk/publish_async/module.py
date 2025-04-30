@@ -8,13 +8,14 @@ from superdesk.core.app import SuperdeskAsyncApp
 from superdesk.core.module import Module
 from superdesk.core.privileges import Privilege
 
-from .resources import (
+from .resources.module import (
     content_filters_resource_config,
     filter_conditions_resource_config,
     products_resource_config,
     publish_queue_resource_config,
     sequences_resource_config,
     subscribers_resource_config,
+    subscriber_token_resource_config,
 )
 
 from .commands import *  # noqa
@@ -49,6 +50,7 @@ module = Module(
         publish_queue_resource_config,
         sequences_resource_config,
         subscribers_resource_config,
+        subscriber_token_resource_config,
     ],
     privileges=[
         Privilege(

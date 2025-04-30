@@ -73,7 +73,7 @@ class ResendService(AsyncBaseService):
         doc = docs[0] if len(docs) > 0 else {}
         article_id = request.view_args["original_id"]
         article_version = doc.get("version")
-        article = self._validate_article(article_id, article_version)
+        article = await self._validate_article(article_id, article_version)
         subscribers = await self._validate_subscribers(doc.get("subscribers"), article)
         remove_is_queued(article)
         signals.item_resend.send(self, item=article)
@@ -119,12 +119,12 @@ class ResendService(AsyncBaseService):
 
         return subscribers
 
-    def _validate_article(self, article_id, article_version):
+    async def _validate_article(self, article_id, article_version):
         article = get_resource_service(ARCHIVE).find_one(req=None, _id=article_id)
 
         if get_app_config("CORRECTIONS_WORKFLOW") and article.get(ITEM_STATE) == "correction":
             publish_service = get_resource_service("published")
-            article = publish_service.find_one(req=None, guid=article.get("guid"), state="being_corrected")
+            article = await publish_service.find_one_async(req=None, guid=article.get("guid"), state="being_corrected")
 
         if not article:
             raise SuperdeskApiError.badRequestError(message=_("Story couldn't be found!"))

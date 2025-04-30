@@ -70,7 +70,7 @@ def get_mongo_uri(key, dbname):
     return "/".join([env_host, dbname])
 
 
-def update_config(conf, auto_add_apps: bool = True):
+def update_config(conf, auto_add_apps: bool = True, include_planning: bool = False):
     conf["ELASTICSEARCH_INDEX"] = "sptest"
     conf["MONGO_DBNAME"] = "sptests"
     conf["MONGO_URI"] = get_mongo_uri("MONGO_URI", "sptests")
@@ -104,8 +104,11 @@ def update_config(conf, auto_add_apps: bool = True):
     conf["DEFAULT_TIMEZONE"] = "Europe/Prague"
     conf["LEGAL_ARCHIVE"] = True
     if auto_add_apps:
-        conf["INSTALLED_APPS"].extend(["planning", "superdesk.macros.imperial", "apps.rundowns"])
-        conf["MODULES"].extend(["planning"])
+        if not include_planning:
+            conf["INSTALLED_APPS"].extend(["superdesk.macros.imperial", "apps.rundowns"])
+        else:
+            conf["INSTALLED_APPS"].extend(["planning", "superdesk.macros.imperial", "apps.rundowns"])
+            conf["MODULES"].extend(["planning"])
 
     # limit mongodb connections
     conf["MONGO_CONNECT"] = False
@@ -676,7 +679,7 @@ class AsyncTestCase(IsolatedAsyncioTestCase):
 
     @classmethod
     async def asyncSetUpClass(cls):
-        app_config = setup_config(deepcopy(cls.app_config))
+        app_config = setup_config(deepcopy(cls.app_config), False)
         cls.app = SuperdeskAsyncApp(MockWSGI(config=app_config))
         copy_async_db_connections(cls.app)
         setattr(setup, "async_app", cls.app)

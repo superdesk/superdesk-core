@@ -9,7 +9,7 @@
 # at https://www.sourcefabric.org/superdesk/license
 
 import bcrypt
-from superdesk.core import get_app_config
+from superdesk.core import get_config
 from superdesk.flask import g
 from apps.auth.service import AuthService
 from superdesk import get_resource_service
@@ -20,13 +20,12 @@ from quart_babel import gettext as _
 
 
 class DbAuthService(AuthService):
-    def authenticate(self, credentials, ignore_expire=False):
-        user = get_resource_service("auth_users").find_one(req=None, username=credentials.get("username"))
+    async def authenticate(self, credentials, ignore_expire=False):
+        user = await get_resource_service("auth_users").find_one_async(req=None, username=credentials.get("username"))
         if not user:
             raise CredentialsAuthError(credentials)
 
-        # TODO-ASYNC[users]: Upgrade to async when updating this module
-        _user = get_resource_service("users").find_one(req=None, username=credentials.get("username"))
+        _user = await get_resource_service("users").find_one_async(req=None, username=credentials.get("username"))
         if _user.get("user_type") == "external":
             raise ExternalUserError(
                 message=_("Oops!This account has been changed to External. External accounts have no login capability.")
@@ -41,17 +40,17 @@ class DbAuthService(AuthService):
         if not bcrypt.checkpw(password, hashed):
             raise CredentialsAuthError(credentials)
 
-        if not ignore_expire and get_app_config("PASSWORD_EXPIRY_DAYS", 0) > 0:
-            days = get_app_config("PASSWORD_EXPIRY_DAYS")
+        expiry_days = get_config(int, "PASSWORD_EXPIRY_DAYS")
+        if not ignore_expire and expiry_days > 0:
             date = user.get("password_changed_on")
-            if date is None or (date + datetime.timedelta(days=days)) < utcnow():
+            if date is None or (date + datetime.timedelta(days=expiry_days)) < utcnow():
                 raise PasswordExpiredError()
 
         return user
 
-    def is_authorized(self, **kwargs):
+    async def is_authorized(self, **kwargs):
         if kwargs.get("_id") is None:
             return False
 
-        auth = self.find_one(_id=str(kwargs.get("_id")), req=None)
+        auth = await self.find_one_async(_id=str(kwargs.get("_id")), req=None)
         return auth and str(g.auth["_id"]) == str(auth.get("_id"))

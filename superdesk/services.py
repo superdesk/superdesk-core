@@ -231,7 +231,7 @@ class BaseService:
             return self.delete(lookup)
         return self.delete_docs(docs)
 
-    def is_authorized(self, **kwargs):
+    async def is_authorized(self, **kwargs):
         """Subclass should override if the resource handled by the service has intrinsic privileges.
 
         :param kwargs: should have properties which help in authorizing the request
@@ -282,6 +282,9 @@ class BaseService:
             "_error": {"code": 400, "_message": "Unable to update {}.".format(self.datasource)},
             "items": items,
         }
+
+    def count(self, lookup: dict | None = None) -> int:
+        return self.backend.count(self.datasource, lookup)
 
 
 class Service(BaseService):

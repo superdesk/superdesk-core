@@ -166,7 +166,7 @@ class ArchiveBroadcastService(BaseService):
         ids = [str(item.get(ID_FIELD))]
         return list(self._get_broadcast_items(ids, include_archived_repo))
 
-    def on_broadcast_master_updated(self, item_event, item, rewrite_id=None):
+    async def on_broadcast_master_updated(self, item_event, item, rewrite_id=None):
         """Runs when master item is updated.
 
         This event is called when the master story is corrected, published, re-written
@@ -209,7 +209,7 @@ class ArchiveBroadcastService(BaseService):
                     updates["broadcast"]["rewrite_id"] = rewrite_id
 
                 if not broadcast_item.get(ID_FIELD) in processed_ids:
-                    self._update_broadcast_status(broadcast_item, updates)
+                    await self._update_broadcast_status(broadcast_item, updates)
                     # list of ids that are processed.
                     processed_ids.add(broadcast_item.get(ID_FIELD))
             except Exception:
@@ -217,7 +217,7 @@ class ArchiveBroadcastService(BaseService):
                     "Failed to update status for the broadcast item {}".format(broadcast_item.get(ID_FIELD))
                 )
 
-    def _update_broadcast_status(self, item, updates):
+    async def _update_broadcast_status(self, item, updates):
         """Update the status of the broadcast item.
 
         :param dict item: broadcast item to be updated
@@ -230,14 +230,14 @@ class ArchiveBroadcastService(BaseService):
             CONTENT_STATE.KILLED,
             CONTENT_STATE.RECALLED,
         }:
-            get_resource_service("published").update_published_items(
+            await get_resource_service("published").update_published_items(
                 item.get(ID_FIELD), "broadcast", updates.get("broadcast")
             )
 
         archive_item = get_resource_service(SOURCE).find_one(req=None, _id=item.get(ID_FIELD))
         get_resource_service(SOURCE).system_update(archive_item.get(ID_FIELD), updates, archive_item)
 
-    def remove_rewrite_refs(self, item):
+    async def remove_rewrite_refs(self, item):
         """Remove the rewrite references from the broadcast item if the re-write is spiked.
 
         :param dict item: Re-written article of the original story
@@ -269,13 +269,13 @@ class ArchiveBroadcastService(BaseService):
                 if "Re-written" in updates["broadcast"]["status"]:
                     updates["broadcast"]["status"] = ""
 
-                self._update_broadcast_status(broadcast_item, updates)
+                await self._update_broadcast_status(broadcast_item, updates)
             except Exception:
                 logger.exception(
                     "Failed to remove rewrite id for the broadcast item {}".format(broadcast_item.get(ID_FIELD))
                 )
 
-    def reset_broadcast_status(self, updates, original):
+    async def reset_broadcast_status(self, updates, original):
         """Reset the broadcast status if the broadcast item is updated.
 
         :param dict updates: updates to the original document
@@ -287,10 +287,10 @@ class ArchiveBroadcastService(BaseService):
             }
 
             broadcast_updates["broadcast"]["status"] = ""
-            self._update_broadcast_status(original, broadcast_updates)
+            await self._update_broadcast_status(original, broadcast_updates)
             updates.update(broadcast_updates)
 
-    def spike_item(self, original):
+    async def spike_item(self, original):
         """If Original item is re-write then it will remove the reference from the broadcast item.
 
         :param: dict original: original document
@@ -314,4 +314,4 @@ class ArchiveBroadcastService(BaseService):
                 logger.exception(message="Failed to spike the related broadcast item {}.".format(id_))
 
         if original.get("rewrite_of") and original.get(ITEM_STATE) not in PUBLISH_STATES:
-            self.remove_rewrite_refs(original)
+            await self.remove_rewrite_refs(original)

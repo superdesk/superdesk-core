@@ -11,7 +11,7 @@
 import logging
 import superdesk
 from superdesk.resource import Resource
-from superdesk.services import BaseService
+from superdesk.eve_async import AsyncBaseService
 from apps.auth.errors import CredentialsAuthError
 from superdesk import get_resource_service
 
@@ -30,24 +30,24 @@ class ChangePasswordResource(Resource):
     item_methods = []
 
 
-class ChangePasswordService(BaseService):
-    def create(self, docs, **kwargs):
+class ChangePasswordService(AsyncBaseService):
+    async def create_async(self, docs, **kwargs):
         for doc in docs:
             username = doc["username"]
             credentials = {"username": username, "password": doc["old_password"]}
             try:
-                get_resource_service("auth_db").authenticate(credentials, True)
+                await get_resource_service("auth_db").authenticate(credentials, True)
             except Exception as e:
                 raise CredentialsAuthError(credentials=credentials, error=e)
 
-            # TODO-ASYNC[users]: Upgrade to async when updating this module
-            user = superdesk.get_resource_service("users").find_one(req=None, username=username)
-            superdesk.get_resource_service("users").update_password(user["_id"], doc["new_password"])
+            users_service = superdesk.get_resource_service("users")
+            user = await users_service.find_one_async(req=None, username=username)
+            await users_service.update_password(user["_id"], doc["new_password"])
             del doc["old_password"]
             del doc["new_password"]
 
             # return etag for further user updates
-            user = superdesk.get_resource_service("users").find_one(req=None, _id=user["_id"])
+            user = await users_service.find_one_async(req=None, _id=user["_id"])
             doc["_etag"] = user["_etag"]
 
             return [user["_id"]]

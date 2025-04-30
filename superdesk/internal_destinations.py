@@ -15,11 +15,13 @@ from copy import deepcopy
 from quart_babel import lazy_gettext
 from apps.tasks import send_to
 from superdesk import register_resource, get_resource_service, privilege
+from superdesk.types import ContentFiltersResource
 from superdesk.services import Service
 from superdesk.resource import Resource
 from superdesk.errors import StopDuplication
 from superdesk.signals import item_published_async, item_routed
 from superdesk.metadata.item import PUBLISH_SCHEDULE, SCHEDULE_SETTINGS
+from superdesk.publish_async.utils import item_matches_content_filter
 
 
 NAME = "internal_destinations"
@@ -48,7 +50,7 @@ class InternalDestinationsService(Service):
 async def handle_item_published(sender, item, desk=None, **extra):
     macros_service = get_resource_service("macros")
     archive_service = get_resource_service("archive")
-    filters_service = get_resource_service("content_filters")
+    filters_service = ContentFiltersResource.get_service()
     destinations_service = get_resource_service(NAME)
 
     for dest in destinations_service.get(req=None, lookup={"is_active": True}):
@@ -58,10 +60,10 @@ async def handle_item_published(sender, item, desk=None, **extra):
             continue
 
         if dest.get("filter"):
-            content_filter = filters_service.find_one(req=None, _id=dest["filter"])
+            content_filter = await filters_service.find_one(req=None, _id=dest["filter"])
             if not content_filter:  # error state sort of, not sure what to do
                 continue
-            if not filters_service.does_match(content_filter, item):
+            if not item_matches_content_filter(item, content_filter):
                 continue
         if not extra.get("after_scheduled") and item[PUBLISH_SCHEDULE] is not None and dest.get("send_after_schedule"):
             # if "after_schedule" is set to False  and item[PUBLISH_SCHEDULE] is not None (in case of scheduled item)

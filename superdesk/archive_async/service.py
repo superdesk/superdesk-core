@@ -421,7 +421,7 @@ class AsyncArchiveService(AsyncResourceService[ArchiveResourceModel], Highlights
 
         for attachment_id in attachment_ids_to_remove:
             lookup = {"_id": attachment_id}
-            await get_resource_service("attachments").delete_action(lookup)
+            await get_resource_service("attachments").delete_action_async(lookup)
 
     async def on_updated(self, updates: Dict[str, Any], original: ArchiveResourceModel) -> None:
         """Run after an item has been updated.

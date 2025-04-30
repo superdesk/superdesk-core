@@ -13,15 +13,46 @@ from typing import Dict
 
 from copy import copy
 
+from superdesk.types import ContentFiltersResource
 from superdesk.resource_fields import ID_FIELD, VERSION
 from superdesk.utc import utcnow
 from superdesk.services import BaseService
 from superdesk.publish.formatters.ninjs_newsroom_formatter import NewsroomNinjsFormatter
 from superdesk import get_resource_service
 from superdesk.metadata.item import ASSOCIATIONS, remove_metadata_for_publish
-from apps.publish.enqueue.enqueue_service import EnqueueService
+
+from superdesk.publish_async.utils import item_matches_content_filter
+from apps.content_types import apply_schema
 
 logger = logging.getLogger("superdesk")
+
+
+def filter_document(item: dict) -> dict:
+    """
+    Filter document:
+    1. Remove fields that should not be there given it's profile.
+    2. Remove `None` valued renditions.
+
+    :note: Copied from apps.publish.enqueue.enqueue_service file
+
+    :param item: document to filter
+    :return: filtered document
+    """
+
+    # remove fields that should not be there given it's profile.
+    doc = apply_schema(item)
+
+    # remove `None` valued renditions.
+    for association_key in doc.get(ASSOCIATIONS, {}):
+        association = doc[ASSOCIATIONS][association_key]
+        if not association:
+            continue
+
+        renditions = association.get("renditions", {})
+        for null_rendition_key in [k for k in renditions if not renditions[k]]:
+            del doc[ASSOCIATIONS][association_key]["renditions"][null_rendition_key]
+
+    return doc
 
 
 class PublishService(BaseService):
@@ -33,7 +64,7 @@ class PublishService(BaseService):
     formatter = NewsroomNinjsFormatter()
     subscriber: Dict[str, Dict] = {"config": {}}
 
-    def publish(self, item, subscribers=None):
+    async def publish_async(self, item, subscribers=None):
         """Publish an item to content api.
 
         This must be enabled via ``PUBLISH_TO_CONTENT_API`` setting.
@@ -44,10 +75,10 @@ class PublishService(BaseService):
         if subscribers is None:
             subscribers = []
 
-        if not self._filter_item(item):
-            item = EnqueueService.filter_document(item)
+        if not await self._filter_item(item):
+            item = filter_document(item)
             item = remove_metadata_for_publish(item)
-            doc = self.formatter._transform_to_ninjs(item, self.subscriber)
+            doc = await self.formatter._transform_to_ninjs(item, self.subscriber)
             now = utcnow()
             doc.setdefault("firstcreated", now)
             doc.setdefault("versioncreated", now)
@@ -130,23 +161,22 @@ class PublishService(BaseService):
             if item.get("pubstatus") != "canceled":
                 get_resource_service("items_versions").update(item["_id"], update, item)
 
-    def _filter_item(self, item):
+    async def _filter_item(self, item):
         """
         Filter the item out if it matches any API Block filter conditions
         :param item:
         :return: True of the item is blocked, False if it is OK to publish it on the API.
         """
-        filter_service = get_resource_service("content_filters")
 
         # Get the API blocking Filters
-        filters = filter_service.get_api_blocking_filters()
+        filters = await ContentFiltersResource.get_service().search({"api_block": True})
 
         # No API blocking filters
-        if not filters:
+        if not await filters.count():
             return False
 
-        for fc in filters:
-            if filter_service.does_match(fc, item):
+        async for fc in filters:
+            if item_matches_content_filter(item, fc):
                 logger.info("API Filter block {} matched for item {}.".format(fc, item.get(ID_FIELD)))
                 return True
 

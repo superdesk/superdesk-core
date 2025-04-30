@@ -18,7 +18,7 @@ from .async_cli import cli
 
 
 @cli.command("app:clean_images")
-def cli_clean_images():
+async def cli_clean_images():
     """This command will remove all the images from the system which are not referenced by content.
 
     It checks the media type and calls the correspoinding function as s3 and mongo
@@ -31,11 +31,11 @@ def cli_clean_images():
         $ python manage.py app:clean_images
 
     """
-    CleanImages().run()
+    await CleanImages().run()
 
 
 class CleanImages:
-    def run(self):
+    async def run(self):
         print("Starting image cleaning.")
         used_images = set()
         types = ["picture", "video", "audio"]
@@ -50,7 +50,7 @@ class CleanImages:
         ingest_items = superdesk.get_resource_service("ingest").get_from_mongo(None, {"type": {"$in": types}})
         self.__add_existing_files(used_images, ingest_items)
 
-        upload_items = superdesk.get_resource_service("upload").get_from_mongo(req=None, lookup={})
+        upload_items = await superdesk.get_resource_service("upload").get_from_mongo_async(req=None, lookup={})
         self.__add_existing_files(used_images, upload_items)
 
         if get_app_config("LEGAL_ARCHIVE"):

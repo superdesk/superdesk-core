@@ -8,16 +8,14 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 import datetime
-from unittest import mock
 from lxml import etree
 
 from superdesk.utc import utcnow
-from superdesk.tests import TestCase
+from superdesk.tests import TestCase, fixtures
 from superdesk.publish import init_app
 from superdesk.publish.formatters.newsml_1_2_formatter import NewsML12Formatter
 
 
-@mock.patch("superdesk.publish.subscribers.SubscribersService.generate_sequence_number", lambda self, subscriber: 1)
 class Newsml12FormatterTest(TestCase):
     article = {
         "_id": "urn:localhost.abc",
@@ -592,6 +590,7 @@ class Newsml12FormatterTest(TestCase):
         self.formatter.string_now = self.now.strftime("%Y%m%dT%H%M%S+0000")
         init_app(self.app)
         self.app.data.insert("vocabularies", self.vocab)
+        self.subscriber = fixtures.subscribers.sub1_subscriber().to_dict()
 
     def _setup_dates(self, item_list):
         for item in item_list:
@@ -732,7 +731,7 @@ class Newsml12FormatterTest(TestCase):
 
     async def test_format_picture(self):
         doc = self.picture.copy()
-        seq, xml_str = self.formatter.format(doc, {"name": "Test Subscriber"})[0]
+        seq, xml_str = (await self.formatter.format(doc, self.subscriber))[0]
         xml = etree.fromstring(xml_str)
 
         self.assertEqual(
@@ -766,7 +765,7 @@ class Newsml12FormatterTest(TestCase):
 
     async def test_format_video(self):
         doc = self.video.copy()
-        seq, xml_str = self.formatter.format(doc, {"name": "Test Subscriber"})[0]
+        seq, xml_str = (await self.formatter.format(doc, self.subscriber))[0]
         xml = etree.fromstring(xml_str)
         self.assertEqual(xml.find("NewsItem/NewsComponent/NewsComponent/NewsLines/HeadLine").text, "test video")
         self.assertEqual(xml.find("NewsItem/NewsComponent/NewsComponent/NewsLines/ByLine").text, "test video")
@@ -794,7 +793,7 @@ class Newsml12FormatterTest(TestCase):
 
     async def test_format_package(self):
         doc = self.package.copy()
-        seq, xml_str = self.formatter.format(doc, {"name": "Test Subscriber"})[0]
+        seq, xml_str = (await self.formatter.format(doc, self.subscriber))[0]
         xml = etree.fromstring(xml_str)
         self.assertEqual(
             xml.find('.//Role[@FormalName="root"]/../NewsComponent/Role').get("FormalName"), "grpRole:main"
@@ -806,7 +805,7 @@ class Newsml12FormatterTest(TestCase):
 
     async def test_format_picture_package(self):
         doc = self.picture_package.copy()
-        seq, xml_str = self.formatter.format(doc, {"name": "Test Subscriber"})[0]
+        seq, xml_str = (await self.formatter.format(doc, self.subscriber))[0]
         xml = etree.fromstring(xml_str)
         self.assertEqual(
             xml.find('.//Role[@FormalName="root"]/../NewsComponent/Role').get("FormalName"), "grpRole:main"
@@ -818,7 +817,7 @@ class Newsml12FormatterTest(TestCase):
 
     async def test_format_picture_text_package(self):
         doc = self.picture_text_package.copy()
-        seq, xml_str = self.formatter.format(doc, {"name": "Test Subscriber"})[0]
+        seq, xml_str = (await self.formatter.format(doc, self.subscriber))[0]
         xml = etree.fromstring(xml_str)
         news_component = xml.find('.//Role[@FormalName="root"]/../NewsComponent')
         self.assertEqual(news_component.find("Role").get("FormalName"), "grpRole:main")

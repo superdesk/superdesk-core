@@ -8,17 +8,21 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
+import logging
+from copy import deepcopy
+from textwrap import dedent
+from draftjs_exporter.dom import DOM
 
-from .ninjs_formatter import NINJSFormatter
 from superdesk.core import get_app_config
 from superdesk.media.renditions import get_rendition_file_name
 from superdesk import get_resource_service
 from superdesk.editor_utils import get_content_state_fields, Editor3Content, DraftJSHTMLExporter
 from superdesk.media.renditions import get_renditions_spec
-from draftjs_exporter.dom import DOM
-from copy import deepcopy
-from textwrap import dedent
-import logging
+from superdesk.publish_async.publish_cache import PublishCache
+from superdesk.publish_async.utils import test_products_against_item
+
+
+from .ninjs_formatter import NINJSFormatter
 
 logger = logging.getLogger(__name__)
 
@@ -32,7 +36,7 @@ class FTPNinjsFormatter(NINJSFormatter):
         self.internal_renditions = []
         self.path = None
 
-    def _transform_to_ninjs(self, article, subscriber, recursive=True):
+    async def _transform_to_ninjs(self, article, subscriber, recursive=True):
         """
         Re-wire that href's in the document to be relative to the destination FTP server root, it expects the
         destination to be an FTP server
@@ -50,9 +54,9 @@ class FTPNinjsFormatter(NINJSFormatter):
         formatted_article = deepcopy(article)
 
         if article.get("type") == "text" and recursive:
-            self.apply_product_filtering_to_associations(formatted_article, subscriber)
+            await self.apply_product_filtering_to_associations(formatted_article, subscriber)
 
-        ninjs = super()._transform_to_ninjs(formatted_article, subscriber, recursive)
+        ninjs = await super()._transform_to_ninjs(formatted_article, subscriber, recursive)
 
         renditions = ninjs.get("renditions")
         if renditions:
@@ -65,7 +69,7 @@ class FTPNinjsFormatter(NINJSFormatter):
 
         return ninjs
 
-    def apply_product_filtering_to_associations(self, article, subscriber):
+    async def apply_product_filtering_to_associations(self, article, subscriber):
         """
         Remove the embedded items from the article that the subscriber has no matching product for.
         :param article:
@@ -78,10 +82,11 @@ class FTPNinjsFormatter(NINJSFormatter):
         remove_keys = []
         permitted_products = set(subscriber["products"])
 
+        await PublishCache.init()
         for key, item in article.get("associations", {}).items():
             if key.startswith("editor_"):
-                result = get_resource_service("product_tests").test_products(item, lookup=None)
-                matching_products = set(p["product_id"] for p in result if p.get("matched", False))
+                result = test_products_against_item(item)
+                matching_products = set(p["product_id"] for p in result if p["matched"])
                 if not matching_products.intersection(permitted_products):
                     remove_keys.append(key)
 

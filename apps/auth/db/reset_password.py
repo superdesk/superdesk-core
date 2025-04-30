@@ -16,7 +16,7 @@ from superdesk.core import get_app_config
 from superdesk.resource_fields import DATE_CREATED, LAST_UPDATED
 from superdesk.resource import Resource
 from superdesk.types import UsersResourceModel
-from superdesk.services import BaseService
+from superdesk.eve_async import AsyncBaseService
 from superdesk.utc import utcnow
 from superdesk.utils import get_random_string
 from superdesk.emails import send_reset_password_email
@@ -53,41 +53,40 @@ class ResetPasswordResource(Resource):
     item_methods = []
 
 
-class ResetPasswordService(BaseService):
-    def check_if_valid_token(self, token):
-        reset_request = superdesk.get_resource_service("active_tokens").find_one(req=None, token=token)
+class ResetPasswordService(AsyncBaseService):
+    async def check_if_valid_token(self, token):
+        reset_request = await superdesk.get_resource_service("active_tokens").find_one_async(req=None, token=token)
         if not reset_request or reset_request["expire_time"] < utcnow():
             logger.warning("Invalid token received: %s" % token)
             raise SuperdeskApiError.unauthorizedError("Invalid token received")
 
         return reset_request
 
-    def create(self, docs, **kwargs):
+    async def create_async(self, docs, **kwargs):
         for doc in docs:
             email = doc.get("email")
             key = doc.get("token")
             password = doc.get("password")
 
             if key and password:
-                return self.reset_password(doc)
+                return await self.reset_password(doc)
             if email:
                 email = email.lower()
-                # TODO-ASYNC: Support async (see superdesk.tests.markers.requires_eve_resource_async_event)
-                return self.initialize_reset_password(doc, email)
+                return await self.initialize_reset_password(doc, email)
             if key:
-                token_req = self.check_if_valid_token(key)
+                token_req = await self.check_if_valid_token(key)
                 return [token_req.get("_id")]
 
             raise SuperdeskApiError.badRequestError(_("Either key:password or email must be provided"))
 
-    def store_reset_password_token(self, doc, email, days_alive, user_id):
+    async def store_reset_password_token(self, doc, email, days_alive, user_id):
         now = utcnow()
         doc[DATE_CREATED] = now
         doc[LAST_UPDATED] = now
         doc["expire_time"] = now + timedelta(days=days_alive)
         doc["user"] = user_id
         doc["token"] = get_random_string()
-        ids = super().create([doc])
+        ids = await super().create_async([doc])
         return ids
 
     async def initialize_reset_password(self, doc, email):
@@ -106,32 +105,31 @@ class ResetPasswordService(BaseService):
             logger.warning("User password reset triggered for an inactive user")
             raise SuperdeskApiError.forbiddenError(_("User not active"))
 
-        ids = self.store_reset_password_token(doc, email, token_ttl, user.id)
+        ids = await self.store_reset_password_token(doc, email, token_ttl, user.id)
         await send_reset_password_email(doc, token_ttl)
         self.remove_private_data(doc)
         return ids
 
-    def reset_password(self, doc):
+    async def reset_password(self, doc):
         key = doc.get("token")
         password = doc.get("password")
 
-        reset_request = self.check_if_valid_token(key)
+        reset_request = await self.check_if_valid_token(key)
 
         user_id = reset_request["user"]
-        # TODO-ASYNC[users]: Upgrade to async when updating this module
-        user = superdesk.get_resource_service("users").find_one(req=None, _id=user_id)
+        users_service = superdesk.get_resource_service("users")
+        user = users_service.find_one_async(req=None, _id=user_id)
         if not user.get("is_active"):
             logger.warning("Try to set password for an inactive user")
             raise SuperdeskApiError.forbiddenError(_("User not active"))
 
-        # TODO-ASYNC[users]: Upgrade to async when updating this module
-        superdesk.get_resource_service("users").update_password(user_id, password)
-        self.remove_all_tokens_for_email(reset_request["email"])
+        await users_service.update_password(user_id, password)
+        await self.remove_all_tokens_for_email(reset_request["email"])
         self.remove_private_data(doc)
         return [reset_request["_id"]]
 
-    def remove_all_tokens_for_email(self, email):
-        super().delete(lookup={"email": email})
+    async def remove_all_tokens_for_email(self, email):
+        await super().delete_async(lookup={"email": email})
 
     def remove_private_data(self, doc):
         self.remove_field_from(doc, "password")

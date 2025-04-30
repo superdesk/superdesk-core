@@ -13,7 +13,7 @@ from unittest import mock
 from unittest.mock import MagicMock, ANY
 from datetime import timedelta
 
-from superdesk.tests import TestCase, markers
+from superdesk.tests import TestCase, markers, utils as test_utils
 from superdesk.utc import utcnow
 from superdesk.errors import PublishHTTPPushServerError, PublishHTTPPushClientError
 from superdesk.publish_async.consumers.celery_consumer import transmit_item
@@ -145,7 +145,7 @@ class TransmitItemTestCase(TestCase):
             "name": "Test",
         }
 
-        self.app.data.insert("subscribers", [subscriber])
+        await test_utils.post_items("subscribers", [subscriber])
 
         item_1 = {
             "_id": ObjectId(),
@@ -158,9 +158,10 @@ class TransmitItemTestCase(TestCase):
             "formatted_item": "test",
         }
 
-        self.app.data.insert("publish_queue", [item_1])
+        await test_utils.post_items("publish_queue", [item_1])
         self.assertIsNone(self.func_under_test(item_1["_id"]))
-        failed_item = self.app.data.find_one("publish_queue", req=None, _id=item_1["_id"])
+
+        failed_item = await test_utils.find_by_id("publish_queue", item_1["_id"])
         self.assertEqual(failed_item["state"], "retrying")
         self.assertEqual(failed_item["retry_attempt"], 1)
         self.assertEqual(failed_item["next_retry_attempt_at"], ANY)
