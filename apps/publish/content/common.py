@@ -911,6 +911,9 @@ class BasePublishService(BaseService):
         """
         SIGNIFICANT_FIELDS = {"headline", "slugline", "byline", "description_text"}
 
+        if len(old) != len(new):
+            return True
+
         item_type = old.get("type") or new.get("type")
         schema_config = app.config.get("SCHEMA", {})
         schema_fields = set(schema_config.get(item_type, {}).keys())
