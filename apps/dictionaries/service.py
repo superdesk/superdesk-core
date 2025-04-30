@@ -154,7 +154,7 @@ class DictionaryService(AsyncBaseService):
             # cf. SDESK-3083
             # We also test request.data because it is not set in behave tests, and they would fail without it
             try:
-                docs[0]["content"] = json.loads((await request.get_data(as_text=False)).decode("utf-8"))["content"]
+                docs[0]["content"] = json.loads((await request.data).decode("utf-8"))["content"]
             except (KeyError, JSONDecodeError, RuntimeError):
                 # request.data is not set during tests, so we ignore those errors
                 pass
@@ -257,7 +257,7 @@ class DictionaryService(AsyncBaseService):
             # works around Eve behaviour which creates sub-dict on each "." it finds in keys
             # cf. SDESK-3083
             try:
-                updates["content"] = json.loads((await request.get_data(as_text=False)).decode("utf-8"))["content"]
+                updates["content"] = json.loads((await request.data).decode("utf-8"))["content"]
             except (KeyError, JSONDecodeError, RuntimeError):
                 # request.data is not set during tests, so we ignore those errors
                 pass
