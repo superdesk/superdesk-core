@@ -906,22 +906,14 @@ class BasePublishService(BaseService):
 
     def is_changed(self, old: dict, new: dict) -> bool:
         """
-        Compare the associated items using SCHEMA fields, or fallback to SIGNIFICANT_FIELDS.
-        Return True if any significant field has changed.
+        Compare all top-level fields except those starting with an underscore (_).
+        Return True if any such field has changed.
         """
-        SIGNIFICANT_FIELDS = {"headline", "slugline", "byline", "description_text"}
 
         if len(old) != len(new):
             return True
 
-        item_type = old.get("type") or new.get("type")
-        schema_config = app.config.get("SCHEMA", {})
-        schema_fields = set(schema_config.get(item_type, {}).keys())
-
-        extra_fields = {key for key in old.keys() | new.keys() if not key.startswith("_") and key not in schema_fields}
-
-        fields_to_check = schema_fields or SIGNIFICANT_FIELDS
-        fields_to_check |= extra_fields
+        fields_to_check = {key for key in old.keys() | new.keys() if not key.startswith("_")}
 
         for field in fields_to_check:
             if old.get(field) != new.get(field):
