@@ -588,7 +588,7 @@ class ArchiveService(BaseService, HighlightsSearchMixin):
         if force_unlock:
             del document["force_unlock"]
 
-    def on_replaced(self, document, original):
+    async def on_replaced(self, document, original):
         get_component(ItemAutosave).clear(original["_id"])
         add_activity(
             ACTIVITY_UPDATE,
