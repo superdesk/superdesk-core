@@ -59,17 +59,21 @@ async def post_items(resource: str, items: list[dict] | list[ResourceModel], use
     async_app = get_current_async_app()
 
     try:
-        if not use_eve:
+        eve_service = get_resource_service(resource)
+    except KeyError:
+        eve_service = None
+
+    try:
+        if eve_service is None or not use_eve:
             await async_app.resources.get_resource_service(resource).create(items)
             return
     except KeyError:
         pass
 
-    service = get_resource_service(resource)
-    if hasattr(service, "post_async"):
-        await service.post_async(items)
+    if hasattr(eve_service, "post_async"):
+        await eve_service.post_async(items)
     else:
-        return service.post(items)
+        return eve_service.post(items)
 
 
 async def patch_item(resource: str, item_id: str | ObjectId, updates: dict) -> None:

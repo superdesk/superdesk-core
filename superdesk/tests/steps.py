@@ -537,7 +537,7 @@ async def step_impl_given_with_objectid(context, resource):
             if "_id" in item:
                 item["_id"] = ObjectId(item["_id"])
 
-        await post_items(resource, items)
+        await post_items(resource, items, use_eve=True)
         context.data = items
         context.resource = resource
         setattr(context, resource, items[-1])
@@ -552,7 +552,7 @@ async def step_impl_given_the(context, resource):
 
         orig_items = {}
         items = [parse(item, resource) for item in json.loads(context.text)]
-        await post_items(resource, items)
+        await post_items(resource, items, use_eve=True)
         context.data = orig_items or items
         context.resource = resource
 
@@ -568,7 +568,7 @@ async def step_impl_given_resource_with_provider(context, provider):
         for item in items:
             item["ingest_provider"] = context.providers[provider]
             item["source"] = ingest_provider.get("source")
-        await post_items(resource, items)
+        await post_items(resource, items, use_eve=True)
         context.data = items
         context.resource = resource
 
