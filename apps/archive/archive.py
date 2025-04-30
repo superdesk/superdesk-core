@@ -238,8 +238,7 @@ class ArchiveService(AsyncBaseService, HighlightsSearchMixin):
             if doc.get("profile"):
                 profiles.add(doc["profile"])
 
-            # TODO-ASYNC[crop_service]: Convert CropService to async
-            self.cropService.update_media_references(doc, {})
+            await self.cropService.update_media_references(doc, {})
             if doc[ITEM_OPERATION] == ITEM_FETCH:
                 await app.on_archive_item_updated.call_async({"task": doc.get("task")}, doc, ITEM_FETCH)
             else:
@@ -393,8 +392,7 @@ class ArchiveService(AsyncBaseService, HighlightsSearchMixin):
         if updates.get("profile"):
             await get_resource_service("content_types").set_used([updates.get("profile")])
 
-        # TODO-ASYNC[crop_service]: Convert CropService to async
-        self.cropService.update_media_references(updates, original)
+        await self.cropService.update_media_references(updates, original)
 
     async def on_replace_async(self, document, original):
         document[ITEM_OPERATION] = ITEM_UPDATE
@@ -423,8 +421,7 @@ class ArchiveService(AsyncBaseService, HighlightsSearchMixin):
             subject=get_subject(original),
         )
         push_content_notification([document, original])
-        # TODO-ASYNC[crop_service]: Convert cropService to async
-        self.cropService.update_media_references(document, original)
+        await self.cropService.update_media_references(document, original)
 
     async def on_deleted_async(self, doc):
         # TODO-ASYNC[item_autosave]: Convert ItemAutosave to async

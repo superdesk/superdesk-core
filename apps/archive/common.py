@@ -568,8 +568,7 @@ async def remove_media_files(doc, published=False):
                 continue
             media = rendition.get("media") if isinstance(rendition.get("media"), str) else str(rendition.get("media"))
             try:
-                # TODO-ASYNC[media_references]: Convert MediaReferences to async
-                references = get_resource_service("media_references").get(
+                references = await get_resource_service("media_references").get_async(
                     req=None, lookup={"media_id": media, "published": True}
                 )
 
@@ -587,9 +586,9 @@ async def remove_media_files(doc, published=False):
 
 
 async def remove_media_references(item_id, published):
-    # TODO-ASYNC[media_references]: Convert MediaReferences to async
-    get_resource_service("media_references").delete_action({"item_id": item_id, "published": published})
-    get_resource_service("media_references").delete_action({"associated_id": item_id, "published": published})
+    media_references = get_resource_service("media_references")
+    await media_references.delete_action_async({"item_id": item_id, "published": published})
+    await media_references.delete_action_async({"associated_id": item_id, "published": published})
 
 
 def is_assigned_to_a_desk(doc):
