@@ -82,7 +82,7 @@ class BaseMediaEditorTestCase(TestCase):
             method="POST",
             json=request_data,
         ):
-            media_editor.create(docs)
+            await media_editor.create_async(docs)
 
         return docs[0]
 

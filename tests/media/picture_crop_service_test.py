@@ -48,7 +48,7 @@ class PictureCropServiceTest(TestCase):
         ]
 
         with mock.patch.object(self.app.media, "put", return_value="foo"):
-            service.post(images)
+            await service.post_async(images)
 
         self.assertEqual(images[0]["metadata"].get("datetime"), '"2015:07:06 16:30:23"')
         self.assertEqual(images[0]["metadata"].get("length"), "144732")

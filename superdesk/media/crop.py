@@ -329,7 +329,7 @@ class CropService:
                 ).get("media"):
                     self._delete_crop_file(renditions.get(key, {}).get("media"))
 
-    def update_media_references(self, updates, original, published=False):
+    async def update_media_references(self, updates, original, published=False):
         """Update the media references collection.
          When item (media item or associated media) is updated or created,
          media_references are created. These media_references are updated to published state
@@ -365,10 +365,12 @@ class CropService:
                     continue
 
                 media = str(rendition.get("media"))
-                reference = get_resource_service("media_references").find_one(req=None, item_id=item_id, media_id=media)
+                reference = await get_resource_service("media_references").find_one_async(
+                    req=None, item_id=item_id, media_id=media
+                )
                 if not reference:
                     try:
-                        get_resource_service("media_references").post(
+                        await get_resource_service("media_references").post_async(
                             [
                                 {
                                     "item_id": item_id,
@@ -387,10 +389,12 @@ class CropService:
 
         req = ParsedRequest()
         req.where = json.dumps({"item_id": item_id, "published": False})
-        refs = list(get_resource_service("media_references").get(req=req, lookup=None))
+        refs = await (await get_resource_service("media_references").get_async(req=req, lookup=None)).to_list()
         for ref in refs:
             try:
-                get_resource_service("media_references").patch(ref.get(ID_FIELD), updates={"published": True})
+                await get_resource_service("media_references").patch_async(
+                    ref.get(ID_FIELD), updates={"published": True}
+                )
             except Exception:
                 logger.exception(
                     "Failed to update media "
