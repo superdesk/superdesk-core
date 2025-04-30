@@ -1,11 +1,11 @@
-from typing import List, Dict, Callable, cast
+from typing import List, Dict, Callable
 import warnings
 import superdesk
 
 from quart_babel import gettext as _
 from datetime import timedelta
 
-from superdesk.core import get_current_app, get_app_config
+from superdesk.core import get_current_app, get_config
 from superdesk.flask import request
 from superdesk.utils import ListCursor
 from superdesk.utc import utcnow
@@ -43,7 +43,7 @@ class AutocompleteService(superdesk.Service):
             else request.args.get("resources").split(",")
         )
         field: str = request.args.get("field", "slugline")
-        language: str = request.args.get("language", get_app_config("DEFAULT_LANGUAGE", "en"))
+        language: str = request.args.get("language", get_config(str, "DEFAULT_LANGUAGE"))
 
         all_suggestions: Dict[str, int] = {}
         for resource in resources:
@@ -61,7 +61,7 @@ class AutocompleteService(superdesk.Service):
 
 
 def get_archive_suggestions(field: str, language: str) -> Dict[str, int]:
-    if not get_app_config(SETTING_ENABLED):
+    if not get_config(bool, SETTING_ENABLED):
         raise SuperdeskApiError(_("Archive autocomplete is not enabled"), 404)
 
     field_mapping = {"slugline": "slugline.keyword"}
@@ -72,8 +72,8 @@ def get_archive_suggestions(field: str, language: str) -> Dict[str, int]:
     versioncreated_min = (
         utcnow()
         - timedelta(
-            days=cast(int, get_app_config(SETTING_DAYS)),
-            hours=cast(int, get_app_config(SETTING_HOURS)),
+            days=get_config(int, SETTING_DAYS),
+            hours=get_config(int, SETTING_HOURS),
         )
     ).replace(
         microsecond=0
@@ -93,7 +93,7 @@ def get_archive_suggestions(field: str, language: str) -> Dict[str, int]:
             "values": {
                 "terms": {
                     "field": field_mapping[field],
-                    "size": get_app_config(SETTING_LIMIT),
+                    "size": get_config(int, SETTING_LIMIT),
                     "order": {"_key": "asc"},
                 },
             },

@@ -8,20 +8,17 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
-from typing import TYPE_CHECKING, Optional, cast
+from typing import Optional
 from bson import ObjectId
 
 import logging
 from datetime import datetime
 from dateutil.parser import parse as date_parse
-from apps.desks import DesksService
-from apps.desks_async.desks_async_service import DesksAsyncService
 from eve.versioning import insert_versioning_documents
 from pytz import timezone
 from copy import deepcopy
 from dateutil.parser import parse
 
-from superdesk.content_types_async.service import ContentTypesService
 from superdesk.core import get_app_config, get_current_app
 from superdesk.resource_fields import ID_FIELD, VERSION
 import superdesk
@@ -54,9 +51,6 @@ from superdesk.errors import SuperdeskApiError, IdentifierGenerationError
 from superdesk.logging import logger
 from apps.auth import get_user, get_auth  # noqa
 from quart_babel import gettext as _
-
-if TYPE_CHECKING:
-    from apps.archive.archive import ArchiveService
 
 
 logger = logging.getLogger(__name__)
@@ -222,8 +216,6 @@ async def on_create_item(docs, repo_type=ARCHIVE, media_service=None):
 
             if doc.get("task", None) and doc["task"].get("desk", None):
                 desks_service = get_resource_service("desks")
-                assert desks_service is not None
-                desks_service = cast(DesksService, desks_service)
                 desk = await desks_service.find_one_async(req=None, _id=doc["task"]["desk"])
                 if desk and desk.get("desk_language", None):
                     doc["language"] = desk["desk_language"]
@@ -475,10 +467,7 @@ async def insert_into_versions_async(id_=None, doc=None):
     """
 
     if id_:
-        archive_service = get_resource_service(ARCHIVE)
-        assert archive_service is not None
-        archive_service = cast(ArchiveService, archive_service)
-        doc_in_archive_collection = await archive_service.find_one_async(req=None, _id=id_)
+        doc_in_archive_collection = await get_resource_service(ARCHIVE).find_one_async(req=None, _id=id_)
     else:
         doc_in_archive_collection = doc
 
@@ -638,9 +627,7 @@ async def get_expiry(desk_id, stage_id, offset=None):
     desk = None
 
     if desk_id:
-        # TODO-ASYNC[desks]: Use DesksResourceModel async service where when upgrading this module
-        desks_service = DesksAsyncService()
-        desk = await desks_service.find_by_id_raw(desk_id)
+        desk = await DesksResourceModel.get_service().find_by_id_raw(desk_id)
 
         if not desk:
             raise SuperdeskApiError.notFoundError(_("Invalid desk identifier {desk_id}").format(desk_id=desk_id))
@@ -858,7 +845,7 @@ async def transtype_metadata(doc, original=None):
         # profile may be missing with some items in tests
         logger.warning("`profile` is not available in doc")
         return
-    ctypes_service = ContentTypesService()
+    ctypes_service = get_resource_service("content_types")
     profile = await ctypes_service.find_by_id_raw(profile_id)
     if profile is None:
         return

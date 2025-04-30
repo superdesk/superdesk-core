@@ -1,4 +1,3 @@
-from typing import cast
 import bson
 import logging
 import superdesk

@@ -25,7 +25,6 @@ from superdesk.errors import StopDuplication, SuperdeskApiError, InvalidStateTra
 from superdesk.notification import push_notification
 from superdesk.utc import utcnow
 from superdesk.metadata.utils import item_url
-from superdesk.services import BaseService
 from superdesk.metadata.item import metadata_schema, ITEM_STATE, CONTENT_STATE, ITEM_TYPE
 from superdesk import get_resource_service
 from superdesk.activity import add_activity, ACTIVITY_CREATE, ACTIVITY_UPDATE

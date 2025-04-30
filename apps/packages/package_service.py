@@ -9,8 +9,6 @@
 # at https://www.sourcefabric.org/superdesk/license
 
 import logging
-from typing import TYPE_CHECKING, Literal, cast
-from apps.desks import DesksService
 from eve.versioning import resolve_document_version
 
 from superdesk.core import get_current_app, get_app_config
@@ -41,11 +39,7 @@ from superdesk.default_settings import VERSION
 from quart_babel import gettext as _
 from superdesk.signals import signals
 from superdesk.validation import ValidationError
-from superdesk.eve_async.service import AsyncBaseService
-from apps.templates.content_templates import render_content_template_by_id
 
-if TYPE_CHECKING:
-    from apps.archive.archive import ArchiveService
 
 logger = logging.getLogger(__name__)
 package_create_signal = signals.signal("package.create")  # @UndefinedVariable
@@ -89,15 +83,10 @@ async def copy_metadata_from_highlight_template(doc):
     """
     highlight_id = doc.get("highlight", None)
     if highlight_id:
-        # We do late import to avoid circular import.
-        from apps.highlights.service import HighlightsService
-
-        highlights_service = get_resource_service("highlights")
-        assert highlights_service is not None
-        highlights_service = cast(HighlightsService, highlights_service)
-        # TODO-ASYNC[highlights]: Use async method once HighlightsService is async.
-        highlight = highlights_service.find_one(req=None, _id=highlight_id)
+        highlight = superdesk.get_resource_service("highlights").find_one(req=None, _id=highlight_id)
         if highlight and "template" in highlight:
+            from apps.templates.content_templates import render_content_template_by_id
+
             updates = await render_content_template_by_id(doc, highlight.get("template", None))
             if ITEM_TYPE in updates:
                 del updates[ITEM_TYPE]
@@ -218,10 +207,7 @@ class PackageService:
                     logger.error(message)
                     raise SuperdeskApiError.forbiddenError(message=message)
                 if not doc["task"].get("stage"):
-                    desks_service = get_resource_service("desks")
-                    assert desks_service is not None
-                    desks_service = cast(DesksService, desks_service)
-                    desk = await desks_service.find_one_async(req=None, _id=doc["task"]["desk"])
+                    desk = await get_resource_service("desks").find_one_asnc(req=None, _id=doc["task"]["desk"])
                     doc["task"]["stage"] = desk["working_stage"]
 
     async def extract_default_association_data_async(self, package, assoc):
@@ -240,10 +226,7 @@ class PackageService:
         if not item_id:
             raise SuperdeskApiError.badRequestError(_("Package contains empty ResidRef!"))
 
-        service = get_resource_service(endpoint)
-        assert service is not None
-        service = cast(AsyncBaseService, service)
-        item = await service.find_one_async(req=None, _id=item_id)
+        item = await get_resource_service(endpoint).find_one_async(req=None, _id=item_id)
 
         if not item and throw_if_not_found:
             message = _("Invalid item reference: {reference}").format(reference=assoc.get(RESIDREF))
@@ -269,10 +252,7 @@ class PackageService:
             two_way_links.append(data)
 
         updates = {LINKED_IN_PACKAGES: two_way_links}
-        service = get_resource_service(endpoint)
-        assert service is not None
-        service = cast(AsyncBaseService, service)
-        await service.system_update_async(item_id, updates, item)
+        await get_resource_service(endpoint).system_update_async(item_id, updates, item)
 
     async def check_for_duplicates_async(self, package, associations):
         counter = Counter()
@@ -297,9 +277,6 @@ class PackageService:
         else:
             # keep checking in the hierarchy
             archive_service = get_resource_service(ARCHIVE)
-            assert archive_service is not None
-            if TYPE_CHECKING:
-                archive_service = cast(ArchiveService, archive_service)
             for d in (d for d in package.get(LINKED_IN_PACKAGES, []) if "package" in d):
                 linked_package = await archive_service.find_one_async(req=None, _id=d["package"])
                 if linked_package:
@@ -323,9 +300,6 @@ class PackageService:
         request.max_results = 100
 
         archive_service = get_resource_service(ARCHIVE)
-        assert archive_service is not None
-        if TYPE_CHECKING:
-            archive_service = cast(ArchiveService, archive_service)
         return await archive_service.get_from_mongo_async(req=request, lookup=query)
 
     def remove_ref_from_inmem_package(self, package, ref_id):
@@ -370,9 +344,6 @@ class PackageService:
         :param new_ref_id: New reference id
         """
         archive_service = get_resource_service("archive")
-        assert archive_service is not None
-        if TYPE_CHECKING:
-            archive_service = cast(ArchiveService, archive_service)
         new_item = await archive_service.find_one_async(req=None, _id=new_ref_id)
 
         non_root_groups = (group for group in package.get(GROUPS, []) if group.get(GROUP_ID) != ROOT_GROUP)
@@ -439,9 +410,6 @@ class PackageService:
 
         resolve_document_version(updates, ARCHIVE, "PATCH", package)
         archive_service = get_resource_service("archive")
-        assert archive_service is not None
-        if TYPE_CHECKING:
-            archive_service = cast(ArchiveService, archive_service)
         await archive_service.patch_async(package[ID_FIELD], updates)
 
         app = get_current_app().as_any()
@@ -487,10 +455,6 @@ class PackageService:
         item_refs_in_package = self.get_residrefs(package)
 
         archive_service = get_resource_service("archive")
-        assert archive_service is not None
-        if TYPE_CHECKING:
-            archive_service = cast(ArchiveService, archive_service)
-
         for item_ref in item_refs_in_package:
             doc = await archive_service.find_one_async(req=None, _id=item_ref)
 
