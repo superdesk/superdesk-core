@@ -11,6 +11,7 @@
 import logging
 import superdesk
 import superdesk.signals as signals
+import superdesk.users.user_metrics as user_metrics
 
 from copy import copy
 from copy import deepcopy
@@ -41,6 +42,7 @@ from superdesk.utc import utcnow
 from superdesk.workflow import is_workflow_state_transition_valid
 from superdesk.validation import ValidationError
 from superdesk.media.image import get_metadata_from_item, write_metadata
+
 
 from eve.utils import config
 from eve.versioning import resolve_document_version
@@ -175,6 +177,9 @@ class BasePublishService(BaseService):
         self._import_into_legal_archive(updates)
         CropService().update_media_references(updates, original, True)
         signals.item_published.send(self, item=original, after_scheduled=False)
+
+        if original.get("original_creator"):
+            user_metrics.incr("published_articles", original["original_creator"])
 
         packages = self.package_service.get_packages(original[config.ID_FIELD])
         if packages and packages.count() > 0:
