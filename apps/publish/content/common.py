@@ -911,8 +911,14 @@ class BasePublishService(BaseService):
         """
         SIGNIFICANT_FIELDS = {"headline", "slugline", "byline", "description_text"}
 
-        schema = app.config.get("SCHEMA", {}).get(old.get("type"))
-        fields_to_check = set(schema.keys()) if schema else SIGNIFICANT_FIELDS
+        item_type = old.get("type") or new.get("type")
+        schema_config = app.config.get("SCHEMA", {})
+        schema_fields = set(schema_config.get(item_type, {}).keys())
+
+        extra_fields = {key for key in old.keys() | new.keys() if not key.startswith("_") and key not in schema_fields}
+
+        fields_to_check = schema_fields or SIGNIFICANT_FIELDS
+        fields_to_check |= extra_fields
 
         for field in fields_to_check:
             if old.get(field) != new.get(field):
