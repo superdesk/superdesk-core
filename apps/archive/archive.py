@@ -9,12 +9,9 @@
 import logging
 import datetime
 from copy import copy, deepcopy
-from typing import TYPE_CHECKING, cast
 
-from apps.desks import UserDesksService
 import superdesk
 from superdesk import editor_utils
-from superdesk.content_types_async.service import ContentTypesService
 import superdesk.signals as signals
 from superdesk.core import json, get_current_app, get_app_config
 from superdesk.resource_fields import ID_FIELD, ITEMS, VERSION, LAST_UPDATED, DATE_CREATED, ETAG
@@ -29,6 +26,7 @@ from superdesk.metadata.utils import (
     is_normal_package,
     get_elastic_highlight_query,
 )
+from apps.auth import get_user, get_user_id
 from .common import (
     remove_unwanted,
     update_state,
@@ -36,7 +34,6 @@ from .common import (
     remove_media_files,
     on_create_item,
     on_duplicate_item,
-    get_user,
     update_version,
     set_sign_off,
     handle_existing_data,
@@ -67,7 +64,6 @@ from superdesk.errors import SuperdeskApiError
 from eve.versioning import resolve_document_version, versioned_id_field
 from superdesk.activity import (
     add_activity,
-    add_activity_async,
     notify_and_add_activity,
     ACTIVITY_CREATE,
     ACTIVITY_UPDATE,
@@ -75,7 +71,7 @@ from superdesk.activity import (
 )
 from eve.utils import parse_request, ParsedRequest
 from superdesk.services import BaseService
-from superdesk.users.services import UsersService, current_user_has_privilege, is_admin
+from superdesk.users.services import current_user_has_privilege, is_admin
 from superdesk.metadata.item import (
     ITEM_STATE,
     CONTENT_STATE,
@@ -105,14 +101,11 @@ from superdesk.privilege import GLOBAL_SEARCH_PRIVILEGE
 from .archive_media import ArchiveMediaService
 from .usage import track_usage, update_refs
 from .utils import flush_renditions, private_content_filter, remove_is_queued
-from .resource import ArchiveResource, ArchiveVersionsResource
 from superdesk.utc import utcnow
 from superdesk.vocabularies_async.service import is_related_content
 from quart_babel import gettext as _
 from apps.archive.highlights_search_mixin import HighlightsSearchMixin
 
-if TYPE_CHECKING:
-    from apps.macros.macros import MacrosService
 
 EDITOR_KEY_PREFIX = "editor_"
 logger = logging.getLogger(__name__)
@@ -220,12 +213,8 @@ class ArchiveService(AsyncBaseService, HighlightsSearchMixin):
             convert_task_attributes_to_objectId(doc)
             await transtype_metadata(doc)
 
-            # TODO-ASYNC: Enable ``execute_macro`` after this service is upgraded to async
             if doc.get("macro"):  # if there is a macro, execute it
-                macros_service = get_resource_service("macros")
-                assert macros_service is not None
-                macros_service = cast(MacrosService, macros_service)
-                await macros_service.execute_macro(doc, doc["macro"])
+                await get_resource_service("macros").execute_macro(doc, doc["macro"])
 
             # send signal
             # TODO-ASYNC: Convert signals to async
@@ -244,9 +233,7 @@ class ArchiveService(AsyncBaseService, HighlightsSearchMixin):
                 msg = 'added new {{ type }} item about "{{ subject }}"'
             else:
                 msg = "added new {{ type }} item with empty header/title"
-            await add_activity_async(
-                ACTIVITY_CREATE, msg, self.datasource, item=doc, type=doc[ITEM_TYPE], subject=subject
-            )
+            add_activity(ACTIVITY_CREATE, msg, self.datasource, item=doc, type=doc[ITEM_TYPE], subject=subject)
 
             if doc.get("profile"):
                 profiles.add(doc["profile"])
@@ -254,19 +241,15 @@ class ArchiveService(AsyncBaseService, HighlightsSearchMixin):
             # TODO-ASYNC[crop_service]: Convert CropService to async
             self.cropService.update_media_references(doc, {})
             if doc[ITEM_OPERATION] == ITEM_FETCH:
-                app.on_archive_item_updated({"task": doc.get("task")}, doc, ITEM_FETCH)
+                await app.on_archive_item_updated.call_async({"task": doc.get("task")}, doc, ITEM_FETCH)
             else:
-                app.on_archive_item_updated({"task": doc.get("task")}, doc, ITEM_CREATE)
+                await app.on_archive_item_updated.call_async({"task": doc.get("task")}, doc, ITEM_CREATE)
 
             # used by client to detect item type
             doc.setdefault("_type", "archive")
 
-        content_types_service = get_resource_service("content_types")
-        assert content_types_service is not None
-        content_types_service = cast(ContentTypesService, content_types_service)
-        await content_types_service.set_used(profiles)
+        await get_resource_service("content_types").set_used(profiles)
 
-        # FIXME: Do `push_content_notification` needs to be async?
         push_content_notification(docs)
 
     async def set_marked_for_sign_off(self, updates):
@@ -352,7 +335,7 @@ class ArchiveService(AsyncBaseService, HighlightsSearchMixin):
 
             self._set_association_timestamps(item_obj, updates, new=False)
 
-            await stored_item.update(item_obj)
+            stored_item.update(item_obj)
 
             updates[ASSOCIATIONS][item_name] = stored_item
         if body:
@@ -393,7 +376,7 @@ class ArchiveService(AsyncBaseService, HighlightsSearchMixin):
         updated.update(updates)
 
         if VERSION in updates:
-            await add_activity_async(
+            add_activity(
                 ACTIVITY_UPDATE,
                 'created new version {{ version }} for item {{ type }} about "{{ subject }}"',
                 self.datasource,
@@ -408,8 +391,7 @@ class ArchiveService(AsyncBaseService, HighlightsSearchMixin):
         get_resource_service("archive_broadcast").reset_broadcast_status(updates, original)
 
         if updates.get("profile"):
-            content_types_service = ContentTypesService()
-            await content_types_service.set_used([updates.get("profile")])
+            await get_resource_service("content_types").set_used([updates.get("profile")])
 
         # TODO-ASYNC[crop_service]: Convert CropService to async
         self.cropService.update_media_references(updates, original)
@@ -424,7 +406,7 @@ class ArchiveService(AsyncBaseService, HighlightsSearchMixin):
         if lock_user and str(lock_user) != user_id and not force_unlock:
             raise SuperdeskApiError.forbiddenError(_("The item was locked by another user"))
         document["versioncreated"] = utcnow()
-        set_item_expiry(document, original)
+        await set_item_expiry(document, original)
         document["version_creator"] = user_id
         if force_unlock:
             del document["force_unlock"]
@@ -432,8 +414,7 @@ class ArchiveService(AsyncBaseService, HighlightsSearchMixin):
     async def on_replaced_async(self, document, original):
         # TODO-ASYNC[item_autosave]: Convert ItemAutosave to async
         get_component(ItemAutosave).clear(original["_id"])
-        # TODO-ASYNC: Convert add_activity to async
-        await add_activity_async(
+        add_activity(
             ACTIVITY_UPDATE,
             "replaced item {{ type }} about {{ subject }}",
             self.datasource,
@@ -454,7 +435,7 @@ class ArchiveService(AsyncBaseService, HighlightsSearchMixin):
         await remove_media_files(doc, published=False)
         await self._remove_from_translations(doc)
 
-        await add_activity_async(
+        add_activity(
             ACTIVITY_DELETE,
             "removed item {{ type }} about {{ subject }}",
             self.datasource,
@@ -465,7 +446,7 @@ class ArchiveService(AsyncBaseService, HighlightsSearchMixin):
         push_expired_notification([doc.get(ID_FIELD)])
 
         app = get_current_app().as_any()
-        app.on_archive_item_deleted(doc)
+        await app.on_archive_item_deleted.call_async(doc)
 
     async def replace_async(self, id, document, original):
         return await self.restore_version(id, document, original) or super().replace(id, document, original)
@@ -477,13 +458,12 @@ class ArchiveService(AsyncBaseService, HighlightsSearchMixin):
     async def find_one_async(self, req, **lookup):
         item = await super().find_one_async(req, **lookup)
         users_service = get_resource_service("users")
-        assert users_service is not None
-        users_service = cast(UsersService, users_service)
 
-        if item and str(item.get("task", {}).get("stage", "")) in await users_service.get_invisible_stages_ids_async(
-            get_user().get("_id")
-        ):
-            raise SuperdeskApiError.forbiddenError(_("User does not have permissions to read the item."))
+        try:
+            if item["task"]["stage"] in await users_service.get_invisible_stages_ids_async(get_user_id()):
+                raise SuperdeskApiError.forbiddenError(_("User does not have permissions to read the item."))
+        except (KeyError, TypeError):
+            pass
 
         handle_existing_data(item)
         return item
@@ -495,21 +475,13 @@ class ArchiveService(AsyncBaseService, HighlightsSearchMixin):
         if not all([item_id, old_version, last_version]):
             return None
 
-        archive_versions_service = get_resource_service("archive_versions")
-        assert archive_versions_service is not None
-        archive_versions_service = cast(ArchiveVersionsService, archive_versions_service)
-
-        old = await archive_versions_service.find_one_async(
+        old = await get_resource_service("archive_versions").find_one_async(
             req=None, _id_document=item_id, _current_version=old_version
         )
         if old is None:
             raise SuperdeskApiError.notFoundError(_("Invalid version {old_version}").format(old_version=old_version))
 
-        service = get_resource_service(SOURCE)
-        assert service is not None
-        service = cast(AsyncBaseService, service)
-
-        curr = await service.find_one_async(req=None, _id=item_id)
+        curr = await get_resource_service(SOURCE).find_one_async(req=None, _id=item_id)
         if curr is None:
             raise SuperdeskApiError.notFoundError(_("Invalid item id {item_id}").format(item_id=item_id))
 
@@ -583,17 +555,19 @@ class ArchiveService(AsyncBaseService, HighlightsSearchMixin):
         await self._duplicate_history(original_doc["_id"], new_doc)
 
         app = get_current_app().as_any()
-        app.on_archive_item_updated({"duplicate_id": new_doc["guid"]}, original_doc, operation or ITEM_DUPLICATE)
+        await app.on_archive_item_updated.call_async(
+            {"duplicate_id": new_doc["guid"]}, original_doc, operation or ITEM_DUPLICATE
+        )
 
         if original_doc.get("task"):
             # Store the new task details along with this history entry
-            app.on_archive_item_updated(
+            await app.on_archive_item_updated.call_async(
                 {"duplicate_id": original_doc["_id"], "task": original_doc.get("task")},
                 new_doc,
                 operation or ITEM_DUPLICATED_FROM,
             )
         else:
-            app.on_archive_item_updated(
+            await app.on_archive_item_updated.call_async(
                 {"duplicate_id": original_doc["_id"]}, new_doc, operation or ITEM_DUPLICATED_FROM
             )
 
@@ -671,10 +645,9 @@ class ArchiveService(AsyncBaseService, HighlightsSearchMixin):
         resource_def = get_app_config("DOMAIN")["archive"]
         version_id = versioned_id_field(resource_def)
         archive_versions_service = get_resource_service("archive_versions")
-        assert archive_versions_service is not None
-        archive_versions_service = cast(ArchiveVersionsService, archive_versions_service)
-        old_versions_cursor = await archive_versions_service.get_from_mongo_async(req=None, lookup={version_id: old_id})
-        old_versions = await old_versions_cursor.to_list(None)
+        old_versions = await (
+            await archive_versions_service.get_from_mongo_async(req=None, lookup={version_id: old_id})
+        ).to_list()
 
         new_versions = []
         for old_version in old_versions:
@@ -752,7 +725,6 @@ class ArchiveService(AsyncBaseService, HighlightsSearchMixin):
             signals.item_updated.send(self, item=updated, original=original)
 
         if "marked_for_user" in updates:
-            # TODO-ASYNC: check superdesk.tests.markers.requires_eve_resource_async_event
             await self.handle_mark_user_notifications(updates, original)
 
         return result
@@ -780,14 +752,14 @@ class ArchiveService(AsyncBaseService, HighlightsSearchMixin):
         # deschedule scheduled associations
         if get_app_config("PUBLISH_ASSOCIATED_ITEMS"):
             associations = original.get(ASSOCIATIONS) or {}
-            archive_service = ArchiveService()
+            archive_service = get_resource_service("archive")
             for associations_key, associated_item in associations.items():
                 if not associated_item:
                     continue
                 orig_associated_item = await archive_service.find_one_async(req=None, _id=associated_item[ID_FIELD])
                 if orig_associated_item and orig_associated_item.get("state") == CONTENT_STATE.SCHEDULED:
                     # deschedule associated item itself
-                    archive_service.patch(id=associated_item[ID_FIELD], updates={PUBLISH_SCHEDULE: None})
+                    await archive_service.patch_async(id=associated_item[ID_FIELD], updates={PUBLISH_SCHEDULE: None})
                     # update associated item info in the original
                     orig_associated_item = await archive_service.find_one_async(req=None, _id=associated_item[ID_FIELD])
                     orig_associated_item[PUBLISH_SCHEDULE] = None
@@ -808,11 +780,7 @@ class ArchiveService(AsyncBaseService, HighlightsSearchMixin):
 
         if item_location:
             if item_location.get("desk"):
-                # TODO-ASYNC: Convert ``is_member`` to async when upgrading this module
-                user_desks_service = superdesk.get_resource_service("user_desks")
-                assert user_desks_service is not None
-                user_desks_service = cast(UserDesksService, user_desks_service)
-                if not await user_desks_service.is_member(user_id, item_location.get("desk")):
+                if not await get_resource_service("user_desks").is_member(user_id, item_location.get("desk")):
                     return False, "User is not a member of the desk."
             elif item_location.get("user"):
                 if not str(item_location.get("user")) == str(user_id):
@@ -826,10 +794,7 @@ class ArchiveService(AsyncBaseService, HighlightsSearchMixin):
         :param list ids: list of ids to be removed
         """
         version_field = versioned_id_field(get_app_config("DOMAIN")["archive_versions"])
-        archive_versions_service = get_resource_service("archive_versions")
-        assert archive_versions_service is not None
-        archive_versions_service = cast(ArchiveVersionsService, archive_versions_service)
-        await archive_versions_service.delete_action_async(lookup={version_field: {"$in": ids}})
+        await get_resource_service("archive_versions").delete_action_async(lookup={version_field: {"$in": ids}})
         await super().delete_action_async({ID_FIELD: {"$in": ids}})
 
     def _set_association_timestamps(self, assoc_item, updates, new=True):
@@ -1040,7 +1005,7 @@ class ArchiveService(AsyncBaseService, HighlightsSearchMixin):
         update_word_count(updates, original)
         update_version(updates, original)
 
-        set_item_expiry(updates, original)
+        await set_item_expiry(updates, original)
         set_sign_off(updates, original=original)
         set_dateline(updates, original)
 
@@ -1096,8 +1061,7 @@ class ArchiveService(AsyncBaseService, HighlightsSearchMixin):
                 "size": get_app_config("MAX_EXPIRY_QUERY_LIMIT"),
             }
 
-            # TODO-ASYNC[archive-internal]: update following line once ArchiveInternalService is async.
-            items = list(archive_internal_service.search(source))
+            items = await (await archive_internal_service.search_async(source)).to_list()
 
             yield items  # we need to yield the empty list too to signal it's the end
 
@@ -1234,7 +1198,7 @@ class ArchiveService(AsyncBaseService, HighlightsSearchMixin):
             _item = item
             for _i in range(50):
                 if item and item.get("translated_from"):
-                    next_item = await self.find_one_async(req={}, _id=item["translated_from"])
+                    next_item = await self.find_one_async(req=None, _id=item["translated_from"])
                     if not next_item:
                         break
                     item = next_item
@@ -1255,7 +1219,7 @@ class ArchiveService(AsyncBaseService, HighlightsSearchMixin):
 
         for _i in range(50):
             try:
-                item = await self.find_one_async(req={}, _id=item["rewrite_of"])
+                item = await self.find_one_async(req=None, _id=item["rewrite_of"])
                 if not item:
                     break
                 # prepend translations + update
@@ -1299,7 +1263,7 @@ class ArchiveService(AsyncBaseService, HighlightsSearchMixin):
             return translation_items
 
         for translation_item_id in item.get("translations", []):
-            translation_item = await self.find_one_async(req={}, _id=translation_item_id)
+            translation_item = await self.find_one_async(req=None, _id=translation_item_id)
             translation_items.append(translation_item)
             # get a translation of a translation and so on
             translation_items += await self.get_item_translations(translation_item)

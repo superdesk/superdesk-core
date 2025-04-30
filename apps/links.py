@@ -3,7 +3,7 @@ from superdesk.core import json, get_app_config
 from superdesk.flask import request
 from superdesk.resource import build_custom_hateoas
 
-from apps.archive.archive import ArchiveResource, ArchiveService
+from apps.archive import ArchiveResource, ArchiveService
 from apps.archive.common import CUSTOM_HATEOAS
 
 

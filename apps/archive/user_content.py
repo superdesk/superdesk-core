@@ -12,7 +12,7 @@ from superdesk.eve_async.service import AsyncBaseService
 from superdesk.resource import Resource, build_custom_hateoas
 from .common import CUSTOM_HATEOAS
 from superdesk.metadata.utils import aggregations
-from .archive import ArchiveResource
+from .resource import ArchiveResource
 import superdesk
 
 

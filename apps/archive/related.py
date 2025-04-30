@@ -3,7 +3,7 @@ from superdesk.flask import abort, request
 from superdesk.resource import Resource
 from superdesk.metadata.utils import item_url
 from superdesk.metadata.item import CONTENT_STATE
-from .archive import ArchiveResource
+from .resource import ArchiveResource
 
 
 ARCHIVE_DATASOURCE = ArchiveResource.datasource

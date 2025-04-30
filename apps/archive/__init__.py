@@ -18,11 +18,10 @@ import superdesk
 from superdesk.celery_app import celery
 
 from .common import ARCHIVE  # noqa  - fixes circular imports
+from .resource import ArchiveResource, ArchiveVersionsResource
 from .archive import (
     ArchiveInternalResource,
-    ArchiveResource,
     ArchiveService,
-    ArchiveVersionsResource,
     ArchiveVersionsService,
     AutoSaveResource,
     ArchiveSaveService,

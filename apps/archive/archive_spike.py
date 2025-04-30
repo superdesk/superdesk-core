@@ -28,10 +28,20 @@ from superdesk.metadata.item import (
 from superdesk.notification import push_notification
 from superdesk.services import BaseService
 from superdesk.metadata.utils import item_url, generate_guid
-from .common import get_user, get_expiry, item_operations, ITEM_OPERATION, set_sign_off, get_auth
+from .common import (
+    get_user,
+    get_expiry,
+    item_operations,
+    ITEM_OPERATION,
+    set_sign_off,
+    get_auth,
+    ITEM_EVENT_ID,
+    ITEM_UNLINK,
+    clear_rewritten_flag,
+)
 from superdesk.workflow import is_workflow_state_transition_valid
-from apps.archive.archive import ArchiveResource, SOURCE as ARCHIVE
-from apps.archive.common import ITEM_EVENT_ID, ITEM_UNLINK, clear_rewritten_flag
+from .resource import ArchiveResource
+from .archive import SOURCE as ARCHIVE
 from apps.packages import PackageService
 from superdesk.metadata.packages import LINKED_IN_PACKAGES, PACKAGE
 from superdesk.utc import get_expiry_date, utcnow

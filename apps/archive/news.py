@@ -7,8 +7,9 @@ It is an alias for archive without filtering out published items.
 
 
 from superdesk.resource import build_custom_hateoas
-from apps.archive.archive import ArchiveResource, ArchiveService
-from apps.archive.common import CUSTOM_HATEOAS
+from .common import CUSTOM_HATEOAS
+from .resource import ArchiveResource
+from .archive import ArchiveService
 
 
 class NewsResource(ArchiveResource):

@@ -21,7 +21,8 @@ from superdesk.eve_async.service import AsyncBaseService
 from superdesk import get_resource_service
 from superdesk.metadata.item import CONTENT_STATE, ITEM_STATE, get_schema
 from superdesk.metadata.utils import aggregations as common_aggregations, item_url, _set_highlight_query
-from apps.archive.archive import SOURCE as ARCHIVE, ArchiveResource, private_content_filter
+from apps.archive.resource import ArchiveResource
+from apps.archive.archive import SOURCE as ARCHIVE, private_content_filter
 from superdesk.resource import build_custom_hateoas
 from apps.publish.published_item import published_item_fields
 from superdesk import es_utils
