@@ -529,6 +529,7 @@ def remove_media_files(doc, published=False):
                 continue
             media = rendition.get("media") if isinstance(rendition.get("media"), str) else str(rendition.get("media"))
             try:
+                # TODO-ASYNC[MediaReferences] - Change this to use `get_async` when this function is update to async and also where it is referenced
                 references = get_resource_service("media_references").get(
                     req=None, lookup={"media_id": media, "published": True}
                 )
@@ -548,6 +549,7 @@ def remove_media_files(doc, published=False):
 
 
 def remove_media_references(item_id, published):
+    # TODO-ASYNC[MediaReferences] - Change this to use `delete_action_async` and to async when `remove_media_files` is updated to async
     get_resource_service("media_references").delete_action({"item_id": item_id, "published": published})
     get_resource_service("media_references").delete_action({"associated_id": item_id, "published": published})
 

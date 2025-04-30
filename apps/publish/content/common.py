@@ -225,7 +225,7 @@ class BasePublishService(AsyncBaseService):
         await get_resource_service("archive_broadcast").reset_broadcast_status(updates, original)
         push_content_notification([updates])
         await self._import_into_legal_archive(updates)
-        CropService().update_media_references(updates, original, True)
+        await CropService().update_media_references(updates, original, True)
         signals.item_published.send(self, item=original, after_scheduled=False)
         await signals.item_published_async.send(original, False)
 
