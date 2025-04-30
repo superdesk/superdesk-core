@@ -92,12 +92,20 @@ class CorrectedPublishExchangeFilter(ContentPublishExchangeFilter):
                 subscribers_response = PublishRequestResponse()
                 await super().filter_subscribers(subscribers_request, subscribers_response)
 
+                subscribers_yet_to_receive = subscribers_response.subscribers
                 if subscribers_response.subscriber_codes:
                     subscriber_codes.update(subscribers_response.subscriber_codes)
         else:
             logger.info(f"No previous subscribers found for item {request.item_id}")
 
-        response.subscribers = subscribers + subscribers_yet_to_receive
+        response.subscribers = subscribers
+        subscriber_ids = set([subscriber.id for subscriber in subscribers])
+        for subscriber in subscribers_yet_to_receive:
+            if subscriber.id in subscriber_ids:
+                continue
+            response.subscribers.append(subscriber)
+            subscriber_ids.add(subscriber.id)
+
         response.subscriber_codes = subscriber_codes
         response.associations = await self._filter_subscribers_for_associations(
             request, response, previous_associations

@@ -18,12 +18,12 @@ from superdesk.types import (
 )
 
 from superdesk.errors import SuperdeskApiError
-from superdesk.publish_async.publish_cache import PublishCache
 
 from apps.content_filters.filter_condition.filter_condition import FilterCondition
 
 import content_api
 
+from ..publish_cache import PublishCache
 from ..utils import get_codes, is_doc_targeted
 
 

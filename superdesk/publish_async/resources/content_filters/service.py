@@ -9,8 +9,7 @@ from superdesk.core.resources import AsyncResourceService
 from superdesk import get_resource_service
 from superdesk.types import ContentFiltersResource, SubscribersResource, ProductsResource
 from superdesk.errors import SuperdeskApiError
-
-from .utils import _get_content_filters_by_content_filter
+from superdesk.publish_async.utils.content_filters import _get_content_filters_by_content_filter
 
 
 logger = logging.getLogger(__name__)

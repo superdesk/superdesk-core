@@ -18,7 +18,11 @@ users_resource_config = ResourceConfig(
                 keys=[("username", 1)],
                 unique=True,
             ),
-            MongoIndexOptions(name="first_name_1_last_name_-1", keys=[("first_name", 1), ("last_name", -1)]),
+            MongoIndexOptions(
+                name="first_name_1_last_name_-1",
+                keys=[("first_name", 1), ("last_name", -1)],
+                unique=False,
+            ),
         ]
     ),
 )

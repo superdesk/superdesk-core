@@ -3,9 +3,9 @@ from superdesk.core.resources.resource_rest_endpoints import RestEndpointConfig
 from superdesk.core.auth.privilege_rules import http_method_privilege_based_rules
 
 from superdesk.types import SubscribersResource
+from superdesk.publish_async.utils.subscribers import SUBSCRIBER_REST_PROJECTION
 from .service import SubscribersService
 from .rest_api import SubscriberRestEndpoints
-from .utils import SUBSCRIBER_REST_PROJECTION
 
 
 subscribers_resource_config = ResourceConfig(

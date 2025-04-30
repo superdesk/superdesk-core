@@ -1,4 +1,4 @@
-from typing import cast
+from typing import cast, Any
 from typing_extensions import Self
 from asyncio import gather
 
@@ -32,6 +32,9 @@ class PublishCache:
     #: Cache used to store the result of content filtering
     filter_result_cache: dict[str, bool]
 
+    #: Cache for generic use, such as product test results
+    cache: dict[str, Any]
+
     #: List of ContentFilters that have ``is_global == True``
     global_content_filters: list[ContentFiltersResource]
 
@@ -55,7 +58,7 @@ class PublishCache:
 
         self.content_types = {
             str(content_type["_id"]): content_type
-            async for content_type in get_resource_service("content_types").get_all_async()
+            async for content_type in await get_resource_service("content_types").get_all_async()
         }
 
         self.global_content_filters = [
@@ -63,6 +66,7 @@ class PublishCache:
         ]
 
         self.filter_result_cache = {}
+        self.cache = {}
         self.global_filter_matches = {}
 
     @classmethod
@@ -104,7 +108,7 @@ class PublishCache:
             raise RuntimeError("PublishCache must be initted first, `await PublishCache.init()`")
 
     @classmethod
-    def generate_cache_id(cls, prefix: str, context_id: str, item_id: str) -> str:
+    def generate_cache_id(cls, prefix: str, context_id: str | ObjectId, item_id: str | ObjectId) -> str:
         """
         Generates a unique cache identifier based on provided inputs.
 
@@ -119,4 +123,4 @@ class PublishCache:
         :return: A concatenated string serving as the unique cache identifier, consisting
             of the prefix, context ID, and item identifier.
         """
-        return "-".join([prefix, str(context_id), item_id])
+        return "-".join([str(prefix), str(context_id), str(item_id)])

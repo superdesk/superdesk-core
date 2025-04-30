@@ -1,7 +1,7 @@
-import superdesk
 from superdesk.metadata.item import CONTENT_TYPE, ITEM_TYPE
 from superdesk.publish.formatters import Formatter
 from superdesk.errors import FormatterError
+from superdesk.publish_async.utils import generate_sequence_number
 
 from .package import Converter
 
@@ -25,9 +25,7 @@ class IDMLFormatter(Formatter):
 
     async def format(self, article: dict, subscriber: dict, codes: list | None = None) -> list[tuple[int, str] | dict]:
         try:
-            publish_seq_num = await superdesk.get_resource_service("subscribers").generate_sequence_number_async(
-                subscriber
-            )
+            publish_seq_num = await generate_sequence_number(subscriber)
             idml_bytes = Converter().create_idml(article)
         except Exception as e:
             raise FormatterError.IDMLFormatterError(e, subscriber)

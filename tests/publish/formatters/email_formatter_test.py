@@ -9,19 +9,17 @@
 # at https://www.sourcefabric.org/superdesk/license
 import json
 import datetime
-from unittest import mock
 
-from superdesk.publish import init_app
 from superdesk.publish.formatters.email_formatter import EmailFormatter
-from superdesk.tests import TestCase
+from superdesk.tests import TestCase, fixtures
 from superdesk.utc import utc
 
 
-@mock.patch("superdesk.publish.subscribers.SubscribersService.generate_sequence_number", lambda self, subscriber: 1)
 class EmailFormatterTest(TestCase):
     async def asyncSetUp(self):
         await super().asyncSetUp()
         self.formatter = EmailFormatter()
+        self.subscriber = fixtures.subscribers.sub1_subscriber().to_dict()
 
     async def test_formatter(self):
         article = {
@@ -47,7 +45,7 @@ class EmailFormatterTest(TestCase):
         article["versioncreated"] = datetime.datetime(
             year=2015, month=1, day=30, hour=2, minute=40, second=56, tzinfo=utc
         )
-        seq, doc = (await self.formatter.format(article, {"name": "Test Subscriber"}))[0]
+        seq, doc = (await self.formatter.format(article, self.subscriber))[0]
         item = json.loads(doc)
         self.assertEqual(item["message_subject"], "This is a test headline")
         self.assertEqual(
@@ -91,7 +89,7 @@ class EmailFormatterTest(TestCase):
         article["versioncreated"] = datetime.datetime(
             year=2015, month=1, day=30, hour=2, minute=40, second=56, tzinfo=utc
         )
-        seq, doc = (await self.formatter.format(article, {"name": "Test Subscriber"}))[0]
+        seq, doc = (await self.formatter.format(article, self.subscriber))[0]
         item = json.loads(doc)
         self.assertEqual(item["message_subject"], "This is a test headline")
         self.assertEqual(item["message_html"], None)
@@ -119,7 +117,7 @@ class EmailFormatterTest(TestCase):
         article["versioncreated"] = datetime.datetime(
             year=2015, month=1, day=30, hour=2, minute=40, second=56, tzinfo=utc
         )
-        seq, doc = (await self.formatter.format(article, {"name": "Test Subscriber"}))[0]
+        seq, doc = (await self.formatter.format(article, self.subscriber))[0]
         item = json.loads(doc)
         self.assertEqual(item["message_subject"], "This is a test headline")
         self.assertEqual(
@@ -164,7 +162,7 @@ class EmailFormatterTest(TestCase):
         article["versioncreated"] = datetime.datetime(
             year=2015, month=1, day=30, hour=2, minute=40, second=56, tzinfo=utc
         )
-        seq, doc = (await self.formatter.format(article, {"name": "Test Subscriber"}))[0]
+        seq, doc = (await self.formatter.format(article, self.subscriber))[0]
         item = json.loads(doc)
         self.assertEqual(item["message_subject"], "This is a test headline")
         self.assertEqual(
@@ -209,7 +207,7 @@ class EmailFormatterTest(TestCase):
         article["versioncreated"] = datetime.datetime(
             year=2015, month=1, day=30, hour=2, minute=40, second=56, tzinfo=utc
         )
-        seq, doc = (await self.formatter.format(article, {"name": "Test Subscriber"}))[0]
+        seq, doc = (await self.formatter.format(article, self.subscriber))[0]
         item = json.loads(doc)
         self.assertEqual(item["message_subject"], "This is a test headline")
         self.assertEqual(
@@ -231,7 +229,7 @@ class EmailFormatterTest(TestCase):
 
     async def test_subject_cyrilic(self):
         article = {"headline": "Неправильная музыка Джамала Али"}
-        seq, doc = (await self.formatter.format(article, {"name": "Test"}))[0]
+        seq, doc = (await self.formatter.format(article, self.subscriber))[0]
         item = json.loads(doc)
         self.assertEqual(article["headline"], item["message_subject"])
 
@@ -256,7 +254,7 @@ class EmailFormatterTest(TestCase):
         article["versioncreated"] = datetime.datetime(
             year=2017, month=2, day=24, hour=16, minute=40, second=56, tzinfo=utc
         )
-        seq, doc = (await self.formatter.format(article, {"name": "Test Subscriber"}))[0]
+        seq, doc = (await self.formatter.format(article, self.subscriber))[0]
 
         item = json.loads(doc)
         self.assertEqual(
@@ -273,7 +271,7 @@ class EmailFormatterTest(TestCase):
         SDESK-836 regression test
         """
         article = {"format": "HTML", "type": "text", "body_html": "<p>some HTML</p>"}
-        _, doc = (await self.formatter.format(article, {"name": "Test Subscriber"}))[0]
+        _, doc = (await self.formatter.format(article, self.subscriber))[0]
         item = json.loads(doc)
         self.assertIsNotNone(item["message_html"])
 
@@ -309,7 +307,7 @@ class EmailFormatterTest(TestCase):
         article["versioncreated"] = datetime.datetime(
             year=2017, month=2, day=24, hour=16, minute=40, second=56, tzinfo=utc
         )
-        seq, doc = (await self.formatter.format(article, {"name": "Test Subscriber"}))[0]
+        seq, doc = (await self.formatter.format(article, self.subscriber))[0]
         item = json.loads(doc)
         self.assertEqual(item["renditions"]["viewImage"]["media"], "5c11ece81d41c89113ed202b")
 
@@ -330,7 +328,7 @@ class EmailFormatterTest(TestCase):
         article["versioncreated"] = datetime.datetime(
             year=2017, month=2, day=24, hour=16, minute=40, second=56, tzinfo=utc
         )
-        seq, doc = (await self.formatter.format(article, {"name": "Test Subscriber"}))[0]
+        seq, doc = (await self.formatter.format(article, self.subscriber))[0]
 
         item = json.loads(doc)
         self.assertIn("<p>abcdefghijklmnopqrstuvwxyz</p>\r\n", item.get("message_html"))
@@ -417,6 +415,6 @@ class EmailFormatterTest(TestCase):
             "format": "HTML",
             "guid": "urn:newsml:localhost:2023-05-10T14:28:37.121795:62fc7a2b-a69a-4c47-8540-49c075a4d62c",
         }
-        seq, doc = (await self.formatter.format(article, {"name": "Test Subscriber"}))[0]
+        seq, doc = (await self.formatter.format(article, self.subscriber))[0]
         self.assertNotIn("EMBED", doc)
         self.assertNotIn("<audio", doc)

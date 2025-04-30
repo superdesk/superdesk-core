@@ -19,13 +19,12 @@ from typing import Any, NamedTuple, Dict, List, Callable, Union, TypedDict
 
 from bson import ObjectId
 
-from superdesk import get_backend
-
 logger = logging.getLogger(__name__)
 
 registered_transmitters = {}
 transmitter_errors = {}
 registered_transmitters_list = []
+PUBLISHED_IN_PACKAGE = "published_in_package"
 
 
 class TransmitterFileEntry(TypedDict):
@@ -73,11 +72,6 @@ def register_transmitter_file_provider(provider: TransmitterFileProvider):
     registered_transmitter_file_providers.append(provider)
 
 
-# must be imported for registration
-from superdesk.publish.subscribers import SubscribersResource, SubscribersService  # NOQA
-from superdesk.publish.publish_queue import PublishQueueResource, PublishQueueService  # NOQA
-
-
 def init_app(app) -> None:
     # XXX: we need to do imports for transmitters and formatters here
     #      so classes creation is done after PublishService is set
@@ -85,14 +79,6 @@ def init_app(app) -> None:
     #      is implemented in Superdesk
     import superdesk.publish.transmitters  # NOQA
     import superdesk.publish.formatters  # NOQA
-
-    endpoint_name = "subscribers"
-    service: Any = SubscribersService(endpoint_name, backend=get_backend())
-    SubscribersResource(endpoint_name, app=app, service=service)
-
-    endpoint_name = "publish_queue"
-    service = PublishQueueService(endpoint_name, backend=get_backend())
-    PublishQueueResource(endpoint_name, app=app, service=service)
 
     app.client_config.update(
         {

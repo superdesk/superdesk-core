@@ -52,14 +52,12 @@ async def ingest_items_for(desk, no_of_stories, skip_index):
     for x in range(0, no_of_buckets):
         skip = x * bucket_size * skip_index
         logger.info("Page : {}, skip: {}".format(x + 1, skip))
-        cursor = get_resource_service("published").get_from_mongo(None, {})
-        cursor.skip(skip)
-        cursor.limit(bucket_size)
-        items = list(cursor)
-        logger.info("Inserting {} items".format(len(items)))
+        cursor = await get_resource_service("published").get_from_mongo_async(None, {})
+        num_items = await cursor.count()
+        logger.info("Inserting {} items".format(len(num_items)))
         archive_items = []
 
-        for item in items:
+        async for item in cursor.skip(skip).limit(bucket_size):
             dest_doc = dict(item)
             new_id = generate_guid(type=GUID_TAG)
             dest_doc[ID_FIELD] = new_id

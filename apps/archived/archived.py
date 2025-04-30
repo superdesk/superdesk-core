@@ -20,7 +20,7 @@ from superdesk.resource_fields import ID_FIELD, VERSION, ETAG, LAST_UPDATED
 from apps.legal_archive.commands import import_into_legal_archive
 from apps.legal_archive.resource import LEGAL_PUBLISH_QUEUE_NAME
 from apps.publish.content.common import ITEM_KILL
-from apps.publish.enqueue import get_enqueue_service
+
 from apps.publish.published_item import published_item_fields, QUEUE_STATE, PUBLISH_STATE, get_content_filter
 from apps.packages import PackageService
 from superdesk import get_resource_service
@@ -264,10 +264,11 @@ class ArchivedService(BaseService):
             )
 
             if transmission_details:
-                # TODO-ASYNC: Use new publishing system
-                get_enqueue_service(updates.get(ITEM_OPERATION, ITEM_KILL)).enqueue_archived_kill_item(
-                    article, transmission_details
-                )
+                pass
+                # TODO-ASYNC[publish]: Use new publishing system
+                # get_enqueue_service(updates.get(ITEM_OPERATION, ITEM_KILL)).enqueue_archived_kill_item(
+                #     article, transmission_details
+                # )
 
             article[ID_FIELD] = article.pop("item_id", article["item_id"])
 
@@ -281,6 +282,7 @@ class ArchivedService(BaseService):
             insert_into_versions(doc=article)
             published_doc = deepcopy(article)
             published_doc[QUEUE_STATE] = PUBLISH_STATE.QUEUED
+            # TODO-ASYNC[published]: Use `await service.post_async` when updating this module
             get_resource_service("published").post([published_doc])
             logger.info("Insert into archive and published for article: {}".format(article[ID_FIELD]))
 

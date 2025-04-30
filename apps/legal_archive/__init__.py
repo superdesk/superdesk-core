@@ -70,10 +70,10 @@ def init_app(app) -> None:
 
 
 @celery.task(soft_time_limit=300)
-def import_legal_publish_queue():
-    ImportLegalPublishQueueCommand().run()
+async def import_legal_publish_queue():
+    await ImportLegalPublishQueueCommand().run()
 
 
 @celery.task(soft_time_limit=1800)
-def import_legal_archive():
-    ImportLegalArchiveCommand().run()
+async def import_legal_archive():
+    await ImportLegalArchiveCommand().run()

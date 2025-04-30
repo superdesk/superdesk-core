@@ -68,7 +68,6 @@ class CreateUserCommandTestCase(TestCase):
         found_user = users_service.find_one(req=None, username="invalid_unknown_role")
         self.assertIsNone(found_user)
 
-    @markers.requires_async_celery
     async def test_import_users_csv(self):
         """users:import is working with CSV files"""
         roles = [
@@ -113,7 +112,6 @@ class CreateUserCommandTestCase(TestCase):
             await cmd.run(None, import_file)
             assert len(outbox) == 0
 
-    @markers.requires_eve_resource_async_event
     async def test_import_users_activation_email(self):
         """users:import sends activation link"""
         roles = [

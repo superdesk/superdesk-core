@@ -18,7 +18,8 @@ from eve.utils import ParsedRequest
 
 from apps.archive.common import insert_into_versions, ARCHIVE
 from superdesk import get_resource_service
-from superdesk.tests import TestCase, markers
+from superdesk.types import PublishQueueResource
+from superdesk.tests import TestCase, markers, utils as test_utils
 from superdesk.utc import utcnow
 from apps.legal_archive.commands import LegalArchiveImport
 
@@ -35,9 +36,9 @@ class LegalArchiveTestCase(TestCase):
 
     async def asyncSetUp(self):
         await super().asyncSetUp()
-        self.app.data.insert("desks", self.desks)
-        self.app.data.insert("users", self.users)
-        self.app.data.insert("stages", self.stages)
+        await test_utils.post_items("desks", self.desks)
+        await test_utils.post_items("users", self.users)
+        await test_utils.post_items("stages", self.stages)
 
     async def test_denormalize_desk_user(self):
         LegalArchiveImport()._denormalize_user_desk(self.archive[0], "")
@@ -73,8 +74,8 @@ class ImportLegalArchiveCommandTestCase(TestCase):
             self.fail("Could not import class under test (ImportLegalArchiveCommand).")
         else:
             self.class_under_test = ImportLegalArchiveCommand
-            self.app.data.insert("desks", self.desks)
-            self.app.data.insert("users", self.users)
+            await test_utils.post_items("desks", self.desks)
+            await test_utils.post_items("users", self.users)
             self.validators = [
                 {"schema": {}, "type": "text", "act": "publish", "_id": "publish_text"},
                 {"schema": {}, "type": "text", "act": "correct", "_id": "correct_text"},
@@ -105,9 +106,9 @@ class ImportLegalArchiveCommandTestCase(TestCase):
                     ],
                 }
             ]
-            self.app.data.insert("validators", self.validators)
-            self.app.data.insert("products", self.products)
-            self.app.data.insert("subscribers", self.subscribers)
+            await test_utils.post_items("validators", self.validators)
+            await test_utils.post_items("products", self.products)
+            await test_utils.post_items("subscribers", self.subscribers)
             self.class_under_test = ImportLegalArchiveCommand
             self.archive_items = [
                 {
@@ -157,7 +158,7 @@ class ImportLegalArchiveCommandTestCase(TestCase):
         legal_archive = get_resource_service("legal_archive")
         archive = get_resource_service("archive_publish")
         published = get_resource_service("published")
-        publish_queue = get_resource_service("publish_queue")
+        publish_queue = PublishQueueResource.get_service()
 
         self.original_method = LegalArchiveImport.upsert_into_legal_archive
         LegalArchiveImport.upsert_into_legal_archive = MagicMock()
@@ -181,7 +182,7 @@ class ImportLegalArchiveCommandTestCase(TestCase):
         archive_correct.patch(self.archive_items[1]["_id"], {"headline": "correcting", "abstract": "correcting"})
 
         LegalArchiveImport.upsert_into_legal_archive = self.original_method
-        self.class_under_test().run(1)
+        await self.class_under_test().run(1)
 
         # items are not expired
         for item in self.archive_items:
@@ -192,10 +193,10 @@ class ImportLegalArchiveCommandTestCase(TestCase):
         for item in self.archive_items:
             original = archive.find_one(req=None, _id=item["_id"])
             archive.system_update(item["_id"], {"expiry": utcnow() - timedelta(minutes=30)}, original)
-            published.update_published_items(item["_id"], "expiry", utcnow() - timedelta(minutes=30))
+            await published.update_published_items(item["_id"], "expiry", utcnow() - timedelta(minutes=30))
 
         # run the command after expiry
-        self.class_under_test().run(1)
+        await self.class_under_test().run(1)
 
         # items are expired
         for item in self.archive_items:
@@ -204,7 +205,7 @@ class ImportLegalArchiveCommandTestCase(TestCase):
 
         # items are moved to legal
         for item in self.archive_items:
-            published_items = list(published.get_other_published_items(item["_id"]))
+            published_items = await (await published.get_other_published_items(item["_id"])).to_list()
             for published_item in published_items:
                 self.assertEqual(published_item["moved_to_legal"], True)
 
@@ -212,7 +213,7 @@ class ImportLegalArchiveCommandTestCase(TestCase):
         for item in self.archive_items:
             req = ParsedRequest()
             req.where = json.dumps({"item_id": item["_id"]})
-            queue_items = list(publish_queue.get(req=req, lookup=None))
-            self.assertGreaterEqual(len(queue_items), 1)
-            for queue_item in queue_items:
-                self.assertEqual(queue_item["moved_to_legal"], True)
+            cursor = await publish_queue.search({"item_id": item["_id"]})
+            self.assertGreaterEqual(await cursor.count(), 1)
+            async for queue_item in cursor:
+                self.assertEqual(queue_item.moved_to_legal, True)

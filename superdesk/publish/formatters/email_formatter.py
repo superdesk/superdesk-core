@@ -10,7 +10,6 @@
 
 import json
 from typing import Any
-import superdesk
 
 from superdesk.publish.formatters import Formatter
 from superdesk.metadata.item import ITEM_TYPE, CONTENT_TYPE, FORMAT, FORMATS
@@ -19,6 +18,7 @@ from superdesk.flask import render_template
 from superdesk.errors import FormatterError
 from superdesk import etree as sd_etree
 from superdesk.editor_utils import remove_all_embeds
+from superdesk.publish_async.utils import generate_sequence_number
 
 
 class EmailFormatter(Formatter):
@@ -59,7 +59,7 @@ class EmailFormatter(Formatter):
     async def format(self, article: dict, subscriber: dict, codes: list | None = None) -> list[tuple[int, str] | dict]:  # type: ignore
         formatted_article = deepcopy(article)
         remove_all_embeds(formatted_article)
-        pub_seq_num = await superdesk.get_resource_service("subscribers").generate_sequence_number_async(subscriber)
+        pub_seq_num = await generate_sequence_number(subscriber)
         doc: dict[str, Any] = {}
         try:
             if formatted_article.get(FORMAT) == FORMATS.HTML:

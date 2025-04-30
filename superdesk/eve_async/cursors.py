@@ -1,4 +1,5 @@
 from typing import TYPE_CHECKING
+from typing_extensions import Self
 
 from pymongo.cursor_shared import _Hint as MongoCursorHint
 from motor.motor_asyncio import AsyncIOMotorCursor
@@ -28,10 +29,12 @@ class AsyncListCursor:
     """Wrapper for a python list as a cursor."""
 
     _index: int
+    _limit: int
     docs: list[dict]
 
     def __init__(self, docs: list[dict] | None = None):
         self._index = 0
+        self._limit = -1
         self.docs = docs or []
 
     def __aiter__(self):
@@ -44,6 +47,9 @@ class AsyncListCursor:
         raise StopAsyncIteration
 
     async def next(self) -> dict | None:
+        if self._index >= self._limit:
+            return None
+
         try:
             doc = self.docs[self._index]
             self._index += 1
@@ -53,6 +59,8 @@ class AsyncListCursor:
             return None
 
     async def to_list(self, length: int | None = None) -> list[dict]:
+        if length is None and self._limit >= 0:
+            length = self._limit
         return self.docs if length is None else self.docs[:length]
 
     def rewind(self) -> None:
@@ -65,6 +73,14 @@ class AsyncListCursor:
 
     def extra(self, response) -> None:
         pass
+
+    def skip(self, skip: int) -> Self:
+        self._index += skip
+        return self
+
+    def limit(self, limit: int) -> Self:
+        self._limit = limit
+        return self
 
 
 class ElasticAsyncEveCursor(AsyncListCursor):

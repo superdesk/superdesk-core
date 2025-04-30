@@ -12,14 +12,14 @@ import json
 from unittest import mock
 from datetime import timedelta
 
-from superdesk.tests import TestCase
+from superdesk.tests import TestCase, utils as test_utils, fixtures
 from superdesk.publish.formatters.ninjs_ftp_formatter import FTPNinjsFormatter
 from superdesk.editor_utils import Editor3Content
 from superdesk.publish import init_app
 from superdesk.utc import utcnow
 
 
-@mock.patch("superdesk.publish.subscribers.SubscribersService.generate_sequence_number", lambda self, subscriber: 1)
+# @mock.patch("superdesk.publish.subscribers.SubscribersService.generate_sequence_number", lambda self, subscriber: 1)
 class FTPNinjsFormatterTest(TestCase):
     async def asyncSetUp(self):
         await super().asyncSetUp()
@@ -29,7 +29,7 @@ class FTPNinjsFormatterTest(TestCase):
         self.app.config["EMBED_PRODUCT_FILTERING"] = True
 
     async def test_picture_formatter(self):
-        self.app.data.insert(
+        await test_utils.post_items(
             "vocabularies",
             [
                 {
@@ -120,7 +120,7 @@ class FTPNinjsFormatterTest(TestCase):
         self.assertNotIn("viewImage", json.loads(doc).get("renditions"))
 
     async def test_picture_formatter_with_original(self):
-        self.app.data.insert(
+        await test_utils.post_items(
             "vocabularies",
             [
                 {
@@ -217,15 +217,15 @@ class FTPNinjsFormatterTest(TestCase):
         self.assertNotIn("viewImage", json.loads(doc).get("renditions"))
 
     async def test_embedded_image(self):
-        self.app.data.insert(
+        await test_utils.post_items(
             "filter_conditions",
             [{"_id": 1, "field": "type", "operator": "eq", "value": "picture", "name": "Picture fc"}],
         )
-        self.app.data.insert(
+        await test_utils.post_items(
             "content_filters",
             [{"_id": 3, "content_filter": [{"expression": {"fc": [1]}}], "name": "Picture cf"}],
         )
-        self.app.data.insert(
+        await test_utils.post_items(
             "products",
             [
                 {
@@ -236,7 +236,7 @@ class FTPNinjsFormatterTest(TestCase):
                 }
             ],
         )
-        self.app.data.insert(
+        await test_utils.post_items(
             "vocabularies",
             [
                 {
@@ -431,7 +431,7 @@ class FTPNinjsFormatterTest(TestCase):
         self.assertEqual(expected, json.loads(doc))
 
     async def test_embedded_image_rendition_set(self):
-        self.app.data.insert(
+        await test_utils.post_items(
             "vocabularies",
             [
                 {
@@ -443,14 +443,14 @@ class FTPNinjsFormatterTest(TestCase):
                 }
             ],
         )
-        self.app.data.insert(
+        await test_utils.post_items(
             "filter_conditions",
             [
                 {"_id": 1, "field": "type", "operator": "eq", "value": "picture", "name": "Picture fc"},
                 {"_id": 2, "field": "type", "operator": "eq", "value": "video", "name": "Video fc"},
             ],
         )
-        self.app.data.insert(
+        await test_utils.post_items(
             "content_filters",
             [
                 {
@@ -460,7 +460,7 @@ class FTPNinjsFormatterTest(TestCase):
                 }
             ],
         )
-        self.app.data.insert(
+        await test_utils.post_items(
             "products",
             [
                 {
@@ -610,15 +610,15 @@ class FTPNinjsFormatterTest(TestCase):
         self.assertEqual(expected, json.loads(doc))
 
     async def test_product_match(self):
-        self.app.data.insert(
+        await test_utils.post_items(
             "filter_conditions",
             [{"_id": 1, "field": "type", "operator": "eq", "value": "video", "name": "ALL Video fc"}],
         )
-        self.app.data.insert(
+        await test_utils.post_items(
             "content_filters",
             [{"_id": 3, "content_filter": [{"expression": {"fc": [1]}}], "name": "All Video cf"}],
         )
-        self.app.data.insert(
+        await test_utils.post_items(
             "products",
             [
                 {
@@ -629,7 +629,7 @@ class FTPNinjsFormatterTest(TestCase):
                 }
             ],
         )
-        self.app.data.insert(
+        await test_utils.post_items(
             "vocabularies",
             [
                 {

@@ -8,36 +8,21 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
-import superdesk
-from superdesk.tests import TestCase
-from superdesk.publish import init_app, SUBSCRIBER_TYPES
+from bson import ObjectId
+
+from superdesk.core import json
+from superdesk.publish import init_app
 from superdesk.publish.transmitters.odbc import ODBCPublishService
+from superdesk.tests import TestCase, utils as test_utils, fixtures
 
 
 class ODBCTests(TestCase):
-    subscribers = [
-        {
-            "_id": "1",
-            "name": "Test",
-            "subscriber_type": SUBSCRIBER_TYPES.WIRE,
-            "media_type": "media",
-            "is_active": True,
-            "sequence_num_settings": {"max": 10, "min": 1},
-            "critical_errors": {"9004": True},
-            "destinations": [
-                {
-                    "name": "AAP IPNEWS",
-                    "delivery_type": "odbc",
-                    "format": "AAP IPNEWS",
-                    "config": {"stored_procedure": "InsertNews"},
-                }
-            ],
-        }
-    ]
+    products = fixtures.products.all_products()
+    subscribers = fixtures.subscribers.all_subscribers()
 
     queue_items = [
         {
-            "_id": "1",
+            "_id": ObjectId(),
             "state": "pending",
             "content_type": "text",
             "headline": "test",
@@ -50,31 +35,33 @@ class ODBCTests(TestCase):
                 "format": "AAP IPNEWS",
                 "config": {"stored_procedure": "InsertNews"},
             },
-            "formatted_item": {
-                "ident": "0",
-                "selector_codes": "3**",
-                "wordcount": 313,
-                "texttab": "x",
-                "originator": "AAP",
-                "service_level": "a",
-                "keyword": "ROSS",
-                "subject": "crime, law and justice",
-                "category": "a",
-                "take_key": "Take-that",
-                "subject_detail": "international court or tribunal",
-                "subject_reference": "02011001",
-                "article_text": "THIS IS A TEST PLEASE IGNORE",
-                "priority": "u",
-                "headline": "TEST HEADLINE",
-                "usn": 68147,
-                "subject_matter": "international law",
-                "sequence": 117,
-                "news_item_type": "News",
-                "author": "",
-                "genre": "Current",
-                "fullStory": 1,
-            },
-            "subscriber_id": "1",
+            "formatted_item": json.dumps(
+                {
+                    "ident": "0",
+                    "selector_codes": "3**",
+                    "wordcount": 313,
+                    "texttab": "x",
+                    "originator": "AAP",
+                    "service_level": "a",
+                    "keyword": "ROSS",
+                    "subject": "crime, law and justice",
+                    "category": "a",
+                    "take_key": "Take-that",
+                    "subject_detail": "international court or tribunal",
+                    "subject_reference": "02011001",
+                    "article_text": "THIS IS A TEST PLEASE IGNORE",
+                    "priority": "u",
+                    "headline": "TEST HEADLINE",
+                    "usn": 68147,
+                    "subject_matter": "international law",
+                    "sequence": 117,
+                    "news_item_type": "News",
+                    "author": "",
+                    "genre": "Current",
+                    "fullStory": 1,
+                }
+            ),
+            "subscriber_id": fixtures.subscribers.SUB1_ID,
             "item_id": "1",
             "item_version": 6,
         }
@@ -82,20 +69,19 @@ class ODBCTests(TestCase):
 
     async def asyncSetUp(self):
         await super().asyncSetUp()
-        self.subscribers[0]["destinations"][0]["config"]["connection_string"] = self.app.config[
-            "ODBC_TEST_CONNECTION_STRING"
-        ]
-        self.app.data.insert("subscribers", self.subscribers)
+        await test_utils.post_items("products", self.products)
+        self.subscribers[0].destinations[0].config["connection_string"] = self.app.config["ODBC_TEST_CONNECTION_STRING"]
+        await test_utils.post_items("subscribers", self.subscribers)
 
         self.queue_items[0]["destination"]["config"]["connection_string"] = self.app.config[
             "ODBC_TEST_CONNECTION_STRING"
         ]
-        self.app.data.insert("publish_queue", self.queue_items)
+        await test_utils.post_items("publish_queue", self.queue_items)
         init_app(self.app)
 
-    def test_transmit(self):
+    async def test_transmit(self):
         if self.app.config["ODBC_PUBLISH"]:
-            subscriber = self.app.data.find("subscribers", None, None)[0]
+            subscriber = list(await test_utils.find_many("subscribers"))[0]
 
             publish_service = ODBCPublishService()
             ret = publish_service._transmit(self.queue_items[0], subscriber)
