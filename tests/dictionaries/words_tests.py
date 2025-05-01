@@ -34,10 +34,10 @@ class WordsTestCase(TestCase):
         self.assertIsNone(DictionaryService().get_base_language("en"))
 
     async def test_get_dictionary(self):
-        dicts = get_resource_service("dictionaries").get_dictionaries("en")
+        dicts = await get_resource_service("dictionaries").get_dictionaries("en")
         self.assertEqual(len(dicts), 1)
         self.assertEqual(dicts[0]["language_id"], "en")
-        dicts = get_resource_service("dictionaries").get_dictionaries("en-AU")
+        dicts = await get_resource_service("dictionaries").get_dictionaries("en-AU")
         self.assertEqual(len(dicts), 1)
         self.assertEqual(dicts[0]["language_id"], "en-AU")
 

@@ -11,6 +11,7 @@
 import logging
 from typing import Any
 import superdesk
+from superdesk.eve_async.service import AsyncBaseService
 from superdesk.resource import Resource
 from superdesk.services import BaseService
 from superdesk.errors import SuperdeskApiError
@@ -58,7 +59,7 @@ class SpellcheckerResource(Resource):
     projection = False
 
 
-class SpellcheckerService(BaseService):
+class SpellcheckerService(AsyncBaseService):
     r"""Service managing spellchecking and suggestions.
 
     When doing a POST request on this service, the following keys can be used (keys with a \* are required):
@@ -96,7 +97,7 @@ class SpellcheckerService(BaseService):
 
     """
 
-    def remove_errors_in_dict(self, spellchecker, language, check_data):
+    async def remove_errors_in_dict(self, spellchecker, language, check_data):
         """Remove spelling error which are in the internal dictionary
 
         :param SpellcheckerBase: spellchecker used
@@ -111,7 +112,7 @@ class SpellcheckerService(BaseService):
             return
         lang = spellchecker.get_language(language)
         dictionaries_service = superdesk.get_resource_service("dictionaries")
-        model = dictionaries_service.get_model_for_lang(lang)
+        model = await dictionaries_service.get_model_for_lang(lang)
         to_remove = []
         for error in errors:
             if error.get("type", "spelling") != "spelling":
@@ -133,7 +134,7 @@ class SpellcheckerService(BaseService):
         for error in to_remove:
             errors.remove(error)
 
-    def create(self, docs, **kwargs):
+    async def create_async(self, docs: list[dict], **kwargs) -> list:
         # we override create because we don't want anything stored in database
         doc = docs[0]
         sc_name = doc["spellchecker"]
@@ -150,7 +151,7 @@ class SpellcheckerService(BaseService):
             check_data = spellchecker.check(doc["text"], language)
             assert "errors" in check_data
             if doc["use_internal_dict"]:
-                self.remove_errors_in_dict(spellchecker, language, check_data)
+                await self.remove_errors_in_dict(spellchecker, language, check_data)
             ignore = doc.get("ignore")
             if ignore:
                 self.remove_ignored(check_data, ignore)
@@ -162,10 +163,10 @@ class SpellcheckersListResource(Resource):
     pass
 
 
-class SpellcheckersListService(BaseService):
+class SpellcheckersListService(AsyncBaseService):
     """Service listing registered spell checkers"""
 
-    def on_fetched(self, doc):
+    async def on_fetched_async(self, doc: dict) -> None:
         doc["spellcheckers"] = [s.serialize() for s in registered_spellcheckers.values()]
 
 

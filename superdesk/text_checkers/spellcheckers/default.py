@@ -36,6 +36,7 @@ class Default(SpellcheckerBase):
         if language is None:
             raise SuperdeskApiError.badRequestError("missing language for default spellchecker")
         dictionaries_service = superdesk.get_resource_service("dictionaries")
+        # TODO-ASYNC[DictionaryService] - Update this to use async `get_model_for_lang` when upgrading the module
         model = dictionaries_service.get_model_for_lang(language)
         err_list = []
         check_data = {"errors": err_list}
@@ -54,6 +55,7 @@ class Default(SpellcheckerBase):
         if language is None:
             raise SuperdeskApiError.badRequestError("missing language for default spellchecker")
         spellcheck_service = superdesk.get_resource_service("spellcheck")
+        # TODO-ASYNC[SpellcheckService] - Update this to use async `suggest` when upgrading the module
         suggestions = spellcheck_service.suggest(text, language)
         return {"suggestions": self.list2suggestions(suggestions)}
 
