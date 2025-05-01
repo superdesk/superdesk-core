@@ -212,7 +212,7 @@ class ContentPublishExchange(BasicPublishExchange):
         # update archive history
         app = get_current_app().as_any()
 
-        app.on_archive_item_updated(item_updates, archive_item, ITEM_PUBLISH)
+        await app.on_archive_item_updated.call_async(item_updates, archive_item, ITEM_PUBLISH)
         # import to legal archive
         await import_into_legal_archive.apply_async(countdown=3, kwargs={"item_id": item_id})
         logger.info(f"Modified the version of scheduled item: {published_item_id}")

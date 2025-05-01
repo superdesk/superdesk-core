@@ -15,16 +15,25 @@ class DataLayer:
     def etag(self, doc):
         raise NotImplementedError()
 
-    def find_one(self, resource, filter, projection, options):
+    def find_one(self, resource, filter, projection, **options):
+        raise NotImplementedError()
+
+    async def find_one_async(self, resource, filter, projection, **options):
         raise NotImplementedError()
 
     def find(self, resource, filter, projection, options):
+        raise NotImplementedError()
+
+    async def find_async(self, resource, filter, projection, options):
         raise NotImplementedError()
 
     def create(self, resource, docs):
         raise NotImplementedError()
 
     def update(self, resource, filter, doc):
+        raise NotImplementedError()
+
+    async def update_async(self, resource, filter, doc):
         raise NotImplementedError()
 
     def replace(self, resource, filter, doc):

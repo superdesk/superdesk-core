@@ -95,7 +95,7 @@ class CorrectPublishService(BasePublishService):
     async def change_being_corrected_to_published(self, updates, original):
         if get_app_config("CORRECTIONS_WORKFLOW") and original.get("state") == "correction":
             publish_service = get_resource_service("published")
-            being_corrected_article = publish_service.find_one(
+            being_corrected_article = await publish_service.find_one_async(
                 req=None, guid=original.get("guid"), state="being_corrected"
             )
 

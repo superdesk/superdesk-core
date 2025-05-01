@@ -13,7 +13,7 @@ from superdesk.resource import Resource, build_custom_hateoas
 from superdesk.metadata.item import get_schema
 from superdesk.metadata.utils import item_url
 from .common import get_user, get_auth, CUSTOM_HATEOAS
-from superdesk.services import BaseService
+from superdesk.eve_async import AsyncBaseService
 from apps.common.components.utils import get_component
 from apps.item_lock.components.item_lock import ItemLock
 
@@ -40,13 +40,13 @@ class ArchiveLockResource(Resource):
     privileges = {"POST": "archive"}
 
 
-class ArchiveLockService(BaseService):
-    def create(self, docs, **kwargs):
+class ArchiveLockService(AsyncBaseService):
+    async def create_async(self, docs, **kwargs):
         user = get_user(required=True)
         auth = get_auth()
         item_id = request.view_args["item_id"]
         lock_action = docs[0].get("lock_action", "edit")
-        item = get_component(ItemLock).lock({"_id": item_id}, user["_id"], auth["_id"], lock_action)
+        item = await get_component(ItemLock).lock({"_id": item_id}, user["_id"], auth["_id"], lock_action)
         return _update_returned_document(docs[0], item)
 
 
@@ -59,12 +59,12 @@ class ArchiveUnlockResource(Resource):
     resource_title = endpoint_name
 
 
-class ArchiveUnlockService(BaseService):
-    def create(self, docs, **kwargs):
+class ArchiveUnlockService(AsyncBaseService):
+    async def create_async(self, docs, **kwargs):
         user = get_user(required=True)
         auth = get_auth()
         item_id = request.view_args["item_id"]
-        item = get_component(ItemLock).unlock({"_id": item_id}, user["_id"], auth["_id"], None)
+        item = await get_component(ItemLock).unlock({"_id": item_id}, user["_id"], auth["_id"], None)
 
         if item is None:
             # version 1 item must have been deleted by now

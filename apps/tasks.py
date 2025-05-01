@@ -34,7 +34,7 @@ from apps.archive.common import (
     item_operations,
     ITEM_OPERATION,
     update_version,
-    insert_into_versions,
+    insert_into_versions_async,
     is_assigned_to_a_desk,
     convert_task_attributes_to_objectId,
     on_create_item,
@@ -211,7 +211,7 @@ class TasksService(AsyncBaseService):
     async def get_async(self, req, lookup):
         if req is None:
             req = ParsedRequest()
-        return self.backend.get_async("tasks", req=req, lookup=lookup)
+        return await self.backend.get_async("tasks", req=req, lookup=lookup)
 
     def update_times(self, doc):
         task = doc.get("task", {})
@@ -254,18 +254,18 @@ class TasksService(AsyncBaseService):
         await send_to(doc=doc, desk_id=desk_id, stage_id=stage_id)
 
     async def on_create_async(self, docs):
-        on_create_item(docs)
+        await on_create_item(docs)
         for doc in docs:
             resolve_document_version(doc, ARCHIVE, "POST")
             self.update_times(doc)
             await self.update_stage(doc)
             convert_task_attributes_to_objectId(doc)
 
-    def on_created(self, docs):
+    async def on_created_async(self, docs):
         push_notification(self.datasource, created=1)
         push_notification("task:new")
         for doc in docs:
-            insert_into_versions(doc["_id"])
+            await insert_into_versions_async(doc["_id"])
             if is_assigned_to_a_desk(doc):
                 add_activity(
                     ACTIVITY_CREATE,
@@ -276,7 +276,7 @@ class TasksService(AsyncBaseService):
                     type=doc[ITEM_TYPE],
                 )
 
-    def on_update(self, updates, original):
+    async def on_update(self, updates, original):
         convert_task_attributes_to_objectId(updates)
         update_version(updates, original)
 
@@ -292,11 +292,11 @@ class TasksService(AsyncBaseService):
             await send_to(doc=original, update=updates, desk_id=None, stage_id=new_stage_id, user_id=new_user_id)
             resolve_document_version(updates, ARCHIVE, "PATCH", original)
 
-    def on_updated(self, updates, original):
+    async def on_updated_async(self, updates, original):
         updated = copy(original)
         updated.update(updates)
         if self._stage_changed(updates, original):
-            insert_into_versions(doc=updated)
+            await insert_into_versions_async(doc=updated)
         new_task = updates.get("task", {})
         old_task = original.get("task", {})
         if new_task.get("stage") != old_task.get("stage"):
@@ -312,7 +312,7 @@ class TasksService(AsyncBaseService):
 
         if is_assigned_to_a_desk(updated):
             if self.__is_content_assigned_to_new_desk(original, updates) and not self._stage_changed(updates, original):
-                insert_into_versions(doc=updated)
+                await insert_into_versions_async(doc=updated)
             add_activity(
                 ACTIVITY_UPDATE,
                 "updated task {{ subject }} for item {{ type }}",
@@ -325,9 +325,9 @@ class TasksService(AsyncBaseService):
     def on_deleted(self, doc):
         push_notification(self.datasource, deleted=1)
 
-    def assign_user(self, item_id, updates):
+    async def assign_user(self, item_id, updates):
         # Only used by ItemLock component, keep sync for now
-        return self.patch(item_id, updates)
+        return await self.patch_async(item_id, updates)
 
     def _stage_changed(self, updates, original):
         new_stage_id = str(updates.get("task", {}).get("stage", ""))

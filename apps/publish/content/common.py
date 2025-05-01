@@ -666,7 +666,7 @@ class BasePublishService(AsyncBaseService):
         self.backend.update(self.datasource, original[ID_FIELD], updates, original)
 
         app = get_current_app().as_any()
-        app.on_archive_item_updated(updates, original, updates[ITEM_OPERATION])
+        await app.on_archive_item_updated.call_async(updates, original, updates[ITEM_OPERATION])
 
         if should_insert_into_versions:
             if versioned_doc is None:

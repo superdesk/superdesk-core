@@ -70,7 +70,7 @@ def get_mongo_uri(key, dbname):
     return "/".join([env_host, dbname])
 
 
-def update_config(conf, auto_add_apps: bool = True, include_planning: bool = False):
+def update_config(conf, auto_add_apps: bool = True, include_planning: bool = True):
     conf["ELASTICSEARCH_INDEX"] = "sptest"
     conf["MONGO_DBNAME"] = "sptests"
     conf["MONGO_URI"] = get_mongo_uri("MONGO_URI", "sptests")

@@ -338,11 +338,9 @@ class PublishedItemService(AsyncBaseService, HighlightsSearchMixin):
         return doc and "rewritten_by" in doc and doc["rewritten_by"]
 
     async def update_published_items(self, item_id: str, field: str | dict, state: Any | None = None):
-        print(f"Updating publish items for {item_id}")
         items = await self.get_other_published_items(item_id)
         updates = field if isinstance(field, dict) else {field: state}
         async for item in items:
-            print("Updating published item")
             try:
                 await super().system_update_async(ObjectId(item[ID_FIELD]), updates, item)
             except Exception:

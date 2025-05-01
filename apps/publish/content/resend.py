@@ -95,7 +95,7 @@ class ResendService(AsyncBaseService):
             raise SuperdeskApiError.badRequestError(message=_("Failed to route item to publish queue!"))
 
         app = get_current_app().as_any()
-        app.on_archive_item_updated({"subscribers": doc.get("subscribers")}, article, ITEM_RESEND)
+        await app.on_archive_item_updated.call_async({"subscribers": doc.get("subscribers")}, article, ITEM_RESEND)
         signals.item_resent.send(self, item=article)
         return [article_id]
 

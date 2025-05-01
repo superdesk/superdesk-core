@@ -413,7 +413,7 @@ class PackageService:
         await archive_service.patch_async(package[ID_FIELD], updates)
 
         app = get_current_app().as_any()
-        app.on_archive_item_updated(updates, package, ITEM_UNLINK)
+        await app.on_archive_item_updated.call_async(updates, package, ITEM_UNLINK)
         await insert_into_versions_async(id_=package[ID_FIELD])
 
         sub_package_ids.append(package[ID_FIELD])

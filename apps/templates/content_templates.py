@@ -560,7 +560,7 @@ async def render_content_template(item, template, update=False):
                 continue
 
             if top and key == "extra":
-                updates[key] = render_content_template_fields(value, top=False)
+                updates[key] = await render_content_template_fields(value, top=False)
                 if update:
                     item.setdefault(key, {}).update(updates[key])
             elif isinstance(value, str):
