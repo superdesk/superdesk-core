@@ -15,7 +15,9 @@ from unittest.mock import MagicMock
 
 import magic
 import requests_mock
-from werkzeug.datastructures import FileStorage
+
+# from werkzeug.datastructures import FileStorage
+from quart.datastructures import FileStorage
 
 import superdesk
 from superdesk.resource_fields import ID_FIELD
@@ -63,7 +65,8 @@ class VideoEditTestCase(TestCase):
             archive_service = superdesk.get_resource_service("archive")
             magic.from_buffer = MagicMock()
             magic.from_buffer.return_value = "video/mp4"
-            self.item = archive_service.find_one(req=None, _id=archive_service.post([doc])[0])
+            item_id = (await archive_service.post_async([doc]))[0]
+            self.item = await archive_service.find_one_async(req=None, _id=item_id)
 
     async def test_get_video(self):
         with requests_mock.mock() as mock:
@@ -103,7 +106,7 @@ class VideoEditTestCase(TestCase):
             mock.get("http://localhost/projects/video_id", json=project_data)
             mock.post("http://localhost/projects/video_id/duplicate", json=project_data)
             mock.put("http://localhost/projects/video_id", json={"processing": True})
-            created_item = await self.video_edit.create_async([doc])[0]
+            created_item = (await self.video_edit.create_async([doc]))[0]
             item = await self.video_edit.find_one_async(req=None, _id=created_item)
             self.assertEqual(
                 item["renditions"],
@@ -137,7 +140,7 @@ class VideoEditTestCase(TestCase):
                 "http://localhost/projects/video_id/thumbnails?type=preview&crop=0,0,200,500&rotate=-90",
                 json=project_data,
             )
-            created_item = await self.video_edit.create_async([doc])[0]
+            created_item = (await self.video_edit.create_async([doc]))[0]
             item = await self.video_edit.find_one_async(req=None, _id=created_item)
             self.assertEqual(
                 item["renditions"],

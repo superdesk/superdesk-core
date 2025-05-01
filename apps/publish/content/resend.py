@@ -120,7 +120,7 @@ class ResendService(AsyncBaseService):
         return subscribers
 
     async def _validate_article(self, article_id, article_version):
-        article = get_resource_service(ARCHIVE).find_one(req=None, _id=article_id)
+        article = await get_resource_service(ARCHIVE).find_one_async(req=None, _id=article_id)
 
         if get_app_config("CORRECTIONS_WORKFLOW") and article.get(ITEM_STATE) == "correction":
             publish_service = get_resource_service("published")

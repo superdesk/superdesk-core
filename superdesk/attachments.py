@@ -48,7 +48,7 @@ class AttachmentsService(AsyncBaseService):
 
             # If a `media` argument is passed into the request url then use that as the id for the media item
             # This is so that SAMS client can manually create this link between SAMS and the article
-            if request.args.get("media"):
+            if request and request.args.get("media"):
                 doc["media"] = request.args["media"]
 
             if doc.get("media"):
@@ -58,7 +58,7 @@ class AttachmentsService(AsyncBaseService):
                 doc.setdefault("length", getattr(media, "length"))
 
     async def on_deleted_async(self, doc):
-        get_current_app().media.delete(doc["media"], RESOURCE)
+        await get_current_app().media.delete_async(doc["media"], RESOURCE)
 
 
 # TODO-ASYNC[attachments]: Convert this to async when possible (used by ContentAPI publish function)

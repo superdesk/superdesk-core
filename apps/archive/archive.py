@@ -707,10 +707,7 @@ class ArchiveService(AsyncBaseService, HighlightsSearchMixin):
 
         # send signal
         # TODO-ASYNC: Support async signals
-        superdesk_testing = get_app_config("SUPERDESK_TESTING", False)
-        if not superdesk_testing:
-            # TODO-ASYNC: Convert signals.item_update.send to async
-            signals.item_update.send(self, updates=updates, original=original)
+        signals.item_update.send(self, updates=updates, original=original)
 
         result = await super().update_async(id, updates, original)
 
@@ -718,8 +715,7 @@ class ArchiveService(AsyncBaseService, HighlightsSearchMixin):
         updated.update(updates)
 
         # TODO-ASYNC: Support async signals
-        if not superdesk_testing:
-            signals.item_updated.send(self, item=updated, original=original)
+        signals.item_updated.send(self, item=updated, original=original)
 
         if "marked_for_user" in updates:
             await self.handle_mark_user_notifications(updates, original)

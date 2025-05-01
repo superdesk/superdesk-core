@@ -20,7 +20,7 @@ from apps.archive.usage import update_refs
 from apps.archive.archive import SOURCE as ARCHIVE
 from apps.content import push_item_move_notification
 from superdesk.metadata.utils import item_url
-from apps.archive.common import insert_into_versions, fetch_item
+from apps.archive.common import insert_into_versions_async, fetch_item
 from superdesk.metadata.item import INGEST_ID, INGEST_VERSION, FAMILY_ID, ITEM_STATE, CONTENT_STATE, GUID_FIELD
 from superdesk.errors import SuperdeskApiError, InvalidStateTransitionError
 from superdesk.resource import Resource, build_custom_hateoas
@@ -110,15 +110,14 @@ class FetchService(AsyncBaseService):
 
             await self.__fetch_associated_items(dest_doc, desk_id, stage_id, doc.get(ITEM_STATE, CONTENT_STATE.FETCHED))
 
-            # TODO-ASYNC[desks]: Use DesksResourceModel async service where when upgrading this module
-            desk = get_resource_service("desks").find_one(req=None, _id=desk_id)
+            desk = await get_resource_service("desks").find_one_async(req=None, _id=desk_id)
             if desk and desk.get("default_content_profile") and dest_doc.get("type") not in MEDIA_TYPES:
                 dest_doc["profile"] = desk["default_content_profile"]
 
-            update_refs(dest_doc, {})
+            await update_refs(dest_doc, {})
 
-            get_resource_service(ARCHIVE).post([dest_doc])
-            insert_into_versions(doc=dest_doc)
+            await get_resource_service(ARCHIVE).post_async([dest_doc])
+            await insert_into_versions_async(doc=dest_doc)
             build_custom_hateoas(custom_hateoas, dest_doc)
             superdesk.item_fetched.send(self, item=dest_doc, ingest_item=ingest_doc)
             doc.update(dest_doc)

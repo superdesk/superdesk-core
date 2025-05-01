@@ -33,7 +33,7 @@ from apps.content_types import apply_schema
 from quart_babel import lazy_gettext
 
 
-def internal_destination_auto_publish(item, **kwargs):
+async def internal_destination_auto_publish(item, **kwargs):
     """Auto publish the item using internal destination
 
     :param dict item: item to be published
@@ -56,16 +56,16 @@ def internal_destination_auto_publish(item, **kwargs):
         {"$and": [{PROCESSED_FROM: item.get(ID_FIELD)}, {"task.desk": str(item.get("task").get("desk"))}]}
     )
     req.max_results = 1
-    overwrite_item = next((archive_service.get_from_mongo(req=req, lookup=None)), None)
+    overwrite_item = await (await archive_service.get_from_mongo(req=req, lookup=None)).next()
 
     # keep pubslish_schedule and schedule_settings in updates so that state can be set to scheduled
     updates = {PUBLISH_SCHEDULE: item[PUBLISH_SCHEDULE], SCHEDULE_SETTINGS: item[SCHEDULE_SETTINGS]}
     if item.get(ITEM_STATE) == CONTENT_STATE.PUBLISHED or not overwrite_item:
-        new_id = archive_service.duplicate_content(item, state="routed", extra_fields=extra_fields)
+        new_id = await archive_service.duplicate_content(item, state="routed", extra_fields=extra_fields)
         updates[ITEM_STATE] = item.get(ITEM_STATE)
         updates[PROCESSED_FROM] = item[ID_FIELD]
 
-        get_resource_service("archive_publish").patch(id=new_id, updates=updates)
+        await get_resource_service("archive_publish").patch_async(id=new_id, updates=updates)
     else:
         if overwrite_item:
             # get the schema fields
@@ -82,7 +82,7 @@ def internal_destination_auto_publish(item, **kwargs):
                 }
             )
 
-            archive_action_service.patch(id=overwrite_item[ID_FIELD], updates=updates)
+            await archive_action_service.patch_async(id=overwrite_item[ID_FIELD], updates=updates)
 
     # raise stop duplication on successful completion so that
     # internal destination superdesk.internal_destination.handle_item_published

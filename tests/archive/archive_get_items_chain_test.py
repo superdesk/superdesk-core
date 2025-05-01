@@ -11,7 +11,7 @@
 import datetime
 
 import superdesk
-from superdesk.tests import TestCase
+from superdesk.tests import TestCase, utils as test_utils
 
 
 class ArchiveGetItemsChainTestCase(TestCase):
@@ -232,37 +232,37 @@ class ArchiveGetItemsChainTestCase(TestCase):
 
     async def asyncSetUp(self):
         await super().asyncSetUp()
-        self.app.data.insert("archive", self.archive)
+        await test_utils.post_items("archive", self.archive, use_eve=True)
 
     async def test_get_items_chain(self):
         archive_service = superdesk.get_resource_service("archive")
 
         original = self.archive[0]
-        items = archive_service.get_items_chain(original)
+        items = await archive_service.get_items_chain(original)
         self.assertListEqual(
             [i["_id"] for i in items], ["original", "original-translation-fr", "original-translation-nl"]
         )
 
         original_translation_fr = self.archive[1]
-        items = archive_service.get_items_chain(original_translation_fr)
+        items = await archive_service.get_items_chain(original_translation_fr)
         self.assertListEqual(
             [i["_id"] for i in items], ["original", "original-translation-fr", "original-translation-nl"]
         )
 
         original_translation_nl = self.archive[2]
-        items = archive_service.get_items_chain(original_translation_nl)
+        items = await archive_service.get_items_chain(original_translation_nl)
         self.assertListEqual(
             [i["_id"] for i in items], ["original", "original-translation-fr", "original-translation-nl"]
         )
 
         update_1 = self.archive[3]
-        items = archive_service.get_items_chain(update_1)
+        items = await archive_service.get_items_chain(update_1)
         self.assertListEqual(
             [i["_id"] for i in items], ["original", "original-translation-fr", "original-translation-nl", "update-1"]
         )
 
         update_2 = self.archive[4]
-        items = archive_service.get_items_chain(update_2)
+        items = await archive_service.get_items_chain(update_2)
         self.assertListEqual(
             [i["_id"] for i in items],
             [
@@ -277,7 +277,7 @@ class ArchiveGetItemsChainTestCase(TestCase):
         )
 
         update_2_translation_fr = self.archive[5]
-        items = archive_service.get_items_chain(update_2_translation_fr)
+        items = await archive_service.get_items_chain(update_2_translation_fr)
         self.assertListEqual(
             [i["_id"] for i in items],
             [
@@ -292,7 +292,7 @@ class ArchiveGetItemsChainTestCase(TestCase):
         )
 
         update_2_translation_fr_nl = self.archive[6]
-        items = archive_service.get_items_chain(update_2_translation_fr_nl)
+        items = await archive_service.get_items_chain(update_2_translation_fr_nl)
         self.assertListEqual(
             [i["_id"] for i in items],
             [
@@ -307,7 +307,7 @@ class ArchiveGetItemsChainTestCase(TestCase):
         )
 
         update_2_translation_fr_nl_update = self.archive[7]
-        items = archive_service.get_items_chain(update_2_translation_fr_nl_update)
+        items = await archive_service.get_items_chain(update_2_translation_fr_nl_update)
         self.assertListEqual(
             [i["_id"] for i in items],
             [
@@ -323,7 +323,7 @@ class ArchiveGetItemsChainTestCase(TestCase):
         )
 
         update_2_translation_fr_nl_update_2 = self.archive[8]
-        items = archive_service.get_items_chain(update_2_translation_fr_nl_update_2)
+        items = await archive_service.get_items_chain(update_2_translation_fr_nl_update_2)
         self.assertListEqual(
             [i["_id"] for i in items],
             [
@@ -341,5 +341,5 @@ class ArchiveGetItemsChainTestCase(TestCase):
 
         spiked = self.archive[-1]
         assert spiked
-        items = archive_service.get_items_chain(spiked)
+        items = await archive_service.get_items_chain(spiked)
         self.assertListEqual([i["_id"] for i in items], ["spiked-1"])

@@ -26,7 +26,7 @@ from superdesk.metadata.item import (
     CONTENT_STATE,
 )
 from superdesk.notification import push_notification
-from superdesk.services import BaseService
+from superdesk.eve_async import AsyncBaseService
 from superdesk.metadata.utils import item_url, generate_guid
 from .common import (
     get_user,
@@ -88,15 +88,15 @@ class ArchiveUnspikeResource(ArchiveResource):
     privileges = {"PATCH": "unspike"}
 
 
-class ArchiveSpikeService(BaseService):
-    def on_update(self, updates, original):
+class ArchiveSpikeService(AsyncBaseService):
+    async def on_update_async(self, updates, original):
         updates[ITEM_OPERATION] = ITEM_SPIKE
         updates["versioncreated"] = utcnow()
-        self._validate_item(original)
-        self.update_rewrite(original)
+        await self._validate_item(original)
+        await self.update_rewrite(original)
         set_sign_off(updates, original=original)
 
-    def _validate_item(self, original):
+    async def _validate_item(self, original):
         """Validates that an item can be deleted.
 
         Raises an exception if the item is linked in a package, the idea being that you don't want to
@@ -108,18 +108,17 @@ class ArchiveSpikeService(BaseService):
         packages = [x.get(PACKAGE) for x in original.get(LINKED_IN_PACKAGES, [])]
         if packages:
             query = {"$and": [{ID_FIELD: {"$in": packages}}]}
-            cursor = get_resource_service(ARCHIVE).get_from_mongo(req=None, lookup=query)
-            if cursor.count() > 0:
+            cursor = await get_resource_service(ARCHIVE).get_from_mongo_async(req=None, lookup=query)
+            if await cursor.count() > 0:
                 raise SuperdeskApiError.badRequestError(
                     message=_('The item "{slugline}" is in a package').format(slugline=original.get("slugline", ""))
                     + _(" it needs to be removed before the item can be spiked")
                 )
 
-    def update_rewrite(self, original):
+    async def update_rewrite(self, original):
         """Removes the reference from the rewritten story in published collection."""
         if original.get("rewrite_of") and original.get(ITEM_EVENT_ID):
-            # TODO-ASYNC[published]: Add `await` prefix when updating this module
-            clear_rewritten_flag(original.get(ITEM_EVENT_ID), original[ID_FIELD], "rewritten_by")
+            await clear_rewritten_flag(original.get(ITEM_EVENT_ID), original[ID_FIELD], "rewritten_by")
 
         # write the rewritten_by to the story before spiked
         archive_service = get_resource_service(ARCHIVE)
@@ -128,19 +127,23 @@ class ArchiveSpikeService(BaseService):
             # you are spike the story from which the rewrite was triggered.
             # in this case both rewrite_of and rewritten_by are published.
             rewrite_id = original.get("rewritten_by")
-            rewritten_by = archive_service.find_one(req=None, _id=rewrite_id)
-            archive_service.system_update(rewrite_id, {"rewrite_of": None, "rewrite_sequence": 0}, rewritten_by)
+            rewritten_by = await archive_service.find_one_async(req=None, _id=rewrite_id)
+            await archive_service.system_update_async(
+                rewrite_id, {"rewrite_of": None, "rewrite_sequence": 0}, rewritten_by
+            )
             app = get_current_app().as_any()
-            app.on_archive_item_updated({"rewrite_of": None, "rewrite_sequence": 0}, original, ITEM_UNLINK)
+            await app.on_archive_item_updated.call_async(
+                {"rewrite_of": None, "rewrite_sequence": 0}, original, ITEM_UNLINK
+            )
 
-    def _removed_refs_from_package(self, item):
+    async def _removed_refs_from_package(self, item):
         """Remove reference from the package of the spiked item.
 
         :param item:
         """
-        PackageService().remove_spiked_refs_from_package(item)
+        await PackageService().remove_spiked_refs_from_package_async(item)
 
-    def _get_spike_expiry(self, desk_id, stage_id):
+    async def _get_spike_expiry(self, desk_id, stage_id):
         """Get spike expiry.
 
         If there is a SPIKE_EXPIRY_MINUTES setting then that is used to set the spike expiry.
@@ -151,24 +154,23 @@ class ArchiveSpikeService(BaseService):
         """
         # If no maximum spike expiry is set then return the desk/stage values
         if get_app_config("SPIKE_EXPIRY_MINUTES") is None:
-            return get_expiry(desk_id=desk_id, stage_id=stage_id)
+            return await get_expiry(desk_id=desk_id, stage_id=stage_id)
         else:
             return get_expiry_date(get_app_config("SPIKE_EXPIRY_MINUTES"))
 
-    def update(self, id, updates, original):
+    async def update_async(self, id, updates, original):
         original_state = original[ITEM_STATE]
         if not is_workflow_state_transition_valid(ITEM_SPIKE, original_state):
             raise InvalidStateTransitionError()
 
         archive_service = get_resource_service(ARCHIVE)
-        # TODO-ASYNC[published]: Use async methods from ``published_service`` when updating this module
         published_service = get_resource_service("published")
 
         user = get_user(required=True)
-        item = archive_service.find_one(req=None, _id=id)
+        item = await archive_service.find_one_async(req=None, _id=id)
         task = item.get("task", {})
 
-        updates[EXPIRY] = self._get_spike_expiry(desk_id=task.get("desk"), stage_id=task.get("stage"))
+        updates[EXPIRY] = await self._get_spike_expiry(desk_id=task.get("desk"), stage_id=task.get("stage"))
         updates[REVERT_STATE] = item.get(ITEM_STATE, None)
 
         if original.get("rewrite_of"):
@@ -198,18 +200,17 @@ class ArchiveSpikeService(BaseService):
 
             # Remove the translated item from the list of translations in the original item
             # where orignal item can be in archive or in both archive and published resource as well
-            translated_from = archive_service.find_one(req=None, _id=original.get("translated_from"))
+            translated_from = await archive_service.find_one_async(req=None, _id=original.get("translated_from"))
             translated_from_id = translated_from.get(ID_FIELD)
-            self._remove_translations(archive_service, translated_from, id_to_remove)
+            await self._remove_translations(archive_service, translated_from, id_to_remove)
 
             if translated_from.get("state") in PUBLISH_STATES:
-                published_items = list(
-                    published_service.get_from_mongo(req=None, lookup={"item_id": translated_from_id})
+                published_items = await published_service.get_from_mongo_async(
+                    req=None, lookup={"item_id": translated_from_id}
                 )
 
-                if published_items:
-                    for item in published_items:
-                        self._remove_translations(published_service, item, id_to_remove)
+                async for item in published_items:
+                    await self._remove_translations(published_service, item, id_to_remove)
 
         # remove any relation with linked items
         updates[ITEM_EVENT_ID] = generate_guid(type=GUID_TAG)
@@ -227,14 +228,14 @@ class ArchiveSpikeService(BaseService):
             package_service = PackageService()
             items = package_service.get_item_refs(original)
             for item in items:
-                package_item = archive_service.find_one(req=None, _id=item[GUID_FIELD])
+                package_item = await archive_service.find_one_async(req=None, _id=item[GUID_FIELD])
                 if package_item:
                     linked_in_packages = [
                         linked
                         for linked in package_item.get(LINKED_IN_PACKAGES, [])
                         if linked.get(PACKAGE) != original.get(ID_FIELD)
                     ]
-                    super().system_update(
+                    await super().system_update_async(
                         package_item[ID_FIELD], {LINKED_IN_PACKAGES: linked_in_packages}, package_item
                     )
 
@@ -243,19 +244,19 @@ class ArchiveSpikeService(BaseService):
             # and remove all the items from the package
             updates["groups"] = []
 
-        item = self.backend.update(self.datasource, id, updates, original)
+        item = await super().update_async(id, updates, original)
         push_notification("item:spike", item=str(id), user=str(user.get(ID_FIELD)))
 
         history_updates = dict(updates)
         if original.get("task"):
             history_updates["task"] = original.get("task")
         app = get_current_app().as_any()
-        app.on_archive_item_updated(history_updates, original, ITEM_SPIKE)
-        self._removed_refs_from_package(id)
+        await app.on_archive_item_updated.call_async(history_updates, original, ITEM_SPIKE)
+        await self._removed_refs_from_package(id)
         return item
 
-    def on_updated(self, updates, original):
-        get_resource_service("archive_broadcast").spike_item(original)
+    async def on_updated_async(self, updates, original):
+        await get_resource_service("archive_broadcast").spike_item(original)
 
         if original.get("lock_user"):
             user = get_user()
@@ -264,9 +265,9 @@ class ArchiveSpikeService(BaseService):
 
         if updates.get("previous_marked_user") and not updates.get("marked_for_user"):
             # send notification so that marked for me list can be updated
-            get_resource_service("archive").handle_mark_user_notifications(updates, original, False)
+            await get_resource_service("archive").handle_mark_user_notifications(updates, original, False)
 
-    def _remove_translations(self, service, article, id_to_remove):
+    async def _remove_translations(self, service, article, id_to_remove):
         """Upadte translation info for the original article in archive or published resource.
         :param service: service for resource endpoint
         :param article: article to be updated
@@ -284,11 +285,11 @@ class ArchiveSpikeService(BaseService):
             updates = {"translations": translations}
             if not translations:
                 updates.update({"translation_id": None})
-            service.system_update(article_id, updates, article)
+            await service.system_update_async(article_id, updates, article)
 
 
-class ArchiveUnspikeService(BaseService):
-    def set_unspike_updates(self, doc, updates):
+class ArchiveUnspikeService(AsyncBaseService):
+    async def set_unspike_updates(self, doc, updates):
         """Generate changes for a given doc to unspike it.
 
         :param doc: document to unspike
@@ -312,24 +313,24 @@ class ArchiveUnspikeService(BaseService):
             stage_id = None
 
         if not stage_id and desk_id:  # get incoming stage for selected desk
-            desk = get_current_app().data.find_one("desks", None, _id=desk_id)
+            desk = await get_resource_service("desks").find_one_async(req=None, _id=desk_id)
             stage_id = desk["incoming_stage"] if desk else stage_id
 
         updates["task"] = {"desk": desk_id, "stage": stage_id, "user": None}
 
-        updates[EXPIRY] = get_expiry(desk_id=desk_id, stage_id=stage_id)
+        updates[EXPIRY] = await get_expiry(desk_id=desk_id, stage_id=stage_id)
 
         if doc[ITEM_TYPE] == CONTENT_TYPE.COMPOSITE and doc.get(DELETED_GROUPS, None):
             updates[GROUPS] = doc[DELETED_GROUPS]
             updates[DELETED_GROUPS] = []
 
-    def on_updated(self, updates, original):
+    async def on_updated_async(self, updates, original):
         if original[ITEM_TYPE] == CONTENT_TYPE.COMPOSITE and updates.get(GROUPS, None):
             # restore the deleted items from package
             package_service = PackageService()
             items = package_service.get_item_refs(updates)
             for item in items:
-                package_item = get_resource_service(ARCHIVE).find_one(req=None, _id=item[GUID_FIELD])
+                package_item = await get_resource_service(ARCHIVE).find_one_async(req=None, _id=item[GUID_FIELD])
                 if package_item:
                     linked_in_packages = [
                         linked
@@ -337,31 +338,31 @@ class ArchiveUnspikeService(BaseService):
                         if linked.get(PACKAGE) != original.get(ID_FIELD)
                     ]
                     linked_in_packages.append({PACKAGE: original.get(ID_FIELD)})
-                    super().system_update(
+                    await super().system_update_async(
                         package_item[ID_FIELD], {LINKED_IN_PACKAGES: linked_in_packages}, package_item
                     )
 
-    def on_update(self, updates, original):
+    async def on_update_async(self, updates, original):
         updates[ITEM_OPERATION] = ITEM_UNSPIKE
         updates["versioncreated"] = utcnow()
         updates[ITEM_STATE] = original.get(REVERT_STATE)
         set_sign_off(updates, original=original)
 
-    def update(self, id, updates, original):
+    async def update_async(self, id, updates, original):
         original_state = original[ITEM_STATE]
         if not is_workflow_state_transition_valid(ITEM_UNSPIKE, original_state):
             raise InvalidStateTransitionError()
 
         user = get_user(required=True)
-        item = get_resource_service(ARCHIVE).find_one(req=None, _id=id)
+        item = await get_resource_service(ARCHIVE).find_one_async(req=None, _id=id)
 
-        self.set_unspike_updates(item, updates)
-        self.backend.update(self.datasource, id, updates, original)
+        await self.set_unspike_updates(item, updates)
+        await super().update_async(id, updates, original)
 
-        item = get_resource_service(ARCHIVE).find_one(req=None, _id=id)
+        item = await get_resource_service(ARCHIVE).find_one_async(req=None, _id=id)
         push_notification("item:unspike", item=str(id), user=str(user.get(ID_FIELD)))
         app = get_current_app().as_any()
-        app.on_archive_item_updated(updates, original, ITEM_UNSPIKE)
+        await app.on_archive_item_updated.call_async(updates, original, ITEM_UNSPIKE)
 
         return item
 

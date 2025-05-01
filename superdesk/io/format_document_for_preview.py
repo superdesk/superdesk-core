@@ -26,8 +26,7 @@ async def format_document():
     formatter_qcode = request.args.get("formatter")
 
     subscriber = await SubscribersResource.get_service().find_by_id_raw(subscriber_id)
-    # TODO-ASYNC[archive]: Use async resource when upgrading ``archive`` module
-    doc = get_resource_service("archive").find_one(req=None, _id=document_id)
+    doc = await get_resource_service("archive").find_one_async(req=None, _id=document_id)
 
     formatter = get_formatter(formatter_qcode, doc)
     formatted_docs = formatter.format(article=apply_schema(doc), subscriber=subscriber, codes=None)

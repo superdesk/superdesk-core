@@ -28,8 +28,7 @@ class ExportService(AsyncBaseService):
         unsuccessful_exports = 0
 
         for item_id in doc.get("item_ids"):
-            # TODO-ASYNC[archive]: Use ``find_one_async`` when available
-            item = archive_service.find_one(req=None, _id=item_id)
+            item = await archive_service.find_one_async(req=None, _id=item_id)
             if item:
                 if validate:
                     try:

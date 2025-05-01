@@ -190,12 +190,12 @@ class DeskFetchPublishRoutingRuleHandler(RoutingRuleHandler):
         items_to_publish = await self.__fetch(ingest_item, destinations, rule)
         for item in items_to_publish:
             try:
-                archive_item = get_resource_service("archive").find_one(req=None, _id=item)
+                archive_item = await get_resource_service("archive").find_one_async(req=None, _id=item)
                 if archive_item.get("auto_publish") is False:
                     logger.info("Stop auto publishing of item %s", guid)
                     continue
                 logger.info("Publishing item %s", guid)
-                self._set_default_values(archive_item)
+                await self._set_default_values(archive_item)
                 await get_resource_service("archive_publish").patch_async(item, {"auto_publish": True})
                 logger.info("Published item %s", guid)
             except Exception:
@@ -216,11 +216,11 @@ class DeskFetchPublishRoutingRuleHandler(RoutingRuleHandler):
 
         return target
 
-    def _set_default_values(self, archive_item):
+    async def _set_default_values(self, archive_item):
         """Assigns the default values to the item that about to be auto published"""
         default_categories = self._get_categories(get_app_config("DEFAULT_CATEGORY_QCODES_FOR_AUTO_PUBLISHED_ARTICLES"))
         default_values = self._assign_default_values(archive_item, default_categories)
-        get_resource_service("archive").patch(archive_item["_id"], default_values)
+        await get_resource_service("archive").patch_async(archive_item["_id"], default_values)
 
     def _assign_default_values(self, archive_item, default_categories):
         """Assigns the default values to the item that about to be auto published"""

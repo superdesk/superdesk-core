@@ -207,7 +207,7 @@ class PackageService:
                     logger.error(message)
                     raise SuperdeskApiError.forbiddenError(message=message)
                 if not doc["task"].get("stage"):
-                    desk = await get_resource_service("desks").find_one_asnc(req=None, _id=doc["task"]["desk"])
+                    desk = await get_resource_service("desks").find_one_async(req=None, _id=doc["task"]["desk"])
                     doc["task"]["stage"] = desk["working_stage"]
 
     async def extract_default_association_data_async(self, package, assoc):
@@ -424,7 +424,7 @@ class PackageService:
 
     async def remove_spiked_refs_from_package_async(self, doc_id, not_package_id=None):
         packages_cursor = await self.get_packages_async(doc_id, not_package_id)
-        packages = await packages_cursor.to_list(None)
+        packages = await packages_cursor.to_list()
         if not packages:
             return
 

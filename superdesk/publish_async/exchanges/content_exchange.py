@@ -204,8 +204,8 @@ class ContentPublishExchange(BasicPublishExchange):
         )
 
         # update the archive collection
-        archive_item = archive_service.find_one(req=None, _id=item_id)
-        archive_service.system_update(item_id, item_updates, archive_item)
+        archive_item = await archive_service.find_one_async(req=None, _id=item_id)
+        await archive_service.system_update_async(item_id, item_updates, archive_item)
         # insert into version.
         insert_into_versions(item_id, doc=None)
 

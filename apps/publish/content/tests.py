@@ -278,7 +278,7 @@ class ArchivePublishTestCase(TestCase):
         await get_resource_service(ARCHIVE_PUBLISH).patch_async(
             id=doc["_id"], updates={ITEM_STATE: CONTENT_STATE.PUBLISHED}
         )
-        published_doc = get_resource_service(ARCHIVE).find_one(req=None, _id=doc["_id"])
+        published_doc = await get_resource_service(ARCHIVE).find_one_async(req=None, _id=doc["_id"])
         self.assertIsNotNone(published_doc)
         self.assertEqual(published_doc[VERSION], doc[VERSION] + 1)
         self.assertEqual(published_doc[ITEM_STATE], ArchivePublishService().published_state)
@@ -296,7 +296,7 @@ class ArchivePublishTestCase(TestCase):
             updates={ITEM_STATE: CONTENT_STATE.PUBLISHED, VERSION: published_version_number},
         )
 
-        article_in_production = get_resource_service(ARCHIVE).find_one(req=None, _id=original[ID_FIELD])
+        article_in_production = await get_resource_service(ARCHIVE).find_one_async(req=None, _id=original[ID_FIELD])
         self.assertIsNotNone(article_in_production)
         self.assertEqual(article_in_production[ITEM_STATE], CONTENT_STATE.PUBLISHED)
         self.assertEqual(article_in_production[VERSION], published_version_number)
@@ -320,7 +320,7 @@ class ArchivePublishTestCase(TestCase):
         doc["item_id"] = doc["_id"]
         schedule_date = utcnow() + timedelta(hours=2)
         updates = {"publish_schedule": schedule_date, "schedule_settings": {"utc_publish_schedule": schedule_date}}
-        get_resource_service(ARCHIVE).patch(id=doc["_id"], updates=updates)
+        await get_resource_service(ARCHIVE).patch_async(id=doc["_id"], updates=updates)
         await get_resource_service(ARCHIVE_PUBLISH).patch_async(id=doc["_id"], updates=updates)
         queue_items = list(await test_utils.find_many(PUBLISH_QUEUE))
         self.assertEqual(0, len(queue_items))
@@ -332,7 +332,7 @@ class ArchivePublishTestCase(TestCase):
         doc["item_id"] = doc["_id"]
         schedule_date = utcnow() + timedelta(minutes=10)
         updates = {"publish_schedule": schedule_date, "schedule_settings": {"utc_publish_schedule": schedule_date}}
-        get_resource_service(ARCHIVE).patch(id=doc["_id"], updates=updates)
+        await get_resource_service(ARCHIVE).patch_async(id=doc["_id"], updates=updates)
         await get_resource_service(ARCHIVE_PUBLISH).patch_async(id=doc["_id"], updates=updates)
         await self._is_publish_queue_empty()
 
@@ -558,7 +558,7 @@ class ArchivePublishTestCase(TestCase):
     async def test_targeted_for_includes_digital_subscribers(self):
         updates = {"target_regions": [{"qcode": "NSW", "name": "New South Wales", "allow": True}]}
         doc_id = self.articles[5][ID_FIELD]
-        get_resource_service(ARCHIVE).patch(id=doc_id, updates=updates)
+        await get_resource_service(ARCHIVE).patch_async(id=doc_id, updates=updates)
 
         await get_resource_service(ARCHIVE_PUBLISH).patch_async(
             id=doc_id, updates={ITEM_STATE: CONTENT_STATE.PUBLISHED, "target_media_type": SubscriberType.ALL}
@@ -592,9 +592,11 @@ class ArchivePublishTestCase(TestCase):
 
             return await (await get_resource_service(PUBLISHED).get_async(req=request, lookup=None)).to_list()
 
-        get_resource_service(ARCHIVE).patch(id=self.articles[1][ID_FIELD], updates={"publish_schedule": None})
+        await get_resource_service(ARCHIVE).patch_async(
+            id=self.articles[1][ID_FIELD], updates={"publish_schedule": None}
+        )
 
-        doc = get_resource_service(ARCHIVE).find_one(req=None, _id=self.articles[1][ID_FIELD])
+        doc = await get_resource_service(ARCHIVE).find_one_async(req=None, _id=self.articles[1][ID_FIELD])
         await get_resource_service(ARCHIVE_PUBLISH).patch_async(
             id=doc[ID_FIELD], updates={ITEM_STATE: CONTENT_STATE.PUBLISHED}
         )

@@ -229,11 +229,11 @@ class BasePublishService(AsyncBaseService):
         signals.item_published.send(self, item=original, after_scheduled=False)
         await signals.item_published_async.send(original, False)
 
-        packages = self.package_service.get_packages(original[ID_FIELD])
-        if packages and packages.count() > 0:
+        packages = await self.package_service.get_packages_async(original[ID_FIELD])
+        if packages and (await packages.count()) > 0:
             archive_correct = get_resource_service("archive_correct")
             processed_packages = []
-            for package in packages:
+            async for package in packages:
                 original_updates = {"operation": updates["operation"], ITEM_STATE: updates[ITEM_STATE]}
                 if (
                     package[ITEM_STATE] in [CONTENT_STATE.PUBLISHED, CONTENT_STATE.CORRECTED]
@@ -310,7 +310,12 @@ class BasePublishService(AsyncBaseService):
             )
 
             if not response.routed:
-                raise SuperdeskApiError.badRequestError(message=_("Failed to route item"))
+                if not len(response.matched_products) and not len(response.matched_api_products):
+                    raise SuperdeskApiError.badRequestError(message=_("Item didn't match any Products"))
+                elif not len(response.subscribers) and not len(response.content_api_subscribers):
+                    raise SuperdeskApiError.badRequestError(message=_("Item not published to any Subscribers"))
+                else:
+                    raise SuperdeskApiError.badRequestError(message=_("Failed to route item"))
 
             push_notification(
                 "item:publish",
@@ -322,7 +327,7 @@ class BasePublishService(AsyncBaseService):
 
             if updates.get("previous_marked_user") and not updates.get("marked_for_user"):
                 # send notification so that marked for me list can be updated
-                get_resource_service("archive").handle_mark_user_notifications(updates, original, False)
+                await get_resource_service("archive").handle_mark_user_notifications(updates, original, False)
 
         except (SuperdeskApiError, SuperdeskValidationError):
             raise
@@ -382,7 +387,7 @@ class BasePublishService(AsyncBaseService):
             original_embargo = original.get(SCHEDULE_SETTINGS, {}).get(f"utc_{EMBARGO}")
             updated_embargo = updated.get(SCHEDULE_SETTINGS, {}).get(f"utc_{EMBARGO}")
             if original_embargo != updated_embargo:
-                get_resource_service(ARCHIVE).validate_embargo(updated)
+                await get_resource_service(ARCHIVE).validate_embargo(updated)
 
         if self.publish_type in [ITEM_CORRECT, ITEM_KILL]:
             if updates.get(EMBARGO) and not original.get(EMBARGO):
@@ -393,12 +398,12 @@ class BasePublishService(AsyncBaseService):
                 raise SuperdeskApiError.badRequestError(_("Dateline can't be modified on kill or take down"))
 
         if self.publish_type == ITEM_PUBLISH and updated.get("rewritten_by"):
-            rewritten_by = get_resource_service(ARCHIVE).find_one(req=None, _id=updated.get("rewritten_by"))
+            rewritten_by = await get_resource_service(ARCHIVE).find_one_async(req=None, _id=updated.get("rewritten_by"))
             if rewritten_by and rewritten_by.get(ITEM_STATE) in PUBLISH_STATES:
                 raise SuperdeskApiError.badRequestError(_("Cannot publish the story after Update is published."))
 
         if self.publish_type == ITEM_PUBLISH and updated.get("rewrite_of"):
-            rewrite_of = get_resource_service(ARCHIVE).find_one(req=None, _id=updated.get("rewrite_of"))
+            rewrite_of = await get_resource_service(ARCHIVE).find_one_async(req=None, _id=updated.get("rewrite_of"))
             update_publish_schedule = get_utc_publish_schedule(updated) or utcnow()
             if rewrite_of and (
                 rewrite_of.get(ITEM_STATE) not in PUBLISH_STATES
@@ -441,9 +446,8 @@ class BasePublishService(AsyncBaseService):
 
         if not publishing_warnings_confirmed:
             for key, associated_item in original.get(ASSOCIATIONS).items():
-                # TODO-ASYNC: Convert this to use async resource when upgrading this module
                 if associated_item and is_related_content(key):
-                    item = archive_service.find_one(req=None, _id=associated_item.get("_id"))
+                    item = await archive_service.find_one_async(req=None, _id=associated_item.get("_id"))
                     item = item if item else associated_item
 
                     if item.get("state") not in PUBLISH_STATES:
@@ -502,9 +506,9 @@ class BasePublishService(AsyncBaseService):
                 else get_config(str, "DEFAULT_SOURCE_VALUE_FOR_MANUAL_ARTICLES")
             )
         updates["pubstatus"] = PUB_STATUS.CANCELED if self.publish_type == ITEM_KILL else PUB_STATUS.USABLE
-        self._set_item_expiry(updates, original)
+        await self._set_item_expiry(updates, original)
 
-    def _set_item_expiry(self, updates, original):
+    async def _set_item_expiry(self, updates, original):
         """Set the expiry for the item.
 
         :param dict updates: doc on which publishing action is performed
@@ -522,7 +526,7 @@ class BasePublishService(AsyncBaseService):
         if get_config(int, "PUBLISHED_CONTENT_EXPIRY_MINUTES"):
             updates["expiry"] = get_expiry_date(get_config(int, "PUBLISHED_CONTENT_EXPIRY_MINUTES"), offset=offset)
         else:
-            updates["expiry"] = get_expiry(desk_id, stage_id, offset=offset)
+            updates["expiry"] = await get_expiry(desk_id, stage_id, offset=offset)
 
     async def _publish_package_items(self, package, updates):
         """Publishes all items of a package recursively then publishes the package itself.
@@ -899,7 +903,7 @@ class BasePublishService(AsyncBaseService):
 
                 if associated_item.get("state") == CONTENT_STATE.UNPUBLISHED:
                     # get the original associated item from archive
-                    orig_associated_item = archive_service.find_one(req=None, _id=associated_item[ID_FIELD])
+                    orig_associated_item = await archive_service.find_one_async(req=None, _id=associated_item[ID_FIELD])
 
                     orig_associated_item["state"] = updates.get("state", self.published_state)
                     orig_associated_item["operation"] = self.publish_type
@@ -917,7 +921,7 @@ class BasePublishService(AsyncBaseService):
                     remove_unwanted(associated_item)
 
                     # get the original associated item from archive
-                    orig_associated_item = archive_service.find_one(req=None, _id=associated_item[ID_FIELD])
+                    orig_associated_item = await archive_service.find_one_async(req=None, _id=associated_item[ID_FIELD])
 
                     # check if the original associated item exists in archive
                     if not orig_associated_item:
@@ -997,7 +1001,7 @@ class BasePublishService(AsyncBaseService):
                 stored_item = media_item
                 if not stored_item:
                     continue
-            track_usage(media_item, stored_item, item_obj, item_name, original)
+            await track_usage(media_item, stored_item, item_obj, item_name, original)
 
     def _inherit_publish_schedule(self, original, updates, associated_item):
         if self.publish_type == "publish" and (updates.get(PUBLISH_SCHEDULE) or original.get(PUBLISH_SCHEDULE)):

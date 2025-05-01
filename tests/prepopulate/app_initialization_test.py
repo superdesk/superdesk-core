@@ -41,25 +41,25 @@ class AppInitializeWithDataCommandTestCase(TestCase):
             }
             for x in range(0, 40)
         ]
-        get_resource_service("published").post(docs)
+        await get_resource_service("published").post_async(docs)
 
         stories_per_desk = 2
         existing_desks = 18
         result = await scaffold_data(stories_per_desk)
         self.assertEqual(result, 0)
 
-        cursor = get_resource_service("desks").get_from_mongo(None, {})
-        self.assertEqual(cursor.count(), existing_desks)
+        cursor = await get_resource_service("desks").get_from_mongo_async(None, {})
+        self.assertEqual(await cursor.count(), existing_desks)
 
-        cursor = get_resource_service("archive").get_from_mongo(None, {})
-        self.assertEqual(cursor.count(), existing_desks * stories_per_desk)
+        cursor = await get_resource_service("archive").get_from_mongo_async(None, {})
+        self.assertEqual(await cursor.count(), existing_desks * stories_per_desk)
 
     async def test_sample_data(self):
         result = await self._run(sample_data=True)
         self.assertEqual(result, 0)
 
-        cursor = get_resource_service("desks").get_from_mongo(None, {})
-        self.assertEqual(cursor.count(), 18)
+        cursor = await get_resource_service("desks").get_from_mongo_async(None, {})
+        self.assertEqual(await cursor.count(), 18)
 
     async def test_app_initialization_index_creation(self):
         result = await self._run()

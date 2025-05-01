@@ -78,7 +78,7 @@ class DuplicateService(AsyncBaseService):
                     archived_doc = archived_docs[0]
 
             else:
-                archived_doc = archive_service.find_one(req=None, _id=guid_of_item_to_be_duplicated)
+                archived_doc = await archive_service.find_one_async(req=None, _id=guid_of_item_to_be_duplicated)
 
             self._validate(archived_doc, doc, guid_of_item_to_be_duplicated)
 
@@ -99,7 +99,7 @@ class DuplicateService(AsyncBaseService):
             if not doc.get("desk"):  # item copied to personal space
                 archived_doc["state"] = CONTENT_STATE.PROGRESS
 
-            new_guid = archive_service.duplicate_content(archived_doc)
+            new_guid = await archive_service.duplicate_content(archived_doc)
             guid_of_duplicated_items.append(new_guid)
 
         if kwargs.get("notify", True):

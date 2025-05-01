@@ -360,10 +360,10 @@ async def clear_rewritten_flag(event_id, rewrite_id, rewrite_field):
         await publish_service.update_published_items(doc_id, rewrite_field, None)
         if doc_id not in processed_items:
             # clear the flag from the archive as well.
-            archive_item = archive_service.find_one(req=None, _id=doc_id)
-            archive_service.system_update(doc_id, {rewrite_field: None}, archive_item)
+            archive_item = await archive_service.find_one_async(req=None, _id=doc_id)
+            await archive_service.system_update_async(doc_id, {rewrite_field: None}, archive_item)
             processed_items.add(doc_id)
-            app.on_archive_item_updated({rewrite_field: None}, archive_item, ITEM_UNLINK)
+            await app.on_archive_item_updated.call_async({rewrite_field: None}, archive_item, ITEM_UNLINK)
 
 
 def update_dates_for(doc):
@@ -561,9 +561,9 @@ async def remove_media_files(doc, published=False):
                     req=None, lookup={"media_id": media, "published": True}
                 )
 
-                if references.count() == 0:
+                if await references.count() == 0:
                     logger.info("Deleting media:%s", media)
-                    app.media.delete(media)
+                    app.media.delete_async(media)
                 else:
                     logger.info("Keeping media:%s due to references", media)
             except Exception:
@@ -846,7 +846,7 @@ async def transtype_metadata(doc, original=None):
         logger.warning("`profile` is not available in doc")
         return
     ctypes_service = get_resource_service("content_types")
-    profile = await ctypes_service.find_by_id_raw(profile_id)
+    profile = await ctypes_service.find_one_async(req=None, _id=profile_id)
     if profile is None:
         return
 

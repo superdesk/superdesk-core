@@ -40,7 +40,7 @@ from apps.archive.common import (
     ITEM_REWRITE,
     ITEM_UNLINK,
     ITEM_LINK,
-    insert_into_versions,
+    insert_into_versions_async,
 )
 from superdesk.metadata.utils import item_url, generate_guid
 from superdesk.workflow import is_workflow_state_transition_valid
@@ -90,7 +90,7 @@ class ArchiveRewriteService(AsyncBaseService):
         update_document = doc.get("update")
 
         archive_service = get_resource_service(ARCHIVE)
-        original = archive_service.find_one(req=None, _id=original_id)
+        original = await archive_service.find_one_async(req=None, _id=original_id)
         self._validate_rewrite(original, update_document)
 
         rewrite = await self._create_rewrite_article(
@@ -115,18 +115,18 @@ class ArchiveRewriteService(AsyncBaseService):
 
         if update_document:
             # process the existing story
-            archive_service.patch(update_document[ID_FIELD], rewrite)
-            app.on_archive_item_updated(rewrite, update_document, ITEM_LINK)
+            await archive_service.patch_async(update_document[ID_FIELD], rewrite)
+            await app.on_archive_item_updated.call_async(rewrite, update_document, ITEM_LINK)
             rewrite[ID_FIELD] = update_document[ID_FIELD]
             ids = [update_document[ID_FIELD]]
         else:
             # Set the version.
             resolve_document_version(rewrite, ARCHIVE, "POST")
-            ids = archive_service.post([rewrite])
-            insert_into_versions(doc=rewrite)
+            ids = await archive_service.post_async([rewrite])
+            await insert_into_versions_async(doc=rewrite)
             build_custom_hateoas(CUSTOM_HATEOAS, rewrite)
 
-            app.on_archive_item_updated({"rewrite_of": rewrite.get("rewrite_of")}, rewrite, ITEM_LINK)
+            await app.on_archive_item_updated.call_async({"rewrite_of": rewrite.get("rewrite_of")}, rewrite, ITEM_LINK)
 
         await self._add_rewritten_flag(original, rewrite)
         await get_resource_service("archive_broadcast").on_broadcast_master_updated(
@@ -320,9 +320,11 @@ class ArchiveRewriteService(AsyncBaseService):
         )
 
         # modify the original item as well.
-        get_resource_service(ARCHIVE).system_update(original[ID_FIELD], {"rewritten_by": rewrite[ID_FIELD]}, original)
+        await get_resource_service(ARCHIVE).system_update_async(
+            original[ID_FIELD], {"rewritten_by": rewrite[ID_FIELD]}, original
+        )
         app = get_current_app().as_any()
-        app.on_archive_item_updated({"rewritten_by": rewrite[ID_FIELD]}, original, ITEM_REWRITE)
+        await app.on_archive_item_updated.call_async({"rewritten_by": rewrite[ID_FIELD]}, original, ITEM_REWRITE)
 
     def _set_take_key(self, rewrite):
         """Sets the anpa take key of the rewrite with ordinal.
@@ -343,15 +345,15 @@ class ArchiveRewriteService(AsyncBaseService):
         else:
             return str(n) + {1: "st", 2: "nd", 3: "rd"}.get(n % 10, "th")
 
-    def delete(self, lookup):
+    async def delete_async(self, lookup):
         target_id = request.view_args["original_id"]
         archive_service = get_resource_service(ARCHIVE)
-        target = archive_service.find_one(req=None, _id=target_id)
+        target = await archive_service.find_one_async(req=None, _id=target_id)
         updates = {}
 
         if target.get("rewrite_of"):
             # remove the rewrite info
-            ArchiveSpikeService().update_rewrite(target)
+            await ArchiveSpikeService().update_rewrite(target)
 
         if not target.get("rewrite_of"):
             # there is nothing to do
@@ -371,8 +373,8 @@ class ArchiveRewriteService(AsyncBaseService):
 
         updates["event_id"] = generate_guid(type=GUID_TAG)
 
-        archive_service.system_update(target_id, updates, target)
+        await archive_service.system_update_async(target_id, updates, target)
         user = get_user(required=True)
         push_notification("item:unlink", item=target_id, user=str(user.get(ID_FIELD)))
         app = get_current_app().as_any()
-        app.on_archive_item_updated(updates, target, ITEM_UNLINK)
+        await app.on_archive_item_updated.call_async(updates, target, ITEM_UNLINK)

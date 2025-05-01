@@ -386,9 +386,8 @@ class NINJSFormatter(Formatter):
 
         for key, item in article_associations.items():
             if item:
-                # TODO-ASYNC: Convert this to use async resource when upgrading this module
                 if is_related_content(key) and "_type" not in item:
-                    orig_item = archive_service.find_one(req=None, _id=item["_id"])
+                    orig_item = await archive_service.find_one_async(req=None, _id=item["_id"])
                     orig_item["order"] = item.get("order", 1)
                     item = orig_item.copy()
 

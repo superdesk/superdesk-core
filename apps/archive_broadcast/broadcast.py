@@ -305,10 +305,10 @@ class ArchiveBroadcastService(BaseService):
         for item in broadcast_items:
             id_ = item.get(ID_FIELD)
             try:
-                self.packageService.remove_spiked_refs_from_package(id_)
+                await self.packageService.remove_spiked_refs_from_package_async(id_)
                 updates = {ITEM_STATE: CONTENT_STATE.SPIKED}
                 resolve_document_version(updates, SOURCE, "PATCH", item)
-                spike_service.patch(id_, updates)
+                await spike_service.patch_async(id_, updates)
                 insert_into_versions(id_=id_)
             except Exception:
                 logger.exception(message="Failed to spike the related broadcast item {}.".format(id_))

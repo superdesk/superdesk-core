@@ -27,10 +27,10 @@ class DesksAsyncService(AsyncResourceService[DesksResourceModel]):
 
         :return: list of desk id's
         """
-        docs = await self._convert_dicts_to_model(docs)
+        instances = await self._convert_dicts_to_model(docs)
         stage_service = get_resource_service("stages")
 
-        for desk in docs:
+        for index, desk in enumerate(instances):
             stages_to_be_linked_with_desk = []
             self._ensure_unique_members(desk.to_dict())
 
@@ -49,6 +49,12 @@ class DesksAsyncService(AsyncResourceService[DesksResourceModel]):
 
             desk.desk_type = DeskTypeEnum.AUTHORING
             await super().create([desk])
+
+            # Update the provided docs, so the `_id` and `_etag` get applied to the supplied dicts
+            docs_entry = docs[index]
+            if isinstance(docs_entry, dict):
+                docs_entry.update(desk.to_dict())
+
             for stage_type in stages_to_be_linked_with_desk:
                 stage_service.patch(desk.to_dict()[stage_type], {"desk": desk.id})
 
@@ -59,7 +65,7 @@ class DesksAsyncService(AsyncResourceService[DesksResourceModel]):
                 template.setdefault("template_desks", []).append(desk.id)
                 await content_templates.patch_async(desk.default_content_template, template)
 
-        return docs
+        return instances
 
     async def on_created(self, docs: list[DesksResourceModel]) -> None:
         users_service = UsersResourceModel.get_service()

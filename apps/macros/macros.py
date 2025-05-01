@@ -59,10 +59,10 @@ class MacrosService(AsyncBaseService):
                 else:
                     doc["item"] = res
                 if doc.get("commit"):
-                    item = get_resource_service("archive").find_one(req=None, _id=doc["item"]["_id"])
+                    item = await get_resource_service("archive").find_one_async(req=None, _id=doc["item"]["_id"])
                     updates = doc["item"].copy()
                     updates.pop("_id")
-                    get_resource_service("archive").update(item["_id"], updates, item)
+                    await get_resource_service("archive").update_async(item["_id"], updates, item)
                 ids.append(doc["macro"])
             return ids
         except Exception as ex:

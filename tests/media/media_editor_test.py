@@ -55,7 +55,7 @@ class BaseMediaEditorTestCase(TestCase):
             self.item["renditions"] = renditions
             f.seek(0)
         archive = get_resource_service("archive")
-        archive.post([self.item])
+        await archive.post_async([self.item])
 
     async def do_edit(self, edit, item=None):
         """Helper method to test edition on current test media

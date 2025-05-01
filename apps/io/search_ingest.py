@@ -24,8 +24,7 @@ from superdesk import get_resource_service
 from superdesk.utc import utcnow
 from superdesk.errors import SuperdeskApiError, ProviderError
 from superdesk.resource import Resource
-from superdesk.eve_async.service import AsyncBaseService
-from apps.archive.common import ARCHIVE, insert_into_versions, fetch_item
+from apps.archive.common import ARCHIVE, insert_into_versions_async, fetch_item
 
 logger = logging.getLogger(__name__)
 
@@ -75,8 +74,8 @@ class SearchIngestService(AsyncBaseService):
             if provider:
                 dest_doc["ingest_provider"] = str(provider[ID_FIELD])
 
-            get_resource_service(ARCHIVE).post([dest_doc])
-            insert_into_versions(dest_doc.get(ID_FIELD))
+            await get_resource_service(ARCHIVE).post_async([dest_doc])
+            await insert_into_versions_async(dest_doc.get(ID_FIELD))
 
         if new_guids:
             get_resource_service("search_providers").system_update(
@@ -85,11 +84,11 @@ class SearchIngestService(AsyncBaseService):
 
         return new_guids
 
-    def get(self, req, lookup):
+    async def get_async(self, req, lookup):
         provider = self.get_provider()
         if provider:
             query = self._get_query(req)
-            results = self.backend.find(self.source, query, None)
+            results = await self.backend.find_async(self.source, query, None)
             for doc in results.docs:
                 doc["ingest_provider"] = str(provider[ID_FIELD])
             return results
@@ -154,9 +153,8 @@ class SearchIngestServiceAsync(AsyncBaseService):
             if provider:
                 dest_doc["ingest_provider"] = str(provider[ID_FIELD])
 
-            # TODO-ASYNC[archvie]: to be replaced by async service once merged
-            superdesk.get_resource_service(ARCHIVE).post([dest_doc])
-            insert_into_versions(dest_doc.get(ID_FIELD))
+            await superdesk.get_resource_service(ARCHIVE).post_async([dest_doc])
+            await insert_into_versions_async(dest_doc.get(ID_FIELD))
 
         if new_guids:
             resource_service = get_resource_service("search_providers")

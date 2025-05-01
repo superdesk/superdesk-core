@@ -147,14 +147,14 @@ class PublishedItemService(AsyncBaseService, HighlightsSearchMixin):
         Overriding this to enhance the published article with the one in archive collection
         """
 
-        self.enhance_with_archive_items(docs[ITEMS])
+        await self.enhance_with_archive_items(docs[ITEMS])
 
     async def on_fetched_item_async(self, doc):
         """
         Overriding this to enhance the published article with the one in archive collection
         """
 
-        self.enhance_with_archive_items([doc])
+        await self.enhance_with_archive_items([doc])
 
     async def on_create_async(self, docs):
         """Runs on create.
@@ -177,7 +177,7 @@ class PublishedItemService(AsyncBaseService, HighlightsSearchMixin):
             updated = original.copy()
             updated.update(updates)
             # Send notification on mark-for-user operation
-            get_resource_service("archive").handle_mark_user_notifications(updates, original)
+            await get_resource_service("archive").handle_mark_user_notifications(updates, original)
             push_content_notification([updated, original])  # see SDBELGA-192
 
     def raise_if_not_marked_for_publication(self, doc):
@@ -199,19 +199,18 @@ class PublishedItemService(AsyncBaseService, HighlightsSearchMixin):
         doc.pop("lock_action", None)
         doc.pop("lock_session", None)
 
-    def enhance_with_archive_items(self, items):
+    async def enhance_with_archive_items(self, items):
         if items:
             ids = list(set([item.get("item_id") for item in items if item.get("item_id")]))
-            archive_items = []
             archive_lookup = {}
             if ids:
                 query = {"$and": [{ID_FIELD: {"$in": ids}}]}
                 archive_req = ParsedRequest()
                 archive_req.max_results = len(ids)
                 # can't access published from elastic due filter on the archive resource hence going to mongo
-                archive_items = list(get_resource_service(ARCHIVE).get_from_mongo(req=archive_req, lookup=query))
+                archive_items = await get_resource_service(ARCHIVE).get_from_mongo_async(req=archive_req, lookup=query)
 
-                for item in archive_items:
+                async for item in archive_items:
                     handle_existing_data(item)
                     archive_lookup[item[ID_FIELD]] = item
 

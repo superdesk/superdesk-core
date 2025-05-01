@@ -25,4 +25,4 @@ class ValidateForPublishTests(TestCase):
         self.app.data.insert("validators", [self.validator])
         with self.assertRaises(ValidationError):
             item = {"_id": 1}
-            validate_for_publish(item)
+            await validate_for_publish(item)

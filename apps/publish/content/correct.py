@@ -118,7 +118,7 @@ class CorrectPublishService(BasePublishService):
 
     async def update_async(self, id, updates, original):
         editor_utils.generate_fields(updates, original=original)
-        get_resource_service("archive")._handle_media_updates(updates, original, get_user())
+        await get_resource_service("archive")._handle_media_updates(updates, original, get_user())
         await super().update_async(id, updates, original)
 
     async def on_updated_async(self, updates, original):

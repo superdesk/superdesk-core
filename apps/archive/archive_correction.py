@@ -14,7 +14,8 @@ from apps.auth import get_user
 from superdesk.core import get_current_app, get_app_config
 from superdesk.resource_fields import ID_FIELD
 from superdesk.flask import request
-from superdesk import get_resource_service, Service
+from superdesk import get_resource_service
+from superdesk.eve_async import AsyncBaseService
 from superdesk.metadata.item import ITEM_STATE, CONTENT_STATE, metadata_schema
 from superdesk.resource import Resource
 from apps.archive.common import ARCHIVE, ITEM_CANCEL_CORRECTION, ITEM_CORRECTION
@@ -44,13 +45,13 @@ class ArchiveCorrectionResource(Resource):
     privileges = {"PATCH": "correct"}
 
 
-class ArchiveCorrectionService(Service):
-    async def on_update(self, updates, original):
+class ArchiveCorrectionService(AsyncBaseService):
+    async def on_update_async(self, updates, original):
         remove_correction = request.args.get("remove_correction") == "true"
         self._validate_correction(original)
         archive_service = get_resource_service(ARCHIVE)
         published_service = get_resource_service("published")
-        archive_item = archive_service.find_one(req=None, _id=original.get(ID_FIELD))
+        archive_item = await archive_service.find_one_async(req=None, _id=original.get(ID_FIELD))
 
         if remove_correction:
             published_article = await published_service.find_one_async(
@@ -112,9 +113,9 @@ class ArchiveCorrectionService(Service):
             ), "Being corrected is not generated"
 
             # modify item in archive.
-            archive_service.system_update(archive_item.get(ID_FIELD), archive_item_updates, archive_item)
+            await archive_service.system_update_async(archive_item.get(ID_FIELD), archive_item_updates, archive_item)
             app = get_current_app().as_any()
-            app.on_archive_item_updated(archive_item_updates, archive_item, ITEM_CORRECTION)
+            await app.on_archive_item_updated.call_async(archive_item_updates, archive_item, ITEM_CORRECTION)
 
         except Exception as e:
             logger.exception(e)
