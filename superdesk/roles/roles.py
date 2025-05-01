@@ -105,7 +105,7 @@ class RolesService(AsyncBaseService):
                 push_notification("role_privileges_revoked", updated=1, role_id=str(role_id))
                 privileges_updated = True
             if len(added) > 0 or (0, 1) in modified.values():
-                activity = add_activity(
+                activity = await add_activity(
                     ACTIVITY_UPDATE,
                     "role {{role}} has been granted new privileges: Please re-login.",
                     self.datasource,

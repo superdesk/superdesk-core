@@ -278,7 +278,7 @@ class DesksService(AsyncBaseService):
 
             for added_user in added:
                 user = await users_service.find_by_id(added_user)
-                activity = add_activity(
+                activity = await add_activity(
                     ACTIVITY_UPDATE,
                     "user {{user}} has been added to desk {{desk}}: Please re-login.",
                     self.datasource,

@@ -414,6 +414,8 @@ class ArchiveService(BaseService, HighlightsSearchMixin):
                 msg = 'added new {{ type }} item about "{{ subject }}"'
             else:
                 msg = "added new {{ type }} item with empty header/title"
+
+            # TODO-ASYNC[activity]: Prefix this next line with `await ` when updating this module
             add_activity(ACTIVITY_CREATE, msg, self.datasource, item=doc, type=doc[ITEM_TYPE], subject=subject)
 
             if doc.get("profile"):
@@ -556,6 +558,7 @@ class ArchiveService(BaseService, HighlightsSearchMixin):
         updated.update(updates)
 
         if VERSION in updates:
+            # TODO-ASYNC[activity]: Prefix this next line with `await ` when updating this module
             add_activity(
                 ACTIVITY_UPDATE,
                 'created new version {{ version }} for item {{ type }} about "{{ subject }}"',
@@ -591,6 +594,7 @@ class ArchiveService(BaseService, HighlightsSearchMixin):
 
     async def on_replaced(self, document, original):
         get_component(ItemAutosave).clear(original["_id"])
+        # TODO-ASYNC[activity]: Prefix this next line with `await ` when updating this module
         add_activity(
             ACTIVITY_UPDATE,
             "replaced item {{ type }} about {{ subject }}",
@@ -610,6 +614,7 @@ class ArchiveService(BaseService, HighlightsSearchMixin):
         remove_media_files(doc, published=False)
         self._remove_from_translations(doc)
 
+        # TODO-ASYNC[activity]: Prefix this next line with `await ` when updating this module
         add_activity(
             ACTIVITY_DELETE,
             "removed item {{ type }} about {{ subject }}",

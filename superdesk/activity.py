@@ -13,7 +13,7 @@ import logging
 from typing import List
 
 from bson.objectid import ObjectId
-from quart_babel import gettext as _, lazy_gettext
+from quart_babel import lazy_gettext
 
 import superdesk
 from superdesk import get_resource_service
@@ -23,7 +23,7 @@ from superdesk.errors import SuperdeskApiError, add_notifier
 from superdesk.notification import push_notification
 from superdesk.preferences import get_user_notification_preferences
 from superdesk.resource import Resource
-from superdesk.services import BaseService
+from superdesk.eve_async import AsyncBaseService
 from superdesk.types import User, UsersResourceModel, UserTypeEnum
 from superdesk.utc import utcnow
 from eve.utils import ParsedRequest
@@ -103,8 +103,8 @@ class ActivityResource(Resource):
     )
 
 
-class ActivityService(BaseService):
-    def get(self, req, lookup):
+class ActivityService(AsyncBaseService):
+    async def get_async(self, req, lookup):
         """Filter out personal activity on personal items if inquired by another user."""
         if req is None:
             req = ParsedRequest()
@@ -122,9 +122,9 @@ class ActivityService(BaseService):
             where_cond["$or"] = [where_item, {"resource": {"$ne": "archive"}}]
             req.where = json.dumps(where_cond)
 
-        return self.backend.get(self.datasource, req=req, lookup=lookup)
+        return await super().get_async(req, lookup)
 
-    def on_update(self, updates, original):
+    async def on_update_async(self, updates, original):
         """Called on the patch request to mark a activity/notification/comment as read and nothing else
 
         :param updates:
@@ -174,7 +174,7 @@ ACTIVITY_EVENT = "event"
 ACTIVITY_ERROR = "error"
 
 
-def add_activity(
+async def add_activity(
     activity_name, msg, resource=None, item=None, notify=None, notify_desks=None, can_push_notification=True, **data
 ):
     """
@@ -231,7 +231,7 @@ def add_activity(
         if item.get("task") and item["task"].get("desk"):
             activity["desk"] = ObjectId(item["task"]["desk"])
 
-    get_resource_service(ActivityResource.endpoint_name).post([activity])
+    await get_resource_service(ActivityResource.endpoint_name).post_async([activity])
 
     if can_push_notification:
         push_notification(ActivityResource.endpoint_name, _dest=activity["recipients"], activity=activity)
@@ -257,7 +257,7 @@ async def notify_and_add_activity(
         if get_user_notification_preferences(user, notification_name)["desktop"]
     ]
 
-    add_activity(
+    await add_activity(
         activity_name,
         msg=msg,
         resource=resource,
@@ -300,4 +300,7 @@ def get_recipients(user_list: List[User], notification_name=None) -> List[str]:
     return recipients
 
 
-add_notifier(notify_and_add_activity)
+# TODO-ASYNC[activity]: Figure out how to handle this next one
+# it adds an activity and notifies the user when a Publish or Ingest error happens
+# but this code is within the constructor of an Exception class, which can't be async
+# add_notifier(notify_and_add_activity)

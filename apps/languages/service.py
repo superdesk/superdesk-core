@@ -8,18 +8,13 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
-import logging
-import superdesk
-
-from superdesk.services import BaseService
-from superdesk.utils import ListCursor
+from superdesk.types.vocabularies import CVItem
+from superdesk.eve_async import AsyncBaseService, AsyncListCursor
+from superdesk.vocabularies_async import get_languages
 
 
-logger = logging.getLogger(__name__)
-
-
-def view_language(item):
-    language = item.copy()
+def view_language(item: CVItem) -> dict:
+    language = item.to_dict()
     language["_id"] = language["qcode"]
     language["label"] = language["name"]
     language["language"] = language["qcode"]
@@ -31,11 +26,10 @@ def view_language(item):
     return language
 
 
-class LanguagesService(BaseService):
-    def get(self, req, lookup):
+class LanguagesService(AsyncBaseService):
+    async def get_async(self, req, lookup):
         """
         Return the list of languages defined on config file.
         """
-        # TODO-ASYNC[vocabularies]: Use VocabulariesService async service where when upgrading this module
-        languages = superdesk.get_resource_service("vocabularies").get_languages()
-        return ListCursor([view_language(lang) for lang in languages])
+        languages = await get_languages()
+        return AsyncListCursor([view_language(lang) for lang in languages])

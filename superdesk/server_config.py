@@ -1,5 +1,7 @@
-import superdesk
+from motor.motor_asyncio import AsyncIOMotorCollection
 
+import superdesk
+from superdesk.eve_async import AsyncBaseService
 from superdesk.core import get_current_app
 from apps.auth import is_current_user_admin
 from superdesk.utc import utcnow
@@ -18,32 +20,34 @@ class ConfigResource(superdesk.Resource):
     public_item_methods = ["GET"]
 
 
-class ConfigService(superdesk.Service):
-    def find_one(self, req, **lookup):
-        item = super().find_one(req, **lookup)
+class ConfigService(AsyncBaseService):
+    async def find_one_async(self, req, **lookup):
+        item = await super().find_one_async(req, **lookup)
         if item:
             return item
         else:
             return {"_id": lookup["_id"], "val": None}
 
-    def create(self, docs, **kwargs):
+    async def create_async(self, docs, **kwargs):
         ids = []
         for doc in docs:
-            self.set(doc["_id"], doc.get("val"))
+            await self.set(doc["_id"], doc.get("val"))
             ids.append(doc["_id"])
         return ids
 
-    def set(self, key, val, namespace="superdesk"):
-        coll = get_current_app().data.mongo.get_collection_with_write_concern("config", "config")
+    async def set(self, key, val, namespace="superdesk"):
+        coll: AsyncIOMotorCollection = get_current_app().data.mongo_async.get_collection_with_write_concern(
+            "config", "config"
+        )
         if isinstance(val, dict):
             updates = {f"val.{k}": v for k, v in val.items()} if val else {}
         else:
             updates = {"val": val}
         updates["_updated"] = utcnow()
-        coll.update_one({"_id": key}, {"$set": dict(_id=key, **updates)}, upsert=True)
+        await coll.update_one({"_id": key}, {"$set": dict(_id=key, **updates)}, upsert=True)
 
-    def get(self, key, namespace="superdesk"):
-        return self.find_one(req=None, _id=key).get("val")
+    async def get_async(self, key, namespace="superdesk"):
+        return (await self.find_one_async(req=None, _id=key)).get("val")
 
     def is_authorizes(self, user):
         return is_current_user_admin()

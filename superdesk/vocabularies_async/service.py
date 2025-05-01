@@ -18,7 +18,6 @@ from quart_babel import gettext, lazy_gettext
 from superdesk import privilege
 from superdesk.cache import cache
 from superdesk.core.resources import ResourceModel, AsyncResourceService
-from superdesk.core.types import SearchRequest
 from superdesk.default_schema import DEFAULT_EDITOR, DEFAULT_SCHEMA
 from superdesk.errors import SuperdeskApiError
 from superdesk.notification import push_notification
@@ -280,82 +279,6 @@ class VocabulariesService(AsyncResourceService[VocabulariesResourceModel]):
         article_item.update({"scheme": scheme})
         return article_item
 
-    async def get_items(
-        self,
-        _id: str,
-        qcode: Optional[str] = None,
-        is_active: bool = True,
-        name: Optional[str] = None,
-        lang: Optional[str] = None,
-    ) -> List[CVItem]:
-        """
-        Return `items` with specified filters from the CV with specified `_id`.
-        If `lang` is provided then `name` is looked in `items.translations.name.{lang}`,
-        otherwise `name` is looked in `items.name`.
-
-        :param _id: custom vocabulary _id
-        :param qcode: items.qcode filter
-        :param is_active: items.is_active filter
-        :param name: items.name filter
-        :param lang: items.lang filter
-        :return: items list
-        """
-
-        projection: dict[str, Any] = {}
-        lookup = {"_id": _id}
-
-        if qcode:
-            elem_match = projection.setdefault("items", {}).setdefault("$elemMatch", {})
-            elem_match["qcode"] = qcode
-
-        # if `lang` is provided `name` is looked in `translations.name.{lang}`
-        if name and lang:
-            elem_match = projection.setdefault("items", {}).setdefault("$elemMatch", {})
-            elem_match[f"translations.name.{lang}"] = {
-                "$regex": r"^{}$".format(name),
-                # case-insensitive
-                "$options": "i",
-            }
-        elif name:
-            elem_match = projection.setdefault("items", {}).setdefault("$elemMatch", {})
-            elem_match["name"] = {
-                "$regex": r"^{}$".format(name),
-                # case-insensitive
-                "$options": "i",
-            }
-
-        cursor = await self.find(SearchRequest(where=lookup, projection=projection))
-
-        try:
-            voc = await cursor.next()
-            if voc is None:
-                raise StopIteration
-        except StopIteration:
-            return []
-        else:
-            items = voc.items
-
-        # $elemMatch projection contains only the first element matching the condition,
-        # that"s why `is_active` filter is filtered via python
-        if is_active is not None:
-            items = [i for i in items if i.is_active == is_active]
-
-        def format_item(item: CVItem) -> CVItem:
-            try:
-                del item.is_active
-            except KeyError:
-                pass
-            # FIXME
-            item.scheme = _id  # type: ignore
-            return item
-
-        items = list(map(format_item, items))
-
-        return items
-
-    async def get_languages(self) -> list[CVItem]:
-        return await self.get_items(_id="languages")
-
     async def get_field_options(self, field) -> dict[str, Any]:
         cv = await self.find_by_id(field)
         return cv.field_options if cv else {}
@@ -365,7 +288,8 @@ class VocabulariesService(AsyncResourceService[VocabulariesResourceModel]):
 async def get_related_field_ids():
     service = VocabulariesService()
     cursor = await service.find(
-        req=SearchRequest(where={"field_type": "related_content"}, projection={"field_type": 1})
+        {"field_type": "related_content"},
+        projection={"field_type": 1},
     )
     return await cursor.to_list()
 

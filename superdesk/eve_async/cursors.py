@@ -47,7 +47,7 @@ class AsyncListCursor:
         raise StopAsyncIteration
 
     async def next(self) -> dict | None:
-        if self._index >= self._limit:
+        if self._limit >= 0 and self._index >= self._limit:
             return None
 
         try:
