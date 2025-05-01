@@ -11,7 +11,7 @@
 import logging
 from superdesk.flask import g
 from superdesk.resource import Resource
-from superdesk.services import BaseService
+from superdesk.eve_async import AsyncBaseService
 
 log = logging.getLogger(__name__)
 
@@ -44,8 +44,8 @@ class AuditResource(Resource):
     }
 
 
-class AuditService(BaseService):
-    def on_generic_inserted(self, resource, docs):
+class AuditService(AsyncBaseService):
+    async def on_generic_inserted(self, resource, docs):
         if resource in AuditResource.exclude:
             return
 
@@ -69,9 +69,9 @@ class AuditService(BaseService):
             "audit_id": self._extract_doc_id(docs[0]),
         }
 
-        self.post([audit])
+        await self.post_async([audit])
 
-    def on_generic_updated(self, resource, doc, original):
+    async def on_generic_updated(self, resource, doc, original):
         if resource in AuditResource.exclude:
             return
 
@@ -88,9 +88,9 @@ class AuditService(BaseService):
         }
         if "_id" not in doc:
             audit["extra"]["_id"] = original.get("_id", None)
-        self.post([audit])
+        await self.post_async([audit])
 
-    def on_generic_deleted(self, resource, doc):
+    async def on_generic_deleted(self, resource, doc):
         if resource in AuditResource.exclude:
             return
 
@@ -105,7 +105,7 @@ class AuditService(BaseService):
             "extra": doc,
             "audit_id": self._extract_doc_id(doc),
         }
-        self.post([audit])
+        await self.post_async([audit])
 
     def _extract_doc_id(self, doc):
         """

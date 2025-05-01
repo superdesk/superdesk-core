@@ -73,6 +73,7 @@ class ArchiveMediaService:
                 doc["renditions"] = renditions
                 doc["mimetype"] = content_type
                 set_filemeta(doc, metadata)
+                # TODO-ASYNC[activity]: Prefix this next line with `await ` when updating this module
                 add_activity(
                     "upload",
                     "uploaded media {{ name }}",

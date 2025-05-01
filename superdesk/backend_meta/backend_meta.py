@@ -41,6 +41,8 @@ class BackendMetaResource(Resource):
     pass
 
 
+# Not upgrading to async, as local file I/O should not add much delay
+# and this endpoint is not used that often
 class BackendMetaService(BaseService):
     """Service givin metadata on backend itself"""
 

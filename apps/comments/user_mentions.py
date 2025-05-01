@@ -68,7 +68,7 @@ async def notify_mentioned_users(docs, origin, item=None):
         if len(mentioned_users) > 0:
             if not item:
                 item = superdesk.get_resource_service("archive").find_one(req=None, _id=doc["item"])
-            add_activity(
+            await add_activity(
                 "user:mention",
                 "",
                 resource=None,
@@ -86,6 +86,7 @@ def notify_mentioned_desks(docs):
         mentioned_desks = doc.get("mentioned_desks", {}).values()
         if len(mentioned_desks) > 0:
             item = superdesk.get_resource_service("archive").find_one(req=None, _id=doc["item"])
+            # TODO-ASYNC[activity]: Prefix this next line with `await ` when updating this module
             add_activity(
                 "desk:mention",
                 "",

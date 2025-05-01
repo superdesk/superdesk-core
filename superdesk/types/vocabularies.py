@@ -32,6 +32,7 @@ class CVItem(Dataclass):
     qcode: str | int
     is_active: bool = True
     translations: dict[str, dict[str, Any]] | None = None
+    scheme: str | None = None
 
 
 class DateShortcut(Dataclass):

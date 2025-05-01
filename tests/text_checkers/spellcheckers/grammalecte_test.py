@@ -12,7 +12,7 @@ from urllib.parse import urljoin
 import responses
 
 from superdesk.flask import Flask
-from superdesk.tests import TestCase
+from superdesk.tests import AsyncTestCase
 from superdesk.text_checkers import tools
 from superdesk.text_checkers import spellcheckers
 from superdesk.text_checkers.spellcheckers.base import registered_spellcheckers, SpellcheckerBase
@@ -42,17 +42,16 @@ def load_spellcheckers():
     tools.import_services(app, spellcheckers.__name__, SpellcheckerBase)
 
 
-class GrammalecteTestCase(TestCase):
-    @classmethod
-    def setUpClass(cls):
-        super().setUpClass()
+class GrammalecteTestCase(AsyncTestCase):
+    async def asyncSetUp(self):
+        await super().asyncSetUp()
         load_spellcheckers()
 
-    def test_list(self):
+    async def test_list(self):
         """Check that Grammalecte is listed by spellcheckers_list service"""
         doc = {}
         spellcheckers_list = get_resource_service("spellcheckers_list")
-        spellcheckers_list.on_fetched(doc)
+        await spellcheckers_list.on_fetched_async(doc)
         for checker in doc["spellcheckers"]:
             if (
                 checker["name"] == Grammalecte.name
@@ -64,7 +63,7 @@ class GrammalecteTestCase(TestCase):
         self.fail("Grammalecte not found")
 
     @responses.activate
-    def test_checker(self):
+    async def test_checker(self):
         """Check that spellchecking is working"""
         doc = {
             "spellchecker": "grammalecte",
@@ -114,7 +113,7 @@ class GrammalecteTestCase(TestCase):
                 ],
             },
         )
-        spellchecker.create([doc])
+        await spellchecker.create_async([doc])
 
         expected = [
             {
@@ -136,7 +135,7 @@ class GrammalecteTestCase(TestCase):
         self.assertEqual(doc["errors"], expected)
 
     @responses.activate
-    def test_checker_paragraphs(self):
+    async def test_checker_paragraphs(self):
         """Check that spellchecking is working as expected with 2 paragraphs"""
         doc = {
             "spellchecker": "grammalecte",
@@ -218,7 +217,7 @@ class GrammalecteTestCase(TestCase):
                 ],
             },
         )
-        spellchecker.create([doc])
+        await spellchecker.create_async([doc])
 
         expected = [
             {
@@ -254,7 +253,7 @@ class GrammalecteTestCase(TestCase):
         self.assertEqual(doc["errors"], expected)
 
     @responses.activate
-    def test_suggest(self):
+    async def test_suggest(self):
         """Check that spelling suggestions are working"""
 
         doc = {
@@ -271,7 +270,7 @@ class GrammalecteTestCase(TestCase):
                 "suggestions": ["faute", "fauté", "féauté", "sotte", "rote", "roté", "note", "noté", "lote", "lotte"]
             },
         )
-        spellchecker.create([doc])
+        await spellchecker.create_async([doc])
 
         self.assertEqual(
             doc,

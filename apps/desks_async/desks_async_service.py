@@ -164,7 +164,7 @@ class DesksAsyncService(AsyncResourceService[DesksResourceModel]):
                 if user is None:
                     logger.warning(f"Failed sending notification to user '{added_user}: user not found")
                     continue
-                activity = add_activity(
+                activity = await add_activity(
                     ACTIVITY_UPDATE,
                     "user {{user}} has been added to desk {{desk}}: Please re-login.",
                     self.resource_name,

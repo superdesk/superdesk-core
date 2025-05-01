@@ -279,7 +279,7 @@ class AsyncArchiveService(AsyncResourceService[ArchiveResourceModel], Highlights
                 msg = 'added new {{ type }} item about "{{ subject }}"'
             else:
                 msg = "added new {{ type }} item with empty header/title"
-            add_activity(ACTIVITY_CREATE, msg, self.resource_name, item=doc, type=doc.item_type, subject=subject)
+            await add_activity(ACTIVITY_CREATE, msg, self.resource_name, item=doc, type=doc.item_type, subject=subject)
 
             if doc.profile:
                 profiles.add(doc.profile)
@@ -439,7 +439,7 @@ class AsyncArchiveService(AsyncResourceService[ArchiveResourceModel], Highlights
             setattr(updated, k, v)
 
         if VERSION in updates:
-            add_activity(
+            await add_activity(
                 ACTIVITY_UPDATE,
                 'created new version {{ version }} for item {{ type }} about "{{ subject }}"',
                 self.resource_name,
@@ -484,7 +484,7 @@ class AsyncArchiveService(AsyncResourceService[ArchiveResourceModel], Highlights
         :param original: Original document that was replaced
         """
         get_component(ItemAutosave).clear(original["_id"])
-        add_activity(
+        await add_activity(
             ACTIVITY_UPDATE,
             "replaced item {{ type }} about {{ subject }}",
             self.resource_name,
@@ -507,7 +507,7 @@ class AsyncArchiveService(AsyncResourceService[ArchiveResourceModel], Highlights
         await remove_media_files(doc, published=False)
         await self._remove_from_translations(doc)
 
-        add_activity(
+        await add_activity(
             ACTIVITY_DELETE,
             "removed item {{ type }} about {{ subject }}",
             self.resource_name,

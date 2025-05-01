@@ -13,7 +13,7 @@ from unittest.mock import MagicMock, patch
 from .utils import mock_dictionaries
 
 from superdesk.flask import Flask
-from superdesk.tests import TestCase
+from superdesk.tests import AsyncTestCase
 from superdesk.text_checkers import tools
 from superdesk.text_checkers import spellcheckers
 from superdesk.text_checkers.spellcheckers import SPELLCHECKER_DEFAULT
@@ -43,17 +43,16 @@ def load_spellcheckers():
     tools.import_services(app, spellcheckers.__name__, SpellcheckerBase)
 
 
-class DefaultSpellcheckerTestCase(TestCase):
-    @classmethod
-    def setUpClass(cls):
-        super().setUpClass()
+class DefaultSpellcheckerTestCase(AsyncTestCase):
+    async def asyncSetUp(self):
+        await super().asyncSetUp()
         load_spellcheckers()
 
-    def test_list(self):
+    async def test_list(self):
         """Check that Default spellchecker is listed by spellcheckers_list service"""
         doc = {}
         spellcheckers_list = get_resource_service("spellcheckers_list")
-        spellcheckers_list.on_fetched(doc)
+        await spellcheckers_list.on_fetched_async(doc)
         for checker in doc["spellcheckers"]:
             if (
                 checker["name"] == SPELLCHECKER_DEFAULT
@@ -65,7 +64,7 @@ class DefaultSpellcheckerTestCase(TestCase):
         self.fail("Defaut spellchecker not found")
 
     @patch("superdesk.get_resource_service", MagicMock(side_effect=partial(mock_dictionaries, model=MODEL)))
-    def test_checker(self):
+    async def test_checker(self):
         """Check that spellchecking is working"""
         doc = {
             "spellchecker": "default",
@@ -77,7 +76,7 @@ class DefaultSpellcheckerTestCase(TestCase):
             "use_internal_dict": False,
         }
         spellchecker = get_resource_service("spellchecker")
-        spellchecker.create([doc])
+        await spellchecker.create_async([doc])
 
         self.assertEqual(
             doc["errors"],
@@ -89,7 +88,7 @@ class DefaultSpellcheckerTestCase(TestCase):
         )
 
     @patch("superdesk.get_resource_service", MagicMock(side_effect=partial(mock_dictionaries, model=MODEL)))
-    def test_suggest(self):
+    async def test_suggest(self):
         """Check that spelling suggestions are working"""
 
         doc = {
@@ -99,7 +98,7 @@ class DefaultSpellcheckerTestCase(TestCase):
             "language": "en",
         }
         spellchecker = get_resource_service("spellchecker")
-        spellchecker.create([doc])
+        await spellchecker.create_async([doc])
 
         self.assertEqual(
             doc,
@@ -112,7 +111,7 @@ class DefaultSpellcheckerTestCase(TestCase):
         )
 
     @patch("superdesk.get_resource_service", MagicMock(side_effect=partial(mock_dictionaries, model=MODEL)))
-    def test_ignore(self):
+    async def test_ignore(self):
         """Check that "ignore" is working (SDBELGA-165)"""
         doc = {
             "spellchecker": "default",
@@ -122,7 +121,7 @@ class DefaultSpellcheckerTestCase(TestCase):
             "use_internal_dict": False,
         }
         spellchecker = get_resource_service("spellchecker")
-        spellchecker.create([doc])
+        await spellchecker.create_async([doc])
 
         self.assertEqual(
             doc["errors"],
@@ -136,6 +135,6 @@ class DefaultSpellcheckerTestCase(TestCase):
         # now the same check with ignore
         doc = doc.copy()
         doc["ignore"] = ["David", "Jean", "Arthur"]
-        spellchecker.create([doc])
+        await spellchecker.create_async([doc])
 
         self.assertEqual(doc["errors"], [])
