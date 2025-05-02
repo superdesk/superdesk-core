@@ -27,7 +27,7 @@ from superdesk.io import allowed_feeding_services, allowed_feed_parsers, get_fee
 from superdesk.metadata.item import CONTENT_STATE, CONTENT_TYPE
 from superdesk.notification import push_notification
 from superdesk.resource import Resource
-from superdesk.services import BaseService
+from superdesk.eve_async import AsyncBaseService
 from superdesk.utc import utcnow
 from superdesk.utils import required_string
 from superdesk.types import UsersResourceModel, UserTypeEnum
@@ -160,7 +160,7 @@ class IngestProviderResource(Resource):
         super().__init__(endpoint_name, app, service, endpoint_schema=endpoint_schema)
 
 
-class IngestProviderService(BaseService):
+class IngestProviderService(AsyncBaseService):
     def __init__(self, datasource=None, backend=None):
         super().__init__(datasource=datasource, backend=backend)
 
@@ -176,7 +176,7 @@ class IngestProviderService(BaseService):
             doc["last_opened"]["opened_at"] = utcnow()
             doc["last_opened"]["opened_by"] = user["_id"] if user else None
 
-    def on_create(self, docs):
+    async def on_create_async(self, docs):
         for doc in docs:
             content_expiry = doc.get("content_expiry", 0)
             if content_expiry == 0:
@@ -184,23 +184,25 @@ class IngestProviderService(BaseService):
                 self._set_provider_status(doc, doc.get("last_closed", {}).get("message", ""))
             elif content_expiry < 0:
                 doc["content_expiry"] = None
-            self._test_config(doc)
+            await self._test_config(doc)
 
-    async def on_created(self, docs):
+    async def on_created_async(self, docs):
         for doc in docs:
             await notify_and_add_activity(
                 ACTIVITY_CREATE,
                 "Created Ingest Channel {{name}}",
                 self.datasource,
                 item=None,
-                user_list=await UsersResourceModel.get_by_user_type(UserTypeEnum.ADMINISTRATOR),
+                user_list=[
+                    user.to_dict() for user in await UsersResourceModel.get_by_user_type(UserTypeEnum.ADMINISTRATOR)
+                ],
                 name=doc.get("name"),
                 provider_id=doc.get("_id"),
             )
             push_notification("ingest_provider:create", provider_id=str(doc.get("_id")))
         logger.info("Created Ingest Channel. Data:{}".format(docs))
 
-    def on_update(self, updates, original):
+    async def on_update_async(self, updates, original):
         try:
             content_expiry = updates["content_expiry"]
         except KeyError:
@@ -214,9 +216,9 @@ class IngestProviderService(BaseService):
         if "is_closed" in updates and original.get("is_closed", False) != updates.get("is_closed"):
             self._set_provider_status(updates, updates.get("last_closed", {}).get("message", ""))
         if "config" in updates:
-            self._test_config(updates, original)
+            await self._test_config(updates, original)
 
-    async def on_updated(self, updates, original):
+    async def on_updated_async(self, updates, original):
         do_notification = updates.get("notifications", {}).get(
             "on_update", original.get("notifications", {}).get("on_update", True)
         )
@@ -225,7 +227,7 @@ class IngestProviderService(BaseService):
             "updated Ingest Channel {{name}}",
             self.datasource,
             item=None,
-            user_list=await UsersResourceModel.get_by_user_type(UserTypeEnum.ADMINISTRATOR)
+            user_list=[user.to_dict() for user in await UsersResourceModel.get_by_user_type(UserTypeEnum.ADMINISTRATOR)]
             if do_notification
             else None,
             name=updates.get("name", original.get("name")),
@@ -252,7 +254,9 @@ class IngestProviderService(BaseService):
                 "{{status}} Ingest Channel {{name}}",
                 self.datasource,
                 item=None,
-                user_list=await UsersResourceModel.get_by_user_type(UserTypeEnum.ADMINISTRATOR)
+                user_list=[
+                    user.to_dict() for user in await UsersResourceModel.get_by_user_type(UserTypeEnum.ADMINISTRATOR)
+                ]
                 if do_notification
                 else None,
                 name=updates.get("name", original.get("name")),
@@ -263,7 +267,7 @@ class IngestProviderService(BaseService):
         push_notification("ingest_provider:update", provider_id=str(original.get("_id")))
         logger.info("Updated Ingest Channel. Data: {}".format(updates))
 
-    def on_delete(self, doc):
+    async def on_delete_async(self, doc):
         """
         Overriding to check if the Ingest Source which has received item being deleted.
         """
@@ -271,7 +275,7 @@ class IngestProviderService(BaseService):
         if doc.get("last_item_update"):
             raise SuperdeskApiError.forbiddenError("Deleting an Ingest Source after receiving items is prohibited.")
 
-    async def on_deleted(self, doc):
+    async def on_deleted_async(self, doc):
         """
         Overriding to send notification and record activity about channel deletion.
         """
@@ -280,7 +284,9 @@ class IngestProviderService(BaseService):
             "Deleted Ingest Channel {{name}}",
             self.datasource,
             item=None,
-            user_list=await UsersResourceModel.get_by_user_type(UserTypeEnum.ADMINISTRATOR),
+            user_list=[
+                user.to_dict() for user in await UsersResourceModel.get_by_user_type(UserTypeEnum.ADMINISTRATOR)
+            ],
             name=doc.get("name"),
             provider_id=doc.get(ID_FIELD),
         )
@@ -290,7 +296,7 @@ class IngestProviderService(BaseService):
         )
         logger.info("Deleted Ingest Channel. Data:{}".format(doc))
 
-    def _test_config(self, updates, original=None):
+    async def _test_config(self, updates, original=None):
         provider = original.copy() if original else {}
         provider.update(updates)
 
@@ -301,7 +307,11 @@ class IngestProviderService(BaseService):
             service = get_feeding_service(provider["feeding_service"])
         except KeyError:
             return
-        service.config_test(provider)
+
+        if hasattr(service, "config_test_async"):
+            await service.config_test_async(provider)
+        else:
+            service.config_test(provider)
 
 
 superdesk.workflow_state(CONTENT_STATE.INGESTED)

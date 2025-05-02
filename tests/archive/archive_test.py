@@ -163,7 +163,7 @@ class ArchiveTestCase(TestCase):
             "dateline": {"located": located, "date": current_ts},
         }
 
-        set_default_source(doc)
+        await set_default_source(doc)
         self.assertEqual(doc["source"], get_default_source())
         self.assertEqual(doc["dateline"]["source"], get_default_source())
         self.assertEqual(doc["dateline"]["text"], "SYDNEY, %s %s -" % (formatted_date, get_default_source()))
@@ -179,7 +179,7 @@ class ArchiveTestCase(TestCase):
             "dateline": {"located": located, "date": current_ts},
         }
 
-        set_default_source(doc)
+        await set_default_source(doc)
         self.assertEqual(doc["source"], source)
         self.assertEqual(doc["dateline"]["source"], source)
         self.assertEqual(doc["dateline"]["text"], "SYDNEY, %s %s -" % (formatted_date, source))
@@ -197,7 +197,7 @@ class ArchiveTestCase(TestCase):
             "ingest_provider": 1,
         }
 
-        set_default_source(doc)
+        await set_default_source(doc)
         self.assertEqual(doc["source"], "ABC")
         self.assertEqual(doc["dateline"]["source"], "ABC")
         self.assertEqual(doc["dateline"]["text"], "SYDNEY, %s %s -" % (formatted_date, "ABC"))
@@ -215,7 +215,7 @@ class ArchiveTestCase(TestCase):
             "ingest_provider": 1,
         }
 
-        set_default_source(doc)
+        await set_default_source(doc)
         self.assertEqual(doc["source"], "FOO")
         self.assertEqual(doc["dateline"]["source"], "FOO")
         self.assertEqual(doc["dateline"]["text"], "SYDNEY, %s %s -" % (formatted_date, "FOO"))
@@ -230,7 +230,7 @@ class ArchiveTestCase(TestCase):
             "ingest_provider": 1,
         }
 
-        set_default_source(doc)
+        await set_default_source(doc)
         self.assertEqual(doc["source"], "ABC")
 
     async def test_if_item_has_source_then_search_provider_source_is_not_used(self):
@@ -244,7 +244,7 @@ class ArchiveTestCase(TestCase):
             "source": "bar",
         }
 
-        set_default_source(doc)
+        await set_default_source(doc)
         self.assertEqual(doc["source"], "bar")
 
     def test_if_image_caption_is_updated(self):

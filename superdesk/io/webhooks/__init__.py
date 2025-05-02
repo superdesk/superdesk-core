@@ -12,7 +12,7 @@ from superdesk.resource import Resource
 from superdesk.eve_async import AsyncBaseService
 from superdesk.io.commands import update_ingest
 import os
-import superdesk
+from superdesk import get_resource_service
 from superdesk.flask import request, abort
 import logging
 
@@ -61,10 +61,10 @@ class FeedingServiceWebhookService(AsyncBaseService):
     async def trigger_provider(self):
         provider_name = request.args["provider_name"]
         lookup = {"name": provider_name}
-        for provider in superdesk.get_resource_service("ingest_providers").get(req=None, lookup=lookup):
+        async for provider in await get_resource_service("ingest_providers").get_async(req=None, lookup=lookup):
             kwargs = {
                 "provider": provider,
-                "rule_set": update_ingest.get_provider_rule_set(provider),
+                "rule_set": await update_ingest.get_provider_rule_set(provider),
                 "routing_scheme": await update_ingest.get_provider_routing_scheme(provider),
             }
             await update_ingest.update_provider.apply_async(expires=update_ingest.get_task_ttl(provider), kwargs=kwargs)

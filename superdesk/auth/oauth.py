@@ -196,11 +196,11 @@ def configure_google(app, extra_scopes: Optional[List[str]] = None, refresh: boo
 
             # token_id is actually the provider id
             ingest_providers_service = superdesk.get_resource_service("ingest_providers")
-            provider = ingest_providers_service.find_one(req=None, _id=token_id)
+            provider = await ingest_providers_service.find_one_async(req=None, _id=token_id)
             if provider is None:
                 logger.warning(f"No provider is corresponding to the id used with the token {token_id!r}")
             else:
-                ingest_providers_service.update(
+                await ingest_providers_service.update_async(
                     provider[ID_FIELD], updates={"config.email": user["email"]}, original=provider
                 )
 
@@ -215,7 +215,7 @@ def configure_google(app, extra_scopes: Optional[List[str]] = None, refresh: boo
 
         :param url_id: used to identify the token
         """
-        revoke_google_token(ObjectId(url_id))
+        await revoke_google_token(ObjectId(url_id))
         return await render_template(AUTHORIZED_TEMPLATE, data={})
 
     superdesk.blueprint(bp, app)
@@ -244,7 +244,7 @@ def refresh_google_token(token_id: ObjectId) -> dict:
     return token_dict
 
 
-def revoke_google_token(token_id: ObjectId) -> None:
+async def revoke_google_token(token_id: ObjectId) -> None:
     """Revoke a token"""
     token, session = _get_token_and_sesion(token_id)
     oauth2_token_service = superdesk.get_resource_service("oauth2_token")
@@ -255,7 +255,9 @@ def revoke_google_token(token_id: ObjectId) -> None:
         )
     oauth2_token_service.delete({ID_FIELD: token_id})
     ingest_providers_service = superdesk.get_resource_service("ingest_providers")
-    provider = ingest_providers_service.find_one(req=None, _id=token_id)
+    provider = await ingest_providers_service.find_one_async(req=None, _id=token_id)
     if provider is not None:
-        ingest_providers_service.update(provider[ID_FIELD], updates={"config.email": None}, original=provider)
+        await ingest_providers_service.update_async(
+            provider[ID_FIELD], updates={"config.email": None}, original=provider
+        )
     logger.info(f"OAUTH token {token_id!r} has been revoked")

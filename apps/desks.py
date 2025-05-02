@@ -226,8 +226,8 @@ class DesksService(AsyncBaseService):
                 {"rules.actions.publish.desk": desk[ID_FIELD]},
             ]
         }
-        routing_rules = superdesk.get_resource_service("routing_schemes").get(req=None, lookup=routing_rules_query)
-        if routing_rules and routing_rules.count():
+        routing_rule_count = await superdesk.get_resource_service("routing_schemes").count(routing_rules_query)
+        if routing_rule_count > 0:
             raise SuperdeskApiError.preconditionFailedError(
                 message=_("Cannot delete desk as routing scheme(s) are associated with the desk")
             )

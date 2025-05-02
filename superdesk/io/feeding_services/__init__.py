@@ -10,6 +10,7 @@
 
 import logging
 import warnings
+from inspect import isawaitable
 from abc import ABCMeta, abstractmethod
 from datetime import timedelta, datetime
 from pytz import utc
@@ -151,7 +152,7 @@ class FeedingService(metaclass=ABCMeta):
     def _log_msg(self, msg, level="info"):
         getattr(logger, level)("Ingest:{} '{}': {}".format(self._provider["_id"], self._provider["name"], msg))
 
-    def update(self, provider, update):
+    async def update(self, provider, update):
         """
         Clients consuming Ingest Services should invoke this to get items from the provider.
 
@@ -171,16 +172,19 @@ class FeedingService(metaclass=ABCMeta):
                 self._log_msg("Start update execution.")
                 self._timer.start("update")
 
-                return self._update(provider, update) or []
+                response = self._update(provider, update) or []
+                if isawaitable(response):
+                    response = await response
+                return response
             except SuperdeskIngestError as error:
-                self.close_provider(provider, error)
+                await self.close_provider(provider, error)
                 raise error
             finally:
                 self._log_msg("Stop update execution. Exec time: {:.4f} secs.".format(self._timer.stop("update")))
                 # just in case stop all timers
                 self._timer.stop_all()
 
-    def close_provider(self, provider, error, force=False):
+    async def close_provider(self, provider, error, force=False):
         """Closes the provider and uses error as reason for closing.
 
         :param provider: Ingest Provider Details.
@@ -197,7 +201,7 @@ class FeedingService(metaclass=ABCMeta):
                 },
             }
 
-            get_resource_service("ingest_providers").system_update(provider[ID_FIELD], updates, provider)
+            await get_resource_service("ingest_providers").system_update_async(provider[ID_FIELD], updates, provider)
 
     def add_timestamps(self, item):
         warnings.warn("deprecated, use localize_timestamps", DeprecationWarning)

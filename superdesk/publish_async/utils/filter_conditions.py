@@ -375,7 +375,7 @@ async def _get_field_values() -> dict[str, list[str] | list[dict]]:
     )
     place = await place_cursor.next_raw()
     values["place"] = place["items"] if place else []
-    values["ingest_provider"] = list(get_resource_service("ingest_providers").get(None, {}))
+    values["ingest_provider"] = await (await get_resource_service("ingest_providers").get_async(None, {})).to_list()
     values["featuremedia"] = [{"qcode": 1, "name": "True"}, {"qcode": 0, "name": "False"}]
     return values
 

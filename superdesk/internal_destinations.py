@@ -16,7 +16,7 @@ from quart_babel import lazy_gettext
 from apps.tasks import send_to
 from superdesk import register_resource, get_resource_service, privilege
 from superdesk.types import ContentFiltersResource
-from superdesk.services import Service
+from superdesk.eve_async import AsyncBaseService
 from superdesk.resource import Resource
 from superdesk.errors import StopDuplication
 from superdesk.signals import item_published_async, item_routed
@@ -43,7 +43,7 @@ class InternalDestinationsResource(Resource):
     privileges = {"POST": "internal_destinations", "PATCH": "internal_destinations", "DELETE": "internal_destinations"}
 
 
-class InternalDestinationsService(Service):
+class InternalDestinationsService(AsyncBaseService):
     pass
 
 

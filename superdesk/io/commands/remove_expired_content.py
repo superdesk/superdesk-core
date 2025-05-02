@@ -25,7 +25,7 @@ from apps.content import push_expired_notification
 
 @cli.command("ingest:clean_expired")
 @click.option("--provider", "-p", "provider_name", required=False)
-def cli_ingest_clean_expired(provider_name):
+async def cli_ingest_clean_expired(provider_name):
     """Remove stale data from ingest based on the provider settings.
 
     Example:
@@ -36,12 +36,14 @@ def cli_ingest_clean_expired(provider_name):
 
     """
 
-    RemoveExpiredContent().run(provider_name)
+    await RemoveExpiredContent().run(provider_name)
 
 
 class RemoveExpiredContent:
-    def run(self, provider_name=None):
-        providers = list(superdesk.get_resource_service("ingest_providers").get(req=None, lookup={}))
+    async def run(self, provider_name=None):
+        providers = await (
+            await superdesk.get_resource_service("ingest_providers").get_async(req=None, lookup={})
+        ).to_list()
         self.remove_expired({"exclude": [str(p.get("_id")) for p in providers]})
         for provider in providers:
             if not provider_name or provider_name == provider.get("name"):

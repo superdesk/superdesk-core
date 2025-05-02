@@ -196,7 +196,7 @@ async def on_create_item(docs, repo_type=ARCHIVE, media_service=None):
 
         if repo_type == ARCHIVE:
             # set the source for the article
-            set_default_source(doc)
+            await set_default_source(doc)
 
         ignore_profiles = DEFAULT_PROFILES.copy()
         ignore_profiles.add(None)
@@ -266,7 +266,7 @@ def format_dateline_to_locmmmddsrc(located, current_timestamp, source=None):
     )
 
 
-def set_default_source(doc):
+async def set_default_source(doc):
     """Set the source for the item.
 
     If desk level source is specified then use that source else default from global settings.
@@ -279,7 +279,9 @@ def set_default_source(doc):
     # If the item has been ingested and the source for the provider is not the same as the system default source
     # the source must be preserved as the item has been ingested from an external agency
     if doc.get("ingest_provider"):
-        provider = get_resource_service("ingest_providers").find_one(req=None, _id=doc.get("ingest_provider"))
+        provider = await get_resource_service("ingest_providers").find_one_async(
+            req=None, _id=doc.get("ingest_provider")
+        )
         if not provider:
             provider = get_resource_service("search_providers").find_one(req=None, _id=doc.get("ingest_provider"))
         if provider and provider.get("source", "") != get_default_source():
@@ -307,7 +309,7 @@ def set_default_source(doc):
     set_dateline(doc, {})
 
 
-def on_duplicate_item(doc, original_doc, operation=None):
+async def on_duplicate_item(doc, original_doc, operation=None):
     """Make sure duplicated item has basic fields populated."""
 
     doc[GUID_FIELD] = generate_guid(type=GUID_NEWSML)
@@ -318,7 +320,7 @@ def on_duplicate_item(doc, original_doc, operation=None):
     doc["force_unlock"] = True
     doc[ITEM_OPERATION] = operation or ITEM_DUPLICATE
     doc["original_id"] = original_doc.get("item_id", original_doc.get("_id"))
-    set_default_source(doc)
+    await set_default_source(doc)
 
 
 def set_dateline(updates, original):

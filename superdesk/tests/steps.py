@@ -816,7 +816,7 @@ async def fetch_from_provider(context, provider_name, guid, routing_scheme=None,
     else:
         provider_service.provider = provider
         provider_service.URL = provider.get("config", {}).get("url")
-        items = provider_service.fetch_ingest(guid)
+        items = await provider_service.fetch_ingest(guid)
 
     for item in items:
         item["versioncreated"] = utcnow()

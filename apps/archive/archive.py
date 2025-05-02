@@ -535,7 +535,7 @@ class ArchiveService(AsyncBaseService, HighlightsSearchMixin):
         new_doc = original_doc.copy()
 
         self.remove_after_copy(new_doc, extra_fields, delete_keys=["marked_for_user", "marked_for_sign_off"])
-        on_duplicate_item(new_doc, original_doc, operation)
+        await on_duplicate_item(new_doc, original_doc, operation)
         resolve_document_version(new_doc, SOURCE, "PATCH", new_doc)
 
         if original_doc.get("task", {}).get("desk") is not None and new_doc.get(ITEM_STATE) != CONTENT_STATE.SUBMITTED:

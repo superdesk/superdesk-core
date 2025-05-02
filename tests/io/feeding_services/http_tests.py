@@ -17,7 +17,7 @@ import superdesk
 from superdesk.utc import utcnow
 from superdesk.io.registry import register_feeding_service
 from superdesk.io.feeding_services.http_service import HTTPFeedingService
-from superdesk.tests import TestCase
+from superdesk.tests import TestCase, utils as test_utils
 from superdesk.errors import IngestApiError
 
 
@@ -58,25 +58,25 @@ class ErrorResponseSession(MagicMock):
 
 
 class GetTokenTestCase(TestCase):
-    def test_get_null_token(self):
+    async def test_get_null_token(self):
         provider = {}
-        self.assertEqual("", TestFeedingService()._get_auth_token(provider))
+        self.assertEqual("", await TestFeedingService()._get_auth_token(provider))
 
-    def test_get_existing_token(self):
+    async def test_get_existing_token(self):
         provider = setup_provider("abc", 10)
-        self.assertEqual("abc", TestFeedingService()._get_auth_token(provider))
+        self.assertEqual("abc", await TestFeedingService()._get_auth_token(provider))
 
-    def test_get_expired_token(self):
+    async def test_get_expired_token(self):
         """Expired is better than none.."""
         provider = setup_provider("abc", 24)
-        self.assertEqual("", TestFeedingService()._get_auth_token(provider))
+        self.assertEqual("", await TestFeedingService()._get_auth_token(provider))
 
     async def test_fetch_token(self):
         # TODO: need some rewriting
         # this test is not working anymore
         # try to fill os.environ['REUTERS_USERNAME']
         provider = setup_provider("abc", 24)
-        superdesk.get_resource_service("ingest_providers").post([provider])
+        await test_utils.post_items("ingest_providers", [provider])
         self.assertTrue(provider.get("_id"))
         provider["config"] = {}
         provider["config"]["username"] = ""
@@ -90,7 +90,7 @@ class GetTokenTestCase(TestCase):
             self.assertNotEquals("", token)
             self.assertEqual(token, provider["tokens"]["auth_token"])
 
-            dbprovider = superdesk.get_resource_service("ingest_providers").find_one(name="test http", req=None)
+            dbprovider = await test_utils.find_one("ingest_providers", name="test http")
             self.assertEqual(token, dbprovider["tokens"]["auth_token"])
 
     async def test_generate_auth_token_raise_on_error(self):
@@ -99,5 +99,5 @@ class GetTokenTestCase(TestCase):
         with patch("requests.Session", new=ErrorResponseSession):
             service = TestFeedingService()
             with self.assertRaises(IngestApiError) as cm:
-                service._generate_auth_token(provider)
+                await service._generate_auth_token(provider)
             self.assertEqual(cm.exception.code, 4007)

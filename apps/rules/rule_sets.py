@@ -11,7 +11,7 @@
 import logging
 
 from superdesk.resource import Resource
-from superdesk.services import BaseService
+from superdesk.eve_async import AsyncBaseService
 from superdesk.errors import SuperdeskApiError
 from quart_babel import gettext as _
 
@@ -38,8 +38,8 @@ class RuleSetsResource(Resource):
     }
 
 
-class RuleSetsService(BaseService):
-    def update(self, id, updates, original):
+class RuleSetsService(AsyncBaseService):
+    async def update_async(self, id, updates, original):
         """
         Overriding to set the value of "new" attribute of rules to empty string if it's None.
         """
@@ -48,8 +48,8 @@ class RuleSetsService(BaseService):
             if rule["new"] is None:
                 rule["new"] = ""
 
-        return super().update(id, updates, original)
+        return await super().update_async(id, updates, original)
 
-    def on_delete(self, doc):
-        if self.backend.find_one("ingest_providers", req=None, rule_set=doc["_id"]):
+    async def on_delete_async(self, doc):
+        if await self.backend.find_one_async("ingest_providers", req=None, rule_set=doc["_id"]):
             raise SuperdeskApiError.forbiddenError(_("Cannot delete Rule set as it's associated with channel(s)."))

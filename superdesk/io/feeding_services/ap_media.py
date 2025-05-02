@@ -84,10 +84,12 @@ class APMediaFeedingService(HTTPFeedingServiceBase):
 
     HTTP_TIMEOUT = 40
 
-    def config_test(self, provider=None):
+    async def config_test_async(self, provider=None):
         self.provider = provider
         self._get_products(provider)
-        original = superdesk.get_resource_service("ingest_providers").find_one(req=None, _id=provider.get("_id"))
+        original = await superdesk.get_resource_service("ingest_providers").find_one_async(
+            req=None, _id=provider.get("_id")
+        )
         # If there has been a change in the required products then reset the next link
         if original and (
             original.get("config", {}).get("productList", "") != provider.get("config", {}).get("productList", "")

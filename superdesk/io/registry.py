@@ -126,6 +126,7 @@ class FeedParserAllowedResource(Resource):
     allow_unknown = True
 
 
+# Not upgrading to async, as there is no I/O to wait for
 class FeedParserAllowedService(Service):
     def get(self, req, lookup):
         def parser(parser_id):
@@ -147,6 +148,7 @@ class FeedingServiceAllowedResource(Resource):
     }
 
 
+# Not upgrading to async, as there is no I/O to wait for
 class FeedingServiceAllowedService(Service):
     def get(self, req, lookup):
         def service(service_id):
