@@ -14,19 +14,20 @@ from uuid import uuid4
 import superdesk
 from werkzeug.datastructures import ImmutableMultiDict
 from eve.utils import ParsedRequest
+from superdesk.eve_async.cursors import AsyncEveCursor
+from superdesk.eve_async.service import AsyncBaseService
 from superdesk.text_utils import get_text
-from superdesk.services import BaseService
 from superdesk.errors import SuperdeskApiError
 from apps.auth import get_user
 
 
-class ConceptItemsService(BaseService):
+class ConceptItemsService(AsyncBaseService):
     """
     CRUD service for concept items
     """
 
-    def get(self, req, lookup):
-        if all([req, req.sort]):
+    async def get_async(self, req: ParsedRequest | None, lookup: dict | None) -> AsyncEveCursor:
+        if req and req.sort:
             CASE_INSENSITIVE_COLLATION = '{"locale": "en", "strength":"1"}'
             COLLATION_SORT_ARGS = (
                 "name",
@@ -62,25 +63,25 @@ class ConceptItemsService(BaseService):
                     req.args = ImmutableMultiDict({"sort": ",".join(set(req_sort_args))})
                 req.sort = req.args["sort"]
 
-        return super().get(req, lookup)
+        return await super().get_async(req, lookup)
 
-    def on_create(self, docs):
+    async def on_create_async(self, docs: list[dict]) -> None:
         for doc in docs:
             self._validate_properties(doc)
-            self._validate_language(doc)
+            await self._validate_language(doc)
             self._setup_created_by(doc)
             self._setup_group_id(doc)
             self._fill_definition_text(doc)
 
-    def on_replace(self, doc, original):
-        self._validate_properties(doc)
-        self._validate_language(doc)
-        self._validate_group_id(doc)
-        self._setup_created_by(doc, original)
-        self._setup_updated_by(doc)
-        self._fill_definition_text(doc)
+    async def on_replace_async(self, document: dict, original: dict | None) -> None:
+        self._validate_properties(document)
+        await self._validate_language(document)
+        self._validate_group_id(document)
+        self._setup_created_by(document, original)
+        self._setup_updated_by(document)
+        self._fill_definition_text(document)
 
-    def on_update(self, updates, original):
+    async def on_update_async(self, updates: dict, original: dict) -> None:
         if "cpnat_type" in updates:
             # we must validate `properties` even if they were not in payload
             if "properties" not in updates and "properties" in original:
@@ -92,16 +93,15 @@ class ConceptItemsService(BaseService):
             self._validate_properties(updates)
 
         if "language" in updates:
-            self._validate_language(updates)
+            await self._validate_language(updates)
 
         if "definition_html" in updates:
             self._fill_definition_text(updates)
 
         self._setup_updated_by(updates)
 
-    def _validate_language(self, doc):
+    async def _validate_language(self, doc):
         try:
-            # TODO-ASYNC[vocabularies]: Use VocabulariesService async service where when upgrading this module
             languages = superdesk.get_resource_service("vocabularies").get_languages()
             assert languages
         except AssertionError:
