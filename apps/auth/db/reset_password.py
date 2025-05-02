@@ -118,7 +118,7 @@ class ResetPasswordService(AsyncBaseService):
 
         user_id = reset_request["user"]
         users_service = superdesk.get_resource_service("users")
-        user = users_service.find_one_async(req=None, _id=user_id)
+        user = await users_service.find_one_async(req=None, _id=user_id)
         if not user.get("is_active"):
             logger.warning("Try to set password for an inactive user")
             raise SuperdeskApiError.forbiddenError(_("User not active"))
