@@ -173,7 +173,9 @@ class NINJSFormatter(Formatter):
         self.can_export = True
         self.internal_renditions = get_app_config("NINJS_COMMON_RENDITIONS", []) + ["original"]
 
-    async def format(self, article: dict, subscriber: dict, codes: list | None = None) -> list[tuple[int, str] | dict]:
+    async def format(
+        self, article: dict, subscriber: dict | None, codes: list | None = None
+    ) -> list[tuple[int, str] | dict]:
         try:
             pub_seq_num = await generate_sequence_number(subscriber)
 
@@ -647,7 +649,7 @@ class NINJSFormatter(Formatter):
 
     async def export(self, item):
         if self.can_format(self.type, item):
-            sequence, formatted_doc = await self.format(item, {"_id": "0"}, None)[0]
+            sequence, formatted_doc = (await self.format(item, None, None))[0]
             return formatted_doc.replace("''", "'")
         else:
             raise Exception()

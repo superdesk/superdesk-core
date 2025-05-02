@@ -34,24 +34,27 @@ class GetFilterConditionResponse(TypedDict):
     selected_subscribers: list[dict]
 
 
-async def generate_sequence_number(subscriber: SubscribersResource | dict) -> int:
+async def generate_sequence_number(subscriber: SubscribersResource | dict | None) -> int:
     """
     Generates Published Sequence Number for the passed subscriber
     """
 
-    if isinstance(subscriber, dict):
-        # Support code that isn't updated to use ``SubscribersResource`` yet
-        subscriber = SubscribersResource.from_dict(subscriber)
-
-    assert subscriber is not None, "Subscriber can't be null"
     min_seq_number = 1
     max_seq_number = get_config(int, "MAX_VALUE_OF_PUBLISH_SEQUENCE")
-    if subscriber.sequence_num_settings:
-        min_seq_number = subscriber.sequence_num_settings.min
-        max_seq_number = subscriber.sequence_num_settings.max
+    key_name = "subscribers_0"
+
+    if subscriber:
+        if isinstance(subscriber, dict):
+            # Support code that isn't updated to use ``SubscribersResource`` yet
+            subscriber = SubscribersResource.from_dict(subscriber)
+
+        key_name = "subscribers_{_id})".format(_id=subscriber.id)
+        if subscriber.sequence_num_settings:
+            min_seq_number = subscriber.sequence_num_settings.min
+            max_seq_number = subscriber.sequence_num_settings.max
 
     return await get_next_sequence_number(
-        key_name="subscribers_{_id})".format(_id=subscriber.id),
+        key_name=key_name,
         max_seq_number=max_seq_number,
         min_seq_number=min_seq_number,
     )

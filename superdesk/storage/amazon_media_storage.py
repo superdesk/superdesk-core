@@ -418,13 +418,15 @@ class AmazonMediaStorage(SuperdeskMediaStorage):
 
         try:
             call_kwargs = self._get_put_kwargs(content, filename, content_type, media_id, **kwargs)
-            call_kwargs = dict(
-                Fileobj=call_kwargs.pop("Body"),
-                Key=call_kwargs.pop("Key"),
-                ExtraArgs=call_kwargs,
-            )
-            await self.call_async("upload_fileobj", **call_kwargs)
-            # await self.call_async("put_object", **call_kwargs)
+            if isinstance(content, (bytes, str)):
+                await self.call_async("put_object", **call_kwargs)
+            else:
+                call_kwargs = dict(
+                    Fileobj=call_kwargs.pop("Body"),
+                    Key=call_kwargs.pop("Key"),
+                    ExtraArgs=call_kwargs,
+                )
+                await self.call_async("upload_fileobj", **call_kwargs)
             return media_id
         except Exception as ex:
             logger.exception(ex)
