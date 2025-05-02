@@ -29,9 +29,6 @@ from superdesk.utils import format_content_type_name
 from superdesk.vocabularies_async.service import VocabulariesService
 from superdesk.flask import request
 
-if TYPE_CHECKING:
-    from apps.templates.content_templates import ContentTemplatesService
-
 
 CONTENT_TYPE_PRIVILEGE = "content_type"
 DO_NOT_SHOW_SELECTION = "do not show"
@@ -99,8 +96,6 @@ class ContentTypesService(AsyncCacheableService[ContentTypesResourceModel]):
         """
         if (enabled := updates.get("enabled")) is not None and not enabled and original.enabled:
             content_templates_service = superdesk.get_resource_service("content_templates")
-            assert content_templates_service is not None
-            content_templates_service = cast(ContentTemplatesService, content_templates_service)
             templates = await content_templates_service.get_templates_by_profile_id(original.id)
 
             if len(templates) > 0:
@@ -131,8 +126,6 @@ class ContentTypesService(AsyncCacheableService[ContentTypesResourceModel]):
         template_metadata_fields = ["usageterms"]
 
         content_templates_service = superdesk.get_resource_service("content_templates")
-        assert content_templates_service is not None
-        content_templates_service = cast(ContentTemplatesService, content_templates_service)
         templates = await content_templates_service.get_templates_by_profile_id(original.id)
 
         for template in templates:
