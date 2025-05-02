@@ -62,17 +62,17 @@ class PublishChannelConfigTestCase(TestCase):
                 filter="content",
                 formatter="default",
                 router="asyncio",
-                polling=True,
+                polling=False,
             ),
         )
 
-        # self.assertEqual(
-        #     get_publish_channel_config({}, ContentType.TEXT, "resend", "api"),
-        #     ExchangeConfig(
-        #         exchange="content",
-        #         filter="resend",
-        #         formatter="default",
-        #         router="asyncio",
-        #         polling=True,
-        #     )
-        # )
+        self.assertEqual(
+            get_publish_channel_config({}, ContentType.TEXT, "resend", "api"),
+            ExchangeConfig(
+                exchange="content",
+                filter="resend",
+                formatter="default",
+                router="asyncio",
+                polling=False,
+            ),
+        )

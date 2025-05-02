@@ -89,10 +89,10 @@ class KillPublishService(BasePublishService):
         # check if we are trying to kill an item that is contained in package
         # and the package itself is not killed.
 
-        packages = self.package_service.get_packages(original[ID_FIELD])
+        packages = await self.package_service.get_packages_async(original[ID_FIELD])
         if self.package_workflow == PACKAGE_WORKFLOW.RAISE:
-            if packages and packages.count() > 0:
-                for package in packages:
+            if packages and (await packages.count()) > 0:
+                async for package in packages:
                     if package[ITEM_STATE] not in {
                         CONTENT_STATE.KILLED,
                         CONTENT_STATE.RECALLED,
@@ -243,7 +243,7 @@ class KillPublishService(BasePublishService):
 
                 await published_service.system_update_async(ObjectId(item.get("_id")), updates, item)
                 # send notifications so that list can be updated in the client
-                get_resource_service("archive").handle_mark_user_notifications(updates, item, False)
+                await get_resource_service("archive").handle_mark_user_notifications(updates, item, False)
                 push_content_notification([updated, item])
 
     async def kill_broadcast(self, updates: dict, original: dict, operation: str) -> None:
@@ -263,10 +263,10 @@ class KillPublishService(BasePublishService):
 
         for item in broadcast_items:
             item_id = item.get(ID_FIELD)
-            packages = self.package_service.get_packages(item_id)
+            packages = await self.package_service.get_packages_async(item_id)
 
             processed_packages = set()
-            for package in packages:
+            async for package in packages:
                 if str(package[ID_FIELD]) in processed_packages or package.get(ITEM_STATE) == CONTENT_STATE.RECALLED:
                     continue
                 try:
@@ -285,7 +285,9 @@ class KillPublishService(BasePublishService):
 
                         processed_packages.add(package.get(ID_FIELD))
                     else:
-                        package_list = self.package_service.remove_refs_in_package(package, item_id, processed_packages)
+                        package_list = await self.package_service.remove_refs_in_package_async(
+                            package, item_id, processed_packages
+                        )
                         processed_packages = processed_packages.union(set(package_list))
                 except Exception:
                     package_id = package.get(ID_FIELD)

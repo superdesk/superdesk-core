@@ -16,7 +16,7 @@ from superdesk.resource_fields import ID_FIELD, VERSION
 from superdesk import get_resource_service
 from superdesk.commands import cli
 from apps.archive.archive import SOURCE as ARCHIVE
-from apps.archive.common import generate_unique_id_and_name, remove_unwanted, insert_into_versions
+from apps.archive.common import generate_unique_id_and_name, remove_unwanted, insert_into_versions_async
 from superdesk.metadata.item import GUID_TAG, FAMILY_ID, ITEM_STATE, CONTENT_STATE
 from superdesk.metadata.utils import generate_guid
 
@@ -54,7 +54,7 @@ async def ingest_items_for(desk, no_of_stories, skip_index):
         logger.info("Page : {}, skip: {}".format(x + 1, skip))
         cursor = await get_resource_service("published").get_from_mongo_async(None, {})
         num_items = await cursor.count()
-        logger.info("Inserting {} items".format(len(num_items)))
+        logger.info("Inserting {} items".format(num_items))
         archive_items = []
 
         async for item in cursor.skip(skip).limit(bucket_size):
@@ -79,6 +79,6 @@ async def ingest_items_for(desk, no_of_stories, skip_index):
             remove_unwanted(dest_doc)
             archive_items.append(dest_doc)
 
-        get_resource_service(ARCHIVE).post(archive_items)
+        await get_resource_service(ARCHIVE).post_async(archive_items)
         for item in archive_items:
-            insert_into_versions(id_=item[ID_FIELD])
+            await insert_into_versions_async(id_=item[ID_FIELD])

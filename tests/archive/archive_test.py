@@ -8,8 +8,6 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
-import time
-
 from bson import ObjectId
 from pytz import timezone
 from datetime import timedelta, datetime
@@ -21,7 +19,7 @@ from superdesk.core import json
 from superdesk.metadata.utils import generate_guid, GUID_TAG
 import superdesk.signals as signals
 from superdesk.errors import SuperdeskApiError
-from superdesk.tests import TestCase, markers
+from superdesk.tests import TestCase, utils as test_utils, fixtures
 from superdesk.utc import utcnow
 from superdesk.metadata.item import CONTENT_STATE, PUBLISH_SCHEDULE, SCHEDULE_SETTINGS
 from apps.archive.archive import update_image_caption, update_associations
@@ -47,7 +45,7 @@ class ArchiveTestCase(TestCase):
     async def asyncSetUp(self):
         await super().asyncSetUp()
         search_provider = {"_id": 1, "source": "ABC", "name": "ABC", "search_provider": "ABC"}
-        self.app.data.insert("search_providers", [search_provider])
+        await test_utils.post_items("search_providers", [search_provider])
         if not registered_search_providers.get("ABC"):
             register_search_provider("ABC", fetch_endpoint="ABC", label="ABC")
 
@@ -145,19 +143,19 @@ class ArchiveTestCase(TestCase):
                 }
             },
         }
-        self.app.data.insert("content_types", [content_type])
+        await test_utils.post_items("content_types", [content_type])
         doc = {
             "_id": "transtype_1",
             "profile": "type_1",
             "extra": {"test_date_field": "2019-11-06T00:00:00+0000"},
         }
 
-        transtype_metadata(doc)
+        await transtype_metadata(doc)
         self.assertIsInstance(doc["extra"]["test_date_field"], datetime)
 
     async def test_if_no_source_defined_on_desk(self):
         desk = {"name": "sports"}
-        self.app.data.insert("desks", [desk])
+        await test_utils.post_items("desks", [desk])
         located, formatted_date, current_ts = self._get_located_and_current_utc_ts()
         doc = {
             "_id": "123",
@@ -173,7 +171,7 @@ class ArchiveTestCase(TestCase):
     async def test_if_source_defined_on_desk(self):
         source = "FOO"
         desk = {"name": "sports", "source": source}
-        self.app.data.insert("desks", [desk])
+        await test_utils.post_items("desks", [desk])
         located, formatted_date, current_ts = self._get_located_and_current_utc_ts()
         doc = {
             "_id": "123",
@@ -188,9 +186,9 @@ class ArchiveTestCase(TestCase):
 
     async def test_if_ingest_provider_source_is_preserved(self):
         desk = {"name": "sports", "source": "FOO"}
-        self.app.data.insert("desks", [desk])
+        await test_utils.post_items("desks", [desk])
         ingest_provider = {"_id": 1, "source": "ABC"}
-        self.app.data.insert("ingest_providers", [ingest_provider])
+        await test_utils.post_items("ingest_providers", [ingest_provider])
         located, formatted_date, current_ts = self._get_located_and_current_utc_ts()
         doc = {
             "_id": "123",
@@ -206,9 +204,9 @@ class ArchiveTestCase(TestCase):
 
     async def test_if_ingest_provider_source_is_not_preserved_for_default_ingest(self):
         desk = {"name": "sports", "source": "FOO"}
-        self.app.data.insert("desks", [desk])
+        await test_utils.post_items("desks", [desk])
         ingest_provider = {"_id": 1, "source": "AAP"}
-        self.app.data.insert("ingest_providers", [ingest_provider])
+        await test_utils.post_items("ingest_providers", [ingest_provider])
         located, formatted_date, current_ts = self._get_located_and_current_utc_ts()
         doc = {
             "_id": "123",
@@ -224,7 +222,7 @@ class ArchiveTestCase(TestCase):
 
     async def test_if_search_provider_source_is_preserved(self):
         desk = {"name": "sports", "source": "FOO"}
-        self.app.data.insert("desks", [desk])
+        await test_utils.post_items("desks", [desk])
         doc = {
             "_id": "123",
             "task": {"desk": desk["_id"], "stage": desk["working_stage"]},
@@ -237,7 +235,7 @@ class ArchiveTestCase(TestCase):
 
     async def test_if_item_has_source_then_search_provider_source_is_not_used(self):
         desk = {"name": "sports", "source": "FOO"}
-        self.app.data.insert("desks", [desk])
+        await test_utils.post_items("desks", [desk])
         doc = {
             "_id": "123",
             "task": {"desk": desk["_id"], "stage": desk["working_stage"]},
@@ -334,13 +332,16 @@ class ArchiveTestCase(TestCase):
     def test_get_dateline_city_from_text_with_city_state(self):
         self.assertEqual(get_dateline_city({"located": None, "text": "City, State, 9 July AAP"}), "City, State")
 
-    @markers.requires_async_celery
     async def test_firstpublished(self):
         """Check that "firstpublihed" field is set correctly
 
         the test create a story, check firstpublished field, then correct it
         and check again that correction is done and firstpublished has not changed
         """
+
+        await test_utils.post_items("products", fixtures.products.all_products())
+        await test_utils.post_items("subscribers", [fixtures.subscribers.sub5_subscriber()])
+
         archive_service = superdesk.get_resource_service("archive")
         correct_service = superdesk.get_resource_service("archive_correct")
         publish_service = superdesk.get_resource_service("archive_publish")
@@ -354,19 +355,18 @@ class ArchiveTestCase(TestCase):
             "rewrite_of": "bar",
             "headline": "foo",
         }
-        archive_service.create([item])
+        await archive_service.create_async([item])
         with mock.patch.object(publish, "utcnow", lambda: NOW):
-            publish_service.patch("foo", {"body_html": "original"})
-        created = publish_service.find_one(None, _id="foo")
+            await publish_service.patch_async("foo", {"body_html": "original"})
+        created = await publish_service.find_one_async(None, _id="foo")
         self.assertEqual(NOW, created["firstpublished"])
-        correct_service.patch("foo", {"body_html": "corrected"})
+        await correct_service.patch_async("foo", {"body_html": "corrected"})
         # we try to update to check that "firstpublished" is not modified
         # note that utcnow MUST NOT be mocked here, else the test would be pointless
-        corrected = publish_service.find_one(None, _id="foo")
+        corrected = await publish_service.find_one_async(None, _id="foo")
         self.assertEqual("corrected", corrected["body_html"])
         self.assertEqual(NOW, corrected["firstpublished"])
 
-    @markers.requires_async_celery
     async def test_update_signals(self):
         def handler(sender, **kwargs):
             pass
@@ -379,10 +379,10 @@ class ArchiveTestCase(TestCase):
 
         archive_service = superdesk.get_resource_service("archive")
         item = {"_id": "foo"}
-        ids = archive_service.create([item])
+        ids = await archive_service.create_async([item])
 
         updates = {"foo": "bar"}
-        archive_service.update(ids[0], updates, item)
+        await archive_service.update_async(ids[0], updates, item)
 
         updated = item.copy()
         updated.update(updates)
@@ -408,11 +408,11 @@ class ArchiveTestCase(TestCase):
             "headline": "original item",
             "language": "en",
         }
-        archive_service.create([original_item])
-        original_item = archive_service.find_one(None, _id="original")
+        await archive_service.create_async([original_item])
+        original_item = await archive_service.find_one_async(None, _id="original")
         item = deepcopy(original_item)
         item["language"] = "fr"
-        translate_guid = archive_service.duplicate_item(item, operation="translate")
+        translate_guid = await archive_service.duplicate_item(item, operation="translate")
 
         # `assert_called_once_with` is not used due to a lot of metadata is generated during duplication
         assert duplicate_handler_mock.call_count == 1  # use `assert_called_once` for python>=3.6
@@ -470,25 +470,22 @@ class ArchiveTestCase(TestCase):
             )
 
         service = superdesk.get_resource_service("archive")
-        service.create(items)
+        await service.create_async(items)
 
         counter = 0
-        for _items in service.get_expired_items(now):
-            for item in _items:
-                counter += 1
+        async for _items in service.get_expired_items(now):
+            counter += len(_items)
 
         assert 1000 == counter
 
         counter = 0
         ids = sorted([item["guid"] for item in items])
         last_id = ids[499]
-        for _items in service.get_expired_items(now, last_id=last_id):
-            for item in _items:
-                counter += 1
+        async for _items in service.get_expired_items(now, last_id=last_id):
+            counter += len(_items)
 
         assert 500 == counter
 
-    @markers.requires_async_celery
     async def test_republished_associated_item_datetime(self):
         """
         Check rescheduled item and its associated item has same published_schedule date time
@@ -511,7 +508,7 @@ class ArchiveTestCase(TestCase):
                 }
             },
         }
-        archive_service.create([item])
+        await archive_service.create_async([item])
         feature_item = {
             "_id": "foo_img",
             "guid": "foo_img",
@@ -520,11 +517,11 @@ class ArchiveTestCase(TestCase):
             "state": CONTENT_STATE.PROGRESS,
             "_current_version": 1,
         }
-        archive_service.create([feature_item])
-        publish_service.patch(
+        await archive_service.create_async([feature_item])
+        await publish_service.patch_async(
             "foo", {"body_html": "original", "headline": "test", "publish_schedule": NOW + timedelta(minutes=60)}
         )
-        created_item = publish_service.find_one(None, _id="foo")
+        created_item = await publish_service.find_one_async(None, _id="foo")
 
         self.assertEqual(created_item[PUBLISH_SCHEDULE], NOW + timedelta(minutes=60))
         self.assertEqual(created_item["state"], CONTENT_STATE.SCHEDULED)
@@ -538,16 +535,16 @@ class ArchiveTestCase(TestCase):
         self.assertEqual(associate_item["state"], CONTENT_STATE.SCHEDULED)
 
         # De-scheduled an item
-        archive_service.patch("foo", {"publish_schedule": None})
-        descheduled_item = archive_service.find_one(None, _id="foo")
+        await archive_service.patch_async("foo", {"publish_schedule": None})
+        descheduled_item = await archive_service.find_one_async(None, _id="foo")
         self.assertEqual(descheduled_item["operation"], "deschedule")
         self.assertEqual(descheduled_item["state"], CONTENT_STATE.PROGRESS)
         self.assertEqual(descheduled_item["associations"]["featuremedia"][SCHEDULE_SETTINGS], {})
         self.assertEqual(descheduled_item["associations"]["featuremedia"][PUBLISH_SCHEDULE], None)
 
         # resheduled an item
-        publish_service.patch("foo", {"publish_schedule": NOW + timedelta(minutes=100)})
-        rescheduled_item = publish_service.find_one(None, _id="foo")
+        await publish_service.patch_async("foo", {"publish_schedule": NOW + timedelta(minutes=100)})
+        rescheduled_item = await publish_service.find_one_async(None, _id="foo")
         self.assertEqual(rescheduled_item[PUBLISH_SCHEDULE], NOW + timedelta(minutes=100))
         self.assertEqual(rescheduled_item["state"], CONTENT_STATE.SCHEDULED)
 

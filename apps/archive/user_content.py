@@ -8,11 +8,11 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
+from superdesk.eve_async.service import AsyncBaseService
 from superdesk.resource import Resource, build_custom_hateoas
-from superdesk.services import BaseService
 from .common import CUSTOM_HATEOAS
 from superdesk.metadata.utils import aggregations
-from .archive import ArchiveResource
+from .resource import ArchiveResource
 import superdesk
 
 
@@ -36,14 +36,14 @@ class UserContentResource(Resource):
     resource_title = endpoint_name
 
 
-class UserContentService(BaseService):
-    def on_fetched(self, docs):
+class UserContentService(AsyncBaseService):
+    async def on_fetched_async(self, doc):
         """
         Overriding this to handle existing data in Mongo & Elastic
         """
-        self.enhance_items(docs["_items"])
+        self.enhance_items(doc["_items"])
 
-    def on_fetched_item(self, doc):
+    async def on_fetched_item_async(self, doc):
         self.enhance_items([doc])
 
     def enhance_items(self, items):

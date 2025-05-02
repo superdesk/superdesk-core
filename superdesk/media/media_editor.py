@@ -105,7 +105,7 @@ class MediaEditorService(AsyncBaseService):
                 item_id = item[ID_FIELD]
 
             if item is None and item_id:
-                item = next(archive.find({"_id": item_id}))
+                item = await (await archive.find_async({"_id": item_id})).next()
             edit = doc.pop("edit")
 
             # now we retrieve and load current original media
@@ -135,7 +135,7 @@ class MediaEditorService(AsyncBaseService):
             filename = str(uuid.uuid4()) + ext
 
             # and save transformed media in database
-            media_id = app.media.put(buf, filename=filename, content_type=content_type)
+            media_id = await app.media.put_async(buf, filename=filename, content_type=content_type)
 
             # now we recreate other renditions based on transformed original media
             buf.seek(0)

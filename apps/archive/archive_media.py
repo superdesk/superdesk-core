@@ -41,6 +41,7 @@ class ArchiveMediaService:
 
     def on_create(self, docs):
         """Create corresponding item on file upload."""
+        # TODO-ASYNC[archive_media_service]: Make this method async.
 
         app = get_current_app()
         for doc in docs:

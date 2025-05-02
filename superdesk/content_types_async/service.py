@@ -8,7 +8,7 @@
 
 
 from copy import deepcopy
-from typing import Any, cast
+from typing import TYPE_CHECKING, Any, Iterable, cast
 
 import bson
 from bson import ObjectId
@@ -16,7 +16,6 @@ from quart_babel import gettext as _
 
 from apps.auth import get_user_id
 from apps.desks import remove_profile_from_desks_async
-from apps.templates.content_templates import ContentTemplatesService
 import superdesk
 from superdesk.core.resources.service import AsyncCacheableService
 from superdesk.core.types.search import ProjectedFieldArg, SearchRequest
@@ -97,8 +96,6 @@ class ContentTypesService(AsyncCacheableService[ContentTypesResourceModel]):
         """
         if (enabled := updates.get("enabled")) is not None and not enabled and original.enabled:
             content_templates_service = superdesk.get_resource_service("content_templates")
-            assert content_templates_service is not None
-            content_templates_service = cast(ContentTemplatesService, content_templates_service)
             templates = await content_templates_service.get_templates_by_profile_id(original.id)
 
             if len(templates) > 0:
@@ -129,8 +126,6 @@ class ContentTypesService(AsyncCacheableService[ContentTypesResourceModel]):
         template_metadata_fields = ["usageterms"]
 
         content_templates_service = superdesk.get_resource_service("content_templates")
-        assert content_templates_service is not None
-        content_templates_service = cast(ContentTemplatesService, content_templates_service)
         templates = await content_templates_service.get_templates_by_profile_id(original.id)
 
         for template in templates:
@@ -163,7 +158,7 @@ class ContentTypesService(AsyncCacheableService[ContentTypesResourceModel]):
             await clean_doc(doc)
         return doc.to_dict()
 
-    async def set_used(self, profile_ids: list[str]) -> None:
+    async def set_used(self, profile_ids: Iterable[str]) -> None:
         query = {"_id": {"$in": list(profile_ids)}, "is_used": {"$ne": True}}
         update = {"$set": {"is_used": True}}
         await self.mongo_async.find_and_modify(query=query, update=update)

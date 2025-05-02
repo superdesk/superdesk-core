@@ -367,14 +367,11 @@ class UserDesksService(AsyncBaseService):
             del lookup["user_id"]
         return await super().get_async(req, lookup)
 
-    # TODO-ASYNC: Convert this to async when upgrading archive module
-    def is_member(self, user_id, desk_id):
-        # desk = list(self.get(req=None, lookup={'members.user':ObjectId(user_id), '_id': ObjectId(desk_id)}))
-        return len(list(self.get(req=None, lookup={"members.user": ObjectId(user_id), "_id": ObjectId(desk_id)}))) > 0
+    async def is_member(self, user_id, desk_id):
+        return await self.count_async({"members.user": ObjectId(user_id), "_id": ObjectId(desk_id)}) > 0
 
-    # TODO-ASYNC: Convert this to async when upgrading archive module
-    def get_by_user(self, user_id):
-        return list(self.get(req=None, lookup={"user_id": user_id}))
+    async def get_by_user(self, user_id):
+        return await (await self.get_async(req=None, lookup={"user_id": user_id})).to_list()
 
 
 class DeskUsersResource(Resource):

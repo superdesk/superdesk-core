@@ -55,7 +55,7 @@ class TranslateService(AsyncBaseService):
         macros_service = get_resource_service("macros")
         published_service = get_resource_service("published")
 
-        item = archive_service.find_one(req=None, _id=guid)
+        item = await archive_service.find_one_async(req=None, _id=guid)
         if not item:
             raise SuperdeskApiError.notFoundError(_("Failed to find item with guid: {guid}").format(guid=guid))
 
@@ -93,7 +93,7 @@ class TranslateService(AsyncBaseService):
         if UPDATE_TRANSLATION_METADATA_MACRO and macros_service.get_macro_by_name(UPDATE_TRANSLATION_METADATA_MACRO):
             await macros_service.execute_macro(item, UPDATE_TRANSLATION_METADATA_MACRO)
 
-        translation_guid = archive_service.duplicate_item(
+        translation_guid = await archive_service.duplicate_item(
             item, extra_fields=extra_fields, state=state, operation="translate"
         )
 
@@ -104,7 +104,7 @@ class TranslateService(AsyncBaseService):
             "translations": item["translations"],
         }
 
-        archive_service.system_update(item["_id"], updates, item)
+        await archive_service.system_update_async(item["_id"], updates, item)
         await published_service.update_published_items(item["_id"], "translation_id", item["_id"])
         await published_service.update_published_items(item["_id"], "translations", item["translations"])
 
@@ -118,8 +118,7 @@ class TranslateService(AsyncBaseService):
         for doc in docs:
             task = None
             if doc.get("desk"):
-                # TODO-ASYNC[desks]: Use DesksResourceModel async service where when upgrading this module
-                desk = get_resource_service("desks").find_one(req=None, _id=doc["desk"]) or {}
+                desk = await get_resource_service("desks").find_one_async(req=None, _id=doc["desk"]) or {}
                 task = dict(desk=desk.get("_id"), stage=desk.get("working_stage"), user=get_user_id())
             ids.append(await self._translate_item(doc["guid"], doc["language"], task, **kwargs))
         return ids

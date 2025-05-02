@@ -17,7 +17,7 @@ from apps.archive.archive import SOURCE as ARCHIVE
 from apps.archive.common import remove_media_files
 from superdesk import get_resource_service
 from superdesk.media.crop import CropService
-from superdesk.tests import TestCase
+from superdesk.tests import TestCase, utils as test_utils
 from superdesk.utc import get_expiry_date, utcnow
 
 
@@ -162,7 +162,7 @@ class RemoveSpikedContentTestCase(TestCase):
     async def test_query_getting_expired_content(self):
         now = utcnow()
 
-        self.app.data.insert(
+        await test_utils.post_items(
             ARCHIVE,
             [
                 {"expiry": get_expiry_date(0), "state": "spiked"},
@@ -173,10 +173,11 @@ class RemoveSpikedContentTestCase(TestCase):
                 {"unique_id": 97, "state": "spiked"},
                 {"expiry": now - timedelta(minutes=10), "state": "spiked", "unique_id": 100},
             ],
+            use_eve=True,
         )
 
         now = utcnow()
-        for expired_items in get_resource_service(ARCHIVE).get_expired_items(now):
+        async for expired_items in get_resource_service(ARCHIVE).get_expired_items(now):
             if expired_items:
                 self.assertEqual(1, len(expired_items))
                 self.assertEqual(100, expired_items[0]["unique_id"])
@@ -188,19 +189,19 @@ class RemoveSpikedContentTestCase(TestCase):
         item = {"_id": "testimage", "type": "picture", "renditions": self.media}
 
         original = item.copy()
-        with patch.object(self.app.media, "delete") as media_delete:
+        with patch.object(self.app.media, "delete_async") as media_delete:
             await CropService().update_media_references(item, original)
             references_service = get_resource_service("media_references")
             refs = await references_service.get_async(req=None, lookup={"item_id": "testimage"})
-            self.assertEqual(refs.count(), 4)
-            for ref in refs:
+            self.assertEqual(await refs.count(), 4)
+            async for ref in refs:
                 self.assertEqual(ref.get("published"), False)
             await CropService().update_media_references(item, original, True)
             refs = await references_service.get_async(req=None, lookup={"item_id": "testimage"})
-            for ref in refs:
+            async for ref in refs:
                 self.assertEqual(ref.get("published"), True)
 
-            remove_media_files(item)
+            await remove_media_files(item)
             self.assertEqual(0, media_delete.call_count)
 
             item = {"_id": "testimage2", "type": "picture", "renditions": self.media}
@@ -209,11 +210,11 @@ class RemoveSpikedContentTestCase(TestCase):
             await CropService().update_media_references(item, original)
             references_service = get_resource_service("media_references")
             refs = await references_service.get_async(req=None, lookup={"item_id": "testimage2"})
-            self.assertEqual(refs.count(), 4)
-            for ref in refs:
+            self.assertEqual(await refs.count(), 4)
+            async for ref in refs:
                 self.assertEqual(ref.get("published"), False)
 
-            remove_media_files(item)
+            await remove_media_files(item)
             self.assertEqual(0, media_delete.call_count)
 
             item = {
@@ -241,11 +242,11 @@ class RemoveSpikedContentTestCase(TestCase):
             await CropService().update_media_references(item, original)
             references_service = get_resource_service("media_references")
             refs = await references_service.get_async(req=None, lookup={"item_id": "testimage3"})
-            self.assertEqual(refs.count(), 2)
-            for ref in refs:
+            self.assertEqual(await refs.count(), 2)
+            async for ref in refs:
                 self.assertEqual(ref.get("published"), False)
 
-            remove_media_files(item)
+            await remove_media_files(item)
             self.assertEqual(2, media_delete.call_count)
             for key, rendition in item.get("renditions").items():
                 media_delete.assert_any_call(rendition["media"])
@@ -283,15 +284,15 @@ class RemoveSpikedContentTestCase(TestCase):
             await CropService().update_media_references(item, original)
             references_service = get_resource_service("media_references")
             refs = await references_service.get_async(req=None, lookup={"item_id": "testimage"})
-            self.assertEqual(refs.count(), 6)
-            for ref in refs:
+            self.assertEqual(await refs.count(), 6)
+            async for ref in refs:
                 self.assertEqual(ref.get("published"), False)
             await CropService().update_media_references(item, original, True)
-            refs = references_service.get(req=None, lookup={"item_id": "testimage"})
-            for ref in refs:
+            refs = await references_service.get_async(req=None, lookup={"item_id": "testimage"})
+            async for ref in refs:
                 self.assertEqual(ref.get("published"), True)
 
-            remove_media_files(item)
+            await remove_media_files(item)
             self.assertEqual(0, media_delete.call_count)
 
     async def test_remove_media_files_for_attachments(self):
@@ -303,15 +304,15 @@ class RemoveSpikedContentTestCase(TestCase):
                 {"attachment": attachments[0]},
             ],
         }
-        with patch.object(self.app.media, "delete") as media_delete:
-            remove_media_files(item)
+        with patch.object(self.app.media, "delete_async") as media_delete:
+            await remove_media_files(item)
         media_delete.assert_any_call("foo", "attachments")
 
     async def test_delete_by_ids(self):
-        ids = self.app.data.insert(ARCHIVE, self.articles)
+        ids = await test_utils.post_items(ARCHIVE, self.articles, use_eve=True)
         archive_service = get_resource_service(ARCHIVE)
         archive_service.on_delete = MagicMock()
-        archive_service.delete_by_article_ids(ids)
+        await archive_service.delete_by_article_ids(ids)
         self.assertTrue(self.app.data.mongo.is_empty(ARCHIVE))
         self.assertTrue(self.app.data.elastic.is_empty(ARCHIVE))
         self.assertEqual(len(self.articles), archive_service.on_delete.call_count)
@@ -319,7 +320,7 @@ class RemoveSpikedContentTestCase(TestCase):
     async def test_remove_renditions_from_all_versions(self):
         renditions = copy.copy(self.media)
 
-        ids = self.app.data.insert(
+        ids = await test_utils.post_items(
             ARCHIVE,
             [
                 {
@@ -329,9 +330,10 @@ class RemoveSpikedContentTestCase(TestCase):
                     "renditions": {},
                 }
             ],
+            use_eve=True,
         )
 
-        self.app.data.insert(
+        await test_utils.post_items(
             "archive_versions",
             [
                 {
@@ -340,12 +342,10 @@ class RemoveSpikedContentTestCase(TestCase):
                     "renditions": renditions,
                 }
             ],
+            use_eve=True,
         )
 
-        with patch.object(self.app.media, "delete") as media_delete:
-            get_resource_service("archive").delete_by_article_ids(ids)
+        with patch.object(self.app.media, "delete_async") as media_delete:
+            await get_resource_service("archive").delete_by_article_ids(ids)
             for key, rendition in renditions.items():
                 media_delete.assert_any_call(rendition["media"])
-
-    def _get_original(self, _id):
-        return self.app.data.find_one(ARCHIVE, None, _id=_id)

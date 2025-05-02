@@ -103,7 +103,7 @@ class RemoveExpiredContent:
             # so they are wrapped with log_exeption
             await self._remove_expired_publish_queue_items(now)
             await self._remove_expired_items(now)
-            self._remove_expired_archived_items(now)
+            await self._remove_expired_archived_items(now)
 
             push_notification("content:expired")
             logger.info("{} Completed remove expired content.".format(self.log_msg))
@@ -140,26 +140,26 @@ class RemoveExpiredContent:
             ]
         )
 
-        last_id = config_service.get(LAST_ID_CONFIG)
+        last_id = await config_service.get_async(LAST_ID_CONFIG)
         if last_id:
             logger.info("%s Continuing from id %s", self.log_msg, last_id)
 
-        for expired_items in archive_service.get_expired_items(expiry_datetime, last_id=last_id):
+        async for expired_items in archive_service.get_expired_items(expiry_datetime, last_id=last_id):
             items_to_remove = set()
             items_to_be_archived = dict()
             items_having_issues = dict()
 
             if len(expired_items) == 0:
                 logger.info("{} No items found to expire.".format(self.log_msg))
-                config_service.set(LAST_ID_CONFIG, "")
+                await config_service.set(LAST_ID_CONFIG, "")
                 return
             else:
                 logger.info("{} Processing {} expired items.".format(self.log_msg, len(expired_items)))
                 last_id = expired_items[-1]["_id"]
-                config_service.set(LAST_ID_CONFIG, last_id)
+                await config_service.set(LAST_ID_CONFIG, last_id)
 
             # delete spiked items
-            self.delete_spiked_items(expired_items)
+            await self.delete_spiked_items(expired_items)
 
             # get killed items
             killed_items = {
@@ -200,7 +200,7 @@ class RemoveExpiredContent:
                 if (
                     item_id not in items_to_be_archived
                     and item_id not in items_having_issues
-                    and self._can_remove_item(item, expiry_datetime, processed_items, preserve_published_desks)
+                    and await self._can_remove_item(item, expiry_datetime, processed_items, preserve_published_desks)
                 ):
                     # item can be archived and removed from the database
                     logger.info("{} Removing item. {}".format(self.log_msg, expiry_msg))
@@ -267,18 +267,18 @@ class RemoveExpiredContent:
 
             if items_to_remove:
                 logger.info("{} Deleting articles.: {}".format(self.log_msg, items_to_remove))
-                archive_service.delete_by_article_ids(list(items_to_remove))
+                await archive_service.delete_by_article_ids(list(items_to_remove))
 
             for _item_id, item in items_having_issues.items():
                 msg = log_msg_format.format(**item)
                 try:
-                    archive_service.system_update(item.get(ID_FIELD), {"expiry_status": "invalid"}, item)
+                    await archive_service.system_update_async(item.get(ID_FIELD), {"expiry_status": "invalid"}, item)
                     logger.info("{} Setting item expiry status. {}".format(self.log_msg, msg))
                 except Exception:
                     logger.exception("{} Failed to set expiry status for item. {}".format(self.log_msg, msg))
 
     @log_exeption
-    def _remove_expired_archived_items(self, now):
+    async def _remove_expired_archived_items(self, now):
         EXPIRY_MINUTES = get_app_config("ARCHIVED_EXPIRY_MINUTES")
         EXPIRY_LIMIT = get_app_config("MAX_EXPIRY_QUERY_LIMIT", 100)
         if not EXPIRY_MINUTES:
@@ -301,9 +301,9 @@ class RemoveExpiredContent:
             # TODO-ASYNC: Use async version
             signals.archived_item_removed.send(archived_service, item=item)
             if not get_app_config("LEGAL_ARCHIVE") and not archived_service.find_one(req=None, item_id=item["item_id"]):
-                remove_media_files(item, published=True)
+                await remove_media_files(item, published=True)
 
-    def _can_remove_item(self, item, now, processed_item=None, preserve_published_desks=None):
+    async def _can_remove_item(self, item, now, processed_item=None, preserve_published_desks=None):
         """Recursively checks if the item can be removed.
 
         :param dict item: item to be remove
@@ -339,7 +339,7 @@ class RemoveExpiredContent:
 
         # get the list of associated item ids
         elif item.get(ITEM_TYPE) in MEDIA_TYPES:
-            item_refs.extend(self._get_associated_items(item))
+            item_refs.extend(await self._get_associated_items(item))
 
         # get item reference where this referred
         item_refs.extend(package_service.get_linked_in_package_ids(item))
@@ -374,9 +374,11 @@ class RemoveExpiredContent:
 
             processed_item[item[ID_FIELD]] = item
             if item_refs:
-                archive_items = archive_service.get_from_mongo(req=None, lookup={"_id": {"$in": item_refs}})
-                for archive_item in archive_items:
-                    is_expired = self._can_remove_item(archive_item, now, processed_item, preserve_published_desks)
+                archive_items = await archive_service.get_from_mongo_async(req=None, lookup={"_id": {"$in": item_refs}})
+                async for archive_item in archive_items:
+                    is_expired = await self._can_remove_item(
+                        archive_item, now, processed_item, preserve_published_desks
+                    )
                     if not is_expired:
                         reason = "References"
                         break
@@ -397,7 +399,7 @@ class RemoveExpiredContent:
                 ids.append(associated_item.get(ID_FIELD))
         return ids
 
-    def _get_associated_items(self, item):
+    async def _get_associated_items(self, item):
         """Get the list of item ids where the media item is associated.
         :param dict item: media item
         :return list: list of associated item ids
@@ -405,18 +407,20 @@ class RemoveExpiredContent:
         if item.get(ITEM_TYPE) not in MEDIA_TYPES:
             return []
 
-        associated_items = list(
-            get_resource_service("media_references").get(req=None, lookup={"associated_id": item.get(ID_FIELD)})
+        associated_items = await get_resource_service("media_references").get_async(
+            req=None, lookup={"associated_id": item.get(ID_FIELD)}
         )
 
         ids = set()
-        for assoc in associated_items:
+        async for assoc in associated_items:
             ids.add(assoc["item_id"])
 
         # extra query just to ensure that item is not deleted
         # get the associated items from the archive collection
-        archive_docs = list(get_resource_service(ARCHIVE).get_from_mongo(req=None, lookup={"_id": {"$in": list(ids)}}))
-        return [doc.get(ID_FIELD) for doc in archive_docs]
+        archive_docs = await get_resource_service(ARCHIVE).get_from_mongo_async(
+            req=None, lookup={"_id": {"$in": list(ids)}}
+        )
+        return [doc.get(ID_FIELD) async for doc in archive_docs]
 
     async def _move_to_archived(self, item, filter_conditions):
         """Moves all the published version of an article to archived.
@@ -451,7 +455,7 @@ class RemoveExpiredContent:
                 logger.info("{} Archived published item: {}".format(self.log_msg, item_id))
                 await published_service.delete_by_article_id(item_id)
                 logger.info("{} Deleted published item. {}".format(self.log_msg, item_id))
-            archive_service.delete_by_article_ids([item_id])
+            await archive_service.delete_by_article_ids([item_id])
             logger.info("{} Deleted archive item. {}".format(self.log_msg, item_id))
         except Exception:
             failed_items = [item.get(ID_FIELD) for item in published_items]
@@ -478,7 +482,7 @@ class RemoveExpiredContent:
         logger.info("{} No filter conditions matched Archiving item {}.".format(self.log_msg, item.get(ID_FIELD)))
         return True
 
-    def delete_spiked_items(self, items):
+    async def delete_spiked_items(self, items):
         """Delete spiked items
 
         :param list items:
@@ -488,11 +492,11 @@ class RemoveExpiredContent:
             spiked_ids = [
                 item.get(ID_FIELD)
                 for item in items
-                if item.get(ITEM_STATE) == CONTENT_STATE.SPIKED and not self._get_associated_items(item)
+                if item.get(ITEM_STATE) == CONTENT_STATE.SPIKED and not await self._get_associated_items(item)
             ]
             if spiked_ids:
                 logger.warning("{} deleting spiked items: {}.".format(self.log_msg, spiked_ids))
-                get_resource_service("archive").delete_by_article_ids(spiked_ids)
+                await get_resource_service("archive").delete_by_article_ids(spiked_ids)
             logger.info("{} deleted spiked items. Count: {}.".format(self.log_msg, len(spiked_ids)))
         except Exception:
             logger.exception("{} Failed to delete spiked items.".format(self.log_msg))

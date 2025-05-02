@@ -123,7 +123,7 @@ class MoveService(AsyncBaseService):
 
     async def move_content(self, id, doc):
         archive_service = get_resource_service(ARCHIVE)
-        archived_doc = archive_service.find_one(req=None, _id=id)
+        archived_doc = await archive_service.find_one_async(req=None, _id=id)
 
         if not archived_doc:
             raise SuperdeskApiError.notFoundError(_("Failed to find item with guid: {guid}").format(guid=id))
@@ -132,7 +132,7 @@ class MoveService(AsyncBaseService):
         await self._move(archived_doc, doc)
 
         # get the recent updates again
-        archived_doc = archive_service.find_one(req=None, _id=id)
+        archived_doc = await archive_service.find_one_async(req=None, _id=id)
         # finally apply any on stage rules/macros
         await apply_onstage_rule(archived_doc, id)
 
@@ -163,7 +163,7 @@ class MoveService(AsyncBaseService):
             archived_doc[ITEM_STATE] = CONTENT_STATE.SUBMITTED
         archived_doc[ITEM_OPERATION] = ITEM_MOVE
         # set the change in desk type when content is moved.
-        self.set_change_in_desk_type(archived_doc, original)
+        await self.set_change_in_desk_type(archived_doc, original)
         archived_doc.pop(SIGN_OFF, None)
         set_sign_off(archived_doc, original=original)
         convert_task_attributes_to_objectId(archived_doc)
@@ -174,13 +174,13 @@ class MoveService(AsyncBaseService):
         archived_doc["versioncreated"] = utcnow()
 
         signals.item_move.send(self, item=archived_doc, original=original)
-        archive_service.update(original[ID_FIELD], archived_doc, original)
+        await archive_service.update_async(original[ID_FIELD], archived_doc, original)
 
         insert_into_versions(id_=original[ID_FIELD])
         push_item_move_notification(original, archived_doc)
 
         app = get_current_app().as_any()
-        app.on_archive_item_updated(archived_doc, original, ITEM_MOVE)
+        await app.on_archive_item_updated.call_async(archived_doc, original, ITEM_MOVE)
 
         # make sure `item._id` is there in signal
         moved_item = archived_doc.copy()
@@ -199,7 +199,7 @@ class MoveService(AsyncBaseService):
         if not is_workflow_state_transition_valid("submit_to_desk", archived_doc[ITEM_STATE]):
             raise InvalidStateTransitionError()
 
-    def set_change_in_desk_type(self, updated, original):
+    async def set_change_in_desk_type(self, updated, original):
         """Detects if the change in the desk is between authoring to production (and vice versa).
 
         Sets the field 'last_production_desk' and 'last_authoring_desk'.
@@ -210,9 +210,8 @@ class MoveService(AsyncBaseService):
         old_desk_id = str(original.get("task", {}).get("desk", ""))
         new_desk_id = str(updated.get("task", {}).get("desk", ""))
         if old_desk_id and old_desk_id != new_desk_id:
-            # TODO-ASYNC[desks]: Use DesksResourceModel async service where when upgrading this module
-            old_desk = get_resource_service("desks").find_one(req=None, _id=old_desk_id)
-            new_desk = get_resource_service("desks").find_one(req=None, _id=new_desk_id)
+            old_desk = await get_resource_service("desks").find_one_async(req=None, _id=old_desk_id)
+            new_desk = await get_resource_service("desks").find_one_async(req=None, _id=new_desk_id)
             if old_desk and new_desk and old_desk.get("desk_type", "") != new_desk.get("desk_type", ""):
                 if new_desk.get("desk_type") == DeskTypes.production.value:
                     updated["task"][LAST_AUTHORING_DESK] = old_desk_id

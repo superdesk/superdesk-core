@@ -9,7 +9,7 @@ from superdesk.metadata.item import ITEM_STATE, PUBLISH_STATES
 logger = logging.getLogger(__name__)
 
 
-def track_usage(media_item, stored_item, item_obj, item_name, original):
+async def track_usage(media_item, stored_item, item_obj, item_name, original):
     if not media_item:
         return
 
@@ -19,7 +19,7 @@ def track_usage(media_item, stored_item, item_obj, item_name, original):
         orig_id = None
 
     if item_obj["_id"] != orig_id:
-        _update_usage(media_item)
+        await _update_usage(media_item)
         stored_item["used"] = True
 
 
@@ -30,7 +30,7 @@ async def _update_usage(item):
         "used_updated": utcnow(),
     }
 
-    superdesk.get_resource_service("archive").system_update(item["_id"], updates, item)
+    await superdesk.get_resource_service("archive").system_update_async(item["_id"], updates, item)
 
     # update published item state as well
     if item.get(ITEM_STATE) in PUBLISH_STATES:
@@ -44,7 +44,7 @@ async def _update_usage(item):
     item.update(updates)
 
 
-def update_refs(updates, original):
+async def update_refs(updates, original):
     """Update refs stored on item based on its associations.
 
     We can't use associations for queries due to unknown keys in dict,
@@ -55,12 +55,16 @@ def update_refs(updates, original):
     refs = []
     assoc = original["associations"].copy() if original.get("associations") else {}
     assoc.update(updates["associations"] or {})
+    # We need to use late import to avoid circular import.
+    from superdesk.archive_async.service import AsyncArchiveService
+
     for key, val in assoc.items():
         if not val:
             continue
         if val.get("_id") and not val.get("guid"):
             # for related items we only store the _id, fetch other metadata
-            item = superdesk.get_resource_service("archive").find_one(req=None, _id=val["_id"]) or {}
+            archive_service = AsyncArchiveService()
+            item = (await archive_service.find_by_id_raw(val["_id"])) or {}
         else:
             item = {}
         refs.append(

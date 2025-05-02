@@ -117,6 +117,14 @@ class BaseModel:
         """
         return self.data_layer.find_one(self.resource, filter, projection)
 
+    async def find_one_async(self, filter, projection=None):
+        """Return one document selected based on the given filter.
+
+        :param filter: dict
+        :param projection: dict
+        """
+        return await self.data_layer.find_one_async(self.resource, filter, projection)
+
     def find(self, filter, projection=None, **options):
         """Return a list of documents selected based on the given filter.
 
@@ -125,6 +133,15 @@ class BaseModel:
         :param options: dict
         """
         return self.data_layer.find(self.resource, filter, projection, **options)
+
+    async def find_async(self, filter, projection=None, **options):
+        """Return a list of documents selected based on the given filter.
+
+        :param filter: dict
+        :param projection: dict
+        :param options: dict
+        """
+        return await self.data_layer.find_async(self.resource, filter, projection, **options)
 
     def create(self, docs):
         """Insert a list of documents.
@@ -151,6 +168,23 @@ class BaseModel:
             self.validate_etag(orig, etag)
         self.on_update(doc, orig)
         res = self.data_layer.update(self.resource, filter, doc)
+        self.on_updated(doc, orig)
+        return res
+
+    async def update_async(self, filter, doc, etag=None):
+        """Update one document selected based on the given filter.
+
+        :param filter: dict
+        :param doc: dict
+        """
+        self.validate(doc)
+        orig = await self.find_one_async(filter)
+        if not orig:
+            raise InvalidFilter(filter, "update")
+        if etag:
+            self.validate_etag(orig, etag)
+        self.on_update(doc, orig)
+        res = await self.data_layer.update_async(self.resource, filter, doc)
         self.on_updated(doc, orig)
         return res
 

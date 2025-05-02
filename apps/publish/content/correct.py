@@ -15,7 +15,7 @@ from superdesk.metadata.item import ITEM_STATE, EMBARGO, SCHEDULE_SETTINGS
 from superdesk.utc import utcnow
 from superdesk.text_utils import update_word_count
 from apps.archive.common import set_sign_off, ITEM_OPERATION, get_user
-from apps.archive.archive import flush_renditions, remove_is_queued
+from apps.archive.utils import flush_renditions, remove_is_queued
 from .common import BasePublishService, BasePublishResource, ITEM_CORRECT
 from superdesk.emails import send_translation_changed
 from superdesk.activity import add_activity
@@ -95,7 +95,7 @@ class CorrectPublishService(BasePublishService):
     async def change_being_corrected_to_published(self, updates, original):
         if get_app_config("CORRECTIONS_WORKFLOW") and original.get("state") == "correction":
             publish_service = get_resource_service("published")
-            being_corrected_article = publish_service.find_one(
+            being_corrected_article = await publish_service.find_one_async(
                 req=None, guid=original.get("guid"), state="being_corrected"
             )
 
@@ -118,7 +118,7 @@ class CorrectPublishService(BasePublishService):
 
     async def update_async(self, id, updates, original):
         editor_utils.generate_fields(updates, original=original)
-        get_resource_service("archive")._handle_media_updates(updates, original, get_user())
+        await get_resource_service("archive")._handle_media_updates(updates, original, get_user())
         await super().update_async(id, updates, original)
 
     async def on_updated_async(self, updates, original):

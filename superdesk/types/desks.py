@@ -2,7 +2,7 @@ from typing import Annotated, Any
 from pydantic import Field
 
 from .enums import MonitoringTypeEnum, MonitoringViewEnum, DeskTypeEnum
-from superdesk.core.resources import ResourceModel, fields, dataclass, Dataclass
+from superdesk.core.resources import ResourceModelWithObjectId, fields, dataclass, Dataclass
 from superdesk.core.resources.fields import ObjectId
 from superdesk.core.resources.validators import validate_unique_value_async, validate_data_relation_async
 
@@ -18,7 +18,7 @@ class DeskMember(Dataclass):
     user: Annotated[ObjectId, validate_data_relation_async("users")]
 
 
-class DesksResourceModel(ResourceModel):
+class DesksResourceModel(ResourceModelWithObjectId):
     name: Annotated[fields.Keyword, validate_unique_value_async("desks", "name")]
     description: str | None = None
     members: list[DeskMember] = Field(default_factory=list)

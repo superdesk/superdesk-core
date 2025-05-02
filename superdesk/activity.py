@@ -10,7 +10,7 @@
 
 import datetime
 import logging
-from typing import List
+from typing import List, cast
 
 from bson.objectid import ObjectId
 from quart_babel import lazy_gettext
@@ -20,6 +20,7 @@ from superdesk import get_resource_service
 from superdesk.core import get_current_app
 from superdesk.emails import send_activity_emails
 from superdesk.errors import SuperdeskApiError, add_notifier
+from superdesk.eve_async.service import AsyncBaseService
 from superdesk.notification import push_notification
 from superdesk.preferences import get_user_notification_preferences
 from superdesk.resource import Resource

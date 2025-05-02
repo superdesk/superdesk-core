@@ -20,7 +20,7 @@ from superdesk.errors import SuperdeskApiError, InvalidStateTransitionError
 from superdesk.metadata.item import ITEM_STATE, CONTENT_STATE
 from superdesk.notification import push_notification
 from superdesk.resource import Resource
-from superdesk.services import BaseService
+from superdesk.eve_async import AsyncBaseService
 from superdesk.metadata.utils import item_url
 from superdesk.workflow import is_workflow_state_transition_valid
 from apps.auth import get_user, get_user_id
@@ -40,8 +40,8 @@ class CopyResource(Resource):
     item_methods = []
 
 
-class CopyService(BaseService):
-    def create(self, docs, **kwargs):
+class CopyService(AsyncBaseService):
+    async def create_async(self, docs, **kwargs):
         guid_of_item_to_be_copied = request.view_args["guid"]
 
         guid_of_copied_items = []
@@ -49,7 +49,7 @@ class CopyService(BaseService):
         for doc in docs:
             archive_service = get_resource_service(ARCHIVE)
 
-            archived_doc = archive_service.find_one(req=None, _id=guid_of_item_to_be_copied)
+            archived_doc = await archive_service.find_one_async(req=None, _id=guid_of_item_to_be_copied)
             if not archived_doc:
                 raise SuperdeskApiError.notFoundError(
                     _("Failed to find item with guid: {guid}").format(guid=guid_of_item_to_be_copied)
@@ -65,7 +65,7 @@ class CopyService(BaseService):
             if not is_workflow_state_transition_valid("copy", archived_doc[ITEM_STATE]):
                 raise InvalidStateTransitionError()
 
-            new_guid = archive_service.duplicate_content(archived_doc)
+            new_guid = await archive_service.duplicate_content(archived_doc)
             guid_of_copied_items.append(new_guid)
 
         if kwargs.get("notify", True):

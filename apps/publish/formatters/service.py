@@ -60,7 +60,7 @@ class FormattersService(AsyncBaseService):
 
         if "article_id" in doc:
             article_id = doc.get("article_id")
-            article = service.find_one(req=None, _id=article_id)
+            article = await service.find_one_async(req=None, _id=article_id)
 
             if not article:
                 raise SuperdeskApiError.badRequestError(_("Article not found!"))

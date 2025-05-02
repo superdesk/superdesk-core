@@ -8,7 +8,7 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
-from apps.archive.archive import ArchiveResource, ArchiveVersionsResource
+from apps.archive.resource import ArchiveResource, ArchiveVersionsResource
 from apps.archive_history import ArchiveHistoryResource
 
 from typing import Any

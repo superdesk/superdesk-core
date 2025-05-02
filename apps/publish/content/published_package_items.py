@@ -43,7 +43,7 @@ class PublishedPackageItemsService(AsyncBaseService):
     async def create_async(self, docs, **kwargs):
         ids = []
         for doc in docs:
-            original = get_resource_service(ARCHIVE).find_one(req=None, _id=doc["package_id"])
+            original = await get_resource_service(ARCHIVE).find_one_async(req=None, _id=doc["package_id"])
             if not original or original[ITEM_TYPE] != CONTENT_TYPE.COMPOSITE:
                 raise SuperdeskApiError.badRequestError(_("Invalid package identifier"))
             if original[ITEM_STATE] not in PUBLISH_STATES:
@@ -51,13 +51,13 @@ class PublishedPackageItemsService(AsyncBaseService):
 
             items = {}
             for new_item in doc["new_items"]:
-                item = get_resource_service(ARCHIVE).find_one(req=None, _id=new_item["item_id"])
+                item = await get_resource_service(ARCHIVE).find_one_async(req=None, _id=new_item["item_id"])
                 if not item:
                     raise SuperdeskApiError.badRequestError(
                         _("Invalid item identifier  {item_id}").format(item_id=new_item["item_id"])
                     )
                 try:
-                    self.package_service.check_for_circular_reference(original, new_item["item_id"])
+                    await self.package_service.check_for_circular_reference_async(original, new_item["item_id"])
                 except ValidationError:
                     raise SuperdeskApiError.badRequestError(
                         _("Circular reference in item {item_id}").format(item_id=new_item["item_id"])
@@ -69,9 +69,9 @@ class PublishedPackageItemsService(AsyncBaseService):
             items_refs = []
             for new_item in doc["new_items"]:
                 items_refs.append(self._set_item_assoc(updates, new_item, items[new_item["item_id"]]))
-            get_resource_service(ARCHIVE).system_update(original[ID_FIELD], updates, original)
+            await get_resource_service(ARCHIVE).system_update_async(original[ID_FIELD], updates, original)
             for item_ref in items_refs:
-                self.package_service.update_link(updates, item_ref)
+                await self.package_service.update_link_async(updates, item_ref)
 
             items_published = [new_item[ITEM_STATE] in PUBLISH_STATES for new_item in items.values()]
             if any(items_published):

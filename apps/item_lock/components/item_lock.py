@@ -70,9 +70,9 @@ class ItemLock(BaseComponent):
     def name(cls):
         return "item_lock"
 
-    def lock(self, item_filter, user_id, session_id, action):
+    async def lock(self, item_filter, user_id, session_id, action):
         item_model = get_model(ItemModel)
-        item = item_model.find_one(item_filter)
+        item = await item_model.find_one_async(item_filter)
 
         # set the lock_id it per item
         lock_id = "item_lock {}".format(item.get(ID_FIELD))
@@ -80,15 +80,15 @@ class ItemLock(BaseComponent):
         if not item:
             raise SuperdeskApiError.notFoundError()
 
-        # get the lock it not raise forbidden exception
+        # get the lock, if not raise a forbidden exception
         if not lock(lock_id, expire=5):
             raise SuperdeskApiError.forbiddenError(message=_("Item is locked by another user."))
 
         try:
-            can_user_lock, error_message = self.can_lock(item, user_id, session_id)
+            can_user_lock, error_message = await self.can_lock(item, user_id, session_id)
 
             if can_user_lock:
-                self.app.on_item_lock(item, user_id)
+                await self.app.on_item_lock.call_async(item, user_id)
                 updates = {LOCK_USER: user_id, LOCK_SESSION: session_id, LOCK_TIME: utcnow()}
                 if action:
                     updates[LOCK_ACTION] = action
@@ -100,10 +100,10 @@ class ItemLock(BaseComponent):
                     updates[TASK] = {"user": user_id}
 
                 # tasks service will update the user
-                superdesk.get_resource_service("tasks").assign_user(item[ID_FIELD], updates)
+                await superdesk.get_resource_service("tasks").assign_user(item[ID_FIELD], updates)
 
-                item = item_model.find_one(item_filter)
-                self.app.on_item_locked(item, user_id)
+                item = await item_model.find_one_async(item_filter)
+                await self.app.on_item_locked.call_async(item, user_id)
                 push_notification(
                     "item:lock",
                     item=str(item.get(ID_FIELD)),
@@ -116,15 +116,15 @@ class ItemLock(BaseComponent):
             else:
                 raise SuperdeskApiError.forbiddenError(message=error_message)
 
-            item = item_model.find_one(item_filter)
+            item = await item_model.find_one_async(item_filter)
             return item
         finally:
             # unlock the lock :)
             unlock(lock_id, remove=True)
 
-    def unlock(self, item_filter, user_id, session_id, etag, force=False):
+    async def unlock(self, item_filter, user_id, session_id, etag, force=False):
         item_model = get_model(ItemModel)
-        item = item_model.find_one(item_filter)
+        item = await item_model.find_one_async(item_filter)
 
         if not item:
             raise SuperdeskApiError.notFoundError()
@@ -132,20 +132,19 @@ class ItemLock(BaseComponent):
         if not item.get(LOCK_USER):
             raise SuperdeskApiError.badRequestError(message=_("Item is not locked."))
 
-        can_user_unlock, error_message = self.can_unlock(item, user_id)
+        can_user_unlock, error_message = await self.can_unlock(item, user_id)
 
         if can_user_unlock or force:
-            self.app.on_item_unlock(item, user_id)
-            updates = {}
+            await self.app.on_item_unlock.call_async(item, user_id)
 
             # delete the item if nothing is saved so far
             # version 0 created on lock item
             if item.get(VERSION, 0) == 0 and item[ITEM_STATE] == CONTENT_STATE.DRAFT:
                 if item.get(ITEM_TYPE) == CONTENT_TYPE.COMPOSITE:
                     # if item is composite then update referenced items in package.
-                    PackageService().update_groups({}, item)
+                    await PackageService().update_groups_async({}, item)
 
-                superdesk.get_resource_service("archive").delete_action(lookup={"_id": item["_id"]})
+                await superdesk.get_resource_service("archive").delete_action_async(lookup={"_id": item["_id"]})
                 push_content_notification([item])
             else:
                 updates = {}
@@ -153,17 +152,16 @@ class ItemLock(BaseComponent):
                 autosave = superdesk.get_resource_service("archive_autosave").find_one(req=None, _id=item["_id"])
                 if autosave and item[ITEM_STATE] not in PUBLISH_STATES:
                     if not hasattr(g, "user"):  # user is not set when session expires
-                        # TODO-ASYNC[users]: Upgrade to async when updating this module
-                        g.user = superdesk.get_resource_service("users").find_one(req=None, _id=user_id)
+                        g.user = await superdesk.get_resource_service("users").find_one_async(req=None, _id=user_id)
                     autosave.update(updates)
                     resolve_document_version(autosave, "archive", "PATCH", item)
-                    superdesk.get_resource_service("archive").patch(item["_id"], autosave)
-                    item = superdesk.get_resource_service("archive").find_one(req=None, _id=item["_id"])
+                    await superdesk.get_resource_service("archive").patch_async(item["_id"], autosave)
+                    item = await superdesk.get_resource_service("archive").find_one_async(req=None, _id=item["_id"])
                     insert_versioning_documents("archive", item)
                 else:
-                    item_model.update(item_filter, updates)
-                    item = item_model.find_one(item_filter)
-                self.app.on_item_unlocked(item, user_id)
+                    await item_model.update_async(item_filter, updates)
+                    item = await item_model.find_one_async(item_filter)
+                await self.app.on_item_unlocked.call_async(item, user_id)
 
             push_unlock_notification(item, user_id, session_id)
         else:
@@ -171,19 +169,19 @@ class ItemLock(BaseComponent):
 
         return item
 
-    def unlock_session(self, user_id, session_id, is_last_session):
+    async def unlock_session(self, user_id, session_id, is_last_session):
         item_model = get_model(ItemModel)
         lookup = {LOCK_SESSION: str(session_id)} if not is_last_session else {LOCK_USER: str(user_id)}
-        items = item_model.find(lookup)
+        items = await item_model.find_async(lookup)
 
-        for item in items:
-            self.unlock({"_id": item["_id"]}, user_id, session_id, None, force=True)
+        async for item in items:
+            await self.unlock({"_id": item["_id"]}, user_id, session_id, None, force=True)
 
-    def can_lock(self, item, user_id, session_id):
+    async def can_lock(self, item, user_id, session_id):
         """
         Function checks whether user can lock the item or not. If not then raises exception.
         """
-        can_user_edit, error_message = superdesk.get_resource_service("archive").can_edit(item, user_id)
+        can_user_edit, error_message = await superdesk.get_resource_service("archive").can_edit(item, user_id)
 
         if can_user_edit:
             if item.get(LOCK_USER):
@@ -197,11 +195,11 @@ class ItemLock(BaseComponent):
 
         return True, ""
 
-    def can_unlock(self, item, user_id):
+    async def can_unlock(self, item, user_id):
         """
         Function checks whether user can unlock the item or not.
         """
-        can_user_edit, error_message = superdesk.get_resource_service("archive").can_edit(item, user_id)
+        can_user_edit, error_message = await superdesk.get_resource_service("archive").can_edit(item, user_id)
 
         if can_user_edit:
             if not (
@@ -214,5 +212,5 @@ class ItemLock(BaseComponent):
 
         return True, ""
 
-    def on_session_end(self, user_id, session_id, is_last_session):
-        self.unlock_session(user_id, session_id, is_last_session)
+    async def on_session_end(self, user_id, session_id, is_last_session):
+        await self.unlock_session(user_id, session_id, is_last_session)

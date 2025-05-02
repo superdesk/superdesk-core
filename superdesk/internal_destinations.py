@@ -101,8 +101,8 @@ async def handle_item_published(sender, item, desk=None, **extra):
                     continue
 
         extra_fields = [PUBLISH_SCHEDULE, SCHEDULE_SETTINGS]
-        next_id = archive_service.duplicate_item(new_item, state="routed", extra_fields=extra_fields)
-        next_item = archive_service.find_one(req=None, _id=next_id)
+        next_id = await archive_service.duplicate_item(new_item, state="routed", extra_fields=extra_fields)
+        next_item = await archive_service.find_one_async(req=None, _id=next_id)
         item_routed.send(sender, item=next_item)
 
 

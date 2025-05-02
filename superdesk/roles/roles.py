@@ -117,7 +117,7 @@ class RolesService(AsyncBaseService):
                 privileges_updated = True
             if privileges_updated:
                 app = get_current_app().as_any()
-                app.on_role_privileges_updated(role, role_users)
+                await app.on_role_privileges_updated.call_async(role, role_users)
 
         else:
             push_notification("role", updated=1, user_id=str(role_id))

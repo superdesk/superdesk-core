@@ -12,8 +12,10 @@ import logging
 
 from bson import ObjectId
 
+from apps.archive.resource import ArchiveResource
 from superdesk.types import PublishRequest, PublishSenderType, SubscribersResource
-from apps.archive.archive import ArchiveResource, SOURCE as ARCHIVE, remove_is_queued
+from apps.archive.common import ARCHIVE
+from apps.archive.utils import remove_is_queued
 from superdesk.metadata.utils import item_url
 
 from superdesk.core import get_current_app, get_app_config
@@ -93,7 +95,7 @@ class ResendService(AsyncBaseService):
             raise SuperdeskApiError.badRequestError(message=_("Failed to route item to publish queue!"))
 
         app = get_current_app().as_any()
-        app.on_archive_item_updated({"subscribers": doc.get("subscribers")}, article, ITEM_RESEND)
+        await app.on_archive_item_updated.call_async({"subscribers": doc.get("subscribers")}, article, ITEM_RESEND)
         signals.item_resent.send(self, item=article)
         return [article_id]
 
@@ -118,7 +120,7 @@ class ResendService(AsyncBaseService):
         return subscribers
 
     async def _validate_article(self, article_id, article_version):
-        article = get_resource_service(ARCHIVE).find_one(req=None, _id=article_id)
+        article = await get_resource_service(ARCHIVE).find_one_async(req=None, _id=article_id)
 
         if get_app_config("CORRECTIONS_WORKFLOW") and article.get(ITEM_STATE) == "correction":
             publish_service = get_resource_service("published")

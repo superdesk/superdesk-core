@@ -37,7 +37,7 @@ from apps.archive.common import (
     CUSTOM_HATEOAS,
     item_schema,
     format_dateline_to_locmmmddsrc,
-    insert_into_versions,
+    insert_into_versions_async,
 )
 from apps.auth import get_user
 
@@ -532,7 +532,7 @@ async def render_content_template_by_id(item, template_id, update=False):
     if not template:
         SuperdeskApiError.badRequestError(message="{} Template missing.".format(template_id))
 
-    return render_content_template(item, template, update)
+    return await render_content_template(item, template, update)
 
 
 async def render_content_template(item, template, update=False):
@@ -560,7 +560,7 @@ async def render_content_template(item, template, update=False):
                 continue
 
             if top and key == "extra":
-                updates[key] = render_content_template_fields(value, top=False)
+                updates[key] = await render_content_template_fields(value, top=False)
                 if update:
                     item.setdefault(key, {}).update(updates[key])
             elif isinstance(value, str):
@@ -671,8 +671,8 @@ async def create_scheduled_content(now=None):
             await set_template_timestamps(template, now)
             item = get_item_from_template(template)
             item[VERSION] = 1
-            production.post([item])
-            insert_into_versions(doc=item)
+            await production.post_async([item])
+            await insert_into_versions_async(doc=item)
             try:
                 await apply_onstage_rule(item, item.get(ID_FIELD))
             except Exception as ex:  # noqa

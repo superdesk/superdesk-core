@@ -326,8 +326,7 @@ class UsersService(AsyncBaseService):
             id=ObjectId(lookup["_id"]), updates={"is_enabled": False, "is_active": False}, original=user
         )
 
-    def __clear_locked_items(self, user_id):
-        # TODO-ASYNC[archive]: Upgrade to async when updating the ``archive`` module
+    async def __clear_locked_items(self, user_id):
         archive_service = get_resource_service("archive")
         archive_autosave_service = get_resource_service("archive_autosave")
 
@@ -341,15 +340,15 @@ class UsersService(AsyncBaseService):
         user = ObjectId(user_id) if isinstance(user_id, str) else user_id
         query = {"$or": [{"lock_user": user}, {"task.user": user, "task.desk": {"$exists": False}}]}
 
-        items_locked_by_user = archive_service.get_from_mongo(req=None, lookup=query)
+        items_locked_by_user = await archive_service.get_from_mongo_async(req=None, lookup=query)
 
-        if items_locked_by_user and items_locked_by_user.count():
-            for item in items_locked_by_user:
+        if items_locked_by_user and await items_locked_by_user.count():
+            async for item in items_locked_by_user:
                 # delete the item if nothing is saved so far
                 if item[VERSION] == 0 and item["state"] == "draft":
-                    archive_service.delete(lookup={"_id": item["_id"]})
+                    await archive_service.delete_async(lookup={"_id": item["_id"]})
                 else:
-                    archive_service.update(item["_id"], doc_to_unlock, item)
+                    await archive_service.update_async(item["_id"], doc_to_unlock, item)
                     archive_autosave_service.delete(lookup={"_id": item["_id"]})
 
     async def on_deleted_async(self, doc):
@@ -366,7 +365,7 @@ class UsersService(AsyncBaseService):
             self.datasource,
             user=doc.get("display_name", doc.get("username")),
         )
-        self.__clear_locked_items(str(doc["_id"]))
+        await self.__clear_locked_items(str(doc["_id"]))
         await self.__handle_status_changed_async(updates={"is_enabled": False, "is_active": False}, user=doc)
 
     async def on_fetched_async(self, document):

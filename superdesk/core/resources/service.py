@@ -987,7 +987,7 @@ class AsyncResourceService(Generic[ResourceModelType]):
 
         await self.mongo_async.update_one({"_id": item_id}, {"$set": updates})
         try:
-            await self.elastic.update(item_id, updates)
+            await self.elastic.update(str(item_id), updates)
         except ElasticNotConfiguredForResource:
             pass
 

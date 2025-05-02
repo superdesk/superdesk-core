@@ -233,7 +233,7 @@ class AsyncArchiveService(AsyncResourceService[ArchiveResourceModel], Highlights
             set_item_expiry({}, doc)
 
             if doc.item_type == ContentTypes.COMPOSITE:
-                await self.packageService.on_create([doc])
+                await self.packageService.on_create_async([doc])
 
             # Do the validation after Circular Reference check passes in Package Service
             update_schedule_settings(doc, EMBARGO, doc.embargo)
@@ -254,7 +254,7 @@ class AsyncArchiveService(AsyncResourceService[ArchiveResourceModel], Highlights
                 doc.version = doc.version
 
             convert_task_attributes_to_objectId(doc)
-            transtype_metadata(doc)
+            await transtype_metadata(doc)
 
             if doc.macro:  # if there is a macro, execute it
                 await get_resource_service("macros").execute_macro(doc, doc.macro)
@@ -269,7 +269,7 @@ class AsyncArchiveService(AsyncResourceService[ArchiveResourceModel], Highlights
         """
         packages = [doc for doc in docs if doc.item_type == ContentTypes.COMPOSITE]
         if packages:
-            await self.packageService.on_created(packages)
+            await self.packageService.on_created_async(packages)
 
         app = get_current_app().as_any()
         profiles = set()
@@ -334,7 +334,7 @@ class AsyncArchiveService(AsyncResourceService[ArchiveResourceModel], Highlights
         await self._handle_media_updates(updates, original, user)
         await self._handle_attachment_updates(updates, original)
         flush_renditions(updates, original)
-        update_refs(updates, original.to_dict())
+        await update_refs(updates, original.to_dict())
 
     async def _handle_media_updates(self, updates: Dict[str, Any], original: ArchiveResourceModel, user):
         """Handle media updates in the item.
@@ -432,7 +432,7 @@ class AsyncArchiveService(AsyncResourceService[ArchiveResourceModel], Highlights
         get_component(ItemAutosave).clear(original.id)
 
         if original.item_type == ContentTypes.COMPOSITE:
-            await self.packageService.on_updated(updates, original)
+            await self.packageService.on_updated_async(updates, original)
 
         updated = copy(original)
         for k, v in updates.items():
@@ -649,7 +649,7 @@ class AsyncArchiveService(AsyncResourceService[ArchiveResourceModel], Highlights
             new_doc[ITEM_STATE] = state
 
         convert_task_attributes_to_objectId(new_doc)
-        transtype_metadata(new_doc)
+        await transtype_metadata(new_doc)
         signals.item_duplicate.send(self, item=new_doc, original=original_doc, operation=operation)
         get_model(ItemModel).create([new_doc])
         await self._duplicate_versions(original_doc["_id"], new_doc)
@@ -682,7 +682,9 @@ class AsyncArchiveService(AsyncResourceService[ArchiveResourceModel], Highlights
         :param delete_keys: Additional keys to delete
         """
         # get the archive schema keys
-        archive_schema_keys = list(superdesk.get_app_config("DOMAIN")[SOURCE]["schema"].keys())
+        app_config = superdesk.get_app_config("DOMAIN")
+        assert app_config is not None
+        archive_schema_keys = list(app_config[SOURCE]["schema"].keys())
         archive_schema_keys.extend([ID_FIELD, LAST_UPDATED, DATE_CREATED, VERSION, ETAG])
 
         # Delete the keys that are not part of archive schema.
@@ -739,11 +741,13 @@ class AsyncArchiveService(AsyncResourceService[ArchiveResourceModel], Highlights
         :param old_id: ID of the original item
         :param new_doc: New document
         """
-        resource_def = superdesk.get_app_config("DOMAIN")["archive"]
+        app_config = superdesk.get_app_config("DOMAIN")
+        assert app_config is not None
+        resource_def = app_config["archive"]
         version_id = versioned_id_field(resource_def)
-        old_versions = await get_resource_service("archive_versions").get_from_mongo(
-            req=None, lookup={version_id: old_id}
-        )
+        archive_versions_service = get_resource_service("archive_versions")
+        assert archive_versions_service is not None
+        old_versions = await archive_versions_service.get_from_mongo(req=None, lookup={version_id: old_id})
 
         new_versions = []
         async for old_version in old_versions:
@@ -763,7 +767,7 @@ class AsyncArchiveService(AsyncResourceService[ArchiveResourceModel], Highlights
         del last_version["_id"]
         new_versions.append(last_version)
         if new_versions:
-            await get_resource_service("archive_versions").post(new_versions)
+            await archive_versions_service.post(new_versions)
 
     async def _duplicate_history(self, old_id, new_doc):
         """Duplicate history for an item.

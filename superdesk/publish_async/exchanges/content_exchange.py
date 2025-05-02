@@ -204,15 +204,15 @@ class ContentPublishExchange(BasicPublishExchange):
         )
 
         # update the archive collection
-        archive_item = archive_service.find_one(req=None, _id=item_id)
-        archive_service.system_update(item_id, item_updates, archive_item)
+        archive_item = await archive_service.find_one_async(req=None, _id=item_id)
+        await archive_service.system_update_async(item_id, item_updates, archive_item)
         # insert into version.
         insert_into_versions(item_id, doc=None)
 
         # update archive history
         app = get_current_app().as_any()
 
-        app.on_archive_item_updated(item_updates, archive_item, ITEM_PUBLISH)
+        await app.on_archive_item_updated.call_async(item_updates, archive_item, ITEM_PUBLISH)
         # import to legal archive
         await import_into_legal_archive.apply_async(countdown=3, kwargs={"item_id": item_id})
         logger.info(f"Modified the version of scheduled item: {published_item_id}")

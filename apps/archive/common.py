@@ -23,6 +23,7 @@ from superdesk.core import get_app_config, get_current_app
 from superdesk.resource_fields import ID_FIELD, VERSION
 import superdesk
 from superdesk import editor_utils
+from superdesk.types.desks import DesksResourceModel
 from superdesk.users.services import get_sign_off
 from superdesk.utc import utcnow, get_expiry_date, local_to_utc, get_date
 from superdesk import get_resource_service
@@ -166,11 +167,12 @@ def update_version(updates, original):
         updates.setdefault("version", updates[VERSION])
 
 
-def on_create_item(docs, repo_type=ARCHIVE, media_service=None):
+async def on_create_item(docs, repo_type=ARCHIVE, media_service=None):
     """Make sure item has basic fields populated."""
 
     for doc in docs:
         if doc.get("media") and media_service:
+            # TODO-ASYNC[archive_media_service]: Use async method once available.
             media_service.on_create([doc])
 
         editor_utils.generate_fields(doc)
@@ -213,8 +215,8 @@ def on_create_item(docs, repo_type=ARCHIVE, media_service=None):
             doc["language"] = get_app_config("DEFAULT_LANGUAGE", "en")
 
             if doc.get("task", None) and doc["task"].get("desk", None):
-                # TODO-ASYNC[desks]: Use DesksResourceModel async service where when upgrading this module
-                desk = superdesk.get_resource_service("desks").find_one(req=None, _id=doc["task"]["desk"])
+                desks_service = get_resource_service("desks")
+                desk = await desks_service.find_one_async(req=None, _id=doc["task"]["desk"])
                 if desk and desk.get("desk_language", None):
                     doc["language"] = desk["desk_language"]
 
@@ -225,7 +227,7 @@ def on_create_item(docs, repo_type=ARCHIVE, media_service=None):
             from apps.templates.content_templates import render_content_template_by_id  # avoid circular import
 
             doc.pop("fields_meta", None)
-            render_content_template_by_id(doc, doc["template"], update=True)
+            await render_content_template_by_id(doc, doc["template"], update=True)
             editor_utils.generate_fields(doc)
 
 
@@ -358,10 +360,10 @@ async def clear_rewritten_flag(event_id, rewrite_id, rewrite_field):
         await publish_service.update_published_items(doc_id, rewrite_field, None)
         if doc_id not in processed_items:
             # clear the flag from the archive as well.
-            archive_item = archive_service.find_one(req=None, _id=doc_id)
-            archive_service.system_update(doc_id, {rewrite_field: None}, archive_item)
+            archive_item = await archive_service.find_one_async(req=None, _id=doc_id)
+            await archive_service.system_update_async(doc_id, {rewrite_field: None}, archive_item)
             processed_items.add(doc_id)
-            app.on_archive_item_updated({rewrite_field: None}, archive_item, ITEM_UNLINK)
+            await app.on_archive_item_updated.call_async({rewrite_field: None}, archive_item, ITEM_UNLINK)
 
 
 def update_dates_for(doc):
@@ -451,6 +453,32 @@ def insert_into_versions(id_=None, doc=None):
         insert_versioning_documents(ARCHIVE, doc_in_archive_collection)
 
 
+async def insert_into_versions_async(id_=None, doc=None):
+    """Insert version document.
+
+    There are some scenarios where the requests are not handled by eve. In those scenarios superdesk should be able to
+    manually manage versions. Below are some scenarios:
+
+    1.  When a user fetches content from ingest collection the request is handled by fetch API which doesn't
+        extend from ArchiveResource.
+    2.  When a user submits content to a desk the request is handled by /tasks API.
+    3.  When a user publishes a package the items of the package also needs to be published. The publishing of items
+        in the package is not handled by eve.
+    """
+
+    if id_:
+        doc_in_archive_collection = await get_resource_service(ARCHIVE).find_one_async(req=None, _id=id_)
+    else:
+        doc_in_archive_collection = doc
+
+    if not doc_in_archive_collection:
+        raise SuperdeskApiError.badRequestError(message=_("Document not found in archive collection"))
+
+    remove_unwanted(doc_in_archive_collection)
+    if VERSION in doc_in_archive_collection:
+        insert_versioning_documents(ARCHIVE, doc_in_archive_collection)
+
+
 def remove_unwanted(doc):
     """Remove attributes unecessary to superdesk from documents.
 
@@ -496,7 +524,7 @@ async def fetch_item(doc, desk_id, stage_id, state=None, target=None):
     return dest_doc
 
 
-def remove_media_files(doc, published=False):
+async def remove_media_files(doc, published=False):
     """Removes the media files of the given doc.
 
     If media files are not references by any other
@@ -520,7 +548,7 @@ def remove_media_files(doc, published=False):
         logger.info("Removing media files for %s", doc.get("guid"))
 
     if doc.get("guid"):
-        remove_media_references(doc["guid"], published)
+        await remove_media_references(doc["guid"], published)
 
     app = get_current_app()
     for renditions in references:
@@ -529,14 +557,13 @@ def remove_media_files(doc, published=False):
                 continue
             media = rendition.get("media") if isinstance(rendition.get("media"), str) else str(rendition.get("media"))
             try:
-                # TODO-ASYNC[MediaReferences] - Change this to use `get_async` when this function is update to async and also where it is referenced
-                references = get_resource_service("media_references").get(
+                references = await get_resource_service("media_references").get_async(
                     req=None, lookup={"media_id": media, "published": True}
                 )
 
-                if references.count() == 0:
+                if await references.count() == 0:
                     logger.info("Deleting media:%s", media)
-                    app.media.delete(media)
+                    app.media.delete_async(media)
                 else:
                     logger.info("Keeping media:%s due to references", media)
             except Exception:
@@ -544,14 +571,13 @@ def remove_media_files(doc, published=False):
 
     for attachment in doc.get("attachments", []):
         lookup = {"_id": attachment["attachment"]}
-        # TODO-ASYNC[attachments]: Use ``delete_action_async``
-        get_resource_service("attachments").delete_action(lookup)
+        await get_resource_service("attachments").delete_action_async(lookup)
 
 
-def remove_media_references(item_id, published):
-    # TODO-ASYNC[MediaReferences] - Change this to use `delete_action_async` and to async when `remove_media_files` is updated to async
-    get_resource_service("media_references").delete_action({"item_id": item_id, "published": published})
-    get_resource_service("media_references").delete_action({"associated_id": item_id, "published": published})
+async def remove_media_references(item_id, published):
+    media_references = get_resource_service("media_references")
+    await media_references.delete_action_async({"item_id": item_id, "published": published})
+    await media_references.delete_action_async({"associated_id": item_id, "published": published})
 
 
 def is_assigned_to_a_desk(doc):
@@ -586,7 +612,7 @@ def get_item_expiry(desk, stage, offset=None):
     return get_expiry_date(expiry_minutes, offset=offset)
 
 
-def get_expiry(desk_id, stage_id, offset=None):
+async def get_expiry(desk_id, stage_id, offset=None):
     """Calculates the expiry for an item.
 
     Fetches the expiry duration from one of the below
@@ -601,13 +627,13 @@ def get_expiry(desk_id, stage_id, offset=None):
     desk = None
 
     if desk_id:
-        # TODO-ASYNC[desks]: Use DesksResourceModel async service where when upgrading this module
-        desk = superdesk.get_resource_service("desks").find_one(req=None, _id=desk_id)
+        desk = await DesksResourceModel.get_service().find_by_id_raw(desk_id)
 
         if not desk:
             raise SuperdeskApiError.notFoundError(_("Invalid desk identifier {desk_id}").format(desk_id=desk_id))
 
     if stage_id:
+        # TODO-ASYNC[stages]: update this code when StagesService is async
         stage = get_resource_service("stages").find_one(req=None, _id=stage_id)
 
         if not stage:
@@ -616,7 +642,7 @@ def get_expiry(desk_id, stage_id, offset=None):
     return get_item_expiry(desk, stage, offset)
 
 
-def set_item_expiry(update, original):
+async def set_item_expiry(update, original):
     task = update.get("task", original.get("task", {}))
     desk_id = task.get("desk", None)
     stage_id = task.get("stage", None)
@@ -625,9 +651,9 @@ def set_item_expiry(update, original):
         return
 
     if update == {}:
-        original["expiry"] = get_expiry(desk_id, stage_id)
+        original["expiry"] = await get_expiry(desk_id, stage_id)
     else:
-        update["expiry"] = get_expiry(desk_id, stage_id)
+        update["expiry"] = await get_expiry(desk_id, stage_id)
 
 
 def update_state(original, updates, publish_from_personal=None):
@@ -796,7 +822,7 @@ def convert_task_attributes_to_objectId(doc):
         task[LAST_AUTHORING_DESK] = ObjectId(task.get(LAST_AUTHORING_DESK))
 
 
-def transtype_metadata(doc, original=None):
+async def transtype_metadata(doc, original=None):
     """Change the type of metadata coming from client to match expected type in database
 
     Some metadata (e.g. custom fields) are sent as plain text while an other type is expected in
@@ -820,7 +846,7 @@ def transtype_metadata(doc, original=None):
         logger.warning("`profile` is not available in doc")
         return
     ctypes_service = get_resource_service("content_types")
-    profile = ctypes_service.find_one(None, _id=profile_id)
+    profile = await ctypes_service.find_one_async(req=None, _id=profile_id)
     if profile is None:
         return
 

@@ -55,7 +55,9 @@ async def find_many(resource: str, lookup: dict | None = None, **kwargs) -> list
         return list(service.get(req=None, lookup=lookup, **kwargs))
 
 
-async def post_items(resource: str, items: list[dict] | list[ResourceModel], use_eve: bool = False) -> None:
+async def post_items(
+    resource: str, items: list[dict] | list[ResourceModel], use_eve: bool = False
+) -> list[str | ObjectId]:
     async_app = get_current_async_app()
 
     try:
@@ -65,13 +67,13 @@ async def post_items(resource: str, items: list[dict] | list[ResourceModel], use
 
     try:
         if eve_service is None or not use_eve:
-            await async_app.resources.get_resource_service(resource).create(items)
-            return
+            new_items = await async_app.resources.get_resource_service(resource).create(items)
+            return [item.id for item in new_items]
     except KeyError:
         pass
 
     if hasattr(eve_service, "post_async"):
-        await eve_service.post_async(items)
+        return await eve_service.post_async(items)
     else:
         return eve_service.post(items)
 
