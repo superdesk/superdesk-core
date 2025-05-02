@@ -81,13 +81,12 @@ async def notify_mentioned_users(docs, origin, item=None):
             await send_email_to_mentioned_users(doc, mentioned_users, origin)
 
 
-def notify_mentioned_desks(docs):
+async def notify_mentioned_desks(docs):
     for doc in docs:
         mentioned_desks = doc.get("mentioned_desks", {}).values()
         if len(mentioned_desks) > 0:
-            item = superdesk.get_resource_service("archive").find_one(req=None, _id=doc["item"])
-            # TODO-ASYNC[activity]: Prefix this next line with `await ` when updating this module
-            add_activity(
+            item = await superdesk.get_resource_service("archive").find_one_async(req=None, _id=doc["item"])
+            await add_activity(
                 "desk:mention",
                 "",
                 resource=None,

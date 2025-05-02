@@ -267,8 +267,7 @@ class TasksService(AsyncBaseService):
         for doc in docs:
             await insert_into_versions_async(doc["_id"])
             if is_assigned_to_a_desk(doc):
-                # TODO-ASYNC[activity]: Prefix this next line with `await ` when updating this module
-                add_activity(
+                await add_activity(
                     ACTIVITY_CREATE,
                     "added new task {{ subject }} of type {{ type }}",
                     self.datasource,

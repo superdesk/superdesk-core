@@ -102,7 +102,7 @@ class CommentsService(BaseService):
 
         if self.notifications:
             await notify_mentioned_users(docs, get_app_config("CLIENT_URL", "").rstrip("/"))
-            notify_mentioned_desks(docs)
+            await notify_mentioned_desks(docs)
 
     def on_updated(self, updates, original):
         push_notification(self.notification_key, updated=1)

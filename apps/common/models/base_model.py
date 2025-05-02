@@ -134,6 +134,15 @@ class BaseModel:
         """
         return self.data_layer.find(self.resource, filter, projection, **options)
 
+    async def find_async(self, filter, projection=None, **options):
+        """Return a list of documents selected based on the given filter.
+
+        :param filter: dict
+        :param projection: dict
+        :param options: dict
+        """
+        return await self.data_layer.find_async(self.resource, filter, projection, **options)
+
     def create(self, docs):
         """Insert a list of documents.
 
@@ -175,7 +184,7 @@ class BaseModel:
         if etag:
             self.validate_etag(orig, etag)
         self.on_update(doc, orig)
-        res = self.data_layer.update_async(self.resource, filter, doc)
+        res = await self.data_layer.update_async(self.resource, filter, doc)
         self.on_updated(doc, orig)
         return res
 

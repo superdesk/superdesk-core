@@ -136,7 +136,6 @@ class ItemLock(BaseComponent):
 
         if can_user_unlock or force:
             await self.app.on_item_unlock.call_async(item, user_id)
-            updates = {}
 
             # delete the item if nothing is saved so far
             # version 0 created on lock item
@@ -175,7 +174,7 @@ class ItemLock(BaseComponent):
         lookup = {LOCK_SESSION: str(session_id)} if not is_last_session else {LOCK_USER: str(user_id)}
         items = await item_model.find_async(lookup)
 
-        for item in items:
+        async for item in items:
             await self.unlock({"_id": item["_id"]}, user_id, session_id, None, force=True)
 
     async def can_lock(self, item, user_id, session_id):

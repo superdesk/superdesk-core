@@ -103,7 +103,7 @@ class RemoveExpiredContent:
             # so they are wrapped with log_exeption
             await self._remove_expired_publish_queue_items(now)
             await self._remove_expired_items(now)
-            self._remove_expired_archived_items(now)
+            await self._remove_expired_archived_items(now)
 
             push_notification("content:expired")
             logger.info("{} Completed remove expired content.".format(self.log_msg))
@@ -140,7 +140,7 @@ class RemoveExpiredContent:
             ]
         )
 
-        last_id = config_service.get(LAST_ID_CONFIG)
+        last_id = await config_service.get_async(LAST_ID_CONFIG)
         if last_id:
             logger.info("%s Continuing from id %s", self.log_msg, last_id)
 
@@ -151,12 +151,12 @@ class RemoveExpiredContent:
 
             if len(expired_items) == 0:
                 logger.info("{} No items found to expire.".format(self.log_msg))
-                config_service.set(LAST_ID_CONFIG, "")
+                await config_service.set(LAST_ID_CONFIG, "")
                 return
             else:
                 logger.info("{} Processing {} expired items.".format(self.log_msg, len(expired_items)))
                 last_id = expired_items[-1]["_id"]
-                config_service.set(LAST_ID_CONFIG, last_id)
+                await config_service.set(LAST_ID_CONFIG, last_id)
 
             # delete spiked items
             await self.delete_spiked_items(expired_items)
@@ -278,7 +278,7 @@ class RemoveExpiredContent:
                     logger.exception("{} Failed to set expiry status for item. {}".format(self.log_msg, msg))
 
     @log_exeption
-    def _remove_expired_archived_items(self, now):
+    async def _remove_expired_archived_items(self, now):
         EXPIRY_MINUTES = get_app_config("ARCHIVED_EXPIRY_MINUTES")
         EXPIRY_LIMIT = get_app_config("MAX_EXPIRY_QUERY_LIMIT", 100)
         if not EXPIRY_MINUTES:
@@ -301,7 +301,7 @@ class RemoveExpiredContent:
             # TODO-ASYNC: Use async version
             signals.archived_item_removed.send(archived_service, item=item)
             if not get_app_config("LEGAL_ARCHIVE") and not archived_service.find_one(req=None, item_id=item["item_id"]):
-                remove_media_files(item, published=True)
+                await remove_media_files(item, published=True)
 
     async def _can_remove_item(self, item, now, processed_item=None, preserve_published_desks=None):
         """Recursively checks if the item can be removed.

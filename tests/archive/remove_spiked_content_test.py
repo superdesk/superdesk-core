@@ -189,7 +189,7 @@ class RemoveSpikedContentTestCase(TestCase):
         item = {"_id": "testimage", "type": "picture", "renditions": self.media}
 
         original = item.copy()
-        with patch.object(self.app.media, "delete") as media_delete:
+        with patch.object(self.app.media, "delete_async") as media_delete:
             await CropService().update_media_references(item, original)
             references_service = get_resource_service("media_references")
             refs = await references_service.get_async(req=None, lookup={"item_id": "testimage"})

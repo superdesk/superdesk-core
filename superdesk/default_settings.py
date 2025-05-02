@@ -491,9 +491,28 @@ class PublishChannelConfig(TypedDict, total=False):
 PUBLISH_CHANNELS: list[PublishChannelConfig] = [
     {
         "operations": ["resend"],
+        "filter": lambda item: not len(item.get("associations") or {}),
         "config": ExchangeConfig(
             exchange="content",
             filter="resend",
+            router="asyncio",
+        ),
+    },
+    {
+        "operations": ["resend"],
+        "filter": lambda item: not len(item.get("associations") or {}),
+        "config": ExchangeConfig(
+            exchange="content",
+            filter="resend",
+        ),
+    },
+    {
+        "operations": ["correct"],
+        "filter": lambda item: not len(item.get("associations") or {}),
+        "config": ExchangeConfig(
+            exchange="content",
+            filter="content:corrected",
+            router="asyncio",
         ),
     },
     {
@@ -508,6 +527,7 @@ PUBLISH_CHANNELS: list[PublishChannelConfig] = [
         "config": ExchangeConfig(
             exchange="content",
             filter="content:killed",
+            router="asyncio",
         ),
     },
     {

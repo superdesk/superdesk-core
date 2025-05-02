@@ -46,7 +46,7 @@ class AuthService(AsyncBaseService):
                 raise UserInactiveError()
             self.set_auth_default(doc, user["_id"])
 
-    async def on_created_asnc(self, docs):
+    async def on_created_async(self, docs):
         for doc in docs:
             await get_resource_service("preferences").set_session_based_prefs(doc["_id"], doc["user"])
             await self.set_user_last_activity(doc["user"])

@@ -234,8 +234,7 @@ class ArchiveService(AsyncBaseService, HighlightsSearchMixin):
             else:
                 msg = "added new {{ type }} item with empty header/title"
 
-            # TODO-ASYNC[activity]: Prefix this next line with `await ` when updating this module
-            add_activity(ACTIVITY_CREATE, msg, self.datasource, item=doc, type=doc[ITEM_TYPE], subject=subject)
+            await add_activity(ACTIVITY_CREATE, msg, self.datasource, item=doc, type=doc[ITEM_TYPE], subject=subject)
 
             if doc.get("profile"):
                 profiles.add(doc["profile"])
@@ -377,8 +376,7 @@ class ArchiveService(AsyncBaseService, HighlightsSearchMixin):
         updated.update(updates)
 
         if VERSION in updates:
-            # TODO-ASYNC[activity]: Prefix this next line with `await ` when updating this module
-            add_activity(
+            await add_activity(
                 ACTIVITY_UPDATE,
                 'created new version {{ version }} for item {{ type }} about "{{ subject }}"',
                 self.datasource,
@@ -389,8 +387,7 @@ class ArchiveService(AsyncBaseService, HighlightsSearchMixin):
             )
 
         push_content_notification([updated, original])
-        # TODO-ASYNC[archive_broadcast]: Convert ArchiveBroadcastService to async
-        get_resource_service("archive_broadcast").reset_broadcast_status(updates, original)
+        await get_resource_service("archive_broadcast").reset_broadcast_status(updates, original)
 
         if updates.get("profile"):
             await get_resource_service("content_types").set_used([updates.get("profile")])
@@ -415,8 +412,7 @@ class ArchiveService(AsyncBaseService, HighlightsSearchMixin):
     async def on_replaced_async(self, document, original):
         # TODO-ASYNC[item_autosave]: Convert ItemAutosave to async
         get_component(ItemAutosave).clear(original["_id"])
-        # TODO-ASYNC[activity]: Prefix this next line with `await ` when updating this module
-        add_activity(
+        await add_activity(
             ACTIVITY_UPDATE,
             "replaced item {{ type }} about {{ subject }}",
             self.datasource,
@@ -436,8 +432,7 @@ class ArchiveService(AsyncBaseService, HighlightsSearchMixin):
         await remove_media_files(doc, published=False)
         await self._remove_from_translations(doc)
 
-        # TODO-ASYNC[activity]: Prefix this next line with `await ` when updating this module
-        add_activity(
+        await add_activity(
             ACTIVITY_DELETE,
             "removed item {{ type }} about {{ subject }}",
             self.datasource,
