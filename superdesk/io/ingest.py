@@ -10,11 +10,10 @@
 
 from superdesk.resource_fields import ID_FIELD
 from superdesk.resource import Resource
-from superdesk.services import BaseService
+from superdesk.eve_async import AsyncBaseService
 from superdesk.metadata.item import metadata_schema
 from superdesk.metadata.utils import extra_response_fields, item_url, aggregations, get_elastic_highlight_query
 from eve.methods.common import resolve_document_etag
-from superdesk import get_resource_service
 
 from superdesk.core import get_app_config, get_current_app
 from apps.auth import get_user
@@ -41,18 +40,18 @@ class IngestResource(Resource):
     }
 
 
-class IngestService(BaseService):
-    def post_in_mongo(self, docs, **kwargs):
+class IngestService(AsyncBaseService):
+    async def post_in_mongo_async(self, docs, **kwargs):
         for doc in docs:
             self._resolve_defaults(doc)
-        self.on_create(docs)
+        await self.on_create_async(docs)
         resolve_document_etag(docs, self.datasource)
-        ids = self.backend.create_in_mongo(self.datasource, docs, **kwargs)
-        self.on_created(docs)
+        ids = await self.backend.create_in_mongo_async(self.datasource, docs, **kwargs)
+        await self.on_created_async(docs)
         return ids
 
-    def patch_in_mongo(self, id, document, original):
-        res = self.backend.update_in_mongo(self.datasource, id, document, original)
+    async def patch_in_mongo_async(self, id, document, original):
+        res = await self.backend.update_in_mongo_async(self.datasource, id, document, original)
         return res
 
     async def set_ingest_provider_sequence_async(self, item, provider):
@@ -67,7 +66,7 @@ class IngestService(BaseService):
         )
         item["ingest_provider_sequence"] = str(sequence_number)
 
-    def on_deleted(self, docs):
+    async def on_deleted_async(self, docs):
         docs = docs if isinstance(docs, list) else [docs]
         file_ids = [
             rend.get("media")
@@ -78,7 +77,7 @@ class IngestService(BaseService):
 
         app = get_current_app()
         for file_id in file_ids:
-            app.media.delete(file_id)
+            await app.media.delete_async(file_id)
 
         ids = [
             ref.get("residRef")
@@ -89,7 +88,7 @@ class IngestService(BaseService):
         ]
 
         if ids:
-            self.delete({"_id": {"$in": ids}})
+            await self.delete_async({"_id": {"$in": ids}})
 
         user = get_user(required=True)
         if docs:

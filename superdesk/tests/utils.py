@@ -4,8 +4,6 @@ from superdesk.core import get_current_async_app
 from superdesk.core.resources import ResourceModel
 from superdesk import get_resource_service
 
-# TODO-ASYNC: Enable Pydantic based async services - failing ATM for some tests (investigate why)
-
 
 async def find_one(resource: str, **kwargs) -> dict | None:
     async_app = get_current_async_app()

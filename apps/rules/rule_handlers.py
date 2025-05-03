@@ -75,6 +75,7 @@ class IngestRuleHandlersResource(Resource):
     }
 
 
+# Not upgrading to async, as there is no I/O to wait for
 class IngestRuleHandlersService(Service):
     def get(self, req, lookup):
         """Return list of available ingest rule handlers"""

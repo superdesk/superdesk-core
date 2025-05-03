@@ -146,7 +146,7 @@ class StagesService(BaseService):
             )
 
         # check if the stage is referred to in a ingest routing rule
-        rules = self._stage_in_rule(doc[ID_FIELD])
+        rules = await self._stage_in_rule(doc[ID_FIELD])
         if rules.count() > 0:
             rule_names = ", ".join(rule.get("name") for rule in rules)
             raise SuperdeskApiError.preconditionFailedError(
@@ -222,7 +222,7 @@ class StagesService(BaseService):
         req.args = {"filter": query_filter}
         return superdesk.get_resource_service(ARCHIVE).get(req, None)
 
-    def _stage_in_rule(self, stage_id):
+    async def _stage_in_rule(self, stage_id):
         """Returns the ingest routing rules that refer to the passed stage.
 
         :param stage_id:
@@ -231,7 +231,7 @@ class StagesService(BaseService):
         query_filter = {
             "$or": [{"rules.actions.fetch.stage": str(stage_id)}, {"rules.actions.publish.stage": str(stage_id)}]
         }
-        return superdesk.get_resource_service("routing_schemes").get(req=None, lookup=query_filter)
+        return await superdesk.get_resource_service("routing_schemes").get_async(req=None, lookup=query_filter)
 
     def get_stages_by_visibility(self, is_visible=False, user_desk_ids=None):
         """Returns a list of stages for a user."""

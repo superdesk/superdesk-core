@@ -47,7 +47,7 @@ class ContentFiltersService(AsyncResourceService[ContentFiltersResource]):
             )
 
         # check if the filter is referenced by any routing schemes...
-        schemes = self._get_referencing_routing_schemes(doc.id)
+        schemes = await self._get_referencing_routing_schemes(doc.id)
         if len(schemes) > 0:
             references = ",".join(s["name"] for s in schemes)
             raise SuperdeskApiError.badRequestError(
@@ -108,7 +108,7 @@ class ContentFiltersService(AsyncResourceService[ContentFiltersResource]):
 
         return subscribers
 
-    def _get_referencing_routing_schemes(self, filter_id: ObjectId) -> list[dict]:
+    async def _get_referencing_routing_schemes(self, filter_id: ObjectId) -> list[dict]:
         """Fetch all routing schemes that contain a reference to the given filter.
 
         :param ObjectId filter_id: the referenced filter's ID
@@ -116,4 +116,6 @@ class ContentFiltersService(AsyncResourceService[ContentFiltersResource]):
         :rtype: :py:class:`pymongo.cursor.Cursor`
         """
         routing_schemes_service = get_resource_service("routing_schemes")
-        return list(routing_schemes_service.get_from_mongo(req=None, lookup={"rules.filter": filter_id}))
+        return await (
+            await routing_schemes_service.get_from_mongo_async(req=None, lookup={"rules.filter": filter_id})
+        ).to_list()

@@ -47,7 +47,9 @@ class CleanImages:
         archive_version_items = superdesk.get_resource_service("archive_versions").get_from_mongo(None, query)
         self.__add_existing_files(used_images, archive_version_items)
 
-        ingest_items = superdesk.get_resource_service("ingest").get_from_mongo(None, {"type": {"$in": types}})
+        ingest_items = await superdesk.get_resource_service("ingest").get_from_mongo_async(
+            None, {"type": {"$in": types}}
+        )
         self.__add_existing_files(used_images, ingest_items)
 
         upload_items = await superdesk.get_resource_service("upload").get_from_mongo_async(req=None, lookup={})

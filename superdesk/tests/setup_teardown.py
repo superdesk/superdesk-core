@@ -20,7 +20,7 @@ async def setup_providers(context):
             ],
         }
 
-        result = get_resource_service("rule_sets").post([rule_sets])
+        result = await get_resource_service("rule_sets").post_async([rule_sets])
 
         app.config["REUTERS_USERNAME"] = "no_username"
         app.config["REUTERS_PASSWORD"] = "no_password"
@@ -118,7 +118,7 @@ async def setup_providers(context):
         ]
 
         with mock.patch.object(FTPFeedingService, "_test", return_value=True):
-            result = get_resource_service("ingest_providers").post(providers)
+            result = await get_resource_service("ingest_providers").post_async(providers)
 
         context.providers["reuters"] = result[0]
         context.providers["aap"] = result[1]

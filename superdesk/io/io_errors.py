@@ -17,6 +17,7 @@ from superdesk.utils import ListCursor
 logger = logging.getLogger(__name__)
 
 
+# Not upgrading to async, as there is no I/O to wait for
 class IOErrorsService(superdesk.Service):
     def get(self, req, lookup):
         """Return all ingest errors."""

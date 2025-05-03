@@ -173,9 +173,9 @@ def filter_expired_items(provider, items):
         raise ProviderError.providerFilterExpiredContentError(ex, provider)
 
 
-def get_provider_rule_set(provider):
+async def get_provider_rule_set(provider):
     if provider.get("rule_set"):
-        return superdesk.get_resource_service("rule_sets").find_one(_id=provider["rule_set"], req=None)
+        return await superdesk.get_resource_service("rule_sets").find_one_async(_id=provider["rule_set"], req=None)
 
 
 async def get_provider_routing_scheme(provider):
@@ -199,7 +199,7 @@ async def get_provider_routing_scheme(provider):
     schemes_service = superdesk.get_resource_service("routing_schemes")
     filters_service = ContentFiltersResource.get_service()
 
-    scheme = schemes_service.find_one(_id=provider["routing_scheme"], req=None)
+    scheme = await schemes_service.find_one_async(_id=provider["routing_scheme"], req=None)
     if not scheme:
         return None
 
@@ -262,7 +262,9 @@ def update_assoc_renditions(assoc, ingested):
 class UpdateIngest:
     async def run(self, provider_name=None, sync=False):
         lookup = {} if not provider_name else {"name": provider_name}
-        for provider in superdesk.get_resource_service("ingest_providers").get(req=None, lookup=lookup):
+        async for provider in await superdesk.get_resource_service("ingest_providers").get_async(
+            req=None, lookup=lookup
+        ):
             if (
                 not is_closed(provider)
                 and is_service_and_parser_registered(provider)
@@ -270,7 +272,7 @@ class UpdateIngest:
             ):
                 kwargs = {
                     "provider": provider,
-                    "rule_set": get_provider_rule_set(provider),
+                    "rule_set": await get_provider_rule_set(provider),
                     "routing_scheme": await get_provider_routing_scheme(provider),
                     "sync": sync,
                 }
@@ -337,11 +339,11 @@ async def update_provider(provider, rule_set=None, routing_scheme=None, sync=Fal
         # Some Feeding Services update the collection and by this time the _etag might have been changed.
         # So it's necessary to fetch it once again. Otherwise, OriginalChangedError is raised.
         ingest_provider_service = superdesk.get_resource_service("ingest_providers")
-        provider = ingest_provider_service.find_one(req=None, _id=provider[ID_FIELD])
-        ingest_provider_service.system_update(provider[ID_FIELD], update, provider)
+        provider = await ingest_provider_service.find_one_async(req=None, _id=provider[ID_FIELD])
+        await ingest_provider_service.system_update_async(provider[ID_FIELD], update, provider)
 
         if LAST_ITEM_UPDATE not in update and get_is_idle(provider):
-            admins = await UsersResourceModel.get_by_user_type(UserTypeEnum.ADMINISTRATOR)
+            admins = [user.to_dict() for user in await UsersResourceModel.get_by_user_type(UserTypeEnum.ADMINISTRATOR)]
             await notify_and_add_activity(
                 ACTIVITY_EVENT,
                 "Provider {{name}} has gone strangely quiet. Last activity was on {{last}}",
@@ -471,7 +473,7 @@ async def _derive_subject(item):
         logger.exception(ex)
 
 
-def apply_rule_set(item, provider, rule_set=None):
+async def apply_rule_set(item, provider, rule_set=None):
     """Applies rules set on the item to be ingested into the system.
 
     If there's no rule set then the item will
@@ -483,7 +485,9 @@ def apply_rule_set(item, provider, rule_set=None):
     """
     try:
         if rule_set is None and provider.get("rule_set") is not None:
-            rule_set = superdesk.get_resource_service("rule_sets").find_one(_id=provider["rule_set"], req=None)
+            rule_set = await superdesk.get_resource_service("rule_sets").find_one_async(
+                _id=provider["rule_set"], req=None
+            )
 
         if rule_set and "body_html" in item:
             body = item["body_html"]
@@ -637,7 +641,7 @@ async def ingest_item(item, provider, feeding_service, rule_set=None, routing_sc
         elif "anpa_category" in item:
             await _derive_subject(item)
 
-        apply_rule_set(item, provider, rule_set)
+        await apply_rule_set(item, provider, rule_set)
 
         if item.get("pubstatus", "") in [PUB_STATUS.CANCELED, "cancelled"]:  # Planning module uses "cancelled" value
             item[ITEM_STATE] = CONTENT_STATE.KILLED
@@ -647,7 +651,10 @@ async def ingest_item(item, provider, feeding_service, rule_set=None, routing_sc
         if rend:
             baseImageRend = rend.get("baseImage") or next(iter(rend.values()))
             if baseImageRend and not baseImageRend.get("media"):  # if there is media should be processed already
-                href = feeding_service.prepare_href(baseImageRend["href"], rend.get("mimetype"))
+                if hasattr(feeding_service, "prepare_href_async"):
+                    href = await feeding_service.prepare_href_async(baseImageRend["href"], rend.get("mimetype"))
+                else:
+                    href = feeding_service.prepare_href(baseImageRend["href"], rend.get("mimetype"))
                 update_renditions(item, href, old_item, feeding_service=feeding_service)
 
         # if the item has associated media
@@ -705,7 +712,10 @@ async def ingest_item(item, provider, feeding_service, rule_set=None, routing_sc
             new_version = _is_new_version(item, old_item)
             updates = deepcopy(item)
             if new_version:
-                ingest_service.patch_in_mongo(old_item[ID_FIELD], updates, old_item)
+                if hasattr(ingest_service, "patch_in_mongo_async"):
+                    await ingest_service.patch_in_mongo_async(old_item[ID_FIELD], updates, old_item)
+                else:
+                    ingest_service.patch_in_mongo(old_item[ID_FIELD], updates, old_item)
                 item.update(old_item)
                 item.update(updates)
                 items_ids.append(item["_id"])
@@ -718,7 +728,10 @@ async def ingest_item(item, provider, feeding_service, rule_set=None, routing_sc
                 else:
                     ingest_service.set_ingest_provider_sequence(item, provider)
             try:
-                items_ids.extend(ingest_service.post_in_mongo([item]))
+                if hasattr(ingest_service, "post_in_mongo_async"):
+                    items_ids.extend(await ingest_service.post_in_mongo_async([item]))
+                else:
+                    items_ids.extend(ingest_service.post_in_mongo([item]))
             except HTTPException as e:
                 logger.error("Exception while persisting item in %s collection: %s", ingest_collection, e)
                 raise e

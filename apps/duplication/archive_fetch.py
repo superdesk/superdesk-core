@@ -68,7 +68,7 @@ class FetchService(AsyncBaseService):
             stage_id = doc.get("stage")
 
             ingest_service = get_resource_service("ingest")
-            ingest_doc = ingest_service.find_one(req=None, _id=id_of_item_to_be_fetched)
+            ingest_doc = await ingest_service.find_one_async(req=None, _id=id_of_item_to_be_fetched)
 
             if not ingest_doc:
                 raise SuperdeskApiError.notFoundError(
@@ -100,7 +100,7 @@ class FetchService(AsyncBaseService):
             )
 
             id_of_fetched_items.append(dest_doc[ID_FIELD])
-            ingest_service.patch(id_of_item_to_be_fetched, {"archived": dest_doc["versioncreated"]})
+            await ingest_service.patch_async(id_of_item_to_be_fetched, {"archived": dest_doc["versioncreated"]})
 
             dest_doc[FAMILY_ID] = ingest_doc[ID_FIELD]
             dest_doc[INGEST_ID] = self.__strip_version_from_guid(ingest_doc[GUID_FIELD], ingest_doc.get("version"))

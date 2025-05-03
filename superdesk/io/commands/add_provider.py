@@ -42,8 +42,7 @@ async def cli_add_provider(provider: str):
         validation = validator.validate(data)
 
         if validation:
-            # TODO-ASYNC[ingest_providers]: Use async service when upgrading ``ingest_providers`` module
-            get_resource_service("ingest_providers").post([data])
+            await get_resource_service("ingest_providers").post_async([data])
             return data
         else:
             ex = Exception(
