@@ -5,12 +5,12 @@
 # at https://www.sourcefabric.org/superdesk/license
 
 from typing import Any
+from superdesk.eve_async.service import AsyncBaseService
 from superdesk.resource import Resource
-from superdesk.services import BaseService
 from superdesk.errors import SuperdeskApiError
 from superdesk.utils import AllowedContainer
 from .. import tools
-from .base import registered_ai_services, AIServiceBase
+from .base import registered_ai_services
 import superdesk
 
 #: main endpoint to interact with AI Services
@@ -53,7 +53,7 @@ class AIResource(Resource):
     item_methods = []
 
 
-class AIService(BaseService):
+class AIService(AsyncBaseService):
     r"""Service managing article analysis with machine learning/AI related services
 
     When doing a POST request on this service, the following keys can be used (keys
@@ -81,7 +81,7 @@ class AIService(BaseService):
 
     """
 
-    def create(self, docs, **kwargs):
+    async def create_async(self, docs: list[dict], **kwargs) -> list:
         doc = docs[0]
         service = doc["service"]
         item = doc["item"]
@@ -121,7 +121,7 @@ class AIDataOpResource(Resource):
     item_methods = []
 
 
-class AIDataOpService(BaseService):
+class AIDataOpService(AsyncBaseService):
     r"""Service to manipulate AI service related data
 
     When doing a POST request on this service, the following keys can be used (keys
@@ -149,7 +149,7 @@ class AIDataOpService(BaseService):
         }
     """
 
-    def create(self, docs, **kwargs):
+    async def create_async(self, docs: list[dict], **kwargs) -> list:
         doc = docs[0]
         service = doc["service"]
         operation = doc["operation"]
@@ -191,7 +191,7 @@ class AIImageResource(Resource):
     item_methods = []
 
 
-class AIImageSuggestionService(BaseService):
+class AIImageSuggestionService(AsyncBaseService):
     r"""Service to get image suggestions
 
     When doing a POST request on this service, the following keys can be used (keys
@@ -215,7 +215,7 @@ class AIImageSuggestionService(BaseService):
         }
     """
 
-    def create(self, docs, **kwargs):
+    async def create_async(self, docs: list[dict], **kwargs) -> list:
         doc = docs[0]
         service = doc["service"]
         items = doc["items"]
