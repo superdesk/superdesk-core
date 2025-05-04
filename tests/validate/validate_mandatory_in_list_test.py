@@ -81,7 +81,7 @@ class ValidateMandatoryInListTest(TestCase):
             ],
         )
         service = ValidateService()
-        errors = service.create(
+        errors = await service.create_async(
             [
                 {
                     "act": "test",
@@ -97,7 +97,7 @@ class ValidateMandatoryInListTest(TestCase):
         self.app.data.insert("content_types", [{"_id": "foo", "schema": {"headline": {"required": True}}}])
 
         service = ValidateService()
-        errors = service.create(
+        errors = await service.create_async(
             [{"act": "test", "type": "test", "validate": {"profile": "foo", "headline": ""}}], fields=True
         )
 
@@ -109,7 +109,7 @@ class ValidateMandatoryInListTest(TestCase):
         )
 
         service = ValidateService()
-        errors = service.create(
+        errors = await service.create_async(
             [{"act": "test", "type": "test", "validate": {"profile": "foo", "subject": []}}], fields=True
         )
 
@@ -122,7 +122,7 @@ class ValidateMandatoryInListTest(TestCase):
         )
 
         service = ValidateService()
-        errors = service.create(
+        errors = await service.create_async(
             [
                 {
                     "act": "test",
@@ -172,7 +172,7 @@ class ValidateMandatoryInListTest(TestCase):
         )
 
         service = ValidateService()
-        errors = service.create(
+        errors = await service.create_async(
             [{"act": "test", "type": "test", "validate": {"profile": "foo", "subject": None}}], fields=True
         )
 
@@ -193,7 +193,7 @@ class ValidateMandatoryInListTest(TestCase):
             ],
         )
         service = ValidateService()
-        errors = service.create(
+        errors = await service.create_async(
             [
                 {
                     "act": "test",
@@ -220,7 +220,7 @@ class ValidateMandatoryInListTest(TestCase):
             ],
         )
         service = ValidateService()
-        errors = service.create(
+        errors = await service.create_async(
             [
                 {
                     "act": "test",
@@ -248,7 +248,7 @@ class ValidateMandatoryInListTest(TestCase):
             ],
         )
         service = ValidateService()
-        errors = service.create(
+        errors = await service.create_async(
             [
                 {
                     "act": "test",
@@ -276,7 +276,7 @@ class ValidateMandatoryInListTest(TestCase):
             ],
         )
         service = ValidateService()
-        errors = service.create(
+        errors = await service.create_async(
             [
                 {
                     "act": "test",
@@ -303,7 +303,7 @@ class ValidateMandatoryInListTest(TestCase):
             ],
         )
         service = ValidateService()
-        errors = service.create(
+        errors = await service.create_async(
             [
                 {
                     "act": "test",
@@ -332,7 +332,7 @@ class ValidateMandatoryInListTest(TestCase):
         service = ValidateService()
         feature_media = MEDIA_MANDATORY
         feature_media.update({"description_text": "test"})
-        errors = service.create(
+        errors = await service.create_async(
             [
                 {
                     "act": "test",
@@ -392,7 +392,7 @@ class ValidateMandatoryInListTest(TestCase):
                 "type": "dict",
             }
         }
-        self.assertEqual(service._get_validators(doc)[0]["schema"], schema)
+        self.assertEqual((await service._get_validators(doc))[0]["schema"], schema)
 
     async def test_validate_field_required_related_content_error(self):
         self.app.data.insert(
@@ -408,7 +408,7 @@ class ValidateMandatoryInListTest(TestCase):
             ],
         )
         service = ValidateService()
-        errors = service.create(
+        errors = await service.create_async(
             [
                 {
                     "act": "test",
@@ -434,7 +434,7 @@ class ValidateMandatoryInListTest(TestCase):
             ],
         )
         service = ValidateService()
-        errors = service.create(
+        errors = await service.create_async(
             [
                 {
                     "act": "test",
@@ -484,7 +484,7 @@ class ValidateMandatoryInListTest(TestCase):
             ],
         )
         service = ValidateService()
-        errors = service.create(
+        errors = await service.create_async(
             [
                 {
                     "act": "test",
@@ -516,7 +516,7 @@ class ValidateMandatoryInListTest(TestCase):
             ],
         )
         service = ValidateService()
-        errors = service.create(
+        errors = await service.create_async(
             [
                 {
                     "act": "test",
@@ -551,7 +551,7 @@ class ValidateMandatoryInListTest(TestCase):
             ],
         )
         service = ValidateService()
-        errors = service.create(
+        errors = await service.create_async(
             [
                 {
                     "act": "test",

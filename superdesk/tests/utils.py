@@ -73,8 +73,13 @@ async def find_many(resource: str, lookup: dict | None = None, use_eve: bool = T
 async def post_items(
     resource: str, items: list[dict] | list[ResourceModel], use_eve: bool = True
 ) -> list[str | ObjectId]:
+    if not len(items):
+        return []
+
     async_app = get_current_async_app()
     eve_service = _get_eve_service(resource)
+    if isinstance(items[0], ResourceModel):
+        use_eve = False
 
     try:
         if not eve_service or not use_eve:

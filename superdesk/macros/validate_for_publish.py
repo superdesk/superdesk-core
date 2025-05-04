@@ -19,7 +19,7 @@ import json
 async def validate_for_publish(item, **kwargs):
     doc = await get_resource_service("archive").find_one_async(req=None, _id=item[ID_FIELD])
     validate_item = {"act": ITEM_PUBLISH, "type": doc["type"], "validate": doc}
-    validation_errors = get_resource_service("validate").validate(validate_item)
+    validation_errors = await get_resource_service("validate").validate(validate_item)
     if validation_errors:
         raise ValidationError(json.dumps(validation_errors))
 

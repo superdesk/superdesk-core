@@ -236,7 +236,7 @@ class ReutersHTTPFeedingService(HTTPFeedingService):
         """
         # get the provider in case it has been updated by another channel
         ingest_provider_service = superdesk.get_resource_service("ingest_providers")
-        provider = await ingest_provider_service.find_one_asnc(req=None, _id=self.provider[ID_FIELD])
+        provider = await ingest_provider_service.find_one_async(req=None, _id=self.provider[ID_FIELD])
         provider_token = provider.get("tokens")
         if "poll_tokens" not in provider_token:
             provider_token["poll_tokens"] = {channel: poll_token}

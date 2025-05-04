@@ -39,20 +39,25 @@ async def given_highlights(context):
 
 
 @when("we create highlights package")
-def when_we_create_highglights_package(context):
+@async_run_until_complete
+async def when_we_create_highglights_package(context):
     data_text = (
         '{"highlight": "%s", "type": "composite", '
         '"task": {"user": "#user._id#", "desk": "#desks._id#"}}' % str(context.highlights["_id"])
     )
     data_text = apply_placeholders(context, data_text)
     url = get_prefixed_url(context.app, "/archive")
-    context.response = context.client.post(url, data=data_text, headers=context.headers)
+    context.response = await context.client.post(url, data=data_text, headers=context.headers)
 
 
 @then("we get new package with items")
-def then_we_get_new_package_with_items(context):
-    assert context.response.status_code == 201, "%d: %s" % (context.response.status_code, context.response.get_data())
-    package = json.loads(context.response.get_data())
+@async_run_until_complete
+async def then_we_get_new_package_with_items(context):
+    assert context.response.status_code == 201, "%d: %s" % (
+        context.response.status_code,
+        await context.response.get_data(),
+    )
+    package = json.loads(await context.response.get_data())
 
     groups = package.get("groups")
     assert len(groups) == 2, "there should be 2 groups"

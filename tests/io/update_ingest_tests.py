@@ -494,7 +494,7 @@ class UpdateIngestTest(TestCase):
     async def test_get_article_ids(self):
         provider_name = "reuters"
         provider, provider_service = await self.setup_reuters_provider()
-        ids = provider_service._get_article_ids("channel1", utcnow(), utcnow() + timedelta(minutes=-10))
+        ids = await provider_service._get_article_ids("channel1", utcnow(), utcnow() + timedelta(minutes=-10))
         self.assertEqual(len(ids), 3)
         provider = await test_utils.find_one("ingest_providers", name=provider_name)
         self.assertEqual(provider["tokens"]["poll_tokens"]["channel1"], "ExwaY31kfnR2Z2J1cWZ2YnxoYH9kfw==")
@@ -662,7 +662,7 @@ class UpdateIngestTest(TestCase):
         self.assertEqual("composite", items[0].get("profile"))
 
         content_types = [{"_id": "story", "name": "story"}]
-        self.app.data.insert("content_types", content_types)
+        await test_utils.post_items("content_types", content_types)
         items[1]["profile"] = "story"
         await ingest_item(items[1], provider, provider_service)
         self.assertEqual("story", items[1].get("profile"))

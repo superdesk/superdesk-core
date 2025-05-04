@@ -429,7 +429,7 @@ class AsyncArchiveService(AsyncResourceService[ArchiveResourceModel], Highlights
         :param updates: Updates that were applied
         :param original: Original item before update
         """
-        get_component(ItemAutosave).clear(original.id)
+        await get_component(ItemAutosave).clear(original.id)
 
         if original.item_type == ContentTypes.COMPOSITE:
             await self.packageService.on_updated_async(updates, original)
@@ -483,7 +483,7 @@ class AsyncArchiveService(AsyncResourceService[ArchiveResourceModel], Highlights
         :param document: New document that replaced original
         :param original: Original document that was replaced
         """
-        get_component(ItemAutosave).clear(original["_id"])
+        await get_component(ItemAutosave).clear(original["_id"])
         await add_activity(
             ACTIVITY_UPDATE,
             "replaced item {{ type }} about {{ subject }}",
@@ -500,7 +500,7 @@ class AsyncArchiveService(AsyncResourceService[ArchiveResourceModel], Highlights
 
         :param doc: Document being deleted
         """
-        get_component(ItemAutosave).clear(doc["_id"])
+        await get_component(ItemAutosave).clear(doc["_id"])
         if doc[ITEM_TYPE] == CONTENT_TYPE.COMPOSITE:
             await self.packageService.on_deleted(doc)
 
@@ -651,7 +651,7 @@ class AsyncArchiveService(AsyncResourceService[ArchiveResourceModel], Highlights
         convert_task_attributes_to_objectId(new_doc)
         await transtype_metadata(new_doc)
         signals.item_duplicate.send(self, item=new_doc, original=original_doc, operation=operation)
-        get_model(ItemModel).create([new_doc])
+        await get_model(ItemModel).create_async([new_doc])
         await self._duplicate_versions(original_doc["_id"], new_doc)
         await self._duplicate_history(original_doc["_id"], new_doc)
 
@@ -775,7 +775,7 @@ class AsyncArchiveService(AsyncResourceService[ArchiveResourceModel], Highlights
         :param old_id: ID of the original item
         :param new_doc: New document
         """
-        old_history_items = await get_resource_service("archive_history").get_from_mongo(
+        old_history_items = await get_resource_service("archive_history").get_from_mongo_async(
             req=None, lookup={"item_id": old_id}
         )
 
@@ -789,7 +789,7 @@ class AsyncArchiveService(AsyncResourceService[ArchiveResourceModel], Highlights
             new_history_items.append(old_history_item)
 
         if new_history_items:
-            await get_resource_service("archive_history").post(new_history_items)
+            await get_resource_service("archive_history").post_async(new_history_items)
 
     async def update(self, id, updates, original=None):
         """Update an item.
@@ -813,6 +813,7 @@ class AsyncArchiveService(AsyncResourceService[ArchiveResourceModel], Highlights
 
         # send signal
         signals.item_update.send(self, updates=updates, original=original)
+        await signals.item_update_async.send(updates, original)
 
         await super().update(id, updates, original)
 

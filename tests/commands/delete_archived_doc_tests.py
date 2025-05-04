@@ -106,59 +106,51 @@ class DeleteDocTestCase(TestCase):
             },
         ]
 
-        self.archivedService = get_resource_service("archived")
+        self.archived_service = get_resource_service("archived")
+        await self.archived_service.post_async(self.archived_only_data)
 
     async def test_no_id_provided_exception(self):
-        self.archivedService.post(self.archived_only_data)
-
         f = io.StringIO()
         with redirect_stdout(f):
-            DeleteArchivedDocumentCommand().run([])
+            await DeleteArchivedDocumentCommand().run([])
         s = f.getvalue()
         self.assertEqual(s, "Please provide at least one id!\n")
 
     async def test_wrong_id_provided_exception(self):
-        self.archivedService.post(self.archived_only_data)
-
         f = io.StringIO()
         with redirect_stdout(f):
-            DeleteArchivedDocumentCommand().run(["5880000000000"])
+            await DeleteArchivedDocumentCommand().run(["5880000000000"])
         s = f.getvalue()
         self.assertIn("No archived story found with given ids(s)!\n", s)
 
     async def test_delete_non_text_document_succeeds(self):
-        self.archivedService.post(self.archived_only_data)
-
-        DeleteArchivedDocumentCommand().run(["213456"])
-        cursor = self.archivedService.get(req=None, lookup={"_id": "213456"})
-        self.assertEqual(0, len(cursor.docs))
+        await DeleteArchivedDocumentCommand().run(["213456"])
+        item_count = await self.archived_service.count_async({"_id": "213456"})
+        self.assertEqual(0, item_count)
 
     async def test_delete_document_succeeds(self):
-        self.archivedService.post(self.archived_only_data)
-        DeleteArchivedDocumentCommand().run(["588c1b901d41c805dce70df0"])
+        await DeleteArchivedDocumentCommand().run(["588c1b901d41c805dce70df0"])
 
-        cursor = self.archivedService.get(req=None, lookup={"_id": "588c1b901d41c805dce70df0"})
-        self.assertEqual(0, len(cursor.docs))
-        cursor = self.archivedService.get(req=None, lookup={"_id": "213456"})
-        self.assertEqual(0, len(cursor.docs))
+        item_count = await self.archived_service.count_async({"_id": "588c1b901d41c805dce70df0"})
+        self.assertEqual(0, item_count)
+        item_count = await self.archived_service.count_async({"_id": "213456"})
+        self.assertEqual(0, item_count)
 
     async def test_delete_multiple_documents_succeeds(self):
-        self.archivedService.post(self.archived_only_data)
-        DeleteArchivedDocumentCommand().run(["588c1b901d41c805dce70df0", "57d224de069b7f038e9d2a53"])
+        await DeleteArchivedDocumentCommand().run(["588c1b901d41c805dce70df0", "57d224de069b7f038e9d2a53"])
 
-        cursor = self.archivedService.get(req=None, lookup={"_id": "588c1b901d41c805dce70df0"})
-        self.assertEqual(0, len(cursor.docs))
-        cursor = self.archivedService.get(req=None, lookup={"_id": "57d224de069b7f038e9d2a53"})
-        self.assertEqual(0, len(cursor.docs))
+        item_count = await self.archived_service.count_async({"_id": "588c1b901d41c805dce70df0"})
+        self.assertEqual(0, item_count)
+        item_count = await self.archived_service.count_async({"_id": "57d224de069b7f038e9d2a53"})
+        self.assertEqual(0, item_count)
 
     async def test_deleting_one_take_deletes_package_but_keeps_other_takes_succeeds(self):
         # it will delete other takes in that package
-        self.archivedService.post(self.archived_only_data)
-        DeleteArchivedDocumentCommand().run(["588c1b901d41c805dce70df0"])
+        await DeleteArchivedDocumentCommand().run(["588c1b901d41c805dce70df0"])
 
-        cursor = self.archivedService.get(req=None, lookup={"_id": "588c1b901d41c805dce70df0"})
-        self.assertEqual(0, len(cursor.docs))
-        cursor = self.archivedService.get(req=None, lookup={"_id": "213456"})
-        self.assertEqual(0, len(cursor.docs))
-        cursor = self.archivedService.get(req=None, lookup={"_id": "57d224de069b7f038e9d2a53"})
-        self.assertEqual(1, len(cursor.docs))
+        item_count = await self.archived_service.count_async({"_id": "588c1b901d41c805dce70df0"})
+        self.assertEqual(0, item_count)
+        item_count = await self.archived_service.count_async({"_id": "213456"})
+        self.assertEqual(0, item_count)
+        item_count = await self.archived_service.count_async({"_id": "57d224de069b7f038e9d2a53"})
+        self.assertEqual(1, item_count)

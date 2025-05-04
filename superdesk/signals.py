@@ -18,7 +18,9 @@ __all__ = [
     "item_create",
     "item_publish",
     "item_published",
+    "item_published_async",
     "item_update",
+    "item_update_async",
     "item_updated",
     "item_fetched",
     "item_move",
@@ -65,6 +67,7 @@ item_published_async = AsyncSignal[dict, bool]("item:published")
 #: :param updates: changes to be saved
 #: :param original: original item version
 item_update = signals.signal("item:update")
+item_update_async = AsyncSignal[dict, dict]("item:update")
 
 #: Sent after new version is saved.
 #:

@@ -73,10 +73,8 @@ class DuplicateService(AsyncBaseService):
                     "size": 1,
                 }
                 req.args = {"source": json.dumps(query)}
-                archived_docs = archived_service.get(req=req, lookup=None)
-                if archived_docs.count() > 0:
-                    archived_doc = archived_docs[0]
-
+                archived_docs_cursor = await archived_service.get_async(req=req, lookup=None)
+                archived_doc = await archived_docs_cursor.next() or {}
             else:
                 archived_doc = await archive_service.find_one_async(req=None, _id=guid_of_item_to_be_duplicated)
 

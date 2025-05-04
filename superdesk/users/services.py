@@ -348,7 +348,7 @@ class UsersService(AsyncBaseService):
                     await archive_service.delete_async(lookup={"_id": item["_id"]})
                 else:
                     await archive_service.update_async(item["_id"], doc_to_unlock, item)
-                    archive_autosave_service.delete(lookup={"_id": item["_id"]})
+                    await archive_autosave_service.delete_async(lookup={"_id": item["_id"]})
 
     async def on_deleted_async(self, doc):
         """Overriding to add to activity stream and handle user clean up.
