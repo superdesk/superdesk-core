@@ -8,10 +8,11 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
-import superdesk
+from superdesk.resource import Resource
+from superdesk.eve_async import AsyncBaseService
 
 
-class ValidatorsResource(superdesk.Resource):
+class ValidatorsResource(Resource):
     schema = {
         "_id": {"type": "string", "required": True, "unique": True},
         "act": {"type": "string", "required": True},
@@ -30,5 +31,5 @@ class ValidatorsResource(superdesk.Resource):
     item_methods = []
 
 
-class ValidatorsService(superdesk.Service):
+class ValidatorsService(AsyncBaseService):
     pass
