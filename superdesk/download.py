@@ -14,7 +14,7 @@ import superdesk
 from superdesk.errors import SuperdeskApiError
 from superdesk.auth.decorator import blueprint_auth
 from .resource import Resource
-from .services import BaseService
+from superdesk.eve_async import AsyncBaseService
 from superdesk.core import get_current_app, get_config
 from superdesk.flask import request, Blueprint, url_for
 from superdesk.storage.superdesk_file import generate_response_for_file, get_file_request_range
@@ -46,7 +46,7 @@ def init_app(app) -> None:
     endpoint_name = "download"
     app.download_url = download_url
     superdesk.blueprint(bp, app)
-    service = BaseService(endpoint_name, backend=superdesk.get_backend())
+    service = AsyncBaseService(endpoint_name, backend=superdesk.get_backend())
     DownloadResource(endpoint_name, app=app, service=service)
 
 
