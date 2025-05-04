@@ -1,13 +1,15 @@
-from typing import List, Dict, Callable
+from typing import Callable, Awaitable
+from inspect import isawaitable
 import warnings
 import superdesk
 
 from quart_babel import gettext as _
 from datetime import timedelta
 
-from superdesk.core import get_current_app, get_config
+from superdesk.core import get_current_app, get_config, get_current_async_app
+from superdesk.eve_async import AsyncBaseService, AsyncListCursor
+from superdesk.types import ArchiveResourceModel
 from superdesk.flask import request
-from superdesk.utils import ListCursor
 from superdesk.utc import utcnow
 from superdesk.errors import SuperdeskApiError
 
@@ -18,8 +20,8 @@ SETTING_HOURS = "ARCHIVE_AUTOCOMPLETE_HOURS"
 SETTING_LIMIT = "ARCHIVE_AUTOCOMPLETE_LIMIT"
 
 
-AutocompleteSuggestionProvider = Callable[[str, str], Dict[str, int]]
-_registered_autocomplete_resources: Dict[str, AutocompleteSuggestionProvider] = {}
+AutocompleteSuggestionProvider = Callable[[str, str], dict[str, int]] | Callable[[str, str], Awaitable[dict[str, int]]]
+_registered_autocomplete_resources: dict[str, AutocompleteSuggestionProvider] = {}
 
 
 def register_autocomplete_suggestion_provider(resource: str, provider: AutocompleteSuggestionProvider):
@@ -35,9 +37,9 @@ class AutocompleteResource(superdesk.Resource):
     }
 
 
-class AutocompleteService(superdesk.Service):
-    def get(self, req, lookup):
-        resources: List[str] = (
+class AutocompleteService(AsyncBaseService):
+    async def get_async(self, req, lookup):
+        resources: list[str] = (
             _registered_autocomplete_resources.keys()
             if not request.args.get("resources")
             else request.args.get("resources").split(",")
@@ -45,7 +47,7 @@ class AutocompleteService(superdesk.Service):
         field: str = request.args.get("field", "slugline")
         language: str = request.args.get("language", get_config(str, "DEFAULT_LANGUAGE"))
 
-        all_suggestions: Dict[str, int] = {}
+        all_suggestions: dict[str, int] = {}
         for resource in resources:
             get_suggestions = _registered_autocomplete_resources.get(resource)
             if not get_suggestions:
@@ -53,14 +55,19 @@ class AutocompleteService(superdesk.Service):
                     _(f"Autocomplete suggestion for resource type '{resource}' not registered"), 404
                 )
 
-            for key, count in get_suggestions(field, language).items():
+            suggestions = get_suggestions(field, language)
+            if isawaitable(suggestions):
+                suggestions = await suggestions
+            for key, count in suggestions.items():
                 all_suggestions.setdefault(key, 0)
                 all_suggestions[key] += count
 
-        return ListCursor([{"value": key, "count": all_suggestions[key]} for key in sorted(all_suggestions.keys())])
+        return AsyncListCursor(
+            [{"value": key, "count": all_suggestions[key]} for key in sorted(all_suggestions.keys())]
+        )
 
 
-def get_archive_suggestions(field: str, language: str) -> Dict[str, int]:
+async def get_archive_suggestions(field: str, language: str) -> dict[str, int]:
     if not get_config(bool, SETTING_ENABLED):
         raise SuperdeskApiError(_("Archive autocomplete is not enabled"), 404)
 
@@ -98,9 +105,14 @@ def get_archive_suggestions(field: str, language: str) -> Dict[str, int]:
                 },
             },
         },
+        "size": 0,
     }
-    res = get_current_app().data.elastic.search(query, "archive", params={"size": 0})
-    return {bucket["key"]: bucket["doc_count"] for bucket in res.hits["aggregations"]["values"]["buckets"]}
+
+    async_app = get_current_async_app()
+    index = async_app.elastic.get_elastic_index_name("archive")
+    elastic = ArchiveResourceModel.get_service().elastic
+    res = await elastic.search(query, [index])
+    return {bucket["key"]: bucket["doc_count"] for bucket in res["aggregations"]["values"]["buckets"]}
 
 
 def init_app(_app) -> None:
