@@ -11,7 +11,7 @@
 from typing import Any
 import superdesk
 from superdesk.resource import Resource
-from superdesk.services import BaseService
+from superdesk.eve_async import AsyncBaseService
 from apps.comments import CommentsService, CommentsResource, comments_schema
 from superdesk.errors import SuperdeskApiError
 
@@ -38,16 +38,16 @@ class ItemCommentsSubResource(Resource):
     resource_methods = ["GET"]
 
 
-class ItemCommentsSubService(BaseService):
-    def check_item_valid(self, item_id):
-        item = superdesk.get_resource_service("archive").find_one(req=None, _id=item_id)
+class ItemCommentsSubService(AsyncBaseService):
+    async def check_item_valid(self, item_id):
+        item = await superdesk.get_resource_service("archive").find_one_async(req=None, _id=item_id)
         if not item:
             msg = "Invalid content item ID provided: %s" % item_id
             raise SuperdeskApiError.notFoundError(msg)
 
-    def get(self, req, lookup):
-        self.check_item_valid(lookup.get("item"))
-        return super().get(req, lookup)
+    async def get_async(self, req, lookup):
+        await self.check_item_valid(lookup.get("item"))
+        return await super().get_async(req, lookup)
 
 
 def init_app(app) -> None:
