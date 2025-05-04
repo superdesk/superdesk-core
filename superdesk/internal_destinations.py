@@ -47,7 +47,7 @@ class InternalDestinationsService(AsyncBaseService):
     pass
 
 
-async def handle_item_published(sender, item, desk=None, **extra):
+async def handle_item_published(item, desk=None, **extra):
     macros_service = get_resource_service("macros")
     archive_service = get_resource_service("archive")
     filters_service = ContentFiltersResource.get_service()
@@ -103,7 +103,7 @@ async def handle_item_published(sender, item, desk=None, **extra):
         extra_fields = [PUBLISH_SCHEDULE, SCHEDULE_SETTINGS]
         next_id = await archive_service.duplicate_item(new_item, state="routed", extra_fields=extra_fields)
         next_item = await archive_service.find_one_async(req=None, _id=next_id)
-        item_routed.send(sender, item=next_item)
+        item_routed.send(None, item=next_item)
 
 
 def init_app(app) -> None:
