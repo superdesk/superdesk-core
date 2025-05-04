@@ -53,6 +53,9 @@ class BaseProxy(DataLayer):
     def create(self, resource, docs):
         return self.data_layer.create(resource, docs)
 
+    async def create_async(self, resource, docs):
+        return await self.data_layer.create_async(resource, docs)
+
     def update(self, resource, filter, doc):
         return self._update(resource, filter, doc)
 
@@ -64,6 +67,9 @@ class BaseProxy(DataLayer):
 
     def delete(self, resource, filter):
         return self.data_layer.delete(resource, filter)
+
+    async def delete_async(self, resource, filter):
+        return await self.data_layer.delete_async(resource, filter)
 
     def _update(self, resource, filter, doc, method="update"):
         _id = doc.pop(ID_FIELD, None)

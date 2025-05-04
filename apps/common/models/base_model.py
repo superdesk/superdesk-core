@@ -154,6 +154,17 @@ class BaseModel:
         self.on_created(docs)
         return res
 
+    async def create_async(self, docs):
+        """Insert a list of documents.
+
+        :param docs: list
+        """
+        self.validate(docs)
+        self.on_create(docs)
+        res = await self.data_layer.create_async(self.resource, docs)
+        self.on_created(docs)
+        return res
+
     def update(self, filter, doc, etag=None):
         """Update one document selected based on the given filter.
 
@@ -218,6 +229,19 @@ class BaseModel:
             return
         self.on_delete(orig)
         res = self.data_layer.delete(self.resource, filter)
+        self.on_deleted(orig)
+        return res
+
+    async def delete_async(self, filter):
+        """Delete one document selected based on the given filter.
+
+        :param filter: dict
+        """
+        orig = await self.find_one_async(filter)
+        if not orig:
+            return
+        self.on_delete(orig)
+        res = await self.data_layer.delete_async(self.resource, filter)
         self.on_deleted(orig)
         return res
 
