@@ -9,10 +9,11 @@
 # at https://www.sourcefabric.org/superdesk/license
 
 import superdesk
+from superdesk.core.types import ItemId
 from superdesk.resource_fields import ID_FIELD
 from superdesk.notification import push_notification
 from superdesk.resource import Resource
-from superdesk.services import BaseService
+from superdesk.eve_async import AsyncBaseService
 from superdesk.errors import SuperdeskApiError
 from superdesk import get_resource_service
 from superdesk.types import DesksResourceModel, UsersResourceModel
@@ -58,10 +59,10 @@ class StagesResource(Resource):
     }
 
 
-class StagesService(BaseService):
+class StagesService(AsyncBaseService):
     notification_key = "stage"
 
-    def on_create(self, docs):
+    async def on_create_async(self, docs):
         """Runs on stage create.
 
         Overriding this to set desk_order and expiry settings. Also, if this stage is defined as either working or
@@ -78,24 +79,24 @@ class StagesService(BaseService):
             req = ParsedRequest()
             req.sort = "-desk_order"
             req.max_results = 1
-            prev_stage = self.get(req=req, lookup={"desk": doc["desk"]})
+            prev_stage = await (await self.get_async(req=req, lookup={"desk": doc["desk"]})).next()
 
             if doc.get("content_expiry") == 0:
                 doc["content_expiry"] = None
 
-            if prev_stage.count() == 0:
+            if not prev_stage:
                 doc["desk_order"] = 1
             else:
-                doc["desk_order"] = prev_stage[0].get("desk_order", 1) + 1
+                doc["desk_order"] = prev_stage.get("desk_order", 1) + 1
 
             # if this new one is default then remove the old default
             if doc.get("working_stage", False):
-                self.remove_old_default(desk, "working_stage")
+                await self.remove_old_default(desk, "working_stage")
 
             if doc.get("default_incoming", False):
-                self.remove_old_default(desk, "default_incoming")
+                await self.remove_old_default(desk, "default_incoming")
 
-    async def on_created(self, docs):
+    async def on_created_async(self, docs):
         users_service = UsersResourceModel.get_service()
         for doc in docs:
             if "desk" in doc:
@@ -116,7 +117,7 @@ class StagesService(BaseService):
             if not doc.get("is_visible", True):
                 await users_service.update_stage_visibility_for_users()
 
-    async def on_delete(self, doc):
+    async def on_delete_async(self, doc):
         """
         Checks if deleting the stage would not violate data integrity, raises an exception if it does.
 
@@ -139,34 +140,34 @@ class StagesService(BaseService):
                 raise SuperdeskApiError.preconditionFailedError(message=_("Cannot delete a Incoming Stage."))
 
         archive_versions_query = {"task.stage": str(doc[ID_FIELD])}
-        items = superdesk.get_resource_service("archive_versions").get(req=None, lookup=archive_versions_query)
-        if items and items.count():
+        items_count = await superdesk.get_resource_service("archive_versions").count_async(archive_versions_query)
+        if items_count > 0:
             raise SuperdeskApiError.preconditionFailedError(
                 message=_("Cannot delete stage as it has article(s) or referenced by versions of the article(s).")
             )
 
         # check if the stage is referred to in a ingest routing rule
         rules = await self._stage_in_rule(doc[ID_FIELD])
-        if rules.count() > 0:
-            rule_names = ", ".join(rule.get("name") for rule in rules)
+        if await rules.count() > 0:
+            rule_names = ", ".join([rule.get("name") async for rule in rules])
             raise SuperdeskApiError.preconditionFailedError(
                 message=_("Stage is referred by Ingest Routing Schemes : {rule_names}").format(rule_names=rule_names)
             )
 
-    def on_deleted(self, doc):
+    async def on_deleted_async(self, doc):
         push_notification(
             self.notification_key, deleted=1, stage_id=str(doc.get(ID_FIELD)), desk_id=str(doc.get("desk"))
         )
 
-    async def on_update(self, updates, original):
+    async def on_update_async(self, updates, original):
         if updates.get("content_expiry") == 0:
             updates["content_expiry"] = None
 
-        super().on_update(updates, original)
+        await super().on_update_async(updates, original)
 
         if updates.get("working_stage", False):
             if not original.get("working_stage"):
-                self.remove_old_default(original.get("desk"), "working_stage")
+                await self.remove_old_default(original.get("desk"), "working_stage")
                 await self.set_desk_ref(original, "working_stage")
         else:
             if original.get("working_stage") and "working_stage" in updates:
@@ -174,13 +175,13 @@ class StagesService(BaseService):
 
         if updates.get("default_incoming", False):
             if not original.get("default_incoming"):
-                self.remove_old_default(original.get("desk"), "default_incoming")
+                await self.remove_old_default(original.get("desk"), "default_incoming")
                 await self.set_desk_ref(original, "incoming_stage")
         else:
             if original.get("default_incoming") and "default_incoming" in updates:
                 raise SuperdeskApiError.forbiddenError(message=_("Must have one incoming stage in a desk"))
 
-    async def on_updated(self, updates, original):
+    async def on_updated_async(self, updates, original):
         if "is_visible" in updates and updates["is_visible"] != original.get("is_visible", True):
             push_notification(
                 "stage_visibility_updated",
@@ -198,7 +199,7 @@ class StagesService(BaseService):
                 desk_id=str(original.get("desk")),
             )
 
-    def _get_unspiked_stage_documents(self, stage_id):
+    async def _get_unspiked_stage_documents(self, stage_id):
         """Returns the documents that are on the stage and not spiked.
 
         :param stage_id:
@@ -214,13 +215,13 @@ class StagesService(BaseService):
         )
         req = ParsedRequest()
         req.args = {"filter": query_filter}
-        return superdesk.get_resource_service(ARCHIVE).get(req, None)
+        return await superdesk.get_resource_service(ARCHIVE).get_async(req, None)
 
-    def get_stage_documents(self, stage_id):
+    async def get_stage_documents(self, stage_id):
         query_filter = superdesk.json.dumps({"term": {"task.stage": stage_id}})
         req = ParsedRequest()
         req.args = {"filter": query_filter}
-        return superdesk.get_resource_service(ARCHIVE).get(req, None)
+        return await superdesk.get_resource_service(ARCHIVE).get_async(req, None)
 
     async def _stage_in_rule(self, stage_id):
         """Returns the ingest routing rules that refer to the passed stage.
@@ -248,6 +249,21 @@ class StagesService(BaseService):
 
         return list(self.get(req=None, lookup=lookup))
 
+    async def get_stages_by_visibility_async(self, is_visible=False, user_desk_ids=None):
+        """Returns a list of stages for a user."""
+        if user_desk_ids is None:
+            user_desk_ids = []
+        if is_visible:
+            lookup = {"$or": [{"is_visible": True}]}
+            if user_desk_ids:
+                lookup["$or"].append({"desk": {"$in": user_desk_ids}})
+        else:
+            lookup = {"is_visible": False}
+            if user_desk_ids:
+                lookup["desk"] = {"$nin": user_desk_ids}
+
+        return await (await self.get_async(req=None, lookup=lookup)).to_list()
+
     async def set_desk_ref(self, doc, field):
         service = DesksResourceModel.get_service()
         desk = await service.find_by_id_raw(doc.get("desk"))
@@ -260,13 +276,13 @@ class StagesService(BaseService):
         if desk:
             await service.update(doc.get("desk"), {field: None})
 
-    def remove_old_default(self, desk, field):
+    async def remove_old_default(self, desk, field):
         lookup = {"$and": [{field: True}, {"desk": str(desk)}]}
-        stages = self.get(req=None, lookup=lookup)
-        for stage in stages:
-            get_resource_service("stages").update(stage.get("_id"), {field: False}, stage)
+        stages = await self.get_async(req=None, lookup=lookup)
+        async for stage in stages:
+            await get_resource_service("stages").update_async(stage.get("_id"), {field: False}, stage)
 
-    def create_working_stage(self):
+    async def create_working_stage(self):
         """Creates a Working stage and returns it's identifier
 
         :return: identifier of Working Stage
@@ -274,16 +290,16 @@ class StagesService(BaseService):
 
         stage = {"name": "Working Stage", "working_stage": True, "desk_order": 1, "content_expiry": None}
         self._resolve_defaults(stage)
-        return self.create([stage])
+        return await self.create_async([stage])
 
-    def create_incoming_stage(self):
+    async def create_incoming_stage(self):
         """Creates a Incoming stage and returns it's identifier
 
         :return: identifier of Incoming Stage
         """
         stage = {"name": "Incoming Stage", "default_incoming": True, "desk_order": 2, "content_expiry": None}
         self._resolve_defaults(stage)
-        return self.create([stage])
+        return await self.create_async([stage])
 
 
 class StagesOrderResource(Resource):
@@ -297,16 +313,16 @@ class StagesOrderResource(Resource):
     privileges = {"POST": "desks"}
 
 
-class StagesOrderService(BaseService):
-    def create(self, docs):
+class StagesOrderService(AsyncBaseService):
+    async def create_async(self, docs: list[dict], **kwargs) -> list[ItemId]:
         # TODO-ASYNC[desks]: Use DesksResourceModel async service where when upgrading this module
         desks_service = superdesk.get_resource_service("desks")
         stages_service = superdesk.get_resource_service("stages")
         for doc in docs:
-            desk = desks_service.find_one(req=None, _id=doc["desk"])
+            desk = await desks_service.find_one_async(req=None, _id=doc["desk"])
             assert desk, {"desk": 1}
             for index, stage_id in enumerate(doc["stages"]):
-                stage = stages_service.find_one(req=None, _id=stage_id)
+                stage = await stages_service.find_one_async(req=None, _id=stage_id)
                 assert stage, {"stage": stage_id}
-                stages_service.system_update(stage["_id"], {"desk_order": index + 1}, stage)
+                await stages_service.system_update_async(stage["_id"], {"desk_order": index + 1}, stage)
         return [doc["desk"] for doc in docs]

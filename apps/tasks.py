@@ -86,7 +86,7 @@ async def send_to(doc, update=None, desk_id=None, stage_id=None, user_id=None, d
     original_task = doc.setdefault("task", {})
     current_stage = None
     if original_task.get("stage"):
-        current_stage = get_resource_service("stages").find_one(req=None, _id=original_task.get("stage"))
+        current_stage = await get_resource_service("stages").find_one_async(req=None, _id=original_task.get("stage"))
     desk = destination_stage = None
     task = {"desk": desk_id, "stage": stage_id, "user": original_task.get("user") if user_id is None else user_id}
 
@@ -107,10 +107,12 @@ async def send_to(doc, update=None, desk_id=None, stage_id=None, user_id=None, d
         task["desk"] = desk_id
         if not stage_id:
             task["stage"] = desk.get(default_stage)
-            destination_stage = get_resource_service("stages").find_one(req=None, _id=desk.get(default_stage))
+            destination_stage = await get_resource_service("stages").find_one_async(
+                req=None, _id=desk.get(default_stage)
+            )
 
     if stage_id:
-        destination_stage = get_resource_service("stages").find_one(req=None, _id=stage_id)
+        destination_stage = await get_resource_service("stages").find_one_async(req=None, _id=stage_id)
         if not destination_stage:
             raise SuperdeskApiError.notFoundError(_("Invalid stage identifier {stage_id}").format(stage_id=stage_id))
 
@@ -167,7 +169,7 @@ async def apply_onstage_rule(doc, _id):
     :return:
     """
     doc[ID_FIELD] = _id
-    stage = get_resource_service("stages").find_one(req=None, _id=doc.get("task", {}).get("stage"))
+    stage = await get_resource_service("stages").find_one_async(req=None, _id=doc.get("task", {}).get("stage"))
     if stage:
         await apply_stage_rule(doc, None, stage, "onstage")
 

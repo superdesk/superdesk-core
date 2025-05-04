@@ -157,7 +157,7 @@ class LegalArchiveImport:
                 return
 
             # Step 2 - De-normalizing the legal archive doc
-            self._denormalize_user_desk(legal_archive_doc, log_msg)
+            await self._denormalize_user_desk(legal_archive_doc, log_msg)
             logger.info("De-normalized article {}".format(log_msg))
 
             # Step 3 - Upserting Legal Archive
@@ -211,7 +211,7 @@ class LegalArchiveImport:
                 versions_to_insert.append(versioned_doc)
 
             for version_doc in versions_to_insert:
-                self._denormalize_user_desk(
+                await self._denormalize_user_desk(
                     version_doc,
                     self.log_msg_format.format(
                         _id=version_doc[version_id_field],
@@ -227,7 +227,7 @@ class LegalArchiveImport:
                 logger.info("Inserted de-normalized versions for article {}".format(log_msg))
 
             for history_doc in history_to_insert:
-                self._denormalize_history(history_doc)
+                await self._denormalize_history(history_doc)
                 history_doc.pop(ETAG, None)
 
             if history_to_insert:
@@ -242,7 +242,7 @@ class LegalArchiveImport:
             logger.exception("Failed to import into legal archive {}.".format(item_id))
             raise
 
-    def _denormalize_history(self, history_item):
+    async def _denormalize_history(self, history_item):
         """
         De-normalizes history items
         """
@@ -264,7 +264,9 @@ class LegalArchiveImport:
                     logger.info("Desk Details Not Found: {}. {}".format(history_update["task"].get("desk"), msg))
 
             if history_update.get("task") and history_update["task"].get("stage"):
-                stage = get_resource_service("stages").find_one(req=None, _id=str(history_update["task"]["stage"]))
+                stage = await get_resource_service("stages").find_one_async(
+                    req=None, _id=str(history_update["task"]["stage"])
+                )
                 if stage:
                     history_update["task"]["stage"] = stage.get("name")
                     logger.info("De-normalized Stage Details for article {}".format(msg))
@@ -276,7 +278,7 @@ class LegalArchiveImport:
 
             history_item["update"] = history_update
 
-    def _denormalize_user_desk(self, legal_archive_doc, log_msg):
+    async def _denormalize_user_desk(self, legal_archive_doc, log_msg):
         """
         De-normalizes user, desk and stage details in legal_archive_doc.
         """
@@ -299,7 +301,9 @@ class LegalArchiveImport:
                     logger.info("Desk Details Not Found: {}. {}".format(legal_archive_doc["task"].get("desk"), log_msg))
 
             if legal_archive_doc["task"].get("stage"):
-                stage = get_resource_service("stages").find_one(req=None, _id=str(legal_archive_doc["task"]["stage"]))
+                stage = await get_resource_service("stages").find_one_async(
+                    req=None, _id=str(legal_archive_doc["task"]["stage"])
+                )
                 if stage:
                     legal_archive_doc["task"]["stage"] = stage.get("name")
                     logger.info("De-normalized Stage Details for article {}".format(log_msg))
