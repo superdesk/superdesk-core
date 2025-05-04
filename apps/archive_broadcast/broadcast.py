@@ -16,10 +16,17 @@ from eve.versioning import resolve_document_version
 
 from superdesk.resource_fields import ID_FIELD
 from superdesk.flask import request
-from apps.archive.common import CUSTOM_HATEOAS, insert_into_versions, get_user, ITEM_CREATE, BROADCAST_GENRE, is_genre
+from apps.archive.common import (
+    CUSTOM_HATEOAS,
+    insert_into_versions_async,
+    get_user,
+    ITEM_CREATE,
+    BROADCAST_GENRE,
+    is_genre,
+)
 from apps.packages import PackageService
 from superdesk.resource import Resource, build_custom_hateoas
-from superdesk.services import BaseService
+from superdesk.eve_async import AsyncBaseService, ElasticAsyncEveCursor
 from superdesk.metadata.utils import item_url
 from superdesk.metadata.item import CONTENT_TYPE, CONTENT_STATE, ITEM_TYPE, ITEM_STATE, PUBLISH_STATES, metadata_schema
 from superdesk import get_resource_service
@@ -55,13 +62,13 @@ class ArchiveBroadcastResource(Resource):
     privileges = {"POST": ARCHIVE_BROADCAST_NAME}
 
 
-class ArchiveBroadcastService(BaseService):
+class ArchiveBroadcastService(AsyncBaseService):
     packageService = PackageService()
 
-    def create(self, docs):
+    async def create_async(self, docs):
         service = get_resource_service(SOURCE)
         item_id = request.view_args["item_id"]
-        item = service.find_one(req=None, _id=item_id)
+        item = await service.find_one_async(req=None, _id=item_id)
         doc = docs[0]
 
         self._valid_broadcast_item(item)
@@ -70,8 +77,7 @@ class ArchiveBroadcastService(BaseService):
         desk = None
 
         if desk_id:
-            # TODO-ASYNC[desks]: Use DesksResourceModel async service where when upgrading this module
-            desk = get_resource_service("desks").find_one(req=None, _id=desk_id)
+            desk = await get_resource_service("desks").find_one_async(req=None, _id=desk_id)
 
         doc.pop("desk", None)
         doc["task"] = {}
@@ -80,8 +86,7 @@ class ArchiveBroadcastService(BaseService):
             doc["task"]["stage"] = desk.get("working_stage")
 
         doc["task"]["user"] = get_user().get("_id")
-        # TODO-ASYNC[vocabularies]: Use VocabulariesService async service where when upgrading this module
-        genre_list = get_resource_service("vocabularies").find_one(req=None, _id="genre") or {}
+        genre_list = await get_resource_service("vocabularies").find_one_async(req=None, _id="genre") or {}
         broadcast_genre = [
             {"qcode": genre.get("qcode"), "name": genre.get("name")}
             for genre in genre_list.get("items", [])
@@ -102,8 +107,8 @@ class ArchiveBroadcastService(BaseService):
             doc[key] = item.get(key)
 
         resolve_document_version(document=doc, resource=SOURCE, method="POST")
-        service.post(docs)
-        insert_into_versions(id_=doc[ID_FIELD])
+        await service.post_async(docs)
+        await insert_into_versions_async(id_=doc[ID_FIELD])
         build_custom_hateoas(CUSTOM_HATEOAS, doc)
         return [doc[ID_FIELD]]
 
@@ -124,7 +129,7 @@ class ArchiveBroadcastService(BaseService):
         if item.get(ITEM_STATE) not in [CONTENT_STATE.CORRECTED, CONTENT_STATE.PUBLISHED]:
             raise SuperdeskApiError.badRequestError(message=_("Invalid content state."))
 
-    def _get_broadcast_items(self, ids, include_archived_repo=False):
+    async def _get_broadcast_items(self, ids, include_archived_repo=False) -> ElasticAsyncEveCursor:
         """Returns list of broadcast items.
 
         Get the broadcast items for the master_id
@@ -150,10 +155,9 @@ class ArchiveBroadcastService(BaseService):
             repos = "archive,published,archived"
 
         req.args = {"source": json.dumps(query), "repo": repos}
-        # TODO-ASYNC[search]: Use `get_async` when upgrading this module
-        return get_resource_service("search").get(req=req, lookup=None)
+        return await get_resource_service("search").get_async(req=req, lookup=None)
 
-    def get_broadcast_items_from_master_story(self, item, include_archived_repo=False):
+    async def get_broadcast_items_from_master_story(self, item, include_archived_repo=False):
         """Get the broadcast items from the master story.
 
         :param dict item: master story item
@@ -164,7 +168,7 @@ class ArchiveBroadcastService(BaseService):
             return []
 
         ids = [str(item.get(ID_FIELD))]
-        return list(self._get_broadcast_items(ids, include_archived_repo))
+        return await (await self._get_broadcast_items(ids, include_archived_repo)).to_list()
 
     async def on_broadcast_master_updated(self, item_event, item, rewrite_id=None):
         """Runs when master item is updated.
@@ -187,7 +191,7 @@ class ArchiveBroadcastService(BaseService):
         elif item_event == ITEM_CORRECT:
             status = "Master Story Corrected"
 
-        broadcast_items = self.get_broadcast_items_from_master_story(item)
+        broadcast_items = await self.get_broadcast_items_from_master_story(item)
 
         if not broadcast_items:
             return
@@ -234,8 +238,8 @@ class ArchiveBroadcastService(BaseService):
                 item.get(ID_FIELD), "broadcast", updates.get("broadcast")
             )
 
-        archive_item = get_resource_service(SOURCE).find_one(req=None, _id=item.get(ID_FIELD))
-        get_resource_service(SOURCE).system_update(archive_item.get(ID_FIELD), updates, archive_item)
+        archive_item = await get_resource_service(SOURCE).find_one_async(req=None, _id=item.get(ID_FIELD))
+        await get_resource_service(SOURCE).system_update_async(archive_item.get(ID_FIELD), updates, archive_item)
 
     async def remove_rewrite_refs(self, item):
         """Remove the rewrite references from the broadcast item if the re-write is spiked.
@@ -258,9 +262,8 @@ class ArchiveBroadcastService(BaseService):
 
         req = ParsedRequest()
         req.args = {"source": json.dumps(query)}
-        broadcast_items = list(get_resource_service(SOURCE).get(req=req, lookup=None))
-
-        for broadcast_item in broadcast_items:
+        broadcast_items = await get_resource_service(SOURCE).get_async(req=req, lookup=None)
+        async for broadcast_item in broadcast_items:
             try:
                 updates = {"broadcast": broadcast_item.get("broadcast", {})}
 
@@ -297,7 +300,7 @@ class ArchiveBroadcastService(BaseService):
         """
         broadcast_items = [
             item
-            for item in self.get_broadcast_items_from_master_story(original)
+            for item in await self.get_broadcast_items_from_master_story(original)
             if item.get(ITEM_STATE) not in PUBLISH_STATES
         ]
         spike_service = get_resource_service("archive_spike")
@@ -309,7 +312,7 @@ class ArchiveBroadcastService(BaseService):
                 updates = {ITEM_STATE: CONTENT_STATE.SPIKED}
                 resolve_document_version(updates, SOURCE, "PATCH", item)
                 await spike_service.patch_async(id_, updates)
-                insert_into_versions(id_=id_)
+                await insert_into_versions_async(id_=id_)
             except Exception:
                 logger.exception(message="Failed to spike the related broadcast item {}.".format(id_))
 
