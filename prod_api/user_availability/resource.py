@@ -17,7 +17,6 @@ class UserAvailabilityResource(Resource):
     """Resource for exposing user availability through the production API."""
 
     url = "user_availability"
-    item_url = item_url
     item_methods = ["GET"]
     resource_methods = ["GET"]
     schema = {
