@@ -5126,3 +5126,81 @@ Feature: Content Publishing
           }
       }
       """
+
+    @auth
+    Scenario: Publishing item with associated image still in progress, without modifying the image
+      Given config update
+      """
+      {
+        "PUBLISH_ASSOCIATED_ITEMS": true
+      }
+      """
+      And "validators"
+        """
+        [
+            {"_id": "publish_text", "act": "publish", "type": "text", "schema":{}}
+        ]
+        """
+      And "desks"
+        """
+        [{"name": "Sports", "members":[{"user":"#CONTEXT_USER_ID#"}]}]
+        """
+      And "archive"
+        """
+        [
+            {
+                "_id": "img1",
+                "guid": "img1",
+                "slugline": "picture",
+                "headline": "picture",
+                "type": "picture",
+                "state": "in_progress",
+                "_current_version": 1
+            },
+            {
+                "_id": "text1",
+                "guid": "text1",
+                "slugline": "story",
+                "headline": "story headline",
+                "type": "text",
+                "state": "in_progress",
+                "_current_version": 1,
+                "associations": {
+                  "picture": {
+                    "_id": "img1",
+                    "guid": "img1",
+                    "slugline": "picture",
+                    "type": "picture",
+                    "state": "in_progress",
+                    "_current_version": 1
+                  }
+                },
+                "task": {
+                  "desk": "#desks._id#",
+                  "stage": "#desks.incoming_stage#",
+                  "user": "#CONTEXT_USER_ID#"
+                }
+            }
+        ]
+        """
+      When we publish "text1" with "publish" type and "published" state
+      Then we get OK response
+      And we get existing resource
+      """
+        {
+            "_id": "text1",
+            "guid": "text1",
+            "slugline": "story",
+            "headline": "story headline",
+            "state": "published",
+            "operation": "publish",
+            "associations": {
+                "picture": {
+                  "_id": "img1",
+                  "slugline": "picture",
+                  "state": "published",
+                  "_current_version": 2
+                }
+            }
+        }
+      """
