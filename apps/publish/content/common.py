@@ -912,7 +912,7 @@ class BasePublishService(BaseService):
         Return True if any such field has changed.
         """
 
-        if len(old) != len(new):
+        if old is None or len(old) != len(new):
             return True
 
         fields_to_check = {key for key in old.keys() | new.keys() if not key.startswith("_")}
