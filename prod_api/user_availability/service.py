@@ -41,7 +41,7 @@ class UserAvailabilityService(ProdApiService):
     def _get_user_availability(self, user, start_date, end_date):
         user_data = {"username": user["username"], "availability": {}}
 
-        availabilty = self.find(
+        availability = self.find(
             where={
                 "user": user["_id"],
                 "date": {
@@ -51,7 +51,7 @@ class UserAvailabilityService(ProdApiService):
             }
         )
 
-        for day_availability in availabilty:
+        for day_availability in availability:
             if day_availability.get("status"):
                 user_data["availability"][day_availability["date"]] = {
                     "status": day_availability["status"],
