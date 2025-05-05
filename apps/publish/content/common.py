@@ -895,14 +895,33 @@ class BasePublishService(BaseService):
                         sync_associated_item_changes(associated_item, associated_item_updates)
                         continue
 
-                    if association_updates.get("state") not in PUBLISH_STATES:
-                        # There's an update to the published associated item
+                    orig_associated_item = archive_service.find_one(req=None, _id=associated_item[config.ID_FIELD])
+                    if association_updates.get("state") not in PUBLISH_STATES or self.is_changed(
+                        orig_associated_item, associated_item
+                    ):
                         remove_unwanted(association_updates)
                         publish_service.patch(id=associated_item[config.ID_FIELD], updates=association_updates)
 
             # When there is an associated item which is published, Inserts the latest version of that associated item into archive_versions.
             insert_into_versions(doc=associated_item)
         self._refresh_associated_items(original)
+
+    def is_changed(self, old: dict, new: dict) -> bool:
+        """
+        Compare all top-level fields except those starting with an underscore (_).
+        Return True if any such field has changed.
+        """
+
+        if old is None or len(old) != len(new):
+            return True
+
+        fields_to_check = {key for key in old.keys() | new.keys() if not key.startswith("_")}
+
+        for field in fields_to_check:
+            if old.get(field) != new.get(field):
+                return True
+
+        return False
 
     def _mark_media_item_as_used(self, updates, original):
         if ASSOCIATIONS not in updates or not updates.get(ASSOCIATIONS):
