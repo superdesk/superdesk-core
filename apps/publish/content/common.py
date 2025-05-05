@@ -896,7 +896,9 @@ class BasePublishService(BaseService):
                         continue
 
                     orig_associated_item = archive_service.find_one(req=None, _id=associated_item[config.ID_FIELD])
-                    if self.is_changed(orig_associated_item, associated_item):
+                    if association_updates.get("state") not in PUBLISH_STATES or self.is_changed(
+                        orig_associated_item, associated_item
+                    ):
                         remove_unwanted(association_updates)
                         publish_service.patch(id=associated_item[config.ID_FIELD], updates=association_updates)
 
