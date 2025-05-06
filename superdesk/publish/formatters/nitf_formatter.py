@@ -151,7 +151,7 @@ class NITFFormatter(Formatter):
                 )
             ]
         except Exception as ex:
-            raise FormatterError.nitfFormatterError(ex, subscriber)
+            raise await FormatterError.nitfFormatterError(ex, subscriber).send_notifications()
 
     def get_nitf(self, article, destination, pub_seq_num):
         if get_app_config("NITF_INCLUDE_SCHEMA", False):

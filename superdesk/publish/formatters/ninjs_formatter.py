@@ -182,7 +182,7 @@ class NINJSFormatter(Formatter):
             ninjs = await self._transform_to_ninjs(article, subscriber)
             return [(pub_seq_num, json.dumps(ninjs, default=json_serialize_datetime_objectId))]
         except Exception as ex:
-            raise FormatterError.ninjsFormatterError(ex, subscriber)
+            raise await FormatterError.ninjsFormatterError(ex, subscriber).send_notifications()
 
     async def _transform_to_ninjs(self, article, subscriber, recursive=True):
         ninjs = {

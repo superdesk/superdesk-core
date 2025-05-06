@@ -200,13 +200,13 @@ class HTTPPushService(PublishService):
     def _get_resource_url(self, destination):
         return destination.get("config", {}).get("resource_url")
 
-    def _raise_publish_error(self, status_code, e, destination=None):
+    async def _raise_publish_error(self, status_code, e, destination=None):
         if status_code >= 400 and status_code < 500:
-            raise PublishHTTPPushClientError.httpPushError(e, destination)
+            raise await PublishHTTPPushClientError.httpPushError(e, destination).send_notifications()
         elif status_code >= 500 and status_code < 600:
-            raise PublishHTTPPushServerError.httpPushError(e, destination)
+            raise await PublishHTTPPushServerError.httpPushError(e, destination).send_notifications()
         else:
-            raise PublishHTTPPushError.httpPushError(e, destination)
+            raise await PublishHTTPPushError.httpPushError(e, destination).send_notifications()
 
 
 register_transmitter("http_push", HTTPPushService(), errors)

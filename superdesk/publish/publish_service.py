@@ -47,7 +47,9 @@ class PublishServiceBase:
         subscriber = await SubscribersResource.get_service().find_by_id(queue_item["subscriber_id"])
 
         if not subscriber.is_active:
-            raise SubscriberError.subscriber_inactive_error(Exception("Subscriber inactive"), subscriber)
+            raise await SubscriberError.subscriber_inactive_error(
+                Exception("Subscriber inactive"), subscriber
+            ).send_notifications()
         else:
             try:
                 # "formatted_item" is the item as str
@@ -117,7 +119,7 @@ class PublishServiceBase:
 
             await PublishQueueResource.get_service().update(queue_item_id, item_update)
         except Exception as ex:
-            raise PublishQueueError.item_update_error(ex)
+            raise await PublishQueueError.item_update_error(ex).send_notifications()
 
     @classmethod
     def get_file_extension(cls, queue_item):

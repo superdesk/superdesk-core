@@ -36,7 +36,7 @@ class EmailPublishService(PublishService):
 
     NAME = "Email"
 
-    def _transmit(self, queue_item, subscriber):
+    async def _transmit(self, queue_item, subscriber):
         config = queue_item.get("destination", {}).get("config", {})
 
         try:
@@ -52,7 +52,9 @@ class EmailPublishService(PublishService):
             recipients = [r.strip() for r in config.get("recipients", "").split(";") if r.strip()]
             bcc = [r.strip() for r in config.get("recipients_bcc", "").split(";") if r.strip()]
             if not recipients and not bcc:
-                raise PublishEmailError.recipientNotFoundError(LookupError("recipient and bcc fields are empty!"))
+                raise await PublishEmailError.recipientNotFoundError(
+                    LookupError("recipient and bcc fields are empty!")
+                ).send_notifications()
 
             subject = item.get("message_subject", "Story: {}".format(queue_item["item_id"]))
             text_body = item.get("message_text", queue_item["formatted_item"])
@@ -96,7 +98,7 @@ class EmailPublishService(PublishService):
             )
 
         except Exception as ex:
-            raise PublishEmailError.emailError(ex, queue_item.get("destination"))
+            raise await PublishEmailError.emailError(ex, queue_item.get("destination")).send_notifications()
 
 
 register_transmitter("email", EmailPublishService(), errors)

@@ -77,7 +77,7 @@ class EmailFormatter(Formatter):
                 "renditions"
             )
         except Exception as ex:
-            raise FormatterError.EmailFormatterError(ex, FormatterError)
+            raise await FormatterError.EmailFormatterError(ex, FormatterError).send_notifications()
         return [(pub_seq_num, json.dumps(doc))]
 
     def can_format(self, format_type, article):

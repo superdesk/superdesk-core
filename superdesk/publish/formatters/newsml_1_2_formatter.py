@@ -80,7 +80,7 @@ class NewsML12Formatter(Formatter):
 
             return [(pub_seq_num, self.XML_ROOT + etree.tostring(newsml, encoding=self.ENCODING).decode(self.ENCODING))]
         except Exception as ex:
-            raise FormatterError.newml12FormatterError(ex, subscriber)
+            raise await FormatterError.newml12FormatterError(ex, subscriber).send_notifications()
 
     def _format_news_envelope(self, article, news_envelope, pub_seq_num):
         """

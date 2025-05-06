@@ -110,7 +110,7 @@ class NewsMLG2Formatter(Formatter):
                 )
             ]
         except Exception as ex:
-            raise FormatterError.newmsmlG2FormatterError(ex, subscriber)
+            raise await FormatterError.newmsmlG2FormatterError(ex, subscriber).send_notifications()
 
     def _is_package(self, article):
         """Given an article returns if it is a none takes package or not

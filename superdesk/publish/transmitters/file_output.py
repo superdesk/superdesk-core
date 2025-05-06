@@ -24,7 +24,7 @@ class FilePublishService(publish_service.PublishService):
 
     NAME = "File"
 
-    def _transmit(self, queue_item, subscriber):
+    async def _transmit(self, queue_item, subscriber):
         try:
             config = queue_item["destination"]["config"]
             file_path = config["file_path"]
@@ -33,7 +33,7 @@ class FilePublishService(publish_service.PublishService):
             with open(path.join(file_path, publish_service.get_publish_service().get_filename(queue_item)), "wb") as f:
                 f.write(queue_item["encoded_item"])
         except Exception as ex:
-            raise PublishFileError.fileSaveError(ex, config)
+            raise await PublishFileError.fileSaveError(ex, config).send_notifications()
 
 
 register_transmitter("File", FilePublishService(), errors)

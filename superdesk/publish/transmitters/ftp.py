@@ -67,7 +67,7 @@ class FTPPublishService(PublishService):
         config = queue_item.get("destination", {}).get("config", {})
 
         try:
-            with ftp_connect(config) as ftp:
+            async with ftp_connect(config) as ftp:
                 if config.get("push_associated", False):
                     # Set the working directory for the associated files
                     if "associated_path" in config and config.get("associated_path"):
@@ -87,7 +87,7 @@ class FTPPublishService(PublishService):
         except PublishFtpError:
             raise
         except Exception as ex:
-            raise PublishFtpError.ftpError(ex, queue_item.get("destination"))
+            raise await PublishFtpError.ftpError(ex, queue_item.get("destination")).send_notifications()
 
     def _copy_published_media_files(self, item, ftp):
         media = {}
