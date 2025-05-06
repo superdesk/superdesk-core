@@ -8,38 +8,43 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
-from superdesk import get_resource_service
-from superdesk.errors import SuperdeskApiError
-from superdesk.services import BaseService
-from eve_elastic.elastic import ElasticCursor
+from inspect import isawaitable
+
 from eve.utils import ParsedRequest
 import json
 from quart_babel import gettext as _
 
+from superdesk import get_resource_service
+from superdesk.errors import SuperdeskApiError
+from superdesk.eve_async import AsyncBaseService, ElasticAsyncEveCursor
 
-class SuggestionsService(BaseService):
+
+class SuggestionsService(AsyncBaseService):
     """Service used for live suggestions functionality."""
 
     def __init__(self, datasource=None, backend=None):
         super().__init__(datasource, backend)
         self.provider = None
 
-    def get(self, req, lookup):
+    async def get_async(self, req, lookup):
         """
         Return a list of items related to the given item. The given item id is retrieved
         from the lookup dictionary as 'item_id'
         """
         if "item_id" not in lookup:
             raise SuperdeskApiError.badRequestError(_("The item identifier is required"))
-        item = get_resource_service("archive_autosave").find_one(req=None, _id=lookup["item_id"])
+        item = await get_resource_service("archive_autosave").find_one_async(req=None, _id=lookup["item_id"])
         if not item:
-            item = get_resource_service("archive").find_one(req=None, _id=lookup["item_id"])
+            item = await get_resource_service("archive").find_one_async(req=None, _id=lookup["item_id"])
             if not item:
                 raise SuperdeskApiError.notFoundError(_("Invalid item identifer"))
 
         keywords = self.provider.get_keywords(self._transform(item))
+        if isawaitable(keywords):
+            keywords = await keywords
+
         if not keywords:
-            return ElasticCursor([])
+            return ElasticAsyncEveCursor()
 
         query = {
             "query": {"filtered": {"query": {"query_string": {"query": " ".join(kwd["text"] for kwd in keywords)}}}}
@@ -48,8 +53,7 @@ class SuggestionsService(BaseService):
         req = ParsedRequest()
         req.args = {"source": json.dumps(query), "repo": "archive,published,archived"}
 
-        # TODO-ASYNC[search]: Use `get_async` when upgrading this module
-        return get_resource_service("search").get(req=req, lookup=None)
+        return await get_resource_service("search").get_async(req=req, lookup=None)
 
     def _transform(self, item):
         """

@@ -666,6 +666,10 @@ async def step_impl_run_update_ingest_command(context, provider_name):
 @mock.patch.object(ftp, "ftp_connect", return_value=mock.MagicMock())
 @mock.patch.object(update_ingest, "is_scheduled", return_value=True)
 @async_run_until_complete
+async def run_update_ingest_ftp_step(*args):
+    await run_update_ingest_ftp(*args)
+
+
 async def run_update_ingest_ftp(*args):
     def retrieve_and_parse_side_effect(ftp, config, filename, provider, registered_parser):
         created = datetime.now() + timedelta(days=365)

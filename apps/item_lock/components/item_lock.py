@@ -149,7 +149,9 @@ class ItemLock(BaseComponent):
             else:
                 updates = {}
                 set_unlock_updates(updates, True)
-                autosave = superdesk.get_resource_service("archive_autosave").find_one(req=None, _id=item["_id"])
+                autosave = await superdesk.get_resource_service("archive_autosave").find_one_async(
+                    req=None, _id=item["_id"]
+                )
                 if autosave and item[ITEM_STATE] not in PUBLISH_STATES:
                     if not hasattr(g, "user"):  # user is not set when session expires
                         g.user = await superdesk.get_resource_service("users").find_one_async(req=None, _id=user_id)

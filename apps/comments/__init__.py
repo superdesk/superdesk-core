@@ -11,6 +11,7 @@
 """Generic comments module."""
 
 import superdesk
+from superdesk.signals import item_update_async
 
 from .comments import CommentsService, CommentsResource, comments_schema  # noqa
 from .user_mentions import on_activity_updated
@@ -25,5 +26,4 @@ def init_app(app) -> None:
     app.on_updated_activity -= on_activity_updated
     app.on_updated_activity += on_activity_updated
 
-    # TODO-ASYNC: Support async events
-    # superdesk.item_update.connect(handle_inline_mentions)
+    item_update_async.connect(handle_inline_mentions)

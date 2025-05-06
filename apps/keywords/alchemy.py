@@ -16,6 +16,7 @@ from superdesk.errors import SuperdeskApiError
 from quart_babel import gettext as _
 
 
+# TODO-ASYNC: Upgrade to use async http io
 class AlchemyKeywordsProvider:
     """Keyword provider that user the Alchemy API(http://www.alchemyapi.com/api)"""
 

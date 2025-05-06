@@ -44,16 +44,15 @@ from apps.archive.common import (
     BROADCAST_GENRE,
     ITEM_OPERATION,
     is_item_in_package,
-    insert_into_versions,
+    insert_into_versions_async,
 )
 from apps.archive.archive import SOURCE as ARCHIVE
 import superdesk
-from superdesk.services import BaseService
+from superdesk.eve_async import AsyncBaseService
 from superdesk.resource import Resource
 from superdesk.utc import utcnow
 
-# TODO-ASYNC: These 2 services require async
-# from apps.publish.content import KillPublishService, TakeDownPublishService
+from apps.publish.content import KillPublishService, TakeDownPublishService
 from quart_babel import gettext as _, lazy_gettext
 
 logger = logging.getLogger(__name__)
@@ -90,8 +89,8 @@ class ArchivedResource(Resource):
     }
 
 
-class ArchivedService(BaseService):
-    def on_create(self, docs):
+class ArchivedService(AsyncBaseService):
+    async def on_create_async(self, docs):
         package_service = PackageService()
 
         for doc in docs:
@@ -107,7 +106,7 @@ class ArchivedService(BaseService):
                 for ref in package_service.get_item_refs(doc):
                     ref["location"] = "archived"
 
-    def validate_delete_action(self, doc, allow_all_types=False):
+    async def validate_delete_action(self, doc, allow_all_types=False):
         """Runs on delete of archive item.
 
         Overriding to validate the item being killed is actually eligible for kill. Validates the following:
@@ -139,12 +138,12 @@ class ArchivedService(BaseService):
         if is_genre(doc, BROADCAST_GENRE):
             raise bad_req_error(message=_("Killing of Broadcast Items isn't allowed in Archived repo"))
 
-        if get_resource_service("archive_broadcast").get_broadcast_items_from_master_story(doc, True):
+        if await get_resource_service("archive_broadcast").get_broadcast_items_from_master_story(doc, True):
             raise bad_req_error(
                 message=_("Can't kill as this article acts as a Master Story for existing broadcast(s)")
             )
 
-        if get_resource_service(ARCHIVE).find_one(req=None, _id=doc[GUID_FIELD]):
+        if await get_resource_service(ARCHIVE).find_one_async(req=None, _id=doc[GUID_FIELD]):
             raise bad_req_error(message=_("Can't Kill as article is still available in production"))
 
         if not allow_all_types and is_item_in_package(doc):
@@ -152,61 +151,61 @@ class ArchivedService(BaseService):
 
         takes_package_id = self._get_take_package_id(doc)
         if takes_package_id:
-            if get_resource_service(ARCHIVE).find_one(req=None, _id=takes_package_id):
+            if await get_resource_service(ARCHIVE).find_one_async(req=None, _id=takes_package_id):
                 raise bad_req_error(message=_("Can't Kill as the Digital Story is still available in production"))
 
             req = ParsedRequest()
             req.sort = '[("%s", -1)]' % VERSION
-            takes_package = list(self.get(req=req, lookup={"item_id": takes_package_id}))
+            takes_package_cursor = await self.get_async(req=req, lookup={"item_id": takes_package_id})
+            takes_package = await takes_package_cursor.next()
             if not takes_package:
                 raise bad_req_error(message=_("Digital Story of the article not found in Archived repo"))
 
-            takes_package = takes_package[0]
             if not allow_all_types and is_item_in_package(takes_package):
                 raise bad_req_error(message=_("Can't kill as Digital Story is part of a Package"))
 
             for takes_ref in self._get_package_refs(takes_package):
                 if takes_ref[RESIDREF] != doc[GUID_FIELD]:
-                    if get_resource_service(ARCHIVE).find_one(req=None, _id=takes_ref[RESIDREF]):
+                    if await get_resource_service(ARCHIVE).find_one_async(req=None, _id=takes_ref[RESIDREF]):
                         raise bad_req_error(message=_("Can't Kill as Take(s) are still available in production"))
 
-                    take = list(self.get(req=None, lookup={"item_id": takes_ref[RESIDREF]}))
+                    take_cursor = await self.get_async(req=None, lookup={"item_id": takes_ref[RESIDREF]})
+                    take = await take_cursor.next()
                     if not take:
                         raise bad_req_error(message=_("One of Take(s) not found in Archived repo"))
 
-                    if not allow_all_types and is_item_in_package(take[0]):
+                    if not allow_all_types and is_item_in_package(take):
                         raise bad_req_error(message=_("Can't kill as one of Take(s) is part of a Package"))
 
         doc["item_id"] = item_id
         doc[ID_FIELD] = id_field
 
-    def on_delete(self, doc):
-        self.validate_delete_action(doc)
+    async def on_delete_async(self, doc):
+        await self.validate_delete_action(doc)
 
-    def delete(self, lookup):
+    async def delete_async(self, lookup):
         if get_current_app().testing and len(lookup) == 0:
-            super().delete(lookup)
+            await super().delete_async(lookup)
             return
 
-    def command_delete(self, lookup):
-        super().delete(lookup)
+    async def command_delete(self, lookup):
+        await super().delete_async(lookup)
 
-    def find_one(self, req, **lookup):
-        item = super().find_one(req, **lookup)
+    async def find_one_async(self, req, **lookup):
+        item = await super().find_one_async(req, **lookup)
         user = get_user()
 
         if (
             user
             and item
             and str(item.get("task", {}).get("stage", ""))
-            # TODO-ASYNC[users]: Upgrade to async when updating this module
-            in get_resource_service("users").get_invisible_stages_ids(user.get("_id"))
+            in await get_resource_service("users").get_invisible_stages_ids_async(user.get("_id"))
         ):
             raise SuperdeskApiError.forbiddenError(_("User does not have permissions to read the item."))
 
         return item
 
-    def update(self, id, updates, original):
+    async def update_async(self, id, updates, original):
         """Runs on update of archive item.
 
         Overriding to handle with Kill/Takedown workflow in the Archived repo:
@@ -230,27 +229,24 @@ class ArchivedService(BaseService):
         """
 
         # Step 1
-        articles_to_kill = self.find_articles_to_kill({"_id": id})
+        articles_to_kill = await self.find_articles_to_kill({"_id": id})
         logger.info("Fetched articles to kill for id: {}".format(id))
         articles_to_kill.sort(key=itemgetter(ITEM_TYPE), reverse=True)  # Needed because package has to be inserted last
 
-        # TODO-ASYNC: These 2 services require async
-        # kill_service = KillPublishService() if updates.get(ITEM_OPERATION) == ITEM_KILL else TakeDownPublishService()
+        kill_service = KillPublishService() if updates.get(ITEM_OPERATION) == ITEM_KILL else TakeDownPublishService()
 
         updated = original.copy()
 
         for article in articles_to_kill:
             updates_copy = deepcopy(updates)
-            # TODO-ASYNC: Required async
-            # kill_service.apply_kill_override(article, updates_copy)
+            await kill_service.apply_kill_override(article, updates_copy)
             updated.update(updates_copy)
             # Step 2, If it is flagged as archived only it has no related items in the system so can be deleted.
             # An email is sent to all subscribers
             if original.get("flags", {}).get("marked_archived_only", False):
-                super().delete({"item_id": article["item_id"]})
+                await super().delete_async({"item_id": article["item_id"]})
                 logger.info("Delete for article: {}".format(article[ID_FIELD]))
-                # TODO-ASYNC: Required async
-                # kill_service.broadcast_kill_email(article, updates_copy)
+                await kill_service.broadcast_kill_email(article, updates_copy)
                 logger.info("Broadcast kill email for article: {}".format(article[ID_FIELD]))
                 continue
 
@@ -259,13 +255,14 @@ class ArchivedService(BaseService):
             logger.info("Removing and setting properties for article: {}".format(article[ID_FIELD]))
 
             # Step 3(ii)
+            # TODO-ASYNC[publish]: Change to ``get_async`` when legal publish queue is upgraded
             transmission_details = list(
                 get_resource_service(LEGAL_PUBLISH_QUEUE_NAME).get(req=None, lookup={"item_id": article["item_id"]})
             )
 
             if transmission_details:
                 pass
-                # TODO-ASYNC[publish]: Use new publishing system
+                # TODO-PR: Use new publishing system
                 # get_enqueue_service(updates.get(ITEM_OPERATION, ITEM_KILL)).enqueue_archived_kill_item(
                 #     article, transmission_details
                 # )
@@ -273,49 +270,47 @@ class ArchivedService(BaseService):
             article[ID_FIELD] = article.pop("item_id", article["item_id"])
 
             # Step 3(iv)
-            super().delete({"item_id": article[ID_FIELD]})
+            await super().delete_async({"item_id": article[ID_FIELD]})
             logger.info("Delete for article: {}".format(article[ID_FIELD]))
 
             # Step 3(i) - Creating entries in published collection
             docs = [article]
-            get_resource_service(ARCHIVE).post(docs)
-            insert_into_versions(doc=article)
+            await get_resource_service(ARCHIVE).post_async(docs)
+            await insert_into_versions_async(doc=article)
             published_doc = deepcopy(article)
             published_doc[QUEUE_STATE] = PUBLISH_STATE.QUEUED
-            # TODO-ASYNC[published]: Use `await service.post_async` when updating this module
-            get_resource_service("published").post([published_doc])
+            await get_resource_service("published").post_async([published_doc])
             logger.info("Insert into archive and published for article: {}".format(article[ID_FIELD]))
 
             # Step 3(iii)
-            import_into_legal_archive.apply_async(countdown=3, kwargs={"item_id": article[ID_FIELD]})
+            await import_into_legal_archive.apply_async(countdown=3, kwargs={"item_id": article[ID_FIELD]})
             logger.info("Legal Archive import for article: {}".format(article[ID_FIELD]))
 
             # Step 3(v)
-            # TODO-ASYNC: Required async
-            # kill_service.broadcast_kill_email(article, updates_copy)
+            await kill_service.broadcast_kill_email(article, updates_copy)
             logger.info("Broadcast kill email for article: {}".format(article[ID_FIELD]))
 
-    def on_updated(self, updates, original):
+    async def on_updated_async(self, updates, original):
         user = get_user()
         push_notification("item:deleted:archived", item=str(original[ID_FIELD]), user=str(user.get(ID_FIELD)))
 
-    def on_fetched_item(self, doc):
+    async def on_fetched_item_async(self, doc):
         doc["_type"] = "archived"
 
     def _get_archived_id(self, item_id, version):
         return "{}:{}".format(item_id, version)
 
-    def get_archived_takes_package(self, package_id, take_id, version, include_other_takes=True):
+    async def get_archived_takes_package(self, package_id, take_id, version, include_other_takes=True):
         req = ParsedRequest()
         req.sort = '[("%s", -1)]' % VERSION
-        take_packages = list(self.get(req=req, lookup={"item_id": package_id}))
+        take_packages = await self.get_async(req=req, lookup={"item_id": package_id})
 
-        for take_package in take_packages:
+        async for take_package in take_packages:
             for ref in self._get_package_refs(take_package):
                 if ref[RESIDREF] == take_id and (include_other_takes or ref["_current_version"] == version):
                     return take_package
 
-    def find_articles_to_kill(self, lookup, include_other_takes=True):
+    async def find_articles_to_kill(self, lookup, include_other_takes=True):
         """Finds the article to kill.
 
         If the article is associated with Digital Story then Digital Story will
@@ -327,17 +322,17 @@ class ArchivedService(BaseService):
         :rtype: list
         """
 
-        archived_doc = self.find_one(req=None, **lookup)
+        archived_doc = await self.find_one_async(req=None, **lookup)
         if not archived_doc:
             return
 
         req = ParsedRequest()
         req.sort = '[("%s", -1)]' % VERSION
-        archived_doc = list(self.get(req=req, lookup={"item_id": archived_doc["item_id"]}))[0]
+        archived_doc = await (await self.get_async(req=req, lookup={"item_id": archived_doc["item_id"]})).next()
         articles_to_kill = [archived_doc]
         takes_package_id = self._get_take_package_id(archived_doc)
         if takes_package_id:
-            takes_package = self.get_archived_takes_package(
+            takes_package = await self.get_archived_takes_package(
                 takes_package_id, archived_doc["item_id"], archived_doc["_current_version"], include_other_takes
             )
             articles_to_kill.append(takes_package)
@@ -345,7 +340,7 @@ class ArchivedService(BaseService):
             if include_other_takes:
                 for takes_ref in self._get_package_refs(takes_package):
                     if takes_ref[RESIDREF] != archived_doc[GUID_FIELD]:
-                        take = list(self.get(req=req, lookup={"item_id": takes_ref[RESIDREF]}))[0]
+                        take = await (await self.get_async(req=req, lookup={"item_id": takes_ref[RESIDREF]})).next()
                         articles_to_kill.append(take)
 
         return articles_to_kill

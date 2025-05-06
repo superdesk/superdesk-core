@@ -11,17 +11,17 @@ as numbers to be able to filter based on such actions::
 
 """
 
-import superdesk
+from superdesk import get_resource_service, register_resource
+from superdesk.resource import Resource, MongoIndexes
+from superdesk.eve_async import AsyncBaseService
 
-from superdesk.resource import MongoIndexes
 
-
-class UsageMetricsResource(superdesk.Resource):
+class UsageMetricsResource(Resource):
     no_privileges = True
 
     schema = {
         "action": {"type": "string", "required": True},
-        "user": superdesk.Resource.rel("users", required=True),
+        "user": Resource.rel("users", required=True),
         "item": {"type": "string", "required": True},
         "date": {"type": "datetime"},
     }
@@ -36,23 +36,23 @@ class UsageMetricsResource(superdesk.Resource):
     resource_methods = ["POST"]
 
 
-class UsageMetricsService(superdesk.Service):
-    def on_created(self, docs):
+class UsageMetricsService(AsyncBaseService):
+    async def on_created_async(self, docs):
         for doc in docs:
             for resource in ["archive", "ingest"]:
-                service = superdesk.get_resource_service(resource)
-                item = service.find_one(req=None, _id=doc["item"])
+                service = get_resource_service(resource)
+                item = await service.find_one_async(req=None, _id=doc["item"])
                 if not item:
                     continue
-                service.system_update(
+                await service.system_update_async(
                     item["_id"],
                     {"$inc": {f"metrics.{doc['action']}": 1}},
                     item,
                     change_request=True,
                     push_notification=False,
                 )
-        return super().on_created(docs)
+        return await super().on_created_async(docs)
 
 
 def init_app(_app) -> None:
-    superdesk.register_resource("usage_metrics", UsageMetricsResource, UsageMetricsService, _app=_app)
+    register_resource("usage_metrics", UsageMetricsResource, UsageMetricsService, _app=_app)

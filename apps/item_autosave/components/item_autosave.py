@@ -24,10 +24,10 @@ class ItemAutosave(BaseComponent):
     def name(cls):
         return "archive_autosave"
 
-    def autosave(self, item_id, updates, user, etag):
+    async def autosave(self, item_id, updates, user, etag):
         updates.setdefault("_type", "archive")
         item_model = get_model(ItemModel)
-        item = item_model.find_one({"_id": item_id})
+        item = await item_model.find_one_async({"_id": item_id})
         if item is None:
             raise SuperdeskApiError.notFoundError(_("Invalid item identifier"))
 
@@ -38,15 +38,15 @@ class ItemAutosave(BaseComponent):
         autosave_model = get_model(ItemAutosaveModel)
         item.update(updates)
         self.app.on_item_autosave(item)
-        autosave_item = autosave_model.find_one({"_id": item_id})
+        autosave_item = await autosave_model.find_one_async({"_id": item_id})
         if not autosave_item:
-            autosave_model.create([item])
+            await autosave_model.create_async([item])
         else:
-            autosave_model.update({"_id": item_id}, item, etag)
-        self.app.on_item_autosaved(item)
+            await autosave_model.update_async({"_id": item_id}, item, etag)
+        await self.app.on_item_autosaved.call_async(item)
         updates.update(item)
         return updates
 
-    def clear(self, item_id):
+    async def clear(self, item_id):
         autosave_model = get_model(ItemAutosaveModel)
-        return autosave_model.delete({"_id": item_id})
+        return await autosave_model.delete_async({"_id": item_id})

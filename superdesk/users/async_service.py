@@ -309,10 +309,10 @@ class UsersAsyncService(AsyncResourceService[UsersResourceModel]):
             for item in items_locked_by_user:
                 # delete the item if nothing is saved so far
                 if item[VERSION] == 0 and item["state"] == "draft":
-                    get_resource_service("archive").delete(lookup={"_id": item["_id"]})
+                    await get_resource_service("archive").delete_async(lookup={"_id": item["_id"]})
                 else:
                     archive_service.update(item["_id"], doc_to_unlock, item)
-                    archive_autosave_service.delete(lookup={"_id": item["_id"]})
+                    await archive_autosave_service.delete_async(lookup={"_id": item["_id"]})
 
     async def on_deleted(self, doc: UsersResourceModel):
         """Overriding to add to activity stream and handle user clean up.

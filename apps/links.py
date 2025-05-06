@@ -63,9 +63,9 @@ class LinksService(ArchiveService):
         for item in items:
             build_custom_hateoas(CUSTOM_HATEOAS, item)
 
-    def get(self, req, lookup):
+    async def get_async(self, req, lookup):
         req.where = None  # it's handled in the elastic_filter
-        return super().get(req, lookup)
+        return await super().get_async(req, lookup)
 
 
 def init_app(_app) -> None:

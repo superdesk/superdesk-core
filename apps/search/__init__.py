@@ -14,10 +14,9 @@ from copy import deepcopy
 from eve_elastic.elastic import set_filters, fix_query
 
 from superdesk.core import json, get_current_app, get_app_config, get_current_async_app
-from superdesk.core.resources.cursor import ElasticsearchResourceCursorAsync
 from superdesk.resource_fields import ITEMS
 from superdesk.types import ArchiveResourceModel
-from superdesk.eve_async.service import AsyncBaseService
+from superdesk.eve_async import AsyncBaseService, ElasticAsyncEveCursor
 from superdesk import get_resource_service
 from superdesk.metadata.item import CONTENT_STATE, ITEM_STATE, get_schema
 from superdesk.metadata.utils import aggregations as common_aggregations, item_url, _set_highlight_query
@@ -41,6 +40,10 @@ class SearchService(AsyncBaseService):
     @property
     def elastic(self):
         return get_current_app().data.elastic
+
+    @property
+    def elastic_async(self):
+        return get_current_app().data.elastic_async
 
     def __init__(self, datasource, backend):
         super().__init__(datasource=datasource, backend=backend)
@@ -223,7 +226,7 @@ class SearchService(AsyncBaseService):
 
         return docs
 
-    async def get_async(self, req, lookup):
+    async def get_async(self, req, lookup) -> ElasticAsyncEveCursor:
         """
         Runs elastic search on multiple doc types.
         """
@@ -246,11 +249,11 @@ class SearchService(AsyncBaseService):
 
         elastic = ArchiveResourceModel.get_service().elastic
         hits = await elastic.search(fix_query(query), indexes, projection)
-        cursor = self.elastic._parse_hits(hits, types[0])
+        cursor = self.elastic_async._parse_hits_async(hits, types[0])
 
+        app = get_current_app().as_any()
         for resource in types:
-            response = {ITEMS: [doc for doc in cursor if doc["_type"] == resource]}
-            app = get_current_app().as_any()
+            response = {ITEMS: [doc async for doc in cursor if doc["_type"] == resource]}
             await getattr(app, "on_fetched_resource").call_async(resource, response)
             await getattr(app, "on_fetched_resource_%s_async" % resource).call_async(response)
             await getattr(app, "on_fetched_resource_%s" % resource).call_async(response)

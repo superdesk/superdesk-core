@@ -24,7 +24,7 @@ from .delete_archived_document import DeleteArchivedDocumentCommand
 @click.option("--field", "-f", required=True)
 @click.option("--value", "-v", required=True)
 @click.option("--parseNeeded", "-p", "parse_needed", is_flag=True, default=False)
-def cli_update_archived_document(ids, field, value, parse_needed):
+async def cli_update_archived_document(ids, field, value, parse_needed):
     """
     Update metadata for a document in both Mongodb and ElasticSearch by supplying ids
     field to update and the value for the update
@@ -43,11 +43,11 @@ def cli_update_archived_document(ids, field, value, parse_needed):
 
     """
 
-    UpdateArchivedDocumentCommand().run(ids, field, value, parse_needed)
+    await UpdateArchivedDocumentCommand().run(ids, field, value, parse_needed)
 
 
 class UpdateArchivedDocumentCommand:
-    def run(self, ids, field, value, parseNeeded=False):
+    async def run(self, ids, field, value, parseNeeded=False):
         ids = ast.literal_eval(ids)
 
         if parseNeeded:
@@ -59,9 +59,10 @@ class UpdateArchivedDocumentCommand:
                 return
 
         if ids and len(ids) > 0:
-            items = DeleteArchivedDocumentCommand().get_archived_items(ids)
+            items = await DeleteArchivedDocumentCommand().get_archived_items(ids)
+            archived_service = get_resource_service("archived")
 
             for item in items:
-                get_resource_service("archived").system_update(bson.ObjectId(item["_id"]), {field: value}, item)
+                await archived_service.system_update_async(bson.ObjectId(item["_id"]), {field: value}, item)
                 print("Archived item {} has been updated.".format(item["_id"]))
                 print("-" * 45)

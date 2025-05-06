@@ -416,7 +416,7 @@ class BasePublishService(AsyncBaseService):
 
         publish_type = "auto_publish" if updates.get("auto_publish") else self.publish_type
         validate_item = {"act": publish_type, "type": original["type"], "validate": updated}
-        validation_errors = get_resource_service("validate").post([validate_item], fields=True)
+        validation_errors = await get_resource_service("validate").post_async([validate_item], fields=True)
         for errors, fields in validation_errors:
             if errors:
                 raise SuperdeskValidationError(errors, fields)
@@ -674,7 +674,7 @@ class BasePublishService(AsyncBaseService):
             else:
                 insert_into_versions(doc=versioned_doc)
 
-        get_component(ItemAutosave).clear(original[ID_FIELD])
+        await get_component(ItemAutosave).clear(original[ID_FIELD])
 
     def _get_changed_items(self, existing_items, updates):
         """Returns the added and removed items from existing_items.
@@ -765,7 +765,9 @@ class BasePublishService(AsyncBaseService):
                 validate_item = {"act": self.publish_type, "type": doc[ITEM_TYPE], "validate": doc}
                 if isinstance(item, dict):
                     validate_item["embedded"] = True
-                errors = get_resource_service("validate").post([validate_item], headline=True, fields=True)[0]
+                errors = (
+                    await get_resource_service("validate").post_async([validate_item], headline=True, fields=True)
+                )[0]
                 if errors[0]:
                     pre_errors = [
                         _("Associated item {name} {error}").format(name=doc.get("slugline", ""), error=error)

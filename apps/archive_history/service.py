@@ -14,7 +14,7 @@ from copy import deepcopy
 from superdesk.resource_fields import ID_FIELD, VERSION
 from superdesk import get_resource_service
 from superdesk.resource import Resource
-from superdesk.services import BaseService
+from superdesk.eve_async import AsyncBaseService
 from apps.archive.common import ITEM_UPDATE, get_user, ITEM_CREATE, ITEM_FETCH
 from superdesk.metadata.item import CONTENT_STATE, ITEM_STATE
 from superdesk.utc import utcnow
@@ -64,8 +64,8 @@ class ArchiveHistoryResource(Resource):
     }
 
 
-class ArchiveHistoryService(BaseService):
-    def on_item_updated(self, updates, original, operation=None):
+class ArchiveHistoryService(AsyncBaseService):
+    async def on_item_updated(self, updates, original, operation=None):
         item = deepcopy(original)
         if updates:
             item.update(updates)
@@ -73,27 +73,27 @@ class ArchiveHistoryService(BaseService):
         if operation in [ITEM_CREATE, ITEM_FETCH]:
             # If this is the initial create on the item,
             # then store the metadata from original as well
-            self._save_history(item, item, operation)
+            await self._save_history(item, item, operation)
         else:
-            self._save_history(item, updates, operation or ITEM_UPDATE)
+            await self._save_history(item, updates, operation or ITEM_UPDATE)
 
-    def on_item_deleted(self, doc):
+    async def on_item_deleted(self, doc):
         lookup = {"item_id": doc[ID_FIELD]}
-        self.delete(lookup=lookup)
+        await self.delete_async(lookup=lookup)
 
-    def on_item_locked(self, item, user_id):
-        self._save_lock_history(item, "item_lock")
+    async def on_item_locked(self, item, user_id):
+        await self._save_lock_history(item, "item_lock")
 
-    def on_item_unlocked(self, item, user_id):
+    async def on_item_unlocked(self, item, user_id):
         if item.get(VERSION, 1) == 0:
             # version 0 items get deleted on unlock, along with all history documents
             # so there is no need to record a history item here
             return
 
-        self._save_lock_history(item, "item_unlock")
+        await self._save_lock_history(item, "item_unlock")
 
-    def _save_lock_history(self, item, operation):
-        self.post(
+    async def _save_lock_history(self, item, operation):
+        await self.post_async(
             [
                 {
                     "item_id": item[ID_FIELD],
@@ -115,7 +115,7 @@ class ArchiveHistoryService(BaseService):
         if user:
             return user.get(ID_FIELD)
 
-    def _save_history(self, item, update, operation):
+    async def _save_history(self, item, update, operation):
         # in case of auto-routing, if the original_creator exists in our database
         # then create item create record in the archive history.
         if (
@@ -123,8 +123,7 @@ class ArchiveHistoryService(BaseService):
             and item.get("original_creator")
             and not item.get("original_id")
         ):
-            # TODO-ASYNC[users]: Upgrade to async when updating this module
-            user = get_resource_service("users").find_one(req=None, _id=item.get("original_creator"))
+            user = await get_resource_service("users").find_one_async(req=None, _id=item.get("original_creator"))
             firstcreated = item.get("firstcreated", utcnow())
 
             if user:
@@ -138,7 +137,7 @@ class ArchiveHistoryService(BaseService):
                     "_updated": firstcreated,
                 }
 
-                self.post([history])
+                await self.post_async([history])
 
         history = {
             "item_id": item[ID_FIELD],
@@ -148,7 +147,7 @@ class ArchiveHistoryService(BaseService):
             "version": item.get(VERSION, 1),
         }
 
-        self.post([history])
+        await self.post_async([history])
 
     def _remove_unwanted_fields(self, update, original):
         if update:

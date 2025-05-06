@@ -10,14 +10,14 @@
 
 
 from superdesk.resource import Resource
-from superdesk.services import BaseService
+from superdesk.eve_async import AsyncBaseService
 from superdesk import get_backend
 from superdesk.metadata.item import metadata_schema
 
 
 def init_app(app) -> None:
     endpoint_name = "spikes"
-    service = BaseService(endpoint_name, backend=get_backend())
+    service = AsyncBaseService(endpoint_name, backend=get_backend())
     SpikesResource(endpoint_name, app=app, service=service)
 
 

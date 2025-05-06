@@ -368,7 +368,7 @@ class PublishedItemService(AsyncBaseService, HighlightsSearchMixin):
         published_items = await (await self.get_from_mongo_async(req=None, lookup={"item_id": _id})).to_list()
         if not published_items:
             return
-        get_resource_service("archived").post(published_items)
+        await get_resource_service("archived").post_async(published_items)
         await self.delete_by_article_id(_id)
 
     async def set_moved_to_legal(self, item_id, version, status):

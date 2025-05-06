@@ -112,7 +112,7 @@ async def send_report_email(user_id, search, docs):
     }
     text_body = await render_template("saved_searches_report.txt", **context)
     html_body = await render_template("saved_searches_report.html", **context)
-    emails.send_email.delay(
+    await emails.send_email.delay(
         subject=subject, sender=admins[0], recipients=recipients, text_body=text_body, html_body=html_body
     )
 

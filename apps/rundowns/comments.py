@@ -19,8 +19,8 @@ class RundownCommentsResource(CommentsResource):
 class RundownCommentsService(CommentsService):
     notifications = False
 
-    async def on_created(self, docs):
-        await super().on_created(docs)
+    async def on_created_async(self, docs):
+        await super().on_created_async(docs)
         users_service = UsersResourceModel.get_service()
         for doc in docs:
             if not doc.get("mentioned_users"):

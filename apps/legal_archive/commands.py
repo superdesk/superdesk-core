@@ -18,7 +18,7 @@ from copy import deepcopy
 from eve.utils import ParsedRequest
 from eve.versioning import versioned_id_field
 
-from superdesk.core import get_app_config
+from superdesk.core import get_app_config, get_config
 from superdesk.types import SubscribersResource, PublishQueueResource, PublishQueueState
 from superdesk.commands import cli
 from superdesk.resource_fields import ID_FIELD, VERSION, ETAG
@@ -184,13 +184,13 @@ class LegalArchiveImport:
 
             # Step 5 - Get History and de-normalize and insert into Legal Archive History
             lookup = {"item_id": legal_archive_doc[ID_FIELD]}
-            history_items = list(get_resource_service("archive_history").get(req=None, lookup=lookup))
+            history_items = await get_resource_service("archive_history").get_async(req=None, lookup=lookup)
             legal_history_items = list(legal_archive_history_service.get(req=None, lookup=lookup))
 
             logger.info("Fetched history for article {}".format(log_msg))
             history_to_insert = [
                 history
-                for history in history_items
+                async for history in history_items
                 if not any(
                     legal_version
                     for legal_version in legal_history_items
@@ -204,7 +204,7 @@ class LegalArchiveImport:
                 and article_in_legal_archive[VERSION] < legal_archive_doc[VERSION]
                 and len(versions_to_insert) == 0
             ):
-                resource_def = get_resource_service("DOMAIN")[ARCHIVE]
+                resource_def = get_config(dict, "DOMAIN")[ARCHIVE]
                 versioned_doc = deepcopy(legal_archive_doc)
                 versioned_doc[versioned_id_field(resource_def)] = legal_archive_doc[ID_FIELD]
                 versioned_doc[ID_FIELD] = ObjectId()
