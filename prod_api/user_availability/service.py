@@ -67,7 +67,7 @@ class UserAvailabilityService(ProdApiService):
 
         for availability_day in availability_days:
             if availability_day.get("status"):
-                availability[availability_day["date"]] = {
+                availability_map[availability_day["date"]] = {
                     "status": availability_day["status"],
                     "published_articles": 0,
                     "published_events": 0,
@@ -84,18 +84,18 @@ class UserAvailabilityService(ProdApiService):
         )
 
         for metric in metrics:
-            availability.setdefault(metric["date"], {"status": "", "published_articles": 0, "published_events": 0})[
+            availability_map.setdefault(metric["date"], {"status": "", "published_articles": 0, "published_events": 0})[
                 metric["name"]
             ] = metric["value"]
 
         user_data["availability"] = [
             {
                 "date": date,
-                "status": availability[date]["status"],
-                "published_articles": availability[date]["published_articles"],
-                "published_events": availability[date]["published_events"],
+                "status": availability_map[date]["status"],
+                "published_articles": availability_map[date]["published_articles"],
+                "published_events": availability_map[date]["published_events"],
             }
-            for date in sorted(availability.keys())
+            for date in sorted(availability_map.keys())
         ]
 
         return user_data
