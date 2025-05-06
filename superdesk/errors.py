@@ -31,9 +31,9 @@ def add_notifier(notifier):
 
 async def update_notifiers(*args, **kwargs):
     for notifier in notifiers:
-        resposne = notifier(*args, **kwargs)
-        if isawaitable(resposne):
-            await resposne
+        response = notifier(*args, **kwargs)
+        if isawaitable(response):
+            await response
 
 
 def get_registered_errors(self):
