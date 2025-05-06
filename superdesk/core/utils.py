@@ -8,8 +8,9 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
-from typing import TypeVar, cast
+from typing import TypeVar, cast, AsyncGenerator
 from typing_extensions import Self
+from inspect import isgenerator
 from importlib import import_module
 from datetime import datetime
 from uuid import uuid4
@@ -152,3 +153,11 @@ class SingletonInstance(object):
             cls._set_instance(instance)
 
         return instance
+
+
+LIST_ITEM_TYPE = TypeVar("LIST_ITEM_TYPE")
+
+
+async def list_to_async_generator(items: list[LIST_ITEM_TYPE]) -> AsyncGenerator[LIST_ITEM_TYPE, None]:
+    for item in items:
+        yield item

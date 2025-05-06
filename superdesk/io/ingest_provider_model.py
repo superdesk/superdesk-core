@@ -308,10 +308,7 @@ class IngestProviderService(AsyncBaseService):
         except KeyError:
             return
 
-        if hasattr(service, "config_test_async"):
-            await service.config_test_async(provider)
-        else:
-            service.config_test(provider)
+        await service.config_test(provider)
 
 
 superdesk.workflow_state(CONTENT_STATE.INGESTED)
