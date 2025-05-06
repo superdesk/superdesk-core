@@ -301,7 +301,4 @@ def get_recipients(user_list: List[User], notification_name=None) -> List[str]:
     return recipients
 
 
-# TODO-ASYNC[activity]: Figure out how to handle this next one
-# it adds an activity and notifies the user when a Publish or Ingest error happens
-# but this code is within the constructor of an Exception class, which can't be async
-# add_notifier(notify_and_add_activity)
+add_notifier(notify_and_add_activity)
