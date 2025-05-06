@@ -17,16 +17,32 @@ def test_service_get(prodapi_app_with_data):
         assert items[0]["_id"]
         assert items[0]["username"] == "admin"
 
-        assert items[0]["availability"]["2023-05-15"]["status"] == "available"
-        assert items[0]["availability"]["2023-05-15"]["published_articles"] == 5
-        assert items[0]["availability"]["2023-05-15"]["published_events"] == 0
+        assert {
+            "date": "2023-05-15",
+            "status": "available",
+            "published_articles": 5,
+            "published_events": 0,
+        } in items[
+            0
+        ]["availability"]
 
-        assert items[0]["availability"]["2023-05-16"]["status"] == "partial"
-        assert items[0]["availability"]["2023-05-16"]["published_articles"] == 0
-        assert items[0]["availability"]["2023-05-16"]["published_events"] == 2
+        assert {
+            "date": "2023-05-16",
+            "status": "partial",
+            "published_articles": 0,
+            "published_events": 2,
+        } in items[
+            0
+        ]["availability"]
 
-        assert items[0]["availability"]["2023-05-18"]["status"] == ""
-        assert items[0]["availability"]["2023-05-18"]["published_articles"] == 3
+        assert {
+            "date": "2023-05-18",
+            "status": "",
+            "published_articles": 3,
+            "published_events": 0,
+        } in items[
+            0
+        ]["availability"]
 
         resp = client.get("/prodapi/v1/user_availability/{}?month=2023-05".format(items[0]["_id"]))
         assert resp.status_code == 200
@@ -37,7 +53,7 @@ def test_service_get(prodapi_app_with_data):
 
         resp = client.get("/prodapi/v1/user_availability")
         assert resp.json["_items"]
-        assert resp.json["_items"][0]["availability"] == {}
+        assert resp.json["_items"][0]["availability"] == []
 
 
 def test_readonly(prodapi_app_with_data, prodapi_app_with_data_client):
