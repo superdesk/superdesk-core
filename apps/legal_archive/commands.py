@@ -121,7 +121,7 @@ class LegalArchiveImport:
                     doc.get(ITEM_STATE), self.log_msg_format.format(**doc)
                 )
                 logger.error(msg)
-                update_notifiers(ACTIVITY_ERROR, msg=msg, resource=ARCHIVE)
+                await update_notifiers(ACTIVITY_ERROR, msg=msg, resource=ARCHIVE)
 
             # required for behave test.
             legal_archive_doc = deepcopy(doc)

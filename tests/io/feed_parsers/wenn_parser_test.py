@@ -11,24 +11,24 @@
 
 import datetime
 import os
-import unittest
 
+from superdesk.tests import IsolatedAsyncioTestCase
 from superdesk.etree import etree
 from superdesk.io.feed_parsers.wenn_parser import WENNFeedParser
 from superdesk.utc import utc
 
 
-class WENNTestCase(unittest.TestCase):
+class WENNTestCase(IsolatedAsyncioTestCase):
     filename = "wenn.xml"
 
-    def setUp(self):
+    async def asyncSetUp(self):
         dirname = os.path.dirname(os.path.realpath(__file__))
         fixture = os.path.normpath(os.path.join(dirname, "../fixtures", self.filename))
         provider = {"name": "Wenn"}
         with open(fixture, "rb") as f:
             self.file = f.read()
             etree.fromstring(self.file)
-            self.items = WENNFeedParser().parse(etree.fromstring(self.file), provider)
+            self.items = await WENNFeedParser().parse(etree.fromstring(self.file), provider)
 
     def test_items_counts(self):
         self.assertEqual(len(self.items), 2)

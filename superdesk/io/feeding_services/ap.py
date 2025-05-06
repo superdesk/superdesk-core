@@ -54,10 +54,10 @@ class APFeedingService(HTTPFeedingServiceBase):
     ]
     HTTP_URL = "https://syndication.ap.org/AP.Distro.Feed/GetFeed.aspx"
 
-    def config_test(self, provider=None):
-        super().config_test(provider)
+    async def config_test(self, provider=None):
+        await super().config_test(provider)
 
-    def _update(self, provider, update):
+    async def _update(self, provider, update):
         try:
             config = provider["config"]
             id_list = config["idList"]
@@ -66,7 +66,7 @@ class APFeedingService(HTTPFeedingServiceBase):
             if not id_list.strip():
                 raise KeyError
         except KeyError:
-            raise SuperdeskIngestError.notConfiguredError(Exception("idList is needed"))
+            raise await SuperdeskIngestError.notConfiguredError(Exception("idList is needed")).send_notifications()
 
         # we check if the provider has been closed since the last update
         try:
@@ -102,15 +102,15 @@ class APFeedingService(HTTPFeedingServiceBase):
             params["sortOrder"] = "chronological"
             chronological = True
 
-        r = self.get_url(params=params)
+        r = await self.get_url(params=params)
 
         try:
             root_elt = etree.fromstring(r.content)
         except Exception:
-            raise IngestApiError.apiRequestError(Exception("error while doing the request"))
+            raise await IngestApiError.apiRequestError(Exception("error while doing the request")).send_notifications()
 
-        parser = self.get_feed_parser(provider)
-        items = parser.parse(root_elt, provider)
+        parser = await self.get_feed_parser(provider)
+        items = await parser.parse(root_elt, provider)
         if not chronological:
             items.reverse()
 
@@ -118,7 +118,9 @@ class APFeedingService(HTTPFeedingServiceBase):
             min_date_time = root_elt.xpath('//iptc:timestamp[@role="minDateTime"]/text()', namespaces=NS)[0].strip()
             sequence_number = root_elt.xpath("//iptc:transmitId/text()", namespaces=NS)[0].strip()
         except IndexError:
-            raise IngestApiError.apiRequestError(Exception("missing minDateTime or transmitId"))
+            raise await IngestApiError.apiRequestError(
+                Exception("missing minDateTime or transmitId")
+            ).send_notifications()
         else:
             update.setdefault("private", {})
             update["private"]["min_date_time"] = min_date_time

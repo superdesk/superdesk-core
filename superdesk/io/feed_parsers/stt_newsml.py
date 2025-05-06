@@ -46,7 +46,7 @@ class STTNewsMLFeedParser(NewsMLTwoFeedParser):
     def can_parse(self, xml):
         return xml.tag.endswith("newsItem")
 
-    def parse(self, xml, provider=None):
+    async def parse(self, xml, provider=None):
         self.root = xml
         try:
             item = self.parse_item(xml)
@@ -153,7 +153,7 @@ class STTNewsMLFeedParser(NewsMLTwoFeedParser):
 
             return [item]
         except Exception as ex:
-            raise ParserError.newsmlTwoParserError(ex, provider)
+            raise await ParserError.newsmlTwoParserError(ex, provider).send_notifications()
 
     def parse_inline_content(self, tree, item):
         html_elt = tree.find(self.qname("html"))

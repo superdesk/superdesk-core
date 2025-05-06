@@ -83,14 +83,16 @@ class GMailFeedingService(EmailFeedingService):
         field = next(f for f in cls.fields if f["id"] == "log_out_url")
         field["url"] = join(app.config["SERVER_URL"], "logout", "google", "{PROVIDER_ID}")
 
-    def _test(self, provider):
-        self._update(provider, update=None, test=True)
+    async def _test(self, provider):
+        await self._update(provider, update=None, test=True)
 
-    def authenticate(self, provider: dict, config: dict) -> imaplib.IMAP4_SSL:
+    async def authenticate(self, provider: dict, config: dict) -> imaplib.IMAP4_SSL:
         oauth2_token_service = superdesk.get_resource_service("oauth2_token")
         token = oauth2_token_service.find_one(req=None, _id=ObjectId(provider["_id"]))
         if token is None:
-            raise IngestEmailError.notConfiguredError(ValueError(l_("You need to log in first")), provider=provider)
+            raise await IngestEmailError.notConfiguredError(
+                ValueError(l_("You need to log in first")), provider=provider
+            ).send_notifications()
         imap = imaplib.IMAP4_SSL("imap.gmail.com")
 
         if token["expires_at"].replace(tzinfo=None).timestamp() < time.time() + 600:

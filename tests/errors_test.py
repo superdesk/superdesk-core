@@ -399,13 +399,13 @@ class ErrorsTestCase(TestCase):
             "Testing nitfParserError on channel TestProvider",
         )
 
-    def test_raise_providerAddError(self):
+    async def test_raise_providerAddError(self):
         with self.assertRaises(ProviderError) as error_context:
             try:
                 ex = Exception("Testing providerAddError")
                 raise ex
             except Exception:
-                raise ProviderError.providerAddError(ex, self.provider)
+                raise await ProviderError.providerAddError(ex, self.provider).send_notifications()
         exception = error_context.exception
         self.assertTrue(exception.code == 2001)
         self.assertTrue(exception.message == "Provider could not be saved")
@@ -418,13 +418,13 @@ class ErrorsTestCase(TestCase):
             "Testing providerAddError on channel TestProvider",
         )
 
-    def test_raise_expiredContentError(self):
+    async def test_raise_expiredContentError(self):
         with self.assertRaises(ProviderError) as error_context:
             try:
                 ex = Exception("Testing expiredContentError")
                 raise ex
             except Exception:
-                raise ProviderError.expiredContentError(ex, self.provider)
+                raise await ProviderError.expiredContentError(ex, self.provider).send_notifications()
         exception = error_context.exception
         self.assertTrue(exception.code == 2002)
         self.assertTrue(exception.message == "Expired content could not be removed")
@@ -437,13 +437,13 @@ class ErrorsTestCase(TestCase):
             "Testing expiredContentError on channel TestProvider",
         )
 
-    def test_raise_ruleError(self):
+    async def test_raise_ruleError(self):
         with self.assertRaises(ProviderError) as error_context:
             try:
                 ex = Exception("Testing ruleError")
                 raise ex
             except Exception:
-                raise ProviderError.ruleError(ex, self.provider)
+                raise await ProviderError.ruleError(ex, self.provider).send_notifications()
         exception = error_context.exception
         self.assertTrue(exception.code == 2003)
         self.assertTrue(exception.message == "Rule could not be applied")
@@ -455,13 +455,13 @@ class ErrorsTestCase(TestCase):
             "ProviderError Error 2003 - Rule could not be applied: " "Testing ruleError on channel TestProvider",
         )
 
-    def test_raise_ingestError(self):
+    async def test_raise_ingestError(self):
         with self.assertRaises(ProviderError) as error_context:
             try:
                 ex = Exception("Testing ingestError")
                 raise ex
             except Exception:
-                raise ProviderError.ingestError(ex, self.provider)
+                raise await ProviderError.ingestError(ex, self.provider).send_notifications()
         exception = error_context.exception
         self.assertTrue(exception.code == 2004)
         self.assertTrue(exception.message == "Ingest error")
@@ -474,13 +474,13 @@ class ErrorsTestCase(TestCase):
             "ProviderError Error 2004 - Ingest error: " "Testing ingestError on channel TestProvider",
         )
 
-    def test_raise_anpaError(self):
+    async def test_raise_anpaError(self):
         with self.assertRaises(ProviderError) as error_context:
             try:
                 ex = Exception("Testing anpaError")
                 raise ex
             except Exception:
-                raise ProviderError.anpaError(ex, self.provider)
+                raise await ProviderError.anpaError(ex, self.provider).send_notifications()
         exception = error_context.exception
         self.assertTrue(exception.code == 2005)
         self.assertTrue(exception.message == "Anpa category error")
@@ -492,13 +492,13 @@ class ErrorsTestCase(TestCase):
             "ProviderError Error 2005 - Anpa category error: " "Testing anpaError on channel TestProvider",
         )
 
-    def test_raise_providerFilterExpiredContentError(self):
+    async def test_raise_providerFilterExpiredContentError(self):
         with self.assertRaises(ProviderError) as error_context:
             try:
                 ex = Exception("Testing providerFilterExpiredContentError")
                 raise ex
             except Exception:
-                raise ProviderError.providerFilterExpiredContentError(ex, self.provider)
+                raise await ProviderError.providerFilterExpiredContentError(ex, self.provider).send_notifications()
         exception = error_context.exception
         self.assertTrue(exception.code == 2006)
         self.assertTrue(exception.message == "Expired content could not be filtered")

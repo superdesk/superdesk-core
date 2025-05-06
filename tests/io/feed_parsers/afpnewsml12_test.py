@@ -10,20 +10,20 @@
 
 import datetime
 import os
-import unittest
 from pytz import utc
 
+from superdesk.tests import IsolatedAsyncioTestCase
 from superdesk.etree import etree
 from superdesk.io.feed_parsers.afp_newsml_1_2 import AFPNewsMLOneFeedParser
 
 
-class TestCase(unittest.TestCase):
-    def setUp(self):
+class TestCase(IsolatedAsyncioTestCase):
+    async def asyncSetUp(self):
         dirname = os.path.dirname(os.path.realpath(__file__))
         fixture = os.path.join(dirname, "../fixtures", "afp.xml")
         provider = {"name": "Test"}
         with open(fixture, "rb") as f:
-            self.item = AFPNewsMLOneFeedParser().parse(etree.fromstring(f.read()), provider)
+            self.item = await AFPNewsMLOneFeedParser().parse(etree.fromstring(f.read()), provider)
 
     def test_headline(self):
         self.assertEqual(self.item.get("headline"), "Sweden court accepts receivership for Saab carmaker")

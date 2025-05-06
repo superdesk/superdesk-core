@@ -28,7 +28,7 @@ class IDMLFormatter(Formatter):
             publish_seq_num = await generate_sequence_number(subscriber)
             idml_bytes = Converter().create_idml(article)
         except Exception as e:
-            raise FormatterError.IDMLFormatterError(e, subscriber)
+            raise await FormatterError.IDMLFormatterError(e, subscriber).send_notifications()
 
         return [
             {

@@ -149,5 +149,5 @@ def init_app(app) -> None:
 
 
 @celery.task(soft_time_limit=LOCK_EXPIRY - 300)  # should finish before the lock is gone
-def content_expiry():
-    RemoveExpiredContent().run()
+async def content_expiry():
+    await RemoveExpiredContent().run()

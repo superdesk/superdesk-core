@@ -42,7 +42,7 @@ class FeedParser(metaclass=ABCMeta):
         raise NotImplementedError()
 
     @abstractmethod
-    def parse(self, article, provider=None):
+    async def parse(self, article, provider=None):
         """Parse the given article and extracts the relevant elements/attributes values from the given article.
 
         :param article: XML String to parse

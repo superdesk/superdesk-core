@@ -86,7 +86,7 @@ class GetTokenTestCase(TestCase):
         # Tests shouldn't depends on some external settings
         # this block should be run always or must be removed %)
         if provider["config"]["username"]:
-            token = TestFeedingService()._generate_auth_token(provider, update=True)
+            token = await TestFeedingService()._generate_auth_token(provider, update=True)
             self.assertNotEquals("", token)
             self.assertEqual(token, provider["tokens"]["auth_token"])
 

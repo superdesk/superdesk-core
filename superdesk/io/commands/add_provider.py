@@ -48,6 +48,6 @@ async def cli_add_provider(provider: str):
             ex = Exception(
                 "Failed to add Provider as the data provided is invalid. Errors: {}".format(str(validator.errors))
             )
-            raise ProviderError.providerAddError(exception=ex, provider=data)
+            raise await ProviderError.providerAddError(exception=ex, provider=data).send_notifications()
     except Exception as ex:
-        raise ProviderError.providerAddError(ex, data)
+        raise await ProviderError.providerAddError(ex, data).send_notifications()

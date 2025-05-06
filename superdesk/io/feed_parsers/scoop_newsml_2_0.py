@@ -39,7 +39,7 @@ class ScoopNewsMLTwoFeedParser(NewsMLTwoFeedParser):
                 return False
         return False
 
-    def parse(self, xml, provider=None):
+    async def parse(self, xml, provider=None):
         self.root = xml
         items = []
         try:
@@ -91,7 +91,7 @@ class ScoopNewsMLTwoFeedParser(NewsMLTwoFeedParser):
                         items.append(item)
             return items
         except Exception as ex:
-            raise ParserError.newsmlTwoParserError(ex, provider)
+            raise await ParserError.newsmlTwoParserError(ex, provider).send_notifications()
 
     def parse_header(self, tree):
         """Parse header element, it seems that the header tag is in camel case

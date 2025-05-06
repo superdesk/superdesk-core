@@ -128,7 +128,7 @@ def is_not_expired(item, delta):
     return False
 
 
-def filter_expired_items(provider, items):
+async def filter_expired_items(provider, items):
     """Filter out expired items from the list of articles to be ingested.
 
     Filte both expired and `item['type'] not in provider['content_types']`.
@@ -170,7 +170,7 @@ def filter_expired_items(provider, items):
 
         return filtered_items
     except Exception as ex:
-        raise ProviderError.providerFilterExpiredContentError(ex, provider)
+        raise await ProviderError.providerFilterExpiredContentError(ex, provider).send_notifications()
 
 
 async def get_provider_rule_set(provider):
@@ -208,7 +208,7 @@ async def get_provider_routing_scheme(provider):
     rules_filters = ((rule, str(rule["filter"])) for rule in scheme["rules"] if rule.get("filter"))
 
     for rule, filter_id in rules_filters:
-        content_filter = await filters_service.find_by_id(filter_id)
+        content_filter = await filters_service.find_by_id_raw(filter_id)
         rule["filter"] = content_filter
 
     return scheme
@@ -317,23 +317,21 @@ async def update_provider(provider, rule_set=None, routing_scheme=None, sync=Fal
         if sync:
             provider[LAST_UPDATED] = utcnow() - timedelta(days=9999)  # import everything again
 
-        generator = feeding_service.update(provider, update)
-        if isinstance(generator, list):
-            generator = (items for items in generator)
+        generator = await feeding_service.update(provider, update)
         failed = None
         while True:
             try:
                 if not touch(lock_name, expire=UPDATE_TTL):
                     logger.warning("lock expired while updating provider %s", provider[ID_FIELD])
                     return
-                items = generator.send(failed)
+                items = await generator.asend(failed)
                 failed = await ingest_items(items, provider, feeding_service, rule_set, routing_scheme)
                 update_last_item_updated(update, items)
 
                 if not update.get(LAST_ITEM_ARRIVED) or update[LAST_ITEM_ARRIVED] < datetime.now(tz=pytz.utc):
                     update[LAST_ITEM_ARRIVED] = datetime.now(tz=pytz.utc)
 
-            except StopIteration:
+            except StopAsyncIteration:
                 break
 
         # Some Feeding Services update the collection and by this time the _etag might have been changed.
@@ -359,7 +357,7 @@ async def update_provider(provider, rule_set=None, routing_scheme=None, sync=Fal
             push_notification("ingest:update", provider_id=str(provider[ID_FIELD]))
     except Exception as e:
         logger.error("Failed to ingest file: {error}".format(error=e))
-        raise IngestFileError(3000, e, provider)
+        raise await IngestFileError(3000, e, provider).send_notifications()
     finally:
         unlock(lock_name)
 
@@ -388,7 +386,7 @@ async def _process_anpa_category(item, provider):
                             set_subject_name_translation(item_category, item["language"])
 
     except Exception as ex:
-        raise ProviderError.anpaError(ex, provider)
+        raise await ProviderError.anpaError(ex, provider).send_notifications()
 
 
 async def _derive_category(item, provider):
@@ -413,7 +411,7 @@ async def _derive_category(item, provider):
         logger.exception(ex)
 
 
-def process_iptc_codes(item, provider):
+async def process_iptc_codes(item, provider):
     """Ensures that the higher level IPTC codes are present by inserting them if missing.
 
     For example if given 15039001 (Formula One) make sure that 15039000 (motor racing) and 15000000 (sport)
@@ -448,7 +446,7 @@ def process_iptc_codes(item, provider):
                         logger.warning("missing qcode in subject_codes: {qcode}".format(qcode=mid_qcode))
                         continue
     except Exception as ex:
-        raise ProviderError.iptcError(ex, provider)
+        raise await ProviderError.iptcError(ex, provider).send_notifications()
 
 
 async def _derive_subject(item):
@@ -499,7 +497,7 @@ async def apply_rule_set(item, provider, rule_set=None):
 
         return item
     except Exception as ex:
-        raise ProviderError.ruleError(ex, provider)
+        raise await ProviderError.ruleError(ex, provider).send_notifications()
 
 
 def ingest_cancel(item, feeding_service):
@@ -522,7 +520,7 @@ def ingest_cancel(item, feeding_service):
 
 
 async def ingest_items(items, provider, feeding_service, rule_set=None, routing_scheme=None):
-    all_items = filter_expired_items(provider, items)
+    all_items = await filter_expired_items(provider, items)
     items_dict = {doc[GUID_FIELD]: doc for doc in all_items}
     items_in_package = []
     failed_items = set()
@@ -595,7 +593,7 @@ async def ingest_item(item, provider, feeding_service, rule_set=None, routing_sc
             _ingest_cancel = ingest_cancel
 
         # determine if we already have this item
-        old_item = ingest_service.find_one(guid=item[GUID_FIELD], req=None)
+        old_item = await ingest_service.find_one_async(guid=item[GUID_FIELD], req=None)
 
         if not old_item:
             item.setdefault(ID_FIELD, generate_guid(type=GUID_NEWSML))
@@ -635,7 +633,7 @@ async def ingest_item(item, provider, feeding_service, rule_set=None, routing_sc
         if "subject" in item:
             if not get_app_config("INGEST_SKIP_IPTC_CODES", False):
                 # FIXME: temporary fix for SDNTB-344, need to be removed once SDESK-439 is implemented
-                process_iptc_codes(item, provider)
+                await process_iptc_codes(item, provider)
             if "anpa_category" not in item:
                 await _derive_category(item, provider)
         elif "anpa_category" in item:
@@ -664,12 +662,12 @@ async def ingest_item(item, provider, feeding_service, rule_set=None, routing_sc
             guid = assoc.get("guid")
             assoc_name = assoc.get("headline") or assoc.get("slugline") or guid
             if guid:
-                ingested = ingest_service.find_one(req=None, guid=guid)
+                ingested = await ingest_service.find_one_async(req=None, guid=guid)
                 if ingested is not None:
                     logger.info("assoc ingested before %s", assoc_name)
                     assoc["_id"] = ingested["_id"]
                     # update expiry so assoc will stay as long as the item using it
-                    ingest_service.system_update(ingested["_id"], {"expiry": item["expiry"]}, ingested)
+                    await ingest_service.system_update_async(ingested["_id"], {"expiry": item["expiry"]}, ingested)
                     if _is_new_version(assoc, ingested) and assoc.get("renditions"):  # new version
                         logger.info("new assoc version - re-transfer renditions for %s", assoc_name)
                         try:
@@ -702,7 +700,7 @@ async def ingest_item(item, provider, feeding_service, rule_set=None, routing_sc
                     if status:
                         assoc["_id"] = ids[0]
                         items_ids.extend(ids)
-                        ingested = ingest_service.find_one(req=None, _id=ids[0])
+                        ingested = await ingest_service.find_one_async(req=None, _id=ids[0])
                         update_assoc_renditions(assoc, ingested)
             elif assoc.get("residRef"):
                 item["associations"][key] = resolve_ref(assoc)
@@ -712,10 +710,7 @@ async def ingest_item(item, provider, feeding_service, rule_set=None, routing_sc
             new_version = _is_new_version(item, old_item)
             updates = deepcopy(item)
             if new_version:
-                if hasattr(ingest_service, "patch_in_mongo_async"):
-                    await ingest_service.patch_in_mongo_async(old_item[ID_FIELD], updates, old_item)
-                else:
-                    ingest_service.patch_in_mongo(old_item[ID_FIELD], updates, old_item)
+                await ingest_service.patch_in_mongo(old_item[ID_FIELD], updates, old_item)
                 item.update(old_item)
                 item.update(updates)
                 items_ids.append(item["_id"])
@@ -728,23 +723,20 @@ async def ingest_item(item, provider, feeding_service, rule_set=None, routing_sc
                 else:
                     ingest_service.set_ingest_provider_sequence(item, provider)
             try:
-                if hasattr(ingest_service, "post_in_mongo_async"):
-                    items_ids.extend(await ingest_service.post_in_mongo_async([item]))
-                else:
-                    items_ids.extend(ingest_service.post_in_mongo([item]))
+                items_ids.extend(await ingest_service.post_in_mongo([item]))
             except HTTPException as e:
                 logger.error("Exception while persisting item in %s collection: %s", ingest_collection, e)
                 raise e
 
         if routing_scheme and new_version:
-            routed = ingest_service.find_one(_id=item[ID_FIELD], req=None)
+            routed = await ingest_service.find_one_async(_id=item[ID_FIELD], req=None)
             await superdesk.get_resource_service("routing_schemes").apply_routing_scheme(
                 routed, provider, routing_scheme
             )
 
     except Exception as ex:
         logger.exception(ex)
-        ProviderError.ingestItemError(ex, provider, item=item)
+        await ProviderError.ingestItemError(ex, provider, item=item).send_notifications()
         return False, []
     return True, items_ids
 

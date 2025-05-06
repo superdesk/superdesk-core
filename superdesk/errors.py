@@ -8,6 +8,8 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
+from typing_extensions import Self
+from inspect import isawaitable
 import logging
 
 from cerberus import DocumentError
@@ -27,9 +29,11 @@ def add_notifier(notifier):
         notifiers.append(notifier)
 
 
-def update_notifiers(*args, **kwargs):
+async def update_notifiers(*args, **kwargs):
     for notifier in notifiers:
-        notifier(*args, **kwargs)
+        response = notifier(*args, **kwargs)
+        if isawaitable(response):
+            await response
 
 
 def get_registered_errors(self):
@@ -215,7 +219,27 @@ class InvalidStateTransitionError(SuperdeskApiError):
         super().__init__(message, status_code)
 
 
-class SuperdeskIngestError(SuperdeskError):
+class SuperdeskErrorWithNotifications(SuperdeskError):
+    def _set_notification_args(self, *args, **kwargs):
+        self._notification_args = dict(args=args, kwargs=kwargs)
+
+    async def send_notifications(self) -> Self:
+        args = getattr(self, "_notification_args", {})
+        if args:
+            try:
+                await update_notifiers(*args["args"], **args["kwargs"])
+            except KeyError:
+                # this might not be working during tests
+                # and should be probably avoided in the first place
+                pass
+
+            # Make sure multiple notifications won't be sent for this one exception
+            self._notification_args = {}
+
+        return self
+
+
+class SuperdeskIngestError(SuperdeskErrorWithNotifications):
     _codes = {
         2000: "Configured Feed Parser either not found or not registered with the application",
         2001: "Configuration of the feeding service is missing or incomplete",
@@ -238,18 +262,14 @@ class SuperdeskIngestError(SuperdeskError):
                     message += '\nitem="{}" name="{}"'.format(
                         item.get("guid", ""), item.get("headline", item.get("slugline", ""))
                     )
-                try:
-                    update_notifiers(
-                        "error",
-                        message,
+                self._set_notification_args(
+                    ["error", message],
+                    dict(
                         resource="ingest_providers" if provider else None,
                         name=self.provider_name,
                         provider_id=provider.get("_id", ""),
-                    )
-                except KeyError:
-                    # this might not be working during tests
-                    # and should be probably avoided in the first place
-                    pass
+                    ),
+                )
 
             if provider:
                 message = "{}: {} on channel {}".format(self, exception, self.provider_name)
@@ -531,7 +551,7 @@ class IngestTwitterError(SuperdeskIngestError):
         return IngestTwitterError(6400, exception, provider)
 
 
-class SuperdeskPublishError(SuperdeskError):
+class SuperdeskPublishError(SuperdeskErrorWithNotifications):
     def __init__(self, code, exception, destination=None):
         super().__init__(code)
         self.system_exception = exception
@@ -541,12 +561,16 @@ class SuperdeskPublishError(SuperdeskError):
         if exception:
             exception_msg = str(exception)[-200:]
             if notifications_enabled():
-                update_notifiers(
-                    "error",
-                    "Error [%s] on a Subscriber" "s destination {{name}}: %s" % (code, exception_msg),
-                    resource="subscribers" if destination else None,
-                    name=self.destination_name,
-                    provider_id=destination.get("_id", ""),
+                self._set_notification_args(
+                    [
+                        "error",
+                        "Error [%s] on a Subscriber" "s destination {{name}}: %s" % (code, exception_msg),
+                    ],
+                    dict(
+                        resource="subscribers" if destination else None,
+                        name=self.destination_name,
+                        provider_id=destination.get("_id", ""),
+                    ),
                 )
 
             extra = {}

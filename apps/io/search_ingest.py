@@ -66,7 +66,7 @@ class SearchIngestService(AsyncBaseService):
             try:
                 archived_doc = self.fetch(doc["guid"])
             except FileNotFoundError as ex:
-                raise ProviderError.externalProviderError(ex, provider)
+                raise await ProviderError.externalProviderError(ex, provider).send_notifications()
 
             dest_doc = await fetch_item(archived_doc, doc.get("desk"), doc.get("stage"), state=doc.get("state"))
             new_guids.append(dest_doc["guid"])
@@ -145,7 +145,7 @@ class SearchIngestServiceAsync(AsyncBaseService):
             try:
                 archived_doc = await self.fetch_async(doc["guid"])
             except FileNotFoundError as ex:
-                raise ProviderError.externalProviderError(ex, provider)
+                raise await ProviderError.externalProviderError(ex, provider).send_notifications()
 
             dest_doc = await fetch_item(archived_doc, doc.get("desk"), doc.get("stage"), state=doc.get("state"))
             new_guids.append(dest_doc["guid"])

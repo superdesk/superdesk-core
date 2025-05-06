@@ -60,11 +60,11 @@ class EMailRFC822FeedParser(EmailFeedParser):
 
         return False
 
-    def parse(self, data, provider=None):
+    async def parse(self, data, provider=None):
         config = provider.get("config", {})
         # If the channel is configured to process structured email generated from a google form
         if config.get("formatted", False):
-            return self._parse_formatted_email(data, provider)
+            return await self._parse_formatted_email(data, provider)
         try:
             new_items = []
             # create an item for the body text of the email
@@ -241,7 +241,7 @@ class EMailRFC822FeedParser(EmailFeedParser):
             new_items.append(item)
             return new_items
         except Exception as ex:
-            raise IngestEmailError.emailParseError(ex, provider)
+            raise await IngestEmailError.emailParseError(ex, provider).send_notifications()
 
     def parse_header(self, field):
         try:
@@ -299,7 +299,7 @@ class EMailRFC822FeedParser(EmailFeedParser):
                             )
                         break
 
-    def _parse_formatted_email(self, data, provider):
+    async def _parse_formatted_email(self, data, provider):
         """Construct an item from an email that was constructed as a notification from a google form submission.
 
         The google form submits to a google sheet, this sheet creates the email as a notification
@@ -430,7 +430,7 @@ class EMailRFC822FeedParser(EmailFeedParser):
 
             return [item]
         except Exception as ex:
-            raise IngestEmailError.emailParseError(ex, provider)
+            raise await IngestEmailError.emailParseError(ex, provider).send_notifications()
 
 
 register_feed_parser(EMailRFC822FeedParser.NAME, EMailRFC822FeedParser())

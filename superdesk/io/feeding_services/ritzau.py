@@ -48,48 +48,60 @@ class RitzauFeedingService(HTTPFeedingServiceBase):
     # auth is done with params
     HTTP_AUTH = False
 
-    def _update(self, provider, update):
+    async def _update(self, provider, update):
         config = self.config
         try:
             user, password = self.config["username"], self.config["password"]
         except KeyError:
-            SuperdeskIngestError.notConfiguredError(Exception("username and password are needed"))
+            raise await SuperdeskIngestError.notConfiguredError(
+                Exception("username and password are needed")
+            ).send_notifications()
 
         url_override = config.get("url", "").strip()
-        if not url_override.startswith("http"):
-            SuperdeskIngestError.notConfiguredError(Exception("if URL is set, it must be a valid http link"))
+        if url_override and not url_override.startswith("http"):
+            raise await SuperdeskIngestError.notConfiguredError(
+                Exception("if URL is set, it must be a valid http link")
+            ).send_notifications()
 
         if url_override:
             params = {"user": user, "password": password, "maksAntal": 50}
         else:
             params = {"user": user, "password": password, "maksAntal": 50, "waitAcknowledge": "true"}
 
-        r = self.get_url(url_override, params=params)
+        r = await self.get_url(url_override, params=params)
 
         try:
             root_elt = etree.fromstring(r.text)
         except Exception:
-            raise IngestApiError.apiRequestError(Exception("error while parsing the request answer"))
+            raise await IngestApiError.apiRequestError(
+                Exception("error while parsing the request answer")
+            ).send_notifications()
 
         try:
             if root_elt.xpath("(//error/text())[1]")[0] != "0":
                 err_msg = root_elt.xpath("(//errormsg/text())[1]")[0]
-                raise IngestApiError.apiRequestError(Exception("error code returned by API: {msg}".format(msg=err_msg)))
+                raise await IngestApiError.apiRequestError(
+                    Exception("error code returned by API: {msg}".format(msg=err_msg))
+                ).send_notifications()
         except IndexError:
-            raise IngestApiError.apiRequestError(Exception("Invalid XML, <error> element not found"))
+            raise await IngestApiError.apiRequestError(
+                Exception("Invalid XML, <error> element not found")
+            ).send_notifications()
 
-        parser = self.get_feed_parser(provider)
+        parser = await self.get_feed_parser(provider)
         items = []
         for elt in root_elt.xpath("//RBNews"):
-            item = parser.parse(elt, provider)
+            item = await parser.parse(elt, provider)
             items.append(item)
             if not url_override:
                 try:
                     queue_id = elt.xpath(".//ServiceQueueId/text()")[0]
                 except IndexError:
-                    raise IngestApiError.apiRequestError(Exception("missing ServiceQueueId element"))
+                    raise await IngestApiError.apiRequestError(
+                        Exception("missing ServiceQueueId element")
+                    ).send_notifications()
                 ack_params = {"user": user, "password": password, "servicequeueid": queue_id}
-                self.get_url(URL_ACK, params=ack_params)
+                await self.get_url(URL_ACK, params=ack_params)
 
         return [items]
 

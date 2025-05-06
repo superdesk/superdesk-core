@@ -30,7 +30,7 @@ class AmazonSQSFIFOPublishService(publish_service.PublishService):
 
     NAME = "Amazon SQS FIFO"
 
-    def _transmit(self, queue_item, subscriber):
+    async def _transmit(self, queue_item, subscriber):
         destination = queue_item.get("destination") or {}
         config = destination.get("config") or {}
 
@@ -49,11 +49,11 @@ class AmazonSQSFIFOPublishService(publish_service.PublishService):
                 MessageGroupId=config.get("message_group_id"),
             )
         except (EndpointConnectionError, ConnectionClosedError, NewConnectionError) as error:
-            raise PublishAmazonSQSError.connectionError(error, destination)
+            raise await PublishAmazonSQSError.connectionError(error, destination).send_notifications()
         except ClientError as error:
-            raise PublishAmazonSQSError.clientError(error, destination)
+            raise await PublishAmazonSQSError.clientError(error, destination).sendMessageError()
         except Exception as error:
-            raise PublishAmazonSQSError.sendMessageError(error, destination)
+            raise await PublishAmazonSQSError.sendMessageError(error, destination).send_notifications()
 
     def _transmit_media(self, media, destination):
         # Not supported

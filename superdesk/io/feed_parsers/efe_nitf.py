@@ -76,8 +76,8 @@ class EFEFeedParser(NITFFeedParser):
         super().__init__()
         self.default_mapping = {}
 
-    def parse(self, xml, provider=None):
-        item = super().parse(xml, provider)
+    async def parse(self, xml, provider=None):
+        item = await super().parse(xml, provider)
         self.derive_dateline(item)
         return item
 

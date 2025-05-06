@@ -13,7 +13,7 @@ import os
 import datetime
 
 from unittest import TestCase, mock
-
+from superdesk.tests import IsolatedAsyncioTestCase
 from superdesk.etree import etree
 from superdesk.io.feed_parsers import wordpress_wxr
 
@@ -82,12 +82,11 @@ def fake_update_renditions(item, url, _):
     item.update(update)
 
 
-class WPWXRTestBase(TestCase):
+class WPWXRTestBase(IsolatedAsyncioTestCase):
     filename = None
 
     @mock.patch.object(wordpress_wxr, "update_renditions", fake_update_renditions)
-    def __init__(self, methodname):
-        super().__init__(methodname)
+    async def asyncSetUp(self):
         if self.filename is None:
             return
         dirname = os.path.dirname(os.path.realpath(__file__))
@@ -98,7 +97,7 @@ class WPWXRTestBase(TestCase):
         self.ori_file = buf
         parser = etree.XMLParser(recover=True)
         parsed = etree.fromstring(buf, parser)
-        self.articles = wordpress_wxr.WPWXRFeedParser().parse(parsed, provider)
+        self.articles = await wordpress_wxr.WPWXRFeedParser().parse(parsed, provider)
 
 
 class WPWXRTestCase(WPWXRTestBase):

@@ -36,7 +36,7 @@ class ODBCPublishService(PublishService):
 
     NAME = "ODBC"
 
-    def _transmit(self, queue_item, subscriber):
+    async def _transmit(self, queue_item, subscriber):
         """
         Transmit the given formatted item to the configured ODBC output.
 
@@ -44,7 +44,7 @@ class ODBCPublishService(PublishService):
         """
 
         if not get_app_config("ODBC_PUBLISH") or not pyodbc_available:
-            raise PublishODBCError()
+            raise await PublishODBCError().send_notifications()
 
         config = queue_item.get("destination", {}).get("config", {})
 
@@ -56,7 +56,7 @@ class ODBCPublishService(PublishService):
                 conn.commit()
             return ret
         except Exception as ex:
-            raise PublishODBCError.odbcError(ex, config)
+            raise await PublishODBCError.odbcError(ex, config).send_notifications()
 
     def _CallStoredProc(self, conn, procName, paramDict):
         params = ""

@@ -9,7 +9,7 @@
 # at https://www.sourcefabric.org/superdesk/license
 
 from unittest import mock
-from unittest.mock import MagicMock, patch
+from unittest.mock import AsyncMock
 
 from superdesk.tests import TestCase
 
@@ -38,8 +38,8 @@ class GetProviderRoutingSchemeTestCase(TestCase):
             self.funcToTest = get_provider_routing_scheme
 
         fake_superdesk.services = {
-            "routing_schemes": MagicMock(name="routing_schemes"),
-            "content_filters": MagicMock(name="content_filters"),
+            "routing_schemes": AsyncMock(name="routing_schemes"),
+            "content_filters": AsyncMock(name="content_filters"),
         }
 
     async def test_returns_none_if_no_provider_scheme_defined(self):
@@ -50,18 +50,19 @@ class GetProviderRoutingSchemeTestCase(TestCase):
     async def test_returns_scheme_config_from_db_if_scheme_defined(self):
         fake_scheme = {"_id": "abc123", "rules": []}
         schemes_service = fake_superdesk.services["routing_schemes"]
-        schemes_service.find_one.return_value = fake_scheme
+        schemes_service.find_one_async.return_value = fake_scheme
 
         fake_provider = {"routing_scheme": "abc123"}
         result = await self.funcToTest(fake_provider)
 
         # check that correct scheme has been fetched and returned
-        self.assertTrue(schemes_service.find_one.called)
-        args, kwargs = schemes_service.find_one.call_args
+        self.assertTrue(schemes_service.find_one_async.called)
+        args, kwargs = schemes_service.find_one_async.call_args
         self.assertEqual(kwargs.get("_id"), "abc123")
         self.assertEqual(result, fake_scheme)
 
-    async def test_includes_content_filters_in_returned_scheme(self):
+    @mock.patch("superdesk.io.commands.update_ingest.ContentFiltersResource.get_service")
+    async def test_includes_content_filters_in_returned_scheme(self, content_filters_service):
         fake_scheme = {
             "_id": "abc123",
             "rules": [
@@ -70,13 +71,12 @@ class GetProviderRoutingSchemeTestCase(TestCase):
             ],
         }
         schemes_service = fake_superdesk.services["routing_schemes"]
-        schemes_service.find_one.return_value = fake_scheme
+        schemes_service.find_one_async.return_value = fake_scheme
 
-        filters_service = fake_superdesk.services["content_filters"]
-        filters_service.find_one.side_effect = [
-            {"_id": "filter_id_4"},
-            {"_id": "filter_id_8"},
-        ]
+        async def get_filters_mock(filter_id):
+            return {"_id": filter_id}
+
+        content_filters_service().find_by_id_raw.side_effect = get_filters_mock
 
         fake_provider = {"routing_scheme": "abc123"}
         result = await self.funcToTest(fake_provider)

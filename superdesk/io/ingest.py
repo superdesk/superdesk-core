@@ -41,7 +41,7 @@ class IngestResource(Resource):
 
 
 class IngestService(AsyncBaseService):
-    async def post_in_mongo_async(self, docs, **kwargs):
+    async def post_in_mongo(self, docs, **kwargs):
         for doc in docs:
             self._resolve_defaults(doc)
         await self.on_create_async(docs)
@@ -50,7 +50,7 @@ class IngestService(AsyncBaseService):
         await self.on_created_async(docs)
         return ids
 
-    async def patch_in_mongo_async(self, id, document, original):
+    async def patch_in_mongo(self, id, document, original):
         res = await self.backend.update_in_mongo_async(self.datasource, id, document, original)
         return res
 

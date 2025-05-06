@@ -24,7 +24,7 @@ class BaseSTTNewsMLTestCase(TestCase):
         with open(fixture, "rb") as f:
             parser = STTNewsMLFeedParser()
             self.xml_root = etree.parse(f).getroot()
-            self.item = parser.parse(self.xml_root, provider)
+            self.item = await parser.parse(self.xml_root, provider)
 
 
 class STTTestCase(BaseSTTNewsMLTestCase):

@@ -43,7 +43,7 @@ class ScoopTestCase(TestCase):
         with open(fixture, "rb") as f:
             parser = ScoopNewsMLTwoFeedParser()
             self.xml = etree.parse(f)
-            self.item = parser.parse(self.xml.getroot(), provider)
+            self.item = await parser.parse(self.xml.getroot(), provider)
 
     def test_content(self):
         self.assertEqual(

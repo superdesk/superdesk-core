@@ -372,6 +372,6 @@ class BasePublishExchangeFormatter(PublishExchangeFormatter):
                     msg = gettext("Can not find package {package} published item {item}").format(
                         package=package["item_id"], item=ref["residRef"]
                     )
-                    raise SuperdeskPublishError(500, msg)
+                    raise await SuperdeskPublishError(500, msg).send_notifications()
                 package_item[ID_FIELD] = package_item["item_id"]
                 ref["package_item"] = package_item

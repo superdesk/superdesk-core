@@ -16,13 +16,13 @@ class TestFeedingService(FeedingService):
 
 
 class FeedingServiceParserTestCase(TestCase):
-    def test_restricted_parser(self):
+    async def test_restricted_parser(self):
         feeding_service = TestFeedingService()
         with patch.dict(
             "superdesk.io.feeding_services.restricted_feeding_service_parsers", {"test_feeding": {"ninjs": True}}
         ):
             with self.assertRaises(SuperdeskIngestError):
-                feeding_service.config_test({"feed_parser": "foo", "feeding_service": "test_feeding"})
+                await feeding_service.config_test({"feed_parser": "foo", "feeding_service": "test_feeding"})
 
     def test_add_timestamps_warning(self):
         item = {}

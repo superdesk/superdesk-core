@@ -146,15 +146,15 @@ class RSSFeedingService(HTTPFeedingServiceBase):
 
         return url
 
-    def _test(self, provider):
+    async def _test(self, provider):
         """Test connection."""
         self.provider = provider
-        xml = self._fetch_data()
+        xml = await self._fetch_data()
         data = feedparser.parse(xml)
         if data.bozo:
-            raise ParserError.parseMessageError(data.bozo_exception, provider)
+            raise await ParserError.parseMessageError(data.bozo_exception, provider).send_notifications()
 
-    def _update(self, provider, update):
+    async def _update(self, provider, update):
         """
         Check data provider for data updates and returns new items (if any).
 
@@ -165,12 +165,12 @@ class RSSFeedingService(HTTPFeedingServiceBase):
         :raises IngestApiError: if data retrieval error occurs
         :raises ParserError: if retrieved RSS data cannot be parsed
         """
-        xml_data = self._fetch_data()
+        xml_data = await self._fetch_data()
 
         try:
             data = feedparser.parse(xml_data)
         except Exception as ex:
-            raise ParserError.parseMessageError(ex, provider, data=xml_data)
+            raise await ParserError.parseMessageError(ex, provider, data=xml_data).send_notifications()
 
         # If provider last updated time is not available, set it to 1.1.1970
         # so that it will be recognized as "not up to date".
@@ -209,7 +209,7 @@ class RSSFeedingService(HTTPFeedingServiceBase):
 
         return [new_items]
 
-    def _fetch_data(self):
+    async def _fetch_data(self):
         """Fetch the latest feed data.
 
         :return: fetched RSS data
@@ -220,7 +220,7 @@ class RSSFeedingService(HTTPFeedingServiceBase):
         """
         url = self.config["url"]
 
-        response = self.get_url(url)
+        response = await self.get_url(url)
 
         return response.content
 

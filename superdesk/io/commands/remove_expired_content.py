@@ -44,12 +44,12 @@ class RemoveExpiredContent:
         providers = await (
             await superdesk.get_resource_service("ingest_providers").get_async(req=None, lookup={})
         ).to_list()
-        self.remove_expired({"exclude": [str(p.get("_id")) for p in providers]})
+        await self.remove_expired({"exclude": [str(p.get("_id")) for p in providers]})
         for provider in providers:
             if not provider_name or provider_name == provider.get("name"):
-                self.remove_expired(provider)
+                await self.remove_expired(provider)
 
-    def remove_expired(self, provider):
+    async def remove_expired(self, provider):
         lock_name = "ingest:gc"
 
         if not lock(lock_name, expire=300):
@@ -60,7 +60,7 @@ class RemoveExpiredContent:
             push_notification("ingest:cleaned")
         except Exception as err:
             logger.exception(err)
-            raise ProviderError.expiredContentError(err, provider)
+            raise await ProviderError.expiredContentError(err, provider).send_notifications()
         finally:
             unlock(lock_name)
 

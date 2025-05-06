@@ -29,5 +29,5 @@ class AuditTestCase(TestCase):
             ],
         )
         self.app.config["AUDIT_EXPIRY_MINUTES"] = 5
-        PurgeAudit().run()
+        await PurgeAudit().run()
         self.assertEqual(get_resource_service("audit").find({}).count(), 1)

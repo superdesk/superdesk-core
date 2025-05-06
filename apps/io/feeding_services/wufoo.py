@@ -54,7 +54,7 @@ class WufooFeedingService(FeedingService):
         super().__init__()
         self.fields_cache = {}
 
-    def _update(self, provider, update):
+    async def _update(self, provider, update):
         user = provider["config"]["wufoo_username"]
         wufoo_data = {
             "url": WUFOO_URL.format(subdomain=user),
@@ -64,17 +64,17 @@ class WufooFeedingService(FeedingService):
             "update": update,
         }
         try:
-            parser = self.get_feed_parser(provider, None)
+            parser = await self.get_feed_parser(provider, None)
         except requests.exceptions.Timeout as ex:
-            raise IngestApiError.apiTimeoutError(ex, provider)
+            raise await IngestApiError.apiTimeoutError(ex, provider).send_notifications()
         except requests.exceptions.TooManyRedirects as ex:
-            raise IngestApiError.apiRedirectError(ex, provider)
+            raise await IngestApiError.apiRedirectError(ex, provider).send_notifications()
         except requests.exceptions.RequestException as ex:
-            raise IngestApiError.apiRequestError(ex, provider)
+            raise await IngestApiError.apiRequestError(ex, provider).send_notifications()
         except Exception as error:
             traceback.print_exc()
-            raise IngestApiError.apiGeneralError(error, self.provider)
-        items = parser.parse(wufoo_data, provider)
+            raise await IngestApiError.apiGeneralError(error, self.provider).send_notifications()
+        items = await parser.parse(wufoo_data, provider)
         return [items]
 
 

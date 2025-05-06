@@ -30,8 +30,8 @@ class DPAFeedParser(NewsMLTwoFeedParser):
     def can_parse(self, xml):
         return super().can_parse(xml)
 
-    def parse(self, xml, provider=None):
-        items = super().parse(xml, provider)
+    async def parse(self, xml, provider=None):
+        items = await super().parse(xml, provider)
         for item in items:
             if "versioncreated" in item:
                 item["versioncreated"] = item["versioncreated"].astimezone(utc)
