@@ -290,12 +290,14 @@ async def clean_dbs(app=None, async_app: SuperdeskAsyncApp | None = None, force=
                         es.elastic(resource).delete_by_query(
                             index=alias,
                             body={"query": {"match_all": {}}},
-                            refresh="wait_for",
+                            refresh=True,
                         )
                     except elasticsearch.exceptions.NotFoundError:
                         pass
 
-                resources_processed.add(resource)
+                # TODO-ASYNC: Figure out what's going on here, uncommenting this line causes
+                # some resources to not be wiped before running tests
+                # resources_processed.add(resource)
 
             await drop_mongo(app)
 

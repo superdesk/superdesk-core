@@ -9,7 +9,7 @@
 # at https://www.sourcefabric.org/superdesk/license
 
 from unittest import mock
-from unittest.mock import MagicMock
+from unittest.mock import AsyncMock
 
 from apps.highlights import init_app
 from superdesk.tests import TestCase
@@ -46,12 +46,12 @@ class CreateMethodTestCase(TestCase):
         self.db_items = {"tag:item_1": db_item_1, "tag:item_2": db_item_2}
 
     async def test_pushes_notifications_for_newly_highlighted_items(self, fake_get_service, fake_push_notify):
-        def fake_find_one(**kwargs):
+        async def fake_find_one(**kwargs):
             item_id = kwargs.get("_id")
             return self.db_items.get(item_id)
 
-        fake_archive_service = MagicMock()
-        fake_archive_service.find_one = fake_find_one
+        fake_archive_service = AsyncMock()
+        fake_archive_service.find_one_async = fake_find_one
 
         fake_get_service.return_value = fake_archive_service
 
@@ -59,7 +59,7 @@ class CreateMethodTestCase(TestCase):
         req_item_1 = {"marked_item": "tag:item_1", "highlights": ["highlight_X"]}
         req_item_2 = {"marked_item": "tag:item_2", "highlights": ["highlight_Y"]}
 
-        self.instance.create([req_item_1, req_item_2])
+        await self.instance.create_async([req_item_1, req_item_2])
 
         # notifications should have been pushed, one for each highlighted item
         self.assertEqual(fake_push_notify.call_count, 2)
@@ -71,12 +71,12 @@ class CreateMethodTestCase(TestCase):
         self.db_items["tag:item_1"]["highlights"] = ["highlight_X"]
         self.db_items["tag:item_2"]["highlights"] = ["highlight_Y"]
 
-        def fake_find_one(**kwargs):
+        async def fake_find_one(**kwargs):
             item_id = kwargs.get("_id")
             return self.db_items.get(item_id)
 
-        fake_archive_service = MagicMock()
-        fake_archive_service.find_one = fake_find_one
+        fake_archive_service = AsyncMock()
+        fake_archive_service.find_one_async = fake_find_one
 
         fake_get_service.return_value = fake_archive_service
 
@@ -84,7 +84,7 @@ class CreateMethodTestCase(TestCase):
         req_item_1 = {"marked_item": "tag:item_1", "highlights": ["highlight_X"]}
         req_item_2 = {"marked_item": "tag:item_2", "highlights": ["highlight_Y"]}
 
-        self.instance.create([req_item_1, req_item_2])
+        await self.instance.create_async([req_item_1, req_item_2])
 
         # notifications should have been pushed, one for each highlighted item
         self.assertEqual(fake_push_notify.call_count, 2)

@@ -15,7 +15,6 @@ from eve.versioning import resolve_document_version
 from eve.methods.common import resolve_document_etag
 from quart_babel import gettext as _
 
-from superdesk.core import get_config
 from superdesk.types import PublishRequest, PublishSenderType, SubscriberType, DesksResourceModel
 from superdesk.publish_async.commands import publish_item
 from superdesk.publish_async.utils import get_utc_publish_schedule, SCHEDULE_SETTINGS, PUBLISH_SCHEDULE
@@ -40,6 +39,7 @@ from apps.archive.common import (
     validate_schedule,
 )
 from apps.archive.usage import track_usage, update_refs
+from apps.legal_archive.commands import import_into_legal_archive
 from apps.common.components.utils import get_component
 from apps.content import push_content_notification
 from apps.content_types.content_types import DEFAULT_SCHEMA
@@ -802,9 +802,8 @@ class BasePublishService(AsyncBaseService):
 
         if is_legal_archive_enabled() and doc.get(ITEM_STATE) != CONTENT_STATE.SCHEDULED:
             kwargs = {"item_id": doc.get(ID_FIELD)}
-            # TODO-ASYNC: Disabled for now until this module is upgraded to async
             # countdown=3 is for elasticsearch to be refreshed with archive and published changes
-            # await import_into_legal_archive.apply_async(countdown=3, kwargs=kwargs)  # @UndefinedVariable
+            await import_into_legal_archive.apply_async(countdown=3, kwargs=kwargs)  # @UndefinedVariable
 
     def _set_updates_for_media_items(self, doc, updates):
         if doc.get("type") not in MEDIA_TYPES or updates.get("operation") != "publish":

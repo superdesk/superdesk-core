@@ -11,11 +11,11 @@ from features.steps.steps import apply_placeholders
 @given("highlights")
 @async_run_until_complete
 async def given_highlights(context):
-    with context.app.app_context():
+    async with context.app.app_context():
         context.desks = {"name": "test"}
         await get_resource_service("desks").post_async([context.desks])
         context.highlights = {"name": "highlight", "desks": [context.desks["_id"]], "auto_insert": "now-12h"}
-        get_resource_service("highlights").post([context.highlights])
+        await get_resource_service("highlights").post_async([context.highlights])
         task = {"desk": context.desks["_id"]}
         context.items = [
             {
@@ -32,10 +32,10 @@ async def given_highlights(context):
             },
             {"headline": "old", "state": "in_progress", "task": task, "versioncreated": utcnow() - timedelta(days=2)},
         ]
-        get_resource_service("archive").post(context.items)
+        await get_resource_service("archive").post_async(context.items)
         for item in context.items:
             marks = [{"highlights": context.highlights["_id"], "marked_item": item["_id"]}]
-            get_resource_service("marked_for_highlights").post(marks)
+            await get_resource_service("marked_for_highlights").post_async(marks)
 
 
 @when("we create highlights package")

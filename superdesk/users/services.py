@@ -105,8 +105,7 @@ async def get_invisible_stages_async(user_id):
     user_desk_ids = await DesksResourceModel.get_service().mongo_async.distinct(
         "_id", {"members.user": [ObjectId(user_id)]}
     )
-    # TODO-ASYNC[stages]: Upgrade to async when updating the ``stages`` module
-    return get_resource_service("stages").get_stages_by_visibility(False, user_desk_ids)
+    return await get_resource_service("stages").get_stages_by_visibility_async(False, user_desk_ids)
 
 
 def set_sign_off(user):

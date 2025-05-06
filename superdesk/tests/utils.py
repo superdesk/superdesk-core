@@ -1,3 +1,4 @@
+from typing import Any
 from bson import ObjectId
 
 from superdesk.core import get_current_async_app
@@ -5,122 +6,145 @@ from superdesk.core.resources import ResourceModel
 from superdesk import get_resource_service
 
 
-async def find_one(resource: str, **kwargs) -> dict | None:
+def _get_eve_service(resource: str) -> Any | None:
+    try:
+        return get_resource_service(resource)
+    except KeyError:
+        return None
+
+
+async def find_one(resource: str, use_eve: bool = True, **kwargs) -> dict | None:
     async_app = get_current_async_app()
+    eve_service = _get_eve_service(resource)
 
     try:
-        model_instance = await async_app.resources.get_resource_service(resource).find_one(**kwargs)
-        return model_instance.to_dict(context={"use_objectid": True}) if model_instance else None
+        if not eve_service or not use_eve:
+            model_instance = await async_app.resources.get_resource_service(resource).find_one(**kwargs)
+            return model_instance.to_dict(context={"use_objectid": True}) if model_instance else None
     except KeyError:
         pass
 
-    service = get_resource_service(resource)
-    if hasattr(service, "find_one_async"):
-        return await service.find_one_async(req=None, **kwargs)
+    if not eve_service:
+        raise RuntimeError(f"Resource {resource} not found")
+    elif hasattr(eve_service, "find_one_async"):
+        return await eve_service.find_one_async(req=None, **kwargs)
     else:
-        return service.find_one(req=None, **kwargs)
+        return eve_service.find_one(req=None, **kwargs)
 
 
-async def find_by_id(resource: str, item_id: str | ObjectId, **kwargs) -> dict | None:
+async def find_by_id(resource: str, item_id: str | ObjectId, use_eve: bool = True, **kwargs) -> dict | None:
     async_app = get_current_async_app()
+    eve_service = _get_eve_service(resource)
 
     try:
-        model_instance = await async_app.resources.get_resource_service(resource).find_by_id(**kwargs)
-        return model_instance.to_dict(context={"use_objectid": True}) if model_instance else None
+        if not eve_service or not use_eve:
+            model_instance = await async_app.resources.get_resource_service(resource).find_by_id(item_id, **kwargs)
+            return model_instance.to_dict(context={"use_objectid": True}) if model_instance else None
     except KeyError:
         pass
 
-    service = get_resource_service(resource)
-    if hasattr(service, "find_one_async"):
-        return await service.find_one_async(req=None, _id=item_id, **kwargs)
+    if not eve_service:
+        raise RuntimeError(f"Resource {resource} not found")
+    elif hasattr(eve_service, "find_one_async"):
+        return await eve_service.find_one_async(req=None, _id=item_id, **kwargs)
     else:
-        return service.find_one(req=None, _id=item_id, **kwargs)
+        return eve_service.find_one(req=None, _id=item_id, **kwargs)
 
 
-async def find_many(resource: str, lookup: dict | None = None, **kwargs) -> list[dict]:
+async def find_many(resource: str, lookup: dict | None = None, use_eve: bool = True, **kwargs) -> list[dict]:
     async_app = get_current_async_app()
+    eve_service = _get_eve_service(resource)
 
     try:
-        cursor = await async_app.resources.get_resource_service(resource).search(lookup or {}, **kwargs)
-        return await cursor.to_list_raw()
+        if not eve_service or not use_eve:
+            cursor = await async_app.resources.get_resource_service(resource).search(lookup or {}, **kwargs)
+            return await cursor.to_list_raw()
     except KeyError:
         pass
 
-    service = get_resource_service(resource)
-    if hasattr(service, "find_one_async"):
-        return await (await service.get_async(req=None, lookup=lookup, **kwargs)).to_list()
+    if not eve_service:
+        raise RuntimeError(f"Resource {resource} not found")
+    elif hasattr(eve_service, "find_one_async"):
+        return await (await eve_service.get_async(req=None, lookup=lookup, **kwargs)).to_list()
     else:
-        return list(service.get(req=None, lookup=lookup, **kwargs))
+        return list(eve_service.get(req=None, lookup=lookup, **kwargs))
 
 
 async def post_items(
-    resource: str, items: list[dict] | list[ResourceModel], use_eve: bool = False
+    resource: str, items: list[dict] | list[ResourceModel], use_eve: bool = True
 ) -> list[str | ObjectId]:
     async_app = get_current_async_app()
+    eve_service = _get_eve_service(resource)
 
     try:
-        eve_service = get_resource_service(resource)
-    except KeyError:
-        eve_service = None
-
-    try:
-        if eve_service is None or not use_eve:
+        if not eve_service or not use_eve:
             new_items = await async_app.resources.get_resource_service(resource).create(items)
             return [item.id for item in new_items]
     except KeyError:
         pass
 
-    if hasattr(eve_service, "post_async"):
+    if not eve_service:
+        raise RuntimeError(f"Resource {resource} not found")
+    elif hasattr(eve_service, "post_async"):
         return await eve_service.post_async(items)
     else:
         return eve_service.post(items)
 
 
-async def patch_item(resource: str, item_id: str | ObjectId, updates: dict) -> None:
+async def patch_item(resource: str, item_id: str | ObjectId, updates: dict, use_eve: bool = True) -> None:
     async_app = get_current_async_app()
+    eve_service = _get_eve_service(resource)
 
     try:
-        await async_app.resources.get_resource_service(resource).update(item_id, updates)
-        return
+        if not eve_service or not use_eve:
+            await async_app.resources.get_resource_service(resource).update(item_id, updates)
+            return
     except KeyError:
         pass
 
-    service = get_resource_service(resource)
-    if hasattr(service, "patch_async"):
-        await service.patch_async(item_id, updates)
+    if not eve_service:
+        raise RuntimeError(f"Resource {resource} not found")
+    elif hasattr(eve_service, "patch_async"):
+        await eve_service.patch_async(item_id, updates)
     else:
-        return service.patch(item_id, updates)
+        return eve_service.patch(item_id, updates)
 
 
-async def system_update(resource: str, item_id: str | ObjectId, updates: dict, original: dict) -> None:
+async def system_update(resource: str, item_id: str | ObjectId, updates: dict, original: dict, use_eve=True) -> None:
     async_app = get_current_async_app()
+    eve_service = _get_eve_service(resource)
 
     try:
-        await async_app.resources.get_resource_service(resource).system_update(item_id, updates)
-        return
+        if not eve_service or not use_eve:
+            await async_app.resources.get_resource_service(resource).system_update(item_id, updates)
+            return
     except KeyError:
         pass
 
-    service = get_resource_service(resource)
-    if hasattr(service, "system_update_async"):
-        await service.system_update_async(item_id, updates, original)
+    if not eve_service:
+        raise RuntimeError(f"Resource {resource} not found")
+    elif hasattr(eve_service, "system_update_async"):
+        await eve_service.system_update_async(item_id, updates, original)
     else:
-        return service.system_update(item_id, updates, original)
+        return eve_service.system_update(item_id, updates, original)
 
 
-async def delete_items(resource: str, lookup: dict | None = None) -> None:
+async def delete_items(resource: str, lookup: dict | None = None, use_eve: bool = True) -> None:
     if lookup is None:
         lookup = {}
     async_app = get_current_async_app()
+    eve_service = _get_eve_service(resource)
 
     try:
-        await async_app.resources.get_resource_service(resource).delete_many(lookup)
-        return
+        if not eve_service or not use_eve:
+            await async_app.resources.get_resource_service(resource).delete_many(lookup)
+            return
     except KeyError:
         pass
 
-    service = get_resource_service(resource)
-    if hasattr(service, "delete_action_async"):
-        await service.delete_action_async(lookup)
+    if not eve_service:
+        raise RuntimeError(f"Resource {resource} not found")
+    elif hasattr(eve_service, "delete_action_async"):
+        await eve_service.delete_action_async(lookup)
     else:
-        return service.delete_action(lookup)
+        return eve_service.delete_action(lookup)

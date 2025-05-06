@@ -435,7 +435,9 @@ class RemoveExpiredContent:
         archive_service = get_resource_service("archive")
         item_id = item.get(ID_FIELD)
         moved_to_archived = self._conforms_to_archived_filter(item, filter_conditions)
-        published_items = await published_service.get_from_mongo_async(req=None, lookup={"item_id": item_id}).to_list()
+        published_items = await (
+            await published_service.get_from_mongo_async(req=None, lookup={"item_id": item_id})
+        ).to_list()
 
         try:
             if published_items:

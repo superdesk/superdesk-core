@@ -64,7 +64,7 @@ from apps.prepopulate.app_initialize import app_initialize_data_handler
 from authlib.jose import jwt
 from authlib.jose.errors import BadSignatureError
 
-from .utils import find_one, post_items, patch_item, system_update, delete_items, find_many
+from .utils import find_one, post_items, patch_item, system_update, delete_items, find_many, find_by_id
 
 external_url = "http://thumbs.dreamstime.com/z/digital-nature-10485007.jpg"
 DATETIME_FORMAT = "%Y-%m-%dT%H:%M:%S%z"
@@ -510,9 +510,6 @@ async def step_impl_given_empty(context, resource):
 async def step_impl_given_(context, resource):
     data = apply_placeholders(context, context.text)
     async with context.app.test_request_context(context.app.config["URL_PREFIX"]):
-        if not is_user_resource(resource):
-            await delete_items(resource)
-
         items = [parse(item, resource) for item in json.loads(data)]
         if is_user_resource(resource):
             for item in items:
@@ -564,7 +561,7 @@ async def step_impl_given_resource_with_provider(context, provider):
     async with context.app.test_request_context(context.app.config["URL_PREFIX"]):
         await delete_items(resource)
         items = [parse(item, resource) for item in json.loads(context.text)]
-        ingest_provider = await find_one("ingest_providers", _id=context.providers[provider])
+        ingest_provider = await find_by_id("ingest_providers", context.providers[provider])
         for item in items:
             item["ingest_provider"] = context.providers[provider]
             item["source"] = ingest_provider.get("source")
@@ -739,7 +736,7 @@ async def embed_routing_scheme_rules(scheme):
     rules_filters = ((rule, str(rule["filter"])) for rule in scheme["rules"] if rule.get("filter"))
 
     for rule, filter_id in rules_filters:
-        content_filter = await find_one("content_filters", _id=filter_id)
+        content_filter = await find_by_id("content_filters", filter_id)
         rule["filter"] = content_filter
 
 
@@ -748,7 +745,7 @@ async def embed_routing_scheme_rules(scheme):
 async def step_impl_fetch_from_provider_ingest_using_routing(context, provider_name, guid):
     async with context.app.test_request_context(context.app.config["URL_PREFIX"]):
         _id = apply_placeholders(context, context.text)
-        routing_scheme = await find_one("routing_schemes", _id=_id)
+        routing_scheme = await find_by_id("routing_schemes", _id)
         await embed_routing_scheme_rules(routing_scheme)
         await fetch_from_provider(context, provider_name, guid, routing_scheme)
 
@@ -760,7 +757,7 @@ async def step_impl_fetch_from_provider_ingest_using_routing_with_desk(context, 
         _id = apply_placeholders(context, context.text)
         desk_id = apply_placeholders(context, desk)
         stage_id = apply_placeholders(context, stage)
-        routing_scheme = await find_one("routing_schemes", _id=_id)
+        routing_scheme = await find_by_id("routing_schemes", _id)
         await embed_routing_scheme_rules(routing_scheme)
         await fetch_from_provider(context, provider_name, guid, routing_scheme, desk_id, stage_id)
 
@@ -770,7 +767,7 @@ async def step_impl_fetch_from_provider_ingest_using_routing_with_desk(context, 
 async def step_impl_ingest_with_routing_scheme(context, provider_name, guid):
     async with context.app.test_request_context(context.app.config["URL_PREFIX"]):
         _id = apply_placeholders(context, context.text)
-        routing_scheme = await find_one("routing_schemes", _id=_id)
+        routing_scheme = await find_by_id("routing_schemes", _id)
         await embed_routing_scheme_rules(routing_scheme)
         await fetch_from_provider(context, provider_name, guid, routing_scheme)
 
@@ -786,7 +783,7 @@ async def fetch_from_provider(context, provider_name, guid, routing_scheme=None,
     provider = await find_one("ingest_providers", name=provider_name)
     provider["routing_scheme"] = routing_scheme
     if "rule_set" in provider:
-        rule_set = await find_one("rule_sets", _id=provider["rule_set"])
+        rule_set = await find_by_id("rule_sets", provider["rule_set"])
     else:
         rule_set = None
 
@@ -2532,7 +2529,7 @@ async def validate_routed_item(context, rule_name, is_routed, is_transformed=Fal
             else:
                 assert len(item) == 0
 
-    scheme = await find_one("routing_schemes", _id=data["routing_scheme"])
+    scheme = await find_by_id("routing_schemes", data["routing_scheme"])
     rule = next((rule for rule in scheme["rules"] if rule["name"].lower() == rule_name.lower()), {})
     await validate_rule("fetch", "routed")
     await validate_rule("publish", "published")
@@ -2578,7 +2575,7 @@ async def get_published_items(query):
     req = ParsedRequest()
     req.max_results = 100
     req.args = {"filter": json.dumps(query)}
-    return await get_resource_service("published").get_async(lookup=None, req=req).to_list()
+    return await (await get_resource_service("published").get_async(lookup=None, req=req)).to_list()
 
 
 def assert_items_in_package(item, state, desk, stage):
@@ -2755,7 +2752,7 @@ async def expire_content(context):
         ids = json.loads(apply_placeholders(context, context.text))
         expiry = utcnow() - timedelta(minutes=5)
         for item_id in ids:
-            original = await find_one("archive", _id=item_id)
+            original = await find_by_id("archive", item_id)
             await system_update("archive", item_id, {"expiry": expiry}, original)
             await get_resource_service("published").update_published_items(item_id, "expiry", expiry)
 
@@ -2777,7 +2774,7 @@ async def run_overdue_schedule_jobs(context):
 
         published_service = get_resource_service("published")
         for item_id in ids:
-            original = await find_one("archive", _id=item_id)
+            original = await find_by_id("archive", item_id)
             await system_update("archive", item_id, updates, original)
             await published_service.update_published_items(item_id, "publish_schedule", lapse_time)
             await published_service.update_published_items(
@@ -3109,7 +3106,7 @@ async def when_lock_expires(context, url):
     url = apply_placeholders(context, url).encode("ascii").decode("unicode-escape")
     resource, _id = url.lstrip("/").rstrip("/").split("/")
     async with context.app.app_context():
-        orig = context.app.data.find_one(resource, req=None, _id=_id)
+        orig = await find_by_id(resource, _id)
         assert orig is not None, "could not find {}/{}".format(resource, _id)
         context.app.data.update(resource, orig["_id"], {"_lock_time": utcnow() - timedelta(hours=48)}, orig)
 
@@ -3129,7 +3126,7 @@ async def then_we_get_picture_metadta(context, media):
 @then('we check "{resource}" db item "{item_id}"')
 @async_run_until_complete
 async def check_resource_db_item(context, resource: str, item_id: str):
-    item = await find_one(resource, _id=item_id)
+    item = await find_by_id(resource, item_id)
     assert item is not None, "Item not found"
 
     context_data = json.loads(apply_placeholders(context, context.text))

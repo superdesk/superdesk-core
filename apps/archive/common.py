@@ -635,8 +635,7 @@ async def get_expiry(desk_id, stage_id, offset=None):
             raise SuperdeskApiError.notFoundError(_("Invalid desk identifier {desk_id}").format(desk_id=desk_id))
 
     if stage_id:
-        # TODO-ASYNC[stages]: update this code when StagesService is async
-        stage = get_resource_service("stages").find_one(req=None, _id=stage_id)
+        stage = await get_resource_service("stages").find_one_async(req=None, _id=stage_id)
 
         if not stage:
             raise SuperdeskApiError.notFoundError(_("Invalid stage identifier {stage_id}").format(stage_id=stage_id))

@@ -1,6 +1,7 @@
 from quart_babel import lazy_gettext
-import superdesk
 
+import superdesk
+from superdesk.eve_async import AsyncBaseService
 from superdesk.notification import push_notification
 from apps.content import push_content_notification
 from superdesk import get_resource_service
@@ -31,25 +32,27 @@ class ClosedDeskResource(superdesk.Resource):
     item_methods = ["PATCH"]
 
 
-class ClosedDeskService(superdesk.Service):
-    def on_updated(self, updates, original):
+class ClosedDeskService(AsyncBaseService):
+    async def on_updated_async(self, updates, original):
         is_closed = updates.get("is_closed", False)
         if not is_closed and original.get("is_closed"):
             desk_id = updates["_id"]
-            self.remove_marks(desk_id)
+            await self.remove_marks(desk_id)
         push_notification("desks:closed", is_closed=is_closed, _id=original.get("_id"), _etag=updates.get("_etag"))
 
-    def remove_marks(self, desk_id):
+    async def remove_marks(self, desk_id):
         """Remove "mark for desk" attribute
 
         :param ObjectId desk_id: id of the desk being re-opened
         """
         for service_name in ("archive", "published"):
             service = get_resource_service(service_name)
-            marked_items = service.find({"task.desk": desk_id, "marked_desks": {"$exists": True, "$ne": []}})
-            for item in marked_items:
+            marked_items = await service.find_async(
+                {"task.desk": desk_id, "marked_desks": {"$exists": True, "$ne": []}}
+            )
+            async for item in marked_items:
                 marked_desks = [m for m in item["marked_desks"] if "user_marked" in m]
-                service.system_update(item["_id"], {"marked_desks": marked_desks}, item)
+                await service.system_update_async(item["_id"], {"marked_desks": marked_desks}, item)
                 push_content_notification([item])
 
 

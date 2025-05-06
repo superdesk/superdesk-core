@@ -963,19 +963,19 @@ class AsyncArchiveService(AsyncResourceService[ArchiveResourceModel], Highlights
         :param updates: Item updates
         """
 
-        def abort_if_readonly_stage(stage_id):
-            stage = superdesk.get_resource_service("stages").find_one(req=None, _id=stage_id)
+        async def abort_if_readonly_stage(stage_id):
+            stage = await superdesk.get_resource_service("stages").find_one_async(req=None, _id=stage_id)
             if stage.get("local_readonly"):
                 abort(403, response={"readonly": True})
 
         orig_stage_id = item.task.stage if getattr(item, "task", None) else None
         if orig_stage_id and get_user() and not item.get(INGEST_ID):
-            abort_if_readonly_stage(orig_stage_id)
+            await abort_if_readonly_stage(orig_stage_id)
 
         if updates:
             dest_stage_id = updates.get("task", {}).get("stage")
             if dest_stage_id and get_user() and not item.get(INGEST_ID):
-                abort_if_readonly_stage(dest_stage_id)
+                await abort_if_readonly_stage(dest_stage_id)
 
     async def _validate_updates(self, original, updates, user):
         """Validate updates to the article.

@@ -13,15 +13,16 @@ async def when_we_run_create_content_task(context):
     from apps.templates import create_scheduled_content
 
     now = utcnow() + timedelta(days=8)
-    with context.app.app_context():
+    async with context.app.app_context():
         items = await create_scheduled_content(now)
         for item in items:
             set_placeholder(context, "ITEM_ID", str(item["_id"]))
 
 
 @then('next run is on monday "{time}"')
-def then_next_run_is_on_monday(context, time):
-    data = get_json_data(context.response)
+@async_run_until_complete
+async def then_next_run_is_on_monday(context, time):
+    data = await get_json_data(context.response)
     next_run = parse_date(data.get("next_run"))
     fmt = "%H:%M:%S"
 

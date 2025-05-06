@@ -39,12 +39,12 @@ class DesksAsyncService(AsyncResourceService[DesksResourceModel]):
 
             if desk.working_stage is None:
                 stages_to_be_linked_with_desk.append("working_stage")
-                stage_id = stage_service.create_working_stage()
+                stage_id = await stage_service.create_working_stage()
                 desk.working_stage = stage_id[0]
 
             if desk.incoming_stage is None:
                 stages_to_be_linked_with_desk.append("incoming_stage")
-                stage_id = stage_service.create_incoming_stage()
+                stage_id = await stage_service.create_incoming_stage()
                 desk.incoming_stage = stage_id[0]
 
             desk.desk_type = DeskTypeEnum.AUTHORING
@@ -56,7 +56,7 @@ class DesksAsyncService(AsyncResourceService[DesksResourceModel]):
                 docs_entry.update(desk.to_dict())
 
             for stage_type in stages_to_be_linked_with_desk:
-                stage_service.patch(desk.to_dict()[stage_type], {"desk": desk.id})
+                await stage_service.patch_async(desk.to_dict()[stage_type], {"desk": desk.id})
 
             # make the desk available in default content template
             content_templates = get_resource_service("content_templates")
@@ -116,7 +116,7 @@ class DesksAsyncService(AsyncResourceService[DesksResourceModel]):
                 {"rules.actions.publish.desk": doc.id},
             ]
         }
-        routing_rule_count = await get_resource_service("routing_schemes").count(routing_rules_query)
+        routing_rule_count = await get_resource_service("routing_schemes").count_async(routing_rules_query)
         if routing_rule_count > 0:
             raise SuperdeskApiError.preconditionFailedError(
                 message=_("Cannot delete desk as routing scheme(s) are associated with the desk")
@@ -141,7 +141,7 @@ class DesksAsyncService(AsyncResourceService[DesksResourceModel]):
         Overriding to delete stages before deleting a desk
         """
 
-        get_resource_service("stages").delete(lookup={"desk": lookup.get(ID_FIELD)})
+        await get_resource_service("stages").delete_async(lookup={"desk": lookup.get(ID_FIELD)})
         return await super().delete_many(lookup)
 
     async def on_deleted(self, doc: DesksResourceModel):

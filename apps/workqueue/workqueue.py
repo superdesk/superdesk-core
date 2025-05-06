@@ -9,7 +9,7 @@
 # at https://www.sourcefabric.org/superdesk/license
 
 import superdesk
-
+from superdesk.eve_async import AsyncBaseService
 from superdesk.metadata.item import get_schema
 
 
@@ -30,5 +30,5 @@ class WorkqueueResource(superdesk.Resource):
     item_methods = ["GET"]
 
 
-class WorkqueueService(superdesk.Service):
+class WorkqueueService(AsyncBaseService):
     pass
