@@ -38,7 +38,7 @@ class ContextAwareSerializerFactory:
         Returns:
             Any: The casted value, or the original value if no casting was possible.
         """
-        if value is None or isinstance(value, bool) or value == 0:
+        if value is None or isinstance(value, (bool, int)) or value == 0:
             return value
 
         try:
