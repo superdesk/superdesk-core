@@ -49,7 +49,7 @@ class APTestCase(TestCase):
         service.provider = provider
         mock_get = service.session.get.return_value
         mock_get.content = self.feed_raw
-        items = service._update(provider, {})[0]
+        items = (await service._update(provider, {}))[0]
         self.assertEqual(len(items), 3)
 
     @mock.patch.object(http_base_service, "requests")
@@ -73,7 +73,7 @@ class APTestCase(TestCase):
         self.assertNotIn("private", provider)
         with mock.patch.object(feed_parser, "parse"):
             update = {}
-            items = service._update(provider, update)[0]
+            items = (await service._update(provider, update))[0]
             items.reverse.assert_called_once_with()
             provider.update(update)
 
@@ -81,5 +81,5 @@ class APTestCase(TestCase):
         # private data must now be present
         self.assertIn("private", provider)
         with mock.patch.object(feed_parser, "parse"):
-            items = service._update(provider, {})[0]
+            items = (await service._update(provider, {}))[0]
             items.reverse.assert_not_called()

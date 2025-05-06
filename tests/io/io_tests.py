@@ -58,20 +58,22 @@ class UtilsTest(AsyncTestCase):
             ),
         )
 
-    def test_get_xml_parser_newsmlg2(self):
+    async def test_get_xml_parser_newsmlg2(self):
         etree = get_etree("snep.xml")
         self.assertIsInstance(
-            FileFeedingService().get_feed_parser({"feed_parser": "newsml2"}, etree), NewsMLTwoFeedParser
+            await FileFeedingService().get_feed_parser({"feed_parser": "newsml2"}, etree), NewsMLTwoFeedParser
         )
 
-    def test_get_xml_parser_nitf(self):
+    async def test_get_xml_parser_nitf(self):
         etree = get_etree("nitf-fishing.xml")
-        self.assertIsInstance(FileFeedingService().get_feed_parser({"feed_parser": "nitf"}, etree), NITFFeedParser)
+        self.assertIsInstance(
+            await FileFeedingService().get_feed_parser({"feed_parser": "nitf"}, etree), NITFFeedParser
+        )
 
-    def test_get_xml_parser_newsml12(self):
+    async def test_get_xml_parser_newsml12(self):
         etree = get_etree("afp.xml")
         self.assertIsInstance(
-            FileFeedingService().get_feed_parser({"feed_parser": "newsml12"}, etree), NewsMLOneFeedParser
+            await FileFeedingService().get_feed_parser({"feed_parser": "newsml12"}, etree), NewsMLOneFeedParser
         )
 
     def test_is_old_content(self):
@@ -81,19 +83,19 @@ class UtilsTest(AsyncTestCase):
 
 
 class ItemTest(TestCase):
-    def setUpFixture(self, filename):
+    async def setUpFixture(self, filename):
         self.tree = get_etree(filename)
         provider = {"name": "Test"}
 
         for parser in registered_feed_parsers.values():
             if parser.can_parse(self.tree):
-                self.item = parser.parse(self.tree, provider)[0]
+                self.item = (await parser.parse(self.tree, provider))[0]
 
 
 class TextParserTest(ItemTest):
     async def asyncSetUp(self):
         await super().asyncSetUp()
-        self.setUpFixture("text.xml")
+        await self.setUpFixture("text.xml")
 
     def test_instance(self):
         self.assertTrue(self.item)
@@ -138,7 +140,7 @@ class TextParserTest(ItemTest):
 class PictureParserTest(ItemTest):
     async def asyncSetUp(self):
         await super().asyncSetUp()
-        self.setUpFixture("picture.xml")
+        await self.setUpFixture("picture.xml")
 
     def test_type(self):
         self.assertEqual("picture", self.item.get("type"))
@@ -184,7 +186,7 @@ class PictureParserTest(ItemTest):
 class SNEPParserTest(ItemTest):
     async def asyncSetUp(self):
         await super().asyncSetUp()
-        self.setUpFixture("snep.xml")
+        await self.setUpFixture("snep.xml")
 
     def test_content_set(self):
         self.assertEqual(4, self.item.get("priority"))

@@ -21,7 +21,7 @@ from superdesk.flask import g
 from superdesk import get_resource_service, etree
 from superdesk.utc import utcnow
 from superdesk.errors import SuperdeskApiError, ProviderError
-from superdesk.tests import TestCase, markers, utils as test_utils
+from superdesk.tests import TestCase, utils as test_utils, fixtures
 from superdesk.tests.setup_teardown import setup_providers, teardown_providers
 from superdesk.io import get_feeding_service
 from superdesk.io.commands.remove_expired_content import RemoveExpiredContent, get_expired_items
@@ -159,8 +159,8 @@ class UpdateIngestTest(TestCase):
             "and run eventually",
         )
 
-    @markers.requires_async_celery
-    async def test_change_last_updated(self):
+    @patch("superdesk.io.feeding_services.file_service.FileFeedingService._test")
+    async def test_change_last_updated(self, *mocks):
         ingest_provider = {"name": "test", "feeding_service": "file", "feed_parser": "nitf", "_etag": "test"}
         await test_utils.post_items("ingest_providers", [ingest_provider])
         await update_provider(ingest_provider)
@@ -173,12 +173,12 @@ class UpdateIngestTest(TestCase):
         items = await provider_service.fetch_ingest(reuters_guid)
         for item in items[:4]:
             item["expiry"] = utcnow() + timedelta(minutes=11)
-        self.assertEqual(4, len(filter_expired_items(provider, items)))
+        self.assertEqual(4, len(await filter_expired_items(provider, items)))
 
     async def test_filter_expired_items_with_no_expiry(self):
         provider, provider_service = await self.setup_reuters_provider()
         items = await provider_service.fetch_ingest(reuters_guid)
-        self.assertEqual(0, len(filter_expired_items(provider, items)))
+        self.assertEqual(0, len(await filter_expired_items(provider, items)))
 
     async def test_query_getting_expired_content(self):
         provider, provider_service = await self.setup_reuters_provider()
@@ -342,8 +342,8 @@ class UpdateIngestTest(TestCase):
         provider = await test_utils.find_one("ingest_providers", name=provider_name)
         file_path = os.path.join(provider.get("config", {}).get("path", ""), "IPTC7901_odd_charset.txt")
         provider_service = self._get_provider_service(provider)
-        feeding_parser = provider_service.get_feed_parser(provider)
-        items = [feeding_parser.parse(file_path, provider)]
+        feeding_parser = await provider_service.get_feed_parser(provider)
+        items = [await feeding_parser.parse(file_path, provider)]
 
         # ingest the items and check the subject code has been derived
         await self.ingest_items(items, provider, provider_service)
@@ -362,8 +362,8 @@ class UpdateIngestTest(TestCase):
         provider = await test_utils.find_one("ingest_providers", name=provider_name)
         file_path = os.path.join(provider.get("config", {}).get("path", ""), "IPTC7901_odd_charset.txt")
         provider_service = self._get_provider_service(provider)
-        feeding_parser = provider_service.get_feed_parser(provider)
-        items = [feeding_parser.parse(file_path, provider)]
+        feeding_parser = await provider_service.get_feed_parser(provider)
+        items = [await feeding_parser.parse(file_path, provider)]
 
         # ingest the items and check the subject code has been derived
         await self.ingest_items(items, provider, provider_service)
@@ -396,10 +396,10 @@ class UpdateIngestTest(TestCase):
         provider = await test_utils.find_one("ingest_providers", name=provider_name)
         file_path = os.path.join(provider.get("config", {}).get("path", ""), "nitf-fishing.xml")
         provider_service = self._get_provider_service(provider)
-        feeding_parser = provider_service.get_feed_parser(provider)
+        feeding_parser = await provider_service.get_feed_parser(provider)
         with open(file_path, "r") as f:
             xml_string = etree.etree.fromstring(f.read())
-            items = [feeding_parser.parse(xml_string, provider)]
+            items = [await feeding_parser.parse(xml_string, provider)]
             for item in items:
                 item["ingest_provider"] = provider["_id"]
                 item["expiry"] = utcnow() + timedelta(hours=11)
@@ -429,10 +429,10 @@ class UpdateIngestTest(TestCase):
         provider = await test_utils.find_one("ingest_providers", name=provider_name)
         file_path = os.path.join(provider.get("config", {}).get("path", ""), "nitf-fishing.xml")
         provider_service = self._get_provider_service(provider)
-        feeding_parser = provider_service.get_feed_parser(provider)
+        feeding_parser = await provider_service.get_feed_parser(provider)
         with open(file_path, "r") as f:
             xml_string = etree.etree.fromstring(f.read())
-            items = [feeding_parser.parse(xml_string, provider)]
+            items = [await feeding_parser.parse(xml_string, provider)]
             for item in items:
                 item["ingest_provider"] = provider["_id"]
                 item["expiry"] = utcnow() + timedelta(hours=11)
@@ -494,7 +494,7 @@ class UpdateIngestTest(TestCase):
     async def test_get_article_ids(self):
         provider_name = "reuters"
         provider, provider_service = await self.setup_reuters_provider()
-        ids = provider_service._get_article_ids("channel1", utcnow(), utcnow() + timedelta(minutes=-10))
+        ids = await provider_service._get_article_ids("channel1", utcnow(), utcnow() + timedelta(minutes=-10))
         self.assertEqual(len(ids), 3)
         provider = await test_utils.find_one("ingest_providers", name=provider_name)
         self.assertEqual(provider["tokens"]["poll_tokens"]["channel1"], "ExwaY31kfnR2Z2J1cWZ2YnxoYH9kfw==")
@@ -516,8 +516,8 @@ class UpdateIngestTest(TestCase):
         provider = await test_utils.find_one("ingest_providers", name=provider_name)
         file_path = os.path.join(provider.get("config", {}).get("path", ""), "ap_anpa-3.tst")
         provider_service = self._get_provider_service(provider)
-        feeding_parser = provider_service.get_feed_parser(provider)
-        items = [feeding_parser.parse(file_path, provider)]
+        feeding_parser = await provider_service.get_feed_parser(provider)
+        items = [await feeding_parser.parse(file_path, provider)]
 
         # ingest the items and check the subject code has been derived
         items[0]["versioncreated"] = utcnow()
@@ -667,7 +667,6 @@ class UpdateIngestTest(TestCase):
         await ingest_item(items[1], provider, provider_service)
         self.assertEqual("story", items[1].get("profile"))
 
-    @markers.requires_async_celery
     async def test_edited_planning_item_is_not_update(self):
         item = {
             "guid": "urn:onclusive:4112034",
@@ -689,7 +688,8 @@ class UpdateIngestTest(TestCase):
                 "all_day": True,
             },
         }
-        g.user = {"_id": "current_user_id"}
+        await test_utils.post_items("users", [fixtures.users.admin()])
+        g.user = {"_id": fixtures.users.ADMIN_USER_ID}
 
         provider = {
             "_id": "asdnjsandkajsdnjkasnd",
@@ -705,22 +705,21 @@ class UpdateIngestTest(TestCase):
         self.assertTrue(ingested)
         self.assertIn(item["guid"], ids)
 
-        dest = list(event_service.get_from_mongo(req=None, lookup={"guid": item["guid"]}))[0]
+        dest = await (await event_service.get_from_mongo_async(req=None, lookup={"guid": item["guid"]})).next()
         self.assertEqual(dest["name"], "Annual Forum on Anti-Money Laundering and Financial Crime")
         self.assertEqual(dest["state"], "ingested")
         self.assertEqual(dest.get("version_creator"), None)
 
         # edit event
-        event_service.patch(dest["_id"], {"name": "Edit event Name", "update_method": "single"})
-        dest = list(event_service.get_from_mongo(req=None, lookup={"guid": item["guid"]}))[0]
-        self.assertEqual(dest.get("version_creator"), "current_user_id")
+        await event_service.patch_async(dest["_id"], {"name": "Edit event Name", "update_method": "single"})
+        dest = await (await event_service.get_from_mongo_async(req=None, lookup={"guid": item["guid"]})).next()
+        self.assertEqual(dest.get("version_creator"), fixtures.users.ADMIN_USER_ID)
 
         # update event
         ingested, ids = await ingest_item(item, provider=provider, feeding_service={})
         self.assertFalse(ingested)
         self.assertEqual([], ids)
 
-    @markers.requires_async_celery
     async def test_unpublished_event_is_not_update(self):
         item = {
             "guid": "urn:onclusive:411202222",
@@ -742,7 +741,8 @@ class UpdateIngestTest(TestCase):
                 "all_day": True,
             },
         }
-        g.user = {"_id": "current_user_id"}
+        await test_utils.post_items("users", [fixtures.users.admin()])
+        g.user = {"_id": fixtures.users.ADMIN_USER_ID}
 
         provider = {
             "_id": "asdnjsandkajsdnjkasnd",

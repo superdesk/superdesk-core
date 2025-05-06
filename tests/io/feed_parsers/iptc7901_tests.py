@@ -23,12 +23,12 @@ def fixture(filename):
 class IptcTestCase(TestCase):
     parser = IPTC7901FeedParser()
 
-    def open(self, filename):
+    async def open(self, filename):
         provider = {"name": "Test"}
-        return self.parser.parse(fixture(filename), provider)
+        return await self.parser.parse(fixture(filename), provider)
 
     async def test_open_iptc7901_file(self):
-        item = self.open("IPTC7901.txt")
+        item = await self.open("IPTC7901.txt")
         self.assertEqual("text", item["type"])
         self.assertEqual("062", item["ingest_provider_sequence"])
         self.assertEqual("i", item["anpa_category"][0]["qcode"])
@@ -41,7 +41,7 @@ class IptcTestCase(TestCase):
         self.assertTrue(item["ednote"].find("## Editorial contacts"))
 
     async def test_open_iptc7901_file_odd_charset(self):
-        item = self.open("IPTC7901_odd_charset.txt")
+        item = await self.open("IPTC7901_odd_charset.txt")
         self.assertTrue(item["body_html"].find("Müller"))
         self.assertTrue(item["ednote"].find("## Editorial contacts"))
 

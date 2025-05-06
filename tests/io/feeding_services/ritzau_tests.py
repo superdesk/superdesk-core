@@ -26,8 +26,6 @@ PROVIDER = {
 class RitzauTestCase(TestCase):
     async def asyncSetUp(self):
         await super().asyncSetUp()
-        vocab = [{}]
-        self.app.data.insert("vocabularies", vocab)
         dirname = os.path.dirname(os.path.realpath(__file__))
         fixture = os.path.normpath(os.path.join(dirname, "../fixtures", "ritzau_feed.xml"))
         with open(fixture) as f:
@@ -42,5 +40,5 @@ class RitzauTestCase(TestCase):
         service.provider = provider
         mock_get = service.session.get.return_value
         mock_get.text = self.feed_raw
-        items = service._update(provider, {})[0]
+        items = (await service._update(provider, {}))[0]
         self.assertEqual(len(items), 2)

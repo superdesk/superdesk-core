@@ -72,7 +72,7 @@ class APTestCase(TestCase):
         provider["config"]["api_url"] = "https://a.b.c/media/v/content/feed"
         service = APMediaFeedingService()
         service.provider = provider
-        items = service._update(provider, {})[0]
+        items = (await service._update(provider, {}))[0]
         self.assertEqual(len(items), 1)
         self.assertEqual(items[0].get("headline"), "headline")
 
@@ -108,7 +108,7 @@ class APTestCase(TestCase):
         provider["config"]["next_link"] = ""
         service = APMediaFeedingService()
         service.provider = provider
-        items = service._update(provider, {})[0]
+        items = (await service._update(provider, {}))[0]
         self.assertEqual(len(items), 1)
         self.assertEqual(items[0].get("headline"), "BC-BBN--Top Ten")
         self.assertEqual(items[0].get("slugline"), "BBN--Top Ten")

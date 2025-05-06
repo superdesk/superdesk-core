@@ -29,7 +29,7 @@ class DPANewsMLTestCase(TestCase):
         provider = {"name": "Test"}
         with open(fixture, "rb") as f:
             self.nitf = f.read()
-            self.item = self.parser.parse(etree.fromstring(self.nitf), provider)[0]
+            self.item = (await self.parser.parse(etree.fromstring(self.nitf), provider))[0]
 
     def test_headline(self):
         self.assertEqual(self.item.get("headline"), "Eintracht in London: Hintereggers Tränen und Attacke auf Reporter")

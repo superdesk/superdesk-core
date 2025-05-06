@@ -21,22 +21,22 @@ class BaseRitzauTestCase(TestCase):
         await super().asyncSetUp()
         self.app.data.insert("vocabularies", self.vocab)
 
-    def _parse_file(self, filename):
+    async def _parse_file(self, filename):
         dirname = os.path.dirname(os.path.realpath(__file__))
         fixture = os.path.normpath(os.path.join(dirname, "../fixtures", filename))
         provider = {"name": "Test"}
         with open(fixture, "rb") as f:
             self.root_elt = etree.fromstring(f.read())
-            self.item = RitzauFeedParser().parse(self.root_elt, provider)
+            self.item = await RitzauFeedParser().parse(self.root_elt, provider)
 
 
 class RitzauTestCase(BaseRitzauTestCase):
-    def test_can_parse(self):
-        self._parse_file("ritzau_news.xml")
+    async def test_can_parse(self):
+        await self._parse_file("ritzau_news.xml")
         self.assertTrue(RitzauFeedParser().can_parse(self.root_elt))
 
-    def test_content(self):
-        self._parse_file("ritzau_news.xml")
+    async def test_content(self):
+        await self._parse_file("ritzau_news.xml")
         item = self.item
         self.assertEqual(item["version"], 1)
         self.assertEqual(item["byline"], "/ritzau/")
@@ -59,8 +59,8 @@ class RitzauTestCase(BaseRitzauTestCase):
         self.assertEqual(item["priority"], 3)
         self.assertEqual(item["priority"], item["urgency"])
 
-    def test_ednote(self):
-        self._parse_file("ritzau_news_test_ednote.xml")
+    async def test_ednote(self):
+        await self._parse_file("ritzau_news_test_ednote.xml")
         self.assertEqual(
             self.item["ednote"],
             "Lasse Norman Hansen skifter til Corendon-Circus.\n"

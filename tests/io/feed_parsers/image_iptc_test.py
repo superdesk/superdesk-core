@@ -23,7 +23,7 @@ class BaseImageIPTCTestCase(TestCase):
         self.image_path = os.path.normpath(os.path.join(dirname, "../fixtures", self.filename))
         provider = {"name": "Test"}
         parser = ImageIPTCFeedParser()
-        self.item = parser.parse(self.image_path, provider)
+        self.item = await parser.parse(self.image_path, provider)
 
 
 class ImageIPTCTestCase(BaseImageIPTCTestCase):

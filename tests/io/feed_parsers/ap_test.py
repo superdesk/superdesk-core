@@ -26,7 +26,7 @@ class BaseAPTestCase(TestCase):
         provider = {"name": "Test"}
         with open(fixture, "rb") as f:
             self.root_elt = etree.fromstring(f.read())
-            self.items = NewsMLTwoFeedParser().parse(self.root_elt, provider)
+            self.items = await NewsMLTwoFeedParser().parse(self.root_elt, provider)
 
 
 class APTestCase(BaseAPTestCase):

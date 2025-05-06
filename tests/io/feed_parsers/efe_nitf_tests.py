@@ -24,7 +24,7 @@ class EFENITFTestCase(TestCase):
         provider = {"name": "Test"}
         with open(fixture) as f:
             self.nitf = f.read()
-            self.item = EFEFeedParser().parse(etree.fromstring(self.nitf), provider)
+            self.item = await EFEFeedParser().parse(etree.fromstring(self.nitf), provider)
 
     def test_item(self):
         self.assertEqual(self.item.get("headline"), "Honduran president announces Cabinet changes")

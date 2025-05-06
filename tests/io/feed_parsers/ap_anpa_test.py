@@ -44,12 +44,12 @@ class ANPATestCase(TestCase):
         ]
         self.app.data.insert("vocabularies", vocab)
 
-    def open(self, filename):
+    async def open(self, filename):
         provider = {"name": "Test"}
-        return self.parser.parse(fixture(filename), provider)
+        return await self.parser.parse(fixture(filename), provider)
 
     async def test_ed_note(self):
-        item = self.open("anpa-2.tst")
+        item = await self.open("anpa-2.tst")
         self.assertEqual(
             "This is part of an Associated Press investigation into the hidden costs of green energy.", item["ednote"]
         )
@@ -57,23 +57,23 @@ class ANPATestCase(TestCase):
         self.assertEqual("i", item["anpa_category"][0]["qcode"])
 
     async def test_subject_expansion(self):
-        item = self.open("ap_anpa-1.tst")
+        item = await self.open("ap_anpa-1.tst")
         self.assertEqual(item["subject"][0]["qcode"], "15008000")
         self.assertEqual(item["dateline"]["text"], "ATLANTA, Feb 19 AP -")
         self.assertEqual(item["anpa_category"][0]["qcode"], "s")
 
     async def test_table_story(self):
-        item = self.open("ap_anpa-2.tst")
+        item = await self.open("ap_anpa-2.tst")
         self.assertEqual(item["slugline"], "BBO--BaseballExpanded")
         self.assertEqual(item["format"], "preserved")
         self.assertGreater(item["body_html"].find("%08Baltimore;23;13;.639;_;_;8-2;L-1;16-6;7-7"), 0)
 
     async def test_unknown_category_defaults_to_i(self):
-        item = self.open("ap_anpa-3.tst")
+        item = await self.open("ap_anpa-3.tst")
         self.assertEqual(item["anpa_category"][0]["qcode"], "i")
 
     async def test_ed_note_with_parentesis(self):
-        item = self.open("ap_anpa-4.tst")
+        item = await self.open("ap_anpa-4.tst")
         self.assertEqual(
             item["ednote"],
             "(Minor edits. A longer version of this story is available. "
@@ -81,7 +81,7 @@ class ANPATestCase(TestCase):
         )
 
     async def test_alert(self):
-        item = self.open("ap_anpa-5.tst")
+        item = await self.open("ap_anpa-5.tst")
         self.assertTrue(
             item["headline"],
             "Hawaii files court challenge to Trump administration"
@@ -90,10 +90,10 @@ class ANPATestCase(TestCase):
         )
 
     async def test_no_word_count(self):
-        item = self.open("ap_anpa-6.tst")
+        item = await self.open("ap_anpa-6.tst")
         self.assertEqual(item["slugline"], "BBO--WildCardGlance")
         self.assertEqual(item["anpa_category"], [{"qcode": "s"}])
 
     async def test_number_in_slugline(self):
-        item = self.open("ap_anpa-7.tst")
+        item = await self.open("ap_anpa-7.tst")
         self.assertEqual(item["slugline"], "10ThingstoKnow-Today")

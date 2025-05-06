@@ -25,7 +25,7 @@ class APMediaTestCase(TestCase):
         fixture = os.path.normpath(os.path.join(dirname, "../fixtures", self.filename))
         provider = {"name": "Test"}
         with open(fixture) as fp:
-            self.item = APMediaFeedParser().parse(json.load(fp), provider)
+            self.item = await APMediaFeedParser().parse(json.load(fp), provider)
 
 
 class SimpleTestCase(APMediaTestCase):

@@ -35,7 +35,7 @@ class NINJSTestCase(TestCase):
         dirname = os.path.dirname(os.path.realpath(__file__))
         fixture = os.path.normpath(os.path.join(dirname, "../fixtures", self.filename))
         provider = {"name": "Test"}
-        self.items = NINJSFeedParser().parse(fixture, provider)
+        self.items = await NINJSFeedParser().parse(fixture, provider)
 
 
 class SimpleTestCase(NINJSTestCase):

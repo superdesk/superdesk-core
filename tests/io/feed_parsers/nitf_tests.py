@@ -28,7 +28,7 @@ class NITFTestCase(TestCase):
         provider = {"name": "Test"}
         with open(fixture, "rb") as f:
             self.nitf = f.read()
-            self.item = NITFFeedParser().parse(etree.fromstring(self.nitf), provider)
+            self.item = await NITFFeedParser().parse(etree.fromstring(self.nitf), provider)
 
 
 class AAPTestCase(NITFTestCase):
@@ -240,7 +240,7 @@ class MappingTestCase(TestCase):
         provider = {"name": "Test"}
         with open(fixture, "rb") as f:
             self.nitf = f.read()
-            self.item = NITFFeedParser().parse(etree.fromstring(self.nitf), provider)
+            self.item = await NITFFeedParser().parse(etree.fromstring(self.nitf), provider)
 
     def test_update_and_hook(self):
         subjects = self.item.get("subject")

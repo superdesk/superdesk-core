@@ -12,21 +12,21 @@
 import os
 import re
 import datetime
-import unittest
 from pytz import utc
 
+from superdesk.tests import IsolatedAsyncioTestCase
 from superdesk.etree import etree
 from superdesk.io.feed_parsers.afp_newsml_1_2_new import AFPNewsMLFeedParser
 
 
-class TestCase(unittest.TestCase):
-    def setUp(self):
+class TestCase(IsolatedAsyncioTestCase):
+    async def asyncSetUp(self):
         dirname = os.path.dirname(os.path.realpath(__file__))
         fixture = os.path.join(dirname, "../fixtures", "afp20.xml")
         provider = {"name": "Test"}
         with open(fixture, "r") as f:
             xml_content = f.read().encode("iso-8859-1")
-            self.item = AFPNewsMLFeedParser().parse(etree.fromstring(xml_content), provider)
+            self.item = await AFPNewsMLFeedParser().parse(etree.fromstring(xml_content), provider)
 
     def test_headline(self):
         self.assertEqual(

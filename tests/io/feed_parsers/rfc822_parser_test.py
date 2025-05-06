@@ -35,7 +35,7 @@ class RFC822TestCase(TestCase):
         with open(fixture, mode="rb") as f:
             bytes = f.read()
         parser = EMailRFC822FeedParser()
-        self.items = parser.parse([(1, bytes)], provider)
+        self.items = await parser.parse([(1, bytes)], provider)
 
     def test_headline(self):
         self.assertEqual(self.items[0]["headline"], "Test message 1234")
@@ -61,7 +61,7 @@ class RFC822ComplexTestCase(TestCase):
         with open(fixture, mode="rb") as f:
             bytes = f.read()
         parser = EMailRFC822FeedParser()
-        self.items = parser.parse([(1, bytes)], provider)
+        self.items = await parser.parse([(1, bytes)], provider)
 
     def test_composite(self):
         self.assertEqual(len(self.items), 3)
@@ -86,7 +86,7 @@ class RFC822OddCharSetTestCase(TestCase):
         with open(fixture, mode="rb") as f:
             bytes = f.read()
         parser = EMailRFC822FeedParser()
-        self.items = parser.parse([(1, bytes)], provider)
+        self.items = await parser.parse([(1, bytes)], provider)
 
     def test_headline(self):
         # This tests a subject that fails to decode but we just try a string conversion
@@ -107,7 +107,7 @@ class RFC822CharSetInSubjectTestCase(TestCase):
         with open(fixture, mode="rb") as f:
             bytes = f.read()
         parser = EMailRFC822FeedParser()
-        self.items = parser.parse([(1, bytes)], provider)
+        self.items = await parser.parse([(1, bytes)], provider)
 
     def test_headline(self):
         # This test a subject that has a charset that decodes correctly
@@ -148,7 +148,7 @@ class RFC822FormattedEmailTestCase(TestCase):
             bytes = f.read()
         parser = EMailRFC822FeedParser()
 
-        self.items = parser.parse([(1, bytes)], self.provider)
+        self.items = await parser.parse([(1, bytes)], self.provider)
         self.assertEqual(self.items[0]["headline"], "TEST NZ HEADER")
         self.assertEqual(self.items[0]["task"]["desk"], 1)
         self.assertEqual(self.items[0]["original_creator"], 123)
@@ -166,7 +166,7 @@ class RFC822FormattedEmailTestCase(TestCase):
         with open(fixture, mode="rb") as f:
             bytes = f.read()
         parser = EMailRFC822FeedParser()
-        self.items = parser.parse([(1, bytes)], self.provider)
+        self.items = await parser.parse([(1, bytes)], self.provider)
         self.assertEqual(self.items[0]["headline"], "Arnold 'worried' about maroon-clad Roar")
         self.assertEqual(self.items[0]["task"]["desk"], 1)
         self.assertEqual(self.items[0]["original_creator"], 123)
@@ -194,7 +194,7 @@ class RFC822JsonEmailTestCase(TestCase):
         with open(fixture, mode="rb") as f:
             bytes = f.read()
         parser = EMailRFC822FeedParser()
-        self.items = parser.parse([(1, bytes)], self.provider)
+        self.items = await parser.parse([(1, bytes)], self.provider)
 
         self.assertEqual(self.items[0]["priority"], 5)
         self.assertEqual(self.items[0]["sign_off"], "TA")
@@ -221,7 +221,7 @@ class RFC822JsonEmailTestCase(TestCase):
 
         try:
             with self.assertRaises(IngestEmailError) as exc_context:
-                self.items = parser.parse([(1, bytes)], self.provider)
+                self.items = await parser.parse([(1, bytes)], self.provider)
         except Exception:
             self.fail("Expected exception type was not raised.")
 

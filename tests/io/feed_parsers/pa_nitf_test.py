@@ -26,7 +26,7 @@ class PANITFFileTestCase(TestCase):
         provider = {"name": "Test"}
         with open(fixture, "rb") as f:
             xml = etree.parse(f)
-            self.item = PAFeedParser().parse(xml.getroot(), provider)
+            self.item = await PAFeedParser().parse(xml.getroot(), provider)
 
 
 class PAFileWithNoSubjects(PANITFFileTestCase):

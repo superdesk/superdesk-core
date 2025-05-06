@@ -31,7 +31,7 @@ class BaseNewMLTwoTestCase(unittest.TestCase):
             self.parser = NewsMLTwoFeedParser()
             self.xml = ElementTree.parse(f)
             async with app.app_context():
-                self.item = self.parser.parse(self.xml.getroot(), provider)
+                self.item = await self.parser.parse(self.xml.getroot(), provider)
 
 
 class ReutersTestCase(BaseNewMLTwoTestCase):

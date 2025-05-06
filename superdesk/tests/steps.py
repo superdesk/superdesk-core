@@ -797,21 +797,21 @@ async def fetch_from_provider(context, provider_name, guid, routing_scheme=None,
             file_path = os.path.join(provider.get("config", {}).get("path_fixtures", ""), guid)
         else:
             file_path = os.path.join(provider.get("config", {}).get("path", ""), guid)
-        feeding_parser = provider_service.get_feed_parser(provider)
+        feeding_parser = await provider_service.get_feed_parser(provider)
         if isinstance(feeding_parser, STTNewsMLFeedParser):
             with open(file_path, "rb") as f:
                 xml_string = etree.etree.fromstring(f.read())
-                items = feeding_parser.parse(xml_string, provider)
+                items = await feeding_parser.parse(xml_string, provider)
         elif isinstance(feeding_parser, XMLFeedParser):
             with open(file_path, "rb") as f:
                 xml_string = etree.etree.fromstring(f.read())
-                items = [feeding_parser.parse(xml_string, provider)]
+                items = [await feeding_parser.parse(xml_string, provider)]
         elif isinstance(feeding_parser, EMailRFC822FeedParser):
             with open(file_path, "rb") as f:
                 data = f.read()
-                items = feeding_parser.parse([(1, data)], provider)
+                items = await feeding_parser.parse([(1, data)], provider)
         else:
-            parsed = feeding_parser.parse(file_path, provider)
+            parsed = await feeding_parser.parse(file_path, provider)
             items = [parsed] if not isinstance(parsed, list) else parsed
     else:
         provider_service.provider = provider
@@ -3097,10 +3097,11 @@ async def setp_impl_when_we_init_data(context, entity):
 
 
 @when('we run task "{name}"')
-def when_we_run_task(context, name):
+@async_run_until_complete
+async def when_we_run_task(context, name):
     task = celery.signature(name)
     assert task is not None
-    task.apply()
+    await task.apply()
 
 
 @when('the lock expires "{url}"')
