@@ -1,0 +1,48 @@
+[
+  {
+    "_id": "5d553c333031e2855a2e5670",
+    "user": "5d385f31fe985ec67a0ca583",
+    "date": "2023-05-15",
+    "status": "available",
+    "language": ["en"],
+    "working_hours": [
+      {
+        "start_time": "09:00:00",
+        "end_time": "17:00:00",
+        "tags": [
+          {"code": "regular"}
+        ]
+      }
+    ],
+    "_updated": "2023-05-15T12:00:00+0000",
+    "_created": "2023-05-15T10:00:00+0000"
+  },
+  {
+    "_id": "5d553c333031e2855a2e5671",
+    "user": "5d385f31fe985ec67a0ca583",
+    "date": "2023-05-16",
+    "status": "partial",
+    "language": ["en", "fr"],
+    "working_hours": [
+      {
+        "start_time": "12:00:00",
+        "end_time": "17:00:00",
+        "tags": [
+          {"code": "afternoon"}
+        ]
+      }
+    ],
+    "_updated": "2023-05-15T12:00:00+0000",
+    "_created": "2023-05-15T10:00:00+0000"
+  },
+  {
+    "_id": "5d553c333031e2855a2e5672",
+    "user": "5d385f31fe985ec67a0ca584",
+    "date": "2023-05-15",
+    "status": "unavailable",
+    "language": ["fr"],
+    "_updated": "2023-05-15T12:00:00+0000",
+    "_created": "2023-05-15T10:00:00+0000",
+    "_generated": true
+  }
+]

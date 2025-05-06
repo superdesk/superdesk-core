@@ -50,6 +50,9 @@ class OAuth2Client(ClientMixin):
             return method == "client_secret_basic"
         return True
 
+    def check_token_endpoint_auth_method(self, method):
+        return method == "client_secret_basic"
+
 
 def query_client(client_id):
     clients_service = superdesk.get_resource_service("auth_server_clients")
