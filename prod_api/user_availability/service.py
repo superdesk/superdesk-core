@@ -53,7 +53,7 @@ class UserAvailabilityService(ProdApiService):
 
     def _get_user_availability(self, user, start_date, end_date):
         user_data = {"_id": user["_id"], "username": user["username"], "availability": []}
-        availability = {}
+        availability_map = {}
 
         availability_days = self.find(
             where={
