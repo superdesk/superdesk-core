@@ -2,6 +2,7 @@ import superdesk
 from superdesk.metadata.item import CONTENT_TYPE, CONTENT_STATE, get_schema
 
 from superdesk.core import get_current_app
+from superdesk.eve_async import AsyncBaseService
 from superdesk.resource_fields import (
     ID_FIELD,
     DATE_CREATED,
@@ -45,39 +46,39 @@ PACKAGE_FIELDS = {
 }
 
 
-def get_template(highlightId):
+async def get_template(highlight_id):
     """Return the string template associated with highlightId or none"""
-    if not highlightId:
+    if not highlight_id:
         return None
-    highlightService = superdesk.get_resource_service("highlights")
-    highlight = highlightService.find_one(req=None, _id=highlightId)
+    highlight_service = superdesk.get_resource_service("highlights")
+    highlight = await highlight_service.find_one_async(req=None, _id=highlight_id)
     if not highlight or not highlight.get("template"):
         return None
 
-    # TODO-ASYNC[ContentTemplatesService]: Use find_one_async where when upgrading this module
-    templateService = superdesk.get_resource_service("content_templates")
-    template = templateService.find_one(req=None, _id=highlight.get("template"))
+    template_service = superdesk.get_resource_service("content_templates")
+    template = await template_service.find_one_async(req=None, _id=highlight.get("template"))
     return template
 
 
-class GenerateHighlightsService(superdesk.Service):
-    def create(self, docs, **kwargs):
+class GenerateHighlightsService(AsyncBaseService):
+    async def create_async(self, docs, **kwargs):
         """Generate highlights text item for given package.
 
         If doc.preview is True it won't save the item, only return.
         """
         service = superdesk.get_resource_service("archive")
         app = get_current_app().as_any()
+        preview = False
         for doc in docs:
             preview = doc.get("preview", False)
-            package = service.find_one(req=None, _id=doc["package"])
+            package = await service.find_one_async(req=None, _id=doc["package"])
             if not package:
                 abort(404)
             export = doc.get("export")
-            template = get_template(package.get("highlight"))
-            stringTemplate = None
+            template = await get_template(package.get("highlight"))
+            string_template = None
             if template and template.get("data") and template["data"].get("body_html"):
-                stringTemplate = template["data"]["body_html"]
+                string_template = template["data"]["body_html"]
 
             doc.clear()
             doc[ITEM_TYPE] = CONTENT_TYPE.TEXT
@@ -93,7 +94,7 @@ class GenerateHighlightsService(superdesk.Service):
             for group in package.get("groups", []):
                 for ref in group.get("refs", []):
                     if "residRef" in ref:
-                        item = service.find_one(req=None, _id=ref.get("residRef"))
+                        item = await service.find_one_async(req=None, _id=ref.get("residRef"))
                         if item:
                             if not (export or preview) and (
                                 item.get("lock_session") or item.get("state") != "published"
@@ -103,32 +104,30 @@ class GenerateHighlightsService(superdesk.Service):
 
                             items.append(item)
                             if not preview:
-                                app.on_archive_item_updated(
+                                await app.on_archive_item_updated.call_async(
                                     {
                                         "highlight_id": package.get("highlight"),
-                                        "highlight_name": get_highlight_name(package.get("highlight")),
+                                        "highlight_name": await get_highlight_name(package.get("highlight")),
                                     },
                                     item,
                                     ITEM_EXPORT_HIGHLIGHT,
                                 )
 
-            if stringTemplate:
-                # TODO-ASYNC: Support async (see superdesk.tests.markers.requires_eve_resource_async_event)
-                doc["body_html"] = render_template_string(stringTemplate, package=package, items=items)
+            if string_template:
+                doc["body_html"] = await render_template_string(string_template, package=package, items=items)
             else:
-                # TODO-ASYNC: Support async (see superdesk.tests.markers.requires_eve_resource_async_event)
-                doc["body_html"] = render_template("default_highlight_template.txt", package=package, items=items)
+                doc["body_html"] = await render_template("default_highlight_template.txt", package=package, items=items)
         if preview:
             return ["" for doc in docs]
         else:
-            ids = service.post(docs, **kwargs)
-            for id in ids:
-                app.on_archive_item_updated(
+            ids = await service.post_async(docs, **kwargs)
+            for item_id in ids:
+                await app.on_archive_item_updated.call_async(
                     {
                         "highlight_id": package.get("highlight"),
-                        "highlight_name": get_highlight_name(package.get("highlight")),
+                        "highlight_name": await get_highlight_name(package.get("highlight")),
                     },
-                    {"_id": id},
+                    {"_id": item_id},
                     ITEM_CREATE_HIGHLIGHT,
                 )
             return ids

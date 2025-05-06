@@ -33,7 +33,7 @@ class AppPopulateValidatorsTest(TestCase):
             service = get_resource_service("validators")
 
             for item in self.json_data:
-                data = service.find_one(_id=item["_id"], req=None)
+                data = await service.find_one_async(_id=item["_id"], req=None)
                 self.assertEqual(data["_id"], item["_id"])
                 self.assertDictEqual(data["schema"], item["schema"])
 

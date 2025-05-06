@@ -10,7 +10,7 @@ from .user_mentions import notify_mentioned_users
 USER_MENTIONS_REGEX = re.compile(r"@\[([^]]+)\]\(user:([a-f0-9]{24})\)")
 
 
-async def handle_inline_mentions(sender, updates, original):
+async def handle_inline_mentions(updates, original):
     """Listen to item_update signal and send notifications to new inline user mentions."""
     updated = original.copy()
     updated.update(updates)

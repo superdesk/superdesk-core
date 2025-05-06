@@ -369,6 +369,13 @@ class VocabulariesService(AsyncBaseService):
 
         return list(self.get_from_mongo(req=None, lookup={"field_type": {"$exists": True, "$ne": None}}))
 
+    async def get_extra_fields_async(self):
+        # This function won't be needed once we use the VocabulariesService async service in it's place
+
+        return await (
+            await self.get_from_mongo_async(req=None, lookup={"field_type": {"$exists": True, "$ne": None}})
+        ).to_list()
+
     def get_custom_vocabularies(self):
         # This function won't be needed once we use the VocabulariesService async service in it's place
 

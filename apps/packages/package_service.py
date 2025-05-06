@@ -11,7 +11,7 @@
 import logging
 from eve.versioning import resolve_document_version
 
-from superdesk.core import get_current_app, get_app_config
+from superdesk.core import get_current_app, get_app_config, AsyncSignal
 from superdesk.resource_fields import ID_FIELD, LAST_UPDATED
 import superdesk
 from collections import Counter
@@ -37,12 +37,11 @@ from apps.archive.common import ITEM_UNLINK, insert_into_versions_async
 from superdesk.utc import utcnow
 from superdesk.default_settings import VERSION
 from quart_babel import gettext as _
-from superdesk.signals import signals
 from superdesk.validation import ValidationError
 
 
 logger = logging.getLogger(__name__)
-package_create_signal = signals.signal("package.create")  # @UndefinedVariable
+package_create_signal: AsyncSignal[list[dict]] = AsyncSignal("package.create")
 ARCHIVE = "archive"
 
 
@@ -83,7 +82,7 @@ async def copy_metadata_from_highlight_template(doc):
     """
     highlight_id = doc.get("highlight", None)
     if highlight_id:
-        highlight = superdesk.get_resource_service("highlights").find_one(req=None, _id=highlight_id)
+        highlight = await superdesk.get_resource_service("highlights").find_one_async(req=None, _id=highlight_id)
         if highlight and "template" in highlight:
             from apps.templates.content_templates import render_content_template_by_id
 
@@ -107,7 +106,7 @@ class PackageService:
             if "highlight" in doc:
                 await copy_metadata_from_highlight_template(doc)
 
-        package_create_signal.send(self, docs=docs)
+        await package_create_signal.send(docs)
 
     async def on_created_async(self, docs):
         for doc, assoc in [(doc, assoc) for doc in docs for assoc in self._get_associations(doc)]:

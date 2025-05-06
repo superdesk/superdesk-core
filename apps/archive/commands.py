@@ -286,21 +286,22 @@ class RemoveExpiredContent:
         logger.info("%s Starting to remove expired items from archived.", self.log_msg)
         archived_service = get_resource_service("archived")
         query = _get_expired_mongo_ids_query(EXPIRY_MINUTES, now)
-        expired = list(archived_service.find(query, max_results=EXPIRY_LIMIT, sort="_id"))
+        expired = await (await archived_service.find_async(query, max_results=EXPIRY_LIMIT, sort="_id")).to_list()
         if not len(expired):
             logger.info("%s No items found to expire in archived.", self.log_msg)
         else:
             logger.info("%s Removing %d expired items from archived.", self.log_msg, len(expired))
 
-        # TODO-ASYNC: Use async version
-        removed = archived_service.delete_docs(expired)
+        removed = await archived_service.delete_docs_async(expired)
         for item in expired:
             if item["_id"] not in removed:
                 logger.error("%s Item was not removed from archived item=%s", self.log_msg, item["item_id"])
                 continue
-            # TODO-ASYNC: Use async version
+            # TODO-PR: Use async version
             signals.archived_item_removed.send(archived_service, item=item)
-            if not get_app_config("LEGAL_ARCHIVE") and not archived_service.find_one(req=None, item_id=item["item_id"]):
+            if not get_app_config("LEGAL_ARCHIVE") and not await archived_service.find_one_async(
+                req=None, item_id=item["item_id"]
+            ):
                 await remove_media_files(item, published=True)
 
     async def _can_remove_item(self, item, now, processed_item=None, preserve_published_desks=None):
@@ -325,7 +326,9 @@ class RemoveExpiredContent:
         if item.get(ITEM_TYPE) in [CONTENT_TYPE.TEXT, CONTENT_TYPE.PREFORMATTED] and get_app_config(
             "BROADCAST_ENABLED", True
         ):
-            broadcast_items = get_resource_service("archive_broadcast").get_broadcast_items_from_master_story(item)
+            broadcast_items = await get_resource_service("archive_broadcast").get_broadcast_items_from_master_story(
+                item
+            )
             # If master story expires then check if broadcast item is included in a package.
             # If included in a package then check the package expiry.
             item_refs.extend([broadcast_item.get(ID_FIELD) for broadcast_item in broadcast_items])
@@ -435,7 +438,9 @@ class RemoveExpiredContent:
         archive_service = get_resource_service("archive")
         item_id = item.get(ID_FIELD)
         moved_to_archived = self._conforms_to_archived_filter(item, filter_conditions)
-        published_items = await published_service.get_from_mongo_async(req=None, lookup={"item_id": item_id}).to_list()
+        published_items = await (
+            await published_service.get_from_mongo_async(req=None, lookup={"item_id": item_id})
+        ).to_list()
 
         try:
             if published_items:
@@ -445,7 +450,7 @@ class RemoveExpiredContent:
                 )
                 if moved_to_archived:
                     try:
-                        archived_service.post(published_items)
+                        await archived_service.post_async(published_items)
                         logger.info("{} Moved item to text archive for item {}.".format(self.log_msg, item_id))
                     except Conflict:
                         logger.warning("%s Item is already in text archive. item=%s", self.log_msg, item_id)

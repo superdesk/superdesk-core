@@ -290,12 +290,14 @@ async def clean_dbs(app=None, async_app: SuperdeskAsyncApp | None = None, force=
                         es.elastic(resource).delete_by_query(
                             index=alias,
                             body={"query": {"match_all": {}}},
-                            refresh="wait_for",
+                            refresh=True,
                         )
                     except elasticsearch.exceptions.NotFoundError:
                         pass
 
-                resources_processed.add(resource)
+                # TODO-ASYNC: Figure out what's going on here, uncommenting this line causes
+                # some resources to not be wiped before running tests
+                # resources_processed.add(resource)
 
             await drop_mongo(app)
 
@@ -587,7 +589,7 @@ async def setup_db_user(context, user):
         add_user_info_to_context(context, token, user, auth_id)
 
 
-def setup_ad_user(context, user):
+async def setup_ad_user(context, user):
     """Setup the AD user for the LDAP authentication.
 
     The method patches the authenticate_and_fetch_profile method of the ADAuth class
@@ -624,10 +626,10 @@ def setup_ad_user(context, user):
 
     with patch.object(ADAuth, "authenticate_and_fetch_profile", return_value=ad_profile):
         auth_data = json.dumps({"username": ad_user["username"], "password": ad_user["password"]})
-        auth_response = context.client.post(
+        auth_response = await context.client.post(
             get_prefixed_url(context.app, "/auth_db"), data=auth_data, headers=context.headers
         )
-        auth_response_as_json = json.loads(auth_response.get_data())
+        auth_response_as_json = json.loads(await auth_response.get_data())
         token = auth_response_as_json.get("token").encode("ascii")
         ad_user["_id"] = auth_response_as_json["user"]
 

@@ -662,7 +662,7 @@ class UpdateIngestTest(TestCase):
         self.assertEqual("composite", items[0].get("profile"))
 
         content_types = [{"_id": "story", "name": "story"}]
-        self.app.data.insert("content_types", content_types)
+        await test_utils.post_items("content_types", content_types)
         items[1]["profile"] = "story"
         await ingest_item(items[1], provider, provider_service)
         self.assertEqual("story", items[1].get("profile"))

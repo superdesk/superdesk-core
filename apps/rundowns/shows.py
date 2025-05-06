@@ -1,5 +1,5 @@
 import superdesk
-import superdesk.utils as utils
+from superdesk.flask import abort
 
 from quart_babel import gettext
 
@@ -32,7 +32,7 @@ class ShowsResource(superdesk.Resource):
 class ShowsService(superdesk.Service):
     def on_delete(self, doc):
         if rundowns_service.find_one(req=None, show=doc["_id"]) is not None:
-            utils.abort(409, gettext("Can't remove show if there are rundowns."))
+            abort(409, gettext("Can't remove show if there are rundowns."))
         return super().on_delete(doc)
 
     def on_deleted(self, doc):

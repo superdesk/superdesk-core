@@ -75,5 +75,4 @@ class ImportCommand:
             article.setdefault("source", parser)
         archived_service = get_resource_service("archived")
 
-        # TODO-ASYNC[archived]: Use async service when upgrading the ``archived`` module
-        archived_service.post(articles)
+        await archived_service.post_async(articles)

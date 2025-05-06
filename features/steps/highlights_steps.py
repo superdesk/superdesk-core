@@ -11,11 +11,11 @@ from features.steps.steps import apply_placeholders
 @given("highlights")
 @async_run_until_complete
 async def given_highlights(context):
-    with context.app.app_context():
+    async with context.app.app_context():
         context.desks = {"name": "test"}
         await get_resource_service("desks").post_async([context.desks])
         context.highlights = {"name": "highlight", "desks": [context.desks["_id"]], "auto_insert": "now-12h"}
-        get_resource_service("highlights").post([context.highlights])
+        await get_resource_service("highlights").post_async([context.highlights])
         task = {"desk": context.desks["_id"]}
         context.items = [
             {
@@ -32,27 +32,32 @@ async def given_highlights(context):
             },
             {"headline": "old", "state": "in_progress", "task": task, "versioncreated": utcnow() - timedelta(days=2)},
         ]
-        get_resource_service("archive").post(context.items)
+        await get_resource_service("archive").post_async(context.items)
         for item in context.items:
             marks = [{"highlights": context.highlights["_id"], "marked_item": item["_id"]}]
-            get_resource_service("marked_for_highlights").post(marks)
+            await get_resource_service("marked_for_highlights").post_async(marks)
 
 
 @when("we create highlights package")
-def when_we_create_highglights_package(context):
+@async_run_until_complete
+async def when_we_create_highglights_package(context):
     data_text = (
         '{"highlight": "%s", "type": "composite", '
         '"task": {"user": "#user._id#", "desk": "#desks._id#"}}' % str(context.highlights["_id"])
     )
     data_text = apply_placeholders(context, data_text)
     url = get_prefixed_url(context.app, "/archive")
-    context.response = context.client.post(url, data=data_text, headers=context.headers)
+    context.response = await context.client.post(url, data=data_text, headers=context.headers)
 
 
 @then("we get new package with items")
-def then_we_get_new_package_with_items(context):
-    assert context.response.status_code == 201, "%d: %s" % (context.response.status_code, context.response.get_data())
-    package = json.loads(context.response.get_data())
+@async_run_until_complete
+async def then_we_get_new_package_with_items(context):
+    assert context.response.status_code == 201, "%d: %s" % (
+        context.response.status_code,
+        await context.response.get_data(),
+    )
+    package = json.loads(await context.response.get_data())
 
     groups = package.get("groups")
     assert len(groups) == 2, "there should be 2 groups"

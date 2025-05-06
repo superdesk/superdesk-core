@@ -92,12 +92,11 @@ class ArchivedService(AsyncResourceService[ArchivedResourceModel]):
         if is_genre(doc, BROADCAST_GENRE):
             raise bad_req_error(message=_("Killing of Broadcast Items isn't allowed in Archived repo"))
 
-        # FIXME: not an async service yet
-        # broadcast_service = get_resource_service("archive_broadcast")
-        # if await broadcast_service.get_broadcast_items_from_master_story(doc, True):
-        #     raise bad_req_error(
-        #         message=_("Can't kill as this article acts as a Master Story for existing broadcast(s)")
-        #     )
+        broadcast_service = get_resource_service("archive_broadcast")
+        if await broadcast_service.get_broadcast_items_from_master_story(doc, True):
+            raise bad_req_error(
+                message=_("Can't kill as this article acts as a Master Story for existing broadcast(s)")
+            )
 
         archive_service = AsyncArchiveService()
         if await archive_service.find_one(None, guid_field=doc.guid):

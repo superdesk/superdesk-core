@@ -256,7 +256,7 @@ class KillPublishService(BasePublishService):
         """
         broadcast_items = [
             item
-            for item in get_resource_service("archive_broadcast").get_broadcast_items_from_master_story(original)
+            for item in await get_resource_service("archive_broadcast").get_broadcast_items_from_master_story(original)
             if item.get(ITEM_STATE) in PUBLISH_STATES
         ]
         correct_service = get_resource_service("archive_correct")

@@ -70,7 +70,6 @@ from superdesk.activity import (
     ACTIVITY_DELETE,
 )
 from eve.utils import parse_request, ParsedRequest
-from superdesk.services import BaseService
 from superdesk.users.services import current_user_has_privilege, is_admin
 from superdesk.metadata.item import (
     ITEM_STATE,
@@ -366,8 +365,7 @@ class ArchiveService(AsyncBaseService, HighlightsSearchMixin):
             await get_resource_service("attachments").delete_action_async(lookup)
 
     async def on_updated_async(self, updates, original):
-        # TODO-ASYNC[item_autosave]: Convert ItemAutosave to async
-        get_component(ItemAutosave).clear(original["_id"])
+        await get_component(ItemAutosave).clear(original["_id"])
 
         if original[ITEM_TYPE] == CONTENT_TYPE.COMPOSITE:
             await self.packageService.on_updated_async(updates, original)
@@ -410,8 +408,7 @@ class ArchiveService(AsyncBaseService, HighlightsSearchMixin):
             del document["force_unlock"]
 
     async def on_replaced_async(self, document, original):
-        # TODO-ASYNC[item_autosave]: Convert ItemAutosave to async
-        get_component(ItemAutosave).clear(original["_id"])
+        await get_component(ItemAutosave).clear(original["_id"])
         await add_activity(
             ACTIVITY_UPDATE,
             "replaced item {{ type }} about {{ subject }}",
@@ -424,8 +421,7 @@ class ArchiveService(AsyncBaseService, HighlightsSearchMixin):
         await self.cropService.update_media_references(document, original)
 
     async def on_deleted_async(self, doc):
-        # TODO-ASYNC[item_autosave]: Convert ItemAutosave to async
-        get_component(ItemAutosave).clear(doc["_id"])
+        await get_component(ItemAutosave).clear(doc["_id"])
         if doc[ITEM_TYPE] == CONTENT_TYPE.COMPOSITE:
             await self.packageService.on_deleted_async(doc)
 
@@ -547,7 +543,7 @@ class ArchiveService(AsyncBaseService, HighlightsSearchMixin):
         convert_task_attributes_to_objectId(new_doc)
         await transtype_metadata(new_doc)
         signals.item_duplicate.send(self, item=new_doc, original=original_doc, operation=operation)
-        get_model(ItemModel).create([new_doc])
+        await get_model(ItemModel).create_async([new_doc])
         await self._duplicate_versions(original_doc["_id"], new_doc)
         await self._duplicate_history(original_doc["_id"], new_doc)
 
@@ -675,11 +671,12 @@ class ArchiveService(AsyncBaseService, HighlightsSearchMixin):
         :param old_id: identifier to fetch history
         :param new_doc: identifiers from this doc will be used to create version history for the duplicated item.
         """
-        # TODO-ASYNC[archive_history]: ArchiveHistoryService needs to be ported to async.
-        old_history_items = get_resource_service("archive_history").get_from_mongo(req=None, lookup={"item_id": old_id})
+        old_history_items = await get_resource_service("archive_history").get_from_mongo_async(
+            req=None, lookup={"item_id": old_id}
+        )
 
         new_history_items = []
-        for old_history_item in old_history_items:
+        async for old_history_item in old_history_items:
             del old_history_item[ID_FIELD]
             old_history_item["item_id"] = new_doc["guid"]
             if not old_history_item.get("original_item_id"):
@@ -688,8 +685,7 @@ class ArchiveService(AsyncBaseService, HighlightsSearchMixin):
             new_history_items.append(old_history_item)
 
         if new_history_items:
-            # TODO-ASYNC[archive_history]: ArchiveHistoryService needs to be ported to async.
-            get_resource_service("archive_history").post(new_history_items)
+            await get_resource_service("archive_history").post_async(new_history_items)
 
     async def update_async(self, id, updates, original):
         if updates.get(ASSOCIATIONS):
@@ -706,8 +702,8 @@ class ArchiveService(AsyncBaseService, HighlightsSearchMixin):
             await self.deschedule_item(updates, original)
 
         # send signal
-        # TODO-ASYNC: Support async signals
         signals.item_update.send(self, updates=updates, original=original)
+        await signals.item_update_async.send(updates, original)
 
         result = await super().update_async(id, updates, original)
 
@@ -858,20 +854,19 @@ class ArchiveService(AsyncBaseService, HighlightsSearchMixin):
         :param updates: item updates
         """
 
-        def abort_if_readonly_stage(stage_id):
-            # TODO-ASYNC[stage]: Upgrade to async
-            stage = superdesk.get_resource_service("stages").find_one(req=None, _id=stage_id)
+        async def abort_if_readonly_stage(stage_id):
+            stage = await superdesk.get_resource_service("stages").find_one_async(req=None, _id=stage_id)
             if stage.get("local_readonly"):
                 abort(403, response={"readonly": True})
 
         orig_stage_id = item.get("task", {}).get("stage")
         if orig_stage_id and get_user() and not item.get(INGEST_ID):
-            abort_if_readonly_stage(orig_stage_id)
+            await abort_if_readonly_stage(orig_stage_id)
 
         if updates:
             dest_stage_id = updates.get("task", {}).get("stage")
             if dest_stage_id and get_user() and not item.get(INGEST_ID):
-                abort_if_readonly_stage(dest_stage_id)
+                await abort_if_readonly_stage(dest_stage_id)
 
     async def _validate_updates(self, original, updates, user):
         """Validates updates to the article for the below conditions.
@@ -1284,8 +1279,8 @@ class AutoSaveResource(Resource):
     notifications = False
 
 
-class ArchiveSaveService(BaseService):
-    def create(self, docs, **kwargs):
+class ArchiveSaveService(AsyncBaseService):
+    async def create_async(self, docs, **kwargs):
         if not docs:
             raise SuperdeskApiError.notFoundError("Content is missing")
 
@@ -1294,14 +1289,14 @@ class ArchiveSaveService(BaseService):
 
         req = parse_request(self.datasource)
         try:
-            get_component(ItemAutosave).autosave(docs[0]["_id"], docs[0], get_user(required=True), req.if_match)
+            await get_component(ItemAutosave).autosave(docs[0]["_id"], docs[0], get_user(required=True), req.if_match)
         except InvalidEtag:
             raise SuperdeskApiError.preconditionFailedError(_("Client and server etags don't match"))
         except KeyError:
             raise SuperdeskApiError.badRequestError(_("Request for Auto-save must have _id"))
         return [docs[0]["_id"]]
 
-    def on_fetched_item(self, item):
+    async def on_fetched_item_async(self, item):
         item["_type"] = "archive"
         return item
 

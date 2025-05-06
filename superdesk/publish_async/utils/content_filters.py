@@ -36,10 +36,15 @@ async def _get_referenced_content_filters(
     return pf_list
 
 
-def item_matches_content_filter(item: dict, content_filter: ContentFiltersResource | None) -> bool:
+def item_matches_content_filter(item: dict, content_filter: ContentFiltersResource | dict | None) -> bool:
     """Returns boolean if the supplied item matches the content_filter
 
     Note: Make sure to initialise the PublishCache before running this function
     """
+
+    if content_filter is None:
+        return True
+    elif isinstance(content_filter, dict):
+        content_filter = ContentFiltersResource.from_dict(content_filter)
 
     return BasePublishExchangeFilter().content_filter_matches_item(get_publish_request_from_item(item), content_filter)

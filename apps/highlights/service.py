@@ -10,7 +10,7 @@ import apps.archive  # NOQA
 from superdesk.core import get_current_app, get_app_config
 import apps.packages.package_service as package
 from superdesk import get_resource_service
-from superdesk.services import BaseService
+from superdesk.eve_async import AsyncBaseService
 from eve.utils import ParsedRequest
 from superdesk.notification import push_notification
 from superdesk.utc import get_timezone_offset, utcnow
@@ -24,9 +24,9 @@ def init_parsed_request(elastic_query):
     return parsed_request
 
 
-def get_highlighted_items(highlights_id):
+async def get_highlighted_items(highlights_id):
     """Get items marked for given highlight and passing date range query."""
-    highlight = get_resource_service("highlights").find_one(req=None, _id=highlights_id)
+    highlight = await get_resource_service("highlights").find_one_async(req=None, _id=highlights_id)
     query = {
         "query": {
             "filtered": {
@@ -52,74 +52,74 @@ def get_highlighted_items(highlights_id):
     }
     request = ParsedRequest()
     request.args = {"source": json.dumps(query), "repo": "archive,published"}
-    # TODO-ASYNC[search]: Use `get_async` when upgrading this module
-    return list(get_resource_service("search").get(req=request, lookup=None))
+    return await get_resource_service("search").get_async(req=request, lookup=None)
 
 
-def init_highlight_package(doc):
+async def init_highlight_package(doc):
     """Add to package items marked for doc highlight."""
     main_group = doc.get("groups")[1]
-    items = get_highlighted_items(doc.get("highlight"))
+    items = await get_highlighted_items(doc.get("highlight"))
     used_items = []
-    for item in items:
+    async for item in items:
         if item["_id"] not in used_items:
             main_group["refs"].append(package.get_item_ref(item))
             used_items.append(item["_id"])
 
 
-def init_default_content_profile(doc):
+async def init_default_content_profile(doc):
     if not doc.get("profile"):
         desk_id = doc.get("task", {}).get("desk")
-        # TODO-ASYNC[desks]: Use DesksResourceModel async service where when upgrading this module
-        desk = get_resource_service("desks").find_one(req=None, _id=desk_id)
+        desk = await get_resource_service("desks").find_one_async(req=None, _id=desk_id)
         doc["profile"] = desk.get("default_content_profile")
 
 
-def on_create_package(sender, docs):
+async def on_create_package(docs: list[dict]) -> None:
     """Call init_highlight_package for each package with highlight reference."""
     for doc in docs:
         if doc.get("highlight"):
-            init_highlight_package(doc)
-            init_default_content_profile(doc)
+            await init_highlight_package(doc)
+            await init_default_content_profile(doc)
 
 
-def get_highlight_name(highlights_id):
+async def get_highlight_name(highlights_id):
     """
     Given the id of a highlight it will return the name.
     :param hightlight_id:
     :return:
     """
-    highlight = get_resource_service("highlights").find_one(req=None, _id=highlights_id)
+    highlight = await get_resource_service("highlights").find_one_async(req=None, _id=highlights_id)
     if highlight and "name" in highlight:
         return highlight.get("name", None)
     return None
 
 
-class HighlightsService(BaseService):
-    def on_delete(self, doc):
+class HighlightsService(AsyncBaseService):
+    async def on_delete_async(self, doc):
         service = get_resource_service("archive")
         highlights_id = str(doc["_id"])
         query = {"query": {"filtered": {"filter": {"term": {"highlights": highlights_id}}}}}
         req = init_parsed_request(query)
-        proposedItems = service.get(req=req, lookup=None)
+        proposed_items = await service.get_async(req=req, lookup=None)
         app = get_current_app().as_any()
-        for item in proposedItems:
-            app.on_archive_item_updated(
-                {"highlight_id": highlights_id, "highlight_name": get_highlight_name(highlights_id)}, item, ITEM_UNMARK
+        async for item in proposed_items:
+            await app.on_archive_item_updated.call_async(
+                {"highlight_id": highlights_id, "highlight_name": await get_highlight_name(highlights_id)},
+                item,
+                ITEM_UNMARK,
             )
             highlights = [h for h in item.get("highlights") if h != highlights_id]
-            service.update(item["_id"], {"highlights": highlights}, item)
+            await service.update_async(item["_id"], {"highlights": highlights}, item)
 
 
-class MarkedForHighlightsService(BaseService):
-    def create(self, docs, **kwargs):
+class MarkedForHighlightsService(AsyncBaseService):
+    async def create_async(self, docs, **kwargs):
         """Toggle highlight status for given highlight and item."""
         service = get_resource_service("archive")
-        publishedService = get_resource_service("published")
+        published_service = get_resource_service("published")
         ids = []
         app = get_current_app().as_any()
         for doc in docs:
-            item = service.find_one(req=None, _id=doc["marked_item"])
+            item = await service.find_one_async(req=None, _id=doc["marked_item"])
             if not item:
                 ids.append(None)
                 continue
@@ -139,23 +139,21 @@ class MarkedForHighlightsService(BaseService):
                     status[str(highlight)] = ITEM_UNMARK
 
             updates = {"highlights": highlights, "_etag": item["_etag"]}
-            service.update(item["_id"], updates, item)
+            await service.update_async(item["_id"], updates, item)
 
-            # TODO-ASYNC[published]: Use ``await service.find_async`` when updating this module
-            publishedItems = publishedService.find({"item_id": item["_id"]})
-            for publishedItem in publishedItems:
-                if publishedItem["_current_version"] == item["_current_version"]:
+            published_items = await published_service.find_async({"item_id": item["_id"]})
+            async for published_item in published_items:
+                if published_item["_current_version"] == item["_current_version"]:
                     updates = {
                         "highlights": highlights,
-                        "_updated": publishedItem["_updated"],
-                        "_etag": publishedItem["_etag"],
+                        "_updated": published_item["_updated"],
+                        "_etag": published_item["_etag"],
                     }
-                    # TODO-ASYNC[published]: Use ``await service.update`` when updating this module
-                    publishedService.update(publishedItem["_id"], updates, publishedItem)
+                    await published_service.update_async(published_item["_id"], updates, published_item)
 
             for highlight in doc_highlights:
-                app.on_archive_item_updated(
-                    {"highlight_id": highlight, "highlight_name": get_highlight_name(highlight)},
+                await app.on_archive_item_updated.call_async(
+                    {"highlight_id": highlight, "highlight_name": await get_highlight_name(highlight)},
                     item,
                     status[str(highlight)],
                 )

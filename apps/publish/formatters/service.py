@@ -38,10 +38,10 @@ class FormattersService(AsyncBaseService):
         formatters = get_all_formatters()
         return next((f for f in formatters if type(f).__name__ == name), None)
 
-    def _validate(self, doc):
+    async def _validate(self, doc):
         """Validates the given story for publish action"""
         validate_item = {"act": ITEM_PUBLISH, "type": doc["type"], "validate": doc}
-        validation_errors = get_resource_service("validate").validate(validate_item)
+        validation_errors = await get_resource_service("validate").validate(validate_item)
         if validation_errors:
             raise ValidationError(validation_errors)
 
@@ -66,12 +66,12 @@ class FormattersService(AsyncBaseService):
                 raise SuperdeskApiError.badRequestError(_("Article not found!"))
 
             try:
-                self._validate(article)
-                response = formatter.format(apply_schema(article), {"_id": "0"}, None)[0]
+                await self._validate(article)
+                response = formatter.format(apply_schema(article), {"_id": "0"}, None)
                 if isawaitable(response):
-                    sequence, formatted_doc = await response
+                    sequence, formatted_doc = (await response)[0]
                 else:
-                    sequence, formatted_doc = response
+                    sequence, formatted_doc = response[0]
 
                 formatted_doc = formatted_doc.replace("''", "'")
 

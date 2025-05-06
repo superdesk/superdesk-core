@@ -18,7 +18,7 @@ from copy import deepcopy
 from eve.utils import ParsedRequest
 from eve.versioning import versioned_id_field
 
-from superdesk.core import get_app_config
+from superdesk.core import get_app_config, get_config
 from superdesk.types import SubscribersResource, PublishQueueResource, PublishQueueState
 from superdesk.commands import cli
 from superdesk.resource_fields import ID_FIELD, VERSION, ETAG
@@ -157,7 +157,7 @@ class LegalArchiveImport:
                 return
 
             # Step 2 - De-normalizing the legal archive doc
-            self._denormalize_user_desk(legal_archive_doc, log_msg)
+            await self._denormalize_user_desk(legal_archive_doc, log_msg)
             logger.info("De-normalized article {}".format(log_msg))
 
             # Step 3 - Upserting Legal Archive
@@ -184,13 +184,13 @@ class LegalArchiveImport:
 
             # Step 5 - Get History and de-normalize and insert into Legal Archive History
             lookup = {"item_id": legal_archive_doc[ID_FIELD]}
-            history_items = list(get_resource_service("archive_history").get(req=None, lookup=lookup))
+            history_items = await get_resource_service("archive_history").get_async(req=None, lookup=lookup)
             legal_history_items = list(legal_archive_history_service.get(req=None, lookup=lookup))
 
             logger.info("Fetched history for article {}".format(log_msg))
             history_to_insert = [
                 history
-                for history in history_items
+                async for history in history_items
                 if not any(
                     legal_version
                     for legal_version in legal_history_items
@@ -204,14 +204,14 @@ class LegalArchiveImport:
                 and article_in_legal_archive[VERSION] < legal_archive_doc[VERSION]
                 and len(versions_to_insert) == 0
             ):
-                resource_def = get_resource_service("DOMAIN")[ARCHIVE]
+                resource_def = get_config(dict, "DOMAIN")[ARCHIVE]
                 versioned_doc = deepcopy(legal_archive_doc)
                 versioned_doc[versioned_id_field(resource_def)] = legal_archive_doc[ID_FIELD]
                 versioned_doc[ID_FIELD] = ObjectId()
                 versions_to_insert.append(versioned_doc)
 
             for version_doc in versions_to_insert:
-                self._denormalize_user_desk(
+                await self._denormalize_user_desk(
                     version_doc,
                     self.log_msg_format.format(
                         _id=version_doc[version_id_field],
@@ -227,7 +227,7 @@ class LegalArchiveImport:
                 logger.info("Inserted de-normalized versions for article {}".format(log_msg))
 
             for history_doc in history_to_insert:
-                self._denormalize_history(history_doc)
+                await self._denormalize_history(history_doc)
                 history_doc.pop(ETAG, None)
 
             if history_to_insert:
@@ -242,7 +242,7 @@ class LegalArchiveImport:
             logger.exception("Failed to import into legal archive {}.".format(item_id))
             raise
 
-    def _denormalize_history(self, history_item):
+    async def _denormalize_history(self, history_item):
         """
         De-normalizes history items
         """
@@ -264,7 +264,9 @@ class LegalArchiveImport:
                     logger.info("Desk Details Not Found: {}. {}".format(history_update["task"].get("desk"), msg))
 
             if history_update.get("task") and history_update["task"].get("stage"):
-                stage = get_resource_service("stages").find_one(req=None, _id=str(history_update["task"]["stage"]))
+                stage = await get_resource_service("stages").find_one_async(
+                    req=None, _id=str(history_update["task"]["stage"])
+                )
                 if stage:
                     history_update["task"]["stage"] = stage.get("name")
                     logger.info("De-normalized Stage Details for article {}".format(msg))
@@ -276,7 +278,7 @@ class LegalArchiveImport:
 
             history_item["update"] = history_update
 
-    def _denormalize_user_desk(self, legal_archive_doc, log_msg):
+    async def _denormalize_user_desk(self, legal_archive_doc, log_msg):
         """
         De-normalizes user, desk and stage details in legal_archive_doc.
         """
@@ -299,7 +301,9 @@ class LegalArchiveImport:
                     logger.info("Desk Details Not Found: {}. {}".format(legal_archive_doc["task"].get("desk"), log_msg))
 
             if legal_archive_doc["task"].get("stage"):
-                stage = get_resource_service("stages").find_one(req=None, _id=str(legal_archive_doc["task"]["stage"]))
+                stage = await get_resource_service("stages").find_one_async(
+                    req=None, _id=str(legal_archive_doc["task"]["stage"])
+                )
                 if stage:
                     legal_archive_doc["task"]["stage"] = stage.get("name")
                     logger.info("De-normalized Stage Details for article {}".format(log_msg))

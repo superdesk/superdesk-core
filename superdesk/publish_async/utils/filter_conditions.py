@@ -381,8 +381,7 @@ async def _get_field_values() -> dict[str, list[str] | list[dict]]:
 
 
 async def _get_stage_field_values(desks: list[dict]) -> list[dict]:
-    # TODO-ASYNC: Convert this to use async stages service
-    stages = list(get_resource_service("stages").get(None, {}))
+    stages = await (await get_resource_service("stages").get_async(None, {})).to_list()
     for i, stage in enumerate(stages):
         try:
             desk = next(filter(lambda d: d["_id"] == stage["desk"], desks))

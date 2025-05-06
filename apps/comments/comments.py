@@ -11,7 +11,7 @@
 from superdesk.core import get_current_app, get_app_config
 from superdesk.resource import Resource
 from superdesk.notification import push_notification
-from superdesk.services import BaseService
+from superdesk.eve_async import AsyncBaseService
 from superdesk.errors import SuperdeskApiError
 from .user_mentions import get_users, get_desks, get_mentions, notify_mentioned_users, notify_mentioned_desks
 from quart_babel import gettext as _
@@ -69,11 +69,11 @@ def decode_keys(doc, field):
     doc[field] = decoded
 
 
-class CommentsService(BaseService):
+class CommentsService(AsyncBaseService):
     notification_key = "comments"
     notifications = True
 
-    async def on_create(self, docs):
+    async def on_create_async(self, docs):
         app = get_current_app()
         for doc in docs:
             sent_user = doc.get("user", None)
@@ -88,12 +88,12 @@ class CommentsService(BaseService):
             encode_keys(doc, "mentioned_users")
             encode_keys(doc, "mentioned_desks")
 
-    def on_fetched(self, doc):
+    async def on_fetched_async(self, doc):
         for item in doc.get("_items", []):
             decode_keys(item, "mentioned_users")
             decode_keys(item, "mentioned_desks")
 
-    async def on_created(self, docs):
+    async def on_created_async(self, docs):
         for doc in docs:
             if self.notifications:
                 push_notification(self.notification_key, item=str(doc.get("item")))
@@ -104,8 +104,8 @@ class CommentsService(BaseService):
             await notify_mentioned_users(docs, get_app_config("CLIENT_URL", "").rstrip("/"))
             await notify_mentioned_desks(docs)
 
-    def on_updated(self, updates, original):
+    async def on_updated_async(self, updates, original):
         push_notification(self.notification_key, updated=1)
 
-    def on_deleted(self, doc):
+    async def on_deleted_async(self, doc):
         push_notification(self.notification_key, deleted=1)
