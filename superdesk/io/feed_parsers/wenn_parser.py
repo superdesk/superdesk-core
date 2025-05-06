@@ -39,7 +39,7 @@ class WENNFeedParser(XMLFeedParser):
             and len(xml.findall(self.qname("NewsManagement", self.WENN_NM_NS))) > 0
         )
 
-    def parse(self, xml, provider=None):
+    async def parse(self, xml, provider=None):
         itemList = []
         try:
             for entry in xml.findall(self.qname("entry", self.ATOM_NS)):
@@ -54,7 +54,7 @@ class WENNFeedParser(XMLFeedParser):
             return itemList
 
         except Exception as ex:
-            raise ParserError.wennParserError(ex, provider)
+            raise await ParserError.wennParserError(ex, provider).send_notifications()
 
     def set_item_defaults(self, item):
         item[ITEM_TYPE] = CONTENT_TYPE.TEXT

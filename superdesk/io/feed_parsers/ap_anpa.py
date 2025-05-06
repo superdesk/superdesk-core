@@ -73,8 +73,8 @@ class AP_ANPAFeedParser(ANPAFeedParser):
         "RGL-": "15048000",
     }
 
-    def parse(self, file_path, provider=None):
-        item = super().parse(file_path, provider)
+    async def parse(self, file_path, provider=None):
+        item = await super().parse(file_path, provider)
         self.ap_derive_dateline(item)
         self.map_category_codes(item)
         self.map_sluglines_to_subjects(item)

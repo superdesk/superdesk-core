@@ -41,7 +41,7 @@ class IPTC7901FeedParser(FileFeedParser):
         except Exception:
             return False
 
-    def parse(self, file_path, provider=None):
+    async def parse(self, file_path, provider=None):
         try:
             item = {ITEM_TYPE: CONTENT_TYPE.TEXT, "guid": generate_guid(type=GUID_TAG), "versioncreated": utcnow()}
 
@@ -95,7 +95,7 @@ class IPTC7901FeedParser(FileFeedParser):
 
             return item
         except Exception as ex:
-            raise ParserError.IPTC7901ParserError(exception=ex, provider=provider)
+            raise await ParserError.IPTC7901ParserError(exception=ex, provider=provider).send_notifications()
 
     def map_category(self, source_category):
         if source_category.lower() == "u" or source_category.lower() == "x":

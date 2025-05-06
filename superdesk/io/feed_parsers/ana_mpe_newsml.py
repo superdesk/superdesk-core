@@ -33,7 +33,7 @@ class ANANewsMLOneFeedParser(NewsMLOneFeedParser):
     def can_parse(self, xml):
         return xml.tag == "NewsML"
 
-    def parse(self, xml, provider=None):
+    async def parse(self, xml, provider=None):
         item = {}
         try:
             self.root = xml
@@ -113,7 +113,7 @@ class ANANewsMLOneFeedParser(NewsMLOneFeedParser):
                 )
             return self.populate_fields(item)
         except Exception as ex:
-            raise ParserError.newsmlOneParserError(ex, provider)
+            raise await ParserError.newsmlOneParserError(ex, provider).send_notifications()
 
     def parse_newslines(self, item, tree):
         parsed_el = self.parse_elements(tree.find("NewsItem/NewsComponent/NewsLines"))

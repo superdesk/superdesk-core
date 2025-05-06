@@ -64,10 +64,10 @@ class TwitterFeedingService(FeedingService):
         IngestTwitterError.TwitterAPIGeneralError().get_error_description(),
     ]
 
-    def _test(self, provider):
-        self._update(provider, update=None, test=True)
+    async def _test(self, provider):
+        await self._update(provider, update=None, test=True)
 
-    def _update(self, provider, update, test=False):
+    async def _update(self, provider, update, test=False):
         config = provider.get("config", {})
         consumer_key = config.get("consumer_key", "")
         consumer_secret = config.get("consumer_secret", "")
@@ -80,10 +80,10 @@ class TwitterFeedingService(FeedingService):
         try:
             screen_names = screen_names.split(",")
         except Exception as ex:
-            raise IngestTwitterError.TwitterNoScreenNamesError(ex, provider)
+            raise await IngestTwitterError.TwitterNoScreenNamesError(ex, provider).send_notifications()
 
         if not screen_names:
-            raise IngestTwitterError.TwitterNoScreenNamesError(provider)
+            raise await IngestTwitterError.TwitterNoScreenNamesError(provider).send_notifications()
         for screen_name in screen_names:
             screen_name = screen_name.replace(" ", "")
             try:
@@ -96,18 +96,18 @@ class TwitterFeedingService(FeedingService):
             except twitter.error.TwitterError as exc:
                 # in some case python twitter error will return dict
                 if isinstance(exc.args[0], dict):
-                    raise IngestTwitterError.TwitterAPIGeneralError(exc, provider)
+                    raise await IngestTwitterError.TwitterAPIGeneralError(exc, provider).send_notifications()
                 if exc.message[0].get("code") == 34:
                     # that page does not exist
                     continue
                 elif exc.message[0].get("code") == 32:
                     # invalid credentials
-                    raise IngestTwitterError.TwitterLoginError(exc, provider)
+                    raise await IngestTwitterError.TwitterLoginError(exc, provider).send_notifications()
                 elif exc.message[0].get("code") == 88:
                     # rate limit exceeded
-                    raise IngestTwitterError.TwitterRateLimitError(exc, provider)
+                    raise await IngestTwitterError.TwitterRateLimitError(exc, provider).send_notifications()
                 else:
-                    raise IngestTwitterError.TwitterAPIGeneralError(exc, provider)
+                    raise await IngestTwitterError.TwitterAPIGeneralError(exc, provider).send_notifications()
 
             for status in statuses:
                 d = parser.parse(status.created_at)

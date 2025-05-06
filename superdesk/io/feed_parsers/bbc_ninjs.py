@@ -95,7 +95,7 @@ class BBCNINJSFeedParser(FeedParser):
 
         return False
 
-    def parse(self, s_json, provider=None):
+    async def parse(self, s_json, provider=None):
         parsed = []
         json_items = json.loads(s_json).get("item", [])
 

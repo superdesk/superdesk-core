@@ -72,7 +72,7 @@ class HTTPFeedingService(FeedingService, metaclass=ABCMeta):
 
         auth_url = provider.get("config", {}).get("auth_url", None)
         if not auth_url:
-            raise IngestApiError.apiGeneralError(
+            raise await IngestApiError.apiGeneralError(
                 provider=provider,
                 exception=KeyError(
                     """
@@ -82,7 +82,7 @@ class HTTPFeedingService(FeedingService, metaclass=ABCMeta):
                         provider["name"]
                     )
                 ),
-            )
+            ).send_notifications()
 
         payload = {
             "username": provider.get("config", {}).get("username", ""),
@@ -96,6 +96,7 @@ class HTTPFeedingService(FeedingService, metaclass=ABCMeta):
             except Exception:
                 err = IngestApiError.apiAuthError(provider=provider)
                 await self.close_provider(provider, err, force=True)
+                await err.send_notifications()
                 raise err
 
         tree = etree.fromstring(response.content)  # workaround for http mock lib

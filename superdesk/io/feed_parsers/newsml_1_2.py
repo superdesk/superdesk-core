@@ -32,7 +32,7 @@ class NewsMLOneFeedParser(XMLFeedParser):
     def can_parse(self, xml):
         return xml.tag == "NewsML" and xml.get("Version", "") == "1.2"
 
-    def parse(self, xml, provider=None):
+    async def parse(self, xml, provider=None):
         item = {}
         try:
             self.root = xml
@@ -88,7 +88,7 @@ class NewsMLOneFeedParser(XMLFeedParser):
 
             return self.populate_fields(item)
         except Exception as ex:
-            raise ParserError.newsmlOneParserError(ex, provider)
+            raise await ParserError.newsmlOneParserError(ex, provider).send_notifications()
 
     def parse_content(self, item, xml):
         item["body_html"] = (

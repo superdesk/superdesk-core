@@ -36,7 +36,7 @@ class ANPAFeedParser(FileFeedParser):
         except Exception:
             return False
 
-    def parse(self, file_path, provider=None):
+    async def parse(self, file_path, provider=None):
         try:
             item = {ITEM_TYPE: CONTENT_TYPE.TEXT, GUID_FIELD: generate_guid(type=GUID_TAG), FORMAT: FORMATS.HTML}
 
@@ -112,7 +112,7 @@ class ANPAFeedParser(FileFeedParser):
 
             return item
         except Exception as ex:
-            raise ParserError.anpaParseFileError(file_path, ex)
+            raise await ParserError.anpaParseFileError(file_path, ex).send_notifications()
 
     def _parse_ednote(self, header_lines, item):
         for line in header_lines:

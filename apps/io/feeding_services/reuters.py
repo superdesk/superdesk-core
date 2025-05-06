@@ -134,16 +134,16 @@ class ReutersHTTPFeedingService(HTTPFeedingService):
                     logger.warn("Reuters API timeout retrying, retries {}".format(retries))
                     retries += 1
                     continue
-                raise IngestApiError.apiTimeoutError(ex, self.provider)
+                raise await IngestApiError.apiTimeoutError(ex, self.provider).send_notifications()
             except requests.exceptions.TooManyRedirects as ex:
                 # Tell the user their URL was bad and try a different one
-                raise IngestApiError.apiRedirectError(ex, self.provider)
+                raise await IngestApiError.apiRedirectError(ex, self.provider).send_notifications()
             except requests.exceptions.RequestException as ex:
                 # catastrophic error. bail.
-                raise IngestApiError.apiRequestError(ex, self.provider)
+                raise await IngestApiError.apiRequestError(ex, self.provider).send_notifications()
             except Exception as error:
                 traceback.print_exc()
-                raise IngestApiError.apiGeneralError(error, self.provider)
+                raise await IngestApiError.apiGeneralError(error, self.provider).send_notifications()
 
             if response.status_code == 404:
                 raise LookupError(_("Not found {payload}").format(payload=payload))
@@ -154,13 +154,13 @@ class ReutersHTTPFeedingService(HTTPFeedingService):
             return etree.fromstring(response.content)  # workaround for http mock lib
         except UnicodeEncodeError as error:
             traceback.print_exc()
-            raise IngestApiError.apiUnicodeError(error, self.provider)
+            raise await IngestApiError.apiUnicodeError(error, self.provider).send_notifications()
         except ParseError as error:
             traceback.print_exc()
-            raise IngestApiError.apiParseError(error, self.provider)
+            raise await IngestApiError.apiParseError(error, self.provider).send_notifications()
         except Exception as error:
             traceback.print_exc()
-            raise IngestApiError.apiGeneralError(error, self.provider)
+            raise await IngestApiError.apiGeneralError(error, self.provider).send_notifications()
 
     def _get_absolute_url(self, endpoint):
         """
@@ -236,7 +236,7 @@ class ReutersHTTPFeedingService(HTTPFeedingService):
         """
         # get the provider in case it has been updated by another channel
         ingest_provider_service = superdesk.get_resource_service("ingest_providers")
-        provider = await ingest_provider_service.find_one_asnc(req=None, _id=self.provider[ID_FIELD])
+        provider = await ingest_provider_service.find_one_async(req=None, _id=self.provider[ID_FIELD])
         provider_token = provider.get("tokens")
         if "poll_tokens" not in provider_token:
             provider_token["poll_tokens"] = {channel: poll_token}
@@ -280,8 +280,8 @@ class ReutersHTTPFeedingService(HTTPFeedingService):
         payload = {"id": id}
         tree = await self._get_tree("item", payload)
 
-        parser = self.get_feed_parser(self.provider, tree)
-        items = parser.parse(tree, self.provider)
+        parser = await self.get_feed_parser(self.provider, tree)
+        items = await parser.parse(tree, self.provider)
 
         return items
 

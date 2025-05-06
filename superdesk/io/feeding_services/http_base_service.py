@@ -128,7 +128,7 @@ class HTTPFeedingServiceBase(FeedingService):
     def config(self):
         return self.provider.setdefault("config", {})
 
-    def validate_config(self):
+    async def validate_config(self):
         """
         Validate provider config according to `cls.fields`
 
@@ -139,19 +139,21 @@ class HTTPFeedingServiceBase(FeedingService):
         # validate required config fields
         required_keys = [field["id"] for field in self.fields if field.get("required", False)]
         if not set(self.config.keys()).issuperset(required_keys):
-            raise SuperdeskIngestError.notConfiguredError(
+            raise await SuperdeskIngestError.notConfiguredError(
                 Exception("{} are required.".format(", ".join(required_keys)))
-            )
+            ).send_notifications()
 
         # validate url
         url = self.config.get("url")
         if url and not url.strip().startswith("http"):
-            raise SuperdeskIngestError.notConfiguredError(Exception("URL must be a valid HTTP link."))
+            raise await SuperdeskIngestError.notConfiguredError(
+                Exception("URL must be a valid HTTP link.")
+            ).send_notifications()
 
     def get_request_kwargs(self) -> Dict[str, Any]:
         return {}
 
-    def get_url(self, url=None, **kwargs):
+    async def get_url(self, url=None, **kwargs):
         """Do an HTTP Get on URL
 
         :param string url: url to use (None to use self.HTTP_URL)
@@ -177,9 +179,9 @@ class HTTPFeedingServiceBase(FeedingService):
 
         if auth_required:
             if not user:
-                raise SuperdeskIngestError.notConfiguredError("user is not configured")
+                raise await SuperdeskIngestError.notConfiguredError("user is not configured").send_notifications()
             if not password:
-                raise SuperdeskIngestError.notConfiguredError("password is not configured")
+                raise await SuperdeskIngestError.notConfiguredError("password is not configured").send_notifications()
             kwargs.setdefault("auth", (user, password))
 
         params = kwargs.pop("params", {})
@@ -198,23 +200,23 @@ class HTTPFeedingServiceBase(FeedingService):
         try:
             response = self.session.get(url, **request_kwargs)
         except requests.exceptions.Timeout as exception:
-            raise IngestApiError.apiTimeoutError(exception, self.provider)
+            raise await IngestApiError.apiTimeoutError(exception, self.provider).send_notifications()
         except requests.exceptions.ConnectionError as exception:
-            raise IngestApiError.apiConnectionError(exception, self.provider)
+            raise await IngestApiError.apiConnectionError(exception, self.provider).send_notifications()
         except requests.exceptions.RequestException as exception:
-            raise IngestApiError.apiRequestError(exception, self.provider)
+            raise await IngestApiError.apiRequestError(exception, self.provider).send_notifications()
         except Exception as exception:
             traceback.print_exc()
-            raise IngestApiError.apiGeneralError(exception, self.provider)
+            raise await IngestApiError.apiGeneralError(exception, self.provider).send_notifications()
 
         if not response.ok:
             exc = Exception(response.reason)
             if response.status_code in (401, 403):
-                raise IngestApiError.apiAuthError(exc, self.provider)
+                raise await IngestApiError.apiAuthError(exc, self.provider).send_notifications()
             elif response.status_code == 404:
-                raise IngestApiError.apiNotFoundError(exc, self.provider)
+                raise await IngestApiError.apiNotFoundError(exc, self.provider).send_notifications()
             else:
-                raise IngestApiError.apiGeneralError(exc, self.provider)
+                raise await IngestApiError.apiGeneralError(exc, self.provider).send_notifications()
 
         return response
 
@@ -224,7 +226,7 @@ class HTTPFeedingServiceBase(FeedingService):
         request_kwargs.setdefault("timeout", self.HTTP_TIMEOUT)
         return download_file_from_url(url, request_kwargs, self.session)
 
-    def update(self, provider, update):
+    async def update(self, provider, update):
         self.provider = provider
-        self.validate_config()
-        return super().update(provider, update)
+        await self.validate_config()
+        return await super().update(provider, update)

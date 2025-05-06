@@ -54,7 +54,7 @@ class BBCLDRSFeedingService(HTTPFeedingServiceBase):
     def __init__(self):
         super().__init__()
 
-    def _test(self, provider):
+    async def _test(self, provider):
         config = self.config
         url = config["url"]
         api_key = config["api_key"]
@@ -64,22 +64,22 @@ class BBCLDRSFeedingService(HTTPFeedingServiceBase):
         params = {"limit": 1, "fields": "id"}
         headers = {"apikey": api_key}
 
-        self.get_url(url, params=params, headers=headers)
+        await self.get_url(url, params=params, headers=headers)
 
-    def _update(self, provider, update):
-        json_items = self._fetch_data()
+    async def _update(self, provider, update):
+        json_items = await self._fetch_data()
         parsed_items = []
 
         for item in json_items:
             try:
-                parser = self.get_feed_parser(provider, item)
-                parsed_items.append(parser.parse(item))
+                parser = await self.get_feed_parser(provider, item)
+                parsed_items.append(await parser.parse(item))
             except Exception as ex:
-                raise ParserError.parseMessageError(ex, provider, data=item)
+                raise await ParserError.parseMessageError(ex, provider, data=item).send_notifications()
 
         return parsed_items
 
-    def _fetch_data(self):
+    async def _fetch_data(self):
         url = self.config["url"]
         api_key = self.config["api_key"]
 
@@ -97,7 +97,7 @@ class BBCLDRSFeedingService(HTTPFeedingServiceBase):
         while True:
             params["offset"] = offset
 
-            response = self.get_url(url, params=params, headers=headers)
+            response = await self.get_url(url, params=params, headers=headers)
             # The total number of results are given to us in json, get them
             # via a regex to read the field so we don't have to convert the
             # whole thing to json pointlessly
@@ -105,7 +105,7 @@ class BBCLDRSFeedingService(HTTPFeedingServiceBase):
             results_str = re.search("[0-9]+", item_ident).group()
 
             if results_str is None:
-                raise IngestApiError.apiGeneralError(Exception(response.text), self.provider)
+                raise await IngestApiError.apiGeneralError(Exception(response.text), self.provider).send_notifications()
 
             num_results = int(results_str)
 

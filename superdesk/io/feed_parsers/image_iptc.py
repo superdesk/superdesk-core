@@ -60,13 +60,13 @@ class ImageIPTCFeedParser(FileFeedParser):
             return False
         return mimetypes.guess_type(image_path)[0] == "image/jpeg"
 
-    def parse(self, image_path, provider=None):
+    async def parse(self, image_path, provider=None):
         try:
             item = self.parse_item(image_path)
             return item
         except Exception as ex:
             logger.exception(ex)
-            raise ParserError.parseFileError(exception=ex, provider=provider)
+            raise await ParserError.parseFileError(exception=ex, provider=provider).send_notifications()
 
     def parse_item(self, image_path):
         filename = os.path.basename(image_path)

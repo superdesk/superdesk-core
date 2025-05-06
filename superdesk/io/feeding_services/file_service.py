@@ -54,14 +54,14 @@ class FileFeedingService(FeedingService):
         }
     ]
 
-    def _test(self, provider):
+    async def _test(self, provider):
         path = provider.get("config", {}).get("path", None)
         if not os.path.exists(path):
-            raise IngestFileError.notExistsError()
+            raise await IngestFileError.notExistsError().send_notifications()
         if not os.path.isdir(path):
-            raise IngestFileError.isNotDirError()
+            raise await IngestFileError.isNotDirError().send_notifications()
 
-    def _update(self, provider, update):
+    async def _update(self, provider, update):
         # check if deprecated FILE_INGEST_OLD_CONTENT_MINUTES setting is still used
         app = get_current_app()
         if "FILE_INGEST_OLD_CONTENT_MINUTES" in app.config:
@@ -84,9 +84,9 @@ class FileFeedingService(FeedingService):
                     provider["name"]
                 )
             )
-            return []
+            return
 
-        registered_parser = self.get_feed_parser(provider)
+        registered_parser = await self.get_feed_parser(provider)
         for filename in get_sorted_files(self.path, sort_by=FileSortAttributes.created):
             try:
                 last_updated = None
@@ -101,11 +101,11 @@ class FileFeedingService(FeedingService):
                         if isinstance(registered_parser, XMLFeedParser):
                             with open(file_path, "rb") as f:
                                 xml = etree.parse(f)
-                                parser = self.get_feed_parser(provider, xml.getroot())
-                                item = parser.parse(xml.getroot(), provider)
+                                parser = await self.get_feed_parser(provider, xml.getroot())
+                                item = await parser.parse(xml.getroot(), provider)
                         else:
-                            parser = self.get_feed_parser(provider, file_path)
-                            item = parser.parse(file_path, provider)
+                            parser = await self.get_feed_parser(provider, file_path)
+                            item = await parser.parse(file_path, provider)
 
                         self.after_extracting(item, provider)
 
@@ -114,13 +114,15 @@ class FileFeedingService(FeedingService):
                         else:
                             failed = yield [item]
 
-                        self.move_file(self.path, filename, provider=provider, success=not failed)
+                        await self.move_file(self.path, filename, provider=provider, success=not failed)
                     else:
-                        self.move_file(self.path, filename, provider=provider, success=False)
+                        await self.move_file(self.path, filename, provider=provider, success=False)
             except Exception as ex:
                 if last_updated and self.is_old_content(last_updated):
-                    self.move_file(self.path, filename, provider=provider, success=False)
-                raise ParserError.parseFileError("{}-{}".format(provider["name"], self.NAME), filename, ex, provider)
+                    await self.move_file(self.path, filename, provider=provider, success=False)
+                raise await ParserError.parseFileError(
+                    "{}-{}".format(provider["name"], self.NAME), filename, ex, provider
+                ).send_notifications()
 
         push_notification("ingest:update")
 
@@ -139,7 +141,7 @@ class FileFeedingService(FeedingService):
         """
         pass
 
-    def move_file(self, file_path, filename, provider, success=True):
+    async def move_file(self, file_path, filename, provider, success=True):
         """Move the files from the current directory to the _Processed if successful, else _Error if unsuccessful.
 
         Creates _Processed and _Error directories within current directory if they don't exist.
@@ -158,7 +160,7 @@ class FileFeedingService(FeedingService):
             if not os.path.exists(os.path.join(file_path, "_ERROR/")):
                 os.makedirs(os.path.join(file_path, "_ERROR/"))
         except Exception as ex:
-            raise IngestFileError.folderCreateError(ex, provider)
+            raise await IngestFileError.folderCreateError(ex, provider).send_notifications()
 
         try:
             if success:
@@ -166,7 +168,7 @@ class FileFeedingService(FeedingService):
             else:
                 shutil.copy2(os.path.join(file_path, filename), os.path.join(file_path, "_ERROR/"))
         except Exception as ex:
-            raise IngestFileError.fileMoveError(ex, provider)
+            raise await IngestFileError.fileMoveError(ex, provider).send_notifications()
         finally:
             os.remove(os.path.join(file_path, filename))
 

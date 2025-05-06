@@ -167,7 +167,7 @@ class APMediaFeedParser(FeedParser):
                 except KeyError:
                     logger.debug("Subject code '%s' not found" % qcode)
 
-    def parse(self, s_json, provider=None):
+    async def parse(self, s_json, provider=None):
         in_item = s_json.get("data", {}).get("item")
         nitf_item = s_json.get("nitf", {})
         item = {"guid": in_item.get("altids", {}).get("itemid") + ":" + str(in_item.get("version"))}
@@ -267,16 +267,16 @@ class APMediaFeedParser(FeedParser):
                 item["body_html"] = nitf_item.get("body_html").replace('<block id="Main">', "").replace("</block>", "")
 
         if s_json.get("associations"):
-            self._parse_associations(s_json["associations"], item, provider)
+            await self._parse_associations(s_json["associations"], item, provider)
 
         return item
 
-    def _parse_associations(self, associations, item, provider=None):
+    async def _parse_associations(self, associations, item, provider=None):
         related_id = getattr(self, "RELATED_ID", get_app_config("INGEST_AP_RELATED_ID"))
         if related_id:
             item["associations"] = {}
             for key, raw in associations.items():
-                item["associations"]["{}--{}".format(related_id, key)] = self.parse(raw, provider)
+                item["associations"]["{}--{}".format(related_id, key)] = await self.parse(raw, provider)
 
     def _parse_renditions(self, renditions, item):
         try:

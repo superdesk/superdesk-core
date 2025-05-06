@@ -73,22 +73,22 @@ class EmailFeedingService(FeedingService):
         {"id": "filter", "type": "text", "label": l_("Filter"), "placeholder": "Filter", "required": False},
     ]
 
-    def _test(self, provider):
-        self._update(provider, update=None, test=True)
+    async def _test(self, provider):
+        await self._update(provider, update=None, test=True)
 
-    def authenticate(self, provider: dict, config: dict) -> imaplib.IMAP4_SSL:
+    async def authenticate(self, provider: dict, config: dict) -> imaplib.IMAP4_SSL:
         server = config.get("server", "")
         port = int(config.get("port", 993))
         try:
             socket.setdefaulttimeout(get_app_config("EMAIL_TIMEOUT", 10))
             imap = imaplib.IMAP4_SSL(host=server, port=port)
         except (socket.gaierror, OSError) as e:
-            raise IngestEmailError.emailHostError(exception=e, provider=provider)
+            raise await IngestEmailError.emailHostError(exception=e, provider=provider).send_notifications()
 
         try:
             imap.login(config.get("user", None), config.get("password", None))
         except imaplib.IMAP4.error:
-            raise IngestEmailError.emailLoginError(imaplib.IMAP4.error, provider)
+            raise await IngestEmailError.emailLoginError(imaplib.IMAP4.error, provider).send_notifications()
 
         return imap
 
@@ -99,29 +99,29 @@ class EmailFeedingService(FeedingService):
         """
         pass
 
-    def _update(self, provider, update, test=False):
+    async def _update(self, provider, update, test=False):
         config = provider.get("config", {})
         new_items = []
 
         try:
-            imap = self.authenticate(provider, config)
+            imap = await self.authenticate(provider, config)
 
             try:
                 rv, data = imap.select(config.get("mailbox", None), readonly=False)
                 if rv != "OK":
-                    raise IngestEmailError.emailMailboxError()
+                    raise await IngestEmailError.emailMailboxError().send_notifications()
                 try:
                     # at least one criterion must be set
                     # (see file:///usr/share/doc/python/html/library/imaplib.html#imaplib.IMAP4.search)
                     rv, data = imap.search(None, config.get("filter") or "(UNSEEN)")
                     if rv != "OK":
-                        raise IngestEmailError.emailFilterError()
+                        raise await IngestEmailError.emailFilterError().send_notifications()
                     for num in data[0].split():
                         rv, data = imap.fetch(num, "(RFC822)")
                         if rv == "OK" and not test:
                             try:
-                                parser = self.get_feed_parser(provider, data)
-                                parsed_items = parser.parse(data, provider)
+                                parser = await self.get_feed_parser(provider, data)
+                                parsed_items = await parser.parse(data, provider)
                                 self.parse_extra(imap, num, parsed_items)
                                 new_items.append(parsed_items)
                                 rv, data = imap.store(num, "+FLAGS", "\\Seen")
@@ -134,7 +134,7 @@ class EmailFeedingService(FeedingService):
         except IngestEmailError:
             raise
         except Exception as ex:
-            raise IngestEmailError.emailError(ex, provider)
+            raise await IngestEmailError.emailError(ex, provider).send_notifications()
         return new_items
 
     def prepare_href(self, href, mimetype=None):

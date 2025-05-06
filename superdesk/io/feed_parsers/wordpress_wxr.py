@@ -103,7 +103,7 @@ class WPWXRFeedParser(XMLFeedParser):
     def can_parse(self, xml):
         return xml.tag == "rss"
 
-    def parse(self, xml, provider=None):
+    async def parse(self, xml, provider=None):
         return list(self.parse_items(xml))
 
     def parse_items(self, xml):

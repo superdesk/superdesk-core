@@ -109,9 +109,9 @@ class PAFeedParser(NITFFeedParser):
         }
         super().__init__()
 
-    def parse(self, xml, provider=None):
+    async def parse(self, xml, provider=None):
         self.xml = xml
-        return super().parse(xml, provider=provider)
+        return await super().parse(xml, provider=provider)
 
 
 register_feed_parser(PAFeedParser.NAME, PAFeedParser())

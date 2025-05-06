@@ -69,7 +69,7 @@ class NINJSFeedParser(FeedParser):
             pass
         return False
 
-    def parse(self, file_path, provider=None):
+    async def parse(self, file_path, provider=None):
         self.items = []
         with open(file_path, "r") as f:
             ninjs = json.load(f)

@@ -108,7 +108,7 @@ class NITFFeedParser(XMLFeedParser):
     def can_parse(self, xml):
         return xml.tag == "nitf"
 
-    def parse(self, xml, provider=None):
+    async def parse(self, xml, provider=None):
         item = {
             ITEM_TYPE: CONTENT_TYPE.TEXT,  # set the default type.
         }
@@ -120,7 +120,7 @@ class NITFFeedParser(XMLFeedParser):
 
             item.setdefault("word_count", get_word_count(item["body_html"], no_html=True))
         except Exception as ex:
-            raise ParserError.nitfParserError(ex, provider)
+            raise await ParserError.nitfParserError(ex, provider).send_notifications()
         return item
 
     def get_norm_datetime(self, tree):

@@ -56,7 +56,7 @@ class NewsMLTwoFeedParser(XMLFeedParser):
     def can_parse(self, xml):
         return any([xml.tag.endswith(tag) for tag in ["newsMessage", "newsItem", "packageItem"]])
 
-    def parse(self, xml, provider=None):
+    async def parse(self, xml, provider=None):
         self.root = xml
         items = []
         try:
@@ -73,7 +73,7 @@ class NewsMLTwoFeedParser(XMLFeedParser):
                     items.append(item)
             return items
         except Exception as ex:
-            raise ParserError.newsmlTwoParserError(ex, provider)
+            raise await ParserError.newsmlTwoParserError(ex, provider).send_notifications()
 
     def parse_item(self, tree):
         # config is not accessible during __init__, so we check it here

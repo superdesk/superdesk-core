@@ -66,7 +66,7 @@ class ImportCommand:
             buf = buf.replace(b"\r", b"&#13;")
             xml_parser = etree.XMLParser(recover=True)
             parsed = etree.fromstring(buf, xml_parser)
-        articles = feed_parser.parse(parsed)
+        articles = await feed_parser.parse(parsed)
         updates = {ITEM_STATE: "published"}
         if profile is not None:
             updates["profile"] = profile_id

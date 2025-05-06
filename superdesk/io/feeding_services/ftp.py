@@ -130,10 +130,10 @@ class FTPFeedingService(FeedingService):
             "path": url_parts.path.lstrip("/"),
         }
 
-    def _test(self, provider):
+    async def _test(self, provider):
         config = provider.get("config", {})
         try:
-            with ftp_connect(config) as ftp:
+            async with ftp_connect(config) as ftp:
                 ftp.mlsd()
         except IngestFtpError:
             raise
@@ -141,7 +141,7 @@ class FTPFeedingService(FeedingService):
             if "500" in str(ex):
                 ftp.nlst()
             else:
-                raise IngestFtpError.ftpError(ex, provider)
+                raise await IngestFtpError.ftpError(ex, provider).send_notifications()
 
     def _move(self, ftp, src, dest, file_modify, failed):
         """Move distant file
@@ -226,16 +226,18 @@ class FTPFeedingService(FeedingService):
         """Test if given file path is empty, return True if a file is empty"""
         return not (os.path.isfile(file_path) and os.path.getsize(file_path) > 0)
 
-    def _list_files(self, ftp, provider):
+    async def _list_files(self, ftp, provider):
         self._timer.start("ftp_list")
         try:
-            return [(filename, facts["modify"]) for filename, facts in ftp.mlsd() if facts.get("type") == "file"]
+            data = ftp.mlsd()
+            print(data)
+            return [(filename, facts["modify"]) for filename, facts in data if facts.get("type") == "file"]
         except Exception as ex:
             if "500" in str(ex):
                 now = utcnow()
                 return [(file_name, now) for file_name in ftp.nlst()]
             else:
-                raise IngestFtpError.ftpError(ex, provider)
+                raise await IngestFtpError.ftpError(ex, provider).send_notifications()
         finally:
             self._log_msg("FTP list files. Exec time: {:.4f} secs.".format(self._timer.stop("ftp_list")))
 
@@ -245,7 +247,7 @@ class FTPFeedingService(FeedingService):
         self._log_msg("Sort {} files. Exec time: {:.4f} secs.".format(len(files), self._timer.stop("sort_files")))
         return files
 
-    def _retrieve_and_parse(self, ftp, config, filename, provider, registered_parser):
+    async def _retrieve_and_parse(self, ftp, config, filename, provider, registered_parser):
         self._timer.start("retrieve_parse")
 
         if "dest_path" not in config:
@@ -260,7 +262,7 @@ class FTPFeedingService(FeedingService):
                         self._timer.split("retrieve_parse"), os.path.getsize(local_file_path), filename
                     )
                 )
-            except ftplib.all_errors:
+            except ftplib.all_errors as err:
                 self._log_msg(
                     "Download failed. Exec time: {:.4f} secs. File: {}.".format(
                         self._timer.stop("retrieve_parse"), filename
@@ -275,11 +277,11 @@ class FTPFeedingService(FeedingService):
 
         if isinstance(registered_parser, XMLFeedParser):
             xml = etree.parse(local_file_path).getroot()
-            parser = self.get_feed_parser(provider, xml)
-            parsed = parser.parse(xml, provider)
+            parser = await self.get_feed_parser(provider, xml)
+            parsed = await parser.parse(xml, provider)
         else:
-            parser = self.get_feed_parser(provider, local_file_path)
-            parsed = parser.parse(local_file_path, provider)
+            parser = await self.get_feed_parser(provider, local_file_path)
+            parsed = await parser.parse(local_file_path, provider)
 
         self._log_msg(
             "Parsing finished. Exec time: {:.4f} secs. File: {}.".format(self._timer.stop("retrieve_parse"), filename)
@@ -287,25 +289,25 @@ class FTPFeedingService(FeedingService):
 
         return [parsed] if isinstance(parsed, dict) else parsed
 
-    def _update(self, provider, update):
+    async def _update(self, provider, update):
         config = provider.get("config", {})
         do_move = config.get("move", False)
         last_processed_file_modify = provider.get("private", {}).get("last_processed_file_modify")
         limit = get_app_config("FTP_INGEST_FILES_LIST_LIMIT", 100)
-        registered_parser = self.get_feed_parser(provider)
+        registered_parser = await self.get_feed_parser(provider)
         allowed_ext = getattr(registered_parser, "ALLOWED_EXT", self.ALLOWED_EXT_DEFAULT)
         if config.get(ALLOWED_EXTENSIONS_CONFIG):
             allowed_ext = set(map(_format_extension, config.get(ALLOWED_EXTENSIONS_CONFIG).split(",")))
 
         try:
             self._timer.start("ftp_connect")
-            with ftp_connect(config) as ftp:
+            async with ftp_connect(config) as ftp:
                 ftp.encoding = "UTF-8"
                 self._log_msg(
                     "Connected to FTP server. Exec time: {:.4f} secs.".format(self._timer.stop("ftp_connect"))
                 )
                 files_to_process = []
-                files = self._sort_files(self._list_files(ftp, provider))
+                files = self._sort_files(await self._list_files(ftp, provider))
 
                 if do_move:
                     move_path, move_path_error = self._create_move_folders(config, ftp)
@@ -353,7 +355,9 @@ class FTPFeedingService(FeedingService):
                 for filename, file_modify in files_to_process:
                     try:
                         update["private"] = {"last_processed_file_modify": file_modify}
-                        failed = yield self._retrieve_and_parse(ftp, config, filename, provider, registered_parser)
+                        failed = yield await self._retrieve_and_parse(
+                            ftp, config, filename, provider, registered_parser
+                        )
 
                         if do_move:
                             move_dest_file_path = os.path.join(move_path if not failed else move_path_error, filename)
@@ -371,10 +375,11 @@ class FTPFeedingService(FeedingService):
                     "Processing finished. Exec time: {:.4f} secs.".format(self._timer.stop("start_processing"))
                 )
 
-        except IngestFtpError:
-            raise
+        except IngestFtpError as ex:
+            await ex.send_notifications()
+            raise ex
         except Exception as ex:
-            raise IngestFtpError.ftpError(ex, provider)
+            raise await IngestFtpError.ftpError(ex, provider).send_notifications()
 
 
 register_feeding_service(FTPFeedingService)
