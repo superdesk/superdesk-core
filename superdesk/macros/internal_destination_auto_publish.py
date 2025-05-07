@@ -56,7 +56,11 @@ async def internal_destination_auto_publish(item, **kwargs):
         {"$and": [{PROCESSED_FROM: item.get(ID_FIELD)}, {"task.desk": str(item.get("task").get("desk"))}]}
     )
     req.max_results = 1
-    overwrite_item = await (await archive_service.get_from_mongo(req=req, lookup=None)).next()
+
+    try:
+        overwrite_item = await (await archive_service.get_from_mongo(req=req, lookup=None)).next()
+    except StopAsyncIteration:
+        overwrite_item = None
 
     # keep pubslish_schedule and schedule_settings in updates so that state can be set to scheduled
     updates = {PUBLISH_SCHEDULE: item[PUBLISH_SCHEDULE], SCHEDULE_SETTINGS: item[SCHEDULE_SETTINGS]}

@@ -157,7 +157,12 @@ class ArchivedService(AsyncBaseService):
             req = ParsedRequest()
             req.sort = '[("%s", -1)]' % VERSION
             takes_package_cursor = await self.get_async(req=req, lookup={"item_id": takes_package_id})
-            takes_package = await takes_package_cursor.next()
+
+            try:
+                takes_package = await takes_package_cursor.next()
+            except StopAsyncIteration:
+                takes_package = None
+
             if not takes_package:
                 raise bad_req_error(message=_("Digital Story of the article not found in Archived repo"))
 
@@ -170,7 +175,12 @@ class ArchivedService(AsyncBaseService):
                         raise bad_req_error(message=_("Can't Kill as Take(s) are still available in production"))
 
                     take_cursor = await self.get_async(req=None, lookup={"item_id": takes_ref[RESIDREF]})
-                    take = await take_cursor.next()
+
+                    try:
+                        take = await take_cursor.next()
+                    except StopAsyncIteration:
+                        take = None
+
                     if not take:
                         raise bad_req_error(message=_("One of Take(s) not found in Archived repo"))
 

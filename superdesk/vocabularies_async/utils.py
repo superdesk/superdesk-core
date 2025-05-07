@@ -45,7 +45,12 @@ async def get_cv_items(
         }
 
     cursor = await VocabulariesResourceModel.get_service().find(lookup, projection=projection)
-    voc = await cursor.next()
+
+    try:
+        voc = await cursor.next()
+    except StopAsyncIteration:
+        voc = None
+
     if voc is None:
         return []
 

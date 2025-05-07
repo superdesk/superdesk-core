@@ -22,7 +22,6 @@ class PublishQueueService(AsyncResourceService[PublishQueueResource]):
                 if doc.destination and doc.destination.delivery_type == "content_api"
                 else doc.state or PublishQueueState.PENDING
             )
-            doc.moved_to_legal = False
 
             if not doc.published_seq_num:
                 subscriber = await subscriber_service.find_by_id(doc.subscriber_id)

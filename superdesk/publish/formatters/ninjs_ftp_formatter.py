@@ -86,7 +86,7 @@ class FTPNinjsFormatter(NINJSFormatter):
         for key, item in article.get("associations", {}).items():
             if key.startswith("editor_"):
                 result = test_products_against_item(item)
-                matching_products = set(p["product_id"] for p in result if p["matched"])
+                matching_products = set(str(p["product_id"]) for p in result if p["matched"])
                 if not matching_products.intersection(permitted_products):
                     remove_keys.append(key)
 

@@ -79,7 +79,11 @@ class StagesService(AsyncBaseService):
             req = ParsedRequest()
             req.sort = "-desk_order"
             req.max_results = 1
-            prev_stage = await (await self.get_async(req=req, lookup={"desk": doc["desk"]})).next()
+
+            try:
+                prev_stage = await (await self.get_async(req=req, lookup={"desk": doc["desk"]})).next()
+            except StopAsyncIteration:
+                prev_stage = None
 
             if doc.get("content_expiry") == 0:
                 doc["content_expiry"] = None
