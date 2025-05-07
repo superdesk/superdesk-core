@@ -74,10 +74,14 @@ components:
           type: string
           example: "admin"
         availability:
-          type: object
-          additionalProperties:
+          type: array
+          items:
             type: object
             properties:
+              date:
+                type: string
+                format: date
+                example: "2023-05-01"
               status:
                 enum:
                   - available
@@ -90,15 +94,6 @@ components:
               published_events:
                 type: integer
                 example: 2
-          example:
-            2023-05-01:
-              status: available
-              published_articles: 5
-              published_events: 2
-            2023-05-02:
-              status: unavailable
-              published_articles: 0
-              published_events: 0
 
   responses:
     '401':

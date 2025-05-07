@@ -52,9 +52,10 @@ class UserAvailabilityService(ProdApiService):
         return start_date, end_date
 
     def _get_user_availability(self, user, start_date, end_date):
-        user_data = {"_id": user["_id"], "username": user["username"], "availability": {}}
+        user_data = {"_id": user["_id"], "username": user["username"], "availability": []}
+        availability_map = {}
 
-        availability = self.find(
+        availability_days = self.find(
             where={
                 "user": user["_id"],
                 "date": {
@@ -64,10 +65,10 @@ class UserAvailabilityService(ProdApiService):
             }
         )
 
-        for day_availability in availability:
-            if day_availability.get("status"):
-                user_data["availability"][day_availability["date"]] = {
-                    "status": day_availability["status"],
+        for availability_day in availability_days:
+            if availability_day.get("status"):
+                availability_map[availability_day["date"]] = {
+                    "status": availability_day["status"],
                     "published_articles": 0,
                     "published_events": 0,
                 }
@@ -83,8 +84,18 @@ class UserAvailabilityService(ProdApiService):
         )
 
         for metric in metrics:
-            user_data["availability"].setdefault(
-                metric["date"], {"status": "", "published_articles": 0, "published_events": 0}
-            )[metric["name"]] = metric["value"]
+            availability_map.setdefault(metric["date"], {"status": "", "published_articles": 0, "published_events": 0})[
+                metric["name"]
+            ] = metric["value"]
+
+        user_data["availability"] = [
+            {
+                "date": date,
+                "status": availability_map[date]["status"],
+                "published_articles": availability_map[date]["published_articles"],
+                "published_events": availability_map[date]["published_events"],
+            }
+            for date in sorted(availability_map.keys())
+        ]
 
         return user_data
