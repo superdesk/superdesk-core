@@ -477,8 +477,8 @@ class UsersService(AsyncBaseService):
         if not self._updating_stage_visibility:
             return
         logger.info("Updating Stage Visibility Started")
-        users = list(await self.get_async(req=None, lookup=None))
-        for user in users:
+        users_cursor = await self.get_async(req=None, lookup=None)
+        async for user in users_cursor:
             await self.update_stage_visibility_for_user_async(user)
 
         logger.info("Updating Stage Visibility Completed")
