@@ -1,9 +1,14 @@
 from bson import ObjectId
-from superdesk.types import ProductsResource
+from superdesk.types import ProductsResource, ProductTypes, ProductContentFilter, ProductFilterType
+
+from .content_filters import CONTENT_FILTER_MEDIA_ID, CONTENT_FILTER_PICTURES_ID, CONTENT_FILTER_VIDEOS_ID
 
 NSW_PRODUCT_ID = ObjectId()
 ABCDEF_PRODUCT_ID = ObjectId()
 XYZ_PRODUCT_ID = ObjectId()
+PICTURE_PRODUCT_ID = ObjectId()
+VIDEO_PRODUCT_ID = ObjectId()
+MEDIA_PRODUCT_ID = ObjectId()
 
 
 def nsw_product() -> ProductsResource:
@@ -27,6 +32,42 @@ def xyz_product() -> ProductsResource:
         id=XYZ_PRODUCT_ID,
         name="xyz",
         codes="xyz",
+    )
+
+
+def picture_product() -> ProductsResource:
+    return ProductsResource(
+        id=PICTURE_PRODUCT_ID,
+        name="Picture Product",
+        product_type=ProductTypes.BOTH,
+        content_filter=ProductContentFilter(
+            filter_id=CONTENT_FILTER_PICTURES_ID,
+            filter_type=ProductFilterType.PERMITTING,
+        ),
+    )
+
+
+def video_product() -> ProductsResource:
+    return ProductsResource(
+        id=VIDEO_PRODUCT_ID,
+        name="Video Product",
+        product_type=ProductTypes.BOTH,
+        content_filter=ProductContentFilter(
+            filter_id=CONTENT_FILTER_VIDEOS_ID,
+            filter_type=ProductFilterType.PERMITTING,
+        ),
+    )
+
+
+def media_product() -> ProductsResource:
+    return ProductsResource(
+        id=MEDIA_PRODUCT_ID,
+        name="Picture & Video Product",
+        product_type=ProductTypes.BOTH,
+        content_filter=ProductContentFilter(
+            filter_id=CONTENT_FILTER_MEDIA_ID,
+            filter_type=ProductFilterType.PERMITTING,
+        ),
     )
 
 
