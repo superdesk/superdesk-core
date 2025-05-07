@@ -54,12 +54,15 @@ class ImportCommand:
         if profile is not None:
             content_types_service = get_resource_service("content_types")
             try:
-                content_profile = await content_types_service.find_async({"label": profile}).next()
-            except StopIteration:
+                content_profile = await (await content_types_service.find_async({"label": profile})).next()
+            except StopAsyncIteration:
+                content_profile = None
+
+            if not content_profile:
                 print("Can't find content profile with this label")
                 sys.exit(1)
-            else:
-                profile_id = content_profile["_id"]
+
+            profile_id = content_profile["_id"]
 
         with open(path, "rb") as f:
             buf = f.read()

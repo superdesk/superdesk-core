@@ -105,7 +105,10 @@ class MediaEditorService(AsyncBaseService):
                 item_id = item[ID_FIELD]
 
             if item is None and item_id:
-                item = await (await archive.find_async({"_id": item_id})).next()
+                try:
+                    item = await (await archive.find_async({"_id": item_id})).next()
+                except StopAsyncIteration:
+                    item = None
             edit = doc.pop("edit")
 
             # now we retrieve and load current original media

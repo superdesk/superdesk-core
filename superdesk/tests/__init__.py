@@ -18,13 +18,16 @@ from dataclasses import dataclass
 
 from copy import deepcopy
 from unittest.mock import patch
-from .async_case import IsolatedAsyncioTestCase
 from quart import Response
 from quart.testing import QuartClient
 from werkzeug.datastructures import Authorization
 from eve.events import Events
 import elasticsearch
+from pymongo import MongoClient
+from motor.motor_asyncio import AsyncIOMotorClient
+from elasticsearch import Elasticsearch, AsyncElasticsearch
 
+from .async_case import IsolatedAsyncioTestCase
 from superdesk.core import json
 from superdesk.flask import Config
 from apps.ldap import ADAuth
@@ -446,33 +449,58 @@ def use_snapshot(app, name, funcs=(snapshot_es, snapshot_mongo), force=False):
 use_snapshot.cache = {}  # type: ignore
 
 
-def copy_db_connections(current_app):
+def _close_db_connection(con: MongoClient | AsyncIOMotorClient | Elasticsearch):
+    con.close()
+
+
+async def _close_async_db_connection(con: AsyncElasticsearch):
+    await con.close()
+
+
+async def cleanup_db_connections(current_app):
+    # Close all connections the MongoDB and Elasticsearch and clear app extension dicts
+
     previous_app = getattr(setup, "app", None)
     if not previous_app:
         return
 
-    # Copy the database connections from the previous app
-    # so we re-use them
-    current_app.extensions = previous_app.extensions
+    async with previous_app.app_context():
+        for mongo_con in previous_app.data.mongo.driver.values():
+            _close_db_connection(mongo_con.cx)
 
-    current_app.data.mongo.driver = previous_app.data.mongo.driver
-    current_app.data.mongo_async.driver = previous_app.data.mongo_async.driver
-    current_app.data.elastic.es = previous_app.data.elastic.es
-    current_app.data.elastic.elastics = previous_app.data.elastic.elastics
+        for mongo_con in previous_app.data.mongo_async.driver.values():
+            _close_db_connection(mongo_con.cx)
 
-    current_app.data.elastic_async.es_async = previous_app.data.elastic_async.es_async
-    current_app.data.elastic_async.elastics = previous_app.data.elastic_async.elastics
+        _close_db_connection(previous_app.data.elastic.es)
+        for es_con in previous_app.data.elastic.elastics.values():
+            _close_db_connection(es_con)
+
+        await _close_async_db_connection(previous_app.data.elastic_async.es_async)
+        for es_async_con in previous_app.data.elastic_async.elastics.values():
+            await _close_async_db_connection(es_async_con)
+
+    current_app.extensions["pymongo"] = {}
+    current_app.extensions["pymongo_async"] = {}
 
 
-def copy_async_db_connections(current_app):
+async def cleanup_async_db_connections(current_app):
+    # Close all async connections the MongoDB and Elasticsearch and clear app extension dicts
+
     previous_app = getattr(setup, "app", None)
     if not previous_app:
         return
 
-    current_app.mongo._mongo_clients = previous_app.async_app.mongo._mongo_clients
-    current_app.mongo._mongo_clients_async = previous_app.async_app.mongo._mongo_clients_async
-    current_app.elastic._elastic_connections = previous_app.async_app.elastic._elastic_connections
-    current_app.elastic._elastic_async_connections = previous_app.async_app.elastic._elastic_async_connections
+    for mongo_con in previous_app.async_app.mongo._mongo_clients.values():
+        _close_db_connection(mongo_con[0])
+
+    for mongo_con in previous_app.async_app.mongo._mongo_clients_async.values():
+        _close_db_connection(mongo_con[0])
+
+    for es_con in previous_app.async_app.elastic._elastic_connections.values():
+        _close_db_connection(es_con)
+
+    for es_async_con in previous_app.async_app.elastic._elastic_async_connections.values():
+        await _close_async_db_connection(es_async_con)
 
 
 async def setup(context=None, config=None, app_factory=get_app, reset=False, auto_add_apps: bool = True):
@@ -482,8 +510,8 @@ async def setup(context=None, config=None, app_factory=get_app, reset=False, aut
         cfg = setup_config(config, auto_add_apps)
         app = app_factory(cfg)  # type: ignore[attr-defined]
 
-        copy_db_connections(app)
-        copy_async_db_connections(app.async_app)
+        await cleanup_db_connections(app)
+        await cleanup_async_db_connections(app.async_app)
 
         setup.app = app  # type: ignore[attr-defined]
         setup.async_app = setup.app.async_app  # type: ignore[attr-defined]
@@ -683,7 +711,7 @@ class AsyncTestCase(IsolatedAsyncioTestCase):
     async def asyncSetUpClass(cls):
         app_config = setup_config(deepcopy(cls.app_config), False)
         cls.app = SuperdeskAsyncApp(MockWSGI(config=app_config))
-        copy_async_db_connections(cls.app)
+        await cleanup_async_db_connections(cls.app)
         setattr(setup, "async_app", cls.app)
         await cls.resetDatabase(True)
         cls.app.start()

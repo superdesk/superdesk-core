@@ -159,7 +159,7 @@ async def report():
         subscribed_searches = await saved_searches.find_async({"subscribers": {"$exists": 1}})
         tz = pytz.timezone(get_app_config("DEFAULT_TIMEZONE"))
         now = datetime.now(tz=tz)
-        for search in subscribed_searches:
+        async for search in subscribed_searches:
             do_update = False
 
             subscribed_users = search["subscribers"].get("user_subscriptions", [])

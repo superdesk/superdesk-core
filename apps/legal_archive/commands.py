@@ -103,7 +103,7 @@ class LegalArchiveImport:
         try:
             logger.info("Import item into legal {}.".format(item_id))
 
-            doc = get_resource_service(ARCHIVE).find_one(req=None, _id=item_id)
+            doc = await get_resource_service(ARCHIVE).find_one_async(req=None, _id=item_id)
 
             if not doc:
                 logger.error("Could not find the document {} to import to legal archive.".format(item_id))
@@ -170,13 +170,13 @@ class LegalArchiveImport:
 
             # Step 4 - Get Versions and De-normalize and Inserting Legal Archive Versions
             lookup = {version_id_field: legal_archive_doc[ID_FIELD]}
-            versions = list(get_resource_service("archive_versions").get(req=None, lookup=lookup))
+            versions_cursor = await get_resource_service("archive_versions").get_async(req=None, lookup=lookup)
             legal_versions = list(legal_archive_versions_service.get(req=None, lookup=lookup))
 
             logger.info("Fetched version history for article {}".format(log_msg))
             versions_to_insert = [
                 version
-                for version in versions
+                async for version in versions_cursor
                 if not any(
                     legal_version for legal_version in legal_versions if version[VERSION] == legal_version[VERSION]
                 )
@@ -530,7 +530,7 @@ class ImportLegalArchiveCommand:
                     await self._move_to_legal(item.get("item_id"), item.get(VERSION), expired_items)
 
             # get the invalid items from archive.
-            for items in get_resource_service(ARCHIVE).get_expired_items(utcnow(), invalid_only=True):
+            async for items in get_resource_service(ARCHIVE).get_expired_items(utcnow(), invalid_only=True):
                 for item in items:
                     await self._move_to_legal(item.get(ID_FIELD), item.get(VERSION), expired_items)
 

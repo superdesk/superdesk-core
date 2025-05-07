@@ -16,7 +16,7 @@ from typing_extensions import LiteralString
 from pydantic import Field
 from quart_babel import gettext
 
-from superdesk.core.resources import ResourceModel, fields
+from superdesk.core.resources import ResourceModel, fields, Dataclass
 from superdesk.core.resources.validators import validate_data_relation_async, validate_iunique_value_async
 
 from pydantic_core import PydanticCustomError
@@ -38,7 +38,7 @@ async def _validate_content_type(item: ResourceModel, _) -> None:
 validate_content_type = AsyncValidator(_validate_content_type)
 
 
-class WidgetConfig(ResourceModel):
+class WidgetConfig(Dataclass):
     widget_id: str
     is_displayed: bool
 

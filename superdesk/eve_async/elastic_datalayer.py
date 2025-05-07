@@ -73,7 +73,7 @@ class ElasticAsync(Elastic):
             hits = await self.elastic_async(resource).search(**search_args)
             docs = self._parse_hits_async(hits, resource)
             return await docs.next()
-        except elastic_exceptions.NotFoundError:
+        except (elastic_exceptions.NotFoundError, StopAsyncIteration):
             return None
 
     async def find_one_raw(self, resource, **lookup):
@@ -210,7 +210,10 @@ class ElasticAsync(Elastic):
                 return
 
             docs = self._parse_hits_async({"hits": {"hits": [hit]}}, resource)
-            return await docs.next()
+            try:
+                return await docs.next()
+            except StopAsyncIteration:
+                return None
 
         except elastic_exceptions.NotFoundError:
             return
@@ -224,5 +227,5 @@ class ElasticAsync(Elastic):
                     hits = await self.elastic_async(resource).search(body=fix_query(query), **args)
                     docs = self._parse_hits_async(hits, resource)
                     return await docs.next()
-                except elastic_exceptions.NotFoundError:
+                except (elastic_exceptions.NotFoundError, StopAsyncIteration):
                     return

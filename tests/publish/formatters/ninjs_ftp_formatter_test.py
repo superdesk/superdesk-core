@@ -9,22 +9,18 @@
 # at https://www.sourcefabric.org/superdesk/license
 
 import json
-from unittest import mock
 from datetime import timedelta
 
 from superdesk.tests import TestCase, utils as test_utils, fixtures
 from superdesk.publish.formatters.ninjs_ftp_formatter import FTPNinjsFormatter
 from superdesk.editor_utils import Editor3Content
-from superdesk.publish import init_app
 from superdesk.utc import utcnow
 
 
-# @mock.patch("superdesk.publish.subscribers.SubscribersService.generate_sequence_number", lambda self, subscriber: 1)
 class FTPNinjsFormatterTest(TestCase):
     async def asyncSetUp(self):
         await super().asyncSetUp()
         self.formatter = FTPNinjsFormatter()
-        init_app(self.app)
         self.maxDiff = None
         self.app.config["EMBED_PRODUCT_FILTERING"] = True
 
@@ -77,22 +73,14 @@ class FTPNinjsFormatterTest(TestCase):
             "body_footer": "<p>call helpline 999 if you are planning to quit smoking</p>",
             "embargoed": embargoed,
         }
-        seq, doc = self.formatter.format(
-            article,
-            {
-                "name": "Test Subscriber",
-                "destinations": [
-                    {
-                        "config": {
-                            "host": "ftp.abc.com",
-                            "path": "/stories",
-                            "associated_path": "/pictures",
-                            "push_associated": True,
-                        }
-                    }
-                ],
-            },
-        )[0]
+        subscriber = fixtures.subscribers.sub1_subscriber()
+        subscriber.destinations[0].config = {
+            "host": "ftp.abc.com",
+            "path": "/stories",
+            "associated_path": "/pictures",
+            "push_associated": True,
+        }
+        seq, doc = (await self.formatter.format(article, subscriber.to_dict()))[0]
         expected = {
             "byline": "MICKEY MOUSE",
             "renditions": {
@@ -168,23 +156,15 @@ class FTPNinjsFormatterTest(TestCase):
             "body_footer": "<p>call helpline 999 if you are planning to quit smoking</p>",
             "embargoed": embargoed,
         }
-        seq, doc = self.formatter.format(
-            article,
-            {
-                "name": "Test Subscriber",
-                "destinations": [
-                    {
-                        "config": {
-                            "host": "ftp.abc.com",
-                            "path": "/stories",
-                            "associated_path": "/pictures",
-                            "push_associated": True,
-                            "include_original": True,
-                        }
-                    }
-                ],
-            },
-        )[0]
+        subscriber = fixtures.subscribers.sub1_subscriber()
+        subscriber.destinations[0].config = {
+            "host": "ftp.abc.com",
+            "path": "/stories",
+            "associated_path": "/pictures",
+            "push_associated": True,
+            "include_original": True,
+        }
+        seq, doc = (await self.formatter.format(article, subscriber.to_dict()))[0]
         expected = {
             "byline": "MICKEY MOUSE",
             "renditions": {
@@ -217,25 +197,9 @@ class FTPNinjsFormatterTest(TestCase):
         self.assertNotIn("viewImage", json.loads(doc).get("renditions"))
 
     async def test_embedded_image(self):
-        await test_utils.post_items(
-            "filter_conditions",
-            [{"_id": 1, "field": "type", "operator": "eq", "value": "picture", "name": "Picture fc"}],
-        )
-        await test_utils.post_items(
-            "content_filters",
-            [{"_id": 3, "content_filter": [{"expression": {"fc": [1]}}], "name": "Picture cf"}],
-        )
-        await test_utils.post_items(
-            "products",
-            [
-                {
-                    "_id": 1,
-                    "content_filter": {"filter_id": 3, "filter_type": "permitting"},
-                    "name": "Picture",
-                    "product_type": "both",
-                }
-            ],
-        )
+        await test_utils.post_items("filter_conditions", fixtures.filter_conditions.all_filter_conditions())
+        await test_utils.post_items("content_filters", fixtures.content_filters.all_content_filters())
+        await test_utils.post_items("products", [fixtures.products.picture_product()])
         await test_utils.post_items(
             "vocabularies",
             [
@@ -349,23 +313,20 @@ class FTPNinjsFormatterTest(TestCase):
         }
         editor = Editor3Content(article, "body_html")
         editor.update_item()
-        seq, doc = self.formatter.format(
-            article,
-            {
-                "name": "Test Subscriber",
-                "destinations": [
-                    {
-                        "config": {
-                            "host": "ftp.abc.com",
-                            "path": "/stories",
-                            "associated_path": "/pictures",
-                            "push_associated": True,
-                            "include_original": True,
-                        }
-                    }
-                ],
-                "products": [1],
-            },
+        subscriber = fixtures.subscribers.sub1_subscriber()
+        subscriber.destinations[0].config = {
+            "host": "ftp.abc.com",
+            "path": "/stories",
+            "associated_path": "/pictures",
+            "push_associated": True,
+            "include_original": True,
+        }
+        subscriber.products = [fixtures.products.PICTURE_PRODUCT_ID]
+        seq, doc = (
+            await self.formatter.format(
+                article,
+                subscriber.to_dict(),
+            )
         )[0]
         expected = {
             "source": "aap",
@@ -443,34 +404,9 @@ class FTPNinjsFormatterTest(TestCase):
                 }
             ],
         )
-        await test_utils.post_items(
-            "filter_conditions",
-            [
-                {"_id": 1, "field": "type", "operator": "eq", "value": "picture", "name": "Picture fc"},
-                {"_id": 2, "field": "type", "operator": "eq", "value": "video", "name": "Video fc"},
-            ],
-        )
-        await test_utils.post_items(
-            "content_filters",
-            [
-                {
-                    "_id": 3,
-                    "content_filter": [{"expression": {"fc": [1]}}, {"expression": {"fc": [2]}}],
-                    "name": "Picture cf",
-                }
-            ],
-        )
-        await test_utils.post_items(
-            "products",
-            [
-                {
-                    "_id": 1,
-                    "content_filter": {"filter_id": 3, "filter_type": "permitting"},
-                    "name": "Picture and Video",
-                    "product_type": "both",
-                }
-            ],
-        )
+        await test_utils.post_items("filter_conditions", fixtures.filter_conditions.all_filter_conditions())
+        await test_utils.post_items("content_filters", fixtures.content_filters.all_content_filters())
+        await test_utils.post_items("products", [fixtures.products.media_product()])
         article = {
             "_id": "urn:newsml:localhost:2020-03-12T15:19:39.654956:e78f3dd6-c096-43d5-9ba0-014e07dc4f1f",
             "associations": {
@@ -531,24 +467,16 @@ class FTPNinjsFormatterTest(TestCase):
         }
         editor = Editor3Content(article, "body_html")
         editor.update_item()
-        seq, doc = self.formatter.format(
-            article,
-            {
-                "name": "Test Subscriber",
-                "destinations": [
-                    {
-                        "config": {
-                            "host": "ftp.abc.com",
-                            "path": "/stories",
-                            "associated_path": "/pictures",
-                            "push_associated": True,
-                            "include_original": False,
-                        }
-                    }
-                ],
-                "products": [1],
-            },
-        )[0]
+        subscriber = fixtures.subscribers.sub1_subscriber()
+        subscriber.destinations[0].config = {
+            "host": "ftp.abc.com",
+            "path": "/stories",
+            "associated_path": "/pictures",
+            "push_associated": True,
+            "include_original": False,
+        }
+        subscriber.products = [fixtures.products.MEDIA_PRODUCT_ID]
+        seq, doc = (await self.formatter.format(article, subscriber.to_dict()))[0]
         expected = {
             "guid": None,
             "version": "1",
@@ -610,25 +538,9 @@ class FTPNinjsFormatterTest(TestCase):
         self.assertEqual(expected, json.loads(doc))
 
     async def test_product_match(self):
-        await test_utils.post_items(
-            "filter_conditions",
-            [{"_id": 1, "field": "type", "operator": "eq", "value": "video", "name": "ALL Video fc"}],
-        )
-        await test_utils.post_items(
-            "content_filters",
-            [{"_id": 3, "content_filter": [{"expression": {"fc": [1]}}], "name": "All Video cf"}],
-        )
-        await test_utils.post_items(
-            "products",
-            [
-                {
-                    "_id": 1,
-                    "content_filter": {"filter_id": 3, "filter_type": "permitting"},
-                    "name": "All Video",
-                    "product_type": "both",
-                }
-            ],
-        )
+        await test_utils.post_items("filter_conditions", fixtures.filter_conditions.all_filter_conditions())
+        await test_utils.post_items("content_filters", fixtures.content_filters.all_content_filters())
+        await test_utils.post_items("products", [fixtures.products.video_product()])
         await test_utils.post_items(
             "vocabularies",
             [
@@ -1204,24 +1116,16 @@ class FTPNinjsFormatterTest(TestCase):
             "word_count": 121,
             "firstpublished": "2023-06-07T01:31:31.000Z",
         }
-        seq, doc = self.formatter.format(
-            item,
-            {
-                "name": "Test Subscriber",
-                "destinations": [
-                    {
-                        "config": {
-                            "host": "ftp.abc.com",
-                            "path": "/stories",
-                            "associated_path": "/pictures",
-                            "push_associated": True,
-                            "include_original": True,
-                        }
-                    }
-                ],
-                "products": [1],
-            },
-        )[0]
+        subscriber = fixtures.subscribers.sub1_subscriber()
+        subscriber.destinations[0].config = {
+            "host": "ftp.abc.com",
+            "path": "/stories",
+            "associated_path": "/pictures",
+            "push_associated": True,
+            "include_original": True,
+        }
+        subscriber.products = [fixtures.products.VIDEO_PRODUCT_ID]
+        seq, doc = (await self.formatter.format(item, subscriber.to_dict()))[0]
         self.assertIn("editor_0", doc)
         self.assertNotIn("editor_1", doc)
         self.assertNotIn("tag:localhost:2023:4f7e5665-84e3-4cef-9181-addf9bf8474c", doc)

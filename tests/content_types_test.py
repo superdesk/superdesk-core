@@ -105,7 +105,7 @@ class ContentTypesTestCase(TestCase):
         updates = copy.deepcopy(original)
         # the updates are only removing the "subject" field
         updates["schema"]["subject"] = updates["editor"]["subject"] = None
-        content_types.ContentTypesService().on_update(updates, original)
+        await content_types.ContentTypesService().on_update_async(updates, original)
         self.assertFalse(updates["schema"]["subject"]["required"])
 
     async def test_prepare_for_edit_updated_now(self):

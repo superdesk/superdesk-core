@@ -219,7 +219,11 @@ class UpdateClient(CommonClient):
             raise click.BadParameter("the given client id is not valid: {msg}".format(msg=e))
 
         cursor = await clients_service.find_async({"_id": client_id})
-        original_client = await cursor.next()
+        try:
+            original_client = await cursor.next()
+        except StopAsyncIteration:
+            original_client = None
+
         if not original_client:
             raise click.BadParameter("Can't find any client with id '{client_id}'".format(client_id=client_id))
 
