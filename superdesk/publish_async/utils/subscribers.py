@@ -7,11 +7,13 @@ from superdesk.types import (
     SequencesResource,
     SubscriberDestination,
     ProductsResource,
+    PublishRequestResponse,
 )
 from superdesk.core import get_config
 from superdesk.resource import build_custom_hateoas
 from superdesk.utils import get_dict_hash
 
+from .common import get_publish_request_from_item
 from .filter_conditions import check_similar_filter_conditions
 from .content_filters import get_content_filters_by_filter_condition
 
@@ -164,3 +166,16 @@ async def _get_subscribers_by_filter_condition(filter_condition: dict) -> GetFil
         "products": list(selected_products.values()),
         "selected_subscribers": list(selected_subscribers.values()),
     }
+
+
+async def get_subscribers_for_item(item: dict, operation_override: str | None = None) -> list[SubscribersResource]:
+    # Import here due to a cyclic import error
+    from superdesk.publish_async import get_exchange_factory
+    from superdesk.publish_async.publish_cache import PublishCache
+
+    request = get_publish_request_from_item(item, operation_override)
+    response = PublishRequestResponse()
+    exchange = get_exchange_factory().get_exchange(request)
+    await PublishCache.init()
+    await exchange._filter.filter_subscribers(request, response)
+    return response.subscribers
