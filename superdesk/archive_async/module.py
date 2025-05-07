@@ -23,22 +23,27 @@ archive_resource_config = ResourceConfig(
             MongoIndexOptions(
                 name="uri_1",
                 keys=[("uri", 1), ("background", 1)],
+                unique=False,
             ),
             MongoIndexOptions(
                 name="ingest_id_1",
                 keys=[("ingest_id", 1), ("background", 1)],
+                unique=False,
             ),
             MongoIndexOptions(
                 name="unique_id_1",
                 keys=[("unique_id", 1), ("background", 1)],
+                unique=False,
             ),
             MongoIndexOptions(
                 name="processed_from_1",
                 keys=[("processed_from", 1), ("background", 1)],
+                unique=False,
             ),
             MongoIndexOptions(
                 name="assignment_id_1",
                 keys=[("assignment_id", 1), ("background", 1)],
+                unique=False,
             ),
         ],
     ),

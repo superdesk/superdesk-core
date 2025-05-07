@@ -20,7 +20,7 @@ from apps.archive.highlights_search_mixin import HighlightsSearchMixin
 
 
 class AppIngestService(IngestService, HighlightsSearchMixin):
-    def on_fetched(self, docs):
+    async def on_fetched_asnc(self, docs):
         """Items when ingested have different case for pubstatus.
 
         Overriding this to handle existing data in Mongo & Elastic
@@ -29,7 +29,7 @@ class AppIngestService(IngestService, HighlightsSearchMixin):
         for item in docs[ITEMS]:
             handle_existing_data(item, doc_type="ingest")
 
-    def on_create(self, docs):
+    async def on_create_async(self, docs):
         for doc in docs:
             set_default_state(doc, CONTENT_STATE.INGESTED)
             if not get_app_config("DEFAULT_CONTENT_TYPE", None):
@@ -38,8 +38,8 @@ class AppIngestService(IngestService, HighlightsSearchMixin):
             handle_existing_data(doc, doc_type="ingest")
             update_word_count(doc)
 
-        on_create_item(docs, repo_type="ingest")  # do it after setting the state otherwise it will make it
+        await on_create_item(docs, repo_type="ingest")  # do it after setting the state otherwise it will make it
 
-    def get(self, req, lookup):
+    async def get_async(self, req, lookup):
         req, lookup = self._get_highlight(req, lookup)
-        return super().get(req, lookup)
+        return await super().get_async(req, lookup)

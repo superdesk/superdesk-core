@@ -23,10 +23,12 @@ content_api_item_resource_config = ResourceConfig(
             MongoIndexOptions(
                 name="_ancestors_",
                 keys=[("ancestors", 1)],
+                unique=False,
             ),
             MongoIndexOptions(
                 name="expiry_1",
                 keys=[("expiry", 1)],
+                unique=False,
             ),
         ],
     ),

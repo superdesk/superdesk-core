@@ -102,6 +102,7 @@ async def prepopulate_data(file_name, default_user=None, directory=None):
     default_username = default_user["username"]
     file = os.path.join(directory, file_name)
     app = get_current_app()
+    current_username = None
     with open(file, "rt", encoding="utf8") as app_prepopulation:
         json_data = json.load(app_prepopulation)
         for item in json_data:
@@ -110,8 +111,13 @@ async def prepopulate_data(file_name, default_user=None, directory=None):
                 service = get_resource_service(resource)
             except KeyError:
                 continue  # resource which is not configured - ignore
+
+            # If the username is different, then login as the new user
             username = item.get("username", None) or default_username
-            await set_logged_user(username, users[username])
+            if current_username is None or current_username != username:
+                current_username = username
+                await set_logged_user(username, users[username])
+
             id_name = item.get("id_name", None)
             id_update = item.get("id_update", None)
             text = json.dumps(item.get("data", None))
