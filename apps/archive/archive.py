@@ -825,11 +825,6 @@ class ArchiveService(AsyncBaseService, HighlightsSearchMixin):
             if EMBARGO in item:
                 embargo = item.get(SCHEDULE_SETTINGS, {}).get("utc_{}".format(EMBARGO))
                 if embargo:
-                    if item.get(PUBLISH_SCHEDULE) or item[ITEM_STATE] == CONTENT_STATE.SCHEDULED:
-                        raise SuperdeskApiError.badRequestError(
-                            _("An item can't have both Publish Schedule and Embargo")
-                        )
-
                     if (
                         item[ITEM_STATE] not in {CONTENT_STATE.KILLED, CONTENT_STATE.RECALLED, CONTENT_STATE.SCHEDULED}
                     ) and embargo <= utcnow():

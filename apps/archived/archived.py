@@ -16,6 +16,7 @@ import logging
 from eve.versioning import resolve_document_version
 
 from superdesk.core import get_current_app
+from superdesk.flask import request
 from superdesk.resource_fields import ID_FIELD, VERSION, ETAG, LAST_UPDATED
 from apps.legal_archive.commands import import_into_legal_archive
 from apps.legal_archive.resource import LEGAL_PUBLISH_QUEUE_NAME
@@ -191,7 +192,7 @@ class ArchivedService(AsyncBaseService):
         doc[ID_FIELD] = id_field
 
     async def on_delete_async(self, doc):
-        await self.validate_delete_action(doc)
+        await self.validate_delete_action(doc, allow_all_types=not request)
 
     async def delete_async(self, lookup):
         if get_current_app().testing and len(lookup) == 0:

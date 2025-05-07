@@ -130,6 +130,10 @@ class BasePublishResource(ArchiveResource):
 
         self.privileges = {"PATCH": publish_type}
 
+        # ignore fields_meta when posting to avoid recursion error
+        # https://sentry.sourcefabric.org/share/issue/03b8d78f8eaf40219f65df015ddb17d6/
+        self.etag_ignore_fields = ["broadcast", "fields_meta"]
+
         super().__init__(endpoint_name, app=app, service=service)
 
 
@@ -978,14 +982,33 @@ class BasePublishService(AsyncBaseService):
                         sync_associated_item_changes(associated_item, associated_item_updates)
                         continue
 
-                    if association_updates.get("state") not in PUBLISH_STATES:
-                        # There's an update to the published associated item
+                    orig_associated_item = archive_service.find_one(req=None, _id=associated_item[config.ID_FIELD])
+                    if association_updates.get("state") not in PUBLISH_STATES or self.is_changed(
+                        orig_associated_item, associated_item
+                    ):
                         remove_unwanted(association_updates)
                         await publish_service.patch_async(id=associated_item[ID_FIELD], updates=association_updates)
 
             # When there is an associated item which is published, Inserts the latest version of that associated item into archive_versions.
             insert_into_versions(doc=associated_item)
         await self._refresh_associated_items(original)
+
+    def is_changed(self, old: dict, new: dict) -> bool:
+        """
+        Compare all top-level fields except those starting with an underscore (_).
+        Return True if any such field has changed.
+        """
+
+        if old is None or len(old) != len(new):
+            return True
+
+        fields_to_check = {key for key in old.keys() | new.keys() if not key.startswith("_")}
+
+        for field in fields_to_check:
+            if old.get(field) != new.get(field):
+                return True
+
+        return False
 
     async def _mark_media_item_as_used(self, updates, original):
         if ASSOCIATIONS not in updates or not updates.get(ASSOCIATIONS):
@@ -1015,31 +1038,43 @@ class BasePublishService(AsyncBaseService):
     def _update_picture_metadata(self, updates, original, updated):
         renditions = updated.get("renditions") or {}
         mapping = get_config(dict, "PICTURE_METADATA_MAPPING")
+
         if not mapping or not renditions:
             return
+
         try:
-            media_id = renditions["original"]["media"]
+            updated_renditions = deepcopy(renditions)
+            updates["renditions"] = updated_renditions
+
+            for rendition_key, rendition_data in renditions.items():
+                if not rendition_data or not isinstance(rendition_data, dict):
+                    continue
+
+                media_id = rendition_data.get("media")
+                if not media_id:
+                    continue
+
+                app = get_current_app()
+                picture = app.media.get(media_id)
+                binary = picture.read()
+                metadata = get_metadata_from_item(updated, mapping)
+
+                updated_binary = write_metadata(binary, metadata)
+                if updated_binary != binary:
+                    updated_media_id = app.media.put(
+                        updated_binary, content_type=picture.content_type, filename=picture.filename
+                    )
+                    updated_renditions[rendition_key].update(
+                        {
+                            "media": updated_media_id,
+                            "href": app.media.url_for_media(updated_media_id, picture.content_type),
+                        }
+                    )
+
+            updated["renditions"] = updated_renditions
+
         except (KeyError, TypeError):
             return
-        if not media_id:
-            return
-
-        app = get_current_app()
-        picture = app.media.get(media_id)
-        binary = picture.read()
-        metadata = get_metadata_from_item(updated, mapping)
-        updated_binary = write_metadata(binary, metadata)
-        if updated_binary != binary:
-            updated_media_id = app.media.put(
-                updated_binary, content_type=picture.content_type, filename=picture.filename
-            )
-            updates.setdefault("renditions", deepcopy(renditions))["original"].update(
-                {
-                    "media": updated_media_id,
-                    "href": app.media.url_for_media(updated_media_id, picture.content_type),
-                }
-            )
-            updated["renditions"] = updates["renditions"]
 
 
 def get_crop(rendition):

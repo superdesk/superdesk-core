@@ -69,7 +69,6 @@ class FTPNinjsFormatterTest(TestCase):
             "pubstatus": "usable",
             "source": "AAP",
             "description": "The most amazing picture you will ever see",
-            "guid": "20150723001158606583",
             "body_footer": "<p>call helpline 999 if you are planning to quit smoking</p>",
             "embargoed": embargoed,
         }
@@ -152,7 +151,6 @@ class FTPNinjsFormatterTest(TestCase):
             "pubstatus": "usable",
             "source": "AAP",
             "description": "The most amazing picture you will ever see",
-            "guid": "20150723001158606583",
             "body_footer": "<p>call helpline 999 if you are planning to quit smoking</p>",
             "embargoed": embargoed,
         }

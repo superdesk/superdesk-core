@@ -1771,8 +1771,8 @@ Feature: Rewrite content
       And "ingest_providers"
       """
       [
-        { "_id": "1", "name": "agency", "source": "YYY"},
-        { "_id": "2", "name": "agency", "source": "XXX"}
+        { "_id": "1", "name": "agency1", "source": "YYY"},
+        { "_id": "2", "name": "agency2", "source": "XXX"}
       ]
       """
       And the "validators"

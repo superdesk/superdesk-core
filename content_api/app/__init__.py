@@ -29,6 +29,7 @@ from superdesk.datalayer import SuperdeskDataLayer
 from superdesk.factory.elastic_apm import setup_apm
 from superdesk.validator import SuperdeskValidator
 from superdesk.factory.app import SuperdeskEve, set_error_handlers, get_media_storage_class
+from superdesk.factory.sentry import SuperdeskSentry
 
 
 def get_app(config=None):
@@ -81,6 +82,7 @@ def get_app(config=None):
         except AttributeError:
             pass
 
+    app.sentry = SuperdeskSentry(app)
     app.async_app.start()
 
     return app

@@ -43,7 +43,6 @@ class DPAFeedParser(NewsMLTwoFeedParser):
         super().parse_content_set(tree, item)
 
         xhtml_ns = "http://www.w3.org/1999/xhtml"
-        section_class = "dpatextgenre-7"
 
         content_set = tree.find(self.qname("contentSet"))
         if content_set is None:
@@ -66,12 +65,12 @@ class DPAFeedParser(NewsMLTwoFeedParser):
                 continue
 
             body_html = etree.tostring(section, encoding="unicode", method="html")
-            body_html = re.sub(
-                r'<section[^>]*class="[^"]*{}[^"]*"[^>]*>'.format(re.escape(section_class)), "", body_html
-            )
-            body_html = body_html.replace("</section>", "")
+            parser = etree.HTMLParser()
+            tree = etree.fromstring(body_html, parser)
 
-            item["body_html"] = body_html
+            etree.strip_tags(tree, "section", "body", "span")
+
+            item["body_html"] = "".join(etree.tostring(child, encoding="unicode", method="html") for child in tree)
 
     def parse_content_meta(self, tree, item):
         self.parse_keywords(tree, item)

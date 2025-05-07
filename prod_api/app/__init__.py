@@ -26,6 +26,7 @@ from superdesk.datalayer import SuperdeskDataLayer
 from superdesk.factory.elastic_apm import setup_apm
 from superdesk.validator import SuperdeskValidator
 from superdesk.factory.app import SuperdeskEve, set_error_handlers, get_media_storage_class
+from superdesk.factory.sentry import SuperdeskSentry
 
 from prod_api.auth import JWTAuth
 
@@ -88,6 +89,8 @@ def get_app(config=None):
             pass
         else:
             init_app(app)
+
+    app.sentry = SuperdeskSentry(app)
 
     return app
 

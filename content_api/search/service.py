@@ -102,7 +102,7 @@ class SearchService(ItemsService):
 
         if item.get("signal"):
             item["flags"] = {
-                "marked_for_legal": any(True for signal in item.get("signal") if signal.get("code") == "cwarn")
+                "marked_for_legal": any([True for signal in item.get("signal") if signal.get("code") == "cwarn"])
             }
 
     def find_one(self, req, **lookup):

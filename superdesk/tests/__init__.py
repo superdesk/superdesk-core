@@ -670,7 +670,7 @@ class NotificationMock:
         self.client = None
         self.open = True
 
-    def send(self, message):
+    def send(self, message, name):
         self.messages.append(message)
 
     def reset(self):

@@ -1,21 +1,18 @@
-flake8
-flake8-bugbear
-flake8-docstrings
-pep8
-pyflakes
-pydocstyle<7.0
+flake8==7.1.2
+flake8-bugbear==24.12.12
+flake8-docstrings==1.7.0
+pep8==1.7.1
+pyflakes==3.2.0
+pydocstyle==6.3.0
 httmock==1.4.0
-watchdog==4.0.1
 wooper==0.4.4
 requests-mock==1.12.1
-responses
-pytest
-pytest-env
-pytest-asyncio
-python3-saml>=1.9,<1.17
-typing_extensions>=3.7.4
-moto[sqs]==5.0.18
-pyexiv2>=2.12.0,<2.13; sys_platform == 'linux'
+responses==0.25.7
+pytest==8.3.4
+pytest-env==1.1.5
+python3-saml==1.16.0
+moto[sqs]==5.1.3
+pyexiv2==2.15.3; sys_platform == 'linux'
 
 -e .
 -e git+https://github.com/superdesk/superdesk-planning.git@async#egg=superdesk_planning

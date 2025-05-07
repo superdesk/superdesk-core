@@ -24,8 +24,11 @@ class DPANewsMLTestCase(TestCase):
 
     async def asyncSetUp(self):
         await super().asyncSetUp()
+        await self.load_item_from_file(self.filename)
+
+    async def load_item_from_file(self, filename: str):
         dirname = os.path.dirname(os.path.realpath(__file__))
-        fixture = os.path.normpath(os.path.join(dirname, "../fixtures", self.filename))
+        fixture = os.path.normpath(os.path.join(dirname, "../fixtures", filename))
         provider = {"name": "Test"}
         with open(fixture, "rb") as f:
             self.nitf = f.read()
@@ -72,8 +75,8 @@ class DPANewsMLTestCase(TestCase):
     def test_body_html(self):
         self.assertIsInstance(self.item.get("body_html"), str)
         expected_output = (
-            '<p><span class="dateline">London <span class="credit">(dpa)'
-            "</span> - </span>2019 gab es bittere Tränen in der Kurve"
+            "<p>London (dpa)"
+            " - 2019 gab es bittere Tränen in der Kurve"
             ", 2022 erst mächtig Wut auf englische Fans und eine Woche später ausgelassenen Jubel:"
             " Für Eintracht Frankfurt ist London in den vergangenen Jahren zu einem Standard-Reiseziel"
             " im europäischen Fußball-Wettbewerb geworden. Bevor es am Mittwochabend (21.00 Uhr/DAZN) "
@@ -88,6 +91,20 @@ class DPANewsMLTestCase(TestCase):
             "zwei Journalisten des Hessischen Rundfunks trübte das Bild. Die Rundfunk-Reporter bekamen nach eigenen Angaben «mehrfach Faustschläge an den Hinterkopf"
             ", in den Nacken, in den Rücken». West Ham United machte die Täter später ausfindig. Eine Woche später gewann die Eintracht"
             " auch das Rückspiel und zog ins Endspiel ein.</p><p> </p>"
+        )
+
+        self.assertEqual(self.item.get("body_html").strip(), expected_output.strip())
+
+    async def test_body_html_section_tags(self):
+        await self.load_item_from_file("dpa_2.xml")
+        self.assertIsInstance(self.item.get("body_html"), str)
+        expected_output = (
+            "<p>BUENOS AIRES, Argentina (AP)"
+            "Argentine President Javier Milei is facing a corruption probe into his promotion of a meme coin,unched tokens of their own. </p>"
+            "<p>The budding scandal in Argentina has been dubbed locally as “cryptogate” and has links to a diverse cast of characters month. </p>"
+            "<p>Here’s an explainer on what happened and where things stand:</p>"
+            "<p>Meme coins don’t appear to be going away anytime soon, but their track record should serve as a cautionary tale for investors </p>"
+            "<p>Suderman reported from Richmond, Virginia</p>"
         )
 
         self.assertEqual(self.item.get("body_html").strip(), expected_output.strip())
