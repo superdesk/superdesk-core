@@ -14,7 +14,7 @@ RESOURCES = ("archive", "assignments", "contacts", "desks", "events", "planning"
 SCOPES = tuple(i.name for i in Scope)
 
 
-def test_not_authenticated(prodapi_app, prodapi_client):
+async def test_not_authenticated(prodapi_app, prodapi_client):
     """
     Send a not authenticated request:
         - make a request without a token
@@ -26,18 +26,18 @@ def test_not_authenticated(prodapi_app, prodapi_client):
     :type prodapi_client: flask.testing.FlaskClient
     """
 
-    with prodapi_app.test_request_context():
+    async with prodapi_app.test_request_context("/"):
         for resource in RESOURCES:
             # we send a request without a token
-            resp = prodapi_client.get(url_for("{}|resource".format(resource)))
-            resp_data = json.loads(resp.data.decode("utf-8"))
+            resp = await prodapi_client.get(url_for("{}|resource".format(resource)))
+            resp_data = json.loads((await resp.get_data()).decode("utf-8"))
             # we get a 401 response
             assert resp.status_code == 401
             assert resp_data["_status"] == "ERR"
 
 
 @pytest.mark.parametrize("auth_server_registered_clients", [(("ARCHIVE_READ",),)], indirect=True)
-def test_authenticated(superdesk_app, superdesk_client, auth_server_registered_clients):
+async def test_authenticated(superdesk_app, superdesk_client, auth_server_registered_clients):
     """
     Send an authenticated request:
         - register client for auth server
@@ -55,29 +55,29 @@ def test_authenticated(superdesk_app, superdesk_client, auth_server_registered_c
     password = auth_server_registered_clients[0]["password"]
 
     # we send a client id and password to get an access token
-    with superdesk_app.test_request_context():
-        resp = superdesk_client.post(
+    async with superdesk_app.test_request_context("/"):
+        resp = await superdesk_client.post(
             url_for("auth_server.issue_token"),
             data={"grant_type": "client_credentials"},
             headers={"Authorization": _basic_auth_str(client_id, password)},
         )
 
     # we get an access token
-    resp_data = json.loads(resp.data.decode("utf-8"))
+    resp_data = json.loads((await resp.get_data()).decode("utf-8"))
     assert resp.status_code == 200
     assert resp_data["token_type"] == "Bearer"
     assert "access_token" in resp_data
 
     # we create a prodapi flask app and client
-    prodapi_app = get_test_prodapi_app()
+    prodapi_app = await get_test_prodapi_app()
     prodapi_client = prodapi_app.test_client()
 
     # we send a request with an auth token
     token = resp_data["access_token"]
-    with prodapi_app.test_request_context():
+    with prodapi_app.test_request_context("/"):
         for resource in ("archive",):
             # we send a request with a token
-            resp = prodapi_client.get(
+            resp = await prodapi_client.get(
                 url_for("{}|resource".format(resource)), headers={"Authorization": "Bearer {}".format(token)}
             )
 
@@ -86,7 +86,7 @@ def test_authenticated(superdesk_app, superdesk_client, auth_server_registered_c
 
 
 @pytest.mark.parametrize("auth_server_registered_clients", [(("ARCHIVE_READ",),)], indirect=True)
-def test_bad_shared_key(superdesk_app, superdesk_client, auth_server_registered_clients):
+async def test_bad_shared_key(superdesk_app, superdesk_client, auth_server_registered_clients):
     """
     Send a request with a token which is signed and verified using different secrets:
         - register client for auth server
@@ -104,32 +104,32 @@ def test_bad_shared_key(superdesk_app, superdesk_client, auth_server_registered_
     password = auth_server_registered_clients[0]["password"]
 
     # we send a client id and password to get an access token
-    with superdesk_app.test_request_context():
-        resp = superdesk_client.post(
+    async with superdesk_app.test_request_context("/"):
+        resp = await superdesk_client.post(
             url_for("auth_server.issue_token"),
             data={"grant_type": "client_credentials"},
             headers={"Authorization": _basic_auth_str(client_id, password)},
         )
 
     # we get an access token
-    resp_data = json.loads(resp.data.decode("utf-8"))
+    resp_data = json.loads((await resp.get_data()).decode("utf-8"))
     token = resp_data["access_token"]
 
     # we create a prodapi flask app and client
-    prodapi_app = get_test_prodapi_app()
+    prodapi_app = await get_test_prodapi_app()
     prodapi_client = prodapi_app.test_client()
 
     # we change `AUTH_SERVER_SHARED_SECRET`
     prodapi_app.config["AUTH_SERVER_SHARED_SECRET"] = "7fZOf0VI9T70vU5uNlKLrc5GlabxVgl6"
 
     # we send a request with an auth token
-    with prodapi_app.test_request_context():
+    async with prodapi_app.test_request_context("/"):
         for resource in ("archive",):
             # we send a request with a token
-            resp = prodapi_client.get(
+            resp = await prodapi_client.get(
                 url_for("{}|resource".format(resource)), headers={"Authorization": "Bearer {}".format(token)}
             )
-            resp_data = json.loads(resp.data.decode("utf-8"))
+            resp_data = json.loads((await resp.get_data()).decode("utf-8"))
 
     # we get a 401 response
     assert resp.status_code == 401
@@ -137,7 +137,7 @@ def test_bad_shared_key(superdesk_app, superdesk_client, auth_server_registered_
 
 
 @pytest.mark.parametrize("issued_tokens", [(SCOPES, tuple())], indirect=True)
-def test_scopes(issued_tokens, prodapi_app, prodapi_client):
+async def test_scopes(issued_tokens, prodapi_app, prodapi_client):
     """
     Send a request with 'all scopes' token:
         - make a requests to all endpoints with a token
@@ -158,19 +158,19 @@ def test_scopes(issued_tokens, prodapi_app, prodapi_client):
     access_token_all_scopes = issued_tokens[0]["access_token"]
     access_token_no_scopes = issued_tokens[1]["access_token"]
 
-    with prodapi_app.test_request_context():
+    async with prodapi_app.test_request_context("/"):
         for resource in RESOURCES:
             # we send a requests with 'empty scopes' token
-            resp = prodapi_client.get(
+            resp = await prodapi_client.get(
                 url_for("{}|resource".format(resource)),
                 headers={"Authorization": "Bearer {}".format(access_token_no_scopes)},
             )
-            resp_data = json.loads(resp.data.decode("utf-8"))
+            resp_data = json.loads((await resp.get_data()).decode("utf-8"))
             # we get a 403 response
             assert resp.status_code == 403
             assert resp_data == {"_status": "ERR", "_error": {"code": 403, "message": "Invalid scope"}}
             # we send a requests with 'all scopes' token
-            resp = prodapi_client.get(
+            resp = await prodapi_client.get(
                 url_for("{}|resource".format(resource)),
                 headers={"Authorization": "Bearer {}".format(access_token_all_scopes)},
             )
@@ -179,7 +179,7 @@ def test_scopes(issued_tokens, prodapi_app, prodapi_client):
 
 
 @pytest.mark.parametrize("issued_tokens", [(("DESKS_READ",),)], indirect=True)
-def test_scopes_partial(issued_tokens, prodapi_app):
+async def test_scopes_partial(issued_tokens, prodapi_app):
     """
     Send a request with DESKS_READ scope token to `desks` and `items`:
         - make requests to `desks` and `items` endpoints
@@ -194,19 +194,19 @@ def test_scopes_partial(issued_tokens, prodapi_app):
     access_token = issued_tokens[0]["access_token"]
     prodapi_client = prodapi_app.test_client()
 
-    with prodapi_app.test_request_context():
+    async with prodapi_app.test_request_context("/"):
         # we send a request with 'DESKS_READ scope' token to desks endpoint
-        resp = prodapi_client.get(
+        resp = await prodapi_client.get(
             url_for("desks|resource"), headers={"Authorization": "Bearer {}".format(access_token)}
         )
         # we get a 200 response
         assert resp.status_code == 200
 
         # we send a request with 'DESKS_READ scope' token to items endpoint
-        resp = prodapi_client.get(
+        resp = await prodapi_client.get(
             url_for("archive|resource"), headers={"Authorization": "Bearer {}".format(access_token)}
         )
-        resp_data = json.loads(resp.data.decode("utf-8"))
+        resp_data = json.loads((await resp.get_data()).decode("utf-8"))
         # we get a 403 response
         assert resp.status_code == 403
         assert resp_data == {"_status": "ERR", "_error": {"code": 403, "message": "Invalid scope"}}
@@ -220,7 +220,7 @@ def test_scopes_partial(issued_tokens, prodapi_app):
     ],
     indirect=True,
 )
-def test_token_expired(superdesk_app, superdesk_client, auth_server_registered_clients):
+async def test_token_expired(superdesk_app, superdesk_client, auth_server_registered_clients):
     """
     Send a request with an expired token:
         - register client for auth server
@@ -240,8 +240,8 @@ def test_token_expired(superdesk_app, superdesk_client, auth_server_registered_c
     expiration_delay = superdesk_app.config["AUTH_SERVER_EXPIRATION_DELAY"]
 
     # we send a client id and password to get an access token
-    with superdesk_app.test_request_context():
-        resp = superdesk_client.post(
+    async with superdesk_app.test_request_context("/"):
+        resp = await superdesk_client.post(
             url_for("auth_server.issue_token"),
             data={"grant_type": "client_credentials"},
             headers={"Authorization": _basic_auth_str(client_id, password)},
@@ -249,21 +249,21 @@ def test_token_expired(superdesk_app, superdesk_client, auth_server_registered_c
 
     # we get an access token
     assert resp.status_code == 200
-    resp_data = json.loads(resp.data.decode("utf-8"))
+    resp_data = json.loads((await resp.get_data()).decode("utf-8"))
     token = resp_data["access_token"]
 
     # wait until token expire
     time.sleep(expiration_delay + 1)
 
     # we create a prodapi flask app and client
-    prodapi_app = get_test_prodapi_app()
+    prodapi_app = await get_test_prodapi_app()
     prodapi_client = prodapi_app.test_client()
 
     # we send a request with an expired auth token
-    with prodapi_app.test_request_context():
+    async with prodapi_app.test_request_context("/"):
         for resource in ("archive",):
             # we send a request with a token
-            resp = prodapi_client.get(
+            resp = await prodapi_client.get(
                 url_for("{}|resource".format(resource)), headers={"Authorization": "Bearer {}".format(token)}
             )
 
