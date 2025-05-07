@@ -402,7 +402,7 @@ class ContentAPITestCase(TestCase):
             },
         }
 
-        update_refs(item, {})
+        await update_refs(item, {})
 
         await self.content_api.publish_async(item, [self.subscriber])
         await self.content_api.publish_async(

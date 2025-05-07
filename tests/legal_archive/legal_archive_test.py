@@ -9,63 +9,62 @@
 # at https://www.sourcefabric.org/superdesk/license
 
 import json
+from bson import ObjectId
 
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, AsyncMock
 from datetime import timedelta
 
 from eve.versioning import resolve_document_version
 from eve.utils import ParsedRequest
 
-from apps.archive.common import insert_into_versions, ARCHIVE
+from apps.archive.common import insert_into_versions_async, ARCHIVE
 from superdesk import get_resource_service
 from superdesk.types import PublishQueueResource
-from superdesk.tests import TestCase, markers, utils as test_utils
+from superdesk.tests import TestCase, markers, utils as test_utils, fixtures
 from superdesk.utc import utcnow
 from apps.legal_archive.commands import LegalArchiveImport
 
+INVALID_DESK_ID = ObjectId()
+INVALID_STAGE_ID = ObjectId()
+INVALID_USER_ID = ObjectId()
+
 
 class LegalArchiveTestCase(TestCase):
-    desks = [{"_id": "123", "name": "Sports"}]
-    users = [{"_id": "123", "username": "test1", "first_name": "test", "last_name": "user", "email": "a@a.com"}]
-    stages = [{"_id": "123", "name": "working stage", "desk": "123"}]
     archive = [
-        {"task": {"desk": "123", "stage": "123"}},
-        {"task": {"desk": "1234", "stage": None, "user": "123"}},
-        {"task": {"desk": "1234", "stage": "dddd", "user": "test"}},
+        {"task": {"desk": fixtures.desks.SPORTS_DESK_ID, "stage": fixtures.stages.SPORTS_WORKING_STAGE_ID}},
+        {"task": {"desk": INVALID_DESK_ID, "stage": None, "user": fixtures.users.ADMIN_USER_ID}},
+        {"task": {"desk": INVALID_DESK_ID, "stage": INVALID_STAGE_ID, "user": INVALID_USER_ID}},
     ]
 
     async def asyncSetUp(self):
         await super().asyncSetUp()
-        await test_utils.post_items("desks", self.desks)
-        await test_utils.post_items("users", self.users)
-        await test_utils.post_items("stages", self.stages)
+        await test_utils.post_items("desks", fixtures.desks.all_desks())
+        await test_utils.post_items("users", fixtures.users.all_users())
+        await test_utils.post_items("stages", fixtures.stages.all_stages())
 
     async def test_denormalize_desk_user(self):
-        LegalArchiveImport()._denormalize_user_desk(self.archive[0], "")
+        await LegalArchiveImport()._denormalize_user_desk(self.archive[0], "")
         task = self.archive[0]["task"]
         self.assertEqual(task.get("desk"), "Sports")
         self.assertEqual(task.get("stage"), "working stage")
         self.assertEqual(task.get("user"), "")
 
     async def test_denormalize_not_configured_desk(self):
-        LegalArchiveImport()._denormalize_user_desk(self.archive[1], "")
+        await LegalArchiveImport()._denormalize_user_desk(self.archive[1], "")
         task = self.archive[1]["task"]
-        self.assertEqual(task.get("desk"), "1234")
+        self.assertEqual(task.get("desk"), INVALID_DESK_ID)
         self.assertEqual(task.get("stage"), None)
-        self.assertEqual(task.get("user"), "test user")
+        self.assertEqual(task.get("user"), "foo bar")
 
     async def test_denormalize_not_configured_desk_stage_user(self):
-        LegalArchiveImport()._denormalize_user_desk(self.archive[2], "")
+        await LegalArchiveImport()._denormalize_user_desk(self.archive[2], "")
         task = self.archive[2]["task"]
-        self.assertEqual(task.get("desk"), "1234")
-        self.assertEqual(task.get("stage"), "dddd")
+        self.assertEqual(task.get("desk"), INVALID_DESK_ID)
+        self.assertEqual(task.get("stage"), INVALID_STAGE_ID)
         self.assertEqual(task.get("user"), "")
 
 
 class ImportLegalArchiveCommandTestCase(TestCase):
-    desks = [{"name": "Sports"}]
-    users = [{"username": "test1", "first_name": "test", "last_name": "user", "email": "a@a.com"}]
-
     async def asyncSetUp(self):
         await super().asyncSetUp()
         try:
@@ -74,45 +73,28 @@ class ImportLegalArchiveCommandTestCase(TestCase):
             self.fail("Could not import class under test (ImportLegalArchiveCommand).")
         else:
             self.class_under_test = ImportLegalArchiveCommand
-            await test_utils.post_items("desks", self.desks)
-            await test_utils.post_items("users", self.users)
+            await test_utils.post_items("desks", fixtures.desks.all_desks())
+            await test_utils.post_items("users", fixtures.users.all_users())
             self.validators = [
                 {"schema": {}, "type": "text", "act": "publish", "_id": "publish_text"},
                 {"schema": {}, "type": "text", "act": "correct", "_id": "correct_text"},
                 {"schema": {}, "type": "text", "act": "kill", "_id": "kill_text"},
             ]
 
-            self.products = [
-                {"_id": "1", "name": "prod1"},
-                {"_id": "2", "name": "prod2", "codes": "abc,def"},
-                {"_id": "3", "name": "prod3", "codes": "xyz"},
-            ]
-
-            self.subscribers = [
-                {
-                    "name": "Test",
-                    "is_active": True,
-                    "subscriber_type": "wire",
-                    "email": "test@test.com",
-                    "sequence_num_settings": {"max": 9999, "min": 1},
-                    "products": ["1"],
-                    "destinations": [
-                        {
-                            "name": "test",
-                            "delivery_type": "email",
-                            "format": "nitf",
-                            "config": {"recipients": "test@test.com"},
-                        }
-                    ],
-                }
-            ]
             await test_utils.post_items("validators", self.validators)
-            await test_utils.post_items("products", self.products)
-            await test_utils.post_items("subscribers", self.subscribers)
+            await test_utils.post_items("products", fixtures.products.all_products())
+            await test_utils.post_items("subscribers", [fixtures.subscribers.sub1_subscriber()])
+
+            self.desks = await test_utils.find_many("desks")
+
             self.class_under_test = ImportLegalArchiveCommand
             self.archive_items = [
                 {
-                    "task": {"desk": self.desks[0]["_id"], "stage": self.desks[0]["incoming_stage"], "user": "123"},
+                    "task": {
+                        "desk": fixtures.desks.SPORTS_DESK_ID,
+                        "stage": self.desks[0]["incoming_stage"],
+                        "user": fixtures.users.ADMIN_USER_ID,
+                    },
                     "_id": "item1",
                     "state": "in_progress",
                     "headline": "item 1",
@@ -146,12 +128,11 @@ class ImportLegalArchiveCommandTestCase(TestCase):
                 },
             ]
 
-            get_resource_service(ARCHIVE).post(self.archive_items)
+            await get_resource_service(ARCHIVE).post_async(self.archive_items)
             for item in self.archive_items:
                 resolve_document_version(item, ARCHIVE, "POST")
-                insert_into_versions(id_=item["_id"])
+                await insert_into_versions_async(id_=item["_id"])
 
-    @markers.requires_async_celery
     async def test_import_into_legal_archive(self):
         archive_publish = get_resource_service("archive_publish")
         archive_correct = get_resource_service("archive_correct")
@@ -161,10 +142,10 @@ class ImportLegalArchiveCommandTestCase(TestCase):
         publish_queue = PublishQueueResource.get_service()
 
         self.original_method = LegalArchiveImport.upsert_into_legal_archive
-        LegalArchiveImport.upsert_into_legal_archive = MagicMock()
+        LegalArchiveImport.upsert_into_legal_archive = AsyncMock()
 
         for item in self.archive_items:
-            archive_publish.patch(
+            await archive_publish.patch_async(
                 item["_id"],
                 {
                     "headline": "publishing",
@@ -179,7 +160,9 @@ class ImportLegalArchiveCommandTestCase(TestCase):
             legal_item = legal_archive.find_one(req=None, _id=item["_id"])
             self.assertIsNone(legal_item, "Item: {} is not none.".format(item["_id"]))
 
-        archive_correct.patch(self.archive_items[1]["_id"], {"headline": "correcting", "abstract": "correcting"})
+        await archive_correct.patch_async(
+            self.archive_items[1]["_id"], {"headline": "correcting", "abstract": "correcting"}
+        )
 
         LegalArchiveImport.upsert_into_legal_archive = self.original_method
         await self.class_under_test().run(1)
@@ -191,8 +174,8 @@ class ImportLegalArchiveCommandTestCase(TestCase):
 
         # expire the items
         for item in self.archive_items:
-            original = archive.find_one(req=None, _id=item["_id"])
-            archive.system_update(item["_id"], {"expiry": utcnow() - timedelta(minutes=30)}, original)
+            original = await archive.find_one_async(req=None, _id=item["_id"])
+            await archive.system_update_async(item["_id"], {"expiry": utcnow() - timedelta(minutes=30)}, original)
             await published.update_published_items(item["_id"], "expiry", utcnow() - timedelta(minutes=30))
 
         # run the command after expiry
@@ -205,8 +188,8 @@ class ImportLegalArchiveCommandTestCase(TestCase):
 
         # items are moved to legal
         for item in self.archive_items:
-            published_items = await (await published.get_other_published_items(item["_id"])).to_list()
-            for published_item in published_items:
+            cursor = await published.get_other_published_items(item["_id"])
+            async for published_item in cursor:
                 self.assertEqual(published_item["moved_to_legal"], True)
 
         # items are moved to legal publish queue
@@ -215,5 +198,5 @@ class ImportLegalArchiveCommandTestCase(TestCase):
             req.where = json.dumps({"item_id": item["_id"]})
             cursor = await publish_queue.search({"item_id": item["_id"]})
             self.assertGreaterEqual(await cursor.count(), 1)
-            async for queue_item in cursor:
-                self.assertEqual(queue_item.moved_to_legal, True)
+            queue_item = await cursor.next()
+            self.assertEqual(queue_item.moved_to_legal, True)
