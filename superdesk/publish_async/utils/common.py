@@ -33,12 +33,12 @@ ERROR_MESSAGE = "error_message"
 logger = logging.getLogger(__name__)
 
 
-def get_publish_request_from_item(item: dict) -> PublishRequest:
+def get_publish_request_from_item(item: dict, operation_override: str | None = None) -> PublishRequest:
     return PublishRequest(
         item=item,
         item_id=item.get("item_id") or item[ID_FIELD],
         item_type=item.get(ITEM_TYPE) or "text",
-        operation=item.get(ITEM_OPERATION, "publish"),
+        operation=operation_override or item.get(ITEM_OPERATION, "publish"),
         published_state="published",
     )
 

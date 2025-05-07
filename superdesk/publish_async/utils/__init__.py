@@ -17,7 +17,12 @@ from .common import (
 from .items import is_doc_targeted, get_codes, get_utc_publish_schedule, get_utc_schedule
 from .content_filters import get_content_filters_by_filter_condition, item_matches_content_filter
 from .filter_conditions import check_similar_filter_conditions, get_available_filter_params
-from .subscribers import generate_sequence_number, get_next_sequence_number, get_subscriber_destination_id
+from .subscribers import (
+    generate_sequence_number,
+    get_next_sequence_number,
+    get_subscriber_destination_id,
+    get_subscribers_for_item,
+)
 from .publish_queue import get_publish_celery_queue, get_high_priority_celery_queue, get_queue_items
 
 __all__ = [
@@ -46,6 +51,7 @@ __all__ = [
     "generate_sequence_number",
     "get_next_sequence_number",
     "get_subscriber_destination_id",
+    "get_subscribers_for_item",
     # Publish Queue
     "get_publish_celery_queue",
     "get_high_priority_celery_queue",
