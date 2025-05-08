@@ -113,7 +113,7 @@ class DefaultAvailabilityService(superdesk.Service):
 
     def on_replaced(self, doc, original):
         """Event handler for replaced event."""
-        if doc.get("working_days") != original.get("working_days"):
+        if doc.get("working_days") != original.get("working_days") or doc.get("language") != original.get("language"):
             self.generate_user_availability(doc)
 
     def generate_all_users_availability(self):
@@ -128,32 +128,47 @@ class DefaultAvailabilityService(superdesk.Service):
     def generate_user_availability(self, doc):
         today = get_local_today().date()
         current_user_id = doc["_id"]
+        generate_weeks = app.config.get("AVAILABILITY_GENERATE_WEEKS", 4 * 3)
         self.availability_service.delete_action(
             {"user": current_user_id, "date": {"$gte": today.isoformat()}, "_generated": True}
         )
-        generate_weeks = app.config.get("AVAILABILITY_GENERATE_WEEKS", 4 * 3)
+
+        working_days = doc.get("working_days") or {}
 
         items = []
-        for day in doc["working_days"]:
+        for day in WEEKDAY_RRULE_MAPPING.keys():
             weekday = WEEKDAY_RRULE_MAPPING[day]
             dates = rrule(freq=WEEKLY, dtstart=today, count=generate_weeks, byweekday=weekday)
-            items += [
-                {
-                    "user": current_user_id,
-                    "date": d.date().isoformat(),
-                    "status": doc["working_days"][day]["status"],
-                    "language": doc.get("language") or [],
-                    "working_hours": doc["working_days"][day]["working_hours"]
-                    if doc["working_days"][day].get("working_hours")
-                    else [],
-                    "_generated": True,
-                }
-                for d in dates
-                if self.availability_service.find_one(req=None, user=current_user_id, date=d.date().isoformat()) is None
-            ]
+            for d in dates:
+                default_availability = working_days.get(day)
+                if default_availability:
+                    items.append(
+                        {
+                            "user": current_user_id,
+                            "date": d.date().isoformat(),
+                            "status": default_availability["status"],
+                            "language": doc.get("language") or [],
+                            "working_hours": default_availability["working_hours"]
+                            if default_availability.get("working_hours")
+                            else [],
+                            "_generated": True,
+                        }
+                    )
+                else:
+                    items.append(
+                        {
+                            "user": current_user_id,
+                            "date": d.date().isoformat(),
+                            "status": "",
+                            "language": doc.get("language") or [],
+                            "working_hours": [],
+                            "_generated": True,
+                        }
+                    )
 
         if items:
-            self.availability_service.create(items)
+            sorted_items = sorted(items, key=lambda x: x["date"])
+            self.availability_service.create(sorted_items)
 
 
 default_service = DefaultAvailabilityService(endpoint_name, backend=superdesk.get_backend())

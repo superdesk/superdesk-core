@@ -89,7 +89,8 @@ Feature: User Availability
                     "start_time": "12:00:00",
                     "end_time": "16:00:00"
                 }
-            ]
+            ],
+            "_generated": false
         }
         """
         
@@ -99,6 +100,27 @@ Feature: User Availability
         """
         {"_items": [{"date": "2023-05-15", "status": "partial", "language": ["fr", "es"]}]}
         """
+
+        # Set the availability record empty
+        When we patch "/user_availability/#user_availability._id#"
+        """
+        {
+            "status": "",
+            "language": ["fr", "es"],
+            "working_hours": [
+                {
+                    "start_time": "12:00:00",
+                    "end_time": "16:00:00",
+                    "tags": [
+                        {"code": "half-day"}
+                    ]
+                }
+            ]
+        }
+        """
+        Then we get OK response
+        
+
         
         # Delete the availability record
         When we delete "/user_availability/#user_availability._id#"
@@ -177,9 +199,6 @@ Feature: User Availability
                 },
                 "saturday": {
                     "status": "unavailable"
-                },
-                "sunday": {
-                    "status": "unavailable"
                 }
             },
             "language": ["en", "fr"],
@@ -212,9 +231,6 @@ Feature: User Availability
                 },
                 "saturday": {
                     "status": "unavailable"
-                },
-                "sunday": {
-                    "status": "unavailable"
                 }
             },
             "language": ["en", "fr"]
@@ -222,7 +238,7 @@ Feature: User Availability
         """
 
         When we get "/user_availability"
-        Then we get list with 20+ items
+        Then we get list with 30+ items
         """
         {"_items": [
             {"_generated": true, "status": "partial", "user": "#CONTEXT_USER_ID#", "language": ["en", "fr"]}
@@ -384,7 +400,12 @@ Feature: User Availability
         {"working_days": {}}
         """
         And we get "user_availability"
-        Then we get list with 0 items
+        Then we get list with 30+ items
+        """
+        {"_items": [
+            {"status": ""}
+        ]}
+        """
 
         When we put to "/default_user_availability/#CONTEXT_USER_ID#"
         """
