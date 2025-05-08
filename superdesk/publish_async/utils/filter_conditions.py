@@ -9,7 +9,6 @@ from superdesk.core import get_config
 from superdesk.types import (
     FilterConditionFieldParam,
     FilterConditionOperator,
-    VocabulariesResourceModel,
     DesksResourceModel,
     FilterConditionsResource,
 )
@@ -310,13 +309,14 @@ async def _get_vocabulary_fields(values: dict[str, list[str] | list[dict]]) -> l
     lookup = {"_id": {"$nin": excluded_vocabularies}, "type": "manageable"}
     fields: list[FilterConditionFieldParam] = []
 
-    async for vocabulary in await VocabulariesResourceModel.get_service().search(lookup):
-        if vocabulary.field_type and vocabulary.field_type != "text":
+    async for vocabulary in await get_resource_service("vocabularies").find_async(lookup):
+        field_type = vocabulary.get("field_type")
+        if field_type and field_type != "text":
             continue
 
         field = FilterConditionFieldParam(
-            field=vocabulary.id,
-            label=vocabulary.display_name,
+            field=vocabulary["_id"],
+            label=vocabulary.get("display_name"),
             operators=[
                 FilterConditionOperator.IN,
                 FilterConditionOperator.NOT_IN,
@@ -327,15 +327,15 @@ async def _get_vocabulary_fields(values: dict[str, list[str] | list[dict]]) -> l
                 FilterConditionOperator.STARTS_WITH,
                 FilterConditionOperator.ENDS_WITH,
             ]
-            if vocabulary.field_type == "text"
+            if field_type == "text"
             else [
                 FilterConditionOperator.IN,
                 FilterConditionOperator.NOT_IN,
             ],
         )
 
-        if vocabulary.field_type != "text":
-            field.values = [item.to_dict() for item in vocabulary.items]
+        if field_type != "text":
+            field.values = vocabulary.get("items") or []
             field.value_field = "qcode"
 
         fields.append(field)
@@ -345,21 +345,31 @@ async def _get_vocabulary_fields(values: dict[str, list[str] | list[dict]]) -> l
 
 async def _get_field_values() -> dict[str, list[str] | list[dict]]:
     values: dict[str, list[str] | list[dict]] = {}
-    vocabularies_resource = VocabulariesResourceModel.get_service()
-    categories_cv = await vocabularies_resource.find_by_id_raw("categories")
+    vocabularies_resource = get_resource_service("vocabularies")
+    categories_cv = await vocabularies_resource.find_one_async(req=None, _id="categories")
     values["anpa_category"] = cast(list[dict], categories_cv.get("items") if categories_cv else [])
-    genre_cursor = await vocabularies_resource.search({"$or": [{"schema_field": "genre"}, {"_id": "genre"}]})
-    genre = await genre_cursor.next_raw()
-    if genre:
-        values["genre"] = genre["items"]
+
+    genre_cursor = await vocabularies_resource.find_async({"$or": [{"schema_field": "genre"}, {"_id": "genre"}]})
+    try:
+        genre = await genre_cursor.next()
+        if genre:
+            values["genre"] = genre["items"]
+    except StopAsyncIteration:
+        pass
+
     for voc_id in ("urgency", "priority", "type"):
         try:
-            vocabulary = await vocabularies_resource.find_by_id_raw(voc_id)
+            vocabulary = await vocabularies_resource.find_one_async(req=None, _id=voc_id)
             values[voc_id] = vocabulary["items"] if vocabulary else []
         except TypeError:
             values[voc_id] = []
-    subject_cursor = await vocabularies_resource.search({"schema_field": "subject"})
-    subject = await subject_cursor.next_raw()
+    subject_cursor = await vocabularies_resource.find_async({"schema_field": "subject"})
+
+    try:
+        subject = await subject_cursor.next()
+    except StopAsyncIteration:
+        subject = None
+
     if subject:
         values["subject"] = cast(list[dict], subject["items"])
     else:
@@ -370,10 +380,15 @@ async def _get_field_values() -> dict[str, list[str] | list[dict]]:
     values["stage"] = await _get_stage_field_values(desks)
     values["sms"] = [{"qcode": 0, "name": "False"}, {"qcode": 1, "name": "True"}]
     values["embargo"] = [{"qcode": 0, "name": "False"}, {"qcode": 1, "name": "True"}]
-    place_cursor = await vocabularies_resource.search(
+    place_cursor = await vocabularies_resource.find_async(
         {"$or": [{"schema_field": "place"}, {"_id": "place"}, {"_id": "locators"}]}
     )
-    place = await place_cursor.next_raw()
+
+    try:
+        place = await place_cursor.next()
+    except StopAsyncIteration:
+        place = None
+
     values["place"] = place["items"] if place else []
     values["ingest_provider"] = await (await get_resource_service("ingest_providers").get_async(None, {})).to_list()
     values["featuremedia"] = [{"qcode": 1, "name": "True"}, {"qcode": 0, "name": "False"}]
