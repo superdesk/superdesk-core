@@ -13,6 +13,7 @@ pytest-env==1.1.5
 python3-saml==1.16.0
 moto[sqs]==5.1.3
 pyexiv2==2.15.3; sys_platform == 'linux'
+snowballstemmer==2.2.0
 
 -e .
 -e git+https://github.com/superdesk/superdesk-planning.git@develop#egg=superdesk-planning
