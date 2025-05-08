@@ -30,9 +30,7 @@ class SuperdeskSentry:
                         monitor_beat_tasks=True,
                     ),
                 ],
-                disabled_integrations=[
-                    FlaskIntegration()
-                ],
+                disabled_integrations=[FlaskIntegration()],
             )
 
     def captureException(self, exc_info=None, **kwargs) -> None:

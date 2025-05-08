@@ -982,7 +982,7 @@ class BasePublishService(AsyncBaseService):
                         sync_associated_item_changes(associated_item, associated_item_updates)
                         continue
 
-                    orig_associated_item = archive_service.find_one(req=None, _id=associated_item[config.ID_FIELD])
+                    orig_associated_item = archive_service.find_one(req=None, _id=associated_item[ID_FIELD])
                     if association_updates.get("state") not in PUBLISH_STATES or self.is_changed(
                         orig_associated_item, associated_item
                     ):

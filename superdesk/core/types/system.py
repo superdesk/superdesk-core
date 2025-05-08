@@ -10,7 +10,7 @@ class NotificationClientProtocol(Protocol):
     def close(self) -> None:
         ...
 
-    def send(self, message: str) -> None:
+    def send(self, message: str, name: str) -> None:
         ...
 
     def reset(self) -> None:

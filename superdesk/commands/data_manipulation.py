@@ -827,7 +827,7 @@ class StorageMigrateDumps:
             records = list(records_path.iterdir())
             for idx, p in enumerate(records):
                 name = p.stem[:-5] if p.suffix == ".bz2" else p.stem
-                print(f"{INFO}Restoring record {name!r} [{idx+1}/{len(records)}]")
+                print(f"{INFO}Restoring record {name!r} [{idx + 1}/{len(records)}]")
                 try:
                     with open_dump(p) as f:
                         record_data = loads(f.read())
@@ -911,7 +911,7 @@ class StorageMigrateDumps:
             dump_files_paths = list(dump_path.iterdir())
             for idx, p in enumerate(dump_files_paths):
                 name = p.stem[:-5] if p.suffix == ".bz2" else p.stem
-                print(f"{INFO}Restoring dump {name!r} [{idx+1}/{len(dump_files_paths)}]")
+                print(f"{INFO}Restoring dump {name!r} [{idx + 1} / {len(dump_files_paths)}]")
                 metadata = get_dump_metadata(p)
                 StorageRestore().run(keep_existing=False, dump_path=p)
                 print(f"{INFO}Applying data migration scripts")
