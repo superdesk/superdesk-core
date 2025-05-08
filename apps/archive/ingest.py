@@ -20,7 +20,7 @@ from apps.archive.highlights_search_mixin import HighlightsSearchMixin
 
 
 class AppIngestService(IngestService, HighlightsSearchMixin):
-    async def on_fetched_asnc(self, docs):
+    async def on_fetched_async(self, docs):
         """Items when ingested have different case for pubstatus.
 
         Overriding this to handle existing data in Mongo & Elastic

@@ -18,7 +18,7 @@ from superdesk.resource_fields import ID_FIELD
 from superdesk import get_resource_service, Resource, Service
 from superdesk.metadata.item import CONTENT_STATE, ITEM_TYPE, CONTENT_TYPE, MEDIA_TYPES
 from superdesk.utils import ListCursor
-from superdesk.types import DesksResourceModel, VocabulariesResourceModel
+from superdesk.types import DesksResourceModel
 
 logger = logging.getLogger(__name__)
 

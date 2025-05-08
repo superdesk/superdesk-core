@@ -1,7 +1,7 @@
 from typing import Any
 from bson import ObjectId
 
-from superdesk.core import get_current_async_app
+from superdesk.core import get_current_async_app, get_current_app
 from superdesk.core.resources import ResourceModel
 from superdesk import get_resource_service
 
@@ -87,6 +87,10 @@ async def post_items(
             return [item.id for item in new_items]
     except KeyError:
         pass
+
+    current_app = get_current_app()
+    for item in items:
+        current_app.data.mongo._mongotize(item, resource)
 
     if not eve_service:
         raise RuntimeError(f"Resource {resource} not found")

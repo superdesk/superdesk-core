@@ -4,11 +4,10 @@ from enum import Enum, unique
 from quart_babel import gettext
 from pydantic_core import PydanticCustomError
 
+import superdesk
 from superdesk.core import get_app_config
 from superdesk.core.resources import ResourceModelWithObjectId, Dataclass
 from superdesk.core.resources.validators import validate_iunique_value_async, AsyncValidator
-
-from .vocabularies import VocabulariesResourceModel
 
 
 @unique
@@ -65,8 +64,8 @@ DEFAULT_ALLOWED_FILTERS: list[str] = [
 async def validate_allowed_filter_fields(item: ResourceModelWithObjectId, field: str) -> None:
     allowed = DEFAULT_ALLOWED_FILTERS.copy() + cast(list[str], get_app_config("EXCLUDED_VOCABULARY_FIELDS", []))
     lookup = {"_id": {"$nin": allowed}, "type": "manageable"}
-    async for vocabulary in await VocabulariesResourceModel.get_service().search(lookup):
-        allowed.append(vocabulary.id)
+    async for vocabulary in await superdesk.get_resource_service("vocabularies").find_async(lookup):
+        allowed.append(vocabulary["_id"])
 
     if field not in allowed:
         raise PydanticCustomError(
