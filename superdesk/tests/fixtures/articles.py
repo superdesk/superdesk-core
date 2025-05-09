@@ -8,32 +8,39 @@ from .users import ADMIN_USER_ID
 from .desks import SPORTS_DESK_ID
 
 
+ARTICLE_1_ID = "1"
+
+
+def article_1() -> dict:
+    return {
+        "guid": "tag:localhost:2015:69b961ab-2816-4b8a-a584-a7b402fed4f9",
+        "_id": ARTICLE_1_ID,
+        ITEM_TYPE: CONTENT_TYPE.TEXT,
+        "last_version": 3,
+        VERSION: 4,
+        "body_html": "Test body",
+        "anpa_category": [{"qcode": "A", "name": "Sport"}],
+        "urgency": 4,
+        "headline": "Two students missing",
+        "pubstatus": "usable",
+        "firstcreated": utcnow(),
+        "byline": "By Alan Karben",
+        "ednote": "Andrew Marwood contributed to this article",
+        "dateline": {"located": {"city": "Sydney"}},
+        "keywords": ["Student", "Crime", "Police", "Missing"],
+        "subject": [{"qcode": "17004000", "name": "Statistics"}, {"qcode": "04001002", "name": "Weather"}],
+        "task": {"user": ADMIN_USER_ID, "desk": SPORTS_DESK_ID},
+        ITEM_STATE: CONTENT_STATE.PUBLISHED,
+        "expiry": utcnow() + timedelta(minutes=20),
+        "slugline": "story slugline",
+        "unique_name": "#1",
+        "operation": "publish",
+    }
+
+
 def all_articles() -> list[dict]:
     return [
-        {
-            "guid": "tag:localhost:2015:69b961ab-2816-4b8a-a584-a7b402fed4f9",
-            "_id": "1",
-            ITEM_TYPE: CONTENT_TYPE.TEXT,
-            "last_version": 3,
-            VERSION: 4,
-            "body_html": "Test body",
-            "anpa_category": [{"qcode": "A", "name": "Sport"}],
-            "urgency": 4,
-            "headline": "Two students missing",
-            "pubstatus": "usable",
-            "firstcreated": utcnow(),
-            "byline": "By Alan Karben",
-            "ednote": "Andrew Marwood contributed to this article",
-            "dateline": {"located": {"city": "Sydney"}},
-            "keywords": ["Student", "Crime", "Police", "Missing"],
-            "subject": [{"qcode": "17004000", "name": "Statistics"}, {"qcode": "04001002", "name": "Weather"}],
-            "task": {"user": ADMIN_USER_ID, "desk": SPORTS_DESK_ID},
-            ITEM_STATE: CONTENT_STATE.PUBLISHED,
-            "expiry": utcnow() + timedelta(minutes=20),
-            "slugline": "story slugline",
-            "unique_name": "#1",
-            "operation": "publish",
-        },
+        article_1(),
         {
             "guid": "tag:localhost:2015:69b961ab-2816-4b8a-a974-xy4532fe33f9",
             "_id": "2",

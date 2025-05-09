@@ -343,9 +343,7 @@ class ResourceRestEndpoints(RestEndpoints):
             item = await self.service.find_by_id_raw(args.item_id, params.version, projection=projection_args)
 
         if not item:
-            raise SuperdeskApiError.notFoundError(
-                f"{self.resource_config.name} resource with ID '{args.item_id}' not found"
-            )
+            await request.abort(404)
 
         self._populate_hateoas_if_needed(request, [item])
         await self.on_fetched_item(request, item)

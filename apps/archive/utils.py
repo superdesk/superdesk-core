@@ -69,8 +69,7 @@ def private_content_filter(req=None):
         # if user has no global search access, only show him content on his desks
         # and not on any desk
         else:
-            # TODO-ASYNC[vocabularies]: Convert ``get_by_user`` to async when upgrading this module
-            desks = get_resource_service("user_desks").get_by_user(user["_id"]) or []
+            desks = list(get_resource_service("user_desks").get(req=None, lookup={"user_id": user["_id"]}))
             private_filter["should"].append(
                 {"terms": {"task.desk": [str(d["_id"]) for d in desks]}},
             )
