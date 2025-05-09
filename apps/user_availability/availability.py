@@ -24,7 +24,7 @@ class AvailabilityResource(Resource):
         "status": {
             "type": "string",
             "required": True,
-            "allowed": ["available", "unavailable", "partial", ""],
+            "allowed": ["available", "unavailable", "partial", "not-set"],
         },
         "language": {
             "type": "list",

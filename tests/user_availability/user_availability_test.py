@@ -42,7 +42,7 @@ def test_user_availability_generator(app):
     generate_user_availability.apply()
 
     generated = list(app.data.find_all("user_availability"))
-    assert len(generated) > 30
+    assert len(generated) == 12
     generated_length = len(generated)
 
     for item in generated:

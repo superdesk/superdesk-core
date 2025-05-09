@@ -136,7 +136,7 @@ class DefaultAvailabilityService(superdesk.Service):
         working_days = doc.get("working_days") or {}
 
         items = []
-        for day in WEEKDAY_RRULE_MAPPING.keys():
+        for day in working_days:
             weekday = WEEKDAY_RRULE_MAPPING[day]
             dates = rrule(freq=WEEKLY, dtstart=today, count=generate_weeks, byweekday=weekday)
             for d in dates:
@@ -151,17 +151,6 @@ class DefaultAvailabilityService(superdesk.Service):
                             "working_hours": default_availability["working_hours"]
                             if default_availability.get("working_hours")
                             else [],
-                            "_generated": True,
-                        }
-                    )
-                else:
-                    items.append(
-                        {
-                            "user": current_user_id,
-                            "date": d.date().isoformat(),
-                            "status": "",
-                            "language": doc.get("language") or [],
-                            "working_hours": [],
                             "_generated": True,
                         }
                     )

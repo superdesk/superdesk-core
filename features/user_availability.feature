@@ -105,7 +105,7 @@ Feature: User Availability
         When we patch "/user_availability/#user_availability._id#"
         """
         {
-            "status": "",
+            "status": "not-set",
             "language": ["fr", "es"],
             "working_hours": [
                 {
@@ -400,12 +400,7 @@ Feature: User Availability
         {"working_days": {}}
         """
         And we get "user_availability"
-        Then we get list with 30+ items
-        """
-        {"_items": [
-            {"status": ""}
-        ]}
-        """
+        Then we get list with 0 items
 
         When we put to "/default_user_availability/#CONTEXT_USER_ID#"
         """
