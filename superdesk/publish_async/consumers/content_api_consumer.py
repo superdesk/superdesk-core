@@ -4,7 +4,14 @@ from superdesk.types import PublishQueueResource, SubscribersResource, PublishCo
 from superdesk.resource_fields import ID_FIELD
 from superdesk import get_resource_service
 from superdesk.publish_async.publish_cache import PublishCache
+from superdesk.metadata.item import ITEM_TYPE
 
+try:
+    from planning.content_api import ContentAPIEventService, ContentAPIPlanningService
+
+    planning_enabled = True
+except ImportError:
+    planning_enabled = False
 
 logger = logging.getLogger(__name__)
 
@@ -49,7 +56,13 @@ class ContentApiPublishConsumer(PublishConsumer):
             for subscriber_id in subscriber_ids
             if cache.subscribers.get(subscriber_id)
         ]
+
+        item_type = item.get(ITEM_TYPE)
         try:
+            if planning_enabled and item_type in ("planning", "event"):
+                service = ContentAPIPlanningService() if item_type == "planning" else ContentAPIEventService()
+                return await service.publish_async(item, subscribers)
+
             await get_resource_service("content_api").publish_async(item, subscribers)
         except Exception:
             logger.exception(
