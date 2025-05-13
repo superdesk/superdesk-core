@@ -33,6 +33,9 @@ from bson import ObjectId, UuidRepresentation
 from bson.json_util import dumps, DEFAULT_JSON_OPTIONS
 from motor.motor_asyncio import AsyncIOMotorCursor
 
+# TODO-ASYNC: Replace Eve's parser with our own
+from eve.io.mongo.parser import parse, ParseError
+
 from superdesk.core.types import SearchRequest, SortListParam, SortParam, ProjectedFieldArg
 from superdesk.core.errors import ElasticNotConfiguredForResource
 from superdesk.flask import g
@@ -784,16 +787,23 @@ class AsyncResourceService(Generic[ResourceModelType]):
             if sort:
                 kwargs["sort"] = sort
 
-        where = json.loads(req.where or "{}") if isinstance(req.where, str) else req.where or {}
-        where = cast_item(where)
+        where = None
+        if req.where:
+            try:
+                where = json.loads(req.where or "{}") if isinstance(req.where, str) else req.where
+            except ValueError:
+                try:
+                    where = parse(req.where)
+                except ParseError:
+                    raise SuperdeskApiError.badRequestError("Failed to parse the where filter")
 
+        where = cast_item(where or {})
         kwargs["filter"] = where
 
         projection_arg = self._get_mongo_projection_argument(req)
         if projection_arg:
             kwargs["projection"] = projection_arg
 
-        self.mongo.find
         cursor = self.mongo_async.find(**kwargs) if not versioned else self.mongo_versioned_async.find(**kwargs)
 
         return MongoResourceCursorAsync(
