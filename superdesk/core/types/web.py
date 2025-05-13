@@ -186,7 +186,7 @@ class Request(Protocol):
         """Get an HTTP header from the current request"""
         ...
 
-    async def get_json(self) -> Any | None:
+    async def get_json(self, force: bool = False) -> Any | None:
         """Get the body of the current request in JSON format"""
         ...
 
