@@ -1,13 +1,35 @@
 from bson import ObjectId
 from superdesk.types import SubscribersResource, SubscriberType, SubscriberSequenceSettings, SubscriberDestination
 
-from .products import NSW_PRODUCT_ID, ABCDEF_PRODUCT_ID
+from .products import TEXT_PRODUCT_ID, NSW_PRODUCT_ID, ABCDEF_PRODUCT_ID
 
 SUB1_ID = ObjectId()
 SUB2_ID = ObjectId()
 SUB3_ID = ObjectId()
 SUB4_ID = ObjectId()
 SUB5_ID = ObjectId()
+
+TEXT_SUBSCRIBER_ID = ObjectId()
+
+
+def text_subscriber() -> SubscribersResource:
+    return SubscribersResource(
+        id=TEXT_SUBSCRIBER_ID,
+        name="text",
+        email="text@subscriber.com",
+        is_active=True,
+        subscriber_type=SubscriberType.ALL,
+        sequence_num_settings=SubscriberSequenceSettings(min=1, max=100),
+        products=[TEXT_PRODUCT_ID],
+        destinations=[
+            SubscriberDestination(
+                name="dest1",
+                format="nitf",
+                delivery_type="File",
+                config={"file_path": "/tmp/"},
+            ),
+        ],
+    )
 
 
 def sub1_subscriber() -> SubscribersResource:
