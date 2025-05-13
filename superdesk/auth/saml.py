@@ -121,7 +121,7 @@ async def index():
         if SESSION_SESSION_ID in session:
             session_index = session[SESSION_SESSION_ID]
         return redirect(auth.logout(name_id=name_id, session_index=session_index))
-    elif "acs" in request.args or request.form:
+    elif "acs" in request.args or await request.form:
         auth.process_response()
         errors = auth.get_errors()
         if len(errors) == 0:
