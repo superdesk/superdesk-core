@@ -8,7 +8,7 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
-from typing import Any, Awaitable
+from typing import Any, Awaitable, get_origin, get_args
 from inspect import signature, isawaitable
 import logging
 
@@ -102,8 +102,11 @@ class Endpoint(EndpointProtocol):
 
         arg_type = func_params["args"] if "args" in func_params else None
         request_args = None
-        if arg_type is not None and arg_type.annotation is not None and issubclass(arg_type.annotation, BaseModel):
-            request_args = arg_type.annotation.model_validate(args)
+        if arg_type is not None and arg_type.annotation is not None:
+            if issubclass(arg_type.annotation, BaseModel):
+                request_args = arg_type.annotation.model_validate(args)
+            elif arg_type.annotation is dict:
+                request_args = args
 
         param_type = func_params["params"] if "params" in func_params else None
         url_params = None
