@@ -2,6 +2,7 @@ import logging
 
 from bson import ObjectId
 from celery.exceptions import SoftTimeLimitExceeded
+from quart_babel import gettext
 
 # TODO-ASYNC: Replace resolve_document_version with something from async core lib
 from eve.versioning import resolve_document_version
@@ -137,7 +138,11 @@ class ContentPublishExchange(BasicPublishExchange):
             await published_service.patch_async(published_item_id, error_updates)
             raise
         except Exception as error:
-            error_updates = {QUEUE_STATE: PublishState.ERROR, ERROR_MESSAGE: str(error)}
+            if isinstance(error, KeyError):
+                error_msg = gettext(f"Key is missing on article to be published: {error}")
+            else:
+                error_msg = str(error)
+            error_updates = {QUEUE_STATE: PublishState.ERROR, ERROR_MESSAGE: error_msg}
             await published_service.patch_async(published_item_id, error_updates)
             raise
 
