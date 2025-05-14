@@ -87,7 +87,7 @@ class EmailPublishService(PublishService):
                     )
 
             # sending email synchronously
-            send_email(
+            await send_email(
                 subject=subject,
                 sender=admins[0],
                 recipients=recipients,
