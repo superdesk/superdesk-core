@@ -12,7 +12,6 @@ import logging
 
 from superdesk import get_resource_service
 from superdesk.commands import cli
-from superdesk.types import VocabulariesResourceModel
 
 
 logger = logging.getLogger(__name__)
@@ -113,7 +112,7 @@ async def update_vocabularies_in_items_command():
 
     fields = ["subject", "genre", "place", "anpa_category"]
     lookup = {"type": "manageable", "service": {"$exists": True}}
-    vocabularies_list = await VocabulariesResourceModel.get_service().get_all_list_raw(lookup)
+    vocabularies_list = await get_resource_service("vocabularies").find_async(lookup)
     vocabularies = await get_vocabularies(vocabularies_list)
 
     await update_items(vocabularies, fields, get_resource_service("archive"))

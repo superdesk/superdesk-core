@@ -12,7 +12,7 @@
 from superdesk.resource_fields import ID_FIELD
 from superdesk.notification import push_notification
 from superdesk.errors import SuperdeskApiError
-from superdesk.types import VocabulariesResourceModel
+from superdesk import get_resource_service
 from superdesk.eve_async import AsyncBaseService
 from eve.utils import ParsedRequest
 from quart_babel import gettext as _
@@ -67,7 +67,7 @@ class ContactsService(AsyncBaseService):
         if not contact or not contact.get("contact_type"):
             return
 
-        types = await VocabulariesResourceModel.get_service().find_by_id_raw("contact_type")
+        types = await get_resource_service("vocabularies").find_one_async(req=None, _id="contact_type")
 
         if not types:
             return

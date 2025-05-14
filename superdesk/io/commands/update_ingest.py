@@ -22,7 +22,7 @@ from superdesk.celery_app import CELERY_SERIALIZER_NAME
 from superdesk.core import get_app_config, get_current_app
 from superdesk.commands import cli
 from superdesk.resource_fields import ID_FIELD
-from superdesk.types import VocabulariesResourceModel, UsersResourceModel, UserTypeEnum, ContentFiltersResource
+from superdesk.types import UsersResourceModel, UserTypeEnum, ContentFiltersResource
 
 from superdesk.activity import ACTIVITY_EVENT, notify_and_add_activity
 from superdesk.celery_app import celery
@@ -364,7 +364,9 @@ async def update_provider(provider, rule_set=None, routing_scheme=None, sync=Fal
 
 async def _process_anpa_category(item, provider):
     try:
-        anpa_categories = await VocabulariesResourceModel.get_service().find_by_id_raw("categories")
+        anpa_categories = await superdesk.get_resource_service("vocabularies").find_one_async(
+            req=None, _id="categories"
+        )
         if anpa_categories:
             for item_category in item["anpa_category"]:
                 mapped_category = [
@@ -397,7 +399,9 @@ async def _derive_category(item, provider):
     """
     try:
         categories = []
-        subject_map = await VocabulariesResourceModel.get_service().find_by_id_raw("iptc_category_map")
+        subject_map = await superdesk.get_resource_service("vocabularies").find_one_async(
+            req=None, _id="iptc_category_map"
+        )
         if subject_map:
             for entry in (map_entry for map_entry in subject_map["items"] if map_entry["is_active"]):
                 for subject in item.get("subject", []):
@@ -456,7 +460,7 @@ async def _derive_subject(item):
     :return:
     """
     try:
-        category_map = await VocabulariesResourceModel.get_service().find_by_id_raw("categories")
+        category_map = await superdesk.get_resource_service("vocabularies").find_one_async(req=None, _id="categories")
         if category_map:
             for cat in item["anpa_category"]:
                 map_entry = next(

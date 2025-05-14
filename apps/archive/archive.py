@@ -101,7 +101,7 @@ from .archive_media import ArchiveMediaService
 from .usage import track_usage, update_refs
 from .utils import flush_renditions, private_content_filter, remove_is_queued
 from superdesk.utc import utcnow
-from superdesk.vocabularies_async.service import is_related_content
+from superdesk.vocabularies import is_related_content
 from quart_babel import gettext as _
 from apps.archive.highlights_search_mixin import HighlightsSearchMixin
 
@@ -198,7 +198,7 @@ class ArchiveService(AsyncBaseService, HighlightsSearchMixin):
             update_associations(doc)
             for key, assoc in doc.get(ASSOCIATIONS, {}).items():
                 # don't set time stamp for related items
-                if not await is_related_content(key):
+                if not is_related_content(key):
                     self._set_association_timestamps(assoc, doc)
                     remove_unwanted(assoc)
 
@@ -323,7 +323,7 @@ class ArchiveService(AsyncBaseService, HighlightsSearchMixin):
 
             await track_usage(media_item, stored_item, item_obj, item_name, original)
 
-            if await is_related_content(item_name):
+            if is_related_content(item_name):
                 continue
 
             await self._validate_updates(stored_item, item_obj, user)
@@ -693,7 +693,7 @@ class ArchiveService(AsyncBaseService, HighlightsSearchMixin):
                 if association is None:
                     continue
                 # don't set time stamp for related items
-                if not await is_related_content(key):
+                if not is_related_content(key):
                     self._set_association_timestamps(association, updates, new=False)
                     remove_unwanted(association)
 
