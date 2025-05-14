@@ -23,7 +23,7 @@ import click
 from superdesk.core import get_current_app, get_app_config
 from superdesk.commands import cli
 from superdesk.resource_fields import VERSION
-from superdesk.flask import g
+from superdesk.flask import g, abort
 from apps.archive.common import ITEM_OPERATION
 from superdesk import get_resource_service
 from superdesk.metadata.item import ITEM_STATE, CONTENT_STATE
@@ -223,6 +223,10 @@ class PrepopulateService(AsyncBaseService):
             await users_service.update_stage_visibility_for_users_async()
 
     async def create_async(self, docs, **kwargs):
+        if not get_app_config("SUPERDESK_TESTING"):
+            # This endpoint should not be available when not in testing
+            return abort(404)
+
         with multiprocessing.Lock() as lock:
             with timer("prepopulate"):
                 await self._create_async(docs)
