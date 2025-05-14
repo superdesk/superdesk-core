@@ -84,10 +84,6 @@ async def content_filter_test_endpoint(request: Request) -> Response:
         if not article:
             raise SuperdeskApiError.badRequestError(gettext("Article not found"))
 
-        print("Testing against single article")
-        print(article)
-        print(content_filter)
-
         try:
             result["match_results"] = item_matches_content_filter(article, content_filter)
         except Exception as ex:
