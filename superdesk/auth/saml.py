@@ -33,12 +33,14 @@ Service provider config for superdesk in ``settings.json`` file example::
 
 import superdesk
 import logging
+import quart
 
 from urllib.parse import urlparse
 
 from superdesk.core import get_app_config
-from superdesk.flask import request, redirect, make_response, session, jsonify, Blueprint
+from superdesk.flask import request, redirect, make_response, session, Blueprint
 from superdesk.auth import auth_user
+
 
 try:
     from onelogin.saml2.auth import OneLogin_Saml2_Auth
@@ -70,7 +72,7 @@ def init_saml_auth(req):
     return auth
 
 
-async def prepare_flask_request(request):
+async def prepare_request(request: quart.Request) -> dict:
     url_data = urlparse(request.url)
     scheme = request.scheme
     server_url = get_app_config("SERVER_URL")
@@ -109,7 +111,7 @@ def get_userdata(saml_data):
 
 @bp.route("/login/saml", methods=["GET", "POST"])
 async def index():
-    req = await prepare_flask_request(request)
+    req = await prepare_request(request)
     auth = init_saml_auth(req)
     errors = []
 
@@ -130,13 +132,11 @@ async def index():
             session[SESSION_USERDATA_KEY] = auth.get_attributes()
         else:
             logger.error("SAML %s reason=%s", errors, auth.get_last_error_reason())
-            return jsonify(
-                {
-                    "req": req,
-                    "errors": errors,
-                    "error_reason": auth.get_last_error_reason(),
-                }
-            )
+            return {
+                "req": req,
+                "errors": errors,
+                "error_reason": auth.get_last_error_reason(),
+            }
     elif "sls" in request.args:
 
         def dscb():
@@ -156,7 +156,7 @@ async def index():
 
 @bp.route("/login/saml_metadata")
 async def metadata():
-    req = await prepare_flask_request(request)
+    req = await prepare_request(request)
     auth = init_saml_auth(req)
     settings = auth.get_settings()
     metadata = settings.get_sp_metadata()
