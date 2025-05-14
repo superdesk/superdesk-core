@@ -1,14 +1,32 @@
 from bson import ObjectId
 from superdesk.types import ProductsResource, ProductTypes, ProductContentFilter, ProductFilterType
 
-from .content_filters import CONTENT_FILTER_MEDIA_ID, CONTENT_FILTER_PICTURES_ID, CONTENT_FILTER_VIDEOS_ID
+from .content_filters import (
+    CONTENT_FILTER_TEXT_ID,
+    CONTENT_FILTER_MEDIA_ID,
+    CONTENT_FILTER_PICTURES_ID,
+    CONTENT_FILTER_VIDEOS_ID,
+)
 
+TEXT_PRODUCT_ID = ObjectId()
 NSW_PRODUCT_ID = ObjectId()
 ABCDEF_PRODUCT_ID = ObjectId()
 XYZ_PRODUCT_ID = ObjectId()
 PICTURE_PRODUCT_ID = ObjectId()
 VIDEO_PRODUCT_ID = ObjectId()
 MEDIA_PRODUCT_ID = ObjectId()
+
+
+def text_product() -> ProductsResource:
+    return ProductsResource(
+        id=TEXT_PRODUCT_ID,
+        name="Text Product",
+        product_type=ProductTypes.BOTH,
+        content_filter=ProductContentFilter(
+            filter_id=CONTENT_FILTER_TEXT_ID,
+            filter_type=ProductFilterType.PERMITTING,
+        ),
+    )
 
 
 def nsw_product() -> ProductsResource:

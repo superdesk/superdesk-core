@@ -1,11 +1,20 @@
 from bson import ObjectId
 from superdesk.types import ContentFiltersResource, ContentFilter, ContentFilterExpression
 
-from .filter_conditions import FILTER_CONDITION_PICTURE_ID, FILTER_CONDITION_VIDEO_ID
+from .filter_conditions import FILTER_CONDITION_TEXT_ID, FILTER_CONDITION_PICTURE_ID, FILTER_CONDITION_VIDEO_ID
 
+CONTENT_FILTER_TEXT_ID = ObjectId()
 CONTENT_FILTER_PICTURES_ID = ObjectId()
 CONTENT_FILTER_VIDEOS_ID = ObjectId()
 CONTENT_FILTER_MEDIA_ID = ObjectId()
+
+
+def content_filter_text() -> ContentFiltersResource:
+    return ContentFiltersResource(
+        id=CONTENT_FILTER_TEXT_ID,
+        name="Text Content Filter",
+        content_filter=[ContentFilter(expression=ContentFilterExpression(fc=[FILTER_CONDITION_TEXT_ID]))],
+    )
 
 
 def content_filter_pictures() -> ContentFiltersResource:

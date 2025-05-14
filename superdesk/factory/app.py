@@ -150,8 +150,8 @@ class HttpFlaskRequest(Request):
     def get_header(self, key: str) -> Optional[str]:
         return self.request.headers.get(key)
 
-    async def get_json(self) -> Union[Any, None]:
-        return await self.request.get_json()
+    async def get_json(self, force: bool = False) -> Union[Any, None]:
+        return await self.request.get_json(force=force)
 
     async def get_form(self) -> Mapping:
         return (await self.request.form).deepcopy()
