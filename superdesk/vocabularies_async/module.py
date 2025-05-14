@@ -29,9 +29,9 @@ vocabularies_resource_config = ResourceConfig(
             ),
         ],
     ),
-    rest_endpoints=RestEndpointConfig(
-        endpoints_class=VocabulariesRestEndpoints,
-        item_methods=["GET", "PATCH", "DELETE"],
-        resource_methods=["GET", "POST"],
-    ),
+    # rest_endpoints=RestEndpointConfig(
+    #     endpoints_class=VocabulariesRestEndpoints,
+    #     item_methods=["GET", "PATCH", "DELETE"],
+    #     resource_methods=["GET", "POST"],
+    # ),
 )
