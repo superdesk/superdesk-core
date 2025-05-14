@@ -19,6 +19,7 @@ from .endpoints import Endpoint, EndpointGroup
 
 class ItemRequestViewArgs(BaseModel):
     item_id: str
+    lookup_field: str | None = None
 
 
 class RestEndpoints(EndpointGroup):
