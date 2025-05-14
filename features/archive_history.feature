@@ -211,7 +211,8 @@ Feature: Archive history
       {
         "name":"Channel 3","media_type":"media", "subscriber_type": "wire", "sequence_num_settings":{"min" : 1, "max" : 10}, "email": "test@test.com",
         "products": ["#products._id#"],
-        "destinations":[{"name":"Test","format": "nitf", "delivery_type":"email","config":{"recipients":"test@test.com"}}]
+        "destinations":[{"name":"Test","format": "nitf", "delivery_type":"email","config":{"recipients":"test@test.com"}}],
+        "is_active": true
       }
       """
       And we publish "#archive._id#" with "publish" type and "published" state
@@ -482,7 +483,7 @@ Feature: Archive history
     And "subscribers"
       """
       [{
-        "_id": "sub-1",
+        "_id": "270340ef1d41c89b50716da0",
         "name":"Channel 3",
         "is_active": true,
         "media_type":"media",
@@ -510,8 +511,8 @@ Feature: Archive history
     """
     {
       "_items": [
-        {"state": "pending", "content_type": "text",
-        "subscriber_id": "sub-1", "item_id": "123", "item_version": 4}
+        {"state": "success", "content_type": "text",
+        "subscriber_id": "270340ef1d41c89b50716da0", "item_id": "123", "item_version": 4}
       ]
     }
     """

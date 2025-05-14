@@ -43,7 +43,7 @@ Feature: Filter Condition
     """
     Then we get error 400
     """
-    {"_status": "ERR", "_issues": {"name": {"unique": 1}}}
+    {"_status": "ERR", "_issues": {"name": {"unique": "Value must be unique"}}}
     """
 
   @auth

@@ -90,7 +90,7 @@ Feature: Products
     """
     Then we get error 400
     """
-    {"_status": "ERR", "_issues": {"product_type": "null value not allowed"}}
+    {"_status": "ERR", "_issues": {"product_type": "Input should be 'api', 'direct' or 'both'"}}
     """
 
   @auth
