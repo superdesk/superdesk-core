@@ -26,7 +26,8 @@ Feature: Publish Queue
     """
     {
        "item_id":"#archive._id#","publish_schedule": "2016-05-30T10:00:00+00:00", "subscriber_id":"#subscribers._id#",
-       "destination":{"name":"Test","format": "nitf","delivery_type":"email","config":{"recipients":"test@test.com"}}
+       "destination":{"name":"Test","format": "nitf","delivery_type":"email","config":{"recipients":"test@test.com"}},
+       "formatted_item": "", "item_version": 1, "publishing_action": "published"
     }
     """
     And we get "/publish_queue"
@@ -91,8 +92,10 @@ Feature: Publish Queue
       """
 
     When we publish "#archive._id#" with "publish" type and "published" state
-    Then we get OK response
-
+    Then we get error 400
+    """
+    {"_issues": {"validator exception": "400: Item didn't match any Products"}, "_status": "ERR"}
+    """
     When we enqueue published
     When we get "/publish_queue"
     Then we get list with 0 items
@@ -122,7 +125,7 @@ Feature: Publish Queue
       [{
         "_id":"570340ef1d41c89b50716dae", "name":"prod-2","codes":"def,xyz",
         "content_filter": {
-            "filter_id": "#content_filter._id#",
+            "filter_id": "#content_filters._id#",
             "filter_type": "blocking"
         },
         "geo_restrictions": "NSW"
@@ -160,7 +163,10 @@ Feature: Publish Queue
       """
 
     When we publish "#archive._id#" with "publish" type and "published" state
-    Then we get OK response
+    Then we get error 400
+    """
+    {"_issues": {"validator exception": "400: Key is missing on article to be published: 'qcode'"}, "_status": "ERR"}
+    """
 
     When we enqueue published
     When we get "/publish_queue"
@@ -173,7 +179,7 @@ Feature: Publish Queue
             {
                 "type": "text",
                 "queue_state": "error",
-                "error_message": "400: Key is missing on article to be published: 'qcode'"
+                "error_message": "Key is missing on article to be published: 'qcode'"
             }
         ]
     }
@@ -241,7 +247,7 @@ Feature: Publish Queue
     {
       "_items": [
         {
-          "state": "pending",
+          "state": "success",
           "content_type": "text",
           "subscriber_id": "#subscribers._id#",
           "item_id": "123",
@@ -311,7 +317,8 @@ Feature: Publish Queue
     """
     {
       "item_id":"#archive._id#","subscriber_id":"#subscribers._id#",
-      "destination":{"name":"destination2","format": "nitf", "delivery_type":"email","config":{"recipients":"test@test.com"}}
+      "destination":{"name":"destination2","format": "nitf", "delivery_type":"email","config":{"recipients":"test@test.com"}},
+      "formatted_item": "", "item_version": 1, "publishing_action": "published"
     }
     """
     And we get "/publish_queue"
@@ -411,9 +418,11 @@ Feature: Publish Queue
     """
     {
        "item_id":"#archive._id#","publish_schedule": "2016-05-30T10:00:00+00:00", "subscriber_id":"#subscribers._id#",
-       "destination":{"name":"destination2","format": "nitf", "delivery_type":"email","config":{"recipients":"test@test.com"}}
+       "destination":{"name":"destination2","format": "nitf", "delivery_type":"email","config":{"recipients":"test@test.com"}},
+       "formatted_item": "", "item_version": 1, "publishing_action": "published"
     }
     """
+    Then we get OK response
     Then we get "published_seq_num" in "/publish_queue/#archive._id#"
     When we patch "/publish_queue/#publish_queue._id#"
     """
@@ -430,13 +439,39 @@ Feature: Publish Queue
 
   @auth
   Scenario: publish queue us returned in correct order
-    Given "publish_queue"
+    Given "subscribers"
+    """
+    [{
+      "name":"Channel 3",
+      "media_type":"media",
+      "is_active": true,
+      "subscriber_type": "digital",
+      "sequence_num_settings":{"min" : 1, "max" : 10},
+      "email": "test@test.com",
+      "codes": "ptr, axx,",
+      "products": [],
+      "destinations":[{"name":"Test","format": "nitf", "delivery_type":"email","config":{"recipients":"test@test.com"}}]
+    }]
+    """
+    And "publish_queue"
     """
     [
-      {"_created":"2016-05-30T13:00:00+00:00", "subscriber_id": 4, "published_seq_num": 2},
-      {"_created":"2016-05-30T12:00:00+00:00", "subscriber_id": 4, "published_seq_num": 3},
-      {"_created":"2016-05-30T11:00:00+00:00", "subscriber_id": 3, "published_seq_num": 1},
-      {"_created":"2016-05-30T10:00:00+00:00", "subscriber_id": 2, "published_seq_num": 1}
+      {
+        "_created":"2016-05-30T13:00:00+00:00", "subscriber_id": "#subscribers._id#", "published_seq_num": 2,
+        "item_id": "item1", "publishing_action": "published", "item_version": 1, "formatted_item": ""
+      },
+      {
+        "_created":"2016-05-30T12:00:00+00:00", "subscriber_id": "#subscribers._id#", "published_seq_num": 3,
+        "item_id": "item2", "publishing_action": "published", "item_version": 1, "formatted_item": ""
+      },
+      {
+        "_created":"2016-05-30T11:00:00+00:00", "subscriber_id": "#subscribers._id#", "published_seq_num": 1,
+        "item_id": "item3", "publishing_action": "published", "item_version": 1, "formatted_item": ""
+      },
+      {
+        "_created":"2016-05-30T10:00:00+00:00", "subscriber_id": "#subscribers._id#", "published_seq_num": 1,
+        "item_id": "item4", "publishing_action": "published", "item_version": 1, "formatted_item": ""
+      }
     ]
     """
     When we get "/publish_queue"
@@ -471,7 +506,8 @@ Feature: Publish Queue
     """
     {
        "item_id":"#archive._id#","publish_schedule": "2016-05-30T10:00:00+00:00", "subscriber_id":"#subscribers._id#",
-       "destination":{"name":"Test","format": "nitf","delivery_type":"email","config":{"recipients":"test@test.com"}}
+       "destination":{"name":"Test","format": "nitf","delivery_type":"email","config":{"recipients":"test@test.com"}},
+       "formatted_item": "", "item_version": 1, "publishing_action": "published"
     }
     """
     And we get "/publish_queue"
@@ -553,7 +589,7 @@ Feature: Publish Queue
     {
       "_items": [
         {
-          "state": "pending",
+          "state": "success",
           "content_type": "text",
           "subscriber_id": "#subscribers._id#",
           "item_id": "123",

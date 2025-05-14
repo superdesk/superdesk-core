@@ -43,6 +43,8 @@ async def before_scenario_async(context, scenario):
     current_app = context.app
     if scenario.status != "skipped" and "notesting" in scenario.tags:
         current_app.config["SUPERDESK_TESTING"] = False
+    else:
+        current_app.config["SUPERDESK_TESTING"] = True
 
     async with current_app.app_context():
         await tests.clean_dbs(current_app, init_indexes=False)

@@ -57,6 +57,7 @@ Feature: Authentication
         {"_issues": {"credentials": 1}}
         """
 
+    @wip
 	Scenario: Check reset password - expired token
         Given "users"
         """

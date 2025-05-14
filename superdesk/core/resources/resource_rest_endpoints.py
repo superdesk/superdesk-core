@@ -12,7 +12,7 @@ import math
 import logging
 import traceback
 
-from typing import Optional, cast, Any, Literal
+from typing import Optional, cast, Any, Literal, TypedDict
 from copy import deepcopy
 
 from dataclasses import dataclass
@@ -22,6 +22,7 @@ from eve.utils import querydef
 from typing_extensions import override
 from werkzeug.datastructures import MultiDict
 from bson import ObjectId
+from quart_babel import gettext
 
 from superdesk.core import json
 from superdesk.utils import get_cors_headers
@@ -75,6 +76,11 @@ class RestParentLink:
         return self.url_arg_name or self.model_id_field or self.resource_name
 
 
+class AdditionalLookupConfig(TypedDict):
+    url: str
+    field: str
+
+
 @dataclass
 class RestEndpointConfig:
     #: Optional list of resource level methods, defaults to ["GET", "POST"]
@@ -106,6 +112,8 @@ class RestEndpointConfig:
     #: Exclude these fields from ALL responses (uses MongoDB or Elasticsearch to provide projection)
     #: Raises an exception if client specifically requests any of these fields to be included
     exclude_fields_in_response: list[str] | None = None
+
+    additional_lookup: AdditionalLookupConfig | None = None
 
 
 def get_id_url_type(data_class: type[ResourceModel]) -> str:
@@ -187,6 +195,18 @@ class ResourceRestEndpoints(RestEndpoints):
                     name="item_options",
                     func=self.item_options_endpoint,
                     methods=["OPTIONS"],
+                    parent=self,
+                )
+            )
+        if self.endpoint_config.additional_lookup:
+            param_url = self.endpoint_config.additional_lookup["url"]
+            field_name = self.endpoint_config.additional_lookup["field"]
+            self.endpoints.append(
+                Endpoint(
+                    url=f"{self.get_resource_url()}/<{param_url}:{field_name}>",
+                    name="item_get_additional_lookup",
+                    func=self.get_item_from_additional_lookup,
+                    methods=["GET"],
                     parent=self,
                 )
             )
@@ -340,7 +360,16 @@ class ResourceRestEndpoints(RestEndpoints):
                 use_mongo=True, version=params.version, projection=projection_args, **lookup
             )
         else:
-            item = await self.service.find_by_id_raw(args.item_id, params.version, projection=projection_args)
+            if args.lookup_field:
+                item = await self.service.find_one_raw(
+                    req=None,
+                    use_mongo=True,
+                    version=params.version,
+                    projection=projection_args,
+                    **{args.lookup_field: args.item_id},
+                )
+            else:
+                item = await self.service.find_by_id_raw(args.item_id, params.version, projection=projection_args)
 
         if not item:
             await request.abort(404)
@@ -351,6 +380,29 @@ class ResourceRestEndpoints(RestEndpoints):
 
         await signals.web.on_get_response.send(request, response)
         return response
+
+    async def get_item_from_additional_lookup(
+        self,
+        args: dict,
+        params: ItemRequestUrlArgs,
+        request: Request,
+    ) -> Response:
+        """Processes a get single item request, using additional lookup config to get the item"""
+
+        field: str | None = None
+        item_id: str | None = None
+        if self.endpoint_config.additional_lookup:
+            field = self.endpoint_config.additional_lookup["field"]
+            item_id = args.get(field)
+
+        if not field or not item_id:
+            raise SuperdeskApiError.badRequestError(gettext("Invalid ID format"))
+
+        return await self.get_item(
+            ItemRequestViewArgs(item_id=item_id, lookup_field=field),
+            params=params,
+            request=request,
+        )
 
     async def create_item(self, request: Request) -> Response:
         """Processes a create item request"""

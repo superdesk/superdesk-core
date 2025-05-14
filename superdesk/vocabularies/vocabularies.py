@@ -51,7 +51,7 @@ vocab_schema = {
 
 
 class VocabulariesResource(Resource):
-    internal_resource = True
+    # internal_resource = True
     schema = {
         "_id": {
             "type": "string",

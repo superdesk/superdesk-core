@@ -25,7 +25,11 @@ publish_queue_resource_config = ResourceConfig(
                 "POST": "publish_queue",
                 "PATCH": "publish_queue",
             }
-        )
+        ),
+        additional_lookup=dict(
+            url=r'regex("[\w,.:-]+")',
+            field="item_id",
+        ),
     ),
     etag_ignore_fields=["moved_to_legal"],
     default_sort=[("_id", -1)],

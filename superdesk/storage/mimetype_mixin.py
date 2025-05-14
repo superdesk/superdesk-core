@@ -1,9 +1,7 @@
 import io
 import logging
-import mimetypes
 
-import magic
-from werkzeug import datastructures
+from .utils import get_mimetype
 
 
 logger = logging.getLogger(__name__)
@@ -22,50 +20,4 @@ class MimetypeMixin:
         :type filename: str
         """
 
-        if content_type:
-            for media_type in ("image", "video", "audio"):
-                if content_type.startswith(media_type):
-                    return content_type
-
-        determined_content_type = None
-
-        try:
-            stream = content
-            if isinstance(content, (bytes, str)):
-                bytes_buffer = content
-            else:
-                if isinstance(content, datastructures.FileStorage):
-                    stream = content.stream
-                stream_type = type(stream)
-                try:
-                    # we expect types with `io.BufferedIOBase` interface
-                    # recommend using at least the first 16 KB, as less can produce incorrect identification
-                    bytes_buffer = stream.read(16384)
-                    stream.seek(0)
-                except AttributeError:
-                    msg = "Not expected format for incoming binary stream: {}".format(stream_type)
-                    logger.warning(msg)
-                    raise Exception(msg)
-
-            # detect mimetype using wrapper around libmagic
-            determined_content_type = magic.from_buffer(bytes_buffer, mime=True)
-
-            # if 'application/octet-stream' is returned it means that libmagic was not able to
-            # detect mimetype precisely and as a fallback 'application/octet-stream' was returned.
-            # in this case we should try to detect a mimetype by filename
-            if determined_content_type == "application/octet-stream":
-                msg = "libmagic was not able to detect mimetype precisely"
-                raise Exception(msg)
-        except Exception as e:
-            logger.warning(e)
-            if filename:
-                # detect mimetype using filename extension
-                determined_content_type = mimetypes.MimeTypes().guess_type(filename)[0]
-
-        if determined_content_type and determined_content_type != content_type:
-            logger.info(
-                "Content type '{}' was expected, but '{}' was determined".format(content_type, determined_content_type)
-            )
-            content_type = determined_content_type
-
-        return content_type
+        return get_mimetype(content, filename, content_type)

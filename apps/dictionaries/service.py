@@ -143,7 +143,6 @@ def read_from_file(doc):
     content = doc.pop(DICTIONARY_FILE)
     if "text/" not in content.mimetype:
         raise SuperdeskApiError.badRequestError(_("A text dictionary file is required"))
-        raise SuperdeskApiError.badRequestError(_("A text dictionary file is required"))
     return train(words(read(content)))
 
 

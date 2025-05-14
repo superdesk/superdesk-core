@@ -54,11 +54,12 @@ from superdesk.io.feeding_services import ftp
 from superdesk.io.feed_parsers import XMLFeedParser, EMailRFC822FeedParser, STTNewsMLFeedParser
 from superdesk.media.image import read_metadata
 from superdesk.utc import utcnow, get_expiry_date
-from superdesk.tests import get_prefixed_url, set_placeholder
+from superdesk.tests import get_prefixed_url, set_placeholder, token_to_basic_auth_header
 from apps.dictionaries.resource import DICTIONARY_FILE
 from superdesk.filemeta import get_filemeta
 from apps.preferences import enhance_document_with_default_prefs
 from apps.prepopulate.app_initialize import app_initialize_data_handler
+from superdesk.storage import get_mimetype
 
 # for auth server
 from authlib.jose import jwt
@@ -612,7 +613,12 @@ async def step_impl_when_auth(context):
         item = json.loads(await context.response.get_data())
         if item.get("_id"):
             set_placeholder(context, "AUTH_ID", item["_id"])
-        context.headers.append(("Authorization", b"basic " + b64encode(item["token"].encode("ascii") + b":")))
+
+        # remove any existing authorization header. Updates the list (in-place)
+        # to preserve any references to context.headers elsewhere
+        context.headers[:] = [h for h in context.headers if h[0] != "Authorization"]
+        basic_token_header = token_to_basic_auth_header(item["token"])
+        context.headers.append(basic_token_header)
         context.user = item["user"]
 
 
@@ -1240,6 +1246,7 @@ async def upload_file(context, dest, filename, file_field, extra_data=None, meth
                 io.BytesIO(file_content),
                 filename=os.path.basename(filename),
                 name=file_field,
+                content_type=get_mimetype(file_content, filename),
             )
         }
 
@@ -1269,7 +1276,7 @@ async def step_impl_when_upload_from_url(context):
     with responses.RequestsMock() as rsps:
         apply_mock_file(rsps, "upload_from_url_mock.json", fixture_path=fixture_path)
         context.response = await context.client.post(
-            get_prefixed_url(context.app, "/upload"), data=data, headers=headers
+            get_prefixed_url(context.app, "/upload"), form=data, headers=headers
         )
 
 
@@ -1284,7 +1291,7 @@ async def step_impl_when_upload_from_url_with_crop(context):
     with responses.RequestsMock() as rsps:
         apply_mock_file(rsps, "upload_from_url_mock.json", fixture_path=fixture_path)
         context.response = await context.client.post(
-            get_prefixed_url(context.app, "/upload"), data=data, headers=headers
+            get_prefixed_url(context.app, "/upload"), form=data, headers=headers
         )
 
 
@@ -1892,7 +1899,7 @@ async def we_post_to_reset_password(context, email):
     headers = unique_headers(headers, context.headers)
     with context.app.mail.record_messages() as outbox:
         context.response = await context.client.post(
-            get_prefixed_url(context.app, "/reset_user_password"), data=data, headers=headers
+            get_prefixed_url(context.app, "/reset_user_password"), form=data, headers=headers
         )
         await expect_status_in(context.response, (200, 201))
         assert len(outbox) == 1
@@ -1913,7 +1920,7 @@ async def we_can_check_token_is_valid(context):
     headers = [("Content-Type", "multipart/form-data")]
     headers = unique_headers(headers, context.headers)
     context.response = await context.client.post(
-        get_prefixed_url(context.app, "/reset_user_password"), data=data, headers=headers
+        get_prefixed_url(context.app, "/reset_user_password"), form=data, headers=headers
     )
     await expect_status_in(context.response, (200, 201))
 
@@ -1936,7 +1943,7 @@ async def check_token_invalid(context):
     headers = [("Content-Type", "multipart/form-data")]
     headers = unique_headers(headers, context.headers)
     context.response = await context.client.post(
-        get_prefixed_url(context.app, "/reset_user_password"), data=data, headers=headers
+        get_prefixed_url(context.app, "/reset_user_password"), form=data, headers=headers
     )
     await expect_status_in(context.response, (403, 401))
 
@@ -1949,7 +1956,7 @@ async def we_post_to_reset_password_it_fails(context):
     headers = unique_headers(headers, context.headers)
     with context.app.mail.record_messages() as outbox:
         context.response = await context.client.post(
-            get_prefixed_url(context.app, "/reset_user_password"), data=data, headers=headers
+            get_prefixed_url(context.app, "/reset_user_password"), form=data, headers=headers
         )
         await expect_status_in(context.response, (200, 201))
         assert len(outbox) == 0
@@ -1960,7 +1967,7 @@ async def start_reset_password_for_user(context):
     headers = [("Content-Type", "multipart/form-data")]
     headers = unique_headers(headers, context.headers)
     context.response = await context.client.post(
-        get_prefixed_url(context.app, "/reset_user_password"), data=data, headers=headers
+        get_prefixed_url(context.app, "/reset_user_password"), form=data, headers=headers
     )
 
 
@@ -1981,7 +1988,7 @@ async def we_reset_password_for_user(context):
     headers = [("Content-Type", "multipart/form-data")]
     headers = unique_headers(headers, context.headers)
     context.response = await context.client.post(
-        get_prefixed_url(context.app, "/auth_db"), data=auth_data, headers=headers
+        get_prefixed_url(context.app, "/auth_db"), form=auth_data, headers=headers
     )
     await expect_status_in(context.response, (200, 201))
 
@@ -3037,7 +3044,7 @@ async def step_impl_given_authorized_client(context):
     clients_data = json.loads(context.text)
     async with context.app.app_context():
         for client_data in clients_data:
-            clients.RegisterClient().run(**client_data)
+            await clients.RegisterClient().run(**client_data)
 
 
 @when('we do OAuth2 client authentication with id "{client_id}" and password "{password}"')

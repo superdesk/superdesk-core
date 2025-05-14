@@ -306,7 +306,7 @@ class BasePublishService(AsyncBaseService):
                     target_media_type=target_media_type
                     or (
                         SubscriberType.DIGITAL
-                        if updated[ITEM_TYPE] in [CONTENT_TYPE.TEXT, CONTENT_TYPE.PREFORMATTED]
+                        if updated[ITEM_TYPE] not in [CONTENT_TYPE.TEXT, CONTENT_TYPE.PREFORMATTED]
                         else None
                     ),
                     publish_to_content_api=True,

@@ -297,7 +297,9 @@ def get_field_errors_from_pydantic_validation_error(validation_error: Validation
                 # Validations provided by Pydantic
                 error_destination[field]["required"] = gettext("Field is required")
             elif error["type"] == "empty":
-                error_destination[field] = gettext("empty values not allowed")
+                error_destination[field] = gettext("empty values not allowed")  # type: ignore[assignment]
+            elif error["type"] == "enum":
+                error_destination[field] = error["msg"]  # type: ignore[assignment]
             else:
                 error_destination[field][error["type"]] = error["msg"]
         except (KeyError, TypeError, ValueError) as error:
