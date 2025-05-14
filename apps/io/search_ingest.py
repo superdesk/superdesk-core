@@ -12,7 +12,7 @@
 import logging
 
 from typing import cast
-from apps.search_providers.service import SearchProviderServiceAsync
+from apps.search_providers.service import SearchProviderService
 import superdesk
 
 from quart_babel import gettext as _
@@ -95,7 +95,7 @@ class SearchIngestService(AsyncBaseService):
         else:
             raise ProviderNotFoundError(_("provider not found source={source}").format(source=self.source))
 
-    def fetch_rendition(self, rendition):
+    async def fetch_rendition(self, rendition):
         """Get file stream for given rendition specs.
 
         Rendition should be from item that was fetched via this service get method.
@@ -120,7 +120,7 @@ class SearchIngestServiceAsync(AsyncBaseService):
     async def get_provider_async(self):
         resource_service = get_resource_service("search_providers")
         assert resource_service is not None
-        resource_service = cast(SearchProviderServiceAsync, resource_service)
+        resource_service = cast(SearchProviderService, resource_service)
         assert resource_service.is_async
         provider = await resource_service.find_one_async(source=self.source, req=None)
         if provider and "config" in provider and "username" in provider["config"]:
@@ -159,7 +159,7 @@ class SearchIngestServiceAsync(AsyncBaseService):
         if new_guids:
             resource_service = get_resource_service("search_providers")
             assert resource_service is not None
-            resource_service = cast(SearchProviderServiceAsync, resource_service)
+            resource_service = cast(SearchProviderService, resource_service)
             assert resource_service.is_async
             assert provider is not None
             await resource_service.system_update_async(provider.get(ID_FIELD), {"last_item_update": utcnow()}, provider)
