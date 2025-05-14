@@ -65,4 +65,4 @@ class FilterCondition:
 
         article_value = self.field.get_value(article)
         filter_value = self.value.get_value(self.field, self.operator)
-        return self.operator.does_match(article_value, filter_value)
+        return bool(self.operator.does_match(article_value, filter_value))
