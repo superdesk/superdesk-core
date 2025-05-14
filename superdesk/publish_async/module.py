@@ -17,6 +17,7 @@ from .resources.module import (
     subscribers_resource_config,
     subscriber_token_resource_config,
 )
+from .views import publish_endpoints
 
 from .commands import *  # noqa
 from . import get_exchange_factory
@@ -43,6 +44,7 @@ def init_publishing_module(app: SuperdeskAsyncApp):
 module = Module(
     name="superdesk.publish_async",
     init=init_publishing_module,
+    endpoints=[publish_endpoints],
     resources=[
         content_filters_resource_config,
         filter_conditions_resource_config,
