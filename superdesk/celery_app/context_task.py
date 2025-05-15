@@ -56,6 +56,10 @@ class HybridAppContextTask(Task):
         """
         is_always_eager = self._is_always_eager()
 
+        async def _handle_run_task(func: Any, *func_args, **func_kwargs) -> Any:
+            response = func(*func_args, **func_kwargs)
+            return await response if isawaitable(response) else response
+
         # We need a wrapper to handle exceptions inside the async function because asyncio
         # does not propagate them in the same way as synchronous exceptions. This ensures that
         # all exceptions are managed and logged regardless of where they occur within the event loop
@@ -63,11 +67,10 @@ class HybridAppContextTask(Task):
             try:
                 if with_context:
                     async with self.get_current_app().app_context():
-                        response = self.run(*args, **kwargs)
+                        return await _handle_run_task(self.run, *args, **kwargs)
                 else:
-                    response = self.run(*args, **kwargs)
+                    return await _handle_run_task(self.run, *args, **kwargs)
 
-                return await response if isawaitable(response) else response
             except self.app_errors as e:
                 self.handle_exception(e)
                 return None
