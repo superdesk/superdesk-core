@@ -117,7 +117,7 @@ class Languagetool(SpellcheckerBase):
         check_data = {"errors": err_list}
         return check_data
 
-    def suggest(self, text, language=None):
+    async def suggest(self, text, language=None):
         payload = {
             "text": text,
             "language": language or "auto",

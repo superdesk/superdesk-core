@@ -71,7 +71,7 @@ class LeuvenDutch(SpellcheckerBase):
 
         return check_data
 
-    def suggest(self, text, language=None):
+    async def suggest(self, text, language=None):
         check_url = API_URL.format(method="suggesties")
         data = {
             "key": self.api_key,

@@ -145,7 +145,7 @@ class SpellcheckerService(AsyncBaseService):
             raise SuperdeskApiError.notFoundError("{sc_name} spellchecker can't be found".format(sc_name=sc_name))
 
         if doc["suggestions"]:
-            check_data = spellchecker.suggest(doc["text"], language)
+            check_data = await spellchecker.suggest(doc["text"], language)
             assert "suggestions" in check_data
         else:
             check_data = spellchecker.check(doc["text"], language)
