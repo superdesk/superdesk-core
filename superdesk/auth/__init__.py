@@ -60,6 +60,8 @@ async def auth_user(email, userdata=None):
     # we don't get email from service
     if userdata and userdata.get("email"):
         email = userdata["email"]
+    elif userdata:
+        userdata.setdefault("email", email)
     data = [{"email": email}]
     if not email:
         return await render_template(AUTHORIZED_TEMPLATE, data={"error": 404})
