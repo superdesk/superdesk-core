@@ -55,7 +55,7 @@ HARDCODED_CVS = ("languages",)
 
 
 class ContentTypesResource(superdesk.Resource):
-    internal_resource = True
+    # internal_resource = True
     schema = {
         "_id": {
             "type": "string",

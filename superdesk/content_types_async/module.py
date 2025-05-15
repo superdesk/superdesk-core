@@ -25,14 +25,14 @@ content_types_resource_config = ResourceConfig(
         ],
     ),
     default_sort=[("priority", -1)],
-    rest_endpoints=RestEndpointConfig(
-        id_param_type=r'regex("[\w,.:-]+")',
-        auth=http_method_privilege_based_rules(
-            {
-                "POST": CONTENT_TYPE_PRIVILEGE,
-                "PATCH": CONTENT_TYPE_PRIVILEGE,
-                "DELETE": CONTENT_TYPE_PRIVILEGE,
-            }
-        ),
-    ),
+    # rest_endpoints=RestEndpointConfig(
+    #     id_param_type=r'regex("[\w,.:-]+")',
+    #     auth=http_method_privilege_based_rules(
+    #         {
+    #             "POST": CONTENT_TYPE_PRIVILEGE,
+    #             "PATCH": CONTENT_TYPE_PRIVILEGE,
+    #             "DELETE": CONTENT_TYPE_PRIVILEGE,
+    #         }
+    #     ),
+    # ),
 )
