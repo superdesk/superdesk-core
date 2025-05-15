@@ -102,7 +102,6 @@ class AsyncioPublishRouter(PublishExchangeRouter):
                 # instead of the actual Subscriber, so this task is sent to the ContentAPI in one step
                 subscriber = ContentApiSubscriber
                 task.item = request.item
-                task.subscriber_id = ContentApiSubscriber.id
             else:
                 subscriber = cache.subscribers.get(task.subscriber_id)
 

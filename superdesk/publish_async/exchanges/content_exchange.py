@@ -16,7 +16,7 @@ from superdesk.metadata.item import CONTENT_STATE
 from superdesk.errors import ConnectionTimeout
 from superdesk.utc import utcnow
 
-from apps.archive.common import ARCHIVE, insert_into_versions
+from apps.archive.common import ARCHIVE, insert_into_versions_async
 from apps.content import push_content_notification
 from superdesk.publish_async.utils import get_utc_publish_schedule, ITEM_PUBLISH, QUEUE_STATE, PUBLISHED, ERROR_MESSAGE
 from apps.legal_archive.commands import import_into_legal_archive
@@ -212,7 +212,7 @@ class ContentPublishExchange(BasicPublishExchange):
         archive_item = await archive_service.find_one_async(req=None, _id=item_id)
         await archive_service.system_update_async(item_id, item_updates, archive_item)
         # insert into version.
-        insert_into_versions(item_id, doc=None)
+        await insert_into_versions_async(item_id, doc=None)
 
         # update archive history
         app = get_current_app().as_any()

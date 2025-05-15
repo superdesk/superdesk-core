@@ -24,7 +24,7 @@ from apps.archive.common import (
     ARCHIVE,
     FIELDS_TO_COPY_FOR_ASSOCIATED_ITEM,
     get_user,
-    insert_into_versions,
+    insert_into_versions_async,
     item_operations,
     remove_unwanted,
 )
@@ -186,15 +186,18 @@ class BasePublishService(AsyncBaseService):
     item_operation = ITEM_PUBLISH
     package_service = PackageService()
 
-    async def patch_async(self, id, updates):
-        original = self.find_one(req=None, _id=id)
+    async def patch_async(self, id, updates, raise_errors: bool = False):
+        original = await self.find_one_async(req=None, _id=id)
+        if not original:
+            raise SuperdeskApiError.notFoundError(_("Cannot find article to publish"))
+
         updated = original.copy()
         await self.on_update_async(updates, original)
         updated.update(updates)
         if get_config(bool, "IF_MATCH"):
             resolve_document_etag(updated, self.datasource)
             updates[ETAG] = updated[ETAG]
-        res = await self.update_async(id, updates, original)
+        res = await self.update_async(id, updates, original, raise_errors)
         await self.on_updated_async(updates, original)
         return res
 
@@ -215,7 +218,7 @@ class BasePublishService(AsyncBaseService):
         await update_refs(updates, original)
 
     async def on_updated_async(self, updates, original):
-        original = super().find_one(req=None, _id=original[ID_FIELD])
+        original = await super().find_one_async(req=None, _id=original[ID_FIELD])
         updates.update(original)
 
         if updates[ITEM_OPERATION] not in {ITEM_KILL, ITEM_TAKEDOWN} and original.get(ITEM_TYPE) in [
@@ -257,10 +260,10 @@ class BasePublishService(AsyncBaseService):
                         )
 
                     await archive_correct.patch_async(id=package[ID_FIELD], updates=original_updates)
-                    insert_into_versions(id_=package[ID_FIELD])
+                    await insert_into_versions_async(id_=package[ID_FIELD])
                     processed_packages.append(package[ID_FIELD])
 
-    async def update_async(self, id, updates, original):
+    async def update_async(self, id, updates, original, raise_errors: bool = False):
         """
         Handles workflow of each Publish, Corrected, Killed and TakeDown.
         """
@@ -280,6 +283,8 @@ class BasePublishService(AsyncBaseService):
                 await self._update_archive(original, updates, should_insert_into_versions=auto_publish)
             else:
                 await self._publish_associated_items(original, updates)
+                updated = deepcopy(original)
+                updated.update(deepcopy(updates))
 
                 if updates.get(ASSOCIATIONS):
                     await self._refresh_associated_items(updated, skip_related=True)  # updates got lost with update
@@ -315,11 +320,16 @@ class BasePublishService(AsyncBaseService):
 
             if not response.routed:
                 if not len(response.matched_products) and not len(response.matched_api_products):
-                    raise SuperdeskApiError.badRequestError(message=_("Item didn't match any Products"))
+                    error_message = _("Item didn't match any Products")
                 elif not len(response.subscribers) and not len(response.content_api_subscribers):
-                    raise SuperdeskApiError.badRequestError(message=_("Item not published to any Subscribers"))
+                    error_message = _("Item not published to any Subscribers")
                 else:
-                    raise SuperdeskApiError.badRequestError(message=_("Failed to route item"))
+                    error_message = _("Failed to route item")
+
+                if raise_errors:
+                    raise SuperdeskApiError.badRequestError(message=error_message)
+                else:
+                    logger.warning(error_message)
 
             push_notification(
                 "item:publish",
@@ -558,7 +568,7 @@ class BasePublishService(AsyncBaseService):
         if items:
             archive_publish = get_resource_service("archive_publish")
             for guid in items:
-                package_item = super().find_one(req=None, _id=guid)
+                package_item = await super().find_one_async(req=None, _id=guid)
 
                 if not package_item:
                     raise SuperdeskApiError.badRequestError(
@@ -579,7 +589,7 @@ class BasePublishService(AsyncBaseService):
                         package_item[PUBLISHED_IN_PACKAGE] = package[ID_FIELD]
                         await archive_publish.patch_async(package_item.pop(ID_FIELD), updates=package_item)
 
-                    insert_into_versions(id_=guid)
+                    await insert_into_versions_async(id_=guid)
 
                 elif guid in added_items:
                     linked_in_packages = package_item.get(LINKED_IN_PACKAGES, [])
@@ -600,7 +610,7 @@ class BasePublishService(AsyncBaseService):
                     ]
                     super().system_update(guid, {LINKED_IN_PACKAGES: linked_in_packages}, package_item)
 
-                package_item = super().find_one(req=None, _id=guid)
+                package_item = await super().find_one_async(req=None, _id=guid)
 
                 self.package_service.update_field_in_package(
                     updates, package_item[ID_FIELD], VERSION, package_item[VERSION]
@@ -622,7 +632,7 @@ class BasePublishService(AsyncBaseService):
 
         :param: str published_item_id: _id of the document.
         """
-        published_item = super().find_one(req=None, _id=published_item_id)
+        published_item = await super().find_one_async(req=None, _id=published_item_id)
         published_item = copy(published_item)
         if updated:
             published_item.update(updated)
@@ -667,16 +677,16 @@ class BasePublishService(AsyncBaseService):
         :param: versioned_doc: doc which can be inserted into archive_versions
         :param: should_insert_into_versions if True inserts the latest document into versions collection
         """
-        self.backend.update(self.datasource, original[ID_FIELD], updates, original)
+        await self.backend.update_async(self.datasource, original[ID_FIELD], updates, original)
 
         app = get_current_app().as_any()
         await app.on_archive_item_updated.call_async(updates, original, updates[ITEM_OPERATION])
 
         if should_insert_into_versions:
             if versioned_doc is None:
-                insert_into_versions(id_=original[ID_FIELD])
+                await insert_into_versions_async(id_=original[ID_FIELD])
             else:
-                insert_into_versions(doc=versioned_doc)
+                await insert_into_versions_async(doc=versioned_doc)
 
         await get_component(ItemAutosave).clear(original[ID_FIELD])
 
@@ -726,7 +736,7 @@ class BasePublishService(AsyncBaseService):
         for item in items:
             orig = None
             if isinstance(item, dict) and item.get(ID_FIELD):
-                orig = super().find_one(req=None, _id=item[ID_FIELD]) or {}
+                orig = (await super().find_one_async(req=None, _id=item[ID_FIELD])) or {}
                 doc = copy(orig)
                 doc.update(item)
                 try:
@@ -734,7 +744,7 @@ class BasePublishService(AsyncBaseService):
                 except (TypeError, KeyError):
                     pass
             elif item:
-                doc = super().find_one(req=None, _id=item)
+                doc = await super().find_one_async(req=None, _id=item)
             else:
                 continue
 
@@ -839,7 +849,7 @@ class BasePublishService(AsyncBaseService):
                     updates = original
                     keys = FIELDS_TO_COPY_FOR_ASSOCIATED_ITEM
                 else:
-                    updates = super().find_one(req=None, _id=item[ID_FIELD]) or {}
+                    updates = (await super().find_one_async(req=None, _id=item[ID_FIELD])) or {}
 
                 try:
                     is_db_item_bigger_ver = updates["_current_version"] > item["_current_version"]
@@ -982,7 +992,7 @@ class BasePublishService(AsyncBaseService):
                         sync_associated_item_changes(associated_item, associated_item_updates)
                         continue
 
-                    orig_associated_item = archive_service.find_one(req=None, _id=associated_item[ID_FIELD])
+                    orig_associated_item = await archive_service.find_one_async(req=None, _id=associated_item[ID_FIELD])
                     if association_updates.get("state") not in PUBLISH_STATES or self.is_changed(
                         orig_associated_item, associated_item
                     ):
@@ -990,7 +1000,7 @@ class BasePublishService(AsyncBaseService):
                         await publish_service.patch_async(id=associated_item[ID_FIELD], updates=association_updates)
 
             # When there is an associated item which is published, Inserts the latest version of that associated item into archive_versions.
-            insert_into_versions(doc=associated_item)
+            await insert_into_versions_async(doc=associated_item)
         await self._refresh_associated_items(original)
 
     def is_changed(self, old: dict, new: dict) -> bool:
@@ -1018,7 +1028,7 @@ class BasePublishService(AsyncBaseService):
             if not item_obj or ID_FIELD not in item_obj:
                 continue
             item_id = item_obj[ID_FIELD]
-            media_item = self.find_one(req=None, _id=item_id)
+            media_item = await self.find_one_async(req=None, _id=item_id)
             if get_config(bool, "COPY_METADATA_FROM_PARENT") and item_obj.get(ITEM_TYPE) in MEDIA_TYPES:
                 stored_item = (original.get(ASSOCIATIONS) or {}).get(item_name) or item_obj
             else:

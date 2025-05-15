@@ -116,10 +116,10 @@ class CorrectPublishService(BasePublishService):
         flush_renditions(updates, original)
         await self.change_being_corrected_to_published(updates, original)
 
-    async def update_async(self, id, updates, original):
+    async def update_async(self, id, updates, original, raise_errors: bool = False):
         editor_utils.generate_fields(updates, original=original)
         await get_resource_service("archive")._handle_media_updates(updates, original, get_user())
-        await super().update_async(id, updates, original)
+        await super().update_async(id, updates, original, raise_errors)
 
     async def on_updated_async(self, updates, original):
         await super().on_updated_async(updates, original)

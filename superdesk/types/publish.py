@@ -104,7 +104,7 @@ class PublishRequestResponse(Dataclass):
     subscriber_codes: dict[ObjectId, set[str]] = field(default_factory=dict)
 
     #: Map of Subscriber ID to Associated Item ID
-    associations: dict[ObjectId, list[str]] = field(default_factory=dict)
+    associations: dict[ObjectId | str, list[str]] = field(default_factory=dict)
 
     #: Map of ProductID to Product Codes that matched the request
     product_codes: dict[ObjectId, set[str]] = field(default_factory=dict)

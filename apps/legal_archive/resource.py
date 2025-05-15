@@ -13,10 +13,11 @@ from apps.archive_history import ArchiveHistoryResource
 
 from typing import Any
 
-# from superdesk.publish.publish_queue import PublishQueueResource
+from superdesk.types import PublishQueueState
 from superdesk.resource import Resource
 from superdesk.metadata.item import get_schema
 from superdesk.mongo import TEXT_INDEX_OPTIONS
+from superdesk.publish import PUBLISHED_IN_PACKAGE
 
 
 LEGAL_ARCHIVE_NAME = "legal_archive"
@@ -74,13 +75,58 @@ class LegalArchiveHistoryResource(LegalResource, ArchiveHistoryResource):
     mongo_indexes = {"item_id": ([("item_id", 1)], {"background": True})}
 
 
-# TODO-ASYNC[publish]: Create Pydantic resource for this one, and use Pydantic model & service instead
-class LegalPublishQueueResource(LegalResource):  # , PublishQueueResource):
+class LegalPublishQueueResource(LegalResource):
     endpoint_name = LEGAL_PUBLISH_QUEUE_NAME
     resource_title = endpoint_name
 
-    item_schema = {"_subscriber_id": Resource.rel("subscribers")}
-    # item_schema.update(PublishQueueResource.schema)
-    schema = item_schema
+    additional_lookup = {"url": r'regex("[\w,.:-]+")', "field": "item_id"}
+    etag_ignore_fields = ["moved_to_legal"]
+    collation = False
+    notifications = False
+
+    schema = {
+        # Copied from old PublishQueue eve resource
+        "item_id": {"type": "string", "required": True},
+        "item_version": {"type": "integer", "nullable": False},
+        "formatted_item": {"type": "string", "nullable": False},
+        "item_encoding": {"type": "string", "nullable": True},
+        "encoded_item_id": {"type": "objectid", "nullable": True},
+        "subscriber_id": Resource.rel("subscribers"),
+        "codes": {"type": "list", "nullable": True},
+        "destination": {
+            "type": "dict",
+            "schema": {
+                "name": {"type": "string", "required": True, "empty": False},
+                "format": {"type": "string", "required": True},
+                "delivery_type": {"type": "string", "required": True},
+                "config": {"type": "dict"},
+            },
+        },
+        PUBLISHED_IN_PACKAGE: {"type": "string"},
+        "published_seq_num": {"type": "integer"},
+        # publish_schedule is to indicate the item schedule datetime.
+        # entries in the queue are created after schedule has elapsed.
+        "publish_schedule": {"type": "datetime"},
+        "publishing_action": {"type": "string"},
+        "unique_name": {"type": "string", "nullable": True},
+        "content_type": {"type": "string"},
+        "headline": {"type": "string", "nullable": True},
+        "transmit_started_at": {"type": "datetime"},
+        "completed_at": {"type": "datetime"},
+        "state": {"type": "string", "allowed": [qs.value for qs in PublishQueueState], "nullable": False},
+        "error_message": {"type": "string"},
+        # to indicate the queue item is moved to legal
+        # True is set after state of the item is success, cancelled or failed. For other state it is false
+        "moved_to_legal": {"type": "boolean", "default": False},
+        "retry_attempt": {"type": "integer", "default": 0},
+        "next_retry_attempt_at": {"type": "datetime"},
+        "ingest_provider": Resource.rel("ingest_providers", nullable=True),
+        "associated_items": {"type": "list", "nullable": True},
+        "priority": {
+            "type": "boolean",
+            "nullable": True,
+        },
+        "_subscriber_id": Resource.rel("subscribers"),
+    }
 
     datasource = {"source": LEGAL_PUBLISH_QUEUE_NAME}

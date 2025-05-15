@@ -36,7 +36,7 @@ from superdesk.resource import Resource
 from superdesk.services import BaseService
 from superdesk.metadata.utils import item_url
 from apps.archive.common import (
-    insert_into_versions,
+    insert_into_versions_async,
     item_operations,
     ITEM_OPERATION,
     set_sign_off,
@@ -176,7 +176,7 @@ class MoveService(AsyncBaseService):
         signals.item_move.send(self, item=archived_doc, original=original)
         await archive_service.update_async(original[ID_FIELD], archived_doc, original)
 
-        insert_into_versions(id_=original[ID_FIELD])
+        await insert_into_versions_async(id_=original[ID_FIELD])
         push_item_move_notification(original, archived_doc)
 
         app = get_current_app().as_any()
