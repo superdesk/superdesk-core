@@ -14,34 +14,34 @@ Feature: Embargo Date and Time on an Article (User Story: https://dev.sourcefabr
     And "products"
       """
       [{
-        "_id": "1", "name":"prod-1", "codes":"abc,xyz"
+        "_id": "1824f90924fc1d7cdfb8e7a1", "name":"prod-1", "codes":"abc,xyz"
       }]
       """
     And "subscribers"
     """
-    [{"_id": "123",
+    [{"_id": "2824f90924fc1d7cdfb8e7a1",
       "name":"Wire Subscriber",
       "media_type":"media",
       "is_active": true,
       "subscriber_type": "wire",
       "sequence_num_settings":{"min" : 1, "max" : 10}, "email": "test@test.com",
-      "products": ["1"],
+      "products": ["1824f90924fc1d7cdfb8e7a1"],
       "destinations":[{"name":"email","format": "nitf", "delivery_type":"email","config":{"recipients":"test@test.com"}}]},
-     {"_id": "321",
+     {"_id": "2824f90924fc1d7cdfb8e7a2",
       "name":"Digital Subscriber",
       "media_type":"media",
       "is_active": true,
       "subscriber_type": "digital",
       "sequence_num_settings":{"min" : 1, "max" : 10}, "email": "test@test.com",
-      "products": ["1"],
+      "products": ["1824f90924fc1d7cdfb8e7a1"],
       "destinations":[{"name":"email","format": "nitf", "delivery_type":"email","config":{"recipients":"test@test.com"}}]},
-     {"_id": "456",
+     {"_id": "2824f90924fc1d7cdfb8e7a3",
       "name":"2nd Wire Subscriber",
       "media_type":"non-media",
       "is_active": true,
       "subscriber_type": "wire",
       "sequence_num_settings":{"min" : 1, "max" : 10}, "email": "test@test.com",
-      "products": ["1"],
+      "products": ["1824f90924fc1d7cdfb8e7a1"],
       "destinations":[{"name":"email","format": "nitf", "delivery_type":"email","config":{"recipients":"test@test.com"}}]}
     ]
     """
@@ -189,8 +189,8 @@ Feature: Embargo Date and Time on an Article (User Story: https://dev.sourcefabr
     Then we get list with 3 items
     """
     {"_items": [
-      {"subscriber_id": "123", "publishing_action": "published", "content_type": "text", "destination":{"name":"email"}},
-      {"subscriber_id": "456"}
+      {"subscriber_id": "2824f90924fc1d7cdfb8e7a1", "publishing_action": "published", "content_type": "text", "destination":{"name":"email"}},
+      {"subscriber_id": "2824f90924fc1d7cdfb8e7a3"}
      ]
     }
     """
@@ -203,10 +203,10 @@ Feature: Embargo Date and Time on an Article (User Story: https://dev.sourcefabr
     When we get "/publish_queue"
     Then we get list with 6 items
     """
-    {"_items": [{"subscriber_id": "123", "publishing_action": "published", "content_type": "text", "destination":{"name":"email"}},
-                {"subscriber_id": "123", "publishing_action": "corrected", "content_type": "text", "destination":{"name":"email"}},
-                {"subscriber_id": "456", "publishing_action": "published"},
-                {"subscriber_id": "456", "publishing_action": "corrected"}]}
+    {"_items": [{"subscriber_id": "2824f90924fc1d7cdfb8e7a1", "publishing_action": "published", "content_type": "text", "destination":{"name":"email"}},
+                {"subscriber_id": "2824f90924fc1d7cdfb8e7a1", "publishing_action": "corrected", "content_type": "text", "destination":{"name":"email"}},
+                {"subscriber_id": "2824f90924fc1d7cdfb8e7a3", "publishing_action": "published"},
+                {"subscriber_id": "2824f90924fc1d7cdfb8e7a3", "publishing_action": "corrected"}]}
     """
     When we publish "#archive._id#" with "kill" type and "killed" state
     """
@@ -217,12 +217,12 @@ Feature: Embargo Date and Time on an Article (User Story: https://dev.sourcefabr
     When we get "/publish_queue"
     Then we get list with 9 items
     """
-    {"_items": [{"subscriber_id": "123", "publishing_action": "published", "content_type": "text", "destination":{"name":"email"}},
-                {"subscriber_id": "123", "publishing_action": "corrected", "content_type": "text", "destination":{"name":"email"}},
-                {"subscriber_id": "123", "publishing_action": "killed", "content_type": "text", "destination":{"name":"email"}},
-                {"subscriber_id": "456", "publishing_action": "published"},
-                {"subscriber_id": "456", "publishing_action": "corrected"},
-                {"subscriber_id": "456", "publishing_action": "killed"}]}
+    {"_items": [{"subscriber_id": "2824f90924fc1d7cdfb8e7a1", "publishing_action": "published", "content_type": "text", "destination":{"name":"email"}},
+                {"subscriber_id": "2824f90924fc1d7cdfb8e7a1", "publishing_action": "corrected", "content_type": "text", "destination":{"name":"email"}},
+                {"subscriber_id": "2824f90924fc1d7cdfb8e7a1", "publishing_action": "killed", "content_type": "text", "destination":{"name":"email"}},
+                {"subscriber_id": "2824f90924fc1d7cdfb8e7a3", "publishing_action": "published"},
+                {"subscriber_id": "2824f90924fc1d7cdfb8e7a3", "publishing_action": "corrected"},
+                {"subscriber_id": "2824f90924fc1d7cdfb8e7a3", "publishing_action": "killed"}]}
     """
 
   @auth
@@ -261,9 +261,9 @@ Feature: Embargo Date and Time on an Article (User Story: https://dev.sourcefabr
     Then we get list with 3 items
     """
     {"_items": [
-    {"subscriber_id": "123", "publishing_action": "published", "content_type": "text", "item_id": "123"},
-    {"subscriber_id": "321", "publishing_action": "published", "content_type": "text", "item_id": "123"},
-    {"subscriber_id": "456"}]}
+    {"subscriber_id": "2824f90924fc1d7cdfb8e7a1", "publishing_action": "published", "content_type": "text", "item_id": "123"},
+    {"subscriber_id": "2824f90924fc1d7cdfb8e7a2", "publishing_action": "published", "content_type": "text", "item_id": "123"},
+    {"subscriber_id": "2824f90924fc1d7cdfb8e7a3"}]}
     """
     When we enqueue published
     And we publish "#archive._id#" with "correct" type and "corrected" state
@@ -272,10 +272,10 @@ Feature: Embargo Date and Time on an Article (User Story: https://dev.sourcefabr
     When we get "/publish_queue"
     Then we get list with 6 items
     """
-    {"_items": [{"subscriber_id": "123", "publishing_action": "published", "content_type": "text", "item_id": "123"},
-                {"subscriber_id": "123", "publishing_action": "corrected", "content_type": "text", "item_id": "123"},
-                {"subscriber_id": "456", "publishing_action": "published"},
-                {"subscriber_id": "456", "publishing_action": "corrected"}]}
+    {"_items": [{"subscriber_id": "2824f90924fc1d7cdfb8e7a1", "publishing_action": "published", "content_type": "text", "item_id": "123"},
+                {"subscriber_id": "2824f90924fc1d7cdfb8e7a1", "publishing_action": "corrected", "content_type": "text", "item_id": "123"},
+                {"subscriber_id": "2824f90924fc1d7cdfb8e7a3", "publishing_action": "published"},
+                {"subscriber_id": "2824f90924fc1d7cdfb8e7a3", "publishing_action": "corrected"}]}
     """
     When we get "/published"
     Then we validate the published item expiry to be after publish expiry set in desk settings 4320
@@ -315,9 +315,9 @@ Feature: Embargo Date and Time on an Article (User Story: https://dev.sourcefabr
     When we get "/publish_queue"
     Then we get list with 3 items
     """
-    {"_items": [{"subscriber_id": "123", "publishing_action": "published", "content_type": "text", "item_id": "123"},
-                {"subscriber_id": "321", "publishing_action": "published", "content_type": "text", "item_id": "123"},
-                {"subscriber_id": "456"}]}
+    {"_items": [{"subscriber_id": "2824f90924fc1d7cdfb8e7a1", "publishing_action": "published", "content_type": "text", "item_id": "123"},
+                {"subscriber_id": "2824f90924fc1d7cdfb8e7a2", "publishing_action": "published", "content_type": "text", "item_id": "123"},
+                {"subscriber_id": "2824f90924fc1d7cdfb8e7a3"}]}
     """
     When embargo lapses for "#archive._id#"
     And we publish "#archive._id#" with "correct" type and "corrected" state
@@ -326,10 +326,10 @@ Feature: Embargo Date and Time on an Article (User Story: https://dev.sourcefabr
     When we get "/publish_queue"
     Then we get list with 6 items
     """
-    {"_items": [{"subscriber_id": "123", "publishing_action": "published", "content_type": "text", "destination":{"name":"email"}},
-                {"subscriber_id": "123", "publishing_action": "corrected", "content_type": "text", "destination":{"name":"email"}},
-                {"subscriber_id": "456", "publishing_action": "published"},
-                {"subscriber_id": "456", "publishing_action": "corrected"}]}
+    {"_items": [{"subscriber_id": "2824f90924fc1d7cdfb8e7a1", "publishing_action": "published", "content_type": "text", "destination":{"name":"email"}},
+                {"subscriber_id": "2824f90924fc1d7cdfb8e7a1", "publishing_action": "corrected", "content_type": "text", "destination":{"name":"email"}},
+                {"subscriber_id": "2824f90924fc1d7cdfb8e7a3", "publishing_action": "published"},
+                {"subscriber_id": "2824f90924fc1d7cdfb8e7a3", "publishing_action": "corrected"}]}
     """
     When we get "/archive/123"
     """
@@ -373,9 +373,9 @@ Feature: Embargo Date and Time on an Article (User Story: https://dev.sourcefabr
     When we get "/publish_queue"
     Then we get list with 3 items
     """
-    {"_items": [{"subscriber_id": "123", "publishing_action": "published", "content_type": "text", "item_id": "123"},
-                {"subscriber_id": "321", "publishing_action": "published", "content_type": "text", "item_id": "123"},
-                {"subscriber_id": "456"}]}
+    {"_items": [{"subscriber_id": "2824f90924fc1d7cdfb8e7a1", "publishing_action": "published", "content_type": "text", "item_id": "123"},
+                {"subscriber_id": "2824f90924fc1d7cdfb8e7a2", "publishing_action": "published", "content_type": "text", "item_id": "123"},
+                {"subscriber_id": "2824f90924fc1d7cdfb8e7a3"}]}
     """
     When we publish "#archive._id#" with "correct" type and "corrected" state
     """
@@ -386,10 +386,10 @@ Feature: Embargo Date and Time on an Article (User Story: https://dev.sourcefabr
     When we get "/publish_queue"
     Then we get list with 6 items
     """
-    {"_items": [{"subscriber_id": "123", "publishing_action": "published", "content_type": "text", "destination":{"name":"email"}},
-                {"subscriber_id": "123", "publishing_action": "corrected", "content_type": "text", "destination":{"name":"email"}},
-                {"subscriber_id": "456", "publishing_action": "published"},
-                {"subscriber_id": "456", "publishing_action": "corrected"}]}
+    {"_items": [{"subscriber_id": "2824f90924fc1d7cdfb8e7a1", "publishing_action": "published", "content_type": "text", "destination":{"name":"email"}},
+                {"subscriber_id": "2824f90924fc1d7cdfb8e7a1", "publishing_action": "corrected", "content_type": "text", "destination":{"name":"email"}},
+                {"subscriber_id": "2824f90924fc1d7cdfb8e7a3", "publishing_action": "published"},
+                {"subscriber_id": "2824f90924fc1d7cdfb8e7a3", "publishing_action": "corrected"}]}
     """
     When we get "/published"
     Then we validate the published item expiry to be after publish expiry set in desk settings 4320
@@ -663,9 +663,9 @@ Feature: Embargo Date and Time on an Article (User Story: https://dev.sourcefabr
     When we get "/publish_queue"
     Then we get list with 3 items
     """
-    {"_items": [{"subscriber_id": "123", "publishing_action": "published", "content_type": "text", "item_id":"123"},
-                {"subscriber_id": "321", "publishing_action": "published", "content_type": "text", "item_id":"123"},
-                {"subscriber_id": "456"}]}
+    {"_items": [{"subscriber_id": "2824f90924fc1d7cdfb8e7a1", "publishing_action": "published", "content_type": "text", "item_id":"123"},
+                {"subscriber_id": "2824f90924fc1d7cdfb8e7a2", "publishing_action": "published", "content_type": "text", "item_id":"123"},
+                {"subscriber_id": "2824f90924fc1d7cdfb8e7a3"}]}
     """
 
   @auth
@@ -689,9 +689,9 @@ Feature: Embargo Date and Time on an Article (User Story: https://dev.sourcefabr
     Then we get list with 3 items
     """
     {"_items": [
-      {"subscriber_id": "123", "publishing_action": "published", "content_type": "text", "destination":{"name":"email"}},
-      {"subscriber_id": "456"},
-      {"subscriber_id": "321", "publishing_action": "published", "content_type": "text", "destination":{"name":"email"}}
+      {"subscriber_id": "2824f90924fc1d7cdfb8e7a1", "publishing_action": "published", "content_type": "text", "destination":{"name":"email"}},
+      {"subscriber_id": "2824f90924fc1d7cdfb8e7a3"},
+      {"subscriber_id": "2824f90924fc1d7cdfb8e7a2", "publishing_action": "published", "content_type": "text", "destination":{"name":"email"}}
      ]
     }
     """
@@ -704,12 +704,12 @@ Feature: Embargo Date and Time on an Article (User Story: https://dev.sourcefabr
     When we get "/publish_queue"
     Then we get list with 6 items
     """
-    {"_items": [{"subscriber_id": "123", "publishing_action": "published", "content_type": "text", "destination":{"name":"email"}},
-                {"subscriber_id": "123", "publishing_action": "corrected", "content_type": "text", "destination":{"name":"email"}},
-                {"subscriber_id": "456", "publishing_action": "published"},
-                {"subscriber_id": "456", "publishing_action": "corrected"},
-                {"subscriber_id": "321", "publishing_action": "published"},
-                {"subscriber_id": "321", "publishing_action": "corrected"}]}
+    {"_items": [{"subscriber_id": "2824f90924fc1d7cdfb8e7a1", "publishing_action": "published", "content_type": "text", "destination":{"name":"email"}},
+                {"subscriber_id": "2824f90924fc1d7cdfb8e7a1", "publishing_action": "corrected", "content_type": "text", "destination":{"name":"email"}},
+                {"subscriber_id": "2824f90924fc1d7cdfb8e7a3", "publishing_action": "published"},
+                {"subscriber_id": "2824f90924fc1d7cdfb8e7a3", "publishing_action": "corrected"},
+                {"subscriber_id": "2824f90924fc1d7cdfb8e7a2", "publishing_action": "published"},
+                {"subscriber_id": "2824f90924fc1d7cdfb8e7a2", "publishing_action": "corrected"}]}
     """
     When we publish "#archive._id#" with "kill" type and "killed" state
     """
@@ -720,13 +720,13 @@ Feature: Embargo Date and Time on an Article (User Story: https://dev.sourcefabr
     When we get "/publish_queue"
     Then we get list with 9 items
     """
-    {"_items": [{"subscriber_id": "123", "publishing_action": "published", "content_type": "text", "destination":{"name":"email"}},
-                {"subscriber_id": "123", "publishing_action": "corrected", "content_type": "text", "destination":{"name":"email"}},
-                {"subscriber_id": "123", "publishing_action": "killed", "content_type": "text", "destination":{"name":"email"}},
-                {"subscriber_id": "456", "publishing_action": "published"},
-                {"subscriber_id": "456", "publishing_action": "corrected"},
-                {"subscriber_id": "456", "publishing_action": "killed"},
-                {"subscriber_id": "321", "publishing_action": "published"},
-                {"subscriber_id": "321", "publishing_action": "corrected"},
-                {"subscriber_id": "321", "publishing_action": "killed"}]}
+    {"_items": [{"subscriber_id": "2824f90924fc1d7cdfb8e7a1", "publishing_action": "published", "content_type": "text", "destination":{"name":"email"}},
+                {"subscriber_id": "2824f90924fc1d7cdfb8e7a1", "publishing_action": "corrected", "content_type": "text", "destination":{"name":"email"}},
+                {"subscriber_id": "2824f90924fc1d7cdfb8e7a1", "publishing_action": "killed", "content_type": "text", "destination":{"name":"email"}},
+                {"subscriber_id": "2824f90924fc1d7cdfb8e7a3", "publishing_action": "published"},
+                {"subscriber_id": "2824f90924fc1d7cdfb8e7a3", "publishing_action": "corrected"},
+                {"subscriber_id": "2824f90924fc1d7cdfb8e7a3", "publishing_action": "killed"},
+                {"subscriber_id": "2824f90924fc1d7cdfb8e7a2", "publishing_action": "published"},
+                {"subscriber_id": "2824f90924fc1d7cdfb8e7a2", "publishing_action": "corrected"},
+                {"subscriber_id": "2824f90924fc1d7cdfb8e7a2", "publishing_action": "killed"}]}
     """

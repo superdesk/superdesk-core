@@ -9,7 +9,7 @@ from superdesk.types import (
     SubscribersResource,
     PublishQueueResource,
 )
-from superdesk.resource_fields import ASSOCIATIONS, ID_FIELD, ITEM_TYPE
+from superdesk.resource_fields import ASSOCIATIONS, ID_FIELD, GUID_FIELD, ITEM_TYPE
 
 from ..publish_cache import PublishCache
 from .base_exchange_filter import BasePublishExchangeFilter
@@ -88,7 +88,7 @@ class ContentPublishExchangeFilter(BasePublishExchangeFilter):
 
         rewrite_subscribers: list[SubscribersResource] = []
         rewrite_codes: dict[ObjectId, set[str]] = {}
-        rewrite_associations: dict[ObjectId, list[str]] = {}
+        rewrite_associations: dict[ObjectId | str, list[str]] = {}
 
         if request.item_type in TEXT_TYPES:
             query = {
@@ -148,7 +148,7 @@ class ContentPublishExchangeFilter(BasePublishExchangeFilter):
 
     async def _get_subscribers_for_previously_sent_items(
         self, response: PublishRequestResponse, lookup: dict
-    ) -> tuple[list[SubscribersResource], dict[ObjectId, set[str]], dict[ObjectId, list[str]]]:
+    ) -> tuple[list[SubscribersResource], dict[ObjectId, set[str]], dict[ObjectId | str, list[str]]]:
         """
         Retrieves subscribers and related information for items that were previously sent.
 
@@ -163,12 +163,12 @@ class ContentPublishExchangeFilter(BasePublishExchangeFilter):
         :return: A tuple containing the following:
             - ``list[SubscribersResource]``: List of active subscribers matching the criteria.
             - ``dict[ObjectId, set[str]]``: Mapping of subscriber IDs to their unique codes.
-            - ``dict[ObjectId, list[str]]``: Mapping of subscriber IDs to associated items.
+            - ``dict[ObjectId | str, list[str]]``: Mapping of subscriber IDs to associated items.
         """
 
         cache = PublishCache.get()
         subscriber_codes: dict[ObjectId, set[str]] = {}
-        associations: dict[ObjectId, list[str]] = {}
+        associations: dict[ObjectId | str, list[str]] = {}
         active_subscribers = cache.subscribers.values()
         queued_items = await PublishQueueResource.get_service().search(lookup)
 
@@ -198,7 +198,7 @@ class ContentPublishExchangeFilter(BasePublishExchangeFilter):
 
     async def _filter_subscribers_for_associations(
         self, request: PublishRequest, response: PublishRequestResponse, existing_associations: dict | None = None
-    ) -> dict[ObjectId, list[str]]:
+    ) -> dict[ObjectId | str, list[str]]:
         """
         Filters and validates subscribers for associated items in a publication request.
 
@@ -221,13 +221,13 @@ class ContentPublishExchangeFilter(BasePublishExchangeFilter):
         if existing_associations is None:
             existing_associations = {}
 
-        associations: dict[ObjectId, list[str]] = {}
+        associations: dict[ObjectId | str, list[str]] = {}
         for assoc, item in request.item.get(ASSOCIATIONS, {}).items():
             if not item:
                 continue
 
             assoc_subscribers: set[ObjectId] = set()
-            assoc_id = item.get(ID_FIELD)
+            assoc_id = item.get(ID_FIELD) or item.get(GUID_FIELD)
 
             assoc_request = PublishRequest(
                 item=item,

@@ -29,6 +29,7 @@ from werkzeug.exceptions import NotFound
 from pymongo.errors import DuplicateKeyError
 from eve.io.mongo.mongo import _create_index as create_index
 from typing import Dict, Any, Type, Optional, Union, Mapping, cast, NoReturn
+from bson import ObjectId
 
 from superdesk.commands import configure_cli
 from superdesk.flask import (
@@ -63,7 +64,7 @@ from superdesk.core.types import (
     Response,
 )
 from superdesk.core.app import SuperdeskAsyncApp
-from superdesk.core.resources import ResourceRestEndpoints
+from superdesk.core.resources import ResourceRestEndpoints, ResourceConfig
 from superdesk.core.resources.validators import convert_pydantic_validation_error_for_response
 from superdesk.core.web import NullEndpoint
 
@@ -458,6 +459,25 @@ class SuperdeskEve(eve.Eve):
                             "title": endpoint.name or endpoint.url.replace("/", "_"),
                         }
                     )
+
+    def get_eve_document_link(
+        self, resource: str, document_id: str | ObjectId, version: str | None = None
+    ) -> dict | None:
+        try:
+            config = self.async_app.resources.get_config(resource)
+            if not config.rest_endpoints:
+                return None
+
+            endpoint_class = config.rest_endpoints.endpoints_class or ResourceRestEndpoints
+            endpoint = endpoint_class(config, config.rest_endpoints)
+            version_part = "?version=%s" % version if version else ""
+
+            return {
+                "title": config.title or config.name,
+                "href": endpoint.get_resource_url() + "/" + str(document_id) + version_part,
+            }
+        except KeyError:
+            return None
 
 
 def get_media_storage_class(app_config: Dict[str, Any], use_provider_config: bool = True) -> Type[MediaStorage]:

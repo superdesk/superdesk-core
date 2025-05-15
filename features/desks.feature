@@ -524,26 +524,26 @@ Feature: Desks
         Given "assignments"
          """
          [
-         {"_id":"1", "assigned_to":{"desk":"#SPORTS_DESK_ID#", "state":"assigned"}, "type":"assignment",
-          "planning" : { "genre":[], "slugline":"test 1", "g2_content_type":"text" }},
-         {"_id":"2", "assigned_to":{"desk":"#SPORTS_DESK_ID#", "state":"assigned"}, "type":"assignment",
-          "planning" : { "genre":[], "slugline":"test 2", "g2_content_type":"text" }},
-         {"_id":"3", "assigned_to":{"desk":"#SPORTS_DESK_ID#", "state":"in_progress"}, "type":"assignment",
-          "planning" : { "genre":[], "slugline":"test 3", "g2_content_type":"text" }},
-         {"_id":"4", "assigned_to":{"desk":"#SPORTS_DESK_ID#", "state":"in_progress"}, "type":"assignment",
-          "planning" : { "genre":[], "slugline":"test 4", "g2_content_type":"text" }},
-         {"_id":"5", "assigned_to":{"desk":"#SPORTS_DESK_ID#", "state":"in_progress"}, "type":"assignment",
-          "planning" : { "genre":[], "slugline":"test 5", "g2_content_type":"text" }},
-         {"_id":"6", "assigned_to":{"desk":"#SPORTS_DESK_ID#", "state":"in_progress"}, "type":"assignment",
-          "planning" : { "genre":[], "slugline":"test 6", "g2_content_type":"text" }},
-         {"_id":"7", "assigned_to":{"desk":"#SPORTS_DESK_ID#", "state":"completed"}, "type":"assignment",
-          "planning" : { "genre":[], "slugline":"test 7", "g2_content_type":"text" }},
-         {"_id":"8", "assigned_to":{"desk":"#POLITICS_DESK_ID#", "state":"in_progress"}, "type":"assignment",
-          "planning" : { "genre":[], "slugline":"test 8", "g2_content_type":"text" }},
-         {"_id":"9", "assigned_to":{"desk":"#POLITICS_DESK_ID#", "state":"completed"}, "type":"assignment",
-          "planning" : { "genre":[], "slugline":"test 9", "g2_content_type":"text" }},
-         {"_id":"10", "assigned_to":{"desk":"#POLITICS_DESK_ID#", "state":"completed"}, "type":"assignment",
-          "planning" : { "genre":[], "slugline":"test 10", "g2_content_type":"text" }}
+         {"_id":"2824f90924fc1d7cdfb8e7a0", "assigned_to":{"desk":"#SPORTS_DESK_ID#", "state":"assigned"}, "type":"assignment",
+          "planning" : { "genre":[], "slugline":"test 1", "g2_content_type":"text"}, "planning_item": "plan1"},
+         {"_id":"2824f90924fc1d7cdfb8e7a1", "assigned_to":{"desk":"#SPORTS_DESK_ID#", "state":"assigned"}, "type":"assignment",
+          "planning" : { "genre":[], "slugline":"test 2", "g2_content_type":"text"}, "planning_item": "plan1"},
+         {"_id":"2824f90924fc1d7cdfb8e7a2", "assigned_to":{"desk":"#SPORTS_DESK_ID#", "state":"in_progress"}, "type":"assignment",
+          "planning" : { "genre":[], "slugline":"test 3", "g2_content_type":"text"}, "planning_item": "plan1"},
+         {"_id":"2824f90924fc1d7cdfb8e7a3", "assigned_to":{"desk":"#SPORTS_DESK_ID#", "state":"in_progress"}, "type":"assignment",
+          "planning" : { "genre":[], "slugline":"test 4", "g2_content_type":"text"}, "planning_item": "plan1"},
+         {"_id":"2824f90924fc1d7cdfb8e7a4", "assigned_to":{"desk":"#SPORTS_DESK_ID#", "state":"in_progress"}, "type":"assignment",
+          "planning" : { "genre":[], "slugline":"test 5", "g2_content_type":"text"}, "planning_item": "plan1"},
+         {"_id":"2824f90924fc1d7cdfb8e7a5", "assigned_to":{"desk":"#SPORTS_DESK_ID#", "state":"in_progress"}, "type":"assignment",
+          "planning" : { "genre":[], "slugline":"test 6", "g2_content_type":"text"}, "planning_item": "plan1"},
+         {"_id":"2824f90924fc1d7cdfb8e7a6", "assigned_to":{"desk":"#SPORTS_DESK_ID#", "state":"completed"}, "type":"assignment",
+          "planning" : { "genre":[], "slugline":"test 7", "g2_content_type":"text"}, "planning_item": "plan1"},
+         {"_id":"2824f90924fc1d7cdfb8e7a7", "assigned_to":{"desk":"#POLITICS_DESK_ID#", "state":"in_progress"}, "type":"assignment",
+          "planning" : { "genre":[], "slugline":"test 8", "g2_content_type":"text"}, "planning_item": "plan1"},
+         {"_id":"2824f90924fc1d7cdfb8e7a8", "assigned_to":{"desk":"#POLITICS_DESK_ID#", "state":"completed"}, "type":"assignment",
+          "planning" : { "genre":[], "slugline":"test 9", "g2_content_type":"text"}, "planning_item": "plan1"},
+         {"_id":"2824f90924fc1d7cdfb8e7a9", "assigned_to":{"desk":"#POLITICS_DESK_ID#", "state":"completed"}, "type":"assignment",
+          "planning" : { "genre":[], "slugline":"test 10", "g2_content_type":"text"}, "planning_item": "plan1"}
          ]
          """
         When we get "/desks/#SPORTS_DESK_ID#/overview/assignments"

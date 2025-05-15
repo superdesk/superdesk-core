@@ -85,6 +85,7 @@ class BasePublishExchangeFilter(PublishExchangeFilter):
             if (
                 self.subscriber_type_matches_request_type(request, subscriber)
                 and self.subscriber_target_matches_item_target(request, subscriber)
+                and self.subscriber_matches_global_filter(subscriber)
             )
         ]
 

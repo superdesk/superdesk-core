@@ -488,14 +488,17 @@ Feature: Content Publishing
       {
         "name":"Channel 3","media_type":"media", "subscriber_type": "digital",  "email": "test@test.com",
         "sequence_num_settings":{"min" : 1, "max" : 10},
-        "products": ["#products._id#"],
+        "products": ["#products._id#"], "is_active": true,
         "destinations":[{"name":"Test","format": "nitf", "delivery_type":"email","config":{"recipients":"test@test.com"}}]
       }
       """
 
       Then we get latest
       When we publish "#archive._id#" with "publish" type and "published" state
-      Then we get OK response
+      Then we get error 400
+      """
+      {"_issues": {"validator exception": "400: Item didn't match any Products"}, "_status": "ERR"}
+      """
       When we enqueue published
       When we get "/publish_queue"
       Then we get list with 0 items
@@ -549,7 +552,7 @@ Feature: Content Publishing
       """
       {
         "name":"Channel Direct","media_type":"media", "subscriber_type": "digital",  "email": "test@test.com",
-        "sequence_num_settings":{"min" : 1, "max" : 10},
+        "sequence_num_settings":{"min" : 1, "max" : 10}, "is_active": true,
         "products": ["#direct-product#"],
         "destinations":[{"name":"Test","format": "nitf", "delivery_type":"email","config":{"recipients":"test@test.com"}}]
       }
@@ -558,12 +561,15 @@ Feature: Content Publishing
       """
       {
         "name":"Channel API","media_type":"media", "subscriber_type": "digital",  "email": "test@test.com",
-        "sequence_num_settings":{"min" : 1, "max" : 10},
+        "sequence_num_settings":{"min" : 1, "max" : 10}, "is_active": true,
         "api_products": ["#api-product#"]
       }
       """
       And we publish "#archive._id#" with "publish" type and "published" state
-      Then we get OK response
+      Then we get error 400
+      """
+      {"_issues": {"validator exception": "400: Item didn't match any Products"}, "_status": "ERR"}
+      """
       When we enqueue published
       When we get "/publish_queue"
       Then we get list with 0 items
@@ -689,12 +695,15 @@ Feature: Content Publishing
       """
       {
         "name":"Channel 3","media_type":"media", "subscriber_type": "digital", "sequence_num_settings":{"min" : 1, "max" : 10}, "email": "test@test.com",
-        "products": ["#products._id#"],
+        "products": ["#products._id#"], "is_active": true,
         "destinations":[{"name":"Test","format": "nitf", "delivery_type":"email","config":{"recipients":"test@test.com"}}]
       }
       """
       And we publish "#archive._id#" with "publish" type and "published" state
-      Then we get response code 200
+      Then we get error 400
+      """
+      {"_issues": {"validator exception": "400: Failed to route item"}, "_status": "ERR"}
+      """
 
     @auth @notification
     Scenario: Schedule a user content publish
@@ -849,7 +858,7 @@ Feature: Content Publishing
       """
       {
         "name":"Channel 3","media_type":"media", "subscriber_type": "digital", "sequence_num_settings":{"min" : 1, "max" : 10}, "email": "test@test.com",
-        "products": ["#products._id#"],
+        "products": ["#products._id#"], "is_active": true,
         "destinations":[{"name":"Test","format": "nitf", "delivery_type":"email","config":{"recipients":"test@test.com"}}]
       }
       """
@@ -933,7 +942,7 @@ Feature: Content Publishing
       """
       [{
         "name":"Digital","media_type":"media", "subscriber_type": "digital", "sequence_num_settings":{"min" : 1, "max" : 10}, "email": "test@test.com",
-        "products": ["#products._id#"],
+        "products": ["#products._id#"], "is_active": true,
         "destinations":[{"name":"Test","format": "nitf", "delivery_type":"email","config":{"recipients":"test@test.com"}}]
       },
       {
@@ -1005,7 +1014,7 @@ Feature: Content Publishing
       """
       {
         "name":"Channel 3","media_type":"media", "subscriber_type": "digital", "sequence_num_settings":{"min" : 1, "max" : 10}, "email": "test@test.com",
-        "products": ["#products._id#"],
+        "products": ["#products._id#"], "is_active": true,
         "destinations":[{"name":"Test","format": "nitf", "delivery_type":"email","config":{"recipients":"test@test.com"}}]
       }
       """
@@ -1043,7 +1052,7 @@ Feature: Content Publishing
       """
       {
         "name":"Channel 3","media_type":"media", "subscriber_type": "digital", "sequence_num_settings":{"min" : 1, "max" : 10}, "email": "test@test.com",
-        "products": ["#products._id#"],
+        "products": ["#products._id#"], "is_active": true,
         "destinations":[{"name":"Test","format": "nitf", "delivery_type":"email","config":{"recipients":"test@test.com"}}]
       }
       """
@@ -1082,7 +1091,7 @@ Feature: Content Publishing
       """
       {
         "name":"Channel 3","media_type":"media", "subscriber_type": "digital", "sequence_num_settings":{"min" : 1, "max" : 10}, "email": "test@test.com",
-        "products": ["#products._id#"],
+        "products": ["#products._id#"], "is_active": true,
         "destinations":[{"name":"Test","format": "nitf", "delivery_type":"email","config":{"recipients":"test@test.com"}}]
       }
       """
@@ -1426,7 +1435,7 @@ Feature: Content Publishing
       """
       {
         "name":"Channel 3","media_type":"media", "subscriber_type": "digital", "sequence_num_settings":{"min" : 1, "max" : 10}, "email": "test@test.com",
-        "products": ["#products._id#"],
+        "products": ["#products._id#"], "is_active": true,
         "destinations":[{"name":"Test","format": "nitf", "delivery_type":"email","config":{"recipients":"test@test.com"}}]
       }
       """
@@ -1621,7 +1630,7 @@ Feature: Content Publishing
       """
       {
         "name":"Channel 3","media_type":"media", "subscriber_type": "digital", "sequence_num_settings":{"min" : 1, "max" : 10}, "email": "test@test.com",
-        "products": ["#products._id#"],
+        "products": ["#products._id#"], "is_active": true,
         "destinations":[{"name":"Test","format": "nitf", "delivery_type":"email","config":{"recipients":"test@test.com"}}]
       }
       """
@@ -1704,7 +1713,7 @@ Feature: Content Publishing
       """
       {
         "name":"Channel 3","media_type":"media", "subscriber_type": "digital", "sequence_num_settings":{"min" : 1, "max" : 10}, "email": "test@test.com",
-        "products": ["#products._id#"],
+        "products": ["#products._id#"], "is_active": true,
         "destinations":[{"name":"Test","format": "nitf", "delivery_type":"email","config":{"recipients":"test@test.com"}}]
       }
       """
@@ -1765,13 +1774,16 @@ Feature: Content Publishing
       """
       {
         "name":"Channel 3","media_type":"media", "subscriber_type": "digital", "sequence_num_settings":{"min" : 1, "max" : 10},
-        "email": "test@test.com", "products": ["#products._id#"],
+        "email": "test@test.com", "products": ["#products._id#"], "is_active": true,
         "destinations":[{"name":"Test","format": "AAP SMS", "delivery_type":"ODBC","config":{}}]
       }
       """
 
       And we publish "122" with "publish" type and "published" state
-      Then we get OK response
+      Then we get error 400
+      """
+      {"_issues": {"validator exception": "400: Failed to route item"}, "_status": "ERR"}
+      """
       When we enqueue published
       When we get "/publish_queue"
       Then we get list with 0 items
@@ -1815,7 +1827,7 @@ Feature: Content Publishing
       """
       {
         "name":"Channel 3","media_type":"media", "subscriber_type": "digital", "sequence_num_settings":{"min" : 1, "max" : 10}, "email": "test@test.com",
-        "products": ["#products._id#"],
+        "products": ["#products._id#"], "is_active": true,
         "destinations":[{"name":"Test","format": "nitf", "delivery_type":"email","config":{"recipients":"test@test.com"}}]
       }
       """
@@ -1867,7 +1879,7 @@ Feature: Content Publishing
       """
       {
         "name":"Channel 3","media_type":"media", "subscriber_type": "digital", "sequence_num_settings":{"min" : 1, "max" : 10}, "email": "test@test.com",
-        "products": ["#products._id#"],
+        "products": ["#products._id#"], "is_active": true,
         "destinations":[{"name":"Test","format": "nitf", "delivery_type":"email","config":{"recipients":"test@test.com"}}]
       }
       """
@@ -2089,7 +2101,7 @@ Feature: Content Publishing
       """
       {
         "name":"Channel 3","media_type":"media", "subscriber_type": "digital", "sequence_num_settings":{"min" : 1, "max" : 10}, "email": "test@test.com",
-        "products": ["#products._id#"],
+        "products": ["#products._id#"], "is_active": true,
         "destinations":[{"name":"Test","format": "nitf", "delivery_type":"email","config":{"recipients":"test@test.com"}}]
       }
       """
@@ -2151,6 +2163,20 @@ Feature: Content Publishing
       And "desks"
       """
       [{"name": "Sports", "content_expiry": 60}]
+      """
+      When we post to "/products" with success
+      """
+      {
+        "name":"prod-1","codes":"abc,xyz", "product_type": "both"
+      }
+      """
+      And we post to "/subscribers" with success
+      """
+      {
+        "name":"Channel 1","media_type":"media", "subscriber_type": "digital", "sequence_num_settings":{"min" : 1, "max" : 10}, "email": "test@test.com",
+        "products": ["#products._id#"], "is_active": true,
+        "destinations":[{"name":"Test","format": "nitf", "delivery_type":"email","config":{"recipients":"test@test.com"}}]
+      }
       """
       When we post to "/archive" with success
       """
@@ -2344,7 +2370,7 @@ Feature: Content Publishing
       """
       {
         "name":"Channel 3","media_type":"media", "subscriber_type": "digital", "sequence_num_settings":{"min" : 1, "max" : 10}, "email": "test@test.com",
-        "products": ["#products._id#"],
+        "products": ["#products._id#"], "is_active": true,
         "destinations":[{"name":"Test","format": "nitf", "delivery_type":"email","config":{"recipients":"test@test.com"}}]
       }
       """
@@ -2415,7 +2441,7 @@ Feature: Content Publishing
       """
       {
         "name":"Channel 3","media_type":"media", "subscriber_type": "digital", "sequence_num_settings":{"min" : 1, "max" : 10}, "email": "test@test.com",
-        "products": ["#products._id#"],
+        "products": ["#products._id#"], "is_active": true,
         "destinations":[{"name":"Test","format": "nitf", "delivery_type":"email","config":{"recipients":"test@test.com"}}]
       }
       """
@@ -2447,7 +2473,7 @@ Feature: Content Publishing
       """
       {
         "name":"Channel 1","media_type":"media", "subscriber_type": "digital", "sequence_num_settings":{"min" : 1, "max" : 10}, "email": "test@test.com",
-        "products": ["#products._id#"],
+        "products": ["#products._id#"], "is_active": true,
         "destinations":[{"name":"Test","format": "nitf", "delivery_type":"email","config":{"recipients":"test@test.com"}}]
       }
       """
@@ -2455,7 +2481,7 @@ Feature: Content Publishing
       """
       {
         "name":"Channel 2","media_type":"media", "subscriber_type": "wire", "sequence_num_settings":{"min" : 1, "max" : 10}, "email": "test@test.com",
-        "products": ["#products._id#"],
+        "products": ["#products._id#"], "is_active": true,
         "destinations":[{"name":"Test","format": "nitf", "delivery_type":"email","config":{"recipients":"test@test.com"}}]
       }
       """
@@ -2577,7 +2603,7 @@ Feature: Content Publishing
       """
       {
         "name":"Channel 1","media_type":"media", "subscriber_type": "digital", "sequence_num_settings":{"min" : 1, "max" : 10}, "email": "test@test.com",
-        "products": ["#products._id#"],
+        "products": ["#products._id#"], "is_active": true,
         "destinations":[{"name":"Test","format": "nitf", "delivery_type":"email","config":{"recipients":"test@test.com"}}]
       }
       """
@@ -2633,7 +2659,7 @@ Feature: Content Publishing
       """
       {
         "name":"Channel 3","media_type":"media", "subscriber_type": "digital", "sequence_num_settings":{"min" : 1, "max" : 10}, "email": "test@test.com",
-        "products": ["#products._id#"],
+        "products": ["#products._id#"], "is_active": true,
         "destinations":[{"name":"Test","format": "nitf", "delivery_type":"email","config":{"recipients":"test@test.com"}}]
       }
       """
@@ -2671,7 +2697,7 @@ Feature: Content Publishing
                 "related--1": {
                   "_id": "text",
                   "type": "text",
-                  "order": "1"
+                  "order": 1
                 }
             }
           }
@@ -2815,7 +2841,7 @@ Feature: Content Publishing
       """
       {
         "name":"Channel 3","media_type":"media", "subscriber_type": "digital", "sequence_num_settings":{"min" : 1, "max" : 10}, "email": "test@test.com",
-        "products": ["#products._id#"],
+        "products": ["#products._id#"], "is_active": true,
         "destinations":[{"name":"Test","format": "nitf", "delivery_type":"email","config":{"recipients":"test@test.com"}}]
       }
       """
@@ -2874,6 +2900,9 @@ Feature: Content Publishing
       {
         "associations": {
             "featuremedia": {
+                "_id": "234",
+                "guid": "234",
+                "type": "picture",
                 "byline": "foo",
                 "alt_text": "alt_text",
                 "description_text": "description_text",
@@ -2938,7 +2967,7 @@ Feature: Content Publishing
       """
       {
         "name":"Channel 3","media_type":"media", "subscriber_type": "digital", "sequence_num_settings":{"min" : 1, "max" : 10}, "email": "test@test.com",
-        "products": ["#products._id#"],
+        "products": ["#products._id#"], "is_active": true,
         "destinations":[{"name":"Test","format": "nitf", "delivery_type":"email","config":{"recipients":"test@test.com"}}]
       }
       """
@@ -3064,7 +3093,7 @@ Feature: Content Publishing
                 }
             },
             {
-                "item_id": "123", "state": "pending", "content_type": "text",
+                "item_id": "123", "state": "success", "content_type": "text",
                 "subscriber_id": "#sub_reg#", "item_version": 2, "ingest_provider": "__none__",
                 "destination": {
                     "delivery_type": "http_push", "format": "ninjs", "name": "Test"
@@ -3479,7 +3508,7 @@ Feature: Content Publishing
         """
         {
         "name":"Channel 3","media_type":"media", "subscriber_type": "digital", "sequence_num_settings":{"min" : 1, "max" : 10}, "email": "test@test.com",
-        "products": ["#products._id#"],
+        "products": ["#products._id#"], "is_active": true,
         "destinations":[{"name":"Test","format": "nitf", "delivery_type":"email","config":{"recipients":"test@test.com"}}]
         }
         """
@@ -3900,7 +3929,7 @@ Feature: Content Publishing
         """
         {
         "name":"Channel 3","media_type":"media", "subscriber_type": "digital", "sequence_num_settings":{"min" : 1, "max" : 10}, "email": "test@test.com",
-        "products": ["#products._id#"],
+        "products": ["#products._id#"], "is_active": true,
         "destinations":[{"name":"Test","format": "nitf", "delivery_type":"email","config":{"recipients":"test@test.com"}}]
         }
         """
@@ -3968,7 +3997,7 @@ Feature: Content Publishing
       """
       {
         "name":"Channel 3","media_type":"media", "subscriber_type": "digital", "sequence_num_settings":{"min" : 1, "max" : 10}, "email": "test@test.com",
-        "products": ["#products._id#"],
+        "products": ["#products._id#"], "is_active": true,
         "destinations":[{"name":"Test","format": "nitf", "delivery_type":"email","config":{"recipients":"test@test.com"}}]
       }
       """
@@ -4090,6 +4119,20 @@ Feature: Content Publishing
 
     @auth
     Scenario: body_html is generated from draftJS state on correction
+        When we post to "/products" with success
+        """
+        {
+            "name":"prod-1","codes":"abc,xyz", "product_type": "both"
+        }
+        """
+        And we post to "/subscribers" with success
+        """
+        {
+          "name":"Channel 3","media_type":"media", "subscriber_type": "digital", "sequence_num_settings":{"min" : 1, "max" : 10}, "email": "test@test.com",
+          "products": ["#products._id#"], "is_active": true,
+          "destinations":[{"name":"Test","format": "nitf", "delivery_type":"email","config":{"recipients":"test@test.com"}}]
+        }
+        """
         Given "archive"
         """
         [{"_id": "test_editor_gen_1", "guid": "test_editor_gen_1", "headline": "test", "state": "fetched"}]
@@ -4230,7 +4273,7 @@ Feature: Content Publishing
       """
       {
         "name":"Channel 3","media_type":"media", "subscriber_type": "digital", "sequence_num_settings":{"min" : 1, "max" : 10}, "email": "test@test.com",
-        "products": ["#products._id#"],
+        "products": ["#products._id#"], "is_active": true,
         "destinations":[{"name":"Test","format": "nitf", "delivery_type":"email","config":{"recipients":"test@test.com"}}]
       }
       """
@@ -4494,7 +4537,7 @@ Feature: Content Publishing
       """
       {
         "name":"Channel 3","media_type":"media", "subscriber_type": "digital", "sequence_num_settings":{"min" : 1, "max" : 10}, "email": "test@test.com",
-        "products": ["#products._id#"],
+        "products": ["#products._id#"], "is_active": true,
         "destinations":[{"name":"Test","format": "nitf", "delivery_type":"email","config":{"recipients":"test@test.com"}}]
       }
       """
@@ -4577,6 +4620,20 @@ Feature: Content Publishing
       """
       [{"name": "Sports"}]
       """
+      When we post to "/products" with success
+      """
+      {
+          "name":"prod-1","codes":"abc,xyz", "product_type": "both"
+      }
+      """
+      And we post to "/subscribers" with success
+      """
+      {
+        "name":"Channel 3","media_type":"media", "subscriber_type": "digital", "sequence_num_settings":{"min" : 1, "max" : 10}, "email": "test@test.com",
+        "products": ["#products._id#"], "is_active": true,
+        "destinations":[{"name":"Test","format": "nitf", "delivery_type":"email","config":{"recipients":"test@test.com"}}]
+      }
+      """
       When we post to "/archive" with success
       """
       [{"guid": "123", "type": "text", "headline": "test", "state": "in_progress",
@@ -4656,6 +4713,20 @@ Feature: Content Publishing
             "_current_version": 1
           }
       ]
+      """
+      When we post to "/products" with success
+      """
+      {
+          "name":"prod-1","codes":"abc,xyz", "product_type": "both"
+      }
+      """
+      And we post to "/subscribers" with success
+      """
+      {
+        "name":"Channel 3","media_type":"media", "subscriber_type": "digital", "sequence_num_settings":{"min" : 1, "max" : 10}, "email": "test@test.com",
+        "products": ["#products._id#"], "is_active": true,
+        "destinations":[{"name":"Test","format": "nitf", "delivery_type":"email","config":{"recipients":"test@test.com"}}]
+      }
       """
       When we publish "123" with "publish" type and "published" state
       Then we get OK response
@@ -4776,6 +4847,20 @@ Feature: Content Publishing
             }
         }
         """
+      When we post to "/products" with success
+      """
+      {
+          "name":"prod-1","codes":"abc,xyz", "product_type": "both"
+      }
+      """
+      And we post to "/subscribers" with success
+      """
+      {
+        "name":"Channel 3","media_type":"media", "subscriber_type": "digital", "sequence_num_settings":{"min" : 1, "max" : 10}, "email": "test@test.com",
+        "products": ["#products._id#"], "is_active": true,
+        "destinations":[{"name":"Test","format": "nitf", "delivery_type":"email","config":{"recipients":"test@test.com"}}]
+      }
+      """
       When we publish "123" with "publish" type and "published" state
       Then we get OK response
       When we get "/archive/234"
@@ -4831,6 +4916,22 @@ Feature: Content Publishing
             }
         ]
       """
+      When we post to "/products" with success
+      """
+      {
+          "name":"prod-1","codes":"abc,xyz", "product_type": "both"
+      }
+      """
+      And we post to "/subscribers" with success
+      """
+      {
+        "name":"Channel 3", "subscriber_type": "all", "sequence_num_settings":{"min" : 1, "max" : 10}, "email": "test@test.com",
+        "products": ["#products._id#"], "is_active": true,
+        "destinations":[{"name":"Test","format": "nitf", "delivery_type":"email","config":{"recipients":"test@test.com"}}]
+      }
+      """
+      # TODO-ASYNC: This test will fail, because there is no formatter for picture types, so corrections won't work
+      #             as it uses the publish queue to determine correction subscribers
       When we publish "1234" with "publish" type and "published" state
       Then we get OK response
       And we get existing resource
@@ -4848,6 +4949,7 @@ Feature: Content Publishing
             "operation": "publish"
         }
       """
+      When we enqueue published
       When we publish "1234" with "correct" type and "corrected" state
       """
       {
@@ -4948,6 +5050,20 @@ Feature: Content Publishing
       """
       [{"name": "Sports", "members":[{"user":"#CONTEXT_USER_ID#"}]}]
       """
+      When we post to "/products" with success
+      """
+      {
+        "name":"prod-1","codes":"abc,xyz", "product_type": "both"
+      }
+      """
+      And we post to "/subscribers" with success
+      """
+      {
+        "name":"Channel 3","media_type":"media", "subscriber_type": "digital", "sequence_num_settings":{"min" : 1, "max" : 10}, "email": "test@test.com",
+        "products": ["#products._id#"], "is_active": true,
+        "destinations":[{"name":"Test","format": "nitf", "delivery_type":"email","config":{"recipients":"test@test.com"}}]
+      }
+      """
       When we publish "story" with "publish" type and "published" state
       """
       {
@@ -5037,6 +5153,20 @@ Feature: Content Publishing
               }
             }
         ]
+      """
+      When we post to "/products" with success
+      """
+      {
+        "name":"prod-1","codes":"abc,xyz", "product_type": "both"
+      }
+      """
+      And we post to "/subscribers" with success
+      """
+      {
+        "name":"Channel 3","media_type":"media", "subscriber_type": "digital", "sequence_num_settings":{"min" : 1, "max" : 10}, "email": "test@test.com",
+        "products": ["#products._id#"], "is_active": true,
+        "destinations":[{"name":"Test","format": "nitf", "delivery_type":"email","config":{"recipients":"test@test.com"}}]
+      }
       """
       When we publish "5678" with "publish" type and "published" state
       Then we get OK response
@@ -5183,6 +5313,20 @@ Feature: Content Publishing
             }
         ]
         """
+      When we post to "/products" with success
+      """
+      {
+        "name":"prod-1","codes":"abc,xyz", "product_type": "both"
+      }
+      """
+      And we post to "/subscribers" with success
+      """
+      {
+        "name":"Channel 3","media_type":"media", "subscriber_type": "digital", "sequence_num_settings":{"min" : 1, "max" : 10}, "email": "test@test.com",
+        "products": ["#products._id#"], "is_active": true,
+        "destinations":[{"name":"Test","format": "nitf", "delivery_type":"email","config":{"recipients":"test@test.com"}}]
+      }
+      """
       When we publish "text1" with "publish" type and "published" state
       Then we get OK response
       And we get existing resource

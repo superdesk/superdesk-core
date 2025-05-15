@@ -101,7 +101,7 @@ class SpellcheckerBase(metaclass=SpellcheckerRegisterer):
             language = self.languages[0]
         return language.split("-", 1)[0].lower()
 
-    def suggest(self, text, language=None):
+    async def suggest(self, text, language=None):
         """Get suggestions to correct given text"""
         logger.debug('"suggest" is not implemented')
         return {"suggestions": []}

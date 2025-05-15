@@ -248,7 +248,7 @@ class Grammalecte(SpellcheckerBase):
         suggestions = r.json().get("suggestions", [])
         return {"suggestions": self.list2suggestions(suggestions)}
 
-    def suggest(self, text, language=None):
+    async def suggest(self, text, language=None):
         return self._suggest_cli(text) if self.use_cli else self._suggest_server(text)
 
     def _available_cli(self):

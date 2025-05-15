@@ -364,7 +364,7 @@ class LegalArchiveImport:
         """
         logger.info("Items to import {}.".format(len(queue_items)))
         logger.info("Get subscribers info for de-normalising queue items.")
-        subscriber_ids = list({str(queue_item["subscriber_id"]) for queue_item in queue_items})
+        subscriber_ids = list({queue_item["subscriber_id"] for queue_item in queue_items})
         query = {"$and": [{ID_FIELD: {"$in": subscriber_ids}}]}
         subscribers = {
             str(subscriber.id): subscriber async for subscriber in await SubscribersResource.get_service().search(query)
@@ -400,7 +400,7 @@ class LegalArchiveImport:
             legal_queue_item["subscriber_id"] = subscribers[str(queue_item["subscriber_id"])].name
             legal_queue_item["_subscriber_id"] = queue_item["subscriber_id"]
         else:
-            logger.warn("Subscriber is deleted from the system: {}".format(log_msg))
+            logger.warning("Subscriber is deleted from the system: {}".format(log_msg))
             legal_queue_item["subscriber_id"] = "Deleted Subscriber"
             legal_queue_item["_subscriber_id"] = queue_item["subscriber_id"]
 
@@ -466,7 +466,7 @@ class LegalArchiveImport:
                 "Fetching publish queue items " "for page number: {}. queue_id: {}".format((page + 1), queue_id)
             )
             cursor = await service.find(query, sort=[("_id", 1)], max_results=page_size)
-            items = await cursor.to_list_raw()
+            items = [item.to_dict(context={"use_objectid": True}) async for item in cursor]
             if len(items) > 0:
                 queue_id = items[len(items) - 1][ID_FIELD]
             logger.info(

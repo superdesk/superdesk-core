@@ -21,6 +21,7 @@ from superdesk.resource_fields import ID_FIELD, VERSION, ETAG, LAST_UPDATED
 from apps.legal_archive.commands import import_into_legal_archive
 from apps.legal_archive.resource import LEGAL_PUBLISH_QUEUE_NAME
 from apps.publish.content.common import ITEM_KILL
+from superdesk.publish_async.commands import publish_item
 
 from apps.publish.published_item import published_item_fields, QUEUE_STATE, PUBLISH_STATE, get_content_filter
 from apps.packages import PackageService
@@ -55,6 +56,8 @@ from superdesk.utc import utcnow
 
 from apps.publish.content import KillPublishService, TakeDownPublishService
 from quart_babel import gettext as _, lazy_gettext
+import content_api
+
 
 logger = logging.getLogger(__name__)
 PACKAGE_TYPE = "package_type"
@@ -272,11 +275,7 @@ class ArchivedService(AsyncBaseService):
             )
 
             if transmission_details:
-                pass
-                # TODO-PR: Use new publishing system
-                # get_enqueue_service(updates.get(ITEM_OPERATION, ITEM_KILL)).enqueue_archived_kill_item(
-                #     article, transmission_details
-                # )
+                await self.enqueue_archived_kill_item(article, transmission_details)
 
             article[ID_FIELD] = article.pop("item_id", article["item_id"])
 
@@ -300,6 +299,31 @@ class ArchivedService(AsyncBaseService):
             # Step 3(v)
             await kill_service.broadcast_kill_email(article, updates_copy)
             logger.info("Broadcast kill email for article: {}".format(article[ID_FIELD]))
+
+    async def enqueue_archived_kill_item(self, item: dict, transmission_details) -> None:
+        """Enqueue items that are killed from dusty archive.
+
+        :param dict item: item from the archived collection.
+        :param list transmission_details: list of legal publish queue entries
+        """
+        subscriber_ids = [transmission_record["_subscriber_id"] for transmission_record in transmission_details]
+        api_subscribers = {
+            t["_subscriber_id"]
+            for t in transmission_details
+            if t.get("destination", {}).get("delivery_type") == "content_api"
+        }
+        query = {"$and": [{ID_FIELD: {"$in": subscriber_ids}}]}
+        subscribers = list(get_resource_service("subscribers").get(req=None, lookup=query))
+
+        for subscriber in subscribers:
+            subscriber["api_enabled"] = subscriber.get(ID_FIELD) in api_subscribers
+
+        await publish_item(item, subscribers=subscribers)
+        logger.info("Queued Transmission for article: {}".format(item[ID_FIELD]))
+        if content_api.is_enabled():
+            await get_resource_service("content_api").publish_async(
+                item, [subscriber for subscriber in subscribers if subscriber["api_enabled"]]
+            )
 
     async def on_updated_async(self, updates, original):
         user = get_user()

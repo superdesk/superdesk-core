@@ -35,7 +35,7 @@ import logging
 from copy import deepcopy
 from superdesk.emails import send_article_killed_email
 from superdesk.errors import SuperdeskApiError
-from apps.archive.common import ITEM_OPERATION, ARCHIVE, insert_into_versions, get_dateline_city
+from apps.archive.common import ITEM_OPERATION, ARCHIVE, insert_into_versions_async, get_dateline_city
 from apps.publish.published_item import PUBLISHED
 from quart_babel import gettext as _
 from enum import Enum
@@ -110,7 +110,7 @@ class KillPublishService(BasePublishService):
         await self._remove_marked_user(original)
         await get_resource_service("archive_broadcast").spike_item(original)
 
-    async def update_async(self, id, updates, original):
+    async def update_async(self, id, updates, original, raise_errors: bool = False):
         """Kill will broadcast kill email notice to all subscriber in the system and then kill the item.
 
         Kill for multiple items is triggered
@@ -129,7 +129,7 @@ class KillPublishService(BasePublishService):
         original_copy = deepcopy(original)
         await self.apply_kill_override(original_copy, updates)
         await self.broadcast_kill_email(original, updates)
-        await super().update_async(id, updates, original)
+        await super().update_async(id, updates, original, raise_errors)
         updated = deepcopy(original)
         updated.update(updates)
         await self.kill_broadcast(updates_copy, original_copy, self.item_operation)
@@ -169,7 +169,7 @@ class KillPublishService(BasePublishService):
         # kill the item
         await self.patch_async(original.get(ID_FIELD), updates_data)
         # insert into versions
-        insert_into_versions(id_=original[ID_FIELD])
+        await insert_into_versions_async(id_=original[ID_FIELD])
 
     async def apply_kill_template(self, item):
         # apply the kill template

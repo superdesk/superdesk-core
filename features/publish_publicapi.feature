@@ -79,7 +79,7 @@ Feature: Publish content to the public API
     When we get "/publish_queue"
     Then we get existing resource
         """
-        {"_items": [{"state": "pending"}]}
+        {"_items": [{"state": "success"}]}
         """
     When we get "/published"
     Then we get existing resource
@@ -203,7 +203,7 @@ Feature: Publish content to the public API
     When we get "/publish_queue"
     Then we get existing resource
         """
-        {"_items": [{"state": "pending"}]}
+        {"_items": [{"state": "success"}]}
         """
     When we get "/publish_queue/20150723001158606583"
     Then we get formatted item
@@ -437,7 +437,7 @@ Feature: Publish content to the public API
     When we get "/publish_queue"
     Then we get existing resource
         """
-        {"_items": [{"state": "pending"}]}
+        {"_items": [{"state": "success"}]}
         """
     When we get "/published/compositeitem"
     Then we get existing resource
@@ -667,7 +667,7 @@ Feature: Publish content to the public API
     And we post to "/subscribers" with success
         """
         {
-        "name":"Channel 3","media_type":"media", "subscriber_type": "digital", "sequence_num_settings":{"min" : 1, "max" : 10}, "email": "test@test.com",
+        "name":"Channel 3", "subscriber_type": "all", "sequence_num_settings":{"min" : 1, "max" : 10}, "email": "test@test.com",
         "products": ["#products._id#"], "is_active": true,
         "destinations":[{"name":"Test","format": "ninjs", "delivery_type":"PublicArchive","config":{"recipients":"test@test.com", "packaged": true}}]
         }
@@ -688,7 +688,7 @@ Feature: Publish content to the public API
         """
         {"_items":
         	[
-        		{"item_id" : "compositeitem", "state": "pending", "content_type": "composite"}
+        		{"item_id" : "compositeitem", "state": "success", "content_type": "composite"}
         	]
         }
         """
