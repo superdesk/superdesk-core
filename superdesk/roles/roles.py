@@ -96,7 +96,7 @@ class RolesService(AsyncBaseService):
         role_id = role["_id"]
 
         role_users = await UsersResourceModel.get_by_user_role(role_id)
-        notified_users = [user["_id"] for user in role_users]
+        notified_users = [user.id for user in role_users]
 
         if "privileges" in updates:
             privileges_updated = False
@@ -117,7 +117,7 @@ class RolesService(AsyncBaseService):
                 privileges_updated = True
             if privileges_updated:
                 app = get_current_app().as_any()
-                await app.on_role_privileges_updated.call_async(role, role_users)
+                await app.on_role_privileges_updated.call_async(role, [user.to_dict() for user in role_users])
 
         else:
             push_notification("role", updated=1, user_id=str(role_id))
