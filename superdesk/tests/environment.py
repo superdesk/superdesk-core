@@ -18,6 +18,7 @@ from apps.prepopulate.app_populate import AppPopulateCommand
 from apps.prepopulate.app_initialize import app_initialize_data_handler
 from superdesk import tests
 from superdesk.factory.app import get_app
+from superdesk.default_settings import PUBLISH_MODULES
 from superdesk.tests import setup_auth_user
 from superdesk.tests.mocks import TestSearchProvider
 from superdesk.tests.steps import get_macro_path
@@ -41,6 +42,12 @@ def setup_before_all(context, config, app_factory):
 
 async def before_scenario_async(context, scenario):
     current_app = context.app
+
+    # Make sure to reset the config for each scenario, based on the config
+    # created in the feature setup
+    if hasattr(context, "_config_backup"):
+        current_app.config.update(deepcopy(context._config_backup))
+
     if scenario.status != "skipped" and "notesting" in scenario.tags:
         current_app.config["SUPERDESK_TESTING"] = False
     else:
@@ -117,10 +124,17 @@ async def before_feature_async(context, feature):
     config = deepcopy(config or {})
     app_factory = app_factory or get_app
 
-    # set the MAX_TRANSMIT_RETRY_ATTEMPT to zero so that transmit does not retry
+    config.update({
+        # set the MAX_TRANSMIT_RETRY_ATTEMPT to zero so that transmit does not retry
+        "MAX_TRANSMIT_RETRY_ATTEMPT": 0,
+        # Use mock publish consumer (so we don't push anything outside this environment)
+        "PUBLISH_MODULES": PUBLISH_MODULES + ["superdesk.tests.publish.mock_consumer"],
+        "PUBLISH_EXCHANGE_FACTORY": "superdesk.tests.publish.exchange_factory:MockPublishExchangeFactory"
+    })
     config["MAX_TRANSMIT_RETRY_ATTEMPT"] = 0
     os.environ["BEHAVE_TESTING"] = "1"
     await tests.setup(context, config, app_factory=app_factory)
+    context._config_backup = deepcopy(context.app.config)
 
     if "tobefixed" in feature.tags:
         feature.mark_skipped()

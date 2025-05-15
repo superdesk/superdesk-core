@@ -286,6 +286,7 @@ async def clean_dbs(app=None, async_app: SuperdeskAsyncApp | None = None, force=
                         es.elastic(resource).delete_by_query(
                             index=index,
                             body={"query": {"match_all": {}}},
+                            refresh=True,
                         )
                 except elasticsearch.exceptions.NotFoundError:
                     try:
@@ -321,6 +322,7 @@ async def clean_dbs(app=None, async_app: SuperdeskAsyncApp | None = None, force=
                     es_client.elastic.delete_by_query(
                         index=es_client.config.index,
                         body={"query": {"match_all": {}}},
+                        refresh=True,
                     )
                 except elasticsearch.exceptions.NotFoundError:
                     print(f"ES Index not found for {resource_config.name}")
@@ -774,6 +776,7 @@ class AsyncFlaskTestCase(AsyncTestCase):
     use_default_apps: bool = False
     test_client: TestClient
     clean_reset_db: bool = True
+    _config_backup: dict = {}
 
     @classmethod
     async def asyncSetUpClass(cls):
@@ -789,8 +792,14 @@ class AsyncFlaskTestCase(AsyncTestCase):
         cls.async_app = cls.app.async_app
         cls.app.test_client_class = TestClient
         cls.test_client = cls.app.test_client()
+        cls._config_backup = deepcopy(cls.app.config)
 
     async def asyncSetUp(self):
+        # Make sure to reset the config for each scenario, based on the config
+        # created in the feature setup
+        if self._config_backup:
+            self.app.config.update(deepcopy(self._config_backup))
+
         self.ctx = self.app.app_context()
         await self.ctx.push()
         await clean_dbs(self.app, init_indexes=self.clean_reset_db)
