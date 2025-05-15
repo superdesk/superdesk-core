@@ -336,7 +336,7 @@ def json_match(context_data, response_data, json_fields=None, parent=None):
 
 
 def get_fixture_path(context, fixture):
-    path = context.app.settings["BEHAVE_TESTS_FIXTURES_PATH"]
+    path = context.app.config["BEHAVE_TESTS_FIXTURES_PATH"]
     return os.path.join(path, fixture)
 
 
@@ -2283,12 +2283,12 @@ def step_get_activation_email(context):
 
 @then("we set elastic limit")
 def step_set_limit(context):
-    context.app.settings["MAX_SEARCH_DEPTH"] = 1
+    context.app.config["MAX_SEARCH_DEPTH"] = 1
 
 
 @when("we reset elastic limit")
 def step_reset_limit(context):
-    context.app.settings["MAX_SEARCH_DEPTH"] = -1
+    context.app.config["MAX_SEARCH_DEPTH"] = -1
 
 
 @then("we get emails")
@@ -2859,17 +2859,17 @@ async def we_find_no_reference_of_package_in_item(context, reference):
 
 @then('we set spike exipry "{expiry}"')
 def we_set_spike_exipry(context, expiry):
-    context.app.settings["SPIKE_EXPIRY_MINUTES"] = int(expiry)
+    context.app.config["SPIKE_EXPIRY_MINUTES"] = int(expiry)
 
 
 @then("we set published item expiry {expiry}")
 def we_set_published_item_expiry(context, expiry):
-    context.app.settings["PUBLISHED_CONTENT_EXPIRY_MINUTES"] = int(expiry)
+    context.app.config["PUBLISHED_CONTENT_EXPIRY_MINUTES"] = int(expiry)
 
 
 @then("we set copy metadata from parent flag")
 def we_set_copy_metadata_from_parent(context):
-    context.app.settings["COPY_METADATA_FROM_PARENT"] = True
+    context.app.config["COPY_METADATA_FROM_PARENT"] = True
 
 
 @then('we assert the content api item "{item_id}" is published to subscriber "{subscriber}"')
