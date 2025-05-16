@@ -54,7 +54,6 @@ class DefaultAvailabilityResource(Resource):
     schema = {
         # controls whether user has availability component enabled
         "enabled": {"type": "boolean"},
-
         "working_days": {
             "type": "dict",
             "schema": {
