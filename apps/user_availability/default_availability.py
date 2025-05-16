@@ -52,6 +52,9 @@ class DefaultAvailabilityResource(Resource):
     }
 
     schema = {
+        # controls whether user has availability component enabled
+        "enabled": {"type": "boolean"},
+
         "working_days": {
             "type": "dict",
             "schema": {
@@ -81,7 +84,7 @@ class DefaultAvailabilityResource(Resource):
     }
 
     item_methods = ["GET", "PUT"]
-    resource_methods = []
+    resource_methods = ["GET"]
     privileges = {"PUT": "users"}
 
 
