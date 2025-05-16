@@ -45,6 +45,8 @@ def item_matches_content_filter(item: dict, content_filter: ContentFiltersResour
     if content_filter is None:
         return True
     elif isinstance(content_filter, dict):
+        content_filter.setdefault("_id", ObjectId())
+        content_filter.setdefault("name", "<in_memory_filter>")
         content_filter = ContentFiltersResource.from_dict(content_filter)
 
     return BasePublishExchangeFilter().content_filter_matches_item(get_publish_request_from_item(item), content_filter)

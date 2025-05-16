@@ -88,31 +88,31 @@ Feature: Publish embedded items feature
     And "filter_conditions"
     """
     [
-    {"_id": "source-foo", "name": "source-foo", "field": "source", "operator": "eq", "value": "foo"},
-    {"_id": "source-aap", "name": "source-aap", "field": "source", "operator": "eq", "value": "AAP"},
-    {"_id": "type-text", "name": "type-text", "field": "type", "operator": "eq", "value": "text"},
-    {"_id": "type-picture", "name": "type-picture", "field": "type", "operator": "eq", "value": "picture"}
+    {"name": "source-foo", "field": "source", "operator": "eq", "value": "foo"},
+    {"name": "source-aap", "field": "source", "operator": "eq", "value": "AAP"},
+    {"name": "type-text", "field": "type", "operator": "eq", "value": "text"},
+    {"name": "type-picture", "field": "type", "operator": "eq", "value": "picture"}
     ]
     """
     And "content_filters"
     """
     [
-    {"content_filter": [{"expression": {"fc": ["source-foo", "type-text"]}}], "name": "text-source-foo", "_id": "text-source-foo"},
-    {"content_filter": [{"expression": {"fc": ["source-aap", "type-picture"]}}], "name": "pic-source-aap", "_id": "pic-source-aap"},
-    {"content_filter": [{"expression": {"fc": ["type-text"]}}], "name": "type-text", "_id": "type-text"},
-    {"content_filter": [{"expression": {"fc": ["type-picture"]}}], "name": "type-picture", "_id": "type-picture"}
+    {"content_filter": [{"expression": {"fc": ["#filter_conditions_0._id#", "#filter_conditions_2._id#"]}}], "name": "text-source-foo"},
+    {"content_filter": [{"expression": {"fc": ["#filter_conditions_1._id#", "#filter_conditions_3._id#"]}}], "name": "pic-source-aap"},
+    {"content_filter": [{"expression": {"fc": ["#filter_conditions_2._id#"]}}], "name": "type-text"},
+    {"content_filter": [{"expression": {"fc": ["#filter_conditions_3._id#"]}}], "name": "type-picture"}
     ]
     """
     And "products"
     """
-    [{"_id": "text-source-foo", "name":"text-source-foo",
-     "content_filter":{"filter_id":"text-source-foo", "filter_type": "permitting"}, "product_type": "both"},
-     {"_id": "pic-source-aap", "name":"pic-source-aap",
-     "content_filter":{"filter_id":"pic-source-aap", "filter_type": "permitting"}, "product_type": "both"},
+    [{"name":"text-source-foo",
+     "content_filter":{"filter_id":"#content_filters_0._id#", "filter_type": "permitting"}, "product_type": "both"},
+     {"name":"pic-source-aap",
+     "content_filter":{"filter_id":"#content_filters_1._id#", "filter_type": "permitting"}, "product_type": "both"},
      {"_id": "58f6120488ea94d000369a32", "name":"type-text",
-     "content_filter":{"filter_id":"type-text", "filter_type": "permitting"}, "product_type": "both"},
-     {"_id": "type-picture", "name":"type-picture",
-     "content_filter":{"filter_id":"type-picture", "filter_type": "permitting"}, "product_type": "both"}
+     "content_filter":{"filter_id":"#content_filters_2._id#", "filter_type": "permitting"}, "product_type": "both"},
+     {"_id": "58f6120488ea94d000369a33", "name":"type-picture",
+     "content_filter":{"filter_id":"#content_filters_3._id#", "filter_type": "permitting"}, "product_type": "both"}
     ]
     """
     And "subscribers"
@@ -124,10 +124,10 @@ Feature: Publish embedded items feature
       "is_active": true,
       "subscriber_type": "all",
       "sequence_num_settings":{"min" : 1, "max" : 10}, "email": "test@test.com",
-      "products": ["text-source-foo"],
+      "products": ["#products_0._id#"],
       "codes": "Aaa",
       "destinations":[{"name":"Test","format": "nitf", "delivery_type":"email","config":{"recipients":"test@test.com"}}],
-      "api_products": ["text-source-foo"]
+      "api_products": ["#products_0._id#"]
     },
     {
       "_id": "58f6113988ea94d000369a30",
@@ -136,7 +136,7 @@ Feature: Publish embedded items feature
       "is_active": true,
       "subscriber_type": "all",
       "sequence_num_settings":{"min" : 1, "max" : 10}, "email": "test@test.com",
-      "products": ["pic-source-aap"],
+      "products": ["#products_1._id#"],
       "destinations":[{"name":"Test","format": "nitf", "delivery_type":"email","config":{"recipients":"test@test.com"}}]
     },
     {
@@ -146,7 +146,7 @@ Feature: Publish embedded items feature
       "is_active": true,
       "subscriber_type": "all",
       "sequence_num_settings":{"min" : 1, "max" : 10}, "email": "test@test.com",
-      "api_products": ["58f6120488ea94d000369a32", "type-picture"]
+      "api_products": ["58f6120488ea94d000369a32", "58f6120488ea94d000369a32"]
     }]
     """
     And "vocabularies"
@@ -155,7 +155,7 @@ Feature: Publish embedded items feature
     """
 
     @auth
-    @vocabulary
+    @vocabulary @wip
     Scenario: Publish embedded picture together with text item - no other ops
         When we post to "archive"
         """

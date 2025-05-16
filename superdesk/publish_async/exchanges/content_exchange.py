@@ -82,7 +82,7 @@ class ContentPublishExchange(BasicPublishExchange):
                     "Published item not found in either ``last_published_version`` or ``_current_version``.",
                     extra=dict(item_id=request.item_id),
                 )
-            return PublishRequestResponse(routed=False)
+                return PublishRequestResponse(routed=False)
 
         published_item_id = ObjectId(published_item[ID_FIELD])
 

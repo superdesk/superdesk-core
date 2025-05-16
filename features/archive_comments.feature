@@ -105,7 +105,10 @@ Feature: News Items Archive Comments
         """
         Then we get error 400
         """
-        {"_issues": {"item": "value 'xyz' must exist in resource 'archive', field '_id'."}, "_status": "ERR", "_error": {"code": 400, "message": "Insertion failure: 1 document(s) contain(s) error(s)"}}
+        {
+            "_issues": {"item": "value 'xyz' must exist in resource 'archive', field '_id'."},
+            "_status": "ERR",
+            "_error": {"code": 400, "message": "Insertion failure: 1 document(s) contain(s) error(s)"}}
         """
 
 

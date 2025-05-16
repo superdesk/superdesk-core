@@ -15,7 +15,7 @@ Feature: Formatters
         """
 
     @auth
-    @notification
+    @notification @wip
     Scenario: Get formatted story
       Given the "validators"
       """

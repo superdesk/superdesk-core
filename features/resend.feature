@@ -228,7 +228,7 @@ Feature: Resend
     And "subscribers"
       """
       [{
-        "_id": "sub-1",
+        "_id": "1826418ecc7602033e9252a1",
         "name":"Channel 3",
         "media_type":"media",
         "is_active": true,
@@ -248,9 +248,9 @@ Feature: Resend
     """
     {
       "_items": [
-        {"state": "pending", "content_type": "text",
+        {"state": "success", "content_type": "text",
          "destination": {"delivery_type": "email"},
-         "subscriber_id": "sub-1", "item_id": "123", "item_version": 4}
+         "subscriber_id": "1826418ecc7602033e9252a1", "item_id": "123", "item_version": 4}
       ]
     }
     """
@@ -281,9 +281,9 @@ Feature: Resend
     """
     {
       "_items": [
-        {"state": "pending", "content_type": "text", "destination": {"delivery_type": "email"},
-        "subscriber_id": "sub-1", "item_id": "123", "item_version": 4},
-        {"state": "pending", "content_type": "text", "destination": {"delivery_type": "email"},
+        {"state": "success", "content_type": "text", "destination": {"delivery_type": "email"},
+        "subscriber_id": "1826418ecc7602033e9252a1", "item_id": "123", "item_version": 4},
+        {"state": "success", "content_type": "text", "destination": {"delivery_type": "email"},
         "subscriber_id": "#subscribers._id#", "item_id": "123", "item_version": 4}
       ]
     }
@@ -324,7 +324,7 @@ Feature: Resend
     And "subscribers"
       """
       [{
-        "_id": "sub-1",
+        "_id": "1826418ecc7602033e9252a1",
         "name":"Channel 3",
         "media_type":"media",
         "is_active": true,
@@ -344,8 +344,8 @@ Feature: Resend
     """
     {
       "_items": [
-        {"state": "pending", "content_type": "text", "destination": {"delivery_type" : "email"},
-        "subscriber_id": "sub-1", "item_id": "123", "item_version": 4}
+        {"state": "success", "content_type": "text", "destination": {"delivery_type" : "email"},
+        "subscriber_id": "1826418ecc7602033e9252a1", "item_id": "123", "item_version": 4}
       ]
     }
     """
@@ -376,9 +376,9 @@ Feature: Resend
     """
     {
       "_items": [
-        {"state": "pending", "content_type": "text", "destination": {"delivery_type": "email"},
-        "subscriber_id": "sub-1", "item_id": "123", "item_version": 4},
-        {"state": "pending", "content_type": "text", "destination": {"delivery_type": "email"},
+        {"state": "success", "content_type": "text", "destination": {"delivery_type": "email"},
+        "subscriber_id": "1826418ecc7602033e9252a1", "item_id": "123", "item_version": 4},
+        {"state": "success", "content_type": "text", "destination": {"delivery_type": "email"},
         "subscriber_id": "#subscribers._id#", "item_id": "123", "item_version": 4}
       ]
     }
@@ -396,11 +396,11 @@ Feature: Resend
     """
     {
       "_items": [
-        {"state": "pending", "content_type": "text", "destination": {"delivery_type": "email"},
-        "subscriber_id": "sub-1", "item_id": "123", "item_version": 4},
-        {"state": "pending", "content_type": "text", "destination": {"delivery_type": "email"},
+        {"state": "success", "content_type": "text", "destination": {"delivery_type": "email"},
+        "subscriber_id": "1826418ecc7602033e9252a1", "item_id": "123", "item_version": 4},
+        {"state": "success", "content_type": "text", "destination": {"delivery_type": "email"},
         "subscriber_id": "#subscribers._id#", "item_id": "123", "item_version": 4},
-        {"state": "pending", "content_type": "text", "destination": {"delivery_type": "email"},
+        {"state": "success", "content_type": "text", "destination": {"delivery_type": "email"},
         "subscriber_id": "#subscribers._id#", "item_id": "123", "item_version": 4}
       ]
     }
@@ -425,7 +425,7 @@ Feature: Resend
       "task": {"desk": "#desks._id#", "stage": "#desks.incoming_stage#", "user": "#CONTEXT_USER_ID#"},
       "subject":[{"qcode": "17004000", "name": "Statistics"}],
       "slugline": "test",
-      "target_subscribers": [{"_id": "sub-1"}],
+      "target_subscribers": [{"_id": "1826418ecc7602033e9252a1"}],
       "body_html": "Test Document body"}]
     """
     And "products"
@@ -440,7 +440,7 @@ Feature: Resend
     And "subscribers"
       """
       [{
-        "_id": "sub-1",
+        "_id": "1826418ecc7602033e9252a1",
         "name":"Channel 3",
         "media_type":"media",
         "is_active": true,
@@ -460,8 +460,8 @@ Feature: Resend
     """
     {
       "_items": [
-        {"state": "pending", "content_type": "text",
-        "subscriber_id": "sub-1", "item_id": "123", "item_version": 4}
+        {"state": "success", "content_type": "text",
+        "subscriber_id": "1826418ecc7602033e9252a1", "item_id": "123", "item_version": 4}
       ]
     }
     """
@@ -492,7 +492,7 @@ Feature: Resend
     """
     {
       "_items": [
-        {"state": "pending", "content_type": "text",
+        {"state": "success", "content_type": "text",
         "subscriber_id": "#subscribers._id#", "item_version": 4}
       ]
     }
@@ -543,7 +543,7 @@ Feature: Resend
     And "subscribers"
       """
       [{
-        "_id": "sub-1",
+        "_id": "1826418ecc7602033e9252a1",
         "name":"Channel 3",
         "media_type":"media",
         "is_active": true,
@@ -563,8 +563,8 @@ Feature: Resend
     """
     {
       "_items": [
-        {"state": "pending", "content_type": "text",
-        "subscriber_id": "sub-1", "item_id": "123", "item_version": 4}
+        {"state": "success", "content_type": "text",
+        "subscriber_id": "1826418ecc7602033e9252a1", "item_id": "123", "item_version": 4}
       ]
     }
     """
@@ -597,9 +597,9 @@ Feature: Resend
     """
     {
       "_items": [
-        {"state": "pending", "content_type": "text", "destination": {"delivery_type": "email"},
-        "subscriber_id": "sub-1", "item_id": "123", "item_version": 4},
-        {"state": "pending", "content_type": "text", "destination": {"delivery_type": "email"},
+        {"state": "success", "content_type": "text", "destination": {"delivery_type": "email"},
+        "subscriber_id": "1826418ecc7602033e9252a1", "item_id": "123", "item_version": 4},
+        {"state": "success", "content_type": "text", "destination": {"delivery_type": "email"},
         "subscriber_id": "#sub2#", "item_id": "123", "item_version": 4},
         {"state": "success", "content_type": "text", "destination": {"delivery_type": "content_api"},
         "subscriber_id": "#sub2#", "item_id": "123", "item_version": 4}
@@ -631,9 +631,9 @@ Feature: Resend
     """
     {
       "_items": [
-        {"state": "pending", "content_type": "text", "destination": {"delivery_type": "email"},
-        "subscriber_id": "sub-1", "item_id": "123", "item_version": 4},
-        {"state": "pending", "content_type": "text", "destination": {"delivery_type": "email"},
+        {"state": "success", "content_type": "text", "destination": {"delivery_type": "email"},
+        "subscriber_id": "1826418ecc7602033e9252a1", "item_id": "123", "item_version": 4},
+        {"state": "success", "content_type": "text", "destination": {"delivery_type": "email"},
         "subscriber_id": "#sub2#", "item_id": "123", "item_version": 4},
         {"state": "success", "content_type": "text", "destination": {"delivery_type": "content_api"},
         "subscriber_id": "#sub3#", "item_id": "123", "item_version": 4}
@@ -642,7 +642,7 @@ Feature: Resend
     """
     And we assert the content api item "123" is published to subscriber "#sub2#"
     And we assert the content api item "123" is published to subscriber "#sub3#"
-    And we assert the content api item "123" is not published to subscriber "sub-1"
+    And we assert the content api item "123" is not published to subscriber "1826418ecc7602033e9252a1"
 
   @auth
   @vocabulary
@@ -676,7 +676,7 @@ Feature: Resend
     And "subscribers"
       """
       [{
-        "_id": "sub-1",
+        "_id": "1826418ecc7602033e9252a1",
         "name":"Channel 3",
         "media_type":"media",
         "is_active": true,
@@ -696,8 +696,8 @@ Feature: Resend
     """
     {
       "_items": [
-        {"state": "pending", "content_type": "text",
-        "subscriber_id": "sub-1", "item_id": "123", "item_version": 4}
+        {"state": "success", "content_type": "text",
+        "subscriber_id": "1826418ecc7602033e9252a1", "item_id": "123", "item_version": 4}
       ]
     }
     """
@@ -727,9 +727,9 @@ Feature: Resend
     """
     {
       "_items": [
-        {"state": "pending", "content_type": "text",
-        "subscriber_id": "sub-1", "item_id": "123", "item_version": 4},
-        {"state": "pending", "content_type": "text",
+        {"state": "success", "content_type": "text",
+        "subscriber_id": "1826418ecc7602033e9252a1", "item_id": "123", "item_version": 4},
+        {"state": "success", "content_type": "text",
         "subscriber_id": "#digital#", "item_version": 4}
       ]
     }
@@ -760,11 +760,11 @@ Feature: Resend
     """
     {
       "_items": [
-        {"state": "pending", "content_type": "text",
-        "subscriber_id": "sub-1", "item_id": "123", "item_version": 4},
-        {"state": "pending", "content_type": "text",
+        {"state": "success", "content_type": "text",
+        "subscriber_id": "1826418ecc7602033e9252a1", "item_id": "123", "item_version": 4},
+        {"state": "success", "content_type": "text",
         "subscriber_id": "#digital#", "item_version": 4},
-        {"state": "pending", "content_type": "text",
+        {"state": "success", "content_type": "text",
         "subscriber_id": "#all#", "item_version": 4}
       ]
     }

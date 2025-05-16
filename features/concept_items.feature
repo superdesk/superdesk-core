@@ -391,30 +391,6 @@ Feature: Concept items
     @auth
     @app_init
     Scenario: Create a concept item: group_id in payload
-        Given "vocabularies"
-        """
-        [{
-            "_id" : "languages",
-            "display_name" : "Languages",
-            "type" : "manageable",
-            "unique_field" : "qcode",
-            "service" : {
-                "all" : 1
-            },
-            "items" : [
-                {
-                    "name" : "en",
-                    "qcode" : "en",
-                    "is_active" : true
-                },
-                {
-                    "name" : "es",
-                    "qcode" : "es",
-                    "is_active" : true
-                }
-            ]
-        }]
-        """
         Given empty "concept_items"
         When we post to "/concept_items"
         """
@@ -481,30 +457,6 @@ Feature: Concept items
     @auth
     @app_init
     Scenario: Patch a concept item
-        Given "vocabularies"
-        """
-        [{
-            "_id" : "languages",
-            "display_name" : "Languages",
-            "type" : "manageable",
-            "unique_field" : "qcode",
-            "service" : {
-                "all" : 1
-            },
-            "items" : [
-                {
-                    "name" : "en",
-                    "qcode" : "en",
-                    "is_active" : true
-                },
-                {
-                    "name" : "es",
-                    "qcode" : "es",
-                    "is_active" : true
-                }
-            ]
-        }]
-        """
         Given empty "concept_items"
         When we post to "/concept_items"
         """

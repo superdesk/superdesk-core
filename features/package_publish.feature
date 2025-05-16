@@ -1290,27 +1290,27 @@ Feature: Package Publishing
         Given "products"
         """
         [{
-          "_id": "1", "name":"prod-1", "codes":"abc,xyz"
+          "name":"prod-1", "codes":"abc,xyz"
         }]
         """
         And "subscribers"
           """
           [{
-            "_id": "sub-1",
+            "_id": "1826418ecc7602033e9252a1",
             "name":"Channel 3","media_type":"media",
             "is_active": true,
             "subscriber_type": "wire",
             "sequence_num_settings":{"min" : 1, "max" : 10},
-            "products": ["1"],
+            "products": ["#products._id#"],
             "email": "test@test.com",
             "destinations":[{"name":"Test","format": "ninjs", "delivery_type":"PublicArchive","config":{"recipients":"test@test.com"}}]
           }, {
-            "_id": "sub-2",
+            "_id": "1826418ecc7602033e9252a2",
             "name":"Channel 4","media_type":"media",
             "is_active": true,
             "subscriber_type": "digital",
             "sequence_num_settings":{"min" : 1, "max" : 10},
-            "products": ["1"],
+            "products": ["#products._id#"],
             "email": "test@test.com",
             "destinations":[{"name":"Test","format": "ninjs", "delivery_type":"PublicArchive","config":{"recipients":"test@test.com"}}]
           }]
@@ -1329,7 +1329,7 @@ Feature: Package Publishing
 	    When we enqueue published
         When we get "/publish_queue"
         Then we get list with 5 items
-        Then we get "123" in formatted output as "main" story for subscriber "sub-2"
+        Then we get "123" in formatted output as "main" story for subscriber "1826418ecc7602033e9252a2"
 
 
 
@@ -1433,28 +1433,28 @@ Feature: Package Publishing
           Given "products"
           """
           [{
-            "_id": "1", "name":"prod-1", "codes":"abc,xyz"
+            "name":"prod-1", "codes":"abc,xyz"
           }]
           """
           And "subscribers"
           """
           [{
-            "_id": "sub-1",
+            "_id": "1826418ecc7602033e9252a1",
             "name":"Channel 3","media_type":"media",
             "is_active": true,
             "subscriber_type": "wire",
             "sequence_num_settings":{"min" : 1, "max" : 10},
             "email": "test@test.com",
-            "products": ["1"],
+            "products": ["#products._id#"],
             "destinations":[{"name":"Test","format": "nitf", "delivery_type":"PublicArchive","config":{"recipients":"test@test.com"}}]
           }, {
-            "_id": "sub-2",
+            "_id": "1826418ecc7602033e9252a2",
             "name":"Channel 4","media_type":"media",
             "is_active": true,
             "subscriber_type": "digital",
             "sequence_num_settings":{"min" : 1, "max" : 10},
             "email": "test@test.com",
-            "products": ["1"],
+            "products": ["#products._id#"],
             "destinations":[{"name":"Test","format": "ninjs", "delivery_type":"PublicArchive","config":{"recipients":"test@test.com"}}]
           }]
           """
@@ -1472,7 +1472,7 @@ Feature: Package Publishing
       When we enqueue published
       When we get "/publish_queue"
       Then we get list with 4 items
-      Then we get "123" in formatted output as "main" story for subscriber "sub-2"
+      Then we get "123" in formatted output as "main" story for subscriber "1826418ecc7602033e9252a2"
 
 
 
@@ -1576,19 +1576,18 @@ Feature: Package Publishing
           Given "products"
           """
           [{
-            "_id": "1", "name":"prod-1", "codes":"abc,xyz"
+            "name":"prod-1", "codes":"abc,xyz"
           }]
           """
           And "subscribers"
           """
           [{
-            "_id": "sub-1",
             "name":"Channel 3","media_type":"media",
             "is_active": true,
             "subscriber_type": "wire",
             "sequence_num_settings":{"min" : 1, "max" : 10},
             "email": "test@test.com",
-            "products": ["1"],
+            "products": ["#products._id#"],
             "destinations":[{"name":"Test","format": "nitf", "delivery_type":"PublicArchive","config":{"recipients":"test@test.com"}}]
           }]
           """
@@ -1607,7 +1606,7 @@ Feature: Package Publishing
       When we get "/publish_queue"
       Then we get list with 1 items
       """
-      {"_items" : [{"item_id": "123", "content_type": "text", "state": "pending"}]
+      {"_items" : [{"item_id": "123", "content_type": "text", "state": "success"}]
       }
       """
 
@@ -1658,18 +1657,17 @@ Feature: Package Publishing
       Given "products"
       """
       [{
-        "_id": "1", "name":"prod-1", "codes":"abc,xyz"
+        "name":"prod-1", "codes":"abc,xyz"
       }]
       """
       And "subscribers"
       """
       [{
-        "_id": "sub-2",
         "name":"Channel 3","media_type":"media",
         "is_active": true,
         "subscriber_type": "digital",
         "sequence_num_settings":{"min" : 1, "max" : 10},
-        "products": ["1"],
+        "products": ["#products._id#"],
         "email": "test@test.com",
         "destinations":[{"name":"Test","format": "ninjs", "delivery_type":"PublicArchive","config":{"recipients":"test@test.com"}}]
       }]
@@ -1766,13 +1764,13 @@ Feature: Package Publishing
       When we get "/publish_queue"
       Then we get list with 3 items
       """
-      {"_items" : [{"headline": "item-1 headline", "content_type": "text", "state": "pending"},
-                   {"headline": "item-2 headline", "content_type": "text", "state": "pending"},
-                   {"headline": "test package", "content_type": "composite", "state": "pending"}]
+      {"_items" : [{"headline": "item-1 headline", "content_type": "text", "state": "success"},
+                   {"headline": "item-2 headline", "content_type": "text", "state": "success"},
+                   {"headline": "test package", "content_type": "composite", "state": "success"}]
       }
       """
-      Then we get "123" in formatted output as "main" story for subscriber "sub-2"
-      Then we get "456" in formatted output as "sidebars" story for subscriber "sub-2"
+      Then we get "123" in formatted output as "main" story for subscriber "#subscribers._id#"
+      Then we get "456" in formatted output as "sidebars" story for subscriber "#subscribers._id#"
 
 
 
@@ -1848,40 +1846,40 @@ Feature: Package Publishing
       Given "products"
       """
       [{
-        "_id": "1", "name":"prod-1", "codes":"abc,xyz"
+        "_id": "1826418ecc7602033e9252a1", "name":"prod-1", "codes":"abc,xyz"
       },
       {
-        "_id": "2", "name":"prod-2", "codes":"abc,xyz",
+        "_id": "1826418ecc7602033e9252a2", "name":"prod-2", "codes":"abc,xyz",
         "content_filter":{"filter_id":"#content_filters._id#", "filter_type":"blocking"}
       }]
       """
       And "subscribers"
       """
       [{
-            "_id": "sub-1",
+            "_id": "2826418ecc7602033e9252a1",
             "name":"Channel 3","media_type":"media",
             "is_active": true,
             "subscriber_type": "wire",
             "sequence_num_settings":{"min" : 1, "max" : 10},
-            "products": ["1"],
+            "products": ["1826418ecc7602033e9252a1"],
             "email": "test@test.com",
             "destinations":[{"name":"Test","format": "nitf", "delivery_type":"PublicArchive","config":{"recipients":"test@test.com"}}]
           }, {
-            "_id": "sub-2",
+            "_id": "2826418ecc7602033e9252a2",
             "name":"Channel 4","media_type":"media",
             "is_active": true,
             "subscriber_type": "digital",
             "sequence_num_settings":{"min" : 1, "max" : 10},
             "email": "test@test.com",
-            "products": ["2"],
+            "products": ["1826418ecc7602033e9252a2"],
             "destinations":[{"name":"Test","format": "ninjs", "delivery_type":"PublicArchive","config":{"recipients":"test@test.com"}}]
           }, {
-            "_id": "sub-3",
+            "_id": "2826418ecc7602033e9252a3",
             "name":"Channel 5","media_type":"media",
             "is_active": true,
             "subscriber_type": "digital",
             "sequence_num_settings":{"min" : 1, "max" : 10},
-            "products": ["1"],
+            "products": ["1826418ecc7602033e9252a1"],
             "email": "test@test.com",
             "destinations":[{"name":"Test","format": "ninjs", "delivery_type":"PublicArchive","config":{"recipients":"test@test.com"}}]
           }]
@@ -1912,14 +1910,14 @@ Feature: Package Publishing
       Then we get list with 8 items
       """
       {"_items" : [
-      {"headline": "item-1 headline", "content_type": "text", "subscriber_id": "sub-1"},
-      {"headline": "item-1 headline", "content_type": "text", "subscriber_id": "sub-2"},
-      {"headline": "item-1 headline", "content_type": "text", "subscriber_id": "sub-3"},
-      {"headline": "item-2 headline", "content_type": "text", "subscriber_id": "sub-1"},
-      {"headline": "item-2 headline", "content_type": "text", "subscriber_id": "sub-3"},
-      {"headline": "item-3 headline", "content_type": "text", "subscriber_id": "sub-1"},
-      {"headline": "item-3 headline", "content_type": "text", "subscriber_id": "sub-2"},
-      {"headline": "item-3 headline", "content_type": "text", "subscriber_id": "sub-3"}
+      {"headline": "item-1 headline", "content_type": "text", "subscriber_id": "2826418ecc7602033e9252a1"},
+      {"headline": "item-1 headline", "content_type": "text", "subscriber_id": "2826418ecc7602033e9252a2"},
+      {"headline": "item-1 headline", "content_type": "text", "subscriber_id": "2826418ecc7602033e9252a3"},
+      {"headline": "item-2 headline", "content_type": "text", "subscriber_id": "2826418ecc7602033e9252a1"},
+      {"headline": "item-2 headline", "content_type": "text", "subscriber_id": "2826418ecc7602033e9252a3"},
+      {"headline": "item-3 headline", "content_type": "text", "subscriber_id": "2826418ecc7602033e9252a1"},
+      {"headline": "item-3 headline", "content_type": "text", "subscriber_id": "2826418ecc7602033e9252a2"},
+      {"headline": "item-3 headline", "content_type": "text", "subscriber_id": "2826418ecc7602033e9252a3"}
       ]}
       """
       When we post to "archive" with success
@@ -2010,15 +2008,15 @@ Feature: Package Publishing
       Then we get list with 10 items
       """
       {"_items" : [
-      {"headline": "test package", "content_type": "composite", "subscriber_id": "sub-2"},
-      {"headline": "test package", "content_type": "composite", "subscriber_id": "sub-3"}
+      {"headline": "test package", "content_type": "composite", "subscriber_id": "2826418ecc7602033e9252a2"},
+      {"headline": "test package", "content_type": "composite", "subscriber_id": "2826418ecc7602033e9252a3"}
       ]}
       """
-      Then we get "123" in formatted output as "main" story for subscriber "sub-2"
-      Then we get "789" in formatted output as "sidebars" story for subscriber "sub-2"
-      Then we get "123" in formatted output as "main" story for subscriber "sub-3"
-      Then we get "456" in formatted output as "sidebars" story for subscriber "sub-3"
-      Then we get "789" in formatted output as "sidebars" story for subscriber "sub-3"
+      Then we get "123" in formatted output as "main" story for subscriber "2826418ecc7602033e9252a2"
+      Then we get "789" in formatted output as "sidebars" story for subscriber "2826418ecc7602033e9252a2"
+      Then we get "123" in formatted output as "main" story for subscriber "2826418ecc7602033e9252a3"
+      Then we get "456" in formatted output as "sidebars" story for subscriber "2826418ecc7602033e9252a3"
+      Then we get "789" in formatted output as "sidebars" story for subscriber "2826418ecc7602033e9252a3"
 
 
       @auth
@@ -2094,41 +2092,39 @@ Feature: Package Publishing
       Given "products"
       """
       [{
-        "_id": "1", "name":"prod-1", "codes":"abc,xyz"
+        "_id": "1826418ecc7602033e9252a1", "name":"prod-1", "codes":"abc,xyz"
       },
       {
-        "_id": "2", "name":"prod-2", "codes":"abc,xyz",
+        "_id": "1826418ecc7602033e9252a2", "name":"prod-2", "codes":"abc,xyz",
         "content_filter":{"filter_id":"#content_filters._id#", "filter_type":"blocking"}
       }]
       """
       And "subscribers"
       """
       [{
-            "_id": "sub-1",
+            "_id": "2826418ecc7602033e9252a1",
             "name":"Channel 3","media_type":"media",
             "is_active": true,
             "subscriber_type": "wire",
             "sequence_num_settings":{"min" : 1, "max" : 10},
             "email": "test@test.com",
-            "products": ["1"],
+            "products": ["1826418ecc7602033e9252a1"],
             "destinations":[{"name":"Test","format": "nitf", "delivery_type":"PublicArchive","config":{"recipients":"test@test.com"}}]
           }, {
-            "_id": "sub-2",
             "name":"Channel 4","media_type":"media",
             "is_active": true,
             "subscriber_type": "digital",
             "sequence_num_settings":{"min" : 1, "max" : 10},
             "email": "test@test.com",
-            "products": ["2"],
+            "products": ["1826418ecc7602033e9252a2"],
             "destinations":[{"name":"Test","format": "ninjs", "delivery_type":"PublicArchive","config":{"recipients":"test@test.com"}}]
           }, {
-            "_id": "sub-3",
             "name":"Channel 5","media_type":"media",
             "is_active": true,
             "subscriber_type": "digital",
             "sequence_num_settings":{"min" : 1, "max" : 10},
             "email": "test@test.com",
-            "products": ["2"],
+            "products": ["1826418ecc7602033e9252a2"],
             "destinations":[{"name":"Test","format": "ninjs", "delivery_type":"PublicArchive","config":{"recipients":"test@test.com"}}]
           }]
       """
@@ -2158,9 +2154,9 @@ Feature: Package Publishing
       Then we get list with 3 items
       """
       {"_items" : [
-      {"headline": "item-1 headline", "content_type": "text", "subscriber_id": "sub-1"},
-      {"headline": "item-2 headline", "content_type": "text", "subscriber_id": "sub-1"},
-      {"headline": "item-3 headline", "content_type": "text", "subscriber_id": "sub-1"}
+      {"headline": "item-1 headline", "content_type": "text", "subscriber_id": "2826418ecc7602033e9252a1"},
+      {"headline": "item-2 headline", "content_type": "text", "subscriber_id": "2826418ecc7602033e9252a1"},
+      {"headline": "item-3 headline", "content_type": "text", "subscriber_id": "2826418ecc7602033e9252a1"}
       ]}
       """
       When we post to "archive" with success
@@ -2252,9 +2248,9 @@ Feature: Package Publishing
       Then we get list with 5 items
       """
       {"_items" : [
-      {"headline": "item-1 headline", "content_type": "text", "subscriber_id": "sub-1"},
-      {"headline": "item-2 headline", "content_type": "text", "subscriber_id": "sub-1"},
-      {"headline": "item-3 headline", "content_type": "text", "subscriber_id": "sub-1"}
+      {"headline": "item-1 headline", "content_type": "text", "subscriber_id": "2826418ecc7602033e9252a1"},
+      {"headline": "item-2 headline", "content_type": "text", "subscriber_id": "2826418ecc7602033e9252a1"},
+      {"headline": "item-3 headline", "content_type": "text", "subscriber_id": "2826418ecc7602033e9252a1"}
       ]}
       """
 
@@ -2304,18 +2300,17 @@ Feature: Package Publishing
       Given "products"
       """
       [{
-        "_id": "1", "name":"prod-1", "codes":"abc,xyz"
+        "name":"prod-1", "codes":"abc,xyz"
       }]
       """
       And "subscribers"
       """
       [{
-        "_id": "sub-2",
         "name":"Channel 3","media_type":"media",
         "is_active": true,
         "subscriber_type": "digital",
         "sequence_num_settings":{"min" : 1, "max" : 10},
-        "products": ["1"],
+        "products": ["#products._id#"],
         "email": "test@test.com",
         "destinations":[{"name":"Test","format": "ninjs", "delivery_type":"PublicArchive","config":{"recipients":"test@test.com"}}]
       }]
@@ -2439,19 +2434,19 @@ Feature: Package Publishing
       When we get "/publish_queue"
       Then we get list with 4 items
       """
-      {"_items" : [{"headline": "item-1 headline", "content_type": "text", "subscriber_id": "sub-2"},
-                   {"headline": "item-2 headline", "content_type": "text", "subscriber_id": "sub-2"},
-                   {"headline": "test package", "content_type": "composite", "subscriber_id": "sub-2"},
-                   {"headline": "outer test package", "content_type": "composite", "subscriber_id": "sub-2"}]
+      {"_items" : [{"headline": "item-1 headline", "content_type": "text", "subscriber_id": "#subscribers._id#"},
+                   {"headline": "item-2 headline", "content_type": "text", "subscriber_id": "subscribers._id"},
+                   {"headline": "test package", "content_type": "composite", "subscriber_id": "subscribers._id"},
+                   {"headline": "outer test package", "content_type": "composite", "subscriber_id": "subscribers._id"}]
       }
       """
       When we enqueue published
       When we get "/publish_queue"
-      Then we get "123" as "main" story for subscriber "sub-2" in package "compositeitem"
+      Then we get "123" as "main" story for subscriber "subscribers._id" in package "compositeitem"
       When we enqueue published
       When we get "/publish_queue"
-      Then we get "456" as "sidebars" story for subscriber "sub-2" in package "compositeitem"
-      Then we get "compositeitem" in formatted output as "main" story for subscriber "sub-2"
+      Then we get "456" as "sidebars" story for subscriber "subscribers._id" in package "compositeitem"
+      Then we get "compositeitem" in formatted output as "main" story for subscriber "subscribers._id"
       When we get "/archive/compositeitem?version=all"
       Then we get list with 2 items
       When we get "/archive/outercompositeitem?version=all"
@@ -2620,41 +2615,41 @@ Feature: Package Publishing
         Given "products"
         """
         [{
-          "_id": "1", "name":"prod-1", "codes":"abc,xyz"
+          "_id": "1826418ecc7602033e9252a1", "name":"prod-1", "codes":"abc,xyz"
         },
         {
-          "_id": "2", "name":"prod-2", "codes":"abc,xyz",
+          "_id": "1826418ecc7602033e9252a2", "name":"prod-2", "codes":"abc,xyz",
           "content_filter":{"filter_id":"#content_filters._id#", "filter_type":"blocking"}
         }]
         """
         And "subscribers"
         """
         [{
-              "_id": "sub-1",
+              "_id": "2826418ecc7602033e9252a1",
               "name":"Channel 3","media_type":"media",
               "is_active": true,
               "subscriber_type": "digital",
               "sequence_num_settings":{"min" : 1, "max" : 10},
               "email": "test@test.com",
-              "products": ["1"],
+              "products": ["1826418ecc7602033e9252a1"],
               "destinations":[{"name":"Test","format": "ninjs", "delivery_type":"PublicArchive","config":{"recipients":"test@test.com"}}]
             }, {
-              "_id": "sub-2",
+              "_id": "2826418ecc7602033e9252a2",
               "name":"Channel 4","media_type":"media",
               "is_active": true,
               "subscriber_type": "digital",
               "sequence_num_settings":{"min" : 1, "max" : 10},
               "email": "test@test.com",
-              "products": ["2"],
+              "products": ["1826418ecc7602033e9252a2"],
               "destinations":[{"name":"Test","format": "ninjs", "delivery_type":"PublicArchive","config":{"recipients":"test@test.com"}}]
             }, {
-              "_id": "sub-3",
+              "_id": "2826418ecc7602033e9252a3",
               "name":"Channel 5","media_type":"media",
               "is_active": true,
               "subscriber_type": "digital",
               "sequence_num_settings":{"min" : 1, "max" : 10},
               "email": "test@test.com",
-              "products": ["2"],
+              "products": ["1826418ecc7602033e9252a2"],
               "destinations":[{"name":"Test","format": "ninjs", "delivery_type":"PublicArchive","config":{"recipients":"test@test.com"}}]
             }]
         """
@@ -2896,32 +2891,32 @@ Feature: Package Publishing
       When we get "/publish_queue?max_results=100"
       Then we get list with 26 items
       """
-      {"_items" : [{"headline": "item-1 headline", "content_type": "text", "subscriber_id": "sub-1"},
-                   {"headline": "ABC-4", "content_type": "picture", "subscriber_id": "sub-1"},
-                   {"headline": "test package 1", "content_type": "composite", "subscriber_id": "sub-1"},
-                   {"headline": "item-2 headline", "content_type": "text", "subscriber_id": "sub-1"},
-                   {"headline": "ABC-5", "content_type": "picture", "subscriber_id": "sub-1"},
-                   {"headline": "test package 2", "content_type": "composite", "subscriber_id": "sub-1"},
-                   {"headline": "item-3 headline", "content_type": "text", "subscriber_id": "sub-1"},
-                   {"headline": "ABC-6", "content_type": "picture", "subscriber_id": "sub-1"},
-                   {"headline": "test package 3", "content_type": "composite", "subscriber_id": "sub-1"},
-                   {"headline": "outer test package", "content_type": "composite", "subscriber_id": "sub-1"},
-                   {"headline": "item-1 headline", "content_type": "text", "subscriber_id": "sub-2"},
-                   {"headline": "test package 1", "content_type": "composite", "subscriber_id": "sub-2"},
-                   {"headline": "ABC-5", "content_type": "picture", "subscriber_id": "sub-2"},
-                   {"headline": "test package 2", "content_type": "composite", "subscriber_id": "sub-2"},
-                   {"headline": "item-3 headline", "content_type": "text", "subscriber_id": "sub-2"},
-                   {"headline": "ABC-6", "content_type": "picture", "subscriber_id": "sub-2"},
-                   {"headline": "test package 3", "content_type": "composite", "subscriber_id": "sub-2"},
-                   {"headline": "outer test package", "content_type": "composite", "subscriber_id": "sub-2"}]
+      {"_items" : [{"headline": "item-1 headline", "content_type": "text", "subscriber_id": "2826418ecc7602033e9252a1"},
+                   {"headline": "ABC-4", "content_type": "picture", "subscriber_id": "2826418ecc7602033e9252a1"},
+                   {"headline": "test package 1", "content_type": "composite", "subscriber_id": "2826418ecc7602033e9252a1"},
+                   {"headline": "item-2 headline", "content_type": "text", "subscriber_id": "2826418ecc7602033e9252a1"},
+                   {"headline": "ABC-5", "content_type": "picture", "subscriber_id": "2826418ecc7602033e9252a1"},
+                   {"headline": "test package 2", "content_type": "composite", "subscriber_id": "2826418ecc7602033e9252a1"},
+                   {"headline": "item-3 headline", "content_type": "text", "subscriber_id": "2826418ecc7602033e9252a1"},
+                   {"headline": "ABC-6", "content_type": "picture", "subscriber_id": "2826418ecc7602033e9252a1"},
+                   {"headline": "test package 3", "content_type": "composite", "subscriber_id": "2826418ecc7602033e9252a1"},
+                   {"headline": "outer test package", "content_type": "composite", "subscriber_id": "2826418ecc7602033e9252a1"},
+                   {"headline": "item-1 headline", "content_type": "text", "subscriber_id": "2826418ecc7602033e9252a2"},
+                   {"headline": "test package 1", "content_type": "composite", "subscriber_id": "2826418ecc7602033e9252a2"},
+                   {"headline": "ABC-5", "content_type": "picture", "subscriber_id": "2826418ecc7602033e9252a2"},
+                   {"headline": "test package 2", "content_type": "composite", "subscriber_id": "2826418ecc7602033e9252a2"},
+                   {"headline": "item-3 headline", "content_type": "text", "subscriber_id": "2826418ecc7602033e9252a2"},
+                   {"headline": "ABC-6", "content_type": "picture", "subscriber_id": "2826418ecc7602033e9252a2"},
+                   {"headline": "test package 3", "content_type": "composite", "subscriber_id": "2826418ecc7602033e9252a2"},
+                   {"headline": "outer test package", "content_type": "composite", "subscriber_id": "2826418ecc7602033e9252a2"}]
       }
       """
       When we enqueue published
       And we get "/publish_queue?max_results=100"
-      Then we get "11" as "main" story for subscriber "sub-1" in package "compositeitem1"
-      And we get "compositeitem1" as "main" story for subscriber "sub-2" in package "outercompositeitem"
-      And we get "compositeitem2" as "main" story for subscriber "sub-2" in package "outercompositeitem"
-      And we get "compositeitem3" as "main" story for subscriber "sub-2" in package "outercompositeitem"
+      Then we get "11" as "main" story for subscriber "2826418ecc7602033e9252a1" in package "compositeitem1"
+      And we get "compositeitem1" as "main" story for subscriber "2826418ecc7602033e9252a2" in package "outercompositeitem"
+      And we get "compositeitem2" as "main" story for subscriber "2826418ecc7602033e9252a2" in package "outercompositeitem"
+      And we get "compositeitem3" as "main" story for subscriber "2826418ecc7602033e9252a2" in package "outercompositeitem"
 
 
       @auth
@@ -3457,18 +3452,17 @@ Feature: Package Publishing
       Given "products"
       """
       [{
-        "_id": "1", "name":"prod-1", "codes":"abc,xyz"
+        "name":"prod-1", "codes":"abc,xyz"
       }]
       """
       And "subscribers"
       """
       [{
-        "_id": "sub-2",
         "name":"Channel 3","media_type":"media",
         "is_active": true,
         "subscriber_type": "digital",
         "sequence_num_settings":{"min" : 1, "max" : 10},
-        "products": ["1"],
+        "products": ["#products._id#"],
         "email": "test@test.com",
         "destinations":[{"name":"Test","format": "ninjs", "delivery_type":"PublicArchive","config":{"recipients":"test@test.com"}}]
       }]
@@ -3623,10 +3617,10 @@ Feature: Package Publishing
       When we get "/publish_queue"
       Then we get list with 4 items
       """
-      {"_items" : [{"headline": "item-1 headline", "content_type": "text", "subscriber_id": "sub-2"},
-                   {"headline": "item-2 headline", "content_type": "text", "subscriber_id": "sub-2"},
-                   {"headline": "test package", "content_type": "composite", "subscriber_id": "sub-2"},
-                   {"headline": "outer test package", "content_type": "composite", "subscriber_id": "sub-2"}]
+      {"_items" : [{"headline": "item-1 headline", "content_type": "text", "subscriber_id": "#subscribers._id#"},
+                   {"headline": "item-2 headline", "content_type": "text", "subscriber_id": "#subscribers._id#"},
+                   {"headline": "test package", "content_type": "composite", "subscriber_id": "#subscribers._id#"},
+                   {"headline": "outer test package", "content_type": "composite", "subscriber_id": "#subscribers._id#"}]
       }
       """
       When we publish "123" with "correct" type and "corrected" state
@@ -3654,7 +3648,7 @@ Feature: Package Publishing
       """
       {"_items" : [{"headline": "item-1.2 headline", "publishing_action": "corrected"},
                    {"headline": "test package", "publishing_action": "corrected"},
-                   {"headline": "outer test package", "publishing_action": "corrected", "subscriber_id": "sub-2"}]
+                   {"headline": "outer test package", "publishing_action": "corrected", "subscriber_id": "#subscribers._id#"}]
       }
       """
       When we get "/archive/123?version=all"
@@ -4084,45 +4078,45 @@ Feature: Package Publishing
       Given "products"
         """
         [{
-          "_id": "1", "name":"prod-1", "codes":"abc,xyz"
+          "_id": "1826418ecc7602033e9252a1", "name":"prod-1", "codes":"abc,xyz"
         },
         {
-          "_id": "2", "name":"prod-2", "codes":"def",
+          "_id": "1826418ecc7602033e9252a2", "name":"prod-2", "codes":"def",
           "content_filter":{"filter_id":"#content_filters._id#", "filter_type":"blocking"}
         },
         {
-          "_id": "3", "name":"prod-3",
+          "_id": "1826418ecc7602033e9252a3", "name":"prod-3",
           "content_filter":{"filter_id":"#content_filters._id#", "filter_type": "permitting"}
         }]
         """
         And "subscribers"
       """
       [{
-            "_id": "sub-1",
+            "_id": "2826418ecc7602033e9252a1",
             "name":"Channel 3","media_type":"media",
             "is_active": true,
             "subscriber_type": "digital",
             "sequence_num_settings":{"min" : 1, "max" : 10},
             "email": "test@test.com",
-            "products": ["2"],
+            "products": ["1826418ecc7602033e9252a2"],
             "destinations":[{"name":"Test","format": "ninjs", "delivery_type":"PublicArchive","config":{"recipients":"test@test.com"}}]
           }, {
-            "_id": "sub-2",
+            "_id": "2826418ecc7602033e9252a2",
             "name":"Channel 4","media_type":"media",
             "is_active": true,
             "subscriber_type": "digital",
             "sequence_num_settings":{"min" : 1, "max" : 10},
             "email": "test@test.com",
-            "products": ["1"],
+            "products": ["1826418ecc7602033e9252a1"],
             "destinations":[{"name":"Test","format": "ninjs", "delivery_type":"PublicArchive","config":{"recipients":"test@test.com"}}]
           }, {
-            "_id": "sub-3",
+            "_id": "2826418ecc7602033e9252a3",
             "name":"Channel 5","media_type":"media",
             "is_active": true,
             "subscriber_type": "digital",
             "sequence_num_settings":{"min" : 1, "max" : 10},
             "email": "test@test.com",
-            "products": ["3"],
+            "products": ["1826418ecc7602033e9252a3"],
             "destinations":[{"name":"Test","format": "ninjs", "delivery_type":"PublicArchive","config":{"recipients":"test@test.com"}}]
           }]
       """
@@ -4141,15 +4135,15 @@ Feature: Package Publishing
       When we get "/publish_queue"
       Then we get list with 9 items
       """
-      {"_items" : [{"headline": "item-1 headline", "subscriber_id": "sub-1"},
-                   {"headline": "item-2 headline", "subscriber_id": "sub-1"},
-                   {"headline": "item-1 headline", "subscriber_id": "sub-2"},
-                   {"headline": "item-2 headline", "subscriber_id": "sub-2"},
-                   {"headline": "item-3 headline", "subscriber_id": "sub-2"},
-                   {"headline": "item-3 headline", "subscriber_id": "sub-3"},
-                   {"headline": "test package", "subscriber_id": "sub-1"},
-                   {"headline": "test package", "subscriber_id": "sub-2"},
-                   {"headline": "test package", "subscriber_id": "sub-3"}]
+      {"_items" : [{"headline": "item-1 headline", "subscriber_id": "2826418ecc7602033e9252a1"},
+                   {"headline": "item-2 headline", "subscriber_id": "2826418ecc7602033e9252a1"},
+                   {"headline": "item-1 headline", "subscriber_id": "2826418ecc7602033e9252a2"},
+                   {"headline": "item-2 headline", "subscriber_id": "2826418ecc7602033e9252a2"},
+                   {"headline": "item-3 headline", "subscriber_id": "2826418ecc7602033e9252a2"},
+                   {"headline": "item-3 headline", "subscriber_id": "2826418ecc7602033e9252a3"},
+                   {"headline": "test package", "subscriber_id": "2826418ecc7602033e9252a1"},
+                   {"headline": "test package", "subscriber_id": "2826418ecc7602033e9252a2"},
+                   {"headline": "test package", "subscriber_id": "2826418ecc7602033e9252a3"}]
       }
       """
       When we publish "compositeitem" with "correct" type and "corrected" state
@@ -4209,16 +4203,16 @@ Feature: Package Publishing
       When we get "/publish_queue"
       Then we get list with 12 items
       """
-      {"_items" : [{"headline": "test package", "publishing_action": "corrected", "subscriber_id": "sub-1"},
-                   {"headline": "test package", "publishing_action": "corrected", "subscriber_id": "sub-2"},
-                   {"headline": "test package", "publishing_action": "corrected", "subscriber_id": "sub-3"}]
+      {"_items" : [{"headline": "test package", "publishing_action": "corrected", "subscriber_id": "2826418ecc7602033e9252a1"},
+                   {"headline": "test package", "publishing_action": "corrected", "subscriber_id": "2826418ecc7602033e9252a2"},
+                   {"headline": "test package", "publishing_action": "corrected", "subscriber_id": "2826418ecc7602033e9252a3"}]
       }
       """
       When we enqueue published
       When we get "/publish_queue"
-      Then we get "789" as "main" story for subscriber "sub-1" not in package "compositeitem" version "3"
-      Then we get "789" as "main" story for subscriber "sub-2" not in package "compositeitem" version "3"
-      Then we get "789" as "main" story for subscriber "sub-3" not in package "compositeitem" version "3"
+      Then we get "789" as "main" story for subscriber "2826418ecc7602033e9252a1" not in package "compositeitem" version "3"
+      Then we get "789" as "main" story for subscriber "2826418ecc7602033e9252a2" not in package "compositeitem" version "3"
+      Then we get "789" as "main" story for subscriber "2826418ecc7602033e9252a3" not in package "compositeitem" version "3"
 
 
       @auth
@@ -4348,45 +4342,45 @@ Feature: Package Publishing
       Given "products"
         """
         [{
-          "_id": "1", "name":"prod-1", "codes":"abc,xyz"
+          "_id": "1826418ecc7602033e9252a1", "name":"prod-1", "codes":"abc,xyz"
         },
         {
-          "_id": "2", "name":"prod-2", "codes":"def",
+          "_id": "1826418ecc7602033e9252a2", "name":"prod-2", "codes":"def",
           "content_filter":{"filter_id":"#content_filters._id#", "filter_type":"blocking"}
         },
         {
-          "_id": "3", "name":"prod-3",
+          "_id": "1826418ecc7602033e9252a3", "name":"prod-3",
           "content_filter":{"filter_id":"#content_filters._id#", "filter_type": "permitting"}
         }]
         """
       And "subscribers"
       """
       [{
-            "_id": "sub-1",
+            "_id": "2826418ecc7602033e9252a1",
             "name":"Channel 3","media_type":"media",
             "is_active": true,
             "subscriber_type": "digital",
             "sequence_num_settings":{"min" : 1, "max" : 10},
             "email": "test@test.com",
-            "products": ["2"],
+            "products": ["1826418ecc7602033e9252a2"],
             "destinations":[{"name":"Test","format": "ninjs", "delivery_type":"PublicArchive","config":{"recipients":"test@test.com"}}]
           }, {
-            "_id": "sub-2",
+            "_id": "2826418ecc7602033e9252a2",
             "name":"Channel 4","media_type":"media",
             "is_active": true,
             "subscriber_type": "digital",
             "sequence_num_settings":{"min" : 1, "max" : 10},
             "email": "test@test.com",
-            "products": ["1"],
+            "products": ["1826418ecc7602033e9252a1"],
             "destinations":[{"name":"Test","format": "ninjs", "delivery_type":"PublicArchive","config":{"recipients":"test@test.com"}}]
           }, {
-            "_id": "sub-3",
+            "_id": "2826418ecc7602033e9252a3",
             "name":"Channel 5","media_type":"media",
             "is_active": true,
             "subscriber_type": "digital",
             "sequence_num_settings":{"min" : 1, "max" : 10},
             "email": "test@test.com",
-            "products": ["3"],
+            "products": ["1826418ecc7602033e9252a3"],
             "destinations":[{"name":"Test","format": "ninjs", "delivery_type":"PublicArchive","config":{"recipients":"test@test.com"}}]
           }]
       """
@@ -4404,12 +4398,12 @@ Feature: Package Publishing
       When we get "/publish_queue"
       Then we get list with 6 items
       """
-      {"_items" : [{"headline": "item-1 headline", "subscriber_id": "sub-1"},
-                   {"headline": "item-2 headline", "subscriber_id": "sub-1"},
-                   {"headline": "item-1 headline", "subscriber_id": "sub-2"},
-                   {"headline": "item-2 headline", "subscriber_id": "sub-2"},
-                   {"headline": "test package", "subscriber_id": "sub-1"},
-                   {"headline": "test package", "subscriber_id": "sub-2"}]
+      {"_items" : [{"headline": "item-1 headline", "subscriber_id": "2826418ecc7602033e9252a1"},
+                   {"headline": "item-2 headline", "subscriber_id": "2826418ecc7602033e9252a1"},
+                   {"headline": "item-1 headline", "subscriber_id": "2826418ecc7602033e9252a2"},
+                   {"headline": "item-2 headline", "subscriber_id": "2826418ecc7602033e9252a2"},
+                   {"headline": "test package", "subscriber_id": "2826418ecc7602033e9252a1"},
+                   {"headline": "test package", "subscriber_id": "2826418ecc7602033e9252a2"}]
       }
       """
       When we publish "compositeitem" with "correct" type and "corrected" state
@@ -4480,28 +4474,28 @@ Feature: Package Publishing
       When we get "/publish_queue"
       Then we get list with 11 items
       """
-      {"_items" : [{"headline": "item-3 headline", "publishing_action": "published", "subscriber_id": "sub-3"},
-                   {"headline": "item-3 headline", "publishing_action": "published", "subscriber_id": "sub-2"},
-                   {"headline": "test package", "publishing_action": "corrected", "subscriber_id": "sub-1"},
-                   {"headline": "test package", "publishing_action": "corrected", "subscriber_id": "sub-2"},
-                   {"headline": "test package", "publishing_action": "corrected", "subscriber_id": "sub-3"}]
+      {"_items" : [{"headline": "item-3 headline", "publishing_action": "published", "subscriber_id": "2826418ecc7602033e9252a3"},
+                   {"headline": "item-3 headline", "publishing_action": "published", "subscriber_id": "2826418ecc7602033e9252a2"},
+                   {"headline": "test package", "publishing_action": "corrected", "subscriber_id": "2826418ecc7602033e9252a1"},
+                   {"headline": "test package", "publishing_action": "corrected", "subscriber_id": "2826418ecc7602033e9252a2"},
+                   {"headline": "test package", "publishing_action": "corrected", "subscriber_id": "2826418ecc7602033e9252a3"}]
       }
       """
       When we enqueue published
       When we get "/publish_queue"
-      Then we get "789" as "main" story for subscriber "sub-3" in package "compositeitem"
-      Then we get "789" as "main" story for subscriber "sub-2" in package "compositeitem"
-      Then we get "789" as "main" story for subscriber "sub-1" not in package "compositeitem" version "3"
+      Then we get "789" as "main" story for subscriber "2826418ecc7602033e9252a3" in package "compositeitem"
+      Then we get "789" as "main" story for subscriber "2826418ecc7602033e9252a2" in package "compositeitem"
+      Then we get "789" as "main" story for subscriber "2826418ecc7602033e9252a1" not in package "compositeitem" version "3"
       When we enqueue published
       When we get "/publish_queue"
-      Then we get "123" as "main" story for subscriber "sub-3" not in package "compositeitem" version "3"
-      Then we get "123" as "main" story for subscriber "sub-2" in package "compositeitem"
-      Then we get "123" as "main" story for subscriber "sub-1" in package "compositeitem"
+      Then we get "123" as "main" story for subscriber "2826418ecc7602033e9252a3" not in package "compositeitem" version "3"
+      Then we get "123" as "main" story for subscriber "2826418ecc7602033e9252a2" in package "compositeitem"
+      Then we get "123" as "main" story for subscriber "2826418ecc7602033e9252a1" in package "compositeitem"
       When we enqueue published
       When we get "/publish_queue"
-      Then we get "456" as "main" story for subscriber "sub-3" not in package "compositeitem" version "3"
-      Then we get "456" as "main" story for subscriber "sub-2" in package "compositeitem"
-      Then we get "456" as "main" story for subscriber "sub-1" in package "compositeitem"
+      Then we get "456" as "main" story for subscriber "2826418ecc7602033e9252a3" not in package "compositeitem" version "3"
+      Then we get "456" as "main" story for subscriber "2826418ecc7602033e9252a2" in package "compositeitem"
+      Then we get "456" as "main" story for subscriber "2826418ecc7602033e9252a1" in package "compositeitem"
 
 
 
@@ -4698,19 +4692,18 @@ Feature: Package Publishing
       Given "products"
       """
       [{
-        "_id": "1", "name":"prod-1", "codes":"abc,xyz"
+        "name":"prod-1", "codes":"abc,xyz"
       }]
       """
       And "subscribers"
       """
       [{
-        "_id": "sub-2",
         "name":"Channel 3","media_type":"media",
         "is_active": true,
         "subscriber_type": "digital",
         "sequence_num_settings":{"min" : 1, "max" : 10},
         "email": "test@test.com",
-        "products": ["1"],
+        "products": ["#products._id#"],
         "destinations":[{"name":"Test","format": "ninjs", "delivery_type":"PublicArchive","config":{"recipients":"test@test.com"}}]
       }]
       """
@@ -4849,18 +4842,17 @@ Feature: Package Publishing
       Given "products"
       """
       [{
-        "_id": "1", "name":"prod-1", "codes":"abc,xyz"
+        "name":"prod-1", "codes":"abc,xyz"
       }]
       """
       And "subscribers"
       """
       [{
-        "_id": "sub-2",
         "name":"Channel 3","media_type":"media",
         "is_active": true,
         "subscriber_type": "digital",
         "sequence_num_settings":{"min" : 1, "max" : 10},
-        "products": ["1"],
+        "products": ["#products._id#"],
         "email": "test@test.com",
         "destinations":[{"name":"Test","format": "ninjs", "delivery_type":"PublicArchive","config":{"recipients":"test@test.com"}}]
       }]
@@ -5046,45 +5038,42 @@ Feature: Package Publishing
       Given "products"
         """
         [{
-          "_id": "1", "name":"prod-1", "codes":"abc,xyz"
+          "_id": "1826418ecc7602033e9252a1", "name":"prod-1", "codes":"abc,xyz"
         },
         {
-          "_id": "2", "name":"prod-2", "codes":"def",
+          "_id": "1826418ecc7602033e9252a2", "name":"prod-2", "codes":"def",
           "content_filter":{"filter_id":"#content_filters._id#", "filter_type":"blocking"}
         },
         {
-          "_id": "3", "name":"prod-3",
+          "_id": "1826418ecc7602033e9252a3", "name":"prod-3",
           "content_filter":{"filter_id":"#content_filters._id#", "filter_type": "permitting"}
         }]
         """
       And "subscribers"
       """
       [{
-            "_id": "sub-1",
             "name":"Channel 3","media_type":"media",
             "is_active": true,
             "subscriber_type": "digital",
             "sequence_num_settings":{"min" : 1, "max" : 10},
             "email": "test@test.com",
-            "products": ["2"],
+            "products": ["1826418ecc7602033e9252a2"],
             "destinations":[{"name":"Test","format": "ninjs", "delivery_type":"PublicArchive","config":{"recipients":"test@test.com"}}]
           }, {
-            "_id": "sub-2",
             "name":"Channel 4","media_type":"media",
             "is_active": true,
             "subscriber_type": "digital",
             "sequence_num_settings":{"min" : 1, "max" : 10},
             "email": "test@test.com",
-            "products": ["1"],
+            "products": ["1826418ecc7602033e9252a1"],
             "destinations":[{"name":"Test","format": "ninjs", "delivery_type":"PublicArchive","config":{"recipients":"test@test.com"}}]
           }, {
-            "_id": "sub-3",
             "name":"Channel 5","media_type":"media",
             "is_active": true,
             "subscriber_type": "digital",
             "sequence_num_settings":{"min" : 1, "max" : 10},
             "email": "test@test.com",
-            "products": ["3"],
+            "products": ["1826418ecc7602033e9252a3"],
             "destinations":[{"name":"Test","format": "ninjs", "delivery_type":"PublicArchive","config":{"recipients":"test@test.com"}}]
           }]
       """

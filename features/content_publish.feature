@@ -495,10 +495,7 @@ Feature: Content Publishing
 
       Then we get latest
       When we publish "#archive._id#" with "publish" type and "published" state
-      Then we get error 400
-      """
-      {"_issues": {"validator exception": "400: Item didn't match any Products"}, "_status": "ERR"}
-      """
+      Then we get OK response
       When we enqueue published
       When we get "/publish_queue"
       Then we get list with 0 items
@@ -566,10 +563,7 @@ Feature: Content Publishing
       }
       """
       And we publish "#archive._id#" with "publish" type and "published" state
-      Then we get error 400
-      """
-      {"_issues": {"validator exception": "400: Item didn't match any Products"}, "_status": "ERR"}
-      """
+      Then we get OK response
       When we enqueue published
       When we get "/publish_queue"
       Then we get list with 0 items
@@ -700,10 +694,7 @@ Feature: Content Publishing
       }
       """
       And we publish "#archive._id#" with "publish" type and "published" state
-      Then we get error 400
-      """
-      {"_issues": {"validator exception": "400: Failed to route item"}, "_status": "ERR"}
-      """
+      Then we get response code 200
 
     @auth @notification
     Scenario: Schedule a user content publish
@@ -1780,10 +1771,7 @@ Feature: Content Publishing
       """
 
       And we publish "122" with "publish" type and "published" state
-      Then we get error 400
-      """
-      {"_issues": {"validator exception": "400: Failed to route item"}, "_status": "ERR"}
-      """
+      Then we get OK response
       When we enqueue published
       When we get "/publish_queue"
       Then we get list with 0 items

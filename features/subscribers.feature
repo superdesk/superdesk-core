@@ -431,12 +431,12 @@ Feature: Subscribers
     Given "products"
       """
       [{
-        "_id":"prod-1", "name":"prod-1","codes":"abc,xyz", "product_type": "both"
+        "name":"prod-1","codes":"abc,xyz", "product_type": "both"
       }]
       """
     Given "subscribers"
     """
-    [{"name": "Foo", "api_products": ["prod-1"]}]
+    [{"name": "Foo", "api_products": ["#products._id#"], "subscriber_type": "wire", "email": "test@test.com"}]
     """
 
     When we post to "subscriber_token"

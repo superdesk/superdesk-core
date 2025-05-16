@@ -376,7 +376,7 @@ class BasePublishExchangeFilter(PublishExchangeFilter):
         """
 
         if not content_filter.content_filter:
-            return False
+            return True  # a non-existing filter matches every thing
 
         for index, expression in enumerate(content_filter.content_filter):
             if not expression.expression:

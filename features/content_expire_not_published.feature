@@ -207,7 +207,7 @@ Feature: Content Expiry Not Published Items
   Scenario: Content linked in planning does not expire.
     Given "assignments"
     """
-    [{"_id": "123456", "planning": {}}]
+    [{"planning": {}}]
     """
     When we post to "archive" with success
     """
@@ -215,7 +215,7 @@ Feature: Content Expiry Not Published Items
       "task": {"desk": "#desks._id#", "stage": "#desks.incoming_stage#", "user": "#CONTEXT_USER_ID#"},
       "subject":[{"qcode": "17004000", "name": "Statistics"}],
       "body_html": "Test Document body",
-      "assignment_id": "123456"}]
+      "assignment_id": "#assignments._id#"}]
     """
     And we get "archive"
     Then we get list with 2 items

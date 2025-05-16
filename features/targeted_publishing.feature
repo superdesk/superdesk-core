@@ -13,56 +13,56 @@ Feature: Targeted Publishing
     """
     And "products"
     """
-    [{"_id": "1", "name":"prod-1", "codes":"abc,xyz"},
-     {"_id": "2", "name":"prod-2", "codes":"klm", "geo_restrictions": "VIC"},
-     {"_id": "3", "name":"prod-3", "codes":"klm", "geo_restrictions": "QLD"},
-     {"_id": "4", "name":"prod-4", "codes":"abc,xyz,klm"}]
+    [{"_id": "1826418ecc7602033e9252a1", "name":"prod-1", "codes":"abc,xyz"},
+     {"_id": "1826418ecc7602033e9252a2", "name":"prod-2", "codes":"klm", "geo_restrictions": "VIC"},
+     {"_id": "1826418ecc7602033e9252a3", "name":"prod-3", "codes":"klm", "geo_restrictions": "QLD"},
+     {"_id": "1826418ecc7602033e9252a4", "name":"prod-4", "codes":"abc,xyz,klm"}]
     """
     And "subscribers"
     """
     [{
-      "_id": "sub-1",
+      "_id": "2826418ecc7602033e9252a1",
       "name":"Channel 1",
       "is_active": true,
       "media_type": "media",
       "subscriber_type": "digital",
       "sequence_num_settings":{"min" : 1, "max" : 10}, "email": "test@test.com",
-      "products": ["1", "4"],
+      "products": ["1826418ecc7602033e9252a1", "1826418ecc7602033e9252a4"],
       "codes": "Aaa",
       "destinations":[{"name":"Test","format": "nitf", "delivery_type":"email","config":{"recipients":"test@test.com"}}]
     },
     {
-      "_id": "sub-2",
+      "_id": "2826418ecc7602033e9252a2",
       "name":"Wire channel with geo restriction Victoria",
       "is_active": true,
       "media_type":"media",
       "subscriber_type": "wire",
       "sequence_num_settings":{"min" : 1, "max" : 10}, "email": "test@test.com",
-      "products": ["2"],
+      "products": ["1826418ecc7602033e9252a2"],
       "destinations":[{"name":"Test","format": "nitf", "delivery_type":"email","config":{"recipients":"test@test.com"}}]
     },
     {
-      "_id": "sub-3",
+      "_id": "2826418ecc7602033e9252a3",
       "name":"Wire channel without geo restriction",
       "is_active": true,
       "media_type":"media",
       "subscriber_type": "wire",
       "sequence_num_settings":{"min" : 1, "max" : 10}, "email": "test@test.com",
-      "products": ["1"],
+      "products": ["1826418ecc7602033e9252a1"],
       "destinations":[{"name":"Test","format": "nitf", "delivery_type":"email","config":{"recipients":"test@test.com"}}]
     },
     {
-      "_id": "sub-4",
+      "_id": "2826418ecc7602033e9252a4",
       "name":"Wire channel with geo restriction Queensland",
       "is_active": true,
       "media_type":"media",
       "subscriber_type": "wire",
       "sequence_num_settings":{"min" : 1, "max" : 10}, "email": "test@test.com",
-      "products": ["3"],
+      "products": ["1826418ecc7602033e9252a3"],
       "destinations":[{"name":"Test","format": "nitf", "delivery_type":"email","config":{"recipients":"test@test.com"}}]
     },
     {
-      "_id": "sub-5",
+      "_id": "2826418ecc7602033e9252a5",
       "name":"Wire channel with geo restriction no product",
       "is_active": true,
       "media_type":"media",
@@ -72,22 +72,22 @@ Feature: Targeted Publishing
       "destinations":[{"name":"Test","format": "nitf", "delivery_type":"email","config":{"recipients":"test@test.com"}}]
     },
     {
-      "_id": "sub-2-api",
+      "_id": "2826418ecc7602033e9252a6",
       "name":"Wire channel with geo restriction Victoria API",
       "is_active": true,
       "media_type":"media",
       "subscriber_type": "wire",
       "sequence_num_settings":{"min" : 1, "max" : 10}, "email": "test@test.com",
-      "api_products": ["2"]
+      "api_products": ["1826418ecc7602033e9252a2"]
     },
     {
-      "_id": "sub-4-api",
+      "_id": "2826418ecc7602033e9252a7",
       "name":"Wire channel with geo restriction Queensland API",
       "is_active": true,
       "media_type":"media",
       "subscriber_type": "wire",
       "sequence_num_settings":{"min" : 1, "max" : 10}, "email": "test@test.com",
-      "api_products": ["3"]
+      "api_products": ["1826418ecc7602033e9252a3"]
     }
     ]
     """
@@ -127,15 +127,15 @@ Feature: Targeted Publishing
     {
       "_items":
         [
-          {"subscriber_id": "sub-4"},
-          {"subscriber_id": "sub-4-api"}
+          {"subscriber_id": "2826418ecc7602033e9252a4"},
+          {"subscriber_id": "2826418ecc7602033e9252a7"}
         ]
     }
     """
     When we get "/items/123"
     Then we get OK response
-    Then we assert the content api item "123" is not published to subscriber "sub-4"
-    Then we assert the content api item "123" is published to subscriber "sub-4-api"
+    Then we assert the content api item "123" is not published to subscriber "2826418ecc7602033e9252a4"
+    Then we assert the content api item "123" is published to subscriber "2826418ecc7602033e9252a7"
 
   @auth @notification
   Scenario: Publish a story to a target region with negation
@@ -163,22 +163,22 @@ Feature: Targeted Publishing
     {
       "_items":
         [
-          {"subscriber_id": "sub-2"},
-          {"subscriber_id": "sub-2-api"},
-          {"subscriber_id": "sub-4"},
-          {"subscriber_id": "sub-4-api"}
+          {"subscriber_id": "2826418ecc7602033e9252a2"},
+          {"subscriber_id": "2826418ecc7602033e9252a6"},
+          {"subscriber_id": "2826418ecc7602033e9252a4"},
+          {"subscriber_id": "2826418ecc7602033e9252a7"}
         ]
     }
     """
     When we get "/items/123"
     Then we get OK response
-    Then we assert the content api item "123" is not published to subscriber "sub-4"
-    Then we assert the content api item "123" is not published to subscriber "sub-2"
-    Then we assert the content api item "123" is not published to subscriber "sub-1"
-    Then we assert the content api item "123" is not published to subscriber "sub-3"
-    Then we assert the content api item "123" is not published to subscriber "sub-5"
-    Then we assert the content api item "123" is published to subscriber "sub-4-api"
-    Then we assert the content api item "123" is published to subscriber "sub-2-api"
+    Then we assert the content api item "123" is not published to subscriber "2826418ecc7602033e9252a4"
+    Then we assert the content api item "123" is not published to subscriber "2826418ecc7602033e9252a2"
+    Then we assert the content api item "123" is not published to subscriber "2826418ecc7602033e9252a1"
+    Then we assert the content api item "123" is not published to subscriber "2826418ecc7602033e9252a3"
+    Then we assert the content api item "123" is not published to subscriber "2826418ecc7602033e9252a5"
+    Then we assert the content api item "123" is published to subscriber "2826418ecc7602033e9252a7"
+    Then we assert the content api item "123" is published to subscriber "2826418ecc7602033e9252a6"
 
   @auth @notification
   Scenario: Publish a story to a target region doesn't publish if no product
@@ -232,8 +232,8 @@ Feature: Targeted Publishing
     {
       "_items":
         [
-          {"subscriber_id": "sub-1"},
-          {"subscriber_id": "sub-3"}
+          {"subscriber_id": "2826418ecc7602033e9252a1"},
+          {"subscriber_id": "2826418ecc7602033e9252a3"}
         ]
     }
     """
@@ -268,7 +268,7 @@ Feature: Targeted Publishing
     {
       "_items":
         [
-          {"subscriber_id": "sub-1"}
+          {"subscriber_id": "2826418ecc7602033e9252a1"}
         ]
     }
     """
@@ -284,7 +284,11 @@ Feature: Targeted Publishing
       "headline": "headline",
       "task": {"desk": "#desks._id#", "stage": "#desks.incoming_stage#", "user": "#CONTEXT_USER_ID#"},
       "subject":[{"qcode": "17004000", "name": "Statistics"}],
-      "target_subscribers": [{"_id": "sub-1"}, {"_id": "sub-4"}, {"_id": "sub-5"}],
+      "target_subscribers": [
+          {"_id": "2826418ecc7602033e9252a1"},
+          {"_id": "2826418ecc7602033e9252a4"},
+          {"_id": "2826418ecc7602033e9252a5"}
+      ],
       "body_html": "Test Document body"}]
     """
     Then we get OK response
@@ -302,9 +306,9 @@ Feature: Targeted Publishing
     {
       "_items":
         [
-          {"subscriber_id": "sub-1", "codes": ["Aaa", "abc", "xyz"]},
-          {"subscriber_id": "sub-4"},
-          {"subscriber_id": "sub-5", "codes": ["ptk", "rst"]}
+          {"subscriber_id": "2826418ecc7602033e9252a1", "codes": ["Aaa", "abc", "xyz"]},
+          {"subscriber_id": "2826418ecc7602033e9252a4"},
+          {"subscriber_id": "2826418ecc7602033e9252a5", "codes": ["ptk", "rst"]}
         ]
     }
     """
@@ -321,7 +325,7 @@ Feature: Targeted Publishing
       "task": {"desk": "#desks._id#", "stage": "#desks.incoming_stage#", "user": "#CONTEXT_USER_ID#"},
       "subject":[{"qcode": "17004000", "name": "Statistics"}],
       "target_regions": [{"qcode": "QLD", "name": "Queensland", "allow": true}],
-      "target_subscribers": [{"_id": "sub-3"}],
+      "target_subscribers": [{"_id": "2826418ecc7602033e9252a3"}],
       "body_html": "Test Document body"}]
     """
     Then we get OK response
@@ -339,17 +343,17 @@ Feature: Targeted Publishing
     {
       "_items":
         [
-          {"subscriber_id": "sub-3"},
-          {"subscriber_id": "sub-4"},
-          {"subscriber_id": "sub-4-api"}
+          {"subscriber_id": "2826418ecc7602033e9252a3"},
+          {"subscriber_id": "2826418ecc7602033e9252a4"},
+          {"subscriber_id": "2826418ecc7602033e9252a7"}
         ]
     }
     """
     When we get "/items/123"
     Then we get OK response
-    Then we assert the content api item "123" is published to subscriber "sub-4-api"
-    Then we assert the content api item "123" is not published to subscriber "sub-4"
-    Then we assert the content api item "123" is not published to subscriber "sub-3"
+    Then we assert the content api item "123" is published to subscriber "2826418ecc7602033e9252a7"
+    Then we assert the content api item "123" is not published to subscriber "2826418ecc7602033e9252a4"
+    Then we assert the content api item "123" is not published to subscriber "2826418ecc7602033e9252a3"
 
   @auth @notification
   Scenario: Correct a targeted story with a added target ignores the change
@@ -359,7 +363,11 @@ Feature: Targeted Publishing
       "headline": "headline",
       "task": {"desk": "#desks._id#", "stage": "#desks.incoming_stage#", "user": "#CONTEXT_USER_ID#"},
       "subject":[{"qcode": "17004000", "name": "Statistics"}],
-      "target_subscribers": [{"_id": "sub-1"}, {"_id": "sub-4"}, {"_id": "sub-5"}],
+      "target_subscribers": [
+          {"_id": "2826418ecc7602033e9252a1"},
+          {"_id": "2826418ecc7602033e9252a4"},
+          {"_id": "2826418ecc7602033e9252a5"}
+      ],
       "body_html": "Test Document body"}]
     """
     Then we get OK response
@@ -377,9 +385,9 @@ Feature: Targeted Publishing
     {
       "_items":
         [
-          {"subscriber_id": "sub-1", "codes": ["Aaa", "abc", "xyz"]},
-          {"subscriber_id": "sub-4"},
-          {"subscriber_id": "sub-5", "codes": ["ptk", "rst"]}
+          {"subscriber_id": "2826418ecc7602033e9252a1", "codes": ["Aaa", "abc", "xyz"]},
+          {"subscriber_id": "2826418ecc7602033e9252a4"},
+          {"subscriber_id": "2826418ecc7602033e9252a5", "codes": ["ptk", "rst"]}
         ]
     }
     """
@@ -395,17 +403,17 @@ Feature: Targeted Publishing
     {
       "_items":
         [
-          {"subscriber_id": "sub-1", "codes": ["Aaa", "abc", "xyz"],
+          {"subscriber_id": "2826418ecc7602033e9252a1", "codes": ["Aaa", "abc", "xyz"],
           "publishing_action": "corrected", "headline": "corrected"},
-          {"subscriber_id": "sub-4", "headline": "corrected", "publishing_action": "corrected"},
-          {"subscriber_id": "sub-5", "codes": ["ptk", "rst"],
+          {"subscriber_id": "2826418ecc7602033e9252a4", "headline": "corrected", "publishing_action": "corrected"},
+          {"subscriber_id": "2826418ecc7602033e9252a5", "codes": ["ptk", "rst"],
           "publishing_action": "corrected", "headline": "corrected"}
         ]
     }
     """
     When we publish "#archive._id#" with "correct" type and "corrected" state
     """
-    {"target_subscribers": [{"_id": "sub-2"}], "headline": "corrected2"}
+    {"target_subscribers": [{"_id": "2826418ecc7602033e9252a2"}], "headline": "corrected2"}
     """
     Then we get OK response
     When we enqueue published
@@ -415,9 +423,9 @@ Feature: Targeted Publishing
     {
       "_items":
         [
-          {"subscriber_id": "sub-1", "codes": ["Aaa", "abc", "xyz", "klm"], "headline": "corrected2"},
-          {"subscriber_id": "sub-4", "headline": "corrected"},
-          {"subscriber_id": "sub-5", "codes": ["ptk", "rst"], "headline": "corrected2"}
+          {"subscriber_id": "2826418ecc7602033e9252a1", "codes": ["Aaa", "abc", "xyz", "klm"], "headline": "corrected2"},
+          {"subscriber_id": "2826418ecc7602033e9252a4", "headline": "corrected"},
+          {"subscriber_id": "2826418ecc7602033e9252a5", "codes": ["ptk", "rst"], "headline": "corrected2"}
         ]
     }
     """
