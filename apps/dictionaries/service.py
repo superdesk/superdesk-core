@@ -14,7 +14,7 @@ import logging
 import collections
 
 from eve.utils import ParsedRequest
-from simplejson.errors import JSONDecodeError
+from json.decoder import JSONDecodeError
 
 from superdesk.eve_async.service import AsyncBaseService
 from superdesk.core import json, get_current_app
