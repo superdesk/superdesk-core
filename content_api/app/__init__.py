@@ -1,4 +1,4 @@
-# -*- coding: utf-8; -*-
+# -- coding: utf-8; --
 #
 # This file is part of Superdesk.
 #
@@ -11,8 +11,8 @@
 A module that provides the Superdesk public API application object and runs
 the Superdesk public API.
 
-The API is built using the `Eve framework <http://python-eve.org/>`_ and is
-thus essentially just a normal `Flask <http://flask.pocoo.org/>`_ application.
+The API is built using the Eve framework <http://python-eve.org/>_ and is
+thus essentially just a normal Flask <http://flask.pocoo.org/>_ application.
 
 .. note:: The public API should not be confused with the "internal" API that
     is meant to be used by the Superdesk browser client only.
@@ -20,7 +20,7 @@ thus essentially just a normal `Flask <http://flask.pocoo.org/>`_ application.
 
 import os
 import importlib
-
+import jinja2
 from eve.io.mongo.mongo import MongoJSONEncoder
 
 from superdesk.flask import Config
@@ -37,7 +37,7 @@ def get_app(config=None):
     App factory.
 
     :param dict config: configuration that can override config
-        from `settings.py`
+        from settings.py
     :return: a new SuperdeskEve app instance
     """
     app_config = Config(".")
@@ -84,6 +84,24 @@ def get_app(config=None):
 
     app.sentry = SuperdeskSentry(app)
     app.async_app.start()
+
+    # Dynamically load planning templates if planning module is available
+    try:
+        import planning
+
+        planning_enabled = True
+    except ImportError:
+        planning_enabled = False
+
+    if planning_enabled:
+        planning_templates_path = os.path.join(os.path.dirname(planning.__file__), "templates")
+
+        if os.path.exists(planning_templates_path):
+            current_loader = app.jinja_loader
+            app.jinja_loader = jinja2.ChoiceLoader(
+                getattr(current_loader, "loaders", [current_loader])
+                + [jinja2.FileSystemLoader(planning_templates_path)]
+            )
 
     return app
 
