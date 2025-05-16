@@ -16,7 +16,6 @@ import superdesk
 
 from superdesk.core import get_app_config, get_current_app
 from superdesk.resource_fields import ID_FIELD
-from superdesk.types import UsersResourceModel
 from superdesk.flask import request
 from superdesk import get_resource_service
 from superdesk.errors import SuperdeskApiError
@@ -172,10 +171,10 @@ class DesksService(AsyncBaseService):
         return [doc[ID_FIELD] for doc in docs]
 
     async def on_created_async(self, docs):
-        user_service = UsersResourceModel.get_service()
+        user_service = get_resource_service("users")
         for doc in docs:
             push_notification(self.notification_key, created=1, desk_id=str(doc.get(ID_FIELD)))
-            await user_service.update_stage_visibility_for_users()
+            await user_service.update_stage_visibility_for_users_async()
 
     async def on_update_async(self, updates, original):
         if updates.get("content_expiry") == 0:
@@ -215,7 +214,7 @@ class DesksService(AsyncBaseService):
             3. The desk is associated with routing rule(s)
         """
 
-        if await UsersResourceModel.get_service().count({"desk": desk[ID_FIELD]}):
+        if await get_resource_service("users").count_async({"desk": desk[ID_FIELD]}):
             raise SuperdeskApiError.preconditionFailedError(
                 message=_("Cannot delete desk as it is assigned as default desk to user(s).")
             )
@@ -267,7 +266,7 @@ class DesksService(AsyncBaseService):
 
     async def __send_notification(self, updates, desk):
         desk_id = desk[ID_FIELD]
-        users_service = UsersResourceModel.get_service()
+        users_service = get_resource_service("users")
 
         if "members" in updates:
             added, removed = self.__compare_members(desk.get("members", {}), updates["members"])
@@ -277,7 +276,7 @@ class DesksService(AsyncBaseService):
                 )
 
             for added_user in added:
-                user = await users_service.find_by_id(added_user)
+                user = await users_service.find_one_async(req=None, _id=added_user)
                 activity = await add_activity(
                     ACTIVITY_UPDATE,
                     "user {{user}} has been added to desk {{desk}}: Please re-login.",
@@ -288,11 +287,11 @@ class DesksService(AsyncBaseService):
                     desk=desk.get("name"),
                 )
                 push_notification("activity", _dest=activity["recipients"])
-                await users_service.update_stage_visibility_for_user(user)
+                await users_service.update_stage_visibility_for_user_async(user)
 
             for removed_user in removed:
                 user = await users_service.find_by_id(removed_user)
-                await users_service.update_stage_visibility_for_user(user)
+                await users_service.update_stage_visibility_for_user_async(user)
 
         else:
             push_notification(self.notification_key, updated=1, desk_id=str(desk.get(ID_FIELD)))

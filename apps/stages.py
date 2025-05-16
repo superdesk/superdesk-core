@@ -16,7 +16,6 @@ from superdesk.resource import Resource
 from superdesk.eve_async import AsyncBaseService
 from superdesk.errors import SuperdeskApiError
 from superdesk import get_resource_service
-from superdesk.types import DesksResourceModel, UsersResourceModel
 from eve.utils import ParsedRequest
 from apps.tasks import task_statuses
 from superdesk.metadata.item import CONTENT_STATE, ITEM_STATE
@@ -101,7 +100,7 @@ class StagesService(AsyncBaseService):
                 await self.remove_old_default(desk, "default_incoming")
 
     async def on_created_async(self, docs):
-        users_service = UsersResourceModel.get_service()
+        users_service = get_resource_service("users")
         for doc in docs:
             if "desk" in doc:
                 push_notification(
@@ -119,7 +118,7 @@ class StagesService(AsyncBaseService):
                 await self.set_desk_ref(doc, "incoming_stage")
 
             if not doc.get("is_visible", True):
-                await users_service.update_stage_visibility_for_users()
+                await users_service.update_stage_visibility_for_users_async()
 
     async def on_delete_async(self, doc):
         """
@@ -132,15 +131,15 @@ class StagesService(AsyncBaseService):
         :param doc:
         """
 
-        desk_service = DesksResourceModel.get_service()
+        desk_service = get_resource_service("desks")
         if doc["working_stage"] is True:
             desk_id = doc.get("desk", None)
-            if desk_id and await desk_service.find_by_id_raw(desk_id):
+            if desk_id and await desk_service.find_one_async(req=None, _id=desk_id):
                 raise SuperdeskApiError.preconditionFailedError(message=_("Cannot delete a Working Stage."))
 
         if doc["default_incoming"] is True:
             desk_id = doc.get("desk", None)
-            if desk_id and await desk_service.find_by_id_raw(desk_id):
+            if desk_id and await desk_service.find_one_async(req=None, _id=desk_id):
                 raise SuperdeskApiError.preconditionFailedError(message=_("Cannot delete a Incoming Stage."))
 
         archive_versions_query = {"task.stage": str(doc[ID_FIELD])}
@@ -194,7 +193,7 @@ class StagesService(AsyncBaseService):
                 desk_id=str(original["desk"]),
                 is_visible=updates.get("is_visible", original.get("is_visible", True)),
             )
-            await UsersResourceModel.get_service().update_stage_visibility_for_users()
+            await get_resource_service("users").update_stage_visibility_for_users_async()
         else:
             push_notification(
                 self.notification_key,
@@ -269,16 +268,16 @@ class StagesService(AsyncBaseService):
         return await (await self.get_async(req=None, lookup=lookup)).to_list()
 
     async def set_desk_ref(self, doc, field):
-        service = DesksResourceModel.get_service()
-        desk = await service.find_by_id_raw(doc.get("desk"))
+        service = get_resource_service("desks")
+        desk = await service.find_one_async(req=None, _id=doc.get("desk"))
         if desk:
-            await service.update(doc.get("desk"), {field: doc.get("_id")})
+            await service.update_async(doc.get("desk"), {field: doc.get("_id")}, desk)
 
     async def clear_desk_ref(self, doc, field):
-        service = DesksResourceModel.get_service()
-        desk = await service.find_by_id_raw(doc.get("desk"))
+        service = get_resource_service("desks")
+        desk = await service.find_one_async(req=None, _id=doc.get("desk"))
         if desk:
-            await service.update(doc.get("desk"), {field: None})
+            await service.update_async(doc.get("desk"), {field: None}, desk)
 
     async def remove_old_default(self, desk, field):
         lookup = {"$and": [{field: True}, {"desk": str(desk)}]}
@@ -308,8 +307,8 @@ class StagesService(AsyncBaseService):
 
 class StagesOrderResource(Resource):
     schema = {
-        "desk": Resource.rel("desks", required=True, type="string"),
-        "stages": {"type": "list", "schema": Resource.rel("stages", required=True, type="string")},
+        "desk": Resource.rel("desks", required=True),
+        "stages": {"type": "list", "schema": Resource.rel("stages", required=True)},
     }
 
     item_methods = []
@@ -319,7 +318,6 @@ class StagesOrderResource(Resource):
 
 class StagesOrderService(AsyncBaseService):
     async def create_async(self, docs: list[dict], **kwargs) -> list[ItemId]:
-        # TODO-ASYNC[desks]: Use DesksResourceModel async service where when upgrading this module
         desks_service = superdesk.get_resource_service("desks")
         stages_service = superdesk.get_resource_service("stages")
         for doc in docs:
