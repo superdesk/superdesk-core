@@ -1,6 +1,7 @@
 import asyncio
 from inspect import isawaitable
 import werkzeug
+from quart import has_app_context
 
 from celery import Task
 from typing import Any
@@ -63,9 +64,9 @@ class HybridAppContextTask(Task):
         # We need a wrapper to handle exceptions inside the async function because asyncio
         # does not propagate them in the same way as synchronous exceptions. This ensures that
         # all exceptions are managed and logged regardless of where they occur within the event loop
-        async def wrapper(with_context: bool = True) -> Any | None:
+        async def wrapper() -> Any | None:
             try:
-                if with_context:
+                if not has_app_context():
                     async with self.get_current_app().app_context():
                         return await _handle_run_task(self.run, *args, **kwargs)
                 else:
@@ -78,7 +79,7 @@ class HybridAppContextTask(Task):
         if is_always_eager:
             # No need to run it with app_context, as we should already be within an app context
             # Also no need to create async task, as the callee awaits the response anyway
-            return wrapper(False)
+            return wrapper()
         else:
             background_tasks = set()
             loop = asyncio.get_event_loop()
