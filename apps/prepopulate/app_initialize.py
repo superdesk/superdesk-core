@@ -311,12 +311,12 @@ async def app_initialize_data_handler(
             entity_name = [entity_name]
         for name in entity_name:
             (file_name, index_params, do_patch) = __entities__[name]
-            import_file(name, path, file_name, index_params, do_patch, force)
+            await import_file(name, path, file_name, index_params, do_patch, force)
         return 0
 
     for name, (file_name, index_params, do_patch) in __entities__.items():
         try:
-            import_file(name, path, file_name, index_params, do_patch, force)
+            await import_file(name, path, file_name, index_params, do_patch, force)
         except KeyError:
             continue
         except Exception as ex:
@@ -327,7 +327,7 @@ async def app_initialize_data_handler(
     return 0
 
 
-def import_file(entity_name, path, file_name, index_params, do_patch=False, force=False):
+async def import_file(entity_name, path, file_name, index_params, do_patch=False, force=False):
     """Imports seed data based on the entity_name (resource name) from the file_name specified.
 
     index_params use to create index for that entity/resource
@@ -382,12 +382,19 @@ def import_file(entity_name, path, file_name, index_params, do_patch=False, forc
                     for item in data:
                         if not item.get(ETAG):
                             item.setdefault(ETAG, "init")
-                    service.post(data)
+
+                    if hasattr(service, "post_async"):
+                        await service.post_async(data)
+                    else:
+                        service.post(data)
 
                 if existing_data and do_patch:
                     for item in existing_data:
                         item["_etag"] = "init"
-                        service.update(item["_id"], item, service.find_one(None, _id=item["_id"]))
+                        if hasattr(service, "update_async"):
+                            await service.update_async(item["_id"], item, service.find_one(None, _id=item["_id"]))
+                        else:
+                            service.update(item["_id"], item, service.find_one(None, _id=item["_id"]))
 
             logger.info(" - file imported successfully: %s", file_name)
 
