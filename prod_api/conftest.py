@@ -113,13 +113,7 @@ def superdesk_app(request):
     extra_config = getattr(request, "param", {})
     app = get_test_superdesk_app(extra_config)
 
-    def test_app_teardown():
-        """
-        Drop test db and test app
-        """
-        teardown_app(app)
-
-    request.addfinalizer(test_app_teardown)
+    teardown_app(app)
 
     return app
 
@@ -147,7 +141,7 @@ def prodapi_app(request):
     return app
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture(scope="function")
 def prodapi_app_with_data(request):
     """
     Prod api app with prefilled collections and with disabled auth.
@@ -175,7 +169,7 @@ def prodapi_app_with_data(request):
     return app
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture(scope="function")
 def prodapi_app_with_data_client(prodapi_app_with_data):
     """Test client for prod api with filled data"""
 

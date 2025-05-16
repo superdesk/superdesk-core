@@ -11,6 +11,7 @@
 import superdesk
 from .service import UserAvailabilityService
 from .resource import UserAvailabilityResource
+from .default_user_availability import DefaultUserAvailabilityResource, DefaultUserAvailabilityService
 
 
 def init_app(app) -> None:
@@ -21,3 +22,8 @@ def init_app(app) -> None:
     """
     service = UserAvailabilityService(datasource="user_availability", backend=superdesk.get_backend())
     UserAvailabilityResource(endpoint_name="user_availability", app=app, service=service)
+
+    default_service = DefaultUserAvailabilityService(
+        datasource="default_user_availability", backend=superdesk.get_backend()
+    )
+    DefaultUserAvailabilityResource(endpoint_name="default_user_availability", app=app, service=default_service)
