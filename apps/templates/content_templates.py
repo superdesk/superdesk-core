@@ -685,7 +685,7 @@ async def create_scheduled_content(now=None):
         unlock(lock_name)
 
 
-def create_template_for_profile(items):
+async def create_template_for_profile(items):
     """Create templates based on given profiles.
 
     Each template should have same name like profile.
@@ -703,11 +703,11 @@ def create_template_for_profile(items):
                 }
             )
     if templates:
-        superdesk.get_resource_service(CONTENT_TEMPLATE_RESOURCE).post(templates)
+        await superdesk.get_resource_service(CONTENT_TEMPLATE_RESOURCE).post_async(templates)
 
 
-def create_template_for_content_type(item: ContentTypesResourceModel) -> None:
-    create_template_for_profile([item.to_dict()])
+async def create_template_for_content_type(item: ContentTypesResourceModel) -> None:
+    await create_template_for_profile([item.to_dict()])
 
 
 async def remove_profile_from_templates(item):

@@ -67,7 +67,7 @@ class FormattersService(AsyncBaseService):
 
             try:
                 await self._validate(article)
-                response = formatter.format(apply_schema(article), {"_id": "0"}, None)
+                response = await formatter.format(apply_schema(article), None, None)
                 if isawaitable(response):
                     sequence, formatted_doc = (await response)[0]
                 else:

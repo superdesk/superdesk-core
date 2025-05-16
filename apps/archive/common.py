@@ -172,8 +172,7 @@ async def on_create_item(docs, repo_type=ARCHIVE, media_service=None):
 
     for doc in docs:
         if doc.get("media") and media_service:
-            # TODO-ASYNC[archive_media_service]: Use async method once available.
-            media_service.on_create([doc])
+            await media_service.on_create_async([doc])
 
         editor_utils.generate_fields(doc)
         update_dates_for(doc)

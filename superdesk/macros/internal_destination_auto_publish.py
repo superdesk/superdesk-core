@@ -58,7 +58,7 @@ async def internal_destination_auto_publish(item, **kwargs):
     req.max_results = 1
 
     try:
-        overwrite_item = await (await archive_service.get_from_mongo(req=req, lookup=None)).next()
+        overwrite_item = await (await archive_service.get_from_mongo_async(req=req, lookup=None)).next()
     except StopAsyncIteration:
         overwrite_item = None
 

@@ -99,7 +99,7 @@ class SuperdeskValidator(Validator):
                 if not service.mongo.find_one({data_field: item_id}):
                     self._error(
                         field,
-                        f"value '{item_id}' must exist in resource '{data_resource}', field '{data_field}'",
+                        f"value '{item_id}' must exist in resource '{data_resource}', field '{data_field}'.",
                     )
         except KeyError:
             # Fallback to using Eve based resources
