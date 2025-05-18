@@ -55,8 +55,7 @@ class EmailFormatter(Formatter):
             ptag.text = formatted_article["dateline"]["text"] + " " + (ptag.text or "")
             formatted_article["body_html"] = sd_etree.to_string(body_html_elem)
 
-    # TODO-ASYNC: Support async formatters in publishing code
-    async def format(self, article: dict, subscriber: dict, codes: list | None = None) -> list[tuple[int, str] | dict]:  # type: ignore
+    async def format(self, article: dict, subscriber: dict | None, codes: list | None = None) -> list[tuple[int, str] | dict]:  # type: ignore
         formatted_article = deepcopy(article)
         remove_all_embeds(formatted_article)
         pub_seq_num = await generate_sequence_number(subscriber)

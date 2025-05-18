@@ -29,7 +29,7 @@ async def format_document():
     doc = await get_resource_service("archive").find_one_async(req=None, _id=document_id)
 
     formatter = get_formatter(formatter_qcode, doc)
-    formatted_docs = formatter.format(article=apply_schema(doc), subscriber=subscriber, codes=None)
+    formatted_docs = await formatter.format(article=apply_schema(doc), subscriber=subscriber, codes=None)
 
     headers = {
         "Access-Control-Allow-Origin": get_app_config("CLIENT_URL"),

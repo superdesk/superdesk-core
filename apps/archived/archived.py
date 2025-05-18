@@ -18,6 +18,7 @@ from eve.versioning import resolve_document_version
 from superdesk.core import get_current_app
 from superdesk.flask import request
 from superdesk.resource_fields import ID_FIELD, VERSION, ETAG, LAST_UPDATED
+from superdesk.types import SubscribersResource
 from apps.legal_archive.commands import import_into_legal_archive
 from apps.legal_archive.resource import LEGAL_PUBLISH_QUEUE_NAME
 from apps.publish.content.common import ITEM_KILL
@@ -313,16 +314,20 @@ class ArchivedService(AsyncBaseService):
             if t.get("destination", {}).get("delivery_type") == "content_api"
         }
         query = {"$and": [{ID_FIELD: {"$in": subscriber_ids}}]}
-        subscribers = list(get_resource_service("subscribers").get(req=None, lookup=query))
+        subscribers = await (await SubscribersResource.get_service().search(query)).to_list()
 
-        for subscriber in subscribers:
-            subscriber["api_enabled"] = subscriber.get(ID_FIELD) in api_subscribers
-
-        await publish_item(item, subscribers=subscribers)
+        # TODO-ASYNC: Killing doesn't work from ``archived`` when item doesn't exist in ``published`` collection
+        #             As ``content`` PublishExchange expects it to exist in ``published`` collection
+        await publish_item(
+            item,
+            subscribers=subscribers,
+            published_state="killed",
+            publish_to_content_api=True,
+        )
         logger.info("Queued Transmission for article: {}".format(item[ID_FIELD]))
         if content_api.is_enabled():
             await get_resource_service("content_api").publish_async(
-                item, [subscriber for subscriber in subscribers if subscriber["api_enabled"]]
+                item, [subscriber.to_dict() for subscriber in subscribers if subscriber.id in api_subscribers]
             )
 
     async def on_updated_async(self, updates, original):

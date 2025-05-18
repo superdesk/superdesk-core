@@ -437,7 +437,7 @@ class LegalArchiveImport:
         if expired_items is None:
             expired_items = []
 
-        query = {"moved_to_legal": False}
+        query: dict = {"moved_to_legal": False}
 
         if expired_items:
             query["item_id"] = {"$in": expired_items}
@@ -453,18 +453,23 @@ class LegalArchiveImport:
         service = PublishQueueResource.get_service()
         cursor = await service.find(query, sort=[("_id", 1)])
         count = await cursor.count()
+
+        if count == 0:
+            logger.info("No items to move to legal archive publish queue")
+            return
+
         no_of_pages = 0
         queue_id = None
         if count:
             no_of_pages = len(range(0, count, page_size))
             queue_id = (await cursor.next()).id
-            cursor.rewind()
         logger.info("Number of items to move to legal archive publish queue: {}, pages={}".format(count, no_of_pages))
 
         for page in range(0, no_of_pages):
             logger.info(
                 "Fetching publish queue items " "for page number: {}. queue_id: {}".format((page + 1), queue_id)
             )
+            query["_id"] = {"$gte": str(queue_id)}
             cursor = await service.find(query, sort=[("_id", 1)], max_results=page_size)
             items = [item.to_dict(context={"use_objectid": True}) async for item in cursor]
             if len(items) > 0:

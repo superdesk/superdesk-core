@@ -47,7 +47,7 @@ class Formatter:
         formatters.append(cls)
 
     def format(
-        self, article: dict, subscriber: dict, codes: list | None = None
+        self, article: dict, subscriber: dict | None, codes: list | None = None
     ) -> FormatReturnType | Awaitable[FormatReturnType]:
         """Formats the article.
 

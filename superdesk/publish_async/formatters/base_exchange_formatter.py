@@ -1,6 +1,7 @@
 import logging
 from inspect import isawaitable
 from io import BytesIO
+from copy import deepcopy
 
 from bson import ObjectId
 from quart_babel import gettext
@@ -142,7 +143,7 @@ class BasePublishExchangeFormatter(PublishExchangeFormatter):
 
             formatter.set_destination(destination.to_dict(), subscriber_dict)
             tasks.extend(
-                await self.get_task_for_destination(
+                await self.get_tasks_for_destination(
                     request,
                     item,
                     subscriber,
@@ -156,7 +157,7 @@ class BasePublishExchangeFormatter(PublishExchangeFormatter):
 
         return tasks, no_formatters
 
-    async def get_task_for_destination(
+    async def get_tasks_for_destination(
         self,
         request: PublishRequest,
         item: dict,
@@ -200,7 +201,7 @@ class BasePublishExchangeFormatter(PublishExchangeFormatter):
 
         if publish_queue_items is not None:
             # Item is available in the PublishCache
-            for publish_queue_item in publish_queue_items:
+            for publish_queue_item in deepcopy(publish_queue_items):
                 publish_queue_item.id = ObjectId()
                 publish_queue_item.state = (
                     PublishQueueState.SUCCESS

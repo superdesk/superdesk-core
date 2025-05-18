@@ -23,7 +23,9 @@ class IDMLFormatter(Formatter):
         super(self.__class__, self).__init__()
         self.format_type = "idml"
 
-    async def format(self, article: dict, subscriber: dict, codes: list | None = None) -> list[tuple[int, str] | dict]:
+    async def format(
+        self, article: dict, subscriber: dict | None, codes: list | None = None
+    ) -> list[tuple[int, str] | dict]:
         try:
             publish_seq_num = await generate_sequence_number(subscriber)
             idml_bytes = Converter().create_idml(article)

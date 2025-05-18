@@ -12,11 +12,10 @@
 import os
 import io
 import time
-from typing import Any
 import arrow
 import celery
 import shutil
-import responses
+from aioresponses import aioresponses
 import operator
 
 from unittest import mock
@@ -521,6 +520,11 @@ async def step_impl_given_(context, resource):
         context.resource = resource
         try:
             setattr(context, resource, items[-1])
+
+            # Allow using IDs from multiple items created
+            # such as #products_0._id#, #products_1._id#
+            for index, item_id in enumerate(items):
+                setattr(context, f"{resource}_{index}", item_id)
         except KeyError:
             pass
 
@@ -647,7 +651,7 @@ async def step_impl_fetch_from_provider_ingest_with_mocking(context, provider_na
     async with context.app.test_request_context(context.app.config["URL_PREFIX"]):
         provider = await find_one("ingest_providers", name=provider_name)
 
-        with responses.RequestsMock() as rsps:
+        with aioresponses() as rsps:
             apply_mock_file(rsps, mock_file, fixture_path=get_provider_file_path(provider))
             await fetch_from_provider(context, provider_name, guid)
 
@@ -846,17 +850,17 @@ async def fetch_from_provider(context, provider_name, guid, routing_scheme=None,
         set_placeholder(context, "{}.{}".format(provider_name, item["guid"]), item["_id"])
 
 
-def apply_mock_file(rsps, mock_file, fixture_path=None):
+def apply_mock_file(rsps: aioresponses, mock_file_path: str, fixture_path: Path | str | None = None) -> None:
     """Parse the mock file and apply it
 
-    This must be executed inside a responses context.
+    This must be executed inside a aioresponses context.
     :param rsps: responses context object
     :param mock_file: name of the mock_file (inside fixture path)
     :param fixture_path: path to the directory containing the file for "binary"
     """
-    mock_file = os.path.join(str(fixture_path), mock_file)
-    with open(mock_file) as f:
-        mocks = json.load(f)
+    mock_file_path = os.path.join(str(fixture_path), mock_file_path)
+    with open(mock_file_path) as f:
+        mocks: dict = json.load(f)
     for mock_url, mock_data in mocks.get("requests", {}).items():
         for verb, verb_data in mock_data.items():
             verb = verb.upper()
@@ -879,7 +883,7 @@ def apply_mock_file(rsps, mock_file, fixture_path=None):
                     kwargs["body"] = f.read()
                 content_type = verb_data.get("content_type", "application/octet-stream")
 
-            rsps.add(verb, mock_url, content_type=content_type, **kwargs)
+            rsps.add(mock_url, method=verb, content_type=content_type, **kwargs)
 
 
 @when('we post to "{url}"')
@@ -1273,7 +1277,7 @@ async def step_impl_when_upload_from_url(context):
     headers = unique_headers(headers, context.headers)
     fixture_path = Path(superdesk.__file__).parent.parent / "tests" / "io" / "fixtures"
 
-    with responses.RequestsMock() as rsps:
+    with aioresponses() as rsps:
         apply_mock_file(rsps, "upload_from_url_mock.json", fixture_path=fixture_path)
         context.response = await context.client.post(
             get_prefixed_url(context.app, "/upload"), form=data, headers=headers
@@ -1288,7 +1292,7 @@ async def step_impl_when_upload_from_url_with_crop(context):
     headers = unique_headers(headers, context.headers)
     fixture_path = Path(superdesk.__file__).parent.parent / "tests" / "io" / "fixtures"
 
-    with responses.RequestsMock() as rsps:
+    with aioresponses() as rsps:
         apply_mock_file(rsps, "upload_from_url_mock.json", fixture_path=fixture_path)
         context.response = await context.client.post(
             get_prefixed_url(context.app, "/upload"), form=data, headers=headers
@@ -1390,6 +1394,7 @@ async def step_impl_then_get_formatted_output_as_story(context, value, group, su
     await assert_200(context.response)
     value = apply_placeholders(context, value)
     data = await get_json_data(context.response)
+    sub = apply_placeholders(context, sub)
     for item in data["_items"]:
         if item["subscriber_id"] != sub:
             continue
@@ -1412,6 +1417,7 @@ async def step_impl_then_get_formatted_output_pck(context, value, group, sub, pc
     await assert_200(context.response)
     value = apply_placeholders(context, value)
     data = await get_json_data(context.response)
+    sub = apply_placeholders(context, sub)
     for item in data["_items"]:
         if item["item_id"] != pck:
             continue
@@ -3138,6 +3144,7 @@ async def then_we_get_picture_metadta(context, media):
 @then('we check "{resource}" db item "{item_id}"')
 @async_run_until_complete
 async def check_resource_db_item(context, resource: str, item_id: str):
+    item_id = apply_placeholders(context, item_id)
     item = await find_by_id(resource, item_id)
     assert item is not None, "Item not found"
 

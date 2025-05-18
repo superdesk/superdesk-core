@@ -39,11 +39,12 @@ class ArchiveMediaService:
 
     type_av = {"image": CONTENT_TYPE.PICTURE, "audio": CONTENT_TYPE.AUDIO, "video": CONTENT_TYPE.VIDEO}
 
-    def on_create(self, docs):
+    async def on_create_async(self, docs):
         """Create corresponding item on file upload."""
-        # TODO-ASYNC[archive_media_service]: Make this method async.
 
         app = get_current_app()
+        res = None
+        inserted = []
         for doc in docs:
             if "media" not in doc or doc["media"] is None:
                 abort(400, description="No media found")
@@ -67,14 +68,14 @@ class ArchiveMediaService:
                         file, doc["media"], inserted, file_type, content_type, rendition_spec, url_for_media
                     )
             try:
-                self._set_metadata(doc)
+                await self._set_metadata(doc)
                 doc[ITEM_TYPE] = self.type_av.get(file_type)
                 doc[ITEM_STATE] = CONTENT_STATE.PROGRESS
                 doc["renditions"] = renditions
                 doc["mimetype"] = content_type
                 set_filemeta(doc, metadata)
                 # TODO-ASYNC[activity]: Prefix this next line with `await ` when updating this module
-                add_activity(
+                await add_activity(
                     "upload",
                     "uploaded media {{ name }}",
                     "archive",
@@ -87,10 +88,10 @@ class ArchiveMediaService:
                 for file_id in inserted:
                     delete_file_on_error(doc, file_id)
                 if res:
-                    self.video_editor.delete(res.get("_id"))
+                    self.video_editor._delete(res.get("_id"))
                 abort(500)
 
-    def _set_metadata(self, doc):
+    async def _set_metadata(self, doc):
         """
         Adds metadata to doc.
         """
@@ -100,7 +101,7 @@ class ArchiveMediaService:
         doc.setdefault("guid", generate_guid(type=GUID_TAG))
         doc.setdefault(ID_FIELD, doc["guid"])
         doc[VERSION] = 1
-        set_item_expiry({}, doc)
+        await set_item_expiry({}, doc)
 
         if not doc.get("_import", None):
             set_original_creator(doc)

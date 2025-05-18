@@ -39,6 +39,7 @@ from datetime import timedelta
 from werkzeug.exceptions import Conflict
 from .common import remove_media_files
 from celery.exceptions import SoftTimeLimitExceeded
+from superdesk.publish_async.publish_cache import PublishCache
 from superdesk.publish_async.utils import item_matches_content_filter
 
 logger = logging.getLogger(__name__)
@@ -101,6 +102,7 @@ class RemoveExpiredContent:
             logger.info("{} Removing expired content for expiry.".format(self.log_msg))
             # all functions should be called, even the first one throw exception,
             # so they are wrapped with log_exeption
+            await PublishCache.init()
             await self._remove_expired_publish_queue_items(now)
             await self._remove_expired_items(now)
             await self._remove_expired_archived_items(now)

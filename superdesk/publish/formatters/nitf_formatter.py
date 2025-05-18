@@ -138,7 +138,9 @@ class NITFFormatter(Formatter):
             "style": {"nitf": EraseElement},  # <style> may be there in case of bad paste
         }
 
-    async def format(self, article: dict, subscriber: dict, codes: list | None = None) -> list[tuple[int, str] | dict]:
+    async def format(
+        self, article: dict, subscriber: dict | None, codes: list | None = None
+    ) -> list[tuple[int, str] | dict]:
         try:
             pub_seq_num = await generate_sequence_number(subscriber)
 

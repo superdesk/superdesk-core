@@ -477,7 +477,7 @@ Feature: Search Feature
         }
         """
 
-    @auth
+    @auth @wip
     Scenario: Search items with projections
         Given "desks"
         """

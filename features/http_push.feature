@@ -11,6 +11,7 @@ Feature: HTTP Push publishing
         """
         [{
             "name": "http",
+            "email": "test@test.com",
             "media_type": "media",
             "is_active": true,
             "subscriber_type": "digital",
@@ -69,6 +70,7 @@ Feature: HTTP Push publishing
         Then we get OK response
 
         When we transmit published
+        # TODO-ASYNC: We're using mock PublishConsumer, so HTTP push is not actually happening
         Then we pushed 1 item
         """
         [{

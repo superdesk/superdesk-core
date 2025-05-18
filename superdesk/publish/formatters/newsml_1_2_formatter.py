@@ -52,7 +52,9 @@ class NewsML12Formatter(Formatter):
     name = "NewsML 1.2"
     type = "newsml12"
 
-    async def format(self, article: dict, subscriber: dict, codes: list | None = None) -> list[tuple[int, str] | dict]:
+    async def format(
+        self, article: dict, subscriber: dict | None, codes: list | None = None
+    ) -> list[tuple[int, str] | dict]:
         """
         Create article in NewsML1.2 format
 

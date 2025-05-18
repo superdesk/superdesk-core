@@ -1541,7 +1541,7 @@ Feature: News Items Archive
     @auth
     @vocabulary
     Scenario: Uploaded image should not get DEFAULT_CONTENT_TYPE assigned
-        Given config
+        Given config update
         """
         {"DEFAULT_CONTENT_TYPE": "bar"}
         """

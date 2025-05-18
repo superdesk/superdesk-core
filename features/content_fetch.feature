@@ -595,7 +595,7 @@ Feature: Fetch Items from Ingest
 
     @auth
     Scenario: Use default content profiles when fetching text item
-        Given config
+        Given config update
         """
         {"DEFAULT_CONTENT_TYPE": "bar"}
         """

@@ -174,7 +174,7 @@ Feature: Content Filter Tests
   Scenario: Test single article from ingest
     Given "ingest"
     """
-    [{"guid": 1, "_id": 1, "urgency": 1}]
+    [{"guid": "abcd123", "_id": "abcd123", "urgency": 1}]
     """
     Given empty "filter_conditions"
     When we post to "/filter_conditions" with success
@@ -189,7 +189,7 @@ Feature: Content Filter Tests
     """
     When we post to "/content_filters/test"
     """
-    {"filter_id": "#content_filters._id#", "article_id":"1"}
+    {"filter_id": "#content_filters._id#", "article_id":"abcd123"}
     """
     Then we get existing resource
     """

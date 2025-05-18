@@ -307,6 +307,8 @@ Feature: Stages
 
     @auth
     Scenario: Reordering of stages
+        Given empty "desks"
+        And empty "stages"
         Given "desks"
         """
         [
@@ -316,18 +318,20 @@ Feature: Stages
         Given "stages"
         """
         [
-            {"_id": "first", "desk": "#desks._id#", "name": "first", "order": 1},
-            {"_id": "second", "desk": "#desks._id#", "name": "second", "order": 2},
-            {"_id": "third", "desk": "#desks._id#", "name": "third", "order": 3}
+            {"_id": "1826418ecc7602033e9252a1", "desk": "#desks._id#", "name": "first", "order": 3},
+            {"_id": "1826418ecc7602033e9252a2", "desk": "#desks._id#", "name": "second", "order": 4},
+            {"_id": "1826418ecc7602033e9252a3", "desk": "#desks._id#", "name": "third", "order": 5}
         ]
         """
         When we get "stages"
-        Then we get ordered list with 3 items
+        Then we get ordered list with 5 items
         """
         {"_items": [
-            {"_id": "first"},
-            {"_id": "second"},
-            {"_id": "third"}
+            {"_id": "#desks.working_stage#"},
+            {"_id": "#desks.incoming_stage#"},
+            {"_id": "1826418ecc7602033e9252a1"},
+            {"_id": "1826418ecc7602033e9252a2"},
+            {"_id": "1826418ecc7602033e9252a3"}
         ]}
         """
         When we post to "stages_order"
@@ -335,20 +339,24 @@ Feature: Stages
         {
             "desk": "#desks._id#",
             "stages": [
-                "second",
-                "third",
-                "first"
+                "#desks.working_stage#",
+                "1826418ecc7602033e9252a2",
+                "1826418ecc7602033e9252a3",
+                "1826418ecc7602033e9252a1",
+                "#desks.incoming_stage#"
             ]
         }
         """
         Then we get OK response
         When we get "stages"
-        Then we get ordered list with 3 items
+        Then we get ordered list with 5 items
         """
         {"_items": [
-            {"_id": "second"},
-            {"_id": "third"},
-            {"_id": "first"}
+            {"_id": "#desks.working_stage#"},
+            {"_id": "1826418ecc7602033e9252a2"},
+            {"_id": "1826418ecc7602033e9252a3"},
+            {"_id": "1826418ecc7602033e9252a1"},
+            {"_id": "#desks.incoming_stage#"}
         ]}
         """
         When we post to "stages"
@@ -357,12 +365,14 @@ Feature: Stages
         """
         Then we get ok response
         When we get "stages"
-        Then we get ordered list with 4 items
+        Then we get ordered list with 6 items
         """
         {"_items": [
-            {"_id": "second"},
-            {"_id": "third"},
-            {"_id": "first"},
+            {"_id": "#desks.working_stage#"},
+            {"_id": "1826418ecc7602033e9252a2"},
+            {"_id": "1826418ecc7602033e9252a3"},
+            {"_id": "1826418ecc7602033e9252a1"},
+            {"_id": "#desks.incoming_stage#"},
             {"_id": "#stages._id#"}
         ]}
         """

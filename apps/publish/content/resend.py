@@ -83,7 +83,7 @@ class ResendService(AsyncBaseService):
                 item=article,
                 item_id=article[ID_FIELD],
                 item_type=article[ITEM_TYPE],
-                operation=article.get(ITEM_OPERATION),
+                operation="resend",
                 published_state=article[ITEM_STATE],
                 sender_type=PublishSenderType.API,
                 publish_to_content_api=True,

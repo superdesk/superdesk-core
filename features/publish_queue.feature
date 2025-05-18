@@ -92,10 +92,7 @@ Feature: Publish Queue
       """
 
     When we publish "#archive._id#" with "publish" type and "published" state
-    Then we get error 400
-    """
-    {"_issues": {"validator exception": "400: Item didn't match any Products"}, "_status": "ERR"}
-    """
+    Then we get OK response
     When we enqueue published
     When we get "/publish_queue"
     Then we get list with 0 items

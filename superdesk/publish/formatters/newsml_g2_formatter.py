@@ -72,7 +72,9 @@ class NewsMLG2Formatter(Formatter):
     def _format_date(self, date):
         return date.strftime("%Y-%m-%dT%H:%M:%S+00:00")
 
-    async def format(self, article: dict, subscriber: dict, codes: list | None = None) -> list[tuple[int, str] | dict]:
+    async def format(
+        self, article: dict, subscriber: dict | None, codes: list | None = None
+    ) -> list[tuple[int, str] | dict]:
         """Create article in NewsML G2 format
 
         :param dict article:

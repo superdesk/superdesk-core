@@ -47,14 +47,14 @@ class InternalDestinationsService(AsyncBaseService):
     pass
 
 
-async def handle_item_published(item, desk=None, **extra):
+async def handle_item_published(item, after_scheduled):
     macros_service = get_resource_service("macros")
     archive_service = get_resource_service("archive")
     filters_service = ContentFiltersResource.get_service()
     destinations_service = get_resource_service(NAME)
 
     for dest in destinations_service.get(req=None, lookup={"is_active": True}):
-        item_desk = desk["_id"] if desk is not None else item.get("task").get("desk")
+        item_desk = item.get("task").get("desk")
         if dest.get("desk") == item_desk:
             # item desk and internal destination are same then don't execute
             continue
@@ -65,12 +65,12 @@ async def handle_item_published(item, desk=None, **extra):
                 continue
             if not item_matches_content_filter(item, content_filter):
                 continue
-        if not extra.get("after_scheduled") and item[PUBLISH_SCHEDULE] is not None and dest.get("send_after_schedule"):
+        if not after_scheduled and item[PUBLISH_SCHEDULE] is not None and dest.get("send_after_schedule"):
             # if "after_schedule" is set to False  and item[PUBLISH_SCHEDULE] is not None (in case of scheduled item)
             # and send_after_schedule is True then don't execute
             # item is being published immediately not depend on config send_after_schedule
             continue
-        if extra.get("after_scheduled") and not dest.get("send_after_schedule"):
+        if after_scheduled and not dest.get("send_after_schedule"):
             # if after_schedule is set to True and send_after_schedule is False
             # then don't execute
             continue
