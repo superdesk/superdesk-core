@@ -39,7 +39,7 @@ class SearchProviderProxyService(SearchIngestService):
     Old implementations will get forwarded to its service.
     """
 
-    def get_provider(self, provider_id=None, req=None):
+    async def get_provider(self, provider_id=None, req=None):
         if not provider_id:
             provider_id = req.args.get("repo") if req else request.args.get("repo")
         if provider_id is None:
@@ -48,7 +48,7 @@ class SearchProviderProxyService(SearchIngestService):
             bson.ObjectId(provider_id)
         except bson.errors.InvalidId:
             return provider_id
-        provider = superdesk.get_resource_service("search_providers").find_one(req=None, _id=provider_id)
+        provider = await superdesk.get_resource_service("search_providers").find_one_async(req=None, _id=provider_id)
         if not provider:
             abort(400)
         if provider.get("is_closed"):
@@ -62,22 +62,22 @@ class SearchProviderProxyService(SearchIngestService):
             return provider if "," not in provider and provider else "search"
         provider_data = registered_search_providers[provider["search_provider"]]
         try:
-            return provider_data.endpoint
+            return provider_data["endpoint"]
         except KeyError:
-            return provider_data.provider_class(provider)
+            return provider_data["class"](provider)
 
-    def get(self, req, lookup):
+    async def get_async(self, req, lookup):
         """Search using provider."""
-        provider = self.get_provider(req=req)
+        provider = await self.get_provider(req=req)
         service = self._get_service(provider)
         if isinstance(service, str):
-            return superdesk.get_resource_service(service).get(req, lookup)
+            return await superdesk.get_resource_service(service).get_async(req, lookup)
         query = self._get_query(req)
         params = json.loads(req.args["params"]) if req.args.get("params") else {}
         try:
-            items = service.find(query, params)
+            items = await service.find_async(query, params)
         except TypeError:  # BC
-            items = service.find(query)
+            items = await service.find_async(query)
         if isinstance(items, list):
             items = ListCursor(items)
         for item in items:
@@ -86,28 +86,28 @@ class SearchProviderProxyService(SearchIngestService):
 
     async def create_async(self, docs, **kwargs):
         """Archive items from provider."""
-        provider = self.get_provider()
+        provider = await self.get_provider()
         service = self._get_service(provider)
         if isinstance(service, str):
-            return superdesk.get_resource_service(service).create(docs, **kwargs)
+            return await superdesk.get_resource_service(service).create_async(docs, **kwargs)
         return await super().create_async(docs, **kwargs)
 
-    def fetch(self, guid, provider_id=None):
+    async def fetch_async(self, guid, provider_id=None):
         """Fetch single item from provider to archive it."""
-        provider = self.get_provider(provider_id)
+        provider = await self.get_provider(provider_id)
         service = self._get_service(provider)
         if isinstance(service, str):
-            return superdesk.get_resource_service(service).fetch(guid)
-        item = service.fetch(guid)
+            return await superdesk.get_resource_service(service).fetch_async(guid)
+        item = await service.fetch_async(guid)
         self._set_item_defaults(item, provider)
         return item
 
-    def fetch_rendition(self, rendition, item):
+    async def fetch_rendition(self, rendition, item):
         """Fetch binary from provider."""
-        provider = self.get_provider(provider_id=item.get("ingest_provider"))
+        provider = await self.get_provider(provider_id=item.get("ingest_provider"))
         service = self._get_service(provider)
         if isinstance(service, str):
-            return superdesk.get_resource_service(service).fetch_rendition(self, rendition)
+            return await superdesk.get_resource_service(service).fetch_rendition(self, rendition)
         return service.fetch_file(rendition.get("href"), rendition=rendition, item=item)
 
     def _set_item_defaults(self, item, provider):

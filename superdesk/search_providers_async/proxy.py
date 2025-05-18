@@ -14,7 +14,7 @@ from typing import Annotated, Any, cast
 from quart import abort, request
 
 from apps.io.search_ingest import SearchIngestServiceAsync
-from apps.search_providers.service import SearchProviderServiceAsync
+from apps.search_providers.service import SearchProviderService
 from superdesk import get_resource_service
 from superdesk.core.auth.privilege_rules import required_privilege_rule
 from superdesk.core.resources import fields
@@ -51,7 +51,7 @@ async def get_provider(provider_id: str | None = None) -> dict[str, Any] | str:
     # TODO-ASYNC [search_providers]: use the Async service
     search_providers_service = get_resource_service("search_providers")
     assert search_providers_service is not None
-    search_providers_service = cast(SearchProviderServiceAsync, search_providers_service)
+    search_providers_service = cast(SearchProviderService, search_providers_service)
     provider = await search_providers_service.find_one_async(req=None, _id=provider_id)
     if not provider:
         abort(400)
@@ -97,7 +97,7 @@ async def search_items(lookup: dict[str, Any], provider_id: str | None = None) -
     if isinstance(service, str):
         resource_service = get_resource_service(service)
         assert resource_service is not None
-        resource_service = cast(SearchProviderServiceAsync, resource_service)
+        resource_service = cast(SearchProviderService, resource_service)
         return await resource_service.get_async(req=None, lookup=lookup)
 
     query = lookup.get("query", {})
@@ -133,7 +133,7 @@ async def search_providers_proxy(request: Request) -> Response:
         if isinstance(service, str):
             resource_service = get_resource_service(service)
             assert resource_service is not None
-            resource_service = cast(SearchProviderServiceAsync, resource_service)
+            resource_service = cast(SearchProviderService, resource_service)
             assert resource_service.is_async
             result = await resource_service.create_async(data)
         else:
