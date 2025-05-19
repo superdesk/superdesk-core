@@ -1730,12 +1730,12 @@ def when_we_switch_user(context):
 
 @when("we setup test user")
 def when_we_setup_test_user(context):
-    try:
+    if context.text:
         user_data = json.loads(apply_placeholders(context, context.text))
         user_data.setdefault("username", "test-user-123")
         user_data.setdefault("password", "pwd")
         user_data.setdefault("email", "test123@example.com")
-    except ValueError:
+    else:
         user_data = deepcopy(tests.test_user)
 
     tests.setup_auth_user(context, user_data)
