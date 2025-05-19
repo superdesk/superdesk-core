@@ -1,5 +1,5 @@
 from bson import ObjectId
-from datetime import datetime
+from datetime import datetime, date
 from apps.user_availability import generate_user_availability
 
 
@@ -43,12 +43,17 @@ def test_user_availability_generator(app):
 
     generated = list(app.data.find_all("user_availability"))
     assert len(generated) == 12
-    assert generated[0]["user"] == active_user_id
-    assert generated[0]["status"] == "available"
-    assert generated[0]["language"] == ["en"]
+    generated_length = len(generated)
 
-    assert datetime.fromisoformat(generated[0]["date"]).isoweekday() == 1
+    for item in generated:
+        if date.fromisoformat(item["date"]).weekday() == 0 and item["user"] == active_user_id:
+            assert item["status"] == "available"
+            assert item["language"] == ["en"]
+            break
+    else:
+        raise AssertionError("Monday availability not found")
 
     generate_user_availability.apply()
 
-    assert len(generated) == 12
+    generated = list(app.data.find_all("user_availability"))
+    assert len(generated) == generated_length

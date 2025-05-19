@@ -24,7 +24,7 @@ class AvailabilityResource(Resource):
         "status": {
             "type": "string",
             "required": True,
-            "allowed": ["available", "unavailable", "partial"],
+            "allowed": ["available", "unavailable", "partial", "not-set"],
         },
         "language": {
             "type": "list",
@@ -65,10 +65,16 @@ class AvailabilityResource(Resource):
     item_methods = ["GET", "PATCH", "PUT", "DELETE"]
     resource_methods = ["GET", "POST"]
     no_privileges = True
+    mongo_indexes = {
+        "date_user": ([("date", 1), ("user", 1)], {"unique": True}),
+    }
 
 
 class AvailabilityService(superdesk.Service):
     default_service: "DefaultAvailabilityService"
+
+    def on_update(self, updates, original):
+        updates["_generated"] = False
 
     def on_create(self, docs):
         for doc in docs:
