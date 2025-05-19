@@ -259,7 +259,6 @@ class ElasticResources:
             try:
                 alias_info = resource_client.elastic.indices.get_alias(name=index_alias)
                 for index in alias_info:
-                    print(f"- Removing index alias={index_alias} index={index}")
                     delete_index_fn(index=index)
             except NotFoundError:
                 try:

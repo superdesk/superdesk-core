@@ -230,9 +230,8 @@ class SearchService(AsyncBaseService):
         """
         Runs elastic search on multiple doc types.
         """
-
         query = self._get_query(req)
-        projection = self._get_projection(req)
+        fields = self._get_projected_fields(req)
         types = self._get_types(req)
         excluded_stages = await self.get_stages_to_exclude_async()
         filters = self._get_filters(types, excluded_stages)
@@ -244,12 +243,11 @@ class SearchService(AsyncBaseService):
         if filters:
             set_filters(query, filters)
 
-        async_app = get_current_async_app()
-        indexes = [async_app.elastic.get_elastic_index_name(resource) for resource in types]
+        params = {}
+        if fields:
+            params["_source"] = fields
 
-        elastic = ArchiveResourceModel.get_service().elastic
-        hits = await elastic.search(fix_query(query), indexes, projection)
-        cursor = self.elastic_async._parse_hits_async(hits, types[0])
+        cursor = await self.elastic_async.search(query, types, params)
 
         app = get_current_app().as_any()
         for resource in types:

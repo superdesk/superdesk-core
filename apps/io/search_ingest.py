@@ -47,24 +47,24 @@ class SearchIngestService(AsyncBaseService):
         super().__init__(datasource, backend)
         self.source = source
 
-    def get_provider(self):
-        provider = get_resource_service("search_providers").find_one(source=self.source, req=None)
+    async def get_provider(self):
+        provider = await get_resource_service("search_providers").find_one_async(source=self.source, req=None)
         if provider and "config" in provider and "username" in provider["config"]:
             self.backend.set_credentials(provider["config"]["username"], provider["config"].get("password", ""))
         return provider
 
-    def fetch(self, guid):
-        return self.backend.find_one_raw(guid, guid)
+    async def fetch_async(self, guid):
+        return self.backend.find_one_raw_async(guid, guid)
 
     async def create_async(self, docs, **kwargs):
         new_guids = []
-        provider = self.get_provider()
+        provider = await self.get_provider()
         for doc in docs:
             if not doc.get("desk"):
                 # if no desk is selected then it is bad request
                 raise SuperdeskApiError.badRequestError(_("Destination desk cannot be empty."))
             try:
-                archived_doc = self.fetch(doc["guid"])
+                archived_doc = await self.fetch_async(doc["guid"])
             except FileNotFoundError as ex:
                 raise await ProviderError.externalProviderError(ex, provider).send_notifications()
 

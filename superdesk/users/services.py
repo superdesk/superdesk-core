@@ -102,9 +102,8 @@ def get_invisible_stages(user_id):
 
 
 async def get_invisible_stages_async(user_id):
-    user_desk_ids = await DesksResourceModel.get_service().mongo_async.distinct(
-        "_id", {"members.user": [ObjectId(user_id)]}
-    )
+    user_desks = await get_resource_service("user_desks").get_async(req=None, lookup={"user_id": user_id})
+    user_desk_ids = [d["_id"] async for d in user_desks]
     return await get_resource_service("stages").get_stages_by_visibility_async(False, user_desk_ids)
 
 

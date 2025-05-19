@@ -264,7 +264,7 @@ CONTENTAPI_ELASTICSEARCH_SETTINGS = {
                     "filter": ["lowercase"],
                     "tokenizer": "standard",
                     "char_filter": ["html_strip_filter"],
-                }
+                },
             },
         }
     }

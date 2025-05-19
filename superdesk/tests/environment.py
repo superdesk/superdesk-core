@@ -70,8 +70,6 @@ async def before_scenario_async(context, scenario):
     if "clean_snapshots" in scenario.tags:
         tests.use_snapshot.cache.clear()
 
-    setup_search_provider(context.app)
-
     if scenario.status != "skipped" and "auth" in scenario.tags:
         await setup_auth_user(context)
 
@@ -114,6 +112,7 @@ def before_feature(context, feature):
 
 
 async def before_feature_async(context, feature):
+    setup_search_provider()
     config = getattr(setup_before_all, "config", None)
     if config is not None:
         app_factory = setup_before_all.app_factory
@@ -188,7 +187,7 @@ def before_step(context, step):
             pass
 
 
-def setup_search_provider(app):
+def setup_search_provider():
     from apps.search_providers import register_search_provider, allowed_search_providers
 
     if "testsearch" not in allowed_search_providers:
