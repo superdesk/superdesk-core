@@ -23,7 +23,7 @@ from superdesk.publish_async.publish_cache import PublishCache
 publish_endpoints = EndpointGroup("publish", __name__)
 
 
-@publish_endpoints.endpoint("filter_conditions/parameters", "filter_conditions_parameters", methods=["GET"])
+@publish_endpoints.endpoint("filter_conditions/parameters", "filter_conditions/parameters", methods=["GET"])
 async def content_params_endpoint() -> Response:
     params = await get_available_filter_params()
     return Response(
