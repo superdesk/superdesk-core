@@ -251,8 +251,14 @@ ELASTICSEARCH_SETTINGS = {
 CONTENTAPI_ELASTICSEARCH_SETTINGS = {
     "settings": {
         "analysis": {
+            "filter": {"remove_hyphen": {"pattern": "[-]", "type": "pattern_replace", "replacement": " "}},
             "char_filter": {"html_strip_filter": {"type": "html_strip"}},
             "analyzer": {
+                "phrase_prefix_analyzer": {
+                    "type": "custom",
+                    "filter": ["remove_hyphen", "lowercase"],
+                    "tokenizer": "keyword",
+                },
                 "html_field_analyzer": {
                     "type": "custom",
                     "filter": ["lowercase"],

@@ -278,10 +278,6 @@ class TasksService(AsyncBaseService):
                     type=doc[ITEM_TYPE],
                 )
 
-    async def on_update(self, updates, original):
-        convert_task_attributes_to_objectId(updates)
-        update_version(updates, original)
-
     async def on_update_async(self, updates, original):
         self.update_times(updates)
         if is_assigned_to_a_desk(updates):
@@ -293,6 +289,8 @@ class TasksService(AsyncBaseService):
             updates[ITEM_OPERATION] = ITEM_SEND
             await send_to(doc=original, update=updates, desk_id=None, stage_id=new_stage_id, user_id=new_user_id)
             resolve_document_version(updates, ARCHIVE, "PATCH", original)
+        convert_task_attributes_to_objectId(updates)
+        update_version(updates, original)
 
     async def on_updated_async(self, updates, original):
         updated = copy(original)
