@@ -1,3 +1,4 @@
+import flask
 import superdesk
 
 from typing import TYPE_CHECKING
@@ -87,7 +88,7 @@ class DefaultAvailabilityResource(Resource):
 
     item_methods = ["GET", "PUT"]
     resource_methods = ["GET"]
-    privileges = {"PUT": "users"}
+    no_privileges = True
 
 
 class DefaultAvailabilityService(superdesk.Service):
@@ -106,7 +107,7 @@ class DefaultAvailabilityService(superdesk.Service):
     def validate_user_id(self, document):
         current_user_id = get_user_id()
         if str(document["_id"]) != str(current_user_id):
-            raise SuperdeskApiError("You can only modify your own availability settings.", 403)
+            return flask.abort(flask.Response("You can only modify your own availability settings.", 403))
 
     def on_created(self, docs):
         """Event handler for created event."""
