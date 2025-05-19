@@ -1129,7 +1129,7 @@ Feature: Auto Routing
          {"_issues": {"validator exception": "[['HEADLINE is too long']]"}, "_status": "ERR"}
         """
 
-    @auth @provider @vocabulary @wip
+    @auth @provider @vocabulary
     Scenario: Content is fetched and published using desk profile
         Given config update
         """

@@ -283,14 +283,14 @@ class DesksService(AsyncBaseService):
                     self.datasource,
                     notify=added,
                     can_push_notification=False,
-                    user=user.username,
+                    user=user.get("username"),
                     desk=desk.get("name"),
                 )
                 push_notification("activity", _dest=activity["recipients"])
                 await users_service.update_stage_visibility_for_user_async(user)
 
             for removed_user in removed:
-                user = await users_service.find_by_id(removed_user)
+                user = await users_service.find_one_async(req=None, _id=removed_user)
                 await users_service.update_stage_visibility_for_user_async(user)
 
         else:

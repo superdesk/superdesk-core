@@ -453,7 +453,7 @@ class ArchiveService(AsyncBaseService, HighlightsSearchMixin):
         users_service = get_resource_service("users")
 
         try:
-            if item["task"]["stage"] in await users_service.get_invisible_stages_ids_async(get_user_id()):
+            if item and str(item["task"]["stage"]) in await users_service.get_invisible_stages_ids_async(get_user_id()):
                 raise SuperdeskApiError.forbiddenError(_("User does not have permissions to read the item."))
         except (KeyError, TypeError):
             pass

@@ -155,7 +155,7 @@ Feature: Publish embedded items feature
     """
 
     @auth
-    @vocabulary @wip
+    @vocabulary
     Scenario: Publish embedded picture together with text item - no other ops
         When we post to "archive"
         """

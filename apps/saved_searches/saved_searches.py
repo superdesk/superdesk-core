@@ -18,8 +18,9 @@ from eve_elastic.elastic import build_elastic_query
 from apps.archive.common import get_user
 from superdesk import Resource, get_resource_service
 from superdesk.core.types.common import ItemId
-from superdesk.eve_async.cursors import AsyncEveCursor
+from superdesk.eve_async.cursors import AsyncEveCursor, AsyncListCursor
 from superdesk.eve_async.service import AsyncBaseService
+from superdesk.utils import ListCursor
 from superdesk.errors import SuperdeskApiError
 from superdesk.notification import push_notification
 from superdesk.users.services import current_user_has_privilege
@@ -139,21 +140,21 @@ class SavedSearchesService(AsyncBaseService):
             if "subscribers" in doc:
                 raise SuperdeskApiError.forbiddenError(_("User's subscriptions are not allowed on create"))
 
-            self.process(doc)
+            await self.process(doc)
         push_notification(UPDATE_NOTIFICATION)
 
     async def on_created_async(self, docs: list[dict]) -> None:
         for doc in docs:
             doc["filter"] = decode_filter(doc["filter"])
 
-    def process(self, doc):
+    async def process(self, doc):
         """
         Validates, constructs and runs the query in the document
         """
         repo, query = self.process_query(doc)
         if repo.find(",") >= 0:
             repo = repo.split(",").pop(0)
-        self.validate_and_run_elastic_query(query, repo)
+        await self.validate_and_run_elastic_query(query, repo)
         doc["filter"] = encode_filter(doc.get("filter"))
 
     def process_subscription(self, updates, original):
@@ -189,7 +190,7 @@ class SavedSearchesService(AsyncBaseService):
         """
         self._validate_user(original.get("user", ""), original.get("is_global", False))
         if "filter" in updates:
-            self.process(updates)
+            await self.process(updates)
         self.process_subscription(updates, original)
         await super().on_update_async(updates, original)
         push_notification(UPDATE_NOTIFICATION)
@@ -249,7 +250,7 @@ class SavedSearchesService(AsyncBaseService):
             {k: v for k, v in doc["filter"]["query"].items() if k != "repo"}
         )
 
-    def validate_and_run_elastic_query(self, elastic_query, index):
+    async def validate_and_run_elastic_query(self, elastic_query, index):
         """
         Validates the elastic_query against ElasticSearch.
 
@@ -261,7 +262,7 @@ class SavedSearchesService(AsyncBaseService):
         parsed_request = self.init_request(elastic_query)
         parsed_request.args["repo"] = index
         try:
-            return get_resource_service("search_providers_proxy").get(req=parsed_request, lookup={})
+            return await get_resource_service("search_providers_proxy").get_async(req=parsed_request, lookup={})
         except Exception as e:
             logger.exception(e)
             raise SuperdeskApiError.badRequestError(
@@ -320,4 +321,12 @@ class SavedSearchItemsService(SavedSearchesService):
         saved_search["filter"] = decode_filter(saved_search.get("filter"))
 
         repo, query = super().process_query(saved_search)
-        return super().validate_and_run_elastic_query(query, repo)
+        cursor = await super().validate_and_run_elastic_query(query, repo)
+        if isinstance(cursor, AsyncEveCursor):
+            return cursor
+        elif isinstance(cursor, list):
+            return AsyncListCursor(cursor)
+        elif isinstance(cursor, ListCursor):
+            return AsyncListCursor(cursor.docs)
+        else:
+            raise SuperdeskApiError.internalError(_("Invalid cursor type"))
