@@ -140,6 +140,13 @@ Feature: User Availability
 
     @auth
     Scenario: Default user availability
+        When we setup test user
+        """
+        {
+            "username": "foo",
+            "user_type": "user"
+        }
+        """
         # Create default availability settings using PUT
         When we put to "/default_user_availability/#CONTEXT_USER_ID#"
         """
@@ -437,3 +444,16 @@ Feature: User Availability
             "language": ["de"]
         }
         """
+
+        When we setup test user
+        """
+        {
+            "username": "bar",
+            "user_type": "user"
+        }
+        """
+        When we put to "/default_user_availability/#FOO_USER_ID#"
+        """
+        {"enabled": false}
+        """
+        Then we get error 403
