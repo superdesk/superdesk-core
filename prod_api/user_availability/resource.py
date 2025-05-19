@@ -19,6 +19,7 @@ class UserAvailabilityResource(Resource):
     url = "user_availability"
     item_methods = ["GET"]
     resource_methods = ["GET"]
+    soft_delete = True
     schema = {
         "date": {"type": "string"},
         "user": {"type": "objectid"},

@@ -105,7 +105,7 @@ Feature: User Availability
         When we patch "/user_availability/#user_availability._id#"
         """
         {
-            "status": "not-set",
+            "status": "available",
             "language": ["fr", "es"],
             "working_hours": [
                 {
@@ -119,9 +119,7 @@ Feature: User Availability
         }
         """
         Then we get OK response
-        
 
-        
         # Delete the availability record
         When we delete "/user_availability/#user_availability._id#"
         Then we get OK response
@@ -129,6 +127,16 @@ Feature: User Availability
         # Verify deletion
         When we get "/user_availability/#user_availability._id#"
         Then we get error 404
+
+        # Recreate it
+        When we post to "user_availability"
+        """
+        {
+            "date": "2023-05-15",
+            "status": "available"
+        }
+        """
+        Then we get OK response
 
     @auth
     Scenario: Default user availability
