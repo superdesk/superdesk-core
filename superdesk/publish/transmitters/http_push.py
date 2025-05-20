@@ -77,19 +77,19 @@ class HTTPPushService(PublishService):
     headers = {"Content-type": "application/json", "Accept": "application/json"}
     hash_header = "x-superdesk-signature"
 
-    def _transmit(self, queue_item, subscriber):
+    async def _transmit(self, queue_item, subscriber):
         """
         @see: PublishService._transmit
         """
         item = json.loads(queue_item["formatted_item"])
         destination = queue_item.get("destination", {})
 
-        self._copy_published_media_files(json.loads(queue_item["formatted_item"]), destination)
+        await self._copy_published_media_files(json.loads(queue_item["formatted_item"]), destination)
 
         if not queue_item.get(PUBLISHED_IN_PACKAGE) or not destination.get("config", {}).get("packaged", False):
-            self._push_item(destination, json.dumps(item))
+            await self._push_item(destination, json.dumps(item))
 
-    def _push_item(self, destination, data):
+    async def _push_item(self, destination, data):
         resource_url = self._get_resource_url(destination)
         headers = self._get_headers(data, destination, self.headers)
         response = requests.post(resource_url, data=data, headers=headers, timeout=self._get_timeout())
@@ -100,9 +100,9 @@ class HTTPPushService(PublishService):
         except Exception as ex:
             logger.exception(ex)
             message = "Error pushing item %s: %s" % (response.status_code, response.text)
-            self._raise_publish_error(response.status_code, Exception(message), destination)
+            await self._raise_publish_error(response.status_code, Exception(message), destination)
 
-    def _copy_published_media_files(self, item, destination):
+    async def _copy_published_media_files(self, item, destination):
         """Copy the media files for the given item to the publish_items endpoint
 
         @param item: the item object
@@ -122,13 +122,13 @@ class HTTPPushService(PublishService):
 
         app = get_current_app()
         for media_id, rendition in media.items():
-            if not self._media_exists(media_id, destination):
+            if not await self._media_exists(media_id, destination):
                 binary = app.media.get(media_id, resource=rendition.get("resource", "upload"))
-                self._transmit_media(binary, destination, exists=False)
+                await self._transmit_media(binary, destination, exists=False)
 
-    def _transmit_media(self, media, destination, exists=None):
+    async def _transmit_media(self, media, destination, exists=None):
         if exists is None:
-            exists = self._media_exists(media._id, destination)
+            exists = await self._media_exists(media._id, destination)
         if exists:
             return
         mimetype = getattr(media, "content_type", "image/jpeg")
@@ -143,13 +143,13 @@ class HTTPPushService(PublishService):
         prepped.prepare_headers(headers)
         response = s.send(prepped, timeout=self._get_timeout())
         if response.status_code not in (200, 201):
-            self._raise_publish_error(
+            await self._raise_publish_error(
                 response.status_code,
                 Exception("Error pushing media file %s: %s %s" % (str(media._id), response.status_code, response.text)),
                 destination,
             )
 
-    def _media_exists(self, media_id, destination):
+    async def _media_exists(self, media_id, destination):
         """Returns true if the media with the given id exists at the service identified by assets_url.
 
         Returns false otherwise. Raises Exception if the error code was not 200 or 404
@@ -163,7 +163,7 @@ class HTTPPushService(PublishService):
         assets_url = self._get_assets_url(destination, media_id)
         response = requests.get(assets_url, timeout=self._get_timeout())
         if response.status_code not in (requests.codes.ok, requests.codes.not_found):  # @UndefinedVariable
-            self._raise_publish_error(
+            await self._raise_publish_error(
                 response.status_code, Exception("Error querying the assets service %s" % assets_url), destination
             )
         return response.status_code == requests.codes.ok  # @UndefinedVariable
