@@ -1,18 +1,12 @@
 import base64
-import arrow
 
-from typing import Any, cast
-from datetime import timedelta
+from typing import Any
 
-from superdesk.utc import utcnow
-from superdesk.core import json, get_app_config
 from superdesk.core.types import Request
-from superdesk import get_resource_service
-from superdesk.types import UsersResourceModel
 from superdesk.errors import SuperdeskApiError
-from superdesk.resource_fields import LAST_UPDATED, ID_FIELD
 
 from .user_auth import UserAuthProtocol
+from .utils import set_user_request_auth_data, clear_user_request_auth_data
 
 
 class TokenAuthorization(UserAuthProtocol):
@@ -35,6 +29,10 @@ class TokenAuthorization(UserAuthProtocol):
             token = token.strip()
             if token.lower().startswith(("token", "bearer", "basic")):
                 token = token.split(" ")[1] if " " in token else ""
+
+            # tokens are no longer decoded internally by flask/quart
+            # so we need to do it ourselves
+            token = self._decode_token(token)
         else:
             token = request.storage.session.get("session_token")
             new_session = False
@@ -43,68 +41,23 @@ class TokenAuthorization(UserAuthProtocol):
             await self.stop_session(request)
             raise SuperdeskApiError.unauthorizedError()
 
-        # Check provided token is valid
-        auth_service = get_resource_service("auth")
-
-        # tokens are no longer decoded internally by flask/quart
-        # so we need to do it ourselves
-        token = self._decode_token(token)
-        auth_token = await auth_service.find_one_async(token=token, req=None)
-
-        if not auth_token:
-            await self.stop_session(request)
-            raise SuperdeskApiError.unauthorizedError()
-
-        user = await UsersResourceModel.get_service().find_by_id_raw(auth_token["user"])
-
-        if not user:
-            await self.stop_session(request)
-            raise SuperdeskApiError.unauthorizedError()
-
         if new_session:
-            await self.start_session(request, user, auth_token=auth_token)
+            await self.start_session(request, {}, token=token)
         else:
-            await self.continue_session(request, user)
-
-    async def start_session(self, request: Request, user: dict[str, Any], **kwargs) -> None:
-        auth_token: str | None = kwargs.pop("auth_token", None)
-        if not auth_token:
-            await self.stop_session(request)
-            raise SuperdeskApiError.unauthorizedError()
-
-        request.storage.session.set("session_token", json.dumps(auth_token))
-        await super().start_session(request, user, **kwargs)
+            await self.continue_session(request, {}, token=token)
 
     async def continue_session(self, request: Request, user: dict[str, Any], **kwargs) -> None:
-        auth_token = request.storage.session.get("session_token")
+        try:
+            user_dict = await set_user_request_auth_data(kwargs.get("token"), request)
+            await super().continue_session(request, user_dict, **kwargs)
+        except SuperdeskApiError as error:
+            if error.status_code == 401:
+                await self.stop_session(request)
+            raise
 
-        if not auth_token:
-            await self.stop_session(request)
-            raise SuperdeskApiError.unauthorizedError()
-
-        if isinstance(auth_token, str):
-            auth_token = json.loads(auth_token)
-
-        user_service = get_resource_service("users")
-        request.storage.request.set("user", user)
-        request.storage.request.set("role", await user_service.get_role(user))
-        request.storage.request.set("auth", auth_token)
-        request.storage.request.set("auth_value", auth_token["user"])
-
-        if request.method in ("POST", "PUT", "PATCH") or (request.method == "GET" and not request.get_url_arg("auto")):
-            now = utcnow()
-            auth_updated = False
-            session_update_seconds = cast(int, get_app_config("SESSION_UPDATE_SECONDS", 30))
-            auth_last_updated = arrow.get(auth_token[LAST_UPDATED])
-
-            if auth_last_updated + timedelta(seconds=session_update_seconds) < now:
-                auth_service = get_resource_service("auth")
-                await auth_service.update_session({LAST_UPDATED: now})
-                auth_updated = True
-            if auth_updated or not request.storage.request.get("last_activity_at"):
-                user_service.system_update(user[ID_FIELD], {"last_activity_at": now, "_updated": now}, user)
-
-        await super().continue_session(request, user, **kwargs)
+    async def stop_session(self, request: Request) -> None:
+        clear_user_request_auth_data(request)
+        await super().stop_session(request)
 
     def get_current_user(self, request: Request) -> dict[str, Any] | None:
         user = request.storage.request.get("user")
