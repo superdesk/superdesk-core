@@ -37,7 +37,6 @@ def create_server(config):
             exchange_name,
             sentry_dsn=os.environ.get("SENTRY_DSN"),
             sentry_traces_sample_rate=float(os.environ.get("SENTRY_TRACES_SAMPLE_RATE", "0")) or None,
-            debug=bool(int(os.environ.get("SUPERDESK_DEBUG", "0"))),
         )
         comms.run_server()
     except Exception:
