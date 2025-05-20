@@ -87,23 +87,33 @@ class SuperdeskValidator(Validator):
         if not value and self.schema[field].get("nullable"):
             return
 
-        # First try using the Pydantic async resources
-        try:
-            data_resource = data_relation.get("resource")
-            data_field = data_relation.get("field")
-            async_app = get_current_async_app()
-            service = async_app.resources.get_resource_service(data_resource)
+        data_resource = data_relation.get("resource")
 
-            for item in value if isinstance(value, list) else [value]:
-                item_id = item.id if isinstance(item, DBRef) else item
-                if not service.mongo.find_one({data_field: item_id}):
-                    self._error(
-                        field,
-                        f"value '{item_id}' must exist in resource '{data_resource}', field '{data_field}'.",
-                    )
-        except KeyError:
-            # Fallback to using Eve based resources
+        try:
+            # If an Eve resource is available, use it
+            superdesk.get_resource_service(data_resource)
             return super()._validate_data_relation(data_relation, field, value)
+        except KeyError:
+            pass
+
+        # Otherwise try the Pydantic resource
+        data_field = data_relation.get("field")
+        async_app = get_current_async_app()
+        service = async_app.resources.get_resource_service(data_resource)
+
+        for item in value if isinstance(value, list) else [value]:
+            if isinstance(item, DBRef):
+                item_id = item.id
+            elif service.id_uses_objectid():
+                item_id = ObjectId(item)
+            else:
+                item_id = item
+
+            if not service.mongo.find_one({data_field: item_id}):
+                self._error(
+                    field,
+                    f"value '{item_id}' must exist in resource '{data_resource}', field '{data_field}'.",
+                )
 
     def _validate_mapping(self, mapping, field, value):
         """
