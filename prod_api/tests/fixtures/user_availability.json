@@ -44,5 +44,24 @@
     "_updated": "2023-05-15T12:00:00+0000",
     "_created": "2023-05-15T10:00:00+0000",
     "_generated": true
+  },
+  {
+    "_id": "5d553c333031e2855a2e5673",
+    "user": "5d385f31fe985ec67a0ca583",
+    "date": "2023-05-20",
+    "status": "partial",
+    "language": ["en", "fr"],
+    "working_hours": [
+      {
+        "start_time": "12:00:00",
+        "end_time": "17:00:00",
+        "tags": [
+          {"code": "afternoon"}
+        ]
+      }
+    ],
+    "_updated": "2023-05-15T12:00:00+0000",
+    "_created": "2023-05-15T10:00:00+0000",
+    "_deleted": true
   }
 ]

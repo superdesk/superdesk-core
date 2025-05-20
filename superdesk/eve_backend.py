@@ -12,6 +12,7 @@
 from typing import Dict, Any, Literal
 import eve.io.base
 import json as std_json
+import pymongo.collection
 
 from pymongo.cursor import Cursor as MongoCursor
 from pymongo.collation import Collation
@@ -168,6 +169,11 @@ class EveBackend:
         result = backend.driver.db[endpoint_name].find_and_modify(**kwargs)
         cache.clean([endpoint_name])
         return result
+
+    def get_mongo_collection(self, endpoint_name) -> pymongo.collection.Collection:
+        backend = self._backend(endpoint_name)
+        datasource = self._datasource(endpoint_name)
+        return backend.pymongo(endpoint_name).db[datasource]
 
     def create(self, endpoint_name, docs, **kwargs):
         """Insert documents into given collection.

@@ -3,11 +3,11 @@ import superdesk
 
 from typing import TYPE_CHECKING
 from flask import current_app as app
+from datetime import timedelta
 from flask_babel import gettext
 from dateutil.rrule import rrule, WEEKLY
 from superdesk.dates import get_local_today
 from superdesk.resource import Resource
-from superdesk.errors import SuperdeskApiError
 from apps.auth import get_user_id
 
 if TYPE_CHECKING:
@@ -137,6 +137,11 @@ class DefaultAvailabilityService(superdesk.Service):
             {"user": current_user_id, "date": {"$gte": today.isoformat()}, "_generated": True}
         )
 
+        existing_availability_days = set(
+            self.availability_service.get_user_set_availability_days(
+                current_user_id, today, (today + timedelta(weeks=generate_weeks))
+            )
+        )
         working_days = doc.get("working_days") or {}
 
         items = []
@@ -145,7 +150,7 @@ class DefaultAvailabilityService(superdesk.Service):
             dates = rrule(freq=WEEKLY, dtstart=today, count=generate_weeks, byweekday=weekday)
             for d in dates:
                 default_availability = working_days.get(day)
-                if default_availability:
+                if default_availability and d.date() not in existing_availability_days:
                     items.append(
                         {
                             "user": current_user_id,

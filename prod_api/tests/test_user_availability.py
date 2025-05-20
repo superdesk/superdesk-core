@@ -24,6 +24,8 @@ def test_service_get(superdesk_app, prodapi_app_with_data):
         assert items[0]["_id"]
         assert items[0]["username"] == "admin"
 
+        assert len(items[0]["availability"]) == 3
+
         assert {
             "date": "2023-05-15",
             "status": "available",
