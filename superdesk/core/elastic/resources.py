@@ -207,17 +207,17 @@ class ElasticResources:
         resource_client = self.get_client(resource_name)
 
         try:
-            if not resource_client.elastic.indices.exists(index=resource_client.config.index):
-                self._create_index_from_alias(resource_client)
-            elif resource_client.config.settings:
-                self._put_settings(resource_client)
-
             mapping = get_elastic_mapping_from_model(
                 resource_name,
                 self.app.resources.get_config(resource_name).data_class,
                 self.app.wsgi.config.get("SCHEMA_UPDATE", {}).get(resource_name),
             )
-            resource_client.elastic.indices.put_mapping(index=resource_client.config.index, body=mapping)
+
+            if not resource_client.elastic.indices.exists(index=resource_client.config.index):
+                self._create_index_from_alias(resource_client, mapping)
+            elif resource_client.config.settings:
+                self._put_settings(resource_client)
+                resource_client.elastic.indices.put_mapping(index=resource_client.config.index, body=mapping)
         except RequestError:
             if self.app.wsgi.config.get("DEBUG") or raise_on_mapping_error:
                 raise
@@ -266,14 +266,19 @@ class ElasticResources:
                 except NotFoundError:
                     pass
 
-    def _create_index_from_alias(self, resource_client: ElasticResourceClient):
+    def _create_index_from_alias(self, resource_client: ElasticResourceClient, mapping: dict):
         try:
-            index = generate_index_name(resource_client.config.index)
+            config = resource_client.config
+            index = generate_index_name(config.index)
             resource_client.elastic.indices.create(
-                index=index, body={} if not resource_client.config.settings else resource_client.config.settings
+                index=index,
+                body={
+                    "aliases": {config.index: {}},
+                    "settings": {"index": config.settings["settings"]} if config.settings else {},
+                    "mappings": mapping,
+                },
             )
-            resource_client.elastic.indices.put_alias(index=index, name=resource_client.config.index)
-            logger.info(f"- Created index alias={resource_client.config.index} index={index}")
+            logger.info(f"- Created index alias={config.index} index={index}")
         except TransportError:  # index exists
             pass
 
