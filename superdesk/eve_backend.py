@@ -317,6 +317,15 @@ class EveBackend:
         res = self.replace_in_mongo(endpoint_name, id, document, original)
         self.replace_in_search(endpoint_name, id, document, original)
         cache.clean([endpoint_name])
+
+        # with soft delete enabled eve uses replace to update the document
+        if document.get("_deleted") and not original.get("_deleted"):
+            self._push_resource_notification("deleted", endpoint_name, _id=str(id))
+        else:
+            self._push_resource_notification(
+                "updated", endpoint_name, _id=str(id), fields=get_diff_keys(document, original)
+            )
+
         return res
 
     def update_in_mongo(self, endpoint_name, id, updates, original):

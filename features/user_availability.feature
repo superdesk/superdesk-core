@@ -4,6 +4,7 @@ Feature: User Availability
     So that I can track when users are available or unavailable
 
     @auth
+    @notification
     Scenario: Create, Read, Update, Delete user availability
         # Create a new availability record
         When we post to "user_availability"
@@ -123,7 +124,11 @@ Feature: User Availability
         # Delete the availability record
         When we delete "/user_availability/#user_availability._id#"
         Then we get OK response
-        
+        And we get notifications
+        """
+        [{"event": "resource:deleted", "extra": {"resource": "user_availability", "_id": "#user_availability._id#"}}]
+        """
+
         # Verify deletion
         When we get "/user_availability/#user_availability._id#"
         Then we get error 404
@@ -139,6 +144,7 @@ Feature: User Availability
         Then we get OK response
 
     @auth
+    @notification
     Scenario: Default user availability
         When we setup test user
         """
@@ -250,6 +256,10 @@ Feature: User Availability
             },
             "language": ["en", "fr"]
         }
+        """
+        And we get notifications
+        """
+        [{"event": "resource:created", "extra": {"resource": "default_user_availability", "_id": "#CONTEXT_USER_ID#"}}]
         """
 
         When we get "/user_availability"
@@ -367,6 +377,10 @@ Feature: User Availability
             },
             "language": ["en"]
         }
+        """
+        And we get notifications
+        """
+        [{"event": "resource:updated", "extra": {"resource": "default_user_availability", "_id": "#CONTEXT_USER_ID#"}}]
         """
         
         # Verify that PATCH is not allowed
