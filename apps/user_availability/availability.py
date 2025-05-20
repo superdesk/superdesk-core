@@ -96,7 +96,7 @@ class AvailabilityService(superdesk.Service):
 
     def get_user_set_availability_days(self, user_id, from_date, to_date) -> list[date]:
         """
-        Retrieve the days for which a user has explicitly set availability within a date range.
+        Retrieve the days for which a user has availability records within a date range.
 
         Args:
             user_id (str): The ID of the user whose availability is being queried.
@@ -109,14 +109,13 @@ class AvailabilityService(superdesk.Service):
         """
         collection = self.backend.get_mongo_collection(self.datasource)
         return [
-            date.fromisoformat(doc["date"])
-            for doc in collection.find(
+            date.fromisoformat(date_str)
+            for date_str in collection.find(
                 {
                     "user": user_id,
                     "date": {"$gte": from_date.isoformat(), "$lte": to_date.isoformat()},
-                    "_generated": {"$ne": True},
                 }
-            )
+            ).distinct("date")
         ]
 
 
