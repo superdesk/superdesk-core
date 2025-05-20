@@ -1,14 +1,12 @@
-import flask
 import superdesk
 
 from typing import TYPE_CHECKING
 from flask import current_app as app
-from flask_babel import gettext
 from dateutil.rrule import rrule, WEEKLY
 from superdesk.dates import get_local_today
 from superdesk.resource import Resource
 from superdesk.errors import SuperdeskApiError
-from apps.auth import get_user_id
+from .privileges import validate_user_can_manage_availability
 
 if TYPE_CHECKING:
     from .availability import AvailabilityService
@@ -106,9 +104,7 @@ class DefaultAvailabilityService(superdesk.Service):
             self.validate_user_id(doc)
 
     def validate_user_id(self, document):
-        current_user_id = get_user_id()
-        if str(document["_id"]) != str(current_user_id):
-            return flask.abort(403, description=gettext("You can only modify your own availability settings."))
+        validate_user_can_manage_availability(document["_id"])
 
     def on_created(self, docs):
         """Event handler for created event."""

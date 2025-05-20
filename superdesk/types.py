@@ -1,4 +1,9 @@
-from typing import TypedDict, Dict, Any, List
+import bson
+
+from typing import TypedDict, Dict, Any, List, TypeAlias, Union
+
+
+Id: TypeAlias = Union[str, bson.ObjectId]
 
 
 class WebsocketMessageFilterConditions(TypedDict, total=False):

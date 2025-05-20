@@ -6,6 +6,8 @@ from apps.user_availability.default_availability import DefaultAvailabilityServi
 from superdesk.resource import Resource
 from apps.auth import get_user_id
 
+from .privileges import validate_user_can_manage_availability
+
 endpoint_name = "user_availability"
 
 if TYPE_CHECKING:
@@ -16,7 +18,7 @@ class AvailabilityResource(Resource):
     """Resource for tracking user availability."""
 
     schema = {
-        "user": Resource.rel("users", readonly=True),
+        "user": Resource.rel("users"),
         "date": {
             "type": "string",
             "required": True,
@@ -74,14 +76,20 @@ class AvailabilityService(superdesk.Service):
     default_service: "DefaultAvailabilityService"
 
     def on_update(self, updates, original):
+        validate_user_can_manage_availability(original["user"])
+        assert "user" not in updates or updates["user"] == original["user"]
         updates["_generated"] = False
 
     def on_create(self, docs):
         for doc in docs:
-            doc["user"] = get_user_id()
+            doc.setdefault("user", get_user_id())
+            validate_user_can_manage_availability(doc["user"])
             default_availability = self.default_service.find_one(req=None, _id=doc["user"])
             if default_availability and default_availability.get("language"):
                 doc.setdefault("language", default_availability["language"])
+
+    def on_delete(self, doc):
+        validate_user_can_manage_availability(doc["user"])
 
 
 availability_service = AvailabilityService(endpoint_name, backend=superdesk.get_backend())

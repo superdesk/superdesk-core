@@ -2771,3 +2771,13 @@ def then_we_get_picture_metadta(context, media):
         metadata = read_metadata(binary.read())
     context_data = json.loads(apply_placeholders(context, context.text))
     assert json_match(context_data, metadata), str(context_data) + "\n != \n" + str(metadata)
+
+
+@when('we add privilege "{privilege}" to user "{username}"')
+def step_impl(context, privilege: str, username: str) -> None:
+    with context.app.app_context():
+        user = get_resource_service("users").find_one(req=None, username=username)
+        assert user is not None, "User {} not found".format(username)
+        privileges = user.get("privileges") or {}
+        privileges[privilege] = 1
+        get_resource_service("users").system_update(user["_id"], {"privileges": privileges}, user)

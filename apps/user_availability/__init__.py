@@ -4,6 +4,7 @@ from flask_babel import lazy_gettext
 from celery.schedules import crontab
 from superdesk.celery_app import celery
 
+from .privileges import USER_AVAILABILITY_READ, USER_AVAILABILITY_WRITE
 from .availability import AvailabilityResource, availability_service
 from .default_availability import DefaultAvailabilityResource, default_service
 
@@ -22,9 +23,15 @@ def init_app(app):
     }
 
     superdesk.privilege(
-        name="user_availability",
+        name=USER_AVAILABILITY_READ,
         label=lazy_gettext("View user availability"),
         description=lazy_gettext("User can view user availability overview"),
+    )
+
+    superdesk.privilege(
+        name=USER_AVAILABILITY_WRITE,
+        label=lazy_gettext("Manage user availability"),
+        description=lazy_gettext("User can manage user availability"),
     )
 
 
