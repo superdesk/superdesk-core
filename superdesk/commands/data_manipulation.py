@@ -557,6 +557,11 @@ class StorageStartRecording(superdesk.Command):
             action="append",
             help="collections to record (DEFAULT: record all collections)",
         ),
+        superdesk.Option(
+            "--continue-from",
+            dest="continue_from",
+            help="continue a previous recording (useful if the process was killed)",
+        ),
     ]
 
     def run(
@@ -569,6 +574,7 @@ class StorageStartRecording(superdesk.Command):
         full_document: bool = False,
         collections: Optional[List[str]] = None,
         lock: Optional[multiprocessing.synchronize.Lock] = None,
+        continue_from: Optional[str] = None,
     ) -> None:
         now = time.time()
         if name is None:
@@ -593,6 +599,8 @@ class StorageStartRecording(superdesk.Command):
                     sys.exit(1)
             StorageRestore().run(keep_existing=False, dump_path=base_dump_p)
             metadata["base_dump"] = str(base_dump_p)
+        elif continue_from:
+            metadata["continue_from"] = continue_from
         if description:
             metadata["description"] = description
         print(f"📼🔴 recording started\nRecording at {dest_path}\nPress Ctrl-C to stop it\n\n")
@@ -609,12 +617,16 @@ class StorageStartRecording(superdesk.Command):
                     try:
                         first = True
                         for change in stream:
-                            collection = change["ns"]["coll"]
+                            try:
+                                collection = change["ns"]["coll"]
+                            except KeyError:
+                                print("Ignore", change["operationType"])
+                                continue
                             if collection == "mongolock.lock":
                                 continue
                             elif collections and collection not in collections:
                                 continue
-                            print(f"change in {change['ns']['coll']!r} collection")
+                            print(f"change in {change['ns']['coll']!r} collection", change["operationType"])
                             if first:
                                 first = False
                             else:
@@ -677,6 +689,12 @@ class StorageRestoreRecord(superdesk.Command):
                             sys.exit(1)
                     print("RESTORE")
                     StorageRestore().run(keep_existing=False, no_flush=True, dump_path=base_dump_p)
+            if metadata.get("continue_from"):
+                print(f"{INFO} continuing from {metadata['continue_from']}")
+                self.run(
+                    record_file=metadata["continue_from"], force_db_reset=force_db_reset, skip_base_dump=skip_base_dump
+                )
+
             print(f"{INFO} restoring record from {datetime.fromtimestamp(metadata['started']).isoformat()}")
             description = metadata.get("description")
             if description:
