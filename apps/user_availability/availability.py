@@ -77,7 +77,8 @@ class AvailabilityService(superdesk.Service):
 
     def on_update(self, updates, original):
         validate_user_can_manage_availability(original["user"])
-        assert "user" not in updates or updates["user"] == original["user"]
+        if "user" in updates and updates["user"] != original["user"]:
+            raise ValueError("The 'user' field in updates must match the 'user' in the original data.")
         updates["_generated"] = False
 
     def on_create(self, docs):
