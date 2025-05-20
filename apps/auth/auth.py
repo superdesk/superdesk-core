@@ -13,12 +13,10 @@ from inspect import isawaitable
 
 import superdesk
 
-from datetime import timedelta
 from eve.auth import TokenAuth
 
-from superdesk.core import get_app_config
-from superdesk.resource_fields import LAST_UPDATED
-from superdesk.flask import g, session, request
+from superdesk.core.auth.utils import set_user_request_auth_data, clear_user_request_auth_data
+from superdesk.flask import session, request
 from superdesk.resource import Resource
 from superdesk.errors import SuperdeskApiError
 from superdesk import (
@@ -27,7 +25,6 @@ from superdesk import (
     get_no_resource_privileges,
     get_intrinsic_privileges,
 )
-from superdesk.utc import utcnow
 from quart_babel import gettext as _
 
 logger = logging.getLogger(__name__)
@@ -83,18 +80,17 @@ class SuperdeskTokenAuth(TokenAuth):
 
         1. If there's no user associated with the request or HTTP Method is GET or the Resource is a Flask Blueprint
         then return True.
-        2. Get User's Privileges
-        3. Intrinsic Privileges:
+        2. Intrinsic Privileges:
             Check if resource has intrinsic privileges.
                 If it has then check if HTTP Method is allowed.
                     Return True if `is_authorized()` on the resource service returns True.
                     Otherwise, raise ForbiddenError.
                 HTTP Method not allowed continue
             No intrinsic privileges continue
-        4. User's Privileges
+        3. User's Privileges
             Get Resource Privileges and validate it against user's privileges. Return True if validation is successful.
             Otherwise continue.
-        5. If method didn't return True, then user is not authorized to perform the requested operation on the resource.
+        4. If method didn't return True, then user is not authorized to perform the requested operation on the resource.
         """
 
         # Step 1:
@@ -104,9 +100,6 @@ class SuperdeskTokenAuth(TokenAuth):
         if resource == "_blueprint":
             return True
 
-        # Step 2: Get User's Privileges
-        get_resource_service("users").set_privileges(user, g.role)
-
         try:
             resource_privileges = get_resource_privileges(resource).get(method, None)
         except KeyError:
@@ -115,7 +108,7 @@ class SuperdeskTokenAuth(TokenAuth):
         if method == "GET" and not resource_privileges:
             return True
 
-        # Step 3: Intrinsic Privileges
+        # Step 2: Intrinsic Privileges
         message = _("Insufficient privileges for the requested operation.")
         intrinsic_privileges = get_intrinsic_privileges()
         if intrinsic_privileges.get(resource) and method in intrinsic_privileges[resource]:
@@ -129,7 +122,7 @@ class SuperdeskTokenAuth(TokenAuth):
 
             return authorized
 
-        # Step 4: User's privileges
+        # Step 3: User's privileges
         privileges = user.get("active_privileges", {})
 
         if not resource_privileges and get_no_resource_privileges(resource):
@@ -138,7 +131,7 @@ class SuperdeskTokenAuth(TokenAuth):
         if privileges.get(resource_privileges, False):
             return True
 
-        # Step 5:
+        # Step 4:
         raise SuperdeskApiError.forbiddenError(message=message)
 
     async def check_auth(self, token, allowed_roles, resource, method):
@@ -146,32 +139,17 @@ class SuperdeskTokenAuth(TokenAuth):
 
         If token is valid it updates session and checks permissions.
         """
-        auth_service = get_resource_service("auth")
-        user_service = get_resource_service("users")
-        auth_token = await auth_service.find_one_async(token=token, req=None)
-        if auth_token:
-            if session.get("session_token") != token:
-                session["session_token"] = token
-            user_id = str(auth_token["user"])
-            g.user = await user_service.find_one_async(req=None, _id=user_id)
-            g.role = await user_service.get_role(g.user)
-            g.auth = auth_token
-            g.auth_value = auth_token["user"]
-            if method in ("POST", "PUT", "PATCH") or method == "GET" and not request.args.get("auto"):
-                now = utcnow()
-                auth_updated = False
-                if auth_token[LAST_UPDATED] + timedelta(seconds=get_app_config("SESSION_UPDATE_SECONDS")) < now:
-                    await auth_service.update_session({LAST_UPDATED: now})
-                    auth_updated = True
-                if not g.user.get("last_activity_at") or auth_updated:
-                    await user_service.system_update_async(
-                        g.user["_id"], {"last_activity_at": now, "_updated": now}, g.user
-                    )
 
-            return await self.check_permissions(resource, method, g.user)
+        try:
+            user_dict = await set_user_request_auth_data(token, request)
+            return await self.check_permissions(resource, method, user_dict)
+        except SuperdeskApiError as error:
+            if error.status_code != 401:
+                # If this is not an authentication error, then raise it
+                raise
 
-        # pop invalid session
-        session.pop("session_token", None)
+        # The user is not authenticated, clear the request auth data and return False
+        clear_user_request_auth_data(request)
         return False
 
     async def authorized(self, allowed_roles, resource, method):
