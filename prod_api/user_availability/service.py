@@ -38,7 +38,7 @@ class UserAvailabilityService(ProdApiService):
         start_date, end_date = self.get_start_end_dates(req)
         user = get_resource_service("users").find_one(req=None, **lookup)
         if not user:
-            raise ValueError("User not found")
+            return user
         user_data = self._get_user_availability(user, start_date, end_date)
         user_data["_links"] = {}
         return user_data
