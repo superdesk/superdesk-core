@@ -8,9 +8,12 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
-from apps.auth import AuthResource
+from superdesk.core.module import Module
 import superdesk
 from superdesk.services import BaseService
+from superdesk.publish_async.resources.module import subscriber_token_resource_config
+
+from apps.auth import AuthResource
 from .auth import AuthUsersResource
 
 
@@ -21,3 +24,6 @@ def init_app(app) -> None:
 
     service = BaseService("auth_user", backend=superdesk.get_backend())
     AuthUsersResource("auth_user", app=app, service=service)
+
+
+module = Module(name="content_api.auth", resources=[subscriber_token_resource_config])

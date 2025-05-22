@@ -328,7 +328,7 @@ async def clean_dbs(app=None, async_app: SuperdeskAsyncApp | None = None, force=
                     print(f"ES Index not found for {resource_config.name}")
                     pass
 
-        if app:
+        if app and getattr(cache, "app", None):
             cache.clean()
 
 

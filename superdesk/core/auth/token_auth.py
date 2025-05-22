@@ -10,6 +10,19 @@ from .utils import set_user_request_auth_data, clear_user_request_auth_data
 
 
 class TokenAuthorization(UserAuthProtocol):
+    def _get_auth_token_from_request(self, request: Request) -> str | None:
+        token = request.get_header("Authorization")
+        if not token:
+            return None
+
+        token = token.strip()
+        if token.lower().startswith(("token", "bearer", "basic")):
+            token = token.split(" ")[1] if " " in token else ""
+
+        # tokens are no longer decoded internally by flask/quart
+        # so we need to do it ourselves
+        return self._decode_token(token)
+
     @staticmethod
     def _decode_token(token: str) -> str:
         """
@@ -22,18 +35,10 @@ class TokenAuthorization(UserAuthProtocol):
             return token
 
     async def authenticate(self, request: Request):
-        token = request.get_header("Authorization")
         new_session = True
+        token = self._get_auth_token_from_request(request)
 
-        if token:
-            token = token.strip()
-            if token.lower().startswith(("token", "bearer", "basic")):
-                token = token.split(" ")[1] if " " in token else ""
-
-            # tokens are no longer decoded internally by flask/quart
-            # so we need to do it ourselves
-            token = self._decode_token(token)
-        else:
+        if not token:
             token = request.storage.session.get("session_token")
             new_session = False
 
