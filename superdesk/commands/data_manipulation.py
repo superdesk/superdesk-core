@@ -600,6 +600,7 @@ class StorageStartRecording(superdesk.Command):
             StorageRestore().run(keep_existing=False, dump_path=base_dump_p)
             metadata["base_dump"] = str(base_dump_p)
         elif continue_from:
+            StorageRestoreRecord().run(continue_from, force_db_reset=True)
             metadata["continue_from"] = continue_from
         if description:
             metadata["description"] = description
