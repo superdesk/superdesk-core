@@ -75,6 +75,6 @@ class SubscriberTokenAuth(TokenAuthorization):
         """
         request.storage.request.set("user", None)
 
-    def get_current_user(self, request: Request) -> str | None:
+    def get_current_user(self, request: Request) -> dict | None:
         """Overrides as it is needed."""
-        return None
+        return {"_id": request.storage.request.get("user")}
