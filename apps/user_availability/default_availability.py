@@ -6,6 +6,7 @@ from flask import current_app as app
 from typing import TYPE_CHECKING
 from dateutil.rrule import rrule, WEEKLY
 
+from apps.auth import get_user_id
 from superdesk.dates import get_local_today
 from superdesk.resource import Resource
 
@@ -86,6 +87,7 @@ class DefaultAvailabilityResource(Resource):
                 },
             },
         },
+        "last_updated_by": Resource.rel("users"),
     }
 
     item_methods = ["GET", "PUT"]
@@ -101,10 +103,12 @@ class DefaultAvailabilityService(superdesk.Service):
     def on_replace(self, document, original):
         """Check that the user can only modify their own availability settings."""
         self.validate_user_id(document)
+        document["last_updated_by"] = get_user_id()
 
     def on_create(self, docs):
         for doc in docs:
             self.validate_user_id(doc)
+            doc["last_updated_by"] = get_user_id()
 
     def validate_user_id(self, document):
         validate_user_can_manage_availability(document["_id"])

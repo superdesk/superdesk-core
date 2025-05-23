@@ -497,12 +497,20 @@ Feature: User Availability
         {"enabled": false}
         """
         Then we get OK response
+        And we get existing resource
+        """
+        {"last_updated_by": "#CONTEXT_USER_ID#"}
+        """
 
         When we post to "/user_availability"
         """
         {"user": "#FOO_USER_ID#", "date": "2025-05-05", "status": "available"}
         """
         Then we get OK response
+        And we get existing resource
+        """
+        {"last_updated_by": "#CONTEXT_USER_ID#"}
+        """
 
         When we patch "/user_availability/#user_availability._id#"
         """

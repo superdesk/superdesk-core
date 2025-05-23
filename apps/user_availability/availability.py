@@ -59,6 +59,7 @@ class AvailabilityResource(Resource):
                 },
             },
         },
+        "last_updated_by": Resource.rel("users"),
         "_generated": {
             "type": "boolean",
             "readonly": True,
@@ -82,6 +83,7 @@ class AvailabilityService(superdesk.Service):
         if "user" in updates and updates["user"] != original["user"]:
             raise ValueError("The 'user' field in updates must match the 'user' in the original data.")
         updates["_generated"] = False
+        updates["last_updated_by"] = get_user_id()
 
     def on_create(self, docs):
         for doc in docs:
@@ -99,6 +101,7 @@ class AvailabilityService(superdesk.Service):
                     "_deleted": True,
                 }
             )
+            doc["last_updated_by"] = get_user_id()
 
     def on_delete(self, doc):
         validate_user_can_manage_availability(doc["user"])
