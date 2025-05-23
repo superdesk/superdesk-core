@@ -1,3 +1,5 @@
+import bson
+
 from flask import url_for
 
 
@@ -63,6 +65,9 @@ def test_service_get(superdesk_app, prodapi_app_with_data):
         resp = client.get("/prodapi/v1/user_availability")
         assert resp.json["_items"]
         assert resp.json["_items"][0]["availability"] == []
+
+        resp = client.get("/prodapi/v1/user_availability/{}?month=2023-05".format(bson.ObjectId()))
+        assert resp.status_code == 404
 
 
 def test_readonly(prodapi_app_with_data, prodapi_app_with_data_client):
