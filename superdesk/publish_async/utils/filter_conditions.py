@@ -9,7 +9,6 @@ from superdesk.core import get_config
 from superdesk.types import (
     FilterConditionFieldParam,
     FilterConditionOperator,
-    DesksResourceModel,
     FilterConditionsResource,
 )
 
@@ -375,7 +374,7 @@ async def _get_field_values() -> dict[str, list[str] | list[dict]]:
     else:
         values["subject"] = get_subjectcodeitems()
 
-    desks = await DesksResourceModel.get_service().get_all_list_raw()
+    desks = await (await get_resource_service("desks").get_async(None, {})).to_list()
     values["desk"] = desks
     values["stage"] = await _get_stage_field_values(desks)
     values["sms"] = [{"qcode": 0, "name": "False"}, {"qcode": 1, "name": "True"}]

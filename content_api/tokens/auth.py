@@ -3,7 +3,7 @@ from eve.auth import TokenAuth
 from superdesk.utc import utcnow
 from superdesk.errors import SuperdeskApiError
 from superdesk.core.types.web import AuthRule, Request
-from superdesk.core.auth.user_auth import UserAuthProtocol
+from superdesk.core.auth.token_auth import TokenAuthorization
 from superdesk.core.auth.rules import endpoint_intrinsic_auth_rule
 from superdesk.types import SubscriberToken
 from superdesk.publish_async.resources.subscriber_token import SubscriberTokenService
@@ -32,39 +32,24 @@ class LegacyTokenAuth(TokenAuth):
         return super().authorized(allowed_roles, resource, method)
 
 
-class SubscriberTokenAuth(UserAuthProtocol):
+class SubscriberTokenAuth(TokenAuthorization):
     def get_default_auth_rules(self) -> list[AuthRule]:
         return [endpoint_intrinsic_auth_rule]
-
-    def get_token_from_request(self, request: Request) -> str | None:
-        """
-        Extracts the token from `Authorization` header. Code taken partly
-        from eve.Auth module
-        """
-
-        auth = (request.get_header("Authorization") or "").strip()
-        if len(auth):
-            if auth.lower().startswith(("token", "bearer", "basic")):
-                return auth.split(" ")[1] if " " in auth else None
-            return auth
-
-        return None
 
     async def authenticate(self, request: Request) -> None:
         """
         Tries to find the auth token in the request and if valid put subscriber id into ``g.user``.
         """
         token_service = SubscriberTokenService()
-        token_missing_exception = SuperdeskApiError.forbiddenError(message="Authorization token missing.")
-        token_id = self.get_token_from_request(request)
+        token_id = self._get_auth_token_from_request(request)
 
         if token_id is None:
-            raise token_missing_exception
+            raise SuperdeskApiError.forbiddenError(message="Authorization token missing.")
 
         token = await token_service.find_by_id(token_id)
         if token is None:
             await self.stop_session(request)
-            raise token_missing_exception
+            raise SuperdeskApiError.forbiddenError(message="Authorization token missing.")
 
         await self.check_token_validity(token)
         await self.start_session(request, token)
@@ -90,6 +75,6 @@ class SubscriberTokenAuth(UserAuthProtocol):
         """
         request.storage.request.set("user", None)
 
-    def get_current_user(self, request: Request) -> str | None:
+    def get_current_user(self, request: Request) -> dict | None:
         """Overrides as it is needed."""
-        return None
+        return {"_id": request.storage.request.get("user")}

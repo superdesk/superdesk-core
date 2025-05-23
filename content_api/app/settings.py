@@ -45,6 +45,7 @@ from superdesk.default_settings import (  # noqa
     PUBLISH_EXCHANGE_FACTORY,
     AUTH_SERVER_SHARED_SECRET,
     AUTH_SERVER_EXPIRATION_DELAY,
+    DEFAULT_GENRE_VALUE_FOR_MANUAL_ARTICLES,
 )
 
 CONTENTAPI_INSTALLED_APPS = [
@@ -59,7 +60,7 @@ CONTENTAPI_INSTALLED_APPS = [
 
 MODULES = [
     "content_api.items.module",
-    "superdesk.publish_async.resources.subscriber_token",
+    "content_api.auth",
 ]
 
 PUBLISH_MODULES = []

@@ -270,9 +270,6 @@ def get_current_app() -> WSGIApp:
 def get_current_async_app() -> SuperdeskAsyncApp:
     """Retrieve the current app instance"""
 
-    if _global_app is not None:
-        return _global_app
-
     from quart import current_app
 
     try:
@@ -282,6 +279,9 @@ def get_current_async_app() -> SuperdeskAsyncApp:
     except RuntimeError:
         # Flask context not available
         pass
+
+    if _global_app is not None:
+        return _global_app
 
     raise RuntimeError("Superdesk app is not running")
 
