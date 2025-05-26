@@ -58,7 +58,7 @@ CONTENTAPI_INSTALLED_APPS = [
     "content_api.api_audit",
 ]
 
-MODULES = ["content_api.items.module", "content_api.auth", "planning.content_api"]
+CONTENT_API_MODULES = ["content_api.items.module", "content_api.auth", "planning.content_api"]
 
 PUBLISH_MODULES = []
 
