@@ -83,6 +83,9 @@ def get_app(config=None):
             pass
 
     app.sentry = SuperdeskSentry(app)
+
+    app.config["MODULES"] = app_config["CONTENT_API_MODULES"]
+
     app.async_app.start()
 
     return app
