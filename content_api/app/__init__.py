@@ -48,15 +48,15 @@ def get_app(config=None):
     # set some required fields
     app_config.update({"DOMAIN": {"upload": {}}, "SOURCES": {}})
 
-    try:
-        # override from settings module, but only things defined in default config
-        import settings as server_settings  # type: ignore
+    # try:
+    #     # override from settings module, but only things defined in default config
+    #     import settings as server_settings  # type: ignore
 
-        for key in dir(server_settings):
-            if key.isupper() and key in app_config:
-                app_config[key] = getattr(server_settings, key)
-    except ImportError:
-        pass  # if exists
+    #     for key in dir(server_settings):
+    #         if key.isupper() and key in app_config:
+    #             app_config[key] = getattr(server_settings, key)
+    # except ImportError:
+    #     pass  # if exists
 
     if config:
         app_config.update(config)
