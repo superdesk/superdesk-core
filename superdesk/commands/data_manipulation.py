@@ -19,6 +19,7 @@ import shutil
 import bz2
 import pymongo.database
 import multiprocessing.synchronize
+import asyncio
 
 from multiprocessing import Process, Lock
 from contextlib import contextmanager
@@ -33,7 +34,7 @@ from pymongo.errors import OperationFailure
 from superdesk.core import get_current_app
 from superdesk.timer import timer
 from superdesk.resource import Resource
-from superdesk.services import BaseService
+from superdesk.eve_async import AsyncBaseService
 from superdesk.cache import cache
 
 from .async_cli import cli
@@ -112,7 +113,7 @@ def cli_data_storage_dump(name, dest_dir, description, single, collections):
 @click.argument("dump_path")
 @click.option("--keep-existing", is_flag=True, help="don't clear collections before inserting items")
 @click.option("--no-flush", is_flag=True, help="don't flush ElasticSearch indexes")
-def cli_data_storage_restore(dump_path, keep_existing, no_flush):
+async def cli_data_storage_restore(dump_path, keep_existing, no_flush):
     """Restore MongoDB collections dumped with ``storage:dump``
 
     Example::
@@ -120,7 +121,7 @@ def cli_data_storage_restore(dump_path, keep_existing, no_flush):
         $ storage:restore foobar_superdesk_dump
     """
 
-    StorageRestore().run(dump_path, keep_existing, no_flush)
+    await StorageRestore().run(dump_path, keep_existing, no_flush)
 
 
 @cli.command("storage:record")
@@ -150,7 +151,7 @@ def cli_data_storage_restore(dump_path, keep_existing, no_flush):
     multiple=True,
     help="collections to record (DEFAULT: record all collections)",
 )
-def cli_data_storage_record(name, dest_dir, description, base_dump, force_db_reset, full_document, collections):
+async def cli_data_storage_record(name, dest_dir, description, base_dump, force_db_reset, full_document, collections):
     """Record changes made in database until the command is stopped
 
     This command is intended for developers to help producing specific state (e.g. for tests), or to create a specific
@@ -176,7 +177,9 @@ def cli_data_storage_record(name, dest_dir, description, base_dump, force_db_res
           instance for categories end-to-end tests"
     """
 
-    StorageStartRecording().run(name, dest_dir, description, base_dump, force_db_reset, full_document, collections)
+    await StorageStartRecording().run(
+        name, dest_dir, description, base_dump, force_db_reset, full_document, collections
+    )
 
 
 @cli.command("storage:restore-record")
@@ -187,7 +190,7 @@ def cli_data_storage_record(name, dest_dir, description, base_dump, force_db_res
     help="reset database before applying record without confirmation (⚠️ you'll loose all data)",
 )
 @click.option("--skip-base-dump", is_flag=True, help="do not restore base dump if any is specified")
-def cli_data_storage_restore_record(record_file, force_db_reset, skip_base_dump):
+async def cli_data_storage_restore_record(record_file, force_db_reset, skip_base_dump):
     """Restore Superdesk record
 
     This command is to be used with a record dump, not a full database archive.
@@ -197,7 +200,7 @@ def cli_data_storage_restore_record(record_file, force_db_reset, skip_base_dump)
         $ storage:restore-record record-for-some-e2e-test
     """
 
-    StorageRestoreRecord().run(record_file, force_db_reset, skip_base_dump)
+    await StorageRestoreRecord().run(record_file, force_db_reset, skip_base_dump)
 
 
 @cli.command("storage:list")
@@ -464,7 +467,7 @@ def parse_dump_file(
                             par_count -= 1
                         else:
                             obj = loads("".join(obj_buf))
-                            collection.insert(obj)  # type: ignore
+                            collection.insert_one(obj)  # type: ignore
                             inserted += 1
                             obj_buf.clear()
                             state = State.COLLECTION_OBJECT_END
@@ -543,8 +546,8 @@ class StorageDump:
                         print(dump_msg.format(name=name, idx=idx + 1, total=len(collections_names)))
                         f.write(f"{dumps(name)}:[")
                         collection = db.get_collection(name)
-                        cursor = collection.find()
-                        count = cursor.count()
+                        cursor = collection.find({})
+                        count = collection.count_documents({})
                         for doc_idx, doc in enumerate(cursor):
                             f.write(f"{dumps(doc)}")
                             if doc_idx < count - 1:
@@ -567,8 +570,8 @@ class StorageDump:
                     collection = db.get_collection(name)
                     with open_dump(col_path, "w") as f:
                         f.write("[")
-                        cursor = collection.find()
-                        count = cursor.count()
+                        cursor = collection.find({})
+                        count = collection.count_documents({})
                         for doc_idx, doc in enumerate(cursor):
                             f.write(f"{dumps(doc)}")
                             if doc_idx < count - 1:
@@ -578,7 +581,7 @@ class StorageDump:
 
 
 class StorageRestore:
-    def run(self, dump_path: Union[Path, str], keep_existing: bool = False, no_flush: bool = False) -> None:
+    async def run(self, dump_path: Union[Path, str], keep_existing: bool = False, no_flush: bool = False) -> None:
         archive_path = get_dest_path(dump_path)
         print("💾 restoring archive")
         if keep_existing is False:
@@ -596,7 +599,7 @@ class StorageRestore:
             print("🚽 flushing ElasticSearch index")
             try:
                 # TODO-ASYNC: remove type ignore once the whole command is migrated
-                flush_elastic_index.FlushElasticIndex().run(sd_index=True, capi_index=False)  # type: ignore
+                await flush_elastic_index.FlushElasticIndex().run(sd_index=True, capi_index=False)  # type: ignore
             except Exception:
                 logger.exception("😭 Something went wrong")
                 sys.exit(1)
@@ -617,7 +620,10 @@ class StorageRestore:
 
 
 class StorageStartRecording:
-    def run(
+    def run_in_new_loop(self, *args, **kwargs):
+        asyncio.run(self.run(*args, **kwargs))
+
+    async def run(
         self,
         name: Optional[str] = None,
         dest_dir: str = RECORD_DIR,
@@ -649,7 +655,7 @@ class StorageStartRecording:
                 if confirm.lower() != "y":
                     print("Recording cancelled")
                     sys.exit(1)
-            StorageRestore().run(keep_existing=False, dump_path=base_dump_p)
+            await StorageRestore().run(keep_existing=False, dump_path=base_dump_p)
             metadata["base_dump"] = str(base_dump_p)
         if description:
             metadata["description"] = description
@@ -695,7 +701,9 @@ class StorageStartRecording:
 
 
 class StorageRestoreRecord:
-    def run(self, record_file: Union[Path, str], force_db_reset: bool = False, skip_base_dump: bool = False) -> None:
+    async def run(
+        self, record_file: Union[Path, str], force_db_reset: bool = False, skip_base_dump: bool = False
+    ) -> None:
         file_path = get_dest_path(record_file, dump=False)
         db = get_current_app().data.pymongo().db
         with open_dump(file_path) as f:
@@ -715,7 +723,7 @@ class StorageRestoreRecord:
                             print("Restoration cancelled")
                             sys.exit(1)
                     print("RESTORE")
-                    StorageRestore().run(keep_existing=False, no_flush=True, dump_path=base_dump_p)
+                    await StorageRestore().run(keep_existing=False, no_flush=True, dump_path=base_dump_p)
             print(f"{INFO} restoring record from {datetime.fromtimestamp(metadata['started']).isoformat()}")
             description = metadata.get("description")
             if description:
@@ -730,7 +738,7 @@ class StorageRestoreRecord:
                     collection = db.get_collection(collection_name)
                     if op_type == "insert":
                         doc = event["fullDocument"]
-                        collection.insert(doc)
+                        collection.insert_one(doc)
                         print(f"inserted one doc in {collection_name!r}")
                     elif op_type == "update":
                         doc_id = event["documentKey"]["_id"]
@@ -746,13 +754,13 @@ class StorageRestoreRecord:
                             if unset:
                                 update_data["$unset"] = unset
                             if update_data:
-                                collection.update({"_id": doc_id}, update_data)
+                                collection.update_one({"_id": doc_id}, update_data)
                         else:
-                            collection.update({"_id": doc_id}, full_doc)
+                            collection.update_one({"_id": doc_id}, full_doc)
                         print(f"updated doc {doc_id!r} in {collection_name!r}")
                     elif op_type == "delete":
                         doc_id = event["documentKey"]["_id"]
-                        collection.remove({"_id": doc_id})
+                        collection.delete_one({"_id": doc_id})
                         print(f"removed doc {doc_id!r} from {collection_name!r}")
 
                     else:
@@ -765,7 +773,7 @@ class StorageRestoreRecord:
         print("🚽 flushing ElasticSearch index")
         try:
             # TODO-ASYNC: remove type ignore once the whole command is migrated
-            flush_elastic_index.FlushElasticIndex().run(sd_index=True, capi_index=False)  # type: ignore
+            await flush_elastic_index.FlushElasticIndex().run(sd_index=True, capi_index=False)  # type: ignore
         except Exception:
             logger.exception("😭 Something went wrong")
         else:
@@ -838,20 +846,20 @@ class StorageMigrateDumps:
                         # there is no base_dump, we restore original state of DB as base
                         # this is to avoid the "data_updates" collection to be updated on first unbased record
                         print(f"{INFO}there is no base dump in this record, we use original state")
-                        StorageRestore().run(
+                        await StorageRestore().run(
                             dump_path=ori_dump,
                             keep_existing=False,
                             no_flush=True,
                         )
                     # now we restore the record
-                    StorageRestoreRecord().run(record_file=p, force_db_reset=True)
+                    await StorageRestoreRecord().run(record_file=p, force_db_reset=True)
                     # and start a new record to get changes made for migration
                     migration_record_name = f"migration_record_{time.time()}.json.bz2"
                     m_record_p = Path(migration_record_name)
                     lock = Lock()
                     lock.acquire()
                     record_process = Process(
-                        target=StorageStartRecording().run,
+                        target=StorageStartRecording().run_in_new_loop,
                         kwargs={
                             "name": migration_record_name,
                             "dest_dir": ".",
@@ -913,7 +921,7 @@ class StorageMigrateDumps:
                 name = p.stem[:-5] if p.suffix == ".bz2" else p.stem
                 print(f"{INFO}Restoring dump {name!r} [{idx + 1} / {len(dump_files_paths)}]")
                 metadata = get_dump_metadata(p)
-                StorageRestore().run(keep_existing=False, dump_path=p)
+                await StorageRestore().run(keep_existing=False, dump_path=p)
                 print(f"{INFO}Applying data migration scripts")
 
                 await data_updates.upgrade_command_handler()
@@ -961,7 +969,7 @@ class StorageMigrateDumps:
             print("\n🏁 All dumps and record are upgraded")
         finally:
             print(f"{INFO}Restoring original database")
-            StorageRestore().run(
+            await StorageRestore().run(
                 keep_existing=False,
                 dump_path=tmp_db,
             )
@@ -979,16 +987,16 @@ class RestoreRecordResource(Resource):
     public_methods = ["POST"]
 
 
-class RestoreRecordService(BaseService):
-    def _create(self, docs):
+class RestoreRecordService(AsyncBaseService):
+    async def _create(self, docs):
         for doc in docs:
             name = doc["name"]
-            StorageRestoreRecord().run(record_file=name, force_db_reset=True)
+            await StorageRestoreRecord().run(record_file=name, force_db_reset=True)
 
-    def create(self, docs, **kwargs):
+    async def create_async(self, docs, **kwargs):
         with Lock() as lock:
             with timer("restore_record"):
-                self._create(docs)
+                await self._create(docs)
             return ["OK"]
 
 
