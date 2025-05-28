@@ -262,12 +262,12 @@ class PublishedItemService(BaseService, HighlightsSearchMixin):
             )
 
     def get_other_published_items(self, _id):
+        """Get all published items with the same `item_id`."""
+
         try:
-            query = {"query": {"filtered": {"filter": {"term": {"item_id": _id}}}}}
-            request = ParsedRequest()
-            request.args = {"source": json.dumps(query)}
-            return super().get(req=request, lookup=None)
-        except Exception:
+            return list(super().get_from_mongo(req=None, lookup={"item_id": _id}))
+        except Exception as e:
+            logger.exception(f"Error getting other published items for `{_id}`: {str(e)}. Returning empty list.")
             return []
 
     def get_last_published_version(self, _id):
