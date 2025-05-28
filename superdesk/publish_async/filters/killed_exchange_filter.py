@@ -1,6 +1,7 @@
 from superdesk.core import get_config
 from superdesk.types import PublishRequest, PublishRequestResponse, ContentState
 
+from ..utils import get_codes
 from .content_exchange_filter import ContentPublishExchangeFilter
 
 
@@ -44,12 +45,12 @@ class KilledPublishExchangeFilter(ContentPublishExchangeFilter):
             ]
         }
         (
-            subscribers,
+            previous_subscribers,
             subscriber_codes,
             previous_associations,
         ) = await self._get_subscribers_for_previously_sent_items(response, query)
 
-        if not subscribers and get_config(bool, "UNPUBLISH_TO_MATCHING_SUBSCRIBERS", False):
+        if not previous_subscribers and get_config(bool, "UNPUBLISH_TO_MATCHING_SUBSCRIBERS", False):
             subscribers_request = PublishRequest(
                 item=request.item,
                 item_id=request.item_id,
@@ -61,9 +62,24 @@ class KilledPublishExchangeFilter(ContentPublishExchangeFilter):
             )
             subscribers_response = PublishRequestResponse()
             await super().filter_subscribers(subscribers_request, subscribers_response)
-            subscribers = subscribers_response.subscribers
+            previous_subscribers = subscribers_response.subscribers
             subscriber_codes = subscribers_response.subscriber_codes
 
-        response.subscribers = subscribers
+        response.subscribers = previous_subscribers
         response.subscriber_codes = subscriber_codes
+
+        # Check to see if any provided Subscribers in the PublishRequest were not picked up by the above
+        # logic. If so then add them to the list, along with their subscriber codes
+        previous_subscriber_ids = set([subscriber.id for subscriber in previous_subscribers])
+        new_subscribers = [
+            subscriber for subscriber in request.subscribers or [] if subscriber.id not in previous_subscriber_ids
+        ]
+        if new_subscribers:
+            response.subscribers.extend(new_subscribers)
+            for subscriber in new_subscribers:
+                response.subscriber_codes[subscriber.id] = get_codes(subscriber)
+
         response.associations = previous_associations
+        response.content_api_subscribers = set(
+            [subscriber.id for subscriber in response.subscribers if subscriber.api_products]
+        )
