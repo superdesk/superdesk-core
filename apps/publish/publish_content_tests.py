@@ -13,7 +13,7 @@ from datetime import timedelta
 
 from apps.publish import init_app
 from apps.publish.enqueue import EnqueueContent
-from superdesk import config
+from superdesk import config, get_resource_service
 from superdesk.publish.publish_content import get_queue_items
 from superdesk.tests import TestCase
 from superdesk.utc import utcnow
@@ -129,3 +129,50 @@ class PublishContentTests(TestCase):
         self.assertEqual(2, len(items))
         ids = [item[config.ID_FIELD] for item in items]
         self.assertNotIn(3, ids)
+
+    def test_get_other_published_items(self):
+        """Test that get_other_published_items returns all items with the same item_id."""
+        with self.app.app_context():
+            items = []
+
+            # Insert multiple published items with the same item_id
+            for i in range(20):
+                items.append(
+                    {
+                        "_id": str(i + 1),
+                        "item_id": "test_item",
+                        "_created": utcnow(),
+                        "_updated": utcnow(),
+                        "queue_state": "pending",
+                        "state": "published",
+                    }
+                )
+
+            # add one item with a different item_id
+            items.append(
+                {
+                    "_id": "21",
+                    "item_id": "different_item",
+                    "_created": utcnow(),
+                    "_updated": utcnow(),
+                    "queue_state": "pending",
+                    "state": "published",
+                }
+            )
+
+            self.app.data.insert("published", items)
+
+            service = get_resource_service("published")
+            result = service.get_other_published_items("test_item")
+
+            # verify we got all items with item_id "test_item"
+            result_list = list(result)
+            self.assertEqual(20, len(result_list), "Should return all 20 items with the same item_id")
+
+            # verify all expected IDs are present
+            item_ids = [item["_id"] for item in result_list]
+            for i in range(1, 21):
+                self.assertIn(str(i), item_ids, f"Item with _id {i} should be in results")
+
+            # verify the different item is not included
+            self.assertNotIn("21", item_ids, "Item with different item_id should not be in results")
