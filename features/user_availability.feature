@@ -459,6 +459,22 @@ Feature: User Availability
         }
         """
 
+    @auth
+    Scenario: Manage other user's availability
+        When we setup test user
+        """
+        {
+            "username": "foo",
+            "user_type": "user"
+        }
+        """
+
+        When we post to "user_availability"
+        """
+        {"user": "#FOO_USER_ID#", "date": "2025-05-01", "status": "available"}
+        """
+        Then we get OK response
+
         When we setup test user
         """
         {
@@ -466,8 +482,55 @@ Feature: User Availability
             "user_type": "user"
         }
         """
+
         When we put to "/default_user_availability/#FOO_USER_ID#"
         """
         {"enabled": false}
         """
         Then we get error 403
+
+        When we patch "/user_availability/#user_availability._id#"
+        """
+        {"status": "partial"}
+        """
+        Then we get error 403
+
+        When we delete "/user_availability/#user_availability._id#"
+        Then we get error 403
+
+        When we post to "/user_availability"
+        """
+        {"user": "#FOO_USER_ID#", "date": "2025-05-05", "status": "available"}
+        """
+        Then we get error 403
+
+        When we add privilege "user_availability_manage" to user "bar"
+
+        When we put to "/default_user_availability/#FOO_USER_ID#"
+        """
+        {"enabled": false}
+        """
+        Then we get OK response
+        And we get existing resource
+        """
+        {"last_updated_by": "#CONTEXT_USER_ID#"}
+        """
+
+        When we post to "/user_availability"
+        """
+        {"user": "#FOO_USER_ID#", "date": "2025-05-05", "status": "available"}
+        """
+        Then we get OK response
+        And we get existing resource
+        """
+        {"last_updated_by": "#CONTEXT_USER_ID#"}
+        """
+
+        When we patch "/user_availability/#user_availability._id#"
+        """
+        {"user": "#FOO_USER_ID#", "date": "2025-05-05", "status": "partial"}
+        """
+        Then we get OK response
+
+        When we delete "/user_availability/#user_availability._id#"
+        Then we get OK response

@@ -7,6 +7,8 @@ from apps.user_availability.default_availability import DefaultAvailabilityServi
 from superdesk.resource import Resource
 from apps.auth import get_user_id
 
+from .privileges import validate_user_can_manage_availability
+
 endpoint_name = "user_availability"
 
 if TYPE_CHECKING:
@@ -17,7 +19,7 @@ class AvailabilityResource(Resource):
     """Resource for tracking user availability."""
 
     schema = {
-        "user": Resource.rel("users", readonly=True),
+        "user": Resource.rel("users"),
         "date": {
             "type": "string",
             "required": True,
@@ -57,6 +59,7 @@ class AvailabilityResource(Resource):
                 },
             },
         },
+        "last_updated_by": Resource.rel("users"),
         "_generated": {
             "type": "boolean",
             "readonly": True,
@@ -76,11 +79,16 @@ class AvailabilityService(superdesk.Service):
     default_service: "DefaultAvailabilityService"
 
     def on_update(self, updates, original):
+        validate_user_can_manage_availability(original["user"])
+        if "user" in updates and updates["user"] != original["user"]:
+            raise ValueError("The 'user' field in updates must match the 'user' in the original data.")
         updates["_generated"] = False
+        updates["last_updated_by"] = get_user_id()
 
     def on_create(self, docs):
         for doc in docs:
-            doc["user"] = get_user_id()
+            doc.setdefault("user", get_user_id())
+            validate_user_can_manage_availability(doc["user"])
             default_availability = self.default_service.find_one(req=None, _id=doc["user"])
             if default_availability and default_availability.get("language"):
                 doc.setdefault("language", default_availability["language"])
@@ -93,6 +101,10 @@ class AvailabilityService(superdesk.Service):
                     "_deleted": True,
                 }
             )
+            doc["last_updated_by"] = get_user_id()
+
+    def on_delete(self, doc):
+        validate_user_can_manage_availability(doc["user"])
 
     def get_user_set_availability_days(self, user_id, from_date, to_date) -> list[date]:
         """

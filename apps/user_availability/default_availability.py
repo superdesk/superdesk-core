@@ -1,14 +1,16 @@
-import flask
 import superdesk
 
-from typing import TYPE_CHECKING
-from flask import current_app as app
 from datetime import timedelta
-from flask_babel import gettext
 from dateutil.rrule import rrule, WEEKLY
+from flask import current_app as app
+from typing import TYPE_CHECKING
+from dateutil.rrule import rrule, WEEKLY
+
+from apps.auth import get_user_id
 from superdesk.dates import get_local_today
 from superdesk.resource import Resource
-from apps.auth import get_user_id
+
+from .privileges import validate_user_can_manage_availability
 
 if TYPE_CHECKING:
     from .availability import AvailabilityService
@@ -85,6 +87,7 @@ class DefaultAvailabilityResource(Resource):
                 },
             },
         },
+        "last_updated_by": Resource.rel("users"),
     }
 
     item_methods = ["GET", "PUT"]
@@ -100,15 +103,15 @@ class DefaultAvailabilityService(superdesk.Service):
     def on_replace(self, document, original):
         """Check that the user can only modify their own availability settings."""
         self.validate_user_id(document)
+        document["last_updated_by"] = get_user_id()
 
     def on_create(self, docs):
         for doc in docs:
             self.validate_user_id(doc)
+            doc["last_updated_by"] = get_user_id()
 
     def validate_user_id(self, document):
-        current_user_id = get_user_id()
-        if str(document["_id"]) != str(current_user_id):
-            return flask.abort(403, description=gettext("You can only modify your own availability settings."))
+        validate_user_can_manage_availability(document["_id"])
 
     def on_created(self, docs):
         """Event handler for created event."""
