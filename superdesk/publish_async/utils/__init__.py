@@ -23,7 +23,13 @@ from .subscribers import (
     get_subscriber_destination_id,
     get_subscribers_for_item,
 )
-from .publish_queue import get_publish_celery_queue, get_high_priority_celery_queue, get_queue_items
+from .publish_queue import (
+    get_publish_celery_queue,
+    get_high_priority_celery_queue,
+    get_queue_items,
+    get_subscribers_for_previously_sent_items,
+)
+from .packages import get_residrefs, remove_ref_from_inmem_package, replace_ref_in_package
 
 __all__ = [
     # Common
@@ -61,4 +67,8 @@ __all__ = [
     "get_codes",
     "get_utc_publish_schedule",
     "get_utc_schedule",
+    # Packages
+    "get_residrefs",
+    "remove_ref_from_inmem_package",
+    "replace_ref_in_package",
 ]

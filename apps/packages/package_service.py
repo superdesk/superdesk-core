@@ -38,6 +38,7 @@ from superdesk.utc import utcnow
 from superdesk.default_settings import VERSION
 from quart_babel import gettext as _
 from superdesk.validation import ValidationError
+from superdesk.publish_async.utils import get_residrefs
 
 
 logger = logging.getLogger(__name__)
@@ -301,57 +302,6 @@ class PackageService:
         archive_service = get_resource_service(ARCHIVE)
         return await archive_service.get_from_mongo_async(req=request, lookup=query)
 
-    def remove_ref_from_inmem_package(self, package, ref_id):
-        """Removes the reference with ref_id from non-root groups.
-
-        If there is nothing left
-        in that group then the group and its reference in root group is also removed.
-        If the removed item was the last item then returns
-
-        :param package: Package
-        :param ref_id: Id of the reference to be removed
-        :return: True if there are still references in the package, False otherwise
-        """
-        groups_to_be_removed = set()
-        non_root_groups = [group for group in package.get(GROUPS, []) if group.get(GROUP_ID) != ROOT_GROUP]
-        for non_rg in non_root_groups:
-            refs = [r for r in non_rg.get(REFS, []) if r.get(RESIDREF, "") != ref_id]
-            if len(refs) == 0:
-                groups_to_be_removed.add(non_rg.get(GROUP_ID))
-            non_rg[REFS] = refs
-
-        if len(groups_to_be_removed) > 0:
-            root_group = [group for group in package.get(GROUPS, []) if group.get(GROUP_ID) == ROOT_GROUP][0]
-            refs = [r for r in root_group.get(REFS, []) if r.get(ID_REF) not in groups_to_be_removed]
-            root_group[REFS] = refs
-            removed_groups = [
-                group for group in package.get(GROUPS, []) if group.get(GROUP_ID) not in groups_to_be_removed
-            ]
-            package[GROUPS] = removed_groups
-
-            # return if the package has any items left in it
-            return len(refs) > 0
-
-        # still has items in the package
-        return True
-
-    async def replace_ref_in_package_async(self, package, old_ref_id, new_ref_id):
-        """Locates the reference with the old_ref_id and replaces with the new_ref_id
-
-        :param package: Package
-        :param old_ref_id: Old reference id
-        :param new_ref_id: New reference id
-        """
-        archive_service = get_resource_service("archive")
-        new_item = await archive_service.find_one_async(req=None, _id=new_ref_id)
-
-        non_root_groups = (group for group in package.get(GROUPS, []) if group.get(GROUP_ID) != ROOT_GROUP)
-        for g in (ref for group in non_root_groups for ref in group.get(REFS, [])):
-            if g.get(RESIDREF, "") == old_ref_id:
-                g[RESIDREF] = new_ref_id
-                g["guid"] = new_ref_id
-                g[VERSION] = new_item[VERSION]
-
     def update_field_in_package(self, package, ref_id, field, field_value):
         """Locates the reference with the ref_id and replaces field value
 
@@ -434,24 +384,13 @@ class PackageService:
 
             processed_packages.extend(await self.remove_refs_in_package_async(package, doc_id, processed_packages))
 
-    def get_residrefs(self, package):
-        """
-        Returns all residref in the package.
-
-        :param package:
-        :return: list of residref
-        """
-        return [
-            ref.get(RESIDREF) for group in package.get(GROUPS, []) for ref in group.get(REFS, []) if RESIDREF in ref
-        ]
-
     async def check_if_any_item_in_package_has_embargo(self, package):
         """Recursively checks if any item in the package has embargo.
 
         :raises: SuperdeskApiError.badRequestError() if any item in the package has embargo.
         """
 
-        item_refs_in_package = self.get_residrefs(package)
+        item_refs_in_package = get_residrefs(package)
 
         archive_service = get_resource_service("archive")
         for item_ref in item_refs_in_package:

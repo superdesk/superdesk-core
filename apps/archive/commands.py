@@ -40,7 +40,7 @@ from werkzeug.exceptions import Conflict
 from .common import remove_media_files
 from celery.exceptions import SoftTimeLimitExceeded
 from superdesk.publish_async.publish_cache import PublishCache
-from superdesk.publish_async.utils import item_matches_content_filter
+from superdesk.publish_async.utils import item_matches_content_filter, get_residrefs
 
 logger = logging.getLogger(__name__)
 
@@ -323,7 +323,7 @@ class RemoveExpiredContent:
 
         if item.get(ITEM_TYPE) == CONTENT_TYPE.COMPOSITE:
             # Get the item references for is package
-            item_refs = package_service.get_residrefs(item)
+            item_refs = get_residrefs(item)
 
         if item.get(ITEM_TYPE) in [CONTENT_TYPE.TEXT, CONTENT_TYPE.PREFORMATTED] and get_app_config(
             "BROADCAST_ENABLED", True

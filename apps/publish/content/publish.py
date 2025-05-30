@@ -26,6 +26,7 @@ from superdesk.metadata.item import (
 from apps.archive.common import set_sign_off, ITEM_OPERATION
 from apps.archive.archive import update_word_count
 from superdesk.utc import utcnow
+from superdesk.publish_async.utils import get_residrefs
 
 from .common import BasePublishService, BasePublishResource, ITEM_PUBLISH
 from quart_babel import gettext as _
@@ -56,7 +57,7 @@ class ArchivePublishService(BasePublishService):
     async def _validate(self, original, updates):
         await super()._validate(original, updates)
         if original[ITEM_TYPE] == CONTENT_TYPE.COMPOSITE:
-            items = self.package_service.get_residrefs(original)
+            items = get_residrefs(original)
 
             if len(items) == 0 and self.publish_type == ITEM_PUBLISH:
                 raise SuperdeskApiError.badRequestError(_("Empty package cannot be published!"))
