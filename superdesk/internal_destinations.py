@@ -21,6 +21,7 @@ from superdesk.resource import Resource
 from superdesk.errors import StopDuplication
 from superdesk.signals import item_published_async, item_routed
 from superdesk.metadata.item import PUBLISH_SCHEDULE, SCHEDULE_SETTINGS
+from superdesk.publish_async.publish_cache import PublishCache
 from superdesk.publish_async.utils import item_matches_content_filter
 
 
@@ -52,6 +53,7 @@ async def handle_item_published(item, after_scheduled):
     archive_service = get_resource_service("archive")
     filters_service = ContentFiltersResource.get_service()
     destinations_service = get_resource_service(NAME)
+    await PublishCache.init()
 
     for dest in destinations_service.get(req=None, lookup={"is_active": True}):
         item_desk = item.get("task").get("desk")
