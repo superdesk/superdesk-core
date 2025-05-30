@@ -86,7 +86,7 @@ class EmailFeedingService(FeedingService):
             raise await IngestEmailError.emailHostError(exception=e, provider=provider).send_notifications()
 
         try:
-            imap.login(config.get("user", None), config.get("password", None))
+            imap.login(config.get("user", ""), config.get("password", ""))
         except imaplib.IMAP4.error:
             raise await IngestEmailError.emailLoginError(imaplib.IMAP4.error, provider).send_notifications()
 

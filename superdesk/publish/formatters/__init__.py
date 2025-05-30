@@ -36,6 +36,11 @@ class Formatter:
     #: If set, formatted article will be re-used between destinations and subscribers.
     use_cache: bool = True
 
+    can_preview: bool = False
+    can_export: bool = False
+    destination: dict | None = None
+    subscriber: dict | None = None
+
     def __init__(self) -> None:
         self.can_preview = False
         self.can_export = False
