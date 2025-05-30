@@ -510,7 +510,6 @@ PUBLISH_CHANNELS: list[PublishChannelConfig] = [
     },
     {
         "operations": ["resend"],
-        "filter": lambda item: not len(item.get("associations") or {}),
         "config": ExchangeConfig(
             exchange="content",
             filter="resend",
@@ -565,6 +564,8 @@ PUBLISH_CHANNELS: list[PublishChannelConfig] = [
         "item_types": ["composite"],
         "config": ExchangeConfig(
             exchange="content",
+            filter="content",
+            router="asyncio",
         ),
     },
     {

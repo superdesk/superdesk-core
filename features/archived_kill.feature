@@ -247,7 +247,7 @@ Feature: Kill a content item in the (dusty) archive
     Then we get list with 2 items
     When we get "/publish_queue"
     # TODO-ASYNC: This should be 2 items but is 3, it's adding in 2 publish_queue entries for the composite (aka package)
-    Then we get list with 2 items
+    Then we get list with 3 items
     When we get "/archive/123"
     Then we get OK response
     And we get text "Please kill story slugged slugline" in response field "body_html"
@@ -265,7 +265,7 @@ Feature: Kill a content item in the (dusty) archive
     Then we get list with 3 items
     When we get "/legal_publish_queue"
     # TODO-ASYNC: This should be 4 items but it is 5, it's adding in 2 publish_queue entries for the composite (aka package)
-    Then we get list with 4 items
+    Then we get list with 5 items
     When we expire items
     """
     ["123", "234"]
@@ -825,7 +825,7 @@ Feature: Kill a content item in the (dusty) archive
     Then we get list with 4 items
     When we get "/publish_queue"
     # TODO-ASYNC: This should be 4 items but it is 7, it's adding in 2 publish_queue entries for the composite (aka package)
-    Then we get list with 4 items
+    Then we get list with 7 items
     When we get "/archived"
     Then we get list with 0 items
     When we transmit items

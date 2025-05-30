@@ -78,3 +78,13 @@ class ContentType(str, Enum):
 TEXT_TYPES = (ContentType.TEXT, ContentType.PREFORMATTED)
 MEDIA_TYPES = (ContentType.AUDIO, ContentType.VIDEO, ContentType.PICTURE, ContentType.GRAPHIC)
 AUTHORING_TYPES = TEXT_TYPES + MEDIA_TYPES + (ContentType.COMPOSITE,)
+
+
+@unique
+class PublishOperation(str, Enum):
+    PUBLISH = "publish"
+    CORRECT = "correct"
+    KILL = "kill"
+    TAKEDOWN = "takedown"
+    UNPUBLISH = "unpublish"
+    RESEND = "resend"

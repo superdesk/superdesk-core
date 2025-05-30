@@ -15,9 +15,9 @@ from eve.versioning import resolve_document_version
 from eve.methods.common import resolve_document_etag
 from quart_babel import gettext as _
 
-from superdesk.types import PublishRequest, PublishSenderType, SubscriberType, DesksResourceModel
+from superdesk.types import PublishRequest, PublishSenderType, SubscriberType, DesksResourceModel, PublishOperation
 from superdesk.publish_async.commands import publish_item
-from superdesk.publish_async.utils import get_utc_publish_schedule, SCHEDULE_SETTINGS, PUBLISH_SCHEDULE
+from superdesk.publish_async.utils import get_utc_publish_schedule, SCHEDULE_SETTINGS, PUBLISH_SCHEDULE, get_residrefs
 
 from apps.archive.resource import ArchiveResource
 from apps.archive.common import (
@@ -85,11 +85,11 @@ from superdesk.workflow import is_workflow_state_transition_valid
 
 logger = logging.getLogger(__name__)
 
-ITEM_PUBLISH = "publish"
-ITEM_CORRECT = "correct"
-ITEM_KILL = "kill"
-ITEM_TAKEDOWN = "takedown"
-ITEM_UNPUBLISH = "unpublish"
+ITEM_PUBLISH = PublishOperation.PUBLISH.value
+ITEM_CORRECT = PublishOperation.CORRECT.value
+ITEM_KILL = PublishOperation.KILL.value
+ITEM_TAKEDOWN = PublishOperation.TAKEDOWN.value
+ITEM_UNPUBLISH = PublishOperation.UNPUBLISH.value
 item_operations.extend([ITEM_PUBLISH, ITEM_CORRECT, ITEM_KILL, ITEM_TAKEDOWN, ITEM_UNPUBLISH])
 publish_services = {
     ITEM_PUBLISH: "archive_publish",
@@ -486,7 +486,7 @@ class BasePublishService(AsyncBaseService):
         if package.get(EMBARGO):
             validation_errors.append(_("Package cannot have Embargo"))
 
-        items = self.package_service.get_residrefs(package)
+        items = get_residrefs(package)
         if self.publish_type in [ITEM_CORRECT, ITEM_KILL]:
             removed_items, added_items = self._get_changed_items(items, updates)
             # we raise error if correction is done on a empty package. Kill is fine.
@@ -542,13 +542,13 @@ class BasePublishService(AsyncBaseService):
         else:
             updates["expiry"] = await get_expiry(desk_id, stage_id, offset=offset)
 
-    async def _publish_package_items(self, package, updates):
+    async def _publish_package_items(self, package: dict, updates: dict, send_to_exchange: bool = False) -> None:
         """Publishes all items of a package recursively then publishes the package itself.
 
         :param package: package to publish
         :param updates: payload
         """
-        items = self.package_service.get_residrefs(package)
+        items = get_residrefs(package)
 
         if len(items) == 0 and self.publish_type == ITEM_PUBLISH:
             raise SuperdeskApiError.badRequestError(_("Empty package cannot be published!"))
@@ -580,7 +580,7 @@ class BasePublishService(AsyncBaseService):
                         # if the item is a package do recursion to publish
                         sub_updates = {i: updates[i] for i in ["state", "operation"] if i in updates}
                         sub_updates["groups"] = list(package_item["groups"])
-                        await self._publish_package_items(package_item, sub_updates)
+                        await self._publish_package_items(package_item, sub_updates, True)
                         await self._update_archive(
                             original=package_item, updates=sub_updates, should_insert_into_versions=False
                         )
@@ -595,7 +595,7 @@ class BasePublishService(AsyncBaseService):
                     linked_in_packages = package_item.get(LINKED_IN_PACKAGES, [])
                     if package[ID_FIELD] not in (lp.get(PACKAGE) for lp in linked_in_packages):
                         linked_in_packages.append({PACKAGE: package[ID_FIELD]})
-                        super().system_update(
+                        await super().system_update_async(
                             guid,
                             {LINKED_IN_PACKAGES: linked_in_packages, PUBLISHED_IN_PACKAGE: package[ID_FIELD]},
                             package_item,
@@ -608,9 +608,13 @@ class BasePublishService(AsyncBaseService):
                         for linked in package_item.get(LINKED_IN_PACKAGES, [])
                         if linked.get(PACKAGE) != package.get(ID_FIELD)
                     ]
-                    super().system_update(guid, {LINKED_IN_PACKAGES: linked_in_packages}, package_item)
+                    await super().system_update_async(guid, {LINKED_IN_PACKAGES: linked_in_packages}, package_item)
 
                 package_item = await super().find_one_async(req=None, _id=guid)
+                if not package_item:
+                    raise SuperdeskApiError.badRequestError(
+                        _("Package item with id: {guid} does not exist.").format(guid=guid)
+                    )
 
                 self.package_service.update_field_in_package(
                     updates, package_item[ID_FIELD], VERSION, package_item[VERSION]
@@ -624,6 +628,18 @@ class BasePublishService(AsyncBaseService):
         updated = deepcopy(package)
         updated.update(updates)
         await self.update_published_collection(published_item_id=package[ID_FIELD], updated=updated)
+
+        if send_to_exchange:
+            await publish_item(
+                updated,
+                item_id=updated[ID_FIELD],
+                item_type=updated[ITEM_TYPE],
+                operation=self.item_operation,
+                published_state=self.published_state,
+                sender_type=PublishSenderType.API,
+                target_media_type=SubscriberType.DIGITAL,
+                publish_to_content_api=True,
+            )
 
     async def update_published_collection(self, published_item_id, updated=None):
         """Updates the published collection with the published item.
@@ -698,7 +714,7 @@ class BasePublishService(AsyncBaseService):
         :return: list of removed items and list of added items
         """
         if "groups" in updates:
-            new_items = self.package_service.get_residrefs(updates)
+            new_items = get_residrefs(updates)
             removed_items = list(set(existing_items) - set(new_items))
             added_items = list(set(new_items) - set(existing_items))
             return removed_items, added_items
@@ -727,7 +743,7 @@ class BasePublishService(AsyncBaseService):
 
         items = [value for value in associations.values() if value]
         if original_item[ITEM_TYPE] == CONTENT_TYPE.COMPOSITE and self.publish_type == ITEM_PUBLISH:
-            items.extend(self.package_service.get_residrefs(original_item))
+            items.extend(get_residrefs(original_item))
 
         main_publish_schedule = get_utc_schedule(updates, PUBLISH_SCHEDULE) or get_utc_schedule(
             original_item, PUBLISH_SCHEDULE

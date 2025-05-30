@@ -1,19 +1,31 @@
 import logging
+from copy import deepcopy
+from dataclasses import dataclass
 
 from bson import ObjectId
 from celery.exceptions import SoftTimeLimitExceeded
 from quart_babel import gettext
+import elasticapm
 
 # TODO-ASYNC: Replace resolve_document_version with something from async core lib
 from eve.versioning import resolve_document_version
+from eve.utils import ParsedRequest
 
-from superdesk.core import get_current_app
-from superdesk.types import PublishRequest, PublishRequestResponse, PublishState
+from superdesk.core import get_current_app, json
+from superdesk.types import (
+    PublishRequest,
+    PublishRequestResponse,
+    PublishState,
+    SubscribersResource,
+    SubscriberType,
+    PublishSenderType,
+    PublishOperation,
+)
 from superdesk import get_resource_service
 import superdesk.signals as signals
 from superdesk.resource_fields import ID_FIELD, VERSION, ITEM_STATE
-from superdesk.metadata.item import CONTENT_STATE
-from superdesk.errors import ConnectionTimeout
+from superdesk.metadata.item import CONTENT_STATE, CONTENT_TYPE
+from superdesk.errors import ConnectionTimeout, SuperdeskApiError
 from superdesk.utc import utcnow
 
 from apps.archive.common import ARCHIVE, insert_into_versions_async
@@ -23,9 +35,24 @@ from apps.legal_archive.commands import import_into_legal_archive
 
 import content_api
 
+from ..publish_cache import PublishCache
+from ..utils import (
+    get_residrefs,
+    get_subscribers_for_previously_sent_items,
+    remove_ref_from_inmem_package,
+    replace_ref_in_package,
+)
+from ..commands import enqueue_published
 from .base_exchange import BasicPublishExchange
 
 logger = logging.getLogger(__name__)
+
+
+@dataclass
+class SubscriberPackageItems:
+    subscriber: SubscribersResource
+    items: dict[str, str | None]
+    codes: set[str]
 
 
 class ContentPublishExchange(BasicPublishExchange):
@@ -63,26 +90,11 @@ class ContentPublishExchange(BasicPublishExchange):
         """
 
         # Update the ``published`` collection, to update it's state
+        await PublishCache.init()
         published_service = get_resource_service(PUBLISHED)
-
-        published_item = await published_service.find_one_async(
-            req=None, item_id=request.item_id, _current_version=request.item[VERSION]
-        )
+        published_item = await self.get_published_item_from_request(request)
         if not published_item:
-            # If we failed to get the item by ``_current_version``, then try ``last_published_version`` instead
-            logger.warning(
-                "Unable to publish item, not found in published collection.", extra=dict(item_id=request.item_id)
-            )
-
-            published_item = await published_service.find_one_async(
-                req=None, item_id=request.item_id, last_published_version=True
-            )
-            if not published_item:
-                logger.warning(
-                    "Published item not found in either ``last_published_version`` or ``_current_version``.",
-                    extra=dict(item_id=request.item_id),
-                )
-                return PublishRequestResponse(routed=False)
+            return PublishRequestResponse(routed=False)
 
         published_item_id = ObjectId(published_item[ID_FIELD])
 
@@ -90,6 +102,10 @@ class ContentPublishExchange(BasicPublishExchange):
             # This request will be processed by ``PublishExchangeFactory.send_scheduled_or_pending_content``
             logger.info(f"Setting item {request.item_id} to be polled for later")
             await self.set_published_item_pending(published_item_id)
+            if request.sender_type == PublishSenderType.API:
+                # If this request was from the API, then run the celery task now
+                # otherwise this task can wait for the next polling iteration
+                await enqueue_published.apply_async()
             return PublishRequestResponse(routed=True)
 
         try:
@@ -106,7 +122,8 @@ class ContentPublishExchange(BasicPublishExchange):
             else:
                 await self.update_published_item(published_item_id)
 
-            response = await super().send(request)
+            request.item = published_item
+            response = await self._publish_item(request)
 
             if not response.content_api_subscribers and request.publish_to_content_api and content_api.is_enabled():
                 try:
@@ -145,6 +162,55 @@ class ContentPublishExchange(BasicPublishExchange):
             error_updates = {QUEUE_STATE: PublishState.ERROR, ERROR_MESSAGE: error_msg}
             await published_service.patch_async(published_item_id, error_updates)
             raise
+
+    async def get_published_item_from_request(self, request: PublishRequest) -> dict | None:
+        """
+        Retrieve the published item associated with the given request.
+
+        This method attempts to fetch a published item from a resource service based on
+        the ID and version in the provided request. If the item is not found using the
+        current version, the method makes a secondary attempt to locate it using the
+        'last_published_version'. If the item cannot be retrieved on either attempt, `None`
+        is returned, and appropriate warnings are logged.
+
+        :param request: The request containing the item ID and version details needed to retrieve the published item.
+        :return: The retrieved published item if found, otherwise ``None``.
+        """
+
+        published_service = get_resource_service(PUBLISHED)
+
+        published_item = await published_service.find_one_async(
+            req=None, item_id=request.item_id, _current_version=request.item[VERSION]
+        )
+
+        if not published_item:
+            # If we failed to get the item by ``_current_version``, then try ``last_published_version`` instead
+            logger.warning(
+                "Unable to publish item, not found in published collection.", extra=dict(item_id=request.item_id)
+            )
+
+            published_item = await published_service.find_one_async(
+                req=None, item_id=request.item_id, last_published_version=True
+            )
+
+        if not published_item:
+            logger.warning(
+                "Published item not found in either ``last_published_version`` or ``_current_version``.",
+                extra=dict(item_id=request.item_id),
+            )
+
+        return published_item
+
+    async def _publish_item(self, request: PublishRequest) -> PublishRequestResponse:
+        response: PublishRequestResponse | None = None
+
+        if request.item_type == CONTENT_TYPE.COMPOSITE:
+            response = await self._publish_package_items(request)
+            if not response:
+                # this was only published to subscribers with config.packaged on
+                request.target_media_type = SubscriberType.DIGITAL
+
+        return response if response else await super().send(request)
 
     async def set_published_item_pending(self, item_id: ObjectId) -> None:
         """
@@ -244,3 +310,191 @@ class ContentPublishExchange(BasicPublishExchange):
         )
         await signals.item_published_async.send(original, True)
         await get_resource_service(PUBLISHED).patch_async(published_item_id, published_update)
+
+    @elasticapm.capture_span()
+    async def _publish_package_items(self, request: PublishRequest) -> PublishRequestResponse | None:
+        items = get_residrefs(request.item)
+        subscriber_items: dict[ObjectId, SubscriberPackageItems] = {}
+        removed_items: list[str] = []
+
+        if request.operation in [PublishOperation.CORRECT, PublishOperation.KILL]:
+            removed_items, added_items = await self._get_package_changed_items(items, request.item)
+            # we raise error if correction is done on a empty package. Kill is fine.
+            if (
+                len(removed_items) == len(items)
+                and len(added_items) == 0
+                and request.operation == PublishOperation.CORRECT
+            ):
+                raise SuperdeskApiError.badRequestError(gettext("Corrected package cannot be empty!"))
+            items.extend(added_items)
+
+        if not items:
+            return None
+
+        archive_service = get_resource_service("archive")
+        for guid in items:
+            package_item = await archive_service.find_one_async(req=None, _id=guid)
+            if not package_item:
+                raise SuperdeskApiError.badRequestError(
+                    gettext(f"Package item with id: {guid} has not been published.")
+                )
+
+            subscribers, subscriber_codes, associations = await self._get_subscribers_for_package_item(package_item)
+            package_item_id = package_item[ID_FIELD]
+            self._extend_subscriber_items(
+                subscriber_items, subscribers, package_item, package_item_id, subscriber_codes
+            )
+
+        for removed_id in removed_items:
+            package_item = await archive_service.find_one_async(req=None, _id=removed_id)
+            subscribers, subscriber_codes, associations = await self._get_subscribers_for_package_item(package_item)
+            package_item_id = None
+            self._extend_subscriber_items(
+                subscriber_items, subscribers, package_item, package_item_id, subscriber_codes
+            )
+
+        return await self.publish_package(request, subscriber_items)
+
+    @elasticapm.capture_span()
+    async def publish_package(
+        self, request: PublishRequest, target_subscribers: dict[ObjectId, SubscriberPackageItems]
+    ) -> PublishRequestResponse | None:
+        """Publishes a given package to given subscribers.
+
+        For each subscriber updates the package definition with the wanted_items for that subscriber
+        and removes unwanted_items that doesn't supposed to go that subscriber.
+        Text stories are replaced by the digital versions.
+
+        :param request: The publication request containing the details for publishing.
+        :param target_subscribers: Dictionary of Subscriber ID and items-per-subscriber
+        :return: PublishRequestResponse if the request was handled, else ``None``.
+        """
+
+        all_items = get_residrefs(request.item)
+        response = PublishRequestResponse()
+        for items in target_subscribers.values():
+            sub_request = deepcopy(request)
+            subscriber = items.subscriber
+            codes = items.codes
+            wanted_items: list[str] = [item_id for item_id, package_id in items.items.items() if package_id]
+            unwanted_items: list[str] = [item for item in all_items if item not in wanted_items]
+
+            for i in unwanted_items:
+                still_items_left = remove_ref_from_inmem_package(sub_request.item, i)
+                if not still_items_left and request.operation != PublishOperation.CORRECT:
+                    # if nothing left in the package to be published and
+                    # if not correcting then don't send the package
+                    return None
+
+            for key in wanted_items:
+                try:
+                    await replace_ref_in_package(sub_request.item, key, items.items[key])
+                except KeyError:
+                    continue
+
+            single_publish_response = PublishRequestResponse(
+                subscribers=[subscriber],
+                subscriber_codes={subscriber.id: codes},
+            )
+            tasks, no_formatters = await self.get_tasks(sub_request, single_publish_response)
+            # Store this exchange config with all the Tasks,
+            # So it can be used in future to retrieve the exchange that manages this task
+            exchange_config = self.get_exchange_config()
+            for task in tasks:
+                task.exchange = exchange_config
+
+            self._push_formatter_notification(sub_request, no_formatters)
+            await self.route_tasks(sub_request, single_publish_response, tasks)
+
+            if single_publish_response.routed:
+                response.routed = True
+                response.subscribers.extend(single_publish_response.subscribers)
+                response.content_api_subscribers |= single_publish_response.content_api_subscribers
+                response.subscriber_codes.update(single_publish_response.subscriber_codes)
+
+        return None if not response.routed else response
+
+    async def _get_package_changed_items(self, existing_items: list[str], package: dict) -> tuple[list[str], list[str]]:
+        """Returns the added and removed items from existing_items
+
+        :param existing_items: List of item IDs that currently exist on the package
+        :param package: The package to check for changes
+        :return: A tuple containing the item IDs for those removed and added
+        """
+
+        published_service = get_resource_service("published")
+        req = ParsedRequest()
+        query = {
+            "query": {
+                "filtered": {
+                    "filter": {
+                        "and": [
+                            {"terms": {QUEUE_STATE: [PublishState.QUEUED, PublishState.QUEUED_NOT_TRANSMITTED]}},
+                            {"term": {"item_id": package["item_id"]}},
+                        ]
+                    }
+                }
+            },
+            "sort": [{"publish_sequence_no": "desc"}],
+        }
+        req.args = {"source": json.dumps(query)}
+        req.max_results = 1
+        previously_published_packages = await published_service.get_async(req=req, lookup=None)
+
+        try:
+            previously_published_package = await previously_published_packages.next()
+        except StopAsyncIteration:
+            previously_published_package = None
+
+        if not previously_published_package:
+            return [], []
+
+        if "groups" in previously_published_package:
+            old_items = get_residrefs(previously_published_package)
+            added_items = list(set(existing_items) - set(old_items))
+            removed_items = list(set(old_items) - set(existing_items))
+            return removed_items, added_items
+        else:
+            return [], []
+
+    async def _get_subscribers_for_package_item(
+        self, package_item: dict
+    ) -> tuple[list[SubscribersResource], dict[ObjectId, set[str]], dict[ObjectId | str, list[str]]]:
+        """Finds the list of subscribers for a given item in a package
+
+        :param package_item: item in a package
+        :return: A tuple containing the following:
+            - ``list[SubscribersResource]``: List of active subscribers matching the criteria.
+            - ``dict[ObjectId, set[str]]``: Mapping of subscriber IDs to their unique codes.
+            - ``dict[ObjectId | str, list[str]]``: Mapping of subscriber IDs to associated items.
+        """
+
+        query = {"$and": [{"item_id": package_item[ID_FIELD]}, {"publishing_action": package_item[ITEM_STATE]}]}
+        return await get_subscribers_for_previously_sent_items(PublishRequestResponse(), query)
+
+    def _extend_subscriber_items(
+        self,
+        subscriber_items: dict[ObjectId, SubscriberPackageItems],
+        subscribers: list[SubscribersResource],
+        item: dict,
+        package_item_id: str | None,
+        subscriber_codes: dict[ObjectId, set[str]],
+    ):
+        """Extends the subscriber_items with the given list of subscribers for the item
+
+        :param subscriber_items: The existing list of subscribers
+        :param subscribers: New subscribers that item has been published to - to be added
+        :param item: item that has been published
+        :param package_item_id: package_item_id
+        :param subscriber_codes: Mapping of subscriber IDs to their configured codes
+        """
+
+        item_id = item[ID_FIELD]
+        for subscriber in subscribers:
+            item_list = subscriber_items[subscriber.id].items if subscriber.id in subscriber_items else {}
+            item_list[item_id] = package_item_id
+            subscriber_items[subscriber.id] = SubscriberPackageItems(
+                subscriber=subscriber,
+                items=item_list,
+                codes=subscriber_codes.get(subscriber.id, set()),
+            )

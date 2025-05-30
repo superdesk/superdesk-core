@@ -2435,18 +2435,18 @@ Feature: Package Publishing
       Then we get list with 4 items
       """
       {"_items" : [{"headline": "item-1 headline", "content_type": "text", "subscriber_id": "#subscribers._id#"},
-                   {"headline": "item-2 headline", "content_type": "text", "subscriber_id": "subscribers._id"},
-                   {"headline": "test package", "content_type": "composite", "subscriber_id": "subscribers._id"},
-                   {"headline": "outer test package", "content_type": "composite", "subscriber_id": "subscribers._id"}]
+                   {"headline": "item-2 headline", "content_type": "text", "subscriber_id": "#subscribers._id#"},
+                   {"headline": "test package", "content_type": "composite", "subscriber_id": "#subscribers._id#"},
+                   {"headline": "outer test package", "content_type": "composite", "subscriber_id": "#subscribers._id#"}]
       }
       """
       When we enqueue published
       When we get "/publish_queue"
-      Then we get "123" as "main" story for subscriber "subscribers._id" in package "compositeitem"
+      Then we get "123" as "main" story for subscriber "#subscribers._id#" in package "compositeitem"
       When we enqueue published
       When we get "/publish_queue"
-      Then we get "456" as "sidebars" story for subscriber "subscribers._id" in package "compositeitem"
-      Then we get "compositeitem" in formatted output as "main" story for subscriber "subscribers._id"
+      Then we get "456" as "sidebars" story for subscriber "#subscribers._id#" in package "compositeitem"
+      Then we get "compositeitem" in formatted output as "main" story for subscriber "#subscribers._id#"
       When we get "/archive/compositeitem?version=all"
       Then we get list with 2 items
       When we get "/archive/outercompositeitem?version=all"

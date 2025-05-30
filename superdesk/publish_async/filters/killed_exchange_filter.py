@@ -1,7 +1,7 @@
 from superdesk.core import get_config
 from superdesk.types import PublishRequest, PublishRequestResponse, ContentState
 
-from ..utils import get_codes
+from ..utils import get_codes, get_subscribers_for_previously_sent_items
 from .content_exchange_filter import ContentPublishExchangeFilter
 
 
@@ -48,7 +48,7 @@ class KilledPublishExchangeFilter(ContentPublishExchangeFilter):
             previous_subscribers,
             subscriber_codes,
             previous_associations,
-        ) = await self._get_subscribers_for_previously_sent_items(response, query)
+        ) = await get_subscribers_for_previously_sent_items(response, query)
 
         if not previous_subscribers and get_config(bool, "UNPUBLISH_TO_MATCHING_SUBSCRIBERS", False):
             subscribers_request = PublishRequest(
