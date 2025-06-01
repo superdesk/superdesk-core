@@ -3,6 +3,7 @@ import logging
 from superdesk.types import SubscribersResource, PublishRequest, PublishRequestResponse, ContentState
 
 from ..publish_cache import PublishCache
+from ..utils import get_subscribers_for_previously_sent_items
 from .content_exchange_filter import ContentPublishExchangeFilter
 
 
@@ -60,7 +61,7 @@ class CorrectedPublishExchangeFilter(ContentPublishExchangeFilter):
             subscribers,
             subscriber_codes,
             previous_associations,
-        ) = await self._get_subscribers_for_previously_sent_items(response, query)
+        ) = await get_subscribers_for_previously_sent_items(response, query)
         subscribers_yet_to_receive: list[SubscribersResource] = []
 
         if subscribers:

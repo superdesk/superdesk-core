@@ -14,6 +14,7 @@ from .enums import (
     TEXT_TYPES,
     MEDIA_TYPES,
     AUTHORING_TYPES,
+    PublishOperation,
 )
 from .desks import DesksResourceModel
 from .users import UsersResourceModel, UserTypeEnum
@@ -54,6 +55,7 @@ __all__ = [
     "TEXT_TYPES",
     "MEDIA_TYPES",
     "AUTHORING_TYPES",
+    "PublishOperation",
     "UsersResourceModel",
     "UserTypeEnum",
     "DesksResourceModel",

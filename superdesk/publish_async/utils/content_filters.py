@@ -4,7 +4,6 @@ from bson import ObjectId
 
 from superdesk.types import ContentFiltersResource
 
-from ..filters import BasePublishExchangeFilter
 from .common import get_publish_request_from_item
 
 
@@ -41,6 +40,8 @@ def item_matches_content_filter(item: dict, content_filter: ContentFiltersResour
 
     Note: Make sure to initialise the PublishCache before running this function
     """
+
+    from ..filters import BasePublishExchangeFilter
 
     if content_filter is None:
         return True

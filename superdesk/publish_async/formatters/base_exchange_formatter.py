@@ -17,10 +17,11 @@ from superdesk.types import (
     PublishQueueResource,
     PublishQueueState,
     SubscriberDestination,
+    SubscriberType,
 )
 from superdesk import get_resource_service
 from superdesk.resource_fields import ID_FIELD, ITEM_TYPE, ASSOCIATIONS, VERSION
-from superdesk.metadata.item import PUBLISH_SCHEDULE
+from superdesk.metadata.item import PUBLISH_SCHEDULE, CONTENT_TYPE
 from superdesk.metadata.packages import GROUPS, GROUP_ID, REFS, RESIDREF, ROOT_GROUP
 from superdesk.publish import PUBLISHED_IN_PACKAGE
 from superdesk.errors import SuperdeskPublishError
@@ -75,6 +76,13 @@ class BasePublishExchangeFormatter(PublishExchangeFormatter):
         no_formatters: list[str] = []
         task_cache: dict[str, list[PublishQueueResource]] = {}
         for subscriber in response.subscribers:
+            if (
+                request.item_type not in [ContentType.TEXT, ContentType.PREFORMATTED]
+                and subscriber.subscriber_type == SubscriberType.WIRE
+            ):
+                # wire subscribers can get only text and preformatted stories
+                continue
+
             try:
                 subscriber_tasks, subscriber_no_formatters = await self.get_tasks_for_subscriber(
                     request, item, subscriber, response, task_cache
@@ -191,9 +199,11 @@ class BasePublishExchangeFormatter(PublishExchangeFormatter):
         cache_id = PublishCache.generate_cache_id(
             "format-item", formatter.name or formatter.__class__.__name__, request.item_id
         )
-        publish_queue_items: list[PublishQueueResource] | None = (
-            None if not formatter.use_cache else task_cache.get(cache_id) or None
-        )
+        # Only cache the formatted item if the Formatter supports it and the item is not a package
+        # (as package associations can be different based on the subscriber permissions)
+        use_cache = formatter.use_cache and request.item_type != CONTENT_TYPE.COMPOSITE
+        publish_queue_items: list[PublishQueueResource] | None = None if not use_cache else task_cache.get(cache_id)
+
         subscriber_dict = subscriber.to_dict()
         tasks: list[PublishQueueResource] = []
 
@@ -279,7 +289,8 @@ class BasePublishExchangeFormatter(PublishExchangeFormatter):
                 tasks.append(publish_queue_item)
                 await publish_queue_service.create([publish_queue_item])
 
-            task_cache[cache_id] = tasks
+            if use_cache:
+                task_cache[cache_id] = tasks
 
         return tasks
 

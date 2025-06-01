@@ -33,7 +33,6 @@ from superdesk.types import (
 from superdesk.resource_fields import ID_FIELD, VERSION
 from superdesk.errors import SuperdeskApiError
 from apps.archive.archive import SOURCE as ARCHIVE
-from apps.packages.package_service import PackageService
 from apps.publish.content.common import BasePublishService
 from apps.publish.content.publish import ArchivePublishService
 from apps.publish.published_item import LAST_PUBLISHED_VERSION
@@ -51,6 +50,7 @@ from superdesk.publish_async.utils import (
     item_target_matches_product_target,
     item_matches_product_filters,
     item_target_matches_subscriber_target,
+    get_residrefs,
 )
 from superdesk.publish_async.publish_cache import PublishCache
 from superdesk.publish_async.filters import BasePublishExchangeFilter
@@ -729,7 +729,7 @@ class ArchivePublishTestCase(TestCase):
             "type": "composite",
         }
 
-        items = PackageService().get_residrefs(package)
+        items = get_residrefs(package)
         removed_items, added_items = ArchivePublishService()._get_changed_items(items, updates)
         self.assertEqual(len(removed_items), 1)
         self.assertEqual(len(added_items), 1)

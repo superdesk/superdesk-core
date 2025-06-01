@@ -30,7 +30,6 @@ from superdesk.metadata.item import (
 from superdesk.metadata.packages import GROUPS
 from superdesk import get_resource_service
 from superdesk.utc import utcnow
-from apps.desks_async import get_desk_name_by_id
 import logging
 from copy import deepcopy
 from superdesk.emails import send_article_killed_email
@@ -41,6 +40,7 @@ from quart_babel import gettext as _
 from enum import Enum
 from bson.objectid import ObjectId
 from apps.content import push_content_notification
+from superdesk.publish_async.utils import get_residrefs
 
 
 logger = logging.getLogger(__name__)
@@ -276,7 +276,7 @@ class KillPublishService(BasePublishService):
                             GROUPS: self.package_service.remove_group_ref(package, item_id),
                         }
 
-                        refs = self.package_service.get_residrefs(package_updates)
+                        refs = get_residrefs(package_updates)
                         if refs:
                             await correct_service.patch_async(package[ID_FIELD], package_updates)
                         else:

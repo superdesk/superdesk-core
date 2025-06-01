@@ -138,14 +138,14 @@ class RestEndpoints(EndpointGroup):
         """
 
         # Import within this method, otherwise a circular import occurs
-        from superdesk.core import get_app_config
+        from superdesk.core import get_config
 
         # Strip the root URL for the API
         path = request.path.strip("/")
-        url_prefix = get_app_config("URL_PREFIX", "")
+        url_prefix = get_config(str, "URL_PREFIX", "")
         if url_prefix:
             url_prefix += "/"
-        api_version = get_app_config("API_VERSION")
+        api_version = get_config(str, "API_VERSION", "")
         if api_version:
             url_prefix += f"{api_version}/"
 
