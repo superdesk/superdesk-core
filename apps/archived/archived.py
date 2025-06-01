@@ -18,7 +18,7 @@ from eve.versioning import resolve_document_version
 from superdesk.core import get_current_app
 from superdesk.flask import request
 from superdesk.resource_fields import ID_FIELD, VERSION, ETAG, LAST_UPDATED
-from superdesk.types import SubscribersResource
+from superdesk.types import SubscribersResource, ContentState
 from apps.legal_archive.commands import import_into_legal_archive
 from apps.legal_archive.resource import LEGAL_PUBLISH_QUEUE_NAME
 from apps.publish.content.common import ITEM_KILL
@@ -275,9 +275,6 @@ class ArchivedService(AsyncBaseService):
                 get_resource_service(LEGAL_PUBLISH_QUEUE_NAME).get(req=None, lookup={"item_id": article["item_id"]})
             )
 
-            if transmission_details:
-                await self.enqueue_archived_kill_item(article, transmission_details)
-
             article[ID_FIELD] = article.pop("item_id", article["item_id"])
 
             # Step 3(iv)
@@ -293,6 +290,9 @@ class ArchivedService(AsyncBaseService):
             await get_resource_service("published").post_async([published_doc])
             logger.info("Insert into archive and published for article: {}".format(article[ID_FIELD]))
 
+            if transmission_details:
+                await self.enqueue_archived_kill_item(article, transmission_details, updates.get(ITEM_OPERATION))
+
             # Step 3(iii)
             await import_into_legal_archive.apply_async(countdown=3, kwargs={"item_id": article[ID_FIELD]})
             logger.info("Legal Archive import for article: {}".format(article[ID_FIELD]))
@@ -301,34 +301,22 @@ class ArchivedService(AsyncBaseService):
             await kill_service.broadcast_kill_email(article, updates_copy)
             logger.info("Broadcast kill email for article: {}".format(article[ID_FIELD]))
 
-    async def enqueue_archived_kill_item(self, item: dict, transmission_details) -> None:
+    async def enqueue_archived_kill_item(self, item: dict, transmission_details, operation: str) -> None:
         """Enqueue items that are killed from dusty archive.
 
         :param dict item: item from the archived collection.
         :param list transmission_details: list of legal publish queue entries
         """
         subscriber_ids = [transmission_record["_subscriber_id"] for transmission_record in transmission_details]
-        api_subscribers = {
-            t["_subscriber_id"]
-            for t in transmission_details
-            if t.get("destination", {}).get("delivery_type") == "content_api"
-        }
         query = {"$and": [{ID_FIELD: {"$in": subscriber_ids}}]}
         subscribers = await (await SubscribersResource.get_service().search(query)).to_list()
 
-        # TODO-ASYNC: Killing doesn't work from ``archived`` when item doesn't exist in ``published`` collection
-        #             As ``content`` PublishExchange expects it to exist in ``published`` collection
         await publish_item(
             item,
             subscribers=subscribers,
-            published_state="killed",
+            published_state=ContentState.KILLED if operation == ITEM_KILL else ContentState.RECALLED,
             publish_to_content_api=True,
         )
-        logger.info("Queued Transmission for article: {}".format(item[ID_FIELD]))
-        if content_api.is_enabled():
-            await get_resource_service("content_api").publish_async(
-                item, [subscriber.to_dict() for subscriber in subscribers if subscriber.id in api_subscribers]
-            )
 
     async def on_updated_async(self, updates, original):
         user = get_user()
