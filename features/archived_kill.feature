@@ -246,7 +246,6 @@ Feature: Kill a content item in the (dusty) archive
     When we get "/published"
     Then we get list with 2 items
     When we get "/publish_queue"
-    # TODO-ASYNC: This should be 2 items but is 3, it's adding in 2 publish_queue entries for the composite (aka package)
     Then we get list with 3 items
     When we get "/archive/123"
     Then we get OK response
@@ -264,7 +263,6 @@ Feature: Kill a content item in the (dusty) archive
     When we get "/legal_archive/123?version=all"
     Then we get list with 3 items
     When we get "/legal_publish_queue"
-    # TODO-ASYNC: This should be 4 items but it is 5, it's adding in 2 publish_queue entries for the composite (aka package)
     Then we get list with 5 items
     When we expire items
     """
@@ -824,7 +822,6 @@ Feature: Kill a content item in the (dusty) archive
     When we get "/published"
     Then we get list with 4 items
     When we get "/publish_queue"
-    # TODO-ASYNC: This should be 4 items but it is 7, it's adding in 2 publish_queue entries for the composite (aka package)
     Then we get list with 7 items
     When we get "/archived"
     Then we get list with 0 items

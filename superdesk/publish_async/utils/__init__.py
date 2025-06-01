@@ -62,6 +62,7 @@ __all__ = [
     "get_publish_celery_queue",
     "get_high_priority_celery_queue",
     "get_queue_items",
+    "get_subscribers_for_previously_sent_items",
     # Items
     "is_doc_targeted",
     "get_codes",
