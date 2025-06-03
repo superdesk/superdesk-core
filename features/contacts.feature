@@ -91,7 +91,7 @@ Feature: Contacts
         {"_id": 3, "first_name": "Bill", "last_name": "Lee", "public": true},
         {"_id": 4, "first_name": "Jane", "last_name": "Doe", "public": true}]
         """
-        When we get "/contacts?q=jane"
+        When we get "/contacts?q=jane+d"
         Then we get existing resource
           """
           {
@@ -99,6 +99,7 @@ Feature: Contacts
               "last_name" : "Doe", "first_name" : "Jane", "public": true}]
           }
           """
+
 
     @auth
     @notification

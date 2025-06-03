@@ -9,6 +9,7 @@
 # at https://www.sourcefabric.org/superdesk/license
 
 
+from flask import json
 from superdesk import get_resource_service
 from superdesk.services import Service
 from superdesk.notification import push_notification
@@ -24,6 +25,45 @@ class ContactsService(Service):
         # by default the response will have the inactive entries filtered out
         if "all" not in req.args:
             lookup["is_active"] = True
+
+        if req and not req.args.get("source") and req.args.get("q"):
+            query = {
+                "bool": {
+                    "must": [
+                        {
+                            "query_string": {
+                                "query": req.args.get("q") + "*",
+                                "fields": [
+                                    "first_name",
+                                    "last_name",
+                                    "organisation",
+                                    "contact_email",
+                                ],
+                                "default_operator": "AND",
+                            }
+                        },
+                    ],
+                }
+            }
+
+            if req.args.get("contact_type"):
+                query["bool"]["filter"] = [{"term": {"contact_type": req.args.get("contact_type")}}]
+
+            args = req.args.copy()
+            args.pop("q")
+            args["source"] = json.dumps(
+                {
+                    "query": query,
+                    "sort": [
+                        {
+                            "first_name.keyword": {"order": "asc"},
+                            "last_name.keyword": {"order": "asc"},
+                            "organisation.keyword": {"order": "asc"},
+                        }
+                    ],
+                }
+            )
+            req.args = args
 
         return super().get(req, lookup)
 
