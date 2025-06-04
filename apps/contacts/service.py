@@ -22,17 +22,13 @@ from copy import deepcopy
 
 class ContactsService(Service):
     def get(self, req, lookup):
-        # by default the response will have the inactive entries filtered out
-        if "all" not in req.args:
-            lookup["is_active"] = True
-
         if req and not req.args.get("source") and req.args.get("q"):
             query = {
                 "bool": {
                     "must": [
                         {
                             "query_string": {
-                                "query": req.args.get("q") + "*",
+                                "query": req.args.get("q") + ("*" if ":" not in req.args.get("q") else ""),
                                 "fields": [
                                     "first_name",
                                     "last_name",
@@ -43,12 +39,14 @@ class ContactsService(Service):
                             }
                         },
                     ],
-                    "should": [
-                        {"term": {"is_active": True}},
-                        {"term": {"public": True}},
-                    ],
                 }
             }
+
+            if "all" not in req.args:
+                query["bool"]["should"] = [
+                    {"term": {"is_active": True}},
+                    {"term": {"public": True}},
+                ]
 
             if req.args.get("contact_type"):
                 query["bool"]["filter"] = [{"term": {"contact_type": req.args.get("contact_type")}}]
@@ -68,6 +66,9 @@ class ContactsService(Service):
                 }
             )
             req.args = args
+
+        elif "all" not in req.args:
+            lookup["is_active"] = True  # by default the response will have the inactive entries filtered out
 
         return super().get(req, lookup)
 
