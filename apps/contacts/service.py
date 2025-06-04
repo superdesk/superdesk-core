@@ -43,6 +43,10 @@ class ContactsService(Service):
                             }
                         },
                     ],
+                    "should": [
+                        {"term": {"is_active": True}},
+                        {"term": {"public": True}},
+                    ],
                 }
             }
 
