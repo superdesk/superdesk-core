@@ -88,8 +88,8 @@ Feature: Contacts
         """
         [{"_id": 1, "first_name": "Albert", "last_name": "Foo", "public": true},
         {"_id": 2, "first_name": "Jill", "last_name": "Smith", "public": true},
-        {"_id": 3, "first_name": "Bill", "last_name": "Lee", "public": true},
-        {"_id": 4, "first_name": "Jane", "last_name": "Doe", "public": true}]
+        {"_id": 3, "first_name": "Bill", "last_name": "Lee", "public": true, "contact_type": "x"},
+        {"_id": 4, "first_name": "Jane", "last_name": "Doe", "public": true, "contact_type": "x"}]
         """
         When we get "/contacts?q=jane+d"
         Then we get existing resource
@@ -99,7 +99,16 @@ Feature: Contacts
               "last_name" : "Doe", "first_name" : "Jane", "public": true}]
           }
           """
+        When we get "/contacts?q=jane+d&contact_type=y"
+        Then we get list with 0 items
 
+        When we get "/contacts?q=jane+d&contact_type=x"
+        Then we get list with 1 items
+        """
+        {
+            "_items": [{"first_name" : "Jane"}]
+        }
+        """
 
     @auth
     @notification

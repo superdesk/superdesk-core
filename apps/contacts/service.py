@@ -39,17 +39,21 @@ class ContactsService(Service):
                             }
                         },
                     ],
+                    "should": [],
+                    "filter": [],
                 }
             }
 
             if "all" not in req.args:
-                query["bool"]["should"] = [
-                    {"term": {"is_active": True}},
-                    {"term": {"public": True}},
-                ]
+                query["bool"]["should"].extend(
+                    [
+                        {"term": {"is_active": True}},
+                        {"term": {"public": True}},
+                    ]
+                )
 
             if req.args.get("contact_type"):
-                query["bool"]["filter"] = [{"term": {"contact_type": req.args.get("contact_type")}}]
+                query["bool"]["filter"].append({"term": {"contact_type": req.args.get("contact_type")}})
 
             args = req.args.copy()
             args.pop("q")
