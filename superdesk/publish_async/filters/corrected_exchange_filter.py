@@ -54,7 +54,7 @@ class CorrectedPublishExchangeFilter(ContentPublishExchangeFilter):
         # step 1
         query = {
             "item_id": request.item_id,
-            "publishing_action": {"$in": [ContentState.PUBLISHED, ContentState.CORRECTED]},
+            "publishing_action": {"$in": [ContentState.PUBLISHED, ContentState.CORRECTED, ContentState.SCHEDULED]},
         }
 
         (
