@@ -24,14 +24,14 @@ def init_app(app):
 
     superdesk.privilege(
         name=USER_AVAILABILITY_READ,
-        label=lazy_gettext("View user availability"),
-        description=lazy_gettext("User can view user availability overview"),
+        label=lazy_gettext("Correspondent availability - view"),
+        description=lazy_gettext("User can view correspondent availability dashboard"),
     )
 
     superdesk.privilege(
         name=USER_AVAILABILITY_WRITE,
-        label=lazy_gettext("Manage user availability"),
-        description=lazy_gettext("User can manage user availability"),
+        label=lazy_gettext("Correspondent availability - manage"),
+        description=lazy_gettext("User can overwrite availability settings that each correspondent has set"),
     )
 
 
