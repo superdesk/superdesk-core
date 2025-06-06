@@ -9,6 +9,7 @@
 # at https://www.sourcefabric.org/superdesk/license
 
 
+from flask import json
 from superdesk import get_resource_service
 from superdesk.services import Service
 from superdesk.notification import push_notification
@@ -21,9 +22,57 @@ from copy import deepcopy
 
 class ContactsService(Service):
     def get(self, req, lookup):
-        # by default the response will have the inactive entries filtered out
-        if "all" not in req.args:
-            lookup["is_active"] = True
+        if req and not req.args.get("source") and req.args.get("q"):
+            query = {
+                "bool": {
+                    "must": [
+                        {
+                            "query_string": {
+                                "query": req.args.get("q") + ("*" if ":" not in req.args.get("q") else ""),
+                                "fields": [
+                                    "first_name",
+                                    "last_name",
+                                    "organisation",
+                                    "contact_email",
+                                ],
+                                "default_operator": "AND",
+                            }
+                        },
+                    ],
+                    "should": [],
+                    "filter": [],
+                }
+            }
+
+            if "all" not in req.args:
+                query["bool"]["should"].extend(
+                    [
+                        {"term": {"is_active": True}},
+                        {"term": {"public": True}},
+                    ]
+                )
+
+            if req.args.get("contact_type"):
+                query["bool"]["filter"].append({"term": {"contact_type": req.args.get("contact_type")}})
+
+            args = req.args.copy()
+            args.pop("q")
+            args["source"] = json.dumps(
+                {
+                    "query": query,
+                    "sort": [
+                        {
+                            "first_name.keyword": {"order": "asc"},
+                            "last_name.keyword": {"order": "asc"},
+                            "organisation.keyword": {"order": "asc"},
+                        }
+                    ],
+                }
+            )
+            req.args = args
+
+        elif "all" not in req.args:
+            lookup["is_active"] = True  # by default the response will have the inactive entries filtered out
 
         return super().get(req, lookup)
 
